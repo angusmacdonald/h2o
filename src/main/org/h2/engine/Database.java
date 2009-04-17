@@ -85,6 +85,12 @@ public class Database implements DataHandler {
     private static int initialPowerOffCount;
 
     private final boolean persistent;
+    
+    /**
+     * Indicates whether this database instance is managing the table schema for other running H20 instances.
+     */
+    private final boolean schemamanager;
+    
     private final String databaseName;
     private final String databaseShortName;
     private final String databaseURL;
@@ -175,6 +181,7 @@ public class Database implements DataHandler {
     public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
         this.compareMode = new CompareMode(null, null, 0);
         this.persistent = ci.isPersistent();
+        this.schemamanager = ci.isSchemaManager();
         this.filePasswordHash = ci.getFilePasswordHash();
         this.databaseName = name;
         this.databaseShortName = parseDatabaseShortName();

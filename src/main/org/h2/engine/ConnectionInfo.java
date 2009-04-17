@@ -42,6 +42,8 @@ public class ConnectionInfo implements Cloneable {
     private boolean ssl;
     private boolean persistent;
     private boolean unnamed;
+    
+	private boolean schemamanager;
 
     /**
      * Create a connection info object.
@@ -105,6 +107,45 @@ public class ConnectionInfo implements Cloneable {
         return clone;
     }
 
+    /**
+     * (2009-04-16) Modified to allow for another keyword to be read - 'sm'.
+     * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
+     */
+    private void parseName() {
+    	if (".".equals(name)) {
+            name = "mem";
+        }
+    	//persistent = true;
+    	unnamed = true;
+    	
+    	String[] info = name.split((":"));
+        
+    	int i = 0;
+        for (String part: info){
+        	if (part.equals("tcp")) {
+                remote = true;
+            } else if (part.equals("ssl")) {
+                remote = true;
+                ssl = true;
+            } else if (part.equals("mem")) {
+                persistent = false;
+            } else if (part.equals("sm")) { //schema manager
+                schemamanager = true;
+            } else {
+            	name = part;
+            	unnamed = false;
+            	
+            	persistent = (i==0); //if only the DB name is included then the ConnectionInfo will be set to true.
+            }
+        	i++;
+        }
+    	
+        
+    }
+    
+    /*
+     * THE OLD PARSENAME CODE:
+     * 
     private void parseName() {
         if (".".equals(name)) {
             name = "mem:";
@@ -128,7 +169,8 @@ public class ConnectionInfo implements Cloneable {
             persistent = true;
         }
     }
-
+    */
+    
     /**
      * Set the base directory of persistent databases, unless the database is in
      * the user home folder (~).
@@ -528,5 +570,14 @@ public class ConnectionInfo implements Cloneable {
         persistent = false;
         this.name = serverKey;
     }
+
+    /**
+     * Check if the referenced database is a schema manager to other databases in the system.
+     *
+     * @return true if it is
+     */
+	public boolean isSchemaManager() {
+		return (originalURL.contains(":sm:"));
+	}
 
 }
