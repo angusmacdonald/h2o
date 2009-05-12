@@ -110,7 +110,7 @@ public class ConnectionInfo implements Cloneable {
     /**
      * (2009-04-16) Modified to allow for another keyword to be read - 'sm'.
      * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
-     */
+     *//*
     private void parseName() {
     	if (".".equals(name)) {
             name = "mem";
@@ -141,14 +141,17 @@ public class ConnectionInfo implements Cloneable {
         }
     	
         
-    }
+    }*/
     
     /*
      * THE OLD PARSENAME CODE:
-     * 
+     */
     private void parseName() {
         if (".".equals(name)) {
             name = "mem:";
+        }
+        if (name.contains(":sm:")){
+        	schemamanager = true;
         }
         if (name.startsWith("tcp:")) {
             remote = true;
@@ -169,7 +172,6 @@ public class ConnectionInfo implements Cloneable {
             persistent = true;
         }
     }
-    */
     
     /**
      * Set the base directory of persistent databases, unless the database is in
