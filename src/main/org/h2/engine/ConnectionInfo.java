@@ -29,6 +29,7 @@ public class ConnectionInfo implements Cloneable {
     private static final HashSet KNOWN_SETTINGS = new HashSet();
     private Properties prop = new Properties();
     private String originalURL;
+    private int port = -1;
     private String url;
     private String user;
     private byte[] filePasswordHash;
@@ -53,6 +54,12 @@ public class ConnectionInfo implements Cloneable {
     public ConnectionInfo(String name) {
         this.name = name;
         parseName();
+    }
+
+    public ConnectionInfo(String name, int port) {
+       this(name);
+       
+       this.port = port;
     }
 
     /**
@@ -150,8 +157,9 @@ public class ConnectionInfo implements Cloneable {
         if (".".equals(name)) {
             name = "mem:";
         }
-        if (name.contains(":sm:")){
+        if (name.startsWith("sm:")){
         	schemamanager = true;
+        	name = name.substring("sm:".length());
         }
         if (name.startsWith("tcp:")) {
             remote = true;
@@ -379,6 +387,14 @@ public class ConnectionInfo implements Cloneable {
     }
 
     /**
+     * Returns the un-normalized database name.
+     * @return the database name
+     */
+    public String getSmallName(){
+    	return name;	
+    }
+    
+    /**
      * Get the file password hash if it is set.
      *
      * @return the password hash or null
@@ -580,6 +596,14 @@ public class ConnectionInfo implements Cloneable {
      */
 	public boolean isSchemaManager() {
 		return (originalURL.contains(":sm:"));
+	}
+
+	/**
+	 * Return the port on which the connection was made.
+	 * @return
+	 */
+	public int getPort() {
+		return port;
 	}
 
 }

@@ -1546,7 +1546,7 @@ public class JdbcConnection extends TraceObject implements Connection {
     public String toString() {
         return getTraceObjectName() + ": url=" + url + " user=" + user;
     }
-
+    
     /**
      * Convert an object to the default Java object for the given SQL type. For
      * example, LOB objects are converted to java.sql.Clob / java.sql.Blob.

@@ -500,4 +500,11 @@ public class Schema extends DbObjectBase {
         return new TableLink(this, id, tableName, driver, url, user, password, originalSchema, originalTable, emitUpdates, force);
     }
 
+	/**
+	 * @return the tablesAndViews
+	 */
+	public HashMap getTablesAndViews() {
+		return tablesAndViews;
+	}
+
 }

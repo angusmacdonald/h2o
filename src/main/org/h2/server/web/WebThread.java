@@ -939,6 +939,9 @@ class WebThread extends Thread implements DatabaseEventListener {
             String version = meta.getDatabaseProductName() + " " + meta.getDatabaseProductVersion();
             buff.append("setNode(" + treeIndex + ", 0, 0, 'info', '" + PageParser.escapeJavaScript(version)
                     + "', null);\n");
+            String connectionUrl = (String) this.session.getInfo().get("url");
+            buff.append("setNode(" + ++treeIndex + ", 0, 0, 'info', '" + PageParser.escapeJavaScript("Schema Manager: " + ((connectionUrl.contains(":sm:"))? "YES": "NO"))
+                    + "', null);\n");
             buff.append("refreshQueryTables();");
             session.put("tree", buff.toString());
         } catch (Exception e) {
