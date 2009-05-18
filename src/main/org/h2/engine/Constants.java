@@ -11,6 +11,10 @@ package org.h2.engine;
  */
 public class Constants {
 
+	/**
+	 * Is the database running as H2O, or as H2 (backwards compatibility maintained for tests.
+	 */
+	public static final boolean IS_H2O = true;
     /**
      * The build id is incremented for each public release.
      */

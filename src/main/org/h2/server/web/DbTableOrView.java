@@ -36,6 +36,11 @@ public class DbTableOrView {
      * True if this represents a view.
      */
     boolean isView;
+    
+    /**
+     * True if this represents a linked table.
+     */
+    boolean isLinked;
 
     /**
      * The column list.
@@ -47,6 +52,7 @@ public class DbTableOrView {
         name = rs.getString("TABLE_NAME");
         String type = rs.getString("TABLE_TYPE");
         isView = "VIEW".equals(type);
+        isLinked = "TABLE LINK".equals(type);
         quotedName = schema.contents.quoteIdentifier(name);
     }
 

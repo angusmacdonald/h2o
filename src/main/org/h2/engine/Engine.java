@@ -38,6 +38,16 @@ public class Engine {
     public static Engine getInstance() {
         return INSTANCE;
     }
+    
+    /**
+     * H20. Access a given database instance.
+     * It's possible there could be some concurrency issues here.
+     * @param databaseName
+     * @return
+     */
+    public static Database getDatabase(String databaseName){
+    	return (Database) DATABASES.get(databaseName.toUpperCase());
+    }
 
     private Session openSession(ConnectionInfo ci, boolean ifExists, String cipher) throws SQLException {
         String name = ci.getName();

@@ -7,7 +7,11 @@
 package org.h2.engine;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,6 +40,7 @@ import org.h2.log.UndoLogRecord;
 import org.h2.message.Message;
 import org.h2.message.Trace;
 import org.h2.message.TraceSystem;
+import org.h2.result.LocalResult;
 import org.h2.result.Row;
 import org.h2.result.SearchRow;
 import org.h2.schema.Schema;
@@ -97,6 +102,11 @@ public class Database implements DataHandler {
 	 * H20. Indicates whether this database instance is managing the table schema for other running H20 instances.
 	 */
 	private boolean schemamanager;
+
+	/**
+	 * Is this instance connected to the schema manager?
+	 */
+	private boolean connectedToSM = false;
 
 	/**
 	 * H20. The location of the schema manager in this system.
@@ -215,6 +225,7 @@ public class Database implements DataHandler {
 		this.localMachinePort = ci.getPort();
 		this.persistent = ci.isPersistent();
 		this.schemamanager = ci.isSchemaManager();
+		this.connectedToSM = this.schemamanager; //if it is the schema manager, it is connected.
 		this.filePasswordHash = ci.getFilePasswordHash();
 		this.databaseName = name;
 		this.databaseShortName = parseDatabaseShortName();
@@ -669,7 +680,7 @@ public class Database implements DataHandler {
 			removeUnusedStorages(systemSession);
 		}
 
-		if (!databaseShortName.startsWith("MANAGEMENT_DB_")){ //don't run this code with the TCP server management DB
+		if (Constants.IS_H2O && !databaseShortName.startsWith("MANAGEMENT_DB_")){ //don't run this code with the TCP server management DB
 			createH20Tables();
 		}
 
@@ -2333,6 +2344,11 @@ public class Database implements DataHandler {
 
 		String sql = "";
 
+		/*
+		 * Whether to create linked tables for all the remote tables in the system once connected to the schema manager. 
+		 */
+		boolean addRemoteTables = false;
+
 		if (schemamanager){ // Create the schema manager tables and immediately add local tables to this manager.
 			/*
 			 * 		CREATE SCHEMA IF NOT EXISTS H20;
@@ -2366,7 +2382,7 @@ public class Database implements DataHandler {
 			 */
 
 			//XXX currently the schema is dropped each time on startup.
-			sql = "DROP SCHEMA H20; CREATE SCHEMA IF NOT EXISTS H20; " +
+			sql = "DROP SCHEMA IF EXISTS H20; CREATE SCHEMA IF NOT EXISTS H20; " +
 			"\n\nCREATE TABLE IF NOT EXISTS H20.H2O_TABLE(tablename VARCHAR(255), " +
 			"last_modification INT NOT NULL, " +
 			"PRIMARY KEY (tablename) );";
@@ -2392,7 +2408,7 @@ public class Database implements DataHandler {
 
 		} else { // Not a schema manager -  Create a linked table connection to the remote schema manager
 
-			sql = "DROP SCHEMA H20; CREATE SCHEMA IF NOT EXISTS H20;";
+			sql = "DROP SCHEMA IF EXISTS H20; CREATE SCHEMA IF NOT EXISTS H20;";
 			String tableName = "H20.H2O_TABLE";
 			sql += "\nDROP TABLE IF EXISTS " + tableName + ";\nCREATE LINKED TABLE " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', 'angus', 'supersecret', '" + tableName + "');";
 			tableName = "H20.H2O_CONNECTION";
@@ -2400,6 +2416,8 @@ public class Database implements DataHandler {
 			tableName = "H20.H2O_REPLICA";
 			sql += "\nDROP TABLE IF EXISTS " + tableName + ";\nCREATE LINKED TABLE " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', 'angus', 'supersecret', '" + tableName + "');";
 
+			//At this point you now need to create linked tables for these.
+			addRemoteTables = true;
 		}
 
 
@@ -2439,29 +2457,113 @@ public class Database implements DataHandler {
 		 * 
 		 * #########################################################################
 		 */
-		Parser linked_table_parser = new Parser(systemSession);
-		Command table_com;
+		Parser queryParser = new Parser(systemSession);
+		Command sqlQuery;
 
 		int result = -1;
 		try {
-			table_com = linked_table_parser.prepareCommand(sql);
+			sqlQuery = queryParser.prepareCommand(sql);
 
-			result = table_com.executeUpdate();
+			result = sqlQuery.executeUpdate();
+
+			connectedToSM = true;
 		} catch (SQLException e) {
 			if (e.getMessage().startsWith("Connection is broken")){
 				// a known error - it was not possible to connect to the schema manager DB.
-				
+				System.err.println("Connection is broken.");
 				/*
 				 * Possible future options at this stage: try to find another schema manager.
 				 */
+
+				//Current plan - make this the schema manager.
+
+				if (!schemamanager){ //if it is not currently a schema manager and the connection is broken, make it a schema manager.
+					schemamanager = true;
+					connectedToSM = true;
+					createH20Tables();
+					return;
+				}
+
 			} else {
 				e.printStackTrace();
 			}
 		}
 
+		//System.out.println(sql);
+
+		if (!schemamanager && result == 0 && addRemoteTables){
+			//Add all the remote tables found via the schema manager
+			sql = "SELECT tablename, db_location, connection_type, machine_name, connection_port " +
+			"FROM H20.H2O_REPLICA, H20.H2O_CONNECTION " +
+			"WHERE H2O_CONNECTION.connection_id = H2O_REPLICA.connection_id " +
+			"AND NOT (machine_name = '" + localMachineAddress + "' AND connection_port = " + localMachinePort + ");";
+
+			try {
+				sqlQuery = queryParser.prepareCommand(sql);
+
+				LocalResult selectResult = sqlQuery.executeQueryLocal(0);
+
+				sql = "";
+				while (selectResult.next()){
+					Value[] row = selectResult.currentRow();
+
+					String tableName = row[0].getString();
+					String db_location = row[1].getString();
+					String connection_type = row[2].getString();
+					String machine_name = row[3].getString();
+					String connection_port = row[4].getString();
+
+					//Example format: jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db
+					String dbname = "jdbc:h2:" + connection_type + "://" + machine_name + ":" + connection_port + "/" + db_location;
+					sql += "\nDROP TABLE IF EXISTS " + tableName + ";\nCREATE LINKED TABLE " + tableName + "('org.h2.Driver', '" + dbname + "', 'angus', 'supersecret', '" + tableName + "');";
+
+				}
+				System.out.println(sql);
+				if (!sql.equals("")){
+					sqlQuery = queryParser.prepareCommand(sql);
+					sqlQuery.executeUpdate();
+				}
+			} catch (SQLException e) {
+				connectedToSM = false;
+			}
+		}
+
+//		/*
+//		 * #########################################################################
+//		 * 
+//		 *  Execute the entire update query on the database.
+//		 * 
+//		 * #########################################################################
+//		 */
+//
+//		try {
+//			sql = "CREATE TRIGGER H2O_TABLES_INSERT AFTER INSERT ON INFORMATION_SCHEMA.TABLES FOR EACH ROW CALL \"org.h2.h2o.SchemaUpdateTrigger\" ";
+//			sqlQuery = queryParser.prepareCommand(sql);
+//
+//			sqlQuery.executeUpdate();
+//		} catch (SQLException e) {
+//			System.err.println("Failed to create trigger for schema manager updates.");
+//			e.printStackTrace();
+//		}
+
 		if (result != 0){
 			System.err.println("Error in H20 Update.");
 		}
 
+	}
+
+	/**
+	 * @return the connectedToSM
+	 */
+	public boolean isConnectedToSM() {
+		return connectedToSM;
+	}
+
+	/**
+	 * Is this database instance a schema manager?
+	 * @return true if it is a schema manager.
+	 */
+	public boolean isSM() {
+		return schemamanager;
 	}
 }

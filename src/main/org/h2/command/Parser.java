@@ -114,6 +114,7 @@ import org.h2.expression.Variable;
 import org.h2.expression.Wildcard;
 import org.h2.index.Index;
 import org.h2.message.Message;
+import org.h2.result.LocalResult;
 import org.h2.result.SortOrder;
 import org.h2.schema.Schema;
 import org.h2.schema.Sequence;
@@ -4275,8 +4276,8 @@ public class Parser {
 		 *  3. The table has not been found, but exists in some remote location.
 		 */
 
-		if (searchRemote){ // 2 or 3
-			return findViaLinkedTableCreation(tableName);
+		if (Constants.IS_H2O && searchRemote && database.isConnectedToSM() && !database.isSM()){ // 2 or 3
+			return findViaSchemaManager(tableName);
 		} else { // 1
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
 		}
@@ -4290,17 +4291,38 @@ public class Parser {
 	 * @return	Information on that table.
 	 * @throws SQLException
 	 */
-	private Table findViaLinkedTableCreation(String tableName) throws SQLException {
-		System.out.println("Table '" + tableName + "' not found. Beginning remote search.");
+	private Table findViaSchemaManager(String tableName) throws SQLException {
+		System.out.println("Table '" + tableName + "' not found. Querying schema manager.");
 
+		Parser queryParser = new Parser(session);
+
+
+		String sql = "SELECT db_location, connection_type, machine_name, connection_port " +
+		"FROM H20.H2O_REPLICA, H20.H2O_CONNECTION " +
+		"WHERE tablename = '" + tableName + "' AND H2O_CONNECTION.connection_id = H2O_REPLICA.connection_id;";
+
+		Command sqlQuery = queryParser.prepareCommand(sql);
+		LocalResult queryResult = sqlQuery.executeQueryLocal(0);
 		String newTableName = tableName;
 
-		System.out.println("Failed to find an existing linked table called '" + newTableName + "'. Creating linked table.");
+		sql = "";
+		int result = -1;
 
-		String lt_sql = "CREATE LINKED TABLE " + newTableName + "('org.h2.Driver', 'jdbc:h2:tcp://localhost:9090/db_data/one/test_db', 'angus', 'supersecret', '" + tableName + "');";
-		Parser linked_table_parser = new Parser(session);
-		Command table_com = linked_table_parser.prepareCommand(lt_sql);
-		int result = table_com.executeUpdate();
+		if (queryResult.next()){ //XXX This just takes the first replica, assuming there are more than one.
+			Value[] row = queryResult.currentRow();
+
+			String db_location = row[0].getString();
+			String connection_type = row[1].getString();
+			String machine_name = row[2].getString();
+			String connection_port = row[3].getString();
+
+			//Example format: jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db
+			String dbname = "jdbc:h2:" + connection_type + "://" + machine_name + ":" + connection_port + "/" + db_location;
+			sql = "CREATE LINKED TABLE " + tableName + "('org.h2.Driver', '" + dbname + "', 'angus', 'supersecret', '" + tableName + "');";
+
+			sqlQuery = queryParser.prepareCommand(sql);
+			result = sqlQuery.executeUpdate();
+		}
 
 		System.out.println("Linked table creation... result: " + result);
 
