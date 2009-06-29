@@ -4289,10 +4289,11 @@ public class Parser {
 	 * is returned.
 	 * @param tableName Name of the table that must be found.
 	 * @return	Information on that table.
-	 * @throws SQLException
+	 * @throws SQLException if the table is not found.
 	 */
-	private Table findViaSchemaManager(String tableName) throws SQLException {
-		System.out.println("Table '" + tableName + "' not found. Querying schema manager.");
+	public Table findViaSchemaManager(String tableName) throws SQLException {
+
+		//System.out.println("Table '" + tableName + "' not found. Querying schema manager.");
 
 		Parser queryParser = new Parser(session);
 
@@ -4324,10 +4325,8 @@ public class Parser {
 			result = sqlQuery.executeUpdate();
 		}
 
-		System.out.println("Linked table creation... result: " + result);
-
 		if (result != 0){
-			System.out.println("Failed to find a table called '" + newTableName + "' anywhere. Exception time.");
+			//Failed to find a table of this name
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
 		} else {
 			//Linked table was successfully added.

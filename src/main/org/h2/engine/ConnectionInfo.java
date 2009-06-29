@@ -45,6 +45,7 @@ public class ConnectionInfo implements Cloneable {
     private boolean unnamed;
     
 	private boolean schemamanager;
+	private String schema_manager_location = null;
 
     /**
      * Create a connection info object.
@@ -56,10 +57,11 @@ public class ConnectionInfo implements Cloneable {
         parseName();
     }
 
-    public ConnectionInfo(String name, int port) {
+    public ConnectionInfo(String name, int port, String schema_manager_location) {
        this(name);
        
        this.port = port;
+       this.schema_manager_location = schema_manager_location;
     }
 
     /**
@@ -604,6 +606,14 @@ public class ConnectionInfo implements Cloneable {
 	 */
 	public int getPort() {
 		return port;
+	}
+	
+	/**
+	 * Get the specified location of the schema manager. Will be null if none was specified.
+	 * @return
+	 */
+	public String getSchemaManagerLocation(){
+		return schema_manager_location;
 	}
 
 }

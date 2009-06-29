@@ -373,7 +373,7 @@ public class Schema extends DbObjectBase {
             table = session.findLocalTempTable(name);
         }
         if (table == null) {
-            System.err.println("Table not found.");
+            System.err.println("Schema.getTableOrView: Table '" + name + "' not found.");
         	throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, name);
         }
         return table;

@@ -7,23 +7,16 @@
 package org.h2.engine;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Map.Entry;
-
-import javax.swing.text.TabExpander;
 
 import org.h2.api.DatabaseEventListener;
 import org.h2.command.Command;
@@ -83,6 +76,7 @@ import org.h2.value.CompareMode;
 import org.h2.value.Value;
 import org.h2.value.ValueInt;
 import org.h2.value.ValueLob;
+import org.h2.value.ValueString;
 
 /**
  * There is one database object per open database.
@@ -127,6 +121,11 @@ public class Database implements DataHandler {
 	 * H20. The database location as specified in the JDBC connection string.
 	 */
 	private final String databaseLocation;
+
+	/**
+	 * H20. Utility class for schema manager interactions.
+	 */
+	private SchemaManager schemaManager;
 
 	private final String databaseName;
 	private final String databaseShortName;
@@ -220,7 +219,13 @@ public class Database implements DataHandler {
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
 		this.compareMode = new CompareMode(null, null, 0);
 		this.databaseLocation = ci.getSmallName();
-		this.schemaManagerLocation = "jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db"; //XXX this won't be hardcoded forever.
+		this.schemaManagerLocation = ci.getSchemaManagerLocation();
+
+		if (this.schemaManagerLocation == null){
+			this.schemaManagerLocation = "jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db"; //XXX this won't be hardcoded forever.
+		}
+
+
 		this.localMachineAddress = NetUtils.getLocalAddress();
 		this.localMachinePort = ci.getPort();
 		this.persistent = ci.isPersistent();
@@ -539,7 +544,10 @@ public class Database implements DataHandler {
 	}
 
 	private synchronized void open(int traceLevelFile, int traceLevelSystemOut) throws SQLException {
+		boolean databaseExists = false; //whether the database already exists on disk. i.e. with .db.data files, etc.
+
 		if (persistent) {
+
 			if (SysProperties.PAGE_STORE) {
 				String pageFileName = databaseName + Constants.SUFFIX_PAGE_FILE;
 				if (FileUtils.exists(pageFileName) && FileUtils.isReadOnly(pageFileName)) {
@@ -547,6 +555,9 @@ public class Database implements DataHandler {
 				}
 			}
 			String dataFileName = databaseName + Constants.SUFFIX_DATA_FILE;
+
+			databaseExists = FileUtils.exists(dataFileName);
+
 			if (FileUtils.exists(dataFileName)) {
 				// if it is already read-only because ACCESS_MODE_DATA=r
 				readOnly = readOnly | FileUtils.isReadOnly(dataFileName);
@@ -620,17 +631,13 @@ public class Database implements DataHandler {
 		mainSchema = new Schema(this, 0, Constants.SCHEMA_MAIN, systemUser, true);
 		infoSchema = new Schema(this, -1, Constants.SCHEMA_INFORMATION, systemUser, true);
 
-
-		//		if (schemamanager){
-		//			h20schema = new Schema(this, -1, Constants.H20_SCHEMA, systemUser, true);
-		//		}
-
 		schemas.put(mainSchema.getName(), mainSchema);
 		schemas.put(infoSchema.getName(), infoSchema);
 		publicRole = new Role(this, 0, Constants.PUBLIC_ROLE_NAME, true);
 		roles.put(Constants.PUBLIC_ROLE_NAME, publicRole);
 		systemUser.setAdmin(true);
 		systemSession = new Session(this, systemUser, ++nextSessionId);
+		
 		ObjectArray cols = new ObjectArray();
 		Column columnId = new Column("ID", Value.INT);
 		columnId.setNullable(false);
@@ -652,16 +659,21 @@ public class Database implements DataHandler {
 		for (int i = 0; i < MetaTable.getMetaTableTypeCount(); i++) {
 			addMetaData(i);
 		}
+
 		starting = true;
+
 		Cursor cursor = metaIdIndex.find(systemSession, null, null);
 		// first, create all function aliases and sequences because
 		// they might be used in create table / view / constraints and so on
+
 		ObjectArray records = new ObjectArray();
+		
 		while (cursor.next()) {
 			MetaRecord rec = new MetaRecord(cursor.get());
 			objectIds.set(rec.getId());
 			records.add(rec);
 		}
+
 		MetaRecord.sort(records);
 		for (int i = 0; i < records.size(); i++) {
 			MetaRecord rec = (MetaRecord) records.get(i);
@@ -669,6 +681,8 @@ public class Database implements DataHandler {
 		}
 		// try to recompile the views that are invalid
 		recompileInvalidViews(systemSession);
+
+
 		starting = false;
 		addDefaultSetting(systemSession, SetTypes.DEFAULT_LOCK_TIMEOUT, null, Constants.INITIAL_LOCK_TIMEOUT);
 		addDefaultSetting(systemSession, SetTypes.DEFAULT_TABLE_TYPE, null, Constants.DEFAULT_TABLE_TYPE);
@@ -680,12 +694,14 @@ public class Database implements DataHandler {
 			removeUnusedStorages(systemSession);
 		}
 
-		if (Constants.IS_H2O && !databaseShortName.startsWith("MANAGEMENT_DB_")){ //don't run this code with the TCP server management DB
-			createH20Tables();
-		}
+
 
 		systemSession.commit(true);
 		traceSystem.getTrace(Trace.DATABASE).info("opened " + databaseName);
+
+		if (Constants.IS_H2O && !isManagementDB() && (!databaseExists || !schemamanager)){ //don't run this code with the TCP server management DB
+			populateH20Tables();
+		}
 	}
 
 	public Schema getMainSchema() {
@@ -1039,6 +1055,10 @@ public class Database implements DataHandler {
 	 */
 	public User getUser(String name) throws SQLException {
 		User user = findUser(name);
+		//H2O bug fix (where admin user is not found on startup queries
+		if (user == null){
+			user = systemUser;
+		}
 		if (user == null) {
 			throw Message.getSQLException(ErrorCode.USER_NOT_FOUND_1, name);
 		}
@@ -2340,172 +2360,38 @@ public class Database implements DataHandler {
 	 * H20 Creates H20 schema meta-data tables, including schema manager tables if this machine is a schema manager.
 	 * @throws SQLException 
 	 */
-	private void createH20Tables(){
-
-		String sql = "";
-
-		/*
-		 * Whether to create linked tables for all the remote tables in the system once connected to the schema manager. 
-		 */
-		boolean addRemoteTables = false;
-
-		if (schemamanager){ // Create the schema manager tables and immediately add local tables to this manager.
-			/*
-			 * 		CREATE SCHEMA IF NOT EXISTS H20;
-
-		 		CREATE TABLE IF NOT EXISTS H20.H2O_TABLE(
-				    tablename VARCHAR(255), 
-					last_modification INT NOT NULL,
-					PRIMARY KEY (tablename)
-				);
-
-				CREATE TABLE IF NOT EXISTS H20.H2O_REPLICA(
-				    replica_id INT NOT NULL auto_increment,
-					tablename VARCHAR(255), 
-					connection_id INT NOT NULL,
-					db_location VARCHAR(255),
-					storage_type VARCHAR(50),
-					last_modification INT NOT NULL,
-					PRIMARY KEY (replica_id),
-					FOREIGN KEY (tablename) REFERENCES H20.H2O_TABLE (tablename),
-					FOREIGN KEY (connection_id) REFERENCES H20.H2O_CONNECTION (connection_id)
-				);
-
-				CREATE TABLE IF NOT EXISTS H20.H2O_CONNECTION(
-				    connection_id INT NOT NULL auto_increment,
-					machine_name VARCHAR(255), 
-					connection_type VARCHAR(5), 
-					connection_port INT NOT NULL, 
-					PRIMARY KEY (connection_id),
-				);
-
-			 */
-
-			//XXX currently the schema is dropped each time on startup.
-			sql = "DROP SCHEMA IF EXISTS H20; CREATE SCHEMA IF NOT EXISTS H20; " +
-			"\n\nCREATE TABLE IF NOT EXISTS H20.H2O_TABLE(tablename VARCHAR(255), " +
-			"last_modification INT NOT NULL, " +
-			"PRIMARY KEY (tablename) );";
-
-			sql += "CREATE TABLE IF NOT EXISTS H20.H2O_CONNECTION(" + 
-			"connection_id INT NOT NULL auto_increment," + 
-			"connection_type VARCHAR(5), " + 
-			"machine_name VARCHAR(255)," + 
-			"connection_port INT NOT NULL, " + 
-			"PRIMARY KEY (connection_id) );";
-
-			sql += "\n\nCREATE TABLE IF NOT EXISTS H20.H2O_REPLICA(replica_id INT NOT NULL auto_increment, " +
-			"tablename VARCHAR(255), " +
-			"connection_id INT NOT NULL, " + 
-			"db_location VARCHAR(255)," +
-			"storage_type VARCHAR(50), " +
-			"last_modification INT NOT NULL, " +
-			"PRIMARY KEY (replica_id), " +
-			"FOREIGN KEY (tablename) REFERENCES H20.H2O_TABLE (tablename) , " +
-			" FOREIGN KEY (connection_id) REFERENCES H20.H2O_CONNECTION (connection_id));\n";
-
-
-
-		} else { // Not a schema manager -  Create a linked table connection to the remote schema manager
-
-			sql = "DROP SCHEMA IF EXISTS H20; CREATE SCHEMA IF NOT EXISTS H20;";
-			String tableName = "H20.H2O_TABLE";
-			sql += "\nDROP TABLE IF EXISTS " + tableName + ";\nCREATE LINKED TABLE " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', 'angus', 'supersecret', '" + tableName + "');";
-			tableName = "H20.H2O_CONNECTION";
-			sql += "\nDROP TABLE IF EXISTS " + tableName + ";\nCREATE LINKED TABLE " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', 'angus', 'supersecret', '" + tableName + "');";
-			tableName = "H20.H2O_REPLICA";
-			sql += "\nDROP TABLE IF EXISTS " + tableName + ";\nCREATE LINKED TABLE " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', 'angus', 'supersecret', '" + tableName + "');";
-
-			//At this point you now need to create linked tables for these.
-			addRemoteTables = true;
-		}
-
-
-		/*
-		 * #########################################################################
-		 * 
-		 *  Go through all tables on this machine and add them to the schema manager.
-		 * 
-		 * #########################################################################
-		 */
-		HashMap tablesAndViews = mainSchema.getTablesAndViews();
-
-		sql += "\nINSERT INTO H20.H2O_CONNECTION VALUES (null, 'tcp', '" + localMachineAddress + "', "  + localMachinePort + ");\n";
-
-		String connection_id = "(SELECT count(connection_id) FROM H20.H2O_connection)";
-
-		for(Object it: tablesAndViews.entrySet()){ //Key: name, Value: Table object
-
-			Entry entry = (Entry) it;
-			//System.out.println("Table Name: " + entry.getKey());
-
-			Table table = (Table) entry.getValue();
-
-			if (!(table instanceof TableLink)){ //if this isn't a linked table... 
-				sql += "\nINSERT INTO H20.H2O_TABLE VALUES ('" + entry.getKey() + "', " + table.getModificationId() +");";
-
-
-				sql += "\nINSERT INTO H20.H2O_REPLICA VALUES (null, '" + entry.getKey() + "', " + connection_id + ", '" + databaseLocation + "', '" + 
-				table.getTableType() + "', " + table.getModificationId() +");\n";
-			}
-		}
-
-		/*
-		 * #########################################################################
-		 * 
-		 *  Execute the entire update query on the database.
-		 * 
-		 * #########################################################################
-		 */
-		Parser queryParser = new Parser(systemSession);
-		Command sqlQuery;
+	private void populateH20Tables(){
+		schemaManager = SchemaManager.getInstance(systemSession); //H20. Create schema manager utility class.
 
 		int result = -1;
+
 		try {
-			sqlQuery = queryParser.prepareCommand(sql);
+			if (schemamanager){ // Create the schema manager tables and immediately add local tables to this manager.
 
-			result = sqlQuery.executeUpdate();
+				result = schemaManager.createSchemaManagerTables();
 
-			connectedToSM = true;
-		} catch (SQLException e) {
-			if (e.getMessage().startsWith("Connection is broken")){
-				// a known error - it was not possible to connect to the schema manager DB.
-				System.err.println("Connection is broken.");
-				/*
-				 * Possible future options at this stage: try to find another schema manager.
-				 */
+			} else { // Not a schema manager -  Create a linked table connection to the remote schema manager
 
-				//Current plan - make this the schema manager.
+				result = schemaManager.createLinkedTablesForSchemaManager(schemaManagerLocation);
 
-				if (!schemamanager){ //if it is not currently a schema manager and the connection is broken, make it a schema manager.
-					schemamanager = true;
-					connectedToSM = true;
-					createH20Tables();
-					return;
-				}
-
-			} else {
-				e.printStackTrace();
 			}
+			
+			schemaManager.addLocalConnectionInformation(localMachineAddress, localMachinePort);
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 
-		//System.out.println(sql);
-
-		if (!schemamanager && result == 0 && addRemoteTables){
-			//Add all the remote tables found via the schema manager
-			sql = "SELECT tablename, db_location, connection_type, machine_name, connection_port " +
-			"FROM H20.H2O_REPLICA, H20.H2O_CONNECTION " +
-			"WHERE H2O_CONNECTION.connection_id = H2O_REPLICA.connection_id " +
-			"AND NOT (machine_name = '" + localMachineAddress + "' AND connection_port = " + localMachinePort + ");";
+				
+		if (!schemamanager && result >= 0){
 
 			try {
-				sqlQuery = queryParser.prepareCommand(sql);
 
-				LocalResult selectResult = sqlQuery.executeQueryLocal(0);
+				LocalResult remoteTables = schemaManager.getAllRemoteTables(localMachineAddress, localMachinePort);
 
-				sql = "";
-				while (selectResult.next()){
-					Value[] row = selectResult.currentRow();
+				String sql = "";
+				while (remoteTables.next()){
+					Value[] row = remoteTables.currentRow();
 
 					String tableName = row[0].getString();
 					String db_location = row[1].getString();
@@ -2518,36 +2404,17 @@ public class Database implements DataHandler {
 					sql += "\nDROP TABLE IF EXISTS " + tableName + ";\nCREATE LINKED TABLE " + tableName + "('org.h2.Driver', '" + dbname + "', 'angus', 'supersecret', '" + tableName + "');";
 
 				}
-				System.out.println(sql);
+				
 				if (!sql.equals("")){
-					sqlQuery = queryParser.prepareCommand(sql);
+					Parser queryParser = new Parser(systemSession);;
+					Command sqlQuery = queryParser.prepareCommand(sql);
 					sqlQuery.executeUpdate();
 				}
+				
 			} catch (SQLException e) {
 				connectedToSM = false;
+				e.printStackTrace();
 			}
-		}
-
-//		/*
-//		 * #########################################################################
-//		 * 
-//		 *  Execute the entire update query on the database.
-//		 * 
-//		 * #########################################################################
-//		 */
-//
-//		try {
-//			sql = "CREATE TRIGGER H2O_TABLES_INSERT AFTER INSERT ON INFORMATION_SCHEMA.TABLES FOR EACH ROW CALL \"org.h2.h2o.SchemaUpdateTrigger\" ";
-//			sqlQuery = queryParser.prepareCommand(sql);
-//
-//			sqlQuery.executeUpdate();
-//		} catch (SQLException e) {
-//			System.err.println("Failed to create trigger for schema manager updates.");
-//			e.printStackTrace();
-//		}
-
-		if (result != 0){
-			System.err.println("Error in H20 Update.");
 		}
 
 	}
@@ -2565,5 +2432,34 @@ public class Database implements DataHandler {
 	 */
 	public boolean isSM() {
 		return schemamanager;
+	}
+
+	/**
+	 * @return the databaseLocation
+	 */
+	public String getDatabaseLocation() {
+		return databaseLocation;
+	}
+
+	/**
+	 * Is this database instance an H2 management database?
+	 * @return
+	 */
+	public boolean isManagementDB() {
+		return databaseShortName.startsWith("MANAGEMENT_DB_");
+	}
+
+	/**
+	 * @return the localMachineAddress
+	 */
+	public String getLocalMachineAddress() {
+		return localMachineAddress;
+	}
+
+	/**
+	 * @return the localMachinePort
+	 */
+	public int getLocalMachinePort() {
+		return localMachinePort;
 	}
 }

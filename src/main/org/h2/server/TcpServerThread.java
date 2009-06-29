@@ -101,7 +101,7 @@ public class TcpServerThread implements Runnable {
                     baseDir = SysProperties.getBaseDir();
                 }
                 db = server.checkKeyAndGetDatabaseName(db);
-                ConnectionInfo ci = new ConnectionInfo(db, server.getPort());
+                ConnectionInfo ci = new ConnectionInfo(db, server.getPort(), server.getSchemaManagerLocation());
                 if (baseDir != null) {
                     ci.setBaseDir(baseDir);
                 }

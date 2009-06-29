@@ -77,6 +77,11 @@ public class TcpServer implements Service {
     private String key, keyDatabase;
 
     /**
+     * H20. The location of the system's schema manager.
+     */
+    private String schemaManagerLocation = null;
+    
+    /**
      * Get the database name of the management database.
      * The management database contains a table with active sessions (SESSIONS).
      *
@@ -189,6 +194,9 @@ public class TcpServer implements Service {
                 } else {
                     ifExists = true;
                 }
+            }
+            else if ("-SMLocation".equals(a)) {
+                schemaManagerLocation = args[++i];
             }
         }
         org.h2.Driver.load();
@@ -478,5 +486,12 @@ public class TcpServer implements Service {
         }
         throw Message.getSQLException(ErrorCode.WRONG_USER_OR_PASSWORD);
     }
+
+	/**
+	 * @return
+	 */
+	public String getSchemaManagerLocation() {
+		return schemaManagerLocation;
+	}
 
 }
