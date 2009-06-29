@@ -19,7 +19,8 @@
 		    <classpath location="ext/lucene-core-2.2.0.jar" />
 		    <classpath location="ext/slf4j-api-1.5.0.jar" />
 		    <classpath location="ext/org.osgi.core-1.2.0.jar" />
-		    <src path="src/main"/>
+			<classpath location="C:/users/angus/eclipse/plugins/org.junit4_4.3.1/junit.jar" />
+			<src path="src/main"/>
 	       	<src path="src/test"/>
 	       	<src path="src/tools"/>
 	    </javac>
