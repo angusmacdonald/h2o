@@ -41,6 +41,26 @@ import org.h2.result.LocalResult;
 public class SchemaManager {
 
 	/**
+	 * Name of the schema used to store schema manager tables.
+	 */
+	private static final String SCHEMA = "H20.";
+
+	/**
+	 * Name of tables' table in schema manager.
+	 */
+	private static final String TABLES = SCHEMA + "H2O_TABLE";
+
+	/**
+	 * Name of replicas' table in schema manager.
+	 */
+	private static final String REPLICAS = SCHEMA + "H2O_REPLICA";
+
+	/**
+	 * Name of connections' table in schema manager.
+	 */
+	private static final String CONNECTIONS = SCHEMA + "H2O_CONNECTION";
+
+	/**
 	 * Query parser instance to be used for all queries to the schema manager.
 	 */
 	private Parser queryParser;
@@ -100,7 +120,7 @@ public class SchemaManager {
 	public void addTableInformation(String tableName, long modificationID,
 			String databaseLocation, String tableType,
 			String localMachineAddress, int localMachinePort, String connection_type) throws SQLException {
-		
+
 		if (!isTableListed(tableName)){ // the table doesn't already exist in the schema manager.
 			addTableInformation(tableName,  modificationID);
 		}
@@ -111,7 +131,7 @@ public class SchemaManager {
 			addReplicaInformation(tableName, modificationID, connectionID, databaseLocation, tableType);				
 		}
 	}
-	
+
 	/**
 	 * Update the schema manager with new connection information.
 	 * @param localMachineAddress	The address through which remote machines can connect to the database.
@@ -120,7 +140,7 @@ public class SchemaManager {
 	 * @throws SQLException
 	 */
 	public int addLocalConnectionInformation(String localMachineAddress, int localMachinePort) throws SQLException{
-		String sql = "\nINSERT INTO H20.H2O_CONNECTION VALUES (null, 'tcp', '" + localMachineAddress + "', "  + localMachinePort + ");\n";
+		String sql = "\nINSERT INTO " + CONNECTIONS + " VALUES (null, 'tcp', '" + localMachineAddress + "', "  + localMachinePort + ");\n";
 
 		return executeUpdate(sql);
 	}
@@ -132,26 +152,26 @@ public class SchemaManager {
 	 */
 	public int createSchemaManagerTables() throws SQLException{
 		String sql = "CREATE SCHEMA IF NOT EXISTS H20; " +
-		"\n\nCREATE TABLE IF NOT EXISTS H20.H2O_TABLE(tablename VARCHAR(255), " +
+		"\n\nCREATE TABLE IF NOT EXISTS " + TABLES + "(tablename VARCHAR(255), " +
 		"last_modification INT NOT NULL, " +
 		"PRIMARY KEY (tablename) );";
 
-		sql += "CREATE TABLE IF NOT EXISTS H20.H2O_CONNECTION(" + 
+		sql += "CREATE TABLE IF NOT EXISTS " + CONNECTIONS +"(" + 
 		"connection_id INT NOT NULL auto_increment," + 
 		"connection_type VARCHAR(5), " + 
 		"machine_name VARCHAR(255)," + 
 		"connection_port INT NOT NULL, " + 
 		"PRIMARY KEY (connection_id) );";
 
-		sql += "\n\nCREATE TABLE IF NOT EXISTS H20.H2O_REPLICA(replica_id INT NOT NULL auto_increment, " +
+		sql += "\n\nCREATE TABLE IF NOT EXISTS " + REPLICAS + "(replica_id INT NOT NULL auto_increment, " +
 		"tablename VARCHAR(255), " +
 		"connection_id INT NOT NULL, " + 
 		"db_location VARCHAR(255)," +
 		"storage_type VARCHAR(50), " +
 		"last_modification INT NOT NULL, " +
 		"PRIMARY KEY (replica_id), " +
-		"FOREIGN KEY (tablename) REFERENCES H20.H2O_TABLE (tablename) , " +
-		" FOREIGN KEY (connection_id) REFERENCES H20.H2O_CONNECTION (connection_id));\n";
+		"FOREIGN KEY (tablename) REFERENCES " + TABLES + " (tablename) , " +
+		" FOREIGN KEY (connection_id) REFERENCES " + CONNECTIONS + " (connection_id));\n";
 
 		return executeUpdate(sql);
 	}
@@ -164,11 +184,11 @@ public class SchemaManager {
 	 */
 	public int createLinkedTablesForSchemaManager(String schemaManagerLocation) throws SQLException{
 		String sql = "DROP SCHEMA IF EXISTS H20; CREATE SCHEMA IF NOT EXISTS H20;";
-		String tableName = "H20.H2O_TABLE";
+		String tableName = TABLES;
 		sql += "\nDROP TABLE IF EXISTS " + tableName + ";\nCREATE LINKED TABLE " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', 'angus', 'supersecret', '" + tableName + "');";
-		tableName = "H20.H2O_CONNECTION";
+		tableName = CONNECTIONS;
 		sql += "\nDROP TABLE IF EXISTS " + tableName + ";\nCREATE LINKED TABLE " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', 'angus', 'supersecret', '" + tableName + "');";
-		tableName = "H20.H2O_REPLICA";
+		tableName = REPLICAS;
 		sql += "\nDROP TABLE IF EXISTS " + tableName + ";\nCREATE LINKED TABLE " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', 'angus', 'supersecret', '" + tableName + "');";
 
 
@@ -184,8 +204,8 @@ public class SchemaManager {
 	 */
 	public LocalResult getAllRemoteTables(String localMachineAddress, int localMachinePort) throws SQLException{
 		String sql = "SELECT tablename, db_location, connection_type, machine_name, connection_port " +
-		"FROM H20.H2O_REPLICA, H20.H2O_CONNECTION " +
-		"WHERE H2O_CONNECTION.connection_id = H2O_REPLICA.connection_id " +
+		"FROM " + REPLICAS + ", " + CONNECTIONS +
+		" WHERE " + CONNECTIONS + ".connection_id = " + REPLICAS + ".connection_id " +
 		"AND NOT (machine_name = '" + localMachineAddress + "' AND connection_port = " + localMachinePort + ");";
 
 		return executeQuery(sql);
@@ -206,7 +226,7 @@ public class SchemaManager {
 		if (cacheConnectionID != -1)
 			return cacheConnectionID;
 
-		String sql = "SELECT connection_id FROM H20.H2O_CONNECTION WHERE machine_name='" + machine_name
+		String sql = "SELECT connection_id FROM " + CONNECTIONS + " WHERE machine_name='" + machine_name
 		+ "' AND connection_port=" + connection_port + " AND connection_type='" + connection_type + "';";
 
 		LocalResult result = null;
@@ -236,7 +256,7 @@ public class SchemaManager {
 	 * @throws SQLException 
 	 */
 	public boolean isTableListed(String tableName) throws SQLException{
-		String sql =  "SELECT count(tablename) FROM H20.H2O_TABLE WHERE tablename='" + tableName + "';";
+		String sql =  "SELECT count(tablename) FROM " + TABLES + " WHERE tablename='" + tableName + "';";
 
 		return countCheck(sql);
 	}
@@ -249,7 +269,7 @@ public class SchemaManager {
 	 * @throws SQLException 
 	 */
 	public boolean isReplicaListed(String tableName, int connectionID) throws SQLException{
-		String sql = "SELECT count(tablename) FROM H20.H2O_REPLICA WHERE tablename='" + tableName + "' AND connection_id=" + connectionID + ";";
+		String sql = "SELECT count(tablename) FROM " + REPLICAS + " WHERE tablename='" + tableName + "' AND connection_id=" + connectionID + ";";
 
 		return countCheck(sql);
 	}
@@ -270,8 +290,8 @@ public class SchemaManager {
 		}
 		return false;
 	}
-	
-	
+
+
 	/**
 	 * Update the schema manager with new table information
 	 * @param tableName			Name of the table being added.
@@ -280,10 +300,10 @@ public class SchemaManager {
 	 * @throws SQLException 
 	 */
 	private int addTableInformation(String tableName, long modificationID) throws SQLException{
-		String sql = "INSERT INTO H20.H2O_TABLE VALUES ('" + tableName + "', " + modificationID +");";
+		String sql = "INSERT INTO " + TABLES + " VALUES ('" + tableName + "', " + modificationID +");";
 		return executeUpdate(sql);
 	}
-	
+
 	/**
 	 * Update the schema manager with new replica information
 	 * @param tableName			Name of the replica being added.
@@ -292,10 +312,24 @@ public class SchemaManager {
 	 * @throws SQLException 
 	 */
 	private int addReplicaInformation(String tableName, long modificationID, int connectionID, String databaseLocation, String tableType) throws SQLException{
-		String sql = "INSERT INTO H20.H2O_REPLICA VALUES (null, '" + tableName + "', " + connectionID + ", '" + databaseLocation + "', '" + 
+		String sql = "INSERT INTO " + REPLICAS + " VALUES (null, '" + tableName + "', " + connectionID + ", '" + databaseLocation + "', '" + 
 		tableType + "', " + modificationID +");\n";
 		return executeUpdate(sql);
 	}
+	
+	/**
+	 * Removes a table completely from the schema manager. Information is removed for the table itself and for all replicas.
+	 * @param tableName
+	 * @throws SQLException 
+	 */
+	public int removeTable(String tableName) throws SQLException {
+		String sql = "DELETE FROM " + REPLICAS + " WHERE tablename='" + tableName + "'; ";
+		
+		sql += "\nDELETE FROM " + TABLES + " WHERE tablename='" + tableName + "';";
+				
+		return executeUpdate(sql);
+	}
+	
 
 	private LocalResult executeQuery(String query) throws SQLException{
 		sqlQuery = queryParser.prepareCommand(query);
@@ -307,4 +341,6 @@ public class SchemaManager {
 		sqlQuery = queryParser.prepareCommand(query);
 		return sqlQuery.executeUpdate();
 	}
+
+
 }

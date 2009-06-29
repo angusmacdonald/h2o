@@ -9,8 +9,10 @@ package org.h2.command.ddl;
 import java.sql.SQLException;
 
 import org.h2.constant.ErrorCode;
+import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Right;
+import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
@@ -64,7 +66,7 @@ public class DropTable extends SchemaCommand {
             }
         } else {
             session.getUser().checkRight(table, Right.ALL);
-            if (!table.canDrop()) {
+            if (!table.canDrop() || (Constants.IS_H2O && tableName.startsWith("H2O_"))) { //H20 - ensure schema tables aren't dropped.
                 throw Message.getSQLException(ErrorCode.CANNOT_DROP_TABLE_1, tableName);
             }
             table.lock(session, true, true);
@@ -82,6 +84,20 @@ public class DropTable extends SchemaCommand {
             table.setModified();
             Database db = session.getDatabase();
             db.removeSchemaObject(session, table);
+            
+            
+			/*
+			 * #########################################################################
+			 * 
+			 *  Remove any schema manager entries.
+			 * 
+			 * #########################################################################
+			 */
+			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_")){
+				SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
+				sm.removeTable(tableName);
+			}
+
         }
         if (next != null) {
             next.executeDrop();

@@ -272,6 +272,7 @@ public class Database implements DataHandler {
 				TraceSystem.DEFAULT_TRACE_LEVEL_SYSTEM_OUT);
 		this.cacheType = StringUtils.toUpperEnglish(ci.removeProperty("CACHE_TYPE", CacheLRU.TYPE_NAME));
 		openDatabase(traceLevelFile, traceLevelSystemOut, closeAtVmShutdown);
+		System.out.println("H2O: Completed startup.");
 	}
 
 	private void openDatabase(int traceLevelFile, int traceLevelSystemOut, boolean closeAtVmShutdown) throws SQLException {
@@ -675,10 +676,13 @@ public class Database implements DataHandler {
 		}
 
 		MetaRecord.sort(records);
+		System.out.println("H2O: Beginning execution of meta-records.");
 		for (int i = 0; i < records.size(); i++) {
 			MetaRecord rec = (MetaRecord) records.get(i);
 			rec.execute(this, systemSession, eventListener);
 		}
+		System.out.println("H2O: Finished executing meta-records.");
+		
 		// try to recompile the views that are invalid
 		recompileInvalidViews(systemSession);
 
@@ -697,8 +701,11 @@ public class Database implements DataHandler {
 		traceSystem.getTrace(Trace.DATABASE).info("opened " + databaseName);
 
 		if (Constants.IS_H2O && !isManagementDB() && (!databaseExists || !schemamanager)){ //don't run this code with the TCP server management DB
-			populateH20Tables();
+			System.out.println("H2O: Creating schema manager tables.");
+			createH20Tables();
 		}
+		
+		System.out.println("H2O: Database Opened.");
 	}
 
 	public Schema getMainSchema() {
@@ -2357,7 +2364,7 @@ public class Database implements DataHandler {
 	 * H20 Creates H20 schema meta-data tables, including schema manager tables if this machine is a schema manager.
 	 * @throws SQLException 
 	 */
-	private void populateH20Tables(){
+	private void createH20Tables(){
 		schemaManager = SchemaManager.getInstance(systemSession); //H20. Create schema manager utility class.
 
 		int result = -1;
@@ -2414,6 +2421,7 @@ public class Database implements DataHandler {
 			}
 		}
 
+		
 	}
 
 	/**
