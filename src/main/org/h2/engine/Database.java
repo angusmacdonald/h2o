@@ -682,7 +682,6 @@ public class Database implements DataHandler {
 		// try to recompile the views that are invalid
 		recompileInvalidViews(systemSession);
 
-
 		starting = false;
 		addDefaultSetting(systemSession, SetTypes.DEFAULT_LOCK_TIMEOUT, null, Constants.INITIAL_LOCK_TIMEOUT);
 		addDefaultSetting(systemSession, SetTypes.DEFAULT_TABLE_TYPE, null, Constants.DEFAULT_TABLE_TYPE);
@@ -693,8 +692,6 @@ public class Database implements DataHandler {
 		if (!readOnly) {
 			removeUnusedStorages(systemSession);
 		}
-
-
 
 		systemSession.commit(true);
 		traceSystem.getTrace(Trace.DATABASE).info("opened " + databaseName);

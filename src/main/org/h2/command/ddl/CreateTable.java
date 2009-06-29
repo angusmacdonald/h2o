@@ -8,7 +8,6 @@ package org.h2.command.ddl;
 
 import java.sql.SQLException;
 
-import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.command.Prepared;
 import org.h2.command.dml.Insert;
@@ -20,7 +19,6 @@ import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
 import org.h2.message.Message;
-import org.h2.result.LocalResult;
 import org.h2.schema.Schema;
 import org.h2.schema.Sequence;
 import org.h2.table.Column;
@@ -236,55 +234,10 @@ public class CreateTable extends SchemaCommand {
 			 * #########################################################################
 			 */
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_")){
-
-				//H2O_TABLE TABLE
-				String sql = "SELECT count(tablename) FROM H20.H2O_TABLE WHERE tablename='" + tableName + "';";
-				String update = ""; // the update query that results from this condition.
-				Command sqlQuery;
-				parser = new Parser(session);
-				sqlQuery = parser.prepareCommand(sql);
-
-				LocalResult count = sqlQuery.executeQueryLocal(1);
-				count.next();
-
-				sql = "";
-				boolean executeQuery = false; //whether to execute the two insert queries below - only needed if they don't already exist.
-
-				if (count != null && count.currentRow()[0].getInt() == 0){ // the table doesn't already exist in the schema manager.
-					executeQuery = true;
-					update = "\nINSERT INTO H20.H2O_TABLE VALUES ('" + tableName + "', " + table.getModificationId() +");";
-				}
-				//END OF H2O_TABLE TABLE
-
-				//Get the correct connection ID
-				SchemaManager sm = SchemaManager.getInstance(db.getSystemSession());
-				
-				int connectionID = SchemaManager.getInstance().getConnectionID(db.getLocalMachineAddress(), db.getLocalMachinePort(), "tcp");
-				
-				
-				// REPLICA TABLE
-				sql = "SELECT count(tablename) FROM H20.H2O_REPLICA WHERE tablename='" + tableName + "' AND connection_id=" + connectionID + ";";
-				sqlQuery = parser.prepareCommand(sql);
-				count = sqlQuery.executeQueryLocal(1);
-				count.next();
-
-				if (count != null && count.currentRow()[0].getInt() == 0){ // the table doesn't already exist in the schema manager.
-					executeQuery = true;
-										
-					update += "\nINSERT INTO H20.H2O_REPLICA VALUES (null, '" + tableName + "', " + connectionID + ", '" + db.getDatabaseLocation() + "', '" + 
-					table.getTableType() + "', " + table.getModificationId() +");\n";
-				}
-				// END OF REPLICA TABLE
-
-				if (executeQuery){
-					sqlQuery = parser.prepareCommand(update);
-					sqlQuery.executeUpdate();
-				}
+				SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
+				sm.addTableInformation(tableName, table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
+						db.getLocalMachineAddress(), db.getLocalMachinePort(), "tcp");	
 			}
-			/*
-			 * #########################################################################
-			 * #########################################################################
-			 */  
 
 
 
