@@ -126,7 +126,7 @@ public class CreateTable extends SchemaCommand {
 
 		Parser parser = null;
 
-		if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_") && !db.isSM()){
+		if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_")){
 
 			parser = new Parser(session);
 			boolean throwException = false;

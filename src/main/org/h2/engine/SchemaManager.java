@@ -59,6 +59,17 @@ public class SchemaManager {
 	 * Name of connections' table in schema manager.
 	 */
 	private static final String CONNECTIONS = SCHEMA + "H2O_CONNECTION";
+	
+	/**
+	 * The database username used to communicate with schema manager tables.
+	 */
+	private static final String USERNAME = "angus";
+	
+	/**
+	 * The database password used to communicate with schema manager tables.
+	 */
+	private static final String PASSWORD = "supersecret";
+	
 
 	/**
 	 * Query parser instance to be used for all queries to the schema manager.
@@ -185,12 +196,13 @@ public class SchemaManager {
 	public int createLinkedTablesForSchemaManager(String schemaManagerLocation) throws SQLException{
 		String sql = "DROP SCHEMA IF EXISTS H20; CREATE SCHEMA IF NOT EXISTS H20;";
 		String tableName = TABLES;
-		sql += "\nDROP TABLE IF EXISTS " + tableName + ";\nCREATE LINKED TABLE " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', 'angus', 'supersecret', '" + tableName + "');";
+		sql += "\nDROP TABLE IF EXISTS " + tableName + ";\nCREATE LINKED TABLE " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', '" + USERNAME + "', '" + PASSWORD + "', '" + tableName + "');";
 		tableName = CONNECTIONS;
-		sql += "\nDROP TABLE IF EXISTS " + tableName + ";\nCREATE LINKED TABLE " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', 'angus', 'supersecret', '" + tableName + "');";
+		sql += "\nDROP TABLE IF EXISTS " + tableName + ";\nCREATE LINKED TABLE " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', '" + USERNAME + "', '" + PASSWORD + "', '" + tableName + "');";
 		tableName = REPLICAS;
-		sql += "\nDROP TABLE IF EXISTS " + tableName + ";\nCREATE LINKED TABLE " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', 'angus', 'supersecret', '" + tableName + "');";
+		sql += "\nDROP TABLE IF EXISTS " + tableName + ";\nCREATE LINKED TABLE " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', '" + USERNAME + "', '" + PASSWORD + "', '" + tableName + "');";
 
+		System.out.println("Linked table query: " + sql);
 
 		return executeUpdate(sql);
 	}

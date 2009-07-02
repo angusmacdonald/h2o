@@ -524,8 +524,10 @@ public class Server implements Runnable, ShutdownHandler {
      * INTERNAL
      */
     public void run() {
-        try {
-            service.listen();
+        
+    	
+    	try {
+    		service.listen();
         } catch (Exception e) {
             TraceSystem.traceThrowable(e);
         }

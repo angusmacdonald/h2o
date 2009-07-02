@@ -16,7 +16,6 @@ import java.util.Iterator;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.Map.Entry;
 
 import org.h2.api.DatabaseEventListener;
 import org.h2.command.Command;
@@ -55,7 +54,6 @@ import org.h2.table.IndexColumn;
 import org.h2.table.MetaTable;
 import org.h2.table.Table;
 import org.h2.table.TableData;
-import org.h2.table.TableLink;
 import org.h2.table.TableLinkConnection;
 import org.h2.table.TableView;
 import org.h2.tools.DeleteDbFiles;
@@ -76,7 +74,6 @@ import org.h2.value.CompareMode;
 import org.h2.value.Value;
 import org.h2.value.ValueInt;
 import org.h2.value.ValueLob;
-import org.h2.value.ValueString;
 
 /**
  * There is one database object per open database.
@@ -217,13 +214,9 @@ public class Database implements DataHandler {
 
 
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
+		System.out.println("H2O: Database Name - " + name);
 		this.compareMode = new CompareMode(null, null, 0);
 		this.databaseLocation = ci.getSmallName();
-		this.schemaManagerLocation = ci.getSchemaManagerLocation();
-
-		if (this.schemaManagerLocation == null){
-			this.schemaManagerLocation = "jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db"; //XXX this won't be hardcoded forever.
-		}
 
 
 		this.localMachineAddress = NetUtils.getLocalAddress();
@@ -234,6 +227,16 @@ public class Database implements DataHandler {
 		this.filePasswordHash = ci.getFilePasswordHash();
 		this.databaseName = name;
 		this.databaseShortName = parseDatabaseShortName();
+		
+		this.schemaManagerLocation = ci.getSchemaManagerLocation();
+
+		if (Constants.IS_H2O && !isManagementDB() && this.schemaManagerLocation == null){
+			//throw new SQLException ("Schema Manager location should be known.");
+			this.schemaManagerLocation = "jdbc:h2:mem:one";
+		}
+
+		
+		
 		this.cipher = cipher;
 		String lockMethodName = ci.getProperty("FILE_LOCK", null);
 		this.accessModeLog = ci.getProperty("ACCESS_MODE_LOG", "rw").toLowerCase();
