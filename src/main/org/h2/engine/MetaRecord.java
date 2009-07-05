@@ -82,6 +82,7 @@ public class MetaRecord {
             Prepared command = systemSession.prepare(sql);
             command.setObjectId(id);
             command.setHeadPos(headPos);
+            command.setStartup(true);
             command.update();
         } catch (Exception e) {
             SQLException s = Message.addSQL(Message.convert(e), sql);

@@ -4,7 +4,10 @@ import java.sql.SQLException;
 
 import org.h2.command.Command;
 import org.h2.command.Parser;
+import org.h2.constant.ErrorCode;
+import org.h2.message.Message;
 import org.h2.result.LocalResult;
+import org.h2.value.Value;
 
 /**
  * Contains various utility methods which the system can use to access and modify H2O's schema manager. SQL for the tables is as follows:<code>
@@ -59,17 +62,17 @@ public class SchemaManager {
 	 * Name of connections' table in schema manager.
 	 */
 	private static final String CONNECTIONS = SCHEMA + "H2O_CONNECTION";
-	
+
 	/**
 	 * The database username used to communicate with schema manager tables.
 	 */
-	private static final String USERNAME = "angus";
-	
+	public static final String USERNAME = "angus";
+
 	/**
 	 * The database password used to communicate with schema manager tables.
 	 */
-	private static final String PASSWORD = "supersecret";
-	
+	public static final String PASSWORD = "supersecret";
+
 
 	/**
 	 * Query parser instance to be used for all queries to the schema manager.
@@ -117,6 +120,36 @@ public class SchemaManager {
 	}
 
 
+	public String getPrimaryReplicaLocation(String tableName) throws SQLException{
+		String sql = "SELECT db_location, connection_type, machine_name, connection_port " +
+		"FROM H20.H2O_REPLICA, H20.H2O_CONNECTION " +
+		"WHERE tablename = '" + tableName + "' AND H2O_CONNECTION.connection_id = H2O_REPLICA.connection_id;";
+
+		LocalResult result = null;
+
+		sqlQuery = queryParser.prepareCommand(sql);
+
+		result = sqlQuery.executeQueryLocal(1);
+
+
+		if (result.next()){ //XXX This just takes the first replica, assuming there are more than one.
+			Value[] row = result.currentRow();
+
+			String dbLocation = row[0].getString();
+			String connectionType = row[1].getString();
+			String machineName = row[2].getString();
+			String connectionPort = row[3].getString();
+			
+			String dbName = "jdbc:h2:" + connectionType + "://" + machineName + ":" + connectionPort + "/" + dbLocation;
+			
+			return dbName;
+		}
+		
+		throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
+		
+		
+	}
+
 	/**
 	 * Add a new table to the schema manager. Called at the end of a CreateTable update. 
 	 * @param tableName				Name of the table being added.
@@ -143,6 +176,20 @@ public class SchemaManager {
 		}
 	}
 
+	/**
+	 * Check if the schema manager contains connection information for this database.
+	 * @param localMachineAddress	The address through which remote machines can connect to the database.
+	 * @param localMachinePort		The port on which the database is running.
+	 * @return						True, if the connection information already exists.
+	 * @throws SQLException
+	 */
+	public boolean connectionInformationExists(String localMachineAddress, int localMachinePort) throws SQLException{
+		String sql = "SELECT count(connection_id) FROM " + CONNECTIONS + " WHERE machine_name='" + localMachineAddress + "' AND connection_port=" + localMachinePort +
+		" AND connection_type='tcp';";
+
+		return countCheck(sql);
+	}
+	
 	/**
 	 * Update the schema manager with new connection information.
 	 * @param localMachineAddress	The address through which remote machines can connect to the database.
@@ -194,15 +241,15 @@ public class SchemaManager {
 	 * @throws SQLException
 	 */
 	public int createLinkedTablesForSchemaManager(String schemaManagerLocation) throws SQLException{
-		String sql = "DROP SCHEMA IF EXISTS H20; CREATE SCHEMA IF NOT EXISTS H20;";
+		String sql = "CREATE SCHEMA IF NOT EXISTS H20;";
 		String tableName = TABLES;
-		sql += "\nDROP TABLE IF EXISTS " + tableName + ";\nCREATE LINKED TABLE " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', '" + USERNAME + "', '" + PASSWORD + "', '" + tableName + "');";
+		sql += "\nCREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', '" + USERNAME + "', '" + PASSWORD + "', '" + tableName + "');";
 		tableName = CONNECTIONS;
-		sql += "\nDROP TABLE IF EXISTS " + tableName + ";\nCREATE LINKED TABLE " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', '" + USERNAME + "', '" + PASSWORD + "', '" + tableName + "');";
+		sql += "\nCREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', '" + USERNAME + "', '" + PASSWORD + "', '" + tableName + "');";
 		tableName = REPLICAS;
-		sql += "\nDROP TABLE IF EXISTS " + tableName + ";\nCREATE LINKED TABLE " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', '" + USERNAME + "', '" + PASSWORD + "', '" + tableName + "');";
+		sql += "\nCREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', '" + USERNAME + "', '" + PASSWORD + "', '" + tableName + "');";
 
-		System.out.println("Linked table query: " + sql);
+		//System.out.println("Linked table query: " + sql);
 
 		return executeUpdate(sql);
 	}
@@ -328,7 +375,7 @@ public class SchemaManager {
 		tableType + "', " + modificationID +");\n";
 		return executeUpdate(sql);
 	}
-	
+
 	/**
 	 * Removes a table completely from the schema manager. Information is removed for the table itself and for all replicas.
 	 * @param tableName
@@ -336,12 +383,12 @@ public class SchemaManager {
 	 */
 	public int removeTable(String tableName) throws SQLException {
 		String sql = "DELETE FROM " + REPLICAS + " WHERE tablename='" + tableName + "'; ";
-		
+
 		sql += "\nDELETE FROM " + TABLES + " WHERE tablename='" + tableName + "';";
-				
+
 		return executeUpdate(sql);
 	}
-	
+
 
 	private LocalResult executeQuery(String query) throws SQLException{
 		sqlQuery = queryParser.prepareCommand(query);

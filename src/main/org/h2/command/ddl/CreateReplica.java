@@ -6,7 +6,14 @@
  */
 package org.h2.command.ddl;
 
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
+import java.util.HashMap;
 
 import org.h2.command.Parser;
 import org.h2.command.Prepared;
@@ -18,20 +25,31 @@ import org.h2.engine.Database;
 import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
+import org.h2.index.Index;
+import org.h2.index.IndexType;
+import org.h2.index.LinkedIndex;
+import org.h2.jdbc.JdbcSQLException;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
 import org.h2.schema.Sequence;
 import org.h2.table.Column;
 import org.h2.table.IndexColumn;
 import org.h2.table.TableData;
+import org.h2.table.TableLinkConnection;
+import org.h2.util.JdbcUtils;
+import org.h2.util.MathUtils;
 import org.h2.util.ObjectArray;
+import org.h2.util.StringUtils;
 import org.h2.value.DataType;
+import org.h2.value.ValueDate;
+import org.h2.value.ValueTime;
+import org.h2.value.ValueTimestamp;
 
 /**
  * This class represents the statement
- * CREATE TABLE
+ * CREATE REPLICA
  */
-public class CreateTable extends SchemaCommand {
+public class CreateReplica extends SchemaCommand {
 
 	private String tableName;
 	private ObjectArray constraintCommands = new ObjectArray();
@@ -47,8 +65,16 @@ public class CreateTable extends SchemaCommand {
 	private String comment;
 	private boolean clustered;
 
-	public CreateTable(Session session, Schema schema) {
+	private TableLinkConnection conn;
+	private SchemaManager schemaManager;
+
+	private boolean storesLowerCase = false;
+	private boolean storesMixedCase = false;
+	private boolean supportsMixedCaseIdentifiers = false;
+
+	public CreateReplica(Session session, Schema schema) {
 		super(session, schema);
+		schemaManager = SchemaManager.getInstance();
 	}
 
 	public void setQuery(Query query) {
@@ -103,6 +129,8 @@ public class CreateTable extends SchemaCommand {
 	}
 
 	public int update() throws SQLException {
+		tableName = "Replica" + tableName; //XXX quick hack to check everything else works.
+
 		// TODO rights: what rights are required to create a table?
 		session.commit(true);
 		Database db = session.getDatabase();
@@ -126,7 +154,7 @@ public class CreateTable extends SchemaCommand {
 
 		Parser parser = null;
 
-		if (Constants.IS_H2O && !db.isSM() && !db.isManagementDB() && !tableName.startsWith("H2O_") && !isStartup()){
+		if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_")){
 
 			parser = new Parser(session);
 			boolean throwException = false;
@@ -325,6 +353,233 @@ public class CreateTable extends SchemaCommand {
 
 	public void setClustered(boolean clustered) {
 		this.clustered = clustered;
+	}
+
+	/**
+	 * Get the primary location of the given table.
+	 * @throws JdbcSQLException 
+	 */
+	public void readSQL() throws JdbcSQLException {
+		String tableLocation = "";
+
+		try {
+			tableLocation = SchemaManager.getInstance().getPrimaryReplicaLocation(tableName);
+		} catch (SQLException e) {
+			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
+		}
+
+		//TODO connect to the given location using hte same method as linked tables, and get the appropriate create table SQL.
+		try {
+			connect(tableLocation);
+		} catch (SQLException e) {
+			throw Message.getSQLException(ErrorCode.CONNECTION_BROKEN, tableName);
+		}
+	}
+
+	private void connect(String tableLocation) throws SQLException {
+		Database db = session.getDatabase();
+
+		conn = db.getLinkConnection("org.h2.Driver", tableLocation, SchemaManager.USERNAME, SchemaManager.PASSWORD);
+		synchronized (conn) {
+			try {
+				readMetaData();
+			} catch (SQLException e) {
+				conn.close();
+				conn = null;
+				throw e;
+			}
+		}
+	}
+
+	private void readMetaData() throws SQLException {
+		String originalSchema = null; //XXX this won't work if the table is in something other than the default schema.
+
+		DatabaseMetaData meta = conn.getConnection().getMetaData();
+		storesLowerCase = meta.storesLowerCaseIdentifiers();
+		storesMixedCase = meta.storesMixedCaseIdentifiers();
+		supportsMixedCaseIdentifiers = meta.supportsMixedCaseIdentifiers();
+		ResultSet rs = meta.getTables(null, null, tableName, null);
+		if (rs.next() && rs.next()) {
+			throw Message.getSQLException(ErrorCode.SCHEMA_NAME_MUST_MATCH, tableName);
+		}
+		rs.close();
+		rs = meta.getColumns(null, originalSchema, tableName, null); 
+		int i = 0;
+		ObjectArray columnList = new ObjectArray();
+		HashMap columnMap = new HashMap();
+		String catalog = null, schema = null;
+		while (rs.next()) {
+			String thisCatalog = rs.getString("TABLE_CAT");
+			if (catalog == null) {
+				catalog = thisCatalog;
+			}
+			String thisSchema = rs.getString("TABLE_SCHEM");
+			if (schema == null) {
+				schema = thisSchema;
+			}
+			if (!StringUtils.equals(catalog, thisCatalog) || !StringUtils.equals(schema, thisSchema)) {
+				// if the table exists in multiple schemas or tables,
+				// use the alternative solution
+				columnMap.clear();
+				columnList.clear();
+				break;
+			}
+			String n = rs.getString("COLUMN_NAME");
+			n = convertColumnName(n);
+			int sqlType = rs.getInt("DATA_TYPE");
+			long precision = rs.getInt("COLUMN_SIZE");
+			precision = convertPrecision(sqlType, precision);
+			int scale = rs.getInt("DECIMAL_DIGITS");
+			int displaySize = MathUtils.convertLongToInt(precision);
+			int type = DataType.convertSQLTypeToValueType(sqlType);
+			Column col = new Column(n, type, precision, scale, displaySize);
+			addColumn(col);
+		}
+		rs.close();
+
+		String qualifiedTableName = "";
+
+		if (tableName.indexOf('.') < 0 && !StringUtils.isNullOrEmpty(schema)) {
+			qualifiedTableName = schema + "." + tableName;
+		} else {
+			qualifiedTableName = tableName;
+		}
+
+		// check if the table is accessible
+		Statement stat = null;
+		try {
+			stat = conn.getConnection().createStatement();
+			rs = stat.executeQuery("SELECT * FROM " + qualifiedTableName + " T WHERE 1=0");
+			if (columns.size() == 0) {
+				// alternative solution
+				ResultSetMetaData rsMeta = rs.getMetaData();
+				for (i = 0; i < rsMeta.getColumnCount();) {
+					String n = rsMeta.getColumnName(i + 1);
+					n = convertColumnName(n);
+					int sqlType = rsMeta.getColumnType(i + 1);
+					long precision = rsMeta.getPrecision(i + 1);
+					precision = convertPrecision(sqlType, precision);
+					int scale = rsMeta.getScale(i + 1);
+					int displaySize = rsMeta.getColumnDisplaySize(i + 1);
+					int type = DataType.convertSQLTypeToValueType(sqlType);
+					Column col = new Column(n, type, precision, scale, displaySize);
+					addColumn(col);
+				}
+			}
+			rs.close();
+		} catch (SQLException e) {
+			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new String[] { tableName + "("
+					+ e.toString() + ")" }, e);
+		} finally {
+			JdbcUtils.closeSilently(stat);
+		}
+
+
+
+		try {
+			rs = meta.getPrimaryKeys(null, originalSchema, tableName);
+		} catch (SQLException e) {
+			// Some ODBC bridge drivers don't support it:
+			// some combinations of "DataDirect SequeLink(R) for JDBC"
+			// http://www.datadirect.com/index.ssp
+			rs = null;
+		}
+		String pkName = "";
+		ObjectArray list;
+		if (rs != null && rs.next()) {
+			// the problem is, the rows are not sorted by KEY_SEQ
+			list = new ObjectArray();
+			do {
+				int idx = rs.getInt("KEY_SEQ");
+				if (pkName == null) {
+					pkName = rs.getString("PK_NAME");
+				}
+				while (list.size() < idx) {
+					list.add(null);
+				}
+				String col = rs.getString("COLUMN_NAME");
+				col = convertColumnName(col);
+				Column column = (Column) columnMap.get(col);
+				list.set(idx - 1, column);
+			} while (rs.next());
+			addIndex(list, IndexType.createPrimaryKey(false, false)); //XXX doesn't do anything currently. Might be necessary later.
+			rs.close();
+		}
+		try {
+			rs = meta.getIndexInfo(null, originalSchema, tableName, false, true);
+		} catch (SQLException e) {
+			// Oracle throws an exception if the table is not found or is a
+			// SYNONYM
+			rs = null;
+		}
+		String indexName = null;
+		list = new ObjectArray();
+		IndexType indexType = null;
+		if (rs != null) {
+			while (rs.next()) {
+				if (rs.getShort("TYPE") == DatabaseMetaData.tableIndexStatistic) {
+					// ignore index statistics
+					continue;
+				}
+				String newIndex = rs.getString("INDEX_NAME");
+				if (pkName.equals(newIndex)) {
+					continue;
+				}
+				if (indexName != null && !indexName.equals(newIndex)) {
+					addIndex(list, indexType);
+					indexName = null;
+				}
+				if (indexName == null) {
+					indexName = newIndex;
+					list.clear();
+				}
+				boolean unique = !rs.getBoolean("NON_UNIQUE");
+				indexType = unique ? IndexType.createUnique(false, false) : IndexType.createNonUnique(false);
+				String col = rs.getString("COLUMN_NAME");
+				col = convertColumnName(col);
+				Column column = (Column) columnMap.get(col);
+				list.add(column);
+			}
+			rs.close();
+		}
+		if (indexName != null) {
+			addIndex(list, indexType);
+		}
+	}
+
+
+	private void addIndex(ObjectArray list, IndexType indexType) {
+		//	        Column[] cols = new Column[list.size()];
+		//	        list.toArray(cols);
+		//	        Index index = new LinkedIndex(this, 0, IndexColumn.wrap(cols), indexType);
+		//	        indexes.add(index);
+	}
+
+	private String convertColumnName(String columnName) {
+		if ((storesMixedCase || storesLowerCase) && columnName.equals(StringUtils.toLowerEnglish(columnName))) {
+			columnName = StringUtils.toUpperEnglish(columnName);
+		} else if (storesMixedCase && !supportsMixedCaseIdentifiers) {
+			// TeraData
+			columnName = StringUtils.toUpperEnglish(columnName);
+		}
+		return columnName;
+	}
+
+	private long convertPrecision(int sqlType, long precision) {
+		// workaround for an Oracle problem
+		// the precision reported by Oracle is 7 for a date column
+		switch (sqlType) {
+		case Types.DATE:
+			precision = Math.max(ValueDate.PRECISION, precision);
+			break;
+		case Types.TIMESTAMP:
+			precision = Math.max(ValueTimestamp.PRECISION, precision);
+			break;
+		case Types.TIME:
+			precision = Math.max(ValueTime.PRECISION, precision);
+			break;
+		}
+		return precision;
 	}
 
 }

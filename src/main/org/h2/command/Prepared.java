@@ -45,6 +45,11 @@ public abstract class Prepared {
      * The list of parameters.
      */
     protected ObjectArray parameters;
+    
+    /**
+     * Whether this query is being executed on startup as a meta-record. If it is, H2O needs to perform fewer checks with the remote schema manager.
+     */
+    private boolean startup = false;
 
     /**
      * If the query should be prepared before each execution. This is set for
@@ -433,4 +438,19 @@ public abstract class Prepared {
         return ex;
     }
 
+	/**
+	 * Whether this prepared statement is being created as part of the execution of a meta-record.
+	 * @param startup True, if it is; otherwise, false.
+	 */
+	public void setStartup(boolean startup) {
+		this.startup = startup;
+	}
+
+	/**
+	 * Whether this prepared statement is being created as part of the execution of a meta-record.
+	 * @param startup
+	 */
+	public boolean isStartup() {
+		return startup;
+	}
 }

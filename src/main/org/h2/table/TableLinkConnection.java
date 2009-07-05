@@ -114,14 +114,14 @@ public class TableLinkConnection {
      *
      * @return the connection
      */
-    Connection getConnection() {
+    public Connection getConnection() {
         return conn;
     }
 
     /**
      * Closes the connection if this is the last link to it.
      */
-    synchronized void close() throws SQLException {
+    public synchronized void close() throws SQLException {
         if (--useCounter <= 0) {
             conn.close();
             conn = null;

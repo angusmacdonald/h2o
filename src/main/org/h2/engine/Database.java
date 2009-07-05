@@ -214,7 +214,7 @@ public class Database implements DataHandler {
 
 
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
-		System.out.println("H2O: Database Name - " + name);
+		System.out.print("H2O, Database '" + name + "'.");
 		this.compareMode = new CompareMode(null, null, 0);
 		this.databaseLocation = ci.getSmallName();
 
@@ -227,7 +227,7 @@ public class Database implements DataHandler {
 		this.filePasswordHash = ci.getFilePasswordHash();
 		this.databaseName = name;
 		this.databaseShortName = parseDatabaseShortName();
-		
+
 		this.schemaManagerLocation = ci.getSchemaManagerLocation();
 
 		if (Constants.IS_H2O && !isManagementDB() && this.schemaManagerLocation == null){
@@ -235,8 +235,8 @@ public class Database implements DataHandler {
 			this.schemaManagerLocation = "jdbc:h2:mem:one";
 		}
 
-		
-		
+
+
 		this.cipher = cipher;
 		String lockMethodName = ci.getProperty("FILE_LOCK", null);
 		this.accessModeLog = ci.getProperty("ACCESS_MODE_LOG", "rw").toLowerCase();
@@ -275,7 +275,7 @@ public class Database implements DataHandler {
 				TraceSystem.DEFAULT_TRACE_LEVEL_SYSTEM_OUT);
 		this.cacheType = StringUtils.toUpperEnglish(ci.removeProperty("CACHE_TYPE", CacheLRU.TYPE_NAME));
 		openDatabase(traceLevelFile, traceLevelSystemOut, closeAtVmShutdown);
-		System.out.println("H2O: Completed startup.");
+		System.out.print(" Completed startup.");
 	}
 
 	private void openDatabase(int traceLevelFile, int traceLevelSystemOut, boolean closeAtVmShutdown) throws SQLException {
@@ -641,7 +641,7 @@ public class Database implements DataHandler {
 		roles.put(Constants.PUBLIC_ROLE_NAME, publicRole);
 		systemUser.setAdmin(true);
 		systemSession = new Session(this, systemUser, ++nextSessionId);
-		
+
 		ObjectArray cols = new ObjectArray();
 		Column columnId = new Column("ID", Value.INT);
 		columnId.setNullable(false);
@@ -671,7 +671,7 @@ public class Database implements DataHandler {
 		// they might be used in create table / view / constraints and so on
 
 		ObjectArray records = new ObjectArray();
-		
+
 		while (cursor.next()) {
 			MetaRecord rec = new MetaRecord(cursor.get());
 			objectIds.set(rec.getId());
@@ -679,13 +679,13 @@ public class Database implements DataHandler {
 		}
 
 		MetaRecord.sort(records);
-		System.out.println("H2O: Beginning execution of meta-records.");
+
 		for (int i = 0; i < records.size(); i++) {
 			MetaRecord rec = (MetaRecord) records.get(i);
 			rec.execute(this, systemSession, eventListener);
 		}
-		System.out.println("H2O: Finished executing meta-records.");
-		
+		System.out.println(" Executed meta-records.");
+
 		// try to recompile the views that are invalid
 		recompileInvalidViews(systemSession);
 
@@ -704,11 +704,12 @@ public class Database implements DataHandler {
 		traceSystem.getTrace(Trace.DATABASE).info("opened " + databaseName);
 
 		if (Constants.IS_H2O && !isManagementDB() && (!databaseExists || !schemamanager)){ //don't run this code with the TCP server management DB
-			System.out.println("H2O: Creating schema manager tables.");
+
 			createH20Tables();
+			System.out.print(" Created schema manager tables.");
 		}
-		
-		System.out.println("H2O: Database Opened.");
+
+
 	}
 
 	public Schema getMainSchema() {
@@ -2382,14 +2383,16 @@ public class Database implements DataHandler {
 				result = schemaManager.createLinkedTablesForSchemaManager(schemaManagerLocation);
 
 			}
-			
-			schemaManager.addLocalConnectionInformation(localMachineAddress, localMachinePort);
-			
+
+			if (!schemaManager.connectionInformationExists(localMachineAddress, localMachinePort)){
+				schemaManager.addLocalConnectionInformation(localMachineAddress, localMachinePort);
+			}
+
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 
-				
+
 		if (!schemamanager && result >= 0){
 
 			try {
@@ -2408,23 +2411,23 @@ public class Database implements DataHandler {
 
 					//Example format: jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db
 					String dbname = "jdbc:h2:" + connection_type + "://" + machine_name + ":" + connection_port + "/" + db_location;
-					sql += "\nDROP TABLE IF EXISTS " + tableName + ";\nCREATE LINKED TABLE " + tableName + "('org.h2.Driver', '" + dbname + "', 'angus', 'supersecret', '" + tableName + "');";
+					sql += "\nCREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + dbname + "', 'angus', 'supersecret', '" + tableName + "');";
 
 				}
-				
+
 				if (!sql.equals("")){
 					Parser queryParser = new Parser(systemSession);;
 					Command sqlQuery = queryParser.prepareCommand(sql);
 					sqlQuery.executeUpdate();
 				}
-				
+
 			} catch (SQLException e) {
 				connectedToSM = false;
 				e.printStackTrace();
 			}
 		}
 
-		
+
 	}
 
 	/**

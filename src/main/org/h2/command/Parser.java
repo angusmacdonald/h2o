@@ -27,6 +27,7 @@ import org.h2.command.ddl.CreateConstant;
 import org.h2.command.ddl.CreateFunctionAlias;
 import org.h2.command.ddl.CreateIndex;
 import org.h2.command.ddl.CreateLinkedTable;
+import org.h2.command.ddl.CreateReplica;
 import org.h2.command.ddl.CreateRole;
 import org.h2.command.ddl.CreateSchema;
 import org.h2.command.ddl.CreateSequence;
@@ -82,6 +83,7 @@ import org.h2.engine.DbObject;
 import org.h2.engine.FunctionAlias;
 import org.h2.engine.Procedure;
 import org.h2.engine.Right;
+import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
 import org.h2.engine.Setting;
 import org.h2.engine.User;
@@ -3453,6 +3455,11 @@ public class Parser {
 			Setting setting = database.findSetting(SetTypes.getTypeName(SetTypes.DEFAULT_TABLE_TYPE));
 			defaultMode = setting == null ? Constants.DEFAULT_TABLE_TYPE : setting.getIntValue();
 			return parseCreateTable(false, false, defaultMode == Table.TYPE_CACHED);
+		} else if (readIf("REPLICA") && Constants.IS_H2O) {
+			int defaultMode;
+			Setting setting = database.findSetting(SetTypes.getTypeName(SetTypes.DEFAULT_TABLE_TYPE));
+			defaultMode = setting == null ? Constants.DEFAULT_TABLE_TYPE : setting.getIntValue();
+			return parseCreateReplica(false, false, defaultMode == Table.TYPE_CACHED);
 		} else if (readIf("VIEW")) {
 			return parseCreateView(force);
 		} else if (readIf("ALIAS")) {
@@ -4293,45 +4300,26 @@ public class Parser {
 	 */
 	public Table findViaSchemaManager(String tableName) throws SQLException {
 
-		//System.out.println("Table '" + tableName + "' not found. Querying schema manager.");
-
+		/*
+		 * Attempt to find the location of this table, if it exists remotely.
+		 */
+		String dbname = SchemaManager.getInstance(session).getPrimaryReplicaLocation(tableName);
+		
 		Parser queryParser = new Parser(session);
-
-
-		String sql = "SELECT db_location, connection_type, machine_name, connection_port " +
-		"FROM H20.H2O_REPLICA, H20.H2O_CONNECTION " +
-		"WHERE tablename = '" + tableName + "' AND H2O_CONNECTION.connection_id = H2O_REPLICA.connection_id;";
+		
+		String sql = "CREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + dbname + "', 'angus', 'supersecret', '" + tableName + "');";
 
 		Command sqlQuery = queryParser.prepareCommand(sql);
-		LocalResult queryResult = sqlQuery.executeQueryLocal(0);
-		String newTableName = tableName;
+		int result = sqlQuery.executeUpdate();
 
-		sql = "";
-		int result = -1;
-
-		if (queryResult.next()){ //XXX This just takes the first replica, assuming there are more than one.
-			Value[] row = queryResult.currentRow();
-
-			String db_location = row[0].getString();
-			String connection_type = row[1].getString();
-			String machine_name = row[2].getString();
-			String connection_port = row[3].getString();
-
-			//Example format: jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db
-			String dbname = "jdbc:h2:" + connection_type + "://" + machine_name + ":" + connection_port + "/" + db_location;
-			sql = "CREATE LINKED TABLE " + tableName + "('org.h2.Driver', '" + dbname + "', 'angus', 'supersecret', '" + tableName + "');";
-
-			sqlQuery = queryParser.prepareCommand(sql);
-			result = sqlQuery.executeUpdate();
-		}
 
 		if (result != 0){
 			//Failed to find a table of this name
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
 		} else {
 			//Linked table was successfully added.
-			System.out.println("Successfully created linked table '" + newTableName + "'. Attempting to access it.");
-			return readTableOrView(newTableName, false);
+			System.out.println("Successfully created linked table '" + tableName + "'. Attempting to access it.");
+			return readTableOrView(tableName, false);
 		}
 
 	}
@@ -4667,6 +4655,36 @@ public class Parser {
 		}
 		return command;
 	}
+
+	/*
+	 * END OF H2O ############################################################
+	 */
+
+	private CreateReplica parseCreateReplica(boolean temp, boolean globalTemp, boolean persistent) throws SQLException {
+		boolean ifNotExists = readIfNoExists();
+		String tableName = readIdentifierWithSchema();
+		if (temp && globalTemp && "SESSION".equals(schemaName)) {
+			// support weird syntax: declare global temporary table session.xy
+			// (...) not logged
+			schemaName = session.getCurrentSchemaName();
+			globalTemp = false;
+		}
+		Schema schema = getSchema();
+		CreateReplica command = new CreateReplica(session, schema);
+		command.setPersistent(persistent);
+		command.setTemporary(temp);
+		command.setGlobalTemporary(globalTemp);
+		command.setIfNotExists(ifNotExists);
+		command.setTableName(tableName);
+		command.setComment(readCommentIf());
+		command.readSQL();
+		return command;
+	}
+
+	/*
+	 * END OF H2O ############################################################
+	 */
+
 
 	private CreateTable parseCreateTable(boolean temp, boolean globalTemp, boolean persistent) throws SQLException {
 		boolean ifNotExists = readIfNoExists();
