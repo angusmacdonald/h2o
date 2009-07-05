@@ -4205,6 +4205,11 @@ public class Parser {
 	private ScriptCommand parseScript() throws SQLException {
 		ScriptCommand command = new ScriptCommand(session);
 		boolean data = true, passwords = true, settings = true, dropTables = false, simple = false;
+		
+		String tableName = null;
+		if (Constants.IS_H2O && readIf("TABLE")){
+			command.setTable(readIdentifierWithSchema());
+		}
 		if (readIf("SIMPLE")) {
 			simple = true;
 		}

@@ -72,6 +72,11 @@ public class CreateReplica extends SchemaCommand {
 	private boolean storesMixedCase = false;
 	private boolean supportsMixedCaseIdentifiers = false;
 
+	/**
+	 * Array containing all of the insert statements required for this replicas state to match that of the primary.
+	 */
+	private String[] inserts = null;
+
 	public CreateReplica(Session session, Schema schema) {
 		super(session, schema);
 		schemaManager = SchemaManager.getInstance();
@@ -254,14 +259,35 @@ public class CreateReplica extends SchemaCommand {
 			}
 
 
-			/*
-			 * #########################################################################
-			 * 
-			 *  Create a schema manager entry.
-			 * 
-			 * #########################################################################
-			 */
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_")){
+
+				/*
+				 * #########################################################################
+				 * 
+				 *  Copy over data.
+				 * 
+				 * #########################################################################
+				 */
+				try {
+					if (inserts != null){
+						for (String insert: inserts){
+							Prepared command = session.prepare(insert);
+							command.update();
+						}
+					}
+				} catch (SQLException e){
+					e.printStackTrace();
+					throw new SQLException("Failed to copy data across to new replica.");
+				}
+
+				/*
+				 * #########################################################################
+				 * 
+				 *  Create a schema manager entry.
+				 * 
+				 * #########################################################################
+				 */
+
 				SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
 				sm.addTableInformation(tableName, table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
 						db.getLocalMachineAddress(), db.getLocalMachinePort(), "tcp");	
@@ -383,11 +409,41 @@ public class CreateReplica extends SchemaCommand {
 		synchronized (conn) {
 			try {
 				readMetaData();
+				getTableData();
 			} catch (SQLException e) {
 				conn.close();
 				conn = null;
 				throw e;
 			}
+		}
+	}
+
+	/**
+	 * Get the data required to fill up this replica (to match the contents of the primary).
+	 * 
+	 * Data is then stored in the 'inserts' field.
+	 */
+	private void getTableData() {
+		// check if the table is accessible
+		Statement stat = null;
+		try {
+			stat = conn.getConnection().createStatement();
+			ResultSet rs = stat.executeQuery("SCRIPT TABLE " + tableName);
+
+			String[] inserts = new String[rs.getFetchSize()]; //XXX the fetch size might be less than the number of database entries.
+			int i = 0;
+			while (rs.next()){
+				inserts[i++] = rs.getString(1);
+			}
+
+			this.inserts = inserts;
+
+			rs.close();
+		} catch (SQLException e) {
+			System.err.println("Failed to fill replica.");
+			e.printStackTrace();
+		} finally {
+			JdbcUtils.closeSilently(stat);
 		}
 	}
 
