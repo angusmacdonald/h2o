@@ -168,4 +168,11 @@ public class RangeTable extends Table {
         return 100;
     }
 
+	/* (non-Javadoc)
+	 * @see org.h2.table.Table#isLocal()
+	 */
+	@Override
+	public boolean isLocal() {
+		return true;
+	}
 }

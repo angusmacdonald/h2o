@@ -701,4 +701,11 @@ public class TableData extends Table implements RecordReader {
         return scanIndex.getRowCountApproximation();
     }
 
+	/* (non-Javadoc)
+	 * @see org.h2.table.Table#isLocal()
+	 */
+	@Override
+	public boolean isLocal() {
+		return true;
+	}
 }

@@ -22,6 +22,7 @@ import org.h2.expression.ValueExpression;
 import org.h2.message.Message;
 import org.h2.result.LocalResult;
 import org.h2.schema.Schema;
+import org.h2.table.ReplicaSet;
 import org.h2.table.Table;
 import org.h2.tools.CompressTool;
 import org.h2.util.StringUtils;
@@ -92,9 +93,9 @@ public class Set extends Prepared {
         }
         case SetTypes.COLLATION: {
             session.getUser().checkAdmin();
-            Table table = database.getFirstUserTable();
-            if (table != null) {
-                throw Message.getSQLException(ErrorCode.COLLATION_CHANGE_WITH_DATA_TABLE_1, table.getSQL());
+            ReplicaSet replicaSet = database.getFirstUserTable();
+            if (replicaSet != null) {
+                throw Message.getSQLException(ErrorCode.COLLATION_CHANGE_WITH_DATA_TABLE_1, replicaSet.getSQL());
             }
             CompareMode compareMode;
             StringBuffer buff = new StringBuffer(stringValue);

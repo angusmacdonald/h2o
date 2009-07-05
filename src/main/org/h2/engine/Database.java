@@ -52,6 +52,7 @@ import org.h2.store.fs.FileSystem;
 import org.h2.table.Column;
 import org.h2.table.IndexColumn;
 import org.h2.table.MetaTable;
+import org.h2.table.ReplicaSet;
 import org.h2.table.Table;
 import org.h2.table.TableData;
 import org.h2.table.TableLinkConnection;
@@ -742,11 +743,13 @@ public class Database implements DataHandler {
 		boolean recompileSuccessful;
 		do {
 			recompileSuccessful = false;
-			ObjectArray list = getAllSchemaObjects(DbObject.TABLE_OR_VIEW);
-			for (int i = 0; i < list.size(); i++) {
-				DbObject obj = (DbObject) list.get(i);
-				if (obj instanceof TableView) {
-					TableView view = (TableView) obj;
+
+
+			Set<Table> alltables = getAllReplicas();
+
+			for (Table table: alltables) {
+				if (table instanceof TableView) {
+					TableView view = (TableView) table;
 					if (view.getInvalid()) {
 						try {
 							view.recompile(session);
@@ -763,11 +766,12 @@ public class Database implements DataHandler {
 		// when opening a database, views are initialized before indexes,
 		// so they may not have the optimal plan yet
 		// this is not a problem, it is just nice to see the newest plan
-		ObjectArray list = getAllSchemaObjects(DbObject.TABLE_OR_VIEW);
-		for (int i = 0; i < list.size(); i++) {
-			DbObject obj = (DbObject) list.get(i);
-			if (obj instanceof TableView) {
-				TableView view = (TableView) obj;
+
+		Set<Table> allTables = getAllReplicas();
+
+		for (Table table: allTables) {
+			if (table instanceof TableView) {
+				TableView view = (TableView) table;
 				if (!view.getInvalid()) {
 					try {
 						view.recompile(systemSession);
@@ -1176,9 +1180,9 @@ public class Database implements DataHandler {
 		}
 		try {
 			if (systemSession != null) {
-				ObjectArray tablesAndViews = getAllSchemaObjects(DbObject.TABLE_OR_VIEW);
-				for (int i = 0; i < tablesAndViews.size(); i++) {
-					Table table = (Table) tablesAndViews.get(i);
+				Set<Table> alltables = getAllReplicas();
+
+				for (Table table: alltables) {
 					table.close(systemSession);
 				}
 				ObjectArray sequences = getAllSchemaObjects(DbObject.SEQUENCE);
@@ -1377,6 +1381,36 @@ public class Database implements DataHandler {
 			list.addAll(schema.getAll(type));
 		}
 		return list;
+	}
+
+	/**
+	 * Get all tables. Replaces the getAllSchemaObjects method for this particular call.
+	 *
+	 * @param type the object type
+	 * @return all objects of that type
+	 */
+	public Set<ReplicaSet> getAllTables() {
+		Set<ReplicaSet> list = new HashSet<ReplicaSet>();
+		for (Iterator it = schemas.values().iterator(); it.hasNext();) {
+			Schema schema = (Schema) it.next();
+			list.addAll(schema.getTablesAndViews().values());
+		}
+		return list;
+	}
+
+	/**
+	 * Get every single table instance, including replicas for the same table.
+	 * @return
+	 */
+	public Set<Table> getAllReplicas(){
+		Set<ReplicaSet> allReplicaSets = getAllTables();
+
+		Set<Table> alltables = new HashSet<Table>();
+		for (ReplicaSet tableSet: allReplicaSets){
+			alltables.addAll(tableSet.getAllCopies());
+		}
+
+		return alltables;
 	}
 
 	public ObjectArray getAllSchemas() {
@@ -1635,7 +1669,7 @@ public class Database implements DataHandler {
 	 * @param except the table to exclude (or null)
 	 * @return the first dependent table, or null
 	 */
-	public Table getDependentTable(SchemaObject obj, Table except) {
+	public ReplicaSet getDependentTable(SchemaObject obj, Table except) {
 		switch (obj.getType()) {
 		case DbObject.COMMENT:
 		case DbObject.CONSTRAINT:
@@ -1646,30 +1680,35 @@ public class Database implements DataHandler {
 			return null;
 		default:
 		}
-		ObjectArray list = getAllSchemaObjects(DbObject.TABLE_OR_VIEW);
+		Set<ReplicaSet> list = getAllTables();
 		HashSet set = new HashSet();
-		for (int i = 0; i < list.size(); i++) {
-			Table t = (Table) list.get(i);
-			if (except == t) {
+		
+		Set<ReplicaSet> allreplicas = getAllTables();
+		
+		for (ReplicaSet replicaSet: allreplicas) {
+
+
+			if ((except != null) && except.getName().equalsIgnoreCase(replicaSet.getACopy().getName())) {
 				continue;
 			}
+			
 			set.clear();
-			t.addDependencies(set);
+			replicaSet.addDependencies(set);
 			if (set.contains(obj)) {
-				return t;
+				return replicaSet;
 			}
 		}
 		return null;
 	}
-
+	
 	private String getFirstInvalidTable(Session session) {
 		String conflict = null;
 		try {
-			ObjectArray list = getAllSchemaObjects(DbObject.TABLE_OR_VIEW);
-			for (int i = 0; i < list.size(); i++) {
-				Table t = (Table) list.get(i);
-				conflict = t.getSQL();
-				session.prepare(t.getCreateSQL());
+			Set<ReplicaSet> list = getAllTables();
+			for (ReplicaSet replicaSet: list) {
+				
+				conflict = replicaSet.getSQL();
+				session.prepare(replicaSet.getCreateSQL());
 			}
 		} catch (SQLException e) {
 			return conflict;
@@ -1715,8 +1754,8 @@ public class Database implements DataHandler {
 		if (!starting) {
 			String invalid;
 			if (SysProperties.OPTIMIZE_DROP_DEPENDENCIES) {
-				Table t = getDependentTable(obj, null);
-				invalid = t == null ? null : t.getSQL();
+				ReplicaSet replicaSet = getDependentTable(obj, null);
+				invalid = replicaSet == null ? null : replicaSet.getSQL();
 			} else {
 				invalid = getFirstInvalidTable(session);
 			}
@@ -2264,14 +2303,16 @@ public class Database implements DataHandler {
 	 *
 	 * @return the table or null if no table is defined
 	 */
-	public Table getFirstUserTable() {
-		ObjectArray array = getAllSchemaObjects(DbObject.TABLE_OR_VIEW);
-		for (int i = 0; i < array.size(); i++) {
-			Table table = (Table) array.get(i);
-			if (table.getCreateSQL() != null) {
-				return table;
+	public ReplicaSet getFirstUserTable() {
+		
+		Set<ReplicaSet> list = getAllTables();
+		for (ReplicaSet replicaSet: list) {
+			
+			if (replicaSet.getCreateSQL()!= null){
+				return replicaSet;
 			}
 		}
+		
 		return null;
 	}
 

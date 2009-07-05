@@ -14,6 +14,7 @@ import org.h2.engine.Session;
 import org.h2.engine.UserDataType;
 import org.h2.message.Message;
 import org.h2.table.Column;
+import org.h2.table.ReplicaSet;
 import org.h2.table.Table;
 import org.h2.value.DataType;
 
@@ -59,9 +60,9 @@ public class CreateUserDataType extends DefineCommand {
             if (!builtIn.hidden) {
                 throw Message.getSQLException(ErrorCode.USER_DATA_TYPE_ALREADY_EXISTS_1, typeName);
             }
-            Table table = session.getDatabase().getFirstUserTable();
-            if (table != null) {
-                throw Message.getSQLException(ErrorCode.USER_DATA_TYPE_ALREADY_EXISTS_1, typeName + " (" + table.getSQL() + ")");
+            ReplicaSet replicaSet = session.getDatabase().getFirstUserTable();
+            if (replicaSet != null) {
+                throw Message.getSQLException(ErrorCode.USER_DATA_TYPE_ALREADY_EXISTS_1, typeName + " (" + replicaSet.getSQL() + ")");
             }
         }
         int id = getObjectId(false, true);

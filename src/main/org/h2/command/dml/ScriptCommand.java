@@ -14,7 +14,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Set;
+
 import org.h2.command.Parser;
 import org.h2.constant.ErrorCode;
 import org.h2.constant.SysProperties;
@@ -284,7 +287,9 @@ public class ScriptCommand extends ScriptBase {
 					}
 					add(agg.getCreateSQL(), false);
 				}
-				ObjectArray tables = db.getAllSchemaObjects(DbObject.TABLE_OR_VIEW);
+				
+				ObjectArray tables = new ObjectArray(db.getAllReplicas()); 
+				
 				// sort by id, so that views are after tables and views on views
 				// after the base views
 				tables.sort(new Comparator() {

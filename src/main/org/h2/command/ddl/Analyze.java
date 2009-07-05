@@ -7,6 +7,7 @@
 package org.h2.command.ddl;
 
 import java.sql.SQLException;
+import java.util.Set;
 
 import org.h2.command.Prepared;
 import org.h2.engine.Constants;
@@ -15,6 +16,7 @@ import org.h2.engine.DbObject;
 import org.h2.engine.Session;
 import org.h2.result.LocalResult;
 import org.h2.table.Column;
+import org.h2.table.ReplicaSet;
 import org.h2.table.Table;
 import org.h2.table.TableData;
 import org.h2.util.ObjectArray;
@@ -35,10 +37,10 @@ public class Analyze extends DefineCommand {
         session.commit(true);
         Database db = session.getDatabase();
         session.getUser().checkAdmin();
-        ObjectArray tables = db.getAllSchemaObjects(DbObject.TABLE_OR_VIEW);
+        Set<ReplicaSet> replicaSet = db.getAllTables();
         // TODO do we need to lock the table?
-        for (int i = 0; i < tables.size(); i++) {
-            Table table = (Table) tables.get(i);
+        for (ReplicaSet replicas: replicaSet) {
+            Table table = replicas.getACopy();
             if (!(table instanceof TableData)) {
                 continue;
             }

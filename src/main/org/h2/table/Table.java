@@ -899,4 +899,10 @@ public abstract class Table extends SchemaObjectBase {
         return null;
     }
 
+    /**
+     * Whether this table instance is local to the current request. False if its a TableLink object.
+     * @return
+     */
+    public abstract boolean isLocal();
+    
 }

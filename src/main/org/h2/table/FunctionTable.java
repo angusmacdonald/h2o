@@ -192,4 +192,11 @@ public class FunctionTable extends Table {
         return rowCount;
     }
 
+	/* (non-Javadoc)
+	 * @see org.h2.table.Table#isLocal()
+	 */
+	@Override
+	public boolean isLocal() {
+		return true;
+	}
 }

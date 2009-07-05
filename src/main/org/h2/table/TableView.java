@@ -372,4 +372,12 @@ public class TableView extends Table {
         return topQuery == null ? 0 : topQuery.getParameters().size();
     }
 
+	/* (non-Javadoc)
+	 * @see org.h2.table.Table#isLocal()
+	 */
+	@Override
+	public boolean isLocal() {
+		return true;
+	}
+
 }

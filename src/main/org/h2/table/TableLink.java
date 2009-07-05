@@ -533,4 +533,11 @@ public class TableLink extends Table {
         prepared.put(sql, prep);
     }
 
+	/* (non-Javadoc)
+	 * @see org.h2.table.Table#isLocal()
+	 */
+	@Override
+	public boolean isLocal() {
+		return false;
+	}
 }

@@ -18,6 +18,7 @@ import java.sql.Timestamp;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.Set;
 
 import org.h2.command.Command;
 import org.h2.constant.SysProperties;
@@ -59,6 +60,8 @@ import org.h2.value.DataType;
 import org.h2.value.Value;
 import org.h2.value.ValueNull;
 import org.h2.value.ValueString;
+
+import sun.tools.javap.Tables;
 
 /**
  * This class is responsible to build the database meta data pseudo tables.
@@ -567,7 +570,15 @@ public class MetaTable extends Table {
 	}
 
 	private ObjectArray getAllTables(Session session) {
-		ObjectArray tables = database.getAllSchemaObjects(DbObject.TABLE_OR_VIEW);
+		
+		Set<ReplicaSet> replicaSet = database.getAllTables();
+		
+		ObjectArray tables = new ObjectArray();
+		
+		for (ReplicaSet set: replicaSet){ //XXX might need to remove this and put in tables = db.getAllReplicas();
+			tables.add(set.getACopy());
+		}
+		
 		ObjectArray tempTables = session.getLocalTempTables();
 		tables.addAll(tempTables);
 		return tables;
@@ -1806,4 +1817,11 @@ public class MetaTable extends Table {
 		return ROW_COUNT_APPROXIMATION;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.h2.table.Table#isLocal()
+	 */
+	@Override
+	public boolean isLocal() {
+		return true;
+	}
 }
