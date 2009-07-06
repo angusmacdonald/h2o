@@ -14,9 +14,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Set;
 
 import org.h2.command.Parser;
 import org.h2.constant.ErrorCode;
@@ -156,31 +154,31 @@ public class ScriptCommand extends ScriptBase {
 					PlanItem plan = table.getBestPlanItem(session, null);
 					Index index = plan.getIndex();
 					Cursor cursor = index.find(session, null, null);
-					Column[] columns = table.getColumns();
 					StringBuffer buff = new StringBuffer();
-					buff.append("INSERT INTO ");
-					buff.append(table.getSQL());
-					buff.append('(');
+
+
+
+
+					Column[] columns = table.getColumns();
+
 					for (int j = 0; j < columns.length; j++) {
 						if (j > 0) {
 							buff.append(", ");
 						}
-						buff.append(Parser.quoteIdentifier(columns[j].getName()));
+						buff.append(columns[j].getType());
+
 					}
-					buff.append(") VALUES");
-					if (!simple) {
-						buff.append('\n');
-					}
-					buff.append('(');
+
+					add(buff.toString(), true);
+					buff = new StringBuffer();
 					String ins = buff.toString();
 					buff = null;
 					while (cursor.next()) {
 						Row row = cursor.get();
 						if (buff == null) {
 							buff = new StringBuffer(ins);
-						} else {
-							buff.append(",\n(");
 						}
+
 						for (int j = 0; j < row.getColumnCount(); j++) {
 							if (j > 0) {
 								buff.append(", ");
@@ -201,27 +199,25 @@ public class ScriptCommand extends ScriptBase {
 								buff.append(v.getSQL());
 							}
 						}
-						buff.append(")");
-						if (simple || buff.length() > Constants.IO_BUFFER_SIZE) {
-							add(buff.toString(), true);
-							buff = null;
-						}
-					}
-					if (buff != null) {
+						buff.append("");
+
 						add(buff.toString(), true);
+						buff = null;
+
 					}
 
 				} else {
 					throw new SQLException("H2O. Incompatible Table Type.");
 				}
 
-				ObjectArray indexes = table.getIndexes();
-				for (int j = 0; indexes != null && j < indexes.size(); j++) {
-					Index index = (Index) indexes.get(j);
-					if (!index.getIndexType().getBelongsToConstraint()) {
-						add(index.getCreateSQL(), false);
-					}
-				}
+				//XXX to add indexes the mechanism used above would have to become more complicated.
+				//				ObjectArray indexes = table.getIndexes();
+				//				for (int j = 0; indexes != null && j < indexes.size(); j++) {
+				//					Index index = (Index) indexes.get(j);
+				//					if (!index.getIndexType().getBelongsToConstraint()) {
+				//						add(index.getCreateSQL(), false);
+				//					}
+				//				}
 
 				/*
 				 * END of H2O code to get insert statements for a single table. 
@@ -287,9 +283,9 @@ public class ScriptCommand extends ScriptBase {
 					}
 					add(agg.getCreateSQL(), false);
 				}
-				
+
 				ObjectArray tables = new ObjectArray(db.getAllReplicas()); 
-				
+
 				// sort by id, so that views are after tables and views on views
 				// after the base views
 				tables.sort(new Comparator() {

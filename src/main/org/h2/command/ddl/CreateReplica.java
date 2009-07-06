@@ -6,16 +6,17 @@
  */
 package org.h2.command.ddl;
 
-import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
-import org.h2.command.Parser;
 import org.h2.command.Prepared;
 import org.h2.command.dml.Insert;
 import org.h2.command.dml.Query;
@@ -25,9 +26,8 @@ import org.h2.engine.Database;
 import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
-import org.h2.index.Index;
+import org.h2.expression.ValueExpression;
 import org.h2.index.IndexType;
-import org.h2.index.LinkedIndex;
 import org.h2.jdbc.JdbcSQLException;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
@@ -42,6 +42,8 @@ import org.h2.util.ObjectArray;
 import org.h2.util.StringUtils;
 import org.h2.value.DataType;
 import org.h2.value.ValueDate;
+import org.h2.value.ValueInt;
+import org.h2.value.ValueString;
 import org.h2.value.ValueTime;
 import org.h2.value.ValueTimestamp;
 
@@ -66,7 +68,6 @@ public class CreateReplica extends SchemaCommand {
 	private boolean clustered;
 
 	private TableLinkConnection conn;
-	private SchemaManager schemaManager;
 
 	private boolean storesLowerCase = false;
 	private boolean storesMixedCase = false;
@@ -75,11 +76,10 @@ public class CreateReplica extends SchemaCommand {
 	/**
 	 * Array containing all of the insert statements required for this replicas state to match that of the primary.
 	 */
-	private String[] inserts = null;
+	private Set<String> inserts = null;
 
 	public CreateReplica(Session session, Schema schema) {
 		super(session, schema);
-		schemaManager = SchemaManager.getInstance();
 	}
 
 	public void setQuery(Query query) {
@@ -142,45 +142,12 @@ public class CreateReplica extends SchemaCommand {
 		if (!db.isPersistent()) {
 			persistent = false;
 		}
-		if (getSchema().findTableOrView(session, tableName) != null) {
+		if (getSchema().findLocalTableOrView(session, tableName) != null) { //H2O. Check for local version here.
 			if (ifNotExists) {
 				return 0;
 			}
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
-		}
-
-		/*
-		 * #########################################################################
-		 * 
-		 *  H20. Check that the table doesn't already exist elsewhere.
-		 * 
-		 * #########################################################################
-		 */
-
-		Parser parser = null;
-
-		if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_")){
-
-			parser = new Parser(session);
-			boolean throwException = false;
-			try { //XXX this is a hack. shouldn't rely on exception being thrown.
-
-				parser.findViaSchemaManager(tableName);
-
-				throwException = true; //code shouldn't reach this point.
-			} catch (SQLException sqlE){
-				//not found, meaning this create table command can be executed.
-			}
-
-			if (throwException){
-				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
-			}
-		}
-		/*
-		 * #########################################################################
-		 * #########################################################################
-		 */       
-
+		}    
 
 		if (asQuery != null) {
 			asQuery.prepare();
@@ -268,17 +235,62 @@ public class CreateReplica extends SchemaCommand {
 				 * 
 				 * #########################################################################
 				 */
-				try {
-					if (inserts != null){
-						for (String insert: inserts){
-							Prepared command = session.prepare(insert);
-							command.update();
+				//				try {
+				//					if (inserts != null){
+				//						for (String insert: inserts){
+				//							Prepared command = session.prepare(insert);
+				//							command.update();
+				//						}
+				//					}
+				//				} catch (SQLException e){
+				//					e.printStackTrace();
+				//					throw new SQLException("Failed to copy data across to new replica.");
+				//				}
+
+
+				Insert command = new Insert(session);
+
+
+				command.setTable(table);
+
+				Column[] columnArray = new Column[columns.size()];
+				columns.toArray(columnArray);
+				command.setColumns(columnArray);
+
+				ArrayList<Integer> types = new ArrayList<Integer>();
+
+				boolean firstRun = true;
+				for (String statement: inserts){
+					ObjectArray values = new ObjectArray();
+					statement = statement.substring(0, statement.length()-1);
+					
+					
+					int i = 0;
+					for (String part: statement.split(",")){
+						part = part.trim();
+						if (firstRun){
+							types.add(new Integer(part));
+						} else {
+							ValueString val = ValueString.get(part);
+
+							values.add(ValueExpression.get(val.convertTo(types.get(i++))));
 						}
+
+
 					}
-				} catch (SQLException e){
-					e.printStackTrace();
-					throw new SQLException("Failed to copy data across to new replica.");
+
+					if (firstRun){
+						firstRun = false;
+					} else {
+						Expression[] expr = new Expression[values.size()];
+						values.toArray(expr);
+						command.addRow(expr);
+					}
+
 				}
+				System.out.println("result of insert: " + command.update());
+
+
 
 				/*
 				 * #########################################################################
@@ -289,7 +301,7 @@ public class CreateReplica extends SchemaCommand {
 				 */
 
 				SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
-				sm.addTableInformation(tableName, table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
+				sm.addReplicaInformation(tableName, table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
 						db.getLocalMachineAddress(), db.getLocalMachinePort(), "tcp");	
 			}
 
@@ -430,10 +442,10 @@ public class CreateReplica extends SchemaCommand {
 			stat = conn.getConnection().createStatement();
 			ResultSet rs = stat.executeQuery("SCRIPT TABLE " + tableName);
 
-			String[] inserts = new String[rs.getFetchSize()]; //XXX the fetch size might be less than the number of database entries.
-			int i = 0;
+			Set<String> inserts = new HashSet<String>();
+
 			while (rs.next()){
-				inserts[i++] = rs.getString(1);
+				inserts.add(rs.getString(1));
 			}
 
 			this.inserts = inserts;

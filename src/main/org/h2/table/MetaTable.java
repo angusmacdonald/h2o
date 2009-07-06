@@ -576,7 +576,10 @@ public class MetaTable extends Table {
 		ObjectArray tables = new ObjectArray();
 		
 		for (ReplicaSet set: replicaSet){ //XXX might need to remove this and put in tables = db.getAllReplicas();
-			tables.add(set.getACopy());
+			Table table = set.getACopy();
+			
+			if (table != null)
+				tables.add(table);
 		}
 		
 		ObjectArray tempTables = session.getLocalTempTables();
@@ -632,6 +635,7 @@ public class MetaTable extends Table {
 			ObjectArray tables = getAllTables(session);
 			for (int i = 0; i < tables.size(); i++) {
 				Table table = (Table) tables.get(i);
+			
 				String tableName = identifier(table.getName());
 				if (!checkIndex(session, tableName, indexFrom, indexTo)) {
 					continue;

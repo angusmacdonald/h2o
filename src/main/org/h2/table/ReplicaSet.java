@@ -47,7 +47,7 @@ public class ReplicaSet {
 		replicas.add(table);
 		
 		primaryCopy = table;
-		localCopy = (table.isLocal())? null: table;
+		localCopy = (table.isLocal())? table: null;
 		
 		tableName = primaryCopy.getName();
 	}
@@ -79,7 +79,7 @@ public class ReplicaSet {
 	public void addNewReplica(SchemaObject obj){
 		Table table = (Table) obj;
 		
-		localCopy = (table.isLocal())? null: table;
+		localCopy = (table.isLocal())? table: null;
 		
 		replicas.add(table);
 		
@@ -124,6 +124,11 @@ public class ReplicaSet {
 	 */
 	public boolean removeCopy(Table table) {
 		replicas.remove(table);
+		
+		if (table == localCopy)
+			localCopy = null;
+		if (table == primaryCopy)
+			primaryCopy = null;
 		
 		return (replicas.size() == 0)? false: true;
 	}

@@ -109,7 +109,8 @@ public class CreateTable extends SchemaCommand {
 		if (!db.isPersistent()) {
 			persistent = false;
 		}
-		if (getSchema().findTableOrView(session, tableName) != null) {
+
+		if ((getSchema().findTableOrView(session, tableName) != null && !isStartup()) || getSchema().findLocalTableOrView(session, tableName) != null) {
 			if (ifNotExists) {
 				return 0;
 			}

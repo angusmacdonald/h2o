@@ -175,6 +175,29 @@ public class SchemaManager {
 			addReplicaInformation(tableName, modificationID, connectionID, databaseLocation, tableType);				
 		}
 	}
+	
+	/**
+	 * Add a new replica to the schema manager. The table already exists, so it is assumed there is an entry for that table
+	 * in the schema manager. This method only updates the replica table in the schema manager.
+	 * @param tableName				Name of the table being added.
+	 * @param modificationId		Modification ID of the table.
+	 * @param databaseLocation		Location of the table (the database it is stored in)
+	 * @param tableType				Type of the table (e.g. Linked, View, Table).
+	 * @param localMachineAddress	Address through which the DB is contactable.
+	 * @param localMachinePort		Port the server is running on.
+	 * @param connection_type		The type of connection (e.g. TCP, FTP).
+	 * @throws SQLException 
+	 */
+	public void addReplicaInformation(String tableName, long modificationID,
+			String databaseLocation, String tableType,
+			String localMachineAddress, int localMachinePort, String connection_type) throws SQLException {
+		
+		int connectionID = SchemaManager.getInstance().getConnectionID(localMachineAddress, localMachinePort, connection_type);
+
+		if (!isReplicaListed(tableName, connectionID)){ // the table doesn't already exist in the schema manager.
+			addReplicaInformation(tableName, modificationID, connectionID, databaseLocation, tableType);				
+		}
+	}
 
 	/**
 	 * Check if the schema manager contains connection information for this database.
@@ -400,6 +423,8 @@ public class SchemaManager {
 		sqlQuery = queryParser.prepareCommand(query);
 		return sqlQuery.executeUpdate();
 	}
+
+
 
 
 }

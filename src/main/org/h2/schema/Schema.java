@@ -243,15 +243,36 @@ public class Schema extends DbObjectBase {
 	public Table findTableOrView(Session session, String name) {
 		ReplicaSet replicaSet = tablesAndViews.get(name);
 
+
+		if (replicaSet == null && session != null) {
+			return session.findLocalTempTable(name);
+		} else {
+			return replicaSet.getACopy();
+		}
+
+	}
+
+	/**
+	 * Try to find a LOCAL VERSION of a table or view with this name. This method returns null if
+	 * no object with this name exists. Local temporary tables are also
+	 * returned.
+	 *
+	 * @param session the session
+	 * @param name the object name
+	 * @return the object or null
+	 */
+	public Table findLocalTableOrView(Session session, String name) {
+		ReplicaSet replicaSet = tablesAndViews.get(name);
+
 		Table table = null;
 		if (replicaSet == null && session != null) {
 			table = session.findLocalTempTable(name);
 		} else {
-			return replicaSet.getACopy();
+			return replicaSet.getLocalCopy();
 		}
 		return table;
 	}
-
+	
 	/**
 	 * Try to find an index with this name. This method returns null if
 	 * no object with this name exists.
@@ -502,9 +523,11 @@ public class Schema extends DbObjectBase {
 			ReplicaSet replicaSet = tablesAndViews.get(table.getName());
 
 			boolean inUse = replicaSet.removeCopy(table);
+			
 			if (!inUse){
 				//Delete this replicaSet
 				tablesAndViews.remove(replicaSet);
+				System.out.println("H2O. Removing replica-set for table '" + table.getName() + "'.");
 			}
 		} else if (SysProperties.CHECK && !map.containsKey(objName)) {
 			Message.throwInternalError("not found: " + objName);
