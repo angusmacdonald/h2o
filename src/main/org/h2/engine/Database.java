@@ -215,7 +215,7 @@ public class Database implements DataHandler {
 
 
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
-		System.out.print("H2O, Database '" + name + "'.");
+		if (Constants.IS_H2O) if (Constants.IS_H2O) System.out.print("H2O, Database '" + name + "'.");
 		this.compareMode = new CompareMode(null, null, 0);
 		this.databaseLocation = ci.getSmallName();
 
@@ -1688,7 +1688,7 @@ public class Database implements DataHandler {
 		for (ReplicaSet replicaSet: allreplicas) {
 
 
-			if ((except != null) && except.getName().equalsIgnoreCase(replicaSet.getACopy().getName())) {
+			if ((except != null) && (replicaSet.getACopy() != null) && except.getName().equalsIgnoreCase(replicaSet.getACopy().getName())) {
 				continue;
 			}
 			

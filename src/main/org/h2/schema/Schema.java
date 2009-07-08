@@ -117,6 +117,7 @@ public class Schema extends DbObjectBase {
 				database.removeSchemaObject(session, table);
 			}
 			replicaSet.removeAllCopies(); //XXX will this actually remove everything properly, or will it infinately loop?
+			tablesAndViews.remove(replicaSet.getTableName());
 
 		}
 		while (indexes != null && indexes.size() > 0) {
@@ -181,6 +182,9 @@ public class Schema extends DbObjectBase {
 		int type = obj.getType();
 		Map map = getMap(type);
 
+		if (SysProperties.CHECK && map.get(name) != null) {
+			Message.throwInternalError("object already exists");
+		}
 		if (type == DbObject.TABLE_OR_VIEW){
 			//H2O. Do something special - this has to be added to a replica set if one doesn't exist.
 
@@ -191,8 +195,6 @@ public class Schema extends DbObjectBase {
 				replicaSet.addNewReplica(obj); //XXX assumes this will never try to over-write an existing table.
 				tablesAndViews.put(name, replicaSet);
 			}
-		} else if (SysProperties.CHECK && map.get(name) != null) {
-			Message.throwInternalError("object already exists");
 		} else {
 			map.put(name, obj);
 		}
@@ -209,19 +211,29 @@ public class Schema extends DbObjectBase {
 		int type = obj.getType();
 		Map map = getMap(type);
 
-
-		if (obj.getType() == DbObject.TABLE_OR_VIEW){
-
-			Message.throwInternalError("the system wants to rename a table. What should this do?"); //XXX incomplete
-
-		} else if (SysProperties.CHECK) {
+		if (SysProperties.CHECK) {
 			if (!map.containsKey(obj.getName())) {
 				Message.throwInternalError("not found: " + obj.getName());
 			}
 			if (obj.getName().equals(newName) || map.containsKey(newName)) {
 				Message.throwInternalError("object already exists: " + newName);
 			}
-		} else {
+		}
+		if (type == DbObject.TABLE_OR_VIEW){
+
+			Table table = (Table) obj;
+			String tableName = table.getName();
+			ReplicaSet replicaSet = tablesAndViews.get(tableName);
+			replicaSet.checkRename();
+			tablesAndViews.remove(tableName);
+			
+			freeUniqueName(tableName);
+			
+			replicaSet.rename(newName);
+			
+			tablesAndViews.put(newName, replicaSet);
+			
+		}  else {
 			obj.checkRename();
 			map.remove(obj.getName());
 			freeUniqueName(obj.getName());
@@ -243,13 +255,13 @@ public class Schema extends DbObjectBase {
 	public Table findTableOrView(Session session, String name) {
 		ReplicaSet replicaSet = tablesAndViews.get(name);
 
-
+		Table table = null;
 		if (replicaSet == null && session != null) {
-			return session.findLocalTempTable(name);
-		} else {
-			return replicaSet.getACopy();
+			table = session.findLocalTempTable(name);
+		} else if (replicaSet != null){
+			table = replicaSet.getACopy();
 		}
-
+		return table;
 	}
 
 	/**
@@ -272,7 +284,7 @@ public class Schema extends DbObjectBase {
 		}
 		return table;
 	}
-	
+
 	/**
 	 * Try to find an index with this name. This method returns null if
 	 * no object with this name exists.
@@ -436,6 +448,16 @@ public class Schema extends DbObjectBase {
 		}
 		return table;
 	}
+	
+	public ReplicaSet getTablesOrViews(Session session, String name) throws SQLException {
+		ReplicaSet tables = tablesAndViews.get(name);
+
+		if (tables == null) {
+			System.err.println("Schema.getTablesOrViews: Table '" + name + "' not found.");
+			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, name);
+		}
+		return tables;
+	}
 
 	/**
 	 * Get the index with the given name.
@@ -517,20 +539,21 @@ public class Schema extends DbObjectBase {
 		String objName = obj.getName();
 		Map map = getMap(obj.getType());
 
+		if (SysProperties.CHECK && !map.containsKey(objName)) {
+			Message.throwInternalError("not found: " + objName);
+		} 
 		if (obj.getType() == DbObject.TABLE_OR_VIEW){
 
 			Table table = (Table) obj;
 			ReplicaSet replicaSet = tablesAndViews.get(table.getName());
 
 			boolean inUse = replicaSet.removeCopy(table);
-			
+
 			if (!inUse){
 				//Delete this replicaSet
-				tablesAndViews.remove(replicaSet);
-				System.out.println("H2O. Removing replica-set for table '" + table.getName() + "'.");
+				tablesAndViews.remove(table.getName());
+				//System.out.println("H2O. Removing replica-set for table '" + table.getName() + "'.");
 			}
-		} else if (SysProperties.CHECK && !map.containsKey(objName)) {
-			Message.throwInternalError("not found: " + objName);
 		} else {
 			map.remove(objName);
 		}

@@ -39,7 +39,7 @@ public class TestScriptSimple extends TestBase {
         }
         deleteDb("scriptSimple");
         reconnect();
-        String inFile = "org/h2/test/testSimple.in.txt";
+        String inFile = "org/h2/test/testSimple.in.txt"; //"org/h2/test/testSimple.in.txt";
         InputStream is = getClass().getClassLoader().getResourceAsStream(inFile);
         LineNumberReader lineReader = new LineNumberReader(new InputStreamReader(is, "Cp1252"));
         ScriptReader reader = new ScriptReader(lineReader);
@@ -49,6 +49,7 @@ public class TestScriptSimple extends TestBase {
                 break;
             }
             sql = sql.trim();
+            System.out.println(sql);
             try {
                 if ("@reconnect".equals(sql.toLowerCase())) {
                     reconnect();
@@ -65,7 +66,7 @@ public class TestScriptSimple extends TestBase {
                     conn.createStatement().execute(sql);
                 }
             } catch (SQLException e) {
-                System.out.println(sql);
+                System.err.println(sql);
                 throw e;
             }
         }
