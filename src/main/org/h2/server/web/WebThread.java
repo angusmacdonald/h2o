@@ -43,6 +43,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Map.Entry;
 
@@ -685,7 +686,7 @@ class WebThread extends Thread implements DatabaseEventListener {
 	}
 
 	private int addColumns(DbTableOrView table, StringBuffer buff, int treeIndex, boolean showColumnTypes,
-			StringBuffer columnsBuffer) {
+			StringBuffer columnsBuffer, int indentationLevel, int tableLevel) {
 		DbColumn[] columns = table.columns;
 		for (int i = 0; columns != null && i < columns.length; i++) {
 			DbColumn column = columns[i];
@@ -694,11 +695,14 @@ class WebThread extends Thread implements DatabaseEventListener {
 			}
 			columnsBuffer.append(column.name);
 			String col = StringUtils.urlEncode(PageParser.escapeJavaScript(column.name));
-			buff.append("setNode(" + treeIndex + ", 1, 1, 'column', '" + PageParser.escapeJavaScript(column.name)
+
+
+			//indentationLevel = 2;
+			buff.append("setNode(" + treeIndex + ", " + indentationLevel + ", " + tableLevel + ", 'column', '" + PageParser.escapeJavaScript(column.name)
 					+ "', 'javascript:ins(\\'" + col + "\\')');\n");
 			treeIndex++;
 			if (showColumnTypes) {
-				buff.append("setNode(" + treeIndex + ", 2, 2, 'type', '" + PageParser.escapeJavaScript(column.dataType)
+				buff.append("setNode(" + treeIndex + ", " + (indentationLevel+1) + ", " + (tableLevel+1) + ", 'type', '" + PageParser.escapeJavaScript(column.dataType)
 						+ "', null);\n");
 				treeIndex++;
 			}
@@ -787,78 +791,104 @@ class WebThread extends Thread implements DatabaseEventListener {
 		Connection conn = session.getConnection();
 		DatabaseMetaData meta = session.getMetaData();
 		int level = mainSchema ? 0 : 1;
+
 		String indentation = ", " + level + ", " + (level + 1) + ", ";
 		String indentNode = ", " + (level + 1) + ", " + (level + 1) + ", ";
-		DbTableOrView[] tables = schema.tables;
+		Map<String, Set<DbTableOrView>> tables = schema.tables;
 		if (tables == null) {
 			return treeIndex;
 		}
 		boolean isOracle = schema.contents.isOracle;
-		boolean notManyTables = tables.length < DbSchema.MAX_TABLES_LIST_INDEXES;
-		for (int i = 0; i < tables.length; i++) {
-			DbTableOrView table = tables[i];
-			if (table.isView) {
-				continue;
-			}
+		boolean notManyTables = tables.size() < DbSchema.MAX_TABLES_LIST_INDEXES;
+
+		/*
+		 * Loop through replica-sets
+		 */
+		for (Entry<String, Set<DbTableOrView>> entrySet: tables.entrySet()){
+			int tableLevel = level + 1;
+			int indentLevel = level;
+
+			Set<DbTableOrView> tableSet = entrySet.getValue();
+
+
+			if (tableSet.size() > 1){
+				String tableName = entrySet.getKey();
+
+				buff.append("setNode(" + treeIndex + ", " + indentLevel+ ", " + tableLevel + ", 'index', ' " + PageParser.escapeJavaScript(tableName + " [" + tableSet.size() + " replicas]")
+						+ "', 'javascript:ins(\\'" + tableName + "\\',true)');\n");
+				treeIndex++;
+				//tableLevel++;
+				indentLevel++;
+			} 
 			
-			int tableId = treeIndex;
-			String tab = table.quotedName;
-			if (!mainSchema) {
-				tab = schema.quotedName + "." + tab;
-			}
-			tab = StringUtils.urlEncode(PageParser.escapeJavaScript(tab));
-			
-			String isLink = table.isLinked? "[R]": "";
-			buff.append("setNode(" + treeIndex + indentation + " 'table', '" + isLink + " " + PageParser.escapeJavaScript(table.name)
-					+ "', 'javascript:ins(\\'" + tab + "\\',true)');\n");
-			treeIndex++;
-			if (mainSchema) {
-				StringBuffer columnsBuffer = new StringBuffer();
-				treeIndex = addColumns(table, buff, treeIndex, notManyTables, columnsBuffer);
-				if (!isOracle && notManyTables) {
-					treeIndex = addIndexes(meta, table.name, schema.name, buff, treeIndex);
+			/*
+			 * Loop through individual tables in replica-sets
+			 */
+			for (DbTableOrView table: tableSet) {
+				if (table.isView) {
+					continue;
 				}
-				buff.append("addTable('" + PageParser.escapeJavaScript(table.name) + "', '"
-						+ PageParser.escapeJavaScript(columnsBuffer.toString()) + "', " + tableId + ");\n");
+
+				int tableId = treeIndex;
+				String tab = table.quotedName;
+				if (!mainSchema) {
+					tab = schema.quotedName + "." + tab;
+				}
+				tab = StringUtils.urlEncode(PageParser.escapeJavaScript(tab));
+
+				String isLink = table.isLinked? "[R]": "";
+				buff.append("setNode(" + treeIndex + ", " + indentLevel+ ", " + tableLevel + ", 'table', '" + isLink + " " + PageParser.escapeJavaScript(table.name)
+						+ "', 'javascript:ins(\\'" + tab + "\\',true)');\n");
+				treeIndex++;
+				if (mainSchema) {
+					StringBuffer columnsBuffer = new StringBuffer();
+					treeIndex = addColumns(table, buff, treeIndex, notManyTables, columnsBuffer, (indentLevel+1), tableLevel);
+					if (!isOracle && notManyTables) {
+						treeIndex = addIndexes(meta, table.name, schema.name, buff, treeIndex);
+					}
+					buff.append("addTable('" + PageParser.escapeJavaScript(table.name) + "', '"
+							+ PageParser.escapeJavaScript(columnsBuffer.toString()) + "', " + tableId + ");\n");
+				}
 			}
 		}
 		tables = schema.tables;
-		for (int i = 0; i < tables.length; i++) {
-			DbTableOrView view = tables[i];
-			if (!view.isView) {
-				continue;
-			}
-			int tableId = treeIndex;
-			String tab = view.quotedName;
-			if (!mainSchema) {
-				tab = view.schema.quotedName + "." + tab;
-			}
-			tab = StringUtils.urlEncode(PageParser.escapeJavaScript(tab));
-			buff.append("setNode(" + treeIndex + indentation + " 'view', '" + PageParser.escapeJavaScript(view.name)
-					+ "', 'javascript:ins(\\'" + tab + "\\',true)');\n");
-			treeIndex++;
-			if (mainSchema) {
-				StringBuffer columnsBuffer = new StringBuffer();
-				treeIndex = addColumns(view, buff, treeIndex, notManyTables, columnsBuffer);
-				if (schema.contents.isH2) {
-					PreparedStatement prep = null;
-					try {
-						prep = conn.prepareStatement("SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME=?");
-						prep.setString(1, view.name);
-						ResultSet rs = prep.executeQuery();
-						if (rs.next()) {
-							String sql = rs.getString("SQL");
-							buff.append("setNode(" + treeIndex + indentNode + " 'type', '"
-									+ PageParser.escapeJavaScript(sql) + "', null);\n");
-							treeIndex++;
-						}
-						rs.close();
-					} finally {
-						JdbcUtils.closeSilently(prep);
-					}
+		for (Set<DbTableOrView> tableSet: tables.values()){
+			for (DbTableOrView view: tableSet) {
+				if (!view.isView) {
+					continue;
 				}
-				buff.append("addTable('" + PageParser.escapeJavaScript(view.name) + "', '"
-						+ PageParser.escapeJavaScript(columnsBuffer.toString()) + "', " + tableId + ");\n");
+				int tableId = treeIndex;
+				String tab = view.quotedName;
+				if (!mainSchema) {
+					tab = view.schema.quotedName + "." + tab;
+				}
+				tab = StringUtils.urlEncode(PageParser.escapeJavaScript(tab));
+				buff.append("setNode(" + treeIndex + indentation + " 'view', '" + PageParser.escapeJavaScript(view.name)
+						+ "', 'javascript:ins(\\'" + tab + "\\',true)');\n");
+				treeIndex++;
+				if (mainSchema) {
+					StringBuffer columnsBuffer = new StringBuffer();
+					treeIndex = addColumns(view, buff, treeIndex, notManyTables, columnsBuffer, level, 1); //XXX the '1' is temporary.
+					if (schema.contents.isH2) {
+						PreparedStatement prep = null;
+						try {
+							prep = conn.prepareStatement("SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME=?");
+							prep.setString(1, view.name);
+							ResultSet rs = prep.executeQuery();
+							if (rs.next()) {
+								String sql = rs.getString("SQL");
+								buff.append("setNode(" + treeIndex + indentNode + " 'type', '"
+										+ PageParser.escapeJavaScript(sql) + "', null);\n");
+								treeIndex++;
+							}
+							rs.close();
+						} finally {
+							JdbcUtils.closeSilently(prep);
+						}
+					}
+					buff.append("addTable('" + PageParser.escapeJavaScript(view.name) + "', '"
+							+ PageParser.escapeJavaScript(columnsBuffer.toString()) + "', " + tableId + ");\n");
+				}
 			}
 		}
 		return treeIndex;

@@ -211,7 +211,7 @@ public class JdbcDatabaseMetaData extends TraceObject implements DatabaseMetaDat
                         +quote(columnNamePattern)+");");
             }
             checkClosed();
-            PreparedStatement prep = conn.prepareAutoCloseStatement("SELECT "
+            PreparedStatement prep = conn.prepareAutoCloseStatement("SELECT DISTINCT "
                     + "TABLE_CATALOG TABLE_CAT, "
                     + "TABLE_SCHEMA TABLE_SCHEM, "
                     + "TABLE_NAME, "

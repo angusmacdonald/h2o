@@ -570,18 +570,17 @@ public class MetaTable extends Table {
 	}
 
 	private ObjectArray getAllTables(Session session) {
-		
+
 		Set<ReplicaSet> replicaSet = database.getAllTables();
-		
+
 		ObjectArray tables = new ObjectArray();
-		
-		for (ReplicaSet set: replicaSet){ //XXX might need to remove this and put in tables = db.getAllReplicas();
-			Table table = set.getACopy();
-			
-			if (table != null)
-				tables.add(table);
+
+		for (ReplicaSet set: replicaSet){ 
+
+			ObjectArray temp = new ObjectArray(set.getAllCopies());
+			tables.addAll(temp);
 		}
-		
+
 		ObjectArray tempTables = session.getLocalTempTables();
 		tables.addAll(tempTables);
 		return tables;
@@ -631,11 +630,11 @@ public class MetaTable extends Table {
 		String catalog = identifier(database.getShortName());
 		switch (type) {
 		case TABLES: {
-			
+
 			ObjectArray tables = getAllTables(session);
 			for (int i = 0; i < tables.size(); i++) {
 				Table table = (Table) tables.get(i);
-			
+
 				String tableName = identifier(table.getName());
 				if (!checkIndex(session, tableName, indexFrom, indexTo)) {
 					continue;

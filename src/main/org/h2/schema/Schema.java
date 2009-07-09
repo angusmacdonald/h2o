@@ -182,7 +182,7 @@ public class Schema extends DbObjectBase {
 		int type = obj.getType();
 		Map map = getMap(type);
 
-		if (SysProperties.CHECK && map.get(name) != null) {
+		if (SysProperties.CHECK && map.get(name) != null && type != DbObject.TABLE_OR_VIEW) {
 			Message.throwInternalError("object already exists");
 		}
 		if (type == DbObject.TABLE_OR_VIEW){

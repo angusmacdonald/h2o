@@ -49,7 +49,7 @@ public class TestScriptSimple extends TestBase {
                 break;
             }
             sql = sql.trim();
-            System.out.println(sql);
+            //System.out.println(sql);
             try {
                 if ("@reconnect".equals(sql.toLowerCase())) {
                     reconnect();

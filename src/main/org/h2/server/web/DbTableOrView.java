@@ -62,7 +62,10 @@ public class DbTableOrView {
      * @param meta the database meta data
      */
     void readColumns(DatabaseMetaData meta) throws SQLException {
-        ResultSet rs = meta.getColumns(null, schema.name, name, null);
+
+    	ResultSet rs = meta.getColumns(null, schema.name, name, null);
+        
+        
         ArrayList list = new ArrayList();
         while (rs.next()) {
             DbColumn column = new DbColumn(rs);

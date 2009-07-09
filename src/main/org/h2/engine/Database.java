@@ -215,7 +215,7 @@ public class Database implements DataHandler {
 
 
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
-		if (Constants.IS_H2O) if (Constants.IS_H2O) System.out.print("H2O, Database '" + name + "'.");
+		if (Constants.IS_H2O) System.out.print("H2O, Database '" + name + "'.");
 		this.compareMode = new CompareMode(null, null, 0);
 		this.databaseLocation = ci.getSmallName();
 
@@ -276,7 +276,7 @@ public class Database implements DataHandler {
 				TraceSystem.DEFAULT_TRACE_LEVEL_SYSTEM_OUT);
 		this.cacheType = StringUtils.toUpperEnglish(ci.removeProperty("CACHE_TYPE", CacheLRU.TYPE_NAME));
 		openDatabase(traceLevelFile, traceLevelSystemOut, closeAtVmShutdown);
-		System.out.print(" Completed startup.");
+		if (Constants.IS_H2O) System.out.println(" Completed startup.");
 	}
 
 	private void openDatabase(int traceLevelFile, int traceLevelSystemOut, boolean closeAtVmShutdown) throws SQLException {
@@ -685,7 +685,7 @@ public class Database implements DataHandler {
 			MetaRecord rec = (MetaRecord) records.get(i);
 			rec.execute(this, systemSession, eventListener);
 		}
-		System.out.println(" Executed meta-records.");
+		if (Constants.IS_H2O) System.out.print(" Executed meta-records.");
 
 		// try to recompile the views that are invalid
 		recompileInvalidViews(systemSession);
