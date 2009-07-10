@@ -22,6 +22,7 @@ import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.command.dml.SetTypes;
 import org.h2.constant.ErrorCode;
+import org.h2.constant.LocationPreference;
 import org.h2.constant.SysProperties;
 import org.h2.constraint.Constraint;
 import org.h2.index.Cursor;
@@ -1820,7 +1821,7 @@ public class Database implements DataHandler {
 		String tempName;
 		for (int i = 0;; i++) {
 			tempName = Constants.TEMP_TABLE_PREFIX + sessionId + "_" + i;
-			if (mainSchema.findTableOrView(null, tempName) == null) {
+			if (mainSchema.findTableOrView(null, tempName, LocationPreference.NO_PREFERENCE) == null) {
 				break;
 			}
 		}

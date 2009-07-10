@@ -232,6 +232,7 @@ public class User extends RightOwner {
      * @throws SQLException if this user owns a schema
      */
     public void checkOwnsNoSchemas() throws SQLException {
+    	if (database == null) return;
         ObjectArray schemas = database.getAllSchemas();
         for (int i = 0; i < schemas.size(); i++) {
             Schema s = (Schema) schemas.get(i);

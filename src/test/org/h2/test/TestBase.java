@@ -20,6 +20,7 @@ import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
+import org.h2.engine.Constants;
 import org.h2.jdbc.JdbcConnection;
 import org.h2.message.TraceSystem;
 import org.h2.store.FileLock;
@@ -47,6 +48,10 @@ public abstract class TestBase {
      */
     protected long start;
 
+    static {
+    	 Constants.IS_H2O = false;
+    }
+    
     /**
      * Get the test directory for this test.
      *
@@ -72,6 +77,7 @@ public abstract class TestBase {
     public TestBase init() {
         baseDir = getTestDir("");
         this.config = new TestAll();
+        Constants.IS_H2O = false;
         return this;
     }
 

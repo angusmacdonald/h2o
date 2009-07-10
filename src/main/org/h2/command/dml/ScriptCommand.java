@@ -18,6 +18,7 @@ import java.util.Comparator;
 
 import org.h2.command.Parser;
 import org.h2.constant.ErrorCode;
+import org.h2.constant.LocationPreference;
 import org.h2.constant.SysProperties;
 import org.h2.constraint.Constraint;
 import org.h2.engine.Comment;
@@ -139,7 +140,7 @@ public class ScriptCommand extends ScriptBase {
 				/*
 				 * Beginning of H2O code to get insert statements for a single table. 
 				 */
-				Table table = db.getSchema(session.getCurrentSchemaName()).findTableOrView(session, tableName); //TODO ensure it works in schema's other than 'public'.
+				Table table = db.getSchema(session.getCurrentSchemaName()).findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE); //TODO ensure it works in schema's other than 'public'.
 
 				if (table == null){
 					throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);

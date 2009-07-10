@@ -9,6 +9,7 @@ package org.h2.command.ddl;
 import java.sql.SQLException;
 
 import org.h2.constant.ErrorCode;
+import org.h2.constant.LocationPreference;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.message.Message;
@@ -39,7 +40,7 @@ public class DropView extends SchemaCommand {
     public int update() throws SQLException {
         // TODO rights: what rights are required to drop a view?
         session.commit(true);
-        Table view = getSchema().findTableOrView(session, viewName);
+        Table view = getSchema().findTableOrView(session, viewName, LocationPreference.NO_PREFERENCE);
         if (view == null) {
             if (!ifExists) {
                 throw Message.getSQLException(ErrorCode.VIEW_NOT_FOUND_1, viewName);

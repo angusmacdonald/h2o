@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import org.h2.constant.ErrorCode;
+import org.h2.constant.LocationPreference;
 import org.h2.constant.SysProperties;
 import org.h2.engine.Constants;
 import org.h2.engine.Mode;
@@ -79,6 +80,8 @@ public class Select extends Query {
     private boolean sortUsingIndex;
     private SortOrder sort;
     private int currentGroupRowId;
+    
+    private LocationPreference locationPreference = LocationPreference.NO_PREFERENCE;
 
     public Select(Session session) {
         super(session);
@@ -1140,4 +1143,18 @@ public class Select extends Query {
         return expr.getAlias();
     }
 
+	/**
+	 * Specifies whether the user wishes the query to be evaluated locally (LOCAL), at the primary copy (PRIMARY), or if they have no preference (NO_PREFERENCE).
+	 * @param b true if local; false for remote evaluation (i.e. access remote copy of the data).
+	 */
+	public void setLocationPreference(LocationPreference locale) {
+		locationPreference = locale;
+	}
+
+	/**
+	 * Whether the user wishes the query to be evaluated locally (LOCAL), at the primary copy (PRIMARY), or if they have no preference (NO_PREFERENCE).
+	 */
+	public LocationPreference getLocationPreference() {
+		return locationPreference;
+	}
 }

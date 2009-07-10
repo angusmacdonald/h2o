@@ -75,6 +75,7 @@ import org.h2.command.dml.SetTypes;
 import org.h2.command.dml.TransactionCommand;
 import org.h2.command.dml.Update;
 import org.h2.constant.ErrorCode;
+import org.h2.constant.LocationPreference;
 import org.h2.constant.SysProperties;
 import org.h2.constraint.ConstraintReferential;
 import org.h2.engine.Constants;
@@ -973,12 +974,14 @@ public class Parser {
 			} else if ("DUAL".equals(tableName)) {
 				table = getDualTable();
 			} else {
-				table = readTableOrView(tableName, true);
+				table = readTableOrView(tableName, true, currentSelect.getLocationPreference());
 			}
 		}
 		alias = readFromAlias(alias);
 		return new TableFilter(session, table, alias, rightsChecked, currentSelect);
 	}
+
+
 
 	private String readFromAlias(String alias) throws SQLException {
 		if (readIf("AS")) {
@@ -1555,7 +1558,11 @@ public class Parser {
 		currentSelect = temp;
 		if (readIf("DISTINCT")) {
 			command.setDistinct(true);
-		} else {
+		} else if (readIf("LOCAL")) {
+			command.setLocationPreference(LocationPreference.LOCAL);
+		} else if (readIf("PRIMARY")) {
+			command.setLocationPreference(LocationPreference.PRIMARY);
+		}else {
 			readIf("ALL");
 		}
 		ObjectArray expressions = new ObjectArray();
@@ -3885,7 +3892,7 @@ public class Parser {
 	private AlterView parseAlterView() throws SQLException {
 		AlterView command = new AlterView(session);
 		String viewName = readIdentifierWithSchema();
-		Table tableView = getSchema().findTableOrView(session, viewName);
+		Table tableView = getSchema().findTableOrView(session, viewName, LocationPreference.NO_PREFERENCE);
 		if (!(tableView instanceof TableView)) {
 			throw Message.getSQLException(ErrorCode.VIEW_NOT_FOUND_1, viewName);
 		}
@@ -4250,7 +4257,7 @@ public class Parser {
 	}
 
 	private Table readTableOrView() throws SQLException {
-		return readTableOrView(readIdentifierWithSchema(null), true);
+		return readTableOrView(readIdentifierWithSchema(null), true, LocationPreference.NO_PREFERENCE);
 	}
 
 
@@ -4262,20 +4269,20 @@ public class Parser {
 	 * @return	
 	 * @throws SQLException
 	 */
-	private Table readTableOrView(String tableName, boolean searchRemote) throws SQLException {
+	private Table readTableOrView(String tableName, boolean searchRemote, LocationPreference locale) throws SQLException {
 		//System.out.println("Looking for table '" + tableName + "'");
 		// same algorithm than readSequence
 		if (schemaName != null) {
 			return getSchema().getTableOrView(session, tableName);
 		}
-		Table table = database.getSchema(session.getCurrentSchemaName()).findTableOrView(session, tableName);
+		Table table = database.getSchema(session.getCurrentSchemaName()).findTableOrView(session, tableName, locale);
 		if (table != null) {
 			return table;
 		}
 		String[] schemaNames = session.getSchemaSearchPath();
 		for (int i = 0; schemaNames != null && i < schemaNames.length; i++) {
 			Schema s = database.getSchema(schemaNames[i]);
-			table = s.findTableOrView(session, tableName);
+			table = s.findTableOrView(session, tableName, locale);
 			if (table != null) {
 				return table;
 			}
@@ -4324,7 +4331,7 @@ public class Parser {
 		} else {
 			//Linked table was successfully added.
 			System.out.println("Successfully created linked table '" + tableName + "'. Attempting to access it.");
-			return readTableOrView(tableName, false);
+			return readTableOrView(tableName, false, LocationPreference.PRIMARY);
 		}
 
 	}

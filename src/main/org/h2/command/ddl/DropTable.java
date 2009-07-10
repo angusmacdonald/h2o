@@ -9,6 +9,7 @@ package org.h2.command.ddl;
 import java.sql.SQLException;
 
 import org.h2.constant.ErrorCode;
+import org.h2.constant.LocationPreference;
 import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Right;
@@ -58,7 +59,7 @@ public class DropTable extends SchemaCommand {
     }
 
     private void prepareDrop() throws SQLException {
-        table = getSchema().findTableOrView(session, tableName);
+        table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
         // TODO drop table: drops views as well (is this ok?)
         if (table == null) {
             if (!ifExists) {
@@ -79,7 +80,7 @@ public class DropTable extends SchemaCommand {
     private void executeDrop() throws SQLException {
         // need to get the table again, because it may be dropped already
         // meanwhile (dependent object, or same object)
-        table = getSchema().findTableOrView(session, tableName);
+        table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
         if (table != null) {
             table.setModified();
             Database db = session.getDatabase();

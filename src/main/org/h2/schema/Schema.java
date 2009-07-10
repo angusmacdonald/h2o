@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.h2.constant.ErrorCode;
+import org.h2.constant.LocationPreference;
 import org.h2.constant.SysProperties;
 import org.h2.constraint.Constraint;
 import org.h2.engine.Database;
@@ -250,16 +251,25 @@ public class Schema extends DbObjectBase {
 	 *
 	 * @param session the session
 	 * @param name the object name
+	 * @param locale 
 	 * @return the object or null
 	 */
-	public Table findTableOrView(Session session, String name) {
+	public Table findTableOrView(Session session, String name, LocationPreference locale) {
 		ReplicaSet replicaSet = tablesAndViews.get(name);
 
 		Table table = null;
 		if (replicaSet == null && session != null) {
 			table = session.findLocalTempTable(name);
 		} else if (replicaSet != null){
-			table = replicaSet.getACopy();
+			
+			if (replicaSet.size() == 1 || locale == LocationPreference.NO_PREFERENCE){ //XXX more advanced logic to choose replica would go here.
+				table = replicaSet.getACopy();
+			} else if (locale == LocationPreference.LOCAL){
+				table = replicaSet.getLocalCopy(); //XXX what if no local copy exists?
+			} else if (locale == LocationPreference.PRIMARY){
+				table = replicaSet.getPrimaryCopy();
+			}
+			
 		}
 		return table;
 	}

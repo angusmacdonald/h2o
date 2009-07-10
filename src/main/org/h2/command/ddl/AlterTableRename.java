@@ -9,6 +9,7 @@ package org.h2.command.ddl;
 import java.sql.SQLException;
 
 import org.h2.constant.ErrorCode;
+import org.h2.constant.LocationPreference;
 import org.h2.engine.Database;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
@@ -40,7 +41,7 @@ public class AlterTableRename extends SchemaCommand {
     public int update() throws SQLException {
         session.commit(true);
         Database db = session.getDatabase();
-        if (getSchema().findTableOrView(session, newTableName) != null || newTableName.equals(oldTable.getName())) {
+        if (getSchema().findTableOrView(session, newTableName, LocationPreference.NO_PREFERENCE) != null || newTableName.equals(oldTable.getName())) {
             throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, newTableName);
         }
         session.getUser().checkRight(oldTable, Right.ALL);

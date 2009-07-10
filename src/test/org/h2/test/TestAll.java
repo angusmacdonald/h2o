@@ -205,7 +205,7 @@ java org.h2.test.TestAll timer
     /**
      * If only JDK 1.4 methods should be tested.
      */
-    public boolean jdk14 = true;
+    public boolean jdk14 = false;
 
     /**
      * The file trace level value to use.
@@ -619,7 +619,7 @@ http://www.w3schools.com/sql/
         new TestExit().runTest(this);
         new TestFile().runTest(this);
         new TestFileLock().runTest(this);
-        new TestFtp().runTest(this);
+        //new TestFtp().runTest(this);
         new TestFileSystem().runTest(this);
         new TestIntArray().runTest(this);
         new TestIntIntHashMap().runTest(this);

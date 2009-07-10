@@ -13,6 +13,7 @@ import org.h2.command.Prepared;
 import org.h2.command.dml.Insert;
 import org.h2.command.dml.Query;
 import org.h2.constant.ErrorCode;
+import org.h2.constant.LocationPreference;
 import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.SchemaManager;
@@ -110,7 +111,7 @@ public class CreateTable extends SchemaCommand {
 			persistent = false;
 		}
 
-		if ((getSchema().findTableOrView(session, tableName) != null && !isStartup()) || getSchema().findLocalTableOrView(session, tableName) != null) {
+		if ((getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE) != null && !isStartup()) || getSchema().findLocalTableOrView(session, tableName) != null) {
 			if (ifNotExists) {
 				return 0;
 			}

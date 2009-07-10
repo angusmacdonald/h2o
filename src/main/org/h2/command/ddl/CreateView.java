@@ -10,6 +10,7 @@ import java.sql.SQLException;
 
 import org.h2.command.dml.Query;
 import org.h2.constant.ErrorCode;
+import org.h2.constant.LocationPreference;
 import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
@@ -51,7 +52,7 @@ public class CreateView extends SchemaCommand {
         // TODO rights: what rights are required to create a view?
         session.commit(true);
         Database db = session.getDatabase();
-        if (getSchema().findTableOrView(session, viewName) != null) {
+        if (getSchema().findTableOrView(session, viewName, LocationPreference.NO_PREFERENCE) != null) {
             if (ifNotExists) {
                 return 0;
             }

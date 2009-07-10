@@ -420,4 +420,12 @@ public class ReplicaSet{
 			return ((Table)replicas.toArray()[0]).getDropSQL();
 		}
 	}
+
+	/**
+	 * The number of replicas for this table.
+	 * @return	Number of replicas.
+	 */
+	public int size() {
+		return replicas.size();
+	}
 }

@@ -67,6 +67,7 @@ public class TableFilter implements ColumnResolver {
     private ObjectArray naturalJoinColumns;
     private boolean foundOne;
     private Expression fullCondition;
+    
 
     /**
      * Create a new table filter object.
@@ -83,6 +84,7 @@ public class TableFilter implements ColumnResolver {
         this.table = table;
         this.alias = alias;
         this.select = select;
+       
         if (!rightsChecked) {
             session.getUser().checkRight(table, Right.SELECT);
         }

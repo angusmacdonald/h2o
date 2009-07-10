@@ -28,7 +28,7 @@ import org.junit.Test;
 public class SchemaManagerTests {
 
 	private static final String BASEDIR = "db_data/unittests";
-	
+
 	/**
 	 * @throws java.lang.Exception
 	 */
@@ -101,31 +101,28 @@ public class SchemaManagerTests {
 	 */
 	@Test
 	public void linkedSchemaTableTest() throws SQLException, InterruptedException{
-		  org.h2.Driver.load();
-	        Connection ca = DriverManager.getConnection("jdbc:h2:mem:one", "sa", "sa");
-	        Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
-	        Statement sa = ca.createStatement();
-	        Statement sb = cb.createStatement();
-	        sa.execute("CREATE TABLE TEST(ID INT)");
-	        sa.execute("CREATE SCHEMA P");
-	        sa.execute("CREATE TABLE P.TEST(X INT)");
-	        sa.execute("INSERT INTO TEST VALUES(1)");
-	        sa.execute("INSERT INTO P.TEST VALUES(2)");
-
-	       
-	      
-//	        
-//		sb.executeQuery("SELECT * FROM H20.H2O_TABLE");
-//		sb.executeQuery("SELECT * FROM H20.H2O_REPLICA");
-//		ResultSet rs = sb.executeQuery("SELECT * FROM H20.H2O_CONNECTION");
-
-
-//		if (rs.next()){
-//			System.out.println(rs.getString(1) + ", " + rs.getString(2)  + ", " + rs.getString(3) + ", " + rs.getString(4));
+		org.h2.Driver.load();
+		Connection ca = DriverManager.getConnection("jdbc:h2:mem:one", "sa", "sa");
+		//Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
+		Statement sa = ca.createStatement();
+		//Statement sb = cb.createStatement();
+		sa.execute("CREATE TABLE TEST(ID INT)");
+		sa.execute("CREATE SCHEMA P");
+		sa.execute("CREATE TABLE P.TEST(X INT)");
+		sa.execute("INSERT INTO TEST VALUES(1)");
+		sa.execute("INSERT INTO P.TEST VALUES(2)");
+//		try {
+//			sb.execute("CREATE LINKED TABLE T(NULL, 'jdbc:h2:mem:one', 'sa', 'sa', 'TEST')");
+//			fail();
+//		} catch (SQLException e) {
+//			
 //		}
-
-		sb.execute("DROP ALL OBJECTS");
-		cb.close();
+//		sb.execute("CREATE LINKED TABLE T(NULL, 'jdbc:h2:mem:one', 'sa', 'sa', 'PUBLIC', 'TEST')");
+//		sb.execute("CREATE LINKED TABLE T2(NULL, 'jdbc:h2:mem:one', 'sa', 'sa', 'P', 'TEST')");
+		sa.execute("DROP ALL OBJECTS");
+		//sb.execute("DROP ALL OBJECTS");
+		ca.close();
+		//cb.close();
 	}
 
 }

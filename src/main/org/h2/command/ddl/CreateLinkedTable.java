@@ -9,6 +9,7 @@ package org.h2.command.ddl;
 import java.sql.SQLException;
 
 import org.h2.constant.ErrorCode;
+import org.h2.constant.LocationPreference;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.message.Message;
@@ -67,7 +68,7 @@ public class CreateLinkedTable extends SchemaCommand {
         session.commit(true);
         Database db = session.getDatabase();
         session.getUser().checkAdmin();
-        if (getSchema().findTableOrView(session, tableName) != null) {
+        if (getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE) != null) {
             if (ifNotExists) {
                 return 0;
             }
