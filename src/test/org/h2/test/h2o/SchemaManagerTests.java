@@ -3,10 +3,6 @@ package org.h2.test.h2o;
 
 import static org.junit.Assert.*;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -15,8 +11,6 @@ import java.sql.Statement;
 
 import org.h2.engine.Constants;
 import org.h2.engine.SchemaManager;
-import org.h2.result.LocalResult;
-import org.h2.test.TestBase;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;
 import org.junit.After;

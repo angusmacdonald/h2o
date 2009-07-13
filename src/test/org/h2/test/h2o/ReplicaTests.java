@@ -21,7 +21,7 @@ import org.junit.Test;
  *
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class ReplicaTest {
+public class ReplicaTests {
 	
 	Connection ca = null;
 	Connection cb = null;
