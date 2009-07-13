@@ -66,12 +66,12 @@ public class SchemaManager {
 	/**
 	 * The database username used to communicate with schema manager tables.
 	 */
-	public static final String USERNAME = "angus";
+	public static String USERNAME = "sa";
 
 	/**
 	 * The database password used to communicate with schema manager tables.
 	 */
-	public static final String PASSWORD = "supersecret";
+	public static String PASSWORD = "sa";
 
 
 	/**
@@ -140,9 +140,16 @@ public class SchemaManager {
 			String machineName = row[2].getString();
 			String connectionPort = row[3].getString();
 			
-			String dbName = "jdbc:h2:" + connectionType + "://" + machineName + ":" + connectionPort + "/" + dbLocation;
+			String dbname = null;
+			if (connectionType.equals("tcp")){
+				dbname = "jdbc:h2:" + connectionType + "://" + machineName + ":" + connectionPort + "/" + dbLocation;
+			} else if (connectionType.equals("mem")){
+				dbname = "jdbc:h2:" + dbLocation;
+			} else {
+				Message.throwInternalError("This connection type isn't supported yet. Get on that!");
+			}
 			
-			return dbName;
+			return dbname;
 		}
 		
 		throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
@@ -192,7 +199,7 @@ public class SchemaManager {
 			String databaseLocation, String tableType,
 			String localMachineAddress, int localMachinePort, String connection_type) throws SQLException {
 		
-		int connectionID = SchemaManager.getInstance().getConnectionID(localMachineAddress, localMachinePort, connection_type);
+		int connectionID = getConnectionID(localMachineAddress, localMachinePort, connection_type);
 
 		if (!isReplicaListed(tableName, connectionID)){ // the table doesn't already exist in the schema manager.
 			addReplicaInformation(tableName, modificationID, connectionID, databaseLocation, tableType);				
@@ -217,11 +224,15 @@ public class SchemaManager {
 	 * Update the schema manager with new connection information.
 	 * @param localMachineAddress	The address through which remote machines can connect to the database.
 	 * @param localMachinePort		The port on which the database is running.
+	 * @param databaseLocation 		The location of the local database. Used to determine whether a database in running in embedded mode.
 	 * @return						Result of the update.
 	 * @throws SQLException
 	 */
-	public int addLocalConnectionInformation(String localMachineAddress, int localMachinePort) throws SQLException{
-		String sql = "\nINSERT INTO " + CONNECTIONS + " VALUES (null, 'tcp', '" + localMachineAddress + "', "  + localMachinePort + ");\n";
+	public int addLocalConnectionInformation(String localMachineAddress, int localMachinePort, String databaseLocation) throws SQLException{
+		
+		String connection_type = (localMachinePort == -1 && databaseLocation.contains("mem"))? "mem": "tcp";
+		
+		String sql = "\nINSERT INTO " + CONNECTIONS + " VALUES (null, '" + connection_type + "', '" + localMachineAddress + "', "  + localMachinePort + ");\n";
 
 		return executeUpdate(sql);
 	}
@@ -281,14 +292,15 @@ public class SchemaManager {
 	 * Contacts the schema manager and accesses information on the set of available remote tables.
 	 * @param localMachineAddress	The address of the local requesting machine (so as to exclude local results)
 	 * @param localMachinePort	The port number of the local requesting machine (so as to exclude local results)
+	 * @param dbLocation The location of the database on the local machine.
 	 * @return	Result-set of all remote tables.
 	 * @throws SQLException
 	 */
-	public LocalResult getAllRemoteTables(String localMachineAddress, int localMachinePort) throws SQLException{
+	public LocalResult getAllRemoteTables(String localMachineAddress, int localMachinePort, String dbLocation) throws SQLException{
 		String sql = "SELECT tablename, db_location, connection_type, machine_name, connection_port " +
 		"FROM " + REPLICAS + ", " + CONNECTIONS +
 		" WHERE " + CONNECTIONS + ".connection_id = " + REPLICAS + ".connection_id " +
-		"AND NOT (machine_name = '" + localMachineAddress + "' AND connection_port = " + localMachinePort + ");";
+		"AND NOT (machine_name = '" + localMachineAddress + "' AND connection_port = " + localMachinePort + " AND db_location = '" + dbLocation + "');";
 
 		return executeQuery(sql);
 	}

@@ -13,7 +13,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.h2.engine.Constants;
+import org.h2.engine.SchemaManager;
 import org.h2.result.LocalResult;
+import org.h2.test.TestBase;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;
 import org.junit.After;
@@ -27,13 +30,16 @@ import org.junit.Test;
  */
 public class SchemaManagerTests {
 
-	private static final String BASEDIR = "db_data/unittests";
+	private static final String BASEDIR = "db_data/unittests/";
 
 	/**
 	 * @throws java.lang.Exception
 	 */
 	@Before
 	public void setUp() throws Exception {
+		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
+		SchemaManager.USERNAME = "sa";
+		SchemaManager.PASSWORD = "sa";
 	}
 
 	/**
@@ -41,7 +47,7 @@ public class SchemaManagerTests {
 	 */
 	@After
 	public void tearDown() throws Exception {
-		DeleteDbFiles.main(new String[] { "-dir", BASEDIR + "/schema_test", "-quiet" });
+
 	}
 
 	/**
@@ -59,14 +65,8 @@ public class SchemaManagerTests {
 
 		try {
 			server = Server.createTcpServer(new String[] { "-tcpPort", "9081", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test" });
+			server.start();
 
-			new Thread(server.start()).start();
-			//server.start();
-
-
-
-			//Thread.sleep(5000);
-			// now use the database in your application in embedded mode
 			Class.forName("org.h2.Driver");
 			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", "sa", "sa");
 
@@ -89,7 +89,96 @@ public class SchemaManagerTests {
 
 			// stop the server
 			server.stop();
+
+			try {
+				DeleteDbFiles.execute(BASEDIR, "schema_test", true);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
 		}
+
+
+	}
+
+	/**
+	 * Test that the state of the schema manager classes are successfully maintained between instances.
+	 * @throws SQLException 
+	 * @throws ClassNotFoundException 
+	 * @throws InterruptedException 
+	 */
+	@Test
+	public void schemaTableCreationPersistence() throws ClassNotFoundException, InterruptedException{
+
+		Connection conn = null;
+		// start the server, allows to access the database remotely
+		Server server = null;
+
+		try {
+			server = Server.createTcpServer(new String[] { "-tcpPort", "9081", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test" });
+			server.start();
+
+			Class.forName("org.h2.Driver");
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", "sa", "sa");
+
+			Statement sa = conn.createStatement();
+
+			sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+			sa.execute("INSERT INTO TEST VALUES(1, 'Hello');");
+			sa.execute("INSERT INTO TEST VALUES(2, 'World');");
+
+			server.shutdown();
+			server.stop();
+
+			server = Server.createTcpServer(new String[] { "-tcpPort", "9081", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test" });
+			server.start();
+
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", "sa", "sa");
+
+			sa = conn.createStatement();
+
+			try{
+				sa.execute("SELECT * FROM TEST;");
+			} catch (SQLException e){
+				fail("The TEST table was not found.");
+			}
+
+			try{
+				sa.execute("SELECT * FROM H20.H2O_TABLE;");
+			} catch (SQLException e){
+				fail("The TEST table was not found.");
+			}			
+
+			ResultSet rs = sa.getResultSet();
+			if (!rs.next()){
+				fail("There shouldn't be a single table in the schema manager.");
+			}
+			
+			if (!rs.getString(1).equals("TEST")){
+				fail("This entry should be for the TEST table.");
+			}
+			
+			rs.close();
+			
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+			fail("Couldn't find schema manager tables.");
+		} finally {
+			try {
+				conn.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+
+			// stop the server
+			server.stop();
+
+			try {
+				DeleteDbFiles.execute(BASEDIR, "schema_test", true);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+
 
 	}
 
@@ -100,29 +189,232 @@ public class SchemaManagerTests {
 	 * @throws InterruptedException
 	 */
 	@Test
-	public void linkedSchemaTableTest() throws SQLException, InterruptedException{
+	public void linkedSchemaTableTest(){
 		org.h2.Driver.load();
-		Connection ca = DriverManager.getConnection("jdbc:h2:mem:one", "sa", "sa");
-		//Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
-		Statement sa = ca.createStatement();
-		//Statement sb = cb.createStatement();
-		sa.execute("CREATE TABLE TEST(ID INT)");
-		sa.execute("CREATE SCHEMA P");
-		sa.execute("CREATE TABLE P.TEST(X INT)");
-		sa.execute("INSERT INTO TEST VALUES(1)");
-		sa.execute("INSERT INTO P.TEST VALUES(2)");
-//		try {
-//			sb.execute("CREATE LINKED TABLE T(NULL, 'jdbc:h2:mem:one', 'sa', 'sa', 'TEST')");
-//			fail();
-//		} catch (SQLException e) {
-//			
-//		}
-//		sb.execute("CREATE LINKED TABLE T(NULL, 'jdbc:h2:mem:one', 'sa', 'sa', 'PUBLIC', 'TEST')");
-//		sb.execute("CREATE LINKED TABLE T2(NULL, 'jdbc:h2:mem:one', 'sa', 'sa', 'P', 'TEST')");
-		sa.execute("DROP ALL OBJECTS");
-		//sb.execute("DROP ALL OBJECTS");
-		ca.close();
-		//cb.close();
+
+		try{
+			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
+			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
+			Statement sa = ca.createStatement();
+			Statement sb = cb.createStatement();
+
+			sb.execute("SELECT * FROM H20.H2O_TABLE;");
+			sb.execute("SELECT * FROM H20.H2O_REPLICA;");
+			sb.execute("SELECT * FROM H20.H2O_CONNECTION;");
+
+			ResultSet rs = sb.getResultSet();
+
+			if (!rs.next()){
+				fail("There should be at least one row for local instance itself.");
+			}
+
+			rs.close();
+
+			sa.execute("DROP ALL OBJECTS");
+			sb.execute("DROP ALL OBJECTS");
+			ca.close();
+			cb.close();
+
+		} catch (SQLException sqle){
+			fail("SQLException thrown when it shouldn't have.");
+			sqle.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Tests that when a new table is added to the database it is also added to the schema manager.
+	 * @throws SQLException
+	 * @throws InterruptedException
+	 */
+	@Test
+	public void testTableInsertion(){
+		org.h2.Driver.load();
+
+		try{
+			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
+			Statement sa = ca.createStatement();
+
+			sa.execute("SELECT * FROM H20.H2O_TABLE;");
+			ResultSet rs = sa.getResultSet();		
+			if (rs.next()){
+				fail("There shouldn't be any tables in the schema manager yet.");
+			}
+			rs.close();
+
+			sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+
+			sa.execute("SELECT * FROM H20.H2O_TABLE;");
+			rs = sa.getResultSet();		
+			if (rs.next()){
+				assertEquals("TEST", rs.getString(1));
+			} else {
+				fail("Table TEST was not found in the schema manager.");
+			}
+			rs.close();
+
+			sa.close();
+			ca.close();
+		} catch (SQLException sqle){
+			fail("SQLException thrown when it shouldn't have.");
+			sqle.printStackTrace();
+		}
 	}
 
+	/**
+	 * Tests that when a new table is added to the database it is accessible remotely.
+	 * @throws SQLException
+	 * @throws InterruptedException
+	 */
+	@Test
+	public void testTableAccessibilityOnCreate(){
+		org.h2.Driver.load();
+
+		try{
+			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
+
+			Statement sa = ca.createStatement();
+
+
+			sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+			sa.execute("INSERT INTO TEST VALUES(1, 'Hello');");
+			sa.execute("INSERT INTO TEST VALUES(2, 'World');");
+
+
+			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
+			Statement sb = cb.createStatement();
+
+			try{
+				sb.execute("SELECT * FROM TEST;");
+			} catch (SQLException e){
+				fail("The TEST table was not found.");
+			}
+			ResultSet rs = sb.getResultSet();		
+
+			if (rs.next()){
+				assertEquals(1, rs.getInt(1));
+				assertEquals("Hello", rs.getString(2));
+			} else {
+				fail("Test was not remotely accessible.");
+			}
+
+			if (rs.next()){
+				assertEquals(2, rs.getInt(1));
+				assertEquals("World", rs.getString(2));
+			} else {
+				fail("Not all of the contents of test were remotely accessible.");
+			}			
+
+			rs.close();
+			sa.close();
+			sb.close();
+			ca.close();
+			cb.close();
+		} catch (SQLException sqle){
+			sqle.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
+
+		}
+	}
+
+	/**
+	 * Tests that when a table is dropped it isn't accessible, and not that meta-data is not available from the schema manager.
+	 * @throws SQLException
+	 * @throws InterruptedException
+	 */
+	@Test
+	public void testTableAccessibilityOnDrop(){
+		org.h2.Driver.load();
+
+		try{
+			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
+			Statement sa = ca.createStatement();
+
+			sa.execute("SELECT * FROM H20.H2O_TABLE;");
+			ResultSet rs = sa.getResultSet();		
+			if (rs.next()){
+				fail("There shouldn't be any tables in the schema manager yet.");
+			}
+			rs.close();
+
+			sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+
+			sa.execute("SELECT * FROM H20.H2O_TABLE;");
+			rs = sa.getResultSet();		
+			if (rs.next()){
+				assertEquals("TEST", rs.getString(1));
+			} else {
+				fail("Table TEST was not found in the schema manager.");
+			}
+			rs.close();
+
+			sa.execute("DROP TABLE TEST;");
+
+			try {
+				sa.execute("SELECT * FROM TEST");
+				fail("Should have caused an exception.");
+			} catch (SQLException e){
+				//Expected
+			}
+
+			sa.execute("SELECT * FROM H20.H2O_TABLE;");
+			rs = sa.getResultSet();		
+			if (rs.next()){
+				fail("There shouldn't be any entries in the schema manager.");
+			} 
+			rs.close();
+
+
+			sa.close();
+			ca.close();
+
+		} catch (SQLException sqle){
+			fail("SQLException thrown when it shouldn't have.");
+			sqle.printStackTrace();
+		}
+	}
+
+	/**
+	 * Tests that when a new table is dropped the system is able to handle this when a
+	 * remote request comes in for it.
+	 * @throws SQLException
+	 * @throws InterruptedException
+	 */
+	@Test
+	public void testTableRemoteAccessibilityOnDrop(){
+		org.h2.Driver.load();
+
+		try{
+			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
+
+			Statement sa = ca.createStatement();
+
+
+			sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+			sa.execute("INSERT INTO TEST VALUES(1, 'Hello');");
+			sa.execute("INSERT INTO TEST VALUES(2, 'World');");
+
+
+			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
+			Statement sb = cb.createStatement();
+
+			sa.execute("DROP TABLE TEST;");
+
+
+			try{
+				sb.execute("SELECT * FROM TEST;");
+				fail("This query should fail.");
+			} catch (SQLException e){
+				//Expected.
+			}
+
+			sa.close();
+			sb.close();
+			ca.close();
+			cb.close();
+		} catch (SQLException sqle){
+			sqle.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
+
+		}
+	}
 }

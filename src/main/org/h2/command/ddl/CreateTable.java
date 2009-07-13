@@ -238,7 +238,7 @@ public class CreateTable extends SchemaCommand {
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_")){
 				SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
 				sm.addTableInformation(tableName, table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
-						db.getLocalMachineAddress(), db.getLocalMachinePort(), "tcp");	
+						db.getLocalMachineAddress(), db.getLocalMachinePort(), (db.isPersistent())? "tcp": "mem");	
 			}
 
 

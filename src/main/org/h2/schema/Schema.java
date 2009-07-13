@@ -463,7 +463,7 @@ public class Schema extends DbObjectBase {
 		ReplicaSet tables = tablesAndViews.get(name);
 
 		if (tables == null) {
-			System.err.println("Schema.getTablesOrViews: Table '" + name + "' not found.");
+			//System.out.println("Schema.getTablesOrViews: Table '" + name + "' not found.");
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, name);
 		}
 		return tables;

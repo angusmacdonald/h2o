@@ -234,7 +234,7 @@ public class Database implements DataHandler {
 
 		if (Constants.IS_H2O && !isManagementDB() && this.schemaManagerLocation == null){
 			//throw new SQLException ("Schema Manager location should be known.");
-			this.schemaManagerLocation = "jdbc:h2:mem:one";
+			this.schemaManagerLocation = Constants.DEFAULT_SCHEMA_MANAGER_LOCATION;
 		}
 
 
@@ -2427,7 +2427,7 @@ public class Database implements DataHandler {
 			}
 
 			if (!schemaManager.connectionInformationExists(localMachineAddress, localMachinePort)){
-				schemaManager.addLocalConnectionInformation(localMachineAddress, localMachinePort);
+				schemaManager.addLocalConnectionInformation(localMachineAddress, localMachinePort, getDatabaseLocation());
 			}
 
 		} catch (SQLException e) {
@@ -2436,10 +2436,11 @@ public class Database implements DataHandler {
 
 
 		if (!schemamanager && result >= 0){
-
+			connectedToSM = true;
+			
 			try {
 
-				LocalResult remoteTables = schemaManager.getAllRemoteTables(localMachineAddress, localMachinePort);
+				LocalResult remoteTables = schemaManager.getAllRemoteTables(localMachineAddress, localMachinePort, getDatabaseLocation());
 
 				String sql = "";
 				while (remoteTables.next()){
@@ -2452,8 +2453,18 @@ public class Database implements DataHandler {
 					String connection_port = row[4].getString();
 
 					//Example format: jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db
-					String dbname = "jdbc:h2:" + connection_type + "://" + machine_name + ":" + connection_port + "/" + db_location;
-					sql += "\nCREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + dbname + "', 'angus', 'supersecret', '" + tableName + "');";
+					
+					String dbname = "";
+					
+					if (connection_type.equals("tcp")){
+						dbname = "jdbc:h2:" + connection_type + "://" + machine_name + ":" + connection_port + "/" + db_location;
+					} else if (connection_type.equals("mem")){
+						dbname = "jdbc:h2:" + db_location;
+					} else {
+						Message.throwInternalError("This connection type isn't supported yet. Get on that!");
+					}
+					sql += "\nCREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + dbname + "', '" + 
+					SchemaManager.USERNAME + "', '" + SchemaManager.PASSWORD + "', '" + tableName + "');";
 
 				}
 

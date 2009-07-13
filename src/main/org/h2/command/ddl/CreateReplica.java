@@ -271,8 +271,13 @@ public class CreateReplica extends SchemaCommand {
 						if (firstRun){
 							types.add(new Integer(part));
 						} else {
+						
+							if (part.startsWith("'") && part.endsWith("'")){
+								part = part.substring(1, part.length()-1);
+							}
 							ValueString val = ValueString.get(part);
 
+						
 							values.add(ValueExpression.get(val.convertTo(types.get(i++))));
 						}
 
@@ -288,10 +293,9 @@ public class CreateReplica extends SchemaCommand {
 					}
 
 				}
-				System.out.println("result of insert: " + command.update());
-
-
-
+				
+				command.update();
+				
 				/*
 				 * #########################################################################
 				 * 

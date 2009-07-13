@@ -15,6 +15,12 @@ public class Constants {
 	 * Is the database running as H2O, or as H2 (backwards compatibility maintained for tests.
 	 */
 	public static boolean IS_H2O = true;
+
+	/**
+	 * Used in testing.
+	 */
+	public static String DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test";
+
     /**
      * The build id is incremented for each public release.
      */
@@ -510,7 +516,7 @@ public class Constants {
     public static final int VIEW_INDEX_CACHE_SIZE = 64;
 
 	public static final String H20_SCHEMA = "H20";
-
+	
     private Constants() {
         // utility class
     }

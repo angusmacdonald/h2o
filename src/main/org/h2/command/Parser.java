@@ -4272,6 +4272,7 @@ public class Parser {
 	private Table readTableOrView(String tableName, boolean searchRemote, LocationPreference locale) throws SQLException {
 		//System.out.println("Looking for table '" + tableName + "'");
 		// same algorithm than readSequence
+
 		if (schemaName != null) {
 			return getSchema().getTableOrView(session, tableName);
 		}
