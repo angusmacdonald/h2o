@@ -66,12 +66,12 @@ public class SchemaManager {
 	/**
 	 * The database username used to communicate with schema manager tables.
 	 */
-	public static String USERNAME = "sa";
+	public static String USERNAME = "angus";
 
 	/**
 	 * The database password used to communicate with schema manager tables.
 	 */
-	public static String PASSWORD = "sa";
+	public static String PASSWORD = "supersecret";
 
 
 	/**

@@ -17,10 +17,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.h2.command.Command;
+import org.h2.command.Parser;
 import org.h2.command.Prepared;
 import org.h2.command.dml.Insert;
 import org.h2.command.dml.Query;
 import org.h2.constant.ErrorCode;
+import org.h2.constant.LocationPreference;
 import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.SchemaManager;
@@ -72,6 +75,8 @@ public class CreateReplica extends SchemaCommand {
 	private boolean storesLowerCase = false;
 	private boolean storesMixedCase = false;
 	private boolean supportsMixedCaseIdentifiers = false;
+	
+	String primaryReplicaLocation = null;
 
 	/**
 	 * Array containing all of the insert statements required for this replicas state to match that of the primary.
@@ -142,11 +147,20 @@ public class CreateReplica extends SchemaCommand {
 		if (!db.isPersistent()) {
 			persistent = false;
 		}
+
 		if (getSchema().findLocalTableOrView(session, tableName) != null) { //H2O. Check for local version here.
 			if (ifNotExists) {
 				return 0;
 			}
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
+		}  
+		
+		if (getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE) == null) { //H2O. Check for the existence of any version. if a linked table version doesn't exist we must create it.
+			String createLinkedTable = "\nCREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + primaryReplicaLocation + "', '" + 
+			SchemaManager.USERNAME + "', '" + SchemaManager.PASSWORD + "', '" + tableName + "');";
+			Parser queryParser = new Parser(session);;
+			Command sqlQuery = queryParser.prepareCommand(createLinkedTable);
+			sqlQuery.executeUpdate();
 		}    
 
 		if (asQuery != null) {
@@ -229,25 +243,11 @@ public class CreateReplica extends SchemaCommand {
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_")){
 
 				/*
-				 * #########################################################################
-				 * 
-				 *  Copy over data.
-				 * 
-				 * #########################################################################
+				 * Copy over the data that we have stored in the 'inserts' set. This section of code loops
+				 * through that set and does some fairly primitive string splitting to get each value - there
+				 * is an assumption that a comma will never appear in the database TODO fix this! 
 				 */
-				//				try {
-				//					if (inserts != null){
-				//						for (String insert: inserts){
-				//							Prepared command = session.prepare(insert);
-				//							command.update();
-				//						}
-				//					}
-				//				} catch (SQLException e){
-				//					e.printStackTrace();
-				//					throw new SQLException("Failed to copy data across to new replica.");
-				//				}
-
-
+				
 				Insert command = new Insert(session);
 
 
@@ -280,7 +280,6 @@ public class CreateReplica extends SchemaCommand {
 						
 							values.add(ValueExpression.get(val.convertTo(types.get(i++))));
 						}
-
 
 					}
 
@@ -402,17 +401,15 @@ public class CreateReplica extends SchemaCommand {
 	 * @throws JdbcSQLException 
 	 */
 	public void readSQL() throws JdbcSQLException {
-		String tableLocation = "";
-
 		try {
-			tableLocation = SchemaManager.getInstance().getPrimaryReplicaLocation(tableName);
+			primaryReplicaLocation = SchemaManager.getInstance().getPrimaryReplicaLocation(tableName);
 		} catch (SQLException e) {
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
 		}
 
 		//TODO connect to the given location using hte same method as linked tables, and get the appropriate create table SQL.
 		try {
-			connect(tableLocation);
+			connect(primaryReplicaLocation);
 		} catch (SQLException e) {
 			throw Message.getSQLException(ErrorCode.CONNECTION_BROKEN, tableName);
 		}
