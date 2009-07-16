@@ -129,10 +129,16 @@ public class SchemaManager {
 
 		sqlQuery = queryParser.prepareCommand(sql);
 
+		try {
+		
 		result = sqlQuery.executeQueryLocal(1);
 
-
-		if (result.next()){ //XXX This just takes the first replica, assuming there are more than one.
+		} catch (Exception e){
+			System.out.println("This is the one.");
+			e.printStackTrace();
+		}
+		
+		if (result != null && result.next()){ //XXX This just takes the first replica, assuming there are more than one.
 			Value[] row = result.currentRow();
 
 			String dbLocation = row[0].getString();

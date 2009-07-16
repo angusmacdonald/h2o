@@ -4676,6 +4676,17 @@ public class Parser {
 	private CreateReplica parseCreateReplica(boolean temp, boolean globalTemp, boolean persistent) throws SQLException {
 		boolean ifNotExists = readIfNoExists();
 		String tableName = readIdentifierWithSchema();
+		
+		
+		String replicationLocation = null;
+		String originalLocation = null;
+		
+		if (readIf("ON")) {
+			replicationLocation = readExpression().toString();
+		} else if (readIf("FROM")){
+			originalLocation = readExpression().toString();			
+		}
+		
 		if (temp && globalTemp && "SESSION".equals(schemaName)) {
 			// support weird syntax: declare global temporary table session.xy
 			// (...) not logged
@@ -4684,6 +4695,15 @@ public class Parser {
 		}
 		Schema schema = getSchema();
 		CreateReplica command = new CreateReplica(session, schema);
+		
+		if (replicationLocation != null){
+			command.setReplicationLocation(replicationLocation);
+			command.setTableName(tableName);
+		} else {		
+		if (originalLocation != null){
+			command.setOriginalLocation(originalLocation);
+		}
+			
 		command.setPersistent(persistent);
 		command.setTemporary(temp);
 		command.setGlobalTemporary(globalTemp);
@@ -4691,6 +4711,7 @@ public class Parser {
 		command.setTableName(tableName);
 		command.setComment(readCommentIf());
 		command.readSQL();
+		}
 		return command;
 	}
 

@@ -1,0 +1,1 @@
+create replica test on 'jdbc:h2:tcp://localhost:9191/db_data/three/test_db'

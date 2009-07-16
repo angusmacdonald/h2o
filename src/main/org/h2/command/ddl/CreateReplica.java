@@ -6,6 +6,7 @@
  */
 package org.h2.command.ddl;
 
+import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -75,13 +76,23 @@ public class CreateReplica extends SchemaCommand {
 	private boolean storesLowerCase = false;
 	private boolean storesMixedCase = false;
 	private boolean supportsMixedCaseIdentifiers = false;
-	
+
 	String primaryReplicaLocation = null;
 
 	/**
 	 * Array containing all of the insert statements required for this replicas state to match that of the primary.
 	 */
 	private Set<String> inserts = null;
+
+	/**
+	 * The intended location of the remote replica.
+	 */
+	private String replicationLocation = null;
+	
+	/**
+	 * The location where the data currently exists and can be copied from.
+	 */
+	private String originalLocation = null;
 
 	public CreateReplica(Session session, Schema schema) {
 		super(session, schema);
@@ -139,7 +150,11 @@ public class CreateReplica extends SchemaCommand {
 	}
 
 	public int update() throws SQLException {
-		//tableName = "Replica" + tableName; //XXX quick hack to check everything else works.
+
+
+		if (replicationLocation != null){
+			return pushCommand();
+		}
 
 		// TODO rights: what rights are required to create a table?
 		session.commit(true);
@@ -154,7 +169,7 @@ public class CreateReplica extends SchemaCommand {
 			}
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
 		}  
-		
+
 		if (getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE) == null) { //H2O. Check for the existence of any version. if a linked table version doesn't exist we must create it.
 			String createLinkedTable = "\nCREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + primaryReplicaLocation + "', '" + 
 			SchemaManager.USERNAME + "', '" + SchemaManager.PASSWORD + "', '" + tableName + "');";
@@ -247,7 +262,7 @@ public class CreateReplica extends SchemaCommand {
 				 * through that set and does some fairly primitive string splitting to get each value - there
 				 * is an assumption that a comma will never appear in the database TODO fix this! 
 				 */
-				
+
 				Insert command = new Insert(session);
 
 
@@ -263,21 +278,21 @@ public class CreateReplica extends SchemaCommand {
 				for (String statement: inserts){
 					ObjectArray values = new ObjectArray();
 					statement = statement.substring(0, statement.length()-1);
-					
-					
+
+
 					int i = 0;
 					for (String part: statement.split(",")){
 						part = part.trim();
 						if (firstRun){
 							types.add(new Integer(part));
 						} else {
-						
+
 							if (part.startsWith("'") && part.endsWith("'")){
 								part = part.substring(1, part.length()-1);
 							}
 							ValueString val = ValueString.get(part);
 
-						
+
 							values.add(ValueExpression.get(val.convertTo(types.get(i++))));
 						}
 
@@ -292,9 +307,9 @@ public class CreateReplica extends SchemaCommand {
 					}
 
 				}
-				
+
 				command.update();
-				
+
 				/*
 				 * #########################################################################
 				 * 
@@ -318,6 +333,39 @@ public class CreateReplica extends SchemaCommand {
 
 
 		return 0;
+	}
+
+	/**
+	 * Push the CREATE REPLICA command to a remote machine where it will be properly executed.
+	 * @return The result of the update.
+	 * @throws SQLException 
+	 */
+	private int pushCommand() throws SQLException {
+		if (replicationLocation.startsWith("'") && replicationLocation.endsWith("'")){
+			replicationLocation = replicationLocation.substring(1, replicationLocation.length()-1);
+		}
+
+		Database db = session.getDatabase();
+
+		conn = db.getLinkConnection("org.h2.Driver", replicationLocation, SchemaManager.USERNAME, SchemaManager.PASSWORD);
+
+		int result = -1;
+
+		synchronized (conn) {
+			try {
+				Statement stat = conn.getConnection().createStatement();
+				String databaseName = db.getFullDatabasePath();
+				stat.execute("CREATE REPLICA " + tableName + " FROM '" + databaseName + "'");
+				result = stat.getUpdateCount();
+			} catch (SQLException e) {
+				conn.close();
+				conn = null;
+				e.printStackTrace();
+				throw e;
+			}
+		}
+
+		return result;
 	}
 
 	private void generateColumnsFromQuery() {
@@ -402,7 +450,15 @@ public class CreateReplica extends SchemaCommand {
 	 */
 	public void readSQL() throws JdbcSQLException {
 		try {
+			if (originalLocation == null){
 			primaryReplicaLocation = SchemaManager.getInstance().getPrimaryReplicaLocation(tableName);
+			} else {
+				if (originalLocation.startsWith("'") && originalLocation.endsWith("'")){
+					originalLocation = originalLocation.substring(1, originalLocation.length()-1);
+				}
+				
+				primaryReplicaLocation = originalLocation;
+			}
 		} catch (SQLException e) {
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
 		}
@@ -649,6 +705,24 @@ public class CreateReplica extends SchemaCommand {
 			break;
 		}
 		return precision;
+	}
+
+	/**
+	 * Sets the location at which the replica will be located. If this method is called that location
+	 * is not the local machine, and so the command will be sent remotely to be executed.
+	 * @param replicationLocation	The location of the remote database.
+	 */
+	public void setReplicationLocation(String replicationLocation) {
+		this.replicationLocation = replicationLocation;
+	}
+
+	/**
+	 * Sets the location at which the primary copy is located. If this method is called that location
+	 * is not the local machine - this location is used to get the meta-data and data from the given table.
+	 * @param originalLocation
+	 */
+	public void setOriginalLocation(String originalLocation) {
+		this.originalLocation = originalLocation;
 	}
 
 }

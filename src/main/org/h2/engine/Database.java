@@ -237,7 +237,7 @@ public class Database implements DataHandler {
 			this.schemaManagerLocation = Constants.DEFAULT_SCHEMA_MANAGER_LOCATION;
 		}
 
-
+		this.multiThreaded = true; //H2O. Required for the H2O push replication feature, among other things.
 
 		this.cipher = cipher;
 		String lockMethodName = ci.getProperty("FILE_LOCK", null);
@@ -725,6 +725,7 @@ public class Database implements DataHandler {
 				"-key", key, databaseName});
 		server.start();
 		String address = NetUtils.getLocalAddress() + ":" + server.getPort();
+		System.out.println("Server started on: " + address);
 		lock.setProperty("server", address);
 		lock.save();
 	}
@@ -1683,16 +1684,16 @@ public class Database implements DataHandler {
 		}
 		Set<ReplicaSet> list = getAllTables();
 		HashSet set = new HashSet();
-		
+
 		Set<ReplicaSet> allreplicas = getAllTables();
-		
+
 		for (ReplicaSet replicaSet: allreplicas) {
 
 
 			if ((except != null) && (replicaSet.getACopy() != null) && except.getName().equalsIgnoreCase(replicaSet.getACopy().getName())) {
 				continue;
 			}
-			
+
 			set.clear();
 			replicaSet.addDependencies(set);
 			if (set.contains(obj)) {
@@ -1701,13 +1702,13 @@ public class Database implements DataHandler {
 		}
 		return null;
 	}
-	
+
 	private String getFirstInvalidTable(Session session) {
 		String conflict = null;
 		try {
 			Set<ReplicaSet> list = getAllTables();
 			for (ReplicaSet replicaSet: list) {
-				
+
 				conflict = replicaSet.getSQL();
 				session.prepare(replicaSet.getCreateSQL());
 			}
@@ -2305,15 +2306,15 @@ public class Database implements DataHandler {
 	 * @return the table or null if no table is defined
 	 */
 	public ReplicaSet getFirstUserTable() {
-		
+
 		Set<ReplicaSet> list = getAllTables();
 		for (ReplicaSet replicaSet: list) {
-			
+
 			if (replicaSet.getCreateSQL()!= null){
 				return replicaSet;
 			}
 		}
-		
+
 		return null;
 	}
 
@@ -2437,7 +2438,7 @@ public class Database implements DataHandler {
 
 		if (!schemamanager && result >= 0){
 			connectedToSM = true;
-			
+
 			try {
 
 				LocalResult remoteTables = schemaManager.getAllRemoteTables(localMachineAddress, localMachinePort, getDatabaseLocation());
@@ -2453,9 +2454,9 @@ public class Database implements DataHandler {
 					String connection_port = row[4].getString();
 
 					//Example format: jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db
-					
+
 					String dbname = "";
-					
+
 					if (connection_type.equals("tcp")){
 						dbname = "jdbc:h2:" + connection_type + "://" + machine_name + ":" + connection_port + "/" + db_location;
 					} else if (connection_type.equals("mem")){
@@ -2525,5 +2526,21 @@ public class Database implements DataHandler {
 	 */
 	public int getLocalMachinePort() {
 		return localMachinePort;
+	}
+
+	/**
+	 * Gets the full address of the database - i.e. one that can be used to connect to it
+	 * remotely through JDBC. An example path:  jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db
+	 * @return
+	 */
+	public String getFullDatabasePath() {
+		String isTCP = (localMachinePort == -1 && databaseLocation.contains("mem"))? "": "tcp:";
+
+		String url = "";
+		if (isTCP.equals("tcp:")){
+			url = getLocalMachineAddress() + ":" + getLocalMachinePort() + "/";
+		}
+
+		return "jdbc:h2:" + ((isSM())? "sm:": "") + isTCP + url + getDatabaseLocation();
 	}
 }

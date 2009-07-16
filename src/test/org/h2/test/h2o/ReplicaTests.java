@@ -163,6 +163,46 @@ public class ReplicaTests extends TestBase{
 	}
 	
 	/**
+	 * Tests the 'push replication' feature by attempting to initiate replication creation on database B from database A.
+	 */
+	@Test
+	public void PushReplication(){
+
+		try{
+			sa.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:two'");
+
+			if (sa.getUpdateCount() != 0){
+				fail("Expected update count to be '0'");
+			}
+
+			sa.execute("INSERT INTO TEST VALUES(3, 'Quite');");
+			
+			/*
+			 * Check that the local copy has only two entries.
+			 */
+			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
+
+			int[] pKey = {1, 2};
+			String[] secondCol = {"Hello", "World"};
+			
+			validateResults(pKey, secondCol, sb.getResultSet());
+
+			/*
+			 * Check that the primary copy has three entries.
+			 */
+			sb.execute("SELECT PRIMARY * FROM TEST ORDER BY ID;"); //Now query on first machine (which should have one extra row).
+
+			int[] pKey2 = {1, 2, 3};
+			String[] secondCol2 = {"Hello", "World", "Quite"};
+			
+			validateResults(pKey2, secondCol2, sb.getResultSet());
+			
+		} catch (SQLException sqle){
+			sqle.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
+			}
+	}
+	/**
 	 * Utility method which checks that the results of a test query match up to the set of expected values. The 'TEST'
 	 * class is being used in these tests so the primary keys (int) and names (varchar/string) are required to check the
 	 * validity of the resultset.
