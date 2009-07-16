@@ -42,6 +42,7 @@ import org.h2.command.ddl.DropConstant;
 import org.h2.command.ddl.DropDatabase;
 import org.h2.command.ddl.DropFunctionAlias;
 import org.h2.command.ddl.DropIndex;
+import org.h2.command.ddl.DropReplica;
 import org.h2.command.ddl.DropRole;
 import org.h2.command.ddl.DropSchema;
 import org.h2.command.ddl.DropSequence;
@@ -1084,6 +1085,21 @@ public class Parser {
 				readIf("CONSTRAINTS");
 			}
 			return command;
+		} else if (readIf("REPLICA")) {
+			boolean ifExists = readIfExists(false);
+			String tableName = readIdentifierWithSchema();
+			DropReplica command = new DropReplica(session, getSchema());
+			command.setTableName(tableName);
+			while (readIf(",")) {
+				tableName = readIdentifierWithSchema();
+				DropReplica next = new DropReplica(session, getSchema());
+				next.setTableName(tableName);
+				command.addNextDropTable(next);
+			}
+			ifExists = readIfExists(ifExists);
+			command.setIfExists(ifExists);
+
+			return command;
 		} else if (readIf("INDEX")) {
 			boolean ifExists = readIfExists(false);
 			String indexName = readIdentifierWithSchema();
@@ -1560,8 +1576,12 @@ public class Parser {
 			command.setDistinct(true);
 		} else if (readIf("LOCAL")) {
 			command.setLocationPreference(LocationPreference.LOCAL);
+			if (readIf("ONLY"))
+				command.setStrictPreference(true);
 		} else if (readIf("PRIMARY")) {
 			command.setLocationPreference(LocationPreference.PRIMARY);
+			if (readIf("ONLY"))
+				command.setStrictPreference(true);
 		}else {
 			readIf("ALL");
 		}
@@ -4296,7 +4316,7 @@ public class Parser {
 		 *  3. The table has not been found, but exists in some remote location.
 		 */
 
-		if (Constants.IS_H2O && searchRemote && database.isConnectedToSM() && !database.isSM()){ // 2 or 3
+		if (Constants.IS_H2O && searchRemote && database.isConnectedToSM() && !database.isSM() && !(locale.isStrict() && locale == LocationPreference.LOCAL)){ // 2 or 3
 			return findViaSchemaManager(tableName);
 		} else { // 1
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
@@ -4320,7 +4340,7 @@ public class Parser {
 		
 		Parser queryParser = new Parser(session);
 		
-		String sql = "CREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + dbname + "', 'angus', 'supersecret', '" + tableName + "');";
+		String sql = "CREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + dbname + "', '" + SchemaManager.USERNAME + "', '" + SchemaManager.PASSWORD + "', '" + tableName + "');";
 
 		Command sqlQuery = queryParser.prepareCommand(sql);
 		int result = sqlQuery.executeUpdate();

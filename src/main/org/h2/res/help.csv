@@ -493,7 +493,7 @@ CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255))
 "
 
 "Commands (DDL)","CREATE REPLICA","
-CREATE REPLICA tableName [ON remoteDBLocation | FROM remoteDBLocation]
+CREATE REPLICA tableName [ON name | FROM name]
 ","
 An H2O feature, this creates a new replica (copy) of an existing table.
 If the 'on' location is specified the replica will be pushed to that machine and created there.

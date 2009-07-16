@@ -106,7 +106,7 @@ public class ReplicaTests extends TestBase{
 		} catch (SQLException sqle){
 			fail("This shouldn't have caused any errors.");
 		}
-	
+
 		try{
 			sb.execute("CREATE REPLICA TEST");
 
@@ -149,22 +149,37 @@ public class ReplicaTests extends TestBase{
 			fail("SQLException thrown when it shouldn't have.");
 		}
 	}
-
+	
 	/**
-	 * Tests that the SELECT LOCAL command fails when no local copy is available.
+	 * Tests that the SELECT LOCAL command find a remote copy when ONLY is not used.
+	 */
+	@Test
+	public void SelectLocalTestRemote(){
+
+		try{
+			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
+		} catch (SQLException sqle){
+			sqle.printStackTrace();
+			fail("The table should be found remotely if not available locally.");
+		}
+	}
+	
+	/**
+	 * Tests that the SELECT LOCAL ONLY command fails when no local copy is available.
 	 */
 	@Test
 	public void SelectLocalTestFailure(){
 
 		try{
-
-			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
+			sb.execute("SELECT LOCAL ONLY * FROM TEST ORDER BY ID;");
 
 			fail("It shouldn't be possible to query a local version which doesn't exist.");
 		} catch (SQLException sqle){
+			sqle.printStackTrace();
 			//Expected!
 		}
 	}
+
 
 	/**
 	 * Tests that the SELECT PRIMARY command succeeds, in the case where the primary is local.
@@ -383,6 +398,43 @@ public class ReplicaTests extends TestBase{
 	}
 
 	/**
+	 * Tests the 'push replication' feature by attempting to initiate replication creation on database B from database A, using the ON
+	 * syntax, even though it is not needed. This checks that the ON, FROM syntax works when describing the machine local machine.
+	 */
+	@Test
+	public void DropReplicaTest(){
+
+		try{
+
+			sb.execute("CREATE REPLICA TEST;");
+
+			if (sb.getUpdateCount() != 0){
+				fail("Expected update count to be '0'");
+			}
+
+			try{
+				sb.execute("DROP REPLICA TEST;");
+			} catch(SQLException e){
+				e.printStackTrace();
+				fail("Failed to drop replica.");
+			}
+
+			try{
+				sb.execute("SELECT LOCAL ONLY * FROM TEST ORDER BY ID;");
+
+				fail("Failed to drop replica.");
+			}	catch (SQLException e){
+				//Expected.	
+			}
+
+		} catch (SQLException sqle){
+			sqle.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
+		}
+	}
+
+
+	/**
 	 * Utility method which checks that the results of a test query match up to the set of expected values. The 'TEST'
 	 * class is being used in these tests so the primary keys (int) and names (varchar/string) are required to check the
 	 * validity of the resultset.
@@ -392,6 +444,9 @@ public class ReplicaTests extends TestBase{
 	 * @throws SQLException 
 	 */
 	private void validateResults(int[] pKey, String[] secondCol, ResultSet rs) throws SQLException {
+		if (rs == null)
+			fail("Resultset was null. Probably an incorrectly set test.");
+		
 		for (int i=0; i < pKey.length; i++){
 			if (rs.next()){
 				assertEquals(pKey[i], rs.getInt(1));

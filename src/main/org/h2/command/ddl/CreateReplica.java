@@ -524,7 +524,7 @@ public class CreateReplica extends SchemaCommand {
 		storesMixedCase = meta.storesMixedCaseIdentifiers();
 		supportsMixedCaseIdentifiers = meta.supportsMixedCaseIdentifiers();
 		ResultSet rs = meta.getTables(null, null, tableName, null);
-//		if (rs.next() && rs.next()) {
+//		if (rs.next() && rs.next()) { //XXX this is ommited because there are duplicate table entries. does this matter.
 //			throw Message.getSQLException(ErrorCode.SCHEMA_NAME_MUST_MATCH, tableName);
 //		}
 		rs.close();

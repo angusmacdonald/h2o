@@ -442,7 +442,36 @@ public class SchemaManager {
 		return sqlQuery.executeUpdate();
 	}
 
+	/**
+	 * Removes a particular replica from the schema manager. 
+	 * @param tableName
+	 * @param dbLocation 
+	 * @param machineName 
+	 * @param connectionPort 
+	 * @param connectionType 
+	 * @throws SQLException 
+	 */
+	public int removeReplica(String tableName, String dbLocation, String machineName, int connectionPort, String connectionType) throws SQLException {
+		int connectionID = getConnectionID(machineName, connectionPort, connectionType);
+		String sql = "DELETE FROM " + REPLICAS + " WHERE tablename='" + tableName + "' AND db_location='" + dbLocation + "' AND connection_id=" + connectionID  + "; ";
 
+		return executeUpdate(sql);
+	}
+
+/*
+ * 		CREATE TABLE IF NOT EXISTS H20.H2O_REPLICA(
+		    replica_id INT NOT NULL auto_increment,
+			tablename VARCHAR(255), 
+			connection_id INT NOT NULL,
+			db_location VARCHAR(255),
+			storage_type VARCHAR(50),
+			last_modification INT NOT NULL,
+			PRIMARY KEY (replica_id),
+			FOREIGN KEY (tablename) REFERENCES H20.H2O_TABLE (tablename),
+			FOREIGN KEY (connection_id) REFERENCES H20.H2O_CONNECTION (connection_id)
+		);<br/>
+
+ */
 
 
 }

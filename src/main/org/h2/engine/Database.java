@@ -94,7 +94,7 @@ public class Database implements DataHandler {
 	/**
 	 * H20. Indicates whether this database instance is managing the table schema for other running H20 instances.
 	 */
-	private boolean schemamanager;
+	private boolean isSchemaManager;
 
 	/**
 	 * Is this instance connected to the schema manager?
@@ -224,8 +224,8 @@ public class Database implements DataHandler {
 		this.localMachineAddress = NetUtils.getLocalAddress();
 		this.localMachinePort = ci.getPort();
 		this.persistent = ci.isPersistent();
-		this.schemamanager = ci.isSchemaManager();
-		this.connectedToSM = this.schemamanager; //if it is the schema manager, it is connected.
+		this.isSchemaManager = ci.isSchemaManager();
+		this.connectedToSM = this.isSchemaManager; //if it is the schema manager, it is connected.
 		this.filePasswordHash = ci.getFilePasswordHash();
 		this.databaseName = name;
 		this.databaseShortName = parseDatabaseShortName();
@@ -683,7 +683,9 @@ public class Database implements DataHandler {
 		MetaRecord.sort(records);
 
 		for (int i = 0; i < records.size(); i++) {
+			
 			MetaRecord rec = (MetaRecord) records.get(i);
+			
 			rec.execute(this, systemSession, eventListener);
 		}
 		if (Constants.IS_H2O) System.out.print(" Executed meta-records.");
@@ -705,11 +707,11 @@ public class Database implements DataHandler {
 		systemSession.commit(true);
 		traceSystem.getTrace(Trace.DATABASE).info("opened " + databaseName);
 
-		if (Constants.IS_H2O && !isManagementDB() && (!databaseExists || !schemamanager)){ //don't run this code with the TCP server management DB
+		if (Constants.IS_H2O && !isManagementDB() && ( !databaseExists || !isSchemaManager)){ //don't run this code with the TCP server management DB
 
 			createH20Tables();
 			System.out.print(" Created schema manager tables.");
-		}
+		} 
 
 
 	}
@@ -2417,7 +2419,7 @@ public class Database implements DataHandler {
 		int result = -1;
 
 		try {
-			if (schemamanager){ // Create the schema manager tables and immediately add local tables to this manager.
+			if (isSchemaManager){ // Create the schema manager tables and immediately add local tables to this manager.
 
 				result = schemaManager.createSchemaManagerTables();
 
@@ -2436,7 +2438,7 @@ public class Database implements DataHandler {
 		}
 
 
-		if (!schemamanager && result >= 0){
+		if (!isSchemaManager && result >= 0){
 			connectedToSM = true;
 
 			try {
@@ -2496,7 +2498,7 @@ public class Database implements DataHandler {
 	 * @return true if it is a schema manager.
 	 */
 	public boolean isSM() {
-		return schemamanager;
+		return isSchemaManager;
 	}
 
 	/**
@@ -2542,5 +2544,13 @@ public class Database implements DataHandler {
 		}
 
 		return "jdbc:h2:" + ((isSM())? "sm:": "") + isTCP + url + getDatabaseLocation();
+	}
+	
+	/**
+	 * Returns the type of connection this database is open on (e.g. tcp, mem).
+	 * @return
+	 */
+	public String getConnectionType() {
+		return (localMachinePort == -1 && databaseLocation.contains("mem"))? "mem": "tcp";
 	}
 }

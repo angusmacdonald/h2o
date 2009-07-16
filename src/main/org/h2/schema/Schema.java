@@ -262,7 +262,7 @@ public class Schema extends DbObjectBase {
 			table = session.findLocalTempTable(name);
 		} else if (replicaSet != null){
 			
-			if (replicaSet.size() == 1 || locale == LocationPreference.NO_PREFERENCE){ //XXX more advanced logic to choose replica would go here.
+			if ((replicaSet.size() == 1 && !locale.isStrict()) || locale == LocationPreference.NO_PREFERENCE){ //XXX more advanced logic to choose replica would go here.
 				table = replicaSet.getACopy();
 			} else if (locale == LocationPreference.LOCAL){
 				table = replicaSet.getLocalCopy(); //XXX what if no local copy exists?
@@ -453,7 +453,7 @@ public class Schema extends DbObjectBase {
 		}
 
 		if (table == null) {
-			System.err.println("Schema.getTableOrView: Table '" + name + "' not found.");
+			//System.err.println("Schema.getTableOrView: Table '" + name + "' not found.");
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, name);
 		}
 		return table;
