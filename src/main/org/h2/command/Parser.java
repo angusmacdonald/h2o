@@ -4678,13 +4678,15 @@ public class Parser {
 		String tableName = readIdentifierWithSchema();
 		
 		
-		String replicationLocation = null;
-		String originalLocation = null;
+		String whereReplicaWillBeCreated = null;
+		String whereDataWillBeTakenFrom = null;
 		
 		if (readIf("ON")) {
-			replicationLocation = readExpression().toString();
-		} else if (readIf("FROM")){
-			originalLocation = readExpression().toString();			
+			whereReplicaWillBeCreated = readExpression().toString();
+		}
+		
+		if (readIf("FROM")){
+			whereDataWillBeTakenFrom = readExpression().toString();			
 		}
 		
 		if (temp && globalTemp && "SESSION".equals(schemaName)) {
@@ -4696,14 +4698,9 @@ public class Parser {
 		Schema schema = getSchema();
 		CreateReplica command = new CreateReplica(session, schema);
 		
-		if (replicationLocation != null){
-			command.setReplicationLocation(replicationLocation);
-			command.setTableName(tableName);
-		} else {		
-		if (originalLocation != null){
-			command.setOriginalLocation(originalLocation);
-		}
-			
+		
+		command.setOriginalLocation(whereDataWillBeTakenFrom);
+		command.setReplicationLocation(whereReplicaWillBeCreated);
 		command.setPersistent(persistent);
 		command.setTemporary(temp);
 		command.setGlobalTemporary(globalTemp);
@@ -4711,7 +4708,7 @@ public class Parser {
 		command.setTableName(tableName);
 		command.setComment(readCommentIf());
 		command.readSQL();
-		}
+		
 		return command;
 	}
 

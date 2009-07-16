@@ -94,6 +94,67 @@ public class SchemaManagerTests {
 
 	}
 
+//	/**
+//	 * Test that schema manager tables are successfully added to a remote machine via a TCP connection.
+//	 * @throws ClassNotFoundException
+//	 * @throws InterruptedException
+//	 */
+//	@Test
+//	public void remoteAvailabilityTCP() throws ClassNotFoundException, InterruptedException{
+//
+//		Connection conn = null, conn2 = null;
+//		// start the server, allows to access the database remotely
+//		Server server = null, server2=null;
+//
+//		try {
+//			server = Server.createTcpServer(new String[] { "-tcpPort", "9081", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test" });
+//			server.start();
+//
+//			server2 = Server.createTcpServer(new String[] { "-tcpPort", "9082", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test" });
+//			server2.start();
+//
+//			Class.forName("org.h2.Driver");
+//			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", "sa", "sa");
+//			conn2 = DriverManager.getConnection("jdbc:h2:tcp://localhost:9082/db_data/unittests/schema_test2", "sa", "sa");
+//
+//			Statement stat = conn2.createStatement();
+//
+//			stat.executeQuery("SELECT * FROM H20.H2O_TABLE");
+//			stat.executeQuery("SELECT * FROM H20.H2O_REPLICA");
+//			stat.executeQuery("SELECT * FROM H20.H2O_CONNECTION");
+//
+//			
+//			ResultSet rs = stat.getResultSet();
+//			
+//			if (!(rs.next() && rs.next())){
+//				fail("Expected two results in resultset.");
+//			}
+//
+//		} catch (SQLException e1) {
+//			e1.printStackTrace();
+//			fail("Couldn't find schema manager tables.");
+//		} finally {
+//			try {
+//				conn.close();
+//				conn2.close();
+//			} catch (SQLException e) {
+//				e.printStackTrace();
+//			}
+//
+//			// stop the server
+//			server.stop();
+//			server2.stop();
+//			try {
+//				DeleteDbFiles.execute(BASEDIR, "schema_test", true);
+//			} catch (SQLException e) {
+//				e.printStackTrace();
+//			}
+//		}
+//
+//
+//	}
+
+
 	/**
 	 * Test that the state of the schema manager classes are successfully maintained between instances.
 	 * @throws SQLException 
@@ -146,13 +207,13 @@ public class SchemaManagerTests {
 			if (!rs.next()){
 				fail("There shouldn't be a single table in the schema manager.");
 			}
-			
+
 			if (!rs.getString(1).equals("TEST")){
 				fail("This entry should be for the TEST table.");
 			}
-			
+
 			rs.close();
-			
+
 		} catch (SQLException e1) {
 			e1.printStackTrace();
 			fail("Couldn't find schema manager tables.");
@@ -214,7 +275,7 @@ public class SchemaManagerTests {
 			sqle.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * Tests that when a new table is added to the database it is also added to the schema manager.
 	 * @throws SQLException

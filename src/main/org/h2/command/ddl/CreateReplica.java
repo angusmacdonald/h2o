@@ -77,8 +77,6 @@ public class CreateReplica extends SchemaCommand {
 	private boolean storesMixedCase = false;
 	private boolean supportsMixedCaseIdentifiers = false;
 
-	String primaryReplicaLocation = null;
-
 	/**
 	 * Array containing all of the insert statements required for this replicas state to match that of the primary.
 	 */
@@ -87,12 +85,12 @@ public class CreateReplica extends SchemaCommand {
 	/**
 	 * The intended location of the remote replica.
 	 */
-	private String replicationLocation = null;
-	
+	private String whereReplicaWillBeCreated = null;
+
 	/**
 	 * The location where the data currently exists and can be copied from.
 	 */
-	private String originalLocation = null;
+	private String whereDataWillBeTakenFrom = null;
 
 	public CreateReplica(Session session, Schema schema) {
 		super(session, schema);
@@ -151,14 +149,14 @@ public class CreateReplica extends SchemaCommand {
 
 	public int update() throws SQLException {
 
-
-		if (replicationLocation != null){
+		Database db = session.getDatabase();
+		if (whereReplicaWillBeCreated != null || db.getFullDatabasePath().equals(whereReplicaWillBeCreated)){
 			return pushCommand();
 		}
 
 		// TODO rights: what rights are required to create a table?
 		session.commit(true);
-		Database db = session.getDatabase();
+
 		if (!db.isPersistent()) {
 			persistent = false;
 		}
@@ -171,7 +169,7 @@ public class CreateReplica extends SchemaCommand {
 		}  
 
 		if (getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE) == null) { //H2O. Check for the existence of any version. if a linked table version doesn't exist we must create it.
-			String createLinkedTable = "\nCREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + primaryReplicaLocation + "', '" + 
+			String createLinkedTable = "\nCREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + whereDataWillBeTakenFrom + "', '" + 
 			SchemaManager.USERNAME + "', '" + SchemaManager.PASSWORD + "', '" + tableName + "');";
 			Parser queryParser = new Parser(session);;
 			Command sqlQuery = queryParser.prepareCommand(createLinkedTable);
@@ -341,20 +339,22 @@ public class CreateReplica extends SchemaCommand {
 	 * @throws SQLException 
 	 */
 	private int pushCommand() throws SQLException {
-		if (replicationLocation.startsWith("'") && replicationLocation.endsWith("'")){
-			replicationLocation = replicationLocation.substring(1, replicationLocation.length()-1);
-		}
-
 		Database db = session.getDatabase();
 
-		conn = db.getLinkConnection("org.h2.Driver", replicationLocation, SchemaManager.USERNAME, SchemaManager.PASSWORD);
+		conn = db.getLinkConnection("org.h2.Driver", whereReplicaWillBeCreated, SchemaManager.USERNAME, SchemaManager.PASSWORD);
 
 		int result = -1;
 
 		synchronized (conn) {
 			try {
 				Statement stat = conn.getConnection().createStatement();
-				String databaseName = db.getFullDatabasePath();
+				String databaseName = null;
+				if (whereDataWillBeTakenFrom == null){
+					databaseName = db.getFullDatabasePath();
+				} else {
+					databaseName = whereDataWillBeTakenFrom;
+				}
+
 				stat.execute("CREATE REPLICA " + tableName + " FROM '" + databaseName + "'");
 				result = stat.getUpdateCount();
 			} catch (SQLException e) {
@@ -445,28 +445,28 @@ public class CreateReplica extends SchemaCommand {
 	}
 
 	/**
-	 * Get the primary location of the given table.
+	 * Get the primary location of the given table and get meta-data from that location along with the contents of the table.
 	 * @throws JdbcSQLException 
 	 */
 	public void readSQL() throws JdbcSQLException {
+		Database db = session.getDatabase();
+		if (whereReplicaWillBeCreated != null || db.getFullDatabasePath().equals(whereReplicaWillBeCreated)){
+			//If the replica is not going to be created on this machine, don't bother executing this method.
+			return ;
+		}
+
 		try {
-			if (originalLocation == null){
-			primaryReplicaLocation = SchemaManager.getInstance().getPrimaryReplicaLocation(tableName);
-			} else {
-				if (originalLocation.startsWith("'") && originalLocation.endsWith("'")){
-					originalLocation = originalLocation.substring(1, originalLocation.length()-1);
-				}
-				
-				primaryReplicaLocation = originalLocation;
+			if (whereDataWillBeTakenFrom == null){
+				whereDataWillBeTakenFrom = SchemaManager.getInstance().getPrimaryReplicaLocation(tableName);
 			}
 		} catch (SQLException e) {
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
 		}
 
-		//TODO connect to the given location using hte same method as linked tables, and get the appropriate create table SQL.
 		try {
-			connect(primaryReplicaLocation);
+			connect(whereDataWillBeTakenFrom);
 		} catch (SQLException e) {
+
 			throw Message.getSQLException(ErrorCode.CONNECTION_BROKEN, tableName);
 		}
 	}
@@ -524,9 +524,9 @@ public class CreateReplica extends SchemaCommand {
 		storesMixedCase = meta.storesMixedCaseIdentifiers();
 		supportsMixedCaseIdentifiers = meta.supportsMixedCaseIdentifiers();
 		ResultSet rs = meta.getTables(null, null, tableName, null);
-		if (rs.next() && rs.next()) {
-			throw Message.getSQLException(ErrorCode.SCHEMA_NAME_MUST_MATCH, tableName);
-		}
+//		if (rs.next() && rs.next()) {
+//			throw Message.getSQLException(ErrorCode.SCHEMA_NAME_MUST_MATCH, tableName);
+//		}
 		rs.close();
 		rs = meta.getColumns(null, originalSchema, tableName, null); 
 		int i = 0;
@@ -713,7 +713,11 @@ public class CreateReplica extends SchemaCommand {
 	 * @param replicationLocation	The location of the remote database.
 	 */
 	public void setReplicationLocation(String replicationLocation) {
-		this.replicationLocation = replicationLocation;
+		this.whereReplicaWillBeCreated = replicationLocation;
+
+		if (whereReplicaWillBeCreated != null && whereReplicaWillBeCreated.startsWith("'") && whereReplicaWillBeCreated.endsWith("'")){
+			whereReplicaWillBeCreated = whereReplicaWillBeCreated.substring(1, whereReplicaWillBeCreated.length()-1);
+		}
 	}
 
 	/**
@@ -722,7 +726,11 @@ public class CreateReplica extends SchemaCommand {
 	 * @param originalLocation
 	 */
 	public void setOriginalLocation(String originalLocation) {
-		this.originalLocation = originalLocation;
+		this.whereDataWillBeTakenFrom = originalLocation;
+
+		if (whereDataWillBeTakenFrom != null && whereDataWillBeTakenFrom.startsWith("'") && whereDataWillBeTakenFrom.endsWith("'")){
+			whereDataWillBeTakenFrom = whereDataWillBeTakenFrom.substring(1, whereDataWillBeTakenFrom.length()-1);
+		}
 	}
 
 }

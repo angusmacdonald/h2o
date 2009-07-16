@@ -4,8 +4,11 @@ package org.h2.test.h2o;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import org.junit.Test;
 
@@ -55,8 +58,9 @@ public class ReplicaTests extends TestBase{
 			sb.execute("SELECT * FROM TEST");
 
 		} catch (SQLException sqle){
-			fail("SQLException thrown when it shouldn't have.");
 			sqle.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
+
 		}
 	}
 
@@ -64,7 +68,7 @@ public class ReplicaTests extends TestBase{
 	 * Tests that the contents of a table are successfully copied over.
 	 */
 	@Test
-	public void TableDataTest(){
+	public void TableData(){
 
 		try{
 			sb.execute("CREATE REPLICA TEST");
@@ -77,13 +81,38 @@ public class ReplicaTests extends TestBase{
 
 			int[] pKey = {1, 2};
 			String[] secondCol = {"Hello", "World"};
-			
+
 			validateResults(pKey, secondCol, sb.getResultSet());
 
 
 		} catch (SQLException sqle){
 			fail("SQLException thrown when it shouldn't have.");
 			sqle.printStackTrace();
+		}
+	}
+
+	/**
+	 * Tests that an error is returned whena replica already exists at the given location.
+	 */
+	@Test
+	public void ReplicaAlreadyExists(){
+
+		try{
+			sb.execute("CREATE REPLICA TEST");
+
+			if (sb.getUpdateCount() != 0){
+				fail("Expected update count to be '0'");
+			}
+		} catch (SQLException sqle){
+			fail("This shouldn't have caused any errors.");
+		}
+	
+		try{
+			sb.execute("CREATE REPLICA TEST");
+
+			fail("Expected an error to be thrown here, as the replica already exists..");
+		} catch (SQLException sqle){
+			//Expected.
 		}
 	}
 
@@ -105,20 +134,57 @@ public class ReplicaTests extends TestBase{
 
 			int[] pKey = {1, 2};
 			String[] secondCol = {"Hello", "World"};
-			
+
 			validateResults(pKey, secondCol, sb.getResultSet());
 
 			sa.execute("SELECT LOCAL * FROM TEST ORDER BY ID;"); //Now query on first machine (which should have one extra row).
 
 			int[] pKey2 = {1, 2, 3};
 			String[] secondCol2 = {"Hello", "World", "Quite"};
-			
+
 			validateResults(pKey2, secondCol2, sa.getResultSet());
-			
+
 		} catch (SQLException sqle){
 			sqle.printStackTrace();
 			fail("SQLException thrown when it shouldn't have.");
-			}
+		}
+	}
+
+	/**
+	 * Tests that the SELECT LOCAL command fails when no local copy is available.
+	 */
+	@Test
+	public void SelectLocalTestFailure(){
+
+		try{
+
+			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
+
+			fail("It shouldn't be possible to query a local version which doesn't exist.");
+		} catch (SQLException sqle){
+			//Expected!
+		}
+	}
+
+	/**
+	 * Tests that the SELECT PRIMARY command succeeds, in the case where the primary is local.
+	 */
+	@Test
+	public void SelectPrimaryWhenLocal(){
+
+		try{
+
+			sa.execute("SELECT PRIMARY * FROM TEST ORDER BY ID;");
+
+			int[] pKey = {1, 2};
+			String[] secondCol = {"Hello", "World"};
+
+			validateResults(pKey, secondCol, sa.getResultSet());
+
+
+		} catch (SQLException sqle){
+			fail("This should succeed.");
+		}
 	}
 
 	/**
@@ -135,7 +201,7 @@ public class ReplicaTests extends TestBase{
 			}
 
 			sa.execute("INSERT INTO TEST VALUES(3, 'Quite');");
-			
+
 			/*
 			 * Check that the local copy has only two entries.
 			 */
@@ -143,7 +209,7 @@ public class ReplicaTests extends TestBase{
 
 			int[] pKey = {1, 2};
 			String[] secondCol = {"Hello", "World"};
-			
+
 			validateResults(pKey, secondCol, sb.getResultSet());
 
 			/*
@@ -153,20 +219,20 @@ public class ReplicaTests extends TestBase{
 
 			int[] pKey2 = {1, 2, 3};
 			String[] secondCol2 = {"Hello", "World", "Quite"};
-			
+
 			validateResults(pKey2, secondCol2, sb.getResultSet());
-			
+
 		} catch (SQLException sqle){
 			sqle.printStackTrace();
 			fail("SQLException thrown when it shouldn't have.");
-			}
+		}
 	}
-	
+
 	/**
 	 * Tests the 'push replication' feature by attempting to initiate replication creation on database B from database A.
 	 */
 	@Test
-	public void PushReplication(){
+	public void PushReplicationON(){
 
 		try{
 			sa.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:two'");
@@ -176,7 +242,7 @@ public class ReplicaTests extends TestBase{
 			}
 
 			sa.execute("INSERT INTO TEST VALUES(3, 'Quite');");
-			
+
 			/*
 			 * Check that the local copy has only two entries.
 			 */
@@ -184,7 +250,7 @@ public class ReplicaTests extends TestBase{
 
 			int[] pKey = {1, 2};
 			String[] secondCol = {"Hello", "World"};
-			
+
 			validateResults(pKey, secondCol, sb.getResultSet());
 
 			/*
@@ -194,14 +260,128 @@ public class ReplicaTests extends TestBase{
 
 			int[] pKey2 = {1, 2, 3};
 			String[] secondCol2 = {"Hello", "World", "Quite"};
-			
+
 			validateResults(pKey2, secondCol2, sb.getResultSet());
-			
+
 		} catch (SQLException sqle){
 			sqle.printStackTrace();
 			fail("SQLException thrown when it shouldn't have.");
-			}
+		}
 	}
+
+	/**
+	 * Tests the 'push replication' feature by attempting to initiate replication creation on database C from database A, getting the data from database B.
+	 * The test first creates a replica on database B, then launches the ON-FROM replication command from database A.
+	 */
+	@Test
+	public void PushReplicationONFROM(){
+
+		try{
+			Connection cc = DriverManager.getConnection("jdbc:h2:mem:three", "sa", "sa");
+			Statement sc = cc.createStatement();
+
+			sb.execute("CREATE REPLICA TEST;");
+
+			if (sb.getUpdateCount() != 0){
+				fail("Expected update count to be '0'");
+			}
+
+			sa.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:three' FROM 'jdbc:h2:mem:two'");
+
+			if (sa.getUpdateCount() != 0){
+				fail("Expected update count to be '0'");
+			}
+
+			sc.execute("INSERT INTO TEST VALUES(3, 'Quite');");
+
+			/*
+			 * Check that the local copy has three entries.
+			 */
+			sc.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
+
+			int[] pKey = {1, 2, 3};
+			String[] secondCol = {"Hello", "World", "Quite"};
+
+			validateResults(pKey, secondCol, sc.getResultSet());
+
+
+
+		} catch (SQLException sqle){
+			sqle.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
+		}
+	}
+
+	/**
+	 * Tests the 'push replication' feature by attempting to initiate replication creation on database B from database A, using the FROM
+	 * syntax, even though it is not needed. This checks that the ON, FROM syntax works when describing the machine local machine.
+	 */
+	@Test
+	public void PushReplicationFROMtwoMachines(){
+
+		try{
+
+			sa.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:two' FROM 'jdbc:h2:mem:one'");
+
+			if (sa.getUpdateCount() != 0){
+				fail("Expected update count to be '0'");
+			}
+
+			sb.execute("INSERT INTO TEST VALUES(3, 'Quite');");
+
+			/*
+			 * Check that the local copy has three entries.
+			 */
+			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
+
+			int[] pKey = {1, 2, 3};
+			String[] secondCol = {"Hello", "World", "Quite"};
+
+			validateResults(pKey, secondCol, sb.getResultSet());
+
+
+
+		} catch (SQLException sqle){
+			sqle.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
+		}
+	}
+
+	/**
+	 * Tests the 'push replication' feature by attempting to initiate replication creation on database B from database A, using the ON
+	 * syntax, even though it is not needed. This checks that the ON, FROM syntax works when describing the machine local machine.
+	 */
+	@Test
+	public void PushReplicationFROMtwoMachinesAlt(){
+
+		try{
+
+			sb.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:two' FROM 'jdbc:h2:mem:one'");
+
+			if (sb.getUpdateCount() != 0){
+				fail("Expected update count to be '0'");
+			}
+
+			sb.execute("INSERT INTO TEST VALUES(3, 'Quite');");
+
+			/*
+			 * Check that the local copy has three entries.
+			 */
+			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
+
+			int[] pKey = {1, 2, 3};
+			String[] secondCol = {"Hello", "World", "Quite"};
+
+			validateResults(pKey, secondCol, sb.getResultSet());
+
+
+
+		} catch (SQLException sqle){
+			sqle.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
+		}
+	}
+
 	/**
 	 * Utility method which checks that the results of a test query match up to the set of expected values. The 'TEST'
 	 * class is being used in these tests so the primary keys (int) and names (varchar/string) are required to check the
@@ -224,7 +404,7 @@ public class ReplicaTests extends TestBase{
 		if (rs.next()){
 			fail("Too many entries.");
 		}
-		
+
 		rs.close();
 	}
 }
