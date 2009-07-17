@@ -713,7 +713,6 @@ public class Database implements DataHandler {
 			System.out.print(" Created schema manager tables.");
 		} 
 
-
 	}
 
 	public Schema getMainSchema() {

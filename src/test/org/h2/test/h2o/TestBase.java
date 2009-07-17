@@ -49,8 +49,8 @@ public class TestBase {
 	@After
 	public void tearDown() {
 		try{ 
-			sa.execute("DROP TABLE IF EXISTS TEST");
-			sb.execute("DROP TABLE IF EXISTS TEST");
+			sa.execute("DROP TABLE IF EXISTS TEST, TEST2");
+			sb.execute("DROP TABLE IF EXISTS TEST, TEST2");
 
 			sa.close();
 			sb.close();

@@ -4697,7 +4697,38 @@ public class Parser {
 		boolean ifNotExists = readIfNoExists();
 		String tableName = readIdentifierWithSchema();
 		
+		if (temp && globalTemp && "SESSION".equals(schemaName)) {
+			// support weird syntax: declare global temporary table session.xy
+			// (...) not logged
+			schemaName = session.getCurrentSchemaName();
+			globalTemp = false;
+		}
+		Schema schema = getSchema();
+		CreateReplica command = new CreateReplica(session, schema);
 		
+		command.setPersistent(persistent);
+		command.setTemporary(temp);
+		command.setGlobalTemporary(globalTemp);
+		command.setIfNotExists(ifNotExists);
+		command.setTableName(tableName);
+		command.setComment(readCommentIf());
+		
+		
+		while (readIf(",")) {
+			tableName = readIdentifierWithSchema();
+			CreateReplica next = new CreateReplica(session, getSchema());
+			next.setTableName(tableName);
+			command.addNextCreateReplica(next);
+			
+			next.setPersistent(persistent);
+			next.setTemporary(temp);
+			next.setGlobalTemporary(globalTemp);
+			next.setIfNotExists(ifNotExists);
+			next.setTableName(tableName);
+			next.setComment(readCommentIf());
+			
+		}
+
 		String whereReplicaWillBeCreated = null;
 		String whereDataWillBeTakenFrom = null;
 		
@@ -4708,27 +4739,10 @@ public class Parser {
 		if (readIf("FROM")){
 			whereDataWillBeTakenFrom = readExpression().toString();			
 		}
-		
-		if (temp && globalTemp && "SESSION".equals(schemaName)) {
-			// support weird syntax: declare global temporary table session.xy
-			// (...) not logged
-			schemaName = session.getCurrentSchemaName();
-			globalTemp = false;
-		}
-		Schema schema = getSchema();
-		CreateReplica command = new CreateReplica(session, schema);
-		
-		
+	
 		command.setOriginalLocation(whereDataWillBeTakenFrom);
 		command.setReplicationLocation(whereReplicaWillBeCreated);
-		command.setPersistent(persistent);
-		command.setTemporary(temp);
-		command.setGlobalTemporary(globalTemp);
-		command.setIfNotExists(ifNotExists);
-		command.setTableName(tableName);
-		command.setComment(readCommentIf());
-		command.readSQL();
-		
+	
 		return command;
 	}
 

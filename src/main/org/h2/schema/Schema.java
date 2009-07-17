@@ -274,6 +274,7 @@ public class Schema extends DbObjectBase {
 		return table;
 	}
 
+	
 	/**
 	 * Try to find a LOCAL VERSION of a table or view with this name. This method returns null if
 	 * no object with this name exists. Local temporary tables are also

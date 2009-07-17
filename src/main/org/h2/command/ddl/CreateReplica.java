@@ -92,6 +92,11 @@ public class CreateReplica extends SchemaCommand {
 	 */
 	private String whereDataWillBeTakenFrom = null;
 
+	/**
+	 * The next table to be replicated if it is to be done with more than one.
+	 */
+	private CreateReplica next = null;
+
 	public CreateReplica(Session session, Schema schema) {
 		super(session, schema);
 	}
@@ -150,8 +155,13 @@ public class CreateReplica extends SchemaCommand {
 	public int update() throws SQLException {
 
 		Database db = session.getDatabase();
+
+		
+		
 		if (whereReplicaWillBeCreated != null || db.getFullDatabasePath().equals(whereReplicaWillBeCreated)){
-			return pushCommand();
+			return pushCommand(); //command will be executed elsewhere
+		} else {
+			readSQL(); //command will be executed here - get the table meta-data and contents.
 		}
 
 		// TODO rights: what rights are required to create a table?
@@ -318,7 +328,7 @@ public class CreateReplica extends SchemaCommand {
 
 				SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
 				sm.addReplicaInformation(tableName, table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
-						db.getLocalMachineAddress(), db.getLocalMachinePort(), "tcp");	
+						db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType());	
 			}
 
 
@@ -329,6 +339,9 @@ public class CreateReplica extends SchemaCommand {
 			throw e;
 		}
 
+        if (next != null) {
+            next.update();
+        }
 
 		return 0;
 	}
@@ -349,13 +362,9 @@ public class CreateReplica extends SchemaCommand {
 			try {
 				Statement stat = conn.getConnection().createStatement();
 				String databaseName = null;
-				if (whereDataWillBeTakenFrom == null){
-					databaseName = db.getFullDatabasePath();
-				} else {
-					databaseName = whereDataWillBeTakenFrom;
-				}
 
-				stat.execute("CREATE REPLICA " + tableName + " FROM '" + databaseName + "'");
+
+				stat.execute("CREATE REPLICA " + tableName + " FROM '" + whereDataWillBeTakenFrom + "'");
 				result = stat.getUpdateCount();
 			} catch (SQLException e) {
 				conn.close();
@@ -364,6 +373,10 @@ public class CreateReplica extends SchemaCommand {
 				throw e;
 			}
 		}
+		
+        if (next != null) {
+            next.update();
+        }
 
 		return result;
 	}
@@ -450,18 +463,6 @@ public class CreateReplica extends SchemaCommand {
 	 */
 	public void readSQL() throws JdbcSQLException {
 		Database db = session.getDatabase();
-		if (whereReplicaWillBeCreated != null || db.getFullDatabasePath().equals(whereReplicaWillBeCreated)){
-			//If the replica is not going to be created on this machine, don't bother executing this method.
-			return ;
-		}
-
-		try {
-			if (whereDataWillBeTakenFrom == null){
-				whereDataWillBeTakenFrom = SchemaManager.getInstance().getPrimaryReplicaLocation(tableName);
-			}
-		} catch (SQLException e) {
-			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
-		}
 
 		try {
 			connect(whereDataWillBeTakenFrom);
@@ -524,9 +525,9 @@ public class CreateReplica extends SchemaCommand {
 		storesMixedCase = meta.storesMixedCaseIdentifiers();
 		supportsMixedCaseIdentifiers = meta.supportsMixedCaseIdentifiers();
 		ResultSet rs = meta.getTables(null, null, tableName, null);
-//		if (rs.next() && rs.next()) { //XXX this is ommited because there are duplicate table entries. does this matter.
-//			throw Message.getSQLException(ErrorCode.SCHEMA_NAME_MUST_MATCH, tableName);
-//		}
+		//		if (rs.next() && rs.next()) { //XXX this is ommited because there are duplicate table entries. does this matter.
+		//			throw Message.getSQLException(ErrorCode.SCHEMA_NAME_MUST_MATCH, tableName);
+		//		}
 		rs.close();
 		rs = meta.getColumns(null, originalSchema, tableName, null); 
 		int i = 0;
@@ -718,18 +719,46 @@ public class CreateReplica extends SchemaCommand {
 		if (whereReplicaWillBeCreated != null && whereReplicaWillBeCreated.startsWith("'") && whereReplicaWillBeCreated.endsWith("'")){
 			whereReplicaWillBeCreated = whereReplicaWillBeCreated.substring(1, whereReplicaWillBeCreated.length()-1);
 		}
+
+		if (next != null){
+			next.setReplicationLocation(whereReplicaWillBeCreated);
+		}
 	}
 
 	/**
 	 * Sets the location at which the primary copy is located. If this method is called that location
 	 * is not the local machine - this location is used to get the meta-data and data from the given table.
 	 * @param originalLocation
+	 * @throws JdbcSQLException 
 	 */
-	public void setOriginalLocation(String originalLocation) {
+	public void setOriginalLocation(String originalLocation) throws JdbcSQLException {
 		this.whereDataWillBeTakenFrom = originalLocation;
 
 		if (whereDataWillBeTakenFrom != null && whereDataWillBeTakenFrom.startsWith("'") && whereDataWillBeTakenFrom.endsWith("'")){
 			whereDataWillBeTakenFrom = whereDataWillBeTakenFrom.substring(1, whereDataWillBeTakenFrom.length()-1);
+		}
+
+		try {
+			if (whereDataWillBeTakenFrom == null){
+				whereDataWillBeTakenFrom = SchemaManager.getInstance().getPrimaryReplicaLocation(tableName);
+			}
+		} catch (SQLException e) {
+			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
+		}
+
+		if (next != null){
+			next.setOriginalLocation(whereDataWillBeTakenFrom);
+		}
+	}
+
+	/**
+	 * @param next
+	 */
+	public void addNextCreateReplica(CreateReplica create) {
+		if (next == null) {
+			next = create;
+		} else {
+			next.addNextCreateReplica(create);
 		}
 	}
 

@@ -130,14 +130,14 @@ public class SchemaManager {
 		sqlQuery = queryParser.prepareCommand(sql);
 
 		try {
-		
-		result = sqlQuery.executeQueryLocal(1);
+
+			result = sqlQuery.executeQueryLocal(1);
 
 		} catch (Exception e){
 			System.out.println("This is the one.");
 			e.printStackTrace();
 		}
-		
+
 		if (result != null && result.next()){ //XXX This just takes the first replica, assuming there are more than one.
 			Value[] row = result.currentRow();
 
@@ -145,7 +145,7 @@ public class SchemaManager {
 			String connectionType = row[1].getString();
 			String machineName = row[2].getString();
 			String connectionPort = row[3].getString();
-			
+
 			String dbname = null;
 			if (connectionType.equals("tcp")){
 				dbname = "jdbc:h2:" + connectionType + "://" + machineName + ":" + connectionPort + "/" + dbLocation;
@@ -154,13 +154,13 @@ public class SchemaManager {
 			} else {
 				Message.throwInternalError("This connection type isn't supported yet. Get on that!");
 			}
-			
+
 			return dbname;
 		}
-		
+
 		throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
-		
-		
+
+
 	}
 
 	/**
@@ -184,11 +184,11 @@ public class SchemaManager {
 
 		int connectionID = SchemaManager.getInstance().getConnectionID(localMachineAddress, localMachinePort, connection_type);
 
-		if (!isReplicaListed(tableName, connectionID)){ // the table doesn't already exist in the schema manager.
+		if (!isReplicaListed(tableName, connectionID, databaseLocation)){ // the table doesn't already exist in the schema manager.
 			addReplicaInformation(tableName, modificationID, connectionID, databaseLocation, tableType);				
 		}
 	}
-	
+
 	/**
 	 * Add a new replica to the schema manager. The table already exists, so it is assumed there is an entry for that table
 	 * in the schema manager. This method only updates the replica table in the schema manager.
@@ -204,10 +204,10 @@ public class SchemaManager {
 	public void addReplicaInformation(String tableName, long modificationID,
 			String databaseLocation, String tableType,
 			String localMachineAddress, int localMachinePort, String connection_type) throws SQLException {
-		
+
 		int connectionID = getConnectionID(localMachineAddress, localMachinePort, connection_type);
 
-		if (!isReplicaListed(tableName, connectionID)){ // the table doesn't already exist in the schema manager.
+		if (!isReplicaListed(tableName, connectionID, databaseLocation)){ // the table doesn't already exist in the schema manager.
 			addReplicaInformation(tableName, modificationID, connectionID, databaseLocation, tableType);				
 		}
 	}
@@ -225,7 +225,7 @@ public class SchemaManager {
 
 		return countCheck(sql);
 	}
-	
+
 	/**
 	 * Update the schema manager with new connection information.
 	 * @param localMachineAddress	The address through which remote machines can connect to the database.
@@ -235,9 +235,9 @@ public class SchemaManager {
 	 * @throws SQLException
 	 */
 	public int addLocalConnectionInformation(String localMachineAddress, int localMachinePort, String databaseLocation) throws SQLException{
-		
+
 		String connection_type = (localMachinePort == -1 && databaseLocation.contains("mem"))? "mem": "tcp";
-		
+
 		String sql = "\nINSERT INTO " + CONNECTIONS + " VALUES (null, '" + connection_type + "', '" + localMachineAddress + "', "  + localMachinePort + ");\n";
 
 		return executeUpdate(sql);
@@ -312,6 +312,15 @@ public class SchemaManager {
 	}
 
 	/**
+	 * Gets the number of replicas that exist for a given table.
+	 */
+	public int getNumberofReplicas(String tableName) throws SQLException{
+		String sql = "SELECT count(*) FROM " + REPLICAS + " WHERE tablename = '" + tableName + "';";
+
+		return getCount(sql);
+	}
+
+	/**
 	 * Gets the connection ID for a given database connection if it is present in the database. If not, -1 is returned.
 	 * 
 	 * Note: Currently, it is assumed this is only called by the local machine (only current use), so the connection_id is cached
@@ -368,8 +377,9 @@ public class SchemaManager {
 	 * @return	true, if the replica's information is already in the schema manager.
 	 * @throws SQLException 
 	 */
-	public boolean isReplicaListed(String tableName, int connectionID) throws SQLException{
-		String sql = "SELECT count(tablename) FROM " + REPLICAS + " WHERE tablename='" + tableName + "' AND connection_id=" + connectionID + ";";
+	public boolean isReplicaListed(String tableName, int connectionID, String dbLocation) throws SQLException{
+		String sql = "SELECT count(tablename) FROM " + REPLICAS + " WHERE tablename='" + tableName + "' AND db_location='"
+		+ dbLocation + "' AND connection_id=" + connectionID + ";";
 
 		return countCheck(sql);
 	}
@@ -389,6 +399,23 @@ public class SchemaManager {
 			return (count>0);
 		}
 		return false;
+	}
+
+	/**
+	 * Takes in an SQL count(*) query, which should return a single result, which is a single integer, indicating
+	 * the number of occurences of a given entry. If no count is returned from the ResultSet, -1 is returned from this method.
+	 * @param query	SQL count query.
+	 * @return
+	 * @throws SQLException
+	 */
+	private int getCount(String query) throws SQLException{
+		LocalResult result = executeQuery(query);
+		if (result.next()){
+			int count = result.currentRow()[0].getInt();
+
+			return count;
+		}
+		return -1;
 	}
 
 
@@ -458,8 +485,8 @@ public class SchemaManager {
 		return executeUpdate(sql);
 	}
 
-/*
- * 		CREATE TABLE IF NOT EXISTS H20.H2O_REPLICA(
+	/*
+	 * 		CREATE TABLE IF NOT EXISTS H20.H2O_REPLICA(
 		    replica_id INT NOT NULL auto_increment,
 			tablename VARCHAR(255), 
 			connection_id INT NOT NULL,
@@ -471,7 +498,7 @@ public class SchemaManager {
 			FOREIGN KEY (connection_id) REFERENCES H20.H2O_CONNECTION (connection_id)
 		);<br/>
 
- */
+	 */
 
 
 }

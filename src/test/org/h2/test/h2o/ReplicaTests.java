@@ -92,6 +92,35 @@ public class ReplicaTests extends TestBase{
 	}
 
 	/**
+	 * Check that the schema manager is correctly updated when a new replica is created.
+	 */
+	@Test
+	public void SchemaMetaData(){
+
+		try{
+			sb.execute("CREATE REPLICA TEST");
+
+			if (sb.getUpdateCount() != 0){
+				fail("Expected update count to be '0'");
+			}
+
+			sa.execute("SELECT * FROM H20.H2O_REPLICA;");
+
+			ResultSet rs = sa.getResultSet();
+
+			if (!(rs.next() && rs.next())){
+				fail("Should have been two entries in the schema manager.");
+			}
+
+
+		} catch (SQLException sqle){
+
+			sqle.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
+		}
+	}
+
+	/**
 	 * Tests that an error is returned whena replica already exists at the given location.
 	 */
 	@Test
@@ -149,7 +178,7 @@ public class ReplicaTests extends TestBase{
 			fail("SQLException thrown when it shouldn't have.");
 		}
 	}
-	
+
 	/**
 	 * Tests that the SELECT LOCAL command find a remote copy when ONLY is not used.
 	 */
@@ -163,7 +192,7 @@ public class ReplicaTests extends TestBase{
 			fail("The table should be found remotely if not available locally.");
 		}
 	}
-	
+
 	/**
 	 * Tests that the SELECT LOCAL ONLY command fails when no local copy is available.
 	 */
@@ -175,7 +204,6 @@ public class ReplicaTests extends TestBase{
 
 			fail("It shouldn't be possible to query a local version which doesn't exist.");
 		} catch (SQLException sqle){
-			sqle.printStackTrace();
 			//Expected!
 		}
 	}
@@ -238,6 +266,7 @@ public class ReplicaTests extends TestBase{
 			validateResults(pKey2, secondCol2, sb.getResultSet());
 
 		} catch (SQLException sqle){
+			System.out.println("This trace matters:");
 			sqle.printStackTrace();
 			fail("SQLException thrown when it shouldn't have.");
 		}
@@ -398,11 +427,10 @@ public class ReplicaTests extends TestBase{
 	}
 
 	/**
-	 * Tests the 'push replication' feature by attempting to initiate replication creation on database B from database A, using the ON
-	 * syntax, even though it is not needed. This checks that the ON, FROM syntax works when describing the machine local machine.
+	 * Checks that the DROP REPLICA command works for a non-primary replica.
 	 */
 	@Test
-	public void DropReplicaTest(){
+	public void DropReplica(){
 
 		try{
 
@@ -411,6 +439,7 @@ public class ReplicaTests extends TestBase{
 			if (sb.getUpdateCount() != 0){
 				fail("Expected update count to be '0'");
 			}
+
 
 			try{
 				sb.execute("DROP REPLICA TEST;");
@@ -433,7 +462,150 @@ public class ReplicaTests extends TestBase{
 		}
 	}
 
+	/**
+	 * Checks that its possible to drop the primary, original copy of the data when one other copy exists.
+	 */
+	@Test
+	public void DropPrimaryReplica(){
 
+		try{
+
+			sb.execute("CREATE REPLICA TEST;");
+
+			if (sb.getUpdateCount() != 0){
+				fail("Expected update count to be '0'");
+			}
+
+			try{
+				sa.execute("DROP REPLICA TEST;");
+			} catch(SQLException e){
+				e.printStackTrace();
+				fail("Failed to drop replica.");
+			}
+
+			try{
+				sa.execute("SELECT LOCAL ONLY * FROM TEST ORDER BY ID;");
+
+				fail("Failed to drop replica.");
+			}	catch (SQLException e){
+				//Expected.	
+			}
+
+		} catch (SQLException sqle){
+			sqle.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
+		}
+	}
+
+	/**
+	 * Checks that an error is thrown when database B tries to drop a replica when one doesn't exist on that database.
+	 */
+	@Test
+	public void DropReplicaFail(){
+
+		try{
+			sb.execute("DROP REPLICA TEST;");
+			fail("Succeeded in dropping the replica when it shouldn't have been possible.");
+		} catch(SQLException e){
+			//Expected
+		}
+
+	}
+
+	/**
+	 * Checks that its possible to drop the primary, original copy of the data when no other copy exists.
+	 * 
+	 * <p>By default this operation should fail - DROP TABLE should be used instead.
+	 */
+	@Test
+	public void DropOnlyReplicaFail(){
+
+		try{
+			sa.execute("DROP REPLICA TEST;");
+			fail("Succeeded in dropping the replica when it shouldn't have been possible.");
+		} catch(SQLException e){
+			//Expected
+		}
+
+	}
+	
+	/**
+	 * Tests the feature to create multiple replicas at the same time.
+	 */
+	@Test
+	public void CreateMultipleReplicas(){
+		try{
+			
+			sa.execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+			sa.execute("INSERT INTO TEST2 VALUES(4, 'Meh');");
+			sa.execute("INSERT INTO TEST2 VALUES(5, 'Heh');");
+			
+			sb.execute("CREATE REPLICA TEST, TEST2;");
+
+			if (sb.getUpdateCount() != 0){
+				fail("Expected update count to be '0'");
+			}
+
+			/*
+			 * Check that the local copy has only two entries.
+			 */
+			sb.execute("SELECT LOCAL ONLY * FROM TEST2 ORDER BY ID;");
+
+			int[] pKey = {4, 5};
+			String[] secondCol = {"Meh", "Heh"};
+
+			validateResults(pKey, secondCol, sb.getResultSet());
+	
+
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
+		}
+	}
+	
+	/**
+	 * Tests the feature to create multiple replicas at the same time using the ON and FROM syntax.
+	 */
+	@Test
+	public void CreateMultipleReplicasONFROM(){
+		try{
+			
+			sa.execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+			sa.execute("INSERT INTO TEST2 VALUES(4, 'Meh');");
+			sa.execute("INSERT INTO TEST2 VALUES(5, 'Heh');");
+			
+			sa.execute("CREATE REPLICA TEST, TEST2 ON 'jdbc:h2:mem:two' FROM 'jdbc:h2:mem:one';");
+
+			if (sa.getUpdateCount() != 0){
+				fail("Expected update count to be '0'");
+			}
+
+			/*
+			 * Check that the local copy has only two entries.
+			 */
+			sb.execute("SELECT LOCAL ONLY * FROM TEST2 ORDER BY ID;");
+
+			int[] pKey = {4, 5};
+			String[] secondCol = {"Meh", "Heh"};
+
+			validateResults(pKey, secondCol, sb.getResultSet());
+
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
+		}
+	}
+
+	
+	/**
+	 * Tests replication of an entire schema of tables.
+	 */
+	@Test
+	public void ReplicateSchema(){
+		fail("Not yet implemented.");
+	}
+
+	
 	/**
 	 * Utility method which checks that the results of a test query match up to the set of expected values. The 'TEST'
 	 * class is being used in these tests so the primary keys (int) and names (varchar/string) are required to check the
@@ -446,7 +618,7 @@ public class ReplicaTests extends TestBase{
 	private void validateResults(int[] pKey, String[] secondCol, ResultSet rs) throws SQLException {
 		if (rs == null)
 			fail("Resultset was null. Probably an incorrectly set test.");
-		
+
 		for (int i=0; i < pKey.length; i++){
 			if (rs.next()){
 				assertEquals(pKey[i], rs.getInt(1));
