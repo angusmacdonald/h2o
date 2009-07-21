@@ -208,10 +208,13 @@ public class SchemaManagerTests {
 				fail("There shouldn't be a single table in the schema manager.");
 			}
 
-			if (!rs.getString(1).equals("TEST")){
+			
+			if (!rs.getString(3).equals("TEST")){
 				fail("This entry should be for the TEST table.");
 			}
-
+			if (!rs.getString(2).equals("PUBLIC")){
+				fail("This entry should be for the PUBLIC schema.");
+			}
 			rs.close();
 
 		} catch (SQLException e1) {
@@ -301,9 +304,10 @@ public class SchemaManagerTests {
 			sa.execute("SELECT * FROM H20.H2O_TABLE;");
 			rs = sa.getResultSet();		
 			if (rs.next()){
-				assertEquals("TEST", rs.getString(1));
+				assertEquals("TEST", rs.getString(3));
+				assertEquals("PUBLIC", rs.getString(2));
 			} else {
-				fail("Table TEST was not found in the schema manager.");
+				fail("Table PUBLIC.TEST was not found in the schema manager.");
 			}
 			rs.close();
 
@@ -396,7 +400,8 @@ public class SchemaManagerTests {
 			sa.execute("SELECT * FROM H20.H2O_TABLE;");
 			rs = sa.getResultSet();		
 			if (rs.next()){
-				assertEquals("TEST", rs.getString(1));
+				assertEquals("TEST", rs.getString(3));
+				assertEquals("PUBLIC", rs.getString(2));
 			} else {
 				fail("Table TEST was not found in the schema manager.");
 			}

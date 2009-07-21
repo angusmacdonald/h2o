@@ -180,20 +180,6 @@ public class ReplicaTests extends TestBase{
 	}
 
 	/**
-	 * Tests that the SELECT LOCAL command find a remote copy when ONLY is not used.
-	 */
-	@Test
-	public void SelectLocalTestRemote(){
-
-		try{
-			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("The table should be found remotely if not available locally.");
-		}
-	}
-
-	/**
 	 * Tests that the SELECT LOCAL ONLY command fails when no local copy is available.
 	 */
 	@Test
@@ -207,7 +193,20 @@ public class ReplicaTests extends TestBase{
 			//Expected!
 		}
 	}
+	
+	/**
+	 * Tests that the SELECT LOCAL command find a remote copy when ONLY is not used.
+	 */
+	@Test
+	public void SelectLocalTestRemote(){
 
+		try{
+			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
+		} catch (SQLException sqle){
+			sqle.printStackTrace();
+			fail("The table should be found remotely if not available locally.");
+		}
+	}
 
 	/**
 	 * Tests that the SELECT PRIMARY command succeeds, in the case where the primary is local.
@@ -440,6 +439,7 @@ public class ReplicaTests extends TestBase{
 				fail("Expected update count to be '0'");
 			}
 
+			sb.execute("INSERT INTO TEST VALUES(3, 'Quite');");
 
 			try{
 				sb.execute("DROP REPLICA TEST;");
@@ -453,7 +453,7 @@ public class ReplicaTests extends TestBase{
 
 				fail("Failed to drop replica.");
 			}	catch (SQLException e){
-				//Expected.	
+				//Expected.
 			}
 
 		} catch (SQLException sqle){
@@ -594,44 +594,5 @@ public class ReplicaTests extends TestBase{
 			e.printStackTrace();
 			fail("SQLException thrown when it shouldn't have.");
 		}
-	}
-
-	
-	/**
-	 * Tests replication of an entire schema of tables.
-	 */
-	@Test
-	public void ReplicateSchema(){
-		fail("Not yet implemented.");
-	}
-
-	
-	/**
-	 * Utility method which checks that the results of a test query match up to the set of expected values. The 'TEST'
-	 * class is being used in these tests so the primary keys (int) and names (varchar/string) are required to check the
-	 * validity of the resultset.
-	 * @param key			The set of expected primary keys.
-	 * @param secondCol		The set of expected names.
-	 * @param rs			The results actually returned.
-	 * @throws SQLException 
-	 */
-	private void validateResults(int[] pKey, String[] secondCol, ResultSet rs) throws SQLException {
-		if (rs == null)
-			fail("Resultset was null. Probably an incorrectly set test.");
-
-		for (int i=0; i < pKey.length; i++){
-			if (rs.next()){
-				assertEquals(pKey[i], rs.getInt(1));
-				assertEquals(secondCol[i], rs.getString(2));
-			} else {
-				fail("Expected an entry here.");
-			}
-		}
-
-		if (rs.next()){
-			fail("Too many entries.");
-		}
-
-		rs.close();
 	}
 }

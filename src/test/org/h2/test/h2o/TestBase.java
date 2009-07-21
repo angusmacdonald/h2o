@@ -1,7 +1,10 @@
 package org.h2.test.h2o;
 
+import static org.junit.Assert.assertEquals;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import static org.junit.Assert.fail;
 
@@ -52,6 +55,10 @@ public class TestBase {
 			sa.execute("DROP TABLE IF EXISTS TEST, TEST2");
 			sb.execute("DROP TABLE IF EXISTS TEST, TEST2");
 
+
+			sa.execute("DROP SCHEMA IF EXISTS SCHEMA2");
+			sb.execute("DROP SCHEMA IF EXISTS SCHEMA2");
+						
 			sa.close();
 			sb.close();
 
@@ -61,5 +68,34 @@ public class TestBase {
 			e.printStackTrace();
 			fail("Connections aren't bein closed correctly.");
 		}
+	}
+	
+	/**
+	 * Utility method which checks that the results of a test query match up to the set of expected values. The 'TEST'
+	 * class is being used in these tests so the primary keys (int) and names (varchar/string) are required to check the
+	 * validity of the resultset.
+	 * @param key			The set of expected primary keys.
+	 * @param secondCol		The set of expected names.
+	 * @param rs			The results actually returned.
+	 * @throws SQLException 
+	 */
+	public void validateResults(int[] pKey, String[] secondCol, ResultSet rs) throws SQLException {
+		if (rs == null)
+			fail("Resultset was null. Probably an incorrectly set test.");
+
+		for (int i=0; i < pKey.length; i++){
+			if (rs.next()){
+				assertEquals(pKey[i], rs.getInt(1));
+				assertEquals(secondCol[i], rs.getString(2));
+			} else {
+				fail("Expected an entry here.");
+			}
+		}
+
+		if (rs.next()){
+			fail("Too many entries.");
+		}
+
+		rs.close();
 	}
 }

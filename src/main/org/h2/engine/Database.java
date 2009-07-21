@@ -2447,15 +2447,16 @@ public class Database implements DataHandler {
 				String sql = "";
 				while (remoteTables.next()){
 					Value[] row = remoteTables.currentRow();
-
-					String tableName = row[0].getString();
-					String db_location = row[1].getString();
-					String connection_type = row[2].getString();
-					String machine_name = row[3].getString();
-					String connection_port = row[4].getString();
+					String schemaName = row[0].getString();
+					String tableName = row[1].getString();
+					String db_location = row[2].getString();
+					String connection_type = row[3].getString();
+					String machine_name = row[4].getString();
+					String connection_port = row[5].getString();
 
 					//Example format: jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db
 
+					String fullTableName = schemaName + "." + tableName;
 					String dbname = "";
 
 					if (connection_type.equals("tcp")){
@@ -2465,8 +2466,8 @@ public class Database implements DataHandler {
 					} else {
 						Message.throwInternalError("This connection type isn't supported yet. Get on that!");
 					}
-					sql += "\nCREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + dbname + "', '" + 
-					SchemaManager.USERNAME + "', '" + SchemaManager.PASSWORD + "', '" + tableName + "');";
+					sql += "\nCREATE LINKED TABLE IF NOT EXISTS " + fullTableName + "('org.h2.Driver', '" + dbname + "', '" + 
+					SchemaManager.USERNAME + "', '" + SchemaManager.PASSWORD + "', '" + fullTableName + "');";
 
 				}
 

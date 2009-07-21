@@ -6,7 +6,6 @@
  */
 package org.h2.command.ddl;
 
-import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -177,10 +176,12 @@ public class CreateReplica extends SchemaCommand {
 			}
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
 		}  
+		
+		String fullTableName = getSchema().getName() + "." + tableName;
 
-		if (getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE) == null) { //H2O. Check for the existence of any version. if a linked table version doesn't exist we must create it.
-			String createLinkedTable = "\nCREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + whereDataWillBeTakenFrom + "', '" + 
-			SchemaManager.USERNAME + "', '" + SchemaManager.PASSWORD + "', '" + tableName + "');";
+		if (getSchema().findTableOrView(session, fullTableName, LocationPreference.NO_PREFERENCE) == null) { //H2O. Check for the existence of any version. if a linked table version doesn't exist we must create it.
+			String createLinkedTable = "\nCREATE LINKED TABLE IF NOT EXISTS " + fullTableName + "('org.h2.Driver', '" + whereDataWillBeTakenFrom + "', '" + 
+			SchemaManager.USERNAME + "', '" + SchemaManager.PASSWORD + "', '" + fullTableName + "');";
 			Parser queryParser = new Parser(session);;
 			Command sqlQuery = queryParser.prepareCommand(createLinkedTable);
 			sqlQuery.executeUpdate();
@@ -328,7 +329,7 @@ public class CreateReplica extends SchemaCommand {
 
 				SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
 				sm.addReplicaInformation(tableName, table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
-						db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType());	
+						db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType(), getSchema().getName());	
 			}
 
 
@@ -498,7 +499,10 @@ public class CreateReplica extends SchemaCommand {
 		Statement stat = null;
 		try {
 			stat = conn.getConnection().createStatement();
-			ResultSet rs = stat.executeQuery("SCRIPT TABLE " + tableName);
+			
+			String fullTableName = getSchema().getName() + "." + tableName;
+			
+			ResultSet rs = stat.executeQuery("SCRIPT TABLE " + fullTableName);
 
 			Set<String> inserts = new HashSet<String>();
 
@@ -740,7 +744,7 @@ public class CreateReplica extends SchemaCommand {
 
 		try {
 			if (whereDataWillBeTakenFrom == null){
-				whereDataWillBeTakenFrom = SchemaManager.getInstance().getPrimaryReplicaLocation(tableName);
+				whereDataWillBeTakenFrom = SchemaManager.getInstance().getPrimaryReplicaLocation(tableName, getSchema().getName());
 			}
 		} catch (SQLException e) {
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);

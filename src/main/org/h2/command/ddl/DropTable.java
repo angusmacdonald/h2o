@@ -96,7 +96,12 @@ public class DropTable extends SchemaCommand {
 			 */
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_")){
 				SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
-				sm.removeTable(tableName);
+				try {
+				sm.removeTable(tableName, getSchema().getName());
+				} catch (SQLException e){
+					//TODO fix - this is thrown because the tableID is not found. This happens because drop table removes only local copies AND
+					// schema manager information.
+				}
 			}
 
         }

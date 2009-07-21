@@ -114,10 +114,13 @@ public class Schema extends DbObjectBase {
 		while (tablesAndViews != null && tablesAndViews.size() > 0) {
 			ReplicaSet replicaSet = (ReplicaSet) tablesAndViews.values().toArray()[0];
 			Set<Table> tables = replicaSet.getAllCopies();
-			for (Table table: tables){
+			Table[] array = (Table[])tables.toArray(new Table[0]);
+			
+			for (int i=0; i<array.length; i++){
+				Table table = array[i];
 				database.removeSchemaObject(session, table);
 			}
-			replicaSet.removeAllCopies(); //XXX will this actually remove everything properly, or will it infinately loop?
+			replicaSet.removeAllCopies();
 			tablesAndViews.remove(replicaSet.getTableName());
 
 		}
@@ -264,9 +267,9 @@ public class Schema extends DbObjectBase {
 			
 			if ((replicaSet.size() == 1 && !locale.isStrict()) || locale == LocationPreference.NO_PREFERENCE){ //XXX more advanced logic to choose replica would go here.
 				table = replicaSet.getACopy();
-			} else if (locale == LocationPreference.LOCAL){
+			} else if (locale == LocationPreference.LOCAL || locale == LocationPreference.LOCAL_STRICT){
 				table = replicaSet.getLocalCopy(); //XXX what if no local copy exists?
-			} else if (locale == LocationPreference.PRIMARY){
+			} else if (locale == LocationPreference.PRIMARY || locale == LocationPreference.PRIMARY_STRICT){
 				table = replicaSet.getPrimaryCopy();
 			}
 			

@@ -9,7 +9,9 @@ package org.h2.command.ddl;
 import java.sql.SQLException;
 
 import org.h2.constant.ErrorCode;
+import org.h2.engine.Constants;
 import org.h2.engine.Database;
+import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
@@ -45,6 +47,9 @@ public class DropSchema extends DefineCommand {
                 throw Message.getSQLException(ErrorCode.SCHEMA_CAN_NOT_BE_DROPPED_1, schemaName);
             }
             db.removeDatabaseObject(session, schema);
+           
+            if (Constants.IS_H2O)
+            	SchemaManager.getInstance(session).removeTable(null, schemaName);
         }
         return 0;
     }

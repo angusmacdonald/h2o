@@ -74,21 +74,24 @@ public class WebServer implements Service {
     };
 
     private static final String[] GENERIC = new String[] {
-        "Generic JNDI Data Source|javax.naming.InitialContext|java:comp/env/jdbc/Test|sa",
-        "Generic Firebird Server|org.firebirdsql.jdbc.FBDriver|jdbc:firebirdsql:localhost:c:/temp/firebird/test|sysdba",
-        "Generic OneDollarDB|in.co.daffodil.db.jdbc.DaffodilDBDriver|jdbc:daffodilDB_embedded:school;path=C:/temp;create=true|sa",
-        "Generic DB2|COM.ibm.db2.jdbc.net.DB2Driver|jdbc:db2://localhost/test|" ,
-        "Generic Oracle|oracle.jdbc.driver.OracleDriver|jdbc:oracle:thin:@localhost:1521:test|scott" ,
-        "Generic MS SQL Server 2000|com.microsoft.jdbc.sqlserver.SQLServerDriver|jdbc:microsoft:sqlserver://localhost:1433;DatabaseName=sqlexpress|sa",
-        "Generic MS SQL Server 2005|com.microsoft.sqlserver.jdbc.SQLServerDriver|jdbc:sqlserver://localhost;DatabaseName=test|sa",
-        "Generic PostgreSQL|org.postgresql.Driver|jdbc:postgresql:test|" ,
-        "Generic MySQL|com.mysql.jdbc.Driver|jdbc:mysql://localhost:3306/test|" ,
-        "Generic HSQLDB|org.hsqldb.jdbcDriver|jdbc:hsqldb:test;hsqldb.default_table_type=cached|sa" ,
-        "Generic Derby (Server)|org.apache.derby.jdbc.ClientDriver|jdbc:derby://localhost:1527/test;create=true|sa",
-        "Generic Derby (Embedded)|org.apache.derby.jdbc.EmbeddedDriver|jdbc:derby:test;create=true|sa",
-        "Generic H2 (Server)|org.h2.Driver|jdbc:h2:tcp://localhost/~/test|sa",
-        // this will be listed on top for new installations
-        "Generic H2 (Embedded)|org.h2.Driver|jdbc:h2:~/test|sa",
+//        "Generic JNDI Data Source|javax.naming.InitialContext|java:comp/env/jdbc/Test|sa",
+//        "Generic Firebird Server|org.firebirdsql.jdbc.FBDriver|jdbc:firebirdsql:localhost:c:/temp/firebird/test|sysdba",
+//        "Generic OneDollarDB|in.co.daffodil.db.jdbc.DaffodilDBDriver|jdbc:daffodilDB_embedded:school;path=C:/temp;create=true|sa",
+//        "Generic DB2|COM.ibm.db2.jdbc.net.DB2Driver|jdbc:db2://localhost/test|" ,
+//        "Generic Oracle|oracle.jdbc.driver.OracleDriver|jdbc:oracle:thin:@localhost:1521:test|scott" ,
+//        "Generic MS SQL Server 2000|com.microsoft.jdbc.sqlserver.SQLServerDriver|jdbc:microsoft:sqlserver://localhost:1433;DatabaseName=sqlexpress|sa",
+//        "Generic MS SQL Server 2005|com.microsoft.sqlserver.jdbc.SQLServerDriver|jdbc:sqlserver://localhost;DatabaseName=test|sa",
+//        "Generic PostgreSQL|org.postgresql.Driver|jdbc:postgresql:test|" ,
+//        "Generic MySQL|com.mysql.jdbc.Driver|jdbc:mysql://localhost:3306/test|" ,
+//        "Generic HSQLDB|org.hsqldb.jdbcDriver|jdbc:hsqldb:test;hsqldb.default_table_type=cached|sa" ,
+//        "Generic Derby (Server)|org.apache.derby.jdbc.ClientDriver|jdbc:derby://localhost:1527/test;create=true|sa",
+//        "Generic Derby (Embedded)|org.apache.derby.jdbc.EmbeddedDriver|jdbc:derby:test;create=true|sa",
+//        "Generic H2 (Server)|org.h2.Driver|jdbc:h2:tcp://localhost/~/test|sa",
+//        // this will be listed on top for new installations
+//        "Generic H2 (Embedded)|org.h2.Driver|jdbc:h2:~/test|sa",
+        "Schema Manager|org.h2.Driver|jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db|angus",
+        "Non-Schema Manager (One)|org.h2.Driver|jdbc:h2:tcp://localhost:9191/db_data/three/test_db|angus",
+        "Non-Schema Manager (Two)|org.h2.Driver|jdbc:h2:tcp://localhost:9292/db_data/two/test_db|angus"
     };
 
     private static int ticker;
@@ -536,22 +539,22 @@ public class WebServer implements Service {
         ArrayList settings = new ArrayList();
         if (connInfoMap.size() == 0) {
             Properties prop = loadProperties();
-            if (prop.size() == 0) {
+  //          if (prop.size() == 0) {
                 for (int i = 0; i < GENERIC.length; i++) {
                     ConnectionInfo info = new ConnectionInfo(GENERIC[i]);
                     settings.add(info);
                     updateSetting(info);
-                }
-            } else {
-                for (int i = 0;; i++) {
-                    String data = prop.getProperty(String.valueOf(i));
-                    if (data == null) {
-                        break;
-                    }
-                    ConnectionInfo info = new ConnectionInfo(data);
-                    settings.add(info);
-                    updateSetting(info);
-                }
+//                }
+//            } else {
+//                for (int i = 0;; i++) {
+//                    String data = prop.getProperty(String.valueOf(i));
+//                    if (data == null) {
+//                        break;
+//                    }
+//                    ConnectionInfo info = new ConnectionInfo(data);
+//                    settings.add(info);
+//                    updateSetting(info);
+//                }
             }
         } else {
             settings.addAll(connInfoMap.values());

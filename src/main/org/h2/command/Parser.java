@@ -11,6 +11,7 @@ import java.math.BigInteger;
 import java.sql.SQLException;
 import java.text.Collator;
 import java.util.HashSet;
+import java.util.Map;
 
 import org.h2.api.Trigger;
 import org.h2.command.ddl.AlterIndexRename;
@@ -126,6 +127,7 @@ import org.h2.table.Column;
 import org.h2.table.FunctionTable;
 import org.h2.table.IndexColumn;
 import org.h2.table.RangeTable;
+import org.h2.table.ReplicaSet;
 import org.h2.table.Table;
 import org.h2.table.TableData;
 import org.h2.table.TableFilter;
@@ -1575,13 +1577,17 @@ public class Parser {
 		if (readIf("DISTINCT")) {
 			command.setDistinct(true);
 		} else if (readIf("LOCAL")) {
-			command.setLocationPreference(LocationPreference.LOCAL);
-			if (readIf("ONLY"))
-				command.setStrictPreference(true);
+			if (readIf("ONLY")){
+				command.setLocationPreference(LocationPreference.LOCAL_STRICT);
+			} else {
+				command.setLocationPreference(LocationPreference.LOCAL);
+			}
 		} else if (readIf("PRIMARY")) {
-			command.setLocationPreference(LocationPreference.PRIMARY);
-			if (readIf("ONLY"))
-				command.setStrictPreference(true);
+			if (readIf("ONLY")){
+				command.setLocationPreference(LocationPreference.PRIMARY_STRICT);
+			} else {
+				command.setLocationPreference(LocationPreference.PRIMARY);
+			}
 		}else {
 			readIf("ALL");
 		}
@@ -4232,10 +4238,11 @@ public class Parser {
 	private ScriptCommand parseScript() throws SQLException {
 		ScriptCommand command = new ScriptCommand(session);
 		boolean data = true, passwords = true, settings = true, dropTables = false, simple = false;
-		
+
 		String tableName = null;
 		if (Constants.IS_H2O && readIf("TABLE")){
 			command.setTable(readIdentifierWithSchema());
+			command.setSchema(getSchema().getName());
 		}
 		if (readIf("SIMPLE")) {
 			simple = true;
@@ -4316,8 +4323,13 @@ public class Parser {
 		 *  3. The table has not been found, but exists in some remote location.
 		 */
 
-		if (Constants.IS_H2O && searchRemote && database.isConnectedToSM() && !database.isSM() && !(locale.isStrict() && locale == LocationPreference.LOCAL)){ // 2 or 3
-			return findViaSchemaManager(tableName);
+		if (Constants.IS_H2O && searchRemote && database.isConnectedToSM() && !database.isSM() && !(locale == LocationPreference.LOCAL_STRICT)){ // 2 or 3
+			String schemaName = "PUBLIC";
+
+			if (getSchema() != null)
+				schemaName = getSchema().getName();
+
+			return findViaSchemaManager(tableName, schemaName); //XXX this might fail if its not the default schema.
 		} else { // 1
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
 		}
@@ -4331,15 +4343,15 @@ public class Parser {
 	 * @return	Information on that table.
 	 * @throws SQLException if the table is not found.
 	 */
-	public Table findViaSchemaManager(String tableName) throws SQLException {
+	public Table findViaSchemaManager(String tableName, String thisSchemaName) throws SQLException {
 
 		/*
 		 * Attempt to find the location of this table, if it exists remotely.
 		 */
-		String dbname = SchemaManager.getInstance(session).getPrimaryReplicaLocation(tableName);
-		
+		String dbname = SchemaManager.getInstance(session).getPrimaryReplicaLocation(tableName, thisSchemaName);
+
 		Parser queryParser = new Parser(session);
-		
+
 		String sql = "CREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + dbname + "', '" + SchemaManager.USERNAME + "', '" + SchemaManager.PASSWORD + "', '" + tableName + "');";
 
 		Command sqlQuery = queryParser.prepareCommand(sql);
@@ -4695,54 +4707,108 @@ public class Parser {
 
 	private CreateReplica parseCreateReplica(boolean temp, boolean globalTemp, boolean persistent) throws SQLException {
 		boolean ifNotExists = readIfNoExists();
-		String tableName = readIdentifierWithSchema();
-		
-		if (temp && globalTemp && "SESSION".equals(schemaName)) {
-			// support weird syntax: declare global temporary table session.xy
-			// (...) not logged
-			schemaName = session.getCurrentSchemaName();
-			globalTemp = false;
-		}
-		Schema schema = getSchema();
-		CreateReplica command = new CreateReplica(session, schema);
-		
-		command.setPersistent(persistent);
-		command.setTemporary(temp);
-		command.setGlobalTemporary(globalTemp);
-		command.setIfNotExists(ifNotExists);
-		command.setTableName(tableName);
-		command.setComment(readCommentIf());
-		
-		
-		while (readIf(",")) {
-			tableName = readIdentifierWithSchema();
-			CreateReplica next = new CreateReplica(session, getSchema());
-			next.setTableName(tableName);
-			command.addNextCreateReplica(next);
-			
-			next.setPersistent(persistent);
-			next.setTemporary(temp);
-			next.setGlobalTemporary(globalTemp);
-			next.setIfNotExists(ifNotExists);
-			next.setTableName(tableName);
-			next.setComment(readCommentIf());
-			
+
+		CreateReplica command = null;
+
+		if (readIf("SCHEMA")){
+			/*
+			 * To copy the entire schema this section loops through all tables. Where there are local tables which
+			 * are TableData objects (i.e. not linked) a new create replica command is created. For the first table found
+			 * the 'command' variable is instantiated. For each subsequent table a new Create table object is created 
+			 * and added to the 'next' of the original command.
+			 */
+
+			schemaName = readExpression().toString();
+			Schema s = getSchema();
+
+			SchemaManager schemaManager = SchemaManager.getInstance(session);
+
+			String[] tables = schemaManager.getAllTablesInSchema(s.getName());
+
+			int numTables = 0;
+
+			for (String shortTableName: tables){
+				String fullTableName = shortTableName;
+				if (numTables == 0){
+					command = new CreateReplica(session, s);
+
+					command.setPersistent(persistent);
+					command.setTemporary(temp);
+					command.setGlobalTemporary(globalTemp);
+					command.setIfNotExists(ifNotExists);
+					command.setTableName(fullTableName);
+					command.setComment(readCommentIf());
+				} else {
+					CreateReplica next = new CreateReplica(session, getSchema());
+					next.setTableName(fullTableName);
+
+					next.setPersistent(persistent);
+					next.setTemporary(temp);
+					next.setGlobalTemporary(globalTemp);
+					next.setIfNotExists(ifNotExists);
+					next.setComment(readCommentIf());
+
+					command.addNextCreateReplica(next);
+				}
+				numTables++;
+
+			}
+
+		} else {
+
+			String tableName = readIdentifierWithSchema();
+			if (temp && globalTemp && "SESSION".equals(schemaName)) {
+				// support weird syntax: declare global temporary table session.xy
+				// (...) not logged
+				schemaName = session.getCurrentSchemaName();
+				globalTemp = false;
+			}
+			checkForSchemaName();
+			Schema schema = getSchema();
+			command = new CreateReplica(session, schema);
+
+			command.setPersistent(persistent);
+			command.setTemporary(temp);
+			command.setGlobalTemporary(globalTemp);
+			command.setIfNotExists(ifNotExists);
+			command.setTableName(tableName);
+			command.setComment(readCommentIf());
+
+
+			while (readIf(",")) {
+				tableName = readIdentifierWithSchema();
+				checkForSchemaName();
+				CreateReplica next = new CreateReplica(session, getSchema());
+				next.setTableName(tableName);
+				command.addNextCreateReplica(next);
+
+				next.setPersistent(persistent);
+				next.setTemporary(temp);
+				next.setGlobalTemporary(globalTemp);
+				next.setIfNotExists(ifNotExists);
+				next.setTableName(tableName);
+				next.setComment(readCommentIf());
+
+			}
+
 		}
 
 		String whereReplicaWillBeCreated = null;
 		String whereDataWillBeTakenFrom = null;
-		
+
 		if (readIf("ON")) {
-			whereReplicaWillBeCreated = readExpression().toString();
+			whereReplicaWillBeCreated = readString();
 		}
-		
+
 		if (readIf("FROM")){
-			whereDataWillBeTakenFrom = readExpression().toString();			
+			whereDataWillBeTakenFrom = readString();			
 		}
-	
-		command.setOriginalLocation(whereDataWillBeTakenFrom);
-		command.setReplicationLocation(whereReplicaWillBeCreated);
-	
+
+		if (command != null){
+			command.setOriginalLocation(whereDataWillBeTakenFrom);
+			command.setReplicationLocation(whereReplicaWillBeCreated);
+		}
+
 		return command;
 	}
 
@@ -4750,6 +4816,28 @@ public class Parser {
 	 * END OF H2O ############################################################
 	 */
 
+
+	/**
+	 * Check whether the schema being called exists, and if it doesn't create it. This is called when a new replica is
+	 * being created.
+	 * @throws SQLException 
+	 */
+	private void checkForSchemaName() throws SQLException {
+		Schema schema = database.findSchema(schemaName);
+
+		if (schema != null) return; //the schema already exists.
+
+		CreateSchema command = new CreateSchema(session);
+		command.setIfNotExists(true);
+		command.setSchemaName(schemaName);
+		command.setAuthorization(session.getUser().getName());
+		try {
+			command.update();
+		} catch (SQLException e) {
+			throw new SQLException("Failed to create new schema for replica.");
+		}
+
+	}
 
 	private CreateTable parseCreateTable(boolean temp, boolean globalTemp, boolean persistent) throws SQLException {
 		boolean ifNotExists = readIfNoExists();

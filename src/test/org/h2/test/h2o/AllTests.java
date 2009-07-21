@@ -11,6 +11,7 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
 	SchemaManagerTests.class,
+	MultipleSchemaTests.class,
 	ReplicaTests.class
 })
 public class AllTests {

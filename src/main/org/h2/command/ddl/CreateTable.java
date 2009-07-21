@@ -134,7 +134,7 @@ public class CreateTable extends SchemaCommand {
 			boolean throwException = false;
 			try { //XXX this is a hack. shouldn't rely on exception being thrown.
 
-				parser.findViaSchemaManager(tableName);
+				parser.findViaSchemaManager(tableName, getSchema().getName());
 
 				throwException = true; //code shouldn't reach this point.
 			} catch (SQLException sqlE){
@@ -238,7 +238,7 @@ public class CreateTable extends SchemaCommand {
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_")){
 				SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
 				sm.addTableInformation(tableName, table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
-						db.getLocalMachineAddress(), db.getLocalMachinePort(), (db.isPersistent())? "tcp": "mem");	
+						db.getLocalMachineAddress(), db.getLocalMachinePort(), (db.isPersistent())? "tcp": "mem", getSchema().getName());	
 			}
 
 

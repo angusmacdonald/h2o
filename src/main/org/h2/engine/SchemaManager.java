@@ -1,6 +1,8 @@
 package org.h2.engine;
 
 import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.h2.command.Command;
 import org.h2.command.Parser;
@@ -14,20 +16,22 @@ import org.h2.value.Value;
 		CREATE SCHEMA IF NOT EXISTS H20;<br/>
 
 		CREATE TABLE IF NOT EXISTS H20.H2O_TABLE(
+		    table_id INT NOT NULL auto_increment,
+		    schemaname VARCHAR(255),
 		    tablename VARCHAR(255), 
 			last_modification INT NOT NULL,
-			PRIMARY KEY (tablename)
+			PRIMARY KEY (table_id)
 		);<br/>
 
 		CREATE TABLE IF NOT EXISTS H20.H2O_REPLICA(
 		    replica_id INT NOT NULL auto_increment,
-			tablename VARCHAR(255), 
+			table_id INT NOT NULL, 
 			connection_id INT NOT NULL,
 			db_location VARCHAR(255),
 			storage_type VARCHAR(50),
 			last_modification INT NOT NULL,
 			PRIMARY KEY (replica_id),
-			FOREIGN KEY (tablename) REFERENCES H20.H2O_TABLE (tablename),
+			FOREIGN KEY (table_id) REFERENCES H20.H2O_TABLE (table_id),
 			FOREIGN KEY (connection_id) REFERENCES H20.H2O_CONNECTION (connection_id)
 		);<br/>
 
@@ -120,10 +124,11 @@ public class SchemaManager {
 	}
 
 
-	public String getPrimaryReplicaLocation(String tableName) throws SQLException{
+	public String getPrimaryReplicaLocation(String tableName, String schemaName) throws SQLException{
 		String sql = "SELECT db_location, connection_type, machine_name, connection_port " +
-		"FROM H20.H2O_REPLICA, H20.H2O_CONNECTION " +
-		"WHERE tablename = '" + tableName + "' AND H2O_CONNECTION.connection_id = H2O_REPLICA.connection_id;";
+		"FROM H20.H2O_REPLICA, H20.H2O_CONNECTION, H20.H2O_TABLE " +
+		"WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND " + TABLES + ".table_id=" + REPLICAS + ".table_id " + 
+		"AND H2O_CONNECTION.connection_id = H2O_REPLICA.connection_id;";
 
 		LocalResult result = null;
 
@@ -134,7 +139,6 @@ public class SchemaManager {
 			result = sqlQuery.executeQueryLocal(1);
 
 		} catch (Exception e){
-			System.out.println("This is the one.");
 			e.printStackTrace();
 		}
 
@@ -176,16 +180,16 @@ public class SchemaManager {
 	 */
 	public void addTableInformation(String tableName, long modificationID,
 			String databaseLocation, String tableType,
-			String localMachineAddress, int localMachinePort, String connection_type) throws SQLException {
+			String localMachineAddress, int localMachinePort, String connection_type, String schemaName) throws SQLException {
 
-		if (!isTableListed(tableName)){ // the table doesn't already exist in the schema manager.
-			addTableInformation(tableName,  modificationID);
+		if (!isTableListed(tableName, schemaName)){ // the table doesn't already exist in the schema manager.
+			addTableInformation(tableName,  modificationID, schemaName);
 		}
 
-		int connectionID = SchemaManager.getInstance().getConnectionID(localMachineAddress, localMachinePort, connection_type);
-
-		if (!isReplicaListed(tableName, connectionID, databaseLocation)){ // the table doesn't already exist in the schema manager.
-			addReplicaInformation(tableName, modificationID, connectionID, databaseLocation, tableType);				
+		int connectionID = getConnectionID(localMachineAddress, localMachinePort, connection_type);
+		int tableID = getTableID(tableName, schemaName);
+		if (!isReplicaListed(tableName, connectionID, databaseLocation, schemaName)){ // the table doesn't already exist in the schema manager.
+			addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType);				
 		}
 	}
 
@@ -203,12 +207,13 @@ public class SchemaManager {
 	 */
 	public void addReplicaInformation(String tableName, long modificationID,
 			String databaseLocation, String tableType,
-			String localMachineAddress, int localMachinePort, String connection_type) throws SQLException {
+			String localMachineAddress, int localMachinePort, String connection_type, String schemaName) throws SQLException {
 
 		int connectionID = getConnectionID(localMachineAddress, localMachinePort, connection_type);
+		int tableID = getTableID(tableName, schemaName);
 
-		if (!isReplicaListed(tableName, connectionID, databaseLocation)){ // the table doesn't already exist in the schema manager.
-			addReplicaInformation(tableName, modificationID, connectionID, databaseLocation, tableType);				
+		if (!isReplicaListed(tableName, connectionID, databaseLocation, schemaName)){ // the table doesn't already exist in the schema manager.
+			addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType);				
 		}
 	}
 
@@ -249,10 +254,12 @@ public class SchemaManager {
 	 * @throws SQLException
 	 */
 	public int createSchemaManagerTables() throws SQLException{
+
 		String sql = "CREATE SCHEMA IF NOT EXISTS H20; " +
-		"\n\nCREATE TABLE IF NOT EXISTS " + TABLES + "(tablename VARCHAR(255), " +
+		"\n\nCREATE TABLE IF NOT EXISTS " + TABLES + "( table_id INT NOT NULL auto_increment, " +
+		"schemaname VARCHAR(255), tablename VARCHAR(255), " +
 		"last_modification INT NOT NULL, " +
-		"PRIMARY KEY (tablename) );";
+		"PRIMARY KEY (table_id) );";
 
 		sql += "CREATE TABLE IF NOT EXISTS " + CONNECTIONS +"(" + 
 		"connection_id INT NOT NULL auto_increment," + 
@@ -262,13 +269,13 @@ public class SchemaManager {
 		"PRIMARY KEY (connection_id) );";
 
 		sql += "\n\nCREATE TABLE IF NOT EXISTS " + REPLICAS + "(replica_id INT NOT NULL auto_increment, " +
-		"tablename VARCHAR(255), " +
+		"table_id INT NOT NULL, " +
 		"connection_id INT NOT NULL, " + 
 		"db_location VARCHAR(255)," +
 		"storage_type VARCHAR(50), " +
 		"last_modification INT NOT NULL, " +
 		"PRIMARY KEY (replica_id), " +
-		"FOREIGN KEY (tablename) REFERENCES " + TABLES + " (tablename) , " +
+		"FOREIGN KEY (table_id) REFERENCES " + TABLES + " (table_id) ON DELETE CASCADE , " +
 		" FOREIGN KEY (connection_id) REFERENCES " + CONNECTIONS + " (connection_id));\n";
 
 		return executeUpdate(sql);
@@ -303,9 +310,10 @@ public class SchemaManager {
 	 * @throws SQLException
 	 */
 	public LocalResult getAllRemoteTables(String localMachineAddress, int localMachinePort, String dbLocation) throws SQLException{
-		String sql = "SELECT tablename, db_location, connection_type, machine_name, connection_port " +
-		"FROM " + REPLICAS + ", " + CONNECTIONS +
+		String sql = "SELECT schemaname, tablename, db_location, connection_type, machine_name, connection_port " +
+		"FROM " + REPLICAS + ", " + CONNECTIONS + ", " + TABLES +
 		" WHERE " + CONNECTIONS + ".connection_id = " + REPLICAS + ".connection_id " +
+		"AND " + TABLES + ".table_id=" + REPLICAS + ".table_id " +
 		"AND NOT (machine_name = '" + localMachineAddress + "' AND connection_port = " + localMachinePort + " AND db_location = '" + dbLocation + "');";
 
 		return executeQuery(sql);
@@ -314,8 +322,9 @@ public class SchemaManager {
 	/**
 	 * Gets the number of replicas that exist for a given table.
 	 */
-	public int getNumberofReplicas(String tableName) throws SQLException{
-		String sql = "SELECT count(*) FROM " + REPLICAS + " WHERE tablename = '" + tableName + "';";
+	public int getNumberofReplicas(String tableName, String schemaName) throws SQLException{
+		String sql = "SELECT count(*) FROM " + REPLICAS + ", " + TABLES + " WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND" +
+		" " + TABLES + ".table_id=" + REPLICAS + ".table_id;";
 
 		return getCount(sql);
 	}
@@ -359,13 +368,41 @@ public class SchemaManager {
 	}
 
 	/**
+	 *  Gets the table ID for a given database table if it is present in the database. If not, an exception is thrown.
+	 * @param tableName		Name of the table
+	 * @param schemaName	Schema the table is in.
+	 * @return
+	 */
+	public int getTableID(String tableName, String schemaName) throws SQLException{
+
+		String sql = "SELECT table_id FROM " + TABLES + " WHERE tablename='" + tableName
+		+ "' AND schemaname='" + schemaName + "';";
+
+		LocalResult result = null;
+
+		sqlQuery = queryParser.prepareCommand(sql);
+
+		result = sqlQuery.executeQueryLocal(1);
+
+		if (result.next()){
+			return result.currentRow()[0].getInt();
+		} else {
+			throw new SQLException("Internal problem: tableID not found in schema manager.");
+		}
+
+
+	}
+
+
+	/**
 	 * A check whether a table is already listed in the schema manager.
 	 * @param tableName			Name of the table for which the check is being made.
+	 * @param schemaName 
 	 * @return	true, if the table's information is already in the schema manager.
 	 * @throws SQLException 
 	 */
-	public boolean isTableListed(String tableName) throws SQLException{
-		String sql =  "SELECT count(tablename) FROM " + TABLES + " WHERE tablename='" + tableName + "';";
+	public boolean isTableListed(String tableName, String schemaName) throws SQLException{
+		String sql =  "SELECT count(*) FROM " + TABLES + " WHERE tablename='" + tableName + "' AND schemaname='" + schemaName +"';";
 
 		return countCheck(sql);
 	}
@@ -377,8 +414,9 @@ public class SchemaManager {
 	 * @return	true, if the replica's information is already in the schema manager.
 	 * @throws SQLException 
 	 */
-	public boolean isReplicaListed(String tableName, int connectionID, String dbLocation) throws SQLException{
-		String sql = "SELECT count(tablename) FROM " + REPLICAS + " WHERE tablename='" + tableName + "' AND db_location='"
+	public boolean isReplicaListed(String tableName, int connectionID, String dbLocation, String schemaName) throws SQLException{
+		String sql = "SELECT count(*) FROM " + REPLICAS + ", " + TABLES + " WHERE tablename='" + tableName + "' AND schemaname='" + 
+		schemaName + "' AND " + TABLES + ".table_id=" + REPLICAS + ".table_id AND db_location='"
 		+ dbLocation + "' AND connection_id=" + connectionID + ";";
 
 		return countCheck(sql);
@@ -426,37 +464,79 @@ public class SchemaManager {
 	 * @return					Result of the update.
 	 * @throws SQLException 
 	 */
-	private int addTableInformation(String tableName, long modificationID) throws SQLException{
-		String sql = "INSERT INTO " + TABLES + " VALUES ('" + tableName + "', " + modificationID +");";
+	private int addTableInformation(String tableName, long modificationID, String schemaName) throws SQLException{
+		String sql = "INSERT INTO " + TABLES + " VALUES (null, '" + schemaName + "', '" + tableName + "', " + modificationID +");";
 		return executeUpdate(sql);
 	}
 
 	/**
 	 * Update the schema manager with new replica information
-	 * @param tableName			Name of the replica being added.
+	 * @param tableID			Name of the replica being added.
 	 * @param modificationID	Mofification ID of the table.
 	 * @return					Result of the update.
 	 * @throws SQLException 
 	 */
-	private int addReplicaInformation(String tableName, long modificationID, int connectionID, String databaseLocation, String tableType) throws SQLException{
-		String sql = "INSERT INTO " + REPLICAS + " VALUES (null, '" + tableName + "', " + connectionID + ", '" + databaseLocation + "', '" + 
+	private int addReplicaInformation(int tableID, long modificationID, int connectionID, String databaseLocation, String tableType) throws SQLException{
+		String sql = "INSERT INTO " + REPLICAS + " VALUES (null, " + tableID + ", " + connectionID + ", '" + databaseLocation + "', '" + 
 		tableType + "', " + modificationID +");\n";
 		return executeUpdate(sql);
 	}
 
 	/**
 	 * Removes a table completely from the schema manager. Information is removed for the table itself and for all replicas.
-	 * @param tableName
+	 * @param tableName		Leave null if you want to drop the entire schema.
+	 * @param schemaName 
 	 * @throws SQLException 
 	 */
-	public int removeTable(String tableName) throws SQLException {
-		String sql = "DELETE FROM " + REPLICAS + " WHERE tablename='" + tableName + "'; ";
+	public int removeTable(String tableName, String schemaName) throws SQLException {
+		String sql = "";
+		if (tableName == null){
+			Integer[] tableIDs = getTableIDs(schemaName);
 
-		sql += "\nDELETE FROM " + TABLES + " WHERE tablename='" + tableName + "';";
+			sql = "DELETE FROM " + REPLICAS;
+			for (int i = 0; i < tableIDs.length; i++){
+				if (i==0){
+					sql +=" WHERE table_id=" + tableIDs[i];
+				} else {
+					sql +=" OR table_id=" + tableIDs[i];
+				}
+			}
+			sql += ";\nDELETE FROM " + TABLES + " WHERE schemaname='" + schemaName + "'; ";
+		} else {
 
+			int tableID = getTableID(tableName, schemaName);
+
+			sql = "DELETE FROM " + REPLICAS + " WHERE table_id=" + tableID + ";";
+
+			sql += "\nDELETE FROM " + TABLES + " WHERE table_id=" + tableID + "; ";
+
+		}
 		return executeUpdate(sql);
 	}
 
+
+	/**
+	 * Gets all the table IDs for tables in a schema.
+	 * @param schemaName
+	 * @return
+	 * @throws SQLException 
+	 */
+	private Integer[] getTableIDs(String schemaName) throws SQLException {
+		String sql = "SELECT table_id FROM " + TABLES + " WHERE schemaname='" + schemaName + "';";
+
+		LocalResult result = null;
+
+		sqlQuery = queryParser.prepareCommand(sql);
+
+		result = sqlQuery.executeQueryLocal(0);
+
+		Set<Integer> ids = new HashSet<Integer>();
+		while (result.next()){
+			ids.add(result.currentRow()[0].getInt());
+		}
+
+		return ids.toArray(new Integer[0]);
+	}
 
 	private LocalResult executeQuery(String query) throws SQLException{
 		sqlQuery = queryParser.prepareCommand(query);
@@ -476,29 +556,39 @@ public class SchemaManager {
 	 * @param machineName 
 	 * @param connectionPort 
 	 * @param connectionType 
+	 * @param schemaName 
 	 * @throws SQLException 
 	 */
-	public int removeReplica(String tableName, String dbLocation, String machineName, int connectionPort, String connectionType) throws SQLException {
+	public int removeReplica(String tableName, String dbLocation, String machineName, int connectionPort, String connectionType, String schemaName) throws SQLException {
 		int connectionID = getConnectionID(machineName, connectionPort, connectionType);
-		String sql = "DELETE FROM " + REPLICAS + " WHERE tablename='" + tableName + "' AND db_location='" + dbLocation + "' AND connection_id=" + connectionID  + "; ";
+		int tableID = getTableID(tableName, schemaName);
+		String sql = "DELETE FROM " + REPLICAS + " WHERE table_id=" + tableID + " AND db_location='" + dbLocation + "' AND connection_id=" + connectionID  + "; ";
 
 		return executeUpdate(sql);
 	}
 
-	/*
-	 * 		CREATE TABLE IF NOT EXISTS H20.H2O_REPLICA(
-		    replica_id INT NOT NULL auto_increment,
-			tablename VARCHAR(255), 
-			connection_id INT NOT NULL,
-			db_location VARCHAR(255),
-			storage_type VARCHAR(50),
-			last_modification INT NOT NULL,
-			PRIMARY KEY (replica_id),
-			FOREIGN KEY (tablename) REFERENCES H20.H2O_TABLE (tablename),
-			FOREIGN KEY (connection_id) REFERENCES H20.H2O_CONNECTION (connection_id)
-		);<br/>
-
+	/**
+	 * Get the names of all the tables in a given schema.
+	 * @param schemaName
+	 * @return
+	 * @throws SQLException 
 	 */
+	public String[] getAllTablesInSchema(String schemaName) throws SQLException {
+		String sql = "SELECT tablename FROM " + TABLES + " WHERE schemaname='" + schemaName + "';";
+
+		LocalResult result = null;
+
+		sqlQuery = queryParser.prepareCommand(sql);
+
+		result = sqlQuery.executeQueryLocal(0);
+
+		Set<String> tableNames = new HashSet<String>();
+		while (result.next()){
+			tableNames.add(result.currentRow()[0].getString());
+		}
+
+		return tableNames.toArray(new String[0]);
+	}
 
 
 }

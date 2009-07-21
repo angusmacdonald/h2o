@@ -1158,14 +1158,4 @@ public class Select extends Query {
 	public LocationPreference getLocationPreference() {
 		return locationPreference;
 	}
-
-	/**
-	 * Whether the location preference specified by the user (LOCAL, PRIMARY) is to be used
-	 * absolutely. By default (without this setting) the query will try to return the data if the specified
-	 * one doesn't exist.
-	 * @param b 
-	 */
-	public void setStrictPreference(boolean b) {
-		locationPreference.setStrict(b);
-	}
 }

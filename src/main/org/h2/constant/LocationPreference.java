@@ -6,28 +6,26 @@ package org.h2.constant;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class LocationPreference {
-	public static LocationPreference LOCAL, PRIMARY, NO_PREFERENCE;
+	public static LocationPreference LOCAL, PRIMARY, NO_PREFERENCE, LOCAL_STRICT, PRIMARY_STRICT, NO_PREFERENCE_STRICT;
 
 	static {
-		LOCAL = new LocationPreference("LOCAL");
-		PRIMARY= new LocationPreference("PRIMARY");
-		NO_PREFERENCE= new LocationPreference("NO_PREFERENCE");
+		LOCAL = new LocationPreference("LOCAL", false);
+		PRIMARY= new LocationPreference("PRIMARY", false);
+		NO_PREFERENCE= new LocationPreference("NO_PREFERENCE", false);
+		
+		LOCAL_STRICT = new LocationPreference("LOCAL", true);
+		PRIMARY_STRICT= new LocationPreference("PRIMARY", true);
+		NO_PREFERENCE_STRICT= new LocationPreference("NO_PREFERENCE", true);
 	}
 	
 	private String setting;
-	private boolean strictSetting = false;
+	private boolean strictSetting;
 	
-	private LocationPreference(String setting){
-		this.setting = setting; 
+	private LocationPreference(String setting, boolean isStrict){
+		this.setting = setting;
+		this.strictSetting = isStrict;
 	}
 	
-	/**
-	 * Whether the location preference is to be strictly adhered to.
-	 * @param b
-	 */
-	public void setStrict(boolean b) {
-		strictSetting = true;
-	}
 	
 	public boolean isStrict(){
 		return strictSetting;
@@ -60,10 +58,11 @@ public class LocationPreference {
 		if (setting == null) {
 			if (other.setting != null)
 				return false;
-		} else if (!setting.equals(other.setting))
+		} else if (!setting.equals(other.setting)){
 			return false;
-		if (strictSetting != other.strictSetting)
-			return false;
+		}
+//		if (strictSetting != other.strictSetting)
+//			return false;
 		return true;
 	}
 

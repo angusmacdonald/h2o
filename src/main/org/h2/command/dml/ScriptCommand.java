@@ -79,6 +79,7 @@ public class ScriptCommand extends ScriptBase {
 	 */
 	private boolean singleTable = false;
 	private String tableName = null;
+	private String schemaName = null;
 
 
 	public ScriptCommand(Session session) {
@@ -140,7 +141,9 @@ public class ScriptCommand extends ScriptBase {
 				/*
 				 * Beginning of H2O code to get insert statements for a single table. 
 				 */
-				Table table = db.getSchema(session.getCurrentSchemaName()).findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE); //TODO ensure it works in schema's other than 'public'.
+				if (schemaName == null)
+					schemaName = session.getCurrentSchemaName();
+				Table table = db.getSchema(schemaName).findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE); //TODO ensure it works in schema's other than 'public'.
 
 				if (table == null){
 					throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
@@ -694,6 +697,15 @@ public class ScriptCommand extends ScriptBase {
 		singleTable = true;
 		this.tableName = tableName;
 
+	}
+
+	/**
+	 * Set the schema name.
+	 * <p>H2O. Called if the insert statements for a single table are required.
+	 * @param name
+	 */
+	public void setSchema(String name) {
+		this.schemaName = name;
 	}
 
 }

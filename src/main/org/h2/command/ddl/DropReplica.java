@@ -67,7 +67,7 @@ public class DropReplica extends SchemaCommand {
 			if (!table.canDrop() || (Constants.IS_H2O && tableName.startsWith("H2O_"))) { //H20 - ensure schema tables aren't dropped.
 				throw Message.getSQLException(ErrorCode.CANNOT_DROP_TABLE_1, tableName);
 			}
-			int numberOfReplicas = SchemaManager.getInstance(session).getNumberofReplicas(tableName);
+			int numberOfReplicas = SchemaManager.getInstance(session).getNumberofReplicas(tableName, getSchema().getName());
 			
 			if (numberOfReplicas == 1){ //can't drop the only replica.
 				throw Message.getSQLException(ErrorCode.CANNOT_DROP_TABLE_1, tableName);
@@ -98,7 +98,7 @@ public class DropReplica extends SchemaCommand {
 			 */
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_")){
 				SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
-				sm.removeReplica(tableName, db.getDatabaseLocation(), db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType());
+				sm.removeReplica(tableName, db.getDatabaseLocation(), db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType(), getSchema().getName());
 			}
 
 		}
