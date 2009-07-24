@@ -45,7 +45,6 @@ import org.h2.util.ObjectArray;
 import org.h2.util.StringUtils;
 import org.h2.value.DataType;
 import org.h2.value.ValueDate;
-import org.h2.value.ValueInt;
 import org.h2.value.ValueString;
 import org.h2.value.ValueTime;
 import org.h2.value.ValueTimestamp;
@@ -95,9 +94,15 @@ public class CreateReplica extends SchemaCommand {
 	 * The next table to be replicated if it is to be done with more than one.
 	 */
 	private CreateReplica next = null;
+	private Set<IndexColumn[]> indexColumns;
+	private Set<IndexType> pkIndexType;
+	private int tableSet = -1; //the set of tables which this replica will belong to.
 
 	public CreateReplica(Session session, Schema schema) {
 		super(session, schema);
+
+		indexColumns = new HashSet<IndexColumn[]>();
+		pkIndexType = new HashSet<IndexType>();
 	}
 
 	public void setQuery(Query query) {
@@ -155,8 +160,8 @@ public class CreateReplica extends SchemaCommand {
 
 		Database db = session.getDatabase();
 
-		
-		
+
+
 		if (whereReplicaWillBeCreated != null || db.getFullDatabasePath().equals(whereReplicaWillBeCreated)){
 			return pushCommand(); //command will be executed elsewhere
 		} else {
@@ -176,7 +181,7 @@ public class CreateReplica extends SchemaCommand {
 			}
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
 		}  
-		
+
 		String fullTableName = getSchema().getName() + "." + tableName;
 
 		if (getSchema().findTableOrView(session, fullTableName, LocationPreference.NO_PREFERENCE) == null) { //H2O. Check for the existence of any version. if a linked table version doesn't exist we must create it.
@@ -263,74 +268,95 @@ public class CreateReplica extends SchemaCommand {
 				}
 			}
 
+//			IndexType[] indexTypes = pkIndexType.toArray(new IndexType[0]);
+//			int y = 0;
+//
+//			for (IndexColumn[] ids: indexColumns){
+//				String prefix = "";
+//
+//				if (indexTypes[y].getPrimaryKey()){
+//					prefix = getSchema().getUniqueIndexName(session, table, Constants.PREFIX_PRIMARY_KEY);
+//
+//				} else {
+//					prefix = table.getSchema().getUniqueIndexName(session, table, Constants.PREFIX_INDEX);
+//				}
+//				table.addIndex(session, prefix, getObjectId(true, false), ids, indexTypes[y], headPos, "A replicated tables primary key.");
+//				y++;
+//			}
 
-			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_")){
+			/*
+			 * Copy over the data that we have stored in the 'inserts' set. This section of code loops
+			 * through that set and does some fairly primitive string splitting to get each value - there
+			 * is an assumption that a comma will never appear in the database TODO fix this! 
+			 */
 
-				/*
-				 * Copy over the data that we have stored in the 'inserts' set. This section of code loops
-				 * through that set and does some fairly primitive string splitting to get each value - there
-				 * is an assumption that a comma will never appear in the database TODO fix this! 
-				 */
+			Insert command = new Insert(session);
 
-				Insert command = new Insert(session);
+			command.setTable(table);
 
+			Column[] columnArray = new Column[columns.size()];
+			columns.toArray(columnArray);
+			command.setColumns(columnArray);
 
-				command.setTable(table);
+			ArrayList<Integer> types = new ArrayList<Integer>();
 
-				Column[] columnArray = new Column[columns.size()];
-				columns.toArray(columnArray);
-				command.setColumns(columnArray);
-
-				ArrayList<Integer> types = new ArrayList<Integer>();
-
-				boolean firstRun = true;
-				for (String statement: inserts){
-					ObjectArray values = new ObjectArray();
-					statement = statement.substring(0, statement.length()-1);
+			boolean firstRun = true;
+			for (String statement: inserts){
+				ObjectArray values = new ObjectArray();
+				statement = statement.substring(0, statement.length()-1);
 
 
-					int i = 0;
-					for (String part: statement.split(",")){
-						part = part.trim();
-						if (firstRun){
-							types.add(new Integer(part));
-						} else {
-
-							if (part.startsWith("'") && part.endsWith("'")){
-								part = part.substring(1, part.length()-1);
-							}
-							ValueString val = ValueString.get(part);
-
-
-							values.add(ValueExpression.get(val.convertTo(types.get(i++))));
-						}
-
-					}
-
+				int i = 0;
+				for (String part: statement.split(",")){
+					part = part.trim();
 					if (firstRun){
-						firstRun = false;
+						types.add(new Integer(part));
 					} else {
-						Expression[] expr = new Expression[values.size()];
-						values.toArray(expr);
-						command.addRow(expr);
+
+						if (part.startsWith("'") && part.endsWith("'")){
+							part = part.substring(1, part.length()-1);
+						}
+						ValueString val = ValueString.get(part);
+
+
+						values.add(ValueExpression.get(val.convertTo(types.get(i++))));
 					}
 
 				}
 
-				command.update();
+				if (firstRun){
+					firstRun = false;
+				} else {
+					Expression[] expr = new Expression[values.size()];
+					values.toArray(expr);
+					command.addRow(expr);
+				}
 
-				/*
-				 * #########################################################################
-				 * 
-				 *  Create a schema manager entry.
-				 * 
-				 * #########################################################################
-				 */
-
-				SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
-				sm.addReplicaInformation(tableName, table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
-						db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType(), getSchema().getName());	
 			}
+
+			command.update();
+
+			/*
+			 * #########################################################################
+			 * 
+			 *  Create a schema manager entry.
+			 * 
+			 * #########################################################################
+			 */
+
+			SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
+			
+			
+			if (tableSet  == -1){
+				tableSet = sm.getNewTableSetNumber();
+			} else {
+				if (next != null){
+					next.setTableSet(tableSet);
+				}
+			}
+					sm.addReplicaInformation(tableName, table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
+					db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType(), getSchema().getName(), tableSet);	
+
 
 
 
@@ -340,11 +366,19 @@ public class CreateReplica extends SchemaCommand {
 			throw e;
 		}
 
-        if (next != null) {
-            next.update();
-        }
+		if (next != null) {
+			next.update();
+		}
 
 		return 0;
+	}
+
+	/**
+	 * Set the tableSet number for this table.
+	 * @param tableSet2
+	 */
+	private void setTableSet(int tableSet) {
+		this.tableSet = tableSet;
 	}
 
 	/**
@@ -374,10 +408,10 @@ public class CreateReplica extends SchemaCommand {
 				throw e;
 			}
 		}
-		
-        if (next != null) {
-            next.update();
-        }
+
+		if (next != null) {
+			next.update();
+		}
 
 		return result;
 	}
@@ -463,7 +497,6 @@ public class CreateReplica extends SchemaCommand {
 	 * @throws JdbcSQLException 
 	 */
 	public void readSQL() throws JdbcSQLException {
-		Database db = session.getDatabase();
 
 		try {
 			connect(whereDataWillBeTakenFrom);
@@ -499,9 +532,9 @@ public class CreateReplica extends SchemaCommand {
 		Statement stat = null;
 		try {
 			stat = conn.getConnection().createStatement();
-			
+
 			String fullTableName = getSchema().getName() + "." + tableName;
-			
+
 			ResultSet rs = stat.executeQuery("SCRIPT TABLE " + fullTableName);
 
 			Set<String> inserts = new HashSet<String>();
@@ -534,6 +567,7 @@ public class CreateReplica extends SchemaCommand {
 		//		}
 		rs.close();
 		rs = meta.getColumns(null, originalSchema, tableName, null); 
+
 		int i = 0;
 		ObjectArray columnList = new ObjectArray();
 		HashMap columnMap = new HashMap();
@@ -564,6 +598,8 @@ public class CreateReplica extends SchemaCommand {
 			int type = DataType.convertSQLTypeToValueType(sqlType);
 			Column col = new Column(n, type, precision, scale, displaySize);
 			addColumn(col);
+			columnList.add(col);
+			columnMap.put(n, col);
 		}
 		rs.close();
 
@@ -594,6 +630,8 @@ public class CreateReplica extends SchemaCommand {
 					int type = DataType.convertSQLTypeToValueType(sqlType);
 					Column col = new Column(n, type, precision, scale, displaySize);
 					addColumn(col);
+					columnList.add(col);
+					columnMap.put(n, col);
 				}
 			}
 			rs.close();
@@ -669,6 +707,7 @@ public class CreateReplica extends SchemaCommand {
 				col = convertColumnName(col);
 				Column column = (Column) columnMap.get(col);
 				list.add(column);
+				columnList.add(col);
 			}
 			rs.close();
 		}
@@ -679,10 +718,27 @@ public class CreateReplica extends SchemaCommand {
 
 
 	private void addIndex(ObjectArray list, IndexType indexType) {
-		//	        Column[] cols = new Column[list.size()];
-		//	        list.toArray(cols);
-		//	        Index index = new LinkedIndex(this, 0, IndexColumn.wrap(cols), indexType);
-		//	        indexes.add(index);
+
+//		IndexColumn[] indexColumn = new IndexColumn[list.size()];
+//		Column[] col = new Column[list.size()];
+//		list.toArray(col);
+//
+//		if (indexType.getPrimaryKey()){
+//			for (Column c: col){
+//				c.setNullable(false);
+//			}
+//		} else {
+//			for (Column c: col){
+//				if (c.getName().equals("ADDRESS_ID")){
+//					System.out.println("address id here.");
+//				}
+//			}	
+//		}
+//		indexColumn = IndexColumn.wrap(col);
+//
+//		this.indexColumns.add(indexColumn);
+//
+//		this.pkIndexType.add(indexType);
 	}
 
 	private String convertColumnName(String columnName) {

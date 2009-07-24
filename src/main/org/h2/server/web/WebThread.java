@@ -814,7 +814,7 @@ class WebThread extends Thread implements DatabaseEventListener {
 			if (tableSet.size() > 1){
 				String tableName = entrySet.getKey();
 
-				buff.append("setNode(" + treeIndex + ", " + indentLevel+ ", " + tableLevel + ", 'index', ' " + PageParser.escapeJavaScript(tableName + " [" + tableSet.size() + " replicas]")
+				buff.append("setNode(" + treeIndex + ", " + indentLevel+ ", " + tableLevel + ", 'index', ' " + PageParser.escapeJavaScript(tableName + " [" + tableSet.size() + " copies]")
 						+ "', 'javascript:ins(\\'" + tableName + "\\',true)');\n");
 				treeIndex++;
 				//tableLevel++;
@@ -837,7 +837,7 @@ class WebThread extends Thread implements DatabaseEventListener {
 				tab = StringUtils.urlEncode(PageParser.escapeJavaScript(tab));
 
 				String isLink = table.isLinked? "[R]": "";
-				buff.append("setNode(" + treeIndex + ", " + indentLevel+ ", " + tableLevel + ", 'table', '" + isLink + " " + PageParser.escapeJavaScript(table.name)
+				buff.append("setNode(" + treeIndex + ", " + indentLevel+ ", " + tableLevel + ", 'table', '" + isLink + " " + PageParser.escapeJavaScript(table.name + ((tableSet.size()==1)? " [1 copy]":""))
 						+ "', 'javascript:ins(\\'" + tab + "\\',true)');\n");
 				treeIndex++;
 				if (mainSchema) {
@@ -976,7 +976,7 @@ class WebThread extends Thread implements DatabaseEventListener {
 					+ "', null);\n");
 
 			/*
-			 * H20. Add check for 'is schema manager.
+			 * H2O. Add check for 'is schema manager.
 			 */
 			String connectionUrl = (String) this.session.getInfo().get("url");
 

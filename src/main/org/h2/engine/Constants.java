@@ -360,7 +360,7 @@ public class Constants {
     /**
      * The product name. This value must stay like that, see
      * http://opensource.atlassian.com/projects/hibernate/browse/HHH-2682
-     * H20 - Changed, assuming hibernate support isn't needed.
+     * H2O - Changed, assuming hibernate support isn't needed.
      */
     public static final String PRODUCT_NAME = "H2";
 
@@ -515,7 +515,7 @@ public class Constants {
      */
     public static final int VIEW_INDEX_CACHE_SIZE = 64;
 
-	public static final String H20_SCHEMA = "H20";
+	public static final String H2O_SCHEMA = "H2O";
 	
     private Constants() {
         // utility class

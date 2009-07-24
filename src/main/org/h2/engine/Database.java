@@ -92,7 +92,7 @@ public class Database implements DataHandler {
 	private final boolean persistent;
 
 	/**
-	 * H20. Indicates whether this database instance is managing the table schema for other running H20 instances.
+	 * H2O. Indicates whether this database instance is managing the table schema for other running H2O instances.
 	 */
 	private boolean isSchemaManager;
 
@@ -102,27 +102,27 @@ public class Database implements DataHandler {
 	private boolean connectedToSM = false;
 
 	/**
-	 * H20. The location of the schema manager in this system.
+	 * H2O. The location of the schema manager in this system.
 	 */
 	private String schemaManagerLocation;
 
 	/**
-	 * H20. The hostname/IP address on which this instance's TCP/FTP server is being run on.
+	 * H2O. The hostname/IP address on which this instance's TCP/FTP server is being run on.
 	 */
 	private String localMachineAddress;
 
 	/**
-	 * H20. The port number on which this instance's TCP/FTP server is listening on.
+	 * H2O. The port number on which this instance's TCP/FTP server is listening on.
 	 */
 	private int localMachinePort;
 
 	/**
-	 * H20. The database location as specified in the JDBC connection string.
+	 * H2O. The database location as specified in the JDBC connection string.
 	 */
 	private final String databaseLocation;
 
 	/**
-	 * H20. Utility class for schema manager interactions.
+	 * H2O. Utility class for schema manager interactions.
 	 */
 	private SchemaManager schemaManager;
 
@@ -709,7 +709,7 @@ public class Database implements DataHandler {
 
 		if (Constants.IS_H2O && !isManagementDB() && ( !databaseExists || !isSchemaManager)){ //don't run this code with the TCP server management DB
 
-			createH20Tables();
+			createH2OTables();
 			System.out.print(" Created schema manager tables.");
 		} 
 
@@ -2409,11 +2409,11 @@ public class Database implements DataHandler {
 	}
 
 	/**
-	 * H20 Creates H20 schema meta-data tables, including schema manager tables if this machine is a schema manager.
+	 * H2O Creates H2O schema meta-data tables, including schema manager tables if this machine is a schema manager.
 	 * @throws SQLException 
 	 */
-	private void createH20Tables(){
-		schemaManager = SchemaManager.getInstance(systemSession); //H20. Create schema manager utility class.
+	private void createH2OTables(){
+		schemaManager = SchemaManager.getInstance(systemSession); //H2O. Create schema manager utility class.
 
 		int result = -1;
 

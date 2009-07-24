@@ -2,6 +2,7 @@ package org.h2.engine;
 
 import java.sql.SQLException;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 
 import org.h2.command.Command;
@@ -13,9 +14,9 @@ import org.h2.value.Value;
 
 /**
  * Contains various utility methods which the system can use to access and modify H2O's schema manager. SQL for the tables is as follows:<code>
-		CREATE SCHEMA IF NOT EXISTS H20;<br/>
+		CREATE SCHEMA IF NOT EXISTS H2O;<br/>
 
-		CREATE TABLE IF NOT EXISTS H20.H2O_TABLE(
+		CREATE TABLE IF NOT EXISTS H2O.H2O_TABLE(
 		    table_id INT NOT NULL auto_increment,
 		    schemaname VARCHAR(255),
 		    tablename VARCHAR(255), 
@@ -23,19 +24,20 @@ import org.h2.value.Value;
 			PRIMARY KEY (table_id)
 		);<br/>
 
-		CREATE TABLE IF NOT EXISTS H20.H2O_REPLICA(
+		CREATE TABLE IF NOT EXISTS H2O.H2O_REPLICA(
 		    replica_id INT NOT NULL auto_increment,
 			table_id INT NOT NULL, 
 			connection_id INT NOT NULL,
 			db_location VARCHAR(255),
 			storage_type VARCHAR(50),
 			last_modification INT NOT NULL,
+			table_set INT NOT NULL,
 			PRIMARY KEY (replica_id),
-			FOREIGN KEY (table_id) REFERENCES H20.H2O_TABLE (table_id),
-			FOREIGN KEY (connection_id) REFERENCES H20.H2O_CONNECTION (connection_id)
+			FOREIGN KEY (table_id) REFERENCES H2O.H2O_TABLE (table_id),
+			FOREIGN KEY (connection_id) REFERENCES H2O.H2O_CONNECTION (connection_id)
 		);<br/>
 
-		CREATE TABLE IF NOT EXISTS H20.H2O_CONNECTION(
+		CREATE TABLE IF NOT EXISTS H2O.H2O_CONNECTION(
 		    connection_id INT NOT NULL auto_increment,
 			machine_name VARCHAR(255), 
 			connection_type VARCHAR(5), 
@@ -50,7 +52,7 @@ public class SchemaManager {
 	/**
 	 * Name of the schema used to store schema manager tables.
 	 */
-	private static final String SCHEMA = "H20.";
+	private static final String SCHEMA = "H2O.";
 
 	/**
 	 * Name of tables' table in schema manager.
@@ -123,10 +125,43 @@ public class SchemaManager {
 		cacheConnectionID = -1;
 	}
 
+	/**
+	 * Creates the set of tables used by the schema manager.
+	 * @return Result of the update.
+	 * @throws SQLException
+	 */
+	public int createSchemaManagerTables() throws SQLException{
+
+		String sql = "CREATE SCHEMA IF NOT EXISTS H2O; " +
+		"\n\nCREATE TABLE IF NOT EXISTS " + TABLES + "( table_id INT NOT NULL auto_increment, " +
+		"schemaname VARCHAR(255), tablename VARCHAR(255), " +
+		"last_modification INT NOT NULL, " +
+		"PRIMARY KEY (table_id) );";
+
+		sql += "CREATE TABLE IF NOT EXISTS " + CONNECTIONS +"(" + 
+		"connection_id INT NOT NULL auto_increment," + 
+		"connection_type VARCHAR(5), " + 
+		"machine_name VARCHAR(255)," + 
+		"connection_port INT NOT NULL, " + 
+		"PRIMARY KEY (connection_id) );";
+
+		sql += "\n\nCREATE TABLE IF NOT EXISTS " + REPLICAS + "(replica_id INT NOT NULL auto_increment, " +
+		"table_id INT NOT NULL, " +
+		"connection_id INT NOT NULL, " + 
+		"db_location VARCHAR(255)," +
+		"storage_type VARCHAR(50), " +
+		"last_modification INT NOT NULL, " +
+		"table_set INT NOT NULL, " +
+		"PRIMARY KEY (replica_id), " +
+		"FOREIGN KEY (table_id) REFERENCES " + TABLES + " (table_id) ON DELETE CASCADE , " +
+		" FOREIGN KEY (connection_id) REFERENCES " + CONNECTIONS + " (connection_id));\n";
+
+		return executeUpdate(sql);
+	}
 
 	public String getPrimaryReplicaLocation(String tableName, String schemaName) throws SQLException{
 		String sql = "SELECT db_location, connection_type, machine_name, connection_port " +
-		"FROM H20.H2O_REPLICA, H20.H2O_CONNECTION, H20.H2O_TABLE " +
+		"FROM H2O.H2O_REPLICA, H2O.H2O_CONNECTION, H2O.H2O_TABLE " +
 		"WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND " + TABLES + ".table_id=" + REPLICAS + ".table_id " + 
 		"AND H2O_CONNECTION.connection_id = H2O_REPLICA.connection_id;";
 
@@ -180,7 +215,7 @@ public class SchemaManager {
 	 */
 	public void addTableInformation(String tableName, long modificationID,
 			String databaseLocation, String tableType,
-			String localMachineAddress, int localMachinePort, String connection_type, String schemaName) throws SQLException {
+			String localMachineAddress, int localMachinePort, String connection_type, String schemaName, int tableSet) throws SQLException {
 
 		if (!isTableListed(tableName, schemaName)){ // the table doesn't already exist in the schema manager.
 			addTableInformation(tableName,  modificationID, schemaName);
@@ -189,7 +224,7 @@ public class SchemaManager {
 		int connectionID = getConnectionID(localMachineAddress, localMachinePort, connection_type);
 		int tableID = getTableID(tableName, schemaName);
 		if (!isReplicaListed(tableName, connectionID, databaseLocation, schemaName)){ // the table doesn't already exist in the schema manager.
-			addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType);				
+			addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, tableSet);				
 		}
 	}
 
@@ -207,13 +242,13 @@ public class SchemaManager {
 	 */
 	public void addReplicaInformation(String tableName, long modificationID,
 			String databaseLocation, String tableType,
-			String localMachineAddress, int localMachinePort, String connection_type, String schemaName) throws SQLException {
+			String localMachineAddress, int localMachinePort, String connection_type, String schemaName, int replicaSet) throws SQLException {
 
 		int connectionID = getConnectionID(localMachineAddress, localMachinePort, connection_type);
 		int tableID = getTableID(tableName, schemaName);
 
 		if (!isReplicaListed(tableName, connectionID, databaseLocation, schemaName)){ // the table doesn't already exist in the schema manager.
-			addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType);				
+			addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, replicaSet);				
 		}
 	}
 
@@ -248,38 +283,6 @@ public class SchemaManager {
 		return executeUpdate(sql);
 	}
 
-	/**
-	 * Creates the set of tables used by the schema manager.
-	 * @return Result of the update.
-	 * @throws SQLException
-	 */
-	public int createSchemaManagerTables() throws SQLException{
-
-		String sql = "CREATE SCHEMA IF NOT EXISTS H20; " +
-		"\n\nCREATE TABLE IF NOT EXISTS " + TABLES + "( table_id INT NOT NULL auto_increment, " +
-		"schemaname VARCHAR(255), tablename VARCHAR(255), " +
-		"last_modification INT NOT NULL, " +
-		"PRIMARY KEY (table_id) );";
-
-		sql += "CREATE TABLE IF NOT EXISTS " + CONNECTIONS +"(" + 
-		"connection_id INT NOT NULL auto_increment," + 
-		"connection_type VARCHAR(5), " + 
-		"machine_name VARCHAR(255)," + 
-		"connection_port INT NOT NULL, " + 
-		"PRIMARY KEY (connection_id) );";
-
-		sql += "\n\nCREATE TABLE IF NOT EXISTS " + REPLICAS + "(replica_id INT NOT NULL auto_increment, " +
-		"table_id INT NOT NULL, " +
-		"connection_id INT NOT NULL, " + 
-		"db_location VARCHAR(255)," +
-		"storage_type VARCHAR(50), " +
-		"last_modification INT NOT NULL, " +
-		"PRIMARY KEY (replica_id), " +
-		"FOREIGN KEY (table_id) REFERENCES " + TABLES + " (table_id) ON DELETE CASCADE , " +
-		" FOREIGN KEY (connection_id) REFERENCES " + CONNECTIONS + " (connection_id));\n";
-
-		return executeUpdate(sql);
-	}
 
 	/**
 	 * Creates linked tables for a remote schema manager, location specified by the paramter.
@@ -288,7 +291,7 @@ public class SchemaManager {
 	 * @throws SQLException
 	 */
 	public int createLinkedTablesForSchemaManager(String schemaManagerLocation) throws SQLException{
-		String sql = "CREATE SCHEMA IF NOT EXISTS H20;";
+		String sql = "CREATE SCHEMA IF NOT EXISTS H2O;";
 		String tableName = TABLES;
 		sql += "\nCREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', '" + USERNAME + "', '" + PASSWORD + "', '" + tableName + "');";
 		tableName = CONNECTIONS;
@@ -476,9 +479,9 @@ public class SchemaManager {
 	 * @return					Result of the update.
 	 * @throws SQLException 
 	 */
-	private int addReplicaInformation(int tableID, long modificationID, int connectionID, String databaseLocation, String tableType) throws SQLException{
+	private int addReplicaInformation(int tableID, long modificationID, int connectionID, String databaseLocation, String tableType, int tableSet) throws SQLException{
 		String sql = "INSERT INTO " + REPLICAS + " VALUES (null, " + tableID + ", " + connectionID + ", '" + databaseLocation + "', '" + 
-		tableType + "', " + modificationID +");\n";
+		tableType + "', " + modificationID +", " + tableSet + ");\n";
 		return executeUpdate(sql);
 	}
 
@@ -588,6 +591,30 @@ public class SchemaManager {
 		}
 
 		return tableNames.toArray(new String[0]);
+	}
+
+	/**
+	 * Returns the next available tableSet number.
+	 * @return
+	 * @throws SQLException 
+	 */
+	public int getNewTableSetNumber() throws SQLException {
+//		Random rnd = new Random();
+//		int val = rnd.nextInt(100);
+		String sql = "SELECT (max(table_set)+1) FROM " + REPLICAS + ";";
+
+		LocalResult result = null;
+
+		sqlQuery = queryParser.prepareCommand(sql);
+
+		result = sqlQuery.executeQueryLocal(1);
+
+		if (result.next()){
+			return result.currentRow()[0].getInt();
+		} else {
+			throw new SQLException("Internal problem: tableID not found in schema manager.");
+		}
+
 	}
 
 

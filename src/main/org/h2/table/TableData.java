@@ -169,6 +169,7 @@ public class TableData extends Table implements RecordReader {
         if (indexType.getPrimaryKey()) {
             for (int i = 0; i < cols.length; i++) {
                 Column column = cols[i].column;
+
                 if (column.getNullable()) {
                     throw Message.getSQLException(ErrorCode.COLUMN_MUST_NOT_BE_NULLABLE_1, column.getName());
                 }
@@ -297,7 +298,10 @@ public class TableData extends Table implements RecordReader {
     }
 
     public void removeRow(Session session, Row row) throws SQLException {
-        if (database.isMultiVersion()) {
+        if (database == null)
+        	database = session.getDatabase();
+    	
+    	if (database.isMultiVersion()) {
             if (row.getDeleted()) {
                 throw Message.getSQLException(ErrorCode.CONCURRENT_UPDATE_1, getName());
             }
@@ -578,7 +582,7 @@ public class TableData extends Table implements RecordReader {
             if (lockExclusive == s) {
                 lockExclusive = null;
             }
-            if (lockShared.size() > 0) {
+            if (lockShared != null && lockShared.size() > 0) {
                 lockShared.remove(s);
             }
             // TODO lock: maybe we need we fifo-queue to make sure nobody
@@ -708,4 +712,5 @@ public class TableData extends Table implements RecordReader {
 	public boolean isLocal() {
 		return true;
 	}
+
 }

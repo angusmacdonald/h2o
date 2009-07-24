@@ -93,6 +93,8 @@ public abstract class Table extends SchemaObjectBase {
     private boolean onCommitDrop, onCommitTruncate;
     private Row nullRow;
 
+	private int tableSet = -1;
+
     Table(Schema schema, int id, String name, boolean persistent) {
         initSchemaObjectBase(schema, id, name, Trace.TABLE);
         this.persistent = persistent;
@@ -904,5 +906,19 @@ public abstract class Table extends SchemaObjectBase {
      * @return
      */
     public abstract boolean isLocal();
+
+	/**
+	 * @return
+	 */
+	public int getTableSet() {
+		return tableSet ;
+	}
     
+
+	/**
+	 * @param tableSet
+	 */
+	public void setTableSet(int tableSet) {
+		this.tableSet = tableSet;
+	}
 }

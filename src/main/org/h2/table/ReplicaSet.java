@@ -12,7 +12,6 @@ import org.h2.result.Row;
 import org.h2.schema.SchemaObject;
 import org.h2.util.ObjectArray;
 
-
 /**
  * H2O. Contains a set of replicas for a single table instance.
  *

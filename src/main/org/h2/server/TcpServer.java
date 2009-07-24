@@ -77,7 +77,7 @@ public class TcpServer implements Service {
     private String key, keyDatabase;
 
     /**
-     * H20. The location of the system's schema manager.
+     * H2O. The location of the system's schema manager.
      */
     private String schemaManagerLocation = null;
     

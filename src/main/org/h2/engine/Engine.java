@@ -40,7 +40,7 @@ public class Engine {
     }
     
     /**
-     * H20. Access a given database instance.
+     * H2O. Access a given database instance.
      * It's possible there could be some concurrency issues here.
      * @param databaseName
      * @return

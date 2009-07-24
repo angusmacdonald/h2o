@@ -66,9 +66,9 @@ public class SchemaManagerTests {
 
 			Statement stat = conn.createStatement();
 
-			stat.executeQuery("SELECT * FROM H20.H2O_TABLE");
-			stat.executeQuery("SELECT * FROM H20.H2O_REPLICA");
-			stat.executeQuery("SELECT * FROM H20.H2O_CONNECTION");
+			stat.executeQuery("SELECT * FROM H2O.H2O_TABLE");
+			stat.executeQuery("SELECT * FROM H2O.H2O_REPLICA");
+			stat.executeQuery("SELECT * FROM H2O.H2O_CONNECTION");
 
 
 		} catch (SQLException e1) {
@@ -119,9 +119,9 @@ public class SchemaManagerTests {
 //
 //			Statement stat = conn2.createStatement();
 //
-//			stat.executeQuery("SELECT * FROM H20.H2O_TABLE");
-//			stat.executeQuery("SELECT * FROM H20.H2O_REPLICA");
-//			stat.executeQuery("SELECT * FROM H20.H2O_CONNECTION");
+//			stat.executeQuery("SELECT * FROM H2O.H2O_TABLE");
+//			stat.executeQuery("SELECT * FROM H2O.H2O_REPLICA");
+//			stat.executeQuery("SELECT * FROM H2O.H2O_CONNECTION");
 //
 //			
 //			ResultSet rs = stat.getResultSet();
@@ -198,7 +198,7 @@ public class SchemaManagerTests {
 			}
 
 			try{
-				sa.execute("SELECT * FROM H20.H2O_TABLE;");
+				sa.execute("SELECT * FROM H2O.H2O_TABLE;");
 			} catch (SQLException e){
 				fail("The TEST table was not found.");
 			}			
@@ -256,9 +256,9 @@ public class SchemaManagerTests {
 			Statement sa = ca.createStatement();
 			Statement sb = cb.createStatement();
 
-			sb.execute("SELECT * FROM H20.H2O_TABLE;");
-			sb.execute("SELECT * FROM H20.H2O_REPLICA;");
-			sb.execute("SELECT * FROM H20.H2O_CONNECTION;");
+			sb.execute("SELECT * FROM H2O.H2O_TABLE;");
+			sb.execute("SELECT * FROM H2O.H2O_REPLICA;");
+			sb.execute("SELECT * FROM H2O.H2O_CONNECTION;");
 
 			ResultSet rs = sb.getResultSet();
 
@@ -292,7 +292,7 @@ public class SchemaManagerTests {
 			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
 			Statement sa = ca.createStatement();
 
-			sa.execute("SELECT * FROM H20.H2O_TABLE;");
+			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
 			ResultSet rs = sa.getResultSet();		
 			if (rs.next()){
 				fail("There shouldn't be any tables in the schema manager yet.");
@@ -301,7 +301,7 @@ public class SchemaManagerTests {
 
 			sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 
-			sa.execute("SELECT * FROM H20.H2O_TABLE;");
+			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
 			rs = sa.getResultSet();		
 			if (rs.next()){
 				assertEquals("TEST", rs.getString(3));
@@ -388,7 +388,7 @@ public class SchemaManagerTests {
 			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
 			Statement sa = ca.createStatement();
 
-			sa.execute("SELECT * FROM H20.H2O_TABLE;");
+			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
 			ResultSet rs = sa.getResultSet();		
 			if (rs.next()){
 				fail("There shouldn't be any tables in the schema manager yet.");
@@ -397,7 +397,7 @@ public class SchemaManagerTests {
 
 			sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 
-			sa.execute("SELECT * FROM H20.H2O_TABLE;");
+			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
 			rs = sa.getResultSet();		
 			if (rs.next()){
 				assertEquals("TEST", rs.getString(3));
@@ -416,7 +416,7 @@ public class SchemaManagerTests {
 				//Expected
 			}
 
-			sa.execute("SELECT * FROM H20.H2O_TABLE;");
+			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
 			rs = sa.getResultSet();		
 			if (rs.next()){
 				fail("There shouldn't be any entries in the schema manager.");

@@ -11,7 +11,6 @@ import java.math.BigInteger;
 import java.sql.SQLException;
 import java.text.Collator;
 import java.util.HashSet;
-import java.util.Map;
 
 import org.h2.api.Trigger;
 import org.h2.command.ddl.AlterIndexRename;
@@ -4289,7 +4288,7 @@ public class Parser {
 
 
 	/**
-	 * H20-Modified. Added the searchRemote parameter.
+	 * H2O-Modified. Added the searchRemote parameter.
 	 * @param tableName
 	 * @param searchRemote	Indicates whether the method will look for a remote copy of the data (true)
 	 * 	or if it should just return null (false).
@@ -4336,7 +4335,7 @@ public class Parser {
 	}
 
 	/**
-	 * H20. Called when a given table was not found in the local schema. This either indicates that the table doesn't exist anywhere, or that
+	 * H2O. Called when a given table was not found in the local schema. This either indicates that the table doesn't exist anywhere, or that
 	 * it exists on some remote machine. This method attempts to create a linked table for this table on a remote machine. If not, the usual error
 	 * is returned.
 	 * @param tableName Name of the table that must be found.

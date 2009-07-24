@@ -29,7 +29,7 @@ public class MultipleSchemaTests extends TestBase {
 			sa.execute("CREATE SCHEMA SCHEMA2");
 			sa.execute("CREATE TABLE SCHEMA2.TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 
-			sa.execute("SELECT tablename, schemaname FROM H20.H2O_TABLE;");
+			sa.execute("SELECT tablename, schemaname FROM H2O.H2O_TABLE;");
 
 			ResultSet rs = sa.getResultSet();
 
@@ -60,7 +60,7 @@ public class MultipleSchemaTests extends TestBase {
 			sa.execute("CREATE SCHEMA SCHEMA2");
 			sa.execute("CREATE TABLE SCHEMA2.TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 
-			sa.execute("SELECT tablename, schemaname FROM H20.H2O_TABLE;");
+			sa.execute("SELECT tablename, schemaname FROM H2O.H2O_TABLE;");
 
 			ResultSet rs = sa.getResultSet();
 
@@ -88,7 +88,7 @@ public class MultipleSchemaTests extends TestBase {
 			/*
 			 * Now check that the schema manager has correct information.
 			 */
-			sa.execute("SELECT tablename, schemaname FROM H20.H2O_TABLE;");
+			sa.execute("SELECT tablename, schemaname FROM H2O.H2O_TABLE;");
 			rs = sa.getResultSet();	
 			
 			if (rs.next()){
@@ -115,7 +115,7 @@ public class MultipleSchemaTests extends TestBase {
 			sa.execute("CREATE SCHEMA SCHEMA2");
 			sa.execute("CREATE TABLE SCHEMA2.TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 
-			sa.execute("SELECT tablename, schemaname FROM H20.H2O_TABLE;");
+			sa.execute("SELECT tablename, schemaname FROM H2O.H2O_TABLE;");
 
 			ResultSet rs = sa.getResultSet();
 
@@ -143,7 +143,7 @@ public class MultipleSchemaTests extends TestBase {
 			/*
 			 * Now check that the schema manager has correct information.
 			 */
-			sa.execute("SELECT tablename, schemaname FROM H20.H2O_TABLE;");
+			sa.execute("SELECT tablename, schemaname FROM H2O.H2O_TABLE;");
 			rs = sa.getResultSet();	
 			
 			if (rs.next()){
@@ -284,6 +284,25 @@ public class MultipleSchemaTests extends TestBase {
 
 	}
 
+	/**
+	 * Tries to create a replica of a schema that doesn't exist. Should fail.
+	 */
+	@Test
+	public void TestTableDoesntExistForReplica2(){
+		try{
+
+			sb.execute("CREATE REPLICA SCEMA2;");
+
+			if (sb.getUpdateCount() == 0){
+				fail("Expected a failure");
+			}
+
+		} catch (SQLException e){
+			//expected.
+		}
+
+	}
+	
 	/**
 	 * Tests replication of an entire schema of tables.
 	 */

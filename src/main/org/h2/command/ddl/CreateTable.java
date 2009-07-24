@@ -7,6 +7,8 @@
 package org.h2.command.ddl;
 
 import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.h2.command.Parser;
 import org.h2.command.Prepared;
@@ -14,6 +16,8 @@ import org.h2.command.dml.Insert;
 import org.h2.command.dml.Query;
 import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
+import org.h2.constraint.Constraint;
+import org.h2.constraint.ConstraintReferential;
 import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.SchemaManager;
@@ -24,6 +28,7 @@ import org.h2.schema.Schema;
 import org.h2.schema.Sequence;
 import org.h2.table.Column;
 import org.h2.table.IndexColumn;
+import org.h2.table.Table;
 import org.h2.table.TableData;
 import org.h2.util.ObjectArray;
 import org.h2.value.DataType;
@@ -121,7 +126,7 @@ public class CreateTable extends SchemaCommand {
 		/*
 		 * #########################################################################
 		 * 
-		 *  H20. Check that the table doesn't already exist elsewhere.
+		 *  H2O. Check that the table doesn't already exist elsewhere.
 		 * 
 		 * #########################################################################
 		 */
@@ -237,8 +242,41 @@ public class CreateTable extends SchemaCommand {
 			 */
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_")){
 				SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
+				int tableSet = -1;
+				boolean thisTableReferencesAnExistingTable = false;
+
+
+				if (table.getConstraints() != null){
+					Constraint[] constraints = new Constraint[table.getConstraints().size()];
+					table.getConstraints().toArray(constraints);
+
+
+
+					Set<Table> referencedTables = new HashSet<Table>();
+					for (Constraint con: constraints){
+						if (con instanceof ConstraintReferential){
+							thisTableReferencesAnExistingTable = true;
+							referencedTables.add(con.getRefTable());
+						}
+					}
+
+					if (thisTableReferencesAnExistingTable){ 
+						if (referencedTables.size() > 1){
+							System.err.println("Unexpected. Test that this still works.");
+						}
+						for (Table tab: referencedTables){
+							tableSet = tab.getTableSet();
+						}
+					} else {
+						tableSet = sm.getNewTableSetNumber();
+					}
+				} else {
+					tableSet = sm.getNewTableSetNumber();
+				}
 				sm.addTableInformation(tableName, table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
-						db.getLocalMachineAddress(), db.getLocalMachinePort(), (db.isPersistent())? "tcp": "mem", getSchema().getName());	
+						db.getLocalMachineAddress(), db.getLocalMachinePort(), (db.isPersistent())? "tcp": "mem", getSchema().getName(), tableSet);	
+
+				table.setTableSet(tableSet);
 			}
 
 

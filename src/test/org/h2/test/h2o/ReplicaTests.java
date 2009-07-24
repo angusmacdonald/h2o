@@ -1,7 +1,5 @@
 package org.h2.test.h2o;
 
-
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.sql.Connection;
@@ -104,7 +102,7 @@ public class ReplicaTests extends TestBase{
 				fail("Expected update count to be '0'");
 			}
 
-			sa.execute("SELECT * FROM H20.H2O_REPLICA;");
+			sa.execute("SELECT * FROM H2O.H2O_REPLICA;");
 
 			ResultSet rs = sa.getResultSet();
 
