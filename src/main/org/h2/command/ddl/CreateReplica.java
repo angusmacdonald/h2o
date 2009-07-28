@@ -30,7 +30,9 @@ import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
 import org.h2.expression.ValueExpression;
+import org.h2.index.Index;
 import org.h2.index.IndexType;
+import org.h2.index.LinkedIndex;
 import org.h2.jdbc.JdbcSQLException;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
@@ -94,14 +96,14 @@ public class CreateReplica extends SchemaCommand {
 	 * The next table to be replicated if it is to be done with more than one.
 	 */
 	private CreateReplica next = null;
-	private Set<IndexColumn[]> indexColumns;
+	private Set<IndexColumn[]> setOfIndexColumns;
 	private Set<IndexType> pkIndexType;
 	private int tableSet = -1; //the set of tables which this replica will belong to.
 
 	public CreateReplica(Session session, Schema schema) {
 		super(session, schema);
 
-		indexColumns = new HashSet<IndexColumn[]>();
+		setOfIndexColumns = new HashSet<IndexColumn[]>();
 		pkIndexType = new HashSet<IndexType>();
 	}
 
@@ -205,6 +207,8 @@ public class CreateReplica extends SchemaCommand {
 			for (int i = 0; i < columns.size(); i++) {
 				Column c = (Column) columns.get(i);
 				for (int j = 0; j < len; j++) {
+					if (pkColumns[j].columnName == null) 
+						pkColumns[j].columnName = pkColumns[j].column.getName();
 					if (c.getName().equals(pkColumns[j].columnName)) {
 						c.setNullable(false);
 					}
@@ -268,21 +272,27 @@ public class CreateReplica extends SchemaCommand {
 				}
 			}
 
-//			IndexType[] indexTypes = pkIndexType.toArray(new IndexType[0]);
-//			int y = 0;
-//
-//			for (IndexColumn[] ids: indexColumns){
-//				String prefix = "";
-//
-//				if (indexTypes[y].getPrimaryKey()){
-//					prefix = getSchema().getUniqueIndexName(session, table, Constants.PREFIX_PRIMARY_KEY);
-//
-//				} else {
-//					prefix = table.getSchema().getUniqueIndexName(session, table, Constants.PREFIX_INDEX);
-//				}
-//				table.addIndex(session, prefix, getObjectId(true, false), ids, indexTypes[y], headPos, "A replicated tables primary key.");
-//				y++;
-//			}
+			/*
+			 * Add indexes to the new table.
+			 */
+
+
+			//			IndexType[] indexTypes = pkIndexType.toArray(new IndexType[0]);
+			//			int y = 0;
+			//
+			//			for (IndexColumn[] indexColumns: setOfIndexColumns){
+			//				String indexName = "";
+			//
+			//				if (indexTypes[y].getPrimaryKey()){
+			//					indexName = getSchema().getUniqueIndexName(session, table, Constants.PREFIX_PRIMARY_KEY);
+			//
+			//				} else {
+			//					indexName = table.getSchema().getUniqueIndexName(session, table, Constants.PREFIX_INDEX);
+			//				}
+			//				table.addIndex(session, indexName, getObjectId(true, false), indexColumns, indexTypes[y], Index.EMPTY_HEAD, "H2O");
+			//				
+			//				y++;
+			//			}
 
 			/*
 			 * Copy over the data that we have stored in the 'inserts' set. This section of code loops
@@ -345,8 +355,8 @@ public class CreateReplica extends SchemaCommand {
 			 */
 
 			SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
-			
-			
+
+
 			if (tableSet  == -1){
 				tableSet = sm.getNewTableSetNumber();
 			} else {
@@ -354,7 +364,7 @@ public class CreateReplica extends SchemaCommand {
 					next.setTableSet(tableSet);
 				}
 			}
-					sm.addReplicaInformation(tableName, table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
+			sm.addReplicaInformation(tableName, table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
 					db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType(), getSchema().getName(), tableSet);	
 
 
@@ -501,7 +511,7 @@ public class CreateReplica extends SchemaCommand {
 		try {
 			connect(whereDataWillBeTakenFrom);
 		} catch (SQLException e) {
-
+			e.printStackTrace();
 			throw Message.getSQLException(ErrorCode.CONNECTION_BROKEN, tableName);
 		}
 	}
@@ -555,7 +565,7 @@ public class CreateReplica extends SchemaCommand {
 	}
 
 	private void readMetaData() throws SQLException {
-		String originalSchema = null; //XXX this won't work if the table is in something other than the default schema.
+		String originalSchema = null;
 
 		DatabaseMetaData meta = conn.getConnection().getMetaData();
 		storesLowerCase = meta.storesLowerCaseIdentifiers();
@@ -572,6 +582,10 @@ public class CreateReplica extends SchemaCommand {
 		ObjectArray columnList = new ObjectArray();
 		HashMap columnMap = new HashMap();
 		String catalog = null, schema = null;
+
+		/*
+		 * Iterate over column meta-data.
+		 */
 		while (rs.next()) {
 			String thisCatalog = rs.getString("TABLE_CAT");
 			if (catalog == null) {
@@ -584,22 +598,28 @@ public class CreateReplica extends SchemaCommand {
 			if (!StringUtils.equals(catalog, thisCatalog) || !StringUtils.equals(schema, thisSchema)) {
 				// if the table exists in multiple schemas or tables,
 				// use the alternative solution
-				columnMap.clear();
-				columnList.clear();
+				//				columnMap.clear();				//XXX this doesn't work in H2O.
+				//				columnList.clear();
 				break;
 			}
-			String n = rs.getString("COLUMN_NAME");
-			n = convertColumnName(n);
+			String columnName = rs.getString("COLUMN_NAME");
+			columnName = convertColumnName(columnName);
 			int sqlType = rs.getInt("DATA_TYPE");
 			long precision = rs.getInt("COLUMN_SIZE");
 			precision = convertPrecision(sqlType, precision);
 			int scale = rs.getInt("DECIMAL_DIGITS");
 			int displaySize = MathUtils.convertLongToInt(precision);
 			int type = DataType.convertSQLTypeToValueType(sqlType);
-			Column col = new Column(n, type, precision, scale, displaySize);
+			Column col = new Column(columnName, type, precision, scale, displaySize);
+
+			/*
+			 * Add this new column to the 'columns' field.
+			 */
 			addColumn(col);
+
+
 			columnList.add(col);
-			columnMap.put(n, col);
+			columnMap.put(columnName, col);
 		}
 		rs.close();
 
@@ -611,7 +631,10 @@ public class CreateReplica extends SchemaCommand {
 			qualifiedTableName = tableName;
 		}
 
-		// check if the table is accessible
+		/*
+		 * Try to access the table, to ensure it actually exists and can be queried.
+		 * If no columns were added above, get them from the meta-data which results from this query.
+		 */
 		Statement stat = null;
 		try {
 			stat = conn.getConnection().createStatement();
@@ -643,7 +666,9 @@ public class CreateReplica extends SchemaCommand {
 		}
 
 
-
+		/*
+		 * Get information on the primary keys for this table.
+		 */
 		try {
 			rs = meta.getPrimaryKeys(null, originalSchema, tableName);
 		} catch (SQLException e) {
@@ -657,20 +682,32 @@ public class CreateReplica extends SchemaCommand {
 		if (rs != null && rs.next()) {
 			// the problem is, the rows are not sorted by KEY_SEQ
 			list = new ObjectArray();
+
+			/*
+			 * Loop through each of the primary keys.
+			 */
 			do {
 				int idx = rs.getInt("KEY_SEQ");
 				if (pkName == null) {
 					pkName = rs.getString("PK_NAME");
 				}
+
+				/*
+				 * Loop through adding a new 'null' entry in the object array for each column that may be included later. 
+				 */
 				while (list.size() < idx) {
 					list.add(null);
 				}
-				String col = rs.getString("COLUMN_NAME");
-				col = convertColumnName(col);
-				Column column = (Column) columnMap.get(col);
+				String columnName = rs.getString("COLUMN_NAME");
+				columnName = convertColumnName(columnName);
+				Column column = (Column) columnMap.get(columnName);
 				list.set(idx - 1, column);
 			} while (rs.next());
-			addIndex(list, IndexType.createPrimaryKey(false, false)); //XXX doesn't do anything currently. Might be necessary later.
+
+			/*
+			 * Add this set of primary key columns to an index.
+			 */
+			addConstraint(list, IndexType.createPrimaryKey(false, false));
 			rs.close();
 		}
 		try {
@@ -684,61 +721,71 @@ public class CreateReplica extends SchemaCommand {
 		list = new ObjectArray();
 		IndexType indexType = null;
 		if (rs != null) {
+			/*
+			 * Loop through all the indexes on this table
+			 */
 			while (rs.next()) {
 				if (rs.getShort("TYPE") == DatabaseMetaData.tableIndexStatistic) {
 					// ignore index statistics
 					continue;
 				}
-				String newIndex = rs.getString("INDEX_NAME");
-				if (pkName.equals(newIndex)) {
+				String newIndexName = rs.getString("INDEX_NAME");
+				if (pkName.equals(newIndexName)) {
 					continue;
 				}
-				if (indexName != null && !indexName.equals(newIndex)) {
-					addIndex(list, indexType);
+				if (indexName != null && !indexName.equals(newIndexName)) {
+					addConstraint(list, indexType);
 					indexName = null;
 				}
 				if (indexName == null) {
-					indexName = newIndex;
+					indexName = newIndexName;
 					list.clear();
 				}
 				boolean unique = !rs.getBoolean("NON_UNIQUE");
 				indexType = unique ? IndexType.createUnique(false, false) : IndexType.createNonUnique(false);
-				String col = rs.getString("COLUMN_NAME");
-				col = convertColumnName(col);
-				Column column = (Column) columnMap.get(col);
+				String columnName = rs.getString("COLUMN_NAME");
+				columnName = convertColumnName(columnName);
+				Column column = (Column) columnMap.get(columnName);
 				list.add(column);
-				columnList.add(col);
+				columnList.add(columnName);
 			}
 			rs.close();
 		}
 		if (indexName != null) {
-			addIndex(list, indexType);
+			addConstraint(list, indexType);
 		}
 	}
 
 
-	private void addIndex(ObjectArray list, IndexType indexType) {
+	private void addConstraint(ObjectArray list, IndexType indexType) throws SQLException {
+		/*
+		 * If this is a primary key constraint, do primary key stuff.
+		 */
+		if (indexType.getPrimaryKey()){
+			Column[] cols = new Column[list.size()];
+			list.toArray(cols);
+			
+			/*
+			 * Set all primary key columns to be not nullable.
+			 */
+			for (Column c: cols){
+				if (c != null){
+					c.setNullable(false);
+				} else {
+					System.out.println("This column was null.");
+				}
+			}
+	
+			IndexColumn[] indexColumn = new IndexColumn[list.size()];
+			indexColumn = IndexColumn.wrap(cols);
 
-//		IndexColumn[] indexColumn = new IndexColumn[list.size()];
-//		Column[] col = new Column[list.size()];
-//		list.toArray(col);
-//
-//		if (indexType.getPrimaryKey()){
-//			for (Column c: col){
-//				c.setNullable(false);
-//			}
-//		} else {
-//			for (Column c: col){
-//				if (c.getName().equals("ADDRESS_ID")){
-//					System.out.println("address id here.");
-//				}
-//			}	
-//		}
-//		indexColumn = IndexColumn.wrap(col);
-//
-//		this.indexColumns.add(indexColumn);
-//
-//		this.pkIndexType.add(indexType);
+			AlterTableAddConstraint pk = new AlterTableAddConstraint(session, getSchema(), false);
+			pk.setType(AlterTableAddConstraint.PRIMARY_KEY);
+			pk.setTableName(tableName);
+			pk.setIndexColumns(indexColumn);
+			
+			addConstraintCommand(pk);
+		}
 	}
 
 	private String convertColumnName(String columnName) {

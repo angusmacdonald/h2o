@@ -61,8 +61,6 @@ import org.h2.value.Value;
 import org.h2.value.ValueNull;
 import org.h2.value.ValueString;
 
-import sun.tools.javap.Tables;
-
 /**
  * This class is responsible to build the database meta data pseudo tables.
  */

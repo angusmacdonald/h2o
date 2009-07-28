@@ -75,6 +75,8 @@ public class IndexColumn {
     public static void mapColumns(IndexColumn[] indexColumns, Table table) throws SQLException {
         for (int i = 0; i < indexColumns.length; i++) {
             IndexColumn col = indexColumns[i];
+            if (col.columnName == null && col.column != null)
+            	col.columnName = col.column.getName();
             col.column = table.getColumn(col.columnName);
         }
     }

@@ -287,7 +287,6 @@ public class CreateTable extends SchemaCommand {
 			throw e;
 		}
 
-
 		return 0;
 	}
 
