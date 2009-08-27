@@ -477,4 +477,89 @@ public class SchemaManagerTests {
 
 		}
 	}
+	
+	/**
+	 * Tests that a primary copy is correctly set when a new table is created.
+	 * @throws SQLException
+	 * @throws InterruptedException
+	 */
+	@Test
+	public void testPrimaryCopySet(){
+		org.h2.Driver.load();
+
+		try{
+			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
+			Statement sa = ca.createStatement();
+
+			sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+
+			sa.execute("SELECT count(*) FROM H2O.H2O_REPLICA WHERE primary_copy=true;");
+				
+			ResultSet rs = sa.getResultSet();
+			
+			if (!rs.next()){
+				fail("Expected one result, found none.");
+			}
+			
+			if (rs.next()){
+				fail("Expected one result, found more.");
+			}
+
+			rs.close();
+
+			sa.execute("DROP TABLE TEST;");
+			
+			sa.close();
+			ca.close();
+		} catch (SQLException sqle){
+			sqle.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
+			
+		}
+	}
+	
+	/**
+	 * Tests that where there are multiple replicas there is only one primary copy.
+	 * @throws SQLException
+	 * @throws InterruptedException
+	 */
+	@Test
+	public void testPrimaryCopyUnique(){
+		org.h2.Driver.load();
+
+		try{
+			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
+			Statement sa = ca.createStatement();
+
+			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
+			Statement sb = cb.createStatement();
+			
+			sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+
+			sb.execute("CREATE REPLICA TEST;");
+
+			sa.execute("SELECT * FROM H2O.H2O_REPLICA WHERE primary_copy=true;");
+				
+			ResultSet rs = sa.getResultSet();
+			
+			if (!rs.next()){
+				fail("Expected one result, found none.");
+			}
+			
+			if (rs.next()){
+				fail("Expected one result, found more.");
+			}
+			rs.close();
+
+			sa.execute("DROP TABLE TEST;");
+			sb.execute("DROP TABLE TEST;");
+			
+			sa.close();
+			ca.close();
+		} catch (SQLException sqle){
+			sqle.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
+			
+		}
+	}
 }

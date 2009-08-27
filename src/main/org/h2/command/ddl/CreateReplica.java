@@ -300,6 +300,7 @@ public class CreateReplica extends SchemaCommand {
 			 * is an assumption that a comma will never appear in the database TODO fix this! 
 			 */
 
+			if (inserts.size() > 1){ //the first entry contains type info //XXX hack.
 			Insert command = new Insert(session);
 
 			command.setTable(table);
@@ -345,7 +346,7 @@ public class CreateReplica extends SchemaCommand {
 			}
 
 			command.update();
-
+			}
 			/*
 			 * #########################################################################
 			 * 

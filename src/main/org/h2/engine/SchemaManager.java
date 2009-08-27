@@ -2,7 +2,6 @@ package org.h2.engine;
 
 import java.sql.SQLException;
 import java.util.HashSet;
-import java.util.Random;
 import java.util.Set;
 
 import org.h2.command.Command;
@@ -32,6 +31,7 @@ import org.h2.value.Value;
 			storage_type VARCHAR(50),
 			last_modification INT NOT NULL,
 			table_set INT NOT NULL,
+			primary_copy BOOLEAN,
 			PRIMARY KEY (replica_id),
 			FOREIGN KEY (table_id) REFERENCES H2O.H2O_TABLE (table_id),
 			FOREIGN KEY (connection_id) REFERENCES H2O.H2O_CONNECTION (connection_id)
@@ -152,6 +152,7 @@ public class SchemaManager {
 		"storage_type VARCHAR(50), " +
 		"last_modification INT NOT NULL, " +
 		"table_set INT NOT NULL, " +
+		"primary_copy BOOLEAN, " +
 		"PRIMARY KEY (replica_id), " +
 		"FOREIGN KEY (table_id) REFERENCES " + TABLES + " (table_id) ON DELETE CASCADE , " +
 		" FOREIGN KEY (connection_id) REFERENCES " + CONNECTIONS + " (connection_id));\n";
@@ -163,7 +164,7 @@ public class SchemaManager {
 		String sql = "SELECT db_location, connection_type, machine_name, connection_port " +
 		"FROM H2O.H2O_REPLICA, H2O.H2O_CONNECTION, H2O.H2O_TABLE " +
 		"WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND " + TABLES + ".table_id=" + REPLICAS + ".table_id " + 
-		"AND H2O_CONNECTION.connection_id = H2O_REPLICA.connection_id;";
+		"AND H2O_CONNECTION.connection_id = H2O_REPLICA.connection_id AND primary_copy = true;";
 
 		LocalResult result = null;
 
@@ -177,7 +178,7 @@ public class SchemaManager {
 			e.printStackTrace();
 		}
 
-		if (result != null && result.next()){ //XXX This just takes the first replica, assuming there are more than one.
+		if (result != null && result.next()){
 			Value[] row = result.currentRow();
 
 			String dbLocation = row[0].getString();
@@ -224,7 +225,7 @@ public class SchemaManager {
 		int connectionID = getConnectionID(localMachineAddress, localMachinePort, connection_type);
 		int tableID = getTableID(tableName, schemaName);
 		if (!isReplicaListed(tableName, connectionID, databaseLocation, schemaName)){ // the table doesn't already exist in the schema manager.
-			addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, tableSet);				
+			addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, tableSet, true);				
 		}
 	}
 
@@ -248,7 +249,7 @@ public class SchemaManager {
 		int tableID = getTableID(tableName, schemaName);
 
 		if (!isReplicaListed(tableName, connectionID, databaseLocation, schemaName)){ // the table doesn't already exist in the schema manager.
-			addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, replicaSet);				
+			addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, replicaSet, false);				
 		}
 	}
 
@@ -479,9 +480,9 @@ public class SchemaManager {
 	 * @return					Result of the update.
 	 * @throws SQLException 
 	 */
-	private int addReplicaInformation(int tableID, long modificationID, int connectionID, String databaseLocation, String tableType, int tableSet) throws SQLException{
+	private int addReplicaInformation(int tableID, long modificationID, int connectionID, String databaseLocation, String tableType, int tableSet, boolean primaryCopy) throws SQLException{
 		String sql = "INSERT INTO " + REPLICAS + " VALUES (null, " + tableID + ", " + connectionID + ", '" + databaseLocation + "', '" + 
-		tableType + "', " + modificationID +", " + tableSet + ");\n";
+		tableType + "', " + modificationID +", " + tableSet + ", " + primaryCopy + ");\n";
 		return executeUpdate(sql);
 	}
 
