@@ -55,7 +55,6 @@ import org.h2.command.ddl.GrantRevoke;
 import org.h2.command.ddl.PrepareProcedure;
 import org.h2.command.ddl.SetComment;
 import org.h2.command.ddl.TruncateTable;
-import org.h2.command.dm.NewReplica;
 import org.h2.command.dml.AlterSequence;
 import org.h2.command.dml.AlterTableSet;
 import org.h2.command.dml.BackupCommand;
@@ -376,11 +375,6 @@ public class Parser {
 			case 'M':
 				if (readIf("MERGE")) {
 					c = parseMerge();
-				}
-				break;
-			case 'N':
-				if (readIf("NEW")) {
-					c = parseNew();
 				}
 				break;
 			case 'P':
@@ -886,18 +880,25 @@ public class Parser {
 	}
 
 	private Insert parseInsert() throws SQLException {
-		Insert command = new Insert(session);
-		currentPrepared = command;
+
 		read("INTO");
-		Table table = readTableOrView();
-		command.setTable(table);
+		
+		/*
+		 * H2O. This command should be set to execute over all replicas,
+		 * not just one.
+		 */
+		ReplicaSet replicaSet = readTableOrViewGetReplica();
+		Insert command = new Insert(session, replicaSet);
+		
+		currentPrepared = command;
+		
 		if (readIf("(")) {
 			if (isToken("SELECT") || isToken("FROM")) {
 				command.setQuery(parseSelect());
 				read(")");
 				return command;
 			} else {
-				Column[] columns = parseColumnList(table);
+				Column[] columns = parseColumnList(replicaSet.getACopy());
 				command.setColumns(columns);
 			}
 		}
@@ -3567,17 +3568,6 @@ public class Parser {
 		}
 	}
 
-
-	private Prepared parseNew() throws SQLException {
-		boolean force = readIf("FORCE");
-		if (readIf("REPLICA")) {
-
-			return parseNewReplica();
-		}
-		
-		return null;
-	}
-	
 	private boolean addRoleOrRight(GrantRevoke command) throws SQLException {
 		if (readIf("SELECT")) {
 			command.addRight(Right.SELECT);
@@ -4303,7 +4293,33 @@ public class Parser {
 		return readTableOrView(readIdentifierWithSchema(null), true, LocationPreference.NO_PREFERENCE);
 	}
 
-
+	/**
+	 * @return
+	 * @throws SQLException 
+	 */
+	private ReplicaSet readTableOrViewGetReplica() throws SQLException {
+		String tableName = readIdentifierWithSchema(null);
+		
+		if (schemaName != null) {
+			return getSchema().getTablesOrViews(session, tableName);
+		}
+		ReplicaSet rs = database.getSchema(session.getCurrentSchemaName()).getTablesOrViews(session, tableName);
+		if (rs != null) {
+			return rs;
+		}
+		
+		String[] schemaNames = session.getSchemaSearchPath();
+		for (int i = 0; schemaNames != null && i < schemaNames.length; i++) {
+			Schema s = database.getSchema(schemaNames[i]);
+			rs = s.getTablesOrViews(session, tableName);
+			if (rs != null) {
+				return rs;
+			}
+		}
+		
+		return null;
+	}
+	
 	/**
 	 * H2O-Modified. Added the searchRemote parameter.
 	 * @param tableName
@@ -4718,7 +4734,7 @@ public class Parser {
 	}
 
 	/*
-	 * START OF H2O ############################################################
+	 * END OF H2O ############################################################
 	 */
 
 	private CreateReplica parseCreateReplica(boolean temp, boolean globalTemp, boolean persistent) throws SQLException {
@@ -4828,38 +4844,6 @@ public class Parser {
 		return command;
 	}
 
-	private NewReplica parseNewReplica() throws SQLException {
-		
-		
-		Table table = readTableOrView();
-		
-		Expression[] expr = null;
-		ObjectArray values = null;
-			do {
-				values = new ObjectArray();
-				read("(");
-				if (!readIf(")")) {
-					do {
-						if (readIf("DEFAULT")) {
-							values.add(null);
-						} else {
-							values.add(readExpression());
-						}
-					} while (readIfMore());
-				}
-				
-				expr = new Expression[values.size()];
-				values.toArray(expr);
-			} while (readIf(","));
-			
-			if (expr == null || expr.length < 4){
-				throw new SQLException("Incorrect format for new replica notification.");
-			}
-			NewReplica command = new NewReplica(session, table.getSchema(), table.getName(), expr);	
-
-		return command;
-	}
-	
 	/*
 	 * END OF H2O ############################################################
 	 */

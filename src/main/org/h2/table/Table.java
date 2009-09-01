@@ -485,6 +485,7 @@ public abstract class Table extends SchemaObjectBase {
     }
 
     public int getType() {
+    
         return DbObject.TABLE_OR_VIEW;
     }
 

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Random;
 import org.h2.command.Command;
 import org.h2.command.CommandInterface;
@@ -100,7 +101,7 @@ public class Session extends SessionWithState {
     private Table waitForLock;
     private int modificationId;
     private int modificationIdState;
-
+    
     Session(Database database, User user, int id) {
         this.database = database;
         this.undoLog = new UndoLog(this);
@@ -1135,5 +1136,6 @@ public class Session extends SessionWithState {
         }
         return ValueString.get(firstUncommittedLog+"-" + firstUncommittedPos + "-" + id);
     }
+
 
 }

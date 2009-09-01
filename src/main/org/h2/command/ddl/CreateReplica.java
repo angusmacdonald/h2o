@@ -25,6 +25,7 @@ import org.h2.command.dml.Query;
 import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
 import org.h2.engine.Constants;
+import org.h2.engine.DataManager;
 import org.h2.engine.Database;
 import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
@@ -163,9 +164,8 @@ public class CreateReplica extends SchemaCommand {
 		Database db = session.getDatabase();
 
 
-
 		if (whereReplicaWillBeCreated != null || db.getFullDatabasePath().equals(whereReplicaWillBeCreated)){
-			return pushCommand(); //command will be executed elsewhere
+			return pushCommand(whereReplicaWillBeCreated, "CREATE REPLICA " + tableName + " FROM '" + whereDataWillBeTakenFrom + "'", true); //command will be executed elsewhere
 		} else {
 			readSQL(); //command will be executed here - get the table meta-data and contents.
 		}
@@ -301,51 +301,51 @@ public class CreateReplica extends SchemaCommand {
 			 */
 
 			if (inserts.size() > 1){ //the first entry contains type info //XXX hack.
-			Insert command = new Insert(session);
+				Insert command = new Insert(session);
 
-			command.setTable(table);
+				command.setTable(table);
 
-			Column[] columnArray = new Column[columns.size()];
-			columns.toArray(columnArray);
-			command.setColumns(columnArray);
+				Column[] columnArray = new Column[columns.size()];
+				columns.toArray(columnArray);
+				command.setColumns(columnArray);
 
-			ArrayList<Integer> types = new ArrayList<Integer>();
+				ArrayList<Integer> types = new ArrayList<Integer>();
 
-			boolean firstRun = true;
-			for (String statement: inserts){
-				ObjectArray values = new ObjectArray();
-				statement = statement.substring(0, statement.length()-1);
+				boolean firstRun = true;
+				for (String statement: inserts){
+					ObjectArray values = new ObjectArray();
+					statement = statement.substring(0, statement.length()-1);
 
 
-				int i = 0;
-				for (String part: statement.split(",")){
-					part = part.trim();
-					if (firstRun){
-						types.add(new Integer(part));
-					} else {
+					int i = 0;
+					for (String part: statement.split(",")){
+						part = part.trim();
+						if (firstRun){
+							types.add(new Integer(part));
+						} else {
 
-						if (part.startsWith("'") && part.endsWith("'")){
-							part = part.substring(1, part.length()-1);
+							if (part.startsWith("'") && part.endsWith("'")){
+								part = part.substring(1, part.length()-1);
+							}
+							ValueString val = ValueString.get(part);
+
+
+							values.add(ValueExpression.get(val.convertTo(types.get(i++))));
 						}
-						ValueString val = ValueString.get(part);
 
+					}
 
-						values.add(ValueExpression.get(val.convertTo(types.get(i++))));
+					if (firstRun){
+						firstRun = false;
+					} else {
+						Expression[] expr = new Expression[values.size()];
+						values.toArray(expr);
+						command.addRow(expr);
 					}
 
 				}
 
-				if (firstRun){
-					firstRun = false;
-				} else {
-					Expression[] expr = new Expression[values.size()];
-					values.toArray(expr);
-					command.addRow(expr);
-				}
-
-			}
-
-			command.update();
+				command.update();
 			}
 			/*
 			 * #########################################################################
@@ -368,8 +368,12 @@ public class CreateReplica extends SchemaCommand {
 			sm.addReplicaInformation(tableName, table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
 					db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType(), getSchema().getName(), tableSet);	
 
-
-
+			//	#############################
+			//  Add to data manager.
+			//	#############################
+			String dataManagerLocation = sm.getPrimaryReplicaLocation(tableName, getSchema().getName());
+			int result = pushCommand(dataManagerLocation, "NEW REPLICA " + tableName + " ('" + db.getDatabaseLocation() + "', '" + db.getLocalMachineAddress() + "', " +
+					db.getLocalMachinePort() + ", '" + db.getConnectionType() + "', " + tableSet + ");", false);
 
 		} catch (SQLException e) {
 			db.checkPowerOff();
@@ -393,14 +397,16 @@ public class CreateReplica extends SchemaCommand {
 	}
 
 	/**
-	 * Push the CREATE REPLICA command to a remote machine where it will be properly executed.
+	 * Push a command to a remote machine where it will be properly executed.
+	 * @param createReplica true, if the command being pushed is a create replica command. This results in any subsequent tables
+	 * involved in the command also being pushed.
 	 * @return The result of the update.
 	 * @throws SQLException 
 	 */
-	private int pushCommand() throws SQLException {
+	private int pushCommand(String remoteDBLocation, String query, boolean createReplica) throws SQLException {
 		Database db = session.getDatabase();
 
-		conn = db.getLinkConnection("org.h2.Driver", whereReplicaWillBeCreated, SchemaManager.USERNAME, SchemaManager.PASSWORD);
+		conn = db.getLinkConnection("org.h2.Driver", remoteDBLocation, SchemaManager.USERNAME, SchemaManager.PASSWORD);
 
 		int result = -1;
 
@@ -410,7 +416,7 @@ public class CreateReplica extends SchemaCommand {
 				String databaseName = null;
 
 
-				stat.execute("CREATE REPLICA " + tableName + " FROM '" + whereDataWillBeTakenFrom + "'");
+				stat.execute(query);
 				result = stat.getUpdateCount();
 			} catch (SQLException e) {
 				conn.close();
@@ -420,7 +426,7 @@ public class CreateReplica extends SchemaCommand {
 			}
 		}
 
-		if (next != null) {
+		if (next != null && createReplica) {
 			next.update();
 		}
 
@@ -463,7 +469,8 @@ public class CreateReplica extends SchemaCommand {
 				throw Message.getSQLException(ErrorCode.SECOND_PRIMARY_KEY);
 			}
 			for (int i = 0; i < columns.length; i++) {
-				if (!columns[i].columnName.equals(pkColumns[i].columnName)) {
+				String columnName = (columns[i].columnName == null)? columns[i].column.getName() : columns[i].columnName;
+				if (!columnName.equals(pkColumns[i].columnName)) {
 					throw Message.getSQLException(ErrorCode.SECOND_PRIMARY_KEY);
 				}
 			}
@@ -765,7 +772,7 @@ public class CreateReplica extends SchemaCommand {
 		if (indexType.getPrimaryKey()){
 			Column[] cols = new Column[list.size()];
 			list.toArray(cols);
-			
+
 			/*
 			 * Set all primary key columns to be not nullable.
 			 */
@@ -776,7 +783,7 @@ public class CreateReplica extends SchemaCommand {
 					System.out.println("This column was null.");
 				}
 			}
-	
+
 			IndexColumn[] indexColumn = new IndexColumn[list.size()];
 			indexColumn = IndexColumn.wrap(cols);
 
@@ -784,7 +791,7 @@ public class CreateReplica extends SchemaCommand {
 			pk.setType(AlterTableAddConstraint.PRIMARY_KEY);
 			pk.setTableName(tableName);
 			pk.setIndexColumns(indexColumn);
-			
+
 			addConstraintCommand(pk);
 		}
 	}
@@ -869,5 +876,11 @@ public class CreateReplica extends SchemaCommand {
 			next.addNextCreateReplica(create);
 		}
 	}
-
+	
+	
+	@Override
+	public String toString(){
+		return tableName;
+	}
+	
 }

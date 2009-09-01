@@ -19,6 +19,7 @@ import org.h2.constant.LocationPreference;
 import org.h2.constraint.Constraint;
 import org.h2.constraint.ConstraintReferential;
 import org.h2.engine.Constants;
+import org.h2.engine.DataManager;
 import org.h2.engine.Database;
 import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
@@ -277,6 +278,12 @@ public class CreateTable extends SchemaCommand {
 						db.getLocalMachineAddress(), db.getLocalMachinePort(), (db.isPersistent())? "tcp": "mem", getSchema().getName(), tableSet);	
 
 				table.setTableSet(tableSet);
+
+				//	#############################
+				//  Create new data manager instance.
+				//	#############################	
+				DataManager dm = new DataManager(tableName, getSchema().getName(), session, table.getModificationId(), tableSet);
+				db.addDataManager(dm);
 			}
 
 

@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -126,6 +127,12 @@ public class Database implements DataHandler {
 	 */
 	private SchemaManager schemaManager;
 
+	/**
+	 * H2O. Data manager instances in this DB.
+	 */
+    private Map<String, DataManager> dataManagers = new HashMap<String, DataManager>();
+
+    
 	private final String databaseName;
 	private final String databaseShortName;
 	private final String databaseURL;
@@ -2427,6 +2434,13 @@ public class Database implements DataHandler {
 				result = schemaManager.createLinkedTablesForSchemaManager(schemaManagerLocation);
 
 			}
+			
+			try { 
+				DataManager.createDataManagerTables(systemSession);
+			} catch (SQLException e) {
+				
+				e.printStackTrace();
+			}
 
 			if (!schemaManager.connectionInformationExists(localMachineAddress, localMachinePort)){
 				schemaManager.addLocalConnectionInformation(localMachineAddress, localMachinePort, getDatabaseLocation());
@@ -2477,10 +2491,13 @@ public class Database implements DataHandler {
 					sqlQuery.executeUpdate();
 				}
 
+						
 			} catch (SQLException e) {
 				connectedToSM = false;
 				e.printStackTrace();
 			}
+			
+			
 		}
 
 
@@ -2553,4 +2570,12 @@ public class Database implements DataHandler {
 	public String getConnectionType() {
 		return (localMachinePort == -1 && databaseLocation.contains("mem"))? "mem": "tcp";
 	}
+	
+    public void addDataManager(DataManager dm){
+    	dataManagers.put(dm.getTableName(), dm);
+    }
+    
+    public DataManager getDataManager(String tableName){
+    	return dataManagers.get(tableName);
+    }
 }
