@@ -1,10 +1,12 @@
 package org.h2.engine;
 
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.constant.ErrorCode;
+import org.h2.h2o.comms.IDataManagerRemote;
 import org.h2.message.Message;
 import org.h2.result.LocalResult;
 import org.h2.value.Value;
@@ -50,7 +52,7 @@ import org.h2.value.Value;
 		); <br/></code>
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class DataManager {
+public class DataManager implements IDataManagerRemote {
 
 	/**
 	 * Name of the schema used to store data manager tables.
@@ -109,7 +111,7 @@ public class DataManager {
 	 */
 	private String cachedReplicaLocation;
 
-	public DataManager(String tableName, String schemaName, Session session, long modificationID, int tableSet) throws SQLException{
+	public DataManager(String tableName, String schemaName, Session session, long modificationID, int tableSet, Database db) throws SQLException{
 		this.tableName = tableName;
 
 		if (schemaName.equals("") || schemaName == null){
@@ -125,6 +127,8 @@ public class DataManager {
 
 		addInformationToDB(modificationID, session.getDatabase().getDatabaseLocation(), "TABLE", session.getDatabase().getLocalMachineAddress(), 
 				session.getDatabase().getLocalMachinePort(), session.getDatabase().getConnectionType(), tableSet);
+		
+		db.addDataManager(this);
 	}
 
 	/**
@@ -185,7 +189,7 @@ public class DataManager {
 	 * @return	true, if the table's information is already in the schema manager.
 	 * @throws SQLException 
 	 */
-	public boolean isTableListed() throws SQLException{
+	private boolean isTableListed() throws SQLException{
 		String sql =  "SELECT count(*) FROM " + TABLES + " WHERE tablename='" + tableName + "' AND schemaname='" + schemaName +"';";
 
 		return countCheck(sql);
@@ -198,7 +202,7 @@ public class DataManager {
 	 * @return	true, if the replica's information is already in the schema manager.
 	 * @throws SQLException 
 	 */
-	public boolean isReplicaListed(int connectionID, String dbLocation) throws SQLException{
+	private boolean isReplicaListed(int connectionID, String dbLocation) throws SQLException{
 		String sql = "SELECT count(*) FROM " + REPLICAS + ", " + TABLES + " WHERE tablename='" + tableName + "' AND schemaname='" + 
 		schemaName + "' AND " + TABLES + ".table_id=" + REPLICAS + ".table_id AND db_location='"
 		+ dbLocation + "' AND connection_id=" + connectionID + ";";
@@ -436,6 +440,14 @@ public class DataManager {
 	 */
 	public String getTableName() {
 		return schemaName + "." + tableName;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.IDataManager#requestLock(java.lang.String)
+	 */
+	@Override
+	public void requestLock(String message) throws RemoteException {
+		System.out.println("LOCK REQUESTED...................................");
 	}
 
 }

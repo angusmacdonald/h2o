@@ -160,7 +160,7 @@ public class SchemaManager {
 		return executeUpdate(sql);
 	}
 
-	public String getPrimaryReplicaLocation(String tableName, String schemaName) throws SQLException{
+	public String getDataManagerLocation(String tableName, String schemaName) throws SQLException{
 		String sql = "SELECT db_location, connection_type, machine_name, connection_port " +
 		"FROM H2O.H2O_REPLICA, H2O.H2O_CONNECTION, H2O.H2O_TABLE " +
 		"WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND " + TABLES + ".table_id=" + REPLICAS + ".table_id " + 

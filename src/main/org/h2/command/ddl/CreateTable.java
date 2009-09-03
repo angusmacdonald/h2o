@@ -282,8 +282,8 @@ public class CreateTable extends SchemaCommand {
 				//	#############################
 				//  Create new data manager instance.
 				//	#############################	
-				DataManager dm = new DataManager(tableName, getSchema().getName(), session, table.getModificationId(), tableSet);
-				db.addDataManager(dm);
+				DataManager dm = new DataManager(tableName, getSchema().getName(), session, table.getModificationId(), tableSet, db);
+				//db.addDataManager(dm);
 			}
 
 

@@ -4364,7 +4364,7 @@ public class Parser {
 		/*
 		 * Attempt to find the location of this table, if it exists remotely.
 		 */
-		String dbname = SchemaManager.getInstance(session).getPrimaryReplicaLocation(tableName, thisSchemaName);
+		String dbname = SchemaManager.getInstance(session).getDataManagerLocation(tableName, thisSchemaName);
 
 		Parser queryParser = new Parser(session);
 

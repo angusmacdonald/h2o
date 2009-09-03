@@ -29,6 +29,7 @@ public class TestBase {
 	 */
 	@Before
 	public void setUp() throws Exception {
+		System.out.println("opening");
 		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
 		SchemaManager.USERNAME = "sa";
 		SchemaManager.PASSWORD = "sa";
@@ -61,7 +62,7 @@ public class TestBase {
 						
 			sa.close();
 			sb.close();
-
+System.out.println("closing");
 			ca.close();	
 			cb.close();	
 		} catch (Exception e){

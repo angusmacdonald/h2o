@@ -191,7 +191,7 @@ public class ReplicaTests extends TestBase{
 			//Expected!
 		}
 	}
-	
+
 	/**
 	 * Tests that the SELECT LOCAL command find a remote copy when ONLY is not used.
 	 */
@@ -274,7 +274,7 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void PushReplicationON(){
-
+		System.out.println("PushReplicationON");
 		try{
 			sa.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:two'");
 
@@ -316,7 +316,7 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void PushReplicationONFROM(){
-
+		System.out.println("PushReplicationONFROM");
 		try{
 			Connection cc = DriverManager.getConnection("jdbc:h2:mem:three", "sa", "sa");
 			Statement sc = cc.createStatement();
@@ -345,7 +345,8 @@ public class ReplicaTests extends TestBase{
 
 			validateResults(pKey, secondCol, sc.getResultSet());
 
-
+			sc.close();
+			cc.close();
 
 		} catch (SQLException sqle){
 			sqle.printStackTrace();
@@ -526,18 +527,19 @@ public class ReplicaTests extends TestBase{
 		}
 
 	}
-	
+
 	/**
 	 * Tests the feature to create multiple replicas at the same time.
 	 */
 	@Test
 	public void CreateMultipleReplicas(){
+		System.out.println("CreateMultipleReplicas");
 		try{
-			
+
 			sa.execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 			sa.execute("INSERT INTO TEST2 VALUES(4, 'Meh');");
 			sa.execute("INSERT INTO TEST2 VALUES(5, 'Heh');");
-			
+
 			sb.execute("CREATE REPLICA TEST, TEST2;");
 
 			if (sb.getUpdateCount() != 0){
@@ -553,25 +555,25 @@ public class ReplicaTests extends TestBase{
 			String[] secondCol = {"Meh", "Heh"};
 
 			validateResults(pKey, secondCol, sb.getResultSet());
-	
+
 
 		} catch (SQLException e){
 			e.printStackTrace();
 			fail("SQLException thrown when it shouldn't have.");
 		}
 	}
-	
+
 	/**
 	 * Tests the feature to create multiple replicas at the same time using the ON and FROM syntax.
 	 */
 	@Test
 	public void CreateMultipleReplicasONFROM(){
 		try{
-			
+
 			sa.execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 			sa.execute("INSERT INTO TEST2 VALUES(4, 'Meh');");
 			sa.execute("INSERT INTO TEST2 VALUES(5, 'Heh');");
-			
+
 			sa.execute("CREATE REPLICA TEST, TEST2 ON 'jdbc:h2:mem:two' FROM 'jdbc:h2:mem:one';");
 
 			if (sa.getUpdateCount() != 0){

@@ -371,7 +371,7 @@ public class CreateReplica extends SchemaCommand {
 			//	#############################
 			//  Add to data manager.
 			//	#############################
-			String dataManagerLocation = sm.getPrimaryReplicaLocation(tableName, getSchema().getName());
+			String dataManagerLocation = sm.getDataManagerLocation(tableName, getSchema().getName());
 			int result = pushCommand(dataManagerLocation, "NEW REPLICA " + tableName + " ('" + db.getDatabaseLocation() + "', '" + db.getLocalMachineAddress() + "', " +
 					db.getLocalMachinePort() + ", '" + db.getConnectionType() + "', " + tableSet + ");", false);
 
@@ -855,7 +855,7 @@ public class CreateReplica extends SchemaCommand {
 
 		try {
 			if (whereDataWillBeTakenFrom == null){
-				whereDataWillBeTakenFrom = SchemaManager.getInstance().getPrimaryReplicaLocation(tableName, getSchema().getName());
+				whereDataWillBeTakenFrom = SchemaManager.getInstance().getDataManagerLocation(tableName, getSchema().getName());
 			}
 		} catch (SQLException e) {
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);

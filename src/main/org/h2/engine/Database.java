@@ -26,6 +26,8 @@ import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
 import org.h2.constant.SysProperties;
 import org.h2.constraint.Constraint;
+import org.h2.h2o.comms.DatabaseURL;
+import org.h2.h2o.comms.RmiServer;
 import org.h2.index.Cursor;
 import org.h2.index.Index;
 import org.h2.index.IndexType;
@@ -130,9 +132,10 @@ public class Database implements DataHandler {
 	/**
 	 * H2O. Data manager instances in this DB.
 	 */
-    private Map<String, DataManager> dataManagers = new HashMap<String, DataManager>();
+	private Map<String, DataManager> dataManagers = new HashMap<String, DataManager>();
 
-    
+	private RmiServer rmiServer;
+
 	private final String databaseName;
 	private final String databaseShortName;
 	private final String databaseURL;
@@ -233,6 +236,8 @@ public class Database implements DataHandler {
 		this.persistent = ci.isPersistent();
 		this.isSchemaManager = ci.isSchemaManager();
 		this.connectedToSM = this.isSchemaManager; //if it is the schema manager, it is connected.
+
+
 		this.filePasswordHash = ci.getFilePasswordHash();
 		this.databaseName = name;
 		this.databaseShortName = parseDatabaseShortName();
@@ -242,6 +247,16 @@ public class Database implements DataHandler {
 		if (Constants.IS_H2O && !isManagementDB() && this.schemaManagerLocation == null){
 			//throw new SQLException ("Schema Manager location should be known.");
 			this.schemaManagerLocation = Constants.DEFAULT_SCHEMA_MANAGER_LOCATION;
+		}
+
+
+		if (Constants.IS_H2O && !isManagementDB()){
+			if (isSchemaManager){
+				rmiServer = new RmiServer(ci.getPort()+1);
+			} else {
+				DatabaseURL dbURL = DatabaseURL.parseURL(schemaManagerLocation);
+				rmiServer = new RmiServer(dbURL.getHostname(), dbURL.getPort()+1);
+			}
 		}
 
 		this.multiThreaded = true; //H2O. Required for the H2O push replication feature, among other things.
@@ -690,9 +705,9 @@ public class Database implements DataHandler {
 		MetaRecord.sort(records);
 
 		for (int i = 0; i < records.size(); i++) {
-			
+
 			MetaRecord rec = (MetaRecord) records.get(i);
-			
+
 			rec.execute(this, systemSession, eventListener);
 		}
 		if (Constants.IS_H2O) System.out.print(" Executed meta-records.");
@@ -1150,8 +1165,14 @@ public class Database implements DataHandler {
 		if (closing) {
 			return;
 		}
+
+
 		closing = true;
 		stopServer();
+
+		rmiServer.unbindExistingManagers();
+		rmiServer = null;
+			
 		if (userSessions.size() > 0) {
 			if (!fromShutdownHook) {
 				return;
@@ -2434,11 +2455,11 @@ public class Database implements DataHandler {
 				result = schemaManager.createLinkedTablesForSchemaManager(schemaManagerLocation);
 
 			}
-			
+
 			try { 
 				DataManager.createDataManagerTables(systemSession);
 			} catch (SQLException e) {
-				
+
 				e.printStackTrace();
 			}
 
@@ -2491,13 +2512,13 @@ public class Database implements DataHandler {
 					sqlQuery.executeUpdate();
 				}
 
-						
+
 			} catch (SQLException e) {
 				connectedToSM = false;
 				e.printStackTrace();
 			}
-			
-			
+
+
 		}
 
 
@@ -2562,7 +2583,7 @@ public class Database implements DataHandler {
 
 		return "jdbc:h2:" + ((isSM())? "sm:": "") + isTCP + url + getDatabaseLocation();
 	}
-	
+
 	/**
 	 * Returns the type of connection this database is open on (e.g. tcp, mem).
 	 * @return
@@ -2570,12 +2591,13 @@ public class Database implements DataHandler {
 	public String getConnectionType() {
 		return (localMachinePort == -1 && databaseLocation.contains("mem"))? "mem": "tcp";
 	}
-	
-    public void addDataManager(DataManager dm){
-    	dataManagers.put(dm.getTableName(), dm);
-    }
-    
-    public DataManager getDataManager(String tableName){
-    	return dataManagers.get(tableName);
-    }
+
+	public void addDataManager(DataManager dm){
+		dataManagers.put(dm.getTableName(), dm);
+		rmiServer.registerDataManager(dm);
+	}
+
+	public DataManager getDataManager(String tableName){
+		return dataManagers.get(tableName);
+	}
 }

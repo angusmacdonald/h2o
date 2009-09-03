@@ -102,7 +102,7 @@ public class Session extends SessionWithState {
     private int modificationId;
     private int modificationIdState;
     
-    Session(Database database, User user, int id) {
+    public Session(Database database, User user, int id) { //TODO remove public identifier - only needed for RMI tests
         this.database = database;
         this.undoLog = new UndoLog(this);
         this.user = user;
