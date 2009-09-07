@@ -274,7 +274,6 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void PushReplicationON(){
-		System.out.println("PushReplicationON");
 		try{
 			sa.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:two'");
 
@@ -316,7 +315,6 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void PushReplicationONFROM(){
-		System.out.println("PushReplicationONFROM");
 		try{
 			Connection cc = DriverManager.getConnection("jdbc:h2:mem:three", "sa", "sa");
 			Statement sc = cc.createStatement();

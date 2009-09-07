@@ -444,6 +444,7 @@ public class Server implements Runnable, ShutdownHandler {
         String name = service.getName() + " (" + service.getURL() + ")";
         t.setName(name);
         t.start();
+        
         for (int i = 1; i < 64; i += i) {
             wait(i);
             if (isRunning(false)) {

@@ -66,7 +66,7 @@ public class RmiServer {
 			LocateRegistry.createRegistry(port);
 
 		} catch (ExportException e1) {
-			System.out.println("The registry is already running.");
+			System.err.println("RMI registry is already running.");
 		}catch (RemoteException e) {
 			e.printStackTrace();
 		}
@@ -150,8 +150,6 @@ public class RmiServer {
 
 			String[] dataManagers = registry.list();
 
-			
-			System.out.println("Closing " + dataManagers.length);
 			for(String dataManager: dataManagers){
 
 				registry.unbind(dataManager);
@@ -161,11 +159,11 @@ public class RmiServer {
 			//UnicastRemoteObject.unexportObject(registry,true);
 			
 		} catch (AccessException e) {
-			e.printStackTrace();
+			System.err.println("Didn't have permission to perform unbind operation on RMI registry.");
 		} catch (RemoteException e) {
-			e.printStackTrace();
+			System.err.println("Lost contact with RMI registry when unbinding managers.");
 		} catch (NotBoundException e) {
-			e.printStackTrace();
+			System.err.println("Attempting to unbind all data managers - failure due to one of the number being unbound.");
 		}
 		
 	}
@@ -178,6 +176,22 @@ public class RmiServer {
 		super.finalize();
 		
 		unbindExistingManagers();
+	}
+
+	/**
+	 * Ubind a given data manager instance from the RMI registry.
+	 * @param tableName
+	 */
+	public void removeDataManager(String tableName) {
+		try {
+			registry.unbind(tableName);
+		}  catch (AccessException e) {
+			System.err.println("Didn't have permission to perform unbind operation on RMI registry.");
+		} catch (RemoteException e) {
+			System.err.println("Lost contact with RMI registry when unbinding manager of '" + tableName + "'.");
+		} catch (NotBoundException e) {
+			System.err.println("Attempting to unbind manager of '" + tableName + "' - failure due this manager not being bound.");
+		}
 	}
 	
 	

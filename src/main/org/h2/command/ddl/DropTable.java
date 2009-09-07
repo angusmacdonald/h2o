@@ -98,6 +98,8 @@ public class DropTable extends SchemaCommand {
 				SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
 				try {
 				sm.removeTable(tableName, getSchema().getName());
+				
+				db.removeDataManager(getSchema().getName() + "." + tableName);
 				} catch (SQLException e){
 					//TODO fix - this is thrown because the tableID is not found. This happens because drop table removes only local copies AND
 					// schema manager information.

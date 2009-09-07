@@ -1170,9 +1170,9 @@ public class Database implements DataHandler {
 		closing = true;
 		stopServer();
 
-		rmiServer.unbindExistingManagers();
-		rmiServer = null;
-			
+//		rmiServer.unbindExistingManagers();
+//		rmiServer = null;
+//			
 		if (userSessions.size() > 0) {
 			if (!fromShutdownHook) {
 				return;
@@ -2599,5 +2599,14 @@ public class Database implements DataHandler {
 
 	public DataManager getDataManager(String tableName){
 		return dataManagers.get(tableName);
+	}
+
+	/**
+	 * @param string
+	 */
+	public void removeDataManager(String tableName) {
+		dataManagers.remove(tableName);
+		rmiServer.removeDataManager(tableName);
+		
 	}
 }

@@ -44,6 +44,8 @@ public class MultipleSchemaTests extends TestBase {
 				fail("Expected a schema manager entry here.");
 			}
 
+			sa.execute("DROP TABLE IF EXISTS SCHEMA2.TEST");
+			sa.execute("DROP SCHEMA IF EXISTS SCHEMA2");
 		} catch (SQLException e){
 			e.printStackTrace();
 			fail("SQLException thrown when it shouldn't have.");
@@ -133,6 +135,9 @@ public class MultipleSchemaTests extends TestBase {
 			/*
 			 * Drop the table and check the result of the update
 			 */
+
+			sa.execute("DROP TABLE IF EXISTS SCHEMA2.TEST");
+			
 			sa.execute("DROP SCHEMA SCHEMA2");
 
 			int result = sa.getUpdateCount();
@@ -193,6 +198,7 @@ public class MultipleSchemaTests extends TestBase {
 
 			validateResults(pKey2, secondCol2, sa.getResultSet());
 
+			sa.execute("DROP TABLE IF EXISTS SCHEMA2.TEST");
 			sa.execute("DROP SCHEMA SCHEMA2");
 
 		} catch (SQLException e){
@@ -235,6 +241,8 @@ public class MultipleSchemaTests extends TestBase {
 
 			validateResults(pKey2, secondCol2, sb.getResultSet());
 
+			sa.execute("DROP TABLE IF EXISTS SCHEMA2.TEST");
+			sb.execute("DROP TABLE IF EXISTS SCHEMA2.TEST");
 			sa.execute("DROP SCHEMA SCHEMA2");
 			sb.execute("DROP SCHEMA SCHEMA2");
 
