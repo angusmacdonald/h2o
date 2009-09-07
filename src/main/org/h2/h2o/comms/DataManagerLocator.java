@@ -8,15 +8,18 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.ExportException;
 import java.rmi.server.UnicastRemoteObject;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.h2.engine.DataManager;
 
 /**
- * Manages the creation of, and connnections to, the RMI registry storing data manager information.
+ * Responsible for managing and providing connections to data managers, both local and remote.
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class RmiServer {
+public class DataManagerLocator {
 
 	/**
 	 * Default port for RMI registry - used in the case where the schema manager is an in-memory database (where it doesn't
@@ -29,15 +32,21 @@ public class RmiServer {
 	 */
 	private Registry registry;
 
+
+	/**
+	 * H2O. Data manager instances in this DB.
+	 */
+	private Map<String, DataManagerRemote> dataManagers = new HashMap<String, DataManagerRemote>();
+
 	/**
 	 * Called when the RMI registry is on a remote machine. Registers local data manager interface.
 	 * @param host	Host of the schema manager (which also hosts the RMI registry).
 	 * @param port	Port where the schema manager is running (RMI port is this + 1, or defaults to a 20000 if in-memory).
 	 */
-	public RmiServer(String host, int port){
+	public DataManagerLocator(String host, int port){
 		//If an in-memory database is being run the DB must look for the default port locally.	
 		if (port < 1){
-			port = RmiServer.DEFAULT_PORT;
+			port = DataManagerLocator.DEFAULT_PORT;
 			host = null;
 		}
 		locateRegistry(host, port, false);
@@ -47,10 +56,10 @@ public class RmiServer {
 	 * Called by the schema manager to create an RMI registry.
 	 * @param port	Port where registry is to be run (on local machine).
 	 */
-	public RmiServer(int port){
+	public DataManagerLocator(int port){
 		//If an in-memory database is being run, this must start up on a default port.
 		if (port < 1){
-			port = RmiServer.DEFAULT_PORT;
+			port = DataManagerLocator.DEFAULT_PORT;
 		}
 
 		initiateRegistry(port);
@@ -89,9 +98,9 @@ public class RmiServer {
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
-		
+
 		if (startup) unbindExistingManagers();
-		
+
 	}
 
 	/**
@@ -99,16 +108,29 @@ public class RmiServer {
 	 * @param tableName	The name of the table whose data manager we are looking for.
 	 * @return	Reference to the exposed data manager (under remote interface).
 	 */
-	public IDataManagerRemote lookupDataManager(String tableName){
+	public DataManagerRemote lookupDataManager(String tableName) throws SQLException{
 
-		IDataManagerRemote dataManager = null;
+		DataManagerRemote dataManager = null;
 
-		try {
-			dataManager = (IDataManagerRemote) registry.lookup(tableName);
-			System.out.println("Successfully connected to remote DM interface");
-		} catch (Exception e) {
-			System.err.println("Couldn't connect to remote DM interface");
+		dataManager = dataManagers.get(tableName);
+
+		if (dataManager != null){
+			return dataManager;
 		}
+		//The local database doesn't have a reference to the requested DM. Find one via RMI registry.
+		
+		try {
+			dataManager = (DataManagerRemote) registry.lookup(tableName);
+		} catch (AccessException e) {
+			e.printStackTrace();
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		} catch (NotBoundException e) {
+			System.err.println(tableName + " was not bound to registry.");
+			throw new SQLException("Data manager for " + tableName + " could not be found in the registry.");
+		}
+
+
 
 		return dataManager;
 	}
@@ -120,25 +142,57 @@ public class RmiServer {
 	 */
 	public void registerDataManager(DataManager dm){
 
-		IDataManagerRemote stub = null;
+		DataManagerRemote stub = null;
 
-		IDataManagerRemote dataManagerRemote = dm;
+		DataManagerRemote dataManagerRemote = dm;
 		try {
-			stub = (IDataManagerRemote) UnicastRemoteObject.exportObject(dataManagerRemote, 0);
+			stub = (DataManagerRemote) UnicastRemoteObject.exportObject(dataManagerRemote, 0);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
 
 		try {
+			
 			registry.bind(dm.getTableName(), stub);
+
+			dataManagers.put(dm.getTableName(), dm);
 		} catch (AlreadyBoundException abe) {
-			System.err.println("A data manager with this name is already bound. The system will now exit.");
-			abe.printStackTrace();
+
+			boolean contactable = testContact(dm.getTableName());
+
+			if (!contactable){
+				removeDataManager(dm.getTableName());
+				registerDataManager(dm);
+				System.out.println("An old data manager for " + dm.getTableName() + " was removed.");
+			} else {
+				System.err.println("A data manager for this table still exists.");
+				abe.printStackTrace();
+			}
 		} catch (AccessException e) {
 			e.printStackTrace();
 		} catch (RemoteException e) {
-			e.printStackTrace();
+			System.err.println("Lost contact with RMI registry when attempting to bind a manager.");
 		}
+	}
+
+	/**
+	 * Test that a data manager can be accessed.
+	 * @param interfaceName	The name given to a data manager in the registry.
+	 * @return true if the data manager is accessible; otherwise false.
+	 */
+	public boolean testContact(String name){
+
+		DataManagerRemote dm;
+
+		try {
+			dm = (DataManagerRemote) registry.lookup(name);
+
+			dm.testAvailability();
+		} catch (Exception e) {
+			return false;
+		}
+
+		return false;
 	}
 
 	/**
@@ -151,13 +205,13 @@ public class RmiServer {
 			String[] dataManagers = registry.list();
 
 			for(String dataManager: dataManagers){
-
+				
 				registry.unbind(dataManager);
 
 			}
 
 			//UnicastRemoteObject.unexportObject(registry,true);
-			
+
 		} catch (AccessException e) {
 			System.err.println("Didn't have permission to perform unbind operation on RMI registry.");
 		} catch (RemoteException e) {
@@ -165,17 +219,7 @@ public class RmiServer {
 		} catch (NotBoundException e) {
 			System.err.println("Attempting to unbind all data managers - failure due to one of the number being unbound.");
 		}
-		
-	}
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#finalize()
-	 */
-	@Override
-	protected void finalize() throws Throwable {
-		super.finalize();
-		
-		unbindExistingManagers();
 	}
 
 	/**
@@ -185,6 +229,8 @@ public class RmiServer {
 	public void removeDataManager(String tableName) {
 		try {
 			registry.unbind(tableName);
+			
+			dataManagers.remove(tableName);
 		}  catch (AccessException e) {
 			System.err.println("Didn't have permission to perform unbind operation on RMI registry.");
 		} catch (RemoteException e) {
@@ -193,6 +239,6 @@ public class RmiServer {
 			System.err.println("Attempting to unbind manager of '" + tableName + "' - failure due this manager not being bound.");
 		}
 	}
-	
-	
+
+
 }

@@ -1,5 +1,6 @@
 package org.h2.command.dm;
 
+import java.rmi.RemoteException;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -30,6 +31,7 @@ import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
 import org.h2.expression.ValueExpression;
+import org.h2.h2o.comms.DataManagerRemote;
 import org.h2.index.IndexType;
 import org.h2.jdbc.JdbcSQLException;
 import org.h2.message.Message;
@@ -76,13 +78,13 @@ public class NewReplica extends SchemaCommand {
 		//NEW REPLICA <tableName> (<databaseLocationOnDisk>, <hostname>, <port>, <connectionType>, <tableSet>);
 
 
-		
+
 		//Parse EXPR
 		this.databaseLocationOnDisk =expr[0].toString();
 		if (databaseLocationOnDisk.startsWith("'") && databaseLocationOnDisk.endsWith("'")){
 			databaseLocationOnDisk = databaseLocationOnDisk.substring(1, databaseLocationOnDisk.length()-1);
 		}
-		
+
 		this.hostname = expr[1].toString();
 		if (hostname.startsWith("'") && hostname.endsWith("'")){
 			hostname = hostname.substring(1, hostname.length()-1);
@@ -93,7 +95,7 @@ public class NewReplica extends SchemaCommand {
 			connectionType = connectionType.substring(1, connectionType.length()-1);
 		}
 		this.tableSet = new Integer(expr[4].toString()).intValue();
-		
+
 
 	}
 
@@ -107,22 +109,25 @@ public class NewReplica extends SchemaCommand {
 		// TODO rights: what rights are required to create a table?
 		session.commit(true);
 
-
-		try{
-			//	#############################
-			//  Add to data manager.
-			//	#############################	
-			DataManager dm = db.getDataManager(getSchema().getName() + "." + tableName);
+		//	#############################
+		//  Add to data manager.
+		//	#############################	
+		DataManagerRemote dm = db.getDataManager(getSchema().getName() + "." + tableName);
 
 
-			//NEW REPLICA <tableName> (<databaseLocationOnDisk>, <hostname>, <port>, <connectionType>, <tableSet>);
-			dm.addReplicaInformation(0, databaseLocationOnDisk, "TABLE", hostname, port, connectionType, tableSet);
+		boolean successful = false;
+		
+		try {
+			successful = dm.addReplicaInformation(0, databaseLocationOnDisk, "TABLE", hostname, port, connectionType, tableSet);
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
 
 
 
-		} catch (SQLException e) {
+		if (!successful){
 			db.checkPowerOff();
-			throw e;
+			throw new SQLException("Error attempting to inform DM of update.");
 		}
 
 		return 0;

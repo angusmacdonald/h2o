@@ -27,7 +27,8 @@ import org.h2.constant.LocationPreference;
 import org.h2.constant.SysProperties;
 import org.h2.constraint.Constraint;
 import org.h2.h2o.comms.DatabaseURL;
-import org.h2.h2o.comms.RmiServer;
+import org.h2.h2o.comms.DataManagerRemote;
+import org.h2.h2o.comms.DataManagerLocator;
 import org.h2.index.Cursor;
 import org.h2.index.Index;
 import org.h2.index.IndexType;
@@ -129,12 +130,7 @@ public class Database implements DataHandler {
 	 */
 	private SchemaManager schemaManager;
 
-	/**
-	 * H2O. Data manager instances in this DB.
-	 */
-	private Map<String, DataManager> dataManagers = new HashMap<String, DataManager>();
-
-	private RmiServer rmiServer;
+	private DataManagerLocator rmiServer;
 
 	private final String databaseName;
 	private final String databaseShortName;
@@ -252,10 +248,10 @@ public class Database implements DataHandler {
 
 		if (Constants.IS_H2O && !isManagementDB()){
 			if (isSchemaManager){
-				rmiServer = new RmiServer(ci.getPort()+1);
+				rmiServer = new DataManagerLocator(ci.getPort()+1);
 			} else {
 				DatabaseURL dbURL = DatabaseURL.parseURL(schemaManagerLocation);
-				rmiServer = new RmiServer(dbURL.getHostname(), dbURL.getPort()+1);
+				rmiServer = new DataManagerLocator(dbURL.getHostname(), dbURL.getPort()+1);
 			}
 		}
 
@@ -2593,19 +2589,19 @@ public class Database implements DataHandler {
 	}
 
 	public void addDataManager(DataManager dm){
-		dataManagers.put(dm.getTableName(), dm);
 		rmiServer.registerDataManager(dm);
 	}
 
-	public DataManager getDataManager(String tableName){
-		return dataManagers.get(tableName);
+	public DataManagerRemote getDataManager(String tableName) throws SQLException{
+
+		return rmiServer.lookupDataManager(tableName);
+
 	}
 
 	/**
 	 * @param string
 	 */
 	public void removeDataManager(String tableName) {
-		dataManagers.remove(tableName);
 		rmiServer.removeDataManager(tableName);
 		
 	}

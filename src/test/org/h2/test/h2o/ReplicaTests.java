@@ -84,8 +84,9 @@ public class ReplicaTests extends TestBase{
 
 
 		} catch (SQLException sqle){
-			fail("SQLException thrown when it shouldn't have.");
 			sqle.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
+			
 		}
 	}
 
@@ -96,6 +97,7 @@ public class ReplicaTests extends TestBase{
 	public void SchemaMetaData(){
 
 		try{
+			
 			sb.execute("CREATE REPLICA TEST");
 
 			if (sb.getUpdateCount() != 0){
@@ -103,13 +105,12 @@ public class ReplicaTests extends TestBase{
 			}
 
 			sa.execute("SELECT * FROM H2O.H2O_REPLICA;");
-
+			
 			ResultSet rs = sa.getResultSet();
 
 			if (!(rs.next() && rs.next())){
 				fail("Should have been two entries in the schema manager.");
 			}
-
 
 		} catch (SQLException sqle){
 
@@ -131,6 +132,7 @@ public class ReplicaTests extends TestBase{
 				fail("Expected update count to be '0'");
 			}
 		} catch (SQLException sqle){
+			sqle.printStackTrace();
 			fail("This shouldn't have caused any errors.");
 		}
 

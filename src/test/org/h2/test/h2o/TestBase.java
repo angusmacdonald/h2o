@@ -65,6 +65,7 @@ public class TestBase {
 			
 			ca.close();	
 			cb.close();	
+			
 		} catch (Exception e){
 			e.printStackTrace();
 			fail("Connections aren't bein closed correctly.");

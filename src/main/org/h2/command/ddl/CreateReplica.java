@@ -6,6 +6,7 @@
  */
 package org.h2.command.ddl;
 
+import java.rmi.RemoteException;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -31,6 +32,7 @@ import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
 import org.h2.expression.ValueExpression;
+import org.h2.h2o.comms.DataManagerRemote;
 import org.h2.index.Index;
 import org.h2.index.IndexType;
 import org.h2.index.LinkedIndex;
@@ -371,9 +373,15 @@ public class CreateReplica extends SchemaCommand {
 			//	#############################
 			//  Add to data manager.
 			//	#############################
-			String dataManagerLocation = sm.getDataManagerLocation(tableName, getSchema().getName());
-			int result = pushCommand(dataManagerLocation, "NEW REPLICA " + tableName + " ('" + db.getDatabaseLocation() + "', '" + db.getLocalMachineAddress() + "', " +
-					db.getLocalMachinePort() + ", '" + db.getConnectionType() + "', " + tableSet + ");", false);
+			DataManagerRemote dm = db.getDataManager(getSchema().getName() + "." + tableName);
+			try {
+				dm.addReplicaInformation(table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
+						db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType(), tableSet);
+			} catch (RemoteException e) {
+				System.err.println("Error informing data manager of update.");
+				e.printStackTrace();
+			}
+	
 
 		} catch (SQLException e) {
 			db.checkPowerOff();
@@ -418,6 +426,7 @@ public class CreateReplica extends SchemaCommand {
 
 				stat.execute(query);
 				result = stat.getUpdateCount();
+				
 			} catch (SQLException e) {
 				conn.close();
 				conn = null;

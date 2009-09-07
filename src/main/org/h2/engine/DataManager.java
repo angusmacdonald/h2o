@@ -6,7 +6,7 @@ import java.sql.SQLException;
 import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.constant.ErrorCode;
-import org.h2.h2o.comms.IDataManagerRemote;
+import org.h2.h2o.comms.DataManagerRemote;
 import org.h2.message.Message;
 import org.h2.result.LocalResult;
 import org.h2.value.Value;
@@ -52,7 +52,7 @@ import org.h2.value.Value;
 		); <br/></code>
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class DataManager implements IDataManagerRemote {
+public class DataManager implements DataManagerRemote {
 
 	/**
 	 * Name of the schema used to store data manager tables.
@@ -127,7 +127,7 @@ public class DataManager implements IDataManagerRemote {
 
 		addInformationToDB(modificationID, session.getDatabase().getDatabaseLocation(), "TABLE", session.getDatabase().getLocalMachineAddress(), 
 				session.getDatabase().getLocalMachinePort(), session.getDatabase().getConnectionType(), tableSet);
-		
+
 		db.addDataManager(this);
 	}
 
@@ -169,16 +169,13 @@ public class DataManager implements IDataManagerRemote {
 		return executeUpdate(sql);
 	}
 
-	/**
-	 * Update the schema manager with new replica information
-	 * @param tableID			Name of the replica being added.
-	 * @param modificationID	Mofification ID of the table.
-	 * @return					Result of the update.
-	 * @throws SQLException 
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.DataManagerRemote#addReplicaInformation(int, java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, int)
 	 */
 	private int addReplicaInformation(int tableID, long modificationID, int connectionID, String databaseLocation, String tableType, int tableSet, boolean primaryCopy) throws SQLException{
 		String sql = "INSERT INTO " + REPLICAS + " VALUES (null, " + tableID + ", " + connectionID + ", '" + databaseLocation + "', '" + 
 		tableType + "', " + modificationID +", " + tableSet + ", " + primaryCopy + ");\n";
+
 		return executeUpdate(sql);
 	}
 
@@ -363,6 +360,7 @@ public class DataManager implements IDataManagerRemote {
 			result = sqlQuery.executeQueryLocal(1);
 
 
+
 			if (result.next()){
 				return result.currentRow()[0].getInt();
 			} else {
@@ -377,33 +375,36 @@ public class DataManager implements IDataManagerRemote {
 		}
 	}
 
-	/**
-	 * Add a new replica to the data manager. The table already exists, so it is assumed there is an entry for that table
-	 * in the data manager. This method only updates the replica table in the data manager.
-	 * @param tableName				Name of the table being added.
-	 * @param modificationId		Modification ID of the table.
-	 * @param databaseLocation		Location of the table (the database it is stored in)
-	 * @param tableType				Type of the table (e.g. Linked, View, Table).
-	 * @param localMachineAddress	Address through which the DB is contactable.
-	 * @param localMachinePort		Port the server is running on.
-	 * @param connection_type		The type of connection (e.g. TCP, FTP).
-	 * @return true if this replica wasn't already in the data manager, false otherwise.
-	 * @throws SQLException 
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.DataManagerRemote#addReplicaInformation(int, java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, int)
 	 */
 	public boolean addReplicaInformation(long modificationID,
 			String databaseLocation, String tableType,
-			String localMachineAddress, int localMachinePort, String connection_type, int replicaSet) throws SQLException {
+			String localMachineAddress, int localMachinePort, String connection_type, int replicaSet){
 
-		int connectionID = getConnectionID(localMachineAddress, localMachinePort, connection_type);
-		int tableID = getTableID();
+		try {
 
-		if (!isReplicaListed(connectionID, databaseLocation)){ // the table doesn't already exist in the schema manager.
-			addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, replicaSet, false);
-			return true;
-		} else {
+			int connectionID = getConnectionID(localMachineAddress, localMachinePort, connection_type);
+			int tableID;
+
+			tableID = getTableID();
+
+
+			if (!isReplicaListed(connectionID, databaseLocation)){ // the table doesn't already exist in the schema manager.
+				int result = addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, replicaSet, false);
+				
+				return (result == 0);
+			} else {
+				return false;
+			}
+		} catch (SQLException e) {
+			System.err.println("Error occured adding replica information.");
 			return false;
 		}
 	}
+
+
 
 	/**
 	 *  Gets the table ID for a given database table if it is present in the database. If not, an exception is thrown.
@@ -447,7 +448,17 @@ public class DataManager implements IDataManagerRemote {
 	 */
 	@Override
 	public void requestLock(String message) throws RemoteException {
-		System.out.println("LOCK REQUESTED...................................");
+		//Nothing
 	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.DataManagerRemote#testAvailability()
+	 */
+	@Override
+	public void testAvailability() {
+		//Doesn't do anything.
+	}
+
+
 
 }
