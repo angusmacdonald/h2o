@@ -2,11 +2,15 @@ package org.h2.engine;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.constant.ErrorCode;
 import org.h2.h2o.comms.DataManagerRemote;
+import org.h2.h2o.comms.DatabaseInstanceRemote;
+import org.h2.h2o.comms.QueryProxy;
 import org.h2.message.Message;
 import org.h2.result.LocalResult;
 import org.h2.value.Value;
@@ -320,6 +324,51 @@ public class DataManager implements DataManagerRemote {
 
 
 	}
+	
+	private Set<String> getAllReplicaLocations() throws SQLException{
+		
+		String sql = "SELECT db_location, connection_type, machine_name, connection_port " +
+		"FROM H2O.H2O_REPLICA, H2O.H2O_CONNECTION, H2O.H2O_TABLE " +
+		"WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND " + TABLES + ".table_id=" + REPLICAS + ".table_id " + 
+		"AND H2O_CONNECTION.connection_id = H2O_REPLICA.connection_id";
+
+		LocalResult result = null;
+
+		sqlQuery = queryParser.prepareCommand(sql);
+
+		try {
+
+			result = sqlQuery.executeQueryLocal(0);
+
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+
+		Set<String> replicaLocations = new HashSet<String>();
+		
+		while(result.next()){
+			Value[] row = result.currentRow();
+
+			String dbLocation = row[0].getString();
+			String connectionType = row[1].getString();
+			String machineName = row[2].getString();
+			String connectionPort = row[3].getString();
+
+			String dbName = null;
+			if (connectionType.equals("tcp")){
+				dbName = "jdbc:h2:" + connectionType + "://" + machineName + ":" + connectionPort + "/" + dbLocation;
+			} else if (connectionType.equals("mem")){
+				dbName = "jdbc:h2:" + dbLocation;
+			} else {
+				Message.throwInternalError("This connection type isn't supported yet. Get on that!");
+			}
+
+			replicaLocations.add(dbName);
+		}
+
+		return replicaLocations;
+	}
+
 
 	/**
 	 * Removes a particular replica from the schema manager. 
@@ -447,8 +496,11 @@ public class DataManager implements DataManagerRemote {
 	 * @see org.h2.h2o.comms.IDataManager#requestLock(java.lang.String)
 	 */
 	@Override
-	public void requestLock(String message) throws RemoteException {
-		//Nothing
+	public QueryProxy requestLock(String message) throws RemoteException {
+		Set<DatabaseInstanceRemote> replicaLocations = new HashSet<DatabaseInstanceRemote>();
+		QueryProxy qp = new QueryProxy(QueryProxy.LockType.WRITE, tableName, replicaLocations);
+		
+		return qp;
 	}
 
 	/* (non-Javadoc)

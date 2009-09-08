@@ -1,20 +1,17 @@
 package org.h2.h2o.comms;
 
-import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 
-import org.h2.command.Command;
-import org.h2.command.Prepared;
 
 /**
  * Remote interface for data manager instances.
  *
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public interface DataManagerRemote extends Remote {
+public interface DataManagerRemote extends H2ORemote {
 
-	public void requestLock(String message) throws RemoteException;
+	public QueryProxy requestLock(String message) throws RemoteException;
 
 	/**
 	 * Inform the data manager that a new replica has been created for the given table.
@@ -33,9 +30,4 @@ public interface DataManagerRemote extends Remote {
 			String string, String hostname, int port, String connectionType,
 			int tableSet) throws RemoteException;
 
-	/**
-	 * Used to check that a data manager is still accessible via RMI. This method shouldn't do anything -
-	 * an exception will be thrown if it is unavailable.
-	 */
-	public void testAvailability() throws RemoteException;
 }

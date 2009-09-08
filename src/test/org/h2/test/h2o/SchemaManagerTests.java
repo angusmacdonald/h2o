@@ -555,6 +555,7 @@ public class SchemaManagerTests {
 			sb.execute("DROP TABLE TEST;");
 
 			sa.close();
+			sb.close();
 			ca.close();
 			cb.close();
 		} catch (SQLException sqle){

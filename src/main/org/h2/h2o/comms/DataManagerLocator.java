@@ -15,7 +15,7 @@ import java.util.Map;
 import org.h2.engine.DataManager;
 
 /**
- * Responsible for managing and providing connections to data managers, both local and remote.
+ * Responsible for managing and providing connections to data managers and database instances, both local and remote.
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
@@ -34,9 +34,14 @@ public class DataManagerLocator {
 
 
 	/**
-	 * H2O. Data manager instances in this DB.
+	 * H2O. Data manager instances currently known to the local database instance.
 	 */
 	private Map<String, DataManagerRemote> dataManagers = new HashMap<String, DataManagerRemote>();
+
+	/**
+	 * Database instances currently known to this database.
+	 */
+	private Map<String, DatabaseInstanceRemote> databaseInstances = new HashMap<String, DatabaseInstanceRemote>();
 
 	/**
 	 * Called when the RMI registry is on a remote machine. Registers local data manager interface.
@@ -118,7 +123,7 @@ public class DataManagerLocator {
 			return dataManager;
 		}
 		//The local database doesn't have a reference to the requested DM. Find one via RMI registry.
-		
+
 		try {
 			dataManager = (DataManagerRemote) registry.lookup(tableName);
 		} catch (AccessException e) {
@@ -130,9 +135,78 @@ public class DataManagerLocator {
 			throw new SQLException("Data manager for " + tableName + " could not be found in the registry.");
 		}
 
-
-
 		return dataManager;
+	}
+
+
+	/**
+	 * Obtain a proxy for an exposed data manager.
+	 * @param instanceName	The name of the table whose data manager we are looking for.
+	 * @return	Reference to the exposed data manager (under remote interface).
+	 */
+	public DatabaseInstanceRemote lookupDatabaseInstance(String instanceName) throws SQLException{
+
+		DatabaseInstanceRemote dbInstance = null;
+
+		dbInstance = databaseInstances.get(instanceName);
+
+		if (dbInstance != null){
+			return dbInstance;
+		}
+		//The local database doesn't have a reference to the requested DM. Find one via RMI registry.
+
+		try {
+			dbInstance = (DatabaseInstanceRemote) registry.lookup(instanceName);
+		} catch (AccessException e) {
+			e.printStackTrace();
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		} catch (NotBoundException e) {
+			System.err.println(instanceName + " was not bound to registry.");
+			throw new SQLException("Database instance for " + instanceName + " could not be found in the registry.");
+		}
+
+		return dbInstance;
+	}
+
+	/**
+	 * Register the local database instance with the RMI registry.
+	 * @param databaseInstance Object to be exposed.
+	 */
+	public void registerDatabaseInstance(DatabaseInstance databaseInstance) {
+		DatabaseInstanceRemote stub = null;
+
+		DatabaseInstanceRemote databaseInstanceRemote = databaseInstance;
+		try {
+			stub = (DatabaseInstanceRemote) UnicastRemoteObject.exportObject(databaseInstanceRemote, 0);
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		} catch (Exception e){
+			System.err.println("#############################################");
+		}
+
+		try {
+
+			registry.bind(databaseInstance.getName(), stub);
+
+			databaseInstances.put(databaseInstance.getName(), databaseInstanceRemote);
+		} catch (AlreadyBoundException abe) {
+
+			boolean contactable = testContact(databaseInstance.getName());
+
+			if (!contactable){
+				removeRegistryObject(databaseInstance.getName());
+				registerDatabaseInstance(databaseInstance);
+				System.out.println("An old database instance for " + databaseInstance.getName() + " was removed.");
+			} else {
+				System.err.println("A data manager for this table still exists.");
+				abe.printStackTrace();
+			}
+		} catch (AccessException e) {
+			e.printStackTrace();
+		} catch (RemoteException e) {
+			System.err.println("Lost contact with RMI registry when attempting to bind a manager.");
+		}
 	}
 
 	/**
@@ -152,7 +226,7 @@ public class DataManagerLocator {
 		}
 
 		try {
-			
+
 			registry.bind(dm.getTableName(), stub);
 
 			dataManagers.put(dm.getTableName(), dm);
@@ -161,7 +235,7 @@ public class DataManagerLocator {
 			boolean contactable = testContact(dm.getTableName());
 
 			if (!contactable){
-				removeDataManager(dm.getTableName());
+				removeRegistryObject(dm.getTableName());
 				registerDataManager(dm);
 				System.out.println("An old data manager for " + dm.getTableName() + " was removed.");
 			} else {
@@ -182,12 +256,13 @@ public class DataManagerLocator {
 	 */
 	public boolean testContact(String name){
 
-		DataManagerRemote dm;
+		H2ORemote registryObject;
 
 		try {
-			dm = (DataManagerRemote) registry.lookup(name);
+			registryObject = (H2ORemote) registry.lookup(name);
 
-			dm.testAvailability();
+			registryObject.testAvailability();
+
 		} catch (Exception e) {
 			return false;
 		}
@@ -202,11 +277,11 @@ public class DataManagerLocator {
 
 		try {
 
-			String[] dataManagers = registry.list();
+			String[] registryObjects = registry.list();
 
-			for(String dataManager: dataManagers){
-				
-				registry.unbind(dataManager);
+			for(String objectName: registryObjects){
+
+				registry.unbind(objectName);
 
 			}
 
@@ -215,30 +290,30 @@ public class DataManagerLocator {
 		} catch (AccessException e) {
 			System.err.println("Didn't have permission to perform unbind operation on RMI registry.");
 		} catch (RemoteException e) {
-			System.err.println("Lost contact with RMI registry when unbinding managers.");
+			System.err.println("Lost contact with RMI registry when unbinding objects.");
 		} catch (NotBoundException e) {
-			System.err.println("Attempting to unbind all data managers - failure due to one of the number being unbound.");
+			System.err.println("Attempting to unbind all objects - failure due to one of the number being unbound.");
 		}
 
 	}
 
 	/**
-	 * Ubind a given data manager instance from the RMI registry.
-	 * @param tableName
+	 * Unbind a given object from the registry.
+	 * @param objectName
 	 */
-	public void removeDataManager(String tableName) {
+	public void removeRegistryObject(String objectName) {
 		try {
-			registry.unbind(tableName);
-			
-			dataManagers.remove(tableName);
+			registry.unbind(objectName);
+
+			dataManagers.remove(objectName);
+			databaseInstances.remove(objectName);
 		}  catch (AccessException e) {
 			System.err.println("Didn't have permission to perform unbind operation on RMI registry.");
 		} catch (RemoteException e) {
-			System.err.println("Lost contact with RMI registry when unbinding manager of '" + tableName + "'.");
+			System.err.println("Lost contact with RMI registry when unbinding manager of '" + objectName + "'.");
 		} catch (NotBoundException e) {
-			System.err.println("Attempting to unbind manager of '" + tableName + "' - failure due this manager not being bound.");
+			System.err.println("Attempting to unbind manager of '" + objectName + "' - failure due this manager not being bound.");
 		}
 	}
-
 
 }

@@ -26,6 +26,7 @@ import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
 import org.h2.constant.SysProperties;
 import org.h2.constraint.Constraint;
+import org.h2.h2o.comms.DatabaseInstance;
 import org.h2.h2o.comms.DatabaseURL;
 import org.h2.h2o.comms.DataManagerRemote;
 import org.h2.h2o.comms.DataManagerLocator;
@@ -220,6 +221,13 @@ public class Database implements DataHandler {
 	private long reconnectCheckNext;
 	private boolean reconnectChangePending;
 
+	/**
+	 * H2O. Interface to this database instance, exposed via RMI.
+	 */
+	private DatabaseInstance databaseInstance;
+
+	private String originalURL;
+
 
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
 		if (Constants.IS_H2O) System.out.print("H2O, Database '" + name + "'.");
@@ -271,6 +279,7 @@ public class Database implements DataHandler {
 			writeDelay = SysProperties.MIN_WRITE_DELAY;
 		}
 		this.databaseURL = ci.getURL();
+		this.originalURL = ci.getOriginalURL();
 		this.eventListener = ci.getDatabaseEventListenerObject();
 		ci.removeDatabaseEventListenerObject();
 		if (eventListener == null) {
@@ -728,9 +737,20 @@ public class Database implements DataHandler {
 		if (Constants.IS_H2O && !isManagementDB() && ( !databaseExists || !isSchemaManager)){ //don't run this code with the TCP server management DB
 
 			createH2OTables();
+
 			System.out.print(" Created schema manager tables.");
 		} 
+		if (Constants.IS_H2O && !isManagementDB()){ //don't run this code with the TCP server management DB
+			exposeViaRMI();
+		}
+	}
 
+	/**
+	 * Exposes this database instance over RMI by creating a DatabaseInstance object. This is used to process distributed queries.
+	 */
+	private void exposeViaRMI() {
+		databaseInstance = new DatabaseInstance(this.originalURL);
+		rmiServer.registerDatabaseInstance(databaseInstance);
 	}
 
 	public Schema getMainSchema() {
@@ -1166,9 +1186,13 @@ public class Database implements DataHandler {
 		closing = true;
 		stopServer();
 
-//		rmiServer.unbindExistingManagers();
-//		rmiServer = null;
-//			
+		//		rmiServer.unbindExistingManagers();
+		//		rmiServer = null;
+
+		if (Constants.IS_H2O && !isManagementDB()){
+			rmiServer.removeRegistryObject(databaseInstance.getName());
+		}
+		
 		if (userSessions.size() > 0) {
 			if (!fromShutdownHook) {
 				return;
@@ -1267,6 +1291,7 @@ public class Database implements DataHandler {
 				// ignore (the trace is closed already)
 			}
 		}
+		closing = false;
 	}
 
 	private void stopWriter() {
@@ -2602,7 +2627,7 @@ public class Database implements DataHandler {
 	 * @param string
 	 */
 	public void removeDataManager(String tableName) {
-		rmiServer.removeDataManager(tableName);
-		
+		rmiServer.removeRegistryObject(tableName);
+
 	}
 }
