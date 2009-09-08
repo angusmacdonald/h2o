@@ -26,10 +26,12 @@ import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
 import org.h2.constant.SysProperties;
 import org.h2.constraint.Constraint;
+import org.h2.h2o.comms.DataManagerLocator;
 import org.h2.h2o.comms.DatabaseInstance;
+import org.h2.h2o.comms.DatabaseInstanceLocator;
 import org.h2.h2o.comms.DatabaseURL;
 import org.h2.h2o.comms.DataManagerRemote;
-import org.h2.h2o.comms.DataManagerLocator;
+import org.h2.h2o.comms.RMIServer;
 import org.h2.index.Cursor;
 import org.h2.index.Index;
 import org.h2.index.IndexType;
@@ -131,7 +133,16 @@ public class Database implements DataHandler {
 	 */
 	private SchemaManager schemaManager;
 
-	private DataManagerLocator rmiServer;
+	/**
+	 * Manages access to data managers, both local and remote.
+	 */
+	private DataManagerLocator dataManagerLocator;
+
+	/**
+	 * Manages access to remote database instances via RMI.
+	 */
+	private DatabaseInstanceLocator databaseInstanceLocator;
+
 
 	private final String databaseName;
 	private final String databaseShortName;
@@ -230,7 +241,7 @@ public class Database implements DataHandler {
 
 
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
-		if (Constants.IS_H2O) System.out.print("H2O, Database '" + name + "'.");
+		
 		this.compareMode = new CompareMode(null, null, 0);
 		this.databaseLocation = ci.getSmallName();
 
@@ -246,6 +257,8 @@ public class Database implements DataHandler {
 		this.databaseName = name;
 		this.databaseShortName = parseDatabaseShortName();
 
+		if (Constants.IS_H2O && !isManagementDB()) System.out.print("H2O, Database '" + name + "'.");
+		
 		this.schemaManagerLocation = ci.getSchemaManagerLocation();
 
 		if (Constants.IS_H2O && !isManagementDB() && this.schemaManagerLocation == null){
@@ -253,16 +266,25 @@ public class Database implements DataHandler {
 			this.schemaManagerLocation = Constants.DEFAULT_SCHEMA_MANAGER_LOCATION;
 		}
 
+		if (Constants.IS_H2O && !isManagementDB()){ //don't run this code with the TCP server management DB
+			DatabaseURL dbURL = DatabaseURL.parseURL(schemaManagerLocation);
 
-		if (Constants.IS_H2O && !isManagementDB()){
+			/* 
+			 * Instantiate connections to RMI registry (if schema manager, create RMI registry first).
+			 */
+			int rmiPort = dbURL.getPort()+1;
 			if (isSchemaManager){
-				rmiServer = new DataManagerLocator(ci.getPort()+1);
+				
+				databaseInstanceLocator = new DatabaseInstanceLocator(rmiPort);
 			} else {
-				DatabaseURL dbURL = DatabaseURL.parseURL(schemaManagerLocation);
-				rmiServer = new DataManagerLocator(dbURL.getHostname(), dbURL.getPort()+1);
+				//Registry is located on a remote machine.
+				databaseInstanceLocator = new DatabaseInstanceLocator(dbURL.getHostname(), rmiPort);
 			}
+		
+			dataManagerLocator = new DataManagerLocator(dbURL.getHostname(), rmiPort);
+		
 		}
-
+		
 		this.multiThreaded = true; //H2O. Required for the H2O push replication feature, among other things.
 
 		this.cipher = cipher;
@@ -304,7 +326,7 @@ public class Database implements DataHandler {
 				TraceSystem.DEFAULT_TRACE_LEVEL_SYSTEM_OUT);
 		this.cacheType = StringUtils.toUpperEnglish(ci.removeProperty("CACHE_TYPE", CacheLRU.TYPE_NAME));
 		openDatabase(traceLevelFile, traceLevelSystemOut, closeAtVmShutdown);
-		if (Constants.IS_H2O) System.out.println(" Completed startup.");
+		if (Constants.IS_H2O && !isManagementDB()) System.out.println(" Completed startup.");
 	}
 
 	private void openDatabase(int traceLevelFile, int traceLevelSystemOut, boolean closeAtVmShutdown) throws SQLException {
@@ -715,7 +737,7 @@ public class Database implements DataHandler {
 
 			rec.execute(this, systemSession, eventListener);
 		}
-		if (Constants.IS_H2O) System.out.print(" Executed meta-records.");
+		if (Constants.IS_H2O && !isManagementDB()) System.out.print(" Executed meta-records.");
 
 		// try to recompile the views that are invalid
 		recompileInvalidViews(systemSession);
@@ -741,16 +763,12 @@ public class Database implements DataHandler {
 			System.out.print(" Created schema manager tables.");
 		} 
 		if (Constants.IS_H2O && !isManagementDB()){ //don't run this code with the TCP server management DB
-			exposeViaRMI();
+			/*
+			 * Add this database instance to the RMI registry.
+			 */
+			databaseInstance = new DatabaseInstance(this.originalURL);
+			databaseInstanceLocator.registerDatabaseInstance(databaseInstance);
 		}
-	}
-
-	/**
-	 * Exposes this database instance over RMI by creating a DatabaseInstance object. This is used to process distributed queries.
-	 */
-	private void exposeViaRMI() {
-		databaseInstance = new DatabaseInstance(this.originalURL);
-		rmiServer.registerDatabaseInstance(databaseInstance);
 	}
 
 	public Schema getMainSchema() {
@@ -1182,17 +1200,14 @@ public class Database implements DataHandler {
 			return;
 		}
 
-
 		closing = true;
 		stopServer();
 
-		//		rmiServer.unbindExistingManagers();
-		//		rmiServer = null;
-
 		if (Constants.IS_H2O && !isManagementDB()){
-			rmiServer.removeRegistryObject(databaseInstance.getName());
+			dataManagerLocator.removeRegistryObject(databaseInstance.getName());
+			dataManagerLocator = null;
 		}
-		
+
 		if (userSessions.size() > 0) {
 			if (!fromShutdownHook) {
 				return;
@@ -2614,12 +2629,12 @@ public class Database implements DataHandler {
 	}
 
 	public void addDataManager(DataManager dm){
-		rmiServer.registerDataManager(dm);
+		dataManagerLocator.registerDataManager(dm);
 	}
 
 	public DataManagerRemote getDataManager(String tableName) throws SQLException{
 
-		return rmiServer.lookupDataManager(tableName);
+		return dataManagerLocator.lookupDataManager(tableName);
 
 	}
 
@@ -2627,7 +2642,7 @@ public class Database implements DataHandler {
 	 * @param string
 	 */
 	public void removeDataManager(String tableName) {
-		rmiServer.removeRegistryObject(tableName);
+		dataManagerLocator.removeRegistryObject(tableName);
 
 	}
 }
