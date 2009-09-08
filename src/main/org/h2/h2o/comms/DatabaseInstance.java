@@ -23,7 +23,8 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	/* (non-Javadoc)
 	 * @see org.h2.command.dm.DatabaseInstanceRemote#executeUpdate(org.h2.command.Prepared)
 	 */
-	public int executeUpdate(Prepared query) throws RemoteException{
+	public int executeUpdate(String query) throws RemoteException{
+		System.out.println("Update received.");
 		return 0;
 		
 	}

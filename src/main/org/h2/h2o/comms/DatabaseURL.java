@@ -1,5 +1,7 @@
 package org.h2.h2o.comms;
 
+import org.h2.util.NetUtils;
+
 /**
  * Parsed representation of an H2 database URL. 
  * 
@@ -13,6 +15,11 @@ public class DatabaseURL {
 	 * The original unedited database URL.
 	 */
 	private String originalURL;
+	
+	/**
+	 * Original URL edited to remove localhost, and replace with the local hostname.
+	 */
+	private String newURL;
 	
 	/**
 	 * Hostname contained in the URL. If the DB is in-memory there will be no host name - this field will be set to null.
@@ -43,6 +50,7 @@ public class DatabaseURL {
 	 * Whether the database in question is a schema manager.
 	 */
 	private boolean schemaManager;
+
 	
 	public static void main (String[] args){
 		//Test.
@@ -71,6 +79,10 @@ public class DatabaseURL {
 			//Get hostname
 			hostname = newURL.substring(0, newURL.indexOf(":"));
 			
+			if (hostname.equals("localhost")){
+				hostname = NetUtils.getLocalAddress();
+			}
+			
 			//Get port
 			String portString = newURL.substring(newURL.indexOf(":")+1);
 			portString = portString.substring(0, portString.indexOf("/"));
@@ -89,6 +101,7 @@ public class DatabaseURL {
 	
 	private DatabaseURL(String originalURL, String hostname, int port, String dbLocation, boolean tcp, boolean mem, boolean schemaManager){
 		this.originalURL = originalURL;
+		this.newURL = "jdbc:h2:" + ((schemaManager)? "sm:": "") + ((tcp)? "tcp://" + hostname + ":" + port + "/": "") + ((mem)? "mem:": "") + dbLocation;
 		this.hostname = hostname;
 		this.port = port;
 		this.tcp = tcp;
@@ -100,10 +113,11 @@ public class DatabaseURL {
 	
 	
 	/**
-	 * @return the originalURL
+	 * Get a slightly modified version of the original URL - if the original included 'localhost' this resolves it to the local hostname.
+	 * @return the new url
 	 */
-	public String getOriginalURL() {
-		return originalURL;
+	public String getNewURL() {
+		return newURL;
 	}
 
 	/**
@@ -152,8 +166,16 @@ public class DatabaseURL {
 		return schemaManager;
 	}
 
+	/**
+	 * @return the originalURL
+	 */
+	public String getOriginalURL() {
+		return originalURL;
+	}
+
 	public String toString(){
 		String output = "Original URL: " + originalURL;
+		output += "\nNew URL: " + newURL;
 		output += "\nHostname: " + hostname;
 		output += "\nPort: " + port;
 		output += "\nDatabase Location: " + dbLocation;

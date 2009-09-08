@@ -533,7 +533,6 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void CreateMultipleReplicas(){
-		System.out.println("CreateMultipleReplicas");
 		try{
 
 			sa.execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");

@@ -7,7 +7,9 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 
@@ -86,8 +88,6 @@ public class DatabaseInstanceLocator extends RMIServer {
 			stub = (DatabaseInstanceRemote) UnicastRemoteObject.exportObject(databaseInstanceRemote, 0);
 		} catch (RemoteException e) {
 			e.printStackTrace();
-		} catch (Exception e){
-			System.err.println("#############################################");
 		}
 
 		try {
@@ -122,5 +122,39 @@ public class DatabaseInstanceLocator extends RMIServer {
 		super.removeRegistryObject(objectName);
 		
 		databaseInstances.remove(objectName);
+	}
+
+
+	/**
+	 * @param replicaLocations
+	 * @return
+	 */
+	public Set<DatabaseInstanceRemote> getInstances(Set<String> replicaLocations) {
+		Set<DatabaseInstanceRemote> dirs = new HashSet<DatabaseInstanceRemote>();
+		
+		for (String replicaLocation: replicaLocations){			
+			try {
+				DatabaseInstanceRemote dir = lookupDatabaseInstance(replicaLocation);
+				dirs.add(dir);
+			} catch (SQLException e) {
+				String[] s = null;
+				try {
+					s = registry.list();
+				} catch (AccessException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				} catch (RemoteException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				
+				for (String ss: s){
+					System.out.println("In list: " + ss);
+				}
+				e.printStackTrace();
+			}
+		}
+		
+		return dirs;
 	}
 }

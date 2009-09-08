@@ -29,6 +29,7 @@ import org.h2.constraint.Constraint;
 import org.h2.h2o.comms.DataManagerLocator;
 import org.h2.h2o.comms.DatabaseInstance;
 import org.h2.h2o.comms.DatabaseInstanceLocator;
+import org.h2.h2o.comms.DatabaseInstanceRemote;
 import org.h2.h2o.comms.DatabaseURL;
 import org.h2.h2o.comms.DataManagerRemote;
 import org.h2.h2o.comms.RMIServer;
@@ -766,7 +767,7 @@ public class Database implements DataHandler {
 			/*
 			 * Add this database instance to the RMI registry.
 			 */
-			databaseInstance = new DatabaseInstance(this.originalURL);
+			databaseInstance = new DatabaseInstance(DatabaseURL.parseURL(this.originalURL).getNewURL()); //original URL may contain 'localhost'.
 			databaseInstanceLocator.registerDatabaseInstance(databaseInstance);
 		}
 	}
@@ -2644,5 +2645,14 @@ public class Database implements DataHandler {
 	public void removeDataManager(String tableName) {
 		dataManagerLocator.removeRegistryObject(tableName);
 
+	}
+
+	/**
+	 * @param replicaLocations
+	 * @return
+	 */
+	public Set<DatabaseInstanceRemote> getDatabaseInstances(
+			Set<String> replicaLocations) {
+		return databaseInstanceLocator.getInstances(replicaLocations);
 	}
 }

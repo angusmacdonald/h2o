@@ -1,7 +1,11 @@
 package org.h2.h2o.comms;
 
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Set;
+
+import org.h2.engine.Database;
+import org.h2.engine.Session;
 
 /**
  * 
@@ -21,21 +25,32 @@ public class QueryProxy implements Serializable{
 	
 	private String tableName;
 	
-	private Set<DatabaseInstanceRemote> replicaLocations;
+	private Set<String> replicaLocations;
 	
 
 	/**
 	 * @param lockGranted
 	 * @param tableName
-	 * @param replicaLocations
+	 * @param replicaStrings
 	 * @param basicQuery
 	 */
 	public QueryProxy(LockType lockGranted, String tableName,
-			Set<DatabaseInstanceRemote> replicaLocations) {
+			Set<String> replicaStrings) {
 		super();
 		this.lockGranted = lockGranted;
 		this.tableName = tableName;
-		this.replicaLocations = replicaLocations;
+		this.replicaLocations = replicaStrings;
+	}
+
+
+	/**
+	 * Get the locations of each of the remote replicas for the given table.
+	 * @return
+	 */
+	public Set<DatabaseInstanceRemote> getReplicaLocations(Database db) {
+
+		return db.getDatabaseInstances(replicaLocations);
+		
 	}
 	
 	/*

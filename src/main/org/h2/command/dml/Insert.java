@@ -6,19 +6,22 @@
  */
 package org.h2.command.dml;
 
+import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.Set;
 
 import org.h2.command.Command;
 import org.h2.command.Prepared;
 import org.h2.constant.ErrorCode;
 import org.h2.engine.Constants;
-import org.h2.engine.DataManager;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
 import org.h2.expression.Parameter;
 import org.h2.h2o.comms.DataManagerRemote;
+import org.h2.h2o.comms.DatabaseInstanceRemote;
+import org.h2.h2o.comms.QueryProxy;
 import org.h2.log.UndoLogRecord;
 import org.h2.message.Message;
 import org.h2.result.LocalResult;
@@ -32,7 +35,7 @@ import org.h2.value.Value;
  * This class represents the statement
  * INSERT
  */
-public class Insert extends Prepared {
+public class Insert extends Prepared{
 
 	private Table table;
 	private Column[] columns;
@@ -78,16 +81,28 @@ public class Insert extends Prepared {
 
 			String fullTableName = table.getSchema().getName() + "." + table.getName();
 			DataManagerRemote dm = session.getDatabase().getDataManager(fullTableName);
+
+			QueryProxy qp = null;
+
 			try {
 				if (dm == null){
 					System.err.println("Data manager proxy was null when requesting table: " + fullTableName);
 					throw new SQLException("Data manager not found for table: " + fullTableName);
 				} else {
-					dm.requestLock("pretty please");
+					qp = dm.requestLock(QueryProxy.LockType.WRITE);
 				}
 			} catch (RemoteException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
+			}
+			
+			Set<DatabaseInstanceRemote> remoteReplicaLocations = qp.getReplicaLocations(session.getDatabase());
+			
+			for (DatabaseInstanceRemote remoteReplica: remoteReplicaLocations){
+				try {
+					remoteReplica.executeUpdate(sqlStatement);
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 

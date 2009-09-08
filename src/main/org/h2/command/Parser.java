@@ -55,7 +55,6 @@ import org.h2.command.ddl.GrantRevoke;
 import org.h2.command.ddl.PrepareProcedure;
 import org.h2.command.ddl.SetComment;
 import org.h2.command.ddl.TruncateTable;
-import org.h2.command.dm.NewReplica;
 import org.h2.command.dml.AlterSequence;
 import org.h2.command.dml.AlterTableSet;
 import org.h2.command.dml.BackupCommand;
@@ -119,7 +118,6 @@ import org.h2.expression.Variable;
 import org.h2.expression.Wildcard;
 import org.h2.index.Index;
 import org.h2.message.Message;
-import org.h2.result.LocalResult;
 import org.h2.result.SortOrder;
 import org.h2.schema.Schema;
 import org.h2.schema.Sequence;
@@ -127,7 +125,6 @@ import org.h2.table.Column;
 import org.h2.table.FunctionTable;
 import org.h2.table.IndexColumn;
 import org.h2.table.RangeTable;
-import org.h2.table.ReplicaSet;
 import org.h2.table.Table;
 import org.h2.table.TableData;
 import org.h2.table.TableFilter;
@@ -890,6 +887,9 @@ public class Parser {
 		currentPrepared = command;
 		read("INTO");
 		Table table = readTableOrView();
+		
+		
+		
 		command.setTable(table);
 		if (readIf("(")) {
 			if (isToken("SELECT") || isToken("FROM")) {
@@ -3569,12 +3569,7 @@ public class Parser {
 
 
 	private Prepared parseNew() throws SQLException {
-		boolean force = readIf("FORCE");
-		if (readIf("REPLICA")) {
-
-			return parseNewReplica();
-		}
-		
+			
 		return null;
 	}
 	
@@ -4824,38 +4819,6 @@ public class Parser {
 			command.setOriginalLocation(whereDataWillBeTakenFrom);
 			command.setReplicationLocation(whereReplicaWillBeCreated);
 		}
-
-		return command;
-	}
-
-	private NewReplica parseNewReplica() throws SQLException {
-		
-		
-		Table table = readTableOrView();
-		
-		Expression[] expr = null;
-		ObjectArray values = null;
-			do {
-				values = new ObjectArray();
-				read("(");
-				if (!readIf(")")) {
-					do {
-						if (readIf("DEFAULT")) {
-							values.add(null);
-						} else {
-							values.add(readExpression());
-						}
-					} while (readIfMore());
-				}
-				
-				expr = new Expression[values.size()];
-				values.toArray(expr);
-			} while (readIf(","));
-			
-			if (expr == null || expr.length < 4){
-				throw new SQLException("Incorrect format for new replica notification.");
-			}
-			NewReplica command = new NewReplica(session, table.getSchema(), table.getName(), expr);	
 
 		return command;
 	}

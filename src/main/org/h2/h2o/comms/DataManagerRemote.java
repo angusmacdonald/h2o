@@ -11,7 +11,7 @@ import java.sql.SQLException;
  */
 public interface DataManagerRemote extends H2ORemote {
 
-	public QueryProxy requestLock(String message) throws RemoteException;
+	public QueryProxy requestLock(QueryProxy.LockType lockType) throws RemoteException;
 
 	/**
 	 * Inform the data manager that a new replica has been created for the given table.
@@ -24,10 +24,11 @@ public interface DataManagerRemote extends H2ORemote {
 	 * @param localMachinePort		Port the server is running on.
 	 * @param connection_type		The type of connection (e.g. TCP, FTP).
 	 * @return true if this replica wasn't already in the data manager, false otherwise.
+	 * @param isSM 					True if the database invoking the method is the schema manager.
 	 * @throws SQLException 
 	 */
 	public boolean addReplicaInformation(long modification_id, String databaseLocationOnDisk,
 			String string, String hostname, int port, String connectionType,
-			int tableSet) throws RemoteException;
+			int tableSet, boolean isSM) throws RemoteException;
 
 }

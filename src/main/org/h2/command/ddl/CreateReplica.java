@@ -376,7 +376,7 @@ public class CreateReplica extends SchemaCommand {
 			DataManagerRemote dm = db.getDataManager(getSchema().getName() + "." + tableName);
 			try {
 				dm.addReplicaInformation(table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
-						db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType(), tableSet);
+						db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType(), tableSet, db.isSM());
 			} catch (RemoteException e) {
 				System.err.println("Error informing data manager of update.");
 				e.printStackTrace();

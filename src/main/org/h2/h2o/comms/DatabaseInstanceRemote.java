@@ -11,6 +11,6 @@ import org.h2.command.Prepared;
  */
 public interface DatabaseInstanceRemote extends H2ORemote  {
 
-	public int executeUpdate(Prepared query) throws RemoteException;
+	public int executeUpdate(String query) throws RemoteException;
 
 }
