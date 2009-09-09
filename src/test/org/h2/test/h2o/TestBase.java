@@ -29,7 +29,6 @@ public class TestBase {
 	 */
 	@Before
 	public void setUp() throws Exception {
-		
 		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
 		SchemaManager.USERNAME = "sa";
 		SchemaManager.PASSWORD = "sa";
@@ -68,7 +67,7 @@ public class TestBase {
 			
 		} catch (Exception e){
 			e.printStackTrace();
-			fail("Connections aren't bein closed correctly.");
+			fail("Connections aren't being closed correctly.");
 		}
 	}
 	

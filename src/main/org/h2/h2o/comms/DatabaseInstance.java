@@ -2,8 +2,6 @@ package org.h2.h2o.comms;
 
 import java.rmi.RemoteException;
 
-import org.h2.command.Prepared;
-
 /**
  * Proxy class exposed via RMI, allowing semi-parsed queries to be sent to remote replicas for execution.
  *
