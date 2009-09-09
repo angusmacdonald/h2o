@@ -11,7 +11,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+
 import org.h2.command.Command;
 import org.h2.command.CommandInterface;
 import org.h2.command.Parser;
@@ -70,11 +73,11 @@ public class Session extends SessionWithState {
     private Value lastIdentity = ValueLong.get(0);
     private int firstUncommittedLog = LogSystem.LOG_WRITTEN;
     private int firstUncommittedPos = LogSystem.LOG_WRITTEN;
-    private HashMap savepoints;
+    private HashMap<String, Integer> savepoints;
     private Exception stackTrace = new Exception();
-    private HashMap localTempTables;
-    private HashMap localTempTableIndexes;
-    private HashMap localTempTableConstraints;
+    private Map<String, Table> localTempTables;
+    private Map<String, Index> localTempTableIndexes;
+    private Map<String, Constraint> localTempTableConstraints;
     private int throttle;
     private long lastThrottle;
     private Command currentCommand;
@@ -82,9 +85,9 @@ public class Session extends SessionWithState {
     private String currentSchemaName;
     private String[] schemaSearchPath;
     private String traceModuleName;
-    private HashMap unlinkMap;
+    private Map<String, ValueLob> unlinkMap;
     private int systemIdentifier;
-    private HashMap procedures;
+    private Map<String, Procedure> procedures;
     private boolean undoLogEnabled = true;
     private boolean autoCommitAtTransactionEnd;
     private String currentTransactionName;
@@ -92,8 +95,8 @@ public class Session extends SessionWithState {
     private boolean closed;
     private long sessionStart = System.currentTimeMillis();
     private long currentCommandStart;
-    private HashMap variables;
-    private HashSet temporaryResults;
+    private Map<String, Value> variables;
+    private Set<LocalResult> temporaryResults;
     private int queryTimeout = SysProperties.getMaxQueryTimeout();
     private int lastUncommittedDelete;
     private boolean commitOrRollbackDisabled;
@@ -120,7 +123,7 @@ public class Session extends SessionWithState {
 
     private void initVariables() {
         if (variables == null) {
-            variables = new HashMap();
+            variables = new HashMap<String, Value>();
         }
     }
 
@@ -160,7 +163,7 @@ public class Session extends SessionWithState {
      */
     public Value getVariable(String name) {
         initVariables();
-        Value v = (Value) variables.get(name);
+        Value v = variables.get(name);
         return v == null ? ValueNull.INSTANCE : v;
     }
 
@@ -207,7 +210,7 @@ public class Session extends SessionWithState {
      */
     public void addLocalTempTable(Table table) throws SQLException {
         if (localTempTables == null) {
-            localTempTables = new HashMap();
+            localTempTables = new HashMap<String, Table>();
         }
         if (localTempTables.get(table.getName()) != null) {
             throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, table.getSQL());
@@ -241,9 +244,9 @@ public class Session extends SessionWithState {
         return (Index) localTempTableIndexes.get(name);
     }
 
-    public HashMap getLocalTempTableIndexes() {
+    public Map<String, Index> getLocalTempTableIndexes() {
         if (localTempTableIndexes == null) {
-            return new HashMap();
+            return new HashMap<String, Index>();
         }
         return localTempTableIndexes;
     }
@@ -256,7 +259,7 @@ public class Session extends SessionWithState {
      */
     public void addLocalTempTableIndex(Index index) throws SQLException {
         if (localTempTableIndexes == null) {
-            localTempTableIndexes = new HashMap();
+            localTempTableIndexes = new HashMap<String, Index>();
         }
         if (localTempTableIndexes.get(index.getName()) != null) {
             throw Message.getSQLException(ErrorCode.INDEX_ALREADY_EXISTS_1, index.getSQL());
@@ -296,9 +299,9 @@ public class Session extends SessionWithState {
      *
      * @return the map of constraints, or null
      */
-    public HashMap getLocalTempTableConstraints() {
+    public Map<String, Constraint> getLocalTempTableConstraints() {
         if (localTempTableConstraints == null) {
-            return new HashMap();
+            return new HashMap<String, Constraint>();
         }
         return localTempTableConstraints;
     }
@@ -311,7 +314,7 @@ public class Session extends SessionWithState {
      */
     public void addLocalTempTableConstraint(Constraint constraint) throws SQLException {
         if (localTempTableConstraints == null) {
-            localTempTableConstraints = new HashMap();
+            localTempTableConstraints = new HashMap<String, Constraint>();
         }
         String name = constraint.getName();
         if (localTempTableConstraints.get(name) != null) {
@@ -389,7 +392,7 @@ public class Session extends SessionWithState {
      * @return the prepared statement
      */
     public Prepared prepare(String sql, boolean rightsChecked) throws SQLException {
-        Parser parser = new Parser(this);
+        Parser parser = new Parser(this, false);
         parser.setRightsChecked(rightsChecked);
         return parser.prepare(sql);
     }
@@ -405,7 +408,7 @@ public class Session extends SessionWithState {
         if (closed) {
             throw Message.getSQLException(ErrorCode.CONNECTION_BROKEN);
         }
-        Parser parser = new Parser(this);
+        Parser parser = new Parser(this, false);
         return parser.prepareCommand(sql);
     }
 
@@ -447,7 +450,7 @@ public class Session extends SessionWithState {
         }
         if (undoLog.size() > 0) {
             if (database.isMultiVersion()) {
-                ArrayList rows = new ArrayList();
+                ArrayList<Row> rows = new ArrayList<Row>();
                 synchronized (database) {
                     while (undoLog.size() > 0) {
                         UndoLogRecord entry = undoLog.getLast();
@@ -476,7 +479,7 @@ public class Session extends SessionWithState {
             // need to flush the log file, because we can't unlink lobs if the
             // commit record is not written
             logSystem.flush();
-            Iterator it = unlinkMap.values().iterator();
+            Iterator<ValueLob> it = unlinkMap.values().iterator();
             while (it.hasNext()) {
                 Value v = (Value) it.next();
                 v.unlink();
@@ -734,7 +737,7 @@ public class Session extends SessionWithState {
      */
     public void addSavepoint(String name) {
         if (savepoints == null) {
-            savepoints = new HashMap();
+            savepoints = new HashMap<String, Integer>();
         }
         savepoints.put(name, ObjectUtils.getInteger(getLogId()));
     }
@@ -919,7 +922,7 @@ public class Session extends SessionWithState {
             Message.throwInternalError();
         }
         if (unlinkMap == null) {
-            unlinkMap = new HashMap();
+            unlinkMap = new HashMap<String, ValueLob>();
         }
         unlinkMap.put(v.toString(), v);
     }
@@ -957,7 +960,7 @@ public class Session extends SessionWithState {
      */
     public void addProcedure(Procedure procedure) {
         if (procedures == null) {
-            procedures = new HashMap();
+            procedures = new HashMap<String, Procedure>();
         }
         procedures.put(procedure.getName(), procedure);
     }
@@ -1062,7 +1065,7 @@ public class Session extends SessionWithState {
             return;
         }
         if (temporaryResults == null) {
-            temporaryResults = new HashSet();
+            temporaryResults = new HashSet<LocalResult>();
         }
         if (temporaryResults.size() < 100) {
             // reference at most 100 result sets to avoid memory problems
@@ -1076,7 +1079,7 @@ public class Session extends SessionWithState {
      */
     public void closeTemporaryResults() {
         if (temporaryResults != null) {
-            for (Iterator it = temporaryResults.iterator(); it.hasNext();) {
+            for (Iterator<LocalResult> it = temporaryResults.iterator(); it.hasNext();) {
                 LocalResult result = (LocalResult) it.next();
                 result.close();
             }

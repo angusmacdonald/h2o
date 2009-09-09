@@ -113,14 +113,14 @@ public class SchemaManager {
 		if (singleton == null){
 			singleton = new SchemaManager(session);
 		} else {
-			singleton.queryParser = new Parser(session);
+			singleton.queryParser = new Parser(session, true);
 		}
 
 		return singleton;
 	}
 
 	private SchemaManager(Session session) {
-		queryParser = new Parser(session);
+		queryParser = new Parser(session, true);
 
 		cacheConnectionID = -1;
 	}

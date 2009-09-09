@@ -310,7 +310,7 @@ public class FullTextLucene extends FullText {
                     int idx = q.indexOf(" WHERE ");
                     JdbcConnection c = (JdbcConnection) conn;
                     Session session = (Session) c.getSession();
-                    Parser p = new Parser(session);
+                    Parser p = new Parser(session, true);
                     String tab = q.substring(0, idx);
                     ExpressionColumn expr = (ExpressionColumn) p.parseExpression(tab);
                     String schemaName = expr.getOriginalTableAliasName();
@@ -398,7 +398,7 @@ public class FullTextLucene extends FullText {
             if (keyList.size() == 0) {
                 throw new SQLException("No primary key for table " + tableName);
             }
-            ArrayList indexList = new ArrayList();
+            ArrayList indexList = new ArrayList<String>();
             PreparedStatement prep = conn.prepareStatement(
                     "SELECT COLUMNS FROM " + SCHEMA
                     + ".INDEXES WHERE SCHEMA=? AND TABLE=?");

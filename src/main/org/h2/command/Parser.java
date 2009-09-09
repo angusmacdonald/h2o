@@ -189,10 +189,23 @@ public class Parser {
 	private boolean rightsChecked;
 	private boolean recompileAlways;
 	private ObjectArray indexedParameterList;
+	
+	/**
+	 * True if this query has been sent internally through the RMI interface, false if it has come from
+	 * an external JBDC connection.
+	 */
+	private boolean internalQuery;
 
-	public Parser(Session session) {
+	/**
+	 * 
+	 * @param session The current session.
+	 * @param internalQuery	True if this query has been sent internally through the RMI interface, false if it has come from
+	 * an external JBDC connection.
+	 */
+	public Parser(Session session, boolean internalQuery) {
 		database = session.getDatabase();
 		this.session = session;
+		this.internalQuery = internalQuery;
 	}
 
 	/**
@@ -4361,7 +4374,7 @@ public class Parser {
 		 */
 		String dbname = SchemaManager.getInstance(session).getDataManagerLocation(tableName, thisSchemaName);
 
-		Parser queryParser = new Parser(session);
+		Parser queryParser = new Parser(session, true);
 
 		String sql = "CREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + dbname + "', '" + SchemaManager.USERNAME + "', '" + SchemaManager.PASSWORD + "', '" + tableName + "');";
 

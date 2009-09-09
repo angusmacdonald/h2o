@@ -2544,7 +2544,7 @@ public class Database implements DataHandler {
 				}
 
 				if (!sql.equals("")){
-					Parser queryParser = new Parser(systemSession);;
+					Parser queryParser = new Parser(systemSession, true);
 					Command sqlQuery = queryParser.prepareCommand(sql);
 					sqlQuery.executeUpdate();
 				}

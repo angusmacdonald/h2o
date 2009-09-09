@@ -99,6 +99,10 @@ public class Insert extends Prepared{
 			
 			for (DatabaseInstanceRemote remoteReplica: remoteReplicaLocations){
 				try {
+					if (sqlStatement == null){
+						System.out.println("Why?");
+					}
+					
 					remoteReplica.executeUpdate(sqlStatement);
 				} catch (RemoteException e) {
 					e.printStackTrace();

@@ -24,6 +24,7 @@ import org.h2.engine.Database;
 import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
+import org.h2.h2o.comms.DataManagerRemote;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
 import org.h2.schema.Sequence;
@@ -136,18 +137,24 @@ public class CreateTable extends SchemaCommand {
 
 		if (Constants.IS_H2O && !db.isSM() && !db.isManagementDB() && !tableName.startsWith("H2O_") && !isStartup()){
 
-			parser = new Parser(session);
-			boolean throwException = false;
-			try { //XXX this is a hack. shouldn't rely on exception being thrown.
+			//parser = new Parser(session);
+//			boolean throwException = false;
+//			try { //XXX this is a hack. shouldn't rely on exception being thrown.
+//
+//				//parser.findViaSchemaManager(tableName, getSchema().getName());
+//
+//				throwException = true; //code shouldn't reach this point.
+//			} catch (SQLException sqlE){
+//				//not found, meaning this create table command can be executed.
+//			}
 
-				parser.findViaSchemaManager(tableName, getSchema().getName());
-
-				throwException = true; //code shouldn't reach this point.
-			} catch (SQLException sqlE){
-				//not found, meaning this create table command can be executed.
-			}
-
-			if (throwException){
+//			if (throwException){
+//				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
+//			}
+			
+			DataManagerRemote dm = db.getDataManager(getSchema().getName() + "." + tableName);
+			
+			if (dm != null){
 				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
 			}
 		}

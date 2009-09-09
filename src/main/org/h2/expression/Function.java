@@ -1130,7 +1130,7 @@ public class Function extends Expression implements FunctionCall {
     private Sequence getSequence(Session session, Value v0, Value v1) throws SQLException {
         String schemaName, sequenceName;
         if (v1 == null) {
-            Parser p = new Parser(session);
+            Parser p = new Parser(session, true);
             String sql = v0.getString();
             Expression expr = p.parseExpression(sql);
             if (expr instanceof ExpressionColumn) {

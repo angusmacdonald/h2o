@@ -390,7 +390,7 @@ public class FullText {
         ArrayList data = new ArrayList();
         JdbcConnection c = (JdbcConnection) conn;
         Session session = (Session) c.getSession();
-        Parser p = new Parser(session);
+        Parser p = new Parser(session, true);
         Expression expr = p.parseExpression(key);
         addColumnData(columns, data, expr);
         Object[] col = new Object[columns.size()];

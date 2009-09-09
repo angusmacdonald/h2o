@@ -566,7 +566,7 @@ public class Column {
         if (checkConstraint == null) {
             return null;
         }
-        Parser parser = new Parser(session);
+        Parser parser = new Parser(session, true);
         String sql;
         synchronized (this) {
             String oldName = name;

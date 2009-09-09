@@ -128,7 +128,7 @@ public class DataManager implements DataManagerRemote {
 
 		this.cachedTableID = -1;
 		this.cachedReplicaLocation = null;
-		this.queryParser = new Parser(session);
+		this.queryParser = new Parser(session, true);
 
 		this.replicaLocations = new HashSet<String>();
 
@@ -171,7 +171,7 @@ public class DataManager implements DataManagerRemote {
 		"FOREIGN KEY (table_id) REFERENCES " + TABLES + " (table_id) ON DELETE CASCADE , " +
 		" FOREIGN KEY (connection_id) REFERENCES " + CONNECTIONS + " (connection_id));\n";
 
-		Parser parser = new Parser(session);
+		Parser parser = new Parser(session, true);
 
 		Command query = parser.prepareCommand(sql);
 		return query.executeUpdate();
