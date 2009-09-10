@@ -330,21 +330,19 @@ public class SchemaManagerTests {
 
 		try{
 			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
+			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
 
 			Statement sa = ca.createStatement();
-
+			Statement sb = cb.createStatement();
 
 			sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 			sa.execute("INSERT INTO TEST VALUES(1, 'Hello');");
 			sa.execute("INSERT INTO TEST VALUES(2, 'World');");
 
-
-			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
-			Statement sb = cb.createStatement();
-
 			try{
 				sb.execute("SELECT * FROM TEST;");
 			} catch (SQLException e){
+				e.printStackTrace();
 				fail("The TEST table was not found.");
 			}
 			ResultSet rs = sb.getResultSet();		

@@ -13,7 +13,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -32,7 +31,6 @@ import org.h2.h2o.comms.DatabaseInstanceLocator;
 import org.h2.h2o.comms.DatabaseInstanceRemote;
 import org.h2.h2o.comms.DatabaseURL;
 import org.h2.h2o.comms.DataManagerRemote;
-import org.h2.h2o.comms.RMIServer;
 import org.h2.index.Cursor;
 import org.h2.index.Index;
 import org.h2.index.IndexType;
@@ -151,19 +149,19 @@ public class Database implements DataHandler {
 	private final String cipher;
 	private final byte[] filePasswordHash;
 
-	private final HashMap roles = new HashMap();
-	private final HashMap users = new HashMap();
-	private final HashMap settings = new HashMap();
-	private final HashMap schemas = new HashMap();
-	private final HashMap rights = new HashMap();
-	private final HashMap functionAliases = new HashMap();
-	private final HashMap userDataTypes = new HashMap();
-	private final HashMap aggregates = new HashMap();
-	private final HashMap comments = new HashMap();
+	private final HashMap<String, DbObject> roles = new HashMap<String, DbObject>();
+	private final HashMap<String, DbObject> users = new HashMap<String, DbObject>();
+	private final HashMap<String, DbObject> settings = new HashMap<String, DbObject>();
+	private final HashMap<String, DbObject> schemas = new HashMap<String, DbObject>();
+	private final HashMap<String, DbObject> rights = new HashMap<String, DbObject>();
+	private final HashMap<String, DbObject> functionAliases = new HashMap<String, DbObject>();
+	private final HashMap<String, DbObject> userDataTypes = new HashMap<String, DbObject>();
+	private final HashMap<String, DbObject> aggregates = new HashMap<String, DbObject>();
+	private final HashMap<String, DbObject> comments = new HashMap<String, DbObject>();
 	private IntHashMap tableMap = new IntHashMap();
-	private final HashMap databaseObjects = new HashMap();
+	private final HashMap<Integer, DbObject> databaseObjects = new HashMap<Integer, DbObject>();
 
-	private final Set userSessions = Collections.synchronizedSet(new HashSet());
+	private final Set<Session> userSessions = Collections.synchronizedSet(new HashSet<Session>());
 	private Session exclusiveSession;
 	private final BitField objectIds = new BitField();
 	private final Object lobSyncObject = new Object();
@@ -663,7 +661,7 @@ public class Database implements DataHandler {
 				} catch (Exception e) {
 					if (recovery) {
 						traceSystem.getTrace(Trace.DATABASE).error("opening index", e);
-						ArrayList list = new ArrayList(storageMap.values());
+						ArrayList<DbObject> list = new ArrayList<DbObject>(storageMap.values());
 						for (int i = 0; i < list.size(); i++) {
 							Storage s = (Storage) list.get(i);
 							if (s.getDiskFile() == fileIndex) {
@@ -767,7 +765,7 @@ public class Database implements DataHandler {
 			/*
 			 * Add this database instance to the RMI registry.
 			 */
-			databaseInstance = new DatabaseInstance(DatabaseURL.parseURL(this.originalURL).getNewURL()); //original URL may contain 'localhost'.
+			databaseInstance = new DatabaseInstance(DatabaseURL.parseURL(this.originalURL).getNewURL(), systemSession); //original URL may contain 'localhost'.
 			databaseInstanceLocator.registerDatabaseInstance(databaseInstance);
 		}
 	}
@@ -963,7 +961,7 @@ public class Database implements DataHandler {
 		}
 	}
 
-	private HashMap getMap(int type) {
+	private HashMap<String, DbObject> getMap(int type) {
 		switch (type) {
 		case DbObject.USER:
 			return users;
@@ -1017,7 +1015,7 @@ public class Database implements DataHandler {
 		if (id > 0 && !starting) {
 			checkWritingAllowed();
 		}
-		HashMap map = getMap(obj.getType());
+		HashMap<String, DbObject> map = getMap(obj.getType());
 		if (obj.getType() == DbObject.USER) {
 			User user = (User) obj;
 			if (user.getAdmin() && systemUser.getName().equals(Constants.DBA_NAME)) {
@@ -1444,7 +1442,7 @@ public class Database implements DataHandler {
 	 */
 	public ObjectArray getAllSchemaObjects(int type) {
 		ObjectArray list = new ObjectArray();
-		for (Iterator it = schemas.values().iterator(); it.hasNext();) {
+		for (Iterator<DbObject> it = schemas.values().iterator(); it.hasNext();) {
 			Schema schema = (Schema) it.next();
 			list.addAll(schema.getAll(type));
 		}
@@ -1459,7 +1457,7 @@ public class Database implements DataHandler {
 	 */
 	public Set<ReplicaSet> getAllTables() {
 		Set<ReplicaSet> list = new HashSet<ReplicaSet>();
-		for (Iterator it = schemas.values().iterator(); it.hasNext();) {
+		for (Iterator<DbObject> it = schemas.values().iterator(); it.hasNext();) {
 			Schema schema = (Schema) it.next();
 			list.addAll(schema.getTablesAndViews().values());
 		}
@@ -1548,7 +1546,7 @@ public class Database implements DataHandler {
 	 * @return the list of sessions
 	 */
 	public Session[] getSessions(boolean includingSystemSession) {
-		ArrayList list = new ArrayList(userSessions);
+		ArrayList<Session> list = new ArrayList<Session>(userSessions);
 		if (includingSystemSession && systemSession != null) {
 			list.add(systemSession);
 		}
@@ -1608,7 +1606,7 @@ public class Database implements DataHandler {
 	public synchronized void renameDatabaseObject(Session session, DbObject obj, String newName) throws SQLException {
 		checkWritingAllowed();
 		int type = obj.getType();
-		HashMap map = getMap(type);
+		HashMap<String, DbObject> map = getMap(type);
 		if (SysProperties.CHECK) {
 			if (!map.containsKey(obj.getName())) {
 				Message.throwInternalError("not found: " + obj.getName());
@@ -1716,7 +1714,7 @@ public class Database implements DataHandler {
 		checkWritingAllowed();
 		String objName = obj.getName();
 		int type = obj.getType();
-		HashMap map = getMap(type);
+		HashMap<String, DbObject> map = getMap(type);
 		if (SysProperties.CHECK && !map.containsKey(objName)) {
 			Message.throwInternalError("not found: " + objName);
 		}
@@ -2470,7 +2468,7 @@ public class Database implements DataHandler {
 	 * @return the database object
 	 */
 	DbObject getDbObject(int id) {
-		return (DbObject) databaseObjects.get(ObjectUtils.getInteger(id));
+		return databaseObjects.get(ObjectUtils.getInteger(id));
 	}
 
 	/**

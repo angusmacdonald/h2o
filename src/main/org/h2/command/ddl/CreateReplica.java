@@ -264,7 +264,7 @@ public class CreateReplica extends SchemaCommand {
 				try {
 					session.setUndoLogEnabled(false);
 					Insert insert = null;
-					insert = new Insert(session);
+					insert = new Insert(session, true);
 					insert.setQuery(asQuery);
 					insert.setTable(table);
 					insert.prepare();
@@ -303,7 +303,7 @@ public class CreateReplica extends SchemaCommand {
 			 */
 
 			if (inserts.size() > 1){ //the first entry contains type info //XXX hack.
-				Insert command = new Insert(session);
+				Insert command = new Insert(session, true);
 
 				command.setTable(table);
 

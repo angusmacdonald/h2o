@@ -896,7 +896,7 @@ public class Parser {
 	}
 
 	private Insert parseInsert() throws SQLException {
-		Insert command = new Insert(session);
+		Insert command = new Insert(session, internalQuery);
 		currentPrepared = command;
 		read("INTO");
 		Table table = readTableOrView();

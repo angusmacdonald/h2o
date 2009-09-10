@@ -230,7 +230,7 @@ public class CreateTable extends SchemaCommand {
 				try {
 					session.setUndoLogEnabled(false);
 					Insert insert = null;
-					insert = new Insert(session);
+					insert = new Insert(session, true);
 					insert.setQuery(asQuery);
 					insert.setTable(table);
 					insert.prepare();

@@ -161,8 +161,8 @@ public class ReplicaTests extends TestBase{
 			sa.execute("INSERT INTO TEST VALUES(3, 'Quite');");
 			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
 
-			int[] pKey = {1, 2};
-			String[] secondCol = {"Hello", "World"};
+			int[] pKey = {1, 2, 3};
+			String[] secondCol = {"Hello", "World", "Quite"};
 
 			validateResults(pKey, secondCol, sb.getResultSet());
 
@@ -229,47 +229,47 @@ public class ReplicaTests extends TestBase{
 		}
 	}
 
-	/**
-	 * Tests that the SELECT PRIMARY command works - this is done by updating one copy but not the other, so that they can be told apart.
-	 */
-	@Test
-	public void SelectPrimaryTest(){
-
-		try{
-			sb.execute("CREATE REPLICA TEST");
-
-			if (sb.getUpdateCount() != 0){
-				fail("Expected update count to be '0'");
-			}
-
-			sa.execute("INSERT INTO TEST VALUES(3, 'Quite');");
-
-			/*
-			 * Check that the local copy has only two entries.
-			 */
-			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
-
-			int[] pKey = {1, 2};
-			String[] secondCol = {"Hello", "World"};
-
-			validateResults(pKey, secondCol, sb.getResultSet());
-
-			/*
-			 * Check that the primary copy has three entries.
-			 */
-			sb.execute("SELECT PRIMARY * FROM TEST ORDER BY ID;"); //Now query on first machine (which should have one extra row).
-
-			int[] pKey2 = {1, 2, 3};
-			String[] secondCol2 = {"Hello", "World", "Quite"};
-
-			validateResults(pKey2, secondCol2, sb.getResultSet());
-
-		} catch (SQLException sqle){
-			System.out.println("This trace matters:");
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
-		}
-	}
+//	/**
+//	 * Tests that the SELECT PRIMARY command works - this is done by updating one copy but not the other, so that they can be told apart.
+//	 */
+//	@Test
+//	public void SelectPrimaryTest(){
+//
+//		try{
+//			sb.execute("CREATE REPLICA TEST");
+//
+//			if (sb.getUpdateCount() != 0){
+//				fail("Expected update count to be '0'");
+//			}
+//
+//			sa.execute("INSERT INTO TEST VALUES(3, 'Quite');");
+//
+//			/*
+//			 * Check that the local copy has only two entries.
+//			 */
+//			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
+//
+//			int[] pKey = {1, 2};
+//			String[] secondCol = {"Hello", "World"};
+//
+//			validateResults(pKey, secondCol, sb.getResultSet());
+//
+//			/*
+//			 * Check that the primary copy has three entries.
+//			 */
+//			sb.execute("SELECT PRIMARY * FROM TEST ORDER BY ID;"); //Now query on first machine (which should have one extra row).
+//
+//			int[] pKey2 = {1, 2, 3};
+//			String[] secondCol2 = {"Hello", "World", "Quite"};
+//
+//			validateResults(pKey2, secondCol2, sb.getResultSet());
+//
+//		} catch (SQLException sqle){
+//			System.out.println("This trace matters:");
+//			sqle.printStackTrace();
+//			fail("SQLException thrown when it shouldn't have.");
+//		}
+//	}
 
 	/**
 	 * Tests the 'push replication' feature by attempting to initiate replication creation on database B from database A.
@@ -290,8 +290,8 @@ public class ReplicaTests extends TestBase{
 			 */
 			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
 
-			int[] pKey = {1, 2};
-			String[] secondCol = {"Hello", "World"};
+			int[] pKey = {1, 2, 3};
+			String[] secondCol = {"Hello", "World", "Quite"};
 
 			validateResults(pKey, secondCol, sb.getResultSet());
 

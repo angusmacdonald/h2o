@@ -6,7 +6,6 @@
  */
 package org.h2.command.dml;
 
-import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Set;
@@ -42,8 +41,18 @@ public class Insert extends Prepared{
 	private ObjectArray list = new ObjectArray();
 	private Query query;
 
-	public Insert(Session session) {
+	private boolean internalQuery;
+
+	/**
+	 * 
+	 * @param session The current session.
+	 * @param internalQuery	True if this query has been sent internally through the RMI interface, false if it has come from
+	 * an external JBDC connection.
+	 */
+	public Insert(Session session, boolean internalQuery) {
 		super(session);
+		
+		this.internalQuery = internalQuery;
 	}
 
 	public void setCommand(Command command) {
@@ -75,9 +84,16 @@ public class Insert extends Prepared{
 	}
 
 	public int update() throws SQLException {
-		int count;
+		int count = 0;
+		
+		session.getUser().checkRight(table, Right.INSERT);
 
-		if (Constants.IS_H2O && !table.getName().startsWith(Constants.H2O_SCHEMA)){
+		/*
+		 * START OF QUERY REDIRECT (QUERY PROPAGATED TO ALL REPLICAS).
+		 */
+		if (Constants.IS_H2O && !internalQuery && !table.getName().startsWith(Constants.H2O_SCHEMA) && !session.getDatabase().isManagementDB()){
+			//Get the data manager and send this query to each replica.
+
 
 			String fullTableName = table.getSchema().getName() + "." + table.getName();
 			DataManagerRemote dm = session.getDatabase().getDataManager(fullTableName);
@@ -93,24 +109,26 @@ public class Insert extends Prepared{
 				}
 			} catch (RemoteException e1) {
 				e1.printStackTrace();
+				throw new SQLException("Unable to contact data manager.");
 			}
-			
+
 			Set<DatabaseInstanceRemote> remoteReplicaLocations = qp.getReplicaLocations(session.getDatabase());
-			
+
 			for (DatabaseInstanceRemote remoteReplica: remoteReplicaLocations){
 				try {
-					if (sqlStatement == null){
-						System.out.println("Why?");
-					}
-					
-					remoteReplica.executeUpdate(sqlStatement);
+					count = remoteReplica.executeUpdate(sqlStatement);
 				} catch (RemoteException e) {
 					e.printStackTrace();
+					throw new SQLException("Unable to send INSERT update to all replicas.");
 				}
 			}
+			
+			return count;
 		}
+		/*
+		 *  END OF QUERY REDIRECT
+		 */
 
-		session.getUser().checkRight(table, Right.INSERT);
 		setCurrentRowNumber(0);
 		if (list.size() > 0) {
 			count = 0;

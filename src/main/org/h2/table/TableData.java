@@ -384,11 +384,13 @@ public class TableData extends Table implements RecordReader {
 
     private void doLock(Session session, int lockMode, boolean exclusive) throws SQLException {
         long max = System.currentTimeMillis() + session.getLockTimeout();
+       
         boolean checkDeadlock = false;
         while (true) {
             if (lockExclusive == session) {
                 return;
             }
+           
             if (exclusive) {
                 if (lockExclusive == null) {
                     if (lockShared.isEmpty()) {

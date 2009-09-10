@@ -183,7 +183,7 @@ public class DataManager implements DataManagerRemote {
 	 */
 	public boolean addReplicaInformation(long modificationID,
 			String databaseLocation, String tableType,
-			String localMachineAddress, int localMachinePort, String connectionType, int replicaSet, boolean isSM){
+			String localMachineAddress, int localMachinePort, String connectionType, int replicaSet, boolean isSM) throws RemoteException{
 
 		try {
 
@@ -201,6 +201,8 @@ public class DataManager implements DataManagerRemote {
 				
 				return (result == 1);
 			} else {
+				replicaLocations.add(createFullDatabaseLocation(databaseLocation, connectionType, localMachineAddress, localMachinePort + "", isSM));
+				
 				return false;
 			}
 		} catch (SQLException e) {
