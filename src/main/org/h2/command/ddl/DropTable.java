@@ -6,7 +6,9 @@
  */
 package org.h2.command.ddl;
 
+import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.Set;
 
 import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
@@ -15,8 +17,12 @@ import org.h2.engine.Database;
 import org.h2.engine.Right;
 import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
+import org.h2.h2o.comms.DataManagerRemote;
+import org.h2.h2o.comms.DatabaseInstanceRemote;
+import org.h2.h2o.comms.QueryProxy;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
+import org.h2.table.ReplicaSet;
 import org.h2.table.Table;
 
 /**
@@ -25,68 +31,87 @@ import org.h2.table.Table;
  */
 public class DropTable extends SchemaCommand {
 
-    private boolean ifExists;
-    private String tableName;
-    private Table table;
-    private DropTable next;
+	private boolean ifExists;
+	private String tableName;
+	private Table table = null;
+	ReplicaSet tables = null;
+	private DropTable next;
 
-    public DropTable(Session session, Schema schema) {
-        super(session, schema);
-    }
+	private boolean internalQuery;
 
-    /**
-     * Chain another drop table statement to this statement.
-     *
-     * @param drop the statement to add
-     */
-    public void addNextDropTable(DropTable drop) {
-        if (next == null) {
-            next = drop;
-        } else {
-            next.addNextDropTable(drop);
-        }
-    }
+	public DropTable(Session session, Schema schema, boolean internalQuery) {
+		super(session, schema);
 
-    public void setIfExists(boolean b) {
-        ifExists = b;
-        if (next != null) {
-            next.setIfExists(b);
-        }
-    }
+		this.internalQuery = internalQuery;
+	}
 
-    public void setTableName(String tableName) {
-        this.tableName = tableName;
-    }
+	/**
+	 * Chain another drop table statement to this statement.
+	 *
+	 * @param drop the statement to add
+	 */
+	public void addNextDropTable(DropTable drop) {
+		if (next == null) {
+			next = drop;
+		} else {
+			next.addNextDropTable(drop);
+		}
+	}
 
-    private void prepareDrop() throws SQLException {
-        table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
-        // TODO drop table: drops views as well (is this ok?)
-        if (table == null) {
-            if (!ifExists) {
-                throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
-            }
-        } else {
-            session.getUser().checkRight(table, Right.ALL);
-            if (!table.canDrop() || (Constants.IS_H2O && tableName.startsWith("H2O_"))) { //H2O - ensure schema tables aren't dropped.
-                throw Message.getSQLException(ErrorCode.CANNOT_DROP_TABLE_1, tableName);
-            }
-            table.lock(session, true, true);
-        }
-        if (next != null) {
-            next.prepareDrop();
-        }
-    }
+	public void setIfExists(boolean b) {
+		ifExists = b;
+		if (next != null) {
+			next.setIfExists(b);
+		}
+	}
 
-    private void executeDrop() throws SQLException {
-        // need to get the table again, because it may be dropped already
-        // meanwhile (dependent object, or same object)
-        table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
-        if (table != null) {
-            table.setModified();
-            Database db = session.getDatabase();
-            db.removeSchemaObject(session, table);
-            
-            
+	public void setTableName(String tableName) {
+		this.tableName = tableName;
+	}
+
+	private void prepareDrop() throws SQLException {
+		//table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
+
+
+		tables = getSchema().getTablesOrViews(session, tableName);
+
+		if (tables != null){
+			table = tables.getACopy();
+		}
+		//		DataManagerRemote dm = null;
+		//
+		//		if (Constants.IS_H2O){
+		//			dm = getSchema().getDatabase().getDataManager(getSchema().getName() + "." + tableName);
+		//		}
+
+		// TODO drop table: drops views as well (is this ok?)
+		if (table == null) {
+			//table = null;
+			if (!ifExists) {
+				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
+			}
+		} else {
+			session.getUser().checkRight(table, Right.ALL);
+			if (!table.canDrop() || (Constants.IS_H2O && tableName.startsWith("H2O_"))) { //H2O - ensure schema tables aren't dropped.
+				throw Message.getSQLException(ErrorCode.CANNOT_DROP_TABLE_1, tableName);
+			}
+			if (Constants.IS_H2O && !internalQuery){
+				table.lock(session, true, true); //lock isn't acquired here - the query is distributed to each replica first.
+			}
+		}
+		if (next != null) {
+			next.prepareDrop();
+		}
+	}
+
+	private void executeDrop() throws SQLException {
+		// need to get the table again, because it may be dropped already
+		// meanwhile (dependent object, or same object)
+		table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
+		if (table != null) {
+			Database db = session.getDatabase();
+			String fullTableName = getSchema().getName() + "." + tableName;
+
 			/*
 			 * #########################################################################
 			 * 
@@ -94,29 +119,74 @@ public class DropTable extends SchemaCommand {
 			 * 
 			 * #########################################################################
 			 */
-			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_")){
+			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_") && !internalQuery){
+
+
 				SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
+				DataManagerRemote dm = db.getDataManager(fullTableName);
+				QueryProxy qp = null;
+
 				try {
-				sm.removeTable(tableName, getSchema().getName());
-				
-				db.removeDataManager(getSchema().getName() + "." + tableName);
+					if (dm == null){
+						System.err.println("Data manager proxy was null when requesting table: " + fullTableName);
+						throw new SQLException("Data manager not found for table: " + fullTableName);
+					} else {
+						qp = dm.requestLock(QueryProxy.LockType.WRITE);
+					}
+				} catch (RemoteException e1) {
+					e1.printStackTrace();
+					throw new SQLException("Unable to contact data manager.");
+				}
+
+				Set<DatabaseInstanceRemote> remoteReplicaLocations = qp.getReplicaLocations(session.getDatabase());
+				int count = 0;
+				for (DatabaseInstanceRemote remoteReplica: remoteReplicaLocations){
+					try {
+						count = remoteReplica.executeUpdate(sqlStatement);
+					} catch (RemoteException e) {
+						e.printStackTrace();
+						throw new SQLException("Unable to send INSERT update to all replicas.");
+					}
+				}
+
+
+				try {
+					sm.removeTable(tableName, getSchema().getName());
+
+					db.removeDataManager(fullTableName, false);
 				} catch (SQLException e){
 					//TODO fix - this is thrown because the tableID is not found. This happens because drop table removes only local copies AND
 					// schema manager information.
 				}
+
+
+			} else {
+				table.setModified();
+
+				//db.removeSchemaObject(session, table);
+				Table[] tableArray = tables.getAllCopies().toArray(new Table[0]);
+				
+				for (Table t: tableArray){
+					db.removeSchemaObject(session, t);
+				}
+
+				if (Constants.IS_H2O){
+					db.removeDataManager(fullTableName, true);
+				}
+
 			}
 
-        }
-        if (next != null) {
-            next.executeDrop();
-        }
-    }
+		}
+		if (next != null) {
+			next.executeDrop();
+		}
+	}
 
-    public int update() throws SQLException {
-        session.commit(true);
-        prepareDrop();
-        executeDrop();
-        return 0;
-    }
+	public int update() throws SQLException {
+		session.commit(true);
+		prepareDrop();
+		executeDrop();
+		return 0;
+	}
 
 }

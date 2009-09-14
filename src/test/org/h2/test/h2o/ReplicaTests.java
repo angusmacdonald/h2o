@@ -8,7 +8,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.h2.h2o.comms.DatabaseURL;
 import org.junit.Test;
+
+import uk.ac.stand.dcs.nds.util.Diagnostic;
 
 /**
  * Various tests for replication in H2O. The 'CREATE REPLICA' function in particular.
@@ -24,7 +27,7 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void ScriptTest(){
-
+		
 		try{
 			sa.execute("SCRIPT TABLE TEST;");
 
@@ -213,7 +216,8 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void SelectPrimaryWhenLocal(){
-
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		
 		try{
 
 			sa.execute("SELECT PRIMARY * FROM TEST ORDER BY ID;");
@@ -276,6 +280,9 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void PushReplicationON(){
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		
+		
 		try{
 			sa.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:two'");
 
@@ -317,6 +324,9 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void PushReplicationONFROM(){
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		
+		
 		try{
 			Connection cc = DriverManager.getConnection("jdbc:h2:mem:three", "sa", "sa");
 			Statement sc = cc.createStatement();
@@ -360,7 +370,8 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void PushReplicationFROMtwoMachines(){
-
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+			
 		try{
 
 			sa.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:two' FROM 'jdbc:h2:mem:one'");
@@ -395,7 +406,8 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void PushReplicationFROMtwoMachinesAlt(){
-
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		
 		try{
 
 			sb.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:two' FROM 'jdbc:h2:mem:one'");

@@ -1,25 +1,21 @@
 package org.h2.h2o.comms;
 
 import java.rmi.AccessException;
-import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.ExportException;
-import java.rmi.server.UnicastRemoteObject;
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 
-import org.h2.engine.DataManager;
+import uk.ac.stand.dcs.nds.util.Diagnostic;
+import uk.ac.stand.dcs.nds.util.ErrorHandling;
 
 /**
  * Responsible for managing and providing connections to data managers and database instances, both local and remote.
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class RMIServer {
+public abstract class RMIServer {
 
 	/**
 	 * Default port for RMI registry - used in the case where the schema manager is an in-memory database (where it doesn't
@@ -70,7 +66,7 @@ public class RMIServer {
 			LocateRegistry.createRegistry(port);
 
 		} catch (ExportException e1) {
-			System.err.println("RMI registry is already running.");
+			Diagnostic.traceNoEvent(Diagnostic.FINAL, "RMI registry is already running.");
 		}catch (RemoteException e) {
 			e.printStackTrace();
 		}
@@ -137,11 +133,11 @@ public class RMIServer {
 			//UnicastRemoteObject.unexportObject(registry,true);
 
 		} catch (AccessException e) {
-			System.err.println("Didn't have permission to perform unbind operation on RMI registry.");
+			ErrorHandling.errorNoEvent(e, "Didn't have permission to perform unbind operation on RMI registry.");
 		} catch (RemoteException e) {
-			System.err.println("Lost contact with RMI registry when unbinding objects.");
+			ErrorHandling.errorNoEvent(e, "Lost contact with RMI registry when unbinding objects.");
 		} catch (NotBoundException e) {
-			System.err.println("Attempting to unbind all objects - failure due to one of the number being unbound.");
+			ErrorHandling.errorNoEvent(e, "Attempting to unbind all objects - failure due to one of the number being unbound.");
 		}
 
 	}
@@ -149,16 +145,19 @@ public class RMIServer {
 	/**
 	 * Unbind a given object from the registry.
 	 * @param objectName
+	 * @param removeLocalOnly 
 	 */
-	public void removeRegistryObject(String objectName) {
+	public void removeRegistryObject(String objectName, boolean removeLocalOnly) {
+		if (removeLocalOnly) return;
+		
 		try {
 			registry.unbind(objectName);
 		}  catch (AccessException e) {
-			System.err.println("Didn't have permission to perform unbind operation on RMI registry.");
+			ErrorHandling.errorNoEvent(e, "Didn't have permission to perform unbind operation on RMI registry.");
 		} catch (RemoteException e) {
-			System.err.println("Lost contact with RMI registry when unbinding manager of '" + objectName + "'.");
+			ErrorHandling.errorNoEvent(e, "Lost contact with RMI registry when unbinding manager of '" + objectName + "'.");
 		} catch (NotBoundException e) {
-			System.err.println("Attempting to unbind manager of '" + objectName + "' - failure due this manager not being bound.");
+			ErrorHandling.errorNoEvent(e, "Attempting to unbind manager of '" + objectName + "' - failure due this manager not being bound.");
 		}
 	}
 

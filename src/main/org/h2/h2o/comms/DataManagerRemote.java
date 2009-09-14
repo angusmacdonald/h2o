@@ -31,4 +31,20 @@ public interface DataManagerRemote extends H2ORemote {
 			String string, String hostname, int port, String connectionType,
 			int tableSet, boolean isSM) throws RemoteException;
 
+	/**
+	 * Removes a particular replica from the schema manager. 
+	 * @param dbLocation 
+	 * @param machineName 
+	 * @param connectionPort 
+	 * @param connectionType 
+	 * @param schemaName 
+	 * @throws SQLException 
+	 */
+	public int removeReplica(String dbLocation, String machineName, int connectionPort, String connectionType) throws RemoteException, SQLException;
+
+	/**
+	 * Remove all stored meta-data for the given data manager.
+	 * @throws SQLException 
+	 */
+	public int removeDataManager() throws RemoteException, SQLException;
 }

@@ -1,6 +1,12 @@
 package org.h2.test.h2o;
 
 import static org.junit.Assert.assertEquals;
+
+import java.rmi.AccessException;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -9,9 +15,13 @@ import java.sql.Statement;
 import static org.junit.Assert.fail;
 
 import org.h2.engine.Constants;
+import org.h2.engine.Engine;
 import org.h2.engine.SchemaManager;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
+
+import uk.ac.stand.dcs.nds.util.Diagnostic;
 
 /**
  * Base class for JUnit tests. Performs a basic setup of two in-memory databases which are used for the rest of testing.
@@ -24,11 +34,17 @@ public class TestBase {
 	Statement sa = null;
 	Statement sb = null;
 
+	@BeforeClass
+	public static void initialSetUp(){
+		Diagnostic.setLevel(Diagnostic.FULL);
+	}
+	
 	/**
 	 * @throws java.lang.Exception
 	 */
 	@Before
 	public void setUp() throws Exception {
+
 		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
 		SchemaManager.USERNAME = "sa";
 		SchemaManager.PASSWORD = "sa";
@@ -53,8 +69,6 @@ public class TestBase {
 	public void tearDown() {
 		try{ 
 			sa.execute("DROP TABLE IF EXISTS TEST, TEST2");
-			sb.execute("DROP TABLE IF EXISTS TEST, TEST2");
-
 
 			sa.execute("DROP SCHEMA IF EXISTS SCHEMA2");
 			sb.execute("DROP SCHEMA IF EXISTS SCHEMA2");
@@ -64,10 +78,43 @@ public class TestBase {
 			
 			ca.close();	
 			cb.close();	
+
+			obliterateRMIRegistyContents();
+			Engine.getInstance().closeAllDatabases();
 			
 		} catch (Exception e){
 			e.printStackTrace();
 			fail("Connections aren't being closed correctly.");
+		}
+	}
+	
+
+	public static void obliterateRMIRegistyContents(){
+		Registry registry = null;
+		
+		try {
+				registry = LocateRegistry.getRegistry(20000);
+
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+
+		try {
+			String[] listOfObjects = registry.list();
+			
+			for (String l: listOfObjects){
+				try {
+					registry.unbind(l);
+				} catch (NotBoundException e) {
+					fail("Failed to remove " + l + " from RMI registry.");
+				}
+			}
+			
+			if (registry.list().length > 0){
+				fail("Somehow failed to empty RMI registry.");
+			}
+		} catch (Exception e) {
+			//It happens for tests where the registry was not set up.
 		}
 	}
 	

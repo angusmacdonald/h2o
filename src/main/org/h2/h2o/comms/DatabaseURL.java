@@ -90,7 +90,6 @@ public class DatabaseURL {
 			
 			//Get DB location
 			dbLocation = newURL.substring(newURL.indexOf("/")+1);
-			System.out.println(dbLocation);
 		} else if (mem){
 			dbLocation = url.substring(url.indexOf(":mem:")+5);
 		}

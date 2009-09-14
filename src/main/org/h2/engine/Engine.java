@@ -269,4 +269,11 @@ public class Engine {
         }
     }
 
+	/**
+	 * Used for JUnit Testing in H2O to preserve independance of tests.
+	 */
+	public void closeAllDatabases() {
+		DATABASES.clear();
+	}
+
 }

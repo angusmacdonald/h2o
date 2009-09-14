@@ -147,6 +147,8 @@ import org.h2.value.ValueString;
 import org.h2.value.ValueTime;
 import org.h2.value.ValueTimestamp;
 
+import uk.ac.stand.dcs.nds.util.Diagnostic;
+
 /**
  * The parser is used to convert a SQL statement string to an command object.
  */
@@ -1091,11 +1093,11 @@ public class Parser {
 		if (readIf("TABLE")) {
 			boolean ifExists = readIfExists(false);
 			String tableName = readIdentifierWithSchema();
-			DropTable command = new DropTable(session, getSchema());
+			DropTable command = new DropTable(session, getSchema(), internalQuery);
 			command.setTableName(tableName);
 			while (readIf(",")) {
 				tableName = readIdentifierWithSchema();
-				DropTable next = new DropTable(session, getSchema());
+				DropTable next = new DropTable(session, getSchema(), internalQuery);
 				next.setTableName(tableName);
 				command.addNextDropTable(next);
 			}
@@ -4387,7 +4389,7 @@ public class Parser {
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
 		} else {
 			//Linked table was successfully added.
-			System.out.println("Successfully created linked table '" + tableName + "'. Attempting to access it.");
+			Diagnostic.traceNoEvent(Diagnostic.FULL, "Successfully created linked table '" + tableName + "'. Attempting to access it.");
 			return readTableOrView(tableName, false, LocationPreference.PRIMARY);
 		}
 

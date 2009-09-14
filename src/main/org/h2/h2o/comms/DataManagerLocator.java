@@ -11,6 +11,8 @@ import java.util.Map;
 
 import org.h2.engine.DataManager;
 
+import uk.ac.stand.dcs.nds.util.ErrorHandling;
+
 /**
  * 
  *
@@ -57,8 +59,11 @@ public class DataManagerLocator extends RMIServer{
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (NotBoundException e) {
-			System.err.println(tableName + " was not bound to registry.");
-			throw new SQLException("Data manager for " + tableName + " could not be found in the registry.");
+			ErrorHandling.errorNoEvent(tableName + " was not bound to registry.");
+			//throw new SQLException("Data manager for " + tableName + " could not be found in the registry.");
+		} catch (ClassCastException e){
+			System.err.println(tableName);
+			e.printStackTrace();
 		}
 
 		return dataManager;
@@ -90,17 +95,17 @@ public class DataManagerLocator extends RMIServer{
 			boolean contactable = testContact(dm.getTableName());
 
 			if (!contactable){
-				removeRegistryObject(dm.getTableName());
+				removeRegistryObject(dm.getTableName(), false);
 				registerDataManager(dm);
-				System.out.println("An old data manager for " + dm.getTableName() + " was removed.");
+				ErrorHandling.errorNoEvent("An old data manager for " + dm.getTableName() + " was removed.");
 			} else {
-				System.err.println("A data manager for this table still exists.");
+				ErrorHandling.errorNoEvent("A data manager for this table still exists.");
 				abe.printStackTrace();
 			}
 		} catch (AccessException e) {
 			e.printStackTrace();
 		} catch (RemoteException e) {
-			System.err.println("Lost contact with RMI registry when attempting to bind a manager.");
+			ErrorHandling.exceptionErrorNoEvent(e, "Lost contact with RMI registry when attempting to bind a manager.");
 		}
 	}
 
@@ -108,9 +113,19 @@ public class DataManagerLocator extends RMIServer{
 	 * @see org.h2.h2o.comms.RMIServer#removeRegistryObject(java.lang.String)
 	 */
 	@Override
-	public void removeRegistryObject(String objectName) {
-		super.removeRegistryObject(objectName);
+	public void removeRegistryObject(String objectName, boolean removeLocalOnly) {
+		try {
+			DataManagerRemote dmr = lookupDataManager(objectName);
+			dmr.removeDataManager();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
+		super.removeRegistryObject(objectName, removeLocalOnly);
 		dataManagers.remove(objectName);
 	}
 

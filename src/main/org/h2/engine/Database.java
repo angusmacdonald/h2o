@@ -83,6 +83,8 @@ import org.h2.value.Value;
 import org.h2.value.ValueInt;
 import org.h2.value.ValueLob;
 
+import uk.ac.stand.dcs.nds.util.Diagnostic;
+
 /**
  * There is one database object per open database.
  *
@@ -141,8 +143,7 @@ public class Database implements DataHandler {
 	 * Manages access to remote database instances via RMI.
 	 */
 	private DatabaseInstanceLocator databaseInstanceLocator;
-
-
+	
 	private final String databaseName;
 	private final String databaseShortName;
 	private final String databaseURL;
@@ -256,7 +257,7 @@ public class Database implements DataHandler {
 		this.databaseName = name;
 		this.databaseShortName = parseDatabaseShortName();
 
-		if (Constants.IS_H2O && !isManagementDB()) System.out.print("H2O, Database '" + name + "'.");
+		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(Diagnostic.FINAL, "H2O, Database '" + name + "'.");
 		
 		this.schemaManagerLocation = ci.getSchemaManagerLocation();
 
@@ -325,7 +326,7 @@ public class Database implements DataHandler {
 				TraceSystem.DEFAULT_TRACE_LEVEL_SYSTEM_OUT);
 		this.cacheType = StringUtils.toUpperEnglish(ci.removeProperty("CACHE_TYPE", CacheLRU.TYPE_NAME));
 		openDatabase(traceLevelFile, traceLevelSystemOut, closeAtVmShutdown);
-		if (Constants.IS_H2O && !isManagementDB()) System.out.println(" Completed startup.");
+		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(Diagnostic.FINAL, " Completed startup.");
 	}
 
 	private void openDatabase(int traceLevelFile, int traceLevelSystemOut, boolean closeAtVmShutdown) throws SQLException {
@@ -736,7 +737,7 @@ public class Database implements DataHandler {
 
 			rec.execute(this, systemSession, eventListener);
 		}
-		if (Constants.IS_H2O && !isManagementDB()) System.out.print(" Executed meta-records.");
+		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(Diagnostic.FINAL, " Executed meta-records.");
 
 		// try to recompile the views that are invalid
 		recompileInvalidViews(systemSession);
@@ -759,13 +760,15 @@ public class Database implements DataHandler {
 
 			createH2OTables();
 
-			System.out.print(" Created schema manager tables.");
+			Diagnostic.traceNoEvent(Diagnostic.FINAL, " Created schema manager tables.");
 		} 
 		if (Constants.IS_H2O && !isManagementDB()){ //don't run this code with the TCP server management DB
 			/*
 			 * Add this database instance to the RMI registry.
 			 */
-			databaseInstance = new DatabaseInstance(DatabaseURL.parseURL(this.originalURL).getNewURL(), systemSession); //original URL may contain 'localhost'.
+			String dbURL = DatabaseURL.parseURL(this.originalURL).getNewURL();
+			Diagnostic.traceNoEvent(Diagnostic.FULL, "Creating remote proxy for database instance: " + dbURL);
+			databaseInstance = new DatabaseInstance(dbURL, systemSession); //original URL may contain 'localhost'.
 			databaseInstanceLocator.registerDatabaseInstance(databaseInstance);
 		}
 	}
@@ -781,7 +784,7 @@ public class Database implements DataHandler {
 				"-key", key, databaseName});
 		server.start();
 		String address = NetUtils.getLocalAddress() + ":" + server.getPort();
-		System.out.println("Server started on: " + address);
+		Diagnostic.traceNoEvent(Diagnostic.FINAL, "Server started on: " + address);
 		lock.setProperty("server", address);
 		lock.save();
 	}
@@ -1195,17 +1198,20 @@ public class Database implements DataHandler {
 	 *            hook
 	 */
 	synchronized void close(boolean fromShutdownHook) {
+		
 		if (closing) {
 			return;
 		}
 
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "Closing database: " + DatabaseURL.parseURL(this.originalURL).getNewURL());
+		
 		closing = true;
 		stopServer();
 
-		if (Constants.IS_H2O && !isManagementDB()){
-			dataManagerLocator.removeRegistryObject(databaseInstance.getName());
-			dataManagerLocator = null;
-		}
+//		if (Constants.IS_H2O && !isManagementDB()){
+//			databaseInstanceLocator.removeRegistryObject(databaseInstance.getName(), false);
+//			databaseInstanceLocator = null;
+//		}
 
 		if (userSessions.size() > 0) {
 			if (!fromShutdownHook) {
@@ -2184,6 +2190,10 @@ public class Database implements DataHandler {
 	public void invalidateIndexSummary() throws SQLException {
 		if (indexSummaryValid) {
 			indexSummaryValid = false;
+			
+			if (log == null){
+				log = new LogSystem(this, databaseName, readOnly, accessModeLog, pageStore);
+			}
 			log.invalidateIndexSummary();
 		}
 	}
@@ -2640,8 +2650,8 @@ public class Database implements DataHandler {
 	/**
 	 * @param string
 	 */
-	public void removeDataManager(String tableName) {
-		dataManagerLocator.removeRegistryObject(tableName);
+	public void removeDataManager(String tableName, boolean removeLocalOnly) {
+		dataManagerLocator.removeRegistryObject(tableName, removeLocalOnly);
 
 	}
 

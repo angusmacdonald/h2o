@@ -15,6 +15,8 @@ import org.h2.message.Message;
 import org.h2.result.LocalResult;
 import org.h2.value.Value;
 
+import uk.ac.stand.dcs.nds.util.Diagnostic;
+
 /**
  * <p>The data manager represents a user table in H2O, and is responsible for storing
  * information on replicas for that table, and handing out locks to access those replicas.</p>
@@ -144,7 +146,7 @@ public class DataManager implements DataManagerRemote {
 	 * @throws SQLException
 	 */
 	public static int createDataManagerTables(Session session) throws SQLException{
-		System.out.println("Creating data manager tables.");
+		Diagnostic.traceNoEvent(Diagnostic.FINAL, "Creating data manager tables.");
 
 		String sql = "CREATE SCHEMA IF NOT EXISTS H2O; " +
 		"\n\nCREATE TABLE IF NOT EXISTS " + TABLES + "( table_id INT NOT NULL auto_increment, " +
@@ -285,16 +287,8 @@ public class DataManager implements DataManagerRemote {
 	}
 
 
-	/**
-	 * Removes a particular replica from the schema manager. 
-	 * @param dbLocation 
-	 * @param machineName 
-	 * @param connectionPort 
-	 * @param connectionType 
-	 * @param schemaName 
-	 * @throws SQLException 
-	 */
-	public int removeReplica(String dbLocation, String machineName, int connectionPort, String connectionType) throws SQLException {
+
+	public int removeReplica(String dbLocation, String machineName, int connectionPort, String connectionType) throws RemoteException, SQLException {
 		int connectionID = getConnectionID(machineName, connectionPort, connectionType);
 		int tableID = getTableID();
 		String sql = "DELETE FROM " + REPLICAS + " WHERE table_id=" + tableID + " AND db_location='" + dbLocation + "' AND connection_id=" + connectionID  + "; ";
@@ -305,7 +299,20 @@ public class DataManager implements DataManagerRemote {
 
 		return executeUpdate(sql);
 	}
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.DataManagerRemote#removeDataManager()
+	 */
+	@Override
+	public int removeDataManager() throws RemoteException, SQLException {
+		int tableID = getTableID();
+		String sql = "DELETE FROM " + REPLICAS + " WHERE table_id=" + tableID + "; DELETE FROM " + TABLES + " WHERE tablename='" + tableName
+		+ "' AND schemaname='" + schemaName + "';";
 
+		//replicaLocations.removeAll(null);
+		
+		return executeUpdate(sql);
+	}
+	
 	/**
 	 * Add the new table to the schema manager. Called at the end of a CreateTable update. 
 	 * @param tableName				Name of the table being added.
@@ -514,6 +521,8 @@ public class DataManager implements DataManagerRemote {
 	public void testAvailability() {
 		//Doesn't do anything.
 	}
+
+	
 
 
 

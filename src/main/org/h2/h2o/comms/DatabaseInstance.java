@@ -32,7 +32,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	 * @see org.h2.command.dm.DatabaseInstanceRemote#executeUpdate(org.h2.command.Prepared)
 	 */
 	public int executeUpdate(String query) throws RemoteException{
-		System.out.println("Update: " + query);
+		//System.out.println("Update: " + query);
 
 		if (query == null){
 			System.err.println("Shouldn't happen.");

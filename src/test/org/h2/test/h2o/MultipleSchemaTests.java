@@ -9,6 +9,8 @@ import java.sql.SQLException;
 
 import org.junit.Test;
 
+import uk.ac.stand.dcs.nds.util.Diagnostic;
+
 /**
  * A small set of tests that check whether the system copes with
  * multiple different schemas (containing tables of the same name).
@@ -24,6 +26,8 @@ public class MultipleSchemaTests extends TestBase {
 	 */
 	@Test
 	public void TestSchemaManagerAdd(){
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		
 		try{
 
 			sa.execute("CREATE SCHEMA SCHEMA2");
@@ -57,6 +61,9 @@ public class MultipleSchemaTests extends TestBase {
 	 */
 	@Test
 	public void TestSchemaManagerDrop(){
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		
+		
 		try{
 
 			sa.execute("CREATE SCHEMA SCHEMA2");

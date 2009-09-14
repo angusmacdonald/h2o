@@ -11,6 +11,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import uk.ac.stand.dcs.nds.util.Diagnostic;
+import uk.ac.stand.dcs.nds.util.ErrorHandling;
+
 /**
  * 
  *
@@ -69,7 +72,25 @@ public class DatabaseInstanceLocator extends RMIServer {
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (NotBoundException e) {
+			
+			e.printStackTrace();
 			System.err.println(instanceName + " was not bound to registry.");
+			
+			String[] inreg;
+			try {
+				inreg = registry.list();
+				for (String in: inreg){
+					System.out.print(in + ", ");
+				}
+			} catch (AccessException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (RemoteException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		
+			
 			throw new SQLException("Database instance for " + instanceName + " could not be found in the registry.");
 		}
 
@@ -100,17 +121,16 @@ public class DatabaseInstanceLocator extends RMIServer {
 			boolean contactable = testContact(databaseInstance.getName());
 
 			if (!contactable){
-				removeRegistryObject(databaseInstance.getName());
+				removeRegistryObject(databaseInstance.getName(), false);
 				registerDatabaseInstance(databaseInstance);
-				System.out.println("An old database instance for " + databaseInstance.getName() + " was removed.");
+				Diagnostic.traceNoEvent(Diagnostic.FULL, "An old database instance for " + databaseInstance.getName() + " was removed.");
 			} else {
-				System.err.println("A data manager for this table still exists.");
-				abe.printStackTrace();
+				ErrorHandling.exceptionErrorNoEvent(abe, "A data manager for this table still exists.");
 			}
 		} catch (AccessException e) {
 			e.printStackTrace();
 		} catch (RemoteException e) {
-			System.err.println("Lost contact with RMI registry when attempting to bind a manager.");
+			ErrorHandling.exceptionErrorNoEvent(e, "Lost contact with RMI registry when attempting to bind a manager.");
 		}
 	}
 
@@ -118,8 +138,8 @@ public class DatabaseInstanceLocator extends RMIServer {
 	 * @see org.h2.h2o.comms.RMIServer#removeRegistryObject(java.lang.String)
 	 */
 	@Override
-	public void removeRegistryObject(String objectName) {
-		super.removeRegistryObject(objectName);
+	public void removeRegistryObject(String objectName, boolean removeLocalOnly) {
+		super.removeRegistryObject(objectName, removeLocalOnly);
 		
 		databaseInstances.remove(objectName);
 	}
@@ -137,21 +157,8 @@ public class DatabaseInstanceLocator extends RMIServer {
 				DatabaseInstanceRemote dir = lookupDatabaseInstance(replicaLocation);
 				dirs.add(dir);
 			} catch (SQLException e) {
-				String[] s = null;
-				try {
-					s = registry.list();
-				} catch (AccessException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				} catch (RemoteException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-				
-				for (String ss: s){
-					System.out.println("In list: " + ss);
-				}
 				e.printStackTrace();
+				ErrorHandling.errorNoEvent("Unable to access database instance at: " + replicaLocation);
 			}
 		}
 		

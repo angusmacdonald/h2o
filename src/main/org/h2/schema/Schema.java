@@ -466,10 +466,10 @@ public class Schema extends DbObjectBase {
 	public ReplicaSet getTablesOrViews(Session session, String name) throws SQLException {
 		ReplicaSet tables = tablesAndViews.get(name);
 
-		if (tables == null) {
-			//System.out.println("Schema.getTablesOrViews: Table '" + name + "' not found.");
-			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, name);
-		}
+//		if (tables == null) {
+//			//System.out.println("Schema.getTablesOrViews: Table '" + name + "' not found.");
+//			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, name);
+//		}
 		return tables;
 	}
 

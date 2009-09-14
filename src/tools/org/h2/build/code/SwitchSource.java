@@ -18,7 +18,7 @@ import java.util.ArrayList;
  */
 public class SwitchSource {
 
-    private ArrayList enable = new ArrayList();
+    private ArrayList<String> enable = new ArrayList();
     private ArrayList disable = new ArrayList();
 
     /**

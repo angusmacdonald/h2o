@@ -10,12 +10,15 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
+import org.h2.engine.Engine;
 import org.h2.engine.SchemaManager;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import uk.ac.stand.dcs.nds.util.Diagnostic;
 
 /**
  * Tests the basic functionality of the schema manager.
@@ -41,7 +44,8 @@ public class SchemaManagerTests {
 	 */
 	@After
 	public void tearDown() throws Exception {
-
+		Engine.getInstance().closeAllDatabases();
+		TestBase.obliterateRMIRegistyContents();
 	}
 
 	/**
@@ -524,7 +528,8 @@ public class SchemaManagerTests {
 	@Test
 	public void testPrimaryCopyUnique(){
 		org.h2.Driver.load();
-
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		
 		try{
 			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
 			Statement sa = ca.createStatement();
@@ -550,8 +555,7 @@ public class SchemaManagerTests {
 			rs.close();
 
 			sa.execute("DROP TABLE TEST;");
-			sb.execute("DROP TABLE TEST;");
-
+			
 			sa.close();
 			sb.close();
 			ca.close();
