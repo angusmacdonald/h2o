@@ -32,7 +32,7 @@ public class DataManagerLocator extends RMIServer{
 	 */
 	public DataManagerLocator(String host, int port) {
 		super(host, port);
-		
+
 		dataManagers = new HashMap<String, DataManagerRemote>();
 	}
 
@@ -68,7 +68,7 @@ public class DataManagerLocator extends RMIServer{
 
 		return dataManager;
 	}
-	
+
 	/**
 	 * Register the local DM interface with the global RMI registry.
 	 * @param interfaceName	Name given to the DM interface on the registry. 
@@ -116,7 +116,10 @@ public class DataManagerLocator extends RMIServer{
 	public void removeRegistryObject(String objectName, boolean removeLocalOnly) {
 		try {
 			DataManagerRemote dmr = lookupDataManager(objectName);
-			dmr.removeDataManager();
+			if (dmr != null){
+				dmr.removeDataManager();
+				}
+
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -124,8 +127,12 @@ public class DataManagerLocator extends RMIServer{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		super.removeRegistryObject(objectName, removeLocalOnly);
+
+		try {
+			super.removeRegistryObject(objectName, removeLocalOnly);
+		} catch (NotBoundException e) {
+			e.printStackTrace();
+		}
 		dataManagers.remove(objectName);
 	}
 

@@ -11,11 +11,14 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
+import org.h2.engine.Engine;
 import org.h2.engine.SchemaManager;
 import org.h2.jdbc.JdbcSQLException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import uk.ac.stand.dcs.nds.util.Diagnostic;
 
 /**
  * This class tests H2O's CREATE REPLICA functionality with regards to its ability to maintain
@@ -80,10 +83,14 @@ public class IndexTests{
 
 			ca.close();	
 			cb.close();	
+			Diagnostic.traceNoEvent(Diagnostic.FULL, "END OF LAST TEST (TEAR DOWN 1).");
+			TestBase.closeDatabaseCompletely();
 		} catch (Exception e){
 			e.printStackTrace();
 			fail("Connections aren't bein closed correctly.");
 		}
+		
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "END OF LAST TEST (TEAR DOWN 2).");
 	}
 
 	/**
@@ -92,7 +99,7 @@ public class IndexTests{
 	 */
 	@Test
 	public void checkTableSetID(){
-
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
 		try{
 		
 					sa.execute("SELECT H2O.H2O_TABLE.table_id, table_set FROM H2O.H2O_TABLE, H2O.H2O_REPLICA WHERE H2O.H2O_REPLICA.table_id=H2O.H2O_TABLE.table_id ORDER BY table_id;");
@@ -112,6 +119,7 @@ public class IndexTests{
 					sqle.printStackTrace();
 					fail("SQLException thrown when it shouldn't have.");
 				}
+				
 	}
 	
 	/**
@@ -119,7 +127,7 @@ public class IndexTests{
 	 */
 	@Test
 	public void checkTableSetID2(){
-
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
 		try{
 					sa.execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 			
@@ -145,6 +153,8 @@ public class IndexTests{
 					sqle.printStackTrace();
 					fail("SQLException thrown when it shouldn't have.");
 				}
+				
+				Diagnostic.traceNoEvent(Diagnostic.FULL, "END OF LAST TEST (MAIN BODY).");
 
 	}
 	

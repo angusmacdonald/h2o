@@ -146,8 +146,9 @@ public abstract class RMIServer {
 	 * Unbind a given object from the registry.
 	 * @param objectName
 	 * @param removeLocalOnly 
+	 * @throws NotBoundException 
 	 */
-	public void removeRegistryObject(String objectName, boolean removeLocalOnly) {
+	public void removeRegistryObject(String objectName, boolean removeLocalOnly) throws NotBoundException {
 		if (removeLocalOnly) return;
 		
 		try {
@@ -156,8 +157,6 @@ public abstract class RMIServer {
 			ErrorHandling.errorNoEvent(e, "Didn't have permission to perform unbind operation on RMI registry.");
 		} catch (RemoteException e) {
 			ErrorHandling.errorNoEvent(e, "Lost contact with RMI registry when unbinding manager of '" + objectName + "'.");
-		} catch (NotBoundException e) {
-			ErrorHandling.errorNoEvent(e, "Attempting to unbind manager of '" + objectName + "' - failure due this manager not being bound.");
 		}
 	}
 

@@ -7,6 +7,7 @@
 package org.h2.engine;
 
 import java.io.IOException;
+import java.rmi.NotBoundException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -1197,21 +1198,29 @@ public class Database implements DataHandler {
 	 * @param fromShutdownHook true if this method is called from the shutdown
 	 *            hook
 	 */
-	synchronized void close(boolean fromShutdownHook) {
+	public synchronized void close(boolean fromShutdownHook) {
 		
 		if (closing) {
 			return;
 		}
 
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "Closing database: " + DatabaseURL.parseURL(this.originalURL).getNewURL());
+		Diagnostic.traceNoEvent(Diagnostic.FULL, DatabaseURL.parseURL(this.originalURL).getNewURL());
 		
 		closing = true;
 		stopServer();
 
-//		if (Constants.IS_H2O && !isManagementDB()){
-//			databaseInstanceLocator.removeRegistryObject(databaseInstance.getName(), false);
-//			databaseInstanceLocator = null;
-//		}
+		if (Constants.IS_H2O && !isManagementDB() && !fromShutdownHook){
+			try {
+				databaseInstanceLocator.removeRegistryObject(databaseInstance.getName(), false);
+			} catch (NotBoundException e) {
+				/*
+				 * Not a big problem because all we are doing at this stage is trying to remove it.
+				 * Happens nearly every time the database is closed from the shutdown hook, hence being inside this IF statement.
+				 */
+				Diagnostic.traceNoEvent(Diagnostic.FULL, "Attempted to remove database instance from registry, but it wasn't found.");
+			}
+			databaseInstanceLocator = null;
+		}
 
 		if (userSessions.size() > 0) {
 			if (!fromShutdownHook) {

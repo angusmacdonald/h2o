@@ -7,7 +7,10 @@
 package org.h2.engine;
 
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import org.h2.command.CommandInterface;
 import org.h2.command.Parser;
@@ -28,7 +31,7 @@ import org.h2.util.StringUtils;
 public class Engine {
 
     private static final Engine INSTANCE = new Engine();
-    private static final HashMap DATABASES = new HashMap();
+    private static final Map<String, Database> DATABASES = new HashMap<String, Database>();
     private static volatile long wrongPasswordDelay = SysProperties.DELAY_WRONG_PASSWORD_MIN;
 
     private Engine() {
@@ -271,9 +274,13 @@ public class Engine {
 
 	/**
 	 * Used for JUnit Testing in H2O to preserve independance of tests.
+	 * @return 
 	 */
-	public void closeAllDatabases() {
+	public Collection<Database> closeAllDatabases() {
+		Collection<Database> dbSet = DATABASES.values();
 		DATABASES.clear();
+		
+		return dbSet;
 	}
 
 }

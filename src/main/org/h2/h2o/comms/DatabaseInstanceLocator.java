@@ -121,7 +121,11 @@ public class DatabaseInstanceLocator extends RMIServer {
 			boolean contactable = testContact(databaseInstance.getName());
 
 			if (!contactable){
-				removeRegistryObject(databaseInstance.getName(), false);
+				try {
+					removeRegistryObject(databaseInstance.getName(), false);
+				} catch (NotBoundException e) {
+					e.printStackTrace();
+				}
 				registerDatabaseInstance(databaseInstance);
 				Diagnostic.traceNoEvent(Diagnostic.FULL, "An old database instance for " + databaseInstance.getName() + " was removed.");
 			} else {
@@ -138,7 +142,7 @@ public class DatabaseInstanceLocator extends RMIServer {
 	 * @see org.h2.h2o.comms.RMIServer#removeRegistryObject(java.lang.String)
 	 */
 	@Override
-	public void removeRegistryObject(String objectName, boolean removeLocalOnly) {
+	public synchronized void removeRegistryObject(String objectName, boolean removeLocalOnly) throws NotBoundException {
 		super.removeRegistryObject(objectName, removeLocalOnly);
 		
 		databaseInstances.remove(objectName);

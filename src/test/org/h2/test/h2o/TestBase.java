@@ -12,9 +12,12 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Collection;
+
 import static org.junit.Assert.fail;
 
 import org.h2.engine.Constants;
+import org.h2.engine.Database;
 import org.h2.engine.Engine;
 import org.h2.engine.SchemaManager;
 import org.junit.After;
@@ -79,17 +82,29 @@ public class TestBase {
 			ca.close();	
 			cb.close();	
 
-			obliterateRMIRegistyContents();
-			Engine.getInstance().closeAllDatabases();
-			
+			closeDatabaseCompletely();
 		} catch (Exception e){
 			e.printStackTrace();
 			fail("Connections aren't being closed correctly.");
 		}
 	}
+
+	/**
+	 * Close the database explicitly, incase it didn't shut down correctly between tests.
+	 */
+	public static void closeDatabaseCompletely() {
+		obliterateRMIRegistyContents();
+		Collection<Database> dbs = Engine.getInstance().closeAllDatabases();
+	
+		for (Database db: dbs){
+			db.close(false);
+		}
+		
+		
+	}
 	
 
-	public static void obliterateRMIRegistyContents(){
+	private static void obliterateRMIRegistyContents(){
 		Registry registry = null;
 		
 		try {
@@ -146,4 +161,5 @@ public class TestBase {
 
 		rs.close();
 	}
+
 }

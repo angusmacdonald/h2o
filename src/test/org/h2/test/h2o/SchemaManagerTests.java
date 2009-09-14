@@ -16,6 +16,7 @@ import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import uk.ac.stand.dcs.nds.util.Diagnostic;
@@ -29,6 +30,11 @@ public class SchemaManagerTests {
 
 	private static final String BASEDIR = "db_data/unittests/";
 
+	@BeforeClass
+	public static void initialSetUp(){
+		Diagnostic.setLevel(Diagnostic.FULL);
+	}
+	
 	/**
 	 * @throws java.lang.Exception
 	 */
@@ -44,8 +50,7 @@ public class SchemaManagerTests {
 	 */
 	@After
 	public void tearDown() throws Exception {
-		Engine.getInstance().closeAllDatabases();
-		TestBase.obliterateRMIRegistyContents();
+		TestBase.closeDatabaseCompletely();
 	}
 
 	/**

@@ -11,6 +11,8 @@ import org.h2.message.Message;
 import org.h2.result.LocalResult;
 import org.h2.value.Value;
 
+import uk.ac.stand.dcs.nds.util.ErrorHandling;
+
 /**
  * Contains various utility methods which the system can use to access and modify H2O's schema manager. SQL for the tables is as follows:<code>
 		CREATE SCHEMA IF NOT EXISTS H2O;<br/>
@@ -198,6 +200,7 @@ public class SchemaManager {
 			return dbname;
 		}
 
+		ErrorHandling.errorNoEvent("Looking for table: " + schemaName + "." + tableName + " (but it wasn't found.");
 		throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
 
 

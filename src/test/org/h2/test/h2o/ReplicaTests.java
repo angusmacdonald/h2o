@@ -153,7 +153,8 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void SelectLocalTest(){
-
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		
 		try{
 			sb.execute("CREATE REPLICA TEST");
 
@@ -187,7 +188,8 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void SelectLocalTestFailure(){
-
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		
 		try{
 			sb.execute("SELECT LOCAL ONLY * FROM TEST ORDER BY ID;");
 
@@ -202,8 +204,10 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void SelectLocalTestRemote(){
-
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		
 		try{
+			Diagnostic.traceNoEvent(Diagnostic.FULL, "Executing test query.");
 			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
 		} catch (SQLException sqle){
 			sqle.printStackTrace();
@@ -545,6 +549,7 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void CreateMultipleReplicas(){
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
 		try{
 
 			sa.execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
@@ -579,6 +584,7 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void CreateMultipleReplicasONFROM(){
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
 		try{
 
 			sa.execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
