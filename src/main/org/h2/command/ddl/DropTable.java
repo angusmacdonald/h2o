@@ -10,6 +10,7 @@ import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Set;
 
+import org.h2.command.QueryDistributor;
 import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
 import org.h2.engine.Constants;
@@ -70,13 +71,15 @@ public class DropTable extends SchemaCommand {
 	}
 
 	private void prepareDrop() throws SQLException {
-		//table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
 
+		if (Constants.IS_H2O){
+			tables = getSchema().getTablesOrViews(session, tableName);
 
-		tables = getSchema().getTablesOrViews(session, tableName);
-
-		if (tables != null){
-			table = tables.getACopy();
+			if (tables != null){
+				table = tables.getACopy();
+			}
+		} else {
+			table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
 		}
 		//		DataManagerRemote dm = null;
 		//
@@ -139,15 +142,8 @@ public class DropTable extends SchemaCommand {
 				}
 
 				Set<DatabaseInstanceRemote> remoteReplicaLocations = qp.getReplicaLocations(session.getDatabase());
-				int count = 0;
-				for (DatabaseInstanceRemote remoteReplica: remoteReplicaLocations){
-					try {
-						count = remoteReplica.executeUpdate(sqlStatement);
-					} catch (RemoteException e) {
-						e.printStackTrace();
-						throw new SQLException("Unable to send INSERT update to all replicas.");
-					}
-				}
+
+				QueryDistributor.sendToAllReplicas(remoteReplicaLocations, sqlStatement, table.getName());
 
 
 				try {
@@ -161,17 +157,24 @@ public class DropTable extends SchemaCommand {
 
 
 			} else {
-				table.setModified();
+				
 
 				//db.removeSchemaObject(session, table);
-				Table[] tableArray = tables.getAllCopies().toArray(new Table[0]);
-				
-				for (Table t: tableArray){
-					db.removeSchemaObject(session, t);
-				}
+
 
 				if (Constants.IS_H2O){
+					Table[] tableArray = tables.getAllCopies().toArray(new Table[0]); // add to array to prevent concurrent modification exceptions.
+
+					for (Table t: tableArray){
+						t.setModified();
+						db.removeSchemaObject(session, t);
+					}
+					
 					db.removeDataManager(fullTableName, true);
+				} else {
+					table.setModified();
+					db.removeSchemaObject(session, table);
+
 				}
 
 			}

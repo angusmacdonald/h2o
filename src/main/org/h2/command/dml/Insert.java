@@ -12,6 +12,7 @@ import java.util.Set;
 
 import org.h2.command.Command;
 import org.h2.command.Prepared;
+import org.h2.command.QueryDistributor;
 import org.h2.constant.ErrorCode;
 import org.h2.engine.Constants;
 import org.h2.engine.Right;
@@ -21,6 +22,7 @@ import org.h2.expression.Parameter;
 import org.h2.h2o.comms.DataManagerRemote;
 import org.h2.h2o.comms.DatabaseInstanceRemote;
 import org.h2.h2o.comms.QueryProxy;
+import org.h2.h2o.comms.TransactionNameGenerator;
 import org.h2.log.UndoLogRecord;
 import org.h2.message.Message;
 import org.h2.result.LocalResult;
@@ -29,6 +31,8 @@ import org.h2.table.Column;
 import org.h2.table.Table;
 import org.h2.util.ObjectArray;
 import org.h2.value.Value;
+
+import uk.ac.stand.dcs.nds.util.ErrorHandling;
 
 /**
  * This class represents the statement
@@ -51,7 +55,7 @@ public class Insert extends Prepared{
 	 */
 	public Insert(Session session, boolean internalQuery) {
 		super(session);
-		
+
 		this.internalQuery = internalQuery;
 	}
 
@@ -85,7 +89,7 @@ public class Insert extends Prepared{
 
 	public int update() throws SQLException {
 		int count = 0;
-		
+
 		session.getUser().checkRight(table, Right.INSERT);
 
 		/*
@@ -114,17 +118,10 @@ public class Insert extends Prepared{
 
 			Set<DatabaseInstanceRemote> remoteReplicaLocations = qp.getReplicaLocations(session.getDatabase());
 
-			for (DatabaseInstanceRemote remoteReplica: remoteReplicaLocations){
-				try {
-					count = remoteReplica.executeUpdate(sqlStatement);
-				} catch (RemoteException e) {
-					e.printStackTrace();
-					throw new SQLException("Unable to send INSERT update to all replicas.");
-				}
-			}
-			
+			count = QueryDistributor.sendToAllReplicas(remoteReplicaLocations, sqlStatement, table.getName());
 			return count;
 		}
+		
 		/*
 		 *  END OF QUERY REDIRECT
 		 */

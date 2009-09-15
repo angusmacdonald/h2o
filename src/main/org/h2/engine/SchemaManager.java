@@ -200,7 +200,7 @@ public class SchemaManager {
 			return dbname;
 		}
 
-		ErrorHandling.errorNoEvent("Looking for table: " + schemaName + "." + tableName + " (but it wasn't found.");
+		ErrorHandling.errorNoEvent("Looking for table: " + schemaName + "." + tableName + " (but it wasn't found).");
 		throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
 
 
