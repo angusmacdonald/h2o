@@ -24,8 +24,6 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 
 	private Parser parser;
 
-	private String lastTransactionName = "LITTLE_TEST_TRANSACTION";
-
 	private Session session;
 
 	public DatabaseInstance(String databaseConnectionString, Session session){
@@ -38,25 +36,21 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	/* (non-Javadoc)
 	 * @see org.h2.command.dm.DatabaseInstanceRemote#executeUpdate(org.h2.command.Prepared)
 	 */
-	public int sendUpdate(String query, String transactionName) throws RemoteException, SQLException{
+	public int prepareQuery(String query, String transactionName) throws RemoteException, SQLException{
 		//System.out.println("Update: " + query);
 
 		if (query == null){
 			System.err.println("Shouldn't happen.");
 		}
 
-		int result = -1;
-
-		session.setAutoCommit(false);
+		session.setAutoCommit(false); //TODO auto-commit shouldn't be set false.true for each transaction.
 		Command command = parser.prepareCommand(query);
-		result = command.executeUpdate();
+		command.executeUpdate();
 	
 		command.close();
 
-		command = parser.prepareCommand("PREPARE COMMIT " + lastTransactionName);
-		result = command.executeUpdate();
-
-		return result;
+		command = parser.prepareCommand("PREPARE COMMIT " + transactionName);
+		return command.executeUpdate();
 
 	}
 
@@ -65,11 +59,10 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	 */
 	@Override
 	public int commitQuery(boolean commit, String transactionName) throws RemoteException, SQLException {
-		Command command = parser.prepareCommand("COMMIT TRANSACTION " + lastTransactionName);
+		Command command = parser.prepareCommand((commit? "commit": "rollback") + " TRANSACTION " + transactionName);
 		int result = command.executeUpdate();
 
-		session.setAutoCommit(true);
-
+		session.setAutoCommit(true); //TODO auto-commit shouldn't be set false.true for each transaction.
 		return result;
 	}
 

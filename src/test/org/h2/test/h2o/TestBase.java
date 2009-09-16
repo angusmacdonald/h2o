@@ -71,11 +71,9 @@ public class TestBase {
 	@After
 	public void tearDown() {
 		try{ 
-			sa.execute("DROP TABLE IF EXISTS TEST, TEST2");
-
-			sa.execute("DROP SCHEMA IF EXISTS SCHEMA2");
-			sb.execute("DROP SCHEMA IF EXISTS SCHEMA2");
-						
+			sa.execute("DROP ALL OBJECTS");
+			sb.execute("DROP ALL OBJECTS");
+			
 			sa.close();
 			sb.close();
 			
@@ -90,7 +88,7 @@ public class TestBase {
 	}
 
 	/**
-	 * Close the database explicitly, incase it didn't shut down correctly between tests.
+	 * Close the database explicitly, in case it didn't shut down correctly between tests.
 	 */
 	public static void closeDatabaseCompletely() {
 		obliterateRMIRegistyContents();
@@ -98,12 +96,14 @@ public class TestBase {
 	
 		for (Database db: dbs){
 			db.close(false);
+			db.shutdownImmediately();
 		}
-		
 		
 	}
 	
-
+	/**
+	 * Removes every object from the RMI registry.
+	 */
 	private static void obliterateRMIRegistyContents(){
 		Registry registry = null;
 		

@@ -125,7 +125,7 @@ public class DropTable extends SchemaCommand {
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_") && !internalQuery){
 
 
-				SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
+				
 				DataManagerRemote dm = db.getDataManager(fullTableName);
 				QueryProxy qp = null;
 
@@ -141,12 +141,11 @@ public class DropTable extends SchemaCommand {
 					throw new SQLException("Unable to contact data manager.");
 				}
 
-				Set<DatabaseInstanceRemote> remoteReplicaLocations = qp.getReplicaLocations(session.getDatabase());
-
-				QueryDistributor.sendToAllReplicas(remoteReplicaLocations, sqlStatement, table.getName());
+				qp.sendToAllReplicas(sqlStatement, session.getDatabase());
 
 
 				try {
+					SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
 					sm.removeTable(tableName, getSchema().getName());
 
 					db.removeDataManager(fullTableName, false);

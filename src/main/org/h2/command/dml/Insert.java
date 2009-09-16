@@ -15,6 +15,7 @@ import org.h2.command.Prepared;
 import org.h2.command.QueryDistributor;
 import org.h2.constant.ErrorCode;
 import org.h2.engine.Constants;
+import org.h2.engine.Database;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
@@ -93,39 +94,12 @@ public class Insert extends Prepared{
 		session.getUser().checkRight(table, Right.INSERT);
 
 		/*
-		 * START OF QUERY REDIRECT (QUERY PROPAGATED TO ALL REPLICAS).
+		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
 		if (Constants.IS_H2O && !internalQuery && !table.getName().startsWith(Constants.H2O_SCHEMA) && !session.getDatabase().isManagementDB()){
-			//Get the data manager and send this query to each replica.
-
-
-			String fullTableName = table.getSchema().getName() + "." + table.getName();
-			DataManagerRemote dm = session.getDatabase().getDataManager(fullTableName);
-
-			QueryProxy qp = null;
-
-			try {
-				if (dm == null){
-					System.err.println("Data manager proxy was null when requesting table: " + fullTableName);
-					throw new SQLException("Data manager not found for table: " + fullTableName);
-				} else {
-					qp = dm.requestLock(QueryProxy.LockType.WRITE);
-				}
-			} catch (RemoteException e1) {
-				e1.printStackTrace();
-				throw new SQLException("Unable to contact data manager.");
-			}
-
-			Set<DatabaseInstanceRemote> remoteReplicaLocations = qp.getReplicaLocations(session.getDatabase());
-
-			count = QueryDistributor.sendToAllReplicas(remoteReplicaLocations, sqlStatement, table.getName());
-			return count;
+			return QueryDistributor.propagateUpdate(table.getSchema().getName() + "." + table.getName(), sqlStatement, session.getDatabase());
 		}
 		
-		/*
-		 *  END OF QUERY REDIRECT
-		 */
-
 		setCurrentRowNumber(0);
 		if (list.size() > 0) {
 			count = 0;
@@ -191,6 +165,8 @@ public class Insert extends Prepared{
 		}
 		return count;
 	}
+
+
 
 	public String getPlanSQL() {
 		StringBuffer buff = new StringBuffer();

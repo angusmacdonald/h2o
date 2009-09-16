@@ -4,7 +4,10 @@ import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Set;
 
+import org.h2.engine.Database;
+import org.h2.h2o.comms.DataManagerRemote;
 import org.h2.h2o.comms.DatabaseInstanceRemote;
+import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.TransactionNameGenerator;
 
 import uk.ac.stand.dcs.nds.util.ErrorHandling;
@@ -15,48 +18,36 @@ import uk.ac.stand.dcs.nds.util.ErrorHandling;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class QueryDistributor {
+	
 	/**
-	 * @param remoteReplicaLocations
+	 * Send the given update to all replicas of the table.
+	 * @return
 	 * @throws SQLException
 	 */
-	public static int sendToAllReplicas(Set<DatabaseInstanceRemote> remoteReplicaLocations, String query, String tableName) throws SQLException {
-		int count = 0;
-		boolean commit = true; //whether the transaction should commit or rollback.
-		
-		/*
-		 * Send the query to each DB instance holding a replica.
-		 */
-		for (DatabaseInstanceRemote remoteReplica: remoteReplicaLocations){
-			try {
-				count = remoteReplica.sendUpdate(query, TransactionNameGenerator.generateName(tableName));
+	public static int propagateUpdate(String fullTableName, String sql, Database db) throws SQLException {
+		int count;
+		//Get the data manager and send this query to each replica.
 
-				if (count != 0) commit = false; // Prepare operation failed at remote machine, so rollback the query everywhere.
-			} catch (RemoteException e) {
-				e.printStackTrace();
-				ErrorHandling.errorNoEvent("Unable to contact one of the DB instances holding a replica for " + tableName + ".");
-				commit = false; // rollback the entire transaction.
+		DataManagerRemote dm = db.getDataManager(fullTableName);
+
+		QueryProxy qp = null;
+
+		try {
+			if (dm == null){
+				System.err.println("Data manager proxy was null when requesting table: " + fullTableName);
+				throw new SQLException("Data manager not found for table: " + fullTableName);
+			} else {
+				qp = dm.requestLock(QueryProxy.LockType.WRITE);
 			}
-
+		} catch (RemoteException e1) {
+			e1.printStackTrace();
+			throw new SQLException("Unable to contact data manager.");
+		} catch (SQLException e){
+			throw new SQLException("Unable to contact data manager.");
 		}
 
-		/*
-		 * Commit or rollback the transaction.
-		 */
-		for (DatabaseInstanceRemote remoteReplica: remoteReplicaLocations){
-			try {
-				count = remoteReplica.commitQuery(commit, TransactionNameGenerator.generateName(tableName));
-			} catch (RemoteException e) {
-				ErrorHandling.errorNoEvent("Unable to send " + (commit? "commit": "rollback") + " message to remote replica.");
-			}
-		}
-		
-		/*
-		 * Rollback was performed - throw an exception informing requesting party of this.
-		 */
-		if (!commit){
-			throw new SQLException("Couldn't complete update because one or a number of replicas failed.");
-		}
-		
+		count = qp.sendToAllReplicas(sql, db);
+
 		return count;
 	}
 }

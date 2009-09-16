@@ -7,15 +7,16 @@ package org.h2.h2o.comms;
  */
 public class TransactionNameGenerator {
 
-	private static int lastNumber = 0;
+	private static int lastNumber = 0; //XXX not the most sophisticated method, but it works.
+	
 	/**
 	 * Generate a unique name for a new transaction.
 	 * @param tableName Name of a table involved in the transaction.
 	 * @return
 	 */
-	public static String generateName(String tableName){
+	public static synchronized String generateName(){
 		
 		
-		return "UNIQUE" + lastNumber++;
+		return "TRANSACTION_" + lastNumber++;
 	}
 }

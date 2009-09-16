@@ -19,7 +19,7 @@ public interface DatabaseInstanceRemote extends H2ORemote  {
 	 * @throws RemoteException
 	 * @throws SQLException 
 	 */
-	public int sendUpdate(String query, String transactionName) throws RemoteException, SQLException;
+	public int prepareQuery(String query, String transactionName) throws RemoteException, SQLException;
 	
 	/**
 	 * 

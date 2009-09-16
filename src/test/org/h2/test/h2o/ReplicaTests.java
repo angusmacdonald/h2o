@@ -207,7 +207,6 @@ public class ReplicaTests extends TestBase{
 		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
 		
 		try{
-			Diagnostic.traceNoEvent(Diagnostic.FULL, "Executing test query.");
 			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
 		} catch (SQLException sqle){
 			sqle.printStackTrace();
