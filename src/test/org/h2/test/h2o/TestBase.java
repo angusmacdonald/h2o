@@ -2,7 +2,6 @@ package org.h2.test.h2o;
 
 import static org.junit.Assert.assertEquals;
 
-import java.rmi.AccessException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;

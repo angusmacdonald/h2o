@@ -134,7 +134,7 @@ public class DropTable extends SchemaCommand {
 						System.err.println("Data manager proxy was null when requesting table: " + fullTableName);
 						throw new SQLException("Data manager not found for table: " + fullTableName);
 					} else {
-						qp = dm.requestLock(QueryProxy.LockType.WRITE);
+						qp = dm.requestQueryProxy(QueryProxy.LockType.WRITE);
 					}
 				} catch (RemoteException e1) {
 					e1.printStackTrace();

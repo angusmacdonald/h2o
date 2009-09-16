@@ -11,7 +11,7 @@ import java.sql.SQLException;
  */
 public interface DataManagerRemote extends H2ORemote {
 
-	public QueryProxy requestLock(QueryProxy.LockType lockType) throws RemoteException;
+	public QueryProxy requestQueryProxy(QueryProxy.LockType lockType) throws RemoteException;
 
 	/**
 	 * Inform the data manager that a new replica has been created for the given table.

@@ -13,6 +13,7 @@ import org.h2.h2o.comms.DatabaseInstanceRemote;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.message.Message;
 import org.h2.result.LocalResult;
+import org.h2.test.db.Db;
 import org.h2.value.Value;
 
 import uk.ac.stand.dcs.nds.util.Diagnostic;
@@ -117,9 +118,11 @@ public class DataManager implements DataManagerRemote {
 	 */
 	private String cachedReplicaLocation;
 
-	private Set<String> replicaLocations;
+	private Set<DatabaseInstanceRemote> replicaLocations;
+	
+	private Database database;
 
-	public DataManager(String tableName, String schemaName, Session session, long modificationID, int tableSet, Database db) throws SQLException{
+	public DataManager(String tableName, String schemaName, Session session, long modificationID, int tableSet, Database database) throws SQLException{
 		this.tableName = tableName;
 		
 		if (schemaName.equals("") || schemaName == null){
@@ -132,12 +135,13 @@ public class DataManager implements DataManagerRemote {
 		this.cachedReplicaLocation = null;
 		this.queryParser = new Parser(session, true);
 
-		this.replicaLocations = new HashSet<String>();
+		this.replicaLocations = new HashSet<DatabaseInstanceRemote>();
+		this.database = database;
+		
+		addInformationToDB(modificationID, database.getDatabaseLocation(), "TABLE", database.getLocalMachineAddress(), 
+				database.getLocalMachinePort(), database.getConnectionType(), tableSet, database.isSM());
 
-		addInformationToDB(modificationID, db.getDatabaseLocation(), "TABLE", db.getLocalMachineAddress(), 
-				db.getLocalMachinePort(), db.getConnectionType(), tableSet, db.isSM());
-
-		db.addDataManager(this);
+		database.addDataManager(this);
 	}
 
 	/**
@@ -194,16 +198,16 @@ public class DataManager implements DataManagerRemote {
 
 			tableID = getTableID();
 
+			String replicaLocationString = createFullDatabaseLocation(databaseLocation, connectionType, localMachineAddress, localMachinePort + "", isSM);
 
 			if (!isReplicaListed(connectionID, databaseLocation)){ // the table doesn't already exist in the schema manager.
 				int result = addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, replicaSet, false);
-
-
-				replicaLocations.add(createFullDatabaseLocation(databaseLocation, connectionType, localMachineAddress, localMachinePort + "", isSM));
+		
+				replicaLocations.add(getDatabaseInstance(replicaLocationString));
 				
 				return (result == 1);
 			} else {
-				replicaLocations.add(createFullDatabaseLocation(databaseLocation, connectionType, localMachineAddress, localMachinePort + "", isSM));
+				replicaLocations.add(getDatabaseInstance(replicaLocationString));
 				
 				return false;
 			}
@@ -213,20 +217,23 @@ public class DataManager implements DataManagerRemote {
 		}
 	}
 
+	/**
+	 * @param replicaLocationString
+	 * @return
+	 */
+	private DatabaseInstanceRemote getDatabaseInstance(
+			String replicaLocationString) {
+		return database.getDatabaseInstance(replicaLocationString);
+	}
+
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.comms.IDataManager#requestLock(java.lang.String)
 	 */
 	@Override
-	public QueryProxy requestLock(QueryProxy.LockType lockType) throws RemoteException {
-		Set<String> replicaStrings = null;
+	public QueryProxy requestQueryProxy(QueryProxy.LockType lockType) throws RemoteException {
+		
 
-		try {
-			replicaStrings = getAllReplicaLocations();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-
-		if (replicaStrings.size() == 0){
+		if (replicaLocations.size() == 0){
 			try {
 				throw new Exception("Illegal State. There must be at least one replica");
 			} catch (Exception e) {
@@ -234,7 +241,8 @@ public class DataManager implements DataManagerRemote {
 				System.exit(1);
 			}
 		}
-		QueryProxy qp = new QueryProxy(lockType, tableName, replicaStrings);
+		
+		QueryProxy qp = new QueryProxy(lockType, tableName, replicaLocations);
 
 		return qp;
 	}
@@ -339,7 +347,7 @@ public class DataManager implements DataManagerRemote {
 			addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, tableSet, true);
 		}
 		
-		replicaLocations.add(createFullDatabaseLocation(databaseLocation, connectionType, localMachineAddress, localMachinePort + "", isSM));
+		replicaLocations.add(getDatabaseInstance(createFullDatabaseLocation(databaseLocation, connectionType, localMachineAddress, localMachinePort + "", isSM)));
 	
 	}
 
@@ -421,7 +429,7 @@ public class DataManager implements DataManagerRemote {
 		return sqlQuery.executeUpdate();
 	}
 
-	private Set<String> getAllReplicaLocations() throws SQLException{
+	private Set<DatabaseInstanceRemote> getAllReplicaLocations() throws SQLException{
 		return replicaLocations;
 	}
 

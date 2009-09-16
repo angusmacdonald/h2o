@@ -168,4 +168,20 @@ public class DatabaseInstanceLocator extends RMIServer {
 		
 		return dirs;
 	}
+
+
+	/**
+	 * @param replicaLocationString
+	 * @return
+	 */
+	public DatabaseInstanceRemote getInstances(String replicaLocationString) {
+		try {
+			DatabaseInstanceRemote dir = lookupDatabaseInstance(replicaLocationString);
+			return dir;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			ErrorHandling.errorNoEvent("Unable to access database instance at: " + replicaLocationString);
+		}
+		return null; //never reached.
+	}
 }

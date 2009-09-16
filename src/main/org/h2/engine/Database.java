@@ -718,6 +718,17 @@ public class Database implements DataHandler {
 
 		starting = true;
 
+		if (Constants.IS_H2O && !isManagementDB()){ //don't run this code with the TCP server management DB
+			/*
+			 * Add this database instance to the RMI registry.
+			 * This must be done before meta-records are executed.
+			 */
+			String dbURL = DatabaseURL.parseURL(this.originalURL).getNewURL();
+			Diagnostic.traceNoEvent(Diagnostic.FULL, "Creating remote proxy for database instance: " + dbURL);
+			databaseInstance = new DatabaseInstance(dbURL, systemSession); //original URL may contain 'localhost'.
+			databaseInstanceLocator.registerDatabaseInstance(databaseInstance);
+		}
+		
 		Cursor cursor = metaIdIndex.find(systemSession, null, null);
 		// first, create all function aliases and sequences because
 		// they might be used in create table / view / constraints and so on
@@ -763,15 +774,7 @@ public class Database implements DataHandler {
 
 			Diagnostic.traceNoEvent(Diagnostic.FINAL, " Created schema manager tables.");
 		} 
-		if (Constants.IS_H2O && !isManagementDB()){ //don't run this code with the TCP server management DB
-			/*
-			 * Add this database instance to the RMI registry.
-			 */
-			String dbURL = DatabaseURL.parseURL(this.originalURL).getNewURL();
-			Diagnostic.traceNoEvent(Diagnostic.FULL, "Creating remote proxy for database instance: " + dbURL);
-			databaseInstance = new DatabaseInstance(dbURL, systemSession); //original URL may contain 'localhost'.
-			databaseInstanceLocator.registerDatabaseInstance(databaseInstance);
-		}
+
 	}
 
 	public Schema getMainSchema() {
@@ -2671,5 +2674,14 @@ public class Database implements DataHandler {
 	public Set<DatabaseInstanceRemote> getDatabaseInstances(
 			Set<String> replicaLocations) {
 		return databaseInstanceLocator.getInstances(replicaLocations);
+	}
+
+	/**
+	 * @param replicaLocationString
+	 * @return
+	 */
+	public DatabaseInstanceRemote getDatabaseInstance(
+			String replicaLocationString) {
+		return databaseInstanceLocator.getInstances(replicaLocationString);
 	}
 }

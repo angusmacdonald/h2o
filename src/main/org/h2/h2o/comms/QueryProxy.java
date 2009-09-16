@@ -29,7 +29,7 @@ public class QueryProxy implements Serializable{
 
 	private String tableName;
 
-	private Set<String> replicaLocations;
+	private Set<DatabaseInstanceRemote> replicaLocations;
 
 
 	/**
@@ -39,11 +39,11 @@ public class QueryProxy implements Serializable{
 	 * @param basicQuery
 	 */
 	public QueryProxy(LockType lockGranted, String tableName,
-			Set<String> replicaStrings) {
+			Set<DatabaseInstanceRemote> replicaLocations) {
 		super();
 		this.lockGranted = lockGranted;
 		this.tableName = tableName;
-		this.replicaLocations = replicaStrings;
+		this.replicaLocations = replicaLocations;
 	}
 
 	/**
@@ -51,7 +51,6 @@ public class QueryProxy implements Serializable{
 	 * @throws SQLException
 	 */
 	public int sendToAllReplicas(String query, Database db) throws SQLException {
-		Set<DatabaseInstanceRemote> remoteReplicaLocations = getReplicaLocations(db);
 
 		String transactionName = TransactionNameGenerator.generateName();
 		int count = 0;
@@ -61,7 +60,7 @@ public class QueryProxy implements Serializable{
 		/*
 		 * Send the query to each DB instance holding a replica.
 		 */
-		for (DatabaseInstanceRemote remoteReplica: remoteReplicaLocations){
+		for (DatabaseInstanceRemote remoteReplica: replicaLocations){
 			try {
 				count = remoteReplica.prepareQuery(query, transactionName);
 
@@ -82,7 +81,7 @@ public class QueryProxy implements Serializable{
 		/*
 		 * Commit or rollback the transaction.
 		 */
-		for (DatabaseInstanceRemote remoteReplica: remoteReplicaLocations){
+		for (DatabaseInstanceRemote remoteReplica: replicaLocations){
 			try {
 				count = remoteReplica.commitQuery(commit, transactionName);
 			} catch (RemoteException e) {
@@ -105,16 +104,6 @@ public class QueryProxy implements Serializable{
 		}
 
 		return count;
-	}
-
-	/**
-	 * Get the locations of each of the remote replicas for the given table.
-	 * @return
-	 */
-	private Set<DatabaseInstanceRemote> getReplicaLocations(Database db) {
-
-		return db.getDatabaseInstances(replicaLocations);
-
 	}
 
 }
