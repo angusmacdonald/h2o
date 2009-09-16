@@ -7,6 +7,7 @@
 package org.h2.expression;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import org.h2.engine.DbObject;
 import org.h2.table.ColumnResolver;
@@ -68,7 +69,7 @@ public class ExpressionVisitor {
     private int type;
     private long maxDataModificationId;
     private ColumnResolver resolver;
-    private HashSet dependencies;
+    private Set dependencies;
 
     private ExpressionVisitor(int type) {
         this.type = type;
@@ -100,7 +101,7 @@ public class ExpressionVisitor {
      *
      * @return the set
      */
-    public HashSet getDependencies() {
+    public Set getDependencies() {
         return dependencies;
     }
 
@@ -108,10 +109,10 @@ public class ExpressionVisitor {
      * Set all dependencies.
      * This is used for GET_DEPENDENCIES visitors.
      *
-     * @param dependencies the dependency set
+     * @param dependencies2 the dependency set
      */
-    public void setDependencies(HashSet dependencies) {
-        this.dependencies = dependencies;
+    public void setDependencies(Set dependencies2) {
+        this.dependencies = dependencies2;
     }
 
     /**

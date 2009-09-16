@@ -10,7 +10,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
-import org.h2.engine.Engine;
 import org.h2.engine.SchemaManager;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;

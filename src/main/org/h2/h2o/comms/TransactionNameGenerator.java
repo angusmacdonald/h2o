@@ -16,7 +16,9 @@ public class TransactionNameGenerator {
 	 */
 	public static synchronized String generateName(){
 		
-		
+		/*TODO this is only unique for basic examples. Where there are multiple distributed queries there could
+		 * easily be conflicting transactions.
+		 */
 		return "TRANSACTION_" + lastNumber++;
 	}
 }

@@ -1765,7 +1765,7 @@ public class Database implements DataHandler {
 		default:
 		}
 		Set<ReplicaSet> list = getAllTables();
-		HashSet set = new HashSet();
+		Set set = new HashSet();
 
 		Set<ReplicaSet> allreplicas = getAllTables();
 

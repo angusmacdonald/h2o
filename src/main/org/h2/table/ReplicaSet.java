@@ -102,6 +102,7 @@ public class ReplicaSet{
 		return tableName;
 	}
 
+	@Override
 	public String toString(){
 		return getTableName();
 	}
@@ -143,7 +144,7 @@ public class ReplicaSet{
 	 * Add dependancies to each copy.
 	 * @param set
 	 */
-	public void addDependencies(HashSet set) {
+	public void addDependencies(Set set) {
 		if (replicas != null && replicas.size() > 0){
 			for (Table table: replicas){
 				table.addDependencies(set);

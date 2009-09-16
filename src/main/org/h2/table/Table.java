@@ -8,7 +8,7 @@ package org.h2.table;
 
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Set;
 
 import org.h2.command.Prepared;
 import org.h2.constant.ErrorCode;
@@ -100,7 +100,8 @@ public abstract class Table extends SchemaObjectBase {
         this.persistent = persistent;
     }
 
-    public void rename(String newName) throws SQLException {
+    @Override
+	public void rename(String newName) throws SQLException {
         super.rename(newName);
         for (int i = 0; constraints != null && i < constraints.size(); i++) {
             Constraint constraint = (Constraint) constraints.get(i);
@@ -251,7 +252,8 @@ public abstract class Table extends SchemaObjectBase {
      */
     public abstract long getRowCountApproximation();
 
-    public String getCreateSQLForCopy(Table table, String quotedName) {
+    @Override
+	public String getCreateSQLForCopy(Table table, String quotedName) {
         throw Message.throwInternalError();
     }
 
@@ -260,7 +262,7 @@ public abstract class Table extends SchemaObjectBase {
      *
      * @param dependencies the current set of dependencies
      */
-    public void addDependencies(HashSet dependencies) {
+    public void addDependencies(Set dependencies) {
         if (sequences != null) {
             for (int i = 0; i < sequences.size(); i++) {
                 dependencies.add(sequences.get(i));
@@ -273,7 +275,8 @@ public abstract class Table extends SchemaObjectBase {
         }
     }
 
-    public ObjectArray getChildren() {
+    @Override
+	public ObjectArray getChildren() {
         ObjectArray children = new ObjectArray();
         ObjectArray indexes = getIndexes();
         if (indexes != null) {
@@ -383,7 +386,8 @@ public abstract class Table extends SchemaObjectBase {
         }
     }
 
-    public void removeChildrenAndResources(Session session) throws SQLException {
+    @Override
+	public void removeChildrenAndResources(Session session) throws SQLException {
         while (views != null && views.size() > 0) {
             TableView view = (TableView) views.get(0);
             views.remove(0);
@@ -484,7 +488,8 @@ public abstract class Table extends SchemaObjectBase {
         return columns;
     }
 
-    public int getType() {
+    @Override
+	public int getType() {
     
         return DbObject.TABLE_OR_VIEW;
     }

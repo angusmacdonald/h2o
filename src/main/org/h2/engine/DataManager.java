@@ -7,14 +7,11 @@ import java.util.Set;
 
 import org.h2.command.Command;
 import org.h2.command.Parser;
-import org.h2.constant.ErrorCode;
 import org.h2.h2o.comms.DataManagerRemote;
 import org.h2.h2o.comms.DatabaseInstanceRemote;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.message.Message;
 import org.h2.result.LocalResult;
-import org.h2.test.db.Db;
-import org.h2.value.Value;
 
 import uk.ac.stand.dcs.nds.util.Diagnostic;
 
@@ -113,11 +110,6 @@ public class DataManager implements DataManagerRemote {
 	 */
 	private int cachedTableID;
 
-	/**
-	 * The location of the primary replica - the same location as this data manager.
-	 */
-	private String cachedReplicaLocation;
-
 	private Set<DatabaseInstanceRemote> replicaLocations;
 	
 	private Database database;
@@ -132,7 +124,7 @@ public class DataManager implements DataManagerRemote {
 		this.schemaName = schemaName;
 
 		this.cachedTableID = -1;
-		this.cachedReplicaLocation = null;
+		
 		this.queryParser = new Parser(session, true);
 
 		this.replicaLocations = new HashSet<DatabaseInstanceRemote>();
@@ -247,54 +239,52 @@ public class DataManager implements DataManagerRemote {
 		return qp;
 	}
 
-	private String getPrimaryReplicaLocation() throws SQLException{
-		if (cachedReplicaLocation != null)
-			return cachedReplicaLocation;
-
-		String sql = "SELECT db_location, connection_type, machine_name, connection_port " +
-		"FROM H2O.H2O_REPLICA, H2O.H2O_CONNECTION, H2O.H2O_TABLE " +
-		"WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND " + TABLES + ".table_id=" + REPLICAS + ".table_id " + 
-		"AND H2O_CONNECTION.connection_id = H2O_REPLICA.connection_id AND primary_copy = true;";
-
-		LocalResult result = null;
-
-		sqlQuery = queryParser.prepareCommand(sql);
-
-		try {
-
-			result = sqlQuery.executeQueryLocal(1);
-
-		} catch (Exception e){
-			e.printStackTrace();
-		}
-
-		if (result != null && result.next()){
-			Value[] row = result.currentRow();
-
-			String dbLocation = row[0].getString();
-			String connectionType = row[1].getString();
-			String machineName = row[2].getString();
-			String connectionPort = row[3].getString();
-
-			String dbName = null;
-			if (connectionType.equals("tcp")){
-				dbName = "jdbc:h2:" + connectionType + "://" + machineName + ":" + connectionPort + "/" + dbLocation;
-			} else if (connectionType.equals("mem")){
-				dbName = "jdbc:h2:" + dbLocation;
-			} else {
-				Message.throwInternalError("This connection type isn't supported yet. Get on that!");
-			}
-
-			cachedReplicaLocation = dbName;
-			return cachedReplicaLocation;
-		}
-
-		throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
-
-
-	}
-
-
+//	private String getPrimaryReplicaLocation() throws SQLException{
+//		if (cachedReplicaLocation != null)
+//			return cachedReplicaLocation;
+//
+//		String sql = "SELECT db_location, connection_type, machine_name, connection_port " +
+//		"FROM H2O.H2O_REPLICA, H2O.H2O_CONNECTION, H2O.H2O_TABLE " +
+//		"WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND " + TABLES + ".table_id=" + REPLICAS + ".table_id " + 
+//		"AND H2O_CONNECTION.connection_id = H2O_REPLICA.connection_id AND primary_copy = true;";
+//
+//		LocalResult result = null;
+//
+//		sqlQuery = queryParser.prepareCommand(sql);
+//
+//		try {
+//
+//			result = sqlQuery.executeQueryLocal(1);
+//
+//		} catch (Exception e){
+//			e.printStackTrace();
+//		}
+//
+//		if (result != null && result.next()){
+//			Value[] row = result.currentRow();
+//
+//			String dbLocation = row[0].getString();
+//			String connectionType = row[1].getString();
+//			String machineName = row[2].getString();
+//			String connectionPort = row[3].getString();
+//
+//			String dbName = null;
+//			if (connectionType.equals("tcp")){
+//				dbName = "jdbc:h2:" + connectionType + "://" + machineName + ":" + connectionPort + "/" + dbLocation;
+//			} else if (connectionType.equals("mem")){
+//				dbName = "jdbc:h2:" + dbLocation;
+//			} else {
+//				Message.throwInternalError("This connection type isn't supported yet. Get on that!");
+//			}
+//
+//			cachedReplicaLocation = dbName;
+//			return cachedReplicaLocation;
+//		}
+//
+//		throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
+//
+//
+//	}
 
 	public int removeReplica(String dbLocation, String machineName, int connectionPort, String connectionType) throws RemoteException, SQLException {
 		int connectionID = getConnectionID(machineName, connectionPort, connectionType);
@@ -427,10 +417,6 @@ public class DataManager implements DataManagerRemote {
 	private int executeUpdate(String query) throws SQLException{
 		sqlQuery = queryParser.prepareCommand(query);
 		return sqlQuery.executeUpdate();
-	}
-
-	private Set<DatabaseInstanceRemote> getAllReplicaLocations() throws SQLException{
-		return replicaLocations;
 	}
 
 	private String createFullDatabaseLocation(String dbLocationOnDisk, String connectionType, String machineName, String connectionPort, boolean isSM){

@@ -3,12 +3,9 @@ package org.h2.h2o.comms;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.h2.engine.Database;
-import org.h2.engine.Session;
-
 import uk.ac.stand.dcs.nds.util.ErrorHandling;
 
 /**
@@ -60,9 +57,9 @@ public class QueryProxy implements Serializable{
 		/*
 		 * Send the query to each DB instance holding a replica.
 		 */
-		for (DatabaseInstanceRemote remoteReplica: replicaLocations){
+		for (TwoPhaseCommit remoteReplica: replicaLocations){
 			try {
-				count = remoteReplica.prepareQuery(query, transactionName);
+				count = remoteReplica.prepare(query, transactionName);
 
 				if (count != 0) commit = false; // Prepare operation failed at remote machine, so rollback the query everywhere.
 			} catch (RemoteException e) {
@@ -81,9 +78,9 @@ public class QueryProxy implements Serializable{
 		/*
 		 * Commit or rollback the transaction.
 		 */
-		for (DatabaseInstanceRemote remoteReplica: replicaLocations){
+		for (TwoPhaseCommit remoteReplica: replicaLocations){
 			try {
-				count = remoteReplica.commitQuery(commit, transactionName);
+				count = remoteReplica.commit(commit, transactionName);
 			} catch (RemoteException e) {
 				ErrorHandling.errorNoEvent("Unable to send " + (commit? "commit": "rollback") + " message to remote replica.");
 			} catch (SQLException e){
@@ -104,6 +101,10 @@ public class QueryProxy implements Serializable{
 		}
 
 		return count;
+	}
+	
+	public LockType getLockGranted(){
+		return lockGranted;
 	}
 
 }

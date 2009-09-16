@@ -2,18 +2,12 @@ package org.h2.command;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.Set;
-
 import org.h2.engine.Database;
 import org.h2.h2o.comms.DataManagerRemote;
-import org.h2.h2o.comms.DatabaseInstanceRemote;
 import org.h2.h2o.comms.QueryProxy;
-import org.h2.h2o.comms.TransactionNameGenerator;
-
-import uk.ac.stand.dcs.nds.util.ErrorHandling;
 
 /**
- * 
+ * Utility class responsible for propagating queries for a given table to all relevant machines.
  *
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */

@@ -5,10 +5,7 @@ import java.sql.SQLException;
 
 import org.h2.command.Command;
 import org.h2.command.Parser;
-import org.h2.command.dml.Insert;
 import org.h2.engine.Session;
-
-import uk.ac.stand.dcs.nds.util.Diagnostic;
 
 /**
  * Proxy class exposed via RMI, allowing semi-parsed queries to be sent to remote replicas for execution.
@@ -36,9 +33,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	/* (non-Javadoc)
 	 * @see org.h2.command.dm.DatabaseInstanceRemote#executeUpdate(org.h2.command.Prepared)
 	 */
-	public int prepareQuery(String query, String transactionName) throws RemoteException, SQLException{
-		//System.out.println("Update: " + query);
-
+	public int prepare(String query, String transactionName) throws RemoteException, SQLException{
 		if (query == null){
 			System.err.println("Shouldn't happen.");
 		}
@@ -58,7 +53,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	 * @see org.h2.h2o.comms.DatabaseInstanceRemote#commitQuery(boolean)
 	 */
 	@Override
-	public int commitQuery(boolean commit, String transactionName) throws RemoteException, SQLException {
+	public int commit(boolean commit, String transactionName) throws RemoteException, SQLException {
 		Command command = parser.prepareCommand((commit? "commit": "rollback") + " TRANSACTION " + transactionName);
 		int result = command.executeUpdate();
 

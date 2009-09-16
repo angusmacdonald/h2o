@@ -6,10 +6,7 @@
  */
 package org.h2.command.ddl;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.Set;
-
 import org.h2.command.QueryDistributor;
 import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
@@ -18,9 +15,6 @@ import org.h2.engine.Database;
 import org.h2.engine.Right;
 import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
-import org.h2.h2o.comms.DataManagerRemote;
-import org.h2.h2o.comms.DatabaseInstanceRemote;
-import org.h2.h2o.comms.QueryProxy;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
 import org.h2.table.ReplicaSet;
@@ -124,25 +118,7 @@ public class DropTable extends SchemaCommand {
 			 */
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_") && !internalQuery){
 
-
-				
-				DataManagerRemote dm = db.getDataManager(fullTableName);
-				QueryProxy qp = null;
-
-				try {
-					if (dm == null){
-						System.err.println("Data manager proxy was null when requesting table: " + fullTableName);
-						throw new SQLException("Data manager not found for table: " + fullTableName);
-					} else {
-						qp = dm.requestQueryProxy(QueryProxy.LockType.WRITE);
-					}
-				} catch (RemoteException e1) {
-					e1.printStackTrace();
-					throw new SQLException("Unable to contact data manager.");
-				}
-
-				qp.sendToAllReplicas(sqlStatement, session.getDatabase());
-
+				QueryDistributor.propagateUpdate(table.getSchema().getName() + "." + table.getName(), sqlStatement, session.getDatabase());
 
 				try {
 					SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
@@ -154,23 +130,23 @@ public class DropTable extends SchemaCommand {
 					// schema manager information.
 				}
 
-
 			} else {
-				
-
-				//db.removeSchemaObject(session, table);
-
 
 				if (Constants.IS_H2O){
+					/*
+					 * We want to remove the local copy of the data plus any other references to remote tables (i.e. linked tables need to
+					 * be removed as well) 
+					 */
 					Table[] tableArray = tables.getAllCopies().toArray(new Table[0]); // add to array to prevent concurrent modification exceptions.
 
 					for (Table t: tableArray){
 						t.setModified();
 						db.removeSchemaObject(session, t);
 					}
-					
+
 					db.removeDataManager(fullTableName, true);
 				} else {
+					// Default H2 behaviour.
 					table.setModified();
 					db.removeSchemaObject(session, table);
 
@@ -184,6 +160,7 @@ public class DropTable extends SchemaCommand {
 		}
 	}
 
+	@Override
 	public int update() throws SQLException {
 		session.commit(true);
 		prepareDrop();
