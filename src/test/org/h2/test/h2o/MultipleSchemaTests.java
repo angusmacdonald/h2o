@@ -207,8 +207,7 @@ public class MultipleSchemaTests extends TestBase {
 
 			validateResults(pKey2, secondCol2, sa.getResultSet());
 
-			sa.execute("DROP TABLE IF EXISTS SCHEMA2.TEST");
-			sa.execute("DROP SCHEMA SCHEMA2");
+			sa.execute("DROP ALL OBJECTS");
 
 		} catch (SQLException e){
 			e.printStackTrace();
@@ -237,7 +236,6 @@ public class MultipleSchemaTests extends TestBase {
 				fail("Expected update count to be '0'");
 			}
 
-
 			sb.execute("SELECT LOCAL ONLY * FROM SCHEMA2.TEST ORDER BY ID;");
 
 			int[] pKey = {4, 5};
@@ -252,10 +250,8 @@ public class MultipleSchemaTests extends TestBase {
 
 			validateResults(pKey2, secondCol2, sb.getResultSet());
 
-			sa.execute("DROP TABLE IF EXISTS SCHEMA2.TEST");
-			sb.execute("DROP TABLE IF EXISTS SCHEMA2.TEST");
-			sa.execute("DROP SCHEMA SCHEMA2");
-			sb.execute("DROP SCHEMA SCHEMA2");
+			sa.execute("DROP ALL OBJECTS");
+			sb.execute("DROP ALL OBJECTS");
 
 		} catch (SQLException e){
 			e.printStackTrace();

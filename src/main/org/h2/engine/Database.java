@@ -2680,7 +2680,18 @@ public class Database implements DataHandler {
 	 */
 	public DatabaseInstanceRemote getDatabaseInstance(
 			String replicaLocationString) {
-		return databaseInstanceLocator.getInstances(replicaLocationString);
+		return databaseInstanceLocator.getInstance(replicaLocationString);
+	}
+	
+	/**
+	 * @return
+	 */
+	public DatabaseInstanceRemote getLocalDatabaseInstance() {
+		return getDatabaseInstance(originalURL);
+	}
+	
+	public String getOriginalDatabaseURL(){
+		return originalURL;
 	}
 	
 	public void removeLocalDatabaseInstance(){
@@ -2695,4 +2706,6 @@ public class Database implements DataHandler {
 		}
 		
 	}
+
+
 }

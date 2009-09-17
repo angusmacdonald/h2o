@@ -72,6 +72,14 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 		return databaseConnectionString;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.DatabaseInstanceRemote#getConnectionString()
+	 */
+	@Override
+	public String getConnectionString() throws RemoteException {
+		return session.getDatabase().getOriginalDatabaseURL();
+	}
+
 
 
 }

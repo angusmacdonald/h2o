@@ -162,6 +162,7 @@ public class JdbcStatement extends TraceObject implements Statement {
                     } else {
                         returnsResultSet = false;
                         updateCount = command.executeUpdate();
+
                     }
                 } finally {
                     setExecutingStatement(null);

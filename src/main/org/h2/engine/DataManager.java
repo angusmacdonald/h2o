@@ -111,10 +111,15 @@ public class DataManager implements DataManagerRemote {
 	private int cachedTableID;
 
 	private Set<DatabaseInstanceRemote> replicaLocations;
-	
+
+	/**
+	 * The database instance which is running this data manager. 
+	 */
+	private DatabaseInstanceRemote primaryLocation;
+
 	private Database database;
 
-	public DataManager(String tableName, String schemaName, Session session, long modificationID, int tableSet, Database database) throws SQLException{
+	public DataManager(String tableName, String schemaName, long modificationID, int tableSet, Database database) throws SQLException{
 		this.tableName = tableName;
 		
 		if (schemaName.equals("") || schemaName == null){
@@ -125,9 +130,17 @@ public class DataManager implements DataManagerRemote {
 
 		this.cachedTableID = -1;
 		
-		this.queryParser = new Parser(session, true);
+		this.queryParser = new Parser(database.getSystemSession(), true);
 
 		this.replicaLocations = new HashSet<DatabaseInstanceRemote>();
+		this.primaryLocation = null;
+		
+		//this.primaryLocation = database.getLocalDatabaseInstance();
+		
+//		this.primaryLocation = getDatabaseInstance(createFullDatabaseLocation(database.getDatabaseLocation(), 
+//				database.getConnectionType(), database.getLocalMachineAddress(), database.getLocalMachinePort() + "", database.isSM()));
+	//	this.replicaLocations.add(primaryLocation);
+		
 		this.database = database;
 		
 		addInformationToDB(modificationID, database.getDatabaseLocation(), "TABLE", database.getLocalMachineAddress(), 
@@ -310,6 +323,16 @@ public class DataManager implements DataManagerRemote {
 		return executeUpdate(sql);
 	}
 	
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.DataManagerRemote#getLocation()
+	 */
+	@Override
+	public String getLocation() throws RemoteException{
+		return primaryLocation.getConnectionString();
+	}
+
+	
 	/**
 	 * Add the new table to the schema manager. Called at the end of a CreateTable update. 
 	 * @param tableName				Name of the table being added.
@@ -336,7 +359,10 @@ public class DataManager implements DataManagerRemote {
 			addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, tableSet, true);
 		}
 		
-		replicaLocations.add(getDatabaseInstance(createFullDatabaseLocation(databaseLocation, connectionType, localMachineAddress, localMachinePort + "", isSM)));
+		if (primaryLocation == null){
+		primaryLocation = getDatabaseInstance(createFullDatabaseLocation(databaseLocation, connectionType, localMachineAddress, localMachinePort + "", isSM));
+		}
+		replicaLocations.add(primaryLocation);
 	
 	}
 
@@ -415,7 +441,9 @@ public class DataManager implements DataManagerRemote {
 
 	private int executeUpdate(String query) throws SQLException{
 		sqlQuery = queryParser.prepareCommand(query);
-		return sqlQuery.executeUpdate();
+		int result = sqlQuery.executeUpdate();
+		
+		return result;
 	}
 
 	private String createFullDatabaseLocation(String dbLocationOnDisk, String connectionType, String machineName, String connectionPort, boolean isSM){
@@ -514,9 +542,5 @@ public class DataManager implements DataManagerRemote {
 	public void testAvailability() {
 		//Doesn't do anything.
 	}
-
-	
-
-
 
 }

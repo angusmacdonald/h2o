@@ -182,7 +182,7 @@ public class DatabaseInstanceLocator extends RMIServer {
 	 * @param replicaLocationString
 	 * @return
 	 */
-	public DatabaseInstanceRemote getInstances(String replicaLocationString) {
+	public DatabaseInstanceRemote getInstance(String replicaLocationString) {
 		try {
 			DatabaseInstanceRemote dir = lookupDatabaseInstance(replicaLocationString);
 			return dir;

@@ -25,6 +25,7 @@ public class UpdateTests extends TestBase {
 		try {
 			sb.execute("CREATE REPLICA TEST");
 		} catch (SQLException e1) {
+			e1.printStackTrace();
 			fail("This wasn't even the interesting part of the test.");
 		}
 		

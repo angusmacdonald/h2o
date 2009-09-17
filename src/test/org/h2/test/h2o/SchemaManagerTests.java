@@ -322,8 +322,8 @@ public class SchemaManagerTests {
 			sa.close();
 			ca.close();
 		} catch (SQLException sqle){
-			fail("SQLException thrown when it shouldn't have.");
 			sqle.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
 		}
 	}
 

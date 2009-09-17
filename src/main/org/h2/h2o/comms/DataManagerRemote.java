@@ -47,4 +47,12 @@ public interface DataManagerRemote extends H2ORemote {
 	 * @throws SQLException 
 	 */
 	public int removeDataManager() throws RemoteException, SQLException;
+
+	/**
+	 * Get the location of a single replica for the given table. This is used in creating linked
+	 * tables, so the return type is string rather than DatabaseInstanceRemote.
+	 * @return Database connection URL for a given remote database.
+	 * @throws RemoteException 
+	 */
+	public String getLocation() throws RemoteException;
 }

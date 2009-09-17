@@ -8,6 +8,7 @@ package org.h2.command;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.text.Collator;
 import java.util.HashSet;
@@ -116,6 +117,7 @@ import org.h2.expression.TableFunction;
 import org.h2.expression.ValueExpression;
 import org.h2.expression.Variable;
 import org.h2.expression.Wildcard;
+import org.h2.h2o.comms.DataManagerRemote;
 import org.h2.index.Index;
 import org.h2.message.Message;
 import org.h2.result.SortOrder;
@@ -148,6 +150,7 @@ import org.h2.value.ValueTime;
 import org.h2.value.ValueTimestamp;
 
 import uk.ac.stand.dcs.nds.util.Diagnostic;
+import uk.ac.stand.dcs.nds.util.ErrorHandling;
 
 /**
  * The parser is used to convert a SQL statement string to an command object.
@@ -191,7 +194,7 @@ public class Parser {
 	private boolean rightsChecked;
 	private boolean recompileAlways;
 	private ObjectArray indexedParameterList;
-	
+
 	/**
 	 * True if this query has been sent internally through the RMI interface, false if it has come from
 	 * an external JBDC connection.
@@ -902,9 +905,9 @@ public class Parser {
 		currentPrepared = command;
 		read("INTO");
 		Table table = readTableOrView();
-		
-		
-		
+
+
+
 		command.setTable(table);
 		if (readIf("(")) {
 			if (isToken("SELECT") || isToken("FROM")) {
@@ -3584,10 +3587,10 @@ public class Parser {
 
 
 	private Prepared parseNew() throws SQLException {
-			
+
 		return null;
 	}
-	
+
 	private boolean addRoleOrRight(GrantRevoke command) throws SQLException {
 		if (readIf("SELECT")) {
 			command.addRight(Right.SELECT);
@@ -4372,27 +4375,46 @@ public class Parser {
 	public Table findViaSchemaManager(String tableName, String thisSchemaName) throws SQLException {
 
 		/*
-		 * Attempt to find the location of this table, if it exists remotely.
+		 * Attempt to locate the table if it exists remotely.
 		 */
-		String dbname = SchemaManager.getInstance(session).getDataManagerLocation(tableName, thisSchemaName);
+		String tableLocation = null;
+		DataManagerRemote dm = null;
+		
+//		if (database != null){
+//			dm = database.getDataManager(thisSchemaName + "." + tableName);
+//			if (dm == null){
+//				//Failed to find the given table.
+//				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
+//			}
+//			try {
+//				tableLocation = dm.getLocation();
+//			} catch (RemoteException e) {
+//				throw new SQLException("Couldn't connect with remote DB.");
+//			}
+//
+//		} else {
+			//Old Schema Manager method.
+			tableLocation = SchemaManager.getInstance(session).getDataManagerLocation(tableName, thisSchemaName);
+//		}
 
 		Parser queryParser = new Parser(session, true);
 
-		String sql = "CREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + dbname + "', '" + SchemaManager.USERNAME + "', '" + SchemaManager.PASSWORD + "', '" + tableName + "');";
+		String sql = "CREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + tableLocation + "', '" + SchemaManager.USERNAME + "', '" + SchemaManager.PASSWORD + "', '" + tableName + "');";
 
 		Command sqlQuery = queryParser.prepareCommand(sql);
 		int result = sqlQuery.executeUpdate();
 
 
-		if (result != 0){
-			//Failed to find a table of this name
-			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
-		} else {
+		if (result == 0){
 			//Linked table was successfully added.
 			Diagnostic.traceNoEvent(Diagnostic.FULL, "Successfully created linked table '" + tableName + "'. Attempting to access it.");
 			return readTableOrView(tableName, false, LocationPreference.PRIMARY);
+		} else {
+			ErrorHandling.hardError("Shouldn't have reached this point.");
 		}
 
+
+		return null; //Not reachable.
 	}
 
 
@@ -4837,7 +4859,7 @@ public class Parser {
 
 		return command;
 	}
-	
+
 	/*
 	 * END OF H2O ############################################################
 	 */
