@@ -152,7 +152,9 @@ public abstract class RMIServer {
 		if (removeLocalOnly) return;
 		
 		try {
+
 			registry.unbind(objectName);
+			
 		}  catch (AccessException e) {
 			ErrorHandling.errorNoEvent(e, "Didn't have permission to perform unbind operation on RMI registry.");
 		} catch (RemoteException e) {

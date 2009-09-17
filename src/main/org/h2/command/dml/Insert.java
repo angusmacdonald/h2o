@@ -9,13 +9,13 @@ package org.h2.command.dml;
 import java.sql.SQLException;
 import org.h2.command.Command;
 import org.h2.command.Prepared;
-import org.h2.command.QueryDistributor;
 import org.h2.constant.ErrorCode;
 import org.h2.engine.Constants;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
 import org.h2.expression.Parameter;
+import org.h2.h2o.comms.QueryProxy;
 import org.h2.log.UndoLogRecord;
 import org.h2.message.Message;
 import org.h2.result.LocalResult;
@@ -89,7 +89,8 @@ public class Insert extends Prepared{
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
 		if (Constants.IS_H2O && !internalQuery && !table.getName().startsWith(Constants.H2O_SCHEMA) && !session.getDatabase().isManagementDB()){
-			return QueryDistributor.propagateUpdate(table.getSchema().getName() + "." + table.getName(), sqlStatement, session.getDatabase());
+			QueryProxy qp = QueryProxy.getQueryProxy(session.getDatabase().getDataManager(table.getSchema().getName() + "." + table.getName()));
+			return qp.executeUpdate(sqlStatement);
 		}
 		
 		setCurrentRowNumber(0);

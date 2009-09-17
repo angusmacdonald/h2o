@@ -17,9 +17,17 @@ public class Constants {
 	public static boolean IS_H2O = true;
 
 	/**
+	 * Is the database running as part of a JUnit test. A test may choose to set this to true to
+	 * induce failure in update propagation - this is used to test the system's ability to rollback
+	 * inserts on this type of failure.
+	 */
+	public static boolean IS_TESTING_PRE_COMMIT_FAILURE = false;
+	public static boolean IS_TESTING_PRE_PREPARE_FAILURE = false;
+	/**
 	 * Used in testing.
 	 */
 	public static String DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test";
+
 
     /**
      * The build id is incremented for each public release.

@@ -2654,9 +2654,7 @@ public class Database implements DataHandler {
 	}
 
 	public DataManagerRemote getDataManager(String tableName) throws SQLException{
-
 		return dataManagerLocator.lookupDataManager(tableName);
-
 	}
 
 	/**
@@ -2683,5 +2681,18 @@ public class Database implements DataHandler {
 	public DatabaseInstanceRemote getDatabaseInstance(
 			String replicaLocationString) {
 		return databaseInstanceLocator.getInstances(replicaLocationString);
+	}
+	
+	public void removeLocalDatabaseInstance(){
+		try {
+			databaseInstanceLocator.removeRegistryObject(databaseInstance.getName(), false);
+		} catch (NotBoundException e) {
+			/*
+			 * Not a big problem because all we are doing at this stage is trying to remove it.
+			 * Happens nearly every time the database is closed from the shutdown hook, hence being inside this IF statement.
+			 */
+			Diagnostic.traceNoEvent(Diagnostic.FULL, "Attempted to remove database instance from registry, but it wasn't found.");
+		}
+		
 	}
 }

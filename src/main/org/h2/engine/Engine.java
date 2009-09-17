@@ -10,7 +10,6 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import org.h2.command.CommandInterface;
 import org.h2.command.Parser;
@@ -49,7 +48,7 @@ public class Engine {
      * @return
      */
     public static Database getDatabase(String databaseName){
-    	return (Database) DATABASES.get(databaseName.toUpperCase());
+    	return (Database) DATABASES.get(databaseName);
     }
 
     private Session openSession(ConnectionInfo ci, boolean ifExists, String cipher) throws SQLException {

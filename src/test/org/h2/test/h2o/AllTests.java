@@ -13,7 +13,8 @@ import org.junit.runners.Suite;
 	SchemaManagerTests.class,
 	MultipleSchemaTests.class,
 	ReplicaTests.class,
-	IndexTests.class
+	IndexTests.class,
+	UpdateTests.class
 })
 public class AllTests {
  //The above annotations do all the work.

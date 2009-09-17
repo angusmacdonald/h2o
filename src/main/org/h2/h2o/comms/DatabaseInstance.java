@@ -46,7 +46,6 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 
 		command = parser.prepareCommand("PREPARE COMMIT " + transactionName);
 		return command.executeUpdate();
-
 	}
 
 	/* (non-Javadoc)

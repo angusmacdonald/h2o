@@ -182,7 +182,6 @@ public class DataManager implements DataManagerRemote {
 	public boolean addReplicaInformation(long modificationID,
 			String databaseLocation, String tableType,
 			String localMachineAddress, int localMachinePort, String connectionType, int replicaSet, boolean isSM) throws RemoteException{
-
 		try {
 
 			int connectionID = getConnectionID(localMachineAddress, localMachinePort, connectionType);

@@ -7,7 +7,6 @@
 package org.h2.command.ddl;
 
 import java.sql.SQLException;
-import org.h2.command.QueryDistributor;
 import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
 import org.h2.engine.Constants;
@@ -15,6 +14,7 @@ import org.h2.engine.Database;
 import org.h2.engine.Right;
 import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
+import org.h2.h2o.comms.QueryProxy;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
 import org.h2.table.ReplicaSet;
@@ -118,7 +118,8 @@ public class DropTable extends SchemaCommand {
 			 */
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_") && !internalQuery){
 
-				QueryDistributor.propagateUpdate(table.getSchema().getName() + "." + table.getName(), sqlStatement, session.getDatabase());
+				QueryProxy qp = QueryProxy.getQueryProxy(session.getDatabase().getDataManager(table.getSchema().getName() + "." + table.getName()));
+				qp.executeUpdate(sqlStatement);
 
 				try {
 					SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
