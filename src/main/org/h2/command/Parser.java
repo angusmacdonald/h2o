@@ -117,7 +117,7 @@ import org.h2.expression.TableFunction;
 import org.h2.expression.ValueExpression;
 import org.h2.expression.Variable;
 import org.h2.expression.Wildcard;
-import org.h2.h2o.comms.DataManagerRemote;
+import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.index.Index;
 import org.h2.message.Message;
 import org.h2.result.SortOrder;
@@ -657,7 +657,7 @@ public class Parser {
 	}
 
 	private Update parseUpdate() throws SQLException {
-		Update command = new Update(session);
+		Update command = new Update(session, internalQuery);
 		currentPrepared = command;
 		int start = lastParseIndex;
 		TableFilter filter = readSimpleTableFilter();
@@ -716,7 +716,7 @@ public class Parser {
 	}
 
 	private Delete parseDelete() throws SQLException {
-		Delete command = new Delete(session);
+		Delete command = new Delete(session, internalQuery);
 		currentPrepared = command;
 		int start = lastParseIndex;
 		readIf("FROM");
@@ -4468,7 +4468,7 @@ public class Parser {
 			read("TO");
 			String newName = readIdentifierWithSchema(table.getSchema().getName());
 			checkSchema(table.getSchema());
-			AlterTableRename command = new AlterTableRename(session, getSchema());
+			AlterTableRename command = new AlterTableRename(session, getSchema(), internalQuery);
 			command.setOldTable(table);
 			command.setNewTableName(newName);
 			return command;

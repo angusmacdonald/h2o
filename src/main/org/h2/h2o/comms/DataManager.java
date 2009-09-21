@@ -1,4 +1,4 @@
-package org.h2.engine;
+package org.h2.h2o.comms;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
@@ -7,13 +7,17 @@ import java.util.Set;
 
 import org.h2.command.Command;
 import org.h2.command.Parser;
-import org.h2.h2o.comms.DataManagerRemote;
-import org.h2.h2o.comms.DatabaseInstanceRemote;
-import org.h2.h2o.comms.QueryProxy;
+import org.h2.engine.Database;
+import org.h2.engine.Session;
+import org.h2.h2o.autonomic.Replication;
+import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.util.LockType;
 import org.h2.message.Message;
 import org.h2.result.LocalResult;
 
 import uk.ac.stand.dcs.nds.util.Diagnostic;
+import uk.ac.stand.dcs.nds.util.ErrorHandling;
 
 /**
  * <p>The data manager represents a user table in H2O, and is responsible for storing
@@ -121,7 +125,7 @@ public class DataManager implements DataManagerRemote {
 
 	public DataManager(String tableName, String schemaName, long modificationID, int tableSet, Database database) throws SQLException{
 		this.tableName = tableName;
-		
+
 		if (schemaName.equals("") || schemaName == null){
 			schemaName = "PUBLIC";
 		}
@@ -129,20 +133,20 @@ public class DataManager implements DataManagerRemote {
 		this.schemaName = schemaName;
 
 		this.cachedTableID = -1;
-		
+
 		this.queryParser = new Parser(database.getSystemSession(), true);
 
 		this.replicaLocations = new HashSet<DatabaseInstanceRemote>();
 		this.primaryLocation = null;
-		
+
 		//this.primaryLocation = database.getLocalDatabaseInstance();
-		
-//		this.primaryLocation = getDatabaseInstance(createFullDatabaseLocation(database.getDatabaseLocation(), 
-//				database.getConnectionType(), database.getLocalMachineAddress(), database.getLocalMachinePort() + "", database.isSM()));
-	//	this.replicaLocations.add(primaryLocation);
-		
+
+		//		this.primaryLocation = getDatabaseInstance(createFullDatabaseLocation(database.getDatabaseLocation(), 
+		//				database.getConnectionType(), database.getLocalMachineAddress(), database.getLocalMachinePort() + "", database.isSM()));
+		//	this.replicaLocations.add(primaryLocation);
+
 		this.database = database;
-		
+
 		addInformationToDB(modificationID, database.getDatabaseLocation(), "TABLE", database.getLocalMachineAddress(), 
 				database.getLocalMachinePort(), database.getConnectionType(), tableSet, database.isSM());
 
@@ -206,13 +210,13 @@ public class DataManager implements DataManagerRemote {
 
 			if (!isReplicaListed(connectionID, databaseLocation)){ // the table doesn't already exist in the schema manager.
 				int result = addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, replicaSet, false);
-		
+
 				replicaLocations.add(getDatabaseInstance(replicaLocationString));
-				
+
 				return (result == 1);
 			} else {
 				replicaLocations.add(getDatabaseInstance(replicaLocationString));
-				
+
 				return false;
 			}
 		} catch (SQLException e) {
@@ -234,8 +238,8 @@ public class DataManager implements DataManagerRemote {
 	 * @see org.h2.h2o.comms.IDataManager#requestLock(java.lang.String)
 	 */
 	@Override
-	public QueryProxy requestQueryProxy(QueryProxy.LockType lockType) throws RemoteException {
-		
+	public QueryProxy requestQueryProxy(LockType lockType) throws RemoteException {
+
 
 		if (replicaLocations.size() == 0){
 			try {
@@ -245,58 +249,110 @@ public class DataManager implements DataManagerRemote {
 				System.exit(1);
 			}
 		}
-		
-		QueryProxy qp = new QueryProxy(lockType, tableName, replicaLocations);
+
+		QueryProxy qp = null;
+
+		if (lockType == LockType.CREATE){
+			//CREATE TABLE, SCHEMA - DON'T REPLICA TO ALL LOCATIONS. BASE ON REPLICATION FACTOR.
+			qp = new QueryProxy(lockType, tableName, selectReplicaLocations(this.primaryLocation));
+		} else {
+			qp = new QueryProxy(lockType, tableName, replicaLocations);
+		}
 
 		return qp;
 	}
 
-//	private String getPrimaryReplicaLocation() throws SQLException{
-//		if (cachedReplicaLocation != null)
-//			return cachedReplicaLocation;
-//
-//		String sql = "SELECT db_location, connection_type, machine_name, connection_port " +
-//		"FROM H2O.H2O_REPLICA, H2O.H2O_CONNECTION, H2O.H2O_TABLE " +
-//		"WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND " + TABLES + ".table_id=" + REPLICAS + ".table_id " + 
-//		"AND H2O_CONNECTION.connection_id = H2O_REPLICA.connection_id AND primary_copy = true;";
-//
-//		LocalResult result = null;
-//
-//		sqlQuery = queryParser.prepareCommand(sql);
-//
-//		try {
-//
-//			result = sqlQuery.executeQueryLocal(1);
-//
-//		} catch (Exception e){
-//			e.printStackTrace();
-//		}
-//
-//		if (result != null && result.next()){
-//			Value[] row = result.currentRow();
-//
-//			String dbLocation = row[0].getString();
-//			String connectionType = row[1].getString();
-//			String machineName = row[2].getString();
-//			String connectionPort = row[3].getString();
-//
-//			String dbName = null;
-//			if (connectionType.equals("tcp")){
-//				dbName = "jdbc:h2:" + connectionType + "://" + machineName + ":" + connectionPort + "/" + dbLocation;
-//			} else if (connectionType.equals("mem")){
-//				dbName = "jdbc:h2:" + dbLocation;
-//			} else {
-//				Message.throwInternalError("This connection type isn't supported yet. Get on that!");
-//			}
-//
-//			cachedReplicaLocation = dbName;
-//			return cachedReplicaLocation;
-//		}
-//
-//		throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
-//
-//
-//	}
+	//	private String getPrimaryReplicaLocation() throws SQLException{
+	//		if (cachedReplicaLocation != null)
+	//			return cachedReplicaLocation;
+	//
+	//		String sql = "SELECT db_location, connection_type, machine_name, connection_port " +
+	//		"FROM H2O.H2O_REPLICA, H2O.H2O_CONNECTION, H2O.H2O_TABLE " +
+	//		"WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND " + TABLES + ".table_id=" + REPLICAS + ".table_id " + 
+	//		"AND H2O_CONNECTION.connection_id = H2O_REPLICA.connection_id AND primary_copy = true;";
+	//
+	//		LocalResult result = null;
+	//
+	//		sqlQuery = queryParser.prepareCommand(sql);
+	//
+	//		try {
+	//
+	//			result = sqlQuery.executeQueryLocal(1);
+	//
+	//		} catch (Exception e){
+	//			e.printStackTrace();
+	//		}
+	//
+	//		if (result != null && result.next()){
+	//			Value[] row = result.currentRow();
+	//
+	//			String dbLocation = row[0].getString();
+	//			String connectionType = row[1].getString();
+	//			String machineName = row[2].getString();
+	//			String connectionPort = row[3].getString();
+	//
+	//			String dbName = null;
+	//			if (connectionType.equals("tcp")){
+	//				dbName = "jdbc:h2:" + connectionType + "://" + machineName + ":" + connectionPort + "/" + dbLocation;
+	//			} else if (connectionType.equals("mem")){
+	//				dbName = "jdbc:h2:" + dbLocation;
+	//			} else {
+	//				Message.throwInternalError("This connection type isn't supported yet. Get on that!");
+	//			}
+	//
+	//			cachedReplicaLocation = dbName;
+	//			return cachedReplicaLocation;
+	//		}
+	//
+	//		throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
+	//
+	//
+	//	}
+
+	/**
+	 * <p>Selects a set of replica locations on which replicas will be created for a given table or schema.
+	 * 
+	 * <p>This decision is currently based on the DESIRED_REPLICATION_FACTOR variable and the database instance where the
+	 * request was initiated.
+	 * @param primaryLocation	The location of the primary copy - also the location of the data manager. This location will NOT
+	 * 	be returned in the list of replica locations (because the primary copy already exists there).
+	 * @return The set of database instances that should host a replica for the given table/schema. The return value will be NULL if
+	 * 	no more replicas need to be created.
+	 */
+	private Set<DatabaseInstanceRemote> selectReplicaLocations(DatabaseInstanceRemote primaryLocation) {
+
+		if (Replication.REPLICATION_FACTOR == 1){
+			return null; //No more replicas are needed currently.
+		}
+
+		/*
+		 * The set of machines onto which new replicas will be added.
+		 */
+		Set<DatabaseInstanceRemote> newReplicaLocations = new HashSet<DatabaseInstanceRemote>();
+
+		/*
+		 * The set of all machines currently in the system.
+		 */
+		Set<DatabaseInstanceRemote> potentialReplicaLocations = database.getDatabaseInstances();
+		
+		int currentReplicationFactor = 1; //currently one copy of the table.
+
+		for (DatabaseInstanceRemote dbInstance: potentialReplicaLocations){
+			if (dbInstance.equals(primaryLocation)) continue; //primary copy exists here.
+
+			newReplicaLocations.add(dbInstance);
+			currentReplicationFactor++;
+
+			if (currentReplicationFactor == Replication.REPLICATION_FACTOR) break;
+		}
+		
+		if (currentReplicationFactor < Replication.REPLICATION_FACTOR){
+			//Couldn't replicate to enough machines.
+			ErrorHandling.errorNoEvent("Insufficient number of machines available to reach a replication factor of " + Replication.REPLICATION_FACTOR);
+		}
+		
+		return replicaLocations;
+	}
 
 	public int removeReplica(String dbLocation, String machineName, int connectionPort, String connectionType) throws RemoteException, SQLException {
 		int connectionID = getConnectionID(machineName, connectionPort, connectionType);
@@ -309,6 +365,7 @@ public class DataManager implements DataManagerRemote {
 
 		return executeUpdate(sql);
 	}
+
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.comms.DataManagerRemote#removeDataManager()
 	 */
@@ -319,10 +376,10 @@ public class DataManager implements DataManagerRemote {
 		+ "' AND schemaname='" + schemaName + "';";
 
 		//replicaLocations.removeAll(null);
-		
+
 		return executeUpdate(sql);
 	}
-	
+
 
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.comms.DataManagerRemote#getLocation()
@@ -332,7 +389,7 @@ public class DataManager implements DataManagerRemote {
 		return primaryLocation.getConnectionString();
 	}
 
-	
+
 	/**
 	 * Add the new table to the schema manager. Called at the end of a CreateTable update. 
 	 * @param tableName				Name of the table being added.
@@ -358,12 +415,12 @@ public class DataManager implements DataManagerRemote {
 		if (!isReplicaListed(connectionID, databaseLocation)){ // the table doesn't already exist in the schema manager.
 			addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, tableSet, true);
 		}
-		
+
 		if (primaryLocation == null){
-		primaryLocation = getDatabaseInstance(createFullDatabaseLocation(databaseLocation, connectionType, localMachineAddress, localMachinePort + "", isSM));
+			primaryLocation = getDatabaseInstance(createFullDatabaseLocation(databaseLocation, connectionType, localMachineAddress, localMachinePort + "", isSM));
 		}
 		replicaLocations.add(primaryLocation);
-	
+
 	}
 
 	/**
@@ -442,7 +499,7 @@ public class DataManager implements DataManagerRemote {
 	private int executeUpdate(String query) throws SQLException{
 		sqlQuery = queryParser.prepareCommand(query);
 		int result = sqlQuery.executeUpdate();
-		
+
 		return result;
 	}
 

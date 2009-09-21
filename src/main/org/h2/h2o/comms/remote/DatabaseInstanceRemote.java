@@ -1,6 +1,9 @@
-package org.h2.h2o.comms;
+package org.h2.h2o.comms.remote;
 
 import java.rmi.RemoteException;
+import java.sql.SQLException;
+
+import org.h2.h2o.comms.QueryProxy;
 
 
 /**
@@ -18,6 +21,17 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit  {
 	 * @return
 	 * @throws RemoteException 
 	 */
-	String getConnectionString() throws RemoteException;
+	public String getConnectionString() throws RemoteException;
 
+	/**
+	 * Execute a query on this machine using the supplied query proxy (which contains permission to execute
+	 * a given type of query).
+	 * @param queryProxy	The query proxy for the table(s) involved in the query.
+	 * @param sql
+	 * @return
+	 * @throws RemoteException
+	 * @throws SQLException
+	 */
+	public int executeUpdate(QueryProxy queryProxy, String sql) throws RemoteException, SQLException;
+	
 }

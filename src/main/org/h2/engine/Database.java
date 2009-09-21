@@ -26,12 +26,13 @@ import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
 import org.h2.constant.SysProperties;
 import org.h2.constraint.Constraint;
-import org.h2.h2o.comms.DataManagerLocator;
+import org.h2.h2o.comms.DataManager;
 import org.h2.h2o.comms.DatabaseInstance;
-import org.h2.h2o.comms.DatabaseInstanceLocator;
-import org.h2.h2o.comms.DatabaseInstanceRemote;
-import org.h2.h2o.comms.DatabaseURL;
-import org.h2.h2o.comms.DataManagerRemote;
+import org.h2.h2o.comms.management.DataManagerLocator;
+import org.h2.h2o.comms.management.DatabaseInstanceLocator;
+import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.util.DatabaseURL;
 import org.h2.index.Cursor;
 import org.h2.index.Index;
 import org.h2.index.IndexType;
@@ -2683,6 +2684,11 @@ public class Database implements DataHandler {
 		return databaseInstanceLocator.getInstance(replicaLocationString);
 	}
 	
+
+	public Set<DatabaseInstanceRemote> getDatabaseInstances() {
+		return databaseInstanceLocator.getInstances();
+	}
+	
 	/**
 	 * @return
 	 */
@@ -2706,6 +2712,7 @@ public class Database implements DataHandler {
 		}
 		
 	}
+
 
 
 }

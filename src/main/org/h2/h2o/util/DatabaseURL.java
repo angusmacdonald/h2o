@@ -1,4 +1,4 @@
-package org.h2.h2o.comms;
+package org.h2.h2o.util;
 
 import org.h2.util.NetUtils;
 

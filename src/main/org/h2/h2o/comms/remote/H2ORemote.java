@@ -1,4 +1,4 @@
-package org.h2.h2o.comms;
+package org.h2.h2o.comms.remote;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

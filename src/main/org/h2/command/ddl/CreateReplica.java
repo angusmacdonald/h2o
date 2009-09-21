@@ -30,7 +30,7 @@ import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
 import org.h2.expression.ValueExpression;
-import org.h2.h2o.comms.DataManagerRemote;
+import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.index.IndexType;
 import org.h2.jdbc.JdbcSQLException;
 import org.h2.message.Message;

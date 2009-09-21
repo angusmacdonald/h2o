@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.engine.Session;
+import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 
 /**
  * Proxy class exposed via RMI, allowing semi-parsed queries to be sent to remote replicas for execution.
@@ -60,6 +61,16 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 		return result;
 	}
 
+	@Override
+	public int executeUpdate(QueryProxy queryProxy, String sql) throws RemoteException,
+			SQLException {
+		/*
+		 * TODO eventually this method may do a lot more - e.g. the query may only be run here, and asynchronously run elsewhere. Another
+		 * overloaded version of the method may take only the query string and be required to obtain the queryProxy seperately. 
+		 */
+		return queryProxy.executeUpdate(sql);
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.comms.DatabaseInstanceRemote#testAvailability()
 	 */
@@ -79,7 +90,4 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	public String getConnectionString() throws RemoteException {
 		return session.getDatabase().getOriginalDatabaseURL();
 	}
-
-
-
 }

@@ -8,7 +8,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.h2.h2o.comms.DatabaseURL;
 import org.junit.Test;
 
 import uk.ac.stand.dcs.nds.util.Diagnostic;
@@ -19,8 +18,6 @@ import uk.ac.stand.dcs.nds.util.Diagnostic;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class ReplicaTests extends TestBase{
-
-
 
 	/**
 	 * Test to ensure that the SCRIPT TABLE command is working. This is used to get the contents of the table being replicated.
@@ -40,6 +37,278 @@ public class ReplicaTests extends TestBase{
 		} catch (SQLException sqle){
 			fail("SQLException thrown when it shouldn't have.");
 			sqle.printStackTrace();
+		}
+	}
+
+	/**
+	 * Tests that the SELECT PRIMARY command succeeds, in the case where the primary is local.
+	 */
+	@Test
+	public void SelectPrimaryWhenLocal(){
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		
+		try{
+
+			sa.execute("SELECT PRIMARY * FROM TEST ORDER BY ID;");
+
+			int[] pKey = {1, 2};
+			String[] secondCol = {"Hello", "World"};
+
+			validateResults(pKey, secondCol, sa.getResultSet());
+
+
+		} catch (SQLException sqle){
+			fail("This should succeed.");
+		}
+	}
+
+
+	/**
+	 * Tests that the SELECT LOCAL command find a remote copy when ONLY is not used.
+	 */
+	@Test
+	public void SelectLocalTestRemote(){
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		
+		try{
+			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
+		} catch (SQLException sqle){
+			sqle.printStackTrace();
+			fail("The table should be found remotely if not available locally.");
+		}
+	}
+	
+	/**
+	 * Checks that its possible to drop the primary, original copy of the data when one other copy exists.
+	 */
+	@Test
+	public void DropPrimaryReplica(){
+
+		try{
+
+			sb.execute("CREATE REPLICA TEST;");
+
+			if (sb.getUpdateCount() != 0){
+				fail("Expected update count to be '0'");
+			}
+
+			try{
+				sa.execute("DROP REPLICA TEST;");
+			} catch(SQLException e){
+				e.printStackTrace();
+				fail("Failed to drop replica.");
+			}
+
+			try{
+				sa.execute("SELECT LOCAL ONLY * FROM TEST ORDER BY ID;");
+
+				fail("Failed to drop replica.");
+			}	catch (SQLException e){
+				//Expected.	
+			}
+
+		} catch (SQLException sqle){
+			sqle.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
+		}
+	}
+
+	/**
+	 * Checks that the DROP REPLICA command works for a non-primary replica.
+	 */
+	@Test
+	public void DropReplica(){
+
+		try{
+
+			sb.execute("CREATE REPLICA TEST;");
+
+			if (sb.getUpdateCount() != 0){
+				fail("Expected update count to be '0'");
+			}
+
+			sb.execute("INSERT INTO TEST VALUES(3, 'Quite');");
+
+			try{
+				sb.execute("DROP REPLICA TEST;");
+			} catch(SQLException e){
+				e.printStackTrace();
+				fail("Failed to drop replica.");
+			}
+
+			try{
+				sb.execute("SELECT LOCAL ONLY * FROM TEST ORDER BY ID;");
+
+				fail("Failed to drop replica.");
+			}	catch (SQLException e){
+				//Expected.
+			}
+
+		} catch (SQLException sqle){
+			sqle.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
+		}
+	}
+	/**
+	 * Tests the 'push replication' feature by attempting to initiate replication creation on database B from database A.
+	 */
+	@Test
+	public void PushReplicationON(){
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		
+		
+		try{
+			sa.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:two'");
+
+			if (sa.getUpdateCount() != 0){
+				fail("Expected update count to be '0'");
+			}
+
+			sa.execute("INSERT INTO TEST VALUES(3, 'Quite');");
+
+			/*
+			 * Check that the local copy has only two entries.
+			 */
+			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
+
+			int[] pKey = {1, 2, 3};
+			String[] secondCol = {"Hello", "World", "Quite"};
+
+			validateResults(pKey, secondCol, sb.getResultSet());
+
+			/*
+			 * Check that the primary copy has three entries.
+			 */
+			sb.execute("SELECT PRIMARY * FROM TEST ORDER BY ID;"); //Now query on first machine (which should have one extra row).
+
+			int[] pKey2 = {1, 2, 3};
+			String[] secondCol2 = {"Hello", "World", "Quite"};
+
+			validateResults(pKey2, secondCol2, sb.getResultSet());
+
+		} catch (SQLException sqle){
+			sqle.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
+		}
+	}
+
+	/**
+	 * Tests the 'push replication' feature by attempting to initiate replication creation on database B from database A, using the FROM
+	 * syntax, even though it is not needed. This checks that the ON, FROM syntax works when describing the machine local machine.
+	 */
+	@Test
+	public void PushReplicationFROMtwoMachines(){
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+			
+		try{
+
+			sa.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:two' FROM 'jdbc:h2:mem:one'");
+
+			if (sa.getUpdateCount() != 0){
+				fail("Expected update count to be '0'");
+			}
+
+			sb.execute("INSERT INTO TEST VALUES(3, 'Quite');");
+
+			/*
+			 * Check that the local copy has three entries.
+			 */
+			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
+
+			int[] pKey = {1, 2, 3};
+			String[] secondCol = {"Hello", "World", "Quite"};
+
+			validateResults(pKey, secondCol, sb.getResultSet());
+
+
+
+		} catch (SQLException sqle){
+			sqle.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
+		}
+	}
+
+	/**
+	 * Tests the 'push replication' feature by attempting to initiate replication creation on database B from database A, using the ON
+	 * syntax, even though it is not needed. This checks that the ON, FROM syntax works when describing the machine local machine.
+	 */
+	@Test
+	public void PushReplicationFROMtwoMachinesAlt(){
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		
+		try{
+
+			sb.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:two' FROM 'jdbc:h2:mem:one'");
+
+			if (sb.getUpdateCount() != 0){
+				fail("Expected update count to be '0'");
+			}
+
+			sb.execute("INSERT INTO TEST VALUES(3, 'Quite');");
+
+			/*
+			 * Check that the local copy has three entries.
+			 */
+			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
+
+			int[] pKey = {1, 2, 3};
+			String[] secondCol = {"Hello", "World", "Quite"};
+
+			validateResults(pKey, secondCol, sb.getResultSet());
+
+
+
+		} catch (SQLException sqle){
+			sqle.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
+		}
+	}
+
+
+	
+	/**
+	 * Tests the 'push replication' feature by attempting to initiate replication creation on database C from database A, getting the data from database B.
+	 * The test first creates a replica on database B, then launches the ON-FROM replication command from database A.
+	 */
+	@Test
+	public void PushReplicationONFROM(){
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		
+		
+		try{
+			Connection cc = DriverManager.getConnection("jdbc:h2:mem:three", "sa", "sa");
+			Statement sc = cc.createStatement();
+
+			sb.execute("CREATE REPLICA TEST;");
+
+			if (sb.getUpdateCount() != 0){
+				fail("Expected update count to be '0'");
+			}
+
+			sa.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:three' FROM 'jdbc:h2:mem:two'");
+
+			if (sa.getUpdateCount() != 0){
+				fail("Expected update count to be '0'");
+			}
+
+			sc.execute("INSERT INTO TEST VALUES(3, 'Quite');");
+
+			/*
+			 * Check that the local copy has three entries.
+			 */
+			sc.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
+
+			int[] pKey = {1, 2, 3};
+			String[] secondCol = {"Hello", "World", "Quite"};
+
+			validateResults(pKey, secondCol, sc.getResultSet());
+
+			sc.close();
+			cc.close();
+
+		} catch (SQLException sqle){
+			sqle.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
 		}
 	}
 
@@ -199,42 +468,7 @@ public class ReplicaTests extends TestBase{
 		}
 	}
 
-	/**
-	 * Tests that the SELECT LOCAL command find a remote copy when ONLY is not used.
-	 */
-	@Test
-	public void SelectLocalTestRemote(){
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
-		
-		try{
-			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("The table should be found remotely if not available locally.");
-		}
-	}
 
-	/**
-	 * Tests that the SELECT PRIMARY command succeeds, in the case where the primary is local.
-	 */
-	@Test
-	public void SelectPrimaryWhenLocal(){
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
-		
-		try{
-
-			sa.execute("SELECT PRIMARY * FROM TEST ORDER BY ID;");
-
-			int[] pKey = {1, 2};
-			String[] secondCol = {"Hello", "World"};
-
-			validateResults(pKey, secondCol, sa.getResultSet());
-
-
-		} catch (SQLException sqle){
-			fail("This should succeed.");
-		}
-	}
 
 //	/**
 //	 * Tests that the SELECT PRIMARY command works - this is done by updating one copy but not the other, so that they can be told apart.
@@ -278,238 +512,9 @@ public class ReplicaTests extends TestBase{
 //		}
 //	}
 
-	/**
-	 * Tests the 'push replication' feature by attempting to initiate replication creation on database B from database A.
-	 */
-	@Test
-	public void PushReplicationON(){
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
-		
-		
-		try{
-			sa.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:two'");
-
-			if (sa.getUpdateCount() != 0){
-				fail("Expected update count to be '0'");
-			}
-
-			sa.execute("INSERT INTO TEST VALUES(3, 'Quite');");
-
-			/*
-			 * Check that the local copy has only two entries.
-			 */
-			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
-
-			int[] pKey = {1, 2, 3};
-			String[] secondCol = {"Hello", "World", "Quite"};
-
-			validateResults(pKey, secondCol, sb.getResultSet());
-
-			/*
-			 * Check that the primary copy has three entries.
-			 */
-			sb.execute("SELECT PRIMARY * FROM TEST ORDER BY ID;"); //Now query on first machine (which should have one extra row).
-
-			int[] pKey2 = {1, 2, 3};
-			String[] secondCol2 = {"Hello", "World", "Quite"};
-
-			validateResults(pKey2, secondCol2, sb.getResultSet());
-
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
-		}
-	}
-
-	/**
-	 * Tests the 'push replication' feature by attempting to initiate replication creation on database C from database A, getting the data from database B.
-	 * The test first creates a replica on database B, then launches the ON-FROM replication command from database A.
-	 */
-	@Test
-	public void PushReplicationONFROM(){
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
-		
-		
-		try{
-			Connection cc = DriverManager.getConnection("jdbc:h2:mem:three", "sa", "sa");
-			Statement sc = cc.createStatement();
-
-			sb.execute("CREATE REPLICA TEST;");
-
-			if (sb.getUpdateCount() != 0){
-				fail("Expected update count to be '0'");
-			}
-
-			sa.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:three' FROM 'jdbc:h2:mem:two'");
-
-			if (sa.getUpdateCount() != 0){
-				fail("Expected update count to be '0'");
-			}
-
-			sc.execute("INSERT INTO TEST VALUES(3, 'Quite');");
-
-			/*
-			 * Check that the local copy has three entries.
-			 */
-			sc.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
-
-			int[] pKey = {1, 2, 3};
-			String[] secondCol = {"Hello", "World", "Quite"};
-
-			validateResults(pKey, secondCol, sc.getResultSet());
-
-			sc.close();
-			cc.close();
-
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
-		}
-	}
-
-	/**
-	 * Tests the 'push replication' feature by attempting to initiate replication creation on database B from database A, using the FROM
-	 * syntax, even though it is not needed. This checks that the ON, FROM syntax works when describing the machine local machine.
-	 */
-	@Test
-	public void PushReplicationFROMtwoMachines(){
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
-			
-		try{
-
-			sa.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:two' FROM 'jdbc:h2:mem:one'");
-
-			if (sa.getUpdateCount() != 0){
-				fail("Expected update count to be '0'");
-			}
-
-			sb.execute("INSERT INTO TEST VALUES(3, 'Quite');");
-
-			/*
-			 * Check that the local copy has three entries.
-			 */
-			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
-
-			int[] pKey = {1, 2, 3};
-			String[] secondCol = {"Hello", "World", "Quite"};
-
-			validateResults(pKey, secondCol, sb.getResultSet());
 
 
 
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
-		}
-	}
-
-	/**
-	 * Tests the 'push replication' feature by attempting to initiate replication creation on database B from database A, using the ON
-	 * syntax, even though it is not needed. This checks that the ON, FROM syntax works when describing the machine local machine.
-	 */
-	@Test
-	public void PushReplicationFROMtwoMachinesAlt(){
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
-		
-		try{
-
-			sb.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:two' FROM 'jdbc:h2:mem:one'");
-
-			if (sb.getUpdateCount() != 0){
-				fail("Expected update count to be '0'");
-			}
-
-			sb.execute("INSERT INTO TEST VALUES(3, 'Quite');");
-
-			/*
-			 * Check that the local copy has three entries.
-			 */
-			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
-
-			int[] pKey = {1, 2, 3};
-			String[] secondCol = {"Hello", "World", "Quite"};
-
-			validateResults(pKey, secondCol, sb.getResultSet());
-
-
-
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
-		}
-	}
-
-	/**
-	 * Checks that the DROP REPLICA command works for a non-primary replica.
-	 */
-	@Test
-	public void DropReplica(){
-
-		try{
-
-			sb.execute("CREATE REPLICA TEST;");
-
-			if (sb.getUpdateCount() != 0){
-				fail("Expected update count to be '0'");
-			}
-
-			sb.execute("INSERT INTO TEST VALUES(3, 'Quite');");
-
-			try{
-				sb.execute("DROP REPLICA TEST;");
-			} catch(SQLException e){
-				e.printStackTrace();
-				fail("Failed to drop replica.");
-			}
-
-			try{
-				sb.execute("SELECT LOCAL ONLY * FROM TEST ORDER BY ID;");
-
-				fail("Failed to drop replica.");
-			}	catch (SQLException e){
-				//Expected.
-			}
-
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
-		}
-	}
-
-	/**
-	 * Checks that its possible to drop the primary, original copy of the data when one other copy exists.
-	 */
-	@Test
-	public void DropPrimaryReplica(){
-
-		try{
-
-			sb.execute("CREATE REPLICA TEST;");
-
-			if (sb.getUpdateCount() != 0){
-				fail("Expected update count to be '0'");
-			}
-
-			try{
-				sa.execute("DROP REPLICA TEST;");
-			} catch(SQLException e){
-				e.printStackTrace();
-				fail("Failed to drop replica.");
-			}
-
-			try{
-				sa.execute("SELECT LOCAL ONLY * FROM TEST ORDER BY ID;");
-
-				fail("Failed to drop replica.");
-			}	catch (SQLException e){
-				//Expected.	
-			}
-
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
-		}
-	}
 
 	/**
 	 * Checks that an error is thrown when database B tries to drop a replica when one doesn't exist on that database.

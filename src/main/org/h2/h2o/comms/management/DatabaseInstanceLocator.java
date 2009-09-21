@@ -1,4 +1,4 @@
-package org.h2.h2o.comms;
+package org.h2.h2o.comms.management;
 
 import java.rmi.AccessException;
 import java.rmi.AlreadyBoundException;
@@ -12,6 +12,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import org.h2.h2o.comms.DatabaseInstance;
+import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 
 import uk.ac.stand.dcs.nds.util.Diagnostic;
 import uk.ac.stand.dcs.nds.util.ErrorHandling;
@@ -191,5 +194,14 @@ public class DatabaseInstanceLocator extends RMIServer {
 			ErrorHandling.errorNoEvent("Unable to access database instance at: " + replicaLocationString);
 		}
 		return null; //never reached.
+	}
+
+
+	/**
+	 * Get references to all current data managers.
+	 * @return
+	 */
+	public Set<DatabaseInstanceRemote> getInstances() {
+		return new HashSet<DatabaseInstanceRemote>(databaseInstances.values());
 	}
 }

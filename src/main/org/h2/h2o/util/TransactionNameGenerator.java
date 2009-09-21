@@ -1,4 +1,4 @@
-package org.h2.h2o.comms;
+package org.h2.h2o.util;
 
 /**
  *	Utility class which generates unique names for transactions. 

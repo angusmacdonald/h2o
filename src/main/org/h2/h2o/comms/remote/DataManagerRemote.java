@@ -1,7 +1,10 @@
-package org.h2.h2o.comms;
+package org.h2.h2o.comms.remote;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
+
+import org.h2.h2o.comms.QueryProxy;
+import org.h2.h2o.util.LockType;
 
 
 /**
@@ -11,7 +14,7 @@ import java.sql.SQLException;
  */
 public interface DataManagerRemote extends H2ORemote {
 
-	public QueryProxy requestQueryProxy(QueryProxy.LockType lockType) throws RemoteException;
+	public QueryProxy requestQueryProxy(LockType lockType) throws RemoteException;
 
 	/**
 	 * Inform the data manager that a new replica has been created for the given table.

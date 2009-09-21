@@ -1,4 +1,4 @@
-package org.h2.h2o.comms;
+package org.h2.h2o.comms.management;
 
 import java.rmi.AccessException;
 import java.rmi.AlreadyBoundException;
@@ -9,7 +9,8 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.h2.engine.DataManager;
+import org.h2.h2o.comms.DataManager;
+import org.h2.h2o.comms.remote.DataManagerRemote;
 
 import uk.ac.stand.dcs.nds.util.ErrorHandling;
 

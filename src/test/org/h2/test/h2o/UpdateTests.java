@@ -71,4 +71,84 @@ public class UpdateTests extends TestBase {
 			e.printStackTrace();
 		}
 	}
+	
+	/**
+	 * Tests that the DELETE FROM command synchronously updates all replicas.
+	 */
+	@Test
+	public void deleteFromCommand(){
+		try {
+			sb.execute("CREATE REPLICA TEST");
+		} catch (SQLException e1) {
+			fail("This wasn't even the interesting part of the test.");
+		}
+		
+		try {
+			sa.execute("DELETE FROM TEST WHERE ID=1;");
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("Unexpected failure executing DELETE FROM.");
+		}
+	
+		
+		/*
+		 * Now check that each replica sees the result of the deletion.
+		 */
+		
+		int[] pKey = {2};
+		String[] secondCol = {"World"};
+
+		try {
+			sa.execute("SELECT * FROM TEST ORDER BY ID");
+			validateResults(pKey, secondCol, sa.getResultSet());
+			
+			sb.execute("SELECT * FROM TEST ORDER BY ID");
+			validateResults(pKey, secondCol, sb.getResultSet());
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("Validation of results failed.");
+		}
+	}
+	
+	/**
+	 * Tests that the UPDATE command synchronously updates all replicas.
+	 */
+	@Test
+	public void updateCommand(){
+		try {
+			sb.execute("CREATE REPLICA TEST");
+		} catch (SQLException e1) {
+			fail("This wasn't even the interesting part of the test.");
+		}
+		
+		try {
+			sa.execute("UPDATE TEST SET ID=3, NAME='TESTING' WHERE ID=2;");
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("Unexpected failure executing DELETE FROM.");
+		}
+	
+		
+		/*
+		 * Now check that each replica sees the result of the deletion.
+		 */
+		
+		int[] pKey = {1, 3};
+		String[] secondCol = {"Hello", "TESTING"};
+
+		try {
+			sa.execute("SELECT * FROM TEST ORDER BY ID");
+			validateResults(pKey, secondCol, sa.getResultSet());
+			
+			sb.execute("SELECT * FROM TEST ORDER BY ID");
+			validateResults(pKey, secondCol, sb.getResultSet());
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("Validation of results failed.");
+		}
+
+
+	}
 }

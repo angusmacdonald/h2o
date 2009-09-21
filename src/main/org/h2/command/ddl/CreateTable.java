@@ -19,12 +19,14 @@ import org.h2.constant.LocationPreference;
 import org.h2.constraint.Constraint;
 import org.h2.constraint.ConstraintReferential;
 import org.h2.engine.Constants;
-import org.h2.engine.DataManager;
 import org.h2.engine.Database;
 import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
-import org.h2.h2o.comms.DataManagerRemote;
+import org.h2.h2o.comms.DataManager;
+import org.h2.h2o.comms.QueryProxy;
+import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.util.LockType;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
 import org.h2.schema.Sequence;
@@ -289,8 +291,15 @@ public class CreateTable extends SchemaCommand {
 				//	#############################
 				//  Create new data manager instance.
 				//	#############################	
-				new DataManager(tableName, getSchema().getName(), table.getModificationId(), tableSet, db);
+				DataManager dm = new DataManager(tableName, getSchema().getName(), table.getModificationId(), tableSet, db);
 				
+				/*
+				 * (add replicas at some external locations).
+				 */
+				if (Constants.IS_H2O && !table.getName().startsWith(Constants.H2O_SCHEMA) && !session.getDatabase().isManagementDB()){
+					QueryProxy qp = QueryProxy.getQueryProxy(dm, LockType.CREATE);
+					return qp.executeUpdate("CREATE REPLICA " + getSchema().getName() + "." + table.getName());
+				}
 			}
 
 

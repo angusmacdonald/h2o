@@ -10,11 +10,14 @@ import java.sql.SQLException;
 
 import org.h2.command.Prepared;
 import org.h2.constant.ErrorCode;
+import org.h2.engine.Constants;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
 import org.h2.expression.Parameter;
 import org.h2.expression.ValueExpression;
+import org.h2.h2o.comms.QueryProxy;
+import org.h2.h2o.util.LockType;
 import org.h2.message.Message;
 import org.h2.result.LocalResult;
 import org.h2.result.Row;
@@ -35,9 +38,11 @@ public class Update extends Prepared {
     private Expression condition;
     private TableFilter tableFilter;
     private Expression[] expressions;
+	private boolean internalQuery;
 
-    public Update(Session session) {
+    public Update(Session session, boolean internalQuery) {
         super(session);
+        this.internalQuery = internalQuery;
     }
 
     public void setTableFilter(TableFilter tableFilter) {
@@ -77,6 +82,16 @@ public class Update extends Prepared {
         try {
             Table table = tableFilter.getTable();
             session.getUser().checkRight(table, Right.UPDATE);
+            
+    		/*
+    		 * (QUERY PROPAGATED TO ALL REPLICAS).
+    		 */
+    		if (Constants.IS_H2O && !internalQuery && !table.getName().startsWith(Constants.H2O_SCHEMA) && !session.getDatabase().isManagementDB()){
+    			QueryProxy qp = QueryProxy.getQueryProxy(session.getDatabase().getDataManager(table.getSchema().getName() + "." + table.getName()), LockType.WRITE);
+    			return qp.executeUpdate(sqlStatement);
+    		}
+            
+            
             table.fireBefore(session);
             table.lock(session, true, false);
             int columnCount = table.getColumns().length;

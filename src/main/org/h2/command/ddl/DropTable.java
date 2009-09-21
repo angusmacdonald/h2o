@@ -15,6 +15,7 @@ import org.h2.engine.Right;
 import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.QueryProxy;
+import org.h2.h2o.util.LockType;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
 import org.h2.table.ReplicaSet;
@@ -118,7 +119,7 @@ public class DropTable extends SchemaCommand {
 			 */
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_") && !internalQuery){
 
-				QueryProxy qp = QueryProxy.getQueryProxy(session.getDatabase().getDataManager(table.getSchema().getName() + "." + table.getName()));
+				QueryProxy qp = QueryProxy.getQueryProxy(session.getDatabase().getDataManager(table.getSchema().getName() + "." + table.getName()), LockType.WRITE);
 				qp.executeUpdate(sqlStatement);
 
 				try {

@@ -5,8 +5,14 @@ import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Set;
 
+import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.comms.remote.TwoPhaseCommit;
+import org.h2.h2o.util.LockType;
+import org.h2.h2o.util.TransactionNameGenerator;
 import org.h2.test.h2o.H2OTest;
 
+import uk.ac.stand.dcs.nds.util.Diagnostic;
 import uk.ac.stand.dcs.nds.util.ErrorHandling;
 
 /**
@@ -24,8 +30,6 @@ public class QueryProxy implements Serializable{
 	 * Generated serial version.
 	 */
 	private static final long serialVersionUID = -31853777345527026L;
-
-	public static enum LockType { READ, WRITE, NONE };
 
 	private LockType lockGranted;
 
@@ -56,6 +60,11 @@ public class QueryProxy implements Serializable{
 	 */
 	public int executeUpdate(String sql) throws SQLException {
 
+		if (allReplicas == null || allReplicas.size() == 0){
+			Diagnostic.traceNoEvent(Diagnostic.FINAL, "No replicas found to perform update: " + sql);
+			return 0;
+		}
+		
 		String transactionName = TransactionNameGenerator.generateName(); 
 		
 		SQLException exception = null;
@@ -147,7 +156,7 @@ public class QueryProxy implements Serializable{
 	 * @return Query proxy for a specific table within H20.
 	 * @throws SQLException
 	 */
-	public static QueryProxy getQueryProxy(DataManagerRemote dataManager) throws SQLException {
+	public static QueryProxy getQueryProxy(DataManagerRemote dataManager, LockType lockType) throws SQLException {
 
 		QueryProxy qp = null;
 
@@ -157,7 +166,7 @@ public class QueryProxy implements Serializable{
 		}
 
 		try {
-			qp = dataManager.requestQueryProxy(QueryProxy.LockType.WRITE);
+			qp = dataManager.requestQueryProxy(lockType);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 			throw new SQLException("Unable to obtain query proxy from data manager (remote exception).");

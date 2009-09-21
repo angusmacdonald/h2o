@@ -9,9 +9,12 @@ package org.h2.command.dml;
 import java.sql.SQLException;
 
 import org.h2.command.Prepared;
+import org.h2.engine.Constants;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
+import org.h2.h2o.comms.QueryProxy;
+import org.h2.h2o.util.LockType;
 import org.h2.log.UndoLogRecord;
 import org.h2.result.LocalResult;
 import org.h2.result.Row;
@@ -29,9 +32,11 @@ public class Delete extends Prepared {
 
     private Expression condition;
     private TableFilter tableFilter;
+    private boolean internalQuery;
 
-    public Delete(Session session) {
+    public Delete(Session session, boolean internalQuery) {
         super(session);
+        this.internalQuery = internalQuery;
     }
 
     public void setTableFilter(TableFilter tableFilter) {
@@ -47,6 +52,15 @@ public class Delete extends Prepared {
         tableFilter.reset();
         Table table = tableFilter.getTable();
         session.getUser().checkRight(table, Right.DELETE);
+        
+		/*
+		 * (QUERY PROPAGATED TO ALL REPLICAS).
+		 */
+		if (Constants.IS_H2O && !internalQuery && !table.getName().startsWith(Constants.H2O_SCHEMA) && !session.getDatabase().isManagementDB()){
+			QueryProxy qp = QueryProxy.getQueryProxy(session.getDatabase().getDataManager(table.getSchema().getName() + "." + table.getName()), LockType.WRITE);
+			return qp.executeUpdate(sqlStatement);
+		}
+        
         table.fireBefore(session);
         table.lock(session, true, false);
         RowList rows = new RowList(session);

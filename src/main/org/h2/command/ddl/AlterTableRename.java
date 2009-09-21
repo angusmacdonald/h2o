@@ -10,9 +10,11 @@ import java.sql.SQLException;
 
 import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
+import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
+import org.h2.h2o.comms.QueryProxy;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
 import org.h2.table.Table;
@@ -25,9 +27,11 @@ public class AlterTableRename extends SchemaCommand {
 
     private Table oldTable;
     private String newTableName;
+	private boolean internalQuery;
 
-    public AlterTableRename(Session session, Schema schema) {
+    public AlterTableRename(Session session, Schema schema, boolean internalQuery) {
         super(session, schema);
+        this.internalQuery = internalQuery;
     }
 
     public void setOldTable(Table table) {
@@ -39,7 +43,7 @@ public class AlterTableRename extends SchemaCommand {
     }
 
     public int update() throws SQLException {
-        session.commit(true);
+    	session.commit(true);
         Database db = session.getDatabase();
         if (getSchema().findTableOrView(session, newTableName, LocationPreference.NO_PREFERENCE) != null || newTableName.equals(oldTable.getName())) {
             throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, newTableName);
