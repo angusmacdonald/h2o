@@ -198,7 +198,7 @@ public class UpdateTests extends TestBase {
 	 * <p>Numerous entries should cause failure, because of the lock contention.
 	 */
 	@Test
-	public void testConcurrentQueries(){
+	public void testConcurrentQueriesCompetingUpdates(){
 		try {
 			sb.execute("CREATE REPLICA TEST");
 		} catch (SQLException e1) {
@@ -207,11 +207,35 @@ public class UpdateTests extends TestBase {
 		}
 
 		int entries = 100;
-		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries);
-		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries);
+		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
+		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
 		new Thread(cta).start();
 		ctb.run();	
 		
 		Assert.assertFalse(ctb.successful);
+	}
+	
+	/**
+	 * Tests the case of multiple database instances attempting to access a table at the same time. Only one thread is writing to the table
+	 * so all queries should run as expected.
+	 * 
+	 * <p>Numerous entries should cause failure, because of the lock contention.
+	 */
+	@Test
+	public void testConcurrentQueriesNonCompeting(){
+		try {
+			sb.execute("CREATE REPLICA TEST");
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+			fail("This wasn't even the interesting part of the test.");
+		}
+
+		int entries = 100;
+		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, false);
+		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, false);
+		new Thread(cta).start();
+		ctb.run();	
+		
+		Assert.assertTrue(ctb.successful);
 	}
 }
