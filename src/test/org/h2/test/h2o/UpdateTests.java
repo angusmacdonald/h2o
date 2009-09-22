@@ -3,7 +3,6 @@ package org.h2.test.h2o;
 import static org.junit.Assert.fail;
 
 import java.sql.DriverManager;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import junit.framework.Assert;

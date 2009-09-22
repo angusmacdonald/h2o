@@ -1,9 +1,6 @@
 package org.h2.test.h2o;
 
-import java.sql.SQLException;
 import java.sql.Statement;
-
-import org.h2.jdbc.JdbcSQLException;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)

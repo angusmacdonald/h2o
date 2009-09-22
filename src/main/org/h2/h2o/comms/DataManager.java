@@ -10,6 +10,7 @@ import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.h2o.autonomic.Replication;
+import org.h2.h2o.autonomic.Updates;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.locking.ILockingTable;
@@ -249,7 +250,6 @@ public class DataManager implements DataManagerRemote {
 	@Override
 	public synchronized QueryProxy requestQueryProxy(LockType lockType, DatabaseInstanceRemote databaseInstanceRemote) throws RemoteException, SQLException {
 
-
 		if (replicaLocations.size() == 0){
 			try {
 				throw new Exception("Illegal State. There must be at least one replica");
@@ -259,33 +259,16 @@ public class DataManager implements DataManagerRemote {
 			}
 		}
 
-
-
 		LockType lockGranted = lockingTable.requestLock(lockType, databaseInstanceRemote);
 
 		if (lockGranted == LockType.NONE){
-//			try {
-//				Thread.sleep(1000);
-//			} catch (InterruptedException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-//			lockGranted = lockingTable.requestLock(lockType, databaseInstanceRemote);
-			if (lockGranted == LockType.NONE){
-				
-				throw new SQLException("Table already locked. Cannot perform query.");
-			}
+			throw new SQLException("Table already locked. Cannot perform query.");
 		}
-		
+
 		QueryProxy qp = null;
 
-		if (lockType == LockType.CREATE){
-			//CREATE TABLE, SCHEMA - DON'T REPLICA TO ALL LOCATIONS. BASE ON REPLICATION FACTOR.
 
-			qp = new QueryProxy(lockType, tableName, selectReplicaLocations(this.primaryLocation), this, databaseInstanceRemote);
-		} else {
-			qp = new QueryProxy(lockType, tableName, replicaLocations, this, databaseInstanceRemote);
-		}
+		qp = new QueryProxy(lockType, tableName, selectReplicaLocations(this.primaryLocation, lockType, databaseInstanceRemote), this, databaseInstanceRemote);
 
 		return qp;
 	}
@@ -340,46 +323,78 @@ public class DataManager implements DataManagerRemote {
 	/**
 	 * <p>Selects a set of replica locations on which replicas will be created for a given table or schema.
 	 * 
-	 * <p>This decision is currently based on the DESIRED_REPLICATION_FACTOR variable and the database instance where the
-	 * request was initiated.
+	 * <p>This decision is currently based on the DESIRED_REPLICATION_FACTOR variable (if the query is a create), the SYNCHRONOUS_UPDATE variable
+	 * if the query is another form of update, and the database instance where the request was initiated.
 	 * @param primaryLocation	The location of the primary copy - also the location of the data manager. This location will NOT
 	 * 	be returned in the list of replica locations (because the primary copy already exists there).
+	 * @param lockType 
+	 * @param databaseInstanceRemote Requesting machine.
 	 * @return The set of database instances that should host a replica for the given table/schema. The return value will be NULL if
 	 * 	no more replicas need to be created.
 	 */
-	private Set<DatabaseInstanceRemote> selectReplicaLocations(DatabaseInstanceRemote primaryLocation) {
-
-		if (Replication.REPLICATION_FACTOR == 1){
-			return null; //No more replicas are needed currently.
-		}
-
+	private Set<DatabaseInstanceRemote> selectReplicaLocations(DatabaseInstanceRemote primaryLocation, LockType lockType, DatabaseInstanceRemote requestingDatabase) {
 		/*
 		 * The set of machines onto which new replicas will be added.
 		 */
 		Set<DatabaseInstanceRemote> newReplicaLocations = new HashSet<DatabaseInstanceRemote>();
 
 		/*
-		 * The set of all machines currently in the system.
+		 * The set of all replica locations that could be involved in the query.
 		 */
-		Set<DatabaseInstanceRemote> potentialReplicaLocations = database.getDatabaseInstances();
+		Set<DatabaseInstanceRemote> potentialReplicaLocations;
 
-		int currentReplicationFactor = 1; //currently one copy of the table.
+		if (lockType == LockType.CREATE){
 
-		for (DatabaseInstanceRemote dbInstance: potentialReplicaLocations){
-			if (dbInstance.equals(primaryLocation)) continue; //primary copy exists here.
+			if (Replication.REPLICATION_FACTOR == 1){
+				return null; //No more replicas are needed currently.
+			}
 
-			newReplicaLocations.add(dbInstance);
-			currentReplicationFactor++;
+			potentialReplicaLocations = database.getDatabaseInstances(); //the update could be sent to any or all machines in the system.
 
-			if (currentReplicationFactor == Replication.REPLICATION_FACTOR) break;
+			int currentReplicationFactor = 1; //currently one copy of the table.
+
+			/*
+			 * Loop through all potential replica locations, selecting enough to satisfy the system's
+			 * replication fact. The location of the primary copy cannot be re-used.
+			 */
+			for (DatabaseInstanceRemote dbInstance: potentialReplicaLocations){
+				if (!dbInstance.equals(primaryLocation)){ //primary copy doesn't exist here.
+					newReplicaLocations.add(dbInstance);
+					currentReplicationFactor++;
+				}
+
+				/*
+				 * Do we have enough replicas yet?
+				 */
+				if (currentReplicationFactor == Replication.REPLICATION_FACTOR) break;
+			}
+
+			if (currentReplicationFactor < Replication.REPLICATION_FACTOR){
+				//Couldn't replicate to enough machines.
+				ErrorHandling.errorNoEvent("Insufficient number of machines available to reach a replication factor of " + Replication.REPLICATION_FACTOR);
+			}
+
+
+		} else if (lockType == LockType.WRITE){
+			potentialReplicaLocations = this.replicaLocations; //The update could be sent to any or all machines holding the given table.
+			
+			if (Updates.SYNCHRONOUS_UPDATE){
+				//Update must be sent to all replicas:
+				return potentialReplicaLocations;
+			} else {
+				//Update should only be sent to a single replica location. Choose that location.
+				if (potentialReplicaLocations.contains(requestingDatabase)){
+					newReplicaLocations.add(requestingDatabase); //try to keep the request local.
+				} else {
+					//Just pick another machine.
+					DatabaseInstanceRemote randomDir = potentialReplicaLocations.toArray(new DatabaseInstanceRemote[0])[0];
+					//TODO there has to be a better way of choosing this.
+					newReplicaLocations.add(randomDir);
+				}
+			}
 		}
 
-		if (currentReplicationFactor < Replication.REPLICATION_FACTOR){
-			//Couldn't replicate to enough machines.
-			ErrorHandling.errorNoEvent("Insufficient number of machines available to reach a replication factor of " + Replication.REPLICATION_FACTOR);
-		}
-
-		return replicaLocations;
+		return newReplicaLocations;
 	}
 
 	public int removeReplica(String dbLocation, String machineName, int connectionPort, String connectionType) throws RemoteException, SQLException {

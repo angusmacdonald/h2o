@@ -207,7 +207,7 @@ public class QueryProxy implements Serializable{
 		}
 
 		if(requestingDatabase == null){
-			System.err.println("Shouldn't happen.");
+			ErrorHandling.hardError("A requesting database must be specified.");
 		}
 
 
