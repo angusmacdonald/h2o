@@ -6,7 +6,6 @@
  */
 package org.h2.command;
 
-import java.io.Serializable;
 import java.sql.SQLException;
 
 import org.h2.constant.ErrorCode;
@@ -28,11 +27,6 @@ import org.h2.value.Value;
  * A prepared statement.
  */
 public abstract class Prepared{
-
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = 790290826734224016L;
 
 	/**
      * The session.

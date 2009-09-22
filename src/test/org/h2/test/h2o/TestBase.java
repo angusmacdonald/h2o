@@ -75,11 +75,11 @@ public class TestBase {
 			sa.execute("DROP ALL OBJECTS");
 			sb.execute("DROP ALL OBJECTS");
 			
-			sa.close();
-			sb.close();
+			if (!sa.isClosed()) sa.close();
+			if (!sb.isClosed())sb.close();
 			
-			ca.close();	
-			cb.close();	
+			if (!ca.isClosed())ca.close();	
+			if (!cb.isClosed())cb.close();	
 
 			closeDatabaseCompletely();
 		} catch (Exception e){

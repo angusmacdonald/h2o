@@ -10,7 +10,6 @@ import java.sql.SQLException;
 
 import org.h2.command.Prepared;
 import org.h2.constant.ErrorCode;
-import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Right;
 import org.h2.engine.Session;

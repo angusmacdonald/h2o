@@ -7,7 +7,6 @@ import java.util.Set;
 
 import org.h2.command.Command;
 import org.h2.command.Parser;
-import org.h2.constant.ErrorCode;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.h2o.autonomic.Replication;
@@ -265,7 +264,17 @@ public class DataManager implements DataManagerRemote {
 		LockType lockGranted = lockingTable.requestLock(lockType, databaseInstanceRemote);
 
 		if (lockGranted == LockType.NONE){
-			throw new SQLException("Table already locked. Cannot perform query.");
+//			try {
+//				Thread.sleep(1000);
+//			} catch (InterruptedException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//			lockGranted = lockingTable.requestLock(lockType, databaseInstanceRemote);
+			if (lockGranted == LockType.NONE){
+				
+				throw new SQLException("Table already locked. Cannot perform query.");
+			}
 		}
 		
 		QueryProxy qp = null;

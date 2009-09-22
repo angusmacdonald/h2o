@@ -8,7 +8,6 @@ package org.h2.command;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.text.Collator;
 import java.util.HashSet;
@@ -117,7 +116,6 @@ import org.h2.expression.TableFunction;
 import org.h2.expression.ValueExpression;
 import org.h2.expression.Variable;
 import org.h2.expression.Wildcard;
-import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.index.Index;
 import org.h2.message.Message;
 import org.h2.result.SortOrder;
@@ -769,7 +767,7 @@ public class Parser {
 
 	private Column[] parseColumnList(Table table) throws SQLException {
 		ObjectArray columns = new ObjectArray();
-		HashSet set = new HashSet();
+		java.util.Set<Column> set = new HashSet<Column>();
 		if (!readIf(")")) {
 			do {
 				Column column = table.getColumn(readColumnIdentifier());
@@ -4268,7 +4266,6 @@ public class Parser {
 		ScriptCommand command = new ScriptCommand(session, internalQuery);
 		boolean data = true, passwords = true, settings = true, dropTables = false, simple = false;
 
-		String tableName = null;
 		if (Constants.IS_H2O && readIf("TABLE")){
 			command.setTable(readIdentifierWithSchema());
 			command.setSchema(getSchema().getName());
@@ -4378,7 +4375,7 @@ public class Parser {
 		 * Attempt to locate the table if it exists remotely.
 		 */
 		String tableLocation = null;
-		DataManagerRemote dm = null;
+//		DataManagerRemote dm = null;
 		
 //		if (database != null){
 //			dm = database.getDataManager(thisSchemaName + "." + tableName);
