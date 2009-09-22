@@ -60,8 +60,8 @@ public abstract class ScriptBase extends Prepared implements DataHandler {
     private FileStore store;
     private String compressionAlgorithm;
 
-    public ScriptBase(Session session) {
-        super(session);
+    public ScriptBase(Session session, boolean internalQuery) {
+        super(session, internalQuery);
     }
 
     public void setCipher(String c) {

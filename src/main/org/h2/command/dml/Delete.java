@@ -10,6 +10,7 @@ import java.sql.SQLException;
 
 import org.h2.command.Prepared;
 import org.h2.engine.Constants;
+import org.h2.engine.Database;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
@@ -32,11 +33,8 @@ public class Delete extends Prepared {
 
     private Expression condition;
     private TableFilter tableFilter;
-    private boolean internalQuery;
-
     public Delete(Session session, boolean internalQuery) {
-        super(session);
-        this.internalQuery = internalQuery;
+        super(session, internalQuery);
     }
 
     public void setTableFilter(TableFilter tableFilter) {
@@ -51,13 +49,14 @@ public class Delete extends Prepared {
         tableFilter.startQuery(session);
         tableFilter.reset();
         Table table = tableFilter.getTable();
+        setTable(table);
         session.getUser().checkRight(table, Right.DELETE);
         
 		/*
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
-		if (Constants.IS_H2O && !internalQuery && !table.getName().startsWith(Constants.H2O_SCHEMA) && !session.getDatabase().isManagementDB()){
-			QueryProxy qp = QueryProxy.getQueryProxy(session.getDatabase().getDataManager(table.getSchema().getName() + "." + table.getName()), LockType.WRITE);
+		if (isRegularTable()){
+			QueryProxy qp = QueryProxy.getQueryProxy(table.getFullName(), LockType.WRITE, session.getDatabase());
 			return qp.executeUpdate(sqlStatement);
 		}
         

@@ -18,7 +18,6 @@ import org.h2.message.Message;
 import org.h2.schema.Schema;
 import org.h2.schema.Sequence;
 import org.h2.table.Column;
-import org.h2.table.Table;
 
 /**
  * This class represents the statement
@@ -26,7 +25,6 @@ import org.h2.table.Table;
  */
 public class AlterSequence extends SchemaCommand {
 
-    private Table table;
     private Sequence sequence;
     private Expression start;
     private Expression increment;

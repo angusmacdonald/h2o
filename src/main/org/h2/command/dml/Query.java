@@ -55,8 +55,8 @@ public abstract class Query extends Prepared {
     private LocalResult lastResult;
     private Value[] lastParameters;
 
-    public Query(Session session) {
-        super(session);
+    public Query(Session session, boolean internalQuery) {
+        super(session, internalQuery);
     }
 
     /**

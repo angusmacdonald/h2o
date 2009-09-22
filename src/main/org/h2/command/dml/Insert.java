@@ -10,7 +10,7 @@ import java.sql.SQLException;
 import org.h2.command.Command;
 import org.h2.command.Prepared;
 import org.h2.constant.ErrorCode;
-import org.h2.engine.Constants;
+import org.h2.engine.Database;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
@@ -22,7 +22,6 @@ import org.h2.message.Message;
 import org.h2.result.LocalResult;
 import org.h2.result.Row;
 import org.h2.table.Column;
-import org.h2.table.Table;
 import org.h2.util.ObjectArray;
 import org.h2.value.Value;
 
@@ -32,12 +31,9 @@ import org.h2.value.Value;
  */
 public class Insert extends Prepared{
 
-	private Table table;
 	private Column[] columns;
 	private ObjectArray list = new ObjectArray();
 	private Query query;
-
-	private boolean internalQuery;
 
 	/**
 	 * 
@@ -46,7 +42,7 @@ public class Insert extends Prepared{
 	 * an external JBDC connection.
 	 */
 	public Insert(Session session, boolean internalQuery) {
-		super(session);
+		super(session, internalQuery);
 
 		this.internalQuery = internalQuery;
 	}
@@ -57,10 +53,6 @@ public class Insert extends Prepared{
 		if (query != null) {
 			query.setCommand(command);
 		}
-	}
-
-	public void setTable(Table table) {
-		this.table = table;
 	}
 
 	public void setColumns(Column[] columns) {
@@ -83,14 +75,14 @@ public class Insert extends Prepared{
 	@Override
 	public int update() throws SQLException {
 		int count = 0;
-
+		
 		session.getUser().checkRight(table, Right.INSERT);
 
 		/*
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
-		if (Constants.IS_H2O && !internalQuery && !table.getName().startsWith(Constants.H2O_SCHEMA) && !session.getDatabase().isManagementDB()){
-			QueryProxy qp = QueryProxy.getQueryProxy(session.getDatabase().getDataManager(table.getSchema().getName() + "." + table.getName()), LockType.WRITE);
+		if (isRegularTable()){
+			QueryProxy qp = QueryProxy.getQueryProxy(table.getFullName(), LockType.WRITE, session.getDatabase());
 			return qp.executeUpdate(sqlStatement);
 		}
 		
@@ -159,8 +151,6 @@ public class Insert extends Prepared{
 		}
 		return count;
 	}
-
-
 
 	@Override
 	public String getPlanSQL() {

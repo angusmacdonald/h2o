@@ -25,8 +25,8 @@ public class ExecuteProcedure extends Prepared {
     private ObjectArray expressions = new ObjectArray();
     private Procedure procedure;
 
-    public ExecuteProcedure(Session session) {
-        super(session);
+    public ExecuteProcedure(Session session, boolean internalQuery) {
+        super(session, internalQuery);
     }
 
     public void setProcedure(Procedure procedure) {

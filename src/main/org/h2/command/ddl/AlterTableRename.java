@@ -27,9 +27,7 @@ public class AlterTableRename extends SchemaCommand {
 
     private Table oldTable;
     private String newTableName;
-	private boolean internalQuery;
-
-    public AlterTableRename(Session session, Schema schema, boolean internalQuery) {
+	public AlterTableRename(Session session, Schema schema, boolean internalQuery) {
         super(session, schema);
         this.internalQuery = internalQuery;
     }

@@ -26,7 +26,6 @@ import org.h2.schema.SchemaObject;
 import org.h2.schema.Sequence;
 import org.h2.schema.TriggerObject;
 import org.h2.table.Column;
-import org.h2.table.Table;
 import org.h2.table.TableData;
 import org.h2.util.ObjectArray;
 
@@ -79,7 +78,6 @@ public class AlterTableAlterColumn extends SchemaCommand {
      */
     public static final int SELECTIVITY = 6;
 
-    private Table table;
     private Column oldColumn;
     private Column newColumn;
     private int type;
@@ -89,10 +87,6 @@ public class AlterTableAlterColumn extends SchemaCommand {
 
     public AlterTableAlterColumn(Session session, Schema schema) {
         super(session, schema);
-    }
-
-    public void setTable(Table table) {
-        this.table = table;
     }
 
     public void setOldColumn(Column oldColumn) {

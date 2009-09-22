@@ -40,8 +40,8 @@ public class Set extends Prepared {
     private String stringValue;
     private String[] stringValueList;
 
-    public Set(Session session, int type) {
-        super(session);
+    public Set(Session session, int type, boolean internalQuery) {
+        super(session, internalQuery);
         this.type = type;
     }
 

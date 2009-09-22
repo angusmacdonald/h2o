@@ -27,8 +27,8 @@ public class RunScriptCommand extends ScriptBase {
 
     private String charset = SysProperties.FILE_ENCODING;
 
-    public RunScriptCommand(Session session) {
-        super(session);
+    public RunScriptCommand(Session session, boolean internalQuery) {
+        super(session, internalQuery);
     }
 
     public int update() throws SQLException {

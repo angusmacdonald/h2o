@@ -29,11 +29,8 @@ public class DropTable extends SchemaCommand {
 
 	private boolean ifExists;
 	private String tableName;
-	private Table table = null;
 	ReplicaSet tables = null;
 	private DropTable next;
-
-	private boolean internalQuery;
 
 	public DropTable(Session session, Schema schema, boolean internalQuery) {
 		super(session, schema);
@@ -117,9 +114,10 @@ public class DropTable extends SchemaCommand {
 			 * 
 			 * #########################################################################
 			 */
+			
+			
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_") && !internalQuery){
-
-				QueryProxy qp = QueryProxy.getQueryProxy(session.getDatabase().getDataManager(table.getSchema().getName() + "." + table.getName()), LockType.WRITE);
+				QueryProxy qp = QueryProxy.getQueryProxy(table.getFullName(), LockType.WRITE, session.getDatabase());
 				qp.executeUpdate(sqlStatement);
 
 				try {

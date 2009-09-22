@@ -12,7 +12,6 @@ import org.h2.constant.ErrorCode;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.message.Message;
-import org.h2.table.Table;
 
 /**
  * This class represents the statement
@@ -20,14 +19,8 @@ import org.h2.table.Table;
  */
 public class TruncateTable extends DefineCommand {
 
-    private Table table;
-
     public TruncateTable(Session session) {
         super(session);
-    }
-
-    public void setTable(Table table) {
-        this.table = table;
     }
 
     public int update() throws SQLException {

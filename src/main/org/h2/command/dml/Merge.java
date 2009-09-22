@@ -21,7 +21,6 @@ import org.h2.message.Message;
 import org.h2.result.LocalResult;
 import org.h2.result.Row;
 import org.h2.table.Column;
-import org.h2.table.Table;
 import org.h2.util.ObjectArray;
 import org.h2.value.Value;
 
@@ -31,15 +30,14 @@ import org.h2.value.Value;
  */
 public class Merge extends Prepared {
 
-    private Table table;
     private Column[] columns;
     private Column[] keys;
     private ObjectArray list = new ObjectArray();
     private Query query;
     private Prepared update;
 
-    public Merge(Session session) {
-        super(session);
+    public Merge(Session session, boolean internalQuery) {
+        super(session, internalQuery);
     }
 
     public void setCommand(Command command) {
@@ -47,10 +45,6 @@ public class Merge extends Prepared {
         if (query != null) {
             query.setCommand(command);
         }
-    }
-
-    public void setTable(Table table) {
-        this.table = table;
     }
 
     public void setColumns(Column[] columns) {

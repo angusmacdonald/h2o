@@ -315,7 +315,7 @@ public class Parser {
 		Prepared c = null;
 		String token = currentToken;
 		if (token.length() == 0) {
-			c = new NoOperation(session);
+			c = new NoOperation(session, internalQuery);
 		} else {
 			char first = token.charAt(0);
 			switch (first) {
@@ -506,7 +506,7 @@ public class Parser {
 	}
 
 	private Prepared parseBackup() throws SQLException {
-		BackupCommand command = new BackupCommand(session);
+		BackupCommand command = new BackupCommand(session, internalQuery);
 		read("TO");
 		command.setFileName(readExpression());
 		return command;
@@ -525,18 +525,18 @@ public class Parser {
 		if (!readIf("WORK")) {
 			readIf("TRANSACTION");
 		}
-		command = new TransactionCommand(session, TransactionCommand.BEGIN);
+		command = new TransactionCommand(session, TransactionCommand.BEGIN, internalQuery);
 		return command;
 	}
 
 	private TransactionCommand parseCommit() throws SQLException {
 		TransactionCommand command;
 		if (readIf("TRANSACTION")) {
-			command = new TransactionCommand(session, TransactionCommand.COMMIT_TRANSACTION);
+			command = new TransactionCommand(session, TransactionCommand.COMMIT_TRANSACTION, internalQuery);
 			command.setTransactionName(readUniqueIdentifier());
 			return command;
 		}
-		command = new TransactionCommand(session, TransactionCommand.COMMIT);
+		command = new TransactionCommand(session, TransactionCommand.COMMIT, internalQuery);
 		readIf("WORK");
 		return command;
 	}
@@ -550,30 +550,30 @@ public class Parser {
 				readIf("SCRIPT");
 			}
 		}
-		return new TransactionCommand(session, type);
+		return new TransactionCommand(session, type, internalQuery);
 	}
 
 	private TransactionCommand parseRollback() throws SQLException {
 		TransactionCommand command;
 		if (readIf("TRANSACTION")) {
-			command = new TransactionCommand(session, TransactionCommand.ROLLBACK_TRANSACTION);
+			command = new TransactionCommand(session, TransactionCommand.ROLLBACK_TRANSACTION, internalQuery);
 			command.setTransactionName(readUniqueIdentifier());
 			return command;
 		}
 		if (readIf("TO")) {
 			read("SAVEPOINT");
-			command = new TransactionCommand(session, TransactionCommand.ROLLBACK_TO_SAVEPOINT);
+			command = new TransactionCommand(session, TransactionCommand.ROLLBACK_TO_SAVEPOINT, internalQuery);
 			command.setSavepointName(readUniqueIdentifier());
 		} else {
 			readIf("WORK");
-			command = new TransactionCommand(session, TransactionCommand.ROLLBACK);
+			command = new TransactionCommand(session, TransactionCommand.ROLLBACK, internalQuery);
 		}
 		return command;
 	}
 
 	private Prepared parsePrepare() throws SQLException {
 		if (readIf("COMMIT")) {
-			TransactionCommand command = new TransactionCommand(session, TransactionCommand.PREPARE_COMMIT);
+			TransactionCommand command = new TransactionCommand(session, TransactionCommand.PREPARE_COMMIT, internalQuery);
 			command.setTransactionName(readUniqueIdentifier());
 			return command;
 		}
@@ -598,13 +598,13 @@ public class Parser {
 	}
 
 	private TransactionCommand parseSavepoint() throws SQLException {
-		TransactionCommand command = new TransactionCommand(session, TransactionCommand.SAVEPOINT);
+		TransactionCommand command = new TransactionCommand(session, TransactionCommand.SAVEPOINT, internalQuery);
 		command.setSavepointName(readUniqueIdentifier());
 		return command;
 	}
 
 	private Prepared parseReleaseSavepoint() throws SQLException {
-		Prepared command = new NoOperation(session);
+		Prepared command = new NoOperation(session, internalQuery);
 		readIf("SAVEPOINT");
 		readUniqueIdentifier();
 		return command;
@@ -863,7 +863,7 @@ public class Parser {
 	}
 
 	private Merge parseMerge() throws SQLException {
-		Merge command = new Merge(session);
+		Merge command = new Merge(session, internalQuery);
 		currentPrepared = command;
 		read("INTO");
 		Table table = readTableOrView();
@@ -900,7 +900,7 @@ public class Parser {
 		return command;
 	}
 
-	private Insert parseInsert() throws SQLException {
+	private Prepared parseInsert() throws SQLException {
 		Insert command = new Insert(session, internalQuery);
 		currentPrepared = command;
 		read("INTO");
@@ -1326,7 +1326,7 @@ public class Parser {
 	}
 
 	private Prepared parseExecute() throws SQLException {
-		ExecuteProcedure command = new ExecuteProcedure(session);
+		ExecuteProcedure command = new ExecuteProcedure(session, internalQuery);
 		String procedureName = readAliasIdentifier();
 		Procedure p = session.getProcedure(procedureName);
 		if (p == null) {
@@ -1354,7 +1354,7 @@ public class Parser {
 	}
 
 	private ExplainPlan parseExplain() throws SQLException {
-		ExplainPlan command = new ExplainPlan(session);
+		ExplainPlan command = new ExplainPlan(session, internalQuery);
 		readIf("PLAN");
 		readIf("FOR");
 		if (isToken("SELECT") || isToken("FROM") || isToken("(")) {
@@ -1394,7 +1394,7 @@ public class Parser {
 	private Query parseSelectUnionExtension(Query command, int start, boolean unionOnly) throws SQLException {
 		while (true) {
 			if (readIf("UNION")) {
-				SelectUnion union = new SelectUnion(session, command);
+				SelectUnion union = new SelectUnion(session, command, internalQuery);
 				if (readIf("ALL")) {
 					union.setUnionType(SelectUnion.UNION_ALL);
 				} else {
@@ -1404,12 +1404,12 @@ public class Parser {
 				union.setRight(parseSelectSub());
 				command = union;
 			} else if (readIf("MINUS") || readIf("EXCEPT")) {
-				SelectUnion union = new SelectUnion(session, command);
+				SelectUnion union = new SelectUnion(session, command, internalQuery);
 				union.setUnionType(SelectUnion.EXCEPT);
 				union.setRight(parseSelectSub());
 				command = union;
 			} else if (readIf("INTERSECT")) {
-				SelectUnion union = new SelectUnion(session, command);
+				SelectUnion union = new SelectUnion(session, command, internalQuery);
 				union.setUnionType(SelectUnion.INTERSECT);
 				union.setRight(parseSelectSub());
 				command = union;
@@ -1639,7 +1639,7 @@ public class Parser {
 		} else {
 			throw getSyntaxError();
 		}
-		Select command = new Select(session);
+		Select command = new Select(session, internalQuery);
 		int start = lastParseIndex;
 		Select oldSelect = currentSelect;
 		currentSelect = command;
@@ -3647,7 +3647,7 @@ public class Parser {
 	}
 
 	private Call parserCall() throws SQLException {
-		Call command = new Call(session);
+		Call command = new Call(session, internalQuery);
 		currentPrepared = command;
 		command.setValue(readExpression());
 		return command;
@@ -3903,9 +3903,9 @@ public class Parser {
 	private TransactionCommand parseCheckpoint() throws SQLException {
 		TransactionCommand command;
 		if (readIf("SYNC")) {
-			command = new TransactionCommand(session, TransactionCommand.CHECKPOINT_SYNC);
+			command = new TransactionCommand(session, TransactionCommand.CHECKPOINT_SYNC, internalQuery);
 		} else {
-			command = new TransactionCommand(session, TransactionCommand.CHECKPOINT);
+			command = new TransactionCommand(session, TransactionCommand.CHECKPOINT, internalQuery);
 		}
 		return command;
 	}
@@ -4022,7 +4022,7 @@ public class Parser {
 
 	private Prepared parseSet() throws SQLException {
 		if (readIf("@")) {
-			Set command = new Set(session, SetTypes.VARIABLE);
+			Set command = new Set(session, SetTypes.VARIABLE, internalQuery);
 			command.setString(readAliasIdentifier());
 			readIfEqualOrTo();
 			command.setExpression(readExpression());
@@ -4031,23 +4031,23 @@ public class Parser {
 			readIfEqualOrTo();
 			boolean value = readBooleanSetting();
 			int setting = value ? TransactionCommand.AUTOCOMMIT_TRUE : TransactionCommand.AUTOCOMMIT_FALSE;
-			return new TransactionCommand(session, setting);
+			return new TransactionCommand(session, setting, internalQuery);
 		} else if (readIf("MVCC")) {
 			readIfEqualOrTo();
 			boolean value = readBooleanSetting();
-			Set command = new Set(session, SetTypes.MVCC);
+			Set command = new Set(session, SetTypes.MVCC, internalQuery);
 			command.setInt(value ? 1 : 0);
 			return command;
 		} else if (readIf("EXCLUSIVE")) {
 			readIfEqualOrTo();
 			boolean value = readBooleanSetting();
-			Set command = new Set(session, SetTypes.EXCLUSIVE);
+			Set command = new Set(session, SetTypes.EXCLUSIVE, internalQuery);
 			command.setInt(value ? 1 : 0);
 			return command;
 		} else if (readIf("IGNORECASE")) {
 			readIfEqualOrTo();
 			boolean value = readBooleanSetting();
-			Set command = new Set(session, SetTypes.IGNORECASE);
+			Set command = new Set(session, SetTypes.IGNORECASE, internalQuery);
 			command.setInt(value ? 1 : 0);
 			return command;
 		} else if (readIf("PASSWORD")) {
@@ -4068,12 +4068,12 @@ public class Parser {
 			return command;
 		} else if (readIf("MODE")) {
 			readIfEqualOrTo();
-			Set command = new Set(session, SetTypes.MODE);
+			Set command = new Set(session, SetTypes.MODE, internalQuery);
 			command.setString(readAliasIdentifier());
 			return command;
 		} else if (readIf("COMPRESS_LOB")) {
 			readIfEqualOrTo();
-			Set command = new Set(session, SetTypes.COMPRESS_LOB);
+			Set command = new Set(session, SetTypes.COMPRESS_LOB, internalQuery);
 			if (currentTokenType == VALUE) {
 				command.setString(readString());
 			} else {
@@ -4089,17 +4089,17 @@ public class Parser {
 			return parseSetCollation();
 		} else if (readIf("CLUSTER")) {
 			readIfEqualOrTo();
-			Set command = new Set(session, SetTypes.CLUSTER);
+			Set command = new Set(session, SetTypes.CLUSTER, internalQuery);
 			command.setString(readString());
 			return command;
 		} else if (readIf("DATABASE_EVENT_LISTENER")) {
 			readIfEqualOrTo();
-			Set command = new Set(session, SetTypes.DATABASE_EVENT_LISTENER);
+			Set command = new Set(session, SetTypes.DATABASE_EVENT_LISTENER, internalQuery);
 			command.setString(readString());
 			return command;
 		} else if (readIf("ALLOW_LITERALS")) {
 			readIfEqualOrTo();
-			Set command = new Set(session, SetTypes.ALLOW_LITERALS);
+			Set command = new Set(session, SetTypes.ALLOW_LITERALS, internalQuery);
 			if (readIf("NONE")) {
 				command.setInt(Constants.ALLOW_LITERALS_NONE);
 			} else if (readIf("ALL")) {
@@ -4112,7 +4112,7 @@ public class Parser {
 			return command;
 		} else if (readIf("DEFAULT_TABLE_TYPE")) {
 			readIfEqualOrTo();
-			Set command = new Set(session, SetTypes.DEFAULT_TABLE_TYPE);
+			Set command = new Set(session, SetTypes.DEFAULT_TABLE_TYPE, internalQuery);
 			if (readIf("MEMORY")) {
 				command.setInt(Table.TYPE_MEMORY);
 			} else if (readIf("CACHED")) {
@@ -4125,58 +4125,58 @@ public class Parser {
 			readIfEqualOrTo();
 			// Derby compatibility (CREATE=TRUE in the database URL)
 			read();
-			return new NoOperation(session);
+			return new NoOperation(session, internalQuery);
 		} else if (readIf("HSQLDB.DEFAULT_TABLE_TYPE")) {
 			readIfEqualOrTo();
 			read();
-			return new NoOperation(session);
+			return new NoOperation(session, internalQuery);
 		} else if (readIf("CACHE_TYPE")) {
 			readIfEqualOrTo();
 			read();
-			return new NoOperation(session);
+			return new NoOperation(session, internalQuery);
 		} else if (readIf("FILE_LOCK")) {
 			readIfEqualOrTo();
 			read();
-			return new NoOperation(session);
+			return new NoOperation(session, internalQuery);
 		} else if (readIf("DB_CLOSE_ON_EXIT")) {
 			readIfEqualOrTo();
 			read();
-			return new NoOperation(session);
+			return new NoOperation(session, internalQuery);
 		} else if (readIf("ACCESS_MODE_LOG")) {
 			readIfEqualOrTo();
 			read();
-			return new NoOperation(session);
+			return new NoOperation(session, internalQuery);
 		} else if (readIf("AUTO_SERVER")) {
 			readIfEqualOrTo();
 			read();
-			return new NoOperation(session);
+			return new NoOperation(session, internalQuery);
 		} else if (readIf("AUTO_RECONNECT")) {
 			readIfEqualOrTo();
 			read();
-			return new NoOperation(session);
+			return new NoOperation(session, internalQuery);
 		} else if (readIf("ASSERT")) {
 			readIfEqualOrTo();
 			read();
-			return new NoOperation(session);
+			return new NoOperation(session, internalQuery);
 		} else if (readIf("ACCESS_MODE_DATA")) {
 			readIfEqualOrTo();
 			read();
-			return new NoOperation(session);
+			return new NoOperation(session, internalQuery);
 		} else if (readIf("DATABASE_EVENT_LISTENER_OBJECT")) {
 			readIfEqualOrTo();
 			read();
-			return new NoOperation(session);
+			return new NoOperation(session, internalQuery);
 		} else if (readIf("OPEN_NEW")) {
 			readIfEqualOrTo();
 			read();
-			return new NoOperation(session);
+			return new NoOperation(session, internalQuery);
 		} else if (readIf("RECOVER")) {
 			readIfEqualOrTo();
 			read();
-			return new NoOperation(session);
+			return new NoOperation(session, internalQuery);
 		} else if (readIf("SCHEMA")) {
 			readIfEqualOrTo();
-			Set command = new Set(session, SetTypes.SCHEMA);
+			Set command = new Set(session, SetTypes.SCHEMA, internalQuery);
 			command.setString(readAliasIdentifier());
 			return command;
 		} else if (readIf("DATESTYLE")) {
@@ -4188,10 +4188,10 @@ public class Parser {
 					throw getSyntaxError();
 				}
 			}
-			return new NoOperation(session);
+			return new NoOperation(session, internalQuery);
 		} else if (readIf("SEARCH_PATH") || readIf(SetTypes.getTypeName(SetTypes.SCHEMA_SEARCH_PATH))) {
 			readIfEqualOrTo();
-			Set command = new Set(session, SetTypes.SCHEMA_SEARCH_PATH);
+			Set command = new Set(session, SetTypes.SCHEMA_SEARCH_PATH, internalQuery);
 			ObjectArray list = new ObjectArray();
 			list.add(readAliasIdentifier());
 			while (readIf(",")) {
@@ -4212,14 +4212,14 @@ public class Parser {
 			}
 			read();
 			readIfEqualOrTo();
-			Set command = new Set(session, type);
+			Set command = new Set(session, type, internalQuery);
 			command.setExpression(readExpression());
 			return command;
 		}
 	}
 
 	private Set parseSetCollation() throws SQLException {
-		Set command = new Set(session, SetTypes.COLLATION);
+		Set command = new Set(session, SetTypes.COLLATION, internalQuery);
 		String name = readAliasIdentifier();
 		command.setString(name);
 		if (name.equals(CompareMode.OFF)) {
@@ -4246,7 +4246,7 @@ public class Parser {
 	}
 
 	private RunScriptCommand parseRunScript() throws SQLException {
-		RunScriptCommand command = new RunScriptCommand(session);
+		RunScriptCommand command = new RunScriptCommand(session, internalQuery);
 		read("FROM");
 		command.setFile(readExpression());
 		if (readIf("COMPRESSION")) {
@@ -4265,7 +4265,7 @@ public class Parser {
 	}
 
 	private ScriptCommand parseScript() throws SQLException {
-		ScriptCommand command = new ScriptCommand(session);
+		ScriptCommand command = new ScriptCommand(session, internalQuery);
 		boolean data = true, passwords = true, settings = true, dropTables = false, simple = false;
 
 		String tableName = null;

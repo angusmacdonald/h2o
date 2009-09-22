@@ -26,8 +26,8 @@ public class ExplainPlan extends Prepared {
     private Prepared command;
     private LocalResult result;
 
-    public ExplainPlan(Session session) {
-        super(session);
+    public ExplainPlan(Session session, boolean internalQuery) {
+        super(session, internalQuery);
     }
 
     public void setCommand(Prepared command) {

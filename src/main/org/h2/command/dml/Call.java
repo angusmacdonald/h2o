@@ -29,8 +29,8 @@ public class Call extends Prepared {
     private Expression value;
     private ObjectArray expressions;
 
-    public Call(Session session) {
-        super(session);
+    public Call(Session session, boolean internalQuery) {
+        super(session, internalQuery);
     }
 
     public LocalResult queryMeta() throws SQLException {

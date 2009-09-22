@@ -14,7 +14,7 @@ import org.h2.h2o.util.LockType;
  */
 public interface DataManagerRemote extends H2ORemote {
 
-	public QueryProxy requestQueryProxy(LockType lockType) throws RemoteException;
+	public QueryProxy requestQueryProxy(LockType lockType, DatabaseInstanceRemote databaseInstanceRemote) throws RemoteException, SQLException;
 
 	/**
 	 * Inform the data manager that a new replica has been created for the given table.
@@ -58,4 +58,11 @@ public interface DataManagerRemote extends H2ORemote {
 	 * @throws RemoteException 
 	 */
 	public String getLocation() throws RemoteException;
+
+	/**
+	 * Release a lock held by the database instance specified in the parameter. Called at the end of QueryProxy.executeQuery()
+	 * to indicate that the transaction has finished (it may have succeeded or failed).
+	 * @param requestingDatabase	Database which made the original request. Lock was taken out in its name.
+	 */
+	public void releaseLock(DatabaseInstanceRemote requestingDatabase) throws RemoteException;
 }

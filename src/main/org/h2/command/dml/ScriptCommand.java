@@ -82,8 +82,8 @@ public class ScriptCommand extends ScriptBase {
 	private String schemaName = null;
 
 
-	public ScriptCommand(Session session) {
-		super(session);
+	public ScriptCommand(Session session, boolean internalQuery) {
+		super(session, internalQuery);
 	}
 
 	public boolean isQuery() {

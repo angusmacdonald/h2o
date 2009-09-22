@@ -927,4 +927,11 @@ public abstract class Table extends SchemaObjectBase {
 	public void setTableSet(int tableSet) {
 		this.tableSet = tableSet;
 	}
+
+	/**
+	 * @return
+	 */
+	public String getFullName() {
+		return getSchema().getName() + "." + getName();
+	}
 }

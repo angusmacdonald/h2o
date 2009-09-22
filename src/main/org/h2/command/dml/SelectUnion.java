@@ -62,8 +62,8 @@ public class SelectUnion extends Query {
     private boolean isPrepared, checkInit;
     private boolean isForUpdate;
 
-    public SelectUnion(Session session, Query query) {
-        super(session);
+    public SelectUnion(Session session, Query query, boolean internalQuery) {
+        super(session, internalQuery);
         this.left = query;
     }
 

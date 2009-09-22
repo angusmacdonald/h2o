@@ -41,8 +41,8 @@ public class BackupCommand extends Prepared {
 
     private Expression fileName;
 
-    public BackupCommand(Session session) {
-        super(session);
+    public BackupCommand(Session session, boolean internalQuery) {
+        super(session, internalQuery);
     }
 
     public void setFileName(Expression fileName) {

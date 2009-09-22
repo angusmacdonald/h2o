@@ -5,6 +5,7 @@ import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Set;
 
+import org.h2.engine.Database;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.TwoPhaseCommit;
@@ -37,19 +38,32 @@ public class QueryProxy implements Serializable{
 
 	private Set<DatabaseInstanceRemote> allReplicas;
 
+	/**
+	 * Proxy for the data manager of this table. Used to release any locks held at the end of the transaction.
+	 */
+	private DataManagerRemote dataManagerProxy;
+
+	/**
+	 * The database instance making the request. This is used to request the lock (i.e. the lock for the given query
+	 * is taken out in the name of this database instance.
+	 */
+	private DatabaseInstanceRemote requestingDatabase;
+
 
 	/**
 	 * @param lockGranted		The type of lock that has been granted
 	 * @param tableName			Name of the table that is being used in the query
 	 * @param replicaLocations	Proxies for each of the replicas used in the query.
-	 * @param basicQuery
+	 * @param dataManager		Proxy for the data manager of the table involved in the query (i.e. tableName).
 	 */
 	public QueryProxy(LockType lockGranted, String tableName,
-			Set<DatabaseInstanceRemote> replicaLocations) {
+			Set<DatabaseInstanceRemote> replicaLocations, DataManagerRemote dataManager, DatabaseInstanceRemote requestingMachine) {
 		super();
 		this.lockGranted = lockGranted;
 		this.tableName = tableName;
 		this.allReplicas = replicaLocations;
+		this.dataManagerProxy = dataManager;
+		this.requestingDatabase = requestingMachine;
 	}
 
 	/**
@@ -61,20 +75,25 @@ public class QueryProxy implements Serializable{
 	public int executeUpdate(String sql) throws SQLException {
 
 		if (allReplicas == null || allReplicas.size() == 0){
+			try {
+				dataManagerProxy.releaseLock(requestingDatabase);
+			} catch (RemoteException e) {
+				ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the data manager");
+			}
 			Diagnostic.traceNoEvent(Diagnostic.FINAL, "No replicas found to perform update: " + sql);
 			return 0;
 		}
-		
+
 		String transactionName = TransactionNameGenerator.generateName(); 
-		
+
 		SQLException exception = null;
-		
+
 		/*
 		 * Whether the transaction should commit or rollback. Defaults to true, but set to false if one
 		 * of the PREPARE operations fails - i.e. every replica must be available to commit.
 		 */
 		boolean globalCommit = true; 
-		
+
 		/*
 		 * Whether an individual replica is able to commit. Used to stop ROLLBACK calls being made to unavailable replicas.
 		 */
@@ -96,6 +115,8 @@ public class QueryProxy implements Serializable{
 				} else {
 					commit[i++] = true;
 				}
+
+				//TODO include more specific exceptions - e..g replica can't commit
 			} catch (RemoteException e) {
 				e.printStackTrace();
 				//ErrorHandling.errorNoEvent("Unable to contact one of the DB instances holding a replica for " + tableName + ".");
@@ -132,8 +153,14 @@ public class QueryProxy implements Serializable{
 					throw new SQLException("Unable to send 'commit' to one of the replicas.");
 				}
 			}
-			
+
 			i++;
+		}
+
+		try {
+			dataManagerProxy.releaseLock(requestingDatabase);
+		} catch (RemoteException e) {
+			ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the data manager");
 		}
 
 		/*
@@ -152,11 +179,25 @@ public class QueryProxy implements Serializable{
 
 	/**
 	 * Obtain a query proxy for the given table.
+	 * @param tableName		Table involved in query.
+	 * @param lockType		Lock required for query
+	 * @param db			Local database instance - needed to inform DM of: the identity of the requesting machine,
+	 * 							and to obtain the data manager for the given table.
+	 * @return
+	 * @throws SQLException
+	 */
+	public static QueryProxy getQueryProxy(String tableName, LockType lockType, Database db) throws SQLException {
+		return getQueryProxy(db.getDataManager(tableName), lockType, db.getLocalDatabaseInstance());
+	}
+
+	/**
+	 * Obtain a query proxy for the given table.
 	 * @param dataManager
+	 * @param requestingDatabase DB making the request.
 	 * @return Query proxy for a specific table within H20.
 	 * @throws SQLException
 	 */
-	public static QueryProxy getQueryProxy(DataManagerRemote dataManager, LockType lockType) throws SQLException {
+	public static QueryProxy getQueryProxy(DataManagerRemote dataManager, LockType lockType, DatabaseInstanceRemote requestingDatabase) throws SQLException {
 
 		QueryProxy qp = null;
 
@@ -165,8 +206,13 @@ public class QueryProxy implements Serializable{
 			throw new SQLException("Data manager not found for table.");
 		}
 
+		if(requestingDatabase == null){
+			System.err.println("Shouldn't happen.");
+		}
+
+
 		try {
-			qp = dataManager.requestQueryProxy(lockType);
+			qp = dataManager.requestQueryProxy(lockType, requestingDatabase);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 			throw new SQLException("Unable to obtain query proxy from data manager (remote exception).");

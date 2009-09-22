@@ -11,7 +11,6 @@ import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
-import org.h2.table.Table;
 
 /**
  * Represents the DROP REPLICA command, allowing individual replicas to be dropped.
@@ -24,7 +23,6 @@ public class DropReplica extends SchemaCommand {
 
 	private boolean ifExists;
 	private String tableName;
-	private Table table;
 	private DropReplica next;
 
 	public DropReplica(Session session, Schema schema) {

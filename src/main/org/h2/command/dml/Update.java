@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import org.h2.command.Prepared;
 import org.h2.constant.ErrorCode;
 import org.h2.engine.Constants;
+import org.h2.engine.Database;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
@@ -38,11 +39,8 @@ public class Update extends Prepared {
     private Expression condition;
     private TableFilter tableFilter;
     private Expression[] expressions;
-	private boolean internalQuery;
-
-    public Update(Session session, boolean internalQuery) {
-        super(session);
-        this.internalQuery = internalQuery;
+	public Update(Session session, boolean internalQuery) {
+        super(session, internalQuery);
     }
 
     public void setTableFilter(TableFilter tableFilter) {
@@ -81,13 +79,15 @@ public class Update extends Prepared {
         RowList rows = new RowList(session);
         try {
             Table table = tableFilter.getTable();
+            setTable(table);
             session.getUser().checkRight(table, Right.UPDATE);
             
     		/*
     		 * (QUERY PROPAGATED TO ALL REPLICAS).
     		 */
-    		if (Constants.IS_H2O && !internalQuery && !table.getName().startsWith(Constants.H2O_SCHEMA) && !session.getDatabase().isManagementDB()){
-    			QueryProxy qp = QueryProxy.getQueryProxy(session.getDatabase().getDataManager(table.getSchema().getName() + "." + table.getName()), LockType.WRITE);
+    		if (isRegularTable()){
+    			Database db = session.getDatabase();
+    			QueryProxy qp = QueryProxy.getQueryProxy(table.getFullName(), LockType.WRITE, db);
     			return qp.executeUpdate(sqlStatement);
     		}
             

@@ -148,7 +148,52 @@ public class UpdateTests extends TestBase {
 			e.printStackTrace();
 			fail("Validation of results failed.");
 		}
+	}
+	
+	/**
+	 * Tests that when multiple updates happen on separate tables the system handles them correctly.
+	 */
+	@Test
+	public void testMultiTableInserts(){
+		try {
+			sb.execute("CREATE REPLICA TEST");
+			sa.execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+			sa.execute("INSERT INTO TEST2 VALUES(4, 'Hi');");
+			sa.execute("INSERT INTO TEST2 VALUES(5, 'Ho');");
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+			fail("This wasn't even the interesting part of the test.");
+		}
+		
+		
+		try {
+			sa.execute("INSERT INTO TEST2 VALUES(3, 'HAHAAHAHAHA'); INSERT INTO TEST VALUES(3, 'HAHAAHAHAHA');");
 
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("Expected success.");
+		}
+		
+		int[] pKey = {1, 2, 3};
+		String[] secondCol = {"Hello", "World", "HAHAAHAHAHA"};
 
+		try {
+			sa.execute("SELECT * FROM TEST ORDER BY ID");
+			validateResults(pKey, secondCol, sa.getResultSet());
+			
+			sb.execute("SELECT * FROM TEST ORDER BY ID");
+			validateResults(pKey, secondCol, sb.getResultSet());
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("Validation of results failed.");
+		}
+	}
+	
+	/**
+	 * Tests the case of multiple database instances attempting to access a table at the same time. Exclusive access should be ensured during the period of writes.
+	 */
+	@Test
+	public void testConcurrentQueries(){
+		fail("Not yet implemented?!");
 	}
 }

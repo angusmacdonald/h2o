@@ -12,7 +12,6 @@ import org.h2.engine.DbObject;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.table.Column;
-import org.h2.table.Table;
 import org.h2.util.ObjectArray;
 
 /**
@@ -21,16 +20,11 @@ import org.h2.util.ObjectArray;
  */
 public class AlterTableRenameColumn extends DefineCommand {
 
-    private Table table;
     private Column column;
     private String newName;
 
     public AlterTableRenameColumn(Session session) {
         super(session);
-    }
-
-    public void setTable(Table table) {
-        this.table = table;
     }
 
     public void setColumn(Column column) {

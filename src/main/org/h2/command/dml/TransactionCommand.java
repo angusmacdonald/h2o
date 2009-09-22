@@ -94,8 +94,8 @@ public class TransactionCommand extends Prepared {
     private String savepointName;
     private String transactionName;
 
-    public TransactionCommand(Session session, int type) {
-        super(session);
+    public TransactionCommand(Session session, int type, boolean internalQuery) {
+        super(session, internalQuery);
         this.type = type;
     }
 

@@ -10,7 +10,6 @@ import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.h2.command.Parser;
 import org.h2.command.Prepared;
 import org.h2.command.dml.Insert;
 import org.h2.command.dml.Query;
@@ -134,8 +133,6 @@ public class CreateTable extends SchemaCommand {
 		 * 
 		 * #########################################################################
 		 */
-
-		Parser parser = null;
 
 		if (Constants.IS_H2O && !db.isSM() && !db.isManagementDB() && !tableName.startsWith("H2O_") && !isStartup()){
 
@@ -297,8 +294,8 @@ public class CreateTable extends SchemaCommand {
 				 * (add replicas at some external locations).
 				 */
 				if (Constants.IS_H2O && !table.getName().startsWith(Constants.H2O_SCHEMA) && !session.getDatabase().isManagementDB()){
-					QueryProxy qp = QueryProxy.getQueryProxy(dm, LockType.CREATE);
-					return qp.executeUpdate("CREATE REPLICA " + getSchema().getName() + "." + table.getName());
+					QueryProxy qp = QueryProxy.getQueryProxy(dm, LockType.CREATE, session.getDatabase().getLocalDatabaseInstance());
+					return qp.executeUpdate("CREATE REPLICA " + table.getFullName());
 				}
 			}
 

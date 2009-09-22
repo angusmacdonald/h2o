@@ -7,11 +7,14 @@ import java.util.Set;
 
 import org.h2.command.Command;
 import org.h2.command.Parser;
+import org.h2.constant.ErrorCode;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.h2o.autonomic.Replication;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.locking.ILockingTable;
+import org.h2.h2o.locking.LockingTable;
 import org.h2.h2o.util.LockType;
 import org.h2.message.Message;
 import org.h2.result.LocalResult;
@@ -121,6 +124,11 @@ public class DataManager implements DataManagerRemote {
 	 */
 	private DatabaseInstanceRemote primaryLocation;
 
+	/**
+	 * Stores locks held by various databases for accessing this table (all replicas).
+	 */
+	private ILockingTable lockingTable;
+
 	private Database database;
 
 	public DataManager(String tableName, String schemaName, long modificationID, int tableSet, Database database) throws SQLException{
@@ -138,6 +146,8 @@ public class DataManager implements DataManagerRemote {
 
 		this.replicaLocations = new HashSet<DatabaseInstanceRemote>();
 		this.primaryLocation = null;
+
+		this.lockingTable = new LockingTable();
 
 		//this.primaryLocation = database.getLocalDatabaseInstance();
 
@@ -238,7 +248,7 @@ public class DataManager implements DataManagerRemote {
 	 * @see org.h2.h2o.comms.IDataManager#requestLock(java.lang.String)
 	 */
 	@Override
-	public QueryProxy requestQueryProxy(LockType lockType) throws RemoteException {
+	public synchronized QueryProxy requestQueryProxy(LockType lockType, DatabaseInstanceRemote databaseInstanceRemote) throws RemoteException, SQLException {
 
 
 		if (replicaLocations.size() == 0){
@@ -250,13 +260,22 @@ public class DataManager implements DataManagerRemote {
 			}
 		}
 
+
+
+		LockType lockGranted = lockingTable.requestLock(lockType, databaseInstanceRemote);
+
+		if (lockGranted == LockType.NONE){
+			throw new SQLException("Table already locked. Cannot perform query.");
+		}
+		
 		QueryProxy qp = null;
 
 		if (lockType == LockType.CREATE){
 			//CREATE TABLE, SCHEMA - DON'T REPLICA TO ALL LOCATIONS. BASE ON REPLICATION FACTOR.
-			qp = new QueryProxy(lockType, tableName, selectReplicaLocations(this.primaryLocation));
+
+			qp = new QueryProxy(lockType, tableName, selectReplicaLocations(this.primaryLocation), this, databaseInstanceRemote);
 		} else {
-			qp = new QueryProxy(lockType, tableName, replicaLocations);
+			qp = new QueryProxy(lockType, tableName, replicaLocations, this, databaseInstanceRemote);
 		}
 
 		return qp;
@@ -334,7 +353,7 @@ public class DataManager implements DataManagerRemote {
 		 * The set of all machines currently in the system.
 		 */
 		Set<DatabaseInstanceRemote> potentialReplicaLocations = database.getDatabaseInstances();
-		
+
 		int currentReplicationFactor = 1; //currently one copy of the table.
 
 		for (DatabaseInstanceRemote dbInstance: potentialReplicaLocations){
@@ -345,18 +364,19 @@ public class DataManager implements DataManagerRemote {
 
 			if (currentReplicationFactor == Replication.REPLICATION_FACTOR) break;
 		}
-		
+
 		if (currentReplicationFactor < Replication.REPLICATION_FACTOR){
 			//Couldn't replicate to enough machines.
 			ErrorHandling.errorNoEvent("Insufficient number of machines available to reach a replication factor of " + Replication.REPLICATION_FACTOR);
 		}
-		
+
 		return replicaLocations;
 	}
 
 	public int removeReplica(String dbLocation, String machineName, int connectionPort, String connectionType) throws RemoteException, SQLException {
 		int connectionID = getConnectionID(machineName, connectionPort, connectionType);
 		int tableID = getTableID();
+
 		String sql = "DELETE FROM " + REPLICAS + " WHERE table_id=" + tableID + " AND db_location='" + dbLocation + "' AND connection_id=" + connectionID  + "; ";
 
 		//Don't know if it is on a SM machine, so try both.
@@ -598,6 +618,14 @@ public class DataManager implements DataManagerRemote {
 	@Override
 	public void testAvailability() {
 		//Doesn't do anything.
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.remote.DataManagerRemote#releaseLock(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
+	 */
+	@Override
+	public void releaseLock(DatabaseInstanceRemote requestingDatabase) throws RemoteException{
+		lockingTable.releaseLock(requestingDatabase);
 	}
 
 }

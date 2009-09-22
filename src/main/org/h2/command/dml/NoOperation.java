@@ -15,8 +15,8 @@ import org.h2.result.LocalResult;
  */
 public class NoOperation extends Prepared {
 
-    public NoOperation(Session session) {
-        super(session);
+    public NoOperation(Session session, boolean internalQuery) {
+        super(session, internalQuery);
     }
 
     public int update() {

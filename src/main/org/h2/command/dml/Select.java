@@ -84,8 +84,8 @@ public class Select extends Query {
     private LocationPreference locationPreference = LocationPreference.NO_PREFERENCE;
     
 
-    public Select(Session session) {
-        super(session);
+    public Select(Session session, boolean internalQuery) {
+        super(session, internalQuery);
     }
 
     /**

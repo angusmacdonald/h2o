@@ -11,6 +11,7 @@ import java.sql.SQLException;
 
 import org.h2.constant.ErrorCode;
 import org.h2.constant.SysProperties;
+import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
@@ -19,6 +20,7 @@ import org.h2.index.Index;
 import org.h2.jdbc.JdbcSQLException;
 import org.h2.message.Message;
 import org.h2.result.LocalResult;
+import org.h2.table.Table;
 import org.h2.util.ObjectArray;
 import org.h2.value.Value;
 
@@ -69,13 +71,19 @@ public abstract class Prepared{
     private int objectId;
     private int currentRowNumber;
 
+	protected Table table;
+
+	protected boolean internalQuery;
+
     /**
      * Create a new object.
      *
      * @param session the session
+     * @param internalQuery2 
      */
-    public Prepared(Session session) {
+    public Prepared(Session session, boolean internalQuery) {
         this.session = session;
+        this.internalQuery = internalQuery;
         modificationMetaId = session.getDatabase().getModificationMetaId();
     }
 
@@ -458,5 +466,16 @@ public abstract class Prepared{
 	 */
 	public boolean isStartup() {
 		return startup;
+	}
+
+	/**
+	 * True if the table involved in the prepared statement is a regular table - i.e. not an H2O meta-data table.
+	 */
+	protected boolean isRegularTable() {
+		return Constants.IS_H2O && !internalQuery && !table.getName().startsWith(Constants.H2O_SCHEMA) && !session.getDatabase().isManagementDB();
+	}
+
+	public void setTable(Table table) {
+		this.table = table;
 	}
 }

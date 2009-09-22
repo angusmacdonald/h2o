@@ -2693,7 +2693,7 @@ public class Database implements DataHandler {
 	 * @return
 	 */
 	public DatabaseInstanceRemote getLocalDatabaseInstance() {
-		return getDatabaseInstance(originalURL);
+		return getDatabaseInstance(DatabaseURL.parseURL(originalURL).getNewURL());
 	}
 	
 	public String getOriginalDatabaseURL(){
