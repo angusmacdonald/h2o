@@ -448,7 +448,7 @@ public class Session extends SessionWithState {
             // (create/drop table and so on)
             logSystem.commit(this);
         }
-        if (undoLog.size() > 0) {
+         if (undoLog.size() > 0) {
             if (database.isMultiVersion()) {
                 ArrayList<Row> rows = new ArrayList<Row>();
                 synchronized (database) {

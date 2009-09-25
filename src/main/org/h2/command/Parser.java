@@ -251,6 +251,7 @@ public class Parser {
 		try {
 			Prepared p = parse(sql);
 			p.prepare();
+			
 			Command c = new CommandContainer(this, sql, p);
 			p.setCommand(c);
 			if (isToken(";")) {

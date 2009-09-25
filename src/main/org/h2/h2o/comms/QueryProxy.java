@@ -3,6 +3,7 @@ package org.h2.h2o.comms;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.h2.engine.Database;
@@ -49,21 +50,28 @@ public class QueryProxy implements Serializable{
 	 */
 	private DatabaseInstanceRemote requestingDatabase;
 
+	/**
+	 * ID assigned to this update by the data manager. This is returned to inform the data manager what replicas were updated.
+	 */
+	private int updateID;
+
 
 	/**
 	 * @param lockGranted		The type of lock that has been granted
 	 * @param tableName			Name of the table that is being used in the query
 	 * @param replicaLocations	Proxies for each of the replicas used in the query.
 	 * @param dataManager		Proxy for the data manager of the table involved in the query (i.e. tableName).
+	 * @param updateID 			ID given to this update.
 	 */
 	public QueryProxy(LockType lockGranted, String tableName,
-			Set<DatabaseInstanceRemote> replicaLocations, DataManagerRemote dataManager, DatabaseInstanceRemote requestingMachine) {
+			Set<DatabaseInstanceRemote> replicaLocations, DataManagerRemote dataManager, DatabaseInstanceRemote requestingMachine, int updateID) {
 		super();
 		this.lockGranted = lockGranted;
 		this.tableName = tableName;
 		this.allReplicas = replicaLocations;
 		this.dataManagerProxy = dataManager;
 		this.requestingDatabase = requestingMachine;
+		this.updateID = updateID;
 	}
 
 	/**
@@ -76,7 +84,7 @@ public class QueryProxy implements Serializable{
 
 		if (allReplicas == null || allReplicas.size() == 0){
 			try {
-				dataManagerProxy.releaseLock(requestingDatabase);
+				dataManagerProxy.releaseLock(requestingDatabase, null, updateID);
 			} catch (RemoteException e) {
 				ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the data manager");
 			}
@@ -84,7 +92,7 @@ public class QueryProxy implements Serializable{
 			return 0;
 		}
 
-		String transactionName = TransactionNameGenerator.generateName(); 
+		String transactionName = TransactionNameGenerator.generateName(requestingDatabase); 
 
 		SQLException exception = null;
 
@@ -97,7 +105,12 @@ public class QueryProxy implements Serializable{
 		/*
 		 * Whether an individual replica is able to commit. Used to stop ROLLBACK calls being made to unavailable replicas.
 		 */
-		boolean[] commit = new boolean[allReplicas.size()]; 
+		boolean[] commit = new boolean[allReplicas.size()];
+		
+		/*
+		 * The set of replicas that were updated. This is returned to the DM when locks are released.
+		 */
+		Set<DatabaseInstanceRemote> updatedReplicas = new HashSet<DatabaseInstanceRemote>();
 
 		H2OTest.rmiFailure(); //Test code to simulate the failure of DB instances at this point.
 
@@ -105,7 +118,7 @@ public class QueryProxy implements Serializable{
 		 * Send the query to each DB instance holding a replica.
 		 */
 		int i = 0;
-		for (TwoPhaseCommit replica: allReplicas){
+		for (DatabaseInstanceRemote replica: allReplicas){
 			try {
 				int result = replica.prepare(sql, transactionName);
 
@@ -136,10 +149,12 @@ public class QueryProxy implements Serializable{
 		 */
 		int result = 0;
 		i = 0;
-		for (TwoPhaseCommit remoteReplica: allReplicas){
+		for (DatabaseInstanceRemote remoteReplica: allReplicas){
 			if (commit[i]){
 				try {
 					result = remoteReplica.commit(globalCommit, transactionName);
+					
+					updatedReplicas.add(remoteReplica);
 				} catch (RemoteException e) {
 					//ErrorHandling.errorNoEvent("Unable to send " + (commit? "commit": "rollback") + " message to remote replica.");
 
@@ -147,10 +162,8 @@ public class QueryProxy implements Serializable{
 
 					throw new SQLException((globalCommit? "COMMIT": "ROLLBACK") + " failed on a replica because database instance was unavailable.");
 				} catch (SQLException e){
-
-					//TODO again, this indicates the failure to commit at one of the replicas. Should it be removed from the set of 'active' replicas.
-
-					throw new SQLException("Unable to send 'commit' to one of the replicas.");
+					//This replica wasn't added to the set of 'updated replicas' so the query doesn't need to be completely aborted.
+					ErrorHandling.errorNoEvent("Unable to send 'commit' to one of the replicas.");
 				}
 			}
 
@@ -158,7 +171,7 @@ public class QueryProxy implements Serializable{
 		}
 
 		try {
-			dataManagerProxy.releaseLock(requestingDatabase);
+			dataManagerProxy.releaseLock(requestingDatabase, updatedReplicas, updateID);
 		} catch (RemoteException e) {
 			ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the data manager");
 		}

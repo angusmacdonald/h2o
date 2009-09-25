@@ -2,7 +2,9 @@ package org.h2.h2o.comms;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.h2.command.Command;
@@ -117,12 +119,16 @@ public class DataManager implements DataManagerRemote {
 	 */
 	private int cachedTableID;
 
-	private Set<DatabaseInstanceRemote> replicaLocations;
+	private ReplicaManager replicaManager;
 
 	/**
-	 * The database instance which is running this data manager. 
+	 * Updates made asynchronously to a single table that haven't yet reached other replicas.
+	 * 
+	 * <p>Key: The number given to the update by the data manager.
+     * <p>Value: The SQL query for the update.
 	 */
-	private DatabaseInstanceRemote primaryLocation;
+	private Map<Integer, String> unPropagatedUpdates;
+	private Map<Integer, String> inProgressUpdates;
 
 	/**
 	 * Stores locks held by various databases for accessing this table (all replicas).
@@ -144,8 +150,9 @@ public class DataManager implements DataManagerRemote {
 
 		this.queryParser = new Parser(database.getSystemSession(), true);
 
-		this.replicaLocations = new HashSet<DatabaseInstanceRemote>();
-		this.primaryLocation = null;
+		this.replicaManager = new ReplicaManager();
+		this.unPropagatedUpdates = new HashMap<Integer, String>();
+		this.inProgressUpdates = new HashMap<Integer, String>();
 
 		this.lockingTable = new LockingTable();
 
@@ -221,11 +228,11 @@ public class DataManager implements DataManagerRemote {
 			if (!isReplicaListed(connectionID, databaseLocation)){ // the table doesn't already exist in the schema manager.
 				int result = addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, replicaSet, false);
 
-				replicaLocations.add(getDatabaseInstance(replicaLocationString));
+				replicaManager.add(getDatabaseInstance(replicaLocationString));
 
 				return (result == 1);
 			} else {
-				replicaLocations.add(getDatabaseInstance(replicaLocationString));
+				replicaManager.add(getDatabaseInstance(replicaLocationString));
 
 				return false;
 			}
@@ -250,7 +257,7 @@ public class DataManager implements DataManagerRemote {
 	@Override
 	public synchronized QueryProxy requestQueryProxy(LockType lockType, DatabaseInstanceRemote databaseInstanceRemote) throws RemoteException, SQLException {
 
-		if (replicaLocations.size() == 0){
+		if (replicaManager.size() == 0){
 			try {
 				throw new Exception("Illegal State. There must be at least one replica");
 			} catch (Exception e) {
@@ -268,7 +275,8 @@ public class DataManager implements DataManagerRemote {
 		QueryProxy qp = null;
 
 
-		qp = new QueryProxy(lockType, tableName, selectReplicaLocations(this.primaryLocation, lockType, databaseInstanceRemote), this, databaseInstanceRemote);
+		qp = new QueryProxy(lockType, tableName, selectReplicaLocations(replicaManager.getPrimary(), lockType, databaseInstanceRemote), 
+				this, databaseInstanceRemote, replicaManager.getNewUpdateID());
 
 		return qp;
 	}
@@ -376,8 +384,8 @@ public class DataManager implements DataManagerRemote {
 
 
 		} else if (lockType == LockType.WRITE){
-			potentialReplicaLocations = this.replicaLocations; //The update could be sent to any or all machines holding the given table.
-			
+			potentialReplicaLocations = this.replicaManager.getActiveReplicas(); //The update could be sent to any or all machines holding the given table.
+
 			if (Updates.SYNCHRONOUS_UPDATE){
 				//Update must be sent to all replicas:
 				return potentialReplicaLocations;
@@ -404,9 +412,17 @@ public class DataManager implements DataManagerRemote {
 		String sql = "DELETE FROM " + REPLICAS + " WHERE table_id=" + tableID + " AND db_location='" + dbLocation + "' AND connection_id=" + connectionID  + "; ";
 
 		//Don't know if it is on a SM machine, so try both.
-		replicaLocations.remove(createFullDatabaseLocation(dbLocation, connectionType, machineName, connectionPort + "", false));
-		replicaLocations.remove(createFullDatabaseLocation(dbLocation, connectionType, machineName, connectionPort + "", true));
+		//TODO push this logic down somewhere else.
+		DatabaseInstanceRemote dbInstance = database.getDatabaseInstance(createFullDatabaseLocation(dbLocation, connectionType, machineName, connectionPort + "", false));
+		if (dbInstance == null){
+			dbInstance =  database.getDatabaseInstance(createFullDatabaseLocation(dbLocation, connectionType, machineName, connectionPort + "", true));
+			if (dbInstance == null){
+				ErrorHandling.errorNoEvent("Couldn't remove replica location.");
+			}
+		}
 
+		replicaManager.remove(dbInstance);
+		
 		return executeUpdate(sql);
 	}
 
@@ -430,7 +446,7 @@ public class DataManager implements DataManagerRemote {
 	 */
 	@Override
 	public String getLocation() throws RemoteException{
-		return primaryLocation.getConnectionString();
+		return replicaManager.getPrimary().getConnectionString();
 	}
 
 
@@ -460,11 +476,7 @@ public class DataManager implements DataManagerRemote {
 			addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, tableSet, true);
 		}
 
-		if (primaryLocation == null){
-			primaryLocation = getDatabaseInstance(createFullDatabaseLocation(databaseLocation, connectionType, localMachineAddress, localMachinePort + "", isSM));
-		}
-		replicaLocations.add(primaryLocation);
-
+		replicaManager.add(getDatabaseInstance(createFullDatabaseLocation(databaseLocation, connectionType, localMachineAddress, localMachinePort + "", isSM)));
 	}
 
 	/**
@@ -648,8 +660,15 @@ public class DataManager implements DataManagerRemote {
 	 * @see org.h2.h2o.comms.remote.DataManagerRemote#releaseLock(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
 	 */
 	@Override
-	public void releaseLock(DatabaseInstanceRemote requestingDatabase) throws RemoteException{
+	public void releaseLock(DatabaseInstanceRemote requestingDatabase, Set<DatabaseInstanceRemote> updatedReplicas, int updateID) throws RemoteException {
+
+		/*
+		 * Update the set of 'active replicas' and their update IDs. 
+		 */
+		replicaManager.completeUpdate(updatedReplicas, updateID);
+		
 		lockingTable.releaseLock(requestingDatabase);
+
 	}
 
 }

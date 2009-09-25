@@ -29,6 +29,9 @@ public class DatabaseInstanceLocator extends RMIServer {
 	 * Database instances currently known to this database.
 	 */
 	private Map<String, DatabaseInstanceRemote> databaseInstances;
+	
+	private DatabaseInstanceRemote localInstance;
+
 
 	/**
 	 * Called when the RMI registry is on a remote machine. Registers local data manager interface.
@@ -37,21 +40,21 @@ public class DatabaseInstanceLocator extends RMIServer {
 	 */
 	public DatabaseInstanceLocator(String host, int port) {
 		super(host, port);
-		
+
 		databaseInstances = new HashMap<String, DatabaseInstanceRemote>();
 	}
 
-	
+
 	/**
 	 * Called by the schema manager to create an RMI registry.
 	 * @param port	Port where registry is to be run (on local machine).
 	 */
 	public DatabaseInstanceLocator(int port) {
 		super(port);
-		
+
 		databaseInstances = new HashMap<String, DatabaseInstanceRemote>();
 	}
-	
+
 
 	/**
 	 * Obtain a proxy for an exposed data manager.
@@ -76,10 +79,10 @@ public class DatabaseInstanceLocator extends RMIServer {
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (NotBoundException e) {
-			
+
 			e.printStackTrace();
 			System.err.println(instanceName + " was not bound to registry.");
-			
+
 			String[] inreg;
 			try {
 				inreg = registry.list();
@@ -93,8 +96,8 @@ public class DatabaseInstanceLocator extends RMIServer {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
-		
-			
+
+
 			throw new SQLException("Database instance for " + instanceName + " could not be found in the registry.");
 		}
 
@@ -109,6 +112,8 @@ public class DatabaseInstanceLocator extends RMIServer {
 		DatabaseInstanceRemote stub = null;
 
 		DatabaseInstanceRemote databaseInstanceRemote = databaseInstance;
+		localInstance = databaseInstanceRemote;
+		
 		try {
 			stub = (DatabaseInstanceRemote) UnicastRemoteObject.exportObject(databaseInstanceRemote, 0);
 		} catch (RemoteException e) {
@@ -118,8 +123,14 @@ public class DatabaseInstanceLocator extends RMIServer {
 		try {
 
 			registry.bind(databaseInstance.getName(), stub);
-
-			databaseInstances.put(databaseInstance.getName(), databaseInstanceRemote);
+			
+			/*
+			 * Now get this stub back from the registry as a proxy, so it can be added locally. Necessary for later comparisons.
+			 * i.e. proxy for object A doesn't equal localy copy of item A in hashtable comparisons. 
+			 */
+			DatabaseInstanceRemote proxy = (DatabaseInstanceRemote) registry.lookup(databaseInstance.getName());
+			databaseInstances.put(databaseInstance.getName(), proxy);
+			
 		} catch (AlreadyBoundException abe) {
 
 			boolean contactable = testContact(databaseInstance.getName());
@@ -139,6 +150,8 @@ public class DatabaseInstanceLocator extends RMIServer {
 			e.printStackTrace();
 		} catch (RemoteException e) {
 			ErrorHandling.exceptionErrorNoEvent(e, "Lost contact with RMI registry when attempting to bind a manager.");
+		} catch (NotBoundException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -150,11 +163,16 @@ public class DatabaseInstanceLocator extends RMIServer {
 		super.removeRegistryObject(objectName, removeLocalOnly);
 
 		try {
-			UnicastRemoteObject.unexportObject(databaseInstances.get(objectName), true);
+			if (localInstance.getConnectionString().equals(objectName)){
+				UnicastRemoteObject.unexportObject(localInstance, true);
+				localInstance = null;
+			}
 		} catch (NoSuchObjectException e) {
-			//e.printStackTrace();
+			e.printStackTrace();
+		} catch (RemoteException e) {
+			e.printStackTrace();
 		}
-		
+
 		databaseInstances.remove(objectName);
 	}
 
@@ -165,7 +183,7 @@ public class DatabaseInstanceLocator extends RMIServer {
 	 */
 	public Set<DatabaseInstanceRemote> getInstances(Set<String> replicaLocations) {
 		Set<DatabaseInstanceRemote> dirs = new HashSet<DatabaseInstanceRemote>();
-		
+
 		for (String replicaLocation: replicaLocations){			
 			try {
 				DatabaseInstanceRemote dir = lookupDatabaseInstance(replicaLocation);
@@ -175,7 +193,7 @@ public class DatabaseInstanceLocator extends RMIServer {
 				ErrorHandling.errorNoEvent("Unable to access database instance at: " + replicaLocation);
 			}
 		}
-		
+
 		return dirs;
 	}
 
@@ -186,13 +204,12 @@ public class DatabaseInstanceLocator extends RMIServer {
 	 */
 	public DatabaseInstanceRemote getInstance(String replicaLocationString) {
 		try {
-			DatabaseInstanceRemote dir = lookupDatabaseInstance(replicaLocationString);
-			return dir;
+			return lookupDatabaseInstance(replicaLocationString);
 		} catch (SQLException e) {
 			e.printStackTrace();
 			ErrorHandling.errorNoEvent("Unable to access database instance at: " + replicaLocationString);
 		}
-		return null; //never reached.
+		return null; 
 	}
 
 

@@ -90,4 +90,39 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	public String getConnectionString() throws RemoteException {
 		return session.getDatabase().getOriginalDatabaseURL();
 	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime
+				* result
+				+ ((databaseConnectionString == null) ? 0
+						: databaseConnectionString.hashCode());
+		return result;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		DatabaseInstance other = (DatabaseInstance) obj;
+		if (databaseConnectionString == null) {
+			if (other.databaseConnectionString != null)
+				return false;
+		} else if (!databaseConnectionString
+				.equals(other.databaseConnectionString))
+			return false;
+		return true;
+	}
 }

@@ -2,6 +2,7 @@ package org.h2.h2o.comms.remote;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.Set;
 
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.util.LockType;
@@ -63,6 +64,8 @@ public interface DataManagerRemote extends H2ORemote {
 	 * Release a lock held by the database instance specified in the parameter. Called at the end of QueryProxy.executeQuery()
 	 * to indicate that the transaction has finished (it may have succeeded or failed).
 	 * @param requestingDatabase	Database which made the original request. Lock was taken out in its name.
+	 * @param updateID The ID given to the update by the data manager. It is returned here to confirm execution of this specific transaction.
+	 * @param updatedReplicas The set of replicas that were successfully updated by this query.
 	 */
-	public void releaseLock(DatabaseInstanceRemote requestingDatabase) throws RemoteException;
+	public void releaseLock(DatabaseInstanceRemote requestingDatabase, Set<DatabaseInstanceRemote> updatedReplicas, int updateID) throws RemoteException;
 }
