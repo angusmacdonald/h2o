@@ -24,6 +24,7 @@ import org.h2.engine.Session;
 import org.h2.expression.Expression;
 import org.h2.h2o.comms.DataManager;
 import org.h2.h2o.comms.QueryProxy;
+import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TransactionNameGenerator;
@@ -56,7 +57,7 @@ public class CreateTable extends SchemaCommand {
 	private Query asQuery;
 	private String comment;
 	private boolean clustered;
-	private QueryProxy queryProxy;
+	private QueryProxy queryProxy = null;
 
 	public CreateTable(Session session, Schema schema) {
 		super(session, schema);
@@ -389,11 +390,16 @@ public class CreateTable extends SchemaCommand {
 
 	/* (non-Javadoc)
 	 * @see org.h2.command.Prepared#acquireLocks()
+	 * 
+	 * The queryProxyManager variable isn't used in create table, because it can't have a proxy for something
+	 * which hasn't yet been created.
 	 */
 	@Override
-	public QueryProxy acquireLocks() throws SQLException {
+	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager) throws SQLException {
 		Database db = session.getDatabase();
 
+		assert queryProxyManager.getQueryProxy(tableName) == null; //should never exist.
+		
 		/*
 		 * #########################################################################
 		 * 

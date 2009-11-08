@@ -286,7 +286,7 @@ public class DataManager implements DataManagerRemote {
 //			throw new SQLException("Table already locked. Cannot perform query.");
 //		}
 
-		QueryProxy qp = new QueryProxy(lockGranted, tableName, selectReplicaLocations(replicaManager.getPrimary(), lockRequested, databaseInstanceRemote), 
+		QueryProxy qp = new QueryProxy(lockGranted, schemaName + "." + tableName, selectReplicaLocations(replicaManager.getPrimary(), lockRequested, databaseInstanceRemote), 
 				this, databaseInstanceRemote, replicaManager.getNewUpdateID(), lockRequested);
 
 		return qp;

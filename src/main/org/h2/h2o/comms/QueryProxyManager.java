@@ -2,7 +2,9 @@ package org.h2.h2o.comms;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.h2.command.Command;
@@ -13,6 +15,7 @@ import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TransactionNameGenerator;
+import org.h2.table.Table;
 
 import uk.ac.stand.dcs.nds.util.ErrorHandling;
 
@@ -37,6 +40,8 @@ public class QueryProxyManager {
 	private Set<DataManagerRemote> dataManagers;
 
 	private DatabaseInstanceRemote requestingDatabase;
+	
+	private Map<String, QueryProxy> queryProxies;
 
 
 
@@ -63,6 +68,8 @@ public class QueryProxyManager {
 		this.dataManagers = new HashSet<DataManagerRemote>();
 
 		this.requestingDatabase = db.getLocalDatabaseInstance();
+		
+		this.queryProxies = new HashMap<String, QueryProxy>();
 
 		
 	}
@@ -96,6 +103,8 @@ public class QueryProxyManager {
 		if (proxy.getUpdateID() > this.updateID){ // the update ID should be the highest of all the proxy update IDs
 			this.updateID = proxy.getUpdateID();
 		}
+		
+		queryProxies.put(proxy.getTableName(), proxy);
 	}
 
 	/**
@@ -237,6 +246,14 @@ public class QueryProxyManager {
 	 */
 	public void releaseLocks() {
 		releaseLocks(allReplicas);
+	}
+
+	/**
+	 * @param table
+	 * @return
+	 */
+	public QueryProxy getQueryProxy(String tableName) {
+		return queryProxies.get(tableName);
 	}
 
 

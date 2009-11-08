@@ -16,6 +16,7 @@ import org.h2.engine.Session;
 import org.h2.expression.Expression;
 import org.h2.expression.Parameter;
 import org.h2.h2o.comms.QueryProxy;
+import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.h2o.util.LockType;
 import org.h2.index.Index;
 import org.h2.jdbc.JdbcSQLException;
@@ -522,10 +523,11 @@ public abstract class Prepared{
 	/**
 	 * Request a lock for the given query, in preparation for its execution. Must be called before update(). This
 	 * method will be overriden if a QueryProxy can be returned -  prepared statements have to acquire a lock in this manner.
+	 * @param queryProxyManager 
 	 * @return
 	 * @throws SQLException 
 	 */
-	public QueryProxy acquireLocks() throws SQLException{
+	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager) throws SQLException{
 		return QueryProxy.getQueryProxy(table, LockType.READ, session.getDatabase());
 	}
 

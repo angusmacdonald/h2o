@@ -59,9 +59,11 @@ public class TestBase {
 		sa = ca.createStatement();
 		sb = cb.createStatement();
 
-		sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-		sa.execute("INSERT INTO TEST VALUES(1, 'Hello');");
-		sa.execute("INSERT INTO TEST VALUES(2, 'World');");
+		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
+		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
+		sql += "INSERT INTO TEST VALUES(2, 'World');";
+		
+		sa.execute(sql);
 	}
 
 	/**

@@ -117,15 +117,16 @@ public class CommandContainer extends Command {
 		prepared.checkParameters();
 		int updateCount;
 
-		//Acquire distributed locks. 
-		QueryProxy proxy = this.acquireLocks(); 
-
 		assert(queryProxyManager != null);
+		
+		//Acquire distributed locks. 
+		QueryProxy proxy = this.acquireLocks(queryProxyManager); 
+
+		
 		assert(proxy != null);
 		
 		queryProxyManager.addProxy(proxy);	//checks that a lock is held for table, then adds the proxy.
 
-		
 		updateCount = prepared.update(queryProxyManager.getTransactionName());
 
 		boolean commit = true; //TODO check whether this should be a commit or rollback.
@@ -159,8 +160,8 @@ public class CommandContainer extends Command {
 	 * @see org.h2.command.Command#acquireLocks()
 	 */
 	@Override
-	public QueryProxy acquireLocks() throws SQLException {
-		return prepared.acquireLocks();
+	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager2) throws SQLException {
+		return prepared.acquireLocks(queryProxyManager);
 	}
 
 	/**

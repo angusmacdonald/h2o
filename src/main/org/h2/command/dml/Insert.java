@@ -16,6 +16,7 @@ import org.h2.engine.Session;
 import org.h2.expression.Expression;
 import org.h2.expression.Parameter;
 import org.h2.h2o.comms.QueryProxy;
+import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.h2o.util.LockType;
 import org.h2.log.UndoLogRecord;
 import org.h2.message.Message;
@@ -77,12 +78,17 @@ public class Insert extends Prepared{
 	 * @see org.h2.command.Prepared#acquireLocks()
 	 */
 	@Override
-	public QueryProxy acquireLocks() throws SQLException {
+	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager) throws SQLException {
 		/*
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
 		if (isRegularTable()){
+			
+			queryProxy = queryProxyManager.getQueryProxy(table.getFullName());
+
+			if (queryProxy == null){
 			queryProxy = QueryProxy.getQueryProxy(table, LockType.WRITE, session.getDatabase());
+			}
 			
 			return queryProxy;
 		}

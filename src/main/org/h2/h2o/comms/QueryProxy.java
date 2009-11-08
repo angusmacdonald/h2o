@@ -306,6 +306,14 @@ public class QueryProxy implements Serializable{
 		return (allReplicas != null && allReplicas.size() == 1) && getRequestingDatabase() == localDatabase;
 	}
 
+	/**
+	 * Name of the table this proxy holds locks for.
+	 * @return
+	 */
+	public String getTableName() {
+		return tableName;
+	}
+
 
 
 }
