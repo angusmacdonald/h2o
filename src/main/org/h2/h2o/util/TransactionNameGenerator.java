@@ -14,24 +14,46 @@ public class TransactionNameGenerator {
 	private static int lastNumber = 0; //XXX not the most sophisticated method, but it works.
 
 	/**
-	 * Generate a unique name for a new transaction.
-	 * @param requestingDatabase 
-	 * @param tableName Name of a table involved in the transaction.
+	 * Generate a unique name for a new transaction based on the identity of the requesting database.
+	 * @param requestingDatabase 	Proxy representing the database making the request.
 	 * @return
 	 */
 	public static synchronized String generateName(DatabaseInstanceRemote requestingDatabase){
 
-		DatabaseURL dbURL = null;
+		String part = "";
+		
+		if (requestingDatabase == null){
+			part = "UnknownDB";
+		} else {
 
-		String transactionName = "TRANSACTION_";
+			try {
+				DatabaseURL dbURL = DatabaseURL.parseURL(requestingDatabase.getConnectionString());
+				part = (!dbURL.isMem()? dbURL.getHostname().replace(".", "") + dbURL.getPort(): "") + dbURL.getDbLocation().replace("/", "");
+			} catch (RemoteException e) {
+				part = "UnknownDB";
+			}
 
-		try {
-			dbURL = DatabaseURL.parseURL(requestingDatabase.getConnectionString());
-
-			transactionName += (!dbURL.isMem()? dbURL.getHostname().replace(".", "") + dbURL.getPort(): "") + dbURL.getDbLocation().replace("/", "");
-		} catch (RemoteException e) {
 		}
 
-		return transactionName + lastNumber++;
+		return generateFullTransactionName(part);
+	}
+
+	private static String generateFullTransactionName(String part){
+		String transactionName = "TRANSACTION_";
+
+		transactionName += part;
+
+		return (transactionName + "_" + lastNumber++).toUpperCase();
+	}
+
+	/**
+	 * Generate a unique name for a new local transaction. Transactions spanning multiple databases should used the other
+	 * method.
+	 * @param requestingDatabase 
+	 * @param tableName Name of a table involved in the transaction.
+	 * @return
+	 */
+	public static String generateName(String string) {
+		return generateFullTransactionName(string);
 	}
 }

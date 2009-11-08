@@ -257,7 +257,7 @@ public class Parser {
 			if (isToken(";")) {
 				String remaining = originalSQL.substring(parseIndex);
 				if (remaining.trim().length() != 0) {
-					CommandList list = new CommandList(this, sql, c, remaining);
+					Command list = new CommandList(this, sql, c, remaining);
 					// list.addCommand(c);
 					// do {
 					// c = parseCommand();
@@ -4400,7 +4400,7 @@ public class Parser {
 		String sql = "CREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + tableLocation + "', '" + SchemaManager.USERNAME + "', '" + SchemaManager.PASSWORD + "', '" + tableName + "');";
 
 		Command sqlQuery = queryParser.prepareCommand(sql);
-		int result = sqlQuery.executeUpdate();
+		int result = sqlQuery.update();
 
 
 		if (result == 0){

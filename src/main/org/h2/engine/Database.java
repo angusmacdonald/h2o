@@ -775,7 +775,8 @@ public class Database implements DataHandler {
 
 			Diagnostic.traceNoEvent(Diagnostic.FINAL, " Created schema manager tables.");
 		} 
-
+		
+	
 	}
 
 	public Schema getMainSchema() {
@@ -2681,6 +2682,8 @@ public class Database implements DataHandler {
 	 */
 	public DatabaseInstanceRemote getDatabaseInstance(
 			String replicaLocationString) {
+		if (databaseInstanceLocator == null) return null;
+		
 		return databaseInstanceLocator.getInstance(replicaLocationString);
 	}
 	

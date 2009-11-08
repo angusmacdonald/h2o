@@ -15,7 +15,7 @@ import org.h2.h2o.util.LockType;
  */
 public interface DataManagerRemote extends H2ORemote {
 
-	public QueryProxy requestQueryProxy(LockType lockType, DatabaseInstanceRemote databaseInstanceRemote) throws RemoteException, SQLException;
+	public QueryProxy getQueryProxy(LockType lockType, DatabaseInstanceRemote databaseInstanceRemote) throws RemoteException, SQLException;
 
 	/**
 	 * Inform the data manager that a new replica has been created for the given table.

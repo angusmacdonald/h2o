@@ -10,6 +10,7 @@ import java.sql.SQLException;
 
 import org.h2.command.Prepared;
 import org.h2.constant.ErrorCode;
+import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
@@ -38,6 +39,8 @@ public class Update extends Prepared {
     private Expression condition;
     private TableFilter tableFilter;
     private Expression[] expressions;
+    private QueryProxy queryProxy;
+    
 	public Update(Session session, boolean internalQuery) {
         super(session, internalQuery);
     }
@@ -72,7 +75,7 @@ public class Update extends Prepared {
         }
     }
 
-    public int update() throws SQLException {
+    public int update(String transactionName) throws SQLException {
         tableFilter.startQuery(session);
         tableFilter.reset();
         RowList rows = new RowList(session);
@@ -85,9 +88,7 @@ public class Update extends Prepared {
     		 * (QUERY PROPAGATED TO ALL REPLICAS).
     		 */
     		if (isRegularTable()){
-    			Database db = session.getDatabase();
-    			QueryProxy qp = QueryProxy.getQueryProxy(table.getFullName(), LockType.WRITE, db);
-    			return qp.executeUpdate(sqlStatement);
+    			return queryProxy.executeUpdate(sqlStatement, transactionName, session);
     		}
             
             
@@ -210,5 +211,33 @@ public class Update extends Prepared {
     public LocalResult queryMeta() {
         return null;
     }
+    
+    /* (non-Javadoc)
+	 * @see org.h2.command.Prepared#acquireLocks()
+	 */
+	@Override
+	public QueryProxy acquireLocks() throws SQLException {
+		/*
+		 * (QUERY PROPAGATED TO ALL REPLICAS).
+		 */
+		if (isRegularTable()){
+			queryProxy = QueryProxy.getQueryProxy(tableFilter.getTable(), LockType.WRITE, session.getDatabase());
+			
+			return queryProxy;
+		}
+		
+		return QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstance());
+		
+	}
+	
+
+
+	/* (non-Javadoc)
+	 * @see org.h2.command.Prepared#isRegularTable()
+	 */
+	@Override
+	protected boolean isRegularTable() {
+		return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery && !tableFilter.getTable().getName().startsWith(Constants.H2O_SCHEMA);
+	}
 
 }

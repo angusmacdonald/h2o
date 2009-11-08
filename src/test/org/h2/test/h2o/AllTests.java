@@ -14,7 +14,8 @@ import org.junit.runners.Suite;
 	MultipleSchemaTests.class,
 	ReplicaTests.class,
 	IndexTests.class,
-	UpdateTests.class
+	UpdateTests.class,
+	MultiQueryTransactionTests.class
 })
 public class AllTests {
  //The above annotations do all the work.

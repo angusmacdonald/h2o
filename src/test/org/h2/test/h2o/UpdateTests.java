@@ -129,7 +129,7 @@ public class UpdateTests extends TestBase {
 
 		} catch (SQLException e) {
 			e.printStackTrace();
-			fail("Unexpected failure executing DELETE FROM.");
+			fail("Unexpected failure executing UPDATE.");
 		}
 
 

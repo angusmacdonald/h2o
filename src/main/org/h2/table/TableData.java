@@ -323,7 +323,8 @@ public class TableData extends Table implements RecordReader {
             }
             rowCount--;
         } catch (Throwable e) {
-            try {
+            e.printStackTrace();
+        	try {
                 while (++i < indexes.size()) {
                     Index index = (Index) indexes.get(i);
                     index.add(session, row);

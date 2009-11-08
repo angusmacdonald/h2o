@@ -7,6 +7,7 @@
 package org.h2.command.dml;
 
 import java.sql.SQLException;
+
 import org.h2.command.Command;
 import org.h2.command.Prepared;
 import org.h2.constant.ErrorCode;
@@ -33,6 +34,7 @@ public class Insert extends Prepared{
 	private Column[] columns;
 	private ObjectArray list = new ObjectArray();
 	private Query query;
+	private QueryProxy queryProxy = null;
 
 	/**
 	 * 
@@ -71,8 +73,30 @@ public class Insert extends Prepared{
 		list.add(expr);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.h2.command.Prepared#acquireLocks()
+	 */
 	@Override
+	public QueryProxy acquireLocks() throws SQLException {
+		/*
+		 * (QUERY PROPAGATED TO ALL REPLICAS).
+		 */
+		if (isRegularTable()){
+			queryProxy = QueryProxy.getQueryProxy(table, LockType.WRITE, session.getDatabase());
+			
+			return queryProxy;
+		}
+		
+		return QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstance());
+		
+	}
+
 	public int update() throws SQLException {
+		return update(null);
+	}
+	
+	@Override
+	public int update(String transactionName) throws SQLException {
 		int count = 0;
 		
 		session.getUser().checkRight(table, Right.INSERT);
@@ -81,8 +105,7 @@ public class Insert extends Prepared{
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
 		if (isRegularTable()){
-			QueryProxy qp = QueryProxy.getQueryProxy(table.getFullName(), LockType.WRITE, session.getDatabase());
-			return qp.executeUpdate(sqlStatement);
+			return queryProxy.executeUpdate(sqlStatement, transactionName, session);
 		}
 		
 		setCurrentRowNumber(0);
@@ -237,4 +260,16 @@ public class Insert extends Prepared{
 		return null;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.h2.command.Prepared#shouldBePropagated()
+	 */
+	@Override
+	public boolean shouldBePropagated() {
+		/*
+		 * If this is not a regular table (i.e. it is a meta-data table, then it will not be propagated regardless.
+		 */
+		return isRegularTable();
+	}
+	
+	
 }

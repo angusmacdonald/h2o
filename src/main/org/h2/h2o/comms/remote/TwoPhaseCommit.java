@@ -14,7 +14,7 @@ public interface TwoPhaseCommit {
 	 * Prepare a query as per the two phase commit protocol. The query will be prepared on the given database instance, but will only
 	 * be committed when the commit operation is called.
 	 * @param query	SQL query to be executed
-	 * @param transactionName	The name to be given to this transaction - must be used again to commit the transaction
+	 * @param transactionName	The name to be given to this transaction - must be used again to commit the transaction.
 	 * @return Result of the prepare - this should never fail in theory, bar some weird disk-based mishap.
 	 * @throws RemoteException
 	 * @throws SQLException 
@@ -22,6 +22,16 @@ public interface TwoPhaseCommit {
 	public int prepare(String query, String transactionName)
 			throws RemoteException, SQLException;
 
+	/**
+	 * Prepare the given machine to commit a set of queries that have already been executed. 
+	 * @param transactionName	The name to be given to this transaction - must be used again to commit the transaction.
+	 * @return Result of the prepare - this should never fail in theory, bar some weird disk-based mishap.
+	 * @throws RemoteException
+	 * @throws SQLException
+	 */
+	public int prepare(String transactionName) 
+			throws RemoteException, SQLException;
+	
 	/**
 	 * Commit a query as per the two phase commit protocol. The query should have previously been prepared via the prepare() method - this
 	 * method commits (or aborts) the transaction.

@@ -27,7 +27,7 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit  {
 	 * Execute a query on this machine using the supplied query proxy (which contains permission to execute
 	 * a given type of query).
 	 * @param queryProxy	The query proxy for the table(s) involved in the query.
-	 * @param sql
+	 * @param sql			The query to be executed
 	 * @return
 	 * @throws RemoteException
 	 * @throws SQLException

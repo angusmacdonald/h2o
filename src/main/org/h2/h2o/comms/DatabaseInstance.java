@@ -8,6 +8,8 @@ import org.h2.command.Parser;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 
+import uk.ac.stand.dcs.nds.util.ErrorHandling;
+
 /**
  * Proxy class exposed via RMI, allowing semi-parsed queries to be sent to remote replicas for execution.
  *
@@ -36,16 +38,30 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	 */
 	public int prepare(String query, String transactionName) throws RemoteException, SQLException{
 		if (query == null){
-			System.err.println("Shouldn't happen.");
+			ErrorHandling.hardError("Shouldn't happen.");
 		}
 
-		session.setAutoCommit(false); //TODO auto-commit shouldn't be set false.true for each transaction.
+		//session.setAutoCommit(false); //TODO auto-commit shouldn't be set false.true for each transaction.
 		Command command = parser.prepareCommand(query);
-		command.executeUpdate();
+		
+		/*
+		 * If called from here executeUpdate should always be told the query is part of a larger transaction, because it
+		 * was remotely initiated and consequently needs to wait for the remote machine to commit.
+		 */
+		command.executeUpdate(true);
 	
 		command.close();
 
-		command = parser.prepareCommand("PREPARE COMMIT " + transactionName);
+		return prepare(transactionName);
+	}
+	
+	public int prepare(String transactionName) throws RemoteException, SQLException{
+		
+		if (session.getAutoCommit()){
+			ErrorHandling.hardError("Shouldn't happen.");
+		}
+			
+		Command command = parser.prepareCommand("PREPARE COMMIT " + transactionName);
 		return command.executeUpdate();
 	}
 
@@ -57,18 +73,22 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 		Command command = parser.prepareCommand((commit? "commit": "rollback") + " TRANSACTION " + transactionName);
 		int result = command.executeUpdate();
 
-		session.setAutoCommit(true); //TODO auto-commit shouldn't be set false.true for each transaction.
+		//session.setAutoCommit(true); //TODO auto-commit shouldn't be set false.true for each transaction.
 		return result;
 	}
 
 	@Override
+	@Deprecated
+	/**
+	 * @Deprecated Because it doesn't currently pass in a transaction name. Do we generate one is this method???
+	 */
 	public int executeUpdate(QueryProxy queryProxy, String sql) throws RemoteException,
 			SQLException {
 		/*
 		 * TODO eventually this method may do a lot more - e.g. the query may only be run here, and asynchronously run elsewhere. Another
 		 * overloaded version of the method may take only the query string and be required to obtain the queryProxy seperately. 
 		 */
-		return queryProxy.executeUpdate(sql);
+		return queryProxy.executeUpdate(sql, null, session);
 	}
 	
 	/* (non-Javadoc)

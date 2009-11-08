@@ -157,7 +157,7 @@ public class SchemaManager {
 		"primary_copy BOOLEAN, " +
 		"PRIMARY KEY (replica_id), " +
 		"FOREIGN KEY (table_id) REFERENCES " + TABLES + " (table_id) ON DELETE CASCADE , " +
-		" FOREIGN KEY (connection_id) REFERENCES " + CONNECTIONS + " (connection_id));\n";
+		" FOREIGN KEY (connection_id) REFERENCES " + CONNECTIONS + " (connection_id));";
 
 		return executeUpdate(sql);
 	}
@@ -553,7 +553,7 @@ public class SchemaManager {
 
 	private int executeUpdate(String query) throws SQLException{
 		sqlQuery = queryParser.prepareCommand(query);
-		return sqlQuery.executeUpdate();
+		return sqlQuery.update();
 	}
 
 	/**

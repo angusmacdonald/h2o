@@ -204,4 +204,13 @@ public class TransactionCommand extends Prepared {
         return null;
     }
 
+	/* (non-Javadoc)
+	 * @see org.h2.command.Prepared#isTransactionCommand()
+	 */
+	@Override
+	public boolean isTransactionCommand() {
+		return true;
+	}
+
+    
 }

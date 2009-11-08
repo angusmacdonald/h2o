@@ -31,7 +31,6 @@ public class DropTable extends SchemaCommand {
 	private String tableName;
 	ReplicaSet tables = null;
 	private DropTable next;
-
 	public DropTable(Session session, Schema schema, boolean internalQuery) {
 		super(session, schema);
 
@@ -62,7 +61,7 @@ public class DropTable extends SchemaCommand {
 		this.tableName = tableName;
 	}
 
-	private void prepareDrop() throws SQLException {
+	private void prepareDrop(String transactionName) throws SQLException {
 
 		if (Constants.IS_H2O){
 			tables = getSchema().getTablesOrViews(session, tableName);
@@ -95,11 +94,11 @@ public class DropTable extends SchemaCommand {
 			}
 		}
 		if (next != null) {
-			next.prepareDrop();
+			next.prepareDrop(transactionName);
 		}
 	}
 
-	private void executeDrop() throws SQLException {
+	private void executeDrop(String transactionName) throws SQLException {
 		// need to get the table again, because it may be dropped already
 		// meanwhile (dependent object, or same object)
 		table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
@@ -117,8 +116,8 @@ public class DropTable extends SchemaCommand {
 			
 			
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_") && !internalQuery){
-				QueryProxy qp = QueryProxy.getQueryProxy(table.getFullName(), LockType.WRITE, session.getDatabase());
-				qp.executeUpdate(sqlStatement);
+				QueryProxy qp = QueryProxy.getQueryProxy(table, LockType.WRITE, session.getDatabase());
+				qp.executeUpdate(sqlStatement, transactionName, session);
 
 				try {
 					SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
@@ -156,15 +155,15 @@ public class DropTable extends SchemaCommand {
 
 		}
 		if (next != null) {
-			next.executeDrop();
+			next.executeDrop(transactionName);
 		}
 	}
 
 	@Override
-	public int update() throws SQLException {
+	public int update(String transactionName) throws SQLException {
 		session.commit(true);
-		prepareDrop();
-		executeDrop();
+		prepareDrop(transactionName);
+		executeDrop(transactionName);
 		return 0;
 	}
 

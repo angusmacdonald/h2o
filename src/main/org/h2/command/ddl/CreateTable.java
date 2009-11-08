@@ -26,6 +26,7 @@ import org.h2.h2o.comms.DataManager;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.util.LockType;
+import org.h2.h2o.util.TransactionNameGenerator;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
 import org.h2.schema.Sequence;
@@ -55,6 +56,7 @@ public class CreateTable extends SchemaCommand {
 	private Query asQuery;
 	private String comment;
 	private boolean clustered;
+	private QueryProxy queryProxy;
 
 	public CreateTable(Session session, Schema schema) {
 		super(session, schema);
@@ -112,6 +114,16 @@ public class CreateTable extends SchemaCommand {
 	}
 
 	public int update() throws SQLException {
+		/*
+		 * The only time this is called is when a CreateTable command is replayed at database startup. This differs
+		 * from the normal CreateTable execution because a DataManager for the table may exist somewhere. Instead of creating a new
+		 * data manager this command should look for an existing one somewhere. The command to create the Data Manager tables should have
+		 * already been replayed, so the 
+		 */
+		return update(TransactionNameGenerator.generateName("NULLCREATION"));
+	}
+
+	public int update(String transactionName) throws SQLException {
 		// TODO rights: what rights are required to create a table?
 		session.commit(true);
 		Database db = session.getDatabase();
@@ -126,41 +138,7 @@ public class CreateTable extends SchemaCommand {
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
 		}
 
-		/*
-		 * #########################################################################
-		 * 
-		 *  H2O. Check that the table doesn't already exist elsewhere.
-		 * 
-		 * #########################################################################
-		 */
 
-		if (Constants.IS_H2O && !db.isSM() && !db.isManagementDB() && !tableName.startsWith("H2O_") && !isStartup()){
-
-			//parser = new Parser(session);
-//			boolean throwException = false;
-//			try { //XXX this is a hack. shouldn't rely on exception being thrown.
-//
-//				//parser.findViaSchemaManager(tableName, getSchema().getName());
-//
-//				throwException = true; //code shouldn't reach this point.
-//			} catch (SQLException sqlE){
-//				//not found, meaning this create table command can be executed.
-//			}
-
-//			if (throwException){
-//				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
-//			}
-			
-			DataManagerRemote dm = db.getDataManager(getSchema().getName() + "." + tableName);
-			
-			if (dm != null){
-				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
-			}
-		}
-		/*
-		 * #########################################################################
-		 * #########################################################################
-		 */       
 
 
 		if (asQuery != null) {
@@ -284,22 +262,24 @@ public class CreateTable extends SchemaCommand {
 						db.getLocalMachineAddress(), db.getLocalMachinePort(), (db.isPersistent())? "tcp": "mem", getSchema().getName(), tableSet);	
 
 				table.setTableSet(tableSet);
-
-				//	#############################
-				//  Create new data manager instance.
-				//	#############################	
-				DataManager dm = new DataManager(tableName, getSchema().getName(), table.getModificationId(), tableSet, db);
-				
+		
 				/*
 				 * (add replicas at some external locations).
 				 */
-				if (Constants.IS_H2O && !table.getName().startsWith(Constants.H2O_SCHEMA) && !session.getDatabase().isManagementDB()){
-					QueryProxy qp = QueryProxy.getQueryProxy(dm, LockType.CREATE, session.getDatabase().getLocalDatabaseInstance());
-					return qp.executeUpdate("CREATE REPLICA " + table.getFullName());
-				}
+//				assert(queryProxy!= null);
+
+				assert(db != null);
+				
+//				if (Constants.IS_H2O && !table.getName().startsWith(Constants.H2O_SCHEMA) && !session.getDatabase().isManagementDB() && 
+//						!queryProxy.isSingleDatabase(db.getLocalDatabaseInstance()) ){
+//					return queryProxy.executeUpdate("CREATE REPLICA " + table.getFullName(), transactionName);
+//				}
+
 			}
-
-
+			
+			if (Constants.IS_H2O && !db.isManagementDB()){
+				prepareTransaction(transactionName);
+			}
 
 		} catch (SQLException e) {
 			db.checkPowerOff();
@@ -384,6 +364,68 @@ public class CreateTable extends SchemaCommand {
 
 	public void setClustered(boolean clustered) {
 		this.clustered = clustered;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.command.Prepared#shouldBePropagated()
+	 */
+	@Override
+	public boolean shouldBePropagated() {
+		/*
+		 * If this is not a regular table (i.e. it is a meta-data table, then it will not be propagated regardless.
+		 */
+		return isRegularTable();
+	}
+
+
+
+	/* (non-Javadoc)
+	 * @see org.h2.command.Prepared#isRegularTable()
+	 */
+	@Override
+	protected boolean isRegularTable() {
+		return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery && !tableName.startsWith(Constants.H2O_SCHEMA);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.command.Prepared#acquireLocks()
+	 */
+	@Override
+	public QueryProxy acquireLocks() throws SQLException {
+		Database db = session.getDatabase();
+
+		/*
+		 * #########################################################################
+		 * 
+		 *  H2O. Check that the table doesn't already exist elsewhere.
+		 * 
+		 * #########################################################################
+		 */
+
+		if (Constants.IS_H2O && !db.isSM() && !db.isManagementDB() && !tableName.startsWith("H2O_") && !isStartup()){
+
+			DataManagerRemote dm = db.getDataManager(getSchema().getName() + "." + tableName);
+
+			if (dm != null){
+				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
+			}
+
+
+		}
+		
+		queryProxy = null;
+		if (Constants.IS_H2O && !tableName.startsWith("H2O_") && !db.isManagementDB()){ //XXX Not sure if this should be a seperate IF
+			queryProxy = QueryProxy.getQueryProxy(new DataManager(tableName, getSchema().getName(), 0, 0, db), LockType.CREATE, db.getLocalDatabaseInstance());
+
+		} else if (Constants.IS_H2O){
+			/*
+			 * This is a system table, but it still needs a QueryProxy to indicate that it is acceptable to execute the query.
+			 */
+			queryProxy = QueryProxy.getQueryProxy(table, LockType.CREATE, db);
+
+		}
+
+		return queryProxy;
 	}
 
 }

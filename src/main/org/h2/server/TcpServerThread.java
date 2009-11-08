@@ -294,7 +294,7 @@ public class TcpServerThread implements Runnable {
             Command command = (Command) cache.getObject(id, false);
             setParameters(command);
             int old = session.getModificationId();
-            int updateCount = command.executeUpdate();
+            int updateCount = command.update();
             int status;
             if (session.isClosed()) {
                 status = SessionRemote.STATUS_CLOSED;

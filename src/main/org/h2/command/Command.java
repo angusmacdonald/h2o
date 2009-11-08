@@ -12,6 +12,8 @@ import org.h2.constant.ErrorCode;
 import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
+import org.h2.h2o.comms.QueryProxy;
+import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.message.Message;
 import org.h2.message.Trace;
 import org.h2.message.TraceObject;
@@ -98,6 +100,18 @@ public abstract class Command implements CommandInterface {
     public int update() throws SQLException {
         throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_QUERY);
     }
+    
+    /**
+     * Local. Won't commit if it is part of a bigger transaction.
+     * 
+     * Execute an updating statement, if this is possible.
+     *
+     * @return the update count
+     * @throws SQLException if the command is not an updating statement
+     */
+    protected int update(boolean partOfABiggerThing) throws SQLException {
+        throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_QUERY);
+    }
 
     /**
      * Execute a query statement, if this is possible.
@@ -110,6 +124,17 @@ public abstract class Command implements CommandInterface {
         throw Message.getSQLException(ErrorCode.METHOD_ONLY_ALLOWED_FOR_QUERY);
     }
 
+    /**
+     * Local. Won't commit if it is part of a bigger transaction.
+     *
+     * @param maxrows the maximum number of rows returned
+     * @return the local result set
+     * @throws SQLException if the command is not a query
+     */
+    protected LocalResult query(int maxrows, boolean partOfABiggerThing) throws SQLException {
+        throw Message.getSQLException(ErrorCode.METHOD_ONLY_ALLOWED_FOR_QUERY);
+    }
+    
     public final LocalResult getMetaDataLocal() throws SQLException {
         return queryMeta();
     }
@@ -190,8 +215,8 @@ public abstract class Command implements CommandInterface {
             }
         }
     }
-
-    public int executeUpdate() throws SQLException {
+    
+    public int executeUpdate(boolean partOfMultiQueryTransaction) throws SQLException {
         long start = startTime = System.currentTimeMillis();
         Database database = session.getDatabase();
         MemoryUtils.allocateReserveMemory();
@@ -204,7 +229,7 @@ public abstract class Command implements CommandInterface {
                 while (true) {
                     database.checkPowerOff();
                     try {
-                        return update();
+                        return update(partOfMultiQueryTransaction);
                     } catch (OutOfMemoryError e) {
                         MemoryUtils.freeReserveMemory();
                         throw Message.convert(e);
@@ -271,4 +296,35 @@ public abstract class Command implements CommandInterface {
     public String toString() {
         return TraceObject.toString(sql, getParameters());
     }
+
+	/**
+	 * Request a query proxy from the data manager of the table involved in the query. This proxy
+	 * contains the details of any locks that were acquired.
+	 * @return
+	 * @throws SQLException 
+	 */
+	public abstract QueryProxy acquireLocks() throws SQLException;
+
+	/**
+	 * @return the session
+	 */
+	public Session getSession() {
+		return session;
+	}
+
+	/**
+	 * @return
+	 */
+	public abstract boolean shouldBePropagated();
+
+	/**
+	 * Is the given command meant to be propagated to all machines?
+	 * @param query 
+	 * @return
+	 */
+	protected boolean isPropagatableCommand(Command command) {
+		return command.shouldBePropagated();
+	}
+
+	protected abstract void addQueryProxyManager(QueryProxyManager proxyManager);
 }

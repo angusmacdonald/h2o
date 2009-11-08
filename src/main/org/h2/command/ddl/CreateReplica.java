@@ -189,7 +189,7 @@ public class CreateReplica extends SchemaCommand {
 			SchemaManager.USERNAME + "', '" + SchemaManager.PASSWORD + "', '" + fullTableName + "');";
 			Parser queryParser = new Parser(session, true);
 			Command sqlQuery = queryParser.prepareCommand(createLinkedTable);
-			sqlQuery.executeUpdate();
+			sqlQuery.update();
 		}    
 
 		if (asQuery != null) {

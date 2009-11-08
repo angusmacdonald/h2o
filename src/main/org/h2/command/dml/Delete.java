@@ -31,12 +31,14 @@ public class Delete extends Prepared {
 
     private Expression condition;
     private TableFilter tableFilter;
+	private QueryProxy queryProxy;
     public Delete(Session session, boolean internalQuery) {
         super(session, internalQuery);
     }
 
     public void setTableFilter(TableFilter tableFilter) {
         this.tableFilter = tableFilter;
+        this.table = tableFilter.getTable();
     }
 
     public void setCondition(Expression condition) {
@@ -44,6 +46,10 @@ public class Delete extends Prepared {
     }
 
     public int update() throws SQLException {
+    	return update(null);
+    }
+    
+    public int update(String transactionName) throws SQLException {
         tableFilter.startQuery(session);
         tableFilter.reset();
         Table table = tableFilter.getTable();
@@ -54,8 +60,7 @@ public class Delete extends Prepared {
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
 		if (isRegularTable()){
-			QueryProxy qp = QueryProxy.getQueryProxy(table.getFullName(), LockType.WRITE, session.getDatabase());
-			return qp.executeUpdate(sqlStatement);
+			return queryProxy.executeUpdate(sqlStatement, transactionName, session);
 		}
         
         table.fireBefore(session);
@@ -121,5 +126,35 @@ public class Delete extends Prepared {
     public LocalResult queryMeta() {
         return null;
     }
-
+    
+    /* (non-Javadoc)
+	 * @see org.h2.command.Prepared#acquireLocks()
+	 */
+	@Override
+	public QueryProxy acquireLocks() throws SQLException {
+		/*
+		 * (QUERY PROPAGATED TO ALL REPLICAS).
+		 */
+		if (isRegularTable()){
+			queryProxy = QueryProxy.getQueryProxy(table, LockType.WRITE, session.getDatabase());
+			
+			return queryProxy;
+		}
+		
+		return QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstance());
+		
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.h2.command.Prepared#shouldBePropagated()
+	 */
+	@Override
+	public boolean shouldBePropagated() {
+		/*
+		 * If this is not a regular table (i.e. it is a meta-data table, then it will not be propagated regardless.
+		 */
+		return isRegularTable();
+	}
+	
+	
 }

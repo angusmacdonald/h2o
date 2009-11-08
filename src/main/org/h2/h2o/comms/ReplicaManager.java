@@ -145,14 +145,16 @@ public class ReplicaManager {
 					allReplicas.put(instance, updateID);
 
 				} else {
+					/*
+					 * This replica was never on this machine.
+					 * 
+					 */
 					try {
-						System.out.println(instance.getConnectionString());
+						ErrorHandling.errorNoEvent("Instance does not hold replica: " + instance.getConnectionString());
 					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-					ErrorHandling.hardError("Unexpected code path 2.");
-
+					//assert false; //This else should never be entered.
 				}
 			}
 		}

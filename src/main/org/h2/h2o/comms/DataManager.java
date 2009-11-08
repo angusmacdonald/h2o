@@ -154,7 +154,7 @@ public class DataManager implements DataManagerRemote {
 		this.unPropagatedUpdates = new HashMap<Integer, String>();
 		this.inProgressUpdates = new HashMap<Integer, String>();
 
-		this.lockingTable = new LockingTable();
+		this.lockingTable = new LockingTable(schemaName + "." + tableName);
 
 		//this.primaryLocation = database.getLocalDatabaseInstance();
 
@@ -168,6 +168,20 @@ public class DataManager implements DataManagerRemote {
 				database.getLocalMachinePort(), database.getConnectionType(), tableSet, database.isSM());
 
 		database.addDataManager(this);
+	}
+	
+	/**
+	 * Creates a new DataManager object from the state of a data manager which is no longer running, but which has
+	 * been persisted to disk.
+	 * @param schemaName
+	 * @param tableName
+	 * @return
+	 */
+	public static DataManager createDataManagerFromPersistentStore(String schemaName, String tableName){
+		
+		
+		return null;
+		
 	}
 
 	/**
@@ -206,7 +220,7 @@ public class DataManager implements DataManagerRemote {
 		Parser parser = new Parser(session, true);
 
 		Command query = parser.prepareCommand(sql);
-		return query.executeUpdate();
+		return query.update();
 	}
 
 
@@ -252,10 +266,10 @@ public class DataManager implements DataManagerRemote {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.comms.IDataManager#requestLock(java.lang.String)
+	 * @see org.h2.h2o.comms.IDataManager#getQueryProxy(java.lang.String)
 	 */
 	@Override
-	public synchronized QueryProxy requestQueryProxy(LockType lockType, DatabaseInstanceRemote databaseInstanceRemote) throws RemoteException, SQLException {
+	public synchronized QueryProxy getQueryProxy(LockType lockRequested, DatabaseInstanceRemote databaseInstanceRemote) throws RemoteException, SQLException {
 
 		if (replicaManager.size() == 0){
 			try {
@@ -266,17 +280,14 @@ public class DataManager implements DataManagerRemote {
 			}
 		}
 
-		LockType lockGranted = lockingTable.requestLock(lockType, databaseInstanceRemote);
+		LockType lockGranted = lockingTable.requestLock(lockRequested, databaseInstanceRemote);
+		
+//		if (lockGranted == LockType.NONE){
+//			throw new SQLException("Table already locked. Cannot perform query.");
+//		}
 
-		if (lockGranted == LockType.NONE){
-			throw new SQLException("Table already locked. Cannot perform query.");
-		}
-
-		QueryProxy qp = null;
-
-
-		qp = new QueryProxy(lockType, tableName, selectReplicaLocations(replicaManager.getPrimary(), lockType, databaseInstanceRemote), 
-				this, databaseInstanceRemote, replicaManager.getNewUpdateID());
+		QueryProxy qp = new QueryProxy(lockGranted, tableName, selectReplicaLocations(replicaManager.getPrimary(), lockRequested, databaseInstanceRemote), 
+				this, databaseInstanceRemote, replicaManager.getNewUpdateID(), lockRequested);
 
 		return qp;
 	}
@@ -554,7 +565,7 @@ public class DataManager implements DataManagerRemote {
 
 	private int executeUpdate(String query) throws SQLException{
 		sqlQuery = queryParser.prepareCommand(query);
-		int result = sqlQuery.executeUpdate();
+		int result = sqlQuery.update();
 
 		return result;
 	}
