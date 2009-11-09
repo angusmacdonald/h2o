@@ -12,6 +12,7 @@ import java.util.Map;
 import org.h2.h2o.comms.DataManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 
+import uk.ac.stand.dcs.nds.util.Diagnostic;
 import uk.ac.stand.dcs.nds.util.ErrorHandling;
 
 /**
@@ -60,8 +61,8 @@ public class DataManagerLocator extends RMIServer{
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (NotBoundException e) {
-			ErrorHandling.errorNoEvent(tableName + " was not bound to registry.");
-			//throw new SQLException("Data manager for " + tableName + " could not be found in the registry.");
+			Diagnostic.traceNoEvent(Diagnostic.FINAL, tableName + " was not bound to registry.");
+			//Happens during the check before CREATE TABLE is run, so is sometimes acceptable.
 		} catch (ClassCastException e){
 			System.err.println(tableName);
 			e.printStackTrace();

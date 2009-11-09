@@ -4350,7 +4350,7 @@ public class Parser {
 		 *  3. The table has not been found, but exists in some remote location.
 		 */
 
-		if (Constants.IS_H2O && searchRemote && database.isConnectedToSM() && !database.isSM() && !(locale == LocationPreference.LOCAL_STRICT)){ // 2 or 3
+		if (Constants.IS_H2O && searchRemote && database.isConnectedToSM() && !(locale == LocationPreference.LOCAL_STRICT)){ // 2 or 3
 			String schemaName = "PUBLIC";
 
 			if (getSchema() != null)

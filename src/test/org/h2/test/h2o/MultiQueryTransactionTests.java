@@ -28,13 +28,12 @@ public class MultiQueryTransactionTests extends TestBase{
 			int[] pKey = new int[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
 			String[] secondCol = new String[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
 
-			String sqlToExecute = createMultipleInserts(pKey, secondCol);
+			TestQuery queryToExecute = createInsertsForTestTable();
 
 			System.out.println("About to do the big set of inserts:");
-			sa.execute(sqlToExecute);
+			sa.execute(queryToExecute.getSQL());
 
-			sa.execute("SELECT PRIMARY * FROM TEST ORDER BY ID;"); 
-			validateResults(pKey, secondCol, sa.getResultSet());
+			validateOnFirstReplica(queryToExecute);
 
 
 		} catch (SQLException sqle){
@@ -54,13 +53,12 @@ public class MultiQueryTransactionTests extends TestBase{
 			int[] pKey = new int[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
 			String[] secondCol = new String[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
 
-			String sqlToExecute = createMultipleInserts(pKey, secondCol);
+			TestQuery queryToExecute = createInsertsForTestTable();
 
 			System.out.println("About to do the big set of inserts:");
-			sb.execute(sqlToExecute);
+			sb.execute(queryToExecute.getSQL());
 
-			sa.execute("SELECT PRIMARY * FROM TEST ORDER BY ID;"); 
-			validateResults(pKey, secondCol, sa.getResultSet());
+			validateOnFirstReplica(queryToExecute);
 
 
 		} catch (SQLException sqle){
@@ -77,12 +75,14 @@ public class MultiQueryTransactionTests extends TestBase{
 	public void basicMultiQueryDelete(){
 		try{
 
-			int[] pKey = new int[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
-			String[] secondCol = new String[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
 
-			String sqlToExecute = createMultipleInserts(pKey, secondCol);
+			TestQuery queryToExecute = createInsertsForTestTable();
 
+			int[] pKey = queryToExecute.getPrimaryKey();
+			String[] secondCol = queryToExecute.getSecondColumn();
 
+			
+			String sqlToExecute = queryToExecute.getSQL();
 			/*
 			 * Delete some of these entries...
 			 */
@@ -96,8 +96,7 @@ public class MultiQueryTransactionTests extends TestBase{
 
 			sb.execute(sqlToExecute);
 
-			sa.execute("SELECT PRIMARY * FROM TEST ORDER BY ID;"); 
-			validateResults(pKey, secondCol, sa.getResultSet());
+			validateOnFirstReplica(queryToExecute.getTableName(), pKey, secondCol);
 
 
 		} catch (SQLException sqle){
@@ -114,14 +113,7 @@ public class MultiQueryTransactionTests extends TestBase{
 	public void multiQueryPropagatedInserts(){
 		try{
 
-			/*
-			 * Create replica on B.
-			 */
-			sb.execute("CREATE REPLICA TEST;");
-
-			if (sb.getUpdateCount() != 0){
-				fail("Expected update count to be '0'");
-			}
+			createReplicaOnB();
 
 			/*
 			 * Create then execute INSERTS for TEST table.
@@ -129,18 +121,12 @@ public class MultiQueryTransactionTests extends TestBase{
 			int[] pKey = new int[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
 			String[] secondCol = new String[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
 
-			String sqlToExecute = createMultipleInserts(pKey, secondCol);
+			TestQuery queryToExecute = createInsertsForTestTable();
 
-			sa.execute(sqlToExecute); //Insert test rows.
+			sa.execute(queryToExecute.getSQL()); //Insert test rows.
 
-			//Validate on first replica
-			sa.execute("SELECT PRIMARY * FROM TEST ORDER BY ID;"); 
-			validateResults(pKey, secondCol, sa.getResultSet());
-
-
-			//Validate on second replica
-			sb.execute("SELECT PRIMARY * FROM TEST ORDER BY ID;"); 
-			validateResults(pKey, secondCol, sb.getResultSet());
+			validateOnFirstReplica(queryToExecute);
+			validateOnSecondReplica(queryToExecute);
 
 		} catch (SQLException sqle){
 			sqle.printStackTrace();
@@ -159,13 +145,11 @@ public class MultiQueryTransactionTests extends TestBase{
 			/*
 			 * Create then execute INSERTS for TEST table.
 			 */
-			int[] pKey = new int[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
-			String[] secondCol = new String[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
-
-			String sqlToExecute = createMultipleInserts(pKey, secondCol);
+			
+			TestQuery queryToExecute = createInsertsForTestTable();
 
 			try{
-				sa.execute(sqlToExecute); //Insert test rows.
+				sa.execute(queryToExecute.getSQL()); //Insert test rows.
 
 				fail("This should have thrown an exception");
 			} catch (SQLException e){
@@ -173,14 +157,13 @@ public class MultiQueryTransactionTests extends TestBase{
 			}
 
 			//Re-set row contents (nothing should have been inserted by this transaction.
-			pKey = new int[ROWS_IN_DATABASE];
-			secondCol = new String[ROWS_IN_DATABASE];
+			
+			int[] pKey = new int[ROWS_IN_DATABASE];
+			String[] secondCol = new String[ROWS_IN_DATABASE];
 			pKey[0] = 1; pKey[1] = 2;
 			secondCol[0] = "Hello"; secondCol[1] = "World";
 
-			//Validate on first replica
-			sa.execute("SELECT PRIMARY * FROM TEST ORDER BY ID;"); 
-			validateResults(pKey, secondCol, sa.getResultSet());
+			validateOnFirstReplica(queryToExecute.getTableName(), pKey, secondCol);
 
 		} catch (SQLException sqle){
 			sqle.printStackTrace();
@@ -196,25 +179,15 @@ public class MultiQueryTransactionTests extends TestBase{
 		try{
 			Constants.IS_TESTING_QUERY_FAILURE = true;
 
-			/*
-			 * Create replica on B.
-			 */
-			sb.execute("CREATE REPLICA TEST;");
-
-			if (sb.getUpdateCount() != 0){
-				fail("Expected update count to be '0'");
-			}
+			createReplicaOnB();
 
 			/*
 			 * Create then execute INSERTS for TEST table.
 			 */
-			int[] pKey = new int[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
-			String[] secondCol = new String[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
-
-			String sqlToExecute = createMultipleInserts(pKey, secondCol);
+			TestQuery queryToExecute = createInsertsForTestTable();
 
 			try{
-				sa.execute(sqlToExecute); //Insert test rows.
+				sa.execute(queryToExecute.getSQL()); //Insert test rows.
 
 				fail("This should have thrown an exception");
 			} catch (SQLException e){
@@ -222,19 +195,98 @@ public class MultiQueryTransactionTests extends TestBase{
 			}
 
 			//Re-set row contents (nothing should have been inserted by this transaction.
-			pKey = new int[ROWS_IN_DATABASE];
-			secondCol = new String[ROWS_IN_DATABASE];
+			int[] pKey = new int[ROWS_IN_DATABASE];
+			String[] secondCol = new String[ROWS_IN_DATABASE];
 			pKey[0] = 1; pKey[1] = 2;
 			secondCol[0] = "Hello"; secondCol[1] = "World";
 
-			//Validate on first replica
-			sa.execute("SELECT PRIMARY * FROM TEST ORDER BY ID;"); 
-			validateResults(pKey, secondCol, sa.getResultSet());
+			validateOnFirstReplica(queryToExecute.getTableName(), pKey, secondCol);
+
+			validateOnSecondReplica(queryToExecute.getTableName(), pKey, secondCol);
+
+		} catch (SQLException sqle){
+			sqle.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
+		}
+	}
 
 
-			//Validate on second replica
-			sb.execute("SELECT PRIMARY * FROM TEST ORDER BY ID;"); 
-			validateResults(pKey, secondCol, sb.getResultSet());
+	/**
+	 * Tests that a multi-query transaction involving more than one table. The result should be a lot of
+	 * successful inserts into each table. Only involves one database instance.
+	 */
+	@Test
+	public void testMultiTableTransactionSuccessLocal(){
+		try{
+			//Constants.IS_TESTING_QUERY_FAILURE = true;
+
+			//			createReplicaOnB();
+
+			createSecondTable(sa, "TEST2");
+
+			/*
+			 * Create then execute INSERTS for TEST table.
+			 */
+			
+			TestQuery testQuery = createInsertsForTestTable();
+			
+			int[] pKey = new int[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
+			String[] secondCol = new String[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
+
+			pKey[0] = 4; pKey[1] = 5;
+			secondCol[0] = "Meh"; secondCol[1] = "Heh";
+
+			TestQuery test2query = createMultipleInsertStatements("TEST2", pKey, secondCol, 6);
+
+			sa.execute(testQuery.getSQL() + test2query.getSQL()); //Insert test rows.
+
+			validateOnFirstReplica(testQuery);
+
+			
+
+			validateOnFirstReplica("TEST2", pKey, secondCol);
+			//validateOnSecondReplica(queryToExecute);
+
+		} catch (SQLException sqle){
+			sqle.printStackTrace();
+			fail("SQLException thrown when it shouldn't have.");
+		}
+	}
+	
+	/**
+	 * Tests that a multi-query transaction involving more than one table works when involving multiple machines.
+	 */
+	@Test
+	public void testMultiTableTransactionSuccessRemote(){
+		try{
+			//Constants.IS_TESTING_QUERY_FAILURE = true;
+
+			//			createReplicaOnB();
+
+			createSecondTable(sb, "TEST2");
+
+			/*
+			 * Create then execute INSERTS for TEST table.
+			 */
+			
+			TestQuery testQuery = createInsertsForTestTable();
+			
+			int[] pKey = new int[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
+			String[] secondCol = new String[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
+
+			pKey[0] = 4; pKey[1] = 5;
+			secondCol[0] = "Meh"; secondCol[1] = "Heh";
+
+			TestQuery test2query = createMultipleInsertStatements("TEST2", pKey, secondCol, 6);
+
+			sa.execute(testQuery.getSQL() + test2query.getSQL()); //Insert test rows.
+			
+			validateOnFirstReplica(testQuery);
+
+			
+
+			validateOnSecondReplica("TEST2", pKey, secondCol);
+			//validateOnSecondReplica(queryToExecute);
 
 		} catch (SQLException sqle){
 			sqle.printStackTrace();
@@ -245,19 +297,35 @@ public class MultiQueryTransactionTests extends TestBase{
 	/**
 	 * Creates lots of insert statements for testing.
 	 */
-	private String createMultipleInserts(int[] pKey,
-			String[] secondCol) {
-		String sqlToExecute = "";
+	private TestQuery createInsertsForTestTable() {
+		int[] pKey = new int[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
+		String[] secondCol = new String[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
 
 		pKey[0] = 1; pKey[1] = 2;
 		secondCol[0] = "Hello"; secondCol[1] = "World";
 
-		for (int i = (ROWS_IN_DATABASE+1); i < (TOTAL_ITERATIONS+(ROWS_IN_DATABASE+1)); i++){
+		return createMultipleInsertStatements("TEST", pKey, secondCol, ROWS_IN_DATABASE + 1);
+	}
+
+	/**
+	 * Creates lots of insert statements for testing with the stated table.
+	 * @param tableName		Name of the table where values are being inserted.
+	 * @param pKey			Array of primary key values in the table. This is a parameter in case the calling method
+	 * 	wants to add some custom values initially.
+	 * @param secondCol		Array of values for the second column in the table. This is a parameter in case the calling method
+	 * 	wants to add some custom values initially.
+	 * @return The query to be executed and the expected results from this execution.
+	 */
+	private TestQuery createMultipleInsertStatements(String tableName, int[] pKey,
+			String[] secondCol, int startPoint) {
+		String sqlToExecute = "";
+
+		for (int i = startPoint; i < (pKey.length); i++){
 			pKey[i-1] = i;
 			secondCol[i-1] = "helloNumber" + i;
 
-			sqlToExecute += "INSERT INTO TEST VALUES(" + pKey[i-1] + ", '" + secondCol[i-1] + "'); ";
+			sqlToExecute += "INSERT INTO " + tableName + " VALUES(" + pKey[i-1] + ", '" + secondCol[i-1] + "'); ";
 		}
-		return sqlToExecute;
+		return new TestQuery(sqlToExecute, tableName, pKey, secondCol);
 	}
 }

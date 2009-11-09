@@ -54,8 +54,7 @@ public class ReplicaTests extends TestBase{
 			int[] pKey = {1, 2};
 			String[] secondCol = {"Hello", "World"};
 
-			validateResults(pKey, secondCol, sa.getResultSet());
-
+			validateOnFirstReplica("TEST", pKey, secondCol);
 
 		} catch (SQLException sqle){
 			fail("This should succeed.");
@@ -86,11 +85,7 @@ public class ReplicaTests extends TestBase{
 
 		try{
 
-			sb.execute("CREATE REPLICA TEST;");
-
-			if (sb.getUpdateCount() != 0){
-				fail("Expected update count to be '0'");
-			}
+			createReplicaOnB();
 
 			try{
 				sa.execute("DROP REPLICA TEST;");
@@ -121,11 +116,7 @@ public class ReplicaTests extends TestBase{
 
 		try{
 
-			sb.execute("CREATE REPLICA TEST;");
-
-			if (sb.getUpdateCount() != 0){
-				fail("Expected update count to be '0'");
-			}
+			createReplicaOnB();
 
 			sb.execute("INSERT INTO TEST VALUES(3, 'Quite');");
 
@@ -174,8 +165,8 @@ public class ReplicaTests extends TestBase{
 			int[] pKey = {1, 2, 3};
 			String[] secondCol = {"Hello", "World", "Quite"};
 
-			validateResults(pKey, secondCol, sb.getResultSet());
-
+			validateOnSecondReplica("TEST", pKey, secondCol);
+			
 			/*
 			 * Check that the primary copy has three entries.
 			 */
@@ -279,11 +270,7 @@ public class ReplicaTests extends TestBase{
 			Connection cc = DriverManager.getConnection("jdbc:h2:mem:three", "sa", "sa");
 			Statement sc = cc.createStatement();
 
-			sb.execute("CREATE REPLICA TEST;");
-
-			if (sb.getUpdateCount() != 0){
-				fail("Expected update count to be '0'");
-			}
+			createReplicaOnB();
 
 			sa.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:three' FROM 'jdbc:h2:mem:two'");
 
@@ -556,9 +543,7 @@ public class ReplicaTests extends TestBase{
 		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
 		try{
 
-			sa.execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-			sa.execute("INSERT INTO TEST2 VALUES(4, 'Meh');");
-			sa.execute("INSERT INTO TEST2 VALUES(5, 'Heh');");
+			createSecondTable(sa, "TEST2");
 
 			sb.execute("CREATE REPLICA TEST, TEST2;");
 
@@ -591,9 +576,7 @@ public class ReplicaTests extends TestBase{
 		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
 		try{
 
-			sa.execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-			sa.execute("INSERT INTO TEST2 VALUES(4, 'Meh');");
-			sa.execute("INSERT INTO TEST2 VALUES(5, 'Heh');");
+			createSecondTable(sa, "TEST2");
 
 			sa.execute("CREATE REPLICA TEST, TEST2 ON 'jdbc:h2:mem:two' FROM 'jdbc:h2:mem:one';");
 

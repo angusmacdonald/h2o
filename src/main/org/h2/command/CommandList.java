@@ -60,6 +60,7 @@ public class CommandList extends Command {
 				 * H2O. Iterate through remaining commands rather than recursively calling this method.
 				 */
 				for (String sqlStatement: remaining){
+
 					Command remainingCommand = session.prepareLocal(sqlStatement);
 					remainingCommand.addQueryProxyManager(proxyManager);
 					

@@ -173,4 +173,76 @@ public class TestBase {
 		rs.close();
 	}
 
+	/**
+	 * Create a replica on the second test database.
+	 * @throws SQLException
+	 */
+	protected void createReplicaOnB() throws SQLException {
+		/*
+		 * Create replica on B.
+		 */
+		sb.execute("CREATE REPLICA TEST;");
+
+		if (sb.getUpdateCount() != 0){
+			fail("Expected update count to be '0'");
+		}
+	}
+
+	
+	/**
+	 * Validate the result of a query on the first replica against expected values by selecting
+	 * everything in a table sorted by ID and comparing with each entry.
+	 */
+	protected void validateOnFirstReplica(TestQuery testQuery)
+	throws SQLException {
+		validateOnFirstReplica(testQuery.getTableName(), testQuery.getPrimaryKey(), testQuery.getSecondColumn());
+	}
+
+	/**
+	 * Validate the result of a query on the second replica against expected values by selecting
+	 * everything in a table sorted by ID and comparing with each entry
+	 */
+	protected void validateOnSecondReplica(TestQuery testQuery)
+	throws SQLException {
+		validateOnSecondReplica(testQuery.getTableName(), testQuery.getPrimaryKey(), testQuery.getSecondColumn());
+	}
+	
+	/**
+	 * Validate the result of a query on the second replica against expected values by selecting
+	 * everything in a table sorted by ID and comparing with each entry.
+	 * @param pKey			Primary key value
+	 * @param secondCol		Second column value in test table.
+	 * @throws SQLException
+	 */
+	protected void validateOnSecondReplica(String tableName, int[] pKey, String[] secondCol)
+	throws SQLException {
+		sb.execute("SELECT PRIMARY * FROM " + tableName + " ORDER BY ID;"); 
+		validateResults(pKey, secondCol, sb.getResultSet());
+	}
+	
+
+	/**
+	 * Validate the result of a query on the first replica against expected values by selecting
+	 * everything in a table sorted by ID and comparing with each entry.
+	 * @param pKey			Primary key value
+	 * @param secondCol		Second column value in test table.
+	 * @throws SQLException
+	 */
+	protected void validateOnFirstReplica(String tableName, int[] pKey, String[] secondCol)
+	throws SQLException {
+		sa.execute("SELECT PRIMARY * FROM " + tableName + " ORDER BY ID;"); 
+		validateResults(pKey, secondCol, sa.getResultSet());
+	}
+
+	/**
+	 * @param stat 
+	 * @param tableName 
+	 * @throws SQLException
+	 */
+	protected void createSecondTable(Statement stat, String tableName) throws SQLException {
+		stat.execute("CREATE TABLE " + tableName + "(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+		stat.execute("INSERT INTO " + tableName + " VALUES(4, 'Meh');");
+		stat.execute("INSERT INTO " + tableName + " VALUES(5, 'Heh');");
+	}
+
 }
