@@ -1,5 +1,7 @@
 package org.h2.test.h2o;
 
+import java.sql.SQLException;
+
 import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Engine;
@@ -23,6 +25,17 @@ public class H2OTest {
 			
 			Constants.IS_TESTING_PRE_COMMIT_FAILURE = false;
 			Constants.IS_TESTING_PRE_PREPARE_FAILURE = false;
+		}
+	}
+
+	/**
+	 * @throws SQLException 
+	 * 
+	 */
+	public static void queryFailure() throws SQLException {
+		if (Constants.IS_TESTING_QUERY_FAILURE){
+			Constants.IS_TESTING_QUERY_FAILURE = false;
+			throw new SQLException("Query was deliberately sabotaged by the test harness.");
 		}
 	}
 }

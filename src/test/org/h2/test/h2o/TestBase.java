@@ -36,11 +36,16 @@ public class TestBase {
 	Statement sa = null;
 	Statement sb = null;
 
+	/**
+	 * The number of rows that are in the test table after the initial @see {@link #setUp()} call.
+	 */
+	protected static final int ROWS_IN_DATABASE = 2;
+
 	@BeforeClass
 	public static void initialSetUp(){
 		Diagnostic.setLevel(Diagnostic.FULL);
 	}
-	
+
 	/**
 	 * @throws java.lang.Exception
 	 */
@@ -62,7 +67,7 @@ public class TestBase {
 		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
 		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
 		sql += "INSERT INTO TEST VALUES(2, 'World');";
-		
+
 		sa.execute(sql);
 	}
 
@@ -72,14 +77,14 @@ public class TestBase {
 	@After
 	public void tearDown() {
 		try{ 
-//			sa.execute("DROP TABLE IF EXISTS TEST");
-//			sb.execute("DROP TABLE IF EXISTS TEST");
+			//			sa.execute("DROP TABLE IF EXISTS TEST");
+			//			sb.execute("DROP TABLE IF EXISTS TEST");
 			sa.execute("DROP ALL OBJECTS");
 			sb.execute("DROP ALL OBJECTS");
-			
+
 			if (!sa.isClosed()) sa.close();
 			if (!sb.isClosed())sb.close();
-			
+
 			if (!ca.isClosed())ca.close();	
 			if (!cb.isClosed())cb.close();	
 
@@ -96,22 +101,22 @@ public class TestBase {
 	public static void closeDatabaseCompletely() {
 		obliterateRMIRegistyContents();
 		Collection<Database> dbs = Engine.getInstance().closeAllDatabases();
-	
+
 		for (Database db: dbs){
 			db.close(false);
 			db.shutdownImmediately();
 		}
-		
+
 	}
-	
+
 	/**
 	 * Removes every object from the RMI registry.
 	 */
 	private static void obliterateRMIRegistyContents(){
 		Registry registry = null;
-		
+
 		try {
-				registry = LocateRegistry.getRegistry(20000);
+			registry = LocateRegistry.getRegistry(20000);
 
 		} catch (RemoteException e) {
 			e.printStackTrace();
@@ -119,7 +124,7 @@ public class TestBase {
 
 		try {
 			String[] listOfObjects = registry.list();
-			
+
 			for (String l: listOfObjects){
 				try {
 					registry.unbind(l);
@@ -127,7 +132,7 @@ public class TestBase {
 					fail("Failed to remove " + l + " from RMI registry.");
 				}
 			}
-			
+
 			if (registry.list().length > 0){
 				fail("Somehow failed to empty RMI registry.");
 			}
@@ -135,7 +140,7 @@ public class TestBase {
 			//It happens for tests where the registry was not set up.
 		}
 	}
-	
+
 	/**
 	 * Utility method which checks that the results of a test query match up to the set of expected values. The 'TEST'
 	 * class is being used in these tests so the primary keys (int) and names (varchar/string) are required to check the
@@ -150,11 +155,14 @@ public class TestBase {
 			fail("Resultset was null. Probably an incorrectly set test.");
 
 		for (int i=0; i < pKey.length; i++){
-			if (rs.next()){
-				assertEquals(pKey[i], rs.getInt(1));
-				assertEquals(secondCol[i], rs.getString(2));
-			} else {
-				fail("Expected an entry here.");
+			if (pKey[i] != 0 && secondCol[i] != null){ //indicates the entry was deleted as part of the test.
+				if (rs.next()){
+					assertEquals(pKey[i], rs.getInt(1));
+					assertEquals(secondCol[i], rs.getString(2));
+
+				} else {
+					fail("Expected an entry here.");
+				}
 			}
 		}
 

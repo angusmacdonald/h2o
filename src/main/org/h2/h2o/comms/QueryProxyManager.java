@@ -179,7 +179,7 @@ public class QueryProxyManager {
 	 * @throws SQLException 
 	 */
 	private boolean commitLocal(boolean commit) throws SQLException {
-		Command command = parser.prepareCommand("PREPARE " + (commit? "COMMIT ": "ROLLBACK ") + transactionName);
+		Command command = parser.prepareCommand("PREPARE COMMIT " + transactionName);
 		command.executeUpdate();
 
 		command = parser.prepareCommand((commit? "COMMIT": "ROLLBACK") + " TRANSACTION " + transactionName);

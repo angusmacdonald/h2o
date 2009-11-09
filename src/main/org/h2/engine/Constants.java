@@ -23,6 +23,8 @@ public class Constants {
 	 */
 	public static boolean IS_TESTING_PRE_COMMIT_FAILURE = false;
 	public static boolean IS_TESTING_PRE_PREPARE_FAILURE = false;
+	public static boolean IS_TESTING_QUERY_FAILURE = false;
+	
 	/**
 	 * Used in testing.
 	 */
@@ -524,7 +526,7 @@ public class Constants {
     public static final int VIEW_INDEX_CACHE_SIZE = 64;
 
 	public static final String H2O_SCHEMA = "H2O";
-	
+
     private Constants() {
         // utility class
     }
