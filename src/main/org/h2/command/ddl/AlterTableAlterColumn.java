@@ -12,11 +12,15 @@ import org.h2.command.Parser;
 import org.h2.command.Prepared;
 import org.h2.constant.ErrorCode;
 import org.h2.constraint.ConstraintReferential;
+import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.DbObject;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
+import org.h2.h2o.comms.QueryProxy;
+import org.h2.h2o.comms.QueryProxyManager;
+import org.h2.h2o.util.LockType;
 import org.h2.index.Index;
 import org.h2.index.IndexType;
 import org.h2.message.Message;
@@ -85,8 +89,11 @@ public class AlterTableAlterColumn extends SchemaCommand {
     private Expression newSelectivity;
     private String addBefore;
 
-    public AlterTableAlterColumn(Session session, Schema schema) {
+    private QueryProxy queryProxy = null;
+    
+    public AlterTableAlterColumn(Session session, Schema schema, boolean internalQuery) {
         super(session, schema);
+        setInternalQuery(internalQuery);
     }
 
     public void setOldColumn(Column oldColumn) {
@@ -97,8 +104,19 @@ public class AlterTableAlterColumn extends SchemaCommand {
         this.addBefore = before;
     }
 
-    public int update() throws SQLException {
+    public int update(String transactionName) throws SQLException {
         session.commit(true);
+        
+        /*
+		 * (QUERY PROPAGATED TO ALL REPLICAS).
+		 */
+		if (isRegularTable()){
+			if (queryProxy == null){
+				queryProxy = QueryProxy.getQueryProxy(oldColumn.getTable(), LockType.WRITE, session.getDatabase());
+			}
+			return queryProxy.executeUpdate(sqlStatement, transactionName, session);
+		}
+        
         Database db = session.getDatabase();
         session.getUser().checkRight(table, Right.ALL);
         table.checkSupportAlter();
@@ -411,4 +429,35 @@ public class AlterTableAlterColumn extends SchemaCommand {
         this.newColumn = newColumn;
     }
 
+    /* (non-Javadoc)
+	 * @see org.h2.command.Prepared#acquireLocks()
+	 */
+	@Override
+	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager) throws SQLException {
+		/*
+		 * (QUERY PROPAGATED TO ALL REPLICAS).
+		 */
+		if (isRegularTable()){
+
+			queryProxy = queryProxyManager.getQueryProxy(oldColumn.getTable().getFullName());
+
+			if (queryProxy == null){
+				queryProxy = QueryProxy.getQueryProxy(oldColumn.getTable(), LockType.WRITE, session.getDatabase());
+			}
+
+			return queryProxy;
+		}
+
+		return QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstance());
+
+	}
+
+	/**
+	 * True if the table involved in the prepared statement is a regular table - i.e. not an H2O meta-data table.
+	 */
+	protected boolean isRegularTable() {
+
+		return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery && !oldColumn.getTable().getFullName().startsWith(Constants.H2O_SCHEMA);
+
+	}
 }

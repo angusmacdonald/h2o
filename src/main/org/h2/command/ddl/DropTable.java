@@ -166,5 +166,15 @@ public class DropTable extends SchemaCommand {
 		executeDrop(transactionName);
 		return 0;
 	}
+	
+	@Override
+	public int update() throws SQLException {
+		String transactionName = "None";
+		
+		session.commit(true);
+		prepareDrop(transactionName);
+		executeDrop(transactionName);
+		return 0;
+	}
 
 }

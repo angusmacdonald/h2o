@@ -1021,7 +1021,7 @@ public class Session extends SessionWithState {
 	 * Begin a transaction.
 	 */
 	public void begin() {
-		autoCommitAtTransactionEnd = true;
+		autoCommitAtTransactionEnd = getAutoCommit();
 		setAutoCommit(false);
 	}
 

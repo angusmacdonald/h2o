@@ -2650,7 +2650,7 @@ public class Database implements DataHandler {
 	public String getConnectionType() {
 		if (localMachinePort == -1 && databaseLocation.contains("mem")){
 			return "mem";
-		} else if (localMachinePort != -1 && databaseLocation.contains("tcp")){
+		} else if (localMachinePort != -1){
 			return "tcp";
 		} else {
 			return "other";

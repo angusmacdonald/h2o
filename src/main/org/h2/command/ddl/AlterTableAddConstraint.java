@@ -19,6 +19,9 @@ import org.h2.engine.Database;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
+import org.h2.h2o.comms.QueryProxy;
+import org.h2.h2o.comms.QueryProxyManager;
+import org.h2.h2o.util.LockType;
 import org.h2.index.Index;
 import org.h2.index.IndexType;
 import org.h2.message.Message;
@@ -71,9 +74,12 @@ public class AlterTableAddConstraint extends SchemaCommand {
     private boolean primaryKeyHash;
     private boolean ifNotExists;
 
-    public AlterTableAddConstraint(Session session, Schema schema, boolean ifNotExists) {
+    private QueryProxy queryProxy = null;
+    
+    public AlterTableAddConstraint(Session session, Schema schema, boolean ifNotExists, boolean internalQuery) {
         super(session, schema);
         this.ifNotExists = ifNotExists;
+        setInternalQuery(internalQuery);
     }
 
     private String generateConstraintName(Table table) {
@@ -84,8 +90,12 @@ public class AlterTableAddConstraint extends SchemaCommand {
     }
 
     public int update() throws SQLException {
+    	return update("AddConstraint");
+    }
+    
+    public int update(String transactionName) throws SQLException {
         try {
-            return tryUpdate();
+            return tryUpdate(transactionName);
         } finally {
             getSchema().freeUniqueName(constraintName);
         }
@@ -96,8 +106,19 @@ public class AlterTableAddConstraint extends SchemaCommand {
      *
      * @return the update count
      */
-    public int tryUpdate() throws SQLException {
+    public int tryUpdate(String transactionName) throws SQLException {
         session.commit(true);
+        
+		/*
+		 * (QUERY PROPAGATED TO ALL REPLICAS).
+		 */
+		if (isRegularTable()){
+			if (queryProxy == null){
+				queryProxy = QueryProxy.getQueryProxy(getSchema().getTableOrView(session, tableName), LockType.WRITE, session.getDatabase());
+			}
+			return queryProxy.executeUpdate(sqlStatement, transactionName, session);
+		}
+        
         Database db = session.getDatabase();
         Table table = getSchema().getTableOrView(session, tableName);
         if (getSchema().findConstraint(session, constraintName) != null) {
@@ -352,6 +373,38 @@ public class AlterTableAddConstraint extends SchemaCommand {
         }
         return true;
     }
+    
+	/* (non-Javadoc)
+	 * @see org.h2.command.Prepared#acquireLocks()
+	 */
+	@Override
+	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager) throws SQLException {
+		/*
+		 * (QUERY PROPAGATED TO ALL REPLICAS).
+		 */
+		if (isRegularTable()){
+
+			queryProxy = queryProxyManager.getQueryProxy(getSchema().getTableOrView(session, tableName).getFullName());
+
+			if (queryProxy == null){
+				queryProxy = QueryProxy.getQueryProxy(getSchema().getTableOrView(session, tableName), LockType.WRITE, session.getDatabase());
+			}
+
+			return queryProxy;
+		}
+
+		return QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstance());
+
+	}
+
+	/**
+	 * True if the table involved in the prepared statement is a regular table - i.e. not an H2O meta-data table.
+	 */
+	protected boolean isRegularTable() {
+
+		return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery && !tableName.startsWith(Constants.H2O_SCHEMA);
+
+	}
 
     public void setConstraintName(String constraintName) {
         this.constraintName = constraintName;

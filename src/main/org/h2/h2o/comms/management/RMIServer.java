@@ -2,10 +2,12 @@ package org.h2.h2o.comms.management;
 
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.ExportException;
+import java.rmi.server.UnicastRemoteObject;
 
 import org.h2.h2o.comms.remote.H2ORemote;
 
@@ -154,9 +156,9 @@ public abstract class RMIServer {
 		if (removeLocalOnly) return;
 		
 		try {
-
-			registry.unbind(objectName);
 			
+			registry.unbind(objectName);
+		
 		}  catch (AccessException e) {
 			ErrorHandling.errorNoEvent(e, "Didn't have permission to perform unbind operation on RMI registry.");
 		} catch (RemoteException e) {

@@ -89,22 +89,10 @@ public class DataManagerLocator extends RMIServer{
 
 		try {
 
-			registry.bind(dm.getTableName(), stub);
+			registry.rebind(dm.getTableName(), stub);
 
 			dataManagers.put(dm.getTableName(), dm);
-		} catch (AlreadyBoundException abe) {
-
-			boolean contactable = testContact(dm.getTableName());
-
-			if (!contactable){
-				removeRegistryObject(dm.getTableName(), false);
-				registerDataManager(dm);
-				ErrorHandling.errorNoEvent("An old data manager for " + dm.getTableName() + " was removed.");
-			} else {
-				ErrorHandling.errorNoEvent("A data manager for this table still exists.");
-				abe.printStackTrace();
-			}
-		} catch (AccessException e) {
+		}  catch (AccessException e) {
 			e.printStackTrace();
 		} catch (RemoteException e) {
 			ErrorHandling.exceptionErrorNoEvent(e, "Lost contact with RMI registry when attempting to bind a manager.");
@@ -120,6 +108,7 @@ public class DataManagerLocator extends RMIServer{
 			DataManagerRemote dmr = lookupDataManager(objectName);
 			if (dmr != null){
 				dmr.removeDataManager();
+		
 				}
 
 		} catch (SQLException e) {

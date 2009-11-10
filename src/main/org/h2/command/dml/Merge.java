@@ -169,7 +169,7 @@ public class Merge extends Prepared {
             Parameter p = (Parameter) k.get(columns.length + i);
             p.setValue(v);
         }
-        int count = update.update();
+        int count = update.update("Merge");
         if (count == 0) {
             table.fireBefore(session);
             table.validateConvertUpdateSequence(session, row);

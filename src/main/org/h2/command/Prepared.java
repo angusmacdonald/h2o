@@ -546,4 +546,11 @@ public abstract class Prepared{
 		return false;
 	}
 
+	/**
+	 * @param internalQuery the internalQuery to set
+	 */
+	public void setInternalQuery(boolean internalQuery) {
+		this.internalQuery = internalQuery;
+	}
+
 }

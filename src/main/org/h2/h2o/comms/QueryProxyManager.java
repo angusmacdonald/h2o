@@ -261,5 +261,14 @@ public class QueryProxyManager {
 		prepareCommand.executeUpdate();
 	}
 
+	/**
+	 * 
+	 */
+	public void begin() throws SQLException{
+		Command command = parser.prepareCommand("BEGIN");
+		command.executeUpdate();
+
+	}
+
 
 }

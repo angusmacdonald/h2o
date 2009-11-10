@@ -4485,7 +4485,7 @@ public class Parser {
 				String constraintName = readIdentifierWithSchema(table.getSchema().getName());
 				ifExists = readIfExists(ifExists);
 				checkSchema(table.getSchema());
-				AlterTableDropConstraint command = new AlterTableDropConstraint(session, getSchema(), ifExists);
+				AlterTableDropConstraint command = new AlterTableDropConstraint(session, getSchema(), ifExists, internalQuery);
 				command.setConstraintName(constraintName);
 				return command;
 			} else if (readIf("PRIMARY")) {
@@ -4496,7 +4496,7 @@ public class Parser {
 				return command;
 			} else {
 				readIf("COLUMN");
-				AlterTableAlterColumn command = new AlterTableAlterColumn(session, table.getSchema());
+				AlterTableAlterColumn command = new AlterTableAlterColumn(session, table.getSchema(), internalQuery);
 				command.setType(AlterTableAlterColumn.DROP);
 				String columnName = readColumnIdentifier();
 				command.setTable(table);
@@ -4520,14 +4520,14 @@ public class Parser {
 					// Derby compatibility
 					read("TYPE");
 					Column newColumn = parseColumnForTable(columnName);
-					AlterTableAlterColumn command = new AlterTableAlterColumn(session, table.getSchema());
+					AlterTableAlterColumn command = new AlterTableAlterColumn(session, table.getSchema(), internalQuery);
 					command.setTable(table);
 					command.setType(AlterTableAlterColumn.CHANGE_TYPE);
 					command.setOldColumn(column);
 					command.setNewColumn(newColumn);
 					return command;
 				}
-				AlterTableAlterColumn command = new AlterTableAlterColumn(session, table.getSchema());
+				AlterTableAlterColumn command = new AlterTableAlterColumn(session, table.getSchema(), internalQuery);
 				command.setTable(table);
 				command.setOldColumn(column);
 				if (readIf("NULL")) {
@@ -4551,7 +4551,7 @@ public class Parser {
 				command.setStartWith(start);
 				return command;
 			} else if (readIf("SELECTIVITY")) {
-				AlterTableAlterColumn command = new AlterTableAlterColumn(session, table.getSchema());
+				AlterTableAlterColumn command = new AlterTableAlterColumn(session, table.getSchema(), internalQuery);
 				command.setTable(table);
 				command.setType(AlterTableAlterColumn.SELECTIVITY);
 				command.setOldColumn(column);
@@ -4559,7 +4559,7 @@ public class Parser {
 				return command;
 			} else {
 				Column newColumn = parseColumnForTable(columnName);
-				AlterTableAlterColumn command = new AlterTableAlterColumn(session, table.getSchema());
+				AlterTableAlterColumn command = new AlterTableAlterColumn(session, table.getSchema(), internalQuery);
 				command.setTable(table);
 				command.setType(AlterTableAlterColumn.CHANGE_TYPE);
 				command.setOldColumn(column);
@@ -4573,7 +4573,7 @@ public class Parser {
 	private AlterTableAlterColumn parseAlterTableAddColumn(Table table) throws SQLException {
 		readIf("COLUMN");
 		Schema schema = table.getSchema();
-		AlterTableAlterColumn command = new AlterTableAlterColumn(session, schema);
+		AlterTableAlterColumn command = new AlterTableAlterColumn(session, schema, internalQuery);
 		command.setType(AlterTableAlterColumn.ADD);
 		command.setTable(table);
 		String columnName = readColumnIdentifier();
@@ -4614,7 +4614,7 @@ public class Parser {
 		}
 		if (readIf("PRIMARY")) {
 			read("KEY");
-			AlterTableAddConstraint command = new AlterTableAddConstraint(session, schema, ifNotExists);
+			AlterTableAddConstraint command = new AlterTableAddConstraint(session, schema, ifNotExists, internalQuery);
 			command.setType(AlterTableAddConstraint.PRIMARY_KEY);
 			command.setComment(comment);
 			command.setConstraintName(constraintName);
@@ -4643,13 +4643,13 @@ public class Parser {
 		}
 		AlterTableAddConstraint command;
 		if (readIf("CHECK")) {
-			command = new AlterTableAddConstraint(session, schema, ifNotExists);
+			command = new AlterTableAddConstraint(session, schema, ifNotExists, internalQuery);
 			command.setType(AlterTableAddConstraint.CHECK);
 			command.setCheckExpression(readExpression());
 		} else if (readIf("UNIQUE")) {
 			readIf("KEY");
 			readIf("INDEX");
-			command = new AlterTableAddConstraint(session, schema, ifNotExists);
+			command = new AlterTableAddConstraint(session, schema, ifNotExists, internalQuery);
 			command.setType(AlterTableAddConstraint.UNIQUE);
 			if (!readIf("(")) {
 				constraintName = readUniqueIdentifier();
@@ -4661,7 +4661,7 @@ public class Parser {
 				command.setIndex(getSchema().findIndex(session, indexName));
 			}
 		} else if (readIf("FOREIGN")) {
-			command = new AlterTableAddConstraint(session, schema, ifNotExists);
+			command = new AlterTableAddConstraint(session, schema, ifNotExists, internalQuery);
 			command.setType(AlterTableAddConstraint.REFERENTIAL);
 			read("KEY");
 			read("(");
@@ -4927,7 +4927,7 @@ public class Parser {
 							column.setPrimaryKey(false);
 							IndexColumn[] cols = new IndexColumn[]{new IndexColumn()};
 							cols[0].columnName = column.getName();
-							AlterTableAddConstraint pk = new AlterTableAddConstraint(session, schema, false);
+							AlterTableAddConstraint pk = new AlterTableAddConstraint(session, schema, false, internalQuery);
 							pk.setType(AlterTableAddConstraint.PRIMARY_KEY);
 							pk.setTableName(tableName);
 							pk.setIndexColumns(cols);
@@ -4943,7 +4943,7 @@ public class Parser {
 							boolean hash = readIf("HASH");
 							IndexColumn[] cols = new IndexColumn[]{new IndexColumn()};
 							cols[0].columnName = column.getName();
-							AlterTableAddConstraint pk = new AlterTableAddConstraint(session, schema, false);
+							AlterTableAddConstraint pk = new AlterTableAddConstraint(session, schema, false, internalQuery);
 							pk.setPrimaryKeyHash(hash);
 							pk.setType(AlterTableAddConstraint.PRIMARY_KEY);
 							pk.setTableName(tableName);
@@ -4953,7 +4953,7 @@ public class Parser {
 								parseAutoIncrement(column);
 							}
 						} else if (readIf("UNIQUE")) {
-							AlterTableAddConstraint unique = new AlterTableAddConstraint(session, schema, false);
+							AlterTableAddConstraint unique = new AlterTableAddConstraint(session, schema, false, internalQuery);
 							unique.setConstraintName(constraintName);
 							unique.setType(AlterTableAddConstraint.UNIQUE);
 							IndexColumn[] cols = new IndexColumn[]{new IndexColumn()};
@@ -4967,7 +4967,7 @@ public class Parser {
 							column.addCheckConstraint(session, expr);
 						}
 						if (readIf("REFERENCES")) {
-							AlterTableAddConstraint ref = new AlterTableAddConstraint(session, schema, false);
+							AlterTableAddConstraint ref = new AlterTableAddConstraint(session, schema, false, internalQuery);
 							ref.setConstraintName(constraintName);
 							ref.setType(AlterTableAddConstraint.REFERENTIAL);
 							IndexColumn[] cols = new IndexColumn[]{new IndexColumn()};

@@ -98,6 +98,8 @@ public class CommandList extends Command {
 		/*
 		 * Execute the first update, then iterate through every subsequent update.
 		 */
+		//proxyManager.begin();
+		
 		int updateCount = command.executeUpdate(true);
 		SQLException rollbackException = executeRemaining();
 

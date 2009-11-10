@@ -792,7 +792,7 @@ public class CreateReplica extends SchemaCommand {
 			IndexColumn[] indexColumn = new IndexColumn[list.size()];
 			indexColumn = IndexColumn.wrap(cols);
 
-			AlterTableAddConstraint pk = new AlterTableAddConstraint(session, getSchema(), false);
+			AlterTableAddConstraint pk = new AlterTableAddConstraint(session, getSchema(), false, internalQuery);
 			pk.setType(AlterTableAddConstraint.PRIMARY_KEY);
 			pk.setTableName(tableName);
 			pk.setIndexColumns(indexColumn);

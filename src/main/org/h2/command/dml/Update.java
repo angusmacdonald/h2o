@@ -89,6 +89,7 @@ public class Update extends Prepared {
 			 * (QUERY PROPAGATED TO ALL REPLICAS).
 			 */
 			 if (isRegularTable()){
+				 if (queryProxy == null) queryProxy = new QueryProxy(session.getDatabase().getLocalDatabaseInstance()); // in case of MERGE statement.
 				 return queryProxy.executeUpdate(sqlStatement, transactionName, session);
 			 }
 
