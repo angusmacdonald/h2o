@@ -34,11 +34,60 @@ public class ReplicaTests extends TestBase{
 				fail("Incorrect number of results returned.");
 			}
 
-		} catch (SQLException sqle){
-			fail("SQLException thrown when it shouldn't have.");
-			sqle.printStackTrace();
+		} catch (SQLException e){
+			fail("An Unexpected SQLException was thrown.");
+			e.printStackTrace();
 		}
 	}
+	
+	/**
+	 * Tries to create a replica of the test table. Tests that a new table of the same name is successfully created on the other machine.
+	 */
+	@Test
+	public void BasicTableCopy(){
+
+		try{
+			sb.execute("CREATE REPLICA TEST");
+
+			if (sb.getUpdateCount() != 0){
+				fail("Expected update count to be '0'");
+			}
+
+			sb.execute("SELECT * FROM TEST");
+
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
+
+		}
+	}
+	
+	/**
+	 * Tests that a replica is successfully created when a field has a space in its value.
+	 */
+	@Test
+	public void SpaceInValue(){
+		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		
+		try{
+
+			sa.execute("INSERT INTO TEST VALUES(3, 'Hello World');");
+			
+			createReplicaOnB();
+			
+			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
+
+			int[] pKey = {1, 2, 3};
+			String[] secondCol = {"Hello", "World", "Hello World"};
+
+			validateOnFirstMachine("TEST", pKey, secondCol);
+
+		} catch (SQLException e){
+			fail("This should succeed.");
+		}
+	}
+
+
 
 	/**
 	 * Tests that the SELECT PRIMARY command succeeds, in the case where the primary is local.
@@ -54,9 +103,9 @@ public class ReplicaTests extends TestBase{
 			int[] pKey = {1, 2};
 			String[] secondCol = {"Hello", "World"};
 
-			validateOnFirstReplica("TEST", pKey, secondCol);
+			validateOnFirstMachine("TEST", pKey, secondCol);
 
-		} catch (SQLException sqle){
+		} catch (SQLException e){
 			fail("This should succeed.");
 		}
 	}
@@ -71,8 +120,8 @@ public class ReplicaTests extends TestBase{
 		
 		try{
 			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
+		} catch (SQLException e){
+			e.printStackTrace();
 			fail("The table should be found remotely if not available locally.");
 		}
 	}
@@ -102,9 +151,9 @@ public class ReplicaTests extends TestBase{
 				//Expected.	
 			}
 
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 
@@ -135,9 +184,9 @@ public class ReplicaTests extends TestBase{
 				//Expected.
 			}
 
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 	/**
@@ -165,7 +214,7 @@ public class ReplicaTests extends TestBase{
 			int[] pKey = {1, 2, 3};
 			String[] secondCol = {"Hello", "World", "Quite"};
 
-			validateOnSecondReplica("TEST", pKey, secondCol);
+			validateOnSecondMachine("TEST", pKey, secondCol);
 			
 			/*
 			 * Check that the primary copy has three entries.
@@ -177,9 +226,9 @@ public class ReplicaTests extends TestBase{
 
 			validateResults(pKey2, secondCol2, sb.getResultSet());
 
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 
@@ -213,9 +262,9 @@ public class ReplicaTests extends TestBase{
 
 
 
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 
@@ -249,9 +298,9 @@ public class ReplicaTests extends TestBase{
 
 
 
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 
@@ -293,33 +342,12 @@ public class ReplicaTests extends TestBase{
 			sc.close();
 			cc.close();
 
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 
-	/**
-	 * Tries to create a replica of the test table. Tests that a new table of the same name is successfully created on the other machine.
-	 */
-	@Test
-	public void BasicTableCopy(){
-
-		try{
-			sb.execute("CREATE REPLICA TEST");
-
-			if (sb.getUpdateCount() != 0){
-				fail("Expected update count to be '0'");
-			}
-
-			sb.execute("SELECT * FROM TEST");
-
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
-
-		}
-	}
 
 	/**
 	 * Tests that the contents of a table are successfully copied over.
@@ -342,9 +370,9 @@ public class ReplicaTests extends TestBase{
 			validateResults(pKey, secondCol, sb.getResultSet());
 
 
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 			
 		}
 	}
@@ -371,10 +399,10 @@ public class ReplicaTests extends TestBase{
 				fail("Should have been two entries in the schema manager.");
 			}
 
-		} catch (SQLException sqle){
+		} catch (SQLException e){
 
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 
@@ -390,8 +418,8 @@ public class ReplicaTests extends TestBase{
 			if (sb.getUpdateCount() != 0){
 				fail("Expected update count to be '0'");
 			}
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
+		} catch (SQLException e){
+			e.printStackTrace();
 			fail("This shouldn't have caused any errors.");
 		}
 
@@ -399,7 +427,7 @@ public class ReplicaTests extends TestBase{
 			sb.execute("CREATE REPLICA TEST");
 
 			fail("Expected an error to be thrown here, as the replica already exists..");
-		} catch (SQLException sqle){
+		} catch (SQLException e){
 			//Expected.
 		}
 	}
@@ -433,9 +461,9 @@ public class ReplicaTests extends TestBase{
 
 			validateResults(pKey2, secondCol2, sa.getResultSet());
 
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 
@@ -450,7 +478,7 @@ public class ReplicaTests extends TestBase{
 			sb.execute("SELECT LOCAL ONLY * FROM TEST ORDER BY ID;");
 
 			fail("It shouldn't be possible to query a local version which doesn't exist.");
-		} catch (SQLException sqle){
+		} catch (SQLException e){
 			//Expected!
 		}
 	}
@@ -492,10 +520,10 @@ public class ReplicaTests extends TestBase{
 //
 //			validateResults(pKey2, secondCol2, sb.getResultSet());
 //
-//		} catch (SQLException sqle){
+//		} catch (SQLException e){
 //			System.out.println("This trace matters:");
-//			sqle.printStackTrace();
-//			fail("SQLException thrown when it shouldn't have.");
+//			e.printStackTrace();
+//			fail("An Unexpected SQLException was thrown.");
 //		}
 //	}
 
@@ -564,7 +592,7 @@ public class ReplicaTests extends TestBase{
 
 		} catch (SQLException e){
 			e.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 
@@ -596,7 +624,7 @@ public class ReplicaTests extends TestBase{
 
 		} catch (SQLException e){
 			e.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 }

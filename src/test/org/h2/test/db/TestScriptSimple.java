@@ -13,6 +13,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.h2.engine.Constants;
 import org.h2.test.TestBase;
 import org.h2.util.ScriptReader;
 
@@ -31,10 +32,13 @@ public class TestScriptSimple extends TestBase {
      */
     public static void main(String[] a) throws Exception {
         TestBase.createCaller().init().test();
+        Constants.IS_TESTING_H2_TESTS = true;
     }
 
     public void test() throws Exception {
-        if (config.memory || config.big || config.networked) {
+    	 Constants.IS_TESTING_H2_TESTS = true;
+    	
+    	if (config.memory || config.big || config.networked) {
             return;
         }
         deleteDb("scriptSimple");
@@ -67,6 +71,7 @@ public class TestScriptSimple extends TestBase {
                 }
             } catch (SQLException e) {
                 System.err.println(sql);
+                e.printStackTrace();
                 throw e;
             }
         }

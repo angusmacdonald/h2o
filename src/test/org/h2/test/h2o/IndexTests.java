@@ -115,9 +115,9 @@ public class IndexTests{
 					} else {
 						fail("Expected a row here.");
 					}
-				} catch (SQLException sqle){
-					sqle.printStackTrace();
-					fail("SQLException thrown when it shouldn't have.");
+				} catch (SQLException e){
+					e.printStackTrace();
+					fail("An Unexpected SQLException was thrown.");
 				}
 				
 	}
@@ -149,9 +149,9 @@ public class IndexTests{
 					}
 					
 					sa.equals("DROP TABLE TEST2");
-				} catch (SQLException sqle){
-					sqle.printStackTrace();
-					fail("SQLException thrown when it shouldn't have.");
+				} catch (SQLException e){
+					e.printStackTrace();
+					fail("An Unexpected SQLException was thrown.");
 				}
 				
 				Diagnostic.traceNoEvent(Diagnostic.FULL, "END OF LAST TEST (MAIN BODY).");
@@ -184,9 +184,9 @@ public class IndexTests{
 //				//Expected.
 //			}
 //
-//		} catch (SQLException sqle){
-//			sqle.printStackTrace();
-//			fail("SQLException thrown when it shouldn't have.");
+//		} catch (SQLException e){
+//			e.printStackTrace();
+//			fail("An Unexpected SQLException was thrown.");
 //		}
 //	}
 //
@@ -222,9 +222,9 @@ public class IndexTests{
 //			}
 //
 //			
-//		} catch (SQLException sqle){
-//			sqle.printStackTrace();
-//			fail("SQLException thrown when it shouldn't have.");
+//		} catch (SQLException e){
+//			e.printStackTrace();
+//			fail("An Unexpected SQLException was thrown.");
 //		}
 //	}
 }

@@ -15,8 +15,6 @@ import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TransactionNameGenerator;
-import org.h2.table.Table;
-
 import uk.ac.stand.dcs.nds.util.ErrorHandling;
 
 /**
@@ -40,8 +38,10 @@ public class QueryProxyManager {
 	private Set<DataManagerRemote> dataManagers;
 
 	private DatabaseInstanceRemote requestingDatabase;
-	
+
 	private Map<String, QueryProxy> queryProxies;
+
+	private Command prepareCommand = null; 
 
 
 
@@ -68,10 +68,10 @@ public class QueryProxyManager {
 		this.dataManagers = new HashSet<DataManagerRemote>();
 
 		this.requestingDatabase = db.getLocalDatabaseInstance();
-		
+
 		this.queryProxies = new HashMap<String, QueryProxy>();
 
-		
+
 	}
 
 	/**
@@ -80,7 +80,7 @@ public class QueryProxyManager {
 	 * @param proxy	Proxy for a particular table.
 	 */
 	public void addProxy(QueryProxy proxy) throws SQLException {
-		
+
 		if (!hasLock(proxy)){
 			throw new SQLException("Table already locked. Cannot perform query.");
 		}
@@ -103,7 +103,7 @@ public class QueryProxyManager {
 		if (proxy.getUpdateID() > this.updateID){ // the update ID should be the highest of all the proxy update IDs
 			this.updateID = proxy.getUpdateID();
 		}
-		
+
 		queryProxies.put(proxy.getTableName(), proxy);
 	}
 
@@ -144,19 +144,19 @@ public class QueryProxyManager {
 		 */
 		for (DatabaseInstanceRemote remoteReplica: allReplicas){
 
-			boolean commitSuccessful;
+			boolean actionSuccessful;
 
 			if (remoteReplica == localDatabase){
 				//Perform commit locally.
-				commitSuccessful = commitLocal(commit);
+				actionSuccessful = commitLocal(commit);
 			} else { //Perform commit via RMI.		 
-				commitSuccessful = commitRemote(commit, remoteReplica);
+				actionSuccessful = commitRemote(commit, remoteReplica);
 			}
 
-			if (commitSuccessful) updatedReplicas.add(remoteReplica);
+			if (actionSuccessful && commit) updatedReplicas.add(remoteReplica);
 		}
 
-		releaseLocks(updatedReplicas);
+		endTransaction(updatedReplicas);
 
 		/*
 		 * If rollback was performed - throw an exception informing requesting party of this.
@@ -179,11 +179,10 @@ public class QueryProxyManager {
 	 * @throws SQLException 
 	 */
 	private boolean commitLocal(boolean commit) throws SQLException {
-		Command command = parser.prepareCommand("PREPARE COMMIT " + transactionName);
-		command.executeUpdate();
+		prepare();
 
-		command = parser.prepareCommand((commit? "COMMIT": "ROLLBACK") + " TRANSACTION " + transactionName);
-		int result = command.executeUpdate();
+		Command commitCommand = parser.prepareCommand((commit? "COMMIT": "ROLLBACK") + " TRANSACTION " + transactionName);
+		int result = commitCommand.executeUpdate();
 
 		return (result == 0);
 	}
@@ -229,9 +228,10 @@ public class QueryProxyManager {
 	/**
 	 * Release locks for every table that is part of this update. This also updates the information on
 	 * which replicas were updated (which are currently active), hence the parameter
-	 * @param updatedReplicas The set of replicas which were updated.
+	 * @param updatedReplicas The set of replicas which were updated. This is NOT used to release locks, but to update the 
+	 * data managers state on which replicas are up-to-date.
 	 */
-	public void releaseLocks(Set<DatabaseInstanceRemote> updatedReplicas) { 
+	public void endTransaction(Set<DatabaseInstanceRemote> updatedReplicas) { 
 		try {
 			for (DataManagerRemote dataManagerProxy: dataManagers){
 				dataManagerProxy.releaseLock(requestingDatabase, updatedReplicas, updateID);
@@ -242,18 +242,23 @@ public class QueryProxyManager {
 	}
 
 	/**
-	 * 
-	 */
-	public void releaseLocks() {
-		releaseLocks(allReplicas);
-	}
-
-	/**
 	 * @param table
 	 * @return
 	 */
 	public QueryProxy getQueryProxy(String tableName) {
 		return queryProxies.get(tableName);
+	}
+
+	/**
+	 * Prepare a transaction to be committed. This is only called locally.
+	 * @throws SQLException 
+	 */
+	public void prepare() throws SQLException {
+		if (prepareCommand == null){
+			prepareCommand = parser.prepareCommand("PREPARE COMMIT " + transactionName);
+		}
+
+		prepareCommand.executeUpdate();
 	}
 
 

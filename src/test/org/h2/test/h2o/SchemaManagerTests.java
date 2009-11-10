@@ -220,9 +220,9 @@ public class SchemaManagerTests {
 			ca.close();
 			cb.close();
 
-		} catch (SQLException sqle){
-			fail("SQLException thrown when it shouldn't have.");
-			sqle.printStackTrace();
+		} catch (SQLException e){
+			fail("An Unexpected SQLException was thrown.");
+			e.printStackTrace();
 		}
 	}
 
@@ -260,9 +260,9 @@ public class SchemaManagerTests {
 
 			sa.close();
 			ca.close();
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 
@@ -313,9 +313,9 @@ public class SchemaManagerTests {
 			sb.close();
 			ca.close();
 			cb.close();
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 
 		}
 	}
@@ -372,9 +372,9 @@ public class SchemaManagerTests {
 			sa.close();
 			ca.close();
 
-		} catch (SQLException sqle){
-			fail("SQLException thrown when it shouldn't have.");
-			sqle.printStackTrace();
+		} catch (SQLException e){
+			fail("An Unexpected SQLException was thrown.");
+			e.printStackTrace();
 		}
 	}
 
@@ -416,9 +416,9 @@ public class SchemaManagerTests {
 			sb.close();
 			ca.close();
 			cb.close();
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 
 		}
 	}
@@ -456,9 +456,9 @@ public class SchemaManagerTests {
 
 			sa.close();
 			ca.close();
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 
 		}
 	}
@@ -503,9 +503,9 @@ public class SchemaManagerTests {
 			sb.close();
 			ca.close();
 			cb.close();
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 
 		}
 	}

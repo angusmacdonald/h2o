@@ -251,7 +251,7 @@ public class Parser {
 		try {
 			Prepared p = parse(sql);
 			p.prepare();
-			
+
 			Command c = new CommandContainer(this, sql, p);
 			p.setCommand(c);
 			if (isToken(";")) {
@@ -4376,26 +4376,35 @@ public class Parser {
 		 * Attempt to locate the table if it exists remotely.
 		 */
 		String tableLocation = null;
-//		DataManagerRemote dm = null;
-		
-//		if (database != null){
-//			dm = database.getDataManager(thisSchemaName + "." + tableName);
-//			if (dm == null){
-//				//Failed to find the given table.
-//				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
-//			}
-//			try {
-//				tableLocation = dm.getLocation();
-//			} catch (RemoteException e) {
-//				throw new SQLException("Couldn't connect with remote DB.");
-//			}
-//
-//		} else {
-			//Old Schema Manager method.
-			tableLocation = SchemaManager.getInstance(session).getDataManagerLocation(tableName, thisSchemaName);
-//		}
+		//		DataManagerRemote dm = null;
 
-		Parser queryParser = new Parser(session, true);
+		//		if (database != null){
+		//			dm = database.getDataManager(thisSchemaName + "." + tableName);
+		//			if (dm == null){
+		//				//Failed to find the given table.
+		//				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
+		//			}
+		//			try {
+		//				tableLocation = dm.getLocation();
+		//			} catch (RemoteException e) {
+		//				throw new SQLException("Couldn't connect with remote DB.");
+		//			}
+		//
+		//		} else {
+		//Old Schema Manager method.
+		tableLocation = SchemaManager.getInstance(session).getDataManagerLocation(tableName, thisSchemaName);
+		//		}
+
+		/*
+		 * Must be a different session from that of the executing user transaction, because this must
+		 * commit in the midst of it all.
+		 */
+		
+		Session sessionToUse = database.getExclusiveSession();
+		if (sessionToUse == null){
+			sessionToUse = database.getSystemSession();
+		}
+		Parser queryParser = new Parser(sessionToUse, true);
 
 		String sql = "CREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + tableLocation + "', '" + SchemaManager.USERNAME + "', '" + SchemaManager.PASSWORD + "', '" + tableName + "');";
 

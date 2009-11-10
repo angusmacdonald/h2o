@@ -107,9 +107,9 @@ public class TransactionTests {
 
 			validateResults(pKey, secondCol, sb.getResultSet());
 
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 
@@ -142,9 +142,9 @@ public class TransactionTests {
 	    	   fail ("Expected this to pass.");
 	       }
 	        
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 
@@ -187,9 +187,9 @@ public class TransactionTests {
 	    	   fail ("Expected this to pass.");
 	       }
 	        
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 		} finally {
 			try {
 				cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");

@@ -24,11 +24,14 @@ public class Constants {
 	public static boolean IS_TESTING_PRE_COMMIT_FAILURE = false;
 	public static boolean IS_TESTING_PRE_PREPARE_FAILURE = false;
 	public static boolean IS_TESTING_QUERY_FAILURE = false;
+	public static boolean IS_TESTING_CREATETABLE_FAILURE = false;
 	
 	/**
 	 * Used in testing.
 	 */
 	public static String DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test";
+
+	public static boolean IS_TESTING_H2_TESTS = false;
 
 
     /**

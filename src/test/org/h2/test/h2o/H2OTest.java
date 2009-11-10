@@ -34,7 +34,20 @@ public class H2OTest {
 	 */
 	public static void queryFailure() throws SQLException {
 		if (Constants.IS_TESTING_QUERY_FAILURE){
+			
 			Constants.IS_TESTING_QUERY_FAILURE = false;
+			throw new SQLException("Query was deliberately sabotaged by the test harness.");
+		}
+	}
+	
+	/**
+	 * @throws SQLException 
+	 * 
+	 */
+	public static void createTableFailure() throws SQLException {
+		if (Constants.IS_TESTING_CREATETABLE_FAILURE){
+			
+			Constants.IS_TESTING_CREATETABLE_FAILURE = false;
 			throw new SQLException("Query was deliberately sabotaged by the test harness.");
 		}
 	}

@@ -57,9 +57,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	
 	public int prepare(String transactionName) throws RemoteException, SQLException{
 		
-		if (session.getAutoCommit()){
-			ErrorHandling.hardError("Shouldn't happen.");
-		}
+		assert session.getAutoCommit() == false;
 			
 		Command command = parser.prepareCommand("PREPARE COMMIT " + transactionName);
 		return command.executeUpdate();

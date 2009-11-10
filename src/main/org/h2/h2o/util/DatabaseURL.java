@@ -15,17 +15,17 @@ public class DatabaseURL {
 	 * The original unedited database URL.
 	 */
 	private String originalURL;
-	
+
 	/**
 	 * Original URL edited to remove localhost, and replace with the local hostname.
 	 */
 	private String newURL;
-	
+
 	/**
 	 * Hostname contained in the URL. If the DB is in-memory there will be no host name - this field will be set to null.
 	 */
 	private String hostname;
-	
+
 	/**
 	 * Port number in the URL. If the DB is in-memory there will be no port number - this field will be set to -1.
 	 */
@@ -35,34 +35,39 @@ public class DatabaseURL {
 	 * The location of the database on disk.
 	 */
 	private String dbLocation;
-	
+
 	/**
 	 * Whether the database is in-memory.
 	 */
 	private boolean mem;
-	
+
 	/**
 	 * Whether the database is open to TCP connections.
 	 */
 	private boolean tcp;
-	
+
 	/**
 	 * Whether the database in question is a schema manager.
 	 */
 	private boolean schemaManager;
 
-	
+
 	public static void main (String[] args){
 		//Test.
 		System.out.println("First test, TCP DB:");
 		DatabaseURL dburl = DatabaseURL.parseURL("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test");
 		System.out.println(dburl.toString());
-		
+
 		System.out.println("\nSecond test, MEM DB:");
 		dburl = DatabaseURL.parseURL("jdbc:h2:sm:mem:one");
 		System.out.println(dburl.toString());
+		
+		System.out.println("\nThird test, Other DB:");
+		dburl = DatabaseURL.parseURL("jdbc:h2:data/test/scriptSimple;LOG=1;LOCK_TIMEOUT=50");
+		System.out.println(dburl.toString());
+		
 	}
-	
+
 	public static DatabaseURL parseURL(String url){
 		boolean tcp = (url.contains(":tcp:"));
 		boolean mem = (url.contains(":mem:"));
@@ -73,31 +78,42 @@ public class DatabaseURL {
 		String dbLocation = null;
 		if (tcp){
 			String newURL = url;
-			
+
 			newURL = newURL.substring(newURL.indexOf("tcp://")+6);
-			
+
 			//Get hostname
 			hostname = newURL.substring(0, newURL.indexOf(":"));
-			
+
 			if (hostname.equals("localhost")){
 				hostname = NetUtils.getLocalAddress();
 			}
-			
+
 			//Get port
 			String portString = newURL.substring(newURL.indexOf(":")+1);
 			portString = portString.substring(0, portString.indexOf("/"));
 			port = new Integer(portString).intValue();
-			
+
 			//Get DB location
 			dbLocation = newURL.substring(newURL.indexOf("/")+1);
 		} else if (mem){
 			dbLocation = url.substring(url.indexOf(":mem:")+5);
+		} else {
+			//jdbc:h2:data/test/scriptSimple;LOG=1;LOCK_TIMEOUT=50
+			if (url.startsWith("jdbc:h2:")){
+				url = url.substring("jdbc:h2:".length());
+			}
+			
+			String[] remaining = url.split(";");
+			
+			dbLocation = remaining[0];
+			
+			//XXX the rest is currently ignored.
 		}
-		
-		
+
+
 		return new DatabaseURL(url, hostname, port, dbLocation, tcp, mem, schemaManager);
 	}
-	
+
 	private DatabaseURL(String originalURL, String hostname, int port, String dbLocation, boolean tcp, boolean mem, boolean schemaManager){
 		this.originalURL = originalURL;
 		this.newURL = "jdbc:h2:" + ((schemaManager)? "sm:": "") + ((tcp)? "tcp://" + hostname + ":" + port + "/": "") + ((mem)? "mem:": "") + dbLocation;
@@ -108,9 +124,9 @@ public class DatabaseURL {
 		this.schemaManager = schemaManager;
 		this.dbLocation = dbLocation;
 	}
-	
-	
-	
+
+
+
 	/**
 	 * Get a slightly modified version of the original URL - if the original included 'localhost' this resolves it to the local hostname.
 	 * @return the new url
@@ -181,7 +197,7 @@ public class DatabaseURL {
 		output +="\nTCP: " + tcp;
 		output +="\nMEM: " + mem;
 		output +="\nSchema Manager: " + schemaManager;
-		
+
 		return output;
 	}
 }

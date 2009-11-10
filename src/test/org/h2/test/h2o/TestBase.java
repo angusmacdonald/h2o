@@ -193,18 +193,18 @@ public class TestBase {
 	 * Validate the result of a query on the first replica against expected values by selecting
 	 * everything in a table sorted by ID and comparing with each entry.
 	 */
-	protected void validateOnFirstReplica(TestQuery testQuery)
+	protected void validateOnFirstMachine(TestQuery testQuery)
 	throws SQLException {
-		validateOnFirstReplica(testQuery.getTableName(), testQuery.getPrimaryKey(), testQuery.getSecondColumn());
+		validateOnFirstMachine(testQuery.getTableName(), testQuery.getPrimaryKey(), testQuery.getSecondColumn());
 	}
 
 	/**
 	 * Validate the result of a query on the second replica against expected values by selecting
 	 * everything in a table sorted by ID and comparing with each entry
 	 */
-	protected void validateOnSecondReplica(TestQuery testQuery)
+	protected void validateOnSecondMachine(TestQuery testQuery)
 	throws SQLException {
-		validateOnSecondReplica(testQuery.getTableName(), testQuery.getPrimaryKey(), testQuery.getSecondColumn());
+		validateOnSecondMachine(testQuery.getTableName(), testQuery.getPrimaryKey(), testQuery.getSecondColumn());
 	}
 	
 	/**
@@ -214,9 +214,9 @@ public class TestBase {
 	 * @param secondCol		Second column value in test table.
 	 * @throws SQLException
 	 */
-	protected void validateOnSecondReplica(String tableName, int[] pKey, String[] secondCol)
+	protected void validateOnSecondMachine(String tableName, int[] pKey, String[] secondCol)
 	throws SQLException {
-		sb.execute("SELECT PRIMARY * FROM " + tableName + " ORDER BY ID;"); 
+		sb.execute("SELECT LOCAL * FROM " + tableName + " ORDER BY ID;"); 
 		validateResults(pKey, secondCol, sb.getResultSet());
 	}
 	
@@ -228,9 +228,9 @@ public class TestBase {
 	 * @param secondCol		Second column value in test table.
 	 * @throws SQLException
 	 */
-	protected void validateOnFirstReplica(String tableName, int[] pKey, String[] secondCol)
+	protected void validateOnFirstMachine(String tableName, int[] pKey, String[] secondCol)
 	throws SQLException {
-		sa.execute("SELECT PRIMARY * FROM " + tableName + " ORDER BY ID;"); 
+		sa.execute("SELECT LOCAL * FROM " + tableName + " ORDER BY ID;"); 
 		validateResults(pKey, secondCol, sa.getResultSet());
 	}
 
@@ -240,9 +240,11 @@ public class TestBase {
 	 * @throws SQLException
 	 */
 	protected void createSecondTable(Statement stat, String tableName) throws SQLException {
-		stat.execute("CREATE TABLE " + tableName + "(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-		stat.execute("INSERT INTO " + tableName + " VALUES(4, 'Meh');");
-		stat.execute("INSERT INTO " + tableName + " VALUES(5, 'Heh');");
+		String sqlQuery = "CREATE TABLE " + tableName + "(ID INT PRIMARY KEY, NAME VARCHAR(255));";
+		sqlQuery += "INSERT INTO " + tableName + " VALUES(4, 'Meh');";
+		sqlQuery += "INSERT INTO " + tableName + " VALUES(5, 'Heh');";
+		
+		stat.execute(sqlQuery);
 	}
 
 }

@@ -565,7 +565,7 @@ public class DataManager implements DataManagerRemote {
 
 	private int executeUpdate(String query) throws SQLException{
 		sqlQuery = queryParser.prepareCommand(query);
-		int result = sqlQuery.update();
+		int result = sqlQuery.executeUpdate(true);
 
 		return result;
 	}
@@ -576,6 +576,8 @@ public class DataManager implements DataManagerRemote {
 			dbName = "jdbc:h2:" + ((isSM)? "sm:": "") + connectionType + "://" + machineName + ":" + connectionPort + "/" + dbLocationOnDisk;
 		} else if (connectionType.equals("mem")){
 			dbName = "jdbc:h2:"  + ((isSM)? "sm:": "") + dbLocationOnDisk;
+		} else if (connectionType.equals("other")){
+			dbName = "jdbc:h2:" + dbLocationOnDisk;
 		} else {
 			Message.throwInternalError("This connection type isn't supported yet. Get on that!");
 		}

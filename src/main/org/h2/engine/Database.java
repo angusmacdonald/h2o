@@ -275,8 +275,8 @@ public class Database implements DataHandler {
 			 * Instantiate connections to RMI registry (if schema manager, create RMI registry first).
 			 */
 			int rmiPort = dbURL.getPort()+1;
-			if (isSchemaManager){
-				
+			if (isSchemaManager || Constants.IS_TESTING_H2_TESTS ){
+				isSchemaManager = true; connectedToSM = true;
 				databaseInstanceLocator = new DatabaseInstanceLocator(rmiPort);
 			} else {
 				//Registry is located on a remote machine.
@@ -2648,7 +2648,13 @@ public class Database implements DataHandler {
 	 * @return
 	 */
 	public String getConnectionType() {
-		return (localMachinePort == -1 && databaseLocation.contains("mem"))? "mem": "tcp";
+		if (localMachinePort == -1 && databaseLocation.contains("mem")){
+			return "mem";
+		} else if (localMachinePort != -1 && databaseLocation.contains("tcp")){
+			return "tcp";
+		} else {
+			return "other";
+		}
 	}
 
 	public void addDataManager(DataManager dm){

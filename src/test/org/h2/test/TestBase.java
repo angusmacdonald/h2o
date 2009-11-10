@@ -49,7 +49,7 @@ public abstract class TestBase {
     protected long start;
 
     static {
-    	 Constants.IS_H2O = false;
+    	Constants.IS_H2O = true;
     }
     
     /**
@@ -77,7 +77,7 @@ public abstract class TestBase {
     public TestBase init() {
         baseDir = getTestDir("");
         this.config = new TestAll();
-        Constants.IS_H2O = false;
+        Constants.IS_H2O = true;
         return this;
     }
 

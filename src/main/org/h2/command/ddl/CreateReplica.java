@@ -364,7 +364,7 @@ public class CreateReplica extends SchemaCommand {
 				}
 			}
 			sm.addReplicaInformation(tableName, table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
-					db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType(), getSchema().getName(), tableSet);	
+					db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType(), getSchema().getName(), tableSet, session);	
 
 			//	#############################
 			//  Add to data manager.

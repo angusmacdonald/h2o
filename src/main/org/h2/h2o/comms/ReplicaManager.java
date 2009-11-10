@@ -1,14 +1,11 @@
 package org.h2.h2o.comms;
 
-import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
-
-import uk.ac.stand.dcs.nds.util.ErrorHandling;
 
 /**
  * Stores the location of each replica for a give table, including the update ID for each of these replicas
@@ -137,25 +134,12 @@ public class ReplicaManager {
 				if (allReplicas.containsKey(instance)){
 					Integer previousID = allReplicas.get(instance);
 
-					if (updateID <= previousID){
-						ErrorHandling.hardError("Unexpected code path 1.");
-					}
+					assert updateID > previousID;
 
 					allReplicas.remove(instance);
 					allReplicas.put(instance, updateID);
 
-				} else {
-					/*
-					 * This replica was never on this machine.
-					 * 
-					 */
-					try {
-						ErrorHandling.errorNoEvent("Instance does not hold replica: " + instance.getConnectionString());
-					} catch (RemoteException e) {
-						e.printStackTrace();
-					}
-					//assert false; //This else should never be entered.
-				}
+				} //In many cases it won't contain this key, but another table (part of the same transaction) was on this machine.
 			}
 		}
 	}

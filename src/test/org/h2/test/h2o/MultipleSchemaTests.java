@@ -52,7 +52,7 @@ public class MultipleSchemaTests extends TestBase {
 			sa.execute("DROP SCHEMA IF EXISTS SCHEMA2");
 		} catch (SQLException e){
 			e.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 
@@ -110,7 +110,7 @@ public class MultipleSchemaTests extends TestBase {
 
 		} catch (SQLException e){
 			e.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 	
@@ -169,7 +169,7 @@ public class MultipleSchemaTests extends TestBase {
 
 		} catch (SQLException e){
 			e.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 
@@ -211,7 +211,7 @@ public class MultipleSchemaTests extends TestBase {
 
 		} catch (SQLException e){
 			e.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 
@@ -255,7 +255,7 @@ public class MultipleSchemaTests extends TestBase {
 
 		} catch (SQLException e){
 			e.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 
@@ -351,7 +351,7 @@ public class MultipleSchemaTests extends TestBase {
 
 		} catch (SQLException e){
 			e.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 }

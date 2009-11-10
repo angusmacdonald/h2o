@@ -10,6 +10,8 @@ import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.h2.command.Command;
+import org.h2.command.Parser;
 import org.h2.command.Prepared;
 import org.h2.command.dml.Insert;
 import org.h2.command.dml.Query;
@@ -29,6 +31,7 @@ import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TransactionNameGenerator;
 import org.h2.message.Message;
+import org.h2.result.LocalResult;
 import org.h2.schema.Schema;
 import org.h2.schema.Sequence;
 import org.h2.table.Column;
@@ -260,7 +263,7 @@ public class CreateTable extends SchemaCommand {
 					tableSet = sm.getNewTableSetNumber();
 				}
 				sm.addTableInformation(tableName, table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
-						db.getLocalMachineAddress(), db.getLocalMachinePort(), (db.isPersistent())? "tcp": "mem", getSchema().getName(), tableSet);	
+						db.getLocalMachineAddress(), db.getLocalMachinePort(), (db.isPersistent())? "tcp": "mem", getSchema().getName(), tableSet, session);	
 
 				table.setTableSet(tableSet);
 		

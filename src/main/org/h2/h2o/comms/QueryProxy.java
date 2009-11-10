@@ -105,9 +105,15 @@ public class QueryProxy implements Serializable{
 	public int executeUpdate(String sql, String transactionName, Session session) throws SQLException {
 
 		if (lockRequested == LockType.CREATE && (allReplicas == null || allReplicas.size() == 0)){
+			/*
+			 * If we don't knwo of any replicas and this is a CREATE TABLE statement then we just run the query on the local DB instance.
+			 */
 			this.allReplicas = new HashSet<DatabaseInstanceRemote>();
 			this.allReplicas.add(requestingDatabase);
 		} else if (allReplicas == null || allReplicas.size() == 0){
+			/*
+			 * If there are no replicas on which to execute the query.
+			 */
 			try {
 				dataManagerProxy.releaseLock(requestingDatabase, null, updateID);
 			} catch (RemoteException e) {

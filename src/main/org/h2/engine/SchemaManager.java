@@ -219,16 +219,16 @@ public class SchemaManager {
 	 */
 	public void addTableInformation(String tableName, long modificationID,
 			String databaseLocation, String tableType,
-			String localMachineAddress, int localMachinePort, String connection_type, String schemaName, int tableSet) throws SQLException {
+			String localMachineAddress, int localMachinePort, String connection_type, String schemaName, int tableSet, Session session) throws SQLException {
 
 		if (!isTableListed(tableName, schemaName)){ // the table doesn't already exist in the schema manager.
-			addTableInformation(tableName,  modificationID, schemaName);
+			addTableInformation(tableName,  modificationID, schemaName, session);
 		}
 
 		int connectionID = getConnectionID(localMachineAddress, localMachinePort, connection_type);
 		int tableID = getTableID(tableName, schemaName);
 		if (!isReplicaListed(tableName, connectionID, databaseLocation, schemaName)){ // the table doesn't already exist in the schema manager.
-			addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, tableSet, true);				
+			addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, tableSet, true, session);				
 		}
 	}
 
@@ -246,13 +246,13 @@ public class SchemaManager {
 	 */
 	public void addReplicaInformation(String tableName, long modificationID,
 			String databaseLocation, String tableType,
-			String localMachineAddress, int localMachinePort, String connection_type, String schemaName, int replicaSet) throws SQLException {
+			String localMachineAddress, int localMachinePort, String connection_type, String schemaName, int replicaSet, Session session) throws SQLException {
 
 		int connectionID = getConnectionID(localMachineAddress, localMachinePort, connection_type);
 		int tableID = getTableID(tableName, schemaName);
 
 		if (!isReplicaListed(tableName, connectionID, databaseLocation, schemaName)){ // the table doesn't already exist in the schema manager.
-			addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, replicaSet, false);				
+			addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, replicaSet, false, session);				
 		}
 	}
 
@@ -468,12 +468,13 @@ public class SchemaManager {
 	 * Update the schema manager with new table information
 	 * @param tableName			Name of the table being added.
 	 * @param modificationID	Mofification ID of the table.
+	 * @param session 
 	 * @return					Result of the update.
 	 * @throws SQLException 
 	 */
-	private int addTableInformation(String tableName, long modificationID, String schemaName) throws SQLException{
+	private int addTableInformation(String tableName, long modificationID, String schemaName, Session session) throws SQLException{
 		String sql = "INSERT INTO " + TABLES + " VALUES (null, '" + schemaName + "', '" + tableName + "', " + modificationID +");";
-		return executeUpdate(sql);
+		return executeUpdate(sql, session);
 	}
 
 	/**
@@ -483,10 +484,10 @@ public class SchemaManager {
 	 * @return					Result of the update.
 	 * @throws SQLException 
 	 */
-	private int addReplicaInformation(int tableID, long modificationID, int connectionID, String databaseLocation, String tableType, int tableSet, boolean primaryCopy) throws SQLException{
+	private int addReplicaInformation(int tableID, long modificationID, int connectionID, String databaseLocation, String tableType, int tableSet, boolean primaryCopy, Session session) throws SQLException{
 		String sql = "INSERT INTO " + REPLICAS + " VALUES (null, " + tableID + ", " + connectionID + ", '" + databaseLocation + "', '" + 
 		tableType + "', " + modificationID +", " + tableSet + ", " + primaryCopy + ");\n";
-		return executeUpdate(sql);
+		return executeUpdate(sql, session);
 	}
 
 	/**
@@ -554,6 +555,12 @@ public class SchemaManager {
 	private int executeUpdate(String query) throws SQLException{
 		sqlQuery = queryParser.prepareCommand(query);
 		return sqlQuery.update();
+	}
+	
+	private int executeUpdate(String query, Session session) throws SQLException{
+		Parser parser = new Parser(session, true);
+		Command update = parser.prepareCommand(query);
+		return update.executeUpdate(true);
 	}
 
 	/**

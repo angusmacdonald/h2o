@@ -12,6 +12,7 @@ import org.h2.expression.Parameter;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.result.LocalResult;
+import org.h2.test.h2o.H2OTest;
 import org.h2.util.ObjectArray;
 import org.h2.value.Value;
 
@@ -29,7 +30,7 @@ public class CommandContainer extends Command {
 		super(parser, sql);
 		prepared.setCommand(this);
 		this.prepared = prepared;
-		
+
 		/*
 		 * If this command is part of a larger transaction then this query proxy manager will be
 		 * over-written later on by a call from the Command list class. 
@@ -50,9 +51,9 @@ public class CommandContainer extends Command {
 	}
 
 	public int executeUpdate() throws SQLException {
-    	return executeUpdate(false);
-    }
-	
+		return executeUpdate(false);
+	}
+
 	private void recompileIfRequired() throws SQLException {
 		if (prepared.needRecompile()) {
 			// TODO test with 'always recompile'
@@ -117,31 +118,38 @@ public class CommandContainer extends Command {
 		prepared.checkParameters();
 		int updateCount;
 
-		assert(queryProxyManager != null);
-		
-		//Acquire distributed locks. 
-		QueryProxy proxy = this.acquireLocks(queryProxyManager); 
-
-		
-		assert(proxy != null);
-		
-		queryProxyManager.addProxy(proxy);	//checks that a lock is held for table, then adds the proxy.
-
-		updateCount = prepared.update(queryProxyManager.getTransactionName());
-
-		boolean commit = true; //TODO check whether this should be a commit or rollback.
 
 		boolean singleQuery = !partOfMultiQueryTransaction, transactionCommand = prepared.isTransactionCommand();
 
+		if (!transactionCommand){ //Not a prepare or commit.
+			assert(queryProxyManager != null);
 
-		if (singleQuery && !transactionCommand){ 
-			/*
-			 * Commit. If this is a transaction command it doesn't require a prepare/commit. If it is one of 
-			 * a number of queries in the transaction then we must wait for the entire transaction to finish.
-			 */
+			//Acquire distributed locks. 
+			QueryProxy proxy = this.acquireLocks(queryProxyManager); 
+
+			assert(proxy != null);
+
+			queryProxyManager.addProxy(proxy);	//checks that a lock is held for table, then adds the proxy.
+
+			updateCount = prepared.update(queryProxyManager.getTransactionName());
+
+			boolean commit = true; //An exception would already have been thrown if it should have been a rollback.
+
 			
-			queryProxyManager.commit(commit);
+			H2OTest.createTableFailure();
+
+			
+			if (singleQuery){ 
+				/*
+				 * If it is one of a number of queries in the transaction then we must wait for the entire transaction to finish.
+				 */
+
+				queryProxyManager.commit(commit);
+			} 
+		} else {
+			updateCount = prepared.update();
 		}
+
 
 		prepared.trace(startTime, updateCount);
 		return updateCount;

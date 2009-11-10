@@ -2,6 +2,7 @@ package org.h2.test.h2o;
 
 import static org.junit.Assert.fail;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.h2.engine.Constants;
@@ -25,20 +26,17 @@ public class MultiQueryTransactionTests extends TestBase{
 	public void basicMultiQueryInsert(){
 		try{
 
-			int[] pKey = new int[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
-			String[] secondCol = new String[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
-
 			TestQuery queryToExecute = createInsertsForTestTable();
 
 			System.out.println("About to do the big set of inserts:");
 			sa.execute(queryToExecute.getSQL());
 
-			validateOnFirstReplica(queryToExecute);
+			validateOnFirstMachine(queryToExecute);
 
 
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 
@@ -50,20 +48,17 @@ public class MultiQueryTransactionTests extends TestBase{
 	public void basicMultiQueryInsertRemote(){
 		try{
 
-			int[] pKey = new int[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
-			String[] secondCol = new String[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
-
 			TestQuery queryToExecute = createInsertsForTestTable();
 
 			System.out.println("About to do the big set of inserts:");
 			sb.execute(queryToExecute.getSQL());
 
-			validateOnFirstReplica(queryToExecute);
+			validateOnFirstMachine(queryToExecute);
 
 
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 
@@ -81,7 +76,7 @@ public class MultiQueryTransactionTests extends TestBase{
 			int[] pKey = queryToExecute.getPrimaryKey();
 			String[] secondCol = queryToExecute.getSecondColumn();
 
-			
+
 			String sqlToExecute = queryToExecute.getSQL();
 			/*
 			 * Delete some of these entries...
@@ -96,12 +91,12 @@ public class MultiQueryTransactionTests extends TestBase{
 
 			sb.execute(sqlToExecute);
 
-			validateOnFirstReplica(queryToExecute.getTableName(), pKey, secondCol);
+			validateOnFirstMachine(queryToExecute.getTableName(), pKey, secondCol);
 
 
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 
@@ -118,19 +113,16 @@ public class MultiQueryTransactionTests extends TestBase{
 			/*
 			 * Create then execute INSERTS for TEST table.
 			 */
-			int[] pKey = new int[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
-			String[] secondCol = new String[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
-
 			TestQuery queryToExecute = createInsertsForTestTable();
 
 			sa.execute(queryToExecute.getSQL()); //Insert test rows.
 
-			validateOnFirstReplica(queryToExecute);
-			validateOnSecondReplica(queryToExecute);
+			validateOnFirstMachine(queryToExecute);
+			validateOnSecondMachine(queryToExecute);
 
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 
@@ -145,7 +137,7 @@ public class MultiQueryTransactionTests extends TestBase{
 			/*
 			 * Create then execute INSERTS for TEST table.
 			 */
-			
+
 			TestQuery queryToExecute = createInsertsForTestTable();
 
 			try{
@@ -157,17 +149,17 @@ public class MultiQueryTransactionTests extends TestBase{
 			}
 
 			//Re-set row contents (nothing should have been inserted by this transaction.
-			
+
 			int[] pKey = new int[ROWS_IN_DATABASE];
 			String[] secondCol = new String[ROWS_IN_DATABASE];
 			pKey[0] = 1; pKey[1] = 2;
 			secondCol[0] = "Hello"; secondCol[1] = "World";
 
-			validateOnFirstReplica(queryToExecute.getTableName(), pKey, secondCol);
+			validateOnFirstMachine(queryToExecute.getTableName(), pKey, secondCol);
 
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 
@@ -200,13 +192,13 @@ public class MultiQueryTransactionTests extends TestBase{
 			pKey[0] = 1; pKey[1] = 2;
 			secondCol[0] = "Hello"; secondCol[1] = "World";
 
-			validateOnFirstReplica(queryToExecute.getTableName(), pKey, secondCol);
+			validateOnFirstMachine(queryToExecute.getTableName(), pKey, secondCol);
 
-			validateOnSecondReplica(queryToExecute.getTableName(), pKey, secondCol);
+			validateOnSecondMachine(queryToExecute.getTableName(), pKey, secondCol);
 
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 
@@ -227,9 +219,9 @@ public class MultiQueryTransactionTests extends TestBase{
 			/*
 			 * Create then execute INSERTS for TEST table.
 			 */
-			
+
 			TestQuery testQuery = createInsertsForTestTable();
-			
+
 			int[] pKey = new int[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
 			String[] secondCol = new String[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
 
@@ -240,37 +232,33 @@ public class MultiQueryTransactionTests extends TestBase{
 
 			sa.execute(testQuery.getSQL() + test2query.getSQL()); //Insert test rows.
 
-			validateOnFirstReplica(testQuery);
+			validateOnFirstMachine(testQuery);
 
-			
 
-			validateOnFirstReplica("TEST2", pKey, secondCol);
+
+			validateOnFirstMachine("TEST2", pKey, secondCol);
 			//validateOnSecondReplica(queryToExecute);
 
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
-	
+
 	/**
 	 * Tests that a multi-query transaction involving more than one table works when involving multiple machines.
 	 */
 	@Test
 	public void testMultiTableTransactionSuccessRemote(){
 		try{
-			//Constants.IS_TESTING_QUERY_FAILURE = true;
-
-			//			createReplicaOnB();
-
 			createSecondTable(sb, "TEST2");
 
 			/*
 			 * Create then execute INSERTS for TEST table.
 			 */
-			
+
 			TestQuery testQuery = createInsertsForTestTable();
-			
+
 			int[] pKey = new int[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
 			String[] secondCol = new String[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
 
@@ -280,19 +268,212 @@ public class MultiQueryTransactionTests extends TestBase{
 			TestQuery test2query = createMultipleInsertStatements("TEST2", pKey, secondCol, 6);
 
 			sa.execute(testQuery.getSQL() + test2query.getSQL()); //Insert test rows.
-			
-			validateOnFirstReplica(testQuery);
 
-			
+			validateOnFirstMachine(testQuery);
 
-			validateOnSecondReplica("TEST2", pKey, secondCol);
-			//validateOnSecondReplica(queryToExecute);
+			validateOnSecondMachine("TEST2", pKey, secondCol);
 
-		} catch (SQLException sqle){
-			sqle.printStackTrace();
-			fail("SQLException thrown when it shouldn't have.");
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
 		}
 	}
+
+	/**
+	 * Tests that a multi-query transaction involving:
+	 * <ul><li><Multiple tables</li>
+	 * <li>Multiple replicas for a single table</li>
+	 * </ul>
+	 * <p>Where the outcome should be a successful query execution.
+	 */
+	@Test
+	public void multiTableAndReplicaSuccess(){
+		try{
+			//Constants.IS_TESTING_QUERY_FAILURE = true;
+
+			createSecondTable(sb, "TEST2");
+			createReplicaOnB();
+
+			/*
+			 * Create then execute INSERTS for TEST table.
+			 */
+
+			TestQuery testQuery = createInsertsForTestTable();
+
+			int[] pKey = new int[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
+			String[] secondCol = new String[TOTAL_ITERATIONS + ROWS_IN_DATABASE];
+
+			pKey[0] = 4; pKey[1] = 5;
+			secondCol[0] = "Meh"; secondCol[1] = "Heh";
+
+			TestQuery test2query = createMultipleInsertStatements("TEST2", pKey, secondCol, 6);
+
+			sa.execute(testQuery.getSQL() + test2query.getSQL()); //Insert test rows.
+
+			validateOnFirstMachine(testQuery);
+			validateOnSecondMachine(testQuery);
+
+			validateOnSecondMachine("TEST2", pKey, secondCol);
+
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
+		}
+	}
+
+	/**
+	 * Tests that a multi-query transaction involving:
+	 * <ul><li><Multiple tables</li>
+	 * <li>Multiple replicas for a single table</li>
+	 * </ul>
+	 * <p>Where the outcome should be a FAILED QUERY EXECUTION.
+	 */
+	@Test
+	public void multiTableAndReplicaFailure(){
+		try{
+
+			createSecondTable(sb, "TEST2");
+			createReplicaOnB();
+
+			/*
+			 * Create then execute INSERTS for TEST table.
+			 */
+
+			TestQuery testQuery = createInsertsForTestTable();
+
+
+			TestQuery test2query = createMultipleInsertStatements("TEST2", new int[TOTAL_ITERATIONS + ROWS_IN_DATABASE], new String[TOTAL_ITERATIONS + ROWS_IN_DATABASE], 6);
+
+
+			/*
+			 * Test that the state of the database is as expected, before attempting to insert anything else.
+			 */
+			int[] pKey = new int[ROWS_IN_DATABASE];
+			String[] secondCol = new String[ROWS_IN_DATABASE];
+
+			pKey[0] = 1; pKey[1] = 2;
+			secondCol[0] = "Hello"; secondCol[1] = "World";
+			validateOnFirstMachine("TEST", pKey, secondCol);
+
+			Constants.IS_TESTING_QUERY_FAILURE = true;
+			try{
+				sa.execute(testQuery.getSQL() + test2query.getSQL()); //Insert test rows.
+				fail("This query should have failed.");
+			} catch(SQLException e){
+				//Expected
+			}
+
+
+			pKey[0] = 1; pKey[1] = 2;
+			secondCol[0] = "Hello"; secondCol[1] = "World";
+
+
+			validateOnFirstMachine("TEST", pKey, secondCol);
+
+			//validateOnSecondMachine(testQuery);
+
+
+			pKey[0] = 4; pKey[1] = 5;
+			secondCol[0] = "Meh"; secondCol[1] = "Heh";
+
+			validateOnSecondMachine("TEST2", pKey, secondCol);
+
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
+		}
+	}
+
+	/**
+	 * Tests that when a transaction fails to create a table the schema manager
+	 * is not updated with information on that table.
+	 * 
+	 * <p>TESTS AFTER A CREATE TABLE STATEMENT HAS BEEN RUN, BUT BEFORE ANYTHING ELSE.
+	 */
+	@Test
+	public void testSchemaManagerContents(){
+		try{
+
+			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
+
+			ResultSet rs = sa.getResultSet();
+
+			if (rs.next() && rs.next()){
+				fail("There should only be one table in the schema manager.");
+			}
+
+			Constants.IS_TESTING_CREATETABLE_FAILURE = true;
+			Constants.IS_TESTING_QUERY_FAILURE = true;
+
+			try{
+				createSecondTable(sb, "TEST2");
+				fail("This should have failed.");
+			} catch (SQLException e){
+				//Expected.
+			}
+
+			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
+
+			rs = sa.getResultSet();
+
+			if (rs.next() && rs.next()){
+				fail("There should only be one table in the schema manager.");
+			}
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
+		}
+	}
+
+	/**
+	 * Tests that when a transaction fails to create a table the schema manager
+	 * is not updated with information on that table.
+	 * 
+	 * <p>TESTS AFTER A CREATE TABLE STATEMENT HAS BEEN RUN, AND AFTER SOME INSERTS
+	 * INTO THAT TABLE.
+	 */
+	@Test
+	public void testSchemaManagerContentsAfterInsert(){
+		try{
+
+			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
+
+			ResultSet rs = sa.getResultSet();
+
+			if (rs.next() && rs.next()){
+				fail("There should only be one table in the schema manager.");
+			}
+
+			Constants.IS_TESTING_QUERY_FAILURE = true;
+
+			try{
+				createSecondTable(sb, "TEST2");
+				fail("This should have failed.");
+			} catch (SQLException e){
+				//Expected.
+			}
+
+			try {
+				sa.execute("SELECT * FROM TEST2");
+				fail("This should have failed: the transaction was not committed.");
+			} catch (SQLException e){
+				//Expected.
+			}
+
+
+			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
+
+			rs = sa.getResultSet();
+
+			if (rs.next() && rs.next()){
+				fail("There should only be one table in the schema manager.");
+			}
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
+		}
+	}
+
 
 	/**
 	 * Creates lots of insert statements for testing.
@@ -324,7 +505,7 @@ public class MultiQueryTransactionTests extends TestBase{
 			pKey[i-1] = i;
 			secondCol[i-1] = "helloNumber" + i;
 
-			sqlToExecute += "INSERT INTO " + tableName + " VALUES(" + pKey[i-1] + ", '" + secondCol[i-1] + "'); ";
+			sqlToExecute += "INSERT INTO " + tableName + " VALUES(" + pKey[i-1] + ", '" + secondCol[i-1] + "');\n";
 		}
 		return new TestQuery(sqlToExecute, tableName, pKey, secondCol);
 	}
