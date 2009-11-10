@@ -116,6 +116,7 @@ public class DropTable extends SchemaCommand {
 			
 			
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_") && !internalQuery){
+				
 				QueryProxy qp = QueryProxy.getQueryProxy(table, LockType.WRITE, session.getDatabase());
 				qp.executeUpdate(sqlStatement, transactionName, session);
 

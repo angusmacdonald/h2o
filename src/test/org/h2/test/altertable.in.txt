@@ -1,0 +1,17 @@
+create table test();
+insert into test values();
+ALTER TABLE TEST ADD ID INTEGER;
+select count(*) from test;
+> 1;
+drop table test;
+
+create constant abc value 1;
+comment on constant abc is 'One';
+select remarks from information_schema.constants where constant_name = 'ABC';
+> One;
+@reconnect;
+select remarks from information_schema.constants where constant_name = 'ABC';
+> One;
+drop constant abc;
+drop table test;
+@reconnect;

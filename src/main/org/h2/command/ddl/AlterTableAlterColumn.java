@@ -112,7 +112,7 @@ public class AlterTableAlterColumn extends SchemaCommand {
 		 */
 		if (isRegularTable()){
 			if (queryProxy == null){
-				queryProxy = QueryProxy.getQueryProxy(oldColumn.getTable(), LockType.WRITE, session.getDatabase());
+				queryProxy = QueryProxy.getQueryProxy(table, LockType.WRITE, session.getDatabase());
 			}
 			return queryProxy.executeUpdate(sqlStatement, transactionName, session);
 		}
@@ -439,10 +439,10 @@ public class AlterTableAlterColumn extends SchemaCommand {
 		 */
 		if (isRegularTable()){
 
-			queryProxy = queryProxyManager.getQueryProxy(oldColumn.getTable().getFullName());
+			queryProxy = queryProxyManager.getQueryProxy(table.getFullName());
 
 			if (queryProxy == null){
-				queryProxy = QueryProxy.getQueryProxy(oldColumn.getTable(), LockType.WRITE, session.getDatabase());
+				queryProxy = QueryProxy.getQueryProxy(table, LockType.WRITE, session.getDatabase());
 			}
 
 			return queryProxy;
@@ -457,7 +457,7 @@ public class AlterTableAlterColumn extends SchemaCommand {
 	 */
 	protected boolean isRegularTable() {
 
-		return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery && !oldColumn.getTable().getFullName().startsWith(Constants.H2O_SCHEMA);
+		return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery && !table.getFullName().startsWith(Constants.H2O_SCHEMA);
 
 	}
 }
