@@ -140,7 +140,7 @@ public class Delete extends Prepared {
 			queryProxy = queryProxyManager.getQueryProxy(table.getFullName());
 
 			if (queryProxy == null){
-			queryProxy = QueryProxy.getQueryProxy(table, LockType.WRITE, session.getDatabase());
+			queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, session.getDatabase());
 			}
 			return queryProxy;
 		}

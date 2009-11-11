@@ -78,7 +78,7 @@ public class AlterTableDropConstraint extends SchemaCommand {
 			queryProxy = queryProxyManager.getQueryProxy(getSchema().findConstraint(session, constraintName).getTable().getFullName());
 
 			if (queryProxy == null){
-				queryProxy = QueryProxy.getQueryProxy(getSchema().findConstraint(session, constraintName).getTable(), LockType.WRITE, session.getDatabase());
+				queryProxy = QueryProxy.getQueryProxyAndLock(getSchema().findConstraint(session, constraintName).getTable(), LockType.WRITE, session.getDatabase());
 			}
 
 			return queryProxy;

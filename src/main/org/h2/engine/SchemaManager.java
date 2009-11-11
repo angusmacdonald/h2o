@@ -7,6 +7,7 @@ import java.util.Set;
 import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.constant.ErrorCode;
+import org.h2.h2o.util.DatabaseURL;
 import org.h2.message.Message;
 import org.h2.result.LocalResult;
 import org.h2.value.Value;
@@ -187,17 +188,10 @@ public class SchemaManager {
 			String connectionType = row[1].getString();
 			String machineName = row[2].getString();
 			String connectionPort = row[3].getString();
+			
+			DatabaseURL dbURL = new DatabaseURL(connectionType, machineName, Integer.parseInt(connectionPort), dbLocation, false);
 
-			String dbname = null;
-			if (connectionType.equals("tcp")){
-				dbname = "jdbc:h2:" + connectionType + "://" + machineName + ":" + connectionPort + "/" + dbLocation;
-			} else if (connectionType.equals("mem")){
-				dbname = "jdbc:h2:" + dbLocation;
-			} else {
-				Message.throwInternalError("This connection type isn't supported yet. Get on that!");
-			}
-
-			return dbname;
+			return dbURL.getURL();
 		}
 
 		ErrorHandling.errorNoEvent("Looking for table: " + schemaName + "." + tableName + " (but it wasn't found).");
@@ -226,6 +220,9 @@ public class SchemaManager {
 		}
 
 		int connectionID = getConnectionID(localMachineAddress, localMachinePort, connection_type);
+		
+		assert connectionID != -1;
+		
 		int tableID = getTableID(tableName, schemaName);
 		if (!isReplicaListed(tableName, connectionID, databaseLocation, schemaName)){ // the table doesn't already exist in the schema manager.
 			addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, tableSet, true, session);				
@@ -278,11 +275,11 @@ public class SchemaManager {
 	 * @return						Result of the update.
 	 * @throws SQLException
 	 */
-	public int addLocalConnectionInformation(String localMachineAddress, int localMachinePort, String databaseLocation) throws SQLException{
+	public int addLocalConnectionInformation(DatabaseURL databaseURL) throws SQLException{
 
-		String connection_type = (localMachinePort == -1 && databaseLocation.contains("mem"))? "mem": "tcp";
+		String connection_type = (databaseURL.getPort() == -1 && databaseURL.isMem())? "mem": "tcp";
 
-		String sql = "\nINSERT INTO " + CONNECTIONS + " VALUES (null, '" + connection_type + "', '" + localMachineAddress + "', "  + localMachinePort + ");\n";
+		String sql = "\nINSERT INTO " + CONNECTIONS + " VALUES (null, '" + connection_type + "', '" + databaseURL.getHostname() + "', "  + databaseURL.getPort() + ");\n";
 
 		return executeUpdate(sql);
 	}
@@ -365,6 +362,7 @@ public class SchemaManager {
 				cacheConnectionID = result.currentRow()[0].getInt();
 				return cacheConnectionID;
 			} else {
+				ErrorHandling.errorNoEvent("Shouldn't happen.");
 				return -1;
 			}
 

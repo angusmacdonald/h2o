@@ -37,8 +37,9 @@ public abstract class RMIServer {
 	 * Called when the RMI registry is on a remote machine. Registers local data manager interface.
 	 * @param host	Host of the schema manager (which also hosts the RMI registry).
 	 * @param port	Port where the schema manager is running (RMI port is this + 1, or defaults to a 20000 if in-memory).
+	 * @throws RemoteException 
 	 */
-	public RMIServer(String host, int port){
+	public RMIServer(String host, int port) throws RemoteException{
 		//If an in-memory database is being run the DB must look for the default port locally.	
 		if (port < 1){
 			port = RMIServer.DEFAULT_PORT;
@@ -50,8 +51,9 @@ public abstract class RMIServer {
 	/**
 	 * Called by the schema manager to create an RMI registry.
 	 * @param port	Port where registry is to be run (on local machine).
+	 * @throws RemoteException 
 	 */
-	public RMIServer(int port){
+	public RMIServer(int port) throws RemoteException{
 		//If an in-memory database is being run, this must start up on a default port.
 		if (port < 1){
 			port = RMIServer.DEFAULT_PORT;
@@ -82,24 +84,21 @@ public abstract class RMIServer {
 	 * @param port Port on which the registry is running.
 	 * @param host Host on which the registry is running (null indicates it is running locally).
 	 * @param startup Whether the registry has been started by this machine. If true, the registry is emptied of old tables.
+	 * @throws RemoteException 
 	 */
-	private void locateRegistry(String host, int port, boolean startup){
-		try {
+	private void locateRegistry(String host, int port, boolean startup) throws RemoteException{
 			if (host == null){
 				registry = LocateRegistry.getRegistry(port);
 			} else {
 				registry = LocateRegistry.getRegistry(host, port);
 			}
-		} catch (RemoteException e) {
-			e.printStackTrace();
-		}
 
 		if (startup) unbindExistingManagers();
 
 	}
 	
 	/**
-	 * Test that a data manager can be accessed.
+	 * Test that a data manager / database instance can be accessed.
 	 * @param interfaceName	The name given to a data manager in the registry.
 	 * @return true if the data manager is accessible; otherwise false.
 	 */
@@ -116,7 +115,7 @@ public abstract class RMIServer {
 			return false;
 		}
 
-		return false;
+		return true;
 	}
 
 	/**

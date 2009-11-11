@@ -32,6 +32,12 @@ public class SchemaManagerTests {
 	@BeforeClass
 	public static void initialSetUp(){
 		Diagnostic.setLevel(Diagnostic.FULL);
+		
+		try {
+			DeleteDbFiles.execute(BASEDIR, "schema_test", true);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -42,6 +48,7 @@ public class SchemaManagerTests {
 		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
 		SchemaManager.USERNAME = "sa";
 		SchemaManager.PASSWORD = "sa";
+
 	}
 
 	/**
@@ -50,6 +57,12 @@ public class SchemaManagerTests {
 	@After
 	public void tearDown() throws Exception {
 		TestBase.closeDatabaseCompletely();
+		
+		try {
+			DeleteDbFiles.execute(BASEDIR, "schema_test", true);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -92,11 +105,7 @@ public class SchemaManagerTests {
 			// stop the server
 			server.stop();
 
-			try {
-				DeleteDbFiles.execute(BASEDIR, "schema_test", true);
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
+	
 		}
 
 
@@ -177,11 +186,6 @@ public class SchemaManagerTests {
 			// stop the server
 			server.stop();
 
-			try {
-				DeleteDbFiles.execute(BASEDIR, "schema_test", true);
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
 		}
 
 

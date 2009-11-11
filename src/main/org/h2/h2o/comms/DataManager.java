@@ -17,6 +17,7 @@ import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.locking.ILockingTable;
 import org.h2.h2o.locking.LockingTable;
+import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LockType;
 import org.h2.message.Message;
 import org.h2.result.LocalResult;
@@ -125,7 +126,7 @@ public class DataManager implements DataManagerRemote {
 	 * Updates made asynchronously to a single table that haven't yet reached other replicas.
 	 * 
 	 * <p>Key: The number given to the update by the data manager.
-     * <p>Value: The SQL query for the update.
+	 * <p>Value: The SQL query for the update.
 	 */
 	private Map<Integer, String> unPropagatedUpdates;
 	private Map<Integer, String> inProgressUpdates;
@@ -169,7 +170,7 @@ public class DataManager implements DataManagerRemote {
 
 		database.addDataManager(this);
 	}
-	
+
 	/**
 	 * Creates a new DataManager object from the state of a data manager which is no longer running, but which has
 	 * been persisted to disk.
@@ -178,10 +179,10 @@ public class DataManager implements DataManagerRemote {
 	 * @return
 	 */
 	public static DataManager createDataManagerFromPersistentStore(String schemaName, String tableName){
-		
-		
+
+
 		return null;
-		
+
 	}
 
 	/**
@@ -281,10 +282,10 @@ public class DataManager implements DataManagerRemote {
 		}
 
 		LockType lockGranted = lockingTable.requestLock(lockRequested, databaseInstanceRemote);
-		
-//		if (lockGranted == LockType.NONE){
-//			throw new SQLException("Table already locked. Cannot perform query.");
-//		}
+
+		//		if (lockGranted == LockType.NONE){
+		//			throw new SQLException("Table already locked. Cannot perform query.");
+		//		}
 
 		QueryProxy qp = new QueryProxy(lockGranted, schemaName + "." + tableName, selectReplicaLocations(replicaManager.getPrimary(), lockRequested, databaseInstanceRemote), 
 				this, databaseInstanceRemote, replicaManager.getNewUpdateID(), lockRequested);
@@ -433,7 +434,7 @@ public class DataManager implements DataManagerRemote {
 		}
 
 		replicaManager.remove(dbInstance);
-		
+
 		return executeUpdate(sql);
 	}
 
@@ -571,18 +572,9 @@ public class DataManager implements DataManagerRemote {
 	}
 
 	private String createFullDatabaseLocation(String dbLocationOnDisk, String connectionType, String machineName, String connectionPort, boolean isSM){
-		String dbName = null;
-		if (connectionType.equals("tcp")){
-			dbName = "jdbc:h2:" + ((isSM)? "sm:": "") + connectionType + "://" + machineName + ":" + connectionPort + "/" + dbLocationOnDisk;
-		} else if (connectionType.equals("mem")){
-			dbName = "jdbc:h2:"  + ((isSM)? "sm:": "") + dbLocationOnDisk;
-		} else if (connectionType.equals("other")){
-			dbName = "jdbc:h2:" + dbLocationOnDisk;
-		} else {
-			Message.throwInternalError("This connection type isn't supported yet. Get on that!");
-		}
+		DatabaseURL dbURL = new DatabaseURL(connectionType, machineName, Integer.parseInt(connectionPort), dbLocationOnDisk, isSM);
 
-		return dbName;
+		return dbURL.getURL();
 	}
 
 
@@ -679,7 +671,7 @@ public class DataManager implements DataManagerRemote {
 		 * Update the set of 'active replicas' and their update IDs. 
 		 */
 		replicaManager.completeUpdate(updatedReplicas, updateID);
-		
+
 		lockingTable.releaseLock(requestingDatabase);
 
 	}

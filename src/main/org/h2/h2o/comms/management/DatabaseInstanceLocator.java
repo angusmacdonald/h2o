@@ -14,6 +14,7 @@ import java.util.Set;
 
 import org.h2.h2o.comms.DatabaseInstance;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.util.DatabaseURL;
 
 import uk.ac.stand.dcs.nds.util.Diagnostic;
 import uk.ac.stand.dcs.nds.util.ErrorHandling;
@@ -31,14 +32,17 @@ public class DatabaseInstanceLocator extends RMIServer {
 	private Map<String, DatabaseInstanceRemote> databaseInstances;
 	
 	private DatabaseInstanceRemote localInstance;
+	
+	private DatabaseURL schemaManagerLocation = null; //only known if it belongs to the schema manager instance.
 
 
 	/**
 	 * Called when the RMI registry is on a remote machine. Registers local data manager interface.
 	 * @param host	Host of the schema manager (which also hosts the RMI registry).
 	 * @param port	Port where the schema manager is running (RMI port is this + 1, or defaults to a 20000 if in-memory).
+	 * @throws RemoteException 
 	 */
-	public DatabaseInstanceLocator(String host, int port) {
+	public DatabaseInstanceLocator(String host, int port) throws RemoteException {
 		super(host, port);
 
 		databaseInstances = new HashMap<String, DatabaseInstanceRemote>();
@@ -48,11 +52,23 @@ public class DatabaseInstanceLocator extends RMIServer {
 	/**
 	 * Called by the schema manager to create an RMI registry.
 	 * @param port	Port where registry is to be run (on local machine).
+	 * @throws RemoteException 
 	 */
-	public DatabaseInstanceLocator(int port) {
+	public DatabaseInstanceLocator(int port, DatabaseURL schemaManagerLocation) throws RemoteException {
 		super(port);
 
+		this.schemaManagerLocation = schemaManagerLocation; 
 		databaseInstances = new HashMap<String, DatabaseInstanceRemote>();
+	}
+
+
+	/**
+	 * Connect to an RMI registry running at this location.
+	 * @param instanceURL
+	 * @throws RemoteException 
+	 */
+	public DatabaseInstanceLocator(DatabaseURL instanceURL) throws RemoteException {
+		this(instanceURL.getHostname(), instanceURL.getPort()+1);
 	}
 
 
@@ -219,5 +235,13 @@ public class DatabaseInstanceLocator extends RMIServer {
 	 */
 	public Set<DatabaseInstanceRemote> getInstances() {
 		return new HashSet<DatabaseInstanceRemote>(databaseInstances.values());
+	}
+
+
+	/**
+	 * @return
+	 */
+	public DatabaseURL getSchemaManagerLocation() {
+		return schemaManagerLocation;
 	}
 }

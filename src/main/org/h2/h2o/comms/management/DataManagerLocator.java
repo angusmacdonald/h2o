@@ -1,7 +1,6 @@
 package org.h2.h2o.comms.management;
 
 import java.rmi.AccessException;
-import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -16,7 +15,7 @@ import uk.ac.stand.dcs.nds.util.Diagnostic;
 import uk.ac.stand.dcs.nds.util.ErrorHandling;
 
 /**
- * 
+ * Controls access to data managers in the system. One instance of this class per database instance.
  *
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
@@ -31,8 +30,9 @@ public class DataManagerLocator extends RMIServer{
 	 * Called to obtain a connection to the RMI registry.
 	 * @param host	Host of the schema manager (which also hosts the RMI registry).
 	 * @param port	Port where the schema manager is running (RMI port is this + 1, or defaults to a 20000 if in-memory).
+	 * @throws RemoteException 
 	 */
-	public DataManagerLocator(String host, int port) {
+	public DataManagerLocator(String host, int port) throws RemoteException {
 		super(host, port);
 
 		dataManagers = new HashMap<String, DataManagerRemote>();
@@ -108,8 +108,8 @@ public class DataManagerLocator extends RMIServer{
 			DataManagerRemote dmr = lookupDataManager(objectName);
 			if (dmr != null){
 				dmr.removeDataManager();
-		
-				}
+
+			}
 
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block

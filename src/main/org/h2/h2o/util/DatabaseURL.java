@@ -1,5 +1,7 @@
 package org.h2.h2o.util;
 
+import java.io.Serializable;
+
 import org.h2.util.NetUtils;
 
 /**
@@ -9,7 +11,9 @@ import org.h2.util.NetUtils;
  *
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class DatabaseURL {
+public class DatabaseURL implements Serializable {
+
+	private static final long serialVersionUID = 3202062668933786677L;
 
 	/**
 	 * The original unedited database URL.
@@ -110,6 +114,7 @@ public class DatabaseURL {
 			//XXX the rest is currently ignored.
 		}
 
+		if (hostname == null) hostname = NetUtils.getLocalAddress();
 
 		return new DatabaseURL(url, hostname, port, dbLocation, tcp, mem, schemaManager);
 	}
@@ -128,10 +133,52 @@ public class DatabaseURL {
 
 
 	/**
+	 * @param connectionType
+	 * @param machineName
+	 * @param connectionPort
+	 * @param dbLocation2
+	 */
+	public DatabaseURL(String connectionType, String hostname,
+			int port, String dbLocation, boolean schemaManager) {
+		
+		if (connectionType.equals("tcp")){
+			this.tcp = true;
+			this.mem = false;
+		} else if (connectionType.equals("mem")){
+			this.mem = true;
+			this.tcp = false;
+		}
+
+		this.originalURL = null;
+		this.newURL = "jdbc:h2:"  + ((schemaManager)? "sm:": "") + ((tcp)? "tcp://" + hostname + ":" + port + "/": "") + ((mem)? "mem:": "") + dbLocation;
+		this.hostname = hostname;
+		this.port = port;
+
+		this.schemaManager = schemaManager;
+		this.dbLocation = dbLocation;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((dbLocation == null) ? 0 : dbLocation.hashCode());
+		result = prime * result + (mem ? 1231 : 1237);
+		result = prime * result + ((newURL == null) ? 0 : newURL.hashCode());
+		result = prime * result + port;
+		result = prime * result + (tcp ? 1231 : 1237);
+		return result;
+	}
+
+	/**
 	 * Get a slightly modified version of the original URL - if the original included 'localhost' this resolves it to the local hostname.
 	 * @return the new url
 	 */
-	public String getNewURL() {
+	public String getURL() {
 		return newURL;
 	}
 
@@ -200,4 +247,44 @@ public class DatabaseURL {
 
 		return output;
 	}
+
+	/**
+	 * @return
+	 */
+	public boolean isValid() {
+		return (newURL != null);
+	}
+	
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		DatabaseURL other = (DatabaseURL) obj;
+		if (dbLocation == null) {
+			if (other.dbLocation != null)
+				return false;
+		} else if (!dbLocation.equals(other.dbLocation))
+			return false;
+		if (mem != other.mem)
+			return false;
+		if (newURL == null) {
+			if (other.newURL != null)
+				return false;
+		} else if (!newURL.equals(other.newURL))
+			return false;
+		if (port != other.port)
+			return false;
+		if (tcp != other.tcp)
+			return false;
+		return true;
+	}
+
 }

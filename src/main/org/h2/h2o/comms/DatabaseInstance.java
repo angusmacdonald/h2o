@@ -7,6 +7,7 @@ import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.util.DatabaseURL;
 
 import uk.ac.stand.dcs.nds.util.ErrorHandling;
 
@@ -87,6 +88,15 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 		 * overloaded version of the method may take only the query string and be required to obtain the queryProxy seperately. 
 		 */
 		return queryProxy.executeUpdate(sql, null, session);
+	}
+	
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#getSchemaManagerLocation()
+	 */
+	@Override
+	public DatabaseURL getSchemaManagerLocation() throws RemoteException {
+		return session.getDatabase().getSchemaManagerLocation();
 	}
 	
 	/* (non-Javadoc)

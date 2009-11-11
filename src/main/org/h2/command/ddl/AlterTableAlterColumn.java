@@ -112,7 +112,7 @@ public class AlterTableAlterColumn extends SchemaCommand {
 		 */
 		if (isRegularTable()){
 			if (queryProxy == null){
-				queryProxy = QueryProxy.getQueryProxy(table, LockType.WRITE, session.getDatabase());
+				queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, session.getDatabase());
 			}
 //			if (queryProxy.getNumberOfReplicas() > 1){
 				return queryProxy.executeUpdate(sqlStatement, transactionName, session);
@@ -444,7 +444,7 @@ public class AlterTableAlterColumn extends SchemaCommand {
 			queryProxy = queryProxyManager.getQueryProxy(table.getFullName());
 
 			if (queryProxy == null){
-				queryProxy = QueryProxy.getQueryProxy(table, LockType.WRITE, session.getDatabase());
+				queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, session.getDatabase());
 			}
 
 			return queryProxy;

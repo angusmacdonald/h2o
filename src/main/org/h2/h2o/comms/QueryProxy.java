@@ -199,7 +199,7 @@ public class QueryProxy implements Serializable{
 	 * @return
 	 * @throws SQLException
 	 */
-	public static QueryProxy getQueryProxy(Table table, LockType lockType, Database db) throws SQLException {
+	public static QueryProxy getQueryProxyAndLock(Table table, LockType lockType, Database db) throws SQLException {
 		if (table != null){
 			return getQueryProxy(db.getDataManager(table.getFullName()), lockType, db.getLocalDatabaseInstance());
 		} else {

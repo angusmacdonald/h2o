@@ -430,7 +430,7 @@ public class CreateTable extends SchemaCommand {
 			/*
 			 * This is a system table, but it still needs a QueryProxy to indicate that it is acceptable to execute the query.
 			 */
-			queryProxy = QueryProxy.getQueryProxy(table, LockType.CREATE, db);
+			queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.CREATE, db);
 
 		}
 

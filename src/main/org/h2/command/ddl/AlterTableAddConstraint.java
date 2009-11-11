@@ -120,7 +120,7 @@ public class AlterTableAddConstraint extends SchemaCommand {
 			if (sqlStatement != null){
 				
 				if (queryProxy == null){
-					queryProxy = QueryProxy.getQueryProxy(getSchema().getTableOrView(session, tableName), LockType.WRITE, session.getDatabase());
+					queryProxy = QueryProxy.getQueryProxyAndLock(getSchema().getTableOrView(session, tableName), LockType.WRITE, session.getDatabase());
 				}
 				return queryProxy.executeUpdate(sqlStatement, transactionName, session);
 			} 
@@ -396,7 +396,7 @@ public class AlterTableAddConstraint extends SchemaCommand {
 			queryProxy = queryProxyManager.getQueryProxy(getSchema().getTableOrView(session, tableName).getFullName());
 
 			if (queryProxy == null){
-				queryProxy = QueryProxy.getQueryProxy(getSchema().getTableOrView(session, tableName), LockType.WRITE, session.getDatabase());
+				queryProxy = QueryProxy.getQueryProxyAndLock(getSchema().getTableOrView(session, tableName), LockType.WRITE, session.getDatabase());
 			}
 
 			return queryProxy;

@@ -227,7 +227,7 @@ public class Update extends Prepared {
 			queryProxy = queryProxyManager.getQueryProxy(tableFilter.getTable().getFullName());
 
 			if (queryProxy == null){
-				queryProxy = QueryProxy.getQueryProxy(tableFilter.getTable(), LockType.WRITE, session.getDatabase());
+				queryProxy = QueryProxy.getQueryProxyAndLock(tableFilter.getTable(), LockType.WRITE, session.getDatabase());
 			}
 			return queryProxy;
 		}
