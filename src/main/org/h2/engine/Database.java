@@ -716,31 +716,39 @@ public class Database implements DataHandler {
 
 			this.isSchemaManager = ci.isSchemaManager();
 			boolean schemaManagerFound = false;
-			DatabaseURL location = null;
-
+			
 			if (!databaseExists && this.isSchemaManager){
 				/*
 				 * Database doesn't exist, and we want to make this instance the schema manager.
 				 */
 				schemaManagerFound = true;
-				location = getDatabaseURL();
+				this.schemaManagerLocation = getDatabaseURL();
 
 			} else if (!databaseExists && !this.isSchemaManager){
 				/*
 				 * Database doesn't exist, and we (should) have specified another location as the
 				 * schema manager location.
+				 * 
+				 * If we haven't (e.g. this is an H2 test), make this machine the schema manager.
 				 */
+				//TODO THIS DOESN'T WORK BECAUSE IT MEANS THE MEM:TWO DATABASE TRIES TO MAKE ITSELF A SCHEMA MANAGER.
+				
+				
+				//this.schemaManagerLocation = DatabaseURL.parseURL(ci.getSchemaManagerLocation());
 				this.schemaManagerLocation = DatabaseURL.parseURL(Constants.DEFAULT_SCHEMA_MANAGER_LOCATION);
-				location = schemaManagerLocation;
 
-				//TODO attempt to connect to this schema manager.
-
+				if (schemaManagerLocation == null){
+					schemaManagerLocation = getDatabaseURL(); //no schema manager location was specified. Use the local machine.
+				}
+				
 				schemaManagerFound = true;
 			} else if (databaseExists){
 				/*
 				 * Database exists. Regardless of whether we want this to be the schema manager,
 				 * check that another instance hasn't taken its place in the meantime.
 				 */
+
+				DatabaseURL location = null;
 
 				String[] listOfInstances = {"jdbc:h2:sm:tcp://138.251.195.59:9081/db_data/unittests/schema_test", 
 				"jdbc:h2:sm:tcp://138.251.195.59:9181/db_data/unittests/schema_test2"};
@@ -760,11 +768,11 @@ public class Database implements DataHandler {
 					try{
 						DatabaseInstanceLocator potentialLocation = new DatabaseInstanceLocator(instanceURL);
 						location = potentialLocation.getSchemaManagerLocation();
-						
+
 						/*
 						 * Make sure there aren't any spurious RMI registrys being created everywhere.
 						 */
-						
+
 						if (location != null && location.isValid()){
 							this.isSchemaManager = false;
 							schemaManagerFound = true;
@@ -772,7 +780,7 @@ public class Database implements DataHandler {
 							Diagnostic.traceNoEvent(Diagnostic.FULL,"Found Schema Manager at remote location.");
 							break;
 						}
-				
+
 					} catch (Exception e){
 						//Will happen if there isn't a schema manager there.
 					}
@@ -787,12 +795,11 @@ public class Database implements DataHandler {
 				//Create/formalize connection to RMI registry.
 				//Registry is located on a remote machine.
 				try {
-					databaseInstanceLocator = new DatabaseInstanceLocator(location.getHostname(), location.getPort()+1);
+					databaseInstanceLocator = new DatabaseInstanceLocator(schemaManagerLocation.getHostname(), schemaManagerLocation.getPort()+1);
 				} catch (RemoteException e) {
 					e.printStackTrace();
 					ErrorHandling.hardError("This shouldn't happen at this point.");
 				}
-				this.schemaManagerLocation = location;
 			} else {
 				/*
 				 * Either we haven't found the schema manager or this is specified as the schema manager.
@@ -807,13 +814,13 @@ public class Database implements DataHandler {
 				}
 				connectedToSM = true;
 				this.schemaManagerLocation = this.getDatabaseURL();
-				location = this.getDatabaseURL();
+		
 			}
 
-			assert location != null;
+			assert this.schemaManagerLocation != null;
 
 			try {
-				dataManagerLocator = new DataManagerLocator(location.getHostname(), location.getPort()+1);
+				dataManagerLocator = new DataManagerLocator(schemaManagerLocation.getHostname(), schemaManagerLocation.getPort()+1);
 			} catch (RemoteException e) {
 				e.printStackTrace();
 				ErrorHandling.hardError("This shouldn't happen at this point.");
@@ -823,7 +830,7 @@ public class Database implements DataHandler {
 			 * Add this database instance to the RMI registry.
 			 * This must be done before meta-records are executed.
 			 */
-			String localDatabaseURL = DatabaseURL.parseURL(this.originalURL).getURL(); //original URL may contain 'localhost'.
+			String localDatabaseURL = getDatabaseURL().getURL(); //original URL may contain 'localhost'.
 			Diagnostic.traceNoEvent(Diagnostic.FULL, "Creating remote proxy for database instance: " + localDatabaseURL);
 			databaseInstance = new DatabaseInstance(localDatabaseURL, systemSession); 
 			databaseInstanceLocator.registerDatabaseInstance(databaseInstance);
@@ -856,16 +863,16 @@ public class Database implements DataHandler {
 		MetaRecord.sort(records);
 
 		QueryProxyManager proxyManager = new QueryProxyManager(this, systemSession, true);
-    	
+
 		for (int i = 0; i < records.size(); i++) {
 
 			MetaRecord rec = (MetaRecord) records.get(i);
 
 			rec.execute(this, systemSession, eventListener, proxyManager);
 		}
-		
-        proxyManager.commit(true);
-		
+
+		proxyManager.commit(true);
+
 		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(Diagnostic.FINAL, " Executed meta-records.");
 
 		// try to recompile the views that are invalid
@@ -2504,9 +2511,9 @@ public class Database implements DataHandler {
 			MetaRecord m = new MetaRecord(row);
 			if (add) {
 				objectIds.set(m.getId());
-				
+
 				QueryProxyManager proxyManager = new QueryProxyManager(this, systemSession, true);
-		    	
+
 				m.execute(this, systemSession, eventListener, proxyManager);
 			} else {
 				m.undo(this, systemSession, eventListener);
@@ -2677,7 +2684,7 @@ public class Database implements DataHandler {
 					//Example format: jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db
 
 					String fullTableName = schemaName + "." + tableName;
-					
+
 					DatabaseURL dbURL = new DatabaseURL(connection_type, machine_name, Integer.parseInt(connection_port), db_location, false);
 
 					sql += "\nCREATE LINKED TABLE IF NOT EXISTS " + fullTableName + "('org.h2.Driver', '" + dbURL.getURL() + "', '" + 

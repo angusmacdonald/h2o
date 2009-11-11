@@ -73,6 +73,8 @@ public class DatabaseURL implements Serializable {
 	}
 
 	public static DatabaseURL parseURL(String url){
+		if (url == null) return null;
+		
 		boolean tcp = (url.contains(":tcp:"));
 		boolean mem = (url.contains(":mem:"));
 		boolean schemaManager = (url.contains(":sm:"));
