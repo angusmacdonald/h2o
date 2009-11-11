@@ -57,7 +57,19 @@ public class QueryProxyManager {
 	 * execute the set of queries, otherwise commit won't work correctly (it won't be able to unlock anything).
 	 */
 	public QueryProxyManager(Database db, Session session){
+		this(db, session, false);
 
+
+	}
+
+	/**
+	 * 
+	 * @param db
+	 * @param systemSession
+	 * @param metaRecordProxy	True if this proxy manager is being used to execute meta-records on system startup.
+	 * This just adds the local database as the only replica.
+	 */
+	public QueryProxyManager(Database db, Session session, boolean metaRecordProxy) {
 		this.localDatabase = db.getLocalDatabaseInstance();
 
 		this.transactionName = TransactionNameGenerator.generateName(this.localDatabase); 
@@ -65,12 +77,16 @@ public class QueryProxyManager {
 		this.parser = new Parser(session, true);
 
 		this.allReplicas = new HashSet<DatabaseInstanceRemote>();
+		
+		if (metaRecordProxy){
+			this.allReplicas.add(localDatabase);
+		}
+		
 		this.dataManagers = new HashSet<DataManagerRemote>();
 
 		this.requestingDatabase = db.getLocalDatabaseInstance();
 
 		this.queryProxies = new HashMap<String, QueryProxy>();
-
 
 	}
 

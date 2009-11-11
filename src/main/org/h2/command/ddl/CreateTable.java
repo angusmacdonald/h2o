@@ -424,8 +424,10 @@ public class CreateTable extends SchemaCommand {
 
 		queryProxy = null;
 		if (Constants.IS_H2O && !tableName.startsWith("H2O_") && !db.isManagementDB()){ //XXX Not sure if this should be a seperate IF
-			queryProxy = QueryProxy.getQueryProxy(new DataManager(tableName, getSchema().getName(), 0, 0, db), LockType.CREATE, db.getLocalDatabaseInstance());
+			
+			queryProxy = QueryProxy.getQueryProxyAndLock(new DataManager(tableName, getSchema().getName(), 0, 0, db), LockType.CREATE, db.getLocalDatabaseInstance());
 
+			queryProxyManager.addProxy(queryProxy);
 		} else if (Constants.IS_H2O){
 			/*
 			 * This is a system table, but it still needs a QueryProxy to indicate that it is acceptable to execute the query.

@@ -134,7 +134,7 @@ public class ReplicaManager {
 				if (allReplicas.containsKey(instance)){
 					Integer previousID = allReplicas.get(instance);
 
-					assert updateID > previousID;
+					assert updateID >= previousID;
 
 					allReplicas.remove(instance);
 					allReplicas.put(instance, updateID);

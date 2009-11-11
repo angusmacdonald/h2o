@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.util.Comparator;
 import org.h2.api.DatabaseEventListener;
 import org.h2.command.Prepared;
+import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.message.Message;
 import org.h2.message.Trace;
 import org.h2.result.SearchRow;
@@ -76,14 +77,17 @@ public class MetaRecord {
      * @param db the database
      * @param systemSession the system session
      * @param listener the database event listener
+     * @param proxyManager 
      */
-    void execute(Database db, Session systemSession, DatabaseEventListener listener) throws SQLException {
+    void execute(Database db, Session systemSession, DatabaseEventListener listener, QueryProxyManager proxyManager) throws SQLException {
         try {
             Prepared command = systemSession.prepare(sql);
             command.setObjectId(id);
             command.setHeadPos(headPos);
             command.setStartup(true);
+            command.acquireLocks(proxyManager);
             command.update();
+
         } catch (Exception e) {
             SQLException s = Message.addSQL(Message.convert(e), sql);
             db.getTrace(Trace.DATABASE).error(sql, s);

@@ -29,6 +29,7 @@ import org.h2.constant.SysProperties;
 import org.h2.constraint.Constraint;
 import org.h2.h2o.comms.DataManager;
 import org.h2.h2o.comms.DatabaseInstance;
+import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.h2o.comms.management.DataManagerLocator;
 import org.h2.h2o.comms.management.DatabaseInstanceLocator;
 import org.h2.h2o.comms.remote.DataManagerRemote;
@@ -744,8 +745,6 @@ public class Database implements DataHandler {
 				String[] listOfInstances = {"jdbc:h2:sm:tcp://138.251.195.59:9081/db_data/unittests/schema_test", 
 				"jdbc:h2:sm:tcp://138.251.195.59:9181/db_data/unittests/schema_test2"};
 
-
-
 				for (String url: listOfInstances){
 
 
@@ -754,8 +753,6 @@ public class Database implements DataHandler {
 					 * Check first that the location isn't the local database instance (currently running).
 					 */
 					if (instanceURL.equals(localMachineLocation)) continue;
-
-
 
 					/*
 					 * This should attempt to create a new database instance locator at each address.
@@ -858,12 +855,17 @@ public class Database implements DataHandler {
 
 		MetaRecord.sort(records);
 
+		QueryProxyManager proxyManager = new QueryProxyManager(this, systemSession, true);
+    	
 		for (int i = 0; i < records.size(); i++) {
 
 			MetaRecord rec = (MetaRecord) records.get(i);
 
-			rec.execute(this, systemSession, eventListener);
+			rec.execute(this, systemSession, eventListener, proxyManager);
 		}
+		
+        proxyManager.commit(true);
+		
 		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(Diagnostic.FINAL, " Executed meta-records.");
 
 		// try to recompile the views that are invalid
@@ -2502,7 +2504,10 @@ public class Database implements DataHandler {
 			MetaRecord m = new MetaRecord(row);
 			if (add) {
 				objectIds.set(m.getId());
-				m.execute(this, systemSession, eventListener);
+				
+				QueryProxyManager proxyManager = new QueryProxyManager(this, systemSession, true);
+		    	
+				m.execute(this, systemSession, eventListener, proxyManager);
 			} else {
 				m.undo(this, systemSession, eventListener);
 			}
@@ -2672,8 +2677,6 @@ public class Database implements DataHandler {
 					//Example format: jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db
 
 					String fullTableName = schemaName + "." + tableName;
-					String dbname = "";
-
 					
 					DatabaseURL dbURL = new DatabaseURL(connection_type, machine_name, Integer.parseInt(connection_port), db_location, false);
 

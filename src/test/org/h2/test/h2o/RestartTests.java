@@ -110,6 +110,7 @@ public class RestartTests {
 				sa.execute("INSERT INTO TEST VALUES(4, 'World');");
 				sa.execute("SELECT * FROM TEST;");
 			} catch (SQLException e){
+				e.printStackTrace();
 				fail("The TEST table was not found.");
 			}
 

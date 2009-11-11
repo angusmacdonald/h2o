@@ -201,7 +201,7 @@ public class QueryProxy implements Serializable{
 	 */
 	public static QueryProxy getQueryProxyAndLock(Table table, LockType lockType, Database db) throws SQLException {
 		if (table != null){
-			return getQueryProxy(db.getDataManager(table.getFullName()), lockType, db.getLocalDatabaseInstance());
+			return getQueryProxyAndLock(db.getDataManager(table.getFullName()), lockType, db.getLocalDatabaseInstance());
 		} else {
 			return getDummyQueryProxy(db.getLocalDatabaseInstance());
 		}
@@ -226,7 +226,7 @@ public class QueryProxy implements Serializable{
 	 * @return Query proxy for a specific table within H20.
 	 * @throws SQLException
 	 */
-	public static QueryProxy getQueryProxy(DataManagerRemote dataManager, LockType lockType, DatabaseInstanceRemote requestingDatabase) throws SQLException {
+	public static QueryProxy getQueryProxyAndLock(DataManagerRemote dataManager, LockType lockType, DatabaseInstanceRemote requestingDatabase) throws SQLException {
 
 		if (dataManager == null){
 			ErrorHandling.errorNoEvent("Data manager proxy was null when requesting table.");
