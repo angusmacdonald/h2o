@@ -114,7 +114,9 @@ public class AlterTableAlterColumn extends SchemaCommand {
 			if (queryProxy == null){
 				queryProxy = QueryProxy.getQueryProxy(table, LockType.WRITE, session.getDatabase());
 			}
-			return queryProxy.executeUpdate(sqlStatement, transactionName, session);
+//			if (queryProxy.getNumberOfReplicas() > 1){
+				return queryProxy.executeUpdate(sqlStatement, transactionName, session);
+//			} //Else, just execute it now.
 		}
         
         Database db = session.getDatabase();
@@ -457,7 +459,7 @@ public class AlterTableAlterColumn extends SchemaCommand {
 	 */
 	protected boolean isRegularTable() {
 
-		return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery && !table.getFullName().startsWith(Constants.H2O_SCHEMA);
+		return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !isStartup() && !internalQuery && !table.getFullName().startsWith(Constants.H2O_SCHEMA);
 
 	}
 }

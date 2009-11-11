@@ -320,6 +320,13 @@ public class QueryProxy implements Serializable{
 		return tableName;
 	}
 
+	/**
+	 * @return
+	 */
+	public int getNumberOfReplicas() {
+		return allReplicas.size();
+	}
+
 
 
 }

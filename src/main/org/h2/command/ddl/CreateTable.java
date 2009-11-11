@@ -266,21 +266,21 @@ public class CreateTable extends SchemaCommand {
 						db.getLocalMachineAddress(), db.getLocalMachinePort(), (db.isPersistent())? "tcp": "mem", getSchema().getName(), tableSet, session);	
 
 				table.setTableSet(tableSet);
-		
+
 				/*
 				 * (add replicas at some external locations).
 				 */
-//				assert(queryProxy!= null);
+				//				assert(queryProxy!= null);
 
 				assert(db != null);
-				
-//				if (Constants.IS_H2O && !table.getName().startsWith(Constants.H2O_SCHEMA) && !session.getDatabase().isManagementDB() && 
-//						!queryProxy.isSingleDatabase(db.getLocalDatabaseInstance()) ){
-//					return queryProxy.executeUpdate("CREATE REPLICA " + table.getFullName(), transactionName);
-//				}
+
+				//				if (Constants.IS_H2O && !table.getName().startsWith(Constants.H2O_SCHEMA) && !session.getDatabase().isManagementDB() && 
+				//						!queryProxy.isSingleDatabase(db.getLocalDatabaseInstance()) ){
+				//					return queryProxy.executeUpdate("CREATE REPLICA " + table.getFullName(), transactionName);
+				//				}
 
 			}
-			
+
 			if (Constants.IS_H2O && !db.isManagementDB()){
 				prepareTransaction(transactionName);
 			}
@@ -402,7 +402,7 @@ public class CreateTable extends SchemaCommand {
 		Database db = session.getDatabase();
 
 		assert queryProxyManager.getQueryProxy(tableName) == null; //should never exist.
-		
+
 		/*
 		 * #########################################################################
 		 * 
@@ -421,7 +421,7 @@ public class CreateTable extends SchemaCommand {
 
 
 		}
-		
+
 		queryProxy = null;
 		if (Constants.IS_H2O && !tableName.startsWith("H2O_") && !db.isManagementDB()){ //XXX Not sure if this should be a seperate IF
 			queryProxy = QueryProxy.getQueryProxy(new DataManager(tableName, getSchema().getName(), 0, 0, db), LockType.CREATE, db.getLocalDatabaseInstance());

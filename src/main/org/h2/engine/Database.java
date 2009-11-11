@@ -244,6 +244,12 @@ public class Database implements DataHandler {
 
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
 		
+		//Ensure testing constants are all set to false.
+		Constants.IS_TESTING_PRE_COMMIT_FAILURE = false;
+		Constants.IS_TESTING_PRE_PREPARE_FAILURE = false;
+		Constants.IS_TESTING_QUERY_FAILURE = false;
+		Constants.IS_TESTING_CREATETABLE_FAILURE = false;
+		
 		this.compareMode = new CompareMode(null, null, 0);
 		this.databaseLocation = ci.getSmallName();
 
