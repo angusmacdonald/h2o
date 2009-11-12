@@ -138,7 +138,7 @@ public class DatabaseInstanceLocator extends RMIServer {
 
 		try {
 
-			registry.bind(databaseInstance.getName(), stub);
+			registry.rebind(databaseInstance.getName(), stub);
 			
 			/*
 			 * Now get this stub back from the registry as a proxy, so it can be added locally. Necessary for later comparisons.
@@ -147,21 +147,6 @@ public class DatabaseInstanceLocator extends RMIServer {
 			DatabaseInstanceRemote proxy = (DatabaseInstanceRemote) registry.lookup(databaseInstance.getName());
 			databaseInstances.put(databaseInstance.getName(), proxy);
 			
-		} catch (AlreadyBoundException abe) {
-
-			boolean contactable = testContact(databaseInstance.getName());
-
-			if (!contactable){
-				try {
-					removeRegistryObject(databaseInstance.getName(), false);
-				} catch (NotBoundException e) {
-					e.printStackTrace();
-				}
-				registerDatabaseInstance(databaseInstance);
-				Diagnostic.traceNoEvent(Diagnostic.FULL, "An old database instance for " + databaseInstance.getName() + " was removed.");
-			} else {
-				ErrorHandling.exceptionErrorNoEvent(abe, "A data manager for this table still exists.");
-			}
 		} catch (AccessException e) {
 			e.printStackTrace();
 		} catch (RemoteException e) {

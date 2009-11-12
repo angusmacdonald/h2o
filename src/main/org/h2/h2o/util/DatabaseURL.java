@@ -26,6 +26,13 @@ public class DatabaseURL implements Serializable {
 	private String newURL;
 
 	/**
+	 * New URL, but without <code>:sm:</code>, if that exists in the URL. This gives the class a way
+	 * of comparing database instances, because the existence of <code>:sm:</code> could render a true
+	 * equals comparison false.
+	 */
+	private String urlWithoutSM;
+
+	/**
 	 * Hostname contained in the URL. If the DB is in-memory there will be no host name - this field will be set to null.
 	 */
 	private String hostname;
@@ -55,7 +62,6 @@ public class DatabaseURL implements Serializable {
 	 */
 	private boolean schemaManager;
 
-
 	public static void main (String[] args){
 		//Test.
 		System.out.println("First test, TCP DB:");
@@ -65,16 +71,16 @@ public class DatabaseURL implements Serializable {
 		System.out.println("\nSecond test, MEM DB:");
 		dburl = DatabaseURL.parseURL("jdbc:h2:sm:mem:one");
 		System.out.println(dburl.toString());
-		
+
 		System.out.println("\nThird test, Other DB:");
 		dburl = DatabaseURL.parseURL("jdbc:h2:data/test/scriptSimple;LOG=1;LOCK_TIMEOUT=50");
 		System.out.println(dburl.toString());
-		
+
 	}
 
 	public static DatabaseURL parseURL(String url){
 		if (url == null) return null;
-		
+
 		boolean tcp = (url.contains(":tcp:"));
 		boolean mem = (url.contains(":mem:"));
 		boolean schemaManager = (url.contains(":sm:"));
@@ -108,11 +114,11 @@ public class DatabaseURL implements Serializable {
 			if (url.startsWith("jdbc:h2:")){
 				url = url.substring("jdbc:h2:".length());
 			}
-			
+
 			String[] remaining = url.split(";");
-			
+
 			dbLocation = remaining[0];
-			
+
 			//XXX the rest is currently ignored.
 		}
 
@@ -124,6 +130,7 @@ public class DatabaseURL implements Serializable {
 	private DatabaseURL(String originalURL, String hostname, int port, String dbLocation, boolean tcp, boolean mem, boolean schemaManager){
 		this.originalURL = originalURL;
 		this.newURL = "jdbc:h2:" + ((schemaManager)? "sm:": "") + ((tcp)? "tcp://" + hostname + ":" + port + "/": "") + ((mem)? "mem:": "") + dbLocation;
+		this.urlWithoutSM = "jdbc:h2:" + ((tcp)? "tcp://" + hostname + ":" + port + "/": "") + ((mem)? "mem:": "") + dbLocation;
 		this.hostname = hostname;
 		this.port = port;
 		this.tcp = tcp;
@@ -142,38 +149,9 @@ public class DatabaseURL implements Serializable {
 	 */
 	public DatabaseURL(String connectionType, String hostname,
 			int port, String dbLocation, boolean schemaManager) {
+
+		this(null, hostname, port, dbLocation, connectionType.equals("tcp"), connectionType.equals("mem"), schemaManager);
 		
-		if (connectionType.equals("tcp")){
-			this.tcp = true;
-			this.mem = false;
-		} else if (connectionType.equals("mem")){
-			this.mem = true;
-			this.tcp = false;
-		}
-
-		this.originalURL = null;
-		this.newURL = "jdbc:h2:"  + ((schemaManager)? "sm:": "") + ((tcp)? "tcp://" + hostname + ":" + port + "/": "") + ((mem)? "mem:": "") + dbLocation;
-		this.hostname = hostname;
-		this.port = port;
-
-		this.schemaManager = schemaManager;
-		this.dbLocation = dbLocation;
-	}
-
-	/* (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result
-				+ ((dbLocation == null) ? 0 : dbLocation.hashCode());
-		result = prime * result + (mem ? 1231 : 1237);
-		result = prime * result + ((newURL == null) ? 0 : newURL.hashCode());
-		result = prime * result + port;
-		result = prime * result + (tcp ? 1231 : 1237);
-		return result;
 	}
 
 	/**
@@ -183,6 +161,15 @@ public class DatabaseURL implements Serializable {
 	public String getURL() {
 		return newURL;
 	}
+
+
+	/**
+	 * @return
+	 */
+	public String getUrlMinusSM() {
+		return urlWithoutSM;
+	}
+
 
 	/**
 	 * @return the hostname
@@ -256,7 +243,21 @@ public class DatabaseURL implements Serializable {
 	public boolean isValid() {
 		return (newURL != null);
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (mem ? 1231 : 1237);
+		result = prime * result + port;
+		result = prime * result + (tcp ? 1231 : 1237);
+		result = prime * result
+				+ ((urlWithoutSM == null) ? 0 : urlWithoutSM.hashCode());
+		return result;
+	}
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)
@@ -270,23 +271,20 @@ public class DatabaseURL implements Serializable {
 		if (getClass() != obj.getClass())
 			return false;
 		DatabaseURL other = (DatabaseURL) obj;
-		if (dbLocation == null) {
-			if (other.dbLocation != null)
-				return false;
-		} else if (!dbLocation.equals(other.dbLocation))
-			return false;
 		if (mem != other.mem)
-			return false;
-		if (newURL == null) {
-			if (other.newURL != null)
-				return false;
-		} else if (!newURL.equals(other.newURL))
 			return false;
 		if (port != other.port)
 			return false;
 		if (tcp != other.tcp)
 			return false;
+		if (urlWithoutSM == null) {
+			if (other.urlWithoutSM != null)
+				return false;
+		} else if (!urlWithoutSM.equals(other.urlWithoutSM))
+			return false;
 		return true;
 	}
+
+
 
 }

@@ -21,14 +21,15 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	/**
 	 * The JDBC connection string for this database.
 	 */
-	private String databaseConnectionString;
+
+	private DatabaseURL databaseURL;
 
 	private Parser parser;
 
 	private Session session;
 
-	public DatabaseInstance(String databaseConnectionString, Session session){
-		this.databaseConnectionString = databaseConnectionString;
+	public DatabaseInstance(DatabaseURL databaseURL, Session session){
+		this.databaseURL = databaseURL;
 
 		this.parser = new Parser(session, true);
 		this.session = session;
@@ -108,7 +109,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	}
 
 	public String getName(){
-		return databaseConnectionString;
+		return databaseURL.getUrlMinusSM();
 	}
 
 	/* (non-Javadoc)
@@ -128,8 +129,8 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 		int result = 1;
 		result = prime
 				* result
-				+ ((databaseConnectionString == null) ? 0
-						: databaseConnectionString.hashCode());
+				+ ((databaseURL.getUrlMinusSM() == null) ? 0
+						: databaseURL.getUrlMinusSM().hashCode());
 		return result;
 	}
 
@@ -145,11 +146,11 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 		if (getClass() != obj.getClass())
 			return false;
 		DatabaseInstance other = (DatabaseInstance) obj;
-		if (databaseConnectionString == null) {
-			if (other.databaseConnectionString != null)
+		if (databaseURL.getUrlMinusSM() == null) {
+			if (other.databaseURL.getUrlMinusSM() != null)
 				return false;
-		} else if (!databaseConnectionString
-				.equals(other.databaseConnectionString))
+		} else if (!databaseURL.getUrlMinusSM()
+				.equals(other.databaseURL.getUrlMinusSM()))
 			return false;
 		return true;
 	}

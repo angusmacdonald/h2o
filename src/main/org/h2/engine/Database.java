@@ -735,10 +735,14 @@ public class Database implements DataHandler {
 				
 				
 				//this.schemaManagerLocation = DatabaseURL.parseURL(ci.getSchemaManagerLocation());
+				
 				this.schemaManagerLocation = DatabaseURL.parseURL(Constants.DEFAULT_SCHEMA_MANAGER_LOCATION);
 
+				if (Constants.IS_TESTING_H2_TESTS) this.schemaManagerLocation = null;
+				
 				if (schemaManagerLocation == null){
 					schemaManagerLocation = getDatabaseURL(); //no schema manager location was specified. Use the local machine.
+					isSchemaManager = true;
 				}
 				
 				schemaManagerFound = true;
@@ -830,9 +834,8 @@ public class Database implements DataHandler {
 			 * Add this database instance to the RMI registry.
 			 * This must be done before meta-records are executed.
 			 */
-			String localDatabaseURL = getDatabaseURL().getURL(); //original URL may contain 'localhost'.
-			Diagnostic.traceNoEvent(Diagnostic.FULL, "Creating remote proxy for database instance: " + localDatabaseURL);
-			databaseInstance = new DatabaseInstance(localDatabaseURL, systemSession); 
+			Diagnostic.traceNoEvent(Diagnostic.FULL, "Creating remote proxy for database instance: " + getDatabaseURL().getURL());
+			databaseInstance = new DatabaseInstance(getDatabaseURL(), systemSession); 
 			databaseInstanceLocator.registerDatabaseInstance(databaseInstance);
 		}
 
@@ -2832,7 +2835,7 @@ public class Database implements DataHandler {
 	 * @return
 	 */
 	public DatabaseInstanceRemote getLocalDatabaseInstance() {
-		return getDatabaseInstance(DatabaseURL.parseURL(originalURL).getURL());
+		return getDatabaseInstance(DatabaseURL.parseURL(originalURL).getUrlMinusSM());
 	}
 
 	public String getOriginalDatabaseURL(){

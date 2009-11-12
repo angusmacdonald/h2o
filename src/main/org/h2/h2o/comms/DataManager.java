@@ -574,7 +574,7 @@ public class DataManager implements DataManagerRemote {
 	private String createFullDatabaseLocation(String dbLocationOnDisk, String connectionType, String machineName, String connectionPort, boolean isSM){
 		DatabaseURL dbURL = new DatabaseURL(connectionType, machineName, Integer.parseInt(connectionPort), dbLocationOnDisk, isSM);
 
-		return dbURL.getURL();
+		return dbURL.getUrlMinusSM();
 	}
 
 
