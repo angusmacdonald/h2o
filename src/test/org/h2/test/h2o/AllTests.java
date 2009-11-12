@@ -1,5 +1,6 @@
 package org.h2.test.h2o;
 
+import org.h2.h2o.util.H2oProperties;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -16,7 +17,8 @@ import org.junit.runners.Suite;
 	IndexTests.class,
 	UpdateTests.class,
 	MultiQueryTransactionTests.class, 
-	RestartTests.class
+	RestartTests.class,
+	H2oProperties.class
 })
 public class AllTests {
  //The above annotations do all the work.

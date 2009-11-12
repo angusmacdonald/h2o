@@ -731,9 +731,8 @@ public class Database implements DataHandler {
 				 * 
 				 * If we haven't (e.g. this is an H2 test), make this machine the schema manager.
 				 */
-				//TODO THIS DOESN'T WORK BECAUSE IT MEANS THE MEM:TWO DATABASE TRIES TO MAKE ITSELF A SCHEMA MANAGER.
 				
-				
+				//XXX THE FOLLOWING LINE DOESN'T WORK BECAUSE IT MEANS THE MEM:TWO DATABASE TRIES TO MAKE ITSELF A SCHEMA MANAGER.
 				//this.schemaManagerLocation = DatabaseURL.parseURL(ci.getSchemaManagerLocation());
 				
 				this.schemaManagerLocation = DatabaseURL.parseURL(Constants.DEFAULT_SCHEMA_MANAGER_LOCATION);

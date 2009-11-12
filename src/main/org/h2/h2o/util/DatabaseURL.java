@@ -192,6 +192,14 @@ public class DatabaseURL implements Serializable {
 	public String getDbLocation() {
 		return dbLocation;
 	}
+	
+	/**
+	 * Get the location of the database with all forward slashes removed.
+	 * Useful if the location is to be used as part of a transaction or file name. 
+	 */
+	public String getDbLocationWithoutSlashes(){
+		return getDbLocation().replace("/", "");
+	}
 
 	/**
 	 * True if this is an in memory database.
