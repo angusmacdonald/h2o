@@ -35,6 +35,7 @@ import org.h2.h2o.comms.management.DatabaseInstanceLocator;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.util.DatabaseURL;
+import org.h2.h2o.util.H2oProperties;
 import org.h2.index.Cursor;
 import org.h2.index.Index;
 import org.h2.index.IndexType;
@@ -119,20 +120,15 @@ public class Database implements DataHandler {
 	 */
 	private DatabaseURL schemaManagerLocation;
 
-	//	/**
-	//	 * H2O. The hostname/IP address on which this instance's TCP/FTP server is being run on.
-	//	 */
-	//	private String localMachineAddress;
-	//
-	//	/**
-	//	 * H2O. The port number on which this instance's TCP/FTP server is listening on.
-	//	 */
-	//	private int localMachinePort;
-	//
-	//	/**
-	//	 * H2O. The database location as specified in the JDBC connection string.
-	//	 */
-	//	private final String databaseLocation;
+	/**
+	 * The location of this database instance.
+	 */
+	private DatabaseURL localMachineLocation;
+
+	/**
+	 * H2O. Interface to this database instance, exposed via RMI.
+	 */
+	private DatabaseInstance databaseInstance;
 
 	/**
 	 * H2O. Utility class for schema manager interactions.
@@ -140,12 +136,12 @@ public class Database implements DataHandler {
 	private SchemaManager schemaManager;
 
 	/**
-	 * Manages access to data managers, both local and remote.
+	 * H2O. Manages access to data managers, both local and remote.
 	 */
 	private DataManagerLocator dataManagerLocator;
 
 	/**
-	 * Manages access to remote database instances via RMI.
+	 * H2O. Manages access to remote database instances via RMI.
 	 */
 	private DatabaseInstanceLocator databaseInstanceLocator;
 
@@ -237,14 +233,12 @@ public class Database implements DataHandler {
 	private long reconnectCheckNext;
 	private boolean reconnectChangePending;
 
+
 	/**
-	 * H2O. Interface to this database instance, exposed via RMI.
+	 * Stores a list of all database instances this database knows about. This is used on restart to attempt to find
+	 * a schema manager.
 	 */
-	private DatabaseInstance databaseInstance;
-
-	private String originalURL;
-
-	private DatabaseURL localMachineLocation;
+	private H2oProperties persistedInstanceInformation;
 
 
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
@@ -289,7 +283,6 @@ public class Database implements DataHandler {
 			writeDelay = SysProperties.MIN_WRITE_DELAY;
 		}
 		this.databaseURL = ci.getURL();
-		this.originalURL = ci.getOriginalURL();
 		this.eventListener = ci.getDatabaseEventListenerObject();
 		ci.removeDatabaseEventListenerObject();
 		if (eventListener == null) {
@@ -714,15 +707,21 @@ public class Database implements DataHandler {
 		 */
 		if (Constants.IS_H2O && !isManagementDB()){ //don't run this code with the TCP server management DB
 
+			persistedInstanceInformation = new H2oProperties(this.getDatabaseURL(), "instances");
+
+			boolean propertiesExist = persistedInstanceInformation.loadProperties();
+
 			this.isSchemaManager = ci.isSchemaManager();
 			boolean schemaManagerFound = false;
-			
+
 			if (!databaseExists && this.isSchemaManager){
 				/*
 				 * Database doesn't exist, and we want to make this instance the schema manager.
 				 */
 				schemaManagerFound = true;
 				this.schemaManagerLocation = getDatabaseURL();
+
+				persistedInstanceInformation.createNewFile(); //might not want to do this, depending on policy
 
 			} else if (!databaseExists && !this.isSchemaManager){
 				/*
@@ -731,19 +730,20 @@ public class Database implements DataHandler {
 				 * 
 				 * If we haven't (e.g. this is an H2 test), make this machine the schema manager.
 				 */
-				
+
 				//XXX THE FOLLOWING LINE DOESN'T WORK BECAUSE IT MEANS THE MEM:TWO DATABASE TRIES TO MAKE ITSELF A SCHEMA MANAGER.
 				//this.schemaManagerLocation = DatabaseURL.parseURL(ci.getSchemaManagerLocation());
-				
+
 				this.schemaManagerLocation = DatabaseURL.parseURL(Constants.DEFAULT_SCHEMA_MANAGER_LOCATION);
 
+
 				if (Constants.IS_TESTING_H2_TESTS) this.schemaManagerLocation = null;
-				
+
 				if (schemaManagerLocation == null){
 					schemaManagerLocation = getDatabaseURL(); //no schema manager location was specified. Use the local machine.
 					isSchemaManager = true;
 				}
-				
+
 				schemaManagerFound = true;
 			} else if (databaseExists){
 				/*
@@ -753,42 +753,45 @@ public class Database implements DataHandler {
 
 				DatabaseURL location = null;
 
-				String[] listOfInstances = {"jdbc:h2:sm:tcp://138.251.195.59:9081/db_data/unittests/schema_test", 
-				"jdbc:h2:sm:tcp://138.251.195.59:9181/db_data/unittests/schema_test2"};
+				Set<Object> listOfInstances = null;
+				if (propertiesExist){
+					listOfInstances = persistedInstanceInformation.getKeys();
 
-				for (String url: listOfInstances){
 
+					for (Object obj: listOfInstances){
+						String url = (String)obj;
 
-					DatabaseURL instanceURL = DatabaseURL.parseURL(url);
-					/*
-					 * Check first that the location isn't the local database instance (currently running).
-					 */
-					if (instanceURL.equals(localMachineLocation)) continue;
-
-					/*
-					 * This should attempt to create a new database instance locator at each address.
-					 */
-					try{
-						DatabaseInstanceLocator potentialLocation = new DatabaseInstanceLocator(instanceURL);
-						location = potentialLocation.getSchemaManagerLocation();
+						DatabaseURL instanceURL = DatabaseURL.parseURL(url);
 
 						/*
-						 * Make sure there aren't any spurious RMI registrys being created everywhere.
+						 * Check first that the location isn't the local database instance (currently running).
 						 */
+						if (instanceURL.equals(localMachineLocation)) continue;
 
-						if (location != null && location.isValid()){
-							this.isSchemaManager = false;
-							schemaManagerFound = true;
-							this.databaseInstanceLocator = potentialLocation;
-							Diagnostic.traceNoEvent(Diagnostic.FULL,"Found Schema Manager at remote location.");
-							break;
+						/*
+						 * This should attempt to create a new database instance locator at each address.
+						 */
+						try{
+							DatabaseInstanceLocator potentialLocation = new DatabaseInstanceLocator(instanceURL);
+							location = potentialLocation.getSchemaManagerLocation();
+
+							/*
+							 * Make sure there aren't any spurious RMI registrys being created everywhere.
+							 */
+
+							if (location != null && location.isValid()){
+								this.isSchemaManager = false;
+								schemaManagerFound = true;
+								this.databaseInstanceLocator = potentialLocation;
+								Diagnostic.traceNoEvent(Diagnostic.FULL,"Found Schema Manager at remote location.");
+								break;
+							}
+
+						} catch (Exception e){
+							//Will happen if there isn't a schema manager there.
 						}
-
-					} catch (Exception e){
-						//Will happen if there isn't a schema manager there.
 					}
-				}
-
+				} 
 			}
 
 			if (schemaManagerFound && !this.isSchemaManager){
@@ -817,7 +820,7 @@ public class Database implements DataHandler {
 				}
 				connectedToSM = true;
 				this.schemaManagerLocation = this.getDatabaseURL();
-		
+
 			}
 
 			assert this.schemaManagerLocation != null;
@@ -907,7 +910,7 @@ public class Database implements DataHandler {
 	/**
 	 * @return
 	 */
-	private DatabaseURL getDatabaseURL() {
+	public DatabaseURL getDatabaseURL() {
 		return localMachineLocation;
 	}
 
@@ -1341,7 +1344,7 @@ public class Database implements DataHandler {
 			return;
 		}
 
-		Diagnostic.traceNoEvent(Diagnostic.FULL, DatabaseURL.parseURL(this.originalURL).getURL());
+		Diagnostic.traceNoEvent(Diagnostic.FULL, getDatabaseURL().getURL());
 
 		closing = true;
 		stopServer();
@@ -2802,7 +2805,6 @@ public class Database implements DataHandler {
 	 */
 	public void removeDataManager(String tableName, boolean removeLocalOnly) {
 		dataManagerLocator.removeRegistryObject(tableName, removeLocalOnly);
-
 	}
 
 	/**
@@ -2834,11 +2836,7 @@ public class Database implements DataHandler {
 	 * @return
 	 */
 	public DatabaseInstanceRemote getLocalDatabaseInstance() {
-		return getDatabaseInstance(DatabaseURL.parseURL(originalURL).getUrlMinusSM());
-	}
-
-	public String getOriginalDatabaseURL(){
-		return originalURL;
+		return getDatabaseInstance(getDatabaseURL().getUrlMinusSM());
 	}
 
 	public void removeLocalDatabaseInstance(){

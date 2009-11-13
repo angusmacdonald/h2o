@@ -33,6 +33,8 @@ public class TestScriptSimple extends TestBase {
     public static void main(String[] a) throws Exception {
         TestBase.createCaller().init().test();
         Constants.IS_TESTING_H2_TESTS = true;
+        
+        System.exit(1);
     }
 
     public void test() throws Exception {
@@ -56,7 +58,8 @@ public class TestScriptSimple extends TestBase {
             System.out.println(sql);
             //System.out.println(sql);
             try {
-                if ("@reconnect".equals(sql.toLowerCase())) {
+                
+            	if ("@reconnect".equals(sql.toLowerCase())) {
                     reconnect();
                 } else if (sql.length() == 0) {
                     // ignore

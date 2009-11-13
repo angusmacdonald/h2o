@@ -444,10 +444,32 @@ public class DataManager implements DataManagerRemote {
 	@Override
 	public int removeDataManager() throws RemoteException, SQLException {
 		int tableID = getTableID();
-		String sql = "DELETE FROM " + REPLICAS + " WHERE table_id=" + tableID + "; DELETE FROM " + TABLES + " WHERE tablename='" + tableName
+		String sql = "DELETE FROM " + REPLICAS + " WHERE table_id=" + tableID + ";\nDELETE FROM " + TABLES + " WHERE tablename='" + tableName
 		+ "' AND schemaname='" + schemaName + "';";
 
 		//replicaLocations.removeAll(null);
+
+//		if (true){// Diagnostic.getLevel() == Diagnostic.FULL
+//			/*
+//			 * Test that the row is there as expected.
+//			 */
+//			String testQuery = "SELECT * FROM " + TABLES + " WHERE tablename='" + tableName
+//			+ "' AND schemaname='" + schemaName + "';";
+//			
+//			LocalResult result = executeQuery(testQuery);
+//			
+//			//assert result.getRowCount() == 1;
+//		
+//			if (result.getRowCount() != 1){
+//				
+//				
+//				testQuery = "SELECT * FROM " + TABLES + ";";
+//				
+//				result = executeQuery(testQuery);
+//				System.out.println("result");
+//				assert false;
+//			}
+//		}
 
 		return executeUpdate(sql);
 	}

@@ -16,6 +16,8 @@ import org.h2.test.h2o.H2OTest;
 import org.h2.util.ObjectArray;
 import org.h2.value.Value;
 
+import uk.ac.stand.dcs.nds.util.Diagnostic;
+
 /**
  * Represents a single SQL statements.
  * It wraps a prepared statement.
@@ -131,14 +133,18 @@ public class CommandContainer extends Command {
 
 			queryProxyManager.addProxy(proxy);	//checks that a lock is held for table, then adds the proxy.
 
+			if (Diagnostic.getLevel() == Diagnostic.FULL){
+				queryProxyManager.addSQL(prepared.getSQL());
+			}
+			
 			updateCount = prepared.update(queryProxyManager.getTransactionName());
 
 			boolean commit = true; //An exception would already have been thrown if it should have been a rollback.
 
-			
+
 			H2OTest.createTableFailure();
 
-			
+
 			if (singleQuery){ 
 				/*
 				 * If it is one of a number of queries in the transaction then we must wait for the entire transaction to finish.
@@ -147,7 +153,12 @@ public class CommandContainer extends Command {
 				queryProxyManager.commit(commit);
 			} 
 		} else {
-			updateCount = prepared.update();
+			try {
+				updateCount = prepared.update();
+			} catch (SQLException e){
+				System.err.println("Transaction not found for query: " + prepared.getSQL());
+				throw e;
+			}
 		}
 
 

@@ -122,7 +122,7 @@ public class DataManagerLocator extends RMIServer{
 		try {
 			super.removeRegistryObject(objectName, removeLocalOnly);
 		} catch (NotBoundException e) {
-			e.printStackTrace();
+			Diagnostic.traceNoEvent(Diagnostic.FINAL, "Table '" + objectName + "' was not bound (when trying to unbind).");
 		}
 		dataManagers.remove(objectName);
 	}

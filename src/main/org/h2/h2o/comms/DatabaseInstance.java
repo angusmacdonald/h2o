@@ -117,7 +117,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	 */
 	@Override
 	public String getConnectionString() throws RemoteException {
-		return session.getDatabase().getOriginalDatabaseURL();
+		return session.getDatabase().getDatabaseURL().getOriginalURL();
 	}
 
 	/* (non-Javadoc)

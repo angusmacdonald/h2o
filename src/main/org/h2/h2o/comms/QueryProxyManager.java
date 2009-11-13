@@ -15,6 +15,8 @@ import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TransactionNameGenerator;
+
+import uk.ac.stand.dcs.nds.util.Diagnostic;
 import uk.ac.stand.dcs.nds.util.ErrorHandling;
 
 /**
@@ -50,6 +52,8 @@ public class QueryProxyManager {
 	 */
 	private int updateID = 0;
 
+	private Set<String> queries;
+
 	/**
 	 * 
 	 * @param db
@@ -59,7 +63,7 @@ public class QueryProxyManager {
 	public QueryProxyManager(Database db, Session session){
 		this(db, session, false);
 
-
+		if (Diagnostic.getLevel() == Diagnostic.FULL) queries = new HashSet<String>();
 	}
 
 	/**
@@ -77,11 +81,11 @@ public class QueryProxyManager {
 		this.parser = new Parser(session, true);
 
 		this.allReplicas = new HashSet<DatabaseInstanceRemote>();
-		
+
 		if (metaRecordProxy){
 			this.allReplicas.add(localDatabase);
 		}
-		
+
 		this.dataManagers = new HashSet<DataManagerRemote>();
 
 		this.requestingDatabase = db.getLocalDatabaseInstance();
@@ -173,6 +177,17 @@ public class QueryProxyManager {
 		}
 
 		endTransaction(updatedReplicas);
+
+
+		if (Diagnostic.getLevel() == Diagnostic.FULL){
+			System.out.println("\tQueries in transaction '" + transactionName + "':");
+			if (queries != null){
+				for (String query: queries){
+					if (query.equals("")) continue;
+					System.out.println("\t\t" + query);
+				}
+			}
+		}
 
 		/*
 		 * If rollback was performed - throw an exception informing requesting party of this.
@@ -286,5 +301,17 @@ public class QueryProxyManager {
 
 	}
 
+	/**
+	 * Adds the current SQL query to the set of all queries that are part of this transaction. This is only used when full
+	 * diagnostics are on.
+	 * @param sql
+	 */
+	public void addSQL(String sql) {
+		this.queries.add(sql);
+	}
+
+	public Set<String> getSQL(){
+		return this.queries;
+	}
 
 }

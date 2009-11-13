@@ -1,6 +1,7 @@
 package org.h2.test.h2o;
 
 import org.h2.h2o.util.H2oProperties;
+import org.h2.h2o.util.TransactionNameGenerator;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -11,6 +12,10 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
+	//Unit tests.
+	H2oProperties.class,
+	TransactionNameGenerator.class,
+	//Database Tests
 	SchemaManagerTests.class,
 	MultipleSchemaTests.class,
 	ReplicaTests.class,
@@ -18,7 +23,7 @@ import org.junit.runners.Suite;
 	UpdateTests.class,
 	MultiQueryTransactionTests.class, 
 	RestartTests.class,
-	H2oProperties.class
+	H2SimpleTest.class
 })
 public class AllTests {
  //The above annotations do all the work.

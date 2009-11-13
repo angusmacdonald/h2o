@@ -35,7 +35,7 @@ public class H2oProperties {
 	 */
 	public H2oProperties(DatabaseURL dbURL, String appendum) {
 		this();
-		this.propertiesFileLocation = dbURL.getDbLocationWithoutSlashes() + ((appendum != null)? appendum: "") + ".properties";
+		this.propertiesFileLocation = dbURL.getDbLocationWithoutSlashes() + ((appendum != null)? "." + appendum: "") + ".properties";
 	}
 
 	public H2oProperties(DatabaseURL dbURL) {
@@ -70,6 +70,26 @@ public class H2oProperties {
 		return true;
 	}
 
+	/**
+	 * Deletes any existing properties file with the given name and creates a new one.
+	 */
+	public void createNewFile() {
+		removePropertiesFile();
+		
+		File f = new File(propertiesFileLocation);
+		try {
+			f.createNewFile();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		try {
+			this.fis = new FileInputStream(propertiesFileLocation);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		
+	}
 
 	public String getProperty(String key) {
 
@@ -102,8 +122,8 @@ public class H2oProperties {
 
 	private boolean removePropertiesFile(){
 		try {
-			if (fis != null) fis.close();
-			if (fos != null) fos.close();
+			if (fis != null) fis.close(); fis = null;
+			if (fos != null) fos.close(); fos = null;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -121,7 +141,7 @@ public class H2oProperties {
 	 * ####################################################
 	 */
 	@Test
-	public void basicPropertiesTest(){
+	public void testBasicProperties(){
 		DatabaseURL dbURL = DatabaseURL.parseURL("jdbc:h2:mem:two");
 		H2oProperties testProp = new H2oProperties(dbURL);
 
@@ -135,7 +155,7 @@ public class H2oProperties {
 	}
 
 	@Test
-	public void multiplePropertiesTest(){
+	public void testMultipleProperties(){
 		DatabaseURL dbURL = DatabaseURL.parseURL("jdbc:h2:mem:two");
 		H2oProperties testProp = new H2oProperties(dbURL);
 
@@ -145,13 +165,13 @@ public class H2oProperties {
 	}
 
 	@Test
-	public void multiplePropertiesTestAppendum(){
+	public void testMultiplePropertiesTestAppendum(){
 		DatabaseURL dbURL = DatabaseURL.parseURL("jdbc:h2:mem:two");
 		H2oProperties testProp = new H2oProperties(dbURL, "appended");
 
 		testProperties(testProp);
 
-		File f = new File(dbURL.getDbLocationWithoutSlashes() + "appended.properties");
+		File f = new File(dbURL.getDbLocationWithoutSlashes() + ".appended.properties");
 
 		assertTrue(f.exists());
 
@@ -163,7 +183,7 @@ public class H2oProperties {
 	 * by looking for a non-existent file.
 	 */
 	@Test
-	public void multiplePropertiesTestAppendumFail(){
+	public void testMultiplePropertiesTestAppendumFail(){
 		DatabaseURL dbURL = DatabaseURL.parseURL("jdbc:h2:mem:two");
 		H2oProperties testProp = new H2oProperties(dbURL, "appended");
 
@@ -178,7 +198,7 @@ public class H2oProperties {
 
 
 	@Test
-	public void alternateConstructor(){
+	public void testAlternateConstructor(){
 		DatabaseURL dbURL = DatabaseURL.parseURL("jdbc:h2:mem:two");
 		H2oProperties testProp = new H2oProperties();
 		testProp.setPropertiesFileLocation(dbURL);
@@ -189,7 +209,7 @@ public class H2oProperties {
 	}
 
 	@Test
-	public void alternateConstructorFail(){
+	public void testAlternateConstructorFail(){
 		H2oProperties testProp = new H2oProperties();
 
 		try {
@@ -206,7 +226,7 @@ public class H2oProperties {
 	 * This isn't a great unit test because it relies on being run after @see {@link #multiplePropertiesTest()}
 	 */
 	@Test
-	public void loadTest(){
+	public void testLoad(){
 		DatabaseURL dbURL = DatabaseURL.parseURL("jdbc:h2:mem:two");
 		H2oProperties testProp = new H2oProperties(dbURL);
 
@@ -230,7 +250,7 @@ public class H2oProperties {
 	 * Tries to load a properties file that doesn't exist. Should return false.
 	 */
 	@Test
-	public void loadPropertiesFail(){
+	public void testLoadPropertiesFail(){
 		DatabaseURL dbURL = DatabaseURL.parseURL("jdbc:h2:mem:two");
 		H2oProperties testProp = new H2oProperties(dbURL, "doesnotexistever");
 
@@ -253,4 +273,14 @@ public class H2oProperties {
 		assertEquals(value, testProp.getProperty(key));
 		assertEquals(value2, testProp.getProperty(key2));
 	}
+
+	/**
+	 * Returns a set of the keys in this properties file.
+	 * @return
+	 */
+	public Set<Object> getKeys() {
+		return properties.keySet();
+	}
+
+
 }

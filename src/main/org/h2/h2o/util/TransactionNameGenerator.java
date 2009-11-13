@@ -1,17 +1,20 @@
 package org.h2.h2o.util;
 
+import static org.junit.Assert.assertNotNull;
+
 import java.rmi.RemoteException;
 
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.junit.Test;
 
 /**
- *	Utility class which generates unique names for transactions. 
+ *Utility class which generates unique names for transactions. 
  *
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class TransactionNameGenerator {
 
-	private static int lastNumber = 0; //XXX not the most sophisticated method, but it works.
+	private static long lastNumber = 0;
 
 	/**
 	 * Generate a unique name for a new transaction based on the identity of the requesting database.
@@ -49,6 +52,10 @@ public class TransactionNameGenerator {
 
 		transactionName += part;
 
+		if (lastNumber == Long.MAX_VALUE){
+			lastNumber = -1;
+		}
+		
 		return (transactionName + "_" + lastNumber++).toUpperCase();
 	}
 
@@ -61,5 +68,34 @@ public class TransactionNameGenerator {
 	 */
 	public static String generateName(String string) {
 		return generateFullTransactionName(string);
+	}
+	
+	/**
+	 * Test that transaction names are correctly generated even when the number of transactions
+	 * exceeds the maximum allowed long value.
+	 */
+	@Test
+	public void testGeneration(){
+		lastNumber = Long.MAX_VALUE - 1000;
+		
+		for (long i = 0; i < 2000; i++){
+			generateName("test");
+		}
+	}
+	
+	/**
+	 * Check that a null Database Instance parameter is handled without error.
+	 */
+	@Test
+	public void nullCheck(){
+		assertNotNull(generateName((DatabaseInstanceRemote)null));
+	}
+	
+	/**
+	 * Check that a null string parameter is handled without error.
+	 */
+	@Test
+	public void nullCheck2(){
+		assertNotNull(generateName((String)null));
 	}
 }
