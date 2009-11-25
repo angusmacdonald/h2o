@@ -38,7 +38,13 @@ public class CommandList extends Command {
 			this.remaining = remaining.split(";"); //TODO not particuarly safe. i.e. no query can contain a semi-colon.
 		}
 
-		this.proxyManager = new QueryProxyManager(parser.getSession().getDatabase(), getSession());
+		if (!session.getApplicationAutoCommit() && session.getCurrentTransactionLocks() != null){
+			this.proxyManager = session.getCurrentTransactionLocks();
+		} else {
+			this.proxyManager = new QueryProxyManager(parser.getSession().getDatabase(), getSession());
+			session.setCurrentTransactionLocks(this.proxyManager);
+		}
+
 		command.addQueryProxyManager(proxyManager);
 
 	}
@@ -48,9 +54,9 @@ public class CommandList extends Command {
 	}
 
 	public int executeUpdate() throws SQLException {
-    	return executeUpdate(true);
-    }
-	
+		return executeUpdate(true);
+	}
+
 	private SQLException executeRemaining() throws SQLException {
 		SQLException rollbackException = null;
 
@@ -63,14 +69,14 @@ public class CommandList extends Command {
 
 					Command remainingCommand = session.prepareLocal(sqlStatement);
 					remainingCommand.addQueryProxyManager(proxyManager);
-					
+
 					if (remainingCommand.isQuery()) {
 						remainingCommand.query(0, true);
 					} else {
 						remainingCommand.update(true);
 					}
 				}
-				
+
 				H2OTest.queryFailure();
 
 			} catch (SQLException e){
@@ -90,16 +96,16 @@ public class CommandList extends Command {
 	@Override
 	protected int update(boolean partOfMultiQueryTransaction) throws SQLException {
 		assert partOfMultiQueryTransaction;
-		
+
 		return update();
 	}
-	
+
 	public int update() throws SQLException {
 		/*
 		 * Execute the first update, then iterate through every subsequent update.
 		 */
 		//proxyManager.begin();
-		
+
 		int updateCount = command.executeUpdate(true);
 		SQLException rollbackException = executeRemaining();
 
@@ -118,24 +124,28 @@ public class CommandList extends Command {
 
 		return result;
 	}
-	
+
 	/**
 	 * Commit or rollback a transaction based on whether an exception was thrown during the update/query.
 	 * @param rollbackException	Exception thrown during query. Will be null if none was thrown and transaction was successful.
 	 * @throws SQLException
 	 */
 	private void commit(SQLException rollbackException)  throws SQLException {
-		
-		/*
-		 * Having executed all commands, rollback if there was an exception. Otherwise, commit.
-		 */
-		proxyManager.commit(rollbackException == null);
 
-		/*
-		 * If we did a rollback, rethrow the exception that caused this to happen.
-		 */
-		if (rollbackException != null){
-			throw rollbackException;
+
+		if (session.getApplicationAutoCommit() || rollbackException != null){
+			/*
+			 * Having executed all commands, rollback if there was an exception. Otherwise, commit.
+			 */
+			proxyManager.commit(rollbackException == null);
+			session.setCurrentTransactionLocks(null);
+
+			/*
+			 * If we did a rollback, rethrow the exception that caused this to happen.
+			 */
+			if (rollbackException != null){
+				throw rollbackException;
+			}
 		}
 	}
 
@@ -175,8 +185,25 @@ public class CommandList extends Command {
 	 * @see org.h2.command.Command#addQueryProxyManager(org.h2.h2o.comms.QueryProxyManager)
 	 */
 	@Override
-	protected void addQueryProxyManager(QueryProxyManager proxyManager) {
+	public void addQueryProxyManager(QueryProxyManager proxyManager) {
 		ErrorHandling.hardError("Didn't expect this to be called.");
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.command.CommandInterface#getQueryProxyManager()
+	 */
+	@Override
+	public QueryProxyManager getQueryProxyManager() {
+		ErrorHandling.hardError("Didn't expect this to be called.");
+		return proxyManager;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.command.CommandInterface#isPreparedStatement(boolean)
+	 */
+	@Override
+	public void setIsPreparedStatement(boolean preparedStatement) {
+		command.setIsPreparedStatement(preparedStatement);
 	}
 
 

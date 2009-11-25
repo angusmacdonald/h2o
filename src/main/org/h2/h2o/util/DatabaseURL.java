@@ -15,6 +15,8 @@ public class DatabaseURL implements Serializable {
 
 	private static final long serialVersionUID = 3202062668933786677L;
 
+	private static final int DEFAULT_PORT_NUMBER = 9092;
+
 	/**
 	 * The original unedited database URL.
 	 */
@@ -64,17 +66,22 @@ public class DatabaseURL implements Serializable {
 
 	public static void main (String[] args){
 		//Test.
-		System.out.println("First test, TCP DB:");
-		DatabaseURL dburl = DatabaseURL.parseURL("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test");
+		//		System.out.println("First test, TCP DB:");
+		//		DatabaseURL dburl = DatabaseURL.parseURL("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test");
+		//		System.out.println(dburl.toString());
+		//
+		//		System.out.println("\nSecond test, MEM DB:");
+		//		dburl = DatabaseURL.parseURL("jdbc:h2:sm:mem:one");
+		//		System.out.println(dburl.toString());
+		//
+		//		System.out.println("\nThird test, Other DB:");
+		//		dburl = DatabaseURL.parseURL("jdbc:h2:data/test/scriptSimple;LOG=1;LOCK_TIMEOUT=50");
+		//		System.out.println(dburl.toString());
+		//		
+		System.out.println("\nFourth test, Tilde DB:");
+		DatabaseURL dburl = DatabaseURL.parseURL("jdbc:h2:tcp://localhost/~/test");
 		System.out.println(dburl.toString());
 
-		System.out.println("\nSecond test, MEM DB:");
-		dburl = DatabaseURL.parseURL("jdbc:h2:sm:mem:one");
-		System.out.println(dburl.toString());
-
-		System.out.println("\nThird test, Other DB:");
-		dburl = DatabaseURL.parseURL("jdbc:h2:data/test/scriptSimple;LOG=1;LOCK_TIMEOUT=50");
-		System.out.println(dburl.toString());
 
 	}
 
@@ -93,9 +100,13 @@ public class DatabaseURL implements Serializable {
 
 			newURL = newURL.substring(newURL.indexOf("tcp://")+6);
 
-			//Get hostname
-			hostname = newURL.substring(0, newURL.indexOf(":"));
-
+			//Get hostname 
+			if (newURL.indexOf(":") < 0){
+				// [example: localhost/~/test]
+				hostname = newURL.substring(0, newURL.indexOf("/"));
+			} else {
+				hostname = newURL.substring(0, newURL.indexOf(":"));
+			}
 			if (hostname.equals("localhost")){
 				hostname = NetUtils.getLocalAddress();
 			}
@@ -103,8 +114,13 @@ public class DatabaseURL implements Serializable {
 			//Get port
 			String portString = newURL.substring(newURL.indexOf(":")+1);
 			portString = portString.substring(0, portString.indexOf("/"));
+			
+			try{
 			port = new Integer(portString).intValue();
-
+			} catch (NumberFormatException e){
+				port = DEFAULT_PORT_NUMBER;
+			}
+			
 			//Get DB location
 			dbLocation = newURL.substring(newURL.indexOf("/")+1);
 		} else if (mem){
@@ -151,7 +167,7 @@ public class DatabaseURL implements Serializable {
 			int port, String dbLocation, boolean schemaManager) {
 
 		this(null, hostname, port, dbLocation, connectionType.equals("tcp"), connectionType.equals("mem"), schemaManager);
-		
+
 	}
 
 	/**
@@ -192,13 +208,13 @@ public class DatabaseURL implements Serializable {
 	public String getDbLocation() {
 		return dbLocation;
 	}
-	
+
 	/**
 	 * Get the location of the database with all forward slashes removed.
 	 * Useful if the location is to be used as part of a transaction or file name. 
 	 */
-	public String getDbLocationWithoutSlashes(){
-		return getDbLocation().replace("/", "");
+	public String getDbLocationWithoutIllegalCharacters(){
+		return getDbLocation().replace("/", "_").replace("~", "_");
 	}
 
 	/**
@@ -263,7 +279,7 @@ public class DatabaseURL implements Serializable {
 		result = prime * result + port;
 		result = prime * result + (tcp ? 1231 : 1237);
 		result = prime * result
-				+ ((urlWithoutSM == null) ? 0 : urlWithoutSM.hashCode());
+		+ ((urlWithoutSM == null) ? 0 : urlWithoutSM.hashCode());
 		return result;
 	}
 

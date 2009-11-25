@@ -3005,6 +3005,9 @@ public class JdbcResultSet extends TraceObject implements ResultSet {
                 list = result.currentRow();
             }
         }
+        
+        
+        //create table australia (ID  INTEGER NOT NULL, Name VARCHAR(100), FirstName VARCHAR(100), Points INTEGER, LicenseID INTEGER, PRIMARY KEY(ID))
         Value value = list[columnIndex - 1];
         wasNull = value == ValueNull.INSTANCE;
         return value;

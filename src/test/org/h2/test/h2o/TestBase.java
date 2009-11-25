@@ -19,6 +19,8 @@ import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Engine;
 import org.h2.engine.SchemaManager;
+import org.h2.h2o.util.DatabaseURL;
+import org.h2.h2o.util.H2oProperties;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -44,6 +46,22 @@ public class TestBase {
 	@BeforeClass
 	public static void initialSetUp(){
 		Diagnostic.setLevel(Diagnostic.FULL);
+
+		H2oProperties properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"));
+
+		properties.createNewFile();
+		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
+		properties.setProperty("schemaManagerLocation", "jdbc:h2:sm:mem:one");
+
+		properties.saveAndClose();
+
+		properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:three"));
+
+		properties.createNewFile();
+		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
+		properties.setProperty("schemaManagerLocation", "jdbc:h2:sm:mem:one");
+
+		properties.saveAndClose();
 	}
 
 	/**
@@ -52,7 +70,7 @@ public class TestBase {
 	@Before
 	public void setUp() throws Exception {
 
-		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
+		//Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
 		SchemaManager.USERNAME = "sa";
 		SchemaManager.PASSWORD = "sa";
 
@@ -188,7 +206,7 @@ public class TestBase {
 		}
 	}
 
-	
+
 	/**
 	 * Validate the result of a query on the first replica against expected values by selecting
 	 * everything in a table sorted by ID and comparing with each entry.
@@ -206,7 +224,7 @@ public class TestBase {
 	throws SQLException {
 		validateOnSecondMachine(testQuery.getTableName(), testQuery.getPrimaryKey(), testQuery.getSecondColumn());
 	}
-	
+
 	/**
 	 * Validate the result of a query on the second replica against expected values by selecting
 	 * everything in a table sorted by ID and comparing with each entry.
@@ -219,7 +237,7 @@ public class TestBase {
 		sb.execute("SELECT LOCAL * FROM " + tableName + " ORDER BY ID;"); 
 		validateResults(pKey, secondCol, sb.getResultSet());
 	}
-	
+
 
 	/**
 	 * Validate the result of a query on the first replica against expected values by selecting
@@ -243,7 +261,7 @@ public class TestBase {
 		String sqlQuery = "CREATE TABLE " + tableName + "(ID INT PRIMARY KEY, NAME VARCHAR(255));";
 		sqlQuery += "INSERT INTO " + tableName + " VALUES(4, 'Meh');";
 		sqlQuery += "INSERT INTO " + tableName + " VALUES(5, 'Heh');";
-		
+
 		stat.execute(sqlQuery);
 	}
 

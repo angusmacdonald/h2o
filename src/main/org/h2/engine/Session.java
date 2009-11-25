@@ -23,6 +23,7 @@ import org.h2.command.dml.SetTypes;
 import org.h2.constant.ErrorCode;
 import org.h2.constant.SysProperties;
 import org.h2.constraint.Constraint;
+import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.index.Index;
 import org.h2.jdbc.JdbcConnection;
 import org.h2.log.InDoubtTransaction;
@@ -65,8 +66,11 @@ public class Session extends SessionWithState {
 	private User user;
 	private int id;
 	private ObjectArray locks = new ObjectArray();
+	
+	private QueryProxyManager currentTransactionLocks = null;
+
 	private UndoLog undoLog;
-	private boolean autoCommit = false; //H2O. Default value used to be true.
+	private final boolean autoCommit = false; //H2O. Default value used to be true. Don't change it now... use applicationAutoCommit instead.
 	private Random random;
 	private LogSystem logSystem;
 	private int lockTimeout;
@@ -103,6 +107,12 @@ public class Session extends SessionWithState {
 	private Table waitForLock;
 	private int modificationId;
 	private int modificationIdState;
+	
+	
+	/*
+	 * The auto commit field that an external application can actually control in H2O.
+	 */
+	private boolean applicationAutoCommit = true;
 
 	public Session(Database database, User user, int id) { //TODO remove public identifier - only needed for RMI tests
 		this.database = database;
@@ -358,9 +368,9 @@ public class Session extends SessionWithState {
 	 * @param b the new value
 	 */
 	public void setAutoCommit(boolean b) {
-		autoCommit = b;
+		//autoCommit = b;
 		
-		assert !autoCommit;
+		assert false; 
 	}
 
 	public int getLockTimeout() {
@@ -442,6 +452,19 @@ public class Session extends SessionWithState {
 	 * @param ddl if the statement was a data definition statement
 	 */
 	public void commit(boolean ddl) throws SQLException {
+		commit(ddl, false);
+	}
+	
+	/**
+	 * Commit the current transaction. If the statement was not a data
+	 * definition statement, and if there are temporary tables that should be
+	 * dropped or truncated at commit, this is done as well.
+	 *
+	 * @param ddl if the statement was a data definition statement
+	 * @param hasAlreadyCommittedQueryProxy true if the calling command/method has already
+	 * called commit on the transactions queryProxyManager object, meaning it shouldn't be called again.
+	 */
+	public void commit(boolean ddl, boolean hasAlreadyCommittedQueryProxy) throws SQLException {
 		checkCommitRollback();
 		lastUncommittedDelete = 0;
 		currentTransactionName = null;
@@ -488,6 +511,12 @@ public class Session extends SessionWithState {
 			}
 			unlinkMap = null;
 		}
+		
+		if (!applicationAutoCommit && currentTransactionLocks != null && !ddl && !hasAlreadyCommittedQueryProxy){
+			currentTransactionLocks.commit(true);
+			currentTransactionLocks = null;
+		}
+		
 		unlockAll();
 	}
 
@@ -785,7 +814,7 @@ public class Session extends SessionWithState {
 	public void setPreparedTransaction(String transactionName, boolean commit) throws SQLException {
 		if (currentTransactionName != null && currentTransactionName.equals(transactionName)) {
 			if (commit) {
-				commit(false);
+				commit(false, true);
 			} else {
 				rollback();
 			}
@@ -1139,6 +1168,28 @@ public class Session extends SessionWithState {
 			return ValueNull.INSTANCE;
 		}
 		return ValueString.get(firstUncommittedLog+"-" + firstUncommittedPos + "-" + id);
+	}
+
+	public void setApplicationAutoCommit(boolean applicationAutoCommit) {
+		this.applicationAutoCommit = applicationAutoCommit;
+	}
+	
+	public boolean getApplicationAutoCommit(){
+		return applicationAutoCommit;
+	}
+
+	/**
+	 * @return the currentTransactionLocks
+	 */
+	public QueryProxyManager getCurrentTransactionLocks() {
+		return currentTransactionLocks;
+	}
+
+	/**
+	 * @param currentTransactionLocks the currentTransactionLocks to set
+	 */
+	public void setCurrentTransactionLocks(QueryProxyManager currentTransactionLocks) {
+		this.currentTransactionLocks = currentTransactionLocks;
 	}
 
 

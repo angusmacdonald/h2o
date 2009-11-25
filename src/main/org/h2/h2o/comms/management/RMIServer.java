@@ -87,16 +87,13 @@ public abstract class RMIServer {
 	 * @throws RemoteException 
 	 */
 	private void locateRegistry(String host, int port, boolean startup) throws RemoteException{
-			if (host == null){
-				registry = LocateRegistry.getRegistry(port);
-			} else {
-				registry = LocateRegistry.getRegistry(host, port);
-			}
+		registry = LocateRegistry.getRegistry(host, port);
+
 
 		if (startup) unbindExistingManagers();
 
 	}
-	
+
 	/**
 	 * Test that a data manager / database instance can be accessed.
 	 * @param interfaceName	The name given to a data manager in the registry.
@@ -153,11 +150,11 @@ public abstract class RMIServer {
 	 */
 	public void removeRegistryObject(String objectName, boolean removeLocalOnly) throws NotBoundException {
 		if (removeLocalOnly) return;
-		
+
 		try {
-			
+
 			registry.unbind(objectName);
-		
+
 		}  catch (AccessException e) {
 			ErrorHandling.errorNoEvent(e, "Didn't have permission to perform unbind operation on RMI registry.");
 		} catch (RemoteException e) {

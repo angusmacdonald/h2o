@@ -11,6 +11,8 @@ import java.sql.Statement;
 
 import org.h2.engine.Constants;
 import org.h2.engine.SchemaManager;
+import org.h2.h2o.util.DatabaseURL;
+import org.h2.h2o.util.H2oProperties;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;
 import org.junit.After;
@@ -32,14 +34,22 @@ public class SchemaManagerTests {
 	@BeforeClass
 	public static void initialSetUp(){
 		Diagnostic.setLevel(Diagnostic.FULL);
-		
+
 		try {
 			DeleteDbFiles.execute(BASEDIR, "schema_test", true);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+
+		H2oProperties properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"));
+
+		properties.createNewFile();
+		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
+		properties.setProperty("schemaManagerLocation", "jdbc:h2:sm:mem:one");
+
+		properties.saveAndClose();
 	}
-	
+
 	/**
 	 * @throws java.lang.Exception
 	 */
@@ -57,7 +67,7 @@ public class SchemaManagerTests {
 	@After
 	public void tearDown() throws Exception {
 		TestBase.closeDatabaseCompletely();
-		
+
 		try {
 			DeleteDbFiles.execute(BASEDIR, "schema_test", true);
 		} catch (SQLException e) {
@@ -105,7 +115,7 @@ public class SchemaManagerTests {
 			// stop the server
 			server.stop();
 
-	
+
 		}
 
 
@@ -476,7 +486,7 @@ public class SchemaManagerTests {
 	public void testPrimaryCopyUnique(){
 		org.h2.Driver.load();
 		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
-		
+
 		try{
 			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
 			Statement sa = ca.createStatement();
@@ -502,7 +512,7 @@ public class SchemaManagerTests {
 			rs.close();
 
 			sa.execute("DROP TABLE TEST;");
-			
+
 			sa.close();
 			sb.close();
 			ca.close();

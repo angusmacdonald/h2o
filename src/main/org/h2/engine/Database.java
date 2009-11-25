@@ -239,9 +239,12 @@ public class Database implements DataHandler {
 	 * a schema manager.
 	 */
 	private H2oProperties persistedInstanceInformation;
-
+	
+	private H2oProperties databaseSettings;
 
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
+
+		Diagnostic.setLevel((Diagnostic.NONE));
 
 		//Ensure testing constants are all set to false.
 		Constants.IS_TESTING_PRE_COMMIT_FAILURE = false;
@@ -326,6 +329,7 @@ public class Database implements DataHandler {
 				}
 			}
 		} catch (Throwable e) {
+			e.printStackTrace();
 			if (traceSystem != null) {
 				if (e instanceof SQLException) {
 					SQLException e2 = (SQLException) e;
@@ -708,7 +712,10 @@ public class Database implements DataHandler {
 		if (Constants.IS_H2O && !isManagementDB()){ //don't run this code with the TCP server management DB
 
 			persistedInstanceInformation = new H2oProperties(this.getDatabaseURL(), "instances");
-
+			databaseSettings = new H2oProperties(this.getDatabaseURL());
+			
+			boolean databaseSettingsExist = databaseSettings.loadProperties();
+			
 			boolean propertiesExist = persistedInstanceInformation.loadProperties();
 
 			this.isSchemaManager = ci.isSchemaManager();
@@ -734,15 +741,27 @@ public class Database implements DataHandler {
 				//XXX THE FOLLOWING LINE DOESN'T WORK BECAUSE IT MEANS THE MEM:TWO DATABASE TRIES TO MAKE ITSELF A SCHEMA MANAGER.
 				//this.schemaManagerLocation = DatabaseURL.parseURL(ci.getSchemaManagerLocation());
 
-				this.schemaManagerLocation = DatabaseURL.parseURL(Constants.DEFAULT_SCHEMA_MANAGER_LOCATION);
+				//this.schemaManagerLocation = DatabaseURL.parseURL("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test");
+
+				//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
 
 
-				if (Constants.IS_TESTING_H2_TESTS) this.schemaManagerLocation = null;
-
+				if (databaseSettingsExist){
+					this.schemaManagerLocation = DatabaseURL.parseURL(databaseSettings.getProperty("schemaManagerLocation"));
+				} else {
+					this.schemaManagerLocation = null;
+				}
+				
+				
 				if (schemaManagerLocation == null){
 					schemaManagerLocation = getDatabaseURL(); //no schema manager location was specified. Use the local machine.
 					isSchemaManager = true;
+				
+				} else if (schemaManagerLocation.equals(localMachineLocation)){
+					this.isSchemaManager = true;
 				}
+			
+				                                                              
 
 				schemaManagerFound = true;
 			} else if (databaseExists){
@@ -791,9 +810,16 @@ public class Database implements DataHandler {
 							//Will happen if there isn't a schema manager there.
 						}
 					}
-				} 
+				} // end of check for other schema managers.
+
+				if (!schemaManagerFound){ //We looked everywhere and didn't find a schema manager. Make this the schema manager.
+					this.isSchemaManager = true;
+					this.schemaManagerLocation = getDatabaseURL();
+					
+				}
 			}
 
+			
 			if (schemaManagerFound && !this.isSchemaManager){
 				/*
 				 * Schema manager is remote.
@@ -825,6 +851,9 @@ public class Database implements DataHandler {
 
 			assert this.schemaManagerLocation != null;
 
+			this.databaseSettings.setProperty("schemaManagerLocation", this.schemaManagerLocation.getUrlMinusSM());
+			
+			
 			try {
 				dataManagerLocator = new DataManagerLocator(schemaManagerLocation.getHostname(), schemaManagerLocation.getPort()+1);
 			} catch (RemoteException e) {
@@ -838,6 +867,7 @@ public class Database implements DataHandler {
 			 */
 			Diagnostic.traceNoEvent(Diagnostic.FULL, "Creating remote proxy for database instance: " + getDatabaseURL().getURL());
 			databaseInstance = new DatabaseInstance(getDatabaseURL(), systemSession); 
+
 			databaseInstanceLocator.registerDatabaseInstance(databaseInstance);
 		}
 
@@ -2836,7 +2866,7 @@ public class Database implements DataHandler {
 	 * @return
 	 */
 	public DatabaseInstanceRemote getLocalDatabaseInstance() {
-		return getDatabaseInstance(getDatabaseURL().getUrlMinusSM());
+		return databaseInstance;
 	}
 
 	public void removeLocalDatabaseInstance(){

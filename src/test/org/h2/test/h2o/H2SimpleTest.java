@@ -11,6 +11,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.h2.engine.Constants;
+import org.h2.h2o.util.DatabaseURL;
+import org.h2.h2o.util.H2oProperties;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.util.ScriptReader;
 import org.junit.Test;
@@ -30,7 +32,13 @@ public class H2SimpleTest {
 	@Test
 	public void largeTest() throws Exception {
 
-
+		H2oProperties properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:scriptSimple"));
+		
+		properties.createNewFile();
+		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
+		properties.setProperty("schemaManagerLocation", "jdbc:h2:db_data/test/scriptSimple");
+		
+		properties.saveAndClose();
 		Constants.IS_TESTING_H2_TESTS = true;
 
 

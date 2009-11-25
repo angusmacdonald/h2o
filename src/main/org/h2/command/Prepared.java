@@ -74,6 +74,8 @@ public abstract class Prepared{
 
 	protected boolean internalQuery;
 
+	private boolean preparedStatement = false;
+
 	/**
 	 * Create a new object.
 	 *
@@ -552,5 +554,22 @@ public abstract class Prepared{
 	public void setInternalQuery(boolean internalQuery) {
 		this.internalQuery = internalQuery;
 	}
+
+	/**
+	 * @param preparedStatement
+	 */
+	public void setPreparedStatement(boolean preparedStatement) {
+		this.preparedStatement  = preparedStatement;
+	}
+
+	/**
+	 * @return the preparedStatement
+	 */
+	public boolean isPreparedStatement() {
+		return sqlStatement.contains("?");
+		//return preparedStatement;
+	}
+	
+	
 
 }

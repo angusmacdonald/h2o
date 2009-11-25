@@ -61,6 +61,9 @@ public class Delete extends Prepared {
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
 		if (isRegularTable()){
+			if (queryProxy == null){
+				System.out.println("what?");
+			}
 			return queryProxy.executeUpdate(sqlStatement, transactionName, session);
 		}
         

@@ -444,6 +444,7 @@ public class ConstraintReferential extends Constraint {
             // TODO multithreaded kernel: this works only if nobody else updates
             // this or the ref table at the same time
             skipOwnTable = true;
+            prep.setInternalQuery(true);
             prep.update();
         } finally {
             skipOwnTable = false;

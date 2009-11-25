@@ -14,6 +14,7 @@ import org.h2.engine.Constants;
 import org.h2.engine.SessionRemote;
 import org.h2.expression.ParameterInterface;
 import org.h2.expression.ParameterRemote;
+import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.message.Trace;
 import org.h2.message.TraceObject;
 import org.h2.result.ResultInterface;
@@ -21,6 +22,8 @@ import org.h2.result.ResultRemote;
 import org.h2.util.ObjectArray;
 import org.h2.value.Transfer;
 import org.h2.value.Value;
+
+import uk.ac.stand.dcs.nds.util.ErrorHandling;
 
 /**
  * Represents the client-side part of a SQL statement.
@@ -262,5 +265,38 @@ public class CommandRemote implements CommandInterface {
     public String toString() {
         return TraceObject.toString(sql, getParameters());
     }
+
+	/* (non-Javadoc)
+	 * @see org.h2.command.CommandInterface#getQueryProxyManager()
+	 */
+	@Override
+	public QueryProxyManager getQueryProxyManager() {
+		ErrorHandling.hardError("Didn't expect this to be called.");
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.command.CommandInterface#executeUpdate(boolean)
+	 */
+	@Override
+	public int executeUpdate(boolean isMultiQueryTransaction) throws SQLException {
+		return executeUpdate();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.command.CommandInterface#isPreparedStatement(boolean)
+	 */
+	@Override
+	public void setIsPreparedStatement(boolean preparedStatement) {
+		//ErrorHandling.hardError("Didn't expect this to be called.");
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.h2.command.Command#addQueryProxyManager(org.h2.h2o.comms.QueryProxyManager)
+	 */
+	@Override
+	public void addQueryProxyManager(QueryProxyManager proxyManager) {
+		//ErrorHandling.hardError("Didn't expect this to be called.");
+	}
 
 }

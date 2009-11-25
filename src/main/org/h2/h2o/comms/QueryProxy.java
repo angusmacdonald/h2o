@@ -324,7 +324,7 @@ public class QueryProxy implements Serializable{
 	 * @return
 	 */
 	public int getNumberOfReplicas() {
-		return allReplicas.size();
+		return (allReplicas == null)? 0: allReplicas.size();
 	}
 
 

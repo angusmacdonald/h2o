@@ -1044,6 +1044,7 @@ public class JdbcConnection extends TraceObject implements Connection {
     CommandInterface prepareCommand(String sql, int fetchSize) throws SQLException {
         return session.prepareCommand(sql, fetchSize);
     }
+   
 
     private CommandInterface prepareCommand(String sql, CommandInterface old) throws SQLException {
         return old == null ? session.prepareCommand(sql, Integer.MAX_VALUE) : old;
@@ -1587,5 +1588,6 @@ public class JdbcConnection extends TraceObject implements Connection {
         }
         return o;
     }
+
 
 }

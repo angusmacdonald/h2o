@@ -411,6 +411,9 @@ public class ConnectionInfo implements Cloneable {
 	 * @return the user name
 	 */
 	public String getUserName() {
+		String u = user;
+		if (u.charAt(0) =='"') u = u.substring(1);
+		if (u.charAt(u.length()-1) =='"') u = u.substring(0, u.length()-1);
 		return user;
 	}
 

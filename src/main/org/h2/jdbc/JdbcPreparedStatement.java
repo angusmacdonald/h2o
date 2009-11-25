@@ -27,6 +27,7 @@ import java.util.Calendar;
 import org.h2.command.CommandInterface;
 import org.h2.constant.ErrorCode;
 import org.h2.expression.ParameterInterface;
+import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.message.Message;
 import org.h2.message.TraceObject;
 import org.h2.result.ResultInterface;
@@ -65,7 +66,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
     private final String sql;
     private CommandInterface command;
     private ObjectArray batchParameters;
-
+	
     JdbcPreparedStatement(JdbcConnection conn, String sql, int resultSetType, int id,
                 boolean closeWithResultSet) throws SQLException {
         super(conn, resultSetType, id, closeWithResultSet);
@@ -125,18 +126,21 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
         try {
             debugCodeCall("executeUpdate");
             checkClosed();
-            return executeUpdateInternal();
+            return executeUpdateInternal(false);
         } catch (Exception e) {
             throw logAndConvert(e);
         }
     }
 
-    private int executeUpdateInternal() throws SQLException {
+    private int executeUpdateInternal(boolean isMultiQueryTransaction) throws SQLException {
         closeOldResultSet();
         synchronized (session) {
             try {
                 setExecutingStatement(command);
-                updateCount = command.executeUpdate();
+                //command.addQueryProxyManager(proxyManager);
+                
+                updateCount = command.executeUpdate(); //TODO set to false, so each one runs as a seperate transaction
+               // proxyManager = command.getQueryProxyManager();
             } finally {
                 setExecutingStatement(null);
             }
@@ -1036,6 +1040,11 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
                 // TODO batch: check what other database do if no parameters are set
                 batchParameters = new ObjectArray();
             }
+            
+            command.setIsPreparedStatement(true);
+            
+            boolean previousAutoCommit = conn.getAutoCommit();
+            conn.setAutoCommit(false);
             int[] result = new int[batchParameters.size()];
             boolean error = false;
             SQLException next = null;
@@ -1048,7 +1057,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
                     param.setValue(value, false);
                 }
                 try {
-                    result[i] = executeUpdateInternal();
+                    result[i] = executeUpdateInternal(batchParameters.size()>1);
                 } catch (SQLException e) {
                     if (next == null) {
                         next = e;
@@ -1063,14 +1072,27 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
                     error = true;
                 }
             }
+            
+            
+            int numOfParameters = batchParameters.size();
+            
             batchParameters = null;
             if (error) {
+            	//proxyManager.commit(false);
+            	conn.rollback();
                 JdbcBatchUpdateException e = new JdbcBatchUpdateException(next, result);
                 e.setNextException(next);
                 throw e;
+            } else {
+            	//proxyManager.commit(true);
+            	conn.commit();
             }
+            
+            conn.setAutoCommit(previousAutoCommit);
+            
             return result;
         } catch (Exception e) {
+        	//if (proxyManager != null) proxyManager.commit(false);
             throw logAndConvert(e);
         }
     }

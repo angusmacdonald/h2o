@@ -106,10 +106,13 @@ public class TransactionCommand extends Prepared {
     public int update() throws SQLException {
         switch (type) {
         case AUTOCOMMIT_TRUE:
-            session.setAutoCommit(true);
+            //session.setAutoCommit(true);
+        	session.setApplicationAutoCommit(true);
             break;
         case AUTOCOMMIT_FALSE:
-            session.setAutoCommit(false);
+            //Old H2 Code: session.setAutoCommit(false);
+        	//New H2O code:
+        	session.setApplicationAutoCommit(false);
             break;
         case BEGIN:
             session.begin();

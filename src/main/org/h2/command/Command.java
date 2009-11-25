@@ -252,6 +252,7 @@ public abstract class Command implements CommandInterface {
                         }
                         throw e;
                     } catch (Throwable e) {
+                    	e.printStackTrace();
                         throw Message.convert(e);
                     }
                 }
@@ -326,5 +327,4 @@ public abstract class Command implements CommandInterface {
 		return command.shouldBePropagated();
 	}
 
-	protected abstract void addQueryProxyManager(QueryProxyManager proxyManager);
 }

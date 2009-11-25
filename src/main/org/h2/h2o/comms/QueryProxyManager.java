@@ -4,6 +4,8 @@ import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -52,7 +54,7 @@ public class QueryProxyManager {
 	 */
 	private int updateID = 0;
 
-	private Set<String> queries;
+	private List<String> queries;
 
 	/**
 	 * 
@@ -63,7 +65,7 @@ public class QueryProxyManager {
 	public QueryProxyManager(Database db, Session session){
 		this(db, session, false);
 
-		if (Diagnostic.getLevel() == Diagnostic.FULL) queries = new HashSet<String>();
+		if (Diagnostic.getLevel() == Diagnostic.FULL) queries = new LinkedList<String>();
 	}
 
 	/**
@@ -310,7 +312,7 @@ public class QueryProxyManager {
 		this.queries.add(sql);
 	}
 
-	public Set<String> getSQL(){
+	public List<String> getSQL(){
 		return this.queries;
 	}
 

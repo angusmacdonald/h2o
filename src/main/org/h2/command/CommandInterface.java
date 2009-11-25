@@ -8,6 +8,7 @@ package org.h2.command;
 
 import java.sql.SQLException;
 
+import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.result.ResultInterface;
 import org.h2.util.ObjectArray;
 
@@ -62,4 +63,25 @@ public interface CommandInterface {
      * @return the empty result
      */
     ResultInterface getMetaData() throws SQLException;
+
+	/**
+	 * @param proxyManager
+	 */
+	void addQueryProxyManager(QueryProxyManager proxyManager);
+
+	/**
+	 * @return
+	 */
+	QueryProxyManager getQueryProxyManager();
+
+	/**
+	 * @param isMultiQueryTransaction
+	 * @return
+	 */
+	int executeUpdate(boolean isMultiQueryTransaction) throws SQLException;
+
+	/**
+	 * @param b
+	 */
+	void setIsPreparedStatement(boolean preparedStatement);
 }

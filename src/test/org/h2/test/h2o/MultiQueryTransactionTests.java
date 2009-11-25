@@ -2,10 +2,16 @@ package org.h2.test.h2o;
 
 import static org.junit.Assert.fail;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import org.h2.engine.Constants;
+import org.h2.tools.DeleteDbFiles;
+import org.h2.tools.Server;
 import org.junit.Test;
 
 
@@ -425,55 +431,281 @@ public class MultiQueryTransactionTests extends TestBase{
 		}
 	}
 
+//	/**
+//	 * Tests that when a transaction fails to create a table the schema manager
+//	 * is not updated with information on that table.
+//	 * 
+//	 * <p>TESTS AFTER A CREATE TABLE STATEMENT HAS BEEN RUN, AND AFTER SOME INSERTS
+//	 * INTO THAT TABLE.
+//	 */
+//	@Test
+//	public void testSchemaManagerContentsAfterInsert(){
+//		try{
+//
+//			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
+//
+//			ResultSet rs = sa.getResultSet();
+//
+//			if (rs.next() && rs.next()){
+//				fail("There should only be one table in the schema manager.");
+//			}
+//
+//			Constants.IS_TESTING_QUERY_FAILURE = true;
+//
+//			try{
+//				createSecondTable(sb, "TEST2");
+//				fail("This should have failed.");
+//			} catch (SQLException e){
+//				//Expected.
+//			}
+//
+//			try {
+//				sa.execute("SELECT * FROM TEST2");
+//				fail("This should have failed: the transaction was not committed.");
+//			} catch (SQLException e){
+//				//Expected.
+//			}
+//
+//
+//			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
+//
+//			rs = sa.getResultSet();
+//
+//			if (rs.next() && rs.next()){
+//				fail("There should only be one table in the schema manager.");
+//			}
+//		} catch (SQLException e){
+//			e.printStackTrace();
+//			fail("An Unexpected SQLException was thrown.");
+//		}
+//	}
+
 	/**
-	 * Tests that when a transaction fails to create a table the schema manager
-	 * is not updated with information on that table.
-	 * 
-	 * <p>TESTS AFTER A CREATE TABLE STATEMENT HAS BEEN RUN, AND AFTER SOME INSERTS
-	 * INTO THAT TABLE.
+	 * Test executing a set of queries where the external application explicitly turns auto-commit off.
 	 */
 	@Test
-	public void testSchemaManagerContentsAfterInsert(){
-		try{
+	public void testAutoCommitOffExternal(){
 
-			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
+		try {
+			ca.setAutoCommit(false);
 
-			ResultSet rs = sa.getResultSet();
+			//Execute some queries
 
-			if (rs.next() && rs.next()){
-				fail("There should only be one table in the schema manager.");
-			}
+			sa.execute("INSERT INTO TEST VALUES(3, 'Quite');");
+			sa.execute("INSERT INTO TEST VALUES(4, 'A');");
+			sa.execute("INSERT INTO TEST VALUES(5, 'Few');");
+			sa.execute("INSERT INTO TEST VALUES(6, 'Cases');");
 
-			Constants.IS_TESTING_QUERY_FAILURE = true;
+			ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
+			cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
+
+			Statement sa2 = ca.createStatement();
 
 			try{
-				createSecondTable(sb, "TEST2");
-				fail("This should have failed.");
-			} catch (SQLException e){
-				//Expected.
+				sa2.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
+				fail("Query timeout expected.");
+
+			}catch(SQLException e){
+				//Timeout expected.
 			}
+			
+		
+			//Commit
+			ca.commit();
 
-			try {
-				sa.execute("SELECT * FROM TEST2");
-				fail("This should have failed: the transaction was not committed.");
-			} catch (SQLException e){
-				//Expected.
-			}
+			//Check that changes have now been committed.
 
+			sa.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
 
-			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
+			int[] pKey2 = {1, 2, 3, 4, 5, 6};
+			String[] secondCol2 = {"Hello", "World", "Quite", "A", "Few", "Cases"};
 
-			rs = sa.getResultSet();
+			validateResults(pKey2, secondCol2, sa.getResultSet());
 
-			if (rs.next() && rs.next()){
-				fail("There should only be one table in the schema manager.");
-			}
-		} catch (SQLException e){
+			sa.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
+
+			ca.setAutoCommit(true);
+
+		} catch (SQLException e) {
 			e.printStackTrace();
 			fail("An Unexpected SQLException was thrown.");
 		}
 	}
 
+
+	/**
+	 * Tests that prepared statements work in the system where no replication is involved.
+	 */
+	@Test
+	public void testPreparedStatementsNoReplication(){
+
+		PreparedStatement mStmt = null;
+		try
+		{
+			mStmt = ca.prepareStatement( "insert into PUBLIC.TEST (id,name) values (?,?)" );
+
+
+			for (int i = 3; i < 100; i++){
+				mStmt.setInt(1, i);
+				mStmt.setString(2, "helloNumber" + i);
+				mStmt.addBatch();
+			}
+
+			mStmt.executeBatch();
+
+			int[] pKey = new int[100];
+			String[] secondCol = new String[100];
+
+			pKey[0] = 1; pKey[1] = 2;
+			secondCol[0] = "Hello"; secondCol[1] = "World";
+
+			TestQuery test2query = createMultipleInsertStatements("TEST", pKey, secondCol, 3);
+
+			sa.execute("SELECT LOCAL * FROM PUBLIC.TEST ORDER BY ID;");
+
+			validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
+
+		} catch ( SQLException ex ) {
+			ex.printStackTrace();
+			fail("Unexpected SQL Exception was thrown. Not cool.");
+		} 
+	}
+
+	/**
+	 * Tests that prepared statements work in the system where replication is involved.
+	 */
+	@Test
+	public void testPreparedStatementsReplication(){
+
+
+		PreparedStatement mStmt = null;
+		try
+		{
+			createReplicaOnB();
+
+
+			mStmt = cb.prepareStatement( "insert into PUBLIC.TEST (id,name) values (?,?)" );
+
+
+			for (int i = 3; i < 100; i++){
+				mStmt.setInt(1, i);
+				mStmt.setString(2, "helloNumber" + i);
+				mStmt.addBatch();
+			}
+
+			mStmt.executeBatch();
+
+			int[] pKey = new int[100];
+			String[] secondCol = new String[100];
+
+			pKey[0] = 1; pKey[1] = 2;
+			secondCol[0] = "Hello"; secondCol[1] = "World";
+
+			TestQuery test2query = createMultipleInsertStatements("TEST", pKey, secondCol, 3);
+
+			/*
+			 * If the query hangs and fails at this point its probably because the lock isn't being relinquished when executeBatch is called.
+			 */
+			sa.execute("SELECT LOCAL * FROM PUBLIC.TEST ORDER BY ID;");
+
+			validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
+
+		} catch ( SQLException ex ) {
+			ex.printStackTrace();
+			fail("Unexpected SQL Exception was thrown. Not cool.");
+		}
+	}
+
+	/**
+	 * Tests that prepared statements work in the system where no replication is involved, and the connection
+	 * is made through a TCP server. This test uses some of the *Remote classes in H2 which have slightly different
+	 * behaviour.
+	 */
+	@Test
+	public void testPreparedStatementsTcpServer(){
+		try {
+			DeleteDbFiles.execute("db_data/unittests/", "schema_test", true);
+		} catch (SQLException e) { }
+		Connection conn = null;
+		// start the server, allows to access the database remotely
+		Server server = null;
+		try {
+			server = Server.createTcpServer(new String[] { "-tcpPort", "9081", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test" });
+			server.start();
+
+			Class.forName("org.h2.Driver");
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", "sa", "sa");
+
+			Statement sa = conn.createStatement();
+
+			sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+			sa.execute("INSERT INTO TEST VALUES(1, 'Hello');");
+			sa.execute("INSERT INTO TEST VALUES(2, 'World');");
+
+			server.shutdown();
+			server.stop();
+
+			server = Server.createTcpServer(new String[] { "-tcpPort", "9081", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test" });
+
+			server.start();
+
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", "sa", "sa");
+
+
+			PreparedStatement mStmt = conn.prepareStatement( "insert into PUBLIC.TEST (id,name) values (?,?)" );
+
+
+			for (int i = 3; i < 100; i++){
+				mStmt.setInt(1, i);
+				mStmt.setString(2, "helloNumber" + i);
+				mStmt.addBatch();
+			}
+
+			mStmt.executeBatch();
+
+			int[] pKey = new int[100];
+			String[] secondCol = new String[100];
+
+			pKey[0] = 1; pKey[1] = 2;
+			secondCol[0] = "Hello"; secondCol[1] = "World";
+
+			TestQuery test2query = createMultipleInsertStatements("TEST", pKey, secondCol, 3);
+
+			sa = conn.createStatement();
+
+			sa.execute("SELECT LOCAL * FROM PUBLIC.TEST ORDER BY ID;");
+
+
+			validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
+
+
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+			fail("Unexpected SQL Exception was thrown. Not cool.");
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				conn.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+
+			// stop the server
+			server.stop();
+
+			try {
+				DeleteDbFiles.execute("db_data/unittests/", "schema_test", true);
+			} catch (SQLException e) {}
+		}
+
+	}
+
+	/*
+	 * ###############
+	 * Utility Methods
+	 * ###############
+	 */
 
 	/**
 	 * Creates lots of insert statements for testing.

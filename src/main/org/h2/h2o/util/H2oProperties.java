@@ -35,16 +35,16 @@ public class H2oProperties {
 	 */
 	public H2oProperties(DatabaseURL dbURL, String appendum) {
 		this();
-		this.propertiesFileLocation = dbURL.getDbLocationWithoutSlashes() + ((appendum != null)? "." + appendum: "") + ".properties";
+		this.propertiesFileLocation = dbURL.getDbLocationWithoutIllegalCharacters() + ((appendum != null)? "." + appendum: "") + ".properties";
 	}
 
 	public H2oProperties(DatabaseURL dbURL) {
 		this(dbURL, null);
-		
+
 	}
 
 	public void setPropertiesFileLocation(DatabaseURL dbURL) {
-		this.propertiesFileLocation = dbURL.getDbLocationWithoutSlashes() + ".properties";
+		this.propertiesFileLocation = dbURL.getDbLocationWithoutIllegalCharacters() + ".properties";
 	}
 
 	public boolean loadProperties(){
@@ -75,20 +75,20 @@ public class H2oProperties {
 	 */
 	public void createNewFile() {
 		removePropertiesFile();
-		
+
 		File f = new File(propertiesFileLocation);
 		try {
 			f.createNewFile();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		try {
 			this.fis = new FileInputStream(propertiesFileLocation);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	public String getProperty(String key) {
@@ -133,6 +133,20 @@ public class H2oProperties {
 		return f.delete();
 	}
 
+
+	/**
+	 * 
+	 */
+	public void saveAndClose() {
+		try {
+			if (fos != null) fos.close();
+
+			if (fis != null) fis.close();
+
+		} catch (IOException e) {
+		}
+	}
+
 	/*
 	 * ####################################################
 	 * 
@@ -171,7 +185,7 @@ public class H2oProperties {
 
 		testProperties(testProp);
 
-		File f = new File(dbURL.getDbLocationWithoutSlashes() + ".appended.properties");
+		File f = new File(dbURL.getDbLocationWithoutIllegalCharacters() + ".appended.properties");
 
 		assertTrue(f.exists());
 
@@ -189,7 +203,7 @@ public class H2oProperties {
 
 		testProperties(testProp);
 
-		File f = new File(dbURL.getDbLocationWithoutSlashes() + "lalala.properties");
+		File f = new File(dbURL.getDbLocationWithoutIllegalCharacters() + "lalala.properties");
 
 		assertFalse(f.exists());
 
@@ -281,6 +295,7 @@ public class H2oProperties {
 	public Set<Object> getKeys() {
 		return properties.keySet();
 	}
+
 
 
 }

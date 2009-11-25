@@ -83,37 +83,46 @@ public class Insert extends Prepared{
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
 		if (isRegularTable()){
-			
+
 			queryProxy = queryProxyManager.getQueryProxy(table.getFullName());
 
 			if (queryProxy == null){
-			queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, session.getDatabase());
+				queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, session.getDatabase());
 			}
-			
+
 			return queryProxy;
 		}
-		
+
 		return QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstance());
-		
+
 	}
 
 	public int update() throws SQLException {
 		return update(null);
 	}
-	
+
 	@Override
 	public int update(String transactionName) throws SQLException {
 		int count = 0;
-		
+
 		session.getUser().checkRight(table, Right.INSERT);
 
 		/*
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
-		if (isRegularTable()){
-			return queryProxy.executeUpdate(sqlStatement, transactionName, session);
+		if (isRegularTable() ){ // && queryProxy.getNumberOfReplicas() > 1
+
+			String sql;
+			
+			if (isPreparedStatement()){
+				sql = adjustForPreparedStatement();
+			} else {
+				sql = sqlStatement;
+			}
+			
+			return queryProxy.executeUpdate(sql, transactionName, session);
 		}
-		
+
 		setCurrentRowNumber(0);
 		if (list.size() > 0) {
 			count = 0;
@@ -178,6 +187,55 @@ public class Insert extends Prepared{
 			table.fireAfter(session);
 		}
 		return count;
+	}
+
+	/**
+	 * Adjusts the sqlStatement string to be a valid prepared statement. This is used when propagating prepared
+	 * statements within the system.
+	 * @param sql
+	 * @return
+	 * @throws SQLException
+	 */
+	private String adjustForPreparedStatement() throws SQLException {
+
+		//Adjust the sqlStatement string to contain actual data.
+
+		//if this is a prepared statement the SQL must look like: insert into PUBLIC.TEST (id,name) values (?,?) {1: 99, 2: 'helloNumber99'};
+		//use the loop structure from below to obtain this information. how do you know if it is a prepared statement.
+
+		Expression[] expr = (Expression[]) list.get(0);
+		String[] values = new String[columns.length];
+
+		for (int i = 0; i < columns.length; i++) {
+			Column c = columns[i];
+			int index = c.getColumnId();
+			Expression e = expr[i];
+			if (e != null) {
+				// e can be null (DEFAULT)
+				e = e.optimize(session);
+				try {
+					Value v = e.getValue(session).convertTo(c.getType());
+					values[i] = v.toString();
+					//newRow.setValue(index, v);
+				} catch (SQLException ex) {
+					throw setRow(ex, 0, getSQL(expr));
+				}
+			}
+		}
+
+		//Edit the SQL String
+		//insert into PUBLIC.TEST (id,name) values (?,?) {1: 99, 2: 'helloNumber99'};
+
+		String sql = new String(sqlStatement) + " {";
+
+		for (int i = 1; i <= columns.length; i++){
+			sql += i + ": " + values[i-1];
+
+			if (i < columns.length) sql += ", ";
+		}
+		sql += "};";
+
+		return sql;
 	}
 
 	@Override
@@ -276,6 +334,6 @@ public class Insert extends Prepared{
 		 */
 		return isRegularTable();
 	}
-	
-	
+
+
 }

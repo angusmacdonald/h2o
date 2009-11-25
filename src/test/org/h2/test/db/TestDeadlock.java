@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 import org.h2.constant.ErrorCode;
+import org.h2.engine.Constants;
 import org.h2.test.TestBase;
 
 /**
@@ -39,6 +40,7 @@ public class TestDeadlock extends TestBase {
      * @param a ignored
      */
     public static void main(String[] a) throws Exception {
+    	Constants.IS_TESTING_H2_TESTS = true;
         TestBase.createCaller().init().test();
     }
 
@@ -251,6 +253,8 @@ public class TestDeadlock extends TestBase {
     }
 
     private void checkDeadlock() throws SQLException {
+    	if (lastException != null) lastException.printStackTrace();
+    	
         assertTrue(lastException != null);
         assertKnownException(lastException);
         assertEquals(ErrorCode.DEADLOCK_1, lastException.getErrorCode());

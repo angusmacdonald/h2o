@@ -37,7 +37,7 @@ public class TransactionNameGenerator {
 					hostname = "local";
 				}
 				
-				part = (dbURL.isTcp()? hostname.replace(".", "") + dbURL.getPort(): "") + dbURL.getDbLocationWithoutSlashes();
+				part = (dbURL.isTcp()? hostname.replace(".", "") + dbURL.getPort(): "") + dbURL.getDbLocationWithoutIllegalCharacters();
 			} catch (RemoteException e) {
 				part = "UnknownDB";
 			}

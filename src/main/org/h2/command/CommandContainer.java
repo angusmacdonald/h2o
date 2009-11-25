@@ -26,7 +26,7 @@ public class CommandContainer extends Command {
 
 	private Prepared prepared;
 
-	private QueryProxyManager queryProxyManager = null;
+	private QueryProxyManager proxyManager = null;
 
 	CommandContainer(Parser parser, String sql, Prepared prepared) {
 		super(parser, sql);
@@ -37,7 +37,14 @@ public class CommandContainer extends Command {
 		 * If this command is part of a larger transaction then this query proxy manager will be
 		 * over-written later on by a call from the Command list class. 
 		 */
-		this.queryProxyManager = new QueryProxyManager(getSession().getDatabase(), getSession());
+		if (!session.getApplicationAutoCommit() && session.getCurrentTransactionLocks() != null){
+			//Diagnostic.traceNoEvent(Diagnostic.FULL, "Using an existing proxy manager.");
+			this.proxyManager = session.getCurrentTransactionLocks();
+		} else {
+			//Diagnostic.traceNoEvent(Diagnostic.FULL, "Creating a new proxy manager.");
+			this.proxyManager = new QueryProxyManager(parser.getSession().getDatabase(), getSession());
+			session.setCurrentTransactionLocks(this.proxyManager);
+		}
 	}
 
 	public ObjectArray getParameters() {
@@ -124,20 +131,20 @@ public class CommandContainer extends Command {
 		boolean singleQuery = !partOfMultiQueryTransaction, transactionCommand = prepared.isTransactionCommand();
 
 		if (!transactionCommand){ //Not a prepare or commit.
-			assert(queryProxyManager != null);
+			assert(proxyManager != null);
 
 			//Acquire distributed locks. 
-			QueryProxy proxy = this.acquireLocks(queryProxyManager); 
+			QueryProxy proxy = this.acquireLocks(proxyManager); 
 
 			assert(proxy != null);
 
-			queryProxyManager.addProxy(proxy);	//checks that a lock is held for table, then adds the proxy.
+			proxyManager.addProxy(proxy);	//checks that a lock is held for table, then adds the proxy.
 
 			if (Diagnostic.getLevel() == Diagnostic.FULL){
-				queryProxyManager.addSQL(prepared.getSQL());
+				proxyManager.addSQL(prepared.getSQL());
 			}
-			
-			updateCount = prepared.update(queryProxyManager.getTransactionName());
+
+			updateCount = prepared.update(proxyManager.getTransactionName());
 
 			boolean commit = true; //An exception would already have been thrown if it should have been a rollback.
 
@@ -145,16 +152,24 @@ public class CommandContainer extends Command {
 			H2OTest.createTableFailure();
 
 
-			if (singleQuery){ 
+			if (singleQuery && session.getApplicationAutoCommit()){ 
 				/*
 				 * If it is one of a number of queries in the transaction then we must wait for the entire transaction to finish.
 				 */
 
-				queryProxyManager.commit(commit);
-			} 
+				proxyManager.commit(commit);
+				session.setCurrentTransactionLocks(null);
+			} else {
+				session.setCurrentTransactionLocks(proxyManager);
+			}
 		} else {
+			/*
+			 * This is a transaction command. No need to commit such a query.
+			 */
+			
 			try {
 				updateCount = prepared.update();
+				session.setCurrentTransactionLocks(null);
 			} catch (SQLException e){
 				System.err.println("Transaction not found for query: " + prepared.getSQL());
 				throw e;
@@ -180,7 +195,7 @@ public class CommandContainer extends Command {
 	 */
 	@Override
 	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager2) throws SQLException {
-		return prepared.acquireLocks(queryProxyManager);
+		return prepared.acquireLocks(proxyManager);
 	}
 
 	/**
@@ -202,9 +217,24 @@ public class CommandContainer extends Command {
 	 * @see org.h2.command.Command#addQueryProxyManager(org.h2.h2o.comms.QueryProxyManager)
 	 */
 	@Override
-	protected void addQueryProxyManager(QueryProxyManager proxyManager) {
-		this.queryProxyManager = proxyManager;
+	public void addQueryProxyManager(QueryProxyManager proxyManager) {
+		if (proxyManager == null) return;
+		this.proxyManager = proxyManager;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.h2.command.CommandInterface#getQueryProxyManager()
+	 */
+	@Override
+	public QueryProxyManager getQueryProxyManager() {
+		return proxyManager;
+	}
 
+	/* (non-Javadoc)
+	 * @see org.h2.command.CommandInterface#isPreparedStatement(boolean)
+	 */
+	@Override
+	public void setIsPreparedStatement(boolean preparedStatement) {
+		prepared.setPreparedStatement(preparedStatement);
+	}
 }
