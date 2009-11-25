@@ -12,6 +12,7 @@ import org.h2.message.Message;
 import org.h2.result.LocalResult;
 import org.h2.value.Value;
 
+import uk.ac.stand.dcs.nds.util.Diagnostic;
 import uk.ac.stand.dcs.nds.util.ErrorHandling;
 
 /**
@@ -194,7 +195,7 @@ public class SchemaManager {
 			return dbURL.getURL();
 		}
 
-		ErrorHandling.errorNoEvent("Looking for table: " + schemaName + "." + tableName + " (but it wasn't found).");
+		Diagnostic.traceNoEvent(Diagnostic.FINAL, "Looking for table: " + schemaName + "." + tableName + " (but it wasn't found).");
 		throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
 
 

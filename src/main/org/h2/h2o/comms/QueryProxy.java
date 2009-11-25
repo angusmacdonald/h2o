@@ -1,5 +1,6 @@
 package org.h2.h2o.comms;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
@@ -174,7 +175,7 @@ public class QueryProxy implements Serializable{
 
 				//TODO include more specific exceptions - e..g replica can't commit
 			} catch (RemoteException e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 				//ErrorHandling.errorNoEvent("Unable to contact one of the DB instances holding a replica for " + tableName + ".");
 				//globalCommit = false; // rollback the entire transaction
 				commit[i++] = false;
@@ -182,7 +183,7 @@ public class QueryProxy implements Serializable{
 				//globalCommit = false; // rollback the entire transaction.
 				commit[i++] = false;
 				//exception = e;
-			}
+			} 
 		}
 
 		H2OTest.rmiFailure(); //Test code to simulate the failure of DB instances at this point.

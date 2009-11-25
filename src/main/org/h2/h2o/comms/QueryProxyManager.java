@@ -233,6 +233,11 @@ public class QueryProxyManager {
 			int result = remoteReplica.commit(commit, transactionName);
 
 			return (result == 0);
+		} catch (SQLException e){
+			//This replica wasn't added to the set of 'updated replicas' so the query doesn't need to be completely aborted.
+			//e.printStackTrace();
+			ErrorHandling.errorNoEvent("Unable to send 'commit' to one of the replicas.");
+
 		} catch (RemoteException e) {
 			//ErrorHandling.errorNoEvent("Unable to send " + (commit? "commit": "rollback") + " message to remote replica.");
 
@@ -240,12 +245,7 @@ public class QueryProxyManager {
 
 			//XXX not sure if you want to do the following line with asynchronous updates.
 			throw new SQLException((commit? "COMMIT": "ROLLBACK") + " failed on a replica because database instance was unavailable.");
-		} catch (SQLException e){
-			//This replica wasn't added to the set of 'updated replicas' so the query doesn't need to be completely aborted.
-			e.printStackTrace();
-			ErrorHandling.errorNoEvent("Unable to send 'commit' to one of the replicas.");
-
-		}
+		} 
 
 		return false;
 	}

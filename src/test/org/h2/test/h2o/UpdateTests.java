@@ -38,7 +38,7 @@ public class UpdateTests extends TestBase {
 
 			fail("Expected failure.");
 		} catch (SQLException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 	}
 
