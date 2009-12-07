@@ -111,6 +111,11 @@ public class TestBase {
 			e.printStackTrace();
 			fail("Connections aren't being closed correctly.");
 		}
+		
+		ca = null;
+		cb = null;
+		sa = null;
+		sb = null;
 	}
 
 	/**
@@ -124,6 +129,8 @@ public class TestBase {
 			db.close(false);
 			db.shutdownImmediately();
 		}
+		
+		dbs = null;
 
 	}
 

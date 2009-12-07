@@ -19,7 +19,6 @@ import org.h2.h2o.locking.ILockingTable;
 import org.h2.h2o.locking.LockingTable;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LockType;
-import org.h2.message.Message;
 import org.h2.result.LocalResult;
 
 import uk.ac.stand.dcs.nds.util.Diagnostic;
@@ -179,7 +178,7 @@ public class DataManager implements DataManagerRemote {
 	 * @return
 	 */
 	public static DataManager createDataManagerFromPersistentStore(String schemaName, String tableName){
-
+		//TODO unimplemented.
 
 		return null;
 
@@ -449,27 +448,27 @@ public class DataManager implements DataManagerRemote {
 
 		//replicaLocations.removeAll(null);
 
-//		if (true){// Diagnostic.getLevel() == Diagnostic.FULL
-//			/*
-//			 * Test that the row is there as expected.
-//			 */
-//			String testQuery = "SELECT * FROM " + TABLES + " WHERE tablename='" + tableName
-//			+ "' AND schemaname='" + schemaName + "';";
-//			
-//			LocalResult result = executeQuery(testQuery);
-//			
-//			//assert result.getRowCount() == 1;
-//		
-//			if (result.getRowCount() != 1){
-//				
-//				
-//				testQuery = "SELECT * FROM " + TABLES + ";";
-//				
-//				result = executeQuery(testQuery);
-//				System.out.println("result");
-//				assert false;
-//			}
-//		}
+		//		if (true){// Diagnostic.getLevel() == Diagnostic.FULL
+		//			/*
+		//			 * Test that the row is there as expected.
+		//			 */
+		//			String testQuery = "SELECT * FROM " + TABLES + " WHERE tablename='" + tableName
+		//			+ "' AND schemaname='" + schemaName + "';";
+		//			
+		//			LocalResult result = executeQuery(testQuery);
+		//			
+		//			//assert result.getRowCount() == 1;
+		//		
+		//			if (result.getRowCount() != 1){
+		//				
+		//				
+		//				testQuery = "SELECT * FROM " + TABLES + ";";
+		//				
+		//				result = executeQuery(testQuery);
+		//				System.out.println("result");
+		//				assert false;
+		//			}
+		//		}
 
 		return executeUpdate(sql);
 	}
