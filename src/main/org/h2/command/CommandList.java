@@ -14,7 +14,7 @@ import org.h2.result.LocalResult;
 import org.h2.test.h2o.H2OTest;
 import org.h2.util.ObjectArray;
 
-import uk.ac.stand.dcs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * Represents a list of SQL statements.

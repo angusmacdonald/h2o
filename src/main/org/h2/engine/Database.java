@@ -10,12 +10,14 @@ import java.io.IOException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Properties;
+import java.util.Random;
 import java.util.Set;
 import java.util.StringTokenizer;
 
@@ -27,11 +29,13 @@ import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
 import org.h2.constant.SysProperties;
 import org.h2.constraint.Constraint;
+import org.h2.h2o.ChordManager;
 import org.h2.h2o.comms.DataManager;
 import org.h2.h2o.comms.DatabaseInstance;
 import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.h2o.comms.management.DataManagerLocator;
 import org.h2.h2o.comms.management.DatabaseInstanceLocator;
+import org.h2.h2o.comms.management.IDatabaseInstanceLocator;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.util.DatabaseURL;
@@ -88,8 +92,9 @@ import org.h2.value.Value;
 import org.h2.value.ValueInt;
 import org.h2.value.ValueLob;
 
-import uk.ac.stand.dcs.nds.util.Diagnostic;
-import uk.ac.stand.dcs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * There is one database object per open database.
@@ -143,8 +148,18 @@ public class Database implements DataHandler {
 	/**
 	 * H2O. Manages access to remote database instances via RMI.
 	 */
-	private DatabaseInstanceLocator databaseInstanceLocator;
+	private IDatabaseInstanceLocator databaseInstanceLocator;
 
+	/**
+	 * Reference to this databases local chord node.
+	 */
+	private ChordManager chordManager = null;	
+	
+	/**
+	 * Port to be used for the next database instance. Currently used for testing.
+	 */
+	private static int currentPort = 30000;
+	
 	private final String databaseName;
 	private final String databaseShortName;
 	private final String databaseURL;
@@ -242,16 +257,26 @@ public class Database implements DataHandler {
 	
 	private H2oProperties databaseSettings;
 
+	/**
+	 * XXX Quick hack to ensure that the schema manager can be found in testing.
+	 */
+	private static int schemaManagerPort;
+
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
 
-		Diagnostic.setLevel((Diagnostic.NONE));
-
+		Diagnostic.setLevel((DiagnosticLevel.FULL));
+		Diagnostic.setTimestampFlag(true);
+		Diagnostic.setTimestampFormat(new SimpleDateFormat("HH:mm:ss:SSS "));
+		Diagnostic.setTimestampDelimiterFlag(false);
+		ErrorHandling.setTimestampFlag(false);
+		
 		//Ensure testing constants are all set to false.
 		Constants.IS_TESTING_PRE_COMMIT_FAILURE = false;
 		Constants.IS_TESTING_PRE_PREPARE_FAILURE = false;
 		Constants.IS_TESTING_QUERY_FAILURE = false;
 		Constants.IS_TESTING_CREATETABLE_FAILURE = false;
-
+		
+		this.chordManager = new ChordManager();
 		this.compareMode = new CompareMode(null, null, 0);
 		//this.databaseLocation = ci.getSmallName();
 		this.localMachineLocation = DatabaseURL.parseURL(ci.getOriginalURL());
@@ -266,7 +291,7 @@ public class Database implements DataHandler {
 		this.databaseName = name;
 		this.databaseShortName = parseDatabaseShortName();
 
-		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(Diagnostic.FINAL, "H2O, Database '" + name + "'.");
+		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "H2O, Database '" + name + "'.");
 
 
 
@@ -310,7 +335,7 @@ public class Database implements DataHandler {
 				TraceSystem.DEFAULT_TRACE_LEVEL_SYSTEM_OUT);
 		this.cacheType = StringUtils.toUpperEnglish(ci.removeProperty("CACHE_TYPE", CacheLRU.TYPE_NAME));
 		openDatabase(traceLevelFile, traceLevelSystemOut, closeAtVmShutdown, ci);
-		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(Diagnostic.FINAL, " Completed startup.");
+		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, " Completed startup.");
 	}
 
 	private void openDatabase(int traceLevelFile, int traceLevelSystemOut, boolean closeAtVmShutdown, ConnectionInfo ci) throws SQLException {
@@ -728,7 +753,8 @@ public class Database implements DataHandler {
 				schemaManagerFound = true;
 				this.schemaManagerLocation = getDatabaseURL();
 
-				persistedInstanceInformation.createNewFile(); //might not want to do this, depending on policy
+				persistedInstanceInformation.createNewFile(); //might not want to do this, depending on policy (i.e. you might want to provide a policy file first).
+					
 
 			} else if (!databaseExists && !this.isSchemaManager){
 				/*
@@ -791,7 +817,7 @@ public class Database implements DataHandler {
 						 * This should attempt to create a new database instance locator at each address.
 						 */
 						try{
-							DatabaseInstanceLocator potentialLocation = new DatabaseInstanceLocator(instanceURL);
+							IDatabaseInstanceLocator potentialLocation = new DatabaseInstanceLocator(instanceURL);
 							location = potentialLocation.getSchemaManagerLocation();
 
 							/*
@@ -802,7 +828,7 @@ public class Database implements DataHandler {
 								this.isSchemaManager = false;
 								schemaManagerFound = true;
 								this.databaseInstanceLocator = potentialLocation;
-								Diagnostic.traceNoEvent(Diagnostic.FULL,"Found Schema Manager at remote location.");
+								Diagnostic.traceNoEvent(DiagnosticLevel.FULL,"Found Schema Manager at remote location.");
 								break;
 							}
 
@@ -817,8 +843,29 @@ public class Database implements DataHandler {
 					this.schemaManagerLocation = getDatabaseURL();
 					
 				}
+				
+				
+				
 			}
-
+			
+			
+			/*
+			 *	At this point we should have found a schema manager if one exists. We now need to create a new Chord ring and add a suitable
+			 * reference for this new database instance. 
+			 */
+			
+			int localPort = this.localMachineLocation.getPort();
+			
+			int chordPort = currentPort;
+			
+			
+			if (Constants.IS_TEST){
+				localPort = currentPort++;
+			} else if (localMachineLocation.isMem()){ //must choose a new port if this is in-mem.
+				//Randomly choose a new port.
+				Random rnd = new Random();
+				localPort = 1000 + rnd.nextInt(54535);
+			}
 			
 			if (schemaManagerFound && !this.isSchemaManager){
 				/*
@@ -832,6 +879,12 @@ public class Database implements DataHandler {
 					e.printStackTrace();
 					ErrorHandling.hardError("This shouldn't happen at this point.");
 				}
+				
+				//CHORD - connect to an existing chord ring
+				
+				chordManager.joinChordRing(this.localMachineLocation.getHostname(), localPort, this.schemaManagerLocation.getHostname(), schemaManagerPort, 
+						this.localMachineLocation.getDbLocationWithoutIllegalCharacters());
+				
 			} else {
 				/*
 				 * Either we haven't found the schema manager or this is specified as the schema manager.
@@ -846,6 +899,17 @@ public class Database implements DataHandler {
 				}
 				connectedToSM = true;
 				this.schemaManagerLocation = this.getDatabaseURL();
+				
+				
+				int port = this.localMachineLocation.getPort();
+				port = (localMachineLocation.isMem())? currentPort: port+2; //if this is an in memory db the port can't be used as the basis for the chord port.
+				
+				
+				//CHORD - create a new chord ring locally
+				schemaManagerPort = currentPort++;
+				chordManager.startChordRing(this.localMachineLocation.getHostname(), schemaManagerPort,
+						this.localMachineLocation.getDbLocationWithoutIllegalCharacters());
+				
 
 			}
 
@@ -865,7 +929,7 @@ public class Database implements DataHandler {
 			 * Add this database instance to the RMI registry.
 			 * This must be done before meta-records are executed.
 			 */
-			Diagnostic.traceNoEvent(Diagnostic.FULL, "Creating remote proxy for database instance: " + getDatabaseURL().getURL());
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Creating remote proxy for database instance: " + getDatabaseURL().getURL());
 			databaseInstance = new DatabaseInstance(getDatabaseURL(), systemSession); 
 
 			databaseInstanceLocator.registerDatabaseInstance(databaseInstance);
@@ -908,7 +972,7 @@ public class Database implements DataHandler {
 
 		proxyManager.commit(true);
 
-		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(Diagnostic.FINAL, " Executed meta-records.");
+		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, " Executed meta-records.");
 
 		// try to recompile the views that are invalid
 		recompileInvalidViews(systemSession);
@@ -931,7 +995,7 @@ public class Database implements DataHandler {
 
 			createH2OTables();
 
-			Diagnostic.traceNoEvent(Diagnostic.FINAL, " Created schema manager tables.");
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, " Created schema manager tables.");
 		} 
 
 
@@ -955,7 +1019,7 @@ public class Database implements DataHandler {
 				"-key", key, databaseName});
 		server.start();
 		String address = NetUtils.getLocalAddress() + ":" + server.getPort();
-		Diagnostic.traceNoEvent(Diagnostic.FINAL, "Server started on: " + address);
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Server started on: " + address);
 		lock.setProperty("server", address);
 		lock.save();
 	}
@@ -1374,7 +1438,7 @@ public class Database implements DataHandler {
 			return;
 		}
 
-		Diagnostic.traceNoEvent(Diagnostic.FULL, getDatabaseURL().getURL());
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, getDatabaseURL().getURL());
 
 		closing = true;
 		stopServer();
@@ -1382,14 +1446,16 @@ public class Database implements DataHandler {
 		if (Constants.IS_H2O && !isManagementDB() && !fromShutdownHook){
 			try {
 				databaseInstanceLocator.removeRegistryObject(databaseInstance.getName(), false);
+				chordManager.shutdownChordNode();
 			} catch (NotBoundException e) {
 				/*
 				 * Not a big problem because all we are doing at this stage is trying to remove it.
 				 * Happens nearly every time the database is closed from the shutdown hook, hence being inside this IF statement.
 				 */
-				Diagnostic.traceNoEvent(Diagnostic.FULL, "Attempted to remove database instance from registry, but it wasn't found.");
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempted to remove database instance from registry, but it wasn't found.");
 			}
 			databaseInstanceLocator = null;
+						
 		}
 
 		if (userSessions.size() > 0) {
@@ -2877,7 +2943,7 @@ public class Database implements DataHandler {
 			 * Not a big problem because all we are doing at this stage is trying to remove it.
 			 * Happens nearly every time the database is closed from the shutdown hook, hence being inside this IF statement.
 			 */
-			Diagnostic.traceNoEvent(Diagnostic.FULL, "Attempted to remove database instance from registry, but it wasn't found.");
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempted to remove database instance from registry, but it wasn't found.");
 		}
 
 	}

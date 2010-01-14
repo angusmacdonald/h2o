@@ -18,7 +18,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import uk.ac.stand.dcs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
  * This class tests H2O's CREATE REPLICA functionality with regards to its ability to maintain
@@ -80,14 +81,14 @@ public class IndexTests{
 
 			ca.close();	
 			cb.close();	
-			Diagnostic.traceNoEvent(Diagnostic.FULL, "END OF LAST TEST (TEAR DOWN 1).");
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "END OF LAST TEST (TEAR DOWN 1).");
 			TestBase.closeDatabaseCompletely();
 		} catch (Exception e){
 			e.printStackTrace();
 			fail("Connections aren't bein closed correctly.");
 		}
 
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "END OF LAST TEST (TEAR DOWN 2).");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "END OF LAST TEST (TEAR DOWN 2).");
 	}
 
 	/**
@@ -99,7 +100,7 @@ public class IndexTests{
 	 */
 	@Test
 	public void checkTableSetID(){
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		try{
 			/*
 			 * These fail because the command which links the two tables doesn't work when query propagation is used on AlterTableAddConstraint.
@@ -130,7 +131,7 @@ public class IndexTests{
 	 */
 	@Test
 	public void checkTableSetID2(){
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		try{
 			sa.execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 
@@ -157,7 +158,7 @@ public class IndexTests{
 			fail("An Unexpected SQLException was thrown.");
 		}
 
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "END OF LAST TEST (MAIN BODY).");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "END OF LAST TEST (MAIN BODY).");
 
 	}
 

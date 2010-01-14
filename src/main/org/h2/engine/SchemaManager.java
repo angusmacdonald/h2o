@@ -12,8 +12,9 @@ import org.h2.message.Message;
 import org.h2.result.LocalResult;
 import org.h2.value.Value;
 
-import uk.ac.stand.dcs.nds.util.Diagnostic;
-import uk.ac.stand.dcs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * Contains various utility methods which the system can use to access and modify H2O's schema manager. SQL for the tables is as follows:<code>
@@ -81,7 +82,7 @@ public class SchemaManager {
 	/**
 	 * The database password used to communicate with schema manager tables.
 	 */
-	public static String PASSWORD = "supersecret";
+	public static String PASSWORD = "";
 
 
 	/**
@@ -195,7 +196,7 @@ public class SchemaManager {
 			return dbURL.getURL();
 		}
 
-		Diagnostic.traceNoEvent(Diagnostic.FINAL, "Looking for table: " + schemaName + "." + tableName + " (but it wasn't found).");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Looking for table: " + schemaName + "." + tableName + " (but it wasn't found).");
 		throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
 
 

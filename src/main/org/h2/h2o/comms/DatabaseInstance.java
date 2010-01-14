@@ -9,7 +9,7 @@ import org.h2.engine.Session;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.util.DatabaseURL;
 
-import uk.ac.stand.dcs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * Proxy class exposed via RMI, allowing semi-parsed queries to be sent to remote replicas for execution.
@@ -19,9 +19,8 @@ import uk.ac.stand.dcs.nds.util.ErrorHandling;
 public class DatabaseInstance implements DatabaseInstanceRemote {
 
 	/**
-	 * The JDBC connection string for this database.
+	 * The parsed JDBC connection string for this database.
 	 */
-
 	private DatabaseURL databaseURL;
 
 	private Parser parser;
@@ -153,5 +152,13 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 				.equals(other.databaseURL.getUrlMinusSM()))
 			return false;
 		return true;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#moveSchemaManagerToThisInstance()
+	 */
+	@Override
+	public void moveSchemaManagerToThisInstance() throws RemoteException {
+		System.err.println("Schema manager is to be moved to : " + databaseURL.getDbLocationWithoutIllegalCharacters());
 	}
 }

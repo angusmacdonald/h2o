@@ -18,7 +18,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import uk.ac.stand.dcs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
@@ -35,7 +36,7 @@ public class RestartTests {
 	
 	@BeforeClass
 	public static void initialSetUp(){
-		Diagnostic.setLevel(Diagnostic.FULL);
+		Diagnostic.setLevel(DiagnosticLevel.FULL);
 		try {
 			DeleteDbFiles.execute(BASEDIR, "schema_test", true);
 		} catch (SQLException e) {

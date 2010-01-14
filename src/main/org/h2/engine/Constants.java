@@ -530,6 +530,8 @@ public class Constants {
 
 	public static final String H2O_SCHEMA = "H2O";
 
+	public static boolean IS_TEST = false;
+
     private Constants() {
         // utility class
     }

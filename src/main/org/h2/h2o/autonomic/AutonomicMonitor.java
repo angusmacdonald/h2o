@@ -21,7 +21,7 @@ public interface AutonomicMonitor extends Remote {
 	 * @param updateFrequency	The level of interest a manager has in this monitoring information. It may want to recieve updates every time there is a change,
 	 * 	only at infrequent intervals, or somewhere in between.
 	 */
-	public void subscribe(AutonomicManager manager, UpdateFrequency updateFrequency) throws RemoteException;
+	public void subscribe(AutonomicManager manager) throws RemoteException;
 	
 	/**
 	 * Called to unsubscribe to events from this monitor.

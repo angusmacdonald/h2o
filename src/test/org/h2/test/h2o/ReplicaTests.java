@@ -10,7 +10,8 @@ import java.sql.Statement;
 
 import org.junit.Test;
 
-import uk.ac.stand.dcs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
  * Various tests for replication in H2O. The 'CREATE REPLICA' function in particular.
@@ -67,7 +68,7 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void SpaceInValue(){
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		
 		try{
 
@@ -94,7 +95,7 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void SelectPrimaryWhenLocal(){
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		
 		try{
 
@@ -116,7 +117,7 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void SelectLocalTestRemote(){
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		
 		try{
 			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
@@ -194,7 +195,7 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void PushReplicationON(){
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		
 		
 		try{
@@ -238,7 +239,7 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void PushReplicationFROMtwoMachines(){
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 			
 		try{
 
@@ -274,7 +275,7 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void PushReplicationFROMtwoMachinesAlt(){
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		
 		try{
 
@@ -312,7 +313,7 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void PushReplicationONFROM(){
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		
 		
 		try{
@@ -437,7 +438,7 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void SelectLocalTest(){
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		
 		try{
 			sb.execute("CREATE REPLICA TEST");
@@ -472,7 +473,7 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void SelectLocalTestFailure(){
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		
 		try{
 			sb.execute("SELECT LOCAL ONLY * FROM TEST ORDER BY ID;");
@@ -568,7 +569,7 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void CreateMultipleReplicas(){
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		try{
 
 			createSecondTable(sa, "TEST2");
@@ -601,7 +602,7 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void CreateMultipleReplicasONFROM(){
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		try{
 
 			createSecondTable(sa, "TEST2");

@@ -11,8 +11,9 @@ import java.util.Map;
 import org.h2.h2o.comms.DataManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 
-import uk.ac.stand.dcs.nds.util.Diagnostic;
-import uk.ac.stand.dcs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * Controls access to data managers in the system. One instance of this class per database instance.
@@ -61,7 +62,7 @@ public class DataManagerLocator extends RMIServer{
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (NotBoundException e) {
-			Diagnostic.traceNoEvent(Diagnostic.FINAL, tableName + " was not bound to registry.");
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, tableName + " was not bound to registry.");
 			//Happens during the check before CREATE TABLE is run, so is sometimes acceptable.
 		} catch (ClassCastException e){
 			System.err.println(tableName);
@@ -122,7 +123,7 @@ public class DataManagerLocator extends RMIServer{
 		try {
 			super.removeRegistryObject(objectName, removeLocalOnly);
 		} catch (NotBoundException e) {
-			Diagnostic.traceNoEvent(Diagnostic.FINAL, "Table '" + objectName + "' was not bound (when trying to unbind).");
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Table '" + objectName + "' was not bound (when trying to unbind).");
 		}
 		dataManagers.remove(objectName);
 	}

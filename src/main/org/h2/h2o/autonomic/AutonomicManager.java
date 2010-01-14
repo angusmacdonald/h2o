@@ -1,6 +1,7 @@
 package org.h2.h2o.autonomic;
 
 import java.io.Serializable;
+import java.util.Observer;
 
 /**
  * <p>An autonomic manager is responsible for some aspect of the database system's operation, such as replication factor.
@@ -10,11 +11,11 @@ import java.io.Serializable;
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public interface AutonomicManager extends Serializable {
+public interface AutonomicManager extends Serializable, Observer {
 	/**
 	 * Sends monitoring data to the manager so that the knowledge-base can be updated and analysed. This method
 	 * is called by classes implementing {@link AutonomicMonitor} where the manager has subscribed for updates from the given class. 
 	 * @param monitoringData	Data which provides 
 	 */
-	public void pushData(MonitoringData monitoringData);
+	public void recieveData(MonitoringData monitoringData);
 }

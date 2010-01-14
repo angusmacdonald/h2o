@@ -26,7 +26,7 @@ import org.h2.table.Table;
 import org.h2.util.ObjectArray;
 import org.h2.value.Value;
 
-import uk.ac.stand.dcs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * A prepared statement.

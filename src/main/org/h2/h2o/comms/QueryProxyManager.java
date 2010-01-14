@@ -18,8 +18,9 @@ import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TransactionNameGenerator;
 
-import uk.ac.stand.dcs.nds.util.Diagnostic;
-import uk.ac.stand.dcs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * Manages query proxies where multiple instances are required in a single transaction.
@@ -65,7 +66,7 @@ public class QueryProxyManager {
 	public QueryProxyManager(Database db, Session session){
 		this(db, session, false);
 
-		if (Diagnostic.getLevel() == Diagnostic.FULL) queries = new LinkedList<String>();
+		if (Diagnostic.getLevel() == DiagnosticLevel.FULL) queries = new LinkedList<String>();
 	}
 
 	/**
@@ -181,7 +182,7 @@ public class QueryProxyManager {
 		endTransaction(updatedReplicas);
 
 
-		if (Diagnostic.getLevel() == Diagnostic.FULL){
+		if (Diagnostic.getLevel() == DiagnosticLevel.FULL){
 			System.out.println("\tQueries in transaction '" + transactionName + "':");
 			if (queries != null){
 				for (String query: queries){

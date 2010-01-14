@@ -23,7 +23,7 @@ import org.h2.util.ObjectArray;
 import org.h2.value.Transfer;
 import org.h2.value.Value;
 
-import uk.ac.stand.dcs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * Represents the client-side part of a SQL statement.

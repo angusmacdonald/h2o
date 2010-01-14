@@ -11,6 +11,8 @@ import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
+import org.h2.h2o.autonomic.AutonomicAction;
+import org.h2.h2o.autonomic.AutonomicController;
 import org.h2.h2o.autonomic.Replication;
 import org.h2.h2o.autonomic.Updates;
 import org.h2.h2o.comms.remote.DataManagerRemote;
@@ -21,8 +23,9 @@ import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LockType;
 import org.h2.result.LocalResult;
 
-import uk.ac.stand.dcs.nds.util.Diagnostic;
-import uk.ac.stand.dcs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * <p>The data manager represents a user table in H2O, and is responsible for storing
@@ -65,7 +68,7 @@ import uk.ac.stand.dcs.nds.util.ErrorHandling;
 		); <br/></code>
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class DataManager implements DataManagerRemote {
+public class DataManager implements DataManagerRemote, AutonomicController {
 
 	/**
 	 * Name of the schema used to store data manager tables.
@@ -190,7 +193,7 @@ public class DataManager implements DataManagerRemote {
 	 * @throws SQLException
 	 */
 	public static int createDataManagerTables(Session session) throws SQLException{
-		Diagnostic.traceNoEvent(Diagnostic.FINAL, "Creating data manager tables.");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Creating data manager tables.");
 
 		String sql = "CREATE SCHEMA IF NOT EXISTS H2O; " +
 		"\n\nCREATE TABLE IF NOT EXISTS " + TABLES + "( table_id INT NOT NULL auto_increment, " +
@@ -448,7 +451,7 @@ public class DataManager implements DataManagerRemote {
 
 		//replicaLocations.removeAll(null);
 
-		//		if (true){// Diagnostic.getLevel() == Diagnostic.FULL
+		//		if (true){// Diagnostic.getLevel() == DiagnosticLevel.FULL
 		//			/*
 		//			 * Test that the row is there as expected.
 		//			 */
@@ -663,7 +666,6 @@ public class DataManager implements DataManagerRemote {
 			throw new SQLException("Internal problem: tableID not found in schema manager.");
 		}
 
-
 	}
 
 	/**
@@ -681,20 +683,35 @@ public class DataManager implements DataManagerRemote {
 	public void testAvailability() {
 		//Doesn't do anything.
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.comms.remote.DataManagerRemote#releaseLock(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
 	 */
 	@Override
 	public void releaseLock(DatabaseInstanceRemote requestingDatabase, Set<DatabaseInstanceRemote> updatedReplicas, int updateID) throws RemoteException {
-
 		/*
 		 * Update the set of 'active replicas' and their update IDs. 
 		 */
 		replicaManager.completeUpdate(updatedReplicas, updateID);
 
+		/*
+		 * Release the locks.
+		 */
 		lockingTable.releaseLock(requestingDatabase);
 
+	}
+
+	/*******************************************************
+	 * Methods implementing the AutonomicController interface.
+	 ***********************************************************/
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.autonomic.AutonomicController#changeSetting(org.h2.h2o.autonomic.AutonomicAction)
+	 */
+	@Override
+	public boolean changeSetting(AutonomicAction action) throws RemoteException {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 }

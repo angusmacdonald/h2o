@@ -147,8 +147,9 @@ import org.h2.value.ValueString;
 import org.h2.value.ValueTime;
 import org.h2.value.ValueTimestamp;
 
-import uk.ac.stand.dcs.nds.util.Diagnostic;
-import uk.ac.stand.dcs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * The parser is used to convert a SQL statement string to an command object.
@@ -4414,7 +4415,7 @@ public class Parser {
 
 		if (result == 0){
 			//Linked table was successfully added.
-			Diagnostic.traceNoEvent(Diagnostic.FULL, "Successfully created linked table '" + tableName + "'. Attempting to access it.");
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Successfully created linked table '" + tableName + "'. Attempting to access it.");
 			return readTableOrView(tableName, false, LocationPreference.PRIMARY);
 		} else {
 			ErrorHandling.hardError("Shouldn't have reached this point.");

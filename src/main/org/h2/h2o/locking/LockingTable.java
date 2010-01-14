@@ -7,7 +7,8 @@ import java.util.Set;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.util.LockType;
 
-import uk.ac.stand.dcs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
  * Represents a locking table for a given table - this is maintained by the table's data manager.
@@ -38,7 +39,7 @@ public class LockingTable implements ILockingTable {
 			//if write lock request + no read locks held.
 
 			try {
-				Diagnostic.traceNoEvent(Diagnostic.FULL, "'" + tableName + "' " + ((LockType.CREATE == lockType)? "CREATE": "WRITE") + " locked by: " + requestingMachine.getConnectionString());
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName + "' " + ((LockType.CREATE == lockType)? "CREATE": "WRITE") + " locked by: " + requestingMachine.getConnectionString());
 			} catch (RemoteException e) {}
 
 			writeLock = requestingMachine;
@@ -46,7 +47,7 @@ public class LockingTable implements ILockingTable {
 		} else if (lockType == LockType.READ){
 
 			try {
-				Diagnostic.traceNoEvent(Diagnostic.FULL, "'" + tableName + "' READ locked by: " + requestingMachine.getConnectionString());
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName + "' READ locked by: " + requestingMachine.getConnectionString());
 			} catch (RemoteException e) {}
 
 			readLocks.add(requestingMachine);
@@ -61,7 +62,7 @@ public class LockingTable implements ILockingTable {
 	 */
 	public synchronized boolean releaseLock(DatabaseInstanceRemote requestingMachine){
 		try {
-			Diagnostic.traceNoEvent(Diagnostic.FULL, "'" + tableName + "' unlocked by " + requestingMachine.getConnectionString());
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName + "' unlocked by " + requestingMachine.getConnectionString());
 		} catch (RemoteException e) {}
 
 

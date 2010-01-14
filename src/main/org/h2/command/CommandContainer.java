@@ -16,7 +16,8 @@ import org.h2.test.h2o.H2OTest;
 import org.h2.util.ObjectArray;
 import org.h2.value.Value;
 
-import uk.ac.stand.dcs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
  * Represents a single SQL statements.
@@ -38,10 +39,10 @@ public class CommandContainer extends Command {
 		 * over-written later on by a call from the Command list class. 
 		 */
 		if (!session.getApplicationAutoCommit() && session.getCurrentTransactionLocks() != null){
-			//Diagnostic.traceNoEvent(Diagnostic.FULL, "Using an existing proxy manager.");
+			//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Using an existing proxy manager.");
 			this.proxyManager = session.getCurrentTransactionLocks();
 		} else {
-			//Diagnostic.traceNoEvent(Diagnostic.FULL, "Creating a new proxy manager.");
+			//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Creating a new proxy manager.");
 			this.proxyManager = new QueryProxyManager(parser.getSession().getDatabase(), getSession());
 			session.setCurrentTransactionLocks(this.proxyManager);
 		}
@@ -140,7 +141,7 @@ public class CommandContainer extends Command {
 
 			proxyManager.addProxy(proxy);	//checks that a lock is held for table, then adds the proxy.
 
-			if (Diagnostic.getLevel() == Diagnostic.FULL){
+			if (Diagnostic.getLevel() == DiagnosticLevel.FULL){
 				proxyManager.addSQL(prepared.getSQL());
 			}
 

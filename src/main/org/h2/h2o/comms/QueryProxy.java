@@ -17,8 +17,8 @@ import org.h2.h2o.util.LockType;
 import org.h2.table.Table;
 import org.h2.test.h2o.H2OTest;
 
-import uk.ac.stand.dcs.nds.util.Diagnostic;
-import uk.ac.stand.dcs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * A proxy class used to make sending queries to multiple replicas easier. The query only needs to be sent

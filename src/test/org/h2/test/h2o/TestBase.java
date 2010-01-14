@@ -25,7 +25,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
-import uk.ac.stand.dcs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
  * Base class for JUnit tests. Performs a basic setup of two in-memory databases which are used for the rest of testing.
@@ -45,7 +46,7 @@ public class TestBase {
 
 	@BeforeClass
 	public static void initialSetUp(){
-		Diagnostic.setLevel(Diagnostic.FULL);
+		Diagnostic.setLevel(DiagnosticLevel.FULL);
 
 		H2oProperties properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"));
 

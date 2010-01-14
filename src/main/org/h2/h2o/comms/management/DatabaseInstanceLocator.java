@@ -16,15 +16,15 @@ import org.h2.h2o.comms.DatabaseInstance;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.util.DatabaseURL;
 
-import uk.ac.stand.dcs.nds.util.Diagnostic;
-import uk.ac.stand.dcs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * 
  *
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class DatabaseInstanceLocator extends RMIServer {
+public class DatabaseInstanceLocator extends RMIServer implements IDatabaseInstanceLocator {
 
 	/**
 	 * Database instances currently known to this database.
@@ -72,10 +72,8 @@ public class DatabaseInstanceLocator extends RMIServer {
 	}
 
 
-	/**
-	 * Obtain a proxy for an exposed data manager.
-	 * @param instanceName	The name of the table whose data manager we are looking for.
-	 * @return	Reference to the exposed data manager (under remote interface).
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.management.IDatabaseInstanceLocator#lookupDatabaseInstance(java.lang.String)
 	 */
 	public DatabaseInstanceRemote lookupDatabaseInstance(String instanceName) throws SQLException{
 
@@ -120,9 +118,8 @@ public class DatabaseInstanceLocator extends RMIServer {
 		return dbInstance;
 	}
 
-	/**
-	 * Register the local database instance with the RMI registry.
-	 * @param databaseInstance Object to be exposed.
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.management.IDatabaseInstanceLocator#registerDatabaseInstance(org.h2.h2o.comms.DatabaseInstance)
 	 */
 	public void registerDatabaseInstance(DatabaseInstance databaseInstance) {
 		DatabaseInstanceRemote stub = null;
@@ -159,6 +156,9 @@ public class DatabaseInstanceLocator extends RMIServer {
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.comms.RMIServer#removeRegistryObject(java.lang.String)
 	 */
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.management.IDatabaseInstanceLocator#removeRegistryObject(java.lang.String, boolean)
+	 */
 	@Override
 	public synchronized void removeRegistryObject(String objectName, boolean removeLocalOnly) throws NotBoundException {
 		super.removeRegistryObject(objectName, removeLocalOnly);
@@ -178,9 +178,8 @@ public class DatabaseInstanceLocator extends RMIServer {
 	}
 
 
-	/**
-	 * @param replicaLocations
-	 * @return
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.management.IDatabaseInstanceLocator#getInstances(java.util.Set)
 	 */
 	public Set<DatabaseInstanceRemote> getInstances(Set<String> replicaLocations) {
 		Set<DatabaseInstanceRemote> dirs = new HashSet<DatabaseInstanceRemote>();
@@ -199,9 +198,8 @@ public class DatabaseInstanceLocator extends RMIServer {
 	}
 
 
-	/**
-	 * @param replicaLocationString
-	 * @return
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.management.IDatabaseInstanceLocator#getInstance(java.lang.String)
 	 */
 	public DatabaseInstanceRemote getInstance(String replicaLocationString) {
 		try {
@@ -214,17 +212,16 @@ public class DatabaseInstanceLocator extends RMIServer {
 	}
 
 
-	/**
-	 * Get references to all current data managers.
-	 * @return
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.management.IDatabaseInstanceLocator#getInstances()
 	 */
 	public Set<DatabaseInstanceRemote> getInstances() {
 		return new HashSet<DatabaseInstanceRemote>(databaseInstances.values());
 	}
 
 
-	/**
-	 * @return
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.management.IDatabaseInstanceLocator#getSchemaManagerLocation()
 	 */
 	public DatabaseURL getSchemaManagerLocation() {
 		return schemaManagerLocation;

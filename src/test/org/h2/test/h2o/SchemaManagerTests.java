@@ -20,7 +20,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import uk.ac.stand.dcs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
  * Tests the basic functionality of the schema manager.
@@ -33,7 +34,7 @@ public class SchemaManagerTests {
 
 	@BeforeClass
 	public static void initialSetUp(){
-		Diagnostic.setLevel(Diagnostic.FULL);
+		Diagnostic.setLevel(DiagnosticLevel.FULL);
 
 		try {
 			DeleteDbFiles.execute(BASEDIR, "schema_test", true);
@@ -485,7 +486,7 @@ public class SchemaManagerTests {
 	@Test
 	public void testPrimaryCopyUnique(){
 		org.h2.Driver.load();
-		Diagnostic.traceNoEvent(Diagnostic.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 
 		try{
 			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");

@@ -11,8 +11,9 @@ import java.rmi.server.UnicastRemoteObject;
 
 import org.h2.h2o.comms.remote.H2ORemote;
 
-import uk.ac.stand.dcs.nds.util.Diagnostic;
-import uk.ac.stand.dcs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * Responsible for managing and providing connections to data managers and database instances, both local and remote.
@@ -72,7 +73,7 @@ public abstract class RMIServer {
 			LocateRegistry.createRegistry(port);
 
 		} catch (ExportException e1) {
-			Diagnostic.traceNoEvent(Diagnostic.FINAL, "RMI registry is already running.");
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "RMI registry is already running.");
 		}catch (RemoteException e) {
 			e.printStackTrace();
 		}

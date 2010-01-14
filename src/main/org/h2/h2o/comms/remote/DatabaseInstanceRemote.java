@@ -41,4 +41,10 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit  {
 	 */
 	public DatabaseURL getSchemaManagerLocation()  throws RemoteException;
 	
+	/**
+	 * Allows another instance to specify that the schema manager is to be moved to this instance.
+	 * @throws RemoteException
+	 */
+	public void moveSchemaManagerToThisInstance() throws RemoteException;
+	
 }

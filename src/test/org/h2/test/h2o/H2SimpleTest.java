@@ -17,7 +17,8 @@ import org.h2.tools.DeleteDbFiles;
 import org.h2.util.ScriptReader;
 import org.junit.Test;
 
-import uk.ac.stand.dcs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 
 /**
@@ -56,7 +57,7 @@ public class H2SimpleTest {
 			}
 			sql = sql.trim();
 
-			Diagnostic.traceNoEvent(Diagnostic.FULL, "Query: " + sql);
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Query: " + sql);
 			
 			try {
 
