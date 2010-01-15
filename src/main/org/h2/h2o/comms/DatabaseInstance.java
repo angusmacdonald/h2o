@@ -9,6 +9,8 @@ import org.h2.engine.Session;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.util.DatabaseURL;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
@@ -96,6 +98,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	 */
 	@Override
 	public DatabaseURL getSchemaManagerLocation() throws RemoteException {
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Responding to request for schema manager location at database '" + session.getDatabase().getDatabaseLocation() + "'.");
 		return session.getDatabase().getSchemaManagerLocation();
 	}
 	

@@ -3,6 +3,7 @@ package org.h2.h2o.comms.management;
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -20,12 +21,13 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  *
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class DataManagerLocator extends RMIServer{
+public class DataManagerLocator implements IDataManagerLocator{
 
 	/**
 	 * H2O. Data manager instances currently known to the local database instance.
 	 */
 	private Map<String, DataManagerRemote> dataManagers;
+	private Registry registry;
 
 	/**
 	 * Called to obtain a connection to the RMI registry.
@@ -33,16 +35,14 @@ public class DataManagerLocator extends RMIServer{
 	 * @param port	Port where the schema manager is running (RMI port is this + 1, or defaults to a 20000 if in-memory).
 	 * @throws RemoteException 
 	 */
-	public DataManagerLocator(String host, int port) throws RemoteException {
-		super(host, port);
-
+	public DataManagerLocator(Registry registry) throws RemoteException {
+		this.registry = registry;
+		
 		dataManagers = new HashMap<String, DataManagerRemote>();
 	}
 
-	/**
-	 * Obtain a proxy for an exposed data manager.
-	 * @param tableName	The name of the table whose data manager we are looking for.
-	 * @return	Reference to the exposed data manager (under remote interface).
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.management.IDataManagerLocator#lookupDataManager(java.lang.String)
 	 */
 	public DataManagerRemote lookupDataManager(String tableName) throws SQLException{
 
@@ -72,10 +72,8 @@ public class DataManagerLocator extends RMIServer{
 		return dataManager;
 	}
 
-	/**
-	 * Register the local DM interface with the global RMI registry.
-	 * @param interfaceName	Name given to the DM interface on the registry. 
-	 * @param dm The data manager instance to be exposed.
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.management.IDataManagerLocator#registerDataManager(org.h2.h2o.comms.DataManager)
 	 */
 	public void registerDataManager(DataManager dm){
 
@@ -103,6 +101,9 @@ public class DataManagerLocator extends RMIServer{
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.comms.RMIServer#removeRegistryObject(java.lang.String)
 	 */
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.management.IDataManagerLocator#removeRegistryObject(java.lang.String, boolean)
+	 */
 	@Override
 	public void removeRegistryObject(String objectName, boolean removeLocalOnly) {
 		try {
@@ -121,9 +122,15 @@ public class DataManagerLocator extends RMIServer{
 		}
 
 		try {
-			super.removeRegistryObject(objectName, removeLocalOnly);
+			if (!removeLocalOnly) registry.unbind(objectName);
 		} catch (NotBoundException e) {
 			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Table '" + objectName + "' was not bound (when trying to unbind).");
+		} catch (AccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		dataManagers.remove(objectName);
 	}

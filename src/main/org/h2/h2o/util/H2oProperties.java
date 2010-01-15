@@ -24,8 +24,10 @@ public class H2oProperties {
 	private FileInputStream fis = null;
 
 
+	@Deprecated
 	public H2oProperties(){
 		this.properties = new Properties();
+		//Required because this is a test class.
 	}
 
 	/**
@@ -34,7 +36,7 @@ public class H2oProperties {
 	 * @param appendum A string to be added on to the DBurl as part of the properties file name.
 	 */
 	public H2oProperties(DatabaseURL dbURL, String appendum) {
-		this();
+		this.properties = new Properties();
 		this.propertiesFileLocation = dbURL.getDbLocationWithoutIllegalCharacters() + ((appendum != null)? "." + appendum: "") + ".properties";
 	}
 

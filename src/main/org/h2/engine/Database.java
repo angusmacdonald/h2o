@@ -16,8 +16,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Properties;
-import java.util.Random;
 import java.util.Set;
 import java.util.StringTokenizer;
 
@@ -35,6 +35,7 @@ import org.h2.h2o.comms.DatabaseInstance;
 import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.h2o.comms.management.DataManagerLocator;
 import org.h2.h2o.comms.management.DatabaseInstanceLocator;
+import org.h2.h2o.comms.management.IDataManagerLocator;
 import org.h2.h2o.comms.management.IDatabaseInstanceLocator;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
@@ -143,7 +144,7 @@ public class Database implements DataHandler {
 	/**
 	 * H2O. Manages access to data managers, both local and remote.
 	 */
-	private DataManagerLocator dataManagerLocator;
+	private IDataManagerLocator dataManagerLocator;
 
 	/**
 	 * H2O. Manages access to remote database instances via RMI.
@@ -154,12 +155,12 @@ public class Database implements DataHandler {
 	 * Reference to this databases local chord node.
 	 */
 	private ChordManager chordManager = null;	
-	
+
 	/**
 	 * Port to be used for the next database instance. Currently used for testing.
 	 */
 	private static int currentPort = 30000;
-	
+
 	private final String databaseName;
 	private final String databaseShortName;
 	private final String databaseURL;
@@ -254,13 +255,16 @@ public class Database implements DataHandler {
 	 * a schema manager.
 	 */
 	private H2oProperties persistedInstanceInformation;
-	
+
 	private H2oProperties databaseSettings;
+
+	private DatabaseURL knownHost;
 
 	/**
 	 * XXX Quick hack to ensure that the schema manager can be found in testing.
 	 */
 	private static int schemaManagerPort;
+	private static Map<String, DatabaseInstanceRemote> staticLocatorMap = new HashMap<String, DatabaseInstanceRemote>();	
 
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
 
@@ -269,13 +273,13 @@ public class Database implements DataHandler {
 		Diagnostic.setTimestampFormat(new SimpleDateFormat("HH:mm:ss:SSS "));
 		Diagnostic.setTimestampDelimiterFlag(false);
 		ErrorHandling.setTimestampFlag(false);
-		
+
 		//Ensure testing constants are all set to false.
 		Constants.IS_TESTING_PRE_COMMIT_FAILURE = false;
 		Constants.IS_TESTING_PRE_PREPARE_FAILURE = false;
 		Constants.IS_TESTING_QUERY_FAILURE = false;
 		Constants.IS_TESTING_CREATETABLE_FAILURE = false;
-		
+
 		this.chordManager = new ChordManager();
 		this.compareMode = new CompareMode(null, null, 0);
 		//this.databaseLocation = ci.getSmallName();
@@ -727,8 +731,6 @@ public class Database implements DataHandler {
 
 		starting = true;
 
-
-
 		/*
 		 * #####################################################################################
 		 * H2O STARTUP CODE FOR SCHEMA MANAGER, TABLE INSTANITATION
@@ -736,203 +738,36 @@ public class Database implements DataHandler {
 		 */
 		if (Constants.IS_H2O && !isManagementDB()){ //don't run this code with the TCP server management DB
 
-			persistedInstanceInformation = new H2oProperties(this.getDatabaseURL(), "instances");
+			this.schemaManagerLocation = establishChordConnection();
+			this.localMachineLocation.setRMIPort(chordManager.getRmiPort()); //set the port on which the RMI server is running.
+			
+			/*
+			 *	The chord ring has now been established. Now find the location of the system's
+			 *	schema manager.  
+			 */
+
+			this.isSchemaManager = this.localMachineLocation.equals(this.schemaManagerLocation);
+
+			/*
+			 * If the schema manager is still not known at this point it must be found, otherwise the database will not start correctly. This will happen
+			 * most commonly when a new database instance starts, and becomes the schema manager location, but does not know where the old schema manager
+			 * is.
+			 */
+			
+			if (this.schemaManagerLocation == null){
+				this.schemaManagerLocation = chordManager.getSchemaManagerLocation(knownHost);
+			}
+			
+			//Update the database settings file with this new information.
 			databaseSettings = new H2oProperties(this.getDatabaseURL());
+			this.databaseSettings.loadProperties();	
 			
-			boolean databaseSettingsExist = databaseSettings.loadProperties();
-			
-			boolean propertiesExist = persistedInstanceInformation.loadProperties();
-
-			this.isSchemaManager = ci.isSchemaManager();
-			boolean schemaManagerFound = false;
-
-			if (!databaseExists && this.isSchemaManager){
-				/*
-				 * Database doesn't exist, and we want to make this instance the schema manager.
-				 */
-				schemaManagerFound = true;
-				this.schemaManagerLocation = getDatabaseURL();
-
-				persistedInstanceInformation.createNewFile(); //might not want to do this, depending on policy (i.e. you might want to provide a policy file first).
-					
-
-			} else if (!databaseExists && !this.isSchemaManager){
-				/*
-				 * Database doesn't exist, and we (should) have specified another location as the
-				 * schema manager location.
-				 * 
-				 * If we haven't (e.g. this is an H2 test), make this machine the schema manager.
-				 */
-
-				//XXX THE FOLLOWING LINE DOESN'T WORK BECAUSE IT MEANS THE MEM:TWO DATABASE TRIES TO MAKE ITSELF A SCHEMA MANAGER.
-				//this.schemaManagerLocation = DatabaseURL.parseURL(ci.getSchemaManagerLocation());
-
-				//this.schemaManagerLocation = DatabaseURL.parseURL("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test");
-
-				//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
-
-
-				if (databaseSettingsExist){
-					this.schemaManagerLocation = DatabaseURL.parseURL(databaseSettings.getProperty("schemaManagerLocation"));
-				} else {
-					this.schemaManagerLocation = null;
-				}
-				
-				
-				if (schemaManagerLocation == null){
-					schemaManagerLocation = getDatabaseURL(); //no schema manager location was specified. Use the local machine.
-					isSchemaManager = true;
-				
-				} else if (schemaManagerLocation.equals(localMachineLocation)){
-					this.isSchemaManager = true;
-				}
-			
-				                                                              
-
-				schemaManagerFound = true;
-			} else if (databaseExists){
-				/*
-				 * Database exists. Regardless of whether we want this to be the schema manager,
-				 * check that another instance hasn't taken its place in the meantime.
-				 */
-
-				DatabaseURL location = null;
-
-				Set<Object> listOfInstances = null;
-				if (propertiesExist){
-					listOfInstances = persistedInstanceInformation.getKeys();
-
-
-					for (Object obj: listOfInstances){
-						String url = (String)obj;
-
-						DatabaseURL instanceURL = DatabaseURL.parseURL(url);
-
-						/*
-						 * Check first that the location isn't the local database instance (currently running).
-						 */
-						if (instanceURL.equals(localMachineLocation)) continue;
-
-						/*
-						 * This should attempt to create a new database instance locator at each address.
-						 */
-						try{
-							IDatabaseInstanceLocator potentialLocation = new DatabaseInstanceLocator(instanceURL);
-							location = potentialLocation.getSchemaManagerLocation();
-
-							/*
-							 * Make sure there aren't any spurious RMI registrys being created everywhere.
-							 */
-
-							if (location != null && location.isValid()){
-								this.isSchemaManager = false;
-								schemaManagerFound = true;
-								this.databaseInstanceLocator = potentialLocation;
-								Diagnostic.traceNoEvent(DiagnosticLevel.FULL,"Found Schema Manager at remote location.");
-								break;
-							}
-
-						} catch (Exception e){
-							//Will happen if there isn't a schema manager there.
-						}
-					}
-				} // end of check for other schema managers.
-
-				if (!schemaManagerFound){ //We looked everywhere and didn't find a schema manager. Make this the schema manager.
-					this.isSchemaManager = true;
-					this.schemaManagerLocation = getDatabaseURL();
-					
-				}
-				
-				
-				
-			}
-			
-			
-			/*
-			 *	At this point we should have found a schema manager if one exists. We now need to create a new Chord ring and add a suitable
-			 * reference for this new database instance. 
-			 */
-			
-			int localPort = this.localMachineLocation.getPort();
-			
-			int chordPort = currentPort;
-			
-			
-			if (Constants.IS_TEST){
-				localPort = currentPort++;
-			} else if (localMachineLocation.isMem()){ //must choose a new port if this is in-mem.
-				//Randomly choose a new port.
-				Random rnd = new Random();
-				localPort = 1000 + rnd.nextInt(54535);
-			}
-			
-			if (schemaManagerFound && !this.isSchemaManager){
-				/*
-				 * Schema manager is remote.
-				 */
-				//Create/formalize connection to RMI registry.
-				//Registry is located on a remote machine.
-				try {
-					databaseInstanceLocator = new DatabaseInstanceLocator(schemaManagerLocation.getHostname(), schemaManagerLocation.getPort()+1);
-				} catch (RemoteException e) {
-					e.printStackTrace();
-					ErrorHandling.hardError("This shouldn't happen at this point.");
-				}
-				
-				//CHORD - connect to an existing chord ring
-				
-				chordManager.joinChordRing(this.localMachineLocation.getHostname(), localPort, this.schemaManagerLocation.getHostname(), schemaManagerPort, 
-						this.localMachineLocation.getDbLocationWithoutIllegalCharacters());
-				
+			if (this.schemaManagerLocation != null){
+				this.databaseSettings.setProperty("schemaManagerLocation", this.schemaManagerLocation.getUrlMinusSM());
 			} else {
-				/*
-				 * Either we haven't found the schema manager or this is specified as the schema manager.
-				 * Regardless, this instance now becomes the schema manager.
-				 */
-				//Make this instance the schema manager.
-				try {
-					databaseInstanceLocator = new DatabaseInstanceLocator(this.getLocalMachinePort()+1, getDatabaseURL());
-				} catch (RemoteException e) {
-					e.printStackTrace();
-					ErrorHandling.hardError("This shouldn't happen at this point.");
-				}
-				connectedToSM = true;
-				this.schemaManagerLocation = this.getDatabaseURL();
-				
-				
-				int port = this.localMachineLocation.getPort();
-				port = (localMachineLocation.isMem())? currentPort: port+2; //if this is an in memory db the port can't be used as the basis for the chord port.
-				
-				
-				//CHORD - create a new chord ring locally
-				schemaManagerPort = currentPort++;
-				chordManager.startChordRing(this.localMachineLocation.getHostname(), schemaManagerPort,
-						this.localMachineLocation.getDbLocationWithoutIllegalCharacters());
-				
-
+				ErrorHandling.hardError("Schema manager not known.");
 			}
 
-			assert this.schemaManagerLocation != null;
-
-			this.databaseSettings.setProperty("schemaManagerLocation", this.schemaManagerLocation.getUrlMinusSM());
-			
-			
-			try {
-				dataManagerLocator = new DataManagerLocator(schemaManagerLocation.getHostname(), schemaManagerLocation.getPort()+1);
-			} catch (RemoteException e) {
-				e.printStackTrace();
-				ErrorHandling.hardError("This shouldn't happen at this point.");
-			}
-
-			/*
-			 * Add this database instance to the RMI registry.
-			 * This must be done before meta-records are executed.
-			 */
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Creating remote proxy for database instance: " + getDatabaseURL().getURL());
-			databaseInstance = new DatabaseInstance(getDatabaseURL(), systemSession); 
-
-			databaseInstanceLocator.registerDatabaseInstance(databaseInstance);
 		}
 
 		/*
@@ -999,6 +834,126 @@ public class Database implements DataHandler {
 		} 
 
 
+	}
+
+	/**
+	 * 
+	 */
+	private DatabaseURL establishChordConnection() {
+		persistedInstanceInformation = new H2oProperties(this.getDatabaseURL(), "instances");
+		boolean knownHostsExist = persistedInstanceInformation.loadProperties();
+
+		boolean connected = false;
+		DatabaseURL newSMLocation = null;
+
+		if (knownHostsExist){
+			/*
+			 * There may be a number of database instances already in the ring. Try to connect.
+			 */
+
+			connected = attemptReconnect(knownHostsExist);
+		} 
+
+		if (!connected) {
+			/*
+			 * Either because there are no known hosts, or because none are still alive.
+			 * Create a new chord ring.
+			 */
+
+			schemaManagerPort = currentPort++;
+			connected = chordManager.startChordRing(this.localMachineLocation.getHostname(), schemaManagerPort,
+					this.localMachineLocation.getDbLocationWithoutIllegalCharacters());
+
+			newSMLocation = this.localMachineLocation;
+			newSMLocation.setRMIPort(schemaManagerPort);
+			
+		} else {
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Successfully connected to existing chord ring.");
+		}
+
+		if (!connected){
+			ErrorHandling.hardError("Tried to connect to an existing network and couldn't. Also tried to create" +
+			" a new network and this also failed.");
+		}
+
+
+		/*
+		 * Create the local database instance remote interface and register it.
+		 * 
+		 * This must be done before meta-records are executed.
+		 */
+
+		this.databaseInstance =  new DatabaseInstance(getDatabaseURL(), systemSession);
+		this.databaseInstanceLocator = new DatabaseInstanceLocator(chordManager.getRegistry(), databaseInstance);
+
+		//Add instance to static map [used for interim testing - wouldn't work over multiple processes].
+		staticLocatorMap.put(getDatabaseURL().getUrlMinusSM(), databaseInstance);
+
+		/*
+		 * Store another connection to the local RMI registry in order to store data manager references.
+		 * 
+		 * TODO refactor this out. there are too many references to a single RMI registry.
+		 */
+		try {
+			dataManagerLocator = new DataManagerLocator(chordManager.getRegistry());
+		} catch (RemoteException e) {
+			e.printStackTrace();
+			ErrorHandling.hardError("This shouldn't happen at this point.");
+		}
+
+		if (newSMLocation == null){ // true if this node has just joined a ring.
+			newSMLocation = chordManager.getSchemaManagerLocation();
+		}
+
+		if (newSMLocation == null){ // true if the previous check resolved to a node which doesn't know of the schema manager (possibly itself).
+			//TODO you probably want a check to make sure it doesn't check against itself.
+		}
+
+		return newSMLocation;
+	}
+
+	/**
+	 * @param knownHostsExist
+	 * @param connected
+	 * @return
+	 */
+	private boolean attemptReconnect(boolean knownHostsExist) {
+		Set<Object> listOfInstances = null;
+
+		if (knownHostsExist){
+			listOfInstances = persistedInstanceInformation.getKeys();
+
+
+			for (Object obj: listOfInstances){
+				String url = (String)obj;
+
+				DatabaseURL instanceURL = DatabaseURL.parseURL(url);
+				instanceURL.setRMIPort(Integer.parseInt(persistedInstanceInformation.getProperty(url)));
+
+				/*
+				 * Check first that the location isn't the local database instance (currently running).
+				 */
+				if (instanceURL.equals(localMachineLocation)) continue;
+
+
+				//Attempt to connect to a Chord node at this location.
+
+				boolean connected = chordManager.joinChordRing(this.localMachineLocation.getHostname(), currentPort++, instanceURL.getHostname(), instanceURL.getRMIPort(), 
+						this.localMachineLocation.getDbLocationWithoutIllegalCharacters());
+
+				if (connected){
+					
+					knownHost = instanceURL;
+					
+					Diagnostic.traceNoEvent(DiagnosticLevel.FULL,"Successfully connected to an existing chord ring.");
+
+					return true;
+				}
+
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -1444,18 +1399,9 @@ public class Database implements DataHandler {
 		stopServer();
 
 		if (Constants.IS_H2O && !isManagementDB() && !fromShutdownHook){
-			try {
-				databaseInstanceLocator.removeRegistryObject(databaseInstance.getName(), false);
-				chordManager.shutdownChordNode();
-			} catch (NotBoundException e) {
-				/*
-				 * Not a big problem because all we are doing at this stage is trying to remove it.
-				 * Happens nearly every time the database is closed from the shutdown hook, hence being inside this IF statement.
-				 */
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempted to remove database instance from registry, but it wasn't found.");
-			}
+			removeLocalDatabaseInstance();
 			databaseInstanceLocator = null;
-						
+
 		}
 
 		if (userSessions.size() > 0) {
@@ -2904,28 +2850,20 @@ public class Database implements DataHandler {
 	}
 
 	/**
-	 * @param replicaLocations
-	 * @return
-	 */
-	public Set<DatabaseInstanceRemote> getDatabaseInstances(
-			Set<String> replicaLocations) {
-		return databaseInstanceLocator.getInstances(replicaLocations);
-	}
-
-	/**
 	 * @param replicaLocationString
 	 * @return
 	 */
+	@Deprecated
 	public DatabaseInstanceRemote getDatabaseInstance(
 			String replicaLocationString) {
 		if (databaseInstanceLocator == null) return null;
 
-		return databaseInstanceLocator.getInstance(replicaLocationString);
+		return staticLocatorMap.get(replicaLocationString);
 	}
 
-
+	@Deprecated
 	public Set<DatabaseInstanceRemote> getDatabaseInstances() {
-		return databaseInstanceLocator.getInstances();
+		return new HashSet<DatabaseInstanceRemote>(staticLocatorMap.values());
 	}
 
 	/**
@@ -2937,13 +2875,16 @@ public class Database implements DataHandler {
 
 	public void removeLocalDatabaseInstance(){
 		try {
-			databaseInstanceLocator.removeRegistryObject(databaseInstance.getName(), false);
+			databaseInstanceLocator.removeLocalInstance();
 		} catch (NotBoundException e) {
 			/*
 			 * Not a big problem because all we are doing at this stage is trying to remove it.
 			 * Happens nearly every time the database is closed from the shutdown hook, hence being inside this IF statement.
 			 */
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempted to remove database instance from registry, but it wasn't found.");
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 
 	}

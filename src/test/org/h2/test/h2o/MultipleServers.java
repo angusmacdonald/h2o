@@ -22,20 +22,20 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 public class MultipleServers {
 	private Connection[] cas;
 	private Statement[] sas;
-	
+
 	private String[] dbs = {"two", "three", "four", "five", "six", "seven", "eight", "nine"};
 
-	
+
 	public MultipleServers(){
 		initialSetUp();
-		
+
 		try {
 			setUp();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void initialSetUp(){
 		Diagnostic.setLevel(DiagnosticLevel.FULL);
 
@@ -50,14 +50,18 @@ public class MultipleServers {
 		for (String db: dbNames){
 
 			String fullDBName = "jdbc:h2:mem:" + db;
-
-			H2oProperties properties = new H2oProperties(DatabaseURL.parseURL(fullDBName));
-
+			DatabaseURL dbURL = DatabaseURL.parseURL(fullDBName);
+			
+			H2oProperties properties = new H2oProperties(dbURL);
 			properties.createNewFile();
-
 			properties.setProperty("schemaManagerLocation", "jdbc:h2:sm:mem:one");
-
 			properties.saveAndClose();
+
+			H2oProperties knownHosts = new H2oProperties(dbURL, "instances");
+			knownHosts.createNewFile();
+			knownHosts.setProperty("jdbc:h2:sm:mem:one", "30000");
+			knownHosts.saveAndClose();
+
 		}
 	}
 
@@ -113,7 +117,7 @@ public class MultipleServers {
 		cas = null;
 		sas = null;
 	}
-	
+
 	/**
 	 * @param args
 	 */

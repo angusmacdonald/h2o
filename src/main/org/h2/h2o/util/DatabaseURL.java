@@ -64,24 +64,25 @@ public class DatabaseURL implements Serializable {
 	 */
 	private boolean schemaManager;
 
+	private int rmiPort;
+
 	public static void main (String[] args){
 		//Test.
-		//		System.out.println("First test, TCP DB:");
-		//		DatabaseURL dburl = DatabaseURL.parseURL("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test");
-		//		System.out.println(dburl.toString());
-		//
-		//		System.out.println("\nSecond test, MEM DB:");
-		//		dburl = DatabaseURL.parseURL("jdbc:h2:sm:mem:one");
-		//		System.out.println(dburl.toString());
-		//
-		//		System.out.println("\nThird test, Other DB:");
-		//		dburl = DatabaseURL.parseURL("jdbc:h2:data/test/scriptSimple;LOG=1;LOCK_TIMEOUT=50");
-		//		System.out.println(dburl.toString());
-		//		
-		System.out.println("\nFourth test, Tilde DB:");
-		DatabaseURL dburl = DatabaseURL.parseURL("jdbc:h2:tcp://localhost/~/test");
+		System.out.println("First test, TCP DB:");
+		DatabaseURL dburl = DatabaseURL.parseURL("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test");
 		System.out.println(dburl.toString());
 
+		System.out.println("\nSecond test, MEM DB:");
+		dburl = DatabaseURL.parseURL("jdbc:h2:sm:mem:one");
+		System.out.println(dburl.toString());
+
+		System.out.println("\nThird test, Other DB:");
+		dburl = DatabaseURL.parseURL("jdbc:h2:data/test/scriptSimple;LOG=1;LOCK_TIMEOUT=50");
+		System.out.println(dburl.toString());
+
+		System.out.println("\nFourth test, Tilde DB:");
+		dburl = DatabaseURL.parseURL("jdbc:h2:tcp://localhost/~/test");
+		System.out.println(dburl.toString());
 
 	}
 
@@ -114,13 +115,13 @@ public class DatabaseURL implements Serializable {
 			//Get port
 			String portString = newURL.substring(newURL.indexOf(":")+1);
 			portString = portString.substring(0, portString.indexOf("/"));
-			
+
 			try{
-			port = new Integer(portString).intValue();
+				port = new Integer(portString).intValue();
 			} catch (NumberFormatException e){
 				port = DEFAULT_PORT_NUMBER;
 			}
-			
+
 			//Get DB location
 			dbLocation = newURL.substring(newURL.indexOf("/")+1);
 		} else if (mem){
@@ -307,6 +308,17 @@ public class DatabaseURL implements Serializable {
 		} else if (!urlWithoutSM.equals(other.urlWithoutSM))
 			return false;
 		return true;
+	}
+
+	/**
+	 * @param rmiPort
+	 */
+	public void setRMIPort(int rmiPort) {
+		this.rmiPort = rmiPort;
+	}
+	
+	public int getRMIPort(){
+		return rmiPort;
 	}
 
 
