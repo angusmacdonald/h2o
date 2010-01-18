@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.h2.h2o.ChordInterface;
 import org.h2.h2o.comms.DataManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 
@@ -28,6 +29,8 @@ public class DataManagerLocator implements IDataManagerLocator{
 	 */
 	private Map<String, DataManagerRemote> dataManagers;
 	private Registry registry;
+	
+	private ChordInterface chordManager;
 
 	/**
 	 * Called to obtain a connection to the RMI registry.
@@ -35,8 +38,9 @@ public class DataManagerLocator implements IDataManagerLocator{
 	 * @param port	Port where the schema manager is running (RMI port is this + 1, or defaults to a 20000 if in-memory).
 	 * @throws RemoteException 
 	 */
-	public DataManagerLocator(Registry registry) throws RemoteException {
-		this.registry = registry;
+	public DataManagerLocator(ChordInterface chordManager) throws RemoteException {
+		this.chordManager = chordManager;
+		this.registry = chordManager.getLocalRegistry();
 		
 		dataManagers = new HashMap<String, DataManagerRemote>();
 	}
@@ -53,10 +57,16 @@ public class DataManagerLocator implements IDataManagerLocator{
 		if (dataManager != null){
 			return dataManager;
 		}
-		//The local database doesn't have a reference to the requested DM. Find one via RMI registry.
+		//The local database doesn't have a reference to the requested DM. Find one via the schema manager registry.
 
+		/*
+		 * TODO this needs to have a reference to the schema manager RMI registry. 
+		 */
+		Registry schemaManagerRegistry = chordManager.getSchemaManagerRegistry();
+		
+		
 		try {
-			dataManager = (DataManagerRemote) registry.lookup(tableName);
+			dataManager = (DataManagerRemote) schemaManagerRegistry.lookup(tableName);
 		} catch (AccessException e) {
 			e.printStackTrace();
 		} catch (RemoteException e) {

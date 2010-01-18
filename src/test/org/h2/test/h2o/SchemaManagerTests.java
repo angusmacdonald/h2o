@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
+import org.h2.engine.Database;
 import org.h2.engine.SchemaManager;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.H2oProperties;
@@ -60,6 +61,20 @@ public class SchemaManagerTests {
 		SchemaManager.USERNAME = "sa";
 		SchemaManager.PASSWORD = "sa";
 
+		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
+		knownHosts.createNewFile();
+		knownHosts.setProperty("jdbc:h2:sm:mem:one", Database.currentPort + "");
+		knownHosts.saveAndClose();
+		
+		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
+		knownHosts.createNewFile();
+		knownHosts.setProperty("jdbc:h2:sm:mem:one", Database.currentPort + "");
+		knownHosts.saveAndClose();
+		
+		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
+		knownHosts.createNewFile();
+		knownHosts.setProperty("jdbc:h2:sm:mem:one", Database.currentPort + "");
+		knownHosts.saveAndClose();
 	}
 
 	/**

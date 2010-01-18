@@ -240,16 +240,16 @@ public class DataManager implements DataManagerRemote, AutonomicController {
 
 			tableID = getTableID();
 
-			String replicaLocationString = createFullDatabaseLocation(databaseLocation, connectionType, localMachineAddress, localMachinePort + "", isSM);
+			DatabaseURL databaseURL = createFullDatabaseLocation(databaseLocation, connectionType, localMachineAddress, localMachinePort + "", isSM);
 
 			if (!isReplicaListed(connectionID, databaseLocation)){ // the table doesn't already exist in the schema manager.
 				int result = addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, replicaSet, false);
 
-				replicaManager.add(getDatabaseInstance(replicaLocationString));
+				replicaManager.add(getDatabaseInstance(databaseURL));
 
 				return (result == 1);
 			} else {
-				replicaManager.add(getDatabaseInstance(replicaLocationString));
+				replicaManager.add(getDatabaseInstance(databaseURL));
 
 				return false;
 			}
@@ -264,8 +264,8 @@ public class DataManager implements DataManagerRemote, AutonomicController {
 	 * @return
 	 */
 	private DatabaseInstanceRemote getDatabaseInstance(
-			String replicaLocationString) {
-		return database.getDatabaseInstance(replicaLocationString);
+			DatabaseURL dbURL) {
+		return database.getDatabaseInstance(dbURL);
 	}
 
 	/* (non-Javadoc)
@@ -595,10 +595,10 @@ public class DataManager implements DataManagerRemote, AutonomicController {
 		return result;
 	}
 
-	private String createFullDatabaseLocation(String dbLocationOnDisk, String connectionType, String machineName, String connectionPort, boolean isSM){
+	private DatabaseURL createFullDatabaseLocation(String dbLocationOnDisk, String connectionType, String machineName, String connectionPort, boolean isSM){
 		DatabaseURL dbURL = new DatabaseURL(connectionType, machineName, Integer.parseInt(connectionPort), dbLocationOnDisk, isSM);
 
-		return dbURL.getUrlMinusSM();
+		return dbURL;
 	}
 
 

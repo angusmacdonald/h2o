@@ -46,5 +46,10 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit  {
 	 * @throws RemoteException
 	 */
 	public void moveSchemaManagerToThisInstance() throws RemoteException;
+
+	/**
+	 * @return
+	 */
+	public DatabaseURL getLocation() throws RemoteException;
 	
 }

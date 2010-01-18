@@ -29,7 +29,7 @@ import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
 import org.h2.constant.SysProperties;
 import org.h2.constraint.Constraint;
-import org.h2.h2o.ChordManager;
+import org.h2.h2o.ChordInterface;
 import org.h2.h2o.comms.DataManager;
 import org.h2.h2o.comms.DatabaseInstance;
 import org.h2.h2o.comms.QueryProxyManager;
@@ -154,12 +154,12 @@ public class Database implements DataHandler {
 	/**
 	 * Reference to this databases local chord node.
 	 */
-	private ChordManager chordManager = null;	
+	private ChordInterface chord = null;	
 
 	/**
 	 * Port to be used for the next database instance. Currently used for testing.
 	 */
-	private static int currentPort = 30000;
+	public static int currentPort = 30000;
 
 	private final String databaseName;
 	private final String databaseShortName;
@@ -258,12 +258,6 @@ public class Database implements DataHandler {
 
 	private H2oProperties databaseSettings;
 
-	private DatabaseURL knownHost;
-
-	/**
-	 * XXX Quick hack to ensure that the schema manager can be found in testing.
-	 */
-	private static int schemaManagerPort;
 	private static Map<String, DatabaseInstanceRemote> staticLocatorMap = new HashMap<String, DatabaseInstanceRemote>();	
 
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
@@ -280,7 +274,7 @@ public class Database implements DataHandler {
 		Constants.IS_TESTING_QUERY_FAILURE = false;
 		Constants.IS_TESTING_CREATETABLE_FAILURE = false;
 
-		this.chordManager = new ChordManager();
+		this.chord = new ChordInterface();
 		this.compareMode = new CompareMode(null, null, 0);
 		//this.databaseLocation = ci.getSmallName();
 		this.localMachineLocation = DatabaseURL.parseURL(ci.getOriginalURL());
@@ -739,7 +733,7 @@ public class Database implements DataHandler {
 		if (Constants.IS_H2O && !isManagementDB()){ //don't run this code with the TCP server management DB
 
 			this.schemaManagerLocation = establishChordConnection();
-			this.localMachineLocation.setRMIPort(chordManager.getRmiPort()); //set the port on which the RMI server is running.
+			this.localMachineLocation.setRMIPort(chord.getRmiPort()); //set the port on which the RMI server is running.
 			
 			/*
 			 *	The chord ring has now been established. Now find the location of the system's
@@ -749,23 +743,15 @@ public class Database implements DataHandler {
 			this.isSchemaManager = this.localMachineLocation.equals(this.schemaManagerLocation);
 
 			/*
-			 * If the schema manager is still not known at this point it must be found, otherwise the database will not start correctly. This will happen
-			 * most commonly when a new database instance starts, and becomes the schema manager location, but does not know where the old schema manager
-			 * is.
+			 * The schema manager location must be known at this point, otherwise the database instance will not start. 
 			 */
-			
-			if (this.schemaManagerLocation == null){
-				this.schemaManagerLocation = chordManager.getSchemaManagerLocation(knownHost);
-			}
-			
-			//Update the database settings file with this new information.
-			databaseSettings = new H2oProperties(this.getDatabaseURL());
-			this.databaseSettings.loadProperties();	
-			
 			if (this.schemaManagerLocation != null){
+				databaseSettings = new H2oProperties(this.getDatabaseURL());
+				this.databaseSettings.loadProperties();	
 				this.databaseSettings.setProperty("schemaManagerLocation", this.schemaManagerLocation.getUrlMinusSM());
 			} else {
-				ErrorHandling.hardError("Schema manager not known.");
+				ErrorHandling.hardError("Schema manager not known. This can be fixed by creating a known hosts file (called " + 
+						this.getDatabaseURL() + ".instances) and adding the location of a known host.");
 			}
 
 		}
@@ -851,7 +837,7 @@ public class Database implements DataHandler {
 			 * There may be a number of database instances already in the ring. Try to connect.
 			 */
 
-			connected = attemptReconnect(knownHostsExist);
+			connected = attemptToJoinChordRing();
 		} 
 
 		if (!connected) {
@@ -860,12 +846,12 @@ public class Database implements DataHandler {
 			 * Create a new chord ring.
 			 */
 
-			schemaManagerPort = currentPort++;
-			connected = chordManager.startChordRing(this.localMachineLocation.getHostname(), schemaManagerPort,
+			int portToUse = currentPort++;
+			connected = chord.startChordRing(this.localMachineLocation.getHostname(), portToUse,
 					this.localMachineLocation.getDbLocationWithoutIllegalCharacters());
 
 			newSMLocation = this.localMachineLocation;
-			newSMLocation.setRMIPort(schemaManagerPort);
+			newSMLocation.setRMIPort(portToUse);
 			
 		} else {
 			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Successfully connected to existing chord ring.");
@@ -884,10 +870,10 @@ public class Database implements DataHandler {
 		 */
 
 		this.databaseInstance =  new DatabaseInstance(getDatabaseURL(), systemSession);
-		this.databaseInstanceLocator = new DatabaseInstanceLocator(chordManager.getRegistry(), databaseInstance);
+		this.databaseInstanceLocator = new DatabaseInstanceLocator(chord, databaseInstance);
 
 		//Add instance to static map [used for interim testing - wouldn't work over multiple processes].
-		staticLocatorMap.put(getDatabaseURL().getUrlMinusSM(), databaseInstance);
+		if (Constants.IS_TEST) staticLocatorMap.put(getDatabaseURL().getUrlMinusSM(), databaseInstance);
 
 		/*
 		 * Store another connection to the local RMI registry in order to store data manager references.
@@ -895,14 +881,14 @@ public class Database implements DataHandler {
 		 * TODO refactor this out. there are too many references to a single RMI registry.
 		 */
 		try {
-			dataManagerLocator = new DataManagerLocator(chordManager.getRegistry());
+			dataManagerLocator = new DataManagerLocator(chord);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 			ErrorHandling.hardError("This shouldn't happen at this point.");
 		}
 
 		if (newSMLocation == null){ // true if this node has just joined a ring.
-			newSMLocation = chordManager.getSchemaManagerLocation();
+			newSMLocation = chord.getSchemaManagerLocation();
 		}
 
 		if (newSMLocation == null){ // true if the previous check resolved to a node which doesn't know of the schema manager (possibly itself).
@@ -913,14 +899,12 @@ public class Database implements DataHandler {
 	}
 
 	/**
-	 * @param knownHostsExist
-	 * @param connected
-	 * @return
+	 * Try to join an existing chord ring.
+	 * @return True if a connection was successful; otherwise false.
 	 */
-	private boolean attemptReconnect(boolean knownHostsExist) {
+	private boolean attemptToJoinChordRing() {
 		Set<Object> listOfInstances = null;
 
-		if (knownHostsExist){
 			listOfInstances = persistedInstanceInformation.getKeys();
 
 
@@ -935,15 +919,12 @@ public class Database implements DataHandler {
 				 */
 				if (instanceURL.equals(localMachineLocation)) continue;
 
-
 				//Attempt to connect to a Chord node at this location.
 
-				boolean connected = chordManager.joinChordRing(this.localMachineLocation.getHostname(), currentPort++, instanceURL.getHostname(), instanceURL.getRMIPort(), 
+				boolean connected = chord.joinChordRing(this.localMachineLocation.getHostname(), currentPort++, instanceURL.getHostname(), instanceURL.getRMIPort(), 
 						this.localMachineLocation.getDbLocationWithoutIllegalCharacters());
 
 				if (connected){
-					
-					knownHost = instanceURL;
 					
 					Diagnostic.traceNoEvent(DiagnosticLevel.FULL,"Successfully connected to an existing chord ring.");
 
@@ -951,7 +932,6 @@ public class Database implements DataHandler {
 				}
 
 			}
-		}
 
 		return false;
 	}
@@ -2854,11 +2834,17 @@ public class Database implements DataHandler {
 	 * @return
 	 */
 	@Deprecated
-	public DatabaseInstanceRemote getDatabaseInstance(
-			String replicaLocationString) {
+	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL) {
 		if (databaseInstanceLocator == null) return null;
 
-		return staticLocatorMap.get(replicaLocationString);
+		//return staticLocatorMap.get(replicaLocationString.getUrlMinusSM());
+		
+		try {
+			return databaseInstanceLocator.lookupDatabaseInstance(databaseURL);
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	@Deprecated
@@ -2875,6 +2861,7 @@ public class Database implements DataHandler {
 
 	public void removeLocalDatabaseInstance(){
 		try {
+			//chordManager.shutdownDatabaseInstance("two");
 			databaseInstanceLocator.removeLocalInstance();
 		} catch (NotBoundException e) {
 			/*

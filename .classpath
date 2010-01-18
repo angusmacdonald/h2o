@@ -10,8 +10,9 @@
 	<classpathentry kind="lib" path="ext/servlet-api-2.4.jar"/>
 	<classpathentry kind="lib" path="ext/slf4j-api-1.5.0.jar"/>
 	<classpathentry kind="lib" path="C:/Program Files/Java/jdk1.6.0_16/lib/tools.jar"/>
-	<classpathentry kind="lib" path="ext/nds.jar"/>
 	<classpathentry kind="lib" path="C:/Users/angus/workspace/org.eclipse.jdt.junit_3.5.0.v20090526-2000.jar"/>
 	<classpathentry kind="lib" path="C:/Program Files/eclipse/junit-4.4.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/staChordRMI"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/nds"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

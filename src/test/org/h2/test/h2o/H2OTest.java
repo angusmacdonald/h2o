@@ -17,9 +17,11 @@ public class H2OTest {
 	/**
 	 * Removes an H2O DB instance from the RMI registy to simulate failure of a database. This method
 	 * only operates when Constants.IS_H2O_TEST = true. The database that is shutdown is named "mem:two".
+	 * @param allReplicas 
 	 */
 	public static void rmiFailure(){
 		if (Constants.IS_TESTING_PRE_PREPARE_FAILURE || Constants.IS_TESTING_PRE_COMMIT_FAILURE){
+			
 			Database db = Engine.getDatabase("mem:two");
 			db.removeLocalDatabaseInstance();
 			

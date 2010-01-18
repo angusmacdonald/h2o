@@ -236,7 +236,7 @@ public class QueryProxyManager {
 			return (result == 0);
 		} catch (SQLException e){
 			//This replica wasn't added to the set of 'updated replicas' so the query doesn't need to be completely aborted.
-			//e.printStackTrace();
+			e.printStackTrace();
 			ErrorHandling.errorNoEvent("Unable to send 'commit' to one of the replicas.");
 
 		} catch (RemoteException e) {

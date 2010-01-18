@@ -371,6 +371,9 @@ public class CreateReplica extends SchemaCommand {
 			//	#############################
 			DataManagerRemote dm = db.getDataManager(getSchema().getName() + "." + tableName);
 			try {
+				if (dm == null){
+					System.err.println("Data manager was null.");
+				}
 				dm.addReplicaInformation(table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
 						db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType(), tableSet, db.isSM());
 			} catch (RemoteException e) {

@@ -164,4 +164,12 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	public void moveSchemaManagerToThisInstance() throws RemoteException {
 		System.err.println("Schema manager is to be moved to : " + databaseURL.getDbLocationWithoutIllegalCharacters());
 	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#getLocation()
+	 */
+	@Override
+	public DatabaseURL getLocation()  throws RemoteException {
+		return databaseURL;
+	}
 }

@@ -63,6 +63,10 @@ public class TestBase {
 		properties.setProperty("schemaManagerLocation", "jdbc:h2:sm:mem:one");
 
 		properties.saveAndClose();
+		
+
+
+
 	}
 
 	/**
@@ -71,6 +75,21 @@ public class TestBase {
 	@Before
 	public void setUp() throws Exception {
 
+		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
+		knownHosts.createNewFile();
+		knownHosts.setProperty("jdbc:h2:sm:mem:one", Database.currentPort + "");
+		knownHosts.saveAndClose();
+		
+		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
+		knownHosts.createNewFile();
+		knownHosts.setProperty("jdbc:h2:sm:mem:one", Database.currentPort + "");
+		knownHosts.saveAndClose();
+		
+		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:three"), "instances");
+		knownHosts.createNewFile();
+		knownHosts.setProperty("jdbc:h2:sm:mem:one", Database.currentPort + "");
+		knownHosts.saveAndClose();
+		
 		//Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
 		SchemaManager.USERNAME = "sa";
 		SchemaManager.PASSWORD = "sa";
