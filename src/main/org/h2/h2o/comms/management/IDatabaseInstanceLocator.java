@@ -3,6 +3,7 @@ package org.h2.h2o.comms.management;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.Set;
 
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.util.DatabaseURL;
@@ -23,11 +24,17 @@ public interface IDatabaseInstanceLocator {
 	/**
 	 * @throws NotBoundException 
 	 * @throws RemoteException 
+	 * @throws RemoteException 
 	 * 
 	 */
 	public void removeLocalInstance() throws NotBoundException, RemoteException;
 
 	public DatabaseInstanceRemote lookupDatabaseInstance(DatabaseURL databaseURL) throws SQLException;
+
+	/**
+	 * @return
+	 */
+	public Set<DatabaseInstanceRemote> getDatabaseInstances();
 	
 //	/**
 //	 * Register the local database instance with the RMI registry.

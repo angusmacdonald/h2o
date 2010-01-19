@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -257,8 +256,6 @@ public class Database implements DataHandler {
 	private H2oProperties persistedInstanceInformation;
 
 	private H2oProperties databaseSettings;
-
-	private static Map<String, DatabaseInstanceRemote> staticLocatorMap = new HashMap<String, DatabaseInstanceRemote>();	
 
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
 
@@ -871,9 +868,6 @@ public class Database implements DataHandler {
 
 		this.databaseInstance =  new DatabaseInstance(getDatabaseURL(), systemSession);
 		this.databaseInstanceLocator = new DatabaseInstanceLocator(chord, databaseInstance);
-
-		//Add instance to static map [used for interim testing - wouldn't work over multiple processes].
-		if (Constants.IS_TEST) staticLocatorMap.put(getDatabaseURL().getUrlMinusSM(), databaseInstance);
 
 		/*
 		 * Store another connection to the local RMI registry in order to store data manager references.
@@ -2833,7 +2827,7 @@ public class Database implements DataHandler {
 	 * @param replicaLocationString
 	 * @return
 	 */
-	@Deprecated
+
 	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL) {
 		if (databaseInstanceLocator == null) return null;
 
@@ -2847,9 +2841,8 @@ public class Database implements DataHandler {
 		}
 	}
 
-	@Deprecated
 	public Set<DatabaseInstanceRemote> getDatabaseInstances() {
-		return new HashSet<DatabaseInstanceRemote>(staticLocatorMap.values());
+		return databaseInstanceLocator.getDatabaseInstances();
 	}
 
 	/**

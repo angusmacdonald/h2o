@@ -7,11 +7,15 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.h2.h2o.ChordInterface;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.util.DatabaseURL;
+
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * 
@@ -22,20 +26,20 @@ public class DatabaseInstanceLocator implements IDatabaseInstanceLocator {
 
 	public static final String LOCAL_DATABASE_INSTANCE = "LOCAL_DB_INSTANCE";
 
+	private static final String DATABASE_INSTANCE_PREFIX = "DB_INSTANCE_";
+
 	/**
 	 * Local registry containing the reference to this database instance.
 	 */
 	private Registry localRegistry;
-	
-	private Registry schemaManagerRegistry;
 
 	private DatabaseInstanceRemote localInstance;
-	
-	private Map<String, DatabaseInstanceRemote> databaseInstances;
 
-	private ChordInterface chordManager;
+	private Map<String, DatabaseInstanceRemote> locallyCachedDatabaseInstances;
 
+	private ChordInterface chord;
 
+	private String[] cachedItemsInSchemaManager;
 
 	/**
 	 * 
@@ -43,12 +47,11 @@ public class DatabaseInstanceLocator implements IDatabaseInstanceLocator {
 	 * @param localInstance
 	 */
 	public DatabaseInstanceLocator(ChordInterface chordManager, DatabaseInstanceRemote localInstance) {
-		this.chordManager = chordManager;
+		this.chord = chordManager;
 		this.localRegistry = chordManager.getLocalRegistry();
-		this.schemaManagerRegistry = chordManager.getSchemaManagerRegistry();
-		
+
 		this.localInstance = localInstance;
-		this.databaseInstances = new HashMap<String, DatabaseInstanceRemote>();
+		this.locallyCachedDatabaseInstances = new HashMap<String, DatabaseInstanceRemote>();
 
 		DatabaseInstanceRemote stub = null;
 
@@ -62,7 +65,7 @@ public class DatabaseInstanceLocator implements IDatabaseInstanceLocator {
 
 		try {
 			this.localRegistry.bind(LOCAL_DATABASE_INSTANCE, stub);
-			this.schemaManagerRegistry.bind(localInstance.getLocation().getUrlMinusSM(), stub);
+			chordManager.getSchemaManagerRegistry().bind(DATABASE_INSTANCE_PREFIX + localInstance.getLocation().getUrlMinusSM(), stub);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -70,16 +73,15 @@ public class DatabaseInstanceLocator implements IDatabaseInstanceLocator {
 
 	public DatabaseInstanceRemote lookupDatabaseInstance(DatabaseURL databaseURL) throws SQLException{
 
-
-		if (databaseInstances.containsKey(databaseURL.getUrlMinusSM())){
-			return databaseInstances.get(databaseURL.getUrlMinusSM());
+		if (locallyCachedDatabaseInstances.containsKey(databaseURL.getUrlMinusSM())){
+			return locallyCachedDatabaseInstances.get(databaseURL.getUrlMinusSM());
 		}
 
-		Registry schemaManager = chordManager.getSchemaManagerRegistry();
+		Registry schemaManager = chord.getSchemaManagerRegistry();
 
 		DatabaseInstanceRemote remoteDatabaseInstance = null;
 		try {
-			remoteDatabaseInstance = (DatabaseInstanceRemote) schemaManager.lookup(databaseURL.getUrlMinusSM());
+			remoteDatabaseInstance = (DatabaseInstanceRemote) schemaManager.lookup(DATABASE_INSTANCE_PREFIX + databaseURL.getUrlMinusSM());
 		} catch (AccessException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -92,27 +94,71 @@ public class DatabaseInstanceLocator implements IDatabaseInstanceLocator {
 		}
 
 		if (remoteDatabaseInstance != null){
-			databaseInstances.put(databaseURL.getUrlMinusSM(), remoteDatabaseInstance);
+			locallyCachedDatabaseInstances.put(DATABASE_INSTANCE_PREFIX + databaseURL.getUrlMinusSM(), remoteDatabaseInstance);
 		}
 
 		return remoteDatabaseInstance;
 	}
 
 	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.management.IDatabaseInstanceLocator#getDatabaseInstances()
+	 */
+	@Override
+	public Set<DatabaseInstanceRemote> getDatabaseInstances() {
+		Registry schemaManagerRegistry = chord.getSchemaManagerRegistry();
+
+		Set<DatabaseInstanceRemote> databaseInstances = new HashSet<DatabaseInstanceRemote>();
+
+
+		String[] itemsInSchemaManager = null;
+		try {
+			itemsInSchemaManager = schemaManagerRegistry.list();
+		} catch (Exception e) {
+			ErrorHandling.exceptionError(e, "Failed to connect to the schema manager.");
+		}
+
+		/*
+		 * First check whether all of the items in the schema manager are cached locally. If they are, just return the cache.
+		 */
+		if (itemsInSchemaManager.equals(cachedItemsInSchemaManager)){
+			return new HashSet<DatabaseInstanceRemote>(locallyCachedDatabaseInstances.values());
+		}
+
+		cachedItemsInSchemaManager = itemsInSchemaManager;
+
+		/*
+		 * We know that the schema manager has at least some new items. In this case we want to get refererences to all
+		 * of these items, update the cache, and return a set of instances.
+		 */
+		for (int i = 0; i < cachedItemsInSchemaManager.length; i++){
+			if (cachedItemsInSchemaManager[i].startsWith(DATABASE_INSTANCE_PREFIX)){
+				try {
+					DatabaseInstanceRemote instance = (DatabaseInstanceRemote) schemaManagerRegistry.lookup(cachedItemsInSchemaManager[i]);
+
+					databaseInstances.add(instance);
+					locallyCachedDatabaseInstances.put(cachedItemsInSchemaManager[i], instance);
+				} catch (NotBoundException e) {
+					ErrorHandling.exceptionErrorNoEvent(e, "Failed to obtain one of the database instances which was thought to be in the schema manager : " + cachedItemsInSchemaManager[i]);
+				} catch (AccessException e) {
+					ErrorHandling.exceptionErrorNoEvent(e, "Failed in lookup to the schema manager registry " + schemaManagerRegistry);
+				} catch (RemoteException e) {
+					ErrorHandling.exceptionErrorNoEvent(e, "Failed in lookup to the schema manager registry " + schemaManagerRegistry);
+				}
+			}
+		}
+
+		return databaseInstances;
+	}	
+
+
+
+	/* (non-Javadoc)
 	 * @see org.h2.h2o.comms.management.IDatabaseInstanceLocator#removeLocalInstance()
 	 */
 	@Override
 	public void removeLocalInstance() throws NotBoundException, RemoteException {
-		try {
 
-			localRegistry.unbind(LOCAL_DATABASE_INSTANCE);
-		} catch (AccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}	
+		localRegistry.unbind(LOCAL_DATABASE_INSTANCE);
 
+	}
 }
