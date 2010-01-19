@@ -19,6 +19,7 @@ import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Engine;
 import org.h2.engine.SchemaManager;
+import org.h2.h2o.ChordDatabaseRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.H2oProperties;
 import org.junit.After;
@@ -77,17 +78,17 @@ public class TestBase {
 
 		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
 		knownHosts.createNewFile();
-		knownHosts.setProperty("jdbc:h2:sm:mem:one", Database.currentPort + "");
+		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordDatabaseRemote.currentPort + "");
 		knownHosts.saveAndClose();
 		
 		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
 		knownHosts.createNewFile();
-		knownHosts.setProperty("jdbc:h2:sm:mem:one", Database.currentPort + "");
+		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordDatabaseRemote.currentPort + "");
 		knownHosts.saveAndClose();
 		
 		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:three"), "instances");
 		knownHosts.createNewFile();
-		knownHosts.setProperty("jdbc:h2:sm:mem:one", Database.currentPort + "");
+		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordDatabaseRemote.currentPort + "");
 		knownHosts.saveAndClose();
 		
 		//Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";

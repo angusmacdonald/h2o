@@ -7,13 +7,17 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.h2.engine.Constants;
+import org.h2.h2o.comms.DatabaseInstance;
+import org.h2.h2o.comms.management.DataManagerLocator;
 import org.h2.h2o.comms.management.DatabaseInstanceLocator;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.util.DatabaseURL;
+import org.h2.h2o.util.H2oProperties;
 
 import uk.ac.standrews.cs.nds.p2p.exceptions.P2PNodeException;
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
@@ -42,7 +46,8 @@ public class ChordInterface implements Observer {
 	private IChordNode chordNode;
 
 	/**
-	 * Reference to the remote chord node which is the location of the current schema manager.
+	 * Reference to the remote chord node which is responsible for ensuring the schema manager
+	 * is running. This node is not necessarily the actual location of the schema manager.
 	 */
 	private IChordRemoteReference currentSMLocation;
 
@@ -55,6 +60,8 @@ public class ChordInterface implements Observer {
 	 * Whether, at the time of last checking, this node is responsible for running the schema manager.
 	 */
 	private boolean isSchemaManagerInKeyRange = false;
+
+	private DatabaseURL actualSchemaManagerLocation = null;
 
 	/**
 	 * Key factory used to create keys for schema manager lookup and to search for specific machines.
@@ -83,6 +90,7 @@ public class ChordInterface implements Observer {
 		allNodes = new TreeSet<IChordNode>(new NodeComparator());
 	}
 
+
 	/**
 	 * Start a new Chord ring at the specified location.
 	 * @param hostname	The hostname on which the Chord ring will be started. This must be a local address to the machine
@@ -92,7 +100,7 @@ public class ChordInterface implements Observer {
 	 * 	for diagnostic output, so can be left null.
 	 * @return	True if the chord ring was started successfully; otherwise false.
 	 */
-	public boolean startChordRing(String hostname, int port, String databaseName) {
+	public boolean startChordRing(String hostname, int port, DatabaseURL databaseURL) {
 
 		this.rmiPort = port;
 
@@ -120,12 +128,15 @@ public class ChordInterface implements Observer {
 			ErrorHandling.hardError("Failed to create Chord Node.");
 		}
 
-		this.currentSMLocation = lookupSchemaManagerNodeLocation();
+		this.currentSMLocation = chordNode.getProxy();
+		
+		this.actualSchemaManagerLocation = databaseURL;
+		
 		this.isSchemaManagerInKeyRange = true;
 
 		((ChordNodeImpl)chordNode).addObserver(this);
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Started local Chord node on : " + databaseName + " : " + hostname + ":" + port + 
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Started local Chord node on : " + databaseURL.getDbLocationWithoutIllegalCharacters() + " : " + hostname + ":" + port + 
 				" : initialized with key :" + chordNode.getKey().toString(10) + " : " + chordNode.getKey() + " : schema manager at " + currentSMLocation + " : ");
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Schema manager key: : : : :" + schemaManagerKey.toString(10) + " : " + schemaManagerKey);
 
@@ -174,14 +185,16 @@ public class ChordInterface implements Observer {
 		((ChordNodeImpl)chordNode).addObserver(this);
 
 		isSchemaManagerInKeyRange = false;
-
+		
+		actualSchemaManagerLocation = getSchemaManagerURL(remoteHostname, remotePort);
+		
 		/*
 		 *	Ensure the ring is stable before continuing with any tests. 
 		 */
 		if (Constants.IS_TEST){ 
 			RingStabilizer.waitForStableNetwork(allNodes);
 		}
-		
+
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Started local Chord node on : " + 
 				databaseName + " : " + localHostname + " : " + localPort + " : initialized with key :" + chordNode.getKey().toString(10) + 
@@ -277,7 +290,7 @@ public class ChordInterface implements Observer {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Returns a reference to the RMI registry of the schema manager.
 	 * 
@@ -290,12 +303,13 @@ public class ChordInterface implements Observer {
 	public Registry getSchemaManagerRegistry(){
 		Registry remoteRegistry = null;
 
-		if (currentSMLocation == null){
-			lookupSchemaManagerNodeLocation();
-		}
+//		if (currentSMLocation == null){
+//			schemaManagerRegistryLocation = getActualSchemaManagerLocation();
+//		}
 
+		
 		try {
-			remoteRegistry = LocateRegistry.getRegistry(currentSMLocation.getRemote().getAddress().getHostName(), currentSMLocation.getRemote().getAddress().getPort());
+			remoteRegistry = LocateRegistry.getRegistry(actualSchemaManagerLocation.getHostname(), actualSchemaManagerLocation.getRMIPort());
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -305,18 +319,29 @@ public class ChordInterface implements Observer {
 
 	}
 
+	public DatabaseURL getStoredSchemaManagerLocation(){
+		return actualSchemaManagerLocation;
+	}
+	
 	/**
+	 * Get the actual location of the schema manager by first looking up the location where the 'schemamanager'
+	 * lookup resoloves to, then querying the database instance at this location for the location of the schema manager.
 	 * @return
 	 */
-	public DatabaseURL getSchemaManagerLocation() {
+	public DatabaseURL getActualSchemaManagerLocation() {
+		IChordRemoteReference oldSchemaManagerNodeLocation = currentSMLocation;
+		
 		IChordRemoteReference sml = lookupSchemaManagerNodeLocation();
 
-		try {
-			return getSchemaManagerURL(sml.getRemote().getAddress().getHostName(), sml.getRemote().getAddress().getPort());
-		} catch (RemoteException e) {
-			ErrorHandling.exceptionErrorNoEvent(e, "Occurred when trying to find schema manager.");
-			return null;
-		}
+		if (!sml.equals(oldSchemaManagerNodeLocation) || actualSchemaManagerLocation == null){ //look for a new schema manager location
+			try {
+				actualSchemaManagerLocation  = getSchemaManagerURL(sml.getRemote().getAddress().getHostName(), sml.getRemote().getAddress().getPort());
+			} catch (RemoteException e) {
+				ErrorHandling.exceptionErrorNoEvent(e, "Occurred when trying to find schema manager.");
+			}
+		} // else - the schema manager location hasn't changed. You can use the old one. 
+		
+		return actualSchemaManagerLocation;
 	}
 
 	/**
@@ -370,14 +395,15 @@ public class ChordInterface implements Observer {
 		}
 		return null;
 	}
-	
+
 	/**
-	 * Get a reference to the Chord node which is responsible for managing the database's schema manager.
+	 * Get a reference to the Chord node which is responsible for managing the database's schema manager lookup,
+	 * BUT NOT NECESSARILY THE SCHEMA MANAGER ITSELF.
 	 * @return	Remote reference to the chord node managing the schema manager.
 	 */
 	private IChordRemoteReference lookupSchemaManagerNodeLocation(){
 		IChordRemoteReference newSMLocation = null;
-		
+
 		try {
 
 			if (chordNode != null){
@@ -396,21 +422,21 @@ public class ChordInterface implements Observer {
 	}
 
 
-//	public IChordRemoteReference lookupInstanceLocation(DatabaseURL databaseURL){
-//
-//		InetSocketAddress address = new InetSocketAddress(databaseURL.getHostname(), databaseURL.getRMIPort());
-//
-//		IKey node_key = keyFactory.generateKey(address);
-//
-//		IChordRemoteReference remoteNode = null;
-//
-//		try {
-//			remoteNode = chordNode.lookup(node_key);
-//		} catch (RemoteException e) {
-//			e.printStackTrace();
-//
-//		}
-//
-//		return remoteNode;
-//	}
+	//	public IChordRemoteReference lookupInstanceLocation(DatabaseURL databaseURL){
+	//
+	//		InetSocketAddress address = new InetSocketAddress(databaseURL.getHostname(), databaseURL.getRMIPort());
+	//
+	//		IKey node_key = keyFactory.generateKey(address);
+	//
+	//		IChordRemoteReference remoteNode = null;
+	//
+	//		try {
+	//			remoteNode = chordNode.lookup(node_key);
+	//		} catch (RemoteException e) {
+	//			e.printStackTrace();
+	//
+	//		}
+	//
+	//		return remoteNode;
+	//	}
 }

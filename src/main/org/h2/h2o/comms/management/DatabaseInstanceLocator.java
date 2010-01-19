@@ -66,6 +66,7 @@ public class DatabaseInstanceLocator implements IDatabaseInstanceLocator {
 		try {
 			this.localRegistry.bind(LOCAL_DATABASE_INSTANCE, stub);
 			chordManager.getSchemaManagerRegistry().bind(DATABASE_INSTANCE_PREFIX + localInstance.getLocation().getUrlMinusSM(), stub);
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -89,7 +90,6 @@ public class DatabaseInstanceLocator implements IDatabaseInstanceLocator {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (NotBoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -157,8 +157,7 @@ public class DatabaseInstanceLocator implements IDatabaseInstanceLocator {
 	 */
 	@Override
 	public void removeLocalInstance() throws NotBoundException, RemoteException {
-
 		localRegistry.unbind(LOCAL_DATABASE_INSTANCE);
-
+		chord.getSchemaManagerRegistry().unbind(DATABASE_INSTANCE_PREFIX +  localInstance.getLocation().getUrlMinusSM());
 	}
 }

@@ -375,7 +375,7 @@ public class CreateReplica extends SchemaCommand {
 					System.err.println("Data manager was null.");
 				}
 				dm.addReplicaInformation(table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
-						db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType(), tableSet, db.isSM());
+						db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType(), tableSet, db.isSchemaManager());
 			} catch (RemoteException e) {
 				System.err.println("Error informing data manager of update.");
 				e.printStackTrace();
