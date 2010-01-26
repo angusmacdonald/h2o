@@ -10,7 +10,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
-import org.h2.engine.Database;
 import org.h2.engine.SchemaManager;
 import org.h2.h2o.ChordDatabaseRemote;
 import org.h2.h2o.util.DatabaseURL;

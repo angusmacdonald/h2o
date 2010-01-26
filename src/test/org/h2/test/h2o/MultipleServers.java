@@ -51,7 +51,7 @@ public class MultipleServers {
 
 			String fullDBName = "jdbc:h2:mem:" + db;
 			DatabaseURL dbURL = DatabaseURL.parseURL(fullDBName);
-			
+
 			H2oProperties properties = new H2oProperties(dbURL);
 			properties.createNewFile();
 			properties.setProperty("schemaManagerLocation", "jdbc:h2:sm:mem:one");
@@ -90,6 +90,7 @@ public class MultipleServers {
 		sql += "INSERT INTO TEST VALUES(2, 'World');";
 
 		sas[0].execute(sql);
+
 	}
 
 	public void tearDown() {
