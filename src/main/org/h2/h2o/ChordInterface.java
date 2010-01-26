@@ -7,17 +7,13 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.h2.engine.Constants;
-import org.h2.h2o.comms.DatabaseInstance;
-import org.h2.h2o.comms.management.DataManagerLocator;
 import org.h2.h2o.comms.management.DatabaseInstanceLocator;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.H2oProperties;
 
 import uk.ac.standrews.cs.nds.p2p.exceptions.P2PNodeException;
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
@@ -60,6 +56,12 @@ public class ChordInterface implements Observer {
 	 * Whether, at the time of last checking, this node is responsible for running the schema manager.
 	 */
 	private boolean isSchemaManagerInKeyRange = false;
+	
+	/**
+	 * Whether, at the time of last checking, this node is running the schema manager process. It may or
+	 * may not be responsible for the schema manager key lookup.
+	 */
+	private boolean isSchemaManagerProcessLocal = false;
 
 	private DatabaseURL actualSchemaManagerLocation = null;
 
@@ -133,7 +135,8 @@ public class ChordInterface implements Observer {
 		this.actualSchemaManagerLocation = databaseURL;
 		
 		this.isSchemaManagerInKeyRange = true;
-
+		this.isSchemaManagerProcessLocal = true;
+		
 		((ChordNodeImpl)chordNode).addObserver(this);
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Started local Chord node on : " + databaseURL.getDbLocationWithoutIllegalCharacters() + " : " + hostname + ":" + port + 
@@ -185,16 +188,16 @@ public class ChordInterface implements Observer {
 		((ChordNodeImpl)chordNode).addObserver(this);
 
 		isSchemaManagerInKeyRange = false;
+		isSchemaManagerProcessLocal = false;
 		
 		actualSchemaManagerLocation = getSchemaManagerURL(remoteHostname, remotePort);
 		
 		/*
 		 *	Ensure the ring is stable before continuing with any tests. 
 		 */
-		if (Constants.IS_TEST){ 
+		if (Constants.IS_TEST){
 			RingStabilizer.waitForStableNetwork(allNodes);
 		}
-
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Started local Chord node on : " + 
 				databaseName + " : " + localHostname + " : " + localPort + " : initialized with key :" + chordNode.getKey().toString(10) + 
@@ -266,6 +269,28 @@ public class ChordInterface implements Observer {
 					e.printStackTrace();
 				}
 
+			}
+		} else if (arg.equals(ChordNodeImpl.SUCCESSOR_CHANGE_EVENT)){
+			/*
+			 * The successor has changed. Make sure the schema manager is replicated to the new successor if this instance is controlling the schema
+			 * manager.
+			 */
+			if (this.isSchemaManagerProcessLocal){
+				//The schema manager is running locally. Replicate it's state to the new successor.
+				IChordRemoteReference successor = chordNode.getSuccessor();
+				
+				DatabaseInstanceRemote dbInstance = null;
+				
+				try {
+					dbInstance = getRemoteReferenceToDatabaseInstance(successor.getRemote().getAddress().getHostName(), successor.getRemote().getAddress().getPort());
+					dbInstance.executeUpdate("CREATE REPLICA SCHEMA H2O");
+					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + dbInstance);
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+			
+			
+			
 			}
 		}
 	}

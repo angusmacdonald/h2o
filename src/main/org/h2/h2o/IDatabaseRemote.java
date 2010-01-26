@@ -101,7 +101,10 @@ public interface IDatabaseRemote {
 
 	/**
 	 * Get the location of the schema manager instance.
-	 * @return Address of the schema manager instance.
+	 * 
+	 * <p>This is the stored schema manager location (i.e. the system does not have to check whether the schema manager still exists at
+	 * this location before returning a value).
+	 * @return Stored schema manager location. 
 	 */
 	public DatabaseURL getSchemaManagerLocation();
 

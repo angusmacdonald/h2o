@@ -46,22 +46,22 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 
 		//session.setAutoCommit(false); //TODO auto-commit shouldn't be set false.true for each transaction.
 		Command command = parser.prepareCommand(query);
-		
+
 		/*
 		 * If called from here executeUpdate should always be told the query is part of a larger transaction, because it
 		 * was remotely initiated and consequently needs to wait for the remote machine to commit.
 		 */
 		command.executeUpdate(true);
-	
+
 		command.close();
 
 		return prepare(transactionName);
 	}
-	
+
 	public int prepare(String transactionName) throws RemoteException, SQLException{
-		
+
 		assert session.getAutoCommit() == false;
-			
+
 		Command command = parser.prepareCommand("PREPARE COMMIT " + transactionName);
 		return command.executeUpdate();
 	}
@@ -84,14 +84,14 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	 * @Deprecated Because it doesn't currently pass in a transaction name. Do we generate one is this method???
 	 */
 	public int executeUpdate(QueryProxy queryProxy, String sql) throws RemoteException,
-			SQLException {
+	SQLException {
 		/*
 		 * TODO eventually this method may do a lot more - e.g. the query may only be run here, and asynchronously run elsewhere. Another
 		 * overloaded version of the method may take only the query string and be required to obtain the queryProxy seperately. 
 		 */
 		return queryProxy.executeUpdate(sql, null, session);
 	}
-	
+
 
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#getSchemaManagerLocation()
@@ -101,7 +101,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Responding to request for schema manager location at database '" + session.getDatabase().getDatabaseLocation() + "'.");
 		return session.getDatabase().getSchemaManagerLocation();
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.comms.DatabaseInstanceRemote#testAvailability()
 	 */
@@ -130,9 +130,9 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 		final int prime = 31;
 		int result = 1;
 		result = prime
-				* result
-				+ ((databaseURL.getUrlMinusSM() == null) ? 0
-						: databaseURL.getUrlMinusSM().hashCode());
+		* result
+		+ ((databaseURL.getUrlMinusSM() == null) ? 0
+				: databaseURL.getUrlMinusSM().hashCode());
 		return result;
 	}
 
@@ -171,5 +171,28 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	@Override
 	public DatabaseURL getLocation()  throws RemoteException {
 		return databaseURL;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#executeUpdate(java.lang.String)
+	 */
+	@Override
+	public int executeUpdate(String sql)  throws RemoteException  {
+		
+		Command command;
+		
+		int result = -1;
+		
+		try {
+			command = parser.prepareCommand(sql);
+
+			result = command.executeUpdate(false);
+
+			command.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return result;
 	}
 }

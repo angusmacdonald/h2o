@@ -233,28 +233,36 @@ public class DataManager implements DataManagerRemote, AutonomicController {
 	public boolean addReplicaInformation(long modificationID,
 			String databaseLocation, String tableType,
 			String localMachineAddress, int localMachinePort, String connectionType, int replicaSet, boolean isSM) throws RemoteException{
-		try {
 
-			int connectionID = getConnectionID(localMachineAddress, localMachinePort, connectionType);
-			int tableID;
+		if (!tableName.startsWith("H2O_")){
 
-			tableID = getTableID();
+			try {
 
-			DatabaseURL databaseURL = createFullDatabaseLocation(databaseLocation, connectionType, localMachineAddress, localMachinePort + "", isSM);
+				int connectionID = getConnectionID(localMachineAddress, localMachinePort, connectionType);
+				int tableID;
 
-			if (!isReplicaListed(connectionID, databaseLocation)){ // the table doesn't already exist in the schema manager.
-				int result = addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, replicaSet, false);
+				tableID = getTableID();
 
-				replicaManager.add(getDatabaseInstance(databaseURL));
+				DatabaseURL databaseURL = createFullDatabaseLocation(databaseLocation, connectionType, localMachineAddress, localMachinePort + "", isSM);
 
-				return (result == 1);
-			} else {
-				replicaManager.add(getDatabaseInstance(databaseURL));
+				if (!isReplicaListed(connectionID, databaseLocation)){ // the table doesn't already exist in the schema manager.
+					int result = addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, replicaSet, false);
 
+					replicaManager.add(getDatabaseInstance(databaseURL));
+
+					return (result == 1);
+				} else {
+					replicaManager.add(getDatabaseInstance(databaseURL));
+
+					return false;
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+
+				System.err.println("Error occured adding replica information.");
 				return false;
 			}
-		} catch (SQLException e) {
-			System.err.println("Error occured adding replica information.");
+		} else {
 			return false;
 		}
 	}
@@ -502,16 +510,18 @@ public class DataManager implements DataManagerRemote, AutonomicController {
 			String databaseLocation, String tableType,
 			String localMachineAddress, int localMachinePort, String connectionType, int tableSet, boolean isSM) throws SQLException {
 
-		if (!isTableListed()){ // the table doesn't already exist in the schema manager.
-			addTableInformation(modificationID);
-		}
+		if (!tableName.startsWith("H2O_")){
 
-		int connectionID = getConnectionID(localMachineAddress, localMachinePort, connectionType);
-		int tableID = getTableID();
-		if (!isReplicaListed(connectionID, databaseLocation)){ // the table doesn't already exist in the schema manager.
-			addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, tableSet, true);
-		}
+			if (!isTableListed()){ // the table doesn't already exist in the schema manager.
+				addTableInformation(modificationID);
+			}
 
+			int connectionID = getConnectionID(localMachineAddress, localMachinePort, connectionType);
+			int tableID = getTableID();
+			if (!isReplicaListed(connectionID, databaseLocation)){ // the table doesn't already exist in the schema manager.
+				addReplicaInformation(tableID, modificationID, connectionID, databaseLocation, tableType, tableSet, true);
+			}
+		}
 		replicaManager.add(getDatabaseInstance(createFullDatabaseLocation(databaseLocation, connectionType, localMachineAddress, localMachinePort + "", isSM)));
 	}
 
@@ -650,7 +660,7 @@ public class DataManager implements DataManagerRemote, AutonomicController {
 		if (cachedTableID != -1)
 			return cachedTableID;
 
-		String sql = "SELECT table_id FROM " + TABLES + " WHERE tablename='" + tableName
+		String sql = "SELECT PRIMARY table_id FROM " + TABLES + " WHERE tablename='" + tableName
 		+ "' AND schemaname='" + schemaName + "';";
 
 		LocalResult result = null;
@@ -683,7 +693,7 @@ public class DataManager implements DataManagerRemote, AutonomicController {
 	public void testAvailability() {
 		//Doesn't do anything.
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.comms.remote.DataManagerRemote#releaseLock(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
 	 */

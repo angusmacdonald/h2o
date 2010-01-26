@@ -94,11 +94,12 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 	}
 	
 	/**
+	 * Get the stored schema manager location (i.e. the system does not have to check whether the schema manager still exists at
+	 * this location before returning a value.
 	 * @return
 	 */
 	public DatabaseURL getSchemaManagerLocation() {
 			return chord.getStoredSchemaManagerLocation();
-
 	}
 
 	/**
@@ -197,7 +198,13 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 
 				//Attempt to connect to a Chord node at this location.
 
-				boolean connected = chord.joinChordRing(localMachineLocation.getHostname(), currentPort++, instanceURL.getHostname(), instanceURL.getRMIPort(), 
+				
+				int portToJoinOn = currentPort++;
+				
+				if (instanceURL.getRMIPort() == portToJoinOn)
+					portToJoinOn++;
+				
+				boolean connected = chord.joinChordRing(localMachineLocation.getHostname(), portToJoinOn, instanceURL.getHostname(), instanceURL.getRMIPort(), 
 						localMachineLocation.getDbLocationWithoutIllegalCharacters());
 
 				if (connected){
