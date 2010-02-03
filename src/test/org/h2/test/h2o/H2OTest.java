@@ -1,10 +1,12 @@
 package org.h2.test.h2o;
 
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Engine;
+import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 
 /**
  * Utility class containing various methods that simulate failure in various parts of H2O. These methods are called from within the database codebase
@@ -27,6 +29,22 @@ public class H2OTest {
 			
 			Constants.IS_TESTING_PRE_COMMIT_FAILURE = false;
 			Constants.IS_TESTING_PRE_PREPARE_FAILURE = false;
+		}
+	}
+	
+	/**
+	 * @param localMachine
+	 * @throws RemoteException 
+	 */
+	public static void rmiFailure(DatabaseInstanceRemote localMachine) throws RemoteException {
+		if (Constants.IS_TESTING_PRE_PREPARE_FAILURE || Constants.IS_TESTING_PRE_COMMIT_FAILURE){
+			
+			Constants.IS_TESTING_PRE_COMMIT_FAILURE = false;
+			Constants.IS_TESTING_PRE_PREPARE_FAILURE = false;
+			
+			if (localMachine.getConnectionString().contains("mem:two")){
+				throw new RemoteException("Testing remote failure");
+			}
 		}
 	}
 
@@ -53,4 +71,6 @@ public class H2OTest {
 			throw new SQLException("Query was deliberately sabotaged by the test harness.");
 		}
 	}
+
+	
 }

@@ -125,8 +125,8 @@ public class QueryProxy implements Serializable{
 		 * Whether an individual replica is able to commit. Used to stop ROLLBACK calls being made to unavailable replicas.
 		 */
 		boolean[] commit = new boolean[allReplicas.size()];
-
-		H2OTest.rmiFailure(); //Test code to simulate the failure of DB instances at this point.
+		boolean globalCommit = true;
+		//H2OTest.rmiFailure(); //Test code to simulate the failure of DB instances at this point.
 
 		/*
 		 * Send the query to each DB instance holding a replica.
@@ -161,12 +161,16 @@ public class QueryProxy implements Serializable{
 					//TODO this shouldn't be duplicated here and in DatabaseInstanceRemote.
 				} else {
 					//Go remote.
+					
+					H2OTest.rmiFailure(replica);
+					
 					result = replica.prepare(sql, transactionName);
 				}
 				
 				if (result != 0) {
 					//globalCommit = false; // Prepare operation failed at remote machine, so rollback the query everywhere.
 					commit[i++] = false;
+					globalCommit = false;
 				} else {
 					commit[i++] = true;
 				}
@@ -177,6 +181,7 @@ public class QueryProxy implements Serializable{
 				//ErrorHandling.errorNoEvent("Unable to contact one of the DB instances holding a replica for " + tableName + ".");
 				//globalCommit = false; // rollback the entire transaction
 				commit[i++] = false;
+				globalCommit = false;
 			} catch (SQLException e){
 				//globalCommit = false; // rollback the entire transaction.
 				commit[i++] = false;
@@ -186,6 +191,10 @@ public class QueryProxy implements Serializable{
 
 		H2OTest.rmiFailure(); //Test code to simulate the failure of DB instances at this point.
 
+		if (!globalCommit){
+			throw new SQLException("Commit failed on one or more replicas. Rollback.");
+		}
+		
 		return 0;
 	}
 
