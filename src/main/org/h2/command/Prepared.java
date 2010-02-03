@@ -6,6 +6,7 @@
  */
 package org.h2.command;
 
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.constant.ErrorCode;
@@ -206,8 +207,9 @@ public abstract class Prepared{
 	 *
 	 * @return the update count
 	 * @throws SQLException if it is a query
+	 * @throws RemoteException 
 	 */
-	public int update() throws SQLException {
+	public int update() throws SQLException, RemoteException {
 		throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_QUERY);
 	}
 
@@ -216,8 +218,9 @@ public abstract class Prepared{
 	 * @param transactionName
 	 * @return
 	 * @throws SQLException
+	 * @throws RemoteException 
 	 */
-	public int update(String transactionName) throws SQLException {
+	public int update(String transactionName) throws SQLException, RemoteException {
 
 		/*
 		 * If the subclass doesn't override this method, then it does not propagate the query to a remote machine.

@@ -26,11 +26,13 @@ import org.h2.command.dml.Query;
 import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
 import org.h2.engine.Database;
-import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
 import org.h2.expression.ValueExpression;
 import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.manager.ISchemaManager;
+import org.h2.h2o.manager.PersistentSchemaManager;
+import org.h2.h2o.util.TableInfo;
 import org.h2.index.IndexType;
 import org.h2.jdbc.JdbcSQLException;
 import org.h2.message.Message;
@@ -38,6 +40,7 @@ import org.h2.schema.Schema;
 import org.h2.schema.Sequence;
 import org.h2.table.Column;
 import org.h2.table.IndexColumn;
+import org.h2.table.Table;
 import org.h2.table.TableData;
 import org.h2.table.TableLinkConnection;
 import org.h2.util.JdbcUtils;
@@ -98,6 +101,7 @@ public class CreateReplica extends SchemaCommand {
 	private Set<IndexColumn[]> setOfIndexColumns;
 	private Set<IndexType> pkIndexType;
 	private int tableSet = -1; //the set of tables which this replica will belong to.
+	private boolean contactSchemaManager = true;
 
 	public CreateReplica(Session session, Schema schema) {
 		super(session, schema);
@@ -115,7 +119,12 @@ public class CreateReplica extends SchemaCommand {
 	}
 
 	public void setTableName(String tableName) {
-		this.tableName = tableName;
+
+		if (tableName.contains(".")){
+			this.tableName = tableName.split("\\.")[1];
+		} else {
+			this.tableName = tableName;
+		}
 	}
 
 	/**
@@ -157,13 +166,36 @@ public class CreateReplica extends SchemaCommand {
 		this.ifNotExists = ifNotExists;
 	}
 
-	public int update() throws SQLException {
+	public int update() throws SQLException, RemoteException {
 
 		Database db = session.getDatabase();
 
 
 		if (whereReplicaWillBeCreated != null || db.getFullDatabasePath().equals(whereReplicaWillBeCreated)){
-			return pushCommand(whereReplicaWillBeCreated, "CREATE REPLICA " + tableName + " FROM '" + whereDataWillBeTakenFrom + "'", true); //command will be executed elsewhere
+			int result = pushCommand(whereReplicaWillBeCreated, "CREATE REPLICA " + tableName + " FROM '" + whereDataWillBeTakenFrom + "'", true); //command will be executed elsewhere
+
+			//Update the schema manager here.
+
+			if (result == 0){
+				ISchemaManager sm = db.getSchemaManager(); //db.getSystemSession()
+
+				Table table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
+
+				if (tableSet  == -1){
+					tableSet = sm.getNewTableSetNumber();
+				} else {
+					if (next != null){
+						next.setTableSet(tableSet);
+					}
+				}
+
+				TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
+
+				sm.addReplicaInformation(ti);	
+			}
+
+			return result;
+
 		} else {
 			readSQL(); //command will be executed here - get the table meta-data and contents.
 		}
@@ -182,11 +214,13 @@ public class CreateReplica extends SchemaCommand {
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
 		}  
 
-		String fullTableName = getSchema().getName() + "." + tableName;
+
+
+		String fullTableName = getSchema().getName() + "." + tableName; //getSchema().getName() + "." + 
 
 		if (getSchema().findTableOrView(session, fullTableName, LocationPreference.NO_PREFERENCE) == null) { //H2O. Check for the existence of any version. if a linked table version doesn't exist we must create it.
 			String createLinkedTable = "\nCREATE LINKED TABLE IF NOT EXISTS " + fullTableName + "('org.h2.Driver', '" + whereDataWillBeTakenFrom + "', '" + 
-			SchemaManager.USERNAME + "', '" + SchemaManager.PASSWORD + "', '" + fullTableName + "');";
+			PersistentSchemaManager.USERNAME + "', '" + PersistentSchemaManager.PASSWORD + "', '" + fullTableName + "');";
 			Parser queryParser = new Parser(session, true);
 			Command sqlQuery = queryParser.prepareCommand(createLinkedTable);
 			sqlQuery.update();
@@ -345,30 +379,28 @@ public class CreateReplica extends SchemaCommand {
 
 				command.update();
 			}
-			/*
-			 * #########################################################################
-			 * 
-			 *  Create a schema manager entry.
-			 * 
-			 * #########################################################################
-			 */
-
-			SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
-
-
-			if (tableSet  == -1){
-				tableSet = sm.getNewTableSetNumber();
-			} else {
-				if (next != null){
-					next.setTableSet(tableSet);
-				}
-			}
-			sm.addReplicaInformation(tableName, table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
-					db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType(), getSchema().getName(), tableSet, session);	
-
+			
 			//	#############################
 			//  Add to data manager.
 			//	#############################
+
+			if (this.contactSchemaManager){
+				ISchemaManager sm = db.getSchemaManager(); //db.getSystemSession()
+
+				
+				if (tableSet  == -1){
+					tableSet = sm.getNewTableSetNumber();
+				} else {
+					if (next != null){
+						next.setTableSet(tableSet);
+					}
+				}
+
+				TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
+
+				sm.addReplicaInformation(ti);	
+			}
+
 			DataManagerRemote dm = db.getDataManager(getSchema().getName() + "." + tableName);
 			try {
 				if (dm == null){
@@ -380,7 +412,7 @@ public class CreateReplica extends SchemaCommand {
 				System.err.println("Error informing data manager of update.");
 				e.printStackTrace();
 			}
-	
+
 
 		} catch (SQLException e) {
 			db.checkPowerOff();
@@ -409,36 +441,44 @@ public class CreateReplica extends SchemaCommand {
 	 * involved in the command also being pushed.
 	 * @return The result of the update.
 	 * @throws SQLException 
+	 * @throws RemoteException 
 	 */
-	private int pushCommand(String remoteDBLocation, String query, boolean createReplica) throws SQLException {
-		Database db = session.getDatabase();
+	private int pushCommand(String remoteDBLocation, String query, boolean createReplica) throws SQLException, RemoteException {
 
-		conn = db.getLinkConnection("org.h2.Driver", remoteDBLocation, SchemaManager.USERNAME, SchemaManager.PASSWORD);
+		try{
+			Database db = session.getDatabase();
 
-		int result = -1;
+			conn = db.getLinkConnection("org.h2.Driver", remoteDBLocation, PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 
-		synchronized (conn) {
-			try {
-				Statement stat = conn.getConnection().createStatement();
-				String databaseName = null;
+			int result = -1;
+
+			synchronized (conn) {
+				try {
+					Statement stat = conn.getConnection().createStatement();
+					String databaseName = null;
 
 
-				stat.execute(query);
-				result = stat.getUpdateCount();
-				
-			} catch (SQLException e) {
-				conn.close();
-				conn = null;
-				e.printStackTrace();
-				throw e;
+					stat.execute(query);
+					result = stat.getUpdateCount();
+
+				} catch (SQLException e) {
+					conn.close();
+					conn = null;
+					e.printStackTrace();
+					throw e;
+				}
 			}
-		}
 
-		if (next != null && createReplica) {
-			next.update();
-		}
+			if (next != null && createReplica) {
+				next.update();
+			}
 
-		return result;
+			return result;
+
+		} catch (Exception e){
+			e.printStackTrace();
+			return 0;
+		}
 	}
 
 	private void generateColumnsFromQuery() {
@@ -535,7 +575,7 @@ public class CreateReplica extends SchemaCommand {
 	private void connect(String tableLocation) throws SQLException {
 		Database db = session.getDatabase();
 
-		conn = db.getLinkConnection("org.h2.Driver", tableLocation, SchemaManager.USERNAME, SchemaManager.PASSWORD);
+		conn = db.getLinkConnection("org.h2.Driver", tableLocation, PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 		synchronized (conn) {
 			try {
 				readMetaData();
@@ -559,9 +599,9 @@ public class CreateReplica extends SchemaCommand {
 		try {
 			stat = conn.getConnection().createStatement();
 
-			String fullTableName = getSchema().getName() + "." + tableName;
+			//String fullTableName = getSchema().getName() + "." + tableName;
 
-			ResultSet rs = stat.executeQuery("SCRIPT TABLE " + fullTableName);
+			ResultSet rs = stat.executeQuery("SCRIPT TABLE " + getSchema().getName() + "." + tableName);
 
 			Set<String> inserts = new HashSet<String>();
 
@@ -581,13 +621,13 @@ public class CreateReplica extends SchemaCommand {
 	}
 
 	private void readMetaData() throws SQLException {
-		String originalSchema = null;
+		String originalSchema = getSchema().getName();
 
 		DatabaseMetaData meta = conn.getConnection().getMetaData();
 		storesLowerCase = meta.storesLowerCaseIdentifiers();
 		storesMixedCase = meta.storesMixedCaseIdentifiers();
 		supportsMixedCaseIdentifiers = meta.supportsMixedCaseIdentifiers();
-		ResultSet rs = meta.getTables(null, null, tableName, null);
+		ResultSet rs = meta.getTables(null, originalSchema, tableName, null);
 		//		if (rs.next() && rs.next()) { //XXX this is ommited because there are duplicate table entries. does this matter.
 		//			throw Message.getSQLException(ErrorCode.SCHEMA_NAME_MUST_MATCH, tableName);
 		//		}
@@ -658,7 +698,7 @@ public class CreateReplica extends SchemaCommand {
 			if (columns.size() == 0) {
 				// alternative solution
 				ResultSetMetaData rsMeta = rs.getMetaData();
-				for (i = 0; i < rsMeta.getColumnCount();) {
+				for (i = 0; i < rsMeta.getColumnCount(); i++) {
 					String n = rsMeta.getColumnName(i + 1);
 					n = convertColumnName(n);
 					int sqlType = rsMeta.getColumnType(i + 1);
@@ -853,24 +893,28 @@ public class CreateReplica extends SchemaCommand {
 	 * is not the local machine - this location is used to get the meta-data and data from the given table.
 	 * @param originalLocation
 	 * @throws JdbcSQLException 
+	 * @throws RemoteException 
 	 */
-	public void setOriginalLocation(String originalLocation) throws JdbcSQLException {
+	public void setOriginalLocation(String originalLocation, boolean contactSM) throws JdbcSQLException, RemoteException {
+		contactSchemaManagerOnCompletion(contactSM);
+		
 		this.whereDataWillBeTakenFrom = originalLocation;
 
 		if (whereDataWillBeTakenFrom != null && whereDataWillBeTakenFrom.startsWith("'") && whereDataWillBeTakenFrom.endsWith("'")){
 			whereDataWillBeTakenFrom = whereDataWillBeTakenFrom.substring(1, whereDataWillBeTakenFrom.length()-1);
 		}
 
-		try {
-			if (whereDataWillBeTakenFrom == null){
-				whereDataWillBeTakenFrom = SchemaManager.getInstance().getDataManagerLocation(tableName, getSchema().getName());
-			}
-		} catch (SQLException e) {
-			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
+		if (whereDataWillBeTakenFrom == null){
+
+			ISchemaManager sm = session.getDatabase().getSchemaManager();
+
+			DataManagerRemote dm = sm.lookup(new TableInfo(tableName, getSchema().getName()));
+
+			whereDataWillBeTakenFrom = dm.getLocation();
 		}
 
 		if (next != null){
-			next.setOriginalLocation(whereDataWillBeTakenFrom);
+			next.setOriginalLocation(whereDataWillBeTakenFrom, contactSM);
 		}
 	}
 
@@ -884,11 +928,18 @@ public class CreateReplica extends SchemaCommand {
 			next.addNextCreateReplica(create);
 		}
 	}
-	
-	
+
+
 	@Override
 	public String toString(){
 		return tableName;
 	}
-	
+
+	/**
+	 * @param b
+	 */
+	public void contactSchemaManagerOnCompletion(boolean b) {
+		this.contactSchemaManager = b;
+	}
+
 }

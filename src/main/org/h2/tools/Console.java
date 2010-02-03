@@ -29,15 +29,13 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import org.h2.util.Resources;
-
 import java.io.IOException;
 import java.io.PrintStream;
-//## AWT end ##
 import java.sql.SQLException;
 
 import org.h2.constant.SysProperties;
 import org.h2.server.ShutdownHandler;
+import org.h2.util.Resources;
 import org.h2.util.StartBrowser;
 
 /**

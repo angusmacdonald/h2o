@@ -9,9 +9,7 @@ package org.h2.jdbcx;
 import java.sql.SQLException;
 import java.util.StringTokenizer;
 
-//## Java 1.4 begin ##
 import javax.transaction.xa.Xid;
-//## Java 1.4 end ##
 
 import org.h2.constant.ErrorCode;
 import org.h2.message.Message;

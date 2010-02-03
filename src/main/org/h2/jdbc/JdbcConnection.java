@@ -8,20 +8,24 @@ package org.h2.jdbc;
 
 import java.io.InputStream;
 import java.io.Reader;
+import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
 import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.NClob;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
+import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
+import java.sql.Struct;
 import java.util.Map;
 import java.util.Properties;
-
 
 import org.h2.command.CommandInterface;
 import org.h2.constant.ErrorCode;
@@ -42,13 +46,6 @@ import org.h2.value.ValueInt;
 import org.h2.value.ValueLob;
 import org.h2.value.ValueNull;
 import org.h2.value.ValueString;
-
-
-import java.sql.Array;
-import java.sql.NClob;
-import java.sql.Struct;
-import java.sql.SQLXML;
-import java.sql.SQLClientInfoException;
 
 
 /**

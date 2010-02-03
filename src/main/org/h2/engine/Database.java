@@ -21,21 +21,20 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.h2.api.DatabaseEventListener;
-import org.h2.command.Command;
-import org.h2.command.Parser;
 import org.h2.command.dml.SetTypes;
 import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
 import org.h2.constant.SysProperties;
 import org.h2.constraint.Constraint;
-import org.h2.h2o.IDatabaseRemote;
-import org.h2.h2o.ChordDatabaseRemote;
 import org.h2.h2o.comms.DataManager;
 import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.manager.ISchemaManager;
+import org.h2.h2o.manager.SchemaManager;
+import org.h2.h2o.remote.ChordDatabaseRemote;
+import org.h2.h2o.remote.IDatabaseRemote;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.H2oProperties;
 import org.h2.index.Cursor;
 import org.h2.index.Index;
 import org.h2.index.IndexType;
@@ -44,7 +43,6 @@ import org.h2.log.UndoLogRecord;
 import org.h2.message.Message;
 import org.h2.message.Trace;
 import org.h2.message.TraceSystem;
-import org.h2.result.LocalResult;
 import org.h2.result.Row;
 import org.h2.result.SearchRow;
 import org.h2.schema.Schema;
@@ -111,30 +109,30 @@ public class Database implements DataHandler {
 	 */
 	private boolean connectedToSM = false;
 
-//	/**
-//	 * H2O. Interface to this database instance, exposed via RMI.
-//	 */
-//	private DatabaseInstance databaseInstance;
+	//	/**
+	//	 * H2O. Interface to this database instance, exposed via RMI.
+	//	 */
+	//	private DatabaseInstance databaseInstance;
 
 	/**
 	 * H2O. Utility class for schema manager interactions.
 	 */
-	private SchemaManager schemaManager;
+	private ISchemaManager schemaManager;
 
-//	/**
-//	 * H2O. Manages access to data managers, both local and remote.
-//	 */
-//	private IDataManagerLocator dataManagerLocator;
-//
-//	/**
-//	 * H2O. Manages access to remote database instances via RMI.
-//	 */
-//	private IDatabaseInstanceLocator databaseInstanceLocator;
-//
-//	/**
-//	 * Reference to this databases local chord node.
-//	 */
-//	private ChordInterface chord = null;	
+	//	/**
+	//	 * H2O. Manages access to data managers, both local and remote.
+	//	 */
+	//	private IDataManagerLocator dataManagerLocator;
+	//
+	//	/**
+	//	 * H2O. Manages access to remote database instances via RMI.
+	//	 */
+	//	private IDatabaseInstanceLocator databaseInstanceLocator;
+	//
+	//	/**
+	//	 * Reference to this databases local chord node.
+	//	 */
+	//	private ChordInterface chord = null;	
 
 	private final String databaseName;
 	private final String databaseShortName;
@@ -699,9 +697,9 @@ public class Database implements DataHandler {
 		 * #####################################################################################
 		 */
 		if (Constants.IS_H2O && !isManagementDB()){ //don't run this code with the TCP server management DB
-			
+
 			databaseRemote.connectToDatabaseSystem(systemSession);
-			
+
 		}
 
 		/*
@@ -762,36 +760,56 @@ public class Database implements DataHandler {
 
 		if (Constants.IS_H2O && !isManagementDB() && ( !databaseExists || !databaseRemote.isSchemaManager())){ //don't run this code with the TCP server management DB
 
-			createH2OTables();
+			try {
+				createH2OTables(false);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 
-			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, " Created schema manager tables.");
-		} 
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, " Created new schema manager tables.");
+		} else if (Constants.IS_H2O && !isManagementDB() && ( databaseExists && databaseRemote.isSchemaManager())){
+			/*
+			 * This is the schema manager. Reclaim previously held state.
+			 */
+			try {
+				createH2OTables(true);
+				databaseRemote.getSchemaManager().buildSchemaManagerState();
+				
+				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Re-created schema manager state.");
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 
 
 	}
 
-//	/**
-//	 * Connect this database instance to the larger distributed database system. If a database system does not
-//	 * currently exist this node will become the first in a new system. 
-//	 */
-//	private void connectInstanceToDatabaseSystem() {
-//		this.schemaManagerLocation = databaseRemote.connectToDatabaseSystem(localMachineLocation, systemSession);
-//		
+	//	/**
+	//	 * Connect this database instance to the larger distributed database system. If a database system does not
+	//	 * currently exist this node will become the first in a new system. 
+	//	 */
+	//	private void connectInstanceToDatabaseSystem() {
+	//		this.schemaManagerLocation = databaseRemote.connectToDatabaseSystem(localMachineLocation, systemSession);
+	//		
 
-//		this.isSchemaManager = this.localMachineLocation.equals(this.schemaManagerLocation);
-//
-//		/*
-//		 * The schema manager location must be known at this point, otherwise the database instance will not start. 
-//		 */
-//		if (this.schemaManagerLocation != null){
-//			databaseSettings = new H2oProperties(this.getDatabaseURL());
-//			this.databaseSettings.loadProperties();	
-//			this.databaseSettings.setProperty("schemaManagerLocation", this.schemaManagerLocation.getUrlMinusSM());
-//		} else {
-//			ErrorHandling.hardError("Schema manager not known. This can be fixed by creating a known hosts file (called " + 
-//					this.getDatabaseURL().getDbLocationWithoutIllegalCharacters() + ".instances.properties) and adding the location of a known host.");
-//		}
-//	}
+	//		this.isSchemaManager = this.localMachineLocation.equals(this.schemaManagerLocation);
+	//
+	//		/*
+	//		 * The schema manager location must be known at this point, otherwise the database instance will not start. 
+	//		 */
+	//		if (this.schemaManagerLocation != null){
+	//			databaseSettings = new H2oProperties(this.getDatabaseURL());
+	//			this.databaseSettings.loadProperties();	
+	//			this.databaseSettings.setProperty("schemaManagerLocation", this.schemaManagerLocation.getUrlMinusSM());
+	//		} else {
+	//			ErrorHandling.hardError("Schema manager not known. This can be fixed by creating a known hosts file (called " + 
+	//					this.getDatabaseURL().getDbLocationWithoutIllegalCharacters() + ".instances.properties) and adding the location of a known host.");
+	//		}
+	//	}
 
 	/**
 	 * @return
@@ -2514,79 +2532,78 @@ public class Database implements DataHandler {
 
 	/**
 	 * H2O Creates H2O schema meta-data tables, including schema manager tables if this machine is a schema manager.
+	 * @throws Exception 
 	 * @throws SQLException 
 	 */
-	private void createH2OTables(){
-		schemaManager = SchemaManager.getInstance(systemSession); //H2O. Create schema manager utility class.
+	private void createH2OTables(boolean persistedSchemaTablesExist) throws Exception{
+
 
 		int result = -1;
 
-		try {
-			if (isSchemaManager()){ // Create the schema manager tables and immediately add local tables to this manager.
+		if (isSchemaManager()){ // Create the schema manager tables and immediately add local tables to this manager.
 
-				result = schemaManager.createSchemaManagerTables();
+			schemaManager = new SchemaManager(this, persistedSchemaTablesExist); 
+			databaseRemote.bindSchemaManager(schemaManager);
 
-			} else { // Not a schema manager -  Create a linked table connection to the remote schema manager
+		} else { // Not a schema manager -  Get a reference to the schema manager.
+			schemaManager = databaseRemote.getSchemaManager();
+		}
 
-				result = schemaManager.createLinkedTablesForSchemaManager(getSchemaManagerLocation().getURL());
-
-			}
-
+		if (!persistedSchemaTablesExist){
 			try { 
 				DataManager.createDataManagerTables(systemSession);
 			} catch (SQLException e) {
 
 				e.printStackTrace();
 			}
-
-			if (!schemaManager.connectionInformationExists(getLocalMachineAddress(), getLocalMachinePort())){
-				schemaManager.addLocalConnectionInformation(getDatabaseURL());
-			}
-
-		} catch (SQLException e) {
-			e.printStackTrace();
 		}
+		
+		schemaManager.addConnectionInformation(getDatabaseURL());
 
 
 		if (!isSchemaManager() && result >= 0){
 			connectedToSM = true;
 
-			try {
-
-				LocalResult remoteTables = schemaManager.getAllRemoteTables(getLocalMachineAddress(), getLocalMachinePort(), getDatabaseLocation());
-
-				String sql = "";
-				while (remoteTables.next()){
-					Value[] row = remoteTables.currentRow();
-					String schemaName = row[0].getString();
-					String tableName = row[1].getString();
-					String db_location = row[2].getString();
-					String connection_type = row[3].getString();
-					String machine_name = row[4].getString();
-					String connection_port = row[5].getString();
-
-					//Example format: jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db
-
-					String fullTableName = schemaName + "." + tableName;
-
-					DatabaseURL dbURL = new DatabaseURL(connection_type, machine_name, Integer.parseInt(connection_port), db_location, false);
-
-					sql += "\nCREATE LINKED TABLE IF NOT EXISTS " + fullTableName + "('org.h2.Driver', '" + dbURL.getURL() + "', '" + 
-					SchemaManager.USERNAME + "', '" + SchemaManager.PASSWORD + "', '" + fullTableName + "');";
-
-				}
-
-				if (!sql.equals("")){
-					Parser queryParser = new Parser(systemSession, true);
-					Command sqlQuery = queryParser.prepareCommand(sql);
-					sqlQuery.executeUpdate();
-				}
-
-
-			} catch (SQLException e) {
-				connectedToSM = false;
-				e.printStackTrace();
-			}
+			/*
+			 * Code used to get information on remote tables from the schema manager state. If this is uncommented it should be changed to
+			 * contact the schema manager directly.
+			 */
+			//			try {
+			//
+			//				LocalResult remoteTables = schemaManager.getAllRemoteTables(getLocalMachineAddress(), getLocalMachinePort(), getDatabaseLocation());
+			//
+			//				String sql = "";
+			//				while (remoteTables.next()){
+			//					Value[] row = remoteTables.currentRow();
+			//					String schemaName = row[0].getString();
+			//					String tableName = row[1].getString();
+			//					String db_location = row[2].getString();
+			//					String connection_type = row[3].getString();
+			//					String machine_name = row[4].getString();
+			//					String connection_port = row[5].getString();
+			//
+			//					//Example format: jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db
+			//
+			//					String fullTableName = schemaName + "." + tableName;
+			//
+			//					DatabaseURL dbURL = new DatabaseURL(connection_type, machine_name, Integer.parseInt(connection_port), db_location, false);
+			//
+			//					sql += "\nCREATE LINKED TABLE IF NOT EXISTS " + fullTableName + "('org.h2.Driver', '" + dbURL.getURL() + "', '" + 
+			//					SchemaManagerState.USERNAME + "', '" + SchemaManagerState.PASSWORD + "', '" + fullTableName + "');";
+			//
+			//				}
+			//
+			//				if (!sql.equals("")){
+			//					Parser queryParser = new Parser(systemSession, true);
+			//					Command sqlQuery = queryParser.prepareCommand(sql);
+			//					sqlQuery.executeUpdate();
+			//				}
+			//
+			//
+			//			} catch (SQLException e) {
+			//				connectedToSM = false;
+			//				e.printStackTrace();
+			//			}
 
 
 		}
@@ -2598,7 +2615,7 @@ public class Database implements DataHandler {
 	 * @return the connectedToSM
 	 */
 	public boolean isConnectedToSM() {
-		return connectedToSM;
+		return databaseRemote.getSchemaManager() != null;
 	}
 
 	/**
@@ -2662,13 +2679,7 @@ public class Database implements DataHandler {
 	 * @return
 	 */
 	public String getConnectionType() {
-		if (getLocalMachinePort() == -1 && getDatabaseURL().isMem()){
-			return "mem";
-		} else if (getLocalMachinePort() != -1){
-			return "tcp";
-		} else {
-			return "other";
-		}
+		return getDatabaseURL().getConnectionType();
 	}
 
 	public void addDataManager(DataManager dm){
@@ -2726,7 +2737,21 @@ public class Database implements DataHandler {
 	 */
 	public DatabaseURL getSchemaManagerLocation() {
 		return databaseRemote.getSchemaManagerLocation();
-		
+
+	}
+
+	/**
+	 * @return
+	 */
+	public ISchemaManager getSchemaManager() {
+		return schemaManager;
+	}
+
+	/**
+	 * 
+	 */
+	public IDatabaseRemote getRemoteInterface() {
+		return databaseRemote;
 	}
 
 }

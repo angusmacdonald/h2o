@@ -8,6 +8,7 @@ package org.h2.command;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.text.Collator;
 import java.util.HashSet;
@@ -62,6 +63,7 @@ import org.h2.command.dml.Call;
 import org.h2.command.dml.Delete;
 import org.h2.command.dml.ExecuteProcedure;
 import org.h2.command.dml.ExplainPlan;
+import org.h2.command.dml.GetRmiPort;
 import org.h2.command.dml.Insert;
 import org.h2.command.dml.Merge;
 import org.h2.command.dml.NoOperation;
@@ -85,7 +87,6 @@ import org.h2.engine.DbObject;
 import org.h2.engine.FunctionAlias;
 import org.h2.engine.Procedure;
 import org.h2.engine.Right;
-import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
 import org.h2.engine.Setting;
 import org.h2.engine.User;
@@ -116,6 +117,10 @@ import org.h2.expression.TableFunction;
 import org.h2.expression.ValueExpression;
 import org.h2.expression.Variable;
 import org.h2.expression.Wildcard;
+import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.manager.ISchemaManager;
+import org.h2.h2o.manager.PersistentSchemaManager;
+import org.h2.h2o.util.TableInfo;
 import org.h2.index.Index;
 import org.h2.message.Message;
 import org.h2.result.SortOrder;
@@ -376,6 +381,8 @@ public class Parser {
 			case 'G':
 				if (readIf("GRANT")) {
 					c = parseGrantRevoke(GrantRevoke.GRANT);
+				} else if (readIf("GET")) {
+					c = parseGetRmiPort();
 				}
 				break;
 			case 'H':
@@ -490,6 +497,7 @@ public class Parser {
 		setSQL(c, null, start);
 		return c;
 	}
+
 
 	private SQLException getSyntaxError() {
 		if (expectedList == null || expectedList.size() == 0) {
@@ -3515,7 +3523,13 @@ public class Parser {
 			int defaultMode;
 			Setting setting = database.findSetting(SetTypes.getTypeName(SetTypes.DEFAULT_TABLE_TYPE));
 			defaultMode = setting == null ? Constants.DEFAULT_TABLE_TYPE : setting.getIntValue();
-			return parseCreateReplica(false, false, defaultMode == Table.TYPE_CACHED);
+			try {
+				return parseCreateReplica(false, false, defaultMode == Table.TYPE_CACHED);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return null;
+			}
 		} else if (readIf("VIEW")) {
 			return parseCreateView(force);
 		} else if (readIf("ALIAS")) {
@@ -4336,6 +4350,11 @@ public class Parser {
 			return table;
 		}
 		String[] schemaNames = session.getSchemaSearchPath();
+		
+		if (schemaNames == null){
+			schemaNames = new String[1];
+			schemaNames[0] = session.getCurrentSchemaName();
+		}
 		for (int i = 0; schemaNames != null && i < schemaNames.length; i++) {
 			Schema s = database.getSchema(schemaNames[i]);
 			table = s.findTableOrView(session, tableName, locale);
@@ -4357,7 +4376,12 @@ public class Parser {
 			if (getSchema() != null)
 				schemaName = getSchema().getName();
 
-			return findViaSchemaManager(tableName, schemaName); //XXX this might fail if its not the default schema.
+			try {
+				return findViaSchemaManager(tableName, schemaName);
+			} catch (RemoteException e) {
+				e.printStackTrace();
+				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
+			} //XXX this might fail if its not the default schema.
 		} else { // 1
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
 		}
@@ -4370,8 +4394,9 @@ public class Parser {
 	 * @param tableName Name of the table that must be found.
 	 * @return	Information on that table.
 	 * @throws SQLException if the table is not found.
+	 * @throws RemoteException 
 	 */
-	public Table findViaSchemaManager(String tableName, String thisSchemaName) throws SQLException {
+	public Table findViaSchemaManager(String tableName, String thisSchemaName) throws SQLException, RemoteException {
 
 		/*
 		 * Attempt to locate the table if it exists remotely.
@@ -4393,7 +4418,18 @@ public class Parser {
 		//
 		//		} else {
 		//Old Schema Manager method.
-		tableLocation = SchemaManager.getInstance(session).getDataManagerLocation(tableName, thisSchemaName);
+		
+	
+		
+		DataManagerRemote dm = session.getDatabase().getSchemaManager().lookup(new TableInfo(tableName, thisSchemaName));
+		
+		if (dm == null){
+			ErrorHandling.errorNoEvent("Data manager not found for not found for " + new TableInfo(tableName, thisSchemaName));
+		}
+		dm = session.getDatabase().getSchemaManager().lookup(new TableInfo(tableName, thisSchemaName));
+		
+		
+		tableLocation = dm.getLocation();
 		//		}
 
 		/*
@@ -4407,7 +4443,7 @@ public class Parser {
 		}
 		Parser queryParser = new Parser(sessionToUse, true);
 
-		String sql = "CREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + tableLocation + "', '" + SchemaManager.USERNAME + "', '" + SchemaManager.PASSWORD + "', '" + tableName + "');";
+		String sql = "CREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + tableLocation + "', '" + PersistentSchemaManager.USERNAME + "', '" + PersistentSchemaManager.PASSWORD + "', '" + tableName + "');";
 
 		Command sqlQuery = queryParser.prepareCommand(sql);
 		int result = sqlQuery.update();
@@ -4761,7 +4797,25 @@ public class Parser {
 	 * START OF H2O ############################################################
 	 */
 
-	private CreateReplica parseCreateReplica(boolean temp, boolean globalTemp, boolean persistent) throws SQLException {
+
+	/**
+	 * @return
+	 * @throws SQLException 
+	 */
+	private GetRmiPort parseGetRmiPort() throws SQLException {
+		read("RMI"); read("PORT");
+		
+		String databaseLocation = null;
+		if (readIf("AT")){
+			databaseLocation = readExpression().toString();
+		}
+		
+		GetRmiPort command = new GetRmiPort(session, getSchema(), databaseLocation);
+		
+		return command;
+	}
+	
+	private CreateReplica parseCreateReplica(boolean temp, boolean globalTemp, boolean persistent) throws SQLException, RemoteException {
 		boolean ifNotExists = readIfNoExists();
 
 		CreateReplica command = null;
@@ -4777,9 +4831,9 @@ public class Parser {
 			schemaName = readExpression().toString();
 			Schema s = getSchema();
 
-			SchemaManager schemaManager = SchemaManager.getInstance(session);
+			ISchemaManager schemaManager = session.getDatabase().getSchemaManager();
 
-			String[] tables = schemaManager.getAllTablesInSchema(s.getName());
+			java.util.Set<String> tables = schemaManager.getAllTablesInSchema(s.getName());
 
 			int numTables = 0;
 
@@ -4792,11 +4846,11 @@ public class Parser {
 					command.setTemporary(temp);
 					command.setGlobalTemporary(globalTemp);
 					command.setIfNotExists(ifNotExists);
-					command.setTableName(fullTableName);
+					command.setTableName(shortTableName);
 					command.setComment(readCommentIf());
 				} else {
 					CreateReplica next = new CreateReplica(session, getSchema());
-					next.setTableName(fullTableName);
+					next.setTableName(shortTableName);
 
 					next.setPersistent(persistent);
 					next.setTemporary(temp);
@@ -4856,12 +4910,18 @@ public class Parser {
 			whereReplicaWillBeCreated = readString();
 		}
 
+		boolean x = true;
+		
 		if (readIf("FROM")){
-			whereDataWillBeTakenFrom = readString();			
+			whereDataWillBeTakenFrom = readString();
+			
+			if (whereDataWillBeTakenFrom != null){
+				x = false;
+			}
 		}
 
 		if (command != null){
-			command.setOriginalLocation(whereDataWillBeTakenFrom);
+			command.setOriginalLocation(whereDataWillBeTakenFrom, x);
 			command.setReplicationLocation(whereReplicaWillBeCreated);
 		}
 

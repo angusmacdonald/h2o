@@ -21,6 +21,7 @@ import org.h2.h2o.locking.ILockingTable;
 import org.h2.h2o.locking.LockingTable;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LockType;
+import org.h2.h2o.util.TableInfo;
 import org.h2.result.LocalResult;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -140,6 +141,8 @@ public class DataManager implements DataManagerRemote, AutonomicController {
 
 	private Database database;
 
+	private boolean isAlive = true;
+
 	public DataManager(String tableName, String schemaName, long modificationID, int tableSet, Database database) throws SQLException{
 		this.tableName = tableName;
 
@@ -223,7 +226,13 @@ public class DataManager implements DataManagerRemote, AutonomicController {
 		Parser parser = new Parser(session, true);
 
 		Command query = parser.prepareCommand(sql);
-		return query.update();
+		try {
+			return query.update();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return -1;
+		}
 	}
 
 
@@ -281,7 +290,9 @@ public class DataManager implements DataManagerRemote, AutonomicController {
 	 */
 	@Override
 	public synchronized QueryProxy getQueryProxy(LockType lockRequested, DatabaseInstanceRemote databaseInstanceRemote) throws RemoteException, SQLException {
-
+		//if (!isAlive ) return null;
+		
+		
 		if (replicaManager.size() == 0){
 			try {
 				throw new Exception("Illegal State. There must be at least one replica");
@@ -722,6 +733,21 @@ public class DataManager implements DataManagerRemote, AutonomicController {
 	public boolean changeSetting(AutonomicAction action) throws RemoteException {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	/**
+	 * @return
+	 */
+	public TableInfo getTableInfo() {
+		return new TableInfo(tableName, schemaName, database.getDatabaseURL());
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.remote.DataManagerRemote#shutdown()
+	 */
+	@Override
+	public void shutdown() {
+		isAlive = false;
 	}
 
 }

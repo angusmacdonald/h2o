@@ -6,12 +6,11 @@
  */
 package org.h2.command.ddl;
 
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.h2.command.Command;
-import org.h2.command.Parser;
 import org.h2.command.Prepared;
 import org.h2.command.dml.Insert;
 import org.h2.command.dml.Query;
@@ -21,17 +20,17 @@ import org.h2.constraint.Constraint;
 import org.h2.constraint.ConstraintReferential;
 import org.h2.engine.Constants;
 import org.h2.engine.Database;
-import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
 import org.h2.h2o.comms.DataManager;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.manager.ISchemaManager;
 import org.h2.h2o.util.LockType;
+import org.h2.h2o.util.TableInfo;
 import org.h2.h2o.util.TransactionNameGenerator;
 import org.h2.message.Message;
-import org.h2.result.LocalResult;
 import org.h2.schema.Schema;
 import org.h2.schema.Sequence;
 import org.h2.table.Column;
@@ -117,7 +116,7 @@ public class CreateTable extends SchemaCommand {
 		this.ifNotExists = ifNotExists;
 	}
 
-	public int update() throws SQLException {
+	public int update() throws SQLException, RemoteException {
 		/*
 		 * The only time this is called is when a CreateTable command is replayed at database startup. This differs
 		 * from the normal CreateTable execution because a DataManager for the table may exist somewhere. Instead of creating a new
@@ -127,7 +126,7 @@ public class CreateTable extends SchemaCommand {
 		return update(TransactionNameGenerator.generateName("NULLCREATION"));
 	}
 
-	public int update(String transactionName) throws SQLException {
+	public int update(String transactionName) throws SQLException, RemoteException {
 		// TODO rights: what rights are required to create a table?
 		session.commit(true);
 		Database db = session.getDatabase();
@@ -229,8 +228,14 @@ public class CreateTable extends SchemaCommand {
 			 * 
 			 * #########################################################################
 			 */
-			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_")){
-				SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
+			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_") && !isStartup()){
+				ISchemaManager sm = db.getSchemaManager(); //db.getSystemSession()
+
+			
+				assert sm != null;
+
+				
+
 				int tableSet = -1;
 				boolean thisTableReferencesAnExistingTable = false;
 
@@ -257,13 +262,15 @@ public class CreateTable extends SchemaCommand {
 							tableSet = tab.getTableSet();
 						}
 					} else {
-						tableSet = sm.getNewTableSetNumber();
+						 tableSet = sm.getNewTableSetNumber();
 					}
 				} else {
 					tableSet = sm.getNewTableSetNumber();
 				}
-				sm.addTableInformation(tableName, table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
-						db.getLocalMachineAddress(), db.getLocalMachinePort(), (db.isPersistent())? "tcp": "mem", getSchema().getName(), tableSet, session);	
+
+				TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
+
+				sm.addTableInformation(queryProxy.getDataManagerLocation(), ti);	
 
 				table.setTableSet(tableSet);
 
@@ -424,7 +431,7 @@ public class CreateTable extends SchemaCommand {
 
 		queryProxy = null;
 		if (Constants.IS_H2O && !tableName.startsWith("H2O_") && !db.isManagementDB()){ //XXX Not sure if this should be a seperate IF
-			
+
 			queryProxy = QueryProxy.getQueryProxyAndLock(new DataManager(tableName, getSchema().getName(), 0, 0, db), LockType.CREATE, db.getLocalDatabaseInstance());
 
 			queryProxyManager.addProxy(queryProxy);

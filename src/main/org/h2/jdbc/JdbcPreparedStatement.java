@@ -13,21 +13,21 @@ import java.net.URL;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
-//## Java 1.4 begin ##
+import java.sql.NClob;
 import java.sql.ParameterMetaData;
-import java.sql.Statement;
-//## Java 1.4 end ##
 import java.sql.PreparedStatement;
 import java.sql.Ref;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.RowId;
 import java.sql.SQLException;
+import java.sql.SQLXML;
+import java.sql.Statement;
 import java.util.Calendar;
 
 import org.h2.command.CommandInterface;
 import org.h2.constant.ErrorCode;
 import org.h2.expression.ParameterInterface;
-import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.message.Message;
 import org.h2.message.TraceObject;
 import org.h2.result.ResultInterface;
@@ -50,11 +50,6 @@ import org.h2.value.ValueShort;
 import org.h2.value.ValueString;
 import org.h2.value.ValueTime;
 import org.h2.value.ValueTimestamp;
-
-
-import java.sql.RowId;
-import java.sql.NClob;
-import java.sql.SQLXML;
 
 
 /**

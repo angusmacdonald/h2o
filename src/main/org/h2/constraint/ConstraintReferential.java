@@ -6,6 +6,7 @@
  */
 package org.h2.constraint;
 
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.command.Parser;
@@ -445,7 +446,11 @@ public class ConstraintReferential extends Constraint {
             // this or the ref table at the same time
             skipOwnTable = true;
             prep.setInternalQuery(true);
-            prep.update();
+            try {
+				prep.update();
+			} catch (RemoteException e) {
+				throw new SQLException(e.getMessage());
+			}
         } finally {
             skipOwnTable = false;
         }

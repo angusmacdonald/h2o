@@ -32,8 +32,6 @@ import org.h2.table.Table;
 import org.h2.table.TableFilter;
 import org.h2.util.ObjectArray;
 
-import uk.ac.standrews.cs.nds.util.ErrorHandling;
-
 /**
  * This class represents the statement
  * ALTER TABLE ADD CONSTRAINT

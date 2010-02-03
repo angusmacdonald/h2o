@@ -12,14 +12,12 @@ import java.util.Set;
 import org.h2.command.Prepared;
 import org.h2.engine.Constants;
 import org.h2.engine.Database;
-import org.h2.engine.DbObject;
 import org.h2.engine.Session;
 import org.h2.result.LocalResult;
 import org.h2.table.Column;
 import org.h2.table.ReplicaSet;
 import org.h2.table.Table;
 import org.h2.table.TableData;
-import org.h2.util.ObjectArray;
 
 /**
  * This class represents the statement

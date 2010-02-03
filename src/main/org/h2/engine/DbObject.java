@@ -7,6 +7,7 @@
 package org.h2.engine;
 
 import java.sql.SQLException;
+
 import org.h2.table.Table;
 import org.h2.util.ObjectArray;
 

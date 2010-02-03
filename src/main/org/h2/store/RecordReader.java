@@ -7,6 +7,7 @@
 package org.h2.store;
 
 import java.sql.SQLException;
+
 import org.h2.engine.Session;
 
 /**

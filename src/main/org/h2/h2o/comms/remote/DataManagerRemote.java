@@ -68,4 +68,10 @@ public interface DataManagerRemote extends H2ORemote {
 	 * @param updatedReplicas The set of replicas that were successfully updated by this query.
 	 */
 	public void releaseLock(DatabaseInstanceRemote requestingDatabase, Set<DatabaseInstanceRemote> updatedReplicas, int updateID) throws RemoteException;
+
+	/**
+	 * Deconstruct this data manager. This is required for testing where a remote reference to a data manager may not completely die when
+	 * expected - this method should essentially render the data manager unusable.
+	 */
+	public void shutdown() throws RemoteException;
 }

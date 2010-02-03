@@ -321,6 +321,19 @@ public class DatabaseURL implements Serializable {
 		return rmiPort;
 	}
 
+	/**
+	 * @return
+	 */
+	public String getConnectionType() {
+		if (port == -1 && isMem()){
+			return "mem";
+		} else if (port != -1 && isTcp()){
+			return "tcp";
+		} else {
+			return "other";
+		}
+	}
+
 
 
 }

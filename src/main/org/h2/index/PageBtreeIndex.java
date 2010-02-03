@@ -7,6 +7,7 @@
 package org.h2.index;
 
 import java.sql.SQLException;
+
 import org.h2.constant.ErrorCode;
 import org.h2.constant.SysProperties;
 import org.h2.engine.Session;

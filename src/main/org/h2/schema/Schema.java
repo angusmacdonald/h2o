@@ -268,6 +268,7 @@ public class Schema extends DbObjectBase {
 			if ((replicaSet.size() == 1 && !locale.isStrict()) || locale == LocationPreference.NO_PREFERENCE){ //XXX more advanced logic to choose replica would go here.
 				table = replicaSet.getACopy();
 			} else if (locale == LocationPreference.LOCAL || locale == LocationPreference.LOCAL_STRICT){
+				
 				table = replicaSet.getLocalCopy(); //XXX what if no local copy exists?
 			} else if (locale == LocationPreference.PRIMARY || locale == LocationPreference.PRIMARY_STRICT){
 				table = replicaSet.getPrimaryCopy();

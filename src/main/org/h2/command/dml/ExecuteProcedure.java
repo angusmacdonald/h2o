@@ -6,6 +6,7 @@
  */
 package org.h2.command.dml;
 
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.command.Prepared;
@@ -58,7 +59,7 @@ public class ExecuteProcedure extends Prepared {
         return prepared.isQuery();
     }
 
-    public int update() throws SQLException {
+    public int update() throws SQLException, RemoteException {
         setParameters();
         Prepared prepared = procedure.getPrepared();
         return prepared.update();

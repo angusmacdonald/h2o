@@ -19,6 +19,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+
 import org.h2.engine.Constants;
 import org.h2.test.TestAll;
 import org.h2.test.TestBase;

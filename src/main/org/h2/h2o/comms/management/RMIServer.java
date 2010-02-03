@@ -2,12 +2,10 @@ package org.h2.h2o.comms.management;
 
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
-import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.ExportException;
-import java.rmi.server.UnicastRemoteObject;
 
 import org.h2.h2o.comms.remote.H2ORemote;
 

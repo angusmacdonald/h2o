@@ -11,8 +11,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.h2.h2o.ChordInterface;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.remote.ChordInterface;
 import org.h2.h2o.util.DatabaseURL;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;

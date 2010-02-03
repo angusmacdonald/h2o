@@ -6,8 +6,8 @@
  */
 package org.h2.util;
 
-import java.util.Date;
 import java.util.Calendar;
+import java.util.Date;
 
 /**
  * <p>

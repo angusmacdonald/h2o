@@ -6,6 +6,7 @@
  */
 package org.h2.command;
 
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.expression.Parameter;
@@ -88,7 +89,7 @@ public class CommandContainer extends Command {
 		}
 	}
 
-	public int update() throws SQLException {
+	public int update() throws SQLException, RemoteException {
 		int resultOfUpdate = update(false);
 
 		//		if (!getSession().getAutoCommit()){
@@ -122,7 +123,7 @@ public class CommandContainer extends Command {
 	 * @see org.h2.command.Command#update(boolean)
 	 */
 	@Override
-	protected int update(boolean partOfMultiQueryTransaction) throws SQLException {
+	protected int update(boolean partOfMultiQueryTransaction) throws SQLException, RemoteException {
 		recompileIfRequired();
 		start();
 		prepared.checkParameters();

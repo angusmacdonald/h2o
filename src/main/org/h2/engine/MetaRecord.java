@@ -8,6 +8,7 @@ package org.h2.engine;
 
 import java.sql.SQLException;
 import java.util.Comparator;
+
 import org.h2.api.DatabaseEventListener;
 import org.h2.command.Prepared;
 import org.h2.h2o.comms.QueryProxyManager;

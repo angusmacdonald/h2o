@@ -10,6 +10,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.command.Prepared;
@@ -68,7 +69,10 @@ public class RunScriptCommand extends ScriptBase {
             }
         } catch (SQLException e) {
             throw Message.addSQL(e, sql);
-        }
+        } catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 
     public void setCharset(String charset) {

@@ -8,6 +8,7 @@ package org.h2.index;
 
 import java.sql.SQLException;
 import java.util.Iterator;
+
 import org.h2.engine.Session;
 import org.h2.message.Message;
 import org.h2.result.Row;

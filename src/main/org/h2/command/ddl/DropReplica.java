@@ -1,14 +1,15 @@
 package org.h2.command.ddl;
 
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.constant.ErrorCode;
-import org.h2.constant.LocationPreference;
 import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Right;
-import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
+import org.h2.h2o.manager.ISchemaManager;
+import org.h2.h2o.util.TableInfo;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
 
@@ -65,7 +66,13 @@ public class DropReplica extends SchemaCommand {
 			if (!table.canDrop() || (Constants.IS_H2O && tableName.startsWith("H2O_"))) { //H2O - ensure schema tables aren't dropped.
 				throw Message.getSQLException(ErrorCode.CANNOT_DROP_TABLE_1, tableName);
 			}
-			int numberOfReplicas = SchemaManager.getInstance(session).getNumberofReplicas(tableName, getSchema().getName());
+			int numberOfReplicas = 0;
+			
+			try {
+				numberOfReplicas = session.getDatabase().getSchemaManager().getNumberofReplicas(tableName, getSchema().getName());
+			} catch (RemoteException e) {
+				throw new SQLException("Failed in communication with the schema manager.");
+			}
 			
 			if (numberOfReplicas == 1){ //can't drop the only replica.
 				throw Message.getSQLException(ErrorCode.CANNOT_DROP_TABLE_1, tableName);
@@ -95,8 +102,15 @@ public class DropReplica extends SchemaCommand {
 			 * #########################################################################
 			 */
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_")){
-				SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
-				sm.removeReplica(tableName, db.getDatabaseLocation(), db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType(), getSchema().getName());
+				ISchemaManager sm = db.getSchemaManager(); //db.getSystemSession()
+				
+				TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), 0, table.getTableType(), db.getDatabaseURL());
+				
+				try {
+					sm.removeReplicaInformation(ti);
+				} catch (RemoteException e) {
+					throw new SQLException("Failed to remove replica on schema manager");
+				}
 			}
 
 		}

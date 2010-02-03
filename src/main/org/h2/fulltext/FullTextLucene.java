@@ -40,7 +40,6 @@ import org.h2.store.fs.FileSystem;
 import org.h2.tools.SimpleResultSet;
 import org.h2.util.JdbcUtils;
 import org.h2.util.StringUtils;
-//## Java 1.4 end ##
 
 /**
  * This class implements the full text search based on Apache Lucene.

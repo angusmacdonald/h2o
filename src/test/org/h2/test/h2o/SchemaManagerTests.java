@@ -1,7 +1,8 @@
 package org.h2.test.h2o;
 
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -10,8 +11,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
-import org.h2.engine.SchemaManager;
-import org.h2.h2o.ChordDatabaseRemote;
+import org.h2.h2o.manager.PersistentSchemaManager;
+import org.h2.h2o.remote.ChordDatabaseRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.H2oProperties;
 import org.h2.tools.DeleteDbFiles;
@@ -58,9 +59,8 @@ public class SchemaManagerTests {
 	@Before
 	public void setUp() throws Exception {
 		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-		SchemaManager.USERNAME = "sa";
-		SchemaManager.PASSWORD = "sa";
-
+		PersistentSchemaManager.USERNAME = "sa";
+		PersistentSchemaManager.PASSWORD = "sa";
 		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
 		knownHosts.createNewFile();
 		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordDatabaseRemote.currentPort + "");
@@ -217,44 +217,44 @@ public class SchemaManagerTests {
 
 	}
 
-	/**
-	 * Tests that a database is able to connect to a remote database and establish linked table connections
-	 * to all schema manager tables.
-	 * @throws SQLException
-	 * @throws InterruptedException
-	 */
-	@Test
-	public void linkedSchemaTableTest(){
-		org.h2.Driver.load();
-
-		try{
-			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
-			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
-			Statement sa = ca.createStatement();
-			Statement sb = cb.createStatement();
-
-			sb.execute("SELECT * FROM H2O.H2O_TABLE;");
-			sb.execute("SELECT * FROM H2O.H2O_REPLICA;");
-			sb.execute("SELECT * FROM H2O.H2O_CONNECTION;");
-
-			ResultSet rs = sb.getResultSet();
-
-			if (!rs.next()){
-				fail("There should be at least one row for local instance itself.");
-			}
-
-			rs.close();
-
-			sa.execute("DROP ALL OBJECTS");
-			sb.execute("DROP ALL OBJECTS");
-			ca.close();
-			cb.close();
-
-		} catch (SQLException e){
-			fail("An Unexpected SQLException was thrown.");
-			e.printStackTrace();
-		}
-	}
+//	/**
+//	 * Tests that a database is able to connect to a remote database and establish linked table connections
+//	 * to all schema manager tables.
+//	 * @throws SQLException
+//	 * @throws InterruptedException
+//	 */
+//	@Test
+//	public void linkedSchemaTableTest(){
+//		org.h2.Driver.load();
+//
+//		try{
+//			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
+//			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
+//			Statement sa = ca.createStatement();
+//			Statement sb = cb.createStatement();
+//
+//			sb.execute("SELECT * FROM H2O.H2O_TABLE;");
+//			sb.execute("SELECT * FROM H2O.H2O_REPLICA;");
+//			sb.execute("SELECT * FROM H2O.H2O_CONNECTION;");
+//
+//			ResultSet rs = sb.getResultSet();
+//
+//			if (!rs.next()){
+//				fail("There should be at least one row for local instance itself.");
+//			}
+//
+//			rs.close();
+//
+//			sa.execute("DROP ALL OBJECTS");
+//			sb.execute("DROP ALL OBJECTS");
+//			ca.close();
+//			cb.close();
+//
+//		} catch (SQLException e){
+//			fail("An Unexpected SQLException was thrown.");
+//			e.printStackTrace();
+//		}
+//	}
 
 	/**
 	 * Tests that when a new table is added to the database it is also added to the schema manager.
@@ -278,6 +278,7 @@ public class SchemaManagerTests {
 
 			sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 
+			
 			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
 			rs = sa.getResultSet();		
 			if (rs.next()){

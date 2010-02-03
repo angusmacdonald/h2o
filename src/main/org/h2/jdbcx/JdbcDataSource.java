@@ -23,11 +23,8 @@ import javax.sql.XAConnection;
 import javax.sql.XADataSource;
 
 import org.h2.jdbc.JdbcConnection;
-import org.h2.message.TraceObject;
-
-
 import org.h2.message.Message;
-
+import org.h2.message.TraceObject;
 import org.h2.util.StringUtils;
 
 /**

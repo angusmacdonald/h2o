@@ -1,6 +1,7 @@
 package org.h2.test.h2o;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -13,13 +14,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collection;
 
-import static org.junit.Assert.fail;
-
-import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Engine;
-import org.h2.engine.SchemaManager;
-import org.h2.h2o.ChordDatabaseRemote;
+import org.h2.h2o.manager.PersistentSchemaManager;
+import org.h2.h2o.remote.ChordDatabaseRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.H2oProperties;
 import org.junit.After;
@@ -92,8 +90,8 @@ public class TestBase {
 		knownHosts.saveAndClose();
 		
 		//Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-		SchemaManager.USERNAME = "sa";
-		SchemaManager.PASSWORD = "sa";
+		PersistentSchemaManager.USERNAME = "sa";
+		PersistentSchemaManager.PASSWORD = "sa";
 
 		org.h2.Driver.load();
 

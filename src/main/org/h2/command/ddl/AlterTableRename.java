@@ -10,11 +10,9 @@ import java.sql.SQLException;
 
 import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
-import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
-import org.h2.h2o.comms.QueryProxy;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
 import org.h2.table.Table;

@@ -6,6 +6,7 @@
  */
 package org.h2.command.dml;
 
+import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -39,7 +40,7 @@ public class Call extends Prepared {
         return result;
     }
 
-    public int update() throws SQLException {
+    public int update() throws SQLException, RemoteException {
         Value v = value.getValue(session);
         int type = v.getType();
         switch(type) {

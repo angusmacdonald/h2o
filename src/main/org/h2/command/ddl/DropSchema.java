@@ -6,13 +6,14 @@
  */
 package org.h2.command.ddl;
 
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.constant.ErrorCode;
 import org.h2.engine.Constants;
 import org.h2.engine.Database;
-import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
+import org.h2.h2o.util.TableInfo;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
 
@@ -33,7 +34,7 @@ public class DropSchema extends DefineCommand {
         this.schemaName = name;
     }
 
-    public int update() throws SQLException {
+    public int update() throws SQLException, RemoteException {
         session.getUser().checkAdmin();
         session.commit(true);
         Database db = session.getDatabase();
@@ -49,7 +50,7 @@ public class DropSchema extends DefineCommand {
             db.removeDatabaseObject(session, schema);
            
             if (Constants.IS_H2O)
-            	SchemaManager.getInstance(session).removeTable(null, schemaName);
+            	db.getSchemaManager().removeTableInformation(new TableInfo(null, schemaName));
         }
         return 0;
     }

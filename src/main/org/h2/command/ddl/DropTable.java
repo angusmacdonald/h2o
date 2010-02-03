@@ -6,16 +6,19 @@
  */
 package org.h2.command.ddl;
 
+import java.rmi.RemoteException;
 import java.sql.SQLException;
+
 import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
 import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Right;
-import org.h2.engine.SchemaManager;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.QueryProxy;
+import org.h2.h2o.manager.ISchemaManager;
 import org.h2.h2o.util.LockType;
+import org.h2.h2o.util.TableInfo;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
 import org.h2.table.ReplicaSet;
@@ -98,7 +101,7 @@ public class DropTable extends SchemaCommand {
 		}
 	}
 
-	private void executeDrop(String transactionName) throws SQLException {
+	private void executeDrop(String transactionName) throws SQLException, RemoteException {
 		// need to get the table again, because it may be dropped already
 		// meanwhile (dependent object, or same object)
 		table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
@@ -120,15 +123,10 @@ public class DropTable extends SchemaCommand {
 				QueryProxy qp = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, session.getDatabase());
 				qp.executeUpdate(sqlStatement, transactionName, session);
 
-				try {
-					SchemaManager sm = SchemaManager.getInstance(session); //db.getSystemSession()
-					sm.removeTable(tableName, getSchema().getName());
+				ISchemaManager sm = db.getSchemaManager(); //db.getSystemSession()
+				sm.removeTableInformation(new TableInfo(tableName, getSchema().getName()));
 
-					db.removeDataManager(fullTableName, false);
-				} catch (SQLException e){
-					//TODO fix - this is thrown because the tableID is not found. This happens because drop table removes only local copies AND
-					// schema manager information.
-				}
+				db.removeDataManager(fullTableName, false);
 
 			} else {
 
@@ -161,7 +159,7 @@ public class DropTable extends SchemaCommand {
 	}
 
 	@Override
-	public int update(String transactionName) throws SQLException {
+	public int update(String transactionName) throws SQLException, RemoteException {
 		session.commit(true);
 		prepareDrop(transactionName);
 		executeDrop(transactionName);
@@ -169,7 +167,7 @@ public class DropTable extends SchemaCommand {
 	}
 	
 	@Override
-	public int update() throws SQLException {
+	public int update() throws SQLException, RemoteException {
 		String transactionName = "None";
 		
 		session.commit(true);

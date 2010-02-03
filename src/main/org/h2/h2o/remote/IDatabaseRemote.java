@@ -1,4 +1,4 @@
-package org.h2.h2o;
+package org.h2.h2o.remote;
 
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -9,7 +9,9 @@ import org.h2.engine.Session;
 import org.h2.h2o.comms.DataManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.manager.ISchemaManager;
 import org.h2.h2o.util.DatabaseURL;
+import org.h2.h2o.util.TableInfo;
 
 /**
  * The interface between a local database instance and the rest of the database system.
@@ -107,5 +109,25 @@ public interface IDatabaseRemote {
 	 * @return Stored schema manager location. 
 	 */
 	public DatabaseURL getSchemaManagerLocation();
+
+	/**
+	 * Obtain a reference to the system's schema manager.
+	 * @return
+	 */
+	public ISchemaManager getSchemaManager();
+
+	/**
+	 * Bind a new schema manager to the local registry.
+	 * @param schemaManager
+	 */
+	public void bindSchemaManager(ISchemaManager schemaManager);
+
+	/**
+	 * Find a reference to a remote data manager, not from the schema manager but from
+	 * first principles (lookup via RMI registry) - this is required when rebuilding the schema manager,
+	 * or using a persistent schema manager in the lookup.
+	 * @param dbURL
+	 */
+	public DataManagerRemote refindDataManagerReference(TableInfo ti, DatabaseURL dbURL);
 
 }

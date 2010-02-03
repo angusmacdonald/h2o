@@ -7,12 +7,7 @@
 package org.h2.test.jaqu;
 
 import java.math.BigDecimal;
-/*## Java 1.5 begin ##
-import java.util.List;
 
-import org.h2.jaqu.Db;
-import static org.h2.jaqu.Function.*;
-## Java 1.5 end ##*/
 import org.h2.test.TestBase;
 
 /**

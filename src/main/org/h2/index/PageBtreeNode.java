@@ -7,6 +7,7 @@
 package org.h2.index;
 
 import java.sql.SQLException;
+
 import org.h2.message.Message;
 import org.h2.result.SearchRow;
 import org.h2.store.DataPage;

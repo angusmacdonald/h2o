@@ -45,7 +45,7 @@ public class H2SimpleTest {
 
 		DeleteDbFiles.execute(baseDir, "scriptSimple", true);
 		reconnect();
-		String inFile = "org/h2/test/testSimple.in.txt";
+		String inFile = "org/h2/test/reconnecttest.txt"; //org/h2/test/testSimple.in.txt
 
 		InputStream is = getClass().getClassLoader().getResourceAsStream(inFile);
 		LineNumberReader lineReader = new LineNumberReader(new InputStreamReader(is, "Cp1252"));
@@ -57,6 +57,7 @@ public class H2SimpleTest {
 			}
 			sql = sql.trim();
 
+			
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Query: " + sql);
 			
 			try {

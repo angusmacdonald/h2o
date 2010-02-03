@@ -8,6 +8,7 @@ package org.h2.test.unit;
 
 import java.math.BigInteger;
 import java.sql.SQLException;
+
 import org.h2.test.TestBase;
 
 /**

@@ -1,6 +1,5 @@
 package org.h2.h2o.comms;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
@@ -17,7 +16,6 @@ import org.h2.h2o.util.LockType;
 import org.h2.table.Table;
 import org.h2.test.h2o.H2OTest;
 
-import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**

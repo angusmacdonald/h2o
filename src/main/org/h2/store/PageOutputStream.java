@@ -9,6 +9,7 @@ package org.h2.store;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.sql.SQLException;
+
 import org.h2.index.Page;
 import org.h2.message.Message;
 import org.h2.message.Trace;

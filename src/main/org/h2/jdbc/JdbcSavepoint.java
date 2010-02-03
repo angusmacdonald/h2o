@@ -7,9 +7,7 @@
 package org.h2.jdbc;
 
 import java.sql.SQLException;
-//## Java 1.4 begin ##
 import java.sql.Savepoint;
-//## Java 1.4 end ##
 
 import org.h2.constant.ErrorCode;
 import org.h2.message.Message;

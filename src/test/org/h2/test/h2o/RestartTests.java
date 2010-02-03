@@ -10,7 +10,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
-import org.h2.engine.SchemaManager;
+import org.h2.h2o.manager.PersistentSchemaManager;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;
 import org.junit.After;
@@ -44,8 +44,9 @@ public class RestartTests {
 		}
 		
 		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-		SchemaManager.USERNAME = "sa";
-		SchemaManager.PASSWORD = "sa";
+		PersistentSchemaManager.USERNAME = "sa";
+		PersistentSchemaManager.PASSWORD = "sa";
+
 	}
 	
 	/**

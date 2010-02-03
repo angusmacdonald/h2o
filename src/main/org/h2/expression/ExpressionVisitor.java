@@ -6,7 +6,6 @@
  */
 package org.h2.expression;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import org.h2.engine.DbObject;

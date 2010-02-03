@@ -19,8 +19,6 @@ import org.h2.h2o.util.LockType;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
 
-import uk.ac.standrews.cs.nds.util.ErrorHandling;
-
 /**
  * This class represents the statement
  * ALTER TABLE DROP CONSTRAINT

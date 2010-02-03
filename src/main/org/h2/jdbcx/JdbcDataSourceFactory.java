@@ -8,12 +8,10 @@ package org.h2.jdbcx;
 
 import java.util.Hashtable;
 
-//## Java 1.4 begin ##
 import javax.naming.Context;
 import javax.naming.Name;
 import javax.naming.Reference;
 import javax.naming.spi.ObjectFactory;
-//## Java 1.4 end ##
 
 import org.h2.constant.SysProperties;
 import org.h2.engine.Constants;

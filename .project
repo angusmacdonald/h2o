@@ -3,6 +3,7 @@
 	<name>h2o</name>
 	<comment></comment>
 	<projects>
+		<project>nds</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

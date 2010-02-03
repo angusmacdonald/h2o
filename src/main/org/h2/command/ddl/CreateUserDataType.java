@@ -15,7 +15,6 @@ import org.h2.engine.UserDataType;
 import org.h2.message.Message;
 import org.h2.table.Column;
 import org.h2.table.ReplicaSet;
-import org.h2.table.Table;
 import org.h2.value.DataType;
 
 /**

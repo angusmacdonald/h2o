@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.sql.Clob;
+import java.sql.NClob;
 import java.sql.SQLException;
 
 import org.h2.constant.ErrorCode;
@@ -19,9 +20,6 @@ import org.h2.message.Message;
 import org.h2.message.TraceObject;
 import org.h2.util.IOUtils;
 import org.h2.value.Value;
-
-
-import java.sql.NClob;
 
 
 /**

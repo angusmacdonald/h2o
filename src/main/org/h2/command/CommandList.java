@@ -6,6 +6,7 @@
  */
 package org.h2.command;
 
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.h2o.comms.QueryProxy;
@@ -57,7 +58,7 @@ public class CommandList extends Command {
 		return executeUpdate(true);
 	}
 
-	private SQLException executeRemaining() throws SQLException {
+	private SQLException executeRemaining() throws SQLException, RemoteException {
 		SQLException rollbackException = null;
 
 		if (remaining != null){
@@ -94,13 +95,13 @@ public class CommandList extends Command {
 	 * @see org.h2.command.Command#update(boolean)
 	 */
 	@Override
-	protected int update(boolean partOfMultiQueryTransaction) throws SQLException {
+	protected int update(boolean partOfMultiQueryTransaction) throws SQLException, RemoteException {
 		assert partOfMultiQueryTransaction;
 
 		return update();
 	}
 
-	public int update() throws SQLException {
+	public int update() throws SQLException, RemoteException {
 		/*
 		 * Execute the first update, then iterate through every subsequent update.
 		 */
@@ -115,7 +116,7 @@ public class CommandList extends Command {
 	}
 
 
-	public LocalResult query(int maxrows) throws SQLException {
+	public LocalResult query(int maxrows) throws SQLException, RemoteException {
 
 		LocalResult result = command.query(maxrows);
 		SQLException rollbackException = executeRemaining();

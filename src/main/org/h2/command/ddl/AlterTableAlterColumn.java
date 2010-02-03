@@ -6,6 +6,7 @@
  */
 package org.h2.command.ddl;
 
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.command.Parser;
@@ -104,7 +105,7 @@ public class AlterTableAlterColumn extends SchemaCommand {
         this.addBefore = before;
     }
 
-    public int update(String transactionName) throws SQLException {
+    public int update(String transactionName) throws SQLException, RemoteException {
         session.commit(true);
         
         /*
@@ -223,7 +224,7 @@ public class AlterTableAlterColumn extends SchemaCommand {
         }
     }
 
-    private void copyData() throws SQLException {
+    private void copyData() throws SQLException, RemoteException {
         Database db = session.getDatabase();
         String tempName = db.getTempTableName(session.getId());
         Column[] columns = table.getColumns();
@@ -355,7 +356,7 @@ public class AlterTableAlterColumn extends SchemaCommand {
         }
     }
 
-    private void execute(String sql, boolean ddl) throws SQLException {
+    private void execute(String sql, boolean ddl) throws SQLException, RemoteException {
         Prepared command = session.prepare(sql);
         command.update();
         if (ddl && session.getDatabase().isMultiVersion()) {

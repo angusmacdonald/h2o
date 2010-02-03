@@ -1,5 +1,6 @@
 package org.h2.test.h2o;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.sql.Connection;
@@ -190,6 +191,8 @@ public class ReplicaTests extends TestBase{
 			fail("An Unexpected SQLException was thrown.");
 		}
 	}
+
+	
 	/**
 	 * Tests the 'push replication' feature by attempting to initiate replication creation on database B from database A.
 	 */
@@ -199,6 +202,10 @@ public class ReplicaTests extends TestBase{
 		
 		
 		try{
+//			int result = sa.executeUpdate("GET RMI PORT AT 'jdbc:h2:mem:two'");
+//			
+//			System.err.println(result);
+//			
 			sa.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:two'");
 
 			if (sa.getUpdateCount() != 0){
@@ -627,5 +634,23 @@ public class ReplicaTests extends TestBase{
 			e.printStackTrace();
 			fail("An Unexpected SQLException was thrown.");
 		}
-	}
+	} 
+	
+//	/**
+//	 * Tests the 'push replication' feature by attempting to initiate replication creation on database B from database A.
+//	 */
+//	@Test
+//	public void GetRmiPort(){
+//		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+//		
+//		
+//		try{
+//			int result = sa.executeUpdate("GET RMI PORT AT 'jdbc:h2:mem:two'");
+//
+//			assertEquals(result, 3000);
+//		} catch (SQLException e){
+//			e.printStackTrace();
+//			fail("An Unexpected SQLException was thrown.");
+//		}
+//	}
 }

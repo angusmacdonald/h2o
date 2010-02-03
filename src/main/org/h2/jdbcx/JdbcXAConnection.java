@@ -13,23 +13,21 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Properties;
+
 import javax.sql.ConnectionEvent;
 import javax.sql.ConnectionEventListener;
+import javax.sql.StatementEventListener;
 import javax.sql.XAConnection;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
+
 import org.h2.jdbc.JdbcConnection;
+import org.h2.message.TraceObject;
 import org.h2.util.ByteUtils;
 import org.h2.util.JdbcConnectionListener;
 import org.h2.util.JdbcUtils;
 import org.h2.util.StringUtils;
-//## Java 1.4 end ##
-
-import org.h2.message.TraceObject;
-
-
-import javax.sql.StatementEventListener;
 
 
 /**

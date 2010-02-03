@@ -6,6 +6,7 @@
  */
 package org.h2.command;
 
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.constant.ErrorCode;
@@ -96,8 +97,9 @@ public abstract class Command implements CommandInterface {
      *
      * @return the update count
      * @throws SQLException if the command is not an updating statement
+     * @throws RemoteException 
      */
-    public int update() throws SQLException {
+    public int update() throws SQLException, RemoteException {
         throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_QUERY);
     }
     
@@ -108,8 +110,9 @@ public abstract class Command implements CommandInterface {
      *
      * @return the update count
      * @throws SQLException if the command is not an updating statement
+     * @throws RemoteException 
      */
-    protected int update(boolean partOfABiggerThing) throws SQLException {
+    protected int update(boolean partOfABiggerThing) throws SQLException, RemoteException {
         throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_QUERY);
     }
 
@@ -119,8 +122,9 @@ public abstract class Command implements CommandInterface {
      * @param maxrows the maximum number of rows returned
      * @return the local result set
      * @throws SQLException if the command is not a query
+     * @throws RemoteException 
      */
-    public LocalResult query(int maxrows) throws SQLException {
+    public LocalResult query(int maxrows) throws SQLException, RemoteException {
         throw Message.getSQLException(ErrorCode.METHOD_ONLY_ALLOWED_FOR_QUERY);
     }
 

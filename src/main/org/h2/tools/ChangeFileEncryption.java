@@ -9,6 +9,7 @@ package org.h2.tools;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+
 import org.h2.message.Message;
 import org.h2.security.SHA256;
 import org.h2.store.FileLister;

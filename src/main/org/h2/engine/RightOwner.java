@@ -6,6 +6,7 @@
  */
 package org.h2.engine;
 
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Iterator;
 

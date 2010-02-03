@@ -52,8 +52,6 @@ import org.h2.bnf.Bnf;
 import org.h2.constant.ErrorCode;
 import org.h2.constant.SysProperties;
 import org.h2.engine.Constants;
-import org.h2.engine.Database;
-import org.h2.engine.Engine;
 import org.h2.jdbc.JdbcSQLException;
 import org.h2.message.Message;
 import org.h2.message.TraceSystem;

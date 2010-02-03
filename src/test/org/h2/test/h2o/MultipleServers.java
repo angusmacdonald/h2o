@@ -7,7 +7,7 @@ import java.sql.DriverManager;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
-import org.h2.engine.SchemaManager;
+import org.h2.h2o.manager.PersistentSchemaManager;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.H2oProperties;
 
@@ -68,8 +68,8 @@ public class MultipleServers {
 
 	public void setUp() throws Exception {
 		//Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-		SchemaManager.USERNAME = "sa";
-		SchemaManager.PASSWORD = "sa";
+		PersistentSchemaManager.USERNAME = "sa";
+		PersistentSchemaManager.PASSWORD = "sa";
 
 		org.h2.Driver.load();
 

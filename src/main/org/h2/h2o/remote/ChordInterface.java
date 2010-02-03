@@ -1,10 +1,11 @@
-package org.h2.h2o;
+package org.h2.h2o.remote;
 
 import java.net.InetSocketAddress;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.SortedSet;
@@ -13,6 +14,7 @@ import java.util.TreeSet;
 import org.h2.engine.Constants;
 import org.h2.h2o.comms.management.DatabaseInstanceLocator;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.manager.ISchemaManager;
 import org.h2.h2o.util.DatabaseURL;
 
 import uk.ac.standrews.cs.nds.p2p.exceptions.P2PNodeException;
@@ -275,23 +277,23 @@ public class ChordInterface implements Observer {
 			 * The successor has changed. Make sure the schema manager is replicated to the new successor if this instance is controlling the schema
 			 * manager.
 			 */
-			if (this.isSchemaManagerProcessLocal){
-				//The schema manager is running locally. Replicate it's state to the new successor.
-				IChordRemoteReference successor = chordNode.getSuccessor();
-				
-				DatabaseInstanceRemote dbInstance = null;
-				
-				try {
-					dbInstance = getRemoteReferenceToDatabaseInstance(successor.getRemote().getAddress().getHostName(), successor.getRemote().getAddress().getPort());
-					dbInstance.executeUpdate("CREATE REPLICA SCHEMA H2O");
-					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + dbInstance);
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
-			
-			
-			
-			}
+//			if (this.isSchemaManagerProcessLocal){
+//				//The schema manager is running locally. Replicate it's state to the new successor.
+//				IChordRemoteReference successor = chordNode.getSuccessor();
+//				
+//				DatabaseInstanceRemote dbInstance = null;
+//				
+//				try {
+//					dbInstance = getRemoteReferenceToDatabaseInstance(successor.getRemote().getAddress().getHostName(), successor.getRemote().getAddress().getPort());
+//					dbInstance.executeUpdate("CREATE REPLICA SCHEMA H2O");
+//					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + dbInstance);
+//				} catch (RemoteException e) {
+//					e.printStackTrace();
+//				}
+//			
+//			
+//			
+//			}
 		}
 	}
 
@@ -444,6 +446,29 @@ public class ChordInterface implements Observer {
 		currentSMLocation = newSMLocation;
 
 		return newSMLocation;
+	}
+
+	/**
+	 * @param schemaManager
+	 */
+	public void bindSchemaManager(ISchemaManager schemaManager) {
+		ISchemaManager stub = null;
+
+		try {
+			stub = (ISchemaManager) UnicastRemoteObject.exportObject(schemaManager, 0);
+			schemaManager = stub;
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+
+
+		try {
+			getLocalRegistry().bind("SCHEMA_MANAGER", stub);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
 	}
 
 

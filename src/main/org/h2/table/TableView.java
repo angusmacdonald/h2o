@@ -7,6 +7,7 @@
 package org.h2.table;
 
 import java.sql.SQLException;
+
 import org.h2.command.Prepared;
 import org.h2.command.dml.Query;
 import org.h2.constant.ErrorCode;

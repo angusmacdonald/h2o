@@ -7,6 +7,7 @@
 package org.h2.command.ddl;
 
 import java.sql.SQLException;
+
 import org.h2.constant.ErrorCode;
 import org.h2.engine.Comment;
 import org.h2.engine.Database;

@@ -1,7 +1,6 @@
 package org.h2.h2o.comms.management;
 
 import java.rmi.AccessException;
-import java.rmi.AlreadyBoundException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -16,7 +15,6 @@ import org.h2.h2o.comms.DatabaseInstance;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.util.DatabaseURL;
 
-import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**

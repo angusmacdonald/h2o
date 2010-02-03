@@ -6,6 +6,7 @@
 package org.h2.store;
 
 import java.sql.SQLException;
+
 import org.h2.constant.ErrorCode;
 import org.h2.index.Page;
 import org.h2.message.Message;

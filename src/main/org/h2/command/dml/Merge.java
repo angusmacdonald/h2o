@@ -6,6 +6,7 @@
  */
 package org.h2.command.dml;
 
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.command.Command;
@@ -68,7 +69,7 @@ public class Merge extends Prepared {
         list.add(expr);
     }
 
-    public int update() throws SQLException {
+    public int update() throws SQLException, RemoteException {
         int count;
         session.getUser().checkRight(table, Right.INSERT);
         session.getUser().checkRight(table, Right.UPDATE);
@@ -152,7 +153,7 @@ public class Merge extends Prepared {
         return count;
     }
 
-    private void merge(Row row) throws SQLException {
+    private void merge(Row row) throws SQLException, RemoteException {
         ObjectArray k = update.getParameters();
         for (int i = 0; i < columns.length; i++) {
             Column col = columns[i];

@@ -8,10 +8,6 @@ package org.h2.util;
 
 //## Java 1.4 begin ##
 import java.util.LinkedHashMap;
-//## Java 1.4 end ##
-/*## Java 1.3 only begin ##
-import java.util.HashMap;
-## Java 1.3 only end ##*/
 import java.util.Map;
 
 /**
