@@ -33,6 +33,7 @@ public class H2SimpleTest {
 	@Test
 	public void largeTest() throws Exception {
 
+		Constants.IS_NON_SM_TEST = true;
 		H2oProperties properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:scriptSimple"));
 		
 		properties.createNewFile();

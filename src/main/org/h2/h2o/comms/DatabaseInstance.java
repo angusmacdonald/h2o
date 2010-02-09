@@ -7,6 +7,8 @@ import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.manager.ISchemaManager;
+import org.h2.h2o.manager.PersistentSchemaManager;
 import org.h2.h2o.util.DatabaseURL;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -185,7 +187,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 		
 		try {
 			command = parser.prepareCommand(sql);
-
+			
 			result = command.executeUpdate(false);
 
 			command.close();
@@ -194,5 +196,19 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 		}
 		
 		return result;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#createNewSchemaManagerBackup()
+	 */
+	@Override
+	public void createNewSchemaManagerBackup(ISchemaManager schemaManager)  throws RemoteException  {
+		try {
+			ISchemaManager localSM = new PersistentSchemaManager(this.session.getDatabase(), false);
+			localSM.buildSchemaManagerState(schemaManager);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
 	}
 }

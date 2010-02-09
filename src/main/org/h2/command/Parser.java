@@ -4424,11 +4424,12 @@ public class Parser {
 		DataManagerRemote dm = session.getDatabase().getSchemaManager().lookup(new TableInfo(tableName, thisSchemaName));
 		
 		if (dm == null){
-			ErrorHandling.errorNoEvent("Data manager not found for not found for " + new TableInfo(tableName, thisSchemaName));
+			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new TableInfo(tableName, thisSchemaName).toString());
 		}
-		dm = session.getDatabase().getSchemaManager().lookup(new TableInfo(tableName, thisSchemaName));
-		
-		
+//		dm = session.getDatabase().getSchemaManager().lookup(new TableInfo(tableName, thisSchemaName));
+//		
+
+				
 		tableLocation = dm.getLocation();
 		//		}
 

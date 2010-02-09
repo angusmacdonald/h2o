@@ -16,6 +16,8 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import org.h2.command.Command;
@@ -53,6 +55,8 @@ import org.h2.value.ValueString;
 import org.h2.value.ValueTime;
 import org.h2.value.ValueTimestamp;
 
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
+
 /**
  * This class represents the statement
  * CREATE REPLICA
@@ -82,7 +86,7 @@ public class CreateReplica extends SchemaCommand {
 	/**
 	 * Array containing all of the insert statements required for this replicas state to match that of the primary.
 	 */
-	private Set<String> inserts = null;
+	private List<String> inserts = null;
 
 	/**
 	 * The intended location of the remote replica.
@@ -244,12 +248,18 @@ public class CreateReplica extends SchemaCommand {
 					if (c.getName().equals(pkColumns[j].columnName)) {
 						c.setNullable(false);
 					}
+					
+				c.setPrimaryKey(true);
 				}
 			}
 		}
 		ObjectArray sequences = new ObjectArray();
 		for (int i = 0; i < columns.size(); i++) {
 			Column c = (Column) columns.get(i);
+			
+			if (fullTableName.startsWith("H2O.H2O") && i == 0){
+				c.setAutoIncrement(true, 0, 1);
+			}
 			if (c.getAutoIncrement()) {
 				int objId = getObjectId(true, true);
 				c.convertAutoIncrementToSequence(session, getSchema(), objId, temporary);
@@ -379,7 +389,7 @@ public class CreateReplica extends SchemaCommand {
 
 				command.update();
 			}
-			
+
 			//	#############################
 			//  Add to data manager.
 			//	#############################
@@ -387,7 +397,7 @@ public class CreateReplica extends SchemaCommand {
 			if (this.contactSchemaManager){
 				ISchemaManager sm = db.getSchemaManager(); //db.getSystemSession()
 
-				
+
 				if (tableSet  == -1){
 					tableSet = sm.getNewTableSetNumber();
 				} else {
@@ -401,18 +411,20 @@ public class CreateReplica extends SchemaCommand {
 				sm.addReplicaInformation(ti);	
 			}
 
-			DataManagerRemote dm = db.getDataManager(getSchema().getName() + "." + tableName);
-			try {
-				if (dm == null){
-					System.err.println("Data manager was null.");
+			if (!tableName.startsWith("H2O_")){
+				DataManagerRemote dm = db.getDataManager(getSchema().getName() + "." + tableName);
+				try {
+					if (dm == null){
+						throw new SQLException("Error creating replica for " + tableName + ". Data manager not found.");
+					} else {
+						dm.addReplicaInformation(table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
+								db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType(), tableSet, db.isSchemaManager());
+					} 
+				} catch (RemoteException e) {
+					System.err.println("Error informing data manager of update.");
+					e.printStackTrace();
 				}
-				dm.addReplicaInformation(table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
-						db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType(), tableSet, db.isSchemaManager());
-			} catch (RemoteException e) {
-				System.err.println("Error informing data manager of update.");
-				e.printStackTrace();
 			}
-
 
 		} catch (SQLException e) {
 			db.checkPowerOff();
@@ -603,7 +615,7 @@ public class CreateReplica extends SchemaCommand {
 
 			ResultSet rs = stat.executeQuery("SCRIPT TABLE " + getSchema().getName() + "." + tableName);
 
-			Set<String> inserts = new HashSet<String>();
+			List<String> inserts = new LinkedList<String>();
 
 			while (rs.next()){
 				inserts.add(rs.getString(1));
@@ -897,7 +909,7 @@ public class CreateReplica extends SchemaCommand {
 	 */
 	public void setOriginalLocation(String originalLocation, boolean contactSM) throws JdbcSQLException, RemoteException {
 		contactSchemaManagerOnCompletion(contactSM);
-		
+
 		this.whereDataWillBeTakenFrom = originalLocation;
 
 		if (whereDataWillBeTakenFrom != null && whereDataWillBeTakenFrom.startsWith("'") && whereDataWillBeTakenFrom.endsWith("'")){
@@ -910,7 +922,11 @@ public class CreateReplica extends SchemaCommand {
 
 			DataManagerRemote dm = sm.lookup(new TableInfo(tableName, getSchema().getName()));
 
-			whereDataWillBeTakenFrom = dm.getLocation();
+			if (dm == null){
+				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new TableInfo(tableName, getSchema().getName()).toString());
+			} else {
+				whereDataWillBeTakenFrom = dm.getLocation();
+			}
 		}
 
 		if (next != null){

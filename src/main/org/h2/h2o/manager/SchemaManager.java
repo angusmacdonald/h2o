@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.h2.engine.Database;
 import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
 
@@ -199,6 +200,16 @@ public class SchemaManager implements ISchemaManager {
 			e.printStackTrace();
 		}
 
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#addSchemaManagerDataLocation(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
+	 */
+	@Override
+	public void addSchemaManagerDataLocation(
+			DatabaseInstanceRemote databaseReference) throws RemoteException {
+		inMemory.addSchemaManagerDataLocation(databaseReference);
+		persisted.addSchemaManagerDataLocation(databaseReference);
 	}
 
 }

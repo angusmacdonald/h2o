@@ -12,7 +12,9 @@ import org.h2.command.Parser;
 import org.h2.constant.ErrorCode;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
+import org.h2.h2o.comms.ReplicaManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.remote.IDatabaseRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
@@ -70,6 +72,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 
 	private int cacheConnectionID;
 
+	private ReplicaManager replicaManager;
 
 	public PersistentSchemaManager(Database db, boolean schemaTablesExist) throws Exception{
 
@@ -77,19 +80,30 @@ public class PersistentSchemaManager implements ISchemaManager{
 
 		queryParser = new Parser(db.getSystemSession(), true);
 
+		this.replicaManager = new ReplicaManager();
 
+		replicaManager.add(db.getLocalDatabaseInstance());
 
 		if (!schemaTablesExist){
+			/*
+			 * Create a new set of schema tables locally.
+			 */
 			try {
 				setupSchemaManagerStateTables();
 			} catch (SQLException e) {
 				throw new Exception("Couldn't create schema manager state tables.");
 			}
+
+		} else {
+			/*
+			 * A local copy of the schema already exists locally. There may be other remote copies,
+			 * but they are not known, and consequently not active.
+			 */
+
+			//This currently does nothing, but could in future look for remote copies, or create remote replicas.
 		}
-		//		User u = new User(db, 6, "heh", true);
-		//		u.setAdmin(true);
-		//		Session ss = new Session(db, u, 5);
-		//		queryParser = new Parser(ss, true);
+
+		//replicaManager.add(db.getLocalDatabaseInstance());
 
 	}
 
@@ -126,7 +140,19 @@ public class PersistentSchemaManager implements ISchemaManager{
 		"FOREIGN KEY (table_id) REFERENCES " + TABLES + " (table_id) ON DELETE CASCADE , " +
 		" FOREIGN KEY (connection_id) REFERENCES " + CONNECTIONS + " (connection_id));";
 
-		return executeUpdate(sql);
+
+		sqlQuery = queryParser.prepareCommand(sql);
+
+		int result = -1;
+		try {
+			result = sqlQuery.update();
+
+			sqlQuery.close();
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+
+		return result;
 	}
 
 	public DatabaseURL getDataManagerLocation(String tableName, String schemaName) throws SQLException{
@@ -551,7 +577,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 				} else {
 					sql = "";
 				}
-				
+
 				sql += "\nDELETE FROM " + TABLES + " WHERE schemaname='" + ti.getSchemaName() + "'; ";
 			} else {
 
@@ -608,17 +634,44 @@ public class PersistentSchemaManager implements ISchemaManager{
 	private int executeUpdate(String query) throws SQLException{
 		//getNewQueryParser();
 
-		sqlQuery = queryParser.prepareCommand(query);
+
+		Set<DatabaseInstanceRemote> replicas = replicaManager.getActiveReplicas();
 
 		int result = -1;
-		try {
-			result = sqlQuery.update();
 
-			sqlQuery.close();
-		} catch (RemoteException e) {
-			e.printStackTrace();
-			return -1;
+		for (DatabaseInstanceRemote replica: replicas){
+
+			if (replica.equals(db.getLocalDatabaseInstance())){
+						
+						sqlQuery = queryParser.prepareCommand(query);
+				
+						try {
+							result = sqlQuery.update();
+				
+							sqlQuery.close();
+						} catch (RemoteException e) {
+							e.printStackTrace();
+						}
+			} else {
+				try {
+					result = replica.executeUpdate(query);
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+			}
 		}
+		//		
+		//		sqlQuery = queryParser.prepareCommand(query);
+		//
+		//		int result = -1;
+		//		try {
+		//			result = sqlQuery.update();
+		//
+		//			sqlQuery.close();
+		//		} catch (RemoteException e) {
+		//			e.printStackTrace();
+		//			return -1;
+		//		}
 
 		return result;
 	}
@@ -902,6 +955,18 @@ public class PersistentSchemaManager implements ISchemaManager{
 	public void removeAllTableInformation() {
 		// TODO Auto-generated method stub
 
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#addSchemaManagerDataLocation(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
+	 */
+	@Override
+	public void addSchemaManagerDataLocation(
+			DatabaseInstanceRemote databaseReference) throws RemoteException {
+		replicaManager.add(databaseReference);
+		
+		//TODO now replica state here.
+		databaseReference.executeUpdate("CREATE REPLICA " + TABLES + ", " + REPLICAS + ", " + CONNECTIONS + " FROM '" + db.getDatabaseURL().getOriginalURL() + "';");
 	}
 
 

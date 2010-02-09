@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.h2.engine.Session;
 import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
 
@@ -139,5 +140,11 @@ public interface ISchemaManager extends Remote {
 	 */
 	public void removeAllTableInformation() throws RemoteException;
 
+	/**
+	 * Specify the remote location of a database instance where schema manager state is to be replicated.
+	 * @param databaseReference
+	 * @throws RemoteException
+	 */
+	public void addSchemaManagerDataLocation(DatabaseInstanceRemote databaseReference) throws RemoteException;
 
 }

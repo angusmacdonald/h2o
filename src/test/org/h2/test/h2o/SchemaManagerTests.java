@@ -37,7 +37,7 @@ public class SchemaManagerTests {
 	@BeforeClass
 	public static void initialSetUp(){
 		Diagnostic.setLevel(DiagnosticLevel.FULL);
-
+		Constants.IS_NON_SM_TEST = true;
 		try {
 			DeleteDbFiles.execute(BASEDIR, "schema_test", true);
 		} catch (SQLException e) {

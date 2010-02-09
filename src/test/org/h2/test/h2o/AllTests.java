@@ -23,7 +23,8 @@ import org.junit.runners.Suite;
 	UpdateTests.class,
 	MultiQueryTransactionTests.class, 
 	RestartTests.class,
-	H2SimpleTest.class
+	H2SimpleTest.class,
+	ChordTests.class
 })
 public class AllTests {
  //The above annotations do all the work.

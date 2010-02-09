@@ -12,10 +12,12 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.h2.engine.Constants;
+import org.h2.engine.Database;
 import org.h2.h2o.comms.management.DatabaseInstanceLocator;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.manager.ISchemaManager;
 import org.h2.h2o.util.DatabaseURL;
+import org.h2.h2o.util.SchemaManagerReplication;
 
 import uk.ac.standrews.cs.nds.p2p.exceptions.P2PNodeException;
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
@@ -58,7 +60,7 @@ public class ChordInterface implements Observer {
 	 * Whether, at the time of last checking, this node is responsible for running the schema manager.
 	 */
 	private boolean isSchemaManagerInKeyRange = false;
-	
+
 	/**
 	 * Whether, at the time of last checking, this node is running the schema manager process. It may or
 	 * may not be responsible for the schema manager key lookup.
@@ -66,6 +68,8 @@ public class ChordInterface implements Observer {
 	private boolean isSchemaManagerProcessLocal = false;
 
 	private DatabaseURL actualSchemaManagerLocation = null;
+
+	private Database db;
 
 	/**
 	 * Key factory used to create keys for schema manager lookup and to search for specific machines.
@@ -92,8 +96,12 @@ public class ChordInterface implements Observer {
 		schemaManagerKey = keyFactory.generateKey("schemaManager");
 
 		allNodes = new TreeSet<IChordNode>(new NodeComparator());
+
 	}
 
+	public ChordInterface (Database db){
+		this.db = db;
+	}
 
 	/**
 	 * Start a new Chord ring at the specified location.
@@ -133,12 +141,12 @@ public class ChordInterface implements Observer {
 		}
 
 		this.currentSMLocation = chordNode.getProxy();
-		
+
 		this.actualSchemaManagerLocation = databaseURL;
-		
+
 		this.isSchemaManagerInKeyRange = true;
 		this.isSchemaManagerProcessLocal = true;
-		
+
 		((ChordNodeImpl)chordNode).addObserver(this);
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Started local Chord node on : " + databaseURL.getDbLocationWithoutIllegalCharacters() + " : " + hostname + ":" + port + 
@@ -191,9 +199,9 @@ public class ChordInterface implements Observer {
 
 		isSchemaManagerInKeyRange = false;
 		isSchemaManagerProcessLocal = false;
-		
+
 		actualSchemaManagerLocation = getSchemaManagerURL(remoteHostname, remotePort);
-		
+
 		/*
 		 *	Ensure the ring is stable before continuing with any tests. 
 		 */
@@ -277,23 +285,46 @@ public class ChordInterface implements Observer {
 			 * The successor has changed. Make sure the schema manager is replicated to the new successor if this instance is controlling the schema
 			 * manager.
 			 */
-//			if (this.isSchemaManagerProcessLocal){
-//				//The schema manager is running locally. Replicate it's state to the new successor.
-//				IChordRemoteReference successor = chordNode.getSuccessor();
-//				
-//				DatabaseInstanceRemote dbInstance = null;
-//				
-//				try {
-//					dbInstance = getRemoteReferenceToDatabaseInstance(successor.getRemote().getAddress().getHostName(), successor.getRemote().getAddress().getPort());
-//					dbInstance.executeUpdate("CREATE REPLICA SCHEMA H2O");
-//					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + dbInstance);
-//				} catch (RemoteException e) {
-//					e.printStackTrace();
-//				}
-//			
-//			
-//			
-//			}
+			if (this.isSchemaManagerProcessLocal){
+				//The schema manager is running locally. Replicate it's state to the new successor.
+				IChordRemoteReference successor = chordNode.getSuccessor();
+
+				DatabaseInstanceRemote dbInstance = null;
+
+				try {
+					String hostname = successor.getRemote().getAddress().getHostName();
+					int port = successor.getRemote().getAddress().getPort();
+
+					dbInstance = getRemoteReferenceToDatabaseInstance(hostname, port);
+
+					if (dbInstance == null){
+						/*
+						 * The remote chord node hasn't been fully instantiated yet. Wait a while then try again.
+						 */
+
+						if (!Constants.IS_NON_SM_TEST){
+							//Don't bother trying to replicate the schema manager if this is a test which doesn't require it.
+							SchemaManagerReplication newThread = new SchemaManagerReplication(hostname, port, this.db, this);
+							newThread.start();
+						}
+
+					} else {
+
+						this.db.getSchemaManager().addSchemaManagerDataLocation(dbInstance);
+
+						//dbInstance.createNewSchemaManagerBackup(db.getSchemaManager());
+						//dbInstance.executeUpdate("CREATE REPLICA SCHEMA H2O");
+						Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + dbInstance);
+
+					}
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+
+
+
+			}
+
 		}
 	}
 
@@ -330,11 +361,11 @@ public class ChordInterface implements Observer {
 	public Registry getSchemaManagerRegistry(){
 		Registry remoteRegistry = null;
 
-//		if (currentSMLocation == null){
-//			schemaManagerRegistryLocation = getActualSchemaManagerLocation();
-//		}
+		//		if (currentSMLocation == null){
+		//			schemaManagerRegistryLocation = getActualSchemaManagerLocation();
+		//		}
 
-		
+
 		try {
 			remoteRegistry = LocateRegistry.getRegistry(actualSchemaManagerLocation.getHostname(), actualSchemaManagerLocation.getRMIPort());
 		} catch (RemoteException e) {
@@ -349,7 +380,7 @@ public class ChordInterface implements Observer {
 	public DatabaseURL getStoredSchemaManagerLocation(){
 		return actualSchemaManagerLocation;
 	}
-	
+
 	/**
 	 * Get the actual location of the schema manager by first looking up the location where the 'schemamanager'
 	 * lookup resoloves to, then querying the database instance at this location for the location of the schema manager.
@@ -357,7 +388,7 @@ public class ChordInterface implements Observer {
 	 */
 	public DatabaseURL getActualSchemaManagerLocation() {
 		IChordRemoteReference oldSchemaManagerNodeLocation = currentSMLocation;
-		
+
 		IChordRemoteReference sml = lookupSchemaManagerNodeLocation();
 
 		if (!sml.equals(oldSchemaManagerNodeLocation) || actualSchemaManagerLocation == null){ //look for a new schema manager location
@@ -367,7 +398,7 @@ public class ChordInterface implements Observer {
 				ErrorHandling.exceptionErrorNoEvent(e, "Occurred when trying to find schema manager.");
 			}
 		} // else - the schema manager location hasn't changed. You can use the old one. 
-		
+
 		return actualSchemaManagerLocation;
 	}
 
@@ -405,7 +436,7 @@ public class ChordInterface implements Observer {
 	 * the database instance itself.
 	 * @return	Remote reference to the database instance.
 	 */
-	private DatabaseInstanceRemote getRemoteReferenceToDatabaseInstance(String hostname, int port) {
+	public DatabaseInstanceRemote getRemoteReferenceToDatabaseInstance(String hostname, int port) {
 		Registry remoteRegistry;
 		try {
 			remoteRegistry = LocateRegistry.getRegistry(hostname, port);
@@ -417,8 +448,7 @@ public class ChordInterface implements Observer {
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (NotBoundException e) {
-			System.err.println("Hostname : " + hostname + ", Port : " + port);
-			e.printStackTrace();
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Database Instance wasn't bound on hostname : " + hostname + ", Port : " + port);
 		}
 		return null;
 	}
@@ -464,11 +494,11 @@ public class ChordInterface implements Observer {
 
 		try {
 			getLocalRegistry().bind("SCHEMA_MANAGER", stub);
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 	}
 
 

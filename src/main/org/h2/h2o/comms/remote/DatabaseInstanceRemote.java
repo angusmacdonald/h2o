@@ -4,6 +4,7 @@ import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.h2o.comms.QueryProxy;
+import org.h2.h2o.manager.ISchemaManager;
 import org.h2.h2o.util.DatabaseURL;
 
 
@@ -57,5 +58,12 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit  {
 	 * @throws RemoteException 
 	 */
 	public int executeUpdate(String sql) throws RemoteException;
+
+	/**
+	 * @param schemaManager
+	 * @throws RemoteException
+	 */
+	void createNewSchemaManagerBackup(ISchemaManager schemaManager)
+			throws RemoteException;
 	
 }

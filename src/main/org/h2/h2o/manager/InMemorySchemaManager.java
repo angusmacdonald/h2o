@@ -15,6 +15,7 @@ import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.h2o.comms.DataManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
 import org.h2.result.LocalResult;
@@ -51,11 +52,20 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	 */
 	private int tableSetNumber = 1;
 
+	/**
+	 * Locations where the state of the schema manager is replicated.
+	 */
+	private Set<DatabaseInstanceRemote> schemaManagerState;
+
 	public InMemorySchemaManager(Database database) throws Exception{
 		this.database = database;
 
 		dataManagers = new HashMap<TableInfo, DataManagerRemote>();
 		replicaLocations = new HashMap<String, Set<TableInfo>>();
+
+		schemaManagerState = new HashSet<DatabaseInstanceRemote>();
+		
+		schemaManagerState.add(database.getLocalDatabaseInstance());
 	}
 
 	/******************************************************************
@@ -287,10 +297,6 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 		 * Obtain references to data managers.
 		 */
 		dataManagers = otherSchemaManager.getDataManagers();
-
-		if (!dataManagers.containsKey(new TableInfo("TEST", "PUBLIC"))){
-			System.err.println("help");
-		}
 		
 		/*
 		 * At this point some of the data manager references will be null if the data managers could not be found at their old location.
@@ -298,9 +304,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 		 * If a reference is null, but there is no local copy then the table should no longer be accessible. 
 		 */
 
-		Parser queryParser = null;
-
-		Map<TableInfo, DataManagerRemote> newManagers = new HashMap<TableInfo, DataManagerRemote>();
+		//Map<TableInfo, DataManagerRemote> newManagers = new HashMap<TableInfo, DataManagerRemote>();
 
 		/*
 		 * Obtain references to replicas.
@@ -384,5 +388,14 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 		}
 
 		dataManagers.clear();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#addSchemaManagerDataLocation(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
+	 */
+	@Override
+	public void addSchemaManagerDataLocation(
+			DatabaseInstanceRemote databaseReference) throws RemoteException {
+		this.schemaManagerState.add(databaseReference);
 	}
 }

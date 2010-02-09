@@ -244,7 +244,7 @@ public class Database implements DataHandler {
 		//this.chord = new ChordInterface();
 		this.compareMode = new CompareMode(null, null, 0);
 		//this.databaseLocation = ci.getSmallName();
-		databaseRemote = new ChordDatabaseRemote(DatabaseURL.parseURL(ci.getOriginalURL()));
+		databaseRemote = new ChordDatabaseRemote(DatabaseURL.parseURL(ci.getOriginalURL()), this);
 
 		//this.localMachineAddress = NetUtils.getLocalAddress();
 		//this.localMachinePort = ci.getPort();

@@ -14,6 +14,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collection;
 
+import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Engine;
 import org.h2.h2o.manager.PersistentSchemaManager;
@@ -45,6 +46,9 @@ public class TestBase {
 
 	@BeforeClass
 	public static void initialSetUp(){
+		
+		Constants.IS_NON_SM_TEST = true;
+		
 		Diagnostic.setLevel(DiagnosticLevel.FULL);
 
 		H2oProperties properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"));
@@ -109,11 +113,12 @@ public class TestBase {
 	}
 
 	/**
+	 * @throws SQLException 
 	 * @throws java.lang.Exception
 	 */
 	@After
-	public void tearDown() {
-		try{ 
+	public void tearDown() throws SQLException {
+		
 			//			sa.execute("DROP TABLE IF EXISTS TEST");
 			//			sb.execute("DROP TABLE IF EXISTS TEST");
 			sa.execute("DROP ALL OBJECTS");
@@ -126,10 +131,7 @@ public class TestBase {
 			if (!cb.isClosed())cb.close();	
 
 			closeDatabaseCompletely();
-		} catch (Exception e){
-			e.printStackTrace();
-			fail("Connections aren't being closed correctly.");
-		}
+
 		
 		ca = null;
 		cb = null;

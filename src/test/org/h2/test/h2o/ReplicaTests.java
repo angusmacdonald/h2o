@@ -635,22 +635,5 @@ public class ReplicaTests extends TestBase{
 			fail("An Unexpected SQLException was thrown.");
 		}
 	} 
-	
-//	/**
-//	 * Tests the 'push replication' feature by attempting to initiate replication creation on database B from database A.
-//	 */
-//	@Test
-//	public void GetRmiPort(){
-//		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
-//		
-//		
-//		try{
-//			int result = sa.executeUpdate("GET RMI PORT AT 'jdbc:h2:mem:two'");
-//
-//			assertEquals(result, 3000);
-//		} catch (SQLException e){
-//			e.printStackTrace();
-//			fail("An Unexpected SQLException was thrown.");
-//		}
-//	}
+
 }

@@ -8,6 +8,7 @@ import java.rmi.registry.Registry;
 import java.sql.SQLException;
 import java.util.Set;
 
+import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.DataManager;
 import org.h2.h2o.comms.DatabaseInstance;
@@ -68,8 +69,8 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 	public static int currentPort = 30000;
 
 
-	public ChordDatabaseRemote(DatabaseURL localMachineLocation){
-		this.chord = new ChordInterface();
+	public ChordDatabaseRemote(DatabaseURL localMachineLocation, Database db){
+		this.chord = new ChordInterface(db);
 
 		this.localMachineLocation = localMachineLocation;
 
