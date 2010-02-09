@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.h2.h2o.manager.PersistentSchemaManager;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -324,7 +325,7 @@ public class ReplicaTests extends TestBase{
 		
 		
 		try{
-			Connection cc = DriverManager.getConnection("jdbc:h2:mem:three", "sa", "sa");
+			Connection cc = DriverManager.getConnection("jdbc:h2:mem:three", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 			Statement sc = cc.createStatement();
 
 			createReplicaOnB();

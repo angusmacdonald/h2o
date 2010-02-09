@@ -82,8 +82,8 @@ public class ChordTests extends TestBase {
 	@Before
 	public void setUp() throws Exception {
 		//Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-		PersistentSchemaManager.USERNAME = "sa";
-		PersistentSchemaManager.PASSWORD = "sa";
+		//PersistentSchemaManager.USERNAME = "angus";
+		//PersistentSchemaManager.PASSWORD = "";
 
 		org.h2.Driver.load();
 
@@ -95,12 +95,12 @@ public class ChordTests extends TestBase {
 			knownHosts.saveAndClose();
 
 		}
-		
-		
+
+
 		cas = new Connection[dbs.length + 1];
-		cas[0] = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
+		cas[0] = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 		for (int i = 1; i < cas.length; i ++){
-			cas[i] = DriverManager.getConnection("jdbc:h2:mem:" + dbs[i-1], "sa", "sa");
+			cas[i] = DriverManager.getConnection("jdbc:h2:mem:" + dbs[i-1], PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 		}
 
 		sas = new Statement[dbs.length + 1];
@@ -218,44 +218,56 @@ public class ChordTests extends TestBase {
 		}
 	}
 
-//	/**
-//	 * Tests that the state of the schema manager is replicated - inserts data after the schema manager
-//	 * state is replicated (probably - not deterministic).
-//	 */
-//	@Test
-//	public void ReplicateSchemaManagerInsertAfter() throws InterruptedException{
-//		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
-//
-//		while (!isReplicated){
-//			Thread.sleep(100);
-//		}
-//
-//		try {
-//			ResultSet rs = sas[1].executeQuery("SELECT LOCAL * FROM H2O.H2O_TABLE");
-//
-//			if ((rs.next() && rs.next())){
-//				fail("Expected nothing here.");
-//			}
-//		} catch (SQLException e) {
-//			e.printStackTrace();
-//		}
-//
-//		try{
-//			int result = sas[0].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-//		} catch (SQLException e){
-//			fail("An Unexpected SQLException was thrown.");
-//		}
-//
-//
-//		try {
-//			ResultSet rs = sas[1].executeQuery("SELECT LOCAL * FROM H2O.H2O_TABLE");
-//
-//			if (!(rs.next() && rs.next())){
-//				fail("Expected a result here.");
-//			}
-//		} catch (SQLException e) {
-//			e.printStackTrace();
-//		}
-//
-//	}
+
+	@Test
+	public void SchemaManagerFailure() {
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		try {
+			sas[0].close();
+			cas[0].close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	//	/**
+	//	 * Tests that the state of the schema manager is replicated - inserts data after the schema manager
+	//	 * state is replicated (probably - not deterministic).
+	//	 */
+	//	@Test
+	//	public void ReplicateSchemaManagerInsertAfter() throws InterruptedException{
+	//		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+	//
+	//		while (!isReplicated){
+	//			Thread.sleep(100);
+	//		}
+	//
+	//		try {
+	//			ResultSet rs = sas[1].executeQuery("SELECT LOCAL * FROM H2O.H2O_TABLE");
+	//
+	//			if ((rs.next() && rs.next())){
+	//				fail("Expected nothing here.");
+	//			}
+	//		} catch (SQLException e) {
+	//			e.printStackTrace();
+	//		}
+	//
+	//		try{
+	//			int result = sas[0].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+	//		} catch (SQLException e){
+	//			fail("An Unexpected SQLException was thrown.");
+	//		}
+	//
+	//
+	//		try {
+	//			ResultSet rs = sas[1].executeQuery("SELECT LOCAL * FROM H2O.H2O_TABLE");
+	//
+	//			if (!(rs.next() && rs.next())){
+	//				fail("Expected a result here.");
+	//			}
+	//		} catch (SQLException e) {
+	//			e.printStackTrace();
+	//		}
+	//
+	//	}
 }

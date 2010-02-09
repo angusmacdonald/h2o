@@ -35,13 +35,13 @@ public class TransactionTests {
 	@Before
 	public void setUp() throws Exception {
 		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-		PersistentSchemaManager.USERNAME = "sa";
-		PersistentSchemaManager.PASSWORD = "sa";
+//		PersistentSchemaManager.USERNAME = "sa";
+//		PersistentSchemaManager.PASSWORD = "sa";
 
 		org.h2.Driver.load();
 
-		ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
-		cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
+		ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+		cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 
 		sa = ca.createStatement();
 		sb = cb.createStatement();
@@ -192,7 +192,7 @@ public class TransactionTests {
 			fail("An Unexpected SQLException was thrown.");
 		} finally {
 			try {
-				cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
+				cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}

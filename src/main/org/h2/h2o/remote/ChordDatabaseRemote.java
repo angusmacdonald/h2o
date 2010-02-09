@@ -215,6 +215,8 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 			boolean connected = chord.joinChordRing(localMachineLocation.getHostname(), portToJoinOn, instanceURL.getHostname(), instanceURL.getRMIPort(), 
 					localMachineLocation.getDbLocationWithoutIllegalCharacters());
 
+			chord.getChordNode().addObserver(chord);
+
 			if (connected){
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL,"Successfully connected to an existing chord ring.");
 				return true;
@@ -238,6 +240,7 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 	public void shutdown() {
 		databaseInstanceLocator = null;
 		dataManagerLocator = null;
+		chord.shutdownNode();
 //		if (this.isSchemaManager){
 //			try {
 //				schemaManager.removeAllTableInformation();

@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
+import org.h2.h2o.manager.PersistentSchemaManager;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;
 import org.junit.Test;
@@ -496,8 +497,8 @@ public class MultiQueryTransactionTests extends TestBase{
 			sa.execute("INSERT INTO TEST VALUES(5, 'Few');");
 			sa.execute("INSERT INTO TEST VALUES(6, 'Cases');");
 
-			ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
-			cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
+			ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+			cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 
 			Statement sa2 = ca.createStatement();
 
@@ -634,7 +635,7 @@ public class MultiQueryTransactionTests extends TestBase{
 			server.start();
 
 			Class.forName("org.h2.Driver");
-			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", "sa", "sa");
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 
 			Statement sa = conn.createStatement();
 
@@ -649,7 +650,7 @@ public class MultiQueryTransactionTests extends TestBase{
 
 			server.start();
 
-			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", "sa", "sa");
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 
 
 			PreparedStatement mStmt = conn.prepareStatement( "insert into PUBLIC.TEST (id,name) values (?,?)" );

@@ -59,8 +59,8 @@ public class SchemaManagerTests {
 	@Before
 	public void setUp() throws Exception {
 		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-		PersistentSchemaManager.USERNAME = "sa";
-		PersistentSchemaManager.PASSWORD = "sa";
+//		PersistentSchemaManager.USERNAME = "sa";
+//		PersistentSchemaManager.PASSWORD = "sa";
 		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
 		knownHosts.createNewFile();
 		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordDatabaseRemote.currentPort + "");
@@ -109,7 +109,7 @@ public class SchemaManagerTests {
 			server.start();
 
 			Class.forName("org.h2.Driver");
-			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", "sa", "sa");
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 
 			Statement stat = conn.createStatement();
 
@@ -154,7 +154,7 @@ public class SchemaManagerTests {
 			server.start();
 
 			Class.forName("org.h2.Driver");
-			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", "sa", "sa");
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 
 			Statement sa = conn.createStatement();
 
@@ -169,7 +169,7 @@ public class SchemaManagerTests {
 
 			server.start();
 
-			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", "sa", "sa");
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 
 			sa = conn.createStatement();
 
@@ -228,8 +228,8 @@ public class SchemaManagerTests {
 //		org.h2.Driver.load();
 //
 //		try{
-//			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
-//			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
+//			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+//			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 //			Statement sa = ca.createStatement();
 //			Statement sb = cb.createStatement();
 //
@@ -266,7 +266,7 @@ public class SchemaManagerTests {
 		org.h2.Driver.load();
 
 		try{
-			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
+			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 			Statement sa = ca.createStatement();
 
 			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
@@ -307,8 +307,8 @@ public class SchemaManagerTests {
 		org.h2.Driver.load();
 
 		try{
-			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
-			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
+			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 
 			Statement sa = ca.createStatement();
 			Statement sb = cb.createStatement();
@@ -361,7 +361,7 @@ public class SchemaManagerTests {
 		org.h2.Driver.load();
 
 		try{
-			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
+			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 			Statement sa = ca.createStatement();
 
 			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
@@ -420,7 +420,7 @@ public class SchemaManagerTests {
 		org.h2.Driver.load();
 
 		try{
-			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
+			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 
 			Statement sa = ca.createStatement();
 
@@ -430,7 +430,7 @@ public class SchemaManagerTests {
 			sa.execute("INSERT INTO TEST VALUES(2, 'World');");
 
 
-			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
+			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 			Statement sb = cb.createStatement();
 
 			sa.execute("DROP TABLE TEST;");
@@ -464,7 +464,7 @@ public class SchemaManagerTests {
 		org.h2.Driver.load();
 
 		try{
-			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
+			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 			Statement sa = ca.createStatement();
 
 			sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
@@ -505,10 +505,10 @@ public class SchemaManagerTests {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 
 		try{
-			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
+			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 			Statement sa = ca.createStatement();
 
-			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
+			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 			Statement sb = cb.createStatement();
 
 			sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");

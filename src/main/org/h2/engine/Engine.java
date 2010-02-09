@@ -92,7 +92,7 @@ public class Engine {
                         if (!user.validateUserPasswordHash(ci.getUserPasswordHash())) {
                             user = null;
                         }
-                    }
+                    } 
                 }
                 if (opened && (user == null || !user.getAdmin())) {
                     // reset - because the user is not an admin, and has no

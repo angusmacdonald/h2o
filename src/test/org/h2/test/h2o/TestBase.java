@@ -94,13 +94,13 @@ public class TestBase {
 		knownHosts.saveAndClose();
 		
 		//Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-		PersistentSchemaManager.USERNAME = "sa";
-		PersistentSchemaManager.PASSWORD = "sa";
+		//PersistentSchemaManager.USERNAME = "sa";
+		//PersistentSchemaManager.PASSWORD = "sa";
 
 		org.h2.Driver.load();
 
-		ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
-		cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
+		ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+		cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 
 		sa = ca.createStatement();
 		sb = cb.createStatement();

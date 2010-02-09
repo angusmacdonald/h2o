@@ -4,10 +4,12 @@ import static org.junit.Assert.fail;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
 import org.h2.h2o.manager.PersistentSchemaManager;
+import org.h2.h2o.remote.ChordDatabaseRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.H2oProperties;
 
@@ -34,6 +36,7 @@ public class MultipleServers {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
 	}
 
 	public void initialSetUp(){
@@ -46,7 +49,7 @@ public class MultipleServers {
 	}
 
 	private void createMultiplePropertiesFiles(String[] dbNames){
-
+		ChordDatabaseRemote.currentPort = 30003;
 		for (String db: dbNames){
 
 			String fullDBName = "jdbc:h2:mem:" + db;
@@ -54,12 +57,12 @@ public class MultipleServers {
 
 			H2oProperties properties = new H2oProperties(dbURL);
 			properties.createNewFile();
-			properties.setProperty("schemaManagerLocation", "jdbc:h2:sm:mem:one");
+			properties.setProperty("schemaManagerLocation", "jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db");
 			properties.saveAndClose();
 
 			H2oProperties knownHosts = new H2oProperties(dbURL, "instances");
 			knownHosts.createNewFile();
-			knownHosts.setProperty("jdbc:h2:sm:mem:one", "30000");
+			knownHosts.setProperty("jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db", "30000"); // //jdbc:h2:sm:mem:one
 			knownHosts.saveAndClose();
 
 		}
@@ -68,28 +71,30 @@ public class MultipleServers {
 
 	public void setUp() throws Exception {
 		//Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-		PersistentSchemaManager.USERNAME = "sa";
-		PersistentSchemaManager.PASSWORD = "sa";
+		//PersistentSchemaManager.USERNAME = "angus";
+		//PersistentSchemaManager.PASSWORD = "";
 
 		org.h2.Driver.load();
 
+		
+		
 		cas = new Connection[dbs.length + 1];
-		cas[0] = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
+		//cas[0] = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 		for (int i = 1; i < cas.length; i ++){
-			cas[i] = DriverManager.getConnection("jdbc:h2:mem:" + dbs[i-1], "sa", "sa");
+			cas[i] = DriverManager.getConnection("jdbc:h2:mem:" + dbs[i-1], PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 		}
 
 		sas = new Statement[dbs.length + 1];
 
-		for (int i = 0; i < cas.length; i ++){
-			sas[i] = cas[i].createStatement();
-		}
+//		for (int i = 0; i < cas.length; i ++){
+//			sas[i] = cas[i].createStatement();
+//		}
 
-		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
-		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
-		sql += "INSERT INTO TEST VALUES(2, 'World');";
-
-		sas[0].execute(sql);
+//		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
+//		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
+//		sql += "INSERT INTO TEST VALUES(2, 'World');";
+//
+//		sas[0].execute(sql);
 
 	}
 
@@ -121,10 +126,43 @@ public class MultipleServers {
 
 	/**
 	 * @param args
+	 * @throws InterruptedException 
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InterruptedException {
 		Constants.IS_TEST = true;
 		MultipleServers servers = new MultipleServers();
+		
+	//	Thread.sleep(2000);
+		
+		//servers.testSchemaManagerFailure();
+		
+	//	Thread.sleep(2000);
+		
+		//servers.insertSecondTable();
+	}
+
+	/**
+	 * 
+	 */
+	private void insertSecondTable() {
+		try {
+			sas[1].execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * 
+	 */
+	private void testSchemaManagerFailure() {
+		Diagnostic.trace("CLOSING SCHEMA MANAGER INSTANCE");
+		
+		try {
+			cas[0].close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 
 }

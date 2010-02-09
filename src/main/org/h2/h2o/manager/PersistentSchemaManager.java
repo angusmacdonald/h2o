@@ -54,12 +54,12 @@ public class PersistentSchemaManager implements ISchemaManager{
 	/**
 	 * The database username used to communicate with schema manager tables.
 	 */
-	public static String USERNAME = "angus";
+	public static final String USERNAME = "angus";
 
 	/**
 	 * The database password used to communicate with schema manager tables.
 	 */
-	public static String PASSWORD = "";
+	public static final String PASSWORD = "";
 
 
 	/**

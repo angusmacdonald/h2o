@@ -41,14 +41,14 @@ public class IndexTests{
 	@Before
 	public void setUp() throws Exception {
 		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-		PersistentSchemaManager.USERNAME = "sa";
-		PersistentSchemaManager.PASSWORD = "sa";
+		//PersistentSchemaManager.USERNAME = "sa";
+		//PersistentSchemaManager.PASSWORD = "sa";
 
 
 		org.h2.Driver.load();
 
-		ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", "sa", "sa");
-		cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
+		ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+		cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 
 		sa = ca.createStatement();
 		sb = cb.createStatement();
@@ -68,8 +68,8 @@ public class IndexTests{
 		"INSERT INTO Person VALUES (4, 'Jon Lewis', 3);");
 
 		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-		PersistentSchemaManager.USERNAME = "sa";
-		PersistentSchemaManager.PASSWORD = "sa";
+		//PersistentSchemaManager.USERNAME = "sa";
+		//PersistentSchemaManager.PASSWORD = "sa";
 		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
 		knownHosts.createNewFile();
 		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordDatabaseRemote.currentPort + "");

@@ -45,8 +45,8 @@ public class RestartTests {
 		}
 		
 		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-		PersistentSchemaManager.USERNAME = "sa";
-		PersistentSchemaManager.PASSWORD = "sa";
+	//	PersistentSchemaManager.USERNAME = "sa";
+		//PersistentSchemaManager.PASSWORD = "sa";
 
 	}
 	
@@ -62,7 +62,7 @@ public class RestartTests {
 		server.start();
 
 		Class.forName("org.h2.Driver");
-		conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", "sa", "sa");
+		conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 
 		sa = conn.createStatement();
 		
@@ -149,7 +149,7 @@ public class RestartTests {
 	private void startServerAndGetConnection() throws SQLException {
 		server = Server.createTcpServer(new String[] { "-tcpPort", "9081", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test" });
 		server.start();
-		conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", "sa", "sa");
+		conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 		sa = conn.createStatement();
 	}
 

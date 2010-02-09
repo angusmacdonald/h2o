@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import junit.framework.Assert;
 
 import org.h2.engine.Constants;
+import org.h2.h2o.manager.PersistentSchemaManager;
 import org.junit.Test;
 
 
@@ -68,7 +69,7 @@ public class UpdateTests extends TestBase {
 			/*
 			 * Start up the failed connection again so that the generic tearDown stuff works.
 			 */
-			cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
+			cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
