@@ -1031,9 +1031,15 @@ public class Session extends SessionWithState {
 	}
 
 	public int hashCode() {
-		return serialId;
+		return user.getName().hashCode();
+		
+		//return serialId;
 	}
-
+	
+	public boolean equals(Object obj){
+		return user.getName().equals(((Session)obj).getUser().getName());
+	}
+	
 	public String toString() {
 		return "#" + serialId + " (user: " + user.getName() + ")";
 	}
@@ -1192,5 +1198,6 @@ public class Session extends SessionWithState {
 		this.currentTransactionLocks = currentTransactionLocks;
 	}
 
+	
 
 }

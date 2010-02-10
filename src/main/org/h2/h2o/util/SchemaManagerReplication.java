@@ -56,7 +56,11 @@ public class SchemaManagerReplication extends Thread {
 			ErrorHandling.error("Failed to get a reference to the database located at : " + hostname + ":" + port + " after " + attempts + " attempts.");
 		} else {
 
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Found reference to remote database.");
+			if (Diagnostic.getLevel() == DiagnosticLevel.FULL){
+				try {
+					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Found reference to remote database (where SM state will be replicated): " + instance.getConnectionString());
+				} catch (RemoteException e1) {}
+			}
 
 			try {
 				this.db.getSchemaManager().addSchemaManagerDataLocation(instance);
@@ -67,7 +71,7 @@ public class SchemaManagerReplication extends Thread {
 			if (Constants.IS_TEST){
 				ChordTests.setReplicated(true);
 			}
-			
+
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Successfully added new schema manager replicas at " + hostname + ":" + port);
 		}
 

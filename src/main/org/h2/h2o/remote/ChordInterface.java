@@ -208,7 +208,12 @@ public class ChordInterface implements Observer {
 		 *	Ensure the ring is stable before continuing with any tests. 
 		 */
 		if (Constants.IS_TEST){
-		//	RingStabilizer.waitForStableNetwork(allNodes);
+
+			RingStabilizer.waitForStableNetwork(allNodes);
+
+			for (IChordNode node: allNodes){
+				System.out.println("CHECK. Suc: " + node.getSuccessor());
+			}
 		}
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Started local Chord node on : " + 
@@ -271,6 +276,9 @@ public class ChordInterface implements Observer {
 					 * TODO check whether the schema manager was ever in this nodes key space.
 					 */
 
+					
+					RingStabilizer.waitForStableNetwork(allNodes);
+
 					boolean inKeyRange = chordNode.inLocalKeyRange(schemaManagerKey);
 					if (!isSchemaManagerInKeyRange && inKeyRange){ //The schema manager has only just become in the key range of this node.
 						Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tThe schema manager is now in the key range of : " + chordNode);
@@ -322,7 +330,7 @@ public class ChordInterface implements Observer {
 						//dbInstance.createNewSchemaManagerBackup(db.getSchemaManager());
 						//dbInstance.executeUpdate("CREATE REPLICA SCHEMA H2O");
 						Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + dbInstance);
-						
+
 						if (Constants.IS_TEST){
 							ChordTests.setReplicated(true);
 						}
@@ -405,7 +413,7 @@ public class ChordInterface implements Observer {
 			sml = lookupSchemaManagerNodeLocation();
 		} catch (RemoteException e1) {
 			e1.printStackTrace();
-			
+
 			return null;
 		}
 
@@ -467,21 +475,21 @@ public class ChordInterface implements Observer {
 			e.printStackTrace();
 		} catch (NotBoundException e) {
 			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Database Instance wasn't bound on hostname : " + hostname + ", Port : " + port);
-			
-			try {
-				
-				remoteRegistry = LocateRegistry.getRegistry(hostname, port);
-				for (String s: remoteRegistry.list()){
-					System.out.println(s);
-				}
-			} catch (AccessException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			} catch (RemoteException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			
+
+			//			try {
+			//				
+			//				remoteRegistry = LocateRegistry.getRegistry(hostname, port);
+			//				for (String s: remoteRegistry.list()){
+			//					System.out.println(s);
+			//				}
+			//			} catch (AccessException e1) {
+			//				// TODO Auto-generated catch block
+			//				e1.printStackTrace();
+			//			} catch (RemoteException e1) {
+			//				// TODO Auto-generated catch block
+			//				e1.printStackTrace();
+			//			}
+
 		}
 		return null;
 	}
@@ -495,9 +503,9 @@ public class ChordInterface implements Observer {
 	private IChordRemoteReference lookupSchemaManagerNodeLocation() throws RemoteException{
 		IChordRemoteReference newSMLocation = null;
 
-			if (chordNode != null){
-				newSMLocation = chordNode.lookup(schemaManagerKey);
-			}
+		if (chordNode != null){
+			newSMLocation = chordNode.lookup(schemaManagerKey);
+		}
 
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Found schema manager at: " + newSMLocation);
@@ -534,7 +542,12 @@ public class ChordInterface implements Observer {
 	 * 
 	 */
 	public void shutdownNode() {
-		
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Simulating the failure of node: " + chordNode);
+
+		if (!Constants.IS_NON_SM_TEST){
+			allNodes.remove(chordNode);
+			chordNode.setSimulatingFailure(true);
+		}
 	}
 
 	/**
