@@ -125,7 +125,7 @@ public class ChordInterface implements Observer {
 		 * Join the existing Chord Ring.
 		 */
 		try {
-			chordNode  = ChordServer.deployNode(localChordAddress, null);
+			chordNode  = ChordNodeImpl.deployNode(localChordAddress, null);
 
 			if (Constants.IS_TEST){ 
 				allNodes.add(chordNode);
@@ -180,7 +180,7 @@ public class ChordInterface implements Observer {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Connecting to existing Chord ring on " + remoteHostname + ":" + remotePort);
 
 		try {
-			chordNode = ChordServer.deployNode(localChordAddress, knownHostAddress);
+			chordNode = ChordNodeImpl.deployNode(localChordAddress, knownHostAddress);
 			if (Constants.IS_TEST){ 
 				allNodes.add(chordNode);
 			}
@@ -277,7 +277,7 @@ public class ChordInterface implements Observer {
 					 */
 
 					
-					RingStabilizer.waitForStableNetwork(allNodes);
+//					RingStabilizer.waitForStableNetwork(allNodes);
 
 					boolean inKeyRange = chordNode.inLocalKeyRange(schemaManagerKey);
 					if (!isSchemaManagerInKeyRange && inKeyRange){ //The schema manager has only just become in the key range of this node.
@@ -542,11 +542,11 @@ public class ChordInterface implements Observer {
 	 * 
 	 */
 	public void shutdownNode() {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Simulating the failure of node: " + chordNode);
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Shutting down node: " + chordNode);
 
 		if (!Constants.IS_NON_SM_TEST){
 			allNodes.remove(chordNode);
-			chordNode.setSimulatingFailure(true);
+			chordNode.destroy();
 		}
 	}
 

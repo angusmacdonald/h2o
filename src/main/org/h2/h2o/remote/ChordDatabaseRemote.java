@@ -316,7 +316,8 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 	 * @see org.h2.h2o.IRemoteDatabase#removeLocalDatabaseInstance()
 	 */
 	public void removeLocalDatabaseInstance() throws RemoteException, NotBoundException {
-		databaseInstanceLocator.removeLocalInstance();
+		
+		if (databaseInstanceLocator != null) databaseInstanceLocator.removeLocalInstance();
 
 	}
 

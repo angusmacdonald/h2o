@@ -44,7 +44,16 @@ public class IndexTests{
 		//PersistentSchemaManager.USERNAME = "sa";
 		//PersistentSchemaManager.PASSWORD = "sa";
 
-
+		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
+		knownHosts.createNewFile();
+		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordDatabaseRemote.currentPort + "");
+		knownHosts.saveAndClose();
+		
+		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
+		knownHosts.createNewFile();
+		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordDatabaseRemote.currentPort + "");
+		knownHosts.saveAndClose();
+		
 		org.h2.Driver.load();
 
 		ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
@@ -70,15 +79,7 @@ public class IndexTests{
 		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
 		//PersistentSchemaManager.USERNAME = "sa";
 		//PersistentSchemaManager.PASSWORD = "sa";
-		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
-		knownHosts.createNewFile();
-		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordDatabaseRemote.currentPort + "");
-		knownHosts.saveAndClose();
-		
-		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
-		knownHosts.createNewFile();
-		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordDatabaseRemote.currentPort + "");
-		knownHosts.saveAndClose();
+
 		
 	}
 
