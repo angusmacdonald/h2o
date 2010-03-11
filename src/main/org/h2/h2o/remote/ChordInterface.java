@@ -1,7 +1,6 @@
 package org.h2.h2o.remote;
 
 import java.net.InetSocketAddress;
-import java.rmi.AccessException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -9,8 +8,6 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import org.h2.engine.Constants;
 import org.h2.engine.Database;
@@ -30,9 +27,6 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.stachordRMI.impl.ChordNodeImpl;
 import uk.ac.standrews.cs.stachordRMI.interfaces.IChordNode;
 import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
-import uk.ac.standrews.cs.stachordRMI.servers.ChordServer;
-import uk.ac.standrews.cs.stachordRMI.util.NodeComparator;
-import uk.ac.standrews.cs.stachordRMI.util.RingStabilizer;
 
 /**
  * Interface between the database system and Chord, providing various methods which use chord
@@ -76,13 +70,13 @@ public class ChordInterface implements Observer {
 	/**
 	 * Key factory used to create keys for schema manager lookup and to search for specific machines.
 	 */
-	private static SHA1KeyFactory keyFactory;
+	private static SHA1KeyFactory keyFactory = new SHA1KeyFactory();
 
 	/**
 	 * The key of the schema manager. This must be used in lookup operations to find the current location of the schema
 	 * manager reference.
 	 */
-	private static IKey schemaManagerKey;
+	private static IKey schemaManagerKey = keyFactory.generateKey("schemaManager");;
 
 	/**
 	 * <p>Set of nodes in the system sorted by key order.
@@ -90,16 +84,7 @@ public class ChordInterface implements Observer {
 	 * <p>This set is only maintained if {@link org.h2.engine.Constants#IS_TEST} is true, and won't
 	 * work in anything other than a test environment where each node is in the same address space.
 	 */
-	public static SortedSet<IChordNode> allNodes;;
-
-	static {
-		keyFactory = new SHA1KeyFactory();
-
-		schemaManagerKey = keyFactory.generateKey("schemaManager");
-
-		allNodes = new TreeSet<IChordNode>(new NodeComparator());
-
-	}
+	//public static SortedSet<IChordNode> allNodes = new TreeSet<IChordNode>(new NodeComparator());
 
 	public ChordInterface (Database db){
 		this.db = db;
@@ -128,7 +113,7 @@ public class ChordInterface implements Observer {
 			chordNode  = ChordNodeImpl.deployNode(localChordAddress, null);
 
 			if (Constants.IS_TEST){ 
-				allNodes.add(chordNode);
+				//allNodes.add(chordNode);
 			}
 		} catch (RemoteException e) {
 			e.printStackTrace();
@@ -182,13 +167,13 @@ public class ChordInterface implements Observer {
 		try {
 			chordNode = ChordNodeImpl.deployNode(localChordAddress, knownHostAddress);
 			if (Constants.IS_TEST){ 
-				allNodes.add(chordNode);
+				//allNodes.add(chordNode);
 			}
 		} catch (RemoteException e) {
 			e.printStackTrace();
 			return false;
 		} catch (P2PNodeException e) {
-			e.printStackTrace();
+			ErrorHandling.errorNoEvent("Failed to create new chord node on + " + localHostname + ":" + localPort + " known host: " + remoteHostname + ":" + remotePort);
 			return false;
 		}	
 
@@ -197,7 +182,7 @@ public class ChordInterface implements Observer {
 			return false;
 		}
 
-		//((ChordNodeImpl)chordNode).addObserver(this);
+		//((ChordNodeImpl)chordNode).addObserver(this); //now done by the calling method.
 
 		isSchemaManagerInKeyRange = false;
 		isSchemaManagerProcessLocal = false;
@@ -207,13 +192,16 @@ public class ChordInterface implements Observer {
 		/*
 		 *	Ensure the ring is stable before continuing with any tests. 
 		 */
+
 		if (Constants.IS_TEST){
 
-			RingStabilizer.waitForStableNetwork(allNodes);
 
-			for (IChordNode node: allNodes){
-				System.out.println("CHECK. Suc: " + node.getSuccessor());
-			}
+			//RingStabilizer.waitForStableNetwork(allNodes);
+
+		//	for (IChordNode node: allNodes){
+		///		System.out.println("CHECK. Suc: " + node.getSuccessor());
+		//	}
+			System.err.println("Schema manager key: " + schemaManagerKey);
 		}
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Started local Chord node on : " + 
@@ -224,16 +212,20 @@ public class ChordInterface implements Observer {
 		return true;
 	}
 
-
 	/**
 	 * Called by various chord functions in {@link ChordNodeImpl} which are being observed. Of particular interest
 	 * to this class is the case where the predecessor of a node changes. This is used to assess whether the schema managers
 	 * location has changed.
 	 * 
+	 * <p>If changing this method please note that it is called synchronously by the Observable class, ChordNodeImpl. This means
+	 * that if you try and do something such as chordNode.stabilize() you will possibly introduce some form of deadlock into Chord. This is
+	 * difficult to debug, but is the most likely cause of a ring failing to close properly (i.e. not stablizing even after an extended period).
+	 * 
 	 * @see java.util.Observer#update(java.util.Observable, java.lang.Object)
 	 */
 	@Override
 	public void update(Observable o, Object arg) {
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Start of update() : " + arg);
 
 		/*
 		 * If the predecessor of this node has changed.
@@ -251,7 +243,7 @@ public class ChordInterface implements Observer {
 
 			IChordRemoteReference newSchemaManagerLocation = null;
 			try {
-				chordNode.stabilize();
+	//			chordNode.stabilize();
 				newSchemaManagerLocation = lookupSchemaManagerNodeLocation();
 			} catch (RemoteException e1) {
 				ErrorHandling.errorNoEvent("Current schema manager lookup does not resolve to active host.");
@@ -261,6 +253,8 @@ public class ChordInterface implements Observer {
 				//We have a new schema manager location
 
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tThe schema manager location has changed.");
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tOld location: " + oldSchemaManagerLocation);
+				//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tNew location: " + newSchemaManagerLocation);
 
 				/*
 				 * In the case of a new node: this node must check that it still has the schema manager
@@ -270,29 +264,33 @@ public class ChordInterface implements Observer {
 				 * In the case of a node failure: this node must check whether it has taken over responsibility for the schema manager.
 				 * If it was already responsible for the schema manager then nothing will have changed.
 				 */
-				try {
 
-					/*
-					 * TODO check whether the schema manager was ever in this nodes key space.
-					 */
 
-					
-//					RingStabilizer.waitForStableNetwork(allNodes);
+				/*
+				 * TODO check whether the schema manager was ever in this nodes key space.
+				 */
 
-					boolean inKeyRange = chordNode.inLocalKeyRange(schemaManagerKey);
-					if (!isSchemaManagerInKeyRange && inKeyRange){ //The schema manager has only just become in the key range of this node.
-						Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tThe schema manager is now in the key range of : " + chordNode);
-					} else if (isSchemaManagerInKeyRange && inKeyRange){ //Nothing has changed.
-						Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tThe schema manager location has not changed. It is still in the key range of " + chordNode);
-					} else if (isSchemaManagerInKeyRange && !inKeyRange){
-						Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tThe schema manager is no longer in the key range of : " + chordNode);
+
+				//					RingStabilizer.waitForStableNetwork(allNodes);
+
+			
+					try {
+						boolean inKeyRange = chordNode.inLocalKeyRange(schemaManagerKey);
+						if (!isSchemaManagerInKeyRange && inKeyRange){ //The schema manager has only just become in the key range of this node.
+							Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tThe schema manager is now in the key range of : " + chordNode);
+						} else if (isSchemaManagerInKeyRange && inKeyRange){ //Nothing has changed.
+							Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tThe schema manager location has not changed. It is still in the key range of " + chordNode);
+						} else if (isSchemaManagerInKeyRange && !inKeyRange){
+							Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tThe schema manager is no longer in the key range of : " + chordNode);
+						}
+
+						isSchemaManagerInKeyRange = inKeyRange;
+
+					} catch (uk.ac.standrews.cs.nds.p2p.exceptions.P2PNodeException  e) {
+						e.printStackTrace();
+
 					}
-
-					isSchemaManagerInKeyRange = inKeyRange;
-
-				} catch (P2PNodeException e) {
-					e.printStackTrace();
-				}
+				
 
 			}
 		} else if (arg.equals(ChordNodeImpl.SUCCESSOR_CHANGE_EVENT)){
@@ -343,8 +341,9 @@ public class ChordInterface implements Observer {
 
 
 			}
-
+			
 		}
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "End of update()");
 	}
 
 	/**
@@ -545,7 +544,7 @@ public class ChordInterface implements Observer {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Shutting down node: " + chordNode);
 
 		if (!Constants.IS_NON_SM_TEST){
-			allNodes.remove(chordNode);
+			//allNodes.remove(chordNode);
 			chordNode.destroy();
 		}
 	}
@@ -557,6 +556,19 @@ public class ChordInterface implements Observer {
 		return (ChordNodeImpl) chordNode;
 	}
 
+	/**
+	 * @return
+	 */
+	public static IKey getSchemaManagerKey() {
+		return schemaManagerKey;
+	}
+
+	/**
+	 * @return the currentSMLocation
+	 */
+	public IChordRemoteReference getCurrentSMLocation() {
+		return currentSMLocation;
+	}
 
 	//	public IChordRemoteReference lookupInstanceLocation(DatabaseURL databaseURL){
 	//

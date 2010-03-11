@@ -206,7 +206,6 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 
 			//Attempt to connect to a Chord node at this location.
 
-
 			int portToJoinOn = currentPort++;
 
 			if (instanceURL.getRMIPort() == portToJoinOn)
@@ -215,6 +214,13 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 			boolean connected = chord.joinChordRing(localMachineLocation.getHostname(), portToJoinOn, instanceURL.getHostname(), instanceURL.getRMIPort(), 
 					localMachineLocation.getDbLocationWithoutIllegalCharacters());
 
+			if (!connected){
+				portToJoinOn ++;
+				connected = chord.joinChordRing(localMachineLocation.getHostname(), portToJoinOn++, instanceURL.getHostname(), instanceURL.getRMIPort(), 
+						localMachineLocation.getDbLocationWithoutIllegalCharacters());
+
+			}
+			
 			chord.getChordNode().addObserver(chord);
 
 			if (connected){

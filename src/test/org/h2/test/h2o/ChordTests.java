@@ -33,7 +33,7 @@ public class ChordTests extends TestBase {
 	private Connection[] cas;
 	private Statement[] sas;
 
-	private static String[] dbs =  {"two", "three"}; //{"two", "three", "four", "five", "six", "seven", "eight", "nine"};
+	private static String[] dbs =  {"two", "three", "four", "five", "six", "seven", "eight", "nine"};
 
 	/**
 	 * Whether the schema manager state has been replicated yet.
@@ -113,7 +113,7 @@ public class ChordTests extends TestBase {
 		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
 		sql += "INSERT INTO TEST VALUES(2, 'World');";
 
-		sas[0].execute(sql);
+		sas[4].execute(sql);
 	}
 
 	/**
@@ -220,11 +220,15 @@ public class ChordTests extends TestBase {
 
 
 	@Test
-	public void SchemaManagerFailure() {
+	public void SchemaManagerFailure() throws InterruptedException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		try {
 			sas[0].close();
 			cas[0].close();
+			
+			Thread.sleep(5000);
+			
+			sas[1].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}

@@ -129,7 +129,7 @@ public class MultipleServers {
 	 * @throws InterruptedException 
 	 */
 	public static void main(String[] args) throws InterruptedException {
-		Constants.IS_TEST = true;
+		Constants.IS_TEST = false;
 		MultipleServers servers = new MultipleServers();
 		
 	//	Thread.sleep(2000);

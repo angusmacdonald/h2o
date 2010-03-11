@@ -62,19 +62,26 @@ public class SchemaManagerReplication extends Thread {
 				} catch (RemoteException e1) {}
 			}
 
-			try {
-				this.db.getSchemaManager().addSchemaManagerDataLocation(instance);
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
-
-			if (Constants.IS_TEST){
-				ChordTests.setReplicated(true);
-			}
+			createSchemaManagerReplicas(instance);
 
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Successfully added new schema manager replicas at " + hostname + ":" + port);
 		}
 
+	}
+
+	/**
+	 * @param instance
+	 */
+	private void createSchemaManagerReplicas(DatabaseInstanceRemote instance) {
+		try {
+			this.db.getSchemaManager().addSchemaManagerDataLocation(instance);
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+
+		if (Constants.IS_TEST){
+			ChordTests.setReplicated(true);
+		}
 	}
 
 }
