@@ -124,15 +124,16 @@ public class PersistentSchemaManager implements ISchemaManager{
 		"connection_id INT NOT NULL auto_increment," + 
 		"connection_type VARCHAR(5), " + 
 		"machine_name VARCHAR(255)," + 
+		"db_location VARCHAR(255)," +
 		"connection_port INT NOT NULL, " + 
 		"chord_port INT NOT NULL, " + 
 		"PRIMARY KEY (connection_id) );";
 
-		sql += "\n\nCREATE TABLE IF NOT EXISTS " + REPLICAS + "(replica_id INT NOT NULL auto_increment, " +
+		sql += "\n\nCREATE TABLE IF NOT EXISTS " + REPLICAS + "(" +
+		"replica_id INT NOT NULL auto_increment, " +
 		"table_id INT NOT NULL, " +
 		"connection_id INT NOT NULL, " + 
-		"db_location VARCHAR(255)," +
-		"storage_type VARCHAR(50), " +
+		"storage_type VARCHAR(255), " + 
 		"last_modification INT NOT NULL, " +
 		"table_set INT NOT NULL, " +
 		"primary_copy BOOLEAN, " +
@@ -287,9 +288,9 @@ public class PersistentSchemaManager implements ISchemaManager{
 	 * @return						True, if the connection information already exists.
 	 * @throws SQLException
 	 */
-	public boolean connectionInformationExists(String localMachineAddress, int localMachinePort, String connectionType) throws SQLException{
-		String sql = "SELECT count(connection_id) FROM " + CONNECTIONS + " WHERE machine_name='" + localMachineAddress + "' AND connection_port=" + localMachinePort +
-		" AND connection_type='" + connectionType +"';";
+	public boolean connectionInformationExists(String localMachineAddress, int localMachinePort, String connectionType, String databaseLocation) throws SQLException{
+		String sql = "SELECT count(connection_id) FROM " + CONNECTIONS + " WHERE machine_name='" + localMachineAddress + "' AND db_location='" + databaseLocation +
+		"' AND connection_port=" + localMachinePort + " AND connection_type='" + connectionType +"';";
 
 		return countCheck(sql);
 	}
@@ -301,22 +302,23 @@ public class PersistentSchemaManager implements ISchemaManager{
 	 * @param databaseLocation 		The location of the local database. Used to determine whether a database in running in embedded mode.
 	 * @return						Result of the update.
 	 */
-	public int addConnectionInformation(DatabaseURL databaseURL){
-		String connection_type = databaseURL.getConnectionType();
+	public int addConnectionInformation(DatabaseURL dburl){
+		String connection_type = dburl.getConnectionType();
 
 		String sql = null;
 		try {
-			if (connectionInformationExists(databaseURL.getHostname(), databaseURL.getPort(), databaseURL.getConnectionType())){
+			if (connectionInformationExists(dburl.getHostname(), dburl.getPort(), dburl.getConnectionType(), dburl.getDbLocation())){
 				//Update existing information - the chord port may have changed.
 
-				sql = "\nUPDATE " + CONNECTIONS + " SET chord_port = " + databaseURL.getRMIPort() + 
-				" WHERE machine_name='" + databaseURL.getHostname() + "' AND connection_port=" + databaseURL.getPort() +
-				" AND connection_type='" + databaseURL.getConnectionType() +"';";
+				sql = "\nUPDATE " + CONNECTIONS + " SET chord_port = " + dburl.getRMIPort() + 
+				" WHERE machine_name='" + dburl.getHostname() + "' AND connection_port=" + dburl.getPort() +
+				" AND connection_type='" + dburl.getConnectionType() +"';";
 
 			} else { 
 
-				sql = "\nINSERT INTO " + CONNECTIONS + " VALUES (null, '" + connection_type + "', '" + databaseURL.getHostname() + "', "  + databaseURL.getPort() + ", " +
-				databaseURL.getRMIPort() + ");\n";
+				sql = "\nINSERT INTO " + CONNECTIONS + " VALUES (null, '" + connection_type + "', '" + dburl.getHostname() + 
+				"', '" + dburl.getDbLocation() + "', "  + dburl.getPort() + ", " +
+				dburl.getRMIPort() + ");\n";
 
 			}
 		} catch (SQLException e1) {
@@ -407,8 +409,10 @@ public class PersistentSchemaManager implements ISchemaManager{
 		//			return cacheConnectionID;
 
 		String sql = "SELECT connection_id FROM " + CONNECTIONS + " WHERE machine_name='" + machine_name
-		+ "' AND connection_port=" + connection_port + " AND connection_type='" + connection_type + "';";
+		+ "' AND connection_port=" + connection_port + " AND connection_type='" + connection_type + "' AND db_location = '" + dbURL.getDbLocation() + "';";
 
+
+		
 		LocalResult result = null;
 		try {
 			sqlQuery = queryParser.prepareCommand(sql);
@@ -477,9 +481,9 @@ public class PersistentSchemaManager implements ISchemaManager{
 	 * @throws SQLException 
 	 */
 	public boolean isReplicaListed(String tableName, int connectionID, String dbLocation, String schemaName) throws SQLException{
-		String sql = "SELECT count(*) FROM " + REPLICAS + ", " + TABLES + " WHERE tablename='" + tableName + "' AND schemaname='" + 
-		schemaName + "' AND " + TABLES + ".table_id=" + REPLICAS + ".table_id AND db_location='"
-		+ dbLocation + "' AND connection_id=" + connectionID + ";";
+		String sql = "SELECT count(*) FROM " + REPLICAS + ", " + TABLES + ", " + CONNECTIONS + " WHERE tablename='" + tableName + "' AND schemaname='" + 
+		schemaName + "' AND " + TABLES + ".table_id=" + REPLICAS + ".table_id AND " + REPLICAS + ".connection_id = " + CONNECTIONS + ".connection_id AND db_location='"
+		+ dbLocation + "';";
 
 		return countCheck(sql);
 	}
@@ -540,7 +544,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 	 * @throws SQLException 
 	 */
 	private int addReplicaInformation(TableInfo ti, int tableID, int connectionID, boolean primaryCopy) throws SQLException{
-		String sql = "INSERT INTO " + REPLICAS + " VALUES (null, " + tableID + ", " + connectionID + ", '" + ti.getDbLocation().getDbLocation() + "', '" + 
+		String sql = "INSERT INTO " + REPLICAS + " VALUES (null, " + tableID + ", " + connectionID + ", '" + 
 		ti.getTableType() + "', " + ti.getModificationID() +", " + ti.getTableSet() + ", " + primaryCopy + ");\n";
 		return executeUpdate(sql);
 	}
@@ -695,7 +699,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 
 			tableID = getTableID(ti);
 
-			String sql = "DELETE FROM " + REPLICAS + " WHERE table_id=" + tableID + " AND db_location='" + ti.getDbLocation().getDbLocation() + "' AND connection_id=" + connectionID  + "; ";
+			String sql = "DELETE FROM " + REPLICAS + " WHERE table_id=" + tableID + " AND connection_id=" + connectionID  + "; ";
 
 			executeUpdate(sql);
 

@@ -322,7 +322,8 @@ public class DatabaseURL implements Serializable {
 	}
 
 	/**
-	 * @return
+	 * The type of database being used.
+	 * @return mem, tcp, or other
 	 */
 	public String getConnectionType() {
 		if (port == -1 && isMem()){
