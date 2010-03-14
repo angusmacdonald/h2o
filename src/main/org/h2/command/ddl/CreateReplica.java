@@ -418,7 +418,7 @@ public class CreateReplica extends SchemaCommand {
 						throw new SQLException("Error creating replica for " + tableName + ". Data manager not found.");
 					} else {
 						dm.addReplicaInformation(table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
-								db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType(), tableSet, db.isSchemaManager());
+								db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType(), tableSet, db.getSchemaManagerReference().isSchemaManagerLocal());
 					} 
 				} catch (RemoteException e) {
 					System.err.println("Error informing data manager of update.");

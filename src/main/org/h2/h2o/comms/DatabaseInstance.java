@@ -101,7 +101,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	@Override
 	public DatabaseURL getSchemaManagerLocation() throws RemoteException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Responding to request for schema manager location at database '" + session.getDatabase().getDatabaseLocation() + "'.");
-		return session.getDatabase().getSchemaManagerLocation();
+		return session.getDatabase().getSchemaManagerReference().getSchemaManagerLocation();
 	}
 
 	/* (non-Javadoc)

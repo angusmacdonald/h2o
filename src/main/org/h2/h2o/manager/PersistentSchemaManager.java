@@ -845,6 +845,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 						"connection_id INT NOT NULL auto_increment," + 
 						"connection_type VARCHAR(5), " + 
 						"machine_name VARCHAR(255)," + 
+						"db_location VARCHAR(255)," +
 						"connection_port INT NOT NULL, " + 
 						"rmi_port INT NOT NULL, " + 
 						"PRIMARY KEY (connection_id) );";
@@ -852,9 +853,10 @@ public class PersistentSchemaManager implements ISchemaManager{
 				Value[] row = result.currentRow();
 				String connectionType = row[1].getString();
 				String hostName = row[2].getString();
-				int dbPort = row[3].getInt();
-				int rmiPort = row[4].getInt();
-				DatabaseURL dbURL = new DatabaseURL(connectionType, hostName, dbPort, null, false);
+				String dbLocation = row[3].getString();
+				int dbPort = row[4].getInt();
+				int rmiPort = row[5].getInt();
+				DatabaseURL dbURL = new DatabaseURL(connectionType, hostName, dbPort, dbLocation, false);
 				dbURL.setRMIPort(rmiPort);
 				databaseLocations.add(dbURL);
 			}

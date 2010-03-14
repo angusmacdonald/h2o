@@ -418,7 +418,7 @@ public class CreateTable extends SchemaCommand {
 		 * #########################################################################
 		 */
 
-		if (Constants.IS_H2O && !db.isSchemaManager() && !db.isManagementDB() && !tableName.startsWith("H2O_") && !isStartup()){
+		if (Constants.IS_H2O && !db.getSchemaManagerReference().isSchemaManagerLocal() && !db.isManagementDB() && !tableName.startsWith("H2O_") && !isStartup()){
 
 			DataManagerRemote dm = db.getDataManager(getSchema().getName() + "." + tableName);
 

@@ -11,6 +11,7 @@ import java.util.Map;
 
 import org.h2.h2o.comms.DataManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.manager.SchemaManagerReference;
 import org.h2.h2o.remote.ChordInterface;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -31,6 +32,7 @@ public class DataManagerLocator implements IDataManagerLocator{
 	private Registry registry;
 	
 	private ChordInterface chordManager;
+	private SchemaManagerReference schemaManagerRef;
 
 	/**
 	 * Called to obtain a connection to the RMI registry.
@@ -38,9 +40,10 @@ public class DataManagerLocator implements IDataManagerLocator{
 	 * @param port	Port where the schema manager is running (RMI port is this + 1, or defaults to a 20000 if in-memory).
 	 * @throws RemoteException 
 	 */
-	public DataManagerLocator(ChordInterface chordManager) throws RemoteException {
+	public DataManagerLocator(ChordInterface chordManager, SchemaManagerReference schemaManagerRef) throws RemoteException {
 		this.chordManager = chordManager;
 		this.registry = chordManager.getLocalRegistry();
+		this.schemaManagerRef = schemaManagerRef;
 		
 		dataManagers = new HashMap<String, DataManagerRemote>();
 	}
@@ -62,7 +65,7 @@ public class DataManagerLocator implements IDataManagerLocator{
 		/*
 		 * TODO this needs to have a reference to the schema manager RMI registry. 
 		 */
-		Registry schemaManagerRegistry = chordManager.getSchemaManagerRegistry();
+		Registry schemaManagerRegistry = schemaManagerRef.getSchemaManagerRegistry();
 		
 		
 		try {

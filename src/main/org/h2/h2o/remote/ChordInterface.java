@@ -14,6 +14,7 @@ import org.h2.engine.Database;
 import org.h2.h2o.comms.management.DatabaseInstanceLocator;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.manager.ISchemaManager;
+import org.h2.h2o.manager.SchemaManagerReference;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.SchemaManagerReplication;
 import org.h2.test.h2o.ChordTests;
@@ -53,18 +54,15 @@ public class ChordInterface implements Observer {
 	private int rmiPort;
 
 	/**
-	 * Whether, at the time of last checking, this node is responsible for running the schema manager.
+	 * Used to cache the location of the schema manager by asking the known node where it is on startup. This is only
+	 * ever really used for this initial lookup. The rest of the schema manager funcitonality is hidden behind the 
+	 * SchemaManagerReference object.
 	 */
-	private boolean isSchemaManagerInKeyRange = false;
-
-	/**
-	 * Whether, at the time of last checking, this node is running the schema manager process. It may or
-	 * may not be responsible for the schema manager key lookup.
-	 */
-	private boolean isSchemaManagerProcessLocal = false;
-
 	private DatabaseURL actualSchemaManagerLocation = null;
 
+	private SchemaManagerReference schemaManagerRef;
+
+	
 	private Database db;
 
 	/**
@@ -83,11 +81,13 @@ public class ChordInterface implements Observer {
 	 * 
 	 * <p>This set is only maintained if {@link org.h2.engine.Constants#IS_TEST} is true, and won't
 	 * work in anything other than a test environment where each node is in the same address space.
+	 * @param schemaManagerRef 
 	 */
 	//public static SortedSet<IChordNode> allNodes = new TreeSet<IChordNode>(new NodeComparator());
 
-	public ChordInterface (Database db){
+	public ChordInterface (Database db, SchemaManagerReference schemaManagerRef){
 		this.db = db;
+		this.schemaManagerRef = schemaManagerRef;
 	}
 
 	/**
@@ -131,8 +131,7 @@ public class ChordInterface implements Observer {
 
 		this.actualSchemaManagerLocation = databaseURL;
 
-		this.isSchemaManagerInKeyRange = true;
-		this.isSchemaManagerProcessLocal = true;
+		this.schemaManagerRef.setInKeyRange(true);
 
 		((ChordNodeImpl)chordNode).addObserver(this);
 
@@ -184,8 +183,7 @@ public class ChordInterface implements Observer {
 
 		//((ChordNodeImpl)chordNode).addObserver(this); //now done by the calling method.
 
-		isSchemaManagerInKeyRange = false;
-		isSchemaManagerProcessLocal = false;
+		this.schemaManagerRef.setInKeyRange(false);
 
 		actualSchemaManagerLocation = getSchemaManagerURL(remoteHostname, remotePort);
 
@@ -276,15 +274,18 @@ public class ChordInterface implements Observer {
 			
 					try {
 						boolean inKeyRange = chordNode.inLocalKeyRange(schemaManagerKey);
-						if (!isSchemaManagerInKeyRange && inKeyRange){ //The schema manager has only just become in the key range of this node.
+						if (!this.schemaManagerRef.isInKeyRange() && inKeyRange){ //The schema manager has only just become in the key range of this node.
 							Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tThe schema manager is now in the key range of : " + chordNode);
-						} else if (isSchemaManagerInKeyRange && inKeyRange){ //Nothing has changed.
+							
+							schemaManagerNowInKeyRange();
+							
+						} else if (this.schemaManagerRef.isInKeyRange() && inKeyRange){ //Nothing has changed.
 							Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tThe schema manager location has not changed. It is still in the key range of " + chordNode);
-						} else if (isSchemaManagerInKeyRange && !inKeyRange){
+						} else if (this.schemaManagerRef.isInKeyRange() && !inKeyRange){
 							Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tThe schema manager is no longer in the key range of : " + chordNode);
 						}
 
-						isSchemaManagerInKeyRange = inKeyRange;
+						this.schemaManagerRef.setInKeyRange(inKeyRange);
 
 					} catch (uk.ac.standrews.cs.nds.p2p.exceptions.P2PNodeException  e) {
 						e.printStackTrace();
@@ -298,7 +299,7 @@ public class ChordInterface implements Observer {
 			 * The successor has changed. Make sure the schema manager is replicated to the new successor if this instance is controlling the schema
 			 * manager.
 			 */
-			if (this.isSchemaManagerProcessLocal){
+			if (this.schemaManagerRef.isSchemaManagerLocal()){
 				//The schema manager is running locally. Replicate it's state to the new successor.
 				IChordRemoteReference successor = chordNode.getSuccessor();
 
@@ -347,6 +348,38 @@ public class ChordInterface implements Observer {
 	}
 
 	/**
+	 * Called when the schema manager has recently moved into the key range of this node.
+	 * 
+	 * At this point the node can decide to do nothing (leave the schema manager where it is and maintain a reference to it), or 
+	 * transfer the schema manager to this machine. This method currently does the latter to test its functionality.
+	 */
+	private void schemaManagerNowInKeyRange() {
+		System.err.println("##################################################################################");
+//		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "The chord node " + chordNode.getKey().toStringAsKeyspaceFraction() + " is now responsible for the schema manager.");
+//		
+//		ISchemaManager sm = db.createNewSchemaManager();
+//	
+//		this.isSchemaManagerInKeyRange = true;
+//		this.isSchemaManagerProcessLocal = true;
+//		
+//		this.currentSMLocation = this.getChordNode().getPredecessor();
+//		this.actualSchemaManagerLocation = db.getDatabaseURL();
+//
+//		try {
+//			sm.buildSchemaManagerState(db.getRemoteInterface().getSchemaManager());
+//		} catch (RemoteException e) {
+//			e.printStackTrace();
+//		}
+//		
+//		db.getRemoteInterface().setSchemaManager(sm);
+//		
+//		//TODO update the schema manager location information in chordDatabaseRemote
+//		
+//		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Finished building new schema manager on " + chordNode.getKey() + ".");
+//		
+	}
+
+	/**
 	 * Returns the port on which this chord nodes RMI server is running.
 	 * @return RMI registry port for this chord node.
 	 */
@@ -368,43 +401,13 @@ public class ChordInterface implements Observer {
 	}
 
 	/**
-	 * Returns a reference to the RMI registry of the schema manager.
-	 * 
-	 * <p>A lookup is performed to identify where the schema manager is currently located,
-	 * then the registry is obtained.
-	 * 
-	 * <p>If the registry is not found this method returns null.
-	 * @return	The RMI registry of this chord node.
-	 */
-	public Registry getSchemaManagerRegistry(){
-		Registry remoteRegistry = null;
-
-		//		if (currentSMLocation == null){
-		//			schemaManagerRegistryLocation = getActualSchemaManagerLocation();
-		//		}
-
-
-		try {
-			remoteRegistry = LocateRegistry.getRegistry(actualSchemaManagerLocation.getHostname(), actualSchemaManagerLocation.getRMIPort());
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		return remoteRegistry;
-
-	}
-
-	public DatabaseURL getStoredSchemaManagerLocation(){
-		return actualSchemaManagerLocation;
-	}
-
-	/**
 	 * Get the actual location of the schema manager by first looking up the location where the 'schemamanager'
 	 * lookup resoloves to, then querying the database instance at this location for the location of the schema manager.
 	 * @return
 	 */
 	public DatabaseURL getActualSchemaManagerLocation() {
+		if (actualSchemaManagerLocation != null){ return actualSchemaManagerLocation; }
+		
 		IChordRemoteReference oldSchemaManagerNodeLocation = currentSMLocation;
 
 		IChordRemoteReference sml = null;
@@ -517,12 +520,11 @@ public class ChordInterface implements Observer {
 	/**
 	 * @param schemaManager
 	 */
-	public void bindSchemaManager(ISchemaManager schemaManager) {
+	public void bindSchemaManager(SchemaManagerReference schemaManagerRef) {
 		ISchemaManager stub = null;
 
 		try {
-			stub = (ISchemaManager) UnicastRemoteObject.exportObject(schemaManager, 0);
-			schemaManager = stub;
+			stub = (ISchemaManager) UnicastRemoteObject.exportObject(schemaManagerRef.getSchemaManager(), 0);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}

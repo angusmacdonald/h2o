@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.manager.SchemaManagerReference;
 import org.h2.h2o.remote.ChordInterface;
 import org.h2.h2o.util.DatabaseURL;
 
@@ -40,16 +41,20 @@ public class DatabaseInstanceLocator implements IDatabaseInstanceLocator {
 	private ChordInterface chord;
 
 	private String[] cachedItemsInSchemaManager;
+	
+	private SchemaManagerReference schemaManagerRef;
 
 	/**
 	 * 
 	 * @param localRegistry
 	 * @param localInstance
 	 */
-	public DatabaseInstanceLocator(ChordInterface chordManager, DatabaseInstanceRemote localInstance) {
+	public DatabaseInstanceLocator(ChordInterface chordManager, DatabaseInstanceRemote localInstance, SchemaManagerReference schemaManagerRef) {
 		this.chord = chordManager;
 		this.localRegistry = chordManager.getLocalRegistry();
 
+		this.schemaManagerRef = schemaManagerRef;
+		
 		this.localInstance = localInstance;
 		this.locallyCachedDatabaseInstances = new HashMap<String, DatabaseInstanceRemote>();
 
@@ -65,7 +70,7 @@ public class DatabaseInstanceLocator implements IDatabaseInstanceLocator {
 
 		try {
 			this.localRegistry.bind(LOCAL_DATABASE_INSTANCE, stub);
-			chordManager.getSchemaManagerRegistry().bind(DATABASE_INSTANCE_PREFIX + localInstance.getLocation().getUrlMinusSM(), stub);
+			schemaManagerRef.getSchemaManagerRegistry().bind(DATABASE_INSTANCE_PREFIX + localInstance.getLocation().getUrlMinusSM(), stub);
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -78,11 +83,11 @@ public class DatabaseInstanceLocator implements IDatabaseInstanceLocator {
 			return locallyCachedDatabaseInstances.get(databaseURL.getUrlMinusSM());
 		}
 
-		Registry schemaManager = chord.getSchemaManagerRegistry();
+		Registry schemaManagerRegistry = schemaManagerRef.getSchemaManagerRegistry();
 
 		DatabaseInstanceRemote remoteDatabaseInstance = null;
 		try {
-			remoteDatabaseInstance = (DatabaseInstanceRemote) schemaManager.lookup(DATABASE_INSTANCE_PREFIX + databaseURL.getUrlMinusSM());
+			remoteDatabaseInstance = (DatabaseInstanceRemote) schemaManagerRegistry.lookup(DATABASE_INSTANCE_PREFIX + databaseURL.getUrlMinusSM());
 		} catch (AccessException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -105,7 +110,7 @@ public class DatabaseInstanceLocator implements IDatabaseInstanceLocator {
 	 */
 	@Override
 	public Set<DatabaseInstanceRemote> getDatabaseInstances() {
-		Registry schemaManagerRegistry = chord.getSchemaManagerRegistry();
+		Registry schemaManagerRegistry = schemaManagerRef.getSchemaManagerRegistry();
 
 		Set<DatabaseInstanceRemote> databaseInstances = new HashSet<DatabaseInstanceRemote>();
 
@@ -158,6 +163,6 @@ public class DatabaseInstanceLocator implements IDatabaseInstanceLocator {
 	@Override
 	public void removeLocalInstance() throws NotBoundException, RemoteException {
 		localRegistry.unbind(LOCAL_DATABASE_INSTANCE);
-		chord.getSchemaManagerRegistry().unbind(DATABASE_INSTANCE_PREFIX +  localInstance.getLocation().getUrlMinusSM());
+		schemaManagerRef.getSchemaManagerRegistry().unbind(DATABASE_INSTANCE_PREFIX +  localInstance.getLocation().getUrlMinusSM());
 	}
 }

@@ -9,7 +9,7 @@ import org.h2.engine.Session;
 import org.h2.h2o.comms.DataManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
-import org.h2.h2o.manager.ISchemaManager;
+import org.h2.h2o.manager.SchemaManagerReference;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
 
@@ -89,38 +89,11 @@ public interface IDatabaseRemote {
 	public void shutdown();
 
 	/**
-	 * Whether this database instance is the schema manager.
-	 * @return True if this database instance is the system's schema manager.
-	 */
-	public boolean isSchemaManager();
-
-	/**
 	 * Get the location of the local database instance, including the port the database
 	 * is running on (JDBC) and the port the databases RMI connection is running on.
 	 * @return Address of the local database instance.
 	 */
 	public DatabaseURL getLocalMachineLocation();
-
-	/**
-	 * Get the location of the schema manager instance.
-	 * 
-	 * <p>This is the stored schema manager location (i.e. the system does not have to check whether the schema manager still exists at
-	 * this location before returning a value).
-	 * @return Stored schema manager location. 
-	 */
-	public DatabaseURL getSchemaManagerLocation();
-
-	/**
-	 * Obtain a reference to the system's schema manager.
-	 * @return
-	 */
-	public ISchemaManager getSchemaManager();
-
-	/**
-	 * Bind a new schema manager to the local registry.
-	 * @param schemaManager
-	 */
-	public void bindSchemaManager(ISchemaManager schemaManager);
 
 	/**
 	 * Find a reference to a remote data manager, not from the schema manager but from
@@ -129,5 +102,10 @@ public interface IDatabaseRemote {
 	 * @param dbURL
 	 */
 	public DataManagerRemote refindDataManagerReference(TableInfo ti, DatabaseURL dbURL);
+
+	/**
+	 * @param schemaManagerRef
+	 */
+	void bindSchemaManagerReference(SchemaManagerReference schemaManagerRef);
 
 }
