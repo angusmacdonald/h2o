@@ -9,6 +9,10 @@ import org.h2.h2o.remote.ChordInterface;
 import org.h2.h2o.util.DatabaseURL;
 
 /**
+ * Encapsulates SchemaManager references, containing state on whether the reference is local or remote,
+ * whether the lookup is local or remote, and other relevant information. This class manages operations on
+ * the Schema Manager, such as migration between database instances.
+ * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class SchemaManagerReference {
@@ -33,27 +37,27 @@ public class SchemaManagerReference {
 	private Database db;
 
 	/**
-	 * @param databaseRemote
+	 * When a new object is created with this constructor the schema manager reference may not exist, so only the database object
+	 * is required.
+	 * @param db
 	 */
 	public SchemaManagerReference(Database db) {
 		this.db = db;
 	}
 
 	/**
-	 * @param schemaManager2
-	 * @param databaseRemote
+	 * Get a reference to the schema manager. If the current schema manager location is
+	 * not known this method will attempt to find it.
+	 * 
+	 * <p>The schema manager may be remote.
+	 * @return
 	 */
-	public SchemaManagerReference(SchemaManager schemaManager) {
-		this.schemaManager = schemaManager;
-	}
-
 	public ISchemaManager getSchemaManager(){
 		if (schemaManager == null) schemaManager = this.findSchemaManager();
 		
 		return schemaManager;
 	}
 
-	
 	/**
 	 * Get the location of the schema manager instance.
 	 * 
@@ -65,15 +69,18 @@ public class SchemaManagerReference {
 		return schemaManagerLocationURL;
 	}
 	
-	
+	/**
+	 * True if the schema manager process is running locally.
+	 */
 	public boolean isSchemaManagerLocal(){
 		return isLocal;
 	}
-
-	public boolean isSchemaManagerLookupLocal() {
-		return inKeyRange;
-	}
 	
+	/**
+	 * Attempts to find the schema manager by looking up its location in the RMI registry of
+	 * the database instance which is responsible for the key range containing 'schema manager'.
+	 * @return
+	 */
 	public ISchemaManager findSchemaManager() {
 		if (schemaManager != null){
 			return schemaManager;
@@ -103,15 +110,9 @@ public class SchemaManagerReference {
 	public Registry getSchemaManagerRegistry(){
 		Registry remoteRegistry = null;
 
-		//		if (currentSMLocation == null){
-		//			schemaManagerRegistryLocation = getActualSchemaManagerLocation();
-		//		}
-
-
 		try {
 			remoteRegistry = LocateRegistry.getRegistry(schemaManagerLocationURL.getHostname(), schemaManagerLocationURL.getRMIPort());
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -138,14 +139,15 @@ public class SchemaManagerReference {
 	}
 
 	/**
-	 * @param schemaManager
-	 */
+	 * Provide a reference to the actual schema manager. This is typically called when a
+	 * database has just been started.
+	 */ 
 	public void setSchemaManager(SchemaManager schemaManager) {
 		this.schemaManager = schemaManager;
 	}
 
 	/**
-	 * @return
+	 * True if this instance has a reference to the schema manager.
 	 */
 	public boolean isConnectedToSM() {
 		return (schemaManager != null);
@@ -153,15 +155,13 @@ public class SchemaManagerReference {
 
 	/**
 	 * Specify whether the schema manager lookup is in the keyrange of the given chord node.
-	 * @param b
 	 */
 	public void setInKeyRange(boolean inKeyRange) {
 		this.inKeyRange = inKeyRange;
 	}
 
 	/**
-	 * True if the schema manager key lookup resolves to a key in this nodes key range.
-	 * @return
+	 * True if the schema manager chord lookup resolves to the local node. 
 	 */
 	public boolean isInKeyRange() {
 		return inKeyRange;
