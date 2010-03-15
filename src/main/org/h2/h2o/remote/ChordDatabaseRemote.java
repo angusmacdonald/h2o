@@ -16,6 +16,7 @@ import org.h2.h2o.comms.management.DatabaseInstanceLocator;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.manager.ISchemaManager;
+import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.SchemaManagerReference;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.H2oProperties;
@@ -66,7 +67,7 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 	public ChordDatabaseRemote(DatabaseURL localMachineLocation, Database db, SchemaManagerReference schemaManagerRef){
 		this.chord = new ChordInterface(db, schemaManagerRef);
 		this.schemaManagerRef = schemaManagerRef;
-		
+
 		this.localMachineLocation = localMachineLocation;
 	}
 
@@ -124,13 +125,13 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 			connected = chord.startChordRing(localMachineLocation.getHostname(), portToUse,
 					localMachineLocation);
 
-			
+
 			newSMLocation = localMachineLocation;
 			newSMLocation.setRMIPort(portToUse);
 
 			schemaManagerRef.setNewSchemaManagerLocation(newSMLocation);
-			
-			
+
+
 			if (!connected){ //if STILL not connected.
 				ErrorHandling.hardError("Tried to connect to an existing network and couldn't. Also tried to create" +
 				" a new network and this also failed.");
@@ -140,8 +141,8 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 		}
 
 		schemaManagerRef.getSchemaManagerLocationIfNotKnown(chord);
-		
-		
+
+
 		/*
 		 * Create the local database instance remote interface and register it.
 		 * 
@@ -163,7 +164,7 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 			ErrorHandling.hardError("This shouldn't happen at this point.");
 		}
 
-		
+
 		if (schemaManagerRef.getSchemaManagerLocation() == null){ // true if the previous check resolved to a node which doesn't know of the schema manager (possibly itself).
 			//TODO you probably want a check to make sure it doesn't check against itself.
 			System.err.println("should this happen?");
@@ -208,7 +209,7 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 						localMachineLocation.getDbLocationWithoutIllegalCharacters());
 
 			}
-			
+
 			chord.getChordNode().addObserver(chord);
 
 			if (connected){
@@ -235,13 +236,13 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 		databaseInstanceLocator = null;
 		dataManagerLocator = null;
 		chord.shutdownNode();
-//		if (this.isSchemaManager){
-//			try {
-//				schemaManager.removeAllTableInformation();
-//			} catch (RemoteException e) {
-//				e.printStackTrace();
-//			}
-//		}
+		//		if (this.isSchemaManager){
+		//			try {
+		//				schemaManager.removeAllTableInformation();
+		//			} catch (RemoteException e) {
+		//				e.printStackTrace();
+		//			}
+		//		}
 	}
 
 	/* (non-Javadoc)
@@ -249,11 +250,11 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 	 */
 	public void registerDataManager(DataManager dm) {
 		dataManagerLocator.registerDataManager(dm);
-//		try {
-//			schemaManager.addTableInformation(dm, dm.getTableInfo());
-//		} catch (RemoteException e) {
-//			e.printStackTrace();
-//		}
+		//		try {
+		//			schemaManager.addTableInformation(dm, dm.getTableInfo());
+		//		} catch (RemoteException e) {
+		//			e.printStackTrace();
+		//		}
 	}
 
 	/* (non-Javadoc)
@@ -262,13 +263,15 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 	public DataManagerRemote lookupDataManager(String tableName) throws SQLException {
 		try {
 			ISchemaManager schemaManager = schemaManagerRef.getSchemaManager();
-			
+
 			return schemaManager.lookup(new TableInfo(tableName));
 		} catch (RemoteException e) {
 			e.printStackTrace();
 			return null;
+		} catch (MovedException e) {
+			schemaManagerRef.handleMovedException(e);
+			return lookupDataManager(tableName);
 		}
-		//return dataManagerLocator.lookupDataManager(tableName);
 	}
 
 	/* (non-Javadoc)
@@ -310,7 +313,7 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 	 * @see org.h2.h2o.IRemoteDatabase#removeLocalDatabaseInstance()
 	 */
 	public void removeLocalDatabaseInstance() throws RemoteException, NotBoundException {
-		
+
 		if (databaseInstanceLocator != null) databaseInstanceLocator.removeLocalInstance();
 
 	}

@@ -3,6 +3,7 @@ package org.h2.h2o.util;
 import java.rmi.RemoteException;
 
 import org.h2.engine.Database;
+import org.h2.h2o.manager.SchemaManagerReference;
 import org.h2.h2o.remote.ChordInterface;
 
 import uk.ac.standrews.cs.nds.p2p.exceptions.P2PNodeException;
@@ -65,20 +66,21 @@ public class SchemaManagerReinstantiator extends Thread {
 				
 				try {
 					db.getSchemaManagerReference().getSchemaManager().exists(null);
+					
 					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Schema manager is still accessible.");
 					return;
-				} catch (RemoteException e) {
+				} catch (Exception e) {
 					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Schema manager isn't accessible. It probably has to be reinstantiated, but by this node?");
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				
-				if (chordInterface.getChordNode().inLocalKeyRange(ChordInterface.getSchemaManagerKey())){
+				if (chordInterface.getChordNode().inLocalKeyRange(SchemaManagerReference.schemaManagerKey)){
 					System.err.println("This is now the schema manager.");
 				} else {
 					System.err.println("Not in this keyspace");
 					System.err.println("Predecessor: " + chordInterface.getChordNode().getPredecessor());
-					System.err.println("Schema Manager Key: " + ChordInterface.getSchemaManagerKey());
+					System.err.println("Schema Manager Key: " + SchemaManagerReference.schemaManagerKey);
 					System.err.println("This node: " + chordInterface.getChordNode());
 //					for (IChordNode n: ChordInterface.allNodes){
 //						System.err.println((n));

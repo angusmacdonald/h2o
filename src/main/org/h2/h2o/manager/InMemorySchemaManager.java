@@ -286,7 +286,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	 */
 	@Override
 	public void buildSchemaManagerState(ISchemaManager otherSchemaManager)
-	throws RemoteException {
+	throws RemoteException, MovedException {
 
 		/*
 		 * Obtain references to connected machines.
@@ -397,5 +397,30 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	public void addSchemaManagerDataLocation(
 			DatabaseInstanceRemote databaseReference) throws RemoteException {
 		this.schemaManagerState.add(databaseReference);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#prepareForMigration()
+	 */
+	@Override
+	public void prepareForMigration(String newLocation) {
+		//Do nothing.
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#checkConnection()
+	 */
+	@Override
+	public void checkConnection() throws RemoteException, MovedException {
+		//Does nothing.
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#completeSchemaManagerMigration()
+	 */
+	@Override
+	public void completeSchemaManagerMigration() throws RemoteException,
+			MovedException {
+		//Do nothing.
 	}
 }

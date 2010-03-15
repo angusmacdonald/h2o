@@ -17,6 +17,7 @@ import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.manager.ISchemaManager;
+import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TableInfo;
 import org.h2.message.Message;
@@ -116,16 +117,19 @@ public class DropTable extends SchemaCommand {
 			 * 
 			 * #########################################################################
 			 */
-			
-			
+
+
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_") && !internalQuery){
-				
+
 				QueryProxy qp = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, session.getDatabase());
 				qp.executeUpdate(sqlStatement, transactionName, session);
 
 				ISchemaManager sm = db.getSchemaManager(); //db.getSystemSession()
-				sm.removeTableInformation(new TableInfo(tableName, getSchema().getName()));
-
+				try{
+					sm.removeTableInformation(new TableInfo(tableName, getSchema().getName()));
+				} catch (MovedException e){
+					throw new RemoteException("Schema Manager has moved.");
+				}
 				db.removeDataManager(fullTableName, false);
 
 			} else {
@@ -165,11 +169,11 @@ public class DropTable extends SchemaCommand {
 		executeDrop(transactionName);
 		return 0;
 	}
-	
+
 	@Override
 	public int update() throws SQLException, RemoteException {
 		String transactionName = "None";
-		
+
 		session.commit(true);
 		prepareDrop(transactionName);
 		executeDrop(transactionName);

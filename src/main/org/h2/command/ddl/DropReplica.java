@@ -9,6 +9,7 @@ import org.h2.engine.Database;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.h2o.manager.ISchemaManager;
+import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.util.TableInfo;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
@@ -72,6 +73,8 @@ public class DropReplica extends SchemaCommand {
 				numberOfReplicas = session.getDatabase().getSchemaManager().getNumberofReplicas(tableName, getSchema().getName());
 			} catch (RemoteException e) {
 				throw new SQLException("Failed in communication with the schema manager.");
+			} catch (MovedException e){
+				throw new SQLException("Schema Manager has moved.");
 			}
 			
 			if (numberOfReplicas == 1){ //can't drop the only replica.
@@ -110,6 +113,8 @@ public class DropReplica extends SchemaCommand {
 					sm.removeReplicaInformation(ti);
 				} catch (RemoteException e) {
 					throw new SQLException("Failed to remove replica on schema manager");
+				} catch (MovedException e){
+					throw new SQLException("Schema Manager has moved.");
 				}
 			}
 

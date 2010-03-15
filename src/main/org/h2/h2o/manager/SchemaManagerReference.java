@@ -8,6 +8,13 @@ import org.h2.engine.Database;
 import org.h2.h2o.remote.ChordInterface;
 import org.h2.h2o.util.DatabaseURL;
 
+import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
+import uk.ac.standrews.cs.nds.p2p.util.SHA1KeyFactory;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
+
 /**
  * Encapsulates SchemaManager references, containing state on whether the reference is local or remote,
  * whether the lookup is local or remote, and other relevant information. This class manages operations on
@@ -17,6 +24,9 @@ import org.h2.h2o.util.DatabaseURL;
  */
 public class SchemaManagerReference {
 
+	/*
+	 * SCHEMA MANAGER STATE.
+	 */
 	/**
 	 * Reference to the database system's schema manager.
 	 */
@@ -26,14 +36,44 @@ public class SchemaManagerReference {
 	 * Location of the actual schema manager.
 	 */
 	private DatabaseURL schemaManagerLocationURL = null;
-	
+
 	/**
 	 * Whether the schema manager is running on this node.
 	 */
 	private boolean isLocal = false;
 
+	/**
+	 * Whether the schema manager lookup on Chord resolves to this machines keyspace.
+	 */
 	private boolean inKeyRange = false;
 
+	/*
+	 * CHORD-RELATED.
+	 */
+	/**
+	 * Reference to the remote chord node which is responsible for ensuring the schema manager
+	 * is running. This node is not necessarily the actual location of the schema manager.
+	 */
+	private IChordRemoteReference lookupLocation;
+	
+	/**
+	 * Key factory used to create keys for schema manager lookup and to search for specific machines.
+	 */
+	private static SHA1KeyFactory keyFactory = new SHA1KeyFactory();
+
+	/**
+	 * The key of the schema manager. This must be used in lookup operations to find the current location of the schema
+	 * manager reference.
+	 */
+	public static IKey schemaManagerKey = keyFactory.generateKey("schemaManager");
+
+	/*
+	 * GENERAL DATABASE.
+	 */
+	/**
+	 * Reference to the local database instance. This is needed to get the local database URL, and to
+	 * instantiate new Schema Manager objects.
+	 */
 	private Database db;
 
 	/**
@@ -54,6 +94,14 @@ public class SchemaManagerReference {
 	 */
 	public ISchemaManager getSchemaManager(){
 		if (schemaManager == null) schemaManager = this.findSchemaManager();
+
+		try {
+			schemaManager.checkConnection();
+		} catch (RemoteException e) {
+			ErrorHandling.exceptionError(e, "Schema Manager is not accessible");
+		} catch (MovedException e) {
+			this.handleMovedException(e);
+		}
 		
 		return schemaManager;
 	}
@@ -68,14 +116,14 @@ public class SchemaManagerReference {
 	public DatabaseURL getSchemaManagerLocation(){
 		return schemaManagerLocationURL;
 	}
-	
+
 	/**
 	 * True if the schema manager process is running locally.
 	 */
 	public boolean isSchemaManagerLocal(){
 		return isLocal;
 	}
-	
+
 	/**
 	 * Attempts to find the schema manager by looking up its location in the RMI registry of
 	 * the database instance which is responsible for the key range containing 'schema manager'.
@@ -96,7 +144,7 @@ public class SchemaManagerReference {
 
 		return schemaManager;
 	}
-	
+
 
 	/**
 	 * Returns a reference to the RMI registry of the schema manager.
@@ -134,7 +182,7 @@ public class SchemaManagerReference {
 	 */
 	public void setNewSchemaManagerLocation(DatabaseURL newSMLocation) {
 		if (newSMLocation.equals(db.getDatabaseURL())){ isLocal = true; }
-		
+
 		this.schemaManagerLocationURL = newSMLocation;
 	}
 
@@ -167,5 +215,96 @@ public class SchemaManagerReference {
 		return inKeyRange;
 	}
 
+	public void migrateSchemaManagerToLocalInstance(boolean isSchemaManagerInKeyRange, boolean persistedSchemaTablesExist){
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Preparing to migrate schema manager.");
+
+		/*
+		 * Create a new schema manager instance locally.
+		 */
+		ISchemaManager newSchemaManager = null;
+		try {
+			newSchemaManager = new SchemaManager(db, persistedSchemaTablesExist);
+		} catch (Exception e) {
+			ErrorHandling.exceptionError(e, "Failed to create new in-memory schema manager.");
+		}
+
+		DatabaseURL newLocation = db.getDatabaseURL();
+
+		/*
+		 * Stop the old, remote, manager from accepting any more requests.
+		 */
+		try {
+			schemaManager.prepareForMigration(this.db.getDatabaseURL().getURL());
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		} catch (MigrationException e) {
+			ErrorHandling.exceptionError(e, "This schema manager is already being migrated to another instance.");
+		} catch (MovedException e) {
+			ErrorHandling.exceptionError(e, "This schema manager has already been migrated to another instance.");
+		}
+		
+		/*
+		 * Build the schema manager's state from that of the existing manager.
+		 */
+		try {
+			newSchemaManager.buildSchemaManagerState(schemaManager);
+		} catch (RemoteException e) {
+			ErrorHandling.exceptionError(e, "Failed to migrate schema manager to new machine.");
+		} catch (MovedException e) {
+			ErrorHandling.exceptionError(e, "This shouldn't be possible here. The schema manager has moved, but this instance should have had exclusive rights to it.");
+		}
+
+		/*
+		 * Shut down the old, remote, schema manager. Redirect requests to new manager.
+		 */
+		try {
+			schemaManager.completeSchemaManagerMigration();
+		} catch (RemoteException e) {
+			ErrorHandling.exceptionError(e, "Failed to complete migration.");
+		} catch (MovedException e) {
+			ErrorHandling.exceptionError(e, "This shouldn't be possible here. The schema manager has moved, but this instance should have had exclusive rights to it.");
+		} catch (MigrationException e) {
+			ErrorHandling.exceptionError(e, "Migration process timed out. It took too long.");
+		}
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Schema Manager officially migrated to " + db.getDatabaseURL().getDbLocation() + ".");
+
+		/*
+		 * Confirm the new schema managers location by updating all local state.
+		 */
+		schemaManager = newSchemaManager;
+		this.inKeyRange = isSchemaManagerInKeyRange;
+		this.isLocal = true;
+		this.schemaManagerLocationURL = newLocation;
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Finished building new schema manager on " + db.getDatabaseURL().getDbLocation() + ".");
+
+	}
+
+	/**
+	 * An exception has been thrown trying to access the schema manager because it has been moved to a new location. Handle this
+	 * by updating the reference to that of the new schema manager.
+	 */
+	public void handleMovedException(MovedException e) {
+
+		//TODO in places where this has been called it may be necessary to run the method again.
+		
+		String newLocation = e.getMessage();
+		
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "This schema manager reference is old. It has been moved to: " + newLocation);
+
+	}
+
+	/**
+	 * @param proxy
+	 */
+	public void setLookupLocation(IChordRemoteReference proxy) {
+		this.lookupLocation = proxy;
+	}
+
+	/**
+	 * @return
+	 */
+	public IChordRemoteReference getLookupLocation() {
+		return lookupLocation;
+	}
 
 }

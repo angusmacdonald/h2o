@@ -27,6 +27,7 @@ import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.manager.ISchemaManager;
+import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TableInfo;
 import org.h2.h2o.util.TransactionNameGenerator;
@@ -231,47 +232,51 @@ public class CreateTable extends SchemaCommand {
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_") && !isStartup()){
 				ISchemaManager sm = db.getSchemaManager(); //db.getSystemSession()
 
-			
+
 				assert sm != null;
 
-				
+
 
 				int tableSet = -1;
 				boolean thisTableReferencesAnExistingTable = false;
 
 
-				if (table.getConstraints() != null){
-					Constraint[] constraints = new Constraint[table.getConstraints().size()];
-					table.getConstraints().toArray(constraints);
+				try{
+
+					if (table.getConstraints() != null){
+						Constraint[] constraints = new Constraint[table.getConstraints().size()];
+						table.getConstraints().toArray(constraints);
 
 
 
-					Set<Table> referencedTables = new HashSet<Table>();
-					for (Constraint con: constraints){
-						if (con instanceof ConstraintReferential){
-							thisTableReferencesAnExistingTable = true;
-							referencedTables.add(con.getRefTable());
+						Set<Table> referencedTables = new HashSet<Table>();
+						for (Constraint con: constraints){
+							if (con instanceof ConstraintReferential){
+								thisTableReferencesAnExistingTable = true;
+								referencedTables.add(con.getRefTable());
+							}
 						}
-					}
 
-					if (thisTableReferencesAnExistingTable){ 
-						if (referencedTables.size() > 1){
-							System.err.println("Unexpected. Test that this still works.");
-						}
-						for (Table tab: referencedTables){
-							tableSet = tab.getTableSet();
+						if (thisTableReferencesAnExistingTable){ 
+							if (referencedTables.size() > 1){
+								System.err.println("Unexpected. Test that this still works.");
+							}
+							for (Table tab: referencedTables){
+								tableSet = tab.getTableSet();
+							}
+						} else {
+							tableSet = sm.getNewTableSetNumber();
 						}
 					} else {
-						 tableSet = sm.getNewTableSetNumber();
+						tableSet = sm.getNewTableSetNumber();
 					}
-				} else {
-					tableSet = sm.getNewTableSetNumber();
+
+					TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
+
+					sm.addTableInformation(queryProxy.getDataManagerLocation(), ti);	
+				} catch (MovedException e){
+					throw new RemoteException("Schema Manager has moved.");
 				}
-
-				TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
-
-				sm.addTableInformation(queryProxy.getDataManagerLocation(), ti);	
-
 				table.setTableSet(tableSet);
 
 				/*

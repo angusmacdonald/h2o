@@ -119,6 +119,7 @@ import org.h2.expression.Variable;
 import org.h2.expression.Wildcard;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.manager.ISchemaManager;
+import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.PersistentSchemaManager;
 import org.h2.h2o.util.TableInfo;
 import org.h2.index.Index;
@@ -4350,7 +4351,7 @@ public class Parser {
 			return table;
 		}
 		String[] schemaNames = session.getSchemaSearchPath();
-		
+
 		if (schemaNames == null){
 			schemaNames = new String[1];
 			schemaNames[0] = session.getCurrentSchemaName();
@@ -4418,26 +4419,29 @@ public class Parser {
 		//
 		//		} else {
 		//Old Schema Manager method.
-		
-	
-		
-		DataManagerRemote dm = session.getDatabase().getSchemaManager().lookup(new TableInfo(tableName, thisSchemaName));
-		
-		if (dm == null){
-			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new TableInfo(tableName, thisSchemaName).toString());
-		}
-//		dm = session.getDatabase().getSchemaManager().lookup(new TableInfo(tableName, thisSchemaName));
-//		
 
-				
-		tableLocation = dm.getLocation();
-		//		}
+
+		try{
+			DataManagerRemote dm = session.getDatabase().getSchemaManager().lookup(new TableInfo(tableName, thisSchemaName));
+
+			if (dm == null){
+				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new TableInfo(tableName, thisSchemaName).toString());
+			}
+			//		dm = session.getDatabase().getSchemaManager().lookup(new TableInfo(tableName, thisSchemaName));
+			//		
+
+
+			tableLocation = dm.getLocation();
+			//		}
+		} catch (MovedException e){
+			throw new RemoteException("Schema Manager has moved.");
+		}
 
 		/*
 		 * Must be a different session from that of the executing user transaction, because this must
 		 * commit in the midst of it all.
 		 */
-		
+
 		Session sessionToUse = database.getExclusiveSession();
 		if (sessionToUse == null){
 			sessionToUse = database.getSystemSession();
@@ -4805,17 +4809,17 @@ public class Parser {
 	 */
 	private GetRmiPort parseGetRmiPort() throws SQLException {
 		read("RMI"); read("PORT");
-		
+
 		String databaseLocation = null;
 		if (readIf("AT")){
 			databaseLocation = readExpression().toString();
 		}
-		
+
 		GetRmiPort command = new GetRmiPort(session, getSchema(), databaseLocation);
-		
+
 		return command;
 	}
-	
+
 	private CreateReplica parseCreateReplica(boolean temp, boolean globalTemp, boolean persistent) throws SQLException, RemoteException {
 		boolean ifNotExists = readIfNoExists();
 
@@ -4833,38 +4837,40 @@ public class Parser {
 			Schema s = getSchema();
 
 			ISchemaManager schemaManager = session.getDatabase().getSchemaManager();
+			try{
+				java.util.Set<String> tables = schemaManager.getAllTablesInSchema(s.getName());
 
-			java.util.Set<String> tables = schemaManager.getAllTablesInSchema(s.getName());
+				int numTables = 0;
 
-			int numTables = 0;
+				for (String shortTableName: tables){
+					String fullTableName = shortTableName;
+					if (numTables == 0){
+						command = new CreateReplica(session, s);
 
-			for (String shortTableName: tables){
-				String fullTableName = shortTableName;
-				if (numTables == 0){
-					command = new CreateReplica(session, s);
+						command.setPersistent(persistent);
+						command.setTemporary(temp);
+						command.setGlobalTemporary(globalTemp);
+						command.setIfNotExists(ifNotExists);
+						command.setTableName(shortTableName);
+						command.setComment(readCommentIf());
+					} else {
+						CreateReplica next = new CreateReplica(session, getSchema());
+						next.setTableName(shortTableName);
 
-					command.setPersistent(persistent);
-					command.setTemporary(temp);
-					command.setGlobalTemporary(globalTemp);
-					command.setIfNotExists(ifNotExists);
-					command.setTableName(shortTableName);
-					command.setComment(readCommentIf());
-				} else {
-					CreateReplica next = new CreateReplica(session, getSchema());
-					next.setTableName(shortTableName);
+						next.setPersistent(persistent);
+						next.setTemporary(temp);
+						next.setGlobalTemporary(globalTemp);
+						next.setIfNotExists(ifNotExists);
+						next.setComment(readCommentIf());
 
-					next.setPersistent(persistent);
-					next.setTemporary(temp);
-					next.setGlobalTemporary(globalTemp);
-					next.setIfNotExists(ifNotExists);
-					next.setComment(readCommentIf());
+						command.addNextCreateReplica(next);
+					}
+					numTables++;
 
-					command.addNextCreateReplica(next);
 				}
-				numTables++;
-
+			} catch (MovedException e){
+				throw new RemoteException("Schema Manager has moved.");
 			}
-
 		} else {
 
 			String tableName = readIdentifierWithSchema();
@@ -4912,10 +4918,10 @@ public class Parser {
 		}
 
 		boolean x = true;
-		
+
 		if (readIf("FROM")){
 			whereDataWillBeTakenFrom = readString();
-			
+
 			if (whereDataWillBeTakenFrom != null){
 				x = false;
 			}

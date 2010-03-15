@@ -5,6 +5,7 @@ import java.rmi.RemoteException;
 import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.remote.ChordInterface;
 import org.h2.test.h2o.ChordTests;
 
@@ -75,7 +76,7 @@ public class SchemaManagerReplication extends Thread {
 	private void createSchemaManagerReplicas(DatabaseInstanceRemote instance) {
 		try {
 			this.db.getSchemaManager().addSchemaManagerDataLocation(instance);
-		} catch (RemoteException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 

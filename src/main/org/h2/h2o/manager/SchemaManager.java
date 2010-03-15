@@ -17,7 +17,7 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class SchemaManager implements ISchemaManager {
-
+	
 	/**
 	 * Interface to the in-memory state of the schema manager.
 	 */
@@ -29,13 +29,44 @@ public class SchemaManager implements ISchemaManager {
 	 */
 	private ISchemaManager persisted;
 
+
+	
+	/*
+	 * MIGRATION RELATED CODE.
+	 */
+	/**
+	 * If this schema manager has been moved to another location (i.e. its state has been transferred to another machine
+	 * and it is no longer active) this field will not be null, and will note the new location of the schema manager.
+	 */
+
+	private String movedLocation = null;
+
+	/**
+	 * Whether the schema manager is in the process of being migrated. If this is true the schema manager will be 'locked', unable to service requests.
+	 */
+	private boolean inMigration;
+	
+	/**
+	 * Whether the schema manager has been moved to another location.
+	 */
+	private boolean hasMoved = false;
+	
+	/**
+	 * The amount of time which has elapsed since migration began. Used to timeout requests which take too long.
+	 */
+	private long migrationTime = 0l;
+	
+	/**
+	 * The timeout period for migrating the schema manager.
+	 */
+	private static final int MIGRATION_TIMEOUT = 10000;
+
 	public SchemaManager(Database db, boolean persistedSchemaTablesExist) {
 
 		try {
 			this.inMemory = new InMemorySchemaManager(db);
 			this.persisted = new PersistentSchemaManager(db, persistedSchemaTablesExist);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -49,7 +80,9 @@ public class SchemaManager implements ISchemaManager {
 	 */
 	@Override
 	public int addConnectionInformation(DatabaseURL databaseURL)
-	throws RemoteException {
+	throws RemoteException, MovedException {
+		preMethodTest();
+
 		inMemory.addConnectionInformation(databaseURL);
 		return persisted.addConnectionInformation(databaseURL);
 
@@ -59,9 +92,9 @@ public class SchemaManager implements ISchemaManager {
 	 * @see org.h2.h2o.ISchemaManager#addReplicaInformation(org.h2.h2o.TableInfo)
 	 */
 	@Override
-	public void addReplicaInformation(TableInfo ti) throws RemoteException {
+	public void addReplicaInformation(TableInfo ti) throws RemoteException, MovedException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Request to add a single replica to the system: " + ti);
-
+		preMethodTest();
 		inMemory.addReplicaInformation(ti);
 		persisted.addReplicaInformation(ti);
 	}
@@ -70,8 +103,8 @@ public class SchemaManager implements ISchemaManager {
 	 * @see org.h2.h2o.ISchemaManager#confirmTableCreation(java.lang.String, org.h2.h2o.comms.remote.DataManagerRemote, org.h2.h2o.TableInfo)
 	 */
 	@Override
-	public boolean addTableInformation(DataManagerRemote dataManager, TableInfo tableDetails) throws RemoteException {
-
+	public boolean addTableInformation(DataManagerRemote dataManager, TableInfo tableDetails) throws RemoteException, MovedException {
+		preMethodTest();
 		boolean result = inMemory.addTableInformation(dataManager, tableDetails);
 		persisted.addTableInformation(dataManager, tableDetails);
 
@@ -83,7 +116,8 @@ public class SchemaManager implements ISchemaManager {
 	 * @see org.h2.h2o.ISchemaManager#removeReplicaInformation(org.h2.h2o.TableInfo)
 	 */
 	@Override
-	public void removeReplicaInformation(TableInfo ti) throws RemoteException {
+	public void removeReplicaInformation(TableInfo ti) throws RemoteException, MovedException {
+		preMethodTest();
 		inMemory.removeReplicaInformation(ti);
 		persisted.removeReplicaInformation(ti);
 	}
@@ -92,7 +126,8 @@ public class SchemaManager implements ISchemaManager {
 	 * @see org.h2.h2o.ISchemaManager#removeTableInformation(java.lang.String, java.lang.String)
 	 */
 	@Override
-	public boolean removeTableInformation(TableInfo ti) throws RemoteException {
+	public boolean removeTableInformation(TableInfo ti) throws RemoteException, MovedException {
+		preMethodTest();
 		boolean result = inMemory.removeTableInformation(ti);
 		persisted.removeTableInformation(ti);
 
@@ -107,7 +142,8 @@ public class SchemaManager implements ISchemaManager {
 	 * @see org.h2.h2o.ISchemaManager#exists(java.lang.String)
 	 */
 	@Override
-	public boolean exists(TableInfo ti) throws RemoteException {
+	public boolean exists(TableInfo ti) throws RemoteException, MovedException {
+		preMethodTest();
 		return inMemory.exists(ti);
 	}
 
@@ -116,7 +152,8 @@ public class SchemaManager implements ISchemaManager {
 	 */
 	@Override
 	public Set<String> getAllTablesInSchema(String schemaName)
-	throws RemoteException {
+	throws RemoteException, MovedException {
+		preMethodTest();
 		return inMemory.getAllTablesInSchema(schemaName);
 	}
 
@@ -124,7 +161,8 @@ public class SchemaManager implements ISchemaManager {
 	 * @see org.h2.h2o.ISchemaManager#getNewTableSetNumber()
 	 */
 	@Override
-	public int getNewTableSetNumber() throws RemoteException {
+	public int getNewTableSetNumber() throws RemoteException, MovedException {
+		preMethodTest();
 		return inMemory.getNewTableSetNumber();
 	}
 
@@ -133,7 +171,8 @@ public class SchemaManager implements ISchemaManager {
 	 */
 	@Override
 	public int getNumberofReplicas(String tableName, String schemaName)
-	throws RemoteException {
+	throws RemoteException, MovedException {
+		preMethodTest();
 		return inMemory.getNumberofReplicas(tableName, schemaName);
 	}
 
@@ -141,7 +180,8 @@ public class SchemaManager implements ISchemaManager {
 	 * @see org.h2.h2o.ISchemaManager#lookup(java.lang.String)
 	 */
 	@Override
-	public DataManagerRemote lookup(TableInfo ti) throws RemoteException {
+	public DataManagerRemote lookup(TableInfo ti) throws RemoteException, MovedException {
+		preMethodTest();
 		return inMemory.lookup(ti);
 	}
 
@@ -150,7 +190,8 @@ public class SchemaManager implements ISchemaManager {
 	 */
 	@Override
 	public void buildSchemaManagerState(ISchemaManager otherSchemaManager)
-	throws RemoteException {
+	throws RemoteException, MovedException {
+		preMethodTest();
 		inMemory.buildSchemaManagerState(otherSchemaManager);
 		persisted.buildSchemaManagerState(otherSchemaManager);
 	}
@@ -160,7 +201,8 @@ public class SchemaManager implements ISchemaManager {
 	 */
 	@Override
 	public void buildSchemaManagerState()
-	throws RemoteException {
+	throws RemoteException, MovedException {
+		preMethodTest();
 		inMemory.buildSchemaManagerState(persisted);
 	}
 
@@ -168,7 +210,7 @@ public class SchemaManager implements ISchemaManager {
 	 * @see org.h2.h2o.manager.ISchemaManager#getConnectionInformation()
 	 */
 	@Override
-	public Set<DatabaseURL> getConnectionInformation() throws RemoteException {
+	public Set<DatabaseURL> getConnectionInformation() throws RemoteException, MovedException {
 		return inMemory.getConnectionInformation();
 	}
 
@@ -176,7 +218,7 @@ public class SchemaManager implements ISchemaManager {
 	 * @see org.h2.h2o.manager.ISchemaManager#getDataManagers()
 	 */
 	@Override
-	public Map<TableInfo, DataManagerRemote> getDataManagers()  throws RemoteException {
+	public Map<TableInfo, DataManagerRemote> getDataManagers()  throws RemoteException, MovedException {
 		return inMemory.getDataManagers();
 	}
 
@@ -184,7 +226,7 @@ public class SchemaManager implements ISchemaManager {
 	 * @see org.h2.h2o.manager.ISchemaManager#getReplicaLocations()
 	 */
 	@Override
-	public Map<String, Set<TableInfo>> getReplicaLocations()  throws RemoteException {
+	public Map<String, Set<TableInfo>> getReplicaLocations()  throws RemoteException, MovedException, MovedException {
 		return inMemory.getReplicaLocations();
 	}
 
@@ -192,14 +234,14 @@ public class SchemaManager implements ISchemaManager {
 	 * @see org.h2.h2o.manager.ISchemaManager#removeAllTableInformation()
 	 */
 	@Override
-	public void removeAllTableInformation() {
+	public void removeAllTableInformation() throws RemoteException, MovedException, MovedException, MovedException  {
+		preMethodTest();
 		try {
 			inMemory.removeAllTableInformation();
 			persisted.removeAllTableInformation();
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	/* (non-Javadoc)
@@ -207,9 +249,63 @@ public class SchemaManager implements ISchemaManager {
 	 */
 	@Override
 	public void addSchemaManagerDataLocation(
-			DatabaseInstanceRemote databaseReference) throws RemoteException {
+			DatabaseInstanceRemote databaseReference) throws RemoteException, MovedException, MovedException, MovedException {
+		preMethodTest();
 		inMemory.addSchemaManagerDataLocation(databaseReference);
 		persisted.addSchemaManagerDataLocation(databaseReference);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#prepareForMigration()
+	 */
+	@Override
+	public synchronized void prepareForMigration(String newLocation) throws RemoteException, MovedException, MigrationException {
+		preMethodTest();
+
+		movedLocation = newLocation;
+
+		inMigration = true;
+
+		migrationTime = System.currentTimeMillis();
+	}
+
+	private void preMethodTest() throws RemoteException, MovedException{
+		long currentTimeOfMigration = System.currentTimeMillis() - migrationTime;
+
+		/*
+		 * If the schema manager is being migrated, and has been migrated for less than 10 seconds (timeout period, throw an execption. 
+		 */
+		if (inMigration){
+			if (currentTimeOfMigration < MIGRATION_TIMEOUT) {
+				throw new RemoteException();
+			} else {
+				inMigration = false; //Timeout request.
+				this.migrationTime = 0l;
+			}
+		} else if (hasMoved){
+			throw new MovedException(movedLocation);
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#completeSchemaManagerMigration()
+	 */
+	@Override
+	public void completeSchemaManagerMigration() throws RemoteException,
+	MovedException, MigrationException {
+		if (!inMigration){ // the migration process has timed out.
+			throw new MigrationException("Migration process has timed-out. Took too long to migrate (timeout: " + MIGRATION_TIMEOUT + "ms)");
+		}
+		
+		this.hasMoved = true;
+		this.inMigration = false;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#checkConnection()
+	 */
+	@Override
+	public void checkConnection() throws RemoteException, MovedException {
+		preMethodTest();
+	}
 }

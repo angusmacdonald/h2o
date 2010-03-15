@@ -13,6 +13,7 @@ import org.h2.constant.ErrorCode;
 import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
+import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.util.TableInfo;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
@@ -23,40 +24,45 @@ import org.h2.schema.Schema;
  */
 public class DropSchema extends DefineCommand {
 
-    private String schemaName;
-    private boolean ifExists;
+	private String schemaName;
+	private boolean ifExists;
 
-    public DropSchema(Session session) {
-        super(session);
-    }
+	public DropSchema(Session session) {
+		super(session);
+	}
 
-    public void setSchemaName(String name) {
-        this.schemaName = name;
-    }
+	public void setSchemaName(String name) {
+		this.schemaName = name;
+	}
 
-    public int update() throws SQLException, RemoteException {
-        session.getUser().checkAdmin();
-        session.commit(true);
-        Database db = session.getDatabase();
-        Schema schema = db.findSchema(schemaName);
-        if (schema == null) {
-            if (!ifExists) {
-                throw Message.getSQLException(ErrorCode.SCHEMA_NOT_FOUND_1, schemaName);
-            }
-        } else {
-            if (!schema.canDrop()) {
-                throw Message.getSQLException(ErrorCode.SCHEMA_CAN_NOT_BE_DROPPED_1, schemaName);
-            }
-            db.removeDatabaseObject(session, schema);
-           
-            if (Constants.IS_H2O)
-            	db.getSchemaManager().removeTableInformation(new TableInfo(null, schemaName));
-        }
-        return 0;
-    }
+	public int update() throws SQLException, RemoteException {
+		session.getUser().checkAdmin();
+		session.commit(true);
+		Database db = session.getDatabase();
+		Schema schema = db.findSchema(schemaName);
+		if (schema == null) {
+			if (!ifExists) {
+				throw Message.getSQLException(ErrorCode.SCHEMA_NOT_FOUND_1, schemaName);
+			}
+		} else {
+			if (!schema.canDrop()) {
+				throw Message.getSQLException(ErrorCode.SCHEMA_CAN_NOT_BE_DROPPED_1, schemaName);
+			}
+			db.removeDatabaseObject(session, schema);
 
-    public void setIfExists(boolean ifExists) {
-        this.ifExists = ifExists;
-    }
+			if (Constants.IS_H2O){
+				try{
+					db.getSchemaManager().removeTableInformation(new TableInfo(null, schemaName));
+				} catch (MovedException e){
+					throw new RemoteException("Schema Manager has moved.");
+				}
+			}
+		}
+		return 0;
+	}
+
+	public void setIfExists(boolean ifExists) {
+		this.ifExists = ifExists;
+	}
 
 }

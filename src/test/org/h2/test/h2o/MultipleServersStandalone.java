@@ -133,7 +133,7 @@ public class MultipleServersStandalone {
 		Constants.IS_TEST = true;
 		MultipleServersStandalone servers = new MultipleServersStandalone();
 		
-		Thread.sleep(4000);
+		Thread.sleep(10000);
 		
 		servers.testSchemaManagerFailure();
 		

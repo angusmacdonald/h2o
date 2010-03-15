@@ -33,6 +33,7 @@ import org.h2.expression.Expression;
 import org.h2.expression.ValueExpression;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.manager.ISchemaManager;
+import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.PersistentSchemaManager;
 import org.h2.h2o.util.TableInfo;
 import org.h2.index.IndexType;
@@ -181,21 +182,25 @@ public class CreateReplica extends SchemaCommand {
 			//Update the schema manager here.
 
 			if (result == 0){
-				ISchemaManager sm = db.getSchemaManager(); //db.getSystemSession()
+				try {
+					ISchemaManager sm = db.getSchemaManager(); //db.getSystemSession()
 
-				Table table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
+					Table table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
 
-				if (tableSet  == -1){
-					tableSet = sm.getNewTableSetNumber();
-				} else {
-					if (next != null){
-						next.setTableSet(tableSet);
+					if (tableSet  == -1){
+						tableSet = sm.getNewTableSetNumber();
+					} else {
+						if (next != null){
+							next.setTableSet(tableSet);
+						}
 					}
+
+					TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
+
+					sm.addReplicaInformation(ti);	
+				} catch (MovedException e){
+					throw new RemoteException("Schema Manager has moved.");
 				}
-
-				TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
-
-				sm.addReplicaInformation(ti);	
 			}
 
 			return result;
@@ -248,15 +253,15 @@ public class CreateReplica extends SchemaCommand {
 					if (c.getName().equals(pkColumns[j].columnName)) {
 						c.setNullable(false);
 					}
-					
-				c.setPrimaryKey(true);
+
+					c.setPrimaryKey(true);
 				}
 			}
 		}
 		ObjectArray sequences = new ObjectArray();
 		for (int i = 0; i < columns.size(); i++) {
 			Column c = (Column) columns.get(i);
-			
+
 			if (fullTableName.startsWith("H2O.H2O") && i == 0){
 				c.setAutoIncrement(true, 0, 1);
 			}
@@ -395,20 +400,26 @@ public class CreateReplica extends SchemaCommand {
 			//	#############################
 
 			if (this.contactSchemaManager){
-				ISchemaManager sm = db.getSchemaManager(); //db.getSystemSession()
+				try{
+
+					ISchemaManager sm = db.getSchemaManager(); //db.getSystemSession()
 
 
-				if (tableSet  == -1){
-					tableSet = sm.getNewTableSetNumber();
-				} else {
-					if (next != null){
-						next.setTableSet(tableSet);
+					if (tableSet  == -1){
+						tableSet = sm.getNewTableSetNumber();
+					} else {
+						if (next != null){
+							next.setTableSet(tableSet);
+						}
 					}
+
+					TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
+
+					sm.addReplicaInformation(ti);	
+
+				} catch (MovedException e){
+					throw new RemoteException("Schema Manager has moved.");
 				}
-
-				TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
-
-				sm.addReplicaInformation(ti);	
 			}
 
 			if (!tableName.startsWith("H2O_")){
@@ -920,7 +931,12 @@ public class CreateReplica extends SchemaCommand {
 
 			ISchemaManager sm = session.getDatabase().getSchemaManager();
 
-			DataManagerRemote dm = sm.lookup(new TableInfo(tableName, getSchema().getName()));
+			DataManagerRemote dm;
+			try {
+				dm = sm.lookup(new TableInfo(tableName, getSchema().getName()));
+			} catch (MovedException e){
+				throw new RemoteException("Schema Manager has moved.");
+			}
 
 			if (dm == null){
 				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new TableInfo(tableName, getSchema().getName()).toString());
