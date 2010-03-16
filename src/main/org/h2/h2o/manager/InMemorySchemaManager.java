@@ -13,6 +13,7 @@ import java.util.Map.Entry;
 import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.engine.Database;
+import org.h2.h2o.autonomic.Replication;
 import org.h2.h2o.comms.DataManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
@@ -396,7 +397,14 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	@Override
 	public void addSchemaManagerDataLocation(
 			DatabaseInstanceRemote databaseReference) throws RemoteException {
-		this.schemaManagerState.add(databaseReference);
+		
+		if (schemaManagerState.size() < Replication.SCHEMA_MANAGER_REPLICATION_FACTOR){ //TODO update to allow policy on number of replicas.
+			this.schemaManagerState.add(databaseReference);
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseReference.getLocation().getDbLocation());
+		} else {
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Didn't add to the schema manager's replication set, because there are enough replicas already (" + schemaManagerState.size() + ")");
+		}
+		
 	}
 
 	/* (non-Javadoc)

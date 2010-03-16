@@ -59,7 +59,7 @@ public class ChordInterface implements Observer {
 
 	private SchemaManagerReference schemaManagerRef;
 
-	
+
 	private Database db;
 
 	/**
@@ -182,9 +182,9 @@ public class ChordInterface implements Observer {
 
 			//RingStabilizer.waitForStableNetwork(allNodes);
 
-		//	for (IChordNode node: allNodes){
-		///		System.out.println("CHECK. Suc: " + node.getSuccessor());
-		//	}
+			//	for (IChordNode node: allNodes){
+			///		System.out.println("CHECK. Suc: " + node.getSuccessor());
+			//	}
 			System.err.println("Schema manager key: " + SchemaManagerReference.schemaManagerKey);
 		}
 
@@ -220,12 +220,12 @@ public class ChordInterface implements Observer {
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "End of update() : " + arg);
 				return;
 			} 
-		
+
 			IChordRemoteReference oldSchemaManagerLocation = this.schemaManagerRef.getLookupLocation();
 
 			IChordRemoteReference newSchemaManagerLocation = null;
 			try {
-	//			chordNode.stabilize();
+				//			chordNode.stabilize();
 				newSchemaManagerLocation = lookupSchemaManagerNodeLocation();
 			} catch (RemoteException e1) {
 				ErrorHandling.errorNoEvent("Current schema manager lookup does not resolve to active host.");
@@ -254,27 +254,30 @@ public class ChordInterface implements Observer {
 
 				//					RingStabilizer.waitForStableNetwork(allNodes);
 
-			
-					try {
-						boolean inKeyRange = chordNode.inLocalKeyRange(SchemaManagerReference.schemaManagerKey);
-						if (!this.schemaManagerRef.isInKeyRange() && inKeyRange){ //The schema manager has only just become in the key range of this node.
-							Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tThe schema manager is now in the key range of : " + chordNode);
-							
-							schemaManagerNowInKeyRange();
-							
-						} else if (this.schemaManagerRef.isInKeyRange() && inKeyRange){ //Nothing has changed.
-							Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tThe schema manager location has not changed. It is still in the key range of " + chordNode);
-						} else if (this.schemaManagerRef.isInKeyRange() && !inKeyRange){
-							Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tThe schema manager is no longer in the key range of : " + chordNode);
-						}
 
-						this.schemaManagerRef.setInKeyRange(inKeyRange);
+				try {
+					boolean inKeyRange = chordNode.inLocalKeyRange(SchemaManagerReference.schemaManagerKey);
 
-					} catch (uk.ac.standrews.cs.nds.p2p.exceptions.P2PNodeException  e) {
-						e.printStackTrace();
+					schemaManagerRef.setInKeyRange(inKeyRange);
 
+					if (!this.schemaManagerRef.isInKeyRange() && inKeyRange){ //The schema manager has only just become in the key range of this node.
+						Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tThe schema manager is now in the key range of : " + chordNode);
+
+						//	schemaManagerNowInKeyRange();
+
+					} else if (this.schemaManagerRef.isInKeyRange() && inKeyRange){ //Nothing has changed.
+						Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tThe schema manager location has not changed. It is still in the key range of " + chordNode);
+					} else if (this.schemaManagerRef.isInKeyRange() && !inKeyRange){
+						Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tThe schema manager is no longer in the key range of : " + chordNode);
 					}
-				
+
+					this.schemaManagerRef.setInKeyRange(inKeyRange);
+
+				} catch (uk.ac.standrews.cs.nds.p2p.exceptions.P2PNodeException  e) {
+					e.printStackTrace();
+
+				}
+
 
 			}
 		} else if (arg.equals(ChordNodeImpl.SUCCESSOR_CHANGE_EVENT)){
@@ -311,8 +314,7 @@ public class ChordInterface implements Observer {
 
 						//dbInstance.createNewSchemaManagerBackup(db.getSchemaManager());
 						//dbInstance.executeUpdate("CREATE REPLICA SCHEMA H2O");
-						Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + dbInstance);
-
+						
 						if (Constants.IS_TEST){
 							ChordTests.setReplicated(true);
 						}
@@ -327,7 +329,7 @@ public class ChordInterface implements Observer {
 
 
 			}
-			
+
 		}
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "End of update() : " + arg);
 
@@ -342,7 +344,7 @@ public class ChordInterface implements Observer {
 	private void schemaManagerNowInKeyRange() {
 		System.err.println("##################################################################################");
 
-		schemaManagerRef.migrateSchemaManagerToLocalInstance(true, false);
+		schemaManagerRef.migrateSchemaManagerToLocalInstance(false);
 	}
 
 	/**
@@ -373,7 +375,7 @@ public class ChordInterface implements Observer {
 	 */
 	public DatabaseURL getActualSchemaManagerLocation() {
 		if (actualSchemaManagerLocation != null){ return actualSchemaManagerLocation; }
-		
+
 		IChordRemoteReference oldSchemaManagerNodeLocation = this.schemaManagerRef.getLookupLocation();
 
 		IChordRemoteReference sml = null;

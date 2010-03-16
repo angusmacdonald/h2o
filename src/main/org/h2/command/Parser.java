@@ -66,6 +66,7 @@ import org.h2.command.dml.ExplainPlan;
 import org.h2.command.dml.GetRmiPort;
 import org.h2.command.dml.Insert;
 import org.h2.command.dml.Merge;
+import org.h2.command.dml.MigrateSchemaManager;
 import org.h2.command.dml.NoOperation;
 import org.h2.command.dml.Query;
 import org.h2.command.dml.RunScriptCommand;
@@ -399,6 +400,8 @@ public class Parser {
 			case 'M':
 				if (readIf("MERGE")) {
 					c = parseMerge();
+				} else if (readIf("MIGRATE")) {
+					c = parseMigrate();
 				}
 				break;
 			case 'N':
@@ -4818,6 +4821,17 @@ public class Parser {
 		GetRmiPort command = new GetRmiPort(session, getSchema(), databaseLocation);
 
 		return command;
+	}
+
+	/**
+	 * @return
+	 * @throws SQLException 
+	 */
+	private Prepared parseMigrate() throws SQLException {
+		read("SCHEMA"); read("MANAGER");
+
+		return new MigrateSchemaManager(session, null);
+
 	}
 
 	private CreateReplica parseCreateReplica(boolean temp, boolean globalTemp, boolean persistent) throws SQLException, RemoteException {

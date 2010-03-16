@@ -12,6 +12,7 @@ import org.h2.command.Parser;
 import org.h2.constant.ErrorCode;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
+import org.h2.h2o.autonomic.Replication;
 import org.h2.h2o.comms.ReplicaManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
@@ -412,7 +413,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 		+ "' AND connection_port=" + connection_port + " AND connection_type='" + connection_type + "' AND db_location = '" + dbURL.getDbLocation() + "';";
 
 
-		
+
 		LocalResult result = null;
 		try {
 			sqlQuery = queryParser.prepareCommand(sql);
@@ -646,16 +647,16 @@ public class PersistentSchemaManager implements ISchemaManager{
 		for (DatabaseInstanceRemote replica: replicas){
 
 			if (replica.equals(db.getLocalDatabaseInstance())){
-						
-						sqlQuery = queryParser.prepareCommand(query);
-				
-						try {
-							result = sqlQuery.update();
-				
-							sqlQuery.close();
-						} catch (RemoteException e) {
-							e.printStackTrace();
-						}
+
+				sqlQuery = queryParser.prepareCommand(query);
+
+				try {
+					result = sqlQuery.update();
+
+					sqlQuery.close();
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
 			} else {
 				try {
 					result = replica.executeUpdate(query);
@@ -969,10 +970,14 @@ public class PersistentSchemaManager implements ISchemaManager{
 	@Override
 	public void addSchemaManagerDataLocation(
 			DatabaseInstanceRemote databaseReference) throws RemoteException {
-		replicaManager.add(databaseReference);
-		
-		//TODO now replica state here.
-		databaseReference.executeUpdate("CREATE REPLICA " + TABLES + ", " + REPLICAS + ", " + CONNECTIONS + " FROM '" + db.getDatabaseURL().getOriginalURL() + "';");
+
+		if (replicaManager.size() < Replication.SCHEMA_MANAGER_REPLICATION_FACTOR + 1){ //+1 because the local copy counts as a replica.
+			replicaManager.add(databaseReference);
+
+			//TODO now replica state here.
+			databaseReference.executeUpdate("CREATE REPLICA " + TABLES + ", " + REPLICAS + ", " + CONNECTIONS + " FROM '" + db.getDatabaseURL().getOriginalURL() + "';");
+
+		}
 	}
 
 	/* (non-Javadoc)
@@ -989,10 +994,10 @@ public class PersistentSchemaManager implements ISchemaManager{
 	 */
 	@Override
 	public void completeSchemaManagerMigration() throws RemoteException,
-			MovedException {
+	MovedException {
 		//Do nothing.
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISchemaManager#checkConnection()
 	 */

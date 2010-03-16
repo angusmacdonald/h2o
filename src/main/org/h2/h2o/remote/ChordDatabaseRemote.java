@@ -267,7 +267,7 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 			return schemaManager.lookup(new TableInfo(tableName));
 		} catch (RemoteException e) {
 			e.printStackTrace();
-			return null;
+			throw new SQLException("Unable to contact schema manager.");
 		} catch (MovedException e) {
 			schemaManagerRef.handleMovedException(e);
 			return lookupDataManager(tableName);
