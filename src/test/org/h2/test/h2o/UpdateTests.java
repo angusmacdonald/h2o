@@ -45,9 +45,10 @@ public class UpdateTests extends TestBase {
 
 	/**
 	 * Tests that the database throws an exception when an instance fails on the commit operation.
+	 * @throws InterruptedException 
 	 */
 	@Test
-	public void failureOnCommit(){
+	public void failureOnCommit() throws InterruptedException{
 		try {
 			sb.execute("CREATE REPLICA TEST");
 		} catch (SQLException e1) {

@@ -26,12 +26,6 @@ public interface IDatabaseRemote {
 	public DatabaseURL connectToDatabaseSystem(Session systemSession);
 
 	/**
-	 * Register a new data manager with the database system.
-	 * @param dm	The data manager to be registered.
-	 */
-	public void registerDataManager(DataManager dm);
-
-	/**
 	 * Find a data manager for the given table in the database system.
 	 * @param tableName	the table whose manager is to be found.
 	 * @return	Remote reference to the data manager in question.
@@ -39,13 +33,6 @@ public interface IDatabaseRemote {
 	 */
 	public DataManagerRemote lookupDataManager(String tableName)
 			throws SQLException;
-
-	/**
-	 * Remove a data manager from the schema manager.
-	 * @param tableName		Data manager to be removed.
-	 * @param removeLocalOnly	Whether it is only the local copy of a data manager's state which is to be removed.
-	 */
-	public void removeDataManager(String tableName, boolean removeLocalOnly);
 
 	/**
 	 * Get a remote reference to a database instance at the specified URL.

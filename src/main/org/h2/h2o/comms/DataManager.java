@@ -173,7 +173,7 @@ public class DataManager implements DataManagerRemote, AutonomicController {
 		addInformationToDB(modificationID, database.getDatabaseLocation(), "TABLE", database.getLocalMachineAddress(), 
 				database.getLocalMachinePort(), database.getConnectionType(), tableSet, database.getSchemaManagerReference().isSchemaManagerLocal());
 
-		database.addDataManager(this);
+		//database.addDataManager(this);
 	}
 
 	/**

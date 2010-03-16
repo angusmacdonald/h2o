@@ -228,6 +228,16 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
+			
+			/*
+			 * Make data manager serializable first.
+			 */
+			try {
+				dm = (DataManagerRemote) UnicastRemoteObject.exportObject(dm, 0);
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+			
 
 		}
 

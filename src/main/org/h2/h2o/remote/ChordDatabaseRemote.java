@@ -11,7 +11,6 @@ import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.DataManager;
 import org.h2.h2o.comms.DatabaseInstance;
-import org.h2.h2o.comms.management.DataManagerLocator;
 import org.h2.h2o.comms.management.DatabaseInstanceLocator;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
@@ -42,11 +41,6 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 	 * Interface to other database instances.
 	 */
 	private DatabaseInstanceLocator databaseInstanceLocator;
-
-	/**
-	 * Interface to other data managers in the system.
-	 */
-	private DataManagerLocator dataManagerLocator;
 
 	/**
 	 * The remote interface of the local database instance.
@@ -152,19 +146,6 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 		this.databaseInstance =  new DatabaseInstance(localMachineLocation, systemSession);
 		this.databaseInstanceLocator = new DatabaseInstanceLocator(chord, databaseInstance, schemaManagerRef);
 
-		/*
-		 * Store another connection to the local RMI registry in order to store data manager references.
-		 * 
-		 * TODO refactor this out. there are too many references to a single RMI registry.
-		 */
-		try {
-			dataManagerLocator = new DataManagerLocator(chord, schemaManagerRef);
-		} catch (RemoteException e) {
-			e.printStackTrace();
-			ErrorHandling.hardError("This shouldn't happen at this point.");
-		}
-
-
 		if (schemaManagerRef.getSchemaManagerLocation() == null){ // true if the previous check resolved to a node which doesn't know of the schema manager (possibly itself).
 			//TODO you probably want a check to make sure it doesn't check against itself.
 			System.err.println("should this happen?");
@@ -234,7 +215,6 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 	 */
 	public void shutdown() {
 		databaseInstanceLocator = null;
-		dataManagerLocator = null;
 		chord.shutdownNode();
 		//		if (this.isSchemaManager){
 		//			try {
@@ -242,18 +222,6 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 		//			} catch (RemoteException e) {
 		//				e.printStackTrace();
 		//			}
-		//		}
-	}
-
-	/* (non-Javadoc)
-	 * @see org.h2.h2o.IRemoteDatabase#registerDataManager(org.h2.h2o.comms.DataManager)
-	 */
-	public void registerDataManager(DataManager dm) {
-		dataManagerLocator.registerDataManager(dm);
-		//		try {
-		//			schemaManager.addTableInformation(dm, dm.getTableInfo());
-		//		} catch (RemoteException e) {
-		//			e.printStackTrace();
 		//		}
 	}
 
@@ -274,12 +242,6 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.h2.h2o.IRemoteDatabase#removeDataManager(java.lang.String, boolean)
-	 */
-	public void removeDataManager(String tableName, boolean removeLocalOnly) {
-		dataManagerLocator.removeRegistryObject(tableName, removeLocalOnly);
-	}
 
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.IRemoteDatabase#getDatabaseInstance(org.h2.h2o.util.DatabaseURL)

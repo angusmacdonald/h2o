@@ -167,13 +167,21 @@ public class QueryProxyManager {
 		 */
 		for (DatabaseInstanceRemote remoteReplica: allReplicas){
 
-			boolean actionSuccessful;
+			boolean actionSuccessful = false;
 
-			if (remoteReplica == localDatabase){
-				//Perform commit locally.
-				actionSuccessful = commitLocal(commit);
-			} else { //Perform commit via RMI.		 
-				actionSuccessful = commitRemote(commit, remoteReplica);
+			try {
+				if (remoteReplica == null && allReplicas.size() < 2){
+					//This is a local internal database operation (e.g. the TCP server doing something).
+					actionSuccessful = commitLocal(commit);
+				} else if (remoteReplica.getConnectionString().equals(localDatabase.getConnectionString())){
+					//Perform commit locally.
+					actionSuccessful = commitLocal(commit);
+				} else { //Perform commit via RMI.		 
+					actionSuccessful = commitRemote(commit, remoteReplica);
+				}
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 
 			if (actionSuccessful && commit) updatedReplicas.add(remoteReplica);

@@ -2,6 +2,7 @@ package org.h2.h2o.comms;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
@@ -139,7 +140,7 @@ public class QueryProxy implements Serializable{
 				
 				DatabaseInstanceRemote localMachine = session.getDatabase().getLocalDatabaseInstance();
 				
-				if (localMachine == replica){
+				if (localMachine.getConnectionString().equals(replica.getConnectionString())){
 					/*
 					 * Execute Locally - otherwise there are some nasty concurrency issues with the RMI call accessing the DB
 					 * object at the same time as the thread which made the RMI call.
@@ -241,6 +242,16 @@ public class QueryProxy implements Serializable{
 			throw new SQLException("Data manager not found for table.");
 		}
 
+		/*
+		 * Make data manager serializable first.
+		 */
+		try {
+			dataManager = (DataManagerRemote) UnicastRemoteObject.exportObject(dataManager, 0);
+		} catch (Exception e) {
+			//May already be exported.
+		}
+		
+		
 		if(requestingDatabase == null){
 			ErrorHandling.hardError("A requesting database must be specified.");
 		}

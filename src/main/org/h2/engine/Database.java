@@ -213,7 +213,7 @@ public class Database implements DataHandler {
 	private Properties reconnectLastLock;
 	private long reconnectCheckNext;
 	private boolean reconnectChangePending;
-	
+
 	private SchemaManagerReference schemaManagerRef;
 
 	/**
@@ -693,7 +693,7 @@ public class Database implements DataHandler {
 		 */
 		if (Constants.IS_H2O && !isManagementDB()){ //don't run this code with the TCP server management DB
 
-			
+
 			//databaseRemote.bindSchemaManagerReference(schemaManagerRef);
 			databaseRemote.connectToDatabaseSystem(systemSession);
 
@@ -725,16 +725,18 @@ public class Database implements DataHandler {
 
 		MetaRecord.sort(records);
 
-		QueryProxyManager proxyManager = new QueryProxyManager(this, systemSession, true);
+		if ( records.size() > 0 ){
+			QueryProxyManager proxyManager = new QueryProxyManager(this, systemSession, true);
 
-		for (int i = 0; i < records.size(); i++) {
+			for (int i = 0; i < records.size(); i++) {
 
-			MetaRecord rec = (MetaRecord) records.get(i);
+				MetaRecord rec = (MetaRecord) records.get(i);
 
-			rec.execute(this, systemSession, eventListener, proxyManager);
+				rec.execute(this, systemSession, eventListener, proxyManager);
+			}
+
+			proxyManager.commit(true);
 		}
-
-		proxyManager.commit(true);
 
 		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, " Executed meta-records.");
 
@@ -771,7 +773,7 @@ public class Database implements DataHandler {
 			try {
 				createH2OTables(true);
 				schemaManagerRef.getSchemaManager().buildSchemaManagerState();
-				
+
 				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Re-created schema manager state.");
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
@@ -2540,7 +2542,7 @@ public class Database implements DataHandler {
 		if (schemaManagerRef.isSchemaManagerLocal()){ // Create the schema manager tables and immediately add local tables to this manager.
 
 			SchemaManager schemaManager = new SchemaManager(this, persistedSchemaTablesExist); 
-			
+
 			schemaManagerRef.setSchemaManager(schemaManager);
 			databaseRemote.bindSchemaManagerReference(schemaManagerRef);
 
@@ -2556,7 +2558,7 @@ public class Database implements DataHandler {
 				e.printStackTrace();
 			}
 		}
-		
+
 		schemaManagerRef.getSchemaManager().addConnectionInformation(getDatabaseURL());
 
 
@@ -2613,7 +2615,7 @@ public class Database implements DataHandler {
 	public SchemaManagerReference getSchemaManagerReference(){
 		return schemaManagerRef;
 	}
-	
+
 	public ISchemaManager getSchemaManager(){
 		return schemaManagerRef.getSchemaManager();
 	}
@@ -2656,15 +2658,15 @@ public class Database implements DataHandler {
 	 * @return
 	 */
 	public String getFullDatabasePath() {
-//		String isTCP = (getLocalMachinePort() == -1 && getDatabaseLocation().contains("mem"))? "": "tcp:";
-//
-//		String url = "";
-//		if (isTCP.equals("tcp:")){
-//			url = getLocalMachineAddress() + ":" + getLocalMachinePort() + "/";
-//		}
-//
-//		return "jdbc:h2:" + ((schemaManagerRef.isSchemaManagerLocal())? "sm:": "") + isTCP + url + getDatabaseLocation();
-		
+		//		String isTCP = (getLocalMachinePort() == -1 && getDatabaseLocation().contains("mem"))? "": "tcp:";
+		//
+		//		String url = "";
+		//		if (isTCP.equals("tcp:")){
+		//			url = getLocalMachineAddress() + ":" + getLocalMachinePort() + "/";
+		//		}
+		//
+		//		return "jdbc:h2:" + ((schemaManagerRef.isSchemaManagerLocal())? "sm:": "") + isTCP + url + getDatabaseLocation();
+
 		return databaseRemote.getLocalMachineLocation().getURL();
 	}
 
@@ -2676,20 +2678,10 @@ public class Database implements DataHandler {
 		return getDatabaseURL().getConnectionType();
 	}
 
-	public void addDataManager(DataManager dm){
-		databaseRemote.registerDataManager(dm);
-	}
-
 	public DataManagerRemote getDataManager(String tableName) throws SQLException{
 		return databaseRemote.lookupDataManager(tableName);
 	}
 
-	/**
-	 * @param string
-	 */
-	public void removeDataManager(String tableName, boolean removeLocalOnly) {
-		databaseRemote.removeDataManager(tableName, removeLocalOnly);
-	}
 
 	/**
 	 * @param replicaLocationString
@@ -2724,6 +2716,7 @@ public class Database implements DataHandler {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		this.close(false);
 	}
 
 	/**

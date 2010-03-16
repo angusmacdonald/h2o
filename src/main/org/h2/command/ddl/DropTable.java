@@ -130,9 +130,9 @@ public class DropTable extends SchemaCommand {
 				} catch (MovedException e){
 					throw new RemoteException("Schema Manager has moved.");
 				}
-				db.removeDataManager(fullTableName, false);
+				//db.removeDataManager(fullTableName, false);
 
-			} else {
+			} else { //It's an internal query...
 
 				if (Constants.IS_H2O){
 					/*
@@ -146,7 +146,7 @@ public class DropTable extends SchemaCommand {
 						db.removeSchemaObject(session, t);
 					}
 
-					db.removeDataManager(fullTableName, true);
+					//db.removeDataManager(fullTableName, true);
 				} else {
 					// Default H2 behaviour.
 					table.setModified();

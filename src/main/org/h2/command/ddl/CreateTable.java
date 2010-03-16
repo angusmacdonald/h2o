@@ -7,6 +7,7 @@
 package org.h2.command.ddl;
 
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
@@ -273,7 +274,11 @@ public class CreateTable extends SchemaCommand {
 
 					TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
 
-					sm.addTableInformation(queryProxy.getDataManagerLocation(), ti);	
+		
+					DataManagerRemote dataManagerRemote = queryProxy.getDataManagerLocation();
+
+					
+					sm.addTableInformation(dataManagerRemote, ti);	
 				} catch (MovedException e){
 					throw new RemoteException("Schema Manager has moved.");
 				}
