@@ -274,10 +274,10 @@ public class CreateTable extends SchemaCommand {
 
 					TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
 
-		
+
 					DataManagerRemote dataManagerRemote = queryProxy.getDataManagerLocation();
 
-					
+
 					sm.addTableInformation(dataManagerRemote, ti);	
 				} catch (MovedException e){
 					throw new RemoteException("Schema Manager has moved.");
@@ -442,7 +442,18 @@ public class CreateTable extends SchemaCommand {
 		queryProxy = null;
 		if (Constants.IS_H2O && !tableName.startsWith("H2O_") && !db.isManagementDB()){ //XXX Not sure if this should be a seperate IF
 
-			queryProxy = QueryProxy.getQueryProxyAndLock(new DataManager(tableName, getSchema().getName(), 0, 0, db), LockType.CREATE, db.getLocalDatabaseInstance());
+			DataManager dataManager = new DataManager(tableName, getSchema().getName(), 0, 0, db);
+			DataManagerRemote stub = null;
+			/*
+			 * Make data manager serializable first.
+			 */
+			try {
+				stub = (DataManagerRemote) UnicastRemoteObject.exportObject(dataManager, 0);
+			} catch (Exception e) {
+				//May already be exported.
+			}
+
+			queryProxy = QueryProxy.getQueryProxyAndLock(stub, LockType.CREATE, db.getLocalDatabaseInstance());
 
 			queryProxyManager.addProxy(queryProxy);
 		} else if (Constants.IS_H2O){

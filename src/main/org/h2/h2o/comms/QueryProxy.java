@@ -241,16 +241,7 @@ public class QueryProxy implements Serializable{
 			ErrorHandling.errorNoEvent("Data manager proxy was null when requesting table.");
 			throw new SQLException("Data manager not found for table.");
 		}
-
-		/*
-		 * Make data manager serializable first.
-		 */
-		try {
-			dataManager = (DataManagerRemote) UnicastRemoteObject.exportObject(dataManager, 0);
-		} catch (Exception e) {
-			//May already be exported.
-		}
-		
+	
 		
 		if(requestingDatabase == null){
 			ErrorHandling.hardError("A requesting database must be specified.");

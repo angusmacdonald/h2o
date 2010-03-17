@@ -2716,7 +2716,7 @@ public class Database implements DataHandler {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		this.close(false);
+	//	this.close(false);
 	}
 
 	/**
