@@ -11,7 +11,6 @@ import java.util.Observer;
 
 import org.h2.engine.Constants;
 import org.h2.engine.Database;
-import org.h2.h2o.comms.management.DatabaseInstanceLocator;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.manager.ISchemaManager;
 import org.h2.h2o.manager.MovedException;
@@ -438,7 +437,7 @@ public class ChordInterface implements Observer {
 		try {
 			remoteRegistry = LocateRegistry.getRegistry(hostname, port);
 
-			DatabaseInstanceRemote dbInstance = (DatabaseInstanceRemote) remoteRegistry.lookup(DatabaseInstanceLocator.LOCAL_DATABASE_INSTANCE);
+			DatabaseInstanceRemote dbInstance = (DatabaseInstanceRemote) remoteRegistry.lookup(ChordDatabaseRemote.LOCAL_DATABASE_INSTANCE);
 
 			return dbInstance;
 

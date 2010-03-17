@@ -118,7 +118,7 @@ public class TestBase {
 	 */
 	@After
 	public void tearDown() throws SQLException {
-		
+		try{
 			//			sa.execute("DROP TABLE IF EXISTS TEST");
 			//			sb.execute("DROP TABLE IF EXISTS TEST");
 			sa.execute("DROP ALL OBJECTS");
@@ -127,12 +127,16 @@ public class TestBase {
 			if (!sa.isClosed()) sa.close();
 			if (!sb.isClosed())sb.close();
 
-			if (!ca.isClosed())ca.close();	
+			if (!ca.isClosed()){
+				ca.close();	
+			}
 			if (!cb.isClosed())cb.close();	
 
 			closeDatabaseCompletely();
 
-		
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		ca = null;
 		cb = null;
 		sa = null;

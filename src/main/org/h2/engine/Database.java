@@ -9,6 +9,7 @@ package org.h2.engine;
 import java.io.IOException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -802,8 +803,6 @@ public class Database implements DataHandler {
 	private void createSchemaManager(boolean databaseExists,
 			boolean persistedTablesExist) {
 		if (schemaManagerRef.isSchemaManagerLocal()){ // Create the schema manager tables and immediately add local tables to this manager.
-
-			System.err.println("Database exists: " + ( persistedTablesExist ));
 
 			SchemaManager schemaManager = new SchemaManager(this, ( databaseExists && schemaManagerRef.isSchemaManagerLocal())); 
 
@@ -2571,6 +2570,7 @@ public class Database implements DataHandler {
 			createSchemaManager(databaseExists, persistedSchemaTablesExist);
 		}
 
+
 		if (!persistedSchemaTablesExist){
 			try { 
 				DataManager.createDataManagerTables(systemSession);
@@ -2581,55 +2581,6 @@ public class Database implements DataHandler {
 		}
 
 		schemaManagerRef.getSchemaManager().addConnectionInformation(getDatabaseURL(), this.databaseRemote.getLocalDatabaseInstance());
-
-
-		if (!schemaManagerRef.isSchemaManagerLocal() && result >= 0){
-			//connectedToSM = true;
-
-			/*
-			 * Code used to get information on remote tables from the schema manager state. If this is uncommented it should be changed to
-			 * contact the schema manager directly.
-			 */
-			//			try {
-			//
-			//				LocalResult remoteTables = schemaManager.getAllRemoteTables(getLocalMachineAddress(), getLocalMachinePort(), getDatabaseLocation());
-			//
-			//				String sql = "";
-			//				while (remoteTables.next()){
-			//					Value[] row = remoteTables.currentRow();
-			//					String schemaName = row[0].getString();
-			//					String tableName = row[1].getString();
-			//					String db_location = row[2].getString();
-			//					String connection_type = row[3].getString();
-			//					String machine_name = row[4].getString();
-			//					String connection_port = row[5].getString();
-			//
-			//					//Example format: jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db
-			//
-			//					String fullTableName = schemaName + "." + tableName;
-			//
-			//					DatabaseURL dbURL = new DatabaseURL(connection_type, machine_name, Integer.parseInt(connection_port), db_location, false);
-			//
-			//					sql += "\nCREATE LINKED TABLE IF NOT EXISTS " + fullTableName + "('org.h2.Driver', '" + dbURL.getURL() + "', '" + 
-			//					SchemaManagerState.USERNAME + "', '" + SchemaManagerState.PASSWORD + "', '" + fullTableName + "');";
-			//
-			//				}
-			//
-			//				if (!sql.equals("")){
-			//					Parser queryParser = new Parser(systemSession, true);
-			//					Command sqlQuery = queryParser.prepareCommand(sql);
-			//					sqlQuery.executeUpdate();
-			//				}
-			//
-			//
-			//			} catch (SQLException e) {
-			//				connectedToSM = false;
-			//				e.printStackTrace();
-			//			}
-
-
-		}
-
 
 	}
 

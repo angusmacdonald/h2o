@@ -12,7 +12,6 @@ import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.DataManager;
 import org.h2.h2o.comms.DatabaseInstance;
-import org.h2.h2o.comms.management.DatabaseInstanceLocator;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.manager.ISchemaManager;
@@ -39,11 +38,6 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 	private ChordInterface chord;
 
 	/**
-	 * Interface to other database instances.
-	 */
-	private DatabaseInstanceLocator databaseInstanceLocator;
-
-	/**
 	 * The remote interface of the local database instance.
 	 */
 	private DatabaseInstanceRemote databaseInstance;
@@ -53,6 +47,8 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 
 
 	private SchemaManagerReference schemaManagerRef;
+
+	static String LOCAL_DATABASE_INSTANCE = "LOCAL_INSTANCE";
 
 	/**
 	 * Port to be used for the next database instance. Currently used for testing.
@@ -146,8 +142,7 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 
 		this.databaseInstance =  new DatabaseInstance(localMachineLocation, systemSession);
 		
-		this.databaseInstanceLocator = new DatabaseInstanceLocator(chord, databaseInstance, schemaManagerRef);
-		//exportConnectionObject();
+		exportConnectionObject();
 		
 		if (schemaManagerRef.getSchemaManagerLocation() == null){ // true if the previous check resolved to a node which doesn't know of the schema manager (possibly itself).
 			//TODO you probably want a check to make sure it doesn't check against itself.
@@ -217,7 +212,6 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 	 * @see org.h2.h2o.IRemoteDatabase#shutdown()
 	 */
 	public void shutdown() {
-		databaseInstanceLocator = null;
 		chord.shutdownNode();
 		//		if (this.isSchemaManager){
 		//			try {
@@ -272,7 +266,7 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 			e.printStackTrace();
 		}
 		try {
-			chord.getLocalRegistry().bind(DatabaseInstanceLocator.LOCAL_DATABASE_INSTANCE, stub);
+			chord.getLocalRegistry().bind(LOCAL_DATABASE_INSTANCE , stub);
 			
 			this.databaseInstance = stub;
 		} catch (Exception e) {
