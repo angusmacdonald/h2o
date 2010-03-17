@@ -89,6 +89,15 @@ public class DatabaseURL implements Serializable {
 	public static DatabaseURL parseURL(String url){
 		if (url == null) return null;
 
+		String[] split = url.split("\\+");
+		
+		url = split[0];
+		
+		int rmiPort = -1;
+		if (split.length == 2){
+			rmiPort = Integer.parseInt(split[1]);
+		}
+		
 		boolean tcp = (url.contains(":tcp:"));
 		boolean mem = (url.contains(":mem:"));
 		boolean schemaManager = (url.contains(":sm:"));
@@ -141,10 +150,10 @@ public class DatabaseURL implements Serializable {
 
 		if (hostname == null) hostname = NetUtils.getLocalAddress();
 
-		return new DatabaseURL(url, hostname, port, dbLocation, tcp, mem, schemaManager);
+		return new DatabaseURL(url, hostname, port, dbLocation, tcp, mem, schemaManager, rmiPort);
 	}
 
-	private DatabaseURL(String originalURL, String hostname, int port, String dbLocation, boolean tcp, boolean mem, boolean schemaManager){
+	private DatabaseURL(String originalURL, String hostname, int port, String dbLocation, boolean tcp, boolean mem, boolean schemaManager, int rmiPort){
 		this.originalURL = originalURL;
 		this.newURL = "jdbc:h2:" + ((schemaManager)? "sm:": "") + ((tcp)? "tcp://" + hostname + ":" + port + "/": "") + ((mem)? "mem:": "") + dbLocation;
 		this.urlWithoutSM = "jdbc:h2:" + ((tcp)? "tcp://" + hostname + ":" + port + "/": "") + ((mem)? "mem:": "") + dbLocation;
@@ -154,6 +163,7 @@ public class DatabaseURL implements Serializable {
 		this.mem = mem;
 		this.schemaManager = schemaManager;
 		this.dbLocation = dbLocation;
+		this.rmiPort = rmiPort;
 	}
 
 
@@ -167,7 +177,7 @@ public class DatabaseURL implements Serializable {
 	public DatabaseURL(String connectionType, String hostname,
 			int port, String dbLocation, boolean schemaManager) {
 
-		this(null, hostname, port, dbLocation, connectionType.equals("tcp"), connectionType.equals("mem"), schemaManager);
+		this(null, hostname, port, dbLocation, connectionType.equals("tcp"), connectionType.equals("mem"), schemaManager, 0);
 
 	}
 
@@ -333,6 +343,13 @@ public class DatabaseURL implements Serializable {
 		} else {
 			return "other";
 		}
+	}
+
+	/**
+	 * @return
+	 */
+	public String getURLwithRMIPort() {
+		return getURL() + "+" + rmiPort;
 	}
 
 

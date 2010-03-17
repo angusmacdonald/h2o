@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>h2o</name>
+	<name>h2o-working</name>
 	<comment></comment>
 	<projects>
 		<project>nds</project>
@@ -22,7 +22,7 @@
 		<link>
 			<name>Suspended Root</name>
 			<type>2</type>
-			<locationURI>SuspendedRootVariable</locationURI>
+			<location>C:/Users/angus/AppData/Local/Temp/tgSuspend454861257696677621</location>
 		</link>
 	</linkedResources>
 </projectDescription>

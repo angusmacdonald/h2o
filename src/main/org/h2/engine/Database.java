@@ -731,14 +731,13 @@ public class Database implements DataHandler {
 			/*
 			 * Create or connect to a new schema manager instance if this node already has tables on it.
 			 */
-			createSchemaManager(true, schemaManagerRef.isSchemaManagerLocal());
+			createSchemaManager(true, schemaManagerRef.isSchemaManagerLocal(), false);
 		}
 
 		if ( records.size() > 0 ){
 			QueryProxyManager proxyManager = new QueryProxyManager(this, systemSession, true);
 
 			for (int i = 0; i < records.size(); i++) {
-				System.err.println("i=" + i);
 				MetaRecord rec = (MetaRecord) records.get(i);
 
 				rec.execute(this, systemSession, eventListener, proxyManager);
@@ -799,12 +798,13 @@ public class Database implements DataHandler {
 	/**
 	 * @param databaseExists
 	 * @param persistedTablesExist
+	 * @param isStartup 
 	 */
 	private void createSchemaManager(boolean databaseExists,
-			boolean persistedTablesExist) {
+			boolean persistedTablesExist, boolean createTables) {
 		if (schemaManagerRef.isSchemaManagerLocal()){ // Create the schema manager tables and immediately add local tables to this manager.
 
-			SchemaManager schemaManager = new SchemaManager(this, ( databaseExists && schemaManagerRef.isSchemaManagerLocal())); 
+			SchemaManager schemaManager = new SchemaManager(this, createTables); 
 
 			schemaManagerRef.setSchemaManager(schemaManager);
 			databaseRemote.bindSchemaManagerReference(schemaManagerRef);
@@ -2563,11 +2563,8 @@ public class Database implements DataHandler {
 	 */
 	private void createH2OTables(boolean persistedSchemaTablesExist, boolean databaseExists) throws Exception{
 
-
-		int result = -1;
-
 		if (!databaseExists){
-			createSchemaManager(databaseExists, persistedSchemaTablesExist);
+			createSchemaManager(databaseExists, persistedSchemaTablesExist, true);
 		}
 
 

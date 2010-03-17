@@ -33,7 +33,7 @@ public class ChordTests extends TestBase {
 	private Connection[] cas;
 	private Statement[] sas;
 
-	private static String[] dbs =  {"two", "three", "four", "five", "six", "seven", "eight", "nine"};
+	private static String[] dbs =  {"two", "three"}; //, "four", "five", "six", "seven", "eight", "nine"
 
 	/**
 	 * Whether the schema manager state has been replicated yet.
@@ -109,11 +109,11 @@ public class ChordTests extends TestBase {
 			sas[i] = cas[i].createStatement();
 		}
 
-		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
-		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
-		sql += "INSERT INTO TEST VALUES(2, 'World');";
-
-		sas[4].execute(sql);
+//		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
+//		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
+//		sql += "INSERT INTO TEST VALUES(2, 'World');";
+//
+//		sas[4].execute(sql);
 	}
 
 	/**
@@ -234,6 +234,17 @@ public class ChordTests extends TestBase {
 		}
 	}
 
+	@Test
+	public void SchemaManagerMigration() throws InterruptedException {
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		try {
+			sas[1].executeUpdate("MIGRATE SCHEMA MANAGER");
+
+			sas[2].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
 	//	/**
 	//	 * Tests that the state of the schema manager is replicated - inserts data after the schema manager
 	//	 * state is replicated (probably - not deterministic).

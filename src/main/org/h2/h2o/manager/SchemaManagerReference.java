@@ -1,8 +1,12 @@
 package org.h2.h2o.manager;
 
+import java.rmi.AccessException;
+import java.rmi.AlreadyBoundException;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 
 import org.h2.engine.Database;
 import org.h2.h2o.remote.ChordInterface;
@@ -241,7 +245,7 @@ public class SchemaManagerReference {
 		 */
 		ISchemaManager newSchemaManager = null;
 		try {
-			newSchemaManager = new SchemaManager(db, persistedSchemaTablesExist);
+			newSchemaManager = new SchemaManager(db, true);
 		} catch (Exception e) {
 			ErrorHandling.exceptionError(e, "Failed to create new in-memory schema manager.");
 		}
@@ -252,7 +256,7 @@ public class SchemaManagerReference {
 		 * Stop the old, remote, manager from accepting any more requests.
 		 */
 		try {
-			schemaManager.prepareForMigration(this.db.getDatabaseURL().getURL());
+			schemaManager.prepareForMigration(this.db.getDatabaseURL().getURLwithRMIPort());
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (MigrationException e) {
@@ -292,6 +296,16 @@ public class SchemaManagerReference {
 		schemaManager = newSchemaManager;
 		this.isLocal = true;
 		this.schemaManagerLocationURL = newLocation;
+		
+		
+		try {
+			ISchemaManager stub = (ISchemaManager) UnicastRemoteObject.exportObject(schemaManager, 0);
+			
+			getSchemaManagerRegistry().bind("SCHEMA_MANAGER", stub);
+		} catch (Exception e) {
+			ErrorHandling.exceptionError(e, "Schema manager migration failed.");
+		}
+		
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Finished building new schema manager on " + db.getDatabaseURL().getDbLocation() + ".");
 
 	}
@@ -325,6 +339,16 @@ public class SchemaManagerReference {
 		//TODO finish implementing this method!
 		String newLocation = e.getMessage();
 
+		schemaManagerLocationURL = DatabaseURL.parseURL(newLocation);
+		Registry registry = getSchemaManagerRegistry();
+
+		try {
+			ISchemaManager newSchemaManager = (ISchemaManager)registry.lookup("SCHEMA_MANAGER");
+			this.schemaManager = newSchemaManager;
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
+		
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "This schema manager reference is old. It has been moved to: " + newLocation);
 
 	}

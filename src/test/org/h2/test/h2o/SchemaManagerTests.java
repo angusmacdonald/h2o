@@ -143,7 +143,7 @@ public class SchemaManagerTests {
 	 * @throws ClassNotFoundException 
 	 * @throws InterruptedException 
 	 */
-	//@Test
+	@Test
 	public void schemaTableCreationPersistence() throws ClassNotFoundException, InterruptedException{
 
 		Connection conn = null;

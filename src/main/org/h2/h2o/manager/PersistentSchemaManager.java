@@ -75,7 +75,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 
 	private ReplicaManager replicaManager;
 
-	public PersistentSchemaManager(Database db, boolean schemaTablesExist) throws Exception{
+	public PersistentSchemaManager(Database db, boolean createTables) throws Exception{
 
 		this.db = db;
 
@@ -85,7 +85,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 
 		replicaManager.add(db.getLocalDatabaseInstance());
 
-		if (!schemaTablesExist){
+		if (createTables){
 			/*
 			 * Create a new set of schema tables locally.
 			 */
@@ -94,15 +94,15 @@ public class PersistentSchemaManager implements ISchemaManager{
 			} catch (SQLException e) {
 				throw new Exception("Couldn't create schema manager state tables.");
 			}
-
-		} else {
+		}
+		//} else {
 			/*
 			 * A local copy of the schema already exists locally. There may be other remote copies,
 			 * but they are not known, and consequently not active.
 			 */
 
 			//This currently does nothing, but could in future look for remote copies, or create remote replicas.
-		}
+		//}
 
 		//replicaManager.add(db.getLocalDatabaseInstance());
 

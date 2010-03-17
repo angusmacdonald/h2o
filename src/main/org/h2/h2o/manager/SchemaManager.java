@@ -61,11 +61,11 @@ public class SchemaManager implements ISchemaManager {
 	 */
 	private static final int MIGRATION_TIMEOUT = 10000;
 
-	public SchemaManager(Database db, boolean persistedSchemaTablesExist) {
+	public SchemaManager(Database db, boolean createTables) {
 
 		try {
 			this.inMemory = new InMemorySchemaManager(db);
-			this.persisted = new PersistentSchemaManager(db, persistedSchemaTablesExist);
+			this.persisted = new PersistentSchemaManager(db, createTables);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
