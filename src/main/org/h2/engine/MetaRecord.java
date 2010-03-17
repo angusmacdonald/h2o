@@ -44,6 +44,13 @@ public class MetaRecord {
         headPos = obj.getHeadPos();
         sql = obj.getCreateSQL();
     }
+    
+    MetaRecord(int id, int objectType, int headPos, String sql) {
+        this.id = id;
+        this.objectType = objectType;
+        this.headPos = headPos;
+        this.sql = sql;
+    }
 
     /**
      * Sort the list of meta records by 'create order'.

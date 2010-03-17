@@ -140,7 +140,7 @@ public class QueryProxy implements Serializable{
 				
 				DatabaseInstanceRemote localMachine = session.getDatabase().getLocalDatabaseInstance();
 				
-				if (localMachine.getConnectionString().equals(replica.getConnectionString())){
+				if (replica == null || localMachine.getConnectionString().equals(replica.getConnectionString())){
 					/*
 					 * Execute Locally - otherwise there are some nasty concurrency issues with the RMI call accessing the DB
 					 * object at the same time as the thread which made the RMI call.

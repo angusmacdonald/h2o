@@ -170,10 +170,10 @@ public class QueryProxyManager {
 			boolean actionSuccessful = false;
 
 			try {
-				if (remoteReplica == null && allReplicas.size() < 2){
+				if (remoteReplica == null){
 					//This is a local internal database operation (e.g. the TCP server doing something).
 					actionSuccessful = commitLocal(commit);
-				} else if (remoteReplica.getConnectionString().equals(localDatabase.getConnectionString())){
+				} else if (localDatabase.getConnectionString().equals(remoteReplica.getConnectionString())){
 					//Perform commit locally.
 					actionSuccessful = commitLocal(commit);
 				} else { //Perform commit via RMI.		 

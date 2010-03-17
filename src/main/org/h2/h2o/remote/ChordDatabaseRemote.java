@@ -4,6 +4,7 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -45,7 +46,7 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 	/**
 	 * The remote interface of the local database instance.
 	 */
-	private DatabaseInstance databaseInstance;
+	private DatabaseInstanceRemote databaseInstance;
 
 
 	private DatabaseURL localMachineLocation;
@@ -144,8 +145,10 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 		 */
 
 		this.databaseInstance =  new DatabaseInstance(localMachineLocation, systemSession);
+		
 		this.databaseInstanceLocator = new DatabaseInstanceLocator(chord, databaseInstance, schemaManagerRef);
-
+		//exportConnectionObject();
+		
 		if (schemaManagerRef.getSchemaManagerLocation() == null){ // true if the previous check resolved to a node which doesn't know of the schema manager (possibly itself).
 			//TODO you probably want a check to make sure it doesn't check against itself.
 			System.err.println("should this happen?");
@@ -243,25 +246,38 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 	}
 
 
-	/* (non-Javadoc)
-	 * @see org.h2.h2o.IRemoteDatabase#getDatabaseInstance(org.h2.h2o.util.DatabaseURL)
-	 */
-	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL) {
-		if (databaseInstanceLocator == null) return null;
+//	/* (non-Javadoc)
+//	 * @see org.h2.h2o.IRemoteDatabase#getDatabaseInstance(org.h2.h2o.util.DatabaseURL)
+//	 */
+//	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL) {
+//		if (databaseInstanceLocator == null) return null;
+//
+//		try {
+//			return databaseInstanceLocator.lookupDatabaseInstance(databaseURL);
+//		} catch (SQLException e) {
+//			e.printStackTrace();
+//			return null;
+//		}
+//	}
 
+	public void exportConnectionObject() {
+		/*
+		 * This is done so that the local database instance is exported correctly on RMI. It doesn't seem to
+		 * work properly otherwise ('No such object' errors in Database.createH2OTables()). 
+		 */
+		DatabaseInstanceRemote stub = null;
 		try {
-			return databaseInstanceLocator.lookupDatabaseInstance(databaseURL);
-		} catch (SQLException e) {
+			stub = (DatabaseInstanceRemote) UnicastRemoteObject.exportObject(this.databaseInstance, 0);
+		} catch (RemoteException e) {
 			e.printStackTrace();
-			return null;
 		}
-	}
-
-	/* (non-Javadoc)
-	 * @see org.h2.h2o.IRemoteDatabase#getDatabaseInstances()
-	 */
-	public Set<DatabaseInstanceRemote> getDatabaseInstances() {
-		return databaseInstanceLocator.getDatabaseInstances();
+		try {
+			chord.getLocalRegistry().bind(DatabaseInstanceLocator.LOCAL_DATABASE_INSTANCE, stub);
+			
+			this.databaseInstance = stub;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	/* (non-Javadoc)
@@ -270,17 +286,6 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 	public DatabaseInstanceRemote getLocalDatabaseInstance() {
 		return databaseInstance;
 	}
-
-	/* (non-Javadoc)
-	 * @see org.h2.h2o.IRemoteDatabase#removeLocalDatabaseInstance()
-	 */
-	public void removeLocalDatabaseInstance() throws RemoteException, NotBoundException {
-
-		if (databaseInstanceLocator != null) databaseInstanceLocator.removeLocalInstance();
-
-	}
-
-
 
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.IDatabaseRemote#getLocalMachineLocation()

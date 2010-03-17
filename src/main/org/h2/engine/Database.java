@@ -31,6 +31,7 @@ import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.manager.ISchemaManager;
+import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.SchemaManager;
 import org.h2.h2o.manager.SchemaManagerReference;
 import org.h2.h2o.remote.ChordDatabaseRemote;
@@ -696,7 +697,6 @@ public class Database implements DataHandler {
 
 			//databaseRemote.bindSchemaManagerReference(schemaManagerRef);
 			databaseRemote.connectToDatabaseSystem(systemSession);
-
 		}
 
 		/*
@@ -720,16 +720,24 @@ public class Database implements DataHandler {
 		while (cursor.next()) {
 			MetaRecord rec = new MetaRecord(cursor.get());
 			objectIds.set(rec.getId());
+
 			records.add(rec);
 		}
 
 		MetaRecord.sort(records);
 
+		if (Constants.IS_H2O && !isManagementDB() && databaseExists){
+			/*
+			 * Create or connect to a new schema manager instance if this node already has tables on it.
+			 */
+			createSchemaManager(true, schemaManagerRef.isSchemaManagerLocal());
+		}
+
 		if ( records.size() > 0 ){
 			QueryProxyManager proxyManager = new QueryProxyManager(this, systemSession, true);
 
 			for (int i = 0; i < records.size(); i++) {
-
+				System.err.println("i=" + i);
 				MetaRecord rec = (MetaRecord) records.get(i);
 
 				rec.execute(this, systemSession, eventListener, proxyManager);
@@ -760,7 +768,7 @@ public class Database implements DataHandler {
 		if (Constants.IS_H2O && !isManagementDB() && ( !databaseExists || !schemaManagerRef.isSchemaManagerLocal())){ //don't run this code with the TCP server management DB
 
 			try {
-				createH2OTables(false);
+				createH2OTables(false, databaseExists);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -771,7 +779,7 @@ public class Database implements DataHandler {
 			 * This is the schema manager. Reclaim previously held state.
 			 */
 			try {
-				createH2OTables(true);
+				createH2OTables(true, databaseExists);
 				schemaManagerRef.getSchemaManager().buildSchemaManagerState();
 
 				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Re-created schema manager state.");
@@ -785,6 +793,26 @@ public class Database implements DataHandler {
 		}
 
 
+	}
+
+	/**
+	 * @param databaseExists
+	 * @param persistedTablesExist
+	 */
+	private void createSchemaManager(boolean databaseExists,
+			boolean persistedTablesExist) {
+		if (schemaManagerRef.isSchemaManagerLocal()){ // Create the schema manager tables and immediately add local tables to this manager.
+
+			System.err.println("Database exists: " + ( persistedTablesExist ));
+
+			SchemaManager schemaManager = new SchemaManager(this, ( databaseExists && schemaManagerRef.isSchemaManagerLocal())); 
+
+			schemaManagerRef.setSchemaManager(schemaManager);
+			databaseRemote.bindSchemaManagerReference(schemaManagerRef);
+
+		} else { // Not a schema manager -  Get a reference to the schema manager.
+			schemaManagerRef.findSchemaManager();
+		}
 	}
 
 	//	/**
@@ -2534,20 +2562,13 @@ public class Database implements DataHandler {
 	 * @throws Exception 
 	 * @throws SQLException 
 	 */
-	private void createH2OTables(boolean persistedSchemaTablesExist) throws Exception{
+	private void createH2OTables(boolean persistedSchemaTablesExist, boolean databaseExists) throws Exception{
 
 
 		int result = -1;
 
-		if (schemaManagerRef.isSchemaManagerLocal()){ // Create the schema manager tables and immediately add local tables to this manager.
-
-			SchemaManager schemaManager = new SchemaManager(this, persistedSchemaTablesExist); 
-
-			schemaManagerRef.setSchemaManager(schemaManager);
-			databaseRemote.bindSchemaManagerReference(schemaManagerRef);
-
-		} else { // Not a schema manager -  Get a reference to the schema manager.
-			schemaManagerRef.findSchemaManager();
+		if (!databaseExists){
+			createSchemaManager(databaseExists, persistedSchemaTablesExist);
 		}
 
 		if (!persistedSchemaTablesExist){
@@ -2689,11 +2710,27 @@ public class Database implements DataHandler {
 	 */
 
 	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL) {
-		return databaseRemote.getDatabaseInstance(databaseURL);
+		try {
+			return schemaManagerRef.getSchemaManager().getDatabaseInstance(databaseURL);
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		} catch (MovedException e) {
+			e.printStackTrace();
+		}
+
+		return null;
 	}
 
 	public Set<DatabaseInstanceRemote> getDatabaseInstances() {
-		return databaseRemote.getDatabaseInstances();
+		try {
+			return schemaManagerRef.getSchemaManager().getDatabaseInstances();
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		} catch (MovedException e) {
+			e.printStackTrace();
+		}
+
+		return null;
 	}
 
 	/**
@@ -2705,18 +2742,14 @@ public class Database implements DataHandler {
 
 	public void removeLocalDatabaseInstance(){
 		try {
-			databaseRemote.removeLocalDatabaseInstance();
-		} catch (NotBoundException e) {
-			/*
-			 * Not a big problem because all we are doing at this stage is trying to remove it.
-			 * Happens nearly every time the database is closed from the shutdown hook, hence being inside this IF statement.
-			 */
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempted to remove database instance from registry, but it wasn't found.");
+			this.schemaManagerRef.getSchemaManager().removeConnectionInformation(this.databaseRemote.getLocalDatabaseInstance());
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MovedException e) {
 			e.printStackTrace();
 		}
-	//	this.close(false);
+
+		this.close(false);
 	}
 
 	/**

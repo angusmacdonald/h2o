@@ -35,34 +35,12 @@ public interface IDatabaseRemote {
 			throws SQLException;
 
 	/**
-	 * Get a remote reference to a database instance at the specified URL.
-	 * @param databaseURL	URL of the database reference.
-	 * @return Remote reference to the database instance.
-	 */
-	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL);
-
-	/**
-	 * Get remote references to every database instance in the database system.
-	 * @return	The set of all databases in the system.
-	 */
-	public Set<DatabaseInstanceRemote> getDatabaseInstances();
-
-	/**
 	 * Get the remote reference of the local database instance.
 	 * 
 	 * <p>This is used as an identity when locking tables for a particular query.
 	 * @return Remote reference of the local database.
 	 */
 	public DatabaseInstanceRemote getLocalDatabaseInstance();
-
-	/**
-	 * Remove the local database instance from the schema manager and any other registries.
-	 * @throws NotBoundException 
-	 * @throws RemoteException 
-	 */
-	public void removeLocalDatabaseInstance() throws RemoteException,
-			NotBoundException;
-
 
 	/**
 	 * Returns the port on which the local database instance is running its RMI server.
@@ -94,5 +72,10 @@ public interface IDatabaseRemote {
 	 * @param schemaManagerRef
 	 */
 	void bindSchemaManagerReference(SchemaManagerReference schemaManagerRef);
+
+	/**
+	 * 
+	 */
+	public void exportConnectionObject();
 
 }
