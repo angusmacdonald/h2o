@@ -2559,7 +2559,7 @@ public class Database implements DataHandler {
 			}
 		}
 
-		schemaManagerRef.getSchemaManager().addConnectionInformation(getDatabaseURL());
+		schemaManagerRef.getSchemaManager().addConnectionInformation(getDatabaseURL(), this.databaseRemote.getLocalDatabaseInstance());
 
 
 		if (!schemaManagerRef.isSchemaManagerLocal() && result >= 0){

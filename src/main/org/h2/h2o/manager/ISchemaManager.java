@@ -71,7 +71,7 @@ public interface ISchemaManager extends Remote {
 	 * Add information about a new database instance to the schema manager.
 	 * @param databaseURL	The name and location of the new database instance.
 	 */
-	public int addConnectionInformation(DatabaseURL databaseURL) throws RemoteException, MovedException;
+	public int addConnectionInformation(DatabaseURL databaseURL, DatabaseInstanceRemote databaseInstanceRemote) throws RemoteException, MovedException;
 
 	/**
 	 * Get a new table set number from the schema manager. Each number given is unique (i.e. the same number should not be given twice).
@@ -121,7 +121,7 @@ public interface ISchemaManager extends Remote {
 	/**
 	 * Returns a set of all the databases connected in the system.
 	 */
-	public Set<DatabaseURL> getConnectionInformation() throws RemoteException, MovedException;
+	public Map<DatabaseURL, DatabaseInstanceRemote> getConnectionInformation() throws RemoteException, MovedException;
 
 	/**
 	 * Returns a map of all data managers in the system.
@@ -163,5 +163,25 @@ public interface ISchemaManager extends Remote {
 	 * 
 	 */
 	public void completeSchemaManagerMigration() throws RemoteException, MovedException, MigrationException ;
+
+
+	/**
+	 * Get a remote reference to a database instance at the specified URL.
+	 * @param databaseURL	URL of the database reference.
+	 * @return Remote reference to the database instance.
+	 */
+	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL) throws RemoteException, MovedException;
+
+	/**
+	 * Get remote references to every database instance in the database system.
+	 * @return	The set of all databases in the system.
+	 */
+	public Set<DatabaseInstanceRemote> getDatabaseInstances() throws RemoteException, MovedException;
+
+	/**
+	 * @param localDatabaseInstance
+	 */
+	public void removeConnectionInformation(DatabaseInstanceRemote localDatabaseInstance) throws RemoteException, MovedException;
+
 
 }

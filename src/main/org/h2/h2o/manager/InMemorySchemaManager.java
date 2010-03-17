@@ -37,6 +37,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	 */
 	private Map<TableInfo, DataManagerRemote> dataManagers;
 
+	
 	/**
 	 * Cached references to replicas in the database system.
 	 * 
@@ -46,7 +47,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	 */
 	private Map<String, Set<TableInfo>> replicaLocations;
 
-	private Set<DatabaseURL> databasesInSystem = new HashSet<DatabaseURL>();
+	private Map<DatabaseURL, DatabaseInstanceRemote> databasesInSystem = new HashMap<DatabaseURL, DatabaseInstanceRemote>();
 
 	/**
 	 * The next valid table set number which can be assigned by the schema manager.
@@ -140,10 +141,10 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	 * @see org.h2.h2o.ISchemaManager#addConnectionInformation(org.h2.h2o.util.DatabaseURL)
 	 */
 	@Override
-	public int addConnectionInformation(DatabaseURL databaseURL)
+	public int addConnectionInformation(DatabaseURL databaseURL, DatabaseInstanceRemote databaseInstanceRemote)
 	throws RemoteException {
 
-		databasesInSystem.add(databaseURL);
+		databasesInSystem.put(databaseURL, databaseInstanceRemote);
 
 		return 1;
 	}
@@ -330,7 +331,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	 * @see org.h2.h2o.manager.ISchemaManager#getConnectionInformation()
 	 */
 	@Override
-	public Set<DatabaseURL> getConnectionInformation() throws RemoteException {
+	public Map<DatabaseURL, DatabaseInstanceRemote> getConnectionInformation() throws RemoteException {
 		return databasesInSystem;
 	}
 
@@ -440,5 +441,33 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	public void completeSchemaManagerMigration() throws RemoteException,
 			MovedException {
 		//Do nothing.
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#getDatabaseInstance(org.h2.h2o.util.DatabaseURL)
+	 */
+	@Override
+	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL)
+			throws RemoteException, MovedException {
+		return databasesInSystem.get(databaseURL);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#getDatabaseInstances()
+	 */
+	@Override
+	public Set<DatabaseInstanceRemote> getDatabaseInstances()
+			throws RemoteException, MovedException {
+		return new HashSet<DatabaseInstanceRemote>(databasesInSystem.values());
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#removeDatabaseInstance(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
+	 */
+	@Override
+	public void removeConnectionInformation(
+			DatabaseInstanceRemote localDatabaseInstance)
+			throws RemoteException, MovedException {
+	//	databaseInstances.remove(localDatabaseInstance.getConnectionString());
 	}
 }

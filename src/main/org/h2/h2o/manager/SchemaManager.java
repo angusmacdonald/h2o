@@ -79,12 +79,12 @@ public class SchemaManager implements ISchemaManager {
 	 * @see org.h2.h2o.ISchemaManager#addConnectionInformation(org.h2.h2o.util.DatabaseURL)
 	 */
 	@Override
-	public int addConnectionInformation(DatabaseURL databaseURL)
+	public int addConnectionInformation(DatabaseURL databaseURL, DatabaseInstanceRemote remoteDatabase)
 	throws RemoteException, MovedException {
 		preMethodTest();
 
-		inMemory.addConnectionInformation(databaseURL);
-		return persisted.addConnectionInformation(databaseURL);
+		inMemory.addConnectionInformation(databaseURL, remoteDatabase);
+		return persisted.addConnectionInformation(databaseURL, remoteDatabase);
 
 	}
 
@@ -210,7 +210,7 @@ public class SchemaManager implements ISchemaManager {
 	 * @see org.h2.h2o.manager.ISchemaManager#getConnectionInformation()
 	 */
 	@Override
-	public Set<DatabaseURL> getConnectionInformation() throws RemoteException, MovedException {
+	public Map<DatabaseURL, DatabaseInstanceRemote> getConnectionInformation() throws RemoteException, MovedException {
 		return inMemory.getConnectionInformation();
 	}
 
@@ -253,6 +253,35 @@ public class SchemaManager implements ISchemaManager {
 		preMethodTest();
 		inMemory.addSchemaManagerDataLocation(databaseReference);
 		persisted.addSchemaManagerDataLocation(databaseReference);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#getDatabaseInstance(org.h2.h2o.util.DatabaseURL)
+	 */
+	@Override
+	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL) throws RemoteException, MovedException {
+		preMethodTest();
+		return inMemory.getDatabaseInstance(databaseURL);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#getDatabaseInstances()
+	 */
+	@Override
+	public Set<DatabaseInstanceRemote> getDatabaseInstances() throws RemoteException, MovedException {
+		preMethodTest();
+		return inMemory.getDatabaseInstances();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#removeDatabaseInstance(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
+	 */
+	@Override
+	public void removeConnectionInformation(
+			DatabaseInstanceRemote localDatabaseInstance) throws RemoteException, MovedException {
+		preMethodTest();
+		inMemory.removeConnectionInformation(localDatabaseInstance);
+		persisted.removeConnectionInformation(localDatabaseInstance);
 	}
 
 	/* (non-Javadoc)
@@ -308,4 +337,5 @@ public class SchemaManager implements ISchemaManager {
 	public void checkConnection() throws RemoteException, MovedException {
 		preMethodTest();
 	}
+
 }

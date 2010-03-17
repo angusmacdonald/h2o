@@ -303,7 +303,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 	 * @param databaseLocation 		The location of the local database. Used to determine whether a database in running in embedded mode.
 	 * @return						Result of the update.
 	 */
-	public int addConnectionInformation(DatabaseURL dburl){
+	public int addConnectionInformation(DatabaseURL dburl, DatabaseInstanceRemote databaseInstanceRemote){
 		String connection_type = dburl.getConnectionType();
 
 		String sql = null;
@@ -826,9 +826,9 @@ public class PersistentSchemaManager implements ISchemaManager{
 	 * @see org.h2.h2o.manager.ISchemaManager#getConnectionInformation()
 	 */
 	@Override
-	public Set<DatabaseURL> getConnectionInformation() throws RemoteException {
+	public Map<DatabaseURL, DatabaseInstanceRemote> getConnectionInformation() throws RemoteException {
 
-		Set<DatabaseURL> databaseLocations = new HashSet<DatabaseURL>();
+		Map<DatabaseURL, DatabaseInstanceRemote> databaseLocations = new HashMap<DatabaseURL, DatabaseInstanceRemote>();
 
 		String sql = "SELECT * FROM " + CONNECTIONS + ";";
 
@@ -859,7 +859,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 				int rmiPort = row[5].getInt();
 				DatabaseURL dbURL = new DatabaseURL(connectionType, hostName, dbPort, dbLocation, false);
 				dbURL.setRMIPort(rmiPort);
-				databaseLocations.add(dbURL);
+				databaseLocations.put(dbURL, null);
 			}
 
 
@@ -1004,5 +1004,37 @@ public class PersistentSchemaManager implements ISchemaManager{
 	@Override
 	public void checkConnection() throws RemoteException, MovedException {
 		//Does nothing.
+	}
+
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#getDatabaseInstance(org.h2.h2o.util.DatabaseURL)
+	 */
+	@Override
+	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL)
+			throws RemoteException, MovedException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#getDatabaseInstances()
+	 */
+	@Override
+	public Set<DatabaseInstanceRemote> getDatabaseInstances()
+			throws RemoteException, MovedException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#removeDatabaseInstance(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
+	 */
+	@Override
+	public void removeConnectionInformation(
+			DatabaseInstanceRemote localDatabaseInstance)
+			throws RemoteException, MovedException {
+		// TODO Auto-generated method stub
+		
 	}
 }
