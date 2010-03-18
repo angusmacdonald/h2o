@@ -233,6 +233,10 @@ public class ChordTests extends TestBase {
 		}
 	}
 
+	/**
+	 * Tests that when the schema manager is migrated another database instance is able to connect to the new manager without any manual intervention.
+	 * 
+	 */
 	@Test
 	public void SchemaManagerMigration() throws InterruptedException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
@@ -244,44 +248,44 @@ public class ChordTests extends TestBase {
 			e.printStackTrace();
 		}
 	}
-	//	/**
-	//	 * Tests that the state of the schema manager is replicated - inserts data after the schema manager
-	//	 * state is replicated (probably - not deterministic).
-	//	 */
-	//	@Test
-	//	public void ReplicateSchemaManagerInsertAfter() throws InterruptedException{
-	//		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
-	//
-	//		while (!isReplicated){
-	//			Thread.sleep(100);
-	//		}
-	//
-	//		try {
-	//			ResultSet rs = sas[1].executeQuery("SELECT LOCAL * FROM H2O.H2O_TABLE");
-	//
-	//			if ((rs.next() && rs.next())){
-	//				fail("Expected nothing here.");
-	//			}
-	//		} catch (SQLException e) {
-	//			e.printStackTrace();
-	//		}
-	//
-	//		try{
-	//			int result = sas[0].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-	//		} catch (SQLException e){
-	//			fail("An Unexpected SQLException was thrown.");
-	//		}
-	//
-	//
-	//		try {
-	//			ResultSet rs = sas[1].executeQuery("SELECT LOCAL * FROM H2O.H2O_TABLE");
-	//
-	//			if (!(rs.next() && rs.next())){
-	//				fail("Expected a result here.");
-	//			}
-	//		} catch (SQLException e) {
-	//			e.printStackTrace();
-	//		}
-	//
-	//	}
+		/**
+		 * Tests that the state of the schema manager is replicated - inserts data after the schema manager
+		 * state is replicated (probably - not deterministic).
+		 */
+		@Test
+		public void ReplicateSchemaManagerInsertAfter() throws InterruptedException{
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+	
+			while (!isReplicated){
+				Thread.sleep(100);
+			}
+	
+			try {
+				ResultSet rs = sas[1].executeQuery("SELECT LOCAL * FROM H2O.H2O_TABLE");
+	
+				if ((rs.next() && rs.next())){
+					fail("Expected nothing here.");
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+	
+			try{
+				sas[0].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+			} catch (SQLException e){
+				fail("An Unexpected SQLException was thrown.");
+			}
+	
+	
+			try {
+				ResultSet rs = sas[1].executeQuery("SELECT LOCAL * FROM H2O.H2O_TABLE");
+	
+				if (!(rs.next() && rs.next())){
+					fail("Expected a result here.");
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+	
+		}
 }
