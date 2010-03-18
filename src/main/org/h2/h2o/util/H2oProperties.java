@@ -42,7 +42,7 @@ public class H2oProperties {
 	 */
 	public H2oProperties(DatabaseURL dbURL, String appendum) {
 		this.properties = new Properties();
-		this.propertiesFileLocation = dbURL.getDbLocationWithoutIllegalCharacters() + ((appendum != null)? "." + appendum: "") + ".properties";
+		this.propertiesFileLocation = "config" + File.separator + dbURL.getDbLocationWithoutIllegalCharacters() + ((appendum != null)? "." + appendum: "") + ".properties";
 	}
 
 	public H2oProperties(DatabaseURL dbURL) {
@@ -192,7 +192,7 @@ public class H2oProperties {
 
 		testProperties(testProp);
 
-		File f = new File(dbURL.getDbLocationWithoutIllegalCharacters() + ".appended.properties");
+		File f = new File("config" + File.separator + dbURL.getDbLocationWithoutIllegalCharacters() + ".appended.properties");
 
 		assertTrue(f.exists());
 
@@ -210,7 +210,7 @@ public class H2oProperties {
 
 		testProperties(testProp);
 
-		File f = new File(dbURL.getDbLocationWithoutIllegalCharacters() + "lalala.properties");
+		File f = new File("config" + File.separator + dbURL.getDbLocationWithoutIllegalCharacters() + "lalala.properties");
 
 		assertFalse(f.exists());
 

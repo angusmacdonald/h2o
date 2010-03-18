@@ -7,9 +7,7 @@
 package org.h2.engine;
 
 import java.io.IOException;
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

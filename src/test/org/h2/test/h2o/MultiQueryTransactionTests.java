@@ -643,9 +643,6 @@ public class MultiQueryTransactionTests extends TestBase{
 			sa.execute("INSERT INTO TEST VALUES(1, 'Hello');");
 			sa.execute("INSERT INTO TEST VALUES(2, 'World');");
 
-			
-			ResultSet rs = sa.executeQuery("SELECT * FROM H2O.H2O_TABLE");
-			
 			server.shutdown();
 			server.stop();
 
