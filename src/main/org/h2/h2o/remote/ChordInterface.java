@@ -184,7 +184,7 @@ public class ChordInterface implements Observer {
 			//	for (IChordNode node: allNodes){
 			///		System.out.println("CHECK. Suc: " + node.getSuccessor());
 			//	}
-			System.err.println("Schema manager key: " + SchemaManagerReference.schemaManagerKey);
+//			System.err.println("Schema manager key: " + SchemaManagerReference.schemaManagerKey);
 		}
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Started local Chord node on : " + 

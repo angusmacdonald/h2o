@@ -109,11 +109,11 @@ public class ChordTests extends TestBase {
 			sas[i] = cas[i].createStatement();
 		}
 
-//		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
-//		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
-//		sql += "INSERT INTO TEST VALUES(2, 'World');";
-//
-//		sas[4].execute(sql);
+		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
+		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
+		sql += "INSERT INTO TEST VALUES(2, 'World');";
+
+		sas[0].execute(sql);
 	}
 
 	/**
