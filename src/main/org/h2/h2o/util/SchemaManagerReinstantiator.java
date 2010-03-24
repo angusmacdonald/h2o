@@ -52,45 +52,39 @@ public class SchemaManagerReinstantiator extends Thread {
 			ErrorHandling.error("Failed to get a predecessor to: " + chordInterface.getChordNode());
 		} else {
 
+
+			//				//Check if schema manager is accessible.
+			//				try {
+			//					//This seems to show that there is a reference to a current machine which works, but which doesn't actually contain a running
+			//					//schema manager.
+			//					chordInterface.getCurrentSMLocation().getRemote().isAlive();
+			//					System.err.println("Schema manager machine: " + chordInterface.getCurrentSMLocation().getKey());
+			//				} catch (RemoteException e) {
+			//					e.printStackTrace();
+			//				}
+
 			try {
-				
-//				//Check if schema manager is accessible.
-//				try {
-//					//This seems to show that there is a reference to a current machine which works, but which doesn't actually contain a running
-//					//schema manager.
-//					chordInterface.getCurrentSMLocation().getRemote().isAlive();
-//					System.err.println("Schema manager machine: " + chordInterface.getCurrentSMLocation().getKey());
-//				} catch (RemoteException e) {
-//					e.printStackTrace();
-//				}
-				
-				try {
-					db.getSchemaManagerReference().getSchemaManager().exists(null);
-					
-					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Schema manager is still accessible.");
-					return;
-				} catch (Exception e) {
-					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Schema manager isn't accessible. It probably has to be reinstantiated, but by this node?");
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				
-				if (chordInterface.getChordNode().inLocalKeyRange(SchemaManagerReference.schemaManagerKey)){
-					System.err.println("This is now the schema manager.");
-				} else {
-					System.err.println("Not in this keyspace");
-					System.err.println("Predecessor: " + chordInterface.getChordNode().getPredecessor());
-					System.err.println("Schema Manager Key: " + SchemaManagerReference.schemaManagerKey);
-					System.err.println("This node: " + chordInterface.getChordNode());
-//					for (IChordNode n: ChordInterface.allNodes){
-//						System.err.println((n));
-//					}
-				}
-			} catch (P2PNodeException e) {
+				db.getSchemaManagerReference().getSchemaManager().exists(null);
+
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Schema manager is still accessible.");
+				return;
+			} catch (Exception e) {
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Schema manager isn't accessible. It probably has to be reinstantiated, but by this node?");
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
+
+			if (chordInterface.getChordNode().inLocalKeyRange(SchemaManagerReference.schemaManagerKey)){
+				System.err.println("This is now the schema manager.");
+			} else {
+				System.err.println("Not in this keyspace");
+				System.err.println("Predecessor: " + chordInterface.getChordNode().getPredecessor());
+				System.err.println("Schema Manager Key: " + SchemaManagerReference.schemaManagerKey);
+				System.err.println("This node: " + chordInterface.getChordNode());
+				//					for (IChordNode n: ChordInterface.allNodes){
+				//						System.err.println((n));
+				//					}
+			}
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Re-instantiated Schema Manager");
 		}
 

@@ -93,7 +93,7 @@ public class ChordInterface implements Observer {
 		 * Join the existing Chord Ring.
 		 */
 		try {
-			chordNode  = ChordNodeImpl.deployNode(localChordAddress, null);
+			chordNode  = new ChordNodeImpl(localChordAddress, null);
 
 			if (Constants.IS_TEST){ 
 				//allNodes.add(chordNode);
@@ -101,7 +101,7 @@ public class ChordInterface implements Observer {
 		} catch (RemoteException e) {
 			e.printStackTrace();
 			return false;
-		} catch (P2PNodeException e) {
+		} catch (NotBoundException e) {
 			e.printStackTrace();
 			return false;
 		}
@@ -147,14 +147,14 @@ public class ChordInterface implements Observer {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Connecting to existing Chord ring on " + remoteHostname + ":" + remotePort);
 
 		try {
-			chordNode = ChordNodeImpl.deployNode(localChordAddress, knownHostAddress);
+			chordNode = new ChordNodeImpl(localChordAddress, knownHostAddress);
 			if (Constants.IS_TEST){ 
 				//allNodes.add(chordNode);
 			}
 		} catch (RemoteException e) {
 			e.printStackTrace();
 			return false;
-		} catch (P2PNodeException e) {
+		} catch (NotBoundException e) {
 			ErrorHandling.errorNoEvent("Failed to create new chord node on + " + localHostname + ":" + localPort + " known host: " + remoteHostname + ":" + remotePort);
 			return false;
 		}	
@@ -252,7 +252,6 @@ public class ChordInterface implements Observer {
 				//					RingStabilizer.waitForStableNetwork(allNodes);
 
 
-				try {
 					boolean inKeyRange = chordNode.inLocalKeyRange(SchemaManagerReference.schemaManagerKey);
 
 					schemaManagerRef.setInKeyRange(inKeyRange);
@@ -270,10 +269,6 @@ public class ChordInterface implements Observer {
 
 					this.schemaManagerRef.setInKeyRange(inKeyRange);
 
-				} catch (uk.ac.standrews.cs.nds.p2p.exceptions.P2PNodeException  e) {
-					e.printStackTrace();
-
-				}
 
 
 			}
@@ -513,7 +508,7 @@ public class ChordInterface implements Observer {
 
 		if (!Constants.IS_NON_SM_TEST){
 			//allNodes.remove(chordNode);
-			chordNode.destroy();
+			((ChordNodeImpl)chordNode).destroy();
 		}
 	}
 
