@@ -12,7 +12,7 @@
 	<classpathentry kind="lib" path="C:/Program Files/Java/jdk1.6.0_16/lib/tools.jar"/>
 	<classpathentry kind="lib" path="C:/Users/angus/workspace/org.eclipse.jdt.junit_3.5.0.v20090526-2000.jar"/>
 	<classpathentry kind="lib" path="C:/Program Files/eclipse/junit-4.4.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/staChordRMI"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/nds"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/stachordRMI"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

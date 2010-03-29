@@ -58,9 +58,7 @@ public class SchemaManagerReplication extends Thread {
 		} else {
 
 			if (Diagnostic.getLevel() == DiagnosticLevel.FULL){
-				try {
-					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Found reference to remote database (where SM state will be replicated): " + instance.getConnectionString());
-				} catch (RemoteException e1) {}
+				try { Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Found reference to remote database (where SM state will be replicated): " + instance.getConnectionString()); } catch (RemoteException e1) {}
 			}
 
 			createSchemaManagerReplicas(instance);

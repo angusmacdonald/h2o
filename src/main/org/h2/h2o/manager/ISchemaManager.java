@@ -149,23 +149,6 @@ public interface ISchemaManager extends Remote {
 	public void addSchemaManagerDataLocation(DatabaseInstanceRemote databaseReference) throws RemoteException, MovedException;
 
 	/**
-	 * @throws MovedException 
-	 * 
-	 */
-	public void prepareForMigration(String newLocation) throws RemoteException, MigrationException, MovedException;
-
-	/**
-	 * 
-	 */
-	public void checkConnection() throws RemoteException, MovedException;
-
-	/**
-	 * 
-	 */
-	public void completeSchemaManagerMigration() throws RemoteException, MovedException, MigrationException ;
-
-
-	/**
 	 * Get a remote reference to a database instance at the specified URL.
 	 * @param databaseURL	URL of the database reference.
 	 * @return Remote reference to the database instance.

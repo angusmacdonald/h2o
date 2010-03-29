@@ -1,8 +1,5 @@
 package org.h2.h2o.manager;
 
-import java.rmi.AccessException;
-import java.rmi.AlreadyBoundException;
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -35,7 +32,7 @@ public class SchemaManagerReference {
 	/**
 	 * Reference to the database system's schema manager.
 	 */
-	private ISchemaManager schemaManager;
+	private SchemaManagerRemote schemaManager;
 
 	/**
 	 * Location of the actual schema manager.
@@ -101,7 +98,7 @@ public class SchemaManagerReference {
 		return getSchemaManager(false);
 	}
 
-	private ISchemaManager getSchemaManager(boolean performedSchemaManagerLookup){
+	private SchemaManagerRemote getSchemaManager(boolean performedSchemaManagerLookup){
 		if (schemaManager == null) {
 			schemaManager = this.findSchemaManager();
 			performedSchemaManagerLookup = true;
@@ -151,7 +148,7 @@ public class SchemaManagerReference {
 	 * the database instance which is responsible for the key range containing 'schema manager'.
 	 * @return
 	 */
-	public ISchemaManager findSchemaManager() {
+	public SchemaManagerRemote findSchemaManager() {
 		if (schemaManager != null){
 			return schemaManager;
 		}
@@ -159,7 +156,7 @@ public class SchemaManagerReference {
 		Registry registry = getSchemaManagerRegistry();
 
 		try {
-			schemaManager = (ISchemaManager)registry.lookup("SCHEMA_MANAGER");
+			schemaManager = (SchemaManagerRemote)registry.lookup("SCHEMA_MANAGER");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -243,7 +240,7 @@ public class SchemaManagerReference {
 		/*
 		 * Create a new schema manager instance locally.
 		 */
-		ISchemaManager newSchemaManager = null;
+		SchemaManagerRemote newSchemaManager = null;
 		try {
 			newSchemaManager = new SchemaManager(db, true);
 		} catch (Exception e) {
@@ -280,7 +277,7 @@ public class SchemaManagerReference {
 		 * Shut down the old, remote, schema manager. Redirect requests to new manager.
 		 */
 		try {
-			schemaManager.completeSchemaManagerMigration();
+			schemaManager.completeMigration();
 		} catch (RemoteException e) {
 			ErrorHandling.exceptionError(e, "Failed to complete migration.");
 		} catch (MovedException e) {
@@ -299,7 +296,7 @@ public class SchemaManagerReference {
 		
 		
 		try {
-			ISchemaManager stub = (ISchemaManager) UnicastRemoteObject.exportObject(schemaManager, 0);
+			SchemaManagerRemote stub = (SchemaManagerRemote) UnicastRemoteObject.exportObject(schemaManager, 0);
 			
 			getSchemaManagerRegistry().bind("SCHEMA_MANAGER", stub);
 		} catch (Exception e) {
@@ -343,7 +340,7 @@ public class SchemaManagerReference {
 		Registry registry = getSchemaManagerRegistry();
 
 		try {
-			ISchemaManager newSchemaManager = (ISchemaManager)registry.lookup("SCHEMA_MANAGER");
+			SchemaManagerRemote newSchemaManager = (SchemaManagerRemote)registry.lookup("SCHEMA_MANAGER");
 			this.schemaManager = newSchemaManager;
 		} catch (Exception e1) {
 			e1.printStackTrace();

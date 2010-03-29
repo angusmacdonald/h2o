@@ -418,30 +418,6 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 		
 	}
 
-	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#prepareForMigration()
-	 */
-	@Override
-	public void prepareForMigration(String newLocation) {
-		//Do nothing.
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#checkConnection()
-	 */
-	@Override
-	public void checkConnection() throws RemoteException, MovedException {
-		//Does nothing.
-	}
-
-	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#completeSchemaManagerMigration()
-	 */
-	@Override
-	public void completeSchemaManagerMigration() throws RemoteException,
-			MovedException {
-		//Do nothing.
-	}
 
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISchemaManager#getDatabaseInstance(org.h2.h2o.util.DatabaseURL)

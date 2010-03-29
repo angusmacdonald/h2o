@@ -16,7 +16,7 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class SchemaManager implements ISchemaManager {
+public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, Migratable
 	
 	/**
 	 * Interface to the in-memory state of the schema manager.
@@ -55,7 +55,7 @@ public class SchemaManager implements ISchemaManager {
 	 * The amount of time which has elapsed since migration began. Used to timeout requests which take too long.
 	 */
 	private long migrationTime = 0l;
-	
+
 	/**
 	 * The timeout period for migrating the schema manager.
 	 */
@@ -284,19 +284,6 @@ public class SchemaManager implements ISchemaManager {
 		persisted.removeConnectionInformation(localDatabaseInstance);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#prepareForMigration()
-	 */
-	@Override
-	public synchronized void prepareForMigration(String newLocation) throws RemoteException, MovedException, MigrationException {
-		preMethodTest();
-
-		movedLocation = newLocation;
-
-		inMigration = true;
-
-		migrationTime = System.currentTimeMillis();
-	}
 
 	private void preMethodTest() throws RemoteException, MovedException{
 		long currentTimeOfMigration = System.currentTimeMillis() - migrationTime;
@@ -317,10 +304,25 @@ public class SchemaManager implements ISchemaManager {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#completeSchemaManagerMigration()
+	 * @see org.h2.h2o.manager.ISchemaManager#prepareForMigration()
 	 */
 	@Override
-	public void completeSchemaManagerMigration() throws RemoteException,
+	public synchronized void prepareForMigration(String newLocation) throws RemoteException, MovedException, MigrationException {
+		preMethodTest();
+
+		movedLocation = newLocation;
+
+		inMigration = true;
+
+		migrationTime = System.currentTimeMillis();
+	}
+
+	
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#completeMigration()
+	 */
+	@Override
+	public void completeMigration() throws RemoteException,
 	MovedException, MigrationException {
 		if (!inMigration){ // the migration process has timed out.
 			throw new MigrationException("Migration process has timed-out. Took too long to migrate (timeout: " + MIGRATION_TIMEOUT + "ms)");

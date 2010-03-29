@@ -38,17 +38,13 @@ public class LockingTable implements ILockingTable {
 		if ((lockType == LockType.WRITE || lockType == LockType.CREATE) && readLocks.size() == 0){
 			//if write lock request + no read locks held.
 
-			try {
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName + "' " + ((LockType.CREATE == lockType)? "CREATE": "WRITE") + " locked by: " + requestingMachine.getConnectionString());
-			} catch (RemoteException e) {}
+			try { Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName + "' " + ((LockType.CREATE == lockType)? "CREATE": "WRITE") + " locked by: " + requestingMachine.getConnectionString()); } catch (RemoteException e) {}
 
 			writeLock = requestingMachine;
 			return lockType; //will either be WRITE or CREATE
 		} else if (lockType == LockType.READ){
 
-			try {
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName + "' READ locked by: " + requestingMachine.getConnectionString());
-			} catch (RemoteException e) {}
+			try { Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName + "' READ locked by: " + requestingMachine.getConnectionString()); } catch (RemoteException e) {}
 
 			readLocks.add(requestingMachine);
 			return LockType.READ;

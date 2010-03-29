@@ -19,6 +19,10 @@ import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.locking.ILockingTable;
 import org.h2.h2o.locking.LockingTable;
+import org.h2.h2o.manager.ISchemaManager;
+import org.h2.h2o.manager.Migratable;
+import org.h2.h2o.manager.MigrationException;
+import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TableInfo;
@@ -69,7 +73,7 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
 		); <br/></code>
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class DataManager implements DataManagerRemote, AutonomicController {
+public class DataManager implements DataManagerRemote, AutonomicController, Migratable {
 
 	/**
 	 * Name of the schema used to store data manager tables.
@@ -142,6 +146,37 @@ public class DataManager implements DataManagerRemote, AutonomicController {
 	private Database database;
 
 	private boolean isAlive = true;
+	
+	/*
+	 * MIGRATION RELATED CODE.
+	 */
+	/**
+	 * If this schema manager has been moved to another location (i.e. its state has been transferred to another machine
+	 * and it is no longer active) this field will not be null, and will note the new location of the schema manager.
+	 */
+
+	private String movedLocation = null;
+
+	/**
+	 * Whether the schema manager is in the process of being migrated. If this is true the schema manager will be 'locked', unable to service requests.
+	 */
+	private boolean inMigration;
+	
+	/**
+	 * Whether the schema manager has been moved to another location.
+	 */
+	private boolean hasMoved = false;
+	
+	/**
+	 * The amount of time which has elapsed since migration began. Used to timeout requests which take too long.
+	 */
+	private long migrationTime = 0l;
+
+	/**
+	 * The timeout period for migrating the schema manager.
+	 */
+	private static final int MIGRATION_TIMEOUT = 10000;
+
 
 	public DataManager(String tableName, String schemaName, long modificationID, int tableSet, Database database) throws SQLException{
 		this.tableName = tableName;
@@ -748,6 +783,92 @@ public class DataManager implements DataManagerRemote, AutonomicController {
 	@Override
 	public void shutdown() {
 		isAlive = false;
+	}
+
+	private void preMethodTest() throws RemoteException, MovedException{
+		long currentTimeOfMigration = System.currentTimeMillis() - migrationTime;
+
+		/*
+		 * If the manager is being migrated, and has been migrated for less than 10 seconds (timeout period, throw an execption. 
+		 */
+		if (inMigration){
+			if (currentTimeOfMigration < MIGRATION_TIMEOUT) {
+				throw new RemoteException();
+			} else {
+				inMigration = false; //Timeout request.
+				this.migrationTime = 0l;
+			}
+		} else if (hasMoved){
+			throw new MovedException(movedLocation);
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.Migratable#checkConnection()
+	 */
+	@Override
+	public void checkConnection() throws RemoteException, MovedException {
+		preMethodTest();
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.Migratable#completeMigration()
+	 */
+	@Override
+	public void completeMigration() throws RemoteException, MovedException,
+			MigrationException {
+		if (!inMigration){ // the migration process has timed out.
+			throw new MigrationException("Migration process has timed-out. Took too long to migrate (timeout: " + MIGRATION_TIMEOUT + "ms)");
+		}
+		
+		this.hasMoved = true;
+		this.inMigration = false;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.Migratable#prepareForMigration(java.lang.String)
+	 */
+	@Override
+	public void prepareForMigration(String newLocation) throws RemoteException,
+			MigrationException, MovedException {
+		preMethodTest();
+
+		movedLocation = newLocation;
+
+		inMigration = true;
+
+		migrationTime = System.currentTimeMillis();
+	}
+	
+
+	public void buildDataManagerState(DataManagerRemote otherDataManager)
+	throws RemoteException, MovedException {
+		preMethodTest();
+		
+//		/*
+//		 * Obtain references to connected machines.
+//		 */
+//		databasesInSystem = otherSchemaManager.getConnectionInformation();
+//
+//		/*
+//		 * Obtain references to data managers.
+//		 */
+//		dataManagers = otherSchemaManager.getDataManagers();
+//		
+//		/*
+//		 * At this point some of the data manager references will be null if the data managers could not be found at their old location.
+//		 * If a reference is null, but there is a copy of the table locally then a new data manager can be created.
+//		 * If a reference is null, but there is no local copy then the table should no longer be accessible. 
+//		 */
+//
+//		//Map<TableInfo, DataManagerRemote> newManagers = new HashMap<TableInfo, DataManagerRemote>();
+//
+//		/*
+//		 * Obtain references to replicas.
+//		 */
+//		//replicaLocations = otherSchemaManager.getReplicaLocations();
+
 	}
 
 }
