@@ -4,10 +4,13 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.sql.SQLException;
 
 import org.h2.engine.Database;
+import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.remote.ChordInterface;
 import org.h2.h2o.util.DatabaseURL;
+import org.h2.h2o.util.TableInfo;
 import org.h2.table.ReplicaSet;
 
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
@@ -115,7 +118,7 @@ public class SchemaManagerReference {
 				schemaManager = null;
 				return getSchemaManager(true);
 			}
-			
+
 			ErrorHandling.exceptionError(e, "Schema Manager is not accessible");
 		} catch (MovedException e) {
 			this.handleMovedException(e);
@@ -293,16 +296,16 @@ public class SchemaManagerReference {
 		schemaManager = newSchemaManager;
 		this.isLocal = true;
 		this.schemaManagerLocationURL = newLocation;
-		
-		
+
+
 		try {
 			SchemaManagerRemote stub = (SchemaManagerRemote) UnicastRemoteObject.exportObject(schemaManager, 0);
-			
+
 			getSchemaManagerRegistry().bind("SCHEMA_MANAGER", stub);
 		} catch (Exception e) {
 			ErrorHandling.exceptionError(e, "Schema manager migration failed.");
 		}
-		
+
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Finished building new schema manager on " + db.getDatabaseURL().getDbLocation() + ".");
 
 	}
@@ -345,7 +348,7 @@ public class SchemaManagerReference {
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
-		
+
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "This schema manager reference is old. It has been moved to: " + newLocation);
 
 	}
@@ -362,5 +365,34 @@ public class SchemaManagerReference {
 	 */
 	public IChordRemoteReference getLookupLocation() {
 		return lookupLocation;
+	}
+
+
+	/**
+	 * 
+	 * @param tableName
+	 * @return
+	 * @throws SQLException
+	 */
+	public DataManagerRemote lookup(String tableName) throws SQLException {
+		return lookup(new TableInfo(tableName));
+	}
+
+	public DataManagerRemote lookup(TableInfo tableInfo) throws SQLException {
+		return lookup(tableInfo, false);
+	}
+
+	private DataManagerRemote lookup(TableInfo tableInfo, boolean alreadyCalled) throws SQLException {
+		try {
+			return schemaManager.lookup(tableInfo);
+		} catch (MovedException e) {
+			if (alreadyCalled)
+				throw new SQLException("System failed to handle a MovedException correctly on a schema manager lookup.");
+			handleMovedException(e);
+			return lookup(tableInfo, true);
+		} catch (RemoteException e) {
+			e.printStackTrace();
+			throw new SQLException("Data manager lookup failed.");
+		}
 	}
 }

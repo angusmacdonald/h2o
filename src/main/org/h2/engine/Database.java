@@ -2646,7 +2646,8 @@ public class Database implements DataHandler {
 	}
 
 	public DataManagerRemote getDataManager(String tableName) throws SQLException{
-		return databaseRemote.lookupDataManager(tableName);
+		//return databaseRemote.lookupDataManager(tableName);
+		return schemaManagerRef.lookup(tableName);
 	}
 
 

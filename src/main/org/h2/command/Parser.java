@@ -4426,7 +4426,7 @@ public class Parser {
 
 
 		try{
-			DataManagerRemote dm = session.getDatabase().getSchemaManager().lookup(new TableInfo(tableName, thisSchemaName));
+			DataManagerRemote dm = session.getDatabase().getSchemaManagerReference().lookup(new TableInfo(tableName, thisSchemaName));
 
 			if (dm == null){
 				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new TableInfo(tableName, thisSchemaName).toString());

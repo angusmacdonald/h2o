@@ -35,6 +35,7 @@ import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.manager.ISchemaManager;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.PersistentSchemaManager;
+import org.h2.h2o.manager.SchemaManagerReference;
 import org.h2.h2o.util.TableInfo;
 import org.h2.index.IndexType;
 import org.h2.jdbc.JdbcSQLException;
@@ -922,7 +923,7 @@ public class CreateReplica extends SchemaCommand {
 	 * @throws JdbcSQLException 
 	 * @throws RemoteException 
 	 */
-	public void setOriginalLocation(String originalLocation, boolean contactSM) throws JdbcSQLException, RemoteException {
+	public void setOriginalLocation(String originalLocation, boolean contactSM) throws SQLException, RemoteException {
 		contactSchemaManagerOnCompletion(contactSM);
 
 		this.whereDataWillBeTakenFrom = originalLocation;
@@ -933,14 +934,14 @@ public class CreateReplica extends SchemaCommand {
 
 		if (whereDataWillBeTakenFrom == null){
 
-			ISchemaManager sm = session.getDatabase().getSchemaManager();
+			SchemaManagerReference sm = session.getDatabase().getSchemaManagerReference();
 
 			DataManagerRemote dm;
-			try {
+//			try {
 				dm = sm.lookup(new TableInfo(tableName, getSchema().getName()));
-			} catch (MovedException e){
-				throw new RemoteException("Schema Manager has moved.");
-			}
+//			} catch (MovedException e){
+//				throw new RemoteException("Schema Manager has moved.");
+//			}
 
 			if (dm == null){
 				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new TableInfo(tableName, getSchema().getName()).toString());

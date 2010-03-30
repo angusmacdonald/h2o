@@ -15,6 +15,7 @@ import org.h2.h2o.manager.MigrationException;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.PersistentSchemaManager;
 import org.h2.h2o.manager.SchemaManager;
+import org.h2.h2o.manager.SchemaManagerReference;
 import org.h2.h2o.manager.SchemaManagerRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LockType;
@@ -62,7 +63,7 @@ public class MigrateDataManager extends org.h2.command.ddl.SchemaCommand {
 	public int update() throws SQLException, RemoteException {
 		try {
 			Database db = this.session.getDatabase();
-			SchemaManagerRemote sm = db.getSchemaManagerReference().getSchemaManager();
+			SchemaManagerReference sm = db.getSchemaManagerReference();
 			String schemaName = "";
 			if (getSchema() != null){
 				schemaName = getSchema().getName();
