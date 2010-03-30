@@ -1,5 +1,6 @@
 package org.h2.h2o.comms;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -13,7 +14,9 @@ import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class ReplicaManager {
+public class ReplicaManager implements Serializable {
+
+	private static final long serialVersionUID = 6064010173578943054L;
 
 	/**
 	 * Set of databases which hold replicas for this table. All replica locations are

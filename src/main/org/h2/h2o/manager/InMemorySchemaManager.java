@@ -14,7 +14,6 @@ import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.h2o.autonomic.Replication;
-import org.h2.h2o.comms.DataManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.util.DatabaseURL;
@@ -445,5 +444,16 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 			DatabaseInstanceRemote localDatabaseInstance)
 			throws RemoteException, MovedException {
 	//	databaseInstances.remove(localDatabaseInstance.getConnectionString());
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#changeDataManagerLocation(org.h2.h2o.comms.remote.DataManagerRemote)
+	 */
+	public void changeDataManagerLocation(DataManagerRemote stub, TableInfo tableInfo) {
+		Object result = this.dataManagers.remove(tableInfo);
+		
+		assert result != null;
+		
+		this.dataManagers.put(tableInfo, stub);
 	}
 }

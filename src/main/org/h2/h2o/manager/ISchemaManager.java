@@ -166,5 +166,11 @@ public interface ISchemaManager extends Remote {
 	 */
 	public void removeConnectionInformation(DatabaseInstanceRemote localDatabaseInstance) throws RemoteException, MovedException;
 
+	/**
+	 * Called when the location of the data manager is to be changed.
+	 * @param stub
+	 */
+	public void changeDataManagerLocation(DataManagerRemote stub, TableInfo tableInfo) throws RemoteException, MovedException;
+
 
 }

@@ -286,20 +286,22 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 
 
 	private void preMethodTest() throws RemoteException, MovedException{
-		long currentTimeOfMigration = System.currentTimeMillis() - migrationTime;
-
+		if (hasMoved){
+			throw new MovedException(movedLocation);
+		}
 		/*
-		 * If the schema manager is being migrated, and has been migrated for less than 10 seconds (timeout period, throw an execption. 
+		 * If the manager is being migrated, and has been migrated for less than 10 seconds (timeout period, throw an execption. 
 		 */
 		if (inMigration){
+			//If it hasn't moved, but is in the process of migration an exception will be thrown.
+			long currentTimeOfMigration = System.currentTimeMillis() - migrationTime;
+			
 			if (currentTimeOfMigration < MIGRATION_TIMEOUT) {
 				throw new RemoteException();
 			} else {
 				inMigration = false; //Timeout request.
 				this.migrationTime = 0l;
 			}
-		} else if (hasMoved){
-			throw new MovedException(movedLocation);
 		}
 	}
 
@@ -338,6 +340,17 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	@Override
 	public void checkConnection() throws RemoteException, MovedException {
 		preMethodTest();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#changeDataManagerLocation(org.h2.h2o.comms.remote.DataManagerRemote)
+	 */
+	@Override
+	public void changeDataManagerLocation(DataManagerRemote stub, TableInfo tableInfo)  throws RemoteException, MovedException{
+		preMethodTest();
+		
+		inMemory.changeDataManagerLocation(stub, tableInfo);
+		persisted.changeDataManagerLocation(stub, tableInfo);
 	}
 
 }

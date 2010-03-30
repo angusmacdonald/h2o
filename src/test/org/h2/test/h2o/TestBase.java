@@ -177,7 +177,9 @@ public class TestBase {
 
 			for (String l: listOfObjects){
 				try {
-					registry.unbind(l);
+					if (!l.equals("IChordNode")){
+						registry.unbind(l);
+					}
 				} catch (NotBoundException e) {
 					fail("Failed to remove " + l + " from RMI registry.");
 				}

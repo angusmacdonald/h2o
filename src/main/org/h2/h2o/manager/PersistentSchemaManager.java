@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.h2.command.Command;
 import org.h2.command.Parser;
@@ -96,12 +97,12 @@ public class PersistentSchemaManager implements ISchemaManager{
 			}
 		}
 		//} else {
-			/*
-			 * A local copy of the schema already exists locally. There may be other remote copies,
-			 * but they are not known, and consequently not active.
-			 */
+		/*
+		 * A local copy of the schema already exists locally. There may be other remote copies,
+		 * but they are not known, and consequently not active.
+		 */
 
-			//This currently does nothing, but could in future look for remote copies, or create remote replicas.
+		//This currently does nothing, but could in future look for remote copies, or create remote replicas.
 		//}
 
 		//replicaManager.add(db.getLocalDatabaseInstance());
@@ -221,6 +222,11 @@ public class PersistentSchemaManager implements ISchemaManager{
 
 			DatabaseURL dbURL = tableDetails.getDbLocation();
 
+			if (dbURL == null){
+				//find the URL from the data manager.
+				dbURL = dataManager.getDatabaseURL();
+			}
+			
 			int connectionID = getConnectionID(dbURL);
 
 			assert connectionID != -1;
@@ -232,6 +238,9 @@ public class PersistentSchemaManager implements ISchemaManager{
 			return true;
 		} catch (SQLException e) {
 
+			e.printStackTrace();
+			return false;
+		} catch (RemoteException e) {
 			e.printStackTrace();
 			return false;
 		}
@@ -815,11 +824,49 @@ public class PersistentSchemaManager implements ISchemaManager{
 	@Override
 	public void buildSchemaManagerState(ISchemaManager otherSchemaManager)
 	throws RemoteException {
-		// TODO Auto-generated method stub
-
 		/*
 		 * Persist the state of the given schema manager reference to disk.
 		 */
+
+		try {		
+			/*
+			 * Obtain references to connected machines.
+			 */
+			Map<DatabaseURL, DatabaseInstanceRemote> databasesInSystem = otherSchemaManager.getConnectionInformation();
+
+			for (Entry<DatabaseURL, DatabaseInstanceRemote> databaseEntry: databasesInSystem.entrySet()){
+				addConnectionInformation(databaseEntry.getKey(), databaseEntry.getValue());
+			}
+
+			/*
+			 * Obtain references to data managers.
+			 */
+
+			Map<TableInfo, DataManagerRemote> dataManagers = otherSchemaManager.getDataManagers();
+
+			for (Entry<TableInfo, DataManagerRemote> dmEntry: dataManagers.entrySet()){
+				addTableInformation(dmEntry.getValue(), dmEntry.getKey());
+			}
+
+			/*
+			 * Obtain references to replicas.
+			 */
+
+			Map<String, Set<TableInfo>> replicaLocations = otherSchemaManager.getReplicaLocations();
+
+			for (Entry<String, Set<TableInfo>> databaseEntry: replicaLocations.entrySet()){
+				for (TableInfo tableInfo: databaseEntry.getValue()){
+					addReplicaInformation(tableInfo);
+				}
+			}
+
+		} catch (MovedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+
+
 	}
 
 	/* (non-Javadoc)
@@ -985,7 +1032,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 	 */
 	@Override
 	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL)
-			throws RemoteException, MovedException {
+	throws RemoteException, MovedException {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -995,7 +1042,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 	 */
 	@Override
 	public Set<DatabaseInstanceRemote> getDatabaseInstances()
-			throws RemoteException, MovedException {
+	throws RemoteException, MovedException {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -1006,8 +1053,17 @@ public class PersistentSchemaManager implements ISchemaManager{
 	@Override
 	public void removeConnectionInformation(
 			DatabaseInstanceRemote localDatabaseInstance)
-			throws RemoteException, MovedException {
+	throws RemoteException, MovedException {
 		// TODO Auto-generated method stub
-		
+
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#changeDataManagerLocation(org.h2.h2o.comms.remote.DataManagerRemote)
+	 */
+	@Override
+	public void changeDataManagerLocation(DataManagerRemote stub, TableInfo tableInfo) {
+		// TODO Auto-generated method stub
+
 	}
 }

@@ -1,4 +1,4 @@
-package org.h2.h2o.comms;
+package org.h2.h2o.manager;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
@@ -15,14 +15,12 @@ import org.h2.h2o.autonomic.AutonomicAction;
 import org.h2.h2o.autonomic.AutonomicController;
 import org.h2.h2o.autonomic.Replication;
 import org.h2.h2o.autonomic.Updates;
+import org.h2.h2o.comms.QueryProxy;
+import org.h2.h2o.comms.ReplicaManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.locking.ILockingTable;
 import org.h2.h2o.locking.LockingTable;
-import org.h2.h2o.manager.ISchemaManager;
-import org.h2.h2o.manager.Migratable;
-import org.h2.h2o.manager.MigrationException;
-import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TableInfo;
@@ -146,7 +144,7 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 	private Database database;
 
 	private boolean isAlive = true;
-	
+
 	/*
 	 * MIGRATION RELATED CODE.
 	 */
@@ -161,12 +159,12 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 	 * Whether the schema manager is in the process of being migrated. If this is true the schema manager will be 'locked', unable to service requests.
 	 */
 	private boolean inMigration;
-	
+
 	/**
 	 * Whether the schema manager has been moved to another location.
 	 */
 	private boolean hasMoved = false;
-	
+
 	/**
 	 * The amount of time which has elapsed since migration began. Used to timeout requests which take too long.
 	 */
@@ -231,6 +229,7 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 	 * @throws SQLException
 	 */
 	public static int createDataManagerTables(Session session) throws SQLException{
+		
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Creating data manager tables.");
 
 		String sql = "CREATE SCHEMA IF NOT EXISTS H2O; " +
@@ -276,7 +275,8 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 	 */
 	public boolean addReplicaInformation(long modificationID,
 			String databaseLocation, String tableType,
-			String localMachineAddress, int localMachinePort, String connectionType, int replicaSet, boolean isSM) throws RemoteException{
+			String localMachineAddress, int localMachinePort, String connectionType, int replicaSet, boolean isSM) throws RemoteException, MovedException{
+		preMethodTest();
 
 		if (!tableName.startsWith("H2O_")){
 
@@ -324,10 +324,12 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 	 * @see org.h2.h2o.comms.IDataManager#getQueryProxy(java.lang.String)
 	 */
 	@Override
-	public synchronized QueryProxy getQueryProxy(LockType lockRequested, DatabaseInstanceRemote databaseInstanceRemote) throws RemoteException, SQLException {
+	public synchronized QueryProxy getQueryProxy(LockType lockRequested, DatabaseInstanceRemote databaseInstanceRemote) throws RemoteException, SQLException, MovedException {
+		preMethodTest();
+
 		//if (!isAlive ) return null;
-		
-		
+
+
 		if (replicaManager.size() == 0){
 			try {
 				throw new Exception("Illegal State. There must be at least one replica");
@@ -473,7 +475,9 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 		return newReplicaLocations;
 	}
 
-	public int removeReplica(String dbLocation, String machineName, int connectionPort, String connectionType) throws RemoteException, SQLException {
+	public int removeReplica(String dbLocation, String machineName, int connectionPort, String connectionType) throws RemoteException, SQLException, MovedException {
+		preMethodTest();
+
 		int connectionID = getConnectionID(machineName, connectionPort, connectionType);
 		int tableID = getTableID();
 
@@ -498,7 +502,9 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 	 * @see org.h2.h2o.comms.DataManagerRemote#removeDataManager()
 	 */
 	@Override
-	public int removeDataManager() throws RemoteException, SQLException {
+	public int removeDataManager() throws RemoteException, SQLException, MovedException {	
+		preMethodTest();
+
 		int tableID = getTableID();
 		String sql = "DELETE FROM " + REPLICAS + " WHERE table_id=" + tableID + ";\nDELETE FROM " + TABLES + " WHERE tablename='" + tableName
 		+ "' AND schemaname='" + schemaName + "';";
@@ -535,7 +541,9 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 	 * @see org.h2.h2o.comms.DataManagerRemote#getLocation()
 	 */
 	@Override
-	public String getLocation() throws RemoteException{
+	public String getLocation() throws RemoteException, MovedException{
+		preMethodTest();
+
 		return replicaManager.getPrimary().getConnectionString();
 	}
 
@@ -728,7 +736,7 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 	 * @return
 	 */
 	public String getTableName() {
-		return schemaName + "." + tableName;
+		return tableName;
 	}
 
 
@@ -744,7 +752,9 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 	 * @see org.h2.h2o.comms.remote.DataManagerRemote#releaseLock(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
 	 */
 	@Override
-	public void releaseLock(DatabaseInstanceRemote requestingDatabase, Set<DatabaseInstanceRemote> updatedReplicas, int updateID) throws RemoteException {
+	public void releaseLock(DatabaseInstanceRemote requestingDatabase, Set<DatabaseInstanceRemote> updatedReplicas, int updateID) throws RemoteException, MovedException {
+		preMethodTest();
+
 		/*
 		 * Update the set of 'active replicas' and their update IDs. 
 		 */
@@ -772,8 +782,11 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 
 	/**
 	 * @return
+	 * @throws MovedException 
+	 * @throws RemoteException 
 	 */
-	public TableInfo getTableInfo() {
+	public TableInfo getTableInfo() throws RemoteException {
+
 		return new TableInfo(tableName, schemaName, database.getDatabaseURL());
 	}
 
@@ -786,30 +799,33 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 	}
 
 	private void preMethodTest() throws RemoteException, MovedException{
-		long currentTimeOfMigration = System.currentTimeMillis() - migrationTime;
-
+		if (hasMoved){
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Data manager has moved. Throwing MovedException.");
+			throw new MovedException(movedLocation);
+		}
 		/*
 		 * If the manager is being migrated, and has been migrated for less than 10 seconds (timeout period, throw an execption. 
 		 */
 		if (inMigration){
+			//If it hasn't moved, but is in the process of migration an exception will be thrown.
+			long currentTimeOfMigration = System.currentTimeMillis() - migrationTime;
+			
 			if (currentTimeOfMigration < MIGRATION_TIMEOUT) {
 				throw new RemoteException();
 			} else {
 				inMigration = false; //Timeout request.
 				this.migrationTime = 0l;
 			}
-		} else if (hasMoved){
-			throw new MovedException(movedLocation);
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.Migratable#checkConnection()
 	 */
 	@Override
 	public void checkConnection() throws RemoteException, MovedException {
 		preMethodTest();
-		
+
 	}
 
 	/* (non-Javadoc)
@@ -817,11 +833,11 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 	 */
 	@Override
 	public void completeMigration() throws RemoteException, MovedException,
-			MigrationException {
+	MigrationException {
 		if (!inMigration){ // the migration process has timed out.
 			throw new MigrationException("Migration process has timed-out. Took too long to migrate (timeout: " + MIGRATION_TIMEOUT + "ms)");
 		}
-		
+
 		this.hasMoved = true;
 		this.inMigration = false;
 	}
@@ -831,7 +847,7 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 	 */
 	@Override
 	public void prepareForMigration(String newLocation) throws RemoteException,
-			MigrationException, MovedException {
+	MigrationException, MovedException {
 		preMethodTest();
 
 		movedLocation = newLocation;
@@ -840,35 +856,56 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 
 		migrationTime = System.currentTimeMillis();
 	}
-	
 
-	public void buildDataManagerState(DataManagerRemote otherDataManager)
-	throws RemoteException, MovedException {
+
+	public void buildDataManagerState(DataManagerRemote otherDataManager) throws RemoteException, MovedException {
 		preMethodTest();
-		
-//		/*
-//		 * Obtain references to connected machines.
-//		 */
-//		databasesInSystem = otherSchemaManager.getConnectionInformation();
-//
-//		/*
-//		 * Obtain references to data managers.
-//		 */
-//		dataManagers = otherSchemaManager.getDataManagers();
-//		
-//		/*
-//		 * At this point some of the data manager references will be null if the data managers could not be found at their old location.
-//		 * If a reference is null, but there is a copy of the table locally then a new data manager can be created.
-//		 * If a reference is null, but there is no local copy then the table should no longer be accessible. 
-//		 */
-//
-//		//Map<TableInfo, DataManagerRemote> newManagers = new HashMap<TableInfo, DataManagerRemote>();
-//
-//		/*
-//		 * Obtain references to replicas.
-//		 */
-//		//replicaLocations = otherSchemaManager.getReplicaLocations();
 
+		/*
+		 * Obtain fully qualified table name.
+		 */
+//		this.schemaName = otherDataManager.getSchemaName();
+//		this.tableName = otherDataManager.getTableName();
+		//This is done when constructing the new data manager.
+		
+		/*
+		 * Obtain replica manager.
+		 */
+		this.replicaManager = otherDataManager.getReplicaManager();
+
+
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.remote.DataManagerRemote#getSchemaName()
+	 */
+	@Override
+	public String getSchemaName()  throws RemoteException {
+		return schemaName;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.remote.DataManagerRemote#getReplicaManager()
+	 */
+	@Override
+	public ReplicaManager getReplicaManager() throws RemoteException {
+		return this.replicaManager;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.remote.DataManagerRemote#getTableSet()
+	 */
+	@Override
+	public int getTableSet()  throws RemoteException {
+		return 1; //TODO implement
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.remote.DataManagerRemote#getDatabaseURL()
+	 */
+	@Override
+	public DatabaseURL getDatabaseURL() throws RemoteException {
+		return database.getDatabaseURL();
 	}
 
 }

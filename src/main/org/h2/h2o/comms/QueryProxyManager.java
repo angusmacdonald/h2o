@@ -15,6 +15,7 @@ import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TransactionNameGenerator;
 
@@ -280,6 +281,8 @@ public class QueryProxyManager {
 			}
 		} catch (RemoteException e) {
 			ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the data manager");
+		} catch (MovedException e) {
+			ErrorHandling.exceptionError(e, "This should never happen - migrating process should hold the lock.");
 		}
 	}
 

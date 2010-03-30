@@ -434,6 +434,10 @@ public class CreateReplica extends SchemaCommand {
 				} catch (RemoteException e) {
 					System.err.println("Error informing data manager of update.");
 					e.printStackTrace();
+				} catch (MovedException e) {
+					e.printStackTrace();
+					System.err.println("FIND NEW DATA MANAGER LOCATION AT THIS POINT.");
+					
 				}
 			}
 
@@ -941,7 +945,12 @@ public class CreateReplica extends SchemaCommand {
 			if (dm == null){
 				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new TableInfo(tableName, getSchema().getName()).toString());
 			} else {
-				whereDataWillBeTakenFrom = dm.getLocation();
+				try {
+					whereDataWillBeTakenFrom = dm.getLocation();
+				} catch (MovedException e) {
+					e.printStackTrace();
+					System.err.println("FIND NEW DATA MANAGER LOCATION AT THIS POINT.");//TODO find
+				}
 			}
 		}
 

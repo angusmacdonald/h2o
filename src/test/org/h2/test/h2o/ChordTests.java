@@ -241,11 +241,38 @@ public class ChordTests extends TestBase {
 	public void SchemaManagerMigration() throws InterruptedException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		try {
-			sas[1].executeUpdate("MIGRATE SCHEMA MANAGER");
+			sas[1].executeUpdate("MIGRATE SCHEMAMANAGER");
 
 			sas[2].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+			sas[2].execute("SELECT * FROM TEST2;");
 		} catch (SQLException e) {
 			e.printStackTrace();
+			fail("Didn't work.");
+		}
+	}
+	
+	/**
+	 * Tests that when the data manager is migrated another database instance is able to connect to the new manager without any manual intervention.
+	 * 
+	 */
+	@Test
+	public void DataManagerMigration() throws InterruptedException {
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		try {
+			sas[1].executeUpdate("MIGRATE DATAMANAGER test");
+
+			/*
+			 * Test that the new data manager can be found.
+			 */
+			sas[2].executeUpdate("INSERT INTO TEST VALUES(4, 'helloagain');");
+			
+			/*
+			 * Test that the old data manager is no longer accessible, and that the referene can be updated.
+			 */
+			sas[0].executeUpdate("INSERT INTO TEST VALUES(5, 'helloagainagain');");
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("Didn't work.");
 		}
 	}
 //		/**

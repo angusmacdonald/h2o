@@ -23,10 +23,10 @@ import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
-import org.h2.h2o.comms.DataManager;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.manager.DataManager;
 import org.h2.h2o.manager.ISchemaManager;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.util.LockType;
@@ -450,6 +450,7 @@ public class CreateTable extends SchemaCommand {
 			try {
 				stub = (DataManagerRemote) UnicastRemoteObject.exportObject(dataManager, 0);
 			} catch (Exception e) {
+				e.printStackTrace();
 				//May already be exported.
 			}
 

@@ -94,7 +94,7 @@ public class SchemaManagerReference {
 	 * <p>The schema manager may be remote.
 	 * @return
 	 */
-	public ISchemaManager getSchemaManager(){
+	public SchemaManagerRemote getSchemaManager(){
 		return getSchemaManager(false);
 	}
 

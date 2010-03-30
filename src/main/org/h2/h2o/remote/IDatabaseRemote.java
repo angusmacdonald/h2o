@@ -6,9 +6,9 @@ import java.sql.SQLException;
 import java.util.Set;
 
 import org.h2.engine.Session;
-import org.h2.h2o.comms.DataManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.manager.DataManager;
 import org.h2.h2o.manager.SchemaManagerReference;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;

@@ -66,6 +66,7 @@ import org.h2.command.dml.ExplainPlan;
 import org.h2.command.dml.GetRmiPort;
 import org.h2.command.dml.Insert;
 import org.h2.command.dml.Merge;
+import org.h2.command.dml.MigrateDataManager;
 import org.h2.command.dml.MigrateSchemaManager;
 import org.h2.command.dml.NoOperation;
 import org.h2.command.dml.Query;
@@ -4828,10 +4829,14 @@ public class Parser {
 	 * @throws SQLException 
 	 */
 	private Prepared parseMigrate() throws SQLException {
-		read("SCHEMA"); read("MANAGER");
-
-		return new MigrateSchemaManager(session, null);
-
+		if (readIf("SCHEMAMANAGER")){
+			return new MigrateSchemaManager(session, null);
+		} else if (readIf("DATAMANAGER")) {
+			String tableName = readIdentifierWithSchema();
+			return new MigrateDataManager(session, null, tableName);
+		} else {
+			throw new SQLException("Could parse migrate command.");
+		}
 	}
 
 	private CreateReplica parseCreateReplica(boolean temp, boolean globalTemp, boolean persistent) throws SQLException, RemoteException {

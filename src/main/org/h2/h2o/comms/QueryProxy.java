@@ -13,6 +13,7 @@ import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.util.LockType;
 import org.h2.table.Table;
 import org.h2.test.h2o.H2OTest;
@@ -118,6 +119,8 @@ public class QueryProxy implements Serializable{
 				dataManagerProxy.releaseLock(requestingDatabase, null, updateID);
 			} catch (RemoteException e) {
 				ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the data manager");
+			} catch (MovedException e) {
+				ErrorHandling.hardError("This should never happen at this point. The migrating machine should have a lock taken out.");
 			}
 			throw new SQLException("No replicas found to perform update: " + sql);
 		}
@@ -252,6 +255,12 @@ public class QueryProxy implements Serializable{
 		} catch (RemoteException e) {
 			e.printStackTrace();
 			throw new SQLException("Unable to obtain query proxy from data manager (remote exception).");
+		} catch (MovedException e) {
+			e.printStackTrace();
+			
+			System.err.println("FIND NEW DATA MANAGER LOCATION AT THIS POINT.");
+			
+			return null;
 		}
 	}
 
