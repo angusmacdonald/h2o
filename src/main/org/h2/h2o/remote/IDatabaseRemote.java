@@ -26,15 +26,6 @@ public interface IDatabaseRemote {
 	public DatabaseURL connectToDatabaseSystem(Session systemSession);
 
 	/**
-	 * Find a data manager for the given table in the database system.
-	 * @param tableName	the table whose manager is to be found.
-	 * @return	Remote reference to the data manager in question.
-	 * @throws SQLException 
-	 */
-	public DataManagerRemote lookupDataManager(String tableName)
-			throws SQLException;
-
-	/**
 	 * Get the remote reference of the local database instance.
 	 * 
 	 * <p>This is used as an identity when locking tables for a particular query.

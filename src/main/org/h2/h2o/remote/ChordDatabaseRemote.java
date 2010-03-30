@@ -222,38 +222,6 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 		//		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.h2.h2o.IRemoteDatabase#lookupDataManager(java.lang.String)
-	 */
-	public DataManagerRemote lookupDataManager(String tableName) throws SQLException {
-		try {
-			ISchemaManager schemaManager = schemaManagerRef.getSchemaManager();
-
-			return schemaManager.lookup(new TableInfo(tableName));
-		} catch (RemoteException e) {
-			e.printStackTrace();
-			throw new SQLException("Unable to contact schema manager.");
-		} catch (MovedException e) {
-			schemaManagerRef.handleMovedException(e);
-			return lookupDataManager(tableName);
-		}
-	}
-
-
-//	/* (non-Javadoc)
-//	 * @see org.h2.h2o.IRemoteDatabase#getDatabaseInstance(org.h2.h2o.util.DatabaseURL)
-//	 */
-//	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL) {
-//		if (databaseInstanceLocator == null) return null;
-//
-//		try {
-//			return databaseInstanceLocator.lookupDatabaseInstance(databaseURL);
-//		} catch (SQLException e) {
-//			e.printStackTrace();
-//			return null;
-//		}
-//	}
-
 	public void exportConnectionObject() {
 		/*
 		 * This is done so that the local database instance is exported correctly on RMI. It doesn't seem to

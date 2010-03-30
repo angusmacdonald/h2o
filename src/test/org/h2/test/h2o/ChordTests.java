@@ -275,6 +275,31 @@ public class ChordTests extends TestBase {
 			fail("Didn't work.");
 		}
 	}
+	
+	@Test
+	public void DataManagerMigrationWithCachedReference() throws InterruptedException {
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		try {
+			sas[0].executeUpdate("INSERT INTO TEST VALUES(7, '7');");
+			sas[1].executeUpdate("INSERT INTO TEST VALUES(6, '6');");
+			sas[2].executeUpdate("INSERT INTO TEST VALUES(8, '8');");
+			
+			sas[1].executeUpdate("MIGRATE DATAMANAGER test");
+
+			/*
+			 * Test that the new data manager can be found.
+			 */
+			sas[2].executeUpdate("INSERT INTO TEST VALUES(4, 'helloagain');");
+			
+			/*
+			 * Test that the old data manager is no longer accessible, and that the referene can be updated.
+			 */
+			sas[0].executeUpdate("INSERT INTO TEST VALUES(5, 'helloagainagain');");
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("Didn't work.");
+		}
+	}
 //		/**
 //		 * Tests that the state of the schema manager is replicated - inserts data after the schema manager
 //		 * state is replicated (probably - not deterministic).

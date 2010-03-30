@@ -4435,7 +4435,12 @@ public class Parser {
 			//		
 
 
+			if (dm.getDatabaseURL().equals(session.getDatabase().getDatabaseURL())){
+				throw new SQLException("The database is incorrectly trying to create a linked table to itself. Illegal code path.");
+			}
+			
 			tableLocation = dm.getLocation();
+			
 			//		}
 		} catch (MovedException e){
 			throw new RemoteException("Schema Manager has moved.");

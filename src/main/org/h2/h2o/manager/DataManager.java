@@ -744,8 +744,8 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 	 * @see org.h2.h2o.comms.DataManagerRemote#testAvailability()
 	 */
 	@Override
-	public void testAvailability() {
-		//Doesn't do anything.
+	public void testAvailability() throws RemoteException, MovedException {
+		preMethodTest();
 	}
 
 	/* (non-Javadoc)

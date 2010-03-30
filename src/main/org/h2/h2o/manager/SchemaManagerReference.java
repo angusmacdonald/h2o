@@ -5,6 +5,8 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.h2.engine.Database;
 import org.h2.h2o.comms.remote.DataManagerRemote;
@@ -36,6 +38,8 @@ public class SchemaManagerReference {
 	 * Reference to the database system's schema manager.
 	 */
 	private SchemaManagerRemote schemaManager;
+
+	private Map<TableInfo, DataManagerRemote> cachedDataManagerReferences = new HashMap<TableInfo, DataManagerRemote>();
 
 	/**
 	 * Location of the actual schema manager.
@@ -368,11 +372,12 @@ public class SchemaManagerReference {
 	}
 
 
+
 	/**
-	 * 
-	 * @param tableName
-	 * @return
-	 * @throws SQLException
+	 * Find a data manager for the given table in the database system.
+	 * @param tableName	the table whose manager is to be found.
+	 * @return	Remote reference to the data manager in question.
+	 * @throws SQLException 
 	 */
 	public DataManagerRemote lookup(String tableName) throws SQLException {
 		return lookup(new TableInfo(tableName));
@@ -383,8 +388,27 @@ public class SchemaManagerReference {
 	}
 
 	private DataManagerRemote lookup(TableInfo tableInfo, boolean alreadyCalled) throws SQLException {
+
+		DataManagerRemote dataManager = cachedDataManagerReferences.get(tableInfo);
+		if (dataManager != null){
+
+			try {
+				dataManager.testAvailability();
+
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Returning cached data manager for lookup operation.");
+
+				return dataManager;
+			} catch (RemoteException e) {
+				//Lookup location again.
+			} catch (MovedException e) {
+				//Lookup location again.
+			}	
+		}
+
 		try {
-			return schemaManager.lookup(tableInfo);
+			dataManager = schemaManager.lookup(tableInfo);
+			cachedDataManagerReferences.put(tableInfo, dataManager);
+			return dataManager;
 		} catch (MovedException e) {
 			if (alreadyCalled)
 				throw new SQLException("System failed to handle a MovedException correctly on a schema manager lookup.");
