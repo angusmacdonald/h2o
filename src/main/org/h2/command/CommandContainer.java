@@ -8,11 +8,15 @@ package org.h2.command;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.Set;
 
+import org.h2.command.dml.Select;
 import org.h2.expression.Parameter;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.QueryProxyManager;
+import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.result.LocalResult;
+import org.h2.table.Table;
 import org.h2.test.h2o.H2OTest;
 import org.h2.util.ObjectArray;
 import org.h2.value.Value;
@@ -114,8 +118,21 @@ public class CommandContainer extends Command {
 		// TODO query time: should keep lock time separate from running time
 		start();
 		prepared.checkParameters();
+		
+		//TODO what if information schema is mixed case? Does it matter?
+		if (!prepared.sqlStatement.contains("H2O.") && !prepared.sqlStatement.contains("INFORMATION_SCHEMA.")&& !prepared.sqlStatement.contains("information_schema.") && prepared instanceof Select){
+			
+			this.acquireLocks(proxyManager); 
+
+			if (!proxyManager.hasAllLocks()){
+				throw new SQLException("Couldn't obtain locks for all tables involved in query.");
+			}
+		}
+		
 		LocalResult result = prepared.query(maxrows);
 		prepared.trace(startTime, result.getRowCount());
+		
+		proxyManager.endTransaction(null);
 		return result;
 	}
 

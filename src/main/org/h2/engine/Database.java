@@ -2650,7 +2650,6 @@ public class Database implements DataHandler {
 		return schemaManagerRef.lookup(tableName);
 	}
 
-
 	/**
 	 * @param replicaLocationString
 	 * @return

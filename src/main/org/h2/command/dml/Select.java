@@ -25,6 +25,9 @@ import org.h2.expression.ExpressionColumn;
 import org.h2.expression.ExpressionVisitor;
 import org.h2.expression.Parameter;
 import org.h2.expression.Wildcard;
+import org.h2.h2o.comms.QueryProxy;
+import org.h2.h2o.comms.QueryProxyManager;
+import org.h2.h2o.util.LockType;
 import org.h2.index.Cursor;
 import org.h2.index.Index;
 import org.h2.index.IndexType;
@@ -798,8 +801,8 @@ public class Select extends Query {
         return cost;
     }
 
-    public HashSet getTables() {
-        HashSet set = new HashSet();
+    public HashSet<Table> getTables() {
+        HashSet<Table> set = new HashSet<Table>();
         for (int i = 0; i < filters.size(); i++) {
             TableFilter filter = (TableFilter) filters.get(i);
             set.add(filter.getTable());
@@ -1159,4 +1162,20 @@ public class Select extends Query {
 	public LocationPreference getLocationPreference() {
 		return locationPreference;
 	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.command.Prepared#acquireLocks(org.h2.h2o.comms.QueryProxyManager)
+	 */
+	@Override
+	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager)
+			throws SQLException {
+		
+		for (Table table: this.getTables()){
+			queryProxyManager.addProxy(QueryProxy.getQueryProxyAndLock(table, LockType.READ, this.session.getDatabase()));
+		}
+		
+		return null; 
+	}
+	
+	
 }

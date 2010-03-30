@@ -90,7 +90,24 @@ public class ReplicaTests extends TestBase{
 		}
 	}
 
+	@Test
+	public void selectFromReplica(){
 
+		try{	
+			sa.execute("CREATE TABLE TEST2 (id2 int references test(id))");
+			sa.execute("INSERT INTO TEST2 VALUES (1);");
+			sa.execute("INSERT INTO TEST2 VALUES (2);");
+			/*
+			 * Check that the local copy has only two entries.
+			 */
+			sa.execute("SELECT * FROM TEST, TEST2 WHERE TEST.ID = TEST2.ID2");
+
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("An Unexpected SQLException was thrown.");
+		}
+	}
+	
 
 	/**
 	 * Tests that the SELECT PRIMARY command succeeds, in the case where the primary is local.

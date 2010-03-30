@@ -272,7 +272,7 @@ public class QueryProxyManager {
 	 * Release locks for every table that is part of this update. This also updates the information on
 	 * which replicas were updated (which are currently active), hence the parameter
 	 * @param updatedReplicas The set of replicas which were updated. This is NOT used to release locks, but to update the 
-	 * data managers state on which replicas are up-to-date.
+	 * data managers state on which replicas are up-to-date. Null if none have changed.
 	 */
 	public void endTransaction(Set<DatabaseInstanceRemote> updatedReplicas) { 
 		try {
@@ -326,6 +326,19 @@ public class QueryProxyManager {
 
 	public List<String> getSQL(){
 		return this.queries;
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean hasAllLocks() {
+		for (QueryProxy qp: queryProxies.values()){
+			if (qp.getLockGranted().equals(LockType.NONE)){
+				return false;
+			}
+		}
+		
+		return true;
 	}
 
 }

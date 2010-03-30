@@ -4346,7 +4346,7 @@ public class Parser {
 	private Table readTableOrView(String tableName, boolean searchRemote, LocationPreference locale) throws SQLException {
 		//System.out.println("Looking for table '" + tableName + "'");
 		// same algorithm than readSequence
-
+		
 		if (schemaName != null) {
 			return getSchema().getTableOrView(session, tableName);
 		}
@@ -4360,6 +4360,7 @@ public class Parser {
 			schemaNames = new String[1];
 			schemaNames[0] = session.getCurrentSchemaName();
 		}
+		
 		for (int i = 0; schemaNames != null && i < schemaNames.length; i++) {
 			Schema s = database.getSchema(schemaNames[i]);
 			table = s.findTableOrView(session, tableName, locale);
