@@ -256,11 +256,7 @@ public class QueryProxy implements Serializable{
 			e.printStackTrace();
 			throw new SQLException("Unable to obtain query proxy from data manager (remote exception).");
 		} catch (MovedException e) {
-			e.printStackTrace();
-			
-			System.err.println("FIND NEW DATA MANAGER LOCATION AT THIS POINT.");
-			
-			return null;
+			throw new SQLException("Data Manager has moved and can't be accessed.");
 		}
 	}
 

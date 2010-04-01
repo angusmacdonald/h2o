@@ -13,6 +13,8 @@ import org.h2.h2o.manager.SchemaManagerReference;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
 
+import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
+
 /**
  * The interface between a local database instance and the rest of the database system.
  * 
@@ -69,4 +71,9 @@ public interface IDatabaseRemote {
 	 */
 	public void exportConnectionObject();
 
+	/**
+	 * @throws RemoteException 
+	 * 
+	 */
+	public IChordRemoteReference lookupSchemaManagerNodeLocation() throws RemoteException;
 }

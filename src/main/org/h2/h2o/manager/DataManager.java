@@ -145,6 +145,7 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 
 	private boolean isAlive = true;
 
+	private boolean shutdown = false;
 	/*
 	 * MIGRATION RELATED CODE.
 	 */
@@ -767,19 +768,6 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 
 	}
 
-	/*******************************************************
-	 * Methods implementing the AutonomicController interface.
-	 ***********************************************************/
-
-	/* (non-Javadoc)
-	 * @see org.h2.h2o.autonomic.AutonomicController#changeSetting(org.h2.h2o.autonomic.AutonomicAction)
-	 */
-	@Override
-	public boolean changeSetting(AutonomicAction action) throws RemoteException {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
 	/**
 	 * @return
 	 * @throws MovedException 
@@ -798,8 +786,12 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 		isAlive = false;
 	}
 
+	/*******************************************************
+	 * Methods implementing the Migrate interface.
+	 ***********************************************************/
+
 	private void preMethodTest() throws RemoteException, MovedException{
-		if (hasMoved){
+		if (hasMoved || shutdown){
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Data manager has moved. Throwing MovedException.");
 			throw new MovedException(movedLocation);
 		}
@@ -906,6 +898,29 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 	@Override
 	public DatabaseURL getDatabaseURL() throws RemoteException {
 		return database.getDatabaseURL();
+	}
+
+
+	/*******************************************************
+	 * Methods implementing the AutonomicController interface.
+	 ***********************************************************/
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.autonomic.AutonomicController#changeSetting(org.h2.h2o.autonomic.AutonomicAction)
+	 */
+	@Override
+	public boolean changeSetting(AutonomicAction action) throws RemoteException {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.Migratable#shutdown(boolean)
+	 */
+	@Override
+	public void shutdown(boolean shutdown) throws RemoteException,
+			MovedException {
+		this.shutdown = shutdown;
 	}
 
 }

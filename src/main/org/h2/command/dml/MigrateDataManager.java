@@ -149,7 +149,7 @@ public class MigrateDataManager extends org.h2.command.ddl.SchemaCommand {
 
 		try {
 			DataManagerRemote stub = (DataManagerRemote) UnicastRemoteObject.exportObject(newDataManager, 0);
-			db.getSchemaManagerReference().getSchemaManager().changeDataManagerLocation(stub, new TableInfo(tableName, schemaName));
+			db.getSchemaManagerReference().getSchemaManager(false).changeDataManagerLocation(stub, new TableInfo(tableName, schemaName));
 		} catch (Exception e) {
 			ErrorHandling.exceptionError(e, "Data manager migration failed.");
 		}

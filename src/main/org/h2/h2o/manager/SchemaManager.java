@@ -1,6 +1,7 @@
 package org.h2.h2o.manager;
 
 import java.rmi.RemoteException;
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.Set;
 
@@ -50,6 +51,11 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	 * Whether the schema manager has been moved to another location.
 	 */
 	private boolean hasMoved = false;
+	
+	/**
+	 * Whether the schema manager has been shutdown.
+	 */
+	private boolean shutdown = false;
 	
 	/**
 	 * The amount of time which has elapsed since migration began. Used to timeout requests which take too long.
@@ -190,7 +196,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	 */
 	@Override
 	public void buildSchemaManagerState(ISchemaManager otherSchemaManager)
-	throws RemoteException, MovedException {
+	throws RemoteException, MovedException, SQLException {
 		preMethodTest();
 		inMemory.buildSchemaManagerState(otherSchemaManager);
 		persisted.buildSchemaManagerState(otherSchemaManager);
@@ -201,7 +207,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	 */
 	@Override
 	public void buildSchemaManagerState()
-	throws RemoteException, MovedException {
+	throws RemoteException, MovedException, SQLException {
 		preMethodTest();
 		inMemory.buildSchemaManagerState(persisted);
 	}
@@ -210,7 +216,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	 * @see org.h2.h2o.manager.ISchemaManager#getConnectionInformation()
 	 */
 	@Override
-	public Map<DatabaseURL, DatabaseInstanceRemote> getConnectionInformation() throws RemoteException, MovedException {
+	public Map<DatabaseURL, DatabaseInstanceRemote> getConnectionInformation() throws RemoteException, MovedException, SQLException {
 		return inMemory.getConnectionInformation();
 	}
 
@@ -286,7 +292,10 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 
 
 	private void preMethodTest() throws RemoteException, MovedException{
-		if (hasMoved){
+
+		if (shutdown){
+			throw new RemoteException(null);
+		} else if (hasMoved){
 			throw new MovedException(movedLocation);
 		}
 		/*
@@ -351,6 +360,14 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 		
 		inMemory.changeDataManagerLocation(stub, tableInfo);
 		persisted.changeDataManagerLocation(stub, tableInfo);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.Migratable#shutdown()
+	 */
+	@Override
+	public void shutdown(boolean shutdown) throws RemoteException, MovedException {
+		this.shutdown = shutdown;
 	}
 
 }

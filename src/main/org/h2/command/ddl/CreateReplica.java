@@ -433,12 +433,9 @@ public class CreateReplica extends SchemaCommand {
 								db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType(), tableSet, db.getSchemaManagerReference().isSchemaManagerLocal());
 					} 
 				} catch (RemoteException e) {
-					System.err.println("Error informing data manager of update.");
-					e.printStackTrace();
+					ErrorHandling.exceptionError(e, "Error informing data manager of update.");
 				} catch (MovedException e) {
-					e.printStackTrace();
-					System.err.println("FIND NEW DATA MANAGER LOCATION AT THIS POINT.");
-					
+					throw new SQLException("Data Manager has moved and can't be accessed.");
 				}
 			}
 

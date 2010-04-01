@@ -1,5 +1,6 @@
 package org.h2.h2o.manager;
 
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -8,6 +9,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.remote.ChordInterface;
@@ -30,6 +32,8 @@ import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class SchemaManagerReference {
+
+	public static final String SCHEMA_MANAGER = "SCHEMA_MANAGER";
 
 	/*
 	 * SCHEMA MANAGER STATE.
@@ -55,6 +59,8 @@ public class SchemaManagerReference {
 	 * Whether the schema manager lookup on Chord resolves to this machines keyspace.
 	 */
 	private boolean inKeyRange = false;
+
+	private IChordRemoteReference schemaManagerNode;
 
 	/*
 	 * CHORD-RELATED.
@@ -85,6 +91,7 @@ public class SchemaManagerReference {
 	 */
 	private Database db;
 
+
 	/**
 	 * When a new object is created with this constructor the schema manager reference may not exist, so only the database object
 	 * is required.
@@ -101,11 +108,21 @@ public class SchemaManagerReference {
 	 * <p>The schema manager may be remote.
 	 * @return
 	 */
-	public SchemaManagerRemote getSchemaManager(){
+	public SchemaManagerRemote getSchemaManager() {
 		return getSchemaManager(false);
 	}
 
-	private SchemaManagerRemote getSchemaManager(boolean performedSchemaManagerLookup){
+	/**
+	 * 
+	 * @param inShutdown If the system is being shut down any
+	 * remote exceptions when contacting the schema manager will be ignored.
+	 * @return
+	 */
+	public SchemaManagerRemote getSchemaManager(boolean inShutdown){
+		return getSchemaManager(false, inShutdown);
+	}
+
+	private SchemaManagerRemote getSchemaManager(boolean performedSchemaManagerLookup, boolean inShutdown){
 		if (schemaManager == null) {
 			schemaManager = this.findSchemaManager();
 			performedSchemaManagerLookup = true;
@@ -113,6 +130,13 @@ public class SchemaManagerReference {
 
 		try {
 			schemaManager.checkConnection();
+		}catch (NullPointerException e) {
+
+			/*
+			 * Call this method again if we attempted to access a cached schema manager reference and it didn't work.
+			 */
+	
+			ErrorHandling.exceptionError(e, "Schema Manager is not accessible");
 		} catch (RemoteException e) {
 
 			/*
@@ -120,12 +144,18 @@ public class SchemaManagerReference {
 			 */
 			if (!performedSchemaManagerLookup){
 				schemaManager = null;
-				return getSchemaManager(true);
+				return getSchemaManager(true, inShutdown);
 			}
 
 			ErrorHandling.exceptionError(e, "Schema Manager is not accessible");
 		} catch (MovedException e) {
-			this.handleMovedException(e);
+			if (!inShutdown){
+				try {
+					this.handleMovedException(e);
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+				}
+			}
 		}
 
 		return schemaManager;
@@ -163,7 +193,7 @@ public class SchemaManagerReference {
 		Registry registry = getSchemaManagerRegistry();
 
 		try {
-			schemaManager = (SchemaManagerRemote)registry.lookup("SCHEMA_MANAGER");
+			schemaManager = (SchemaManagerRemote)registry.lookup(SCHEMA_MANAGER);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -197,9 +227,9 @@ public class SchemaManagerReference {
 	/**
 	 * @param chord
 	 */
-	public void getSchemaManagerLocationIfNotKnown(ChordInterface chord) {
+	public void getSchemaManagerLocationIfNotKnown(ChordInterface chord) throws RemoteException {
 		if (schemaManagerLocationURL == null){ // true if this node has just joined a ring.
-			schemaManagerLocationURL = chord.getActualSchemaManagerLocation();
+			schemaManagerLocationURL = chord.getSchemaManagerLocation();
 		}
 	}
 
@@ -241,77 +271,121 @@ public class SchemaManagerReference {
 		return inKeyRange;
 	}
 
-	public void migrateSchemaManagerToLocalInstance(boolean persistedSchemaTablesExist){
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Preparing to migrate schema manager.");
+	/**
+	 * Create another schema manager at the current location, replacing the old manager.
+	 * @param persistedSchemaTablesExist	Whether replicated copies of the schema managers state exist locally.
+	 * @param recreateFromPersistedState If true the new schema manager will be re-instantiated from persisted state on disk. Otherwise
+	 * it will be migrated from an active in-memory copy. If the old schema manager has failed the new manager must be recreated from
+	 * persisted state.
+	 */
+	public void migrateSchemaManagerToLocalInstance(boolean persistedSchemaTablesExist, boolean recreateFromPersistedState){
 
-		/*
-		 * Create a new schema manager instance locally.
-		 */
-		SchemaManagerRemote newSchemaManager = null;
-		try {
-			newSchemaManager = new SchemaManager(db, true);
-		} catch (Exception e) {
-			ErrorHandling.exceptionError(e, "Failed to create new in-memory schema manager.");
+		if (recreateFromPersistedState){
+			/*
+			 * INSTANTIATE A NEW SCHEMA MANAGER FROM PERSISTED STATE. This must be called if the previous schema manager
+			 * has failed.
+			 */
+			if (!persistedSchemaTablesExist){
+				ErrorHandling.hardError("The system doesn't have a mechanism for recreating the state of the schema manager from remote machines.");
+			}
+
+			SchemaManagerRemote newSchemaManager = null;
+			try {
+				newSchemaManager = new SchemaManager(db, false); // false - don't overwrite saved persisted state.
+			} catch (Exception e) {
+				ErrorHandling.exceptionError(e, "Failed to create new in-memory schema manager.");
+			}
+
+			try {
+				newSchemaManager.buildSchemaManagerState();
+
+				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "New schema manager created.");
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			} catch (MovedException e) {
+				e.printStackTrace();
+			} catch (SQLException e) {
+				ErrorHandling.exceptionError(e, "Persisted state didn't exist on machine as expected.");
+			}
+
+			schemaManager = newSchemaManager;
+
+		} else {
+			/*
+			 * CREATE A NEW SCHEMA MANAGER BY COPYING THE STATE OF THE CURRENT ACTIVE IN-MEMORY SCHEMA MANAGER.
+			 */
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Preparing to migrate schema manager.");
+
+			/*
+			 * Create a new schema manager instance locally.
+			 */
+			SchemaManagerRemote newSchemaManager = null;
+			try {
+				newSchemaManager = new SchemaManager(db, true);
+			} catch (Exception e) {
+				ErrorHandling.exceptionError(e, "Failed to create new in-memory schema manager.");
+			}
+
+			DatabaseURL newLocation = db.getDatabaseURL();
+
+			/*
+			 * Stop the old, remote, manager from accepting any more requests.
+			 */
+			try {
+				schemaManager.prepareForMigration(this.db.getDatabaseURL().getURLwithRMIPort());
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			} catch (MigrationException e) {
+				ErrorHandling.exceptionError(e, "This schema manager is already being migrated to another instance.");
+			} catch (MovedException e) {
+				ErrorHandling.exceptionError(e, "This schema manager has already been migrated to another instance.");
+			}
+
+			/*
+			 * Build the schema manager's state from that of the existing manager.
+			 */
+			try {
+				newSchemaManager.buildSchemaManagerState(schemaManager);
+			} catch (RemoteException e) {
+				ErrorHandling.exceptionError(e, "Failed to migrate schema manager to new machine.");
+			} catch (MovedException e) {
+				ErrorHandling.exceptionError(e, "This shouldn't be possible here. The schema manager has moved, but this instance should have had exclusive rights to it.");
+			} catch (SQLException e) {
+				ErrorHandling.exceptionError(e, "Couldn't create persisted tables as expected.");
+			}
+
+			/*
+			 * Shut down the old, remote, schema manager. Redirect requests to new manager.
+			 */
+			try {
+				schemaManager.completeMigration();
+			} catch (RemoteException e) {
+				ErrorHandling.exceptionError(e, "Failed to complete migration.");
+			} catch (MovedException e) {
+				ErrorHandling.exceptionError(e, "This shouldn't be possible here. The schema manager has moved, but this instance should have had exclusive rights to it.");
+			} catch (MigrationException e) {
+				ErrorHandling.exceptionError(e, "Migration process timed out. It took too long.");
+			}
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Schema Manager officially migrated to " + db.getDatabaseURL().getDbLocation() + ".");
+
+			/*
+			 * Confirm the new schema managers location by updating all local state.
+			 */
+			schemaManager = newSchemaManager;
+			this.isLocal = true;
+			this.schemaManagerLocationURL = newLocation;
+
+
+			try {
+				SchemaManagerRemote stub = (SchemaManagerRemote) UnicastRemoteObject.exportObject(schemaManager, 0);
+
+				getSchemaManagerRegistry().bind(SCHEMA_MANAGER, stub);
+			} catch (Exception e) {
+				ErrorHandling.exceptionError(e, "Schema manager migration failed.");
+			}
+
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Finished building new schema manager on " + db.getDatabaseURL().getDbLocation() + ".");
 		}
-
-		DatabaseURL newLocation = db.getDatabaseURL();
-
-		/*
-		 * Stop the old, remote, manager from accepting any more requests.
-		 */
-		try {
-			schemaManager.prepareForMigration(this.db.getDatabaseURL().getURLwithRMIPort());
-		} catch (RemoteException e) {
-			e.printStackTrace();
-		} catch (MigrationException e) {
-			ErrorHandling.exceptionError(e, "This schema manager is already being migrated to another instance.");
-		} catch (MovedException e) {
-			ErrorHandling.exceptionError(e, "This schema manager has already been migrated to another instance.");
-		}
-
-		/*
-		 * Build the schema manager's state from that of the existing manager.
-		 */
-		try {
-			newSchemaManager.buildSchemaManagerState(schemaManager);
-		} catch (RemoteException e) {
-			ErrorHandling.exceptionError(e, "Failed to migrate schema manager to new machine.");
-		} catch (MovedException e) {
-			ErrorHandling.exceptionError(e, "This shouldn't be possible here. The schema manager has moved, but this instance should have had exclusive rights to it.");
-		}
-
-		/*
-		 * Shut down the old, remote, schema manager. Redirect requests to new manager.
-		 */
-		try {
-			schemaManager.completeMigration();
-		} catch (RemoteException e) {
-			ErrorHandling.exceptionError(e, "Failed to complete migration.");
-		} catch (MovedException e) {
-			ErrorHandling.exceptionError(e, "This shouldn't be possible here. The schema manager has moved, but this instance should have had exclusive rights to it.");
-		} catch (MigrationException e) {
-			ErrorHandling.exceptionError(e, "Migration process timed out. It took too long.");
-		}
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Schema Manager officially migrated to " + db.getDatabaseURL().getDbLocation() + ".");
-
-		/*
-		 * Confirm the new schema managers location by updating all local state.
-		 */
-		schemaManager = newSchemaManager;
-		this.isLocal = true;
-		this.schemaManagerLocationURL = newLocation;
-
-
-		try {
-			SchemaManagerRemote stub = (SchemaManagerRemote) UnicastRemoteObject.exportObject(schemaManager, 0);
-
-			getSchemaManagerRegistry().bind("SCHEMA_MANAGER", stub);
-		} catch (Exception e) {
-			ErrorHandling.exceptionError(e, "Schema manager migration failed.");
-		}
-
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Finished building new schema manager on " + db.getDatabaseURL().getDbLocation() + ".");
-
 	}
 
 	/**
@@ -328,26 +402,28 @@ public class SchemaManagerReference {
 			}
 		}
 
-		migrateSchemaManagerToLocalInstance(persistedSchemaTablesExist);
+		migrateSchemaManagerToLocalInstance(persistedSchemaTablesExist, false);
 	}
 
 
 	/**
 	 * An exception has been thrown trying to access the schema manager because it has been moved to a new location. Handle this
 	 * by updating the reference to that of the new schema manager.
+	 * @throws SQLException 
 	 */
-	public void handleMovedException(MovedException e) {
+	public void handleMovedException(MovedException e) throws SQLException {
 
-		//TODO in places where this has been called it may be necessary to run the method again.
-
-		//TODO finish implementing this method!
 		String newLocation = e.getMessage();
+
+		if (newLocation == null){
+			throw new SQLException("The schema manager has been shutdown. It must be re-instantiated before another query can be answered.");
+		}
 
 		schemaManagerLocationURL = DatabaseURL.parseURL(newLocation);
 		Registry registry = getSchemaManagerRegistry();
 
 		try {
-			SchemaManagerRemote newSchemaManager = (SchemaManagerRemote)registry.lookup("SCHEMA_MANAGER");
+			SchemaManagerRemote newSchemaManager = (SchemaManagerRemote)registry.lookup(SCHEMA_MANAGER);
 			this.schemaManager = newSchemaManager;
 		} catch (Exception e1) {
 			e1.printStackTrace();
@@ -415,8 +491,46 @@ public class SchemaManagerReference {
 			handleMovedException(e);
 			return lookup(tableInfo, true);
 		} catch (RemoteException e) {
-			e.printStackTrace();
-			throw new SQLException("Data manager lookup failed.");
+			if (e.getMessage() == null){
+				//return handleFailedSchemaManager();
+				return null;
+			} else {
+				throw new SQLException("Internal system error: failed to contact Schema Manager.");
+			}
 		}
 	}
+
+	/**
+	 * The schema manager has failed or been shut down. This node must know figure out where the schema manager's persisted state
+	 * was, and use that state to create a new schema manager.
+	 * @return
+	 */
+	private DataManagerRemote handleFailedSchemaManager() {
+		
+		boolean unstable = true;
+		do{
+			try {
+				IChordRemoteReference chordNode = this.db.getRemoteInterface().lookupSchemaManagerNodeLocation();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		} while (unstable);
+		return null;
+	}
+
+	/**
+	 * 
+	 */
+	public void shutdown() {
+		if(inKeyRange && !Constants.IS_NON_SM_TEST){
+			try {
+				schemaManager.shutdown(true);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
 }

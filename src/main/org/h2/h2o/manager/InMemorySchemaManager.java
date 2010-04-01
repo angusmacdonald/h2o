@@ -297,7 +297,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	 */
 	@Override
 	public void buildSchemaManagerState(ISchemaManager otherSchemaManager)
-	throws RemoteException, MovedException {
+	throws RemoteException, MovedException, SQLException {
 
 		/*
 		 * Obtain references to connected machines.

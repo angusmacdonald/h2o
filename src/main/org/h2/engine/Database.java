@@ -778,14 +778,10 @@ public class Database implements DataHandler {
 			 */
 			try {
 				createH2OTables(true, databaseExists);
-				schemaManagerRef.getSchemaManager().buildSchemaManagerState();
+				schemaManagerRef.getSchemaManager(false).buildSchemaManagerState();
 
 				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Re-created schema manager state.");
-			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -2575,7 +2571,7 @@ public class Database implements DataHandler {
 			}
 		}
 
-		schemaManagerRef.getSchemaManager().addConnectionInformation(getDatabaseURL(), this.databaseRemote.getLocalDatabaseInstance());
+		schemaManagerRef.getSchemaManager(false).addConnectionInformation(getDatabaseURL(), this.databaseRemote.getLocalDatabaseInstance());
 
 	}
 
@@ -2584,7 +2580,7 @@ public class Database implements DataHandler {
 	}
 
 	public ISchemaManager getSchemaManager(){
-		return schemaManagerRef.getSchemaManager();
+		return schemaManagerRef.getSchemaManager(false);
 	}
 
 	/**
@@ -2657,7 +2653,7 @@ public class Database implements DataHandler {
 
 	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL) {
 		try {
-			return schemaManagerRef.getSchemaManager().getDatabaseInstance(databaseURL);
+			return schemaManagerRef.getSchemaManager(false).getDatabaseInstance(databaseURL);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (MovedException e) {
@@ -2669,7 +2665,7 @@ public class Database implements DataHandler {
 
 	public Set<DatabaseInstanceRemote> getDatabaseInstances() {
 		try {
-			return schemaManagerRef.getSchemaManager().getDatabaseInstances();
+			return schemaManagerRef.getSchemaManager(false).getDatabaseInstances();
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (MovedException e) {
@@ -2688,11 +2684,9 @@ public class Database implements DataHandler {
 
 	public void removeLocalDatabaseInstance(){
 		try {
-			this.schemaManagerRef.getSchemaManager().removeConnectionInformation(this.databaseRemote.getLocalDatabaseInstance());
-		} catch (RemoteException e) {
-			e.printStackTrace();
-		} catch (MovedException e) {
-			e.printStackTrace();
+			this.schemaManagerRef.getSchemaManager(true).removeConnectionInformation(this.databaseRemote.getLocalDatabaseInstance());
+		} catch (Exception e) {
+			//An error here isn't critical.
 		}
 
 		this.close(false);

@@ -23,4 +23,8 @@ public interface Migratable {
 	 */
 	public void completeMigration() throws RemoteException, MovedException, MigrationException ;
 
+	/**
+	 * Tell the manager to stop accepting queries.
+	 */
+	public void shutdown(boolean shutdown) throws RemoteException, MovedException;
 }

@@ -105,7 +105,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 		//This currently does nothing, but could in future look for remote copies, or create remote replicas.
 		//}
 
-		//replicaManager.add(db.getLocalDatabaseInstance());
+		replicaManager.add(db.getLocalDatabaseInstance());
 
 	}
 
@@ -832,7 +832,12 @@ public class PersistentSchemaManager implements ISchemaManager{
 			/*
 			 * Obtain references to connected machines.
 			 */
-			Map<DatabaseURL, DatabaseInstanceRemote> databasesInSystem = otherSchemaManager.getConnectionInformation();
+			Map<DatabaseURL, DatabaseInstanceRemote> databasesInSystem = null;
+			try {
+				databasesInSystem = otherSchemaManager.getConnectionInformation();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
 
 			for (Entry<DatabaseURL, DatabaseInstanceRemote> databaseEntry: databasesInSystem.entrySet()){
 				addConnectionInformation(databaseEntry.getKey(), databaseEntry.getValue());
@@ -873,7 +878,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 	 * @see org.h2.h2o.manager.ISchemaManager#getConnectionInformation()
 	 */
 	@Override
-	public Map<DatabaseURL, DatabaseInstanceRemote> getConnectionInformation() throws RemoteException {
+	public Map<DatabaseURL, DatabaseInstanceRemote> getConnectionInformation() throws RemoteException, SQLException {
 
 		Map<DatabaseURL, DatabaseInstanceRemote> databaseLocations = new HashMap<DatabaseURL, DatabaseInstanceRemote>();
 

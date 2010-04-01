@@ -2,6 +2,7 @@ package org.h2.h2o.manager;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.Set;
 
@@ -105,21 +106,24 @@ public interface ISchemaManager extends Remote {
 	 * manager.
 	 * @param otherSchemaManager	The schema manager whose state is to be taken.
 	 * @throws RemoteException
+	 * @throws SQLException 
 	 */
-	public void buildSchemaManagerState(ISchemaManager otherSchemaManager) throws RemoteException, MovedException;
+	public void buildSchemaManagerState(ISchemaManager otherSchemaManager) throws RemoteException, MovedException, SQLException;
 
 
 	/**
 	 * Build the state of this schema manager object by replicating the state of the local
 	 * persistent schema manager.
 	 * @throws RemoteException
+	 * @throws SQLException 
 	 */
-	void buildSchemaManagerState() throws RemoteException, MovedException;
+	void buildSchemaManagerState() throws RemoteException, MovedException, SQLException;
 	
 	/**
 	 * Returns a set of all the databases connected in the system.
+	 * @throws SQLException 
 	 */
-	public Map<DatabaseURL, DatabaseInstanceRemote> getConnectionInformation() throws RemoteException, MovedException;
+	public Map<DatabaseURL, DatabaseInstanceRemote> getConnectionInformation() throws RemoteException, MovedException, SQLException;
 
 	/**
 	 * Returns a map of all data managers in the system.
@@ -169,6 +173,7 @@ public interface ISchemaManager extends Remote {
 	 * @param stub
 	 */
 	public void changeDataManagerLocation(DataManagerRemote stub, TableInfo tableInfo) throws RemoteException, MovedException;
+
 
 
 }

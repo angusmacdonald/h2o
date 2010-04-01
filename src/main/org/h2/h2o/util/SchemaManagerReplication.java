@@ -49,7 +49,7 @@ public class SchemaManagerReplication extends Thread {
 				e.printStackTrace();
 			}
 
-			instance = chordInterface.getRemoteReferenceToDatabaseInstance(hostname, port);
+			instance = chordInterface.getDatabaseInstance(hostname, port);
 			attempts++;
 		} while (instance == null && attempts < 10);
 

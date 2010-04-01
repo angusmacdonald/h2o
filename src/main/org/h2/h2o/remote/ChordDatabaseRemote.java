@@ -1,11 +1,9 @@
 package org.h2.h2o.remote;
 
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.sql.SQLException;
 import java.util.Set;
 
 import org.h2.engine.Database;
@@ -13,9 +11,6 @@ import org.h2.engine.Session;
 import org.h2.h2o.comms.DatabaseInstance;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
-import org.h2.h2o.manager.DataManager;
-import org.h2.h2o.manager.ISchemaManager;
-import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.SchemaManagerReference;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.H2oProperties;
@@ -24,6 +19,7 @@ import org.h2.h2o.util.TableInfo;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
 
 /**
  * The interface between a local database instance and the rest of the database system.
@@ -48,8 +44,7 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 
 	private SchemaManagerReference schemaManagerRef;
 
-	static String LOCAL_DATABASE_INSTANCE = "LOCAL_INSTANCE";
-
+	protected static String LOCAL_DATABASE_INSTANCE = "LOCAL_INSTANCE";
 	/**
 	 * Port to be used for the next database instance. Currently used for testing.
 	 */
@@ -101,7 +96,6 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 			/*
 			 * There may be a number of database instances already in the ring. Try to connect.
 			 */
-
 			connected = attemptToJoinChordRing(persistedInstanceInformation, localMachineLocation);
 		} 
 
@@ -131,7 +125,12 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Successfully connected to existing chord ring.");
 		}
 
-		schemaManagerRef.getSchemaManagerLocationIfNotKnown(chord);
+		try {
+			schemaManagerRef.getSchemaManagerLocationIfNotKnown(chord);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 
 		/*
@@ -189,9 +188,10 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 
 			}
 
-			chord.getChordNode().addObserver(chord);
 
 			if (connected){
+				chord.getChordNode().addObserver(chord);
+
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL,"Successfully connected to an existing chord ring.");
 				return true;
 			}
@@ -212,6 +212,7 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 	 * @see org.h2.h2o.IRemoteDatabase#shutdown()
 	 */
 	public void shutdown() {
+		schemaManagerRef.shutdown();
 		chord.shutdownNode();
 		//		if (this.isSchemaManager){
 		//			try {
@@ -280,5 +281,13 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 			ErrorHandling.errorNoEvent("Could not find the data manager for " + ti.getFullTableName() + " at its old location: " + dbURL.getHostname() + ":" + dbURL.getRMIPort());
 		}
 		return dataManagerReference;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.remote.IDatabaseRemote#lookupSchemaManagerNodeLocation()
+	 */
+	@Override
+	public IChordRemoteReference lookupSchemaManagerNodeLocation() throws RemoteException {
+		return chord.performChordLookupForSchemaManager();
 	}
 }

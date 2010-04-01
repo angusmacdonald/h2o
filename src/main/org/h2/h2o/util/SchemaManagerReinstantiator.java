@@ -64,7 +64,7 @@ public class SchemaManagerReinstantiator extends Thread {
 			//				}
 
 			try {
-				db.getSchemaManagerReference().getSchemaManager().exists(null);
+				db.getSchemaManagerReference().getSchemaManager(false).exists(null);
 
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Schema manager is still accessible.");
 				return;
