@@ -9,7 +9,7 @@ import java.sql.Statement;
 
 import org.h2.engine.Constants;
 import org.h2.h2o.manager.PersistentSchemaManager;
-import org.h2.h2o.remote.ChordDatabaseRemote;
+import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.H2oProperties;
 

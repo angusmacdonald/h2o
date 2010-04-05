@@ -30,10 +30,12 @@ import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.manager.DataManager;
 import org.h2.h2o.manager.ISchemaManager;
+import org.h2.h2o.manager.ISchemaManagerReference;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.SchemaManager;
 import org.h2.h2o.manager.SchemaManagerReference;
-import org.h2.h2o.remote.ChordDatabaseRemote;
+import org.h2.h2o.remote.ChordRemote;
+import org.h2.h2o.remote.IChordInterface;
 import org.h2.h2o.remote.IDatabaseRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.index.Cursor;
@@ -214,12 +216,12 @@ public class Database implements DataHandler {
 	private long reconnectCheckNext;
 	private boolean reconnectChangePending;
 
-	private SchemaManagerReference schemaManagerRef;
+	private ISchemaManagerReference schemaManagerRef;
 
 	/**
 	 * Interface for this database instance to the rest of the database system.
 	 */
-	private IDatabaseRemote databaseRemote;
+	private ChordRemote databaseRemote;
 
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
 
@@ -239,7 +241,7 @@ public class Database implements DataHandler {
 		this.compareMode = new CompareMode(null, null, 0);
 		//this.databaseLocation = ci.getSmallName();
 		schemaManagerRef = new SchemaManagerReference(this);
-		databaseRemote = new ChordDatabaseRemote(DatabaseURL.parseURL(ci.getOriginalURL()), this, schemaManagerRef);
+		databaseRemote = new ChordRemote(DatabaseURL.parseURL(ci.getOriginalURL()), schemaManagerRef);
 
 		//this.localMachineAddress = NetUtils.getLocalAddress();
 		//this.localMachinePort = ci.getPort();
@@ -778,7 +780,7 @@ public class Database implements DataHandler {
 			 */
 			try {
 				createH2OTables(true, databaseExists);
-				schemaManagerRef.getSchemaManager(false).buildSchemaManagerState();
+				schemaManagerRef.getSchemaManager().buildSchemaManagerState();
 
 				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Re-created schema manager state.");
 			} catch (Exception e) {
@@ -801,7 +803,7 @@ public class Database implements DataHandler {
 			SchemaManager schemaManager = new SchemaManager(this, createTables); 
 
 			schemaManagerRef.setSchemaManager(schemaManager);
-			databaseRemote.bindSchemaManagerReference(schemaManagerRef);
+			databaseRemote.exportSchemaManager(schemaManagerRef);
 
 		} else { // Not a schema manager -  Get a reference to the schema manager.
 			schemaManagerRef.findSchemaManager();
@@ -2571,16 +2573,16 @@ public class Database implements DataHandler {
 			}
 		}
 
-		schemaManagerRef.getSchemaManager(false).addConnectionInformation(getDatabaseURL(), this.databaseRemote.getLocalDatabaseInstance());
+		schemaManagerRef.getSchemaManager().addConnectionInformation(getDatabaseURL(), this.databaseRemote.getLocalDatabaseInstance());
 
 	}
 
-	public SchemaManagerReference getSchemaManagerReference(){
+	public ISchemaManagerReference getSchemaManagerReference(){
 		return schemaManagerRef;
 	}
 
 	public ISchemaManager getSchemaManager(){
-		return schemaManagerRef.getSchemaManager(false);
+		return schemaManagerRef.getSchemaManager();
 	}
 
 	/**
@@ -2653,7 +2655,7 @@ public class Database implements DataHandler {
 
 	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL) {
 		try {
-			return schemaManagerRef.getSchemaManager(false).getDatabaseInstance(databaseURL);
+			return schemaManagerRef.getSchemaManager().getDatabaseInstance(databaseURL);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (MovedException e) {
@@ -2665,7 +2667,7 @@ public class Database implements DataHandler {
 
 	public Set<DatabaseInstanceRemote> getDatabaseInstances() {
 		try {
-			return schemaManagerRef.getSchemaManager(false).getDatabaseInstances();
+			return schemaManagerRef.getSchemaManager().getDatabaseInstances();
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (MovedException e) {
@@ -2696,6 +2698,13 @@ public class Database implements DataHandler {
 	 * 
 	 */
 	public IDatabaseRemote getRemoteInterface() {
+		return databaseRemote;
+	}
+	
+	/**
+	 * 
+	 */
+	public IChordInterface getChordInterface() {
 		return databaseRemote;
 	}
 

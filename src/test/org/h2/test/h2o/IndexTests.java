@@ -12,7 +12,7 @@ import java.sql.Statement;
 
 import org.h2.engine.Constants;
 import org.h2.h2o.manager.PersistentSchemaManager;
-import org.h2.h2o.remote.ChordDatabaseRemote;
+import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.H2oProperties;
 import org.junit.After;
@@ -46,12 +46,12 @@ public class IndexTests{
 
 		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
 		knownHosts.createNewFile();
-		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordDatabaseRemote.currentPort + "");
+		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordRemote.currentPort + "");
 		knownHosts.saveAndClose();
 		
 		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
 		knownHosts.createNewFile();
-		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordDatabaseRemote.currentPort + "");
+		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordRemote.currentPort + "");
 		knownHosts.saveAndClose();
 		
 		org.h2.Driver.load();

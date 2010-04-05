@@ -200,7 +200,7 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 
 		this.lockingTable = new LockingTable(schemaName + "." + tableName);
 
-		this.location = database.getRemoteInterface().getLocalChordReference();
+		this.location = database.getChordInterface().getLocalChordReference();
 		//this.primaryLocation = database.getLocalDatabaseInstance();
 
 		//		this.primaryLocation = getDatabaseInstance(createFullDatabaseLocation(database.getDatabaseLocation(), 

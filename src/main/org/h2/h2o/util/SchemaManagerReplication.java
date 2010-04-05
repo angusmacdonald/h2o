@@ -3,10 +3,9 @@ package org.h2.h2o.util;
 import java.rmi.RemoteException;
 
 import org.h2.engine.Constants;
-import org.h2.engine.Database;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.manager.ISchemaManager;
-import org.h2.h2o.remote.ChordInterface;
+import org.h2.h2o.remote.IChordInterface;
 import org.h2.test.h2o.ChordTests;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -22,7 +21,7 @@ public class SchemaManagerReplication extends Thread {
 	int port;
 
 	ISchemaManager iSchemaManager;
-	ChordInterface chordInterface;
+	IChordInterface chordInterface;
 
 	/**
 	 * Repeatedly attempts to replicate the schema managers state on the database instance at the specified location. This is done multiple times
@@ -31,7 +30,7 @@ public class SchemaManagerReplication extends Thread {
 	 * @param port			Port on which the database instance is listening.
 	 * @param iSchemaManager			Used to update the schema manager, informing it of the new replica location.
 	 */
-	public SchemaManagerReplication(String hostname, int port, ISchemaManager iSchemaManager, ChordInterface chordInterface){
+	public SchemaManagerReplication(String hostname, int port, ISchemaManager iSchemaManager, IChordInterface chordInterface){
 		this.hostname = hostname;
 		this.port = port;
 		this.iSchemaManager = iSchemaManager;
@@ -56,7 +55,11 @@ public class SchemaManagerReplication extends Thread {
 				e.printStackTrace();
 			}
 
-			instance = chordInterface.getDatabaseInstance(hostname, port);
+			try {
+				instance = chordInterface.getDatabaseInstanceAt(hostname, port);
+			} catch (Exception e) {
+				//Ignore.
+			}
 			attempts++;
 		} while (instance == null && attempts < 10);
 

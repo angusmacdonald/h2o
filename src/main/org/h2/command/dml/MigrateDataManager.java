@@ -11,11 +11,11 @@ import org.h2.engine.Session;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.manager.DataManager;
+import org.h2.h2o.manager.ISchemaManagerReference;
 import org.h2.h2o.manager.MigrationException;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.PersistentSchemaManager;
 import org.h2.h2o.manager.SchemaManager;
-import org.h2.h2o.manager.SchemaManagerReference;
 import org.h2.h2o.manager.SchemaManagerRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LockType;
@@ -63,7 +63,7 @@ public class MigrateDataManager extends org.h2.command.ddl.SchemaCommand {
 	public int update() throws SQLException, RemoteException {
 		try {
 			Database db = this.session.getDatabase();
-			SchemaManagerReference sm = db.getSchemaManagerReference();
+			ISchemaManagerReference sm = db.getSchemaManagerReference();
 			String schemaName = "";
 			if (getSchema() != null){
 				schemaName = getSchema().getName();
@@ -149,7 +149,7 @@ public class MigrateDataManager extends org.h2.command.ddl.SchemaCommand {
 
 		try {
 			DataManagerRemote stub = (DataManagerRemote) UnicastRemoteObject.exportObject(newDataManager, 0);
-			db.getSchemaManagerReference().getSchemaManager(false).changeDataManagerLocation(stub, new TableInfo(tableName, schemaName));
+			db.getSchemaManagerReference().getSchemaManager().changeDataManagerLocation(stub, new TableInfo(tableName, schemaName));
 		} catch (Exception e) {
 			ErrorHandling.exceptionError(e, "Data manager migration failed.");
 		}

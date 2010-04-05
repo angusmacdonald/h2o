@@ -76,8 +76,8 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 			this.inMemory = new InMemorySchemaManager(db);
 			this.persisted = new PersistentSchemaManager(db, createTables);
 			
-			this.location = db.getRemoteInterface().getLocalChordReference();
-			this.pingerThread = new LookupPinger(db.getRemoteInterface(), location);
+			this.location = db.getChordInterface().getLocalChordReference();
+			this.pingerThread = new LookupPinger(db.getRemoteInterface(), db.getChordInterface(), location);
 			this.pingerThread.start();
 		} catch (Exception e) {
 			e.printStackTrace();

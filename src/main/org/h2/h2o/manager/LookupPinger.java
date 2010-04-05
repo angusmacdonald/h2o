@@ -3,6 +3,7 @@ package org.h2.h2o.manager;
 import java.rmi.RemoteException;
 
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.remote.IChordInterface;
 import org.h2.h2o.remote.IDatabaseRemote;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -26,6 +27,11 @@ public class LookupPinger extends Thread {
 	private IDatabaseRemote remoteInterface;
 	
 	/**
+	 * Interface to the Chord system.
+	 */
+	private IChordInterface chordInterface;
+	
+	/**
 	 * Location of the schema manager instance on the chord ring.
 	 */
 	private IChordRemoteReference schemaManagerLocation;
@@ -39,9 +45,10 @@ public class LookupPinger extends Thread {
 	 * @param remoteInterface
 	 * @param location
 	 */
-	public LookupPinger(IDatabaseRemote remoteInterface,
+	public LookupPinger(IDatabaseRemote remoteInterface, IChordInterface chordInterface,
 			IChordRemoteReference location) {
 		this.remoteInterface = remoteInterface;
+		this.chordInterface = chordInterface;
 		this.schemaManagerLocation = location;
 	}
 	
@@ -66,7 +73,7 @@ public class LookupPinger extends Thread {
 			
 			IChordRemoteReference lookupLocation = null;
 			try {
-				lookupLocation = this.remoteInterface.getChordInterface().getLookupLocation(SchemaManagerReference.schemaManagerKey);
+				lookupLocation = chordInterface.getLookupLocation(SchemaManagerReference.schemaManagerKey);
 			} catch (RemoteException e1) {
 				ErrorHandling.errorNoEvent("Error on ping lookup.");
 				continue;

@@ -1,16 +1,13 @@
 package org.h2.h2o.util;
 
-import java.rmi.RemoteException;
 
 import org.h2.engine.Database;
 import org.h2.h2o.manager.SchemaManagerReference;
-import org.h2.h2o.remote.ChordInterface;
+import org.h2.h2o.remote.IChordInterface;
 
-import uk.ac.standrews.cs.nds.p2p.exceptions.P2PNodeException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
-import uk.ac.standrews.cs.stachordRMI.interfaces.IChordNode;
 import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
 
 /**
@@ -19,9 +16,9 @@ import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
 public class SchemaManagerReinstantiator extends Thread {
 
 	Database db;
-	ChordInterface chordInterface;
+	IChordInterface chordInterface;
 
-	public SchemaManagerReinstantiator(Database db, ChordInterface chordInterface){
+	public SchemaManagerReinstantiator(Database db, IChordInterface chordInterface){
 		this.db = db;
 		this.chordInterface = chordInterface;
 	}
@@ -64,7 +61,7 @@ public class SchemaManagerReinstantiator extends Thread {
 			//				}
 
 			try {
-				db.getSchemaManagerReference().getSchemaManager(false).exists(null);
+				db.getSchemaManagerReference().getSchemaManager().exists(null);
 
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Schema manager is still accessible.");
 				return;

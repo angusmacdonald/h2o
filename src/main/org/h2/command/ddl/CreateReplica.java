@@ -33,9 +33,9 @@ import org.h2.expression.Expression;
 import org.h2.expression.ValueExpression;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.manager.ISchemaManager;
+import org.h2.h2o.manager.ISchemaManagerReference;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.PersistentSchemaManager;
-import org.h2.h2o.manager.SchemaManagerReference;
 import org.h2.h2o.util.TableInfo;
 import org.h2.index.IndexType;
 import org.h2.jdbc.JdbcSQLException;
@@ -941,7 +941,7 @@ public class CreateReplica extends SchemaCommand {
 
 		if (whereDataWillBeTakenFrom == null){
 
-			SchemaManagerReference sm = session.getDatabase().getSchemaManagerReference();
+			ISchemaManagerReference sm = session.getDatabase().getSchemaManagerReference();
 
 			DataManagerRemote dm;
 //			try {

@@ -1,18 +1,11 @@
 package org.h2.h2o.remote;
 
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.sql.SQLException;
-import java.util.Set;
 
 import org.h2.engine.Session;
-import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
-import org.h2.h2o.manager.DataManager;
-import org.h2.h2o.manager.SchemaManagerReference;
+import org.h2.h2o.manager.ISchemaManagerReference;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.TableInfo;
 
 import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
 
@@ -40,7 +33,7 @@ public interface IDatabaseRemote {
 	 * Returns the port on which the local database instance is running its RMI server.
 	 * @return
 	 */
-	public int getLocalRMIPort();
+	public int getRmiPort();
 
 	/**
 	 * Remove references to remote objects in preparation for the shutdown of the database system.
@@ -55,40 +48,31 @@ public interface IDatabaseRemote {
 	public DatabaseURL getLocalMachineLocation();
 	
 	/**
-	 * @param schemaManagerRef
+	 * Export the schema manager contained within this SchemaManagerReference via the UnicastRemoteObject class
+	 * to allow it to be accessed remotely.
+	 * @param schemaManagerRef	Local wrapper class for the schema manager.
 	 */
-	void bindSchemaManagerReference(SchemaManagerReference schemaManagerRef);
+	public void exportSchemaManager(ISchemaManagerReference schemaManagerRef);
 
 	/**
-	 * 
-	 */
-	public void exportConnectionObject();
-
-	/**
-	 * @throws RemoteException 
-	 * 
-	 */
-	public IChordRemoteReference lookupSchemaManagerNodeLocation() throws RemoteException;
-
-	/**
-	 * @return
-	 */
-	public IChordRemoteReference getLocalChordReference();
-
-	/**
-	 * @param lookupLocation
-	 * @throws RemoteException 
+	 * Find the database instance located at the location given. The chord reference parameter is used
+	 * to get the hostname and port of that chord nodes RMI registry. This registry should contain a reference
+	 * to the local database instance.
+	 * @param lookupLocation	The hostname and port of this reference are used to find the local RMI registry.
+	 * @throws RemoteException 	Thrown if there is a problem accessing the RMI registry.
+	 * @return Database instance remote proxy for the database at the given location.
 	 */
 	public DatabaseInstanceRemote getDatabaseInstanceAt(IChordRemoteReference lookupLocation) throws RemoteException;
 
 	/**
-	 * @return
+	 * Find the database instance located at the location given. The parameter is used
+	 * to get the hostname and RMI port of that chord nodes RMI registry. This registry should contain a reference
+	 * to the local database instance.
+	 * @param databaseURL The hostname and RMI port of this reference are used to find the local RMI registry.
+	 * @return Database instance remote proxy for the database at the given location.
 	 */
-	public ChordInterface getChordInterface();
+	public DatabaseInstanceRemote getDatabaseInstanceAt(DatabaseURL databaseURL)  throws RemoteException;
+	
 
-	/**
-	 * @param dbURL
-	 * @return
-	 */
-	public DatabaseInstanceRemote getDatabaseInstanceAt(DatabaseURL dbURL)  throws RemoteException;
+	
 }

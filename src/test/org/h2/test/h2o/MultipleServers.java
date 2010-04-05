@@ -9,7 +9,7 @@ import java.sql.Statement;
 
 import org.h2.engine.Constants;
 import org.h2.h2o.manager.PersistentSchemaManager;
-import org.h2.h2o.remote.ChordDatabaseRemote;
+import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.H2oProperties;
 
@@ -49,7 +49,7 @@ public class MultipleServers {
 	}
 
 	private void createMultiplePropertiesFiles(String[] dbNames){
-		ChordDatabaseRemote.currentPort = 30003;
+		ChordRemote.currentPort = 30003;
 		for (String db: dbNames){
 
 			String fullDBName = "jdbc:h2:mem:" + db;

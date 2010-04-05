@@ -1,7 +1,5 @@
 package org.h2.h2o.manager;
 
-import java.rmi.NotBoundException;
-import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -14,7 +12,7 @@ import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
-import org.h2.h2o.remote.ChordInterface;
+import org.h2.h2o.remote.IChordInterface;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.SchemaManagerReplication;
 import org.h2.h2o.util.TableInfo;
@@ -34,8 +32,11 @@ import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class SchemaManagerReference {
+public class SchemaManagerReference implements ISchemaManagerReference {
 
+	/**
+	 * Name under which the schema manager is located in the local RMI registry.
+	 */
 	public static final String SCHEMA_MANAGER = "SCHEMA_MANAGER";
 
 	/*
@@ -104,22 +105,15 @@ public class SchemaManagerReference {
 		this.db = db;
 	}
 
-	/**
-	 * Get a reference to the schema manager. If the current schema manager location is
-	 * not known this method will attempt to find it.
-	 * 
-	 * <p>The schema manager may be remote.
-	 * @return
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#getSchemaManager()
 	 */
 	public SchemaManagerRemote getSchemaManager() {
 		return getSchemaManager(false);
 	}
 
-	/**
-	 * 
-	 * @param inShutdown If the system is being shut down any
-	 * remote exceptions when contacting the schema manager will be ignored.
-	 * @return
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#getSchemaManager(boolean)
 	 */
 	public SchemaManagerRemote getSchemaManager(boolean inShutdown){
 		return getSchemaManager(false, inShutdown);
@@ -170,29 +164,22 @@ public class SchemaManagerReference {
 	}
 
 
-	/**
-	 * Get the location of the schema manager instance.
-	 * 
-	 * <p>This is the stored schema manager location (i.e. the system does not have to check whether the schema manager still exists at
-	 * this location before returning a value).
-	 * @return Stored schema manager location. 
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#getSchemaManagerLocation()
 	 */
-	public DatabaseURL getSchemaManagerLocation(){
+	public DatabaseURL getSchemaManagerURL(){
 		return schemaManagerLocationURL;
 	}
 
-	/**
-	 * True if the schema manager process is running locally.
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#isSchemaManagerLocal()
 	 */
 	public boolean isSchemaManagerLocal(){
 		return isLocal;
 	}
 
-	/**
-	 * Attempts to find the schema manager by looking up its location in the RMI registry of
-	 * the database instance which is responsible for the key range containing 'schema manager'.
-	 * @return
-	 * @throws SQLException If schema manager registry access resulted in some kind of exception.
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#findSchemaManager()
 	 */
 	public SchemaManagerRemote findSchemaManager() throws SQLException {
 		if (schemaManager != null){
@@ -212,14 +199,8 @@ public class SchemaManagerReference {
 	}
 
 
-	/**
-	 * Returns a reference to the RMI registry of the schema manager.
-	 * 
-	 * <p>A lookup is performed to identify where the schema manager is currently located,
-	 * then the registry is obtained.
-	 * 
-	 * <p>If the registry is not found this method returns null.
-	 * @return	The RMI registry of this chord node.
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#getSchemaManagerRegistry()
 	 */
 	public Registry getSchemaManagerRegistry(){
 		Registry remoteRegistry = null;
@@ -235,68 +216,62 @@ public class SchemaManagerReference {
 
 	}
 
-	/**
-	 * @param chord
-	 */
-	public void getSchemaManagerLocationIfNotKnown(ChordInterface chord) throws RemoteException {
-		if (schemaManagerLocationURL == null){ // true if this node has just joined a ring.
-			schemaManagerLocationURL = chord.getSchemaManagerLocation();
-		}
-	}
 
-	/**
-	 * @param newSMLocation
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#setNewSchemaManagerLocation(org.h2.h2o.util.DatabaseURL)
 	 */
-	public void setNewSchemaManagerLocation(DatabaseURL newSMLocation) {
+	public void setSchemaManagerURL(DatabaseURL newSMLocation) {
 		if (newSMLocation.equals(db.getDatabaseURL())){ isLocal = true; }
 
 		this.schemaManagerLocationURL = newSMLocation;
 	}
 
-	/**
-	 * Provide a reference to the actual schema manager. This is typically called when a
-	 * database has just been started.
-	 */ 
-	public void setSchemaManager(SchemaManager schemaManager) {
-		this.schemaManager = schemaManager;
-	}
 
-	/**
-	 * @param schemaManagerLocation
-	 * @param schemaManager2
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#setSchemaManagerLocation(uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference, org.h2.h2o.util.DatabaseURL)
 	 */
 	public void setSchemaManagerLocation(IChordRemoteReference schemaManagerLocation, DatabaseURL databaseURL) {
 		this.schemaManagerNode = schemaManagerLocation;
 		this.schemaManagerLocationURL = databaseURL;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#setSchemaManager(org.h2.h2o.manager.SchemaManager)
+	 */ 
+	public void setSchemaManager(SchemaManager schemaManager) {
+		this.schemaManager = schemaManager;
+	}
 
-	/**
-	 * True if this instance has a reference to the schema manager.
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#setSchemaManagerLocationURL(org.h2.h2o.util.DatabaseURL)
+	 */
+	public void setSchemaManagerLocationURL(DatabaseURL databaseURL) {
+		this.schemaManagerLocationURL = databaseURL;
+	}
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#isConnectedToSM()
 	 */
 	public boolean isConnectedToSM() {
 		return (schemaManager != null);
 	}
 
-	/**
-	 * Specify whether the schema manager lookup is in the keyrange of the given chord node.
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#setInKeyRange(boolean)
 	 */
 	public void setInKeyRange(boolean inKeyRange) {
 		this.inKeyRange = inKeyRange;
 	}
 
-	/**
-	 * True if the schema manager chord lookup resolves to the local node. 
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#isInKeyRange()
 	 */
 	public boolean isInKeyRange() {
 		return inKeyRange;
 	}
 
-	/**
-	 * Create another schema manager at the current location, replacing the old manager.
-	 * @param persistedSchemaTablesExist	Whether replicated copies of the schema managers state exist locally.
-	 * @param recreateFromPersistedState If true the new schema manager will be re-instantiated from persisted state on disk. Otherwise
-	 * it will be migrated from an active in-memory copy. If the old schema manager has failed the new manager must be recreated from
-	 * persisted state.
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#migrateSchemaManagerToLocalInstance(boolean, boolean)
 	 */
 	public void migrateSchemaManagerToLocalInstance(boolean persistedSchemaTablesExist, boolean recreateFromPersistedState){
 
@@ -412,9 +387,9 @@ public class SchemaManagerReference {
 		 */
 
 		try {
-			String hostname = db.getRemoteInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getHostName();
-			int port = db.getRemoteInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getPort();
-			SchemaManagerReplication newThread = new SchemaManagerReplication(hostname, port, this.db.getSchemaManager(), this.db.getRemoteInterface().getChordInterface());
+			String hostname = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getHostName();
+			int port = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getPort();
+			SchemaManagerReplication newThread = new SchemaManagerReplication(hostname, port, this.db.getSchemaManager(), this.db.getChordInterface());
 			newThread.start();
 		} catch (RemoteException e) {
 			ErrorHandling.errorNoEvent("Failed to create replica for new schema manager on its successor.");
@@ -423,8 +398,8 @@ public class SchemaManagerReference {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Finished building new schema manager on " + db.getDatabaseURL().getDbLocation() + ".");
 	}
 
-	/**
-	 * 
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#migrateSchemaManagerToLocalInstance()
 	 */
 	public void migrateSchemaManagerToLocalInstance() {
 
@@ -441,10 +416,8 @@ public class SchemaManagerReference {
 	}
 
 
-	/**
-	 * An exception has been thrown trying to access the schema manager because it has been moved to a new location. Handle this
-	 * by updating the reference to that of the new schema manager.
-	 * @throws SQLException 
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#handleMovedException(org.h2.h2o.manager.MovedException)
 	 */
 	public void handleMovedException(MovedException e) throws SQLException {
 
@@ -468,15 +441,15 @@ public class SchemaManagerReference {
 
 	}
 
-	/**
-	 * @param proxy
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#setLookupLocation(uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference)
 	 */
 	public void setLookupLocation(IChordRemoteReference proxy) {
 		this.lookupLocation = proxy;
 	}
 
-	/**
-	 * @return
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#getLookupLocation()
 	 */
 	public IChordRemoteReference getLookupLocation() {
 		return lookupLocation;
@@ -484,16 +457,16 @@ public class SchemaManagerReference {
 
 
 
-	/**
-	 * Find a data manager for the given table in the database system.
-	 * @param tableName	the table whose manager is to be found.
-	 * @return	Remote reference to the data manager in question.
-	 * @throws SQLException 
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#lookup(java.lang.String)
 	 */
 	public DataManagerRemote lookup(String tableName) throws SQLException {
 		return lookup(new TableInfo(tableName));
 	}
 
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#lookup(org.h2.h2o.util.TableInfo)
+	 */
 	public DataManagerRemote lookup(TableInfo tableInfo) throws SQLException {
 		return lookup(tableInfo, false);
 	}
@@ -548,7 +521,7 @@ public class SchemaManagerReference {
 			int attempts = 0;
 			do {
 				try{
-					lookupLocation = this.db.getRemoteInterface().getChordInterface().getLookupLocation(SchemaManagerReference.schemaManagerKey);
+					lookupLocation = this.db.getChordInterface().getLookupLocation(SchemaManagerReference.schemaManagerKey);
 				} catch (RemoteException e){
 					Thread.sleep(100); //wait, then try again.
 				}
@@ -558,21 +531,21 @@ public class SchemaManagerReference {
 
 
 			DatabaseInstanceRemote lookupInstance  = null;
-			if (this.db.getRemoteInterface().getLocalChordReference().equals(lookupLocation)){
+			if (this.db.getChordInterface().getLocalChordReference().equals(lookupLocation)){
 				lookupInstance = this.db.getLocalDatabaseInstance();
 			} else {
 				String lookupHostname = lookupLocation.getRemote().getAddress().getHostName();
 				int lookupPort = lookupLocation.getRemote().getAddress().getPort();
 
-				ChordInterface chord = this.db.getRemoteInterface().getChordInterface();
-				lookupInstance = chord.getDatabaseInstance(lookupHostname, lookupPort);
+				IChordInterface chord = this.db.getChordInterface();
+				lookupInstance = chord.getDatabaseInstanceAt(lookupHostname, lookupPort);
 			}
 
 			DatabaseURL actualSchemaManagerLocation = lookupInstance.getSchemaManagerLocation();
 
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Actual schema manager location found at: " + actualSchemaManagerLocation.getRMIPort());
 
-			setNewSchemaManagerLocation(actualSchemaManagerLocation);
+			setSchemaManagerURL(actualSchemaManagerLocation);
 
 			Registry registry = getSchemaManagerRegistry();
 
@@ -585,29 +558,29 @@ public class SchemaManagerReference {
 			throw new SQLException("Internal system error: failed to contact Schema Manager.");
 		} 
 	}
+//
+//	/**
+//	 * The schema manager has failed or been shut down. This node must know figure out where the schema manager's persisted state
+//	 * was, and use that state to create a new schema manager.
+//	 * @return
+//	 */
+//	private DataManagerRemote handleFailedSchemaManager() {
+//
+//		boolean unstable = true;
+//		do{
+//			try {
+//				IChordRemoteReference chordNode = this.db.getChordInterface().lookupSchemaManagerNodeLocation();
+//			} catch (RemoteException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//
+//		} while (unstable);
+//		return null;
+//	}
 
-	/**
-	 * The schema manager has failed or been shut down. This node must know figure out where the schema manager's persisted state
-	 * was, and use that state to create a new schema manager.
-	 * @return
-	 */
-	private DataManagerRemote handleFailedSchemaManager() {
-
-		boolean unstable = true;
-		do{
-			try {
-				IChordRemoteReference chordNode = this.db.getRemoteInterface().lookupSchemaManagerNodeLocation();
-			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-		} while (unstable);
-		return null;
-	}
-
-	/**
-	 * 
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#shutdown()
 	 */
 	public void shutdown() {
 		if(inKeyRange && !Constants.IS_NON_SM_TEST){
@@ -619,6 +592,9 @@ public class SchemaManagerReference {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#isThisSchemaManagerNode(uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference)
+	 */
 	public boolean isThisSchemaManagerNode(IChordRemoteReference otherNode){
 		return schemaManagerNode.equals(otherNode);
 	}
