@@ -1,5 +1,6 @@
 package org.h2.h2o.manager;
 
+import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -36,7 +37,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	 */
 	private Map<TableInfo, DataManagerRemote> dataManagers;
 
-	
+
 	/**
 	 * Cached references to replicas in the database system.
 	 * 
@@ -65,7 +66,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 		replicaLocations = new HashMap<String, Set<TableInfo>>();
 
 		schemaManagerState = new HashSet<DatabaseInstanceRemote>();
-		
+
 		schemaManagerState.add(database.getLocalDatabaseInstance());
 	}
 
@@ -116,7 +117,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 			/*
 			 * Drop the entire schema.
 			 */
-			
+
 			for (Entry<TableInfo, DataManagerRemote> dm: dataManagers.entrySet()){
 				if (dm.getKey().getSchemaName().equals(ti.getSchemaName())){
 					toRemove.add(dm.getKey());
@@ -143,6 +144,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	public int addConnectionInformation(DatabaseURL databaseURL, DatabaseInstanceRemote databaseInstanceRemote)
 	throws RemoteException {
 
+		databasesInSystem.remove(databaseURL);
 		databasesInSystem.put(databaseURL, databaseInstanceRemote);
 
 		return 1;
@@ -228,7 +230,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
-			
+
 			/*
 			 * Make data manager serializable first.
 			 */
@@ -237,7 +239,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
-			
+
 
 		}
 
@@ -302,13 +304,44 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 		/*
 		 * Obtain references to connected machines.
 		 */
-		databasesInSystem = otherSchemaManager.getConnectionInformation();
+		Map<DatabaseURL, DatabaseInstanceRemote> connectedMachines = otherSchemaManager.getConnectionInformation();
+
+		databasesInSystem = new HashMap<DatabaseURL, DatabaseInstanceRemote>();
+
+		//Make sure this contains remote references for each URL
+
+		for (Entry<DatabaseURL, DatabaseInstanceRemote> remoteDB: connectedMachines.entrySet()){
+
+			DatabaseInstanceRemote dir = remoteDB.getValue();
+
+
+			if (dir == null){
+
+				if (remoteDB.getKey().equals(database.getDatabaseURL())){
+					//Local machine.
+					dir = database.getLocalDatabaseInstance();
+				} else {
+					//Look for a remote reference.
+					String hostname = remoteDB.getKey().getHostname();
+					int port = remoteDB.getKey().getRMIPort();
+					try {
+						dir = database.getRemoteInterface().getDatabaseInstanceAt(hostname, port);
+					} catch (Exception e) {
+						//Couldn't find reference to this database instance. TODO mark it as inactive.
+					}
+				}
+
+			} 
+
+			databasesInSystem.put(remoteDB.getKey(), dir);
+		}
+
 
 		/*
 		 * Obtain references to data managers.
 		 */
 		dataManagers = otherSchemaManager.getDataManagers();
-		
+
 		/*
 		 * At this point some of the data manager references will be null if the data managers could not be found at their old location.
 		 * If a reference is null, but there is a copy of the table locally then a new data manager can be created.
@@ -407,14 +440,14 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	@Override
 	public void addSchemaManagerDataLocation(
 			DatabaseInstanceRemote databaseReference) throws RemoteException {
-		
+
 		if (schemaManagerState.size() < Replication.SCHEMA_MANAGER_REPLICATION_FACTOR){ //TODO update to allow policy on number of replicas.
 			this.schemaManagerState.add(databaseReference);
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseReference.getLocation().getDbLocation());
 		} else {
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Didn't add to the schema manager's replication set, because there are enough replicas already (" + schemaManagerState.size() + ")");
 		}
-		
+
 	}
 
 
@@ -423,7 +456,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	 */
 	@Override
 	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL)
-			throws RemoteException, MovedException {
+	throws RemoteException, MovedException {
 		return databasesInSystem.get(databaseURL);
 	}
 
@@ -432,7 +465,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	 */
 	@Override
 	public Set<DatabaseInstanceRemote> getDatabaseInstances()
-			throws RemoteException, MovedException {
+	throws RemoteException, MovedException {
 		return new HashSet<DatabaseInstanceRemote>(databasesInSystem.values());
 	}
 
@@ -442,8 +475,8 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	@Override
 	public void removeConnectionInformation(
 			DatabaseInstanceRemote localDatabaseInstance)
-			throws RemoteException, MovedException {
-	//	databaseInstances.remove(localDatabaseInstance.getConnectionString());
+	throws RemoteException, MovedException {
+		//	databaseInstances.remove(localDatabaseInstance.getConnectionString());
 	}
 
 	/* (non-Javadoc)
@@ -451,9 +484,9 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	 */
 	public void changeDataManagerLocation(DataManagerRemote stub, TableInfo tableInfo) {
 		Object result = this.dataManagers.remove(tableInfo);
-		
+
 		assert result != null;
-		
+
 		this.dataManagers.put(tableInfo, stub);
 	}
 }

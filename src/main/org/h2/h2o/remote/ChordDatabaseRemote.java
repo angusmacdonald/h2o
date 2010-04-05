@@ -1,5 +1,6 @@
 package org.h2.h2o.remote;
 
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -44,7 +45,8 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 
 	private SchemaManagerReference schemaManagerRef;
 
-	protected static String LOCAL_DATABASE_INSTANCE = "LOCAL_INSTANCE";
+	protected static final String LOCAL_DATABASE_INSTANCE = "LOCAL_INSTANCE";
+
 	/**
 	 * Port to be used for the next database instance. Currently used for testing.
 	 */
@@ -140,9 +142,9 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 		 */
 
 		this.databaseInstance =  new DatabaseInstance(localMachineLocation, systemSession);
-		
+
 		exportConnectionObject();
-		
+
 		if (schemaManagerRef.getSchemaManagerLocation() == null){ // true if the previous check resolved to a node which doesn't know of the schema manager (possibly itself).
 			//TODO you probably want a check to make sure it doesn't check against itself.
 			System.err.println("should this happen?");
@@ -236,7 +238,7 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 		}
 		try {
 			chord.getLocalRegistry().bind(LOCAL_DATABASE_INSTANCE , stub);
-			
+
 			this.databaseInstance = stub;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -284,10 +286,66 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 	}
 
 	/* (non-Javadoc)
+	 * @see org.h2.h2o.remote.IDatabaseRemote#getDatabaseInstanceAt(uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference)
+	 */
+	@Override
+	public DatabaseInstanceRemote getDatabaseInstanceAt(IChordRemoteReference lookupLocation) throws RemoteException {
+
+		String hostname = lookupLocation.getRemote().getAddress().getHostName();
+
+		int port = lookupLocation.getRemote().getAddress().getPort();
+
+		try {
+			return getDatabaseInstanceAt(hostname, port);
+		} catch (NotBoundException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.remote.IDatabaseRemote#getDatabaseInstanceAt(java.lang.String, int)
+	 */
+	@Override
+	public DatabaseInstanceRemote getDatabaseInstanceAt(String hostname, int port) throws RemoteException, NotBoundException {
+		DatabaseInstanceRemote dir = null;
+
+
+		Registry remoteRegistry = LocateRegistry.getRegistry(hostname, port);
+
+		dir = (DatabaseInstanceRemote) remoteRegistry.lookup(LOCAL_DATABASE_INSTANCE);
+
+		return dir;
+	}
+
+	/* (non-Javadoc)
 	 * @see org.h2.h2o.remote.IDatabaseRemote#lookupSchemaManagerNodeLocation()
 	 */
 	@Override
 	public IChordRemoteReference lookupSchemaManagerNodeLocation() throws RemoteException {
 		return chord.performChordLookupForSchemaManager();
 	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.remote.IDatabaseRemote#getLocalChordReference()
+	 */
+	@Override
+	public IChordRemoteReference getLocalChordReference() {
+		return chord.getLocalChordreference();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.remote.IDatabaseRemote#getSchemaManagerLookupLocation()
+	 */
+	@Override
+	public IChordRemoteReference getSchemaManagerLookupLocation() {
+		return chord.getLookupLocation(SchemaManagerReference.schemaManagerKey);
+	}
+
+	public ChordInterface getChordInterface(){
+		return chord;
+	}
+
+
 }

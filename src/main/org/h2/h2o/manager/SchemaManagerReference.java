@@ -1,5 +1,6 @@
 package org.h2.h2o.manager;
 
+import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -12,6 +13,7 @@ import java.util.Map;
 import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.remote.ChordInterface;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
@@ -123,21 +125,28 @@ public class SchemaManagerReference {
 	}
 
 	private SchemaManagerRemote getSchemaManager(boolean performedSchemaManagerLookup, boolean inShutdown){
-		if (schemaManager == null) {
-			schemaManager = this.findSchemaManager();
-			performedSchemaManagerLookup = true;
-		}
-
 		try {
-			schemaManager.checkConnection();
-		}catch (NullPointerException e) {
 
-			/*
-			 * Call this method again if we attempted to access a cached schema manager reference and it didn't work.
-			 */
-	
-			ErrorHandling.exceptionError(e, "Schema Manager is not accessible");
-		} catch (RemoteException e) {
+			if (schemaManager == null) {
+				performedSchemaManagerLookup = true;
+				schemaManager = this.findSchemaManager();
+
+			}
+
+
+			schemaManager.checkConnection();
+		} catch (MovedException e) {
+			if (!inShutdown){
+				try {
+					this.handleMovedException(e);
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+				}
+			}
+		} catch (SQLException e){
+			return null;
+		} catch (Exception e) {
+
 
 			/*
 			 * Call this method again if we attempted to access a cached schema manager reference and it didn't work.
@@ -148,14 +157,12 @@ public class SchemaManagerReference {
 			}
 
 			ErrorHandling.exceptionError(e, "Schema Manager is not accessible");
-		} catch (MovedException e) {
-			if (!inShutdown){
-				try {
-					this.handleMovedException(e);
-				} catch (SQLException e1) {
-					e1.printStackTrace();
-				}
-			}
+		}
+
+		try {
+			this.schemaManagerNode = schemaManager.getChordReference();
+		} catch (RemoteException e) {
+			e.printStackTrace();
 		}
 
 		return schemaManager;
@@ -184,8 +191,9 @@ public class SchemaManagerReference {
 	 * Attempts to find the schema manager by looking up its location in the RMI registry of
 	 * the database instance which is responsible for the key range containing 'schema manager'.
 	 * @return
+	 * @throws SQLException If schema manager registry access resulted in some kind of exception.
 	 */
-	public SchemaManagerRemote findSchemaManager() {
+	public SchemaManagerRemote findSchemaManager() throws SQLException {
 		if (schemaManager != null){
 			return schemaManager;
 		}
@@ -194,8 +202,9 @@ public class SchemaManagerReference {
 
 		try {
 			schemaManager = (SchemaManagerRemote)registry.lookup(SCHEMA_MANAGER);
+			this.schemaManagerNode = schemaManager.getChordReference();
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new SQLException("Unable to find schema manager.");
 		}
 
 		return schemaManager;
@@ -216,6 +225,7 @@ public class SchemaManagerReference {
 
 		try {
 			remoteRegistry = LocateRegistry.getRegistry(schemaManagerLocationURL.getHostname(), schemaManagerLocationURL.getRMIPort());
+			
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
@@ -251,6 +261,15 @@ public class SchemaManagerReference {
 	}
 
 	/**
+	 * @param schemaManagerLocation
+	 * @param schemaManager2
+	 */
+	public void setSchemaManagerLocation(IChordRemoteReference schemaManagerLocation, DatabaseURL databaseURL) {
+		this.schemaManagerNode = schemaManagerLocation;
+		this.schemaManagerLocationURL = databaseURL;
+	}
+
+	/**
 	 * True if this instance has a reference to the schema manager.
 	 */
 	public boolean isConnectedToSM() {
@@ -281,6 +300,7 @@ public class SchemaManagerReference {
 	public void migrateSchemaManagerToLocalInstance(boolean persistedSchemaTablesExist, boolean recreateFromPersistedState){
 
 		if (recreateFromPersistedState){
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Preparing to re-instantiate schema manager from persistent store.");
 			/*
 			 * INSTANTIATE A NEW SCHEMA MANAGER FROM PERSISTED STATE. This must be called if the previous schema manager
 			 * has failed.
@@ -326,8 +346,6 @@ public class SchemaManagerReference {
 				ErrorHandling.exceptionError(e, "Failed to create new in-memory schema manager.");
 			}
 
-			DatabaseURL newLocation = db.getDatabaseURL();
-
 			/*
 			 * Stop the old, remote, manager from accepting any more requests.
 			 */
@@ -367,25 +385,28 @@ public class SchemaManagerReference {
 				ErrorHandling.exceptionError(e, "Migration process timed out. It took too long.");
 			}
 			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Schema Manager officially migrated to " + db.getDatabaseURL().getDbLocation() + ".");
-
-			/*
-			 * Confirm the new schema managers location by updating all local state.
-			 */
-			schemaManager = newSchemaManager;
-			this.isLocal = true;
-			this.schemaManagerLocationURL = newLocation;
-
-
-			try {
-				SchemaManagerRemote stub = (SchemaManagerRemote) UnicastRemoteObject.exportObject(schemaManager, 0);
-
-				getSchemaManagerRegistry().bind(SCHEMA_MANAGER, stub);
-			} catch (Exception e) {
-				ErrorHandling.exceptionError(e, "Schema manager migration failed.");
-			}
-
-			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Finished building new schema manager on " + db.getDatabaseURL().getDbLocation() + ".");
+			
+			this.schemaManager = newSchemaManager;
 		}
+		
+		/*
+		 * Confirm the new schema managers location by updating all local state.
+		 */
+		
+		this.isLocal = true;
+		this.schemaManagerLocationURL = db.getDatabaseURL();
+
+
+		try {
+			SchemaManagerRemote stub = (SchemaManagerRemote) UnicastRemoteObject.exportObject(schemaManager, 0);
+
+			getSchemaManagerRegistry().bind(SCHEMA_MANAGER, stub);
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Binding schema manager on port " + schemaManagerLocationURL.getRMIPort());
+		} catch (Exception e) {
+			ErrorHandling.exceptionError(e, "Schema manager migration failed.");
+		}
+
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Finished building new schema manager on " + db.getDatabaseURL().getDbLocation() + ".");
 	}
 
 	/**
@@ -491,13 +512,52 @@ public class SchemaManagerReference {
 			handleMovedException(e);
 			return lookup(tableInfo, true);
 		} catch (RemoteException e) {
-			if (e.getMessage() == null){
-				//return handleFailedSchemaManager();
-				return null;
-			} else {
-				throw new SQLException("Internal system error: failed to contact Schema Manager.");
-			}
+			if (alreadyCalled) throw new SQLException("Failed to find Schema Manager. Query has been rolled back.");
+
+			/*
+			 * Schema manager no longer exists. Try to find new location.
+			 */
+			handleLostSchemaManagerConnection();
+			return lookup(tableInfo, true);
 		}
+	}
+
+	/**
+	 * The schema manager connection has been lost. Try to connect to the schema manager lookup location
+	 * and obtain a reference to the new schema manager.
+	 * @throws SQLException
+	 */
+	private void handleLostSchemaManagerConnection() throws SQLException {
+		try {
+			IChordRemoteReference lookupLocation = this.db.getRemoteInterface().getSchemaManagerLookupLocation();
+
+			DatabaseInstanceRemote lookupInstance  = null;
+			if (lookupLocation.equals(this.db.getRemoteInterface().getLocalChordReference())){
+				lookupInstance = this.db.getLocalDatabaseInstance();
+			} else {
+				String lookupHostname = lookupLocation.getRemote().getAddress().getHostName();
+				int lookupPort = lookupLocation.getRemote().getAddress().getPort();
+
+				ChordInterface chord = this.db.getRemoteInterface().getChordInterface();
+				lookupInstance = chord.getDatabaseInstance(lookupHostname, lookupPort);
+			}
+
+			DatabaseURL actualSchemaManagerLocation = lookupInstance.getSchemaManagerLocation();
+
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Actual schema manager location found at: " + actualSchemaManagerLocation.getRMIPort());
+
+			setNewSchemaManagerLocation(actualSchemaManagerLocation);
+
+			Registry registry = getSchemaManagerRegistry();
+
+
+			this.schemaManager = (SchemaManagerRemote)registry.lookup(SCHEMA_MANAGER);
+			this.schemaManagerNode = schemaManager.getChordReference();
+
+		} catch (Exception e1) {
+			e1.printStackTrace();
+			throw new SQLException("Internal system error: failed to contact Schema Manager.");
+		} 
 	}
 
 	/**
@@ -506,7 +566,7 @@ public class SchemaManagerReference {
 	 * @return
 	 */
 	private DataManagerRemote handleFailedSchemaManager() {
-		
+
 		boolean unstable = true;
 		do{
 			try {
@@ -515,7 +575,7 @@ public class SchemaManagerReference {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
+
 		} while (unstable);
 		return null;
 	}
@@ -532,5 +592,11 @@ public class SchemaManagerReference {
 			}
 		}
 	}
+
+	public boolean isThisSchemaManagerNode(IChordRemoteReference otherNode){
+		return schemaManagerNode.equals(otherNode);
+	}
+
+
 
 }

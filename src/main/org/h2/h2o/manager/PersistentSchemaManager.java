@@ -796,26 +796,28 @@ public class PersistentSchemaManager implements ISchemaManager{
 	 */
 	@Override
 	public DataManagerRemote lookup(TableInfo ti) throws RemoteException {
-
-		/*
-		 * Get the machine location of the table's data manager.
-		 */
-		DatabaseURL dbURL = null;
-
-		try {
-			dbURL = getDataManagerLocation(ti.getTableName(), ti.getSchemaName());
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return null;
-		}
-
-		/*
-		 * Use the chord interface to get a remote reference to this data manager.
-		 */
-
-		IDatabaseRemote remoteInterface = db.getRemoteInterface();
-
-		return remoteInterface.refindDataManagerReference(ti, dbURL);
+//
+//		/*
+//		 * Get the machine location of the table's data manager.
+//		 */
+//		DatabaseURL dbURL = null;
+//
+//		try {
+//			dbURL = getDataManagerLocation(ti.getTableName(), ti.getSchemaName());
+//		} catch (SQLException e) {
+//			e.printStackTrace();
+//			return null;
+//		}
+//
+//		/*
+//		 * Use the chord interface to get a remote reference to this data manager.
+//		 */
+//
+//		IDatabaseRemote remoteInterface = db.getRemoteInterface();
+//
+//		return remoteInterface.refindDataManagerReference(ti, dbURL);
+		
+		return null;
 	}
 
 	/* (non-Javadoc)

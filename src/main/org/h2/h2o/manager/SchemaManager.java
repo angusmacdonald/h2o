@@ -13,6 +13,7 @@ import org.h2.h2o.util.TableInfo;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
@@ -30,8 +31,6 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	 */
 	private ISchemaManager persisted;
 
-
-	
 	/*
 	 * MIGRATION RELATED CODE.
 	 */
@@ -61,17 +60,25 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	 * The amount of time which has elapsed since migration began. Used to timeout requests which take too long.
 	 */
 	private long migrationTime = 0l;
+	
+	private IChordRemoteReference location;
 
 	/**
 	 * The timeout period for migrating the schema manager.
 	 */
 	private static final int MIGRATION_TIMEOUT = 10000;
 
+	private LookupPinger pingerThread;
+	
 	public SchemaManager(Database db, boolean createTables) {
 
 		try {
 			this.inMemory = new InMemorySchemaManager(db);
 			this.persisted = new PersistentSchemaManager(db, createTables);
+			
+			this.location = db.getRemoteInterface().getLocalChordReference();
+			this.pingerThread = new LookupPinger(db.getRemoteInterface(), location);
+			this.pingerThread.start();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -368,6 +375,18 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	@Override
 	public void shutdown(boolean shutdown) throws RemoteException, MovedException {
 		this.shutdown = shutdown;
+		
+		if (shutdown){
+			pingerThread.setRunning(false);
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.Migratable#getChordReference()
+	 */
+	@Override
+	public IChordRemoteReference getChordReference() throws RemoteException {
+		return location;
 	}
 
 }

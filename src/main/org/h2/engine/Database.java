@@ -795,7 +795,7 @@ public class Database implements DataHandler {
 	 * @param isStartup 
 	 */
 	private void createSchemaManager(boolean databaseExists,
-			boolean persistedTablesExist, boolean createTables) {
+			boolean persistedTablesExist, boolean createTables) throws SQLException {
 		if (schemaManagerRef.isSchemaManagerLocal()){ // Create the schema manager tables and immediately add local tables to this manager.
 
 			SchemaManager schemaManager = new SchemaManager(this, createTables); 

@@ -2,6 +2,8 @@ package org.h2.h2o.manager;
 
 import java.rmi.RemoteException;
 
+import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
+
 /**
  * Classes implementing this interface can be migrated to other machines in the system.
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
@@ -27,4 +29,10 @@ public interface Migratable {
 	 * Tell the manager to stop accepting queries.
 	 */
 	public void shutdown(boolean shutdown) throws RemoteException, MovedException;
+	
+	/**
+	 * 
+	 */
+	public IChordRemoteReference getChordReference() throws RemoteException;
+
 }

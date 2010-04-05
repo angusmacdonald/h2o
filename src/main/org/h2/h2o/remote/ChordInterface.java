@@ -20,6 +20,7 @@ import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.SchemaManagerReplication;
 import org.h2.test.h2o.ChordTests;
 
+import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -55,6 +56,8 @@ public class ChordInterface implements Observer {
 	private DatabaseURL actualSchemaManagerLocation = null;
 
 	private SchemaManagerReference schemaManagerRef;
+	
+	private IChordRemoteReference predecessor;
 
 
 	private Database db;
@@ -231,10 +234,33 @@ public class ChordInterface implements Observer {
 	 * 
 	 */
 	private void predecessorChangeEvent() {
-		if (this.schemaManagerRef.getLookupLocation() == null) return; //This is a new chord node. If it is responsible for the schema manager its successor will say so.
+		//if (this.schemaManagerRef.getLookupLocation() == null) return; //This is a new chord node. If it is responsible for the schema manager its successor will say so.
 
+		
+		boolean schemaManagerWasOnPredecessor = schemaManagerRef.isThisSchemaManagerNode(this.predecessor);
+		this.predecessor = chordNode.getPredecessor();
+		
+		if (schemaManagerWasOnPredecessor){
+			//Check whether the schema manager is still active.
+			boolean schemaManagerAlive = false;
+			try {
+				this.schemaManagerRef.getSchemaManager().checkConnection();
+				schemaManagerAlive = true;
+			} catch (Exception e) {
+				schemaManagerAlive = false;
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "The schema manager is no longer accessible.");
+			}
+			
+			
+			if (!schemaManagerAlive){
+				/*
+				 * The schema manager was on the predecessor and has now failed. It must be re-instantiated on this node.
+				 */
+				schemaManagerRef.migrateSchemaManagerToLocalInstance(true, true);
+				
+			}
+		}
 	
-
 //		if (schemaManagerWasInPredessorsKeyRange){
 			/*
 			 * 
@@ -478,6 +504,26 @@ public class ChordInterface implements Observer {
 		} catch (Exception e) {
 			e.printStackTrace();
 			//ErrorHandling.hardError("Failed to export and bind schema manager.");
+		}
+	}
+
+	/**
+	 * @return
+	 */
+	public IChordRemoteReference getLocalChordreference() {
+		return chordNode.getProxy();
+	}
+
+	/**
+	 * @param schemaManagerKey
+	 * @return
+	 */
+	public IChordRemoteReference getLookupLocation(IKey schemaManagerKey) {
+		try {
+			return chordNode.lookup(schemaManagerKey);
+		} catch (RemoteException e) {
+			ErrorHandling.errorNoEvent("Error looking up schema manager lookup location.");
+			return null;
 		}
 	}
 }

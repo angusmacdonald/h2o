@@ -2,6 +2,7 @@ package org.h2.h2o.remote;
 
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -76,4 +77,33 @@ public interface IDatabaseRemote {
 	 * 
 	 */
 	public IChordRemoteReference lookupSchemaManagerNodeLocation() throws RemoteException;
+
+	/**
+	 * @return
+	 */
+	public IChordRemoteReference getLocalChordReference();
+
+	/**
+	 * @return
+	 */
+	public IChordRemoteReference getSchemaManagerLookupLocation();
+
+	/**
+	 * @param lookupLocation
+	 * @throws RemoteException 
+	 */
+	public DatabaseInstanceRemote getDatabaseInstanceAt(IChordRemoteReference lookupLocation) throws RemoteException;
+
+	/**
+	 * @return
+	 */
+	public ChordInterface getChordInterface();
+
+	/**
+	 * @param hostname
+	 * @param port
+	 * @throws RemoteException 
+	 * @throws NotBoundException 
+	 */
+	public DatabaseInstanceRemote getDatabaseInstanceAt(String hostname, int port) throws RemoteException, NotBoundException;
 }

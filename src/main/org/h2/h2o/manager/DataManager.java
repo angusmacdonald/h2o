@@ -1,5 +1,6 @@
 package org.h2.h2o.manager;
 
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -29,6 +30,7 @@ import org.h2.result.LocalResult;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
 
 /**
  * <p>The data manager represents a user table in H2O, and is responsible for storing
@@ -146,6 +148,7 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 	private boolean isAlive = true;
 
 	private boolean shutdown = false;
+
 	/*
 	 * MIGRATION RELATED CODE.
 	 */
@@ -176,6 +179,7 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 	 */
 	private static final int MIGRATION_TIMEOUT = 10000;
 
+	private IChordRemoteReference location;
 
 	public DataManager(String tableName, String schemaName, long modificationID, int tableSet, Database database) throws SQLException{
 		this.tableName = tableName;
@@ -196,6 +200,7 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 
 		this.lockingTable = new LockingTable(schemaName + "." + tableName);
 
+		this.location = database.getRemoteInterface().getLocalChordReference();
 		//this.primaryLocation = database.getLocalDatabaseInstance();
 
 		//		this.primaryLocation = getDatabaseInstance(createFullDatabaseLocation(database.getDatabaseLocation(), 
@@ -230,7 +235,7 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 	 * @throws SQLException
 	 */
 	public static int createDataManagerTables(Session session) throws SQLException{
-		
+
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Creating data manager tables.");
 
 		String sql = "CREATE SCHEMA IF NOT EXISTS H2O; " +
@@ -318,7 +323,30 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 	 */
 	private DatabaseInstanceRemote getDatabaseInstance(
 			DatabaseURL dbURL) {
-		return database.getDatabaseInstance(dbURL);
+		DatabaseInstanceRemote dir = database.getDatabaseInstance(dbURL);
+
+		if (dir == null){
+			try {
+				//The schema manager doesn't contain a proper reference for the remote database instance. Try and find one,
+				//then update the schema manager if successful.
+				dir = database.getRemoteInterface().getDatabaseInstanceAt(dbURL.getHostname(), dbURL.getRMIPort());
+
+				if (dir == null){
+					ErrorHandling.errorNoEvent("DatabaseInstanceRemote wasn't found.");
+				} else {
+
+					database.getSchemaManager().addConnectionInformation(dbURL, dir);
+
+				}
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+
+
+		return dir;
 	}
 
 	/* (non-Javadoc)
@@ -801,7 +829,7 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 		if (inMigration){
 			//If it hasn't moved, but is in the process of migration an exception will be thrown.
 			long currentTimeOfMigration = System.currentTimeMillis() - migrationTime;
-			
+
 			if (currentTimeOfMigration < MIGRATION_TIMEOUT) {
 				throw new RemoteException();
 			} else {
@@ -856,10 +884,10 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 		/*
 		 * Obtain fully qualified table name.
 		 */
-//		this.schemaName = otherDataManager.getSchemaName();
-//		this.tableName = otherDataManager.getTableName();
+		//		this.schemaName = otherDataManager.getSchemaName();
+		//		this.tableName = otherDataManager.getTableName();
 		//This is done when constructing the new data manager.
-		
+
 		/*
 		 * Obtain replica manager.
 		 */
@@ -919,8 +947,16 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 	 */
 	@Override
 	public void shutdown(boolean shutdown) throws RemoteException,
-			MovedException {
+	MovedException {
 		this.shutdown = shutdown;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.Migratable#getChordReference()
+	 */
+	@Override
+	public IChordRemoteReference getChordReference() throws RemoteException {
+		return location;
 	}
 
 }

@@ -5,4 +5,5 @@ package org.h2.h2o.manager;
  */
 public interface SchemaManagerRemote extends ISchemaManager, Migratable {
 
+
 }

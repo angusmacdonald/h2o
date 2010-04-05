@@ -9,11 +9,13 @@ import org.h2.engine.Session;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.manager.ISchemaManager;
 import org.h2.h2o.manager.PersistentSchemaManager;
+import org.h2.h2o.manager.SchemaManagerRemote;
 import org.h2.h2o.util.DatabaseURL;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
 
 /**
  * Proxy class exposed via RMI, allowing semi-parsed queries to be sent to remote replicas for execution.
@@ -210,5 +212,14 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 			e.printStackTrace();
 		}
 		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#setSchemaManagerLocation(uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference)
+	 */
+	@Override
+	public void setSchemaManagerLocation(IChordRemoteReference schemaManagerLocation, DatabaseURL databaseURL) throws RemoteException {
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Schema manager location set to: " + schemaManagerLocation.getRemote().getAddress().getPort());
+		this.session.getDatabase().getSchemaManagerReference().setSchemaManagerLocation(schemaManagerLocation, databaseURL);
 	}
 }
