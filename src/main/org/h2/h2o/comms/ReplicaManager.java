@@ -53,6 +53,9 @@ public class ReplicaManager implements Serializable {
 	}
 
 	public void add(DatabaseInstanceRemote replicaLocation){
+		
+		assert replicaLocation != null;
+		
 		if (primaryLocation == null){
 			primaryLocation = replicaLocation;
 		}

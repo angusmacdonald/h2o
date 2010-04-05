@@ -6,11 +6,13 @@ import java.sql.SQLException;
 import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.engine.Session;
+import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.manager.ISchemaManager;
 import org.h2.h2o.manager.PersistentSchemaManager;
 import org.h2.h2o.manager.SchemaManagerRemote;
 import org.h2.h2o.util.DatabaseURL;
+import org.h2.h2o.util.TableInfo;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -219,7 +221,21 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	 */
 	@Override
 	public void setSchemaManagerLocation(IChordRemoteReference schemaManagerLocation, DatabaseURL databaseURL) throws RemoteException {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Schema manager location set to: " + schemaManagerLocation.getRemote().getAddress().getPort());
+		//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Schema manager location set to: " + schemaManagerLocation.getRemote().getAddress().getPort());
 		this.session.getDatabase().getSchemaManagerReference().setSchemaManagerLocation(schemaManagerLocation, databaseURL);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#findDataManagerReference(org.h2.h2o.util.TableInfo)
+	 */
+	@Override
+	public DataManagerRemote findDataManagerReference(TableInfo ti)
+			throws RemoteException {
+		try {
+			return this.session.getDatabase().getSchemaManagerReference().lookup(ti);
+		} catch (SQLException e) {
+			ErrorHandling.errorNoEvent("Couldn't find data manager at this machine. Data manager needs to be re-instantiated.."); //TODO allow for re-instantiation at this point.
+			return null;
+		}
 	}
 }

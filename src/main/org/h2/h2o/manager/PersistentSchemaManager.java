@@ -117,13 +117,13 @@ public class PersistentSchemaManager implements ISchemaManager{
 	private int setupSchemaManagerStateTables() throws SQLException{
 
 		String sql = "CREATE SCHEMA IF NOT EXISTS H2O; " +
-		"\n\nCREATE TABLE IF NOT EXISTS " + TABLES + "( table_id INT NOT NULL auto_increment, " +
+		"\n\nCREATE TABLE IF NOT EXISTS " + TABLES + "( table_id INT NOT NULL auto_increment(1,1), " +
 		"schemaname VARCHAR(255), tablename VARCHAR(255), " +
 		"last_modification INT NOT NULL, " +
 		"PRIMARY KEY (table_id) );";
 
 		sql += "CREATE TABLE IF NOT EXISTS " + CONNECTIONS +"(" + 
-		"connection_id INT NOT NULL auto_increment," + 
+		"connection_id INTEGER NOT NULL auto_increment(1,1)," + 
 		"connection_type VARCHAR(5), " + 
 		"machine_name VARCHAR(255)," + 
 		"db_location VARCHAR(255)," +
@@ -132,9 +132,9 @@ public class PersistentSchemaManager implements ISchemaManager{
 		"PRIMARY KEY (connection_id) );";
 
 		sql += "\n\nCREATE TABLE IF NOT EXISTS " + REPLICAS + "(" +
-		"replica_id INT NOT NULL auto_increment, " +
-		"table_id INT NOT NULL, " +
-		"connection_id INT NOT NULL, " + 
+		"replica_id INTEGER NOT NULL auto_increment(1,1), " +
+		"table_id INTEGER NOT NULL, " +
+		"connection_id INTEGER NOT NULL, " + 
 		"storage_type VARCHAR(255), " + 
 		"last_modification INT NOT NULL, " +
 		"table_set INT NOT NULL, " +
@@ -226,7 +226,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 				//find the URL from the data manager.
 				dbURL = dataManager.getDatabaseURL();
 			}
-			
+
 			int connectionID = getConnectionID(dbURL);
 
 			assert connectionID != -1;
@@ -796,27 +796,27 @@ public class PersistentSchemaManager implements ISchemaManager{
 	 */
 	@Override
 	public DataManagerRemote lookup(TableInfo ti) throws RemoteException {
-//
-//		/*
-//		 * Get the machine location of the table's data manager.
-//		 */
-//		DatabaseURL dbURL = null;
-//
-//		try {
-//			dbURL = getDataManagerLocation(ti.getTableName(), ti.getSchemaName());
-//		} catch (SQLException e) {
-//			e.printStackTrace();
-//			return null;
-//		}
-//
-//		/*
-//		 * Use the chord interface to get a remote reference to this data manager.
-//		 */
-//
-//		IDatabaseRemote remoteInterface = db.getRemoteInterface();
-//
-//		return remoteInterface.refindDataManagerReference(ti, dbURL);
-		
+		//
+		//		/*
+		//		 * Get the machine location of the table's data manager.
+		//		 */
+		//		DatabaseURL dbURL = null;
+		//
+		//		try {
+		//			dbURL = getDataManagerLocation(ti.getTableName(), ti.getSchemaName());
+		//		} catch (SQLException e) {
+		//			e.printStackTrace();
+		//			return null;
+		//		}
+		//
+		//		/*
+		//		 * Use the chord interface to get a remote reference to this data manager.
+		//		 */
+		//
+		//		IDatabaseRemote remoteInterface = db.getRemoteInterface();
+		//
+		//		return remoteInterface.refindDataManagerReference(ti, dbURL);
+
 		return null;
 	}
 
@@ -946,6 +946,10 @@ public class PersistentSchemaManager implements ISchemaManager{
 		"WHERE " + TABLES + ".table_id=" + REPLICAS + ".table_id " + 
 		"AND H2O_CONNECTION.connection_id = H2O_REPLICA.connection_id AND primary_copy = true;";
 
+
+		//		SELECT db_location, connection_type, machine_name, connection_port, tablename, schemaname, chord_port FROM H2O.H2O_REPLICA, H2O.H2O_CONNECTION, H2O.H2O_TABLE 
+		//		WHERE H2O.H2O_TABLE.table_id=H2O.H2O_REPLICA.table_id AND H2O_CONNECTION.connection_id = H2O_REPLICA.connection_id AND primary_copy = true;
+
 		LocalResult result = null;
 
 		try {
@@ -972,11 +976,14 @@ public class PersistentSchemaManager implements ISchemaManager{
 				/*
 				 * Perform lookups to get remote references to every data manager.
 				 */
-				DataManagerRemote dmReference = remoteInterface.refindDataManagerReference(ti, dbURL);
+				DatabaseInstanceRemote dir = remoteInterface.getDatabaseInstanceAt(dbURL);   //.findDataManagerReference(ti, dbURL);
 
-				dataManagers.put(ti, dmReference);
-
-
+				if (dir != null){
+					DataManagerRemote dmReference = dir.findDataManagerReference(ti);
+					dataManagers.put(ti, dmReference);
+				} else {
+					dataManagers.put(ti, null);
+				}
 
 			}
 
@@ -1028,7 +1035,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 		if (replicaManager.size() < Replication.SCHEMA_MANAGER_REPLICATION_FACTOR + 1){ //+1 because the local copy counts as a replica.
 			replicaManager.add(databaseReference);
 
-			//TODO now replica state here.
+			//now replica state here.
 			databaseReference.executeUpdate("CREATE REPLICA " + TABLES + ", " + REPLICAS + ", " + CONNECTIONS + " FROM '" + db.getDatabaseURL().getOriginalURL() + "';");
 
 		}

@@ -1,6 +1,5 @@
 package org.h2.h2o.manager;
 
-import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -322,10 +321,8 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 					dir = database.getLocalDatabaseInstance();
 				} else {
 					//Look for a remote reference.
-					String hostname = remoteDB.getKey().getHostname();
-					int port = remoteDB.getKey().getRMIPort();
 					try {
-						dir = database.getRemoteInterface().getDatabaseInstanceAt(hostname, port);
+						dir = database.getRemoteInterface().getDatabaseInstanceAt(remoteDB.getKey());
 					} catch (Exception e) {
 						//Couldn't find reference to this database instance. TODO mark it as inactive.
 					}

@@ -329,7 +329,7 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 			try {
 				//The schema manager doesn't contain a proper reference for the remote database instance. Try and find one,
 				//then update the schema manager if successful.
-				dir = database.getRemoteInterface().getDatabaseInstanceAt(dbURL.getHostname(), dbURL.getRMIPort());
+				dir = database.getRemoteInterface().getDatabaseInstanceAt(dbURL);
 
 				if (dir == null){
 					ErrorHandling.errorNoEvent("DatabaseInstanceRemote wasn't found.");

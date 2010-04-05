@@ -10,12 +10,10 @@ import java.util.Set;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.DatabaseInstance;
-import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.manager.SchemaManagerReference;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.H2oProperties;
-import org.h2.h2o.util.TableInfo;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -55,7 +53,7 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 	public ChordDatabaseRemote(DatabaseURL localMachineLocation, Database db, SchemaManagerReference schemaManagerRef){
 		this.chord = new ChordInterface(db, schemaManagerRef);
 		this.schemaManagerRef = schemaManagerRef;
-
+		
 		this.localMachineLocation = localMachineLocation;
 	}
 
@@ -271,21 +269,6 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.remote.IDatabaseRemote#refindDataManagerReference(org.h2.h2o.util.DatabaseURL)
-	 */
-	@Override
-	public DataManagerRemote refindDataManagerReference(TableInfo ti, DatabaseURL dbURL) {
-		DataManagerRemote dataManagerReference = null;
-		try {
-			Registry remoteRegistry = LocateRegistry.getRegistry(dbURL.getHostname(), dbURL.getRMIPort());
-			dataManagerReference = (DataManagerRemote) remoteRegistry.lookup(ti.getFullTableName());
-		} catch (Exception e) {
-			ErrorHandling.errorNoEvent("Could not find the data manager for " + ti.getFullTableName() + " at its old location: " + dbURL.getHostname() + ":" + dbURL.getRMIPort());
-		}
-		return dataManagerReference;
-	}
-
-	/* (non-Javadoc)
 	 * @see org.h2.h2o.remote.IDatabaseRemote#getDatabaseInstanceAt(uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference)
 	 */
 	@Override
@@ -305,10 +288,25 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.remote.IDatabaseRemote#getDatabaseInstanceAt(java.lang.String, int)
+	 * @see org.h2.h2o.remote.IDatabaseRemote#getDatabaseInstanceAt(org.h2.h2o.util.DatabaseURL)
 	 */
 	@Override
-	public DatabaseInstanceRemote getDatabaseInstanceAt(String hostname, int port) throws RemoteException, NotBoundException {
+	public DatabaseInstanceRemote getDatabaseInstanceAt(DatabaseURL dbURL)
+			throws RemoteException {
+		
+		if (dbURL.equals(this.localMachineLocation)){
+			return this.getLocalDatabaseInstance(); 
+		}
+
+		try {
+			return getDatabaseInstanceAt(dbURL.getHostname(), dbURL.getRMIPort());
+		} catch (NotBoundException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	private DatabaseInstanceRemote getDatabaseInstanceAt(String hostname, int port) throws RemoteException, NotBoundException {
 		DatabaseInstanceRemote dir = null;
 
 

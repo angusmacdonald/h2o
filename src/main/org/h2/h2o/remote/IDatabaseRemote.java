@@ -53,15 +53,7 @@ public interface IDatabaseRemote {
 	 * @return Address of the local database instance.
 	 */
 	public DatabaseURL getLocalMachineLocation();
-
-	/**
-	 * Find a reference to a remote data manager, not from the schema manager but from
-	 * first principles (lookup via RMI registry) - this is required when rebuilding the schema manager,
-	 * or using a persistent schema manager in the lookup.
-	 * @param dbURL
-	 */
-	public DataManagerRemote refindDataManagerReference(TableInfo ti, DatabaseURL dbURL);
-
+	
 	/**
 	 * @param schemaManagerRef
 	 */
@@ -100,10 +92,8 @@ public interface IDatabaseRemote {
 	public ChordInterface getChordInterface();
 
 	/**
-	 * @param hostname
-	 * @param port
-	 * @throws RemoteException 
-	 * @throws NotBoundException 
+	 * @param dbURL
+	 * @return
 	 */
-	public DatabaseInstanceRemote getDatabaseInstanceAt(String hostname, int port) throws RemoteException, NotBoundException;
+	public DatabaseInstanceRemote getDatabaseInstanceAt(DatabaseURL dbURL)  throws RemoteException;
 }

@@ -48,14 +48,15 @@ public class LookupPinger extends Thread {
 	
 	@Override
 	public void run(){
+
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Starting to ping schema manager lookup location.");
 		
 		while (running){
 			/*
 			 * Continously inform schema managers chord ring node of the 
 			 * actual schema manager location.
 			 */
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Ping loop.");
-			
+
 			
 			try {
 				Thread.sleep(DEFAULT_SLEEP_TIME);
@@ -71,11 +72,10 @@ public class LookupPinger extends Thread {
 				//If this chord node doesn't hold both the lookup and the schema manager process.
 				
 				try {
-					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Lookup location is: " + lookupLocation.getRemote().getAddress().getPort());
-					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "SM location is: " + schemaManagerLocation.getRemote().getAddress().getPort());
+//					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Lookup location is: " + lookupLocation.getRemote().getAddress().getPort());
+//					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "SM location is: " + schemaManagerLocation.getRemote().getAddress().getPort());
 					DatabaseInstanceRemote dir = remoteInterface.getDatabaseInstanceAt(lookupLocation);
 					dir.setSchemaManagerLocation(schemaManagerLocation, remoteInterface.getLocalMachineLocation());
-					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Pinging lookup location.");
 					
 				} catch (RemoteException e) {
 					ErrorHandling.errorNoEvent("Pinger thread failed to find instance responsible for schema manager lookup.");

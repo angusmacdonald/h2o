@@ -263,8 +263,8 @@ public class CreateReplica extends SchemaCommand {
 		for (int i = 0; i < columns.size(); i++) {
 			Column c = (Column) columns.get(i);
 
-			if (fullTableName.startsWith("H2O.H2O") && i == 0){
-				c.setAutoIncrement(true, 0, 1);
+			if (fullTableName.startsWith("H2O.H2O") && i == 0){ //XXX nasty h2o-specific auto-increment hack.
+				c.setAutoIncrement(true, 1, 1);
 			}
 			if (c.getAutoIncrement()) {
 				int objId = getObjectId(true, true);
@@ -689,9 +689,12 @@ public class CreateReplica extends SchemaCommand {
 			long precision = rs.getInt("COLUMN_SIZE");
 			precision = convertPrecision(sqlType, precision);
 			int scale = rs.getInt("DECIMAL_DIGITS");
+			int nullable = rs.getInt("NULLABLE");
 			int displaySize = MathUtils.convertLongToInt(precision);
 			int type = DataType.convertSQLTypeToValueType(sqlType);
 			Column col = new Column(columnName, type, precision, scale, displaySize);
+			
+			col.setNullable(nullable == 1);
 
 			/*
 			 * Add this new column to the 'columns' field.
@@ -853,7 +856,7 @@ public class CreateReplica extends SchemaCommand {
 				if (c != null){
 					c.setNullable(false);
 				} else {
-					System.out.println("This column was null.");
+					ErrorHandling.errorNoEvent("This column was null.");
 				}
 			}
 
