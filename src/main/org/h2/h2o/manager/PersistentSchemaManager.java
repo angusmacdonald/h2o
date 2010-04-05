@@ -1036,8 +1036,8 @@ public class PersistentSchemaManager implements ISchemaManager{
 			replicaManager.add(databaseReference);
 
 			//now replica state here.
+			databaseReference.executeUpdate("DROP REPLICA IF EXISTS " + TABLES + ", " + REPLICAS + ", " + CONNECTIONS + ";"); 
 			databaseReference.executeUpdate("CREATE REPLICA " + TABLES + ", " + REPLICAS + ", " + CONNECTIONS + " FROM '" + db.getDatabaseURL().getOriginalURL() + "';");
-
 		}
 	}
 

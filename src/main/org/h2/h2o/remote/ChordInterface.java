@@ -56,7 +56,7 @@ public class ChordInterface implements Observer {
 	private DatabaseURL actualSchemaManagerLocation = null;
 
 	private SchemaManagerReference schemaManagerRef;
-	
+
 	private IChordRemoteReference predecessor;
 
 
@@ -216,7 +216,7 @@ public class ChordInterface implements Observer {
 	 */
 	@Override
 	public void update(Observable o, Object arg) {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Start of update() : " + arg);
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, arg);
 
 		/*
 		 * If the predecessor of this node has changed.
@@ -225,9 +225,6 @@ public class ChordInterface implements Observer {
 			predecessorChangeEvent();
 		else if (arg.equals(ChordNodeImpl.SUCCESSOR_CHANGE_EVENT))
 			successorChangeEvent();
-
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "End of update() : " + arg);
-
 	}
 
 	/**
@@ -236,10 +233,10 @@ public class ChordInterface implements Observer {
 	private void predecessorChangeEvent() {
 		//if (this.schemaManagerRef.getLookupLocation() == null) return; //This is a new chord node. If it is responsible for the schema manager its successor will say so.
 
-		
+
 		boolean schemaManagerWasOnPredecessor = schemaManagerRef.isThisSchemaManagerNode(this.predecessor);
 		this.predecessor = chordNode.getPredecessor();
-		
+
 		if (schemaManagerWasOnPredecessor){
 			//Check whether the schema manager is still active.
 			boolean schemaManagerAlive = false;
@@ -250,86 +247,86 @@ public class ChordInterface implements Observer {
 				schemaManagerAlive = false;
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "The schema manager is no longer accessible.");
 			}
-			
-			
+
+
 			if (!schemaManagerAlive){
 				/*
 				 * The schema manager was on the predecessor and has now failed. It must be re-instantiated on this node.
 				 */
 				schemaManagerRef.migrateSchemaManagerToLocalInstance(true, true);
-				
+
 			}
 		}
-	
-//		if (schemaManagerWasInPredessorsKeyRange){
-			/*
-			 * 
-			 * At this point in the code we know:
-			 * 	- the schema manager (pre-predecessor change) was in the key range of this nodes predecessor.
-			 *  - the schema manager itself may have been on this node, but possibly not.
-			 * We may have a new schema manager location.
-			 * 
-			 * 1. The schema manager has failed and this instance is now also responsible for its key space. The local database instance has a replicated
-			 * 		copy of its state.
-			 * 2. The schema manager lookup is still active on the old predecessor, which is also the chord node with the lookup for 'SCHEMA_MANAGER'.
-			 * 			i.e. a new predecessor has joined, but the chord lookup resolves to the schema manager's location.
-			 * 3. The schema manager was/is on the predecessor, and this node is not responsible for the lookup 'SCHEMA_MANAGER'.
-			 * 			i.e. a new node (the new predecessor) has joined and is now responsible for the lookup operation.
-			 */
 
-			/*
+		//		if (schemaManagerWasInPredessorsKeyRange){
+		/*
+		 * 
+		 * At this point in the code we know:
+		 * 	- the schema manager (pre-predecessor change) was in the key range of this nodes predecessor.
+		 *  - the schema manager itself may have been on this node, but possibly not.
+		 * We may have a new schema manager location.
+		 * 
+		 * 1. The schema manager has failed and this instance is now also responsible for its key space. The local database instance has a replicated
+		 * 		copy of its state.
+		 * 2. The schema manager lookup is still active on the old predecessor, which is also the chord node with the lookup for 'SCHEMA_MANAGER'.
+		 * 			i.e. a new predecessor has joined, but the chord lookup resolves to the schema manager's location.
+		 * 3. The schema manager was/is on the predecessor, and this node is not responsible for the lookup 'SCHEMA_MANAGER'.
+		 * 			i.e. a new node (the new predecessor) has joined and is now responsible for the lookup operation.
+		 */
+
+		/*
 //			 * Check whether this is 1.
 //			 */
-//			boolean scenarioOne = false; //Machine of schema manager lookup has failed.
-//			//Check whether the schema manager is still active.
-//			try {
-//				this.schemaManagerRef.getSchemaManager().checkConnection();
-//				scenarioOne = false;
-//			} catch (Exception e) {
-//				scenarioOne = true;
-//				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "The schema manager is no longer accessible.");
-//			}
-//
-//			boolean previousPredecessorAlive = false;
-//			//Check whether the node on which the schema manager was on is still active.
-//			try {
-//				IChordRemoteReference predecessorsSucessor = this.schemaManagerRef.getLookupLocation().getRemote().getSuccessor();
-//				if (predecessorsSucessor.equals(this.chordNode.getProxy()))
-//					previousPredecessorAlive = true;
-//			} catch (RemoteException e) {
-//				previousPredecessorAlive = false;
-//			}
-//
-//
-//			//We know know if the schema manager is alive, and if the previous predecessor is alive.
-//			
-//			/*
-//			 * Check whether this is 2.
-//			 */
-//			boolean scenarioTwo = false;
-//			/*
-//			 * Check whether this is 3.
-//			 */
-//			boolean scenarioThree = false;
-//
-//
-//			/*
-//			 * Now we know what has happened. Action...
-//			 */
-//			if (scenarioOne){ //1. The schema manager has failed and this instance is now responsible for its key space.
-//				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tThe schema manager is now in the key range of : " + chordNode);
-//
-//				schemaManagerRef.migrateSchemaManagerToLocalInstance(true, true);
-//				this.schemaManagerRef.setInKeyRange(true);
-//
-//			} else if (scenarioTwo){ // 2. The schema manager is still active on the old predecessor, which is also the chord node with the lookup for 'SCHEMA_MANAGER'.
-//				schemaManagerRef.setInPredessorsKeyRange(false); // No longer true.
-//				//Nothing else needs changing on this machine. The new predecessor will have a pointer to the actual schema manager.
-//			} else if (scenarioThree){ // 3. The schema manager was/is on the predecessor, and this node is not responsible for the lookup 'SCHEMA_MANAGER'.
-//
-//			}
+		//			boolean scenarioOne = false; //Machine of schema manager lookup has failed.
+		//			//Check whether the schema manager is still active.
+		//			try {
+		//				this.schemaManagerRef.getSchemaManager().checkConnection();
+		//				scenarioOne = false;
+		//			} catch (Exception e) {
+		//				scenarioOne = true;
+		//				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "The schema manager is no longer accessible.");
+		//			}
+		//
+		//			boolean previousPredecessorAlive = false;
+		//			//Check whether the node on which the schema manager was on is still active.
+		//			try {
+		//				IChordRemoteReference predecessorsSucessor = this.schemaManagerRef.getLookupLocation().getRemote().getSuccessor();
+		//				if (predecessorsSucessor.equals(this.chordNode.getProxy()))
+		//					previousPredecessorAlive = true;
+		//			} catch (RemoteException e) {
+		//				previousPredecessorAlive = false;
+		//			}
+		//
+		//
+		//			//We know know if the schema manager is alive, and if the previous predecessor is alive.
+		//			
+		//			/*
+		//			 * Check whether this is 2.
+		//			 */
+		//			boolean scenarioTwo = false;
+		//			/*
+		//			 * Check whether this is 3.
+		//			 */
+		//			boolean scenarioThree = false;
+		//
+		//
+		//			/*
+		//			 * Now we know what has happened. Action...
+		//			 */
+		//			if (scenarioOne){ //1. The schema manager has failed and this instance is now responsible for its key space.
+		//				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tThe schema manager is now in the key range of : " + chordNode);
+		//
+		//				schemaManagerRef.migrateSchemaManagerToLocalInstance(true, true);
+		//				this.schemaManagerRef.setInKeyRange(true);
+		//
+		//			} else if (scenarioTwo){ // 2. The schema manager is still active on the old predecessor, which is also the chord node with the lookup for 'SCHEMA_MANAGER'.
+		//				schemaManagerRef.setInPredessorsKeyRange(false); // No longer true.
+		//				//Nothing else needs changing on this machine. The new predecessor will have a pointer to the actual schema manager.
+		//			} else if (scenarioThree){ // 3. The schema manager was/is on the predecessor, and this node is not responsible for the lookup 'SCHEMA_MANAGER'.
+		//
+		//			}
 
-//		}
+		//		}
 	}
 
 	/**
@@ -357,10 +354,13 @@ public class ChordInterface implements Observer {
 
 					if (!Constants.IS_NON_SM_TEST){
 						//Don't bother trying to replicate the schema manager if this is a test which doesn't require it.
-						SchemaManagerReplication newThread = new SchemaManagerReplication(hostname, port, this.db, this);
+						SchemaManagerReplication newThread = new SchemaManagerReplication(hostname, port, this.db.getSchemaManager(), this);
 						newThread.start();
 					}
 
+				} else if (dbInstance.equals(this.db.getLocalDatabaseInstance())) {
+					//Do nothing. There is only one node in the network.
+					Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "There is only one node in the network so the schema manager can't be replicated elsewhere.");
 				} else {
 
 					this.schemaManagerRef.getSchemaManager(false).addSchemaManagerDataLocation(dbInstance);
@@ -450,13 +450,9 @@ public class ChordInterface implements Observer {
 	}
 
 	/**
-	 * Obtain a remote reference to a database instance, where the instance has a chord node running
-	 * on the specified hostname and port.
-	 * 
-	 * <p>This information is used to locate the chord node's RMI registry which provides a reference to
-	 * the database instance itself.
-	 * @return	Remote reference to the database instance.
+	 * Use ChordDatabaseRemote.getDatabaseInstanceAt().
 	 */
+	@Deprecated
 	public DatabaseInstanceRemote getDatabaseInstance(String hostname, int port) {
 		Registry remoteRegistry;
 		try {
@@ -517,13 +513,10 @@ public class ChordInterface implements Observer {
 	/**
 	 * @param schemaManagerKey
 	 * @return
+	 * @throws RemoteException 
 	 */
-	public IChordRemoteReference getLookupLocation(IKey schemaManagerKey) {
-		try {
-			return chordNode.lookup(schemaManagerKey);
-		} catch (RemoteException e) {
-			ErrorHandling.errorNoEvent("Error looking up schema manager lookup location.");
-			return null;
-		}
+	public IChordRemoteReference getLookupLocation(IKey schemaManagerKey) throws RemoteException {
+		return chordNode.lookup(schemaManagerKey);
+
 	}
 }

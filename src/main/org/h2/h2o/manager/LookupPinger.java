@@ -64,7 +64,13 @@ public class LookupPinger extends Thread {
 				ErrorHandling.errorNoEvent("Pinger thread was interrupted while sleeping.");
 			}
 			
-			IChordRemoteReference lookupLocation = this.remoteInterface.getSchemaManagerLookupLocation();
+			IChordRemoteReference lookupLocation = null;
+			try {
+				lookupLocation = this.remoteInterface.getChordInterface().getLookupLocation(SchemaManagerReference.schemaManagerKey);
+			} catch (RemoteException e1) {
+				ErrorHandling.errorNoEvent("Error on ping lookup.");
+				continue;
+			}
 			
 			if (lookupLocation == null){
 				ErrorHandling.errorNoEvent("Lookup location was null.");

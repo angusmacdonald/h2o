@@ -664,6 +664,7 @@ public class CreateReplica extends SchemaCommand {
 		HashMap columnMap = new HashMap();
 		String catalog = null, schema = null;
 
+		Set<String> currentColumns = new HashSet<String>();
 		/*
 		 * Iterate over column meta-data.
 		 */
@@ -684,6 +685,12 @@ public class CreateReplica extends SchemaCommand {
 				break;
 			}
 			String columnName = rs.getString("COLUMN_NAME");
+			
+			if (currentColumns.contains(columnName)) //stops duplicate primary keys - this happens with multiple replicas.
+				continue;
+			
+			currentColumns.add(columnName);
+			
 			columnName = convertColumnName(columnName);
 			int sqlType = rs.getInt("DATA_TYPE");
 			long precision = rs.getInt("COLUMN_SIZE");

@@ -16,6 +16,7 @@ import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.remote.ChordInterface;
 import org.h2.h2o.util.DatabaseURL;
+import org.h2.h2o.util.SchemaManagerReplication;
 import org.h2.h2o.util.TableInfo;
 import org.h2.table.ReplicaSet;
 
@@ -225,7 +226,7 @@ public class SchemaManagerReference {
 
 		try {
 			remoteRegistry = LocateRegistry.getRegistry(schemaManagerLocationURL.getHostname(), schemaManagerLocationURL.getRMIPort());
-			
+
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
@@ -385,14 +386,14 @@ public class SchemaManagerReference {
 				ErrorHandling.exceptionError(e, "Migration process timed out. It took too long.");
 			}
 			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Schema Manager officially migrated to " + db.getDatabaseURL().getDbLocation() + ".");
-			
+
 			this.schemaManager = newSchemaManager;
 		}
-		
+
 		/*
 		 * Confirm the new schema managers location by updating all local state.
 		 */
-		
+
 		this.isLocal = true;
 		this.schemaManagerLocationURL = db.getDatabaseURL();
 
@@ -404,6 +405,19 @@ public class SchemaManagerReference {
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Binding schema manager on port " + schemaManagerLocationURL.getRMIPort());
 		} catch (Exception e) {
 			ErrorHandling.exceptionError(e, "Schema manager migration failed.");
+		}
+
+		/*
+		 * Replicate state to new successor.
+		 */
+
+		try {
+			String hostname = db.getRemoteInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getHostName();
+			int port = db.getRemoteInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getPort();
+			SchemaManagerReplication newThread = new SchemaManagerReplication(hostname, port, this.db.getSchemaManager(), this.db.getRemoteInterface().getChordInterface());
+			newThread.start();
+		} catch (RemoteException e) {
+			ErrorHandling.errorNoEvent("Failed to create replica for new schema manager on its successor.");
 		}
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Finished building new schema manager on " + db.getDatabaseURL().getDbLocation() + ".");
@@ -529,10 +543,22 @@ public class SchemaManagerReference {
 	 */
 	private void handleLostSchemaManagerConnection() throws SQLException {
 		try {
-			IChordRemoteReference lookupLocation = this.db.getRemoteInterface().getSchemaManagerLookupLocation();
+			IChordRemoteReference lookupLocation = null;
+
+			int attempts = 0;
+			do {
+				try{
+					lookupLocation = this.db.getRemoteInterface().getChordInterface().getLookupLocation(SchemaManagerReference.schemaManagerKey);
+				} catch (RemoteException e){
+					Thread.sleep(100); //wait, then try again.
+				}
+				attempts++;
+			} while (lookupLocation == null && attempts < 10);
+
+
 
 			DatabaseInstanceRemote lookupInstance  = null;
-			if (lookupLocation.equals(this.db.getRemoteInterface().getLocalChordReference())){
+			if (this.db.getRemoteInterface().getLocalChordReference().equals(lookupLocation)){
 				lookupInstance = this.db.getLocalDatabaseInstance();
 			} else {
 				String lookupHostname = lookupLocation.getRemote().getAddress().getHostName();

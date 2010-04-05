@@ -64,22 +64,28 @@ public class DropReplica extends SchemaCommand {
 			}
 		} else {
 			session.getUser().checkRight(table, Right.ALL);
-			if (!table.canDrop() || (Constants.IS_H2O && tableName.startsWith("H2O_"))) { //H2O - ensure schema tables aren't dropped.
+			if (!table.canDrop()) { //H2O - ensure schema tables aren't dropped. 
 				throw Message.getSQLException(ErrorCode.CANNOT_DROP_TABLE_1, tableName);
 			}
-			int numberOfReplicas = 0;
-			
-			try {
-				numberOfReplicas = session.getDatabase().getSchemaManager().getNumberofReplicas(tableName, getSchema().getName());
-			} catch (RemoteException e) {
-				throw new SQLException("Failed in communication with the schema manager.");
-			} catch (MovedException e){
-				throw new SQLException("Schema Manager has moved.");
+
+			if (!table.getName().startsWith("H2O_")){
+
+				int numberOfReplicas = 0;
+
+				try {
+					numberOfReplicas = session.getDatabase().getSchemaManager().getNumberofReplicas(tableName, getSchema().getName());
+				} catch (RemoteException e) {
+					throw new SQLException("Failed in communication with the schema manager.");
+				} catch (MovedException e){
+					throw new SQLException("Schema Manager has moved.");
+				}
+
+				if (numberOfReplicas == 1){ //can't drop the only replica.
+					throw Message.getSQLException(ErrorCode.CANNOT_DROP_TABLE_1, tableName);
+				}
+
 			}
 			
-			if (numberOfReplicas == 1){ //can't drop the only replica.
-				throw Message.getSQLException(ErrorCode.CANNOT_DROP_TABLE_1, tableName);
-			}
 			table.lock(session, true, true);
 		}
 		if (next != null) {
@@ -106,9 +112,9 @@ public class DropReplica extends SchemaCommand {
 			 */
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_")){
 				ISchemaManager sm = db.getSchemaManager(); //db.getSystemSession()
-				
+
 				TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), 0, table.getTableType(), db.getDatabaseURL());
-				
+
 				try {
 					sm.removeReplicaInformation(ti);
 				} catch (RemoteException e) {

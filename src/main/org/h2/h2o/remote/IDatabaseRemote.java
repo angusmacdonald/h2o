@@ -76,11 +76,6 @@ public interface IDatabaseRemote {
 	public IChordRemoteReference getLocalChordReference();
 
 	/**
-	 * @return
-	 */
-	public IChordRemoteReference getSchemaManagerLookupLocation();
-
-	/**
 	 * @param lookupLocation
 	 * @throws RemoteException 
 	 */

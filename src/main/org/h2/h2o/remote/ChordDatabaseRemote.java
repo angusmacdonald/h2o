@@ -305,7 +305,15 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 			return null;
 		}
 	}
-
+	
+	/**
+	 * Obtain a remote reference to a database instance, where the instance has a chord node running
+	 * on the specified hostname and port.
+	 * 
+	 * <p>This information is used to locate the chord node's RMI registry which provides a reference to
+	 * the database instance itself.
+	 * @return	Remote reference to the database instance.
+	 */
 	private DatabaseInstanceRemote getDatabaseInstanceAt(String hostname, int port) throws RemoteException, NotBoundException {
 		DatabaseInstanceRemote dir = null;
 
@@ -333,13 +341,6 @@ public class ChordDatabaseRemote implements IDatabaseRemote {
 		return chord.getLocalChordreference();
 	}
 
-	/* (non-Javadoc)
-	 * @see org.h2.h2o.remote.IDatabaseRemote#getSchemaManagerLookupLocation()
-	 */
-	@Override
-	public IChordRemoteReference getSchemaManagerLookupLocation() {
-		return chord.getLookupLocation(SchemaManagerReference.schemaManagerKey);
-	}
 
 	public ChordInterface getChordInterface(){
 		return chord;
