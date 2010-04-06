@@ -8,7 +8,6 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
@@ -234,7 +233,7 @@ public class SchemaManagerReference implements ISchemaManagerReference {
 		this.schemaManagerNode = schemaManagerLocation;
 		this.schemaManagerLocationURL = databaseURL;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISchemaManagerReference#setSchemaManager(org.h2.h2o.manager.SchemaManager)
 	 */ 
@@ -348,6 +347,7 @@ public class SchemaManagerReference implements ISchemaManagerReference {
 				ErrorHandling.exceptionError(e, "Couldn't create persisted tables as expected.");
 			}
 
+
 			/*
 			 * Shut down the old, remote, schema manager. Redirect requests to new manager.
 			 */
@@ -364,15 +364,12 @@ public class SchemaManagerReference implements ISchemaManagerReference {
 
 			this.schemaManager = newSchemaManager;
 		}
-
+		
 		/*
-		 * Confirm the new schema managers location by updating all local state.
+		 * Make the new schema manager remotely accessible.
 		 */
-
 		this.isLocal = true;
 		this.schemaManagerLocationURL = db.getDatabaseURL();
-
-
 		try {
 			SchemaManagerRemote stub = (SchemaManagerRemote) UnicastRemoteObject.exportObject(schemaManager, 0);
 
@@ -382,16 +379,24 @@ public class SchemaManagerReference implements ISchemaManagerReference {
 			ErrorHandling.exceptionError(e, "Schema manager migration failed.");
 		}
 
+
 		/*
 		 * Replicate state to new successor.
 		 */
 
 		try {
-			String hostname = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getHostName();
-			int port = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getPort();
-			SchemaManagerReplication newThread = new SchemaManagerReplication(hostname, port, this.db.getSchemaManager(), this.db.getChordInterface());
-			newThread.start();
-		} catch (RemoteException e) {
+			
+			//If the successor to this node is not itself (i.e. if this network has more than one node in it).
+			if ( !db.getChordInterface().getLocalChordReference().getRemote().getSuccessor().getKey().equals( db.getChordInterface().getLocalChordReference().getKey())){
+
+				String hostname = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getHostName();
+				int port = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getPort();
+				SchemaManagerReplication newThread = new SchemaManagerReplication(hostname, port, this.db.getSchemaManager(), this.db.getChordInterface());
+				newThread.start();
+			} else {
+				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "There is only one node in the network. There is no-where else to replicate the schema manager.");
+			}
+		} catch (Exception e) {
 			ErrorHandling.errorNoEvent("Failed to create replica for new schema manager on its successor.");
 		}
 
@@ -531,7 +536,7 @@ public class SchemaManagerReference implements ISchemaManagerReference {
 
 
 			DatabaseInstanceRemote lookupInstance  = null;
-			
+
 			if (this.db.getChordInterface().getLocalChordReference().equals(lookupLocation)){
 				lookupInstance = this.db.getLocalDatabaseInstance();
 			} else {
