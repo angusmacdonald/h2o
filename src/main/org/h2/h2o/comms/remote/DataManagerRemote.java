@@ -81,34 +81,38 @@ public interface DataManagerRemote extends H2ORemote, Migratable {
 	public void shutdown() throws RemoteException;
 
 	/**
-	 * @return
+	 * The name of the schema which this table is in.
 	 */
 	public String getSchemaName()throws RemoteException;
 
 	/**
-	 * @return
+	 * The name of the table this data manager is responsible for (not including schema name).
 	 */
 	public String getTableName()throws RemoteException;
 
 	/**
-	 * @return
+	 * The object responsible for managing the set of replicas this data manager maintains.
+	 * 
+	 * <p>This is called when the data manager is being migrated elsewhere, but shouldn't need to be
+	 * called anywhere else.
 	 */
 	public ReplicaManager getReplicaManager() throws RemoteException;
 
 	/**
-	 * @return
+	 * Get the table set that this table is part of.
 	 */
 	public int getTableSet() throws RemoteException;
 
 	/**
-	 * @param oldDataManager
-	 * @throws MovedException 
-	 * @throws RemoteException 
+	 * Build up the state of this data manager from the state of another extant manager. Used when migrating the state of the old
+	 * manager to this manager.
+	 * @param oldDataManager	Extant data manager.
+	 * @throws MovedException 	Thrown if this data manager has already been moved to somewhere else.
 	 */
 	public void buildDataManagerState(DataManagerRemote oldDataManager) throws RemoteException, MovedException;
 
 	/**
-	 * @return
+	 * The URL of the database on which this data manager is located.
 	 */
 	public DatabaseURL getDatabaseURL() throws RemoteException;
 }
