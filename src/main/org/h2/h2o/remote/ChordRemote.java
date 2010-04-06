@@ -532,16 +532,16 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 					//Do nothing. There is only one node in the network.
 					Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "There is only one node in the network so the schema manager can't be replicated elsewhere.");
 				} else {
+					if (dbInstance.isAlive()){
+						this.schemaManagerRef.getSchemaManager().addSchemaManagerDataLocation(dbInstance);
 
-					this.schemaManagerRef.getSchemaManager().addSchemaManagerDataLocation(dbInstance);
+						//dbInstance.createNewSchemaManagerBackup(db.getSchemaManager());
+						//dbInstance.executeUpdate("CREATE REPLICA SCHEMA H2O");
 
-					//dbInstance.createNewSchemaManagerBackup(db.getSchemaManager());
-					//dbInstance.executeUpdate("CREATE REPLICA SCHEMA H2O");
-
-					if (Constants.IS_TEST){
-						ChordTests.setReplicated(true);
+						if (Constants.IS_TEST){
+							ChordTests.setReplicated(true);
+						}
 					}
-
 				}
 			} catch (RemoteException e) {
 				e.printStackTrace();
@@ -580,20 +580,20 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	public void shutdown() {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Shutting down node: " + chordNode);
 		IChordRemoteReference successor = chordNode.getSuccessor();
-		
-		if (successor != null && !chordNode.getKey().equals(successor.getKey()) && !Constants.IS_NON_SM_TEST){
+
+		if (schemaManagerRef.isSchemaManagerLocal() && successor != null && !chordNode.getKey().equals(successor.getKey()) && !Constants.IS_NON_SM_TEST){
 			//If this node isn't it's own successor AND this isn't an unrelated JUnit test
 			//Migrate the schema manager to this node before shutdown.
 			try {
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Migrating schema manager to successor: " + successor);
 				DatabaseInstanceRemote successorDB = getDatabaseInstanceAt(successor);
-				
+
 				successorDB.executeUpdate("MIGRATE SCHEMAMANAGER");
 			} catch (RemoteException e) {
 				ErrorHandling.errorNoEvent("Failed to migrate schema manager to successor: " + successor);
 			}
 		}
-		
+
 		if (!Constants.IS_NON_SM_TEST){
 			((ChordNodeImpl)chordNode).destroy();
 		}

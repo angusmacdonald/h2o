@@ -13,9 +13,9 @@ import org.h2.h2o.manager.MovedException;
 public interface H2ORemote extends Remote {
 
 	/**
-	 * Used to check that a data manager is still accessible via RMI. This method shouldn't do anything -
+	 * Used to check that a data manager is still accessible via RMI. This method will return false if the database has been closed -
 	 * an exception will be thrown if it is unavailable.
 	 * @throws MovedException 
 	 */
-	public void testAvailability() throws RemoteException, MovedException;
+	public boolean isAlive() throws RemoteException, MovedException;
 }

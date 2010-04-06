@@ -335,7 +335,7 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 					ErrorHandling.errorNoEvent("DatabaseInstanceRemote wasn't found.");
 				} else {
 
-					database.getSchemaManager().addConnectionInformation(dbURL, dir);
+					database.getSchemaManager().addConnectionInformation(dbURL, new DatabaseInstanceWrapper(dir, true));
 
 				}
 
@@ -448,7 +448,7 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 		/*
 		 * The set of all replica locations that could be involved in the query.
 		 */
-		Set<DatabaseInstanceRemote> potentialReplicaLocations;
+		Set<DatabaseInstanceWrapper> potentialReplicaLocations;
 
 		if (lockType == LockType.CREATE){
 
@@ -464,9 +464,9 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 			 * Loop through all potential replica locations, selecting enough to satisfy the system's
 			 * replication fact. The location of the primary copy cannot be re-used.
 			 */
-			for (DatabaseInstanceRemote dbInstance: potentialReplicaLocations){
+			for (DatabaseInstanceWrapper dbInstance: potentialReplicaLocations){
 				if (!dbInstance.equals(primaryLocation)){ //primary copy doesn't exist here.
-					newReplicaLocations.add(dbInstance);
+					newReplicaLocations.add(dbInstance.getDatabaseInstance());
 					currentReplicationFactor++;
 				}
 
@@ -483,18 +483,18 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 
 
 		} else if (lockType == LockType.WRITE){
-			potentialReplicaLocations = this.replicaManager.getActiveReplicas(); //The update could be sent to any or all machines holding the given table.
+			Set<DatabaseInstanceRemote> replicaLocations = this.replicaManager.getActiveReplicas(); //The update could be sent to any or all machines holding the given table.
 
 			if (Updates.SYNCHRONOUS_UPDATE){
 				//Update must be sent to all replicas:
-				return potentialReplicaLocations;
+				return replicaLocations;
 			} else {
 				//Update should only be sent to a single replica location. Choose that location.
-				if (potentialReplicaLocations.contains(requestingDatabase)){
+				if (replicaLocations.contains(requestingDatabase)){
 					newReplicaLocations.add(requestingDatabase); //try to keep the request local.
 				} else {
 					//Just pick another machine.
-					DatabaseInstanceRemote randomDir = potentialReplicaLocations.toArray(new DatabaseInstanceRemote[0])[0];
+					DatabaseInstanceRemote randomDir = replicaLocations.toArray(new DatabaseInstanceRemote[0])[0];
 					//TODO there has to be a better way of choosing this.
 					newReplicaLocations.add(randomDir);
 				}
@@ -773,8 +773,10 @@ public class DataManager implements DataManagerRemote, AutonomicController, Migr
 	 * @see org.h2.h2o.comms.DataManagerRemote#testAvailability()
 	 */
 	@Override
-	public void testAvailability() throws RemoteException, MovedException {
+	public boolean isAlive() throws RemoteException, MovedException {
 		preMethodTest();
+		
+		return true;
 	}
 
 	/* (non-Javadoc)

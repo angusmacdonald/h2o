@@ -274,6 +274,8 @@ public class SchemaManagerReference implements ISchemaManagerReference {
 	 */
 	public void migrateSchemaManagerToLocalInstance(boolean persistedSchemaTablesExist, boolean recreateFromPersistedState){
 
+		IChordRemoteReference oldSchemaManagerLocation = this.schemaManagerNode;
+		
 		if (recreateFromPersistedState){
 			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Preparing to re-instantiate schema manager from persistent store.");
 			/*
@@ -364,12 +366,13 @@ public class SchemaManagerReference implements ISchemaManagerReference {
 
 			this.schemaManager = newSchemaManager;
 		}
-		
+
 		/*
 		 * Make the new schema manager remotely accessible.
 		 */
 		this.isLocal = true;
 		this.schemaManagerLocationURL = db.getDatabaseURL();
+		
 		try {
 			SchemaManagerRemote stub = (SchemaManagerRemote) UnicastRemoteObject.exportObject(schemaManager, 0);
 
@@ -379,15 +382,16 @@ public class SchemaManagerReference implements ISchemaManagerReference {
 			ErrorHandling.exceptionError(e, "Schema manager migration failed.");
 		}
 
-
 		/*
 		 * Replicate state to new successor.
 		 */
 
 		try {
-			
+
+			IChordRemoteReference successor = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor();
+			IChordRemoteReference localNode = db.getChordInterface().getLocalChordReference();
 			//If the successor to this node is not itself (i.e. if this network has more than one node in it).
-			if ( !db.getChordInterface().getLocalChordReference().getRemote().getSuccessor().getKey().equals( db.getChordInterface().getLocalChordReference().getKey())){
+			if ( !successor.equals( localNode.getKey()) && !successor.equals(oldSchemaManagerLocation)){
 
 				String hostname = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getHostName();
 				int port = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getPort();
@@ -443,7 +447,6 @@ public class SchemaManagerReference implements ISchemaManagerReference {
 		}
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "This schema manager reference is old. It has been moved to: " + newLocation);
-
 	}
 
 	/* (non-Javadoc)
@@ -459,8 +462,6 @@ public class SchemaManagerReference implements ISchemaManagerReference {
 	public IChordRemoteReference getLookupLocation() {
 		return lookupLocation;
 	}
-
-
 
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISchemaManagerReference#lookup(java.lang.String)
@@ -482,7 +483,7 @@ public class SchemaManagerReference implements ISchemaManagerReference {
 		if (dataManager != null){
 
 			try {
-				dataManager.testAvailability();
+				dataManager.isAlive();
 
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Returning cached data manager for lookup operation.");
 
@@ -569,6 +570,7 @@ public class SchemaManagerReference implements ISchemaManagerReference {
 	 * @see org.h2.h2o.manager.ISchemaManagerReference#isThisSchemaManagerNode(uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference)
 	 */
 	public boolean isThisSchemaManagerNode(IChordRemoteReference otherNode){
+		if (schemaManagerNode == null) return false;
 		return schemaManagerNode.equals(otherNode);
 	}
 

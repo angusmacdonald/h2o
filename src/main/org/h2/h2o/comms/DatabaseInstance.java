@@ -35,6 +35,8 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 
 	private Session session;
 
+	private boolean alive = true;
+
 	public DatabaseInstance(DatabaseURL databaseURL, Session session){
 		this.databaseURL = databaseURL;
 
@@ -112,8 +114,8 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	 * @see org.h2.h2o.comms.DatabaseInstanceRemote#testAvailability()
 	 */
 	@Override
-	public void testAvailability() throws RemoteException {
-		//Does Nothing
+	public boolean isAlive() throws RemoteException {
+		return alive ;
 	}
 
 	public String getName(){
@@ -238,4 +240,9 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 			return null;
 		}
 	}
+	
+	public synchronized void setAlive(boolean alive) {
+		this.alive = alive;
+	}
+
 }

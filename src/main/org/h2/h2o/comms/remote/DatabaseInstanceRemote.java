@@ -83,5 +83,10 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit  {
 	 * @return
 	 */
 	public DataManagerRemote findDataManagerReference(TableInfo ti) throws RemoteException;
-	
+
+
+	/**
+	 * @param b
+	 */
+	public void setAlive(boolean b) throws RemoteException;
 }

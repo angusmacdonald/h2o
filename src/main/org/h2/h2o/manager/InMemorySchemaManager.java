@@ -36,7 +36,6 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	 */
 	private Map<TableInfo, DataManagerRemote> dataManagers;
 
-
 	/**
 	 * Cached references to replicas in the database system.
 	 * 
@@ -46,7 +45,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	 */
 	private Map<String, Set<TableInfo>> replicaLocations;
 
-	private Map<DatabaseURL, DatabaseInstanceRemote> databasesInSystem = new HashMap<DatabaseURL, DatabaseInstanceRemote>();
+	private Map<DatabaseURL, DatabaseInstanceWrapper> databasesInSystem = new HashMap<DatabaseURL, DatabaseInstanceWrapper>();
 
 	/**
 	 * The next valid table set number which can be assigned by the schema manager.
@@ -56,7 +55,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	/**
 	 * Locations where the state of the schema manager is replicated.
 	 */
-	private Set<DatabaseInstanceRemote> schemaManagerState;
+	//private Set<DatabaseInstanceRemote> schemaManagerState;
 
 	public InMemorySchemaManager(Database database) throws Exception{
 		this.database = database;
@@ -64,9 +63,9 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 		dataManagers = new HashMap<TableInfo, DataManagerRemote>();
 		replicaLocations = new HashMap<String, Set<TableInfo>>();
 
-		schemaManagerState = new HashSet<DatabaseInstanceRemote>();
-
-		schemaManagerState.add(database.getLocalDatabaseInstance());
+//		schemaManagerState = new HashSet<DatabaseInstanceRemote>();
+//
+//		schemaManagerState.add(database.getLocalDatabaseInstance());
 	}
 
 	/******************************************************************
@@ -140,7 +139,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	 * @see org.h2.h2o.ISchemaManager#addConnectionInformation(org.h2.h2o.util.DatabaseURL)
 	 */
 	@Override
-	public int addConnectionInformation(DatabaseURL databaseURL, DatabaseInstanceRemote databaseInstanceRemote)
+	public int addConnectionInformation(DatabaseURL databaseURL, DatabaseInstanceWrapper databaseInstanceRemote)
 	throws RemoteException {
 
 		databasesInSystem.remove(databaseURL);
@@ -303,19 +302,22 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 		/*
 		 * Obtain references to connected machines.
 		 */
-		Map<DatabaseURL, DatabaseInstanceRemote> connectedMachines = otherSchemaManager.getConnectionInformation();
+		Map<DatabaseURL, DatabaseInstanceWrapper> connectedMachines = otherSchemaManager.getConnectionInformation();
 
-		databasesInSystem = new HashMap<DatabaseURL, DatabaseInstanceRemote>();
+		databasesInSystem = new HashMap<DatabaseURL, DatabaseInstanceWrapper>();
 
 		//Make sure this contains remote references for each URL
 
-		for (Entry<DatabaseURL, DatabaseInstanceRemote> remoteDB: connectedMachines.entrySet()){
+		for (Entry<DatabaseURL, DatabaseInstanceWrapper> remoteDB: connectedMachines.entrySet()){
+			DatabaseInstanceWrapper wrapper = remoteDB.getValue();
+			
+			DatabaseInstanceRemote dir = null;
+			
+			if (wrapper != null) wrapper.getDatabaseInstance();
 
-			DatabaseInstanceRemote dir = remoteDB.getValue();
-
-
+			boolean active = (remoteDB.getValue() == null)? true : remoteDB.getValue().isActive();
+			
 			if (dir == null){
-
 				if (remoteDB.getKey().equals(database.getDatabaseURL())){
 					//Local machine.
 					dir = database.getLocalDatabaseInstance();
@@ -323,14 +325,17 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 					//Look for a remote reference.
 					try {
 						dir = database.getRemoteInterface().getDatabaseInstanceAt(remoteDB.getKey());
+						
+						if (dir != null) active = true;
 					} catch (Exception e) {
-						//Couldn't find reference to this database instance. TODO mark it as inactive.
+						//Couldn't find reference to this database instance.
+						active = false;
 					}
 				}
 
-			} 
+			}
 
-			databasesInSystem.put(remoteDB.getKey(), dir);
+			databasesInSystem.put(remoteDB.getKey(), new DatabaseInstanceWrapper(dir, active));
 		}
 
 
@@ -360,7 +365,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	 * @see org.h2.h2o.manager.ISchemaManager#getConnectionInformation()
 	 */
 	@Override
-	public Map<DatabaseURL, DatabaseInstanceRemote> getConnectionInformation() throws RemoteException {
+	public Map<DatabaseURL, DatabaseInstanceWrapper> getConnectionInformation() throws RemoteException {
 		return databasesInSystem;
 	}
 
@@ -386,7 +391,6 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	@Override
 	public void buildSchemaManagerState() throws RemoteException {
 		// TODO Auto-generated method stub
-
 	}
 
 
@@ -438,12 +442,12 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	public void addSchemaManagerDataLocation(
 			DatabaseInstanceRemote databaseReference) throws RemoteException {
 
-		if (schemaManagerState.size() < Replication.SCHEMA_MANAGER_REPLICATION_FACTOR){ //TODO update to allow policy on number of replicas.
-			this.schemaManagerState.add(databaseReference);
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseReference.getLocation().getDbLocation());
-		} else {
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Didn't add to the schema manager's replication set, because there are enough replicas already (" + schemaManagerState.size() + ")");
-		}
+//		if (schemaManagerState.size() < Replication.SCHEMA_MANAGER_REPLICATION_FACTOR){ //TODO update to allow policy on number of replicas.
+//			this.schemaManagerState.add(databaseReference);
+//			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseReference.getLocation().getDbLocation());
+//		} else {
+//			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Didn't add to the schema manager's replication set, because there are enough replicas already (" + schemaManagerState.size() + ")");
+//		}
 
 	}
 
@@ -454,16 +458,18 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	@Override
 	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL)
 	throws RemoteException, MovedException {
-		return databasesInSystem.get(databaseURL);
+		DatabaseInstanceWrapper wrapper = databasesInSystem.get(databaseURL);
+		if (wrapper == null) return null;
+		return wrapper.getDatabaseInstance();
 	}
 
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISchemaManager#getDatabaseInstances()
 	 */
 	@Override
-	public Set<DatabaseInstanceRemote> getDatabaseInstances()
+	public Set<DatabaseInstanceWrapper> getDatabaseInstances()
 	throws RemoteException, MovedException {
-		return new HashSet<DatabaseInstanceRemote>(databasesInSystem.values());
+		return new HashSet<DatabaseInstanceWrapper>(databasesInSystem.values());
 	}
 
 	/* (non-Javadoc)
@@ -473,7 +479,11 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	public void removeConnectionInformation(
 			DatabaseInstanceRemote localDatabaseInstance)
 	throws RemoteException, MovedException {
-		//	databaseInstances.remove(localDatabaseInstance.getConnectionString());
+		DatabaseInstanceWrapper wrapper = this.databasesInSystem.get(localDatabaseInstance.getLocation());
+		
+		assert wrapper != null;
+		
+		wrapper.setActive(false);
 	}
 
 	/* (non-Javadoc)

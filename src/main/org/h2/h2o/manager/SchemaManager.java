@@ -92,7 +92,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	 * @see org.h2.h2o.ISchemaManager#addConnectionInformation(org.h2.h2o.util.DatabaseURL)
 	 */
 	@Override
-	public int addConnectionInformation(DatabaseURL databaseURL, DatabaseInstanceRemote remoteDatabase)
+	public int addConnectionInformation(DatabaseURL databaseURL, DatabaseInstanceWrapper remoteDatabase)
 	throws RemoteException, MovedException {
 		preMethodTest();
 
@@ -223,7 +223,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	 * @see org.h2.h2o.manager.ISchemaManager#getConnectionInformation()
 	 */
 	@Override
-	public Map<DatabaseURL, DatabaseInstanceRemote> getConnectionInformation() throws RemoteException, MovedException, SQLException {
+	public Map<DatabaseURL, DatabaseInstanceWrapper> getConnectionInformation() throws RemoteException, MovedException, SQLException {
 		return inMemory.getConnectionInformation();
 	}
 
@@ -281,7 +281,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	 * @see org.h2.h2o.manager.ISchemaManager#getDatabaseInstances()
 	 */
 	@Override
-	public Set<DatabaseInstanceRemote> getDatabaseInstances() throws RemoteException, MovedException {
+	public Set<DatabaseInstanceWrapper> getDatabaseInstances() throws RemoteException, MovedException {
 		preMethodTest();
 		return inMemory.getDatabaseInstances();
 	}

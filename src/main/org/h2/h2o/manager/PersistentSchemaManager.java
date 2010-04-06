@@ -128,7 +128,8 @@ public class PersistentSchemaManager implements ISchemaManager{
 		"machine_name VARCHAR(255)," + 
 		"db_location VARCHAR(255)," +
 		"connection_port INT NOT NULL, " + 
-		"chord_port INT NOT NULL, " + 
+		"chord_port INT NOT NULL, " +
+		"active BOOLEAN, " + 
 		"PRIMARY KEY (connection_id) );";
 
 		sql += "\n\nCREATE TABLE IF NOT EXISTS " + REPLICAS + "(" +
@@ -312,7 +313,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 	 * @param databaseLocation 		The location of the local database. Used to determine whether a database in running in embedded mode.
 	 * @return						Result of the update.
 	 */
-	public int addConnectionInformation(DatabaseURL dburl, DatabaseInstanceRemote databaseInstanceRemote){
+	public int addConnectionInformation(DatabaseURL dburl, DatabaseInstanceWrapper databaseInstanceWrapper){
 		String connection_type = dburl.getConnectionType();
 
 		String sql = null;
@@ -321,14 +322,14 @@ public class PersistentSchemaManager implements ISchemaManager{
 				//Update existing information - the chord port may have changed.
 
 				sql = "\nUPDATE " + CONNECTIONS + " SET chord_port = " + dburl.getRMIPort() + 
-				" WHERE machine_name='" + dburl.getHostname() + "' AND connection_port=" + dburl.getPort() +
+				", active = " + databaseInstanceWrapper.isActive() + " WHERE machine_name='" + dburl.getHostname() + "' AND connection_port=" + dburl.getPort() +
 				" AND connection_type='" + dburl.getConnectionType() +"';";
 
 			} else { 
 
 				sql = "\nINSERT INTO " + CONNECTIONS + " VALUES (null, '" + connection_type + "', '" + dburl.getHostname() + 
 				"', '" + dburl.getDbLocation() + "', "  + dburl.getPort() + ", " +
-				dburl.getRMIPort() + ");\n";
+				dburl.getRMIPort() + ", " + databaseInstanceWrapper.isActive() + ");\n";
 
 			}
 		} catch (SQLException e1) {
@@ -654,9 +655,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 		int result = -1;
 
 		for (DatabaseInstanceRemote replica: replicas){
-
 			if (replica.equals(db.getLocalDatabaseInstance())){
-
 				sqlQuery = queryParser.prepareCommand(query);
 
 				try {
@@ -834,14 +833,14 @@ public class PersistentSchemaManager implements ISchemaManager{
 			/*
 			 * Obtain references to connected machines.
 			 */
-			Map<DatabaseURL, DatabaseInstanceRemote> databasesInSystem = null;
+			Map<DatabaseURL, DatabaseInstanceWrapper> databasesInSystem = null;
 			try {
 				databasesInSystem = otherSchemaManager.getConnectionInformation();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
 
-			for (Entry<DatabaseURL, DatabaseInstanceRemote> databaseEntry: databasesInSystem.entrySet()){
+			for (Entry<DatabaseURL, DatabaseInstanceWrapper> databaseEntry: databasesInSystem.entrySet()){
 				addConnectionInformation(databaseEntry.getKey(), databaseEntry.getValue());
 			}
 
@@ -880,9 +879,9 @@ public class PersistentSchemaManager implements ISchemaManager{
 	 * @see org.h2.h2o.manager.ISchemaManager#getConnectionInformation()
 	 */
 	@Override
-	public Map<DatabaseURL, DatabaseInstanceRemote> getConnectionInformation() throws RemoteException, SQLException {
+	public Map<DatabaseURL, DatabaseInstanceWrapper> getConnectionInformation() throws RemoteException, SQLException {
 
-		Map<DatabaseURL, DatabaseInstanceRemote> databaseLocations = new HashMap<DatabaseURL, DatabaseInstanceRemote>();
+		Map<DatabaseURL, DatabaseInstanceWrapper> databaseLocations = new HashMap<DatabaseURL, DatabaseInstanceWrapper>();
 
 		String sql = "SELECT * FROM " + CONNECTIONS + ";";
 
@@ -1034,10 +1033,12 @@ public class PersistentSchemaManager implements ISchemaManager{
 
 		if (replicaManager.size() < Replication.SCHEMA_MANAGER_REPLICATION_FACTOR + 1){ //+1 because the local copy counts as a replica.
 			replicaManager.add(databaseReference);
-
 			//now replica state here.
 			databaseReference.executeUpdate("DROP REPLICA IF EXISTS " + TABLES + ", " + REPLICAS + ", " + CONNECTIONS + ";"); 
 			databaseReference.executeUpdate("CREATE REPLICA " + TABLES + ", " + REPLICAS + ", " + CONNECTIONS + " FROM '" + db.getDatabaseURL().getOriginalURL() + "';");
+			
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseReference.getLocation().getDbLocation());
+			
 		}
 	}
 
@@ -1055,7 +1056,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 	 * @see org.h2.h2o.manager.ISchemaManager#getDatabaseInstances()
 	 */
 	@Override
-	public Set<DatabaseInstanceRemote> getDatabaseInstances()
+	public Set<DatabaseInstanceWrapper> getDatabaseInstances()
 	throws RemoteException, MovedException {
 		// TODO Auto-generated method stub
 		return null;
@@ -1066,9 +1067,28 @@ public class PersistentSchemaManager implements ISchemaManager{
 	 */
 	@Override
 	public void removeConnectionInformation(
-			DatabaseInstanceRemote localDatabaseInstance)
+			DatabaseInstanceRemote databaseInstance)
 	throws RemoteException, MovedException {
-		// TODO Auto-generated method stub
+
+		/*
+		 * If the schema managers state is replicateed onto this machine remove it as a replica location.
+		 */
+		this.replicaManager.remove(databaseInstance);
+		/*
+		 * TODO try to replicate somewhere else.
+		 */
+
+
+		DatabaseURL dburl = databaseInstance.getLocation(); 
+		String sql = "\nUPDATE " + CONNECTIONS + " SET active = false WHERE machine_name='" + dburl.getHostname() + "' AND connection_port=" + dburl.getPort() +
+		" AND connection_type='" + dburl.getConnectionType() +"';";
+
+		try {
+			executeUpdate(sql);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
 
 	}
 

@@ -107,7 +107,7 @@ public class ReplicaManager implements Serializable {
 	 */
 	public void remove(DatabaseInstanceRemote dbInstance) {
 		allReplicas.remove(dbInstance);
-
+		activeReplicas.remove(dbInstance);
 		//XXX the following code logic may not work when an instance is being removed then added with a new value.
 		//		if (primaryLocation.equals(dbInstance)){
 		//			if (replicaLocations.size()==0){
@@ -158,4 +158,14 @@ public class ReplicaManager implements Serializable {
 	public boolean areReplicasConsistent(){
 		return (activeReplicas.size() == allReplicas.size());
 	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "ReplicaManager [number of replicas=" + allReplicas.size() + "]";
+	}
+	
+	
 }

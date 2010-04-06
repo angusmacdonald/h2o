@@ -25,10 +25,12 @@ import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
 import org.h2.constant.SysProperties;
 import org.h2.constraint.Constraint;
+import org.h2.h2o.comms.DatabaseInstance;
 import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.manager.DataManager;
+import org.h2.h2o.manager.DatabaseInstanceWrapper;
 import org.h2.h2o.manager.ISchemaManager;
 import org.h2.h2o.manager.ISchemaManagerReference;
 import org.h2.h2o.manager.MovedException;
@@ -1274,9 +1276,9 @@ public class Database implements DataHandler {
 
 		closing = true;
 		stopServer();
-
 		if (Constants.IS_H2O && !isManagementDB() && !fromShutdownHook){
 			removeLocalDatabaseInstance();
+			
 			databaseRemote.shutdown();
 
 		}
@@ -2573,7 +2575,7 @@ public class Database implements DataHandler {
 			}
 		}
 
-		schemaManagerRef.getSchemaManager().addConnectionInformation(getDatabaseURL(), this.databaseRemote.getLocalDatabaseInstance());
+		schemaManagerRef.getSchemaManager().addConnectionInformation(getDatabaseURL(), new DatabaseInstanceWrapper(this.databaseRemote.getLocalDatabaseInstance(), true));
 
 	}
 
@@ -2665,7 +2667,7 @@ public class Database implements DataHandler {
 		return null;
 	}
 
-	public Set<DatabaseInstanceRemote> getDatabaseInstances() {
+	public Set<DatabaseInstanceWrapper> getDatabaseInstances() {
 		try {
 			return schemaManagerRef.getSchemaManager().getDatabaseInstances();
 		} catch (RemoteException e) {
@@ -2686,7 +2688,10 @@ public class Database implements DataHandler {
 
 	public void removeLocalDatabaseInstance(){
 		try {
-			this.schemaManagerRef.getSchemaManager(true).removeConnectionInformation(this.databaseRemote.getLocalDatabaseInstance());
+			
+			this.getRemoteInterface().getLocalDatabaseInstance().setAlive(false);
+//			this.schemaManagerRef.getSchemaManager(true).removeConnectionInformation(this.databaseRemote.getLocalDatabaseInstance());
+			
 		} catch (Exception e) {
 			//An error here isn't critical.
 		}
