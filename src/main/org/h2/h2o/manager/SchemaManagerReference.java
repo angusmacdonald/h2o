@@ -531,6 +531,7 @@ public class SchemaManagerReference implements ISchemaManagerReference {
 
 
 			DatabaseInstanceRemote lookupInstance  = null;
+			
 			if (this.db.getChordInterface().getLocalChordReference().equals(lookupLocation)){
 				lookupInstance = this.db.getLocalDatabaseInstance();
 			} else {
@@ -558,37 +559,17 @@ public class SchemaManagerReference implements ISchemaManagerReference {
 			throw new SQLException("Internal system error: failed to contact Schema Manager.");
 		} 
 	}
-//
-//	/**
-//	 * The schema manager has failed or been shut down. This node must know figure out where the schema manager's persisted state
-//	 * was, and use that state to create a new schema manager.
-//	 * @return
-//	 */
-//	private DataManagerRemote handleFailedSchemaManager() {
-//
-//		boolean unstable = true;
-//		do{
-//			try {
-//				IChordRemoteReference chordNode = this.db.getChordInterface().lookupSchemaManagerNodeLocation();
-//			} catch (RemoteException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-//
-//		} while (unstable);
-//		return null;
-//	}
 
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISchemaManagerReference#shutdown()
 	 */
 	public void shutdown() {
-		if(inKeyRange && !Constants.IS_NON_SM_TEST){
-			try {
-				schemaManager.shutdown(true);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+		if(isLocal && !Constants.IS_NON_SM_TEST){
+//			try {
+//				schemaManager.shutdown(true);
+//			} catch (Exception e) {
+//				e.printStackTrace();
+//			}
 		}
 	}
 
