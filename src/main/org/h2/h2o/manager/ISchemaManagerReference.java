@@ -161,11 +161,6 @@ public interface ISchemaManagerReference {
 	public DataManagerRemote lookup(TableInfo tableInfo) throws SQLException;
 
 	/**
-	 * Shutdown the database's chord node, disconnecting it from the database system.
-	 */
-	public void shutdown();
-
-	/**
 	 * Check if the node given as a parameter is the node on which the schema manager is held.
 	 * @param otherNode Node to check against.
 	 * @return	True if the schema manager is held on this node.

@@ -561,19 +561,6 @@ public class SchemaManagerReference implements ISchemaManagerReference {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManagerReference#shutdown()
-	 */
-	public void shutdown() {
-		if(isLocal && !Constants.IS_NON_SM_TEST){
-//			try {
-//				schemaManager.shutdown(true);
-//			} catch (Exception e) {
-//				e.printStackTrace();
-//			}
-		}
-	}
-
-	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISchemaManagerReference#isThisSchemaManagerNode(uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference)
 	 */
 	public boolean isThisSchemaManagerNode(IChordRemoteReference otherNode){

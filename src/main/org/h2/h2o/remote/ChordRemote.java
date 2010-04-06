@@ -593,10 +593,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				ErrorHandling.errorNoEvent("Failed to migrate schema manager to successor: " + successor);
 			}
 		}
-		//schemaManagerRef.shutdown();
 		
 		if (!Constants.IS_NON_SM_TEST){
-			//allNodes.remove(chordNode);
 			((ChordNodeImpl)chordNode).destroy();
 		}
 	}
