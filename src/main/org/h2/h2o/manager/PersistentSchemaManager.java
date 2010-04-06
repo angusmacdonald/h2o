@@ -17,6 +17,7 @@ import org.h2.h2o.autonomic.Replication;
 import org.h2.h2o.comms.ReplicaManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.remote.IDatabaseRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
@@ -1034,11 +1035,15 @@ public class PersistentSchemaManager implements ISchemaManager{
 		if (replicaManager.size() < Replication.SCHEMA_MANAGER_REPLICATION_FACTOR + 1){ //+1 because the local copy counts as a replica.
 			replicaManager.add(databaseReference);
 			//now replica state here.
-			databaseReference.executeUpdate("DROP REPLICA IF EXISTS " + TABLES + ", " + REPLICAS + ", " + CONNECTIONS + ";"); 
-			databaseReference.executeUpdate("CREATE REPLICA " + TABLES + ", " + REPLICAS + ", " + CONNECTIONS + " FROM '" + db.getDatabaseURL().getOriginalURL() + "';");
-			
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseReference.getLocation().getDbLocation());
-			
+			try {
+				databaseReference.executeUpdate("DROP REPLICA IF EXISTS " + TABLES + ", " + REPLICAS + ", " + CONNECTIONS + ";");
+				databaseReference.executeUpdate("CREATE REPLICA " + TABLES + ", " + REPLICAS + ", " + CONNECTIONS + " FROM '" + db.getDatabaseURL().getOriginalURL() + "';");
+			} catch (SQLException e) {
+				replicaManager.remove(databaseReference);
+				ErrorHandling.errorNoEvent("Failed to replicate schema manager state on: " + databaseReference.getConnectionURL().getDbLocation());
+			} 
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseReference.getConnectionURL().getDbLocation());
+
 		}
 	}
 
@@ -1079,7 +1084,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 		 */
 
 
-		DatabaseURL dburl = databaseInstance.getLocation(); 
+		DatabaseURL dburl = databaseInstance.getConnectionURL(); 
 		String sql = "\nUPDATE " + CONNECTIONS + " SET active = false WHERE machine_name='" + dburl.getHostname() + "' AND connection_port=" + dburl.getPort() +
 		" AND connection_type='" + dburl.getConnectionType() +"';";
 

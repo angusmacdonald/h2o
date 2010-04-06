@@ -20,6 +20,7 @@ import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.ReplicaManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.locking.ILockingTable;
 import org.h2.h2o.locking.LockingTable;
 import org.h2.h2o.util.DatabaseURL;

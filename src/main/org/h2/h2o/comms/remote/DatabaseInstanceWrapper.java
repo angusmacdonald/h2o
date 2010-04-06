@@ -1,10 +1,14 @@
-package org.h2.h2o.manager;
+package org.h2.h2o.comms.remote;
 
 import java.io.Serializable;
 
-import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 
 /**
+ * Wrapper for remote database instance proxies. Contains a reference to the proxy itself
+ * and whether the database is actually alive.
+ * 
+ * <p>This is done because connection information is maintained in the schema manager even when a connection itself
+ * has become inactive.
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class DatabaseInstanceWrapper implements Serializable {
@@ -27,22 +31,22 @@ public class DatabaseInstanceWrapper implements Serializable {
 	}
 
 	/**
-	 * @return the active
+	 * Wether the database instance this proxy points to is still active.
 	 */
 	public boolean isActive() {
 		return active;
 	}
 
 	/**
-	 * @param active the active to set
+	 * Set the database instance as active (allowing incoming connections) or inactive (not running).
 	 */
 	public void setActive(boolean active) {
 		this.active = active;
 	}
 
-	/**
-	 * @return the databaseInstance
-	 */
+/**
+ * @return Remote proxy for a database instances interface.
+ */
 	public DatabaseInstanceRemote getDatabaseInstance() {
 		return databaseInstance;
 	}

@@ -426,7 +426,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 		try {
 			DatabaseInstanceRemote lookupInstance = getDatabaseInstanceAt(remoteHostname, remotePort);
-			actualSchemaManagerLocation = lookupInstance.getSchemaManagerLocation();
+			actualSchemaManagerLocation = lookupInstance.getSchemaManagerURL();
 			this.schemaManagerRef.setSchemaManagerURL(actualSchemaManagerLocation);
 		} catch (RemoteException e) {
 			e.printStackTrace();
@@ -589,7 +589,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				DatabaseInstanceRemote successorDB = getDatabaseInstanceAt(successor);
 
 				successorDB.executeUpdate("MIGRATE SCHEMAMANAGER");
-			} catch (RemoteException e) {
+			} catch (Exception e) {
 				ErrorHandling.errorNoEvent("Failed to migrate schema manager to successor: " + successor);
 			}
 		}
@@ -627,7 +627,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		try {
 			lookupInstance = getDatabaseInstanceAt(lookupHostname, lookupPort);
 
-			actualSchemaManagerLocation = lookupInstance.getSchemaManagerLocation();
+			actualSchemaManagerLocation = lookupInstance.getSchemaManagerURL();
 			this.schemaManagerRef.setSchemaManagerURL(actualSchemaManagerLocation);
 		} catch (NotBoundException e) {
 			e.printStackTrace();

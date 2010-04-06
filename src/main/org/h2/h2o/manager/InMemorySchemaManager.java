@@ -16,6 +16,7 @@ import org.h2.engine.Database;
 import org.h2.h2o.autonomic.Replication;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
 import org.h2.result.LocalResult;
@@ -479,7 +480,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	public void removeConnectionInformation(
 			DatabaseInstanceRemote localDatabaseInstance)
 	throws RemoteException, MovedException {
-		DatabaseInstanceWrapper wrapper = this.databasesInSystem.get(localDatabaseInstance.getLocation());
+		DatabaseInstanceWrapper wrapper = this.databasesInSystem.get(localDatabaseInstance.getConnectionURL());
 		
 		assert wrapper != null;
 		

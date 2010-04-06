@@ -29,8 +29,8 @@ import org.h2.h2o.comms.DatabaseInstance;
 import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.manager.DataManager;
-import org.h2.h2o.manager.DatabaseInstanceWrapper;
 import org.h2.h2o.manager.ISchemaManager;
 import org.h2.h2o.manager.ISchemaManagerReference;
 import org.h2.h2o.manager.MovedException;
@@ -2690,7 +2690,7 @@ public class Database implements DataHandler {
 	public void removeLocalDatabaseInstance(){
 		try {
 			
-			this.getRemoteInterface().getLocalDatabaseInstance().setAlive(false);
+			this.getLocalDatabaseInstance().setAlive(false);
 //			this.schemaManagerRef.getSchemaManager(true).removeConnectionInformation(this.databaseRemote.getLocalDatabaseInstance());
 			new RemoveConnectionInfo(this.schemaManagerRef.getSchemaManager(true), this.databaseRemote.getLocalDatabaseInstance()).start();
 		} catch (Exception e) {

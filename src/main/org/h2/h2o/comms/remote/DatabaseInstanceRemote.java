@@ -4,8 +4,6 @@ import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.h2o.comms.QueryProxy;
-import org.h2.h2o.manager.ISchemaManager;
-import org.h2.h2o.manager.SchemaManagerRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
 
@@ -14,7 +12,7 @@ import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
 
 /**
  * Interface to a database instance. For each database instance in the H2O system there will be one DatabaseInstanceRemote
- * exposed via the system's RMI registry.
+ * exposed via the instance's RMI registry.
  *
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
@@ -30,63 +28,62 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit  {
 	public String getConnectionString() throws RemoteException;
 
 	/**
+	 * Get the connection information for this database instance, including the instances
+	 * RMI port.
+	 * @return	Object containing all connection information for this database.
+	 */
+	public DatabaseURL getConnectionURL() throws RemoteException;
+
+	/**
+	 * Get the URL of the schema manager to which this instance is connected.
+	 * @return Object containing all connection information for the schema manager.
+	 */
+	public DatabaseURL getSchemaManagerURL()  throws RemoteException;
+
+	/**
 	 * Execute a query on this machine using the supplied query proxy (which contains permission to execute
 	 * a given type of query).
 	 * @param queryProxy	The query proxy for the table(s) involved in the query.
 	 * @param sql			The query to be executed
-	 * @return
-	 * @throws RemoteException
-	 * @throws SQLException
+	 * @return	Result of the update.
+	 * @throws RemoteException		Thrown if there were problems connecting to the instance.
+	 * @throws SQLException			Thrown if there was an error in the queries execution.
 	 */
 	public int executeUpdate(QueryProxy queryProxy, String sql) throws RemoteException, SQLException;
 
 	/**
-	 * Get the location of the schema manager to which this instance is connected.
-	 * @return
+	 * Execute the given SQL update on this instance. Since no query proxy is provided with this method call
+	 * the database instance must request the locks needed to execute this query.
+	 * @param sql	The query to be executed.
+	 * @return Result of the update.
+	 * @throws RemoteException		Thrown if there were problems connecting to the instance.
+	 * @throws SQLException			Thrown if there was an error in the queries execution.
 	 */
-	public DatabaseURL getSchemaManagerLocation()  throws RemoteException;
-	
-	/**
-	 * Allows another instance to specify that the schema manager is to be moved to this instance.
-	 * @throws RemoteException
-	 */
-	public void moveSchemaManagerToThisInstance() throws RemoteException;
+	public int executeUpdate(String sql) throws RemoteException, SQLException;
 
 	/**
-	 * @return
+	 * Set the current location of the schema manager. This is typically only called by the LookupPinger thread to continually inform
+	 * the node responsible for #(SM) of the schema managers location.
+	 * @param schemaManagerLocation		The location in Chord of the schema manager.
+	 * @param databaseURL				Object containing all connection information for the schema manager.
+	 * @throws RemoteException		Thrown if there were problems connecting to the instance.
 	 */
-	public DatabaseURL getLocation() throws RemoteException;
+	public void setSchemaManagerLocation(IChordRemoteReference schemaManagerLocation, DatabaseURL databaseURL) throws RemoteException;
 
 	/**
-	 * @param string
-	 * @throws RemoteException 
+	 * Look for a reference to the specified data manager. This may be called by a Schema Manager which has just been re-instantiated from
+	 * persisted state, and which doesn't have direct pointers to data manager proxies (only their location).
+	 * @param tableInfo		The table name and schema name of the table to be found.
+	 * @return	Remote reference to the data manager, or null if nothing was found.
+	 * @throws RemoteException		Thrown if there were problems connecting to the instance.
 	 */
-	public int executeUpdate(String sql) throws RemoteException;
-
-	/**
-	 * @param schemaManager
-	 * @throws RemoteException
-	 */
-	void createNewSchemaManagerBackup(ISchemaManager schemaManager)
-			throws RemoteException;
-
-	/**
-	 * @param schemaManagerLocation
-	 * @param databaseURL
-	 * @throws RemoteException
-	 */
-	void setSchemaManagerLocation(IChordRemoteReference schemaManagerLocation,
-			DatabaseURL databaseURL) throws RemoteException;
-
-	/**
-	 * @param ti
-	 * @return
-	 */
-	public DataManagerRemote findDataManagerReference(TableInfo ti) throws RemoteException;
+	public DataManagerRemote findDataManagerReference(TableInfo tableInfo) throws RemoteException;
 
 
 	/**
-	 * @param b
+	 * Set whether this database instance is alive or being shut down.  
+	 * @param alive		True if the database instance is not being shut down.
+	 * @throws RemoteException		Thrown if there were problems connecting to the instance.
 	 */
-	public void setAlive(boolean b) throws RemoteException;
+	public void setAlive(boolean alive) throws RemoteException;
 }

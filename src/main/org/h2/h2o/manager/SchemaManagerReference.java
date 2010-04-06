@@ -548,7 +548,7 @@ public class SchemaManagerReference implements ISchemaManagerReference {
 				lookupInstance = chord.getDatabaseInstanceAt(lookupHostname, lookupPort);
 			}
 
-			DatabaseURL actualSchemaManagerLocation = lookupInstance.getSchemaManagerLocation();
+			DatabaseURL actualSchemaManagerLocation = lookupInstance.getSchemaManagerURL();
 
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Actual schema manager location found at: " + actualSchemaManagerLocation.getRMIPort());
 
