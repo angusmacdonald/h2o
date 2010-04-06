@@ -40,6 +40,7 @@ import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.remote.IChordInterface;
 import org.h2.h2o.remote.IDatabaseRemote;
 import org.h2.h2o.util.DatabaseURL;
+import org.h2.h2o.util.RemoveConnectionInfo;
 import org.h2.index.Cursor;
 import org.h2.index.Index;
 import org.h2.index.IndexType;
@@ -2691,7 +2692,7 @@ public class Database implements DataHandler {
 			
 			this.getRemoteInterface().getLocalDatabaseInstance().setAlive(false);
 //			this.schemaManagerRef.getSchemaManager(true).removeConnectionInformation(this.databaseRemote.getLocalDatabaseInstance());
-			
+			new RemoveConnectionInfo(this.schemaManagerRef.getSchemaManager(true), this.databaseRemote.getLocalDatabaseInstance()).start();
 		} catch (Exception e) {
 			//An error here isn't critical.
 		}

@@ -218,22 +218,22 @@ public class ChordTests extends TestBase {
 //	}
 //
 //
-	@Test
-	public void SchemaManagerFailure() throws InterruptedException {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
-		try {
-			sas[0].close();
-			cas[0].close();
-			
-			//Thread.sleep(5000);
-			
-			sas[1].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-
-		} catch (SQLException e) {
-			e.printStackTrace();
-			fail("Didn't complete query");
-		}
-	}
+//	@Test
+//	public void SchemaManagerFailure() throws InterruptedException {
+//		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+//		try {
+//			sas[0].close();
+//			cas[0].close();
+//			
+//			//Thread.sleep(5000);
+//			
+//			sas[1].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+//
+//		} catch (SQLException e) {
+//			e.printStackTrace();
+//			fail("Didn't complete query");
+//		}
+//	}
 
 	/**
 	 * Tests that when the schema manager is migrated another database instance is able to connect to the new manager without any manual intervention.
