@@ -22,6 +22,7 @@ import org.h2.result.LocalResult;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 public class InMemorySchemaManager implements ISchemaManager, Remote {
 
@@ -63,9 +64,9 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 		dataManagers = new HashMap<TableInfo, DataManagerRemote>();
 		replicaLocations = new HashMap<String, Set<TableInfo>>();
 
-//		schemaManagerState = new HashSet<DatabaseInstanceRemote>();
-//
-//		schemaManagerState.add(database.getLocalDatabaseInstance());
+		//		schemaManagerState = new HashSet<DatabaseInstanceRemote>();
+		//
+		//		schemaManagerState.add(database.getLocalDatabaseInstance());
 	}
 
 	/******************************************************************
@@ -312,13 +313,13 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 
 		for (Entry<DatabaseURL, DatabaseInstanceWrapper> remoteDB: connectedMachines.entrySet()){
 			DatabaseInstanceWrapper wrapper = remoteDB.getValue();
-			
+
 			DatabaseInstanceRemote dir = null;
-			
+
 			if (wrapper != null) wrapper.getDatabaseInstance();
 
 			boolean active = (remoteDB.getValue() == null)? true : remoteDB.getValue().isActive();
-			
+
 			if (dir == null){
 				if (remoteDB.getKey().equals(database.getDatabaseURL())){
 					//Local machine.
@@ -327,7 +328,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 					//Look for a remote reference.
 					try {
 						dir = database.getRemoteInterface().getDatabaseInstanceAt(remoteDB.getKey());
-						
+
 						if (dir != null) active = true;
 					} catch (Exception e) {
 						//Couldn't find reference to this database instance.
@@ -444,12 +445,12 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	public void addStateReplicaLocation(
 			DatabaseInstanceRemote databaseReference) throws RemoteException {
 
-//		if (schemaManagerState.size() < Replication.SCHEMA_MANAGER_REPLICATION_FACTOR){ //TODO update to allow policy on number of replicas.
-//			this.schemaManagerState.add(databaseReference);
-//			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseReference.getLocation().getDbLocation());
-//		} else {
-//			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Didn't add to the schema manager's replication set, because there are enough replicas already (" + schemaManagerState.size() + ")");
-//		}
+		//		if (schemaManagerState.size() < Replication.SCHEMA_MANAGER_REPLICATION_FACTOR){ //TODO update to allow policy on number of replicas.
+		//			this.schemaManagerState.add(databaseReference);
+		//			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseReference.getLocation().getDbLocation());
+		//		} else {
+		//			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Didn't add to the schema manager's replication set, because there are enough replicas already (" + schemaManagerState.size() + ")");
+		//		}
 
 	}
 
@@ -482,9 +483,9 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 			DatabaseInstanceRemote localDatabaseInstance)
 	throws RemoteException, MovedException {
 		DatabaseInstanceWrapper wrapper = this.databasesInSystem.get(localDatabaseInstance.getConnectionURL());
-		
+
 		assert wrapper != null;
-		
+
 		wrapper.setActive(false);
 	}
 
@@ -492,10 +493,12 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	 * @see org.h2.h2o.manager.ISchemaManager#changeDataManagerLocation(org.h2.h2o.comms.remote.DataManagerRemote)
 	 */
 	public void changeDataManagerLocation(DataManagerRemote stub, TableInfo tableInfo) {
-		Object result = this.dataManagers.remove(tableInfo);
+		Object result = this.dataManagers.remove(tableInfo.getGenericTableInfo());
 
-		assert result != null;
-
-		this.dataManagers.put(tableInfo, stub);
+		if (result == null){
+			ErrorHandling.errorNoEvent("There is an inconsistency in the storage of data managers which has caused inconsistencies in the set of managers.");
+			assert false;
+		}
+		this.dataManagers.put(tableInfo.getGenericTableInfo(), stub);
 	}
 }

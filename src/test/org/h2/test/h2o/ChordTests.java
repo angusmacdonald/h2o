@@ -224,6 +224,14 @@ public class ChordTests extends TestBase {
 			 * Test that the old data manager is no longer accessible, and that the referene can be updated.
 			 */
 			sas[0].executeUpdate("INSERT INTO TEST VALUES(5, 'helloagainagain');");
+			
+			ResultSet rs = sas[0].executeQuery("SELECT manager_location FROM H2O.H2O_TABLE");
+			
+			if (rs.next()){
+			assertEquals(2, rs.getInt(1));
+			} else {
+				fail("Schema manager wasn't updated correctly.");
+			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 			fail("Didn't work.");

@@ -100,6 +100,31 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 
 	}
 
+//	/**
+//	 * Creates the set of tables used by the schema manager.
+//	 * @return Result of the update.
+//	 * @throws SQLException
+//	 */
+//	protected int setupManagerStateTables() throws SQLException{
+//
+//		String sql = super.createSQL(TABLES, REPLICAS, CONNECTIONS);
+//
+//		String dataManagerLocation = "H2O.DATA_MANAGER_LOCATIONS";
+//		
+//		sql += "\n\nCREATE TABLE IF NOT EXISTS " + dataManagerLocation + "(" +
+//		"replica_id INTEGER NOT NULL auto_increment(1,1), " +
+//		"table_id INTEGER NOT NULL, " +
+//		"connection_id INTEGER NOT NULL, " + 
+//		"storage_type VARCHAR(255), " + 
+//		"last_modification INT NOT NULL, " +
+//		"table_set INT NOT NULL, " +
+//		"primary_copy BOOLEAN, " +
+//		"PRIMARY KEY (replica_id), " +
+//		"FOREIGN KEY (table_id) REFERENCES " + tables + " (table_id) ON DELETE CASCADE , " +
+//		" FOREIGN KEY (connection_id) REFERENCES " + connections + " (connection_id));";
+//		
+//		return executeUpdate(sql);
+//	}
 
 
 	
@@ -489,9 +514,8 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 	 * @see org.h2.h2o.manager.ISchemaManager#changeDataManagerLocation(org.h2.h2o.comms.remote.DataManagerRemote)
 	 */
 	@Override
-	public void changeDataManagerLocation(DataManagerRemote stub, TableInfo tableInfo) {
-		// TODO Auto-generated method stub
-
+	public void changeDataManagerLocation(DataManagerRemote locationOfManager, TableInfo tableInfo) {
+		super.changeDataManagerLocation(tableInfo);
 	}
 
 	/* (non-Javadoc)

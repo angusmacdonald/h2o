@@ -4839,7 +4839,8 @@ public class Parser {
 			return new MigrateSchemaManager(session, null);
 		} else if (readIf("DATAMANAGER")) {
 			String tableName = readIdentifierWithSchema();
-			return new MigrateDataManager(session, null, tableName);
+			Schema schema = getSchema();
+			return new MigrateDataManager(session, schema, tableName);
 		} else {
 			throw new SQLException("Could parse migrate command.");
 		}

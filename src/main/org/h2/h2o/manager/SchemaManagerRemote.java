@@ -2,6 +2,8 @@ package org.h2.h2o.manager;
 
 import java.rmi.RemoteException;
 
+import org.h2.h2o.util.TableInfo;
+
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
@@ -13,5 +15,6 @@ public interface SchemaManagerRemote extends ISchemaManager, Migratable {
 	 * be called if the database is being shut down.
 	 */
 	public void stopLookupPinger() throws RemoteException;
+
 
 }

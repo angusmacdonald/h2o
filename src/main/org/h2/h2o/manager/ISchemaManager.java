@@ -177,6 +177,4 @@ public interface ISchemaManager extends Remote {
 	 */
 	public void changeDataManagerLocation(DataManagerRemote stub, TableInfo tableInfo) throws RemoteException, MovedException;
 
-
-
 }

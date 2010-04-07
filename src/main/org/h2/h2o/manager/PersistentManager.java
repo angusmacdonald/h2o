@@ -49,13 +49,13 @@ public class PersistentManager {
 		this.db = db;
 
 		Session session = db.getSystemSession();
-		
+
 		if (session == null){
 			ErrorHandling.error("Couldn't find system session. Local database has been shutdown.");
 			db.getSchemaManager().stopLookupPinger();
 			return;
 		}
-		
+
 		queryParser = new Parser(session, true);
 
 		this.stateReplicaManager = new ReplicaManager();
@@ -69,6 +69,8 @@ public class PersistentManager {
 			try {
 				setupManagerStateTables();
 			} catch (SQLException e) {
+
+				e.printStackTrace();
 				throw new Exception("Couldn't create manager state tables.");
 			}
 		}
@@ -84,11 +86,7 @@ public class PersistentManager {
 	 * @return
 	 */
 	public static String createSQL(String tables, String replicas, String connections) {
-		String sql = "CREATE SCHEMA IF NOT EXISTS H2O; " +
-		"\n\nCREATE TABLE IF NOT EXISTS " + tables + "( table_id INT NOT NULL auto_increment(1,1), " +
-		"schemaname VARCHAR(255), tablename VARCHAR(255), " +
-		"last_modification INT NOT NULL, " +
-		"PRIMARY KEY (table_id) );";
+		String sql = "CREATE SCHEMA IF NOT EXISTS H2O; ";
 
 		sql += "CREATE TABLE IF NOT EXISTS " + connections +"(" + 
 		"connection_id INTEGER NOT NULL auto_increment(1,1)," + 
@@ -99,6 +97,15 @@ public class PersistentManager {
 		"chord_port INT NOT NULL, " +
 		"active BOOLEAN, " + 
 		"PRIMARY KEY (connection_id) );";
+
+		sql+="CREATE SCHEMA IF NOT EXISTS H2O; " +
+		"\n\nCREATE TABLE IF NOT EXISTS " + tables + "( table_id INT NOT NULL auto_increment(1,1), " +
+		"schemaname VARCHAR(255), tablename VARCHAR(255), " +
+		"last_modification INT NOT NULL, " +
+		"manager_location INTEGER NOT NULL, " +
+		"PRIMARY KEY (table_id), " + 
+		"FOREIGN KEY (manager_location) REFERENCES " + connections + " (connection_id));";
+
 
 		sql += "\n\nCREATE TABLE IF NOT EXISTS " + replicas + "(" +
 		"replica_id INTEGER NOT NULL auto_increment(1,1), " +
@@ -160,9 +167,7 @@ public class PersistentManager {
 
 			assert !tableName.startsWith("H2O_");
 
-			if (!isTableListed(tableDetails)){ // the table doesn't already exist in the schema manager.
-				addTableInformation(tableName,  tableDetails.getModificationID(), schemaName);
-			}
+
 
 
 			DatabaseURL dbURL = tableDetails.getDbURL();
@@ -175,6 +180,11 @@ public class PersistentManager {
 			int connectionID = getConnectionID(dbURL);
 
 			assert connectionID != -1;
+
+			if (!isTableListed(tableDetails)){ // the table doesn't already exist in the schema manager.
+				addTableInformation(tableDetails, connectionID);
+			}
+
 
 			int tableID = getTableID(tableDetails);
 			if (!isReplicaListed(tableDetails, connectionID)){ // the table doesn't already exist in the schema manager.
@@ -407,8 +417,9 @@ public class PersistentManager {
 	 * @return					Result of the update.
 	 * @throws SQLException 
 	 */
-	private int addTableInformation(String tableName, long modificationID, String schemaName) throws SQLException{
-		String sql = "INSERT INTO " + tableRelation + " VALUES (null, '" + schemaName + "', '" + tableName + "', " + modificationID +");";
+	private int addTableInformation(TableInfo tableInfo, int connectionID) throws SQLException{
+		String sql = "INSERT INTO " + tableRelation + " VALUES (null, '" + tableInfo.getSchemaName() + "', '" + tableInfo.getTableName() + "', " + tableInfo.getModificationID() + ", " +
+		connectionID +");";
 		return executeUpdate(sql);
 	}
 
@@ -596,20 +607,20 @@ public class PersistentManager {
 			DatabaseInstanceRemote databaseReference) throws RemoteException {
 
 		if (stateReplicaManager.size() < Replication.SCHEMA_MANAGER_REPLICATION_FACTOR + 1){ //+1 because the local copy counts as a replica.
-			
+
 			//now replica state here.
 			try {
 				databaseReference.executeUpdate("DROP REPLICA IF EXISTS " + tableRelation + ", " + replicaRelation + ", " + connectionRelation + ";");
 				databaseReference.executeUpdate("CREATE REPLICA " + tableRelation + ", " + replicaRelation + ", " + connectionRelation + " FROM '" + db.getDatabaseURL().getOriginalURL() + "';");
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseReference.getConnectionURL().getDbLocation());
-				
+
 				stateReplicaManager.add(databaseReference);
-				
+
 			} catch (SQLException e) {
 				ErrorHandling.errorNoEvent("Failed to replicate schema manager state on: " + databaseReference.getConnectionURL().getDbLocation());
 			} 
-			
-			
+
+
 
 		}
 	}
@@ -650,6 +661,25 @@ public class PersistentManager {
 	 */
 	protected Parser getParser() {
 		return queryParser;
+	}
+
+	/**
+	 * Change the location of the data manager to the new location specified.
+	 * @param tableInfo 	New location of the data manager.
+	 */
+	public void changeDataManagerLocation(TableInfo tableInfo) {
+		int connectionID = getConnectionID(tableInfo.getDbURL());
+
+		assert connectionID != -1;
+
+		String sql = "\nUPDATE " + tableRelation + " SET manager_location = " + connectionID + " WHERE schemaname='" + tableInfo.getSchemaName() + "' AND tablename='" + 
+		tableInfo.getTableName() + "';";
+
+		try {
+			executeUpdate(sql);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}	
 	}
 
 }
