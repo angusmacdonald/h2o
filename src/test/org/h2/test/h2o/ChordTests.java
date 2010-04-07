@@ -151,6 +151,10 @@ public class ChordTests extends TestBase {
 		}
 	}
 	
+	/**
+	 * This sequence of events used to lock the sys table causing entries to not be included in the schema manager.
+	 * This tests that it never happens again.
+	 */
 	@Test
 	public void sysTableLock(){
 		try {
@@ -244,8 +248,69 @@ public class ChordTests extends TestBase {
 			fail("Didn't work.");
 		}
 	}
+
+	@SuppressWarnings("deprecation")
 	@Test
 	public void SchemaManagerFailure() throws InterruptedException {
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		try {
+			
+			dts[0].stop();
+			sas[0].close();
+			
+			Thread.sleep(5000);
+			
+			sas[1].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("Didn't complete query");
+		}
+	}
+
+	/**
+	 * Tests that if there are a number of failures the schema is successfully moved on each time.
+	 * @throws InterruptedException
+	 */
+	@Test
+	public void FailureMultipleReinstantiation() throws InterruptedException {
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		try {
+
+			sas[1].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+
+			dts[0].stop();
+			sas[0].close();
+			
+			Thread.sleep(5000);
+			
+			sas[1].executeUpdate("CREATE TABLE TEST3(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+
+			dts[0].stop();
+			sas[0].close();
+			
+			Thread.sleep(5000);
+			
+			ResultSet rs = sas[1].executeQuery("SELECT * FROM H2O.H2O_TABLE");
+			
+			if (rs.next() && rs.next() && rs.next()){
+				//pass
+			} else {
+				fail("Not enough results.");
+			}
+			
+			if (rs.next()){
+				fail("Too many results.");
+			}
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("Didn't complete query");
+		}
+	}
+	
+	@Test
+	public void FirstMachineDisconnect() throws InterruptedException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		try {
 			sas[0].close();
@@ -260,5 +325,5 @@ public class ChordTests extends TestBase {
 			fail("Didn't complete query");
 		}
 	}
-
+	
 }
