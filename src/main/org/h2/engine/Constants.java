@@ -530,6 +530,8 @@ public class Constants {
 
 	public static final String H2O_SCHEMA = "H2O";
 
+	public static boolean IS_TEAR_DOWN = false;
+
 	/**
 	 * True if a test is being run but this test doesn't require the state of the schema manager to be replicated. This is done
 	 * because the mechanism by which schema managers are replicated requires creating multiple threads, and is unnecessary for most tests.

@@ -36,6 +36,7 @@ import org.h2.h2o.manager.ISchemaManagerReference;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.SchemaManager;
 import org.h2.h2o.manager.SchemaManagerReference;
+import org.h2.h2o.manager.SchemaManagerRemote;
 import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.remote.IChordInterface;
 import org.h2.h2o.remote.IDatabaseRemote;
@@ -803,7 +804,12 @@ public class Database implements DataHandler {
 			boolean persistedTablesExist, boolean createTables) throws SQLException {
 		if (schemaManagerRef.isSchemaManagerLocal()){ // Create the schema manager tables and immediately add local tables to this manager.
 
-			SchemaManager schemaManager = new SchemaManager(this, createTables); 
+			SchemaManager schemaManager = null;
+			try {
+				schemaManager = new SchemaManager(this, createTables);
+			} catch (Exception e) {
+				ErrorHandling.hardError("Failed to create schema manager.");
+			} 
 
 			schemaManagerRef.setSchemaManager(schemaManager);
 			databaseRemote.exportSchemaManager(schemaManagerRef);
@@ -2584,7 +2590,7 @@ public class Database implements DataHandler {
 		return schemaManagerRef;
 	}
 
-	public ISchemaManager getSchemaManager(){
+	public SchemaManagerRemote getSchemaManager(){
 		return schemaManagerRef.getSchemaManager();
 	}
 

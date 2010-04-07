@@ -512,4 +512,5 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 			throws RemoteException, MovedException, SQLException {
 		return super.addConnectionInformation(databaseURL, databaseInstanceWrapper.isActive());
 	}
+
 }

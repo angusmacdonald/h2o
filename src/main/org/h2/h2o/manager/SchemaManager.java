@@ -10,10 +10,12 @@ import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.util.DatabaseURL;
+import org.h2.h2o.util.LookupPinger;
 import org.h2.h2o.util.TableInfo;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
 
 /**
@@ -71,18 +73,14 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 
 	private LookupPinger pingerThread;
 
-	public SchemaManager(Database db, boolean createTables) {
+	public SchemaManager(Database db, boolean createTables) throws Exception {
 
-		try {
 			this.inMemory = new InMemorySchemaManager(db);
 			this.persisted = new PersistentSchemaManager(db, createTables);
 
 			this.location = db.getChordInterface().getLocalChordReference();
 			this.pingerThread = new LookupPinger(db.getRemoteInterface(), db.getChordInterface(), location);
 			this.pingerThread.start();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 	}
 
 	/******************************************************************
@@ -223,6 +221,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	throws RemoteException, MovedException, SQLException {
 		preMethodTest();
 		inMemory.buildSchemaManagerState(otherSchemaManager);
+		
 		persisted.buildSchemaManagerState(otherSchemaManager);
 	}
 
@@ -365,6 +364,8 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 
 		this.hasMoved = true;
 		this.inMigration = false;
+		
+		this.pingerThread.setRunning(false);
 	}
 
 	/* (non-Javadoc)
@@ -404,6 +405,14 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	@Override
 	public IChordRemoteReference getChordReference() throws RemoteException {
 		return location;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#stopLookupPinger()
+	 */
+	@Override
+	public void stopLookupPinger() {
+		this.pingerThread.setRunning(false);
 	}
 
 }

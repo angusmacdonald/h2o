@@ -48,7 +48,15 @@ public class PersistentManager {
 		this.connectionRelation = connections;
 		this.db = db;
 
-		queryParser = new Parser(db.getSystemSession(), true);
+		Session session = db.getSystemSession();
+		
+		if (session == null){
+			ErrorHandling.error("Couldn't find system session. Local database has been shutdown.");
+			db.getSchemaManager().stopLookupPinger();
+			return;
+		}
+		
+		queryParser = new Parser(session, true);
 
 		this.stateReplicaManager = new ReplicaManager();
 
@@ -588,16 +596,20 @@ public class PersistentManager {
 			DatabaseInstanceRemote databaseReference) throws RemoteException {
 
 		if (stateReplicaManager.size() < Replication.SCHEMA_MANAGER_REPLICATION_FACTOR + 1){ //+1 because the local copy counts as a replica.
-			stateReplicaManager.add(databaseReference);
+			
 			//now replica state here.
 			try {
 				databaseReference.executeUpdate("DROP REPLICA IF EXISTS " + tableRelation + ", " + replicaRelation + ", " + connectionRelation + ";");
 				databaseReference.executeUpdate("CREATE REPLICA " + tableRelation + ", " + replicaRelation + ", " + connectionRelation + " FROM '" + db.getDatabaseURL().getOriginalURL() + "';");
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseReference.getConnectionURL().getDbLocation());
+				
+				stateReplicaManager.add(databaseReference);
+				
 			} catch (SQLException e) {
-				stateReplicaManager.remove(databaseReference);
 				ErrorHandling.errorNoEvent("Failed to replicate schema manager state on: " + databaseReference.getConnectionURL().getDbLocation());
 			} 
+			
+			
 
 		}
 	}

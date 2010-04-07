@@ -581,14 +581,15 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Shutting down node: " + chordNode);
 		IChordRemoteReference successor = chordNode.getSuccessor();
 
-		if (schemaManagerRef.isSchemaManagerLocal() && successor != null && !chordNode.getKey().equals(successor.getKey()) && !Constants.IS_NON_SM_TEST){
-			//If this node isn't it's own successor AND this isn't an unrelated JUnit test
+		if (schemaManagerRef.isSchemaManagerLocal() && successor != null && !chordNode.getKey().equals(successor.getKey()) && !Constants.IS_NON_SM_TEST && !Constants.IS_TEAR_DOWN){
+			//If this node isn't it's own successor AND this isn't an unrelated JUnit test, and it holds the schema manager.
 			//Migrate the schema manager to this node before shutdown.
 			try {
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Migrating schema manager to successor: " + successor);
 				DatabaseInstanceRemote successorDB = getDatabaseInstanceAt(successor);
 
 				successorDB.executeUpdate("MIGRATE SCHEMAMANAGER");
+				
 			} catch (Exception e) {
 				ErrorHandling.errorNoEvent("Failed to migrate schema manager to successor: " + successor);
 			}

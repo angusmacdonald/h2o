@@ -46,7 +46,7 @@ public class TestBase {
 
 	@BeforeClass
 	public static void initialSetUp(){
-		
+		Constants.IS_TEAR_DOWN = false; 
 		Constants.IS_NON_SM_TEST = true;
 		
 		Diagnostic.setLevel(DiagnosticLevel.FULL);
@@ -77,7 +77,7 @@ public class TestBase {
 	 */
 	@Before
 	public void setUp() throws Exception {
-
+		Constants.IS_TEAR_DOWN = false; 
 		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
 		knownHosts.createNewFile();
 		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordRemote.currentPort + "");

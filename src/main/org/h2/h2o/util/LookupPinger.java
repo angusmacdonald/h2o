@@ -1,10 +1,13 @@
-package org.h2.h2o.manager;
+package org.h2.h2o.util;
 
 import java.rmi.RemoteException;
 
+import org.h2.engine.Constants;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.manager.SchemaManagerReference;
 import org.h2.h2o.remote.IChordInterface;
 import org.h2.h2o.remote.IDatabaseRemote;
+import org.h2.test.h2o.ChordTests;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -20,6 +23,8 @@ public class LookupPinger extends Thread {
 	 * Time between pings.
 	 */
 	private static final long DEFAULT_SLEEP_TIME = 5000;
+
+	private static final int MAXIMUM_CONSECUTIVE_ERRORS = 10;
 	
 	/**
 	 * Interface to the rest of the database system for this instance.
@@ -50,6 +55,10 @@ public class LookupPinger extends Thread {
 		this.remoteInterface = remoteInterface;
 		this.chordInterface = chordInterface;
 		this.schemaManagerLocation = location;
+		
+		if (Constants.IS_TEST){
+			ChordTests.pingSet.add(this);
+		}
 	}
 	
 	
@@ -57,8 +66,10 @@ public class LookupPinger extends Thread {
 	public void run(){
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Starting to ping schema manager lookup location.");
+
+		int errors = 0;
 		
-		while (running){
+		while (isRunning()){
 			/*
 			 * Continously inform schema managers chord ring node of the 
 			 * actual schema manager location.
@@ -75,6 +86,7 @@ public class LookupPinger extends Thread {
 			try {
 				lookupLocation = chordInterface.getLookupLocation(SchemaManagerReference.schemaManagerKey);
 			} catch (RemoteException e1) {
+				errors ++;
 				ErrorHandling.errorNoEvent("Error on ping lookup.");
 				continue;
 			}
@@ -89,12 +101,20 @@ public class LookupPinger extends Thread {
 //					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "SM location is: " + schemaManagerLocation.getRemote().getAddress().getPort());
 					DatabaseInstanceRemote dir = remoteInterface.getDatabaseInstanceAt(lookupLocation);
 					dir.setSchemaManagerLocation(schemaManagerLocation, remoteInterface.getLocalMachineLocation());
-					
+					errors = 0;
 				} catch (RemoteException e) {
 					ErrorHandling.errorNoEvent("Pinger thread failed to find instance responsible for schema manager lookup.");
+					errors ++;
 				}
+			} else {
+				errors = 0;
+			}
+			
+			if (errors > MAXIMUM_CONSECUTIVE_ERRORS){
+				setRunning(false);
 			}
 		}
+		
 	}
 
 
