@@ -83,7 +83,7 @@ public class SchemaManagerReplication extends Thread {
 	 */
 	private void createSchemaManagerReplicas(DatabaseInstanceRemote instance) {
 		try {
-			iSchemaManager.addSchemaManagerDataLocation(instance);
+			iSchemaManager.addStateReplicaLocation(instance);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

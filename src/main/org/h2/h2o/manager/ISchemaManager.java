@@ -44,8 +44,9 @@ public interface ISchemaManager extends Remote {
 	 * @param session 
 	 * @return True if this action was successful on the schema manager; otherwise false.
 	 * @throws RemoteException
+	 * @throws SQLException 
 	 */
-	public boolean addTableInformation(DataManagerRemote dataManager, TableInfo tableDetails) throws RemoteException, MovedException;
+	public boolean addTableInformation(DataManagerRemote dataManager, TableInfo tableDetails) throws RemoteException, MovedException, SQLException;
 
 
 	/**
@@ -70,8 +71,9 @@ public interface ISchemaManager extends Remote {
 	/**
 	 * Add information about a new database instance to the schema manager.
 	 * @param databaseURL	The name and location of the new database instance.
+	 * @throws SQLException 
 	 */
-	public int addConnectionInformation(DatabaseURL databaseURL, DatabaseInstanceWrapper databaseInstanceWrapper) throws RemoteException, MovedException;
+	public int addConnectionInformation(DatabaseURL databaseURL, DatabaseInstanceWrapper databaseInstanceWrapper) throws RemoteException, MovedException, SQLException;
 
 	/**
 	 * Get a new table set number from the schema manager. Each number given is unique (i.e. the same number should not be given twice).
@@ -93,7 +95,7 @@ public interface ISchemaManager extends Remote {
 	 * Add details of a new replica at the specified location.
 	 * @param ti
 	 */
-	public void addReplicaInformation(TableInfo ti) throws RemoteException, MovedException;
+	public void addReplicaInformation(TableInfo ti) throws RemoteException, MovedException, SQLException;
 
 	/**
 	 * Returns an array of all the tables in a given database schema.
@@ -149,7 +151,7 @@ public interface ISchemaManager extends Remote {
 	 * @throws RemoteException
 	 * @throws MovedException 
 	 */
-	public void addSchemaManagerDataLocation(DatabaseInstanceRemote databaseReference) throws RemoteException, MovedException;
+	public void addStateReplicaLocation(DatabaseInstanceRemote databaseReference) throws RemoteException, MovedException;
 
 	/**
 	 * Get a remote reference to a database instance at the specified URL.

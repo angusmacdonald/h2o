@@ -10,6 +10,7 @@ import org.h2.h2o.manager.Migratable;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LockType;
+import org.h2.h2o.util.TableInfo;
 
 
 /**
@@ -21,40 +22,24 @@ public interface DataManagerRemote extends H2ORemote, Migratable {
 
 	public QueryProxy getQueryProxy(LockType lockType, DatabaseInstanceRemote databaseInstanceRemote) throws RemoteException, SQLException, MovedException;
 
-	/**
-	 * Inform the data manager that a new replica has been created for the given table.
-	 * 
-	 * @param tableName				Name of the table being added.
-	 * @param modificationId		Modification ID of the table.
-	 * @param databaseLocation		Location of the table (the database it is stored in)
-	 * @param tableType				Type of the table (e.g. Linked, View, Table).
-	 * @param localMachineAddress	Address through which the DB is contactable.
-	 * @param localMachinePort		Port the server is running on.
-	 * @param connection_type		The type of connection (e.g. TCP, FTP).
-	 * @return true if this replica wasn't already in the data manager, false otherwise.
-	 * @param isSM 					True if the database invoking the method is the schema manager.
-	 * @throws SQLException 
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.PersistentManager#addTableInformation(org.h2.h2o.util.DatabaseURL, org.h2.h2o.util.TableInfo)
 	 */
-	public boolean addReplicaInformation(long modification_id, String databaseLocationOnDisk,
-			String string, String hostname, int port, String connectionType,
-			int tableSet, boolean isSM) throws RemoteException, MovedException;
+	public boolean addTableInformation(DatabaseURL dataManagerURL,
+			TableInfo tableDetails) throws RemoteException, MovedException, SQLException;
 
-	/**
-	 * Removes a particular replica from the schema manager. 
-	 * @param dbLocation 
-	 * @param machineName 
-	 * @param connectionPort 
-	 * @param connectionType 
-	 * @param schemaName 
-	 * @throws SQLException 
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.PersistentManager#addReplicaInformation(org.h2.h2o.util.TableInfo)
 	 */
-	public int removeReplica(String dbLocation, String machineName, int connectionPort, String connectionType) throws RemoteException, SQLException, MovedException;
+	public void addReplicaInformation(TableInfo tableDetails)  throws RemoteException, MovedException, SQLException;
 
-	/**
-	 * Remove all stored meta-data for the given data manager.
-	 * @throws SQLException 
+	public void removeReplicaInformation(TableInfo ti)  throws RemoteException, MovedException, SQLException;
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.remote.DataManagerRemote#removeDataManager()
 	 */
-	public int removeDataManager() throws RemoteException, SQLException, MovedException;
+	public boolean removeDataManager() throws RemoteException, SQLException,
+			MovedException;
 
 	/**
 	 * Get the location of a single replica for the given table. This is used in creating linked

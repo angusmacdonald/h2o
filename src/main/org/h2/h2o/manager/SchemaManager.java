@@ -20,7 +20,7 @@ import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, Migratable
-	
+
 	/**
 	 * Interface to the in-memory state of the schema manager.
 	 */
@@ -46,22 +46,22 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	 * Whether the schema manager is in the process of being migrated. If this is true the schema manager will be 'locked', unable to service requests.
 	 */
 	private boolean inMigration;
-	
+
 	/**
 	 * Whether the schema manager has been moved to another location.
 	 */
 	private boolean hasMoved = false;
-	
+
 	/**
 	 * Whether the schema manager has been shutdown.
 	 */
 	private boolean shutdown = false;
-	
+
 	/**
 	 * The amount of time which has elapsed since migration began. Used to timeout requests which take too long.
 	 */
 	private long migrationTime = 0l;
-	
+
 	private IChordRemoteReference location;
 
 	/**
@@ -70,13 +70,13 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	private static final int MIGRATION_TIMEOUT = 10000;
 
 	private LookupPinger pingerThread;
-	
+
 	public SchemaManager(Database db, boolean createTables) {
 
 		try {
 			this.inMemory = new InMemorySchemaManager(db);
 			this.persisted = new PersistentSchemaManager(db, createTables);
-			
+
 			this.location = db.getChordInterface().getLocalChordReference();
 			this.pingerThread = new LookupPinger(db.getRemoteInterface(), db.getChordInterface(), location);
 			this.pingerThread.start();
@@ -97,8 +97,14 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	throws RemoteException, MovedException {
 		preMethodTest();
 
-		inMemory.addConnectionInformation(databaseURL, remoteDatabase);
-		return persisted.addConnectionInformation(databaseURL, remoteDatabase);
+		try {
+			inMemory.addConnectionInformation(databaseURL, remoteDatabase);
+
+			return persisted.addConnectionInformation(databaseURL, remoteDatabase);
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return -1;
+		}
 
 	}
 
@@ -109,8 +115,12 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	public void addReplicaInformation(TableInfo ti) throws RemoteException, MovedException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Request to add a single replica to the system: " + ti);
 		preMethodTest();
-		inMemory.addReplicaInformation(ti);
-		persisted.addReplicaInformation(ti);
+		try {
+			inMemory.addReplicaInformation(ti);
+			persisted.addReplicaInformation(ti);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/* (non-Javadoc)
@@ -119,10 +129,16 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	@Override
 	public boolean addTableInformation(DataManagerRemote dataManager, TableInfo tableDetails) throws RemoteException, MovedException {
 		preMethodTest();
-		boolean result = inMemory.addTableInformation(dataManager, tableDetails);
-		persisted.addTableInformation(dataManager, tableDetails);
-
-		return result;
+		boolean success;
+		try {
+			success = inMemory.addTableInformation(dataManager, tableDetails);
+			if (!success) return false;
+			persisted.addTableInformation(dataManager, tableDetails);
+		} catch (SQLException e) {
+			e.printStackTrace();
+			success = false;
+		}
+		return success;
 	}
 
 
@@ -262,11 +278,11 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	 * @see org.h2.h2o.manager.ISchemaManager#addSchemaManagerDataLocation(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
 	 */
 	@Override
-	public void addSchemaManagerDataLocation(
+	public void addStateReplicaLocation(
 			DatabaseInstanceRemote databaseReference) throws RemoteException, MovedException, MovedException, MovedException {
 		preMethodTest();
-		inMemory.addSchemaManagerDataLocation(databaseReference);
-		persisted.addSchemaManagerDataLocation(databaseReference);
+		inMemory.addStateReplicaLocation(databaseReference);
+		persisted.addStateReplicaLocation(databaseReference);
 	}
 
 	/* (non-Javadoc)
@@ -312,7 +328,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 		if (inMigration){
 			//If it hasn't moved, but is in the process of migration an exception will be thrown.
 			long currentTimeOfMigration = System.currentTimeMillis() - migrationTime;
-			
+
 			if (currentTimeOfMigration < MIGRATION_TIMEOUT) {
 				throw new RemoteException();
 			} else {
@@ -336,7 +352,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 		migrationTime = System.currentTimeMillis();
 	}
 
-	
+
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISchemaManager#completeMigration()
 	 */
@@ -346,7 +362,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 		if (!inMigration){ // the migration process has timed out.
 			throw new MigrationException("Migration process has timed-out. Took too long to migrate (timeout: " + MIGRATION_TIMEOUT + "ms)");
 		}
-		
+
 		this.hasMoved = true;
 		this.inMigration = false;
 	}
@@ -365,7 +381,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	@Override
 	public void changeDataManagerLocation(DataManagerRemote stub, TableInfo tableInfo)  throws RemoteException, MovedException{
 		preMethodTest();
-		
+
 		inMemory.changeDataManagerLocation(stub, tableInfo);
 		persisted.changeDataManagerLocation(stub, tableInfo);
 	}
@@ -376,7 +392,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	@Override
 	public void shutdown(boolean shutdown) throws RemoteException, MovedException {
 		this.shutdown = shutdown;
-		
+
 		if (shutdown){
 			pingerThread.setRunning(false);
 		}

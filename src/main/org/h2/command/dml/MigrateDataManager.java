@@ -98,7 +98,9 @@ public class MigrateDataManager extends org.h2.command.ddl.SchemaCommand {
 		 */
 		DataManagerRemote newDataManager = null;
 		try {
-			newDataManager = new DataManager(tableName, schemaName, 0l, oldDataManager.getTableSet(), db);
+			TableInfo ti = new TableInfo(tableName, schemaName, 0l, 0, "TABLE", db.getDatabaseURL());
+			
+			newDataManager = new DataManager(ti, db);
 		} catch (Exception e) {
 			ErrorHandling.hardExceptionError(e, "Failed to create new data manager.");
 		}

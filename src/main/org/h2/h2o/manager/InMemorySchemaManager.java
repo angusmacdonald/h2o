@@ -13,7 +13,6 @@ import java.util.Map.Entry;
 import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.engine.Database;
-import org.h2.h2o.autonomic.Replication;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
@@ -225,8 +224,10 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 			 */
 			//DataManager dm = DataManager.createDataManagerFromPersistentStore(ti.getSchemaName(), ti.getSchemaName());
 			try {
-				dm = new DataManager(ti.getTableName(), ti.getSchemaName(), 10l, 0, database);
+				dm = new DataManager(ti, database);
 			} catch (SQLException e) {
+				e.printStackTrace();
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 
@@ -440,7 +441,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	 * @see org.h2.h2o.manager.ISchemaManager#addSchemaManagerDataLocation(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
 	 */
 	@Override
-	public void addSchemaManagerDataLocation(
+	public void addStateReplicaLocation(
 			DatabaseInstanceRemote databaseReference) throws RemoteException {
 
 //		if (schemaManagerState.size() < Replication.SCHEMA_MANAGER_REPLICATION_FACTOR){ //TODO update to allow policy on number of replicas.

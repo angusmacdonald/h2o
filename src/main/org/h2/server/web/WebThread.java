@@ -813,7 +813,7 @@ class WebThread extends Thread implements DatabaseEventListener {
 				String tableName = entrySet.getKey();
 
 				buff.append("setNode(" + treeIndex + ", " + indentLevel+ ", " + tableLevel + ", 'index', ' " + PageParser.escapeJavaScript(tableName + " [" + tableSet.size() + " copies]")
-						+ "', 'javascript:ins(\\'" + tableName + "\\',true)');\n");
+						+ "', 'javascript:ins(\\'" + schema.name + "." + tableName + "\\',true)');\n");
 				treeIndex++;
 				//tableLevel++;
 				indentLevel++;

@@ -442,7 +442,14 @@ public class CreateTable extends SchemaCommand {
 		queryProxy = null;
 		if (Constants.IS_H2O && !tableName.startsWith("H2O_") && !db.isManagementDB()){ //XXX Not sure if this should be a seperate IF
 
-			DataManager dataManager = new DataManager(tableName, getSchema().getName(), 0, 0, db);
+			//TableInfo tableDetails, Database databas
+			TableInfo ti = new TableInfo(tableName, getSchema().getName(), 0l, 0, "TABLE", db.getDatabaseURL());
+			DataManager dataManager = null;
+			try {
+				dataManager = new DataManager(ti, db);
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
 			DataManagerRemote stub = null;
 			/*
 			 * Make data manager serializable first.

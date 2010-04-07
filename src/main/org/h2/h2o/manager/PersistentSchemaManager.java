@@ -8,13 +8,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import org.h2.command.Command;
-import org.h2.command.Parser;
 import org.h2.constant.ErrorCode;
 import org.h2.engine.Database;
-import org.h2.engine.Session;
-import org.h2.h2o.autonomic.Replication;
-import org.h2.h2o.comms.ReplicaManager;
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
@@ -27,12 +22,11 @@ import org.h2.value.Value;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
-import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class PersistentSchemaManager implements ISchemaManager{
+public class PersistentSchemaManager extends PersistentManager implements ISchemaManager {
 
 	/**
 	 * Name of the schema used to store schema manager tables.
@@ -63,101 +57,10 @@ public class PersistentSchemaManager implements ISchemaManager{
 	 * The database password used to communicate with schema manager tables.
 	 */
 	public static final String PASSWORD = "";
-
-
-	/**
-	 * Query parser instance to be used for all queries to the schema manager.
-	 */
-	private Parser queryParser;
-	private Command sqlQuery;
-
-	private Database db;
-
-	private int cacheConnectionID;
-
-	private ReplicaManager replicaManager;
+	
 
 	public PersistentSchemaManager(Database db, boolean createTables) throws Exception{
-
-		this.db = db;
-
-		queryParser = new Parser(db.getSystemSession(), true);
-
-		this.replicaManager = new ReplicaManager();
-
-		replicaManager.add(db.getLocalDatabaseInstance());
-
-		if (createTables){
-			/*
-			 * Create a new set of schema tables locally.
-			 */
-			try {
-				setupSchemaManagerStateTables();
-			} catch (SQLException e) {
-				throw new Exception("Couldn't create schema manager state tables.");
-			}
-		}
-		//} else {
-		/*
-		 * A local copy of the schema already exists locally. There may be other remote copies,
-		 * but they are not known, and consequently not active.
-		 */
-
-		//This currently does nothing, but could in future look for remote copies, or create remote replicas.
-		//}
-
-		replicaManager.add(db.getLocalDatabaseInstance());
-
-	}
-
-	/**
-	 * Creates the set of tables used by the schema manager.
-	 * @return Result of the update.
-	 * @throws SQLException
-	 */
-	private int setupSchemaManagerStateTables() throws SQLException{
-
-		String sql = "CREATE SCHEMA IF NOT EXISTS H2O; " +
-		"\n\nCREATE TABLE IF NOT EXISTS " + TABLES + "( table_id INT NOT NULL auto_increment(1,1), " +
-		"schemaname VARCHAR(255), tablename VARCHAR(255), " +
-		"last_modification INT NOT NULL, " +
-		"PRIMARY KEY (table_id) );";
-
-		sql += "CREATE TABLE IF NOT EXISTS " + CONNECTIONS +"(" + 
-		"connection_id INTEGER NOT NULL auto_increment(1,1)," + 
-		"connection_type VARCHAR(5), " + 
-		"machine_name VARCHAR(255)," + 
-		"db_location VARCHAR(255)," +
-		"connection_port INT NOT NULL, " + 
-		"chord_port INT NOT NULL, " +
-		"active BOOLEAN, " + 
-		"PRIMARY KEY (connection_id) );";
-
-		sql += "\n\nCREATE TABLE IF NOT EXISTS " + REPLICAS + "(" +
-		"replica_id INTEGER NOT NULL auto_increment(1,1), " +
-		"table_id INTEGER NOT NULL, " +
-		"connection_id INTEGER NOT NULL, " + 
-		"storage_type VARCHAR(255), " + 
-		"last_modification INT NOT NULL, " +
-		"table_set INT NOT NULL, " +
-		"primary_copy BOOLEAN, " +
-		"PRIMARY KEY (replica_id), " +
-		"FOREIGN KEY (table_id) REFERENCES " + TABLES + " (table_id) ON DELETE CASCADE , " +
-		" FOREIGN KEY (connection_id) REFERENCES " + CONNECTIONS + " (connection_id));";
-
-
-		sqlQuery = queryParser.prepareCommand(sql);
-
-		int result = -1;
-		try {
-			result = sqlQuery.update();
-
-			sqlQuery.close();
-		} catch (RemoteException e) {
-			e.printStackTrace();
-		}
-
-		return result;
+		super (db, createTables, TABLES, REPLICAS, CONNECTIONS);
 	}
 
 	public DatabaseURL getDataManagerLocation(String tableName, String schemaName) throws SQLException{
@@ -168,7 +71,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 
 		LocalResult result = null;
 
-		sqlQuery = queryParser.prepareCommand(sql);
+		sqlQuery = getParser().prepareCommand(sql);
 
 		try {
 
@@ -197,156 +100,9 @@ public class PersistentSchemaManager implements ISchemaManager{
 
 	}
 
-	/**
-	 * Add a new table to the schema manager. Called at the end of a CreateTable update. 
-	 * @param tableName				Name of the table being added.
-	 * @param modificationId		Modification ID of the table.
-	 * @param databaseLocation		Location of the table (the database it is stored in)
-	 * @param tableType				Type of the table (e.g. Linked, View, Table).
-	 * @param localMachineAddress	Address through which the DB is contactable.
-	 * @param localMachinePort		Port the server is running on.
-	 * @param connection_type		The type of connection (e.g. TCP, FTP).
-	 * @throws SQLException 
-	 */
-	public boolean addTableInformation(DataManagerRemote dataManager, TableInfo tableDetails){
-
-		getNewQueryParser();
-
-		try {
-			String tableName = tableDetails.getTableName();
-			String schemaName = tableDetails.getSchemaName();
 
 
-			if (!isTableListed(tableDetails)){ // the table doesn't already exist in the schema manager.
-				addTableInformation(tableName,  tableDetails.getModificationID(), schemaName);
-			}
-
-
-			DatabaseURL dbURL = tableDetails.getDbLocation();
-
-			if (dbURL == null){
-				//find the URL from the data manager.
-				dbURL = dataManager.getDatabaseURL();
-			}
-
-			int connectionID = getConnectionID(dbURL);
-
-			assert connectionID != -1;
-
-			int tableID = getTableID(tableDetails);
-			if (!isReplicaListed(tableName, connectionID, dbURL.getDbLocation(), schemaName)){ // the table doesn't already exist in the schema manager.
-				addReplicaInformation(tableDetails, tableID, connectionID, true);				
-			}
-			return true;
-		} catch (SQLException e) {
-
-			e.printStackTrace();
-			return false;
-		} catch (RemoteException e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
-
-
-	/**
-	 * Add a new replica to the schema manager. The table already exists, so it is assumed there is an entry for that table
-	 * in the schema manager. This method only updates the replica table in the schema manager.
-	 * @param tableName				Name of the table being added.
-	 * @param modificationId		Modification ID of the table.
-	 * @param databaseLocation		Location of the table (the database it is stored in)
-	 * @param tableType				Type of the table (e.g. Linked, View, Table).
-	 * @param localMachineAddress	Address through which the DB is contactable.
-	 * @param localMachinePort		Port the server is running on.
-	 * @param connection_type		The type of connection (e.g. TCP, FTP).
-	 */
-	public void addReplicaInformation(TableInfo tableDetails) {
-		//getNewQueryParser();
-
-		//queryParser = new Parser(db.getExclusiveSession(), true);
-
-		try {
-			int connectionID = getConnectionID(tableDetails.getDbLocation());
-			int tableID = getTableID(tableDetails);
-
-			if (!isReplicaListed(tableDetails.getTableName(), connectionID, tableDetails.getDbLocation().getDbLocation(), tableDetails.getSchemaName())){ // the table doesn't already exist in the schema manager.
-				addReplicaInformation(tableDetails, tableID, connectionID, false);				
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * 
-	 */
-	private void getNewQueryParser() {
-		Session s = null;
-
-		if (db.getSessions(false).length > 0){
-			s = db.getSessions(false)[0];
-		} else {
-			s = db.getSystemSession();
-		}
-
-		queryParser = new Parser(s, true);
-
-	}
-
-	/**
-	 * Check if the schema manager contains connection information for this database.
-	 * @param localMachineAddress	The address through which remote machines can connect to the database.
-	 * @param localMachinePort		The port on which the database is running.
-	 * @return						True, if the connection information already exists.
-	 * @throws SQLException
-	 */
-	public boolean connectionInformationExists(String localMachineAddress, int localMachinePort, String connectionType, String databaseLocation) throws SQLException{
-		String sql = "SELECT count(connection_id) FROM " + CONNECTIONS + " WHERE machine_name='" + localMachineAddress + "' AND db_location='" + databaseLocation +
-		"' AND connection_port=" + localMachinePort + " AND connection_type='" + connectionType +"';";
-
-		return countCheck(sql);
-	}
-
-	/**
-	 * Update the schema manager with new connection information.
-	 * @param localMachineAddress	The address through which remote machines can connect to the database.
-	 * @param localMachinePort		The port on which the database is running.
-	 * @param databaseLocation 		The location of the local database. Used to determine whether a database in running in embedded mode.
-	 * @return						Result of the update.
-	 */
-	public int addConnectionInformation(DatabaseURL dburl, DatabaseInstanceWrapper databaseInstanceWrapper){
-		String connection_type = dburl.getConnectionType();
-
-		String sql = null;
-		try {
-			if (connectionInformationExists(dburl.getHostname(), dburl.getPort(), dburl.getConnectionType(), dburl.getDbLocation())){
-				//Update existing information - the chord port may have changed.
-
-				sql = "\nUPDATE " + CONNECTIONS + " SET chord_port = " + dburl.getRMIPort() + 
-				", active = " + databaseInstanceWrapper.isActive() + " WHERE machine_name='" + dburl.getHostname() + "' AND connection_port=" + dburl.getPort() +
-				" AND connection_type='" + dburl.getConnectionType() +"';";
-
-			} else { 
-
-				sql = "\nINSERT INTO " + CONNECTIONS + " VALUES (null, '" + connection_type + "', '" + dburl.getHostname() + 
-				"', '" + dburl.getDbLocation() + "', "  + dburl.getPort() + ", " +
-				dburl.getRMIPort() + ", " + databaseInstanceWrapper.isActive() + ");\n";
-
-			}
-		} catch (SQLException e1) {
-			e1.printStackTrace();
-			return -1;
-		}
-
-		try {
-			return executeUpdate(sql);
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return -1;
-		}
-	}
-
-
+	
 	/**
 	 * Creates linked tables for a remote schema manager, location specified by the paramter.
 	 * @param schemaManagerLocation Location of the remote schema manager.
@@ -385,339 +141,10 @@ public class PersistentSchemaManager implements ISchemaManager{
 		return executeQuery(sql);
 	}
 
-	/**
-	 * Gets the number of replicas that exist for a given table.
-	 */
-	public int getNumberofReplicas(String tableName, String schemaName){
-		String sql = "SELECT count(*) FROM " + REPLICAS + ", " + TABLES + " WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND" +
-		" " + TABLES + ".table_id=" + REPLICAS + ".table_id;";
 
-		try {
-			return getCount(sql);
-		} catch (SQLException e) {
-			e.printStackTrace();
 
-			return -1;
-		}
-	}
 
-	/**
-	 * Gets the connection ID for a given database connection if it is present in the database. If not, -1 is returned.
-	 * 
-	 * Note: Currently, it is assumed this is only called by the local machine (only current use), so the connection_id is cached
-	 * and returned if it is already known.
-	 * 
-	 * @param machine_name
-	 * @param connection_port
-	 * @param connection_type
-	 * @return
-	 */
-	public int getConnectionID(DatabaseURL dbURL){
-		String machine_name = dbURL.getHostname();
-		int connection_port = dbURL.getPort();
-		String connection_type = dbURL.getConnectionType();
-
-		//		if (cacheConnectionID != -1)
-		//			return cacheConnectionID;
-
-		String sql = "SELECT connection_id FROM " + CONNECTIONS + " WHERE machine_name='" + machine_name
-		+ "' AND connection_port=" + connection_port + " AND connection_type='" + connection_type + "' AND db_location = '" + dbURL.getDbLocation() + "';";
-
-
-
-		LocalResult result = null;
-		try {
-			sqlQuery = queryParser.prepareCommand(sql);
-
-			result = sqlQuery.executeQueryLocal(1);
-
-			if (result.next()){
-				cacheConnectionID = result.currentRow()[0].getInt();
-				return cacheConnectionID;
-			} else {
-				ErrorHandling.errorNoEvent("No connection ID was found - this shouldn't happen if the system has started correctly.");
-				return -1;
-			}
-
-
-		} catch (SQLException e) {
-			return -1;
-		}
-	}
-
-	/**
-	 *  Gets the table ID for a given database table if it is present in the database. If not, an exception is thrown.
-	 * @param tableName		Name of the table
-	 * @param schemaName	Schema the table is in.
-	 * @return
-	 */
-	public int getTableID(TableInfo ti) throws SQLException{
-
-		String sql = "SELECT table_id FROM " + TABLES + " WHERE tablename='" + ti.getTableName()
-		+ "' AND schemaname='" + ti.getSchemaName() + "';";
-
-		LocalResult result = null;
-
-		sqlQuery = queryParser.prepareCommand(sql);
-
-		result = sqlQuery.executeQueryLocal(1);
-
-		if (result.next()){
-			return result.currentRow()[0].getInt();
-		} else {
-			throw new SQLException("Internal problem: tableID not found in schema manager.");
-		}
-
-
-	}
-
-
-	/**
-	 * A check whether a table is already listed in the schema manager.
-	 * @param tableName			Name of the table for which the check is being made.
-	 * @param schemaName 
-	 * @return	true, if the table's information is already in the schema manager.
-	 * @throws SQLException 
-	 */
-	public boolean isTableListed(TableInfo ti) throws SQLException{
-		String sql =  "SELECT count(*) FROM " + TABLES + " WHERE tablename='" + ti.getTableName() + "' AND schemaname='" + ti.getSchemaName() +"';";
-
-		return countCheck(sql);
-	}
-
-	/**
-	 * A check whether a replica is already listed in the schema manager.
-	 * @param tableName			Name of the table for which the check is being made.
-	 * @param connectionID		Connection ID of the machine holding this replica.
-	 * @return	true, if the replica's information is already in the schema manager.
-	 * @throws SQLException 
-	 */
-	public boolean isReplicaListed(String tableName, int connectionID, String dbLocation, String schemaName) throws SQLException{
-		String sql = "SELECT count(*) FROM " + REPLICAS + ", " + TABLES + ", " + CONNECTIONS + " WHERE tablename='" + tableName + "' AND schemaname='" + 
-		schemaName + "' AND " + TABLES + ".table_id=" + REPLICAS + ".table_id AND " + REPLICAS + ".connection_id = " + CONNECTIONS + ".connection_id AND db_location='"
-		+ dbLocation + "';";
-
-		return countCheck(sql);
-	}
-
-	/**
-	 * Takes in an SQL count(*) query, which should return a single result, which is a single integer, indicating
-	 * the number of occurences of a given entry. If the number of entries is greater than zero true is returned; otherwise false.
-	 * @param query	SQL count query.
-	 * @return
-	 * @throws SQLException
-	 */
-	private boolean countCheck(String query) throws SQLException{
-		LocalResult result = executeQuery(query);
-		if (result.next()){
-			int count = result.currentRow()[0].getInt();
-
-			return (count>0);
-		}
-		return false;
-	}
-
-	/**
-	 * Takes in an SQL count(*) query, which should return a single result, which is a single integer, indicating
-	 * the number of occurences of a given entry. If no count is returned from the ResultSet, -1 is returned from this method.
-	 * @param query	SQL count query.
-	 * @return
-	 * @throws SQLException
-	 */
-	private int getCount(String query) throws SQLException{
-		LocalResult result = executeQuery(query);
-		if (result.next()){
-			int count = result.currentRow()[0].getInt();
-
-			return count;
-		}
-		return -1;
-	}
-
-
-	/**
-	 * Update the schema manager with new table information
-	 * @param tableName			Name of the table being added.
-	 * @param modificationID	Mofification ID of the table.
-	 * @param session 
-	 * @return					Result of the update.
-	 * @throws SQLException 
-	 */
-	private int addTableInformation(String tableName, long modificationID, String schemaName) throws SQLException{
-		String sql = "INSERT INTO " + TABLES + " VALUES (null, '" + schemaName + "', '" + tableName + "', " + modificationID +");";
-		return executeUpdate(sql);
-	}
-
-	/**
-	 * Update the schema manager with new replica information
-	 * @param tableID			Name of the replica being added.
-	 * @param modificationID	Mofification ID of the table.
-	 * @return					Result of the update.
-	 * @throws SQLException 
-	 */
-	private int addReplicaInformation(TableInfo ti, int tableID, int connectionID, boolean primaryCopy) throws SQLException{
-		String sql = "INSERT INTO " + REPLICAS + " VALUES (null, " + tableID + ", " + connectionID + ", '" + 
-		ti.getTableType() + "', " + ti.getModificationID() +", " + ti.getTableSet() + ", " + primaryCopy + ");\n";
-		return executeUpdate(sql);
-	}
-
-	/**
-	 * Removes a table completely from the schema manager. Information is removed for the table itself and for all replicas.
-	 * @param tableName		Leave null if you want to drop the entire schema.
-	 * @param schemaName 
-	 * @throws SQLException 
-	 */
-	public boolean removeTableInformation(TableInfo ti) {
-		try {
-
-			String sql = "";
-			if (ti.getTableName() == null){
-				/*
-				 * Deleting the entire schema.
-				 */
-				Integer[] tableIDs;
-
-				tableIDs = getTableIDs(ti.getSchemaName());
-
-
-				if (tableIDs.length > 0){
-					sql = "DELETE FROM " + REPLICAS;
-					for (int i = 0; i < tableIDs.length; i++){
-						if (i==0){
-							sql +=" WHERE table_id=" + tableIDs[i];
-						} else {
-							sql +=" OR table_id=" + tableIDs[i];
-						}
-					}
-					sql += ";";
-				} else {
-					sql = "";
-				}
-
-				sql += "\nDELETE FROM " + TABLES + " WHERE schemaname='" + ti.getSchemaName() + "'; ";
-			} else {
-
-				int tableID = getTableID(ti);
-
-				sql = "DELETE FROM " + REPLICAS + " WHERE table_id=" + tableID + ";";
-
-				sql += "\nDELETE FROM " + TABLES + " WHERE table_id=" + tableID + "; ";
-
-			}
-			executeUpdate(sql);
-
-
-			//int id = getTableID(new TableInfo("TEST", "PUBLIC"));
-
-			return true;
-		} catch (SQLException e) {
-			e.printStackTrace();
-
-			return false;
-		}
-	}
-
-
-	/**
-	 * Gets all the table IDs for tables in a schema.
-	 * @param schemaName
-	 * @return
-	 * @throws SQLException 
-	 */
-	private Integer[] getTableIDs(String schemaName) throws SQLException {
-		String sql = "SELECT table_id FROM " + TABLES + " WHERE schemaname='" + schemaName + "';";
-
-		LocalResult result = null;
-
-		sqlQuery = queryParser.prepareCommand(sql);
-
-		result = sqlQuery.executeQueryLocal(0);
-
-		Set<Integer> ids = new HashSet<Integer>();
-		while (result.next()){
-			ids.add(result.currentRow()[0].getInt());
-		}
-
-		return ids.toArray(new Integer[0]);
-	}
-
-	private LocalResult executeQuery(String query) throws SQLException{
-		sqlQuery = queryParser.prepareCommand(query);
-
-		return sqlQuery.executeQueryLocal(0);
-	}
-
-	private int executeUpdate(String query) throws SQLException{
-		//getNewQueryParser();
-
-
-		Set<DatabaseInstanceRemote> replicas = replicaManager.getActiveReplicas();
-
-		int result = -1;
-
-		for (DatabaseInstanceRemote replica: replicas){
-			if (replica.equals(db.getLocalDatabaseInstance())){
-				sqlQuery = queryParser.prepareCommand(query);
-
-				try {
-					result = sqlQuery.update();
-
-					sqlQuery.close();
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
-			} else {
-				try {
-					result = replica.executeUpdate(query);
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		//		
-		//		sqlQuery = queryParser.prepareCommand(query);
-		//
-		//		int result = -1;
-		//		try {
-		//			result = sqlQuery.update();
-		//
-		//			sqlQuery.close();
-		//		} catch (RemoteException e) {
-		//			e.printStackTrace();
-		//			return -1;
-		//		}
-
-		return result;
-	}
-
-	/**
-	 * Removes a particular replica from the schema manager. 
-	 * @param tableName
-	 * @param dbLocation 
-	 * @param machineName 
-	 * @param connectionPort 
-	 * @param connectionType 
-	 * @param schemaName 
-	 * @throws SQLException 
-	 */
-	public void removeReplicaInformation(TableInfo ti) {
-
-		try {
-
-			int connectionID = getConnectionID(ti.getDbLocation());
-			int tableID;
-
-			tableID = getTableID(ti);
-
-			String sql = "DELETE FROM " + REPLICAS + " WHERE table_id=" + tableID + " AND connection_id=" + connectionID  + "; ";
-
-			executeUpdate(sql);
-
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-	}
-
+	
 	/**
 	 * Get the names of all the tables in a given schema.
 	 * @param schemaName
@@ -729,7 +156,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 		LocalResult result = null;
 
 		try {
-			sqlQuery = queryParser.prepareCommand(sql);
+			sqlQuery = getParser().prepareCommand(sql);
 
 
 			result = sqlQuery.executeQueryLocal(0);
@@ -758,7 +185,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 
 		LocalResult result = null;
 		try {
-			sqlQuery = queryParser.prepareCommand(sql);
+			sqlQuery = getParser().prepareCommand(sql);
 
 
 			result = sqlQuery.executeQueryLocal(1);
@@ -842,7 +269,11 @@ public class PersistentSchemaManager implements ISchemaManager{
 			}
 
 			for (Entry<DatabaseURL, DatabaseInstanceWrapper> databaseEntry: databasesInSystem.entrySet()){
-				addConnectionInformation(databaseEntry.getKey(), databaseEntry.getValue());
+				try {
+					addConnectionInformation(databaseEntry.getKey(), databaseEntry.getValue());
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
 			}
 
 			/*
@@ -852,7 +283,11 @@ public class PersistentSchemaManager implements ISchemaManager{
 			Map<TableInfo, DataManagerRemote> dataManagers = otherSchemaManager.getDataManagers();
 
 			for (Entry<TableInfo, DataManagerRemote> dmEntry: dataManagers.entrySet()){
-				addTableInformation(dmEntry.getValue(), dmEntry.getKey());
+				try {
+					addTableInformation(dmEntry.getValue(), dmEntry.getKey());
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
 			}
 
 			/*
@@ -863,7 +298,11 @@ public class PersistentSchemaManager implements ISchemaManager{
 
 			for (Entry<String, Set<TableInfo>> databaseEntry: replicaLocations.entrySet()){
 				for (TableInfo tableInfo: databaseEntry.getValue()){
-					addReplicaInformation(tableInfo);
+					try {
+						addReplicaInformation(tableInfo);
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
 				}
 			}
 
@@ -889,7 +328,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 		LocalResult result = null;
 
 		try {
-			sqlQuery = queryParser.prepareCommand(sql);
+			sqlQuery = getParser().prepareCommand(sql);
 
 
 			result = sqlQuery.executeQueryLocal(0);
@@ -936,7 +375,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 
 		Map<TableInfo, DataManagerRemote> dataManagers = new HashMap<TableInfo, DataManagerRemote>();
 
-		IDatabaseRemote remoteInterface = db.getRemoteInterface();
+		IDatabaseRemote remoteInterface = getDB().getRemoteInterface();
 
 		/*
 		 * Parse the query resultset to find the primary location of every table.
@@ -953,7 +392,7 @@ public class PersistentSchemaManager implements ISchemaManager{
 		LocalResult result = null;
 
 		try {
-			sqlQuery = queryParser.prepareCommand(sql);
+			sqlQuery = getParser().prepareCommand(sql);
 
 			result = sqlQuery.executeQueryLocal(0);
 
@@ -1025,27 +464,6 @@ public class PersistentSchemaManager implements ISchemaManager{
 
 	}
 
-	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#addSchemaManagerDataLocation(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
-	 */
-	@Override
-	public void addSchemaManagerDataLocation(
-			DatabaseInstanceRemote databaseReference) throws RemoteException {
-
-		if (replicaManager.size() < Replication.SCHEMA_MANAGER_REPLICATION_FACTOR + 1){ //+1 because the local copy counts as a replica.
-			replicaManager.add(databaseReference);
-			//now replica state here.
-			try {
-				databaseReference.executeUpdate("DROP REPLICA IF EXISTS " + TABLES + ", " + REPLICAS + ", " + CONNECTIONS + ";");
-				databaseReference.executeUpdate("CREATE REPLICA " + TABLES + ", " + REPLICAS + ", " + CONNECTIONS + " FROM '" + db.getDatabaseURL().getOriginalURL() + "';");
-			} catch (SQLException e) {
-				replicaManager.remove(databaseReference);
-				ErrorHandling.errorNoEvent("Failed to replicate schema manager state on: " + databaseReference.getConnectionURL().getDbLocation());
-			} 
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseReference.getConnectionURL().getDbLocation());
-
-		}
-	}
 
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISchemaManager#getDatabaseInstance(org.h2.h2o.util.DatabaseURL)
@@ -1068,41 +486,30 @@ public class PersistentSchemaManager implements ISchemaManager{
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#removeDatabaseInstance(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
-	 */
-	@Override
-	public void removeConnectionInformation(
-			DatabaseInstanceRemote databaseInstance)
-	throws RemoteException, MovedException {
-
-		/*
-		 * If the schema managers state is replicateed onto this machine remove it as a replica location.
-		 */
-		this.replicaManager.remove(databaseInstance);
-		/*
-		 * TODO try to replicate somewhere else.
-		 */
-
-
-		DatabaseURL dburl = databaseInstance.getConnectionURL(); 
-		String sql = "\nUPDATE " + CONNECTIONS + " SET active = false WHERE machine_name='" + dburl.getHostname() + "' AND connection_port=" + dburl.getPort() +
-		" AND connection_type='" + dburl.getConnectionType() +"';";
-
-		try {
-			executeUpdate(sql);
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-
-
-	}
-
-	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISchemaManager#changeDataManagerLocation(org.h2.h2o.comms.remote.DataManagerRemote)
 	 */
 	@Override
 	public void changeDataManagerLocation(DataManagerRemote stub, TableInfo tableInfo) {
 		// TODO Auto-generated method stub
 
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#addTableInformation(org.h2.h2o.comms.remote.DataManagerRemote, org.h2.h2o.util.TableInfo)
+	 */
+	@Override
+	public boolean addTableInformation(DataManagerRemote dataManager,
+			TableInfo tableDetails) throws RemoteException, MovedException, SQLException {
+		return super.addTableInformation(dataManager.getDatabaseURL(), tableDetails);
+		}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#addConnectionInformation(org.h2.h2o.util.DatabaseURL, org.h2.h2o.comms.remote.DatabaseInstanceWrapper)
+	 */
+	@Override
+	public int addConnectionInformation(DatabaseURL databaseURL,
+			DatabaseInstanceWrapper databaseInstanceWrapper)
+			throws RemoteException, MovedException, SQLException {
+		return super.addConnectionInformation(databaseURL, databaseInstanceWrapper.isActive());
 	}
 }

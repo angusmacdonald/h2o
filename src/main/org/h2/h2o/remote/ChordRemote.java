@@ -533,7 +533,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 					Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "There is only one node in the network so the schema manager can't be replicated elsewhere.");
 				} else {
 					if (dbInstance.isAlive()){
-						this.schemaManagerRef.getSchemaManager().addSchemaManagerDataLocation(dbInstance);
+						this.schemaManagerRef.getSchemaManager().addStateReplicaLocation(dbInstance);
 
 						//dbInstance.createNewSchemaManagerBackup(db.getSchemaManager());
 						//dbInstance.executeUpdate("CREATE REPLICA SCHEMA H2O");

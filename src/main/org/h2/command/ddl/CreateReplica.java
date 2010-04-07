@@ -400,7 +400,12 @@ public class CreateReplica extends SchemaCommand {
 			//  Add to data manager.
 			//	#############################
 
+
+			TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
+
+			
 			if (this.contactSchemaManager){
+
 				try{
 
 					ISchemaManager sm = db.getSchemaManager(); //db.getSystemSession()
@@ -414,8 +419,6 @@ public class CreateReplica extends SchemaCommand {
 						}
 					}
 
-					TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
-
 					sm.addReplicaInformation(ti);	
 
 				} catch (MovedException e){
@@ -425,24 +428,22 @@ public class CreateReplica extends SchemaCommand {
 
 			if (!tableName.startsWith("H2O_")){
 				DataManagerRemote dm = db.getDataManager(getSchema().getName() + "." + tableName);
-				try {
+				
 					if (dm == null){
 						throw new SQLException("Error creating replica for " + tableName + ". Data manager not found.");
 					} else {
-						dm.addReplicaInformation(table.getModificationId(), db.getDatabaseLocation(), table.getTableType(), 
-								db.getLocalMachineAddress(), db.getLocalMachinePort(), db.getConnectionType(), tableSet, db.getSchemaManagerReference().isSchemaManagerLocal());
+						dm.addReplicaInformation(ti);
 					} 
-				} catch (RemoteException e) {
-					ErrorHandling.exceptionError(e, "Error informing data manager of update.");
-				} catch (MovedException e) {
-					throw new SQLException("Data Manager has moved and can't be accessed.");
-				}
 			}
 
 		} catch (SQLException e) {
 			db.checkPowerOff();
 			db.removeSchemaObject(session, table);
 			throw e;
+		} catch (MovedException e) {
+			db.checkPowerOff();
+			db.removeSchemaObject(session, table);
+			throw new SQLException("Data manager has moved.");
 		}
 
 		if (next != null) {

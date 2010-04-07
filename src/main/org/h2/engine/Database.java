@@ -2692,7 +2692,7 @@ public class Database implements DataHandler {
 			
 			this.getLocalDatabaseInstance().setAlive(false);
 //			this.schemaManagerRef.getSchemaManager(true).removeConnectionInformation(this.databaseRemote.getLocalDatabaseInstance());
-			new RemoveConnectionInfo(this.schemaManagerRef.getSchemaManager(true), this.databaseRemote.getLocalDatabaseInstance()).start();
+//			new RemoveConnectionInfo(this.schemaManagerRef.getSchemaManager(true), this.databaseRemote.getLocalDatabaseInstance()).start();
 		} catch (Exception e) {
 			//An error here isn't critical.
 		}
