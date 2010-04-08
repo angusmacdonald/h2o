@@ -131,7 +131,7 @@ public interface ISchemaManager extends Remote {
 	/**
 	 * Returns a map of all data managers in the system.
 	 */
-	public Map<TableInfo, DataManagerRemote> getDataManagers() throws RemoteException, MovedException;
+	public Map<TableInfo, DataManagerWrapper> getDataManagers() throws RemoteException, MovedException;
 
 	/**
 	 * Returns a map of all replicas in the database system. Key is the fully
@@ -176,5 +176,13 @@ public interface ISchemaManager extends Remote {
 	 * @param stub
 	 */
 	public void changeDataManagerLocation(DataManagerRemote stub, TableInfo tableInfo) throws RemoteException, MovedException;
+
+
+	/**
+	 * Get the data manager instances stored local to the given location.
+	 * @param localMachineLocation
+	 * @return
+	 */
+	public Set<DataManagerWrapper> getLocalDatabaseInstances(DatabaseURL localMachineLocation) throws RemoteException, MovedException;
 
 }

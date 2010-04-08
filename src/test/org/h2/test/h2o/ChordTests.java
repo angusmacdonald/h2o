@@ -32,7 +32,7 @@ public class ChordTests extends TestBase {
 	private Statement[] sas;
 	private DatabaseThread[] dts;
 	private static String[] dbs =  {"two", "three"}; //, "four", "five", "six", "seven", "eight", "nine"
-
+	
 	/**
 	 * Whether the schema manager state has been replicated yet.
 	 */
@@ -205,6 +205,21 @@ public class ChordTests extends TestBase {
 		}
 	}
 	
+	/**
+	 * Tests that when migration fails when an incorrect table name is given.
+	 */
+	@Test
+	public void DataManagerMigrationFail() throws InterruptedException {
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		try {
+			sas[1].executeUpdate("MIGRATE DATAMANAGER testy");
+			fail("Didn't work.");
+		} catch (SQLException e) {
+			e.printStackTrace();
+			
+		}
+	}
+	
 	@Test
 	public void DataManagerMigrationWithCachedReference() throws InterruptedException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
@@ -321,7 +336,7 @@ public class ChordTests extends TestBase {
 	public void FirstMachineDisconnect() throws InterruptedException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		try {
-			sas[0].close();
+			//sas[0].close();
 			dts[0].getConnection().close();
 			
 			Thread.sleep(5000);
@@ -334,4 +349,33 @@ public class ChordTests extends TestBase {
 		}
 	}
 	
+//	/**
+//	 * Tests that a data manager will migrate itself when the database is closed.
+//	 * @throws InterruptedException
+//	 */
+//	@Test
+//	public void DataManagerMigrationOnClose() throws InterruptedException {
+//		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+//		try {
+//			
+//			sas[1].execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+//			
+//			sas[1].close();
+//			dts[1].getConnection().close();
+//			
+//			Thread.sleep(5000);
+//			
+//			sas[2].executeUpdate("INSERT INTO TEST VALUES(4, 'help');");
+//
+//			
+//			ResultSet rs = sas[2].executeQuery("SELECT * FROM TEST WHERE ID=4");
+//			
+//			if (!rs.next()){
+//				fail("Didn't add entry.");
+//			}
+//		} catch (SQLException e) {
+//			e.printStackTrace();
+//			fail("Didn't complete query");
+//		}
+//	}
 }

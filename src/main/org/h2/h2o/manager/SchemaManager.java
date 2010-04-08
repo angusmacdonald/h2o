@@ -15,7 +15,6 @@ import org.h2.h2o.util.TableInfo;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
-import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
 
 /**
@@ -247,7 +246,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	 * @see org.h2.h2o.manager.ISchemaManager#getDataManagers()
 	 */
 	@Override
-	public Map<TableInfo, DataManagerRemote> getDataManagers()  throws RemoteException, MovedException {
+	public Map<TableInfo, DataManagerWrapper> getDataManagers()  throws RemoteException, MovedException {
 		return inMemory.getDataManagers();
 	}
 
@@ -413,6 +412,16 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	@Override
 	public void stopLookupPinger() {
 		this.pingerThread.setRunning(false);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#getLocalDatabaseInstances(org.h2.h2o.util.DatabaseURL)
+	 */
+	@Override
+	public Set<DataManagerWrapper>getLocalDatabaseInstances(DatabaseURL localMachineLocation)
+			throws RemoteException, MovedException {
+		preMethodTest();
+		return inMemory.getLocalDatabaseInstances(localMachineLocation);
 	}
 
 }

@@ -15,6 +15,7 @@ import org.h2.engine.Constants;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.DatabaseInstance;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.manager.DataManagerWrapper;
 import org.h2.h2o.manager.ISchemaManager;
 import org.h2.h2o.manager.ISchemaManagerReference;
 import org.h2.h2o.manager.MovedException;
@@ -100,8 +101,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.IRemoteDatabase#connectToDatabaseSystem(org.h2.h2o.util.DatabaseURL, org.h2.engine.Session)
 	 */
-	public DatabaseURL connectToDatabaseSystem(Session systemSession) {
-		establishChordConnection(localMachineLocation, systemSession);
+	public DatabaseURL connectToDatabaseSystem(Session session) {
+		establishChordConnection(localMachineLocation, session);
 
 		this.localMachineLocation.setRMIPort(getRmiPort()); //set the port on which the RMI server is running.
 
@@ -125,7 +126,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	 * 
 	 * If no established ring is found a new Chord ring will be created.
 	 */
-	private DatabaseURL establishChordConnection(DatabaseURL localMachineLocation, Session systemSession) {
+	private DatabaseURL establishChordConnection(DatabaseURL localMachineLocation, Session session) {
 		H2oProperties persistedInstanceInformation = new H2oProperties(localMachineLocation, "instances");
 		boolean knownHostsExist = persistedInstanceInformation.loadProperties();
 
@@ -179,7 +180,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		 * Create the local database instance remote interface and register it.
 		 * This must be done before meta-records are executed.
 		 */
-		this.databaseInstance =  new DatabaseInstance(localMachineLocation, systemSession);
+		this.databaseInstance =  new DatabaseInstance(localMachineLocation, session);
 
 		exportConnectionObject();
 
@@ -544,7 +545,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 					}
 				}
 			} catch (RemoteException e) {
-				e.printStackTrace();
+				ErrorHandling.errorNoEvent("Remote exception thrown. Happens when successor has very recently changed and chord ring hasn't stabilized.");
 			} catch (MovedException e) {
 				try {
 					schemaManagerRef.handleMovedException(e);
@@ -581,19 +582,72 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Shutting down node: " + chordNode);
 		IChordRemoteReference successor = chordNode.getSuccessor();
 
-		if (schemaManagerRef.isSchemaManagerLocal() && successor != null && !chordNode.getKey().equals(successor.getKey()) && !Constants.IS_NON_SM_TEST && !Constants.IS_TEAR_DOWN){
-			//If this node isn't it's own successor AND this isn't an unrelated JUnit test, and it holds the schema manager.
+
+		boolean successesorIsDifferentMachine = successor != null && !chordNode.getKey().equals(successor.getKey());
+		boolean thisIsntATestShouldPreventThis = !Constants.IS_NON_SM_TEST && !Constants.IS_TEAR_DOWN;
+		boolean schemaManagerHeldLocally = schemaManagerRef.isSchemaManagerLocal();
+
+
+
+		DatabaseInstanceRemote successorDB = null;
+
+		if (successesorIsDifferentMachine && thisIsntATestShouldPreventThis){
+
+			try {
+				successorDB = getDatabaseInstanceAt(successor);
+			} catch (RemoteException e1) {
+				e1.printStackTrace();
+			}
+		}
+		
+		/*
+		 * Migrate the schema manager if needed.
+		 */
+		if (schemaManagerHeldLocally && successesorIsDifferentMachine && thisIsntATestShouldPreventThis){
+
 			//Migrate the schema manager to this node before shutdown.
 			try {
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Migrating schema manager to successor: " + successor);
-				DatabaseInstanceRemote successorDB = getDatabaseInstanceAt(successor);
+				successorDB = getDatabaseInstanceAt(successor);
 
 				successorDB.executeUpdate("MIGRATE SCHEMAMANAGER");
-				
+
 			} catch (Exception e) {
 				ErrorHandling.errorNoEvent("Failed to migrate schema manager to successor: " + successor);
 			}
 		}
+
+		/*
+		 * Migrate any local data managers.
+		 */
+		if (successesorIsDifferentMachine && thisIsntATestShouldPreventThis){
+
+			try {
+				///successorDB = getDatabaseInstanceAt(successor);
+
+
+				Set<DataManagerWrapper> localManagers = schemaManagerRef.getSchemaManager().getLocalDatabaseInstances(this.getLocalMachineLocation());
+
+				for (DataManagerWrapper manager: localManagers){
+
+					//					DataManagerRemote dmr = schemaManagerRef.getSchemaManager().lookup(new TableInfo(table));
+					//					if (dmr.getReplicaManager().getPrimary().equals(databaseInstance) && dmr.getReplicaManager().getNumberOfReplicas() == 1){
+					//						//This machine holds the only replica - replicate on the successor as well.
+					//						
+					//						successorDB.executeUpdate("CREATE REPLICA " + table + ";");
+					//					}
+
+					successorDB.executeUpdate("MIGRATE DATAMANAGER " + manager.getTableInfo().getFullTableName());
+				}
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			} catch (MovedException e) {
+				e.printStackTrace();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+
 
 		if (!Constants.IS_NON_SM_TEST){
 			((ChordNodeImpl)chordNode).destroy();

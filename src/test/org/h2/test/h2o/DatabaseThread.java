@@ -38,7 +38,7 @@ public class DatabaseThread extends Thread {
 	public void run() {
 
 		
-		while (isRunning()){ }
+		while (isRunning()){}
 		
 		/*
 		 * Shutdown.

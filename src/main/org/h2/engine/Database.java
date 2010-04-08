@@ -227,6 +227,10 @@ public class Database implements DataHandler {
 	 */
 	private ChordRemote databaseRemote;
 
+	private User h2oUser;
+
+	private Session h2oSession;
+
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
 
 		Diagnostic.setLevel((DiagnosticLevel.FULL));
@@ -658,6 +662,7 @@ public class Database implements DataHandler {
 			log = new LogSystem(null, null, false, null, null);
 		}
 		systemUser = new User(this, 0, Constants.DBA_NAME, true);
+		h2oUser = new User(this, 1, "H2O", true);
 		mainSchema = new Schema(this, 0, Constants.SCHEMA_MAIN, systemUser, true);
 		infoSchema = new Schema(this, -1, Constants.SCHEMA_INFORMATION, systemUser, true);
 
@@ -666,8 +671,9 @@ public class Database implements DataHandler {
 		publicRole = new Role(this, 0, Constants.PUBLIC_ROLE_NAME, true);
 		roles.put(Constants.PUBLIC_ROLE_NAME, publicRole);
 		systemUser.setAdmin(true);
+		h2oUser.setAdmin(true);
 		systemSession = new Session(this, systemUser, ++nextSessionId);
-
+		h2oSession = new Session(this, h2oUser, ++nextSessionId);
 		ObjectArray cols = new ObjectArray();
 		Column columnId = new Column("ID", Value.INT);
 		columnId.setNullable(false);
@@ -701,7 +707,7 @@ public class Database implements DataHandler {
 
 
 			//databaseRemote.bindSchemaManagerReference(schemaManagerRef);
-			databaseRemote.connectToDatabaseSystem(systemSession);
+			databaseRemote.connectToDatabaseSystem(h2oSession); //systemSession
 		}
 
 		/*
@@ -1284,9 +1290,9 @@ public class Database implements DataHandler {
 		closing = true;
 		stopServer();
 		if (Constants.IS_H2O && !isManagementDB() && !fromShutdownHook){
-			removeLocalDatabaseInstance();
-			
+
 			databaseRemote.shutdown();
+			removeLocalDatabaseInstance();
 
 		}
 
@@ -2695,15 +2701,14 @@ public class Database implements DataHandler {
 
 	public void removeLocalDatabaseInstance(){
 		try {
-			
+
 			this.getLocalDatabaseInstance().setAlive(false);
-//			this.schemaManagerRef.getSchemaManager(true).removeConnectionInformation(this.databaseRemote.getLocalDatabaseInstance());
-//			new RemoveConnectionInfo(this.schemaManagerRef.getSchemaManager(true), this.databaseRemote.getLocalDatabaseInstance()).start();
+			//			this.schemaManagerRef.getSchemaManager(true).removeConnectionInformation(this.databaseRemote.getLocalDatabaseInstance());
+			//			new RemoveConnectionInfo(this.schemaManagerRef.getSchemaManager(true), this.databaseRemote.getLocalDatabaseInstance()).start();
 		} catch (Exception e) {
 			//An error here isn't critical.
 		}
 
-		this.close(false);
 	}
 
 	/**
@@ -2712,12 +2717,20 @@ public class Database implements DataHandler {
 	public IDatabaseRemote getRemoteInterface() {
 		return databaseRemote;
 	}
-	
+
 	/**
 	 * 
 	 */
 	public IChordInterface getChordInterface() {
 		return databaseRemote;
 	}
+
+	/**
+	 * @return
+	 */
+	public Session getH2OSession() {
+		return h2oSession;
+	}
+	
 
 }

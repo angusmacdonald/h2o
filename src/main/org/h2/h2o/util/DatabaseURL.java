@@ -259,17 +259,13 @@ public class DatabaseURL implements Serializable {
 		return originalURL;
 	}
 
-	public String toString(){
-		String output = "Original URL: " + originalURL;
-		output += "\nNew URL: " + newURL;
-		output += "\nHostname: " + hostname;
-		output += "\nPort: " + port;
-		output += "\nDatabase Location: " + dbLocation;
-		output +="\nTCP: " + tcp;
-		output +="\nMEM: " + mem;
-		output +="\nSchema Manager: " + schemaManager;
 
-		return output;
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "DatabaseURL [" + dbLocation + "]";
 	}
 
 	/**

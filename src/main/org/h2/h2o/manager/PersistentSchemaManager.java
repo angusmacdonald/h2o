@@ -305,11 +305,11 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 			 * Obtain references to data managers.
 			 */
 
-			Map<TableInfo, DataManagerRemote> dataManagers = otherSchemaManager.getDataManagers();
+			Map<TableInfo, DataManagerWrapper> dataManagers = otherSchemaManager.getDataManagers();
 
-			for (Entry<TableInfo, DataManagerRemote> dmEntry: dataManagers.entrySet()){
+			for (Entry<TableInfo, DataManagerWrapper> dmEntry: dataManagers.entrySet()){
 				try {
-					addTableInformation(dmEntry.getValue(), dmEntry.getKey());
+					addTableInformation(dmEntry.getValue().getDataManager(), dmEntry.getKey());
 				} catch (SQLException e) {
 					e.printStackTrace();
 				}
@@ -396,9 +396,9 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 	 * @see org.h2.h2o.manager.ISchemaManager#getDataManagers()
 	 */
 	@Override
-	public Map<TableInfo, DataManagerRemote> getDataManagers()  throws RemoteException{
+	public Map<TableInfo, DataManagerWrapper> getDataManagers()  throws RemoteException{
 
-		Map<TableInfo, DataManagerRemote> dataManagers = new HashMap<TableInfo, DataManagerRemote>();
+		Map<TableInfo, DataManagerWrapper> dataManagers = new HashMap<TableInfo, DataManagerWrapper>();
 
 		IDatabaseRemote remoteInterface = getDB().getRemoteInterface();
 
@@ -407,8 +407,7 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 		 */
 		String sql = "SELECT db_location, connection_type, machine_name, connection_port, tablename, schemaname, chord_port " +
 		"FROM H2O.H2O_REPLICA, H2O.H2O_CONNECTION, H2O.H2O_TABLE " +
-		"WHERE " + TABLES + ".table_id=" + REPLICAS + ".table_id " + 
-		"AND H2O_CONNECTION.connection_id = H2O_REPLICA.connection_id AND primary_copy = true;";
+		"WHERE H2O_CONNECTION.connection_id = H2O_TABLE.manager_location;";
 
 
 		//		SELECT db_location, connection_type, machine_name, connection_port, tablename, schemaname, chord_port FROM H2O.H2O_REPLICA, H2O.H2O_CONNECTION, H2O.H2O_TABLE 
@@ -444,7 +443,9 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 
 				if (dir != null){
 					DataManagerRemote dmReference = dir.findDataManagerReference(ti);
-					dataManagers.put(ti, dmReference);
+					
+					DataManagerWrapper dmw = new DataManagerWrapper(ti, dmReference, dbURL);
+					dataManagers.put(ti, dmw);
 				} else {
 					dataManagers.put(ti, null);
 				}
@@ -535,6 +536,36 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 			DatabaseInstanceWrapper databaseInstanceWrapper)
 			throws RemoteException, MovedException, SQLException {
 		return super.addConnectionInformation(databaseURL, databaseInstanceWrapper.isActive());
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManager#getLocalDatabaseInstances(org.h2.h2o.util.DatabaseURL)
+	 */
+	@Override
+	public Set<DataManagerWrapper> getLocalDatabaseInstances(DatabaseURL localMachineLocation)
+			throws RemoteException, MovedException {
+		int connectionID = getConnectionID(localMachineLocation);
+		
+		assert connectionID != -1;
+
+		String sql = "SELECT tablename, schemaname FROM " + TABLES + "  WHERE manager_location= " + connectionID + ";";
+		
+		Set<DataManagerWrapper> localTables = new HashSet<DataManagerWrapper>();
+		try {
+			LocalResult rs = executeQuery(sql);
+			
+			
+			while (rs.next()){
+				TableInfo tableInfo = new TableInfo(rs.currentRow()[0].getString(), rs.currentRow()[1].getString());
+				DataManagerWrapper dmw = new DataManagerWrapper(tableInfo, null, null);
+				localTables.add(dmw);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}	
+		
+		
+		return localTables;
 	}
 
 }

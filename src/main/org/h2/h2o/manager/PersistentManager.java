@@ -300,6 +300,9 @@ public class PersistentManager {
 	 * @return
 	 */
 	public int getConnectionID(DatabaseURL dbURL){
+//		Session s = db.getSystemSession();
+//		queryParser = new Parser(s, true);
+//		
 		String machine_name = dbURL.getHostname();
 		int connection_port = dbURL.getPort();
 		String connection_type = dbURL.getConnectionType();
@@ -322,6 +325,7 @@ public class PersistentManager {
 
 
 		} catch (SQLException e) {
+			e.printStackTrace();
 			return -1;
 		}
 	}
@@ -466,7 +470,7 @@ public class PersistentManager {
 	}
 
 	protected int executeUpdate(String query) throws SQLException{
-		//getNewQueryParser();
+	//	getNewQueryParser();
 
 		Set<DatabaseInstanceRemote> replicas = stateReplicaManager.getActiveReplicas();
 
@@ -668,6 +672,8 @@ public class PersistentManager {
 	 * @param tableInfo 	New location of the data manager.
 	 */
 	public void changeDataManagerLocation(TableInfo tableInfo) {
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "About to update the location of the data manager.");
+		
 		int connectionID = getConnectionID(tableInfo.getDbURL());
 
 		assert connectionID != -1;

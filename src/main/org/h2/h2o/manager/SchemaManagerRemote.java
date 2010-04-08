@@ -2,6 +2,7 @@ package org.h2.h2o.manager;
 
 import java.rmi.RemoteException;
 
+import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
 
 /**
