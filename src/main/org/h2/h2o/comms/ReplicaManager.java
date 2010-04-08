@@ -166,6 +166,13 @@ public class ReplicaManager implements Serializable {
 	public String toString() {
 		return "ReplicaManager [number of replicas=" + allReplicas.size() + "]";
 	}
+
+	/**
+	 * 
+	 */
+	public int getNumberOfReplicas() {
+		return activeReplicas.size();
+	}
 	
 	
 }

@@ -254,9 +254,9 @@ public class QueryProxy implements Serializable{
 			return dataManager.getQueryProxy(lockType, requestingDatabase);
 		} catch (RemoteException e) {
 			e.printStackTrace();
-			throw new SQLException("Unable to obtain query proxy from data manager (remote exception).");
+			throw new SQLException("Data manager could not be accessed. The table is unavailable until the data manager is reactivated.");
 		} catch (MovedException e) {
-			throw new SQLException("Data Manager has moved and can't be accessed.");
+			throw new SQLException("Data Manager has moved and can't be accessed at this location.");
 		}
 	}
 
