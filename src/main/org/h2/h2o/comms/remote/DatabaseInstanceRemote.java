@@ -51,16 +51,18 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit  {
 	 */
 	public int executeUpdate(QueryProxy queryProxy, String sql) throws RemoteException, SQLException;
 
+
 	/**
 	 * Execute the given SQL update on this instance. Since no query proxy is provided with this method call
 	 * the database instance must request the locks needed to execute this query.
 	 * @param sql	The query to be executed.
+	 * @param schemaManagerCommand	True if this command is to update a schema manager replica; otherwise false. This is done
+	 * to prevent deadlock, where there is a cycle between machines making updates.
 	 * @return Result of the update.
 	 * @throws RemoteException		Thrown if there were problems connecting to the instance.
 	 * @throws SQLException			Thrown if there was an error in the queries execution.
 	 */
-	public int executeUpdate(String sql) throws RemoteException, SQLException;
-
+	int executeUpdate(String sql, boolean schemaManagerCommand) throws RemoteException, SQLException;
 	/**
 	 * Set the current location of the schema manager. This is typically only called by the LookupPinger thread to continually inform
 	 * the node responsible for #(SM) of the schema managers location.
@@ -86,4 +88,5 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit  {
 	 * @throws RemoteException		Thrown if there were problems connecting to the instance.
 	 */
 	public void setAlive(boolean alive) throws RemoteException;
+
 }

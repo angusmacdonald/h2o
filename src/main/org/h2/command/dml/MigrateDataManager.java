@@ -3,6 +3,7 @@ package org.h2.command.dml;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
+import java.util.HashSet;
 
 import org.h2.constant.ErrorCode;
 import org.h2.engine.Database;
@@ -28,6 +29,7 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
 public class MigrateDataManager extends org.h2.command.ddl.SchemaCommand {
 
 	private String tableName;
+
 
 	/**
 	 * @param session
@@ -95,7 +97,7 @@ public class MigrateDataManager extends org.h2.command.ddl.SchemaCommand {
 	}
 
 	public int migrateDataManagerToLocalInstance(DataManagerRemote oldDataManager, String schemaName, Database db){
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Preparing to migrate data manager.");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Preparing to migrate data manager for [" + schemaName + "." + tableName);
 
 		/*
 		 * Create a new schema manager instance locally.
@@ -107,7 +109,7 @@ public class MigrateDataManager extends org.h2.command.ddl.SchemaCommand {
 		try {
 			newDataManager = new DataManager(ti, db);
 		} catch (Exception e) {
-			ErrorHandling.exceptionError(e, "Failed to create new data manager.");
+			ErrorHandling.exceptionError(e, "Failed to create new data manager [" + schemaName + "." + tableName + "].");
 		}
 
 		/*
@@ -118,9 +120,9 @@ public class MigrateDataManager extends org.h2.command.ddl.SchemaCommand {
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (MigrationException e) {
-			ErrorHandling.exceptionError(e, "This data manager is already being migrated to another instance.");
+			ErrorHandling.exceptionError(e, "This data manager [" + schemaName + "." + tableName + "] is already being migrated to another instance.");
 		} catch (MovedException e) {
-			ErrorHandling.exceptionError(e, "This data manager has already been migrated to another instance.");
+			ErrorHandling.exceptionError(e, "This data manager [" + schemaName + "." + tableName + "] has already been migrated to another instance.");
 		}
 
 		/*
@@ -129,9 +131,9 @@ public class MigrateDataManager extends org.h2.command.ddl.SchemaCommand {
 		try {
 			newDataManager.buildDataManagerState(oldDataManager);
 		} catch (RemoteException e) {
-			ErrorHandling.exceptionError(e, "Failed to migrate data manager to new machine.");
+			ErrorHandling.exceptionError(e, "Failed to migrate data manager [" + schemaName + "." + tableName + "] to new machine.");
 		} catch (MovedException e) {
-			ErrorHandling.exceptionError(e, "This shouldn't be possible here. The data manager has moved, but this instance should have had exclusive rights to it.");
+			ErrorHandling.exceptionError(e, "This shouldn't be possible here. The data manager [" + schemaName + "." + tableName + "] has moved, but this instance should have had exclusive rights to it.");
 		}
 
 		/*
@@ -140,13 +142,13 @@ public class MigrateDataManager extends org.h2.command.ddl.SchemaCommand {
 		try {
 			oldDataManager.completeMigration();
 		} catch (RemoteException e) {
-			ErrorHandling.exceptionError(e, "Failed to complete migration.");
+			ErrorHandling.exceptionError(e, "Failed to complete migration [" + schemaName + "." + tableName + "].");
 		} catch (MovedException e) {
 			ErrorHandling.exceptionError(e, "This shouldn't be possible here. The data manager has moved, but this instance should have had exclusive rights to it.");
 		} catch (MigrationException e) {
-			ErrorHandling.exceptionError(e, "Migration process timed out. It took too long.");
+			ErrorHandling.exceptionError(e, "Migration process timed out [" + schemaName + "." + tableName + "]. It took too long.");
 		}
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Data Manager officially migrated.");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Data Manager [" + schemaName + "." + tableName + "] officially migrated.");
 
 		/*
 		 * Confirm the new schema managers location by updating all local state.
@@ -155,12 +157,15 @@ public class MigrateDataManager extends org.h2.command.ddl.SchemaCommand {
 
 
 		try {
-			DataManagerRemote stub = (DataManagerRemote) UnicastRemoteObject.exportObject(newDataManager, 0);
-			db.getSchemaManagerReference().getSchemaManager().changeDataManagerLocation(stub, ti);
-		} catch (Exception e) {
-			ErrorHandling.exceptionError(e, "Data manager migration failed.");
-		}
 
+			DataManagerRemote stub = (DataManagerRemote) UnicastRemoteObject.exportObject(newDataManager, 0);
+
+			db.getSchemaManagerReference().getSchemaManager().changeDataManagerLocation(stub, ti);
+			db.getSchemaManagerReference().addProxy(ti, stub);
+		} catch (Exception e) {
+			ErrorHandling.exceptionError(e, "Data manager migration failed [" + schemaName + "." + tableName + "].");
+		}
+		
 		return 1;
 	}
 

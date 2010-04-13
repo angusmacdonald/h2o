@@ -123,6 +123,7 @@ import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.manager.ISchemaManager;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.PersistentSchemaManager;
+import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
 import org.h2.index.Index;
 import org.h2.message.Message;
@@ -4346,9 +4347,10 @@ public class Parser {
 	private Table readTableOrView(String tableName, boolean searchRemote, LocationPreference locale) throws SQLException {
 		//System.out.println("Looking for table '" + tableName + "'");
 		// same algorithm than readSequence
-		
+
 		if (schemaName != null) {
-			return getSchema().getTableOrView(session, tableName);
+			Table table = getSchema().getTableOrView(session, tableName);
+			if (table != null) return table; 
 		}
 		Table table = database.getSchema(session.getCurrentSchemaName()).findTableOrView(session, tableName, locale);
 		if (table != null) {
@@ -4360,7 +4362,7 @@ public class Parser {
 			schemaNames = new String[1];
 			schemaNames[0] = session.getCurrentSchemaName();
 		}
-		
+
 		for (int i = 0; schemaNames != null && i < schemaNames.length; i++) {
 			Schema s = database.getSchema(schemaNames[i]);
 			table = s.findTableOrView(session, tableName, locale);
@@ -4425,27 +4427,24 @@ public class Parser {
 		//		} else {
 		//Old Schema Manager method.
 
+		DataManagerRemote dm = session.getDatabase().getSchemaManagerReference().lookup(new TableInfo(tableName, thisSchemaName));
 
-		try{
-			DataManagerRemote dm = session.getDatabase().getSchemaManagerReference().lookup(new TableInfo(tableName, thisSchemaName));
-
-			if (dm == null){
-				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new TableInfo(tableName, thisSchemaName).toString());
-			}
-			//		dm = session.getDatabase().getSchemaManager().lookup(new TableInfo(tableName, thisSchemaName));
-			//		
-
-
-			if (dm.getDatabaseURL().equals(session.getDatabase().getDatabaseURL())){
-				throw new SQLException("The database is incorrectly trying to create a linked table to itself. Illegal code path.");
-			}
-			
-			tableLocation = dm.getLocation();
-			
-			//		}
-		} catch (MovedException e){
-			throw new RemoteException("Schema Manager has moved.");
+		if (dm == null){
+			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new TableInfo(tableName, thisSchemaName).toString());
 		}
+		//		dm = session.getDatabase().getSchemaManager().lookup(new TableInfo(tableName, thisSchemaName));
+		//		
+
+		DatabaseURL dmURL = dm.getDatabaseURL();
+		System.err.println(dmURL);
+		if (dmURL.equals(session.getDatabase().getDatabaseURL())){
+			throw new SQLException("The database is incorrectly trying to create a linked table to itself. Illegal code path.");
+		}
+
+		tableLocation = dmURL.getOriginalURL();
+
+		//		}
+
 
 		/*
 		 * Must be a different session from that of the executing user transaction, because this must

@@ -227,9 +227,12 @@ public class Database implements DataHandler {
 	 */
 	private ChordRemote databaseRemote;
 
-	private User h2oUser;
-
+	private User h2oSchemaUser; 
 	private Session h2oSession;
+
+	private User h2oSystemUser;
+
+	private Session h2oSystemSession;
 
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
 
@@ -662,7 +665,9 @@ public class Database implements DataHandler {
 			log = new LogSystem(null, null, false, null, null);
 		}
 		systemUser = new User(this, 0, Constants.DBA_NAME, true);
-		h2oUser = new User(this, 1, "H2O", true);
+		h2oSchemaUser = new User(this, 1, "H2O", true);
+		h2oSystemUser = new User(this, 1, "H2O", true);
+		
 		mainSchema = new Schema(this, 0, Constants.SCHEMA_MAIN, systemUser, true);
 		infoSchema = new Schema(this, -1, Constants.SCHEMA_INFORMATION, systemUser, true);
 
@@ -671,9 +676,14 @@ public class Database implements DataHandler {
 		publicRole = new Role(this, 0, Constants.PUBLIC_ROLE_NAME, true);
 		roles.put(Constants.PUBLIC_ROLE_NAME, publicRole);
 		systemUser.setAdmin(true);
-		h2oUser.setAdmin(true);
+		h2oSchemaUser.setAdmin(true);
+		h2oSystemUser.setAdmin(true);
 		systemSession = new Session(this, systemUser, ++nextSessionId);
-		h2oSession = new Session(this, h2oUser, ++nextSessionId);
+		h2oSession = new Session(this, h2oSchemaUser, ++nextSessionId);
+		
+		h2oSystemSession = new Session(this, h2oSystemUser, ++nextSessionId);
+		
+		
 		ObjectArray cols = new ObjectArray();
 		Column columnId = new Column("ID", Value.INT);
 		columnId.setNullable(false);
@@ -707,7 +717,7 @@ public class Database implements DataHandler {
 
 
 			//databaseRemote.bindSchemaManagerReference(schemaManagerRef);
-			databaseRemote.connectToDatabaseSystem(h2oSession); //systemSession
+			databaseRemote.connectToDatabaseSystem(h2oSystemSession); //systemSession
 		}
 
 		/*
@@ -1247,6 +1257,7 @@ public class Database implements DataHandler {
 	 * @param session the session
 	 */
 	public synchronized void removeSession(Session session) {
+		
 		if (session != null) {
 			if (exclusiveSession == session) {
 				exclusiveSession = null;
@@ -1291,7 +1302,7 @@ public class Database implements DataHandler {
 		stopServer();
 		if (Constants.IS_H2O && !isManagementDB() && !fromShutdownHook){
 
-			databaseRemote.shutdown();
+			
 			removeLocalDatabaseInstance();
 
 		}
@@ -2730,6 +2741,13 @@ public class Database implements DataHandler {
 	 */
 	public Session getH2OSession() {
 		return h2oSession;
+	}
+
+	/**
+	 * @return
+	 */
+	public int getUserSessionsSize() {
+		return userSessions.size();
 	}
 	
 

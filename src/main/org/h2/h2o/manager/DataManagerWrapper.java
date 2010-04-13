@@ -1,6 +1,8 @@
 package org.h2.h2o.manager;
 
 import java.io.Serializable;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
 
 import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.util.DatabaseURL;
@@ -9,7 +11,7 @@ import org.h2.h2o.util.TableInfo;
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class DataManagerWrapper implements Serializable {
+public class DataManagerWrapper implements Serializable, Remote {
 
 	private static final long serialVersionUID = -7088367740432999328L;
 
@@ -37,42 +39,42 @@ public class DataManagerWrapper implements Serializable {
 	/**
 	 * @return the tableInfo
 	 */
-	public TableInfo getTableInfo() {
+	public TableInfo getTableInfo() throws RemoteException {
 		return tableInfo;
 	}
 
 	/**
 	 * @param tableInfo the tableInfo to set
 	 */
-	public void setTableInfo(TableInfo tableInfo) {
+	public void setTableInfo(TableInfo tableInfo) throws RemoteException {
 		this.tableInfo = tableInfo.getGenericTableInfo();
 	}
 
 	/**
 	 * @return the dataManager
 	 */
-	public DataManagerRemote getDataManager() {
+	public DataManagerRemote getDataManager()throws RemoteException {
 		return dataManager;
 	}
 
 	/**
 	 * @param dataManager the dataManager to set
 	 */
-	public void setDataManager(DataManagerRemote dataManager) {
+	public void setDataManager(DataManagerRemote dataManager)throws RemoteException {
 		this.dataManager = dataManager;
 	}
 
 	/**
 	 * @return the dataManagerURL
 	 */
-	public DatabaseURL getDataManagerURL() {
+	public DatabaseURL getDataManagerURL()throws RemoteException {
 		return dataManagerURL;
 	}
 
 	/**
 	 * @param dataManagerURL the dataManagerURL to set
 	 */
-	public void setDataManagerURL(DatabaseURL dataManagerURL) {
+	public void setDataManagerURL(DatabaseURL dataManagerURL)throws RemoteException {
 		this.dataManagerURL = dataManagerURL;
 	}
 
@@ -108,7 +110,7 @@ public class DataManagerWrapper implements Serializable {
 	 * @param localMachineLocation
 	 * @return
 	 */
-	public boolean isLocalTo(DatabaseURL localMachineLocation) {
+	public boolean isLocalTo(DatabaseURL localMachineLocation) throws RemoteException{
 		return dataManagerURL.equals(localMachineLocation);
 	}
 

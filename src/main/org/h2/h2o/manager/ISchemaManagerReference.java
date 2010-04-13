@@ -167,4 +167,11 @@ public interface ISchemaManagerReference {
 	 */
 	public boolean isThisSchemaManagerNode(IChordRemoteReference otherNode);
 
+	/**
+	 * Add a new DataManager proxy to the local cache.
+	 * @param tableInfo The fully qualified name of the table to be added.
+	 * @param dataManager	The data manager to be added.
+	 */
+	void addProxy(TableInfo tableInfo, DataManagerRemote dataManager);
+
 }

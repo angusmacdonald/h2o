@@ -157,15 +157,12 @@ public class PersistentManager {
 	 * @throws RemoteException 
 	 * @throws SQLException 
 	 */
-	public boolean addTableInformation(DatabaseURL dataManagerURL, TableInfo tableDetails) throws RemoteException, MovedException, SQLException{
+	public boolean addTableInformation(DatabaseURL dataManagerURL, TableInfo tableDetails, boolean addReplicaInfo) throws RemoteException, MovedException, SQLException{
 
 		getNewQueryParser();
 
 		try {
-			String tableName = tableDetails.getTableName();
-			String schemaName = tableDetails.getSchemaName();
-
-			assert !tableName.startsWith("H2O_");
+			assert !tableDetails.getTableName().startsWith("H2O_");
 
 
 
@@ -185,10 +182,11 @@ public class PersistentManager {
 				addTableInformation(tableDetails, connectionID);
 			}
 
-
-			int tableID = getTableID(tableDetails);
-			if (!isReplicaListed(tableDetails, connectionID)){ // the table doesn't already exist in the schema manager.
-				addReplicaInformation(tableDetails, tableID, connectionID, true);				
+			if (addReplicaInfo){
+				int tableID = getTableID(tableDetails);
+				if (!isReplicaListed(tableDetails, connectionID)){ // the table doesn't already exist in the schema manager.
+					addReplicaInformation(tableDetails, tableID, connectionID, true);				
+				}
 			}
 			return true;
 		} catch (SQLException e) {
@@ -300,9 +298,9 @@ public class PersistentManager {
 	 * @return
 	 */
 	public int getConnectionID(DatabaseURL dbURL){
-//		Session s = db.getSystemSession();
-//		queryParser = new Parser(s, true);
-//		
+		//		Session s = db.getSystemSession();
+		//		queryParser = new Parser(s, true);
+		//		
 		String machine_name = dbURL.getHostname();
 		int connection_port = dbURL.getPort();
 		String connection_type = dbURL.getConnectionType();
@@ -435,6 +433,7 @@ public class PersistentManager {
 	 * @throws SQLException 
 	 */
 	private int addReplicaInformation(TableInfo ti, int tableID, int connectionID, boolean primaryCopy) throws SQLException{
+
 		String sql = "INSERT INTO " + replicaRelation + " VALUES (null, " + tableID + ", " + connectionID + ", '" + 
 		ti.getTableType() + "', " + ti.getModificationID() +", " + ti.getTableSet() + ", " + primaryCopy + ");\n";
 		return executeUpdate(sql);
@@ -470,7 +469,7 @@ public class PersistentManager {
 	}
 
 	protected int executeUpdate(String query) throws SQLException{
-	//	getNewQueryParser();
+		//	getNewQueryParser();
 
 		Set<DatabaseInstanceRemote> replicas = stateReplicaManager.getActiveReplicas();
 
@@ -489,7 +488,7 @@ public class PersistentManager {
 				}
 			} else {
 				try {
-					result = replica.executeUpdate(query);
+					result = replica.executeUpdate(query, true);
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				}
@@ -614,8 +613,8 @@ public class PersistentManager {
 
 			//now replica state here.
 			try {
-				databaseReference.executeUpdate("DROP REPLICA IF EXISTS " + tableRelation + ", " + replicaRelation + ", " + connectionRelation + ";");
-				databaseReference.executeUpdate("CREATE REPLICA " + tableRelation + ", " + replicaRelation + ", " + connectionRelation + " FROM '" + db.getDatabaseURL().getOriginalURL() + "';");
+				databaseReference.executeUpdate("DROP REPLICA IF EXISTS " + tableRelation + ", " + replicaRelation + ", " + connectionRelation + ";", true);
+				databaseReference.executeUpdate("CREATE REPLICA " + tableRelation + ", " + replicaRelation + ", " + connectionRelation + " FROM '" + db.getDatabaseURL().getOriginalURL() + "';", true);
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseReference.getConnectionURL().getDbLocation());
 
 				stateReplicaManager.add(databaseReference);
@@ -672,8 +671,8 @@ public class PersistentManager {
 	 * @param tableInfo 	New location of the data manager.
 	 */
 	public void changeDataManagerLocation(TableInfo tableInfo) {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "About to update the location of the data manager.");
-		
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "About to update the location of the data manager " + tableInfo + ".");
+
 		int connectionID = getConnectionID(tableInfo.getDbURL());
 
 		assert connectionID != -1;

@@ -24,6 +24,8 @@ import org.h2.constant.ErrorCode;
 import org.h2.constant.SysProperties;
 import org.h2.constraint.Constraint;
 import org.h2.h2o.comms.QueryProxyManager;
+import org.h2.h2o.remote.ChordRemote;
+import org.h2.h2o.remote.IDatabaseRemote;
 import org.h2.index.Index;
 import org.h2.jdbc.JdbcConnection;
 import org.h2.log.InDoubtTransaction;
@@ -589,6 +591,8 @@ public class Session extends SessionWithState {
 		if (!closed) {
 			try {
 				cleanTempTables(true);
+				IDatabaseRemote cr = database.getRemoteInterface();
+				cr.shutdown();
 				database.removeSession(this);
 			} finally {
 				closed = true;

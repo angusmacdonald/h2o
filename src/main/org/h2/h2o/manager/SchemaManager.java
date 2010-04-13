@@ -277,7 +277,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	 */
 	@Override
 	public void addStateReplicaLocation(
-			DatabaseInstanceRemote databaseReference) throws RemoteException, MovedException, MovedException, MovedException {
+			DatabaseInstanceRemote databaseReference) throws RemoteException, MovedException {
 		preMethodTest();
 		inMemory.addStateReplicaLocation(databaseReference);
 		persisted.addStateReplicaLocation(databaseReference);

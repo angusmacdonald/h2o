@@ -457,10 +457,10 @@ public class Schema extends DbObjectBase {
 			table = tables.getACopy();
 		}
 
-		if (table == null) {
-			//System.err.println("Schema.getTableOrView: Table '" + name + "' not found.");
-			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, name);
-		}
+//		if (table == null) {
+//			//System.err.println("Schema.getTableOrView: Table '" + name + "' not found.");
+//			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, name);
+//		}
 		return table;
 	}
 	

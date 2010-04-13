@@ -136,8 +136,15 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#executeUpdate(java.lang.String)
 	 */
 	@Override
-	public int executeUpdate(String sql)  throws RemoteException, SQLException  {
-		Command command = parser.prepareCommand(sql);
+	public int executeUpdate(String sql, boolean schemaManagerCommand)  throws RemoteException, SQLException  {
+		Command command = null;
+		if (schemaManagerCommand){
+			Parser schemaParser = new Parser(session.getDatabase().getH2OSession(), true);
+			command = schemaParser.prepareCommand(sql);
+		} else {
+			command = parser.prepareCommand(sql);
+		}
+
 		int result = command.executeUpdate(false);
 		command.close();
 
@@ -177,7 +184,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	public boolean isAlive() throws RemoteException {
 		return alive;
 	}
-	
+
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()

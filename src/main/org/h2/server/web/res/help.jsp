@@ -73,6 +73,46 @@ function set(s) {
     UPDATE TEST SET NAME='Hi' WHERE ID=1;<br />
     DELETE FROM TEST WHERE ID=2;
 </td></tr>
+<tr><td><a href="javascript:set('CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));\rINSERT INTO TEST2 VALUES(1, \'Second Table\');\rINSERT INTO TEST2 VALUES(2, \'Second Table Second Entry\');\rSELECT * FROM TEST2 ORDER BY ID;');">
+ ${text.helpCreateTable}<br />
+    &nbsp;&nbsp;${text.helpWithColumnsIdName}<br />
+    ${text.helpAddRow}<br />
+    ${text.helpAddAnotherRow}<br />
+    ${text.helpQuery}
+</a></td><td>
+CREATE TABLE TEST2(ID INT PRIMARY KEY,<br />
+    &nbsp;&nbsp; NAME VARCHAR(255));<br />
+    INSERT INTO TEST2 VALUES(1, 'Second Table');<br />
+    INSERT INTO TEST2 VALUES(2, 'Second Table Second Entry');<br />
+    SELECT * FROM TEST2 ORDER BY ID;
+</td></tr>
+<tr><td><a href="javascript:set('CREATE TABLE TEST3(ID INT PRIMARY KEY, NAME VARCHAR(255));\rINSERT INTO TEST3 VALUES(1, \'Third Table\');\rINSERT INTO TEST3 VALUES(2, \'Third Table Second Entry\');\rSELECT * FROM TEST3 ORDER BY ID;');">
+ ${text.helpCreateTable}<br />
+    &nbsp;&nbsp;${text.helpWithColumnsIdName}<br />
+    ${text.helpAddRow}<br />
+    ${text.helpAddAnotherRow}<br />
+    ${text.helpQuery}
+</a></td><td>
+CREATE TABLE TEST3(ID INT PRIMARY KEY,<br />
+    &nbsp;&nbsp; NAME VARCHAR(255));<br />
+    INSERT INTO TEST3 VALUES(1, 'Third Table');<br />
+    INSERT INTO TEST3 VALUES(2, 'Third Table Second Entry');<br />
+    SELECT * FROM TEST3 ORDER BY ID;
+</td></tr>
+
+
+<tr><td><a href="javascript:set('CREATE TABLE Address(id INT NOT NULL, street VARCHAR(255), PRIMARY KEY (id)); CREATE TABLE Person(id INT NOT NULL, name VARCHAR(255), address_id INT NOT NULL, PRIMARY KEY (id), FOREIGN KEY (address_id) REFERENCES Address (id)); INSERT INTO Address VALUES (0, \'Glasgow Road\'); INSERT INTO Address VALUES (1, \'Kinnessburn Terrace\'); INSERT INTO Address VALUES (2, \'Lamond Drive\'); INSERT INTO Address VALUES (3, \'North Street\'); INSERT INTO Address VALUES (4, \'Market Street\'); INSERT INTO Address VALUES (5, \'Hawthorn Avenue\'); INSERT INTO Person VALUES (0, \'Angus Macdonald\', 0); INSERT INTO Person VALUES (1, \'Alan Dearle\', 1); INSERT INTO Person VALUES (2, \'Graham Kirby\', 2); INSERT INTO Person VALUES (3, \'Dharini Balasubramaniam\', 2); INSERT INTO Person VALUES (4, \'Jon Lewis\', 3);')">
+ Create Address and Person Tables<br />
+ Add sample data
+</a></td><td>
+Address &amp; Person tables
+</td></tr>
+
+<tr><td><a href="javascript:set('SELECT * FROM Person, Address WHERE Address.id = Person.id')">
+Join on Person and Address Tables
+</a></td><td>
+Perform Join on Person & Address
+</td></tr>
 </table>
 <h3>${text.helpAddDrivers}</h3>
 <p>

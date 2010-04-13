@@ -125,6 +125,7 @@ public class CommandContainer extends Command {
 			this.acquireLocks(proxyManager); 
 
 			if (!proxyManager.hasAllLocks()){
+				//TODO implement lock request timeout - look at TableData.doLock().
 				throw new SQLException("Couldn't obtain locks for all tables involved in query.");
 			}
 		}

@@ -376,7 +376,7 @@ public class SchemaManagerReference implements ISchemaManagerReference {
 		try {
 			SchemaManagerRemote stub = (SchemaManagerRemote) UnicastRemoteObject.exportObject(schemaManager, 0);
 
-			getSchemaManagerRegistry().bind(SCHEMA_MANAGER, stub);
+			getSchemaManagerRegistry().rebind(SCHEMA_MANAGER, stub);
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Binding schema manager on port " + schemaManagerLocationURL.getRMIPort());
 		} catch (Exception e) {
 			ErrorHandling.exceptionError(e, "Schema manager migration failed.");
@@ -395,7 +395,8 @@ public class SchemaManagerReference implements ISchemaManagerReference {
 
 				String hostname = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getHostName();
 				int port = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getPort();
-				SchemaManagerReplication newThread = new SchemaManagerReplication(hostname, port, this.db.getSchemaManager(), this.db.getChordInterface());
+				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting schema manager replication thread on : " + db.getDatabaseURL().getDbLocation() + ".");
+				SchemaManagerReplication newThread = new SchemaManagerReplication(hostname, port, this, this.db.getChordInterface());
 				newThread.start();
 			} else {
 				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "There is only one node in the network. There is no-where else to replicate the schema manager.");
@@ -490,13 +491,16 @@ public class SchemaManagerReference implements ISchemaManagerReference {
 				return dataManager;
 			} catch (RemoteException e) {
 				//Lookup location again.
+				cachedDataManagerReferences.remove(tableInfo);
 			} catch (MovedException e) {
+				cachedDataManagerReferences.remove(tableInfo);
 				//Lookup location again.
 			}	
 		}
 
 		try {
 			dataManager = schemaManager.lookup(tableInfo);
+			
 			cachedDataManagerReferences.put(tableInfo, dataManager);
 			return dataManager;
 		} catch (MovedException e) {
@@ -504,7 +508,7 @@ public class SchemaManagerReference implements ISchemaManagerReference {
 				throw new SQLException("System failed to handle a MovedException correctly on a schema manager lookup.");
 			handleMovedException(e);
 			return lookup(tableInfo, true);
-		} catch (RemoteException e) {
+		} catch (Exception e) {
 			if (alreadyCalled) throw new SQLException("Failed to find Schema Manager. Query has been rolled back.");
 
 			/*
@@ -572,6 +576,15 @@ public class SchemaManagerReference implements ISchemaManagerReference {
 	public boolean isThisSchemaManagerNode(IChordRemoteReference otherNode){
 		if (schemaManagerNode == null) return false;
 		return schemaManagerNode.equals(otherNode);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISchemaManagerReference#addProxy(org.h2.h2o.comms.remote.DataManagerRemote)
+	 */
+	@Override
+	public void addProxy(TableInfo tableInfo, DataManagerRemote dataManager) {
+		this.cachedDataManagerReferences.remove(tableInfo);
+		this.cachedDataManagerReferences.put(tableInfo, dataManager);
 	}
 
 

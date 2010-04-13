@@ -5,6 +5,9 @@ import java.rmi.RemoteException;
 import org.h2.engine.Constants;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.manager.ISchemaManager;
+import org.h2.h2o.manager.ISchemaManagerReference;
+import org.h2.h2o.manager.MovedException;
+import org.h2.h2o.manager.SchemaManagerReference;
 import org.h2.h2o.remote.IChordInterface;
 import org.h2.test.h2o.ChordTests;
 
@@ -20,7 +23,7 @@ public class SchemaManagerReplication extends Thread {
 	String hostname;
 	int port;
 
-	ISchemaManager iSchemaManager;
+	ISchemaManagerReference schemaManagerRef;
 	IChordInterface chordInterface;
 
 	/**
@@ -30,10 +33,10 @@ public class SchemaManagerReplication extends Thread {
 	 * @param port			Port on which the database instance is listening.
 	 * @param iSchemaManager			Used to update the schema manager, informing it of the new replica location.
 	 */
-	public SchemaManagerReplication(String hostname, int port, ISchemaManager iSchemaManager, IChordInterface chordInterface){
+	public SchemaManagerReplication(String hostname, int port, ISchemaManagerReference schemaManagerRef, IChordInterface chordInterface){
 		this.hostname = hostname;
 		this.port = port;
-		this.iSchemaManager = iSchemaManager;
+		this.schemaManagerRef = schemaManagerRef;
 		this.chordInterface = chordInterface;
 	}
 
@@ -83,7 +86,9 @@ public class SchemaManagerReplication extends Thread {
 	 */
 	private void createSchemaManagerReplicas(DatabaseInstanceRemote instance) {
 		try {
-			iSchemaManager.addStateReplicaLocation(instance);
+			schemaManagerRef.getSchemaManager().addStateReplicaLocation(instance);
+		} catch (MovedException e) {
+			e.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

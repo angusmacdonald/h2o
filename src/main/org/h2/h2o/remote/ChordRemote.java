@@ -1,6 +1,7 @@
 package org.h2.h2o.remote;
 
 import java.net.InetSocketAddress;
+import java.rmi.AccessException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -14,6 +15,7 @@ import java.util.Set;
 import org.h2.engine.Constants;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.DatabaseInstance;
+import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.manager.DataManagerWrapper;
 import org.h2.h2o.manager.ISchemaManager;
@@ -23,6 +25,7 @@ import org.h2.h2o.manager.SchemaManagerReference;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.H2oProperties;
 import org.h2.h2o.util.SchemaManagerReplication;
+import org.h2.h2o.util.TableInfo;
 import org.h2.test.h2o.ChordTests;
 
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
@@ -87,6 +90,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	 * schema manager was located on the old predecessor, and to check whether it has failed.
 	 */
 	private IChordRemoteReference predecessor;
+
+	private boolean inShutdown = false;
 
 	/**
 	 * Port to be used for the next database instance. Currently used for testing.
@@ -525,7 +530,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 					if (!Constants.IS_NON_SM_TEST){
 						//Don't bother trying to replicate the schema manager if this is a test which doesn't require it.
-						SchemaManagerReplication newThread = new SchemaManagerReplication(hostname, port, this.schemaManagerRef.getSchemaManager(), this);
+						Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting schema manager replication thread on successor change on: " + this.localMachineLocation.getDbLocation() + ".");
+
+						SchemaManagerReplication newThread = new SchemaManagerReplication(hostname, port, this.schemaManagerRef, this);
 						newThread.start();
 					}
 
@@ -579,7 +586,15 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	 * @see org.h2.h2o.remote.IDatabaseRemote#shutdown()
 	 */
 	public void shutdown() {
+
+		if (inShutdown){
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Chord node is already shutting down: " + chordNode);
+			return;
+		}
+
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Shutting down node: " + chordNode);
+
+		inShutdown = true;
 		IChordRemoteReference successor = chordNode.getSuccessor();
 
 
@@ -599,23 +614,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				e1.printStackTrace();
 			}
 		}
-		
-		/*
-		 * Migrate the schema manager if needed.
-		 */
-		if (schemaManagerHeldLocally && successesorIsDifferentMachine && thisIsntATestShouldPreventThis){
-
-			//Migrate the schema manager to this node before shutdown.
-			try {
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Migrating schema manager to successor: " + successor);
-				successorDB = getDatabaseInstanceAt(successor);
-
-				successorDB.executeUpdate("MIGRATE SCHEMAMANAGER");
-
-			} catch (Exception e) {
-				ErrorHandling.errorNoEvent("Failed to migrate schema manager to successor: " + successor);
-			}
-		}
 
 		/*
 		 * Migrate any local data managers.
@@ -628,17 +626,33 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 				Set<DataManagerWrapper> localManagers = schemaManagerRef.getSchemaManager().getLocalDatabaseInstances(this.getLocalMachineLocation());
 
-				for (DataManagerWrapper manager: localManagers){
 
-					//					DataManagerRemote dmr = schemaManagerRef.getSchemaManager().lookup(new TableInfo(table));
-					//					if (dmr.getReplicaManager().getPrimary().equals(databaseInstance) && dmr.getReplicaManager().getNumberOfReplicas() == 1){
-					//						//This machine holds the only replica - replicate on the successor as well.
-					//						
-					//						successorDB.executeUpdate("CREATE REPLICA " + table + ";");
-					//					}
+				/*
+				 * Create replicas if needed.
+				 */
+				for (DataManagerWrapper wrapper: localManagers){
 
-					successorDB.executeUpdate("MIGRATE DATAMANAGER " + manager.getTableInfo().getFullTableName());
+					DataManagerRemote dmr = wrapper.getDataManager();
+					if (dmr.getReplicaManager().getPrimary().equals(databaseInstance) && dmr.getReplicaManager().getNumberOfReplicas() == 1){
+						//This machine holds the only replica - replicate on the successor as well.
+						Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Replicating table [" + wrapper.getTableInfo().getFullTableName() + "] to successor: " + successor);
+
+						successorDB.executeUpdate("CREATE REPLICA " + wrapper.getTableInfo().getFullTableName() + ";", false);
+					}
 				}
+
+
+				/*
+				 * Migrate data managers.
+				 */
+				for (DataManagerWrapper wrapper: localManagers){
+
+					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Migrating data manager [" + wrapper.getTableInfo().getFullTableName() + "] to successor: " + successor);
+
+					successorDB.executeUpdate("MIGRATE DATAMANAGER " + wrapper.getTableInfo().getFullTableName(), false);
+
+				}
+
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			} catch (MovedException e) {
@@ -647,6 +661,25 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				e.printStackTrace();
 			}
 		}
+
+		/*
+		 * Migrate the schema manager if needed.
+		 */
+		if (schemaManagerHeldLocally && successesorIsDifferentMachine && thisIsntATestShouldPreventThis){
+
+			//Migrate the schema manager to this node before shutdown.
+			try {
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Migrating schema manager to successor: " + successor);
+				successorDB = getDatabaseInstanceAt(successor);
+
+				successorDB.executeUpdate("MIGRATE SCHEMAMANAGER", false);
+
+			} catch (Exception e) {
+				ErrorHandling.errorNoEvent("Failed to migrate schema manager to successor: " + successor);
+			}
+		}
+
+
 
 
 		if (!Constants.IS_NON_SM_TEST){
@@ -739,5 +772,25 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	public IChordRemoteReference getLookupLocation(IKey schemaManagerKey) throws RemoteException {
 		return chordNode.lookup(schemaManagerKey);
 
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.remote.IDatabaseRemote#inShutdown()
+	 */
+	@Override
+	public boolean inShutdown() {
+		return inShutdown ;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.remote.IChordInterface#bind(java.lang.String, org.h2.h2o.comms.remote.DataManagerRemote)
+	 */
+	@Override
+	public void bind(String fullTableName, DataManagerRemote stub) {
+		try {
+			getLocalRegistry().rebind(fullTableName, stub);
+		} catch (Exception e) {
+			//Doesn't matter.
+		}
 	}
 }

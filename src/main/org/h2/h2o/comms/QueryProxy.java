@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.h2.command.Command;
 import org.h2.command.Parser;
+import org.h2.command.dml.MigrateDataManager;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.remote.DataManagerRemote;
@@ -138,39 +139,39 @@ public class QueryProxy implements Serializable{
 		int i = 0;
 		for (DatabaseInstanceRemote replica: allReplicas){
 			try {
-				
+
 				int result = 0;
-				
+
 				DatabaseInstanceRemote localMachine = session.getDatabase().getLocalDatabaseInstance();
-				
+
 				if (replica == null || localMachine.getConnectionString().equals(replica.getConnectionString())){
 					/*
 					 * Execute Locally - otherwise there are some nasty concurrency issues with the RMI call accessing the DB
 					 * object at the same time as the thread which made the RMI call.
 					 */
-					
+
 					Parser parser = new Parser (session, true);
-					
+
 					Command command = parser.prepareCommand(sql);
-					
+
 					/*
 					 * If called from here executeUpdate should always be told the query is part of a larger transaction, because it
 					 * was remotely initiated and consequently needs to wait for the remote machine to commit.
 					 */
 					command.executeUpdate(true);
-					
+
 					command = parser.prepareCommand("PREPARE COMMIT " + transactionName);
 					result = command.executeUpdate();
-					
+
 					//TODO this shouldn't be duplicated here and in DatabaseInstanceRemote.
 				} else {
 					//Go remote.
-					
+
 					H2OTest.rmiFailure(replica);
-					
+
 					result = replica.prepare(sql, transactionName);
 				}
-				
+
 				if (result != 0) {
 					//globalCommit = false; // Prepare operation failed at remote machine, so rollback the query everywhere.
 					commit[i++] = false;
@@ -198,7 +199,7 @@ public class QueryProxy implements Serializable{
 		if (!globalCommit){
 			throw new SQLException("Commit failed on one or more replicas. Rollback.");
 		}
-		
+
 		return 0;
 	}
 
@@ -244,14 +245,19 @@ public class QueryProxy implements Serializable{
 			ErrorHandling.errorNoEvent("Data manager proxy was null when requesting table.");
 			throw new SQLException("Data manager not found for table.");
 		}
-	
-		
+
+
 		if(requestingDatabase == null){
 			ErrorHandling.hardError("A requesting database must be specified.");
 		}
 
 		try {
 			return dataManager.getQueryProxy(lockType, requestingDatabase);
+		} catch (java.rmi.NoSuchObjectException e) {
+			e.printStackTrace();
+			
+			
+			throw new SQLException("Data manager could not be accessed. It may not have been exported to RMI correctly.");
 		} catch (RemoteException e) {
 			e.printStackTrace();
 			throw new SQLException("Data manager could not be accessed. The table is unavailable until the data manager is reactivated.");

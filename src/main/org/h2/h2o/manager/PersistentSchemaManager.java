@@ -309,7 +309,7 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 
 			for (Entry<TableInfo, DataManagerWrapper> dmEntry: dataManagers.entrySet()){
 				try {
-					addTableInformation(dmEntry.getValue().getDataManager(), dmEntry.getKey());
+					super.addTableInformation(dmEntry.getValue().getDataManager().getDatabaseURL(), dmEntry.getKey(), false);
 				} catch (SQLException e) {
 					e.printStackTrace();
 				}
@@ -525,7 +525,7 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 	@Override
 	public boolean addTableInformation(DataManagerRemote dataManager,
 			TableInfo tableDetails) throws RemoteException, MovedException, SQLException {
-		return super.addTableInformation(dataManager.getDatabaseURL(), tableDetails);
+		return super.addTableInformation(dataManager.getDatabaseURL(), tableDetails, true);
 		}
 
 	/* (non-Javadoc)

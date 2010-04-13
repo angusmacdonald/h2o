@@ -189,7 +189,7 @@ public class CreateReplica extends SchemaCommand {
 					Table table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
 
 					if (tableSet  == -1){
-						tableSet = sm.getNewTableSetNumber();
+						tableSet = 1; //sm.getTableSetNumber(new TableInfo(tableName, getSchema().getName()));
 					} else {
 						if (next != null){
 							next.setTableSet(tableSet);
@@ -403,7 +403,7 @@ public class CreateReplica extends SchemaCommand {
 
 			TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
 
-			
+
 			if (this.contactSchemaManager){
 
 				try{
@@ -412,11 +412,12 @@ public class CreateReplica extends SchemaCommand {
 
 
 					if (tableSet  == -1){
-						tableSet = sm.getNewTableSetNumber();
-					} else {
-						if (next != null){
-							next.setTableSet(tableSet);
-						}
+						tableSet = 1; //TODO create this method if its needed. sm.getTableSetNumber(ti.getGenericTableInfo());
+						ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
+
+					}
+					if (tableSet != -1 && next != null){
+						next.setTableSet(tableSet);
 					}
 
 					sm.addReplicaInformation(ti);	
@@ -428,12 +429,12 @@ public class CreateReplica extends SchemaCommand {
 
 			if (!tableName.startsWith("H2O_")){
 				DataManagerRemote dm = db.getDataManager(getSchema().getName() + "." + tableName);
-				
-					if (dm == null){
-						throw new SQLException("Error creating replica for " + tableName + ". Data manager not found.");
-					} else {
-						dm.addReplicaInformation(ti);
-					} 
+
+				if (dm == null){
+					throw new SQLException("Error creating replica for " + tableName + ". Data manager not found.");
+				} else {
+					dm.addReplicaInformation(ti);
+				} 
 			}
 
 		} catch (SQLException e) {
@@ -686,12 +687,12 @@ public class CreateReplica extends SchemaCommand {
 				break;
 			}
 			String columnName = rs.getString("COLUMN_NAME");
-			
+
 			if (currentColumns.contains(columnName)) //stops duplicate primary keys - this happens with multiple replicas.
 				continue;
-			
+
 			currentColumns.add(columnName);
-			
+
 			columnName = convertColumnName(columnName);
 			int sqlType = rs.getInt("DATA_TYPE");
 			long precision = rs.getInt("COLUMN_SIZE");
@@ -701,7 +702,7 @@ public class CreateReplica extends SchemaCommand {
 			int displaySize = MathUtils.convertLongToInt(precision);
 			int type = DataType.convertSQLTypeToValueType(sqlType);
 			Column col = new Column(columnName, type, precision, scale, displaySize);
-			
+
 			col.setNullable(nullable == 1);
 
 			/*
@@ -945,11 +946,11 @@ public class CreateReplica extends SchemaCommand {
 			ISchemaManagerReference sm = session.getDatabase().getSchemaManagerReference();
 
 			DataManagerRemote dm;
-//			try {
-				dm = sm.lookup(new TableInfo(tableName, getSchema().getName()));
-//			} catch (MovedException e){
-//				throw new RemoteException("Schema Manager has moved.");
-//			}
+			//			try {
+			dm = sm.lookup(new TableInfo(tableName, getSchema().getName()));
+			//			} catch (MovedException e){
+			//				throw new RemoteException("Schema Manager has moved.");
+			//			}
 
 			if (dm == null){
 				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new TableInfo(tableName, getSchema().getName()).toString());

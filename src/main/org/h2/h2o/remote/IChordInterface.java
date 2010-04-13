@@ -3,6 +3,7 @@ package org.h2.h2o.remote;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 
+import org.h2.h2o.comms.remote.DataManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.util.DatabaseURL;
 
@@ -63,5 +64,13 @@ public interface IChordInterface {
 	 * @return	the chord node of the local database instance.
 	 */
 	public ChordNodeImpl getChordNode();
+
+	/**
+	 * Bind the given data manager to the local registry. This isn't used to access data managers, but to maintain references to them
+	 * to prevent their remote proxies from being garbage collected.
+	 * @param fullTableName	Name of the table.
+	 * @param stub	Remote data manager proxy.
+	 */
+	public void bind(String fullTableName, DataManagerRemote stub);
 
 }

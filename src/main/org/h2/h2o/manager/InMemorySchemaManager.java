@@ -50,6 +50,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 
 	private Map<DatabaseURL, DatabaseInstanceWrapper> databasesInSystem = new HashMap<DatabaseURL, DatabaseInstanceWrapper>();
 
+
 	/**
 	 * The next valid table set number which can be assigned by the schema manager.
 	 */
@@ -60,6 +61,14 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	 */
 	//private Set<DatabaseInstanceRemote> schemaManagerState;
 
+	/**
+	 * Maintained because a nosuchobjectexception is occasionally thrown. 
+	 * See http://stackoverflow.com/questions/645208/java-rmi-nosuchobjectexception-no-such-object-in-table/854097#854097.
+	 */
+	public static HashSet<DataManagerRemote> dataManagerReferences = new HashSet<DataManagerRemote>();
+
+	
+	
 	public InMemorySchemaManager(Database database) throws Exception{
 		this.database = database;
 
@@ -90,6 +99,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 			return false; //this table already exists.
 		}
 
+		dataManagerReferences.add(dataManager);
 		dataManagers.put(basicTableInfo, dmw);
 		String fullName = tableDetails.getFullTableName();
 		Set<TableInfo> replicas = replicaLocations.get(fullName);
@@ -166,6 +176,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 
 		replicas.add(ti);
 
+		replicaLocations.put(ti.getFullTableName(), replicas);
 	}
 
 	/* (non-Javadoc)
@@ -208,6 +219,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 			if (!dataManagers.containsKey(ti)){
 				return null;
 			}
+
 			return dm;
 		}
 
@@ -508,14 +520,18 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	 */
 	public void changeDataManagerLocation(DataManagerRemote stub, TableInfo tableInfo) {
 		Object result = this.dataManagers.remove(tableInfo.getGenericTableInfo());
-
+		
 		if (result == null){
 			ErrorHandling.errorNoEvent("There is an inconsistency in the storage of data managers which has caused inconsistencies in the set of managers.");
 			assert false;
 		}
 
 		DataManagerWrapper dmw = new DataManagerWrapper(tableInfo, stub, tableInfo.getDbURL());
+		
 		this.dataManagers.put(tableInfo.getGenericTableInfo(), dmw);
+		dataManagerReferences.add(stub);
+		this.database.getChordInterface().bind(tableInfo.getFullTableName(), stub);
+		
 	}
 
 	/* (non-Javadoc)
@@ -530,7 +546,11 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 		 */
 		Predicate<DataManagerWrapper, DatabaseURL> isLocal = new Predicate<DataManagerWrapper, DatabaseURL>() {
 			public boolean apply(DataManagerWrapper wrapper, DatabaseURL databaseInstance) {
-		        return wrapper.isLocalTo(databaseInstance);
+		        try {
+					return wrapper.isLocalTo(databaseInstance);
+				} catch (RemoteException e) {
+					return false;
+				}
 		    }
 			
 		};

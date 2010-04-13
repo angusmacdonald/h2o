@@ -169,7 +169,7 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 		boolean added = (result != -1);
 		if (!added) return false;
 		
-		added = super.addTableInformation(dataManagerURL, tableDetails);
+		added = super.addTableInformation(dataManagerURL, tableDetails, true);
 		if (added) replicaManager.add(getDatabaseInstance(dataManagerURL));
 		return added;
 	}
@@ -391,7 +391,7 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 	public String getLocation() throws RemoteException, MovedException{
 		preMethodTest();
 
-		return replicaManager.getPrimary().getConnectionString();
+		return getDB().getDatabaseURL().getOriginalURL();
 	}
 
 

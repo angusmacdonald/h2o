@@ -336,7 +336,7 @@ public class ChordTests extends TestBase {
 	public void FirstMachineDisconnect() throws InterruptedException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		try {
-			//sas[0].close();
+			sas[0].close();
 			dts[0].getConnection().close();
 			
 			Thread.sleep(5000);

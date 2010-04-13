@@ -100,9 +100,9 @@ public class TableLink extends Table {
 		storesMixedCase = meta.storesMixedCaseIdentifiers();
 		supportsMixedCaseIdentifiers = meta.supportsMixedCaseIdentifiers();
 		ResultSet rs = meta.getTables(null, originalSchema, originalTable, null);
-		if (rs.next() && rs.next()) {
-			throw Message.getSQLException(ErrorCode.SCHEMA_NAME_MUST_MATCH, originalTable);
-		}
+//		if (rs.next() && rs.next()) {
+//			throw Message.getSQLException(ErrorCode.SCHEMA_NAME_MUST_MATCH, originalTable);
+//		}
 		rs.close();
 
 		if (originalTable.contains(".")){

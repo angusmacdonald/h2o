@@ -40,6 +40,13 @@ public interface IDatabaseRemote {
 	 */
 	public void shutdown();
 
+
+	/**
+	 * True if this chord node is in the process of shutting down.
+	 */
+	public boolean inShutdown();
+
+	
 	/**
 	 * Get the location of the local database instance, including the port the database
 	 * is running on (JDBC) and the port the databases RMI connection is running on.

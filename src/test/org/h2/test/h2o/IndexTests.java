@@ -64,7 +64,7 @@ public class IndexTests{
 
 		sa.execute("CREATE TABLE Address(id INT NOT NULL, street VARCHAR(255), PRIMARY KEY (id)); " +
 				"CREATE TABLE Person(id INT NOT NULL, name VARCHAR(255), address_id INT NOT NULL, PRIMARY KEY (id), FOREIGN KEY (address_id) REFERENCES Address (id));" +
-				"INSERT INTO Address VALUES (0, 'Pinewood Avenue');" +
+				"INSERT INTO Address VALUES (0, 'Glasgow Road');" +
 				"INSERT INTO Address VALUES (1, 'Kinnessburn Terrace');" +
 				"INSERT INTO Address VALUES (2, 'Lamond Drive');" +
 				"INSERT INTO Address VALUES (3, 'North Street');" +
