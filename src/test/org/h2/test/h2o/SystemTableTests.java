@@ -11,7 +11,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
-import org.h2.h2o.manager.PersistentSchemaManager;
+import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.H2oProperties;
@@ -26,11 +26,11 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
- * Tests the basic functionality of the schema manager.
+ * Tests the basic functionality of the System Table.
  *
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class SchemaManagerTests {
+public class SystemTableTests {
 
 	private static final String BASEDIR = "db_data/unittests/";
 
@@ -48,7 +48,7 @@ public class SchemaManagerTests {
 
 		properties.createNewFile();
 		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
-		properties.setProperty("schemaManagerLocation", "jdbc:h2:sm:mem:one");
+		properties.setProperty("systemTableLocation", "jdbc:h2:sm:mem:one");
 
 		properties.saveAndClose();
 	}
@@ -59,8 +59,8 @@ public class SchemaManagerTests {
 	@Before
 	public void setUp() throws Exception {
 		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-//		PersistentSchemaManager.USERNAME = "sa";
-//		PersistentSchemaManager.PASSWORD = "sa";
+//		PersistentSystemTable.USERNAME = "sa";
+//		PersistentSystemTable.PASSWORD = "sa";
 		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
 		knownHosts.createNewFile();
 		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordRemote.currentPort + "");
@@ -92,7 +92,7 @@ public class SchemaManagerTests {
 	}
 
 	/**
-	 * Test that the three schema manager tables are successfully created on startup in the H2O schema.
+	 * Test that the three System Table tables are successfully created on startup in the H2O schema.
 	 * @throws SQLException 
 	 * @throws ClassNotFoundException 
 	 * @throws InterruptedException 
@@ -109,7 +109,7 @@ public class SchemaManagerTests {
 			server.start();
 
 			Class.forName("org.h2.Driver");
-			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 			Statement stat = conn.createStatement();
 
@@ -120,7 +120,7 @@ public class SchemaManagerTests {
 
 		} catch (SQLException e1) {
 			e1.printStackTrace();
-			fail("Couldn't find schema manager tables.");
+			fail("Couldn't find System Table tables.");
 		} finally {
 			try {
 				conn.close();
@@ -138,7 +138,7 @@ public class SchemaManagerTests {
 	}
 
 	/**
-	 * Test that the state of the schema manager classes are successfully maintained between instances.
+	 * Test that the state of the System Table classes are successfully maintained between instances.
 	 * @throws SQLException 
 	 * @throws ClassNotFoundException 
 	 * @throws InterruptedException 
@@ -154,7 +154,7 @@ public class SchemaManagerTests {
 			server.start();
 
 			Class.forName("org.h2.Driver");
-			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 			Statement sa = conn.createStatement();
 
@@ -169,7 +169,7 @@ public class SchemaManagerTests {
 
 			server.start();
 
-			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 			sa = conn.createStatement();
 
@@ -187,7 +187,7 @@ public class SchemaManagerTests {
 
 			ResultSet rs = sa.getResultSet();
 			if (!rs.next()){
-				fail("There shouldn't be a single table in the schema manager.");
+				fail("There shouldn't be a single table in the System Table.");
 			}
 
 
@@ -201,7 +201,7 @@ public class SchemaManagerTests {
 
 		} catch (SQLException e1) {
 			e1.printStackTrace();
-			fail("Couldn't find schema manager tables.");
+			fail("Couldn't find System Table tables.");
 		} finally {
 			try {
 				conn.close();
@@ -219,7 +219,7 @@ public class SchemaManagerTests {
 
 //	/**
 //	 * Tests that a database is able to connect to a remote database and establish linked table connections
-//	 * to all schema manager tables.
+//	 * to all System Table tables.
 //	 * @throws SQLException
 //	 * @throws InterruptedException
 //	 */
@@ -228,8 +228,8 @@ public class SchemaManagerTests {
 //		org.h2.Driver.load();
 //
 //		try{
-//			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
-//			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+//			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+//			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 //			Statement sa = ca.createStatement();
 //			Statement sb = cb.createStatement();
 //
@@ -257,7 +257,7 @@ public class SchemaManagerTests {
 //	}
 
 	/**
-	 * Tests that when a new table is added to the database it is also added to the schema manager.
+	 * Tests that when a new table is added to the database it is also added to the System Table.
 	 * @throws SQLException
 	 * @throws InterruptedException
 	 */
@@ -266,13 +266,13 @@ public class SchemaManagerTests {
 		org.h2.Driver.load();
 
 		try{
-			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 			Statement sa = ca.createStatement();
 
 			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
 			ResultSet rs = sa.getResultSet();		
 			if (rs.next()){
-				fail("There shouldn't be any tables in the schema manager yet.");
+				fail("There shouldn't be any tables in the System Table yet.");
 			}
 			rs.close();
 
@@ -285,7 +285,7 @@ public class SchemaManagerTests {
 				assertEquals("TEST", rs.getString(3));
 				assertEquals("PUBLIC", rs.getString(2));
 			} else {
-				fail("Table PUBLIC.TEST was not found in the schema manager.");
+				fail("Table PUBLIC.TEST was not found in the System Table.");
 			}
 			rs.close();
 
@@ -307,8 +307,8 @@ public class SchemaManagerTests {
 		org.h2.Driver.load();
 
 		try{
-			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
-			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 			Statement sa = ca.createStatement();
 			Statement sb = cb.createStatement();
@@ -352,7 +352,7 @@ public class SchemaManagerTests {
 	}
 
 	/**
-	 * Tests that when a table is dropped it isn't accessible, and not that meta-data is not available from the schema manager.
+	 * Tests that when a table is dropped it isn't accessible, and not that meta-data is not available from the System Table.
 	 * @throws SQLException
 	 * @throws InterruptedException
 	 */
@@ -361,13 +361,13 @@ public class SchemaManagerTests {
 		org.h2.Driver.load();
 
 		try{
-			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 			Statement sa = ca.createStatement();
 
 			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
 			ResultSet rs = sa.getResultSet();		
 			if (rs.next()){
-				fail("There shouldn't be any tables in the schema manager yet.");
+				fail("There shouldn't be any tables in the System Table yet.");
 			}
 			rs.close();
 
@@ -379,7 +379,7 @@ public class SchemaManagerTests {
 				assertEquals("TEST", rs.getString(3));
 				assertEquals("PUBLIC", rs.getString(2));
 			} else {
-				fail("Table TEST was not found in the schema manager.");
+				fail("Table TEST was not found in the System Table.");
 			}
 			rs.close();
 
@@ -395,7 +395,7 @@ public class SchemaManagerTests {
 			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
 			rs = sa.getResultSet();		
 			if (rs.next()){
-				fail("There shouldn't be any entries in the schema manager.");
+				fail("There shouldn't be any entries in the System Table.");
 			} 
 			rs.close();
 
@@ -420,7 +420,7 @@ public class SchemaManagerTests {
 		org.h2.Driver.load();
 
 		try{
-			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 			Statement sa = ca.createStatement();
 
@@ -430,7 +430,7 @@ public class SchemaManagerTests {
 			sa.execute("INSERT INTO TEST VALUES(2, 'World');");
 
 
-			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 			Statement sb = cb.createStatement();
 
 			sa.execute("DROP TABLE TEST;");
@@ -464,7 +464,7 @@ public class SchemaManagerTests {
 		org.h2.Driver.load();
 
 		try{
-			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 			Statement sa = ca.createStatement();
 
 			sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
@@ -505,10 +505,10 @@ public class SchemaManagerTests {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 
 		try{
-			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 			Statement sa = ca.createStatement();
 
-			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 			Statement sb = cb.createStatement();
 
 			sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");

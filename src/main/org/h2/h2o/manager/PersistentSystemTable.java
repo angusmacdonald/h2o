@@ -10,7 +10,7 @@ import java.util.Map.Entry;
 
 import org.h2.constant.ErrorCode;
 import org.h2.engine.Database;
-import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.remote.IDatabaseRemote;
@@ -26,44 +26,44 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class PersistentSchemaManager extends PersistentManager implements ISchemaManager {
+public class PersistentSystemTable extends PersistentManager implements ISystemTable {
 
 	/**
-	 * Name of the schema used to store schema manager tables.
+	 * Name of the schema used to store System Table tables.
 	 */
 	private static final String SCHEMA = "H2O.";
 
 	/**
-	 * Name of tables' table in schema manager.
+	 * Name of tables' table in System Table.
 	 */
 	private static final String TABLES = SCHEMA + "H2O_TABLE";
 
 	/**
-	 * Name of replicas' table in schema manager.
+	 * Name of replicas' table in System Table.
 	 */
 	private static final String REPLICAS = SCHEMA + "H2O_REPLICA";
 
 	/**
-	 * Name of connections' table in schema manager.
+	 * Name of connections' table in System Table.
 	 */
 	private static final String CONNECTIONS = SCHEMA + "H2O_CONNECTION";
 
 	/**
-	 * The database username used to communicate with schema manager tables.
+	 * The database username used to communicate with System Table tables.
 	 */
 	public static final String USERNAME = "angus";
 
 	/**
-	 * The database password used to communicate with schema manager tables.
+	 * The database password used to communicate with System Table tables.
 	 */
 	public static final String PASSWORD = "";
 	
 
-	public PersistentSchemaManager(Database db, boolean createTables) throws Exception{
+	public PersistentSystemTable(Database db, boolean createTables) throws Exception{
 		super (db, createTables, TABLES, REPLICAS, CONNECTIONS);
 	}
 
-	public DatabaseURL getDataManagerLocation(String tableName, String schemaName) throws SQLException{
+	public DatabaseURL getTableManagerLocation(String tableName, String schemaName) throws SQLException{
 		String sql = "SELECT db_location, connection_type, machine_name, connection_port " +
 		"FROM H2O.H2O_REPLICA, H2O.H2O_CONNECTION, H2O.H2O_TABLE " +
 		"WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND " + TABLES + ".table_id=" + REPLICAS + ".table_id " + 
@@ -101,7 +101,7 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 	}
 
 //	/**
-//	 * Creates the set of tables used by the schema manager.
+//	 * Creates the set of tables used by the System Table.
 //	 * @return Result of the update.
 //	 * @throws SQLException
 //	 */
@@ -109,9 +109,9 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 //
 //		String sql = super.createSQL(TABLES, REPLICAS, CONNECTIONS);
 //
-//		String dataManagerLocation = "H2O.DATA_MANAGER_LOCATIONS";
+//		String tableManagerLocation = "H2O.DATA_MANAGER_LOCATIONS";
 //		
-//		sql += "\n\nCREATE TABLE IF NOT EXISTS " + dataManagerLocation + "(" +
+//		sql += "\n\nCREATE TABLE IF NOT EXISTS " + tableManagerLocation + "(" +
 //		"replica_id INTEGER NOT NULL auto_increment(1,1), " +
 //		"table_id INTEGER NOT NULL, " +
 //		"connection_id INTEGER NOT NULL, " + 
@@ -129,19 +129,19 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 
 	
 	/**
-	 * Creates linked tables for a remote schema manager, location specified by the paramter.
-	 * @param schemaManagerLocation Location of the remote schema manager.
+	 * Creates linked tables for a remote System Table, location specified by the paramter.
+	 * @param systemTableLocation Location of the remote System Table.
 	 * @return Result of the update.
 	 * @throws SQLException
 	 */
-	public int createLinkedTablesForSchemaManager(String schemaManagerLocation) throws SQLException{
+	public int createLinkedTablesForSystemTable(String systemTableLocation) throws SQLException{
 		String sql = "CREATE SCHEMA IF NOT EXISTS H2O;";
 		String tableName = TABLES;
-		sql += "\nCREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', '" + USERNAME + "', '" + PASSWORD + "', '" + tableName + "');";
+		sql += "\nCREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + systemTableLocation + "', '" + USERNAME + "', '" + PASSWORD + "', '" + tableName + "');";
 		tableName = CONNECTIONS;
-		sql += "\nCREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', '" + USERNAME + "', '" + PASSWORD + "', '" + tableName + "');";
+		sql += "\nCREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + systemTableLocation + "', '" + USERNAME + "', '" + PASSWORD + "', '" + tableName + "');";
 		tableName = REPLICAS;
-		sql += "\nCREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + schemaManagerLocation + "', '" + USERNAME + "', '" + PASSWORD + "', '" + tableName + "');";
+		sql += "\nCREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + systemTableLocation + "', '" + USERNAME + "', '" + PASSWORD + "', '" + tableName + "');";
 
 		//System.out.println("Linked table query: " + sql);
 
@@ -149,7 +149,7 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 	}
 
 	/**
-	 * Contacts the schema manager and accesses information on the set of available remote tables.
+	 * Contacts the System Table and accesses information on the set of available remote tables.
 	 * @param localMachineAddress	The address of the local requesting machine (so as to exclude local results)
 	 * @param localMachinePort	The port number of the local requesting machine (so as to exclude local results)
 	 * @param dbLocation The location of the database on the local machine.
@@ -231,7 +231,7 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.ISchemaManager#exists(java.lang.String)
+	 * @see org.h2.h2o.ISystemTable#exists(java.lang.String)
 	 */
 	@Override
 	public boolean exists(TableInfo ti) throws RemoteException {
@@ -244,42 +244,42 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.ISchemaManager#lookup(java.lang.String)
+	 * @see org.h2.h2o.ISystemTable#lookup(java.lang.String)
 	 */
 	@Override
-	public DataManagerRemote lookup(TableInfo ti) throws RemoteException {
+	public TableManagerRemote lookup(TableInfo ti) throws RemoteException {
 		//
 		//		/*
-		//		 * Get the machine location of the table's data manager.
+		//		 * Get the machine location of the table's Table Manager.
 		//		 */
 		//		DatabaseURL dbURL = null;
 		//
 		//		try {
-		//			dbURL = getDataManagerLocation(ti.getTableName(), ti.getSchemaName());
+		//			dbURL = getTableManagerLocation(ti.getTableName(), ti.getSchemaName());
 		//		} catch (SQLException e) {
 		//			e.printStackTrace();
 		//			return null;
 		//		}
 		//
 		//		/*
-		//		 * Use the chord interface to get a remote reference to this data manager.
+		//		 * Use the chord interface to get a remote reference to this Table Manager.
 		//		 */
 		//
 		//		IDatabaseRemote remoteInterface = db.getRemoteInterface();
 		//
-		//		return remoteInterface.refindDataManagerReference(ti, dbURL);
+		//		return remoteInterface.refindTableManagerReference(ti, dbURL);
 
 		return null;
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#buildSchemaManagerState(org.h2.h2o.manager.ISchemaManager)
+	 * @see org.h2.h2o.manager.ISystemTable#buildSystemTableState(org.h2.h2o.manager.ISystemTable)
 	 */
 	@Override
-	public void buildSchemaManagerState(ISchemaManager otherSchemaManager)
+	public void buildSystemTableState(ISystemTable otherSystemTable)
 	throws RemoteException {
 		/*
-		 * Persist the state of the given schema manager reference to disk.
+		 * Persist the state of the given System Table reference to disk.
 		 */
 
 		try {		
@@ -288,7 +288,7 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 			 */
 			Map<DatabaseURL, DatabaseInstanceWrapper> databasesInSystem = null;
 			try {
-				databasesInSystem = otherSchemaManager.getConnectionInformation();
+				databasesInSystem = otherSystemTable.getConnectionInformation();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
@@ -302,14 +302,14 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 			}
 
 			/*
-			 * Obtain references to data managers.
+			 * Obtain references to Table Managers.
 			 */
 
-			Map<TableInfo, DataManagerWrapper> dataManagers = otherSchemaManager.getDataManagers();
+			Map<TableInfo, TableManagerWrapper> tableManagers = otherSystemTable.getTableManagers();
 
-			for (Entry<TableInfo, DataManagerWrapper> dmEntry: dataManagers.entrySet()){
+			for (Entry<TableInfo, TableManagerWrapper> dmEntry: tableManagers.entrySet()){
 				try {
-					super.addTableInformation(dmEntry.getValue().getDataManager().getDatabaseURL(), dmEntry.getKey(), false);
+					super.addTableInformation(dmEntry.getValue().getTableManager().getDatabaseURL(), dmEntry.getKey(), false);
 				} catch (SQLException e) {
 					e.printStackTrace();
 				}
@@ -319,7 +319,7 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 			 * Obtain references to replicas.
 			 */
 
-			Map<String, Set<TableInfo>> replicaLocations = otherSchemaManager.getReplicaLocations();
+			Map<String, Set<TableInfo>> replicaLocations = otherSystemTable.getReplicaLocations();
 
 			for (Entry<String, Set<TableInfo>> databaseEntry: replicaLocations.entrySet()){
 				for (TableInfo tableInfo: databaseEntry.getValue()){
@@ -341,7 +341,7 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#getConnectionInformation()
+	 * @see org.h2.h2o.manager.ISystemTable#getConnectionInformation()
 	 */
 	@Override
 	public Map<DatabaseURL, DatabaseInstanceWrapper> getConnectionInformation() throws RemoteException, SQLException {
@@ -393,12 +393,12 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#getDataManagers()
+	 * @see org.h2.h2o.manager.ISystemTable#getTableManagers()
 	 */
 	@Override
-	public Map<TableInfo, DataManagerWrapper> getDataManagers()  throws RemoteException{
+	public Map<TableInfo, TableManagerWrapper> getTableManagers()  throws RemoteException{
 
-		Map<TableInfo, DataManagerWrapper> dataManagers = new HashMap<TableInfo, DataManagerWrapper>();
+		Map<TableInfo, TableManagerWrapper> tableManagers = new HashMap<TableInfo, TableManagerWrapper>();
 
 		IDatabaseRemote remoteInterface = getDB().getRemoteInterface();
 
@@ -437,17 +437,17 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 				TableInfo ti = new TableInfo (tableName, schemaName);
 
 				/*
-				 * Perform lookups to get remote references to every data manager.
+				 * Perform lookups to get remote references to every Table Manager.
 				 */
-				DatabaseInstanceRemote dir = remoteInterface.getDatabaseInstanceAt(dbURL);   //.findDataManagerReference(ti, dbURL);
+				DatabaseInstanceRemote dir = remoteInterface.getDatabaseInstanceAt(dbURL);   //.findTableManagerReference(ti, dbURL);
 
 				if (dir != null){
-					DataManagerRemote dmReference = dir.findDataManagerReference(ti);
+					TableManagerRemote dmReference = dir.findTableManagerReference(ti);
 					
-					DataManagerWrapper dmw = new DataManagerWrapper(ti, dmReference, dbURL);
-					dataManagers.put(ti, dmw);
+					TableManagerWrapper dmw = new TableManagerWrapper(ti, dmReference, dbURL);
+					tableManagers.put(ti, dmw);
 				} else {
-					dataManagers.put(ti, null);
+					tableManagers.put(ti, null);
 				}
 
 			}
@@ -456,11 +456,11 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 			e1.printStackTrace();
 		}
 
-		return dataManagers;
+		return tableManagers;
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#getReplicaLocations()
+	 * @see org.h2.h2o.manager.ISystemTable#getReplicaLocations()
 	 */
 	@Override
 	public Map<String, Set<TableInfo>> getReplicaLocations()  throws RemoteException{
@@ -473,16 +473,16 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#buildSchemaManagerState()
+	 * @see org.h2.h2o.manager.ISystemTable#buildSystemTableState()
 	 */
 	@Override
-	public void buildSchemaManagerState() throws RemoteException {
+	public void buildSystemTableState() throws RemoteException {
 		// TODO Auto-generated method stub
 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#removeAllTableInformation()
+	 * @see org.h2.h2o.manager.ISystemTable#removeAllTableInformation()
 	 */
 	@Override
 	public void removeAllTableInformation() {
@@ -492,7 +492,7 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#getDatabaseInstance(org.h2.h2o.util.DatabaseURL)
+	 * @see org.h2.h2o.manager.ISystemTable#getDatabaseInstance(org.h2.h2o.util.DatabaseURL)
 	 */
 	@Override
 	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL)
@@ -502,7 +502,7 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#getDatabaseInstances()
+	 * @see org.h2.h2o.manager.ISystemTable#getDatabaseInstances()
 	 */
 	@Override
 	public Set<DatabaseInstanceWrapper> getDatabaseInstances()
@@ -512,24 +512,24 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#changeDataManagerLocation(org.h2.h2o.comms.remote.DataManagerRemote)
+	 * @see org.h2.h2o.manager.ISystemTable#changeTableManagerLocation(org.h2.h2o.comms.remote.TableManagerRemote)
 	 */
 	@Override
-	public void changeDataManagerLocation(DataManagerRemote locationOfManager, TableInfo tableInfo) {
-		super.changeDataManagerLocation(tableInfo);
+	public void changeTableManagerLocation(TableManagerRemote locationOfManager, TableInfo tableInfo) {
+		super.changeTableManagerLocation(tableInfo);
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#addTableInformation(org.h2.h2o.comms.remote.DataManagerRemote, org.h2.h2o.util.TableInfo)
+	 * @see org.h2.h2o.manager.ISystemTable#addTableInformation(org.h2.h2o.comms.remote.TableManagerRemote, org.h2.h2o.util.TableInfo)
 	 */
 	@Override
-	public boolean addTableInformation(DataManagerRemote dataManager,
+	public boolean addTableInformation(TableManagerRemote tableManager,
 			TableInfo tableDetails) throws RemoteException, MovedException, SQLException {
-		return super.addTableInformation(dataManager.getDatabaseURL(), tableDetails, true);
+		return super.addTableInformation(tableManager.getDatabaseURL(), tableDetails, true);
 		}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#addConnectionInformation(org.h2.h2o.util.DatabaseURL, org.h2.h2o.comms.remote.DatabaseInstanceWrapper)
+	 * @see org.h2.h2o.manager.ISystemTable#addConnectionInformation(org.h2.h2o.util.DatabaseURL, org.h2.h2o.comms.remote.DatabaseInstanceWrapper)
 	 */
 	@Override
 	public int addConnectionInformation(DatabaseURL databaseURL,
@@ -539,10 +539,10 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#getLocalDatabaseInstances(org.h2.h2o.util.DatabaseURL)
+	 * @see org.h2.h2o.manager.ISystemTable#getLocalDatabaseInstances(org.h2.h2o.util.DatabaseURL)
 	 */
 	@Override
-	public Set<DataManagerWrapper> getLocalDatabaseInstances(DatabaseURL localMachineLocation)
+	public Set<TableManagerWrapper> getLocalDatabaseInstances(DatabaseURL localMachineLocation)
 			throws RemoteException, MovedException {
 		int connectionID = getConnectionID(localMachineLocation);
 		
@@ -550,14 +550,14 @@ public class PersistentSchemaManager extends PersistentManager implements ISchem
 
 		String sql = "SELECT tablename, schemaname FROM " + TABLES + "  WHERE manager_location= " + connectionID + ";";
 		
-		Set<DataManagerWrapper> localTables = new HashSet<DataManagerWrapper>();
+		Set<TableManagerWrapper> localTables = new HashSet<TableManagerWrapper>();
 		try {
 			LocalResult rs = executeQuery(sql);
 			
 			
 			while (rs.next()){
 				TableInfo tableInfo = new TableInfo(rs.currentRow()[0].getString(), rs.currentRow()[1].getString());
-				DataManagerWrapper dmw = new DataManagerWrapper(tableInfo, null, null);
+				TableManagerWrapper dmw = new TableManagerWrapper(tableInfo, null, null);
 				localTables.add(dmw);
 			}
 		} catch (SQLException e) {

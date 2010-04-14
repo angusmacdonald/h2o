@@ -10,7 +10,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
-import org.h2.h2o.manager.PersistentSchemaManager;
+import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;
 import org.junit.Test;
@@ -392,13 +392,13 @@ public class MultiQueryTransactionTests extends TestBase{
 	}
 
 	/**
-	 * Tests that when a transaction fails to create a table the schema manager
+	 * Tests that when a transaction fails to create a table the System Table
 	 * is not updated with information on that table.
 	 * 
 	 * <p>TESTS AFTER A CREATE TABLE STATEMENT HAS BEEN RUN, BUT BEFORE ANYTHING ELSE.
 	 */
 	@Test
-	public void testSchemaManagerContents(){
+	public void testSystemTableContents(){
 		try{
 
 			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
@@ -406,7 +406,7 @@ public class MultiQueryTransactionTests extends TestBase{
 			ResultSet rs = sa.getResultSet();
 
 			if (rs.next() && rs.next()){
-				fail("There should only be one table in the schema manager.");
+				fail("There should only be one table in the System Table.");
 			}
 
 			Constants.IS_TESTING_CREATETABLE_FAILURE = true;
@@ -424,7 +424,7 @@ public class MultiQueryTransactionTests extends TestBase{
 			rs = sa.getResultSet();
 
 			if (rs.next() && rs.next()){
-				fail("There should only be one table in the schema manager.");
+				fail("There should only be one table in the System Table.");
 			}
 		} catch (SQLException e){
 			e.printStackTrace();
@@ -433,14 +433,14 @@ public class MultiQueryTransactionTests extends TestBase{
 	}
 
 //	/**
-//	 * Tests that when a transaction fails to create a table the schema manager
+//	 * Tests that when a transaction fails to create a table the System Table
 //	 * is not updated with information on that table.
 //	 * 
 //	 * <p>TESTS AFTER A CREATE TABLE STATEMENT HAS BEEN RUN, AND AFTER SOME INSERTS
 //	 * INTO THAT TABLE.
 //	 */
 //	@Test
-//	public void testSchemaManagerContentsAfterInsert(){
+//	public void testSystemTableContentsAfterInsert(){
 //		try{
 //
 //			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
@@ -448,7 +448,7 @@ public class MultiQueryTransactionTests extends TestBase{
 //			ResultSet rs = sa.getResultSet();
 //
 //			if (rs.next() && rs.next()){
-//				fail("There should only be one table in the schema manager.");
+//				fail("There should only be one table in the System Table.");
 //			}
 //
 //			Constants.IS_TESTING_QUERY_FAILURE = true;
@@ -473,7 +473,7 @@ public class MultiQueryTransactionTests extends TestBase{
 //			rs = sa.getResultSet();
 //
 //			if (rs.next() && rs.next()){
-//				fail("There should only be one table in the schema manager.");
+//				fail("There should only be one table in the System Table.");
 //			}
 //		} catch (SQLException e){
 //			e.printStackTrace();
@@ -497,8 +497,8 @@ public class MultiQueryTransactionTests extends TestBase{
 			sa.execute("INSERT INTO TEST VALUES(5, 'Few');");
 			sa.execute("INSERT INTO TEST VALUES(6, 'Cases');");
 
-			ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
-			cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+			ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+			cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 			Statement sa2 = ca.createStatement();
 
@@ -635,7 +635,7 @@ public class MultiQueryTransactionTests extends TestBase{
 			server.start();
 
 			Class.forName("org.h2.Driver");
-			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 			Statement sa = conn.createStatement();
 
@@ -650,7 +650,7 @@ public class MultiQueryTransactionTests extends TestBase{
 
 			server.start();
 
-			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 
 			PreparedStatement mStmt = conn.prepareStatement( "insert into PUBLIC.TEST (id,name) values (?,?)" );

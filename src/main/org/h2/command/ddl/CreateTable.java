@@ -25,9 +25,9 @@ import org.h2.engine.Session;
 import org.h2.expression.Expression;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.QueryProxyManager;
-import org.h2.h2o.comms.remote.DataManagerRemote;
-import org.h2.h2o.manager.DataManager;
-import org.h2.h2o.manager.ISchemaManager;
+import org.h2.h2o.comms.remote.TableManagerRemote;
+import org.h2.h2o.manager.TableManager;
+import org.h2.h2o.manager.ISystemTable;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TableInfo;
@@ -121,8 +121,8 @@ public class CreateTable extends SchemaCommand {
 	public int update() throws SQLException, RemoteException {
 		/*
 		 * The only time this is called is when a CreateTable command is replayed at database startup. This differs
-		 * from the normal CreateTable execution because a DataManager for the table may exist somewhere. Instead of creating a new
-		 * data manager this command should look for an existing one somewhere. The command to create the Data Manager tables should have
+		 * from the normal CreateTable execution because a TableManager for the table may exist somewhere. Instead of creating a new
+		 * Table Manager this command should look for an existing one somewhere. The command to create the Table Manager tables should have
 		 * already been replayed, so the 
 		 */
 		return update(TransactionNameGenerator.generateName("NULLCREATION"));
@@ -226,12 +226,12 @@ public class CreateTable extends SchemaCommand {
 			/*
 			 * #########################################################################
 			 * 
-			 *  Create a schema manager entry.
+			 *  Create a System Table entry.
 			 * 
 			 * #########################################################################
 			 */
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_") && !isStartup()){
-				ISchemaManager sm = db.getSchemaManager(); //db.getSystemSession()
+				ISystemTable sm = db.getSystemTable(); //db.getSystemSession()
 
 
 				assert sm != null;
@@ -275,12 +275,12 @@ public class CreateTable extends SchemaCommand {
 					TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
 
 
-					DataManagerRemote dataManagerRemote = queryProxy.getDataManagerLocation();
+					TableManagerRemote tableManagerRemote = queryProxy.getTableManagerLocation();
 
 
-					sm.addTableInformation(dataManagerRemote, ti);	
+					sm.addTableInformation(tableManagerRemote, ti);	
 				} catch (MovedException e){
-					throw new RemoteException("Schema Manager has moved.");
+					throw new RemoteException("System Table has moved.");
 				}
 				table.setTableSet(tableSet);
 
@@ -428,9 +428,9 @@ public class CreateTable extends SchemaCommand {
 		 * #########################################################################
 		 */
 
-		if (Constants.IS_H2O && !db.getSchemaManagerReference().isSchemaManagerLocal() && !db.isManagementDB() && !tableName.startsWith("H2O_") && !isStartup()){
+		if (Constants.IS_H2O && !db.getSystemTableReference().isSystemTableLocal() && !db.isManagementDB() && !tableName.startsWith("H2O_") && !isStartup()){
 
-			DataManagerRemote dm = db.getDataManager(getSchema().getName() + "." + tableName);
+			TableManagerRemote dm = db.getTableManager(getSchema().getName() + "." + tableName);
 
 			if (dm != null){
 				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
@@ -444,18 +444,18 @@ public class CreateTable extends SchemaCommand {
 
 			//TableInfo tableDetails, Database databas
 			TableInfo ti = new TableInfo(tableName, getSchema().getName(), 0l, 0, "TABLE", db.getDatabaseURL());
-			DataManager dataManager = null;
+			TableManager tableManager = null;
 			try {
-				dataManager = new DataManager(ti, db);
+				tableManager = new TableManager(ti, db);
 			} catch (Exception e1) {
 				e1.printStackTrace();
 			}
-			DataManagerRemote stub = null;
+			TableManagerRemote stub = null;
 			/*
-			 * Make data manager serializable first.
+			 * Make Table Manager serializable first.
 			 */
 			try {
-				stub = (DataManagerRemote) UnicastRemoteObject.exportObject(dataManager, 0);
+				stub = (TableManagerRemote) UnicastRemoteObject.exportObject(tableManager, 0);
 			} catch (Exception e) {
 				e.printStackTrace();
 				//May already be exported.

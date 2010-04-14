@@ -60,9 +60,9 @@ public class DatabaseURL implements Serializable {
 	private boolean tcp;
 
 	/**
-	 * Whether the database in question is a schema manager.
+	 * Whether the database in question is a System Table.
 	 */
-	private boolean schemaManager;
+	private boolean systemTable;
 
 	private int rmiPort;
 
@@ -100,7 +100,7 @@ public class DatabaseURL implements Serializable {
 		
 		boolean tcp = (url.contains(":tcp:"));
 		boolean mem = (url.contains(":mem:"));
-		boolean schemaManager = (url.contains(":sm:"));
+		boolean systemTable = (url.contains(":sm:"));
 
 		int port = -1;
 		String hostname = null;
@@ -150,18 +150,18 @@ public class DatabaseURL implements Serializable {
 
 		if (hostname == null) hostname = NetUtils.getLocalAddress();
 
-		return new DatabaseURL(url, hostname, port, dbLocation, tcp, mem, schemaManager, rmiPort);
+		return new DatabaseURL(url, hostname, port, dbLocation, tcp, mem, systemTable, rmiPort);
 	}
 
-	private DatabaseURL(String originalURL, String hostname, int port, String dbLocation, boolean tcp, boolean mem, boolean schemaManager, int rmiPort){
+	private DatabaseURL(String originalURL, String hostname, int port, String dbLocation, boolean tcp, boolean mem, boolean systemTable, int rmiPort){
 		this.originalURL = originalURL;
-		this.newURL = "jdbc:h2:" + ((schemaManager)? "sm:": "") + ((tcp)? "tcp://" + hostname + ":" + port + "/": "") + ((mem)? "mem:": "") + dbLocation;
+		this.newURL = "jdbc:h2:" + ((systemTable)? "sm:": "") + ((tcp)? "tcp://" + hostname + ":" + port + "/": "") + ((mem)? "mem:": "") + dbLocation;
 		this.urlWithoutSM = "jdbc:h2:" + ((tcp)? "tcp://" + hostname + ":" + port + "/": "") + ((mem)? "mem:": "") + dbLocation;
 		this.hostname = hostname;
 		this.port = port;
 		this.tcp = tcp;
 		this.mem = mem;
-		this.schemaManager = schemaManager;
+		this.systemTable = systemTable;
 		this.dbLocation = dbLocation;
 		this.rmiPort = rmiPort;
 	}
@@ -175,9 +175,9 @@ public class DatabaseURL implements Serializable {
 	 * @param dbLocation2
 	 */
 	public DatabaseURL(String connectionType, String hostname,
-			int port, String dbLocation, boolean schemaManager) {
+			int port, String dbLocation, boolean systemTable) {
 
-		this(null, hostname, port, dbLocation, connectionType.equals("tcp"), connectionType.equals("mem"), schemaManager, 0);
+		this(null, hostname, port, dbLocation, connectionType.equals("tcp"), connectionType.equals("mem"), systemTable, 0);
 
 	}
 
@@ -245,11 +245,11 @@ public class DatabaseURL implements Serializable {
 	}
 
 	/**
-	 * True if this database is a schema manager.
-	 * @return the schemaManager
+	 * True if this database is a System Table.
+	 * @return the systemTable
 	 */
-	public boolean isSchemaManager() {
-		return schemaManager;
+	public boolean isSystemTable() {
+		return systemTable;
 	}
 
 	/**

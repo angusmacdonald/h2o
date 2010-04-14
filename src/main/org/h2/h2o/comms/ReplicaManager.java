@@ -34,7 +34,7 @@ public class ReplicaManager implements Serializable {
 	private Set<DatabaseInstanceRemote> activeReplicas;
 
 	/**
-	 * The database instance which is running this data manager. 
+	 * The database instance which is running this Table Manager. 
 	 */
 	private DatabaseInstanceRemote primaryLocation;
 

@@ -14,7 +14,7 @@ import org.h2.command.dml.Select;
 import org.h2.expression.Parameter;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.QueryProxyManager;
-import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.result.LocalResult;
 import org.h2.table.Table;
 import org.h2.test.h2o.H2OTest;

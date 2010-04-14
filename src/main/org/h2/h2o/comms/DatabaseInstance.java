@@ -6,7 +6,7 @@ import java.sql.SQLException;
 import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.engine.Session;
-import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
@@ -124,21 +124,21 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#getSchemaManagerLocation()
+	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#getSystemTableLocation()
 	 */
 	@Override
-	public DatabaseURL getSchemaManagerURL() throws RemoteException {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Responding to request for schema manager location at database '" + session.getDatabase().getDatabaseLocation() + "'.");
-		return session.getDatabase().getSchemaManagerReference().getSchemaManagerURL();
+	public DatabaseURL getSystemTableURL() throws RemoteException {
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Responding to request for System Table location at database '" + session.getDatabase().getDatabaseLocation() + "'.");
+		return session.getDatabase().getSystemTableReference().getSystemTableURL();
 	}
 
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#executeUpdate(java.lang.String)
 	 */
 	@Override
-	public int executeUpdate(String sql, boolean schemaManagerCommand)  throws RemoteException, SQLException  {
+	public int executeUpdate(String sql, boolean systemTableCommand)  throws RemoteException, SQLException  {
 		Command command = null;
-		if (schemaManagerCommand){
+		if (systemTableCommand){
 			Parser schemaParser = new Parser(session.getDatabase().getH2OSession(), true);
 			command = schemaParser.prepareCommand(sql);
 		} else {
@@ -152,23 +152,23 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#setSchemaManagerLocation(uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference)
+	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#setSystemTableLocation(uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference)
 	 */
 	@Override
-	public void setSchemaManagerLocation(IChordRemoteReference schemaManagerLocation, DatabaseURL databaseURL) throws RemoteException {
-		this.session.getDatabase().getSchemaManagerReference().setSchemaManagerLocation(schemaManagerLocation, databaseURL);
+	public void setSystemTableLocation(IChordRemoteReference systemTableLocation, DatabaseURL databaseURL) throws RemoteException {
+		this.session.getDatabase().getSystemTableReference().setSystemTableLocation(systemTableLocation, databaseURL);
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#findDataManagerReference(org.h2.h2o.util.TableInfo)
+	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#findTableManagerReference(org.h2.h2o.util.TableInfo)
 	 */
 	@Override
-	public DataManagerRemote findDataManagerReference(TableInfo ti)
+	public TableManagerRemote findTableManagerReference(TableInfo ti)
 	throws RemoteException {
 		try {
-			return this.session.getDatabase().getSchemaManagerReference().lookup(ti);
+			return this.session.getDatabase().getSystemTableReference().lookup(ti);
 		} catch (SQLException e) {
-			ErrorHandling.errorNoEvent("Couldn't find data manager at this machine. Data manager needs to be re-instantiated.."); //TODO allow for re-instantiation at this point.
+			ErrorHandling.errorNoEvent("Couldn't find Table Manager at this machine. Table Manager needs to be re-instantiated.."); //TODO allow for re-instantiation at this point.
 			return null;
 		}
 	}

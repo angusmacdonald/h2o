@@ -34,7 +34,7 @@ public class ChordTests extends TestBase {
 	private static String[] dbs =  {"two", "three"}; //, "four", "five", "six", "seven", "eight", "nine"
 	
 	/**
-	 * Whether the schema manager state has been replicated yet.
+	 * Whether the System Table state has been replicated yet.
 	 */
 	public static boolean isReplicated = false;
 	public static Set<LookupPinger> pingSet = new HashSet<LookupPinger>();
@@ -63,7 +63,7 @@ public class ChordTests extends TestBase {
 			String fullDBName = "jdbc:h2:mem:" + db;
 			H2oProperties properties = new H2oProperties(DatabaseURL.parseURL(fullDBName));
 			properties.createNewFile();
-			properties.setProperty("schemaManagerLocation", "jdbc:h2:sm:mem:one");
+			properties.setProperty("systemTableLocation", "jdbc:h2:sm:mem:one");
 			properties.saveAndClose();
 		}
 	}
@@ -76,8 +76,8 @@ public class ChordTests extends TestBase {
 		Constants.IS_TEAR_DOWN = false; 
 		
 		//Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-		//PersistentSchemaManager.USERNAME = "angus";
-		//PersistentSchemaManager.PASSWORD = "";
+		//PersistentSystemTable.USERNAME = "angus";
+		//PersistentSystemTable.PASSWORD = "";
 
 		org.h2.Driver.load();
 
@@ -152,7 +152,7 @@ public class ChordTests extends TestBase {
 	}
 	
 	/**
-	 * This sequence of events used to lock the sys table causing entries to not be included in the schema manager.
+	 * This sequence of events used to lock the sys table causing entries to not be included in the System Table.
 	 * This tests that it never happens again.
 	 */
 	@Test
@@ -180,22 +180,22 @@ public class ChordTests extends TestBase {
 	}
 	
 	/**
-	 * Tests that when the data manager is migrated another database instance is able to connect to the new manager without any manual intervention.
+	 * Tests that when the Table Manager is migrated another database instance is able to connect to the new manager without any manual intervention.
 	 * 
 	 */
 	@Test
-	public void DataManagerMigration() throws InterruptedException {
+	public void TableManagerMigration() throws InterruptedException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		try {
-			sas[1].executeUpdate("MIGRATE DATAMANAGER test");
+			sas[1].executeUpdate("MIGRATE TABLEMANAGER test");
 
 			/*
-			 * Test that the new data manager can be found.
+			 * Test that the new Table Manager can be found.
 			 */
-			sas[2].executeUpdate("INSERT INTO TEST VALUES(4, 'helloagain');");
+			sas[1].executeUpdate("INSERT INTO TEST VALUES(4, 'helloagain');");
 			
 			/*
-			 * Test that the old data manager is no longer accessible, and that the referene can be updated.
+			 * Test that the old Table Manager is no longer accessible, and that the referene can be updated.
 			 */
 			sas[0].executeUpdate("INSERT INTO TEST VALUES(5, 'helloagainagain');");
 			
@@ -209,10 +209,10 @@ public class ChordTests extends TestBase {
 	 * Tests that when migration fails when an incorrect table name is given.
 	 */
 	@Test
-	public void DataManagerMigrationFail() throws InterruptedException {
+	public void TableManagerMigrationFail() throws InterruptedException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		try {
-			sas[1].executeUpdate("MIGRATE DATAMANAGER testy");
+			sas[1].executeUpdate("MIGRATE TABLEMANAGER testy");
 			fail("Didn't work.");
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -221,22 +221,22 @@ public class ChordTests extends TestBase {
 	}
 	
 	@Test
-	public void DataManagerMigrationWithCachedReference() throws InterruptedException {
+	public void TableManagerMigrationWithCachedReference() throws InterruptedException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		try {
 			sas[0].executeUpdate("INSERT INTO TEST VALUES(7, '7');");
 			sas[1].executeUpdate("INSERT INTO TEST VALUES(6, '6');");
 			sas[2].executeUpdate("INSERT INTO TEST VALUES(8, '8');");
 			
-			sas[1].executeUpdate("MIGRATE DATAMANAGER test");
+			sas[1].executeUpdate("MIGRATE TABLEMANAGER test");
 
 			/*
-			 * Test that the new data manager can be found.
+			 * Test that the new Table Manager can be found.
 			 */
 			sas[2].executeUpdate("INSERT INTO TEST VALUES(4, 'helloagain');");
 			
 			/*
-			 * Test that the old data manager is no longer accessible, and that the referene can be updated.
+			 * Test that the old Table Manager is no longer accessible, and that the referene can be updated.
 			 */
 			sas[0].executeUpdate("INSERT INTO TEST VALUES(5, 'helloagainagain');");
 			
@@ -245,7 +245,7 @@ public class ChordTests extends TestBase {
 			if (rs.next()){
 			assertEquals(2, rs.getInt(1));
 			} else {
-				fail("Schema manager wasn't updated correctly.");
+				fail("System Table wasn't updated correctly.");
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -255,14 +255,14 @@ public class ChordTests extends TestBase {
 	
 	
 	/**
-	 * Tests that when the schema manager is migrated another database instance is able to connect to the new manager without any manual intervention.
+	 * Tests that when the System Table is migrated another database instance is able to connect to the new manager without any manual intervention.
 	 * 
 	 */
 	@Test
-	public void SchemaManagerMigration() throws InterruptedException {
+	public void SystemTableMigration() throws InterruptedException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		try {
-			sas[1].executeUpdate("MIGRATE SCHEMAMANAGER");
+			sas[1].executeUpdate("MIGRATE SYSTEMTABLE");
 
 			sas[2].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 			sas[2].execute("SELECT * FROM TEST2;");
@@ -274,7 +274,7 @@ public class ChordTests extends TestBase {
 
 	@SuppressWarnings("deprecation")
 	@Test
-	public void SchemaManagerFailure() throws InterruptedException {
+	public void SystemTableFailure() throws InterruptedException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		try {
 			
@@ -350,11 +350,11 @@ public class ChordTests extends TestBase {
 	}
 	
 //	/**
-//	 * Tests that a data manager will migrate itself when the database is closed.
+//	 * Tests that a Table Manager will migrate itself when the database is closed.
 //	 * @throws InterruptedException
 //	 */
 //	@Test
-//	public void DataManagerMigrationOnClose() throws InterruptedException {
+//	public void TableManagerMigrationOnClose() throws InterruptedException {
 //		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 //		try {
 //			

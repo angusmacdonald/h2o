@@ -9,7 +9,7 @@ import org.h2.command.Prepared;
 import org.h2.command.ddl.SchemaCommand;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
-import org.h2.h2o.manager.PersistentSchemaManager;
+import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.result.LocalResult;
 import org.h2.schema.Schema;
 import org.h2.table.TableLinkConnection;
@@ -81,7 +81,7 @@ public class GetRmiPort extends SchemaCommand {
 	private int pushCommand(String remoteDBLocation, String query) throws SQLException, RemoteException {
 		Database db = session.getDatabase();
 
-		conn = db.getLinkConnection("org.h2.Driver", remoteDBLocation, PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+		conn = db.getLinkConnection("org.h2.Driver", remoteDBLocation, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 		int result = -1;
 

@@ -23,10 +23,10 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 public class MultipleSchemaTests extends TestBase {
 
 	/**
-	 * Tests that a table in a non-default schema is added succussfully to the schema manager.
+	 * Tests that a table in a non-default schema is added succussfully to the System Table.
 	 */
 	@Test
-	public void TestSchemaManagerAdd(){
+	public void TestSystemTableAdd(){
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		
 		try{
@@ -46,7 +46,7 @@ public class MultipleSchemaTests extends TestBase {
 				assertEquals("TEST", rs.getString(1));
 				assertEquals("SCHEMA2", rs.getString(2));
 			} else {
-				fail("Expected a schema manager entry here.");
+				fail("Expected a System Table entry here.");
 			}
 
 			sa.execute("DROP TABLE IF EXISTS SCHEMA2.TEST");
@@ -58,10 +58,10 @@ public class MultipleSchemaTests extends TestBase {
 	}
 
 	/**
-	 * Tests that a table in a non-default schema is dropped succussfully from the schema manager.
+	 * Tests that a table in a non-default schema is dropped succussfully from the System Table.
 	 */
 	@Test
-	public void TestSchemaManagerDrop(){
+	public void TestSystemTableDrop(){
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		
 		
@@ -82,7 +82,7 @@ public class MultipleSchemaTests extends TestBase {
 				assertEquals("TEST", rs.getString(1));
 				assertEquals("SCHEMA2", rs.getString(2));
 			} else {
-				fail("Expected a schema manager entry here.");
+				fail("Expected a System Table entry here.");
 			}
 
 			/*
@@ -96,7 +96,7 @@ public class MultipleSchemaTests extends TestBase {
 			}
 
 			/*
-			 * Now check that the schema manager has correct information.
+			 * Now check that the System Table has correct information.
 			 */
 			sa.execute("SELECT tablename, schemaname FROM H2O.H2O_TABLE;");
 			rs = sa.getResultSet();	
@@ -116,10 +116,10 @@ public class MultipleSchemaTests extends TestBase {
 	}
 	
 	/**
-	 * Tests that a non-default schema is dropped succussfully from the schema manager.
+	 * Tests that a non-default schema is dropped succussfully from the System Table.
 	 */
 	@Test
-	public void TestSchemaManagerDropSchema(){
+	public void TestSystemTableDropSchema(){
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		try{
 
@@ -138,7 +138,7 @@ public class MultipleSchemaTests extends TestBase {
 				assertEquals("TEST", rs.getString(1));
 				assertEquals("SCHEMA2", rs.getString(2));
 			} else {
-				fail("Expected a schema manager entry here.");
+				fail("Expected a System Table entry here.");
 			}
 
 			/*
@@ -155,7 +155,7 @@ public class MultipleSchemaTests extends TestBase {
 			}
 
 			/*
-			 * Now check that the schema manager has correct information.
+			 * Now check that the System Table has correct information.
 			 */
 			sa.execute("SELECT tablename, schemaname FROM H2O.H2O_TABLE;");
 			rs = sa.getResultSet();	

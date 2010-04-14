@@ -3,7 +3,7 @@ package org.h2.h2o.remote;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 
-import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.util.DatabaseURL;
 
@@ -18,19 +18,19 @@ import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
 public interface IChordInterface {
 
 	/**
-	 * Get the actual location of the schema manager by first looking up the location where the 'schemamanager'
-	 * lookup resoloves to, then querying the database instance at this location for the location of the schema manager.
+	 * Get the actual location of the System Table by first looking up the location where the 'schemamanager'
+	 * lookup resoloves to, then querying the database instance at this location for the location of the System Table.
 	 * @return
 	 */
-	public DatabaseURL getSchemaManagerLocation() throws RemoteException;
+	public DatabaseURL getSystemTableLocation() throws RemoteException;
 
 	/**
-	 * Get a reference to the Chord node which is responsible for managing the database's schema manager lookup,
-	 * BUT NOT NECESSARILY THE SCHEMA MANAGER ITSELF.
-	 * @return	Remote reference to the chord node managing the schema manager.
+	 * Get a reference to the Chord node which is responsible for managing the database's System Table lookup,
+	 * BUT NOT NECESSARILY THE System Table ITSELF.
+	 * @return	Remote reference to the chord node managing the System Table.
 	 * @throws RemoteException 
 	 */
-	public IChordRemoteReference lookupSchemaManagerNodeLocation() throws RemoteException;
+	public IChordRemoteReference lookupSystemTableNodeLocation() throws RemoteException;
 
 	/**
 	 * Get the remote chord reference for the local chord node. This can be used for comparison (e.g. to check whether a reference
@@ -66,11 +66,11 @@ public interface IChordInterface {
 	public ChordNodeImpl getChordNode();
 
 	/**
-	 * Bind the given data manager to the local registry. This isn't used to access data managers, but to maintain references to them
+	 * Bind the given Table Manager to the local registry. This isn't used to access Table Managers, but to maintain references to them
 	 * to prevent their remote proxies from being garbage collected.
 	 * @param fullTableName	Name of the table.
-	 * @param stub	Remote data manager proxy.
+	 * @param stub	Remote Table Manager proxy.
 	 */
-	public void bind(String fullTableName, DataManagerRemote stub);
+	public void bind(String fullTableName, TableManagerRemote stub);
 
 }

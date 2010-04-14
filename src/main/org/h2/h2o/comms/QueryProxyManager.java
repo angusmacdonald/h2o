@@ -13,7 +13,7 @@ import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
-import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.util.LockType;
@@ -41,7 +41,7 @@ public class QueryProxyManager {
 
 	private Set<DatabaseInstanceRemote> allReplicas;
 
-	private Set<DataManagerRemote> dataManagers;
+	private Set<TableManagerRemote> tableManagers;
 
 	private DatabaseInstanceRemote requestingDatabase;
 
@@ -90,7 +90,7 @@ public class QueryProxyManager {
 			this.allReplicas.add(localDatabase);
 		}
 
-		this.dataManagers = new HashSet<DataManagerRemote>();
+		this.tableManagers = new HashSet<TableManagerRemote>();
 
 		this.requestingDatabase = db.getLocalDatabaseInstance();
 
@@ -120,8 +120,8 @@ public class QueryProxyManager {
 			allReplicas.add(parser.getSession().getDatabase().getLocalDatabaseInstance());
 		}
 
-		if (proxy.getDataManagerLocation() != null){
-			dataManagers.add(proxy.getDataManagerLocation());
+		if (proxy.getTableManagerLocation() != null){
+			tableManagers.add(proxy.getTableManagerLocation());
 		}
 
 		if (proxy.getUpdateID() > this.updateID){ // the update ID should be the highest of all the proxy update IDs
@@ -142,7 +142,7 @@ public class QueryProxyManager {
 			return true; //this proxy already holds the required lock 
 
 		//The proxy doesn't hold the lock - does the manager already have it?
-		if (dataManagers.contains(proxy.getDataManagerLocation())){
+		if (tableManagers.contains(proxy.getTableManagerLocation())){
 
 			proxy.setLockType(LockType.WRITE); //TODO fix hardcoded lock type.
 			return true; //XXX this check isn't perfect, but will do for now.
@@ -272,15 +272,15 @@ public class QueryProxyManager {
 	 * Release locks for every table that is part of this update. This also updates the information on
 	 * which replicas were updated (which are currently active), hence the parameter
 	 * @param updatedReplicas The set of replicas which were updated. This is NOT used to release locks, but to update the 
-	 * data managers state on which replicas are up-to-date. Null if none have changed.
+	 * Table Managers state on which replicas are up-to-date. Null if none have changed.
 	 */
 	public void endTransaction(Set<DatabaseInstanceRemote> updatedReplicas) { 
 		try {
-			for (DataManagerRemote dataManagerProxy: dataManagers){
-				dataManagerProxy.releaseLock(requestingDatabase, updatedReplicas, updateID);
+			for (TableManagerRemote tableManagerProxy: tableManagers){
+				tableManagerProxy.releaseLock(requestingDatabase, updatedReplicas, updateID);
 			}
 		} catch (RemoteException e) {
-			ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the data manager");
+			ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the Table Manager");
 		} catch (MovedException e) {
 			ErrorHandling.exceptionError(e, "This should never happen - migrating process should hold the lock.");
 		}

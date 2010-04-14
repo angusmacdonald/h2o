@@ -14,9 +14,9 @@ import org.h2.h2o.util.DatabaseURL;
 public interface IDatabaseInstanceLocator {
 
 //	/**
-//	 * Obtain a proxy for an exposed data manager.
-//	 * @param instanceName	The name of the table whose data manager we are looking for.
-//	 * @return	Reference to the exposed data manager (under remote interface).
+//	 * Obtain a proxy for an exposed Table Manager.
+//	 * @param instanceName	The name of the table whose Table Manager we are looking for.
+//	 * @return	Reference to the exposed Table Manager (under remote interface).
 //	 */
 //	public abstract DatabaseInstanceRemote lookupDatabaseInstance(
 //			String instanceName) throws SQLException;
@@ -64,7 +64,7 @@ public interface IDatabaseInstanceLocator {
 //			String replicaLocationString);
 //
 //	/**
-//	 * Get references to all current data managers.
+//	 * Get references to all current Table Managers.
 //	 * @return
 //	 */
 //	public abstract Set<DatabaseInstanceRemote> getInstances();
@@ -72,6 +72,6 @@ public interface IDatabaseInstanceLocator {
 //	/**
 //	 * @return
 //	 */
-//	public abstract DatabaseURL getSchemaManagerLocation();
+//	public abstract DatabaseURL getSystemTableLocation();
 
 }

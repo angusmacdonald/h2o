@@ -15,16 +15,16 @@ import java.util.Set;
 import org.h2.engine.Constants;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.DatabaseInstance;
-import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
-import org.h2.h2o.manager.DataManagerWrapper;
-import org.h2.h2o.manager.ISchemaManager;
-import org.h2.h2o.manager.ISchemaManagerReference;
+import org.h2.h2o.manager.TableManagerWrapper;
+import org.h2.h2o.manager.ISystemTable;
+import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.manager.MovedException;
-import org.h2.h2o.manager.SchemaManagerReference;
+import org.h2.h2o.manager.SystemTableReference;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.H2oProperties;
-import org.h2.h2o.util.SchemaManagerReplication;
+import org.h2.h2o.util.SystemTableReplication;
 import org.h2.h2o.util.TableInfo;
 import org.h2.test.h2o.ChordTests;
 
@@ -59,9 +59,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	private DatabaseURL localMachineLocation;
 
 	/**
-	 * Local wrapper for the schema manager.
+	 * Local wrapper for the System Table.
 	 */
-	private ISchemaManagerReference schemaManagerRef;
+	private ISystemTableReference systemTableRef;
 
 	/**
 	 * Name under which the local database instance is bound to its RMI registry.
@@ -79,15 +79,15 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	private int rmiPort;
 
 	/**
-	 * Used to cache the location of the schema manager by asking the known node where it is on startup. This is only
-	 * ever really used for this initial lookup. The rest of the schema manager funcitonality is hidden behind the 
-	 * SchemaManagerReference object.
+	 * Used to cache the location of the System Table by asking the known node where it is on startup. This is only
+	 * ever really used for this initial lookup. The rest of the System Table funcitonality is hidden behind the 
+	 * SystemTableReference object.
 	 */
-	private DatabaseURL actualSchemaManagerLocation = null;
+	private DatabaseURL actualSystemTableLocation = null;
 
 	/**
 	 * This chord nodes predecessor in the ring. When the predecessor changes this is used to determine if the
-	 * schema manager was located on the old predecessor, and to check whether it has failed.
+	 * System Table was located on the old predecessor, and to check whether it has failed.
 	 */
 	private IChordRemoteReference predecessor;
 
@@ -98,8 +98,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	 */
 	public static int currentPort = 30000;
 
-	public ChordRemote(DatabaseURL localMachineLocation, ISchemaManagerReference schemaManagerRef){
-		this.schemaManagerRef = schemaManagerRef;
+	public ChordRemote(DatabaseURL localMachineLocation, ISystemTableReference systemTableRef){
+		this.systemTableRef = systemTableRef;
 		this.localMachineLocation = localMachineLocation;
 	}
 
@@ -112,18 +112,18 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		this.localMachineLocation.setRMIPort(getRmiPort()); //set the port on which the RMI server is running.
 
 		/*
-		 * The schema manager location must be known at this point, otherwise the database instance will not start. 
+		 * The System Table location must be known at this point, otherwise the database instance will not start. 
 		 */
-		if (schemaManagerRef.getSchemaManagerURL() != null){
+		if (systemTableRef.getSystemTableURL() != null){
 			H2oProperties databaseSettings = new H2oProperties(localMachineLocation);
 			databaseSettings.loadProperties();	
-			databaseSettings.setProperty("schemaManagerLocation", schemaManagerRef.getSchemaManagerURL().getUrlMinusSM());
+			databaseSettings.setProperty("systemTableLocation", systemTableRef.getSystemTableURL().getUrlMinusSM());
 		} else {
-			ErrorHandling.hardError("Schema manager not known. This can be fixed by creating a known hosts file (called " + 
+			ErrorHandling.hardError("System Table not known. This can be fixed by creating a known hosts file (called " + 
 					localMachineLocation.getDbLocationWithoutIllegalCharacters() + ".instances.properties) and adding the location of a known host.");
 		}
 
-		return schemaManagerRef.getSchemaManagerURL();
+		return systemTableRef.getSystemTableURL();
 	}
 
 	/**
@@ -160,7 +160,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			newSMLocation = localMachineLocation;
 			newSMLocation.setRMIPort(portToUse);
 
-			schemaManagerRef.setSchemaManagerURL(newSMLocation);
+			systemTableRef.setSystemTableURL(newSMLocation);
 
 
 			if (!connected){ //if STILL not connected.
@@ -172,10 +172,10 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		}
 
 		try {
-			DatabaseURL dbURL = schemaManagerRef.getSchemaManagerURL();
+			DatabaseURL dbURL = systemTableRef.getSystemTableURL();
 
 			if (dbURL == null){
-				schemaManagerRef.setSchemaManagerURL(getSchemaManagerLocation());
+				systemTableRef.setSystemTableURL(getSystemTableLocation());
 			}
 		} catch (RemoteException e) {
 			e.printStackTrace();
@@ -189,9 +189,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 		exportConnectionObject();
 
-		assert schemaManagerRef.getSchemaManagerURL() != null;
+		assert systemTableRef.getSystemTableURL() != null;
 
-		return schemaManagerRef.getSchemaManagerURL();
+		return systemTableRef.getSystemTableURL();
 	}
 
 	/**
@@ -375,17 +375,17 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			ErrorHandling.hardError("Failed to create Chord Node.");
 		}
 
-		this.schemaManagerRef.setLookupLocation(chordNode.getProxy());
+		this.systemTableRef.setLookupLocation(chordNode.getProxy());
 
-		this.actualSchemaManagerLocation = databaseURL;
+		this.actualSystemTableLocation = databaseURL;
 
-		this.schemaManagerRef.setInKeyRange(true);
+		this.systemTableRef.setInKeyRange(true);
 
 		((ChordNodeImpl)chordNode).addObserver(this);
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Started local Chord node on : " + databaseURL.getDbLocationWithoutIllegalCharacters() + " : " + hostname + ":" + port + 
-				" : initialized with key :" + chordNode.getKey().toString(10) + " : " + chordNode.getKey() + " : schema manager at " + this.schemaManagerRef.getLookupLocation() + " : ");
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Schema manager key: : : : :" + SchemaManagerReference.schemaManagerKey.toString(10) + " : " + SchemaManagerReference.schemaManagerKey);
+				" : initialized with key :" + chordNode.getKey().toString(10) + " : " + chordNode.getKey() + " : System Table at " + this.systemTableRef.getLookupLocation() + " : ");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "System Table key: : : : :" + SystemTableReference.systemTableKey.toString(10) + " : " + SystemTableReference.systemTableKey);
 
 		return true;
 	}
@@ -427,13 +427,13 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			return false;
 		}
 
-		this.schemaManagerRef.setInKeyRange(false);
+		this.systemTableRef.setInKeyRange(false);
 
 
 		try {
 			DatabaseInstanceRemote lookupInstance = getDatabaseInstanceAt(remoteHostname, remotePort);
-			actualSchemaManagerLocation = lookupInstance.getSchemaManagerURL();
-			this.schemaManagerRef.setSchemaManagerURL(actualSchemaManagerLocation);
+			actualSystemTableLocation = lookupInstance.getSystemTableURL();
+			this.systemTableRef.setSystemTableURL(actualSystemTableLocation);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (NotBoundException e) {
@@ -442,7 +442,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Started local Chord node on : " + 
 				databaseName + " : " + localHostname + " : " + localPort + " : initialized with key :" + chordNode.getKey().toString(10) + 
-				" : " + chordNode.getKey() + " : schema manager at " + this.schemaManagerRef.getLookupLocation() + " : " + chordNode.getSuccessor().getKey());
+				" : " + chordNode.getKey() + " : System Table at " + this.systemTableRef.getLookupLocation() + " : " + chordNode.getSuccessor().getKey());
 
 
 		return true;
@@ -450,7 +450,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 	/**
 	 * Called by various chord functions in {@link ChordNodeImpl} which are being observed. Of particular interest
-	 * to this class is the case where the predecessor of a node changes. This is used to assess whether the schema managers
+	 * to this class is the case where the predecessor of a node changes. This is used to assess whether the System Tables
 	 * location has changed.
 	 * 
 	 * <p>If changing this method please note that it is called synchronously by the Observable class, ChordNodeImpl. This means
@@ -473,42 +473,42 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	}
 
 	/**
-	 * Called when the successor has changed. Used to check whether the schema manager was on the predecessor, and if it was (and has failed) to restart it
+	 * Called when the successor has changed. Used to check whether the System Table was on the predecessor, and if it was (and has failed) to restart it
 	 * on this machine using local replicated state.
 	 */
 	private void predecessorChangeEvent() {
 
-		boolean schemaManagerWasOnPredecessor = schemaManagerRef.isThisSchemaManagerNode(this.predecessor);
+		boolean systemTableWasOnPredecessor = systemTableRef.isThisSystemTableNode(this.predecessor);
 		this.predecessor = chordNode.getPredecessor();
 
-		if (schemaManagerWasOnPredecessor){
-			//Check whether the schema manager is still active.
-			boolean schemaManagerAlive = false;
+		if (systemTableWasOnPredecessor){
+			//Check whether the System Table is still active.
+			boolean systemTableAlive = false;
 			try {
-				this.schemaManagerRef.getSchemaManager().checkConnection();
-				schemaManagerAlive = true;
+				this.systemTableRef.getSystemTable().checkConnection();
+				systemTableAlive = true;
 			} catch (Exception e) {
-				schemaManagerAlive = false;
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "The schema manager is no longer accessible.");
+				systemTableAlive = false;
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "The System Table is no longer accessible.");
 			}
 
 
-			if (!schemaManagerAlive){
-				// The schema manager was on the predecessor and has now failed. It must be re-instantiated on this node.
-				schemaManagerRef.migrateSchemaManagerToLocalInstance(true, true);
+			if (!systemTableAlive){
+				// The System Table was on the predecessor and has now failed. It must be re-instantiated on this node.
+				systemTableRef.migrateSystemTableToLocalInstance(true, true);
 			}
 		}
 
 	}
 
 	/**
-	 * The successor has changed. Make sure the schema manager is replicated to the new successor if this instance is controlling the schema
+	 * The successor has changed. Make sure the System Table is replicated to the new successor if this instance is controlling the schema
 	 * manager.
 	 */
 	private void successorChangeEvent() {
 
-		if (this.schemaManagerRef.isSchemaManagerLocal()){
-			//The schema manager is running locally. Replicate it's state to the new successor.
+		if (this.systemTableRef.isSystemTableLocal()){
+			//The System Table is running locally. Replicate it's state to the new successor.
 			IChordRemoteReference successor = chordNode.getSuccessor();
 
 			DatabaseInstanceRemote dbInstance = null;
@@ -529,21 +529,21 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 					 */
 
 					if (!Constants.IS_NON_SM_TEST){
-						//Don't bother trying to replicate the schema manager if this is a test which doesn't require it.
-						Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting schema manager replication thread on successor change on: " + this.localMachineLocation.getDbLocation() + ".");
+						//Don't bother trying to replicate the System Table if this is a test which doesn't require it.
+						Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting System Table replication thread on successor change on: " + this.localMachineLocation.getDbLocation() + ".");
 
-						SchemaManagerReplication newThread = new SchemaManagerReplication(hostname, port, this.schemaManagerRef, this);
+						SystemTableReplication newThread = new SystemTableReplication(hostname, port, this.systemTableRef, this);
 						newThread.start();
 					}
 
 				} else if (dbInstance.equals(this.databaseInstance)) {
 					//Do nothing. There is only one node in the network.
-					Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "There is only one node in the network so the schema manager can't be replicated elsewhere.");
+					Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "There is only one node in the network so the System Table can't be replicated elsewhere.");
 				} else {
 					if (dbInstance.isAlive()){
-						this.schemaManagerRef.getSchemaManager().addStateReplicaLocation(dbInstance);
+						this.systemTableRef.getSystemTable().addStateReplicaLocation(dbInstance);
 
-						//dbInstance.createNewSchemaManagerBackup(db.getSchemaManager());
+						//dbInstance.createNewSystemTableBackup(db.getSystemTable());
 						//dbInstance.executeUpdate("CREATE REPLICA SCHEMA H2O");
 
 						if (Constants.IS_TEST){
@@ -555,7 +555,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				ErrorHandling.errorNoEvent("Remote exception thrown. Happens when successor has very recently changed and chord ring hasn't stabilized.");
 			} catch (MovedException e) {
 				try {
-					schemaManagerRef.handleMovedException(e);
+					systemTableRef.handleMovedException(e);
 				} catch (SQLException e1) {
 					e1.printStackTrace();
 				}
@@ -600,7 +600,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 		boolean successesorIsDifferentMachine = successor != null && !chordNode.getKey().equals(successor.getKey());
 		boolean thisIsntATestShouldPreventThis = !Constants.IS_NON_SM_TEST && !Constants.IS_TEAR_DOWN;
-		boolean schemaManagerHeldLocally = schemaManagerRef.isSchemaManagerLocal();
+		boolean systemTableHeldLocally = systemTableRef.isSystemTableLocal();
 
 
 
@@ -616,7 +616,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		}
 
 		/*
-		 * Migrate any local data managers.
+		 * Migrate any local Table Managers.
 		 */
 		if (successesorIsDifferentMachine && thisIsntATestShouldPreventThis){
 
@@ -624,15 +624,15 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				///successorDB = getDatabaseInstanceAt(successor);
 
 
-				Set<DataManagerWrapper> localManagers = schemaManagerRef.getSchemaManager().getLocalDatabaseInstances(this.getLocalMachineLocation());
+				Set<TableManagerWrapper> localManagers = systemTableRef.getSystemTable().getLocalDatabaseInstances(this.getLocalMachineLocation());
 
 
 				/*
 				 * Create replicas if needed.
 				 */
-				for (DataManagerWrapper wrapper: localManagers){
+				for (TableManagerWrapper wrapper: localManagers){
 
-					DataManagerRemote dmr = wrapper.getDataManager();
+					TableManagerRemote dmr = wrapper.getTableManager();
 					if (dmr.getReplicaManager().getPrimary().equals(databaseInstance) && dmr.getReplicaManager().getNumberOfReplicas() == 1){
 						//This machine holds the only replica - replicate on the successor as well.
 						Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Replicating table [" + wrapper.getTableInfo().getFullTableName() + "] to successor: " + successor);
@@ -643,13 +643,13 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 
 				/*
-				 * Migrate data managers.
+				 * Migrate Table Managers.
 				 */
-				for (DataManagerWrapper wrapper: localManagers){
+				for (TableManagerWrapper wrapper: localManagers){
 
-					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Migrating data manager [" + wrapper.getTableInfo().getFullTableName() + "] to successor: " + successor);
+					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Migrating Table Manager [" + wrapper.getTableInfo().getFullTableName() + "] to successor: " + successor);
 
-					successorDB.executeUpdate("MIGRATE DATAMANAGER " + wrapper.getTableInfo().getFullTableName(), false);
+					successorDB.executeUpdate("MIGRATE TABLEMANAGER " + wrapper.getTableInfo().getFullTableName(), false);
 
 				}
 
@@ -663,19 +663,19 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		}
 
 		/*
-		 * Migrate the schema manager if needed.
+		 * Migrate the System Table if needed.
 		 */
-		if (schemaManagerHeldLocally && successesorIsDifferentMachine && thisIsntATestShouldPreventThis){
+		if (systemTableHeldLocally && successesorIsDifferentMachine && thisIsntATestShouldPreventThis){
 
-			//Migrate the schema manager to this node before shutdown.
+			//Migrate the System Table to this node before shutdown.
 			try {
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Migrating schema manager to successor: " + successor);
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Migrating System Table to successor: " + successor);
 				successorDB = getDatabaseInstanceAt(successor);
 
-				successorDB.executeUpdate("MIGRATE SCHEMAMANAGER", false);
+				successorDB.executeUpdate("MIGRATE SYSTEMTABLE", false);
 
 			} catch (Exception e) {
-				ErrorHandling.errorNoEvent("Failed to migrate schema manager to successor: " + successor);
+				ErrorHandling.errorNoEvent("Failed to migrate System Table to successor: " + successor);
 			}
 		}
 
@@ -697,16 +697,16 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.h2.h2o.remote.IChordInterface#getSchemaManagerLocation()
+	 * @see org.h2.h2o.remote.IChordInterface#getSystemTableLocation()
 	 */
-	public DatabaseURL getSchemaManagerLocation() throws RemoteException{
-		if (actualSchemaManagerLocation != null){ 
-			return actualSchemaManagerLocation; 
+	public DatabaseURL getSystemTableLocation() throws RemoteException{
+		if (actualSystemTableLocation != null){ 
+			return actualSystemTableLocation; 
 		}
 
 		IChordRemoteReference lookupLocation = null;
-		lookupLocation = lookupSchemaManagerNodeLocation();
-		schemaManagerRef.setLookupLocation(lookupLocation);
+		lookupLocation = lookupSystemTableNodeLocation();
+		systemTableRef.setLookupLocation(lookupLocation);
 
 		String lookupHostname = lookupLocation.getRemote().getAddress().getHostName();
 		int lookupPort = lookupLocation.getRemote().getAddress().getPort();
@@ -715,26 +715,26 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		try {
 			lookupInstance = getDatabaseInstanceAt(lookupHostname, lookupPort);
 
-			actualSchemaManagerLocation = lookupInstance.getSchemaManagerURL();
-			this.schemaManagerRef.setSchemaManagerURL(actualSchemaManagerLocation);
+			actualSystemTableLocation = lookupInstance.getSystemTableURL();
+			this.systemTableRef.setSystemTableURL(actualSystemTableLocation);
 		} catch (NotBoundException e) {
 			e.printStackTrace();
 		}
 
 
 
-		return actualSchemaManagerLocation;
+		return actualSystemTableLocation;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.h2.h2o.remote.IChordInterface#lookupSchemaManagerNodeLocation()
+	 * @see org.h2.h2o.remote.IChordInterface#lookupSystemTableNodeLocation()
 	 */
-	public IChordRemoteReference lookupSchemaManagerNodeLocation() throws RemoteException{
+	public IChordRemoteReference lookupSystemTableNodeLocation() throws RemoteException{
 		IChordRemoteReference lookupLocation = null;
 
 		if (chordNode != null){
-			lookupLocation = chordNode.lookup(SchemaManagerReference.schemaManagerKey);
+			lookupLocation = chordNode.lookup(SystemTableReference.systemTableKey);
 		}
 
 		return lookupLocation;
@@ -742,18 +742,18 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.h2.h2o.remote.IDatabaseRemote#exportSchemaManager(org.h2.h2o.manager.SchemaManagerReference)
+	 * @see org.h2.h2o.remote.IDatabaseRemote#exportSystemTable(org.h2.h2o.manager.SystemTableReference)
 	 */
-	public void exportSchemaManager(ISchemaManagerReference schemaManagerRef) {
-		ISchemaManager stub = null;
+	public void exportSystemTable(ISystemTableReference systemTableRef) {
+		ISystemTable stub = null;
 
 		try {
-			stub = (ISchemaManager) UnicastRemoteObject.exportObject(schemaManagerRef.getSchemaManager(), 0);
-			getLocalRegistry().bind(SchemaManagerReference.SCHEMA_MANAGER, stub);
+			stub = (ISystemTable) UnicastRemoteObject.exportObject(systemTableRef.getSystemTable(), 0);
+			getLocalRegistry().bind(SystemTableReference.SCHEMA_MANAGER, stub);
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			//ErrorHandling.hardError("Failed to export and bind schema manager.");
+			//ErrorHandling.hardError("Failed to export and bind System Table.");
 		}
 	}
 
@@ -769,8 +769,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	 * (non-Javadoc)
 	 * @see org.h2.h2o.remote.IChordInterface#getLookupLocation(uk.ac.standrews.cs.nds.p2p.interfaces.IKey)
 	 */
-	public IChordRemoteReference getLookupLocation(IKey schemaManagerKey) throws RemoteException {
-		return chordNode.lookup(schemaManagerKey);
+	public IChordRemoteReference getLookupLocation(IKey systemTableKey) throws RemoteException {
+		return chordNode.lookup(systemTableKey);
 
 	}
 
@@ -783,10 +783,10 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.remote.IChordInterface#bind(java.lang.String, org.h2.h2o.comms.remote.DataManagerRemote)
+	 * @see org.h2.h2o.remote.IChordInterface#bind(java.lang.String, org.h2.h2o.comms.remote.TableManagerRemote)
 	 */
 	@Override
-	public void bind(String fullTableName, DataManagerRemote stub) {
+	public void bind(String fullTableName, TableManagerRemote stub) {
 		try {
 			getLocalRegistry().rebind(fullTableName, stub);
 		} catch (Exception e) {

@@ -77,9 +77,9 @@ public class TcpServer implements Service {
     private String key, keyDatabase;
 
     /**
-     * H2O. The location of the system's schema manager.
+     * H2O. The location of the system's System Table.
      */
-    private String schemaManagerLocation = null;
+    private String systemTableLocation = null;
     
     /**
      * Get the database name of the management database.
@@ -196,7 +196,7 @@ public class TcpServer implements Service {
                 }
             }
             else if ("-SMLocation".equals(a)) {
-                schemaManagerLocation = args[++i];
+                systemTableLocation = args[++i];
             }
         }
         org.h2.Driver.load();
@@ -490,8 +490,8 @@ public class TcpServer implements Service {
 	/**
 	 * @return
 	 */
-	public String getSchemaManagerLocation() {
-		return schemaManagerLocation;
+	public String getSystemTableLocation() {
+		return systemTableLocation;
 	}
 
 }

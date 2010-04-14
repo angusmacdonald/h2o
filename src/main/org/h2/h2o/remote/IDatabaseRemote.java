@@ -4,7 +4,7 @@ import java.rmi.RemoteException;
 
 import org.h2.engine.Session;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
-import org.h2.h2o.manager.ISchemaManagerReference;
+import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.util.DatabaseURL;
 
 import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
@@ -12,7 +12,7 @@ import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
 /**
  * The interface between a local database instance and the rest of the database system.
  * 
- * <p>Classes implementing this interface must manage connections to the schema manager, and to
+ * <p>Classes implementing this interface must manage connections to the System Table, and to
  * other database instances.
  *  
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
@@ -55,11 +55,11 @@ public interface IDatabaseRemote {
 	public DatabaseURL getLocalMachineLocation();
 	
 	/**
-	 * Export the schema manager contained within this SchemaManagerReference via the UnicastRemoteObject class
+	 * Export the System Table contained within this SystemTableReference via the UnicastRemoteObject class
 	 * to allow it to be accessed remotely.
-	 * @param schemaManagerRef	Local wrapper class for the schema manager.
+	 * @param systemTableRef	Local wrapper class for the System Table.
 	 */
-	public void exportSchemaManager(ISchemaManagerReference schemaManagerRef);
+	public void exportSystemTable(ISystemTableReference systemTableRef);
 
 	/**
 	 * Find the database instance located at the location given. The chord reference parameter is used

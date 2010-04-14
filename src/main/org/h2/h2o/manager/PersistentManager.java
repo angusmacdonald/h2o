@@ -28,7 +28,7 @@ public class PersistentManager {
 	private ReplicaManager stateReplicaManager;
 
 	/**
-	 * Query parser instance to be used for all queries to the schema manager.
+	 * Query parser instance to be used for all queries to the System Table.
 	 */
 	private Parser queryParser;
 
@@ -52,7 +52,7 @@ public class PersistentManager {
 
 		if (session == null){
 			ErrorHandling.error("Couldn't find system session. Local database has been shutdown.");
-			db.getSchemaManager().stopLookupPinger();
+			db.getSystemTable().stopLookupPinger();
 			return;
 		}
 
@@ -122,7 +122,7 @@ public class PersistentManager {
 	}
 
 	/**
-	 * Creates the set of tables used by the schema manager.
+	 * Creates the set of tables used by the System Table.
 	 * @return Result of the update.
 	 * @throws SQLException
 	 */
@@ -145,7 +145,7 @@ public class PersistentManager {
 	}
 
 	/**
-	 * Add a new table to the schema manager. Called at the end of a CreateTable update. 
+	 * Add a new table to the System Table. Called at the end of a CreateTable update. 
 	 * @param tableName				Name of the table being added.
 	 * @param modificationId		Modification ID of the table.
 	 * @param databaseLocation		Location of the table (the database it is stored in)
@@ -157,7 +157,7 @@ public class PersistentManager {
 	 * @throws RemoteException 
 	 * @throws SQLException 
 	 */
-	public boolean addTableInformation(DatabaseURL dataManagerURL, TableInfo tableDetails, boolean addReplicaInfo) throws RemoteException, MovedException, SQLException{
+	public boolean addTableInformation(DatabaseURL tableManagerURL, TableInfo tableDetails, boolean addReplicaInfo) throws RemoteException, MovedException, SQLException{
 
 		getNewQueryParser();
 
@@ -170,21 +170,21 @@ public class PersistentManager {
 			DatabaseURL dbURL = tableDetails.getDbURL();
 
 			if (dbURL == null){
-				//find the URL from the data manager.
-				dbURL = dataManagerURL;
+				//find the URL from the Table Manager.
+				dbURL = tableManagerURL;
 			}
 
 			int connectionID = getConnectionID(dbURL);
 
 			assert connectionID != -1;
 
-			if (!isTableListed(tableDetails)){ // the table doesn't already exist in the schema manager.
+			if (!isTableListed(tableDetails)){ // the table doesn't already exist in the System Table.
 				addTableInformation(tableDetails, connectionID);
 			}
 
 			if (addReplicaInfo){
 				int tableID = getTableID(tableDetails);
-				if (!isReplicaListed(tableDetails, connectionID)){ // the table doesn't already exist in the schema manager.
+				if (!isReplicaListed(tableDetails, connectionID)){ // the table doesn't already exist in the System Table.
 					addReplicaInformation(tableDetails, tableID, connectionID, true);				
 				}
 			}
@@ -197,8 +197,8 @@ public class PersistentManager {
 	}
 
 	/**
-	 * Add a new replica to the schema manager. The table already exists, so it is assumed there is an entry for that table
-	 * in the schema manager. This method only updates the replica table in the schema manager.
+	 * Add a new replica to the System Table. The table already exists, so it is assumed there is an entry for that table
+	 * in the System Table. This method only updates the replica table in the System Table.
 	 * @param tableDetails		Fully qualified name of the table, and its location (as a DatabaseURL).
 	 * @throws RemoteException	Thrown if there was a problem connnecting to this instance.
 	 * @throws MovedException	Thrown if the instance has been migrated to another machine.
@@ -213,7 +213,7 @@ public class PersistentManager {
 			int connectionID = getConnectionID(tableDetails.getDbURL());
 			int tableID = getTableID(tableDetails);
 
-			if (!isReplicaListed(tableDetails, connectionID)){ // the table doesn't already exist in the schema manager.
+			if (!isReplicaListed(tableDetails, connectionID)){ // the table doesn't already exist in the System Table.
 				addReplicaInformation(tableDetails, tableID, connectionID, false);				
 			}
 		} catch (SQLException e) {
@@ -222,7 +222,7 @@ public class PersistentManager {
 	}
 
 	/**
-	 * Check if the schema manager contains connection information for this database.
+	 * Check if the System Table contains connection information for this database.
 	 * @param localMachineAddress	The address through which remote machines can connect to the database.
 	 * @param localMachinePort		The port on which the database is running.
 	 * @return						True, if the connection information already exists.
@@ -236,7 +236,7 @@ public class PersistentManager {
 	}
 
 	/**
-	 * Update the schema manager with new connection information.
+	 * Update the System Table with new connection information.
 	 * @param localMachineAddress	The address through which remote machines can connect to the database.
 	 * @param localMachinePort		The port on which the database is running.
 	 * @param databaseLocation 		The location of the local database. Used to determine whether a database in running in embedded mode.
@@ -348,7 +348,7 @@ public class PersistentManager {
 		if (result.next()){
 			return result.currentRow()[0].getInt();
 		} else {
-			throw new SQLException("Internal problem: tableID not found in schema manager.");
+			throw new SQLException("Internal problem: tableID not found in System Table.");
 		}
 
 
@@ -356,10 +356,10 @@ public class PersistentManager {
 
 
 	/**
-	 * A check whether a table is already listed in the schema manager.
+	 * A check whether a table is already listed in the System Table.
 	 * @param tableName			Name of the table for which the check is being made.
 	 * @param schemaName 
-	 * @return	true, if the table's information is already in the schema manager.
+	 * @return	true, if the table's information is already in the System Table.
 	 * @throws SQLException 
 	 */
 	public boolean isTableListed(TableInfo ti) throws SQLException{
@@ -369,10 +369,10 @@ public class PersistentManager {
 	}
 
 	/**
-	 * A check whether a replica is already listed in the schema manager.
+	 * A check whether a replica is already listed in the System Table.
 	 * @param tableName			Name of the table for which the check is being made.
 	 * @param connectionID		Connection ID of the machine holding this replica.
-	 * @return	true, if the replica's information is already in the schema manager.
+	 * @return	true, if the replica's information is already in the System Table.
 	 * @throws SQLException 
 	 */
 	public boolean isReplicaListed(TableInfo ti, int connectionID) throws SQLException{
@@ -412,7 +412,7 @@ public class PersistentManager {
 	}
 
 	/**
-	 * Update the schema manager with new table information
+	 * Update the System Table with new table information
 	 * @param tableName			Name of the table being added.
 	 * @param modificationID	Mofification ID of the table.
 	 * @param session 
@@ -426,7 +426,7 @@ public class PersistentManager {
 	}
 
 	/**
-	 * Update the schema manager with new replica information
+	 * Update the System Table with new replica information
 	 * @param tableID			Name of the replica being added.
 	 * @param modificationID	Mofification ID of the table.
 	 * @return					Result of the update.
@@ -499,7 +499,7 @@ public class PersistentManager {
 	}
 
 	/**
-	 * Removes a particular replica from the schema manager. 
+	 * Removes a particular replica from the System Table. 
 	 * @param tableName
 	 * @param dbLocation 
 	 * @param machineName 
@@ -529,7 +529,7 @@ public class PersistentManager {
 	}
 
 	/**
-	 * Removes a table completely from the schema manager. Information is removed for the table itself and for all replicas.
+	 * Removes a table completely from the System Table. Information is removed for the table itself and for all replicas.
 	 * @param tableName		Leave null if you want to drop the entire schema.
 	 * @param schemaName 
 	 * @throws SQLException 
@@ -620,7 +620,7 @@ public class PersistentManager {
 				stateReplicaManager.add(databaseReference);
 
 			} catch (SQLException e) {
-				ErrorHandling.errorNoEvent("Failed to replicate schema manager state on: " + databaseReference.getConnectionURL().getDbLocation());
+				ErrorHandling.errorNoEvent("Failed to replicate System Table state on: " + databaseReference.getConnectionURL().getDbLocation());
 			} 
 
 
@@ -634,7 +634,7 @@ public class PersistentManager {
 	throws RemoteException, MovedException {
 
 		/*
-		 * If the schema managers state is replicateed onto this machine remove it as a replica location.
+		 * If the System Tables state is replicateed onto this machine remove it as a replica location.
 		 */
 		this.stateReplicaManager.remove(databaseInstance);
 		/*
@@ -667,11 +667,11 @@ public class PersistentManager {
 	}
 
 	/**
-	 * Change the location of the data manager to the new location specified.
-	 * @param tableInfo 	New location of the data manager.
+	 * Change the location of the Table Manager to the new location specified.
+	 * @param tableInfo 	New location of the Table Manager.
 	 */
-	public void changeDataManagerLocation(TableInfo tableInfo) {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "About to update the location of the data manager " + tableInfo + ".");
+	public void changeTableManagerLocation(TableInfo tableInfo) {
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "About to update the location of the Table Manager " + tableInfo + ".");
 
 		int connectionID = getConnectionID(tableInfo.getDbURL());
 

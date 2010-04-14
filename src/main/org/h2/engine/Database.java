@@ -27,16 +27,16 @@ import org.h2.constant.SysProperties;
 import org.h2.constraint.Constraint;
 import org.h2.h2o.comms.DatabaseInstance;
 import org.h2.h2o.comms.QueryProxyManager;
-import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
-import org.h2.h2o.manager.DataManager;
-import org.h2.h2o.manager.ISchemaManager;
-import org.h2.h2o.manager.ISchemaManagerReference;
+import org.h2.h2o.manager.TableManager;
+import org.h2.h2o.manager.ISystemTable;
+import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.manager.MovedException;
-import org.h2.h2o.manager.SchemaManager;
-import org.h2.h2o.manager.SchemaManagerReference;
-import org.h2.h2o.manager.SchemaManagerRemote;
+import org.h2.h2o.manager.SystemTable;
+import org.h2.h2o.manager.SystemTableReference;
+import org.h2.h2o.manager.SystemTableRemote;
 import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.remote.IChordInterface;
 import org.h2.h2o.remote.IDatabaseRemote;
@@ -118,9 +118,9 @@ public class Database implements DataHandler {
 
 
 	//	/**
-	//	 * H2O. Manages access to data managers, both local and remote.
+	//	 * H2O. Manages access to Table Managers, both local and remote.
 	//	 */
-	//	private IDataManagerLocator dataManagerLocator;
+	//	private ITableManagerLocator tableManagerLocator;
 	//
 	//	/**
 	//	 * H2O. Manages access to remote database instances via RMI.
@@ -220,7 +220,7 @@ public class Database implements DataHandler {
 	private long reconnectCheckNext;
 	private boolean reconnectChangePending;
 
-	private ISchemaManagerReference schemaManagerRef;
+	private ISystemTableReference systemTableRef;
 
 	/**
 	 * Interface for this database instance to the rest of the database system.
@@ -251,8 +251,8 @@ public class Database implements DataHandler {
 		//this.chord = new ChordInterface();
 		this.compareMode = new CompareMode(null, null, 0);
 		//this.databaseLocation = ci.getSmallName();
-		schemaManagerRef = new SchemaManagerReference(this);
-		databaseRemote = new ChordRemote(DatabaseURL.parseURL(ci.getOriginalURL()), schemaManagerRef);
+		systemTableRef = new SystemTableReference(this);
+		databaseRemote = new ChordRemote(DatabaseURL.parseURL(ci.getOriginalURL()), systemTableRef);
 
 		//this.localMachineAddress = NetUtils.getLocalAddress();
 		//this.localMachinePort = ci.getPort();
@@ -710,24 +710,24 @@ public class Database implements DataHandler {
 
 		/*
 		 * #####################################################################################
-		 * H2O STARTUP CODE FOR SCHEMA MANAGER, TABLE INSTANITATION
+		 * H2O STARTUP CODE FOR System Table, TABLE INSTANITATION
 		 * #####################################################################################
 		 */
 		if (Constants.IS_H2O && !isManagementDB()){ //don't run this code with the TCP server management DB
 
 
-			//databaseRemote.bindSchemaManagerReference(schemaManagerRef);
+			//databaseRemote.bindSystemTableReference(systemTableRef);
 			databaseRemote.connectToDatabaseSystem(h2oSystemSession); //systemSession
 		}
 
 		/*
 		 * ############################################################################
 		 * 
-		 * END OF SCHEMA MANAGER STARTUP CODE
+		 * END OF System Table STARTUP CODE
 		 * 
 		 * At this point in the code this database instance will be connected to a schema
 		 * manager, so when tables are generated (below), it will be possible for them to
-		 * re-instantiate data managers where possible.
+		 * re-instantiate Table Managers where possible.
 		 * 
 		 * ############################################################################
 		 */
@@ -749,9 +749,9 @@ public class Database implements DataHandler {
 
 		if (Constants.IS_H2O && !isManagementDB() && databaseExists){
 			/*
-			 * Create or connect to a new schema manager instance if this node already has tables on it.
+			 * Create or connect to a new System Table instance if this node already has tables on it.
 			 */
-			createSchemaManager(true, schemaManagerRef.isSchemaManagerLocal(), false);
+			createSystemTable(true, systemTableRef.isSystemTableLocal(), false);
 		}
 
 		if ( records.size() > 0 ){
@@ -785,7 +785,7 @@ public class Database implements DataHandler {
 		systemSession.commit(true);
 		traceSystem.getTrace(Trace.DATABASE).info("opened " + databaseName);
 
-		if (Constants.IS_H2O && !isManagementDB() && ( !databaseExists || !schemaManagerRef.isSchemaManagerLocal())){ //don't run this code with the TCP server management DB
+		if (Constants.IS_H2O && !isManagementDB() && ( !databaseExists || !systemTableRef.isSystemTableLocal())){ //don't run this code with the TCP server management DB
 
 			try {
 				createH2OTables(false, databaseExists);
@@ -793,16 +793,16 @@ public class Database implements DataHandler {
 				e.printStackTrace();
 			}
 
-			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, " Created new schema manager tables.");
-		} else if (Constants.IS_H2O && !isManagementDB() && ( databaseExists && schemaManagerRef.isSchemaManagerLocal())){
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, " Created new System Table tables.");
+		} else if (Constants.IS_H2O && !isManagementDB() && ( databaseExists && systemTableRef.isSystemTableLocal())){
 			/*
-			 * This is the schema manager. Reclaim previously held state.
+			 * This is the System Table. Reclaim previously held state.
 			 */
 			try {
 				createH2OTables(true, databaseExists);
-				schemaManagerRef.getSchemaManager().buildSchemaManagerState();
+				systemTableRef.getSystemTable().buildSystemTableState();
 
-				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Re-created schema manager state.");
+				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Re-created System Table state.");
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -816,22 +816,22 @@ public class Database implements DataHandler {
 	 * @param persistedTablesExist
 	 * @param isStartup 
 	 */
-	private void createSchemaManager(boolean databaseExists,
+	private void createSystemTable(boolean databaseExists,
 			boolean persistedTablesExist, boolean createTables) throws SQLException {
-		if (schemaManagerRef.isSchemaManagerLocal()){ // Create the schema manager tables and immediately add local tables to this manager.
+		if (systemTableRef.isSystemTableLocal()){ // Create the System Table tables and immediately add local tables to this manager.
 
-			SchemaManager schemaManager = null;
+			SystemTable systemTable = null;
 			try {
-				schemaManager = new SchemaManager(this, createTables);
+				systemTable = new SystemTable(this, createTables);
 			} catch (Exception e) {
-				ErrorHandling.hardError("Failed to create schema manager.");
+				ErrorHandling.hardError("Failed to create System Table.");
 			} 
 
-			schemaManagerRef.setSchemaManager(schemaManager);
-			databaseRemote.exportSchemaManager(schemaManagerRef);
+			systemTableRef.setSystemTable(systemTable);
+			databaseRemote.exportSystemTable(systemTableRef);
 
-		} else { // Not a schema manager -  Get a reference to the schema manager.
-			schemaManagerRef.findSchemaManager();
+		} else { // Not a System Table -  Get a reference to the System Table.
+			systemTableRef.findSystemTable();
 		}
 	}
 
@@ -840,20 +840,20 @@ public class Database implements DataHandler {
 	//	 * currently exist this node will become the first in a new system. 
 	//	 */
 	//	private void connectInstanceToDatabaseSystem() {
-	//		this.schemaManagerLocation = databaseRemote.connectToDatabaseSystem(localMachineLocation, systemSession);
+	//		this.systemTableLocation = databaseRemote.connectToDatabaseSystem(localMachineLocation, systemSession);
 	//		
 
-	//		this.isSchemaManager = this.localMachineLocation.equals(this.schemaManagerLocation);
+	//		this.isSystemTable = this.localMachineLocation.equals(this.systemTableLocation);
 	//
 	//		/*
-	//		 * The schema manager location must be known at this point, otherwise the database instance will not start. 
+	//		 * The System Table location must be known at this point, otherwise the database instance will not start. 
 	//		 */
-	//		if (this.schemaManagerLocation != null){
+	//		if (this.systemTableLocation != null){
 	//			databaseSettings = new H2oProperties(this.getDatabaseURL());
 	//			this.databaseSettings.loadProperties();	
-	//			this.databaseSettings.setProperty("schemaManagerLocation", this.schemaManagerLocation.getUrlMinusSM());
+	//			this.databaseSettings.setProperty("systemTableLocation", this.systemTableLocation.getUrlMinusSM());
 	//		} else {
-	//			ErrorHandling.hardError("Schema manager not known. This can be fixed by creating a known hosts file (called " + 
+	//			ErrorHandling.hardError("System Table not known. This can be fixed by creating a known hosts file (called " + 
 	//					this.getDatabaseURL().getDbLocationWithoutIllegalCharacters() + ".instances.properties) and adding the location of a known host.");
 	//		}
 	//	}
@@ -2579,36 +2579,36 @@ public class Database implements DataHandler {
 	}
 
 	/**
-	 * H2O Creates H2O schema meta-data tables, including schema manager tables if this machine is a schema manager.
+	 * H2O Creates H2O schema meta-data tables, including System Table tables if this machine is a System Table.
 	 * @throws Exception 
 	 * @throws SQLException 
 	 */
 	private void createH2OTables(boolean persistedSchemaTablesExist, boolean databaseExists) throws Exception{
 
 		if (!databaseExists){
-			createSchemaManager(databaseExists, persistedSchemaTablesExist, true);
+			createSystemTable(databaseExists, persistedSchemaTablesExist, true);
 		}
 
 
 		if (!persistedSchemaTablesExist){
 			try { 
-				DataManager.createDataManagerTables(systemSession);
+				TableManager.createTableManagerTables(systemSession);
 			} catch (SQLException e) {
 
 				e.printStackTrace();
 			}
 		}
 
-		schemaManagerRef.getSchemaManager().addConnectionInformation(getDatabaseURL(), new DatabaseInstanceWrapper(this.databaseRemote.getLocalDatabaseInstance(), true));
+		systemTableRef.getSystemTable().addConnectionInformation(getDatabaseURL(), new DatabaseInstanceWrapper(this.databaseRemote.getLocalDatabaseInstance(), true));
 
 	}
 
-	public ISchemaManagerReference getSchemaManagerReference(){
-		return schemaManagerRef;
+	public ISystemTableReference getSystemTableReference(){
+		return systemTableRef;
 	}
 
-	public SchemaManagerRemote getSchemaManager(){
-		return schemaManagerRef.getSchemaManager();
+	public SystemTableRemote getSystemTable(){
+		return systemTableRef.getSystemTable();
 	}
 
 	/**
@@ -2656,7 +2656,7 @@ public class Database implements DataHandler {
 		//			url = getLocalMachineAddress() + ":" + getLocalMachinePort() + "/";
 		//		}
 		//
-		//		return "jdbc:h2:" + ((schemaManagerRef.isSchemaManagerLocal())? "sm:": "") + isTCP + url + getDatabaseLocation();
+		//		return "jdbc:h2:" + ((systemTableRef.isSystemTableLocal())? "sm:": "") + isTCP + url + getDatabaseLocation();
 
 		return databaseRemote.getLocalMachineLocation().getURL();
 	}
@@ -2669,9 +2669,9 @@ public class Database implements DataHandler {
 		return getDatabaseURL().getConnectionType();
 	}
 
-	public DataManagerRemote getDataManager(String tableName) throws SQLException{
-		//return databaseRemote.lookupDataManager(tableName);
-		return schemaManagerRef.lookup(tableName);
+	public TableManagerRemote getTableManager(String tableName) throws SQLException{
+		//return databaseRemote.lookupTableManager(tableName);
+		return systemTableRef.lookup(tableName);
 	}
 
 	/**
@@ -2681,7 +2681,7 @@ public class Database implements DataHandler {
 
 	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL) {
 		try {
-			return schemaManagerRef.getSchemaManager().getDatabaseInstance(databaseURL);
+			return systemTableRef.getSystemTable().getDatabaseInstance(databaseURL);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (MovedException e) {
@@ -2693,7 +2693,7 @@ public class Database implements DataHandler {
 
 	public Set<DatabaseInstanceWrapper> getDatabaseInstances() {
 		try {
-			return schemaManagerRef.getSchemaManager().getDatabaseInstances();
+			return systemTableRef.getSystemTable().getDatabaseInstances();
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (MovedException e) {
@@ -2714,8 +2714,8 @@ public class Database implements DataHandler {
 		try {
 
 			this.getLocalDatabaseInstance().setAlive(false);
-			//			this.schemaManagerRef.getSchemaManager(true).removeConnectionInformation(this.databaseRemote.getLocalDatabaseInstance());
-			//			new RemoveConnectionInfo(this.schemaManagerRef.getSchemaManager(true), this.databaseRemote.getLocalDatabaseInstance()).start();
+			//			this.systemTableRef.getSystemTable(true).removeConnectionInformation(this.databaseRemote.getLocalDatabaseInstance());
+			//			new RemoveConnectionInfo(this.systemTableRef.getSystemTable(true), this.databaseRemote.getLocalDatabaseInstance()).start();
 		} catch (Exception e) {
 			//An error here isn't critical.
 		}

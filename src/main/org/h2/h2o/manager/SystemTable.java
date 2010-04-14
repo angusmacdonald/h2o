@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.h2.engine.Database;
-import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.util.DatabaseURL;
@@ -20,41 +20,41 @@ import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, Migratable
+public class SystemTable implements SystemTableRemote { //, ISystemTable, Migratable
 
 	/**
-	 * Interface to the in-memory state of the schema manager.
+	 * Interface to the in-memory state of the System Table.
 	 */
-	private ISchemaManager inMemory;
+	private ISystemTable inMemory;
 
 	/**
-	 * Interface to the persisted state of this schema manager. This object interacts
-	 * with the database to store the state of the schema manager on disk.
+	 * Interface to the persisted state of this System Table. This object interacts
+	 * with the database to store the state of the System Table on disk.
 	 */
-	private ISchemaManager persisted;
+	private ISystemTable persisted;
 
 	/*
 	 * MIGRATION RELATED CODE.
 	 */
 	/**
-	 * If this schema manager has been moved to another location (i.e. its state has been transferred to another machine
-	 * and it is no longer active) this field will not be null, and will note the new location of the schema manager.
+	 * If this System Table has been moved to another location (i.e. its state has been transferred to another machine
+	 * and it is no longer active) this field will not be null, and will note the new location of the System Table.
 	 */
 
 	private String movedLocation = null;
 
 	/**
-	 * Whether the schema manager is in the process of being migrated. If this is true the schema manager will be 'locked', unable to service requests.
+	 * Whether the System Table is in the process of being migrated. If this is true the System Table will be 'locked', unable to service requests.
 	 */
 	private boolean inMigration;
 
 	/**
-	 * Whether the schema manager has been moved to another location.
+	 * Whether the System Table has been moved to another location.
 	 */
 	private boolean hasMoved = false;
 
 	/**
-	 * Whether the schema manager has been shutdown.
+	 * Whether the System Table has been shutdown.
 	 */
 	private boolean shutdown = false;
 
@@ -66,16 +66,16 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	private IChordRemoteReference location;
 
 	/**
-	 * The timeout period for migrating the schema manager.
+	 * The timeout period for migrating the System Table.
 	 */
 	private static final int MIGRATION_TIMEOUT = 10000;
 
 	private LookupPinger pingerThread;
 
-	public SchemaManager(Database db, boolean createTables) throws Exception {
+	public SystemTable(Database db, boolean createTables) throws Exception {
 
-			this.inMemory = new InMemorySchemaManager(db);
-			this.persisted = new PersistentSchemaManager(db, createTables);
+			this.inMemory = new InMemorySystemTable(db);
+			this.persisted = new PersistentSystemTable(db, createTables);
 
 			this.location = db.getChordInterface().getLocalChordReference();
 			this.pingerThread = new LookupPinger(db.getRemoteInterface(), db.getChordInterface(), location);
@@ -87,7 +87,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	 ******************************************************************/
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.ISchemaManager#addConnectionInformation(org.h2.h2o.util.DatabaseURL)
+	 * @see org.h2.h2o.ISystemTable#addConnectionInformation(org.h2.h2o.util.DatabaseURL)
 	 */
 	@Override
 	public int addConnectionInformation(DatabaseURL databaseURL, DatabaseInstanceWrapper remoteDatabase)
@@ -106,7 +106,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.ISchemaManager#addReplicaInformation(org.h2.h2o.TableInfo)
+	 * @see org.h2.h2o.ISystemTable#addReplicaInformation(org.h2.h2o.TableInfo)
 	 */
 	@Override
 	public void addReplicaInformation(TableInfo ti) throws RemoteException, MovedException {
@@ -121,16 +121,16 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.ISchemaManager#confirmTableCreation(java.lang.String, org.h2.h2o.comms.remote.DataManagerRemote, org.h2.h2o.TableInfo)
+	 * @see org.h2.h2o.ISystemTable#confirmTableCreation(java.lang.String, org.h2.h2o.comms.remote.TableManagerRemote, org.h2.h2o.TableInfo)
 	 */
 	@Override
-	public boolean addTableInformation(DataManagerRemote dataManager, TableInfo tableDetails) throws RemoteException, MovedException {
+	public boolean addTableInformation(TableManagerRemote tableManager, TableInfo tableDetails) throws RemoteException, MovedException {
 		preMethodTest();
 		boolean success;
 		try {
-			success = inMemory.addTableInformation(dataManager, tableDetails);
+			success = inMemory.addTableInformation(tableManager, tableDetails);
 			if (!success) return false;
-			persisted.addTableInformation(dataManager, tableDetails);
+			persisted.addTableInformation(tableManager, tableDetails);
 		} catch (SQLException e) {
 			e.printStackTrace();
 			success = false;
@@ -140,7 +140,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.ISchemaManager#removeReplicaInformation(org.h2.h2o.TableInfo)
+	 * @see org.h2.h2o.ISystemTable#removeReplicaInformation(org.h2.h2o.TableInfo)
 	 */
 	@Override
 	public void removeReplicaInformation(TableInfo ti) throws RemoteException, MovedException {
@@ -150,7 +150,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.ISchemaManager#removeTableInformation(java.lang.String, java.lang.String)
+	 * @see org.h2.h2o.ISystemTable#removeTableInformation(java.lang.String, java.lang.String)
 	 */
 	@Override
 	public boolean removeTableInformation(TableInfo ti) throws RemoteException, MovedException {
@@ -166,7 +166,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	 ******************************************************************/
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.ISchemaManager#exists(java.lang.String)
+	 * @see org.h2.h2o.ISystemTable#exists(java.lang.String)
 	 */
 	@Override
 	public boolean exists(TableInfo ti) throws RemoteException, MovedException {
@@ -175,7 +175,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.ISchemaManager#getAllTablesInSchema(java.lang.String)
+	 * @see org.h2.h2o.ISystemTable#getAllTablesInSchema(java.lang.String)
 	 */
 	@Override
 	public Set<String> getAllTablesInSchema(String schemaName)
@@ -185,7 +185,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.ISchemaManager#getNewTableSetNumber()
+	 * @see org.h2.h2o.ISystemTable#getNewTableSetNumber()
 	 */
 	@Override
 	public int getNewTableSetNumber() throws RemoteException, MovedException {
@@ -194,7 +194,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.ISchemaManager#getNumberofReplicas(java.lang.String, java.lang.String)
+	 * @see org.h2.h2o.ISystemTable#getNumberofReplicas(java.lang.String, java.lang.String)
 	 */
 	@Override
 	public int getNumberofReplicas(String tableName, String schemaName)
@@ -204,38 +204,38 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.ISchemaManager#lookup(java.lang.String)
+	 * @see org.h2.h2o.ISystemTable#lookup(java.lang.String)
 	 */
 	@Override
-	public DataManagerRemote lookup(TableInfo ti) throws RemoteException, MovedException {
+	public TableManagerRemote lookup(TableInfo ti) throws RemoteException, MovedException {
 		preMethodTest();
 		return inMemory.lookup(ti);
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#buildSchemaManagerState(org.h2.h2o.manager.ISchemaManager)
+	 * @see org.h2.h2o.manager.ISystemTable#buildSystemTableState(org.h2.h2o.manager.ISystemTable)
 	 */
 	@Override
-	public void buildSchemaManagerState(ISchemaManager otherSchemaManager)
+	public void buildSystemTableState(ISystemTable otherSystemTable)
 	throws RemoteException, MovedException, SQLException {
 		preMethodTest();
-		inMemory.buildSchemaManagerState(otherSchemaManager);
+		inMemory.buildSystemTableState(otherSystemTable);
 		
-		persisted.buildSchemaManagerState(otherSchemaManager);
+		persisted.buildSystemTableState(otherSystemTable);
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#buildSchemaManagerState(org.h2.h2o.manager.ISchemaManager)
+	 * @see org.h2.h2o.manager.ISystemTable#buildSystemTableState(org.h2.h2o.manager.ISystemTable)
 	 */
 	@Override
-	public void buildSchemaManagerState()
+	public void buildSystemTableState()
 	throws RemoteException, MovedException, SQLException {
 		preMethodTest();
-		inMemory.buildSchemaManagerState(persisted);
+		inMemory.buildSystemTableState(persisted);
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#getConnectionInformation()
+	 * @see org.h2.h2o.manager.ISystemTable#getConnectionInformation()
 	 */
 	@Override
 	public Map<DatabaseURL, DatabaseInstanceWrapper> getConnectionInformation() throws RemoteException, MovedException, SQLException {
@@ -243,15 +243,15 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#getDataManagers()
+	 * @see org.h2.h2o.manager.ISystemTable#getTableManagers()
 	 */
 	@Override
-	public Map<TableInfo, DataManagerWrapper> getDataManagers()  throws RemoteException, MovedException {
-		return inMemory.getDataManagers();
+	public Map<TableInfo, TableManagerWrapper> getTableManagers()  throws RemoteException, MovedException {
+		return inMemory.getTableManagers();
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#getReplicaLocations()
+	 * @see org.h2.h2o.manager.ISystemTable#getReplicaLocations()
 	 */
 	@Override
 	public Map<String, Set<TableInfo>> getReplicaLocations()  throws RemoteException, MovedException, MovedException {
@@ -259,7 +259,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#removeAllTableInformation()
+	 * @see org.h2.h2o.manager.ISystemTable#removeAllTableInformation()
 	 */
 	@Override
 	public void removeAllTableInformation() throws RemoteException, MovedException, MovedException, MovedException  {
@@ -273,7 +273,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#addSchemaManagerDataLocation(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
+	 * @see org.h2.h2o.manager.ISystemTable#addSystemTableDataLocation(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
 	 */
 	@Override
 	public void addStateReplicaLocation(
@@ -284,7 +284,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#getDatabaseInstance(org.h2.h2o.util.DatabaseURL)
+	 * @see org.h2.h2o.manager.ISystemTable#getDatabaseInstance(org.h2.h2o.util.DatabaseURL)
 	 */
 	@Override
 	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL) throws RemoteException, MovedException {
@@ -293,7 +293,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#getDatabaseInstances()
+	 * @see org.h2.h2o.manager.ISystemTable#getDatabaseInstances()
 	 */
 	@Override
 	public Set<DatabaseInstanceWrapper> getDatabaseInstances() throws RemoteException, MovedException {
@@ -302,7 +302,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#removeDatabaseInstance(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
+	 * @see org.h2.h2o.manager.ISystemTable#removeDatabaseInstance(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
 	 */
 	@Override
 	public void removeConnectionInformation(
@@ -337,7 +337,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#prepareForMigration()
+	 * @see org.h2.h2o.manager.ISystemTable#prepareForMigration()
 	 */
 	@Override
 	public synchronized void prepareForMigration(String newLocation) throws RemoteException, MovedException, MigrationException {
@@ -352,7 +352,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#completeMigration()
+	 * @see org.h2.h2o.manager.ISystemTable#completeMigration()
 	 */
 	@Override
 	public void completeMigration() throws RemoteException,
@@ -368,7 +368,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#checkConnection()
+	 * @see org.h2.h2o.manager.ISystemTable#checkConnection()
 	 */
 	@Override
 	public void checkConnection() throws RemoteException, MovedException {
@@ -376,14 +376,14 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#changeDataManagerLocation(org.h2.h2o.comms.remote.DataManagerRemote)
+	 * @see org.h2.h2o.manager.ISystemTable#changeTableManagerLocation(org.h2.h2o.comms.remote.TableManagerRemote)
 	 */
 	@Override
-	public void changeDataManagerLocation(DataManagerRemote stub, TableInfo tableInfo)  throws RemoteException, MovedException{
+	public void changeTableManagerLocation(TableManagerRemote stub, TableInfo tableInfo)  throws RemoteException, MovedException{
 		preMethodTest();
 
-		inMemory.changeDataManagerLocation(stub, tableInfo);
-		persisted.changeDataManagerLocation(stub, tableInfo);
+		inMemory.changeTableManagerLocation(stub, tableInfo);
+		persisted.changeTableManagerLocation(stub, tableInfo);
 	}
 
 	/* (non-Javadoc)
@@ -407,7 +407,7 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#stopLookupPinger()
+	 * @see org.h2.h2o.manager.ISystemTable#stopLookupPinger()
 	 */
 	@Override
 	public void stopLookupPinger() {
@@ -415,10 +415,10 @@ public class SchemaManager implements SchemaManagerRemote { //, ISchemaManager, 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#getLocalDatabaseInstances(org.h2.h2o.util.DatabaseURL)
+	 * @see org.h2.h2o.manager.ISystemTable#getLocalDatabaseInstances(org.h2.h2o.util.DatabaseURL)
 	 */
 	@Override
-	public Set<DataManagerWrapper>getLocalDatabaseInstances(DatabaseURL localMachineLocation)
+	public Set<TableManagerWrapper>getLocalDatabaseInstances(DatabaseURL localMachineLocation)
 			throws RemoteException, MovedException {
 		preMethodTest();
 		return inMemory.getLocalDatabaseInstances(localMachineLocation);

@@ -7,7 +7,7 @@ import java.io.Serializable;
  * Wrapper for remote database instance proxies. Contains a reference to the proxy itself
  * and whether the database is actually alive.
  * 
- * <p>This is done because connection information is maintained in the schema manager even when a connection itself
+ * <p>This is done because connection information is maintained in the System Table even when a connection itself
  * has become inactive.
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */

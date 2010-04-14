@@ -38,7 +38,7 @@ public class H2SimpleTest {
 		
 		properties.createNewFile();
 		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
-		properties.setProperty("schemaManagerLocation", "jdbc:h2:db_data/test/scriptSimple");
+		properties.setProperty("systemTableLocation", "jdbc:h2:db_data/test/scriptSimple");
 		
 		properties.saveAndClose();
 		Constants.IS_TESTING_H2_TESTS = true;

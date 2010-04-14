@@ -9,11 +9,11 @@ import org.junit.Test;
 
 
 /**
- * Tests related to the functionality of the data manager.
+ * Tests related to the functionality of the Table Manager.
  *
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class DataManagerTests {
+public class TableManagerTests {
 
 	/**
 	 * @throws java.lang.Exception
@@ -30,7 +30,7 @@ public class DataManagerTests {
 	}
 
 	/**
-	 * Tests that a new data manager is instantiated correctly when a table is created.
+	 * Tests that a new Table Manager is instantiated correctly when a table is created.
 	 */
 	@Test
 	public void newTable(){
@@ -38,7 +38,7 @@ public class DataManagerTests {
 	}
 
 	/**
-	 * Tests that a new data manager is correctly notified when the new replica command is used.
+	 * Tests that a new Table Manager is correctly notified when the new replica command is used.
 	 */
 	@Test
 	public void newReplicaCommand(){
@@ -46,7 +46,7 @@ public class DataManagerTests {
 	}
 	
 	/**
-	 * Tests that a new data manager is correctly notified when a new replica is created. This test actually creates
+	 * Tests that a new Table Manager is correctly notified when a new replica is created. This test actually creates
 	 * a replica, while the previous newReplicaCommand test only runs the NEW REPLICA command.
 	 */
 	@Test
@@ -55,7 +55,7 @@ public class DataManagerTests {
 	}
 	
 	/**
-	 * Tests that a new data manager instance is created when the machine holding the primary copy is restarted.
+	 * Tests that a new Table Manager instance is created when the machine holding the primary copy is restarted.
 	 */
 	@Test
 	public void databaseRestart(){

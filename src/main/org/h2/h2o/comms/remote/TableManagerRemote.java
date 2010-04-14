@@ -14,18 +14,18 @@ import org.h2.h2o.util.TableInfo;
 
 
 /**
- * Remote interface for data manager instances.
+ * Remote interface for Table Manager instances.
  *
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public interface DataManagerRemote extends H2ORemote, Migratable {
+public interface TableManagerRemote extends H2ORemote, Migratable {
 
 	public QueryProxy getQueryProxy(LockType lockType, DatabaseInstanceRemote databaseInstanceRemote) throws RemoteException, SQLException, MovedException;
 
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.PersistentManager#addTableInformation(org.h2.h2o.util.DatabaseURL, org.h2.h2o.util.TableInfo)
 	 */
-	public boolean addTableInformation(DatabaseURL dataManagerURL,
+	public boolean addTableInformation(DatabaseURL tableManagerURL,
 			TableInfo tableDetails) throws RemoteException, MovedException, SQLException;
 
 	/* (non-Javadoc)
@@ -36,9 +36,9 @@ public interface DataManagerRemote extends H2ORemote, Migratable {
 	public void removeReplicaInformation(TableInfo ti)  throws RemoteException, MovedException, SQLException;
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.comms.remote.DataManagerRemote#removeDataManager()
+	 * @see org.h2.h2o.comms.remote.TableManagerRemote#removeTableManager()
 	 */
-	public boolean removeDataManager() throws RemoteException, SQLException,
+	public boolean removeTableManager() throws RemoteException, SQLException,
 			MovedException;
 
 	/**
@@ -53,15 +53,15 @@ public interface DataManagerRemote extends H2ORemote, Migratable {
 	 * Release a lock held by the database instance specified in the parameter. Called at the end of QueryProxy.executeQuery()
 	 * to indicate that the transaction has finished (it may have succeeded or failed).
 	 * @param requestingDatabase	Database which made the original request. Lock was taken out in its name.
-	 * @param updateID The ID given to the update by the data manager. It is returned here to confirm execution of this specific transaction.
+	 * @param updateID The ID given to the update by the Table Manager. It is returned here to confirm execution of this specific transaction.
 	 * @param updatedReplicas The set of replicas that were successfully updated by this query.
 	 * @throws MovedException 
 	 */
 	public void releaseLock(DatabaseInstanceRemote requestingDatabase, Set<DatabaseInstanceRemote> updatedReplicas, int updateID) throws RemoteException, MovedException;
 
 	/**
-	 * Deconstruct this data manager. This is required for testing where a remote reference to a data manager may not completely die when
-	 * expected - this method should essentially render the data manager unusable.
+	 * Deconstruct this Table Manager. This is required for testing where a remote reference to a Table Manager may not completely die when
+	 * expected - this method should essentially render the Table Manager unusable.
 	 */
 	public void shutdown() throws RemoteException;
 
@@ -71,14 +71,14 @@ public interface DataManagerRemote extends H2ORemote, Migratable {
 	public String getSchemaName()throws RemoteException;
 
 	/**
-	 * The name of the table this data manager is responsible for (not including schema name).
+	 * The name of the table this Table Manager is responsible for (not including schema name).
 	 */
 	public String getTableName()throws RemoteException;
 
 	/**
-	 * The object responsible for managing the set of replicas this data manager maintains.
+	 * The object responsible for managing the set of replicas this Table Manager maintains.
 	 * 
-	 * <p>This is called when the data manager is being migrated elsewhere, but shouldn't need to be
+	 * <p>This is called when the Table Manager is being migrated elsewhere, but shouldn't need to be
 	 * called anywhere else.
 	 */
 	public ReplicaManager getReplicaManager() throws RemoteException;
@@ -89,15 +89,15 @@ public interface DataManagerRemote extends H2ORemote, Migratable {
 	public int getTableSet() throws RemoteException;
 
 	/**
-	 * Build up the state of this data manager from the state of another extant manager. Used when migrating the state of the old
+	 * Build up the state of this Table Manager from the state of another extant manager. Used when migrating the state of the old
 	 * manager to this manager.
-	 * @param oldDataManager	Extant data manager.
-	 * @throws MovedException 	Thrown if this data manager has already been moved to somewhere else.
+	 * @param oldTableManager	Extant Table Manager.
+	 * @throws MovedException 	Thrown if this Table Manager has already been moved to somewhere else.
 	 */
-	public void buildDataManagerState(DataManagerRemote oldDataManager) throws RemoteException, MovedException;
+	public void buildTableManagerState(TableManagerRemote oldTableManager) throws RemoteException, MovedException;
 
 	/**
-	 * The URL of the database on which this data manager is located.
+	 * The URL of the database on which this Table Manager is located.
 	 */
 	public DatabaseURL getDatabaseURL() throws RemoteException;
 }

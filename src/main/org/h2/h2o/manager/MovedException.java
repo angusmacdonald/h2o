@@ -8,9 +8,9 @@ public class MovedException extends Exception {
 	private static final long serialVersionUID = -3440292190623018795L;
 
 	/**
-	 * @param newSchemaManagerLocation
+	 * @param newSystemTableLocation
 	 */
-	public MovedException(String newSchemaManagerLocation) {
-		super(newSchemaManagerLocation);
+	public MovedException(String newSystemTableLocation) {
+		super(newSystemTableLocation);
 	}
 }

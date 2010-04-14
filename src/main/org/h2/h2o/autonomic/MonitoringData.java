@@ -7,7 +7,7 @@ package org.h2.h2o.autonomic;
 public interface MonitoringData {
 	/**
 	 * Specifies where the monitoring data originated.
-	 * @return Location of monitoring data (e.g. Data Manager, Database Instance, Local Resource Monitoring)
+	 * @return Location of monitoring data (e.g. Table Manager, Database Instance, Local Resource Monitoring)
 	 */
 	public MonitoringDataLocation getDataLocation();
 	

@@ -8,7 +8,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
-import org.h2.h2o.manager.PersistentSchemaManager;
+import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.H2oProperties;
@@ -56,7 +56,7 @@ public class MultipleServersStandalone {
 
 			H2oProperties properties = new H2oProperties(dbURL);
 			properties.createNewFile();
-			properties.setProperty("schemaManagerLocation", "jdbc:h2:sm:mem:one");
+			properties.setProperty("systemTableLocation", "jdbc:h2:sm:mem:one");
 			properties.saveAndClose();
 
 			H2oProperties knownHosts = new H2oProperties(dbURL, "instances");
@@ -70,19 +70,19 @@ public class MultipleServersStandalone {
 
 	public void setUp() throws Exception {
 		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-		//PersistentSchemaManager.USERNAME = "angus";
-		//PersistentSchemaManager.PASSWORD = "";
+		//PersistentSystemTable.USERNAME = "angus";
+		//PersistentSystemTable.PASSWORD = "";
 
 		org.h2.Driver.load();
 
 		
 		
 		cas = new Connection[dbs.length + 1];
-		cas[0] = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+		cas[0] = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 		for (int i = 1; i < cas.length; i ++){
 			
 			//Thread.sleep(1000);
-			cas[i] = DriverManager.getConnection("jdbc:h2:mem:" + dbs[i-1], PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+			cas[i] = DriverManager.getConnection("jdbc:h2:mem:" + dbs[i-1], PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 		}
 
 		sas = new Statement[dbs.length + 1];
@@ -135,7 +135,7 @@ public class MultipleServersStandalone {
 		
 		Thread.sleep(10000);
 		
-		servers.testSchemaManagerFailure();
+		servers.testSystemTableFailure();
 		
 	//	Thread.sleep(2000);
 		
@@ -156,8 +156,8 @@ public class MultipleServersStandalone {
 	/**
 	 * 
 	 */
-	private void testSchemaManagerFailure() {
-		Diagnostic.trace("CLOSING SCHEMA MANAGER INSTANCE");
+	private void testSystemTableFailure() {
+		Diagnostic.trace("CLOSING System Table INSTANCE");
 		
 		try {
 			cas[0].close();

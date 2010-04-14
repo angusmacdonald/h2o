@@ -533,8 +533,8 @@ public class Constants {
 	public static boolean IS_TEAR_DOWN = false;
 
 	/**
-	 * True if a test is being run but this test doesn't require the state of the schema manager to be replicated. This is done
-	 * because the mechanism by which schema managers are replicated requires creating multiple threads, and is unnecessary for most tests.
+	 * True if a test is being run but this test doesn't require the state of the System Table to be replicated. This is done
+	 * because the mechanism by which System Tables are replicated requires creating multiple threads, and is unnecessary for most tests.
 	 */
 	public static boolean IS_NON_SM_TEST = false;
 

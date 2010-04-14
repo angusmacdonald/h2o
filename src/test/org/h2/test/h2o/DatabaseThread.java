@@ -4,7 +4,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-import org.h2.h2o.manager.PersistentSchemaManager;
+import org.h2.h2o.manager.PersistentSystemTable;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
@@ -23,7 +23,7 @@ public class DatabaseThread extends Thread {
 	public DatabaseThread(String connectionString) {
 		
 		try {
-			this.connection = DriverManager.getConnection(connectionString, PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+			this.connection = DriverManager.getConnection(connectionString, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}

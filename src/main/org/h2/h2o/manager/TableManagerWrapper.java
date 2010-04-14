@@ -4,14 +4,14 @@ import java.io.Serializable;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
-import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class DataManagerWrapper implements Serializable, Remote {
+public class TableManagerWrapper implements Serializable, Remote {
 
 	private static final long serialVersionUID = -7088367740432999328L;
 
@@ -21,19 +21,19 @@ public class DataManagerWrapper implements Serializable, Remote {
 	private TableInfo tableInfo;
 	
 	/**
-	 * Remote reference to the actual data manager.
+	 * Remote reference to the actual Table Manager.
 	 */
-	private DataManagerRemote dataManager;
+	private TableManagerRemote tableManager;
 	
 	/**
-	 * Location of the data manager.
+	 * Location of the Table Manager.
 	 */
-	private DatabaseURL dataManagerURL;
+	private DatabaseURL tableManagerURL;
 
-	public DataManagerWrapper(TableInfo tableInfo, DataManagerRemote dataManager, DatabaseURL dataManagerURL) {
+	public TableManagerWrapper(TableInfo tableInfo, TableManagerRemote tableManager, DatabaseURL tableManagerURL) {
 		this.tableInfo = tableInfo.getGenericTableInfo();
-		this.dataManager = dataManager;
-		this.dataManagerURL = dataManagerURL;
+		this.tableManager = tableManager;
+		this.tableManagerURL = tableManagerURL;
 	}
 
 	/**
@@ -51,31 +51,31 @@ public class DataManagerWrapper implements Serializable, Remote {
 	}
 
 	/**
-	 * @return the dataManager
+	 * @return the tableManager
 	 */
-	public DataManagerRemote getDataManager()throws RemoteException {
-		return dataManager;
+	public TableManagerRemote getTableManager()throws RemoteException {
+		return tableManager;
 	}
 
 	/**
-	 * @param dataManager the dataManager to set
+	 * @param tableManager the tableManager to set
 	 */
-	public void setDataManager(DataManagerRemote dataManager)throws RemoteException {
-		this.dataManager = dataManager;
+	public void setTableManager(TableManagerRemote tableManager)throws RemoteException {
+		this.tableManager = tableManager;
 	}
 
 	/**
-	 * @return the dataManagerURL
+	 * @return the tableManagerURL
 	 */
-	public DatabaseURL getDataManagerURL()throws RemoteException {
-		return dataManagerURL;
+	public DatabaseURL getTableManagerURL()throws RemoteException {
+		return tableManagerURL;
 	}
 
 	/**
-	 * @param dataManagerURL the dataManagerURL to set
+	 * @param tableManagerURL the tableManagerURL to set
 	 */
-	public void setDataManagerURL(DatabaseURL dataManagerURL)throws RemoteException {
-		this.dataManagerURL = dataManagerURL;
+	public void setTableManagerURL(DatabaseURL tableManagerURL)throws RemoteException {
+		this.tableManagerURL = tableManagerURL;
 	}
 
 	/* (non-Javadoc)
@@ -97,7 +97,7 @@ public class DataManagerWrapper implements Serializable, Remote {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		DataManagerWrapper other = (DataManagerWrapper) obj;
+		TableManagerWrapper other = (TableManagerWrapper) obj;
 		if (tableInfo == null) {
 			if (other.tableInfo != null)
 				return false;
@@ -111,7 +111,7 @@ public class DataManagerWrapper implements Serializable, Remote {
 	 * @return
 	 */
 	public boolean isLocalTo(DatabaseURL localMachineLocation) throws RemoteException{
-		return dataManagerURL.equals(localMachineLocation);
+		return tableManagerURL.equals(localMachineLocation);
 	}
 
 	/* (non-Javadoc)
@@ -119,7 +119,7 @@ public class DataManagerWrapper implements Serializable, Remote {
 	 */
 	@Override
 	public String toString() {
-		return "DataManagerWrapper [tableInfo=" + tableInfo + ", dataManagerURL=" + dataManagerURL + "]";
+		return "TableManagerWrapper [tableInfo=" + tableInfo + ", tableManagerURL=" + tableManagerURL + "]";
 	}
 	
 	

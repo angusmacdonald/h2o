@@ -91,9 +91,9 @@ public class WebServer implements Service {
 //        "Generic H2 (Embedded)|org.h2.Driver|jdbc:h2:~/test|sa",
        
         
-        "C: Non-Schema Manager (Two)|org.h2.Driver|jdbc:h2:tcp://localhost:9292/db_data/two/test_db|angus",
-        "B: Non-Schema Manager (One)|org.h2.Driver|jdbc:h2:tcp://localhost:9191/db_data/three/test_db|angus",
-        "A: Schema Manager|org.h2.Driver|jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db|angus"
+        "C: Non-System Table (Two)|org.h2.Driver|jdbc:h2:tcp://localhost:9292/db_data/two/test_db|angus",
+        "B: Non-System Table (One)|org.h2.Driver|jdbc:h2:tcp://localhost:9191/db_data/three/test_db|angus",
+        "A: System Table|org.h2.Driver|jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db|angus"
     };
 
     private static int ticker;

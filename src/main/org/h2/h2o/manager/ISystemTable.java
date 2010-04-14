@@ -6,7 +6,7 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Set;
 
-import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.util.DatabaseURL;
@@ -15,19 +15,19 @@ import org.h2.h2o.util.TableInfo;
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public interface ISchemaManager extends Remote {
+public interface ISystemTable extends Remote {
 
 	/**
-	 * Find a reference for the data manager responsible for the given table.
+	 * Find a reference for the Table Manager responsible for the given table.
 	 * 
-	 * @param tableName	Name of the table whose data manager we are looking for.
-	 * @return A reference to the given table's data manager.
+	 * @param tableName	Name of the table whose Table Manager we are looking for.
+	 * @return A reference to the given table's Table Manager.
 	 * @throws RemoteException
 	 */
-	public DataManagerRemote lookup(TableInfo ti) throws RemoteException, MovedException;
+	public TableManagerRemote lookup(TableInfo ti) throws RemoteException, MovedException;
 
 	/**
-	 * Checks whether a data manager for the given table exists in the system. If it
+	 * Checks whether a Table Manager for the given table exists in the system. If it
 	 * doesn't exist then it indicates that it is possible to create a table with the given name.
 	 * 
 	 * @param tableName	Name of the table being checked for.
@@ -40,13 +40,13 @@ public interface ISchemaManager extends Remote {
 	 * Confirm that the specified table has now been created, and provide a reference to the table's data
 	 * manager.
 	 * 
-	 * @param dataManager	Data manager for the given table.
+	 * @param tableManager	Table Manager for the given table.
 	 * @param session 
-	 * @return True if this action was successful on the schema manager; otherwise false.
+	 * @return True if this action was successful on the System Table; otherwise false.
 	 * @throws RemoteException
 	 * @throws SQLException 
 	 */
-	public boolean addTableInformation(DataManagerRemote dataManager, TableInfo tableDetails) throws RemoteException, MovedException, SQLException;
+	public boolean addTableInformation(TableManagerRemote tableManager, TableInfo tableDetails) throws RemoteException, MovedException, SQLException;
 
 
 	/**
@@ -56,27 +56,27 @@ public interface ISchemaManager extends Remote {
 	public void removeReplicaInformation(TableInfo ti) throws RemoteException, MovedException;
 
 	/**
-	 * Remove data manager from the system. This is used when a table is being dropped completely
+	 * Remove Table Manager from the system. This is used when a table is being dropped completely
 	 * from the database system.
 	 * 
 	 * <p>If the tableName parameter is NULL the entire schema will be dropped.
 	 * 
 	 * @param tableName	The table to be dropped.
 	 * @param schemaName the name of the schema where this table can be found.
-	 * @return	true if the data manager was dropped successfully; otherwise false.
+	 * @return	true if the Table Manager was dropped successfully; otherwise false.
 	 * @throws RemoteException
 	 */
 	public boolean removeTableInformation(TableInfo ti) throws RemoteException, MovedException;
 
 	/**
-	 * Add information about a new database instance to the schema manager.
+	 * Add information about a new database instance to the System Table.
 	 * @param databaseURL	The name and location of the new database instance.
 	 * @throws SQLException 
 	 */
 	public int addConnectionInformation(DatabaseURL databaseURL, DatabaseInstanceWrapper databaseInstanceWrapper) throws RemoteException, MovedException, SQLException;
 
 	/**
-	 * Get a new table set number from the schema manager. Each number given is unique (i.e. the same number should not be given twice).
+	 * Get a new table set number from the System Table. Each number given is unique (i.e. the same number should not be given twice).
 	 * 
 	 * @return
 	 */
@@ -105,22 +105,22 @@ public interface ISchemaManager extends Remote {
 	public Set<String> getAllTablesInSchema(String schemaName) throws RemoteException, MovedException;
 	
 	/**
-	 * Build the state of this schema manager object by replicating the state of another schema
+	 * Build the state of this System Table object by replicating the state of another schema
 	 * manager.
-	 * @param otherSchemaManager	The schema manager whose state is to be taken.
+	 * @param otherSystemTable	The System Table whose state is to be taken.
 	 * @throws RemoteException
 	 * @throws SQLException 
 	 */
-	public void buildSchemaManagerState(ISchemaManager otherSchemaManager) throws RemoteException, MovedException, SQLException;
+	public void buildSystemTableState(ISystemTable otherSystemTable) throws RemoteException, MovedException, SQLException;
 
 
 	/**
-	 * Build the state of this schema manager object by replicating the state of the local
-	 * persistent schema manager.
+	 * Build the state of this System Table object by replicating the state of the local
+	 * persistent System Table.
 	 * @throws RemoteException
 	 * @throws SQLException 
 	 */
-	void buildSchemaManagerState() throws RemoteException, MovedException, SQLException;
+	void buildSystemTableState() throws RemoteException, MovedException, SQLException;
 	
 	/**
 	 * Returns a set of all the databases connected in the system.
@@ -129,9 +129,9 @@ public interface ISchemaManager extends Remote {
 	public Map<DatabaseURL, DatabaseInstanceWrapper> getConnectionInformation() throws RemoteException, MovedException, SQLException;
 
 	/**
-	 * Returns a map of all data managers in the system.
+	 * Returns a map of all Table Managers in the system.
 	 */
-	public Map<TableInfo, DataManagerWrapper> getDataManagers() throws RemoteException, MovedException;
+	public Map<TableInfo, TableManagerWrapper> getTableManagers() throws RemoteException, MovedException;
 
 	/**
 	 * Returns a map of all replicas in the database system. Key is the fully
@@ -140,13 +140,13 @@ public interface ISchemaManager extends Remote {
 	public Map<String, Set<TableInfo>> getReplicaLocations() throws RemoteException, MovedException;
 
 	/**
-	 * Remove all references to data managers and replicas. Used to shutdown a schema manager.
+	 * Remove all references to Table Managers and replicas. Used to shutdown a System Table.
 	 * @throws RemoteException 
 	 */
 	public void removeAllTableInformation() throws RemoteException, MovedException;
 
 	/**
-	 * Specify the remote location of a database instance where schema manager state is to be replicated.
+	 * Specify the remote location of a database instance where System Table state is to be replicated.
 	 * @param databaseReference
 	 * @throws RemoteException
 	 * @throws MovedException 
@@ -172,17 +172,17 @@ public interface ISchemaManager extends Remote {
 	public void removeConnectionInformation(DatabaseInstanceRemote localDatabaseInstance) throws RemoteException, MovedException;
 
 	/**
-	 * Called when the location of the data manager is to be changed.
+	 * Called when the location of the Table Manager is to be changed.
 	 * @param stub
 	 */
-	public void changeDataManagerLocation(DataManagerRemote stub, TableInfo tableInfo) throws RemoteException, MovedException;
+	public void changeTableManagerLocation(TableManagerRemote stub, TableInfo tableInfo) throws RemoteException, MovedException;
 
 
 	/**
-	 * Get the data manager instances stored local to the given location.
+	 * Get the Table Manager instances stored local to the given location.
 	 * @param localMachineLocation
 	 * @return
 	 */
-	public Set<DataManagerWrapper> getLocalDatabaseInstances(DatabaseURL localMachineLocation) throws RemoteException, MovedException;
+	public Set<TableManagerWrapper> getLocalDatabaseInstances(DatabaseURL localMachineLocation) throws RemoteException, MovedException;
 
 }

@@ -139,7 +139,7 @@ public class ConnectionInfo implements Cloneable {
                 ssl = true;
             } else if (part.equals("mem")) {
                 persistent = false;
-            } else if (part.equals("sm")) { //schema manager
+            } else if (part.equals("sm")) { //System Table
                 schemamanager = true;
             } else {
             	name = part;
@@ -596,11 +596,11 @@ public class ConnectionInfo implements Cloneable {
 	}
 
 	/**
-	 * Check if the referenced database is a schema manager to other databases in the system.
+	 * Check if the referenced database is a System Table to other databases in the system.
 	 *
 	 * @return true if it is
 	 */
-	public boolean isSchemaManager() {
+	public boolean isSystemTable() {
 		if (originalURL != null){
 			return (originalURL.contains(":sm:"));
 		} else {
@@ -617,10 +617,10 @@ public class ConnectionInfo implements Cloneable {
 	}
 
 	/**
-	 * Get the specified location of the schema manager. Will be null if none was specified.
+	 * Get the specified location of the System Table. Will be null if none was specified.
 	 * @return
 	 */
-	public String getSchemaManagerLocation(){
+	public String getSystemTableLocation(){
 		return schema_manager_location;
 	}
 

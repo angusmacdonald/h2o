@@ -52,9 +52,9 @@ public class DropSchema extends DefineCommand {
 
 			if (Constants.IS_H2O){
 				try{
-					db.getSchemaManager().removeTableInformation(new TableInfo(null, schemaName));
+					db.getSystemTable().removeTableInformation(new TableInfo(null, schemaName));
 				} catch (MovedException e){
-					throw new RemoteException("Schema Manager has moved.");
+					throw new RemoteException("System Table has moved.");
 				}
 			}
 		}

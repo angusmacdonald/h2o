@@ -10,7 +10,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
-import org.h2.h2o.manager.PersistentSchemaManager;
+import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;
 import org.junit.After;
@@ -45,8 +45,8 @@ public class RestartTests {
 		}
 		
 		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-	//	PersistentSchemaManager.USERNAME = "sa";
-		//PersistentSchemaManager.PASSWORD = "sa";
+	//	PersistentSystemTable.USERNAME = "sa";
+		//PersistentSystemTable.PASSWORD = "sa";
 
 	}
 	
@@ -62,7 +62,7 @@ public class RestartTests {
 		server.start();
 
 		Class.forName("org.h2.Driver");
-		conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+		conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 		sa = conn.createStatement();
 		
@@ -125,7 +125,7 @@ public class RestartTests {
 
 			ResultSet rs = sa.getResultSet();
 			if (!rs.next()){
-				fail("There should be a  table in the schema manager.");
+				fail("There should be a  table in the System Table.");
 			}
 
 
@@ -139,7 +139,7 @@ public class RestartTests {
 
 		} catch (SQLException e1) {
 			e1.printStackTrace();
-			fail("Couldn't find schema manager tables.");
+			fail("Couldn't find System Table tables.");
 		}
 	}
 
@@ -149,7 +149,7 @@ public class RestartTests {
 	private void startServerAndGetConnection() throws SQLException {
 		server = Server.createTcpServer(new String[] { "-tcpPort", "9081", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test" });
 		server.start();
-		conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+		conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 		sa = conn.createStatement();
 	}
 

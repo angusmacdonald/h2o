@@ -166,7 +166,7 @@ public class H2oProperties {
 		DatabaseURL dbURL = DatabaseURL.parseURL("jdbc:h2:mem:two");
 		H2oProperties testProp = new H2oProperties(dbURL);
 
-		String key = "schemaManagerLocation";
+		String key = "systemTableLocation";
 		String value = "jdbc:h2:sm:mem:one";
 		testProp.setProperty(key, value);
 
@@ -257,7 +257,7 @@ public class H2oProperties {
 
 		testProp.loadProperties();
 
-		String key = "schemaManagerLocation";
+		String key = "systemTableLocation";
 		String value = "jdbc:h2:sm:mem:one";
 
 		String key2 = "localMachineLocation";
@@ -283,7 +283,7 @@ public class H2oProperties {
 	 * @param testProp
 	 */
 	private void testProperties(H2oProperties testProp) {
-		String key = "schemaManagerLocation";
+		String key = "systemTableLocation";
 		String value = "jdbc:h2:sm:mem:one";
 		testProp.setProperty(key, value);
 

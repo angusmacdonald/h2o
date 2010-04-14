@@ -9,7 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.h2.h2o.manager.PersistentSchemaManager;
+import org.h2.h2o.manager.PersistentSystemTable;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -342,7 +342,7 @@ public class ReplicaTests extends TestBase{
 		
 		
 		try{
-			Connection cc = DriverManager.getConnection("jdbc:h2:mem:three", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+			Connection cc = DriverManager.getConnection("jdbc:h2:mem:three", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 			Statement sc = cc.createStatement();
 
 			createReplicaOnB();
@@ -404,7 +404,7 @@ public class ReplicaTests extends TestBase{
 	}
 
 	/**
-	 * Check that the schema manager is correctly updated when a new replica is created.
+	 * Check that the System Table is correctly updated when a new replica is created.
 	 */
 	@Test
 	public void SchemaMetaData(){
@@ -422,7 +422,7 @@ public class ReplicaTests extends TestBase{
 			ResultSet rs = sa.getResultSet();
 
 			if (!(rs.next() && rs.next())){
-				fail("Should have been two entries in the schema manager.");
+				fail("Should have been two entries in the System Table.");
 			}
 
 		} catch (SQLException e){

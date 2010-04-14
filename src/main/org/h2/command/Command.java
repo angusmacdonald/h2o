@@ -303,7 +303,7 @@ public abstract class Command implements CommandInterface {
     }
 
 	/**
-	 * Request a query proxy from the data manager of the table involved in the query. This proxy
+	 * Request a query proxy from the Table Manager of the table involved in the query. This proxy
 	 * contains the details of any locks that were acquired.
 	 * @return
 	 * @throws SQLException 

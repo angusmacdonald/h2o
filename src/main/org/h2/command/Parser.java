@@ -66,8 +66,8 @@ import org.h2.command.dml.ExplainPlan;
 import org.h2.command.dml.GetRmiPort;
 import org.h2.command.dml.Insert;
 import org.h2.command.dml.Merge;
-import org.h2.command.dml.MigrateDataManager;
-import org.h2.command.dml.MigrateSchemaManager;
+import org.h2.command.dml.MigrateTableManager;
+import org.h2.command.dml.MigrateSystemTable;
 import org.h2.command.dml.NoOperation;
 import org.h2.command.dml.Query;
 import org.h2.command.dml.RunScriptCommand;
@@ -119,10 +119,10 @@ import org.h2.expression.TableFunction;
 import org.h2.expression.ValueExpression;
 import org.h2.expression.Variable;
 import org.h2.expression.Wildcard;
-import org.h2.h2o.comms.remote.DataManagerRemote;
-import org.h2.h2o.manager.ISchemaManager;
+import org.h2.h2o.comms.remote.TableManagerRemote;
+import org.h2.h2o.manager.ISystemTable;
 import org.h2.h2o.manager.MovedException;
-import org.h2.h2o.manager.PersistentSchemaManager;
+import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
 import org.h2.index.Index;
@@ -4378,14 +4378,14 @@ public class Parser {
 		 *  3. The table has not been found, but exists in some remote location.
 		 */
 
-		if (Constants.IS_H2O && searchRemote && database.getSchemaManagerReference().isConnectedToSM() && !(locale == LocationPreference.LOCAL_STRICT)){ // 2 or 3
+		if (Constants.IS_H2O && searchRemote && database.getSystemTableReference().isConnectedToSM() && !(locale == LocationPreference.LOCAL_STRICT)){ // 2 or 3
 			String schemaName = "PUBLIC";
 
 			if (getSchema() != null)
 				schemaName = getSchema().getName();
 
 			try {
-				return findViaSchemaManager(tableName, schemaName);
+				return findViaSystemTable(tableName, schemaName);
 			} catch (RemoteException e) {
 				e.printStackTrace();
 				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
@@ -4404,16 +4404,16 @@ public class Parser {
 	 * @throws SQLException if the table is not found.
 	 * @throws RemoteException 
 	 */
-	public Table findViaSchemaManager(String tableName, String thisSchemaName) throws SQLException, RemoteException {
+	public Table findViaSystemTable(String tableName, String thisSchemaName) throws SQLException, RemoteException {
 
 		/*
 		 * Attempt to locate the table if it exists remotely.
 		 */
 		String tableLocation = null;
-		//		DataManagerRemote dm = null;
+		//		TableManagerRemote dm = null;
 
 		//		if (database != null){
-		//			dm = database.getDataManager(thisSchemaName + "." + tableName);
+		//			dm = database.getTableManager(thisSchemaName + "." + tableName);
 		//			if (dm == null){
 		//				//Failed to find the given table.
 		//				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
@@ -4425,20 +4425,19 @@ public class Parser {
 		//			}
 		//
 		//		} else {
-		//Old Schema Manager method.
+		//Old System Table method.
 
-		DataManagerRemote dm = session.getDatabase().getSchemaManagerReference().lookup(new TableInfo(tableName, thisSchemaName));
+		TableManagerRemote dm = session.getDatabase().getSystemTableReference().lookup(new TableInfo(tableName, thisSchemaName));
 
 		if (dm == null){
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new TableInfo(tableName, thisSchemaName).toString());
 		}
-		//		dm = session.getDatabase().getSchemaManager().lookup(new TableInfo(tableName, thisSchemaName));
+		//		dm = session.getDatabase().getSystemTable().lookup(new TableInfo(tableName, thisSchemaName));
 		//		
 
 		DatabaseURL dmURL = dm.getDatabaseURL();
-		System.err.println(dmURL);
 		if (dmURL.equals(session.getDatabase().getDatabaseURL())){
-			throw new SQLException("The database is incorrectly trying to create a linked table to itself. Illegal code path.");
+			throw new SQLException("The database [" + dmURL.getDbLocation() + "] is incorrectly trying to create a linked table to itself. Illegal code path.");
 		}
 
 		tableLocation = dmURL.getOriginalURL();
@@ -4457,7 +4456,7 @@ public class Parser {
 		}
 		Parser queryParser = new Parser(sessionToUse, true);
 
-		String sql = "CREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + tableLocation + "', '" + PersistentSchemaManager.USERNAME + "', '" + PersistentSchemaManager.PASSWORD + "', '" + tableName + "');";
+		String sql = "CREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + tableLocation + "', '" + PersistentSystemTable.USERNAME + "', '" + PersistentSystemTable.PASSWORD + "', '" + tableName + "');";
 
 		Command sqlQuery = queryParser.prepareCommand(sql);
 		int result = sqlQuery.update();
@@ -4834,12 +4833,12 @@ public class Parser {
 	 * @throws SQLException 
 	 */
 	private Prepared parseMigrate() throws SQLException {
-		if (readIf("SCHEMAMANAGER")){
-			return new MigrateSchemaManager(session, null);
-		} else if (readIf("DATAMANAGER")) {
+		if (readIf("SYSTEMTABLE")){
+			return new MigrateSystemTable(session, null);
+		} else if (readIf("TABLEMANAGER")) {
 			String tableName = readIdentifierWithSchema();
 			Schema schema = getSchema();
-			return new MigrateDataManager(session, schema, tableName);
+			return new MigrateTableManager(session, schema, tableName);
 		} else {
 			throw new SQLException("Could parse migrate command.");
 		}
@@ -4861,9 +4860,9 @@ public class Parser {
 			schemaName = readExpression().toString();
 			Schema s = getSchema();
 
-			ISchemaManager schemaManager = session.getDatabase().getSchemaManager();
+			ISystemTable systemTable = session.getDatabase().getSystemTable();
 			try{
-				java.util.Set<String> tables = schemaManager.getAllTablesInSchema(s.getName());
+				java.util.Set<String> tables = systemTable.getAllTablesInSchema(s.getName());
 
 				int numTables = 0;
 
@@ -4894,7 +4893,7 @@ public class Parser {
 
 				}
 			} catch (MovedException e){
-				throw new RemoteException("Schema Manager has moved.");
+				throw new RemoteException("System Table has moved.");
 			}
 		} else {
 

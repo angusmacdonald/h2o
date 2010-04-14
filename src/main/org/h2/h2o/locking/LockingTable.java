@@ -11,7 +11,7 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
- * Represents a locking table for a given table - this is maintained by the table's data manager.
+ * Represents a locking table for a given table - this is maintained by the table's Table Manager.
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  *
  */

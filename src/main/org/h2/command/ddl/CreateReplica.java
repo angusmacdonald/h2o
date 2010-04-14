@@ -31,11 +31,11 @@ import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
 import org.h2.expression.ValueExpression;
-import org.h2.h2o.comms.remote.DataManagerRemote;
-import org.h2.h2o.manager.ISchemaManager;
-import org.h2.h2o.manager.ISchemaManagerReference;
+import org.h2.h2o.comms.remote.TableManagerRemote;
+import org.h2.h2o.manager.ISystemTable;
+import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.manager.MovedException;
-import org.h2.h2o.manager.PersistentSchemaManager;
+import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.util.TableInfo;
 import org.h2.index.IndexType;
 import org.h2.jdbc.JdbcSQLException;
@@ -107,7 +107,7 @@ public class CreateReplica extends SchemaCommand {
 	private Set<IndexColumn[]> setOfIndexColumns;
 	private Set<IndexType> pkIndexType;
 	private int tableSet = -1; //the set of tables which this replica will belong to.
-	private boolean contactSchemaManager = true;
+	private boolean contactSystemTable = true;
 
 	public CreateReplica(Session session, Schema schema) {
 		super(session, schema);
@@ -180,11 +180,11 @@ public class CreateReplica extends SchemaCommand {
 		if (whereReplicaWillBeCreated != null || db.getFullDatabasePath().equals(whereReplicaWillBeCreated)){
 			int result = pushCommand(whereReplicaWillBeCreated, "CREATE REPLICA " + tableName + " FROM '" + whereDataWillBeTakenFrom + "'", true); //command will be executed elsewhere
 
-			//Update the schema manager here.
+			//Update the System Table here.
 
 			if (result == 0){
 				try {
-					ISchemaManager sm = db.getSchemaManager(); //db.getSystemSession()
+					ISystemTable sm = db.getSystemTable(); //db.getSystemSession()
 
 					Table table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
 
@@ -200,7 +200,7 @@ public class CreateReplica extends SchemaCommand {
 
 					sm.addReplicaInformation(ti);	
 				} catch (MovedException e){
-					throw new RemoteException("Schema Manager has moved.");
+					throw new RemoteException("System Table has moved.");
 				}
 			}
 
@@ -230,7 +230,7 @@ public class CreateReplica extends SchemaCommand {
 
 		if (getSchema().findTableOrView(session, fullTableName, LocationPreference.NO_PREFERENCE) == null) { //H2O. Check for the existence of any version. if a linked table version doesn't exist we must create it.
 			String createLinkedTable = "\nCREATE LINKED TABLE IF NOT EXISTS " + fullTableName + "('org.h2.Driver', '" + whereDataWillBeTakenFrom + "', '" + 
-			PersistentSchemaManager.USERNAME + "', '" + PersistentSchemaManager.PASSWORD + "', '" + fullTableName + "');";
+			PersistentSystemTable.USERNAME + "', '" + PersistentSystemTable.PASSWORD + "', '" + fullTableName + "');";
 			Parser queryParser = new Parser(session, true);
 			Command sqlQuery = queryParser.prepareCommand(createLinkedTable);
 			sqlQuery.update();
@@ -397,18 +397,18 @@ public class CreateReplica extends SchemaCommand {
 			}
 
 			//	#############################
-			//  Add to data manager.
+			//  Add to Table Manager.
 			//	#############################
 
 
 			TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
 
 
-			if (this.contactSchemaManager){
+			if (this.contactSystemTable){
 
 				try{
 
-					ISchemaManager sm = db.getSchemaManager(); //db.getSystemSession()
+					ISystemTable sm = db.getSystemTable(); //db.getSystemSession()
 
 
 					if (tableSet  == -1){
@@ -423,15 +423,15 @@ public class CreateReplica extends SchemaCommand {
 					sm.addReplicaInformation(ti);	
 
 				} catch (MovedException e){
-					throw new RemoteException("Schema Manager has moved.");
+					throw new RemoteException("System Table has moved.");
 				}
 			}
 
 			if (!tableName.startsWith("H2O_")){
-				DataManagerRemote dm = db.getDataManager(getSchema().getName() + "." + tableName);
+				TableManagerRemote dm = db.getTableManager(getSchema().getName() + "." + tableName);
 
 				if (dm == null){
-					throw new SQLException("Error creating replica for " + tableName + ". Data manager not found.");
+					throw new SQLException("Error creating replica for " + tableName + ". Table Manager not found.");
 				} else {
 					dm.addReplicaInformation(ti);
 				} 
@@ -444,7 +444,7 @@ public class CreateReplica extends SchemaCommand {
 		} catch (MovedException e) {
 			db.checkPowerOff();
 			db.removeSchemaObject(session, table);
-			throw new SQLException("Data manager has moved.");
+			throw new SQLException("Table Manager has moved.");
 		}
 
 		if (next != null) {
@@ -475,7 +475,7 @@ public class CreateReplica extends SchemaCommand {
 		try{
 			Database db = session.getDatabase();
 
-			conn = db.getLinkConnection("org.h2.Driver", remoteDBLocation, PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+			conn = db.getLinkConnection("org.h2.Driver", remoteDBLocation, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 			int result = -1;
 
@@ -602,7 +602,7 @@ public class CreateReplica extends SchemaCommand {
 	private void connect(String tableLocation) throws SQLException {
 		Database db = session.getDatabase();
 
-		conn = db.getLinkConnection("org.h2.Driver", tableLocation, PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+		conn = db.getLinkConnection("org.h2.Driver", tableLocation, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 		synchronized (conn) {
 			try {
 				readMetaData();
@@ -933,7 +933,7 @@ public class CreateReplica extends SchemaCommand {
 	 * @throws RemoteException 
 	 */
 	public void setOriginalLocation(String originalLocation, boolean contactSM) throws SQLException, RemoteException {
-		contactSchemaManagerOnCompletion(contactSM);
+		contactSystemTableOnCompletion(contactSM);
 
 		this.whereDataWillBeTakenFrom = originalLocation;
 
@@ -943,13 +943,13 @@ public class CreateReplica extends SchemaCommand {
 
 		if (whereDataWillBeTakenFrom == null){
 
-			ISchemaManagerReference sm = session.getDatabase().getSchemaManagerReference();
+			ISystemTableReference sm = session.getDatabase().getSystemTableReference();
 
-			DataManagerRemote dm;
+			TableManagerRemote dm;
 			//			try {
 			dm = sm.lookup(new TableInfo(tableName, getSchema().getName()));
 			//			} catch (MovedException e){
-			//				throw new RemoteException("Schema Manager has moved.");
+			//				throw new RemoteException("System Table has moved.");
 			//			}
 
 			if (dm == null){
@@ -959,7 +959,7 @@ public class CreateReplica extends SchemaCommand {
 					whereDataWillBeTakenFrom = dm.getLocation();
 				} catch (MovedException e) {
 					e.printStackTrace();
-					System.err.println("FIND NEW DATA MANAGER LOCATION AT THIS POINT.");//TODO find
+					System.err.println("FIND NEW Table Manager LOCATION AT THIS POINT.");//TODO find
 				}
 			}
 		}
@@ -989,8 +989,8 @@ public class CreateReplica extends SchemaCommand {
 	/**
 	 * @param b
 	 */
-	public void contactSchemaManagerOnCompletion(boolean b) {
-		this.contactSchemaManager = b;
+	public void contactSystemTableOnCompletion(boolean b) {
+		this.contactSystemTable = b;
 	}
 
 }

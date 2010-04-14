@@ -4,7 +4,7 @@ import java.rmi.RemoteException;
 
 import org.h2.engine.Constants;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
-import org.h2.h2o.manager.SchemaManagerReference;
+import org.h2.h2o.manager.SystemTableReference;
 import org.h2.h2o.remote.IChordInterface;
 import org.h2.h2o.remote.IDatabaseRemote;
 import org.h2.test.h2o.ChordTests;
@@ -37,9 +37,9 @@ public class LookupPinger extends Thread {
 	private IChordInterface chordInterface;
 	
 	/**
-	 * Location of the schema manager instance on the chord ring.
+	 * Location of the System Table instance on the chord ring.
 	 */
-	private IChordRemoteReference schemaManagerLocation;
+	private IChordRemoteReference systemTableLocation;
 	
 	/**
 	 * Whether the pinger thread should still be running.
@@ -54,7 +54,7 @@ public class LookupPinger extends Thread {
 			IChordRemoteReference location) {
 		this.remoteInterface = remoteInterface;
 		this.chordInterface = chordInterface;
-		this.schemaManagerLocation = location;
+		this.systemTableLocation = location;
 		
 		if (Constants.IS_TEST){
 			ChordTests.pingSet.add(this);
@@ -65,14 +65,14 @@ public class LookupPinger extends Thread {
 	@Override
 	public void run(){
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Starting to ping schema manager lookup location.");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Starting to ping System Table lookup location.");
 
 		int errors = 0;
 		
 		while (isRunning()){
 			/*
-			 * Continously inform schema managers chord ring node of the 
-			 * actual schema manager location.
+			 * Continously inform System Tables chord ring node of the 
+			 * actual System Table location.
 			 */
 
 			
@@ -84,7 +84,7 @@ public class LookupPinger extends Thread {
 			
 			IChordRemoteReference lookupLocation = null;
 			try {
-				lookupLocation = chordInterface.getLookupLocation(SchemaManagerReference.schemaManagerKey);
+				lookupLocation = chordInterface.getLookupLocation(SystemTableReference.systemTableKey);
 			} catch (RemoteException e1) {
 				errors ++;
 				ErrorHandling.errorNoEvent("Error on ping lookup.");
@@ -93,17 +93,17 @@ public class LookupPinger extends Thread {
 			
 			if (lookupLocation == null){
 				ErrorHandling.errorNoEvent("Lookup location was null.");
-			} else if (!schemaManagerLocation.equals(lookupLocation)){
-				//If this chord node doesn't hold both the lookup and the schema manager process.
+			} else if (!systemTableLocation.equals(lookupLocation)){
+				//If this chord node doesn't hold both the lookup and the System Table process.
 				
 				try {
 //					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Lookup location is: " + lookupLocation.getRemote().getAddress().getPort());
-//					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "SM location is: " + schemaManagerLocation.getRemote().getAddress().getPort());
+//					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "SM location is: " + systemTableLocation.getRemote().getAddress().getPort());
 					DatabaseInstanceRemote dir = remoteInterface.getDatabaseInstanceAt(lookupLocation);
-					dir.setSchemaManagerLocation(schemaManagerLocation, remoteInterface.getLocalMachineLocation());
+					dir.setSystemTableLocation(systemTableLocation, remoteInterface.getLocalMachineLocation());
 					errors = 0;
 				} catch (RemoteException e) {
-					ErrorHandling.errorNoEvent("Pinger thread failed to find instance responsible for schema manager lookup.");
+					ErrorHandling.errorNoEvent("Pinger thread failed to find instance responsible for System Table lookup.");
 					errors ++;
 				}
 			} else {

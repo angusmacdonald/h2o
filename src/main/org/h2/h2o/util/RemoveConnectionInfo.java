@@ -1,7 +1,7 @@
 package org.h2.h2o.util;
 
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
-import org.h2.h2o.manager.SchemaManagerRemote;
+import org.h2.h2o.manager.SystemTableRemote;
 
 /**
  * Run to remove connection information for a database instance. This is run as a thread rather than within the database process
@@ -9,21 +9,21 @@ import org.h2.h2o.manager.SchemaManagerRemote;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class RemoveConnectionInfo extends Thread {
-	private SchemaManagerRemote schemaManager;
+	private SystemTableRemote systemTable;
 	private DatabaseInstanceRemote databaseInstanceRemote;
 
 	/**
-	 * @param schemaManager
+	 * @param systemTable
 	 * @param databaseInstanceRemote 
 	 */
-	public RemoveConnectionInfo(SchemaManagerRemote schemaManager, DatabaseInstanceRemote databaseInstanceRemote) {
-		this.schemaManager = schemaManager;
+	public RemoveConnectionInfo(SystemTableRemote systemTable, DatabaseInstanceRemote databaseInstanceRemote) {
+		this.systemTable = systemTable;
 		this.databaseInstanceRemote = databaseInstanceRemote;
 	}
 
 	public void run(){
 		try {
-			schemaManager.removeConnectionInformation(databaseInstanceRemote);
+			systemTable.removeConnectionInformation(databaseInstanceRemote);
 		} catch (Exception e) {
 			//Doesn't matter.
 		}

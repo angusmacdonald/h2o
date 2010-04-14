@@ -4,10 +4,10 @@ import java.rmi.RemoteException;
 
 import org.h2.engine.Constants;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
-import org.h2.h2o.manager.ISchemaManager;
-import org.h2.h2o.manager.ISchemaManagerReference;
+import org.h2.h2o.manager.ISystemTable;
+import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.manager.MovedException;
-import org.h2.h2o.manager.SchemaManagerReference;
+import org.h2.h2o.manager.SystemTableReference;
 import org.h2.h2o.remote.IChordInterface;
 import org.h2.test.h2o.ChordTests;
 
@@ -18,25 +18,25 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class SchemaManagerReplication extends Thread {
+public class SystemTableReplication extends Thread {
 
 	String hostname;
 	int port;
 
-	ISchemaManagerReference schemaManagerRef;
+	ISystemTableReference systemTableRef;
 	IChordInterface chordInterface;
 
 	/**
-	 * Repeatedly attempts to replicate the schema managers state on the database instance at the specified location. This is done multiple times
+	 * Repeatedly attempts to replicate the System Tables state on the database instance at the specified location. This is done multiple times
 	 * because the lookup may not work initially if the chord ring has not already recovered from a failure.
 	 * @param hostname		Hostname of the database which will recieve the replica.
 	 * @param port			Port on which the database instance is listening.
-	 * @param iSchemaManager			Used to update the schema manager, informing it of the new replica location.
+	 * @param iSystemTable			Used to update the System Table, informing it of the new replica location.
 	 */
-	public SchemaManagerReplication(String hostname, int port, ISchemaManagerReference schemaManagerRef, IChordInterface chordInterface){
+	public SystemTableReplication(String hostname, int port, ISystemTableReference systemTableRef, IChordInterface chordInterface){
 		this.hostname = hostname;
 		this.port = port;
-		this.schemaManagerRef = schemaManagerRef;
+		this.systemTableRef = systemTableRef;
 		this.chordInterface = chordInterface;
 	}
 
@@ -74,9 +74,9 @@ public class SchemaManagerReplication extends Thread {
 				try { Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Found reference to remote database (where SM state will be replicated): " + instance.getConnectionString()); } catch (RemoteException e1) {}
 			}
 
-			createSchemaManagerReplicas(instance);
+			createSystemTableReplicas(instance);
 
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Successfully added new schema manager replicas at " + hostname + ":" + port);
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Successfully added new System Table replicas at " + hostname + ":" + port);
 		}
 
 	}
@@ -84,9 +84,9 @@ public class SchemaManagerReplication extends Thread {
 	/**
 	 * @param instance
 	 */
-	private void createSchemaManagerReplicas(DatabaseInstanceRemote instance) {
+	private void createSystemTableReplicas(DatabaseInstanceRemote instance) {
 		try {
-			schemaManagerRef.getSchemaManager().addStateReplicaLocation(instance);
+			systemTableRef.getSystemTable().addStateReplicaLocation(instance);
 		} catch (MovedException e) {
 			e.printStackTrace();
 		} catch (Exception e) {

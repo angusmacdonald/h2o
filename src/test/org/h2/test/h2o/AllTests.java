@@ -16,7 +16,7 @@ import org.junit.runners.Suite;
 	H2oProperties.class,
 	TransactionNameGenerator.class,
 	//Database Tests
-	SchemaManagerTests.class,
+	SystemTableTests.class,
 	MultipleSchemaTests.class,
 	ReplicaTests.class,
 	IndexTests.class,

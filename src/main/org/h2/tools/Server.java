@@ -79,7 +79,7 @@ public class Server implements Runnable, ShutdownHandler {
         out.println("-baseDir <dir>        The base directory for H2 databases; for all servers");
         out.println("-ifExists             Only existing databases may be opened; for all servers");
         out.println("-trace                Print additional trace information; for all servers");
-        out.println("-SMLocation           The location (as a JDBC URL) of this system's schema manager.");
+        out.println("-SMLocation           The location (as a JDBC URL) of this system's System Table.");
         out.println("See also http://h2database.com/javadoc/" + getClass().getName().replace('.', '/') + ".html");
     }
 

@@ -11,7 +11,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
-import org.h2.h2o.manager.PersistentSchemaManager;
+import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.H2oProperties;
@@ -41,8 +41,8 @@ public class IndexTests{
 	@Before
 	public void setUp() throws Exception {
 		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-		//PersistentSchemaManager.USERNAME = "sa";
-		//PersistentSchemaManager.PASSWORD = "sa";
+		//PersistentSystemTable.USERNAME = "sa";
+		//PersistentSystemTable.PASSWORD = "sa";
 
 		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
 		knownHosts.createNewFile();
@@ -56,8 +56,8 @@ public class IndexTests{
 		
 		org.h2.Driver.load();
 
-		ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
-		cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+		ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+		cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 		sa = ca.createStatement();
 		sb = cb.createStatement();
@@ -77,8 +77,8 @@ public class IndexTests{
 		"INSERT INTO Person VALUES (4, 'Jon Lewis', 3);");
 
 		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-		//PersistentSchemaManager.USERNAME = "sa";
-		//PersistentSchemaManager.PASSWORD = "sa";
+		//PersistentSystemTable.USERNAME = "sa";
+		//PersistentSystemTable.PASSWORD = "sa";
 
 		
 	}

@@ -17,7 +17,7 @@ import java.util.Collection;
 import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Engine;
-import org.h2.h2o.manager.PersistentSchemaManager;
+import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.H2oProperties;
@@ -55,7 +55,7 @@ public class TestBase {
 
 		properties.createNewFile();
 		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
-		properties.setProperty("schemaManagerLocation", "jdbc:h2:sm:mem:one");
+		properties.setProperty("systemTableLocation", "jdbc:h2:sm:mem:one");
 
 		properties.saveAndClose();
 
@@ -63,7 +63,7 @@ public class TestBase {
 
 		properties.createNewFile();
 		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
-		properties.setProperty("schemaManagerLocation", "jdbc:h2:sm:mem:one");
+		properties.setProperty("systemTableLocation", "jdbc:h2:sm:mem:one");
 
 		properties.saveAndClose();
 		
@@ -94,13 +94,13 @@ public class TestBase {
 		knownHosts.saveAndClose();
 		
 		//Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-		//PersistentSchemaManager.USERNAME = "sa";
-		//PersistentSchemaManager.PASSWORD = "sa";
+		//PersistentSystemTable.USERNAME = "sa";
+		//PersistentSystemTable.PASSWORD = "sa";
 
 		org.h2.Driver.load();
 
-		ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
-		cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSchemaManager.USERNAME, PersistentSchemaManager.PASSWORD);
+		ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+		cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 		sa = ca.createStatement();
 		sb = cb.createStatement();

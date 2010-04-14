@@ -16,7 +16,7 @@ import org.h2.engine.Database;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.QueryProxy;
-import org.h2.h2o.manager.ISchemaManager;
+import org.h2.h2o.manager.ISystemTable;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TableInfo;
@@ -76,10 +76,10 @@ public class DropTable extends SchemaCommand {
 		} else {
 			table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
 		}
-		//		DataManagerRemote dm = null;
+		//		TableManagerRemote dm = null;
 		//
 		//		if (Constants.IS_H2O){
-		//			dm = getSchema().getDatabase().getDataManager(getSchema().getName() + "." + tableName);
+		//			dm = getSchema().getDatabase().getTableManager(getSchema().getName() + "." + tableName);
 		//		}
 
 		// TODO drop table: drops views as well (is this ok?)
@@ -113,7 +113,7 @@ public class DropTable extends SchemaCommand {
 			/*
 			 * #########################################################################
 			 * 
-			 *  Remove any schema manager entries.
+			 *  Remove any System Table entries.
 			 * 
 			 * #########################################################################
 			 */
@@ -124,13 +124,13 @@ public class DropTable extends SchemaCommand {
 				QueryProxy qp = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, session.getDatabase());
 				qp.executeUpdate(sqlStatement, transactionName, session);
 
-				ISchemaManager sm = db.getSchemaManager(); //db.getSystemSession()
+				ISystemTable sm = db.getSystemTable(); //db.getSystemSession()
 				try{
 					sm.removeTableInformation(new TableInfo(tableName, getSchema().getName()));
 				} catch (MovedException e){
-					throw new RemoteException("Schema Manager has moved.");
+					throw new RemoteException("System Table has moved.");
 				}
-				//db.removeDataManager(fullTableName, false);
+				//db.removeTableManager(fullTableName, false);
 
 			} else { //It's an internal query...
 
@@ -146,7 +146,7 @@ public class DropTable extends SchemaCommand {
 						db.removeSchemaObject(session, t);
 					}
 
-					//db.removeDataManager(fullTableName, true);
+					//db.removeTableManager(fullTableName, true);
 				} else {
 					// Default H2 behaviour.
 					table.setModified();

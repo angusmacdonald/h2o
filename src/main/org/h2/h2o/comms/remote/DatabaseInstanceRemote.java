@@ -35,10 +35,10 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit  {
 	public DatabaseURL getConnectionURL() throws RemoteException;
 
 	/**
-	 * Get the URL of the schema manager to which this instance is connected.
-	 * @return Object containing all connection information for the schema manager.
+	 * Get the URL of the System Table to which this instance is connected.
+	 * @return Object containing all connection information for the System Table.
 	 */
-	public DatabaseURL getSchemaManagerURL()  throws RemoteException;
+	public DatabaseURL getSystemTableURL()  throws RemoteException;
 
 	/**
 	 * Execute a query on this machine using the supplied query proxy (which contains permission to execute
@@ -56,30 +56,30 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit  {
 	 * Execute the given SQL update on this instance. Since no query proxy is provided with this method call
 	 * the database instance must request the locks needed to execute this query.
 	 * @param sql	The query to be executed.
-	 * @param schemaManagerCommand	True if this command is to update a schema manager replica; otherwise false. This is done
+	 * @param systemTableCommand	True if this command is to update a System Table replica; otherwise false. This is done
 	 * to prevent deadlock, where there is a cycle between machines making updates.
 	 * @return Result of the update.
 	 * @throws RemoteException		Thrown if there were problems connecting to the instance.
 	 * @throws SQLException			Thrown if there was an error in the queries execution.
 	 */
-	int executeUpdate(String sql, boolean schemaManagerCommand) throws RemoteException, SQLException;
+	int executeUpdate(String sql, boolean systemTableCommand) throws RemoteException, SQLException;
 	/**
-	 * Set the current location of the schema manager. This is typically only called by the LookupPinger thread to continually inform
-	 * the node responsible for #(SM) of the schema managers location.
-	 * @param schemaManagerLocation		The location in Chord of the schema manager.
-	 * @param databaseURL				Object containing all connection information for the schema manager.
+	 * Set the current location of the System Table. This is typically only called by the LookupPinger thread to continually inform
+	 * the node responsible for #(SM) of the System Tables location.
+	 * @param systemTableLocation		The location in Chord of the System Table.
+	 * @param databaseURL				Object containing all connection information for the System Table.
 	 * @throws RemoteException		Thrown if there were problems connecting to the instance.
 	 */
-	public void setSchemaManagerLocation(IChordRemoteReference schemaManagerLocation, DatabaseURL databaseURL) throws RemoteException;
+	public void setSystemTableLocation(IChordRemoteReference systemTableLocation, DatabaseURL databaseURL) throws RemoteException;
 
 	/**
-	 * Look for a reference to the specified data manager. This may be called by a Schema Manager which has just been re-instantiated from
-	 * persisted state, and which doesn't have direct pointers to data manager proxies (only their location).
+	 * Look for a reference to the specified Table Manager. This may be called by a System Table which has just been re-instantiated from
+	 * persisted state, and which doesn't have direct pointers to Table Manager proxies (only their location).
 	 * @param tableInfo		The table name and schema name of the table to be found.
-	 * @return	Remote reference to the data manager, or null if nothing was found.
+	 * @return	Remote reference to the Table Manager, or null if nothing was found.
 	 * @throws RemoteException		Thrown if there were problems connecting to the instance.
 	 */
-	public DataManagerRemote findDataManagerReference(TableInfo tableInfo) throws RemoteException;
+	public TableManagerRemote findTableManagerReference(TableInfo tableInfo) throws RemoteException;
 
 
 	/**

@@ -974,14 +974,14 @@ class WebThread extends Thread implements DatabaseEventListener {
 					+ "', null);\n");
 
 			/*
-			 * H2O. Add check for 'is schema manager.
+			 * H2O. Add check for 'is System Table.
 			 */
 			String connectionUrl = (String) this.session.getInfo().get("url");
 
 			String isSM = (connectionUrl.contains(":sm:"))? "YES": "NO";	
 
 
-			buff.append("setNode(" + ++treeIndex + ", 0, 0, 'info', '" + PageParser.escapeJavaScript("Schema Manager: " + isSM)
+			buff.append("setNode(" + ++treeIndex + ", 0, 0, 'info', '" + PageParser.escapeJavaScript("System Table: " + isSM)
 					+ "', null);\n");
 
 

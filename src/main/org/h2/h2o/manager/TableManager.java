@@ -15,7 +15,7 @@ import org.h2.h2o.autonomic.Replication;
 import org.h2.h2o.autonomic.Updates;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.ReplicaManager;
-import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.locking.ILockingTable;
@@ -30,46 +30,46 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
 
 /**
- * <p>The data manager represents a user table in H2O, and is responsible for storing
+ * <p>The Table Manager represents a user table in H2O, and is responsible for storing
  * information on replicas for that table, and handing out locks to access those replicas.</p>
  * 
- * <p>There is one data manager for every user table in the system.
+ * <p>There is one Table Manager for every user table in the system.
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class DataManager extends PersistentManager implements DataManagerRemote, AutonomicController, Migratable {
+public class TableManager extends PersistentManager implements TableManagerRemote, AutonomicController, Migratable {
 
 	/**
-	 * Name of the schema used to store data manager tables.
+	 * Name of the schema used to store Table Manager tables.
 	 */
 	private static final String SCHEMA = "H2O.";
 
 	/**
-	 * Name of tables' table in data manager.
+	 * Name of tables' table in Table Manager.
 	 */
 	private static final String TABLES = SCHEMA + "H2O_DM_TABLE";
 
 	/**
-	 * Name of replicas' table in data manager.
+	 * Name of replicas' table in Table Manager.
 	 */
 	private static final String REPLICAS = SCHEMA + "H2O_DM_REPLICA";
 
 	/**
-	 * Name of connections' table in data manager.
+	 * Name of connections' table in Table Manager.
 	 */
 	private static final String CONNECTIONS = SCHEMA + "H2O_DM_CONNECTION";
 
 	/**
-	 * The database username used to communicate with data manager tables.
+	 * The database username used to communicate with Table Manager tables.
 	 */
 	public static String USERNAME = "angus";
 
 	/**
-	 * The database password used to communicate with data manager tables.
+	 * The database password used to communicate with Table Manager tables.
 	 */
 	public static String PASSWORD = "supersecret";
 
 	/**
-	 * The name of the table that this data manager is responsible for.
+	 * The name of the table that this Table Manager is responsible for.
 	 */
 	private String tableName;
 
@@ -83,7 +83,7 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 	//	/**
 	//	 * Updates made asynchronously to a single table that haven't yet reached other replicas.
 	//	 * 
-	//	 * <p>Key: The number given to the update by the data manager.
+	//	 * <p>Key: The number given to the update by the Table Manager.
 	//	 * <p>Value: The SQL query for the update.
 	//	 */
 	//	private Map<Integer, String> unPropagatedUpdates;
@@ -100,19 +100,19 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 	 * MIGRATION RELATED CODE.
 	 */
 	/**
-	 * If this schema manager has been moved to another location (i.e. its state has been transferred to another machine
-	 * and it is no longer active) this field will not be null, and will note the new location of the schema manager.
+	 * If this System Table has been moved to another location (i.e. its state has been transferred to another machine
+	 * and it is no longer active) this field will not be null, and will note the new location of the System Table.
 	 */
 
 	private String movedLocation = null;
 
 	/**
-	 * Whether the schema manager is in the process of being migrated. If this is true the schema manager will be 'locked', unable to service requests.
+	 * Whether the System Table is in the process of being migrated. If this is true the System Table will be 'locked', unable to service requests.
 	 */
 	private boolean inMigration;
 
 	/**
-	 * Whether the schema manager has been moved to another location.
+	 * Whether the System Table has been moved to another location.
 	 */
 	private boolean hasMoved = false;
 
@@ -122,13 +122,13 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 	private long migrationTime = 0l;
 
 	/**
-	 * The timeout period for migrating the schema manager.
+	 * The timeout period for migrating the System Table.
 	 */
 	private static final int MIGRATION_TIMEOUT = 10000;
 
 	private IChordRemoteReference location;
 
-	public DataManager(TableInfo tableDetails, Database database) throws Exception{
+	public TableManager(TableInfo tableDetails, Database database) throws Exception{
 		super(database, false, TABLES, REPLICAS, CONNECTIONS);
 
 		this.tableName = tableDetails.getTableName();
@@ -155,27 +155,27 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 
 		addTableInformation(getDB().getDatabaseURL(), tableDetails);
 
-		//database.addDataManager(this);
+		//database.addTableManager(this);
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.DataManagerRemote2#addTableInformation(org.h2.h2o.util.DatabaseURL, org.h2.h2o.util.TableInfo)
+	 * @see org.h2.h2o.manager.TableManagerRemote2#addTableInformation(org.h2.h2o.util.DatabaseURL, org.h2.h2o.util.TableInfo)
 	 */
 	@Override
-	public boolean addTableInformation(DatabaseURL dataManagerURL,
+	public boolean addTableInformation(DatabaseURL tableManagerURL,
 			TableInfo tableDetails) throws RemoteException, MovedException, SQLException {
-		int result = super.addConnectionInformation(dataManagerURL, true);
+		int result = super.addConnectionInformation(tableManagerURL, true);
 		
 		boolean added = (result != -1);
 		if (!added) return false;
 		
-		added = super.addTableInformation(dataManagerURL, tableDetails, true);
-		if (added) replicaManager.add(getDatabaseInstance(dataManagerURL));
+		added = super.addTableInformation(tableManagerURL, tableDetails, true);
+		if (added) replicaManager.add(getDatabaseInstance(tableManagerURL));
 		return added;
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.DataManagerRemote2#addReplicaInformation(org.h2.h2o.util.TableInfo)
+	 * @see org.h2.h2o.manager.TableManagerRemote2#addReplicaInformation(org.h2.h2o.util.TableInfo)
 	 */
 	@Override
 	public void addReplicaInformation(TableInfo tableDetails)throws RemoteException, MovedException, SQLException {
@@ -185,7 +185,7 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.DataManagerRemote2#removeReplicaInformation(org.h2.h2o.util.TableInfo)
+	 * @see org.h2.h2o.manager.TableManagerRemote2#removeReplicaInformation(org.h2.h2o.util.TableInfo)
 	 */
 	public void removeReplicaInformation(TableInfo ti) throws RemoteException, MovedException{
 		super.removeReplicaInformation(ti);
@@ -203,10 +203,10 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.DataManagerRemote2#removeDataManager()
+	 * @see org.h2.h2o.manager.TableManagerRemote2#removeTableManager()
 	 */
 	@Override
-	public boolean removeDataManager() throws RemoteException, SQLException,
+	public boolean removeTableManager() throws RemoteException, SQLException,
 			MovedException {
 		boolean successful = super.removeTableInformation(getTableInfo());
 		
@@ -214,13 +214,13 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 	}
 
 	/**
-	 * Creates the set of tables used by the data manager.
+	 * Creates the set of tables used by the Table Manager.
 	 * @return Result of the update.
 	 * @throws SQLException
 	 */
-	public static int createDataManagerTables(Session session) throws SQLException{
+	public static int createTableManagerTables(Session session) throws SQLException{
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Creating data manager tables.");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Creating Table Manager tables.");
 
 		String sql = createSQL(TABLES, REPLICAS, CONNECTIONS);
 
@@ -246,15 +246,15 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 
 		if (dir == null){
 			try {
-				//The schema manager doesn't contain a proper reference for the remote database instance. Try and find one,
-				//then update the schema manager if successful.
+				//The System Table doesn't contain a proper reference for the remote database instance. Try and find one,
+				//then update the System Table if successful.
 				dir = getDB().getRemoteInterface().getDatabaseInstanceAt(dbURL);
 
 				if (dir == null){
 					ErrorHandling.errorNoEvent("DatabaseInstanceRemote wasn't found.");
 				} else {
 
-					getDB().getSchemaManager().addConnectionInformation(dbURL, new DatabaseInstanceWrapper(dir, true));
+					getDB().getSystemTable().addConnectionInformation(dbURL, new DatabaseInstanceWrapper(dir, true));
 
 				}
 
@@ -269,10 +269,10 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.comms.IDataManager#getQueryProxy(java.lang.String)
+	 * @see org.h2.h2o.comms.ITableManager#getQueryProxy(java.lang.String)
 	 */
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.DataManagerRemote2#getQueryProxy(org.h2.h2o.util.LockType, org.h2.h2o.comms.remote.DatabaseInstanceRemote)
+	 * @see org.h2.h2o.manager.TableManagerRemote2#getQueryProxy(org.h2.h2o.util.LockType, org.h2.h2o.comms.remote.DatabaseInstanceRemote)
 	 */
 	@Override
 	public synchronized QueryProxy getQueryProxy(LockType lockRequested, DatabaseInstanceRemote databaseInstanceRemote) throws RemoteException, SQLException, MovedException {
@@ -307,7 +307,7 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 	 * 
 	 * <p>This decision is currently based on the DESIRED_REPLICATION_FACTOR variable (if the query is a create), the SYNCHRONOUS_UPDATE variable
 	 * if the query is another form of update, and the database instance where the request was initiated.
-	 * @param primaryLocation	The location of the primary copy - also the location of the data manager. This location will NOT
+	 * @param primaryLocation	The location of the primary copy - also the location of the Table Manager. This location will NOT
 	 * 	be returned in the list of replica locations (because the primary copy already exists there).
 	 * @param lockType 
 	 * @param databaseInstanceRemote Requesting machine.
@@ -382,10 +382,10 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.comms.DataManagerRemote#getLocation()
+	 * @see org.h2.h2o.comms.TableManagerRemote#getLocation()
 	 */
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.DataManagerRemote2#getLocation()
+	 * @see org.h2.h2o.manager.TableManagerRemote2#getLocation()
 	 */
 	@Override
 	public String getLocation() throws RemoteException, MovedException{
@@ -396,7 +396,7 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.DataManagerRemote2#getTableName()
+	 * @see org.h2.h2o.manager.TableManagerRemote2#getTableName()
 	 */
 	public String getTableName() {
 		return tableName;
@@ -404,10 +404,10 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.comms.DataManagerRemote#testAvailability()
+	 * @see org.h2.h2o.comms.TableManagerRemote#testAvailability()
 	 */
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.DataManagerRemote2#isAlive()
+	 * @see org.h2.h2o.manager.TableManagerRemote2#isAlive()
 	 */
 	@Override
 	public boolean isAlive() throws RemoteException, MovedException {
@@ -417,10 +417,10 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.comms.remote.DataManagerRemote#releaseLock(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
+	 * @see org.h2.h2o.comms.remote.TableManagerRemote#releaseLock(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
 	 */
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.DataManagerRemote2#releaseLock(org.h2.h2o.comms.remote.DatabaseInstanceRemote, java.util.Set, int)
+	 * @see org.h2.h2o.manager.TableManagerRemote2#releaseLock(org.h2.h2o.comms.remote.DatabaseInstanceRemote, java.util.Set, int)
 	 */
 	@Override
 	public void releaseLock(DatabaseInstanceRemote requestingDatabase, Set<DatabaseInstanceRemote> updatedReplicas, int updateID) throws RemoteException, MovedException {
@@ -439,7 +439,7 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.DataManagerRemote2#getTableInfo()
+	 * @see org.h2.h2o.manager.TableManagerRemote2#getTableInfo()
 	 */
 	public TableInfo getTableInfo() throws RemoteException {
 
@@ -448,10 +448,10 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.h2.h2o.comms.remote.DataManagerRemote#shutdown()
+	 * @see org.h2.h2o.comms.remote.TableManagerRemote#shutdown()
 	 */
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.DataManagerRemote2#shutdown()
+	 * @see org.h2.h2o.manager.TableManagerRemote2#shutdown()
 	 */
 	@Override
 	public void shutdown() {
@@ -464,7 +464,7 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 
 	private void preMethodTest() throws RemoteException, MovedException{
 		if (hasMoved || shutdown){
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Data manager has moved. Throwing MovedException.");
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Table Manager has moved. Throwing MovedException.");
 			throw new MovedException(movedLocation);
 		}
 		/*
@@ -523,31 +523,31 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.DataManagerRemote2#buildDataManagerState(org.h2.h2o.comms.remote.DataManagerRemote)
+	 * @see org.h2.h2o.manager.TableManagerRemote2#buildTableManagerState(org.h2.h2o.comms.remote.TableManagerRemote)
 	 */
-	public void buildDataManagerState(DataManagerRemote otherDataManager) throws RemoteException, MovedException {
+	public void buildTableManagerState(TableManagerRemote otherTableManager) throws RemoteException, MovedException {
 		preMethodTest();
 
 		/*
 		 * Obtain fully qualified table name.
 		 */
-		//		this.schemaName = otherDataManager.getSchemaName();
-		//		this.tableName = otherDataManager.getTableName();
-		//This is done when constructing the new data manager.
+		//		this.schemaName = otherTableManager.getSchemaName();
+		//		this.tableName = otherTableManager.getTableName();
+		//This is done when constructing the new Table Manager.
 
 		/*
 		 * Obtain replica manager.
 		 */
-		this.replicaManager = otherDataManager.getReplicaManager();
+		this.replicaManager = otherTableManager.getReplicaManager();
 
 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.comms.remote.DataManagerRemote#getSchemaName()
+	 * @see org.h2.h2o.comms.remote.TableManagerRemote#getSchemaName()
 	 */
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.DataManagerRemote2#getSchemaName()
+	 * @see org.h2.h2o.manager.TableManagerRemote2#getSchemaName()
 	 */
 	@Override
 	public String getSchemaName()  throws RemoteException {
@@ -555,10 +555,10 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.comms.remote.DataManagerRemote#getReplicaManager()
+	 * @see org.h2.h2o.comms.remote.TableManagerRemote#getReplicaManager()
 	 */
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.DataManagerRemote2#getReplicaManager()
+	 * @see org.h2.h2o.manager.TableManagerRemote2#getReplicaManager()
 	 */
 	@Override
 	public ReplicaManager getReplicaManager() throws RemoteException {
@@ -566,10 +566,10 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.comms.remote.DataManagerRemote#getTableSet()
+	 * @see org.h2.h2o.comms.remote.TableManagerRemote#getTableSet()
 	 */
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.DataManagerRemote2#getTableSet()
+	 * @see org.h2.h2o.manager.TableManagerRemote2#getTableSet()
 	 */
 	@Override
 	public int getTableSet()  throws RemoteException {
@@ -577,10 +577,10 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.comms.remote.DataManagerRemote#getDatabaseURL()
+	 * @see org.h2.h2o.comms.remote.TableManagerRemote#getDatabaseURL()
 	 */
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.DataManagerRemote2#getDatabaseURL()
+	 * @see org.h2.h2o.manager.TableManagerRemote2#getDatabaseURL()
 	 */
 	@Override
 	public DatabaseURL getDatabaseURL() throws RemoteException {
@@ -605,7 +605,7 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 	 * @see org.h2.h2o.manager.Migratable#shutdown(boolean)
 	 */
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.DataManagerRemote2#shutdown(boolean)
+	 * @see org.h2.h2o.manager.TableManagerRemote2#shutdown(boolean)
 	 */
 	@Override
 	public void shutdown(boolean shutdown) throws RemoteException,
@@ -617,7 +617,7 @@ public class DataManager extends PersistentManager implements DataManagerRemote,
 	 * @see org.h2.h2o.manager.Migratable#getChordReference()
 	 */
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.DataManagerRemote2#getChordReference()
+	 * @see org.h2.h2o.manager.TableManagerRemote2#getChordReference()
 	 */
 	@Override
 	public IChordRemoteReference getChordReference() throws RemoteException {

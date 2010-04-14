@@ -6,19 +6,19 @@ import java.sql.Statement;
 
 import org.h2.engine.Database;
 import org.h2.engine.Session;
-import org.h2.h2o.manager.PersistentSchemaManager;
+import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.schema.Schema;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class MigrateSchemaManager extends org.h2.command.ddl.SchemaCommand {
+public class MigrateSystemTable extends org.h2.command.ddl.SchemaCommand {
 
 	/**
 	 * @param session
 	 * @param schema
 	 */
-	public MigrateSchemaManager(Session session, Schema schema) {
+	public MigrateSystemTable(Session session, Schema schema) {
 		super(session, schema);
 		// TODO Auto-generated constructor stub
 	}
@@ -39,7 +39,7 @@ public class MigrateSchemaManager extends org.h2.command.ddl.SchemaCommand {
 	 */
 	@Override
 	public int update() throws SQLException, RemoteException {
-		this.session.getDatabase().getSchemaManagerReference().migrateSchemaManagerToLocalInstance();
+		this.session.getDatabase().getSystemTableReference().migrateSystemTableToLocalInstance();
 		
 		return 0;
 	}

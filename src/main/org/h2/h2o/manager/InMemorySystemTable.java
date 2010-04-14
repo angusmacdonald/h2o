@@ -13,7 +13,7 @@ import java.util.Map.Entry;
 import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.engine.Database;
-import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.util.DatabaseURL;
@@ -26,18 +26,18 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
-public class InMemorySchemaManager implements ISchemaManager, Remote {
+public class InMemorySystemTable implements ISystemTable, Remote {
 
 	private Database database;
 
 	/**
-	 * References to every data manager in the database system.
+	 * References to every Table Manager in the database system.
 	 * 
 	 * <p><ul><li>Key: Full table name (incl. schema name)</li>
-	 * <li>Value: reference to the table's data manager</li>
+	 * <li>Value: reference to the table's Table Manager</li>
 	 * </ul>
 	 */
-	private Map<TableInfo, DataManagerWrapper> dataManagers;
+	private Map<TableInfo, TableManagerWrapper> tableManagers;
 
 	/**
 	 * Cached references to replicas in the database system.
@@ -52,55 +52,55 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 
 
 	/**
-	 * The next valid table set number which can be assigned by the schema manager.
+	 * The next valid table set number which can be assigned by the System Table.
 	 */
 	private int tableSetNumber = 1;
 
 	/**
-	 * Locations where the state of the schema manager is replicated.
+	 * Locations where the state of the System Table is replicated.
 	 */
-	//private Set<DatabaseInstanceRemote> schemaManagerState;
+	//private Set<DatabaseInstanceRemote> systemTableState;
 
 	/**
 	 * Maintained because a nosuchobjectexception is occasionally thrown. 
 	 * See http://stackoverflow.com/questions/645208/java-rmi-nosuchobjectexception-no-such-object-in-table/854097#854097.
 	 */
-	public static HashSet<DataManagerRemote> dataManagerReferences = new HashSet<DataManagerRemote>();
+	public static HashSet<TableManagerRemote> tableManagerReferences = new HashSet<TableManagerRemote>();
 
 	
 	
-	public InMemorySchemaManager(Database database) throws Exception{
+	public InMemorySystemTable(Database database) throws Exception{
 		this.database = database;
 
-		dataManagers = new HashMap<TableInfo, DataManagerWrapper>();
+		tableManagers = new HashMap<TableInfo, TableManagerWrapper>();
 		replicaLocations = new HashMap<String, Set<TableInfo>>();
-		//		schemaManagerState = new HashSet<DatabaseInstanceRemote>();
+		//		systemTableState = new HashSet<DatabaseInstanceRemote>();
 		//
-		//		schemaManagerState.add(database.getLocalDatabaseInstance());
+		//		systemTableState.add(database.getLocalDatabaseInstance());
 	}
 
 	/******************************************************************
-	 ****	Methods which involve updating the schema manager's state.
+	 ****	Methods which involve updating the System Table's state.
 	 ******************************************************************/
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.ISchemaManager#confirmTableCreation(java.lang.String, org.h2.h2o.comms.remote.DataManagerRemote)
+	 * @see org.h2.h2o.ISystemTable#confirmTableCreation(java.lang.String, org.h2.h2o.comms.remote.TableManagerRemote)
 	 */
-	public boolean addTableInformation(DataManagerRemote dataManager, TableInfo tableDetails) throws RemoteException {
+	public boolean addTableInformation(TableManagerRemote tableManager, TableInfo tableDetails) throws RemoteException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "New table successfully created: " + tableDetails);
 
 
 		TableInfo basicTableInfo = tableDetails.getGenericTableInfo();
 
 
-		DataManagerWrapper dmw = new DataManagerWrapper(basicTableInfo, dataManager, tableDetails.getDbURL());
+		TableManagerWrapper dmw = new TableManagerWrapper(basicTableInfo, tableManager, tableDetails.getDbURL());
 
-		if (dataManagers.containsKey(basicTableInfo)){
+		if (tableManagers.containsKey(basicTableInfo)){
 			return false; //this table already exists.
 		}
 
-		dataManagerReferences.add(dataManager);
-		dataManagers.put(basicTableInfo, dmw);
+		tableManagerReferences.add(tableManager);
+		tableManagers.put(basicTableInfo, dmw);
 		String fullName = tableDetails.getFullTableName();
 		Set<TableInfo> replicas = replicaLocations.get(fullName);
 
@@ -116,7 +116,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.ISchemaManager#removeTable(java.lang.String, java.lang.String)
+	 * @see org.h2.h2o.ISystemTable#removeTable(java.lang.String, java.lang.String)
 	 */
 	@Override
 	public boolean removeTableInformation(TableInfo ti) throws RemoteException {
@@ -130,19 +130,19 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 			 * Drop the entire schema.
 			 */
 
-			for (TableInfo info: dataManagers.keySet()){
+			for (TableInfo info: tableManagers.keySet()){
 				if (info.getSchemaName().equals(ti.getSchemaName())){
 					toRemove.add(info);
 				}
 			}
 
 			for (TableInfo key: toRemove){
-				this.dataManagers.remove(key);
+				this.tableManagers.remove(key);
 			}
 
 		} else { //Just remove the single table.
 
-			this.dataManagers.remove(ti.getGenericTableInfo());
+			this.tableManagers.remove(ti.getGenericTableInfo());
 
 		}
 
@@ -150,7 +150,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.ISchemaManager#addConnectionInformation(org.h2.h2o.util.DatabaseURL)
+	 * @see org.h2.h2o.ISystemTable#addConnectionInformation(org.h2.h2o.util.DatabaseURL)
 	 */
 	@Override
 	public int addConnectionInformation(DatabaseURL databaseURL, DatabaseInstanceWrapper databaseInstanceRemote)
@@ -163,7 +163,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.ISchemaManager#addReplicaInformation(org.h2.h2o.TableInfo)
+	 * @see org.h2.h2o.ISystemTable#addReplicaInformation(org.h2.h2o.TableInfo)
 	 */
 	@Override
 	public void addReplicaInformation(TableInfo ti) throws RemoteException {
@@ -180,7 +180,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.ISchemaManager#removeReplica(java.lang.String, org.h2.h2o.TableInfo)
+	 * @see org.h2.h2o.ISystemTable#removeReplica(java.lang.String, org.h2.h2o.TableInfo)
 	 */
 	@Override
 	public void removeReplicaInformation(TableInfo ti) throws RemoteException {
@@ -197,26 +197,26 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	}
 
 	/******************************************************************
-	 ****	Methods which involve querying the schema manager.
+	 ****	Methods which involve querying the System Table.
 	 ******************************************************************/
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.ISchemaManager#lookup(java.lang.String)
+	 * @see org.h2.h2o.ISystemTable#lookup(java.lang.String)
 	 */
 	@Override
-	public DataManagerRemote lookup(TableInfo ti) throws RemoteException {
-		DataManagerWrapper dmw = dataManagers.get(ti);
-		DataManagerRemote dm = null;
+	public TableManagerRemote lookup(TableInfo ti) throws RemoteException {
+		TableManagerWrapper dmw = tableManagers.get(ti);
+		TableManagerRemote dm = null;
 
 		if (dmw != null){
-			dm = dmw.getDataManager();
+			dm = dmw.getTableManager();
 		}
 		/*
-		 * If there is a null reference to a data manager we can try to reinstantiate it, but
+		 * If there is a null reference to a Table Manager we can try to reinstantiate it, but
 		 * if there is no reference at all just return null for the lookup. 
 		 */
-		if (dm != null || !dataManagers.containsKey(ti)) {
-			if (!dataManagers.containsKey(ti)){
+		if (dm != null || !tableManagers.containsKey(ti)) {
+			if (!tableManagers.containsKey(ti)){
 				return null;
 			}
 
@@ -226,7 +226,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 
 		/*
 		 * The DM reference is null so we must look to create a new DM.
-		 * TODO in future we may do a chord lookup to look for another dm, in a similar way to schema manager lookups.
+		 * TODO in future we may do a chord lookup to look for another dm, in a similar way to System Table lookups.
 		 */
 
 		boolean tableExists = false;
@@ -240,11 +240,11 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 
 		if (tableExists){
 			/*
-			 * It is okay to re-instantiate the data manager here.
+			 * It is okay to re-instantiate the Table Manager here.
 			 */
-			//DataManager dm = DataManager.createDataManagerFromPersistentStore(ti.getSchemaName(), ti.getSchemaName());
+			//TableManager dm = TableManager.createTableManagerFromPersistentStore(ti.getSchemaName(), ti.getSchemaName());
 			try {
-				dm = new DataManager(ti, database);
+				dm = new TableManager(ti, database);
 			} catch (SQLException e) {
 				e.printStackTrace();
 			} catch (Exception e) {
@@ -252,10 +252,10 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 			}
 
 			/*
-			 * Make data manager serializable first.
+			 * Make Table Manager serializable first.
 			 */
 			try {
-				dm = (DataManagerRemote) UnicastRemoteObject.exportObject(dm, 0);
+				dm = (TableManagerRemote) UnicastRemoteObject.exportObject(dm, 0);
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
@@ -263,31 +263,31 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 
 		}
 
-		dmw.setDataManager(dm);
-		dataManagers.put(ti, dmw);
+		dmw.setTableManager(dm);
+		tableManagers.put(ti, dmw);
 
-		return dataManagers.get(ti).getDataManager();
+		return tableManagers.get(ti).getTableManager();
 	}
 
 
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.ISchemaManager#exists(java.lang.String)
+	 * @see org.h2.h2o.ISystemTable#exists(java.lang.String)
 	 */
 	@Override
 	public boolean exists(TableInfo ti) throws RemoteException {
-		return dataManagers.containsKey(ti);
+		return tableManagers.containsKey(ti);
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.ISchemaManager#getAllTablesInSchema(java.lang.String)
+	 * @see org.h2.h2o.ISystemTable#getAllTablesInSchema(java.lang.String)
 	 */
 	@Override
 	public Set<String> getAllTablesInSchema(String schemaName) throws RemoteException {
 
 		Set<String> tableNames = new HashSet<String>();
 
-		for (TableInfo ti: dataManagers.keySet()){
+		for (TableInfo ti: tableManagers.keySet()){
 			if (ti.getSchemaName().equals(schemaName)){
 				tableNames.add(ti.getFullTableName());
 			}
@@ -297,7 +297,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.ISchemaManager#getNewTableSetNumber()
+	 * @see org.h2.h2o.ISystemTable#getNewTableSetNumber()
 	 */
 	@Override
 	public int getNewTableSetNumber() throws RemoteException {
@@ -305,7 +305,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.ISchemaManager#getNumberofReplicas(java.lang.String, java.lang.String)
+	 * @see org.h2.h2o.ISystemTable#getNumberofReplicas(java.lang.String, java.lang.String)
 	 */
 	@Override
 	public int getNumberofReplicas(String tableName, String schemaName) throws RemoteException {
@@ -316,16 +316,16 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#buildSchemaManagerState(org.h2.h2o.manager.ISchemaManager)
+	 * @see org.h2.h2o.manager.ISystemTable#buildSystemTableState(org.h2.h2o.manager.ISystemTable)
 	 */
 	@Override
-	public void buildSchemaManagerState(ISchemaManager otherSchemaManager)
+	public void buildSystemTableState(ISystemTable otherSystemTable)
 	throws RemoteException, MovedException, SQLException {
 
 		/*
 		 * Obtain references to connected machines.
 		 */
-		Map<DatabaseURL, DatabaseInstanceWrapper> connectedMachines = otherSchemaManager.getConnectionInformation();
+		Map<DatabaseURL, DatabaseInstanceWrapper> connectedMachines = otherSystemTable.getConnectionInformation();
 
 		databasesInSystem = new HashMap<DatabaseURL, DatabaseInstanceWrapper>();
 
@@ -363,29 +363,29 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 
 
 		/*
-		 * Obtain references to data managers.
+		 * Obtain references to Table Managers.
 		 */
-		dataManagers = otherSchemaManager.getDataManagers();
+		tableManagers = otherSystemTable.getTableManagers();
 
 		/*
-		 * At this point some of the data manager references will be null if the data managers could not be found at their old location.
-		 * If a reference is null, but there is a copy of the table locally then a new data manager can be created.
+		 * At this point some of the Table Manager references will be null if the Table Managers could not be found at their old location.
+		 * If a reference is null, but there is a copy of the table locally then a new Table Manager can be created.
 		 * If a reference is null, but there is no local copy then the table should no longer be accessible. 
 		 */
 
-		//Map<TableInfo, DataManagerRemote> newManagers = new HashMap<TableInfo, DataManagerRemote>();
+		//Map<TableInfo, TableManagerRemote> newManagers = new HashMap<TableInfo, TableManagerRemote>();
 
 		/*
 		 * Obtain references to replicas.
 		 */
-		//replicaLocations = otherSchemaManager.getReplicaLocations();
+		//replicaLocations = otherSystemTable.getReplicaLocations();
 
 
 	}
 
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#getConnectionInformation()
+	 * @see org.h2.h2o.manager.ISystemTable#getConnectionInformation()
 	 */
 	@Override
 	public Map<DatabaseURL, DatabaseInstanceWrapper> getConnectionInformation() throws RemoteException {
@@ -393,15 +393,15 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#getDataManagers()
+	 * @see org.h2.h2o.manager.ISystemTable#getTableManagers()
 	 */
 	@Override
-	public Map<TableInfo, DataManagerWrapper> getDataManagers() {
-		return dataManagers;
+	public Map<TableInfo, TableManagerWrapper> getTableManagers() {
+		return tableManagers;
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#getReplicaLocations()
+	 * @see org.h2.h2o.manager.ISystemTable#getReplicaLocations()
 	 */
 	@Override
 	public Map<String, Set<TableInfo>> getReplicaLocations() {
@@ -409,10 +409,10 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#buildSchemaManagerState()
+	 * @see org.h2.h2o.manager.ISystemTable#buildSystemTableState()
 	 */
 	@Override
-	public void buildSchemaManagerState() throws RemoteException {
+	public void buildSystemTableState() throws RemoteException {
 		// TODO Auto-generated method stub
 	}
 
@@ -439,17 +439,17 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#removeAllTableInformation()
+	 * @see org.h2.h2o.manager.ISystemTable#removeAllTableInformation()
 	 */
 	@Override
 	public void removeAllTableInformation() throws RemoteException{
-		for (DataManagerWrapper dmw : dataManagers.values()){
+		for (TableManagerWrapper dmw : tableManagers.values()){
 			try {
 
-				DataManagerRemote dm = null;
+				TableManagerRemote dm = null;
 				
 				if (dmw != null){
-					dm = dmw.getDataManager();
+					dm = dmw.getTableManager();
 				}
 				
 				if (dm != null){
@@ -461,28 +461,28 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 			}
 		}
 
-		dataManagers.clear();
+		tableManagers.clear();
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#addSchemaManagerDataLocation(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
+	 * @see org.h2.h2o.manager.ISystemTable#addSystemTableDataLocation(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
 	 */
 	@Override
 	public void addStateReplicaLocation(
 			DatabaseInstanceRemote databaseReference) throws RemoteException {
 
-		//		if (schemaManagerState.size() < Replication.SCHEMA_MANAGER_REPLICATION_FACTOR){ //TODO update to allow policy on number of replicas.
-		//			this.schemaManagerState.add(databaseReference);
+		//		if (systemTableState.size() < Replication.SCHEMA_MANAGER_REPLICATION_FACTOR){ //TODO update to allow policy on number of replicas.
+		//			this.systemTableState.add(databaseReference);
 		//			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseReference.getLocation().getDbLocation());
 		//		} else {
-		//			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Didn't add to the schema manager's replication set, because there are enough replicas already (" + schemaManagerState.size() + ")");
+		//			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Didn't add to the System Table's replication set, because there are enough replicas already (" + systemTableState.size() + ")");
 		//		}
 
 	}
 
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#getDatabaseInstance(org.h2.h2o.util.DatabaseURL)
+	 * @see org.h2.h2o.manager.ISystemTable#getDatabaseInstance(org.h2.h2o.util.DatabaseURL)
 	 */
 	@Override
 	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL)
@@ -493,7 +493,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#getDatabaseInstances()
+	 * @see org.h2.h2o.manager.ISystemTable#getDatabaseInstances()
 	 */
 	@Override
 	public Set<DatabaseInstanceWrapper> getDatabaseInstances()
@@ -502,7 +502,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#removeDatabaseInstance(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
+	 * @see org.h2.h2o.manager.ISystemTable#removeDatabaseInstance(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
 	 */
 	@Override
 	public void removeConnectionInformation(
@@ -516,36 +516,36 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#changeDataManagerLocation(org.h2.h2o.comms.remote.DataManagerRemote)
+	 * @see org.h2.h2o.manager.ISystemTable#changeTableManagerLocation(org.h2.h2o.comms.remote.TableManagerRemote)
 	 */
-	public void changeDataManagerLocation(DataManagerRemote stub, TableInfo tableInfo) {
-		Object result = this.dataManagers.remove(tableInfo.getGenericTableInfo());
+	public void changeTableManagerLocation(TableManagerRemote stub, TableInfo tableInfo) {
+		Object result = this.tableManagers.remove(tableInfo.getGenericTableInfo());
 		
 		if (result == null){
-			ErrorHandling.errorNoEvent("There is an inconsistency in the storage of data managers which has caused inconsistencies in the set of managers.");
+			ErrorHandling.errorNoEvent("There is an inconsistency in the storage of Table Managers which has caused inconsistencies in the set of managers.");
 			assert false;
 		}
 
-		DataManagerWrapper dmw = new DataManagerWrapper(tableInfo, stub, tableInfo.getDbURL());
+		TableManagerWrapper dmw = new TableManagerWrapper(tableInfo, stub, tableInfo.getDbURL());
 		
-		this.dataManagers.put(tableInfo.getGenericTableInfo(), dmw);
-		dataManagerReferences.add(stub);
+		this.tableManagers.put(tableInfo.getGenericTableInfo(), dmw);
+		tableManagerReferences.add(stub);
 		this.database.getChordInterface().bind(tableInfo.getFullTableName(), stub);
 		
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISchemaManager#getLocalDatabaseInstances(org.h2.h2o.util.DatabaseURL)
+	 * @see org.h2.h2o.manager.ISystemTable#getLocalDatabaseInstances(org.h2.h2o.util.DatabaseURL)
 	 */
 	@Override
-	public Set<DataManagerWrapper> getLocalDatabaseInstances(DatabaseURL databaseInstance)
+	public Set<TableManagerWrapper> getLocalDatabaseInstances(DatabaseURL databaseInstance)
 	throws RemoteException, MovedException {
 		
 		/*
-		 * Create an interator to go through and chec whether a given data manager is local to the specified machine.
+		 * Create an interator to go through and chec whether a given Table Manager is local to the specified machine.
 		 */
-		Predicate<DataManagerWrapper, DatabaseURL> isLocal = new Predicate<DataManagerWrapper, DatabaseURL>() {
-			public boolean apply(DataManagerWrapper wrapper, DatabaseURL databaseInstance) {
+		Predicate<TableManagerWrapper, DatabaseURL> isLocal = new Predicate<TableManagerWrapper, DatabaseURL>() {
+			public boolean apply(TableManagerWrapper wrapper, DatabaseURL databaseInstance) {
 		        try {
 					return wrapper.isLocalTo(databaseInstance);
 				} catch (RemoteException e) {
@@ -555,7 +555,7 @@ public class InMemorySchemaManager implements ISchemaManager, Remote {
 			
 		};
 
-		Set<DataManagerWrapper> localManagers = CollectionFilter.filter(this.dataManagers.values(), isLocal, databaseInstance);
+		Set<TableManagerWrapper> localManagers = CollectionFilter.filter(this.tableManagers.values(), isLocal, databaseInstance);
 
 		return localManagers;
 	}

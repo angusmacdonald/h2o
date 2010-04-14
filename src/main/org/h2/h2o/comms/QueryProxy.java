@@ -9,10 +9,10 @@ import java.util.Set;
 
 import org.h2.command.Command;
 import org.h2.command.Parser;
-import org.h2.command.dml.MigrateDataManager;
+import org.h2.command.dml.MigrateTableManager;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
-import org.h2.h2o.comms.remote.DataManagerRemote;
+import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.util.LockType;
@@ -25,7 +25,7 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  * A proxy class used to make sending queries to multiple replicas easier. The query only needs to be sent
  * to the query proxy, which handles the rest of the transaction.
  * 
- * <p>Query proxies are created by the data manager for a given table, and indicate permission to perform a given query. The
+ * <p>Query proxies are created by the Table Manager for a given table, and indicate permission to perform a given query. The
  * level of this permission is indicated by the type of lock granted (see lockGranted attribute).
  *
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
@@ -44,9 +44,9 @@ public class QueryProxy implements Serializable{
 	private Set<DatabaseInstanceRemote> allReplicas;
 
 	/**
-	 * Proxy for the data manager of this table. Used to release any locks held at the end of the transaction.
+	 * Proxy for the Table Manager of this table. Used to release any locks held at the end of the transaction.
 	 */
-	private DataManagerRemote dataManagerProxy;
+	private TableManagerRemote tableManagerProxy;
 
 	/**
 	 * The database instance making the request. This is used to request the lock (i.e. the lock for the given query
@@ -55,7 +55,7 @@ public class QueryProxy implements Serializable{
 	private DatabaseInstanceRemote requestingDatabase;
 
 	/**
-	 * ID assigned to this update by the data manager. This is returned to inform the data manager what replicas were updated.
+	 * ID assigned to this update by the Table Manager. This is returned to inform the Table Manager what replicas were updated.
 	 */
 	private int updateID;
 
@@ -70,16 +70,16 @@ public class QueryProxy implements Serializable{
 	 * @param lockGranted		The type of lock that has been granted
 	 * @param tableName			Name of the table that is being used in the query
 	 * @param replicaLocations	Proxies for each of the replicas used in the query.
-	 * @param dataManager		Proxy for the data manager of the table involved in the query (i.e. tableName).
+	 * @param tableManager		Proxy for the Table Manager of the table involved in the query (i.e. tableName).
 	 * @param updateID 			ID given to this update.
 	 */
 	public QueryProxy(LockType lockGranted, String tableName,
-			Set<DatabaseInstanceRemote> replicaLocations, DataManagerRemote dataManager, DatabaseInstanceRemote requestingMachine, int updateID, LockType lockRequested) {
+			Set<DatabaseInstanceRemote> replicaLocations, TableManagerRemote tableManager, DatabaseInstanceRemote requestingMachine, int updateID, LockType lockRequested) {
 		this.lockGranted = lockGranted;
 		this.lockRequested = lockRequested;
 		this.tableName = tableName;
 		this.allReplicas = replicaLocations;
-		this.dataManagerProxy = dataManager;
+		this.tableManagerProxy = tableManager;
 		this.requestingDatabase = requestingMachine;
 		this.updateID = updateID;
 	}
@@ -117,9 +117,9 @@ public class QueryProxy implements Serializable{
 			 * If there are no replicas on which to execute the query.
 			 */
 			try {
-				dataManagerProxy.releaseLock(requestingDatabase, null, updateID);
+				tableManagerProxy.releaseLock(requestingDatabase, null, updateID);
 			} catch (RemoteException e) {
-				ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the data manager");
+				ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the Table Manager");
 			} catch (MovedException e) {
 				ErrorHandling.hardError("This should never happen at this point. The migrating machine should have a lock taken out.");
 			}
@@ -208,13 +208,13 @@ public class QueryProxy implements Serializable{
 	 * @param tableName		Table involved in query.
 	 * @param lockType		Lock required for query
 	 * @param db			Local database instance - needed to inform DM of: the identity of the requesting machine,
-	 * 							and to obtain the data manager for the given table.
+	 * 							and to obtain the Table Manager for the given table.
 	 * @return
 	 * @throws SQLException
 	 */
 	public static QueryProxy getQueryProxyAndLock(Table table, LockType lockType, Database db) throws SQLException {
 		if (table != null){
-			return getQueryProxyAndLock(db.getDataManager(table.getFullName()), lockType, db.getLocalDatabaseInstance());
+			return getQueryProxyAndLock(db.getTableManager(table.getFullName()), lockType, db.getLocalDatabaseInstance());
 		} else {
 			return getDummyQueryProxy(db.getLocalDatabaseInstance());
 		}
@@ -234,16 +234,16 @@ public class QueryProxy implements Serializable{
 
 	/**
 	 * Obtain a query proxy for the given table.
-	 * @param dataManager
+	 * @param tableManager
 	 * @param requestingDatabase DB making the request.
 	 * @return Query proxy for a specific table within H20.
 	 * @throws SQLException
 	 */
-	public static QueryProxy getQueryProxyAndLock(DataManagerRemote dataManager, LockType lockType, DatabaseInstanceRemote requestingDatabase) throws SQLException {
+	public static QueryProxy getQueryProxyAndLock(TableManagerRemote tableManager, LockType lockType, DatabaseInstanceRemote requestingDatabase) throws SQLException {
 
-		if (dataManager == null){
-			ErrorHandling.errorNoEvent("Data manager proxy was null when requesting table.");
-			throw new SQLException("Data manager not found for table.");
+		if (tableManager == null){
+			ErrorHandling.errorNoEvent("Table Manager proxy was null when requesting table.");
+			throw new SQLException("Table Manager not found for table.");
 		}
 
 
@@ -252,17 +252,17 @@ public class QueryProxy implements Serializable{
 		}
 
 		try {
-			return dataManager.getQueryProxy(lockType, requestingDatabase);
+			return tableManager.getQueryProxy(lockType, requestingDatabase);
 		} catch (java.rmi.NoSuchObjectException e) {
 			e.printStackTrace();
 			
 			
-			throw new SQLException("Data manager could not be accessed. It may not have been exported to RMI correctly.");
+			throw new SQLException("Table Manager could not be accessed. It may not have been exported to RMI correctly.");
 		} catch (RemoteException e) {
 			e.printStackTrace();
-			throw new SQLException("Data manager could not be accessed. The table is unavailable until the data manager is reactivated.");
+			throw new SQLException("Table Manager could not be accessed. The table is unavailable until the Table Manager is reactivated.");
 		} catch (MovedException e) {
-			throw new SQLException("Data Manager has moved and can't be accessed at this location.");
+			throw new SQLException("Table Manager has moved and can't be accessed at this location.");
 		}
 	}
 
@@ -276,7 +276,7 @@ public class QueryProxy implements Serializable{
 	@Override
 	public String toString() {
 
-		if (dataManagerProxy == null){
+		if (tableManagerProxy == null){
 			/*
 			 * This is a dummy proxy.
 			 */
@@ -298,8 +298,8 @@ public class QueryProxy implements Serializable{
 	/**
 	 * @return
 	 */
-	public DataManagerRemote getDataManagerLocation() {
-		return dataManagerProxy;
+	public TableManagerRemote getTableManagerLocation() {
+		return tableManagerProxy;
 	}
 
 	/**

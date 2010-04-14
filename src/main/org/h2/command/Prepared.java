@@ -55,7 +55,7 @@ public abstract class Prepared{
 	protected ObjectArray parameters;
 
 	/**
-	 * H2O. Whether this query is being executed on startup as a meta-record. If it is, H2O needs to perform fewer checks with the remote schema manager.
+	 * H2O. Whether this query is being executed on startup as a meta-record. If it is, H2O needs to perform fewer checks with the remote System Table.
 	 */
 	private boolean startup = false;
 
