@@ -11,7 +11,6 @@ import java.util.Set;
 import org.h2.engine.Constants;
 import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.LookupPinger;
 import org.h2.h2o.util.properties.H2oProperties;
 import org.h2.h2o.util.properties.server.LocatorServer;
 import org.junit.After;
@@ -39,8 +38,7 @@ public class ChordTests extends TestBase {
 	 * Whether the System Table state has been replicated yet.
 	 */
 	public static boolean isReplicated = false;
-	public static Set<LookupPinger> pingSet = new HashSet<LookupPinger>();
-
+	
 	@BeforeClass
 	public static void initialSetUp(){
 		Diagnostic.setLevel(DiagnosticLevel.FULL);
@@ -129,10 +127,6 @@ public class ChordTests extends TestBase {
 			dts[i].setRunning(false);
 		}
 
-		for (LookupPinger ping: pingSet){
-			ping.setRunning(false);
-			ping.stop();
-		}
 		closeDatabaseCompletely();
 		
 		ls.setRunning(false);

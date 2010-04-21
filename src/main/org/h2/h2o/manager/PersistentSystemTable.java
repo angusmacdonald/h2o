@@ -61,6 +61,8 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
 	public PersistentSystemTable(Database db, boolean createTables) throws Exception{
 		super (db, createTables, TABLES, REPLICAS, CONNECTIONS);
+		
+		super.updateLocatorFiles();
 	}
 
 	public DatabaseURL getTableManagerLocation(String tableName, String schemaName) throws SQLException{

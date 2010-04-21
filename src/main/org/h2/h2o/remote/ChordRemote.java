@@ -648,7 +648,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		inShutdown = true;
 
 		if (chordNode == null){
-			ErrorHandling.errorNoEvent("Chord node was not initialized so the system is shutting down without transferring any active tables or managers.");
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Chord node was not initialized so the system is shutting down without transferring any active tables or managers.");
 			return;
 		}
 

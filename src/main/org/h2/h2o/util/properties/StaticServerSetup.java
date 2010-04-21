@@ -1,5 +1,7 @@
 package org.h2.h2o.util.properties;
 
+import java.io.File;
+
 import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
 
@@ -25,13 +27,19 @@ public class StaticServerSetup {
 		
 		String initialSchemaManager = "jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db";
 		
+		/*
+		 * Clear locator file.
+		 */
+		
+		File f = new File("locatorFile");
+		f.delete();
 		
 		/*
 		 * Setup descriptor file.
 		 */
 		DatabaseDescriptorFile ddf = new DatabaseDescriptorFile("\\\\shell\\angus\\public_html\\databases\\" + databaseName + ".h2o");
 		ddf.createPropertiesFile();
-		ddf.setProperties(databaseName, "\\\\shell\\angus\\public_html\\databases");
+		ddf.setProperties(databaseName, "eigg:29999");
 		//System.out.println("\\\\shell\\angus\\public_html\\databases" + databaseName + ".h2o");
 		/*
 		 * Setup locator file.

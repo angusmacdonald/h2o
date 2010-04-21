@@ -10,7 +10,6 @@ import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.LookupPinger;
 import org.h2.h2o.util.TableInfo;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -70,16 +69,12 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 	 */
 	private static final int MIGRATION_TIMEOUT = 10000;
 
-	private LookupPinger pingerThread;
-
 	public SystemTable(Database db, boolean createTables) throws Exception {
 
 			this.inMemory = new InMemorySystemTable(db);
 			this.persisted = new PersistentSystemTable(db, createTables);
 
 			this.location = db.getChordInterface().getLocalChordReference();
-			this.pingerThread = new LookupPinger(db.getRemoteInterface(), db.getChordInterface(), location);
-			this.pingerThread.start();
 	}
 
 	/******************************************************************
@@ -364,7 +359,6 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 		this.hasMoved = true;
 		this.inMigration = false;
 		
-		this.pingerThread.setRunning(false);
 	}
 
 	/* (non-Javadoc)
@@ -393,9 +387,6 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 	public void shutdown(boolean shutdown) throws RemoteException, MovedException {
 		this.shutdown = shutdown;
 
-		if (shutdown){
-			pingerThread.setRunning(false);
-		}
 	}
 
 	/* (non-Javadoc)
@@ -406,13 +397,6 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 		return location;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISystemTable#stopLookupPinger()
-	 */
-	@Override
-	public void stopLookupPinger() {
-		this.pingerThread.setRunning(false);
-	}
 
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISystemTable#getLocalDatabaseInstances(org.h2.h2o.util.DatabaseURL)

@@ -54,7 +54,6 @@ public class PersistentManager {
 
 		if (session == null){
 			ErrorHandling.error("Couldn't find system session. Local database has been shutdown.");
-			db.getSystemTable().stopLookupPinger();
 			return;
 		}
 
@@ -63,8 +62,7 @@ public class PersistentManager {
 		this.stateReplicaManager = new ReplicaManager();
 
 		stateReplicaManager.add(db.getLocalDatabaseInstance());
-		updateLocatorFiles();
-		
+
 		if (createTables){
 			/*
 			 * Create a new set of schema tables locally.
@@ -636,7 +634,7 @@ public class PersistentManager {
 	/**
 	 * 
 	 */
-	private void updateLocatorFiles() throws Exception{
+	protected void updateLocatorFiles() throws Exception{
 		H2oProperties persistedInstanceInformation = new H2oProperties(db.getDatabaseURL());
 		persistedInstanceInformation.loadProperties();
 
