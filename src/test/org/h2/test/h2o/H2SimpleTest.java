@@ -12,9 +12,12 @@ import java.sql.SQLException;
 
 import org.h2.engine.Constants;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.H2oProperties;
+import org.h2.h2o.util.properties.H2oProperties;
+import org.h2.h2o.util.properties.server.LocatorServer;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.util.ScriptReader;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -28,19 +31,36 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 public class H2SimpleTest {
 	private static final String BASE_TEST_DIR = "db_data";
 	private Connection conn;
+	private LocatorServer ls;
 	protected static String baseDir = getTestDir("");
 
+	@Before
+	public void setUp() throws Exception {
+		ls = new LocatorServer(29999, "config/junit_locator.h2o");
+		ls.createNewLocatorFile();
+		ls.start();
+	}
+	
+	@After
+	public void tearDown() throws Exception {
+		ls.setRunning(false);
+		while (!ls.isFinished()){};
+		
+	}
+	
 	@Test
 	public void largeTest() throws Exception {
 
-		Constants.IS_NON_SM_TEST = true;
-		H2oProperties properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:scriptSimple"));
 		
+		Constants.IS_NON_SM_TEST = true;
+		H2oProperties properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:db_data/test/scriptSimple"), "instances");
+
 		properties.createNewFile();
 		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
-		properties.setProperty("systemTableLocation", "jdbc:h2:db_data/test/scriptSimple");
-		
+		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		properties.setProperty("databaseName", "testDB");
 		properties.saveAndClose();
+	
 		Constants.IS_TESTING_H2_TESTS = true;
 
 

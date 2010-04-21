@@ -14,7 +14,8 @@ import org.h2.engine.Constants;
 import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.H2oProperties;
+import org.h2.h2o.util.properties.H2oProperties;
+import org.h2.h2o.util.properties.server.LocatorServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,6 +35,7 @@ public class IndexTests{
 	Connection cb = null;
 	Statement sa = null;
 	Statement sb = null;
+	private LocatorServer ls;
 
 	/**
 	 * @throws java.lang.Exception
@@ -44,15 +46,11 @@ public class IndexTests{
 		//PersistentSystemTable.USERNAME = "sa";
 		//PersistentSystemTable.PASSWORD = "sa";
 
-		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
-		knownHosts.createNewFile();
-		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordRemote.currentPort + "");
-		knownHosts.saveAndClose();
+		TestBase.setUpDescriptorFiles();
+		ls = new LocatorServer(29999, "config/junit_locator.h2o");
+		ls.createNewLocatorFile();
 		
-		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
-		knownHosts.createNewFile();
-		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordRemote.currentPort + "");
-		knownHosts.saveAndClose();
+		ls.start();
 		
 		org.h2.Driver.load();
 
@@ -103,7 +101,8 @@ public class IndexTests{
 			e.printStackTrace();
 			fail("Connections aren't bein closed correctly.");
 		}
-
+		ls.setRunning(false);
+		while (!ls.isFinished()){};
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "END OF LAST TEST (TEAR DOWN 2).");
 	}
 

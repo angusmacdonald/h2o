@@ -11,8 +11,9 @@ import java.util.Set;
 import org.h2.engine.Constants;
 import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.H2oProperties;
 import org.h2.h2o.util.LookupPinger;
+import org.h2.h2o.util.properties.H2oProperties;
+import org.h2.h2o.util.properties.server.LocatorServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -31,6 +32,7 @@ public class ChordTests extends TestBase {
 
 	private Statement[] sas;
 	private DatabaseThread[] dts;
+	private LocatorServer ls;
 	private static String[] dbs =  {"two", "three"}; //, "four", "five", "six", "seven", "eight", "nine"
 	
 	/**
@@ -73,6 +75,10 @@ public class ChordTests extends TestBase {
 	 */
 	@Before
 	public void setUp() throws Exception {
+		
+		ls = new LocatorServer(29999, "config/junit_locator.h2o");
+		ls.createNewLocatorFile();
+		
 		Constants.IS_TEAR_DOWN = false; 
 		
 		//Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
@@ -81,16 +87,20 @@ public class ChordTests extends TestBase {
 
 		org.h2.Driver.load();
 
-		for (String db: dbs){
+//		for (String db: dbs){
+//
+//			H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:" + db), "instances");
+//			knownHosts.createNewFile();
+//			knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordRemote.currentPort + "");
+//			knownHosts.saveAndClose();
+//
+//		}
 
-			H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:" + db), "instances");
-			knownHosts.createNewFile();
-			knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordRemote.currentPort + "");
-			knownHosts.saveAndClose();
-
-		}
-
-
+		TestBase.setUpDescriptorFiles();
+		ls = new LocatorServer(29999, "config/junit_locator.h2o");
+		ls.createNewLocatorFile();
+		ls.start();
+		
 		dts = new DatabaseThread[dbs.length + 1];
 		dts[0] = new DatabaseThread("jdbc:h2:sm:mem:one");
 		dts[0].start();
@@ -137,8 +147,13 @@ public class ChordTests extends TestBase {
 		}
 		closeDatabaseCompletely();
 		
+		ls.setRunning(false);
 		dts = null;
 		sas = null;
+		
+
+		ls.setRunning(false);
+		while (!ls.isFinished()){};
 	}
 
 	@Test
@@ -340,7 +355,7 @@ public class ChordTests extends TestBase {
 			dts[0].getConnection().close();
 			
 			Thread.sleep(5000);
-			
+			System.err.println("heere");
 			sas[1].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 
 		} catch (SQLException e) {

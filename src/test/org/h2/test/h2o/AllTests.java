@@ -1,7 +1,7 @@
 package org.h2.test.h2o;
 
-import org.h2.h2o.util.H2oProperties;
 import org.h2.h2o.util.TransactionNameGenerator;
+import org.h2.h2o.util.properties.H2oProperties;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 

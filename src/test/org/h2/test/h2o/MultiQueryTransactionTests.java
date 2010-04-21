@@ -11,6 +11,7 @@ import java.sql.Statement;
 
 import org.h2.engine.Constants;
 import org.h2.h2o.manager.PersistentSystemTable;
+import org.h2.h2o.util.properties.server.LocatorServer;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;
 import org.junit.Test;
@@ -432,54 +433,54 @@ public class MultiQueryTransactionTests extends TestBase{
 		}
 	}
 
-//	/**
-//	 * Tests that when a transaction fails to create a table the System Table
-//	 * is not updated with information on that table.
-//	 * 
-//	 * <p>TESTS AFTER A CREATE TABLE STATEMENT HAS BEEN RUN, AND AFTER SOME INSERTS
-//	 * INTO THAT TABLE.
-//	 */
-//	@Test
-//	public void testSystemTableContentsAfterInsert(){
-//		try{
-//
-//			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
-//
-//			ResultSet rs = sa.getResultSet();
-//
-//			if (rs.next() && rs.next()){
-//				fail("There should only be one table in the System Table.");
-//			}
-//
-//			Constants.IS_TESTING_QUERY_FAILURE = true;
-//
-//			try{
-//				createSecondTable(sb, "TEST2");
-//				fail("This should have failed.");
-//			} catch (SQLException e){
-//				//Expected.
-//			}
-//
-//			try {
-//				sa.execute("SELECT * FROM TEST2");
-//				fail("This should have failed: the transaction was not committed.");
-//			} catch (SQLException e){
-//				//Expected.
-//			}
-//
-//
-//			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
-//
-//			rs = sa.getResultSet();
-//
-//			if (rs.next() && rs.next()){
-//				fail("There should only be one table in the System Table.");
-//			}
-//		} catch (SQLException e){
-//			e.printStackTrace();
-//			fail("An Unexpected SQLException was thrown.");
-//		}
-//	}
+	//	/**
+	//	 * Tests that when a transaction fails to create a table the System Table
+	//	 * is not updated with information on that table.
+	//	 * 
+	//	 * <p>TESTS AFTER A CREATE TABLE STATEMENT HAS BEEN RUN, AND AFTER SOME INSERTS
+	//	 * INTO THAT TABLE.
+	//	 */
+	//	@Test
+	//	public void testSystemTableContentsAfterInsert(){
+	//		try{
+	//
+	//			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
+	//
+	//			ResultSet rs = sa.getResultSet();
+	//
+	//			if (rs.next() && rs.next()){
+	//				fail("There should only be one table in the System Table.");
+	//			}
+	//
+	//			Constants.IS_TESTING_QUERY_FAILURE = true;
+	//
+	//			try{
+	//				createSecondTable(sb, "TEST2");
+	//				fail("This should have failed.");
+	//			} catch (SQLException e){
+	//				//Expected.
+	//			}
+	//
+	//			try {
+	//				sa.execute("SELECT * FROM TEST2");
+	//				fail("This should have failed: the transaction was not committed.");
+	//			} catch (SQLException e){
+	//				//Expected.
+	//			}
+	//
+	//
+	//			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
+	//
+	//			rs = sa.getResultSet();
+	//
+	//			if (rs.next() && rs.next()){
+	//				fail("There should only be one table in the System Table.");
+	//			}
+	//		} catch (SQLException e){
+	//			e.printStackTrace();
+	//			fail("An Unexpected SQLException was thrown.");
+	//		}
+	//	}
 
 	/**
 	 * Test executing a set of queries where the external application explicitly turns auto-commit off.
@@ -509,8 +510,8 @@ public class MultiQueryTransactionTests extends TestBase{
 			}catch(SQLException e){
 				//Timeout expected.
 			}
-			
-		
+
+
 			//Commit
 			ca.commit();
 
@@ -624,6 +625,17 @@ public class MultiQueryTransactionTests extends TestBase{
 	 */
 	@Test
 	public void testPreparedStatementsTcpServer(){
+
+		/*
+		 * Reset the locator file. This test doesn't use the in-memory database.
+		 */
+		ls.setRunning(false);
+		while (!ls.isFinished()){};
+
+		ls = new LocatorServer(29999, "config/junit_locator.h2o");
+		ls.createNewLocatorFile();
+		ls.start();
+
 		try {
 			DeleteDbFiles.execute("db_data/unittests/", "schema_test", true);
 		} catch (SQLException e) { }

@@ -1,6 +1,7 @@
 package org.h2.h2o.comms;
 
 import java.io.Serializable;
+import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -172,6 +173,24 @@ public class ReplicaManager implements Serializable {
 	 */
 	public int getNumberOfReplicas() {
 		return activeReplicas.size();
+	}
+
+	/**
+	 * @return
+	 */
+	public String[] getReplicaLocations() {
+		String[] locations = new String[activeReplicas.size()];
+		
+		int i = 0;
+		for (DatabaseInstanceRemote r: activeReplicas){
+			try {
+				locations[i++] = r.getConnectionURL().getURLwithRMIPort();
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return locations;
 	}
 	
 	

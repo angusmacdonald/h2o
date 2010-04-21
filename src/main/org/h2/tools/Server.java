@@ -324,6 +324,7 @@ public class Server implements Runnable, ShutdownHandler {
             }
             out.println(ftp.getStatus());
         }
+        
         return exitCode;
     }
 

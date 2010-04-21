@@ -824,7 +824,8 @@ public class Database implements DataHandler {
 			try {
 				systemTable = new SystemTable(this, createTables);
 			} catch (Exception e) {
-				ErrorHandling.hardError("Failed to create System Table.");
+				e.printStackTrace();
+				ErrorHandling.hardError(e.getMessage());
 			} 
 
 			systemTableRef.setSystemTable(systemTable);

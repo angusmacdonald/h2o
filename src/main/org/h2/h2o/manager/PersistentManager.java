@@ -12,8 +12,10 @@ import org.h2.engine.Session;
 import org.h2.h2o.autonomic.Replication;
 import org.h2.h2o.comms.ReplicaManager;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.util.DatabaseLocator;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
+import org.h2.h2o.util.properties.H2oProperties;
 import org.h2.result.LocalResult;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -61,7 +63,8 @@ public class PersistentManager {
 		this.stateReplicaManager = new ReplicaManager();
 
 		stateReplicaManager.add(db.getLocalDatabaseInstance());
-
+		updateLocatorFiles();
+		
 		if (createTables){
 			/*
 			 * Create a new set of schema tables locally.
@@ -75,7 +78,7 @@ public class PersistentManager {
 			}
 		}
 
-		stateReplicaManager.add(db.getLocalDatabaseInstance());
+		//stateReplicaManager.add(db.getLocalDatabaseInstance());
 
 	}
 
@@ -606,8 +609,7 @@ public class PersistentManager {
 	 * @param databaseReference
 	 * @throws RemoteException
 	 */
-	public void addStateReplicaLocation(
-			DatabaseInstanceRemote databaseReference) throws RemoteException {
+	public void addStateReplicaLocation(DatabaseInstanceRemote databaseReference) throws RemoteException {
 
 		if (stateReplicaManager.size() < Replication.SCHEMA_MANAGER_REPLICATION_FACTOR + 1){ //+1 because the local copy counts as a replica.
 
@@ -619,13 +621,34 @@ public class PersistentManager {
 
 				stateReplicaManager.add(databaseReference);
 
+				updateLocatorFiles();
+				
 			} catch (SQLException e) {
 				ErrorHandling.errorNoEvent("Failed to replicate System Table state on: " + databaseReference.getConnectionURL().getDbLocation());
+			} catch (Exception e) {
+				throw new RemoteException(e.getMessage());
 			} 
 
-
-
 		}
+		
+	}
+
+	/**
+	 * 
+	 */
+	private void updateLocatorFiles() throws Exception{
+		H2oProperties persistedInstanceInformation = new H2oProperties(db.getDatabaseURL(), "instances");
+		persistedInstanceInformation.loadProperties();
+
+		String descriptorLocation = persistedInstanceInformation.getProperty("descriptor");
+		String databaseName = persistedInstanceInformation.getProperty("databaseName");
+		
+		if (descriptorLocation == null || databaseName == null){
+			throw new Exception("The location of the database descriptor must be specifed (it was not found). The database will now terminate.");
+		}
+		DatabaseLocator dl = new DatabaseLocator(databaseName, descriptorLocation);
+		
+		dl.setLocations(stateReplicaManager.getReplicaLocations());
 	}
 
 

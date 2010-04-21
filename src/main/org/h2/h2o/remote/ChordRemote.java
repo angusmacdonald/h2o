@@ -22,10 +22,13 @@ import org.h2.h2o.manager.ISystemTable;
 import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.SystemTableReference;
+import org.h2.h2o.util.DatabaseLocator;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.H2oProperties;
 import org.h2.h2o.util.SystemTableReplication;
 import org.h2.h2o.util.TableInfo;
+import org.h2.h2o.util.properties.DatabaseDescriptorFile;
+import org.h2.h2o.util.properties.H2oProperties;
+import org.h2.h2o.util.properties.server.LocatorClientConnection;
 import org.h2.test.h2o.ChordTests;
 
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
@@ -138,14 +141,52 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		boolean connected = false;
 		DatabaseURL newSMLocation = null;
 
-		if (knownHostsExist){
+
+		/*
+		 * Contact descriptor for SM locations.
+		 */
+		String descriptorLocation = persistedInstanceInformation.getProperty("descriptor");
+		String databaseName = persistedInstanceInformation.getProperty("databaseName");
+		DatabaseLocator dl = new DatabaseLocator(databaseName, descriptorLocation);
+
+		Set<String> databaseInstances = null;
+		try {
+			databaseInstances = dl.getLocations();
+		} catch (Exception e){
+			ErrorHandling.hardError(e.getMessage());
+		}
+
+		/*
+		 * If this is the first time DB to be run the set of DB instance will be empty and this node should become the schema manager.
+		 * 
+		 * If there is a list of DB instances this instance should attempt to connect to one of them (but not to itself).
+		 * 
+		 * If none exist but for itself then it can start as the schema manager.
+		 * 
+		 * If none exist and it isn't on the list either, just shutdown the database.
+		 */
+
+		if (databaseInstances != null && databaseInstances.size() > 0){
 			/*
 			 * There may be a number of database instances already in the ring. Try to connect.
 			 */
-			connected = attemptToJoinChordRing(persistedInstanceInformation, localMachineLocation);
-		} 
+			connected = attemptToJoinChordRing(persistedInstanceInformation, localMachineLocation, databaseInstances);
+		}
 
-		if (!connected) {
+		/*
+		 * Check whether the local machines URL is included on the list of possible schema managers.
+		 */
+		boolean localMachineIncluded = false;
+		if (databaseInstances != null){
+			for (String instance: databaseInstances){
+				if (instance.contains(localMachineLocation.getURL())){
+					localMachineIncluded = true;
+					break;
+				}
+			}
+		}
+		
+		if (!connected && (databaseInstances == null || databaseInstances.size() == 0 || localMachineIncluded)){
 			/*
 			 * Either because there are no known hosts, or because none are still alive.
 			 * Create a new chord ring.
@@ -167,7 +208,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				ErrorHandling.hardError("Tried to connect to an existing network and couldn't. Also tried to create" +
 				" a new network and this also failed.");
 			}
-		} else {
+		}
+
+		if (connected) {
 			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Successfully connected to existing chord ring.");
 		}
 
@@ -198,16 +241,12 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	 * Try to join an existing chord ring.
 	 * @return True if a connection was successful; otherwise false.
 	 */
-	private boolean attemptToJoinChordRing(H2oProperties persistedInstanceInformation, DatabaseURL localMachineLocation) {
-		Set<Object> listOfInstances = null;
+	private boolean attemptToJoinChordRing(H2oProperties persistedInstanceInformation, DatabaseURL localMachineLocation, Set<String> databaseInstances) {
 
-		listOfInstances = persistedInstanceInformation.getKeys();
 
-		for (Object obj: listOfInstances){
-			String url = (String)obj;
+		for (String url: databaseInstances){
 
 			DatabaseURL instanceURL = DatabaseURL.parseURL(url);
-			instanceURL.setRMIPort(Integer.parseInt(persistedInstanceInformation.getProperty(url)));
 
 			/*
 			 * Check first that the location isn't the local database instance (currently running).

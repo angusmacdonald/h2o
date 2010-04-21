@@ -61,13 +61,19 @@ Initial Developer: H2 Group
             </tr>
             <tr class="login">
                 <td class="login">${text.login.driverClass}:</td>
-                <td class="login"><input type="text" name="driver" value="${driver}" style="width:300px;" /></td>
+                <td class="login"><input type="text" name="driver" value="${driver}" style="width:400px;" /></td>
             </tr>
+            <!--
+            <tr class="login">
+                <td class="login">Global Database Descriptor URL:</td>
+                <td class="login"><input type="text" name="descriptor" value="http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o" style="width:400px;" /></td>
+            </tr>
+            -->
             <tr class="login">
                 <td class="login">
                     <a href="#" onclick="var x=document.getElementById('url').style;x.display=x.display==''?'none':'';">
                         ${text.login.jdbcUrl}</a>:</td>
-                <td class="login"><input type="text" name="url" value="${url}" style="width:300px;" /></td>
+                <td class="login"><input type="text" name="url" value="${url}" style="width:400px;" /></td>
             </tr>
             <tr class="login">
                 <td class="login">${text.a.user}:</td>

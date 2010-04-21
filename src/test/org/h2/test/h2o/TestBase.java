@@ -20,7 +20,9 @@ import org.h2.engine.Engine;
 import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.H2oProperties;
+import org.h2.h2o.util.properties.DatabaseLocatorFile;
+import org.h2.h2o.util.properties.H2oProperties;
+import org.h2.h2o.util.properties.server.LocatorServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -38,6 +40,7 @@ public class TestBase {
 	Connection cb = null;
 	Statement sa = null;
 	Statement sb = null;
+	protected LocatorServer ls;
 
 	/**
 	 * The number of rows that are in the test table after the initial @see {@link #setUp()} call.
@@ -55,7 +58,8 @@ public class TestBase {
 
 		properties.createNewFile();
 		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
-		properties.setProperty("systemTableLocation", "jdbc:h2:sm:mem:one");
+		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		properties.setProperty("databaseName", "testDB");
 
 		properties.saveAndClose();
 
@@ -63,8 +67,8 @@ public class TestBase {
 
 		properties.createNewFile();
 		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
-		properties.setProperty("systemTableLocation", "jdbc:h2:sm:mem:one");
-
+		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		properties.setProperty("databaseName", "testDB");
 		properties.saveAndClose();
 		
 
@@ -78,20 +82,11 @@ public class TestBase {
 	@Before
 	public void setUp() throws Exception {
 		Constants.IS_TEAR_DOWN = false; 
-		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
-		knownHosts.createNewFile();
-		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordRemote.currentPort + "");
-		knownHosts.saveAndClose();
 		
-		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
-		knownHosts.createNewFile();
-		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordRemote.currentPort + "");
-		knownHosts.saveAndClose();
-		
-		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:three"), "instances");
-		knownHosts.createNewFile();
-		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordRemote.currentPort + "");
-		knownHosts.saveAndClose();
+		setUpDescriptorFiles();
+		ls = new LocatorServer(29999, "config/junit_locator.h2o");
+		ls.createNewLocatorFile();
+		ls.start();
 		
 		//Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
 		//PersistentSystemTable.USERNAME = "sa";
@@ -111,6 +106,37 @@ public class TestBase {
 
 		sa.execute(sql);
 	}
+
+	/**
+	 * 
+	 */
+	public static void setUpDescriptorFiles() {
+//		DatabaseLocatorFile dlf = new DatabaseLocatorFile("testDB", "\\\\shell\\angus\\public_html\\databases"); 
+//		
+//		dlf.setProperties("testDB", "jdbc:h2:mem:one" + "+" + ChordRemote.currentPort);
+//		
+		
+		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
+		knownHosts.createNewFile();
+		knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		knownHosts.setProperty("databaseName", "testDB");
+		knownHosts.saveAndClose();
+		
+		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
+		knownHosts.createNewFile();
+		knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		knownHosts.setProperty("databaseName", "testDB");
+		knownHosts.saveAndClose();
+		
+		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:three"), "instances");
+		knownHosts.createNewFile();
+		knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		knownHosts.setProperty("databaseName", "testDB");
+		knownHosts.saveAndClose();
+		
+
+	}
+	
 
 	/**
 	 * @throws SQLException 
@@ -141,6 +167,9 @@ public class TestBase {
 		cb = null;
 		sa = null;
 		sb = null;
+		
+		ls.setRunning(false);
+		while (!ls.isFinished()){};
 	}
 
 	/**

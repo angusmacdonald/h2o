@@ -1,4 +1,4 @@
-package org.h2.h2o.util;
+package org.h2.h2o.util.properties;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.Set;
 
+import org.h2.h2o.util.DatabaseURL;
 import org.junit.Test;
 
 /**
@@ -48,6 +49,14 @@ public class H2oProperties {
 	public H2oProperties(DatabaseURL dbURL) {
 		this(dbURL, null);
 
+	}
+
+	/**
+	 * @param string
+	 */
+	public H2oProperties(String descriptorLocation) {
+		this.properties = new Properties();
+		this.propertiesFileLocation = "config" + File.separator + descriptorLocation + ".properties";
 	}
 
 	public void setPropertiesFileLocation(DatabaseURL dbURL) {

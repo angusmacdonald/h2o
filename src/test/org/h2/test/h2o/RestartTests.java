@@ -11,6 +11,7 @@ import java.sql.Statement;
 
 import org.h2.engine.Constants;
 import org.h2.h2o.manager.PersistentSystemTable;
+import org.h2.h2o.util.properties.server.LocatorServer;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;
 import org.junit.After;
@@ -33,6 +34,8 @@ public class RestartTests {
 	private Server server = null;
 	
 	private Statement sa = null;
+
+	private LocatorServer ls;
 	
 	@BeforeClass
 	public static void initialSetUp(){
@@ -56,7 +59,9 @@ public class RestartTests {
 	 */
 	@Before
 	public void setUp() throws Exception {
-
+		ls = new LocatorServer(29999, "config/junit_locator.h2o");
+		ls.createNewLocatorFile();
+		ls.start();
 		
 		server = Server.createTcpServer(new String[] { "-tcpPort", "9081", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test" });
 		server.start();
@@ -92,6 +97,9 @@ public class RestartTests {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+		
+		ls.setRunning(false);
+		while (!ls.isFinished()){};
 	}
 
 	/**

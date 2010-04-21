@@ -14,7 +14,9 @@ import org.h2.engine.Constants;
 import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.H2oProperties;
+import org.h2.h2o.util.properties.DatabaseLocatorFile;
+import org.h2.h2o.util.properties.H2oProperties;
+import org.h2.h2o.util.properties.server.LocatorServer;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;
 import org.junit.After;
@@ -43,15 +45,20 @@ public class SystemTableTests {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:one"), "instances");
+		knownHosts.createNewFile();
+		knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		knownHosts.setProperty("databaseName", "testDB");
+		knownHosts.saveAndClose();
+		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
+		knownHosts.createNewFile();
+		knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		knownHosts.setProperty("databaseName", "testDB");
+		knownHosts.saveAndClose();
 
-		H2oProperties properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"));
-
-		properties.createNewFile();
-		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
-		properties.setProperty("systemTableLocation", "jdbc:h2:sm:mem:one");
-
-		properties.saveAndClose();
 	}
+
+	private LocatorServer ls;
 
 	/**
 	 * @throws java.lang.Exception
@@ -59,22 +66,13 @@ public class SystemTableTests {
 	@Before
 	public void setUp() throws Exception {
 		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-//		PersistentSystemTable.USERNAME = "sa";
-//		PersistentSystemTable.PASSWORD = "sa";
-		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
-		knownHosts.createNewFile();
-		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordRemote.currentPort + "");
-		knownHosts.saveAndClose();
-		
-		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
-		knownHosts.createNewFile();
-		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordRemote.currentPort + "");
-		knownHosts.saveAndClose();
-		
-		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
-		knownHosts.createNewFile();
-		knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordRemote.currentPort + "");
-		knownHosts.saveAndClose();
+		//		PersistentSystemTable.USERNAME = "sa";
+		//		PersistentSystemTable.PASSWORD = "sa";
+
+		TestBase.setUpDescriptorFiles();
+		ls = new LocatorServer(29999, "config/junit_locator.h2o");
+		ls.createNewLocatorFile();
+		ls.start();
 	}
 
 	/**
@@ -89,6 +87,12 @@ public class SystemTableTests {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+
+		ls.setRunning(false);
+		while (!ls.isFinished()){
+			
+		}
+
 	}
 
 	/**
@@ -105,6 +109,14 @@ public class SystemTableTests {
 		Server server = null;
 
 		try {
+
+			H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"), "instances");
+			knownHosts.createNewFile();
+			knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+			knownHosts.setProperty("databaseName", "testDB");
+			knownHosts.saveAndClose();
+
+
 			server = Server.createTcpServer(new String[] { "-tcpPort", "9081", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test" });
 			server.start();
 
@@ -217,44 +229,44 @@ public class SystemTableTests {
 
 	}
 
-//	/**
-//	 * Tests that a database is able to connect to a remote database and establish linked table connections
-//	 * to all System Table tables.
-//	 * @throws SQLException
-//	 * @throws InterruptedException
-//	 */
-//	@Test
-//	public void linkedSchemaTableTest(){
-//		org.h2.Driver.load();
-//
-//		try{
-//			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-//			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-//			Statement sa = ca.createStatement();
-//			Statement sb = cb.createStatement();
-//
-//			sb.execute("SELECT * FROM H2O.H2O_TABLE;");
-//			sb.execute("SELECT * FROM H2O.H2O_REPLICA;");
-//			sb.execute("SELECT * FROM H2O.H2O_CONNECTION;");
-//
-//			ResultSet rs = sb.getResultSet();
-//
-//			if (!rs.next()){
-//				fail("There should be at least one row for local instance itself.");
-//			}
-//
-//			rs.close();
-//
-//			sa.execute("DROP ALL OBJECTS");
-//			sb.execute("DROP ALL OBJECTS");
-//			ca.close();
-//			cb.close();
-//
-//		} catch (SQLException e){
-//			fail("An Unexpected SQLException was thrown.");
-//			e.printStackTrace();
-//		}
-//	}
+	//	/**
+	//	 * Tests that a database is able to connect to a remote database and establish linked table connections
+	//	 * to all System Table tables.
+	//	 * @throws SQLException
+	//	 * @throws InterruptedException
+	//	 */
+	//	@Test
+	//	public void linkedSchemaTableTest(){
+	//		org.h2.Driver.load();
+	//
+	//		try{
+	//			Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+	//			Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+	//			Statement sa = ca.createStatement();
+	//			Statement sb = cb.createStatement();
+	//
+	//			sb.execute("SELECT * FROM H2O.H2O_TABLE;");
+	//			sb.execute("SELECT * FROM H2O.H2O_REPLICA;");
+	//			sb.execute("SELECT * FROM H2O.H2O_CONNECTION;");
+	//
+	//			ResultSet rs = sb.getResultSet();
+	//
+	//			if (!rs.next()){
+	//				fail("There should be at least one row for local instance itself.");
+	//			}
+	//
+	//			rs.close();
+	//
+	//			sa.execute("DROP ALL OBJECTS");
+	//			sb.execute("DROP ALL OBJECTS");
+	//			ca.close();
+	//			cb.close();
+	//
+	//		} catch (SQLException e){
+	//			fail("An Unexpected SQLException was thrown.");
+	//			e.printStackTrace();
+	//		}
+	//	}
 
 	/**
 	 * Tests that when a new table is added to the database it is also added to the System Table.
@@ -278,7 +290,7 @@ public class SystemTableTests {
 
 			sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 
-			
+
 			sa.execute("SELECT * FROM H2O.H2O_TABLE;");
 			rs = sa.getResultSet();		
 			if (rs.next()){

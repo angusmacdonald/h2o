@@ -1111,6 +1111,7 @@ class WebThread extends Thread implements DatabaseEventListener {
 		final String url = attributes.getProperty("url", "");
 		final String user = attributes.getProperty("user", "");
 		final String password = attributes.getProperty("password", "");
+		//final String descriptor = attributes.getProperty("descriptor", "");
 		session.put("autoCommit", "checked");
 		session.put("autoComplete", "1");
 		session.put("maxrows", "1000");
