@@ -42,19 +42,19 @@ public class StaticServerSetup {
 		/*
 		 * Setup bootstrap files.
 		 */
-		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL(initialSchemaManager), "instances");
+		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL(initialSchemaManager));
 		knownHosts.createNewFile();
 		knownHosts.setProperty("descriptor", descriptorFile);
 		knownHosts.setProperty("databaseName", databaseName);
 		knownHosts.saveAndClose();
 		
-		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:tcp://localhost:9191/db_data/three/test_db"), "instances");
+		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:tcp://localhost:9191/db_data/three/test_db"));
 		knownHosts.createNewFile();
 		knownHosts.setProperty("descriptor", descriptorFile);
 		knownHosts.setProperty("databaseName", databaseName);
 		knownHosts.saveAndClose();
 		
-		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:tcp://localhost:9292/db_data/two/test_db"), "instances");
+		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:tcp://localhost:9292/db_data/two/test_db"));
 		knownHosts.createNewFile();
 		knownHosts.setProperty("descriptor", descriptorFile);
 		knownHosts.setProperty("databaseName", databaseName);

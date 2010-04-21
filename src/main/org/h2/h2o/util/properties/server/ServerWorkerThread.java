@@ -14,18 +14,19 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  * Handles incoming connections from client databases looking to access (for read or write) the locator file.
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class LocatorConnectionHandler extends Thread {
+public class ServerWorkerThread extends Thread {
 
-	private Socket clientSocket;
+	private static final String SEPARATOR = "!!";
+	private Socket socket;
 	private LocatorFileWriter locatorFile;
 
 	/**
 	 * @param newConnection
 	 * @param locatorFile 
 	 */
-	public LocatorConnectionHandler(Socket newConnection, LocatorFileWriter locatorFile) {
+	protected ServerWorkerThread(Socket newConnection, LocatorFileWriter locatorFile) {
 		this.locatorFile = locatorFile;
-		this.clientSocket = newConnection;
+		this.socket = newConnection;
 	}
 
 	public void run(){
@@ -36,7 +37,7 @@ public class LocatorConnectionHandler extends Thread {
 
 				//Get single-line request from the client.
 				String clientRequest, entireRequest = "";
-				BufferedReader br = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+				BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
 
 				while ((clientRequest = br.readLine()) != null) {
@@ -44,31 +45,38 @@ public class LocatorConnectionHandler extends Thread {
 						break;
 					}
 
-					entireRequest += clientRequest + "!!";
+					entireRequest += clientRequest + SEPARATOR;
 
 				}
 
+				/*
+				 * If the request is empty this is interpreted as a request for the database locations. Read from the locator file
+				 * and return this list.
+				 * 
+				 * If the list does contain some text then this is a new set of database instance locations which hold system table state.
+				 * Write these to the locator file
+				 */
 				if (entireRequest.equals("")){
 					//Send back database info
-					Set<String> locations = locatorFile.read();
+					Set<String> locations = locatorFile.readFromFile();
 
 					String clientResponse = "";
 					for (String s: locations){
 						clientResponse += s + "\n";
 					}
-					OutputStream output = clientSocket.getOutputStream();
+					
+					OutputStream output = socket.getOutputStream();
 					output.write((clientResponse.getBytes()));
 					output.flush();
 					output.close();
 				} else {
 					//Update local file.
-					String[] databaseLocations = entireRequest.split("!!");
-					locatorFile.write(databaseLocations);
-
+					String[] databaseLocations = entireRequest.split(SEPARATOR);
+					locatorFile.writeToFile(databaseLocations);
 				}
 
 			} finally {
-				clientSocket.close();
+				socket.close();
 			}
 
 

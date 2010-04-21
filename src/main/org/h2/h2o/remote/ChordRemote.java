@@ -22,13 +22,13 @@ import org.h2.h2o.manager.ISystemTable;
 import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.SystemTableReference;
-import org.h2.h2o.util.DatabaseLocator;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.SystemTableReplication;
 import org.h2.h2o.util.TableInfo;
 import org.h2.h2o.util.properties.DatabaseDescriptorFile;
 import org.h2.h2o.util.properties.H2oProperties;
 import org.h2.h2o.util.properties.server.LocatorClientConnection;
+import org.h2.h2o.util.properties.server.SystemTableLocator;
 import org.h2.test.h2o.ChordTests;
 
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
@@ -109,7 +109,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.IRemoteDatabase#connectToDatabaseSystem(org.h2.h2o.util.DatabaseURL, org.h2.engine.Session)
 	 */
-	public DatabaseURL connectToDatabaseSystem(Session session) {
+	public DatabaseURL connectToDatabaseSystem(Session session) throws StartupException {
 		establishChordConnection(localMachineLocation, session);
 
 		this.localMachineLocation.setRMIPort(getRmiPort()); //set the port on which the RMI server is running.
@@ -117,11 +117,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		/*
 		 * The System Table location must be known at this point, otherwise the database instance will not start. 
 		 */
-		if (systemTableRef.getSystemTableURL() != null){
-			H2oProperties databaseSettings = new H2oProperties(localMachineLocation);
-			databaseSettings.loadProperties();	
-			databaseSettings.setProperty("systemTableLocation", systemTableRef.getSystemTableURL().getUrlMinusSM());
-		} else {
+		if (systemTableRef.getSystemTableURL() == null){
 			ErrorHandling.hardError("System Table not known. This can be fixed by creating a known hosts file (called " + 
 					localMachineLocation.getDbLocationWithoutIllegalCharacters() + ".instances.properties) and adding the location of a known host.");
 		}
@@ -134,9 +130,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	 * 
 	 * If no established ring is found a new Chord ring will be created.
 	 */
-	private DatabaseURL establishChordConnection(DatabaseURL localMachineLocation, Session session) {
-		H2oProperties persistedInstanceInformation = new H2oProperties(localMachineLocation, "instances");
-		boolean knownHostsExist = persistedInstanceInformation.loadProperties();
+	private DatabaseURL establishChordConnection(DatabaseURL localMachineLocation, Session session) throws StartupException {
+		H2oProperties persistedInstanceInformation = new H2oProperties(localMachineLocation);
+		persistedInstanceInformation.loadProperties();
 
 		boolean connected = false;
 		DatabaseURL newSMLocation = null;
@@ -147,13 +143,18 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		 */
 		String descriptorLocation = persistedInstanceInformation.getProperty("descriptor");
 		String databaseName = persistedInstanceInformation.getProperty("databaseName");
-		DatabaseLocator dl = new DatabaseLocator(databaseName, descriptorLocation);
+
+		if (descriptorLocation == null || databaseName == null){
+			throw new StartupException("The location of the database descriptor was not specified. The database will now exit.");
+		}
+		SystemTableLocator dl = new SystemTableLocator(databaseName, descriptorLocation);
 
 		Set<String> databaseInstances = null;
 		try {
 			databaseInstances = dl.getLocations();
 		} catch (Exception e){
-			ErrorHandling.hardError(e.getMessage());
+			e.printStackTrace();
+			throw new StartupException(e.getMessage());
 		}
 
 		/*
@@ -185,7 +186,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				}
 			}
 		}
-		
+
 		if (!connected && (databaseInstances == null || databaseInstances.size() == 0 || localMachineIncluded)){
 			/*
 			 * Either because there are no known hosts, or because none are still alive.
@@ -205,14 +206,25 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 
 			if (!connected){ //if STILL not connected.
-				ErrorHandling.hardError("Tried to connect to an existing network and couldn't. Also tried to create" +
+				throw new StartupException("Tried to connect to an existing database system and couldn't. Also tried to create" +
 				" a new network and this also failed.");
 			}
 		}
 
-		if (connected) {
-			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Successfully connected to existing chord ring.");
+
+		if (!connected && (databaseInstances != null && databaseInstances.size() > 0) ){
+			
+			String instances = "";
+			for (String instance: databaseInstances){
+				instances += instance + "\n";
+			}
+
+			throw new StartupException("\n\nH2O couldn't find an active instance with System Table state, so it cannot connect to the database system.\n\n" +
+					"Please re-instantiate one of the following database instances:\n\n" + instances + "\n\n");
 		}
+
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Successfully connected to existing chord ring.");
+
 
 		try {
 			DatabaseURL dbURL = systemTableRef.getSystemTableURL();
@@ -634,6 +646,12 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Shutting down node: " + chordNode);
 
 		inShutdown = true;
+
+		if (chordNode == null){
+			ErrorHandling.errorNoEvent("Chord node was not initialized so the system is shutting down without transferring any active tables or managers.");
+			return;
+		}
+
 		IChordRemoteReference successor = chordNode.getSuccessor();
 
 

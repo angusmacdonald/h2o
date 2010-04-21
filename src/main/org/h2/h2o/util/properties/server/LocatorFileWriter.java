@@ -24,7 +24,7 @@ public class LocatorFileWriter {
 	
 	private boolean writerPresent = false;  
 
-	public LocatorFileWriter(String location){
+	protected LocatorFileWriter(String location){
 		locatorFile = new File(location);
 		if (!locatorFile.exists()){
 			try {
@@ -36,9 +36,10 @@ public class LocatorFileWriter {
 	}
 
 	/**
-	 * @return
+	 * Read the set of database locations from the file.
+	 * @return Set of db locations which hold system table replicas.
 	 */
-	public Set<String> read() {
+	public Set<String> readFromFile() {
 		startRead();
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Reader reading:");
 
@@ -72,9 +73,10 @@ public class LocatorFileWriter {
 	}
 
 	/**
-	 * @param databaseLocations
+	 * Write the given array of database locations to the locator file.
+	 * @param databaseLocations	Locations to be written to the file, each on a new line.
 	 */
-	public void write(String[] databaseLocations) {
+	public void writeToFile(String[] databaseLocations) {
 		startWrite();
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Writer writing.");
 
@@ -101,6 +103,16 @@ public class LocatorFileWriter {
 		stopWrite();
 	}
 
+	/*
+	 * #####################################
+	 * 
+	 * Reader-writer methods.
+	 * 
+	 * From: http://beg.projects.cis.ksu.edu/examples/small/readerswriters/
+	 * 
+	 * #####################################
+	 */
+	
 	private boolean writeCondition() {
 		return activeReaders == 0 && !writerPresent;
 	}
@@ -132,7 +144,7 @@ public class LocatorFileWriter {
 	}
 
 	/**
-	 * 
+	 * Create a new locator file. This is used by various test classes to overwrite old locator files.
 	 */
 	public void createNewLocatorFile() {
 		startWrite();

@@ -21,7 +21,7 @@ public class LocatorClientConnection {
 	private int port;
 	private String hostname;
 
-	public LocatorClientConnection(String hostname, int port){
+	protected LocatorClientConnection(String hostname, int port){
 		this.hostname = hostname;
 		this.port = port;
 	}

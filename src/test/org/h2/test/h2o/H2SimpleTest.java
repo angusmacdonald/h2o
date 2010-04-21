@@ -53,7 +53,7 @@ public class H2SimpleTest {
 
 		
 		Constants.IS_NON_SM_TEST = true;
-		H2oProperties properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:db_data/test/scriptSimple"), "instances");
+		H2oProperties properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:db_data/test/scriptSimple"));
 
 		properties.createNewFile();
 		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"

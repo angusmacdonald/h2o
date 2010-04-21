@@ -40,6 +40,7 @@ import org.h2.h2o.manager.SystemTableRemote;
 import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.remote.IChordInterface;
 import org.h2.h2o.remote.IDatabaseRemote;
+import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.RemoveConnectionInfo;
 import org.h2.index.Cursor;
@@ -580,7 +581,7 @@ public class Database implements DataHandler {
 		return StringUtils.toUpperEnglish(n);
 	}
 
-	private synchronized void open(int traceLevelFile, int traceLevelSystemOut, ConnectionInfo ci) throws SQLException {
+	private synchronized void open(int traceLevelFile, int traceLevelSystemOut, ConnectionInfo ci) throws SQLException, StartupException {
 		boolean databaseExists = false; //whether the database already exists on disk. i.e. with .db.data files, etc.
 
 		if (persistent) {

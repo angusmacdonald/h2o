@@ -14,7 +14,6 @@ import org.h2.engine.Constants;
 import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.properties.DatabaseLocatorFile;
 import org.h2.h2o.util.properties.H2oProperties;
 import org.h2.h2o.util.properties.server.LocatorServer;
 import org.h2.tools.DeleteDbFiles;
@@ -45,12 +44,12 @@ public class SystemTableTests {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:one"), "instances");
+		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:one"));
 		knownHosts.createNewFile();
 		knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
 		knownHosts.setProperty("databaseName", "testDB");
 		knownHosts.saveAndClose();
-		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
+		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"));
 		knownHosts.createNewFile();
 		knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
 		knownHosts.setProperty("databaseName", "testDB");
@@ -110,7 +109,7 @@ public class SystemTableTests {
 
 		try {
 
-			H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"), "instances");
+			H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"));
 			knownHosts.createNewFile();
 			knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
 			knownHosts.setProperty("databaseName", "testDB");

@@ -8,7 +8,7 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
- * Base class for the locator server. Creates a ServerSocket and listens for connections constantly.
+ * The locator server class. Creates a ServerSocket and listens for connections constantly.
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class LocatorServer extends Thread{
@@ -30,8 +30,10 @@ public class LocatorServer extends Thread{
 
 
 	public void run(){
-		Diagnostic.setLevel(DiagnosticLevel.FULL);
 		try {
+			/*
+			 * Set up the server socket.
+			 */
 			try {
 				ss = new ServerSocket(LOCATOR_SERVER_PORT);
 				
@@ -42,12 +44,15 @@ public class LocatorServer extends Thread{
 				e.printStackTrace();
 			}
 
+			/*
+			 * Start listening for incoming connections. Pass them off to a worker thread if they come.
+			 */
 			while (isRunning()){
 				try {
 					Socket newConnection = ss.accept();
 					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "New connection from: " + newConnection.getInetAddress().getHostName() + "." +  newConnection.getPort());
 
-					LocatorConnectionHandler connectionHandler = new LocatorConnectionHandler(newConnection, locatorFile);
+					ServerWorkerThread connectionHandler = new ServerWorkerThread(newConnection, locatorFile);
 					connectionHandler.start();
 				} catch (IOException e) {
 					//e.printStackTrace();
@@ -68,6 +73,8 @@ public class LocatorServer extends Thread{
 	 * @param args
 	 */
 	public static void main(String[] args) {
+
+		Diagnostic.setLevel(DiagnosticLevel.FULL);
 		LocatorServer server = new LocatorServer(LOCATOR_SERVER_PORT, "locatorFile");
 		server.start();
 	}

@@ -41,14 +41,9 @@ public class H2oProperties {
 	 * the properties file for this database on disk.
 	 * @param appendum A string to be added on to the DBurl as part of the properties file name.
 	 */
-	public H2oProperties(DatabaseURL dbURL, String appendum) {
-		this.properties = new Properties();
-		this.propertiesFileLocation = "config" + File.separator + dbURL.getDbLocationWithoutIllegalCharacters() + ((appendum != null)? "." + appendum: "") + ".properties";
-	}
-
 	public H2oProperties(DatabaseURL dbURL) {
-		this(dbURL, null);
-
+		this.properties = new Properties();
+		this.propertiesFileLocation = "config" + File.separator + dbURL.getDbLocationWithoutIllegalCharacters() + ".properties";
 	}
 
 	/**
@@ -195,39 +190,6 @@ public class H2oProperties {
 	}
 
 	@Test
-	public void testMultiplePropertiesTestAppendum(){
-		DatabaseURL dbURL = DatabaseURL.parseURL("jdbc:h2:mem:two");
-		H2oProperties testProp = new H2oProperties(dbURL, "appended");
-
-		testProperties(testProp);
-
-		File f = new File("config" + File.separator + dbURL.getDbLocationWithoutIllegalCharacters() + ".appended.properties");
-
-		assertTrue(f.exists());
-
-		assert testProp.removePropertiesFile();
-	}
-
-	/**
-	 * Checks that the test in the previous test @see {@link #multiplePropertiesTestAppendum()} is valid
-	 * by looking for a non-existent file.
-	 */
-	@Test
-	public void testMultiplePropertiesTestAppendumFail(){
-		DatabaseURL dbURL = DatabaseURL.parseURL("jdbc:h2:mem:two");
-		H2oProperties testProp = new H2oProperties(dbURL, "appended");
-
-		testProperties(testProp);
-
-		File f = new File("config" + File.separator + dbURL.getDbLocationWithoutIllegalCharacters() + "lalala.properties");
-
-		assertFalse(f.exists());
-
-		assert testProp.removePropertiesFile();
-	}
-
-
-	@Test
 	public void testAlternateConstructor(){
 		DatabaseURL dbURL = DatabaseURL.parseURL("jdbc:h2:mem:two");
 		H2oProperties testProp = new H2oProperties();
@@ -282,7 +244,7 @@ public class H2oProperties {
 	@Test
 	public void testLoadPropertiesFail(){
 		DatabaseURL dbURL = DatabaseURL.parseURL("jdbc:h2:mem:two");
-		H2oProperties testProp = new H2oProperties(dbURL, "doesnotexistever");
+		H2oProperties testProp = new H2oProperties(dbURL);
 
 		assertFalse(testProp.loadProperties());
 

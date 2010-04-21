@@ -12,10 +12,10 @@ import org.h2.engine.Session;
 import org.h2.h2o.autonomic.Replication;
 import org.h2.h2o.comms.ReplicaManager;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
-import org.h2.h2o.util.DatabaseLocator;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
 import org.h2.h2o.util.properties.H2oProperties;
+import org.h2.h2o.util.properties.server.SystemTableLocator;
 import org.h2.result.LocalResult;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -637,7 +637,7 @@ public class PersistentManager {
 	 * 
 	 */
 	private void updateLocatorFiles() throws Exception{
-		H2oProperties persistedInstanceInformation = new H2oProperties(db.getDatabaseURL(), "instances");
+		H2oProperties persistedInstanceInformation = new H2oProperties(db.getDatabaseURL());
 		persistedInstanceInformation.loadProperties();
 
 		String descriptorLocation = persistedInstanceInformation.getProperty("descriptor");
@@ -646,7 +646,7 @@ public class PersistentManager {
 		if (descriptorLocation == null || databaseName == null){
 			throw new Exception("The location of the database descriptor must be specifed (it was not found). The database will now terminate.");
 		}
-		DatabaseLocator dl = new DatabaseLocator(databaseName, descriptorLocation);
+		SystemTableLocator dl = new SystemTableLocator(databaseName, descriptorLocation);
 		
 		dl.setLocations(stateReplicaManager.getReplicaLocations());
 	}

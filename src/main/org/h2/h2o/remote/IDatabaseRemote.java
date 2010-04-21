@@ -19,7 +19,7 @@ import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
  */
 public interface IDatabaseRemote {
 
-	public DatabaseURL connectToDatabaseSystem(Session systemSession);
+	public DatabaseURL connectToDatabaseSystem(Session systemSession) throws StartupException;
 
 	/**
 	 * Get the remote reference of the local database instance.

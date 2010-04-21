@@ -18,9 +18,7 @@ import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Engine;
 import org.h2.h2o.manager.PersistentSystemTable;
-import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.properties.DatabaseLocatorFile;
 import org.h2.h2o.util.properties.H2oProperties;
 import org.h2.h2o.util.properties.server.LocatorServer;
 import org.junit.After;
@@ -116,19 +114,19 @@ public class TestBase {
 //		dlf.setProperties("testDB", "jdbc:h2:mem:one" + "+" + ChordRemote.currentPort);
 //		
 		
-		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
+		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"));
 		knownHosts.createNewFile();
 		knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
 		knownHosts.setProperty("databaseName", "testDB");
 		knownHosts.saveAndClose();
 		
-		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"), "instances");
+		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"));
 		knownHosts.createNewFile();
 		knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
 		knownHosts.setProperty("databaseName", "testDB");
 		knownHosts.saveAndClose();
 		
-		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:three"), "instances");
+		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:three"));
 		knownHosts.createNewFile();
 		knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
 		knownHosts.setProperty("databaseName", "testDB");

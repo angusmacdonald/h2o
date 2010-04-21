@@ -46,7 +46,6 @@ public class ChordTests extends TestBase {
 		Diagnostic.setLevel(DiagnosticLevel.FULL);
 		Constants.IS_TEST = true;
 		Constants.IS_NON_SM_TEST = false;
-		createMultiplePropertiesFiles(dbs);
 
 		setReplicated(false);
 	}
@@ -57,17 +56,6 @@ public class ChordTests extends TestBase {
 
 	public static synchronized boolean isReplicated(){
 		return isReplicated;
-	}
-
-	private static void createMultiplePropertiesFiles(String[] dbNames){
-
-		for (String db: dbNames){
-			String fullDBName = "jdbc:h2:mem:" + db;
-			H2oProperties properties = new H2oProperties(DatabaseURL.parseURL(fullDBName));
-			properties.createNewFile();
-			properties.setProperty("systemTableLocation", "jdbc:h2:sm:mem:one");
-			properties.saveAndClose();
-		}
 	}
 
 	/**

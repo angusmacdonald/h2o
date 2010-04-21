@@ -55,12 +55,7 @@ public class MultipleServers {
 			String fullDBName = "jdbc:h2:mem:" + db;
 			DatabaseURL dbURL = DatabaseURL.parseURL(fullDBName);
 
-			H2oProperties properties = new H2oProperties(dbURL);
-			properties.createNewFile();
-			properties.setProperty("systemTableLocation", "jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db");
-			properties.saveAndClose();
-
-			H2oProperties knownHosts = new H2oProperties(dbURL, "instances");
+			H2oProperties knownHosts = new H2oProperties(dbURL);
 			knownHosts.createNewFile();
 			knownHosts.setProperty("jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db", "30000"); // //jdbc:h2:sm:mem:one
 			knownHosts.saveAndClose();
