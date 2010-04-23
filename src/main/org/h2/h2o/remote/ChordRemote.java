@@ -740,7 +740,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 
 		if (!Constants.IS_NON_SM_TEST){
-			((ChordNodeImpl)chordNode).shutDown();
+			((ChordNodeImpl)chordNode).destroy();
 		}
 	}
 
