@@ -531,7 +531,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	 */
 	@Override
 	public void update(Observable o, Object arg) {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, arg);
+		//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, arg);
 
 		/*
 		 * If the predecessor of this node has changed.

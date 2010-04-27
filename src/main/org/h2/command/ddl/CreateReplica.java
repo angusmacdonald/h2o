@@ -27,6 +27,7 @@ import org.h2.command.dml.Insert;
 import org.h2.command.dml.Query;
 import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
+import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
@@ -366,7 +367,7 @@ public class CreateReplica extends SchemaCommand {
 
 
 					int i = 0;
-					for (String part: statement.split(",")){
+					for (String part: statement.split(Constants.REPLICATION_DELIMETER)){
 						part = part.trim();
 						if (firstRun){
 							types.add(new Integer(part));

@@ -167,7 +167,7 @@ public class ScriptCommand extends ScriptBase {
 
 					for (int j = 0; j < columns.length; j++) {
 						if (j > 0) {
-							buff.append(", ");
+							buff.append(Constants.REPLICATION_DELIMETER);
 						}
 						buff.append(columns[j].getType());
 
@@ -185,7 +185,7 @@ public class ScriptCommand extends ScriptBase {
 
 						for (int j = 0; j < row.getColumnCount(); j++) {
 							if (j > 0) {
-								buff.append(", ");
+								buff.append(Constants.REPLICATION_DELIMETER);
 							}
 							Value v = row.getValue(j);
 							if (v.getPrecision() > lobBlockSize) {

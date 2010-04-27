@@ -90,6 +90,33 @@ public class ReplicaTests extends TestBase{
 		}
 	}
 
+	
+	/**
+	 * Tests that a replica is successfully created when a field has a comma in its value.
+	 */
+	@Test
+	public void CommaInValue(){
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		
+		try{
+
+			sa.execute("INSERT INTO TEST VALUES(3, 'Hello, World');");
+			
+			createReplicaOnB();
+			
+			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
+
+			int[] pKey = {1, 2, 3};
+			String[] secondCol = {"Hello", "World", "Hello, World"};
+
+			validateOnFirstMachine("TEST", pKey, secondCol);
+
+		} catch (SQLException e){
+			fail("This should succeed.");
+		}
+	}
+
+	
 	@Test
 	public void selectFromReplica(){
 
