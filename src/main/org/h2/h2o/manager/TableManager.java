@@ -529,18 +529,13 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		preMethodTest();
 
 		/*
-		 * Obtain fully qualified table name.
+		 * Table name, schema name, and other infor are already obtained when the table manager instance is created.
 		 */
-		//		this.schemaName = otherTableManager.getSchemaName();
-		//		this.tableName = otherTableManager.getTableName();
-		//This is done when constructing the new Table Manager.
 
 		/*
 		 * Obtain replica manager.
 		 */
 		this.replicaManager = otherTableManager.getReplicaManager();
-
-
 	}
 
 	/* (non-Javadoc)

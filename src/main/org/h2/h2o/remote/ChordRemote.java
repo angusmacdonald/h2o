@@ -1,5 +1,6 @@
 package org.h2.h2o.remote;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
@@ -96,6 +97,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 	private boolean inShutdown = false;
 
+	private SystemTableLocator dl;
+
 	/**
 	 * Port to be used for the next database instance. Currently used for testing.
 	 */
@@ -147,7 +150,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		if (descriptorLocation == null || databaseName == null){
 			throw new StartupException("The location of the database descriptor was not specified. The database will now exit.");
 		}
-		SystemTableLocator dl = new SystemTableLocator(databaseName, descriptorLocation);
+		dl = new SystemTableLocator(databaseName, descriptorLocation);
 
 		Set<String> databaseInstances = null;
 		try {
@@ -193,6 +196,22 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			 * Create a new chord ring.
 			 */
 
+			//Obtain a lock on the locator server first.
+			
+			boolean locked = false;
+			try {
+				locked = dl.lockLocators(this.localMachineLocation.getDbLocation());
+			} catch (IOException e) {
+				throw new StartupException("Couldn't obtain a lock to create a new System Table. An IO Exception was thrown trying to contact the locator server (" + e.getMessage() + ").");
+			}
+			
+			if (!locked){
+				/*
+				 * Request made it to the locator server but the lock couldn't be taken out. Wait then try later to connect to the schema manager.
+				 */
+				throw new StartupException("Lock already taken out. H2O will eventually try to connect again at this point.");
+			}
+			
 			int portToUse = currentPort++;
 
 			connected = startChordRing(localMachineLocation.getHostname(), portToUse,
@@ -203,9 +222,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			newSMLocation.setRMIPort(portToUse);
 
 			systemTableRef.setSystemTableURL(newSMLocation);
-
-
+			
 			if (!connected){ //if STILL not connected.
+				unlockLocator();
 				throw new StartupException("Tried to connect to an existing database system and couldn't. Also tried to create" +
 				" a new network and this also failed.");
 			}
@@ -562,19 +581,19 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			//The System Table is running locally. Replicate it's state to the new successor.
 			IChordRemoteReference successor = chordNode.getSuccessor();
 
-			DatabaseInstanceRemote dbInstance = null;
+			DatabaseInstanceRemote successorInstance = null;
 
 			try {
 				String hostname = successor.getRemote().getAddress().getHostName();
 				int port = successor.getRemote().getAddress().getPort();
 
 				try {
-					dbInstance = getDatabaseInstanceAt(hostname, port);
+					successorInstance = getDatabaseInstanceAt(hostname, port);
 				} catch (NotBoundException e) {
 					//May happen. Ignore.
 				}
 
-				if (dbInstance == null){
+				if (successorInstance == null){
 					/*
 					 * The remote chord node hasn't been fully instantiated yet. Wait a while then try again.
 					 */
@@ -587,12 +606,12 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 						newThread.start();
 					}
 
-				} else if (dbInstance.equals(this.databaseInstance)) {
+				} else if (successorInstance.equals(this.databaseInstance)) {
 					//Do nothing. There is only one node in the network.
 					Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "There is only one node in the network so the System Table can't be replicated elsewhere.");
 				} else {
-					if (dbInstance.isAlive()){
-						this.systemTableRef.getSystemTable().addStateReplicaLocation(dbInstance);
+					if (successorInstance.isAlive()){
+						this.systemTableRef.getSystemTable().addStateReplicaLocation(successorInstance);
 
 						//dbInstance.createNewSystemTableBackup(db.getSystemTable());
 						//dbInstance.executeUpdate("CREATE REPLICA SCHEMA H2O");
@@ -848,6 +867,24 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			getLocalRegistry().rebind(fullTableName, stub);
 		} catch (Exception e) {
 			//Doesn't matter.
+		}
+	}
+
+	/**
+	 * 
+	 */
+	public void unlockLocator() {
+		boolean successful = false;
+		
+		try {
+			successful = dl.unlockLocators(this.localMachineLocation.getDbLocation());
+			System.err.println(successful);
+		} catch (Exception e) {
+			successful = false;
+		}
+		
+		if (!successful){
+			ErrorHandling.errorNoEvent("Failed to unlock database locator servers after creating the system table.");
 		}
 	}
 }

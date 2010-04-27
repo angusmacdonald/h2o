@@ -3,6 +3,7 @@ package org.h2.h2o.util.properties.server;
 import java.io.IOException;
 import java.util.Set;
 
+import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.properties.DatabaseDescriptorFile;
 
 /**
@@ -11,6 +12,7 @@ import org.h2.h2o.util.properties.DatabaseDescriptorFile;
  */
 public class SystemTableLocator {
 
+	private static final int MINIMUM_NUMER_OF_LOCATOR_SERVERS = 0;
 	private String[] locatorLocations;
 
 	public SystemTableLocator(String databaseName, String descriptorURL){
@@ -53,6 +55,41 @@ public class SystemTableLocator {
 			lcc.sendDatabaseLocation(replicaLocations);
 		}
 	}
+
+	public boolean lockLocators(String databaseInstanceString) throws IOException, StartupException {
+		int successful = 0;
+		
+		if (locatorLocations.length < MINIMUM_NUMER_OF_LOCATOR_SERVERS){
+			throw new StartupException("Not enough locator servers to reach majority consensus.");
+		}
+		
+		for (String locatorLocation: locatorLocations){
+			LocatorClientConnection lcc = getLocatorConnection(locatorLocation);
+			boolean locked = lcc.lockLocator(databaseInstanceString);
+			
+			if (locked) successful++;
+		}
+		
+		return successful == locatorLocations.length;
+		//TODO use this when more locators are used - return successful > (locatorLocations.length / 2 + 1);
+	}
+	
+	public boolean unlockLocators(String databaseInstanceString) throws IOException, StartupException {
+		int successful = 0;
+		
+		if (locatorLocations.length < MINIMUM_NUMER_OF_LOCATOR_SERVERS){
+			throw new StartupException("Not enough locator servers to reach majority consensus.");
+		}
+		
+		for (String locatorLocation: locatorLocations){
+			LocatorClientConnection lcc = getLocatorConnection(locatorLocation);
+			lcc.unlockLocator(databaseInstanceString);
+		}
+		
+		return successful == locatorLocations.length;
+		//TODO use this when more locators are used - return successful > (locatorLocations.length / 2 + 1);
+	}
+
 
 	/**
 	 * Obtain a new connection to the locator server.

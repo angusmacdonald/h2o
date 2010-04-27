@@ -58,21 +58,30 @@ public class ServerWorkerThread extends Thread {
 				 */
 				if (entireRequest.equals("")){
 					//Send back database info
-					Set<String> locations = locatorFile.readFromFile();
+					Set<String> locations = locatorFile.readLocationsFromFile();
 
 					String clientResponse = "";
 					for (String s: locations){
 						clientResponse += s + "\n";
 					}
-					
+
 					OutputStream output = socket.getOutputStream();
 					output.write((clientResponse.getBytes()));
 					output.flush();
 					output.close();
+				} else if (entireRequest.startsWith("LOCK ")){
+					boolean result = locatorFile.takeOutLockOnFile(entireRequest.substring("LOCK ".length()));
+					
+					returnResultOfLockRequest(result);
+				} else if (entireRequest.startsWith("UNLOCK ")){
+					boolean result = locatorFile.releaseLockOnFile(entireRequest.substring("UNLOCK ".length()));
+					
+					returnResultOfLockRequest(result);
 				} else {
+
 					//Update local file.
 					String[] databaseLocations = entireRequest.split(SEPARATOR);
-					locatorFile.writeToFile(databaseLocations);
+					locatorFile.writeLocationsToFile(databaseLocations);
 				}
 
 			} finally {
@@ -83,5 +92,12 @@ public class ServerWorkerThread extends Thread {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private void returnResultOfLockRequest(boolean result) throws IOException {
+		OutputStream output = socket.getOutputStream();
+		output.write((result? 1:0));
+		output.flush();
+		output.close();
 	}
 }

@@ -831,6 +831,8 @@ public class Database implements DataHandler {
 
 			systemTableRef.setSystemTable(systemTable);
 			databaseRemote.exportSystemTable(systemTableRef);
+			
+			databaseRemote.unlockLocator();
 
 		} else { // Not a System Table -  Get a reference to the System Table.
 			systemTableRef.findSystemTable();
