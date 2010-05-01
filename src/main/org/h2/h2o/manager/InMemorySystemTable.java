@@ -251,6 +251,9 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
+			
+			this.database.getChordInterface().bind(ti.getFullTableName(), tm);
+
 		} else if (dmw != null){
 			//Try to create the data manager at whereever it is meant to be. It may already be active.
 			// RECREATE TABLEMANAGER <tableName>

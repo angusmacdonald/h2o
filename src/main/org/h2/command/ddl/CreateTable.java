@@ -457,7 +457,6 @@ public class CreateTable extends SchemaCommand {
 			try {
 				stub = (TableManagerRemote) UnicastRemoteObject.exportObject(tableManager, 0);
 			} catch (Exception e) {
-				e.printStackTrace();
 				//May already be exported.
 			}
 

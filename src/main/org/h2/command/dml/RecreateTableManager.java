@@ -79,6 +79,7 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
 		//TableManager dm = TableManager.createTableManagerFromPersistentStore(ti.getSchemaName(), ti.getSchemaName());
 		try {
 			tm = new TableManager(ti, db);
+			tm.recreateReplicaManagerState();
 		} catch (SQLException e) {
 
 			e.printStackTrace();
@@ -96,6 +97,8 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
+		db.getChordInterface().bind(ti.getFullTableName(), tm);
+
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, ti + " recreated on " + db.getDatabaseURL() + ".");
 

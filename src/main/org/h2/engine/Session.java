@@ -120,6 +120,7 @@ public class Session extends SessionWithState {
 		this.database = database;
 	this.undoLog = new UndoLog(this);
 	this.user = user;
+	this.user.sessions ++;
 	this.id = id;
 	this.logSystem = database.getLog();
 	Setting setting = database.findSetting(SetTypes.getTypeName(SetTypes.DEFAULT_LOCK_TIMEOUT));
@@ -591,9 +592,14 @@ public class Session extends SessionWithState {
 		if (!closed) {
 			try {
 				cleanTempTables(true);
+				this.user.sessions --;
+				
+				if (this.user.sessions == 0){
 				IDatabaseRemote cr = database.getRemoteInterface();
 				cr.shutdown();
 				database.removeSession(this);
+				}
+				
 			} finally {
 				closed = true;
 			}

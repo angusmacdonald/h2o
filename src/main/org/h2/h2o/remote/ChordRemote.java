@@ -717,7 +717,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				for (TableManagerWrapper wrapper: localManagers){
 
 					TableManagerRemote dmr = wrapper.getTableManager();
-					if (dmr.getReplicaManager().getPrimary().equals(databaseInstance) && dmr.getReplicaManager().getNumberOfReplicas() == 1){
+					if (dmr.getReplicaManager().getPrimary().getDatabaseInstance().equals(databaseInstance) && dmr.getReplicaManager().getNumberOfReplicas() == 1){
 						//This machine holds the only replica - replicate on the successor as well.
 						Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Replicating table [" + wrapper.getTableInfo().getFullTableName() + "] to successor: " + successor);
 

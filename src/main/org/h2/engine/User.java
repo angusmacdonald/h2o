@@ -31,6 +31,7 @@ public class User extends RightOwner {
     private byte[] salt;
     private byte[] passwordHash;
     private boolean admin;
+	public int sessions = 0;
 
     public User(Database database, int id, String userName, boolean systemUser) {
         super(database, id, userName, Trace.USER);
