@@ -137,7 +137,7 @@ public class CreateTable extends SchemaCommand {
 		}
 
 		if ((getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE) != null && !isStartup()) || getSchema().findLocalTableOrView(session, tableName) != null) {
-			if (ifNotExists) {
+			if (ifNotExists || isStartup()) {
 				return 0;
 			}
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);

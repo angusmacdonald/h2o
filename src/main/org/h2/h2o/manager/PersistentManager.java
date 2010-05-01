@@ -304,9 +304,9 @@ public class PersistentManager {
 	 * @return
 	 */
 	public int getConnectionID(DatabaseURL dbURL){
-		//		Session s = db.getSystemSession();
-		//		queryParser = new Parser(s, true);
-		//		
+				Session s = db.getSystemSession();
+				queryParser = new Parser(s, true);
+				
 		String machine_name = dbURL.getHostname();
 		int connection_port = dbURL.getPort();
 		String connection_type = dbURL.getConnectionType();

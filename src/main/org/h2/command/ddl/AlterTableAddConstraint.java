@@ -128,7 +128,7 @@ public class AlterTableAddConstraint extends SchemaCommand {
 		Database db = session.getDatabase();
 		Table table = getSchema().getTableOrView(session, tableName);
 		if (getSchema().findConstraint(session, constraintName) != null) {
-			if (ifNotExists) {
+			if (ifNotExists || isStartup()) {
 				return 0;
 			}
 			throw Message.getSQLException(ErrorCode.CONSTRAINT_ALREADY_EXISTS_1, constraintName);

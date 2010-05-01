@@ -97,17 +97,14 @@ public class MetaRecord {
 			command.update();
 
 		} catch (Exception e) {
-			System.err.println("XXX removed.");
-			e.printStackTrace();
-
-			//            SQLException s = Message.addSQL(Message.convert(e), sql);
-			//            db.getTrace(Trace.DATABASE).error(sql, s);
-			//            if (listener != null) {
-			//                listener.exceptionThrown(s, sql);
-			//                // continue startup in this case
-			//            } else {
-			//                throw s;
-			//            }
+			SQLException s = Message.addSQL(Message.convert(e), sql);
+			db.getTrace(Trace.DATABASE).error(sql, s);
+			if (listener != null) {
+				listener.exceptionThrown(s, sql);
+				// continue startup in this case
+			} else {
+				throw s;
+			}
 		}
 	}
 

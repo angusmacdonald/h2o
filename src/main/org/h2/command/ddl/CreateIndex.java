@@ -77,8 +77,10 @@ public class CreateIndex extends SchemaCommand {
         }
         IndexType indexType;
         if (primaryKey) {
-            if (table.findPrimaryKey() != null) {
-                throw Message.getSQLException(ErrorCode.SECOND_PRIMARY_KEY);
+            if (table.findPrimaryKey() != null && isStartup()) {
+                return 0;
+            } else if (table.findPrimaryKey() != null){
+            	throw Message.getSQLException(ErrorCode.SECOND_PRIMARY_KEY);
             }
             indexType = IndexType.createPrimaryKey(persistent, hash);
         } else if (unique) {
