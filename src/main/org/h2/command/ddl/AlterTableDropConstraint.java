@@ -82,7 +82,7 @@ public class AlterTableDropConstraint extends SchemaCommand {
 			return queryProxy;
 		}
 
-		return QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstance());
+		return QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper());
 
 	}
 

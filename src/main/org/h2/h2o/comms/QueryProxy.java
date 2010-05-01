@@ -12,6 +12,7 @@ import org.h2.command.Parser;
 import org.h2.command.dml.MigrateTableManager;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
+import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.manager.MovedException;
@@ -41,7 +42,7 @@ public class QueryProxy implements Serializable{
 
 	private String tableName;
 
-	private Set<DatabaseInstanceRemote> allReplicas;
+	private Set<DatabaseInstanceWrapper> allReplicas;
 
 	/**
 	 * Proxy for the Table Manager of this table. Used to release any locks held at the end of the transaction.
@@ -52,7 +53,7 @@ public class QueryProxy implements Serializable{
 	 * The database instance making the request. This is used to request the lock (i.e. the lock for the given query
 	 * is taken out in the name of this database instance.
 	 */
-	private DatabaseInstanceRemote requestingDatabase;
+	private DatabaseInstanceWrapper requestingDatabase;
 
 	/**
 	 * ID assigned to this update by the Table Manager. This is returned to inform the Table Manager what replicas were updated.
@@ -74,7 +75,7 @@ public class QueryProxy implements Serializable{
 	 * @param updateID 			ID given to this update.
 	 */
 	public QueryProxy(LockType lockGranted, String tableName,
-			Set<DatabaseInstanceRemote> replicaLocations, TableManagerRemote tableManager, DatabaseInstanceRemote requestingMachine, int updateID, LockType lockRequested) {
+			Set<DatabaseInstanceWrapper> replicaLocations, TableManagerRemote tableManager, DatabaseInstanceWrapper requestingMachine, int updateID, LockType lockRequested) {
 		this.lockGranted = lockGranted;
 		this.lockRequested = lockRequested;
 		this.tableName = tableName;
@@ -89,9 +90,9 @@ public class QueryProxy implements Serializable{
 	 * @see #getDummyQueryProxy(DatabaseInstanceRemote)
 	 * @param localDatabaseInstance
 	 */
-	public QueryProxy(DatabaseInstanceRemote localDatabaseInstance) {
+	public QueryProxy(DatabaseInstanceWrapper localDatabaseInstance) {
 		this.lockGranted = LockType.WRITE;
-		this.allReplicas = new HashSet<DatabaseInstanceRemote>();
+		this.allReplicas = new HashSet<DatabaseInstanceWrapper>();
 		if (localDatabaseInstance != null){ //true when the DB hasn't started yet (management DB, etc.)
 			this.allReplicas.add(localDatabaseInstance);
 		}
@@ -110,7 +111,7 @@ public class QueryProxy implements Serializable{
 			/*
 			 * If we don't knwo of any replicas and this is a CREATE TABLE statement then we just run the query on the local DB instance.
 			 */
-			this.allReplicas = new HashSet<DatabaseInstanceRemote>();
+			this.allReplicas = new HashSet<DatabaseInstanceWrapper>();
 			this.allReplicas.add(requestingDatabase);
 		} else if (allReplicas == null || allReplicas.size() == 0){
 			/*
@@ -137,14 +138,14 @@ public class QueryProxy implements Serializable{
 		 * Send the query to each DB instance holding a replica.
 		 */
 		int i = 0;
-		for (DatabaseInstanceRemote replica: allReplicas){
+		for (DatabaseInstanceWrapper replica: allReplicas){
 			try {
 
 				int result = 0;
 
 				DatabaseInstanceRemote localMachine = session.getDatabase().getLocalDatabaseInstance();
 
-				if (replica == null || localMachine.getConnectionString().equals(replica.getConnectionString())){
+				if (replica == null || localMachine.getConnectionString().equals(replica.getDatabaseInstance().getConnectionString())){
 					/*
 					 * Execute Locally - otherwise there are some nasty concurrency issues with the RMI call accessing the DB
 					 * object at the same time as the thread which made the RMI call.
@@ -169,7 +170,7 @@ public class QueryProxy implements Serializable{
 
 					H2OTest.rmiFailure(replica);
 
-					result = replica.prepare(sql, transactionName);
+					result = replica.getDatabaseInstance().prepare(sql, transactionName);
 				}
 
 				if (result != 0) {
@@ -214,9 +215,9 @@ public class QueryProxy implements Serializable{
 	 */
 	public static QueryProxy getQueryProxyAndLock(Table table, LockType lockType, Database db) throws SQLException {
 		if (table != null){
-			return getQueryProxyAndLock(db.getTableManager(table.getFullName()), lockType, db.getLocalDatabaseInstance());
+			return getQueryProxyAndLock(db.getTableManager(table.getFullName()), lockType, db.getLocalDatabaseInstanceInWrapper());
 		} else {
-			return getDummyQueryProxy(db.getLocalDatabaseInstance());
+			return getDummyQueryProxy(db.getLocalDatabaseInstanceInWrapper());
 		}
 	}
 
@@ -228,7 +229,7 @@ public class QueryProxy implements Serializable{
 	 * @return
 	 */
 	public static QueryProxy getDummyQueryProxy(
-			DatabaseInstanceRemote localDatabaseInstance) {
+			DatabaseInstanceWrapper localDatabaseInstance) {
 		return new QueryProxy(localDatabaseInstance);
 	}
 
@@ -239,7 +240,7 @@ public class QueryProxy implements Serializable{
 	 * @return Query proxy for a specific table within H20.
 	 * @throws SQLException
 	 */
-	public static QueryProxy getQueryProxyAndLock(TableManagerRemote tableManager, LockType lockType, DatabaseInstanceRemote requestingDatabase) throws SQLException {
+	public static QueryProxy getQueryProxyAndLock(TableManagerRemote tableManager, LockType lockType, DatabaseInstanceWrapper requestingDatabase) throws SQLException {
 
 		if (tableManager == null){
 			ErrorHandling.errorNoEvent("Table Manager proxy was null when requesting table.");
@@ -291,7 +292,7 @@ public class QueryProxy implements Serializable{
 	/**
 	 * @return
 	 */
-	public Set<DatabaseInstanceRemote> getReplicaLocations() {
+	public Set<DatabaseInstanceWrapper> getReplicaLocations() {
 		return allReplicas;
 	}
 
@@ -319,7 +320,7 @@ public class QueryProxy implements Serializable{
 	/**
 	 * @return the requestingDatabase
 	 */
-	public DatabaseInstanceRemote getRequestingDatabase() {
+	public DatabaseInstanceWrapper getRequestingDatabase() {
 		return requestingDatabase;
 	}
 

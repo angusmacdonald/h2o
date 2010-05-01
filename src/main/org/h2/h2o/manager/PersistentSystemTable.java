@@ -22,6 +22,7 @@ import org.h2.value.Value;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
@@ -434,22 +435,28 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 				String schemaName = row[5].getString();
 				int chord_port = row[6].getInt();
 
-				DatabaseURL dbURL = new DatabaseURL(connectionType, machineName, Integer.parseInt(connectionPort), dbLocation, false);
-				dbURL.setRMIPort(chord_port);
+				DatabaseURL dbURL = new DatabaseURL(connectionType, machineName, Integer.parseInt(connectionPort), dbLocation, false, chord_port);
 				TableInfo ti = new TableInfo (tableName, schemaName);
 
 				/*
 				 * Perform lookups to get remote references to every Table Manager.
 				 */
-				DatabaseInstanceRemote dir = remoteInterface.getDatabaseInstanceAt(dbURL);   //.findTableManagerReference(ti, dbURL);
-
+				
+				DatabaseInstanceRemote dir = null;
+				try {
+				dir = remoteInterface.getDatabaseInstanceAt(dbURL);   //.findTableManagerReference(ti, dbURL);
+				} catch (Exception e){
+					ErrorHandling.errorNoEvent("Couldn't find table manager at " + dbURL);
+				}
+				
 				if (dir != null){
 					TableManagerRemote dmReference = dir.findTableManagerReference(ti);
 					
 					TableManagerWrapper dmw = new TableManagerWrapper(ti, dmReference, dbURL);
 					tableManagers.put(ti, dmw);
 				} else {
-					tableManagers.put(ti, null);
+					TableManagerWrapper dmw = new TableManagerWrapper(ti, null, dbURL);
+					tableManagers.put(ti, dmw);
 				}
 
 			}
@@ -569,5 +576,4 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 		
 		return localTables;
 	}
-
 }

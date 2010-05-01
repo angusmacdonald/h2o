@@ -7,6 +7,7 @@ import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Engine;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 
 /**
  * Utility class containing various methods that simulate failure in various parts of H2O. These methods are called from within the database codebase
@@ -33,16 +34,16 @@ public class H2OTest {
 	}
 	
 	/**
-	 * @param localMachine
+	 * @param replica.getDatabaseInstance()
 	 * @throws RemoteException 
 	 */
-	public static void rmiFailure(DatabaseInstanceRemote localMachine) throws RemoteException {
+	public static void rmiFailure(DatabaseInstanceWrapper replica) throws RemoteException {
 		if (Constants.IS_TESTING_PRE_PREPARE_FAILURE || Constants.IS_TESTING_PRE_COMMIT_FAILURE){
 			
 			Constants.IS_TESTING_PRE_COMMIT_FAILURE = false;
 			Constants.IS_TESTING_PRE_PREPARE_FAILURE = false;
 			
-			if (localMachine.getConnectionString().contains("mem:two")){
+			if (replica.getDatabaseInstance().getConnectionString().contains("mem:two")){
 				throw new RemoteException("Testing remote failure");
 			}
 		}

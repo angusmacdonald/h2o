@@ -587,6 +587,21 @@ public class SystemTableReference implements ISystemTableReference {
 		this.cachedTableManagerReferences.put(tableInfo, tableManager);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.ISystemTableReference#addNewTableManagerReference(org.h2.h2o.util.TableInfo, org.h2.h2o.comms.remote.TableManagerRemote)
+	 */
+	@Override
+	public void addNewTableManagerReference(TableInfo ti, TableManagerRemote tm) {
+		try {
+			db.getSystemTableReference().getSystemTable().changeTableManagerLocation(tm, ti);
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		} catch (MovedException e) {
+			e.printStackTrace();
+		}
+		db.getSystemTableReference().addProxy(ti, tm);
+	}
+
 
 
 }

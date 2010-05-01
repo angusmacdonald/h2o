@@ -88,7 +88,7 @@ public class Update extends Prepared {
 			 * (QUERY PROPAGATED TO ALL REPLICAS).
 			 */
 			 if (isRegularTable()){
-				 if (queryProxy == null) queryProxy = new QueryProxy(session.getDatabase().getLocalDatabaseInstance()); // in case of MERGE statement.
+				 if (queryProxy == null) queryProxy = new QueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper()); // in case of MERGE statement.
 				 return queryProxy.executeUpdate(sqlStatement, transactionName, session);
 			 }
 
@@ -231,7 +231,7 @@ public class Update extends Prepared {
 			return queryProxy;
 		}
 
-		return QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstance());
+		return QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper());
 
 	}
 

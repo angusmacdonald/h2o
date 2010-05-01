@@ -148,7 +148,7 @@ public class Delete extends Prepared {
 			return queryProxy;
 		}
 		
-		return QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstance());
+		return QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper());
 		
 	}
 	

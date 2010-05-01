@@ -151,7 +151,7 @@ public interface ISystemTable extends Remote {
 	 * @throws RemoteException
 	 * @throws MovedException 
 	 */
-	public void addStateReplicaLocation(DatabaseInstanceRemote databaseReference) throws RemoteException, MovedException;
+	public void addStateReplicaLocation(DatabaseInstanceWrapper databaseReference) throws RemoteException, MovedException;
 
 	/**
 	 * Get a remote reference to a database instance at the specified URL.

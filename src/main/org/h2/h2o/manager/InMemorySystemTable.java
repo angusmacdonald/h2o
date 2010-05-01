@@ -67,8 +67,8 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	 */
 	public static HashSet<TableManagerRemote> tableManagerReferences = new HashSet<TableManagerRemote>();
 
-	
-	
+
+
 	public InMemorySystemTable(Database database) throws Exception{
 		this.database = database;
 
@@ -206,45 +206,37 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	@Override
 	public TableManagerRemote lookup(TableInfo ti) throws RemoteException {
 		TableManagerWrapper dmw = tableManagers.get(ti);
-		TableManagerRemote dm = null;
+		TableManagerRemote tm = null;
 
 		if (dmw != null){
-			dm = dmw.getTableManager();
+			tm = dmw.getTableManager();
 		}
 		/*
 		 * If there is a null reference to a Table Manager we can try to reinstantiate it, but
 		 * if there is no reference at all just return null for the lookup. 
 		 */
-		if (dm != null || !tableManagers.containsKey(ti)) {
+		if (tm != null || !tableManagers.containsKey(ti)) {
 			if (!tableManagers.containsKey(ti)){
 				return null;
 			}
 
-			return dm;
+			return tm;
 		}
 
 
 		/*
 		 * The DM reference is null so we must look to create a new DM.
-		 * TODO in future we may do a chord lookup to look for another dm, in a similar way to System Table lookups.
+		 * XXX is it possible that a data manager is running and the SM doesn't know of it?
 		 */
 
-		boolean tableExists = false;
-
-		try {
-			tableExists = countCheck("SELECT count(*) FROM information_schema.tables WHERE table_schema = '" + 
-					ti.getSchemaName().toUpperCase() + "' AND table_name = '" + ti.getTableName().toUpperCase() + "';");
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-
-		if (tableExists){
+		if (dmw != null && this.database.getDatabaseURL().equals(dmw.getTableManagerURL())){
 			/*
 			 * It is okay to re-instantiate the Table Manager here.
 			 */
 			//TableManager dm = TableManager.createTableManagerFromPersistentStore(ti.getSchemaName(), ti.getSchemaName());
 			try {
-				dm = new TableManager(ti, database);
+				tm = new TableManager(ti, database);
+				tm.recreateReplicaManagerState();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			} catch (Exception e) {
@@ -255,15 +247,33 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 			 * Make Table Manager serializable first.
 			 */
 			try {
-				dm = (TableManagerRemote) UnicastRemoteObject.exportObject(dm, 0);
+				tm = (TableManagerRemote) UnicastRemoteObject.exportObject(tm, 0);
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
+		} else if (dmw != null){
+			//Try to create the data manager at whereever it is meant to be. It may already be active.
+			// RECREATE TABLEMANAGER <tableName>
+			try {
+				this.getDatabaseInstance(dmw.getTableManagerURL()).executeUpdate("RECREATE TABLEMANAGER " + ti.getFullTableName(), false);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} catch (MovedException e) {
+				e.printStackTrace();
+			}
+			
+			dmw = tableManagers.get(ti);
+			tm = dmw.getTableManager();
 
-
+		} else {
+			//Table Manager location is not known.
+			ErrorHandling.errorNoEvent("Couldn't find the location of the table manager for table " + ti + ". This should never happen - the relevant information" +
+					" should be found in persisted state.");
 		}
 
-		dmw.setTableManager(dm);
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, ti.getFullTableName() + "'s table manager has been recreated on " + dmw.getTableManagerURL() + ".");
+
+		dmw.setTableManager(tm);
 		tableManagers.put(ti, dmw);
 
 		return tableManagers.get(ti).getTableManager();
@@ -358,12 +368,12 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 
 			}
 
-			databasesInSystem.put(remoteDB.getKey(), new DatabaseInstanceWrapper(dir, active));
+			databasesInSystem.put(remoteDB.getKey(), new DatabaseInstanceWrapper(remoteDB.getKey(), dir, active));
 		}
 
 
 		/*
-		 * Obtain references to Table Managers.
+		 * Obtain references to Table Managers, though not necessarily references to active TM proxies.
 		 */
 		tableManagers = otherSystemTable.getTableManagers();
 
@@ -447,11 +457,11 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 			try {
 
 				TableManagerRemote dm = null;
-				
+
 				if (dmw != null){
 					dm = dmw.getTableManager();
 				}
-				
+
 				if (dm != null){
 					dm.shutdown();
 
@@ -469,7 +479,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	 */
 	@Override
 	public void addStateReplicaLocation(
-			DatabaseInstanceRemote databaseReference) throws RemoteException {
+			DatabaseInstanceWrapper databaseReference) throws RemoteException {
 
 		//		if (systemTableState.size() < Replication.SCHEMA_MANAGER_REPLICATION_FACTOR){ //TODO update to allow policy on number of replicas.
 		//			this.systemTableState.add(databaseReference);
@@ -520,18 +530,18 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	 */
 	public void changeTableManagerLocation(TableManagerRemote stub, TableInfo tableInfo) {
 		Object result = this.tableManagers.remove(tableInfo.getGenericTableInfo());
-		
+
 		if (result == null){
 			ErrorHandling.errorNoEvent("There is an inconsistency in the storage of Table Managers which has caused inconsistencies in the set of managers.");
 			assert false;
 		}
 
 		TableManagerWrapper dmw = new TableManagerWrapper(tableInfo, stub, tableInfo.getDbURL());
-		
+
 		this.tableManagers.put(tableInfo.getGenericTableInfo(), dmw);
 		tableManagerReferences.add(stub);
 		this.database.getChordInterface().bind(tableInfo.getFullTableName(), stub);
-		
+
 	}
 
 	/* (non-Javadoc)
@@ -540,19 +550,19 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	@Override
 	public Set<TableManagerWrapper> getLocalDatabaseInstances(DatabaseURL databaseInstance)
 	throws RemoteException, MovedException {
-		
+
 		/*
 		 * Create an interator to go through and chec whether a given Table Manager is local to the specified machine.
 		 */
 		Predicate<TableManagerWrapper, DatabaseURL> isLocal = new Predicate<TableManagerWrapper, DatabaseURL>() {
 			public boolean apply(TableManagerWrapper wrapper, DatabaseURL databaseInstance) {
-		        try {
+				try {
 					return wrapper.isLocalTo(databaseInstance);
 				} catch (RemoteException e) {
 					return false;
 				}
-		    }
-			
+			}
+
 		};
 
 		Set<TableManagerWrapper> localManagers = CollectionFilter.filter(this.tableManagers.values(), isLocal, databaseInstance);

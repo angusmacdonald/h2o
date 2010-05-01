@@ -4,6 +4,7 @@ import java.rmi.RemoteException;
 
 import org.h2.engine.Constants;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.manager.ISystemTable;
 import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.manager.MovedException;
@@ -74,7 +75,11 @@ public class SystemTableReplication extends Thread {
 				try { Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Found reference to remote database (where SM state will be replicated): " + instance.getConnectionString()); } catch (RemoteException e1) {}
 			}
 
-			createSystemTableReplicas(instance);
+			try {
+				createSystemTableReplicas(new DatabaseInstanceWrapper(instance.getConnectionURL(), instance, true));
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
 
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Successfully added new System Table replicas at " + hostname + ":" + port);
 		}
@@ -84,7 +89,7 @@ public class SystemTableReplication extends Thread {
 	/**
 	 * @param instance
 	 */
-	private void createSystemTableReplicas(DatabaseInstanceRemote instance) {
+	private void createSystemTableReplicas(DatabaseInstanceWrapper instance) {
 		try {
 			systemTableRef.getSystemTable().addStateReplicaLocation(instance);
 		} catch (MovedException e) {

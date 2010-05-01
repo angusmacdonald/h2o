@@ -272,7 +272,7 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 	 */
 	@Override
 	public void addStateReplicaLocation(
-			DatabaseInstanceRemote databaseReference) throws RemoteException, MovedException {
+			DatabaseInstanceWrapper databaseReference) throws RemoteException, MovedException {
 		preMethodTest();
 		inMemory.addStateReplicaLocation(databaseReference);
 		persisted.addStateReplicaLocation(databaseReference);

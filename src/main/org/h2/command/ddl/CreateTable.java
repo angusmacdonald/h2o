@@ -440,7 +440,7 @@ public class CreateTable extends SchemaCommand {
 		}
 
 		queryProxy = null;
-		if (Constants.IS_H2O && !tableName.startsWith("H2O_") && !db.isManagementDB()){ //XXX Not sure if this should be a seperate IF
+		if (Constants.IS_H2O && !tableName.startsWith("H2O_") && !db.isManagementDB() && !isStartup()){ //if it is startup then we don't want to create a table manager yet.
 
 			//TableInfo tableDetails, Database databas
 			TableInfo ti = new TableInfo(tableName, getSchema().getName(), 0l, 0, "TABLE", db.getDatabaseURL());
@@ -461,7 +461,7 @@ public class CreateTable extends SchemaCommand {
 				//May already be exported.
 			}
 
-			queryProxy = QueryProxy.getQueryProxyAndLock(stub, LockType.CREATE, db.getLocalDatabaseInstance());
+			queryProxy = QueryProxy.getQueryProxyAndLock(stub, LockType.CREATE, db.getLocalDatabaseInstanceInWrapper());
 
 			queryProxyManager.addProxy(queryProxy);
 		} else if (Constants.IS_H2O){

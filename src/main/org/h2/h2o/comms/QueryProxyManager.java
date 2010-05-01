@@ -13,6 +13,7 @@ import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
+import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.manager.MovedException;
@@ -35,15 +36,15 @@ public class QueryProxyManager {
 
 	private String transactionName; 
 
-	private DatabaseInstanceRemote localDatabase;
+	private DatabaseInstanceWrapper localDatabase;
 
 	private Parser parser;
 
-	private Set<DatabaseInstanceRemote> allReplicas;
+	private Set<DatabaseInstanceWrapper> allReplicas;
 
 	private Set<TableManagerRemote> tableManagers;
 
-	private DatabaseInstanceRemote requestingDatabase;
+	private DatabaseInstanceWrapper requestingDatabase;
 
 	private Map<String, QueryProxy> queryProxies;
 
@@ -78,13 +79,13 @@ public class QueryProxyManager {
 	 * This just adds the local database as the only replica.
 	 */
 	public QueryProxyManager(Database db, Session session, boolean metaRecordProxy) {
-		this.localDatabase = db.getLocalDatabaseInstance();
+		this.localDatabase = db.getLocalDatabaseInstanceInWrapper();
 
-		this.transactionName = TransactionNameGenerator.generateName(this.localDatabase); 
+		this.transactionName = TransactionNameGenerator.generateName(this.localDatabase.getDatabaseInstance()); 
 
 		this.parser = new Parser(session, true);
 
-		this.allReplicas = new HashSet<DatabaseInstanceRemote>();
+		this.allReplicas = new HashSet<DatabaseInstanceWrapper>();
 
 		if (metaRecordProxy){
 			this.allReplicas.add(localDatabase);
@@ -92,7 +93,7 @@ public class QueryProxyManager {
 
 		this.tableManagers = new HashSet<TableManagerRemote>();
 
-		this.requestingDatabase = db.getLocalDatabaseInstance();
+		this.requestingDatabase = db.getLocalDatabaseInstanceInWrapper();
 
 		this.queryProxies = new HashMap<String, QueryProxy>();
 
@@ -117,7 +118,7 @@ public class QueryProxyManager {
 			 * Executed if no replica location was specified by the query proxy, which will happen on queries which
 			 * don't involve a particular table (these are always local anyway).
 			 */
-			allReplicas.add(parser.getSession().getDatabase().getLocalDatabaseInstance());
+			allReplicas.add(parser.getSession().getDatabase().getLocalDatabaseInstanceInWrapper());
 		}
 
 		if (proxy.getTableManagerLocation() != null){
@@ -161,28 +162,23 @@ public class QueryProxyManager {
 		/*
 		 * The set of replicas that were updated. This is returned to the DM when locks are released.
 		 */
-		Set<DatabaseInstanceRemote> updatedReplicas = new HashSet<DatabaseInstanceRemote>();
+		Set<DatabaseInstanceWrapper> updatedReplicas = new HashSet<DatabaseInstanceWrapper>();
 
 		/*
 		 * Commit or rollback the transaction.
 		 */
-		for (DatabaseInstanceRemote remoteReplica: allReplicas){
+		for (DatabaseInstanceWrapper remoteReplica: allReplicas){
 
 			boolean actionSuccessful = false;
 
-			try {
-				if (remoteReplica == null){
-					//This is a local internal database operation (e.g. the TCP server doing something).
-					actionSuccessful = commitLocal(commit);
-				} else if (localDatabase.getConnectionString().equals(remoteReplica.getConnectionString())){
-					//Perform commit locally.
-					actionSuccessful = commitLocal(commit);
-				} else { //Perform commit via RMI.		 
-					actionSuccessful = commitRemote(commit, remoteReplica);
-				}
-			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			if (remoteReplica == null){
+				//This is a local internal database operation (e.g. the TCP server doing something).
+				actionSuccessful = commitLocal(commit);
+			} else if (localDatabase.getDatabaseURL().getOriginalURL().equals(remoteReplica.getDatabaseURL().getOriginalURL())){
+				//Perform commit locally.
+				actionSuccessful = commitLocal(commit);
+			} else { //Perform commit via RMI.		 
+				actionSuccessful = commitRemote(commit, remoteReplica);
 			}
 
 			if (actionSuccessful && commit) updatedReplicas.add(remoteReplica);
@@ -238,9 +234,9 @@ public class QueryProxyManager {
 	 * @throws SQLException
 	 */
 	private boolean commitRemote(boolean commit,
-			DatabaseInstanceRemote remoteReplica) throws SQLException {
+			DatabaseInstanceWrapper remoteReplica) throws SQLException {
 		try {
-			int result = remoteReplica.commit(commit, transactionName);
+			int result = remoteReplica.getDatabaseInstance().commit(commit, transactionName);
 
 			return (result == 0);
 		} catch (SQLException e){
@@ -274,7 +270,7 @@ public class QueryProxyManager {
 	 * @param updatedReplicas The set of replicas which were updated. This is NOT used to release locks, but to update the 
 	 * Table Managers state on which replicas are up-to-date. Null if none have changed.
 	 */
-	public void endTransaction(Set<DatabaseInstanceRemote> updatedReplicas) { 
+	public void endTransaction(Set<DatabaseInstanceWrapper> updatedReplicas) { 
 		try {
 			for (TableManagerRemote tableManagerProxy: tableManagers){
 				tableManagerProxy.releaseLock(requestingDatabase, updatedReplicas, updateID);
@@ -337,7 +333,7 @@ public class QueryProxyManager {
 				return false;
 			}
 		}
-		
+
 		return true;
 	}
 

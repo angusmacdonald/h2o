@@ -4,10 +4,12 @@ import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 
 /**
  * Stores the location of each replica for a give table, including the update ID for each of these replicas
@@ -26,18 +28,18 @@ public class ReplicaManager implements Serializable {
 	 * <p>Key: Location of the replica
 	 * <p>Value: Number given to the last update made at that replica.
 	 */
-	private Map<DatabaseInstanceRemote, Integer> allReplicas;
+	private Map<DatabaseInstanceWrapper, Integer> allReplicas;
 
 	/**
 	 * The set of replicas that are currently active - i.e. up-to-date. Queries can only
 	 * be executed on this set of replicas.
 	 */
-	private Set<DatabaseInstanceRemote> activeReplicas;
+	private Set<DatabaseInstanceWrapper> activeReplicas;
 
 	/**
 	 * The database instance which is running this Table Manager. 
 	 */
-	private DatabaseInstanceRemote primaryLocation;
+	private DatabaseInstanceWrapper primaryLocation;
 
 	/**
 	 * Number given to the last update to a replica.
@@ -46,14 +48,14 @@ public class ReplicaManager implements Serializable {
 
 
 	public ReplicaManager(){
-		this.allReplicas = new HashMap<DatabaseInstanceRemote, Integer>();
-		this.activeReplicas = new HashSet<DatabaseInstanceRemote>();
+		this.allReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
+		this.activeReplicas = new HashSet<DatabaseInstanceWrapper>();
 		this.primaryLocation = null;
 
 		this.lastUpdate = 0;
 	}
 
-	public void add(DatabaseInstanceRemote replicaLocation){
+	public void add(DatabaseInstanceWrapper replicaLocation){
 		
 		assert replicaLocation != null;
 		
@@ -64,12 +66,27 @@ public class ReplicaManager implements Serializable {
 		allReplicas.put(replicaLocation, lastUpdate);
 		activeReplicas.add(replicaLocation);
 	}
+	
+	public void add(List<DatabaseInstanceWrapper> replicaLocations){
+		
+		assert replicaLocations != null;
+		
+		if (primaryLocation == null){
+			primaryLocation = replicaLocations.get(0);
+		}
+		
+		for (DatabaseInstanceWrapper diw: replicaLocations){
+			allReplicas.put(diw, lastUpdate);
+		}
+
+		activeReplicas.addAll(replicaLocations);
+	}
 
 	/**
 	 * @param instance
 	 * @param updateID
 	 */
-	public void add(DatabaseInstanceRemote instance, int updateID) {
+	public void add(DatabaseInstanceWrapper instance, int updateID) {
 		allReplicas.put(instance, updateID);
 	}
 
@@ -83,7 +100,7 @@ public class ReplicaManager implements Serializable {
 	/**
 	 * @return
 	 */
-	public DatabaseInstanceRemote getPrimary() {
+	public DatabaseInstanceWrapper getPrimary() {
 		return primaryLocation;
 	}
 
@@ -98,7 +115,7 @@ public class ReplicaManager implements Serializable {
 	/**
 	 * @return
 	 */
-	public Set<DatabaseInstanceRemote> getActiveReplicas() {
+	public Set<DatabaseInstanceWrapper> getActiveReplicas() {
 		return activeReplicas;
 	}
 
@@ -127,7 +144,7 @@ public class ReplicaManager implements Serializable {
 	 * <p>The updateID of the last update committed on each replica.
 	 * <p>The set of replicas which are deemed active.
 	 */
-	public void completeUpdate(Set<DatabaseInstanceRemote> updatedReplicas, int updateID) {
+	public void completeUpdate(Set<DatabaseInstanceWrapper> updatedReplicas, int updateID) {
 
 		if (updatedReplicas != null && updatedReplicas.size() != 0){
 
@@ -137,7 +154,7 @@ public class ReplicaManager implements Serializable {
 			 * Loop through each replica which was updated, re-adding them into the
 			 * replicaLocations hashmap along with the new updateID.
 			 */
-			for (DatabaseInstanceRemote instance: updatedReplicas){
+			for (DatabaseInstanceWrapper instance: updatedReplicas){
 				if (allReplicas.containsKey(instance)){
 					Integer previousID = allReplicas.get(instance);
 
@@ -182,12 +199,8 @@ public class ReplicaManager implements Serializable {
 		String[] locations = new String[activeReplicas.size()];
 		
 		int i = 0;
-		for (DatabaseInstanceRemote r: activeReplicas){
-			try {
-				locations[i++] = r.getConnectionURL().getURLwithRMIPort();
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
+		for (DatabaseInstanceWrapper r: activeReplicas){
+				locations[i++] = r.getDatabaseURL().getURLwithRMIPort();
 		}
 		
 		return locations;

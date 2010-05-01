@@ -182,6 +182,19 @@ public class DatabaseURL implements Serializable {
 	}
 
 	/**
+	 * @param string
+	 * @param string2
+	 * @param int1
+	 * @param string3
+	 * @param b
+	 * @param int2
+	 */
+	public DatabaseURL(String connectionType, String hostname, int port, String dbLocation, boolean systemTable, int rmiPort) {
+		this(connectionType, hostname, port, dbLocation, systemTable);
+		this.rmiPort = rmiPort;
+	}
+
+	/**
 	 * Get a slightly modified version of the original URL - if the original included 'localhost' this resolves it to the local hostname.
 	 * @return the new url
 	 */

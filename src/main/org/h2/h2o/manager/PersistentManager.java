@@ -1,8 +1,11 @@
 package org.h2.h2o.manager;
 
 import java.rmi.RemoteException;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import org.h2.command.Command;
@@ -12,6 +15,7 @@ import org.h2.engine.Session;
 import org.h2.h2o.autonomic.Replication;
 import org.h2.h2o.comms.ReplicaManager;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
 import org.h2.h2o.util.properties.H2oProperties;
@@ -61,7 +65,7 @@ public class PersistentManager {
 
 		this.stateReplicaManager = new ReplicaManager();
 
-		stateReplicaManager.add(db.getLocalDatabaseInstance());
+		stateReplicaManager.add(db.getLocalDatabaseInstanceInWrapper());
 
 		if (createTables){
 			/*
@@ -287,6 +291,7 @@ public class PersistentManager {
 		}
 	}
 
+
 	/**
 	 * Gets the connection ID for a given database connection if it is present in the database. If not, -1 is returned.
 	 * 
@@ -472,12 +477,12 @@ public class PersistentManager {
 	protected int executeUpdate(String query) throws SQLException{
 		//	getNewQueryParser();
 
-		Set<DatabaseInstanceRemote> replicas = stateReplicaManager.getActiveReplicas();
-
+		Set<DatabaseInstanceWrapper> replicas = stateReplicaManager.getActiveReplicas();
+Set<DatabaseInstanceWrapper> failed = new HashSet<DatabaseInstanceWrapper>();
 		int result = -1;
 
-		for (DatabaseInstanceRemote replica: replicas){
-			if (replica.equals(db.getLocalDatabaseInstance())){
+		for (DatabaseInstanceWrapper replica: replicas){
+			if (replica.getDatabaseInstance().equals(db.getLocalDatabaseInstance())){
 				sqlQuery = queryParser.prepareCommand(query);
 
 				try {
@@ -489,11 +494,18 @@ public class PersistentManager {
 				}
 			} else {
 				try {
-					result = replica.executeUpdate(query, true);
+					result = replica.getDatabaseInstance().executeUpdate(query, true);
 				} catch (RemoteException e) {
 					e.printStackTrace();
+					failed.add(replica);
 				}
 			}
+		}
+		
+		boolean hasRemoved = replicas.removeAll(failed);
+		
+		if (hasRemoved){
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Removed one or more replica locations because they couldn't be contacted for the last update.");
 		}
 
 		return result;
@@ -604,31 +616,31 @@ public class PersistentManager {
 
 	/**
 	 * Add a location where replicas of this managers state will be placed.
-	 * @param databaseReference
+	 * @param databaseWrapper
 	 * @throws RemoteException
 	 */
-	public void addStateReplicaLocation(DatabaseInstanceRemote databaseReference) throws RemoteException {
+	public void addStateReplicaLocation(DatabaseInstanceWrapper databaseWrapper) throws RemoteException {
 
 		if (stateReplicaManager.size() < Replication.SCHEMA_MANAGER_REPLICATION_FACTOR + 1){ //+1 because the local copy counts as a replica.
 
 			//now replica state here.
 			try {
-				databaseReference.executeUpdate("DROP REPLICA IF EXISTS " + tableRelation + ", " + replicaRelation + ", " + connectionRelation + ";", true);
-				databaseReference.executeUpdate("CREATE REPLICA " + tableRelation + ", " + replicaRelation + ", " + connectionRelation + " FROM '" + db.getDatabaseURL().getOriginalURL() + "';", true);
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseReference.getConnectionURL().getDbLocation());
+				databaseWrapper.getDatabaseInstance().executeUpdate("DROP REPLICA IF EXISTS " + tableRelation + ", " + replicaRelation + ", " + connectionRelation + ";", true);
+				databaseWrapper.getDatabaseInstance().executeUpdate("CREATE REPLICA " + tableRelation + ", " + replicaRelation + ", " + connectionRelation + " FROM '" + db.getDatabaseURL().getOriginalURL() + "';", true);
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseWrapper.getDatabaseURL().getDbLocation());
 
-				stateReplicaManager.add(databaseReference);
+				stateReplicaManager.add(databaseWrapper);
 
 				updateLocatorFiles();
-				
+
 			} catch (SQLException e) {
-				ErrorHandling.errorNoEvent("Failed to replicate System Table state on: " + databaseReference.getConnectionURL().getDbLocation());
+				ErrorHandling.errorNoEvent("Failed to replicate System Table state on: " + databaseWrapper.getDatabaseURL().getDbLocation());
 			} catch (Exception e) {
 				throw new RemoteException(e.getMessage());
 			} 
 
 		}
-		
+
 	}
 
 	/**
@@ -640,12 +652,12 @@ public class PersistentManager {
 
 		String descriptorLocation = persistedInstanceInformation.getProperty("descriptor");
 		String databaseName = persistedInstanceInformation.getProperty("databaseName");
-		
+
 		if (descriptorLocation == null || databaseName == null){
 			throw new Exception("The location of the database descriptor must be specifed (it was not found). The database will now terminate.");
 		}
 		SystemTableLocator dl = new SystemTableLocator(databaseName, descriptorLocation);
-		
+
 		dl.setLocations(stateReplicaManager.getReplicaLocations());
 	}
 

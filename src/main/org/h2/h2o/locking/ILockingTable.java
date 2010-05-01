@@ -1,6 +1,6 @@
 package org.h2.h2o.locking;
 
-import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.util.LockType;
 
 /**
@@ -13,11 +13,11 @@ public interface ILockingTable {
 	/**
 	 * Request a lock on the given table.
 	 * @param lockType	Type of lock requested.
-	 * @param requestingMachine Proxy for the machine making the request.
+	 * @param databaseInstanceWrapper Proxy for the machine making the request.
 	 * @return			Type of lock granted.
 	 */
 	public LockType requestLock(LockType lockType,
-			DatabaseInstanceRemote requestingMachine);
+			DatabaseInstanceWrapper databaseInstanceWrapper);
 
 	/**
 	 * Release the lock of this type held by this machine.
@@ -25,6 +25,6 @@ public interface ILockingTable {
 	 * @param requestingMachine Proxy for the machine making the request.
 	 * @return True if the success was successful.
 	 */
-	public boolean releaseLock(DatabaseInstanceRemote requestingMachine);
+	public boolean releaseLock(DatabaseInstanceWrapper requestingMachine);
 
 }

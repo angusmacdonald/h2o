@@ -3,6 +3,8 @@ package org.h2.h2o.manager;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import org.h2.command.Command;
@@ -23,6 +25,7 @@ import org.h2.h2o.locking.LockingTable;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TableInfo;
+import org.h2.result.LocalResult;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -46,17 +49,17 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	/**
 	 * Name of tables' table in Table Manager.
 	 */
-	private static final String TABLES = SCHEMA + "H2O_DM_TABLE";
+	protected static final String TABLES = SCHEMA + "H2O_DM_TABLE";
 
 	/**
 	 * Name of replicas' table in Table Manager.
 	 */
-	private static final String REPLICAS = SCHEMA + "H2O_DM_REPLICA";
+	protected static final String REPLICAS = SCHEMA + "H2O_DM_REPLICA";
 
 	/**
 	 * Name of connections' table in Table Manager.
 	 */
-	private static final String CONNECTIONS = SCHEMA + "H2O_DM_CONNECTION";
+	protected static final String CONNECTIONS = SCHEMA + "H2O_DM_CONNECTION";
 
 	/**
 	 * The database username used to communicate with Table Manager tables.
@@ -165,10 +168,10 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	public boolean addTableInformation(DatabaseURL tableManagerURL,
 			TableInfo tableDetails) throws RemoteException, MovedException, SQLException {
 		int result = super.addConnectionInformation(tableManagerURL, true);
-		
+
 		boolean added = (result != -1);
 		if (!added) return false;
-		
+
 		added = super.addTableInformation(tableManagerURL, tableDetails, true);
 		if (added) replicaManager.add(getDatabaseInstance(tableManagerURL));
 		return added;
@@ -207,9 +210,9 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 */
 	@Override
 	public boolean removeTableManager() throws RemoteException, SQLException,
-			MovedException {
+	MovedException {
 		boolean successful = super.removeTableInformation(getTableInfo());
-		
+
 		return successful;
 	}
 
@@ -238,10 +241,11 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	}
 
 	/**
-	 * @param replicaLocationString
-	 * @return
+	 * Get the database instance at the specified database URL.
+	 * @param dbURL location of the database instance.
+	 * @return null if the instance wasn't found (including if it wasn't active).
 	 */
-	private DatabaseInstanceRemote getDatabaseInstance(DatabaseURL dbURL) {
+	private DatabaseInstanceWrapper getDatabaseInstance(DatabaseURL dbURL) {
 		DatabaseInstanceRemote dir = getDB().getDatabaseInstance(dbURL);
 
 		if (dir == null){
@@ -254,7 +258,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 					ErrorHandling.errorNoEvent("DatabaseInstanceRemote wasn't found.");
 				} else {
 
-					getDB().getSystemTable().addConnectionInformation(dbURL, new DatabaseInstanceWrapper(dir, true));
+					getDB().getSystemTable().addConnectionInformation(dbURL, new DatabaseInstanceWrapper(dbURL, dir, true));
 
 				}
 
@@ -265,7 +269,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 
 
-		return dir;
+		return new DatabaseInstanceWrapper(dbURL, dir, true);
 	}
 
 	/* (non-Javadoc)
@@ -275,7 +279,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 * @see org.h2.h2o.manager.TableManagerRemote2#getQueryProxy(org.h2.h2o.util.LockType, org.h2.h2o.comms.remote.DatabaseInstanceRemote)
 	 */
 	@Override
-	public synchronized QueryProxy getQueryProxy(LockType lockRequested, DatabaseInstanceRemote databaseInstanceRemote) throws RemoteException, SQLException, MovedException {
+	public synchronized QueryProxy getQueryProxy(LockType lockRequested, DatabaseInstanceWrapper databaseInstanceWrapper) throws RemoteException, SQLException, MovedException {
 		preMethodTest();
 
 		//if (!isAlive ) return null;
@@ -290,14 +294,14 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 			}
 		}
 
-		LockType lockGranted = lockingTable.requestLock(lockRequested, databaseInstanceRemote);
+		LockType lockGranted = lockingTable.requestLock(lockRequested, databaseInstanceWrapper);
 
 		//		if (lockGranted == LockType.NONE){
 		//			throw new SQLException("Table already locked. Cannot perform query.");
 		//		}
 
-		QueryProxy qp = new QueryProxy(lockGranted, schemaName + "." + tableName, selectReplicaLocations(replicaManager.getPrimary(), lockRequested, databaseInstanceRemote), 
-				this, databaseInstanceRemote, replicaManager.getNewUpdateID(), lockRequested);
+		QueryProxy qp = new QueryProxy(lockGranted, schemaName + "." + tableName, selectReplicaLocations(replicaManager.getPrimary(), lockRequested, databaseInstanceWrapper), 
+				this, databaseInstanceWrapper, replicaManager.getNewUpdateID(), lockRequested);
 
 		return qp;
 	}
@@ -314,11 +318,11 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 * @return The set of database instances that should host a replica for the given table/schema. The return value will be NULL if
 	 * 	no more replicas need to be created.
 	 */
-	private Set<DatabaseInstanceRemote> selectReplicaLocations(DatabaseInstanceRemote primaryLocation, LockType lockType, DatabaseInstanceRemote requestingDatabase) {
+	private Set<DatabaseInstanceWrapper> selectReplicaLocations(DatabaseInstanceWrapper primaryLocation, LockType lockType, DatabaseInstanceWrapper requestingDatabase) {
 		/*
 		 * The set of machines onto which new replicas will be added.
 		 */
-		Set<DatabaseInstanceRemote> newReplicaLocations = new HashSet<DatabaseInstanceRemote>();
+		Set<DatabaseInstanceWrapper> newReplicaLocations = new HashSet<DatabaseInstanceWrapper>();
 
 		/*
 		 * The set of all replica locations that could be involved in the query.
@@ -341,7 +345,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 			 */
 			for (DatabaseInstanceWrapper dbInstance: potentialReplicaLocations){
 				if (!dbInstance.equals(primaryLocation)){ //primary copy doesn't exist here.
-					newReplicaLocations.add(dbInstance.getDatabaseInstance());
+					newReplicaLocations.add(dbInstance);
 					currentReplicationFactor++;
 				}
 
@@ -358,7 +362,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 
 		} else if (lockType == LockType.WRITE){
-			Set<DatabaseInstanceRemote> replicaLocations = this.replicaManager.getActiveReplicas(); //The update could be sent to any or all machines holding the given table.
+			Set<DatabaseInstanceWrapper> replicaLocations = this.replicaManager.getActiveReplicas(); //The update could be sent to any or all machines holding the given table.
 
 			if (Updates.SYNCHRONOUS_UPDATE){
 				//Update must be sent to all replicas:
@@ -369,7 +373,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 					newReplicaLocations.add(requestingDatabase); //try to keep the request local.
 				} else {
 					//Just pick another machine.
-					DatabaseInstanceRemote randomDir = replicaLocations.toArray(new DatabaseInstanceRemote[0])[0];
+					DatabaseInstanceWrapper randomDir = replicaLocations.toArray(new DatabaseInstanceWrapper[0])[0];
 					//TODO there has to be a better way of choosing this.
 					newReplicaLocations.add(randomDir);
 				}
@@ -423,7 +427,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 * @see org.h2.h2o.manager.TableManagerRemote2#releaseLock(org.h2.h2o.comms.remote.DatabaseInstanceRemote, java.util.Set, int)
 	 */
 	@Override
-	public void releaseLock(DatabaseInstanceRemote requestingDatabase, Set<DatabaseInstanceRemote> updatedReplicas, int updateID) throws RemoteException, MovedException {
+	public void releaseLock(DatabaseInstanceWrapper requestingDatabase, Set<DatabaseInstanceWrapper> updatedReplicas, int updateID) throws RemoteException, MovedException {
 		preMethodTest();
 
 		/*
@@ -617,6 +621,38 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	@Override
 	public IChordRemoteReference getChordReference() throws RemoteException {
 		return location;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.remote.TableManagerRemote#recreateReplicaManagerState()
+	 */
+	@Override
+	public void recreateReplicaManagerState() throws RemoteException {
+		ReplicaManager rm = new ReplicaManager();
+
+		/*
+		 * Get Replica information from persisted state.
+		 */
+		String sql = "SELECT connection_type, machine_name, db_location, connection_port, chord_port FROM " + REPLICAS + ", " + TABLES + ", " + CONNECTIONS + " WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND" +
+		" " + TABLES + ".table_id=" + REPLICAS + ".table_id AND " + CONNECTIONS + ".connection_id=" + REPLICAS + ".connection_id;";
+
+		try {
+			LocalResult rs = executeQuery(sql);
+			
+			List<DatabaseInstanceWrapper> replicaLocations = new LinkedList<DatabaseInstanceWrapper>();
+			while (rs.next()){
+				DatabaseURL dbURL = new DatabaseURL(rs.currentRow()[0].getString(), rs.currentRow()[1].getString(), 
+						rs.currentRow()[3].getInt(), rs.currentRow()[2].getString(), false, rs.currentRow()[4].getInt());
+				replicaLocations.add(getDatabaseInstance(dbURL));
+			}
+
+			rm.add(replicaLocations);
+		} catch (SQLException e) {
+			e.printStackTrace();
+
+		}
+
+		this.replicaManager = rm;
 	}
 
 }

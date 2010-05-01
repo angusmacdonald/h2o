@@ -70,6 +70,7 @@ import org.h2.command.dml.MigrateTableManager;
 import org.h2.command.dml.MigrateSystemTable;
 import org.h2.command.dml.NoOperation;
 import org.h2.command.dml.Query;
+import org.h2.command.dml.RecreateTableManager;
 import org.h2.command.dml.RunScriptCommand;
 import org.h2.command.dml.ScriptCommand;
 import org.h2.command.dml.Select;
@@ -425,6 +426,8 @@ public class Parser {
 					c = parseRunScript();
 				} else if (readIf("RELEASE")) {
 					c = parseReleaseSavepoint();
+				} else if (readIf("RECREATE")){
+					c = parseRecreate();
 				}
 				break;
 			case 'S':
@@ -4839,6 +4842,20 @@ public class Parser {
 			String tableName = readIdentifierWithSchema();
 			Schema schema = getSchema();
 			return new MigrateTableManager(session, schema, tableName);
+		} else {
+			throw new SQLException("Could parse migrate command.");
+		}
+	}
+	
+	/**
+	 * @return
+	 * @throws SQLException 
+	 */
+	private Prepared parseRecreate() throws SQLException {
+		if (readIf("TABLEMANAGER")) {
+			String tableName = readIdentifierWithSchema();
+			Schema schema = getSchema();
+			return new RecreateTableManager(session, schema, tableName);
 		} else {
 			throw new SQLException("Could parse migrate command.");
 		}

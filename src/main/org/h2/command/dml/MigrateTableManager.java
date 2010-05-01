@@ -74,7 +74,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 			if (dmr == null){
 				Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, getSchema().getName() + tableName);
 			}
-			QueryProxy qp = dmr.getQueryProxy(LockType.WRITE, db.getLocalDatabaseInstance());
+			QueryProxy qp = dmr.getQueryProxy(LockType.WRITE, db.getLocalDatabaseInstanceInWrapper());
 
 			if (!qp.getLockGranted().equals(LockType.NONE)){
 				result = migrateTableManagerToLocalInstance(dmr, schemaName, db);
@@ -89,7 +89,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, getSchema().getName() + tableName);
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new SQLException("Update failed somehow.");
+			throw new SQLException("Failed to migrate table manager for " + getSchema().getName() + tableName + ".");
 		}
 
 

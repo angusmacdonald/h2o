@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.util.LockType;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -17,34 +18,34 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  */
 public class LockingTable implements ILockingTable {
 
-	private DatabaseInstanceRemote writeLock;
-	private Set<DatabaseInstanceRemote> readLocks;
+	private DatabaseInstanceWrapper writeLock;
+	private Set<DatabaseInstanceWrapper> readLocks;
 
 	private String tableName; //used entirely for trace output in this class.
 
 	public LockingTable(String tableName){
 		this.tableName = tableName;
 		this.writeLock = null;
-		this.readLocks = new HashSet<DatabaseInstanceRemote>();
+		this.readLocks = new HashSet<DatabaseInstanceWrapper>();
 	}
 
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.util.ILockingTable#requestLock(org.h2.h2o.util.LockType, org.h2.h2o.comms.remote.DatabaseInstanceRemote)
 	 */
-	public synchronized LockType requestLock(LockType lockType, DatabaseInstanceRemote requestingMachine){
+	public synchronized LockType requestLock(LockType lockType, DatabaseInstanceWrapper requestingMachine){
 
 		if (writeLock != null) return LockType.NONE; //exclusive lock held.
 
 		if ((lockType == LockType.WRITE || lockType == LockType.CREATE) && readLocks.size() == 0){
 			//if write lock request + no read locks held.
 
-			try { Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName + "' " + ((LockType.CREATE == lockType)? "CREATE": "WRITE") + " locked by: " + requestingMachine.getConnectionString()); } catch (RemoteException e) {}
+			try { Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName + "' " + ((LockType.CREATE == lockType)? "CREATE": "WRITE") + " locked by: " + requestingMachine.getDatabaseInstance().getConnectionString()); } catch (RemoteException e) {}
 
 			writeLock = requestingMachine;
 			return lockType; //will either be WRITE or CREATE
 		} else if (lockType == LockType.READ){
 
-			try { Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName + "' READ locked by: " + requestingMachine.getConnectionString()); } catch (RemoteException e) {}
+			try { Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName + "' READ locked by: " + requestingMachine.getDatabaseInstance().getConnectionString()); } catch (RemoteException e) {}
 
 			readLocks.add(requestingMachine);
 			return LockType.READ;
@@ -56,9 +57,9 @@ public class LockingTable implements ILockingTable {
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.util.ILockingTable#releaseLock(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
 	 */
-	public synchronized boolean releaseLock(DatabaseInstanceRemote requestingMachine){
+	public synchronized boolean releaseLock(DatabaseInstanceWrapper requestingMachine){
 		try {
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName + "' unlocked by " + requestingMachine.getConnectionString());
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName + "' unlocked by " + requestingMachine.getDatabaseInstance().getConnectionString());
 		} catch (RemoteException e) {}
 
 

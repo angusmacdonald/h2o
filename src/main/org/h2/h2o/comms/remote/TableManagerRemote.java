@@ -20,7 +20,7 @@ import org.h2.h2o.util.TableInfo;
  */
 public interface TableManagerRemote extends H2ORemote, Migratable {
 
-	public QueryProxy getQueryProxy(LockType lockType, DatabaseInstanceRemote databaseInstanceRemote) throws RemoteException, SQLException, MovedException;
+	public QueryProxy getQueryProxy(LockType lockType, DatabaseInstanceWrapper databaseInstanceRemote) throws RemoteException, SQLException, MovedException;
 
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.PersistentManager#addTableInformation(org.h2.h2o.util.DatabaseURL, org.h2.h2o.util.TableInfo)
@@ -57,7 +57,7 @@ public interface TableManagerRemote extends H2ORemote, Migratable {
 	 * @param updatedReplicas The set of replicas that were successfully updated by this query.
 	 * @throws MovedException 
 	 */
-	public void releaseLock(DatabaseInstanceRemote requestingDatabase, Set<DatabaseInstanceRemote> updatedReplicas, int updateID) throws RemoteException, MovedException;
+	public void releaseLock(DatabaseInstanceWrapper requestingDatabase, Set<DatabaseInstanceWrapper> updatedReplicas, int updateID) throws RemoteException, MovedException;
 
 	/**
 	 * Deconstruct this Table Manager. This is required for testing where a remote reference to a Table Manager may not completely die when
@@ -100,4 +100,9 @@ public interface TableManagerRemote extends H2ORemote, Migratable {
 	 * The URL of the database on which this Table Manager is located.
 	 */
 	public DatabaseURL getDatabaseURL() throws RemoteException;
+
+	/**
+	 * Re-populate this Table Managers replica manager with state held locally on disk.
+	 */
+	public void recreateReplicaManagerState() throws RemoteException;
 }

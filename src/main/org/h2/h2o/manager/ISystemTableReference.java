@@ -174,4 +174,11 @@ public interface ISystemTableReference {
 	 */
 	void addProxy(TableInfo tableInfo, TableManagerRemote tableManager);
 
+	/**
+	 * Add a new Table Manager reference to the System Table.
+	 * @param ti	The name of the table being added.
+	 * @param tm	The reference to the extant Table Manager.
+	 */
+	public void addNewTableManagerReference(TableInfo ti, TableManagerRemote tm);
+
 }

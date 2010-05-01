@@ -83,7 +83,9 @@ public class SystemTableLocator {
 		
 		for (String locatorLocation: locatorLocations){
 			LocatorClientConnection lcc = getLocatorConnection(locatorLocation);
-			lcc.unlockLocator(databaseInstanceString);
+			boolean unlocked = lcc.unlockLocator(databaseInstanceString);
+			
+			if (unlocked) successful++;
 		}
 		
 		return successful == locatorLocations.length;

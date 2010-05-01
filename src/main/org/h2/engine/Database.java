@@ -2603,7 +2603,7 @@ public class Database implements DataHandler {
 			}
 		}
 
-		systemTableRef.getSystemTable().addConnectionInformation(getDatabaseURL(), new DatabaseInstanceWrapper(this.databaseRemote.getLocalDatabaseInstance(), true));
+		systemTableRef.getSystemTable().addConnectionInformation(getDatabaseURL(), new DatabaseInstanceWrapper(getDatabaseURL(), this.databaseRemote.getLocalDatabaseInstance(), true));
 
 	}
 
@@ -2713,6 +2713,13 @@ public class Database implements DataHandler {
 	public DatabaseInstanceRemote getLocalDatabaseInstance() {
 		return databaseRemote.getLocalDatabaseInstance();
 	}
+	
+	/**
+	 * @return
+	 */
+	public DatabaseInstanceWrapper getLocalDatabaseInstanceInWrapper() {
+		return new DatabaseInstanceWrapper(this.getDatabaseURL(), databaseRemote.getLocalDatabaseInstance(), true);
+	}
 
 	public void removeLocalDatabaseInstance(){
 		try {
@@ -2753,6 +2760,8 @@ public class Database implements DataHandler {
 	public int getUserSessionsSize() {
 		return userSessions.size();
 	}
+
+
 	
 
 }
