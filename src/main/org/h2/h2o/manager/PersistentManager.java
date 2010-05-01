@@ -119,7 +119,6 @@ public class PersistentManager {
 		"storage_type VARCHAR(255), " + 
 		"last_modification INT NOT NULL, " +
 		"table_set INT NOT NULL, " +
-		"primary_copy BOOLEAN, " +
 		"PRIMARY KEY (replica_id), " +
 		"FOREIGN KEY (table_id) REFERENCES " + tables + " (table_id) ON DELETE CASCADE , " +
 		" FOREIGN KEY (connection_id) REFERENCES " + connections + " (connection_id));";
@@ -190,7 +189,7 @@ public class PersistentManager {
 			if (addReplicaInfo){
 				int tableID = getTableID(tableDetails);
 				if (!isReplicaListed(tableDetails, connectionID)){ // the table doesn't already exist in the System Table.
-					addReplicaInformation(tableDetails, tableID, connectionID, true);				
+					addReplicaInformation(tableDetails, tableID, connectionID);				
 				}
 			}
 			return true;
@@ -219,7 +218,7 @@ public class PersistentManager {
 			int tableID = getTableID(tableDetails);
 
 			if (!isReplicaListed(tableDetails, connectionID)){ // the table doesn't already exist in the System Table.
-				addReplicaInformation(tableDetails, tableID, connectionID, false);				
+				addReplicaInformation(tableDetails, tableID, connectionID);				
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -438,10 +437,10 @@ public class PersistentManager {
 	 * @return					Result of the update.
 	 * @throws SQLException 
 	 */
-	private int addReplicaInformation(TableInfo ti, int tableID, int connectionID, boolean primaryCopy) throws SQLException{
+	private int addReplicaInformation(TableInfo ti, int tableID, int connectionID) throws SQLException{
 
 		String sql = "INSERT INTO " + replicaRelation + " VALUES (null, " + tableID + ", " + connectionID + ", '" + 
-		ti.getTableType() + "', " + ti.getModificationID() +", " + ti.getTableSet() + ", " + primaryCopy + ");\n";
+		ti.getTableType() + "', " + ti.getModificationID() +", " + ti.getTableSet() + ");\n";
 		return executeUpdate(sql);
 	}
 
