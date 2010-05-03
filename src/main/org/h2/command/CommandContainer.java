@@ -165,10 +165,6 @@ public class CommandContainer extends Command {
 				proxyManager.addSQL(prepared.getSQL());
 			}
 
-			if (Constants.IS_TESTING_CREATETABLE_FAILURE){
-				System.err.println("whoa buddy");
-			}
-			
 			try {
 			updateCount = prepared.update(proxyManager.getTransactionName());
 
