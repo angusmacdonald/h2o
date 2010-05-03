@@ -1,18 +1,14 @@
 package org.h2.h2o.manager;
 
 import java.rmi.RemoteException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 
 import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
-import org.h2.h2o.autonomic.Replication;
 import org.h2.h2o.comms.ReplicaManager;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
@@ -29,14 +25,14 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class PersistentManager {
+public abstract class PersistentManager {
 
 	private ReplicaManager stateReplicaManager;
 
 	/**
 	 * Query parser instance to be used for all queries to the System Table.
 	 */
-	private Parser queryParser;
+	protected Parser queryParser;
 
 	/**
 	 * Command used as the container for all queries taking place in this instance.
@@ -47,13 +43,18 @@ public class PersistentManager {
 	private String tableRelation;
 	private String replicaRelation;
 	private String connectionRelation;
+	private String tableManagerRelation;
 
-	public PersistentManager(Database db, boolean createTables, String tables, String replicas, String connections) throws Exception{
+	private int managerStateReplicationFactor;
+
+	public PersistentManager(Database db, String tables, String replicas, String connections, String tableManagerRelation, int managerStateReplicationFactor) throws Exception{
 		this.tableRelation = tables;
 		this.replicaRelation = replicas;
 		this.connectionRelation = connections;
+		this.tableManagerRelation = tableManagerRelation;
 		this.db = db;
 
+		this.managerStateReplicationFactor = managerStateReplicationFactor;
 		Session session = db.getSystemSession();
 
 		if (session == null){
@@ -67,19 +68,6 @@ public class PersistentManager {
 
 		stateReplicaManager.add(db.getLocalDatabaseInstanceInWrapper());
 
-		if (createTables){
-			/*
-			 * Create a new set of schema tables locally.
-			 */
-			try {
-				setupManagerStateTables();
-			} catch (SQLException e) {
-
-				e.printStackTrace();
-				throw new Exception("Couldn't create manager state tables.");
-			}
-		}
-
 		//stateReplicaManager.add(db.getLocalDatabaseInstance());
 
 	}
@@ -90,7 +78,7 @@ public class PersistentManager {
 	 * @param connectionRelation
 	 * @return
 	 */
-	public static String createSQL(String tables, String replicas, String connections) {
+	public static String createSQL(String tables, String connections) {
 		String sql = "CREATE SCHEMA IF NOT EXISTS H2O; ";
 
 		sql += "CREATE TABLE IF NOT EXISTS " + connections +"(" + 
@@ -110,42 +98,8 @@ public class PersistentManager {
 		"manager_location INTEGER NOT NULL, " +
 		"PRIMARY KEY (table_id), " + 
 		"FOREIGN KEY (manager_location) REFERENCES " + connections + " (connection_id));";
-
-
-		sql += "\n\nCREATE TABLE IF NOT EXISTS " + replicas + "(" +
-		"replica_id INTEGER NOT NULL auto_increment(1,1), " +
-		"table_id INTEGER NOT NULL, " +
-		"connection_id INTEGER NOT NULL, " + 
-		"storage_type VARCHAR(255), " + 
-		"last_modification INT NOT NULL, " +
-		"table_set INT NOT NULL, " +
-		"PRIMARY KEY (replica_id), " +
-		"FOREIGN KEY (table_id) REFERENCES " + tables + " (table_id) ON DELETE CASCADE , " +
-		" FOREIGN KEY (connection_id) REFERENCES " + connections + " (connection_id));";
+		
 		return sql;
-	}
-
-	/**
-	 * Creates the set of tables used by the System Table.
-	 * @return Result of the update.
-	 * @throws SQLException
-	 */
-	protected int setupManagerStateTables() throws SQLException{
-
-		String sql = createSQL(tableRelation, replicaRelation, connectionRelation);
-
-		sqlQuery = queryParser.prepareCommand(sql);
-
-		int result = -1;
-		try {
-			result = sqlQuery.update();
-
-			sqlQuery.close();
-		} catch (RemoteException e) {
-			e.printStackTrace();
-		}
-
-		return result;
 	}
 
 	/**
@@ -168,9 +122,6 @@ public class PersistentManager {
 		try {
 			assert !tableDetails.getTableName().startsWith("H2O_");
 
-
-
-
 			DatabaseURL dbURL = tableDetails.getDbURL();
 
 			if (dbURL == null){
@@ -188,10 +139,11 @@ public class PersistentManager {
 
 			if (addReplicaInfo){
 				int tableID = getTableID(tableDetails);
-				if (!isReplicaListed(tableDetails, connectionID)){ // the table doesn't already exist in the System Table.
+				if (!isReplicaListed(tableDetails, connectionID)){ // the table doesn't already exist in the manager.
 					addReplicaInformation(tableDetails, tableID, connectionID);				
 				}
 			}
+
 			return true;
 		} catch (SQLException e) {
 
@@ -303,9 +255,9 @@ public class PersistentManager {
 	 * @return
 	 */
 	public int getConnectionID(DatabaseURL dbURL){
-				Session s = db.getSystemSession();
-				queryParser = new Parser(s, true);
-				
+		Session s = db.getSystemSession();
+		queryParser = new Parser(s, true);
+
 		String machine_name = dbURL.getHostname();
 		int connection_port = dbURL.getPort();
 		String connection_type = dbURL.getConnectionType();
@@ -430,6 +382,16 @@ public class PersistentManager {
 		return executeUpdate(sql);
 	}
 
+	protected int addTableManagerReplicaInformation(int tableID, int connectionID, boolean active) throws SQLException{
+		String sql = "INSERT INTO " + tableManagerRelation + " VALUES (" + tableID + ", " + connectionID + ", " + active + ");";
+		return executeUpdate(sql);
+	}
+	
+	protected int removeTableManagerReplicaInformation(int tableID, int connectionID) throws SQLException {
+		String sql = "DELETE FROM " + tableManagerRelation + " WHERE table_id=" + tableID + " AND connection_id=" + connectionID + ";";
+		return executeUpdate(sql);
+	}
+
 	/**
 	 * Update the System Table with new replica information
 	 * @param tableID			Name of the replica being added.
@@ -477,11 +439,11 @@ public class PersistentManager {
 		//	getNewQueryParser();
 
 		Set<DatabaseInstanceWrapper> replicas = stateReplicaManager.getActiveReplicas();
-Set<DatabaseInstanceWrapper> failed = new HashSet<DatabaseInstanceWrapper>();
+		Set<DatabaseInstanceWrapper> failed = new HashSet<DatabaseInstanceWrapper>();
 		int result = -1;
 
 		for (DatabaseInstanceWrapper replica: replicas){
-			if (replica.getDatabaseInstance().equals(db.getLocalDatabaseInstance())){
+			if (db.isLocal(replica)){
 				sqlQuery = queryParser.prepareCommand(query);
 
 				try {
@@ -497,18 +459,40 @@ Set<DatabaseInstanceWrapper> failed = new HashSet<DatabaseInstanceWrapper>();
 				} catch (RemoteException e) {
 					e.printStackTrace();
 					failed.add(replica);
+					
+					if (this instanceof TableManager){
+						//Remove table replica information from the system table.
+						try {
+							this.db.getSystemTable().removeTableManagerStateReplica(this.getTableInfo(), this.getLocation());
+						} catch (RemoteException e1) {
+							e1.printStackTrace();
+						} catch (MovedException e1) {
+							e1.printStackTrace();
+						}
+					}
 				}
 			}
 		}
-		
+
 		boolean hasRemoved = replicas.removeAll(failed);
-		
+
 		if (hasRemoved){
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Removed one or more replica locations because they couldn't be contacted for the last update.");
 		}
 
 		return result;
 	}
+
+	/**
+	 * @return
+	 * @throws MovedException 
+	 */
+	protected abstract DatabaseURL getLocation() throws RemoteException, MovedException;
+
+	/**
+	 * @return
+	 */
+	protected abstract TableInfo getTableInfo() throws RemoteException;
 
 	/**
 	 * Removes a particular replica from the System Table. 
@@ -542,11 +526,12 @@ Set<DatabaseInstanceWrapper> failed = new HashSet<DatabaseInstanceWrapper>();
 
 	/**
 	 * Removes a table completely from the System Table. Information is removed for the table itself and for all replicas.
+	 * @param removeReplicaInfo Table managers need to remove replica information, system tables don't.
 	 * @param tableName		Leave null if you want to drop the entire schema.
 	 * @param schemaName 
 	 * @throws SQLException 
 	 */
-	public boolean removeTableInformation(TableInfo ti) {
+	public boolean removeTableInformation(TableInfo ti, boolean removeReplicaInfo) {
 		try {
 
 			String sql = "";
@@ -559,7 +544,7 @@ Set<DatabaseInstanceWrapper> failed = new HashSet<DatabaseInstanceWrapper>();
 				tableIDs = getTableIDs(ti.getSchemaName());
 
 
-				if (tableIDs.length > 0){
+				if (tableIDs.length > 0 && removeReplicaInfo){
 					sql = "DELETE FROM " + replicaRelation;
 					for (int i = 0; i < tableIDs.length; i++){
 						if (i==0){
@@ -578,8 +563,11 @@ Set<DatabaseInstanceWrapper> failed = new HashSet<DatabaseInstanceWrapper>();
 
 				int tableID = getTableID(ti);
 
+				sql = "";
+				
+				if (removeReplicaInfo){
 				sql = "DELETE FROM " + replicaRelation + " WHERE table_id=" + tableID + ";";
-
+				}
 				sql += "\nDELETE FROM " + tableRelation + " WHERE table_id=" + tableID + "; ";
 
 			}
@@ -600,7 +588,7 @@ Set<DatabaseInstanceWrapper> failed = new HashSet<DatabaseInstanceWrapper>();
 	/**
 	 * 
 	 */
-	private void getNewQueryParser() {
+	protected void getNewQueryParser() {
 		Session s = null;
 
 		if (db.getSessions(false).length > 0){
@@ -618,9 +606,9 @@ Set<DatabaseInstanceWrapper> failed = new HashSet<DatabaseInstanceWrapper>();
 	 * @param databaseWrapper
 	 * @throws RemoteException
 	 */
-	public void addStateReplicaLocation(DatabaseInstanceWrapper databaseWrapper) throws RemoteException {
+	public boolean addStateReplicaLocation(DatabaseInstanceWrapper databaseWrapper) throws RemoteException {
 
-		if (stateReplicaManager.size() < Replication.SCHEMA_MANAGER_REPLICATION_FACTOR + 1){ //+1 because the local copy counts as a replica.
+		if (stateReplicaManager.size() < managerStateReplicationFactor + 1){ //+1 because the local copy counts as a replica.
 
 			//now replica state here.
 			try {
@@ -630,16 +618,15 @@ Set<DatabaseInstanceWrapper> failed = new HashSet<DatabaseInstanceWrapper>();
 
 				stateReplicaManager.add(databaseWrapper);
 
-				updateLocatorFiles();
-
+				return true;
 			} catch (SQLException e) {
-				ErrorHandling.errorNoEvent("Failed to replicate System Table state on: " + databaseWrapper.getDatabaseURL().getDbLocation());
+				ErrorHandling.errorNoEvent("Failed to replicate manager/table state onto: " + databaseWrapper.getDatabaseURL().getDbLocation());
 			} catch (Exception e) {
 				throw new RemoteException(e.getMessage());
 			} 
 
 		}
-
+		return false;
 	}
 
 	/**

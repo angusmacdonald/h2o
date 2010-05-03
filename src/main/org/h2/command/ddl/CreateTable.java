@@ -29,6 +29,7 @@ import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.manager.TableManager;
 import org.h2.h2o.manager.ISystemTable;
 import org.h2.h2o.manager.MovedException;
+import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TableInfo;
 import org.h2.h2o.util.TransactionNameGenerator;
@@ -278,7 +279,17 @@ public class CreateTable extends SchemaCommand {
 					TableManagerRemote tableManagerRemote = queryProxy.getTableManagerLocation();
 
 
-					sm.addTableInformation(tableManagerRemote, ti);	
+					boolean successful = sm.addTableInformation(tableManagerRemote, ti);
+					
+					if (!successful){
+						throw new SQLException("Failed to add table information to schema manager.");
+					}
+					
+					try {
+						tableManagerRemote.persistToCompleteStartup(ti);
+					} catch (StartupException e) {
+						throw new SQLException("Failed to create table. Couldn't persist table manager meta-data [" + e.getMessage() + "].");
+					}
 				} catch (MovedException e){
 					throw new RemoteException("System Table has moved.");
 				}

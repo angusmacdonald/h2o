@@ -199,7 +199,7 @@ public class CreateReplica extends SchemaCommand {
 
 					TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
 
-					sm.addReplicaInformation(ti);	
+					sm.lookup(ti).addReplicaInformation(ti);	
 				} catch (MovedException e){
 					throw new RemoteException("System Table has moved.");
 				}
@@ -405,28 +405,28 @@ public class CreateReplica extends SchemaCommand {
 			TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
 
 
-			if (this.contactSystemTable){
-
-				try{
-
-					ISystemTable sm = db.getSystemTable(); //db.getSystemSession()
-
-
-					if (tableSet  == -1){
-						tableSet = 1; //TODO create this method if its needed. sm.getTableSetNumber(ti.getGenericTableInfo());
-						ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
-
-					}
-					if (tableSet != -1 && next != null){
-						next.setTableSet(tableSet);
-					}
-
-					sm.addReplicaInformation(ti);	
-
-				} catch (MovedException e){
-					throw new RemoteException("System Table has moved.");
-				}
-			}
+//			if (this.contactSystemTable){
+//
+//				try{
+//
+//					ISystemTable sm = db.getSystemTable(); //db.getSystemSession()
+//
+//
+//					if (tableSet  == -1){
+//						tableSet = 1; //TODO create this method if its needed. sm.getTableSetNumber(ti.getGenericTableInfo());
+//						ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
+//
+//					}
+//					if (tableSet != -1 && next != null){
+//						next.setTableSet(tableSet);
+//					}
+//
+//					sm.lookup(ti).addReplicaInformation(ti);	
+//
+//				} catch (MovedException e){
+//					throw new RemoteException("System Table has moved.");
+//				}
+//			}
 
 			if (!tableName.startsWith("H2O_")){
 				TableManagerRemote dm = db.getTableManager(getSchema().getName() + "." + tableName);
@@ -957,7 +957,7 @@ public class CreateReplica extends SchemaCommand {
 				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new TableInfo(tableName, getSchema().getName()).toString());
 			} else {
 				try {
-					whereDataWillBeTakenFrom = dm.getLocation();
+					whereDataWillBeTakenFrom = dm.getLocation().getOriginalURL();
 				} catch (MovedException e) {
 					e.printStackTrace();
 					System.err.println("FIND NEW Table Manager LOCATION AT THIS POINT.");//TODO find

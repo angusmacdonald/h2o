@@ -8,6 +8,7 @@ import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
+import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.manager.ISystemTable;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.util.TableInfo;
@@ -73,7 +74,7 @@ public class DropReplica extends SchemaCommand {
 				int numberOfReplicas = 0;
 
 				try {
-					numberOfReplicas = session.getDatabase().getSystemTable().getNumberofReplicas(tableName, getSchema().getName());
+					numberOfReplicas = session.getDatabase().getSystemTable().lookup(new TableInfo(tableName, getSchema().getName())).getNumberofReplicas();
 				} catch (RemoteException e) {
 					throw new SQLException("Failed in communication with the System Table.");
 				} catch (MovedException e){
@@ -85,7 +86,7 @@ public class DropReplica extends SchemaCommand {
 				}
 
 			}
-			
+
 			table.lock(session, true, true);
 		}
 		if (next != null) {
@@ -114,11 +115,12 @@ public class DropReplica extends SchemaCommand {
 				ISystemTable sm = db.getSystemTable(); //db.getSystemSession()
 
 				TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), 0, table.getTableType(), db.getDatabaseURL());
-
+				
 				try {
-					sm.removeReplicaInformation(ti);
+					TableManagerRemote tmr = sm.lookup(ti);
+					tmr.removeReplicaInformation(ti);
 				} catch (RemoteException e) {
-					throw new SQLException("Failed to remove replica on System Table");
+					throw new SQLException("Failed to remove replica on System Table/Table Manager");
 				} catch (MovedException e){
 					throw new SQLException("System Table has moved.");
 				}

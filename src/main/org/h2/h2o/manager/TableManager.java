@@ -22,6 +22,7 @@ import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.locking.ILockingTable;
 import org.h2.h2o.locking.LockingTable;
+import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TableInfo;
@@ -61,16 +62,8 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 */
 	protected static final String CONNECTIONS = SCHEMA + "H2O_DM_CONNECTION";
 
-	/**
-	 * The database username used to communicate with Table Manager tables.
-	 */
-	public static String USERNAME = "angus";
-
-	/**
-	 * The database password used to communicate with Table Manager tables.
-	 */
-	public static String PASSWORD = "supersecret";
-
+	private static final String TABLEMANAGERSTATE = SCHEMA + "H2O_DM_TABLEMANAGERS";
+	
 	/**
 	 * The name of the table that this Table Manager is responsible for.
 	 */
@@ -129,10 +122,11 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 */
 	private static final int MIGRATION_TIMEOUT = 10000;
 
+
 	private IChordRemoteReference location;
 
 	public TableManager(TableInfo tableDetails, Database database) throws Exception{
-		super(database, false, TABLES, REPLICAS, CONNECTIONS);
+		super(database, TABLES, REPLICAS, CONNECTIONS, TABLEMANAGERSTATE, Replication.TABLE_MANAGER_REPLICATION_FACTOR);
 
 		this.tableName = tableDetails.getTableName();
 
@@ -156,8 +150,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		//	this.replicaLocations.add(primaryLocation);
 
 
-		addTableInformation(getDB().getDatabaseURL(), tableDetails);
-
+		
 		//database.addTableManager(this);
 	}
 
@@ -173,7 +166,14 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		if (!added) return false;
 
 		added = super.addTableInformation(tableManagerURL, tableDetails, true);
-		if (added) replicaManager.add(getDatabaseInstance(tableManagerURL));
+		if (added){
+			replicaManager.add(getDatabaseInstance(tableManagerURL));
+			/*
+			 * Don't update the system table here. The table manager is only created initially as a lock, then actually committed later on.
+			 * 
+			 * TODO because of this maybe none of this should happen until later?
+			 */
+		}
 		return added;
 	}
 
@@ -211,7 +211,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	@Override
 	public boolean removeTableManager() throws RemoteException, SQLException,
 	MovedException {
-		boolean successful = super.removeTableInformation(getTableInfo());
+		boolean successful = super.removeTableInformation(getTableInfo(), true);
 
 		return successful;
 	}
@@ -225,7 +225,18 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Creating Table Manager tables.");
 
-		String sql = createSQL(TABLES, REPLICAS, CONNECTIONS);
+		String sql = createSQL(TABLES, CONNECTIONS);
+
+		sql += "\n\nCREATE TABLE IF NOT EXISTS " + REPLICAS + "(" +
+		"replica_id INTEGER NOT NULL auto_increment(1,1), " +
+		"table_id INTEGER NOT NULL, " +
+		"connection_id INTEGER NOT NULL, " + 
+		"storage_type VARCHAR(255), " + 
+		"last_modification INT NOT NULL, " +
+		"table_set INT NOT NULL, " +
+		"PRIMARY KEY (replica_id), " +
+		"FOREIGN KEY (table_id) REFERENCES " + TABLES + " (table_id) ON DELETE CASCADE , " +
+		" FOREIGN KEY (connection_id) REFERENCES " + CONNECTIONS + " (connection_id));";
 
 
 		Parser parser = new Parser(session, true);
@@ -285,7 +296,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		//if (!isAlive ) return null;
 
 
-		if (replicaManager.size() == 0){
+		if (replicaManager.size() == 0 && !lockRequested.equals(LockType.CREATE)){
 			try {
 				throw new Exception("Illegal State. There must be at least one replica");
 			} catch (Exception e) {
@@ -331,7 +342,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 		if (lockType == LockType.CREATE){
 
-			if (Replication.REPLICATION_FACTOR == 1){
+			if (Replication.RELATION_REPLICATION_FACTOR == 1){
 				return null; //No more replicas are needed currently.
 			}
 
@@ -352,12 +363,12 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 				/*
 				 * Do we have enough replicas yet?
 				 */
-				if (currentReplicationFactor == Replication.REPLICATION_FACTOR) break;
+				if (currentReplicationFactor == Replication.RELATION_REPLICATION_FACTOR) break;
 			}
 
-			if (currentReplicationFactor < Replication.REPLICATION_FACTOR){
+			if (currentReplicationFactor < Replication.RELATION_REPLICATION_FACTOR){
 				//Couldn't replicate to enough machines.
-				ErrorHandling.errorNoEvent("Insufficient number of machines available to reach a replication factor of " + Replication.REPLICATION_FACTOR);
+				ErrorHandling.errorNoEvent("Insufficient number of machines available to reach a replication factor of " + Replication.RELATION_REPLICATION_FACTOR);
 			}
 
 
@@ -388,14 +399,11 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.comms.TableManagerRemote#getLocation()
 	 */
-	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.TableManagerRemote2#getLocation()
-	 */
 	@Override
-	public String getLocation() throws RemoteException, MovedException{
+	public DatabaseURL getLocation() throws RemoteException, MovedException{
 		preMethodTest();
 
-		return getDB().getDatabaseURL().getOriginalURL();
+		return getDB().getDatabaseURL();
 	}
 
 
@@ -655,4 +663,46 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		this.replicaManager = rm;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.manager.PersistentManager#addStateReplicaLocation(org.h2.h2o.comms.remote.DatabaseInstanceWrapper)
+	 */
+	@Override
+	public boolean addStateReplicaLocation(
+			DatabaseInstanceWrapper databaseWrapper) throws RemoteException {
+		boolean added = super.addStateReplicaLocation(databaseWrapper);
+		
+//		if (added){
+//			try {
+//				addTableManagerReplicaInformation(getTableID(new TableInfo(tableName, schemaName)), getConnectionID(databaseWrapper.getDatabaseURL()), false);
+//			} catch (SQLException e) {
+//				throw new RemoteException(e.getMessage());
+//			}
+//		}
+		
+		return added;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.remote.TableManagerRemote#getNumberofReplicas()
+	 */
+	@Override
+	public int getNumberofReplicas() throws RemoteException {
+		return replicaManager.getNumberOfReplicas();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.h2.h2o.comms.remote.TableManagerRemote#persistToCompleteStartup()
+	 */
+	@Override
+	public void persistToCompleteStartup(TableInfo tableInfo) throws RemoteException, StartupException {
+		try {
+			addTableInformation(getDB().getDatabaseURL(), tableInfo);
+		} catch (MovedException e) {
+			throw new StartupException("Newly created Table Manager throws a MovedException. This should never happen - serious internal error.");
+		} catch (SQLException e) {
+			throw new StartupException("Failed to persist table manager meta-data to disk: " + e.getMessage());
+		}
+
+	}
+	
 }

@@ -49,11 +49,11 @@ public interface ISystemTable extends Remote {
 	public boolean addTableInformation(TableManagerRemote tableManager, TableInfo tableDetails) throws RemoteException, MovedException, SQLException;
 
 
-	/**
-	 * Remove a single replica from the database system (so there will be other replicas left).
-	 * @param ti			Information on the replicas location.
-	 */
-	public void removeReplicaInformation(TableInfo ti) throws RemoteException, MovedException;
+//	/**
+//	 * Remove a single replica from the database system (so there will be other replicas left).
+//	 * @param ti			Information on the replicas location.
+//	 */
+//	public void removeReplicaInformation(TableInfo ti) throws RemoteException, MovedException;
 
 	/**
 	 * Remove Table Manager from the system. This is used when a table is being dropped completely
@@ -82,20 +82,20 @@ public interface ISystemTable extends Remote {
 	 */
 	public int getNewTableSetNumber() throws RemoteException, MovedException;
 
-	/**
-	 * Get the number of replicas that exist for a particular table.
-	 * @param tableName	The name of the table.
-	 * @param schemaName	The schema which this table is in. NULL is acceptable, and
-	 * used to indicate the default 'PUBLIC' schema.
-	 * @return
-	 */
-	public int getNumberofReplicas(String tableName, String schemaName) throws RemoteException, MovedException;
+//	/**
+//	 * Get the number of replicas that exist for a particular table.
+//	 * @param tableName	The name of the table.
+//	 * @param schemaName	The schema which this table is in. NULL is acceptable, and
+//	 * used to indicate the default 'PUBLIC' schema.
+//	 * @return
+//	 */
+//	public int getNumberofReplicas(String tableName, String schemaName) throws RemoteException, MovedException;
 
-	/**
-	 * Add details of a new replica at the specified location.
-	 * @param ti
-	 */
-	public void addReplicaInformation(TableInfo ti) throws RemoteException, MovedException, SQLException;
+//	/**
+//	 * Add details of a new replica at the specified location.
+//	 * @param ti
+//	 */
+//	public void addReplicaInformation(TableInfo ti) throws RemoteException, MovedException, SQLException;
 
 	/**
 	 * Returns an array of all the tables in a given database schema.
@@ -137,7 +137,7 @@ public interface ISystemTable extends Remote {
 	 * Returns a map of all replicas in the database system. Key is the fully
 	 * qualified name of the table, value is the set of replica locations.
 	 */
-	public Map<String, Set<TableInfo>> getReplicaLocations() throws RemoteException, MovedException;
+	public Map<TableInfo, Set<DatabaseURL>> getReplicaLocations() throws RemoteException, MovedException;
 
 	/**
 	 * Remove all references to Table Managers and replicas. Used to shutdown a System Table.
@@ -151,7 +151,7 @@ public interface ISystemTable extends Remote {
 	 * @throws RemoteException
 	 * @throws MovedException 
 	 */
-	public void addStateReplicaLocation(DatabaseInstanceWrapper databaseReference) throws RemoteException, MovedException;
+	public boolean addStateReplicaLocation(DatabaseInstanceWrapper databaseReference) throws RemoteException, MovedException;
 
 	/**
 	 * Get a remote reference to a database instance at the specified URL.
@@ -167,9 +167,18 @@ public interface ISystemTable extends Remote {
 	public Set<DatabaseInstanceWrapper> getDatabaseInstances() throws RemoteException, MovedException;
 
 	/**
+	 * Remove connection information for a database instance.
 	 * @param localDatabaseInstance
 	 */
 	public void removeConnectionInformation(DatabaseInstanceRemote localDatabaseInstance) throws RemoteException, MovedException;
+
+	/**
+	 * Get the Table Manager instances stored local to the given location.
+	 * @param localMachineLocation
+	 * @return
+	 */
+	public Set<TableManagerWrapper> getLocalDatabaseInstances(DatabaseURL localMachineLocation) throws RemoteException, MovedException;
+
 
 	/**
 	 * Called when the location of the Table Manager is to be changed.
@@ -179,10 +188,17 @@ public interface ISystemTable extends Remote {
 
 
 	/**
-	 * Get the Table Manager instances stored local to the given location.
-	 * @param localMachineLocation
-	 * @return
+	 * Add a new location where a given table managers state has been replicated.
+	 * @param table				The table whose manager has just replicated its state.
+	 * @param replicaLocation	Where the state has been replicated.
 	 */
-	public Set<TableManagerWrapper> getLocalDatabaseInstances(DatabaseURL localMachineLocation) throws RemoteException, MovedException;
-
+	public void addTableManagerStateReplica(TableInfo table, DatabaseURL replicaLocation, boolean active) throws RemoteException, MovedException;
+	
+	/**
+	 * Add a location where a given table managers state was replicated.
+	 * @param table				The table whose manager has removed/lost a replica of its state.
+	 * @param replicaLocation	Where the state was replicated.
+	 */
+	public void removeTableManagerStateReplica(TableInfo table, DatabaseURL replicaLocation) throws RemoteException, MovedException;
+	
 }

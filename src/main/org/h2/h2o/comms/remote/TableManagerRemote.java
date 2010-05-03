@@ -8,6 +8,7 @@ import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.ReplicaManager;
 import org.h2.h2o.manager.Migratable;
 import org.h2.h2o.manager.MovedException;
+import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TableInfo;
@@ -47,7 +48,7 @@ public interface TableManagerRemote extends H2ORemote, Migratable {
 	 * @return Database connection URL for a given remote database.
 	 * @throws RemoteException 
 	 */
-	public String getLocation() throws RemoteException, MovedException;
+	public DatabaseURL getLocation() throws RemoteException, MovedException;
 
 	/**
 	 * Release a lock held by the database instance specified in the parameter. Called at the end of QueryProxy.executeQuery()
@@ -105,4 +106,16 @@ public interface TableManagerRemote extends H2ORemote, Migratable {
 	 * Re-populate this Table Managers replica manager with state held locally on disk.
 	 */
 	public void recreateReplicaManagerState() throws RemoteException;
+
+	/**
+	 * Number of replicas of this table.
+	 * @return
+	 */
+	public int getNumberofReplicas() throws RemoteException;
+
+	/**
+	 * Persist the information on this table manager to complete the creation of the table.
+	 * @param ti Used to get the table set number for this table manager.
+	 */
+	public void persistToCompleteStartup(TableInfo ti) throws RemoteException, StartupException;
 }

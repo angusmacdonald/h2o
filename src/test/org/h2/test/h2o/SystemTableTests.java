@@ -125,7 +125,6 @@ public class SystemTableTests {
 			Statement stat = conn.createStatement();
 
 			stat.executeQuery("SELECT * FROM H2O.H2O_TABLE");
-			stat.executeQuery("SELECT * FROM H2O.H2O_REPLICA");
 			stat.executeQuery("SELECT * FROM H2O.H2O_CONNECTION");
 
 

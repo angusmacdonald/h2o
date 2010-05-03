@@ -108,6 +108,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 
 		try {
 			newTableManager = new TableManager(ti, db);
+			newTableManager.persistToCompleteStartup(ti);
 		} catch (Exception e) {
 			ErrorHandling.exceptionError(e, "Failed to create new Table Manager [" + schemaName + "." + tableName + "].");
 		}

@@ -2616,6 +2616,14 @@ public class Database implements DataHandler {
 	}
 
 	/**
+	 * @param dbLocation
+	 * @return
+	 */
+	public boolean isLocal(DatabaseInstanceWrapper dbLocation) {
+		return dbLocation.getDatabaseInstance().equals(getLocalDatabaseInstance());
+	}
+	
+	/**
 	 * Examples:
 	 * <ul><li><code>//mem:management_db_9081</code></li>
 	 * <li><code>//db_data/unittests/schema_test</code></li></ul>

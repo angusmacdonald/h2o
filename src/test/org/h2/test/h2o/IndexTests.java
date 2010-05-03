@@ -121,7 +121,7 @@ public class IndexTests{
 			 * These fail because the command which links the two tables doesn't work when query propagation is used on AlterTableAddConstraint.
 			 * But if this feature is bypassed another set of tests fail.
 			 */
-			sa.execute("SELECT H2O.H2O_TABLE.table_id, table_set FROM H2O.H2O_TABLE, H2O.H2O_REPLICA WHERE H2O.H2O_REPLICA.table_id=H2O.H2O_TABLE.table_id ORDER BY table_id;");
+			sa.execute("SELECT H2O.H2O_DM_TABLE.table_id, table_set FROM H2O.H2O_DM_TABLE, H2O.H2O_DM_REPLICA WHERE H2O.H2O_DM_REPLICA.table_id=H2O.H2O_DM_TABLE.table_id ORDER BY table_id;");
 
 			ResultSet rs = sa.getResultSet();
 
@@ -150,7 +150,7 @@ public class IndexTests{
 		try{
 			sa.execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 
-			sa.execute("SELECT H2O.H2O_TABLE.table_id, table_set FROM H2O.H2O_TABLE, H2O.H2O_REPLICA WHERE H2O.H2O_REPLICA.table_id=H2O.H2O_TABLE.table_id ORDER BY table_id;");
+			sa.execute("SELECT H2O.H2O_DM_TABLE.table_id, table_set FROM H2O.H2O_DM_TABLE, H2O.H2O_DM_REPLICA WHERE H2O.H2O_DM_REPLICA.table_id=H2O.H2O_DM_TABLE.table_id ORDER BY table_id;");
 
 			ResultSet rs = sa.getResultSet();
 

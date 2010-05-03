@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.util.Set;
 
 import org.h2.command.dml.Select;
+import org.h2.engine.Constants;
 import org.h2.expression.Parameter;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.QueryProxyManager;
@@ -164,6 +165,11 @@ public class CommandContainer extends Command {
 				proxyManager.addSQL(prepared.getSQL());
 			}
 
+			if (Constants.IS_TESTING_CREATETABLE_FAILURE){
+				System.err.println("whoa buddy");
+			}
+			
+			try {
 			updateCount = prepared.update(proxyManager.getTransactionName());
 
 			boolean commit = true; //An exception would already have been thrown if it should have been a rollback.
@@ -181,6 +187,13 @@ public class CommandContainer extends Command {
 				session.setCurrentTransactionLocks(null);
 			} else {
 				session.setCurrentTransactionLocks(proxyManager);
+			}
+			
+			} catch (SQLException e){
+
+				proxyManager.commit(false);
+				session.setCurrentTransactionLocks(null);
+				throw e;
 			}
 		} else {
 			/*
