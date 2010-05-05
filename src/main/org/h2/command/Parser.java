@@ -4430,15 +4430,15 @@ public class Parser {
 		//		} else {
 		//Old System Table method.
 
-		TableManagerRemote dm = session.getDatabase().getSystemTableReference().lookup(new TableInfo(tableName, thisSchemaName));
+		TableManagerRemote tm = session.getDatabase().getSystemTableReference().lookup(new TableInfo(tableName, thisSchemaName));
 
-		if (dm == null){
+		if (tm == null){
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new TableInfo(tableName, thisSchemaName).toString());
 		}
 		//		dm = session.getDatabase().getSystemTable().lookup(new TableInfo(tableName, thisSchemaName));
 		//		
 
-		DatabaseURL dmURL = dm.getDatabaseURL();
+		DatabaseURL dmURL = tm.getReplicaManager().getPrimary().getDatabaseURL();
 		if (dmURL.equals(session.getDatabase().getDatabaseURL())){
 			throw new SQLException("The database [" + dmURL.getDbLocation() + "] is incorrectly trying to create a linked table to itself. Illegal code path.");
 		}

@@ -794,7 +794,7 @@ public class Database implements DataHandler {
 				e.printStackTrace();
 			}
 
-			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, " Created new System Table tables.");
+			
 		} else if (Constants.IS_H2O && !isManagementDB() && ( databaseExists && systemTableRef.isSystemTableLocal())){
 			/*
 			 * This is the System Table. Reclaim previously held state.
@@ -2591,6 +2591,7 @@ public class Database implements DataHandler {
 
 		if (!databaseExists){
 			createSystemTable(databaseExists, persistedSchemaTablesExist, true);
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, " Created new System Table tables.");
 		}
 
 
