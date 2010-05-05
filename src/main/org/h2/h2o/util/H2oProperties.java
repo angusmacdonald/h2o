@@ -1,4 +1,4 @@
-package org.h2.h2o.util.properties;
+package org.h2.h2o.util;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.Set;
 
-import org.h2.h2o.util.DatabaseURL;
 import org.junit.Test;
 
 /**

@@ -12,8 +12,8 @@ import java.sql.SQLException;
 
 import org.h2.engine.Constants;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.properties.H2oProperties;
-import org.h2.h2o.util.properties.server.LocatorServer;
+import org.h2.h2o.util.H2oProperties;
+import org.h2.h2o.util.locator.LocatorServer;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.util.ScriptReader;
 import org.junit.After;
@@ -36,7 +36,7 @@ public class H2SimpleTest {
 
 	@Before
 	public void setUp() throws Exception {
-		ls = new LocatorServer(29999, "config/junit_locator.h2o");
+		ls = new LocatorServer(29999, "junitLocator");
 		ls.createNewLocatorFile();
 		ls.start();
 	}

@@ -13,9 +13,9 @@ import org.h2.h2o.comms.ReplicaManager;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.util.DatabaseURL;
+import org.h2.h2o.util.H2oProperties;
 import org.h2.h2o.util.TableInfo;
-import org.h2.h2o.util.properties.H2oProperties;
-import org.h2.h2o.util.properties.server.SystemTableLocator;
+import org.h2.h2o.util.locator.H2OLocatorInterface;
 import org.h2.result.LocalResult;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -642,9 +642,13 @@ public abstract class PersistentManager {
 		if (descriptorLocation == null || databaseName == null){
 			throw new Exception("The location of the database descriptor must be specifed (it was not found). The database will now terminate.");
 		}
-		SystemTableLocator dl = new SystemTableLocator(databaseName, descriptorLocation);
+		H2OLocatorInterface dl = new H2OLocatorInterface(databaseName, descriptorLocation);
 
-		dl.setLocations(stateReplicaManager.getReplicaLocations());
+		boolean successful = dl.setLocations(stateReplicaManager.getReplicaLocations());
+		
+		if (!successful){
+			ErrorHandling.errorNoEvent("Didn't successfully write new System Replica locations to a majority of locator servers.");
+		}
 	}
 
 

@@ -11,7 +11,7 @@ import java.sql.Statement;
 
 import org.h2.engine.Constants;
 import org.h2.h2o.manager.PersistentSystemTable;
-import org.h2.h2o.util.properties.server.LocatorServer;
+import org.h2.h2o.util.locator.LocatorServer;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;
 import org.junit.After;
@@ -59,7 +59,7 @@ public class RestartTests {
 	 */
 	@Before
 	public void setUp() throws Exception {
-		ls = new LocatorServer(29999, "config/junit_locator.h2o");
+		ls = new LocatorServer(29999, "junitLocator");
 		ls.createNewLocatorFile();
 		ls.start();
 		

@@ -1,9 +1,10 @@
-package org.h2.h2o.util.properties;
+package org.h2.h2o.util.locator;
 
 import java.io.File;
 
 import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
+import org.h2.h2o.util.H2oProperties;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)

@@ -25,12 +25,12 @@ import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.SystemTableReference;
 import org.h2.h2o.util.DatabaseURL;
+import org.h2.h2o.util.H2oProperties;
 import org.h2.h2o.util.SystemTableReplication;
 import org.h2.h2o.util.TableInfo;
-import org.h2.h2o.util.properties.DatabaseDescriptorFile;
-import org.h2.h2o.util.properties.H2oProperties;
-import org.h2.h2o.util.properties.server.LocatorClientConnection;
-import org.h2.h2o.util.properties.server.SystemTableLocator;
+import org.h2.h2o.util.locator.DatabaseDescriptorFile;
+import org.h2.h2o.util.locator.H2OLocatorInterface;
+import org.h2.h2o.util.locator.LocatorClientConnection;
 import org.h2.test.h2o.ChordTests;
 
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
@@ -98,7 +98,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 	private boolean inShutdown = false;
 
-	private SystemTableLocator dl;
+	private H2OLocatorInterface dl;
 
 	/**
 	 * Port to be used for the next database instance. Currently used for testing.
@@ -151,7 +151,11 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		if (descriptorLocation == null || databaseName == null){
 			throw new StartupException("The location of the database descriptor was not specified. The database will now exit.");
 		}
-		dl = new SystemTableLocator(databaseName, descriptorLocation);
+		try {
+			dl = new H2OLocatorInterface(databaseName, descriptorLocation);
+		} catch (IOException e) {
+			throw new StartupException(e.getMessage());
+		}
 
 		Set<String> databaseInstances = null;
 		try {
@@ -885,7 +889,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		boolean successful = false;
 
 		try {
-			successful = dl.unlockLocators(this.localMachineLocation.getDbLocation());
+			successful = dl.commitLocators(this.localMachineLocation.getDbLocation());
 		} catch (Exception e) {
 			successful = false;
 		}

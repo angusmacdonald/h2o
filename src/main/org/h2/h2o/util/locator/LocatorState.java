@@ -1,4 +1,4 @@
-package org.h2.h2o.util.properties.server;
+package org.h2.h2o.util.locator;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -10,6 +10,9 @@ import java.io.Writer;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.h2.h2o.util.locator.messages.LockRequestResponse;
+import org.h2.h2o.util.locator.messages.ReplicaLocationsResponse;
+
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -18,19 +21,20 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  * Used to write to database locator file. This class uses readers-writers model.
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class LocatorFileWriter {
-
-	private File locatorFile;
-	private File lockFile;
+public class LocatorState {	
 	private int activeReaders = 0;
-	
-	private final int LOCK_FILE_TIMEOUT = 10000;
-
-	private long lockFileCreationTime = 0l;
-	
 	private boolean writerPresent = false;  
 
-	protected LocatorFileWriter(String location){
+
+	private File locatorFile;
+	private boolean locked = false;
+	private String databaseWithLock = null;
+	int updateCount = 1;
+
+	public final static int LOCK_TIMEOUT = 3000;
+	private long lockCreationTime = 0l;
+
+	protected LocatorState(String location){
 		locatorFile = new File(location);
 		if (!locatorFile.exists()){
 			try {
@@ -40,27 +44,23 @@ public class LocatorFileWriter {
 			}
 		}
 
-		lockFile = new File(location + ".lock");
-		if (lockFile.exists()){
-			lockFile.delete();
-		}
+
 
 	}
 
 	private boolean isLocked(){
-		return lockFile.exists();
+		return locked;
 	}
-	
+
 	/**
 	 * Read the set of database locations from the file.
 	 * @return Set of db locations which hold system table replicas.
 	 */
-	public Set<String> readLocationsFromFile() {
+	public ReplicaLocationsResponse readLocationsFromFile() {
 		startRead();
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Reader reading:");
-	
-		
+
 		Set<String> locations = new HashSet<String>();
 
 		try {
@@ -81,20 +81,26 @@ public class LocatorFileWriter {
 			e.printStackTrace();
 		}
 
+
+		ReplicaLocationsResponse response = new ReplicaLocationsResponse(locations, updateCount);
+
+
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Finished reading.");
 		stopRead();
 
 
-		return locations;
+		return response;
 	}
 
 	/**
 	 * Write the given array of database locations to the locator file.
 	 * @param databaseLocations	Locations to be written to the file, each on a new line.
 	 */
-	public void writeLocationsToFile(String[] databaseLocations) {
+	public boolean writeLocationsToFile(String[] databaseLocations) {
 		startWrite();
-		
+
+		boolean successful = false;
+
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Writer writing.");
 
 		try {
@@ -104,7 +110,9 @@ public class LocatorFileWriter {
 				for (String location: databaseLocations){
 					output.write(location+ "\n");
 				}
+				successful = true;
 			}
+
 			finally {
 				output.close();
 			}
@@ -115,6 +123,8 @@ public class LocatorFileWriter {
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Finished writing.");
 		stopWrite();
+		
+		return successful;
 	}
 
 	/**
@@ -122,91 +132,67 @@ public class LocatorFileWriter {
 	 * @param requestingDatabase	The database which is requesting the lock.
 	 * @return true if the lock was successfully taken out; otherwise false.
 	 */
-	public boolean takeOutLockOnFile(String requestingDatabase){
+	public LockRequestResponse lock(String requestingDatabase){
 		startWrite();
 
 		boolean success = false;
 
-		if (lockFile.exists()){
+		if (locked){
+			//Check that the lock hasn't timed out.
+			if ((lockCreationTime + LOCK_TIMEOUT) < System.currentTimeMillis()){
+				ErrorHandling.errorNoEvent("Lock held by " + databaseWithLock + " has timed out.");
+				locked = false;
+				databaseWithLock = null;
+				lockCreationTime = 0l;
+			}
+		}
+		
+		
+		if (locked){
+			ErrorHandling.errorNoEvent("Lock already held by " + databaseWithLock + ".");
 			success = false;
 		} else {
-
-			try {
-				lockFile.createNewFile();
-
-				Writer output = new BufferedWriter(new FileWriter(lockFile));
-
-				try {
-					output.write(requestingDatabase);
-				} finally {
-					output.close();
-				}
-
-				success = true;
-			} catch (IOException e) {
-				e.printStackTrace();
-				ErrorHandling.exceptionErrorNoEvent(e, "Failed to create lock file.");
-				success= false;
-			}
-
-			lockFile.deleteOnExit();
+			locked = true;
+			lockCreationTime = System.currentTimeMillis();
+			success = true;
+			databaseWithLock = requestingDatabase;
 		}
 
-		
+		LockRequestResponse response = new LockRequestResponse(updateCount, success);
+
 		stopWrite();
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Database instance at '" + requestingDatabase + "' has attempted to lock locator (successful: "+ success + ").");
 
-		return success;
+		return response;
 	}
 
 	/**
 	 * Release a lock file. Indicates that a System Table has been created successfully.
 	 * @param requestingDatabase	The database which is requesting the lock.
-	 * @return true if the lock was successfully released; otherwise false.
+	 * @return 0 if the commit failed; 1 if it succeeded.
 	 */
-	public boolean releaseLockOnFile(String requestingDatabase){
+	public int releaseLockOnFile(String requestingDatabase){
 		startWrite();
 
-		boolean success = false;
+		int result = 0;
 
-		if (!lockFile.exists()){
-			ErrorHandling.errorNoEvent("Tried to release lock, but lock file didn't exist.");
-			success = false;
+		if (!locked || !requestingDatabase.equals(databaseWithLock)){
+			ErrorHandling.errorNoEvent("Tried to release lock, but lock wasn't held by this database.");
+			result = 0;
 		} else {
-
-			try {
-				BufferedReader input = new BufferedReader(new FileReader(lockFile));
-				String line = null;
-
-				try {
-					line = input.readLine();
-
-
-				}
-				finally {
-					input.close();
-				}
-
-				if (requestingDatabase.equals(line)){
-					success = lockFile.delete();
-				} else {
-					ErrorHandling.errorNoEvent("The database requesting that the lock is removed is different from the database which took out the lock (" +
-							"Requesting DB: " + requestingDatabase + ", DB which took out lock: " + line + ").");
-				}
-
-			} catch (IOException e) {
-				e.printStackTrace();
-				ErrorHandling.exceptionErrorNoEvent(e, "Failed to remove lock file.");
-				success = false;
-			}
+			updateCount++;
+			locked = false;
+			lockCreationTime = 0l;
+			databaseWithLock = null;
+			result = 1;
 		}
 
 		stopWrite();
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Database instance at '" + requestingDatabase + "' has attempted to unlock locator (successful: "+ success + ").");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Database instance at '" + requestingDatabase + "' has attempted to unlock locator (successful: "+ (result==1) + ").");
 
-		return success;
+		return result;
 	}
 
 	/*

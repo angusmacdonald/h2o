@@ -11,8 +11,8 @@ import java.util.Set;
 import org.h2.engine.Constants;
 import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.properties.H2oProperties;
-import org.h2.h2o.util.properties.server.LocatorServer;
+import org.h2.h2o.util.H2oProperties;
+import org.h2.h2o.util.locator.LocatorServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -62,7 +62,7 @@ public class ChordTests extends TestBase {
 	@Before
 	public void setUp() throws Exception {
 		
-		ls = new LocatorServer(29999, "config/junit_locator.h2o");
+		ls = new LocatorServer(29999, "junitLocator");
 		ls.createNewLocatorFile();
 		
 		Constants.IS_TEAR_DOWN = false; 
@@ -83,7 +83,7 @@ public class ChordTests extends TestBase {
 //		}
 
 		TestBase.setUpDescriptorFiles();
-		ls = new LocatorServer(29999, "config/junit_locator.h2o");
+		ls = new LocatorServer(29999, "junitLocator");
 		ls.createNewLocatorFile();
 		ls.start();
 		

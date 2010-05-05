@@ -173,7 +173,7 @@ public class CommandContainer extends Command {
 
 			H2OTest.createTableFailure();
 
-
+			
 			if (singleQuery && session.getApplicationAutoCommit()){ 
 				/*
 				 * If it is one of a number of queries in the transaction then we must wait for the entire transaction to finish.

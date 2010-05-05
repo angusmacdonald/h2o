@@ -1,4 +1,4 @@
-package org.h2.h2o.util.properties;
+package org.h2.h2o.util.locator;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;

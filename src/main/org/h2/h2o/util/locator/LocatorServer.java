@@ -1,5 +1,6 @@
-package org.h2.h2o.util.properties.server;
+package org.h2.h2o.util.locator;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -13,29 +14,34 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  */
 public class LocatorServer extends Thread{
 
+
+	
 	private static final int LOCATOR_SERVER_PORT = 29999;
 	private boolean running = true;
 	private ServerSocket ss;
-	private LocatorFileWriter locatorFile;
+	private LocatorState locatorFile;
 	private int port;
 	private boolean finished = false;
 	
 	/**
 	 * @param locatorServerPort
 	 */
-	public LocatorServer(int port, String locatorFileLocation) {
+	public LocatorServer(int port, String databaseName) {
 		this.port = port;
-		locatorFile = new LocatorFileWriter(locatorFileLocation);
+		locatorFile = new LocatorState("config" + File.separator + databaseName + ".locator");
 	}
 
 
+	/**
+	 * Starts the server and listens until the running field is set to false.
+	 */
 	public void run(){
 		try {
 			/*
 			 * Set up the server socket.
 			 */
 			try {
-				ss = new ServerSocket(LOCATOR_SERVER_PORT);
+				ss = new ServerSocket(port);
 				
 				ss.setSoTimeout(500);
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Server listening on port " + port);
@@ -52,7 +58,7 @@ public class LocatorServer extends Thread{
 					Socket newConnection = ss.accept();
 					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "New connection from: " + newConnection.getInetAddress().getHostName() + "." +  newConnection.getPort());
 
-					ServerWorkerThread connectionHandler = new ServerWorkerThread(newConnection, locatorFile);
+					LocatorWorker connectionHandler = new LocatorWorker(newConnection, locatorFile);
 					connectionHandler.start();
 				} catch (IOException e) {
 					//e.printStackTrace();

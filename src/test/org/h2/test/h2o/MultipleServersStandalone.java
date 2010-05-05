@@ -11,7 +11,7 @@ import org.h2.engine.Constants;
 import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.properties.H2oProperties;
+import org.h2.h2o.util.H2oProperties;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;

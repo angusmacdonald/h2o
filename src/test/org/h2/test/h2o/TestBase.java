@@ -19,8 +19,8 @@ import org.h2.engine.Database;
 import org.h2.engine.Engine;
 import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.properties.H2oProperties;
-import org.h2.h2o.util.properties.server.LocatorServer;
+import org.h2.h2o.util.H2oProperties;
+import org.h2.h2o.util.locator.LocatorServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -82,7 +82,7 @@ public class TestBase {
 		Constants.IS_TEAR_DOWN = false; 
 		
 		setUpDescriptorFiles();
-		ls = new LocatorServer(29999, "config/junit_locator.h2o");
+		ls = new LocatorServer(29999, "junitLocator");
 		ls.createNewLocatorFile();
 		ls.start();
 		
