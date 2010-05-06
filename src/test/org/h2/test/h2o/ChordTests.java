@@ -88,14 +88,14 @@ public class ChordTests extends TestBase {
 		ls.start();
 		
 		dts = new DatabaseThread[dbs.length + 1];
-		dts[0] = new DatabaseThread("jdbc:h2:sm:mem:one");
+		dts[0] = new DatabaseThread("jdbc:h2:sm:mem:one", false);
 		dts[0].start();
 
 		Thread.sleep(5000);
 
 		for (int i = 1; i < dts.length; i ++){
 			
-			dts[i] = new DatabaseThread("jdbc:h2:mem:" + dbs[i-1]);
+			dts[i] = new DatabaseThread("jdbc:h2:mem:" + dbs[i-1], false);
 			dts[i].start();
 			
 			Thread.sleep(5000);

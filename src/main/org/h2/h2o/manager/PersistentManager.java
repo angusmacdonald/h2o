@@ -588,7 +588,7 @@ public abstract class PersistentManager {
 	/**
 	 * 
 	 */
-	protected void getNewQueryParser() {
+	protected boolean getNewQueryParser() {
 		Session s = null;
 
 		if (db.getSessions(false).length > 0){
@@ -597,7 +597,11 @@ public abstract class PersistentManager {
 			s = db.getSystemSession();
 		}
 
+		if (s == null) return false;
+		
 		queryParser = new Parser(s, true);
+		
+		return true;
 
 	}
 

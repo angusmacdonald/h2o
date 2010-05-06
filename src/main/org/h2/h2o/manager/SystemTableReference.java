@@ -150,7 +150,7 @@ public class SystemTableReference implements ISystemTableReference {
 				return getSystemTable(true, inShutdown);
 			}
 
-			ErrorHandling.exceptionError(e, "System Table is not accessible");
+			ErrorHandling.errorNoEvent("System Table is not accessible");
 		}
 
 		try {
@@ -347,6 +347,8 @@ public class SystemTableReference implements ISystemTableReference {
 				ErrorHandling.exceptionError(e, "This shouldn't be possible here. The System Table has moved, but this instance should have had exclusive rights to it.");
 			} catch (SQLException e) {
 				ErrorHandling.exceptionError(e, "Couldn't create persisted tables as expected.");
+			} catch (NullPointerException e) {
+				//ErrorHandling.exceptionError(e, "Failed to migrate System Table to new machine. Machine has already been shut down.");
 			}
 
 

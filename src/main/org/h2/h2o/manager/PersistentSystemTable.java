@@ -15,6 +15,7 @@ import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.remote.IDatabaseRemote;
+import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
 import org.h2.message.Message;
@@ -43,7 +44,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 	/**
 	 * Name of connections' table in System Table.
 	 */
-	private static final String CONNECTIONS = SCHEMA + "H2O_CONNECTION";
+	private static final String DATABASE_LOCATIONS = SCHEMA + "H2O_CONNECTION";
 
 	/**
 	 * Name of the table which stores the location of table manager state replicas.
@@ -63,7 +64,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
 
 	public PersistentSystemTable(Database db, boolean createTables) throws Exception{
-		super (db, TABLES, null, CONNECTIONS, TABLEMANAGERSTATE, Replication.SYSTEM_TABLE_REPLICATION_FACTOR);
+		super (db, TABLES, null, DATABASE_LOCATIONS, TABLEMANAGERSTATE, Replication.SYSTEM_TABLE_REPLICATION_FACTOR);
 
 
 		if (createTables){
@@ -71,16 +72,20 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 			 * Create a new set of schema tables locally.
 			 */
 			try {
-				String sql = createSQL(TABLES, CONNECTIONS);
+				String sql = createSQL(TABLES, DATABASE_LOCATIONS);
 				sql += "\n\nCREATE TABLE IF NOT EXISTS " + TABLEMANAGERSTATE + "(" +
 				"table_id INTEGER NOT NULL, " +
 				"connection_id INTEGER NOT NULL, " + 
 				"active BOOLEAN, " + 
 				"FOREIGN KEY (table_id) REFERENCES " + TABLES + " (table_id) ON DELETE CASCADE , " +
-				" FOREIGN KEY (connection_id) REFERENCES " + CONNECTIONS + " (connection_id));";
+				" FOREIGN KEY (connection_id) REFERENCES " + DATABASE_LOCATIONS + " (connection_id));";
 
 				
-				getNewQueryParser();
+				boolean success = getNewQueryParser();
+				
+				if (!success){
+					throw new StartupException("Database has already been shutdown.");
+				}
 				sqlQuery = queryParser.prepareCommand(sql);
 
 				sqlQuery.update();
@@ -354,7 +359,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
 		Map<DatabaseURL, DatabaseInstanceWrapper> databaseLocations = new HashMap<DatabaseURL, DatabaseInstanceWrapper>();
 
-		String sql = "SELECT * FROM " + CONNECTIONS + ";";
+		String sql = "SELECT * FROM " + DATABASE_LOCATIONS + ";";
 
 		LocalResult result = null;
 
@@ -412,8 +417,8 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 		 * Parse the query resultset to find the primary location of every table.
 		 */
 		String sql = "SELECT db_location, connection_type, machine_name, connection_port, tablename, schemaname, chord_port " +
-		"FROM " + CONNECTIONS + ", " +  TABLES + " " +
-		"WHERE " + CONNECTIONS + ".connection_id = " + TABLES + ".manager_location;";
+		"FROM " + DATABASE_LOCATIONS + ", " +  TABLES + " " +
+		"WHERE " + DATABASE_LOCATIONS + ".connection_id = " + TABLES + ".manager_location;";
 
 
 		//		SELECT db_location, connection_type, machine_name, connection_port, tablename, schemaname, chord_port FROM H2O.H2O_REPLICA, H2O.H2O_CONNECTION, H2O.H2O_TABLE 

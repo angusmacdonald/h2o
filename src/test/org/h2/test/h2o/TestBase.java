@@ -49,7 +49,7 @@ public class TestBase {
 	public static void initialSetUp(){
 		Constants.IS_TEAR_DOWN = false; 
 		Constants.IS_NON_SM_TEST = true;
-		
+
 		Diagnostic.setLevel(DiagnosticLevel.FULL);
 
 		H2oProperties properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"));
@@ -68,7 +68,7 @@ public class TestBase {
 		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
 		properties.setProperty("databaseName", "testDB");
 		properties.saveAndClose();
-		
+
 
 
 
@@ -80,12 +80,12 @@ public class TestBase {
 	@Before
 	public void setUp() throws Exception {
 		Constants.IS_TEAR_DOWN = false; 
-		
+
 		setUpDescriptorFiles();
 		ls = new LocatorServer(29999, "junitLocator");
 		ls.createNewLocatorFile();
 		ls.start();
-		
+
 		//Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
 		//PersistentSystemTable.USERNAME = "sa";
 		//PersistentSystemTable.PASSWORD = "sa";
@@ -109,32 +109,48 @@ public class TestBase {
 	 * 
 	 */
 	public static void setUpDescriptorFiles() {
-//		DatabaseLocatorFile dlf = new DatabaseLocatorFile("testDB", "\\\\shell\\angus\\public_html\\databases"); 
-//		
-//		dlf.setProperties("testDB", "jdbc:h2:mem:one" + "+" + ChordRemote.currentPort);
-//		
-		
+		//		DatabaseLocatorFile dlf = new DatabaseLocatorFile("testDB", "\\\\shell\\angus\\public_html\\databases"); 
+		//		
+		//		dlf.setProperties("testDB", "jdbc:h2:mem:one" + "+" + ChordRemote.currentPort);
+		//		
+
 		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"));
 		knownHosts.createNewFile();
 		knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
 		knownHosts.setProperty("databaseName", "testDB");
 		knownHosts.saveAndClose();
-		
+
 		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"));
 		knownHosts.createNewFile();
 		knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
 		knownHosts.setProperty("databaseName", "testDB");
 		knownHosts.saveAndClose();
-		
+
 		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:three"));
 		knownHosts.createNewFile();
 		knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
 		knownHosts.setProperty("databaseName", "testDB");
 		knownHosts.saveAndClose();
-		
+
 
 	}
-	
+
+	public static void setUpDescriptorFiles(String[] dbLocations, String descriptorLocation, String databaseName) {
+		//		DatabaseLocatorFile dlf = new DatabaseLocatorFile("testDB", "\\\\shell\\angus\\public_html\\databases"); 
+		//		
+		//		dlf.setProperties("testDB", "jdbc:h2:mem:one" + "+" + ChordRemote.currentPort);
+		//		
+
+		for (String location: dbLocations){
+			H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:" + location));
+			knownHosts.createNewFile();
+			knownHosts.setProperty("descriptor", descriptorLocation);
+			knownHosts.setProperty("databaseName", "testDB");
+			knownHosts.saveAndClose();
+		}
+
+	}
+
 
 	/**
 	 * @throws SQLException 
@@ -165,7 +181,7 @@ public class TestBase {
 		cb = null;
 		sa = null;
 		sb = null;
-		
+
 		ls.setRunning(false);
 		while (!ls.isFinished()){};
 	}
@@ -181,7 +197,7 @@ public class TestBase {
 			db.close(false);
 			db.shutdownImmediately();
 		}
-		
+
 		dbs = null;
 
 	}

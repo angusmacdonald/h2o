@@ -11,6 +11,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Random;
 import java.util.Set;
 
 import org.h2.engine.Constants;
@@ -242,13 +243,34 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 			if (!connected && (databaseInstances != null && databaseInstances.size() > 0) ){
 
-				String instances = "";
-				for (String instance: databaseInstances){
-					instances += instance + "\n";
+
+				int attempts = 1;
+
+				/**
+				 * Back-off then try to connect again up to 10 times. If this fails, throw an exception.
+				 */
+				while (!connected && attempts <= 10){
+					Random r = new Random();
+					try {
+						Thread.sleep((1000 + (r.nextInt(100) * 10))*attempts);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Trying to connect to known node again. Attempt number " + attempts + ".");
+
+					connected = attemptToJoinChordRing(persistedInstanceInformation, localMachineLocation, databaseInstances);
+					attempts++;
 				}
 
-				throw new StartupException("\n\nH2O couldn't find an active instance with System Table state, so it cannot connect to the database system.\n\n" +
-						"Please re-instantiate one of the following database instances:\n\n" + instances + "\n\n");
+				if (!connected){
+					String instances = "";
+					for (String instance: databaseInstances){
+						instances += instance + "\n";
+					}
+
+					throw new StartupException("\n\nH2O couldn't find an active instance with System Table state, so it cannot connect to the database system.\n\n" +
+							"Please re-instantiate one of the following database instances:\n\n" + instances + "\n\n");
+				}
 			}
 
 			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Successfully created new chord ring.");
@@ -288,7 +310,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 
 		for (String url: databaseInstances){
-
 			DatabaseURL instanceURL = DatabaseURL.parseURL(url);
 
 			/*
@@ -298,8 +319,14 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 			//Attempt to connect to a Chord node at this location.
 
-			int portToJoinOn = currentPort++;
+			String chordPort = persistedInstanceInformation.getProperty("chordPort");
 
+			int portToJoinOn = 0;
+			if (chordPort!=null){
+				portToJoinOn = Integer.parseInt(chordPort);
+			} else {
+				portToJoinOn = currentPort++;
+			}
 			if (instanceURL.getRMIPort() == portToJoinOn)
 				portToJoinOn++;
 
@@ -307,17 +334,17 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 					localMachineLocation.getDbLocationWithoutIllegalCharacters());
 
 			if (!connected){
-				portToJoinOn ++; //TODO this should only happen if there is a bind exception. Not in any other case.
+				portToJoinOn ++; //this should only happen if there is a bind exception. Not in any other case.
 				connected = joinChordRing(localMachineLocation.getHostname(), portToJoinOn++, instanceURL.getHostname(), instanceURL.getRMIPort(), 
 						localMachineLocation.getDbLocationWithoutIllegalCharacters());
 
 			}
 
-
 			if (connected){
+				persistedInstanceInformation.setProperty("chordPort", portToJoinOn + "");
 				((ChordNodeImpl)chordNode).addObserver(this);
 
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL,"Successfully connected to an existing chord ring.");
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL,"Successfully connected to an existing chord ring at " + url);
 				return true;
 			}
 
@@ -497,7 +524,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			chordNode = new ChordNodeImpl(localChordAddress, knownHostAddress);
 
 		} catch (RemoteException e) {
-			ErrorHandling.errorNoEvent("Failed to connect to chord ring with known host: " + remoteHostname + ":" + remotePort);
+			ErrorHandling.errorNoEvent("Failed to connect to chord ring with known host: " + remoteHostname + ":" + 
+					remotePort + ", at address " + localHostname + ":" + localPort + " (" + e.getMessage() + ").");
 			return false;
 		} catch (NotBoundException e) {
 			ErrorHandling.errorNoEvent("Failed to create new chord node on + " + localHostname + ":" + localPort + " known host: " + remoteHostname + ":" + remotePort);
@@ -589,15 +617,40 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	 */
 	private void successorChangeEvent() {
 
-		if (this.systemTableRef.isSystemTableLocal()){
-			//The System Table is running locally. Replicate it's state to the new successor.
-			IChordRemoteReference successor = chordNode.getSuccessor();
 
-			DatabaseInstanceRemote successorInstance = null;
-
+		/*
+		 * Check whether there are any table managers running locally.
+		 */
+		Set<TableManagerWrapper> localTableManagers = null;
+		try {
+			localTableManagers = this.systemTableRef.getSystemTable().getLocalDatabaseInstances(localMachineLocation);
+		} catch (RemoteException e) {
+			ErrorHandling.errorNoEvent("Remote exception thrown. Happens when successor has very recently changed and chord ring hasn't stabilized.");
+		} catch (MovedException e) {
 			try {
-				String hostname = successor.getRemote().getAddress().getHostName();
-				int port = successor.getRemote().getAddress().getPort();
+				systemTableRef.handleMovedException(e);
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+		}
+
+
+		IChordRemoteReference successor = chordNode.getSuccessor();
+		DatabaseInstanceRemote successorInstance = null;
+
+		/*
+		 * If table managers running locally or the System Table is located locally then get a reference to the suceessor instance so
+		 * that we can replicate meta-data onto it.
+		 * 
+		 * If not, don't go to the effort of looking up the successor.
+		 */
+		if (this.systemTableRef.isSystemTableLocal() || localTableManagers != null && localTableManagers.size() > 0){
+			String hostname = null;
+			int port = 0;
+			try {
+				hostname = successor.getRemote().getAddress().getHostName();
+
+				port = successor.getRemote().getAddress().getPort();
 
 				try {
 					successorInstance = getDatabaseInstanceAt(hostname, port);
@@ -605,44 +658,69 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 					//May happen. Ignore.
 				}
 
-				if (successorInstance == null){
-					/*
-					 * The remote chord node hasn't been fully instantiated yet. Wait a while then try again.
-					 */
 
-					if (!Constants.IS_NON_SM_TEST){
-						//Don't bother trying to replicate the System Table if this is a test which doesn't require it.
-						Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting System Table replication thread on successor change on: " + this.localMachineLocation.getDbLocation() + ".");
+				if (this.systemTableRef.isSystemTableLocal()){
+					//The System Table is running locally. Replicate it's state to the new successor.
 
-						SystemTableReplication newThread = new SystemTableReplication(hostname, port, this.systemTableRef, this);
-						newThread.start();
-					}
+					try {
 
-				} else if (successorInstance.equals(this.databaseInstance)) {
-					//Do nothing. There is only one node in the network.
-					Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "There is only one node in the network so the System Table can't be replicated elsewhere.");
-				} else {
-					if (successorInstance.isAlive()){
-						this.systemTableRef.getSystemTable().addStateReplicaLocation(new DatabaseInstanceWrapper(successorInstance.getConnectionURL(), successorInstance, true));
+						if (successorInstance == null){
+							/*
+							 * The remote chord node hasn't been fully instantiated yet. Wait a while then try again.
+							 */
 
-						//dbInstance.createNewSystemTableBackup(db.getSystemTable());
-						//dbInstance.executeUpdate("CREATE REPLICA SCHEMA H2O");
+							if (!Constants.IS_NON_SM_TEST){
+								//Don't bother trying to replicate the System Table if this is a test which doesn't require it.
+								Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting System Table replication thread on successor change on: " + this.localMachineLocation.getDbLocation() + ".");
 
-						if (Constants.IS_TEST){
-							ChordTests.setReplicated(true);
+								SystemTableReplication newThread = new SystemTableReplication(hostname, port, this.systemTableRef, this);
+								newThread.start();
+							}
+
+						} else if (successorInstance.equals(this.databaseInstance)) {
+							//Do nothing. There is only one node in the network.
+							Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "There is only one node in the network so the System Table can't be replicated elsewhere.");
+						} else {
+							if (successorInstance.isAlive()){
+								this.systemTableRef.getSystemTable().addStateReplicaLocation(new DatabaseInstanceWrapper(successorInstance.getConnectionURL(), successorInstance, true));
+
+								//dbInstance.createNewSystemTableBackup(db.getSystemTable());
+								//dbInstance.executeUpdate("CREATE REPLICA SCHEMA H2O");
+
+								if (Constants.IS_TEST){
+									ChordTests.setReplicated(true);
+								}
+							}
+						}
+					} catch (RemoteException e) {
+						ErrorHandling.errorNoEvent("Remote exception thrown. Happens when successor has very recently changed and chord ring hasn't stabilized.");
+					} catch (MovedException e) {
+						try {
+							systemTableRef.handleMovedException(e);
+						} catch (SQLException e1) {
+							e1.printStackTrace();
 						}
 					}
-				}
-			} catch (RemoteException e) {
-				ErrorHandling.errorNoEvent("Remote exception thrown. Happens when successor has very recently changed and chord ring hasn't stabilized.");
-			} catch (MovedException e) {
-				try {
-					systemTableRef.handleMovedException(e);
-				} catch (SQLException e1) {
-					e1.printStackTrace();
-				}
-			}
 
+				}
+
+				/*
+				 * Now do the same thing for table manager replication.
+				 */
+
+
+
+				if (localTableManagers != null){
+					for (TableManagerWrapper tableManager: localTableManagers){
+						//Check that each manager has enough replicas. If not, replicate to the new successor.
+
+
+					}
+				}
+
+			} catch (RemoteException e2) {
+				ErrorHandling.exceptionErrorNoEvent(e2, "Couldn't connect to successor.");
+			}
 		}
 	}
 
@@ -742,11 +820,11 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				}
 
 			} catch (RemoteException e) {
-				e.printStackTrace();
+				ErrorHandling.errorNoEvent("(Error during shutdown) " + e.getMessage());
 			} catch (MovedException e) {
-				e.printStackTrace();
+				ErrorHandling.errorNoEvent("(Error during shutdown) " + e.getMessage());
 			} catch (SQLException e) {
-				e.printStackTrace();
+				ErrorHandling.errorNoEvent("(Error during shutdown) " + e.getMessage());
 			}
 		}
 

@@ -444,7 +444,7 @@ public class ReplicaTests extends TestBase{
 				fail("Expected update count to be '0'");
 			}
 
-			sa.execute("SELECT * FROM H2O.H2O_DM_REPLICA;");
+			sa.execute("SELECT * FROM H2O.H2O_TM_REPLICA;");
 			
 			ResultSet rs = sa.getResultSet();
 

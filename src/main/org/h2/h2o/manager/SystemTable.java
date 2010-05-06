@@ -314,14 +314,14 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 			throw new MovedException(movedLocation);
 		}
 		/*
-		 * If the manager is being migrated, and has been migrated for less than 10 seconds (timeout period, throw an execption. 
+		 * If the manager is being migrated, and has been migrated for less than 10 seconds (timeout period), throw an execption. 
 		 */
 		if (inMigration){
 			//If it hasn't moved, but is in the process of migration an exception will be thrown.
 			long currentTimeOfMigration = System.currentTimeMillis() - migrationTime;
 
 			if (currentTimeOfMigration < MIGRATION_TIMEOUT) {
-				throw new RemoteException();
+				throw new RemoteException("System Table is in the process of being moved.");
 			} else {
 				inMigration = false; //Timeout request.
 				this.migrationTime = 0l;

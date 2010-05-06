@@ -13,21 +13,25 @@ public class DatabaseThread extends Thread {
 
 	private String connectionString;
 	private Connection connection;
-	
-	
+
+
 	private boolean running = true;
-	
+	private boolean createConnectionInSeperateThread;
+
 	/**
 	 * @param connectionString
 	 */
-	public DatabaseThread(String connectionString) {
-		
-		try {
-			this.connection = DriverManager.getConnection(connectionString, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-		} catch (SQLException e) {
-			e.printStackTrace();
+	public DatabaseThread(String connectionString, boolean createConnectionInSeperateThread) {
+
+		if (!createConnectionInSeperateThread){
+			try {
+				this.connection = DriverManager.getConnection(connectionString, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
 		}
-		
+
+		this.createConnectionInSeperateThread = createConnectionInSeperateThread;
 		this.connectionString = connectionString;
 	}
 
@@ -36,21 +40,34 @@ public class DatabaseThread extends Thread {
 	 */
 	@Override
 	public void run() {
+		if (createConnectionInSeperateThread){
+			try {
+				this.connection = DriverManager.getConnection(connectionString, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
 
-		
-		while (isRunning()){}
-		
+		while (isRunning()){
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
 		/*
 		 * Shutdown.
 		 */
-		
+
 		try {
-			connection.close();
+			if (connection != null) connection.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public Connection getConnection(){
 		return connection;
 	}
@@ -67,5 +84,16 @@ public class DatabaseThread extends Thread {
 	 */
 	public synchronized void setRunning(boolean running) {
 		this.running = running;
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean isConnected() {
+		try {
+			return (connection!=null && !connection.isClosed());
+		} catch (SQLException e) {
+			return false;
+		}
 	}
 }

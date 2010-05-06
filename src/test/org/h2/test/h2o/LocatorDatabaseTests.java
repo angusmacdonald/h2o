@@ -34,8 +34,9 @@ public class LocatorDatabaseTests extends TestBase {
 	private Statement[] sas;
 	private DatabaseThread[] dts;
 	private LocatorServer ls;
-	private static String[] dbs =  {"two", "three"}; //, "four", "five", "six", "seven", "eight", "nine"
-	
+	private static String[] dbs =  {"two", "three", "four"}; //, "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen"};
+		//"sixteen", "seventeen", "eighteen", "nineteen", "twenty", "twenty-one", "twenty-one", "twenty-two", "twenty-three", "twenty-four", "twenty-five", "twenty-six", "twenty-seven"};
+
 	/**
 	 * Whether the System Table state has been replicated yet.
 	 */
@@ -69,40 +70,17 @@ public class LocatorDatabaseTests extends TestBase {
 		
 		Constants.IS_TEAR_DOWN = false; 
 		
-		//Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-		//PersistentSystemTable.USERNAME = "angus";
-		//PersistentSystemTable.PASSWORD = "";
-
 		org.h2.Driver.load();
 
-//		for (String db: dbs){
-//
-//			H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:" + db), "instances");
-//			knownHosts.createNewFile();
-//			knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordRemote.currentPort + "");
-//			knownHosts.saveAndClose();
-//
-//		}
 
-		TestBase.setUpDescriptorFiles();
+		TestBase.setUpDescriptorFiles(dbs, "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o", "testDB");
 		ls = new LocatorServer(29999, "junitLocator");
 		ls.createNewLocatorFile();
 		ls.start();
 		
-		dts = new DatabaseThread[dbs.length + 1];
-		dts[0] = new DatabaseThread("jdbc:h2:sm:mem:one");
-		dts[0].start();
-
-		Thread.sleep(5000);
-
-		for (int i = 1; i < dts.length; i ++){
-			
-			dts[i] = new DatabaseThread("jdbc:h2:mem:" + dbs[i-1]);
-			dts[i].start();
-			
-			Thread.sleep(5000);
-		}
+		startDatabases();
 		
+		Thread.sleep(5000);
 		
 		sas = new Statement[dbs.length + 1];
 
@@ -111,11 +89,7 @@ public class LocatorDatabaseTests extends TestBase {
 		}
 
 		
-		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
-		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
-		sql += "INSERT INTO TEST VALUES(2, 'World');";
 
-		sas[0].execute(sql);
 	}
 
 	/**
@@ -125,54 +99,91 @@ public class LocatorDatabaseTests extends TestBase {
 	public void tearDown() {
 		Constants.IS_TEAR_DOWN = true; 
 
-		for (int i = 0; i < dts.length; i ++){
-			dts[i].setRunning(false);
-		}
+		shutdownDatabases();
 
+		ls.setRunning(false);
+		
 		closeDatabaseCompletely();
 		
-		ls.setRunning(false);
 		dts = null;
 		sas = null;
 		
 
-		ls.setRunning(false);
+		
 		while (!ls.isFinished()){};
 	}
 
+
+	/**
+	 * 
+	 */
+	private void startDatabases() {
+		dts = new DatabaseThread[dbs.length + 1];
+		dts[0] = new DatabaseThread("jdbc:h2:sm:mem:one", true);
+		dts[0].start();
+
+		for (int i = 1; i < dts.length; i ++){
+			
+			dts[i] = new DatabaseThread("jdbc:h2:mem:" + dbs[i-1], true);
+			dts[i].start();
+		}
+	}
+
+	/**
+	 * 
+	 */
+	private void shutdownDatabases() {
+		for (int i = 0; i < dts.length; i ++){
+			dts[i].setRunning(false);
+		}
+	}
+
 	
-//	/**
-//	 * Tests that when the Table Manager is migrated another database instance is able to connect to the new manager without any manual intervention.
-//	 * 
-//	 */
-//	@Test
-//	public void TableManagerMigration() throws InterruptedException {
-//		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
-//		try {
-//			sas[1].executeUpdate("MIGRATE TABLEMANAGER test");
-//
-//			/*
-//			 * Test that the new Table Manager can be found.
-//			 */
-//			sas[1].executeUpdate("INSERT INTO TEST VALUES(4, 'helloagain');");
-//			
-//			/*
-//			 * Test that the old Table Manager is no longer accessible, and that the referene can be updated.
-//			 */
-//			sas[0].executeUpdate("INSERT INTO TEST VALUES(5, 'helloagainagain');");
-//			
-//		} catch (SQLException e) {
-//			e.printStackTrace();
-//			fail("Didn't work.");
-//		}
-//	}
+	@Test
+	public void createLotsInOneGo() throws InterruptedException{
+		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
+		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
+		sql += "INSERT INTO TEST VALUES(2, 'World');";
+
+		for (int i = 0; i < dts.length; i ++){
+			while (!dts[i].isConnected()){Thread.sleep(100);};
+		}
+		
+		shutdownDatabases();
+		
+		for (int i = 0; i < dts.length; i ++){
+			while (dts[i].isAlive()){Thread.sleep(100);};
+		}
+		
+		startDatabases();
+			
+		for (int i = 0; i < dts.length; i ++){
+			while (!dts[i].isConnected()){Thread.sleep(100);};
+		}
+		
+		sas = new Statement[dbs.length + 1];
+		for (int i = 0; i < dts.length; i ++){
+			try {
+				sas[i] = dts[i].getConnection().createStatement();
+			} catch (Exception e) {
+				fail("Couldn't get a database connection.");
+			}
+			try {
+				sas[i].executeUpdate("INSERT INTO TEST VALUES(" + (i+4) + ", Value);");
+			} catch (SQLException e) {
+				fail("Failed to insert into database.");
+			}
+		}
+		
+	}
 	
 	/**
 	 * One node gets a majority while another backs out then tries again.
+	 * @throws InterruptedException 
 	 */
 	@Test
-	public void noMajorityForOneNode(){
-
+	public void noMajorityForOneNode() throws InterruptedException{
+	
 	}
 
 	/**
