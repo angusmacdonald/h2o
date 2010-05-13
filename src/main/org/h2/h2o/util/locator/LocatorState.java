@@ -123,7 +123,7 @@ public class LocatorState {
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Finished writing.");
 		stopWrite();
-		
+
 		return successful;
 	}
 
@@ -146,10 +146,9 @@ public class LocatorState {
 				lockCreationTime = 0l;
 			}
 		}
-		
-		
+
+
 		if (locked){
-			ErrorHandling.errorNoEvent("Lock already held by " + databaseWithLock + ".");
 			success = false;
 		} else {
 			locked = true;
@@ -162,8 +161,11 @@ public class LocatorState {
 
 		stopWrite();
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Database instance at '" + requestingDatabase + "' has attempted to lock locator (successful: "+ success + ").");
-
+		if (success){
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "LOCATOR LOCKED by database instance '" + requestingDatabase + "'");
+		} else {
+			ErrorHandling.errorNoEvent("Database instance '" + requestingDatabase + "' FAILED TO LOCK the locator server. The lock is held by " + databaseWithLock + ".");
+		}
 		return response;
 	}
 
@@ -189,8 +191,12 @@ public class LocatorState {
 		}
 
 		stopWrite();
-
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Database instance at '" + requestingDatabase + "' has attempted to unlock locator (successful: "+ (result==1) + ").");
+		
+		if (result == 1){
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Database instance at '" + requestingDatabase + "' has committed its creation of the system table.");
+		} else {
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Database instance at '" + requestingDatabase + "' has failed to commit its creation of the system table.");
+		}
 
 		return result;
 	}

@@ -202,8 +202,6 @@ public class LocatorClientConnection {
 			br = new BufferedReader(new InputStreamReader(s.getInputStream()));
 			String inputLine;
 
-			//initiate conversation with client
-
 			int updateCount = Integer.parseInt(br.readLine());
 
 			while ((inputLine = br.readLine()) != null) {

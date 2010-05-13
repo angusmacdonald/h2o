@@ -282,7 +282,7 @@ public class CreateTable extends SchemaCommand {
 					boolean successful = sm.addTableInformation(tableManagerRemote, ti);
 					
 					if (!successful){
-						throw new SQLException("Failed to add table information to schema manager.");
+						throw new SQLException("Failed to add table information to schema manager: " + sm);
 					}
 					
 					try {

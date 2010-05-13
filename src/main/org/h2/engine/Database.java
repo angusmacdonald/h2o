@@ -112,27 +112,6 @@ public class Database implements DataHandler {
 
 	private final boolean persistent;
 
-	//	/**
-	//	 * H2O. Interface to this database instance, exposed via RMI.
-	//	 */
-	//	private DatabaseInstance databaseInstance;
-
-
-	//	/**
-	//	 * H2O. Manages access to Table Managers, both local and remote.
-	//	 */
-	//	private ITableManagerLocator tableManagerLocator;
-	//
-	//	/**
-	//	 * H2O. Manages access to remote database instances via RMI.
-	//	 */
-	//	private IDatabaseInstanceLocator databaseInstanceLocator;
-	//
-	//	/**
-	//	 * Reference to this databases local chord node.
-	//	 */
-	//	private ChordInterface chord = null;	
-
 	private final String databaseName;
 	private final String databaseShortName;
 	private final String databaseURL;
@@ -308,7 +287,7 @@ public class Database implements DataHandler {
 				TraceSystem.DEFAULT_TRACE_LEVEL_SYSTEM_OUT);
 		this.cacheType = StringUtils.toUpperEnglish(ci.removeProperty("CACHE_TYPE", CacheLRU.TYPE_NAME));
 		openDatabase(traceLevelFile, traceLevelSystemOut, closeAtVmShutdown, ci);
-		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, " Completed startup.");
+		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, " Completed startup on " + ci.getOriginalURL());
 	}
 
 	private void openDatabase(int traceLevelFile, int traceLevelSystemOut, boolean closeAtVmShutdown, ConnectionInfo ci) throws SQLException {
@@ -596,6 +575,12 @@ public class Database implements DataHandler {
 
 			databaseExists = FileUtils.exists(dataFileName);
 
+			if (databaseExists){
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Database already exists at: " + dataFileName);
+			} else {
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Database doesn't exist at: " + dataFileName);
+			}
+			
 			if (FileUtils.exists(dataFileName)) {
 				// if it is already read-only because ACCESS_MODE_DATA=r
 				readOnly = readOnly | FileUtils.isReadOnly(dataFileName);
@@ -752,6 +737,7 @@ public class Database implements DataHandler {
 			/*
 			 * Create or connect to a new System Table instance if this node already has tables on it.
 			 */
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Database already exists. No need to recreate the System Table.");
 			createSystemTable(true, systemTableRef.isSystemTableLocal(), false);
 		}
 

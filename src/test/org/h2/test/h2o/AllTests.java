@@ -25,6 +25,7 @@ import org.junit.runners.Suite;
 	RestartTests.class,
 	H2SimpleTest.class,
 	LocatorTests.class,
+	LocatorDatabaseTests.class,
 	ChordTests.class
 })
 public class AllTests {

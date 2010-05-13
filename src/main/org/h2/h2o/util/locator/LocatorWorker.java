@@ -37,14 +37,18 @@ public class LocatorWorker extends Thread {
 	 * Service the current incoming connection.
 	 */
 	public void run(){
+		
+		
 		try {
 			try { //ends with 'finally' to close the socket connection.
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Created new LocatorConnectionHandler thread.");
-
+				socket.setSoTimeout(5000);
+				
 				//Get single-line request from the client.
-				String requestLine, request = "";
+				
 				BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
+				
+				String requestLine="", request = "";
 				String requestType = requestLine = br.readLine(); //The first line always specifies the type of the request being made.
 
 				if (requestType == null){ //Request didn't contain anything.
@@ -86,7 +90,7 @@ public class LocatorWorker extends Thread {
 				socket.close();
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			
 		}
 	}
 

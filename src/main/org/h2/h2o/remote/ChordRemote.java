@@ -1,12 +1,15 @@
 package org.h2.h2o.remote;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.rmi.AccessException;
+import java.rmi.ConnectException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.ExportException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.Observable;
@@ -16,6 +19,7 @@ import java.util.Set;
 
 import org.h2.engine.Constants;
 import org.h2.engine.Session;
+import org.h2.h2o.autonomic.Settings;
 import org.h2.h2o.comms.DatabaseInstance;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.comms.remote.TableManagerRemote;
@@ -140,6 +144,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		persistedInstanceInformation.loadProperties();
 
 		boolean connected = false;
+
+		int attempts = 1; //attempts at connected
+
 		DatabaseURL newSMLocation = null;
 
 
@@ -159,123 +166,131 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		}
 
 		Set<String> databaseInstances = null;
-		try {
-			databaseInstances = dl.getLocations();
-		} catch (Exception e){
-			e.printStackTrace();
-			throw new StartupException(e.getMessage());
-		}
 
 		/*
-		 * If this is the first time DB to be run the set of DB instance will be empty and this node should become the schema manager.
-		 * 
-		 * If there is a list of DB instances this instance should attempt to connect to one of them (but not to itself).
-		 * 
-		 * If none exist but for itself then it can start as the schema manager.
-		 * 
-		 * If none exist and it isn't on the list either, just shutdown the database.
+		 * Try to connect repeatedly until successful. There is a back-off mechanism to ensure this doesn't fail 
+		 * repeatedly in a short space of time.
 		 */
+		
+		while (!connected && attempts < Settings.ATTEMPTS_TO_CREATE_OR_JOIN_SYSTEM){
+			try {
+				databaseInstances = dl.getLocations();
+			} catch (Exception e){
+				e.printStackTrace();
+				throw new StartupException(e.getMessage());
+			}
 
-		if (databaseInstances != null && databaseInstances.size() > 0){
 			/*
-			 * There may be a number of database instances already in the ring. Try to connect.
+			 * If this is the first time DB to be run the set of DB instance will be empty and this node should become the schema manager.
+			 * 
+			 * If there is a list of DB instances this instance should attempt to connect to one of them (but not to itself).
+			 * 
+			 * If none exist but for itself then it can start as the schema manager.
+			 * 
+			 * If none exist and it isn't on the list either, just shutdown the database.
 			 */
-			connected = attemptToJoinChordRing(persistedInstanceInformation, localMachineLocation, databaseInstances);
-		}
+
+			if (databaseInstances != null && databaseInstances.size() > 0){
+				/*
+				 * There may be a number of database instances already in the ring. Try to connect.
+				 */
+				connected = attemptToJoinChordRing(persistedInstanceInformation, localMachineLocation, databaseInstances);
+			}
 
 
-		if (connected){
-			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Successfully connected to existing chord ring.");
-		} else {
-			/*
-			 * Check whether the local machines URL is included on the list of possible schema managers.
-			 */
-			boolean localMachineIncluded = false;
-			if (databaseInstances != null){
-				for (String instance: databaseInstances){
-					if (instance.contains(localMachineLocation.getURL())){
-						localMachineIncluded = true;
-						break;
+			if (connected){
+				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Successfully connected to existing chord ring.");
+			} else {
+				/*
+				 * Check whether the local machines URL is included on the list of possible schema managers.
+				 */
+				boolean localMachineIncluded = false;
+				if (databaseInstances != null){
+					for (String instance: databaseInstances){
+						if (instance.contains(localMachineLocation.getURL())){
+							localMachineIncluded = true;
+							break;
+						}
 					}
 				}
-			}
 
-			if (!connected && (databaseInstances == null || databaseInstances.size() == 0 || localMachineIncluded)){
-				/*
-				 * Either because there are no known hosts, or because none are still alive.
-				 * Create a new chord ring.
-				 */
-
-				//Obtain a lock on the locator server first.
-
-				boolean locked = false;
-				try {
-					locked = dl.lockLocators(this.localMachineLocation.getDbLocation());
-				} catch (IOException e) {
-					throw new StartupException("Couldn't obtain a lock to create a new System Table. An IO Exception was thrown trying to contact the locator server (" + e.getMessage() + ").");
-				}
-
-				if (!locked){
+				if (!connected && (databaseInstances == null || databaseInstances.size() == 0 || localMachineIncluded)){
 					/*
-					 * Request made it to the locator server but the lock couldn't be taken out. Wait then try later to connect to the schema manager.
+					 * Either because there are no known hosts, or because none are still alive.
+					 * Create a new chord ring.
 					 */
-					throw new StartupException("Lock already taken out. H2O will eventually try to connect again at this point.");
+
+					//Obtain a lock on the locator server first.
+
+					boolean locked = false;
+					try {
+						locked = dl.lockLocators(this.localMachineLocation.getDbLocation());
+					} catch (IOException e) {
+						throw new StartupException("Couldn't obtain a lock to create a new System Table. " +
+								"An IO Exception was thrown trying to contact the locator server (" + e.getMessage() + ").");
+					}
+
+					if (locked){
+						int portToUse = currentPort++;
+
+						connected = startChordRing(localMachineLocation.getHostname(), portToUse,
+								localMachineLocation);
+
+						if (connected){
+							persistedInstanceInformation.setProperty("chordPort", portToUse + "");
+							persistedInstanceInformation.saveAndClose();
+						}
+
+						newSMLocation = localMachineLocation;
+						newSMLocation.setRMIPort(portToUse);
+
+						systemTableRef.setSystemTableURL(newSMLocation);
+
+						//					if (!connected){ //if STILL not connected.
+						//						unlockLocator();
+						//						throw new StartupException("Tried to connect to an existing database system and couldn't. Also tried to create" +
+						//						" a new network and this also failed.");
+						//					}
+					}
 				}
 
-				int portToUse = currentPort++;
 
-				connected = startChordRing(localMachineLocation.getHostname(), portToUse,
-						localMachineLocation);
+				if (!connected ){
+					/*
+					 * Back-off then try to connect again up to n times. If this fails, throw an exception.
+					 */
 
-
-				newSMLocation = localMachineLocation;
-				newSMLocation.setRMIPort(portToUse);
-
-				systemTableRef.setSystemTableURL(newSMLocation);
-
-				if (!connected){ //if STILL not connected.
-					unlockLocator();
-					throw new StartupException("Tried to connect to an existing database system and couldn't. Also tried to create" +
-					" a new network and this also failed.");
-				}
-			}
-
-
-			if (!connected && (databaseInstances != null && databaseInstances.size() > 0) ){
-
-
-				int attempts = 1;
-
-				/**
-				 * Back-off then try to connect again up to 10 times. If this fails, throw an exception.
-				 */
-				while (!connected && attempts <= 10){
 					Random r = new Random();
 					try {
-						Thread.sleep((1000 + (r.nextInt(100) * 10))*attempts);
+						int backoffTime = (1000 + (r.nextInt(100) * 10))*attempts;
+						Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Attempt number " + attempts + " of " + Settings.ATTEMPTS_TO_CREATE_OR_JOIN_SYSTEM + ". Instance at " + localMachineLocation + " is about to back-off for " + backoffTime + " ms.");
+
+						Thread.sleep(backoffTime);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
 					Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Trying to connect to known node again. Attempt number " + attempts + ".");
 
-					connected = attemptToJoinChordRing(persistedInstanceInformation, localMachineLocation, databaseInstances);
 					attempts++;
-				}
+				}			
+			}
+		} 
 
-				if (!connected){
-					String instances = "";
-					for (String instance: databaseInstances){
-						instances += instance + "\n";
-					}
-
-					throw new StartupException("\n\nH2O couldn't find an active instance with System Table state, so it cannot connect to the database system.\n\n" +
-							"Please re-instantiate one of the following database instances:\n\n" + instances + "\n\n");
-				}
+		/*
+		 * If still not connected after many attempts, throw an exception.
+		 */
+		if (!connected){
+			String instances = "";
+			for (String instance: databaseInstances){
+				instances += instance + "\n";
 			}
 
-			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Successfully created new chord ring.");
+			throw new StartupException("\n\nAfter " + attempts + " the H2O instance at " + localMachineLocation + " couldn't find an active instance with System Table state, so it cannot connect to the database system.\n\n" +
+					"Please re-instantiate one of the following database instances:\n\n" + instances + "\n\n");
+		} else {
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Database at " + localMachineLocation + " successful created/connected to chord ring.");
+		}
 
-		} 
 
 
 
@@ -333,15 +348,10 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			boolean connected = joinChordRing(localMachineLocation.getHostname(), portToJoinOn, instanceURL.getHostname(), instanceURL.getRMIPort(), 
 					localMachineLocation.getDbLocationWithoutIllegalCharacters());
 
-			if (!connected){
-				portToJoinOn ++; //this should only happen if there is a bind exception. Not in any other case.
-				connected = joinChordRing(localMachineLocation.getHostname(), portToJoinOn++, instanceURL.getHostname(), instanceURL.getRMIPort(), 
-						localMachineLocation.getDbLocationWithoutIllegalCharacters());
-
-			}
 
 			if (connected){
 				persistedInstanceInformation.setProperty("chordPort", portToJoinOn + "");
+				persistedInstanceInformation.saveAndClose();
 				((ChordNodeImpl)chordNode).addObserver(this);
 
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL,"Successfully connected to an existing chord ring at " + url);
@@ -369,7 +379,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			e.printStackTrace();
 		}
 		try {
-			getLocalRegistry().bind(LOCAL_DATABASE_INSTANCE , stub);
+			getLocalRegistry().rebind(LOCAL_DATABASE_INSTANCE , stub);
 
 			this.databaseInstance = stub;
 		} catch (Exception e) {
@@ -513,29 +523,46 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	 */
 	private boolean joinChordRing(String localHostname, int localPort, String remoteHostname, int remotePort, String databaseName) {
 
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Trying to connect to existing Chord ring on " + remoteHostname + ":" + remotePort);
+
 		this.rmiPort = localPort;
 
 		InetSocketAddress localChordAddress = new InetSocketAddress(localHostname, localPort);
 		InetSocketAddress knownHostAddress = new InetSocketAddress(remoteHostname, remotePort);
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Trying to connect to existing Chord ring on " + remoteHostname + ":" + remotePort);
+		boolean connected = false; int attempts = 0;
 
-		try {
-			chordNode = new ChordNodeImpl(localChordAddress, knownHostAddress);
+		while(!connected && attempts < Settings.ATTEMPTS_AFTER_BIND_EXCEPTIONS){ //only have multiple attempts if there is a bind exception. otherwise this just returns false.
+			try {
+				chordNode = new ChordNodeImpl(localChordAddress, knownHostAddress);
 
-		} catch (RemoteException e) {
-			ErrorHandling.errorNoEvent("Failed to connect to chord ring with known host: " + remoteHostname + ":" + 
-					remotePort + ", at address " + localHostname + ":" + localPort + " (" + e.getMessage() + ").");
-			return false;
-		} catch (NotBoundException e) {
-			ErrorHandling.errorNoEvent("Failed to create new chord node on + " + localHostname + ":" + localPort + " known host: " + remoteHostname + ":" + remotePort);
-			return false;
-		}	
+			} catch (ConnectException e){ //database instance we're trying to connect to doesn't exist.
+				ErrorHandling.errorNoEvent("Failed to connect to chord node on + " + localHostname + ":" + localPort + " known host: " + remoteHostname + ":" + remotePort);
+				return false;
+			} catch (ExportException e) { //bind exception (most commonly nested in ExportException
+			
+				if (attempts > 50){
+					ErrorHandling.errorNoEvent("Failed to connect to chord ring with known host: " + remoteHostname + ":" + 
+							remotePort + ", on address " + localHostname + ":" + localPort + ".");
+				}
+				connected = false;
+			} catch (NotBoundException e) {
+				ErrorHandling.errorNoEvent("Failed to create new chord node on + " + localHostname + ":" + localPort + " known host: " + remoteHostname + ":" + remotePort);
+				connected = false;
+			} catch (RemoteException e) {
+				e.printStackTrace();
+				return false;
+			} 
 
-		if (chordNode == null){
-			ErrorHandling.hardError("Failed to create Chord Node.");
-			return false;
+			if (chordNode != null){
+				connected = true;
+			}
+
+			localChordAddress = new InetSocketAddress(localHostname, localPort++);
+			attempts++;
 		}
+
+		if (!connected) return false;
 
 		this.systemTableRef.setInKeyRange(false);
 

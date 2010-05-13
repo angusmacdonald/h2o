@@ -380,7 +380,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 		 * Obtain references to Table Managers, though not necessarily references to active TM proxies.
 		 */
 		tableManagers = otherSystemTable.getTableManagers();
-
+		
 		/*
 		 * At this point some of the Table Manager references will be null if the Table Managers could not be found at their old location.
 		 * If a reference is null, but there is a copy of the table locally then a new Table Manager can be created.
@@ -393,7 +393,6 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 		 * Obtain references to replicas.
 		 */
 		//replicaLocations = otherSystemTable.getReplicaLocations();
-
 
 	}
 

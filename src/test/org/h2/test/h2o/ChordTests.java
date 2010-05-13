@@ -13,6 +13,7 @@ import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.H2oProperties;
 import org.h2.h2o.util.locator.LocatorServer;
+import org.h2.test.h2o.util.StartDatabaseInstance;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -30,7 +31,7 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 public class ChordTests extends TestBase {
 
 	private Statement[] sas;
-	private DatabaseThread[] dts;
+	private StartDatabaseInstance[] dts;
 	private LocatorServer ls;
 	private static String[] dbs =  {"two", "three"}; //, "four", "five", "six", "seven", "eight", "nine"
 	
@@ -87,15 +88,15 @@ public class ChordTests extends TestBase {
 		ls.createNewLocatorFile();
 		ls.start();
 		
-		dts = new DatabaseThread[dbs.length + 1];
-		dts[0] = new DatabaseThread("jdbc:h2:sm:mem:one", false);
+		dts = new StartDatabaseInstance[dbs.length + 1];
+		dts[0] = new StartDatabaseInstance("jdbc:h2:sm:mem:one", false);
 		dts[0].start();
 
 		Thread.sleep(5000);
 
 		for (int i = 1; i < dts.length; i ++){
 			
-			dts[i] = new DatabaseThread("jdbc:h2:mem:" + dbs[i-1], false);
+			dts[i] = new StartDatabaseInstance("jdbc:h2:mem:" + dbs[i-1], false);
 			dts[i].start();
 			
 			Thread.sleep(5000);

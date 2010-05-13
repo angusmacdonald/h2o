@@ -621,7 +621,7 @@ public abstract class PersistentManager {
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseWrapper.getDatabaseURL().getDbLocation());
 
 				stateReplicaManager.add(databaseWrapper);
-
+				
 				return true;
 			} catch (SQLException e) {
 				ErrorHandling.errorNoEvent("Failed to replicate manager/table state onto: " + databaseWrapper.getDatabaseURL().getDbLocation());

@@ -13,7 +13,7 @@ import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.h2o.autonomic.AutonomicAction;
 import org.h2.h2o.autonomic.AutonomicController;
-import org.h2.h2o.autonomic.Replication;
+import org.h2.h2o.autonomic.Settings;
 import org.h2.h2o.autonomic.Updates;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.ReplicaManager;
@@ -126,7 +126,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	private IChordRemoteReference location;
 
 	public TableManager(TableInfo tableDetails, Database database) throws Exception{
-		super(database, TABLES, REPLICAS, CONNECTIONS, TABLEMANAGERSTATE, Replication.TABLE_MANAGER_REPLICATION_FACTOR);
+		super(database, TABLES, REPLICAS, CONNECTIONS, TABLEMANAGERSTATE, Settings.TABLE_MANAGER_REPLICATION_FACTOR);
 
 		this.tableName = tableDetails.getTableName();
 
@@ -342,7 +342,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 		if (lockType == LockType.CREATE){
 
-			if (Replication.RELATION_REPLICATION_FACTOR == 1){
+			if (Settings.RELATION_REPLICATION_FACTOR == 1){
 				return null; //No more replicas are needed currently.
 			}
 
@@ -363,12 +363,12 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 				/*
 				 * Do we have enough replicas yet?
 				 */
-				if (currentReplicationFactor == Replication.RELATION_REPLICATION_FACTOR) break;
+				if (currentReplicationFactor == Settings.RELATION_REPLICATION_FACTOR) break;
 			}
 
-			if (currentReplicationFactor < Replication.RELATION_REPLICATION_FACTOR){
+			if (currentReplicationFactor < Settings.RELATION_REPLICATION_FACTOR){
 				//Couldn't replicate to enough machines.
-				ErrorHandling.errorNoEvent("Insufficient number of machines available to reach a replication factor of " + Replication.RELATION_REPLICATION_FACTOR);
+				ErrorHandling.errorNoEvent("Insufficient number of machines available to reach a replication factor of " + Settings.RELATION_REPLICATION_FACTOR);
 			}
 
 

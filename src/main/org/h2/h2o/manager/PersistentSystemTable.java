@@ -8,9 +8,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import org.h2.constant.ErrorCode;
 import org.h2.engine.Database;
-import org.h2.h2o.autonomic.Replication;
+import org.h2.h2o.autonomic.Settings;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
@@ -18,12 +17,9 @@ import org.h2.h2o.remote.IDatabaseRemote;
 import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
-import org.h2.message.Message;
 import org.h2.result.LocalResult;
 import org.h2.value.Value;
 
-import uk.ac.standrews.cs.nds.util.Diagnostic;
-import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
@@ -64,7 +60,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
 
 	public PersistentSystemTable(Database db, boolean createTables) throws Exception{
-		super (db, TABLES, null, DATABASE_LOCATIONS, TABLEMANAGERSTATE, Replication.SYSTEM_TABLE_REPLICATION_FACTOR);
+		super (db, TABLES, null, DATABASE_LOCATIONS, TABLEMANAGERSTATE, Settings.SYSTEM_TABLE_REPLICATION_FACTOR);
 
 
 		if (createTables){

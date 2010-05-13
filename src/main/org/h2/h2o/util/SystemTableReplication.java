@@ -3,6 +3,7 @@ package org.h2.h2o.util;
 import java.rmi.RemoteException;
 
 import org.h2.engine.Constants;
+import org.h2.h2o.autonomic.Settings;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.manager.ISystemTable;
@@ -54,7 +55,7 @@ public class SystemTableReplication extends Thread {
 		do {
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempting to find database instance at " + hostname + ":" + port);
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(Settings.REPLICATOR_SLEEP_TIME);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}

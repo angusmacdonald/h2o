@@ -1,4 +1,4 @@
-package org.h2.test.h2o;
+package org.h2.test.h2o.util;
 
 import static org.junit.Assert.fail;
 
