@@ -257,4 +257,10 @@ public class LocatorState {
 		stopWrite();
 	}
 
+	@Override
+	public String toString() {
+		return locatorFile.getAbsolutePath();
+	}
+
+	
 }

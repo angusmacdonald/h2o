@@ -44,7 +44,7 @@ public class LocatorServer extends Thread{
 				ss = new ServerSocket(port);
 				
 				ss.setSoTimeout(500);
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Server listening on port " + port);
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Server listening on port " + port + ", locator file at '" + locatorFile + "'.");
 
 			} catch (IOException e) {
 				e.printStackTrace();

@@ -616,14 +616,23 @@ public abstract class PersistentManager {
 
 			//now replica state here.
 			try {
-				databaseWrapper.getDatabaseInstance().executeUpdate("DROP REPLICA IF EXISTS " + tableRelation + ", " + replicaRelation + ", " + connectionRelation + ";", true);
-				databaseWrapper.getDatabaseInstance().executeUpdate("CREATE REPLICA " + tableRelation + ", " + replicaRelation + ", " + connectionRelation + " FROM '" + db.getDatabaseURL().getOriginalURL() + "';", true);
+				String query = "DROP REPLICA IF EXISTS ";
+				query += tableRelation + ", ";
+				query += (replicaRelation == null)? "": replicaRelation + ", ";
+				query += (tableManagerRelation == null)? "": tableManagerRelation + ", ";
+				query += (connectionRelation == null)? "": connectionRelation + ";";
+				databaseWrapper.getDatabaseInstance().executeUpdate(query, true);
+				
+				query = "CREATE REPLICA " + tableRelation + ", " + ((replicaRelation==null)? "": (replicaRelation + ", ")) + 
+				connectionRelation + ((tableManagerRelation == null)? "": (", " + tableManagerRelation)) + " FROM '" + db.getDatabaseURL().getOriginalURL() + "';";
+				databaseWrapper.getDatabaseInstance().executeUpdate(query, true);
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseWrapper.getDatabaseURL().getDbLocation());
 
 				stateReplicaManager.add(databaseWrapper);
 				
 				return true;
 			} catch (SQLException e) {
+				e.printStackTrace();
 				ErrorHandling.errorNoEvent("Failed to replicate manager/table state onto: " + databaseWrapper.getDatabaseURL().getDbLocation());
 			} catch (Exception e) {
 				throw new RemoteException(e.getMessage());

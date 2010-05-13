@@ -32,7 +32,7 @@ public class StaticServerSetup {
 		 * Clear locator file.
 		 */
 		
-		File f = new File("locatorFile");
+		File f = new File("config\\locatorFile.locator");
 		f.delete();
 		
 		/*

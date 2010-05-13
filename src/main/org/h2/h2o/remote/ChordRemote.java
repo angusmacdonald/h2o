@@ -103,7 +103,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 	private boolean inShutdown = false;
 
-	private H2OLocatorInterface dl;
+	private H2OLocatorInterface locatorServers;
 
 	/**
 	 * Port to be used for the next database instance. Currently used for testing.
@@ -140,8 +140,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	 * If no established ring is found a new Chord ring will be created.
 	 */
 	private DatabaseURL establishChordConnection(DatabaseURL localMachineLocation, Session session) throws StartupException {
-		H2oProperties persistedInstanceInformation = new H2oProperties(localMachineLocation);
-		persistedInstanceInformation.loadProperties();
 
 		boolean connected = false;
 
@@ -153,28 +151,20 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		/*
 		 * Contact descriptor for SM locations.
 		 */
-		String descriptorLocation = persistedInstanceInformation.getProperty("descriptor");
-		String databaseName = persistedInstanceInformation.getProperty("databaseName");
-
-		if (descriptorLocation == null || databaseName == null){
-			throw new StartupException("The location of the database descriptor was not specified. The database will now exit.");
-		}
-		try {
-			dl = new H2OLocatorInterface(databaseName, descriptorLocation);
-		} catch (IOException e) {
-			throw new StartupException(e.getMessage());
-		}
-
-		Set<String> databaseInstances = null;
+		H2oProperties persistedInstanceInformation = new H2oProperties(localMachineLocation);
+		persistedInstanceInformation.loadProperties();
+		this.locatorServers = getLocatorServerReference(persistedInstanceInformation);
 
 		/*
 		 * Try to connect repeatedly until successful. There is a back-off mechanism to ensure this doesn't fail 
 		 * repeatedly in a short space of time.
 		 */
-		
+
+		Set<String> databaseInstances = null;
+
 		while (!connected && attempts < Settings.ATTEMPTS_TO_CREATE_OR_JOIN_SYSTEM){
 			try {
-				databaseInstances = dl.getLocations();
+				databaseInstances = locatorServers.getLocations();
 			} catch (Exception e){
 				e.printStackTrace();
 				throw new StartupException(e.getMessage());
@@ -224,7 +214,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 					boolean locked = false;
 					try {
-						locked = dl.lockLocators(this.localMachineLocation.getDbLocation());
+						locked = locatorServers.lockLocators(this.localMachineLocation.getDbLocation());
 					} catch (IOException e) {
 						throw new StartupException("Couldn't obtain a lock to create a new System Table. " +
 								"An IO Exception was thrown trying to contact the locator server (" + e.getMessage() + ").");
@@ -318,12 +308,39 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	}
 
 	/**
+	 * Get a reference to the locator servers for this database system.
+	 * @param persistedInstanceInformation 	Properties file containing the location of the database descriptor.
+	 * @return	
+	 * @throws StartupException		Thrown if the descriptor file couldn't be found.
+	 */
+	private H2OLocatorInterface getLocatorServerReference(H2oProperties persistedInstanceInformation) throws StartupException {
+
+		H2OLocatorInterface dlo = null;
+		String descriptorLocation = persistedInstanceInformation.getProperty("descriptor");
+		String databaseName = persistedInstanceInformation.getProperty("databaseName");
+
+		if (descriptorLocation == null || databaseName == null){
+			throw new StartupException("The location of the database descriptor was not specified. The database will now exit.");
+		}
+
+		try {
+			dlo = new H2OLocatorInterface(databaseName, descriptorLocation);
+		} catch (IOException e) {
+			throw new StartupException(e.getMessage());
+		}
+		return dlo;
+	}
+
+	/**
 	 * Try to join an existing chord ring.
 	 * @return True if a connection was successful; otherwise false.
 	 */
 	private boolean attemptToJoinChordRing(H2oProperties persistedInstanceInformation, DatabaseURL localMachineLocation, Set<String> databaseInstances) {
 
 
+		/*
+		 * Try to connect via each of the database instances that are known.
+		 */
 		for (String url: databaseInstances){
 			DatabaseURL instanceURL = DatabaseURL.parseURL(url);
 
@@ -333,7 +350,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			if (instanceURL.equals(localMachineLocation)) continue;
 
 			//Attempt to connect to a Chord node at this location.
-
 			String chordPort = persistedInstanceInformation.getProperty("chordPort");
 
 			int portToJoinOn = 0;
@@ -342,15 +358,14 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			} else {
 				portToJoinOn = currentPort++;
 			}
-			if (instanceURL.getRMIPort() == portToJoinOn)
-				portToJoinOn++;
+			
+			if (instanceURL.getRMIPort() == portToJoinOn) portToJoinOn++;
 
 			boolean connected = joinChordRing(localMachineLocation.getHostname(), portToJoinOn, instanceURL.getHostname(), instanceURL.getRMIPort(), 
 					localMachineLocation.getDbLocationWithoutIllegalCharacters());
 
-
 			if (connected){
-				persistedInstanceInformation.setProperty("chordPort", portToJoinOn + "");
+				persistedInstanceInformation.setProperty("chordPort", rmiPort + "");
 				persistedInstanceInformation.saveAndClose();
 				((ChordNodeImpl)chordNode).addObserver(this);
 
@@ -379,6 +394,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			e.printStackTrace();
 		}
 		try {
+
 			getLocalRegistry().rebind(LOCAL_DATABASE_INSTANCE , stub);
 
 			this.databaseInstance = stub;
@@ -527,7 +543,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 		this.rmiPort = localPort;
 
-		InetSocketAddress localChordAddress = new InetSocketAddress(localHostname, localPort);
+		InetSocketAddress localChordAddress = new InetSocketAddress(localHostname, rmiPort);
 		InetSocketAddress knownHostAddress = new InetSocketAddress(remoteHostname, remotePort);
 
 		boolean connected = false; int attempts = 0;
@@ -537,17 +553,17 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				chordNode = new ChordNodeImpl(localChordAddress, knownHostAddress);
 
 			} catch (ConnectException e){ //database instance we're trying to connect to doesn't exist.
-				ErrorHandling.errorNoEvent("Failed to connect to chord node on + " + localHostname + ":" + localPort + " known host: " + remoteHostname + ":" + remotePort);
+				ErrorHandling.errorNoEvent("Failed to connect to chord node on + " + localHostname + ":" + rmiPort + " known host: " + remoteHostname + ":" + remotePort);
 				return false;
 			} catch (ExportException e) { //bind exception (most commonly nested in ExportException
-			
+
 				if (attempts > 50){
 					ErrorHandling.errorNoEvent("Failed to connect to chord ring with known host: " + remoteHostname + ":" + 
-							remotePort + ", on address " + localHostname + ":" + localPort + ".");
+							remotePort + ", on address " + localHostname + ":" + rmiPort + ".");
 				}
 				connected = false;
 			} catch (NotBoundException e) {
-				ErrorHandling.errorNoEvent("Failed to create new chord node on + " + localHostname + ":" + localPort + " known host: " + remoteHostname + ":" + remotePort);
+				ErrorHandling.errorNoEvent("Failed to create new chord node on + " + localHostname + ":" + rmiPort + " known host: " + remoteHostname + ":" + remotePort);
 				connected = false;
 			} catch (RemoteException e) {
 				e.printStackTrace();
@@ -557,8 +573,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			if (chordNode != null){
 				connected = true;
 			}
-
-			localChordAddress = new InetSocketAddress(localHostname, localPort++);
+			if (!connected) localChordAddress = new InetSocketAddress(localHostname, rmiPort++);
 			attempts++;
 		}
 
@@ -566,7 +581,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 		this.systemTableRef.setInKeyRange(false);
 
-
+		rmiPort = localChordAddress.getPort();
+		
 		try {
 			DatabaseInstanceRemote lookupInstance = getDatabaseInstanceAt(remoteHostname, remotePort);
 			actualSystemTableLocation = lookupInstance.getSystemTableURL();
@@ -578,9 +594,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		}
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Started local Chord node on : " + 
-				databaseName + " : " + localHostname + " : " + localPort + " : initialized with key :" + chordNode.getKey().toString(10) + 
+				databaseName + " : " + localHostname + " : " + rmiPort + " : initialized with key :" + chordNode.getKey().toString(10) + 
 				" : " + chordNode.getKey() + " : System Table at " + this.systemTableRef.getLookupLocation() + " : " + chordNode.getSuccessor().getKey());
-
 
 		return true;
 	}
@@ -610,8 +625,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	}
 
 	/**
-	 * Called when the successor has changed. Used to check whether the System Table was on the predecessor, and if it was (and has failed) to restart it
-	 * on this machine using local replicated state.
+	 * Called when the successor has changed. Used to check whether the System Table was on the predecessor, and if it was (and has failed) restart the System Table elsewhere.
 	 */
 	private void predecessorChangeEvent() {
 
@@ -619,6 +633,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		this.predecessor = chordNode.getPredecessor();
 
 		if (systemTableWasOnPredecessor){
+
 			//Check whether the System Table is still active.
 			boolean systemTableAlive = false;
 			try {
@@ -629,10 +644,56 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "The System Table is no longer accessible.");
 			}
 
+			/*
+			 * There is no guarantee this node has a replica of the System Table state. Obtain the list of replicas from
+			 * the locator server. There are a number of cases:
+			 * 
+			 * 1. This node holds a copy of System Table state. It can then apply to the locator server
+			 * 		to become the new System Table.
+			 * 2. Another active node holds a copy of the System Table state. This node should be informed of the failure. It can then
+			 * 		apply to the locator server itself.
+			 * 3. No active node has System Table state. Nothing can be done.
+			 */
 
 			if (!systemTableAlive){
-				// The System Table was on the predecessor and has now failed. It must be re-instantiated on this node.
-				systemTableRef.migrateSystemTableToLocalInstance(true, true);
+
+				/*
+				 * Obtain a reference to the locator servers if one is not already held.
+				 */
+				if (this.locatorServers == null){
+					H2oProperties persistedInstanceInformation = new H2oProperties(localMachineLocation);
+					persistedInstanceInformation.loadProperties();
+					try {
+						this.locatorServers = getLocatorServerReference(persistedInstanceInformation);
+					} catch (StartupException e) {
+						ErrorHandling.errorNoEvent("Failed to obtain a reference to the locator servers: " + e.getMessage());
+						return;
+					}
+				}
+
+				Set<String> stLocations = null;
+
+				try {
+					stLocations = locatorServers.getLocations();
+				} catch (IOException e) {
+					ErrorHandling.errorNoEvent("Failed to obtain a list of instances which hold System Table state: " + e.getMessage());
+					return;
+				}
+
+				boolean localMachineHoldsSystemTableState = false;
+				for (String location: stLocations){
+					DatabaseURL st = DatabaseURL.parseURL(location);
+					localMachineHoldsSystemTableState = st.equals(localMachineLocation);
+				}
+
+				if (localMachineHoldsSystemTableState){
+					//Re-instantiate the System Table on this node
+					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "A copy of the System Table state exists on the successor to the failed machine [" + this.localMachineLocation + "]." +
+							" It will be re-instantiated here.");
+					systemTableRef.migrateSystemTableToLocalInstance(true, true);
+				} else {
+					ErrorHandling.hardError("Currently no implemented way of recovering from System Table failure.");
+				}
 			}
 		}
 
@@ -994,7 +1055,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		boolean successful = false;
 
 		try {
-			successful = dl.commitLocators(this.localMachineLocation.getDbLocation());
+			successful = locatorServers.commitLocators(this.localMachineLocation.getDbLocation());
 		} catch (Exception e) {
 			successful = false;
 		}

@@ -53,7 +53,7 @@ public class SystemTableReplication extends Thread {
 		int attempts = 0;
 
 		do {
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempting to find database instance at " + hostname + ":" + port);
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempting to find database instance at " + hostname + ":" + port + ". Attempt " + (attempts+1) + " of " + 10);
 			try {
 				Thread.sleep(Settings.REPLICATOR_SLEEP_TIME);
 			} catch (InterruptedException e) {
