@@ -113,6 +113,15 @@ public class H2SimpleTest {
 		if (conn != null) {
 			conn.close();
 		}
+		
+		H2oProperties properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:db_data/test/scriptSimple"));
+
+		properties.createNewFile();
+		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
+		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		properties.setProperty("databaseName", "testDB");
+		properties.saveAndClose();
+		
 		conn = getConnection("jdbc:h2:db_data/test/scriptSimple;LOG=1;LOCK_TIMEOUT=50");
 	}
 	

@@ -658,6 +658,8 @@ public class MultiQueryTransactionTests extends TestBase{
 			server.shutdown();
 			server.stop();
 
+			TestBase.resetLocatorFile();
+			
 			server = Server.createTcpServer(new String[] { "-tcpPort", "9081", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test" });
 
 			server.start();

@@ -42,7 +42,7 @@ public class IndexTests{
 	 */
 	@Before
 	public void setUp() throws Exception {
-		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
+		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:mem:one";
 		//PersistentSystemTable.USERNAME = "sa";
 		//PersistentSystemTable.PASSWORD = "sa";
 
@@ -54,7 +54,7 @@ public class IndexTests{
 		
 		org.h2.Driver.load();
 
-		ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+		ca = DriverManager.getConnection("jdbc:h2:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 		cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 		sa = ca.createStatement();
@@ -74,7 +74,7 @@ public class IndexTests{
 				"INSERT INTO Person VALUES (3, 'Dharini Balasubramaniam', 2);" +
 		"INSERT INTO Person VALUES (4, 'Jon Lewis', 3);");
 
-		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
+		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:mem:one";
 		//PersistentSystemTable.USERNAME = "sa";
 		//PersistentSystemTable.PASSWORD = "sa";
 
@@ -146,6 +146,8 @@ public class IndexTests{
 	 */
 	@Test
 	public void checkTableSetID2(){
+
+		TestBase.resetLocatorFile();
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		try{
 			sa.execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");

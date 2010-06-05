@@ -209,7 +209,7 @@ public class Database implements DataHandler {
 
 	private User h2oSchemaUser; 
 	private Session h2oSession;
-
+	
 	private User h2oSystemUser;
 
 	private Session h2oSystemSession;
@@ -580,7 +580,7 @@ public class Database implements DataHandler {
 			} else {
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Database doesn't exist at: " + dataFileName);
 			}
-			
+
 			if (FileUtils.exists(dataFileName)) {
 				// if it is already read-only because ACCESS_MODE_DATA=r
 				readOnly = readOnly | FileUtils.isReadOnly(dataFileName);
@@ -653,7 +653,7 @@ public class Database implements DataHandler {
 		systemUser = new User(this, 0, Constants.DBA_NAME, true);
 		h2oSchemaUser = new User(this, 1, "H2O", true);
 		h2oSystemUser = new User(this, 1, "H2O", true);
-		
+
 		mainSchema = new Schema(this, 0, Constants.SCHEMA_MAIN, systemUser, true);
 		infoSchema = new Schema(this, -1, Constants.SCHEMA_INFORMATION, systemUser, true);
 
@@ -666,10 +666,10 @@ public class Database implements DataHandler {
 		h2oSystemUser.setAdmin(true);
 		systemSession = new Session(this, systemUser, ++nextSessionId);
 		h2oSession = new Session(this, h2oSchemaUser, ++nextSessionId);
-		
+
 		h2oSystemSession = new Session(this, h2oSystemUser, ++nextSessionId);
-		
-		
+
+
 		ObjectArray cols = new ObjectArray();
 		Column columnId = new Column("ID", Value.INT);
 		columnId.setNullable(false);
@@ -738,7 +738,7 @@ public class Database implements DataHandler {
 			 * Create or connect to a new System Table instance if this node already has tables on it.
 			 */
 			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Database already exists. No need to recreate the System Table.");
-			createSystemTable(true, systemTableRef.isSystemTableLocal(), false);
+			commitSystemTableCreation(true, systemTableRef.isSystemTableLocal(), false);
 		}
 
 		if ( records.size() > 0 ){
@@ -747,6 +747,16 @@ public class Database implements DataHandler {
 			for (int i = 0; i < records.size(); i++) {
 				MetaRecord rec = (MetaRecord) records.get(i);
 
+				if (rec.getSQL().startsWith("CREATE FORCE LINKED TABLE")) continue;
+				
+				try {
+					if (rec.getSQL().contains("H2O") && databaseRemote.getSystemTableLocation().equals(this.getDatabaseURL())){
+						System.out.println(this.databaseName + ": " + rec.getSQL());
+					}
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				rec.execute(this, systemSession, eventListener, proxyManager);
 			}
 
@@ -780,7 +790,7 @@ public class Database implements DataHandler {
 				e.printStackTrace();
 			}
 
-			
+
 		} else if (Constants.IS_H2O && !isManagementDB() && ( databaseExists && systemTableRef.isSystemTableLocal())){
 			/*
 			 * This is the System Table. Reclaim previously held state.
@@ -803,7 +813,7 @@ public class Database implements DataHandler {
 	 * @param persistedTablesExist
 	 * @param isStartup 
 	 */
-	private void createSystemTable(boolean databaseExists,
+	private void commitSystemTableCreation(boolean databaseExists,
 			boolean persistedTablesExist, boolean createTables) throws SQLException {
 		if (systemTableRef.isSystemTableLocal()){ // Create the System Table tables and immediately add local tables to this manager.
 
@@ -817,8 +827,8 @@ public class Database implements DataHandler {
 
 			systemTableRef.setSystemTable(systemTable);
 			databaseRemote.exportSystemTable(systemTableRef);
-			
-			databaseRemote.unlockLocator();
+
+			databaseRemote.commitSystemTableCreation();
 
 		} else { // Not a System Table -  Get a reference to the System Table.
 			systemTableRef.findSystemTable();
@@ -1247,7 +1257,7 @@ public class Database implements DataHandler {
 	 * @param session the session
 	 */
 	public synchronized void removeSession(Session session) {
-		
+
 		if (session != null) {
 			if (exclusiveSession == session) {
 				exclusiveSession = null;
@@ -1292,7 +1302,7 @@ public class Database implements DataHandler {
 		stopServer();
 		if (Constants.IS_H2O && !isManagementDB() && !fromShutdownHook){
 
-			
+
 			removeLocalDatabaseInstance();
 
 		}
@@ -2576,7 +2586,7 @@ public class Database implements DataHandler {
 	private void createH2OTables(boolean persistedSchemaTablesExist, boolean databaseExists) throws Exception{
 
 		if (!databaseExists){
-			createSystemTable(databaseExists, persistedSchemaTablesExist, true);
+			commitSystemTableCreation(databaseExists, persistedSchemaTablesExist, true);
 			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, " Created new System Table tables.");
 		}
 
@@ -2609,7 +2619,7 @@ public class Database implements DataHandler {
 	public boolean isLocal(DatabaseInstanceWrapper dbLocation) {
 		return dbLocation.getDatabaseInstance().equals(getLocalDatabaseInstance());
 	}
-	
+
 	/**
 	 * Examples:
 	 * <ul><li><code>//mem:management_db_9081</code></li>
@@ -2708,7 +2718,7 @@ public class Database implements DataHandler {
 	public DatabaseInstanceRemote getLocalDatabaseInstance() {
 		return databaseRemote.getLocalDatabaseInstance();
 	}
-	
+
 	/**
 	 * @return
 	 */
@@ -2757,6 +2767,6 @@ public class Database implements DataHandler {
 	}
 
 
-	
+
 
 }

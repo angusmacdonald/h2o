@@ -114,7 +114,7 @@ public class TestBase {
 		//		dlf.setProperties("testDB", "jdbc:h2:mem:one" + "+" + ChordRemote.currentPort);
 		//		
 
-		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"));
+		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:one"));
 		knownHosts.createNewFile();
 		knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
 		knownHosts.setProperty("databaseName", "testDB");
@@ -133,8 +133,37 @@ public class TestBase {
 		knownHosts.saveAndClose();
 
 
+		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"));
+		knownHosts.createNewFile();
+		knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		knownHosts.setProperty("databaseName", "testDB");
+		knownHosts.saveAndClose();
+
 	}
 
+
+	/**
+	 * This is done because the server doesn't release the original port when it is stopped programmatically.
+	 */
+	public static void resetLocatorFile() {
+		H2oProperties properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:db_data/test/scriptSimple"));
+
+		properties.createNewFile();
+		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
+		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		properties.setProperty("databaseName", "testDB");
+		properties.saveAndClose();
+		
+		properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"));
+
+		properties.createNewFile();
+		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
+		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		properties.setProperty("databaseName", "testDB");
+		properties.saveAndClose();
+		
+	}
+	
 	public static void setUpDescriptorFiles(String[] dbLocations, String descriptorLocation, String databaseName) {
 		//		DatabaseLocatorFile dlf = new DatabaseLocatorFile("testDB", "\\\\shell\\angus\\public_html\\databases"); 
 		//		

@@ -24,6 +24,7 @@ import org.h2.value.Value;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * Represents a single SQL statements.
@@ -200,7 +201,7 @@ public class CommandContainer extends Command {
 				updateCount = prepared.update();
 				session.setCurrentTransactionLocks(null);
 			} catch (SQLException e){
-				System.err.println("Transaction not found for query: " + prepared.getSQL());
+				ErrorHandling.errorNoEvent("Transaction not found for query: " + prepared.getSQL());
 				throw e;
 			}
 		}

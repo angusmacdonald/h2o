@@ -13,7 +13,7 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
 	//Unit tests.
-	H2oProperties.class,
+	//H2oProperties.class,
 	TransactionNameGenerator.class,
 	//Database Tests
 	SystemTableTests.class,

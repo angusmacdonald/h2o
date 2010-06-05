@@ -7,6 +7,8 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import org.h2.h2o.util.locator.messages.LockRequestResponse;
@@ -188,7 +190,7 @@ public class LocatorClientConnection {
 
 	public ReplicaLocationsResponse getDatabaseLocations() throws IOException{
 		setupSocketConnection();
-		Set<String> locations = new HashSet<String>();
+		List<String> locations = new LinkedList<String>();
 		ReplicaLocationsResponse response = null;
 
 		OutputStream os = null;
@@ -226,7 +228,7 @@ public class LocatorClientConnection {
 	public static void main(String[] args) throws InterruptedException {
 		Diagnostic.setLevel(DiagnosticLevel.FULL);
 		LocatorClientConnection lcc = new LocatorClientConnection("eigg", 29999);
-		Set<String> ls;
+		List<String> ls;
 		try {
 			ls = lcc.getDatabaseLocations().getLocations();
 

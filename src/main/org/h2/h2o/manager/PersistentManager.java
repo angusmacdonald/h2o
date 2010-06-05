@@ -9,6 +9,7 @@ import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
+import org.h2.h2o.autonomic.Settings;
 import org.h2.h2o.comms.ReplicaManager;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
@@ -98,7 +99,7 @@ public abstract class PersistentManager {
 		"manager_location INTEGER NOT NULL, " +
 		"PRIMARY KEY (table_id), " + 
 		"FOREIGN KEY (manager_location) REFERENCES " + connections + " (connection_id));";
-		
+
 		return sql;
 	}
 
@@ -199,6 +200,8 @@ public abstract class PersistentManager {
 	 * @return						Result of the update.
 	 */
 	public int addConnectionInformation(DatabaseURL dbURL, boolean isActive) throws SQLException{
+
+		System.err.println("Adding connection info on " + db.getDatabaseURL().getURLwithRMIPort() + ". Info being added: "+ dbURL.getURLwithRMIPort());
 		Session s = db.getSystemSession();
 		queryParser = new Parser(s, true);
 
@@ -221,6 +224,7 @@ public abstract class PersistentManager {
 
 		}
 
+		System.err.println(sql);
 		return executeUpdate(sql);
 
 	}
@@ -386,7 +390,7 @@ public abstract class PersistentManager {
 		String sql = "INSERT INTO " + tableManagerRelation + " VALUES (" + tableID + ", " + connectionID + ", " + active + ");";
 		return executeUpdate(sql);
 	}
-	
+
 	protected int removeTableManagerReplicaInformation(int tableID, int connectionID) throws SQLException {
 		String sql = "DELETE FROM " + tableManagerRelation + " WHERE table_id=" + tableID + " AND connection_id=" + connectionID + ";";
 		return executeUpdate(sql);
@@ -430,6 +434,7 @@ public abstract class PersistentManager {
 	}
 
 	protected LocalResult executeQuery(String query) throws SQLException{
+
 		sqlQuery = queryParser.prepareCommand(query);
 
 		return sqlQuery.executeQueryLocal(0);
@@ -459,7 +464,7 @@ public abstract class PersistentManager {
 				} catch (RemoteException e) {
 					e.printStackTrace();
 					failed.add(replica);
-					
+
 					if (this instanceof TableManager){
 						//Remove table replica information from the system table.
 						try {
@@ -564,9 +569,9 @@ public abstract class PersistentManager {
 				int tableID = getTableID(ti);
 
 				sql = "";
-				
+
 				if (removeReplicaInfo){
-				sql = "DELETE FROM " + replicaRelation + " WHERE table_id=" + tableID + ";";
+					sql = "DELETE FROM " + replicaRelation + " WHERE table_id=" + tableID + ";";
 				}
 				sql += "\nDELETE FROM " + tableRelation + " WHERE table_id=" + tableID + "; ";
 
@@ -598,9 +603,9 @@ public abstract class PersistentManager {
 		}
 
 		if (s == null) return false;
-		
+
 		queryParser = new Parser(s, true);
-		
+
 		return true;
 
 	}
@@ -612,32 +617,34 @@ public abstract class PersistentManager {
 	 */
 	public boolean addStateReplicaLocation(DatabaseInstanceWrapper databaseWrapper) throws RemoteException {
 
-		if (stateReplicaManager.size() < managerStateReplicationFactor + 1){ //+1 because the local copy counts as a replica.
+		if (Settings.METADATA_REPLICATION_ENABLED){
+			if (stateReplicaManager.size() < managerStateReplicationFactor + 1){ //+1 because the local copy counts as a replica.
 
-			//now replica state here.
-			try {
-				String query = "DROP REPLICA IF EXISTS ";
-				query += tableRelation + ", ";
-				query += (replicaRelation == null)? "": replicaRelation + ", ";
-				query += (tableManagerRelation == null)? "": tableManagerRelation + ", ";
-				query += (connectionRelation == null)? "": connectionRelation + ";";
-				databaseWrapper.getDatabaseInstance().executeUpdate(query, true);
-				
-				query = "CREATE REPLICA " + tableRelation + ", " + ((replicaRelation==null)? "": (replicaRelation + ", ")) + 
-				connectionRelation + ((tableManagerRelation == null)? "": (", " + tableManagerRelation)) + " FROM '" + db.getDatabaseURL().getOriginalURL() + "';";
-				databaseWrapper.getDatabaseInstance().executeUpdate(query, true);
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseWrapper.getDatabaseURL().getDbLocation());
+				//now replica state here.
+				try {
+					String query = "DROP REPLICA IF EXISTS ";
+					query += tableRelation + ", ";
+					query += (replicaRelation == null)? "": replicaRelation + ", ";
+					query += (tableManagerRelation == null)? "": tableManagerRelation + ", ";
+					query += (connectionRelation == null)? "": connectionRelation + ";";
+					databaseWrapper.getDatabaseInstance().executeUpdate(query, true);
 
-				stateReplicaManager.add(databaseWrapper);
-				
-				return true;
-			} catch (SQLException e) {
-				e.printStackTrace();
-				ErrorHandling.errorNoEvent("Failed to replicate manager/table state onto: " + databaseWrapper.getDatabaseURL().getDbLocation());
-			} catch (Exception e) {
-				throw new RemoteException(e.getMessage());
-			} 
+					query = "CREATE REPLICA " + tableRelation + ", " + ((replicaRelation==null)? "": (replicaRelation + ", ")) + 
+					connectionRelation + ((tableManagerRelation == null)? "": (", " + tableManagerRelation)) + " FROM '" + db.getDatabaseURL().getOriginalURL() + "';";
+					databaseWrapper.getDatabaseInstance().executeUpdate(query, true);
+					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseWrapper.getDatabaseURL().getDbLocation());
 
+					stateReplicaManager.add(databaseWrapper);
+
+					return true;
+				} catch (SQLException e) {
+					e.printStackTrace();
+					ErrorHandling.errorNoEvent("Failed to replicate manager/table state onto: " + databaseWrapper.getDatabaseURL().getDbLocation());
+				} catch (Exception e) {
+					throw new RemoteException(e.getMessage());
+				} 
+
+			}
 		}
 		return false;
 	}
@@ -658,7 +665,7 @@ public abstract class PersistentManager {
 		H2OLocatorInterface dl = new H2OLocatorInterface(databaseName, descriptorLocation);
 
 		boolean successful = dl.setLocations(stateReplicaManager.getReplicaLocations());
-		
+
 		if (!successful){
 			ErrorHandling.errorNoEvent("Didn't successfully write new System Replica locations to a majority of locator servers.");
 		}

@@ -3,6 +3,7 @@ package org.h2.test.h2o;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 
 import org.h2.engine.Constants;
@@ -260,7 +261,7 @@ public class LocatorTests{
 		 * Get locations.
 		 */
 		try {
-			Set<String> locations = locatorInterface.getLocations();
+			List<String> locations = locatorInterface.getLocations();
 
 			assertEquals(replicaLocations.length, locations.size());
 
@@ -605,7 +606,7 @@ public class LocatorTests{
 		 * Get locations.
 		 */
 		try {
-			Set<String> locations = locatorInterface.getLocations();
+			List<String> locations = locatorInterface.getLocations();
 
 			assertEquals(replicaLocations.length, locations.size());
 

@@ -62,7 +62,7 @@ public class RestartTests {
 		ls = new LocatorServer(29999, "junitLocator");
 		ls.createNewLocatorFile();
 		ls.start();
-		
+		TestBase.resetLocatorFile();
 		server = Server.createTcpServer(new String[] { "-tcpPort", "9081", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test" });
 		server.start();
 
@@ -111,7 +111,7 @@ public class RestartTests {
 	public void basicRestart() throws ClassNotFoundException{
 	
 		try {
-
+			TestBase.resetLocatorFile();
 			shutdownServer();
 
 			startServerAndGetConnection();

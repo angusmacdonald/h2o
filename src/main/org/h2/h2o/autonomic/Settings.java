@@ -41,6 +41,12 @@ public class Settings {
 	 * database system. It may fail because a lock is held on creating the
 	 * System Table, or because no System Table instances are active.
 	 */
-	public static int ATTEMPTS_TO_CREATE_OR_JOIN_SYSTEM = 5;
+	public static int ATTEMPTS_TO_CREATE_OR_JOIN_SYSTEM = 20;
+	
+	/**
+	 * Whether the system is replicating the meta-data of the System Table
+	 * and Table Managers.
+	 */
+	public static final boolean METADATA_REPLICATION_ENABLED = true;
 
 }

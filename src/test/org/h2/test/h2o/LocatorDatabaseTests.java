@@ -10,18 +10,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.Map.Entry;
 
 import org.h2.engine.Constants;
-import org.h2.h2o.autonomic.Settings;
 import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.remote.ChordRemote;
-import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.H2oProperties;
 import org.h2.h2o.util.locator.H2OLocatorInterface;
@@ -40,7 +35,7 @@ import uk.ac.standrews.cs.nds.util.Processes;
 
 
 /**
- * Class which conducts tests on 10 in-memory databases running at the same time.
+ * Class which conducts tests on <i>n</i> in-memory databases running at the same time.
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
@@ -49,7 +44,7 @@ public class LocatorDatabaseTests extends TestBase {
 	private static final String BASEDIR = "db_data/multiprocesstests/";
 
 	private LocatorServer ls;
-	private static String[] dbs =  {"two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen"};
+	private static String[] dbs =  {"two", "three", "four"};//, "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen"};
 	//"sixteen", "seventeen", "eighteen", "nineteen", "twenty", "twenty-one", "twenty-one", "twenty-two", "twenty-three", "twenty-four", "twenty-five", "twenty-six", "twenty-seven"};
 	private String[] fullDbName = null;
 
@@ -85,6 +80,7 @@ public class LocatorDatabaseTests extends TestBase {
 	 */
 	@Before
 	public void setUp() throws Exception {
+
 		ls = new LocatorServer(29999, "junitLocator");
 		ls.createNewLocatorFile();
 
@@ -106,10 +102,10 @@ public class LocatorDatabaseTests extends TestBase {
 
 		startDatabases();
 
-
+		sleep(5000);
 		createConnectionsToDatabases();
+		sleep(5000);
 
-		Thread.sleep(5000);
 
 		//		sas = new Statement[dbs.length + 1];
 		//
@@ -131,7 +127,7 @@ public class LocatorDatabaseTests extends TestBase {
 		killDatabases();
 
 		try {
-			Thread.sleep(1000);
+			sleep(1000);
 		} catch (InterruptedException e1) {};
 
 		deleteDatabaseData();
@@ -186,27 +182,26 @@ public class LocatorDatabaseTests extends TestBase {
 		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
 		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
 		sql += "INSERT INTO TEST VALUES(2, 'World');";
-
+		sleep(10000);
 		try {
-			Thread.sleep(5000);
 			executeUpdate(sql);
 
 			assertTestTableExists(2);
-			assertMetaDataExists(connections[0], 1);
+			assertMetaDataExists(getSystemTableConnection(), 1);
 
-			Thread.sleep(5000);
+			sleep(10000);
 
 			/*
 			 * Kill off databases.
 			 */
 			killDatabases();
 
-			/*
-			 * Wait, then restart all databases.
-			 */
-			Thread.sleep(5000);
+			sleep(10000);
 
 			startDatabases();
+
+			sleep(10000);
+
 			createConnectionsToDatabases();
 
 			assertTestTableExists(2);
@@ -215,6 +210,12 @@ public class LocatorDatabaseTests extends TestBase {
 			e.printStackTrace();
 			fail("Unexpected exception");
 		}
+	}
+
+
+	private void sleep(int time) throws InterruptedException {
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "About to sleep for " + time/1000 + " seconds.");
+		Thread.sleep(time);
 	}
 
 	/**
@@ -246,26 +247,26 @@ public class LocatorDatabaseTests extends TestBase {
 		sql += "INSERT INTO TEST VALUES(2, 'World');";
 
 		try {
-			Thread.sleep(5000);
+			sleep(5000);
 
 			executeUpdate(sql);
 
 			assertTestTableExists(2);
 			assertMetaDataExists(connections[0], 1);
 
-			Thread.sleep(4000);
+			sleep(5000);
 
 			/*
 			 * Kill off databases.
 			 */
 			killDatabases();
 
-			Thread.sleep(4000);
+			sleep(4000);
 
 			/*
 			 * Start up all the instances which aren't System Tables.
 			 */
-			Set<String> nonSystemTableInstances = findNonSystemTableInstances();
+			List<String> nonSystemTableInstances = findNonSystemTableInstances();
 			String singleInstance = nonSystemTableInstances.toArray(new String[0])[0];
 
 			startDatabases(nonSystemTableInstances);
@@ -289,22 +290,25 @@ public class LocatorDatabaseTests extends TestBase {
 		sql += "INSERT INTO TEST VALUES(2, 'World');";
 
 		try {
-			Thread.sleep(5000);
+			sleep(5000);
 			/*
 			 * Create test table.
 			 */
 			executeUpdate(sql);
 
 			assertTestTableExists(2);
-			assertMetaDataExists(connections[0], 1);
+			assertMetaDataExists(getSystemTableConnection(), 1);
 
-			Thread.sleep(4000);
+			sleep(4000);
 			/*
 			 * Kill off databases.
 			 */
 			killDatabases();
 
-			Thread.sleep(4000);
+
+			printSystemTableInstances();
+
+			sleep(4000);
 
 			/*
 			 * Start up all the instances which aren't System Tables.
@@ -316,10 +320,8 @@ public class LocatorDatabaseTests extends TestBase {
 			/*
 			 * Sleep, then start up all System Table instances.
 			 */
-			Thread.sleep(1000);
-			for (String instance: findSystemTableInstances()){
-				startDatabase(instance);
-			}
+			sleep(10000);
+			startDatabase(findSystemTableInstance());
 
 
 			createConnectionsToDatabases();
@@ -330,6 +332,14 @@ public class LocatorDatabaseTests extends TestBase {
 			fail("Unexpected exception.");
 		}
 
+	}
+
+	private void printSystemTableInstances() {
+		List<String> sts = findSystemTableInstances();
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Printing list of valid System Table Instances: ");
+		for (String s: sts){
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Instance: " + s);
+		}
 	}
 
 	/**
@@ -345,7 +355,7 @@ public class LocatorDatabaseTests extends TestBase {
 		sql += "INSERT INTO TEST VALUES(2, 'World');";
 
 		try {
-			Thread.sleep(5000);
+			sleep(5000);
 			/*
 			 * Create test table.
 			 */
@@ -354,8 +364,8 @@ public class LocatorDatabaseTests extends TestBase {
 			assertTestTableExists(2);
 			assertMetaDataExists(connections[0], 1);
 
-			Thread.sleep(4000);
-			
+			sleep(4000);
+
 			/*
 			 * Kill off the System Table process. 
 			 */
@@ -364,8 +374,8 @@ public class LocatorDatabaseTests extends TestBase {
 				break;
 			}
 
-			Thread.sleep(10000);
-			
+			sleep(10000);
+
 			createConnectionsToDatabases();
 
 			assertTrue(assertTestTableExists(2));
@@ -412,11 +422,11 @@ public class LocatorDatabaseTests extends TestBase {
 		s.executeUpdate(sql);
 	}
 
-	
+
 	/**
 	 * Get a set of all database instances which hold system table state
 	 */
-	private Set<String> findSystemTableInstances(){
+	private List<String> findSystemTableInstances(){
 		H2oProperties persistedInstanceInformation = new H2oProperties(DatabaseURL.parseURL(fullDbName[0]));
 		persistedInstanceInformation.loadProperties();
 
@@ -426,7 +436,7 @@ public class LocatorDatabaseTests extends TestBase {
 		String descriptorLocation = persistedInstanceInformation.getProperty("descriptor");
 		String databaseName = persistedInstanceInformation.getProperty("databaseName");
 
-		Set<String> locations = null;
+		List<String> locations = null;
 
 		try {
 			H2OLocatorInterface dl = new H2OLocatorInterface(databaseName, descriptorLocation);
@@ -438,20 +448,46 @@ public class LocatorDatabaseTests extends TestBase {
 		/*
 		 * Parse these locations to ensure they are of the correct form.
 		 */
-		Set<String> parsedLocations = new HashSet<String>();
+		List<String> parsedLocations = new LinkedList<String>();
 		for (String l: locations){
 			parsedLocations.add(DatabaseURL.parseURL(l).getURL());
 		}
 
 		return parsedLocations;
 	}
+
+	private String findSystemTableInstance() {
+		return findSystemTableInstances().get(0);
+	}
+
+	private Connection getSystemTableConnection() {
+		for (String instance: findSystemTableInstances()){
+			DatabaseURL dbURL = DatabaseURL.parseURL(instance);
+			for (int i = 0; i < connections.length; i++){
+				String connectionURL;
+				try {
+					connectionURL = connections[i].getMetaData().getURL();
+					if (connectionURL.equals(dbURL.getURL())){
+						return connections[i];
+					}
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+
+
+		}
+
+		return null; //none found.
+	}
+
 	/**
 	 * Get a set of all database instances which don't hold System Table state.
 	 */
-	private Set<String> findNonSystemTableInstances(){
-		Set<String> systemTableInstances = findSystemTableInstances();
+	private List<String> findNonSystemTableInstances(){
+		List<String> systemTableInstances = findSystemTableInstances();
 
-		Set<String> nonSystemTableInstances = new HashSet<String>();
+		List<String> nonSystemTableInstances = new LinkedList<String>();
 
 		for (String instance: this.fullDbName){
 
@@ -529,7 +565,7 @@ public class LocatorDatabaseTests extends TestBase {
 	private boolean assertTestTableExists(Connection connnection, int expectedEntries) throws SQLException {
 		Statement s = null;
 		ResultSet rs = null;
-		
+
 		/*
 		 * Query database.
 		 */
@@ -560,7 +596,7 @@ public class LocatorDatabaseTests extends TestBase {
 			if (rs != null) rs.close();
 			if (s != null) s.close();
 		}
-		
+
 		return true;
 	}
 
@@ -597,7 +633,7 @@ public class LocatorDatabaseTests extends TestBase {
 	 * Start all of the databases specified.
 	 * @param databasesToStart	The databases that will be started by this method.
 	 */
-	private void startDatabases(Set<String> databasesToStart) {
+	private void startDatabases(List<String> databasesToStart) {
 		for (String instance: databasesToStart){
 			startDatabase(instance);
 		}
@@ -656,7 +692,7 @@ public class LocatorDatabaseTests extends TestBase {
 		try {
 			return DriverManager.getConnection(connectionString, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 		} catch (SQLException e) {
-			e.printStackTrace();
+			ErrorHandling.exceptionError(e, "Trying to connect to: " + connectionString);
 			return null;
 		}
 	}
@@ -669,7 +705,7 @@ public class LocatorDatabaseTests extends TestBase {
 			process.destroy();
 		}
 	}
-	
+
 	private void killDatabase(String instance) {
 		Process p = processes.get(instance);
 		if (p == null){

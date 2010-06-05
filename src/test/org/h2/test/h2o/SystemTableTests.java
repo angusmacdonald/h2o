@@ -44,16 +44,7 @@ public class SystemTableTests {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:one"));
-		knownHosts.createNewFile();
-		knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
-		knownHosts.setProperty("databaseName", "testDB");
-		knownHosts.saveAndClose();
-		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"));
-		knownHosts.createNewFile();
-		knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
-		knownHosts.setProperty("databaseName", "testDB");
-		knownHosts.saveAndClose();
+
 
 	}
 
@@ -69,6 +60,8 @@ public class SystemTableTests {
 		//		PersistentSystemTable.PASSWORD = "sa";
 
 		TestBase.setUpDescriptorFiles();
+
+
 		ls = new LocatorServer(29999, "junitLocator");
 		ls.createNewLocatorFile();
 		ls.start();
@@ -108,12 +101,6 @@ public class SystemTableTests {
 		Server server = null;
 
 		try {
-
-			H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"));
-			knownHosts.createNewFile();
-			knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
-			knownHosts.setProperty("databaseName", "testDB");
-			knownHosts.saveAndClose();
 
 
 			server = Server.createTcpServer(new String[] { "-tcpPort", "9081", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test" });
@@ -160,6 +147,8 @@ public class SystemTableTests {
 		// start the server, allows to access the database remotely
 		Server server = null;
 		try {
+			TestBase.resetLocatorFile();
+			
 			server = Server.createTcpServer(new String[] { "-tcpPort", "9081", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test" });
 			server.start();
 
@@ -174,13 +163,16 @@ public class SystemTableTests {
 
 			server.shutdown();
 			server.stop();
-
+			
+			TestBase.resetLocatorFile();
+			
 			server = Server.createTcpServer(new String[] { "-tcpPort", "9081", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test" });
 
 			server.start();
 
 			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-
+			TestBase.resetLocatorFile();
+			
 			sa = conn.createStatement();
 
 			try{
@@ -226,6 +218,7 @@ public class SystemTableTests {
 
 
 	}
+
 
 	//	/**
 	//	 * Tests that a database is able to connect to a remote database and establish linked table connections

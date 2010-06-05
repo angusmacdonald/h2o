@@ -641,8 +641,7 @@ public class CreateReplica extends SchemaCommand {
 
 			rs.close();
 		} catch (SQLException e) {
-			System.err.println("Failed to fill replica.");
-			e.printStackTrace();
+			ErrorHandling.exceptionError(e, "Failed to fill replica.");
 		} finally {
 			JdbcUtils.closeSilently(stat);
 		}
@@ -959,8 +958,7 @@ public class CreateReplica extends SchemaCommand {
 				try {
 					whereDataWillBeTakenFrom = dm.getLocation().getOriginalURL();
 				} catch (MovedException e) {
-					e.printStackTrace();
-					System.err.println("FIND NEW Table Manager LOCATION AT THIS POINT.");//TODO find
+					e.printStackTrace(); //TODO find new table manager location at this point.
 				}
 			}
 		}

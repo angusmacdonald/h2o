@@ -71,11 +71,11 @@ public class StartDatabaseInstance extends Thread {
 				e1.printStackTrace();
 			}
 
-//			try {
-//				this.connection = DriverManager.getConnection(connectionString, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-//			} catch (SQLException e) {
-//				e.printStackTrace();
-//			}
+			try {
+				this.connection = DriverManager.getConnection(connectionString, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
 		}
 
 		while (isRunning()){

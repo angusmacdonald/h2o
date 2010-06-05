@@ -8,6 +8,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import org.h2.h2o.util.locator.messages.LockRequestResponse;
@@ -61,7 +63,7 @@ public class LocatorState {
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Reader reading:");
 
-		Set<String> locations = new HashSet<String>();
+		List<String> locations = new LinkedList<String>();
 
 		try {
 			BufferedReader input = new BufferedReader(new FileReader(locatorFile));
@@ -82,6 +84,7 @@ public class LocatorState {
 		}
 
 
+		System.err.println("Update count: " + updateCount);
 		ReplicaLocationsResponse response = new ReplicaLocationsResponse(locations, updateCount);
 
 
@@ -157,6 +160,7 @@ public class LocatorState {
 			databaseWithLock = requestingDatabase;
 		}
 
+		System.err.println("Update count: " + updateCount);
 		LockRequestResponse response = new LockRequestResponse(updateCount, success);
 
 		stopWrite();

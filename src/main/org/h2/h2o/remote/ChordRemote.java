@@ -12,6 +12,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.ExportException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Random;
@@ -160,7 +161,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		 * repeatedly in a short space of time.
 		 */
 
-		Set<String> databaseInstances = null;
+		List<String> databaseInstances = null;
 
 		while (!connected && attempts < Settings.ATTEMPTS_TO_CREATE_OR_JOIN_SYSTEM){
 			try {
@@ -221,7 +222,13 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 					}
 
 					if (locked){
+						String chordPort = persistedInstanceInformation.getProperty("chordPort");
+
 						int portToUse = currentPort++;
+						if (chordPort!=null){
+							Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Obtained chord port from disk: " + chordPort);
+							portToUse = Integer.parseInt(chordPort);
+						}
 
 						connected = startChordRing(localMachineLocation.getHostname(), portToUse,
 								localMachineLocation);
@@ -335,7 +342,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	 * Try to join an existing chord ring.
 	 * @return True if a connection was successful; otherwise false.
 	 */
-	private boolean attemptToJoinChordRing(H2oProperties persistedInstanceInformation, DatabaseURL localMachineLocation, Set<String> databaseInstances) {
+	private boolean attemptToJoinChordRing(H2oProperties persistedInstanceInformation, DatabaseURL localMachineLocation, List<String> databaseInstances) {
 
 
 		/*
@@ -344,7 +351,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		for (String url: databaseInstances){
 			DatabaseURL instanceURL = DatabaseURL.parseURL(url);
 
-			/*
+/*
 			 * Check first that the location isn't the local database instance (currently running).
 			 */
 			if (instanceURL.equals(localMachineLocation)) continue;
@@ -354,6 +361,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 			int portToJoinOn = 0;
 			if (chordPort!=null){
+				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Obtained chord port from disk: " + chordPort);
 				portToJoinOn = Integer.parseInt(chordPort);
 			} else {
 				portToJoinOn = currentPort++;
@@ -451,6 +459,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		try {
 			return getDatabaseInstanceAt(dbURL.getHostname(), dbURL.getRMIPort());
 		} catch (NotBoundException e) {
+			ErrorHandling.errorNoEvent("Local instance of database " + dbURL + " not bound at " + dbURL.getRMIPort() + "." +
+					" Request made by " + localMachineLocation.getURLwithRMIPort());
 			e.printStackTrace();
 			return null;
 		}
@@ -551,12 +561,12 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		while(!connected && attempts < Settings.ATTEMPTS_AFTER_BIND_EXCEPTIONS){ //only have multiple attempts if there is a bind exception. otherwise this just returns false.
 			try {
 				chordNode = new ChordNodeImpl(localChordAddress, knownHostAddress);
-
 			} catch (ConnectException e){ //database instance we're trying to connect to doesn't exist.
+				//e.printStackTrace();
 				ErrorHandling.errorNoEvent("Failed to connect to chord node on + " + localHostname + ":" + rmiPort + " known host: " + remoteHostname + ":" + remotePort);
 				return false;
 			} catch (ExportException e) { //bind exception (most commonly nested in ExportException
-
+				
 				if (attempts > 50){
 					ErrorHandling.errorNoEvent("Failed to connect to chord ring with known host: " + remoteHostname + ":" + 
 							remotePort + ", on address " + localHostname + ":" + rmiPort + ".");
@@ -574,6 +584,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				connected = true;
 			}
 			if (!connected) localChordAddress = new InetSocketAddress(localHostname, rmiPort++);
+			
 			attempts++;
 		}
 
@@ -671,7 +682,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 					}
 				}
 
-				Set<String> stLocations = null;
+				List<String> stLocations = null;
 
 				try {
 					stLocations = locatorServers.getLocations();
@@ -682,6 +693,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 				boolean localMachineHoldsSystemTableState = false;
 				for (String location: stLocations){
+					System.out.println("ST Locations: " + location);
 					DatabaseURL st = DatabaseURL.parseURL(location);
 					localMachineHoldsSystemTableState = st.equals(localMachineLocation);
 				}
@@ -1049,9 +1061,11 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	}
 
 	/**
+	 * Called when the local database has been created, has started an ST, and is ready to receive requests.
 	 * 
+	 * <p>The system will start throwing errors about meta-tables not existing if this is called too soon.
 	 */
-	public void unlockLocator() {
+	public void commitSystemTableCreation() {
 		boolean successful = false;
 
 		try {

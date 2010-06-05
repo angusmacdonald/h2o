@@ -145,6 +145,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 			command = parser.prepareCommand(sql);
 		}
 
+		System.err.println("User: "+ parser.getSession().getUser().getName());
 		int result = command.executeUpdate(false);
 		command.close();
 

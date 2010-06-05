@@ -1,12 +1,13 @@
 package org.h2.h2o.util.locator.messages;
 
+import java.util.List;
 import java.util.Set;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class ReplicaLocationsResponse {
-	private Set<String> locations;
+	private List<String> locations;
 	private int updateCount;
 	
 	
@@ -14,7 +15,7 @@ public class ReplicaLocationsResponse {
 	 * @param locations
 	 * @param updateCount
 	 */
-	public ReplicaLocationsResponse(Set<String> locations, int updateCount) {
+	public ReplicaLocationsResponse(List<String> locations, int updateCount) {
 		super();
 		this.locations = locations;
 		this.updateCount = updateCount;
@@ -23,7 +24,7 @@ public class ReplicaLocationsResponse {
 	/**
 	 * @return the locations
 	 */
-	public Set<String> getLocations() {
+	public List<String> getLocations() {
 		return locations;
 	}
 	/**

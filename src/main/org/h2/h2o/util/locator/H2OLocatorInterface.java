@@ -76,7 +76,7 @@ public class H2OLocatorInterface {
 	 * @return	Database URLs represented as strings, where system table state is stored.
 	 * @throws IOException	Thrown if the method was unable to connect to a locator server.
 	 */
-	public Set<String> getLocations() throws IOException{
+	public List<String> getLocations() throws IOException{
 
 		ReplicaLocationsResponse majorityResponse = null;
 		List<ReplicaLocationsResponse> resultList = new LinkedList<ReplicaLocationsResponse>();

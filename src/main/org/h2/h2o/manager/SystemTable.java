@@ -89,7 +89,6 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 
 		try {
 			inMemory.addConnectionInformation(databaseURL, remoteDatabase);
-
 			return persisted.addConnectionInformation(databaseURL, remoteDatabase);
 		} catch (SQLException e) {
 			e.printStackTrace();
