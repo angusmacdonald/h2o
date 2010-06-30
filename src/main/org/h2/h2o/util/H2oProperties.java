@@ -14,6 +14,10 @@ import java.util.Set;
 
 import org.junit.Test;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
+
 /**
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
@@ -86,10 +90,16 @@ public class H2oProperties {
 	public void createNewFile() {
 		removePropertiesFile();
 
-		File f = new File(propertiesFileLocation);
+		File f = new File("config");
+		if (!f.exists()){
+			f.mkdir();
+		}
+		
+		f = new File(propertiesFileLocation);
 		try {
 			f.createNewFile();
 		} catch (IOException e) {
+			ErrorHandling.exceptionError(e, "Creation of properties file failed at " + propertiesFileLocation + ".");
 			e.printStackTrace();
 		}
 

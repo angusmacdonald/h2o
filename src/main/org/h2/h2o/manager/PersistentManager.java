@@ -201,7 +201,7 @@ public abstract class PersistentManager {
 	 */
 	public int addConnectionInformation(DatabaseURL dbURL, boolean isActive) throws SQLException{
 
-		System.err.println("Adding connection info on " + db.getDatabaseURL().getURLwithRMIPort() + ". Info being added: "+ dbURL.getURLwithRMIPort());
+		//System.err.println("Adding connection info on " + db.getDatabaseURL().getURLwithRMIPort() + ". Info being added: "+ dbURL.getURLwithRMIPort());
 		Session s = db.getSystemSession();
 		queryParser = new Parser(s, true);
 
@@ -224,7 +224,7 @@ public abstract class PersistentManager {
 
 		}
 
-		System.err.println(sql);
+		//System.err.println(sql);
 		return executeUpdate(sql);
 
 	}

@@ -28,7 +28,7 @@ public class LocatorServer extends Thread{
 	 */
 	public LocatorServer(int port, String databaseName) {
 		this.port = port;
-		locatorFile = new LocatorState("config" + File.separator + databaseName + ".locator");
+		locatorFile = new LocatorState("config" + File.separator + databaseName + port + ".locator");
 	}
 
 

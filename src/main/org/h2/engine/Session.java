@@ -515,7 +515,7 @@ public class Session extends SessionWithState {
 			unlinkMap = null;
 		}
 		
-		if (!applicationAutoCommit && currentTransactionLocks != null && !ddl && !hasAlreadyCommittedQueryProxy){
+		if (currentTransactionLocks != null && !ddl && !hasAlreadyCommittedQueryProxy){
 			currentTransactionLocks.commit(true);
 			currentTransactionLocks = null;
 		}
@@ -594,7 +594,7 @@ public class Session extends SessionWithState {
 				cleanTempTables(true);
 				this.user.sessions --;
 				
-				if (this.user.sessions == 0){
+				if (this.user.sessions == 0 && this.getDatabase().getSystemSession().getUser().sessions == 0){
 				IDatabaseRemote cr = database.getRemoteInterface();
 				cr.shutdown();
 				database.removeSession(this);

@@ -33,8 +33,9 @@ public class H2OLocatorInterface {
 	 * @param databaseName		Name of the database being connected to.
 	 * @param descriptorURL		Location of the descriptor file.
 	 * @throws IOException
+	 * @throws StartupException 
 	 */
-	public H2OLocatorInterface(String databaseName, String descriptorURL) throws IOException{
+	public H2OLocatorInterface(String databaseName, String descriptorURL) throws IOException, StartupException{
 		DatabaseDescriptorFile descriptor = new DatabaseDescriptorFile(descriptorURL);
 		this.locatorLocations = descriptor.getLocatorLocations();
 		connectToLocators();
@@ -231,7 +232,6 @@ public class H2OLocatorInterface {
 		String host = "";
 		int port = 0;
 
-
 		try{
 			String[] locatorLocatonAddress = locatorLocation.split(":");
 
@@ -240,6 +240,7 @@ public class H2OLocatorInterface {
 
 
 		} catch (Exception e){
+			e.printStackTrace();
 			throw new IOException("Failed to parse locator location from database descriptor. Ensure the descriptor file lists locators as host:port combinations.");
 		}
 		LocatorClientConnection lcc = new LocatorClientConnection(host, port);

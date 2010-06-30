@@ -188,14 +188,15 @@ public class QueryProxyManager {
 
 
 		if (Diagnostic.getLevel() == DiagnosticLevel.FULL){
-			System.out.println("\tQueries in transaction (on DB at " + this.localDatabase.getDatabaseURL().getRMIPort() + ": '" + transactionName + "'):");
-			if (queries != null){
-				for (String query: queries){
-					if (query.equals("")) continue;
-					System.out.println("\t\t" + query);
+			if (this.localDatabase.getDatabaseURL().getRMIPort() > 0){
+				System.out.println("\tQueries in transaction (on DB at " + this.localDatabase.getDatabaseURL().getRMIPort() + ": '" + transactionName + "'):");
+				if (queries != null){
+					for (String query: queries){
+						if (query.equals("")) continue;
+						System.out.println("\t\t" + query);
+					}
 				}
 			}
-			
 		}
 
 		/*

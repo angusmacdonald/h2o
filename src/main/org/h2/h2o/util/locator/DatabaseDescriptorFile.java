@@ -1,12 +1,16 @@
 package org.h2.h2o.util.locator;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.Date;
 import java.util.Properties;
+
+import org.h2.h2o.remote.StartupException;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
@@ -41,15 +45,33 @@ public class DatabaseDescriptorFile extends PropertiesWrapper {
 		this.properties = new Properties();
 	}
 
-	public String[] getLocatorLocations(){
-		try {
-			URL url = new URL(propertiesFileLocation);
-			InputStreamReader isr = new InputStreamReader(url.openStream());
+	public String[] getLocatorLocations() throws StartupException{
 
-			properties.load(isr);
-			
-		} catch (IOException e) {
-			e.printStackTrace();
+		if (propertiesFileLocation.startsWith("http:")){ //Parse URL, request file from webpage.
+
+			try {
+				URL url = new URL(propertiesFileLocation);
+				InputStreamReader isr = new InputStreamReader(url.openStream());
+
+				properties.load(isr);
+
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} else {  //Try to open the file from disk.
+			File f = new File(propertiesFileLocation);
+			FileInputStream fis;
+			try {
+				fis = new FileInputStream(f);
+				properties.load(fis);
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+				throw new StartupException(e.getMessage());
+			} catch (IOException e) {
+				e.printStackTrace();
+				throw new StartupException(e.getMessage());
+			}
+
 		}
 
 		String locatorLocations = properties.getProperty(LOCATORLOCATIONS);

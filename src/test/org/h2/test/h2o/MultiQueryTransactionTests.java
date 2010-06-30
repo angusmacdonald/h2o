@@ -573,6 +573,69 @@ public class MultiQueryTransactionTests extends TestBase{
 		} 
 	}
 
+//	/**
+//	 * Tests that prepared statements work in the system where no replication is involved.
+//	 */
+//	@Test
+//	public void testPreparedStatementsMultipleTransactions(){
+//
+//		PreparedStatement mStmt = null;
+//		try
+//		{
+//			Connection cc = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+//			
+//			cc.setAutoCommit(false);
+//			mStmt = cc.prepareStatement( "CREATE TABLE PUBLIC.TEST5 (ID INT, NAME VARCHAR(255));" );
+//
+//
+//			mStmt.execute();
+//
+//			cc.commit();
+//			
+//			cc.close();
+//			
+//			while (!cc.isClosed()){};
+//			
+//		} catch ( SQLException ex ) {
+//			ex.printStackTrace();
+//			fail("Unexpected SQL Exception was thrown. Not cool.");
+//		} 
+//		
+//		
+//		mStmt = null;
+//		try
+//		{
+//
+//			
+//			mStmt = ca.prepareStatement( "insert into PUBLIC.TEST5 (id,name) values (?,?)" );
+//
+//
+//			for (int i = 3; i < 100; i++){
+//				mStmt.setInt(1, i);
+//				mStmt.setString(2, "helloNumber" + i);
+//				mStmt.addBatch();
+//			}
+//
+//			mStmt.executeBatch();
+//
+//			int[] pKey = new int[100];
+//			String[] secondCol = new String[100];
+//
+//			pKey[0] = 1; pKey[1] = 2;
+//			secondCol[0] = "Hello"; secondCol[1] = "World";
+//
+//			TestQuery test2query = createMultipleInsertStatements("TEST5", pKey, secondCol, 3);
+//
+//			sa.execute("SELECT LOCAL * FROM PUBLIC.TEST5 ORDER BY ID;");
+//
+//			validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
+//
+//		} catch ( SQLException ex ) {
+//			ex.printStackTrace();
+//			fail("Unexpected SQL Exception was thrown. Not cool.");
+//		} 
+//	}
+	
 	/**
 	 * Tests that prepared statements work in the system where replication is involved.
 	 */

@@ -17,6 +17,7 @@ import java.util.Map;
 import org.h2.engine.Constants;
 import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.remote.ChordRemote;
+import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.H2oProperties;
 import org.h2.h2o.util.locator.H2OLocatorInterface;
@@ -442,6 +443,8 @@ public class LocatorDatabaseTests extends TestBase {
 			H2OLocatorInterface dl = new H2OLocatorInterface(databaseName, descriptorLocation);
 			locations = dl.getLocations();
 		} catch (IOException e) {
+			fail("Failed to find System Table locations.");
+		} catch (StartupException e) {
 			fail("Failed to find System Table locations.");
 		}
 

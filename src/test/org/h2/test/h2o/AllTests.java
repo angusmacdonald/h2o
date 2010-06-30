@@ -1,6 +1,5 @@
 package org.h2.test.h2o;
 
-import org.h2.h2o.util.H2oProperties;
 import org.h2.h2o.util.TransactionNameGenerator;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -24,6 +23,7 @@ import org.junit.runners.Suite;
 	MultiQueryTransactionTests.class, 
 	RestartTests.class,
 	H2SimpleTest.class,
+	WrapperTests.class,
 	LocatorTests.class,
 	LocatorDatabaseTests.class,
 	ChordTests.class

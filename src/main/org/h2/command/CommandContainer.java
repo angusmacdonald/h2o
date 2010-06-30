@@ -8,16 +8,12 @@ package org.h2.command;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.Set;
 
 import org.h2.command.dml.Select;
-import org.h2.engine.Constants;
 import org.h2.expression.Parameter;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.QueryProxyManager;
-import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.result.LocalResult;
-import org.h2.table.Table;
 import org.h2.test.h2o.H2OTest;
 import org.h2.util.ObjectArray;
 import org.h2.value.Value;
@@ -120,10 +116,10 @@ public class CommandContainer extends Command {
 		// TODO query time: should keep lock time separate from running time
 		start();
 		prepared.checkParameters();
-		
+
 		//TODO what if information schema is mixed case? Does it matter?
 		if (!prepared.sqlStatement.contains("H2O.") && !prepared.sqlStatement.contains("INFORMATION_SCHEMA.")&& !prepared.sqlStatement.contains("information_schema.") && prepared instanceof Select){
-			
+
 			this.acquireLocks(proxyManager); 
 
 			if (!proxyManager.hasAllLocks()){
@@ -131,10 +127,10 @@ public class CommandContainer extends Command {
 				throw new SQLException("Couldn't obtain locks for all tables involved in query.");
 			}
 		}
-		
+
 		LocalResult result = prepared.query(maxrows);
 		prepared.trace(startTime, result.getRowCount());
-		
+
 		proxyManager.endTransaction(null);
 		return result;
 	}
@@ -148,7 +144,6 @@ public class CommandContainer extends Command {
 		start();
 		prepared.checkParameters();
 		int updateCount;
-
 
 		boolean singleQuery = !partOfMultiQueryTransaction, transactionCommand = prepared.isTransactionCommand();
 
@@ -167,25 +162,25 @@ public class CommandContainer extends Command {
 			}
 
 			try {
-			updateCount = prepared.update(proxyManager.getTransactionName());
+				updateCount = prepared.update(proxyManager.getTransactionName());
 
-			boolean commit = true; //An exception would already have been thrown if it should have been a rollback.
+				boolean commit = true; //An exception would already have been thrown if it should have been a rollback.
 
 
-			H2OTest.createTableFailure();
+				H2OTest.createTableFailure();
 
-			
-			if (singleQuery && session.getApplicationAutoCommit()){ 
-				/*
-				 * If it is one of a number of queries in the transaction then we must wait for the entire transaction to finish.
-				 */
 
-				proxyManager.commit(commit);
-				session.setCurrentTransactionLocks(null);
-			} else {
-				session.setCurrentTransactionLocks(proxyManager);
-			}
-			
+				if (singleQuery && session.getApplicationAutoCommit()){ 
+					/*
+					 * If it is one of a number of queries in the transaction then we must wait for the entire transaction to finish.
+					 */
+
+					proxyManager.commit(commit);
+					session.setCurrentTransactionLocks(null);
+				} else {
+					session.setCurrentTransactionLocks(proxyManager);
+				}
+
 			} catch (SQLException e){
 
 				proxyManager.commit(false);
@@ -196,9 +191,10 @@ public class CommandContainer extends Command {
 			/*
 			 * This is a transaction command. No need to commit such a query.
 			 */
-			
+
 			try {
 				updateCount = prepared.update();
+
 				session.setCurrentTransactionLocks(null);
 			} catch (SQLException e){
 				ErrorHandling.errorNoEvent("Transaction not found for query: " + prepared.getSQL());

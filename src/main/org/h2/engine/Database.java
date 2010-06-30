@@ -42,6 +42,7 @@ import org.h2.h2o.remote.IChordInterface;
 import org.h2.h2o.remote.IDatabaseRemote;
 import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.DatabaseURL;
+import org.h2.h2o.util.H2oProperties;
 import org.h2.h2o.util.RemoveConnectionInfo;
 import org.h2.index.Cursor;
 import org.h2.index.Index;
@@ -209,18 +210,18 @@ public class Database implements DataHandler {
 
 	private User h2oSchemaUser; 
 	private Session h2oSession;
-	
-	private User h2oSystemUser;
 
+	private User h2oSystemUser;
 	private Session h2oSystemSession;
 
+	private User h2oAdminUser; //used by H2O users for initial logon.
+
+	
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
 
-		Diagnostic.setLevel((DiagnosticLevel.FULL));
-		Diagnostic.setTimestampFlag(true);
-		Diagnostic.setTimestampFormat(new SimpleDateFormat("HH:mm:ss:SSS "));
-		Diagnostic.setTimestampDelimiterFlag(false);
-		ErrorHandling.setTimestampFlag(false);
+		DatabaseURL localMachineLocation = DatabaseURL.parseURL(ci.getOriginalURL());
+
+		setDiagnosticLevel(localMachineLocation);
 
 		//Ensure testing constants are all set to false.
 		Constants.IS_TESTING_PRE_COMMIT_FAILURE = false;
@@ -232,7 +233,7 @@ public class Database implements DataHandler {
 		this.compareMode = new CompareMode(null, null, 0);
 		//this.databaseLocation = ci.getSmallName();
 		systemTableRef = new SystemTableReference(this);
-		databaseRemote = new ChordRemote(DatabaseURL.parseURL(ci.getOriginalURL()), systemTableRef);
+		databaseRemote = new ChordRemote(localMachineLocation, systemTableRef);
 
 		//this.localMachineAddress = NetUtils.getLocalAddress();
 		//this.localMachinePort = ci.getPort();
@@ -243,7 +244,7 @@ public class Database implements DataHandler {
 		this.databaseName = name;
 		this.databaseShortName = parseDatabaseShortName();
 
-		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "H2O, Database '" + name + "'.");
+		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O, Database '" + name + "'.");
 
 
 
@@ -288,6 +289,29 @@ public class Database implements DataHandler {
 		this.cacheType = StringUtils.toUpperEnglish(ci.removeProperty("CACHE_TYPE", CacheLRU.TYPE_NAME));
 		openDatabase(traceLevelFile, traceLevelSystemOut, closeAtVmShutdown, ci);
 		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, " Completed startup on " + ci.getOriginalURL());
+	}
+
+	private void setDiagnosticLevel(DatabaseURL localMachineLocation) {
+		H2oProperties databaseProperties = new H2oProperties(localMachineLocation);
+		databaseProperties.loadProperties();
+		
+		String diagnosticLevel = databaseProperties.getProperty("diagnosticLevel");
+		
+		Diagnostic.setLevel((DiagnosticLevel.FULL));
+				
+		if (diagnosticLevel != null){
+			
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Setting diagnostic level to " + diagnosticLevel);
+			
+			if (diagnosticLevel.equals("FINAL")) Diagnostic.setLevel(DiagnosticLevel.FINAL);
+			else if (diagnosticLevel.equals("NONE")) Diagnostic.setLevel(DiagnosticLevel.NONE);
+			else if (diagnosticLevel.equals("FULL")) Diagnostic.setLevel(DiagnosticLevel.FULL);
+		}
+		
+		Diagnostic.setTimestampFlag(true);
+		Diagnostic.setTimestampFormat(new SimpleDateFormat("HH:mm:ss:SSS "));
+		Diagnostic.setTimestampDelimiterFlag(false);
+		ErrorHandling.setTimestampFlag(false);
 	}
 
 	private void openDatabase(int traceLevelFile, int traceLevelSystemOut, boolean closeAtVmShutdown, ConnectionInfo ci) throws SQLException {
@@ -652,8 +676,8 @@ public class Database implements DataHandler {
 		}
 		systemUser = new User(this, 0, Constants.DBA_NAME, true);
 		h2oSchemaUser = new User(this, 1, "H2O", true);
-		h2oSystemUser = new User(this, 1, "H2O", true);
-
+		h2oSystemUser = new User(this, 1, "system", true);
+		h2oAdminUser = new User(this, 1, "admin", true);
 		mainSchema = new Schema(this, 0, Constants.SCHEMA_MAIN, systemUser, true);
 		infoSchema = new Schema(this, -1, Constants.SCHEMA_INFORMATION, systemUser, true);
 
@@ -737,7 +761,7 @@ public class Database implements DataHandler {
 			/*
 			 * Create or connect to a new System Table instance if this node already has tables on it.
 			 */
-			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Database already exists. No need to recreate the System Table.");
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Database already exists. No need to recreate the System Table.");
 			commitSystemTableCreation(true, systemTableRef.isSystemTableLocal(), false);
 		}
 
@@ -748,22 +772,14 @@ public class Database implements DataHandler {
 				MetaRecord rec = (MetaRecord) records.get(i);
 
 				if (rec.getSQL().startsWith("CREATE FORCE LINKED TABLE")) continue;
-				
-				try {
-					if (rec.getSQL().contains("H2O") && databaseRemote.getSystemTableLocation().equals(this.getDatabaseURL())){
-						System.out.println(this.databaseName + ": " + rec.getSQL());
-					}
-				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+
 				rec.execute(this, systemSession, eventListener, proxyManager);
 			}
 
 			proxyManager.commit(true);
 		}
 
-		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, " Executed meta-records.");
+		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(DiagnosticLevel.FULL, " Executed meta-records.");
 
 		// try to recompile the views that are invalid
 		recompileInvalidViews(systemSession);
@@ -2587,7 +2603,7 @@ public class Database implements DataHandler {
 
 		if (!databaseExists){
 			commitSystemTableCreation(databaseExists, persistedSchemaTablesExist, true);
-			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, " Created new System Table tables.");
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, " Created new System Table tables.");
 		}
 
 

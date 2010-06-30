@@ -238,7 +238,7 @@ public class DatabaseURL implements Serializable {
 	 * Useful if the location is to be used as part of a transaction or file name. 
 	 */
 	public String getDbLocationWithoutIllegalCharacters(){
-		return getDbLocation().replace("/", "_").replace("~", "_").replace("-", "__");
+		return getDbLocation().replace("/", "_").replace("\\", "_").replace("~", "_").replace("-", "__");
 	}
 
 	/**

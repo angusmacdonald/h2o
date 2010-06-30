@@ -50,7 +50,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 	/**
 	 * The database username used to communicate with System Table tables.
 	 */
-	public static final String USERNAME = "angus";
+	public static final String USERNAME = "sa";
 
 	/**
 	 * The database password used to communicate with System Table tables.

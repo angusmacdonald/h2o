@@ -38,15 +38,18 @@ public class LocatorState {
 
 	protected LocatorState(String location){
 		locatorFile = new File(location);
-		if (!locatorFile.exists()){
-			try {
-				locatorFile.createNewFile();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+		
+		if (locatorFile.getParentFile() != null){
+			locatorFile.getParentFile().mkdirs();
 		}
-
-
+		
+		try {
+			if (!(locatorFile.createNewFile() || locatorFile.isFile())) {
+				ErrorHandling.errorNoEvent("This is a directory, when I file should have been given.");
+			}
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
 
 	}
 
@@ -84,7 +87,6 @@ public class LocatorState {
 		}
 
 
-		System.err.println("Update count: " + updateCount);
 		ReplicaLocationsResponse response = new ReplicaLocationsResponse(locations, updateCount);
 
 
@@ -151,7 +153,7 @@ public class LocatorState {
 		}
 
 
-		if (locked){
+		if (locked && !this.databaseWithLock.equals(requestingDatabase)){
 			success = false;
 		} else {
 			locked = true;
@@ -160,7 +162,6 @@ public class LocatorState {
 			databaseWithLock = requestingDatabase;
 		}
 
-		System.err.println("Update count: " + updateCount);
 		LockRequestResponse response = new LockRequestResponse(updateCount, success);
 
 		stopWrite();

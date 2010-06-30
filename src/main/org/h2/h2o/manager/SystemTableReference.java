@@ -482,23 +482,23 @@ public class SystemTableReference implements ISystemTableReference {
 
 	private TableManagerRemote lookup(TableInfo tableInfo, boolean alreadyCalled) throws SQLException {
 
-		TableManagerRemote tableManager = cachedTableManagerReferences.get(tableInfo);
-		if (tableManager != null){
-
-			try {
-				tableManager.isAlive();
-
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Returning cached Table Manager for lookup operation.");
-
-				return tableManager;
-			} catch (RemoteException e) {
-				//Lookup location again.
-				cachedTableManagerReferences.remove(tableInfo);
-			} catch (MovedException e) {
-				cachedTableManagerReferences.remove(tableInfo);
-				//Lookup location again.
-			}	
-		}
+		TableManagerRemote tableManager = null; //cachedTableManagerReferences.get(tableInfo);
+//		if (tableManager != null){
+//
+//			try {
+//				tableManager.isAlive();
+//
+//				//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Returning cached Table Manager for lookup operation: " + tableInfo);
+//
+//				return tableManager;
+//			} catch (RemoteException e) {
+//				//Lookup location again.
+//				cachedTableManagerReferences.remove(tableInfo);
+//			} catch (MovedException e) {
+//				cachedTableManagerReferences.remove(tableInfo);
+//				//Lookup location again.
+//			}	
+//		}
 
 		try {
 			tableManager = systemTable.lookup(tableInfo);

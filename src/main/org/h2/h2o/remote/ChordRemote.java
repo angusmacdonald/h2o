@@ -152,6 +152,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		/*
 		 * Contact descriptor for SM locations.
 		 */
+		//		IS:				config\MyFirstDatabase9999.properties
+		//		SHOULD BE: 		config\db_data_wrapper__MyFirstDatabase9999.properties
 		H2oProperties persistedInstanceInformation = new H2oProperties(localMachineLocation);
 		persistedInstanceInformation.loadProperties();
 		this.locatorServers = getLocatorServerReference(persistedInstanceInformation);
@@ -226,7 +228,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 						int portToUse = currentPort++;
 						if (chordPort!=null){
-							Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Obtained chord port from disk: " + chordPort);
+							Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Obtained chord port from disk: " + chordPort);
 							portToUse = Integer.parseInt(chordPort);
 						}
 
@@ -260,14 +262,12 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 					Random r = new Random();
 					try {
 						int backoffTime = (1000 + (r.nextInt(100) * 10))*attempts;
-						Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Attempt number " + attempts + " of " + Settings.ATTEMPTS_TO_CREATE_OR_JOIN_SYSTEM + ". Instance at " + localMachineLocation + " is about to back-off for " + backoffTime + " ms.");
+						Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Trying to connect to Chord ring. Attempt number " + attempts + " of " + Settings.ATTEMPTS_TO_CREATE_OR_JOIN_SYSTEM + ". Instance at " + localMachineLocation + " is about to back-off for " + backoffTime + " ms.");
 
 						Thread.sleep(backoffTime);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-					Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Trying to connect to known node again. Attempt number " + attempts + ".");
-
 					attempts++;
 				}			
 			}

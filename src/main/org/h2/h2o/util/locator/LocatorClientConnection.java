@@ -6,12 +6,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
-import org.h2.h2o.util.locator.messages.LockRequestResponse;
 import org.h2.h2o.util.locator.messages.ReplicaLocationsResponse;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;

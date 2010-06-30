@@ -26,6 +26,7 @@ import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TableInfo;
+import org.h2.h2o.util.locator.messages.ReplicaLocationsResponse;
 import org.h2.result.LocalResult;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -223,7 +224,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 */
 	public static int createTableManagerTables(Session session) throws SQLException{
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Creating Table Manager tables.");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Creating Table Manager tables.");
 
 		String sql = createSQL(TABLES, CONNECTIONS);
 
@@ -389,6 +390,8 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 					newReplicaLocations.add(randomDir);
 				}
 			}
+		} else if (lockType == LockType.READ){
+			return this.replicaManager.getActiveReplicas();
 		}
 
 		return newReplicaLocations;
