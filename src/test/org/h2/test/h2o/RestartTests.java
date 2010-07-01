@@ -63,19 +63,10 @@ public class RestartTests {
 		ls.createNewLocatorFile();
 		ls.start();
 		TestBase.resetLocatorFile();
-		server = Server.createTcpServer(new String[] { "-tcpPort", "9081", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test" });
-		server.start();
 
-		Class.forName("org.h2.Driver");
-		conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-
-		sa = conn.createStatement();
-		
-		sa.execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-		sa.execute("INSERT INTO TEST2 VALUES(1, 'Hello');");
-		sa.execute("INSERT INTO TEST2 VALUES(2, 'World');");
 	}
 
+	
 	/**
 	 * @throws java.lang.Exception
 	 */
@@ -111,15 +102,33 @@ public class RestartTests {
 	public void basicRestart() throws ClassNotFoundException{
 	
 		try {
+			
+			server = Server.createTcpServer(new String[] { "-tcpPort", "9089", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9089/db_data/unittests/schema_test" });
+			server.start();
+
+			Class.forName("org.h2.Driver");
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9089/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+
+			sa = conn.createStatement();
+			sa.executeUpdate("DROP ALL OBJECTS;");
+			sa.executeUpdate("CREATE TABLE TEST6(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+			sa.executeUpdate("INSERT INTO TEST6 VALUES(1, 'Hello');");
+			sa.executeUpdate("INSERT INTO TEST6 VALUES(2, 'World');");
+			
+			
+			
 			TestBase.resetLocatorFile();
 			shutdownServer();
 
-			startServerAndGetConnection();
+			server = Server.createTcpServer(new String[] { "-tcpPort", "9093", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9093/db_data/unittests/schema_test" });
+			server.start();
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9093/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+			sa = conn.createStatement();
 
 			try{
-				sa.execute("INSERT INTO TEST2 VALUES(3, 'Hello');");
-				sa.execute("INSERT INTO TEST2 VALUES(4, 'World');");
-				sa.execute("SELECT * FROM TEST2;");
+				sa.executeUpdate("INSERT INTO TEST6 VALUES(3, 'Hello');");
+				sa.executeUpdate("INSERT INTO TEST6 VALUES(4, 'World');");
+				sa.executeQuery("SELECT * FROM TEST6;");
 			} catch (SQLException e){
 				e.printStackTrace();
 				fail("The TEST table was not found.");
@@ -137,12 +146,11 @@ public class RestartTests {
 			}
 
 
-			if (!rs.getString(3).equals("TEST2")){
-				fail("This entry should be for the TEST table. It is for: " + rs.getString(3));
-			}
+
 			if (!rs.getString(2).equals("PUBLIC")){
 				fail("This entry should be for the PUBLIC schema.");
 			}
+
 			rs.close();
 
 		} catch (SQLException e1) {
@@ -151,15 +159,6 @@ public class RestartTests {
 		}
 	}
 
-	/**
-	 * @throws SQLException
-	 */
-	private void startServerAndGetConnection() throws SQLException {
-		server = Server.createTcpServer(new String[] { "-tcpPort", "9081", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test" });
-		server.start();
-		conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-		sa = conn.createStatement();
-	}
 
 	/**
 	 * 
@@ -167,5 +166,6 @@ public class RestartTests {
 	private void shutdownServer() {
 		server.shutdown();
 		server.stop();
+		while (server.isRunning(false));
 	}
 }

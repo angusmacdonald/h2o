@@ -26,6 +26,8 @@ import org.h2.expression.Expression;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.h2o.comms.remote.TableManagerRemote;
+import org.h2.h2o.manager.ISystemTableReference;
+import org.h2.h2o.manager.SystemTableReference;
 import org.h2.h2o.manager.TableManager;
 import org.h2.h2o.manager.ISystemTable;
 import org.h2.h2o.manager.MovedException;
@@ -233,7 +235,7 @@ public class CreateTable extends SchemaCommand {
 			 */
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_") && !isStartup()){
 				ISystemTable sm = db.getSystemTable(); //db.getSystemSession()
-
+				ISystemTableReference str = db.getSystemTableReference();
 
 				assert sm != null;
 
@@ -276,17 +278,18 @@ public class CreateTable extends SchemaCommand {
 					TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
 
 
-					TableManagerRemote tableManagerRemote = queryProxy.getTableManagerLocation();
+					TableManagerRemote tableManager = queryProxy.getTableManagerLocation(); // changed by al
 
 
-					boolean successful = sm.addTableInformation(tableManagerRemote, ti);
+					boolean successful = str.addTableInformation(tableManager, ti);
+						//sm.addTableInformation(tableManagerRemote, ti);
 					
 					if (!successful){
 						throw new SQLException("Failed to add table information to schema manager: " + sm);
 					}
 					
 					try {
-						tableManagerRemote.persistToCompleteStartup(ti);
+						tableManager.persistToCompleteStartup(ti);
 					} catch (StartupException e) {
 						throw new SQLException("Failed to create table. Couldn't persist table manager meta-data [" + e.getMessage() + "].");
 					}
@@ -471,7 +474,7 @@ public class CreateTable extends SchemaCommand {
 				//May already be exported.
 			}
 
-			queryProxy = QueryProxy.getQueryProxyAndLock(stub, LockType.CREATE, db.getLocalDatabaseInstanceInWrapper());
+			queryProxy = QueryProxy.getQueryProxyAndLock(tableManager, LockType.CREATE, db.getLocalDatabaseInstanceInWrapper());
 
 			queryProxyManager.addProxy(queryProxy);
 		} else if (Constants.IS_H2O){

@@ -24,7 +24,7 @@ public interface ISystemTable extends Remote {
 	 * @return A reference to the given table's Table Manager.
 	 * @throws RemoteException
 	 */
-	public TableManagerRemote lookup(TableInfo ti) throws RemoteException, MovedException;
+	public TableManagerWrapper lookup(TableInfo ti) throws RemoteException, MovedException;
 
 	/**
 	 * Checks whether a Table Manager for the given table exists in the system. If it

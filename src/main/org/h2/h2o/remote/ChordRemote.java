@@ -713,7 +713,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	 * manager.
 	 */
 	private void successorChangeEvent() {
-
+		if (Constants.IS_NON_SM_TEST) return; //Don't do this if we're testing something that isn't to do with this replication.
 
 		/*
 		 * Check whether there are any table managers running locally.

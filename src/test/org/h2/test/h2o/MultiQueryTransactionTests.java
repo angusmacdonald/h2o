@@ -706,31 +706,32 @@ public class MultiQueryTransactionTests extends TestBase{
 		// start the server, allows to access the database remotely
 		Server server = null;
 		try {
-			server = Server.createTcpServer(new String[] { "-tcpPort", "9085", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9085/db_data/unittests/schema_test" });
+			server = Server.createTcpServer(new String[] { "-tcpPort", "9990", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test" });
 			server.start();
 
 			Class.forName("org.h2.Driver");
-			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9085/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 			Statement sa = conn.createStatement();
 
-			sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-			sa.execute("INSERT INTO TEST VALUES(1, 'Hello');");
-			sa.execute("INSERT INTO TEST VALUES(2, 'World');");
+			sa.execute("DROP ALL OBJECTS;");
+			sa.execute("CREATE TABLE TEST5(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+			sa.execute("INSERT INTO TEST5 VALUES(1, 'Hello');");
+			sa.execute("INSERT INTO TEST5 VALUES(2, 'World');");
 
 			server.shutdown();
 			server.stop();
 
 			TestBase.resetLocatorFile();
 			
-			server = Server.createTcpServer(new String[] { "-tcpPort", "9085", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9085/db_data/unittests/schema_test" });
+			server = Server.createTcpServer(new String[] { "-tcpPort", "9990", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test" });
 
 			server.start();
 
-			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9085/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 
-			PreparedStatement mStmt = conn.prepareStatement( "insert into PUBLIC.TEST (id,name) values (?,?)" );
+			PreparedStatement mStmt = conn.prepareStatement( "insert into PUBLIC.TEST5 (id,name) values (?,?)" );
 
 
 			for (int i = 3; i < 100; i++){
@@ -747,11 +748,11 @@ public class MultiQueryTransactionTests extends TestBase{
 			pKey[0] = 1; pKey[1] = 2;
 			secondCol[0] = "Hello"; secondCol[1] = "World";
 
-			TestQuery test2query = createMultipleInsertStatements("TEST", pKey, secondCol, 3);
+			TestQuery test2query = createMultipleInsertStatements("TEST5", pKey, secondCol, 3);
 
 			sa = conn.createStatement();
 
-			sa.execute("SELECT LOCAL * FROM PUBLIC.TEST ORDER BY ID;");
+			sa.execute("SELECT LOCAL * FROM PUBLIC.TEST5 ORDER BY ID;");
 
 
 			validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());

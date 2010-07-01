@@ -257,7 +257,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 	 * @see org.h2.h2o.ISystemTable#lookup(java.lang.String)
 	 */
 	@Override
-	public TableManagerRemote lookup(TableInfo ti) throws RemoteException {
+	public TableManagerWrapper lookup(TableInfo ti) throws RemoteException {
 		//
 		//		/*
 		//		 * Get the machine location of the table's Table Manager.

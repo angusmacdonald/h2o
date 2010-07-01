@@ -1,5 +1,6 @@
 package org.h2.h2o.manager;
 
+import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
 import java.sql.SQLException;
 
@@ -180,5 +181,8 @@ public interface ISystemTableReference {
 	 * @param tm	The reference to the extant Table Manager.
 	 */
 	public void addNewTableManagerReference(TableInfo ti, TableManagerRemote tm);
+
+	// changed by al - was TableManager
+	public boolean addTableInformation(TableManagerRemote tableManagerRemote, TableInfo ti) throws RemoteException, MovedException, SQLException;
 
 }

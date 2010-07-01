@@ -74,7 +74,7 @@ public class DropReplica extends SchemaCommand {
 				int numberOfReplicas = 0;
 
 				try {
-					numberOfReplicas = session.getDatabase().getSystemTable().lookup(new TableInfo(tableName, getSchema().getName())).getNumberofReplicas();
+					numberOfReplicas = session.getDatabase().getSystemTable().lookup(new TableInfo(tableName, getSchema().getName())).getTableManager().getNumberofReplicas();
 				} catch (RemoteException e) {
 					throw new SQLException("Failed in communication with the System Table.");
 				} catch (MovedException e){
@@ -117,7 +117,7 @@ public class DropReplica extends SchemaCommand {
 				TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), 0, table.getTableType(), db.getDatabaseURL());
 				
 				try {
-					TableManagerRemote tmr = sm.lookup(ti);
+					TableManagerRemote tmr = sm.lookup(ti).getTableManager();
 					tmr.removeReplicaInformation(ti);
 				} catch (RemoteException e) {
 					throw new SQLException("Failed to remove replica on System Table/Table Manager");

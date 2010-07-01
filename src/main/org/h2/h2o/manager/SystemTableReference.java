@@ -47,6 +47,7 @@ public class SystemTableReference implements ISystemTableReference {
 	private SystemTableRemote systemTable;
 
 	private Map<TableInfo, TableManagerRemote> cachedTableManagerReferences = new HashMap<TableInfo, TableManagerRemote>();
+	private Map<TableInfo, TableManager> localTableManagers = new HashMap<TableInfo, TableManager>();
 
 	/**
 	 * Location of the actual System Table.
@@ -482,6 +483,9 @@ public class SystemTableReference implements ISystemTableReference {
 
 	private TableManagerRemote lookup(TableInfo tableInfo, boolean alreadyCalled) throws SQLException {
 
+		TableManager tm = localTableManagers.get(tableInfo);
+		if (tm != null) return tm; //TODO need to do isalive check.
+		
 		TableManagerRemote tableManager = cachedTableManagerReferences.get(tableInfo);
 		if (tableManager != null){
 
@@ -509,8 +513,17 @@ public class SystemTableReference implements ISystemTableReference {
 		 * Contact the System Table for the managers location.
 		 */
 		try {
-			tableManager = systemTable.lookup(tableInfo);
+			TableManagerWrapper tmw = systemTable.lookup(tableInfo);
 
+			if (tmw == null) return null; //true if the table doesn't already exist (during a create table operation).
+			if (tmw.getTableManagerURL().equals(this.db.getDatabaseURL())){
+				//The Table Manager is local
+				
+				tableManager = localTableManagers.get(tableInfo);
+			} else {
+				tableManager = tmw.getTableManager();
+			}
+			
 			cachedTableManagerReferences.put(tableInfo, tableManager);
 			return tableManager;
 		} catch (MovedException e) {
@@ -519,6 +532,7 @@ public class SystemTableReference implements ISystemTableReference {
 			handleMovedException(e);
 			return lookup(tableInfo, true);
 		} catch (Exception e) {
+			e.printStackTrace();
 			if (alreadyCalled) throw new SQLException("Failed to find System Table. Query has been rolled back.");
 
 			/*
@@ -603,13 +617,23 @@ public class SystemTableReference implements ISystemTableReference {
 	@Override
 	public void addNewTableManagerReference(TableInfo ti, TableManagerRemote tm) {
 		try {
-			db.getSystemTableReference().getSystemTable().changeTableManagerLocation(tm, ti);
+			getSystemTable().changeTableManagerLocation(tm, ti);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (MovedException e) {
 			e.printStackTrace();
 		}
-		db.getSystemTableReference().addProxy(ti, tm);
+		addProxy(ti, tm);
+	}
+
+	@Override
+	public boolean addTableInformation(TableManagerRemote tableManagerRemote, TableInfo ti) throws RemoteException, MovedException, SQLException { // changed by al
+		// TableManagerRemote tableManagerRemote = (TableManagerRemote) tableManager; changed by al
+		// changed by al - following line can fail dynamically but shoudn't - should be passed a local table manager
+		// put in try catch ??
+		localTableManagers.put(ti.getGenericTableInfo(), (TableManager) tableManagerRemote);
+		
+		return systemTable.addTableInformation(tableManagerRemote, ti);
 	}
 
 

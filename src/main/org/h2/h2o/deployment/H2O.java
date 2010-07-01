@@ -241,7 +241,7 @@ public class H2O {
 		properties.createNewFile();
 		properties.setProperty("descriptor", descriptorFileLocation);
 		properties.setProperty("databaseName", databaseName);
-		properties.setProperty("diagnosticLevel", Diagnostic.getLevel().toString());
+		properties.setProperty("diagnosticLevel", DiagnosticLevel.NONE.toString());
 
 		try {
 			Class.forName("org.h2.Driver");

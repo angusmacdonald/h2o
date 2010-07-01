@@ -224,7 +224,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	 * @see org.h2.h2o.ISystemTable#lookup(java.lang.String)
 	 */
 	@Override
-	public TableManagerRemote lookup(TableInfo ti) throws RemoteException {
+	public TableManagerWrapper lookup(TableInfo ti) throws RemoteException {
 		ti = ti.getGenericTableInfo();
 		TableManagerWrapper dmw = tableManagers.get(ti);
 		TableManagerRemote tm = null;
@@ -236,12 +236,13 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 		 * If there is a null reference to a Table Manager we can try to reinstantiate it, but
 		 * if there is no reference at all just return null for the lookup. 
 		 */
-		if (tm != null || !tableManagers.containsKey(ti)) {
-			if (!tableManagers.containsKey(ti)){
+		boolean containsTableManager = tableManagers.containsKey(ti);
+		if (tm != null || !containsTableManager) {
+			if (!containsTableManager){
 				return null;
 			}
 
-			return tm;
+			return dmw;
 		}
 
 
@@ -300,7 +301,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 		dmw.setTableManager(tm);
 		tableManagers.put(ti, dmw);
 
-		return tableManagers.get(ti).getTableManager();
+		return dmw;
 	}
 
 
@@ -503,15 +504,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	@Override
 	public boolean addStateReplicaLocation(
 			DatabaseInstanceWrapper databaseReference) throws RemoteException {
-
-		return true;
-		//		if (systemTableState.size() < Replication.SCHEMA_MANAGER_REPLICATION_FACTOR){ //TODO update to allow policy on number of replicas.
-		//			this.systemTableState.add(databaseReference);
-		//			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseReference.getLocation().getDbLocation());
-		//		} else {
-		//			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Didn't add to the System Table's replication set, because there are enough replicas already (" + systemTableState.size() + ")");
-		//		}
-
+		return true; //This class doesn't do replication. See the PersistentSystemTable class.
 	}
 
 

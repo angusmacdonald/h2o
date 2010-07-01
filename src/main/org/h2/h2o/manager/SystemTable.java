@@ -199,7 +199,7 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 	 * @see org.h2.h2o.ISystemTable#lookup(java.lang.String)
 	 */
 	@Override
-	public TableManagerRemote lookup(TableInfo ti) throws RemoteException, MovedException {
+	public TableManagerWrapper lookup(TableInfo ti) throws RemoteException, MovedException {
 		preMethodTest();
 		return inMemory.lookup(ti);
 	}

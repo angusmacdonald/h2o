@@ -199,7 +199,7 @@ public class CreateReplica extends SchemaCommand {
 
 					TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
 
-					sm.lookup(ti).addReplicaInformation(ti);	
+					sm.lookup(ti).getTableManager().addReplicaInformation(ti);	
 				} catch (MovedException e){
 					throw new RemoteException("System Table has moved.");
 				}

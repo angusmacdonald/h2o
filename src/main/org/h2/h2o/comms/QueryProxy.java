@@ -16,6 +16,7 @@ import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.manager.MovedException;
+import org.h2.h2o.manager.TableManager;
 import org.h2.h2o.util.LockType;
 import org.h2.table.Table;
 import org.h2.test.h2o.H2OTest;
@@ -47,7 +48,7 @@ public class QueryProxy implements Serializable{
 	/**
 	 * Proxy for the Table Manager of this table. Used to release any locks held at the end of the transaction.
 	 */
-	private TableManagerRemote tableManagerProxy;
+	private TableManagerRemote tableManager; // changed by al - this is either a local guy or an RMI reference
 
 	/**
 	 * The database instance making the request. This is used to request the lock (i.e. the lock for the given query
@@ -75,12 +76,12 @@ public class QueryProxy implements Serializable{
 	 * @param updateID 			ID given to this update.
 	 */
 	public QueryProxy(LockType lockGranted, String tableName,
-			Set<DatabaseInstanceWrapper> replicaLocations, TableManagerRemote tableManager, DatabaseInstanceWrapper requestingMachine, int updateID, LockType lockRequested) {
+			Set<DatabaseInstanceWrapper> replicaLocations, TableManager tableManager, DatabaseInstanceWrapper requestingMachine, int updateID, LockType lockRequested) {
 		this.lockGranted = lockGranted;
 		this.lockRequested = lockRequested;
 		this.tableName = tableName;
 		this.allReplicas = replicaLocations;
-		this.tableManagerProxy = tableManager;
+		this.tableManager = tableManager;
 		this.requestingDatabase = requestingMachine;
 		this.updateID = updateID;
 	}
@@ -118,7 +119,7 @@ public class QueryProxy implements Serializable{
 			 * If there are no replicas on which to execute the query.
 			 */
 			try {
-				tableManagerProxy.releaseLock(requestingDatabase, null, updateID);
+				tableManager.releaseLock(requestingDatabase, null, updateID);
 			} catch (RemoteException e) {
 				ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the Table Manager");
 			} catch (MovedException e) {
@@ -280,7 +281,7 @@ public class QueryProxy implements Serializable{
 	@Override
 	public String toString() {
 
-		if (tableManagerProxy == null){
+		if (tableManager == null){
 			/*
 			 * This is a dummy proxy.
 			 */
@@ -302,8 +303,8 @@ public class QueryProxy implements Serializable{
 	/**
 	 * @return
 	 */
-	public TableManagerRemote getTableManagerLocation() {
-		return tableManagerProxy;
+	public TableManagerRemote getTableManagerLocation() { // TODO - fix name of this method! // changed by al
+		return tableManager;
 	}
 
 	/**

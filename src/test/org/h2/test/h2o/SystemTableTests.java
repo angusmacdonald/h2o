@@ -206,7 +206,7 @@ public class SystemTableTests {
 			fail("Couldn't find System Table tables.");
 		} finally {
 			try {
-				conn.close();
+				if (conn != null && !conn.isClosed()) conn.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
@@ -215,7 +215,6 @@ public class SystemTableTests {
 			server.stop();
 
 		}
-
 
 	}
 
