@@ -182,7 +182,14 @@ public interface ISystemTableReference {
 	 */
 	public void addNewTableManagerReference(TableInfo ti, TableManagerRemote tm);
 
-	// changed by al - was TableManager
+	/**
+	 * Adds a new Table Manager to the System Table. Before doing this it stores a local reference to the Table Manager
+	 * to bypass RMI calls (which are extremely inefficient).
+	 * @param tableManagerRemote	The table manager being added to the System Table.
+	 * @param ti					Name of the table being added.
+	 * @return						True if the table was successfully added.
+	 * @throws RemoteException		Thrown if the System Table could not be contacted.
+	 * @throws MovedException		Thrown if the System Table has moved and a new reference is needed.
+	 */
 	public boolean addTableInformation(TableManagerRemote tableManagerRemote, TableInfo ti) throws RemoteException, MovedException, SQLException;
-
 }

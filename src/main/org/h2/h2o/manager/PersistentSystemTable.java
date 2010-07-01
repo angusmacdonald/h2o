@@ -638,7 +638,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 	 */
 	@Override
 	protected DatabaseURL getLocation() throws RemoteException {
-		return this.getDB().getDatabaseURL();
+		return this.getDB().getURL();
 	}
 
 	/* (non-Javadoc)

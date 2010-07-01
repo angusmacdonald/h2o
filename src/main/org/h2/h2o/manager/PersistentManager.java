@@ -630,7 +630,7 @@ public abstract class PersistentManager {
 					databaseWrapper.getDatabaseInstance().executeUpdate(query, true);
 
 					query = "CREATE REPLICA " + tableRelation + ", " + ((replicaRelation==null)? "": (replicaRelation + ", ")) + 
-					connectionRelation + ((tableManagerRelation == null)? "": (", " + tableManagerRelation)) + " FROM '" + db.getDatabaseURL().getOriginalURL() + "';";
+					connectionRelation + ((tableManagerRelation == null)? "": (", " + tableManagerRelation)) + " FROM '" + db.getURL().getOriginalURL() + "';";
 					databaseWrapper.getDatabaseInstance().executeUpdate(query, true);
 					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseWrapper.getDatabaseURL().getDbLocation());
 
@@ -653,7 +653,7 @@ public abstract class PersistentManager {
 	 * 
 	 */
 	protected void updateLocatorFiles() throws Exception{
-		H2oProperties persistedInstanceInformation = new H2oProperties(db.getDatabaseURL());
+		H2oProperties persistedInstanceInformation = new H2oProperties(db.getURL());
 		persistedInstanceInformation.loadProperties();
 
 		String descriptorLocation = persistedInstanceInformation.getProperty("descriptor");

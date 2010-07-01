@@ -52,7 +52,7 @@ public class GetRmiPort extends SchemaCommand {
 			 * Return the RMI port on which this database is running.
 			 */
 			
-			return super.session.getDatabase().getDatabaseURL().getRMIPort();
+			return super.session.getDatabase().getURL().getRMIPort();
 		} else {
 			/*
 			 * Send this query remotely to get the RMI port.

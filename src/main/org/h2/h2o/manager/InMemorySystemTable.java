@@ -226,11 +226,11 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	@Override
 	public TableManagerWrapper lookup(TableInfo ti) throws RemoteException {
 		ti = ti.getGenericTableInfo();
-		TableManagerWrapper dmw = tableManagers.get(ti);
+		TableManagerWrapper tableManagerWrapper = tableManagers.get(ti);
 		TableManagerRemote tm = null;
 
-		if (dmw != null){
-			tm = dmw.getTableManager();
+		if (tableManagerWrapper != null){
+			tm = tableManagerWrapper.getTableManager();
 		}
 		/*
 		 * If there is a null reference to a Table Manager we can try to reinstantiate it, but
@@ -242,7 +242,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 				return null;
 			}
 
-			return dmw;
+			return tableManagerWrapper;
 		}
 
 
@@ -251,7 +251,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 		 * XXX is it possible that a data manager is running and the SM doesn't know of it?
 		 */
 
-		if (dmw != null && this.database.getDatabaseURL().equals(dmw.getTableManagerURL())){
+		if (tableManagerWrapper != null && this.database.getURL().equals(tableManagerWrapper.getURL())){
 			/*
 			 * It is okay to re-instantiate the Table Manager here.
 			 */
@@ -276,19 +276,19 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 			
 			this.database.getChordInterface().bind(ti.getFullTableName(), tm);
 
-		} else if (dmw != null){
+		} else if (tableManagerWrapper != null){
 			//Try to create the data manager at whereever it is meant to be. It may already be active.
 			// RECREATE TABLEMANAGER <tableName>
 			try {
-				this.getDatabaseInstance(dmw.getTableManagerURL()).executeUpdate("RECREATE TABLEMANAGER " + ti.getFullTableName(), false);
+				this.getDatabaseInstance(tableManagerWrapper.getURL()).executeUpdate("RECREATE TABLEMANAGER " + ti.getFullTableName(), false);
 			} catch (SQLException e) {
 				e.printStackTrace();
 			} catch (MovedException e) {
 				e.printStackTrace();
 			}
 			
-			dmw = tableManagers.get(ti);
-			tm = dmw.getTableManager();
+			tableManagerWrapper = tableManagers.get(ti);
+			tm = tableManagerWrapper.getTableManager();
 
 		} else {
 			//Table Manager location is not known.
@@ -296,12 +296,12 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 					" should be found in persisted state.");
 		}
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, ti.getFullTableName() + "'s table manager has been recreated on " + dmw.getTableManagerURL() + ".");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, ti.getFullTableName() + "'s table manager has been recreated on " + tableManagerWrapper.getURL() + ".");
 
-		dmw.setTableManager(tm);
-		tableManagers.put(ti, dmw);
+		tableManagerWrapper.setTableManager(tm);
+		tableManagers.put(ti, tableManagerWrapper);
 
-		return dmw;
+		return tableManagerWrapper;
 	}
 
 
@@ -376,7 +376,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 			boolean active = (remoteDB.getValue() == null)? true : remoteDB.getValue().isActive();
 
 			if (dir == null){
-				if (remoteDB.getKey().equals(database.getDatabaseURL())){
+				if (remoteDB.getKey().equals(database.getURL())){
 					//Local machine.
 					dir = database.getLocalDatabaseInstance();
 				} else {

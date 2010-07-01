@@ -197,7 +197,7 @@ public class CreateReplica extends SchemaCommand {
 						}
 					}
 
-					TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
+					TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getURL());
 
 					sm.lookup(ti).getTableManager().addReplicaInformation(ti);	
 				} catch (MovedException e){
@@ -402,7 +402,7 @@ public class CreateReplica extends SchemaCommand {
 			//	#############################
 
 
-			TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
+			TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getURL());
 
 
 //			if (this.contactSystemTable){

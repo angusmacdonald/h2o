@@ -67,7 +67,7 @@ public class TableManagerWrapper implements Serializable, Remote {
 	/**
 	 * @return the tableManagerURL
 	 */
-	public DatabaseURL getTableManagerURL()throws RemoteException {
+	public DatabaseURL getURL()throws RemoteException {
 		return tableManagerURL;
 	}
 

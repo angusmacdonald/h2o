@@ -877,7 +877,7 @@ public class Database implements DataHandler {
 	/**
 	 * @return
 	 */
-	public DatabaseURL getDatabaseURL() {
+	public DatabaseURL getURL() {
 		return databaseRemote.getLocalMachineLocation();
 	}
 
@@ -1312,7 +1312,7 @@ public class Database implements DataHandler {
 			return;
 		}
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, getDatabaseURL().getURL());
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, getURL().getURL());
 
 		closing = true;
 		stopServer();
@@ -2616,7 +2616,7 @@ public class Database implements DataHandler {
 			}
 		}
 
-		systemTableRef.getSystemTable().addConnectionInformation(getDatabaseURL(), new DatabaseInstanceWrapper(getDatabaseURL(), this.databaseRemote.getLocalDatabaseInstance(), true));
+		systemTableRef.getSystemTable().addConnectionInformation(getURL(), new DatabaseInstanceWrapper(getURL(), this.databaseRemote.getLocalDatabaseInstance(), true));
 
 	}
 
@@ -2643,7 +2643,7 @@ public class Database implements DataHandler {
 	 * @return the databaseLocation
 	 */
 	public String getDatabaseLocation() {
-		return getDatabaseURL().getDbLocation();
+		return getURL().getDbLocation();
 	}
 
 	/**
@@ -2658,14 +2658,14 @@ public class Database implements DataHandler {
 	 * @return the localMachineAddress
 	 */
 	public String getLocalMachineAddress() {
-		return getDatabaseURL().getHostname();
+		return getURL().getHostname();
 	}
 
 	/**
 	 * @return the localMachinePort
 	 */
 	public int getLocalMachinePort() {
-		return getDatabaseURL().getPort();
+		return getURL().getPort();
 	}
 
 	/**
@@ -2691,11 +2691,10 @@ public class Database implements DataHandler {
 	 * @return
 	 */
 	public String getConnectionType() {
-		return getDatabaseURL().getConnectionType();
+		return getURL().getConnectionType();
 	}
 
 	public TableManagerRemote getTableManager(String tableName) throws SQLException{
-		//return databaseRemote.lookupTableManager(tableName);
 		return systemTableRef.lookup(tableName);
 	}
 
@@ -2739,7 +2738,7 @@ public class Database implements DataHandler {
 	 * @return
 	 */
 	public DatabaseInstanceWrapper getLocalDatabaseInstanceInWrapper() {
-		return new DatabaseInstanceWrapper(this.getDatabaseURL(), databaseRemote.getLocalDatabaseInstance(), true);
+		return new DatabaseInstanceWrapper(this.getURL(), databaseRemote.getLocalDatabaseInstance(), true);
 	}
 
 	public void removeLocalDatabaseInstance(){

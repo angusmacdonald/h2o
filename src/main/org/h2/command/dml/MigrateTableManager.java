@@ -104,7 +104,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 		 */
 		TableManagerRemote newTableManager = null;
 
-		TableInfo ti = new TableInfo(tableName, schemaName, 0l, 0, "TABLE", db.getDatabaseURL());
+		TableInfo ti = new TableInfo(tableName, schemaName, 0l, 0, "TABLE", db.getURL());
 
 		try {
 			newTableManager = new TableManager(ti, db);
@@ -117,7 +117,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 		 * Stop the old, remote, manager from accepting any more requests.
 		 */
 		try {
-			oldTableManager.prepareForMigration(db.getDatabaseURL().getURLwithRMIPort());
+			oldTableManager.prepareForMigration(db.getURL().getURLwithRMIPort());
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (MigrationException e) {
@@ -162,7 +162,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 			TableManagerRemote stub = (TableManagerRemote) UnicastRemoteObject.exportObject(newTableManager, 0);
 
 			db.getSystemTableReference().getSystemTable().changeTableManagerLocation(stub, ti);
-			db.getSystemTableReference().addProxy(ti, stub);
+			db.getSystemTableReference().addProxy(ti, newTableManager);
 		} catch (Exception e) {
 			ErrorHandling.exceptionError(e, "Table Manager migration failed [" + schemaName + "." + tableName + "].");
 		}

@@ -114,7 +114,7 @@ public class DropReplica extends SchemaCommand {
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_")){
 				ISystemTable sm = db.getSystemTable(); //db.getSystemSession()
 
-				TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), 0, table.getTableType(), db.getDatabaseURL());
+				TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), 0, table.getTableType(), db.getURL());
 				
 				try {
 					TableManagerRemote tmr = sm.lookup(ti).getTableManager();

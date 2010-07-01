@@ -27,7 +27,6 @@ import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.manager.ISystemTableReference;
-import org.h2.h2o.manager.SystemTableReference;
 import org.h2.h2o.manager.TableManager;
 import org.h2.h2o.manager.ISystemTable;
 import org.h2.h2o.manager.MovedException;
@@ -275,7 +274,7 @@ public class CreateTable extends SchemaCommand {
 						tableSet = sm.getNewTableSetNumber();
 					}
 
-					TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
+					TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getURL());
 
 
 					TableManagerRemote tableManager = queryProxy.getTableManagerLocation(); // changed by al
@@ -457,19 +456,18 @@ public class CreateTable extends SchemaCommand {
 		if (Constants.IS_H2O && !tableName.startsWith("H2O_") && !db.isManagementDB() && !isStartup()){ //if it is startup then we don't want to create a table manager yet.
 
 			//TableInfo tableDetails, Database databas
-			TableInfo ti = new TableInfo(tableName, getSchema().getName(), 0l, 0, "TABLE", db.getDatabaseURL());
+			TableInfo ti = new TableInfo(tableName, getSchema().getName(), 0l, 0, "TABLE", db.getURL());
 			TableManager tableManager = null;
 			try {
 				tableManager = new TableManager(ti, db);
 			} catch (Exception e1) {
 				e1.printStackTrace();
 			}
-			TableManagerRemote stub = null;
 			/*
 			 * Make Table Manager serializable first.
 			 */
 			try {
-				stub = (TableManagerRemote) UnicastRemoteObject.exportObject(tableManager, 0);
+				UnicastRemoteObject.exportObject(tableManager, 0);
 			} catch (Exception e) {
 				//May already be exported.
 			}

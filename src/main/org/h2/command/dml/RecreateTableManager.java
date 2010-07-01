@@ -60,7 +60,7 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
 	public int update() throws SQLException, RemoteException {
 
 		Database db = this.session.getDatabase();
-		ISystemTableReference sm = db.getSystemTableReference();
+		ISystemTableReference systemTableReference = db.getSystemTableReference();
 		
 		/*
 		 * TODO perform a check to see that it isn't already active. 
@@ -73,7 +73,7 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
 			schemaName = "PUBLIC";
 		}
 
-		TableInfo ti = new TableInfo(tableName, schemaName, db.getDatabaseURL());
+		TableInfo ti = new TableInfo(tableName, schemaName, db.getURL());
 		TableManagerRemote tm = null;
 
 		//TableManager dm = TableManager.createTableManagerFromPersistentStore(ti.getSchemaName(), ti.getSchemaName());
@@ -100,9 +100,9 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
 		db.getChordInterface().bind(ti.getFullTableName(), tm);
 
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, ti + " recreated on " + db.getDatabaseURL() + ".");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, ti + " recreated on " + db.getURL() + ".");
 
-		sm.addNewTableManagerReference(ti, tm);
+		systemTableReference.addNewTableManagerReference(ti, tm);
 
 		return 1;
 	}

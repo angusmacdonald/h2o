@@ -4439,7 +4439,7 @@ public class Parser {
 		//		
 
 		DatabaseURL dmURL = tm.getReplicaManager().getPrimary().getDatabaseURL();
-		if (dmURL.equals(session.getDatabase().getDatabaseURL())){
+		if (dmURL.equals(session.getDatabase().getURL())){
 			throw new SQLException("The database [" + dmURL.getDbLocation() + "] is incorrectly trying to create a linked table to itself. Illegal code path.");
 		}
 

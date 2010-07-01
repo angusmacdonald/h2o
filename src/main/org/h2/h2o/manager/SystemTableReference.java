@@ -221,7 +221,7 @@ public class SystemTableReference implements ISystemTableReference {
 	 * @see org.h2.h2o.manager.ISystemTableReference#setNewSystemTableLocation(org.h2.h2o.util.DatabaseURL)
 	 */
 	public void setSystemTableURL(DatabaseURL newSMLocation) {
-		if (newSMLocation.equals(db.getDatabaseURL())){ isLocal = true; }
+		if (newSMLocation.equals(db.getURL())){ isLocal = true; }
 
 		this.systemTableLocationURL = newSMLocation;
 	}
@@ -328,7 +328,7 @@ public class SystemTableReference implements ISystemTableReference {
 			 * Stop the old, remote, manager from accepting any more requests.
 			 */
 			try {
-				systemTable.prepareForMigration(this.db.getDatabaseURL().getURLwithRMIPort());
+				systemTable.prepareForMigration(this.db.getURL().getURLwithRMIPort());
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			} catch (MigrationException e) {
@@ -365,7 +365,7 @@ public class SystemTableReference implements ISystemTableReference {
 			} catch (MigrationException e) {
 				ErrorHandling.exceptionError(e, "Migration process timed out. It took too long.");
 			}
-			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "System Table officially migrated to " + db.getDatabaseURL().getDbLocation() + ".");
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "System Table officially migrated to " + db.getURL().getDbLocation() + ".");
 
 			this.systemTable = newSystemTable;
 		}
@@ -374,7 +374,7 @@ public class SystemTableReference implements ISystemTableReference {
 		 * Make the new System Table remotely accessible.
 		 */
 		this.isLocal = true;
-		this.systemTableLocationURL = db.getDatabaseURL();
+		this.systemTableLocationURL = db.getURL();
 
 		try {
 			SystemTableRemote stub = (SystemTableRemote) UnicastRemoteObject.exportObject(systemTable, 0);
@@ -398,7 +398,7 @@ public class SystemTableReference implements ISystemTableReference {
 
 				String hostname = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getHostName();
 				int port = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getPort();
-				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting System Table replication thread on : " + db.getDatabaseURL().getDbLocation() + ".");
+				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting System Table replication thread on : " + db.getURL().getDbLocation() + ".");
 				SystemTableReplication newThread = new SystemTableReplication(hostname, port, this, this.db.getChordInterface());
 				newThread.start();
 			} else {
@@ -408,7 +408,7 @@ public class SystemTableReference implements ISystemTableReference {
 			ErrorHandling.errorNoEvent("Failed to create replica for new System Table on its successor.");
 		}
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Finished building new System Table on " + db.getDatabaseURL().getDbLocation() + ".");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Finished building new System Table on " + db.getURL().getDbLocation() + ".");
 	}
 
 	/* (non-Javadoc)
@@ -482,49 +482,39 @@ public class SystemTableReference implements ISystemTableReference {
 	}
 
 	private TableManagerRemote lookup(TableInfo tableInfo, boolean alreadyCalled) throws SQLException {
+		/*
+		 * The Table Manager may exist in one of two local caches, or it may have to be found via the Schema Manager. 
+		 * The caches are tested first, in the following order:
+		 * 	CHECK ONE: Look in cache of Local Table Managers.
+		 *  CHECK TWO: The Table Manager is not local. Look in the cache of Remote Table Manager References.
+		 *  CHECK THREE: The Table Manager proxy is not known. Contact the System Table for the managers location.
+		 */
 
-		TableManager tm = localTableManagers.get(tableInfo);
-		if (tm != null) return tm; //TODO need to do isalive check.
-		
-		TableManagerRemote tableManager = cachedTableManagerReferences.get(tableInfo);
-		if (tableManager != null){
-
-			try {
-				boolean alive = tableManager.isAlive();
-
-				if (alive){
-					//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Returning cached Table Manager for lookup operation: " + tableInfo);
-					return tableManager;
-				} else {
-					//Lookup location again.
-					cachedTableManagerReferences.remove(tableInfo);
-				}
-			} catch (RemoteException e) {
-				//Lookup location again.
-				cachedTableManagerReferences.remove(tableInfo);
-			} catch (MovedException e) {
-				//Lookup location again.
-				cachedTableManagerReferences.remove(tableInfo);
-				
-			}	
-		}
 
 		/*
-		 * Contact the System Table for the managers location.
+		 * CHECK ONE: Look in cache of Local Table Managers.
+		 */
+		TableManager tm = localTableManagers.get(tableInfo);
+		if (tm != null) return tm; //TODO need to do isalive check.
+
+		/*
+		 * CHECK TWO: The Table Manager is not local. Look in the cache of Remote Table Manager References.
+		 */
+		TableManagerRemote tableManager = lookupCachedTableManagers(tableInfo);
+		if (tableManager != null) return tableManager;
+		
+		/*
+		 * CHECK THREE: The Table Manager proxy is not known. Contact the System Table for the managers location.
 		 */
 		try {
-			TableManagerWrapper tmw = systemTable.lookup(tableInfo);
+			TableManagerWrapper tableManagerWrapper = systemTable.lookup(tableInfo);
 
-			if (tmw == null) return null; //true if the table doesn't already exist (during a create table operation).
-			if (tmw.getTableManagerURL().equals(this.db.getDatabaseURL())){
-				//The Table Manager is local
-				
-				tableManager = localTableManagers.get(tableInfo);
-			} else {
-				tableManager = tmw.getTableManager();
-			}
-			
+			if (tableManagerWrapper == null) return null; //During a create table operation it is expected that the lookup will return null here.
+
+			//Put this Table Manager in the local cache then return it.
+			tableManager = tableManagerWrapper.getTableManager();
 			cachedTableManagerReferences.put(tableInfo, tableManager);
+			
 			return tableManager;
 		} catch (MovedException e) {
 			if (alreadyCalled)
@@ -541,6 +531,34 @@ public class SystemTableReference implements ISystemTableReference {
 			handleLostSystemTableConnection();
 			return lookup(tableInfo, true);
 		}
+	}
+
+	/**
+	 * Look for a Table Manager reference in the local set of cached references.
+	 * 
+	 * Returns null if the specified Table Manager was not found.
+	 */
+	private TableManagerRemote lookupCachedTableManagers(TableInfo tableInfo) {
+		TableManagerRemote tableManager = cachedTableManagerReferences.get(tableInfo);
+		
+		boolean found = false;
+		if (tableManager != null){
+			try {
+				boolean alive = tableManager.isAlive();
+
+				if (alive){
+					found = true;
+
+				}
+			} catch (Exception e) { found = false; } // The cached reference may have been invalidated. 
+			
+			if (!found){
+				cachedTableManagerReferences.remove(tableInfo);
+				tableManager = null;
+			}
+		}
+		
+		return tableManager;
 	}
 
 	/**
@@ -609,6 +627,9 @@ public class SystemTableReference implements ISystemTableReference {
 	public void addProxy(TableInfo tableInfo, TableManagerRemote tableManager) {
 		this.cachedTableManagerReferences.remove(tableInfo);
 		this.cachedTableManagerReferences.put(tableInfo, tableManager);
+		
+		//This is only ever called on the local machine, so it is okay to add the Table Manager to the set of local table managers here.
+		localTableManagers.put(tableInfo.getGenericTableInfo(), (TableManager) tableManager);
 	}
 
 	/* (non-Javadoc)
@@ -632,7 +653,7 @@ public class SystemTableReference implements ISystemTableReference {
 		// changed by al - following line can fail dynamically but shoudn't - should be passed a local table manager
 		// put in try catch ??
 		localTableManagers.put(ti.getGenericTableInfo(), (TableManager) tableManagerRemote);
-		
+
 		return systemTable.addTableInformation(tableManagerRemote, ti);
 	}
 

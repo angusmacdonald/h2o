@@ -148,7 +148,7 @@ public class QueryProxy implements Serializable{
 
 				int result = 0;
 
-				String localURL = session.getDatabase().getDatabaseURL().getOriginalURL();
+				String localURL = session.getDatabase().getURL().getOriginalURL();
 
 				if (replica == null || localURL.equals(replica.getDatabaseURL().getOriginalURL())){
 					/*

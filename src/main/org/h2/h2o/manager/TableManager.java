@@ -412,7 +412,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	public DatabaseURL getLocation() throws RemoteException, MovedException{
 		preMethodTest();
 
-		return getDB().getDatabaseURL();
+		return getDB().getURL();
 	}
 
 
@@ -466,7 +466,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 */
 	public TableInfo getTableInfo() throws RemoteException {
 
-		return new TableInfo(tableName, schemaName, getDB().getDatabaseURL());
+		return new TableInfo(tableName, schemaName, getDB().getURL());
 	}
 
 	/*
@@ -602,7 +602,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 */
 	@Override
 	public DatabaseURL getDatabaseURL() throws RemoteException {
-		return getDB().getDatabaseURL();
+		return getDB().getURL();
 	}
 
 
@@ -707,7 +707,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	@Override
 	public void persistToCompleteStartup(TableInfo tableInfo) throws RemoteException, StartupException {
 		try {
-			addTableInformation(getDB().getDatabaseURL(), tableInfo);
+			addTableInformation(getDB().getURL(), tableInfo);
 		} catch (MovedException e) {
 			throw new StartupException("Newly created Table Manager throws a MovedException. This should never happen - serious internal error.");
 		} catch (SQLException e) {
