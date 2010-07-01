@@ -706,11 +706,11 @@ public class MultiQueryTransactionTests extends TestBase{
 		// start the server, allows to access the database remotely
 		Server server = null;
 		try {
-			server = Server.createTcpServer(new String[] { "-tcpPort", "9081", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test" });
+			server = Server.createTcpServer(new String[] { "-tcpPort", "9085", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9085/db_data/unittests/schema_test" });
 			server.start();
 
 			Class.forName("org.h2.Driver");
-			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9085/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 			Statement sa = conn.createStatement();
 
@@ -723,11 +723,11 @@ public class MultiQueryTransactionTests extends TestBase{
 
 			TestBase.resetLocatorFile();
 			
-			server = Server.createTcpServer(new String[] { "-tcpPort", "9081", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test" });
+			server = Server.createTcpServer(new String[] { "-tcpPort", "9085", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9085/db_data/unittests/schema_test" });
 
 			server.start();
 
-			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9085/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 
 			PreparedStatement mStmt = conn.prepareStatement( "insert into PUBLIC.TEST (id,name) values (?,?)" );
@@ -764,7 +764,7 @@ public class MultiQueryTransactionTests extends TestBase{
 			e.printStackTrace();
 		} finally {
 			try {
-				conn.close();
+				if (conn != null && !conn.isClosed()) conn.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}

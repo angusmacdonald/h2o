@@ -21,9 +21,9 @@ import org.junit.runners.Suite;
 	IndexTests.class,
 	UpdateTests.class,
 	MultiQueryTransactionTests.class, 
-	RestartTests.class,
 	H2SimpleTest.class,
 	WrapperTests.class,
+	RestartTests.class,
 	LocatorTests.class,
 	LocatorDatabaseTests.class,
 	ChordTests.class

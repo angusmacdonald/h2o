@@ -275,7 +275,7 @@ public class SystemTableReference implements ISystemTableReference {
 	public void migrateSystemTableToLocalInstance(boolean persistedSchemaTablesExist, boolean recreateFromPersistedState){
 
 		IChordRemoteReference oldSystemTableLocation = this.systemTableNode;
-		
+
 		if (recreateFromPersistedState){
 			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Preparing to re-instantiate System Table from persistent store.");
 			/*
@@ -374,7 +374,7 @@ public class SystemTableReference implements ISystemTableReference {
 		 */
 		this.isLocal = true;
 		this.systemTableLocationURL = db.getDatabaseURL();
-		
+
 		try {
 			SystemTableRemote stub = (SystemTableRemote) UnicastRemoteObject.exportObject(systemTable, 0);
 
@@ -482,27 +482,35 @@ public class SystemTableReference implements ISystemTableReference {
 
 	private TableManagerRemote lookup(TableInfo tableInfo, boolean alreadyCalled) throws SQLException {
 
-		TableManagerRemote tableManager = null; //cachedTableManagerReferences.get(tableInfo);
-//		if (tableManager != null){
-//
-//			try {
-//				tableManager.isAlive();
-//
-//				//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Returning cached Table Manager for lookup operation: " + tableInfo);
-//
-//				return tableManager;
-//			} catch (RemoteException e) {
-//				//Lookup location again.
-//				cachedTableManagerReferences.remove(tableInfo);
-//			} catch (MovedException e) {
-//				cachedTableManagerReferences.remove(tableInfo);
-//				//Lookup location again.
-//			}	
-//		}
+		TableManagerRemote tableManager = cachedTableManagerReferences.get(tableInfo);
+		if (tableManager != null){
 
+			try {
+				boolean alive = tableManager.isAlive();
+
+				if (alive){
+					//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Returning cached Table Manager for lookup operation: " + tableInfo);
+					return tableManager;
+				} else {
+					//Lookup location again.
+					cachedTableManagerReferences.remove(tableInfo);
+				}
+			} catch (RemoteException e) {
+				//Lookup location again.
+				cachedTableManagerReferences.remove(tableInfo);
+			} catch (MovedException e) {
+				//Lookup location again.
+				cachedTableManagerReferences.remove(tableInfo);
+				
+			}	
+		}
+
+		/*
+		 * Contact the System Table for the managers location.
+		 */
 		try {
 			tableManager = systemTable.lookup(tableInfo);
-			
+
 			cachedTableManagerReferences.put(tableInfo, tableManager);
 			return tableManager;
 		} catch (MovedException e) {

@@ -1,9 +1,7 @@
 package org.h2.h2o.remote;
 
 import java.io.IOException;
-import java.net.BindException;
 import java.net.InetSocketAddress;
-import java.rmi.AccessException;
 import java.rmi.ConnectException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -232,8 +230,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 							portToUse = Integer.parseInt(chordPort);
 						}
 
-						connected = startChordRing(localMachineLocation.getHostname(), portToUse,
-								localMachineLocation);
+						connected = startChordRing(localMachineLocation.getHostname(), portToUse, localMachineLocation);
 
 						if (connected){
 							persistedInstanceInformation.setProperty("chordPort", portToUse + "");

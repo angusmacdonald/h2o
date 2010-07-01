@@ -30,7 +30,7 @@ public class TransactionNameGenerator {
 		} else {
 
 			try {
-				DatabaseURL dbURL = DatabaseURL.parseURL(requestingDatabase.getConnectionString());
+				DatabaseURL dbURL = requestingDatabase.getConnectionURL();
 				String hostname = dbURL.getHostname();
 				
 				if (hostname == null){

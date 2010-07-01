@@ -21,6 +21,7 @@ import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.H2oProperties;
 import org.h2.h2o.util.locator.LocatorServer;
+import org.h2.tools.DeleteDbFiles;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -38,7 +39,9 @@ public class TestBase {
 	Connection cb = null;
 	Statement sa = null;
 	Statement sb = null;
+
 	protected LocatorServer ls;
+	private static int chordPort = 40000;
 
 	/**
 	 * The number of rows that are in the test table after the initial @see {@link #setUp()} call.
@@ -58,7 +61,7 @@ public class TestBase {
 		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
 		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
 		properties.setProperty("databaseName", "testDB");
-
+		properties.setProperty("chordPort", "" + chordPort++);
 		properties.saveAndClose();
 
 		properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:three"));
@@ -67,6 +70,7 @@ public class TestBase {
 		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
 		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
 		properties.setProperty("databaseName", "testDB");
+		properties.setProperty("chordPort", "" + chordPort++);
 		properties.saveAndClose();
 
 
@@ -80,7 +84,7 @@ public class TestBase {
 	@Before
 	public void setUp() throws Exception {
 		Constants.IS_TEAR_DOWN = false; 
-
+		deleteDatabaseData("db_data/unittests/", "schema_test");
 		setUpDescriptorFiles();
 		ls = new LocatorServer(29999, "junitLocator");
 		ls.createNewLocatorFile();
@@ -105,6 +109,18 @@ public class TestBase {
 		sa.execute(sql);
 	}
 
+
+	/**
+	 * Delete all of the database files created in these tests
+	 */
+	private static void deleteDatabaseData(String baseDir, String db) {
+		try{
+			DeleteDbFiles.execute(baseDir, db, true);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
 	/**
 	 * 
 	 */
@@ -114,30 +130,34 @@ public class TestBase {
 		//		dlf.setProperties("testDB", "jdbc:h2:mem:one" + "+" + ChordRemote.currentPort);
 		//		
 
-		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:one"));
-		knownHosts.createNewFile();
-		knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
-		knownHosts.setProperty("databaseName", "testDB");
-		knownHosts.saveAndClose();
+		H2oProperties properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:one"));
+		properties.createNewFile();
+		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		properties.setProperty("databaseName", "testDB");
+		properties.setProperty("chordPort", "" + chordPort++);
+		properties.saveAndClose();
 
-		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"));
-		knownHosts.createNewFile();
-		knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
-		knownHosts.setProperty("databaseName", "testDB");
-		knownHosts.saveAndClose();
+		properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"));
+		properties.createNewFile();
+		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		properties.setProperty("databaseName", "testDB");
+		properties.setProperty("chordPort", "" + chordPort++);
+		properties.saveAndClose();
 
-		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:three"));
-		knownHosts.createNewFile();
-		knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
-		knownHosts.setProperty("databaseName", "testDB");
-		knownHosts.saveAndClose();
+		properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:three"));
+		properties.createNewFile();
+		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		properties.setProperty("databaseName", "testDB");
+		properties.setProperty("chordPort", "" + chordPort++);
+		properties.saveAndClose();
 
 
-		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"));
-		knownHosts.createNewFile();
-		knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
-		knownHosts.setProperty("databaseName", "testDB");
-		knownHosts.saveAndClose();
+		properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"));
+		properties.createNewFile();
+		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		properties.setProperty("databaseName", "testDB");
+		properties.setProperty("chordPort", "" + chordPort++);
+		properties.saveAndClose();
 
 	}
 
@@ -153,7 +173,7 @@ public class TestBase {
 		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
 		properties.setProperty("databaseName", "testDB");
 		properties.saveAndClose();
-		
+
 		properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"));
 
 		properties.createNewFile();
@@ -161,9 +181,9 @@ public class TestBase {
 		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
 		properties.setProperty("databaseName", "testDB");
 		properties.saveAndClose();
-		
+
 	}
-	
+
 	public static void setUpDescriptorFiles(String[] dbLocations, String descriptorLocation, String databaseName) {
 		//		DatabaseLocatorFile dlf = new DatabaseLocatorFile("testDB", "\\\\shell\\angus\\public_html\\databases"); 
 		//		

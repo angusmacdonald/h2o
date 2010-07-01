@@ -118,6 +118,10 @@ public class CommandContainer extends Command {
 		prepared.checkParameters();
 
 		//TODO what if information schema is mixed case? Does it matter?
+		
+		/*
+		 * If this is a SELECT query that does not target any meta-tables then locks must be acquired. If it is something else then no locks are needed.
+		 */
 		if (!prepared.sqlStatement.contains("H2O.") && !prepared.sqlStatement.contains("INFORMATION_SCHEMA.")&& !prepared.sqlStatement.contains("information_schema.") && prepared instanceof Select){
 
 			this.acquireLocks(proxyManager); 

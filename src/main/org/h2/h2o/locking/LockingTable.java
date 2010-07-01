@@ -1,10 +1,8 @@
 package org.h2.h2o.locking;
 
-import java.rmi.RemoteException;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.util.LockType;
 
@@ -36,20 +34,21 @@ public class LockingTable implements ILockingTable {
 
 		if (writeLock != null) return LockType.NONE; //exclusive lock held.
 
-		if ((lockType == LockType.WRITE || lockType == LockType.CREATE) && readLocks.size() == 0){
-			//if write lock request + no read locks held.
+		 if (lockType == LockType.READ){
 
-			try { Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName + "' " + ((LockType.CREATE == lockType)? "CREATE": "WRITE") + " locked by: " + requestingMachine.getDatabaseInstance().getConnectionString()); } catch (RemoteException e) {}
-
-			writeLock = requestingMachine;
-			return lockType; //will either be WRITE or CREATE
-		} else if (lockType == LockType.READ){
-
-			try { Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName + "' READ locked by: " + requestingMachine.getDatabaseInstance().getConnectionString()); } catch (RemoteException e) {}
+			//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName + "' READ locked by: " + requestingMachine.getDatabaseURL().getOriginalURL());
 
 			readLocks.add(requestingMachine);
 			return LockType.READ;
-		}
+			
+		} else if ((lockType == LockType.WRITE || lockType == LockType.CREATE) && readLocks.size() == 0){
+			//if write lock request + no read locks held.
+
+			//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName + "' " + ((LockType.CREATE == lockType)? "CREATE": "WRITE") + " locked by: " + requestingMachine.getDatabaseURL().getOriginalURL());
+
+			writeLock = requestingMachine;
+			return lockType; //will either be WRITE or CREATE
+		} 
 
 		return LockType.NONE;
 	}
@@ -58,16 +57,14 @@ public class LockingTable implements ILockingTable {
 	 * @see org.h2.h2o.util.ILockingTable#releaseLock(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
 	 */
 	public synchronized boolean releaseLock(DatabaseInstanceWrapper requestingMachine){
-		try {
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName + "' unlocked by " + requestingMachine.getDatabaseInstance().getConnectionString());
-		} catch (RemoteException e) {}
+
+		//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName + "' unlocked by " + requestingMachine.getDatabaseURL().getOriginalURL());
 
 
 		if (writeLock != null && writeLock.equals(requestingMachine)){
 			writeLock = null;
 			return true;
-		} else if (readLocks.contains(requestingMachine)){
-			readLocks.remove(requestingMachine);
+		} else if (readLocks.remove(requestingMachine)){
 			return true;
 		}
 

@@ -137,16 +137,36 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 			}
 
 			for (TableInfo key: toRemove){
-				this.tableManagers.remove(key);
+				TableManagerWrapper tmw = this.tableManagers.remove(key);
+				
+				setTableManagerAsShutdown(tmw);
 			}
 
 		} else { //Just remove the single table.
 
-			this.tableManagers.remove(ti.getGenericTableInfo());
-
+			TableManagerWrapper tmw = this.tableManagers.remove(ti.getGenericTableInfo());
+			setTableManagerAsShutdown(tmw);
 		}
 
 		return true;
+	}
+
+	/**
+	 * Specify that the Table Manager is no longer in use. This ensures that if any remote instances have cached references of the
+	 * manager, they will become aware that it is no longer active.
+	 * @param tmw
+	 * @throws RemoteException
+	 */
+	private void setTableManagerAsShutdown(TableManagerWrapper tmw)
+			throws RemoteException {
+		if (tmw.getTableManager() != null){
+			try {
+				tmw.getTableManager().shutdown(true);
+			} catch (MovedException e) {
+				//This should never happen - the System Table should always know the current location.
+				e.printStackTrace();
+			}
+		}
 	}
 
 	/* (non-Javadoc)

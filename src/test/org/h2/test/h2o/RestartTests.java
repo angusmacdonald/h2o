@@ -71,9 +71,9 @@ public class RestartTests {
 
 		sa = conn.createStatement();
 		
-		sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-		sa.execute("INSERT INTO TEST VALUES(1, 'Hello');");
-		sa.execute("INSERT INTO TEST VALUES(2, 'World');");
+		sa.execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+		sa.execute("INSERT INTO TEST2 VALUES(1, 'Hello');");
+		sa.execute("INSERT INTO TEST2 VALUES(2, 'World');");
 	}
 
 	/**
@@ -117,9 +117,9 @@ public class RestartTests {
 			startServerAndGetConnection();
 
 			try{
-				sa.execute("INSERT INTO TEST VALUES(3, 'Hello');");
-				sa.execute("INSERT INTO TEST VALUES(4, 'World');");
-				sa.execute("SELECT * FROM TEST;");
+				sa.execute("INSERT INTO TEST2 VALUES(3, 'Hello');");
+				sa.execute("INSERT INTO TEST2 VALUES(4, 'World');");
+				sa.execute("SELECT * FROM TEST2;");
 			} catch (SQLException e){
 				e.printStackTrace();
 				fail("The TEST table was not found.");
@@ -137,8 +137,8 @@ public class RestartTests {
 			}
 
 
-			if (!rs.getString(3).equals("TEST")){
-				fail("This entry should be for the TEST table.");
+			if (!rs.getString(3).equals("TEST2")){
+				fail("This entry should be for the TEST table. It is for: " + rs.getString(3));
 			}
 			if (!rs.getString(2).equals("PUBLIC")){
 				fail("This entry should be for the PUBLIC schema.");

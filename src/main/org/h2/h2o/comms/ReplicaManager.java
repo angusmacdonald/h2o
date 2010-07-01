@@ -56,9 +56,9 @@ public class ReplicaManager implements Serializable {
 	}
 
 	public void add(DatabaseInstanceWrapper replicaLocation){
-		
+
 		assert replicaLocation != null;
-		
+
 		if (primaryLocation == null){
 			primaryLocation = replicaLocation;
 		}
@@ -66,15 +66,15 @@ public class ReplicaManager implements Serializable {
 		allReplicas.put(replicaLocation, lastUpdate);
 		activeReplicas.add(replicaLocation);
 	}
-	
+
 	public void add(List<DatabaseInstanceWrapper> replicaLocations){
-		
+
 		assert replicaLocations != null;
-		
+
 		if (primaryLocation == null){
 			primaryLocation = replicaLocations.get(0);
 		}
-		
+
 		for (DatabaseInstanceWrapper diw: replicaLocations){
 			allReplicas.put(diw, lastUpdate);
 		}
@@ -144,26 +144,30 @@ public class ReplicaManager implements Serializable {
 	 * <p>The updateID of the last update committed on each replica.
 	 * <p>The set of replicas which are deemed active.
 	 */
-	public void completeUpdate(Set<DatabaseInstanceWrapper> updatedReplicas, int updateID) {
+	public void completeUpdate(Set<DatabaseInstanceWrapper> updatedReplicas, int updateID, boolean synchronousUpdate) {
 
-		if (updatedReplicas != null && updatedReplicas.size() != 0){
+		if (synchronousUpdate){
+			//Don't change anything.
 
-			activeReplicas = updatedReplicas;
+		} else {
+			if (updatedReplicas != null && updatedReplicas.size() != 0){
+				activeReplicas = updatedReplicas;
 
-			/*
-			 * Loop through each replica which was updated, re-adding them into the
-			 * replicaLocations hashmap along with the new updateID.
-			 */
-			for (DatabaseInstanceWrapper instance: updatedReplicas){
-				if (allReplicas.containsKey(instance)){
-					Integer previousID = allReplicas.get(instance);
+				/*
+				 * Loop through each replica which was updated, re-adding them into the
+				 * replicaLocations hashmap along with the new updateID.
+				 */
+				for (DatabaseInstanceWrapper instance: updatedReplicas){
+					if (allReplicas.containsKey(instance)){
+						Integer previousID = allReplicas.get(instance);
 
-					assert updateID >= previousID;
+						assert updateID >= previousID;
 
-					allReplicas.remove(instance);
-					allReplicas.put(instance, updateID);
+						allReplicas.remove(instance);
+						allReplicas.put(instance, updateID);
 
-				} //In many cases it won't contain this key, but another table (part of the same transaction) was on this machine.
+					} //In many cases it won't contain this key, but another table (part of the same transaction) was on this machine.
+				}
 			}
 		}
 	}
@@ -197,14 +201,14 @@ public class ReplicaManager implements Serializable {
 	 */
 	public String[] getReplicaLocations() {
 		String[] locations = new String[activeReplicas.size()];
-		
+
 		int i = 0;
 		for (DatabaseInstanceWrapper r: activeReplicas){
-				locations[i++] = r.getDatabaseURL().getURLwithRMIPort();
+			locations[i++] = r.getDatabaseURL().getURLwithRMIPort();
 		}
-		
+
 		return locations;
 	}
-	
-	
+
+
 }

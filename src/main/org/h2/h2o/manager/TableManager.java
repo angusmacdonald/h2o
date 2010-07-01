@@ -126,17 +126,21 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 	private IChordRemoteReference location;
 
+	private String fullName;
+
 	public TableManager(TableInfo tableDetails, Database database) throws Exception{
 		super(database, TABLES, REPLICAS, CONNECTIONS, TABLEMANAGERSTATE, Settings.TABLE_MANAGER_REPLICATION_FACTOR);
 
 		this.tableName = tableDetails.getTableName();
 
 		this.schemaName = tableDetails.getSchemaName();
-
+		
 		if (schemaName.equals("") || schemaName == null){
 			schemaName = "PUBLIC";
 		}
 
+		this.fullName = schemaName + "." + tableName;
+		
 		this.replicaManager = new ReplicaManager();
 		//		this.unPropagatedUpdates = new HashMap<Integer, String>();
 		//		this.inProgressUpdates = new HashMap<Integer, String>();
@@ -312,8 +316,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		//			throw new SQLException("Table already locked. Cannot perform query.");
 		//		}
 
-		QueryProxy qp = new QueryProxy(lockGranted, schemaName + "." + tableName, selectReplicaLocations(replicaManager.getPrimary(), lockRequested, databaseInstanceWrapper), 
-				this, databaseInstanceWrapper, replicaManager.getNewUpdateID(), lockRequested);
+		QueryProxy qp = new QueryProxy(lockGranted, fullName, selectReplicaLocations(lockRequested, databaseInstanceWrapper), this, databaseInstanceWrapper, replicaManager.getNewUpdateID(), lockRequested);
 
 		return qp;
 	}
@@ -330,7 +333,12 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 * @return The set of database instances that should host a replica for the given table/schema. The return value will be NULL if
 	 * 	no more replicas need to be created.
 	 */
-	private Set<DatabaseInstanceWrapper> selectReplicaLocations(DatabaseInstanceWrapper primaryLocation, LockType lockType, DatabaseInstanceWrapper requestingDatabase) {
+	private Set<DatabaseInstanceWrapper> selectReplicaLocations(LockType lockType, DatabaseInstanceWrapper requestingDatabase) {
+		
+		if (lockType == LockType.READ){
+			return this.replicaManager.getActiveReplicas();
+		}// else, a more informed decision is needed.
+		
 		/*
 		 * The set of machines onto which new replicas will be added.
 		 */
@@ -356,7 +364,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 			 * replication fact. The location of the primary copy cannot be re-used.
 			 */
 			for (DatabaseInstanceWrapper dbInstance: potentialReplicaLocations){
-				if (!dbInstance.equals(primaryLocation)){ //primary copy doesn't exist here.
+				if (!dbInstance.equals(replicaManager.getPrimary())){ //primary copy doesn't exist here.
 					newReplicaLocations.add(dbInstance);
 					currentReplicationFactor++;
 				}
@@ -390,8 +398,6 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 					newReplicaLocations.add(randomDir);
 				}
 			}
-		} else if (lockType == LockType.READ){
-			return this.replicaManager.getActiveReplicas();
 		}
 
 		return newReplicaLocations;
@@ -426,6 +432,8 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 */
 	@Override
 	public boolean isAlive() throws RemoteException, MovedException {
+		if (shutdown) return false;
+		
 		preMethodTest();
 
 		return true;
@@ -444,7 +452,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		/*
 		 * Update the set of 'active replicas' and their update IDs. 
 		 */
-		replicaManager.completeUpdate(updatedReplicas, updateID);
+		replicaManager.completeUpdate(updatedReplicas, updateID, true);
 
 		/*
 		 * Release the locks.
