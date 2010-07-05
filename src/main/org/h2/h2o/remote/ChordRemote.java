@@ -29,7 +29,7 @@ import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.SystemTableReference;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.H2oProperties;
+import org.h2.h2o.util.LocalH2OProperties;
 import org.h2.h2o.util.SystemTableReplication;
 import org.h2.h2o.util.TableInfo;
 import org.h2.h2o.util.locator.DatabaseDescriptorFile;
@@ -104,6 +104,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 	private H2OLocatorInterface locatorInterface;
 
+	private Settings databaseSettings;
+
 	/**
 	 * Port to be used for the next database instance. Currently used for testing.
 	 */
@@ -117,7 +119,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.IRemoteDatabase#connectToDatabaseSystem(org.h2.h2o.util.DatabaseURL, org.h2.engine.Session)
 	 */
-	public DatabaseURL connectToDatabaseSystem(Session session) throws StartupException {
+	public DatabaseURL connectToDatabaseSystem(Session session, Settings databaseSettings) throws StartupException {
+		this.databaseSettings = databaseSettings;
+		
 		establishChordConnection(localMachineLocation, session);
 
 		this.localMachineLocation.setRMIPort(getRmiPort()); //set the port on which the RMI server is running.
@@ -137,6 +141,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	 * Attempt to establish a new Chord connection by trying to connect to a number of known hosts.
 	 * 
 	 * If no established ring is found a new Chord ring will be created.
+	 * @param databaseSettings 
 	 */
 	private DatabaseURL establishChordConnection(DatabaseURL localMachineLocation, Session session) throws StartupException {
 
@@ -150,14 +155,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		/*
 		 * Contact descriptor for SM locations.
 		 */
-		//		IS:				config\MyFirstDatabase9999.properties
-		//		SHOULD BE: 		config\db_data_wrapper__MyFirstDatabase9999.properties
-		H2oProperties persistedInstanceInformation = new H2oProperties(localMachineLocation);
-		persistedInstanceInformation.loadProperties();
-		this.locatorInterface = getLocatorServerReference(persistedInstanceInformation);
-
-		getSystemWideSettings(locatorInterface);
-		
+	
 		/*
 		 * Try to connect repeatedly until successful. There is a back-off mechanism to ensure this doesn't fail 
 		 * repeatedly in a short space of time.
@@ -165,7 +163,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 		List<String> databaseInstances = null;
 
-		while (!connected && attempts < Settings.getInstance().ATTEMPTS_TO_CREATE_OR_JOIN_SYSTEM){
+		int maxNumberOfAttempts = Integer.parseInt(databaseSettings.get("ATTEMPTS_TO_CREATE_OR_JOIN_SYSTEM"));
+		
+		while (!connected && attempts < maxNumberOfAttempts){
 			try {
 				databaseInstances = locatorInterface.getLocations();
 			} catch (Exception e){
@@ -187,7 +187,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				/*
 				 * There may be a number of database instances already in the ring. Try to connect.
 				 */
-				connected = attemptToJoinChordRing(persistedInstanceInformation, localMachineLocation, databaseInstances);
+				connected = attemptToJoinChordRing(databaseSettings.getLocalSettings(), localMachineLocation, databaseInstances);
 			}
 
 
@@ -215,6 +215,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 					//Obtain a lock on the locator server first.
 
+					LocalH2OProperties localSettings = databaseSettings.getLocalSettings();
+					
 					boolean locked = false;
 					try {
 						locked = locatorInterface.lockLocators(this.localMachineLocation.getDbLocation());
@@ -224,7 +226,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 					}
 
 					if (locked){
-						String chordPort = persistedInstanceInformation.getProperty("chordPort");
+						String chordPort = localSettings.getProperty("chordPort");
 
 						int portToUse = currentPort++;
 						if (chordPort!=null){
@@ -235,8 +237,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 						connected = startChordRing(localMachineLocation.getHostname(), portToUse, localMachineLocation);
 
 						if (connected){
-							persistedInstanceInformation.setProperty("chordPort", portToUse + "");
-							persistedInstanceInformation.saveAndClose();
+							localSettings.setProperty("chordPort", portToUse + "");
+							localSettings.saveAndClose();
 						}
 
 						newSMLocation = localMachineLocation;
@@ -261,7 +263,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 					Random r = new Random();
 					try {
 						int backoffTime = (1000 + (r.nextInt(100) * 10))*attempts;
-						Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Trying to connect to Chord ring. Attempt number " + attempts + " of " + Settings.getInstance().ATTEMPTS_TO_CREATE_OR_JOIN_SYSTEM + ". Instance at " + localMachineLocation + " is about to back-off for " + backoffTime + " ms.");
+						Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Trying to connect to Chord ring. Attempt number " + attempts + " of " + databaseSettings.get("ATTEMPTS_TO_CREATE_OR_JOIN_SYSTEM") + ". Instance at " + localMachineLocation + " is about to back-off for " + backoffTime + " ms.");
 
 						Thread.sleep(backoffTime);
 					} catch (InterruptedException e) {
@@ -313,41 +315,34 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		return systemTableRef.getSystemTableURL();
 	}
 
-	private void getSystemWideSettings(H2OLocatorInterface locatorInterface) {
-		DatabaseDescriptorFile descriptor = locatorInterface.getDescriptor();
-		
-		Settings.getInstance().updateSettings(descriptor);
-	}
-
 	/**
 	 * Get a reference to the locator servers for this database system.
-	 * @param persistedInstanceInformation 	Properties file containing the location of the database descriptor.
+	 * @param localDatabaseProperties 	Properties file containing the location of the database descriptor.
 	 * @return	
 	 * @throws StartupException		Thrown if the descriptor file couldn't be found.
 	 */
-	private H2OLocatorInterface getLocatorServerReference(H2oProperties persistedInstanceInformation) throws StartupException {
+	public H2OLocatorInterface getLocatorServerReference(LocalH2OProperties localDatabaseProperties) throws StartupException {
 
-		H2OLocatorInterface dlo = null;
-		String descriptorLocation = persistedInstanceInformation.getProperty("descriptor");
-		String databaseName = persistedInstanceInformation.getProperty("databaseName");
+		String descriptorLocation = localDatabaseProperties.getProperty("descriptor");
+		String databaseName = localDatabaseProperties.getProperty("databaseName");
 
 		if (descriptorLocation == null || databaseName == null){
 			throw new StartupException("The location of the database descriptor was not specified. The database will now exit.");
 		}
 
 		try {
-			dlo = new H2OLocatorInterface(databaseName, descriptorLocation);
+			locatorInterface = new H2OLocatorInterface(databaseName, descriptorLocation);
 		} catch (IOException e) {
 			throw new StartupException(e.getMessage());
 		}
-		return dlo;
+		return locatorInterface;
 	}
 
 	/**
 	 * Try to join an existing chord ring.
 	 * @return True if a connection was successful; otherwise false.
 	 */
-	private boolean attemptToJoinChordRing(H2oProperties persistedInstanceInformation, DatabaseURL localMachineLocation, List<String> databaseInstances) {
+	private boolean attemptToJoinChordRing(LocalH2OProperties persistedInstanceInformation, DatabaseURL localMachineLocation, List<String> databaseInstances) {
 
 
 		/*
@@ -563,7 +558,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 		boolean connected = false; int attempts = 0;
 
-		while(!connected && attempts < Settings.getInstance().ATTEMPTS_AFTER_BIND_EXCEPTIONS){ //only have multiple attempts if there is a bind exception. otherwise this just returns false.
+		int maxNumberOfAttempts = Integer.parseInt(databaseSettings.get("ATTEMPTS_AFTER_BIND_EXCEPTIONS"));
+		
+		while(!connected && attempts < maxNumberOfAttempts){ //only have multiple attempts if there is a bind exception. otherwise this just returns false.
 			try {
 				chordNode = new ChordNodeImpl(localChordAddress, knownHostAddress);
 			} catch (ConnectException e){ //database instance we're trying to connect to doesn't exist.
@@ -677,7 +674,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				 * Obtain a reference to the locator servers if one is not already held.
 				 */
 				if (this.locatorInterface == null){
-					H2oProperties persistedInstanceInformation = new H2oProperties(localMachineLocation);
+					LocalH2OProperties persistedInstanceInformation = new LocalH2OProperties(localMachineLocation);
 					persistedInstanceInformation.loadProperties();
 					try {
 						this.locatorInterface = getLocatorServerReference(persistedInstanceInformation);
@@ -778,7 +775,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 								//Don't bother trying to replicate the System Table if this is a test which doesn't require it.
 								Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting System Table replication thread on successor change on: " + this.localMachineLocation.getDbLocation() + ".");
 
-								SystemTableReplication newThread = new SystemTableReplication(hostname, port, this.systemTableRef, this);
+								int sleepTime = Integer.parseInt(databaseSettings.get("REPLICATOR_SLEEP_TIME"));
+								SystemTableReplication newThread = new SystemTableReplication(hostname, port, this.systemTableRef, this, sleepTime);
 								newThread.start();
 							}
 

@@ -12,7 +12,7 @@ import java.sql.SQLException;
 
 import org.h2.engine.Constants;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.H2oProperties;
+import org.h2.h2o.util.LocalH2OProperties;
 import org.h2.h2o.util.locator.LocatorServer;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.util.ScriptReader;
@@ -53,7 +53,7 @@ public class H2SimpleTest {
 
 		
 		Constants.IS_NON_SM_TEST = true;
-		H2oProperties properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:db_data/test/scriptSimple"));
+		LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:db_data/test/scriptSimple"));
 
 		properties.createNewFile();
 		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
@@ -114,7 +114,7 @@ public class H2SimpleTest {
 			conn.close();
 		}
 		
-		H2oProperties properties = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:db_data/test/scriptSimple"));
+		LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:db_data/test/scriptSimple"));
 
 		properties.createNewFile();
 		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"

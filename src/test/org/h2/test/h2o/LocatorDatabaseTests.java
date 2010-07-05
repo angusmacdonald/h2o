@@ -19,7 +19,7 @@ import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.H2oProperties;
+import org.h2.h2o.util.LocalH2OProperties;
 import org.h2.h2o.util.locator.H2OLocatorInterface;
 import org.h2.h2o.util.locator.LocatorServer;
 import org.h2.test.h2o.util.StartDatabaseInstance;
@@ -90,7 +90,7 @@ public class LocatorDatabaseTests extends TestBase {
 		org.h2.Driver.load();
 
 		for (String location: dbs){
-			H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:tcp://localhost:9081/db_data/multiprocesstests/" + location));
+			LocalH2OProperties knownHosts = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:tcp://localhost:9081/db_data/multiprocesstests/" + location));
 			knownHosts.createNewFile();
 			knownHosts.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
 			knownHosts.setProperty("databaseName", "testDB");
@@ -428,7 +428,7 @@ public class LocatorDatabaseTests extends TestBase {
 	 * Get a set of all database instances which hold system table state
 	 */
 	private List<String> findSystemTableInstances(){
-		H2oProperties persistedInstanceInformation = new H2oProperties(DatabaseURL.parseURL(fullDbName[0]));
+		LocalH2OProperties persistedInstanceInformation = new LocalH2OProperties(DatabaseURL.parseURL(fullDbName[0]));
 		persistedInstanceInformation.loadProperties();
 
 		/*

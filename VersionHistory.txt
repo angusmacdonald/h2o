@@ -9,3 +9,4 @@ H2O Version 0.2.3 (Unreleased)
 	SYSTEM_RANGE command now works.
 	TestBigResult class from H2 now integrated as unit test.
 	Added support for immediate replication of newly created tables.
+	Added support for specifying replication factor and other settings.

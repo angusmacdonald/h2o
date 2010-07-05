@@ -121,9 +121,7 @@ public class H2OLocator {
 
 		descriptor.setProperty("databaseName", databaseName);
 		descriptor.setProperty("locatorLocations", locatorLocation);
-		
-		Settings.setDescriptorProperties(descriptor);
-		
+	
 		descriptor.store(fos, "H2O Database Descriptor file.");
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "\n\tThe descriptor file for this database has been created at: " + f.getAbsolutePath() + "\n\t"

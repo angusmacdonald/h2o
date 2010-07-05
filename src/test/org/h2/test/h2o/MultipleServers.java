@@ -11,7 +11,7 @@ import org.h2.engine.Constants;
 import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.H2oProperties;
+import org.h2.h2o.util.LocalH2OProperties;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -55,7 +55,7 @@ public class MultipleServers {
 			String fullDBName = "jdbc:h2:mem:" + db;
 			DatabaseURL dbURL = DatabaseURL.parseURL(fullDBName);
 
-			H2oProperties knownHosts = new H2oProperties(dbURL);
+			LocalH2OProperties knownHosts = new LocalH2OProperties(dbURL);
 			knownHosts.createNewFile();
 			knownHosts.setProperty("jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db", "30000"); // //jdbc:h2:sm:mem:one
 			knownHosts.saveAndClose();

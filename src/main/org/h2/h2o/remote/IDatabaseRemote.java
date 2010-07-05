@@ -3,6 +3,7 @@ package org.h2.h2o.remote;
 import java.rmi.RemoteException;
 
 import org.h2.engine.Session;
+import org.h2.h2o.autonomic.Settings;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.util.DatabaseURL;
@@ -19,7 +20,7 @@ import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
  */
 public interface IDatabaseRemote {
 
-	public DatabaseURL connectToDatabaseSystem(Session systemSession) throws StartupException;
+	public DatabaseURL connectToDatabaseSystem(Session systemSession, Settings databaseSettings) throws StartupException;
 
 	/**
 	 * Get the remote reference of the local database instance.

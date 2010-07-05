@@ -399,7 +399,10 @@ public class SystemTableReference implements ISystemTableReference {
 				String hostname = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getHostName();
 				int port = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getPort();
 				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting System Table replication thread on : " + db.getURL().getDbLocation() + ".");
-				SystemTableReplication newThread = new SystemTableReplication(hostname, port, this, this.db.getChordInterface());
+				
+				int sleepTime = Integer.parseInt(db.getDatabaseSettings().get("REPLICATOR_SLEEP_TIME"));
+				
+				SystemTableReplication newThread = new SystemTableReplication(hostname, port, this, this.db.getChordInterface(), sleepTime);
 				newThread.start();
 			} else {
 				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "There is only one node in the network. There is no-where else to replicate the System Table.");

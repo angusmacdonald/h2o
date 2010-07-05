@@ -27,6 +27,7 @@ public class SystemTableReplication extends Thread {
 
 	ISystemTableReference systemTableRef;
 	IChordInterface chordInterface;
+	private long replicatorSleepTime;
 
 	/**
 	 * Repeatedly attempts to replicate the System Tables state on the database instance at the specified location. This is done multiple times
@@ -35,11 +36,12 @@ public class SystemTableReplication extends Thread {
 	 * @param port			Port on which the database instance is listening.
 	 * @param iSystemTable			Used to update the System Table, informing it of the new replica location.
 	 */
-	public SystemTableReplication(String hostname, int port, ISystemTableReference systemTableRef, IChordInterface chordInterface){
+	public SystemTableReplication(String hostname, int port, ISystemTableReference systemTableRef, IChordInterface chordInterface, int replicatorSleepTime){
 		this.hostname = hostname;
 		this.port = port;
 		this.systemTableRef = systemTableRef;
 		this.chordInterface = chordInterface;
+		this.replicatorSleepTime = replicatorSleepTime;
 	}
 
 	/* (non-Javadoc)
@@ -55,7 +57,7 @@ public class SystemTableReplication extends Thread {
 		do {
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempting to find database instance at " + hostname + ":" + port + ". Attempt " + (attempts+1) + " of " + 10);
 			try {
-				Thread.sleep(Settings.getInstance().REPLICATOR_SLEEP_TIME);
+				Thread.sleep(replicatorSleepTime);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}

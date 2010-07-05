@@ -25,13 +25,11 @@ import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
 import org.h2.constant.SysProperties;
 import org.h2.constraint.Constraint;
-import org.h2.h2o.comms.DatabaseInstance;
+import org.h2.h2o.autonomic.Settings;
 import org.h2.h2o.comms.QueryProxyManager;
-import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.manager.TableManager;
-import org.h2.h2o.manager.ISystemTable;
 import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.SystemTable;
@@ -42,8 +40,8 @@ import org.h2.h2o.remote.IChordInterface;
 import org.h2.h2o.remote.IDatabaseRemote;
 import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.H2oProperties;
-import org.h2.h2o.util.RemoveConnectionInfo;
+import org.h2.h2o.util.LocalH2OProperties;
+import org.h2.h2o.util.locator.H2OLocatorInterface;
 import org.h2.index.Cursor;
 import org.h2.index.Index;
 import org.h2.index.IndexType;
@@ -193,7 +191,7 @@ public class Database implements DataHandler {
 	private SmallLRUCache lobFileListCache = new SmallLRUCache(128);
 	private boolean autoServerMode;
 	private Server server;
-	private HashMap linkConnections;
+	private HashMap<?, ?> linkConnections;
 	private TempFileDeleter tempFileDeleter = TempFileDeleter.getInstance();
 	private PageStore pageStore;
 
@@ -213,9 +211,8 @@ public class Database implements DataHandler {
 
 	private User h2oSystemUser;
 	private Session h2oSystemSession;
-
-	private User h2oAdminUser; //used by H2O users for initial logon.
-
+	
+	private Settings databaseSettings;
 	
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
 
@@ -229,14 +226,12 @@ public class Database implements DataHandler {
 		Constants.IS_TESTING_QUERY_FAILURE = false;
 		Constants.IS_TESTING_CREATETABLE_FAILURE = false;
 
-		//this.chord = new ChordInterface();
+
 		this.compareMode = new CompareMode(null, null, 0);
-		//this.databaseLocation = ci.getSmallName();
+
 		systemTableRef = new SystemTableReference(this);
 		databaseRemote = new ChordRemote(localMachineLocation, systemTableRef);
 
-		//this.localMachineAddress = NetUtils.getLocalAddress();
-		//this.localMachinePort = ci.getPort();
 		this.persistent = ci.isPersistent();
 
 
@@ -287,12 +282,12 @@ public class Database implements DataHandler {
 		int traceLevelSystemOut = ci.getIntProperty(SetTypes.TRACE_LEVEL_SYSTEM_OUT,
 				TraceSystem.DEFAULT_TRACE_LEVEL_SYSTEM_OUT);
 		this.cacheType = StringUtils.toUpperEnglish(ci.removeProperty("CACHE_TYPE", CacheLRU.TYPE_NAME));
-		openDatabase(traceLevelFile, traceLevelSystemOut, closeAtVmShutdown, ci);
+		openDatabase(traceLevelFile, traceLevelSystemOut, closeAtVmShutdown, ci, localMachineLocation);
 		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, " Completed startup on " + ci.getOriginalURL());
 	}
 
 	private void setDiagnosticLevel(DatabaseURL localMachineLocation) {
-		H2oProperties databaseProperties = new H2oProperties(localMachineLocation);
+		LocalH2OProperties databaseProperties = new LocalH2OProperties(localMachineLocation);
 		databaseProperties.loadProperties();
 		
 		String diagnosticLevel = databaseProperties.getProperty("diagnosticLevel");
@@ -314,9 +309,9 @@ public class Database implements DataHandler {
 		ErrorHandling.setTimestampFlag(false);
 	}
 
-	private void openDatabase(int traceLevelFile, int traceLevelSystemOut, boolean closeAtVmShutdown, ConnectionInfo ci) throws SQLException {
+	private void openDatabase(int traceLevelFile, int traceLevelSystemOut, boolean closeAtVmShutdown, ConnectionInfo ci, DatabaseURL localMachineLocation) throws SQLException {
 		try {
-			open(traceLevelFile, traceLevelSystemOut, ci);
+			open(traceLevelFile, traceLevelSystemOut, ci, localMachineLocation);
 			if (closeAtVmShutdown) {
 				closeOnExit = new DatabaseCloser(this, 0, true);
 				try {
@@ -365,14 +360,6 @@ public class Database implements DataHandler {
 	 * @return true if both objects are equal
 	 */
 	public boolean areEqual(Value a, Value b) throws SQLException {
-		// TODO optimization possible
-		// boolean is = a.compareEqual(b);
-		// boolean is2 = a.compareTo(b, compareMode) == 0;
-		// if(is != is2) {
-		// is = a.compareEqual(b);
-		// System.out.println("hey!");
-		// }
-		// return a.compareEqual(b);
 		return a.compareTo(b, compareMode) == 0;
 	}
 
@@ -584,7 +571,7 @@ public class Database implements DataHandler {
 		return StringUtils.toUpperEnglish(n);
 	}
 
-	private synchronized void open(int traceLevelFile, int traceLevelSystemOut, ConnectionInfo ci) throws SQLException, StartupException {
+	private synchronized void open(int traceLevelFile, int traceLevelSystemOut, ConnectionInfo ci, DatabaseURL localMachineLocation) throws SQLException, StartupException {
 		boolean databaseExists = false; //whether the database already exists on disk. i.e. with .db.data files, etc.
 
 		if (persistent) {
@@ -677,7 +664,7 @@ public class Database implements DataHandler {
 		systemUser = new User(this, 0, Constants.DBA_NAME, true);
 		h2oSchemaUser = new User(this, 1, "H2O", true);
 		h2oSystemUser = new User(this, 1, "system", true);
-		h2oAdminUser = new User(this, 1, "admin", true);
+
 		mainSchema = new Schema(this, 0, Constants.SCHEMA_MAIN, systemUser, true);
 		infoSchema = new Schema(this, -1, Constants.SCHEMA_INFORMATION, systemUser, true);
 
@@ -719,15 +706,17 @@ public class Database implements DataHandler {
 		starting = true;
 
 		/*
-		 * #####################################################################################
 		 * H2O STARTUP CODE FOR System Table, TABLE INSTANITATION
-		 * #####################################################################################
 		 */
 		if (Constants.IS_H2O && !isManagementDB()){ //don't run this code with the TCP server management DB
+			
+			LocalH2OProperties localSettings = new LocalH2OProperties(localMachineLocation);
+			localSettings.loadProperties();
+			H2OLocatorInterface locatorInterface = databaseRemote.getLocatorServerReference(localSettings);
 
-
-			//databaseRemote.bindSystemTableReference(systemTableRef);
-			databaseRemote.connectToDatabaseSystem(h2oSystemSession); //systemSession
+			databaseSettings = new Settings(localSettings, locatorInterface.getDescriptor());
+			
+			databaseRemote.connectToDatabaseSystem(h2oSystemSession, databaseSettings); //systemSession
 		}
 
 		/*
@@ -735,8 +724,8 @@ public class Database implements DataHandler {
 		 * 
 		 * END OF System Table STARTUP CODE
 		 * 
-		 * At this point in the code this database instance will be connected to a schema
-		 * manager, so when tables are generated (below), it will be possible for them to
+		 * At this point in the code this database instance will be connected to a System
+		 * Table, so when tables are generated (below), it will be possible for them to
 		 * re-instantiate Table Managers where possible.
 		 * 
 		 * ############################################################################
@@ -2775,6 +2764,10 @@ public class Database implements DataHandler {
 	 */
 	public int getUserSessionsSize() {
 		return userSessions.size();
+	}
+
+	public Settings getDatabaseSettings() {
+		return databaseSettings;
 	}
 
 

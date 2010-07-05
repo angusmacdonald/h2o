@@ -60,7 +60,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
 
 	public PersistentSystemTable(Database db, boolean createTables) throws Exception{
-		super (db, TABLES, null, DATABASE_LOCATIONS, TABLEMANAGERSTATE, Settings.getInstance().SYSTEM_TABLE_REPLICATION_FACTOR);
+		super (db, TABLES, null, DATABASE_LOCATIONS, TABLEMANAGERSTATE, Integer.parseInt(db.getDatabaseSettings().get("SYSTEM_TABLE_REPLICATION_FACTOR")));
 
 
 		if (createTables){

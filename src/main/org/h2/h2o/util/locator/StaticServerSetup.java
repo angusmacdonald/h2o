@@ -4,7 +4,7 @@ import java.io.File;
 
 import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.H2oProperties;
+import org.h2.h2o.util.LocalH2OProperties;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
@@ -51,19 +51,19 @@ public class StaticServerSetup {
 		/*
 		 * Setup bootstrap files.
 		 */
-		H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL(initialSchemaManager));
+		LocalH2OProperties knownHosts = new LocalH2OProperties(DatabaseURL.parseURL(initialSchemaManager));
 		knownHosts.createNewFile();
 		knownHosts.setProperty("descriptor", descriptorFile);
 		knownHosts.setProperty("databaseName", databaseName);
 		knownHosts.saveAndClose();
 		
-		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:tcp://localhost:9191/db_data/three/test_db"));
+		knownHosts = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:tcp://localhost:9191/db_data/three/test_db"));
 		knownHosts.createNewFile();
 		knownHosts.setProperty("descriptor", descriptorFile);
 		knownHosts.setProperty("databaseName", databaseName);
 		knownHosts.saveAndClose();
 		
-		knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:tcp://localhost:9292/db_data/two/test_db"));
+		knownHosts = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:tcp://localhost:9292/db_data/two/test_db"));
 		knownHosts.createNewFile();
 		knownHosts.setProperty("descriptor", descriptorFile);
 		knownHosts.setProperty("databaseName", databaseName);

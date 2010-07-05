@@ -22,7 +22,7 @@ import java.util.ArrayList;
 
 import org.h2.engine.Constants;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.H2oProperties;
+import org.h2.h2o.util.LocalH2OProperties;
 import org.h2.h2o.util.locator.LocatorServer;
 import org.h2.jdbc.JdbcConnection;
 import org.h2.message.TraceSystem;
@@ -148,7 +148,7 @@ public abstract class TestBase {
     }
     
 	public static void setUpDescriptorFiles(String url) {
-		H2oProperties properties = new H2oProperties(DatabaseURL.parseURL(url));
+		LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(url));
 		properties.createNewFile();
 		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
 		properties.setProperty("databaseName", "testDB");

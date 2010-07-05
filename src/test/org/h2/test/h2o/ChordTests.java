@@ -11,7 +11,7 @@ import java.util.Set;
 import org.h2.engine.Constants;
 import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.H2oProperties;
+import org.h2.h2o.util.LocalH2OProperties;
 import org.h2.h2o.util.locator.LocatorServer;
 import org.h2.test.h2o.util.StartDatabaseInstance;
 import org.junit.After;

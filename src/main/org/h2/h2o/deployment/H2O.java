@@ -12,7 +12,7 @@ import java.util.Map;
 import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.H2oProperties;
+import org.h2.h2o.util.LocalH2OProperties;
 import org.h2.tools.Server;
 import org.h2.util.NetUtils;
 
@@ -141,6 +141,7 @@ public class H2O {
 			port = "9999";
 			descriptorFileLocation = null; //e.g. "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o"
 			defaultLocation = "db_data"; //e.g. "db_data"
+			//webPort = 9990;
 		} else {
 
 			/*
@@ -253,12 +254,12 @@ public class H2O {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Specified Descriptor File Location: " + descriptorFileLocation);
 
 
-		H2oProperties properties = new H2oProperties(DatabaseURL.parseURL(generatedDatabaseURL));
+		LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(generatedDatabaseURL));
 		properties.createNewFile();
 		properties.setProperty("descriptor", descriptorFileLocation);
 		properties.setProperty("databaseName", databaseName);
 		properties.setProperty("diagnosticLevel", DiagnosticLevel.NONE.toString());
-
+		properties.saveAndClose();
 		try {
 			Class.forName("org.h2.Driver");
 		} catch (ClassNotFoundException e) {

@@ -14,7 +14,7 @@ import org.h2.h2o.comms.ReplicaManager;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.H2oProperties;
+import org.h2.h2o.util.LocalH2OProperties;
 import org.h2.h2o.util.TableInfo;
 import org.h2.h2o.util.locator.H2OLocatorInterface;
 import org.h2.result.LocalResult;
@@ -48,6 +48,8 @@ public abstract class PersistentManager {
 
 	private int managerStateReplicationFactor;
 
+	private boolean metaDataReplicationEnabled;
+
 	public PersistentManager(Database db, String tables, String replicas, String connections, String tableManagerRelation, int managerStateReplicationFactor) throws Exception{
 		this.tableRelation = tables;
 		this.replicaRelation = replicas;
@@ -58,6 +60,8 @@ public abstract class PersistentManager {
 		this.managerStateReplicationFactor = managerStateReplicationFactor;
 		Session session = db.getSystemSession();
 
+		metaDataReplicationEnabled = Boolean.parseBoolean(db.getDatabaseSettings().get("METADATA_REPLICATION_ENABLED"));
+		
 		if (session == null){
 			ErrorHandling.error("Couldn't find system session. Local database has been shutdown.");
 			return;
@@ -616,8 +620,8 @@ public abstract class PersistentManager {
 	 * @throws RemoteException
 	 */
 	public boolean addStateReplicaLocation(DatabaseInstanceWrapper databaseWrapper) throws RemoteException {
-
-		if (Settings.getInstance().METADATA_REPLICATION_ENABLED){
+		
+		if (metaDataReplicationEnabled){
 			if (stateReplicaManager.size() < managerStateReplicationFactor + 1){ //+1 because the local copy counts as a replica.
 
 				//now replica state here.
@@ -653,7 +657,7 @@ public abstract class PersistentManager {
 	 * 
 	 */
 	protected void updateLocatorFiles() throws Exception{
-		H2oProperties persistedInstanceInformation = new H2oProperties(db.getURL());
+		LocalH2OProperties persistedInstanceInformation = new LocalH2OProperties(db.getURL());
 		persistedInstanceInformation.loadProperties();
 
 		String descriptorLocation = persistedInstanceInformation.getProperty("descriptor");

@@ -128,8 +128,10 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 	private String fullName;
 
+	private int relationReplicationFactor;
+
 	public TableManager(TableInfo tableDetails, Database database) throws Exception{
-		super(database, TABLES, REPLICAS, CONNECTIONS, TABLEMANAGERSTATE, Settings.getInstance().TABLE_MANAGER_REPLICATION_FACTOR);
+		super(database, TABLES, REPLICAS, CONNECTIONS, TABLEMANAGERSTATE, Integer.parseInt(database.getDatabaseSettings().get("TABLE_MANAGER_REPLICATION_FACTOR")));
 
 		this.tableName = tableDetails.getTableName();
 
@@ -147,6 +149,8 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		this.lockingTable = new LockingTable(schemaName + "." + tableName);
 
 		this.location = database.getChordInterface().getLocalChordReference();
+		
+		this.relationReplicationFactor = Integer.parseInt(database.getDatabaseSettings().get("RELATION_REPLICATION_FACTOR"));
 	}
 
 	/* (non-Javadoc)
@@ -340,9 +344,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 			 * Manager in the first place. 
 			 */
 
-			int RELATION_REPLICATION_FACTOR = Settings.getInstance().RELATION_REPLICATION_FACTOR;
-
-			if (RELATION_REPLICATION_FACTOR == 1){
+			if (relationReplicationFactor == 1){
 				return null; //No more replicas are needed currently.
 			}
 
@@ -365,14 +367,14 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 					/*
 					 * Do we have enough replicas yet?
 					 */
-					if (currentReplicationFactor == RELATION_REPLICATION_FACTOR) break;
+					if (currentReplicationFactor == relationReplicationFactor) break;
 				}
 
 			}
 
-			if (currentReplicationFactor < RELATION_REPLICATION_FACTOR){
+			if (currentReplicationFactor < relationReplicationFactor){
 				//Couldn't replicate to enough machines.
-				ErrorHandling.errorNoEvent("Insufficient number of machines available to reach a replication factor of " + RELATION_REPLICATION_FACTOR
+				ErrorHandling.errorNoEvent("Insufficient number of machines available to reach a replication factor of " + relationReplicationFactor
 						+ ". The table will be replicated on " + currentReplicationFactor + " instances.");
 			}
 

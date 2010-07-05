@@ -46,6 +46,14 @@ public class DatabaseDescriptorFile extends PropertiesWrapper {
 	
 	public String[] getLocatorLocations() throws StartupException{
 
+		openPropertiesFile();
+
+		String locatorLocations = properties.getProperty(LOCATORLOCATIONS);
+
+		return locatorLocations.split(",");
+	}
+
+	private void openPropertiesFile() throws StartupException {
 		if (propertiesFileLocation.startsWith("http:")){ //Parse URL, request file from webpage.
 
 			try {
@@ -72,10 +80,6 @@ public class DatabaseDescriptorFile extends PropertiesWrapper {
 			}
 
 		}
-
-		String locatorLocations = properties.getProperty(LOCATORLOCATIONS);
-
-		return locatorLocations.split(",");
 	}
 
 	public void setLocatorLocations(String databaseName, String... locations){
@@ -96,5 +100,12 @@ public class DatabaseDescriptorFile extends PropertiesWrapper {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public Properties getSettings() throws StartupException {
+		
+		openPropertiesFile();
+
+		return properties;
 	}
 }
