@@ -69,15 +69,22 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 			} else {
 				schemaName = "PUBLIC";
 			}
-			TableManagerRemote dmr = sm.lookup(new TableInfo(tableName, schemaName));
+			TableManagerRemote tableManager = sm.lookup(new TableInfo(tableName, schemaName), true);
 
-			if (dmr == null){
+			if (tableManager == null){
 				Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, getSchema().getName() + tableName);
 			}
-			QueryProxy qp = dmr.getQueryProxy(LockType.WRITE, db.getLocalDatabaseInstanceInWrapper());
-
+			
+			QueryProxy qp = null;
+			try {
+				qp = tableManager.getQueryProxy(LockType.WRITE, db.getLocalDatabaseInstanceInWrapper());
+			} catch (MovedException e){
+				tableManager = sm.lookup(new TableInfo(tableName, schemaName), false);
+				qp = tableManager.getQueryProxy(LockType.WRITE, db.getLocalDatabaseInstanceInWrapper());
+			}
+			
 			if (!qp.getLockGranted().equals(LockType.NONE)){
-				result = migrateTableManagerToLocalInstance(dmr, schemaName, db);
+				result = migrateTableManagerToLocalInstance(tableManager, schemaName, db);
 
 				if (result == -1){
 					throw new SQLException("Table Manager migration failed.");

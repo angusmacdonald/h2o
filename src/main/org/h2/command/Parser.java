@@ -3528,14 +3528,24 @@ public class Parser {
 			Setting setting = database.findSetting(SetTypes.getTypeName(SetTypes.DEFAULT_TABLE_TYPE));
 			defaultMode = setting == null ? Constants.DEFAULT_TABLE_TYPE : setting.getIntValue();
 			return parseCreateTable(false, false, defaultMode == Table.TYPE_CACHED);
+		} else if (readIf("EMPTY")  && Constants.IS_H2O) {
+			read("REPLICA");
+			int defaultMode;
+			Setting setting = database.findSetting(SetTypes.getTypeName(SetTypes.DEFAULT_TABLE_TYPE));
+			defaultMode = setting == null ? Constants.DEFAULT_TABLE_TYPE : setting.getIntValue();
+			try {
+				return parseCreateReplica(false, false, defaultMode == Table.TYPE_CACHED, true);
+			} catch (RemoteException e) {
+				e.printStackTrace();
+				return null;
+			}
 		} else if (readIf("REPLICA") && Constants.IS_H2O) {
 			int defaultMode;
 			Setting setting = database.findSetting(SetTypes.getTypeName(SetTypes.DEFAULT_TABLE_TYPE));
 			defaultMode = setting == null ? Constants.DEFAULT_TABLE_TYPE : setting.getIntValue();
 			try {
-				return parseCreateReplica(false, false, defaultMode == Table.TYPE_CACHED);
+				return parseCreateReplica(false, false, defaultMode == Table.TYPE_CACHED, false);
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 				return null;
 			}
@@ -4430,15 +4440,27 @@ public class Parser {
 		//		} else {
 		//Old System Table method.
 
-		TableManagerRemote tm = session.getDatabase().getSystemTableReference().lookup(new TableInfo(tableName, thisSchemaName));
+		TableManagerRemote tableManager = session.getDatabase().getSystemTableReference().lookup(new TableInfo(tableName, thisSchemaName), true);
 
-		if (tm == null){
+		if (tableManager == null){
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new TableInfo(tableName, thisSchemaName).toString());
 		}
 		//		dm = session.getDatabase().getSystemTable().lookup(new TableInfo(tableName, thisSchemaName));
 		//		
 
-		DatabaseURL dmURL = tm.getReplicaManager().getPrimary().getDatabaseURL();
+		DatabaseURL dmURL = null;
+		try {
+			dmURL = tableManager.getReplicaManager().getPrimary().getDatabaseURL();
+
+		} catch (MovedException e){
+			//Query System Table again, bypassing the cache.
+			tableManager = session.getDatabase().getSystemTableReference().lookup(new TableInfo(tableName, thisSchemaName), false);
+			try {
+				dmURL = tableManager.getReplicaManager().getPrimary().getDatabaseURL();
+			} catch (MovedException e1) {
+				throw new SQLException("Unable to contact Table Manager for " + tableName + ":: " + e1.getMessage());
+			}
+		}
 		if (dmURL.equals(session.getDatabase().getURL())){
 			throw new SQLException("The database [" + dmURL.getDbLocation() + "] is incorrectly trying to create a linked table to itself. Illegal code path.");
 		}
@@ -4846,7 +4868,7 @@ public class Parser {
 			throw new SQLException("Could parse migrate command.");
 		}
 	}
-	
+
 	/**
 	 * @return
 	 * @throws SQLException 
@@ -4861,7 +4883,7 @@ public class Parser {
 		}
 	}
 
-	private CreateReplica parseCreateReplica(boolean temp, boolean globalTemp, boolean persistent) throws SQLException, RemoteException {
+	private CreateReplica parseCreateReplica(boolean temp, boolean globalTemp, boolean persistent, boolean empty) throws SQLException, RemoteException {
 		boolean ifNotExists = readIfNoExists();
 
 		CreateReplica command = null;
@@ -4886,7 +4908,7 @@ public class Parser {
 				for (String shortTableName: tables){
 					String fullTableName = shortTableName;
 					if (numTables == 0){
-						command = new CreateReplica(session, s);
+						command = new CreateReplica(session, s, false);
 
 						command.setPersistent(persistent);
 						command.setTemporary(temp);
@@ -4895,7 +4917,7 @@ public class Parser {
 						command.setTableName(shortTableName);
 						command.setComment(readCommentIf());
 					} else {
-						CreateReplica next = new CreateReplica(session, getSchema());
+						CreateReplica next = new CreateReplica(session, getSchema(), false);
 						next.setTableName(shortTableName);
 
 						next.setPersistent(persistent);
@@ -4923,7 +4945,7 @@ public class Parser {
 			}
 			checkForSchemaName();
 			Schema schema = getSchema();
-			command = new CreateReplica(session, schema);
+			command = new CreateReplica(session, schema, empty);
 
 			command.setPersistent(persistent);
 			command.setTemporary(temp);
@@ -4932,11 +4954,13 @@ public class Parser {
 			command.setTableName(tableName);
 			command.setComment(readCommentIf());
 
+			parseReplicaTypingInformation(empty, command, tableName, schema);
+
 
 			while (readIf(",")) {
 				tableName = readIdentifierWithSchema();
 				checkForSchemaName();
-				CreateReplica next = new CreateReplica(session, getSchema());
+				CreateReplica next = new CreateReplica(session, getSchema(), empty);
 				next.setTableName(tableName);
 				command.addNextCreateReplica(next);
 
@@ -4946,6 +4970,9 @@ public class Parser {
 				next.setIfNotExists(ifNotExists);
 				next.setTableName(tableName);
 				next.setComment(readCommentIf());
+				
+				parseReplicaTypingInformation(empty, command, tableName, schema);
+
 
 			}
 
@@ -4974,6 +5001,97 @@ public class Parser {
 		}
 
 		return command;
+	}
+
+	/**
+	 * Parses typing information for a CREATE REPLICA command.
+	 * If the replica being created is for a table that is only just being created then it is acceptable to pass typing
+	 * information as part of the query. This method will only do anything if this is the case (indicated by the parameter
+	 * <em>empty</em> being true.
+	 * @param empty
+	 * @param command
+	 * @param tableName
+	 * @param schema
+	 * @throws SQLException
+	 */
+	private void parseReplicaTypingInformation(boolean empty,
+			CreateReplica command, String tableName, Schema schema)
+			throws SQLException {
+		if (empty){
+			if (readIf("AS")) {
+				command.setQuery(parseSelect());
+			} else {
+				read("(");
+				if (!readIf(")")) {
+					do {
+						Prepared c = parseAlterTableAddConstraintIf(tableName, schema);
+						if (c != null) {
+							command.addConstraintCommand(c);
+						} else {
+							String columnName = readColumnIdentifier();
+							Column column = parseColumnForTable(columnName);
+							if (column.getAutoIncrement() && column.getPrimaryKey()) {
+								column.setPrimaryKey(false);
+								IndexColumn[] cols = new IndexColumn[]{new IndexColumn()};
+								cols[0].columnName = column.getName();
+								AlterTableAddConstraint pk = new AlterTableAddConstraint(session, schema, false, internalQuery);
+								pk.setType(AlterTableAddConstraint.PRIMARY_KEY);
+								pk.setTableName(tableName);
+								pk.setIndexColumns(cols);
+								command.addConstraintCommand(pk);
+							}
+							command.addColumn(column);
+							String constraintName = null;
+							if (readIf("CONSTRAINT")) {
+								constraintName = readColumnIdentifier();
+							}
+							if (readIf("PRIMARY")) {
+								read("KEY");
+								boolean hash = readIf("HASH");
+								IndexColumn[] cols = new IndexColumn[]{new IndexColumn()};
+								cols[0].columnName = column.getName();
+								AlterTableAddConstraint pk = new AlterTableAddConstraint(session, schema, false, internalQuery);
+								pk.setPrimaryKeyHash(hash);
+								pk.setType(AlterTableAddConstraint.PRIMARY_KEY);
+								pk.setTableName(tableName);
+								pk.setIndexColumns(cols);
+								command.addConstraintCommand(pk);
+								if (readIf("AUTO_INCREMENT")) {
+									parseAutoIncrement(column);
+								}
+							} else if (readIf("UNIQUE")) {
+								AlterTableAddConstraint unique = new AlterTableAddConstraint(session, schema, false, internalQuery);
+								unique.setConstraintName(constraintName);
+								unique.setType(AlterTableAddConstraint.UNIQUE);
+								IndexColumn[] cols = new IndexColumn[]{new IndexColumn()};
+								cols[0].columnName = columnName;
+								unique.setIndexColumns(cols);
+								unique.setTableName(tableName);
+								command.addConstraintCommand(unique);
+							}
+							if (readIf("CHECK")) {
+								Expression expr = readExpression();
+								column.addCheckConstraint(session, expr);
+							}
+							if (readIf("REFERENCES")) {
+								AlterTableAddConstraint ref = new AlterTableAddConstraint(session, schema, false, internalQuery);
+								ref.setConstraintName(constraintName);
+								ref.setType(AlterTableAddConstraint.REFERENTIAL);
+								IndexColumn[] cols = new IndexColumn[]{new IndexColumn()};
+								cols[0].columnName = columnName;
+								ref.setIndexColumns(cols);
+								ref.setTableName(tableName);
+								parseReferences(ref, schema, tableName);
+								command.addConstraintCommand(ref);
+							}
+						}
+					} while (readIfMore());
+				}
+				if (readIf("AS")) {
+					command.setQuery(parseSelect());
+				}
+			}
+		}
 	}
 
 	/*

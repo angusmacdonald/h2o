@@ -501,10 +501,11 @@ public class MultiQueryTransactionTests extends TestBase{
 			ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 			cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
-			Statement sa2 = ca.createStatement();
+			Statement sa2 = cb.createStatement();
 
 			try{
-				sa2.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
+				ResultSet rs = sa2.executeQuery("SELECT LOCAL * FROM TEST ORDER BY ID;");
+				
 				fail("Query timeout expected.");
 
 			}catch(SQLException e){

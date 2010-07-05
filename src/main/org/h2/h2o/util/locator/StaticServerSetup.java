@@ -40,7 +40,7 @@ public class StaticServerSetup {
 		 */
 		DatabaseDescriptorFile ddf = new DatabaseDescriptorFile("\\\\shell\\angus\\public_html\\databases\\" + databaseName + ".h2o");
 		ddf.createPropertiesFile();
-		ddf.setProperties(databaseName, "eigg:29999");
+		ddf.setLocatorLocations(databaseName, "eigg:29999");
 		//System.out.println("\\\\shell\\angus\\public_html\\databases" + databaseName + ".h2o");
 		/*
 		 * Setup locator file.

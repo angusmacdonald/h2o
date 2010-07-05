@@ -3,7 +3,6 @@ package org.h2.h2o.util.locator;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -27,7 +26,7 @@ public class DatabaseDescriptorFile extends PropertiesWrapper {
 
 		DatabaseDescriptorFile cddf = new DatabaseDescriptorFile("testDB", fileLocation);
 		cddf.createPropertiesFile();
-		cddf.setProperties("testDB", fileLocation);
+		cddf.setLocatorLocations("testDB", fileLocation);
 	}
 
 	public DatabaseDescriptorFile(String databaseName, String propertiesFileFolder){
@@ -44,7 +43,7 @@ public class DatabaseDescriptorFile extends PropertiesWrapper {
 		this.propertiesFileLocation = url;
 		this.properties = new Properties();
 	}
-
+	
 	public String[] getLocatorLocations() throws StartupException{
 
 		if (propertiesFileLocation.startsWith("http:")){ //Parse URL, request file from webpage.
@@ -79,7 +78,7 @@ public class DatabaseDescriptorFile extends PropertiesWrapper {
 		return locatorLocations.split(",");
 	}
 
-	public void setProperties(String databaseName, String... locations){
+	public void setLocatorLocations(String databaseName, String... locations){
 		String locatorLocations = "";
 
 		for (String locatorFile: locations){

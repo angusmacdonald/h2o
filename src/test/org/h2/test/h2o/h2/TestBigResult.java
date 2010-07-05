@@ -4,7 +4,9 @@
  * (http://h2database.com/html/license.html).
  * Initial Developer: H2 Group
  */
-package org.h2.test.db;
+package org.h2.test.h2o.h2;
+
+import static org.junit.Assert.*;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -13,35 +15,42 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 
+import org.h2.h2o.util.locator.LocatorServer;
 import org.h2.store.FileLister;
+import org.h2.test.TestAll;
 import org.h2.test.TestBase;
+import org.h2.tools.DeleteDbFiles;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Test for big result sets.
  */
-public class TestBigResult extends TestBase {
+public class TestBigResult extends H2TestBase {
 
-    /**
-     * Run just this test.
-     *
-     * @param a ignored
-     */
-    public static void main(String[] a) throws Exception {
-        TestBase.createCaller().init().test();
-    }
+	private LocatorServer ls;
 
-    public void test() throws SQLException {
-        if (config.memory) {
+	@Before
+	public void setUp() throws SQLException{
+		ls = new LocatorServer(29999, "junitLocator");
+		ls.createNewLocatorFile();
+		ls.start();
+		
+		config = new TestAll();
+		
+		if (config.memory) {
             return;
         }
-        testLargeSubquery();
-        testLargeUpdateDelete();
-        testOrderGroup();
-        testLimitBufferedResult();
-        deleteDb("bigResult");
     }
 
-    private void testLargeSubquery() throws SQLException {
+	@After
+	public void tearDown() throws SQLException{
+		DeleteDbFiles.execute("data\\test\\", "bigResult", true);
+	}
+	
+	@Test
+	public void testLargeSubquery() throws SQLException {
         deleteDb("bigResult");
         Connection conn = getConnection("bigResult");
         Statement stat = conn.createStatement();
@@ -64,7 +73,8 @@ public class TestBigResult extends TestBase {
         conn.close();
     }
 
-    private void testLargeUpdateDelete() throws SQLException {
+	@Test
+	public void testLargeUpdateDelete() throws SQLException {
         deleteDb("bigResult");
         Connection conn = getConnection("bigResult");
         Statement stat = conn.createStatement();
@@ -77,7 +87,8 @@ public class TestBigResult extends TestBase {
         conn.close();
     }
 
-    private void testLimitBufferedResult() throws SQLException {
+	@Test
+	public void testLimitBufferedResult() throws SQLException {
         deleteDb("bigResult");
         Connection conn = getConnection("bigResult");
         Statement stat = conn.createStatement();
@@ -103,7 +114,8 @@ public class TestBigResult extends TestBase {
         conn.close();
     }
 
-    private void testOrderGroup() throws SQLException {
+	@Test
+    public void testOrderGroup() throws SQLException {
         deleteDb("bigResult");
         Connection conn = getConnection("bigResult");
         Statement stat = conn.createStatement();
@@ -173,6 +185,21 @@ public class TestBigResult extends TestBase {
             // do nothing
         }
 
+        conn.close();
+    }
+	
+
+	@Test
+	public void testDeleteAllObjects() throws SQLException {
+        deleteDb("bigResult");
+        Connection conn = getConnection("bigResult");
+        Statement stat = conn.createStatement();
+        int len = getSize(10000, 100000);
+        stat.execute("DROP TABLE IF EXISTS TEST");
+        stat.execute("CREATE TABLE TEST(ID INT)");
+        stat.execute("DROP ALL OBJECTS;");
+        stat.execute("DROP TABLE IF EXISTS TEST");
+        stat.execute("CREATE TABLE TEST AS SELECT * FROM SYSTEM_RANGE(1, " + len + ")");
         conn.close();
     }
 

@@ -62,7 +62,6 @@ public class H2O {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting H2O Server Instance.");
 
 		Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
-
 		H2O db = parseArguments(arguments);
 
 		db.startDatabase();
@@ -127,34 +126,51 @@ public class H2O {
 
 	private static H2O parseArguments(Map<String, String> arguments) throws StartupException {
 
-		/*
-		 * Get required command line arguments.
-		 */
-		String databaseName =arguments.get("-n");
-		String port = arguments.get("-p");
-		String descriptorFileLocation = arguments.get("-d"); //e.g. "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o"
-		String defaultLocation = arguments.get("-f"); //e.g. "db_data"
-		String web = arguments.get("-w");
-
+		String databaseName = null;
+		String port = null;
+		String descriptorFileLocation = null;
+		String defaultLocation = null;
+		String web = null;
 		int webPort = 0;
-
-		if (web != null){
-			webPort = Integer.parseInt(web);
-		}
-
-		if (databaseName == null || port == null){
-			throw new StartupException("One of the required command line arguments was not supplied. Please check the documentation to ensure you have included" +
-			"all necessary arguments");
-		}
-
-		if (descriptorFileLocation != null){
-			descriptorFileLocation = removeParenthesis(descriptorFileLocation);	
-		}
 		
-		if (defaultLocation != null){
-			defaultLocation = removeParenthesis(defaultLocation);
-		}
+		if (arguments.size() == 0){
+			//Fill with default arguments.
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "No user arguments were specified. Creating a database with default arguments.");
 
+			databaseName = "MyFirstDatabase";
+			port = "9999";
+			descriptorFileLocation = null; //e.g. "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o"
+			defaultLocation = "db_data"; //e.g. "db_data"
+		} else {
+
+			/*
+			 * Get required command line arguments.
+			 */
+			databaseName =arguments.get("-n");
+			port = arguments.get("-p");
+			descriptorFileLocation = arguments.get("-d"); //e.g. "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o"
+			defaultLocation = arguments.get("-f"); //e.g. "db_data"
+			web = arguments.get("-w");
+
+			
+
+			if (web != null){
+				webPort = Integer.parseInt(web);
+			}
+
+			if (databaseName == null || port == null){
+				throw new StartupException("One of the required command line arguments was not supplied. Please check the documentation to ensure you have included" +
+				"all necessary arguments");
+			}
+
+			if (descriptorFileLocation != null){
+				descriptorFileLocation = removeParenthesis(descriptorFileLocation);	
+			}
+
+			if (defaultLocation != null){
+				defaultLocation = removeParenthesis(defaultLocation);
+			}
+		}
 
 		return new H2O(databaseName, Integer.parseInt(port), webPort, defaultLocation, descriptorFileLocation);
 	}

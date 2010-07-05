@@ -75,7 +75,7 @@ public class SystemTableTests {
 		TestBase.closeDatabaseCompletely();
 
 		try {
-			DeleteDbFiles.execute(BASEDIR, "schema_test", true);
+			DeleteDbFiles.execute(BASEDIR, "schema_test", false);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -128,7 +128,7 @@ public class SystemTableTests {
 			// stop the server
 			server.stop();
 
-
+			while(server.isRunning(false)){};
 		}
 
 
@@ -149,11 +149,11 @@ public class SystemTableTests {
 		try {
 			TestBase.resetLocatorFile();
 			
-			server = Server.createTcpServer(new String[] { "-tcpPort", "9083", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9083/db_data/unittests/schema_test" });
+			server = Server.createTcpServer(new String[] { "-tcpPort", "9082", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9082/db_data/unittests/schema_test" });
 			server.start();
 
 			Class.forName("org.h2.Driver");
-			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9083/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9082/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 			Statement sa = conn.createStatement();
 
@@ -166,11 +166,11 @@ public class SystemTableTests {
 			
 			TestBase.resetLocatorFile();
 			
-			server = Server.createTcpServer(new String[] { "-tcpPort", "9083", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9083/db_data/unittests/schema_test" });
+			server = Server.createTcpServer(new String[] { "-tcpPort", "9082", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9082/db_data/unittests/schema_test" });
 
 			server.start();
 
-			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9083/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9082/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 			TestBase.resetLocatorFile();
 			
 			sa = conn.createStatement();

@@ -617,7 +617,7 @@ public abstract class PersistentManager {
 	 */
 	public boolean addStateReplicaLocation(DatabaseInstanceWrapper databaseWrapper) throws RemoteException {
 
-		if (Settings.METADATA_REPLICATION_ENABLED){
+		if (Settings.getInstance().METADATA_REPLICATION_ENABLED){
 			if (stateReplicaManager.size() < managerStateReplicationFactor + 1){ //+1 because the local copy counts as a replica.
 
 				//now replica state here.

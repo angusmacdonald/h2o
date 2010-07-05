@@ -113,17 +113,15 @@ public class CommandContainer extends Command {
 	protected LocalResult query(int maxrows, boolean partOfMultiQueryTransaction)
 	throws SQLException {
 		recompileIfRequired();
-		// TODO query time: should keep lock time separate from running time
+		
 		start();
 		prepared.checkParameters();
 
-		//TODO what if information schema is mixed case? Does it matter?
-		
 		/*
 		 * If this is a SELECT query that does not target any meta-tables then locks must be acquired. If it is something else then no locks are needed.
 		 */
-		if (!prepared.sqlStatement.contains("H2O.") && !prepared.sqlStatement.contains("INFORMATION_SCHEMA.")&& !prepared.sqlStatement.contains("information_schema.") && prepared instanceof Select){
-
+		if (!prepared.sqlStatement.contains("H2O.") && !prepared.sqlStatement.contains("INFORMATION_SCHEMA.")&& !prepared.sqlStatement.contains("SYSTEM_RANGE") && !prepared.sqlStatement.contains("information_schema.") && prepared instanceof Select){
+			
 			this.acquireLocks(proxyManager); 
 
 			if (!proxyManager.hasAllLocks()){

@@ -2694,10 +2694,6 @@ public class Database implements DataHandler {
 		return getURL().getConnectionType();
 	}
 
-	public TableManagerRemote getTableManager(String tableName) throws SQLException{
-		return systemTableRef.lookup(tableName);
-	}
-
 	/**
 	 * @param replicaLocationString
 	 * @return

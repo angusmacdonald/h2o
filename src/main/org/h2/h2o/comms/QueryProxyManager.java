@@ -111,7 +111,7 @@ public class QueryProxyManager {
 		}
 
 		if (proxy.getReplicaLocations() != null && proxy.getReplicaLocations().size() > 0){
-			allReplicas.addAll(proxy.getReplicaLocations()); //XXX this method is weird. might not work.
+			allReplicas.addAll(proxy.getReplicaLocations());
 		} else {
 			/*
 			 * Adds the local database to the set of databases holding something relevent to the query, IF the set is currently empty. 
@@ -121,8 +121,8 @@ public class QueryProxyManager {
 			allReplicas.add(parser.getSession().getDatabase().getLocalDatabaseInstanceInWrapper());
 		}
 
-		if (proxy.getTableManagerLocation() != null){
-			tableManagers.add(proxy.getTableManagerLocation());
+		if (proxy.getTableManager() != null){
+			tableManagers.add(proxy.getTableManager());
 		}
 
 		if (proxy.getUpdateID() > this.updateID){ // the update ID should be the highest of all the proxy update IDs
@@ -143,7 +143,7 @@ public class QueryProxyManager {
 			return true; //this proxy already holds the required lock 
 
 		//The proxy doesn't hold the lock - does the manager already have it?
-		if (tableManagers.contains(proxy.getTableManagerLocation())){
+		if (tableManagers.contains(proxy.getTableManager())){
 
 			proxy.setLockType(LockType.WRITE); //TODO fix hardcoded lock type.
 			return true; //XXX this check isn't perfect, but will do for now.

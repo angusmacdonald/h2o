@@ -470,18 +470,18 @@ public class SystemTableReference implements ISystemTableReference {
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISystemTableReference#lookup(java.lang.String)
 	 */
-	public TableManagerRemote lookup(String tableName) throws SQLException {
-		return lookup(new TableInfo(tableName));
+	public TableManagerRemote lookup(String tableName, boolean useCache) throws SQLException {
+		return lookup(new TableInfo(tableName), useCache);
 	}
 
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISystemTableReference#lookup(org.h2.h2o.util.TableInfo)
 	 */
-	public TableManagerRemote lookup(TableInfo tableInfo) throws SQLException {
-		return lookup(tableInfo, false);
+	public TableManagerRemote lookup(TableInfo tableInfo, boolean useCache) throws SQLException {
+		return lookup(tableInfo, false, useCache);
 	}
 
-	private TableManagerRemote lookup(TableInfo tableInfo, boolean alreadyCalled) throws SQLException {
+	private TableManagerRemote lookup(TableInfo tableInfo, boolean alreadyCalled, boolean useCache) throws SQLException {
 		/*
 		 * The Table Manager may exist in one of two local caches, or it may have to be found via the Schema Manager. 
 		 * The caches are tested first, in the following order:
@@ -490,19 +490,22 @@ public class SystemTableReference implements ISystemTableReference {
 		 *  CHECK THREE: The Table Manager proxy is not known. Contact the System Table for the managers location.
 		 */
 
+		if (useCache){
+			/*
+			 * CHECK ONE: Look in cache of Local Table Managers.
+			 */
+			TableManager tm = localTableManagers.get(tableInfo);
 
-		/*
-		 * CHECK ONE: Look in cache of Local Table Managers.
-		 */
-		TableManager tm = localTableManagers.get(tableInfo);
-		if (tm != null) return tm; //TODO need to do isalive check.
+			if (tm != null) return tm;
 
-		/*
-		 * CHECK TWO: The Table Manager is not local. Look in the cache of Remote Table Manager References.
-		 */
-		TableManagerRemote tableManager = lookupCachedTableManagers(tableInfo);
-		if (tableManager != null) return tableManager;
-		
+			/*
+			 * CHECK TWO: The Table Manager is not local. Look in the cache of Remote Table Manager References.
+			 */
+			TableManagerRemote tableManager = cachedTableManagerReferences.get(tableInfo);
+
+			if (tableManager != null) return tableManager;
+		}
+
 		/*
 		 * CHECK THREE: The Table Manager proxy is not known. Contact the System Table for the managers location.
 		 */
@@ -512,15 +515,15 @@ public class SystemTableReference implements ISystemTableReference {
 			if (tableManagerWrapper == null) return null; //During a create table operation it is expected that the lookup will return null here.
 
 			//Put this Table Manager in the local cache then return it.
-			tableManager = tableManagerWrapper.getTableManager();
+			TableManagerRemote tableManager = tableManagerWrapper.getTableManager();
 			cachedTableManagerReferences.put(tableInfo, tableManager);
-			
+
 			return tableManager;
 		} catch (MovedException e) {
 			if (alreadyCalled)
 				throw new SQLException("System failed to handle a MovedException correctly on a System Table lookup.");
 			handleMovedException(e);
-			return lookup(tableInfo, true);
+			return lookup(tableInfo, true, false);
 		} catch (Exception e) {
 			e.printStackTrace();
 			if (alreadyCalled) throw new SQLException("Failed to find System Table. Query has been rolled back.");
@@ -529,37 +532,11 @@ public class SystemTableReference implements ISystemTableReference {
 			 * System Table no longer exists. Try to find new location.
 			 */
 			handleLostSystemTableConnection();
-			return lookup(tableInfo, true);
+			return lookup(tableInfo, true, false);
 		}
 	}
 
-	/**
-	 * Look for a Table Manager reference in the local set of cached references.
-	 * 
-	 * Returns null if the specified Table Manager was not found.
-	 */
-	private TableManagerRemote lookupCachedTableManagers(TableInfo tableInfo) {
-		TableManagerRemote tableManager = cachedTableManagerReferences.get(tableInfo);
-		
-		boolean found = false;
-		if (tableManager != null){
-			try {
-				boolean alive = tableManager.isAlive();
 
-				if (alive){
-					found = true;
-
-				}
-			} catch (Exception e) { found = false; } // The cached reference may have been invalidated. 
-			
-			if (!found){
-				cachedTableManagerReferences.remove(tableInfo);
-				tableManager = null;
-			}
-		}
-		
-		return tableManager;
-	}
 
 	/**
 	 * The System Table connection has been lost. Try to connect to the System Table lookup location
@@ -627,7 +604,7 @@ public class SystemTableReference implements ISystemTableReference {
 	public void addProxy(TableInfo tableInfo, TableManagerRemote tableManager) {
 		this.cachedTableManagerReferences.remove(tableInfo);
 		this.cachedTableManagerReferences.put(tableInfo, tableManager);
-		
+
 		//This is only ever called on the local machine, so it is okay to add the Table Manager to the set of local table managers here.
 		localTableManagers.put(tableInfo.getGenericTableInfo(), (TableManager) tableManager);
 	}
@@ -649,12 +626,26 @@ public class SystemTableReference implements ISystemTableReference {
 
 	@Override
 	public boolean addTableInformation(TableManagerRemote tableManagerRemote, TableInfo ti) throws RemoteException, MovedException, SQLException { // changed by al
-		// TableManagerRemote tableManagerRemote = (TableManagerRemote) tableManager; changed by al
-		// changed by al - following line can fail dynamically but shoudn't - should be passed a local table manager
-		// put in try catch ??
+
 		localTableManagers.put(ti.getGenericTableInfo(), (TableManager) tableManagerRemote);
 
 		return systemTable.addTableInformation(tableManagerRemote, ti);
+	}
+
+	@Override
+	public void removeTableInformation(TableInfo tableInfo) throws RemoteException, MovedException {
+		localTableManagers.remove(tableInfo);
+		cachedTableManagerReferences.remove(tableInfo);
+		
+		systemTable.removeTableInformation(tableInfo);
+	}
+
+	@Override
+	public void removeAllTableInformation() throws RemoteException, MovedException {
+		localTableManagers.clear();
+		cachedTableManagerReferences.clear();
+		
+		systemTable.removeAllTableInformation();
 	}
 
 

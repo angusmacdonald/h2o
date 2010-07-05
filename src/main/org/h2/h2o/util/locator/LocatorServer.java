@@ -55,6 +55,7 @@ public class LocatorServer extends Thread{
 			 */
 			while (isRunning()){
 				try {
+					
 					Socket newConnection = ss.accept();
 					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "New connection from: " + newConnection.getInetAddress().getHostName() + "." +  newConnection.getPort());
 

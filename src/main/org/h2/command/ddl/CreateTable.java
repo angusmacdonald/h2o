@@ -25,6 +25,7 @@ import org.h2.engine.Session;
 import org.h2.expression.Expression;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.QueryProxyManager;
+import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.manager.TableManager;
@@ -43,6 +44,10 @@ import org.h2.table.Table;
 import org.h2.table.TableData;
 import org.h2.util.ObjectArray;
 import org.h2.value.DataType;
+
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * This class represents the statement
@@ -233,10 +238,10 @@ public class CreateTable extends SchemaCommand {
 			 * #########################################################################
 			 */
 			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_") && !isStartup()){
-				ISystemTable sm = db.getSystemTable(); //db.getSystemSession()
-				ISystemTableReference str = db.getSystemTableReference();
+				ISystemTable systemTable = db.getSystemTable(); //db.getSystemSession()
+				ISystemTableReference systemTableReference = db.getSystemTableReference();
 
-				assert sm != null;
+				assert systemTable != null;
 
 
 
@@ -268,47 +273,22 @@ public class CreateTable extends SchemaCommand {
 								tableSet = tab.getTableSet();
 							}
 						} else {
-							tableSet = sm.getNewTableSetNumber();
+							tableSet = systemTable.getNewTableSetNumber();
 						}
 					} else {
-						tableSet = sm.getNewTableSetNumber();
+						tableSet = systemTable.getNewTableSetNumber();
 					}
 
-					TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getURL());
+					TableInfo tableInfo = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getURL());
 
+					addInformationToSystemTable(systemTable, systemTableReference, tableInfo);
 
-					TableManagerRemote tableManager = queryProxy.getTableManagerLocation(); // changed by al
+					createReplicas(tableInfo, transactionName);
 
-
-					boolean successful = str.addTableInformation(tableManager, ti);
-						//sm.addTableInformation(tableManagerRemote, ti);
-					
-					if (!successful){
-						throw new SQLException("Failed to add table information to schema manager: " + sm);
-					}
-					
-					try {
-						tableManager.persistToCompleteStartup(ti);
-					} catch (StartupException e) {
-						throw new SQLException("Failed to create table. Couldn't persist table manager meta-data [" + e.getMessage() + "].");
-					}
 				} catch (MovedException e){
-					throw new RemoteException("System Table has moved.");
+					throw new RemoteException("System Table has moved. Cannot complete query.");
 				}
 				table.setTableSet(tableSet);
-
-				/*
-				 * (add replicas at some external locations).
-				 */
-				//				assert(queryProxy!= null);
-
-				assert(db != null);
-
-				//				if (Constants.IS_H2O && !table.getName().startsWith(Constants.H2O_SCHEMA) && !session.getDatabase().isManagementDB() && 
-				//						!queryProxy.isSingleDatabase(db.getLocalDatabaseInstance()) ){
-				//					return queryProxy.executeUpdate("CREATE REPLICA " + table.getFullName(), transactionName);
-				//				}
-
 			}
 
 			if (Constants.IS_H2O && !db.isManagementDB()){
@@ -322,6 +302,64 @@ public class CreateTable extends SchemaCommand {
 		}
 
 		return 0;
+	}
+
+	/**
+	 * Inform the System Table that the new table has been created.
+	 * @param systemTable
+	 * @param systemTableReference
+	 * @param tableInfo
+	 */
+	private void addInformationToSystemTable(ISystemTable systemTable, ISystemTableReference systemTableReference, TableInfo tableInfo)
+	throws RemoteException, MovedException, SQLException {
+		TableManagerRemote tableManager = queryProxy.getTableManager();
+
+
+		boolean successful = systemTableReference.addTableInformation(tableManager, tableInfo);
+
+		if (!successful){
+			throw new SQLException("Failed to add Table Manager reference to System Table: " + systemTable);
+		}
+
+		try {
+			tableManager.persistToCompleteStartup(tableInfo);
+		} catch (StartupException e) {
+			throw new SQLException("Failed to create table. Couldn't persist table manager meta-data [" + e.getMessage() + "].");
+		}
+	}
+
+	/**
+	 * Create replicas if required by the system configuration (Settings.RELATION_REPLICATION_FACTOR).
+	 * @param tableInfo			The name of the table being created.
+	 * @throws RemoteException
+	 * @throws SQLException
+	 */
+	private void createReplicas(TableInfo tableInfo, String transactionName) throws RemoteException, SQLException {
+
+		Set<DatabaseInstanceWrapper> replicaLocations = queryProxy.getReplicaLocations();
+		if (replicaLocations != null && replicaLocations.size() > 1){
+			/*
+			 * If true, this table should be immediately replicated onto a number of other instances.
+			 */
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Creating replica of table " + tableInfo.getFullTableName() + " onto " + 
+					(queryProxy.getReplicaLocations().size()-1) + " other instances.");
+
+String sql = sqlStatement.substring("CREATE TABLE".length());
+			sql = "CREATE EMPTY REPLICA" + sql;
+
+
+			for (DatabaseInstanceWrapper replicaLocation: replicaLocations){
+
+				try {
+					if (!replicaLocation.equals(queryProxy.getTableManager().getReplicaManager().getPrimary())){ //don't create replica where primary has been created.
+						replicaLocation.getDatabaseInstance().executeUpdate(sql, false);
+						replicaLocation.getDatabaseInstance().prepare(transactionName);
+					}
+				} catch (MovedException e) {
+					ErrorHandling.exceptionError(e, "Moved exception thrown when it shouldn't have. This should happen straight after the TM is created.");
+				}
+			}
+		}
 	}
 
 	private void generateColumnsFromQuery() {
@@ -443,10 +481,16 @@ public class CreateTable extends SchemaCommand {
 
 		if (Constants.IS_H2O && !db.getSystemTableReference().isSystemTableLocal() && !db.isManagementDB() && !tableName.startsWith("H2O_") && !isStartup()){
 
-			TableManagerRemote dm = db.getTableManager(getSchema().getName() + "." + tableName);
+			TableManagerRemote tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, false);
 
-			if (dm != null){
-				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
+			if (tableManager != null){
+				try {
+					if (tableManager.isAlive()){
+						throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
+					}
+				} catch (Exception e) {
+					//The TableManager is not alive.
+				}
 			}
 
 
@@ -472,7 +516,7 @@ public class CreateTable extends SchemaCommand {
 				//May already be exported.
 			}
 
-			queryProxy = QueryProxy.getQueryProxyAndLock(tableManager, LockType.CREATE, db.getLocalDatabaseInstanceInWrapper());
+			queryProxy = QueryProxy.getQueryProxyAndLock(tableManager, ti.getFullTableName(), db, LockType.CREATE, db.getLocalDatabaseInstanceInWrapper());
 
 			queryProxyManager.addProxy(queryProxy);
 		} else if (Constants.IS_H2O){

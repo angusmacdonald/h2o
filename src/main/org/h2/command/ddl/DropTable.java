@@ -17,6 +17,7 @@ import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.manager.ISystemTable;
+import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TableInfo;
@@ -124,7 +125,7 @@ public class DropTable extends SchemaCommand {
 				QueryProxy qp = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, session.getDatabase());
 				qp.executeUpdate(sqlStatement, transactionName, session);
 
-				ISystemTable sm = db.getSystemTable(); //db.getSystemSession()
+				ISystemTableReference sm = db.getSystemTableReference(); 
 				try{
 					sm.removeTableInformation(new TableInfo(tableName, getSchema().getName()));
 				} catch (MovedException e){

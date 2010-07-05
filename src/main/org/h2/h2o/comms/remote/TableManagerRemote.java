@@ -81,8 +81,9 @@ public interface TableManagerRemote extends H2ORemote, Migratable {
 	 * 
 	 * <p>This is called when the Table Manager is being migrated elsewhere, but shouldn't need to be
 	 * called anywhere else.
+	 * @throws MovedException 
 	 */
-	public ReplicaManager getReplicaManager() throws RemoteException;
+	public ReplicaManager getReplicaManager() throws RemoteException, MovedException;
 
 	/**
 	 * Get the table set that this table is part of.

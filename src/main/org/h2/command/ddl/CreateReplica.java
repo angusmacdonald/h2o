@@ -109,12 +109,22 @@ public class CreateReplica extends SchemaCommand {
 	private Set<IndexType> pkIndexType;
 	private int tableSet = -1; //the set of tables which this replica will belong to.
 	private boolean contactSystemTable = true;
+	private boolean empty;
 
-	public CreateReplica(Session session, Schema schema) {
+	/**
+	 * 
+	 * @param session
+	 * @param schema
+	 * @param empty		Whether the replica being created is of a table which is empty. If it is
+	 * no data has to be transferred initially.
+	 */
+	public CreateReplica(Session session, Schema schema, boolean empty) {
 		super(session, schema);
 
 		setOfIndexColumns = new HashSet<IndexColumn[]>();
 		pkIndexType = new HashSet<IndexType>();
+		
+		this.empty = empty;
 	}
 
 	public void setQuery(Query query) {
@@ -225,11 +235,9 @@ public class CreateReplica extends SchemaCommand {
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
 		}  
 
-
-
 		String fullTableName = getSchema().getName() + "." + tableName; //getSchema().getName() + "." + 
 
-		if (getSchema().findTableOrView(session, fullTableName, LocationPreference.NO_PREFERENCE) == null) { //H2O. Check for the existence of any version. if a linked table version doesn't exist we must create it.
+		if (!empty && getSchema().findTableOrView(session, fullTableName, LocationPreference.NO_PREFERENCE) == null) { //H2O. Check for the existence of any version. if a linked table version doesn't exist we must create it.
 			String createLinkedTable = "\nCREATE LINKED TABLE IF NOT EXISTS " + fullTableName + "('org.h2.Driver', '" + whereDataWillBeTakenFrom + "', '" + 
 			PersistentSystemTable.USERNAME + "', '" + PersistentSystemTable.PASSWORD + "', '" + fullTableName + "');";
 			Parser queryParser = new Parser(session, true);
@@ -322,34 +330,11 @@ public class CreateReplica extends SchemaCommand {
 			}
 
 			/*
-			 * Add indexes to the new table.
-			 */
-
-
-			//			IndexType[] indexTypes = pkIndexType.toArray(new IndexType[0]);
-			//			int y = 0;
-			//
-			//			for (IndexColumn[] indexColumns: setOfIndexColumns){
-			//				String indexName = "";
-			//
-			//				if (indexTypes[y].getPrimaryKey()){
-			//					indexName = getSchema().getUniqueIndexName(session, table, Constants.PREFIX_PRIMARY_KEY);
-			//
-			//				} else {
-			//					indexName = table.getSchema().getUniqueIndexName(session, table, Constants.PREFIX_INDEX);
-			//				}
-			//				table.addIndex(session, indexName, getObjectId(true, false), indexColumns, indexTypes[y], Index.EMPTY_HEAD, "H2O");
-			//				
-			//				y++;
-			//			}
-
-			/*
 			 * Copy over the data that we have stored in the 'inserts' set. This section of code loops
-			 * through that set and does some fairly primitive string splitting to get each value - there
-			 * is an assumption that a comma will never appear in the database TODO fix this! 
+			 * through that set and does some fairly primitive string splitting to get each value.
 			 */
 
-			if (inserts.size() > 1){ //the first entry contains type info //XXX hack.
+			if (!empty && inserts.size() > 1){ //the first entry contains type info
 				Insert command = new Insert(session, true);
 
 				command.setTable(table);
@@ -404,37 +389,19 @@ public class CreateReplica extends SchemaCommand {
 
 			TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getURL());
 
-
-//			if (this.contactSystemTable){
-//
-//				try{
-//
-//					ISystemTable sm = db.getSystemTable(); //db.getSystemSession()
-//
-//
-//					if (tableSet  == -1){
-//						tableSet = 1; //TODO create this method if its needed. sm.getTableSetNumber(ti.getGenericTableInfo());
-//						ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getDatabaseURL());
-//
-//					}
-//					if (tableSet != -1 && next != null){
-//						next.setTableSet(tableSet);
-//					}
-//
-//					sm.lookup(ti).addReplicaInformation(ti);	
-//
-//				} catch (MovedException e){
-//					throw new RemoteException("System Table has moved.");
-//				}
-//			}
-
 			if (!tableName.startsWith("H2O_")){
-				TableManagerRemote dm = db.getTableManager(getSchema().getName() + "." + tableName);
+				TableManagerRemote tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, true);
 
-				if (dm == null){
+				if (tableManager == null){
 					throw new SQLException("Error creating replica for " + tableName + ". Table Manager not found.");
 				} else {
-					dm.addReplicaInformation(ti);
+					try {
+						tableManager.addReplicaInformation(ti);
+					} catch(MovedException e){
+						//If this is an old cached reference contact the system table directly.
+						tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, false);
+						tableManager.addReplicaInformation(ti);
+					}
 				} 
 			}
 
@@ -606,8 +573,10 @@ public class CreateReplica extends SchemaCommand {
 		conn = db.getLinkConnection("org.h2.Driver", tableLocation, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 		synchronized (conn) {
 			try {
-				readMetaData();
-				getTableData();
+				if (!empty) {
+					readMetaData();
+					getTableData();
+				}
 			} catch (SQLException e) {
 				conn.close();
 				conn = null;
@@ -752,8 +721,7 @@ public class CreateReplica extends SchemaCommand {
 			}
 			rs.close();
 		} catch (SQLException e) {
-			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new String[] { tableName + "("
-					+ e.toString() + ")" }, e);
+			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new String[] { tableName }, e);
 		} finally {
 			JdbcUtils.closeSilently(stat);
 		}
@@ -945,20 +913,25 @@ public class CreateReplica extends SchemaCommand {
 
 			ISystemTableReference sm = session.getDatabase().getSystemTableReference();
 
-			TableManagerRemote dm;
-			//			try {
-			dm = sm.lookup(new TableInfo(tableName, getSchema().getName()));
-			//			} catch (MovedException e){
-			//				throw new RemoteException("System Table has moved.");
-			//			}
+			TableManagerRemote tableManager;
 
-			if (dm == null){
+			tableManager = sm.lookup(new TableInfo(tableName, getSchema().getName()), true);
+
+
+			if (tableManager == null){
 				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new TableInfo(tableName, getSchema().getName()).toString());
 			} else {
 				try {
-					whereDataWillBeTakenFrom = dm.getLocation().getOriginalURL();
+					whereDataWillBeTakenFrom = tableManager.getLocation().getOriginalURL();
 				} catch (MovedException e) {
-					e.printStackTrace(); //TODO find new table manager location at this point.
+					//If this is an old cached reference contact the system table directly.
+					tableManager = sm.lookup(new TableInfo(tableName, getSchema().getName()), false);
+					try {
+						whereDataWillBeTakenFrom = tableManager.getLocation().getOriginalURL();
+					} catch (MovedException e1) {
+						//This should not happen. Abort the query.
+						throw new SQLException(e1.getMessage());
+					}
 				}
 			}
 		}

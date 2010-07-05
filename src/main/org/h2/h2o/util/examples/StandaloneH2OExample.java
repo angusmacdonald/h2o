@@ -20,7 +20,7 @@ public class StandaloneH2OExample {
 		int tcpPort = 9999;						//the port on which the databases TCP JDBC server will run.	
 		String rootFolder = "db_data"; 			//where the database will be created (where persisted state is stored).
 
-		H2O db = new H2O(databaseName, tcpPort, rootFolder);
+		H2O db = new H2O(databaseName, tcpPort, 8282, rootFolder);
 		db.startDatabase();
 	}
 

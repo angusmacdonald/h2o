@@ -148,7 +148,7 @@ public interface ISystemTableReference {
 	 * @return	Remote reference to the Table Manager in question.
 	 * @throws SQLException 	Thrown if the System Table could not be found anywhere, and lookup failed twice.
 	 */
-	public TableManagerRemote lookup(String fqTableName) throws SQLException;
+	public TableManagerRemote lookup(String fqTableName,  boolean useCache) throws SQLException;
 
 	/**
 	 * Find the Table Manager for the given table in the database system.
@@ -159,7 +159,7 @@ public interface ISystemTableReference {
 	 * @return
 	 * @throws SQLException
 	 */
-	public TableManagerRemote lookup(TableInfo tableInfo) throws SQLException;
+	public TableManagerRemote lookup(TableInfo tableInfo, boolean useCache) throws SQLException;
 
 	/**
 	 * Check if the node given as a parameter is the node on which the System Table is held.
@@ -192,4 +192,8 @@ public interface ISystemTableReference {
 	 * @throws MovedException		Thrown if the System Table has moved and a new reference is needed.
 	 */
 	public boolean addTableInformation(TableManagerRemote tableManagerRemote, TableInfo ti) throws RemoteException, MovedException, SQLException;
+
+	public void removeTableInformation(TableInfo tableInfo) throws RemoteException, MovedException;
+
+	public void removeAllTableInformation() throws RemoteException, MovedException;
 }

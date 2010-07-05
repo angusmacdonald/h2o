@@ -93,14 +93,14 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 		TableInfo basicTableInfo = tableDetails.getGenericTableInfo();
 
 
-		TableManagerWrapper dmw = new TableManagerWrapper(basicTableInfo, tableManager, tableDetails.getDbURL());
+		TableManagerWrapper tableManagerWrapper = new TableManagerWrapper(basicTableInfo, tableManager, tableDetails.getDbURL());
 
 		if (tableManagers.containsKey(basicTableInfo)){
 			return false; //this table already exists.
 		}
 
 		tableManagerReferences.add(tableManager);
-		tableManagers.put(basicTableInfo, dmw);
+		tableManagers.put(basicTableInfo, tableManagerWrapper);
 		String fullName = tableDetails.getFullTableName();
 		Set<DatabaseURL> replicas = tmReplicaLocations.get(basicTableInfo);
 

@@ -64,7 +64,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	protected static final String CONNECTIONS = SCHEMA + "H2O_TM_CONNECTION";
 
 	private static final String TABLEMANAGERSTATE = SCHEMA + "H2O_TM_TABLEMANAGERS";
-	
+
 	/**
 	 * The name of the table that this Table Manager is responsible for.
 	 */
@@ -129,34 +129,24 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	private String fullName;
 
 	public TableManager(TableInfo tableDetails, Database database) throws Exception{
-		super(database, TABLES, REPLICAS, CONNECTIONS, TABLEMANAGERSTATE, Settings.TABLE_MANAGER_REPLICATION_FACTOR);
+		super(database, TABLES, REPLICAS, CONNECTIONS, TABLEMANAGERSTATE, Settings.getInstance().TABLE_MANAGER_REPLICATION_FACTOR);
 
 		this.tableName = tableDetails.getTableName();
 
 		this.schemaName = tableDetails.getSchemaName();
-		
+
 		if (schemaName.equals("") || schemaName == null){
 			schemaName = "PUBLIC";
 		}
 
 		this.fullName = schemaName + "." + tableName;
-		
+
 		this.replicaManager = new ReplicaManager();
-		//		this.unPropagatedUpdates = new HashMap<Integer, String>();
-		//		this.inProgressUpdates = new HashMap<Integer, String>();
+		this.replicaManager.add(database.getLocalDatabaseInstanceInWrapper()); //the first replica will be created here.
 
 		this.lockingTable = new LockingTable(schemaName + "." + tableName);
 
 		this.location = database.getChordInterface().getLocalChordReference();
-		//this.primaryLocation = database.getLocalDatabaseInstance();
-
-		//		this.primaryLocation = getDatabaseInstance(createFullDatabaseLocation(database.getDatabaseLocation(), 
-		//				database.getConnectionType(), database.getLocalMachineAddress(), database.getLocalMachinePort() + "", database.isSM()));
-		//	this.replicaLocations.add(primaryLocation);
-
-
-		
-		//database.addTableManager(this);
 	}
 
 	/* (non-Javadoc)
@@ -170,16 +160,12 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		boolean added = (result != -1);
 		if (!added) return false;
 
-		added = super.addTableInformation(tableManagerURL, tableDetails, true);
-		if (added){
-			replicaManager.add(getDatabaseInstance(tableManagerURL));
-			/*
-			 * Don't update the system table here. The table manager is only created initially as a lock, then actually committed later on.
-			 * 
-			 * TODO because of this maybe none of this should happen until later?
-			 */
-		}
-		return added;
+		return super.addTableInformation(tableManagerURL, tableDetails, true);
+
+		/*
+		 * The System Table isn't contacted here, but in the Create Table class. This is because the Table isn't officially
+		 * created until the end of CreateTable.update().
+		 */
 	}
 
 	/* (non-Javadoc)
@@ -187,6 +173,8 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 */
 	@Override
 	public void addReplicaInformation(TableInfo tableDetails)throws RemoteException, MovedException, SQLException {
+		preMethodTest();
+
 		super.addConnectionInformation(tableDetails.getDbURL(), true);
 		super.addReplicaInformation(tableDetails);
 		replicaManager.add(getDatabaseInstance(tableDetails.getDbURL()));
@@ -312,10 +300,6 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 		LockType lockGranted = lockingTable.requestLock(lockRequested, databaseInstanceWrapper);
 
-		//		if (lockGranted == LockType.NONE){
-		//			throw new SQLException("Table already locked. Cannot perform query.");
-		//		}
-
 		QueryProxy qp = new QueryProxy(lockGranted, fullName, selectReplicaLocations(lockRequested, databaseInstanceWrapper), this, databaseInstanceWrapper, replicaManager.getNewUpdateID(), lockRequested);
 
 		return qp;
@@ -334,11 +318,11 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 * 	no more replicas need to be created.
 	 */
 	private Set<DatabaseInstanceWrapper> selectReplicaLocations(LockType lockType, DatabaseInstanceWrapper requestingDatabase) {
-		
+
 		if (lockType == LockType.READ){
 			return this.replicaManager.getActiveReplicas();
 		}// else, a more informed decision is needed.
-		
+
 		/*
 		 * The set of machines onto which new replicas will be added.
 		 */
@@ -350,34 +334,46 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		Set<DatabaseInstanceWrapper> potentialReplicaLocations;
 
 		if (lockType == LockType.CREATE){
+			/*
+			 * We know that the CREATE operation has been executed on the machine on which this Table
+			 * Manager has been created, because it is the create operation that initializes the Table
+			 * Manager in the first place. 
+			 */
 
-			if (Settings.RELATION_REPLICATION_FACTOR == 1){
+			int RELATION_REPLICATION_FACTOR = Settings.getInstance().RELATION_REPLICATION_FACTOR;
+
+			if (RELATION_REPLICATION_FACTOR == 1){
 				return null; //No more replicas are needed currently.
 			}
 
 			potentialReplicaLocations = getDB().getDatabaseInstances(); //the update could be sent to any or all machines in the system.
 
-			int currentReplicationFactor = 1; //currently one copy of the table.
+			int currentReplicationFactor = 0; //currently one copy of the table.
 
 			/*
 			 * Loop through all potential replica locations, selecting enough to satisfy the system's
 			 * replication fact. The location of the primary copy cannot be re-used.
 			 */
-			for (DatabaseInstanceWrapper dbInstance: potentialReplicaLocations){
-				if (!dbInstance.equals(replicaManager.getPrimary())){ //primary copy doesn't exist here.
+
+			if (potentialReplicaLocations.size() > 0){
+
+				for (DatabaseInstanceWrapper dbInstance: potentialReplicaLocations){
+					//This includes the location of the primary copy.
 					newReplicaLocations.add(dbInstance);
 					currentReplicationFactor++;
+
+					/*
+					 * Do we have enough replicas yet?
+					 */
+					if (currentReplicationFactor == RELATION_REPLICATION_FACTOR) break;
 				}
 
-				/*
-				 * Do we have enough replicas yet?
-				 */
-				if (currentReplicationFactor == Settings.RELATION_REPLICATION_FACTOR) break;
 			}
 
-			if (currentReplicationFactor < Settings.RELATION_REPLICATION_FACTOR){
+			if (currentReplicationFactor < RELATION_REPLICATION_FACTOR){
 				//Couldn't replicate to enough machines.
-				ErrorHandling.errorNoEvent("Insufficient number of machines available to reach a replication factor of " + Settings.RELATION_REPLICATION_FACTOR);
+				ErrorHandling.errorNoEvent("Insufficient number of machines available to reach a replication factor of " + RELATION_REPLICATION_FACTOR
+						+ ". The table will be replicated on " + currentReplicationFactor + " instances.");
 			}
 
 
@@ -433,7 +429,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	@Override
 	public boolean isAlive() throws RemoteException, MovedException {
 		if (shutdown) return false;
-		
+
 		preMethodTest();
 
 		return true;
@@ -579,7 +575,9 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 * @see org.h2.h2o.manager.TableManagerRemote2#getReplicaManager()
 	 */
 	@Override
-	public ReplicaManager getReplicaManager() throws RemoteException {
+	public ReplicaManager getReplicaManager() throws RemoteException, MovedException {
+		preMethodTest();
+
 		return this.replicaManager;
 	}
 
@@ -657,7 +655,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 		try {
 			LocalResult rs = executeQuery(sql);
-			
+
 			List<DatabaseInstanceWrapper> replicaLocations = new LinkedList<DatabaseInstanceWrapper>();
 			while (rs.next()){
 				DatabaseURL dbURL = new DatabaseURL(rs.currentRow()[0].getString(), rs.currentRow()[1].getString(), 
@@ -681,15 +679,15 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	public boolean addStateReplicaLocation(
 			DatabaseInstanceWrapper databaseWrapper) throws RemoteException {
 		boolean added = super.addStateReplicaLocation(databaseWrapper);
-		
-//		if (added){
-//			try {
-//				addTableManagerReplicaInformation(getTableID(new TableInfo(tableName, schemaName)), getConnectionID(databaseWrapper.getDatabaseURL()), false);
-//			} catch (SQLException e) {
-//				throw new RemoteException(e.getMessage());
-//			}
-//		}
-		
+
+		//		if (added){
+		//			try {
+		//				addTableManagerReplicaInformation(getTableID(new TableInfo(tableName, schemaName)), getConnectionID(databaseWrapper.getDatabaseURL()), false);
+		//			} catch (SQLException e) {
+		//				throw new RemoteException(e.getMessage());
+		//			}
+		//		}
+
 		return added;
 	}
 
@@ -706,6 +704,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 */
 	@Override
 	public void persistToCompleteStartup(TableInfo tableInfo) throws RemoteException, StartupException {
+
 		try {
 			addTableInformation(getDB().getURL(), tableInfo);
 		} catch (MovedException e) {
@@ -715,5 +714,5 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		}
 
 	}
-	
+
 }

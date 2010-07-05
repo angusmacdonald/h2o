@@ -139,10 +139,10 @@ public class QueryProxy implements Serializable{
 		 * Send the query to each DB instance holding a replica.
 		 */
 		int i = 0;
-		
+
 		Parser parser = new Parser (session, true);
 
-		
+
 		for (DatabaseInstanceWrapper replica: allReplicas){
 			try {
 
@@ -156,7 +156,7 @@ public class QueryProxy implements Serializable{
 					 * object at the same time as the thread which made the RMI call.
 					 */
 
-					
+
 					Command command = parser.prepareCommand(sql);
 
 					/*
@@ -219,7 +219,7 @@ public class QueryProxy implements Serializable{
 	 */
 	public static QueryProxy getQueryProxyAndLock(Table table, LockType lockType, Database db) throws SQLException {
 		if (table != null){
-			return getQueryProxyAndLock(db.getTableManager(table.getFullName()), lockType, db.getLocalDatabaseInstanceInWrapper());
+			return getQueryProxyAndLock(db, table.getFullName(), lockType, db.getLocalDatabaseInstanceInWrapper());
 		} else {
 			return getDummyQueryProxy(db.getLocalDatabaseInstanceInWrapper());
 		}
@@ -237,6 +237,7 @@ public class QueryProxy implements Serializable{
 		return new QueryProxy(localDatabaseInstance);
 	}
 
+
 	/**
 	 * Obtain a query proxy for the given table.
 	 * @param tableManager
@@ -244,24 +245,26 @@ public class QueryProxy implements Serializable{
 	 * @return Query proxy for a specific table within H20.
 	 * @throws SQLException
 	 */
-	public static QueryProxy getQueryProxyAndLock(TableManagerRemote tableManager, LockType lockType, DatabaseInstanceWrapper requestingDatabase) throws SQLException {
-
-		if (tableManager == null){
-			ErrorHandling.errorNoEvent("Table Manager proxy was null when requesting table.");
-			throw new SQLException("Table Manager not found for table.");
-		}
-
+	public static QueryProxy getQueryProxyAndLock(TableManagerRemote tableManager, String tableName, Database db, LockType lockType, DatabaseInstanceWrapper requestingDatabase) throws SQLException {
+		
 
 		if(requestingDatabase == null){
 			ErrorHandling.hardError("A requesting database must be specified.");
 		}
 
 		try {
-			return tableManager.getQueryProxy(lockType, requestingDatabase);
+			QueryProxy queryProxy = null;
+			try{
+				queryProxy = tableManager.getQueryProxy(lockType, requestingDatabase);
+			} catch(MovedException e){
+				//Get an uncached Table Manager from the System Table
+				tableManager = db.getSystemTableReference().lookup(tableName, false);
+
+				queryProxy = tableManager.getQueryProxy(lockType, requestingDatabase);
+			}
+			return queryProxy;
 		} catch (java.rmi.NoSuchObjectException e) {
 			e.printStackTrace();
-			
-			
 			throw new SQLException("Table Manager could not be accessed. It may not have been exported to RMI correctly.");
 		} catch (RemoteException e) {
 			e.printStackTrace();
@@ -269,6 +272,18 @@ public class QueryProxy implements Serializable{
 		} catch (MovedException e) {
 			throw new SQLException("Table Manager has moved and can't be accessed at this location.");
 		}
+	}
+
+	public static QueryProxy getQueryProxyAndLock(Database db, String tableName, LockType lockType, DatabaseInstanceWrapper requestingDatabase) throws SQLException {
+		TableManagerRemote tableManager = db.getSystemTableReference().lookup(tableName, true);
+
+		if (tableManager == null){
+			ErrorHandling.errorNoEvent("Table Manager proxy was null when requesting table.");
+			db.getSystemTableReference();
+			throw new SQLException("Table Manager not found for table.");
+		}
+
+		return getQueryProxyAndLock(tableManager, tableName, db, lockType, requestingDatabase);
 	}
 
 	public LockType getLockGranted(){
@@ -303,7 +318,7 @@ public class QueryProxy implements Serializable{
 	/**
 	 * @return
 	 */
-	public TableManagerRemote getTableManagerLocation() { // TODO - fix name of this method! // changed by al
+	public TableManagerRemote getTableManager() { 
 		return tableManager;
 	}
 
@@ -352,6 +367,7 @@ public class QueryProxy implements Serializable{
 	public int getNumberOfReplicas() {
 		return (allReplicas == null)? 0: allReplicas.size();
 	}
+
 
 
 

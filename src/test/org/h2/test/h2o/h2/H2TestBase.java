@@ -4,7 +4,7 @@
  * (http://h2database.com/html/license.html).
  * Initial Developer: H2 Group
  */
-package org.h2.test;
+package org.h2.test.h2o.h2;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -28,13 +28,16 @@ import org.h2.jdbc.JdbcConnection;
 import org.h2.message.TraceSystem;
 import org.h2.store.FileLock;
 import org.h2.store.fs.FileSystem;
+import org.h2.test.TestAll;
 import org.h2.tools.DeleteDbFiles;
 
 /**
  * The base class for all tests.
  */
-public abstract class TestBase {
+public abstract class H2TestBase {
 
+	
+	private static int port = 50000;
     /**
      * The base directory to write test databases.
      */
@@ -77,7 +80,7 @@ public abstract class TestBase {
      *
      * @return itself
      */
-    public TestBase init() {
+    public H2TestBase init() {
         baseDir = getTestDir("");
         this.config = new TestAll();
         Constants.IS_H2O = true;
@@ -90,7 +93,7 @@ public abstract class TestBase {
      * @param conf the configuration
      * @return itself
      */
-    public TestBase init(TestAll conf) throws Exception {
+    public H2TestBase init(TestAll conf) throws Exception {
         baseDir = getTestDir("");
         this.config = conf;
         return this;
@@ -105,34 +108,6 @@ public abstract class TestBase {
         // do nothing
     }
 
-    /**
-     * This method is initializes the test, runs the test by calling the test()
-     * method, and prints status information. It also catches exceptions so that
-     * the tests can continue.
-     *
-     * @param conf the test configuration
-     */
-    public void runTest(TestAll conf) {
-        try {
-            init(conf);
-            start = System.currentTimeMillis();
-            test();
-            println("");
-        } catch (Throwable e) {
-            println("FAIL " + e.toString());
-            logError("FAIL " + e.toString(), e);
-            if (config.stopOnError) {
-                throw new Error("ERROR");
-            }
-        } finally {
-            try {
-                FileSystem.getInstance("memFS:").deleteRecursive("memFS:");
-                FileSystem.getInstance("memLZF:").deleteRecursive("memLZF:");
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
     /**
      * Open a database connection in admin mode. The default user name and
@@ -152,7 +127,7 @@ public abstract class TestBase {
 		properties.createNewFile();
 		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
 		properties.setProperty("databaseName", "testDB");
-		properties.setProperty("chordPort", "" + 50000);
+		properties.setProperty("chordPort", "" + ++port);
 		properties.saveAndClose();
 //
 //		LocatorServer ls = new LocatorServer(29999, "junitLocator");
@@ -230,7 +205,7 @@ public abstract class TestBase {
             if (config.ssl) {
                 url = "ssl://localhost:9192/" + name;
             } else {
-                url = "tcp://localhost:9192/" + name;
+                url = "tcp://localhost:9402/" + name;
             }
         } else {
             url = name;
@@ -478,353 +453,7 @@ public abstract class TestBase {
     }
 
     /**
-     * This method will be called by the test framework.
-     *
-     * @throws Exception if an exception in the test occurs
-     */
-    public abstract void test() throws Exception;
-
-    /**
-     * Check if two values are equal, and if not throw an exception.
-     *
-     * @param message the message to print in case of error
-     * @param expected the expected value
-     * @param actual the actual value
-     * @throws AssertionError if the values are not equal
-     */
-    public void assertEquals(String message, int expected, int actual) {
-        if (expected != actual) {
-            fail("Expected: " + expected + " actual: " + actual + " message: " + message);
-        }
-    }
-
-    /**
-     * Check if two values are equal, and if not throw an exception.
-     *
-     * @param expected the expected value
-     * @param actual the actual value
-     * @throws AssertionError if the values are not equal
-     */
-    public void assertEquals(int expected, int actual) {
-        if (expected != actual) {
-            fail("Expected: " + expected + " actual: " + actual);
-        }
-    }
-
-    /**
-     * Check if two values are equal, and if not throw an exception.
-     *
-     * @param expected the expected value
-     * @param actual the actual value
-     * @throws AssertionError if the values are not equal
-     */
-    protected void assertEquals(byte[] expected, byte[] actual) {
-        assertEquals("length", expected.length, actual.length);
-        for (int i = 0; i < expected.length; i++) {
-            if (expected[i] != actual[i]) {
-                fail("[" + i + "]: expected: " + (int) expected[i] + " actual: " + (int) actual[i]);
-            }
-        }
-    }
-
-    /**
-     * Check if two values are equal, and if not throw an exception.
-     *
-     * @param expected the expected value
-     * @param actual the actual value
-     * @throws AssertionError if the values are not equal
-     */
-    protected void assertEquals(String expected, String actual) {
-        if (expected == null && actual == null) {
-            return;
-        } else if (expected == null || actual == null) {
-            fail("Expected: " + expected + " Actual: " + actual);
-        }
-        if (!expected.equals(actual)) {
-            for (int i = 0; i < expected.length(); i++) {
-                String s = expected.substring(0, i);
-                if (!actual.startsWith(s)) {
-                    expected = expected.substring(0, i) + "<*>" + expected.substring(i);
-                    break;
-                }
-            }
-            int al = expected.length();
-            int bl = actual.length();
-            if (al > 4000) {
-                expected = expected.substring(0, 4000);
-            }
-            if (bl > 4000) {
-                actual = actual.substring(0, 4000);
-            }
-            fail("Expected: " + expected + " (" + al + ") actual: " + actual + " (" + bl + ")");
-        }
-    }
-
-    /**
-     * Check if the first value is larger or equal than the second value, and if
-     * not throw an exception.
-     *
-     * @param a the first value
-     * @param b the second value (must be smaller than the first value)
-     * @throws AssertionError if the first value is smaller
-     */
-    protected void assertSmaller(long a, long b) {
-        if (a >= b) {
-            fail("a: " + a + " is not smaller than b: " + b);
-        }
-    }
-
-    /**
-     * Check that a result contains the given substring.
-     *
-     * @param result the result value
-     * @param contains the term that should appear in the result
-     * @throws AssertionError if the term was not found
-     */
-    protected void assertContains(String result, String contains) {
-        if (result.indexOf(contains) < 0) {
-            fail(result + " does not contain: " + contains);
-        }
-    }
-
-    /**
-     * Check that a text starts with the expected characters..
-     *
-     * @param text the text
-     * @param  expectedStart the expected prefix
-     * @throws AssertionError if the text does not start with the expected characters
-     */
-    protected void assertStartsWith(String text, String expectedStart) {
-        if (!text.startsWith(expectedStart)) {
-            fail(text + " does not start with: " + expectedStart);
-        }
-    }
-
-    /**
-     * Check if two values are equal, and if not throw an exception.
-     *
-     * @param expected the expected value
-     * @param actual the actual value
-     * @throws AssertionError if the values are not equal
-     */
-    protected void assertEquals(long expected, long actual) {
-        if (expected != actual) {
-            fail("Expected: " + expected + " actual: " + actual);
-        }
-    }
-
-    /**
-     * Check if two values are equal, and if not throw an exception.
-     *
-     * @param expected the expected value
-     * @param actual the actual value
-     * @throws AssertionError if the values are not equal
-     */
-    protected void assertEquals(double expected, double actual) {
-        if (expected != actual) {
-            if (Double.isNaN(expected) && Double.isNaN(actual)) {
-                // if both a NaN, then there is no error
-            } else {
-                fail("Expected: " + expected + " actual: " + actual);
-            }
-        }
-    }
-
-    /**
-     * Check if two values are equal, and if not throw an exception.
-     *
-     * @param expected the expected value
-     * @param actual the actual value
-     * @throws AssertionError if the values are not equal
-     */
-    protected void assertEquals(float expected, float actual) {
-        if (expected != actual) {
-            if (Float.isNaN(expected) && Float.isNaN(actual)) {
-                // if both a NaN, then there is no error
-            } else {
-                fail("Expected: " + expected + " actual: " + actual);
-            }
-        }
-    }
-
-    /**
-     * Check if two values are equal, and if not throw an exception.
-     *
-     * @param expected the expected value
-     * @param actual the actual value
-     * @throws AssertionError if the values are not equal
-     */
-    protected void assertEquals(boolean expected, boolean actual) {
-        if (expected != actual) {
-            fail("Boolean expected: " + expected + " actual: " + actual);
-        }
-    }
-
-    /**
-     * Check that the passed boolean is true.
-     *
-     * @param condition the condition
-     * @throws AssertionError if the condition is false
-     */
-    protected void assertTrue(boolean condition) {
-        assertTrue("Expected: true got: false", condition);
-    }
-
-    /**
-     * Check that the passed boolean is true.
-     *
-     * @param message the message to print if the condition is false
-     * @param condition the condition
-     * @throws AssertionError if the condition is false
-     */
-    protected void assertTrue(String message, boolean condition) {
-        if (!condition) {
-            fail(message);
-        }
-    }
-
-    /**
-     * Check that the passed boolean is false.
-     *
-     * @param value the condition
-     * @throws AssertionError if the condition is true
-     */
-    protected void assertFalse(boolean value) {
-        assertFalse("Expected: false got: true", value);
-    }
-
-    /**
-     * Check that the passed boolean is false.
-     *
-     * @param message the message to print if the condition is false
-     * @param value the condition
-     * @throws AssertionError if the condition is true
-     */
-    protected void assertFalse(String message, boolean value) {
-        if (value) {
-            fail(message);
-        }
-    }
-
-    /**
-     * Check that the result set row count matches.
-     *
-     * @param rs the result set
-     * @param expected the number of expected rows
-     * @throws AssertionError if a different number of rows have been found
-     */
-    protected void assertResultRowCount(ResultSet rs, int expected) throws SQLException {
-        int i = 0;
-        while (rs.next()) {
-            i++;
-        }
-        assertEquals(i, expected);
-    }
-
-    /**
-     * Check that the result set of a query is exactly this value.
-     *
-     * @param stat the statement
-     * @param sql the SQL statement to execute
-     * @param expected the expected result value
-     * @throws AssertionError if a different result value was returned
-     */
-    protected void assertSingleValue(Statement stat, String sql, int expected) throws SQLException {
-        ResultSet rs = stat.executeQuery(sql);
-        assertTrue(rs.next());
-        assertEquals(expected, rs.getInt(1));
-        assertFalse(rs.next());
-    }
-
-    /**
-     * Check that the result set of a query is exactly this value.
-     *
-     * @param stat the statement
-     * @param sql the SQL statement to execute
-     * @param expected the expected result value
-     * @throws AssertionError if a different result value was returned
-     */
-    protected void assertResult(Statement stat, String sql, String expected) throws SQLException {
-        ResultSet rs = stat.executeQuery(sql);
-        if (rs.next()) {
-            String actual = rs.getString(1);
-            assertEquals(expected, actual);
-        } else {
-            assertEquals(null, expected);
-        }
-    }
-
-    /**
-     * Check if the result set meta data is correct.
-     *
-     * @param rs the result set
-     * @param columnCount the expected column count
-     * @param labels the expected column labels
-     * @param datatypes the expected data types
-     * @param precision the expected precisions
-     * @param scale the expected scales
-     */
-    protected void assertResultSetMeta(ResultSet rs, int columnCount, String[] labels, int[] datatypes, int[] precision,
-            int[] scale) throws SQLException {
-        ResultSetMetaData meta = rs.getMetaData();
-        int cc = meta.getColumnCount();
-        if (cc != columnCount) {
-            fail("result set contains " + cc + " columns not " + columnCount);
-        }
-        for (int i = 0; i < columnCount; i++) {
-            if (labels != null) {
-                String l = meta.getColumnLabel(i + 1);
-                if (!labels[i].equals(l)) {
-                    fail("column label " + i + " is " + l + " not " + labels[i]);
-                }
-            }
-            if (datatypes != null) {
-                int t = meta.getColumnType(i + 1);
-                if (datatypes[i] != t) {
-                    fail("column datatype " + i + " is " + t + " not " + datatypes[i] + " (prec="
-                            + meta.getPrecision(i + 1) + " scale=" + meta.getScale(i + 1) + ")");
-                }
-                String typeName = meta.getColumnTypeName(i + 1);
-                String className = meta.getColumnClassName(i + 1);
-                switch (t) {
-                case Types.INTEGER:
-                    assertEquals(typeName, "INTEGER");
-                    assertEquals(className, "java.lang.Integer");
-                    break;
-                case Types.VARCHAR:
-                    assertEquals(typeName, "VARCHAR");
-                    assertEquals(className, "java.lang.String");
-                    break;
-                case Types.SMALLINT:
-                    assertEquals(typeName, "SMALLINT");
-                    assertEquals(className, "java.lang.Short");
-                    break;
-                case Types.TIMESTAMP:
-                    assertEquals(typeName, "TIMESTAMP");
-                    assertEquals(className, "java.sql.Timestamp");
-                    break;
-                case Types.DECIMAL:
-                    assertEquals(typeName, "DECIMAL");
-                    assertEquals(className, "java.math.BigDecimal");
-                    break;
-                default:
-                }
-            }
-            if (precision != null) {
-                int p = meta.getPrecision(i + 1);
-                if (precision[i] != p) {
-                    fail("column precision " + i + " is " + p + " not " + precision[i]);
-                }
-            }
-            if (scale != null) {
-                int s = meta.getScale(i + 1);
-                if (scale[i] != s) {
-                    fail("column scale " + i + " is " + s + " not " + scale[i]);
-                }
-            }
-
-        }
-    }
+   
 
     /**
      * Check if a result set contains the expected data.
@@ -959,32 +588,7 @@ public abstract class TestBase {
         }
     }
 
-    /**
-     * Read a string from the reader. This method reads until end of file.
-     *
-     * @param reader the reader
-     * @return the string read
-     */
-    protected String readString(Reader reader) {
-        if (reader == null) {
-            return null;
-        }
-        StringBuffer buffer = new StringBuffer();
-        try {
-            while (true) {
-                int c = reader.read();
-                if (c == -1) {
-                    break;
-                }
-                buffer.append((char) c);
-            }
-            return buffer.toString();
-        } catch (Exception e) {
-            assertTrue(false);
-            return null;
-        }
-    }
-
+   
     /**
      * Check that a given exception is not an unexpected 'general error'
      * exception.
@@ -1004,66 +608,22 @@ public abstract class TestBase {
      */
     protected void assertKnownException(String message, SQLException e) {
         if (e != null && e.getSQLState().startsWith("HY000")) {
-            TestBase.logError("Unexpected General error " + message, e);
+            H2TestBase.logError("Unexpected General error " + message, e);
         }
     }
 
-    /**
-     * Check if two values are equal, and if not throw an exception.
-     *
-     * @param expected the expected value
-     * @param actual the actual value
-     * @throws AssertionError if the values are not equal
-     */
-    protected void assertEquals(Integer expected, Integer actual) {
-        if (expected == null || actual == null) {
-            assertTrue(expected == actual);
-        } else {
-            assertEquals(expected.intValue(), actual.intValue());
-        }
-    }
-
-    /**
-     * Check if two databases contain the same met data.
-     *
-     * @param stat1 the connection to the first database
-     * @param stat2 the connection to the second database
-     * @throws AssertionError if the databases don't match
-     */
-    protected void assertEqualDatabases(Statement stat1, Statement stat2) throws SQLException {
-        ResultSet rs1 = stat1.executeQuery("SCRIPT NOPASSWORDS");
-        ResultSet rs2 = stat2.executeQuery("SCRIPT NOPASSWORDS");
-        ArrayList list1 = new ArrayList();
-        ArrayList list2 = new ArrayList();
-        while (rs1.next()) {
-            String s1 = rs1.getString(1);
-            list1.add(s1);
-            if (!rs2.next()) {
-                fail("expected: " + s1);
-            }
-            String s2 = rs2.getString(1);
-            list2.add(s2);
-        }
-        for (int i = 0; i < list1.size(); i++) {
-            String s = (String) list1.get(i);
-            if (!list2.remove(s)) {
-                fail("not found: " + s);
-            }
-        }
-        assertEquals(list2.size(), 0);
-        assertFalse(rs2.next());
-    }
+  
 
     /**
      * Create a new object of the calling class.
      *
      * @return the new test
      */
-    public static TestBase createCaller() {
+    public static H2TestBase createCaller() {
         String className = new Exception().getStackTrace()[1].getClassName();
         org.h2.Driver.load();
         try {
-            return (TestBase) Class.forName(className).newInstance();
+            return (H2TestBase) Class.forName(className).newInstance();
         } catch (Exception e) {
             throw new RuntimeException("Can not create object " + className, e);
         }

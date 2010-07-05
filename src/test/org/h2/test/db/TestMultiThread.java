@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Random;
 
+import org.h2.h2o.util.locator.LocatorServer;
 import org.h2.test.TestAll;
 import org.h2.test.TestBase;
 
@@ -32,7 +33,8 @@ public class TestMultiThread extends TestBase implements Runnable {
     }
 
     private TestMultiThread(TestAll config, TestMultiThread parent) throws SQLException {
-        this.config = config;
+
+    	this.config = config;
         this.parent = parent;
         random = new Random();
         conn = getConnection();

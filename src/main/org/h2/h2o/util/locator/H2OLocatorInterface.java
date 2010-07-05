@@ -25,6 +25,7 @@ public class H2OLocatorInterface {
 	 * Connections to locator servers and the corresponding last known update count on that server.
 	 */
 	private Map<LocatorClientConnection, Integer> locatorConnections;
+	private DatabaseDescriptorFile descriptor;
 
 
 
@@ -36,7 +37,7 @@ public class H2OLocatorInterface {
 	 * @throws StartupException 
 	 */
 	public H2OLocatorInterface(String databaseName, String descriptorURL) throws IOException, StartupException{
-		DatabaseDescriptorFile descriptor = new DatabaseDescriptorFile(descriptorURL);
+		descriptor = new DatabaseDescriptorFile(descriptorURL);
 		this.locatorLocations = descriptor.getLocatorLocations();
 		connectToLocators();
 	}
@@ -256,6 +257,10 @@ public class H2OLocatorInterface {
 	 */
 	public static boolean hasAchievedMajority(int successfulResponses, int numberOfLocators) {
 		return successfulResponses >= (numberOfLocators/2 + 1);
+	}
+
+	public DatabaseDescriptorFile getDescriptor() {
+		return descriptor;
 	}
 
 

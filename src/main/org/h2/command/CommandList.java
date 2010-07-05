@@ -96,8 +96,6 @@ public class CommandList extends Command {
 	 */
 	@Override
 	protected int update(boolean partOfMultiQueryTransaction) throws SQLException, RemoteException {
-		//assert partOfMultiQueryTransaction;
-
 		return update();
 	}
 

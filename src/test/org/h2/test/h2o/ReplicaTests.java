@@ -1,6 +1,5 @@
 package org.h2.test.h2o;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.sql.Connection;
@@ -65,6 +64,31 @@ public class ReplicaTests extends TestBase{
 		}
 	}
 	
+	
+	/**
+	 * Tests that a replica is automatically created on B when replication factor is set to 2.
+	 */
+	@Test
+	public void ReplicaAutomaticallyCreated(){
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		
+		try{
+
+			sa.execute("INSERT INTO TEST VALUES(3, 'Hello World');");
+			
+			sb.execute("SELECT LOCAL ONLY * FROM TEST ORDER BY ID;");
+
+			int[] pKey = {1, 2, 3};
+			String[] secondCol = {"Hello", "World", "Hello World"};
+
+			validateOnFirstMachine("TEST", pKey, secondCol);
+
+		} catch (SQLException e){
+			e.printStackTrace();
+			fail("This should succeed.");
+		}
+	}
+	
 	/**
 	 * Tests that a replica is successfully created when a field has a space in its value.
 	 */
@@ -86,6 +110,7 @@ public class ReplicaTests extends TestBase{
 			validateOnFirstMachine("TEST", pKey, secondCol);
 
 		} catch (SQLException e){
+			e.printStackTrace();
 			fail("This should succeed.");
 		}
 	}

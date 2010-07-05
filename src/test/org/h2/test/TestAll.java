@@ -16,7 +16,6 @@ import org.h2.test.bench.TestPerformance;
 import org.h2.test.db.TestAlter;
 import org.h2.test.db.TestAutoRecompile;
 import org.h2.test.db.TestBackup;
-import org.h2.test.db.TestBigDb;
 import org.h2.test.db.TestBigResult;
 import org.h2.test.db.TestCases;
 import org.h2.test.db.TestCheckpoint;
@@ -220,47 +219,47 @@ java org.h2.test.TestAll timer
      * If the transaction log files should be kept small (that is, log files
      * should be switched early).
      */
-    boolean smallLog;
+    public boolean smallLog;
 
     /**
      * If SSL should be used for remote connections.
      */
-    boolean ssl;
+    public boolean ssl;
 
     /**
      * If MAX_MEMORY_UNDO=3 should be used.
      */
-    boolean diskUndo;
+    public boolean diskUndo;
 
     /**
      * If a small cache and a low number for MAX_MEMORY_ROWS should be used.
      */
-    boolean diskResult;
+    public boolean diskResult;
 
     /**
      * If TRACE_LEVEL_SYSTEM_OUT should be set to 2 (for debugging only).
      */
-    boolean traceSystemOut;
+    public boolean traceSystemOut;
 
     /**
      * If the tests should run forever.
      */
-    boolean endless;
+    public boolean endless;
 
     /**
      * The THROTTLE value to use.
      */
-    int throttle;
+    public int throttle;
 
     /**
      * If the test should stop when the first error occurs.
      */
-    boolean stopOnError;
+    public boolean stopOnError;
 
     /**
      * If the Two-Queue cache algorithm should be used.
      */
-    boolean cache2Q;
+    public boolean cache2Q;
 
     private Server server;
 
@@ -517,7 +516,6 @@ http://www.w3schools.com/sql/
         new TestAlter().runTest(this);
         new TestAutoRecompile().runTest(this);
         new TestBackup().runTest(this);
-        new TestBigDb().runTest(this);
         new TestBigResult().runTest(this);
         new TestCases().runTest(this);
         new TestCheckpoint().runTest(this);
@@ -661,7 +659,7 @@ http://www.w3schools.com/sql/
      * old database files in the test directory and trace files. It also starts
      * a TCP server if the test uses remote connections.
      */
-    void beforeTest() throws SQLException {
+    public void beforeTest() throws SQLException {
         Driver.load();
         DeleteDbFiles.execute(TestBase.baseDir, null, true);
         FileSystemDisk.getInstance().deleteRecursive("trace.db");

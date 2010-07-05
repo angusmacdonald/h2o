@@ -87,7 +87,6 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 		Command command = parser.prepareCommand((commit? "commit": "rollback") + " TRANSACTION " + transactionName);
 		int result = command.executeUpdate();
 
-		//session.setAutoCommit(true); //TODO auto-commit shouldn't be set false.true for each transaction.
 		return result;
 	}
 
@@ -167,7 +166,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	public TableManagerRemote findTableManagerReference(TableInfo ti)
 	throws RemoteException {
 		try {
-			return this.session.getDatabase().getSystemTableReference().lookup(ti);
+			return this.session.getDatabase().getSystemTableReference().lookup(ti, true);
 		} catch (SQLException e) {
 			ErrorHandling.errorNoEvent("Couldn't find Table Manager at this machine. Table Manager needs to be re-instantiated.."); //TODO allow for re-instantiation at this point.
 			return null;
