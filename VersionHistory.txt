@@ -10,3 +10,5 @@ H2O Version 0.2.3 (Unreleased)
 	TestBigResult class from H2 now integrated as unit test.
 	Added support for immediate replication of newly created tables.
 	Added support for specifying replication factor and other settings.
+	Fixed bugs in support for UPDATE and DELETE prepared statements.
+	Added asynchronous execution for remote updates to parallelize where there are multiple replicas.

@@ -11,7 +11,10 @@ import java.sql.SQLException;
 import org.h2.command.Prepared;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
+import org.h2.expression.Comparison;
 import org.h2.expression.Expression;
+import org.h2.expression.Operation;
+import org.h2.expression.Parameter;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.h2o.util.LockType;
@@ -19,10 +22,12 @@ import org.h2.log.UndoLogRecord;
 import org.h2.result.LocalResult;
 import org.h2.result.Row;
 import org.h2.result.RowList;
+import org.h2.table.Column;
 import org.h2.table.PlanItem;
 import org.h2.table.Table;
 import org.h2.table.TableFilter;
 import org.h2.util.StringUtils;
+import org.h2.value.Value;
 
 /**
  * This class represents the statement
@@ -62,9 +67,17 @@ public class Delete extends Prepared {
 		 */
 		if (isRegularTable()){
 			if (queryProxy == null){
-				System.out.println("what?");
+				throw new SQLException("Internal Error: Query Proxy was null.");
 			}
-			return queryProxy.executeUpdate(sqlStatement, transactionName, session);
+			
+			String sql = null;
+			if (isPreparedStatement()){
+				sql = adjustForPreparedStatement();
+			} else {
+				sql = sqlStatement;
+			}
+			
+			return queryProxy.executeUpdate(sql, transactionName, session);
 		}
         
         table.fireBefore(session);
@@ -101,6 +114,49 @@ public class Delete extends Prepared {
             rows.close();
         }
     }
+    
+	private String adjustForPreparedStatement() throws SQLException {
+		String[] values = new String[1];
+		
+		int y = 0;
+		
+		Comparison comparison = ((Comparison)condition);
+		Expression setExpression = comparison.getExpression(false);
+		
+		evaluateExpression(setExpression, values, y, setExpression.getType());
+		
+		//Edit the SQL String
+		//Example: update bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
+		String sql = new String(sqlStatement) + " {";
+
+		boolean addComma = false;
+		int count = 1;
+		for (int i = 1; i <= values.length; i++){
+			if (values[i-1] != null){
+				if (addComma) sql += ", ";
+				else addComma = true;
+				
+				sql += count + ": " + values[i-1];
+				
+				count++;
+			}
+		}
+		sql += "};";
+
+		return sql;
+	}
+	private void evaluateExpression(Expression e,String[] values, int i, int colummType) throws SQLException {
+		//Only add the expression if it is unspecified in the query (there will be an instance of parameter somewhere).
+		if (e != null && e instanceof Parameter ) {
+			// e can be null (DEFAULT)
+			e = e.optimize(session);
+			
+				Value v = e.getValue(session).convertTo(colummType);
+				values[i] = v.toString();
+
+		}
+	}
+
 
     public String getPlanSQL() {
         StringBuffer buff = new StringBuffer();

@@ -304,7 +304,8 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 		LockType lockGranted = lockingTable.requestLock(lockRequested, databaseInstanceWrapper);
 
-		QueryProxy qp = new QueryProxy(lockGranted, fullName, selectReplicaLocations(lockRequested, databaseInstanceWrapper), this, databaseInstanceWrapper, replicaManager.getNewUpdateID(), lockRequested);
+		QueryProxy qp = new QueryProxy(lockGranted, fullName, selectReplicaLocations(lockRequested, databaseInstanceWrapper), 
+				this, databaseInstanceWrapper, replicaManager.getNewUpdateID(), lockRequested);
 
 		return qp;
 	}

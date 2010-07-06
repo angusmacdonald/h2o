@@ -156,9 +156,12 @@ public class QueryProxyManager {
 	 * Commit the transaction being run through this proxy manager. Involves contacting each machine taking part in the
 	 * transaction and sending a commit for the correct transaction name.
 	 * @param commit True if the transaction is to be committed. False if the transaction should be rolled back.
+	 * @param h2oCommit If the application has turned off auto-commit, this parameter will be false and the only
+	 * 	commits the database will receive will be from the application - in this case no transaction name is attached to the commit
+	 *  because this only happens when h2o is auto-committing.
 	 * @throws SQLException 
 	 */
-	public void commit(boolean commit) throws SQLException {
+	public void commit(boolean commit, boolean h2oCommit) throws SQLException {
 		/*
 		 * The set of replicas that were updated. This is returned to the DM when locks are released.
 		 */
@@ -173,12 +176,12 @@ public class QueryProxyManager {
 
 			if (remoteReplica == null){
 				//This is a local internal database operation (e.g. the TCP server doing something).
-				actionSuccessful = commitLocal(commit);
+				actionSuccessful = commitLocal(commit, h2oCommit);
 			} else if (localDatabase.getDatabaseURL().getOriginalURL().equals(remoteReplica.getDatabaseURL().getOriginalURL())){
 				//Perform commit locally.
-				actionSuccessful = commitLocal(commit);
+				actionSuccessful = commitLocal(commit, h2oCommit);
 			} else { //Perform commit via RMI.		 
-				actionSuccessful = commitRemote(commit, remoteReplica);
+				actionSuccessful = commitRemote(commit, remoteReplica, h2oCommit);
 			}
 
 			if (actionSuccessful && commit) updatedReplicas.add(remoteReplica);
@@ -216,13 +219,14 @@ public class QueryProxyManager {
 	/**
 	 * Commit the transaction on the local machine.
 	 * @param commit			Whether to commit or rollback (true if commit)
+	 * @param h2oCommit 
 	 * @return	true if the commit was successful. False if it wasn't, or if it was a rollback.
 	 * @throws SQLException 
 	 */
-	private boolean commitLocal(boolean commit) throws SQLException {
+	private boolean commitLocal(boolean commit, boolean h2oCommit) throws SQLException {
 		prepare();
 
-		Command commitCommand = parser.prepareCommand((commit? "COMMIT": "ROLLBACK") + " TRANSACTION " + transactionName);
+		Command commitCommand = parser.prepareCommand((commit? "COMMIT": "ROLLBACK") + ((h2oCommit)? " TRANSACTION " + transactionName: ";"));
 		int result = commitCommand.executeUpdate();
 
 		return (result == 0);
@@ -232,13 +236,14 @@ public class QueryProxyManager {
 	 * Commit the transaction by calling a remote replica and sending the COMMIT transaction command.
 	 * @param commit			Whether to commit or rollback (true if commit)
 	 * @param remoteReplica		The location to which the commit is being sent.
+	 * @param h2oCommit 
 	 * @return	true if the commit was successful. False if it wasn't, or if it was a rollback.
 	 * @throws SQLException
 	 */
 	private boolean commitRemote(boolean commit,
-			DatabaseInstanceWrapper remoteReplica) throws SQLException {
+			DatabaseInstanceWrapper remoteReplica, boolean h2oCommit) throws SQLException {
 		try {
-			int result = remoteReplica.getDatabaseInstance().commit(commit, transactionName);
+			int result = remoteReplica.getDatabaseInstance().commit(commit, transactionName, h2oCommit);
 
 			return (result == 0);
 		} catch (SQLException e){
@@ -253,6 +258,8 @@ public class QueryProxyManager {
 
 			//XXX not sure if you want to do the following line with asynchronous updates.
 			throw new SQLException((commit? "COMMIT": "ROLLBACK") + " failed on a replica because database instance was unavailable.");
+		} catch (Exception e) {
+			throw new SQLException((commit? "COMMIT": "ROLLBACK") + " failed because:" + e.getMessage());
 		} 
 
 		return false;

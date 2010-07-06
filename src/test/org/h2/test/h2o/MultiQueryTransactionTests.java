@@ -574,6 +574,103 @@ public class MultiQueryTransactionTests extends TestBase{
 		} 
 	}
 
+	/**
+	 * Tests that prepared statements work in the system where no replication is involved.
+	 * @throws SQLException 
+	 */
+	@Test
+	public void testPreparedStatementsUpdateNoReplication() throws SQLException{
+		//update bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
+		createReplicaOnB();
+
+		PreparedStatement mStmt = null;
+		try
+		{
+			mStmt = ca.prepareStatement( "insert into PUBLIC.TEST (id,name) values (?,?)" );
+
+
+			for (int i = 3; i < 10; i++){
+				mStmt.setInt(1, i);
+				mStmt.setString(2, "helloNumber" + i);
+				mStmt.addBatch();
+			}
+
+			mStmt.executeBatch();
+
+			mStmt = ca.prepareStatement( "update PUBLIC.TEST set name=? where id=?;" );
+			mStmt.setString(1, "New Order");
+			mStmt.setInt(2, 1);
+			mStmt.addBatch();
+			mStmt.executeBatch();
+
+			
+			int[] pKey = new int[10];
+			String[] secondCol = new String[10];
+
+			pKey[0] = 1; pKey[1] = 2;
+			secondCol[0] = "New Order"; secondCol[1] = "World";
+
+			TestQuery test2query = createMultipleInsertStatements("TEST", pKey, secondCol, 3);
+
+			sa.execute("SELECT LOCAL * FROM PUBLIC.TEST ORDER BY ID;");
+
+			validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
+
+		} catch ( SQLException ex ) {
+			ex.printStackTrace();
+			fail("Unexpected SQL Exception was thrown. Not cool.");
+		} 
+	}
+	
+	/**
+	 * Tests that prepared statements work in the system where no replication is involved.
+	 * @throws SQLException 
+	 */
+	@Test
+	public void testPreparedStatementsDeleteNoReplication() throws SQLException{
+		//update bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
+		createReplicaOnB();
+
+
+
+			PreparedStatement mStmt = null;
+			try
+			{
+				mStmt = ca.prepareStatement( "insert into PUBLIC.TEST (id,name) values (?,?)" );
+
+
+				for (int i = 3; i < 10; i++){
+					mStmt.setInt(1, i);
+					mStmt.setString(2, "helloNumber" + i);
+					mStmt.addBatch();
+				}
+
+				mStmt.executeBatch();
+
+				
+				mStmt = ca.prepareStatement( "delete from PUBLIC.TEST where id=?;" );
+				mStmt.setInt(1, 9);
+				mStmt.addBatch();
+				mStmt.executeBatch();
+//				
+				
+				int[] pKey = new int[9];
+				String[] secondCol = new String[9];
+
+				pKey[0] = 1; pKey[1] = 2;
+				secondCol[0] = "Hello"; secondCol[1] = "World";
+
+				TestQuery test2query = createMultipleInsertStatements("TEST", pKey, secondCol, 3);
+
+				sa.execute("SELECT LOCAL * FROM PUBLIC.TEST ORDER BY ID;");
+
+				validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
+
+			} catch ( SQLException ex ) {
+				ex.printStackTrace();
+				fail("Unexpected SQL Exception was thrown. Not cool.");
+			} 
+	}
 //	/**
 //	 * Tests that prepared statements work in the system where no replication is involved.
 //	 */

@@ -765,7 +765,7 @@ public class Database implements DataHandler {
 				rec.execute(this, systemSession, eventListener, proxyManager);
 			}
 
-			proxyManager.commit(true);
+			proxyManager.commit(true, true);
 		}
 
 		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(DiagnosticLevel.FULL, " Executed meta-records.");

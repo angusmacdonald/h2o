@@ -177,7 +177,7 @@ public class CommandContainer extends Command {
 					 * If it is one of a number of queries in the transaction then we must wait for the entire transaction to finish.
 					 */
 
-					proxyManager.commit(commit);
+					proxyManager.commit(commit, true);
 					session.setCurrentTransactionLocks(null);
 				} else {
 					session.setCurrentTransactionLocks(proxyManager);
@@ -185,7 +185,8 @@ public class CommandContainer extends Command {
 
 			} catch (SQLException e){
 
-				proxyManager.commit(false);
+				e.printStackTrace();
+				proxyManager.commit(false, true);
 				session.setCurrentTransactionLocks(null);
 				throw e;
 			}

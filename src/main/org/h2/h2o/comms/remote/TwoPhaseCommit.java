@@ -37,11 +37,12 @@ public interface TwoPhaseCommit {
 	 * method commits (or aborts) the transaction.
 	 * @param transactionName	The name to given to this transaction - used to find which transaction to commit.
 	 * @param commit	true if the transaction is to be committed; false for an abort.
+	 * @param h2oCommit 
 	 * @return Result of the commit queries execution. 
 	 * @throws RemoteException
 	 * @throws SQLException 
 	 */
-	public int commit(boolean commit, String transactionName)
+	public int commit(boolean commit, String transactionName, boolean h2oCommit)
 			throws RemoteException, SQLException;
 
 }

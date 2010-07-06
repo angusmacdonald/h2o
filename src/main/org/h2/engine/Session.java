@@ -516,7 +516,7 @@ public class Session extends SessionWithState {
 		}
 		
 		if (currentTransactionLocks != null && !ddl && !hasAlreadyCommittedQueryProxy){
-			currentTransactionLocks.commit(true);
+			currentTransactionLocks.commit(true, applicationAutoCommit);
 			currentTransactionLocks = null;
 		}
 		

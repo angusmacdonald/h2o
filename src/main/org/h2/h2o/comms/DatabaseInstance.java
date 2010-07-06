@@ -83,8 +83,8 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	 * @see org.h2.h2o.comms.DatabaseInstanceRemote#commitQuery(boolean)
 	 */
 	@Override
-	public int commit(boolean commit, String transactionName) throws RemoteException, SQLException {
-		Command command = parser.prepareCommand((commit? "commit": "rollback") + " TRANSACTION " + transactionName);
+	public int commit(boolean commit, String transactionName, boolean h2oCommit) throws RemoteException, SQLException {
+		Command command = parser.prepareCommand((commit? "commit": "rollback") + ((h2oCommit)? " TRANSACTION " + transactionName: ";"));
 		int result = command.executeUpdate();
 
 		return result;
@@ -98,7 +98,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	public int executeUpdate(QueryProxy queryProxy, String sql) throws RemoteException,
 	SQLException {
 		/*
-		 * TODO eventually this method may do a lot more - e.g. the query may only be run here, and asynchronously run elsewhere. Another
+		 * TODO eventually this method could do a lot more - e.g. the query may only be run here, and asynchronously run elsewhere. Another
 		 * overloaded version of the method may take only the query string and be required to obtain the queryProxy seperately. 
 		 */
 		return queryProxy.executeUpdate(sql, null, session);
@@ -144,7 +144,6 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 			command = parser.prepareCommand(sql);
 		}
 
-		System.err.println("User: "+ parser.getSession().getUser().getName());
 		int result = command.executeUpdate(false);
 		command.close();
 

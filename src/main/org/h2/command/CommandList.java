@@ -136,7 +136,7 @@ public class CommandList extends Command {
 			/*
 			 * Having executed all commands, rollback if there was an exception. Otherwise, commit.
 			 */
-			proxyManager.commit(rollbackException == null);
+			proxyManager.commit(rollbackException == null, true);
 			session.setCurrentTransactionLocks(null);
 
 			/*

@@ -13,7 +13,9 @@ import org.h2.constant.ErrorCode;
 import org.h2.engine.Constants;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
+import org.h2.expression.Comparison;
 import org.h2.expression.Expression;
+import org.h2.expression.Operation;
 import org.h2.expression.Parameter;
 import org.h2.expression.ValueExpression;
 import org.h2.h2o.comms.QueryProxy;
@@ -87,77 +89,162 @@ public class Update extends Prepared {
 			/*
 			 * (QUERY PROPAGATED TO ALL REPLICAS).
 			 */
-			 if (isRegularTable()){
-				 if (queryProxy == null) queryProxy = new QueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper()); // in case of MERGE statement.
-				 return queryProxy.executeUpdate(sqlStatement, transactionName, session);
-			 }
+			if (isRegularTable()){
+
+				String sql = null;
+				if (isPreparedStatement()){
+					sql = adjustForPreparedStatement();
+				} else {
+					sql = sqlStatement;
+				}
+
+				if (queryProxy == null) queryProxy = new QueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper()); // in case of MERGE statement.
+				return queryProxy.executeUpdate(sql, transactionName, session);
+			}
 
 
-			 table.fireBefore(session);
-			 table.lock(session, true, false);
-			 int columnCount = table.getColumns().length;
-			 // get the old rows, compute the new rows
-			 setCurrentRowNumber(0);
-			 int count = 0;
-			 while (tableFilter.next()) {
-				 checkCanceled();
-				 setCurrentRowNumber(count+1);
-				 if (condition == null || Boolean.TRUE.equals(condition.getBooleanValue(session))) {
-					 Row oldRow = tableFilter.get();
-					 Row newRow = table.getTemplateRow();
-					 for (int i = 0; i < columnCount; i++) {
-						 Expression newExpr = expressions[i];
-						 Value newValue;
-						 if (newExpr == null) {
-							 newValue = oldRow.getValue(i);
-						 } else if (newExpr == ValueExpression.getDefault()) {
-							 Column column = table.getColumn(i);
-							 Expression defaultExpr = column.getDefaultExpression();
-							 Value v;
-							 if (defaultExpr == null) {
-								 v = column.validateConvertUpdateSequence(session, null);
-							 } else {
-								 v = defaultExpr.getValue(session);
-							 }
-							 int type = column.getType();
-							 newValue = v.convertTo(type);
-						 } else {
-							 Column column = table.getColumn(i);
-							 newValue = newExpr.getValue(session).convertTo(column.getType());
-						 }
-						 newRow.setValue(i, newValue);
-					 }
-					 table.validateConvertUpdateSequence(session, newRow);
-					 if (table.fireRow()) {
-						 table.fireBeforeRow(session, oldRow, newRow);
-					 }
-					 rows.add(oldRow);
-					 rows.add(newRow);
-					 count++;
-				 }
-			 }
-			 // TODO self referencing referential integrity constraints
-			 // don't work if update is multi-row and 'inversed' the condition!
-			 // probably need multi-row triggers with 'deleted' and 'inserted'
-			 // at the same time. anyway good for sql compatibility
-			 // TODO update in-place (but if the position changes,
-					 // we need to update all indexes) before row triggers
+			table.fireBefore(session);
+			table.lock(session, true, false);
+			int columnCount = table.getColumns().length;
+			// get the old rows, compute the new rows
+			setCurrentRowNumber(0);
+			int count = 0;
+			while (tableFilter.next()) {
+				checkCanceled();
+				setCurrentRowNumber(count+1);
+				if (condition == null || Boolean.TRUE.equals(condition.getBooleanValue(session))) {
+					Row oldRow = tableFilter.get();
+					Row newRow = table.getTemplateRow();
+					for (int i = 0; i < columnCount; i++) {
+						Expression newExpr = expressions[i];
+						Value newValue;
+						if (newExpr == null) {
+							newValue = oldRow.getValue(i);
+						} else if (newExpr == ValueExpression.getDefault()) {
+							Column column = table.getColumn(i);
+							Expression defaultExpr = column.getDefaultExpression();
+							Value v;
+							if (defaultExpr == null) {
+								v = column.validateConvertUpdateSequence(session, null);
+							} else {
+								v = defaultExpr.getValue(session);
+							}
+							int type = column.getType();
+							newValue = v.convertTo(type);
+						} else {
+							Column column = table.getColumn(i);
+							newValue = newExpr.getValue(session).convertTo(column.getType());
+						}
+						newRow.setValue(i, newValue);
+					}
+					table.validateConvertUpdateSequence(session, newRow);
+					if (table.fireRow()) {
+						table.fireBeforeRow(session, oldRow, newRow);
+					}
+					rows.add(oldRow);
+					rows.add(newRow);
+					count++;
+				}
+			}
+			// TODO self referencing referential integrity constraints
+			// don't work if update is multi-row and 'inversed' the condition!
+			// probably need multi-row triggers with 'deleted' and 'inserted'
+			// at the same time. anyway good for sql compatibility
+			// TODO update in-place (but if the position changes,
+			// we need to update all indexes) before row triggers
 
-					 // the cached row is already updated - we need the old values
-					 table.updateRows(this, session, rows);
-			 if (table.fireRow()) {
-				 rows.invalidateCache();
-				 for (rows.reset(); rows.hasNext();) {
-					 checkCanceled();
-					 Row o = rows.next();
-					 Row n = rows.next();
-					 table.fireAfterRow(session, o, n);
-				 }
-			 }
-			 table.fireAfter(session);
-			 return count;
+			// the cached row is already updated - we need the old values
+			table.updateRows(this, session, rows);
+			if (table.fireRow()) {
+				rows.invalidateCache();
+				for (rows.reset(); rows.hasNext();) {
+					checkCanceled();
+					Row o = rows.next();
+					Row n = rows.next();
+					table.fireAfterRow(session, o, n);
+				}
+			}
+			table.fireAfter(session);
+			return count;
 		} finally {
 			rows.close();
+		}
+	}
+
+	/**
+	 * Adjusts the sqlStatement string to be a valid prepared statement. This is used when propagating prepared
+	 * statements within the system.
+	 * @param sql
+	 * @return
+	 * @throws SQLException
+	 */
+	private String adjustForPreparedStatement() throws SQLException {
+
+
+
+
+		//Adjust the sqlStatement string to contain actual data.
+
+		//if this is a prepared statement the SQL must look like: update bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
+		//use the loop structure from below to obtain this information. how do you know if it is a prepared statement.
+
+		Expression[] expr = expressions;
+		String[] values = new String[expressions.length + 1]; //The last expression is the where condition, everything before it is part of the set expression.
+		Column[] columns = table.getColumns();
+		
+		/*
+		 * 'Expressions' stores all of the expressions being set by this update. The expression will be null if nothing is being set.
+		 * 'Condition' stores the set condition.
+		 */
+		for (int i = 0; i < (expressions.length); i++) {
+
+			Column c = columns[i];
+			int index = c.getColumnId();
+			Expression e = expr[i];
+
+			evaluateExpression(e, values, i, c.getType(), expr);
+		}
+
+		int y = 2;
+		
+		Comparison comparison = ((Comparison)condition);
+		Expression setExpression = comparison.getExpression(false);
+		
+		evaluateExpression(setExpression, values, y, setExpression.getType(), expr);
+		
+		//Edit the SQL String
+		//Example: update bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
+		String sql = new String(sqlStatement) + " {";
+
+		boolean addComma = false;
+		int count = 1;
+		for (int i = 1; i <= values.length; i++){
+			if (values[i-1] != null){
+				if (addComma) sql += ", ";
+				else addComma = true;
+				
+				sql += count + ": " + values[i-1];
+				
+				count++;
+			}
+		}
+		sql += "};";
+
+		return sql;
+	}
+
+	private void evaluateExpression(Expression e,String[] values, int i, int colummType,  Expression[] expr) throws SQLException {
+		//Only add the expression if it is unspecified in the query (there will be an instance of parameter somewhere).
+		if (e != null && e instanceof Parameter || ((e instanceof Operation) && e.toString().contains("?")) ) {
+			// e can be null (DEFAULT)
+			e = e.optimize(session);
+			try {
+				Value v = e.getValue(session).convertTo(colummType);
+				values[i] = v.toString();
+				//newRow.setValue(index, v);
+			} catch (SQLException ex) {
+				throw setRow(ex, 0, getSQL(expr));
+			}
 		}
 	}
 

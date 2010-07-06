@@ -132,7 +132,7 @@ public class H2O {
 		String defaultLocation = null;
 		String web = null;
 		int webPort = 0;
-		
+
 		if (arguments.size() == 0){
 			//Fill with default arguments.
 			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "No user arguments were specified. Creating a database with default arguments.");
@@ -153,7 +153,7 @@ public class H2O {
 			defaultLocation = arguments.get("-f"); //e.g. "db_data"
 			web = arguments.get("-w");
 
-			
+
 
 			if (web != null){
 				webPort = Integer.parseInt(web);
@@ -255,11 +255,16 @@ public class H2O {
 
 
 		LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(generatedDatabaseURL));
-		properties.createNewFile();
+		if (!properties.loadProperties()){
+			properties.createNewFile();
+			properties.setProperty("diagnosticLevel", DiagnosticLevel.NONE.toString());
+		}
+		//Overwrite these properties regardless of whether properties file exists or not.
 		properties.setProperty("descriptor", descriptorFileLocation);
 		properties.setProperty("databaseName", databaseName);
-		properties.setProperty("diagnosticLevel", DiagnosticLevel.NONE.toString());
+		
 		properties.saveAndClose();
+		
 		try {
 			Class.forName("org.h2.Driver");
 		} catch (ClassNotFoundException e) {

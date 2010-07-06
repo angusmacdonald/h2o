@@ -16,6 +16,7 @@ import org.h2.engine.Database;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.QueryProxy;
+import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.manager.ISystemTable;
 import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.manager.MovedException;
@@ -77,14 +78,14 @@ public class DropTable extends SchemaCommand {
 		} else {
 			table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
 		}
-		//		TableManagerRemote dm = null;
-		//
-		//		if (Constants.IS_H2O){
-		//			dm = getSchema().getDatabase().getTableManager(getSchema().getName() + "." + tableName);
-		//		}
 
-		// TODO drop table: drops views as well (is this ok?)
-		if (table == null) {
+		
+		TableManagerRemote tableManager = null;
+		if (table == null){
+			tableManager = getSchema().getDatabase().getSystemTableReference().lookup((getSchema().getName() + "." + tableName), false);
+		}
+
+		if (table == null && tableManager == null) {
 			//table = null;
 			if (!ifExists) {
 				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);

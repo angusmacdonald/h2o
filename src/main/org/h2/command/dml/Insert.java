@@ -14,6 +14,7 @@ import org.h2.constant.ErrorCode;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
+import org.h2.expression.Operation;
 import org.h2.expression.Parameter;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.QueryProxyManager;
@@ -113,13 +114,13 @@ public class Insert extends Prepared{
 		if (isRegularTable() ){ // && queryProxy.getNumberOfReplicas() > 1
 
 			String sql;
-			
+
 			if (isPreparedStatement()){
 				sql = adjustForPreparedStatement();
 			} else {
 				sql = sqlStatement;
 			}
-			
+
 			return queryProxy.executeUpdate(sql, transactionName, session);
 		}
 
@@ -210,7 +211,9 @@ public class Insert extends Prepared{
 			Column c = columns[i];
 			int index = c.getColumnId();
 			Expression e = expr[i];
-			if (e != null) {
+			
+			//Only add the expression if it is unspecified in the query (there will be an instance of parameter somewhere).
+			if (e != null && e instanceof Parameter || ((e instanceof Operation) && e.toString().contains("?")) ) {
 				// e can be null (DEFAULT)
 				e = e.optimize(session);
 				try {
@@ -229,9 +232,11 @@ public class Insert extends Prepared{
 		String sql = new String(sqlStatement) + " {";
 
 		for (int i = 1; i <= columns.length; i++){
-			sql += i + ": " + values[i-1];
-
-			if (i < columns.length) sql += ", ";
+			if (values[i-1] != null){
+				if (i > 1) sql += ", ";
+				sql += i + ": " + values[i-1];
+				
+			}
 		}
 		sql += "};";
 
