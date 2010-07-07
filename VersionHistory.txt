@@ -4,7 +4,7 @@ Version History
 H2O Version 0.2.2
 	Adds local caching of Table Manager proxies + bypass of RMI where possible (10x speed increase for read queries on single machine).
 	
-H2O Version 0.2.3 (Unreleased)
+H2O Version 0.2.3
 	DROP ALL OBJECTS command now works with System Table
 	SYSTEM_RANGE command now works.
 	TestBigResult class from H2 now integrated as unit test.
@@ -12,3 +12,5 @@ H2O Version 0.2.3 (Unreleased)
 	Added support for specifying replication factor and other settings.
 	Fixed bugs in support for UPDATE and DELETE prepared statements.
 	Added asynchronous execution for remote updates to parallelize where there are multiple replicas.
+	Fixed bug where database would shutdown when another instance failed.
+H2O Version 0.2.4 (Unreleased)

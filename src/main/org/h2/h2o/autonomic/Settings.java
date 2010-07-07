@@ -81,7 +81,7 @@ public class Settings {
 		defaults.setProperty("RELATION_REPLICATION_FACTOR", "1");
 
 		//Number of copies required of the System Table's state.
-		defaults.setProperty("SYSTEM_TABLE_REPLICATION_FACTOR", "2");
+		defaults.setProperty("SYSTEM_TABLE_REPLICATION_FACTOR", "3");
 
 		//Number of copies required of Table Manager state.
 		defaults.setProperty("TABLE_MANAGER_REPLICATION_FACTOR", "2");

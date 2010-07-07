@@ -89,7 +89,9 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	public boolean addTableInformation(TableManagerRemote tableManager, TableInfo tableDetails) throws RemoteException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "New table successfully created: " + tableDetails);
 
-
+		if (tableDetails.getTableName().equals("BARCELONA1")) 
+			System.out.println();
+		
 		TableInfo basicTableInfo = tableDetails.getGenericTableInfo();
 
 

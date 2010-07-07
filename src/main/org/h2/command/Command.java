@@ -226,7 +226,7 @@ public abstract class Command implements CommandInterface {
         MemoryUtils.allocateReserveMemory();
         Object sync = database.isMultiThreaded() ? (Object) session : (Object) database;
         session.waitIfExclusiveModeEnabled();
-        synchronized (sync) {
+       // synchronized (sync) {
             int rollback = session.getLogId();
             session.setCurrentCommand(this, startTime);
             try {
@@ -287,7 +287,7 @@ public abstract class Command implements CommandInterface {
             } finally {
                 stop();
             }
-        }
+    	//}
     }
 
     public void close() {

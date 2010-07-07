@@ -92,10 +92,12 @@ public class DropTable extends SchemaCommand {
 			}
 		} else {
 			session.getUser().checkRight(table, Right.ALL);
-			if (!table.canDrop() || (Constants.IS_H2O && tableName.startsWith("H2O_"))) { //H2O - ensure schema tables aren't dropped.
+			
+			 //XXX changed to add the table null checks because some tests show up the tableManager existing when the local table doesn't.
+			if ((table != null && !table.canDrop()) || (Constants.IS_H2O && tableName.startsWith("H2O_"))) { //H2O - ensure schema tables aren't dropped.
 				throw Message.getSQLException(ErrorCode.CANNOT_DROP_TABLE_1, tableName);
 			}
-			if (Constants.IS_H2O && !internalQuery){
+			if (Constants.IS_H2O && !internalQuery && table != null){
 				table.lock(session, true, true); //lock isn't acquired here - the query is distributed to each replica first.
 			}
 		}

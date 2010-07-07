@@ -73,14 +73,14 @@ public class QueryProxy implements Serializable{
 	 * @see #lockGranted
 	 */
 	private LockType lockRequested;
-
-	private static ExecutorService executor = Executors.newCachedThreadPool(
+	
+	private static ExecutorService queryExecutor = Executors.newCachedThreadPool(
 			new QueryThreadFactory(){
 				public Thread newThread(Runnable r) {
 					return new Thread(r);
 				}
 			});
-	
+
 	/**
 	 * @param lockGranted		The type of lock that has been granted
 	 * @param tableName			Name of the table that is being used in the query
@@ -156,77 +156,32 @@ public class QueryProxy implements Serializable{
 
 		Parser parser = new Parser (session, true);
 
-		//////////////////////////////////////////////////////////////
-
-		List<FutureTask<QueryResult>> remoteQueries = new LinkedList<FutureTask<QueryResult>>();
-		//////////////////////////////////////////////////////////////
-
+		List<FutureTask<QueryResult>> executingQueries = new LinkedList<FutureTask<QueryResult>>();
+	
 		for (DatabaseInstanceWrapper replica: allReplicas){
-			try {
 
-				int result = 0;
+			String localURL = session.getDatabase().getURL().getOriginalURL();
 
-				String localURL = session.getDatabase().getURL().getOriginalURL();
+			//Decide whether the query is to be executed locall or remotely.
+			boolean local = (replica == null || localURL.equals(replica.getDatabaseURL().getOriginalURL()));
 
-				if (replica == null || localURL.equals(replica.getDatabaseURL().getOriginalURL())){
-					/*
-					 * Execute Locally - otherwise there are some nasty concurrency issues with the RMI call accessing the DB
-					 * object at the same time as the thread which made the RMI call.
-					 */
-					Command command = parser.prepareCommand(sql);
+			final RemoteQueryExecutor qt = new RemoteQueryExecutor(sql, transactionName, replica, i, parser, local);
 
-					/*
-					 * If called from here executeUpdate should always be told the query is part of a larger transaction, because it
-					 * was remotely initiated and consequently needs to wait for the remote machine to commit.
-					 */
-					command.executeUpdate(true);
+			FutureTask<QueryResult> future = new FutureTask<QueryResult>(
+					new Callable<QueryResult>()
+					{
+						public QueryResult call()
+						{
+							return qt.executeQuery();
+						}
+					});
 
-					command = parser.prepareCommand("PREPARE COMMIT " + transactionName);
-					result = command.executeUpdate();
-
-				} else {
-					/*
-					 * Go remote. Start asynchronous execution of this query.
-					 */
-
-					final QueryThread qt = new QueryThread(sql, transactionName, replica, i);
-
-					FutureTask<QueryResult> future = new FutureTask<QueryResult>(
-							new Callable<QueryResult>()
-							{
-								public QueryResult call()
-								{
-									return qt.executeQuery();
-								}
-							});
-
-					remoteQueries.add(future);
-					executor.execute(future);
-
-					//					H2OTest.rmiFailure(replica);
-					//					result = replica.getDatabaseInstance().prepare(sql, transactionName);
-					//					
-				}
-
-				if (result != 0) {
-					//globalCommit = false; // Prepare operation failed at remote machine, so rollback the query everywhere.
-					commit[i++] = false;
-					globalCommit = false;
-				} else {
-					commit[i++] = true;
-				}
-
-				//TODO include more specific exceptions - e..g replica can't commit
-			} catch (SQLException e){
-				globalCommit = false; // rollback the entire transaction.
-				commit[i++] = false;
-				//			} catch (RemoteException e) {
-				//				commit[i++] = false;
-				//				globalCommit = false;
-			} 
+			executingQueries.add(future);
+			queryExecutor.execute(future);
+			i++;
 		}
 
-		globalCommit = waitUntilRemoteQueriesFinish(commit, globalCommit, remoteQueries);
+		globalCommit = waitUntilRemoteQueriesFinish(commit, globalCommit, executingQueries);
 
 
 
@@ -244,62 +199,59 @@ public class QueryProxy implements Serializable{
 
 	private boolean waitUntilRemoteQueriesFinish(boolean[] commit, boolean globalCommit, List<FutureTask<QueryResult>> remoteQueries) {
 		if (remoteQueries.size() == 0) return globalCommit; //the commit value has not changed.
-		try {
-			List<FutureTask<QueryResult>> completedQueries = new LinkedList<FutureTask<QueryResult>>();
 
-			/*
-			 * Wait until all remote queries have been completed.
-			 */
-			while (remoteQueries.size() > 0){
-				for (int y = 0; y < remoteQueries.size(); y++){
-					FutureTask<QueryResult> remoteQuery = remoteQueries.get(y);
+		List<FutureTask<QueryResult>> completedQueries = new LinkedList<FutureTask<QueryResult>>();
 
-					if (remoteQuery.isDone()){
-						//If the query is done add it to the list of completed queries.
-						completedQueries.add(remoteQuery);
-						remoteQueries.remove(y);
-					} else {
-						//We could sleep for a time here before checking again.
-					}
+		/*
+		 * Wait until all remote queries have been completed.
+		 */
+		while (remoteQueries.size() > 0){
+			for (int y = 0; y < remoteQueries.size(); y++){
+				FutureTask<QueryResult> remoteQuery = remoteQueries.get(y);
+
+				if (remoteQuery.isDone()){
+					//If the query is done add it to the list of completed queries.
+					completedQueries.add(remoteQuery);
+					remoteQueries.remove(y);
+				} else {
+					//We could sleep for a time here before checking again.
 				}
 			}
+		}
 
-			/*
-			 * All of the queries have now completed. Iterate through these queries and check that they
-			 * executed successfully.
-			 */
-			for (FutureTask<QueryResult> completedQuery: completedQueries){
-				QueryResult asyncResult = null;
-				try {
-					asyncResult = completedQuery.get();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				} catch (ExecutionException e) {
-					e.printStackTrace();
-				}
+		/*
+		 * All of the queries have now completed. Iterate through these queries and check that they
+		 * executed successfully.
+		 */
+		for (FutureTask<QueryResult> completedQuery: completedQueries){
+			QueryResult asyncResult = null;
+			try {
+				asyncResult = completedQuery.get();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+			}
 
-				if (asyncResult.getException() == null){
-					int result = asyncResult.getResult();
-					int x = asyncResult.getInstanceID();
-					if (result != 0) {
-						//globalCommit = false; // Prepare operation failed at remote machine, so rollback the query everywhere.
-						commit[x] = false;
-						globalCommit = false;
-					} else {
-						commit[x] = true;
-					}
-
-				} else {
-					int x = asyncResult.getInstanceID();
-					//throw asyncResult.getException();
+			if (asyncResult.getException() == null){
+				int result = asyncResult.getResult();
+				int x = asyncResult.getInstanceID();
+				if (result != 0) {
+					//globalCommit = false; // Prepare operation failed at remote machine, so rollback the query everywhere.
 					commit[x] = false;
 					globalCommit = false;
+				} else {
+					commit[x] = true;
 				}
-			}
 
-		} catch(Exception e){
-			e.printStackTrace();
+			} else {
+				int x = asyncResult.getInstanceID();
+				//throw asyncResult.getException();
+				commit[x] = false;
+				globalCommit = false;
+			}
 		}
+
 		return globalCommit;
 
 	}

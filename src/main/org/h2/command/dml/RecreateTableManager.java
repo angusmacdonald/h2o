@@ -74,7 +74,7 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
 		}
 
 		TableInfo ti = new TableInfo(tableName, schemaName, db.getURL());
-		TableManagerRemote tm = null;
+		TableManager tm = null;
 
 		//TableManager dm = TableManager.createTableManagerFromPersistentStore(ti.getSchemaName(), ti.getSchemaName());
 		try {
@@ -93,11 +93,12 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
 		 * Make Table Manager serializable first.
 		 */
 		try {
-			tm = (TableManagerRemote) UnicastRemoteObject.exportObject(tm, 0);
+			TableManagerRemote tmr = (TableManager) UnicastRemoteObject.exportObject(tm, 0);
+			db.getChordInterface().bind(ti.getFullTableName(), tmr);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
-		db.getChordInterface().bind(ti.getFullTableName(), tm);
+		
 
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, ti + " recreated on " + db.getURL() + ".");
