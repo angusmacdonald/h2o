@@ -71,13 +71,7 @@ public class QueryProxy implements Serializable{
 	 * @see #lockGranted
 	 */
 	private LockType lockRequested;
-	
-	private static ExecutorService queryExecutor = Executors.newCachedThreadPool(
-			new QueryThreadFactory(){
-				public Thread newThread(Runnable r) {
-					return new Thread(r);
-				}
-			});
+
 
 	/**
 	 * @param lockGranted		The type of lock that has been granted
@@ -148,7 +142,9 @@ public class QueryProxy implements Serializable{
 		/*
 		 * Execute the query. Send the query to each DB instance holding a replica.
 		 */
-		boolean globalCommit = executeQuery(query, transactionNameForQuery, session, commit);
+		
+		AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor();
+		boolean globalCommit = queryExecutor.executeQuery(query, transactionNameForQuery, allReplicas, session, commit);
 
 		H2OTest.rmiFailure(); //Test code to simulate the failure of DB instances at this point.
 
@@ -157,135 +153,6 @@ public class QueryProxy implements Serializable{
 		}
 
 		return 0;
-	}
-
-	/**
-	 * Aysnchronously executes the query on each database instance that requires the update.
-	 * @param query		Query to be executed.
-	 * @param transactionNameForQuery	The name of the transaction in which this query is in.
-	 * @param session	The session we are in - used to create the query parser.
-	 * @param commit	The array that will be used to store (for each replica) whether the transaction was executed successfully.
-	 * @return			True if everything was executed successfully (a global commit).
-	 */
-	private boolean executeQuery(String query, String transactionNameForQuery, Session session, boolean[] commit) {
-		
-		Parser parser = new Parser (session, true);
-
-		List<FutureTask<QueryResult>> executingQueries = new LinkedList<FutureTask<QueryResult>>();
-	
-		int i = 0;
-		for (DatabaseInstanceWrapper replicaToExecuteQueryOn: allReplicas){
-
-			String localURL = session.getDatabase().getURL().getOriginalURL();
-
-			//Decide whether the query is to be executed locall or remotely.
-			boolean isReplicaLocal = (replicaToExecuteQueryOn == null || localURL.equals(replicaToExecuteQueryOn.getDatabaseURL().getOriginalURL()));
-
-			executeQueryOnSpecifiedReplica(query, transactionNameForQuery, replicaToExecuteQueryOn, isReplicaLocal, parser, executingQueries, i);
-			i++;
-		}
-
-		return waitUntilRemoteQueriesFinish(commit, executingQueries);
-	}
-
-	/**
-	 * Execute a query on the specified database instance by creating a new asynchronous callable executor ({@link Executors}, {@link Future}).
-	 * 
-	 * <p>This method begins execution of the queries but does not actually return their results (because it is asynchronous). 
-	 * See {@link QueryProxy#waitUntilRemoteQueriesFinish(boolean[], List)} for the result.
-	 * 
-	 * @param sql							The query to be executed
-	 * @param transactionName				The name of the transaction in which this query is in.
-	 * @param replicaToExecuteQueryOn		The database instance where this query will be sent.
-	 * @param isReplicaLocal				Whether this database instance is the local instance, or it is remote.	
-	 * @param parser						The parser to be used to parser the query if it is local.
-	 * @param executingQueries				The list of queries that have already been sent. The latest query will be added to this list.
-	 * @param i								A basic counter used to identify which execution has failed/passed when the results of queries are returned. 
-	 */
-	private void executeQueryOnSpecifiedReplica(String sql, String transactionName, DatabaseInstanceWrapper replicaToExecuteQueryOn, boolean isReplicaLocal,
-			Parser parser, List<FutureTask<QueryResult>> executingQueries, int i) {
-
-		final RemoteQueryExecutor qt = new RemoteQueryExecutor(sql, transactionName, replicaToExecuteQueryOn, i, parser, isReplicaLocal);
-
-		FutureTask<QueryResult> future = new FutureTask<QueryResult>(
-				new Callable<QueryResult>()
-				{
-					public QueryResult call()
-					{
-						return qt.executeQuery();
-					}
-				});
-
-		executingQueries.add(future);
-		queryExecutor.execute(future);
-
-	}
-
-	/**
-	 * Waits on the result of a number of asynchronous queries to be completed and returned.
-	 * @param commit				The array that will be used to store (for each replica) whether the transaction was executed successfully.
-	 * @param remoteQueries			The list of tasks currently being executed.
-	 * @return						True if everything was executed successfully (a global commit).
-	 */
-	private boolean waitUntilRemoteQueriesFinish(boolean[] commit, List<FutureTask<QueryResult>> remoteQueries) {
-		if (remoteQueries.size() == 0) return true; //the commit value has not changed.
-
-		List<FutureTask<QueryResult>> completedQueries = new LinkedList<FutureTask<QueryResult>>();
-
-		/*
-		 * Wait until all remote queries have been completed.
-		 */
-		while (remoteQueries.size() > 0){
-			for (int y = 0; y < remoteQueries.size(); y++){
-				FutureTask<QueryResult> remoteQuery = remoteQueries.get(y);
-
-				if (remoteQuery.isDone()){
-					//If the query is done add it to the list of completed queries.
-					completedQueries.add(remoteQuery);
-					remoteQueries.remove(y);
-				} else {
-					//We could sleep for a time here before checking again.
-				}
-			}
-		}
-
-		boolean globalCommit = true;
-		
-		/*
-		 * All of the queries have now completed. Iterate through these queries and check that they
-		 * executed successfully.
-		 */
-		for (FutureTask<QueryResult> completedQuery: completedQueries){
-			QueryResult asyncResult = null;
-			try {
-				asyncResult = completedQuery.get();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} catch (ExecutionException e) {
-				e.printStackTrace();
-			}
-
-			if (asyncResult.getException() == null){ //If the query executed successfully.
-				int result = asyncResult.getResult();
-				int x = asyncResult.getInstanceID();
-				if (result != 0) {
-					//globalCommit = false; // Prepare operation failed at remote machine, so rollback the query everywhere.
-					commit[x] = false;
-					globalCommit = false;
-				} else {
-					commit[x] = true;
-				}
-
-			} else {
-				int x = asyncResult.getInstanceID();
-				//throw asyncResult.getException();
-				commit[x] = false;
-				globalCommit = false;
-			}
-		}
-
-		return globalCommit;
-
 	}
 
 	/**
