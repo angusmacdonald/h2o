@@ -29,10 +29,12 @@ public class AsynchronousQueryExecutor {
 	 * @param transactionNameForQuery	The name of the transaction in which this query is in.
 	 * @param session	The session we are in - used to create the query parser.
 	 * @param commit	The array that will be used to store (for each replica) whether the transaction was executed successfully.
+	 * @param commitOperation True if this is a COMMIT, false if it is another type of query. If it is false a PREPARE command will
+	 * be executed to get ready for the eventual commit.
 	 * @return			True if everything was executed successfully (a global commit).
 	 */
 	public boolean executeQuery(String query, String transactionNameForQuery, 
-			Set<DatabaseInstanceWrapper> replicasInvolvedInQuery, Session session, boolean[] commit) {
+			Set<DatabaseInstanceWrapper> replicasInvolvedInQuery, Session session, boolean[] commit, boolean commitOperation) {
 		
 		Parser parser = new Parser (session, true);
 
@@ -47,14 +49,14 @@ public class AsynchronousQueryExecutor {
 			boolean isReplicaLocal = (replicaToExecuteQueryOn == null || localURL.equals(replicaToExecuteQueryOn.getDatabaseURL().getOriginalURL()));
 
 			//Start execution of queries.
-			executeQueryOnSpecifiedReplica(query, transactionNameForQuery, replicaToExecuteQueryOn, isReplicaLocal, parser, executingQueries, i);
+			executeQueryOnSpecifiedReplica(query, transactionNameForQuery, replicaToExecuteQueryOn, isReplicaLocal, parser, executingQueries, i, commitOperation);
 			i++;
 		}
 
 		//Wait for all queries to execute, then return the result.
 		return waitUntilRemoteQueriesFinish(commit, executingQueries);
 	}
-
+	
 	/**
 	 * Execute a query on the specified database instance by creating a new asynchronous callable executor ({@link Executors}, {@link Future}).
 	 * 
@@ -67,12 +69,14 @@ public class AsynchronousQueryExecutor {
 	 * @param isReplicaLocal				Whether this database instance is the local instance, or it is remote.	
 	 * @param parser						The parser to be used to parser the query if it is local.
 	 * @param executingQueries				The list of queries that have already been sent. The latest query will be added to this list.
-	 * @param i								A basic counter used to identify which execution has failed/passed when the results of queries are returned. 
+	 * @param i								A basic counter used to identify which execution has failed/passed when the results of queries are returned.
+	 * @param commitOperation True if this is a COMMIT, false if it is another type of query. If it is false a PREPARE command will
+	 * be executed to get ready for the eventual commit.
 	 */
 	private void executeQueryOnSpecifiedReplica(String sql, String transactionName, DatabaseInstanceWrapper replicaToExecuteQueryOn, boolean isReplicaLocal,
-			Parser parser, List<FutureTask<QueryResult>> executingQueries, int i) {
+			Parser parser, List<FutureTask<QueryResult>> executingQueries, int i, boolean commitOperation) {
 
-		final RemoteQueryExecutor qt = new RemoteQueryExecutor(sql, transactionName, replicaToExecuteQueryOn, i, parser, isReplicaLocal);
+		final RemoteQueryExecutor qt = new RemoteQueryExecutor(sql, transactionName, replicaToExecuteQueryOn, i, parser, isReplicaLocal, commitOperation);
 
 		FutureTask<QueryResult> future = new FutureTask<QueryResult>(
 				new Callable<QueryResult>()
@@ -154,4 +158,5 @@ public class AsynchronousQueryExecutor {
 		return globalCommit;
 
 	}
+
 }

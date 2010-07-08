@@ -4,17 +4,8 @@ import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
 
-import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
@@ -144,7 +135,7 @@ public class QueryProxy implements Serializable{
 		 */
 		
 		AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor();
-		boolean globalCommit = queryExecutor.executeQuery(query, transactionNameForQuery, allReplicas, session, commit);
+		boolean globalCommit = queryExecutor.executeQuery(query, transactionNameForQuery, allReplicas, session, commit, false);
 
 		H2OTest.rmiFailure(); //Test code to simulate the failure of DB instances at this point.
 
@@ -270,7 +261,9 @@ public class QueryProxy implements Serializable{
 		Set<DatabaseInstanceWrapper> remoteReplicas = new HashSet<DatabaseInstanceWrapper>(allReplicas);
 		boolean removed = remoteReplicas.remove(requestingDatabase);
 		
-		if (!removed) ErrorHandling.errorNoEvent("Tried to remove the local replica from the set of all replicas, but failed. Possibly equality check problem.");
+		if (!removed) {
+			ErrorHandling.errorNoEvent("Tried to remove the local replica from the set of all replicas, but failed. Possibly equality check problem.");
+		}
 		
 		return remoteReplicas;
 	}

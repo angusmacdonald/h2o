@@ -53,22 +53,29 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	/* (non-Javadoc)
 	 * @see org.h2.command.dm.DatabaseInstanceRemote#executeUpdate(org.h2.command.Prepared)
 	 */
-	public int prepare(String query, String transactionName) throws RemoteException, SQLException{
+	public int execute(String query, String transactionName, boolean commitOperation) throws RemoteException, SQLException{
 		if (query == null){
 			ErrorHandling.hardError("Shouldn't happen.");
 		}
 
 		Command command = parser.prepareCommand(query);
 
-		/*
-		 * If called from here executeUpdate should always be told the query is part of a larger transaction, because it
-		 * was remotely initiated and consequently needs to wait for the remote machine to commit.
-		 */
-		command.executeUpdate(true);
 
-		command.close();
+		try {
+			if (commitOperation){
+				return command.executeUpdate();						//This is a COMMIT.
+			} else {
+				/*
+				 * If called from here executeUpdate should always be told the query is part of a larger transaction, because it
+				 * was remotely initiated and consequently needs to wait for the remote machine to commit.
+				 */
 
-		return prepare(transactionName);
+				command.executeUpdate(true);
+				return prepare(transactionName);	//This wasn't a COMMIT. Execute a PREPARE.
+			}
+		} finally {
+			command.close();
+		}
 	}
 
 	public int prepare(String transactionName) throws RemoteException, SQLException{
@@ -77,17 +84,6 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 
 		Command command = parser.prepareCommand("PREPARE COMMIT " + transactionName);
 		return command.executeUpdate();
-	}
-
-	/* (non-Javadoc)
-	 * @see org.h2.h2o.comms.DatabaseInstanceRemote#commitQuery(boolean)
-	 */
-	@Override
-	public int commit(boolean commit, String transactionName, boolean h2oCommit) throws RemoteException, SQLException {
-		Command command = parser.prepareCommand((commit? "commit": "rollback") + ((h2oCommit)? " TRANSACTION " + transactionName: ";"));
-		int result = command.executeUpdate();
-
-		return result;
 	}
 
 	@Override

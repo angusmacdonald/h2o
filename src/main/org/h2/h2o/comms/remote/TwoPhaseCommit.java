@@ -15,11 +15,13 @@ public interface TwoPhaseCommit {
 	 * be committed when the commit operation is called.
 	 * @param query	SQL query to be executed
 	 * @param transactionName	The name to be given to this transaction - must be used again to commit the transaction.
+	 * @param commitOperation	True if this is a COMMIT, false if it is another type of query. If it is false a PREPARE command will
+	 * be executed to get ready for the eventual commit.
 	 * @return Result of the prepare - this should never fail in theory, bar some weird disk-based mishap.
 	 * @throws RemoteException
 	 * @throws SQLException 
 	 */
-	public int prepare(String query, String transactionName)
+	public int execute(String query, String transactionName, boolean commitOperation)
 			throws RemoteException, SQLException;
 
 	/**
@@ -31,18 +33,4 @@ public interface TwoPhaseCommit {
 	 */
 	public int prepare(String transactionName) 
 			throws RemoteException, SQLException;
-	
-	/**
-	 * Commit a query as per the two phase commit protocol. The query should have previously been prepared via the prepare() method - this
-	 * method commits (or aborts) the transaction.
-	 * @param transactionName	The name to given to this transaction - used to find which transaction to commit.
-	 * @param commit	true if the transaction is to be committed; false for an abort.
-	 * @param h2oCommit 
-	 * @return Result of the commit queries execution. 
-	 * @throws RemoteException
-	 * @throws SQLException 
-	 */
-	public int commit(boolean commit, String transactionName, boolean h2oCommit)
-			throws RemoteException, SQLException;
-
 }

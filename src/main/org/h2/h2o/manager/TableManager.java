@@ -344,16 +344,14 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 			 * Manager has been created, because it is the create operation that initializes the Table
 			 * Manager in the first place. 
 			 */
-
-			if (relationReplicationFactor == 1){
-				Set<DatabaseInstanceWrapper> involvedDatabases =  new HashSet<DatabaseInstanceWrapper>();
-				involvedDatabases.add(requestingDatabase);
-				return involvedDatabases; //No more replicas are needed currently.
+			newReplicaLocations.add(requestingDatabase);
+			if (relationReplicationFactor == 1){		
+				return newReplicaLocations; //No more replicas are needed currently.
 			}
 
 			potentialReplicaLocations = getDB().getDatabaseInstances(); //the update could be sent to any or all machines in the system.
 
-			int currentReplicationFactor = 0; //currently one copy of the table.
+			int currentReplicationFactor = 1; //currently one copy of the table.
 
 			/*
 			 * Loop through all potential replica locations, selecting enough to satisfy the system's

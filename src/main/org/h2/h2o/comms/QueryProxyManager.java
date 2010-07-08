@@ -167,25 +167,22 @@ public class QueryProxyManager {
 		 */
 		Set<DatabaseInstanceWrapper> updatedReplicas = new HashSet<DatabaseInstanceWrapper>();
 
-		/*
-		 * Commit or rollback the transaction.
-		 */
-		for (DatabaseInstanceWrapper remoteReplica: allReplicas){
 
-			boolean actionSuccessful = false;
-
-			if (remoteReplica == null){
-				//This is a local internal database operation (e.g. the TCP server doing something).
-				actionSuccessful = commitLocal(commit, h2oCommit);
-			} else if (localDatabase.getDatabaseURL().getOriginalURL().equals(remoteReplica.getDatabaseURL().getOriginalURL())){
-				//Perform commit locally.
-				actionSuccessful = commitLocal(commit, h2oCommit);
-			} else { //Perform commit via RMI.		 
-				actionSuccessful = commitRemote(commit, remoteReplica, h2oCommit);
-			}
-
-			if (actionSuccessful && commit) updatedReplicas.add(remoteReplica);
+		if (tableManagers.size() == 0 && allReplicas.size() > 0){
+			// tableManagers.size() == 0 - indicates this is a local internal database operation (e.g. the TCP server doing something).
+			// allReplicas.size() > 0 - confirms it is an internal operation. otherwise it may be a COMMIT from the application or a prepared statement.
+			commitLocal(commit, h2oCommit);
+			return;
 		}
+		
+		String sql = (commit? "commit": "rollback") + ((h2oCommit)? " TRANSACTION " + transactionName: ";");
+
+		AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor();
+
+		boolean[] commitCheck = new boolean[allReplicas.size()];
+		boolean actionSuccessful = queryExecutor.executeQuery(sql, transactionName, allReplicas, this.parser.getSession(), commitCheck, true);
+		
+		if (actionSuccessful && commit) updatedReplicas = allReplicas; //For asynchronous updates this should check for each replicas success.
 
 		endTransaction(updatedReplicas);
 
@@ -236,14 +233,17 @@ public class QueryProxyManager {
 	 * Commit the transaction by calling a remote replica and sending the COMMIT transaction command.
 	 * @param commit			Whether to commit or rollback (true if commit)
 	 * @param remoteReplica		The location to which the commit is being sent.
-	 * @param h2oCommit 
+	 * @param h2oCommit 		True if it is H2O sending this commit (i.e. application auto-commit is on); false if it
+	 * is the user manually sending this information.
 	 * @return	true if the commit was successful. False if it wasn't, or if it was a rollback.
 	 * @throws SQLException
 	 */
 	private boolean commitRemote(boolean commit,
 			DatabaseInstanceWrapper remoteReplica, boolean h2oCommit) throws SQLException {
 		try {
-			int result = remoteReplica.getDatabaseInstance().commit(commit, transactionName, h2oCommit);
+			String sql = (commit? "commit": "rollback") + ((h2oCommit)? " TRANSACTION " + transactionName: ";");
+
+			int result = remoteReplica.getDatabaseInstance().execute(sql, transactionName, true);
 
 			return (result == 0);
 		} catch (SQLException e){

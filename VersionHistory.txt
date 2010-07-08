@@ -15,3 +15,4 @@ H2O Version 0.2.3
 	Fixed bug where database would shutdown when another instance failed.
 H2O Version 0.2.4 (Unreleased)
 	CREATE TABLE operation now creates new replicas in parallel.
+	COMMIT operations now executed in parallel.
