@@ -346,7 +346,9 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 			 */
 
 			if (relationReplicationFactor == 1){
-				return null; //No more replicas are needed currently.
+				Set<DatabaseInstanceWrapper> involvedDatabases =  new HashSet<DatabaseInstanceWrapper>();
+				involvedDatabases.add(requestingDatabase);
+				return involvedDatabases; //No more replicas are needed currently.
 			}
 
 			potentialReplicaLocations = getDB().getDatabaseInstances(); //the update could be sent to any or all machines in the system.

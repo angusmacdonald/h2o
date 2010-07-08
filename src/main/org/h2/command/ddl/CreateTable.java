@@ -23,6 +23,8 @@ import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
+import org.h2.h2o.comms.AsynchronousQueryExecutor;
+import org.h2.h2o.comms.DatabaseInstance;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
@@ -333,11 +335,13 @@ public class CreateTable extends SchemaCommand {
 	 * @param tableInfo			The name of the table being created.
 	 * @throws RemoteException
 	 * @throws SQLException
+	 * @throws MovedException 
 	 */
-	private void createReplicas(TableInfo tableInfo, String transactionName) throws RemoteException, SQLException {
+	private void createReplicas(TableInfo tableInfo, String transactionName) throws RemoteException, SQLException, MovedException {
 
-		Set<DatabaseInstanceWrapper> replicaLocations = queryProxy.getReplicaLocations();
-		if (replicaLocations != null && replicaLocations.size() > 1){
+		Set<DatabaseInstanceWrapper> replicaLocations = queryProxy.getRemoteReplicaLocations();
+
+		if (replicaLocations != null && replicaLocations.size() > 0){
 			/*
 			 * If true, this table should be immediately replicated onto a number of other instances.
 			 */
@@ -348,17 +352,14 @@ public class CreateTable extends SchemaCommand {
 			sql = "CREATE EMPTY REPLICA" + sql;
 
 
-			for (DatabaseInstanceWrapper replicaLocation: replicaLocations){
-
-				try {
-					if (!replicaLocation.equals(queryProxy.getTableManager().getReplicaManager().getPrimary())){ //don't create replica where primary has been created.
-						replicaLocation.getDatabaseInstance().executeUpdate(sql, false);
-						replicaLocation.getDatabaseInstance().prepare(transactionName);
-					}
-				} catch (MovedException e) {
-					ErrorHandling.exceptionError(e, "Moved exception thrown when it shouldn't have. This should happen straight after the TM is created.");
-				}
-			}
+			
+			//Get the set of only remote replica locations.
+			
+			boolean[] commit = new boolean[replicaLocations.size()];
+			
+			//Execute query.
+			AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor();
+			queryExecutor.executeQuery(sql, transactionName, replicaLocations, session, commit);
 		}
 	}
 

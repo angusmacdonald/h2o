@@ -74,7 +74,8 @@ public class CustomSettingsTests extends TestBase{
 			sa.execute(sql);
 			sa.execute("INSERT INTO TEST VALUES(3, 'Hello World');");
 			
-			sb.execute("SELECT LOCAL ONLY * FROM TEST ORDER BY ID;");
+			ResultSet rs = sb.executeQuery("SELECT LOCAL ONLY * FROM TEST ORDER BY ID;");
+			ResultSet rs2 = sa.executeQuery("SELECT LOCAL ONLY * FROM TEST ORDER BY ID;");
 
 			int[] pKey = {1, 2, 3};
 			String[] secondCol = {"Hello", "World", "Hello World"};

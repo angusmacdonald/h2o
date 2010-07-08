@@ -261,7 +261,20 @@ public class QueryProxy implements Serializable{
 	public Set<DatabaseInstanceWrapper> getReplicaLocations() {
 		return allReplicas;
 	}
-
+	
+	/**
+	 * @return
+	 */
+	public Set<DatabaseInstanceWrapper> getRemoteReplicaLocations() {
+		
+		Set<DatabaseInstanceWrapper> remoteReplicas = new HashSet<DatabaseInstanceWrapper>(allReplicas);
+		boolean removed = remoteReplicas.remove(requestingDatabase);
+		
+		if (!removed) ErrorHandling.errorNoEvent("Tried to remove the local replica from the set of all replicas, but failed. Possibly equality check problem.");
+		
+		return remoteReplicas;
+	}
+	
 	/**
 	 * @return
 	 */
