@@ -344,7 +344,7 @@ public class CreateTable extends SchemaCommand {
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Creating replica of table " + tableInfo.getFullTableName() + " onto " + 
 					(queryProxy.getReplicaLocations().size()-1) + " other instances.");
 
-String sql = sqlStatement.substring("CREATE TABLE".length());
+			String sql = sqlStatement.substring("CREATE TABLE".length());
 			sql = "CREATE EMPTY REPLICA" + sql;
 
 

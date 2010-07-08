@@ -2,7 +2,6 @@ package org.h2.h2o.comms;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -12,11 +11,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
-import org.h2.command.Command;
 import org.h2.command.Parser;
-import org.h2.command.dml.MigrateTableManager;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
@@ -116,11 +114,11 @@ public class QueryProxy implements Serializable{
 
 	/**
 	 * Execute the given SQL update.
-	 * @param sql The query to be executed
+	 * @param query The query to be executed
 	 * @param db	Used to obtain proxies for remote database instances.
 	 * @throws SQLException
 	 */
-	public int executeUpdate(String sql, String transactionName, Session session) throws SQLException {
+	public int executeUpdate(String query, String transactionNameForQuery, Session session) throws SQLException {
 
 		if (lockRequested == LockType.CREATE && (allReplicas == null || allReplicas.size() == 0)){
 			/*
@@ -139,54 +137,18 @@ public class QueryProxy implements Serializable{
 			} catch (MovedException e) {
 				ErrorHandling.hardError("This should never happen at this point. The migrating machine should have a lock taken out.");
 			}
-			throw new SQLException("No replicas found to perform update: " + sql);
+			throw new SQLException("No replicas found to perform update: " + query);
 		}
 
 		/*
 		 * Whether an individual replica is able to commit. Used to stop ROLLBACK calls being made to unavailable replicas.
 		 */
 		boolean[] commit = new boolean[allReplicas.size()];
-		boolean globalCommit = true;
-		//H2OTest.rmiFailure(); //Test code to simulate the failure of DB instances at this point.
-
+		
 		/*
-		 * Send the query to each DB instance holding a replica.
+		 * Execute the query. Send the query to each DB instance holding a replica.
 		 */
-		int i = 0;
-
-		Parser parser = new Parser (session, true);
-
-		List<FutureTask<QueryResult>> executingQueries = new LinkedList<FutureTask<QueryResult>>();
-	
-		for (DatabaseInstanceWrapper replica: allReplicas){
-
-			String localURL = session.getDatabase().getURL().getOriginalURL();
-
-			//Decide whether the query is to be executed locall or remotely.
-			boolean local = (replica == null || localURL.equals(replica.getDatabaseURL().getOriginalURL()));
-
-			final RemoteQueryExecutor qt = new RemoteQueryExecutor(sql, transactionName, replica, i, parser, local);
-
-			FutureTask<QueryResult> future = new FutureTask<QueryResult>(
-					new Callable<QueryResult>()
-					{
-						public QueryResult call()
-						{
-							return qt.executeQuery();
-						}
-					});
-
-			executingQueries.add(future);
-			queryExecutor.execute(future);
-			i++;
-		}
-
-		globalCommit = waitUntilRemoteQueriesFinish(commit, globalCommit, executingQueries);
-
-
-
-
-
+		boolean globalCommit = executeQuery(query, transactionNameForQuery, session, commit);
 
 		H2OTest.rmiFailure(); //Test code to simulate the failure of DB instances at this point.
 
@@ -197,8 +159,76 @@ public class QueryProxy implements Serializable{
 		return 0;
 	}
 
-	private boolean waitUntilRemoteQueriesFinish(boolean[] commit, boolean globalCommit, List<FutureTask<QueryResult>> remoteQueries) {
-		if (remoteQueries.size() == 0) return globalCommit; //the commit value has not changed.
+	/**
+	 * Aysnchronously executes the query on each database instance that requires the update.
+	 * @param query		Query to be executed.
+	 * @param transactionNameForQuery	The name of the transaction in which this query is in.
+	 * @param session	The session we are in - used to create the query parser.
+	 * @param commit	The array that will be used to store (for each replica) whether the transaction was executed successfully.
+	 * @return			True if everything was executed successfully (a global commit).
+	 */
+	private boolean executeQuery(String query, String transactionNameForQuery, Session session, boolean[] commit) {
+		
+		Parser parser = new Parser (session, true);
+
+		List<FutureTask<QueryResult>> executingQueries = new LinkedList<FutureTask<QueryResult>>();
+	
+		int i = 0;
+		for (DatabaseInstanceWrapper replicaToExecuteQueryOn: allReplicas){
+
+			String localURL = session.getDatabase().getURL().getOriginalURL();
+
+			//Decide whether the query is to be executed locall or remotely.
+			boolean isReplicaLocal = (replicaToExecuteQueryOn == null || localURL.equals(replicaToExecuteQueryOn.getDatabaseURL().getOriginalURL()));
+
+			executeQueryOnSpecifiedReplica(query, transactionNameForQuery, replicaToExecuteQueryOn, isReplicaLocal, parser, executingQueries, i);
+			i++;
+		}
+
+		return waitUntilRemoteQueriesFinish(commit, executingQueries);
+	}
+
+	/**
+	 * Execute a query on the specified database instance by creating a new asynchronous callable executor ({@link Executors}, {@link Future}).
+	 * 
+	 * <p>This method begins execution of the queries but does not actually return their results (because it is asynchronous). 
+	 * See {@link QueryProxy#waitUntilRemoteQueriesFinish(boolean[], List)} for the result.
+	 * 
+	 * @param sql							The query to be executed
+	 * @param transactionName				The name of the transaction in which this query is in.
+	 * @param replicaToExecuteQueryOn		The database instance where this query will be sent.
+	 * @param isReplicaLocal				Whether this database instance is the local instance, or it is remote.	
+	 * @param parser						The parser to be used to parser the query if it is local.
+	 * @param executingQueries				The list of queries that have already been sent. The latest query will be added to this list.
+	 * @param i								A basic counter used to identify which execution has failed/passed when the results of queries are returned. 
+	 */
+	private void executeQueryOnSpecifiedReplica(String sql, String transactionName, DatabaseInstanceWrapper replicaToExecuteQueryOn, boolean isReplicaLocal,
+			Parser parser, List<FutureTask<QueryResult>> executingQueries, int i) {
+
+		final RemoteQueryExecutor qt = new RemoteQueryExecutor(sql, transactionName, replicaToExecuteQueryOn, i, parser, isReplicaLocal);
+
+		FutureTask<QueryResult> future = new FutureTask<QueryResult>(
+				new Callable<QueryResult>()
+				{
+					public QueryResult call()
+					{
+						return qt.executeQuery();
+					}
+				});
+
+		executingQueries.add(future);
+		queryExecutor.execute(future);
+
+	}
+
+	/**
+	 * Waits on the result of a number of asynchronous queries to be completed and returned.
+	 * @param commit				The array that will be used to store (for each replica) whether the transaction was executed successfully.
+	 * @param remoteQueries			The list of tasks currently being executed.
+	 * @return						True if everything was executed successfully (a global commit).
+	 */
+	private boolean waitUntilRemoteQueriesFinish(boolean[] commit, List<FutureTask<QueryResult>> remoteQueries) {
+		if (remoteQueries.size() == 0) return true; //the commit value has not changed.
 
 		List<FutureTask<QueryResult>> completedQueries = new LinkedList<FutureTask<QueryResult>>();
 
@@ -219,6 +249,8 @@ public class QueryProxy implements Serializable{
 			}
 		}
 
+		boolean globalCommit = true;
+		
 		/*
 		 * All of the queries have now completed. Iterate through these queries and check that they
 		 * executed successfully.
@@ -233,7 +265,7 @@ public class QueryProxy implements Serializable{
 				e.printStackTrace();
 			}
 
-			if (asyncResult.getException() == null){
+			if (asyncResult.getException() == null){ //If the query executed successfully.
 				int result = asyncResult.getResult();
 				int x = asyncResult.getInstanceID();
 				if (result != 0) {
