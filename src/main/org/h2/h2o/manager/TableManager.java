@@ -653,7 +653,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		/*
 		 * Get Replica information from persisted state.
 		 */
-		String sql = "SELECT connection_type, machine_name, db_location, connection_port, chord_port FROM " + REPLICAS + ", " + TABLES + ", " + CONNECTIONS + " WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND" +
+		String sql = "SELECT LOCAL ONLY connection_type, machine_name, db_location, connection_port, chord_port FROM " + REPLICAS + ", " + TABLES + ", " + CONNECTIONS + " WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND" +
 		" " + TABLES + ".table_id=" + REPLICAS + ".table_id AND " + CONNECTIONS + ".connection_id=" + REPLICAS + ".connection_id;";
 
 		try {

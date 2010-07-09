@@ -93,7 +93,7 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
 		 * Make Table Manager serializable first.
 		 */
 		try {
-			TableManagerRemote tmr = (TableManager) UnicastRemoteObject.exportObject(tm, 0);
+			TableManagerRemote tmr = (TableManagerRemote) UnicastRemoteObject.exportObject(tm, 0);
 			db.getChordInterface().bind(ti.getFullTableName(), tmr);
 		} catch (RemoteException e) {
 			e.printStackTrace();

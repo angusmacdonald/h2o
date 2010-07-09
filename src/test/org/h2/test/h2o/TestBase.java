@@ -360,7 +360,7 @@ public class TestBase {
 	 */
 	protected void validateOnSecondMachine(String tableName, int[] pKey, String[] secondCol)
 	throws SQLException {
-		sb.execute("SELECT LOCAL * FROM " + tableName + " ORDER BY ID;"); 
+		sb.execute("SELECT LOCAL ONLY * FROM " + tableName + " ORDER BY ID;"); 
 		validateResults(pKey, secondCol, sb.getResultSet());
 	}
 
@@ -374,7 +374,7 @@ public class TestBase {
 	 */
 	protected void validateOnFirstMachine(String tableName, int[] pKey, String[] secondCol)
 	throws SQLException {
-		sa.execute("SELECT LOCAL * FROM " + tableName + " ORDER BY ID;"); 
+		sa.execute("SELECT LOCAL ONLY * FROM " + tableName + " ORDER BY ID;"); 
 		validateResults(pKey, secondCol, sa.getResultSet());
 	}
 

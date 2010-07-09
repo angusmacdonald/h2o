@@ -27,7 +27,7 @@ import org.junit.runners.Suite;
 	WrapperTests.class,
 	RestartTests.class,
 	LocatorTests.class,
-	LocatorDatabaseTests.class,
+	//LocatorDatabaseTests.class,
 	ChordTests.class
 })
 public class AllTests {

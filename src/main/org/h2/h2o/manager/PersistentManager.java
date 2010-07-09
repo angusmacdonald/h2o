@@ -3,6 +3,7 @@ package org.h2.h2o.manager;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.h2.command.Command;
@@ -206,16 +207,16 @@ public abstract class PersistentManager {
 	public int addConnectionInformation(DatabaseURL dbURL, boolean isActive) throws SQLException{
 
 		//System.err.println("Adding connection info on " + db.getDatabaseURL().getURLwithRMIPort() + ". Info being added: "+ dbURL.getURLwithRMIPort());
-		Session s = db.getSystemSession();
+		Session s = db.getH2OSession();
 		queryParser = new Parser(s, true);
 
 		String connection_type = dbURL.getConnectionType();
 
 		String sql = null;
-
+		
 		if (connectionInformationExists(dbURL)){
 			//Update existing information - the chord port may have changed.
-
+			
 			sql = "\nUPDATE " + connectionRelation + " SET chord_port = " + dbURL.getRMIPort() + 
 			", active = " + isActive + " WHERE machine_name='" + dbURL.getHostname() + "' AND connection_port=" + dbURL.getPort() +
 			" AND connection_type='" + dbURL.getConnectionType() +"';";
@@ -228,9 +229,7 @@ public abstract class PersistentManager {
 
 		}
 
-		//System.err.println(sql);
 		return executeUpdate(sql);
-
 	}
 
 
@@ -285,11 +284,12 @@ public abstract class PersistentManager {
 				ErrorHandling.errorNoEvent("No connection ID was found - this shouldn't happen if the system has started correctly.");
 				return -1;
 			}
-
-
+			
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return -1;
+		} finally {
+			sqlQuery.close();
 		}
 	}
 

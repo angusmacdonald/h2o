@@ -211,9 +211,12 @@ public class UpdateTests extends TestBase {
 		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
 		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
 		new Thread(cta).start();
+		
 		ctb.run();	
 		
-		Assert.assertFalse(ctb.successful);
+		boolean result = ctb.successful;
+		
+		Assert.assertEquals(true, result);
 	}
 	
 	/**

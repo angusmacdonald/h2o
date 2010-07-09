@@ -13,6 +13,8 @@ H2O Version 0.2.3
 	Fixed bugs in support for UPDATE and DELETE prepared statements.
 	Added asynchronous execution for remote updates to parallelize where there are multiple replicas.
 	Fixed bug where database would shutdown when another instance failed.
-H2O Version 0.2.4 (Unreleased)
+H2O Version 0.2.4
 	CREATE TABLE operation now creates new replicas in parallel.
 	COMMIT operations now executed in parallel.
+	Fixed a remote access error for H2 TCP connections.
+H2O Version 0.2.5 (Unreleased)

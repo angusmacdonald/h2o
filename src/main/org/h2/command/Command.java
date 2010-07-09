@@ -163,7 +163,9 @@ public abstract class Command implements CommandInterface {
         Database database = session.getDatabase();
         Object sync = database.isMultiThreaded() ? (Object) session : (Object) database;
         session.waitIfExclusiveModeEnabled();
+
         synchronized (sync) {
+        	
             try {
                 database.checkPowerOff();
                 session.setCurrentCommand(this, startTime);

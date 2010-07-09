@@ -198,7 +198,6 @@ public class ChordTests extends TestBase {
 			sas[0].executeUpdate("INSERT INTO TEST VALUES(5, 'helloagainagain');");
 			
 		} catch (SQLException e) {
-			e.printStackTrace();
 			fail("Didn't work.");
 		}
 	}

@@ -85,17 +85,14 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 			
 			if (!qp.getLockGranted().equals(LockType.NONE)){
 				result = migrateTableManagerToLocalInstance(tableManager, schemaName, db);
-
-				if (result == -1){
-					throw new SQLException("Table Manager migration failed.");
-				}
 			} else {
 				throw Message.getSQLException(ErrorCode.LOCK_TIMEOUT_1, getSchema().getName() + tableName);
 			}
 		} catch (MovedException e) {
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, getSchema().getName() + tableName);
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (SQLException e) {
+			throw e;
+		}catch (Exception e) {
 			throw new SQLException("Failed to migrate table manager for " + getSchema().getName() + tableName + ".");
 		}
 
@@ -103,7 +100,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 		return result;
 	}
 
-	public int migrateTableManagerToLocalInstance(TableManagerRemote oldTableManager, String schemaName, Database db){
+	public int migrateTableManagerToLocalInstance(TableManagerRemote oldTableManager, String schemaName, Database db) throws SQLException{
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Preparing to migrate Table Manager for [" + schemaName + "." + tableName);
 
 		/*
@@ -128,9 +125,9 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (MigrationException e) {
-			ErrorHandling.exceptionError(e, "This Table Manager [" + schemaName + "." + tableName + "] is already being migrated to another instance.");
+			throw new SQLException("This Table Manager [" + schemaName + "." + tableName + "] is already being migrated to another instance.");
 		} catch (MovedException e) {
-			ErrorHandling.exceptionError(e, "This Table Manager [" + schemaName + "." + tableName + "] has already been migrated to another instance.");
+			throw new SQLException("This Table Manager [" + schemaName + "." + tableName + "] is already being migrated to another instance.");
 		}
 
 		/*
@@ -139,9 +136,9 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 		try {
 			newTableManager.buildTableManagerState(oldTableManager);
 		} catch (RemoteException e) {
-			ErrorHandling.exceptionError(e, "Failed to migrate Table Manager [" + schemaName + "." + tableName + "] to new machine.");
+			throw new SQLException("Failed to migrate Table Manager [" + schemaName + "." + tableName + "] to new machine.");
 		} catch (MovedException e) {
-			ErrorHandling.exceptionError(e, "This shouldn't be possible here. The Table Manager [" + schemaName + "." + tableName + "] has moved, but this instance should have had exclusive rights to it.");
+			throw new SQLException("This shouldn't be possible here. The Table Manager [" + schemaName + "." + tableName + "] has moved, but this instance should have had exclusive rights to it.");		
 		}
 
 		/*
@@ -150,11 +147,13 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 		try {
 			oldTableManager.completeMigration();
 		} catch (RemoteException e) {
-			ErrorHandling.exceptionError(e, "Failed to complete migration [" + schemaName + "." + tableName + "].");
+			throw new SQLException("Failed to complete migration [" + schemaName + "." + tableName + "].");
+			
 		} catch (MovedException e) {
-			ErrorHandling.exceptionError(e, "This shouldn't be possible here. The Table Manager has moved, but this instance should have had exclusive rights to it.");
+			throw new SQLException("This shouldn't be possible here. The Table Manager has moved, but this instance should have had exclusive rights to it.");
+			
 		} catch (MigrationException e) {
-			ErrorHandling.exceptionError(e, "Migration process timed out [" + schemaName + "." + tableName + "]. It took too long.");
+			throw new SQLException("Migration process timed out [" + schemaName + "." + tableName + "]. It took too long.");
 		}
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Table Manager [" + schemaName + "." + tableName + "] officially migrated.");
 

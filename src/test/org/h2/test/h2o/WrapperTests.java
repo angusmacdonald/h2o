@@ -30,8 +30,8 @@ public class WrapperTests {
 	private Process databaseProcess = null;
 
 	private String defaultLocation = "db_data";
-	private String databaseName = "MyFirstDatabase";
-	private String databasePort = "9999";
+	private String databaseName = "TestDB";
+	private String databasePort = "7474";
 
 	@Before
 	public void setUp(){
@@ -47,13 +47,14 @@ public class WrapperTests {
 	public void startSingleDatabaseInstance() throws InterruptedException{
 		Diagnostic.setLevel(DiagnosticLevel.FULL);
 
+		int locatorPort = 29990;
 		
 		try {
 			/*
 			 * Start the locator server. 
 			 */
 			List<String> locatorArgs = new LinkedList<String>();
-			locatorArgs.add("-p29998");
+			locatorArgs.add("-p" + locatorPort);
 			locatorArgs.add("-n" + databaseName);
 			locatorArgs.add("-d");
 			locatorArgs.add("-f'" + defaultLocation + "'");
@@ -65,9 +66,6 @@ public class WrapperTests {
 			}
 
 			Thread.sleep(1000);
-
-			
-			databasePort = "9999";
 
 			startDatabaseInSeperateProcess(databasePort);
 

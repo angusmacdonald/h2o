@@ -49,6 +49,9 @@ public class TestBigDb extends H2TestBase{
 	@After
 	public void tearDown() throws SQLException{
 		DeleteDbFiles.execute("data\\test\\", "bigDb", true);
+		ls.setRunning(false);
+		while (!ls.isFinished()){};
+		
 	}
 
 	@Test

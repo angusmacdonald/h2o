@@ -42,7 +42,7 @@ public class RestartTests {
 		Diagnostic.setLevel(DiagnosticLevel.FULL);
 		Constants.IS_NON_SM_TEST = true;
 		try {
-			DeleteDbFiles.execute(BASEDIR, "schema_test", true);
+			DeleteDbFiles.execute(BASEDIR, "schema_test", false);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -103,11 +103,11 @@ public class RestartTests {
 	
 		try {
 			
-			server = Server.createTcpServer(new String[] { "-tcpPort", "9089", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9089/db_data/unittests/schema_test" });
+			server = Server.createTcpServer(new String[] { "-tcpPort", "8585", "-SMLocation", "jdbc:h2:sm:tcp://localhost:8585/db_data/unittests/schema_test" });
 			server.start();
 
 			Class.forName("org.h2.Driver");
-			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9089/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:8585/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 			sa = conn.createStatement();
 			sa.executeUpdate("DROP ALL OBJECTS;");
@@ -120,9 +120,9 @@ public class RestartTests {
 			TestBase.resetLocatorFile();
 			shutdownServer();
 
-			server = Server.createTcpServer(new String[] { "-tcpPort", "9093", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9093/db_data/unittests/schema_test" });
+			server = Server.createTcpServer(new String[] { "-tcpPort", "8585", "-SMLocation", "jdbc:h2:sm:tcp://localhost:8585/db_data/unittests/schema_test" });
 			server.start();
-			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9093/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:8585/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 			sa = conn.createStatement();
 
 			try{

@@ -184,8 +184,6 @@ public class CommandContainer extends Command {
 				}
 
 			} catch (SQLException e){
-
-				e.printStackTrace();
 				proxyManager.commit(false, true);
 				session.setCurrentTransactionLocks(null);
 				throw e;

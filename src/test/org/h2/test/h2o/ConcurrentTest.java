@@ -29,6 +29,7 @@ public class ConcurrentTest extends Thread {
 				} else {
 					stat.execute("SELECT * FROM TEST;");
 				}
+				successful = true;
 			} catch (Exception e) {
 				successful = false;
 			}
