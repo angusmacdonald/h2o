@@ -158,7 +158,7 @@ public class ScriptCommand extends ScriptBase {
 					PlanItem plan = table.getBestPlanItem(session, null);
 					Index index = plan.getIndex();
 					Cursor cursor = index.find(session, null, null);
-					StringBuffer buff = new StringBuffer();
+					StringBuilder buff = new StringBuilder();
 
 
 
@@ -174,13 +174,13 @@ public class ScriptCommand extends ScriptBase {
 					}
 
 					add(buff.toString(), true);
-					buff = new StringBuffer();
+					buff = new StringBuilder();
 					String ins = buff.toString();
 					buff = null;
 					while (cursor.next()) {
 						Row row = cursor.get();
 						if (buff == null) {
-							buff = new StringBuffer(ins);
+							buff = new StringBuilder(ins);
 						}
 
 						for (int j = 0; j < row.getColumnCount(); j++) {
@@ -340,7 +340,7 @@ public class ScriptCommand extends ScriptBase {
 							Index index = plan.getIndex();
 							Cursor cursor = index.find(session, null, null);
 							Column[] columns = table.getColumns();
-							StringBuffer buff = new StringBuffer();
+							StringBuilder buff = new StringBuilder();
 							buff.append("INSERT INTO ");
 							buff.append(table.getSQL());
 							buff.append('(');
@@ -360,7 +360,7 @@ public class ScriptCommand extends ScriptBase {
 							while (cursor.next()) {
 								Row row = cursor.get();
 								if (buff == null) {
-									buff = new StringBuffer(ins);
+									buff = new StringBuilder(ins);
 								} else {
 									buff.append(",\n(");
 								}
@@ -468,7 +468,7 @@ public class ScriptCommand extends ScriptBase {
 			InputStream in = v.getInputStream();
 			try {
 				for (int i = 0;; i++) {
-					StringBuffer buff = new StringBuffer(lobBlockSize * 2);
+					StringBuilder buff = new StringBuilder(lobBlockSize * 2);
 					buff.append("INSERT INTO SYSTEM_LOB_STREAM VALUES(" + id + ", " + i + ", NULL, '");
 					int len = IOUtils.readFully(in, bytes, 0, lobBlockSize);
 					if (len <= 0) {
@@ -489,7 +489,7 @@ public class ScriptCommand extends ScriptBase {
 			Reader in = v.getReader();
 			try {
 				for (int i = 0;; i++) {
-					StringBuffer buff = new StringBuffer(lobBlockSize * 2);
+					StringBuilder buff = new StringBuilder(lobBlockSize * 2);
 					buff.append("INSERT INTO SYSTEM_LOB_STREAM VALUES(" + id + ", " + i + ", ");
 					int len = IOUtils.readFully(in, chars, lobBlockSize);
 					if (len < 0) {

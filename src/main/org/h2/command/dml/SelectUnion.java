@@ -294,7 +294,7 @@ public class SelectUnion extends Query {
     }
 
     public String getPlanSQL() {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append('(');
         buff.append(StringUtils.unEnclose(left.getPlanSQL()));
         buff.append(')');

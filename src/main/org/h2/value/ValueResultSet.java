@@ -83,7 +83,7 @@ public class ValueResultSet extends Value {
 
     public String getString() {
         try {
-            StringBuffer buff = new StringBuffer();
+            StringBuilder buff = new StringBuilder();
             buff.append("(");
             result.beforeFirst();
             ResultSetMetaData meta = result.getMetaData();

@@ -105,7 +105,7 @@ public class ConditionInSelect extends Condition {
     }
 
     public String getSQL() {
-        StringBuffer buff = new StringBuffer("(");
+        StringBuilder buff = new StringBuilder("(");
         buff.append(left.getSQL());
         buff.append(" IN(");
         buff.append(query.getPlanSQL());

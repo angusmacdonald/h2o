@@ -557,7 +557,7 @@ public class FullText {
                     };
                     result.addRow(row);
                 } else {
-                    StringBuffer buff = new StringBuffer();
+                    StringBuilder buff = new StringBuilder();
                     buff.append(StringUtils.quoteIdentifier(index.schema));
                     buff.append('.');
                     buff.append(StringUtils.quoteIdentifier(index.table));
@@ -617,7 +617,7 @@ public class FullText {
                 + StringUtils.quoteIdentifier(TRIGGER_PREFIX + table);
         stat.execute("DROP TRIGGER IF EXISTS " + trigger);
         if (create) {
-            StringBuffer buff = new StringBuffer("CREATE TRIGGER IF NOT EXISTS ");
+            StringBuilder buff = new StringBuilder("CREATE TRIGGER IF NOT EXISTS ");
             buff.append(trigger);
             buff.append(" AFTER INSERT, UPDATE, DELETE ON ");
             buff.append(StringUtils.quoteIdentifier(schema) + "." + StringUtils.quoteIdentifier(table));
@@ -631,7 +631,7 @@ public class FullText {
     private static void indexExistingRows(Connection conn, String schema, String table) throws SQLException {
         FullText.FullTextTrigger existing = new FullText.FullTextTrigger();
         existing.init(conn, schema, null, table, false, Trigger.INSERT);
-        StringBuffer buff = new StringBuffer("SELECT * FROM ");
+        StringBuilder buff = new StringBuilder("SELECT * FROM ");
         buff.append(StringUtils.quoteIdentifier(schema) + "." + StringUtils.quoteIdentifier(table));
         ResultSet rs = conn.createStatement().executeQuery(buff.toString());
         int columnCount = rs.getMetaData().getColumnCount();
@@ -648,7 +648,7 @@ public class FullText {
         if (data.indexOf('\'') < 0) {
             return "'" + data + "'";
         }
-        StringBuffer buff = new StringBuffer(data.length() + 2);
+        StringBuilder buff = new StringBuilder(data.length() + 2);
         buff.append('\'');
         for (int i = 0; i < data.length(); i++) {
             char ch = data.charAt(i);
@@ -868,7 +868,7 @@ public class FullText {
         }
 
         private String getKey(Object[] row) throws SQLException {
-            StringBuffer buff = new StringBuffer();
+            StringBuilder buff = new StringBuilder();
             for (int i = 0; i < index.keys.length; i++) {
                 if (i > 0) {
                     buff.append(" AND ");

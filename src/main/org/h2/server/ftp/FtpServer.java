@@ -114,7 +114,7 @@ public class FtpServer implements Service {
         return NetUtils.createServerSocket(0, false);
     }
 
-    private void appendFile(StringBuffer buff, String fileName) throws SQLException {
+    private void appendFile(StringBuilder buff, String fileName) throws SQLException {
         buff.append(fs.isDirectory(fileName) ? 'd' : '-');
         buff.append('r');
         buff.append(fs.canWrite(fileName) ? 'w' : '-');
@@ -188,7 +188,7 @@ public class FtpServer implements Service {
      */
     String getDirectoryListing(String directory, boolean listDirectories) throws SQLException {
         String[] list = fs.listFiles(directory);
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         for (int i = 0; list != null && i < list.length; i++) {
             String fileName = list[i];
             if (!fs.isDirectory(fileName) || (fs.isDirectory(fileName) && listDirectories)) {

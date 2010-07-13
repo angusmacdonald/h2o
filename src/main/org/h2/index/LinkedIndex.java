@@ -50,7 +50,7 @@ public class LinkedIndex extends BaseIndex {
     }
 
     public void add(Session session, Row row) throws SQLException {
-        StringBuffer buff = new StringBuffer("INSERT INTO ");
+        StringBuilder buff = new StringBuilder("INSERT INTO ");
         buff.append(targetTableName);
         buff.append(" VALUES(");
         for (int i = 0, j = 0; i < row.getColumnCount(); i++) {
@@ -86,7 +86,7 @@ public class LinkedIndex extends BaseIndex {
     }
 
     public Cursor find(Session session, SearchRow first, SearchRow last) throws SQLException {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         for (int i = 0; first != null && i < first.getColumnCount(); i++) {
             Value v = first.getValue(i);
             if (v != null) {
@@ -142,7 +142,7 @@ public class LinkedIndex extends BaseIndex {
         }
     }
 
-    private void addParameter(StringBuffer buff, Column col) {
+    private void addParameter(StringBuilder buff, Column col) {
         if (col.getType() == Value.STRING_FIXED && link.isOracle()) {
             // workaround for Oracle
             // create table test(id int primary key, name char(15));
@@ -187,7 +187,7 @@ public class LinkedIndex extends BaseIndex {
     }
 
     public void remove(Session session, Row row) throws SQLException {
-        StringBuffer buff = new StringBuffer("DELETE FROM ");
+        StringBuilder buff = new StringBuilder("DELETE FROM ");
         buff.append(targetTableName);
         buff.append(" WHERE ");
         for (int i = 0; i < row.getColumnCount(); i++) {
@@ -232,7 +232,7 @@ public class LinkedIndex extends BaseIndex {
      * @param newRow the new data
      */
     public void update(Row oldRow, Row newRow) throws SQLException {
-        StringBuffer buff = new StringBuffer("UPDATE ");
+        StringBuilder buff = new StringBuilder("UPDATE ");
         buff.append(targetTableName).append(" SET ");
         for (int i = 0; i < newRow.getColumnCount(); i++) {
             if (i > 0) {

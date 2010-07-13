@@ -351,7 +351,7 @@ public class Server implements Runnable, ShutdownHandler {
     }
 
     String getStatus() {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         if (isRunning(false)) {
             buff.append(service.getType());
             buff.append(" server running on ");

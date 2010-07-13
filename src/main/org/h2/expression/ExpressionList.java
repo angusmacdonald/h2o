@@ -78,7 +78,7 @@ public class ExpressionList extends Expression {
     }
 
     public String getSQL() {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append('(');
         for (int i = 0; i < list.length; i++) {
             if (i > 0) {

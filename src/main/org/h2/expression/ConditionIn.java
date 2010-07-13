@@ -164,7 +164,7 @@ public class ConditionIn extends Condition {
     }
 
     public String getSQL() {
-        StringBuffer buff = new StringBuffer("(");
+        StringBuilder buff = new StringBuilder("(");
         buff.append(left.getSQL());
         buff.append(" IN(");
         for (int i = 0; i < values.size(); i++) {

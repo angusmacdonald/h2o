@@ -258,8 +258,8 @@ public class AlterTableAlterColumn extends SchemaCommand {
         int id = -1;
         TableData newTable = getSchema().createTable(tempName, id, newColumns, persistent, false, Index.EMPTY_HEAD);
         newTable.setComment(table.getComment());
-        StringBuffer buff = new StringBuffer(newTable.getCreateSQL());
-        StringBuffer columnList = new StringBuffer();
+        StringBuilder buff = new StringBuilder(newTable.getCreateSQL());
+        StringBuilder columnList = new StringBuilder();
         for (int i = 0; i < newColumns.size(); i++) {
             Column nc = (Column) newColumns.get(i);
             if (columnList.length() > 0) {

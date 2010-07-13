@@ -55,10 +55,10 @@ public class TestXid implements Xid {
         fGlobalTransactionId = new byte[MAXGTRIDSIZE];
         fBranchQualifier = new byte[MAXBQUALSIZE];
 
-        StringBuffer sb;
+        StringBuilder sb;
         byte[] ba;
 
-        sb = new StringBuffer();
+        sb = new StringBuilder();
         sb.append(host);
         sb.append(":");
         sb.append(fId);
@@ -74,7 +74,7 @@ public class TestXid implements Xid {
             fGlobalTransactionId[i] = ba[i];
         }
 
-        sb = new StringBuffer(NF.format(branch));
+        sb = new StringBuilder(NF.format(branch));
         // System.out.println("branch qualifier: " + sb.toString());
         ba = sb.toString().getBytes();
         for (int i = 0; i < MAXBQUALSIZE; i++) {

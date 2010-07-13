@@ -370,7 +370,7 @@ public abstract class Prepared{
 			long time = System.currentTimeMillis() - startTime;
 			String params;
 			if (parameters.size() > 0) {
-				StringBuffer buff = new StringBuffer(parameters.size() * 10);
+				StringBuilder buff = new StringBuilder(parameters.size() * 10);
 				buff.append(" {");
 				for (int i = 0; i < parameters.size(); i++) {
 					if (i > 0) {
@@ -435,7 +435,7 @@ public abstract class Prepared{
 	 * @return the SQL snippet
 	 */
 	protected String getSQL(Value[] values) {
-		StringBuffer buff = new StringBuffer();
+		StringBuilder buff = new StringBuilder();
 		for (int i = 0; i < values.length; i++) {
 			if (i > 0) {
 				buff.append(", ");
@@ -455,7 +455,7 @@ public abstract class Prepared{
 	 * @return the SQL snippet
 	 */
 	protected String getSQL(Expression[] list) {
-		StringBuffer buff = new StringBuffer();
+		StringBuilder buff = new StringBuilder();
 		for (int i = 0; i < list.length; i++) {
 			if (i > 0) {
 				buff.append(", ");
@@ -479,7 +479,7 @@ public abstract class Prepared{
 	protected SQLException setRow(SQLException ex, int rowId, String values) {
 		if (ex instanceof JdbcSQLException) {
 			JdbcSQLException e = (JdbcSQLException) ex;
-			StringBuffer buff = new StringBuffer();
+			StringBuilder buff = new StringBuilder();
 			if (sqlStatement != null) {
 				buff.append(sqlStatement);
 			}

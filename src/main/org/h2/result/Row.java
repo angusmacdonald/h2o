@@ -86,7 +86,7 @@ public class Row extends Record implements SearchRow {
     }
 
     public String toString() {
-        StringBuffer buff = new StringBuffer(data.length * 5);
+        StringBuilder buff = new StringBuilder(data.length * 5);
         buff.append("( /* pos:");
         buff.append(getPos());
         if (version != 0) {

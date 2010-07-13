@@ -362,7 +362,7 @@ public class BuildBase {
     }
 
     private String convertBytesToString(byte[] value) {
-        StringBuffer buff = new StringBuffer(value.length * 2);
+        StringBuilder buff = new StringBuilder(value.length * 2);
         for (int i = 0; i < value.length; i++) {
             int c = value[i] & 0xff;
             buff.append(Integer.toString(c >> 4, 16));

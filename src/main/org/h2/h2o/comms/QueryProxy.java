@@ -264,7 +264,7 @@ public class QueryProxy implements Serializable{
 		if (!removed) {
 			ErrorHandling.errorNoEvent("Tried to remove the local replica from the set of all replicas, but failed. Possibly equality check problem.");
 		}
-		
+	
 		return remoteReplicas;
 	}
 	

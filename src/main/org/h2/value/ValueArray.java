@@ -59,7 +59,7 @@ public class ValueArray extends Value {
     }
 
     public String getString() {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append('(');
         for (int i = 0; i < values.length; i++) {
             if (i > 0) {
@@ -103,7 +103,7 @@ public class ValueArray extends Value {
     }
 
     public String getSQL() {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append('(');
         for (int i = 0; i < values.length; i++) {
             if (i > 0) {
@@ -116,7 +116,7 @@ public class ValueArray extends Value {
     }
 
     public String getTraceSQL() {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append('(');
         for (int i = 0; i < values.length; i++) {
             if (i > 0) {

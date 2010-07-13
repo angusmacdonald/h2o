@@ -18,3 +18,5 @@ H2O Version 0.2.4
 	COMMIT operations now executed in parallel.
 	Fixed a remote access error for H2 TCP connections.
 H2O Version 0.2.5 (Unreleased)
+	Single machine local INSERT queries are only parsed once.
+	Changed from StringBuffer to StringBuilder

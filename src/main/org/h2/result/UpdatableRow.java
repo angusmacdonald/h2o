@@ -113,7 +113,7 @@ public class UpdatableRow {
         throw Message.getSQLException(ErrorCode.COLUMN_NOT_FOUND_1, columnName);
     }
 
-    private void appendColumnList(StringBuffer buff, boolean set) {
+    private void appendColumnList(StringBuilder buff, boolean set) {
         for (int i = 0; i < columnCount; i++) {
             if (i > 0) {
                 buff.append(',');
@@ -126,7 +126,7 @@ public class UpdatableRow {
         }
     }
 
-    private void appendKeyCondition(StringBuffer buff) {
+    private void appendKeyCondition(StringBuilder buff) {
         buff.append(" WHERE ");
         for (int i = 0; i < key.size(); i++) {
             if (i > 0) {
@@ -152,7 +152,7 @@ public class UpdatableRow {
     }
 
 //    public boolean isRowDeleted(Value[] row) throws SQLException {
-//        StringBuffer buff = new StringBuffer();
+//        StringBuilder buff = new StringBuilder();
 //        buff.append("SELECT COUNT(*) FROM ");
 //        buff.append(StringUtils.quoteIdentifier(tableName));
 //        appendKeyCondition(buff);
@@ -163,7 +163,7 @@ public class UpdatableRow {
 //        return rs.getInt(1) == 0;
 //    }
 
-    private void appendTableName(StringBuffer buff) {
+    private void appendTableName(StringBuilder buff) {
         if (schemaName != null && schemaName.length() > 0) {
             buff.append(StringUtils.quoteIdentifier(schemaName));
             buff.append('.');
@@ -178,7 +178,7 @@ public class UpdatableRow {
      * @return the row
      */
     public Value[] readRow(Value[] row) throws SQLException {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append("SELECT ");
         appendColumnList(buff, false);
         buff.append(" FROM ");
@@ -205,7 +205,7 @@ public class UpdatableRow {
      * @throws SQLException if this row has already been deleted
      */
     public void deleteRow(Value[] current) throws SQLException {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append("DELETE FROM ");
         appendTableName(buff);
         appendKeyCondition(buff);
@@ -226,7 +226,7 @@ public class UpdatableRow {
      * @throws SQLException if the row has been deleted
      */
     public void updateRow(Value[] current, Value[] updateRow) throws SQLException {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append("UPDATE ");
         appendTableName(buff);
         buff.append(" SET ");
@@ -259,7 +259,7 @@ public class UpdatableRow {
      * @throws SQLException if the row could not be inserted
      */
     public void insertRow(Value[] row) throws SQLException {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append("INSERT INTO ");
         appendTableName(buff);
         buff.append('(');

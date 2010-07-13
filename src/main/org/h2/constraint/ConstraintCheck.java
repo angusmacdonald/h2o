@@ -46,7 +46,7 @@ public class ConstraintCheck extends Constraint {
     }
 
     public String getCreateSQLForCopy(Table table, String quotedName) {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append("ALTER TABLE ");
         buff.append(table.getSQL());
         buff.append(" ADD CONSTRAINT ");
@@ -62,7 +62,7 @@ public class ConstraintCheck extends Constraint {
     }
 
     public String getShortDescription() {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append(getName());
         buff.append(": ");
         buff.append(expr.getSQL());
@@ -126,7 +126,7 @@ public class ConstraintCheck extends Constraint {
             // don't check at startup
             return;
         }
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append("SELECT 1 FROM ");
         buff.append(filter.getTable().getSQL());
         buff.append(" WHERE NOT(");

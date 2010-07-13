@@ -116,7 +116,7 @@ public class Doclet {
             String type = getTypeName(method.isStatic(), method.returnType());
             writer.println("<tr><td class=\"return\">" + type + "</td><td class=\"method\">");
             Parameter[] params = method.parameters();
-            StringBuffer buff = new StringBuffer();
+            StringBuilder buff = new StringBuilder();
             buff.append('(');
             for (int j = 0; j < params.length; j++) {
                 if (j > 0) {
@@ -197,7 +197,7 @@ public class Doclet {
             String type = getTypeName(method.isStatic(), method.returnType());
             writer.println("<a name=\"r" + i + "\"></a>");
             Parameter[] params = method.parameters();
-            StringBuffer buff = new StringBuffer();
+            StringBuilder buff = new StringBuilder();
             buff.append('(');
             for (int j = 0; j < params.length; j++) {
                 if (j > 0) {

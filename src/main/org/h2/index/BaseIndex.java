@@ -149,7 +149,7 @@ public abstract class BaseIndex extends SchemaObjectBase implements Index {
     }
 
     public SQLException getDuplicateKeyException() {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append(getName());
         buff.append(" ");
         buff.append(" ON ");
@@ -306,7 +306,7 @@ public abstract class BaseIndex extends SchemaObjectBase implements Index {
     }
 
     public String getColumnListSQL() {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         for (int i = 0; i < indexColumns.length; i++) {
             if (i > 0) {
                 buff.append(", ");
@@ -317,7 +317,7 @@ public abstract class BaseIndex extends SchemaObjectBase implements Index {
     }
 
     public String getCreateSQLForCopy(Table table, String quotedName) {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append("CREATE ");
         buff.append(indexType.getSQL());
         if (!indexType.getPrimaryKey()) {

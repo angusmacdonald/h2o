@@ -79,7 +79,7 @@ public class HtmlConverter {
         if (s.length() == 0) {
             return s;
         }
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         for (int i = 0; i < s.length(); i++) {
             char ch = s.charAt(i);
             Character c = new Character(ch);
@@ -118,7 +118,7 @@ public class HtmlConverter {
         if (html.indexOf('&') < 0) {
             return html;
         }
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         for (int i = 0; i < html.length(); i++) {
             char ch = html.charAt(i);
             if (ch != '&') {

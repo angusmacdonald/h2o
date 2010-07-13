@@ -1396,7 +1396,7 @@ public class MetaTable extends Table {
 				}
 				String columnList = null;
 				if (columns != null) {
-					StringBuffer buff = new StringBuffer();
+					StringBuilder buff = new StringBuilder();
 					for (int j = 0; j < columns.length; j++) {
 						if (j > 0) {
 							buff.append(',');
@@ -1607,7 +1607,7 @@ public class MetaTable extends Table {
 			}
 			String[] path = session.getSchemaSearchPath();
 			if (path != null && path.length > 0) {
-				StringBuffer buff = new StringBuffer();
+				StringBuilder buff = new StringBuilder();
 				buff.append("SET SCHEMA_SEARCH_PATH ");
 				for (int i = 0; i < path.length; i++) {
 					if (i > 0) {

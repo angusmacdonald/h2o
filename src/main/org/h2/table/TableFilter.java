@@ -505,7 +505,7 @@ public class TableFilter implements ColumnResolver {
      * @return the SQL statement snippet
      */
     public String getPlanSQL(boolean join) {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         if (join) {
             if (outerJoin) {
                 buff.append("LEFT OUTER JOIN ");
@@ -520,7 +520,7 @@ public class TableFilter implements ColumnResolver {
         }
         if (index != null) {
             buff.append(" /* ");
-            StringBuffer planBuff = new StringBuffer();
+            StringBuilder planBuff = new StringBuilder();
             planBuff.append(index.getPlanSQL());
             if (indexConditions.size() > 0) {
                 planBuff.append(": ");

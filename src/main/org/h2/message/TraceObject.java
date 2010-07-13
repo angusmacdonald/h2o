@@ -356,7 +356,7 @@ public class TraceObject {
         if (map.size() == 0) {
             return "new Map()";
         }
-        StringBuffer buff = new StringBuffer("new Map() /* ");
+        StringBuilder buff = new StringBuilder("new Map() /* ");
         try {
             // Map<String, Class>
             for (Iterator it = map.entrySet().iterator(); it.hasNext();) {
@@ -417,7 +417,7 @@ public class TraceObject {
      * INTERNAL
      */
     public static String toString(String sql, ObjectArray params) {
-        StringBuffer buff = new StringBuffer(sql);
+        StringBuilder buff = new StringBuilder(sql);
         if (params != null && params.size() > 0) {
             buff.append(" {");
             for (int i = 0; i < params.size(); i++) {

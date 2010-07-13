@@ -362,8 +362,8 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 				for (DatabaseInstanceWrapper dbInstance: potentialReplicaLocations){
 					//This includes the location of the primary copy.
-					newReplicaLocations.add(dbInstance);
-					currentReplicationFactor++;
+					boolean added = newReplicaLocations.add(dbInstance);
+					if (added) currentReplicationFactor++;
 
 					/*
 					 * Do we have enough replicas yet?
@@ -375,7 +375,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 			if (currentReplicationFactor < relationReplicationFactor){
 				//Couldn't replicate to enough machines.
-				ErrorHandling.errorNoEvent("Insufficient number of machines available to reach a replication factor of " + relationReplicationFactor
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Insufficient number of machines available to reach a replication factor of " + relationReplicationFactor
 						+ ". The table will be replicated on " + currentReplicationFactor + " instances.");
 			}
 

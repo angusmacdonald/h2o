@@ -153,7 +153,7 @@ public class TableView extends Table {
     }
 
     public String getCreateSQL() {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append("CREATE FORCE VIEW ");
         buff.append(getSQL());
         if (comment != null) {
@@ -254,7 +254,7 @@ public class TableView extends Table {
 
     public String getSQL() {
         if (getTemporary()) {
-            StringBuffer buff = new StringBuffer(querySQL.length());
+            StringBuilder buff = new StringBuilder(querySQL.length());
             buff.append("(");
             buff.append(querySQL);
             buff.append(")");

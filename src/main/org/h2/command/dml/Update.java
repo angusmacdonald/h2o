@@ -249,7 +249,7 @@ public class Update extends Prepared {
 	}
 
 	public String getPlanSQL() {
-		StringBuffer buff = new StringBuffer();
+		StringBuilder buff = new StringBuilder();
 		buff.append("UPDATE ");
 		buff.append(tableFilter.getPlanSQL(false));
 		buff.append("\nSET ");

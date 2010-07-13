@@ -706,7 +706,7 @@ http://www.w3schools.com/sql/
     }
 
     public String toString() {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         appendIf(buff, big, "big");
         appendIf(buff, networked, "net");
         appendIf(buff, memory, "memory");
@@ -730,7 +730,7 @@ http://www.w3schools.com/sql/
         return buff.toString();
     }
 
-    private void appendIf(StringBuffer buff, boolean flag, String text) {
+    private void appendIf(StringBuilder buff, boolean flag, String text) {
         if (flag) {
             buff.append(text);
             buff.append(' ');

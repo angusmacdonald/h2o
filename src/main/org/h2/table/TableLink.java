@@ -300,7 +300,7 @@ public class TableLink extends Table {
 	}
 
 	public String getCreateSQL() {
-		StringBuffer buff = new StringBuffer();
+		StringBuilder buff = new StringBuilder();
 		buff.append("CREATE FORCE ");
 		if (getTemporary()) {
 			if (globalTemporary) {

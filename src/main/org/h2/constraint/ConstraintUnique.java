@@ -42,7 +42,7 @@ public class ConstraintUnique extends Constraint {
     }
 
     private String getCreateSQLForCopy(Table table, String quotedName, boolean internalIndex) {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append("ALTER TABLE ");
         buff.append(table.getSQL());
         buff.append(" ADD CONSTRAINT ");

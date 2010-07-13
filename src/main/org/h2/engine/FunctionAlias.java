@@ -99,7 +99,7 @@ public class FunctionAlias extends DbObjectBase {
     }
 
     private String getMethodSignature(Method m) {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append(m.getName());
         buff.append('(');
         Class[] params = m.getParameterTypes();
@@ -128,7 +128,7 @@ public class FunctionAlias extends DbObjectBase {
     }
 
     public String getCreateSQL() {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append("CREATE FORCE ALIAS ");
         buff.append(getSQL());
         if (deterministic) {

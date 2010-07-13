@@ -80,7 +80,7 @@ public class JavaFunction extends Expression implements FunctionCall {
     }
 
     public String getSQL() {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append(Parser.quoteIdentifier(functionAlias.getName()));
         buff.append('(');
         for (int i = 0; i < args.length; i++) {

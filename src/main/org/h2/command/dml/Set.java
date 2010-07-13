@@ -97,7 +97,7 @@ public class Set extends Prepared {
                 throw Message.getSQLException(ErrorCode.COLLATION_CHANGE_WITH_DATA_TABLE_1, replicaSet.getSQL());
             }
             CompareMode compareMode;
-            StringBuffer buff = new StringBuffer(stringValue);
+            StringBuilder buff = new StringBuilder(stringValue);
             if (stringValue.equals(CompareMode.OFF)) {
                 compareMode = new CompareMode(null, null, 0);
             } else {

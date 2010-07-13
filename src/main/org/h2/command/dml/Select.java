@@ -867,7 +867,7 @@ public class Select extends Query {
         // can not use the field sqlStatement because the parameter
         // indexes may be incorrect: ? may be in fact ?2 for a subquery
         // but indexes may be set manually as well
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         Expression[] exprList = new Expression[expressions.size()];
         expressions.toArray(exprList);
         buff.append("SELECT ");

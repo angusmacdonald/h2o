@@ -77,7 +77,7 @@ public class SortOrder {
      * @return the SQL snippet
      */
     public String getSQL(Expression[] list, int visible) {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         for (int i = 0; i < len; i++) {
             if (i > 0) {
                 buff.append(", ");

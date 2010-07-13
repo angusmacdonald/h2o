@@ -20,14 +20,14 @@ public class PageParser {
     private int pos;
     private Map settings;
     private int len;
-    private StringBuffer result;
+    private StringBuilder result;
 
     private PageParser(String page, Map settings, int pos) {
         this.page = page;
         this.pos = pos;
         this.len = page.length();
         this.settings = settings;
-        result = new StringBuffer(len);
+        result = new StringBuilder(len);
     }
 
     /**
@@ -45,7 +45,7 @@ public class PageParser {
     private void setError(int i) {
         String s = page.substring(0, i) + "####BUG####" + page.substring(i);
         s = PageParser.escapeHtml(s);
-        result = new StringBuffer(s);
+        result = new StringBuilder(s);
     }
 
     private String parseBlockUntil(String end) throws ParseException {
@@ -71,7 +71,7 @@ public class PageParser {
     }
 
     private void parseAll() throws ParseException {
-        StringBuffer buff = result;
+        StringBuilder buff = result;
         String p = page;
         int i = pos;
         for (; i < len; i++) {
@@ -238,7 +238,7 @@ public class PageParser {
                 return "&nbsp;";
             }
         }
-        StringBuffer buff = new StringBuffer(s.length());
+        StringBuilder buff = new StringBuilder(s.length());
         boolean convertSpace = true;
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
@@ -307,7 +307,7 @@ public class PageParser {
         if (s.length() == 0) {
             return "";
         }
-        StringBuffer buff = new StringBuffer(s.length());
+        StringBuilder buff = new StringBuilder(s.length());
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
             switch (c) {

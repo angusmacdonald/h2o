@@ -135,7 +135,7 @@ public class User extends RightOwner {
      * @return the SQL statement
      */
     public String getCreateSQL(boolean password, boolean ifNotExists) {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append("CREATE USER ");
         if (ifNotExists) {
             buff.append("IF NOT EXISTS ");

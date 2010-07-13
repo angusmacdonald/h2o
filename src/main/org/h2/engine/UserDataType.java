@@ -33,7 +33,7 @@ public class UserDataType extends DbObjectBase {
     }
 
     public String getCreateSQL() {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append("CREATE DOMAIN ");
         buff.append(getSQL());
         buff.append(" AS ");

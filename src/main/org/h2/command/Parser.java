@@ -512,7 +512,7 @@ public class Parser {
 		if (expectedList == null || expectedList.size() == 0) {
 			return Message.getSyntaxError(sqlCommand, parseIndex);
 		}
-		StringBuffer buff = new StringBuffer();
+		StringBuilder buff = new StringBuilder();
 		for (int i = 0; i < expectedList.size(); i++) {
 			if (i > 0) {
 				buff.append(", ");
@@ -810,7 +810,7 @@ public class Parser {
 	}
 
 	private Prepared parseHelp() throws SQLException {
-		StringBuffer buff = new StringBuffer("SELECT * FROM INFORMATION_SCHEMA.HELP");
+		StringBuilder buff = new StringBuilder("SELECT * FROM INFORMATION_SCHEMA.HELP");
 		int i = 0;
 		ObjectArray paramValues = new ObjectArray();
 		while (currentTokenType != END) {
@@ -830,7 +830,7 @@ public class Parser {
 
 	private Prepared parseShow() throws SQLException {
 		ObjectArray paramValues = new ObjectArray();
-		StringBuffer buff = new StringBuffer("SELECT ");
+		StringBuilder buff = new StringBuilder("SELECT ");
 		if (readIf("CLIENT_ENCODING")) {
 			// for PostgreSQL compatibility
 			buff.append("'UNICODE' AS CLIENT_ENCODING FROM DUAL");

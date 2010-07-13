@@ -210,7 +210,7 @@ public class FullTextLucene extends FullText {
         Statement stat = conn.createStatement();
         String trigger = StringUtils.quoteIdentifier(schema) + "." + StringUtils.quoteIdentifier(TRIGGER_PREFIX + table);
         stat.execute("DROP TRIGGER IF EXISTS " + trigger);
-        StringBuffer buff = new StringBuffer("CREATE TRIGGER IF NOT EXISTS ");
+        StringBuilder buff = new StringBuilder("CREATE TRIGGER IF NOT EXISTS ");
         buff.append(trigger);
         buff.append(" AFTER INSERT, UPDATE, DELETE ON ");
         buff.append(StringUtils.quoteIdentifier(schema) + "." + StringUtils.quoteIdentifier(table));
@@ -254,7 +254,7 @@ public class FullTextLucene extends FullText {
     private static void indexExistingRows(Connection conn, String schema, String table) throws SQLException {
         FullTextLucene.FullTextTrigger existing = new FullTextLucene.FullTextTrigger();
         existing.init(conn, schema, null, table, false, Trigger.INSERT);
-        StringBuffer buff = new StringBuffer("SELECT * FROM ");
+        StringBuilder buff = new StringBuilder("SELECT * FROM ");
         buff.append(StringUtils.quoteIdentifier(schema) + "." + StringUtils.quoteIdentifier(table));
         ResultSet rs = conn.createStatement().executeQuery(buff.toString());
         int columnCount = rs.getMetaData().getColumnCount();
@@ -469,7 +469,7 @@ public class FullTextLucene extends FullText {
             doc.add(new Field(FIELD_QUERY, query, Field.Store.YES, Field.Index.UN_TOKENIZED));
             long time = System.currentTimeMillis();
             doc.add(new Field("modified", DateTools.timeToString(time, DateTools.Resolution.SECOND), Field.Store.YES, Field.Index.UN_TOKENIZED));
-            StringBuffer allData = new StringBuffer();
+            StringBuilder allData = new StringBuilder();
             for (int i = 0; i < indexColumns.length; i++) {
                 int index = indexColumns[i];
                 String columnName = columns[index];
@@ -501,7 +501,7 @@ public class FullTextLucene extends FullText {
         }
 
         private String getQuery(Object[] row) throws SQLException {
-            StringBuffer buff = new StringBuffer();
+            StringBuilder buff = new StringBuilder();
             if (schema != null) {
                 buff.append(StringUtils.quoteIdentifier(schema));
                 buff.append(".");

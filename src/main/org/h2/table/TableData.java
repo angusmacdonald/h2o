@@ -471,7 +471,7 @@ public class TableData extends Table implements RecordReader {
 	}
 
 	private String getDeadlockDetails(ObjectArray sessions) {
-		StringBuffer buff = new StringBuffer();
+		StringBuilder buff = new StringBuilder();
 		for (int i = 0; i < sessions.size(); i++) {
 			buff.append('\n');
 			Session s = (Session) sessions.get(i);
@@ -548,7 +548,7 @@ public class TableData extends Table implements RecordReader {
 	}
 
 	public String getCreateSQL() {
-		StringBuffer buff = new StringBuffer();
+		StringBuilder buff = new StringBuilder();
 		buff.append("CREATE ");
 		if (getTemporary()) {
 			if (globalTemporary) {

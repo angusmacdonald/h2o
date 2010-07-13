@@ -49,7 +49,7 @@ public class Setting extends DbObjectBase {
     }
 
     public String getCreateSQL() {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append("SET ");
         buff.append(getSQL());
         buff.append(' ');

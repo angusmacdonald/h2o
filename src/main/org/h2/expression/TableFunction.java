@@ -49,7 +49,7 @@ public class TableFunction extends Function implements FunctionCall {
     }
 
     public String getSQL() {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append(getName());
         buff.append('(');
         for (int i = 0; i < args.length; i++) {

@@ -75,7 +75,7 @@ public class ConstraintReferential extends Constraint {
         return Constraint.REFERENTIAL;
     }
 
-    private void appendAction(StringBuffer buff, int action) {
+    private void appendAction(StringBuilder buff, int action) {
         switch (action) {
         case CASCADE:
             buff.append("CASCADE");
@@ -112,7 +112,7 @@ public class ConstraintReferential extends Constraint {
      * @return the SQL statement
      */
     public String getCreateSQLForCopy(Table table, Table refTable, String quotedName, boolean internalIndex) {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append("ALTER TABLE ");
         String mainTable = table.getSQL();
         buff.append(mainTable);
@@ -177,7 +177,7 @@ public class ConstraintReferential extends Constraint {
      * @return the description
      */
     public String getShortDescription() {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append(getName());
         buff.append(": ");
         buff.append(table.getSQL());
@@ -490,7 +490,7 @@ public class ConstraintReferential extends Constraint {
         if (deleteAction == RESTRICT) {
             return;
         }
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         if (deleteAction == CASCADE) {
             buff.append("DELETE FROM ");
             buff.append(table.getSQL());
@@ -533,7 +533,7 @@ public class ConstraintReferential extends Constraint {
         if (updateAction == RESTRICT) {
             return;
         }
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         appendUpdate(buff);
         appendWhere(buff);
         updateSQL = buff.toString();
@@ -567,7 +567,7 @@ public class ConstraintReferential extends Constraint {
         return command;
     }
 
-    private void appendUpdate(StringBuffer buff) {
+    private void appendUpdate(StringBuilder buff) {
         buff.append("UPDATE ");
         buff.append(table.getSQL());
         buff.append(" SET ");
@@ -581,7 +581,7 @@ public class ConstraintReferential extends Constraint {
         }
     }
 
-    private void appendWhere(StringBuffer buff) {
+    private void appendWhere(StringBuilder buff) {
         buff.append(" WHERE ");
         for (int i = 0; i < columns.length; i++) {
             if (i > 0) {
@@ -634,7 +634,7 @@ public class ConstraintReferential extends Constraint {
             // don't check at startup
             return;
         }
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append("SELECT 1 FROM (SELECT ");
         for (int i = 0; i < columns.length; i++) {
             if (i > 0) {

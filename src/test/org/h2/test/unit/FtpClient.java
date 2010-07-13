@@ -197,7 +197,7 @@ public class FtpClient {
     private String removeQuotes() {
         int first = message.indexOf('"') + 1;
         int last = message.lastIndexOf('"');
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         for (int i = first; i < last; i++) {
             char ch = message.charAt(i);
             buff.append(ch);
@@ -214,7 +214,7 @@ public class FtpClient {
         int first = message.indexOf('(') + 1;
         int last = message.indexOf(')');
         String[] address = StringUtils.arraySplit(message.substring(first, last), ',', true);
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         for (int i = 0; i < 4; i++) {
             if (i > 0) {
                 buff.append('.');

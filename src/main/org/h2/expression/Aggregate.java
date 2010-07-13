@@ -313,7 +313,7 @@ public class Aggregate extends Expression {
                     throw Message.convert(e);
                 }
             }
-            StringBuffer buff = new StringBuffer();
+            StringBuilder buff = new StringBuilder();
             String sep = separator == null ? "," : separator.getValue(session).getString();
             for (int i = 0; i < list.size(); i++) {
                 Value val = (Value) list.get(i);
@@ -457,7 +457,7 @@ public class Aggregate extends Expression {
     }
 
     private String getSQLGroupConcat() {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append("GROUP_CONCAT(");
         buff.append(on.getSQL());
         if (orderList != null) {

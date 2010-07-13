@@ -378,7 +378,7 @@ public class Column {
     }
 
     public String getCreateSQL() {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         if (name != null) {
             buff.append(Parser.quoteIdentifier(name));
             buff.append(' ');

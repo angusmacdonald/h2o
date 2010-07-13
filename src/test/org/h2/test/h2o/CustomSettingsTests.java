@@ -61,10 +61,12 @@ public class CustomSettingsTests extends TestBase{
 	/**
 	 * Tests that a replica is automatically created on B when replication factor is set to 2.
 	 * @throws SQLException 
+	 * @throws InterruptedException 
 	 */
 	@Test
-	public void ReplicaAutomaticallyCreated() throws SQLException{
+	public void ReplicaAutomaticallyCreated() throws SQLException, InterruptedException{
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		
 		
 		try{
 			String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";

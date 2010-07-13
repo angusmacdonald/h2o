@@ -125,7 +125,7 @@ public class JdbcDatabaseMetaData extends TraceObject implements DatabaseMetaDat
             checkClosed();
             String tableType;
             if (types != null && types.length > 0) {
-                StringBuffer buff = new StringBuffer("TABLE_TYPE IN(");
+                StringBuilder buff = new StringBuilder("TABLE_TYPE IN(");
                 for (int i = 0; i < types.length; i++) {
                     if (i > 0) {
                         buff.append(", ");
@@ -1349,7 +1349,7 @@ public class JdbcDatabaseMetaData extends TraceObject implements DatabaseMetaDat
 
     private String getFunctions(String section) throws SQLException {
         try {
-            StringBuffer buff = new StringBuffer();
+            StringBuilder buff = new StringBuilder();
             checkClosed();
             PreparedStatement prep = conn.prepareAutoCloseStatement("SELECT TOPIC "
                     + "FROM INFORMATION_SCHEMA.HELP WHERE SECTION = ?");

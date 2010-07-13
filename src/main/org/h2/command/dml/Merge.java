@@ -80,7 +80,7 @@ public class Merge extends Prepared {
             }
             keys = idx.getColumns();
         }
-        StringBuffer buff = new StringBuffer("UPDATE ");
+        StringBuilder buff = new StringBuilder("UPDATE ");
         buff.append(table.getSQL());
         buff.append(" SET ");
         for (int i = 0; i < columns.length; i++) {
@@ -186,7 +186,7 @@ public class Merge extends Prepared {
     }
 
     public String getPlanSQL() {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append("MERGE INTO ");
         buff.append(table.getSQL());
         buff.append('(');

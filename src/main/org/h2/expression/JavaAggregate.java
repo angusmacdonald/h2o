@@ -64,7 +64,7 @@ public class JavaAggregate extends Expression {
     }
 
     public String getSQL() {
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         buff.append(Parser.quoteIdentifier(userAggregate.getName()));
         buff.append('(');
         for (int i = 0; i < args.length; i++) {

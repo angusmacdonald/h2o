@@ -43,7 +43,7 @@ public class Analyze extends DefineCommand {
                 continue;
             }
             Column[] columns = table.getColumns();
-            StringBuffer buff = new StringBuffer();
+            StringBuilder buff = new StringBuilder();
             buff.append("SELECT ");
             for (int j = 0; j < columns.length; j++) {
                 if (j > 0) {
