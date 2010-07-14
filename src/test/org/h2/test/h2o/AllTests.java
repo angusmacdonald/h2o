@@ -1,6 +1,5 @@
 package org.h2.test.h2o;
 
-import org.h2.h2o.util.TransactionNameGenerator;
 import org.h2.test.h2o.h2.H2Tests;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -14,7 +13,7 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
 	//Unit tests.
 	//H2oProperties.class,
-	TransactionNameGenerator.class,
+	TransactionNameTests.class,
 	//Database Tests
 	SystemTableTests.class,
 	MultipleSchemaTests.class,

@@ -65,7 +65,7 @@ public class Delete extends Prepared {
 		/*
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
-		if (isRegularTable()){
+		if (isRegularTable() && (queryProxy.getNumberOfReplicas() > 1 || !isReplicaLocal(queryProxy))){
 			if (queryProxy == null){
 				throw new SQLException("Internal Error: Query Proxy was null.");
 			}

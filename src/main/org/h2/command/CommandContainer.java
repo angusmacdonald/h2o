@@ -164,8 +164,9 @@ public class CommandContainer extends Command {
 			}
 
 			try {
+				
 				updateCount = prepared.update(proxyManager.getTransactionName());
-
+	
 				boolean commit = true; //An exception would already have been thrown if it should have been a rollback.
 
 

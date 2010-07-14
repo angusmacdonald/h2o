@@ -18,6 +18,7 @@ import org.h2.expression.Expression;
 import org.h2.expression.Parameter;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.QueryProxyManager;
+import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.util.LockType;
 import org.h2.index.Index;
 import org.h2.jdbc.JdbcSQLException;
@@ -77,6 +78,20 @@ public abstract class Prepared{
 
 	private boolean preparedStatement = false;
 
+	/**
+	 * True if every replica is local. This will only be the case if there is only one replica.
+	 * @return
+	 */
+	protected boolean isReplicaLocal(QueryProxy queryProxy) {
+
+		for (DatabaseInstanceWrapper replica: queryProxy.getReplicaLocations()){
+			if (!this.session.getDatabase().getURL().equals(replica.getDatabaseURL()))
+				return false;
+		}
+		
+		return true;
+	}
+	
 	/**
 	 * Create a new object.
 	 *

@@ -263,6 +263,7 @@ public abstract class Command implements CommandInterface {
                     }
                 }
             } catch (SQLException e) {
+            	e.printStackTrace();
                 Message.addSQL(e, sql);
                 database.exceptionThrown(e, sql);
                 database.checkPowerOff();

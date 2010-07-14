@@ -20,6 +20,7 @@ import org.h2.expression.Parameter;
 import org.h2.expression.ValueExpression;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.QueryProxyManager;
+import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.util.LockType;
 import org.h2.message.Message;
 import org.h2.result.LocalResult;
@@ -77,6 +78,8 @@ public class Update extends Prepared {
 		}
 	}
 
+
+	
 	public int update(String transactionName) throws SQLException {
 		tableFilter.startQuery(session);
 		tableFilter.reset();
@@ -89,7 +92,7 @@ public class Update extends Prepared {
 			/*
 			 * (QUERY PROPAGATED TO ALL REPLICAS).
 			 */
-			if (isRegularTable()){
+			if (isRegularTable() && ((queryProxy != null && queryProxy.getNumberOfReplicas() > 1) || !isReplicaLocal(queryProxy))){
 
 				String sql = null;
 				if (isPreparedStatement()){
@@ -180,56 +183,59 @@ public class Update extends Prepared {
 	 */
 	private String adjustForPreparedStatement() throws SQLException {
 
+		String sql = null;
+		try{
 
+			//Adjust the sqlStatement string to contain actual data.
 
+			//if this is a prepared statement the SQL must look like: update bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
+			//use the loop structure from below to obtain this information. how do you know if it is a prepared statement.
 
-		//Adjust the sqlStatement string to contain actual data.
+			Expression[] expr = expressions;
+			String[] values = new String[expressions.length + 1]; //The last expression is the where condition, everything before it is part of the set expression.
+			Column[] columns = table.getColumns();
 
-		//if this is a prepared statement the SQL must look like: update bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
-		//use the loop structure from below to obtain this information. how do you know if it is a prepared statement.
+			/*
+			 * 'Expressions' stores all of the expressions being set by this update. The expression will be null if nothing is being set.
+			 * 'Condition' stores the set condition.
+			 */
+			for (int i = 0; i < (expressions.length); i++) {
 
-		Expression[] expr = expressions;
-		String[] values = new String[expressions.length + 1]; //The last expression is the where condition, everything before it is part of the set expression.
-		Column[] columns = table.getColumns();
-		
-		/*
-		 * 'Expressions' stores all of the expressions being set by this update. The expression will be null if nothing is being set.
-		 * 'Condition' stores the set condition.
-		 */
-		for (int i = 0; i < (expressions.length); i++) {
+				Column c = columns[i];
+				int index = c.getColumnId();
+				Expression e = expr[i];
 
-			Column c = columns[i];
-			int index = c.getColumnId();
-			Expression e = expr[i];
-
-			evaluateExpression(e, values, i, c.getType(), expr);
-		}
-
-		int y = 2;
-		
-		Comparison comparison = ((Comparison)condition);
-		Expression setExpression = comparison.getExpression(false);
-		
-		evaluateExpression(setExpression, values, y, setExpression.getType(), expr);
-		
-		//Edit the SQL String
-		//Example: update bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
-		String sql = new String(sqlStatement) + " {";
-
-		boolean addComma = false;
-		int count = 1;
-		for (int i = 1; i <= values.length; i++){
-			if (values[i-1] != null){
-				if (addComma) sql += ", ";
-				else addComma = true;
-				
-				sql += count + ": " + values[i-1];
-				
-				count++;
+				evaluateExpression(e, values, i, c.getType(), expr);
 			}
-		}
-		sql += "};";
 
+			int y = 2;
+
+			Comparison comparison = ((Comparison)condition);
+			Expression setExpression = comparison.getExpression(false);
+
+			evaluateExpression(setExpression, values, y, setExpression.getType(), expr);
+
+			//Edit the SQL String
+			//Example: update bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
+			sql = new String(sqlStatement) + " {";
+
+			boolean addComma = false;
+			int count = 1;
+			for (int i = 1; i <= values.length; i++){
+				if (values[i-1] != null){
+					if (addComma) sql += ", ";
+					else addComma = true;
+
+					sql += count + ": " + values[i-1];
+
+					count++;
+				}
+			}
+			sql += "};";
+		} catch(SQLException e){
+			e.printStackTrace();
+			throw e;
+		}
 		return sql;
 	}
 

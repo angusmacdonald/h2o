@@ -3,9 +3,8 @@ Version History
 
 H2O Version 0.2.2
 	Adds local caching of Table Manager proxies + bypass of RMI where possible (10x speed increase for read queries on single machine).
-	
 H2O Version 0.2.3
-	DROP ALL OBJECTS command now works with System Table
+	DROP ALL OBJECTS command now works with System Table.
 	SYSTEM_RANGE command now works.
 	TestBigResult class from H2 now integrated as unit test.
 	Added support for immediate replication of newly created tables.
@@ -18,5 +17,7 @@ H2O Version 0.2.4
 	COMMIT operations now executed in parallel.
 	Fixed a remote access error for H2 TCP connections.
 H2O Version 0.2.5 (Unreleased)
-	Single machine local INSERT queries are only parsed once.
-	Changed from StringBuffer to StringBuilder
+	Single machine local INSERT, UPDATE, and DELETE queries are only parsed once.
+	Changed from StringBuffer to StringBuilder.
+	Removed un-necessary repeated work in TransactionNameGenerator class.
+	VACUUM ANALYZE queries will execute ANALYZE command even though VACUUM isn't supported directly.

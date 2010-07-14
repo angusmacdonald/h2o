@@ -458,6 +458,8 @@ public class Parser {
 			case 'V':
 				if (readIf("VALUES")) {
 					c = parserCall();
+				} else if (readIf("VACUUM")) {
+					c = parserVacuum();
 				}
 				break;
 			case 'W':
@@ -508,6 +510,8 @@ public class Parser {
 	}
 
 
+
+
 	private SQLException getSyntaxError() {
 		if (expectedList == null || expectedList.size() == 0) {
 			return Message.getSyntaxError(sqlCommand, parseIndex);
@@ -527,6 +531,21 @@ public class Parser {
 		read("TO");
 		command.setFileName(readExpression());
 		return command;
+	}
+
+	/**
+	 * H2O: The VACUUM command isn't implemented in H2O, but it is used
+	 * in some benchmarking tools, so its been added here. ANALYZE is implemented,
+	 * so if VACUUM ANALYZE is called the database will execute the latter part of the query.
+	 * @return
+	 * @throws SQLException
+	 */
+	private Prepared parserVacuum() throws SQLException {
+		if (readIf("ANALYZE")){
+			return parseAnalyze();}
+		else {
+			throw new SQLException("Not implemented in H2O.");
+		}
 	}
 
 	private Prepared parseAnalyze() throws SQLException {
@@ -4970,7 +4989,7 @@ public class Parser {
 				next.setIfNotExists(ifNotExists);
 				next.setTableName(tableName);
 				next.setComment(readCommentIf());
-				
+
 				parseReplicaTypingInformation(empty, command, tableName, schema);
 
 
@@ -5016,7 +5035,7 @@ public class Parser {
 	 */
 	private void parseReplicaTypingInformation(boolean empty,
 			CreateReplica command, String tableName, Schema schema)
-			throws SQLException {
+	throws SQLException {
 		if (empty){
 			if (readIf("AS")) {
 				command.setQuery(parseSelect());

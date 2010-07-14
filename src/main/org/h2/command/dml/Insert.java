@@ -112,7 +112,7 @@ public class Insert extends Prepared{
 		/*
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
-		if (isRegularTable() && (queryProxy.getNumberOfReplicas() > 1 || !isReplicaLocal())){ // && queryProxy.getNumberOfReplicas() > 1
+		if (isRegularTable() && (queryProxy.getNumberOfReplicas() > 1 || !isReplicaLocal(queryProxy))){ // && queryProxy.getNumberOfReplicas() > 1
 			String sql;
 
 			if (isPreparedStatement()){
@@ -188,20 +188,6 @@ public class Insert extends Prepared{
 			table.fireAfter(session);
 		}
 		return count;
-	}
-
-	/**
-	 * True if every replica is local. This will only be the case if there is only one replica.
-	 * @return
-	 */
-	private boolean isReplicaLocal() {
-
-		for (DatabaseInstanceWrapper replica: queryProxy.getReplicaLocations()){
-			if (!this.session.getDatabase().getURL().equals(replica.getDatabaseURL()))
-				return false;
-		}
-		
-		return true;
 	}
 
 

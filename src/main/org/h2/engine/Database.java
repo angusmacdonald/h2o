@@ -41,6 +41,7 @@ import org.h2.h2o.remote.IDatabaseRemote;
 import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LocalH2OProperties;
+import org.h2.h2o.util.TransactionNameGenerator;
 import org.h2.h2o.util.locator.H2OLocatorInterface;
 import org.h2.index.Cursor;
 import org.h2.index.Index;
@@ -213,6 +214,8 @@ public class Database implements DataHandler {
 	private Session h2oSystemSession;
 	
 	private Settings databaseSettings;
+
+	private TransactionNameGenerator transactionNameGenerator;
 	
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
 
@@ -226,7 +229,8 @@ public class Database implements DataHandler {
 		Constants.IS_TESTING_QUERY_FAILURE = false;
 		Constants.IS_TESTING_CREATETABLE_FAILURE = false;
 
-
+		this.transactionNameGenerator = new TransactionNameGenerator(localMachineLocation);
+		
 		this.compareMode = new CompareMode(null, null, 0);
 
 		systemTableRef = new SystemTableReference(this);
@@ -2768,6 +2772,10 @@ public class Database implements DataHandler {
 
 	public Settings getDatabaseSettings() {
 		return databaseSettings;
+	}
+
+	public TransactionNameGenerator getTransactionNameGenerator() {
+		return transactionNameGenerator;
 	}
 
 

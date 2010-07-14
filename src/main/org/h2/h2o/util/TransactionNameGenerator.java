@@ -1,12 +1,5 @@
 package org.h2.h2o.util;
 
-import static org.junit.Assert.assertNotNull;
-
-import java.rmi.RemoteException;
-
-import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
-import org.junit.Test;
-
 /**
  *Utility class which generates unique names for transactions. 
  *
@@ -14,40 +7,56 @@ import org.junit.Test;
  */
 public class TransactionNameGenerator {
 
-	private static long lastNumber = 0;
+	private long lastNumber = 0;
 
 	/**
-	 * Generate a unique name for a new transaction based on the identity of the requesting database.
-	 * @param requestingDatabase 	Proxy representing the database making the request.
-	 * @return
+	 * Used when no database name is specified to avoid unnecessarily contacting local instance of this class.
 	 */
-	public static synchronized String generateName(DatabaseInstanceRemote requestingDatabase){
+	private static long lastStaticNumber = 0;
+	
+	private String prefix;
+	
+	public TransactionNameGenerator(DatabaseURL url){
+		this.prefix = generatePrefix(url);
+	}	
+	
+	public TransactionNameGenerator(DatabaseURL url, long startNumber) {
+		this(url);
+		this.lastNumber = startNumber;
+	}
+
+	private String generatePrefix(DatabaseURL url){
 
 		String part = "";
 		
-		if (requestingDatabase == null){
+		if (url == null){
 			part = "UnknownDB";
 		} else {
 
-			try {
-				DatabaseURL dbURL = requestingDatabase.getConnectionURL();
-				String hostname = dbURL.getHostname();
+				String hostname = url.getHostname();
 				
 				if (hostname == null){
 					hostname = "local";
 				}
 				
-				part = (dbURL.isTcp()? hostname.replace(".", "") + dbURL.getPort(): "") + dbURL.getDbLocationWithoutIllegalCharacters();
-			} catch (RemoteException e) {
-				part = "UnknownDB";
-			}
+				part = (url.isTcp()? hostname.replace(".", "") + url.getPort(): "") + url.getDbLocationWithoutIllegalCharacters();
+
 
 		}
-
-		return generateFullTransactionName(part);
+		
+		return part;
+	}
+	
+	/**
+	 * Generate a unique name for a new transaction based on the identity of the requesting database.
+	 * @param requestingDatabase 	Proxy representing the database making the request.
+	 * @return
+	 */
+	public String generateName(){
+		return generateFullTransactionName(prefix);
 	}
 
-	private static String generateFullTransactionName(String part){
+	private String generateFullTransactionName(String part){
 		String transactionName = "TRANSACTION_";
 
 		transactionName += part;
@@ -66,36 +75,16 @@ public class TransactionNameGenerator {
 	 * @param tableName Name of a table involved in the transaction.
 	 * @return
 	 */
-	public static String generateName(String string) {
-		return generateFullTransactionName(string);
-	}
-	
-	/**
-	 * Test that transaction names are correctly generated even when the number of transactions
-	 * exceeds the maximum allowed long value.
-	 */
-	@Test
-	public void testGeneration(){
-		lastNumber = Long.MAX_VALUE - 1000;
-		
-		for (long i = 0; i < 2000; i++){
-			generateName("test");
+	public static String generateName(String part) {
+		String transactionName = "TRANSACTION_";
+
+		transactionName += part;
+
+		if (lastStaticNumber == Long.MAX_VALUE){
+			lastStaticNumber = -1;
 		}
+		
+		return (transactionName + "_" + lastStaticNumber++).toUpperCase();
 	}
-	
-	/**
-	 * Check that a null Database Instance parameter is handled without error.
-	 */
-	@Test
-	public void nullCheck(){
-		assertNotNull(generateName((DatabaseInstanceRemote)null));
-	}
-	
-	/**
-	 * Check that a null string parameter is handled without error.
-	 */
-	@Test
-	public void nullCheck2(){
-		assertNotNull(generateName((String)null));
-	}
+
 }

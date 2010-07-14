@@ -81,7 +81,7 @@ public class QueryProxyManager {
 	public QueryProxyManager(Database db, Session session, boolean metaRecordProxy) {
 		this.localDatabase = db.getLocalDatabaseInstanceInWrapper();
 
-		this.transactionName = TransactionNameGenerator.generateName(this.localDatabase.getDatabaseInstance()); 
+		this.transactionName = db.getTransactionNameGenerator().generateName(); 
 
 		this.parser = new Parser(session, true);
 
