@@ -161,7 +161,7 @@ public class LocatorTests{
 	@Test
 	public void writeThenReadDatabaseInstances(){
 
-		String[] locatorLocations = {"eigg:20000"};
+		String[] locatorLocations = {"localhost:20000"};
 		H2OLocatorInterface locatorInterface = null;
 		try {
 			locatorInterface = new H2OLocatorInterface(locatorLocations);
@@ -180,7 +180,7 @@ public class LocatorTests{
 	 */
 	@Test
 	public void locatorServerNotFound(){
-		String[] locatorLocations = {"eigg:12111"};
+		String[] locatorLocations = {"localhost:12111"};
 		H2OLocatorInterface locatorInterface = null;
 
 		/*
@@ -219,7 +219,7 @@ public class LocatorTests{
 	@Test
 	public void writeThenReadDatabaseInstancesMultipleLocators(){
 
-		String[] locatorLocations = {"eigg:20000", "eigg:20001", "eigg:20002"};
+		String[] locatorLocations = {"localhost:20000", "localhost:20001", "localhost:20002"};
 		H2OLocatorInterface locatorInterface = null;
 		try {
 			locatorInterface = new H2OLocatorInterface(locatorLocations);
@@ -240,7 +240,7 @@ public class LocatorTests{
 	@Test
 	public void writeDatabaseInstancesMultipleFailedLocators(){
 
-		String[] locatorLocations = {"eigg:20000", "eigg:20007", "eigg:20008"};
+		String[] locatorLocations = {"localhost:20000", "localhost:20007", "localhost:20008"};
 		H2OLocatorInterface locatorInterface = null;
 
 		boolean successful = false;
@@ -284,7 +284,7 @@ public class LocatorTests{
 	@Test
 	public void majorityNoFailure(){
 
-		String[] locatorLocations = {"eigg:20000", "eigg:20001"};
+		String[] locatorLocations = {"localhost:20000", "localhost:20001"};
 		
 		H2OLocatorInterface locatorInterface = null;
 		try {
@@ -319,7 +319,7 @@ public class LocatorTests{
 	@Test
 	public void failureNoGetRequest(){
 
-		String[] locatorLocations = {"eigg:20000", "eigg:20001"};
+		String[] locatorLocations = {"localhost:20000", "localhost:20001"};
 		H2OLocatorInterface locatorInterface = null;
 		try {
 			locatorInterface = new H2OLocatorInterface(locatorLocations);
@@ -347,7 +347,7 @@ public class LocatorTests{
 	@Test
 	public void majorityThenCommit(){
 
-		String[] locatorLocations = {"eigg:20000", "eigg:20001", "eigg:20008"};
+		String[] locatorLocations = {"localhost:20000", "localhost:20001", "localhost:20008"};
 		H2OLocatorInterface locatorInterface = null;
 		try {
 			locatorInterface = new H2OLocatorInterface(locatorLocations);
@@ -396,7 +396,7 @@ public class LocatorTests{
 	@Test
 	public void commitFail(){
 
-		String[] locatorLocations = {"eigg:20000", "eigg:20001", "eigg:20008"};
+		String[] locatorLocations = {"localhost:20000", "localhost:20001", "localhost:20008"};
 		H2OLocatorInterface locatorInterface = null;
 		try {
 			locatorInterface = new H2OLocatorInterface(locatorLocations);
@@ -443,7 +443,7 @@ public class LocatorTests{
 	@Test
 	public void commitCheckUpdateCount(){
 
-		String[] locatorLocations = {"eigg:20000", "eigg:20001", "eigg:20002"};
+		String[] locatorLocations = {"localhost:20000", "localhost:20001", "localhost:20002"};
 		String[] replicaLocations = {"test1:databaseOnDisk", "test2:databaseOnDisk", "test3:databaseOnDisk", "test4:databaseOnDisk"};
 		H2OLocatorInterface locatorInterface = null;
 		try {
@@ -515,7 +515,7 @@ public class LocatorTests{
 	 */
 	@Test
 	public void majorityThenFailure() throws InterruptedException{
-		String[] locatorLocations = {"eigg:20000", "eigg:20001", "eigg:20002"};
+		String[] locatorLocations = {"localhost:20000", "localhost:20001", "localhost:20002"};
 		String[] replicaLocations = {"test1:databaseOnDisk", "test2:databaseOnDisk", "test3:databaseOnDisk", "test4:databaseOnDisk"};
 		H2OLocatorInterface locatorInterface = null;
 		try {
