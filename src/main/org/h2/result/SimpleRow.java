@@ -13,41 +13,41 @@ import org.h2.value.Value;
  */
 public class SimpleRow implements SearchRow {
 
-    private int pos;
-    private int version;
-    private Value[] data;
+	private int pos;
+	private int version;
+	private Value[] data;
 
-    public SimpleRow(Value[] data) {
-        this.data = data;
-    }
+	public SimpleRow(Value[] data) {
+		this.data = data;
+	}
 
-    public int getColumnCount() {
-        return data.length;
-    }
+	public int getColumnCount() {
+		return data.length;
+	}
 
-    public int getPos() {
-        return pos;
-    }
+	public int getPos() {
+		return pos;
+	}
 
-    public void setPos(int pos) {
-        this.pos = pos;
-    }
+	public void setPos(int pos) {
+		this.pos = pos;
+	}
 
-    public void setPosAndVersion(SearchRow row) {
-        pos = row.getPos();
-        version = row.getVersion();
-    }
+	public void setPosAndVersion(SearchRow row) {
+		pos = row.getPos();
+		version = row.getVersion();
+	}
 
-    public int getVersion() {
-        return version;
-    }
+	public int getVersion() {
+		return version;
+	}
 
-    public void setValue(int i, Value v) {
-        data[i] = v;
-    }
+	public void setValue(int i, Value v) {
+		data[i] = v;
+	}
 
-    public Value getValue(int i) {
-        return data[i];
-    }
+	public Value getValue(int i) {
+		return data[i];
+	}
 
 }

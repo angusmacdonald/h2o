@@ -1,3 +1,20 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.test.h2o;
 
 
@@ -30,13 +47,13 @@ public class RestartTests {
 	private static final String BASEDIR = "db_data/unittests/";
 
 	private Connection conn = null;
-	
+
 	private Server server = null;
-	
+
 	private Statement sa = null;
 
 	private LocatorServer ls;
-	
+
 	@BeforeClass
 	public static void initialSetUp(){
 		Diagnostic.setLevel(DiagnosticLevel.FULL);
@@ -46,13 +63,13 @@ public class RestartTests {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		
+
 		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-	//	PersistentSystemTable.USERNAME = "sa";
+		//	PersistentSystemTable.USERNAME = "sa";
 		//PersistentSystemTable.PASSWORD = "sa";
 
 	}
-	
+
 	/**
 	 * Starts up a TCP server, adds some stuff, then keeps it running.
 	 * @throws java.lang.Exception
@@ -66,7 +83,7 @@ public class RestartTests {
 
 	}
 
-	
+
 	/**
 	 * @throws java.lang.Exception
 	 */
@@ -81,14 +98,14 @@ public class RestartTests {
 		// stop the server
 		server.stop();
 
-		
+
 		TestBase.closeDatabaseCompletely();
 		try {
 			DeleteDbFiles.execute(BASEDIR, "schema_test", true);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		
+
 		ls.setRunning(false);
 		while (!ls.isFinished()){};
 	}
@@ -100,9 +117,9 @@ public class RestartTests {
 	 */
 	@Test
 	public void basicRestart() throws ClassNotFoundException{
-	
+
 		try {
-			
+
 			server = Server.createTcpServer(new String[] { "-tcpPort", "8585", "-SMLocation", "jdbc:h2:sm:tcp://localhost:8585/db_data/unittests/schema_test" });
 			server.start();
 
@@ -114,9 +131,9 @@ public class RestartTests {
 			sa.executeUpdate("CREATE TABLE TEST6(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 			sa.executeUpdate("INSERT INTO TEST6 VALUES(1, 'Hello');");
 			sa.executeUpdate("INSERT INTO TEST6 VALUES(2, 'World');");
-			
-			
-			
+
+
+
 			TestBase.resetLocatorFile();
 			shutdownServer();
 

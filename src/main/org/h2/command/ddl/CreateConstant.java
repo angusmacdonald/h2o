@@ -23,44 +23,44 @@ import org.h2.value.Value;
  */
 public class CreateConstant extends SchemaCommand {
 
-    private String constantName;
-    private Expression expression;
-    private boolean ifNotExists;
+	private String constantName;
+	private Expression expression;
+	private boolean ifNotExists;
 
-    public CreateConstant(Session session, Schema schema) {
-        super(session, schema);
-    }
+	public CreateConstant(Session session, Schema schema) {
+		super(session, schema);
+	}
 
-    public void setIfNotExists(boolean ifNotExists) {
-        // TODO constant: if exists - probably better use 'or replace'
-        this.ifNotExists = ifNotExists;
-    }
+	public void setIfNotExists(boolean ifNotExists) {
+		// TODO constant: if exists - probably better use 'or replace'
+		this.ifNotExists = ifNotExists;
+	}
 
-    public int update() throws SQLException {
-        session.commit(true);
-        session.getUser().checkAdmin();
-        Database db = session.getDatabase();
-        if (getSchema().findConstant(constantName) != null) {
-            if (ifNotExists) {
-                return 0;
-            }
-            throw Message.getSQLException(ErrorCode.CONSTANT_ALREADY_EXISTS_1, constantName);
-        }
-        int id = getObjectId(false, true);
-        Constant constant = new Constant(getSchema(), id, constantName);
-        expression = expression.optimize(session);
-        Value value = expression.getValue(session);
-        constant.setValue(value);
-        db.addSchemaObject(session, constant);
-        return 0;
-    }
+	public int update() throws SQLException {
+		session.commit(true);
+		session.getUser().checkAdmin();
+		Database db = session.getDatabase();
+		if (getSchema().findConstant(constantName) != null) {
+			if (ifNotExists) {
+				return 0;
+			}
+			throw Message.getSQLException(ErrorCode.CONSTANT_ALREADY_EXISTS_1, constantName);
+		}
+		int id = getObjectId(false, true);
+		Constant constant = new Constant(getSchema(), id, constantName);
+		expression = expression.optimize(session);
+		Value value = expression.getValue(session);
+		constant.setValue(value);
+		db.addSchemaObject(session, constant);
+		return 0;
+	}
 
-    public void setConstantName(String constantName) {
-        this.constantName = constantName;
-    }
+	public void setConstantName(String constantName) {
+		this.constantName = constantName;
+	}
 
-    public void setExpression(Expression expr) {
-        this.expression = expr;
-    }
+	public void setExpression(Expression expr) {
+		this.expression = expr;
+	}
 
 }

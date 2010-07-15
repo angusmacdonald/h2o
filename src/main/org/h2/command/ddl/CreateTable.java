@@ -24,7 +24,6 @@ import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
 import org.h2.h2o.comms.AsynchronousQueryExecutor;
-import org.h2.h2o.comms.DatabaseInstance;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
@@ -49,7 +48,6 @@ import org.h2.value.DataType;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
-import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * This class represents the statement
@@ -352,11 +350,11 @@ public class CreateTable extends SchemaCommand {
 			sql = "CREATE EMPTY REPLICA" + sql;
 
 
-			
+
 			//Get the set of only remote replica locations.
-			
+
 			boolean[] commit = new boolean[replicaLocations.size()];
-			
+
 			//Execute query.
 			AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor();
 			queryExecutor.executeQuery(sql, transactionName, replicaLocations, session, commit, false);

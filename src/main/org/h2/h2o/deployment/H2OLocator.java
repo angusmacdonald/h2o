@@ -1,3 +1,20 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.h2o.deployment;
 
 import java.io.File;
@@ -7,7 +24,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
-import org.h2.h2o.autonomic.Settings;
 import org.h2.h2o.util.locator.LocatorServer;
 import org.h2.util.NetUtils;
 
@@ -94,20 +110,20 @@ public class H2OLocator {
 		} else {
 			server.run();
 		}
-		
+
 		return descriptorFileLocation;
 	}
 
 	private String createDescriptorFile(String locatorLocation) throws FileNotFoundException, IOException {
 
 		String descriptorFilename = defaultLocation + File.separator +databaseName + ".h2od";
-		
+
 		File f = new File(defaultLocation);
-		
+
 		if (!f.exists()){
 			f.mkdir();
 		}
-		
+
 		f = new File(descriptorFilename);
 		try {
 			f.createNewFile();
@@ -121,7 +137,7 @@ public class H2OLocator {
 
 		descriptor.setProperty("databaseName", databaseName);
 		descriptor.setProperty("locatorLocations", locatorLocation);
-	
+
 		descriptor.store(fos, "H2O Database Descriptor file.");
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "\n\tThe descriptor file for this database has been created at: " + f.getAbsolutePath() + "\n\t"

@@ -113,10 +113,10 @@ public class AlterTableAddConstraint extends SchemaCommand {
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
 		if (isRegularTable()){
-			
+
 			//			if (queryProxy.getNumberOfReplicas() > 1){
 			if (sqlStatement != null){
-				
+
 				if (queryProxy == null){
 					queryProxy = QueryProxy.getQueryProxyAndLock(getSchema().getTableOrView(session, tableName), LockType.WRITE, session.getDatabase());
 				}

@@ -13,11 +13,11 @@ package org.h2.jaqu.util;
  */
 public class ClassUtils {
 
-    private ClassUtils() {
-        // utility class
-    }
+	private ClassUtils() {
+		// utility class
+	}
 
-/*## Java 1.5 begin ##
+	/*## Java 1.5 begin ##
 
     @SuppressWarnings("unchecked")
     public

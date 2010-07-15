@@ -21,54 +21,54 @@ import org.h2.value.ValueBoolean;
  */
 public class ConditionExists extends Condition {
 
-    private final Query query;
+	private final Query query;
 
-    public ConditionExists(Query query) {
-        this.query = query;
-    }
+	public ConditionExists(Query query) {
+		this.query = query;
+	}
 
-    public Value getValue(Session session) throws SQLException {
-        query.setSession(session);
-        LocalResult result = query.query(1);
-        session.addTemporaryResult(result);
-        boolean r = result.getRowCount() > 0;
-        return ValueBoolean.get(r);
-    }
+	public Value getValue(Session session) throws SQLException {
+		query.setSession(session);
+		LocalResult result = query.query(1);
+		session.addTemporaryResult(result);
+		boolean r = result.getRowCount() > 0;
+		return ValueBoolean.get(r);
+	}
 
-    public Expression optimize(Session session) throws SQLException {
-        query.prepare();
-        return this;
-    }
+	public Expression optimize(Session session) throws SQLException {
+		query.prepare();
+		return this;
+	}
 
-    public String getSQL() {
-        StringBuilder buff = new StringBuilder();
-        buff.append("EXISTS(");
-        buff.append(query.getPlanSQL());
-        buff.append(")");
-        return buff.toString();
-    }
+	public String getSQL() {
+		StringBuilder buff = new StringBuilder();
+		buff.append("EXISTS(");
+		buff.append(query.getPlanSQL());
+		buff.append(")");
+		return buff.toString();
+	}
 
-    public void updateAggregate(Session session) {
-        // TODO exists: is it allowed that the subquery contains aggregates?
-        // probably not
-        // select id from test group by id having exists (select * from test2
-        // where id=count(test.id))
-    }
+	public void updateAggregate(Session session) {
+		// TODO exists: is it allowed that the subquery contains aggregates?
+		// probably not
+		// select id from test group by id having exists (select * from test2
+		// where id=count(test.id))
+	}
 
-    public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
-        query.mapColumns(resolver, level + 1);
-    }
+	public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
+		query.mapColumns(resolver, level + 1);
+	}
 
-    public void setEvaluatable(TableFilter tableFilter, boolean b) {
-        query.setEvaluatable(tableFilter, b);
-    }
+	public void setEvaluatable(TableFilter tableFilter, boolean b) {
+		query.setEvaluatable(tableFilter, b);
+	}
 
-    public boolean isEverything(ExpressionVisitor visitor) {
-        return query.isEverything(visitor);
-    }
+	public boolean isEverything(ExpressionVisitor visitor) {
+		return query.isEverything(visitor);
+	}
 
-    public int getCost() {
-        return 10 + (int) (10 * query.getCost());
-    }
+	public int getCost() {
+		return 10 + (int) (10 * query.getCost());
+	}
 
 }

@@ -17,46 +17,46 @@ import org.h2.store.Record;
  */
 public class BtreeHead extends Record {
 
-    private int rootPosition;
-    private boolean consistent;
+	private int rootPosition;
+	private boolean consistent;
 
-    public BtreeHead() {
-        // nothing to do
-    }
+	public BtreeHead() {
+		// nothing to do
+	}
 
-    public BtreeHead(DataPage s) {
-        rootPosition = s.readInt();
-        consistent = s.readInt() == 1;
-    }
+	public BtreeHead(DataPage s) {
+		rootPosition = s.readInt();
+		consistent = s.readInt() == 1;
+	}
 
-    boolean getConsistent() {
-        return consistent;
-    }
+	boolean getConsistent() {
+		return consistent;
+	}
 
-    void setConsistent(boolean b) {
-        this.consistent = b;
-    }
+	void setConsistent(boolean b) {
+		this.consistent = b;
+	}
 
-    public int getByteCount(DataPage dummy) {
-        return 1 + DataPage.LENGTH_INT;
-    }
+	public int getByteCount(DataPage dummy) {
+		return 1 + DataPage.LENGTH_INT;
+	}
 
-    public void write(DataPage buff) {
-        buff.writeByte((byte) 'H');
-        buff.writeInt(rootPosition);
-        buff.writeInt(consistent ? 1 : 0);
-    }
+	public void write(DataPage buff) {
+		buff.writeByte((byte) 'H');
+		buff.writeInt(rootPosition);
+		buff.writeInt(consistent ? 1 : 0);
+	}
 
-    void setRootPosition(int rootPosition) {
-        this.rootPosition = rootPosition;
-    }
+	void setRootPosition(int rootPosition) {
+		this.rootPosition = rootPosition;
+	}
 
-    int getRootPosition() {
-        return rootPosition;
-    }
+	int getRootPosition() {
+		return rootPosition;
+	}
 
-    public boolean isPinned() {
-        return true;
-    }
+	public boolean isPinned() {
+		return true;
+	}
 
 }

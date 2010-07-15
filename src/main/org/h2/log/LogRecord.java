@@ -11,24 +11,24 @@ package org.h2.log;
  */
 class LogRecord {
 
-    /**
-     * The log file of this record.
-     */
-    LogFile log;
+	/**
+	 * The log file of this record.
+	 */
+	LogFile log;
 
-    /**
-     * The position in the log file.
-     */
-    int logRecordId;
+	/**
+	 * The position in the log file.
+	 */
+	int logRecordId;
 
-    /**
-     * The session id of this record.
-     */
-    int sessionId;
+	/**
+	 * The session id of this record.
+	 */
+	int sessionId;
 
-    LogRecord(LogFile log, int logRecordId, int sessionId) {
-        this.log = log;
-        this.logRecordId = logRecordId;
-        this.sessionId = sessionId;
-    }
+	LogRecord(LogFile log, int logRecordId, int sessionId) {
+		this.log = log;
+		this.logRecordId = logRecordId;
+		this.sessionId = sessionId;
+	}
 }

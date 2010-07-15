@@ -19,58 +19,58 @@ import org.h2.value.ValueUuid;
  */
 public class TestValue extends TestBase {
 
-    /**
-     * Run just this test.
-     *
-     * @param a ignored
-     */
-    public static void main(String[] a) throws Exception {
-        TestBase.createCaller().init().test();
-    }
+	/**
+	 * Run just this test.
+	 *
+	 * @param a ignored
+	 */
+	public static void main(String[] a) throws Exception {
+		TestBase.createCaller().init().test();
+	}
 
-    public void test() throws SQLException {
-        testUUID();
-        testDouble(false);
-        testDouble(true);
-    }
+	public void test() throws SQLException {
+		testUUID();
+		testDouble(false);
+		testDouble(true);
+	}
 
-    private void testDouble(boolean useFloat) throws SQLException {
-        double[] d = new double[]{
-                Double.NEGATIVE_INFINITY,
-                -1,
-                0,
-                1,
-                Double.POSITIVE_INFINITY,
-                Double.NaN
-        };
-        Value[] values = new Value[d.length];
-        for (int i = 0; i < d.length; i++) {
-            Value v = useFloat ? (Value) ValueFloat.get((float) d[i]) : (Value) ValueDouble.get(d[i]);
-            values[i] = v;
-            assertTrue(values[i].compareTypeSave(values[i], null) == 0);
-            assertTrue(v.equals(v));
-            assertEquals(i < 2 ? -1 : i > 2 ? 1 : 0, v.getSignum());
-        }
-        for (int i = 0; i < d.length - 1; i++) {
-            assertTrue(values[i].compareTypeSave(values[i+1], null) < 0);
-            assertTrue(values[i + 1].compareTypeSave(values[i], null) > 0);
-            assertTrue(!values[i].equals(values[i+1]));
-        }
-    }
+	private void testDouble(boolean useFloat) throws SQLException {
+		double[] d = new double[]{
+				Double.NEGATIVE_INFINITY,
+				-1,
+				0,
+				1,
+				Double.POSITIVE_INFINITY,
+				Double.NaN
+		};
+		Value[] values = new Value[d.length];
+		for (int i = 0; i < d.length; i++) {
+			Value v = useFloat ? (Value) ValueFloat.get((float) d[i]) : (Value) ValueDouble.get(d[i]);
+			values[i] = v;
+			assertTrue(values[i].compareTypeSave(values[i], null) == 0);
+			assertTrue(v.equals(v));
+			assertEquals(i < 2 ? -1 : i > 2 ? 1 : 0, v.getSignum());
+		}
+		for (int i = 0; i < d.length - 1; i++) {
+			assertTrue(values[i].compareTypeSave(values[i+1], null) < 0);
+			assertTrue(values[i + 1].compareTypeSave(values[i], null) > 0);
+			assertTrue(!values[i].equals(values[i+1]));
+		}
+	}
 
-    private void testUUID() {
-        long maxHigh = 0, maxLow = 0, minHigh = -1L, minLow = -1L;
-        for (int i = 0; i < 100; i++) {
-            ValueUuid uuid = ValueUuid.getNewRandom();
-            maxHigh |= uuid.getHigh();
-            maxLow |= uuid.getLow();
-            minHigh &= uuid.getHigh();
-            minLow &= uuid.getLow();
-        }
-        ValueUuid max = ValueUuid.get(maxHigh, maxLow);
-        assertEquals(max.getString(), "ffffffff-ffff-4fff-bfff-ffffffffffff");
-        ValueUuid min = ValueUuid.get(minHigh, minLow);
-        assertEquals(min.getString(), "00000000-0000-4000-8000-000000000000");
-    }
+	private void testUUID() {
+		long maxHigh = 0, maxLow = 0, minHigh = -1L, minLow = -1L;
+		for (int i = 0; i < 100; i++) {
+			ValueUuid uuid = ValueUuid.getNewRandom();
+			maxHigh |= uuid.getHigh();
+			maxLow |= uuid.getLow();
+			minHigh &= uuid.getHigh();
+			minLow &= uuid.getLow();
+		}
+		ValueUuid max = ValueUuid.get(maxHigh, maxLow);
+		assertEquals(max.getString(), "ffffffff-ffff-4fff-bfff-ffffffffffff");
+		ValueUuid min = ValueUuid.get(minHigh, minLow);
+		assertEquals(min.getString(), "00000000-0000-4000-8000-000000000000");
+	}
 
 }

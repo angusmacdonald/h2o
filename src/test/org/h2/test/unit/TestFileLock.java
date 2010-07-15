@@ -20,108 +20,108 @@ import org.h2.test.TestBase;
  */
 public class TestFileLock extends TestBase implements Runnable {
 
-    private static final int KILL = 5;
-    private static final String FILE = baseDir + "/test.lock";
-    private static volatile int locks;
-    private static volatile boolean stop;
-    private TestBase base;
-    private int wait;
-    private boolean allowSockets;
+	private static final int KILL = 5;
+	private static final String FILE = baseDir + "/test.lock";
+	private static volatile int locks;
+	private static volatile boolean stop;
+	private TestBase base;
+	private int wait;
+	private boolean allowSockets;
 
-    public TestFileLock() {
-        // nothing to do
-    }
+	public TestFileLock() {
+		// nothing to do
+	}
 
-    TestFileLock(TestBase base, boolean allowSockets) {
-        this.base = base;
-        this.allowSockets = allowSockets;
-    }
+	TestFileLock(TestBase base, boolean allowSockets) {
+		this.base = base;
+		this.allowSockets = allowSockets;
+	}
 
-    /**
-     * Run just this test.
-     *
-     * @param a ignored
-     */
-    public static void main(String[] a) throws Exception {
-        TestBase.createCaller().init().test();
-    }
+	/**
+	 * Run just this test.
+	 *
+	 * @param a ignored
+	 */
+	public static void main(String[] a) throws Exception {
+		TestBase.createCaller().init().test();
+	}
 
-    public void test() throws Exception {
-        testSimple();
-        test(false);
-        test(true);
-    }
+	public void test() throws Exception {
+		testSimple();
+		test(false);
+		test(true);
+	}
 
-    private void testSimple() throws SQLException {
-        FileLock lock1 = new FileLock(new TraceSystem(null, false), FILE, Constants.LOCK_SLEEP);
-        FileLock lock2 = new FileLock(new TraceSystem(null, false), FILE, Constants.LOCK_SLEEP);
-        lock1.lock(FileLock.LOCK_FILE);
-        try {
-            lock2.lock(FileLock.LOCK_FILE);
-            fail();
-        } catch (Exception e) {
-            // expected
-        }
-        lock1.unlock();
-        lock2 = new FileLock(new TraceSystem(null, false), FILE, Constants.LOCK_SLEEP);
-        lock2.lock(FileLock.LOCK_FILE);
-        lock2.unlock();
-    }
+	private void testSimple() throws SQLException {
+		FileLock lock1 = new FileLock(new TraceSystem(null, false), FILE, Constants.LOCK_SLEEP);
+		FileLock lock2 = new FileLock(new TraceSystem(null, false), FILE, Constants.LOCK_SLEEP);
+		lock1.lock(FileLock.LOCK_FILE);
+		try {
+			lock2.lock(FileLock.LOCK_FILE);
+			fail();
+		} catch (Exception e) {
+			// expected
+		}
+		lock1.unlock();
+		lock2 = new FileLock(new TraceSystem(null, false), FILE, Constants.LOCK_SLEEP);
+		lock2.lock(FileLock.LOCK_FILE);
+		lock2.unlock();
+	}
 
-    private void test(boolean allowSockets) throws Exception {
-        int threadCount = getSize(3, 5);
-        wait = getSize(20, 200);
-        Thread[] threads = new Thread[threadCount];
-        new File(FILE).delete();
-        for (int i = 0; i < threadCount; i++) {
-            threads[i] = new Thread(new TestFileLock(this, allowSockets));
-            threads[i].start();
-            Thread.sleep(wait + (int) (Math.random() * wait));
-        }
-        trace("wait");
-        Thread.sleep(500);
-        stop = true;
-        trace("STOP file");
-        for (int i = 0; i < threadCount; i++) {
-            threads[i].join();
-        }
-        assertEquals(locks, 0);
-    }
+	private void test(boolean allowSockets) throws Exception {
+		int threadCount = getSize(3, 5);
+		wait = getSize(20, 200);
+		Thread[] threads = new Thread[threadCount];
+		new File(FILE).delete();
+		for (int i = 0; i < threadCount; i++) {
+			threads[i] = new Thread(new TestFileLock(this, allowSockets));
+			threads[i].start();
+			Thread.sleep(wait + (int) (Math.random() * wait));
+		}
+		trace("wait");
+		Thread.sleep(500);
+		stop = true;
+		trace("STOP file");
+		for (int i = 0; i < threadCount; i++) {
+			threads[i].join();
+		}
+		assertEquals(locks, 0);
+	}
 
-    public void run() {
-        while (!stop) {
-            FileLock lock = new FileLock(new TraceSystem(null, false), FILE, 100);
-            try {
-                lock.lock(allowSockets ? FileLock.LOCK_SOCKET : FileLock.LOCK_FILE);
-                base.trace(lock + " locked");
-                locks++;
-                if (locks > 1) {
-                    System.err.println("ERROR! LOCKS=" + locks + " sockets=" + allowSockets);
-                    stop = true;
-                }
-                Thread.sleep(wait + (int) (Math.random() * wait));
-                locks--;
-                if ((Math.random() * 50) < KILL) {
-                    base.trace(lock + " kill");
-                    lock = null;
-                    System.gc();
-                } else {
-                    base.trace(lock + " unlock");
-                    lock.unlock();
-                }
-                if (locks < 0) {
-                    System.err.println("ERROR! LOCKS=" + locks);
-                    stop = true;
-                }
-            } catch (Exception e) {
-                // log(id+" cannot lock: " + e);
-            }
-            try {
-                Thread.sleep(wait + (int) (Math.random() * wait));
-            } catch (InterruptedException e1) {
-                // ignore
-            }
-        }
-    }
+	public void run() {
+		while (!stop) {
+			FileLock lock = new FileLock(new TraceSystem(null, false), FILE, 100);
+			try {
+				lock.lock(allowSockets ? FileLock.LOCK_SOCKET : FileLock.LOCK_FILE);
+				base.trace(lock + " locked");
+				locks++;
+				if (locks > 1) {
+					System.err.println("ERROR! LOCKS=" + locks + " sockets=" + allowSockets);
+					stop = true;
+				}
+				Thread.sleep(wait + (int) (Math.random() * wait));
+				locks--;
+				if ((Math.random() * 50) < KILL) {
+					base.trace(lock + " kill");
+					lock = null;
+					System.gc();
+				} else {
+					base.trace(lock + " unlock");
+					lock.unlock();
+				}
+				if (locks < 0) {
+					System.err.println("ERROR! LOCKS=" + locks);
+					stop = true;
+				}
+			} catch (Exception e) {
+				// log(id+" cannot lock: " + e);
+			}
+			try {
+				Thread.sleep(wait + (int) (Math.random() * wait));
+			} catch (InterruptedException e1) {
+				// ignore
+			}
+		}
+	}
 
 }

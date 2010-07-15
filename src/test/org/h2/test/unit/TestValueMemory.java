@@ -54,208 +54,208 @@ import org.h2.value.ValueUuid;
  */
 public class TestValueMemory extends TestBase implements DataHandler {
 
-    private Random random = new Random(1);
-    private SmallLRUCache lobFileListCache = new SmallLRUCache(128);
+	private Random random = new Random(1);
+	private SmallLRUCache lobFileListCache = new SmallLRUCache(128);
 
-    /**
-     * Run just this test.
-     *
-     * @param a ignored
-     */
-    public static void main(String[] a) throws Exception {
-        TestBase.createCaller().init().test();
-    }
+	/**
+	 * Run just this test.
+	 *
+	 * @param a ignored
+	 */
+	public static void main(String[] a) throws Exception {
+		TestBase.createCaller().init().test();
+	}
 
-    public void test() throws SQLException {
-        for (int i = 0; i < Value.TYPE_COUNT; i++) {
-            testType(i);
-        }
-    }
+	public void test() throws SQLException {
+		for (int i = 0; i < Value.TYPE_COUNT; i++) {
+			testType(i);
+		}
+	}
 
-    private void testType(int type) throws SQLException {
-        System.gc();
-        System.gc();
-        long first = MemoryUtils.getMemoryUsed();
-        ArrayList list = new ArrayList();
-        long memory = 0;
-        for (int i = 0; memory < 1000000; i++) {
-            Value v = create(type);
-            memory += v.getMemory();
-            list.add(v);
-        }
-        Object[] array = list.toArray();
-        IdentityHashMap map = new IdentityHashMap();
-        for (int i = 0; i < array.length; i++) {
-            map.put(array[i], array[i]);
-        }
-        int size = map.size();
-        map.clear();
-        map = null;
-        list = null;
-        System.gc();
-        System.gc();
-        long used = MemoryUtils.getMemoryUsed() - first;
-        memory /= 1024;
-        if (used > memory * 3) {
-            fail("Type: " + type + " Used memory: " + used + " calculated: " + memory + " " + array.length + " size: " + size);
-        }
-    }
-    private Value create(int type) throws SQLException {
-        switch (type) {
-        case Value.NULL:
-            return ValueNull.INSTANCE;
-        case Value.BOOLEAN:
-            return ValueBoolean.get(false);
-        case Value.BYTE:
-            return ValueByte.get((byte) random.nextInt());
-        case Value.SHORT:
-            return ValueShort.get((short) random.nextInt());
-        case Value.INT:
-            return ValueInt.get(random.nextInt());
-        case Value.LONG:
-            return ValueLong.get(random.nextLong());
-        case Value.DECIMAL:
-            return ValueDecimal.get(new BigDecimal(random.nextInt()));
-            // + "12123344563456345634565234523451312312"
-        case Value.DOUBLE:
-            return ValueDouble.get(random.nextDouble());
-        case Value.FLOAT:
-            return ValueFloat.get(random.nextFloat());
-        case Value.TIME:
-            return ValueTime.get(new java.sql.Time(random.nextLong()));
-        case Value.DATE:
-            return ValueDate.get(new java.sql.Date(random.nextLong()));
-        case Value.TIMESTAMP:
-            return ValueTimestamp.get(new java.sql.Timestamp(random.nextLong()));
-        case Value.BYTES:
-            return ValueBytes.get(randomBytes(random.nextInt(1000)));
-        case Value.STRING:
-            return ValueString.get(randomString(random.nextInt(100)));
-        case Value.STRING_IGNORECASE:
-            return ValueStringIgnoreCase.get(randomString(random.nextInt(100)));
-        case Value.BLOB: {
-            int len = (int) Math.abs(random.nextGaussian() * 10);
-            byte[] data = randomBytes(len);
-            return ValueLob.createBlob(new ByteArrayInputStream(data), len, this);
-        }
-        case Value.CLOB: {
-            int len = (int) Math.abs(random.nextGaussian() * 10);
-            String s = randomString(len);
-            return ValueLob.createClob(new StringReader(s), len, this);
-        }
-        case Value.ARRAY: {
-            int len = random.nextInt(20);
-            Value[] list = new Value[len];
-            for (int i = 0; i < list.length; i++) {
-                list[i] = create(Value.STRING);
-            }
-            return ValueArray.get(list);
-        }
-        case Value.RESULT_SET:
-            // not supported currently
-            return ValueNull.INSTANCE;
-        case Value.JAVA_OBJECT:
-            return ValueJavaObject.getNoCopy(randomBytes(random.nextInt(100)));
-        case Value.UUID:
-            return ValueUuid.get(random.nextLong(), random.nextLong());
-        case Value.STRING_FIXED:
-            return ValueStringFixed.get(randomString(random.nextInt(100)));
-        default:
-            throw new Error("type=" + type);
-        }
-    }
+	private void testType(int type) throws SQLException {
+		System.gc();
+		System.gc();
+		long first = MemoryUtils.getMemoryUsed();
+		ArrayList list = new ArrayList();
+		long memory = 0;
+		for (int i = 0; memory < 1000000; i++) {
+			Value v = create(type);
+			memory += v.getMemory();
+			list.add(v);
+		}
+		Object[] array = list.toArray();
+		IdentityHashMap map = new IdentityHashMap();
+		for (int i = 0; i < array.length; i++) {
+			map.put(array[i], array[i]);
+		}
+		int size = map.size();
+		map.clear();
+		map = null;
+		list = null;
+		System.gc();
+		System.gc();
+		long used = MemoryUtils.getMemoryUsed() - first;
+		memory /= 1024;
+		if (used > memory * 3) {
+			fail("Type: " + type + " Used memory: " + used + " calculated: " + memory + " " + array.length + " size: " + size);
+		}
+	}
+	private Value create(int type) throws SQLException {
+		switch (type) {
+		case Value.NULL:
+			return ValueNull.INSTANCE;
+		case Value.BOOLEAN:
+			return ValueBoolean.get(false);
+		case Value.BYTE:
+			return ValueByte.get((byte) random.nextInt());
+		case Value.SHORT:
+			return ValueShort.get((short) random.nextInt());
+		case Value.INT:
+			return ValueInt.get(random.nextInt());
+		case Value.LONG:
+			return ValueLong.get(random.nextLong());
+		case Value.DECIMAL:
+			return ValueDecimal.get(new BigDecimal(random.nextInt()));
+			// + "12123344563456345634565234523451312312"
+		case Value.DOUBLE:
+			return ValueDouble.get(random.nextDouble());
+		case Value.FLOAT:
+			return ValueFloat.get(random.nextFloat());
+		case Value.TIME:
+			return ValueTime.get(new java.sql.Time(random.nextLong()));
+		case Value.DATE:
+			return ValueDate.get(new java.sql.Date(random.nextLong()));
+		case Value.TIMESTAMP:
+			return ValueTimestamp.get(new java.sql.Timestamp(random.nextLong()));
+		case Value.BYTES:
+			return ValueBytes.get(randomBytes(random.nextInt(1000)));
+		case Value.STRING:
+			return ValueString.get(randomString(random.nextInt(100)));
+		case Value.STRING_IGNORECASE:
+			return ValueStringIgnoreCase.get(randomString(random.nextInt(100)));
+		case Value.BLOB: {
+			int len = (int) Math.abs(random.nextGaussian() * 10);
+			byte[] data = randomBytes(len);
+			return ValueLob.createBlob(new ByteArrayInputStream(data), len, this);
+		}
+		case Value.CLOB: {
+			int len = (int) Math.abs(random.nextGaussian() * 10);
+			String s = randomString(len);
+			return ValueLob.createClob(new StringReader(s), len, this);
+		}
+		case Value.ARRAY: {
+			int len = random.nextInt(20);
+			Value[] list = new Value[len];
+			for (int i = 0; i < list.length; i++) {
+				list[i] = create(Value.STRING);
+			}
+			return ValueArray.get(list);
+		}
+		case Value.RESULT_SET:
+			// not supported currently
+			return ValueNull.INSTANCE;
+		case Value.JAVA_OBJECT:
+			return ValueJavaObject.getNoCopy(randomBytes(random.nextInt(100)));
+		case Value.UUID:
+			return ValueUuid.get(random.nextLong(), random.nextLong());
+		case Value.STRING_FIXED:
+			return ValueStringFixed.get(randomString(random.nextInt(100)));
+		default:
+			throw new Error("type=" + type);
+		}
+	}
 
-    private byte[] randomBytes(int len) {
-        byte[] data = new byte[len];
-        if (random.nextBoolean()) {
-            // don't initialize always (compression)
-            random.nextBytes(data);
-        }
-        return data;
-    }
+	private byte[] randomBytes(int len) {
+		byte[] data = new byte[len];
+		if (random.nextBoolean()) {
+			// don't initialize always (compression)
+			random.nextBytes(data);
+		}
+		return data;
+	}
 
-    private String randomString(int len) {
-        char[] chars = new char[len];
-        if (random.nextBoolean()) {
-            // don't initialize always (compression)
-            for (int i = 0; i < chars.length; i++) {
-                chars[i] = (char) (random.nextGaussian() * 100);
-            }
-        }
-        return new String(chars);
-    }
+	private String randomString(int len) {
+		char[] chars = new char[len];
+		if (random.nextBoolean()) {
+			// don't initialize always (compression)
+			for (int i = 0; i < chars.length; i++) {
+				chars[i] = (char) (random.nextGaussian() * 100);
+			}
+		}
+		return new String(chars);
+	}
 
-    public int allocateObjectId(boolean needFresh, boolean dataFile) {
-        return 0;
-    }
+	public int allocateObjectId(boolean needFresh, boolean dataFile) {
+		return 0;
+	}
 
-    public void checkPowerOff() {
-        // nothing to do
-    }
+	public void checkPowerOff() {
+		// nothing to do
+	}
 
-    public void checkWritingAllowed() {
-        // nothing to do
-    }
+	public void checkWritingAllowed() {
+		// nothing to do
+	}
 
-    public int compareTypeSave(Value a, Value b) {
-        return 0;
-    }
+	public int compareTypeSave(Value a, Value b) {
+		return 0;
+	}
 
-    public String createTempFile() throws SQLException {
-        String name = baseDir + "/valueMemory/data";
-        try {
-            return FileUtils.createTempFile(name, Constants.SUFFIX_TEMP_FILE, true, false);
-        } catch (IOException e) {
-            throw Message.convertIOException(e, name);
-        }
-    }
+	public String createTempFile() throws SQLException {
+		String name = baseDir + "/valueMemory/data";
+		try {
+			return FileUtils.createTempFile(name, Constants.SUFFIX_TEMP_FILE, true, false);
+		} catch (IOException e) {
+			throw Message.convertIOException(e, name);
+		}
+	}
 
-    public void freeUpDiskSpace() {
-        // nothing to do
-    }
+	public void freeUpDiskSpace() {
+		// nothing to do
+	}
 
-    public int getChecksum(byte[] data, int start, int end) {
-        return 0;
-    }
+	public int getChecksum(byte[] data, int start, int end) {
+		return 0;
+	}
 
-    public String getDatabasePath() {
-        return baseDir + "/valueMemory";
-    }
+	public String getDatabasePath() {
+		return baseDir + "/valueMemory";
+	}
 
-    public String getLobCompressionAlgorithm(int type) {
-        return "LZF";
-    }
+	public String getLobCompressionAlgorithm(int type) {
+		return "LZF";
+	}
 
-    public Object getLobSyncObject() {
-        return this;
-    }
+	public Object getLobSyncObject() {
+		return this;
+	}
 
-    public int getMaxLengthInplaceLob() {
-        return 100;
-    }
+	public int getMaxLengthInplaceLob() {
+		return 100;
+	}
 
-    public void handleInvalidChecksum() {
-        // nothing to do
-    }
+	public void handleInvalidChecksum() {
+		// nothing to do
+	}
 
-    public FileStore openFile(String name, String mode, boolean mustExist) throws SQLException {
-        return FileStore.open(this, name, mode);
-    }
+	public FileStore openFile(String name, String mode, boolean mustExist) throws SQLException {
+		return FileStore.open(this, name, mode);
+	}
 
-    public boolean getLobFilesInDirectories() {
-        return SysProperties.LOB_FILES_IN_DIRECTORIES;
-    }
+	public boolean getLobFilesInDirectories() {
+		return SysProperties.LOB_FILES_IN_DIRECTORIES;
+	}
 
-    public SmallLRUCache getLobFileListCache() {
-        return lobFileListCache;
-    }
+	public SmallLRUCache getLobFileListCache() {
+		return lobFileListCache;
+	}
 
-    public TempFileDeleter getTempFileDeleter() {
-        return TempFileDeleter.getInstance();
-    }
+	public TempFileDeleter getTempFileDeleter() {
+		return TempFileDeleter.getInstance();
+	}
 
-    public Trace getTrace() {
-        return null;
-    }
+	public Trace getTrace() {
+		return null;
+	}
 
 }

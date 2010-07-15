@@ -13,15 +13,15 @@ package org.h2.message;
  */
 public class InternalException extends RuntimeException {
 
-    private static final long serialVersionUID = -5369631382082604330L;
-    private Exception cause;
+	private static final long serialVersionUID = -5369631382082604330L;
+	private Exception cause;
 
-    public InternalException(Exception e) {
-        super(e.getMessage());
-        cause = e;
-    }
+	public InternalException(Exception e) {
+		super(e.getMessage());
+		cause = e;
+	}
 
-    public Exception getOriginalCause() {
-        return cause;
-    }
+	public Exception getOriginalCause() {
+		return cause;
+	}
 }

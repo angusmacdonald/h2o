@@ -17,65 +17,65 @@ import java.net.Socket;
  */
 public class Listener implements Runnable {
 
-    private volatile int maxValue;
+	private volatile int maxValue;
 
-    /**
-     * This method is called when executing this application from the command
-     * line.
-     *
-     * @param args the command line parameters
-     */
-    public static void main(String[] args) throws IOException {
-        new Listener().test(args);
-    }
+	/**
+	 * This method is called when executing this application from the command
+	 * line.
+	 *
+	 * @param args the command line parameters
+	 */
+	public static void main(String[] args) throws IOException {
+		new Listener().test(args);
+	}
 
-    private void test(String[] args) throws IOException {
-        int port = 9099;
-        for (int i = 0; i < args.length; i++) {
-            if (args[i].equals("-port")) {
-                port = Integer.parseInt(args[++i]);
-            }
-        }
-        listen(port);
-    }
+	private void test(String[] args) throws IOException {
+		int port = 9099;
+		for (int i = 0; i < args.length; i++) {
+			if (args[i].equals("-port")) {
+				port = Integer.parseInt(args[++i]);
+			}
+		}
+		listen(port);
+	}
 
-    public void run() {
-        while (true) {
-            try {
-                Thread.sleep(10000);
-            } catch (Exception e) {
-                // ignore
-            }
-            System.out.println("Max=" + maxValue);
-        }
-    }
+	public void run() {
+		while (true) {
+			try {
+				Thread.sleep(10000);
+			} catch (Exception e) {
+				// ignore
+			}
+			System.out.println("Max=" + maxValue);
+		}
+	}
 
-    private void listen(int port) throws IOException {
-        new Thread(this).start();
-        ServerSocket serverSocket = new ServerSocket(port);
-        System.out.println("Listening on " + serverSocket.toString());
-        long time;
-        maxValue = 0;
-        while (true) {
-            Socket socket = serverSocket.accept();
-            DataInputStream in = new DataInputStream(socket.getInputStream());
-            System.out.println("Connected");
-            time = System.currentTimeMillis();
-            try {
-                while (true) {
-                    int value = in.readInt();
-                    if (value < 0) {
-                        break;
-                    }
-                    maxValue = Math.max(maxValue, value);
-                }
-            } catch (IOException e) {
-                System.out.println("Closed with Exception: " + e);
-            }
-            time = System.currentTimeMillis() - time;
-            int operationsPerSecond = (int) (1000 * maxValue / time);
-            System.out.println("Max=" + maxValue + " operations/sec=" + operationsPerSecond);
-        }
-    }
+	private void listen(int port) throws IOException {
+		new Thread(this).start();
+		ServerSocket serverSocket = new ServerSocket(port);
+		System.out.println("Listening on " + serverSocket.toString());
+		long time;
+		maxValue = 0;
+		while (true) {
+			Socket socket = serverSocket.accept();
+			DataInputStream in = new DataInputStream(socket.getInputStream());
+			System.out.println("Connected");
+			time = System.currentTimeMillis();
+			try {
+				while (true) {
+					int value = in.readInt();
+					if (value < 0) {
+						break;
+					}
+					maxValue = Math.max(maxValue, value);
+				}
+			} catch (IOException e) {
+				System.out.println("Closed with Exception: " + e);
+			}
+			time = System.currentTimeMillis() - time;
+			int operationsPerSecond = (int) (1000 * maxValue / time);
+			System.out.println("Max=" + maxValue + " operations/sec=" + operationsPerSecond);
+		}
+	}
 
 }

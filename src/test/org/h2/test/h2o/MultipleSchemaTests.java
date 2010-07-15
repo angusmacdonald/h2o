@@ -1,3 +1,20 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.test.h2o;
 
 
@@ -28,7 +45,7 @@ public class MultipleSchemaTests extends TestBase {
 	@Test
 	public void TestSystemTableAdd(){
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
-		
+
 		try{
 
 			sa.execute("CREATE SCHEMA SCHEMA2");
@@ -63,8 +80,8 @@ public class MultipleSchemaTests extends TestBase {
 	@Test
 	public void TestSystemTableDrop(){
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
-		
-		
+
+
 		try{
 
 			sa.execute("CREATE SCHEMA SCHEMA2");
@@ -100,7 +117,7 @@ public class MultipleSchemaTests extends TestBase {
 			 */
 			sa.execute("SELECT tablename, schemaname FROM H2O.H2O_TABLE;");
 			rs = sa.getResultSet();	
-			
+
 			if (rs.next()){
 				assertEquals("TEST", rs.getString(1));
 				assertEquals("PUBLIC", rs.getString(2));
@@ -114,7 +131,7 @@ public class MultipleSchemaTests extends TestBase {
 			fail("An Unexpected SQLException was thrown.");
 		}
 	}
-	
+
 	/**
 	 * Tests that a non-default schema is dropped succussfully from the System Table.
 	 */
@@ -146,7 +163,7 @@ public class MultipleSchemaTests extends TestBase {
 			 */
 
 			sa.execute("DROP TABLE IF EXISTS SCHEMA2.TEST");
-			
+
 			sa.execute("DROP SCHEMA SCHEMA2");
 
 			int result = sa.getUpdateCount();
@@ -159,7 +176,7 @@ public class MultipleSchemaTests extends TestBase {
 			 */
 			sa.execute("SELECT tablename, schemaname FROM H2O.H2O_TABLE;");
 			rs = sa.getResultSet();	
-			
+
 			if (rs.next()){
 				assertEquals("TEST", rs.getString(1));
 				assertEquals("PUBLIC", rs.getString(2));
@@ -223,7 +240,7 @@ public class MultipleSchemaTests extends TestBase {
 	@Test
 	public void CreateMultipleTestReplicas(){
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
-		
+
 		try{
 
 			sa.execute("CREATE SCHEMA SCHEMA2");
@@ -321,7 +338,7 @@ public class MultipleSchemaTests extends TestBase {
 		}
 
 	}
-	
+
 	/**
 	 * Tests replication of an entire schema of tables.
 	 */

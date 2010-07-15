@@ -21,25 +21,25 @@ import org.h2.test.TestBase;
  * no more SQL injection.</p>
  */
 public class SamplesTest extends TestBase {
-    /**
-     * This object represents a database (actually a connection to the database).
-     */
-/*## Java 1.5 begin ##
+	/**
+	 * This object represents a database (actually a connection to the database).
+	 */
+	/*## Java 1.5 begin ##
     Db db;
 ## Java 1.5 end ##*/
 
-    /**
-     * This method is called when executing this application from the command
-     * line.
-     *
-     * @param args the command line parameters
-     */
-    public static void main(String[] args) {
-        new SamplesTest().test();
-    }
+	/**
+	 * This method is called when executing this application from the command
+	 * line.
+	 *
+	 * @param args the command line parameters
+	 */
+	public static void main(String[] args) {
+		new SamplesTest().test();
+	}
 
-    public void test() {
-/*## Java 1.5 begin ##
+	public void test() {
+		/*## Java 1.5 begin ##
         db = Db.open("jdbc:h2:mem:", "sa", "sa");
         db.insertAll(Product.getList());
         db.insertAll(Customer.getList());
@@ -72,9 +72,9 @@ public class SamplesTest extends TestBase {
         testWhereSimple3();
         db.close();
 ## Java 1.5 end ##*/
-    }
+	}
 
-/*## Java 1.5 begin ##
+	/*## Java 1.5 begin ##
     private void testWhereSimple2() {
 
 //            var soldOutProducts =
@@ -145,16 +145,16 @@ public class SamplesTest extends TestBase {
     }
 ## Java 1.5 end ##*/
 
-    /**
-     * A result set class containing the product name and price.
-     */
-    public static class ProductPrice {
-        public String productName;
-        public String category;
-        public Double price;
-    }
+	/**
+	 * A result set class containing the product name and price.
+	 */
+	public static class ProductPrice {
+		public String productName;
+		public String category;
+		public Double price;
+	}
 
-/*## Java 1.5 begin ##
+	/*## Java 1.5 begin ##
     private void testAnonymousTypes3() {
 
 //        var productInfos =
@@ -186,19 +186,19 @@ public class SamplesTest extends TestBase {
     }
 ## Java 1.5 end ##*/
 
-    /**
-     * A result set class containing customer data and the order total.
-     */
-    public static class CustOrder {
-        public String customerId;
-        public Integer orderId;
-        public BigDecimal total;
-        public String toString() {
-            return customerId + ":" + orderId + ":" + total;
-        }
-    }
+	/**
+	 * A result set class containing customer data and the order total.
+	 */
+	public static class CustOrder {
+		public String customerId;
+		public Integer orderId;
+		public BigDecimal total;
+		public String toString() {
+			return customerId + ":" + orderId + ":" + total;
+		}
+	}
 
-/*## Java 1.5 begin ##
+	/*## Java 1.5 begin ##
     private void testSelectManyCompoundFrom2() {
 
 //        var orders =
@@ -308,18 +308,18 @@ public class SamplesTest extends TestBase {
 
 ## Java 1.5 end ##*/
 
-    /**
-     * A result set class containing product groups.
-     */
-    public static class ProductGroup {
-        public String category;
-        public Long productCount;
-        public String toString() {
-            return category + ":" + productCount;
-        }
-    }
+	/**
+	 * A result set class containing product groups.
+	 */
+	public static class ProductGroup {
+		public String category;
+		public Long productCount;
+		public String toString() {
+			return category + ":" + productCount;
+		}
+	}
 
-/*## Java 1.5 begin ##
+	/*## Java 1.5 begin ##
     private void testGroup() {
 
 //      var orderGroups =

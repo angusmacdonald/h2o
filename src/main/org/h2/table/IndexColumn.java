@@ -16,68 +16,68 @@ import org.h2.result.SortOrder;
  */
 public class IndexColumn {
 
-    /**
-     * The column name.
-     */
-    public String columnName;
+	/**
+	 * The column name.
+	 */
+	public String columnName;
 
-    /**
-     * The column, or null if not set.
-     */
-    public Column column;
+	/**
+	 * The column, or null if not set.
+	 */
+	public Column column;
 
-    /**
-     * The sort type. Ascending (the default) and descending are supported;
-     * nulls can be sorted first or last.
-     */
-    public int sortType = SortOrder.ASCENDING;
+	/**
+	 * The sort type. Ascending (the default) and descending are supported;
+	 * nulls can be sorted first or last.
+	 */
+	public int sortType = SortOrder.ASCENDING;
 
-    /**
-     * Get the SQL snippet for this index column.
-     *
-     * @return the SQL snippet
-     */
-    public String getSQL() {
-        StringBuilder buff = new StringBuilder(column.getSQL());
-        if ((sortType & SortOrder.DESCENDING) != 0) {
-            buff.append(" DESC");
-        }
-        if ((sortType & SortOrder.NULLS_FIRST) != 0) {
-            buff.append(" NULLS FIRST");
-        } else if ((sortType & SortOrder.NULLS_LAST) != 0) {
-            buff.append(" NULLS LAST");
-        }
-        return buff.toString();
-    }
+	/**
+	 * Get the SQL snippet for this index column.
+	 *
+	 * @return the SQL snippet
+	 */
+	public String getSQL() {
+		StringBuilder buff = new StringBuilder(column.getSQL());
+		if ((sortType & SortOrder.DESCENDING) != 0) {
+			buff.append(" DESC");
+		}
+		if ((sortType & SortOrder.NULLS_FIRST) != 0) {
+			buff.append(" NULLS FIRST");
+		} else if ((sortType & SortOrder.NULLS_LAST) != 0) {
+			buff.append(" NULLS LAST");
+		}
+		return buff.toString();
+	}
 
-    /**
-     * Create an array of index columns from a list of columns. The default sort
-     * type is used.
-     *
-     * @param columns the column list
-     * @return the index column array
-     */
-    public static IndexColumn[] wrap(Column[] columns) {
-        IndexColumn[] list = new IndexColumn[columns.length];
-        for (int i = 0; i < list.length; i++) {
-            list[i] = new IndexColumn();
-            list[i].column = columns[i];
-        }
-        return list;
-    }
+	/**
+	 * Create an array of index columns from a list of columns. The default sort
+	 * type is used.
+	 *
+	 * @param columns the column list
+	 * @return the index column array
+	 */
+	public static IndexColumn[] wrap(Column[] columns) {
+		IndexColumn[] list = new IndexColumn[columns.length];
+		for (int i = 0; i < list.length; i++) {
+			list[i] = new IndexColumn();
+			list[i].column = columns[i];
+		}
+		return list;
+	}
 
-    /**
-     * Map the columns using the column names and the specified table.
-     *
-     * @param indexColumns the column list with column names set
-     * @param table the table from where to map the column names to columns
-     */
-    public static void mapColumns(IndexColumn[] indexColumns, Table table) throws SQLException {
-        for (int i = 0; i < indexColumns.length; i++) {
-            IndexColumn col = indexColumns[i];
-            if (col.columnName == null && col.column != null)
-            	col.columnName = col.column.getName();
-            col.column = table.getColumn(col.columnName);
-        }
-    }
+	/**
+	 * Map the columns using the column names and the specified table.
+	 *
+	 * @param indexColumns the column list with column names set
+	 * @param table the table from where to map the column names to columns
+	 */
+	public static void mapColumns(IndexColumn[] indexColumns, Table table) throws SQLException {
+		for (int i = 0; i < indexColumns.length; i++) {
+			IndexColumn col = indexColumns[i];
+			if (col.columnName == null && col.column != null)
+				col.columnName = col.column.getName();
+			col.column = table.getColumn(col.columnName);
+		}
+	}
 }

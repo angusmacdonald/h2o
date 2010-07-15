@@ -20,73 +20,73 @@ import org.h2.util.StringUtils;
  */
 public class TestSampleApps extends TestBase {
 
-    /**
-     * Run just this test.
-     *
-     * @param a ignored
-     */
-    public static void main(String[] a) throws Exception {
-        TestBase.createCaller().init().test();
-    }
+	/**
+	 * Run just this test.
+	 *
+	 * @param a ignored
+	 */
+	public static void main(String[] a) throws Exception {
+		TestBase.createCaller().init().test();
+	}
 
-    public void test() throws Exception {
-        deleteDb("optimizations");
-        String url = "jdbc:h2:" + baseDir + "/optimizations";
-        testApp(org.h2.tools.RunScript.class, new String[] { "-url", url, "-user", "sa", "-password", "sa", "-script",
-                "src/test/org/h2/samples/optimizations.sql", "-checkResults" }, "");
-        deleteDb("optimizations");
+	public void test() throws Exception {
+		deleteDb("optimizations");
+		String url = "jdbc:h2:" + baseDir + "/optimizations";
+		testApp(org.h2.tools.RunScript.class, new String[] { "-url", url, "-user", "sa", "-password", "sa", "-script",
+			"src/test/org/h2/samples/optimizations.sql", "-checkResults" }, "");
+		deleteDb("optimizations");
 
-        testApp(org.h2.samples.Compact.class, null, "Compacting...\nDone.");
-        testApp(org.h2.samples.CsvSample.class, null, "NAME: Bob Meier\n" + "EMAIL: bob.meier@abcde.abc\n"
-                + "PHONE: +41123456789\n\n" + "NAME: John Jones\n" + "EMAIL: john.jones@abcde.abc\n"
-                + "PHONE: +41976543210\n");
-        testApp(org.h2.samples.Function.class, null,
-                "2 is prime\n3 is prime\n5 is prime\n7 is prime\n11 is prime\n13 is prime\n17 is prime\n19 is prime\n30\n20");
-        // Not compatible with PostgreSQL JDBC driver (throws a NullPointerException)
-        //testApp(org.h2.samples.SecurePassword.class, null, "Joe");
-        // TODO test ShowProgress (percent numbers are hardware specific)
-        // TODO test ShutdownServer (server needs to be started in a separate
-        // process)
-        testApp(org.h2.samples.TriggerSample.class, null, "The sum is 20.00");
+		testApp(org.h2.samples.Compact.class, null, "Compacting...\nDone.");
+		testApp(org.h2.samples.CsvSample.class, null, "NAME: Bob Meier\n" + "EMAIL: bob.meier@abcde.abc\n"
+				+ "PHONE: +41123456789\n\n" + "NAME: John Jones\n" + "EMAIL: john.jones@abcde.abc\n"
+				+ "PHONE: +41976543210\n");
+		testApp(org.h2.samples.Function.class, null,
+		"2 is prime\n3 is prime\n5 is prime\n7 is prime\n11 is prime\n13 is prime\n17 is prime\n19 is prime\n30\n20");
+		// Not compatible with PostgreSQL JDBC driver (throws a NullPointerException)
+		//testApp(org.h2.samples.SecurePassword.class, null, "Joe");
+		// TODO test ShowProgress (percent numbers are hardware specific)
+		// TODO test ShutdownServer (server needs to be started in a separate
+		// process)
+		testApp(org.h2.samples.TriggerSample.class, null, "The sum is 20.00");
 
-        // tools
-        testApp(org.h2.tools.ChangeFileEncryption.class, new String[] { "-help" },
-                "Allows changing the database file encryption password or algorithm*");
-        testApp(org.h2.tools.ChangeFileEncryption.class, null,
-                "Allows changing the database file encryption password or algorithm*");
-        testApp(org.h2.tools.DeleteDbFiles.class, new String[] { "-help" },
-                "Deletes all files belonging to a database.*");
-    }
+		// tools
+		testApp(org.h2.tools.ChangeFileEncryption.class, new String[] { "-help" },
+		"Allows changing the database file encryption password or algorithm*");
+		testApp(org.h2.tools.ChangeFileEncryption.class, null,
+		"Allows changing the database file encryption password or algorithm*");
+		testApp(org.h2.tools.DeleteDbFiles.class, new String[] { "-help" },
+		"Deletes all files belonging to a database.*");
+	}
 
-    private void testApp(Class clazz, String[] args, String expected) throws Exception {
-        DeleteDbFiles.execute("data", "test", true);
-        Method m = clazz.getMethod("main", new Class[] { String[].class });
-        PrintStream oldOut = System.out, oldErr = System.err;
-        ByteArrayOutputStream buff = new ByteArrayOutputStream();
-        PrintStream out = new PrintStream(buff, false, "UTF-8");
-        System.setOut(out);
-        System.setErr(out);
-        try {
-            m.invoke(null, new Object[] { args });
-        } catch (InvocationTargetException e) {
-            TestBase.logError("error", e.getTargetException());
-        } catch (Throwable e) {
-            TestBase.logError("error", e);
-        }
-        out.flush();
-        System.setOut(oldOut);
-        System.setErr(oldErr);
-        String s = new String(buff.toByteArray(), "UTF-8");
-        s = StringUtils.replaceAll(s, "\r\n", "\n");
-        s = s.trim();
-        expected = expected.trim();
-        if (expected.endsWith("*")) {
-            expected = expected.substring(0, expected.length() - 1);
-            if (!s.startsWith(expected)) {
-                assertEquals(s.trim(), expected.trim());
-            }
-        } else {
-            assertEquals(s.trim(), expected.trim());
-        }
-    }
+	private void testApp(Class clazz, String[] args, String expected) throws Exception {
+		DeleteDbFiles.execute("data", "test", true);
+		Method m = clazz.getMethod("main", new Class[] { String[].class });
+		PrintStream oldOut = System.out, oldErr = System.err;
+		ByteArrayOutputStream buff = new ByteArrayOutputStream();
+		PrintStream out = new PrintStream(buff, false, "UTF-8");
+		System.setOut(out);
+		System.setErr(out);
+		try {
+			m.invoke(null, new Object[] { args });
+		} catch (InvocationTargetException e) {
+			TestBase.logError("error", e.getTargetException());
+		} catch (Throwable e) {
+			TestBase.logError("error", e);
+		}
+		out.flush();
+		System.setOut(oldOut);
+		System.setErr(oldErr);
+		String s = new String(buff.toByteArray(), "UTF-8");
+		s = StringUtils.replaceAll(s, "\r\n", "\n");
+		s = s.trim();
+		expected = expected.trim();
+		if (expected.endsWith("*")) {
+			expected = expected.substring(0, expected.length() - 1);
+			if (!s.startsWith(expected)) {
+				assertEquals(s.trim(), expected.trim());
+			}
+		} else {
+			assertEquals(s.trim(), expected.trim());
+		}
+	}
 }

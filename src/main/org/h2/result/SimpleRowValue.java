@@ -13,45 +13,45 @@ import org.h2.value.Value;
  */
 public class SimpleRowValue implements SearchRow {
 
-    private int pos;
-    private int version;
-    private int index;
-    private int virtualColumnCount;
-    private Value data;
+	private int pos;
+	private int version;
+	private int index;
+	private int virtualColumnCount;
+	private Value data;
 
-    public SimpleRowValue(int columnCount) {
-        this.virtualColumnCount = columnCount;
-    }
+	public SimpleRowValue(int columnCount) {
+		this.virtualColumnCount = columnCount;
+	}
 
-    public void setPosAndVersion(SearchRow row) {
-        pos = row.getPos();
-        version = row.getVersion();
-    }
+	public void setPosAndVersion(SearchRow row) {
+		pos = row.getPos();
+		version = row.getVersion();
+	}
 
-    public int getVersion() {
-        return version;
-    }
+	public int getVersion() {
+		return version;
+	}
 
-    public int getColumnCount() {
-        return virtualColumnCount;
-    }
-    public int getPos() {
-        return pos;
-    }
-    public Value getValue(int idx) {
-        return idx == index ? data : null;
-    }
-    public void setPos(int pos) {
-        this.pos = pos;
-    }
+	public int getColumnCount() {
+		return virtualColumnCount;
+	}
+	public int getPos() {
+		return pos;
+	}
+	public Value getValue(int idx) {
+		return idx == index ? data : null;
+	}
+	public void setPos(int pos) {
+		this.pos = pos;
+	}
 
-    public void setValue(int idx, Value v) {
-        index = idx;
-        data = v;
-    }
+	public void setValue(int idx, Value v) {
+		index = idx;
+		data = v;
+	}
 
-    public String toString() {
-        return "( /* " + pos + " */ " + data.getTraceSQL() + " )";
-    }
+	public String toString() {
+		return "( /* " + pos + " */ " + data.getTraceSQL() + " )";
+	}
 
 }

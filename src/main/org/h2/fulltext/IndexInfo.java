@@ -11,33 +11,33 @@ package org.h2.fulltext;
  */
 class IndexInfo {
 
-    /**
-     * The index id.
-     */
-    int id;
+	/**
+	 * The index id.
+	 */
+	int id;
 
-    /**
-     * The schema name.
-     */
-    String schema;
+	/**
+	 * The schema name.
+	 */
+	String schema;
 
-    /**
-     * The table name.
-     */
-    String table;
+	/**
+	 * The table name.
+	 */
+	String table;
 
-    /**
-     * The column indexes of the key columns.
-     */
-    int[] keys;
+	/**
+	 * The column indexes of the key columns.
+	 */
+	int[] keys;
 
-    /**
-     * The column indexes of the index columns.
-     */
-    int[] indexColumns;
+	/**
+	 * The column indexes of the index columns.
+	 */
+	int[] indexColumns;
 
-    /**
-     * The column names.
-     */
-    String[] columns;
+	/**
+	 * The column names.
+	 */
+	String[] columns;
 }

@@ -21,42 +21,42 @@ import org.h2.schema.Schema;
  */
 public class CreateSchema extends DefineCommand {
 
-    private String schemaName;
-    private String authorization;
-    private boolean ifNotExists;
+	private String schemaName;
+	private String authorization;
+	private boolean ifNotExists;
 
-    public CreateSchema(Session session) {
-        super(session);
-    }
+	public CreateSchema(Session session) {
+		super(session);
+	}
 
-    public void setIfNotExists(boolean ifNotExists) {
-        this.ifNotExists = ifNotExists;
-    }
+	public void setIfNotExists(boolean ifNotExists) {
+		this.ifNotExists = ifNotExists;
+	}
 
-    public int update() throws SQLException {
-        session.getUser().checkAdmin();
-        session.commit(true);
-        Database db = session.getDatabase();
-        User user = db.getUser(authorization);
-        user.checkAdmin();
-        if (db.findSchema(schemaName) != null) {
-            if (ifNotExists) {
-                return 0;
-            }
-            throw Message.getSQLException(ErrorCode.SCHEMA_ALREADY_EXISTS_1, schemaName);
-        }
-        int id = getObjectId(true, true);
-        Schema schema = new Schema(db, id, schemaName, user, false);
-        db.addDatabaseObject(session, schema);
-        return 0;
-    }
+	public int update() throws SQLException {
+		session.getUser().checkAdmin();
+		session.commit(true);
+		Database db = session.getDatabase();
+		User user = db.getUser(authorization);
+		user.checkAdmin();
+		if (db.findSchema(schemaName) != null) {
+			if (ifNotExists) {
+				return 0;
+			}
+			throw Message.getSQLException(ErrorCode.SCHEMA_ALREADY_EXISTS_1, schemaName);
+		}
+		int id = getObjectId(true, true);
+		Schema schema = new Schema(db, id, schemaName, user, false);
+		db.addDatabaseObject(session, schema);
+		return 0;
+	}
 
-    public void setSchemaName(String name) {
-        this.schemaName = name;
-    }
+	public void setSchemaName(String name) {
+		this.schemaName = name;
+	}
 
-    public void setAuthorization(String userName) {
-        this.authorization = userName;
-    }
+	public void setAuthorization(String userName) {
+		this.authorization = userName;
+	}
 
 }

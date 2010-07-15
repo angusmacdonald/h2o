@@ -11,33 +11,33 @@ package org.h2.expression;
  */
 class FunctionInfo {
 
-    /**
-     * The name of the function.
-     */
-    String name;
+	/**
+	 * The name of the function.
+	 */
+	String name;
 
-    /**
-     * The function type.
-     */
-    int type;
+	/**
+	 * The function type.
+	 */
+	int type;
 
-    /**
-     * The data type of the return value.
-     */
-    int dataType;
+	/**
+	 * The data type of the return value.
+	 */
+	int dataType;
 
-    /**
-     * The number of parameters.
-     */
-    int parameterCount;
+	/**
+	 * The number of parameters.
+	 */
+	int parameterCount;
 
-    /**
-     * If the result of the function is NULL if any of the parameters is NULL.
-     */
-    boolean nullIfParameterIsNull;
+	/**
+	 * If the result of the function is NULL if any of the parameters is NULL.
+	 */
+	boolean nullIfParameterIsNull;
 
-    /**
-     * If this function always returns the same value for the same parameters.
-     */
-    boolean deterministic;
+	/**
+	 * If this function always returns the same value for the same parameters.
+	 */
+	boolean deterministic;
 }

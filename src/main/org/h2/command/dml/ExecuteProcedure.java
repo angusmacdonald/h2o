@@ -23,61 +23,61 @@ import org.h2.util.ObjectArray;
  */
 public class ExecuteProcedure extends Prepared {
 
-    private ObjectArray expressions = new ObjectArray();
-    private Procedure procedure;
+	private ObjectArray expressions = new ObjectArray();
+	private Procedure procedure;
 
-    public ExecuteProcedure(Session session, boolean internalQuery) {
-        super(session, internalQuery);
-    }
+	public ExecuteProcedure(Session session, boolean internalQuery) {
+		super(session, internalQuery);
+	}
 
-    public void setProcedure(Procedure procedure) {
-        this.procedure = procedure;
-    }
+	public void setProcedure(Procedure procedure) {
+		this.procedure = procedure;
+	}
 
-    /**
-     * Set the expression at the given index.
-     *
-     * @param index the index (0 based)
-     * @param expr the expression
-     */
-    public void setExpression(int index, Expression expr) {
-        expressions.add(index, expr);
-    }
+	/**
+	 * Set the expression at the given index.
+	 *
+	 * @param index the index (0 based)
+	 * @param expr the expression
+	 */
+	public void setExpression(int index, Expression expr) {
+		expressions.add(index, expr);
+	}
 
-    private void setParameters() throws SQLException {
-        Prepared prepared = procedure.getPrepared();
-        ObjectArray params = prepared.getParameters();
-        for (int i = 0; params != null && i < params.size() && i < expressions.size(); i++) {
-            Expression expr = (Expression) expressions.get(i);
-            Parameter p = (Parameter) params.get(i);
-            p.setValue(expr.getValue(session));
-        }
-    }
+	private void setParameters() throws SQLException {
+		Prepared prepared = procedure.getPrepared();
+		ObjectArray params = prepared.getParameters();
+		for (int i = 0; params != null && i < params.size() && i < expressions.size(); i++) {
+			Expression expr = (Expression) expressions.get(i);
+			Parameter p = (Parameter) params.get(i);
+			p.setValue(expr.getValue(session));
+		}
+	}
 
-    public boolean isQuery() {
-        Prepared prepared = procedure.getPrepared();
-        return prepared.isQuery();
-    }
+	public boolean isQuery() {
+		Prepared prepared = procedure.getPrepared();
+		return prepared.isQuery();
+	}
 
-    public int update() throws SQLException, RemoteException {
-        setParameters();
-        Prepared prepared = procedure.getPrepared();
-        return prepared.update();
-    }
+	public int update() throws SQLException, RemoteException {
+		setParameters();
+		Prepared prepared = procedure.getPrepared();
+		return prepared.update();
+	}
 
-    public final LocalResult query(int limit) throws SQLException {
-        setParameters();
-        Prepared prepared = procedure.getPrepared();
-        return prepared.query(limit);
-    }
+	public final LocalResult query(int limit) throws SQLException {
+		setParameters();
+		Prepared prepared = procedure.getPrepared();
+		return prepared.query(limit);
+	}
 
-    public boolean isTransactional() {
-        return true;
-    }
+	public boolean isTransactional() {
+		return true;
+	}
 
-    public LocalResult queryMeta() throws SQLException {
-        Prepared prepared = procedure.getPrepared();
-        return prepared.queryMeta();
-    }
+	public LocalResult queryMeta() throws SQLException {
+		Prepared prepared = procedure.getPrepared();
+		return prepared.queryMeta();
+	}
 
 }

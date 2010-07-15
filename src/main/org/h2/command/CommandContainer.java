@@ -113,7 +113,7 @@ public class CommandContainer extends Command {
 	protected LocalResult query(int maxrows, boolean partOfMultiQueryTransaction)
 	throws SQLException {
 		recompileIfRequired();
-		
+
 		start();
 		prepared.checkParameters();
 
@@ -121,7 +121,7 @@ public class CommandContainer extends Command {
 		 * If this is a SELECT query that does not target any meta-tables then locks must be acquired. If it is something else then no locks are needed.
 		 */
 		if (!prepared.sqlStatement.contains("H2O.") && !prepared.sqlStatement.contains("INFORMATION_SCHEMA.")&& !prepared.sqlStatement.contains("SYSTEM_RANGE") && !prepared.sqlStatement.contains("information_schema.") && prepared instanceof Select){
-			
+
 			this.acquireLocks(proxyManager); 
 
 			if (!proxyManager.hasAllLocks()){
@@ -164,9 +164,9 @@ public class CommandContainer extends Command {
 			}
 
 			try {
-				
+
 				updateCount = prepared.update(proxyManager.getTransactionName());
-	
+
 				boolean commit = true; //An exception would already have been thrown if it should have been a rollback.
 
 

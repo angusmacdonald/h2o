@@ -1,12 +1,26 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.test.h2o;
 
 import static org.junit.Assert.fail;
 
-import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Properties;
 
 import org.h2.engine.Constants;
@@ -40,13 +54,13 @@ public class CustomSettingsTests extends TestBase{
 		/*
 		 * Alter Settings file.
 		 */
-		
+
 		Properties settings = Settings.defaultSettings();
 		settings.setProperty("RELATION_REPLICATION_FACTOR", "2");
-		
+
 		String databaseName = "jdbc:h2:mem:one";
 		Settings.saveAsLocalProperties(settings, databaseName);
-		
+
 
 		org.h2.Driver.load();
 
@@ -57,7 +71,7 @@ public class CustomSettingsTests extends TestBase{
 		sb = cb.createStatement();
 	}
 
-	
+
 	/**
 	 * Tests that a replica is automatically created on B when replication factor is set to 2.
 	 * @throws SQLException 
@@ -66,8 +80,8 @@ public class CustomSettingsTests extends TestBase{
 	@Test
 	public void ReplicaAutomaticallyCreated() throws SQLException, InterruptedException{
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
-		
-		
+
+
 		try{
 			String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
 			sql += "INSERT INTO TEST VALUES(1, 'Hello');";
@@ -75,7 +89,7 @@ public class CustomSettingsTests extends TestBase{
 
 			sa.execute(sql);
 			sa.execute("INSERT INTO TEST VALUES(3, 'Hello World');");
-			
+
 			int[] pKey = {1, 2, 3};
 			String[] secondCol = {"Hello", "World", "Hello World"};
 
@@ -87,5 +101,5 @@ public class CustomSettingsTests extends TestBase{
 			fail("This should succeed.");
 		}
 	}
-	
+
 }

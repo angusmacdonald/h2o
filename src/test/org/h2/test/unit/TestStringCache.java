@@ -16,122 +16,122 @@ import org.h2.util.StringCache;
  */
 public class TestStringCache extends TestBase {
 
-    /**
-     * Flag to indicate the test should stop.
-     */
-    volatile boolean stop;
-    private Random random = new Random(1);
-    private String[] some = new String[] { null, "", "ABC", "this is a medium sized string", "1", "2" };
-    private boolean returnNew;
-    private boolean useIntern;
+	/**
+	 * Flag to indicate the test should stop.
+	 */
+	volatile boolean stop;
+	private Random random = new Random(1);
+	private String[] some = new String[] { null, "", "ABC", "this is a medium sized string", "1", "2" };
+	private boolean returnNew;
+	private boolean useIntern;
 
-    /**
-     * This method is called when executing this application from the command
-     * line.
-     *
-     * @param args the command line parameters
-     */
-    public static void main(String[] args) {
-        new TestStringCache().runBenchmark();
-    }
+	/**
+	 * This method is called when executing this application from the command
+	 * line.
+	 *
+	 * @param args the command line parameters
+	 */
+	public static void main(String[] args) {
+		new TestStringCache().runBenchmark();
+	}
 
-    public void test() throws InterruptedException {
-        returnNew = true;
-        StringCache.clearCache();
-        testSingleThread(getSize(5000, 20000));
-        testMultiThreads();
-        returnNew = false;
-        StringCache.clearCache();
-        testSingleThread(getSize(5000, 20000));
-        testMultiThreads();
-    }
+	public void test() throws InterruptedException {
+		returnNew = true;
+		StringCache.clearCache();
+		testSingleThread(getSize(5000, 20000));
+		testMultiThreads();
+		returnNew = false;
+		StringCache.clearCache();
+		testSingleThread(getSize(5000, 20000));
+		testMultiThreads();
+	}
 
-    private void runBenchmark() {
-        returnNew = false;
-        for (int i = 0; i < 6; i++) {
-            useIntern = (i % 2) == 0;
-            long time = System.currentTimeMillis();
-            testSingleThread(100000);
-            time = System.currentTimeMillis() - time;
-            System.out.println(time + " ms (useIntern=" + useIntern + ")");
-        }
+	private void runBenchmark() {
+		returnNew = false;
+		for (int i = 0; i < 6; i++) {
+			useIntern = (i % 2) == 0;
+			long time = System.currentTimeMillis();
+			testSingleThread(100000);
+			time = System.currentTimeMillis() - time;
+			System.out.println(time + " ms (useIntern=" + useIntern + ")");
+		}
 
-    }
+	}
 
-    private String randomString() {
-        if (random.nextBoolean()) {
-            String s = some[random.nextInt(some.length)];
-            if (s != null && random.nextBoolean()) {
-                s = new String(s);
-            }
-            return s;
-        }
-        int len = random.nextBoolean() ? random.nextInt(1000) : random.nextInt(10);
-        StringBuilder buff = new StringBuilder(len);
-        for (int i = 0; i < len; i++) {
-            buff.append(random.nextInt(0xfff));
-        }
-        return buff.toString();
-    }
+	private String randomString() {
+		if (random.nextBoolean()) {
+			String s = some[random.nextInt(some.length)];
+			if (s != null && random.nextBoolean()) {
+				s = new String(s);
+			}
+			return s;
+		}
+		int len = random.nextBoolean() ? random.nextInt(1000) : random.nextInt(10);
+		StringBuilder buff = new StringBuilder(len);
+		for (int i = 0; i < len; i++) {
+			buff.append(random.nextInt(0xfff));
+		}
+		return buff.toString();
+	}
 
-    /**
-     * Test one string operation using the string cache.
-     */
-    void testString() {
-        String a = randomString();
-        if (returnNew) {
-            String b = StringCache.getNew(a);
-            try {
-                assertEquals(a, b);
-            } catch (Exception e) {
-                TestBase.logError("error", e);
-            }
-            if (a != null && a == b && a.length() > 0) {
-                throw new Error("a=" + System.identityHashCode(a) + " b=" + System.identityHashCode(b));
-            }
-        } else {
-            String b;
-            if (useIntern) {
-                b = a == null ? null : a.intern();
-            } else {
-                b = StringCache.get(a);
-            }
-            try {
-                assertEquals(a, b);
-            } catch (Exception e) {
-                TestBase.logError("error", e);
-            }
-        }
-    }
+	/**
+	 * Test one string operation using the string cache.
+	 */
+	void testString() {
+		String a = randomString();
+		if (returnNew) {
+			String b = StringCache.getNew(a);
+			try {
+				assertEquals(a, b);
+			} catch (Exception e) {
+				TestBase.logError("error", e);
+			}
+			if (a != null && a == b && a.length() > 0) {
+				throw new Error("a=" + System.identityHashCode(a) + " b=" + System.identityHashCode(b));
+			}
+		} else {
+			String b;
+			if (useIntern) {
+				b = a == null ? null : a.intern();
+			} else {
+				b = StringCache.get(a);
+			}
+			try {
+				assertEquals(a, b);
+			} catch (Exception e) {
+				TestBase.logError("error", e);
+			}
+		}
+	}
 
-    private void testSingleThread(int len) {
-        for (int i = 0; i < len; i++) {
-            testString();
-        }
-    }
+	private void testSingleThread(int len) {
+		for (int i = 0; i < len; i++) {
+			testString();
+		}
+	}
 
-    private void testMultiThreads() throws InterruptedException {
-        int threadCount = getSize(3, 100);
-        Thread[] threads = new Thread[threadCount];
-        for (int i = 0; i < threadCount; i++) {
-            Thread t = new Thread(new Runnable() {
-                public void run() {
-                    while (!stop) {
-                        testString();
-                    }
-                }
-            });
-            threads[i] = t;
-        }
-        for (int i = 0; i < threadCount; i++) {
-            threads[i].start();
-        }
-        int wait = getSize(200, 2000);
-        Thread.sleep(wait);
-        stop = true;
-        for (int i = 0; i < threadCount; i++) {
-            threads[i].join();
-        }
-    }
+	private void testMultiThreads() throws InterruptedException {
+		int threadCount = getSize(3, 100);
+		Thread[] threads = new Thread[threadCount];
+		for (int i = 0; i < threadCount; i++) {
+			Thread t = new Thread(new Runnable() {
+				public void run() {
+					while (!stop) {
+						testString();
+					}
+				}
+			});
+			threads[i] = t;
+		}
+		for (int i = 0; i < threadCount; i++) {
+			threads[i].start();
+		}
+		int wait = getSize(200, 2000);
+		Thread.sleep(wait);
+		stop = true;
+		for (int i = 0; i < threadCount; i++) {
+			threads[i].join();
+		}
+	}
 
 }

@@ -14,34 +14,34 @@ import java.io.OutputStream;
  */
 public class FileObjectOutputStream extends OutputStream {
 
-    private FileObject file;
-    private byte[] buffer = new byte[1];
+	private FileObject file;
+	private byte[] buffer = new byte[1];
 
-    FileObjectOutputStream(FileObject file, boolean append) throws IOException {
-        this.file = file;
-        if (append) {
-            file.seek(file.length());
-        } else {
-            file.seek(0);
-            file.setFileLength(0);
-        }
-    }
+	FileObjectOutputStream(FileObject file, boolean append) throws IOException {
+		this.file = file;
+		if (append) {
+			file.seek(file.length());
+		} else {
+			file.seek(0);
+			file.setFileLength(0);
+		}
+	}
 
-    public void write(int b) throws IOException {
-        buffer[0] = (byte) b;
-        file.write(buffer, 0, 1);
-    }
+	public void write(int b) throws IOException {
+		buffer[0] = (byte) b;
+		file.write(buffer, 0, 1);
+	}
 
-    public void write(byte[] b) throws IOException {
-        file.write(b, 0, b.length);
-    }
+	public void write(byte[] b) throws IOException {
+		file.write(b, 0, b.length);
+	}
 
-    public void write(byte[] b, int off, int len) throws IOException {
-        file.write(b, off, len);
-    }
+	public void write(byte[] b, int off, int len) throws IOException {
+		file.write(b, off, len);
+	}
 
-    public void close() throws IOException {
-        file.close();
-    }
+	public void close() throws IOException {
+		file.close();
+	}
 
 }

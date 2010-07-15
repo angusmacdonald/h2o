@@ -33,170 +33,170 @@ import org.h2.value.ValueResultSet;
  */
 public class FunctionTable extends Table {
 
-    private final FunctionCall function;
-    private final long rowCount;
-    private Expression functionExpr;
-    private LocalResult cachedResult;
-    private Value cachedValue;
+	private final FunctionCall function;
+	private final long rowCount;
+	private Expression functionExpr;
+	private LocalResult cachedResult;
+	private Value cachedValue;
 
-    public FunctionTable(Schema schema, Session session, Expression functionExpr, FunctionCall function) throws SQLException {
-        super(schema, 0, function.getName(), false);
-        this.functionExpr = functionExpr;
-        this.function = function;
-        if (function instanceof TableFunction) {
-            rowCount = ((TableFunction) function).getRowCount();
-        } else {
-            rowCount = Long.MAX_VALUE;
-        }
-        function.optimize(session);
-        int type = function.getType();
-        if (type != Value.RESULT_SET) {
-            throw Message.getSQLException(ErrorCode.FUNCTION_MUST_RETURN_RESULT_SET_1, function.getName());
-        }
-        int params = function.getParameterCount();
-        Expression[] columnListArgs = new Expression[params];
-        Expression[] args = function.getArgs();
-        for (int i = 0; i < params; i++) {
-            args[i] = args[i].optimize(session);
-            columnListArgs[i] = args[i];
-        }
-        ValueResultSet template = function.getValueForColumnList(session, columnListArgs);
-        if (template == null) {
-            throw Message.getSQLException(ErrorCode.FUNCTION_MUST_RETURN_RESULT_SET_1, function.getName());
-        }
-        ResultSet rs = template.getResultSet();
-        ResultSetMetaData meta = rs.getMetaData();
-        int columnCount = meta.getColumnCount();
-        Column[] cols = new Column[columnCount];
-        for (int i = 0; i < columnCount; i++) {
-            cols[i] = new Column(meta.getColumnName(i + 1), DataType.convertSQLTypeToValueType(meta
-                    .getColumnType(i + 1)), meta.getPrecision(i + 1), meta.getScale(i + 1), meta.getColumnDisplaySize(i + 1));
-        }
-        setColumns(cols);
-    }
-
-    public void lock(Session session, boolean exclusive, boolean force) {
-        // nothing to do
-    }
-
-    public void close(Session session) {
-        // nothing to do
-    }
-
-    public void unlock(Session s) {
-        // nothing to do
-    }
-
-    public boolean isLockedExclusively() {
-        return false;
-    }
-
-    public Index addIndex(Session session, String indexName, int indexId, IndexColumn[] cols, IndexType indexType,
-            int headPos, String comment) throws SQLException {
-        throw Message.getUnsupportedException();
-    }
-
-    public void removeRow(Session session, Row row) throws SQLException {
-        throw Message.getUnsupportedException();
-    }
-
-    public void truncate(Session session) throws SQLException {
-        throw Message.getUnsupportedException();
-    }
-
-    public boolean canDrop() {
-        throw Message.throwInternalError();
-    }
-
-    public void addRow(Session session, Row row) throws SQLException {
-        throw Message.getUnsupportedException();
-    }
-
-    public void checkSupportAlter() throws SQLException {
-        throw Message.getUnsupportedException();
-    }
-
-    public String getTableType() {
-        return null;
-    }
-
-    public Index getScanIndex(Session session) {
-        return new FunctionIndex(this, IndexColumn.wrap(columns));
-    }
-
-    public ObjectArray getIndexes() {
-        return null;
-    }
-
-    public boolean canGetRowCount() {
-        return rowCount != Long.MAX_VALUE;
-    }
-
-    public long getRowCount(Session session) {
-        return rowCount;
-    }
-
-    public String getCreateSQL() {
-        return null;
-    }
-
-    public String getDropSQL() {
-        return null;
-    }
-
-    public void checkRename() throws SQLException {
-        throw Message.getUnsupportedException();
-    }
-
-    /**
-     * Read the result set from the function.
-     *
-     * @param session the session
-     * @return the result set
-     */
-    public LocalResult getResult(Session session) throws SQLException {
-        functionExpr = functionExpr.optimize(session);
-        Value v = functionExpr.getValue(session);
-        if (cachedResult != null && cachedValue == v) {
-            cachedResult.reset();
-            return cachedResult;
-        }
-        if (v == ValueNull.INSTANCE) {
-            return new LocalResult();
-        }
-        ValueResultSet value = (ValueResultSet) v;
-        ResultSet rs = value.getResultSet();
-        LocalResult result = LocalResult.read(session,  rs, 0);
-        if (function.isDeterministic()) {
-            cachedResult = result;
-            cachedValue = v;
-        }
-        return result;
-    }
-
-    public long getMaxDataModificationId() {
-        // TODO optimization: table-as-a-function currently doesn't know the
-        // last modified date
-        return Long.MAX_VALUE;
-    }
-
-    public Index getUniqueIndex() {
-        return null;
-    }
-
-    public String getSQL() {
-        return function.getSQL();
-    }
-
-    public long getRowCountApproximation() {
-        return rowCount;
-    }
-
-	/* (non-Javadoc)
-	 * @see org.h2.table.Table#isLocal()
-	 */
-	@Override
-	public boolean isLocal() {
-		return true;
+	public FunctionTable(Schema schema, Session session, Expression functionExpr, FunctionCall function) throws SQLException {
+		super(schema, 0, function.getName(), false);
+		this.functionExpr = functionExpr;
+		this.function = function;
+		if (function instanceof TableFunction) {
+			rowCount = ((TableFunction) function).getRowCount();
+		} else {
+			rowCount = Long.MAX_VALUE;
+		}
+		function.optimize(session);
+		int type = function.getType();
+		if (type != Value.RESULT_SET) {
+			throw Message.getSQLException(ErrorCode.FUNCTION_MUST_RETURN_RESULT_SET_1, function.getName());
+		}
+		int params = function.getParameterCount();
+		Expression[] columnListArgs = new Expression[params];
+		Expression[] args = function.getArgs();
+		for (int i = 0; i < params; i++) {
+			args[i] = args[i].optimize(session);
+			columnListArgs[i] = args[i];
+		}
+		ValueResultSet template = function.getValueForColumnList(session, columnListArgs);
+		if (template == null) {
+			throw Message.getSQLException(ErrorCode.FUNCTION_MUST_RETURN_RESULT_SET_1, function.getName());
+		}
+		ResultSet rs = template.getResultSet();
+		ResultSetMetaData meta = rs.getMetaData();
+		int columnCount = meta.getColumnCount();
+		Column[] cols = new Column[columnCount];
+		for (int i = 0; i < columnCount; i++) {
+			cols[i] = new Column(meta.getColumnName(i + 1), DataType.convertSQLTypeToValueType(meta
+					.getColumnType(i + 1)), meta.getPrecision(i + 1), meta.getScale(i + 1), meta.getColumnDisplaySize(i + 1));
+		}
+		setColumns(cols);
 	}
+
+	public void lock(Session session, boolean exclusive, boolean force) {
+		// nothing to do
+	}
+
+	public void close(Session session) {
+		// nothing to do
+	}
+
+	public void unlock(Session s) {
+		// nothing to do
+	}
+
+	public boolean isLockedExclusively() {
+		return false;
+	}
+
+	public Index addIndex(Session session, String indexName, int indexId, IndexColumn[] cols, IndexType indexType,
+			int headPos, String comment) throws SQLException {
+		throw Message.getUnsupportedException();
+	}
+
+	public void removeRow(Session session, Row row) throws SQLException {
+		throw Message.getUnsupportedException();
+	}
+
+	public void truncate(Session session) throws SQLException {
+		throw Message.getUnsupportedException();
+	}
+
+	public boolean canDrop() {
+		throw Message.throwInternalError();
+	}
+
+	public void addRow(Session session, Row row) throws SQLException {
+		throw Message.getUnsupportedException();
+	}
+
+	public void checkSupportAlter() throws SQLException {
+		throw Message.getUnsupportedException();
+	}
+
+	public String getTableType() {
+		return null;
+	}
+
+	public Index getScanIndex(Session session) {
+		return new FunctionIndex(this, IndexColumn.wrap(columns));
+	}
+
+	public ObjectArray getIndexes() {
+		return null;
+	}
+
+	public boolean canGetRowCount() {
+		return rowCount != Long.MAX_VALUE;
+	}
+
+	public long getRowCount(Session session) {
+		return rowCount;
+	}
+
+	public String getCreateSQL() {
+		return null;
+	}
+
+	public String getDropSQL() {
+		return null;
+	}
+
+	public void checkRename() throws SQLException {
+		throw Message.getUnsupportedException();
+	}
+
+	/**
+	 * Read the result set from the function.
+	 *
+	 * @param session the session
+	 * @return the result set
+	 */
+	 public LocalResult getResult(Session session) throws SQLException {
+		 functionExpr = functionExpr.optimize(session);
+		 Value v = functionExpr.getValue(session);
+		 if (cachedResult != null && cachedValue == v) {
+			 cachedResult.reset();
+			 return cachedResult;
+		 }
+		 if (v == ValueNull.INSTANCE) {
+			 return new LocalResult();
+		 }
+		 ValueResultSet value = (ValueResultSet) v;
+		 ResultSet rs = value.getResultSet();
+		 LocalResult result = LocalResult.read(session,  rs, 0);
+		 if (function.isDeterministic()) {
+			 cachedResult = result;
+			 cachedValue = v;
+		 }
+		 return result;
+	 }
+
+	 public long getMaxDataModificationId() {
+		 // TODO optimization: table-as-a-function currently doesn't know the
+		 // last modified date
+		 return Long.MAX_VALUE;
+	 }
+
+	 public Index getUniqueIndex() {
+		 return null;
+	 }
+
+	 public String getSQL() {
+		 return function.getSQL();
+	 }
+
+	 public long getRowCountApproximation() {
+		 return rowCount;
+	 }
+
+	 /* (non-Javadoc)
+	  * @see org.h2.table.Table#isLocal()
+	  */
+	 @Override
+	 public boolean isLocal() {
+		 return true;
+	 }
 }

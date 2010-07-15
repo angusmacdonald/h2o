@@ -2,11 +2,7 @@ package org.h2.command.dml;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.sql.Statement;
-
-import org.h2.engine.Database;
 import org.h2.engine.Session;
-import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.schema.Schema;
 
 /**
@@ -23,7 +19,7 @@ public class MigrateSystemTable extends org.h2.command.ddl.SchemaCommand {
 		// TODO Auto-generated constructor stub
 	}
 
-	
+
 
 	/* (non-Javadoc)
 	 * @see org.h2.command.Prepared#isTransactional()
@@ -33,14 +29,14 @@ public class MigrateSystemTable extends org.h2.command.ddl.SchemaCommand {
 		return false;
 	}
 
-	
+
 	/* (non-Javadoc)
 	 * @see org.h2.command.Prepared#update()
 	 */
 	@Override
 	public int update() throws SQLException, RemoteException {
 		this.session.getDatabase().getSystemTableReference().migrateSystemTableToLocalInstance();
-		
+
 		return 0;
 	}
 
@@ -49,7 +45,7 @@ public class MigrateSystemTable extends org.h2.command.ddl.SchemaCommand {
 	 */
 	@Override
 	public int update(String transactionName) throws SQLException,
-			RemoteException {
+	RemoteException {
 		return update();
 	}
 

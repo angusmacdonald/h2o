@@ -19,106 +19,106 @@ import org.h2.message.Trace;
  */
 public class PageOutputStream extends OutputStream {
 
-    private final Trace trace;
-    private PageStore store;
-    private int type;
-    private int parentPage;
-    private int pageId;
-    private int nextPage;
-    private DataPage page;
-    private int remaining;
-    private final boolean allocateAtEnd;
-    private byte[] buffer = new byte[1];
-    private boolean needFlush;
+	private final Trace trace;
+	private PageStore store;
+	private int type;
+	private int parentPage;
+	private int pageId;
+	private int nextPage;
+	private DataPage page;
+	private int remaining;
+	private final boolean allocateAtEnd;
+	private byte[] buffer = new byte[1];
+	private boolean needFlush;
 
-    /**
-     * Create a new page output stream.
-     *
-     * @param store the page store
-     * @param parentPage the parent page id
-     * @param headPage the first page
-     * @param type the page type
-     */
-    public PageOutputStream(PageStore store, int parentPage, int headPage, int type, boolean allocateAtEnd) {
-        this.trace = store.getTrace();
-        this.store = store;
-        this.parentPage = parentPage;
-        this.pageId = headPage;
-        this.type = type;
-        this.allocateAtEnd = allocateAtEnd;
-        page = store.createDataPage();
-        initPage();
-    }
+	/**
+	 * Create a new page output stream.
+	 *
+	 * @param store the page store
+	 * @param parentPage the parent page id
+	 * @param headPage the first page
+	 * @param type the page type
+	 */
+	public PageOutputStream(PageStore store, int parentPage, int headPage, int type, boolean allocateAtEnd) {
+		this.trace = store.getTrace();
+		this.store = store;
+		this.parentPage = parentPage;
+		this.pageId = headPage;
+		this.type = type;
+		this.allocateAtEnd = allocateAtEnd;
+		page = store.createDataPage();
+		initPage();
+	}
 
-    public void write(int b) throws IOException {
-        buffer[0] = (byte) b;
-        write(buffer);
-    }
+	public void write(int b) throws IOException {
+		buffer[0] = (byte) b;
+		write(buffer);
+	}
 
-    public void write(byte[] b) throws IOException {
-        write(b, 0, b.length);
-    }
+	public void write(byte[] b) throws IOException {
+		write(b, 0, b.length);
+	}
 
-    private void initPage() {
-        page.reset();
-        page.writeInt(parentPage);
-        page.writeByte((byte) type);
-        page.writeInt(0);
-        remaining = store.getPageSize() - page.length();
-    }
+	private void initPage() {
+		page.reset();
+		page.writeInt(parentPage);
+		page.writeByte((byte) type);
+		page.writeInt(0);
+		remaining = store.getPageSize() - page.length();
+	}
 
-    public void write(byte[] b, int off, int len) throws IOException {
-        if (len <= 0) {
-            return;
-        }
-        while (len >= remaining) {
-            page.write(b, off, remaining);
-            off += remaining;
-            len -= remaining;
-            try {
-                nextPage = store.allocatePage(allocateAtEnd);
-            } catch (SQLException e) {
-                throw Message.convertToIOException(e);
-            }
-            page.setPos(4);
-            page.writeByte((byte) type);
-            page.writeInt(nextPage);
-            storePage();
-            parentPage = pageId;
-            pageId = nextPage;
-            initPage();
-        }
-        page.write(b, off, len);
-        needFlush = true;
-        remaining -= len;
-    }
+	public void write(byte[] b, int off, int len) throws IOException {
+		if (len <= 0) {
+			return;
+		}
+		while (len >= remaining) {
+			page.write(b, off, remaining);
+			off += remaining;
+			len -= remaining;
+			try {
+				nextPage = store.allocatePage(allocateAtEnd);
+			} catch (SQLException e) {
+				throw Message.convertToIOException(e);
+			}
+			page.setPos(4);
+			page.writeByte((byte) type);
+			page.writeInt(nextPage);
+			storePage();
+			parentPage = pageId;
+			pageId = nextPage;
+			initPage();
+		}
+		page.write(b, off, len);
+		needFlush = true;
+		remaining -= len;
+	}
 
-    private void storePage() throws IOException {
-        try {
-            if (trace.isDebugEnabled()) {
-                trace.debug("pageOut.storePage " + pageId + " next:" + nextPage);
-            }
-            store.writePage(pageId, page);
-        } catch (SQLException e) {
-            throw Message.convertToIOException(e);
-        }
-    }
+	private void storePage() throws IOException {
+		try {
+			if (trace.isDebugEnabled()) {
+				trace.debug("pageOut.storePage " + pageId + " next:" + nextPage);
+			}
+			store.writePage(pageId, page);
+		} catch (SQLException e) {
+			throw Message.convertToIOException(e);
+		}
+	}
 
-    public void flush() throws IOException {
-        if (needFlush) {
-            int len = page.length();
-            page.setPos(4);
-            page.writeByte((byte) (type | Page.FLAG_LAST));
-            page.writeInt(store.getPageSize() - remaining - 9);
-            page.setPos(len);
-            storePage();
-            needFlush = false;
-        }
-    }
+	public void flush() throws IOException {
+		if (needFlush) {
+			int len = page.length();
+			page.setPos(4);
+			page.writeByte((byte) (type | Page.FLAG_LAST));
+			page.writeInt(store.getPageSize() - remaining - 9);
+			page.setPos(len);
+			storePage();
+			needFlush = false;
+		}
+	}
 
-    public void close() throws IOException {
-        flush();
-        store = null;
-    }
+	public void close() throws IOException {
+		flush();
+		store = null;
+	}
 
 }

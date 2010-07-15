@@ -26,9 +26,9 @@ import org.h2.jaqu.util.Utils;
 class TableDefinition<T> {
 ## Java 1.5 end ##*/
 
-    /**
-     * The meta data of an index.
-     */
+/**
+ * The meta data of an index.
+ */
 /*## Java 1.5 begin ##
     static class IndexDefinition {
         boolean unique;
@@ -37,9 +37,9 @@ class TableDefinition<T> {
     }
 ## Java 1.5 end ##*/
 
-    /**
-     * The meta data of a field.
-     */
+/**
+ * The meta data of a field.
+ */
 /*## Java 1.5 begin ##
     static class FieldDefinition<X> {
         String columnName;

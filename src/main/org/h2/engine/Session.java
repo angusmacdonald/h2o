@@ -24,7 +24,6 @@ import org.h2.constant.ErrorCode;
 import org.h2.constant.SysProperties;
 import org.h2.constraint.Constraint;
 import org.h2.h2o.comms.QueryProxyManager;
-import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.remote.IDatabaseRemote;
 import org.h2.index.Index;
 import org.h2.jdbc.JdbcConnection;
@@ -68,7 +67,7 @@ public class Session extends SessionWithState {
 	private User user;
 	private int id;
 	private ObjectArray locks = new ObjectArray();
-	
+
 	private QueryProxyManager currentTransactionLocks = null;
 
 	private UndoLog undoLog;
@@ -109,8 +108,8 @@ public class Session extends SessionWithState {
 	private Table waitForLock;
 	private int modificationId;
 	private int modificationIdState;
-	
-	
+
+
 	/*
 	 * The auto commit field that an external application can actually control in H2O.
 	 */
@@ -118,14 +117,14 @@ public class Session extends SessionWithState {
 
 	public Session(Database database, User user, int id) { //TODO remove public identifier - only needed for RMI tests
 		this.database = database;
-	this.undoLog = new UndoLog(this);
-	this.user = user;
-	this.user.sessions ++;
-	this.id = id;
-	this.logSystem = database.getLog();
-	Setting setting = database.findSetting(SetTypes.getTypeName(SetTypes.DEFAULT_LOCK_TIMEOUT));
-	this.lockTimeout = setting == null ? Constants.INITIAL_LOCK_TIMEOUT : setting.getIntValue();
-	this.currentSchemaName = Constants.SCHEMA_MAIN;
+		this.undoLog = new UndoLog(this);
+		this.user = user;
+		this.user.sessions ++;
+		this.id = id;
+		this.logSystem = database.getLog();
+		Setting setting = database.findSetting(SetTypes.getTypeName(SetTypes.DEFAULT_LOCK_TIMEOUT));
+		this.lockTimeout = setting == null ? Constants.INITIAL_LOCK_TIMEOUT : setting.getIntValue();
+		this.currentSchemaName = Constants.SCHEMA_MAIN;
 	}
 
 	public boolean setCommitOrRollbackDisabled(boolean x) {
@@ -151,13 +150,13 @@ public class Session extends SessionWithState {
 		modificationId++;
 		Value old;
 		if (value == ValueNull.INSTANCE) {
-			old = (Value) variables.remove(name);
+			old = variables.remove(name);
 		} else {
 			if (value instanceof ValueLob) {
 				// link it, to make sure we have our own file
 				value = value.link(database, ValueLob.TABLE_ID_SESSION_VARIABLE);
 			}
-			old = (Value) variables.put(name, value);
+			old = variables.put(name, value);
 		}
 		if (old != null) {
 			// close the old value (in case it is a lob)
@@ -205,7 +204,7 @@ public class Session extends SessionWithState {
 		if (localTempTables == null) {
 			return null;
 		}
-		return (Table) localTempTables.get(name);
+		return localTempTables.get(name);
 	}
 
 	public ObjectArray getLocalTempTables() {
@@ -254,7 +253,7 @@ public class Session extends SessionWithState {
 		if (localTempTableIndexes == null) {
 			return null;
 		}
-		return (Index) localTempTableIndexes.get(name);
+		return localTempTableIndexes.get(name);
 	}
 
 	public Map<String, Index> getLocalTempTableIndexes() {
@@ -303,7 +302,7 @@ public class Session extends SessionWithState {
 		if (localTempTableConstraints == null) {
 			return null;
 		}
-		return (Constraint) localTempTableConstraints.get(name);
+		return localTempTableConstraints.get(name);
 	}
 
 	/**
@@ -372,7 +371,7 @@ public class Session extends SessionWithState {
 	 */
 	public void setAutoCommit(boolean b) {
 		//autoCommit = b;
-		
+
 		assert false; 
 	}
 
@@ -457,7 +456,7 @@ public class Session extends SessionWithState {
 	public void commit(boolean ddl) throws SQLException {
 		commit(ddl, false);
 	}
-	
+
 	/**
 	 * Commit the current transaction. If the statement was not a data
 	 * definition statement, and if there are temporary tables that should be
@@ -487,7 +486,7 @@ public class Session extends SessionWithState {
 						undoLog.removeLast(false);
 					}
 					for (int i = 0; i < rows.size(); i++) {
-						Row r = (Row) rows.get(i);
+						Row r = rows.get(i);
 						r.commit();
 					}
 				}
@@ -509,17 +508,17 @@ public class Session extends SessionWithState {
 			logSystem.flush();
 			Iterator<ValueLob> it = unlinkMap.values().iterator();
 			while (it.hasNext()) {
-				Value v = (Value) it.next();
+				Value v = it.next();
 				v.unlink();
 			}
 			unlinkMap = null;
 		}
-		
+
 		if (currentTransactionLocks != null && !ddl && !hasAlreadyCommittedQueryProxy){
 			currentTransactionLocks.commit(true, applicationAutoCommit);
 			currentTransactionLocks = null;
 		}
-		
+
 		unlockAll();
 	}
 
@@ -568,7 +567,7 @@ public class Session extends SessionWithState {
 			savepoints.keySet().toArray(names);
 			for (int i = 0; i < names.length; i++) {
 				String name = names[i];
-				Integer id = (Integer) savepoints.get(names[i]);
+				Integer id = savepoints.get(names[i]);
 				if (id.intValue() > index) {
 					savepoints.remove(name);
 				}
@@ -593,13 +592,13 @@ public class Session extends SessionWithState {
 			try {
 				cleanTempTables(true);
 				this.user.sessions --;
-				
+
 				if (this.user.sessions == 0 && (Constants.IS_NON_SM_TEST || this.getDatabase().getSystemSession().getUser().sessions == 0) ){
-				IDatabaseRemote cr = database.getRemoteInterface();
-				cr.shutdown();
-				database.removeSession(this);
+					IDatabaseRemote cr = database.getRemoteInterface();
+					cr.shutdown();
+					database.removeSession(this);
 				}
-				
+
 			} finally {
 				closed = true;
 			}
@@ -793,7 +792,7 @@ public class Session extends SessionWithState {
 		if (savepoints == null) {
 			throw Message.getSQLException(ErrorCode.SAVEPOINT_IS_INVALID_1, name);
 		}
-		Integer id = (Integer) savepoints.get(name);
+		Integer id = savepoints.get(name);
 		if (id == null) {
 			throw Message.getSQLException(ErrorCode.SAVEPOINT_IS_INVALID_1, name);
 		}
@@ -1028,7 +1027,7 @@ public class Session extends SessionWithState {
 		if (procedures == null) {
 			return null;
 		}
-		return (Procedure) procedures.get(name);
+		return procedures.get(name);
 	}
 
 	public void setSchemaSearchPath(String[] schemas) {
@@ -1042,14 +1041,14 @@ public class Session extends SessionWithState {
 
 	public int hashCode() {
 		return user.getName().hashCode();
-		
+
 		//return serialId;
 	}
-	
+
 	public boolean equals(Object obj){
 		return user.getName().equals(((Session)obj).getUser().getName());
 	}
-	
+
 	public String toString() {
 		return "#" + serialId + " (user: " + user.getName() + ")";
 	}
@@ -1127,7 +1126,7 @@ public class Session extends SessionWithState {
 	public void closeTemporaryResults() {
 		if (temporaryResults != null) {
 			for (Iterator<LocalResult> it = temporaryResults.iterator(); it.hasNext();) {
-				LocalResult result = (LocalResult) it.next();
+				LocalResult result = it.next();
 				result.close();
 			}
 			temporaryResults = null;
@@ -1189,7 +1188,7 @@ public class Session extends SessionWithState {
 	public void setApplicationAutoCommit(boolean applicationAutoCommit) {
 		this.applicationAutoCommit = applicationAutoCommit;
 	}
-	
+
 	public boolean getApplicationAutoCommit(){
 		return applicationAutoCommit;
 	}
@@ -1208,6 +1207,6 @@ public class Session extends SessionWithState {
 		this.currentTransactionLocks = currentTransactionLocks;
 	}
 
-	
+
 
 }

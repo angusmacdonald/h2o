@@ -17,27 +17,27 @@ import org.h2.test.TestBase;
  */
 public class TestDriver extends TestBase {
 
-    /**
-     * Run just this test.
-     *
-     * @param a ignored
-     */
-    public static void main(String[] a) throws Exception {
-        TestBase.createCaller().init().test();
-    }
+	/**
+	 * Run just this test.
+	 *
+	 * @param a ignored
+	 */
+	public static void main(String[] a) throws Exception {
+		TestBase.createCaller().init().test();
+	}
 
-    public void test() throws Exception {
-        Driver instance = Driver.load();
-        assertTrue(DriverManager.getDriver("jdbc:h2:~/test") == instance);
-        Driver.unload();
-        try {
-            java.sql.Driver d = DriverManager.getDriver("jdbc:h2:~/test");
-            fail(d.toString());
-        } catch (SQLException e) {
-            // ignore
-        }
-        Driver.load();
-        assertTrue(DriverManager.getDriver("jdbc:h2:~/test") == instance);
-    }
+	public void test() throws Exception {
+		Driver instance = Driver.load();
+		assertTrue(DriverManager.getDriver("jdbc:h2:~/test") == instance);
+		Driver.unload();
+		try {
+			java.sql.Driver d = DriverManager.getDriver("jdbc:h2:~/test");
+			fail(d.toString());
+		} catch (SQLException e) {
+			// ignore
+		}
+		Driver.load();
+		assertTrue(DriverManager.getDriver("jdbc:h2:~/test") == instance);
+	}
 
 }

@@ -15,20 +15,20 @@ import org.h2.jdbc.JdbcConnection;
  */
 public interface JdbcConnectionListener {
 
-    // TODO pooled connection: make sure
-    // fatalErrorOccurred is called in the right situations
-    /**
-     * A fatal error occurred.
-     *
-     * @param conn the connection
-     * @param e the exception
-     */
-    void fatalErrorOccurred(JdbcConnection conn, SQLException e) throws SQLException;
+	// TODO pooled connection: make sure
+	// fatalErrorOccurred is called in the right situations
+	/**
+	 * A fatal error occurred.
+	 *
+	 * @param conn the connection
+	 * @param e the exception
+	 */
+	void fatalErrorOccurred(JdbcConnection conn, SQLException e) throws SQLException;
 
-    /**
-     * A connection was closed
-     *
-     * @param conn the connection
-     */
-    void closed(JdbcConnection conn);
+	/**
+	 * A connection was closed
+	 *
+	 * @param conn the connection
+	 */
+	void closed(JdbcConnection conn);
 }

@@ -17,105 +17,105 @@ import java.io.RandomAccessFile;
  */
 public class CheckJavadoc {
 
-    private static final int MAX_COMMENT_LINE_SIZE = 80;
-    private int errorCount;
+	private static final int MAX_COMMENT_LINE_SIZE = 80;
+	private int errorCount;
 
-    /**
-     * This method is called when executing this application from the command
-     * line.
-     *
-     * @param args the command line parameters
-     */
-    public static void main(String[] args) throws Exception {
-        new CheckJavadoc().run();
-    }
+	/**
+	 * This method is called when executing this application from the command
+	 * line.
+	 *
+	 * @param args the command line parameters
+	 */
+	public static void main(String[] args) throws Exception {
+		new CheckJavadoc().run();
+	}
 
-    private void run() throws Exception {
-        String baseDir = "src";
-        check(new File(baseDir));
-        if (errorCount > 0) {
-            throw new Exception(errorCount + " errors found");
-        }
-    }
+	private void run() throws Exception {
+		String baseDir = "src";
+		check(new File(baseDir));
+		if (errorCount > 0) {
+			throw new Exception(errorCount + " errors found");
+		}
+	}
 
-    private int check(File file) throws Exception {
-        String name = file.getName();
-        if (file.isDirectory()) {
-            if (name.equals("CVS") || name.equals(".svn")) {
-                return 0;
-            }
-            File[] list = file.listFiles();
-            boolean foundPackageHtml = false, foundJava = false;
-            for (int i = 0; i < list.length; i++) {
-                int type = check(list[i]);
-                if (type == 1) {
-                    foundJava = true;
-                } else if (type == 2) {
-                    foundPackageHtml = true;
-                }
-            }
-            if (foundJava && !foundPackageHtml) {
-                System.out.println("No package.html file, but a Java file found at: " + file.getAbsolutePath());
-                errorCount++;
-            }
-        } else {
-            if (name.endsWith(".java")) {
-                checkJavadoc(file);
-                return 1;
-            } else if (name.equals("package.html")) {
-                return 2;
-            }
-        }
-        return 0;
-    }
+	private int check(File file) throws Exception {
+		String name = file.getName();
+		if (file.isDirectory()) {
+			if (name.equals("CVS") || name.equals(".svn")) {
+				return 0;
+			}
+			File[] list = file.listFiles();
+			boolean foundPackageHtml = false, foundJava = false;
+			for (int i = 0; i < list.length; i++) {
+				int type = check(list[i]);
+				if (type == 1) {
+					foundJava = true;
+				} else if (type == 2) {
+					foundPackageHtml = true;
+				}
+			}
+			if (foundJava && !foundPackageHtml) {
+				System.out.println("No package.html file, but a Java file found at: " + file.getAbsolutePath());
+				errorCount++;
+			}
+		} else {
+			if (name.endsWith(".java")) {
+				checkJavadoc(file);
+				return 1;
+			} else if (name.equals("package.html")) {
+				return 2;
+			}
+		}
+		return 0;
+	}
 
-    private void checkJavadoc(File file) throws IOException {
-        RandomAccessFile in = new RandomAccessFile(file, "r");
-        byte[] data = new byte[(int) file.length()];
-        in.readFully(data);
-        in.close();
-        String text = new String(data);
-        int comment = text.indexOf("/**");
-        if (comment < 0) {
-            System.out.println("No Javadoc comment: " + file.getAbsolutePath());
-            errorCount++;
-        }
-        int open = text.indexOf('{');
-        if (open < 0 || open < comment) {
-            System.out.println("No '{' or '{' before the first Javadoc comment: " +
-                    file.getAbsolutePath());
-            errorCount++;
-        }
-        int pos = 0;
-        int lineNumber = 1;
-        boolean inComment = false;
-        while (true) {
-            int next = text.indexOf("\n", pos);
-            if (next < 0) {
-                break;
-            }
-            String line = text.substring(pos, next).trim();
-            if (line.startsWith("/*")) {
-                inComment = true;
-            }
-            if (inComment) {
-                if (line.length() > MAX_COMMENT_LINE_SIZE && !line.trim().startsWith("* http://")) {
-                    System.out.println("Long line : " + file.getAbsolutePath()
-                            + " (" + file.getName() + ":" + lineNumber + ")");
-                    errorCount++;
-                }
-                if (line.endsWith("*/")) {
-                    inComment = false;
-                }
-            }
-            if (!inComment && line.startsWith("//") && line.length() > MAX_COMMENT_LINE_SIZE) {
-                System.out.println("Long line: " + file.getAbsolutePath()
-                        + " (" + file.getName() + ":" + lineNumber + ")");
-                errorCount++;
-            }
-            lineNumber++;
-            pos = next + 1;
-        }
-    }
+	private void checkJavadoc(File file) throws IOException {
+		RandomAccessFile in = new RandomAccessFile(file, "r");
+		byte[] data = new byte[(int) file.length()];
+		in.readFully(data);
+		in.close();
+		String text = new String(data);
+		int comment = text.indexOf("/**");
+		if (comment < 0) {
+			System.out.println("No Javadoc comment: " + file.getAbsolutePath());
+			errorCount++;
+		}
+		int open = text.indexOf('{');
+		if (open < 0 || open < comment) {
+			System.out.println("No '{' or '{' before the first Javadoc comment: " +
+					file.getAbsolutePath());
+			errorCount++;
+		}
+		int pos = 0;
+		int lineNumber = 1;
+		boolean inComment = false;
+		while (true) {
+			int next = text.indexOf("\n", pos);
+			if (next < 0) {
+				break;
+			}
+			String line = text.substring(pos, next).trim();
+			if (line.startsWith("/*")) {
+				inComment = true;
+			}
+			if (inComment) {
+				if (line.length() > MAX_COMMENT_LINE_SIZE && !line.trim().startsWith("* http://")) {
+					System.out.println("Long line : " + file.getAbsolutePath()
+							+ " (" + file.getName() + ":" + lineNumber + ")");
+					errorCount++;
+				}
+				if (line.endsWith("*/")) {
+					inComment = false;
+				}
+			}
+			if (!inComment && line.startsWith("//") && line.length() > MAX_COMMENT_LINE_SIZE) {
+				System.out.println("Long line: " + file.getAbsolutePath()
+						+ " (" + file.getName() + ":" + lineNumber + ")");
+				errorCount++;
+			}
+			lineNumber++;
+			pos = next + 1;
+		}
+	}
 
 }

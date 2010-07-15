@@ -1,3 +1,20 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.test.h2o;
 
 import static org.junit.Assert.fail;
@@ -211,14 +228,14 @@ public class UpdateTests extends TestBase {
 		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
 		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
 		new Thread(cta).start();
-		
+
 		ctb.run();	
-		
+
 		boolean result = ctb.successful;
-		
+
 		Assert.assertEquals(true, result);
 	}
-	
+
 	/**
 	 * Tests the case of multiple database instances attempting to access a table at the same time. Only one thread is writing to the table
 	 * so all queries should run as expected.
@@ -239,10 +256,10 @@ public class UpdateTests extends TestBase {
 		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, false);
 		new Thread(cta).start();
 		ctb.run();	
-		
+
 		Assert.assertTrue(ctb.successful);
 	}
-	
-	
-	
+
+
+
 }

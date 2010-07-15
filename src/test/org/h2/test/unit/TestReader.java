@@ -20,24 +20,24 @@ import org.h2.util.IOUtils;
  */
 public class TestReader extends TestBase {
 
-    /**
-     * Run just this test.
-     *
-     * @param a ignored
-     */
-    public static void main(String[] a) throws Exception {
-        TestBase.createCaller().init().test();
-    }
+	/**
+	 * Run just this test.
+	 *
+	 * @param a ignored
+	 */
+	public static void main(String[] a) throws Exception {
+		TestBase.createCaller().init().test();
+	}
 
-    public void test() throws Exception {
-        String s = "\u00ef\u00f6\u00fc";
-        StringReader r = new StringReader(s);
-        InputStream in = new ReaderInputStream(r);
-        byte[] buff = IOUtils.readBytesAndClose(in, 0);
-        InputStream in2 = new ByteArrayInputStream(buff);
-        Reader r2 = IOUtils.getReader(in2);
-        String s2 = IOUtils.readStringAndClose(r2, Integer.MAX_VALUE);
-        assertEquals(s2, "\u00ef\u00f6\u00fc");
-    }
+	public void test() throws Exception {
+		String s = "\u00ef\u00f6\u00fc";
+		StringReader r = new StringReader(s);
+		InputStream in = new ReaderInputStream(r);
+		byte[] buff = IOUtils.readBytesAndClose(in, 0);
+		InputStream in2 = new ByteArrayInputStream(buff);
+		Reader r2 = IOUtils.getReader(in2);
+		String s2 = IOUtils.readStringAndClose(r2, Integer.MAX_VALUE);
+		assertEquals(s2, "\u00ef\u00f6\u00fc");
+	}
 
 }

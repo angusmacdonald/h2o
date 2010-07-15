@@ -16,25 +16,25 @@ import org.h2.result.LocalResult;
  */
 public abstract class DefineCommand extends Prepared {
 
-    /**
-     * Create a new command for the given session.
-     *
-     * @param session the session
-     */
-    public DefineCommand(Session session) {
-        super(session, false);
-    }
+	/**
+	 * Create a new command for the given session.
+	 *
+	 * @param session the session
+	 */
+	public DefineCommand(Session session) {
+		super(session, false);
+	}
 
-    public boolean isTransactional() {
-        return false;
-    }
+	public boolean isTransactional() {
+		return false;
+	}
 
-    public boolean isReadOnly() {
-        return false;
-    }
+	public boolean isReadOnly() {
+		return false;
+	}
 
-    public LocalResult queryMeta() {
-        return null;
-    }
+	public LocalResult queryMeta() {
+		return null;
+	}
 
 }

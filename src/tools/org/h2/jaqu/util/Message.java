@@ -18,36 +18,36 @@ import java.sql.SQLException;
  */
 public class Message {
 
-    private Message() {
-        // utility class
-    }
+	private Message() {
+		// utility class
+	}
 
-    /**
-     * Convert an exception to a SQL exception using the default mapping.
-     *
-     * @param e the root cause
-     * @return the SQL exception object
-     */
-    public static SQLException convert(Throwable e) {
-        if (e instanceof SQLException) {
-            return (SQLException) e;
-        }
-        String message;
-        if (e instanceof InvocationTargetException) {
-            InvocationTargetException te = (InvocationTargetException) e;
-            Throwable t = te.getTargetException();
-            if (t instanceof SQLException) {
-                return (SQLException) t;
-            }
-            message = "Invocation exception";
-        } else if (e instanceof IOException) {
-            message = "IO exception";
-        } else {
-            message = "General exception";
-        }
-        SQLException e2 = new SQLException(message + ": " + e.toString());
-        e2.initCause(e);
-        return e2;
-    }
+	/**
+	 * Convert an exception to a SQL exception using the default mapping.
+	 *
+	 * @param e the root cause
+	 * @return the SQL exception object
+	 */
+	public static SQLException convert(Throwable e) {
+		if (e instanceof SQLException) {
+			return (SQLException) e;
+		}
+		String message;
+		if (e instanceof InvocationTargetException) {
+			InvocationTargetException te = (InvocationTargetException) e;
+			Throwable t = te.getTargetException();
+			if (t instanceof SQLException) {
+				return (SQLException) t;
+			}
+			message = "Invocation exception";
+		} else if (e instanceof IOException) {
+			message = "IO exception";
+		} else {
+			message = "General exception";
+		}
+		SQLException e2 = new SQLException(message + ": " + e.toString());
+		e2.initCause(e);
+		return e2;
+	}
 
 }

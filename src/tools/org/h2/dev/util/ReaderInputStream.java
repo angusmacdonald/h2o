@@ -25,49 +25,49 @@ import org.h2.message.Message;
  */
 public class ReaderInputStream extends InputStream {
 
-    private final Reader reader;
-    private final char[] chars;
-    private final ByteArrayOutputStream out;
-    private final Writer writer;
-    private int pos;
-    private int remaining;
-    private byte[] buffer;
+	private final Reader reader;
+	private final char[] chars;
+	private final ByteArrayOutputStream out;
+	private final Writer writer;
+	private int pos;
+	private int remaining;
+	private byte[] buffer;
 
-    public ReaderInputStream(Reader reader) throws SQLException {
-        chars = new char[Constants.IO_BUFFER_SIZE];
-        this.reader = reader;
-        out = new ByteArrayOutputStream(Constants.IO_BUFFER_SIZE);
-        try {
-            writer = new BufferedWriter(new OutputStreamWriter(out, Constants.UTF8));
-        } catch (UnsupportedEncodingException e) {
-            throw Message.convert(e);
-        }
-    }
+	public ReaderInputStream(Reader reader) throws SQLException {
+		chars = new char[Constants.IO_BUFFER_SIZE];
+		this.reader = reader;
+		out = new ByteArrayOutputStream(Constants.IO_BUFFER_SIZE);
+		try {
+			writer = new BufferedWriter(new OutputStreamWriter(out, Constants.UTF8));
+		} catch (UnsupportedEncodingException e) {
+			throw Message.convert(e);
+		}
+	}
 
-    private void fillBuffer() throws IOException {
-        if (remaining == 0) {
-            pos = 0;
-            remaining = reader.read(chars, 0, Constants.IO_BUFFER_SIZE);
-            if (remaining < 0) {
-                return;
-            }
-            writer.write(chars, 0, remaining);
-            writer.flush();
-            buffer = out.toByteArray();
-            remaining = buffer.length;
-            out.reset();
-        }
-    }
+	private void fillBuffer() throws IOException {
+		if (remaining == 0) {
+			pos = 0;
+			remaining = reader.read(chars, 0, Constants.IO_BUFFER_SIZE);
+			if (remaining < 0) {
+				return;
+			}
+			writer.write(chars, 0, remaining);
+			writer.flush();
+			buffer = out.toByteArray();
+			remaining = buffer.length;
+			out.reset();
+		}
+	}
 
-    public int read() throws IOException {
-        if (remaining == 0) {
-            fillBuffer();
-        }
-        if (remaining < 0) {
-            return -1;
-        }
-        remaining--;
-        return buffer[pos++] & 0xff;
-    }
+	public int read() throws IOException {
+		if (remaining == 0) {
+			fillBuffer();
+		}
+		if (remaining < 0) {
+			return -1;
+		}
+		remaining--;
+		return buffer[pos++] & 0xff;
+	}
 
 }

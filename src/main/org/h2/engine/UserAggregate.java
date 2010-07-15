@@ -20,65 +20,65 @@ import org.h2.util.ClassUtils;
  */
 public class UserAggregate extends DbObjectBase {
 
-    private String className;
-    private Class javaClass;
+	private String className;
+	private Class javaClass;
 
-    public UserAggregate(Database db, int id, String name, String className, boolean force) throws SQLException {
-        initDbObjectBase(db, id, name, Trace.FUNCTION);
-        this.className = className;
-        if (!force) {
-            getInstance();
-        }
-    }
+	public UserAggregate(Database db, int id, String name, String className, boolean force) throws SQLException {
+		initDbObjectBase(db, id, name, Trace.FUNCTION);
+		this.className = className;
+		if (!force) {
+			getInstance();
+		}
+	}
 
-    public AggregateFunction getInstance() throws SQLException {
-        if (javaClass == null) {
-            javaClass = ClassUtils.loadUserClass(className);
-        }
-        Object obj;
-        try {
-            obj = javaClass.newInstance();
-            AggregateFunction agg = (AggregateFunction) obj;
-            return agg;
-        } catch (Exception e) {
-            throw Message.convert(e);
-        }
-    }
+	public AggregateFunction getInstance() throws SQLException {
+		if (javaClass == null) {
+			javaClass = ClassUtils.loadUserClass(className);
+		}
+		Object obj;
+		try {
+			obj = javaClass.newInstance();
+			AggregateFunction agg = (AggregateFunction) obj;
+			return agg;
+		} catch (Exception e) {
+			throw Message.convert(e);
+		}
+	}
 
-    public String getCreateSQLForCopy(Table table, String quotedName) {
-        throw Message.throwInternalError();
-    }
+	public String getCreateSQLForCopy(Table table, String quotedName) {
+		throw Message.throwInternalError();
+	}
 
-    public String getDropSQL() {
-        return "DROP AGGREGATE IF EXISTS " + getSQL();
-    }
+	public String getDropSQL() {
+		return "DROP AGGREGATE IF EXISTS " + getSQL();
+	}
 
-    public String getCreateSQL() {
-        StringBuilder buff = new StringBuilder();
-        buff.append("CREATE FORCE AGGREGATE ");
-        buff.append(getSQL());
-        buff.append(" FOR ");
-        buff.append(Parser.quoteIdentifier(className));
-        return buff.toString();
-    }
+	public String getCreateSQL() {
+		StringBuilder buff = new StringBuilder();
+		buff.append("CREATE FORCE AGGREGATE ");
+		buff.append(getSQL());
+		buff.append(" FOR ");
+		buff.append(Parser.quoteIdentifier(className));
+		return buff.toString();
+	}
 
-    public int getType() {
-        return DbObject.AGGREGATE;
-    }
+	public int getType() {
+		return DbObject.AGGREGATE;
+	}
 
-    public synchronized void removeChildrenAndResources(Session session) throws SQLException {
-        database.removeMeta(session, getId());
-        className = null;
-        javaClass = null;
-        invalidate();
-    }
+	public synchronized void removeChildrenAndResources(Session session) throws SQLException {
+		database.removeMeta(session, getId());
+		className = null;
+		javaClass = null;
+		invalidate();
+	}
 
-    public void checkRename() throws SQLException {
-        throw Message.getUnsupportedException();
-    }
+	public void checkRename() throws SQLException {
+		throw Message.getUnsupportedException();
+	}
 
-    public String getJavaClassName() {
-        return this.className;
-    }
+	public String getJavaClassName() {
+		return this.className;
+	}
 
 }

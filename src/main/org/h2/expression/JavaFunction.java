@@ -23,136 +23,136 @@ import org.h2.value.ValueResultSet;
  */
 public class JavaFunction extends Expression implements FunctionCall {
 
-    private FunctionAlias functionAlias;
-    private FunctionAlias.JavaMethod javaMethod;
-    private Expression[] args;
+	private FunctionAlias functionAlias;
+	private FunctionAlias.JavaMethod javaMethod;
+	private Expression[] args;
 
-    public JavaFunction(FunctionAlias functionAlias, Expression[] args) throws SQLException {
-        this.functionAlias = functionAlias;
-        this.javaMethod = functionAlias.findJavaMethod(args);
-        this.args = args;
-    }
+	public JavaFunction(FunctionAlias functionAlias, Expression[] args) throws SQLException {
+		this.functionAlias = functionAlias;
+		this.javaMethod = functionAlias.findJavaMethod(args);
+		this.args = args;
+	}
 
-    public Value getValue(Session session) throws SQLException {
-        return javaMethod.getValue(session, args, false);
-    }
+	public Value getValue(Session session) throws SQLException {
+		return javaMethod.getValue(session, args, false);
+	}
 
-    public int getType() {
-        return javaMethod.getDataType();
-    }
+	public int getType() {
+		return javaMethod.getDataType();
+	}
 
-    public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
-        for (int i = 0; i < args.length; i++) {
-            args[i].mapColumns(resolver, level);
-        }
-    }
+	public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
+		for (int i = 0; i < args.length; i++) {
+			args[i].mapColumns(resolver, level);
+		}
+	}
 
-    public Expression optimize(Session session) throws SQLException {
-        for (int i = 0; i < args.length; i++) {
-            Expression e = args[i].optimize(session);
-            args[i] = e;
-        }
-        if (isEverything(ExpressionVisitor.DETERMINISTIC)) {
-            return ValueExpression.get(getValue(session));
-        }
-        return this;
-    }
+	public Expression optimize(Session session) throws SQLException {
+		for (int i = 0; i < args.length; i++) {
+			Expression e = args[i].optimize(session);
+			args[i] = e;
+		}
+		if (isEverything(ExpressionVisitor.DETERMINISTIC)) {
+			return ValueExpression.get(getValue(session));
+		}
+		return this;
+	}
 
-    public void setEvaluatable(TableFilter tableFilter, boolean b) {
-        for (int i = 0; i < args.length; i++) {
-            Expression e = args[i];
-            if (e != null) {
-                e.setEvaluatable(tableFilter, b);
-            }
-        }
-    }
+	public void setEvaluatable(TableFilter tableFilter, boolean b) {
+		for (int i = 0; i < args.length; i++) {
+			Expression e = args[i];
+			if (e != null) {
+				e.setEvaluatable(tableFilter, b);
+			}
+		}
+	}
 
-    public int getScale() {
-        return DataType.getDataType(getType()).defaultScale;
-    }
+	public int getScale() {
+		return DataType.getDataType(getType()).defaultScale;
+	}
 
-    public long getPrecision() {
-        return Integer.MAX_VALUE;
-    }
+	public long getPrecision() {
+		return Integer.MAX_VALUE;
+	}
 
-    public int getDisplaySize() {
-        return Integer.MAX_VALUE;
-    }
+	public int getDisplaySize() {
+		return Integer.MAX_VALUE;
+	}
 
-    public String getSQL() {
-        StringBuilder buff = new StringBuilder();
-        buff.append(Parser.quoteIdentifier(functionAlias.getName()));
-        buff.append('(');
-        for (int i = 0; i < args.length; i++) {
-            if (i > 0) {
-                buff.append(", ");
-            }
-            Expression e = args[i];
-            buff.append(e.getSQL());
-        }
-        buff.append(')');
-        return buff.toString();
-    }
+	public String getSQL() {
+		StringBuilder buff = new StringBuilder();
+		buff.append(Parser.quoteIdentifier(functionAlias.getName()));
+		buff.append('(');
+		for (int i = 0; i < args.length; i++) {
+			if (i > 0) {
+				buff.append(", ");
+			}
+			Expression e = args[i];
+			buff.append(e.getSQL());
+		}
+		buff.append(')');
+		return buff.toString();
+	}
 
-    public void updateAggregate(Session session) throws SQLException {
-        for (int i = 0; i < args.length; i++) {
-            Expression e = args[i];
-            if (e != null) {
-                e.updateAggregate(session);
-            }
-        }
-    }
+	public void updateAggregate(Session session) throws SQLException {
+		for (int i = 0; i < args.length; i++) {
+			Expression e = args[i];
+			if (e != null) {
+				e.updateAggregate(session);
+			}
+		}
+	}
 
-    public String getName() {
-        return functionAlias.getName();
-    }
+	public String getName() {
+		return functionAlias.getName();
+	}
 
-    public int getParameterCount() throws SQLException {
-        return javaMethod.getParameterCount();
-    }
+	public int getParameterCount() throws SQLException {
+		return javaMethod.getParameterCount();
+	}
 
-    public ValueResultSet getValueForColumnList(Session session, Expression[] args) throws SQLException {
-        Value v = javaMethod.getValue(session, args, true);
-        return v == ValueNull.INSTANCE ? null : (ValueResultSet) v;
-    }
+	public ValueResultSet getValueForColumnList(Session session, Expression[] args) throws SQLException {
+		Value v = javaMethod.getValue(session, args, true);
+		return v == ValueNull.INSTANCE ? null : (ValueResultSet) v;
+	}
 
-    public Expression[] getArgs() {
-        return args;
-    }
+	public Expression[] getArgs() {
+		return args;
+	}
 
-    public boolean isEverything(ExpressionVisitor visitor) {
-        switch(visitor.getType()) {
-        case ExpressionVisitor.DETERMINISTIC:
-            if (!isDeterministic()) {
-                return false;
-            } else {
-                // only if all parameters are deterministic as well
-                break;
-            }
-        case ExpressionVisitor.GET_DEPENDENCIES:
-            visitor.addDependency(functionAlias);
-            break;
-        default:
-        }
-        for (int i = 0; i < args.length; i++) {
-            Expression e = args[i];
-            if (e != null && !e.isEverything(visitor)) {
-                return false;
-            }
-        }
-        return true;
-    }
+	public boolean isEverything(ExpressionVisitor visitor) {
+		switch(visitor.getType()) {
+		case ExpressionVisitor.DETERMINISTIC:
+			if (!isDeterministic()) {
+				return false;
+			} else {
+				// only if all parameters are deterministic as well
+				break;
+			}
+		case ExpressionVisitor.GET_DEPENDENCIES:
+			visitor.addDependency(functionAlias);
+			break;
+		default:
+		}
+		for (int i = 0; i < args.length; i++) {
+			Expression e = args[i];
+			if (e != null && !e.isEverything(visitor)) {
+				return false;
+			}
+		}
+		return true;
+	}
 
-    public int getCost() {
-        int cost = javaMethod.hasConnectionParam() ? 25 : 5;
-        for (int i = 0; i < args.length; i++) {
-            cost += args[i].getCost();
-        }
-        return cost;
-    }
+	public int getCost() {
+		int cost = javaMethod.hasConnectionParam() ? 25 : 5;
+		for (int i = 0; i < args.length; i++) {
+			cost += args[i].getCost();
+		}
+		return cost;
+	}
 
-    public boolean isDeterministic() {
-        return functionAlias.isDeterministic();
-    }
+	public boolean isDeterministic() {
+		return functionAlias.isDeterministic();
+	}
 
 }

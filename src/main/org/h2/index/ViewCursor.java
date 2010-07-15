@@ -21,45 +21,45 @@ import org.h2.value.ValueNull;
  */
 public class ViewCursor implements Cursor {
 
-    private Table table;
-    private LocalResult result;
-    private Row current;
+	private Table table;
+	private LocalResult result;
+	private Row current;
 
-    ViewCursor(Table table, LocalResult result) {
-        this.table = table;
-        this.result = result;
-    }
+	ViewCursor(Table table, LocalResult result) {
+		this.table = table;
+		this.result = result;
+	}
 
-    public Row get() {
-        return current;
-    }
+	public Row get() {
+		return current;
+	}
 
-    public SearchRow getSearchRow() {
-        return current;
-    }
+	public SearchRow getSearchRow() {
+		return current;
+	}
 
-    public int getPos() {
-        throw Message.throwInternalError();
-    }
+	public int getPos() {
+		throw Message.throwInternalError();
+	}
 
-    public boolean next() throws SQLException {
-        boolean res = result.next();
-        if (!res) {
-            result.reset();
-            current = null;
-            return false;
-        }
-        current = table.getTemplateRow();
-        Value[] values = result.currentRow();
-        for (int i = 0; i < current.getColumnCount(); i++) {
-            Value v = i < values.length ? values[i] : ValueNull.INSTANCE;
-            current.setValue(i, v);
-        }
-        return true;
-    }
+	public boolean next() throws SQLException {
+		boolean res = result.next();
+		if (!res) {
+			result.reset();
+			current = null;
+			return false;
+		}
+		current = table.getTemplateRow();
+		Value[] values = result.currentRow();
+		for (int i = 0; i < current.getColumnCount(); i++) {
+			Value v = i < values.length ? values[i] : ValueNull.INSTANCE;
+			current.setValue(i, v);
+		}
+		return true;
+	}
 
-    public boolean previous() {
-        throw Message.throwInternalError();
-    }
+	public boolean previous() {
+		throw Message.throwInternalError();
+	}
 
 }

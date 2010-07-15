@@ -3,8 +3,6 @@ package org.h2.command.dml;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
-import java.util.HashSet;
-
 import org.h2.constant.ErrorCode;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
@@ -74,7 +72,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 			if (tableManager == null){
 				Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, getSchema().getName() + tableName);
 			}
-			
+
 			QueryProxy qp = null;
 			try {
 				qp = tableManager.getQueryProxy(LockType.WRITE, db.getLocalDatabaseInstanceInWrapper());
@@ -82,7 +80,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 				tableManager = sm.lookup(new TableInfo(tableName, schemaName), false);
 				qp = tableManager.getQueryProxy(LockType.WRITE, db.getLocalDatabaseInstanceInWrapper());
 			}
-			
+
 			if (!qp.getLockGranted().equals(LockType.NONE)){
 				result = migrateTableManagerToLocalInstance(tableManager, schemaName, db);
 			} else {
@@ -148,10 +146,10 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 			oldTableManager.completeMigration();
 		} catch (RemoteException e) {
 			throw new SQLException("Failed to complete migration [" + schemaName + "." + tableName + "].");
-			
+
 		} catch (MovedException e) {
 			throw new SQLException("This shouldn't be possible here. The Table Manager has moved, but this instance should have had exclusive rights to it.");
-			
+
 		} catch (MigrationException e) {
 			throw new SQLException("Migration process timed out [" + schemaName + "." + tableName + "]. It took too long.");
 		}
@@ -172,7 +170,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 		} catch (Exception e) {
 			ErrorHandling.exceptionError(e, "Table Manager migration failed [" + schemaName + "." + tableName + "].");
 		}
-		
+
 		return 1;
 	}
 

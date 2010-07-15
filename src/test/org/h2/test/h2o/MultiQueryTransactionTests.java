@@ -1,3 +1,20 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.test.h2o;
 
 import static org.junit.Assert.fail;
@@ -505,7 +522,7 @@ public class MultiQueryTransactionTests extends TestBase{
 
 			try{
 				ResultSet rs = sa2.executeQuery("SELECT LOCAL * FROM TEST ORDER BY ID;");
-				
+
 				fail("Query timeout expected.");
 
 			}catch(SQLException e){
@@ -603,7 +620,7 @@ public class MultiQueryTransactionTests extends TestBase{
 			mStmt.addBatch();
 			mStmt.executeBatch();
 
-			
+
 			int[] pKey = new int[10];
 			String[] secondCol = new String[10];
 
@@ -621,7 +638,7 @@ public class MultiQueryTransactionTests extends TestBase{
 			fail("Unexpected SQL Exception was thrown. Not cool.");
 		} 
 	}
-	
+
 	/**
 	 * Tests that prepared statements work in the system where no replication is involved.
 	 * @throws SQLException 
@@ -633,107 +650,107 @@ public class MultiQueryTransactionTests extends TestBase{
 
 
 
-			PreparedStatement mStmt = null;
-			try
-			{
-				mStmt = ca.prepareStatement( "insert into PUBLIC.TEST (id,name) values (?,?)" );
+		PreparedStatement mStmt = null;
+		try
+		{
+			mStmt = ca.prepareStatement( "insert into PUBLIC.TEST (id,name) values (?,?)" );
 
 
-				for (int i = 3; i < 10; i++){
-					mStmt.setInt(1, i);
-					mStmt.setString(2, "helloNumber" + i);
-					mStmt.addBatch();
-				}
-
-				mStmt.executeBatch();
-
-				
-				mStmt = ca.prepareStatement( "delete from PUBLIC.TEST where id=?;" );
-				mStmt.setInt(1, 9);
+			for (int i = 3; i < 10; i++){
+				mStmt.setInt(1, i);
+				mStmt.setString(2, "helloNumber" + i);
 				mStmt.addBatch();
-				mStmt.executeBatch();
-//				
-				
-				int[] pKey = new int[9];
-				String[] secondCol = new String[9];
+			}
 
-				pKey[0] = 1; pKey[1] = 2;
-				secondCol[0] = "Hello"; secondCol[1] = "World";
+			mStmt.executeBatch();
 
-				TestQuery test2query = createMultipleInsertStatements("TEST", pKey, secondCol, 3);
 
-				sa.execute("SELECT LOCAL * FROM PUBLIC.TEST ORDER BY ID;");
+			mStmt = ca.prepareStatement( "delete from PUBLIC.TEST where id=?;" );
+			mStmt.setInt(1, 9);
+			mStmt.addBatch();
+			mStmt.executeBatch();
+			//				
 
-				validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
+			int[] pKey = new int[9];
+			String[] secondCol = new String[9];
 
-			} catch ( SQLException ex ) {
-				ex.printStackTrace();
-				fail("Unexpected SQL Exception was thrown. Not cool.");
-			} 
+			pKey[0] = 1; pKey[1] = 2;
+			secondCol[0] = "Hello"; secondCol[1] = "World";
+
+			TestQuery test2query = createMultipleInsertStatements("TEST", pKey, secondCol, 3);
+
+			sa.execute("SELECT LOCAL * FROM PUBLIC.TEST ORDER BY ID;");
+
+			validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
+
+		} catch ( SQLException ex ) {
+			ex.printStackTrace();
+			fail("Unexpected SQL Exception was thrown. Not cool.");
+		} 
 	}
-//	/**
-//	 * Tests that prepared statements work in the system where no replication is involved.
-//	 */
-//	@Test
-//	public void testPreparedStatementsMultipleTransactions(){
-//
-//		PreparedStatement mStmt = null;
-//		try
-//		{
-//			Connection cc = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-//			
-//			cc.setAutoCommit(false);
-//			mStmt = cc.prepareStatement( "CREATE TABLE PUBLIC.TEST5 (ID INT, NAME VARCHAR(255));" );
-//
-//
-//			mStmt.execute();
-//
-//			cc.commit();
-//			
-//			cc.close();
-//			
-//			while (!cc.isClosed()){};
-//			
-//		} catch ( SQLException ex ) {
-//			ex.printStackTrace();
-//			fail("Unexpected SQL Exception was thrown. Not cool.");
-//		} 
-//		
-//		
-//		mStmt = null;
-//		try
-//		{
-//
-//			
-//			mStmt = ca.prepareStatement( "insert into PUBLIC.TEST5 (id,name) values (?,?)" );
-//
-//
-//			for (int i = 3; i < 100; i++){
-//				mStmt.setInt(1, i);
-//				mStmt.setString(2, "helloNumber" + i);
-//				mStmt.addBatch();
-//			}
-//
-//			mStmt.executeBatch();
-//
-//			int[] pKey = new int[100];
-//			String[] secondCol = new String[100];
-//
-//			pKey[0] = 1; pKey[1] = 2;
-//			secondCol[0] = "Hello"; secondCol[1] = "World";
-//
-//			TestQuery test2query = createMultipleInsertStatements("TEST5", pKey, secondCol, 3);
-//
-//			sa.execute("SELECT LOCAL * FROM PUBLIC.TEST5 ORDER BY ID;");
-//
-//			validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
-//
-//		} catch ( SQLException ex ) {
-//			ex.printStackTrace();
-//			fail("Unexpected SQL Exception was thrown. Not cool.");
-//		} 
-//	}
-	
+	//	/**
+	//	 * Tests that prepared statements work in the system where no replication is involved.
+	//	 */
+	//	@Test
+	//	public void testPreparedStatementsMultipleTransactions(){
+	//
+	//		PreparedStatement mStmt = null;
+	//		try
+	//		{
+	//			Connection cc = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+	//			
+	//			cc.setAutoCommit(false);
+	//			mStmt = cc.prepareStatement( "CREATE TABLE PUBLIC.TEST5 (ID INT, NAME VARCHAR(255));" );
+	//
+	//
+	//			mStmt.execute();
+	//
+	//			cc.commit();
+	//			
+	//			cc.close();
+	//			
+	//			while (!cc.isClosed()){};
+	//			
+	//		} catch ( SQLException ex ) {
+	//			ex.printStackTrace();
+	//			fail("Unexpected SQL Exception was thrown. Not cool.");
+	//		} 
+	//		
+	//		
+	//		mStmt = null;
+	//		try
+	//		{
+	//
+	//			
+	//			mStmt = ca.prepareStatement( "insert into PUBLIC.TEST5 (id,name) values (?,?)" );
+	//
+	//
+	//			for (int i = 3; i < 100; i++){
+	//				mStmt.setInt(1, i);
+	//				mStmt.setString(2, "helloNumber" + i);
+	//				mStmt.addBatch();
+	//			}
+	//
+	//			mStmt.executeBatch();
+	//
+	//			int[] pKey = new int[100];
+	//			String[] secondCol = new String[100];
+	//
+	//			pKey[0] = 1; pKey[1] = 2;
+	//			secondCol[0] = "Hello"; secondCol[1] = "World";
+	//
+	//			TestQuery test2query = createMultipleInsertStatements("TEST5", pKey, secondCol, 3);
+	//
+	//			sa.execute("SELECT LOCAL * FROM PUBLIC.TEST5 ORDER BY ID;");
+	//
+	//			validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
+	//
+	//		} catch ( SQLException ex ) {
+	//			ex.printStackTrace();
+	//			fail("Unexpected SQL Exception was thrown. Not cool.");
+	//		} 
+	//	}
+
 	/**
 	 * Tests that prepared statements work in the system where replication is involved.
 	 */
@@ -821,7 +838,7 @@ public class MultiQueryTransactionTests extends TestBase{
 			server.stop();
 
 			TestBase.resetLocatorFile();
-			
+
 			server = Server.createTcpServer(new String[] { "-tcpPort", "9990", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test" });
 
 			server.start();

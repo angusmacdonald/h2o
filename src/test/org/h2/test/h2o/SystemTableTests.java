@@ -1,3 +1,20 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.test.h2o;
 
 
@@ -12,9 +29,6 @@ import java.sql.Statement;
 
 import org.h2.engine.Constants;
 import org.h2.h2o.manager.PersistentSystemTable;
-import org.h2.h2o.remote.ChordRemote;
-import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.LocalH2OProperties;
 import org.h2.h2o.util.locator.LocatorServer;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;
@@ -83,7 +97,7 @@ public class SystemTableTests {
 
 		ls.setRunning(false);
 		while (!ls.isFinished()){
-			
+
 		}
 
 	}
@@ -149,7 +163,7 @@ public class SystemTableTests {
 		Server server = null;
 		try {
 			TestBase.resetLocatorFile();
-			
+
 			server = Server.createTcpServer(new String[] { "-tcpPort", "9082", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9082/db_data/unittests/schema_test" });
 			server.start();
 
@@ -164,16 +178,16 @@ public class SystemTableTests {
 
 			server.shutdown();
 			server.stop();
-			
+
 			TestBase.resetLocatorFile();
-			
+
 			server = Server.createTcpServer(new String[] { "-tcpPort", "9082", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9082/db_data/unittests/schema_test" });
 
 			server.start();
 
 			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9082/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 			TestBase.resetLocatorFile();
-			
+
 			sa = conn.createStatement();
 
 			try{

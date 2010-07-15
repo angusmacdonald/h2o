@@ -15,85 +15,85 @@ import org.h2.message.Message;
  */
 public class InDoubtTransaction {
 
-    /**
-     * The transaction state meaning this transaction is not committed yet, but
-     * also not rolled back (in-doubt).
-     */
-    public static final int IN_DOUBT = 0;
+	/**
+	 * The transaction state meaning this transaction is not committed yet, but
+	 * also not rolled back (in-doubt).
+	 */
+	public static final int IN_DOUBT = 0;
 
-    /**
-     * The transaction state meaning this transaction is committed.
-     */
-    public static final int COMMIT = 1;
+	/**
+	 * The transaction state meaning this transaction is committed.
+	 */
+	public static final int COMMIT = 1;
 
-    /**
-     * The transaction state meaning this transaction is rolled back.
-     */
-    public static final int ROLLBACK = 2;
+	/**
+	 * The transaction state meaning this transaction is rolled back.
+	 */
+	public static final int ROLLBACK = 2;
 
-    // TODO 2-phase-commit: document sql statements and metadata table
+	// TODO 2-phase-commit: document sql statements and metadata table
 
-    private LogFile log;
-    private int sessionId;
-    private int pos;
-    private String transaction;
-    private int blocks;
-    private int state;
+	private LogFile log;
+	private int sessionId;
+	private int pos;
+	private String transaction;
+	private int blocks;
+	private int state;
 
-    InDoubtTransaction(LogFile log, int sessionId, int pos, String transaction, int blocks) {
-        this.log = log;
-        this.sessionId = sessionId;
-        this.pos = pos;
-        this.transaction = transaction;
-        this.blocks = blocks;
-        this.state = IN_DOUBT;
-    }
+	InDoubtTransaction(LogFile log, int sessionId, int pos, String transaction, int blocks) {
+		this.log = log;
+		this.sessionId = sessionId;
+		this.pos = pos;
+		this.transaction = transaction;
+		this.blocks = blocks;
+		this.state = IN_DOUBT;
+	}
 
-    /**
-     * Change the state of this transaction.
-     * This will also update the log file.
-     *
-     * @param state the new state
-     */
-    public void setState(int state) throws SQLException {
-        switch(state) {
-        case COMMIT:
-            log.updatePreparedCommit(true, pos, sessionId, blocks);
-            break;
-        case ROLLBACK:
-            log.updatePreparedCommit(false, pos, sessionId, blocks);
-            break;
-        default:
-            Message.throwInternalError("state="+state);
-        }
-        this.state = state;
-    }
+	/**
+	 * Change the state of this transaction.
+	 * This will also update the log file.
+	 *
+	 * @param state the new state
+	 */
+	public void setState(int state) throws SQLException {
+		switch(state) {
+		case COMMIT:
+			log.updatePreparedCommit(true, pos, sessionId, blocks);
+			break;
+		case ROLLBACK:
+			log.updatePreparedCommit(false, pos, sessionId, blocks);
+			break;
+		default:
+			Message.throwInternalError("state="+state);
+		}
+		this.state = state;
+	}
 
-    /**
-     * Get the state of this transaction as a text.
-     *
-     * @return the transaction state text
-     */
-    public String getState() {
-        switch(state) {
-        case IN_DOUBT:
-            return "IN_DOUBT";
-        case COMMIT:
-            return "COMMIT";
-        case ROLLBACK:
-            return "ROLLBACK";
-        default:
-            throw Message.throwInternalError("state="+state);
-        }
-    }
+	/**
+	 * Get the state of this transaction as a text.
+	 *
+	 * @return the transaction state text
+	 */
+	public String getState() {
+		switch(state) {
+		case IN_DOUBT:
+			return "IN_DOUBT";
+		case COMMIT:
+			return "COMMIT";
+		case ROLLBACK:
+			return "ROLLBACK";
+		default:
+			throw Message.throwInternalError("state="+state);
+		}
+	}
 
-    /**
-     * Get the name of the transaction.
-     *
-     * @return the transaction name
-     */
-    public String getTransaction() {
-        return transaction;
-    }
+	/**
+	 * Get the name of the transaction.
+	 *
+	 * @return the transaction name
+	 */
+	public String getTransaction() {
+		return transaction;
+	}
 
 }

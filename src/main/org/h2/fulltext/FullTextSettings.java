@@ -21,119 +21,119 @@ import org.h2.util.ObjectUtils;
  */
 class FullTextSettings {
 
-    private static final HashMap SETTINGS = new HashMap();
+	private static final HashMap SETTINGS = new HashMap();
 
-    private HashSet ignoreList = new HashSet();
-    private HashMap words = new HashMap();
-    private HashMap indexes = new HashMap();
-    private PreparedStatement prepSelectMapByWordId;
-    private PreparedStatement prepSelectRowById;
+	private HashSet ignoreList = new HashSet();
+	private HashMap words = new HashMap();
+	private HashMap indexes = new HashMap();
+	private PreparedStatement prepSelectMapByWordId;
+	private PreparedStatement prepSelectRowById;
 
-    private FullTextSettings() {
-        // don't allow construction
-    }
+	private FullTextSettings() {
+		// don't allow construction
+	}
 
-    HashSet getIgnoreList() {
-        return ignoreList;
-    }
+	HashSet getIgnoreList() {
+		return ignoreList;
+	}
 
-    HashMap getWordList() {
-        return words;
-    }
+	HashMap getWordList() {
+		return words;
+	}
 
-    /**
-     * Get the index information for the given index id.
-     *
-     * @param indexId the index id
-     * @return the index info
-     */
-    IndexInfo getIndexInfo(long indexId) {
-        return (IndexInfo) indexes.get(ObjectUtils.getLong(indexId));
-    }
+	/**
+	 * Get the index information for the given index id.
+	 *
+	 * @param indexId the index id
+	 * @return the index info
+	 */
+	IndexInfo getIndexInfo(long indexId) {
+		return (IndexInfo) indexes.get(ObjectUtils.getLong(indexId));
+	}
 
-    /**
-     * Add an index.
-     *
-     * @param index the index
-     */
-    void addIndexInfo(IndexInfo index) {
-        indexes.put(ObjectUtils.getLong(index.id), index);
-    }
+	/**
+	 * Add an index.
+	 *
+	 * @param index the index
+	 */
+	void addIndexInfo(IndexInfo index) {
+		indexes.put(ObjectUtils.getLong(index.id), index);
+	}
 
-    /**
-     * Convert a word to uppercase. This method returns null if the word is in
-     * the ignore list.
-     *
-     * @param word the word to convert and check
-     * @return the uppercase version of the word or null
-     */
-    String convertWord(String word) {
-        // TODO this is locale specific, document
-        word = word.toUpperCase();
-        if (ignoreList.contains(word)) {
-            return null;
-        }
-        return word;
-    }
+	/**
+	 * Convert a word to uppercase. This method returns null if the word is in
+	 * the ignore list.
+	 *
+	 * @param word the word to convert and check
+	 * @return the uppercase version of the word or null
+	 */
+	String convertWord(String word) {
+		// TODO this is locale specific, document
+		word = word.toUpperCase();
+		if (ignoreList.contains(word)) {
+			return null;
+		}
+		return word;
+	}
 
-    /**
-     * Get or create the fulltext settings for this database.
-     *
-     * @param conn the connection
-     * @return the settings
-     */
-    static FullTextSettings getInstance(Connection conn) throws SQLException {
-        String path = getIndexPath(conn);
-        FullTextSettings setting = (FullTextSettings) SETTINGS.get(path);
-        if (setting == null) {
-            setting = new FullTextSettings();
-            SETTINGS.put(path, setting);
-        }
-        return setting;
-    }
+	/**
+	 * Get or create the fulltext settings for this database.
+	 *
+	 * @param conn the connection
+	 * @return the settings
+	 */
+	static FullTextSettings getInstance(Connection conn) throws SQLException {
+		String path = getIndexPath(conn);
+		FullTextSettings setting = (FullTextSettings) SETTINGS.get(path);
+		if (setting == null) {
+			setting = new FullTextSettings();
+			SETTINGS.put(path, setting);
+		}
+		return setting;
+	}
 
-    private static String getIndexPath(Connection conn) throws SQLException {
-        Statement stat = conn.createStatement();
-        ResultSet rs = stat.executeQuery("CALL IFNULL(DATABASE_PATH(), 'MEM:' || DATABASE())");
-        rs.next();
-        String path = rs.getString(1);
-        if ("MEM:UNNAMED".equals(path)) {
-            throw new SQLException("FULLTEXT", "Fulltext search for private (unnamed) in-memory databases is not supported.");
-        }
-        rs.close();
-        return path;
-    }
+	private static String getIndexPath(Connection conn) throws SQLException {
+		Statement stat = conn.createStatement();
+		ResultSet rs = stat.executeQuery("CALL IFNULL(DATABASE_PATH(), 'MEM:' || DATABASE())");
+		rs.next();
+		String path = rs.getString(1);
+		if ("MEM:UNNAMED".equals(path)) {
+			throw new SQLException("FULLTEXT", "Fulltext search for private (unnamed) in-memory databases is not supported.");
+		}
+		rs.close();
+		return path;
+	}
 
-    PreparedStatement getPrepSelectMapByWordId() {
-        return prepSelectMapByWordId;
-    }
+	PreparedStatement getPrepSelectMapByWordId() {
+		return prepSelectMapByWordId;
+	}
 
-    void setPrepSelectMapByWordId(PreparedStatement prepSelectMapByWordId) {
-        this.prepSelectMapByWordId = prepSelectMapByWordId;
-    }
+	void setPrepSelectMapByWordId(PreparedStatement prepSelectMapByWordId) {
+		this.prepSelectMapByWordId = prepSelectMapByWordId;
+	}
 
-    PreparedStatement getPrepSelectRowById() {
-        return prepSelectRowById;
-    }
+	PreparedStatement getPrepSelectRowById() {
+		return prepSelectRowById;
+	}
 
-    void setPrepSelectRowById(PreparedStatement prepSelectRowById) {
-        this.prepSelectRowById = prepSelectRowById;
-    }
+	void setPrepSelectRowById(PreparedStatement prepSelectRowById) {
+		this.prepSelectRowById = prepSelectRowById;
+	}
 
-    /**
-     * Remove all indexes from the settings.
-     */
-    void removeAllIndexes() {
-        indexes.clear();
-    }
+	/**
+	 * Remove all indexes from the settings.
+	 */
+	void removeAllIndexes() {
+		indexes.clear();
+	}
 
-    /**
-     * Remove an index from the settings.
-     *
-     * @param index the index to remove
-     */
-    void removeIndexInfo(IndexInfo index) {
-        indexes.remove(ObjectUtils.getLong(index.id));
-    }
+	/**
+	 * Remove an index from the settings.
+	 *
+	 * @param index the index to remove
+	 */
+	void removeIndexInfo(IndexInfo index) {
+		indexes.remove(ObjectUtils.getLong(index.id));
+	}
 
 }

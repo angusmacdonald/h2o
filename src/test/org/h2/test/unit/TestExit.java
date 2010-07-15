@@ -21,121 +21,121 @@ import org.h2.test.TestBase;
  */
 public class TestExit extends TestBase implements DatabaseEventListener {
 
-    public static Connection conn;
+	public static Connection conn;
 
-    static final int OPEN_WITH_CLOSE_ON_EXIT = 1, OPEN_WITHOUT_CLOSE_ON_EXIT = 2;
+	static final int OPEN_WITH_CLOSE_ON_EXIT = 1, OPEN_WITHOUT_CLOSE_ON_EXIT = 2;
 
-    public void test() throws Exception {
-        if (config.codeCoverage || config.networked) {
-            return;
-        }
-        deleteDb("exit");
-        String selfDestruct = SelfDestructor.getPropertyString(60);
-        String[] procDef = new String[] { "java", selfDestruct,
-                "-cp", "bin" + File.pathSeparator + ".",
-                getClass().getName(), "" + OPEN_WITH_CLOSE_ON_EXIT };
-        Process proc = Runtime.getRuntime().exec(procDef);
-        while (true) {
-            int ch = proc.getErrorStream().read();
-            if (ch < 0) {
-                break;
-            }
-            System.out.print((char) ch);
-        }
-        while (true) {
-            int ch = proc.getInputStream().read();
-            if (ch < 0) {
-                break;
-            }
-            System.out.print((char) ch);
-        }
-        proc.waitFor();
-        Thread.sleep(100);
-        if (!getClosedFile().exists()) {
-            fail("did not close database");
-        }
-        procDef = new String[] { "java",
-                "-cp", "bin" + File.pathSeparator + ".", getClass().getName(),
-                "" + OPEN_WITHOUT_CLOSE_ON_EXIT };
-        proc = Runtime.getRuntime().exec(procDef);
-        proc.waitFor();
-        Thread.sleep(100);
-        if (getClosedFile().exists()) {
-            fail("closed database");
-        }
-        deleteDb("exit");
-    }
+	public void test() throws Exception {
+		if (config.codeCoverage || config.networked) {
+			return;
+		}
+		deleteDb("exit");
+		String selfDestruct = SelfDestructor.getPropertyString(60);
+		String[] procDef = new String[] { "java", selfDestruct,
+				"-cp", "bin" + File.pathSeparator + ".",
+				getClass().getName(), "" + OPEN_WITH_CLOSE_ON_EXIT };
+		Process proc = Runtime.getRuntime().exec(procDef);
+		while (true) {
+			int ch = proc.getErrorStream().read();
+			if (ch < 0) {
+				break;
+			}
+			System.out.print((char) ch);
+		}
+		while (true) {
+			int ch = proc.getInputStream().read();
+			if (ch < 0) {
+				break;
+			}
+			System.out.print((char) ch);
+		}
+		proc.waitFor();
+		Thread.sleep(100);
+		if (!getClosedFile().exists()) {
+			fail("did not close database");
+		}
+		procDef = new String[] { "java",
+				"-cp", "bin" + File.pathSeparator + ".", getClass().getName(),
+				"" + OPEN_WITHOUT_CLOSE_ON_EXIT };
+		proc = Runtime.getRuntime().exec(procDef);
+		proc.waitFor();
+		Thread.sleep(100);
+		if (getClosedFile().exists()) {
+			fail("closed database");
+		}
+		deleteDb("exit");
+	}
 
-    /**
-     * This method is called when executing this application from the command
-     * line.
-     *
-     * @param args the command line parameters
-     */
-    public static void main(String[] args) throws SQLException {
-        SelfDestructor.startCountdown(60);
-        if (args.length == 0) {
-            System.exit(1);
-        }
-        int action = Integer.parseInt(args[0]);
-        TestExit app = new TestExit();
-        app.execute(action);
-    }
+	/**
+	 * This method is called when executing this application from the command
+	 * line.
+	 *
+	 * @param args the command line parameters
+	 */
+	public static void main(String[] args) throws SQLException {
+		SelfDestructor.startCountdown(60);
+		if (args.length == 0) {
+			System.exit(1);
+		}
+		int action = Integer.parseInt(args[0]);
+		TestExit app = new TestExit();
+		app.execute(action);
+	}
 
-    private void execute(int action) throws SQLException {
-        org.h2.Driver.load();
-        String url = "";
-        switch (action) {
-        case OPEN_WITH_CLOSE_ON_EXIT:
-            url = "jdbc:h2:" + baseDir + "/exit;database_event_listener='" + getClass().getName()
-                    + "';db_close_on_exit=true";
-            break;
-        case OPEN_WITHOUT_CLOSE_ON_EXIT:
-            url = "jdbc:h2:" + baseDir + "/exit;database_event_listener='" + getClass().getName()
-                    + "';db_close_on_exit=false";
-            break;
-        default:
-        }
-        conn = open(url);
-        Connection conn2 = open(url);
-        conn2.close();
-    }
+	private void execute(int action) throws SQLException {
+		org.h2.Driver.load();
+		String url = "";
+		switch (action) {
+		case OPEN_WITH_CLOSE_ON_EXIT:
+			url = "jdbc:h2:" + baseDir + "/exit;database_event_listener='" + getClass().getName()
+			+ "';db_close_on_exit=true";
+			break;
+		case OPEN_WITHOUT_CLOSE_ON_EXIT:
+			url = "jdbc:h2:" + baseDir + "/exit;database_event_listener='" + getClass().getName()
+			+ "';db_close_on_exit=false";
+			break;
+		default:
+		}
+		conn = open(url);
+		Connection conn2 = open(url);
+		conn2.close();
+	}
 
-    private static Connection open(String url) throws SQLException {
-        getClosedFile().delete();
-        return DriverManager.getConnection(url, "sa", "");
-    }
+	private static Connection open(String url) throws SQLException {
+		getClosedFile().delete();
+		return DriverManager.getConnection(url, "sa", "");
+	}
 
-    public void diskSpaceIsLow(long stillAvailable) {
-        // nothing to do
-    }
+	public void diskSpaceIsLow(long stillAvailable) {
+		// nothing to do
+	}
 
-    public void exceptionThrown(SQLException e, String sql) {
-        // nothing to do
-    }
+	public void exceptionThrown(SQLException e, String sql) {
+		// nothing to do
+	}
 
-    public void closingDatabase() {
-        try {
-            getClosedFile().createNewFile();
-        } catch (IOException e) {
-            TestBase.logError("error", e);
-        }
-    }
+	public void closingDatabase() {
+		try {
+			getClosedFile().createNewFile();
+		} catch (IOException e) {
+			TestBase.logError("error", e);
+		}
+	}
 
-    private static File getClosedFile() {
-        return new File(baseDir + "/closed.txt");
-    }
+	private static File getClosedFile() {
+		return new File(baseDir + "/closed.txt");
+	}
 
-    public void setProgress(int state, String name, int x, int max) {
-        // nothing to do
-    }
+	public void setProgress(int state, String name, int x, int max) {
+		// nothing to do
+	}
 
-    public void init(String url) {
-        // nothing to do
-    }
+	public void init(String url) {
+		// nothing to do
+	}
 
-    public void opened() {
-        // nothing to do
-    }
+	public void opened() {
+		// nothing to do
+	}
 
 }

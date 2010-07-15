@@ -14,49 +14,49 @@ import org.h2.util.StringUtils;
  * This class is used by the H2 Console.
  */
 public class ConnectionInfo {
-    /**
-     * The driver class name.
-     */
-    public String driver;
+	/**
+	 * The driver class name.
+	 */
+	public String driver;
 
-    /**
-     * The database URL.
-     */
-    public String url;
+	/**
+	 * The database URL.
+	 */
+	public String url;
 
-    /**
-     * The user name.
-     */
-    public String user;
+	/**
+	 * The user name.
+	 */
+	public String user;
 
-    /**
-     * The connection display name.
-     */
-    String name;
+	/**
+	 * The connection display name.
+	 */
+	String name;
 
-    /**
-     * The last time this connection was used.
-     */
-    int lastAccess;
+	/**
+	 * The last time this connection was used.
+	 */
+	int lastAccess;
 
-    ConnectionInfo() {
-        // nothing to do
-    }
+	ConnectionInfo() {
+		// nothing to do
+	}
 
-    public ConnectionInfo(String data) {
-        String[] array = StringUtils.arraySplit(data, '|', false);
-        name = get(array, 0);
-        driver = get(array, 1);
-        url = get(array, 2);
-        user = get(array, 3);
-    }
+	public ConnectionInfo(String data) {
+		String[] array = StringUtils.arraySplit(data, '|', false);
+		name = get(array, 0);
+		driver = get(array, 1);
+		url = get(array, 2);
+		user = get(array, 3);
+	}
 
-    private String get(String[] array, int i) {
-        return array != null && array.length > i ? array[i] : "";
-    }
+	private String get(String[] array, int i) {
+		return array != null && array.length > i ? array[i] : "";
+	}
 
-    String getString() {
-        return StringUtils.arrayCombine(new String[] { name, driver, url, user }, '|');
-    }
+	String getString() {
+		return StringUtils.arrayCombine(new String[] { name, driver, url, user }, '|');
+	}
 
 }

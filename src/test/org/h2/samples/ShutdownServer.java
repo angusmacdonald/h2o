@@ -12,13 +12,13 @@ package org.h2.samples;
  */
 public class ShutdownServer {
 
-    /**
-     * This method is called when executing this sample application from the
-     * command line.
-     *
-     * @param args the command line parameters
-     */
-    public static void main(String[] args) throws Exception {
-        org.h2.tools.Server.shutdownTcpServer("tcp://localhost:9094", "", false);
-    }
+	/**
+	 * This method is called when executing this sample application from the
+	 * command line.
+	 *
+	 * @param args the command line parameters
+	 */
+	public static void main(String[] args) throws Exception {
+		org.h2.tools.Server.shutdownTcpServer("tcp://localhost:9094", "", false);
+	}
 }

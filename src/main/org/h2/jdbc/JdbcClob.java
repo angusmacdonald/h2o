@@ -27,209 +27,209 @@ import org.h2.value.Value;
  */
 public class JdbcClob extends TraceObject implements Clob
 
-    , NClob
+, NClob
 
 {
 
-    private Value value;
-    private JdbcConnection conn;
+	private Value value;
+	private JdbcConnection conn;
 
-    /**
-     * INTERNAL
-     */
-    public JdbcClob(JdbcConnection conn, Value value, int id) {
-        setTrace(conn.getSession().getTrace(), TraceObject.CLOB, id);
-        this.conn = conn;
-        this.value = value;
-    }
+	/**
+	 * INTERNAL
+	 */
+	public JdbcClob(JdbcConnection conn, Value value, int id) {
+		setTrace(conn.getSession().getTrace(), TraceObject.CLOB, id);
+		this.conn = conn;
+		this.value = value;
+	}
 
-    /**
-     * Returns the length.
-     *
-     * @return the length
-     */
-    public long length() throws SQLException {
-        try {
-            debugCodeCall("length");
-            checkClosed();
-            if (value.getType() == Value.CLOB) {
-                long precision = value.getPrecision();
-                if (precision > 0) {
-                    return precision;
-                }
-            }
-            Reader in = value.getReader();
-            try {
-                long size = 0;
-                char[] buff = new char[Constants.FILE_BLOCK_SIZE];
-                while (true) {
-                    int len = in.read(buff, 0, Constants.FILE_BLOCK_SIZE);
-                    if (len <= 0) {
-                        break;
-                    }
-                    size += len;
-                }
-                return size;
-            } finally {
-                in.close();
-            }
-        } catch (Exception e) {
-            throw logAndConvert(e);
-        }
-    }
+	/**
+	 * Returns the length.
+	 *
+	 * @return the length
+	 */
+	public long length() throws SQLException {
+		try {
+			debugCodeCall("length");
+			checkClosed();
+			if (value.getType() == Value.CLOB) {
+				long precision = value.getPrecision();
+				if (precision > 0) {
+					return precision;
+				}
+			}
+			Reader in = value.getReader();
+			try {
+				long size = 0;
+				char[] buff = new char[Constants.FILE_BLOCK_SIZE];
+				while (true) {
+					int len = in.read(buff, 0, Constants.FILE_BLOCK_SIZE);
+					if (len <= 0) {
+						break;
+					}
+					size += len;
+				}
+				return size;
+			} finally {
+				in.close();
+			}
+		} catch (Exception e) {
+			throw logAndConvert(e);
+		}
+	}
 
-    /**
-     * [Not supported] Truncates the object.
-     */
-    public void truncate(long len) throws SQLException {
-        debugCodeCall("truncate", len);
-        throw Message.getUnsupportedException();
-    }
+	/**
+	 * [Not supported] Truncates the object.
+	 */
+	public void truncate(long len) throws SQLException {
+		debugCodeCall("truncate", len);
+		throw Message.getUnsupportedException();
+	}
 
-    /**
-     * Returns the input stream.
-     *
-     * @return the input stream
-     */
-    public InputStream getAsciiStream() throws SQLException {
-        try {
-            debugCodeCall("getAsciiStream");
-            checkClosed();
-            String s = value.getString();
-            return IOUtils.getInputStream(s);
-        } catch (Exception e) {
-            throw logAndConvert(e);
-        }
-    }
+	/**
+	 * Returns the input stream.
+	 *
+	 * @return the input stream
+	 */
+	public InputStream getAsciiStream() throws SQLException {
+		try {
+			debugCodeCall("getAsciiStream");
+			checkClosed();
+			String s = value.getString();
+			return IOUtils.getInputStream(s);
+		} catch (Exception e) {
+			throw logAndConvert(e);
+		}
+	}
 
-    /**
-     * [Not supported] Returns an output  stream.
-     */
-    public OutputStream setAsciiStream(long pos) throws SQLException {
-        debugCodeCall("setAsciiStream", pos);
-        throw Message.getUnsupportedException();
-    }
+	/**
+	 * [Not supported] Returns an output  stream.
+	 */
+	public OutputStream setAsciiStream(long pos) throws SQLException {
+		debugCodeCall("setAsciiStream", pos);
+		throw Message.getUnsupportedException();
+	}
 
-    /**
-     * Returns the reader.
-     *
-     * @return the reader
-     */
-    public Reader getCharacterStream() throws SQLException {
-        try {
-            debugCodeCall("getCharacterStream");
-            checkClosed();
-            return value.getReader();
-        } catch (Exception e) {
-            throw logAndConvert(e);
-        }
-    }
+	/**
+	 * Returns the reader.
+	 *
+	 * @return the reader
+	 */
+	public Reader getCharacterStream() throws SQLException {
+		try {
+			debugCodeCall("getCharacterStream");
+			checkClosed();
+			return value.getReader();
+		} catch (Exception e) {
+			throw logAndConvert(e);
+		}
+	}
 
-    /**
-     * [Not supported] Returns a writer starting from a given position.
-     */
-    public Writer setCharacterStream(long pos) throws SQLException {
-        debugCodeCall("setCharacterStream", pos);
-        throw Message.getUnsupportedException();
-    }
+	/**
+	 * [Not supported] Returns a writer starting from a given position.
+	 */
+	public Writer setCharacterStream(long pos) throws SQLException {
+		debugCodeCall("setCharacterStream", pos);
+		throw Message.getUnsupportedException();
+	}
 
-    /**
-     * Returns a substring.
-     *
-     * @param pos the position (the first character is at position 1)
-     * @param length the number of characters
-     * @return the string
-     */
-    public String getSubString(long pos, int length) throws SQLException {
-        try {
-            debugCode("getSubString(" + pos + ", " + length + ");");
-            checkClosed();
-            if (pos < 1) {
-                throw Message.getInvalidValueException("pos", "" + pos);
-            }
-            if (length < 0) {
-                throw Message.getInvalidValueException("length", "" + length);
-            }
-            StringBuilder buff = new StringBuilder(Math.min(4096, length));
-            Reader reader = value.getReader();
-            try {
-                IOUtils.skipFully(reader, pos - 1);
-                for (int i = 0; i < length; i++) {
-                    int ch = reader.read();
-                    if (ch < 0) {
-                        break;
-                    }
-                    buff.append((char) ch);
-                }
-            } finally {
-                reader.close();
-            }
-            return buff.toString();
-        } catch (Exception e) {
-            throw logAndConvert(e);
-        }
-    }
+	/**
+	 * Returns a substring.
+	 *
+	 * @param pos the position (the first character is at position 1)
+	 * @param length the number of characters
+	 * @return the string
+	 */
+	public String getSubString(long pos, int length) throws SQLException {
+		try {
+			debugCode("getSubString(" + pos + ", " + length + ");");
+			checkClosed();
+			if (pos < 1) {
+				throw Message.getInvalidValueException("pos", "" + pos);
+			}
+			if (length < 0) {
+				throw Message.getInvalidValueException("length", "" + length);
+			}
+			StringBuilder buff = new StringBuilder(Math.min(4096, length));
+			Reader reader = value.getReader();
+			try {
+				IOUtils.skipFully(reader, pos - 1);
+				for (int i = 0; i < length; i++) {
+					int ch = reader.read();
+					if (ch < 0) {
+						break;
+					}
+					buff.append((char) ch);
+				}
+			} finally {
+				reader.close();
+			}
+			return buff.toString();
+		} catch (Exception e) {
+			throw logAndConvert(e);
+		}
+	}
 
-    /**
-     * [Not supported] Sets a substring.
-     */
-    public int setString(long pos, String str) throws SQLException {
-        debugCode("setString("+pos+", "+quote(str)+");");
-        throw Message.getUnsupportedException();
-    }
+	/**
+	 * [Not supported] Sets a substring.
+	 */
+	public int setString(long pos, String str) throws SQLException {
+		debugCode("setString("+pos+", "+quote(str)+");");
+		throw Message.getUnsupportedException();
+	}
 
-    /**
-     * [Not supported] Sets a substring.
-     */
-    public int setString(long pos, String str, int offset, int len) throws SQLException {
-        debugCode("setString("+pos+", "+quote(str)+", "+offset+", "+len+");");
-        throw Message.getUnsupportedException();
-    }
+	/**
+	 * [Not supported] Sets a substring.
+	 */
+	public int setString(long pos, String str, int offset, int len) throws SQLException {
+		debugCode("setString("+pos+", "+quote(str)+", "+offset+", "+len+");");
+		throw Message.getUnsupportedException();
+	}
 
-    /**
-     * [Not supported] Searches a pattern and return the position.
-     */
-    public long position(String pattern, long start) throws SQLException {
-        debugCode("position("+quote(pattern)+", "+start+");");
-        throw Message.getUnsupportedException();
-    }
+	/**
+	 * [Not supported] Searches a pattern and return the position.
+	 */
+	public long position(String pattern, long start) throws SQLException {
+		debugCode("position("+quote(pattern)+", "+start+");");
+		throw Message.getUnsupportedException();
+	}
 
-    /**
-     * [Not supported] Searches a pattern and return the position.
-     */
-    public long position(Clob clobPattern, long start) throws SQLException {
-        debugCode("position(clobPattern, "+start+");");
-        throw Message.getUnsupportedException();
-    }
+	/**
+	 * [Not supported] Searches a pattern and return the position.
+	 */
+	public long position(Clob clobPattern, long start) throws SQLException {
+		debugCode("position(clobPattern, "+start+");");
+		throw Message.getUnsupportedException();
+	}
 
-    /**
-     * Release all resources of this object.
-     */
-    public void free() {
-        debugCodeCall("free");
-        value = null;
-    }
+	/**
+	 * Release all resources of this object.
+	 */
+	public void free() {
+		debugCodeCall("free");
+		value = null;
+	}
 
-    /**
-     * [Not supported] Returns the reader, starting from an offset.
-     */
-    public Reader getCharacterStream(long pos, long length) throws SQLException {
-        debugCode("getCharacterStream("+pos+", "+length+");");
-        throw Message.getUnsupportedException();
-    }
+	/**
+	 * [Not supported] Returns the reader, starting from an offset.
+	 */
+	public Reader getCharacterStream(long pos, long length) throws SQLException {
+		debugCode("getCharacterStream("+pos+", "+length+");");
+		throw Message.getUnsupportedException();
+	}
 
-    private void checkClosed() throws SQLException {
-        conn.checkClosed();
-        if (value == null) {
-            throw Message.getSQLException(ErrorCode.OBJECT_CLOSED);
-        }
-    }
+	private void checkClosed() throws SQLException {
+		conn.checkClosed();
+		if (value == null) {
+			throw Message.getSQLException(ErrorCode.OBJECT_CLOSED);
+		}
+	}
 
-    /**
-     * INTERNAL
-     */
-    public String toString() {
-        return getTraceObjectName() + ": " + value.getTraceSQL();
-    }
+	/**
+	 * INTERNAL
+	 */
+	public String toString() {
+		return getTraceObjectName() + ": " + value.getTraceSQL();
+	}
 
 }

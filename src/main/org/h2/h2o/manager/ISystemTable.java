@@ -1,3 +1,20 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.h2o.manager;
 
 import java.rmi.Remote;
@@ -49,11 +66,11 @@ public interface ISystemTable extends Remote {
 	public boolean addTableInformation(TableManagerRemote tableManager, TableInfo tableDetails) throws RemoteException, MovedException, SQLException;
 
 
-//	/**
-//	 * Remove a single replica from the database system (so there will be other replicas left).
-//	 * @param ti			Information on the replicas location.
-//	 */
-//	public void removeReplicaInformation(TableInfo ti) throws RemoteException, MovedException;
+	//	/**
+	//	 * Remove a single replica from the database system (so there will be other replicas left).
+	//	 * @param ti			Information on the replicas location.
+	//	 */
+	//	public void removeReplicaInformation(TableInfo ti) throws RemoteException, MovedException;
 
 	/**
 	 * Remove Table Manager from the system. This is used when a table is being dropped completely
@@ -82,20 +99,20 @@ public interface ISystemTable extends Remote {
 	 */
 	public int getNewTableSetNumber() throws RemoteException, MovedException;
 
-//	/**
-//	 * Get the number of replicas that exist for a particular table.
-//	 * @param tableName	The name of the table.
-//	 * @param schemaName	The schema which this table is in. NULL is acceptable, and
-//	 * used to indicate the default 'PUBLIC' schema.
-//	 * @return
-//	 */
-//	public int getNumberofReplicas(String tableName, String schemaName) throws RemoteException, MovedException;
+	//	/**
+	//	 * Get the number of replicas that exist for a particular table.
+	//	 * @param tableName	The name of the table.
+	//	 * @param schemaName	The schema which this table is in. NULL is acceptable, and
+	//	 * used to indicate the default 'PUBLIC' schema.
+	//	 * @return
+	//	 */
+	//	public int getNumberofReplicas(String tableName, String schemaName) throws RemoteException, MovedException;
 
-//	/**
-//	 * Add details of a new replica at the specified location.
-//	 * @param ti
-//	 */
-//	public void addReplicaInformation(TableInfo ti) throws RemoteException, MovedException, SQLException;
+	//	/**
+	//	 * Add details of a new replica at the specified location.
+	//	 * @param ti
+	//	 */
+	//	public void addReplicaInformation(TableInfo ti) throws RemoteException, MovedException, SQLException;
 
 	/**
 	 * Returns an array of all the tables in a given database schema.
@@ -103,7 +120,7 @@ public interface ISystemTable extends Remote {
 	 * @return Array of table names from the specified schema.
 	 */
 	public Set<String> getAllTablesInSchema(String schemaName) throws RemoteException, MovedException;
-	
+
 	/**
 	 * Build the state of this System Table object by replicating the state of another schema
 	 * manager.
@@ -121,7 +138,7 @@ public interface ISystemTable extends Remote {
 	 * @throws SQLException 
 	 */
 	void buildSystemTableState() throws RemoteException, MovedException, SQLException;
-	
+
 	/**
 	 * Returns a set of all the databases connected in the system.
 	 * @throws SQLException 
@@ -193,12 +210,12 @@ public interface ISystemTable extends Remote {
 	 * @param replicaLocation	Where the state has been replicated.
 	 */
 	public void addTableManagerStateReplica(TableInfo table, DatabaseURL replicaLocation, boolean active) throws RemoteException, MovedException;
-	
+
 	/**
 	 * Add a location where a given table managers state was replicated.
 	 * @param table				The table whose manager has removed/lost a replica of its state.
 	 * @param replicaLocation	Where the state was replicated.
 	 */
 	public void removeTableManagerStateReplica(TableInfo table, DatabaseURL replicaLocation) throws RemoteException, MovedException;
-	
+
 }

@@ -22,129 +22,129 @@ import org.h2.message.Message;
  */
 public class ValueNull extends Value {
 
-    /**
-     * The main NULL instance.
-     */
-    public static final ValueNull INSTANCE = new ValueNull();
+	/**
+	 * The main NULL instance.
+	 */
+	public static final ValueNull INSTANCE = new ValueNull();
 
-    /**
-     * This special instance is used as a marker for deleted entries in a map.
-     * It should not be used anywhere else.
-     */
-    public static final ValueNull DELETED = new ValueNull();
+	/**
+	 * This special instance is used as a marker for deleted entries in a map.
+	 * It should not be used anywhere else.
+	 */
+	public static final ValueNull DELETED = new ValueNull();
 
-    /**
-     * The precision of NULL.
-     */
-    private static final int PRECISION = 1;
+	/**
+	 * The precision of NULL.
+	 */
+	private static final int PRECISION = 1;
 
-    /**
-     * The display size of the textual representation of NULL.
-     */
-    private static final int DISPLAY_SIZE = 4;
+	/**
+	 * The display size of the textual representation of NULL.
+	 */
+	private static final int DISPLAY_SIZE = 4;
 
-    private ValueNull() {
-        // don't allow construction
-    }
+	private ValueNull() {
+		// don't allow construction
+	}
 
-    public String getSQL() {
-        return "NULL";
-    }
+	public String getSQL() {
+		return "NULL";
+	}
 
-    public int getType() {
-        return Value.NULL;
-    }
+	public int getType() {
+		return Value.NULL;
+	}
 
-    public String getString() {
-        return null;
-    }
+	public String getString() {
+		return null;
+	}
 
-    public Boolean getBoolean() {
-        return null;
-    }
+	public Boolean getBoolean() {
+		return null;
+	}
 
-    public Date getDate() {
-        return null;
-    }
+	public Date getDate() {
+		return null;
+	}
 
-    public Time getTime() {
-        return null;
-    }
+	public Time getTime() {
+		return null;
+	}
 
-    public Timestamp getTimestamp() {
-        return null;
-    }
+	public Timestamp getTimestamp() {
+		return null;
+	}
 
-    public byte[] getBytes() {
-        return null;
-    }
+	public byte[] getBytes() {
+		return null;
+	}
 
-    public byte getByte() {
-        return 0;
-    }
+	public byte getByte() {
+		return 0;
+	}
 
-    public short getShort() {
-        return 0;
-    }
+	public short getShort() {
+		return 0;
+	}
 
-    public BigDecimal getBigDecimal() {
-        return null;
-    }
+	public BigDecimal getBigDecimal() {
+		return null;
+	}
 
-    public double getDouble() {
-        return 0.0;
-    }
+	public double getDouble() {
+		return 0.0;
+	}
 
-    public float getFloat() {
-        return 0.0F;
-    }
+	public float getFloat() {
+		return 0.0F;
+	}
 
-    public int getInt() {
-        return 0;
-    }
+	public int getInt() {
+		return 0;
+	}
 
-    public long getLong() {
-        return 0;
-    }
+	public long getLong() {
+		return 0;
+	}
 
-    public InputStream getInputStream() {
-        return null;
-    }
+	public InputStream getInputStream() {
+		return null;
+	}
 
-    public Reader getReader() {
-        return null;
-    }
+	public Reader getReader() {
+		return null;
+	}
 
-    public Value convertTo(int type) {
-        return this;
-    }
+	public Value convertTo(int type) {
+		return this;
+	}
 
-    protected int compareSecure(Value v, CompareMode mode) {
-        throw Message.throwInternalError("compare null");
-    }
+	protected int compareSecure(Value v, CompareMode mode) {
+		throw Message.throwInternalError("compare null");
+	}
 
-    public long getPrecision() {
-        return PRECISION;
-    }
+	public long getPrecision() {
+		return PRECISION;
+	}
 
-    public int hashCode() {
-        return 0;
-    }
+	public int hashCode() {
+		return 0;
+	}
 
-    public Object getObject() {
-        return null;
-    }
+	public Object getObject() {
+		return null;
+	}
 
-    public void set(PreparedStatement prep, int parameterIndex) throws SQLException {
-        prep.setNull(parameterIndex, DataType.convertTypeToSQLType(Value.NULL));
-    }
+	public void set(PreparedStatement prep, int parameterIndex) throws SQLException {
+		prep.setNull(parameterIndex, DataType.convertTypeToSQLType(Value.NULL));
+	}
 
-    public int getDisplaySize() {
-        return DISPLAY_SIZE;
-    }
+	public int getDisplaySize() {
+		return DISPLAY_SIZE;
+	}
 
-    public boolean equals(Object other) {
-        return other == this;
-    }
+	public boolean equals(Object other) {
+		return other == this;
+	}
 
 }

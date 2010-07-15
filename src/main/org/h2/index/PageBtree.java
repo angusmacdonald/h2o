@@ -17,180 +17,180 @@ import org.h2.store.Record;
  */
 abstract class PageBtree extends Record {
 
-    /**
-     * Indicator that the row count is not known.
-     */
-    static final int UNKNOWN_ROWCOUNT = -1;
+	/**
+	 * Indicator that the row count is not known.
+	 */
+	static final int UNKNOWN_ROWCOUNT = -1;
 
-    /**
-     * The index.
-     */
-    protected final PageBtreeIndex index;
+	/**
+	 * The index.
+	 */
+	protected final PageBtreeIndex index;
 
-    /**
-     * The page number of the parent.
-     */
-    protected int parentPageId;
+	/**
+	 * The page number of the parent.
+	 */
+	protected int parentPageId;
 
-    /**
-     * The data page.
-     */
-    protected final DataPage data;
+	/**
+	 * The data page.
+	 */
+	protected final DataPage data;
 
-    /**
-     * The row offsets.
-     */
-    protected int[] offsets;
+	/**
+	 * The row offsets.
+	 */
+	protected int[] offsets;
 
-    /**
-     * The number of entries.
-     */
-    protected int entryCount;
+	/**
+	 * The number of entries.
+	 */
+	protected int entryCount;
 
-    /**
-     * The index data
-     */
-    protected SearchRow[] rows;
+	/**
+	 * The index data
+	 */
+	protected SearchRow[] rows;
 
-    /**
-     * The start of the data area.
-     */
-    protected int start;
+	/**
+	 * The start of the data area.
+	 */
+	protected int start;
 
-    PageBtree(PageBtreeIndex index, int pageId, int parentPageId, DataPage data) {
-        this.index = index;
-        this.parentPageId = parentPageId;
-        this.data = data;
-        setPos(pageId);
-    }
+	PageBtree(PageBtreeIndex index, int pageId, int parentPageId, DataPage data) {
+		this.index = index;
+		this.parentPageId = parentPageId;
+		this.data = data;
+		setPos(pageId);
+	}
 
-    /**
-     * Get the real row count. If required, this will read all child pages.
-     *
-     * @return the row count
-     */
-    abstract int getRowCount() throws SQLException;
+	/**
+	 * Get the real row count. If required, this will read all child pages.
+	 *
+	 * @return the row count
+	 */
+	abstract int getRowCount() throws SQLException;
 
-    /**
-     * Set the stored row count. This will write the page.
-     *
-     * @param rowCount the stored row count
-     */
-    abstract void setRowCountStored(int rowCount) throws SQLException;
+	/**
+	 * Set the stored row count. This will write the page.
+	 *
+	 * @param rowCount the stored row count
+	 */
+	abstract void setRowCountStored(int rowCount) throws SQLException;
 
-    /**
-     * Find an entry.
-     *
-     * @param compare the row
-     * @param bigger if looking for a larger row
-     * @return the index of the found row
-     */
-    int find(SearchRow compare, boolean bigger) throws SQLException {
-        if (compare == null) {
-            return 0;
-        }
-        int l = 0, r = entryCount;
-        while (l < r) {
-            int i = (l + r) >>> 1;
-            SearchRow row = (SearchRow) getRow(i);
-            int comp = index.compareRows(row, compare);
-            if (comp > 0 || (!bigger && comp == 0)) {
-                r = i;
-            } else {
-                l = i + 1;
-            }
-        }
-        return l;
-    }
+	/**
+	 * Find an entry.
+	 *
+	 * @param compare the row
+	 * @param bigger if looking for a larger row
+	 * @return the index of the found row
+	 */
+	int find(SearchRow compare, boolean bigger) throws SQLException {
+		if (compare == null) {
+			return 0;
+		}
+		int l = 0, r = entryCount;
+		while (l < r) {
+			int i = (l + r) >>> 1;
+			SearchRow row = getRow(i);
+			int comp = index.compareRows(row, compare);
+			if (comp > 0 || (!bigger && comp == 0)) {
+				r = i;
+			} else {
+				l = i + 1;
+			}
+		}
+		return l;
+	}
 
-    /**
-     * Read the data.
-     */
-    abstract void read() throws SQLException;
+	/**
+	 * Read the data.
+	 */
+	abstract void read() throws SQLException;
 
-    /**
-     * Add a row.
-     *
-     * @param row the row
-     * @return 0 if successful, or the split position if the page needs to be
-     *         split
-     */
-    abstract int addRow(SearchRow row) throws SQLException;
+	/**
+	 * Add a row.
+	 *
+	 * @param row the row
+	 * @return 0 if successful, or the split position if the page needs to be
+	 *         split
+	 */
+	abstract int addRow(SearchRow row) throws SQLException;
 
-    /**
-     * Find the first row.
-     *
-     * @param cursor the cursor
-     * @param first the row to find
-     * @param if the row should be bigger
-     */
-    abstract void find(PageBtreeCursor cursor, SearchRow first, boolean bigger) throws SQLException;
+	/**
+	 * Find the first row.
+	 *
+	 * @param cursor the cursor
+	 * @param first the row to find
+	 * @param if the row should be bigger
+	 */
+	abstract void find(PageBtreeCursor cursor, SearchRow first, boolean bigger) throws SQLException;
 
-    /**
-     * Get the row at this position.
-     *
-     * @param at the index
-     * @return the row
-     */
-    SearchRow getRow(int at) throws SQLException {
-        SearchRow row = rows[at];
-        if (row == null) {
-            row = index.readRow(data, offsets[at]);
-            rows[at] = row;
-        }
-        return row;
-    }
+	/**
+	 * Get the row at this position.
+	 *
+	 * @param at the index
+	 * @return the row
+	 */
+	SearchRow getRow(int at) throws SQLException {
+		SearchRow row = rows[at];
+		if (row == null) {
+			row = index.readRow(data, offsets[at]);
+			rows[at] = row;
+		}
+		return row;
+	}
 
-    /**
-     * Split the index page at the given point.
-     *
-     * @param splitPoint the index where to split
-     * @return the new page that contains about half the entries
-     */
-    abstract PageBtree split(int splitPoint) throws SQLException;
+	/**
+	 * Split the index page at the given point.
+	 *
+	 * @param splitPoint the index where to split
+	 * @return the new page that contains about half the entries
+	 */
+	abstract PageBtree split(int splitPoint) throws SQLException;
 
-    /**
-     * Change the page id.
-     *
-     * @param id the new page id
-     */
-    void setPageId(int id) throws SQLException {
-        index.getPageStore().removeRecord(getPos());
-        setPos(id);
-        remapChildren();
-    }
+	/**
+	 * Change the page id.
+	 *
+	 * @param id the new page id
+	 */
+	void setPageId(int id) throws SQLException {
+		index.getPageStore().removeRecord(getPos());
+		setPos(id);
+		remapChildren();
+	}
 
-    int getPageId() {
-        return getPos();
-    }
+	int getPageId() {
+		return getPos();
+	}
 
-    /**
-     * Get the first child leaf page of a page.
-     *
-     * @return the page
-     */
-    abstract PageBtreeLeaf getFirstLeaf() throws SQLException;
+	/**
+	 * Get the first child leaf page of a page.
+	 *
+	 * @return the page
+	 */
+	abstract PageBtreeLeaf getFirstLeaf() throws SQLException;
 
-    /**
-     * Change the parent page id.
-     *
-     * @param id the new parent page id
-     */
-    void setParentPageId(int id) {
-        this.parentPageId = id;
-    }
+	/**
+	 * Change the parent page id.
+	 *
+	 * @param id the new parent page id
+	 */
+	void setParentPageId(int id) {
+		this.parentPageId = id;
+	}
 
-    /**
-     * Update the parent id of all children.
-     */
-    abstract void remapChildren() throws SQLException;
+	/**
+	 * Update the parent id of all children.
+	 */
+	abstract void remapChildren() throws SQLException;
 
-    /**
-     * Remove a row.
-     *
-     * @param row the row to remove
-     * @return true if this page is now empty
-     */
-    abstract boolean remove(SearchRow row) throws SQLException;
+	/**
+	 * Remove a row.
+	 *
+	 * @param row the row to remove
+	 * @return true if this page is now empty
+	 */
+	abstract boolean remove(SearchRow row) throws SQLException;
 
 }

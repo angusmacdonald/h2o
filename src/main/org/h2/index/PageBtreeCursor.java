@@ -17,75 +17,75 @@ import org.h2.result.SearchRow;
  */
 public class PageBtreeCursor implements Cursor {
 
-    private final Session session;
-    private final PageBtreeIndex index;
-    private final SearchRow last;
-    private PageBtreeLeaf current;
-    private int i;
-    private SearchRow currentSearchRow;
-    private Row currentRow;
+	private final Session session;
+	private final PageBtreeIndex index;
+	private final SearchRow last;
+	private PageBtreeLeaf current;
+	private int i;
+	private SearchRow currentSearchRow;
+	private Row currentRow;
 
-    PageBtreeCursor(Session session, PageBtreeIndex index, SearchRow last) {
-        this.session = session;
-        this.index = index;
-        this.last = last;
-    }
+	PageBtreeCursor(Session session, PageBtreeIndex index, SearchRow last) {
+		this.session = session;
+		this.index = index;
+		this.last = last;
+	}
 
-    /**
-     * Set the position of the current row.
-     *
-     * @param current the leaf page
-     * @param i the index within the page
-     */
-    void setCurrent(PageBtreeLeaf current, int i) {
-        this.current = current;
-        this.i = i;
-    }
+	/**
+	 * Set the position of the current row.
+	 *
+	 * @param current the leaf page
+	 * @param i the index within the page
+	 */
+	void setCurrent(PageBtreeLeaf current, int i) {
+		this.current = current;
+		this.i = i;
+	}
 
-    public Row get() throws SQLException {
-        if (currentRow == null && currentSearchRow != null) {
-            currentRow = index.getRow(session, currentSearchRow.getPos());
-        }
-        return currentRow;
-    }
+	public Row get() throws SQLException {
+		if (currentRow == null && currentSearchRow != null) {
+			currentRow = index.getRow(session, currentSearchRow.getPos());
+		}
+		return currentRow;
+	}
 
-    public int getPos() {
-        return currentSearchRow.getPos();
-    }
+	public int getPos() {
+		return currentSearchRow.getPos();
+	}
 
-    public SearchRow getSearchRow() {
-        return currentSearchRow;
-    }
+	public SearchRow getSearchRow() {
+		return currentSearchRow;
+	}
 
-    public boolean next() throws SQLException {
-        if (current == null) {
-            return false;
-        }
-        if (i >= current.getEntryCount()) {
-            current.nextPage(this);
-            i = 0;
-            if (current == null) {
-                return false;
-            }
-        }
-        currentSearchRow = current.getRow(i);
-        if (last != null && index.compareRows(currentSearchRow, last) > 0) {
-            currentSearchRow = null;
-            currentRow = null;
-            return false;
-        }
-        i++;
-        return true;
-    }
+	public boolean next() throws SQLException {
+		if (current == null) {
+			return false;
+		}
+		if (i >= current.getEntryCount()) {
+			current.nextPage(this);
+			i = 0;
+			if (current == null) {
+				return false;
+			}
+		}
+		currentSearchRow = current.getRow(i);
+		if (last != null && index.compareRows(currentSearchRow, last) > 0) {
+			currentSearchRow = null;
+			currentRow = null;
+			return false;
+		}
+		i++;
+		return true;
+	}
 
-    public boolean previous() throws SQLException {
-        i--;
-        int todo;
-        return true;
-    }
+	public boolean previous() throws SQLException {
+		i--;
+		int todo;
+		return true;
+	}
 
-    Session getSession() {
-        return session;
-    }
+	Session getSession() {
+		return session;
+	}
 
 }

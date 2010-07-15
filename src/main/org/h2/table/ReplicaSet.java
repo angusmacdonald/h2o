@@ -220,7 +220,7 @@ public class ReplicaSet{
 	/* (non-Javadoc)
 	 * @see org.h2.table.Table#addRow(org.h2.engine.Session, org.h2.result.Row)
 	 */
-	
+
 	public void addRow(Session session, Row row) throws SQLException {
 		for (Table table: replicas){
 			table.addRow(session, row);
@@ -230,7 +230,7 @@ public class ReplicaSet{
 	/* (non-Javadoc)
 	 * @see org.h2.table.Table#canDrop()
 	 */
-	
+
 	public boolean canDrop() {
 		if (localCopy == primaryCopy){
 			return primaryCopy.canDrop();
@@ -242,7 +242,7 @@ public class ReplicaSet{
 	/* (non-Javadoc)
 	 * @see org.h2.table.Table#canGetRowCount()
 	 */
-	
+
 	public boolean canGetRowCount() {
 		if (localCopy != null){
 			return localCopy.canGetRowCount();
@@ -256,7 +256,7 @@ public class ReplicaSet{
 	/* (non-Javadoc)
 	 * @see org.h2.table.Table#checkSupportAlter()
 	 */
-	
+
 	public void checkSupportAlter() throws SQLException {
 		for (Table table: replicas){
 			table.checkSupportAlter();		}
@@ -265,7 +265,7 @@ public class ReplicaSet{
 	/* (non-Javadoc)
 	 * @see org.h2.table.Table#close(org.h2.engine.Session)
 	 */
-	
+
 	public void close(Session session) throws SQLException {
 		for (Table table: replicas){
 			table.close(session);
@@ -275,17 +275,17 @@ public class ReplicaSet{
 	/* (non-Javadoc)
 	 * @see org.h2.table.Table#getIndexes()
 	 */
-	
+
 	public ObjectArray getIndexes() {
 		Message.throwInternalError("Can't be called yet.");
-		
+
 		return null;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.h2.table.Table#getMaxDataModificationId()
 	 */
-	
+
 	public long getMaxDataModificationId() {
 
 		long max = 0;
@@ -301,7 +301,7 @@ public class ReplicaSet{
 	/* (non-Javadoc)
 	 * @see org.h2.table.Table#getRowCount(org.h2.engine.Session)
 	 */
-	
+
 	public long getRowCount(Session session) throws SQLException {
 		if (localCopy != null){
 			return localCopy.getRowCount(session);
@@ -315,7 +315,7 @@ public class ReplicaSet{
 	/* (non-Javadoc)
 	 * @see org.h2.table.Table#getRowCountApproximation()
 	 */
-	
+
 	public long getRowCountApproximation() {
 		if (localCopy != null){
 			return localCopy.getRowCountApproximation();
@@ -329,17 +329,17 @@ public class ReplicaSet{
 	/* (non-Javadoc)
 	 * @see org.h2.table.Table#getScanIndex(org.h2.engine.Session)
 	 */
-	
+
 	public Index getScanIndex(Session session) throws SQLException {
 		Message.throwInternalError("Can't be called yet.");
-		
+
 		return null;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.h2.table.Table#getTableType()
 	 */
-	
+
 	public String getTableType() {
 		Message.throwInternalError("Shouldn't be called.");
 		return null;
@@ -348,7 +348,7 @@ public class ReplicaSet{
 	/* (non-Javadoc)
 	 * @see org.h2.table.Table#getUniqueIndex()
 	 */
-	
+
 	public Index getUniqueIndex() {
 		Message.throwInternalError("Shouldn't be called.");
 		return null;
@@ -357,7 +357,7 @@ public class ReplicaSet{
 	/* (non-Javadoc)
 	 * @see org.h2.table.Table#isLocal()
 	 */
-	
+
 	public boolean isLocal() {
 		Message.throwInternalError("Shouldn't be called.");
 		return false;
@@ -366,7 +366,7 @@ public class ReplicaSet{
 	/* (non-Javadoc)
 	 * @see org.h2.table.Table#isLockedExclusively()
 	 */
-	
+
 	public boolean isLockedExclusively() {
 		Message.throwInternalError("Shouldn't be called.");
 		return false;
@@ -375,7 +375,7 @@ public class ReplicaSet{
 	/* (non-Javadoc)
 	 * @see org.h2.table.Table#lock(org.h2.engine.Session, boolean, boolean)
 	 */
-	
+
 	public void lock(Session session, boolean exclusive, boolean force)
 	throws SQLException {
 		Message.throwInternalError("Shouldn't be called.");
@@ -384,7 +384,7 @@ public class ReplicaSet{
 	/* (non-Javadoc)
 	 * @see org.h2.table.Table#removeRow(org.h2.engine.Session, org.h2.result.Row)
 	 */
-	
+
 	public void removeRow(Session session, Row row) throws SQLException {
 		for (Table table: replicas){
 			table.removeRow(session, row);
@@ -394,7 +394,7 @@ public class ReplicaSet{
 	/* (non-Javadoc)
 	 * @see org.h2.table.Table#truncate(org.h2.engine.Session)
 	 */
-	
+
 	public void truncate(Session session) throws SQLException {
 		Message.throwInternalError("Can't be called yet.");
 	}
@@ -402,7 +402,7 @@ public class ReplicaSet{
 	/* (non-Javadoc)
 	 * @see org.h2.table.Table#unlock(org.h2.engine.Session)
 	 */
-	
+
 	public void unlock(Session s) {
 		Message.throwInternalError("Can't be called yet.");
 	}
@@ -410,7 +410,7 @@ public class ReplicaSet{
 	/* (non-Javadoc)
 	 * @see org.h2.engine.DbObjectBase#getDropSQL()
 	 */
-	
+
 	public String getDropSQL() {
 		if (localCopy != null){
 			return localCopy.getDropSQL();

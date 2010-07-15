@@ -17,61 +17,61 @@ import org.h2.table.Table;
  */
 public class Setting extends DbObjectBase {
 
-    private int intValue;
-    private String stringValue;
+	private int intValue;
+	private String stringValue;
 
-    public Setting(Database database, int id, String settingName) {
-        initDbObjectBase(database, id, settingName, Trace.SETTING);
-    }
+	public Setting(Database database, int id, String settingName) {
+		initDbObjectBase(database, id, settingName, Trace.SETTING);
+	}
 
-    public void setIntValue(int value) {
-        intValue = value;
-    }
+	public void setIntValue(int value) {
+		intValue = value;
+	}
 
-    public int getIntValue() {
-        return intValue;
-    }
+	public int getIntValue() {
+		return intValue;
+	}
 
-    public void setStringValue(String value) {
-        stringValue = value;
-    }
+	public void setStringValue(String value) {
+		stringValue = value;
+	}
 
-    public String getStringValue() {
-        return stringValue;
-    }
+	public String getStringValue() {
+		return stringValue;
+	}
 
-    public String getCreateSQLForCopy(Table table, String quotedName) {
-        throw Message.throwInternalError();
-    }
+	public String getCreateSQLForCopy(Table table, String quotedName) {
+		throw Message.throwInternalError();
+	}
 
-    public String getDropSQL() {
-        return null;
-    }
+	public String getDropSQL() {
+		return null;
+	}
 
-    public String getCreateSQL() {
-        StringBuilder buff = new StringBuilder();
-        buff.append("SET ");
-        buff.append(getSQL());
-        buff.append(' ');
-        if (stringValue != null) {
-            buff.append(stringValue);
-        } else {
-            buff.append(intValue);
-        }
-        return buff.toString();
-    }
+	public String getCreateSQL() {
+		StringBuilder buff = new StringBuilder();
+		buff.append("SET ");
+		buff.append(getSQL());
+		buff.append(' ');
+		if (stringValue != null) {
+			buff.append(stringValue);
+		} else {
+			buff.append(intValue);
+		}
+		return buff.toString();
+	}
 
-    public int getType() {
-        return DbObject.SETTING;
-    }
+	public int getType() {
+		return DbObject.SETTING;
+	}
 
-    public void removeChildrenAndResources(Session session) throws SQLException {
-        database.removeMeta(session, getId());
-        invalidate();
-    }
+	public void removeChildrenAndResources(Session session) throws SQLException {
+		database.removeMeta(session, getId());
+		invalidate();
+	}
 
-    public void checkRename() throws SQLException {
-        throw Message.getUnsupportedException();
-    }
+	public void checkRename() throws SQLException {
+		throw Message.getUnsupportedException();
+	}
 
 }

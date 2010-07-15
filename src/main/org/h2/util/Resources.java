@@ -19,64 +19,64 @@ import java.util.zip.ZipInputStream;
  */
 public class Resources {
 
-    private static final HashMap FILES = new HashMap();
+	private static final HashMap FILES = new HashMap();
 
-    private Resources() {
-        // utility class
-    }
+	private Resources() {
+		// utility class
+	}
 
-    static {
-        loadFromZip();
-    }
+	static {
+		loadFromZip();
+	}
 
-    private static void loadFromZip() {
-        InputStream in = Resources.class.getResourceAsStream("data.zip");
-        if (in == null) {
-            return;
-        }
-        ZipInputStream zipIn = new ZipInputStream(in);
-        try {
-            while (true) {
-                ZipEntry entry = zipIn.getNextEntry();
-                if (entry == null) {
-                    break;
-                }
-                String entryName = entry.getName();
-                if (!entryName.startsWith("/")) {
-                    entryName = "/" + entryName;
-                }
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                IOUtils.copy(zipIn, out);
-                zipIn.closeEntry();
-                FILES.put(entryName, out.toByteArray());
-            }
-            zipIn.close();
-        } catch (IOException e) {
-            // if this happens we have a real problem
-            e.printStackTrace();
-        }
-    }
+	private static void loadFromZip() {
+		InputStream in = Resources.class.getResourceAsStream("data.zip");
+		if (in == null) {
+			return;
+		}
+		ZipInputStream zipIn = new ZipInputStream(in);
+		try {
+			while (true) {
+				ZipEntry entry = zipIn.getNextEntry();
+				if (entry == null) {
+					break;
+				}
+				String entryName = entry.getName();
+				if (!entryName.startsWith("/")) {
+					entryName = "/" + entryName;
+				}
+				ByteArrayOutputStream out = new ByteArrayOutputStream();
+				IOUtils.copy(zipIn, out);
+				zipIn.closeEntry();
+				FILES.put(entryName, out.toByteArray());
+			}
+			zipIn.close();
+		} catch (IOException e) {
+			// if this happens we have a real problem
+			e.printStackTrace();
+		}
+	}
 
-    /**
-     * Get a resource from the resource map.
-     *
-     * @param name the name of the resource
-     * @return the resource data
-     */
-    public static byte[] get(String name) throws IOException {
-        byte[] data;
-        if (FILES.size() == 0) {
-            // TODO web: security (check what happens with files like 'lpt1.txt' on windows)
-            InputStream in = Resources.class.getResourceAsStream(name);
-            if (in == null) {
-                data = null;
-            } else {
-                data = IOUtils.readBytesAndClose(in, 0);
-            }
-        } else {
-            data = (byte[]) FILES.get(name);
-        }
-        return data == null ? new byte[0] : data;
-    }
+	/**
+	 * Get a resource from the resource map.
+	 *
+	 * @param name the name of the resource
+	 * @return the resource data
+	 */
+	public static byte[] get(String name) throws IOException {
+		byte[] data;
+		if (FILES.size() == 0) {
+			// TODO web: security (check what happens with files like 'lpt1.txt' on windows)
+			InputStream in = Resources.class.getResourceAsStream(name);
+			if (in == null) {
+				data = null;
+			} else {
+				data = IOUtils.readBytesAndClose(in, 0);
+			}
+		} else {
+			data = (byte[]) FILES.get(name);
+		}
+		return data == null ? new byte[0] : data;
+	}
 
 }

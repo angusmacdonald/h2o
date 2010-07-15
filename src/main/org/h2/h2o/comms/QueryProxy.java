@@ -1,3 +1,20 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.h2o.comms;
 
 import java.io.Serializable;
@@ -129,11 +146,11 @@ public class QueryProxy implements Serializable{
 		 * Whether an individual replica is able to commit. Used to stop ROLLBACK calls being made to unavailable replicas.
 		 */
 		boolean[] commit = new boolean[allReplicas.size()];
-		
+
 		/*
 		 * Execute the query. Send the query to each DB instance holding a replica.
 		 */
-		
+
 		AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor();
 		boolean globalCommit = queryExecutor.executeQuery(query, transactionNameForQuery, allReplicas, session, commit, false);
 
@@ -252,22 +269,22 @@ public class QueryProxy implements Serializable{
 	public Set<DatabaseInstanceWrapper> getReplicaLocations() {
 		return allReplicas;
 	}
-	
+
 	/**
 	 * @return
 	 */
 	public Set<DatabaseInstanceWrapper> getRemoteReplicaLocations() {
-		
+
 		Set<DatabaseInstanceWrapper> remoteReplicas = new HashSet<DatabaseInstanceWrapper>(allReplicas);
 		boolean removed = remoteReplicas.remove(requestingDatabase);
-		
+
 		if (!removed) {
 			ErrorHandling.errorNoEvent("Tried to remove the local replica from the set of all replicas, but failed. Possibly equality check problem.");
 		}
-	
+
 		return remoteReplicas;
 	}
-	
+
 	/**
 	 * @return
 	 */

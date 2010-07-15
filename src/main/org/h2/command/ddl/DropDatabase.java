@@ -6,7 +6,6 @@
  */
 package org.h2.command.ddl;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -17,7 +16,6 @@ import org.h2.engine.Role;
 import org.h2.engine.Session;
 import org.h2.engine.User;
 import org.h2.h2o.manager.ISystemTableReference;
-import org.h2.h2o.manager.MovedException;
 import org.h2.schema.Schema;
 import org.h2.schema.SchemaObject;
 import org.h2.table.Table;
@@ -51,19 +49,19 @@ public class DropDatabase extends DefineCommand {
 		session.commit(true);
 		Database db = session.getDatabase();
 		ObjectArray objects;
-		
+
 		/*
 		 * Drop everything from the System Table.
 		 */
 		ISystemTableReference systemTableReference = db.getSystemTableReference();
-		
+
 		try {
 			systemTableReference.removeAllTableInformation();
 		} catch (Exception e) {
 			throw new SQLException(e.getMessage());
 		}
 		//**************************************
-		
+
 		// TODO local temp tables are not removed
 		objects = db.getAllSchemas();
 		for (int i = 0; i < objects.size(); i++) {
@@ -93,7 +91,7 @@ public class DropDatabase extends DefineCommand {
 			}
 		}
 
-		
+
 		session.findLocalTempTable(null);
 		objects = db.getAllSchemaObjects(DbObject.SEQUENCE);
 		// maybe constraints and triggers on system schemi will be allowed in

@@ -16,23 +16,23 @@ import java.util.List;
  */
 public class Customer {
 
-    public String customerId;
-    public String region;
+	public String customerId;
+	public String region;
 
-    public Customer() {
-        // public constructor
-    }
+	public Customer() {
+		// public constructor
+	}
 
-    public Customer(String customerId, String region) {
-        this.customerId = customerId;
-        this.region = region;
-    }
+	public Customer(String customerId, String region) {
+		this.customerId = customerId;
+		this.region = region;
+	}
 
-    public String toString() {
-        return customerId;
-    }
+	public String toString() {
+		return customerId;
+	}
 
-/*## Java 1.5 begin ##
+	/*## Java 1.5 begin ##
     public static List<Customer> getList() {
         Customer[] list = new Customer[] {
                 new Customer("ALFKI", "WA"),

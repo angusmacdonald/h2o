@@ -13,71 +13,71 @@ import org.h2.constant.SysProperties;
  */
 public class MemoryUtils {
 
-    private static long lastGC;
-    private static final int GC_DELAY = 50;
-    private static final int MAX_GC = 8;
-    private static volatile byte[] reserveMemory;
+	private static long lastGC;
+	private static final int GC_DELAY = 50;
+	private static final int MAX_GC = 8;
+	private static volatile byte[] reserveMemory;
 
-    private MemoryUtils() {
-        // utility class
-    }
+	private MemoryUtils() {
+		// utility class
+	}
 
-    /**
-     * Get the used memory in KB.
-     *
-     * @return the used memory
-     */
-    public static int getMemoryUsed() {
-        collectGarbage();
-        Runtime rt = Runtime.getRuntime();
-        long mem = rt.totalMemory() - rt.freeMemory();
-        return (int) (mem >> 10);
-    }
+	/**
+	 * Get the used memory in KB.
+	 *
+	 * @return the used memory
+	 */
+	public static int getMemoryUsed() {
+		collectGarbage();
+		Runtime rt = Runtime.getRuntime();
+		long mem = rt.totalMemory() - rt.freeMemory();
+		return (int) (mem >> 10);
+	}
 
-    /**
-     * Get the free memory in KB.
-     *
-     * @return the used memory
-     */
-    public static int getMemoryFree() {
-        collectGarbage();
-        Runtime rt = Runtime.getRuntime();
-        long mem = rt.freeMemory();
-        return (int) (mem >> 10);
-    }
+	/**
+	 * Get the free memory in KB.
+	 *
+	 * @return the used memory
+	 */
+	public static int getMemoryFree() {
+		collectGarbage();
+		Runtime rt = Runtime.getRuntime();
+		long mem = rt.freeMemory();
+		return (int) (mem >> 10);
+	}
 
-    private static synchronized void collectGarbage() {
-        Runtime runtime = Runtime.getRuntime();
-        long total = runtime.totalMemory();
-        long time = System.currentTimeMillis();
-        if (lastGC + GC_DELAY < time) {
-            for (int i = 0; i < MAX_GC; i++) {
-                runtime.gc();
-                long now = runtime.totalMemory();
-                if (now == total) {
-                    lastGC = System.currentTimeMillis();
-                    break;
-                }
-                total = now;
-            }
-        }
-    }
+	private static synchronized void collectGarbage() {
+		Runtime runtime = Runtime.getRuntime();
+		long total = runtime.totalMemory();
+		long time = System.currentTimeMillis();
+		if (lastGC + GC_DELAY < time) {
+			for (int i = 0; i < MAX_GC; i++) {
+				runtime.gc();
+				long now = runtime.totalMemory();
+				if (now == total) {
+					lastGC = System.currentTimeMillis();
+					break;
+				}
+				total = now;
+			}
+		}
+	}
 
-    /**
-     * Allocate a little main memory that is freed up when if no memory is
-     * available, so that rolling back a large transaction is easier.
-     */
-    public static void allocateReserveMemory() {
-        if (reserveMemory == null) {
-            reserveMemory = new byte[SysProperties.RESERVE_MEMORY];
-        }
-    }
+	/**
+	 * Allocate a little main memory that is freed up when if no memory is
+	 * available, so that rolling back a large transaction is easier.
+	 */
+	public static void allocateReserveMemory() {
+		if (reserveMemory == null) {
+			reserveMemory = new byte[SysProperties.RESERVE_MEMORY];
+		}
+	}
 
-    /**
-     * Free up the reserve memory.
-     */
-    public static void freeReserveMemory() {
-        reserveMemory = null;
-    }
+	/**
+	 * Free up the reserve memory.
+	 */
+	public static void freeReserveMemory() {
+		reserveMemory = null;
+	}
 
 }

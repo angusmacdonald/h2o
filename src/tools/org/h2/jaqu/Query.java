@@ -166,12 +166,12 @@ public class Query<T> {
     }
 ## Java 1.5 end ##*/
 
-    /**
-     * Order by a number of columns.
-     *
-     * @param expressions the columns
-     * @return the query
-     */
+/**
+ * Order by a number of columns.
+ *
+ * @param expressions the columns
+ * @return the query
+ */
 /*## Java 1.5 begin ##
     public Query<T> orderBy(Object... expressions) {
         for (Object expr : expressions) {
@@ -268,12 +268,12 @@ public class Query<T> {
     }
 ## Java 1.5 end ##*/
 
-    /**
-     * Join another table.
-     *
-     * @param alias an alias for the table to join
-     * @return the joined query
-     */
+/**
+ * Join another table.
+ *
+ * @param alias an alias for the table to join
+ * @return the joined query
+ */
 /*## Java 1.5 begin ##
     public QueryJoin innerJoin(Object alias) {
         TableDefinition def = db.define(alias.getClass());

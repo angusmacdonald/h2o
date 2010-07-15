@@ -16,44 +16,44 @@ import org.h2.result.SearchRow;
  */
 class PageScanCursor implements Cursor {
 
-    private PageDataLeaf current;
-    private int index;
-    private Row row;
+	private PageDataLeaf current;
+	private int index;
+	private Row row;
 
-    PageScanCursor(PageDataLeaf current, int index) {
-        this.current = current;
-        this.index = index;
-    }
+	PageScanCursor(PageDataLeaf current, int index) {
+		this.current = current;
+		this.index = index;
+	}
 
-    public Row get() throws SQLException {
-        return row;
-    }
+	public Row get() throws SQLException {
+		return row;
+	}
 
-    public int getPos() {
-        return row.getPos();
-    }
+	public int getPos() {
+		return row.getPos();
+	}
 
-    public SearchRow getSearchRow() throws SQLException {
-        return get();
-    }
+	public SearchRow getSearchRow() throws SQLException {
+		return get();
+	}
 
-    public boolean next() throws SQLException {
-        if (index >= current.getEntryCount()) {
-            current = current.getNextPage();
-            index = 0;
-            if (current == null) {
-                return false;
-            }
-        }
-        row = current.getRowAt(index);
-        index++;
-        return true;
-    }
+	public boolean next() throws SQLException {
+		if (index >= current.getEntryCount()) {
+			current = current.getNextPage();
+			index = 0;
+			if (current == null) {
+				return false;
+			}
+		}
+		row = current.getRowAt(index);
+		index++;
+		return true;
+	}
 
-    public boolean previous() throws SQLException {
-        index--;
-        int todo;
-        return true;
-    }
+	public boolean previous() throws SQLException {
+		index--;
+		int todo;
+		return true;
+	}
 
 }

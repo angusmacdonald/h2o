@@ -1,3 +1,20 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.h2o.comms;
 
 import java.util.LinkedList;
@@ -15,14 +32,14 @@ import org.h2.engine.Session;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 
 public class AsynchronousQueryExecutor {
-	
+
 	private static ExecutorService queryExecutor = Executors.newCachedThreadPool(
 			new QueryThreadFactory(){
 				public Thread newThread(Runnable r) {
 					return new Thread(r);
 				}
 			});
-	
+
 	/**
 	 * Aysnchronously executes the query on each database instance that requires the update.
 	 * @param query		Query to be executed.
@@ -35,11 +52,11 @@ public class AsynchronousQueryExecutor {
 	 */
 	public boolean executeQuery(String query, String transactionNameForQuery, 
 			Set<DatabaseInstanceWrapper> replicasInvolvedInQuery, Session session, boolean[] commit, boolean commitOperation) {
-		
+
 		Parser parser = new Parser (session, true);
 
 		List<FutureTask<QueryResult>> executingQueries = new LinkedList<FutureTask<QueryResult>>();
-	
+
 		int i = 0;
 		for (DatabaseInstanceWrapper replicaToExecuteQueryOn: replicasInvolvedInQuery){
 
@@ -56,7 +73,7 @@ public class AsynchronousQueryExecutor {
 		//Wait for all queries to execute, then return the result.
 		return waitUntilRemoteQueriesFinish(commit, executingQueries);
 	}
-	
+
 	/**
 	 * Execute a query on the specified database instance by creating a new asynchronous callable executor ({@link Executors}, {@link Future}).
 	 * 
@@ -121,7 +138,7 @@ public class AsynchronousQueryExecutor {
 		}
 
 		boolean globalCommit = true;
-		
+
 		/*
 		 * All of the queries have now completed. Iterate through these queries and check that they
 		 * executed successfully.

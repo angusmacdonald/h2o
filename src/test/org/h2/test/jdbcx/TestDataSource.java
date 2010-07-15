@@ -24,69 +24,69 @@ import org.h2.test.TestBase;
  */
 public class TestDataSource extends TestBase {
 
-//     public static void main(String[] args) throws SQLException {
-//
-//     // first, need to start on the command line:
-//     // rmiregistry 1099
-//
-//     // System.setProperty(Context.INITIAL_CONTEXT_FACTORY,
-//     "com.sun.jndi.ldap.LdapCtxFactory");
-//     System.setProperty(Context.INITIAL_CONTEXT_FACTORY,
-//     "com.sun.jndi.rmi.registry.RegistryContextFactory");
-//     System.setProperty(Context.PROVIDER_URL, "rmi://localhost:1099");
-//
-//     JdbcDataSource ds = new JdbcDataSource();
-//     ds.setURL("jdbc:h2:test");
-//     ds.setUser("test");
-//     ds.setPassword("");
-//
-//     Context ctx = new InitialContext();
-//     ctx.bind("jdbc/test", ds);
-//
-//     DataSource ds2 = (DataSource)ctx.lookup("jdbc/test");
-//     Connection conn = ds2.getConnection();
-//     conn.close();
-//     }
+	//     public static void main(String[] args) throws SQLException {
+	//
+	//     // first, need to start on the command line:
+	//     // rmiregistry 1099
+	//
+	//     // System.setProperty(Context.INITIAL_CONTEXT_FACTORY,
+	//     "com.sun.jndi.ldap.LdapCtxFactory");
+	//     System.setProperty(Context.INITIAL_CONTEXT_FACTORY,
+	//     "com.sun.jndi.rmi.registry.RegistryContextFactory");
+	//     System.setProperty(Context.PROVIDER_URL, "rmi://localhost:1099");
+	//
+	//     JdbcDataSource ds = new JdbcDataSource();
+	//     ds.setURL("jdbc:h2:test");
+	//     ds.setUser("test");
+	//     ds.setPassword("");
+	//
+	//     Context ctx = new InitialContext();
+	//     ctx.bind("jdbc/test", ds);
+	//
+	//     DataSource ds2 = (DataSource)ctx.lookup("jdbc/test");
+	//     Connection conn = ds2.getConnection();
+	//     conn.close();
+	//     }
 
-    public void test() throws Exception {
-        testDataSource();
-        testXAConnection();
-        deleteDb(baseDir, "dataSource");
-    }
+	public void test() throws Exception {
+		testDataSource();
+		testXAConnection();
+		deleteDb(baseDir, "dataSource");
+	}
 
-    private void testXAConnection() throws Exception {
-        deleteDb(baseDir, "dataSource");
-        JdbcDataSource ds = new JdbcDataSource();
-        ds.setURL("jdbc:h2:" + baseDir + "/dataSource");
-        XAConnection xaConn = ds.getXAConnection();
-        xaConn.addConnectionEventListener(new ConnectionEventListener() {
-            public void connectionClosed(ConnectionEvent event) {
-                // nothing to do
-            }
+	private void testXAConnection() throws Exception {
+		deleteDb(baseDir, "dataSource");
+		JdbcDataSource ds = new JdbcDataSource();
+		ds.setURL("jdbc:h2:" + baseDir + "/dataSource");
+		XAConnection xaConn = ds.getXAConnection();
+		xaConn.addConnectionEventListener(new ConnectionEventListener() {
+			public void connectionClosed(ConnectionEvent event) {
+				// nothing to do
+			}
 
-            public void connectionErrorOccurred(ConnectionEvent event) {
-                // nothing to do
-            }
-        });
-        XAResource res = xaConn.getXAResource();
-        Connection conn = xaConn.getConnection();
-        Xid[] list = res.recover(XAResource.TMSTARTRSCAN);
-        assertEquals(list.length, 0);
-        Statement stat = conn.createStatement();
-        stat.execute("SELECT * FROM DUAL");
-        conn.close();
-        xaConn.close();
-    }
+			public void connectionErrorOccurred(ConnectionEvent event) {
+				// nothing to do
+			}
+		});
+		XAResource res = xaConn.getXAResource();
+		Connection conn = xaConn.getConnection();
+		Xid[] list = res.recover(XAResource.TMSTARTRSCAN);
+		assertEquals(list.length, 0);
+		Statement stat = conn.createStatement();
+		stat.execute("SELECT * FROM DUAL");
+		conn.close();
+		xaConn.close();
+	}
 
-    private void testDataSource() throws SQLException {
-        deleteDb(baseDir, "dataSource");
-        JdbcDataSource ds = new JdbcDataSource();
-        ds.setURL("jdbc:h2:" + baseDir + "/dataSource");
-        ds.setUser("sa");
-        Connection conn = ds.getConnection();
-        Statement stat = conn.createStatement();
-        stat.execute("SELECT * FROM DUAL");
-        conn.close();
-    }
+	private void testDataSource() throws SQLException {
+		deleteDb(baseDir, "dataSource");
+		JdbcDataSource ds = new JdbcDataSource();
+		ds.setURL("jdbc:h2:" + baseDir + "/dataSource");
+		ds.setUser("sa");
+		Connection conn = ds.getConnection();
+		Statement stat = conn.createStatement();
+		stat.execute("SELECT * FROM DUAL");
+		conn.close();
+	}
 
 }

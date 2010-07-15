@@ -28,139 +28,139 @@ import org.h2.value.ValueString;
  */
 public class TestDataPage extends TestBase implements DataHandler {
 
-    /**
-     * Run just this test.
-     *
-     * @param a ignored
-     */
-    public static void main(String[] a) throws Exception {
-        TestBase.createCaller().init().test();
-    }
+	/**
+	 * Run just this test.
+	 *
+	 * @param a ignored
+	 */
+	public static void main(String[] a) throws Exception {
+		TestBase.createCaller().init().test();
+	}
 
-    public void test() throws SQLException {
-        testAll();
-    }
+	public void test() throws SQLException {
+		testAll();
+	}
 
-    private void testAll() throws SQLException {
-        DataPage page = DataPage.create(this, 128);
+	private void testAll() throws SQLException {
+		DataPage page = DataPage.create(this, 128);
 
-        char[] data = new char[0x10000];
-        for (int i = 0; i < data.length; i++) {
-            data[i] = (char) i;
-        }
-        String s = new String(data);
-        page.writeString(s);
-        int len = page.length();
-        assertEquals(page.getStringLen(s), len);
-        page.reset();
-        assertEquals(s, page.readString());
-        page.reset();
+		char[] data = new char[0x10000];
+		for (int i = 0; i < data.length; i++) {
+			data[i] = (char) i;
+		}
+		String s = new String(data);
+		page.writeString(s);
+		int len = page.length();
+		assertEquals(page.getStringLen(s), len);
+		page.reset();
+		assertEquals(s, page.readString());
+		page.reset();
 
-        page.writeString("H\u1111!");
-        page.writeString("John\tBrack's \"how are you\" M\u1111ller");
-        page.writeValue(ValueInt.get(10));
-        page.writeValue(ValueString.get("test"));
-        page.writeValue(ValueFloat.get(-2.25f));
-        page.writeValue(ValueDouble.get(10.40));
-        page.writeValue(ValueNull.INSTANCE);
-        trace(new String(page.getBytes()));
-        page.reset();
+		page.writeString("H\u1111!");
+		page.writeString("John\tBrack's \"how are you\" M\u1111ller");
+		page.writeValue(ValueInt.get(10));
+		page.writeValue(ValueString.get("test"));
+		page.writeValue(ValueFloat.get(-2.25f));
+		page.writeValue(ValueDouble.get(10.40));
+		page.writeValue(ValueNull.INSTANCE);
+		trace(new String(page.getBytes()));
+		page.reset();
 
-        trace(page.readString());
-        trace(page.readString());
-        trace(page.readValue().getInt());
-        trace(page.readValue().getString());
-        trace("" + page.readValue().getFloat());
-        trace("" + page.readValue().getDouble());
-        trace(page.readValue().toString());
-        page.reset();
+		trace(page.readString());
+		trace(page.readString());
+		trace(page.readValue().getInt());
+		trace(page.readValue().getString());
+		trace("" + page.readValue().getFloat());
+		trace("" + page.readValue().getDouble());
+		trace(page.readValue().toString());
+		page.reset();
 
-        page.writeInt(0);
-        page.writeInt(Integer.MAX_VALUE);
-        page.writeInt(Integer.MIN_VALUE);
-        page.writeInt(1);
-        page.writeInt(-1);
-        page.writeInt(1234567890);
-        page.writeInt(54321);
-        trace(new String(page.getBytes()));
-        page.reset();
-        trace(page.readInt());
-        trace(page.readInt());
-        trace(page.readInt());
-        trace(page.readInt());
-        trace(page.readInt());
-        trace(page.readInt());
-        trace(page.readInt());
+		page.writeInt(0);
+		page.writeInt(Integer.MAX_VALUE);
+		page.writeInt(Integer.MIN_VALUE);
+		page.writeInt(1);
+		page.writeInt(-1);
+		page.writeInt(1234567890);
+		page.writeInt(54321);
+		trace(new String(page.getBytes()));
+		page.reset();
+		trace(page.readInt());
+		trace(page.readInt());
+		trace(page.readInt());
+		trace(page.readInt());
+		trace(page.readInt());
+		trace(page.readInt());
+		trace(page.readInt());
 
-        page = null;
-    }
+		page = null;
+	}
 
-    public String getDatabasePath() {
-        return null;
-    }
+	public String getDatabasePath() {
+		return null;
+	}
 
-    public FileStore openFile(String name, String mode, boolean mustExist) {
-        return null;
-    }
+	public FileStore openFile(String name, String mode, boolean mustExist) {
+		return null;
+	}
 
-    public int getChecksum(byte[] data, int start, int end) {
-        return end - start;
-    }
+	public int getChecksum(byte[] data, int start, int end) {
+		return end - start;
+	}
 
-    public void checkPowerOff() {
-        // nothing to do
-    }
+	public void checkPowerOff() {
+		// nothing to do
+	}
 
-    public void checkWritingAllowed() {
-        // ok
-    }
+	public void checkWritingAllowed() {
+		// ok
+	}
 
-    public void freeUpDiskSpace() {
-        // nothing to do
-    }
+	public void freeUpDiskSpace() {
+		// nothing to do
+	}
 
-    public void handleInvalidChecksum() throws SQLException {
-        throw new SQLException();
-    }
+	public void handleInvalidChecksum() throws SQLException {
+		throw new SQLException();
+	}
 
-    public int compareTypeSave(Value a, Value b) throws SQLException {
-        throw new SQLException();
-    }
+	public int compareTypeSave(Value a, Value b) throws SQLException {
+		throw new SQLException();
+	}
 
-    public int getMaxLengthInplaceLob() {
-        throw new Error();
-    }
+	public int getMaxLengthInplaceLob() {
+		throw new Error();
+	}
 
-    public int allocateObjectId(boolean b, boolean c) {
-        throw new Error();
-    }
+	public int allocateObjectId(boolean b, boolean c) {
+		throw new Error();
+	}
 
-    public String createTempFile() throws SQLException {
-        throw new SQLException();
-    }
+	public String createTempFile() throws SQLException {
+		throw new SQLException();
+	}
 
-    public String getLobCompressionAlgorithm(int type) {
-        throw new Error();
-    }
+	public String getLobCompressionAlgorithm(int type) {
+		throw new Error();
+	}
 
-    public Object getLobSyncObject() {
-        return this;
-    }
+	public Object getLobSyncObject() {
+		return this;
+	}
 
-    public boolean getLobFilesInDirectories() {
-        return SysProperties.LOB_FILES_IN_DIRECTORIES;
-    }
+	public boolean getLobFilesInDirectories() {
+		return SysProperties.LOB_FILES_IN_DIRECTORIES;
+	}
 
-    public SmallLRUCache getLobFileListCache() {
-        return null;
-    }
+	public SmallLRUCache getLobFileListCache() {
+		return null;
+	}
 
-    public TempFileDeleter getTempFileDeleter() {
-        return TempFileDeleter.getInstance();
-    }
+	public TempFileDeleter getTempFileDeleter() {
+		return TempFileDeleter.getInstance();
+	}
 
-    public Trace getTrace() {
-        return null;
-    }
+	public Trace getTrace() {
+		return null;
+	}
 
 }

@@ -1,3 +1,20 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.test.h2o;
 
 import static org.junit.Assert.*;
@@ -5,13 +22,7 @@ import static org.junit.Assert.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.h2.engine.Constants;
-import org.h2.h2o.remote.ChordRemote;
-import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.LocalH2OProperties;
 import org.h2.h2o.util.locator.LocatorServer;
 import org.h2.test.h2o.util.StartDatabaseInstance;
 import org.junit.After;
@@ -34,12 +45,12 @@ public class ChordTests extends TestBase {
 	private StartDatabaseInstance[] dts;
 	private LocatorServer ls;
 	private static String[] dbs =  {"two", "three"}; //, "four", "five", "six", "seven", "eight", "nine"
-	
+
 	/**
 	 * Whether the System Table state has been replicated yet.
 	 */
 	public static boolean isReplicated = false;
-	
+
 	@BeforeClass
 	public static void initialSetUp(){
 		Diagnostic.setLevel(DiagnosticLevel.FULL);
@@ -62,32 +73,32 @@ public class ChordTests extends TestBase {
 	 */
 	@Before
 	public void setUp() throws Exception {
-		
+
 		ls = new LocatorServer(29999, "junitLocator");
 		ls.createNewLocatorFile();
-		
+
 		Constants.IS_TEAR_DOWN = false; 
-		
+
 		//Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
 		//PersistentSystemTable.USERNAME = "angus";
 		//PersistentSystemTable.PASSWORD = "";
 
 		org.h2.Driver.load();
 
-//		for (String db: dbs){
-//
-//			H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:" + db), "instances");
-//			knownHosts.createNewFile();
-//			knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordRemote.currentPort + "");
-//			knownHosts.saveAndClose();
-//
-//		}
+		//		for (String db: dbs){
+		//
+		//			H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:" + db), "instances");
+		//			knownHosts.createNewFile();
+		//			knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordRemote.currentPort + "");
+		//			knownHosts.saveAndClose();
+		//
+		//		}
 
 		TestBase.setUpDescriptorFiles();
 		ls = new LocatorServer(29999, "junitLocator");
 		ls.createNewLocatorFile();
 		ls.start();
-		
+
 		dts = new StartDatabaseInstance[dbs.length + 1];
 		dts[0] = new StartDatabaseInstance("jdbc:h2:sm:mem:one", false);
 		dts[0].start();
@@ -95,21 +106,21 @@ public class ChordTests extends TestBase {
 		Thread.sleep(5000);
 
 		for (int i = 1; i < dts.length; i ++){
-			
+
 			dts[i] = new StartDatabaseInstance("jdbc:h2:mem:" + dbs[i-1], false);
 			dts[i].start();
-			
+
 			Thread.sleep(5000);
 		}
-		
-		
+
+
 		sas = new Statement[dbs.length + 1];
 
 		for (int i = 0; i < dts.length; i ++){
 			sas[i] = dts[i].getConnection().createStatement();
 		}
 
-		
+
 		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
 		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
 		sql += "INSERT INTO TEST VALUES(2, 'World');";
@@ -129,11 +140,11 @@ public class ChordTests extends TestBase {
 		}
 
 		closeDatabaseCompletely();
-		
+
 		ls.setRunning(false);
 		dts = null;
 		sas = null;
-		
+
 
 		ls.setRunning(false);
 		while (!ls.isFinished()){};
@@ -148,7 +159,7 @@ public class ChordTests extends TestBase {
 			fail("Failed to execute query.");
 		}
 	}
-	
+
 	/**
 	 * This sequence of events used to lock the sys table causing entries to not be included in the System Table.
 	 * This tests that it never happens again.
@@ -158,16 +169,16 @@ public class ChordTests extends TestBase {
 		try {
 			sas[1].execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 			sas[2].execute("CREATE TABLE TEST3(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-			
+
 
 			ResultSet rs = sas[0].executeQuery("SELECT * FROM H2O.H2O_TABLE");
-			
+
 			if (rs.next() && rs.next() && rs.next()){
 				//pass
 			} else {
 				fail("Not enough results.");
 			}
-			
+
 			if (rs.next()){
 				fail("Too many results.");
 			}
@@ -176,7 +187,7 @@ public class ChordTests extends TestBase {
 			fail("Failed to execute query.");
 		}
 	}
-	
+
 	/**
 	 * Tests that when the Table Manager is migrated another database instance is able to connect to the new manager without any manual intervention.
 	 * 
@@ -191,17 +202,17 @@ public class ChordTests extends TestBase {
 			 * Test that the new Table Manager can be found.
 			 */
 			sas[1].executeUpdate("INSERT INTO TEST VALUES(4, 'helloagain');");
-			
+
 			/*
 			 * Test that the old Table Manager is no longer accessible, and that the referene can be updated.
 			 */
 			sas[0].executeUpdate("INSERT INTO TEST VALUES(5, 'helloagainagain');");
-			
+
 		} catch (SQLException e) {
 			fail("Didn't work.");
 		}
 	}
-	
+
 	/**
 	 * Tests that when migration fails when an incorrect table name is given.
 	 */
@@ -213,10 +224,10 @@ public class ChordTests extends TestBase {
 			fail("Didn't work.");
 		} catch (SQLException e) {
 			e.printStackTrace();
-			
+
 		}
 	}
-	
+
 	@Test
 	public void TableManagerMigrationWithCachedReference() throws InterruptedException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
@@ -224,23 +235,23 @@ public class ChordTests extends TestBase {
 			sas[0].executeUpdate("INSERT INTO TEST VALUES(7, '7');");
 			sas[1].executeUpdate("INSERT INTO TEST VALUES(6, '6');");
 			sas[2].executeUpdate("INSERT INTO TEST VALUES(8, '8');");
-			
+
 			sas[1].executeUpdate("MIGRATE TABLEMANAGER test");
 
 			/*
 			 * Test that the new Table Manager can be found.
 			 */
 			sas[2].executeUpdate("INSERT INTO TEST VALUES(4, 'helloagain');");
-			
+
 			/*
 			 * Test that the old Table Manager is no longer accessible, and that the referene can be updated.
 			 */
 			sas[0].executeUpdate("INSERT INTO TEST VALUES(5, 'helloagainagain');");
-			
+
 			ResultSet rs = sas[0].executeQuery("SELECT manager_location FROM H2O.H2O_TABLE");
-			
+
 			if (rs.next()){
-			assertEquals(2, rs.getInt(1));
+				assertEquals(2, rs.getInt(1));
 			} else {
 				fail("System Table wasn't updated correctly.");
 			}
@@ -249,8 +260,8 @@ public class ChordTests extends TestBase {
 			fail("Didn't work.");
 		}
 	}
-	
-	
+
+
 	/**
 	 * Tests that when the System Table is migrated another database instance is able to connect to the new manager without any manual intervention.
 	 * 
@@ -274,12 +285,12 @@ public class ChordTests extends TestBase {
 	public void SystemTableFailure() throws InterruptedException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		try {
-			
+
 			dts[0].stop();
 			sas[0].close();
-			
+
 			Thread.sleep(5000);
-			
+
 			sas[1].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 
 		} catch (SQLException e) {
@@ -288,56 +299,56 @@ public class ChordTests extends TestBase {
 		}
 	}
 
-//	/**
-//	 * Tests that if there are a number of failures the schema is successfully moved on each time.
-//	 * @throws InterruptedException
-//	 */
-//	@Test
-//	public void FailureMultipleReinstantiation() throws InterruptedException {
-//		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
-//		try {
-//
-//			sas[1].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-//
-//			dts[0].setRunning(false);
-//			while (dts[0].isRunning()){};
-//			dts[0].stop(); //can't simulate failure.
-//			sas[0].close();
-//			
-//			Thread.sleep(5000);
-//			
-//			sas[1].executeUpdate("CREATE TABLE TEST3(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-//
-////			dts[0].stop();
-////			sas[0].close();
-////			
-//			Thread.sleep(5000);
-//			
-//			ResultSet rs = sas[1].executeQuery("SELECT * FROM H2O.H2O_TABLE");
-//			
-//			if (rs.next() && rs.next() && rs.next()){
-//				//pass
-//			} else {
-//				fail("Not enough results.");
-//			}
-//			
-//			if (rs.next()){
-//				fail("Too many results.");
-//			}
-//			
-//		} catch (SQLException e) {
-//			e.printStackTrace();
-//			fail("Didn't complete query");
-//		}
-//	}
-	
+	//	/**
+	//	 * Tests that if there are a number of failures the schema is successfully moved on each time.
+	//	 * @throws InterruptedException
+	//	 */
+	//	@Test
+	//	public void FailureMultipleReinstantiation() throws InterruptedException {
+	//		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+	//		try {
+	//
+	//			sas[1].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+	//
+	//			dts[0].setRunning(false);
+	//			while (dts[0].isRunning()){};
+	//			dts[0].stop(); //can't simulate failure.
+	//			sas[0].close();
+	//			
+	//			Thread.sleep(5000);
+	//			
+	//			sas[1].executeUpdate("CREATE TABLE TEST3(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+	//
+	////			dts[0].stop();
+	////			sas[0].close();
+	////			
+	//			Thread.sleep(5000);
+	//			
+	//			ResultSet rs = sas[1].executeQuery("SELECT * FROM H2O.H2O_TABLE");
+	//			
+	//			if (rs.next() && rs.next() && rs.next()){
+	//				//pass
+	//			} else {
+	//				fail("Not enough results.");
+	//			}
+	//			
+	//			if (rs.next()){
+	//				fail("Too many results.");
+	//			}
+	//			
+	//		} catch (SQLException e) {
+	//			e.printStackTrace();
+	//			fail("Didn't complete query");
+	//		}
+	//	}
+
 	@Test
 	public void FirstMachineDisconnect() throws InterruptedException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
 		try {
 			sas[0].close();
 			dts[0].getConnection().close();
-			
+
 			Thread.sleep(5000);
 			System.err.println("heere");
 			sas[1].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
@@ -347,34 +358,34 @@ public class ChordTests extends TestBase {
 			fail("Didn't complete query");
 		}
 	}
-	
-//	/**
-//	 * Tests that a Table Manager will migrate itself when the database is closed.
-//	 * @throws InterruptedException
-//	 */
-//	@Test
-//	public void TableManagerMigrationOnClose() throws InterruptedException {
-//		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
-//		try {
-//			
-//			sas[1].execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-//			
-//			sas[1].close();
-//			dts[1].getConnection().close();
-//			
-//			Thread.sleep(5000);
-//			
-//			sas[2].executeUpdate("INSERT INTO TEST VALUES(4, 'help');");
-//
-//			
-//			ResultSet rs = sas[2].executeQuery("SELECT * FROM TEST WHERE ID=4");
-//			
-//			if (!rs.next()){
-//				fail("Didn't add entry.");
-//			}
-//		} catch (SQLException e) {
-//			e.printStackTrace();
-//			fail("Didn't complete query");
-//		}
-//	}
+
+	//	/**
+	//	 * Tests that a Table Manager will migrate itself when the database is closed.
+	//	 * @throws InterruptedException
+	//	 */
+	//	@Test
+	//	public void TableManagerMigrationOnClose() throws InterruptedException {
+	//		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+	//		try {
+	//			
+	//			sas[1].execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+	//			
+	//			sas[1].close();
+	//			dts[1].getConnection().close();
+	//			
+	//			Thread.sleep(5000);
+	//			
+	//			sas[2].executeUpdate("INSERT INTO TEST VALUES(4, 'help');");
+	//
+	//			
+	//			ResultSet rs = sas[2].executeQuery("SELECT * FROM TEST WHERE ID=4");
+	//			
+	//			if (!rs.next()){
+	//				fail("Didn't add entry.");
+	//			}
+	//		} catch (SQLException e) {
+	//			e.printStackTrace();
+	//			fail("Didn't complete query");
+	//		}
+	//	}
 }

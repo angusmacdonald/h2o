@@ -17,95 +17,95 @@ import java.util.Random;
  */
 public class BenchSimple implements Bench {
 
-    Database db;
-    int records;
+	Database db;
+	int records;
 
-    public void init(Database db, int size) throws SQLException {
-        this.db = db;
-        this.records = size * 60;
+	public void init(Database db, int size) throws SQLException {
+		this.db = db;
+		this.records = size * 60;
 
-        db.start(this, "Init");
-        db.openConnection();
-        db.dropTable("TEST");
-        db.setAutoCommit(false);
-        int commitEvery = 1000;
-        db.update("CREATE TABLE TEST(ID INT NOT NULL PRIMARY KEY, NAME VARCHAR(255))");
-        db.commit();
-        PreparedStatement prep = db.prepare("INSERT INTO TEST VALUES(?, ?)");
-        for (int i = 0; i < records; i++) {
-            prep.setInt(1, i);
-            prep.setString(2, "Hello World " + i);
-            db.update(prep, "insertTest");
-            if (i % commitEvery == 0) {
-                db.commit();
-            }
-        }
-        db.commit();
-        db.closeConnection();
-        db.end();
+		db.start(this, "Init");
+		db.openConnection();
+		db.dropTable("TEST");
+		db.setAutoCommit(false);
+		int commitEvery = 1000;
+		db.update("CREATE TABLE TEST(ID INT NOT NULL PRIMARY KEY, NAME VARCHAR(255))");
+		db.commit();
+		PreparedStatement prep = db.prepare("INSERT INTO TEST VALUES(?, ?)");
+		for (int i = 0; i < records; i++) {
+			prep.setInt(1, i);
+			prep.setString(2, "Hello World " + i);
+			db.update(prep, "insertTest");
+			if (i % commitEvery == 0) {
+				db.commit();
+			}
+		}
+		db.commit();
+		db.closeConnection();
+		db.end();
 
-//        db.start(this, "Open/Close");
-//        db.openConnection();
-//        db.closeConnection();
-//        db.end();
+		//        db.start(this, "Open/Close");
+		//        db.openConnection();
+		//        db.closeConnection();
+		//        db.end();
 
-    }
+	}
 
-    public void runTest() throws SQLException {
-        PreparedStatement prep;
-        Random random = db.getRandom();
+	public void runTest() throws SQLException {
+		PreparedStatement prep;
+		Random random = db.getRandom();
 
-        db.openConnection();
+		db.openConnection();
 
-        db.start(this, "Query (random)");
-        prep = db.prepare("SELECT * FROM TEST WHERE ID=?");
-        for (int i = 0; i < records; i++) {
-            prep.setInt(1, random.nextInt(records));
-            db.queryReadResult(prep);
-        }
-        db.end();
+		db.start(this, "Query (random)");
+		prep = db.prepare("SELECT * FROM TEST WHERE ID=?");
+		for (int i = 0; i < records; i++) {
+			prep.setInt(1, random.nextInt(records));
+			db.queryReadResult(prep);
+		}
+		db.end();
 
-        db.start(this, "Query (sequential)");
-        prep = db.prepare("SELECT * FROM TEST WHERE ID=?");
-        for (int i = 0; i < records; i++) {
-            prep.setInt(1, i);
-            db.queryReadResult(prep);
-        }
-        db.end();
+		db.start(this, "Query (sequential)");
+		prep = db.prepare("SELECT * FROM TEST WHERE ID=?");
+		for (int i = 0; i < records; i++) {
+			prep.setInt(1, i);
+			db.queryReadResult(prep);
+		}
+		db.end();
 
-        db.start(this, "Update (random)");
-        prep = db.prepare("UPDATE TEST SET NAME=? WHERE ID=?");
-        for (int i = 0; i < records; i++) {
-            prep.setString(1, "Hallo Welt");
-            prep.setInt(2, i);
-            db.update(prep, "updateTest");
-        }
-        db.end();
+		db.start(this, "Update (random)");
+		prep = db.prepare("UPDATE TEST SET NAME=? WHERE ID=?");
+		for (int i = 0; i < records; i++) {
+			prep.setString(1, "Hallo Welt");
+			prep.setInt(2, i);
+			db.update(prep, "updateTest");
+		}
+		db.end();
 
-        db.start(this, "Delete (sequential)");
-        prep = db.prepare("DELETE FROM TEST WHERE ID=?");
-        // delete only 50%
-        for (int i = 0; i < records; i += 2) {
-            prep.setInt(1, i);
-            db.update(prep, "deleteTest");
-        }
-        db.end();
+		db.start(this, "Delete (sequential)");
+		prep = db.prepare("DELETE FROM TEST WHERE ID=?");
+		// delete only 50%
+		for (int i = 0; i < records; i += 2) {
+			prep.setInt(1, i);
+			db.update(prep, "deleteTest");
+		}
+		db.end();
 
-        db.closeConnection();
+		db.closeConnection();
 
-        db.openConnection();
-        prep = db.prepare("SELECT * FROM TEST WHERE ID=?");
-        for (int i = 0; i < records; i++) {
-            prep.setInt(1, random.nextInt(records));
-            db.queryReadResult(prep);
-        }
-        db.logMemory(this, "Memory Usage");
-        db.closeConnection();
+		db.openConnection();
+		prep = db.prepare("SELECT * FROM TEST WHERE ID=?");
+		for (int i = 0; i < records; i++) {
+			prep.setInt(1, random.nextInt(records));
+			db.queryReadResult(prep);
+		}
+		db.logMemory(this, "Memory Usage");
+		db.closeConnection();
 
-    }
+	}
 
-    public String getName() {
-        return "Simple";
-    }
+	public String getName() {
+		return "Simple";
+	}
 
 }

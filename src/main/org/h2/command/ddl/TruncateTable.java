@@ -19,19 +19,19 @@ import org.h2.message.Message;
  */
 public class TruncateTable extends DefineCommand {
 
-    public TruncateTable(Session session) {
-        super(session);
-    }
+	public TruncateTable(Session session) {
+		super(session);
+	}
 
-    public int update() throws SQLException {
-        session.commit(true);
-        if (!table.canTruncate()) {
-            throw Message.getSQLException(ErrorCode.CANNOT_TRUNCATE_1, table.getSQL());
-        }
-        session.getUser().checkRight(table, Right.DELETE);
-        table.lock(session, true, true);
-        table.truncate(session);
-        return 0;
-    }
+	public int update() throws SQLException {
+		session.commit(true);
+		if (!table.canTruncate()) {
+			throw Message.getSQLException(ErrorCode.CANNOT_TRUNCATE_1, table.getSQL());
+		}
+		session.getUser().checkRight(table, Right.DELETE);
+		table.lock(session, true, true);
+		table.truncate(session);
+		return 0;
+	}
 
 }

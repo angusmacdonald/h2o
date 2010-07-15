@@ -1,3 +1,20 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.h2o.util;
 
 import java.io.Serializable;
@@ -7,12 +24,12 @@ import java.io.Serializable;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class TableInfo implements Serializable {
-	
+
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -2023146600034394467L;
-	
+
 	private String schemaName;
 	private String tableName;
 	private long modificationID;
@@ -22,9 +39,9 @@ public class TableInfo implements Serializable {
 
 	public TableInfo(String tableName, String schemaName, long modificationID, int tableSet, String tableType,
 			DatabaseURL dbLocation){
-		
+
 		this(tableName, schemaName);
-		
+
 		this.modificationID = modificationID;
 		this.tableSet = tableSet;
 		this.tableType = tableType;
@@ -45,9 +62,9 @@ public class TableInfo implements Serializable {
 	 */
 	public TableInfo(String fqTableName) {
 		String[] name = fqTableName.split("\\.");
-		
+
 		assert name.length == 2;
-		
+
 		this.tableName = name[1];
 		this.schemaName = name[0];
 	}
@@ -60,7 +77,7 @@ public class TableInfo implements Serializable {
 	 */
 	public TableInfo(String tableName, String schemaName, DatabaseURL databaseURL) {
 		this(tableName, schemaName);
-		
+
 		this.dbLocation = databaseURL;
 	}
 
@@ -134,11 +151,11 @@ public class TableInfo implements Serializable {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result
-				+ ((dbLocation == null) ? 0 : dbLocation.hashCode());
+		+ ((dbLocation == null) ? 0 : dbLocation.hashCode());
 		result = prime * result
-				+ ((schemaName == null) ? 0 : schemaName.hashCode());
+		+ ((schemaName == null) ? 0 : schemaName.hashCode());
 		result = prime * result
-				+ ((tableName == null) ? 0 : tableName.hashCode());
+		+ ((tableName == null) ? 0 : tableName.hashCode());
 		return result;
 	}
 
@@ -178,8 +195,8 @@ public class TableInfo implements Serializable {
 	@Override
 	public String toString() {
 		return "TableInfo [" + schemaName + "."
-				+ tableName + "]";
+		+ tableName + "]";
 	}
-	
-	
+
+
 }

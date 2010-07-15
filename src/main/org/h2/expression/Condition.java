@@ -14,20 +14,20 @@ import org.h2.value.ValueBoolean;
  */
 public abstract class Condition extends Expression {
 
-    public int getType() {
-        return Value.BOOLEAN;
-    }
+	public int getType() {
+		return Value.BOOLEAN;
+	}
 
-    public int getScale() {
-        return 0;
-    }
+	public int getScale() {
+		return 0;
+	}
 
-    public long getPrecision() {
-        return ValueBoolean.PRECISION;
-    }
+	public long getPrecision() {
+		return ValueBoolean.PRECISION;
+	}
 
-    public int getDisplaySize() {
-        return ValueBoolean.DISPLAY_SIZE;
-    }
+	public int getDisplaySize() {
+		return ValueBoolean.DISPLAY_SIZE;
+	}
 
 }

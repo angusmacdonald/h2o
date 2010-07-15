@@ -22,42 +22,42 @@ import org.h2.tools.SimpleResultSet;
  */
 public class CsvSample {
 
-    /**
-     * This method is called when executing this sample application from the
-     * command line.
-     *
-     * @param args the command line parameters
-     */
-    public static void main(String[] args) throws SQLException {
-        CsvSample.write();
-        CsvSample.read();
-    }
+	/**
+	 * This method is called when executing this sample application from the
+	 * command line.
+	 *
+	 * @param args the command line parameters
+	 */
+	public static void main(String[] args) throws SQLException {
+		CsvSample.write();
+		CsvSample.read();
+	}
 
-    /**
-     * Write a CSV file.
-     */
-    static void write() throws SQLException {
-        SimpleResultSet rs = new SimpleResultSet();
-        rs.addColumn("NAME", Types.VARCHAR, 255, 0);
-        rs.addColumn("EMAIL", Types.VARCHAR, 255, 0);
-        rs.addColumn("PHONE", Types.VARCHAR, 255, 0);
-        rs.addRow(new String[] { "Bob Meier", "bob.meier@abcde.abc", "+41123456789" });
-        rs.addRow(new String[] { "John Jones", "john.jones@abcde.abc", "+41976543210" });
-        Csv.getInstance().write("data/test.csv", rs, null);
-    }
+	/**
+	 * Write a CSV file.
+	 */
+	static void write() throws SQLException {
+		SimpleResultSet rs = new SimpleResultSet();
+		rs.addColumn("NAME", Types.VARCHAR, 255, 0);
+		rs.addColumn("EMAIL", Types.VARCHAR, 255, 0);
+		rs.addColumn("PHONE", Types.VARCHAR, 255, 0);
+		rs.addRow(new String[] { "Bob Meier", "bob.meier@abcde.abc", "+41123456789" });
+		rs.addRow(new String[] { "John Jones", "john.jones@abcde.abc", "+41976543210" });
+		Csv.getInstance().write("data/test.csv", rs, null);
+	}
 
-    /**
-     * Read a CSV file.
-     */
-    static void read() throws SQLException {
-        ResultSet rs = Csv.getInstance().read("data/test.csv", null, null);
-        ResultSetMetaData meta = rs.getMetaData();
-        while (rs.next()) {
-            for (int i = 0; i < meta.getColumnCount(); i++) {
-                System.out.println(meta.getColumnLabel(i + 1) + ": " + rs.getString(i + 1));
-            }
-            System.out.println();
-        }
-        rs.close();
-    }
+	/**
+	 * Read a CSV file.
+	 */
+	static void read() throws SQLException {
+		ResultSet rs = Csv.getInstance().read("data/test.csv", null, null);
+		ResultSetMetaData meta = rs.getMetaData();
+		while (rs.next()) {
+			for (int i = 0; i < meta.getColumnCount(); i++) {
+				System.out.println(meta.getColumnLabel(i + 1) + ": " + rs.getString(i + 1));
+			}
+			System.out.println();
+		}
+		rs.close();
+	}
 }

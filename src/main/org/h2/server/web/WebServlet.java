@@ -29,134 +29,134 @@ import org.h2.util.StringUtils;
  */
 public class WebServlet extends HttpServlet {
 
-    private static final long serialVersionUID = 9171446624885086692L;
-    private transient WebServer server;
+	private static final long serialVersionUID = 9171446624885086692L;
+	private transient WebServer server;
 
-    public void init() throws ServletException {
-        ServletConfig config = getServletConfig();
-        Enumeration en = config.getInitParameterNames();
-        ArrayList list = new ArrayList();
-        while (en.hasMoreElements()) {
-            String name = en.nextElement().toString();
-            String value = config.getInitParameter(name);
-            if (!name.startsWith("-")) {
-                name = "-" + name;
-            }
-            list.add(name);
-            if (value.length() > 0) {
-                list.add(value);
-            }
-        }
-        String[] args = new String[list.size()];
-        list.toArray(args);
-        server = new WebServer();
-        server.init(args);
-    }
+	public void init() throws ServletException {
+		ServletConfig config = getServletConfig();
+		Enumeration en = config.getInitParameterNames();
+		ArrayList list = new ArrayList();
+		while (en.hasMoreElements()) {
+			String name = en.nextElement().toString();
+			String value = config.getInitParameter(name);
+			if (!name.startsWith("-")) {
+				name = "-" + name;
+			}
+			list.add(name);
+			if (value.length() > 0) {
+				list.add(value);
+			}
+		}
+		String[] args = new String[list.size()];
+		list.toArray(args);
+		server = new WebServer();
+		server.init(args);
+	}
 
-    public void destroy() {
-        server.stop();
-    }
+	public void destroy() {
+		server.stop();
+	}
 
-    private boolean allow(HttpServletRequest req) {
-        if (server.getAllowOthers()) {
-            return true;
-        }
-        String addr = req.getRemoteAddr();
-        try {
-            InetAddress address = InetAddress.getByName(addr);
-            return address.isLoopbackAddress();
-        } catch (UnknownHostException e) {
-            return false;
-        }
-    }
+	private boolean allow(HttpServletRequest req) {
+		if (server.getAllowOthers()) {
+			return true;
+		}
+		String addr = req.getRemoteAddr();
+		try {
+			InetAddress address = InetAddress.getByName(addr);
+			return address.isLoopbackAddress();
+		} catch (UnknownHostException e) {
+			return false;
+		}
+	}
 
-    private String getAllowedFile(HttpServletRequest req, String requestedFile) {
-        if (!allow(req)) {
-            return "notAllowed.jsp";
-        }
-        if (requestedFile.length() == 0) {
-            return "index.do";
-        }
-        return requestedFile;
-    }
+	private String getAllowedFile(HttpServletRequest req, String requestedFile) {
+		if (!allow(req)) {
+			return "notAllowed.jsp";
+		}
+		if (requestedFile.length() == 0) {
+			return "index.do";
+		}
+		return requestedFile;
+	}
 
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        req.setCharacterEncoding("utf-8");
-        String file = req.getPathInfo();
-        if (file == null) {
-            resp.sendRedirect(req.getRequestURI() + "/");
-            return;
-        } else if (file.startsWith("/")) {
-            file = file.substring(1);
-        }
-        file = getAllowedFile(req, file);
-        byte[] bytes = null;
-        Properties attributes = new Properties();
-        Enumeration en = req.getAttributeNames();
-        while (en.hasMoreElements()) {
-            String name = en.nextElement().toString();
-            String value = req.getAttribute(name).toString();
-            attributes.put(name, value);
-        }
-        en = req.getParameterNames();
-        while (en.hasMoreElements()) {
-            String name = en.nextElement().toString();
-            String value = req.getParameter(name);
-            attributes.put(name, value);
-        }
-        WebSession session = null;
-        String sessionId = attributes.getProperty("jsessionid");
-        if (sessionId != null) {
-            session = server.getSession(sessionId);
-        }
-        WebThread app = new WebThread(null, server);
-        app.setSession(session, attributes);
-        String ifModifiedSince = req.getHeader("if-modified-since");
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		req.setCharacterEncoding("utf-8");
+		String file = req.getPathInfo();
+		if (file == null) {
+			resp.sendRedirect(req.getRequestURI() + "/");
+			return;
+		} else if (file.startsWith("/")) {
+			file = file.substring(1);
+		}
+		file = getAllowedFile(req, file);
+		byte[] bytes = null;
+		Properties attributes = new Properties();
+		Enumeration en = req.getAttributeNames();
+		while (en.hasMoreElements()) {
+			String name = en.nextElement().toString();
+			String value = req.getAttribute(name).toString();
+			attributes.put(name, value);
+		}
+		en = req.getParameterNames();
+		while (en.hasMoreElements()) {
+			String name = en.nextElement().toString();
+			String value = req.getParameter(name);
+			attributes.put(name, value);
+		}
+		WebSession session = null;
+		String sessionId = attributes.getProperty("jsessionid");
+		if (sessionId != null) {
+			session = server.getSession(sessionId);
+		}
+		WebThread app = new WebThread(null, server);
+		app.setSession(session, attributes);
+		String ifModifiedSince = req.getHeader("if-modified-since");
 
-        String hostAddr = req.getRemoteAddr();
-        file = app.processRequest(file, hostAddr);
-        session = app.getSession();
+		String hostAddr = req.getRemoteAddr();
+		file = app.processRequest(file, hostAddr);
+		session = app.getSession();
 
-        String mimeType = app.getMimeType();
-        boolean cache = app.getCache();
+		String mimeType = app.getMimeType();
+		boolean cache = app.getCache();
 
-        if (cache && server.getStartDateTime().equals(ifModifiedSince)) {
-            resp.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
-            return;
-        }
-        bytes = server.getFile(file);
-        if (bytes == null) {
-            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-            try {
-                bytes = StringUtils.utf8Encode("File not found: " + file);
-            } catch (SQLException e) {
-                server.traceError(e);
-            }
-        } else {
-            if (session != null && file.endsWith(".jsp")) {
-                String page = StringUtils.utf8Decode(bytes);
-                page = PageParser.parse(page, session.map);
-                try {
-                    bytes = StringUtils.utf8Encode(page);
-                } catch (SQLException e) {
-                    server.traceError(e);
-                }
-            }
-            resp.setContentType(mimeType);
-            if (!cache) {
-                resp.setHeader("Cache-Control", "no-cache");
-            } else {
-                resp.setHeader("Cache-Control", "max-age=10");
-                resp.setHeader("Last-Modified", server.getStartDateTime());
-            }
-        }
-        if (bytes != null) {
-            ServletOutputStream out = resp.getOutputStream();
-            out.write(bytes);
-        }
-    }
+		if (cache && server.getStartDateTime().equals(ifModifiedSince)) {
+			resp.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+			return;
+		}
+		bytes = server.getFile(file);
+		if (bytes == null) {
+			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+			try {
+				bytes = StringUtils.utf8Encode("File not found: " + file);
+			} catch (SQLException e) {
+				server.traceError(e);
+			}
+		} else {
+			if (session != null && file.endsWith(".jsp")) {
+				String page = StringUtils.utf8Decode(bytes);
+				page = PageParser.parse(page, session.map);
+				try {
+					bytes = StringUtils.utf8Encode(page);
+				} catch (SQLException e) {
+					server.traceError(e);
+				}
+			}
+			resp.setContentType(mimeType);
+			if (!cache) {
+				resp.setHeader("Cache-Control", "no-cache");
+			} else {
+				resp.setHeader("Cache-Control", "max-age=10");
+				resp.setHeader("Last-Modified", server.getStartDateTime());
+			}
+		}
+		if (bytes != null) {
+			ServletOutputStream out = resp.getOutputStream();
+			out.write(bytes);
+		}
+	}
 
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        doGet(req, resp);
-    }
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		doGet(req, resp);
+	}
 }

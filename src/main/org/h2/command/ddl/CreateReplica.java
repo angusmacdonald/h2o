@@ -123,7 +123,7 @@ public class CreateReplica extends SchemaCommand {
 
 		setOfIndexColumns = new HashSet<IndexColumn[]>();
 		pkIndexType = new HashSet<IndexType>();
-		
+
 		this.empty = empty;
 	}
 

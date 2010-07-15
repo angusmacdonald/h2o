@@ -25,53 +25,53 @@ import org.h2.util.ObjectArray;
  */
 public class DropIndex extends SchemaCommand {
 
-    private String indexName;
-    private boolean ifExists;
+	private String indexName;
+	private boolean ifExists;
 
-    public DropIndex(Session session, Schema schema) {
-        super(session, schema);
-    }
+	public DropIndex(Session session, Schema schema) {
+		super(session, schema);
+	}
 
-    public void setIfExists(boolean b) {
-        ifExists = b;
-    }
+	public void setIfExists(boolean b) {
+		ifExists = b;
+	}
 
-    public void setIndexName(String indexName) {
-        this.indexName = indexName;
-    }
+	public void setIndexName(String indexName) {
+		this.indexName = indexName;
+	}
 
-    public int update() throws SQLException {
-        session.commit(true);
-        Database db = session.getDatabase();
-        Index index = getSchema().findIndex(session, indexName);
-        if (index == null) {
-            if (!ifExists) {
-                throw Message.getSQLException(ErrorCode.INDEX_NOT_FOUND_1, indexName);
-            }
-        } else {
-            Table table = index.getTable();
-            session.getUser().checkRight(index.getTable(), Right.ALL);
-            Constraint pkConstraint = null;
-            ObjectArray constraints = table.getConstraints();
-            for (int i = 0; constraints != null && i < constraints.size(); i++) {
-                Constraint cons = (Constraint) constraints.get(i);
-                if (cons.usesIndex(index)) {
-                    // can drop primary key index (for compatibility)
-                    if (Constraint.PRIMARY_KEY.equals(cons.getConstraintType())) {
-                        pkConstraint = cons;
-                    } else {
-                        throw Message.getSQLException(ErrorCode.INDEX_BELONGS_TO_CONSTRAINT_1, indexName);
-                    }
-                }
-            }
-            index.getTable().setModified();
-            if (pkConstraint != null) {
-                db.removeSchemaObject(session, pkConstraint);
-            } else {
-                db.removeSchemaObject(session, index);
-            }
-        }
-        return 0;
-    }
+	public int update() throws SQLException {
+		session.commit(true);
+		Database db = session.getDatabase();
+		Index index = getSchema().findIndex(session, indexName);
+		if (index == null) {
+			if (!ifExists) {
+				throw Message.getSQLException(ErrorCode.INDEX_NOT_FOUND_1, indexName);
+			}
+		} else {
+			Table table = index.getTable();
+			session.getUser().checkRight(index.getTable(), Right.ALL);
+			Constraint pkConstraint = null;
+			ObjectArray constraints = table.getConstraints();
+			for (int i = 0; constraints != null && i < constraints.size(); i++) {
+				Constraint cons = (Constraint) constraints.get(i);
+				if (cons.usesIndex(index)) {
+					// can drop primary key index (for compatibility)
+					if (Constraint.PRIMARY_KEY.equals(cons.getConstraintType())) {
+						pkConstraint = cons;
+					} else {
+						throw Message.getSQLException(ErrorCode.INDEX_BELONGS_TO_CONSTRAINT_1, indexName);
+					}
+				}
+			}
+			index.getTable().setModified();
+			if (pkConstraint != null) {
+				db.removeSchemaObject(session, pkConstraint);
+			} else {
+				db.removeSchemaObject(session, index);
+			}
+		}
+		return 0;
+	}
 
 }

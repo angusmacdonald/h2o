@@ -18,42 +18,42 @@ import org.h2.test.TestBase;
  */
 public class TestAlter extends TestBase {
 
-    private Connection conn;
-    private Statement stat;
+	private Connection conn;
+	private Statement stat;
 
-    /**
-     * Run just this test.
-     *
-     * @param a ignored
-     */
-    public static void main(String[] a) throws Exception {
-        TestBase.createCaller().init().test();
-    }
+	/**
+	 * Run just this test.
+	 *
+	 * @param a ignored
+	 */
+	public static void main(String[] a) throws Exception {
+		TestBase.createCaller().init().test();
+	}
 
-    public void test() throws Exception {
-        deleteDb("alter");
-        conn = getConnection("alter");
-        stat = conn.createStatement();
-        testAlterTableAlterColumn();
-        conn.close();
-        deleteDb("alter");
-    }
+	public void test() throws Exception {
+		deleteDb("alter");
+		conn = getConnection("alter");
+		stat = conn.createStatement();
+		testAlterTableAlterColumn();
+		conn.close();
+		deleteDb("alter");
+	}
 
-    private void testAlterTableAlterColumn() throws SQLException {
-        stat.execute("create table t(x varchar) as select 'x'");
-        try {
-            stat.execute("alter table t alter column x int");
-        } catch (SQLException e) {
-            assertEquals(ErrorCode.DATA_CONVERSION_ERROR_1, e.getErrorCode());
-        }
-        stat.execute("drop table t");
-        stat.execute("create table t(id identity, x varchar) as select null, 'x'");
-        try {
-            stat.execute("alter table t alter column x int");
-        } catch (SQLException e) {
-            assertEquals(ErrorCode.DATA_CONVERSION_ERROR_1, e.getErrorCode());
-        }
-        stat.execute("drop table t");
-    }
+	private void testAlterTableAlterColumn() throws SQLException {
+		stat.execute("create table t(x varchar) as select 'x'");
+		try {
+			stat.execute("alter table t alter column x int");
+		} catch (SQLException e) {
+			assertEquals(ErrorCode.DATA_CONVERSION_ERROR_1, e.getErrorCode());
+		}
+		stat.execute("drop table t");
+		stat.execute("create table t(id identity, x varchar) as select null, 'x'");
+		try {
+			stat.execute("alter table t alter column x int");
+		} catch (SQLException e) {
+			assertEquals(ErrorCode.DATA_CONVERSION_ERROR_1, e.getErrorCode());
+		}
+		stat.execute("drop table t");
+	}
 
 }

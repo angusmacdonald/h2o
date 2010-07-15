@@ -13,62 +13,62 @@ import java.util.HashMap;
  */
 public class RuleRepeat implements Rule {
 
-    private Rule rule;
+	private Rule rule;
 
-    RuleRepeat(Rule rule) {
-        this.rule = rule;
-    }
+	RuleRepeat(Rule rule) {
+		this.rule = rule;
+	}
 
-    public String toString() {
-        return "...";
-    }
+	public String toString() {
+		return "...";
+	}
 
-    public String name() {
-        return rule.name();
-    }
+	public String name() {
+		return rule.name();
+	}
 
-    public Rule last() {
-        return this;
-    }
+	public Rule last() {
+		return this;
+	}
 
-    public void setLinks(HashMap ruleMap) {
-        // rule.setLinks(ruleMap);
-    }
+	public void setLinks(HashMap ruleMap) {
+		// rule.setLinks(ruleMap);
+	}
 
-    public String random(Bnf config, int level) {
-        return rule.random(config, level);
-    }
+	public String random(Bnf config, int level) {
+		return rule.random(config, level);
+	}
 
-    public boolean matchRemove(Sentence sentence) {
-        if (sentence.shouldStop()) {
-            return false;
-        }
-        String query = sentence.getQuery();
-        if (query.length() == 0) {
-            return false;
-        }
-        while (true) {
-            if (!rule.matchRemove(sentence)) {
-                return true;
-            }
-            if (sentence.getQuery().length() == 0) {
-                return true;
-            }
-        }
-    }
+	public boolean matchRemove(Sentence sentence) {
+		if (sentence.shouldStop()) {
+			return false;
+		}
+		String query = sentence.getQuery();
+		if (query.length() == 0) {
+			return false;
+		}
+		while (true) {
+			if (!rule.matchRemove(sentence)) {
+				return true;
+			}
+			if (sentence.getQuery().length() == 0) {
+				return true;
+			}
+		}
+	}
 
-    public void addNextTokenList(Sentence sentence) {
-        if (sentence.shouldStop()) {
-            return;
-        }
-        String old = sentence.getQuery();
-        while (true) {
-            rule.addNextTokenList(sentence);
-            if (!rule.matchRemove(sentence) || old.equals(sentence.getQuery())) {
-                break;
-            }
-        }
-        sentence.setQuery(old);
-    }
+	public void addNextTokenList(Sentence sentence) {
+		if (sentence.shouldStop()) {
+			return;
+		}
+		String old = sentence.getQuery();
+		while (true) {
+			rule.addNextTokenList(sentence);
+			if (!rule.matchRemove(sentence) || old.equals(sentence.getQuery())) {
+				break;
+			}
+		}
+		sentence.setQuery(old);
+	}
 
 }

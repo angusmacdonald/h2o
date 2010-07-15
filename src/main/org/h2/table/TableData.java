@@ -392,11 +392,11 @@ public class TableData extends Table implements RecordReader {
 			if (lockExclusive != null){
 				session = lockExclusive; //XXX H2O hack to stop SYS table locking on B-to-A-to-B DB communication. Will cause issues with multiple users?
 			}
-			
+
 			if (lockExclusive == session) {
 				return;
 			}
-			
+
 			if (exclusive) {
 				if (lockExclusive == null) {
 					if (lockShared.isEmpty()) {

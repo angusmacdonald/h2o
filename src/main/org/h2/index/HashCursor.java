@@ -15,36 +15,36 @@ import org.h2.result.SearchRow;
  * At most one row can be accessed.
  */
 public class HashCursor implements Cursor {
-    private Row row;
-    private boolean end;
+	private Row row;
+	private boolean end;
 
-    HashCursor(Row row) {
-        this.row = row;
-    }
+	HashCursor(Row row) {
+		this.row = row;
+	}
 
-    public Row get() {
-        return row;
-    }
+	public Row get() {
+		return row;
+	}
 
-    public SearchRow getSearchRow() {
-        return row;
-    }
+	public SearchRow getSearchRow() {
+		return row;
+	}
 
-    public int getPos() {
-        return row.getPos();
-    }
+	public int getPos() {
+		return row.getPos();
+	}
 
-    public boolean next() {
-        if (row == null || end) {
-            row = null;
-            return false;
-        }
-        end = true;
-        return true;
-    }
+	public boolean next() {
+		if (row == null || end) {
+			row = null;
+			return false;
+		}
+		end = true;
+		return true;
+	}
 
-    public boolean previous() {
-        throw Message.throwInternalError();
-    }
+	public boolean previous() {
+		throw Message.throwInternalError();
+	}
 
 }

@@ -31,242 +31,242 @@ import org.h2.util.JdbcDriverUtils;
  */
 public class Db {
 
-    private Connection conn;
-    private Statement stat;
-    private HashMap prepared = new HashMap();
+	private Connection conn;
+	private Statement stat;
+	private HashMap prepared = new HashMap();
 
-    /**
-     * Create a database object using the given connection.
-     *
-     * @param conn the database connection
-     */
-    public Db(Connection conn) {
-        try {
-            this.conn = conn;
-            stat = conn.createStatement();
-        } catch (SQLException e) {
-            throw convert(e);
-        }
-    }
+	/**
+	 * Create a database object using the given connection.
+	 *
+	 * @param conn the database connection
+	 */
+	public Db(Connection conn) {
+		try {
+			this.conn = conn;
+			stat = conn.createStatement();
+		} catch (SQLException e) {
+			throw convert(e);
+		}
+	}
 
-    /**
-     * Open the database connection. For most databases, it is not required to
-     * load the driver before calling this method.
-     *
-     * @param url the database URL
-     * @param user the user name
-     * @param password the password
-     * @return the database
-     */
-    public static Db open(String url, String user, String password) {
-        try {
-            JdbcDriverUtils.load(url);
-            return new Db(DriverManager.getConnection(url, user, password));
-        } catch (SQLException e) {
-            throw convert(e);
-        }
-    }
+	/**
+	 * Open the database connection. For most databases, it is not required to
+	 * load the driver before calling this method.
+	 *
+	 * @param url the database URL
+	 * @param user the user name
+	 * @param password the password
+	 * @return the database
+	 */
+	public static Db open(String url, String user, String password) {
+		try {
+			JdbcDriverUtils.load(url);
+			return new Db(DriverManager.getConnection(url, user, password));
+		} catch (SQLException e) {
+			throw convert(e);
+		}
+	}
 
-    /**
-     * Prepare a SQL statement.
-     *
-     * @param sql the SQL statement
-     * @return the prepared statement
-     */
-    public Prepared prepare(String sql) {
-        try {
-            PreparedStatement prep = (PreparedStatement) prepared.get(sql);
-            if (prep == null) {
-                prep = conn.prepareStatement(sql);
-                prepared.put(sql, prep);
-            }
-            return new Prepared(conn.prepareStatement(sql));
-        } catch (SQLException e) {
-            throw convert(e);
-        }
-    }
+	/**
+	 * Prepare a SQL statement.
+	 *
+	 * @param sql the SQL statement
+	 * @return the prepared statement
+	 */
+	public Prepared prepare(String sql) {
+		try {
+			PreparedStatement prep = (PreparedStatement) prepared.get(sql);
+			if (prep == null) {
+				prep = conn.prepareStatement(sql);
+				prepared.put(sql, prep);
+			}
+			return new Prepared(conn.prepareStatement(sql));
+		} catch (SQLException e) {
+			throw convert(e);
+		}
+	}
 
-    /**
-     * Execute a SQL statement.
-     *
-     * @param sql the SQL statement
-     */
-    public void execute(String sql) {
-        try {
-            stat.execute(sql);
-        } catch (SQLException e) {
-            throw convert(e);
-        }
-    }
+	/**
+	 * Execute a SQL statement.
+	 *
+	 * @param sql the SQL statement
+	 */
+	public void execute(String sql) {
+		try {
+			stat.execute(sql);
+		} catch (SQLException e) {
+			throw convert(e);
+		}
+	}
 
-    /**
-     * Read a result set.
-     *
-     * @param rs the result set
-     * @return a list of maps
-     */
-    static List query(ResultSet rs) throws SQLException {
-        List list = new ArrayList();
-        ResultSetMetaData meta = rs.getMetaData();
-        int columnCount = meta.getColumnCount();
-        while (rs.next()) {
-            HashMap map = new HashMap();
-            for (int i = 0; i < columnCount; i++) {
-                map.put(meta.getColumnLabel(i+1), rs.getObject(i+1));
-            }
-            list.add(map);
-        }
-        return list;
-    }
+	/**
+	 * Read a result set.
+	 *
+	 * @param rs the result set
+	 * @return a list of maps
+	 */
+	static List query(ResultSet rs) throws SQLException {
+		List list = new ArrayList();
+		ResultSetMetaData meta = rs.getMetaData();
+		int columnCount = meta.getColumnCount();
+		while (rs.next()) {
+			HashMap map = new HashMap();
+			for (int i = 0; i < columnCount; i++) {
+				map.put(meta.getColumnLabel(i+1), rs.getObject(i+1));
+			}
+			list.add(map);
+		}
+		return list;
+	}
 
-    /**
-     * Execute a SQL statement.
-     *
-     * @param sql the SQL statement
-     * @return a list of maps
-     */
-    public List query(String sql) {
-        try {
-            return query(stat.executeQuery(sql));
-        } catch (SQLException e) {
-            throw convert(e);
-        }
-    }
+	/**
+	 * Execute a SQL statement.
+	 *
+	 * @param sql the SQL statement
+	 * @return a list of maps
+	 */
+	public List query(String sql) {
+		try {
+			return query(stat.executeQuery(sql));
+		} catch (SQLException e) {
+			throw convert(e);
+		}
+	}
 
-    /**
-     * Close the database connection.
-     */
-    public void close() {
-        try {
-            conn.close();
-        } catch (SQLException e) {
-            throw convert(e);
-        }
-    }
+	/**
+	 * Close the database connection.
+	 */
+	public void close() {
+		try {
+			conn.close();
+		} catch (SQLException e) {
+			throw convert(e);
+		}
+	}
 
-    /**
-     * This class represents a prepared statement.
-     */
-    public class Prepared {
-        private PreparedStatement prep;
-        private int index;
+	/**
+	 * This class represents a prepared statement.
+	 */
+	public class Prepared {
+		private PreparedStatement prep;
+		private int index;
 
-        Prepared(PreparedStatement prep) {
-            this.prep = prep;
-        }
+		Prepared(PreparedStatement prep) {
+			this.prep = prep;
+		}
 
-        /**
-         * Set the value of the current parameter.
-         *
-         * @param x the value
-         * @return itself
-         */
-        public Prepared set(int x) {
-            try {
-                prep.setInt(++index, x);
-                return this;
-            } catch (SQLException e) {
-                throw convert(e);
-            }
-        }
+		/**
+		 * Set the value of the current parameter.
+		 *
+		 * @param x the value
+		 * @return itself
+		 */
+		public Prepared set(int x) {
+			try {
+				prep.setInt(++index, x);
+				return this;
+			} catch (SQLException e) {
+				throw convert(e);
+			}
+		}
 
-        /**
-         * Set the value of the current parameter.
-         *
-         * @param x the value
-         * @return itself
-         */
-        public Prepared set(String x) {
-            try {
-                prep.setString(++index, x);
-                return this;
-            } catch (SQLException e) {
-                throw convert(e);
-            }
-        }
+		/**
+		 * Set the value of the current parameter.
+		 *
+		 * @param x the value
+		 * @return itself
+		 */
+		public Prepared set(String x) {
+			try {
+				prep.setString(++index, x);
+				return this;
+			} catch (SQLException e) {
+				throw convert(e);
+			}
+		}
 
-        /**
-         * Set the value of the current parameter.
-         *
-         * @param x the value
-         * @return itself
-         */
-        public Prepared set(byte[] x) {
-            try {
-                prep.setBytes(++index, x);
-                return this;
-            } catch (SQLException e) {
-                throw convert(e);
-            }
-        }
+		/**
+		 * Set the value of the current parameter.
+		 *
+		 * @param x the value
+		 * @return itself
+		 */
+		public Prepared set(byte[] x) {
+			try {
+				prep.setBytes(++index, x);
+				return this;
+			} catch (SQLException e) {
+				throw convert(e);
+			}
+		}
 
-        /**
-         * Set the value of the current parameter.
-         *
-         * @param x the value
-         * @return itself
-         */
-        public Prepared set(InputStream x) {
-            try {
-                prep.setBinaryStream(++index, x, -1);
-                return this;
-            } catch (SQLException e) {
-                throw convert(e);
-            }
-        }
+		/**
+		 * Set the value of the current parameter.
+		 *
+		 * @param x the value
+		 * @return itself
+		 */
+		public Prepared set(InputStream x) {
+			try {
+				prep.setBinaryStream(++index, x, -1);
+				return this;
+			} catch (SQLException e) {
+				throw convert(e);
+			}
+		}
 
-        /**
-         * Execute the prepared statement.
-         */
-        public void execute() {
-            try {
-                prep.execute();
-            } catch (SQLException e) {
-                throw convert(e);
-            }
-        }
+		/**
+		 * Execute the prepared statement.
+		 */
+		public void execute() {
+			try {
+				prep.execute();
+			} catch (SQLException e) {
+				throw convert(e);
+			}
+		}
 
-        /**
-         * Execute the prepared query.
-         *
-         * @return the result list
-         */
-        public List query() {
-            try {
-                return Db.query(prep.executeQuery());
-            } catch (SQLException e) {
-                throw convert(e);
-            }
-        }
-    }
+		/**
+		 * Execute the prepared query.
+		 *
+		 * @return the result list
+		 */
+		public List query() {
+			try {
+				return Db.query(prep.executeQuery());
+			} catch (SQLException e) {
+				throw convert(e);
+			}
+		}
+	}
 
-    /**
-     * Convert a checked exception to a runtime exception.
-     *
-     * @param e the checked exception
-     * @return the runtime exception
-     */
-    static RuntimeException convert(Exception e) {
-        return new RuntimeException(e.toString(), e);
-    }
+	/**
+	 * Convert a checked exception to a runtime exception.
+	 *
+	 * @param e the checked exception
+	 * @return the runtime exception
+	 */
+	static RuntimeException convert(Exception e) {
+		return new RuntimeException(e.toString(), e);
+	}
 
-    public void setAutoCommit(boolean autoCommit) {
-        try {
-            conn.setAutoCommit(autoCommit);
-        } catch (SQLException e) {
-            throw convert(e);
-        }
-    }
+	public void setAutoCommit(boolean autoCommit) {
+		try {
+			conn.setAutoCommit(autoCommit);
+		} catch (SQLException e) {
+			throw convert(e);
+		}
+	}
 
-    /**
-     * Commit a pending transaction.
-     */
-    public void commit() {
-        try {
-            conn.commit();
-        } catch (SQLException e) {
-            throw convert(e);
-        }
-    }
+	/**
+	 * Commit a pending transaction.
+	 */
+	public void commit() {
+		try {
+			conn.commit();
+		} catch (SQLException e) {
+			throw convert(e);
+		}
+	}
 
 }

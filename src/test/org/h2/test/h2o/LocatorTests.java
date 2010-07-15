@@ -1,11 +1,26 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.test.h2o;
 
 import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Set;
-
 import org.h2.engine.Constants;
 import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.locator.H2OLocatorInterface;
@@ -32,8 +47,8 @@ public class LocatorTests{
 	public static boolean isReplicated = false;
 
 	private static String[] replicaLocations = {"test1:databaseOnDisk", "test2:databaseOnDisk", "test3:databaseOnDisk", "test4:databaseOnDisk"};
-	
-	
+
+
 	@BeforeClass
 	public static void initialSetUp(){
 		Diagnostic.setLevel(DiagnosticLevel.FULL);
@@ -72,12 +87,12 @@ public class LocatorTests{
 		for (int i = 0; i < locatorServers.length; i++){
 			locatorServers[i].setRunning(false);
 		}
-		
+
 		for (int i = locatorServers.length-1; i >= 0; i--){
 			while (!locatorServers[i].isFinished()){};
 		}
 	}
-	
+
 	/**
 	 * Test that the maths used to establish whether a majority has been achieved works
 	 * as expected.
@@ -233,7 +248,7 @@ public class LocatorTests{
 
 		assertTrue(successful);
 	}
-	
+
 	/**
 	 * Writes to a number of replicas, where the majority have failed / don't exist.
 	 */
@@ -285,18 +300,18 @@ public class LocatorTests{
 	public void majorityNoFailure(){
 
 		String[] locatorLocations = {"localhost:20000", "localhost:20001"};
-		
+
 		H2OLocatorInterface locatorInterface = null;
 		try {
 			locatorInterface = new H2OLocatorInterface(locatorLocations);
 		} catch (IOException e) {
 			fail("Unexpected exception.");
 		}
-		
+
 		boolean successful = setThenGetLocations(replicaLocations, locatorInterface);
 
 		assertTrue(successful);
-		
+
 		/*
 		 * Lock.
 		 */
@@ -311,7 +326,7 @@ public class LocatorTests{
 
 		assertTrue(successful);
 	}
-	
+
 	/**
 	 * Tries to get a lock out without having sent a get request. This should fail because it
 	 * is an illegal action.
@@ -331,7 +346,7 @@ public class LocatorTests{
 		 */
 		try {
 			locatorInterface.lockLocators("databaseInstance");
-			
+
 			fail("Should have thrown a startup exception.");
 		} catch (IOException e) {
 			fail("Unexpected IOException when setting replica locations.");
@@ -354,7 +369,7 @@ public class LocatorTests{
 		} catch (IOException e) {
 			fail("Unexpected exception.");
 		}
-		
+
 		boolean successful = setThenGetLocations(replicaLocations, locatorInterface);
 
 
@@ -370,8 +385,8 @@ public class LocatorTests{
 		}
 
 		assertTrue(successful);
-		
-		
+
+
 		/*
 		 * Commit (unlock).
 		 */
@@ -384,12 +399,12 @@ public class LocatorTests{
 		} catch (StartupException e) {
 			fail("Didn't achieve majority the hard way.");
 		}
-		
+
 
 		assertTrue(successful);
-		
+
 	}
-	
+
 	/**
 	 * Try to unlock (commit) with the wrong database instance string.
 	 */
@@ -403,7 +418,7 @@ public class LocatorTests{
 		} catch (IOException e) {
 			fail("Unexpected exception.");
 		}
-		
+
 		boolean successful = setThenGetLocations(replicaLocations, locatorInterface);
 
 		/*
@@ -418,8 +433,8 @@ public class LocatorTests{
 		}
 
 		assertTrue(successful);
-		
-		
+
+
 		/*
 		 * Commit (unlock).
 		 */
@@ -434,9 +449,9 @@ public class LocatorTests{
 
 
 		assertFalse(successful);
-		
+
 	}
-	
+
 	/**
 	 * Check that when the update count doesn't match a lock cannot be taken out.
 	 */
@@ -451,11 +466,11 @@ public class LocatorTests{
 		} catch (IOException e) {
 			fail("Unexpected exception.");
 		}
-		
+
 		boolean successful = setThenGetLocations(replicaLocations, locatorInterface);
 
 		assertTrue(successful);
-		
+
 		H2OLocatorInterface locatorInterfaceTwo = null;
 		try {
 			locatorInterfaceTwo = new H2OLocatorInterface(locatorLocations);
@@ -464,11 +479,11 @@ public class LocatorTests{
 		}
 		successful = setThenGetLocations(replicaLocations, locatorInterfaceTwo);
 		assertTrue(successful);
-		
+
 		/*
 		 * Lock then commit the second 'instance'.
 		 */
-		
+
 		try {
 			successful = locatorInterfaceTwo.lockLocators("databaseInstance");
 		} catch (IOException e) {
@@ -476,7 +491,7 @@ public class LocatorTests{
 		} catch (StartupException e) {
 			fail("Didn't achieve majority the hard way.");
 		}
-		
+
 		try {
 			successful = locatorInterfaceTwo.commitLocators("databaseInstance");
 		} catch (IOException e) {
@@ -484,7 +499,7 @@ public class LocatorTests{
 		} catch (StartupException e) {
 			fail("Didn't achieve majority the hard way.");
 		}
-		
+
 
 		/*
 		 * Lock the first instance.
@@ -496,15 +511,15 @@ public class LocatorTests{
 		} catch (StartupException e) {
 			fail("Didn't achieve majority the hard way.");
 		}
-		
+
 		assertFalse(successful);
-		
+
 		/*
 		 * This should fail because a commit action has taken place since the first 'get' of the db locations.
 		 * 
 		 * The 'instance' must still manually unlock, or wait for a timeout.
 		 */
-		
+
 	}
 
 	/**
@@ -523,11 +538,11 @@ public class LocatorTests{
 		} catch (IOException e) {
 			fail("Unexpected exception.");
 		}
-		
+
 		boolean successful = setThenGetLocations(replicaLocations, locatorInterface);
 
 		assertTrue(successful);
-		
+
 		H2OLocatorInterface locatorInterfaceTwo = null;
 		try {
 			locatorInterfaceTwo = new H2OLocatorInterface(locatorLocations);
@@ -536,8 +551,8 @@ public class LocatorTests{
 		}
 		successful = setThenGetLocations(replicaLocations, locatorInterfaceTwo);
 		assertTrue(successful);
-		
-		
+
+
 		/*
 		 * Lock the first instance.
 		 */
@@ -548,12 +563,12 @@ public class LocatorTests{
 		} catch (StartupException e) {
 			fail("Didn't achieve majority the hard way.");
 		}
-		
-		
+
+
 		/*
 		 * Try to get a lock with the second locator. This will fail.
 		 */
-		
+
 		try {
 			successful = locatorInterfaceTwo.lockLocators("databaseInstanceTwo");
 		} catch (IOException e) {
@@ -561,15 +576,15 @@ public class LocatorTests{
 		} catch (StartupException e) {
 			fail("Didn't achieve majority the hard way.");
 		}
-		
+
 		assertFalse(successful);
-		
+
 		/*
 		 * Sleep then try to get a lock again. The timeout should have kicked in.
 		 */
-		
+
 		Thread.sleep(LocatorState.LOCK_TIMEOUT + 500);
-		
+
 		try {
 			successful = locatorInterfaceTwo.lockLocators("databaseInstance");
 		} catch (IOException e) {
@@ -577,7 +592,7 @@ public class LocatorTests{
 		} catch (StartupException e) {
 			fail("Didn't achieve majority the hard way.");
 		}
-		
+
 		assertTrue(successful);
 	}
 
@@ -591,7 +606,7 @@ public class LocatorTests{
 	 */
 	private boolean setThenGetLocations(String[] replicaLocations, H2OLocatorInterface locatorInterface) {
 		boolean successful = false;
-		
+
 		/*
 		 * Set locations.
 		 */

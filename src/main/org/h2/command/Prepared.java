@@ -88,10 +88,10 @@ public abstract class Prepared{
 			if (!this.session.getDatabase().getURL().equals(replica.getDatabaseURL()))
 				return false;
 		}
-		
+
 		return true;
 	}
-	
+
 	/**
 	 * Create a new object.
 	 *
@@ -587,7 +587,7 @@ public abstract class Prepared{
 		return sqlStatement.contains("?");
 		//return preparedStatement;
 	}
-	
-	
+
+
 
 }

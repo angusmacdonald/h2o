@@ -19,50 +19,50 @@ import org.h2.test.TestBase;
  */
 public class TestCache extends TestBase {
 
-    /**
-     * Run just this test.
-     *
-     * @param a ignored
-     */
-    public static void main(String[] a) throws Exception {
-        TestBase.createCaller().init().test();
-    }
+	/**
+	 * Run just this test.
+	 *
+	 * @param a ignored
+	 */
+	public static void main(String[] a) throws Exception {
+		TestBase.createCaller().init().test();
+	}
 
-    public void test() throws SQLException {
-        if (config.memory) {
-            return;
-        }
-        deleteDb("cache");
-        Connection conn = getConnection("cache");
-        Statement stat = conn.createStatement();
-        stat.execute("SET CACHE_SIZE 1024");
-        stat.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR)");
-        stat.execute("CREATE TABLE MAIN(ID INT PRIMARY KEY, NAME VARCHAR)");
-        PreparedStatement prep = conn.prepareStatement("INSERT INTO TEST VALUES(?, ?)");
-        PreparedStatement prep2 = conn.prepareStatement("INSERT INTO MAIN VALUES(?, ?)");
-        int max = 10000;
-        for (int i = 0; i < max; i++) {
-            prep.setInt(1, i);
-            prep.setString(2, "Hello " + i);
-            prep.execute();
-            prep2.setInt(1, i);
-            prep2.setString(2, "World " + i);
-            prep2.execute();
-        }
-        conn.close();
-        conn = getConnection("cache");
-        stat = conn.createStatement();
-        stat.execute("SET CACHE_SIZE 1024");
-        Random random = new Random(1);
-        for (int i = 0; i < 100; i++) {
-            stat.executeQuery("SELECT * FROM MAIN WHERE ID BETWEEN 40 AND 50");
-            stat.executeQuery("SELECT * FROM MAIN WHERE ID = " + random.nextInt(max));
-            if ((i % 10) == 0) {
-                stat.executeQuery("SELECT * FROM TEST");
-            }
-        }
-        conn.close();
-        deleteDb("cache");
-    }
+	public void test() throws SQLException {
+		if (config.memory) {
+			return;
+		}
+		deleteDb("cache");
+		Connection conn = getConnection("cache");
+		Statement stat = conn.createStatement();
+		stat.execute("SET CACHE_SIZE 1024");
+		stat.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR)");
+		stat.execute("CREATE TABLE MAIN(ID INT PRIMARY KEY, NAME VARCHAR)");
+		PreparedStatement prep = conn.prepareStatement("INSERT INTO TEST VALUES(?, ?)");
+		PreparedStatement prep2 = conn.prepareStatement("INSERT INTO MAIN VALUES(?, ?)");
+		int max = 10000;
+		for (int i = 0; i < max; i++) {
+			prep.setInt(1, i);
+			prep.setString(2, "Hello " + i);
+			prep.execute();
+			prep2.setInt(1, i);
+			prep2.setString(2, "World " + i);
+			prep2.execute();
+		}
+		conn.close();
+		conn = getConnection("cache");
+		stat = conn.createStatement();
+		stat.execute("SET CACHE_SIZE 1024");
+		Random random = new Random(1);
+		for (int i = 0; i < 100; i++) {
+			stat.executeQuery("SELECT * FROM MAIN WHERE ID BETWEEN 40 AND 50");
+			stat.executeQuery("SELECT * FROM MAIN WHERE ID = " + random.nextInt(max));
+			if ((i % 10) == 0) {
+				stat.executeQuery("SELECT * FROM TEST");
+			}
+		}
+		conn.close();
+		deleteDb("cache");
+	}
 
 }

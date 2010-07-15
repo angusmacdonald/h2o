@@ -21,128 +21,128 @@ import org.h2.util.FileUtils;
  */
 public class FileObjectDiskMapped implements FileObject {
 
-    // TODO support files over 2 GB by using multiple buffers
-    private static final long GC_TIMEOUT_MS = 10000;
-    private final String name;
-    private final MapMode mode;
-    private RandomAccessFile file;
-    private MappedByteBuffer mapped;
+	// TODO support files over 2 GB by using multiple buffers
+	private static final long GC_TIMEOUT_MS = 10000;
+	private final String name;
+	private final MapMode mode;
+	private RandomAccessFile file;
+	private MappedByteBuffer mapped;
 
-    FileObjectDiskMapped(String fileName, String mode) throws IOException {
-        if ("r".equals(mode)) {
-            this.mode = MapMode.READ_ONLY;
-        } else {
-            this.mode = MapMode.READ_WRITE;
-        }
-        this.name = fileName;
-        file = new RandomAccessFile(fileName, mode);
-        reMap();
-    }
+	FileObjectDiskMapped(String fileName, String mode) throws IOException {
+		if ("r".equals(mode)) {
+			this.mode = MapMode.READ_ONLY;
+		} else {
+			this.mode = MapMode.READ_WRITE;
+		}
+		this.name = fileName;
+		file = new RandomAccessFile(fileName, mode);
+		reMap();
+	}
 
-    private void unMap() {
-        if (mapped != null) {
-            // first write all data
-            mapped.force();
+	private void unMap() {
+		if (mapped != null) {
+			// first write all data
+			mapped.force();
 
-            // need to dispose old direct buffer, see bug
-            // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4724038
+			// need to dispose old direct buffer, see bug
+			// http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4724038
 
-            boolean useSystemGc;
-            if (SysProperties.NIO_CLEANER_HACK) {
-                try {
-                    useSystemGc = false;
-                    Method cleanerMethod = mapped.getClass().getMethod("cleaner", new Class[0]);
-                    cleanerMethod.setAccessible(true);
-                    Object cleaner = cleanerMethod.invoke(mapped, new Object[0]);
-                    Method clearMethod = cleaner.getClass().getMethod("clear", new Class[0]);
-                    clearMethod.invoke(cleaner, new Object[0]);
-                } catch (Throwable e) {
-                    useSystemGc = true;
-                }
-            } else {
-                useSystemGc = true;
-            }
-            if (useSystemGc) {
-                WeakReference bufferWeakRef = new WeakReference(mapped);
-                mapped = null;
-                long start = System.currentTimeMillis();
-                while (bufferWeakRef.get() != null) {
-                    if (System.currentTimeMillis() - start > GC_TIMEOUT_MS) {
-                        throw new RuntimeException("Timeout (" + GC_TIMEOUT_MS
-                                + " ms) reached while trying to GC mapped buffer");
-                    }
-                    System.gc();
-                    Thread.yield();
-                }
-            }
-        }
-    }
+			boolean useSystemGc;
+			if (SysProperties.NIO_CLEANER_HACK) {
+				try {
+					useSystemGc = false;
+					Method cleanerMethod = mapped.getClass().getMethod("cleaner", new Class[0]);
+					cleanerMethod.setAccessible(true);
+					Object cleaner = cleanerMethod.invoke(mapped, new Object[0]);
+					Method clearMethod = cleaner.getClass().getMethod("clear", new Class[0]);
+					clearMethod.invoke(cleaner, new Object[0]);
+				} catch (Throwable e) {
+					useSystemGc = true;
+				}
+			} else {
+				useSystemGc = true;
+			}
+			if (useSystemGc) {
+				WeakReference bufferWeakRef = new WeakReference(mapped);
+				mapped = null;
+				long start = System.currentTimeMillis();
+				while (bufferWeakRef.get() != null) {
+					if (System.currentTimeMillis() - start > GC_TIMEOUT_MS) {
+						throw new RuntimeException("Timeout (" + GC_TIMEOUT_MS
+								+ " ms) reached while trying to GC mapped buffer");
+					}
+					System.gc();
+					Thread.yield();
+				}
+			}
+		}
+	}
 
-    /**
-     * Re-map byte buffer into memory, called when file size has changed or file
-     * was created.
-     */
-    private void reMap() throws IOException {
-        if (file.length() > Integer.MAX_VALUE) {
-            throw new RuntimeException("File over 2GB is not supported yet");
-        }
-        int oldPos = 0;
-        if (mapped != null) {
-            oldPos = mapped.position();
-            mapped.force();
-            unMap();
-        }
+	/**
+	 * Re-map byte buffer into memory, called when file size has changed or file
+	 * was created.
+	 */
+	private void reMap() throws IOException {
+		if (file.length() > Integer.MAX_VALUE) {
+			throw new RuntimeException("File over 2GB is not supported yet");
+		}
+		int oldPos = 0;
+		if (mapped != null) {
+			oldPos = mapped.position();
+			mapped.force();
+			unMap();
+		}
 
-        // maps new MappedByteBuffer, old one is disposed during GC
-        mapped = file.getChannel().map(mode, 0, file.length());
-        if (SysProperties.NIO_LOAD_MAPPED) {
-            mapped.load();
-        }
-        mapped.position(oldPos);
-    }
+		// maps new MappedByteBuffer, old one is disposed during GC
+		mapped = file.getChannel().map(mode, 0, file.length());
+		if (SysProperties.NIO_LOAD_MAPPED) {
+			mapped.load();
+		}
+		mapped.position(oldPos);
+	}
 
-    public void close() throws IOException {
-        unMap();
-        file.close();
-        file = null;
-    }
+	public void close() throws IOException {
+		unMap();
+		file.close();
+		file = null;
+	}
 
-    public long getFilePointer() throws IOException {
-        return mapped.position();
-    }
+	public long getFilePointer() throws IOException {
+		return mapped.position();
+	}
 
-    public String getName() {
-        return name;
-    }
+	public String getName() {
+		return name;
+	}
 
-    public long length() throws IOException {
-        return file.length();
-    }
+	public long length() throws IOException {
+		return file.length();
+	}
 
-    public void readFully(byte[] b, int off, int len) throws IOException {
-        mapped.get(b, off, len);
-    }
+	public void readFully(byte[] b, int off, int len) throws IOException {
+		mapped.get(b, off, len);
+	}
 
-    public void seek(long pos) throws IOException {
-        mapped.position((int) pos);
-    }
+	public void seek(long pos) throws IOException {
+		mapped.position((int) pos);
+	}
 
-    public void setFileLength(long newLength) throws IOException {
-        FileUtils.setLength(file, newLength);
-        reMap();
-    }
+	public void setFileLength(long newLength) throws IOException {
+		FileUtils.setLength(file, newLength);
+		reMap();
+	}
 
-    public void sync() throws IOException {
-        file.getFD().sync();
-        mapped.force();
-    }
+	public void sync() throws IOException {
+		file.getFD().sync();
+		mapped.force();
+	}
 
-    public void write(byte[] b, int off, int len) throws IOException {
-        // check if need to expand file
-        if (mapped.capacity() < mapped.position() + len) {
-            setFileLength(mapped.position() + len);
-        }
-        mapped.put(b, off, len);
-    }
+	public void write(byte[] b, int off, int len) throws IOException {
+		// check if need to expand file
+		if (mapped.capacity() < mapped.position() + len) {
+			setFileLength(mapped.position() + len);
+		}
+		mapped.put(b, off, len);
+	}
 
 }

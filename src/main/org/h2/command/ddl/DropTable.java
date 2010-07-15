@@ -17,7 +17,6 @@ import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.remote.TableManagerRemote;
-import org.h2.h2o.manager.ISystemTable;
 import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.util.LockType;
@@ -79,7 +78,7 @@ public class DropTable extends SchemaCommand {
 			table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
 		}
 
-		
+
 		TableManagerRemote tableManager = null;
 		if (table == null){
 			tableManager = getSchema().getDatabase().getSystemTableReference().lookup((getSchema().getName() + "." + tableName), false);
@@ -92,8 +91,8 @@ public class DropTable extends SchemaCommand {
 			}
 		} else {
 			session.getUser().checkRight(table, Right.ALL);
-			
-			 //XXX changed to add the table null checks because some tests show up the tableManager existing when the local table doesn't.
+
+			//XXX changed to add the table null checks because some tests show up the tableManager existing when the local table doesn't.
 			if ((table != null && !table.canDrop()) || (Constants.IS_H2O && tableName.startsWith("H2O_"))) { //H2O - ensure schema tables aren't dropped.
 				throw Message.getSQLException(ErrorCode.CANNOT_DROP_TABLE_1, tableName);
 			}

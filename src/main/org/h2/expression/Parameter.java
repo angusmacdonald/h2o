@@ -23,147 +23,147 @@ import org.h2.value.ValueNull;
  */
 public class Parameter extends Expression implements ParameterInterface {
 
-    private Value value;
-    private Column column;
-    private int index;
+	private Value value;
+	private Column column;
+	private int index;
 
-    public Parameter(int index) {
-        this.index = index;
-    }
+	public Parameter(int index) {
+		this.index = index;
+	}
 
-    public String getSQL() {
-        return "?" + (index + 1);
-    }
+	public String getSQL() {
+		return "?" + (index + 1);
+	}
 
-    public void setValue(Value v, boolean closeOld) {
-        // don't need to close the old value as temporary files are anyway removed
-        this.value = v;
-    }
+	public void setValue(Value v, boolean closeOld) {
+		// don't need to close the old value as temporary files are anyway removed
+		this.value = v;
+	}
 
-    public void setValue(Value v) {
-        this.value = v;
-    }
+	public void setValue(Value v) {
+		this.value = v;
+	}
 
-    public Value getParamValue() {
-        if (value == null) {
-            // to allow parameters in function tables
-            return ValueNull.INSTANCE;
-        }
-        return value;
-    }
+	public Value getParamValue() {
+		if (value == null) {
+			// to allow parameters in function tables
+			return ValueNull.INSTANCE;
+		}
+		return value;
+	}
 
-    public Value getValue(Session session) {
-        return getParamValue();
-    }
+	public Value getValue(Session session) {
+		return getParamValue();
+	}
 
-    public int getType() {
-        if (value != null) {
-            return value.getType();
-        }
-        if (column != null) {
-            return column.getType();
-        }
-        return Value.UNKNOWN;
-    }
+	public int getType() {
+		if (value != null) {
+			return value.getType();
+		}
+		if (column != null) {
+			return column.getType();
+		}
+		return Value.UNKNOWN;
+	}
 
-    public void mapColumns(ColumnResolver resolver, int level) {
-        // can't map
-    }
+	public void mapColumns(ColumnResolver resolver, int level) {
+		// can't map
+	}
 
-    public void checkSet() throws SQLException {
-        if (value == null) {
-            throw Message.getSQLException(ErrorCode.PARAMETER_NOT_SET_1, "#" + (index + 1));
-        }
-    }
+	public void checkSet() throws SQLException {
+		if (value == null) {
+			throw Message.getSQLException(ErrorCode.PARAMETER_NOT_SET_1, "#" + (index + 1));
+		}
+	}
 
-    public Expression optimize(Session session) {
-        return this;
-    }
+	public Expression optimize(Session session) {
+		return this;
+	}
 
-    public boolean isConstant() {
-        return false;
-    }
+	public boolean isConstant() {
+		return false;
+	}
 
-    public boolean isValueSet() {
-        return value != null;
-    }
+	public boolean isValueSet() {
+		return value != null;
+	}
 
-    public void setEvaluatable(TableFilter tableFilter, boolean b) {
-        // not bound
-    }
+	public void setEvaluatable(TableFilter tableFilter, boolean b) {
+		// not bound
+	}
 
-    public int getScale() {
-        if (value != null) {
-            return value.getScale();
-        }
-        if (column != null) {
-            return column.getScale();
-        }
-        return 0;
-    }
+	public int getScale() {
+		if (value != null) {
+			return value.getScale();
+		}
+		if (column != null) {
+			return column.getScale();
+		}
+		return 0;
+	}
 
-    public long getPrecision() {
-        if (value != null) {
-            return value.getPrecision();
-        }
-        if (column != null) {
-            return column.getPrecision();
-        }
-        return 0;
-    }
+	public long getPrecision() {
+		if (value != null) {
+			return value.getPrecision();
+		}
+		if (column != null) {
+			return column.getPrecision();
+		}
+		return 0;
+	}
 
-    public int getDisplaySize() {
-        if (value != null) {
-            return value.getDisplaySize();
-        }
-        if (column != null) {
-            return column.getDisplaySize();
-        }
-        return 0;
-    }
+	public int getDisplaySize() {
+		if (value != null) {
+			return value.getDisplaySize();
+		}
+		if (column != null) {
+			return column.getDisplaySize();
+		}
+		return 0;
+	}
 
-    public void updateAggregate(Session session) {
-        // nothing to do
-    }
+	public void updateAggregate(Session session) {
+		// nothing to do
+	}
 
-    public boolean isEverything(ExpressionVisitor visitor) {
-        switch(visitor.getType()) {
-        case ExpressionVisitor.OPTIMIZABLE_MIN_MAX_COUNT_ALL:
-            return true;
-        case ExpressionVisitor.DETERMINISTIC:
-        case ExpressionVisitor.READONLY:
-            return true;
-        case ExpressionVisitor.INDEPENDENT:
-            return value != null;
-        case ExpressionVisitor.EVALUATABLE:
-            // the parameter _will_be_ evaluatable at execute time
-            return true;
-        case ExpressionVisitor.SET_MAX_DATA_MODIFICATION_ID:
-            // it is checked independently if the value is the same as the last time
-            return true;
-        case ExpressionVisitor.NOT_FROM_RESOLVER:
-            return true;
-        case ExpressionVisitor.GET_DEPENDENCIES:
-            return true;
-        default:
-            throw Message.throwInternalError("type="+visitor.getType());
-        }
-    }
+	public boolean isEverything(ExpressionVisitor visitor) {
+		switch(visitor.getType()) {
+		case ExpressionVisitor.OPTIMIZABLE_MIN_MAX_COUNT_ALL:
+			return true;
+		case ExpressionVisitor.DETERMINISTIC:
+		case ExpressionVisitor.READONLY:
+			return true;
+		case ExpressionVisitor.INDEPENDENT:
+			return value != null;
+		case ExpressionVisitor.EVALUATABLE:
+			// the parameter _will_be_ evaluatable at execute time
+			return true;
+		case ExpressionVisitor.SET_MAX_DATA_MODIFICATION_ID:
+			// it is checked independently if the value is the same as the last time
+			return true;
+		case ExpressionVisitor.NOT_FROM_RESOLVER:
+			return true;
+		case ExpressionVisitor.GET_DEPENDENCIES:
+			return true;
+		default:
+			throw Message.throwInternalError("type="+visitor.getType());
+		}
+	}
 
-    public int getCost() {
-        return 0;
-    }
+	public int getCost() {
+		return 0;
+	}
 
-    public Expression getNotIfPossible(Session session) {
-        return new Comparison(session, Comparison.EQUAL, this, ValueExpression.get(ValueBoolean.get(false)));
-    }
+	public Expression getNotIfPossible(Session session) {
+		return new Comparison(session, Comparison.EQUAL, this, ValueExpression.get(ValueBoolean.get(false)));
+	}
 
-    public void setColumn(Column column) {
-        this.column = column;
-    }
+	public void setColumn(Column column) {
+		this.column = column;
+	}
 
-    public int getIndex() {
-        return index;
-    }
+	public int getIndex() {
+		return index;
+	}
 
 }

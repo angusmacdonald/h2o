@@ -1,3 +1,20 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.test.h2o;
 
 import static org.junit.Assert.fail;
@@ -7,9 +24,6 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Properties;
-
-import org.h2.h2o.autonomic.Settings;
 import org.h2.h2o.manager.PersistentSystemTable;
 import org.junit.Test;
 
@@ -28,7 +42,7 @@ public class ReplicaTests extends TestBase{
 	 */
 	@Test
 	public void ScriptTest(){
-		
+
 		try{
 			sa.execute("SCRIPT TABLE TEST;");
 
@@ -43,7 +57,7 @@ public class ReplicaTests extends TestBase{
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * Tries to create a replica of the test table. Tests that a new table of the same name is successfully created on the other machine.
 	 */
@@ -66,20 +80,20 @@ public class ReplicaTests extends TestBase{
 		}
 	}
 
-	
+
 	/**
 	 * Tests that a replica is successfully created when a field has a space in its value.
 	 */
 	@Test
 	public void SpaceInValue(){
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
-		
+
 		try{
 
 			sa.execute("INSERT INTO TEST VALUES(3, 'Hello World');");
-			
+
 			createReplicaOnB();
-			
+
 			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
 
 			int[] pKey = {1, 2, 3};
@@ -93,20 +107,20 @@ public class ReplicaTests extends TestBase{
 		}
 	}
 
-	
+
 	/**
 	 * Tests that a replica is successfully created when a field has a comma in its value.
 	 */
 	@Test
 	public void CommaInValue(){
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
-		
+
 		try{
 
 			sa.execute("INSERT INTO TEST VALUES(3, 'Hello, World');");
-			
+
 			createReplicaOnB();
-			
+
 			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
 
 			int[] pKey = {1, 2, 3};
@@ -119,7 +133,7 @@ public class ReplicaTests extends TestBase{
 		}
 	}
 
-	
+
 	@Test
 	public void selectFromReplica(){
 
@@ -137,7 +151,7 @@ public class ReplicaTests extends TestBase{
 			fail("An Unexpected SQLException was thrown.");
 		}
 	}
-	
+
 
 	/**
 	 * Tests that the SELECT PRIMARY command succeeds, in the case where the primary is local.
@@ -145,7 +159,7 @@ public class ReplicaTests extends TestBase{
 	@Test
 	public void SelectPrimaryWhenLocal(){
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
-		
+
 		try{
 
 			sa.execute("SELECT PRIMARY * FROM TEST ORDER BY ID;");
@@ -167,7 +181,7 @@ public class ReplicaTests extends TestBase{
 	@Test
 	public void SelectLocalTestRemote(){
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
-		
+
 		try{
 			sb.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
 		} catch (SQLException e){
@@ -175,7 +189,7 @@ public class ReplicaTests extends TestBase{
 			fail("The table should be found remotely if not available locally.");
 		}
 	}
-	
+
 	/**
 	 * Checks that its possible to drop the primary, original copy of the data when one other copy exists.
 	 */
@@ -240,20 +254,20 @@ public class ReplicaTests extends TestBase{
 		}
 	}
 
-	
+
 	/**
 	 * Tests the 'push replication' feature by attempting to initiate replication creation on database B from database A.
 	 */
 	@Test
 	public void PushReplicationON(){
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
-		
-		
+
+
 		try{
-//			int result = sa.executeUpdate("GET RMI PORT AT 'jdbc:h2:mem:two'");
-//			
-//			System.err.println(result);
-//			
+			//			int result = sa.executeUpdate("GET RMI PORT AT 'jdbc:h2:mem:two'");
+			//			
+			//			System.err.println(result);
+			//			
 			sa.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:two'");
 
 			if (sa.getUpdateCount() != 0){
@@ -271,7 +285,7 @@ public class ReplicaTests extends TestBase{
 			String[] secondCol = {"Hello", "World", "Quite"};
 
 			validateOnSecondMachine("TEST", pKey, secondCol);
-			
+
 			/*
 			 * Check that the primary copy has three entries.
 			 */
@@ -295,7 +309,7 @@ public class ReplicaTests extends TestBase{
 	@Test
 	public void PushReplicationFROMtwoMachines(){
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
-			
+
 		try{
 
 			sa.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:two' FROM 'jdbc:h2:mem:one'");
@@ -331,7 +345,7 @@ public class ReplicaTests extends TestBase{
 	@Test
 	public void PushReplicationFROMtwoMachinesAlt(){
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
-		
+
 		try{
 
 			sb.execute("CREATE REPLICA TEST ON 'jdbc:h2:mem:two' FROM 'jdbc:h2:mem:one'");
@@ -361,7 +375,7 @@ public class ReplicaTests extends TestBase{
 	}
 
 
-	
+
 	/**
 	 * Tests the 'push replication' feature by attempting to initiate replication creation on database C from database A, getting the data from database B.
 	 * The test first creates a replica on database B, then launches the ON-FROM replication command from database A.
@@ -369,8 +383,8 @@ public class ReplicaTests extends TestBase{
 	@Test
 	public void PushReplicationONFROM(){
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
-		
-		
+
+
 		try{
 			Connection cc = DriverManager.getConnection("jdbc:h2:mem:three", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 			Statement sc = cc.createStatement();
@@ -429,7 +443,7 @@ public class ReplicaTests extends TestBase{
 		} catch (SQLException e){
 			e.printStackTrace();
 			fail("An Unexpected SQLException was thrown.");
-			
+
 		}
 	}
 
@@ -440,7 +454,7 @@ public class ReplicaTests extends TestBase{
 	public void SchemaMetaData(){
 
 		try{
-			
+
 			sb.execute("CREATE REPLICA TEST");
 
 			if (sb.getUpdateCount() != 0){
@@ -448,7 +462,7 @@ public class ReplicaTests extends TestBase{
 			}
 
 			sa.execute("SELECT * FROM H2O.H2O_TM_REPLICA;");
-			
+
 			ResultSet rs = sa.getResultSet();
 
 			if (!(rs.next() && rs.next())){
@@ -494,7 +508,7 @@ public class ReplicaTests extends TestBase{
 	@Test
 	public void SelectLocalTest(){
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
-		
+
 		try{
 			sb.execute("CREATE REPLICA TEST");
 
@@ -529,7 +543,7 @@ public class ReplicaTests extends TestBase{
 	@Test
 	public void SelectLocalTestFailure(){
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
-		
+
 		try{
 			sb.execute("SELECT LOCAL ONLY * FROM TEST ORDER BY ID;");
 

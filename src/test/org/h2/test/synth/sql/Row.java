@@ -13,40 +13,40 @@ import java.sql.SQLException;
  * Represents a row.
  */
 class Row implements Comparable {
-    private Value[] data;
+	private Value[] data;
 
-    public Row(TestSynth config, ResultSet rs, int len) throws SQLException {
-        data = new Value[len];
-        for (int i = 0; i < len; i++) {
-            data[i] = Value.read(config, rs, i + 1);
-        }
-    }
+	public Row(TestSynth config, ResultSet rs, int len) throws SQLException {
+		data = new Value[len];
+		for (int i = 0; i < len; i++) {
+			data[i] = Value.read(config, rs, i + 1);
+		}
+	}
 
-    public String toString() {
-        String s = "";
-        for (int i = 0; i < data.length; i++) {
-            Object o = data[i];
-            s += o == null ? "NULL" : o.toString();
-            s += "; ";
-        }
-        return s;
-    }
+	public String toString() {
+		String s = "";
+		for (int i = 0; i < data.length; i++) {
+			Object o = data[i];
+			s += o == null ? "NULL" : o.toString();
+			s += "; ";
+		}
+		return s;
+	}
 
-    public int compareTo(Object o) {
-        Row r2 = (Row) o;
-        int result = 0;
-        for (int i = 0; i < data.length && result == 0; i++) {
-            Object o1 = data[i];
-            Object o2 = r2.data[i];
-            if (o1 == null) {
-                result = (o2 == null) ? 0 : -1;
-            } else if (o2 == null) {
-                result = 1;
-            } else {
-                result = o1.toString().compareTo(o2.toString());
-            }
-        }
-        return result;
-    }
+	public int compareTo(Object o) {
+		Row r2 = (Row) o;
+		int result = 0;
+		for (int i = 0; i < data.length && result == 0; i++) {
+			Object o1 = data[i];
+			Object o2 = r2.data[i];
+			if (o1 == null) {
+				result = (o2 == null) ? 0 : -1;
+			} else if (o2 == null) {
+				result = 1;
+			} else {
+				result = o1.toString().compareTo(o2.toString());
+			}
+		}
+		return result;
+	}
 
 }

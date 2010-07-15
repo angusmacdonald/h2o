@@ -100,9 +100,9 @@ public class TableLink extends Table {
 		storesMixedCase = meta.storesMixedCaseIdentifiers();
 		supportsMixedCaseIdentifiers = meta.supportsMixedCaseIdentifiers();
 		ResultSet rs = meta.getTables(null, originalSchema, originalTable, null);
-//		if (rs.next() && rs.next()) {
-//			throw Message.getSQLException(ErrorCode.SCHEMA_NAME_MUST_MATCH, originalTable);
-//		}
+		//		if (rs.next() && rs.next()) {
+		//			throw Message.getSQLException(ErrorCode.SCHEMA_NAME_MUST_MATCH, originalTable);
+		//		}
 		rs.close();
 
 		if (originalTable.contains(".")){
@@ -132,7 +132,7 @@ public class TableLink extends Table {
 				break;
 			}
 			String n = rs.getString("COLUMN_NAME");
-			
+
 			n = convertColumnName(n);
 			int sqlType = rs.getInt("DATA_TYPE");
 			long precision = rs.getInt("COLUMN_SIZE");
@@ -142,7 +142,7 @@ public class TableLink extends Table {
 			int type = DataType.convertSQLTypeToValueType(sqlType);
 			Column col = new Column(n, type, precision, scale, displaySize);
 			if (rs.getString("COLUMN_DEF") == null){
-			col.setNullable(rs.getBoolean("IS_NULLABLE"));
+				col.setNullable(rs.getBoolean("IS_NULLABLE"));
 			}
 			col.setTable(this, i++);
 			columnList.add(col);
@@ -194,7 +194,7 @@ public class TableLink extends Table {
 			rs = meta.getPrimaryKeys(null, originalSchema, originalTable);
 		} catch (SQLException e) {
 			// Some ODBC bridge drivers don't support it:
-				// some combinations of "DataDirect SequeLink(R) for JDBC"
+			// some combinations of "DataDirect SequeLink(R) for JDBC"
 			// http://www.datadirect.com/index.ssp
 			rs = null;
 		}
@@ -539,15 +539,15 @@ public class TableLink extends Table {
 	 * @param prep the prepared statement
 	 * @param sql the SQL statement
 	 */
-	 public void reusePreparedStatement(PreparedStatement prep, String sql) {
-		 prepared.put(sql, prep);
-	 }
+	public void reusePreparedStatement(PreparedStatement prep, String sql) {
+		prepared.put(sql, prep);
+	}
 
-	 /* (non-Javadoc)
-	  * @see org.h2.table.Table#isLocal()
-	  */
-	 @Override
-	 public boolean isLocal() {
-		 return false;
-	 }
+	/* (non-Javadoc)
+	 * @see org.h2.table.Table#isLocal()
+	 */
+	@Override
+	public boolean isLocal() {
+		return false;
+	}
 }

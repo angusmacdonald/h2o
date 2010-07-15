@@ -17,33 +17,33 @@ import org.h2.util.ObjectArray;
  */
 public class MetaCursor implements Cursor {
 
-    private Row current;
-    private ObjectArray rows;
-    private int index;
+	private Row current;
+	private ObjectArray rows;
+	private int index;
 
-    MetaCursor(ObjectArray rows) {
-        this.rows = rows;
-    }
+	MetaCursor(ObjectArray rows) {
+		this.rows = rows;
+	}
 
-    public Row get() {
-        return current;
-    }
+	public Row get() {
+		return current;
+	}
 
-    public SearchRow getSearchRow() {
-        return current;
-    }
+	public SearchRow getSearchRow() {
+		return current;
+	}
 
-    public int getPos() {
-        throw Message.throwInternalError();
-    }
+	public int getPos() {
+		throw Message.throwInternalError();
+	}
 
-    public boolean next() {
-        current =  (Row) (index >= rows.size() ? null : rows.get(index++));
-        return current != null;
-    }
+	public boolean next() {
+		current =  (Row) (index >= rows.size() ? null : rows.get(index++));
+		return current != null;
+	}
 
-    public boolean previous() {
-        throw Message.throwInternalError();
-    }
+	public boolean previous() {
+		throw Message.throwInternalError();
+	}
 
 }

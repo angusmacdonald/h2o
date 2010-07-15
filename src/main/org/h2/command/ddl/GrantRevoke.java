@@ -27,166 +27,166 @@ import org.h2.util.ObjectArray;
  */
 public class GrantRevoke extends DefineCommand {
 
-    /**
-     * The operation type to grant a right.
-     */
-    public static final int GRANT = 0;
+	/**
+	 * The operation type to grant a right.
+	 */
+	public static final int GRANT = 0;
 
-    /**
-     * The operation type to revoke a right.
-     */
-    public static final int REVOKE = 1;
+	/**
+	 * The operation type to revoke a right.
+	 */
+	public static final int REVOKE = 1;
 
-    private ObjectArray roleNames;
-    private int operationType;
-    private int rightMask;
-    private ObjectArray tables = new ObjectArray();
-    private RightOwner grantee;
+	private ObjectArray roleNames;
+	private int operationType;
+	private int rightMask;
+	private ObjectArray tables = new ObjectArray();
+	private RightOwner grantee;
 
-    public GrantRevoke(Session session) {
-        super(session);
-    }
+	public GrantRevoke(Session session) {
+		super(session);
+	}
 
-    public void setOperationType(int operationType) {
-        this.operationType = operationType;
-    }
+	public void setOperationType(int operationType) {
+		this.operationType = operationType;
+	}
 
-    /**
-     * Add the specified right bit to the rights bitmap.
-     *
-     * @param right the right bit
-     */
-    public void addRight(int right) {
-        this.rightMask |= right;
-    }
+	/**
+	 * Add the specified right bit to the rights bitmap.
+	 *
+	 * @param right the right bit
+	 */
+	public void addRight(int right) {
+		this.rightMask |= right;
+	}
 
-    /**
-     * Add the specified role to the list of roles.
-     *
-     * @param roleName the role
-     */
-    public void addRoleName(String roleName) {
-        if (roleNames == null) {
-            roleNames = new ObjectArray();
-        }
-        roleNames.add(roleName);
-    }
+	/**
+	 * Add the specified role to the list of roles.
+	 *
+	 * @param roleName the role
+	 */
+	public void addRoleName(String roleName) {
+		if (roleNames == null) {
+			roleNames = new ObjectArray();
+		}
+		roleNames.add(roleName);
+	}
 
-    public void setGranteeName(String granteeName) throws SQLException {
-        Database db = session.getDatabase();
-        grantee = db.findUser(granteeName);
-        if (grantee == null) {
-            grantee = db.findRole(granteeName);
-            if (grantee == null) {
-                throw Message.getSQLException(ErrorCode.USER_OR_ROLE_NOT_FOUND_1, granteeName);
-            }
-        }
-    }
+	public void setGranteeName(String granteeName) throws SQLException {
+		Database db = session.getDatabase();
+		grantee = db.findUser(granteeName);
+		if (grantee == null) {
+			grantee = db.findRole(granteeName);
+			if (grantee == null) {
+				throw Message.getSQLException(ErrorCode.USER_OR_ROLE_NOT_FOUND_1, granteeName);
+			}
+		}
+	}
 
-    public int update() throws SQLException {
-        session.getUser().checkAdmin();
-        session.commit(true);
-        Database db = session.getDatabase();
-        if (roleNames != null) {
-            for (int i = 0; i < roleNames.size(); i++) {
-                String name = (String) roleNames.get(i);
-                Role grantedRole = db.findRole(name);
-                if (grantedRole == null) {
-                    throw Message.getSQLException(ErrorCode.ROLE_NOT_FOUND_1, name);
-                }
-                if (operationType == GRANT) {
-                    grantRole(grantedRole);
-                } else if (operationType == REVOKE) {
-                    revokeRole(grantedRole);
-                } else {
-                    Message.throwInternalError("type=" + operationType);
-                }
-            }
-        } else {
-            if (operationType == GRANT) {
-                grantRight();
-            } else if (operationType == REVOKE) {
-                revokeRight();
-            } else {
-                Message.throwInternalError("type=" + operationType);
-            }
-        }
-        return 0;
-    }
+	public int update() throws SQLException {
+		session.getUser().checkAdmin();
+		session.commit(true);
+		Database db = session.getDatabase();
+		if (roleNames != null) {
+			for (int i = 0; i < roleNames.size(); i++) {
+				String name = (String) roleNames.get(i);
+				Role grantedRole = db.findRole(name);
+				if (grantedRole == null) {
+					throw Message.getSQLException(ErrorCode.ROLE_NOT_FOUND_1, name);
+				}
+				if (operationType == GRANT) {
+					grantRole(grantedRole);
+				} else if (operationType == REVOKE) {
+					revokeRole(grantedRole);
+				} else {
+					Message.throwInternalError("type=" + operationType);
+				}
+			}
+		} else {
+			if (operationType == GRANT) {
+				grantRight();
+			} else if (operationType == REVOKE) {
+				revokeRight();
+			} else {
+				Message.throwInternalError("type=" + operationType);
+			}
+		}
+		return 0;
+	}
 
-    private void grantRight() throws SQLException {
-        Database db = session.getDatabase();
-        for (int i = 0; i < tables.size(); i++) {
-            Table table = (Table) tables.get(i);
-            Right right = grantee.getRightForTable(table);
-            if (right == null) {
-                int id = getObjectId(true, true);
-                right = new Right(db, id, grantee, rightMask, table);
-                grantee.grantRight(table, right);
-                db.addDatabaseObject(session, right);
-            } else {
-                right.setRightMask(right.getRightMask() | rightMask);
-            }
-        }
-    }
+	private void grantRight() throws SQLException {
+		Database db = session.getDatabase();
+		for (int i = 0; i < tables.size(); i++) {
+			Table table = (Table) tables.get(i);
+			Right right = grantee.getRightForTable(table);
+			if (right == null) {
+				int id = getObjectId(true, true);
+				right = new Right(db, id, grantee, rightMask, table);
+				grantee.grantRight(table, right);
+				db.addDatabaseObject(session, right);
+			} else {
+				right.setRightMask(right.getRightMask() | rightMask);
+			}
+		}
+	}
 
-    private void grantRole(Role grantedRole) throws SQLException {
-        if (grantedRole != grantee && grantee.isRoleGranted(grantedRole)) {
-            return;
-        }
-        if (grantee instanceof Role) {
-            Role granteeRole = (Role) grantee;
-            if (grantedRole.isRoleGranted(granteeRole)) {
-                // TODO role: should be 'cyclic role grants are not allowed'
-                throw Message.getSQLException(ErrorCode.ROLE_ALREADY_GRANTED_1, grantedRole.getSQL());
-            }
-        }
-        Database db = session.getDatabase();
-        int id = getObjectId(true, true);
-        Right right = new Right(db, id, grantee, grantedRole);
-        db.addDatabaseObject(session, right);
-        grantee.grantRole(grantedRole, right);
-    }
+	private void grantRole(Role grantedRole) throws SQLException {
+		if (grantedRole != grantee && grantee.isRoleGranted(grantedRole)) {
+			return;
+		}
+		if (grantee instanceof Role) {
+			Role granteeRole = (Role) grantee;
+			if (grantedRole.isRoleGranted(granteeRole)) {
+				// TODO role: should be 'cyclic role grants are not allowed'
+				throw Message.getSQLException(ErrorCode.ROLE_ALREADY_GRANTED_1, grantedRole.getSQL());
+			}
+		}
+		Database db = session.getDatabase();
+		int id = getObjectId(true, true);
+		Right right = new Right(db, id, grantee, grantedRole);
+		db.addDatabaseObject(session, right);
+		grantee.grantRole(grantedRole, right);
+	}
 
-    private void revokeRight() throws SQLException {
-        for (int i = 0; i < tables.size(); i++) {
-            Table table = (Table) tables.get(i);
-            Right right = grantee.getRightForTable(table);
-            if (right == null) {
-                continue;
-            }
-            int mask = right.getRightMask();
-            int newRight = mask & ~rightMask;
-            Database db = session.getDatabase();
-            if (newRight == 0) {
-                db.removeDatabaseObject(session, right);
-            } else {
-                right.setRightMask(newRight);
-                db.update(session, right);
-            }
-        }
-    }
+	private void revokeRight() throws SQLException {
+		for (int i = 0; i < tables.size(); i++) {
+			Table table = (Table) tables.get(i);
+			Right right = grantee.getRightForTable(table);
+			if (right == null) {
+				continue;
+			}
+			int mask = right.getRightMask();
+			int newRight = mask & ~rightMask;
+			Database db = session.getDatabase();
+			if (newRight == 0) {
+				db.removeDatabaseObject(session, right);
+			} else {
+				right.setRightMask(newRight);
+				db.update(session, right);
+			}
+		}
+	}
 
-    private void revokeRole(Role grantedRole) throws SQLException {
-        Right right = grantee.getRightForRole(grantedRole);
-        if (right == null) {
-            return;
-        }
-        Database db = session.getDatabase();
-        db.removeDatabaseObject(session, right);
-    }
+	private void revokeRole(Role grantedRole) throws SQLException {
+		Right right = grantee.getRightForRole(grantedRole);
+		if (right == null) {
+			return;
+		}
+		Database db = session.getDatabase();
+		db.removeDatabaseObject(session, right);
+	}
 
-    public boolean isTransactional() {
-        return false;
-    }
+	public boolean isTransactional() {
+		return false;
+	}
 
-    /**
-     * Add the specified table to the list of tables.
-     *
-     * @param table the table
-     */
-    public void addTable(Table table) {
-        tables.add(table);
-    }
+	/**
+	 * Add the specified table to the list of tables.
+	 *
+	 * @param table the table
+	 */
+	public void addTable(Table table) {
+		tables.add(table);
+	}
 
 }

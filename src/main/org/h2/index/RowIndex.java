@@ -16,13 +16,13 @@ import org.h2.result.Row;
  */
 public interface RowIndex extends Index {
 
-    /**
-     * Get the row with the given key.
-     *
-     * @param session the session
-     * @param key the position
-     * @return the row
-     */
-    Row getRow(Session session, int key) throws SQLException;
+	/**
+	 * Get the row with the given key.
+	 *
+	 * @param session the session
+	 * @param key the position
+	 * @return the row
+	 */
+	Row getRow(Session session, int key) throws SQLException;
 
 }

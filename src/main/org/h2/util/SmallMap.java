@@ -17,79 +17,79 @@ import org.h2.message.Message;
  * A simple hash table with an optimization for the last recently used object.
  */
 public class SmallMap {
-    private HashMap map = new HashMap();
-    private Object cache;
-    private int cacheId;
-    private int lastId;
-    private int maxElements;
+	private HashMap map = new HashMap();
+	private Object cache;
+	private int cacheId;
+	private int lastId;
+	private int maxElements;
 
-    /**
-     * Create a map with the given maximum number of entries.
-     *
-     * @param maxElements the maximum number of entries
-     */
-    public SmallMap(int maxElements) {
-        this.maxElements = maxElements;
-    }
+	/**
+	 * Create a map with the given maximum number of entries.
+	 *
+	 * @param maxElements the maximum number of entries
+	 */
+	public SmallMap(int maxElements) {
+		this.maxElements = maxElements;
+	}
 
-    /**
-     * Add an object to the map. If the size of the map is larger than twice the
-     * maximum size, objects with a low id are removed.
-     *
-     * @param id the object id
-     * @param o the object
-     * @return the id
-     */
-    public int addObject(int id, Object o) {
-        if (map.size() > maxElements * 2) {
-            Iterator it = map.keySet().iterator();
-            while (it.hasNext()) {
-                Integer k = (Integer) it.next();
-                if (k.intValue() + maxElements < lastId) {
-                    it.remove();
-                }
-            }
-        }
-        if (id > lastId) {
-            lastId = id;
-        }
-        map.put(ObjectUtils.getInteger(id), o);
-        cacheId = id;
-        cache = o;
-        return id;
-    }
+	/**
+	 * Add an object to the map. If the size of the map is larger than twice the
+	 * maximum size, objects with a low id are removed.
+	 *
+	 * @param id the object id
+	 * @param o the object
+	 * @return the id
+	 */
+	public int addObject(int id, Object o) {
+		if (map.size() > maxElements * 2) {
+			Iterator it = map.keySet().iterator();
+			while (it.hasNext()) {
+				Integer k = (Integer) it.next();
+				if (k.intValue() + maxElements < lastId) {
+					it.remove();
+				}
+			}
+		}
+		if (id > lastId) {
+			lastId = id;
+		}
+		map.put(ObjectUtils.getInteger(id), o);
+		cacheId = id;
+		cache = o;
+		return id;
+	}
 
-    /**
-     * Remove an object from the map.
-     *
-     * @param id the id of the object to remove
-     */
-    public void freeObject(int id) {
-        if (cacheId == id) {
-            cacheId = -1;
-            cache = null;
-        }
-        map.remove(ObjectUtils.getInteger(id));
-    }
+	/**
+	 * Remove an object from the map.
+	 *
+	 * @param id the id of the object to remove
+	 */
+	public void freeObject(int id) {
+		if (cacheId == id) {
+			cacheId = -1;
+			cache = null;
+		}
+		map.remove(ObjectUtils.getInteger(id));
+	}
 
-    /**
-     * Get an object from the map if it is stored.
-     *
-     * @param id the id of the object
-     * @param ifAvailable only return it if available, otherwise return null
-     * @return the object or null
-     * @throws SQLException if isAvailable is false and the object has not been
-     *             found
-     */
-    public Object getObject(int id, boolean ifAvailable) throws SQLException {
-        if (id == cacheId) {
-            return cache;
-        }
-        Object obj = map.get(ObjectUtils.getInteger(id));
-        if (obj == null && !ifAvailable) {
-            throw Message.getSQLException(ErrorCode.OBJECT_CLOSED);
-        }
-        return obj;
-    }
+	/**
+	 * Get an object from the map if it is stored.
+	 *
+	 * @param id the id of the object
+	 * @param ifAvailable only return it if available, otherwise return null
+	 * @return the object or null
+	 * @throws SQLException if isAvailable is false and the object has not been
+	 *             found
+	 */
+	public Object getObject(int id, boolean ifAvailable) throws SQLException {
+		if (id == cacheId) {
+			return cache;
+		}
+		Object obj = map.get(ObjectUtils.getInteger(id));
+		if (obj == null && !ifAvailable) {
+			throw Message.getSQLException(ErrorCode.OBJECT_CLOSED);
+		}
+		return obj;
+	}
 
 }

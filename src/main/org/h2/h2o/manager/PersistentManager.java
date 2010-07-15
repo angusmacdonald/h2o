@@ -1,16 +1,31 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.h2o.manager;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
-import org.h2.h2o.autonomic.Settings;
 import org.h2.h2o.comms.ReplicaManager;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
@@ -62,7 +77,7 @@ public abstract class PersistentManager {
 		Session session = db.getSystemSession();
 
 		metaDataReplicationEnabled = Boolean.parseBoolean(db.getDatabaseSettings().get("METADATA_REPLICATION_ENABLED"));
-		
+
 		if (session == null){
 			ErrorHandling.error("Couldn't find system session. Local database has been shutdown.");
 			return;
@@ -213,10 +228,10 @@ public abstract class PersistentManager {
 		String connection_type = dbURL.getConnectionType();
 
 		String sql = null;
-		
+
 		if (connectionInformationExists(dbURL)){
 			//Update existing information - the chord port may have changed.
-			
+
 			sql = "\nUPDATE " + connectionRelation + " SET chord_port = " + dbURL.getRMIPort() + 
 			", active = " + isActive + " WHERE machine_name='" + dbURL.getHostname() + "' AND connection_port=" + dbURL.getPort() +
 			" AND connection_type='" + dbURL.getConnectionType() +"';";
@@ -284,7 +299,7 @@ public abstract class PersistentManager {
 				ErrorHandling.errorNoEvent("No connection ID was found - this shouldn't happen if the system has started correctly.");
 				return -1;
 			}
-			
+
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return -1;
@@ -620,7 +635,7 @@ public abstract class PersistentManager {
 	 * @throws RemoteException
 	 */
 	public boolean addStateReplicaLocation(DatabaseInstanceWrapper databaseWrapper) throws RemoteException {
-		
+
 		if (metaDataReplicationEnabled){
 			if (stateReplicaManager.size() < managerStateReplicationFactor + 1){ //+1 because the local copy counts as a replica.
 

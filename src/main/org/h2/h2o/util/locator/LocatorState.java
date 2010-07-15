@@ -1,3 +1,20 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.h2o.util.locator;
 
 import java.io.BufferedReader;
@@ -7,11 +24,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
-
 import org.h2.h2o.util.locator.messages.LockRequestResponse;
 import org.h2.h2o.util.locator.messages.ReplicaLocationsResponse;
 
@@ -38,11 +52,11 @@ public class LocatorState {
 
 	protected LocatorState(String location){
 		locatorFile = new File(location);
-		
+
 		if (locatorFile.getParentFile() != null){
 			locatorFile.getParentFile().mkdirs();
 		}
-		
+
 		try {
 			if (!(locatorFile.createNewFile() || locatorFile.isFile())) {
 				ErrorHandling.errorNoEvent("This is a directory, when I file should have been given.");
@@ -196,7 +210,7 @@ public class LocatorState {
 		}
 
 		stopWrite();
-		
+
 		if (result == 1){
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Database instance at '" + requestingDatabase + "' has committed its creation of the system table.");
 		} else {
@@ -267,5 +281,5 @@ public class LocatorState {
 		return locatorFile.getAbsolutePath();
 	}
 
-	
+
 }

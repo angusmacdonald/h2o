@@ -20,7 +20,6 @@ import org.h2.expression.Parameter;
 import org.h2.expression.ValueExpression;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.QueryProxyManager;
-import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.util.LockType;
 import org.h2.message.Message;
 import org.h2.result.LocalResult;
@@ -79,7 +78,7 @@ public class Update extends Prepared {
 	}
 
 
-	
+
 	public int update(String transactionName) throws SQLException {
 		tableFilter.startQuery(session);
 		tableFilter.reset();

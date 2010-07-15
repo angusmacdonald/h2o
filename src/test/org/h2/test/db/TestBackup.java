@@ -19,54 +19,54 @@ import org.h2.util.FileUtils;
  */
 public class TestBackup extends TestBase {
 
-    /**
-     * Run just this test.
-     *
-     * @param a ignored
-     */
-    public static void main(String[] a) throws Exception {
-        TestBase.createCaller().init().test();
-    }
+	/**
+	 * Run just this test.
+	 *
+	 * @param a ignored
+	 */
+	public static void main(String[] a) throws Exception {
+		TestBase.createCaller().init().test();
+	}
 
-    public void test() throws SQLException {
-        if (config.memory || config.logMode == 0) {
-            return;
-        }
-        testBackup();
-        deleteDb("backup");
-    }
+	public void test() throws SQLException {
+		if (config.memory || config.logMode == 0) {
+			return;
+		}
+		testBackup();
+		deleteDb("backup");
+	}
 
-    private void testBackup() throws SQLException {
-        deleteDb("backup");
-        Connection conn1, conn2, conn3;
-        Statement stat1, stat2, stat3;
-        conn1 = getConnection("backup");
-        stat1 = conn1.createStatement();
-        stat1.execute("create table test(id int primary key, name varchar(255))");
-        stat1.execute("insert into test values(1, 'first'), (2, 'second')");
-        stat1.execute("create table testlob(id int primary key, b blob, c clob)");
-        stat1.execute("insert into testlob values(1, space(10000), repeat('00', 10000))");
-        conn2 = getConnection("backup");
-        stat2 = conn2.createStatement();
-        stat2.execute("insert into test values(3, 'third')");
-        conn2.setAutoCommit(false);
-        stat2.execute("insert into test values(4, 'fourth (uncommitted)')");
-        stat2.execute("insert into testlob values(2, ' ', '00')");
+	private void testBackup() throws SQLException {
+		deleteDb("backup");
+		Connection conn1, conn2, conn3;
+		Statement stat1, stat2, stat3;
+		conn1 = getConnection("backup");
+		stat1 = conn1.createStatement();
+		stat1.execute("create table test(id int primary key, name varchar(255))");
+		stat1.execute("insert into test values(1, 'first'), (2, 'second')");
+		stat1.execute("create table testlob(id int primary key, b blob, c clob)");
+		stat1.execute("insert into testlob values(1, space(10000), repeat('00', 10000))");
+		conn2 = getConnection("backup");
+		stat2 = conn2.createStatement();
+		stat2.execute("insert into test values(3, 'third')");
+		conn2.setAutoCommit(false);
+		stat2.execute("insert into test values(4, 'fourth (uncommitted)')");
+		stat2.execute("insert into testlob values(2, ' ', '00')");
 
-        stat1.execute("backup to '" + baseDir + "/backup.zip'");
-        conn2.rollback();
-        assertEqualDatabases(stat1, stat2);
+		stat1.execute("backup to '" + baseDir + "/backup.zip'");
+		conn2.rollback();
+		assertEqualDatabases(stat1, stat2);
 
-        Restore.execute(baseDir + "/backup.zip", baseDir, "restored", true);
-        conn3 = getConnection("restored");
-        stat3 = conn3.createStatement();
-        assertEqualDatabases(stat1, stat3);
+		Restore.execute(baseDir + "/backup.zip", baseDir, "restored", true);
+		conn3 = getConnection("restored");
+		stat3 = conn3.createStatement();
+		assertEqualDatabases(stat1, stat3);
 
-        conn1.close();
-        conn2.close();
-        conn3.close();
-        deleteDb("restored");
-        FileUtils.delete(baseDir + "/backup.zip");
-    }
+		conn1.close();
+		conn2.close();
+		conn3.close();
+		deleteDb("restored");
+		FileUtils.delete(baseDir + "/backup.zip");
+	}
 
 }

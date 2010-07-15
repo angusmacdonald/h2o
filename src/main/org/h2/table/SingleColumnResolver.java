@@ -17,47 +17,47 @@ import org.h2.value.Value;
  */
 public class SingleColumnResolver implements ColumnResolver {
 
-    private final Column column;
-    private Value value;
+	private final Column column;
+	private Value value;
 
-    SingleColumnResolver(Column column) {
-        this.column = column;
-    }
+	SingleColumnResolver(Column column) {
+		this.column = column;
+	}
 
-    public String getTableAlias() {
-        return null;
-    }
+	public String getTableAlias() {
+		return null;
+	}
 
-    void setValue(Value value) {
-        this.value = value;
-    }
+	void setValue(Value value) {
+		this.value = value;
+	}
 
-    public Value getValue(Column column) {
-        return value;
-    }
+	public Value getValue(Column column) {
+		return value;
+	}
 
-    public Column[] getColumns() {
-        return new Column[] { column };
-    }
+	public Column[] getColumns() {
+		return new Column[] { column };
+	}
 
-    public String getSchemaName() {
-        return null;
-    }
+	public String getSchemaName() {
+		return null;
+	}
 
-    public TableFilter getTableFilter() {
-        return null;
-    }
+	public TableFilter getTableFilter() {
+		return null;
+	}
 
-    public Select getSelect() {
-        return null;
-    }
+	public Select getSelect() {
+		return null;
+	}
 
-    public Column[] getSystemColumns() {
-        return null;
-    }
+	public Column[] getSystemColumns() {
+		return null;
+	}
 
-    public Expression optimize(ExpressionColumn expressionColumn, Column column) {
-        return expressionColumn;
-    }
+	public Expression optimize(ExpressionColumn expressionColumn, Column column) {
+		return expressionColumn;
+	}
 
 }

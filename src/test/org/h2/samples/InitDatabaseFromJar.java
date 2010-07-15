@@ -21,47 +21,47 @@ import org.h2.tools.RunScript;
  */
 public class InitDatabaseFromJar {
 
-    /**
-     * This method is called when executing this sample application from the
-     * command line.
-     *
-     * @param args the command line parameters
-     */
-    public static void main(String[] args) throws Exception {
-        new InitDatabaseFromJar().createScript();
-        new InitDatabaseFromJar().initDb();
-    }
+	/**
+	 * This method is called when executing this sample application from the
+	 * command line.
+	 *
+	 * @param args the command line parameters
+	 */
+	public static void main(String[] args) throws Exception {
+		new InitDatabaseFromJar().createScript();
+		new InitDatabaseFromJar().initDb();
+	}
 
-    /**
-     * Create a script from a new database.
-     */
-    private void createScript() throws Exception {
-        Class.forName("org.h2.Driver");
-        Connection conn = DriverManager.getConnection("jdbc:h2:mem:test");
-        Statement stat = conn.createStatement();
-        stat.execute("CREATE TABLE TEST(NAME VARCHAR)");
-        stat.execute("INSERT INTO TEST VALUES('Hello World')");
-        stat.execute("SCRIPT TO 'script.sql'");
-        conn.close();
-    }
+	/**
+	 * Create a script from a new database.
+	 */
+	private void createScript() throws Exception {
+		Class.forName("org.h2.Driver");
+		Connection conn = DriverManager.getConnection("jdbc:h2:mem:test");
+		Statement stat = conn.createStatement();
+		stat.execute("CREATE TABLE TEST(NAME VARCHAR)");
+		stat.execute("INSERT INTO TEST VALUES('Hello World')");
+		stat.execute("SCRIPT TO 'script.sql'");
+		conn.close();
+	}
 
-    /**
-     * Initialize a database from a SQL script file.
-     */
-    void initDb() throws Exception {
-        Class.forName("org.h2.Driver");
-        Connection conn = DriverManager.getConnection("jdbc:h2:mem:test");
-        InputStream in = getClass().getResourceAsStream("script.sql");
-        if (in == null) {
-            System.out.println("Please add the file script.sql to the classpath, package "
-                    + getClass().getPackage().getName());
-        } else {
-            RunScript.execute(conn, new InputStreamReader(in));
-            ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM TEST");
-            while (rs.next()) {
-                System.out.println(rs.getString(1));
-            }
-            conn.close();
-        }
-    }
+	/**
+	 * Initialize a database from a SQL script file.
+	 */
+	void initDb() throws Exception {
+		Class.forName("org.h2.Driver");
+		Connection conn = DriverManager.getConnection("jdbc:h2:mem:test");
+		InputStream in = getClass().getResourceAsStream("script.sql");
+		if (in == null) {
+			System.out.println("Please add the file script.sql to the classpath, package "
+					+ getClass().getPackage().getName());
+		} else {
+			RunScript.execute(conn, new InputStreamReader(in));
+			ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM TEST");
+			while (rs.next()) {
+				System.out.println(rs.getString(1));
+			}
+			conn.close();
+		}
+	}
 }

@@ -18,138 +18,138 @@ import org.h2.table.Table;
  */
 public class Right extends DbObjectBase {
 
-    /**
-     * The right bit mask that means: selecting from a table is allowed.
-     */
-    public static final int SELECT = 1;
+	/**
+	 * The right bit mask that means: selecting from a table is allowed.
+	 */
+	public static final int SELECT = 1;
 
-    /**
-     * The right bit mask that means: deleting rows from a table is allowed.
-     */
-    public static final int DELETE = 2;
+	/**
+	 * The right bit mask that means: deleting rows from a table is allowed.
+	 */
+	public static final int DELETE = 2;
 
-    /**
-     * The right bit mask that means: inserting rows into a table is allowed.
-     */
-    public static final int INSERT = 4;
+	/**
+	 * The right bit mask that means: inserting rows into a table is allowed.
+	 */
+	public static final int INSERT = 4;
 
-    /**
-     * The right bit mask that means: updating data is allowed.
-     */
-    public static final int UPDATE = 8;
+	/**
+	 * The right bit mask that means: updating data is allowed.
+	 */
+	public static final int UPDATE = 8;
 
-    /**
-     * The right bit mask that means: select, insert, update, delete, and update
-     * for this object is allowed.
-     */
-    public static final int ALL = SELECT | DELETE | INSERT | UPDATE;
+	/**
+	 * The right bit mask that means: select, insert, update, delete, and update
+	 * for this object is allowed.
+	 */
+	public static final int ALL = SELECT | DELETE | INSERT | UPDATE;
 
-    private Role grantedRole;
-    private int grantedRight;
-    private Table grantedTable;
-    private RightOwner grantee;
+	private Role grantedRole;
+	private int grantedRight;
+	private Table grantedTable;
+	private RightOwner grantee;
 
-    public Right(Database db, int id, RightOwner grantee, Role grantedRole) {
-        initDbObjectBase(db, id, "RIGHT_"+id, Trace.USER);
-        this.grantee = grantee;
-        this.grantedRole = grantedRole;
-    }
+	public Right(Database db, int id, RightOwner grantee, Role grantedRole) {
+		initDbObjectBase(db, id, "RIGHT_"+id, Trace.USER);
+		this.grantee = grantee;
+		this.grantedRole = grantedRole;
+	}
 
-    public Right(Database db, int id, RightOwner grantee, int grantedRight, Table grantedRightOnTable) {
-        initDbObjectBase(db, id, ""+id, Trace.USER);
-        this.grantee = grantee;
-        this.grantedRight = grantedRight;
-        this.grantedTable = grantedRightOnTable;
-    }
+	public Right(Database db, int id, RightOwner grantee, int grantedRight, Table grantedRightOnTable) {
+		initDbObjectBase(db, id, ""+id, Trace.USER);
+		this.grantee = grantee;
+		this.grantedRight = grantedRight;
+		this.grantedTable = grantedRightOnTable;
+	}
 
-    private boolean appendRight(StringBuilder buff, int right, int mask, String name, boolean comma) {
-        if ((right & mask) != 0) {
-            if (comma) {
-                buff.append(", ");
-            }
-            buff.append(name);
-            return true;
-        }
-        return comma;
-    }
+	private boolean appendRight(StringBuilder buff, int right, int mask, String name, boolean comma) {
+		if ((right & mask) != 0) {
+			if (comma) {
+				buff.append(", ");
+			}
+			buff.append(name);
+			return true;
+		}
+		return comma;
+	}
 
-    public String getRights() {
-        StringBuilder buff = new StringBuilder();
-        if (grantedRight == ALL) {
-            buff.append("ALL");
-        } else {
-            boolean comma = false;
-            comma = appendRight(buff, grantedRight, SELECT, "SELECT", comma);
-            comma = appendRight(buff, grantedRight, DELETE, "DELETE", comma);
-            comma = appendRight(buff, grantedRight, INSERT, "INSERT", comma);
-            appendRight(buff, grantedRight, UPDATE, "UPDATE", comma);
-        }
-        return buff.toString();
-    }
+	public String getRights() {
+		StringBuilder buff = new StringBuilder();
+		if (grantedRight == ALL) {
+			buff.append("ALL");
+		} else {
+			boolean comma = false;
+			comma = appendRight(buff, grantedRight, SELECT, "SELECT", comma);
+			comma = appendRight(buff, grantedRight, DELETE, "DELETE", comma);
+			comma = appendRight(buff, grantedRight, INSERT, "INSERT", comma);
+			appendRight(buff, grantedRight, UPDATE, "UPDATE", comma);
+		}
+		return buff.toString();
+	}
 
-    public Role getGrantedRole() {
-        return grantedRole;
-    }
+	public Role getGrantedRole() {
+		return grantedRole;
+	}
 
-    public Table getGrantedTable() {
-        return grantedTable;
-    }
+	public Table getGrantedTable() {
+		return grantedTable;
+	}
 
-    public DbObject getGrantee() {
-        return grantee;
-    }
+	public DbObject getGrantee() {
+		return grantee;
+	}
 
-    public String getDropSQL() {
-        return null;
-    }
+	public String getDropSQL() {
+		return null;
+	}
 
-    public String getCreateSQLForCopy(Table table, String quotedName) {
-        StringBuilder buff = new StringBuilder();
-        buff.append("GRANT ");
-        if (grantedRole != null) {
-            buff.append(grantedRole.getSQL());
-        } else {
-            buff.append(getRights());
-            buff.append(" ON ");
-            buff.append(table.getSQL());
-        }
-        buff.append(" TO ");
-        // TODO rights: need role 'PUBLIC'
-        buff.append(grantee.getSQL());
-        return buff.toString();
-    }
+	public String getCreateSQLForCopy(Table table, String quotedName) {
+		StringBuilder buff = new StringBuilder();
+		buff.append("GRANT ");
+		if (grantedRole != null) {
+			buff.append(grantedRole.getSQL());
+		} else {
+			buff.append(getRights());
+			buff.append(" ON ");
+			buff.append(table.getSQL());
+		}
+		buff.append(" TO ");
+		// TODO rights: need role 'PUBLIC'
+		buff.append(grantee.getSQL());
+		return buff.toString();
+	}
 
-    public String getCreateSQL() {
-        return getCreateSQLForCopy(grantedTable, null);
-    }
+	public String getCreateSQL() {
+		return getCreateSQLForCopy(grantedTable, null);
+	}
 
-    public int getType() {
-        return DbObject.RIGHT;
-    }
+	public int getType() {
+		return DbObject.RIGHT;
+	}
 
-    public void removeChildrenAndResources(Session session) throws SQLException {
-        if (grantedTable != null) {
-            grantee.revokeRight(grantedTable);
-        } else {
-            grantee.revokeRole(grantedRole);
-        }
-        database.removeMeta(session, getId());
-        grantedRole = null;
-        grantedTable = null;
-        grantee = null;
-        invalidate();
-    }
+	public void removeChildrenAndResources(Session session) throws SQLException {
+		if (grantedTable != null) {
+			grantee.revokeRight(grantedTable);
+		} else {
+			grantee.revokeRole(grantedRole);
+		}
+		database.removeMeta(session, getId());
+		grantedRole = null;
+		grantedTable = null;
+		grantee = null;
+		invalidate();
+	}
 
-    public void checkRename() {
-        Message.throwInternalError();
-    }
+	public void checkRename() {
+		Message.throwInternalError();
+	}
 
-    public void setRightMask(int rightMask) {
-        grantedRight = rightMask;
-    }
+	public void setRightMask(int rightMask) {
+		grantedRight = rightMask;
+	}
 
-    public int getRightMask() {
-        return grantedRight;
-    }
+	public int getRightMask() {
+		return grantedRight;
+	}
 
 }

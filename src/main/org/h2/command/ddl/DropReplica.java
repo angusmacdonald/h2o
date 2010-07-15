@@ -115,7 +115,7 @@ public class DropReplica extends SchemaCommand {
 				ISystemTable sm = db.getSystemTable(); //db.getSystemSession()
 
 				TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), 0, table.getTableType(), db.getURL());
-				
+
 				try {
 					TableManagerRemote tmr = sm.lookup(ti).getTableManager();
 					tmr.removeReplicaInformation(ti);

@@ -1,3 +1,20 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.test.h2o.util;
 
 import static org.junit.Assert.fail;
@@ -9,7 +26,6 @@ import java.sql.Statement;
 
 import org.h2.engine.Constants;
 import org.h2.h2o.manager.PersistentSystemTable;
-import org.h2.h2o.remote.ChordRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LocalH2OProperties;
 
@@ -70,27 +86,27 @@ public class MultipleServersStandalone {
 
 		org.h2.Driver.load();
 
-		
-		
+
+
 		cas = new Connection[dbs.length + 1];
 		cas[0] = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 		for (int i = 1; i < cas.length; i ++){
-			
+
 			//Thread.sleep(1000);
 			cas[i] = DriverManager.getConnection("jdbc:h2:mem:" + dbs[i-1], PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 		}
 
 		sas = new Statement[dbs.length + 1];
 
-//		for (int i = 0; i < cas.length; i ++){
-//			sas[i] = cas[i].createStatement();
-//		}
+		//		for (int i = 0; i < cas.length; i ++){
+		//			sas[i] = cas[i].createStatement();
+		//		}
 
-//		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
-//		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
-//		sql += "INSERT INTO TEST VALUES(2, 'World');";
-//
-//		sas[0].execute(sql);
+		//		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
+		//		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
+		//		sql += "INSERT INTO TEST VALUES(2, 'World');";
+		//
+		//		sas[0].execute(sql);
 
 	}
 
@@ -127,13 +143,13 @@ public class MultipleServersStandalone {
 	public static void main(String[] args) throws InterruptedException {
 		Constants.IS_TEST = true;
 		MultipleServersStandalone servers = new MultipleServersStandalone();
-		
+
 		Thread.sleep(10000);
-		
+
 		servers.testSystemTableFailure();
-		
-	//	Thread.sleep(2000);
-		
+
+		//	Thread.sleep(2000);
+
 		//servers.insertSecondTable();
 	}
 
@@ -153,7 +169,7 @@ public class MultipleServersStandalone {
 	 */
 	private void testSystemTableFailure() {
 		Diagnostic.trace("CLOSING System Table INSTANCE");
-		
+
 		try {
 			cas[0].close();
 		} catch (SQLException e) {

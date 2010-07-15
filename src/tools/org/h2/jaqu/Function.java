@@ -14,7 +14,7 @@ import org.h2.jaqu.util.Utils;
  * This class provides static methods that represents common SQL functions.
  */
 public class Function implements Token {
-/*## Java 1.5 begin ##
+	/*## Java 1.5 begin ##
 
     private static final Long COUNT_STAR = new Long(0);
 

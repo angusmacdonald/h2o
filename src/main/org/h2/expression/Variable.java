@@ -18,86 +18,86 @@ import org.h2.value.Value;
  */
 public class Variable extends Expression {
 
-    private final String name;
-    private Value lastValue;
+	private final String name;
+	private Value lastValue;
 
-    public Variable(Session session, String name) {
-        this.name = name;
-        lastValue = session.getVariable(name);
-    }
+	public Variable(Session session, String name) {
+		this.name = name;
+		lastValue = session.getVariable(name);
+	}
 
-    public int getCost() {
-        return 0;
-    }
+	public int getCost() {
+		return 0;
+	}
 
-    public int getDisplaySize() {
-        return lastValue.getDisplaySize();
-    }
+	public int getDisplaySize() {
+		return lastValue.getDisplaySize();
+	}
 
-    public long getPrecision() {
-        return lastValue.getPrecision();
-    }
+	public long getPrecision() {
+		return lastValue.getPrecision();
+	}
 
-    public String getSQL() {
-        return "@" + Parser.quoteIdentifier(name);
-    }
+	public String getSQL() {
+		return "@" + Parser.quoteIdentifier(name);
+	}
 
-    public int getScale() {
-        return lastValue.getScale();
-    }
+	public int getScale() {
+		return lastValue.getScale();
+	}
 
-    public int getType() {
-        return lastValue.getType();
-    }
+	public int getType() {
+		return lastValue.getType();
+	}
 
-    public Value getValue(Session session) {
-        lastValue = session.getVariable(name);
-        return lastValue;
-    }
+	public Value getValue(Session session) {
+		lastValue = session.getVariable(name);
+		return lastValue;
+	}
 
-    public boolean isEverything(ExpressionVisitor visitor) {
-        switch(visitor.getType()) {
-        case ExpressionVisitor.OPTIMIZABLE_MIN_MAX_COUNT_ALL:
-            return true;
-        case ExpressionVisitor.DETERMINISTIC:
-            return false;
-        case ExpressionVisitor.READONLY:
-            return true;
-        case ExpressionVisitor.INDEPENDENT:
-            return true;
-        case ExpressionVisitor.EVALUATABLE:
-            // the value will be evaluated at execute time
-            return true;
-        case ExpressionVisitor.SET_MAX_DATA_MODIFICATION_ID:
-            // it is checked independently if the value is the same as the last time
-            return true;
-        case ExpressionVisitor.NOT_FROM_RESOLVER:
-            return true;
-        case ExpressionVisitor.GET_DEPENDENCIES:
-            return true;
-        default:
-            throw Message.throwInternalError("type="+visitor.getType());
-        }
-    }
+	public boolean isEverything(ExpressionVisitor visitor) {
+		switch(visitor.getType()) {
+		case ExpressionVisitor.OPTIMIZABLE_MIN_MAX_COUNT_ALL:
+			return true;
+		case ExpressionVisitor.DETERMINISTIC:
+			return false;
+		case ExpressionVisitor.READONLY:
+			return true;
+		case ExpressionVisitor.INDEPENDENT:
+			return true;
+		case ExpressionVisitor.EVALUATABLE:
+			// the value will be evaluated at execute time
+			return true;
+		case ExpressionVisitor.SET_MAX_DATA_MODIFICATION_ID:
+			// it is checked independently if the value is the same as the last time
+			return true;
+		case ExpressionVisitor.NOT_FROM_RESOLVER:
+			return true;
+		case ExpressionVisitor.GET_DEPENDENCIES:
+			return true;
+		default:
+			throw Message.throwInternalError("type="+visitor.getType());
+		}
+	}
 
-    public void mapColumns(ColumnResolver resolver, int level) {
-        // nothing to do
-    }
+	public void mapColumns(ColumnResolver resolver, int level) {
+		// nothing to do
+	}
 
-    public Expression optimize(Session session) {
-        return this;
-    }
+	public Expression optimize(Session session) {
+		return this;
+	}
 
-    public void setEvaluatable(TableFilter tableFilter, boolean value) {
-        // nothing to do
-    }
+	public void setEvaluatable(TableFilter tableFilter, boolean value) {
+		// nothing to do
+	}
 
-    public void updateAggregate(Session session) {
-        // nothing to do
-    }
+	public void updateAggregate(Session session) {
+		// nothing to do
+	}
 
-    public String getName() {
-        return name;
-    }
+	public String getName() {
+		return name;
+	}
 
 }

@@ -16,58 +16,58 @@ import org.h2.test.TestBase;
  */
 abstract class TestMultiThread extends Thread {
 
-    /**
-     * The base object.
-     */
-    TestMulti base;
+	/**
+	 * The base object.
+	 */
+	TestMulti base;
 
-    /**
-     * The random number generator.
-     */
-    Random random = new Random();
+	/**
+	 * The random number generator.
+	 */
+	Random random = new Random();
 
-    TestMultiThread(TestMulti base) {
-        this.base = base;
-    }
+	TestMultiThread(TestMulti base) {
+		this.base = base;
+	}
 
-    /**
-     * Execute statements that need to be executed before starting the thread.
-     * This includes CREATE TABLE statements.
-     */
-    abstract void first() throws SQLException;
+	/**
+	 * Execute statements that need to be executed before starting the thread.
+	 * This includes CREATE TABLE statements.
+	 */
+	abstract void first() throws SQLException;
 
-    /**
-     * The main operation to perform. This method is called in a loop.
-     */
-    abstract void operation() throws SQLException;
+	/**
+	 * The main operation to perform. This method is called in a loop.
+	 */
+	abstract void operation() throws SQLException;
 
-    /**
-     * Execute statements before entering the loop, but after starting the
-     * thread.
-     */
-    abstract void begin() throws SQLException;
+	/**
+	 * Execute statements before entering the loop, but after starting the
+	 * thread.
+	 */
+	abstract void begin() throws SQLException;
 
-    /**
-     * This method is called once after the test is stopped.
-     */
-    abstract void end() throws SQLException;
+	/**
+	 * This method is called once after the test is stopped.
+	 */
+	abstract void end() throws SQLException;
 
-    /**
-     * This method is called once after all threads have been stopped.
-     * @throws SQLException
-     */
-    abstract void finalTest() throws SQLException;
+	/**
+	 * This method is called once after all threads have been stopped.
+	 * @throws SQLException
+	 */
+	abstract void finalTest() throws SQLException;
 
-    public void run() {
-        try {
-            begin();
-            while (!base.stop) {
-                operation();
-            }
-            end();
-        } catch (Throwable e) {
-            TestBase.logError("error", e);
-        }
-    }
+	public void run() {
+		try {
+			begin();
+			while (!base.stop) {
+				operation();
+			}
+			end();
+		} catch (Throwable e) {
+			TestBase.logError("error", e);
+		}
+	}
 
 }

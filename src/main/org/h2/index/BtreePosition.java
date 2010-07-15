@@ -11,24 +11,24 @@ package org.h2.index;
  */
 class BtreePosition {
 
-    /**
-     * The index in the row list.
-     */
-    int position;
+	/**
+	 * The index in the row list.
+	 */
+	int position;
 
-    /**
-     * The b-tree page.
-     */
-    BtreePage page;
+	/**
+	 * The b-tree page.
+	 */
+	BtreePage page;
 
-    /**
-     * The next upper b-tree position.
-     */
-    BtreePosition next;
+	/**
+	 * The next upper b-tree position.
+	 */
+	BtreePosition next;
 
-    BtreePosition(BtreePage page, int position, BtreePosition next) {
-        this.page = page;
-        this.position = position;
-        this.next = next;
-    }
+	BtreePosition(BtreePage page, int position, BtreePosition next) {
+		this.page = page;
+		this.position = position;
+		this.next = next;
+	}
 }

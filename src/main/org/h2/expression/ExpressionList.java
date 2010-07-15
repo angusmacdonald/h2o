@@ -20,97 +20,97 @@ import org.h2.value.ValueArray;
  */
 public class ExpressionList extends Expression {
 
-    private Expression[] list;
+	private Expression[] list;
 
-    public ExpressionList(Expression[] list) {
-        this.list = list;
-    }
+	public ExpressionList(Expression[] list) {
+		this.list = list;
+	}
 
-    public Value getValue(Session session) throws SQLException {
-        Value[] v = new Value[list.length];
-        for (int i = 0; i < list.length; i++) {
-            v[i] = list[i].getValue(session);
-        }
-        return ValueArray.get(v);
-    }
+	public Value getValue(Session session) throws SQLException {
+		Value[] v = new Value[list.length];
+		for (int i = 0; i < list.length; i++) {
+			v[i] = list[i].getValue(session);
+		}
+		return ValueArray.get(v);
+	}
 
-    public int getType() {
-        return Value.ARRAY;
-    }
+	public int getType() {
+		return Value.ARRAY;
+	}
 
-    public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
-        for (int i = 0; i < list.length; i++) {
-            list[i].mapColumns(resolver, level);
-        }
-    }
+	public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
+		for (int i = 0; i < list.length; i++) {
+			list[i].mapColumns(resolver, level);
+		}
+	}
 
-    public Expression optimize(Session session) throws SQLException {
-        boolean allConst = true;
-        for (int i = 0; i < list.length; i++) {
-            Expression e = list[i].optimize(session);
-            if (!e.isConstant()) {
-                allConst = false;
-            }
-            list[i] = e;
-        }
-        if (allConst) {
-            return ValueExpression.get(getValue(session));
-        }
-        return this;
-    }
+	public Expression optimize(Session session) throws SQLException {
+		boolean allConst = true;
+		for (int i = 0; i < list.length; i++) {
+			Expression e = list[i].optimize(session);
+			if (!e.isConstant()) {
+				allConst = false;
+			}
+			list[i] = e;
+		}
+		if (allConst) {
+			return ValueExpression.get(getValue(session));
+		}
+		return this;
+	}
 
-    public void setEvaluatable(TableFilter tableFilter, boolean b) {
-        for (int i = 0; i < list.length; i++) {
-            list[i].setEvaluatable(tableFilter, b);
-        }
-    }
+	public void setEvaluatable(TableFilter tableFilter, boolean b) {
+		for (int i = 0; i < list.length; i++) {
+			list[i].setEvaluatable(tableFilter, b);
+		}
+	}
 
-    public int getScale() {
-        return 0;
-    }
+	public int getScale() {
+		return 0;
+	}
 
-    public long getPrecision() {
-        return Integer.MAX_VALUE;
-    }
+	public long getPrecision() {
+		return Integer.MAX_VALUE;
+	}
 
-    public int getDisplaySize() {
-        return Integer.MAX_VALUE;
-    }
+	public int getDisplaySize() {
+		return Integer.MAX_VALUE;
+	}
 
-    public String getSQL() {
-        StringBuilder buff = new StringBuilder();
-        buff.append('(');
-        for (int i = 0; i < list.length; i++) {
-            if (i > 0) {
-                buff.append(", ");
-            }
-            buff.append(list[i].getSQL());
-        }
-        buff.append(')');
-        return buff.toString();
-    }
+	public String getSQL() {
+		StringBuilder buff = new StringBuilder();
+		buff.append('(');
+		for (int i = 0; i < list.length; i++) {
+			if (i > 0) {
+				buff.append(", ");
+			}
+			buff.append(list[i].getSQL());
+		}
+		buff.append(')');
+		return buff.toString();
+	}
 
-    public void updateAggregate(Session session) throws SQLException {
-        for (int i = 0; i < list.length; i++) {
-            list[i].updateAggregate(session);
-        }
-    }
+	public void updateAggregate(Session session) throws SQLException {
+		for (int i = 0; i < list.length; i++) {
+			list[i].updateAggregate(session);
+		}
+	}
 
-    public boolean isEverything(ExpressionVisitor visitor) {
-        for (int i = 0; i < list.length; i++) {
-            if (!list[i].isEverything(visitor)) {
-                return false;
-            }
-        }
-        return true;
-    }
+	public boolean isEverything(ExpressionVisitor visitor) {
+		for (int i = 0; i < list.length; i++) {
+			if (!list[i].isEverything(visitor)) {
+				return false;
+			}
+		}
+		return true;
+	}
 
-    public int getCost() {
-        int cost = 1;
-        for (int i = 0; i < list.length; i++) {
-            cost += list[i].getCost();
-        }
-        return cost;
-    }
+	public int getCost() {
+		int cost = 1;
+		for (int i = 0; i < list.length; i++) {
+			cost += list[i].getCost();
+		}
+		return cost;
+	}
 
 }

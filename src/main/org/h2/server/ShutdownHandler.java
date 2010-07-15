@@ -11,8 +11,8 @@ package org.h2.server;
  */
 public interface ShutdownHandler {
 
-    /**
-     * Tell the listener to shut down.
-     */
-    void shutdown();
+	/**
+	 * Tell the listener to shut down.
+	 */
+	void shutdown();
 }

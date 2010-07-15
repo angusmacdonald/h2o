@@ -19,58 +19,58 @@ import org.h2.test.TestBase;
  */
 public class TestNestedLoop extends TestBase {
 
-    /**
-     * Run just this test.
-     *
-     * @param a ignored
-     */
-    public static void main(String[] a) throws Exception {
-        TestBase.createCaller().init().test();
-    }
+	/**
+	 * Run just this test.
+	 *
+	 * @param a ignored
+	 */
+	public static void main(String[] a) throws Exception {
+		TestBase.createCaller().init().test();
+	}
 
-    public void test() throws SQLException {
-        deleteDb("nestedLoop");
-        Connection conn = getConnection("nestedLoop");
-        Statement stat = conn.createStatement();
-        stat.execute("create table test(id int identity, name varchar)");
-        int len = getSize(1010, 10000);
-        for (int i = 0; i < len; i++) {
-            stat.execute("insert into test(name) values('Hello World')");
-        }
-        ResultSet rs = stat.executeQuery("select id from test");
-        stat.executeQuery("select id from test");
-        try {
-            rs.next();
-            fail("Result set should be closed");
-        } catch (SQLException e) {
-            assertKnownException(e);
-        }
-        rs = stat.executeQuery("select id from test");
-        stat.close();
-        try {
-            rs.next();
-            fail("Result set should be closed");
-        } catch (SQLException e) {
-            assertKnownException(e);
-        }
-        stat = conn.createStatement();
-        rs = stat.executeQuery("select id from test");
-        Statement stat2 = conn.createStatement();
-        while (rs.next()) {
-            int id = rs.getInt(1);
-            ResultSet rs2 = stat2.executeQuery("select * from test where id=" + id);
-            while (rs2.next()) {
-                assertEquals(rs2.getInt(1), id);
-                assertEquals(rs2.getString(2), "Hello World");
-            }
-            rs2 = stat2.executeQuery("select * from test where id=" + id);
-            while (rs2.next()) {
-                assertEquals(rs2.getInt(1), id);
-                assertEquals(rs2.getString(2), "Hello World");
-            }
-        }
-        conn.close();
-        deleteDb("nestedLoop");
-    }
+	public void test() throws SQLException {
+		deleteDb("nestedLoop");
+		Connection conn = getConnection("nestedLoop");
+		Statement stat = conn.createStatement();
+		stat.execute("create table test(id int identity, name varchar)");
+		int len = getSize(1010, 10000);
+		for (int i = 0; i < len; i++) {
+			stat.execute("insert into test(name) values('Hello World')");
+		}
+		ResultSet rs = stat.executeQuery("select id from test");
+		stat.executeQuery("select id from test");
+		try {
+			rs.next();
+			fail("Result set should be closed");
+		} catch (SQLException e) {
+			assertKnownException(e);
+		}
+		rs = stat.executeQuery("select id from test");
+		stat.close();
+		try {
+			rs.next();
+			fail("Result set should be closed");
+		} catch (SQLException e) {
+			assertKnownException(e);
+		}
+		stat = conn.createStatement();
+		rs = stat.executeQuery("select id from test");
+		Statement stat2 = conn.createStatement();
+		while (rs.next()) {
+			int id = rs.getInt(1);
+			ResultSet rs2 = stat2.executeQuery("select * from test where id=" + id);
+			while (rs2.next()) {
+				assertEquals(rs2.getInt(1), id);
+				assertEquals(rs2.getString(2), "Hello World");
+			}
+			rs2 = stat2.executeQuery("select * from test where id=" + id);
+			while (rs2.next()) {
+				assertEquals(rs2.getInt(1), id);
+				assertEquals(rs2.getString(2), "Hello World");
+			}
+		}
+		conn.close();
+		deleteDb("nestedLoop");
+	}
 
 }

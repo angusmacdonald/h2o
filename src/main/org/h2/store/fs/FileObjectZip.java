@@ -21,72 +21,72 @@ import org.h2.util.IOUtils;
  */
 public class FileObjectZip implements FileObject {
 
-    private ZipFile file;
-    private ZipEntry entry;
-    private long pos;
-    private InputStream in;
-    private long inPos;
-    private long length;
+	private ZipFile file;
+	private ZipEntry entry;
+	private long pos;
+	private InputStream in;
+	private long inPos;
+	private long length;
 
-    FileObjectZip(ZipFile file, ZipEntry entry) {
-        this.file = file;
-        this.entry = entry;
-        length = entry.getSize();
-    }
+	FileObjectZip(ZipFile file, ZipEntry entry) {
+		this.file = file;
+		this.entry = entry;
+		length = entry.getSize();
+	}
 
-    public void close() {
-        // nothing to do
-    }
+	public void close() {
+		// nothing to do
+	}
 
-    public long getFilePointer() {
-        return pos;
-    }
+	public long getFilePointer() {
+		return pos;
+	}
 
-    public long length() {
-        return length;
-    }
+	public long length() {
+		return length;
+	}
 
-    public void readFully(byte[] b, int off, int len) throws IOException {
-        if (inPos > pos) {
-            if (in != null) {
-                in.close();
-            }
-            in = null;
-        }
-        if (in == null) {
-            in = file.getInputStream(entry);
-            inPos = 0;
-        }
-        if (inPos < pos) {
-            IOUtils.skipFully(in, pos - inPos);
-            inPos = pos;
-        }
-        int l = IOUtils.readFully(in, b, off, len);
-        if (l != len) {
-            throw new EOFException();
-        }
-        pos += len;
-        inPos += len;
-    }
+	public void readFully(byte[] b, int off, int len) throws IOException {
+		if (inPos > pos) {
+			if (in != null) {
+				in.close();
+			}
+			in = null;
+		}
+		if (in == null) {
+			in = file.getInputStream(entry);
+			inPos = 0;
+		}
+		if (inPos < pos) {
+			IOUtils.skipFully(in, pos - inPos);
+			inPos = pos;
+		}
+		int l = IOUtils.readFully(in, b, off, len);
+		if (l != len) {
+			throw new EOFException();
+		}
+		pos += len;
+		inPos += len;
+	}
 
-    public void seek(long pos) {
-        this.pos = pos;
-    }
+	public void seek(long pos) {
+		this.pos = pos;
+	}
 
-    public void setFileLength(long newLength) throws IOException {
-        throw new IOException("File is read-only");
-    }
+	public void setFileLength(long newLength) throws IOException {
+		throw new IOException("File is read-only");
+	}
 
-    public void sync() {
-        // nothing to do
-    }
+	public void sync() {
+		// nothing to do
+	}
 
-    public void write(byte[] b, int off, int len) throws IOException {
-        throw new IOException("File is read-only");
-    }
+	public void write(byte[] b, int off, int len) throws IOException {
+		throw new IOException("File is read-only");
+	}
 
-    public String getName() {
-        return file.getName();
-    }
+	public String getName() {
+		return file.getName();
+	}
 
 }

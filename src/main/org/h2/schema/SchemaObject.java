@@ -13,10 +13,10 @@ import org.h2.engine.DbObject;
  */
 public interface SchemaObject extends DbObject {
 
-    /**
-     * Get the schema in which this object is defined
-     *
-     * @return the schema
-     */
-    Schema getSchema();
+	/**
+	 * Get the schema in which this object is defined
+	 *
+	 * @return the schema
+	 */
+	Schema getSchema();
 }

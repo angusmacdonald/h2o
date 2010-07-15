@@ -63,12 +63,12 @@ public class QueryWhere<T> {
 
 ## Java 1.5 end ##*/
 
-    /**
-     * Order by a number of columns.
-     *
-     * @param expressions the order by expressions
-     * @return the query
-     */
+/**
+ * Order by a number of columns.
+ *
+ * @param expressions the order by expressions
+ * @return the query
+ */
 /*## Java 1.5 begin ##
     public QueryWhere<T> orderBy(Object... expressions) {
         for (Object expr : expressions) {

@@ -17,50 +17,50 @@ import org.h2.tools.Server;
  */
 public class TestFtp extends TestBase implements FtpEventListener {
 
-    private FtpEvent lastEvent;
+	private FtpEvent lastEvent;
 
-    /**
-     * Run just this test.
-     *
-     * @param a ignored
-     */
-    public static void main(String[] a) throws Exception {
-        TestBase.createCaller().init().test();
-    }
+	/**
+	 * Run just this test.
+	 *
+	 * @param a ignored
+	 */
+	public static void main(String[] a) throws Exception {
+		TestBase.createCaller().init().test();
+	}
 
-    public void test() throws Exception {
-        test(baseDir);
-    }
+	public void test() throws Exception {
+		test(baseDir);
+	}
 
-    private void test(String dir) throws Exception {
-        Server server = Server.createFtpServer(new String[]{"-ftpDir", dir, "-ftpPort", "8121"}).start();
-        FtpServer ftp = (FtpServer) server.getService();
-        ftp.setEventListener(this);
-        FtpClient client = FtpClient.open("localhost:8121");
-        client.login("sa", "sa");
-        client.makeDirectory("test");
-        client.changeWorkingDirectory("test");
-        assertEquals(lastEvent.getCommand(), "CWD");
-        client.makeDirectory("hello");
-        client.changeWorkingDirectory("hello");
-        client.changeDirectoryUp();
-        assertEquals(lastEvent.getCommand(), "CDUP");
-        client.nameList("hello");
-        client.removeDirectory("hello");
-        client.close();
-        server.stop();
-    }
+	private void test(String dir) throws Exception {
+		Server server = Server.createFtpServer(new String[]{"-ftpDir", dir, "-ftpPort", "8121"}).start();
+		FtpServer ftp = (FtpServer) server.getService();
+		ftp.setEventListener(this);
+		FtpClient client = FtpClient.open("localhost:8121");
+		client.login("sa", "sa");
+		client.makeDirectory("test");
+		client.changeWorkingDirectory("test");
+		assertEquals(lastEvent.getCommand(), "CWD");
+		client.makeDirectory("hello");
+		client.changeWorkingDirectory("hello");
+		client.changeDirectoryUp();
+		assertEquals(lastEvent.getCommand(), "CDUP");
+		client.nameList("hello");
+		client.removeDirectory("hello");
+		client.close();
+		server.stop();
+	}
 
-    public void beforeCommand(FtpEvent event) {
-        lastEvent = event;
-    }
+	public void beforeCommand(FtpEvent event) {
+		lastEvent = event;
+	}
 
-    public void afterCommand(FtpEvent event) {
-        lastEvent = event;
-    }
+	public void afterCommand(FtpEvent event) {
+		lastEvent = event;
+	}
 
-    public void onUnsupportedCommand(FtpEvent event) {
-        lastEvent = event;
-    }
+	public void onUnsupportedCommand(FtpEvent event) {
+		lastEvent = event;
+	}
 
 }

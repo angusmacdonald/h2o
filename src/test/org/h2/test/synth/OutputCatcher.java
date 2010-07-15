@@ -16,63 +16,63 @@ import org.h2.util.IOUtils;
  * Catches the output of another process.
  */
 class OutputCatcher extends Thread {
-    private InputStream in;
-    private LinkedList list = new LinkedList();
+	private InputStream in;
+	private LinkedList list = new LinkedList();
 
-    OutputCatcher(InputStream in) {
-        this.in = in;
-    }
+	OutputCatcher(InputStream in) {
+		this.in = in;
+	}
 
-    /**
-     * Read a line from the output.
-     *
-     * @param wait the maximum number of milliseconds to wait
-     * @return the line
-     */
-    String readLine(long wait) {
-        long start = System.currentTimeMillis();
-        while (true) {
-            synchronized (list) {
-                if (list.size() > 0) {
-                    return (String) list.removeFirst();
-                }
-                try {
-                    list.wait(wait);
-                } catch (InterruptedException e) {
-                    // ignore
-                }
-                long time = System.currentTimeMillis() - start;
-                if (time >= wait) {
-                    return null;
-                }
-            }
-        }
-    }
+	/**
+	 * Read a line from the output.
+	 *
+	 * @param wait the maximum number of milliseconds to wait
+	 * @return the line
+	 */
+	String readLine(long wait) {
+		long start = System.currentTimeMillis();
+		while (true) {
+			synchronized (list) {
+				if (list.size() > 0) {
+					return (String) list.removeFirst();
+				}
+				try {
+					list.wait(wait);
+				} catch (InterruptedException e) {
+					// ignore
+				}
+				long time = System.currentTimeMillis() - start;
+				if (time >= wait) {
+					return null;
+				}
+			}
+		}
+	}
 
-    public void run() {
-        StringBuilder buff = new StringBuilder();
-        while (true) {
-            try {
-                int x = in.read();
-                if (x < 0) {
-                    break;
-                }
-                if (x < ' ') {
-                    if (buff.length() > 0) {
-                        String s = buff.toString();
-                        buff.setLength(0);
-                        synchronized (list) {
-                            list.add(s);
-                            list.notifyAll();
-                        }
-                    }
-                } else {
-                    buff.append((char) x);
-                }
-            } catch (IOException e) {
-                break;
-            }
-        }
-        IOUtils.closeSilently(in);
-    }
+	public void run() {
+		StringBuilder buff = new StringBuilder();
+		while (true) {
+			try {
+				int x = in.read();
+				if (x < 0) {
+					break;
+				}
+				if (x < ' ') {
+					if (buff.length() > 0) {
+						String s = buff.toString();
+						buff.setLength(0);
+						synchronized (list) {
+							list.add(s);
+							list.notifyAll();
+						}
+					}
+				} else {
+					buff.append((char) x);
+				}
+			} catch (IOException e) {
+				break;
+			}
+		}
+		IOUtils.closeSilently(in);
+	}
 }

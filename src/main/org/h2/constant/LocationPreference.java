@@ -12,21 +12,21 @@ public class LocationPreference {
 		LOCAL = new LocationPreference("LOCAL", false);
 		PRIMARY= new LocationPreference("PRIMARY", false);
 		NO_PREFERENCE= new LocationPreference("NO_PREFERENCE", false);
-		
+
 		LOCAL_STRICT = new LocationPreference("LOCAL", true);
 		PRIMARY_STRICT= new LocationPreference("PRIMARY", true);
 		NO_PREFERENCE_STRICT= new LocationPreference("NO_PREFERENCE", true);
 	}
-	
+
 	private String setting;
 	private boolean strictSetting;
-	
+
 	private LocationPreference(String setting, boolean isStrict){
 		this.setting = setting;
 		this.strictSetting = isStrict;
 	}
-	
-	
+
+
 	public boolean isStrict(){
 		return strictSetting;
 	}
@@ -61,8 +61,8 @@ public class LocationPreference {
 		} else if (!setting.equals(other.setting)){
 			return false;
 		}
-//		if (strictSetting != other.strictSetting)
-//			return false;
+		//		if (strictSetting != other.strictSetting)
+		//			return false;
 		return true;
 	}
 
@@ -73,6 +73,6 @@ public class LocationPreference {
 	public String toString() {
 		return setting + ((strictSetting)? ", STRICT": "");
 	}
-	
-	
+
+
 }

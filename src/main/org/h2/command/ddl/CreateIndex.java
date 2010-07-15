@@ -25,88 +25,88 @@ import org.h2.table.Table;
  */
 public class CreateIndex extends SchemaCommand {
 
-    private String tableName;
-    private String indexName;
-    private IndexColumn[] indexColumns;
-    private boolean primaryKey, unique, hash;
-    private boolean ifNotExists;
-    private String comment;
+	private String tableName;
+	private String indexName;
+	private IndexColumn[] indexColumns;
+	private boolean primaryKey, unique, hash;
+	private boolean ifNotExists;
+	private String comment;
 
-    public CreateIndex(Session session, Schema schema) {
-        super(session, schema);
-    }
+	public CreateIndex(Session session, Schema schema) {
+		super(session, schema);
+	}
 
-    public void setIfNotExists(boolean ifNotExists) {
-        this.ifNotExists = ifNotExists;
-    }
+	public void setIfNotExists(boolean ifNotExists) {
+		this.ifNotExists = ifNotExists;
+	}
 
-    public void setTableName(String tableName) {
-        this.tableName = tableName;
-    }
+	public void setTableName(String tableName) {
+		this.tableName = tableName;
+	}
 
-    public void setIndexName(String indexName) {
-        this.indexName = indexName;
-    }
+	public void setIndexName(String indexName) {
+		this.indexName = indexName;
+	}
 
-    public void setIndexColumns(IndexColumn[] columns) {
-        this.indexColumns = columns;
-    }
+	public void setIndexColumns(IndexColumn[] columns) {
+		this.indexColumns = columns;
+	}
 
-    public int update() throws SQLException {
-        // TODO cancel: may support for index creation
-        session.commit(true);
-        Database db = session.getDatabase();
-        boolean persistent = db.isPersistent();
-        Table table = getSchema().getTableOrView(session, tableName);
-        session.getUser().checkRight(table, Right.ALL);
-        table.lock(session, true, true);
-        if (!table.getPersistent()) {
-            persistent = false;
-        }
-        int id = getObjectId(true, false);
-        if (primaryKey) {
-            indexName = table.getSchema().getUniqueIndexName(session, table, Constants.PREFIX_PRIMARY_KEY);
-        } else if (indexName == null) {
-            indexName = table.getSchema().getUniqueIndexName(session, table, Constants.PREFIX_INDEX);
-        }
-        if (getSchema().findIndex(session, indexName) != null) {
-            if (ifNotExists) {
-                return 0;
-            }
-            throw Message.getSQLException(ErrorCode.INDEX_ALREADY_EXISTS_1, indexName);
-        }
-        IndexType indexType;
-        if (primaryKey) {
-            if (table.findPrimaryKey() != null && isStartup()) {
-                return 0;
-            } else if (table.findPrimaryKey() != null){
-            	throw Message.getSQLException(ErrorCode.SECOND_PRIMARY_KEY);
-            }
-            indexType = IndexType.createPrimaryKey(persistent, hash);
-        } else if (unique) {
-            indexType = IndexType.createUnique(persistent, hash);
-        } else {
-            indexType = IndexType.createNonUnique(persistent);
-        }
-        IndexColumn.mapColumns(indexColumns, table);
-        table.addIndex(session, indexName, id, indexColumns, indexType, headPos, comment);
-        return 0;
-    }
+	public int update() throws SQLException {
+		// TODO cancel: may support for index creation
+		session.commit(true);
+		Database db = session.getDatabase();
+		boolean persistent = db.isPersistent();
+		Table table = getSchema().getTableOrView(session, tableName);
+		session.getUser().checkRight(table, Right.ALL);
+		table.lock(session, true, true);
+		if (!table.getPersistent()) {
+			persistent = false;
+		}
+		int id = getObjectId(true, false);
+		if (primaryKey) {
+			indexName = table.getSchema().getUniqueIndexName(session, table, Constants.PREFIX_PRIMARY_KEY);
+		} else if (indexName == null) {
+			indexName = table.getSchema().getUniqueIndexName(session, table, Constants.PREFIX_INDEX);
+		}
+		if (getSchema().findIndex(session, indexName) != null) {
+			if (ifNotExists) {
+				return 0;
+			}
+			throw Message.getSQLException(ErrorCode.INDEX_ALREADY_EXISTS_1, indexName);
+		}
+		IndexType indexType;
+		if (primaryKey) {
+			if (table.findPrimaryKey() != null && isStartup()) {
+				return 0;
+			} else if (table.findPrimaryKey() != null){
+				throw Message.getSQLException(ErrorCode.SECOND_PRIMARY_KEY);
+			}
+			indexType = IndexType.createPrimaryKey(persistent, hash);
+		} else if (unique) {
+			indexType = IndexType.createUnique(persistent, hash);
+		} else {
+			indexType = IndexType.createNonUnique(persistent);
+		}
+		IndexColumn.mapColumns(indexColumns, table);
+		table.addIndex(session, indexName, id, indexColumns, indexType, headPos, comment);
+		return 0;
+	}
 
-    public void setPrimaryKey(boolean b) {
-        this.primaryKey = b;
-    }
+	public void setPrimaryKey(boolean b) {
+		this.primaryKey = b;
+	}
 
-    public void setUnique(boolean b) {
-        this.unique = b;
-    }
+	public void setUnique(boolean b) {
+		this.unique = b;
+	}
 
-    public void setHash(boolean b) {
-        this.hash = b;
-    }
+	public void setHash(boolean b) {
+		this.hash = b;
+	}
 
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
+	public void setComment(String comment) {
+		this.comment = comment;
+	}
 
 }

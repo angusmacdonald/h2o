@@ -22,64 +22,64 @@ import org.h2.schema.Sequence;
  */
 public class CreateSequence extends SchemaCommand {
 
-    private String sequenceName;
-    private boolean ifNotExists;
-    private Expression start;
-    private Expression increment;
-    private Expression cacheSize;
-    private boolean belongsToTable;
+	private String sequenceName;
+	private boolean ifNotExists;
+	private Expression start;
+	private Expression increment;
+	private Expression cacheSize;
+	private boolean belongsToTable;
 
-    public CreateSequence(Session session, Schema schema) {
-        super(session, schema);
-    }
+	public CreateSequence(Session session, Schema schema) {
+		super(session, schema);
+	}
 
-    public void setSequenceName(String sequenceName) {
-        this.sequenceName = sequenceName;
-    }
+	public void setSequenceName(String sequenceName) {
+		this.sequenceName = sequenceName;
+	}
 
-    public void setIfNotExists(boolean ifNotExists) {
-        this.ifNotExists = ifNotExists;
-    }
+	public void setIfNotExists(boolean ifNotExists) {
+		this.ifNotExists = ifNotExists;
+	}
 
-    public int update() throws SQLException {
-        session.commit(true);
-        Database db = session.getDatabase();
-        if (getSchema().findSequence(sequenceName) != null) {
-            if (ifNotExists) {
-                return 0;
-            }
-            throw Message.getSQLException(ErrorCode.SEQUENCE_ALREADY_EXISTS_1, sequenceName);
-        }
-        int id = getObjectId(false, true);
-        Sequence sequence = new Sequence(getSchema(), id, sequenceName, belongsToTable);
-        sequence.setStartValue(getLong(start, 1));
-        sequence.setIncrement(getLong(increment, 1));
-        sequence.setCacheSize(getLong(cacheSize, Sequence.DEFAULT_CACHE_SIZE));
-        db.addSchemaObject(session, sequence);
-        return 0;
-    }
+	public int update() throws SQLException {
+		session.commit(true);
+		Database db = session.getDatabase();
+		if (getSchema().findSequence(sequenceName) != null) {
+			if (ifNotExists) {
+				return 0;
+			}
+			throw Message.getSQLException(ErrorCode.SEQUENCE_ALREADY_EXISTS_1, sequenceName);
+		}
+		int id = getObjectId(false, true);
+		Sequence sequence = new Sequence(getSchema(), id, sequenceName, belongsToTable);
+		sequence.setStartValue(getLong(start, 1));
+		sequence.setIncrement(getLong(increment, 1));
+		sequence.setCacheSize(getLong(cacheSize, Sequence.DEFAULT_CACHE_SIZE));
+		db.addSchemaObject(session, sequence);
+		return 0;
+	}
 
-    private long getLong(Expression expr, long defaultValue) throws SQLException {
-        if (expr == null) {
-            return defaultValue;
-        }
-        return expr.optimize(session).getValue(session).getLong();
-    }
+	private long getLong(Expression expr, long defaultValue) throws SQLException {
+		if (expr == null) {
+			return defaultValue;
+		}
+		return expr.optimize(session).getValue(session).getLong();
+	}
 
-    public void setStartWith(Expression start) {
-        this.start = start;
-    }
+	public void setStartWith(Expression start) {
+		this.start = start;
+	}
 
-    public void setIncrement(Expression increment) {
-        this.increment = increment;
-    }
+	public void setIncrement(Expression increment) {
+		this.increment = increment;
+	}
 
-    public void setBelongsToTable(boolean belongsToTable) {
-        this.belongsToTable = belongsToTable;
-    }
+	public void setBelongsToTable(boolean belongsToTable) {
+		this.belongsToTable = belongsToTable;
+	}
 
-    public void setCacheSize(Expression cacheSize) {
-        this.cacheSize = cacheSize;
-    }
+	public void setCacheSize(Expression cacheSize) {
+		this.cacheSize = cacheSize;
+	}
 
 }

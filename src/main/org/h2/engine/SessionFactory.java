@@ -13,12 +13,12 @@ import java.sql.SQLException;
  */
 public interface SessionFactory {
 
-    /**
-     * Create a new session.
-     *
-     * @param ci the connection parameters
-     * @return the new session
-     */
-    SessionInterface createSession(ConnectionInfo ci) throws SQLException;
+	/**
+	 * Create a new session.
+	 *
+	 * @param ci the connection parameters
+	 * @return the new session
+	 */
+	SessionInterface createSession(ConnectionInfo ci) throws SQLException;
 
 }

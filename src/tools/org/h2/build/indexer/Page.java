@@ -11,35 +11,35 @@ package org.h2.build.indexer;
  */
 public class Page {
 
-    /**
-     * The page id.
-     */
-    int id;
+	/**
+	 * The page id.
+	 */
+	int id;
 
-    /**
-     * The file name.
-     */
-    String fileName;
+	/**
+	 * The file name.
+	 */
+	String fileName;
 
-    /**
-     * The title of the page.
-     */
-    String title;
+	/**
+	 * The title of the page.
+	 */
+	String title;
 
-    /**
-     * The total weight of this page.
-     */
-    // TODO page.totalWeight is currently not used
-    int totalWeight;
+	/**
+	 * The total weight of this page.
+	 */
+	// TODO page.totalWeight is currently not used
+	int totalWeight;
 
-    /**
-     * The number of relations between a page and a word.
-     */
-    int relations;
+	/**
+	 * The number of relations between a page and a word.
+	 */
+	int relations;
 
-    Page(int id, String fileName) {
-        this.id = id;
-        this.fileName = fileName;
-    }
+	Page(int id, String fileName) {
+		this.id = id;
+		this.fileName = fileName;
+	}
 
 }

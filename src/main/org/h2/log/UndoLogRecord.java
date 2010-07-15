@@ -27,204 +27,204 @@ import org.h2.value.Value;
  */
 public class UndoLogRecord {
 
-    /**
-     * Operation type meaning the row was inserted.
-     */
-    public static final short INSERT = 0;
+	/**
+	 * Operation type meaning the row was inserted.
+	 */
+	public static final short INSERT = 0;
 
-    /**
-     * Operation type meaning the row was deleted.
-     */
-    public static final short DELETE = 1;
+	/**
+	 * Operation type meaning the row was deleted.
+	 */
+	public static final short DELETE = 1;
 
-    private static final int IN_MEMORY = 0, STORED = 1, IN_MEMORY_READ_POS = 2;
-    private Table table;
-    private Row row;
-    private short operation;
-    private short state;
-    private int filePos;
+	private static final int IN_MEMORY = 0, STORED = 1, IN_MEMORY_READ_POS = 2;
+	private Table table;
+	private Row row;
+	private short operation;
+	private short state;
+	private int filePos;
 
-    /**
-     * Create a new undo log record
-     *
-     * @param table the table
-     * @param op the operation type
-     * @param row the row that was deleted or inserted
-     */
-    public UndoLogRecord(Table table, short op, Row row) {
-        this.table = table;
-        this.row = row;
-        this.operation = op;
-        this.state = IN_MEMORY;
-    }
+	/**
+	 * Create a new undo log record
+	 *
+	 * @param table the table
+	 * @param op the operation type
+	 * @param row the row that was deleted or inserted
+	 */
+	public UndoLogRecord(Table table, short op, Row row) {
+		this.table = table;
+		this.row = row;
+		this.operation = op;
+		this.state = IN_MEMORY;
+	}
 
-    /**
-     * Check if the log record is stored in the file.
-     *
-     * @return true if it is
-     */
-    boolean isStored() {
-        return state == STORED;
-    }
+	/**
+	 * Check if the log record is stored in the file.
+	 *
+	 * @return true if it is
+	 */
+	boolean isStored() {
+		return state == STORED;
+	}
 
-    /**
-     * Check if this undo log record can be store. Only record can be stored if
-     * the table has a unique index.
-     *
-     * @return if it can be stored
-     */
-    boolean canStore() {
-        return table.getUniqueIndex() != null;
-    }
+	/**
+	 * Check if this undo log record can be store. Only record can be stored if
+	 * the table has a unique index.
+	 *
+	 * @return if it can be stored
+	 */
+	boolean canStore() {
+		return table.getUniqueIndex() != null;
+	}
 
-    /**
-     * Un-do the operation. If the row was inserted before, it is deleted now,
-     * and vice versa.
-     *
-     * @param session the session
-     */
-    public void undo(Session session) throws SQLException {
-        switch (operation) {
-        case INSERT:
-            if (state == IN_MEMORY_READ_POS) {
-                Index index = table.getUniqueIndex();
-                Cursor cursor = index.find(session, row, row);
-                cursor.next();
-                int pos = cursor.getPos();
-                row.setPos(pos);
-                state = IN_MEMORY;
-            }
-            if (session.getDatabase().getLockMode() == Constants.LOCK_MODE_OFF) {
-                if (row.getDeleted()) {
-                    // it might have been deleted by another thread
-                    return;
-                }
-            }
-            try {
-                table.removeRow(session, row);
-            } catch (SQLException e) {
-                if (session.getDatabase().getLockMode() == Constants.LOCK_MODE_OFF
-                        && e.getErrorCode() == ErrorCode.ROW_NOT_FOUND_WHEN_DELETING_1) {
-                    // it might have been deleted by another thread
-                    // ignore
-                } else {
-                    throw e;
-                }
-            }
-            break;
-        case DELETE:
-            try {
-                row.setPos(0);
-                table.addRow(session, row);
-                // reset session id, otherwise other session think
-                // that this row was inserted by this session
-                row.commit();
-            } catch (SQLException e) {
-                if (session.getDatabase().getLockMode() == Constants.LOCK_MODE_OFF
-                        && e.getErrorCode() == ErrorCode.DUPLICATE_KEY_1) {
-                    // it might have been added by another thread
-                    // ignore
-                } else {
-                    throw e;
-                }
-            }
-            break;
-        default:
-            Message.throwInternalError("op=" + operation);
-        }
-    }
+	/**
+	 * Un-do the operation. If the row was inserted before, it is deleted now,
+	 * and vice versa.
+	 *
+	 * @param session the session
+	 */
+	public void undo(Session session) throws SQLException {
+		switch (operation) {
+		case INSERT:
+			if (state == IN_MEMORY_READ_POS) {
+				Index index = table.getUniqueIndex();
+				Cursor cursor = index.find(session, row, row);
+				cursor.next();
+				int pos = cursor.getPos();
+				row.setPos(pos);
+				state = IN_MEMORY;
+			}
+			if (session.getDatabase().getLockMode() == Constants.LOCK_MODE_OFF) {
+				if (row.getDeleted()) {
+					// it might have been deleted by another thread
+					return;
+				}
+			}
+			try {
+				table.removeRow(session, row);
+			} catch (SQLException e) {
+				if (session.getDatabase().getLockMode() == Constants.LOCK_MODE_OFF
+						&& e.getErrorCode() == ErrorCode.ROW_NOT_FOUND_WHEN_DELETING_1) {
+					// it might have been deleted by another thread
+					// ignore
+				} else {
+					throw e;
+				}
+			}
+			break;
+		case DELETE:
+			try {
+				row.setPos(0);
+				table.addRow(session, row);
+				// reset session id, otherwise other session think
+				// that this row was inserted by this session
+				row.commit();
+			} catch (SQLException e) {
+				if (session.getDatabase().getLockMode() == Constants.LOCK_MODE_OFF
+						&& e.getErrorCode() == ErrorCode.DUPLICATE_KEY_1) {
+					// it might have been added by another thread
+					// ignore
+				} else {
+					throw e;
+				}
+			}
+			break;
+		default:
+			Message.throwInternalError("op=" + operation);
+		}
+	}
 
-    /**
-     * Save the row in the file using the data page as a buffer.
-     *
-     * @param buff the data page that is used as a buffer
-     * @param file the file
-     */
-    void save(DataPage buff, FileStore file) throws SQLException {
-        buff.reset();
-        buff.writeInt(0);
-        buff.writeInt(operation);
-        buff.writeInt(row.getColumnCount());
-        for (int i = 0; i < row.getColumnCount(); i++) {
-            buff.writeValue(row.getValue(i));
-        }
-        buff.fillAligned();
-        buff.setInt(0, buff.length() / Constants.FILE_BLOCK_SIZE);
-        buff.updateChecksum();
-        filePos = (int) (file.getFilePointer() / Constants.FILE_BLOCK_SIZE);
-        file.write(buff.getBytes(), 0, buff.length());
-        row = null;
-        state = STORED;
-    }
+	/**
+	 * Save the row in the file using the data page as a buffer.
+	 *
+	 * @param buff the data page that is used as a buffer
+	 * @param file the file
+	 */
+	void save(DataPage buff, FileStore file) throws SQLException {
+		buff.reset();
+		buff.writeInt(0);
+		buff.writeInt(operation);
+		buff.writeInt(row.getColumnCount());
+		for (int i = 0; i < row.getColumnCount(); i++) {
+			buff.writeValue(row.getValue(i));
+		}
+		buff.fillAligned();
+		buff.setInt(0, buff.length() / Constants.FILE_BLOCK_SIZE);
+		buff.updateChecksum();
+		filePos = (int) (file.getFilePointer() / Constants.FILE_BLOCK_SIZE);
+		file.write(buff.getBytes(), 0, buff.length());
+		row = null;
+		state = STORED;
+	}
 
-    /**
-     * Go to the right position in the file.
-     *
-     * @param file the file
-     */
-    void seek(FileStore file) throws SQLException {
-        file.seek(filePos * Constants.FILE_BLOCK_SIZE);
-    }
+	/**
+	 * Go to the right position in the file.
+	 *
+	 * @param file the file
+	 */
+	void seek(FileStore file) throws SQLException {
+		file.seek(filePos * Constants.FILE_BLOCK_SIZE);
+	}
 
-    /**
-     * Load an undo log record row using the data page as a buffer.
-     *
-     * @param buff the data page that is used as a buffer
-     * @param file the source file
-     */
-    void load(DataPage buff, FileStore file) throws SQLException {
-        int min = Constants.FILE_BLOCK_SIZE;
-        seek(file);
-        buff.reset();
-        file.readFully(buff.getBytes(), 0, min);
-        int len = buff.readInt() * Constants.FILE_BLOCK_SIZE;
-        buff.checkCapacity(len);
-        if (len - min > 0) {
-            file.readFully(buff.getBytes(), min, len - min);
-        }
-        buff.check(len);
-        int op = buff.readInt();
-        if (SysProperties.CHECK) {
-            if (operation != op) {
-                Message.throwInternalError("operation=" + operation + " op=" + op);
-            }
-        }
-        int columnCount = buff.readInt();
-        Value[] values = new Value[columnCount];
-        for (int i = 0; i < columnCount; i++) {
-            values[i] = buff.readValue();
-        }
-        row = new Row(values, 0);
-        state = IN_MEMORY_READ_POS;
-    }
+	/**
+	 * Load an undo log record row using the data page as a buffer.
+	 *
+	 * @param buff the data page that is used as a buffer
+	 * @param file the source file
+	 */
+	void load(DataPage buff, FileStore file) throws SQLException {
+		int min = Constants.FILE_BLOCK_SIZE;
+		seek(file);
+		buff.reset();
+		file.readFully(buff.getBytes(), 0, min);
+		int len = buff.readInt() * Constants.FILE_BLOCK_SIZE;
+		buff.checkCapacity(len);
+		if (len - min > 0) {
+			file.readFully(buff.getBytes(), min, len - min);
+		}
+		buff.check(len);
+		int op = buff.readInt();
+		if (SysProperties.CHECK) {
+			if (operation != op) {
+				Message.throwInternalError("operation=" + operation + " op=" + op);
+			}
+		}
+		int columnCount = buff.readInt();
+		Value[] values = new Value[columnCount];
+		for (int i = 0; i < columnCount; i++) {
+			values[i] = buff.readValue();
+		}
+		row = new Row(values, 0);
+		state = IN_MEMORY_READ_POS;
+	}
 
-    /**
-     * Get the table.
-     *
-     * @return the table
-     */
-    public Table getTable() {
-        return table;
-    }
+	/**
+	 * Get the table.
+	 *
+	 * @return the table
+	 */
+	public Table getTable() {
+		return table;
+	}
 
-    /**
-     * This method is called after the operation was committed.
-     * It commits the change to the indexes.
-     */
-    public void commit() throws SQLException {
-        ObjectArray list = table.getIndexes();
-        for (int i = 0; i < list.size(); i++) {
-            Index index = (Index) list.get(i);
-            index.commit(operation, row);
-        }
-    }
+	/**
+	 * This method is called after the operation was committed.
+	 * It commits the change to the indexes.
+	 */
+	public void commit() throws SQLException {
+		ObjectArray list = table.getIndexes();
+		for (int i = 0; i < list.size(); i++) {
+			Index index = (Index) list.get(i);
+			index.commit(operation, row);
+		}
+	}
 
-    /**
-     * Get the row that was deleted or inserted.
-     *
-     * @return the row
-     */
-    public Row getRow() {
-        return row;
-    }
+	/**
+	 * Get the row that was deleted or inserted.
+	 *
+	 * @return the row
+	 */
+	public Row getRow() {
+		return row;
+	}
 }

@@ -24,208 +24,208 @@ import org.h2.util.RandomUtils;
  */
 public class FileSystemMemory extends FileSystem {
 
-    private static final FileSystemMemory INSTANCE = new FileSystemMemory();
-    private static final HashMap MEMORY_FILES = new HashMap();
+	private static final FileSystemMemory INSTANCE = new FileSystemMemory();
+	private static final HashMap MEMORY_FILES = new HashMap();
 
-    private FileSystemMemory() {
-        // don't allow construction
-    }
+	private FileSystemMemory() {
+		// don't allow construction
+	}
 
-    public static FileSystemMemory getInstance() {
-        return INSTANCE;
-    }
+	public static FileSystemMemory getInstance() {
+		return INSTANCE;
+	}
 
-    public long length(String fileName) {
-        return getMemoryFile(fileName).length();
-    }
+	public long length(String fileName) {
+		return getMemoryFile(fileName).length();
+	}
 
-    public void rename(String oldName, String newName) {
-        oldName = normalize(oldName);
-        newName = normalize(newName);
-        synchronized (MEMORY_FILES) {
-            FileObjectMemory f = getMemoryFile(oldName);
-            f.setName(newName);
-            MEMORY_FILES.remove(oldName);
-            MEMORY_FILES.put(newName, f);
-        }
-    }
+	public void rename(String oldName, String newName) {
+		oldName = normalize(oldName);
+		newName = normalize(newName);
+		synchronized (MEMORY_FILES) {
+			FileObjectMemory f = getMemoryFile(oldName);
+			f.setName(newName);
+			MEMORY_FILES.remove(oldName);
+			MEMORY_FILES.put(newName, f);
+		}
+	}
 
-    public boolean createNewFile(String fileName) {
-        synchronized (MEMORY_FILES) {
-            if (exists(fileName)) {
-                return false;
-            }
-            getMemoryFile(fileName);
-        }
-        return true;
-    }
+	public boolean createNewFile(String fileName) {
+		synchronized (MEMORY_FILES) {
+			if (exists(fileName)) {
+				return false;
+			}
+			getMemoryFile(fileName);
+		}
+		return true;
+	}
 
-    public boolean exists(String fileName) {
-        fileName = normalize(fileName);
-        synchronized (MEMORY_FILES) {
-            return MEMORY_FILES.get(fileName) != null;
-        }
-    }
+	public boolean exists(String fileName) {
+		fileName = normalize(fileName);
+		synchronized (MEMORY_FILES) {
+			return MEMORY_FILES.get(fileName) != null;
+		}
+	}
 
-    public void delete(String fileName) {
-        fileName = normalize(fileName);
-        synchronized (MEMORY_FILES) {
-            MEMORY_FILES.remove(fileName);
-        }
-    }
+	public void delete(String fileName) {
+		fileName = normalize(fileName);
+		synchronized (MEMORY_FILES) {
+			MEMORY_FILES.remove(fileName);
+		}
+	}
 
-    public boolean tryDelete(String fileName) {
-        fileName = normalize(fileName);
-        synchronized (MEMORY_FILES) {
-            MEMORY_FILES.remove(fileName);
-        }
-        return true;
-    }
+	public boolean tryDelete(String fileName) {
+		fileName = normalize(fileName);
+		synchronized (MEMORY_FILES) {
+			MEMORY_FILES.remove(fileName);
+		}
+		return true;
+	}
 
-    public String createTempFile(String name, String suffix, boolean deleteOnExit, boolean inTempDir) {
-        name += ".";
-        synchronized (MEMORY_FILES) {
-            for (int i = 0;; i++) {
-                String n = name + (RandomUtils.getSecureLong() >>> 1) + suffix;
-                if (!exists(n)) {
-                    getMemoryFile(n);
-                    return n;
-                }
-            }
-        }
-    }
+	public String createTempFile(String name, String suffix, boolean deleteOnExit, boolean inTempDir) {
+		name += ".";
+		synchronized (MEMORY_FILES) {
+			for (int i = 0;; i++) {
+				String n = name + (RandomUtils.getSecureLong() >>> 1) + suffix;
+				if (!exists(n)) {
+					getMemoryFile(n);
+					return n;
+				}
+			}
+		}
+	}
 
-    public String[] listFiles(String path) {
-        ObjectArray list = new ObjectArray();
-        synchronized (MEMORY_FILES) {
-            for (Iterator it = MEMORY_FILES.keySet().iterator(); it.hasNext();) {
-                String name = (String) it.next();
-                if (name.startsWith(path)) {
-                    list.add(name);
-                }
-            }
-            String[] array = new String[list.size()];
-            list.toArray(array);
-            return array;
-        }
-    }
+	public String[] listFiles(String path) {
+		ObjectArray list = new ObjectArray();
+		synchronized (MEMORY_FILES) {
+			for (Iterator it = MEMORY_FILES.keySet().iterator(); it.hasNext();) {
+				String name = (String) it.next();
+				if (name.startsWith(path)) {
+					list.add(name);
+				}
+			}
+			String[] array = new String[list.size()];
+			list.toArray(array);
+			return array;
+		}
+	}
 
-    public void deleteRecursive(String fileName) throws SQLException {
-        fileName = normalize(fileName);
-        synchronized (MEMORY_FILES) {
-            Iterator it = MEMORY_FILES.keySet().iterator();
-            while (it.hasNext()) {
-                String name = (String) it.next();
-                if (name.startsWith(fileName)) {
-                    it.remove();
-                }
-            }
-        }
-    }
+	public void deleteRecursive(String fileName) throws SQLException {
+		fileName = normalize(fileName);
+		synchronized (MEMORY_FILES) {
+			Iterator it = MEMORY_FILES.keySet().iterator();
+			while (it.hasNext()) {
+				String name = (String) it.next();
+				if (name.startsWith(fileName)) {
+					it.remove();
+				}
+			}
+		}
+	}
 
-    public boolean isReadOnly(String fileName) {
-        return false;
-    }
+	public boolean isReadOnly(String fileName) {
+		return false;
+	}
 
-    public String normalize(String fileName) {
-        fileName = fileName.replace('\\', '/');
-        int idx = fileName.indexOf(":/");
-        if (idx > 0) {
-            fileName = fileName.substring(0, idx + 1) + fileName.substring(idx + 2);
-        }
-        return fileName;
-    }
+	public String normalize(String fileName) {
+		fileName = fileName.replace('\\', '/');
+		int idx = fileName.indexOf(":/");
+		if (idx > 0) {
+			fileName = fileName.substring(0, idx + 1) + fileName.substring(idx + 2);
+		}
+		return fileName;
+	}
 
-    public String getParent(String fileName) {
-        fileName = normalize(fileName);
-        int idx = fileName.lastIndexOf('/');
-        if (idx < 0) {
-            idx = fileName.indexOf(':') + 1;
-        }
-        return fileName.substring(0, idx);
-    }
+	public String getParent(String fileName) {
+		fileName = normalize(fileName);
+		int idx = fileName.lastIndexOf('/');
+		if (idx < 0) {
+			idx = fileName.indexOf(':') + 1;
+		}
+		return fileName.substring(0, idx);
+	}
 
-    public boolean isDirectory(String fileName) {
-        // TODO in memory file system currently doesn't support directories
-        return false;
-    }
+	public boolean isDirectory(String fileName) {
+		// TODO in memory file system currently doesn't support directories
+		return false;
+	}
 
-    public boolean isAbsolute(String fileName) {
-        // TODO relative files are not supported
-        return true;
-    }
+	public boolean isAbsolute(String fileName) {
+		// TODO relative files are not supported
+		return true;
+	}
 
-    public String getAbsolutePath(String fileName) {
-        // TODO relative files are not supported
-        return normalize(fileName);
-    }
+	public String getAbsolutePath(String fileName) {
+		// TODO relative files are not supported
+		return normalize(fileName);
+	}
 
-    public long getLastModified(String fileName) {
-        return getMemoryFile(fileName).getLastModified();
-    }
+	public long getLastModified(String fileName) {
+		return getMemoryFile(fileName).getLastModified();
+	}
 
-    public boolean canWrite(String fileName) {
-        return true;
-    }
+	public boolean canWrite(String fileName) {
+		return true;
+	}
 
-    public void copy(String original, String copy) throws SQLException {
-        try {
-            OutputStream out = openFileOutputStream(copy, false);
-            InputStream in = openFileInputStream(original);
-            IOUtils.copyAndClose(in, out);
-        } catch (IOException e) {
-            throw Message.convertIOException(e, "Can not copy " + original + " to " + copy);
-        }
-    }
+	public void copy(String original, String copy) throws SQLException {
+		try {
+			OutputStream out = openFileOutputStream(copy, false);
+			InputStream in = openFileInputStream(original);
+			IOUtils.copyAndClose(in, out);
+		} catch (IOException e) {
+			throw Message.convertIOException(e, "Can not copy " + original + " to " + copy);
+		}
+	}
 
-    public void createDirs(String fileName) {
-        // TODO directories are not really supported
-    }
+	public void createDirs(String fileName) {
+		// TODO directories are not really supported
+	}
 
-    public String getFileName(String name) {
-        // TODO directories are not supported
-        return name;
-    }
+	public String getFileName(String name) {
+		// TODO directories are not supported
+		return name;
+	}
 
-    public boolean fileStartsWith(String fileName, String prefix) {
-        fileName = normalize(fileName);
-        prefix = normalize(prefix);
-        return fileName.startsWith(prefix);
-    }
+	public boolean fileStartsWith(String fileName, String prefix) {
+		fileName = normalize(fileName);
+		prefix = normalize(prefix);
+		return fileName.startsWith(prefix);
+	}
 
-    public OutputStream openFileOutputStream(String fileName, boolean append) throws SQLException {
-        try {
-            FileObjectMemory obj = getMemoryFile(fileName);
-            obj.seek(0);
-            return new FileObjectOutputStream(obj, append);
-        } catch (IOException e) {
-            throw Message.convertIOException(e, fileName);
-        }
-    }
+	public OutputStream openFileOutputStream(String fileName, boolean append) throws SQLException {
+		try {
+			FileObjectMemory obj = getMemoryFile(fileName);
+			obj.seek(0);
+			return new FileObjectOutputStream(obj, append);
+		} catch (IOException e) {
+			throw Message.convertIOException(e, fileName);
+		}
+	}
 
-    public InputStream openFileInputStream(String fileName) {
-        FileObjectMemory obj = getMemoryFile(fileName);
-        obj.seek(0);
-        return new FileObjectInputStream(obj);
-    }
+	public InputStream openFileInputStream(String fileName) {
+		FileObjectMemory obj = getMemoryFile(fileName);
+		obj.seek(0);
+		return new FileObjectInputStream(obj);
+	}
 
-    public FileObject openFileObject(String fileName, String mode) {
-        FileObjectMemory obj = getMemoryFile(fileName);
-        obj.seek(0);
-        return obj;
-    }
+	public FileObject openFileObject(String fileName, String mode) {
+		FileObjectMemory obj = getMemoryFile(fileName);
+		obj.seek(0);
+		return obj;
+	}
 
-    private FileObjectMemory getMemoryFile(String fileName) {
-        fileName = normalize(fileName);
-        synchronized (MEMORY_FILES) {
-            FileObjectMemory m = (FileObjectMemory) MEMORY_FILES.get(fileName);
-            if (m == null) {
-                boolean compress = fileName.startsWith(FileSystem.PREFIX_MEMORY_LZF);
-                m = new FileObjectMemory(fileName, compress);
-                MEMORY_FILES.put(fileName, m);
-            }
-            return m;
-        }
-    }
+	private FileObjectMemory getMemoryFile(String fileName) {
+		fileName = normalize(fileName);
+		synchronized (MEMORY_FILES) {
+			FileObjectMemory m = (FileObjectMemory) MEMORY_FILES.get(fileName);
+			if (m == null) {
+				boolean compress = fileName.startsWith(FileSystem.PREFIX_MEMORY_LZF);
+				m = new FileObjectMemory(fileName, compress);
+				MEMORY_FILES.put(fileName, m);
+			}
+			return m;
+		}
+	}
 
 }

@@ -19,68 +19,68 @@ import org.h2.util.SortedProperties;
  */
 public class TestAutoServer extends TestBase {
 
-    /**
-     * If enabled, this flag allows to debug the test case.
-     */
-    static final boolean SLOW = false;
+	/**
+	 * If enabled, this flag allows to debug the test case.
+	 */
+	static final boolean SLOW = false;
 
-    /**
-     * Run just this test.
-     *
-     * @param a ignored
-     */
-    public static void main(String[] a) throws Exception {
-        TestBase.createCaller().init().test();
-    }
+	/**
+	 * Run just this test.
+	 *
+	 * @param a ignored
+	 */
+	public static void main(String[] a) throws Exception {
+		TestBase.createCaller().init().test();
+	}
 
-    public void test() throws Exception {
-        if (config.memory || config.networked) {
-            return;
-        }
-        deleteDb("autoServer");
-        String url = getURL("autoServer;AUTO_SERVER=TRUE", true);
-        String user = getUser(), password = getPassword();
-        Connection connServer = getConnection(url + ";OPEN_NEW=TRUE", user, password);
+	public void test() throws Exception {
+		if (config.memory || config.networked) {
+			return;
+		}
+		deleteDb("autoServer");
+		String url = getURL("autoServer;AUTO_SERVER=TRUE", true);
+		String user = getUser(), password = getPassword();
+		Connection connServer = getConnection(url + ";OPEN_NEW=TRUE", user, password);
 
-        int i = SLOW ? Integer.MAX_VALUE : 30;
-        for (; i > 0; i--) {
-            Thread.sleep(100);
-            SortedProperties prop = SortedProperties.loadProperties(baseDir + "/autoServer.lock.db");
-            String key = prop.getProperty("id");
-            String server = prop.getProperty("server");
-            if (server != null) {
-                String u2 = url.substring(url.indexOf(";"));
-                u2 = "jdbc:h2:tcp://" + server + "/" + key + u2;
-                Connection conn = DriverManager.getConnection(u2, user, password);
-                conn.close();
-                break;
-            }
-        }
-        if (i <= 0) {
-            fail();
-        }
-        Connection conn = getConnection(url + ";OPEN_NEW=TRUE");
-        Statement stat = conn.createStatement();
-        if (config.big) {
-            try {
-                stat.execute("SHUTDOWN");
-            } catch (SQLException e) {
-                assertKnownException(e);
-                // the connection is closed
-            }
-        }
-        conn.close();
-        connServer.close();
-        deleteDb("autoServer");
-    }
+		int i = SLOW ? Integer.MAX_VALUE : 30;
+		for (; i > 0; i--) {
+			Thread.sleep(100);
+			SortedProperties prop = SortedProperties.loadProperties(baseDir + "/autoServer.lock.db");
+			String key = prop.getProperty("id");
+			String server = prop.getProperty("server");
+			if (server != null) {
+				String u2 = url.substring(url.indexOf(";"));
+				u2 = "jdbc:h2:tcp://" + server + "/" + key + u2;
+				Connection conn = DriverManager.getConnection(u2, user, password);
+				conn.close();
+				break;
+			}
+		}
+		if (i <= 0) {
+			fail();
+		}
+		Connection conn = getConnection(url + ";OPEN_NEW=TRUE");
+		Statement stat = conn.createStatement();
+		if (config.big) {
+			try {
+				stat.execute("SHUTDOWN");
+			} catch (SQLException e) {
+				assertKnownException(e);
+				// the connection is closed
+			}
+		}
+		conn.close();
+		connServer.close();
+		deleteDb("autoServer");
+	}
 
-    /**
-     * This method is called via reflection from the database.
-     *
-     * @param exitValue the exit value
-     */
-    public static void halt(int exitValue) {
-        Runtime.getRuntime().halt(exitValue);
-    }
+	/**
+	 * This method is called via reflection from the database.
+	 *
+	 * @param exitValue the exit value
+	 */
+	public static void halt(int exitValue) {
+		Runtime.getRuntime().halt(exitValue);
+	}
 
 }

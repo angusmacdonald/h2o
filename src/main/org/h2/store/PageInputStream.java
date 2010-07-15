@@ -26,98 +26,98 @@ import org.h2.message.Trace;
  */
 public class PageInputStream extends InputStream {
 
-    private PageStore store;
-    private final Trace trace;
-    private int parentPage;
-    private int type;
-    private int nextPage;
-    private DataPage page;
-    private boolean endOfFile;
-    private int remaining;
-    private byte[] buffer = new byte[1];
+	private PageStore store;
+	private final Trace trace;
+	private int parentPage;
+	private int type;
+	private int nextPage;
+	private DataPage page;
+	private boolean endOfFile;
+	private int remaining;
+	private byte[] buffer = new byte[1];
 
-    public PageInputStream(PageStore store, int parentPage, int headPage, int type) {
-        this.store = store;
-        this.trace = store.getTrace();
-        this.parentPage = parentPage;
-        this.type = type;
-        nextPage = headPage;
-        page = store.createDataPage();
-    }
+	public PageInputStream(PageStore store, int parentPage, int headPage, int type) {
+		this.store = store;
+		this.trace = store.getTrace();
+		this.parentPage = parentPage;
+		this.type = type;
+		nextPage = headPage;
+		page = store.createDataPage();
+	}
 
-    public int read() throws IOException {
-        int len = read(buffer);
-        return len < 0 ? -1 : (buffer[0] & 255);
-    }
+	public int read() throws IOException {
+		int len = read(buffer);
+		return len < 0 ? -1 : (buffer[0] & 255);
+	}
 
-    public int read(byte[] b) throws IOException {
-        return read(b, 0, b.length);
-    }
+	public int read(byte[] b) throws IOException {
+		return read(b, 0, b.length);
+	}
 
-    public int read(byte[] b, int off, int len) throws IOException {
-        if (len == 0) {
-            return 0;
-        }
-        int read = 0;
-        while (len > 0) {
-            int r = readBlock(b, off, len);
-            if (r < 0) {
-                break;
-            }
-            read += r;
-            off += r;
-            len -= r;
-        }
-        return read == 0 ? -1 : read;
-    }
+	public int read(byte[] b, int off, int len) throws IOException {
+		if (len == 0) {
+			return 0;
+		}
+		int read = 0;
+		while (len > 0) {
+			int r = readBlock(b, off, len);
+			if (r < 0) {
+				break;
+			}
+			read += r;
+			off += r;
+			len -= r;
+		}
+		return read == 0 ? -1 : read;
+	}
 
-    private int readBlock(byte[] buff, int off, int len) throws IOException {
-        fillBuffer();
-        if (endOfFile) {
-            return -1;
-        }
-        int l = Math.min(remaining, len);
-        page.read(buff, off, l);
-        remaining -= l;
-        return l;
-    }
+	private int readBlock(byte[] buff, int off, int len) throws IOException {
+		fillBuffer();
+		if (endOfFile) {
+			return -1;
+		}
+		int l = Math.min(remaining, len);
+		page.read(buff, off, l);
+		remaining -= l;
+		return l;
+	}
 
-    private void fillBuffer() throws IOException {
-        if (remaining > 0 || endOfFile) {
-            return;
-        }
-        if (nextPage == 0) {
-            endOfFile = true;
-            return;
-        }
-        page.reset();
-        try {
-            store.readPage(nextPage, page);
-            int p = page.readInt();
-            int t = page.readByte();
-            boolean last = (t & Page.FLAG_LAST) != 0;
-            t &= ~Page.FLAG_LAST;
-            if (type != t || p != parentPage) {
-                int todoNeedBetterWayToDetectEOF;
-                throw Message.getSQLException(
-                        ErrorCode.FILE_CORRUPTED_1,
-                        "page:" +nextPage+ " type:" + t + " parent:" + p +
-                        " expected type:" + type + " expected parent:" + parentPage);
-            }
-            parentPage = nextPage;
-            if (last) {
-                nextPage = 0;
-                remaining = page.readInt();
-            } else {
-                nextPage = page.readInt();
-                remaining = store.getPageSize() - page.length();
-            }
-            if (trace.isDebugEnabled()) {
-                trace.debug("pageIn.readPage " + parentPage + " next:" + nextPage);
-            }
-        } catch (SQLException e) {
-            throw Message.convertToIOException(e);
-        }
-    }
+	private void fillBuffer() throws IOException {
+		if (remaining > 0 || endOfFile) {
+			return;
+		}
+		if (nextPage == 0) {
+			endOfFile = true;
+			return;
+		}
+		page.reset();
+		try {
+			store.readPage(nextPage, page);
+			int p = page.readInt();
+			int t = page.readByte();
+			boolean last = (t & Page.FLAG_LAST) != 0;
+			t &= ~Page.FLAG_LAST;
+			if (type != t || p != parentPage) {
+				int todoNeedBetterWayToDetectEOF;
+				throw Message.getSQLException(
+						ErrorCode.FILE_CORRUPTED_1,
+						"page:" +nextPage+ " type:" + t + " parent:" + p +
+						" expected type:" + type + " expected parent:" + parentPage);
+			}
+			parentPage = nextPage;
+			if (last) {
+				nextPage = 0;
+				remaining = page.readInt();
+			} else {
+				nextPage = page.readInt();
+				remaining = store.getPageSize() - page.length();
+			}
+			if (trace.isDebugEnabled()) {
+				trace.debug("pageIn.readPage " + parentPage + " next:" + nextPage);
+			}
+		} catch (SQLException e) {
+			throw Message.convertToIOException(e);
+		}
+	}
 
 }

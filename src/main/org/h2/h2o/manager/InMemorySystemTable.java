@@ -1,3 +1,20 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.h2o.manager;
 
 import java.rmi.Remote;
@@ -136,7 +153,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 
 			for (TableInfo key: toRemove){
 				TableManagerWrapper tmw = this.tableManagers.remove(key);
-				
+
 				setTableManagerAsShutdown(tmw);
 			}
 
@@ -156,7 +173,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	 * @throws RemoteException
 	 */
 	private void setTableManagerAsShutdown(TableManagerWrapper tmw)
-			throws RemoteException {
+	throws RemoteException {
 		if (tmw.getTableManager() != null){
 			try {
 				tmw.getTableManager().shutdown(true);
@@ -180,39 +197,39 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 		return 1;
 	}
 
-//	/* (non-Javadoc)
-//	 * @see org.h2.h2o.ISystemTable#addReplicaInformation(org.h2.h2o.TableInfo)
-//	 */
-//	@Override
-//	public void addReplicaInformation(TableInfo ti) throws RemoteException {
-//
-//		Set<TableInfo> replicas = replicaLocations.get(ti.getFullTableName());
-//
-//		if (replicas == null){
-//			replicas = new HashSet<TableInfo>();
-//		}
-//
-//		replicas.add(ti);
-//
-//		replicaLocations.put(ti.getFullTableName(), replicas);
-//	}
-//
-//	/* (non-Javadoc)
-//	 * @see org.h2.h2o.ISystemTable#removeReplica(java.lang.String, org.h2.h2o.TableInfo)
-//	 */
-//	@Override
-//	public void removeReplicaInformation(TableInfo ti) throws RemoteException {
-//		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Request to drop a single replica of '" + ti.getFullTableName() + "' from the system.");
-//
-//		Set<TableInfo> replicas = replicaLocations.get(ti.getFullTableName());
-//
-//		if (replicas == null){
-//			return;
-//		}
-//
-//		replicas.remove(ti);
-//
-//	}
+	//	/* (non-Javadoc)
+	//	 * @see org.h2.h2o.ISystemTable#addReplicaInformation(org.h2.h2o.TableInfo)
+	//	 */
+	//	@Override
+	//	public void addReplicaInformation(TableInfo ti) throws RemoteException {
+	//
+	//		Set<TableInfo> replicas = replicaLocations.get(ti.getFullTableName());
+	//
+	//		if (replicas == null){
+	//			replicas = new HashSet<TableInfo>();
+	//		}
+	//
+	//		replicas.add(ti);
+	//
+	//		replicaLocations.put(ti.getFullTableName(), replicas);
+	//	}
+	//
+	//	/* (non-Javadoc)
+	//	 * @see org.h2.h2o.ISystemTable#removeReplica(java.lang.String, org.h2.h2o.TableInfo)
+	//	 */
+	//	@Override
+	//	public void removeReplicaInformation(TableInfo ti) throws RemoteException {
+	//		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Request to drop a single replica of '" + ti.getFullTableName() + "' from the system.");
+	//
+	//		Set<TableInfo> replicas = replicaLocations.get(ti.getFullTableName());
+	//
+	//		if (replicas == null){
+	//			return;
+	//		}
+	//
+	//		replicas.remove(ti);
+	//
+	//	}
 
 	/******************************************************************
 	 ****	Methods which involve querying the System Table.
@@ -271,7 +288,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
-			
+
 			this.database.getChordInterface().bind(ti.getFullTableName(), tm);
 
 		} else if (tableManagerWrapper != null){
@@ -284,14 +301,14 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 			} catch (MovedException e) {
 				e.printStackTrace();
 			}
-			
+
 			tableManagerWrapper = tableManagers.get(ti);
 			tm = tableManagerWrapper.getTableManager();
 
 		} else {
 			//Table Manager location is not known.
 			ErrorHandling.errorNoEvent("Couldn't find the location of the table manager for table " + ti + ". This should never happen - the relevant information" +
-					" should be found in persisted state.");
+			" should be found in persisted state.");
 		}
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, ti.getFullTableName() + "'s table manager has been recreated on " + tableManagerWrapper.getURL() + ".");
@@ -337,16 +354,16 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 		return tableSetNumber++;
 	}
 
-//	/* (non-Javadoc)
-//	 * @see org.h2.h2o.ISystemTable#getNumberofReplicas(java.lang.String, java.lang.String)
-//	 */
-//	@Override
-//	public int getNumberofReplicas(String tableName, String schemaName) throws RemoteException {
-//		Set<TableInfo> replicas = replicaLocations.get(schemaName + "." + tableName);
-//
-//		if (replicas == null) 	return 0;
-//		else					return replicas.size();
-//	}
+	//	/* (non-Javadoc)
+	//	 * @see org.h2.h2o.ISystemTable#getNumberofReplicas(java.lang.String, java.lang.String)
+	//	 */
+	//	@Override
+	//	public int getNumberofReplicas(String tableName, String schemaName) throws RemoteException {
+	//		Set<TableInfo> replicas = replicaLocations.get(schemaName + "." + tableName);
+	//
+	//		if (replicas == null) 	return 0;
+	//		else					return replicas.size();
+	//	}
 
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISystemTable#buildSystemTableState(org.h2.h2o.manager.ISystemTable)
@@ -399,7 +416,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 		 * Obtain references to Table Managers, though not necessarily references to active TM proxies.
 		 */
 		tableManagers = otherSystemTable.getTableManagers();
-		
+
 		/*
 		 * At this point some of the Table Manager references will be null if the Table Managers could not be found at their old location.
 		 * If a reference is null, but there is a copy of the table locally then a new Table Manager can be created.
@@ -616,7 +633,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 		}
 
 		boolean removed = replicas.remove(replicaLocation);
-		
+
 		if (!removed){
 			throw new RemoteException("Tried to remove table manager replica state for a replica which wasn't found " + table + " at " + replicaLocation);
 		}

@@ -17,67 +17,67 @@ import org.h2.constant.SysProperties;
  */
 public abstract class Tool {
 
-    /**
-     * The output stream where this tool writes to.
-     */
-    protected PrintStream out = System.out;
+	/**
+	 * The output stream where this tool writes to.
+	 */
+	protected PrintStream out = System.out;
 
-    /**
-     * Sets the standard output stream.
-     *
-     * @param out the new standard output stream
-     */
-    public void setOut(PrintStream out) {
-        this.out = out;
-    }
+	/**
+	 * Sets the standard output stream.
+	 *
+	 * @param out the new standard output stream
+	 */
+	public void setOut(PrintStream out) {
+		this.out = out;
+	}
 
-    /**
-     * Run the tool with the given output stream and arguments.
-     *
-     * @param args the argument list
-     */
-    public abstract void run(String[] args) throws SQLException;
+	/**
+	 * Run the tool with the given output stream and arguments.
+	 *
+	 * @param args the argument list
+	 */
+	public abstract void run(String[] args) throws SQLException;
 
-    /**
-     * Print to the output stream that no database files have been found.
-     *
-     * @param dir the directory or null
-     * @param db the database name or null
-     */
-    protected void printNoDatabaseFilesFound(String dir, String db) {
-        StringBuilder buff = new StringBuilder("No database files have been found");
-        if (dir != null) {
-            buff.append(" in directory ");
-            buff.append(dir);
-        }
-        if (db != null) {
-            buff.append(" for the database ");
-            buff.append(db);
-        }
-        out.println(buff.toString());
-    }
+	/**
+	 * Print to the output stream that no database files have been found.
+	 *
+	 * @param dir the directory or null
+	 * @param db the database name or null
+	 */
+	protected void printNoDatabaseFilesFound(String dir, String db) {
+		StringBuilder buff = new StringBuilder("No database files have been found");
+		if (dir != null) {
+			buff.append(" in directory ");
+			buff.append(dir);
+		}
+		if (db != null) {
+			buff.append(" for the database ");
+			buff.append(db);
+		}
+		out.println(buff.toString());
+	}
 
-    /**
-     * Read an argument and check if it is true (1), false (-1), or not (0).
-     * This method is used for compatibility with older versions only.
-     *
-     * @param args the list of arguments
-     * @param i the index - 1
-     * @return 1 for true, -1 for false, or 0 for not read
-     */
-    public static int readArgBoolean(String[] args, int i) {
-        if (!SysProperties.OLD_COMMAND_LINE_OPTIONS) {
-            return 0;
-        }
-        if (i + 1 < args.length) {
-            String a = args[++i];
-            if ("true".equals(a)) {
-                return 1;
-            } else if ("false".equals(a)) {
-                return -1;
-            }
-        }
-        return 0;
-    }
+	/**
+	 * Read an argument and check if it is true (1), false (-1), or not (0).
+	 * This method is used for compatibility with older versions only.
+	 *
+	 * @param args the list of arguments
+	 * @param i the index - 1
+	 * @return 1 for true, -1 for false, or 0 for not read
+	 */
+	public static int readArgBoolean(String[] args, int i) {
+		if (!SysProperties.OLD_COMMAND_LINE_OPTIONS) {
+			return 0;
+		}
+		if (i + 1 < args.length) {
+			String a = args[++i];
+			if ("true".equals(a)) {
+				return 1;
+			} else if ("false".equals(a)) {
+				return -1;
+			}
+		}
+		return 0;
+	}
 
 }

@@ -24,57 +24,57 @@ import org.h2.value.Value;
  */
 public class LinkedCursor implements Cursor {
 
-    private final TableLink tableLink;
-    private final PreparedStatement prep;
-    private final String sql;
-    private final Session session;
-    private final ResultSet rs;
-    private Row current;
+	private final TableLink tableLink;
+	private final PreparedStatement prep;
+	private final String sql;
+	private final Session session;
+	private final ResultSet rs;
+	private Row current;
 
-    LinkedCursor(TableLink tableLink, ResultSet rs, Session session, String sql, PreparedStatement prep) {
-        this.session = session;
-        this.tableLink = tableLink;
-        this.rs = rs;
-        this.sql = sql;
-        this.prep = prep;
-    }
+	LinkedCursor(TableLink tableLink, ResultSet rs, Session session, String sql, PreparedStatement prep) {
+		this.session = session;
+		this.tableLink = tableLink;
+		this.rs = rs;
+		this.sql = sql;
+		this.prep = prep;
+	}
 
-    private void closeResultSetAndReusePreparedStatement() throws SQLException {
-        rs.close();
-        tableLink.reusePreparedStatement(prep, sql);
-    }
+	private void closeResultSetAndReusePreparedStatement() throws SQLException {
+		rs.close();
+		tableLink.reusePreparedStatement(prep, sql);
+	}
 
-    public Row get() {
-        return current;
-    }
+	public Row get() {
+		return current;
+	}
 
-    public SearchRow getSearchRow() {
-        return current;
-    }
+	public SearchRow getSearchRow() {
+		return current;
+	}
 
-    public int getPos() {
-        throw Message.throwInternalError();
-    }
+	public int getPos() {
+		throw Message.throwInternalError();
+	}
 
 
-    public boolean next() throws SQLException {
-        boolean result = rs.next();
-        if (!result) {
-            closeResultSetAndReusePreparedStatement();
-            current = null;
-            return false;
-        }
-        current = tableLink.getTemplateRow();
-        for (int i = 0; i < current.getColumnCount(); i++) {
-            Column col = tableLink.getColumn(i);
-            Value v = DataType.readValue(session, rs, i + 1, col.getType());
-            current.setValue(i, v);
-        }
-        return true;
-    }
+	public boolean next() throws SQLException {
+		boolean result = rs.next();
+		if (!result) {
+			closeResultSetAndReusePreparedStatement();
+			current = null;
+			return false;
+		}
+		current = tableLink.getTemplateRow();
+		for (int i = 0; i < current.getColumnCount(); i++) {
+			Column col = tableLink.getColumn(i);
+			Value v = DataType.readValue(session, rs, i + 1, col.getType());
+			current.setValue(i, v);
+		}
+		return true;
+	}
 
-    public boolean previous() {
-        throw Message.throwInternalError();
-    }
+	public boolean previous() {
+		throw Message.throwInternalError();
+	}
 
 }

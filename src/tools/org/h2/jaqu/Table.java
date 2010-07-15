@@ -11,9 +11,9 @@ package org.h2.jaqu;
  */
 public interface Table {
 
-    /**
-     * This method is called to let the table define the primary key, indexes,
-     * and the table name.
-     */
-    void define();
+	/**
+	 * This method is called to let the table define the primary key, indexes,
+	 * and the table name.
+	 */
+	void define();
 }

@@ -1,3 +1,20 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.h2o.remote;
 
 import java.io.IOException;
@@ -31,10 +48,7 @@ import org.h2.h2o.manager.SystemTableReference;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LocalH2OProperties;
 import org.h2.h2o.util.SystemTableReplication;
-import org.h2.h2o.util.TableInfo;
-import org.h2.h2o.util.locator.DatabaseDescriptorFile;
 import org.h2.h2o.util.locator.H2OLocatorInterface;
-import org.h2.h2o.util.locator.LocatorClientConnection;
 import org.h2.test.h2o.ChordTests;
 
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
@@ -121,7 +135,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	 */
 	public DatabaseURL connectToDatabaseSystem(Session session, Settings databaseSettings) throws StartupException {
 		this.databaseSettings = databaseSettings;
-		
+
 		establishChordConnection(localMachineLocation, session);
 
 		this.localMachineLocation.setRMIPort(getRmiPort()); //set the port on which the RMI server is running.
@@ -155,7 +169,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		/*
 		 * Contact descriptor for SM locations.
 		 */
-	
+
 		/*
 		 * Try to connect repeatedly until successful. There is a back-off mechanism to ensure this doesn't fail 
 		 * repeatedly in a short space of time.
@@ -164,7 +178,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		List<String> databaseInstances = null;
 
 		int maxNumberOfAttempts = Integer.parseInt(databaseSettings.get("ATTEMPTS_TO_CREATE_OR_JOIN_SYSTEM"));
-		
+
 		while (!connected && attempts < maxNumberOfAttempts){
 			try {
 				databaseInstances = locatorInterface.getLocations();
@@ -216,7 +230,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 					//Obtain a lock on the locator server first.
 
 					LocalH2OProperties localSettings = databaseSettings.getLocalSettings();
-					
+
 					boolean locked = false;
 					try {
 						locked = locatorInterface.lockLocators(this.localMachineLocation.getDbLocation());
@@ -351,7 +365,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		for (String url: databaseInstances){
 			DatabaseURL instanceURL = DatabaseURL.parseURL(url);
 
-/*
+			/*
 			 * Check first that the location isn't the local database instance (currently running).
 			 */
 			if (instanceURL.equals(localMachineLocation)) continue;
@@ -366,7 +380,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			} else {
 				portToJoinOn = currentPort++;
 			}
-			
+
 			if (instanceURL.getRMIPort() == portToJoinOn) portToJoinOn++;
 
 			boolean connected = joinChordRing(localMachineLocation.getHostname(), portToJoinOn, instanceURL.getHostname(), instanceURL.getRMIPort(), 
@@ -559,7 +573,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		boolean connected = false; int attempts = 0;
 
 		int maxNumberOfAttempts = Integer.parseInt(databaseSettings.get("ATTEMPTS_AFTER_BIND_EXCEPTIONS"));
-		
+
 		while(!connected && attempts < maxNumberOfAttempts){ //only have multiple attempts if there is a bind exception. otherwise this just returns false.
 			try {
 				chordNode = new ChordNodeImpl(localChordAddress, knownHostAddress);
@@ -568,7 +582,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				ErrorHandling.errorNoEvent("Failed to connect to chord node on + " + localHostname + ":" + rmiPort + " known host: " + remoteHostname + ":" + remotePort);
 				return false;
 			} catch (ExportException e) { //bind exception (most commonly nested in ExportException
-				
+
 				if (attempts > 50){
 					ErrorHandling.errorNoEvent("Failed to connect to chord ring with known host: " + remoteHostname + ":" + 
 							remotePort + ", on address " + localHostname + ":" + rmiPort + ".");
@@ -586,7 +600,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				connected = true;
 			}
 			if (!connected) localChordAddress = new InetSocketAddress(localHostname, rmiPort++);
-			
+
 			attempts++;
 		}
 
@@ -595,7 +609,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		this.systemTableRef.setInKeyRange(false);
 
 		rmiPort = localChordAddress.getPort();
-		
+
 		try {
 			DatabaseInstanceRemote lookupInstance = getDatabaseInstanceAt(remoteHostname, remotePort);
 			actualSystemTableLocation = lookupInstance.getSystemTableURL();
@@ -703,7 +717,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				if (localMachineHoldsSystemTableState){
 					//Re-instantiate the System Table on this node
 					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "A copy of the System Table state exists on the successor to the failed machine [" + this.localMachineLocation + "]." +
-							" It will be re-instantiated here.");
+					" It will be re-instantiated here.");
 					systemTableRef.migrateSystemTableToLocalInstance(true, true);
 				} else {
 					ErrorHandling.hardError("Currently no implemented way of recovering from System Table failure.");

@@ -21,37 +21,37 @@ import org.h2.util.ObjectArray;
  */
 public class AlterTableRenameColumn extends DefineCommand {
 
-    private Column column;
-    private String newName;
+	private Column column;
+	private String newName;
 
-    public AlterTableRenameColumn(Session session) {
-        super(session);
-    }
+	public AlterTableRenameColumn(Session session) {
+		super(session);
+	}
 
-    public void setColumn(Column column) {
-        this.column = column;
-    }
+	public void setColumn(Column column) {
+		this.column = column;
+	}
 
-    public void setNewColumnName(String newName) {
-        this.newName = newName;
-    }
+	public void setNewColumnName(String newName) {
+		this.newName = newName;
+	}
 
-    public int update() throws SQLException {
-        session.commit(true);
-        Database db = session.getDatabase();
-        session.getUser().checkRight(table, Right.ALL);
-        table.checkSupportAlter();
-        table.renameColumn(column, newName);
-        table.setModified();
-        db.update(session, table);
-        ObjectArray children = table.getChildren();
-        for (int i = 0; i < children.size(); i++) {
-            DbObject child = (DbObject) children.get(i);
-            if (child.getCreateSQL() != null) {
-                db.update(session, child);
-            }
-        }
-        return 0;
-    }
+	public int update() throws SQLException {
+		session.commit(true);
+		Database db = session.getDatabase();
+		session.getUser().checkRight(table, Right.ALL);
+		table.checkSupportAlter();
+		table.renameColumn(column, newName);
+		table.setModified();
+		db.update(session, table);
+		ObjectArray children = table.getChildren();
+		for (int i = 0; i < children.size(); i++) {
+			DbObject child = (DbObject) children.get(i);
+			if (child.getCreateSQL() != null) {
+				db.update(session, child);
+			}
+		}
+		return 0;
+	}
 
 }

@@ -1,3 +1,20 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.h2o.manager;
 
 import java.rmi.RemoteException;
@@ -13,7 +30,6 @@ import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.h2o.autonomic.AutonomicAction;
 import org.h2.h2o.autonomic.AutonomicController;
-import org.h2.h2o.autonomic.Settings;
 import org.h2.h2o.autonomic.Updates;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.ReplicaManager;
@@ -26,7 +42,6 @@ import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TableInfo;
-import org.h2.h2o.util.locator.messages.ReplicaLocationsResponse;
 import org.h2.result.LocalResult;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -149,7 +164,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		this.lockingTable = new LockingTable(schemaName + "." + tableName);
 
 		this.location = database.getChordInterface().getLocalChordReference();
-		
+
 		this.relationReplicationFactor = Integer.parseInt(database.getDatabaseSettings().get("RELATION_REPLICATION_FACTOR"));
 	}
 

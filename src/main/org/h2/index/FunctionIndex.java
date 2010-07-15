@@ -23,76 +23,76 @@ import org.h2.table.IndexColumn;
  */
 public class FunctionIndex extends BaseIndex {
 
-    private FunctionTable functionTable;
-    private LocalResult result;
+	private FunctionTable functionTable;
+	private LocalResult result;
 
-    public FunctionIndex(FunctionTable functionTable, IndexColumn[] columns) {
-        initBaseIndex(functionTable, 0, null, columns, IndexType.createNonUnique(true));
-        this.functionTable = functionTable;
-    }
+	public FunctionIndex(FunctionTable functionTable, IndexColumn[] columns) {
+		initBaseIndex(functionTable, 0, null, columns, IndexType.createNonUnique(true));
+		this.functionTable = functionTable;
+	}
 
-    public void close(Session session) {
-        // nothing to do
-    }
+	public void close(Session session) {
+		// nothing to do
+	}
 
-    public void add(Session session, Row row) throws SQLException {
-        throw Message.getUnsupportedException();
-    }
+	public void add(Session session, Row row) throws SQLException {
+		throw Message.getUnsupportedException();
+	}
 
-    public void remove(Session session, Row row) throws SQLException {
-        throw Message.getUnsupportedException();
-    }
+	public void remove(Session session, Row row) throws SQLException {
+		throw Message.getUnsupportedException();
+	}
 
-    public Cursor find(Session session, SearchRow first, SearchRow last) throws SQLException {
-        // TODO sometimes result.reset() would be enough (but not when
-        // parameters are used)
-        result = functionTable.getResult(session);
-        return new FunctionCursor(result);
-    }
+	public Cursor find(Session session, SearchRow first, SearchRow last) throws SQLException {
+		// TODO sometimes result.reset() would be enough (but not when
+		// parameters are used)
+		result = functionTable.getResult(session);
+		return new FunctionCursor(result);
+	}
 
-    public double getCost(Session session, int[] masks) throws SQLException {
-        if (masks != null) {
-            throw Message.getUnsupportedException();
-        }
-        long expectedRows;
-        if (functionTable.canGetRowCount()) {
-            expectedRows = functionTable.getRowCountApproximation();
-        } else {
-            expectedRows = SysProperties.ESTIMATED_FUNCTION_TABLE_ROWS;
-        }
-        return expectedRows * 10;
-    }
+	public double getCost(Session session, int[] masks) throws SQLException {
+		if (masks != null) {
+			throw Message.getUnsupportedException();
+		}
+		long expectedRows;
+		if (functionTable.canGetRowCount()) {
+			expectedRows = functionTable.getRowCountApproximation();
+		} else {
+			expectedRows = SysProperties.ESTIMATED_FUNCTION_TABLE_ROWS;
+		}
+		return expectedRows * 10;
+	}
 
-    public void remove(Session session) throws SQLException {
-        throw Message.getUnsupportedException();
-    }
+	public void remove(Session session) throws SQLException {
+		throw Message.getUnsupportedException();
+	}
 
-    public void truncate(Session session) throws SQLException {
-        throw Message.getUnsupportedException();
-    }
+	public void truncate(Session session) throws SQLException {
+		throw Message.getUnsupportedException();
+	}
 
-    public boolean needRebuild() {
-        return false;
-    }
+	public boolean needRebuild() {
+		return false;
+	}
 
-    public void checkRename() throws SQLException {
-        throw Message.getUnsupportedException();
-    }
+	public void checkRename() throws SQLException {
+		throw Message.getUnsupportedException();
+	}
 
-    public boolean canGetFirstOrLast() {
-        return false;
-    }
+	public boolean canGetFirstOrLast() {
+		return false;
+	}
 
-    public Cursor findFirstOrLast(Session session, boolean first) throws SQLException {
-        throw Message.getUnsupportedException();
-    }
+	public Cursor findFirstOrLast(Session session, boolean first) throws SQLException {
+		throw Message.getUnsupportedException();
+	}
 
-    public long getRowCount(Session session) {
-        return functionTable.getRowCount(session);
-    }
+	public long getRowCount(Session session) {
+		return functionTable.getRowCount(session);
+	}
 
-    public long getRowCountApproximation() {
-        return functionTable.getRowCountApproximation();
-    }
+	public long getRowCountApproximation() {
+		return functionTable.getRowCountApproximation();
+	}
 
 }

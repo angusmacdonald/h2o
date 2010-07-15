@@ -1,3 +1,20 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.h2o.util.locator;
 
 import org.h2.h2o.util.locator.messages.LockRequestResponse;
@@ -13,17 +30,17 @@ public class LocatorProtocol {
 	 * Indicates lock request is being made. Used when an instance wants to create a new System Table.
 	 */
 	protected static final String LOCK = "LOCK";
-	
+
 	/**
 	 * Indicates an instance has created a System Table and wishes to commit this action.
 	 */
 	protected static final String COMMIT = "COMMIT";
-	
+
 	/**
 	 * Request to get the list of current System Table replicas.
 	 */
 	protected static final String GET = "GET";
-	
+
 	/**
 	 * Request to update the list of current System Table replicas.
 	 */
@@ -71,7 +88,7 @@ public class LocatorProtocol {
 	 */
 	protected static String constructSetRequest(String[] locations){
 		String delimeter = "\n";
-		
+
 		String message = SET + delimeter;
 
 		for (String location: locations){
@@ -108,7 +125,7 @@ public class LocatorProtocol {
 	protected static int constructLockResponse(LockRequestResponse response){
 		return (response.isSuccessful()? response.getUpdateCount():0);
 	}
-	
+
 	/**
 	 * Parse the result of the lock request.
 	 * @param response	The response recieved from the server.

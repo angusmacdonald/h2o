@@ -11,28 +11,28 @@ package org.h2.build.indexer;
  */
 public class Weight {
 
-    /**
-     * The weight of a word in a title.
-     */
-    static final int TITLE = 10000;
+	/**
+	 * The weight of a word in a title.
+	 */
+	static final int TITLE = 10000;
 
-    /**
-     * The weight of a word in the header.
-     */
-    static final int HEADER = 100;
+	/**
+	 * The weight of a word in the header.
+	 */
+	static final int HEADER = 100;
 
-    /**
-     * The weight of a word in a paragraph.
-     */
-    static final int PARAGRAPH = 1;
+	/**
+	 * The weight of a word in a paragraph.
+	 */
+	static final int PARAGRAPH = 1;
 
-    /**
-     * The page referenced.
-     */
-    Page page;
+	/**
+	 * The page referenced.
+	 */
+	Page page;
 
-    /**
-     * The weight value.
-     */
-    int value;
+	/**
+	 * The weight value.
+	 */
+	int value;
 }

@@ -19,93 +19,93 @@ import org.h2.value.Value;
  */
 public class Alias extends Expression {
 
-    private final String alias;
-    private Expression expr;
-    private boolean aliasColumnName;
+	private final String alias;
+	private Expression expr;
+	private boolean aliasColumnName;
 
-    public Alias(Expression expression, String alias, boolean aliasColumnName) {
-        this.expr = expression;
-        this.alias = alias;
-        this.aliasColumnName = aliasColumnName;
-    }
+	public Alias(Expression expression, String alias, boolean aliasColumnName) {
+		this.expr = expression;
+		this.alias = alias;
+		this.aliasColumnName = aliasColumnName;
+	}
 
-    public Expression getNonAliasExpression() {
-        return expr;
-    }
+	public Expression getNonAliasExpression() {
+		return expr;
+	}
 
-    public Value getValue(Session session) throws SQLException {
-        return expr.getValue(session);
-    }
+	public Value getValue(Session session) throws SQLException {
+		return expr.getValue(session);
+	}
 
-    public int getType() {
-        return expr.getType();
-    }
+	public int getType() {
+		return expr.getType();
+	}
 
-    public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
-        expr.mapColumns(resolver, level);
-    }
+	public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
+		expr.mapColumns(resolver, level);
+	}
 
-    public Expression optimize(Session session) throws SQLException {
-        expr = expr.optimize(session);
-        return this;
-    }
+	public Expression optimize(Session session) throws SQLException {
+		expr = expr.optimize(session);
+		return this;
+	}
 
-    public void setEvaluatable(TableFilter tableFilter, boolean b) {
-        expr.setEvaluatable(tableFilter, b);
-    }
+	public void setEvaluatable(TableFilter tableFilter, boolean b) {
+		expr.setEvaluatable(tableFilter, b);
+	}
 
-    public int getScale() {
-        return expr.getScale();
-    }
+	public int getScale() {
+		return expr.getScale();
+	}
 
-    public long getPrecision() {
-        return expr.getPrecision();
-    }
+	public long getPrecision() {
+		return expr.getPrecision();
+	}
 
-    public int getDisplaySize() {
-        return expr.getDisplaySize();
-    }
+	public int getDisplaySize() {
+		return expr.getDisplaySize();
+	}
 
-    public boolean isAutoIncrement() {
-        return expr.isAutoIncrement();
-    }
+	public boolean isAutoIncrement() {
+		return expr.isAutoIncrement();
+	}
 
-    public String getSQL() {
-        return expr.getSQL() + " AS " + Parser.quoteIdentifier(alias);
-    }
+	public String getSQL() {
+		return expr.getSQL() + " AS " + Parser.quoteIdentifier(alias);
+	}
 
-    public void updateAggregate(Session session) throws SQLException {
-        expr.updateAggregate(session);
-    }
+	public void updateAggregate(Session session) throws SQLException {
+		expr.updateAggregate(session);
+	}
 
-    public String getAlias() {
-        return alias;
-    }
+	public String getAlias() {
+		return alias;
+	}
 
-    public int getNullable() {
-        return expr.getNullable();
-    }
+	public int getNullable() {
+		return expr.getNullable();
+	}
 
-    public boolean isEverything(ExpressionVisitor visitor) {
-        return expr.isEverything(visitor);
-    }
+	public boolean isEverything(ExpressionVisitor visitor) {
+		return expr.isEverything(visitor);
+	}
 
-    public int getCost() {
-        return expr.getCost();
-    }
+	public int getCost() {
+		return expr.getCost();
+	}
 
-    public String getTableName() {
-        if (aliasColumnName) {
-            return super.getTableName();
-        }
-        return expr.getTableName();
-    }
+	public String getTableName() {
+		if (aliasColumnName) {
+			return super.getTableName();
+		}
+		return expr.getTableName();
+	}
 
-    public String getColumnName() {
-        if (!(expr instanceof ExpressionColumn) || aliasColumnName) {
-            return super.getColumnName();
-        }
-        return expr.getColumnName();
-    }
+	public String getColumnName() {
+		if (!(expr instanceof ExpressionColumn) || aliasColumnName) {
+			return super.getColumnName();
+		}
+		return expr.getColumnName();
+	}
 
 }

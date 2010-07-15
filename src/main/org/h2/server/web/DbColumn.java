@@ -16,32 +16,32 @@ import java.sql.SQLException;
  */
 class DbColumn {
 
-    /**
-     * The column name.
-     */
-    String name;
+	/**
+	 * The column name.
+	 */
+	String name;
 
-    /**
-     * The data type name (including precision and the NOT NULL flag if
-     * applicable).
-     */
-    String dataType;
+	/**
+	 * The data type name (including precision and the NOT NULL flag if
+	 * applicable).
+	 */
+	String dataType;
 
-    DbColumn(ResultSet rs) throws SQLException {
-        name = rs.getString("COLUMN_NAME");
-        String type = rs.getString("TYPE_NAME");
-        int size = rs.getInt(DbContents.findColumn(rs, "COLUMN_SIZE", 7));
-        if (size > 0) {
-            type += "(" + size;
-            int prec = rs.getInt(DbContents.findColumn(rs, "DECIMAL_DIGITS", 9));
-            if (prec > 0) {
-                type += ", " + prec;
-            }
-            type += ")";
-        }
-        if (rs.getInt("NULLABLE") == DatabaseMetaData.columnNoNulls) {
-            type += " NOT NULL";
-        }
-        dataType = type;
-    }
+	DbColumn(ResultSet rs) throws SQLException {
+		name = rs.getString("COLUMN_NAME");
+		String type = rs.getString("TYPE_NAME");
+		int size = rs.getInt(DbContents.findColumn(rs, "COLUMN_SIZE", 7));
+		if (size > 0) {
+			type += "(" + size;
+			int prec = rs.getInt(DbContents.findColumn(rs, "DECIMAL_DIGITS", 9));
+			if (prec > 0) {
+				type += ", " + prec;
+			}
+			type += ")";
+		}
+		if (rs.getInt("NULLABLE") == DatabaseMetaData.columnNoNulls) {
+			type += " NOT NULL";
+		}
+		dataType = type;
+	}
 }

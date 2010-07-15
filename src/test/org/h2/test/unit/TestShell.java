@@ -23,97 +23,97 @@ import org.h2.tools.Shell;
  */
 public class TestShell extends TestBase {
 
-    /**
-     * The output stream of the tool.
-     */
-    PrintStream toolOut;
+	/**
+	 * The output stream of the tool.
+	 */
+	PrintStream toolOut;
 
-    /**
-     * The input stream of the tool.
-     */
-    InputStream toolIn;
+	/**
+	 * The input stream of the tool.
+	 */
+	InputStream toolIn;
 
-    private PrintStream testOut;
-    private PipedInputStream testIn;
-    private LineNumberReader lineReader;
+	private PrintStream testOut;
+	private PipedInputStream testIn;
+	private LineNumberReader lineReader;
 
-    /**
-     * Run just this test.
-     *
-     * @param a ignored
-     */
-    public static void main(String[] a) throws Exception {
-        TestBase.createCaller().init().test();
-    }
+	/**
+	 * Run just this test.
+	 *
+	 * @param a ignored
+	 */
+	public static void main(String[] a) throws Exception {
+		TestBase.createCaller().init().test();
+	}
 
-    public void test() throws IOException {
-        testIn = new PipedInputStream();
-        PipedOutputStream out = new PipedOutputStream(testIn);
-        toolOut = new PrintStream(out, true);
-        out = new PipedOutputStream();
-        testOut = new PrintStream(out, true);
-        toolIn = new PipedInputStream(out);
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    Shell shell = new Shell();
-                    shell.setStreams(toolIn, toolOut, toolOut);
-                    shell.run(new String[0]);
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                } finally {
-                    toolOut.close();
-                }
-            }
-        }).start();
-        InputStreamReader reader = new InputStreamReader(testIn);
-        lineReader = new LineNumberReader(reader);
-        read("");
-        read("Welcome to H2 Shell");
-        read("Exit with");
-        read("[Enter]");
-        testOut.println("jdbc:h2:mem:");
-        read("URL");
-        testOut.println("org.h2.Driver");
-        read("Driver");
-        testOut.println("sa");
-        read("User");
-        testOut.println("sa");
-        read("Password");
-        read("Commands are case insensitive");
-        read("help or ?");
-        read("list");
-        read("maxwidth");
-        read("show");
-        read("describe");
-        read("quit or exit");
-        read("");
-        testOut.println("create table test(id int primary key, name varchar)\n;");
-        read("sql> ...>");
-        testOut.println("show public");
-        read("sql>");
-        while (read("").startsWith("INFORMATION_SCHEMA")) {
-            // ignore
-        }
-        testOut.println("insert into test values(1, 'Hello');");
-        read("sql>");
-        testOut.println("select * from test;");
-        read("sql> ID");
-        read("1 ");
-        read("(1 row,");
-        testOut.println("describe test");
-        read("sql> Column Name");
-        read("ID");
-        read("NAME");
-        testOut.println("exit");
-        read("sql>");
-    }
+	public void test() throws IOException {
+		testIn = new PipedInputStream();
+		PipedOutputStream out = new PipedOutputStream(testIn);
+		toolOut = new PrintStream(out, true);
+		out = new PipedOutputStream();
+		testOut = new PrintStream(out, true);
+		toolIn = new PipedInputStream(out);
+		new Thread(new Runnable() {
+			public void run() {
+				try {
+					Shell shell = new Shell();
+					shell.setStreams(toolIn, toolOut, toolOut);
+					shell.run(new String[0]);
+				} catch (SQLException e) {
+					e.printStackTrace();
+				} finally {
+					toolOut.close();
+				}
+			}
+		}).start();
+		InputStreamReader reader = new InputStreamReader(testIn);
+		lineReader = new LineNumberReader(reader);
+		read("");
+		read("Welcome to H2 Shell");
+		read("Exit with");
+		read("[Enter]");
+		testOut.println("jdbc:h2:mem:");
+		read("URL");
+		testOut.println("org.h2.Driver");
+		read("Driver");
+		testOut.println("sa");
+		read("User");
+		testOut.println("sa");
+		read("Password");
+		read("Commands are case insensitive");
+		read("help or ?");
+		read("list");
+		read("maxwidth");
+		read("show");
+		read("describe");
+		read("quit or exit");
+		read("");
+		testOut.println("create table test(id int primary key, name varchar)\n;");
+		read("sql> ...>");
+		testOut.println("show public");
+		read("sql>");
+		while (read("").startsWith("INFORMATION_SCHEMA")) {
+			// ignore
+		}
+		testOut.println("insert into test values(1, 'Hello');");
+		read("sql>");
+		testOut.println("select * from test;");
+		read("sql> ID");
+		read("1 ");
+		read("(1 row,");
+		testOut.println("describe test");
+		read("sql> Column Name");
+		read("ID");
+		read("NAME");
+		testOut.println("exit");
+		read("sql>");
+	}
 
-    private String read(String expectedStart) throws IOException {
-        String line = lineReader.readLine();
-        // System.out.println(": " + line);
-        assertStartsWith(line, expectedStart);
-        return line;
-    }
+	private String read(String expectedStart) throws IOException {
+		String line = lineReader.readLine();
+		// System.out.println(": " + line);
+		assertStartsWith(line, expectedStart);
+		return line;
+	}
 
 }

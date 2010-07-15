@@ -26,61 +26,61 @@ import org.h2.util.ScriptReader;
  */
 public class RunScriptCommand extends ScriptBase {
 
-    private String charset = SysProperties.FILE_ENCODING;
+	private String charset = SysProperties.FILE_ENCODING;
 
-    public RunScriptCommand(Session session, boolean internalQuery) {
-        super(session, internalQuery);
-    }
+	public RunScriptCommand(Session session, boolean internalQuery) {
+		super(session, internalQuery);
+	}
 
-    public int update() throws SQLException {
-        session.getUser().checkAdmin();
-        int count = 0;
-        try {
-            openInput();
-            Reader reader = new InputStreamReader(in, charset);
-            ScriptReader r = new ScriptReader(new BufferedReader(reader));
-            while (true) {
-                String sql = r.readStatement();
-                if (sql == null) {
-                    break;
-                }
-                execute(sql);
-                count++;
-            }
-            reader.close();
-        } catch (IOException e) {
-            throw Message.convertIOException(e, null);
-        } finally {
-            closeIO();
-        }
-        return count;
-    }
+	public int update() throws SQLException {
+		session.getUser().checkAdmin();
+		int count = 0;
+		try {
+			openInput();
+			Reader reader = new InputStreamReader(in, charset);
+			ScriptReader r = new ScriptReader(new BufferedReader(reader));
+			while (true) {
+				String sql = r.readStatement();
+				if (sql == null) {
+					break;
+				}
+				execute(sql);
+				count++;
+			}
+			reader.close();
+		} catch (IOException e) {
+			throw Message.convertIOException(e, null);
+		} finally {
+			closeIO();
+		}
+		return count;
+	}
 
-    private void execute(String sql) throws SQLException {
-        try {
-            Prepared command = session.prepare(sql);
-            if (command.isQuery()) {
-                command.query(0);
-            } else {
-                command.update();
-            }
-            if (session.getAutoCommit()) {
-                session.commit(false);
-            }
-        } catch (SQLException e) {
-            throw Message.addSQL(e, sql);
-        } catch (RemoteException e) {
+	private void execute(String sql) throws SQLException {
+		try {
+			Prepared command = session.prepare(sql);
+			if (command.isQuery()) {
+				command.query(0);
+			} else {
+				command.update();
+			}
+			if (session.getAutoCommit()) {
+				session.commit(false);
+			}
+		} catch (SQLException e) {
+			throw Message.addSQL(e, sql);
+		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-    }
+	}
 
-    public void setCharset(String charset) {
-        this.charset = charset;
-    }
+	public void setCharset(String charset) {
+		this.charset = charset;
+	}
 
-    public LocalResult queryMeta() {
-        return null;
-    }
+	public LocalResult queryMeta() {
+		return null;
+	}
 
 }

@@ -20,38 +20,38 @@ import org.h2.message.Message;
  */
 public class CreateRole extends DefineCommand {
 
-    private String roleName;
-    private boolean ifNotExists;
+	private String roleName;
+	private boolean ifNotExists;
 
-    public CreateRole(Session session) {
-        super(session);
-    }
+	public CreateRole(Session session) {
+		super(session);
+	}
 
-    public void setIfNotExists(boolean ifNotExists) {
-        this.ifNotExists = ifNotExists;
-    }
+	public void setIfNotExists(boolean ifNotExists) {
+		this.ifNotExists = ifNotExists;
+	}
 
-    public void setRoleName(String name) {
-        this.roleName = name;
-    }
+	public void setRoleName(String name) {
+		this.roleName = name;
+	}
 
-    public int update() throws SQLException {
-        session.getUser().checkAdmin();
-        session.commit(true);
-        Database db = session.getDatabase();
-        if (db.findUser(roleName) != null) {
-            throw Message.getSQLException(ErrorCode.USER_ALREADY_EXISTS_1, roleName);
-        }
-        if (db.findRole(roleName) != null) {
-            if (ifNotExists) {
-                return 0;
-            }
-            throw Message.getSQLException(ErrorCode.ROLE_ALREADY_EXISTS_1, roleName);
-        }
-        int id = getObjectId(false, true);
-        Role role = new Role(db, id, roleName, false);
-        db.addDatabaseObject(session, role);
-        return 0;
-    }
+	public int update() throws SQLException {
+		session.getUser().checkAdmin();
+		session.commit(true);
+		Database db = session.getDatabase();
+		if (db.findUser(roleName) != null) {
+			throw Message.getSQLException(ErrorCode.USER_ALREADY_EXISTS_1, roleName);
+		}
+		if (db.findRole(roleName) != null) {
+			if (ifNotExists) {
+				return 0;
+			}
+			throw Message.getSQLException(ErrorCode.ROLE_ALREADY_EXISTS_1, roleName);
+		}
+		int id = getObjectId(false, true);
+		Role role = new Role(db, id, roleName, false);
+		db.addDatabaseObject(session, role);
+		return 0;
+	}
 
 }

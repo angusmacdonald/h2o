@@ -14,19 +14,19 @@ import org.h2.engine.Session;
  */
 public class DeallocateProcedure extends DefineCommand {
 
-    private String procedureName;
+	private String procedureName;
 
-    public DeallocateProcedure(Session session) {
-        super(session);
-    }
+	public DeallocateProcedure(Session session) {
+		super(session);
+	}
 
-    public int update() {
-        session.removeProcedure(procedureName);
-        return 0;
-    }
+	public int update() {
+		session.removeProcedure(procedureName);
+		return 0;
+	}
 
-    public void setProcedureName(String name) {
-        this.procedureName = name;
-    }
+	public void setProcedureName(String name) {
+		this.procedureName = name;
+	}
 
 }

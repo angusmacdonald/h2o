@@ -25,187 +25,187 @@ import org.h2.util.RandomUtils;
  */
 public class TestRandomSQL extends TestBase {
 
-    private int dbId;
-    private boolean showSQL;
-    private ArrayList statements;
-    private int seed;
-    private boolean exitOnError = true;
-    private Bnf bnf;
-    private int success, total;
+	private int dbId;
+	private boolean showSQL;
+	private ArrayList statements;
+	private int seed;
+	private boolean exitOnError = true;
+	private Bnf bnf;
+	private int success, total;
 
-    /**
-     * Run just this test.
-     *
-     * @param a ignored
-     */
-    public static void main(String[] a) throws Exception {
-        TestBase.createCaller().init().test();
-    }
+	/**
+	 * Run just this test.
+	 *
+	 * @param a ignored
+	 */
+	public static void main(String[] a) throws Exception {
+		TestBase.createCaller().init().test();
+	}
 
-    private void processException(String sql, SQLException e) {
-        if (e.getSQLState().equals("HY000")) {
-            TestBase.logError("new TestRandomSQL().init(test).testCase(" + seed + ");  // FAIL: " + e.toString() + " sql: " + sql, e);
-            if (exitOnError) {
-                System.exit(0);
-            }
-        }
-    }
+	private void processException(String sql, SQLException e) {
+		if (e.getSQLState().equals("HY000")) {
+			TestBase.logError("new TestRandomSQL().init(test).testCase(" + seed + ");  // FAIL: " + e.toString() + " sql: " + sql, e);
+			if (exitOnError) {
+				System.exit(0);
+			}
+		}
+	}
 
-    private String getDatabaseName() {
-        if (config.big) {
-            return "dataRandomSQL/randomSql" + dbId;
-        }
-        return "memFS:/randomSql" + dbId;
-        // return "dataRandomSQL/randomSql" + dbId+";TRACE_LEVEL_FILE=3";
-    }
+	private String getDatabaseName() {
+		if (config.big) {
+			return "dataRandomSQL/randomSql" + dbId;
+		}
+		return "memFS:/randomSql" + dbId;
+		// return "dataRandomSQL/randomSql" + dbId+";TRACE_LEVEL_FILE=3";
+	}
 
-    private Connection connect() throws SQLException {
-        while (true) {
-            try {
-                return getConnection(getDatabaseName());
-            } catch (SQLException e) {
-                dbId--;
-                try {
-                    deleteDb();
-                } catch (Exception e2) {
-                    // ignore
-                }
-                dbId++;
-                try {
-                    deleteDb();
-                } catch (Exception e2) {
-                    // ignore
-                }
-                dbId++;
-                try {
-                    deleteDb();
-                } catch (SQLException e2) {
-                    dbId++;
-                    deleteDb();
-                }
-            }
-        }
+	private Connection connect() throws SQLException {
+		while (true) {
+			try {
+				return getConnection(getDatabaseName());
+			} catch (SQLException e) {
+				dbId--;
+				try {
+					deleteDb();
+				} catch (Exception e2) {
+					// ignore
+				}
+				dbId++;
+				try {
+					deleteDb();
+				} catch (Exception e2) {
+					// ignore
+				}
+				dbId++;
+				try {
+					deleteDb();
+				} catch (SQLException e2) {
+					dbId++;
+					deleteDb();
+				}
+			}
+		}
 
-    }
+	}
 
-    private void deleteDb() throws SQLException {
-        String name = getDatabaseName();
-        if (name.startsWith(FileSystem.PREFIX_MEMORY)) {
-            DeleteDbFiles.execute("memFS:/", name, true);
-        } else {
-            DeleteDbFiles.execute(baseDir, name, true);
-        }
-    }
+	private void deleteDb() throws SQLException {
+		String name = getDatabaseName();
+		if (name.startsWith(FileSystem.PREFIX_MEMORY)) {
+			DeleteDbFiles.execute("memFS:/", name, true);
+		} else {
+			DeleteDbFiles.execute(baseDir, name, true);
+		}
+	}
 
-    public TestBase init(TestAll conf) throws Exception {
-        super.init(conf);
-        bnf = Bnf.getInstance(null);
-        bnf.linkStatements();
-        statements = bnf.getStatements();
+	public TestBase init(TestAll conf) throws Exception {
+		super.init(conf);
+		bnf = Bnf.getInstance(null);
+		bnf.linkStatements();
+		statements = bnf.getStatements();
 
-        // go backwards so we can append at the end
-        for (int i = statements.size() - 1; i >= 0; i--) {
-            RuleHead r = (RuleHead) statements.get(i);
-            String topic = r.getTopic();
-            int weight = 0;
-            if (topic.equals("select")) {
-                weight = 10;
-            } else if (topic.equals("createtable")) {
-                weight = 20;
-            } else if (topic.equals("insert")) {
-                weight = 5;
-            } else if (topic.startsWith("update")) {
-                weight = 3;
-            } else if (topic.startsWith("delete")) {
-                weight = 3;
-            } else if (topic.startsWith("drop")) {
-                weight = 2;
-            }
-            if (showSQL) {
-                System.out.println(r.getTopic());
-            }
-            for (int j = 0; j < weight; j++) {
-                statements.add(r);
-            }
-        }
-        return this;
-    }
+		// go backwards so we can append at the end
+		for (int i = statements.size() - 1; i >= 0; i--) {
+			RuleHead r = (RuleHead) statements.get(i);
+			String topic = r.getTopic();
+			int weight = 0;
+			if (topic.equals("select")) {
+				weight = 10;
+			} else if (topic.equals("createtable")) {
+				weight = 20;
+			} else if (topic.equals("insert")) {
+				weight = 5;
+			} else if (topic.startsWith("update")) {
+				weight = 3;
+			} else if (topic.startsWith("delete")) {
+				weight = 3;
+			} else if (topic.startsWith("drop")) {
+				weight = 2;
+			}
+			if (showSQL) {
+				System.out.println(r.getTopic());
+			}
+			for (int j = 0; j < weight; j++) {
+				statements.add(r);
+			}
+		}
+		return this;
+	}
 
-    private void testWithSeed(Bnf config) throws SQLException {
-        config.getRandom().setSeed(seed);
-        Connection conn = null;
-        try {
-            conn = connect();
-        } catch (SQLException e) {
-            processException("connect", e);
-            conn = connect();
-        }
-        Statement stat = conn.createStatement();
-        for (int i = 0; i < statements.size(); i++) {
-            int sid = config.getRandom().nextInt(statements.size());
-            RuleHead r = (RuleHead) statements.get(sid);
-            String rand = r.getRule().random(config, 0).trim();
-            if (rand.length() > 0) {
-                try {
-                    Thread.yield();
-                    if (rand.indexOf("TRACE_LEVEL_") < 0 && rand.indexOf("COLLATION") < 0
-                            && rand.indexOf("SCRIPT ") < 0 && rand.indexOf("CSVWRITE") < 0
-                            && rand.indexOf("BACKUP") < 0) {
-                        if (showSQL) {
-                            System.out.println(i + "  " + rand);
-                        }
-                        total++;
-                        if (total % 100 == 0) {
-                            printTime("total: " + total + " success: " + (100 * success / total) + "%");
-                        }
-                        stat.execute(rand);
-                        success++;
-                    }
-                } catch (SQLException e) {
-                    processException(rand, e);
-                }
-            }
-        }
-        try {
-            conn.close();
-        } catch (SQLException e) {
-            processException("conn.close", e);
-        }
-    }
+	private void testWithSeed(Bnf config) throws SQLException {
+		config.getRandom().setSeed(seed);
+		Connection conn = null;
+		try {
+			conn = connect();
+		} catch (SQLException e) {
+			processException("connect", e);
+			conn = connect();
+		}
+		Statement stat = conn.createStatement();
+		for (int i = 0; i < statements.size(); i++) {
+			int sid = config.getRandom().nextInt(statements.size());
+			RuleHead r = (RuleHead) statements.get(sid);
+			String rand = r.getRule().random(config, 0).trim();
+			if (rand.length() > 0) {
+				try {
+					Thread.yield();
+					if (rand.indexOf("TRACE_LEVEL_") < 0 && rand.indexOf("COLLATION") < 0
+							&& rand.indexOf("SCRIPT ") < 0 && rand.indexOf("CSVWRITE") < 0
+							&& rand.indexOf("BACKUP") < 0) {
+						if (showSQL) {
+							System.out.println(i + "  " + rand);
+						}
+						total++;
+						if (total % 100 == 0) {
+							printTime("total: " + total + " success: " + (100 * success / total) + "%");
+						}
+						stat.execute(rand);
+						success++;
+					}
+				} catch (SQLException e) {
+					processException(rand, e);
+				}
+			}
+		}
+		try {
+			conn.close();
+		} catch (SQLException e) {
+			processException("conn.close", e);
+		}
+	}
 
-    public void testCase(int i) throws SQLException {
-        String old = SysProperties.getScriptDirectory();
-        try {
-            SysProperties.setScriptDirectory("dataScript/");
-            seed = i;
-            printTime("seed: " + seed);
-            try {
-                deleteDb();
-            } catch (SQLException e) {
-                processException("deleteDb", e);
-            }
-            testWithSeed(bnf);
-        } finally {
-            SysProperties.setScriptDirectory(old);
-        }
-        try {
-            deleteDb();
-        } catch (SQLException e) {
-            processException("deleteDb", e);
-        }
-    }
+	public void testCase(int i) throws SQLException {
+		String old = SysProperties.getScriptDirectory();
+		try {
+			SysProperties.setScriptDirectory("dataScript/");
+			seed = i;
+			printTime("seed: " + seed);
+			try {
+				deleteDb();
+			} catch (SQLException e) {
+				processException("deleteDb", e);
+			}
+			testWithSeed(bnf);
+		} finally {
+			SysProperties.setScriptDirectory(old);
+		}
+		try {
+			deleteDb();
+		} catch (SQLException e) {
+			processException("deleteDb", e);
+		}
+	}
 
-    public void test() throws SQLException {
-        if (config.networked) {
-            return;
-        }
-        int len = getSize(2, 6);
-        exitOnError = false;
-        showSQL = false;
-        for (int a = 0; a < len; a++) {
-            int seed = RandomUtils.nextInt(Integer.MAX_VALUE);
-            testCase(seed);
-        }
-    }
+	public void test() throws SQLException {
+		if (config.networked) {
+			return;
+		}
+		int len = getSize(2, 6);
+		exitOnError = false;
+		showSQL = false;
+		for (int a = 0; a < len; a++) {
+			int seed = RandomUtils.nextInt(Integer.MAX_VALUE);
+			testCase(seed);
+		}
+	}
 
 }

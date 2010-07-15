@@ -29,60 +29,60 @@ import org.h2.util.StringUtils;
  * An argument of a statement.
  */
 class Arg {
-    private Class clazz;
-    private Object obj;
-    private Statement stat;
+	private Class clazz;
+	private Object obj;
+	private Statement stat;
 
-    Arg(Class clazz, Object obj) {
-        this.clazz = clazz;
-        this.obj = obj;
-    }
+	Arg(Class clazz, Object obj) {
+		this.clazz = clazz;
+		this.obj = obj;
+	}
 
-    Arg(Statement stat) {
-        this.stat = stat;
-    }
+	Arg(Statement stat) {
+		this.stat = stat;
+	}
 
-    public String toString() {
-        if (stat != null) {
-            return stat.toString();
-        }
-        return quote(clazz, getValue());
-    }
+	public String toString() {
+		if (stat != null) {
+			return stat.toString();
+		}
+		return quote(clazz, getValue());
+	}
 
-    /**
-     * Calculate the value if this is a statement.
-     */
-    void execute() throws Exception {
-        if (stat != null) {
-            obj = stat.execute();
-            clazz = stat.getReturnClass();
-            stat = null;
-        }
-    }
+	/**
+	 * Calculate the value if this is a statement.
+	 */
+	 void execute() throws Exception {
+		 if (stat != null) {
+			 obj = stat.execute();
+			 clazz = stat.getReturnClass();
+			 stat = null;
+		 }
+	 }
 
-    Class getValueClass() {
-        return clazz;
-    }
+	 Class getValueClass() {
+		 return clazz;
+	 }
 
-    Object getValue() {
-        return obj;
-    }
+	 Object getValue() {
+		 return obj;
+	 }
 
-    private String quote(Class clazz, Object value) {
-        if (value == null) {
-            return null;
-        } else if (clazz == String.class) {
-            return StringUtils.quoteJavaString(value.toString());
-        } else if (clazz == BigDecimal.class) {
-            return "new BigDecimal(\"" + value.toString() + "\")";
-        } else if (clazz.isArray()) {
-            if (clazz == String[].class) {
-                return StringUtils.quoteJavaStringArray((String[]) value);
-            } else if (clazz == int[].class) {
-                return StringUtils.quoteJavaIntArray((int[]) value);
-            }
-        }
-        return value.toString();
-    }
+	 private String quote(Class clazz, Object value) {
+		 if (value == null) {
+			 return null;
+		 } else if (clazz == String.class) {
+			 return StringUtils.quoteJavaString(value.toString());
+		 } else if (clazz == BigDecimal.class) {
+			 return "new BigDecimal(\"" + value.toString() + "\")";
+		 } else if (clazz.isArray()) {
+			 if (clazz == String[].class) {
+				 return StringUtils.quoteJavaStringArray((String[]) value);
+			 } else if (clazz == int[].class) {
+				 return StringUtils.quoteJavaIntArray((int[]) value);
+			 }
+		 }
+		 return value.toString();
+	 }
 
 }

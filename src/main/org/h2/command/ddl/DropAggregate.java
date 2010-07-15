@@ -20,34 +20,34 @@ import org.h2.message.Message;
  */
 public class DropAggregate extends DefineCommand {
 
-    private String name;
-    private boolean ifExists;
+	private String name;
+	private boolean ifExists;
 
-    public DropAggregate(Session session) {
-        super(session);
-    }
+	public DropAggregate(Session session) {
+		super(session);
+	}
 
-    public int update() throws SQLException {
-        session.getUser().checkAdmin();
-        session.commit(true);
-        Database db = session.getDatabase();
-        UserAggregate aggregate = db.findAggregate(name);
-        if (aggregate == null) {
-            if (!ifExists) {
-                throw Message.getSQLException(ErrorCode.AGGREGATE_NOT_FOUND_1, name);
-            }
-        } else {
-            db.removeDatabaseObject(session, aggregate);
-        }
-        return 0;
-    }
+	public int update() throws SQLException {
+		session.getUser().checkAdmin();
+		session.commit(true);
+		Database db = session.getDatabase();
+		UserAggregate aggregate = db.findAggregate(name);
+		if (aggregate == null) {
+			if (!ifExists) {
+				throw Message.getSQLException(ErrorCode.AGGREGATE_NOT_FOUND_1, name);
+			}
+		} else {
+			db.removeDatabaseObject(session, aggregate);
+		}
+		return 0;
+	}
 
-    public void setName(String name) {
-        this.name = name;
-    }
+	public void setName(String name) {
+		this.name = name;
+	}
 
-    public void setIfExists(boolean ifExists) {
-        this.ifExists = ifExists;
-    }
+	public void setIfExists(boolean ifExists) {
+		this.ifExists = ifExists;
+	}
 
 }

@@ -212,11 +212,11 @@ public class Database implements DataHandler {
 
 	private User h2oSystemUser;
 	private Session h2oSystemSession;
-	
+
 	private Settings databaseSettings;
 
 	private TransactionNameGenerator transactionNameGenerator;
-	
+
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
 
 		DatabaseURL localMachineLocation = DatabaseURL.parseURL(ci.getOriginalURL());
@@ -230,7 +230,7 @@ public class Database implements DataHandler {
 		Constants.IS_TESTING_CREATETABLE_FAILURE = false;
 
 		this.transactionNameGenerator = new TransactionNameGenerator(localMachineLocation);
-		
+
 		this.compareMode = new CompareMode(null, null, 0);
 
 		systemTableRef = new SystemTableReference(this);
@@ -293,20 +293,20 @@ public class Database implements DataHandler {
 	private void setDiagnosticLevel(DatabaseURL localMachineLocation) {
 		LocalH2OProperties databaseProperties = new LocalH2OProperties(localMachineLocation);
 		databaseProperties.loadProperties();
-		
+
 		String diagnosticLevel = databaseProperties.getProperty("diagnosticLevel");
-		
+
 		Diagnostic.setLevel((DiagnosticLevel.FULL));
-				
+
 		if (diagnosticLevel != null){
-			
+
 			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Setting diagnostic level to " + diagnosticLevel);
-			
+
 			if (diagnosticLevel.equals("FINAL")) Diagnostic.setLevel(DiagnosticLevel.FINAL);
 			else if (diagnosticLevel.equals("NONE")) Diagnostic.setLevel(DiagnosticLevel.NONE);
 			else if (diagnosticLevel.equals("FULL")) Diagnostic.setLevel(DiagnosticLevel.FULL);
 		}
-		
+
 		Diagnostic.setTimestampFlag(true);
 		Diagnostic.setTimestampFormat(new SimpleDateFormat("HH:mm:ss:SSS "));
 		Diagnostic.setTimestampDelimiterFlag(false);
@@ -713,13 +713,13 @@ public class Database implements DataHandler {
 		 * H2O STARTUP CODE FOR System Table, TABLE INSTANITATION
 		 */
 		if (Constants.IS_H2O && !isManagementDB()){ //don't run this code with the TCP server management DB
-			
+
 			LocalH2OProperties localSettings = new LocalH2OProperties(localMachineLocation);
 			localSettings.loadProperties();
 			H2OLocatorInterface locatorInterface = databaseRemote.getLocatorServerReference(localSettings);
 
 			databaseSettings = new Settings(localSettings, locatorInterface.getDescriptor());
-			
+
 			databaseRemote.connectToDatabaseSystem(h2oSystemSession, databaseSettings); //systemSession
 		}
 

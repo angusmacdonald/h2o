@@ -1,3 +1,20 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.h2o.util.locator;
 
 import java.io.BufferedReader;
@@ -5,8 +22,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.Set;
-
 import org.h2.h2o.util.locator.messages.LockRequestResponse;
 import org.h2.h2o.util.locator.messages.ReplicaLocationsResponse;
 
@@ -37,17 +52,17 @@ public class LocatorWorker extends Thread {
 	 * Service the current incoming connection.
 	 */
 	public void run(){
-		
-		
+
+
 		try {
 			try { //ends with 'finally' to close the socket connection.
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Created new LocatorConnectionHandler thread.");
 				socket.setSoTimeout(5000);
-				
+
 				//Get single-line request from the client.
-				
+
 				BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-				
+
 				String requestLine="", request = "";
 				String requestType = requestLine = br.readLine(); //The first line always specifies the type of the request being made.
 
@@ -60,7 +75,7 @@ public class LocatorWorker extends Thread {
 
 					request += requestLine + SEPARATOR;
 				}
-				
+
 				if (request.length() > SEPARATOR.length()){
 					request = request.substring(0, request.length() - SEPARATOR.length());
 				}
@@ -90,7 +105,7 @@ public class LocatorWorker extends Thread {
 				socket.close();
 			}
 		} catch (IOException e) {
-			
+
 		}
 	}
 

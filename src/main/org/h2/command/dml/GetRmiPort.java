@@ -1,16 +1,13 @@
 package org.h2.command.dml;
 
 import java.rmi.RemoteException;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.h2.command.Prepared;
 import org.h2.command.ddl.SchemaCommand;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.h2o.manager.PersistentSystemTable;
-import org.h2.result.LocalResult;
 import org.h2.schema.Schema;
 import org.h2.table.TableLinkConnection;
 
@@ -29,7 +26,7 @@ public class GetRmiPort extends SchemaCommand {
 	 */
 	public GetRmiPort(Session session, Schema schema, String databaseLocation) {
 		super(session, schema);
-		
+
 		this.databaseLocation = databaseLocation;
 	}
 
@@ -41,7 +38,7 @@ public class GetRmiPort extends SchemaCommand {
 		return false;
 	}
 
-	
+
 	/* (non-Javadoc)
 	 * @see org.h2.command.Prepared#update()
 	 */
@@ -51,7 +48,7 @@ public class GetRmiPort extends SchemaCommand {
 			/*
 			 * Return the RMI port on which this database is running.
 			 */
-			
+
 			return super.session.getDatabase().getURL().getRMIPort();
 		} else {
 			/*
@@ -66,7 +63,7 @@ public class GetRmiPort extends SchemaCommand {
 	 */
 	@Override
 	public int update(String transactionName) throws SQLException,
-			RemoteException {
+	RemoteException {
 		return update();
 	}
 
@@ -88,10 +85,10 @@ public class GetRmiPort extends SchemaCommand {
 		synchronized (conn) {
 			try {
 				Statement stat = conn.getConnection().createStatement();
-				
+
 				stat.execute(query);
 				result = stat.getUpdateCount();
-				
+
 			} catch (SQLException e) {
 				conn.close();
 				conn = null;

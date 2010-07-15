@@ -28,55 +28,55 @@ import org.h2.value.Value;
  */
 public class SelectListColumnResolver implements ColumnResolver {
 
-    private Select select;
-    private Expression[] expressions;
-    private Column[] columns;
+	private Select select;
+	private Expression[] expressions;
+	private Column[] columns;
 
-    SelectListColumnResolver(Select select) {
-        this.select = select;
-        int columnCount = select.getColumnCount();
-        columns = new Column[columnCount];
-        expressions = new Expression[columnCount];
-        ObjectArray columnList = select.getExpressions();
-        for (int i = 0; i < columnCount; i++) {
-            Expression expr = (Expression) columnList.get(i);
-            Column column = new Column(expr.getAlias(), Value.NULL);
-            column.setTable(null, i);
-            columns[i] = column;
-            expressions[i] = expr.getNonAliasExpression();
-        }
-    }
+	SelectListColumnResolver(Select select) {
+		this.select = select;
+		int columnCount = select.getColumnCount();
+		columns = new Column[columnCount];
+		expressions = new Expression[columnCount];
+		ObjectArray columnList = select.getExpressions();
+		for (int i = 0; i < columnCount; i++) {
+			Expression expr = (Expression) columnList.get(i);
+			Column column = new Column(expr.getAlias(), Value.NULL);
+			column.setTable(null, i);
+			columns[i] = column;
+			expressions[i] = expr.getNonAliasExpression();
+		}
+	}
 
-    public Column[] getColumns() {
-        return columns;
-    }
+	public Column[] getColumns() {
+		return columns;
+	}
 
-    public String getSchemaName() {
-        return null;
-    }
+	public String getSchemaName() {
+		return null;
+	}
 
-    public Select getSelect() {
-        return select;
-    }
+	public Select getSelect() {
+		return select;
+	}
 
-    public Column[] getSystemColumns() {
-        return null;
-    }
+	public Column[] getSystemColumns() {
+		return null;
+	}
 
-    public String getTableAlias() {
-        return null;
-    }
+	public String getTableAlias() {
+		return null;
+	}
 
-    public TableFilter getTableFilter() {
-        return null;
-    }
+	public TableFilter getTableFilter() {
+		return null;
+	}
 
-    public Value getValue(Column column) throws SQLException {
-        return null;
-    }
+	public Value getValue(Column column) throws SQLException {
+		return null;
+	}
 
-    public Expression optimize(ExpressionColumn expressionColumn, Column column) {
-        return expressions[column.getColumnId()];
-    }
+	public Expression optimize(ExpressionColumn expressionColumn, Column column) {
+		return expressions[column.getColumnId()];
+	}
 
 }

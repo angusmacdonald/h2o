@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
  * Version 1.0, and under the Eclipse Public License, Version 1.0
  * (http://h2database.com/html/license.html).
@@ -7,7 +7,6 @@
 package org.h2.test.h2o.h2;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -27,13 +26,13 @@ import org.junit.Test;
 public class TestBigDb extends H2TestBase{
 
 	protected LocatorServer ls;
-	
+
 	@Before
 	public void setUp() throws SQLException{
 		ls = new LocatorServer(29999, "junitLocator");
 		ls.createNewLocatorFile();
 		ls.start();
-		
+
 		config = new TestAll();
 
 		if (config.memory) {
@@ -42,21 +41,21 @@ public class TestBigDb extends H2TestBase{
 		if (config.networked && config.big) {
 			return;
 		}
-		
+
 		DeleteDbFiles.execute("data\\test\\", "bigDb", true);
 	}
-	
+
 	@After
 	public void tearDown() throws SQLException{
 		DeleteDbFiles.execute("data\\test\\", "bigDb", true);
 		ls.setRunning(false);
 		while (!ls.isFinished()){};
-		
+
 	}
 
 	@Test
 	public void testLargeTable() throws SQLException {
-		
+
 		Connection conn = getConnection("bigDb");
 		Statement stat = conn.createStatement();
 		stat.execute("CREATE CACHED TABLE TEST(" + "M_CODE CHAR(1) DEFAULT CAST(RAND()*9 AS INT),"

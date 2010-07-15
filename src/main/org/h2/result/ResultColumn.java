@@ -15,92 +15,92 @@ import org.h2.value.Transfer;
  */
 public class ResultColumn {
 
-    /**
-     * The column alias.
-     */
-    String alias;
+	/**
+	 * The column alias.
+	 */
+	String alias;
 
-    /**
-     * The schema name or null.
-     */
-    String schemaName;
+	/**
+	 * The schema name or null.
+	 */
+	String schemaName;
 
-    /**
-     * The table name or null.
-     */
-    String tableName;
+	/**
+	 * The table name or null.
+	 */
+	String tableName;
 
-    /**
-     * The column name or null.
-     */
-    String columnName;
+	/**
+	 * The column name or null.
+	 */
+	String columnName;
 
-    /**
-     * The value type of this column.
-     */
-    int columnType;
+	/**
+	 * The value type of this column.
+	 */
+	int columnType;
 
-    /**
-     * The precision.
-     */
-    long precision;
+	/**
+	 * The precision.
+	 */
+	long precision;
 
-    /**
-     * The scale.
-     */
-    int scale;
+	/**
+	 * The scale.
+	 */
+	int scale;
 
-    /**
-     * The expected display size.
-     */
-    int displaySize;
+	/**
+	 * The expected display size.
+	 */
+	int displaySize;
 
-    /**
-     * True if this is an autoincrement column.
-     */
-    boolean autoIncrement;
+	/**
+	 * True if this is an autoincrement column.
+	 */
+	boolean autoIncrement;
 
-    /**
-     * True if this column is nullable.
-     */
-    int nullable;
+	/**
+	 * True if this column is nullable.
+	 */
+	int nullable;
 
-    /**
-     * Read an object from the given transfer object.
-     *
-     * @param in the object from where to read the data
-     */
-    ResultColumn(Transfer in) throws IOException {
-        alias = in.readString();
-        schemaName = in.readString();
-        tableName = in.readString();
-        columnName = in.readString();
-        columnType = in.readInt();
-        precision = in.readLong();
-        scale = in.readInt();
-        displaySize = in.readInt();
-        autoIncrement = in.readBoolean();
-        nullable = in.readInt();
-    }
+	/**
+	 * Read an object from the given transfer object.
+	 *
+	 * @param in the object from where to read the data
+	 */
+	ResultColumn(Transfer in) throws IOException {
+		alias = in.readString();
+		schemaName = in.readString();
+		tableName = in.readString();
+		columnName = in.readString();
+		columnType = in.readInt();
+		precision = in.readLong();
+		scale = in.readInt();
+		displaySize = in.readInt();
+		autoIncrement = in.readBoolean();
+		nullable = in.readInt();
+	}
 
-    /**
-     * Write a result column to the given output.
-     *
-     * @param out the object to where to write the data
-     * @param result the result
-     * @param i the column index
-     */
-    public static void writeColumn(Transfer out, ResultInterface result, int i) throws IOException {
-        out.writeString(result.getAlias(i));
-        out.writeString(result.getSchemaName(i));
-        out.writeString(result.getTableName(i));
-        out.writeString(result.getColumnName(i));
-        out.writeInt(result.getColumnType(i));
-        out.writeLong(result.getColumnPrecision(i));
-        out.writeInt(result.getColumnScale(i));
-        out.writeInt(result.getDisplaySize(i));
-        out.writeBoolean(result.isAutoIncrement(i));
-        out.writeInt(result.getNullable(i));
-    }
+	/**
+	 * Write a result column to the given output.
+	 *
+	 * @param out the object to where to write the data
+	 * @param result the result
+	 * @param i the column index
+	 */
+	public static void writeColumn(Transfer out, ResultInterface result, int i) throws IOException {
+		out.writeString(result.getAlias(i));
+		out.writeString(result.getSchemaName(i));
+		out.writeString(result.getTableName(i));
+		out.writeString(result.getColumnName(i));
+		out.writeInt(result.getColumnType(i));
+		out.writeLong(result.getColumnPrecision(i));
+		out.writeInt(result.getColumnScale(i));
+		out.writeInt(result.getDisplaySize(i));
+		out.writeBoolean(result.isAutoIncrement(i));
+		out.writeInt(result.getNullable(i));
+	}
 
 }

@@ -114,8 +114,8 @@ public class Schema extends DbObjectBase {
 		while (tablesAndViews != null && tablesAndViews.size() > 0) {
 			ReplicaSet replicaSet = (ReplicaSet) tablesAndViews.values().toArray()[0];
 			Set<Table> tables = replicaSet.getAllCopies();
-			Table[] array = (Table[])tables.toArray(new Table[0]);
-			
+			Table[] array = tables.toArray(new Table[0]);
+
 			for (int i=0; i<array.length; i++){
 				Table table = array[i];
 				database.removeSchemaObject(session, table);
@@ -230,13 +230,13 @@ public class Schema extends DbObjectBase {
 			ReplicaSet replicaSet = tablesAndViews.get(tableName);
 			replicaSet.checkRename();
 			tablesAndViews.remove(tableName);
-			
+
 			freeUniqueName(tableName);
-			
+
 			replicaSet.rename(newName);
-			
+
 			tablesAndViews.put(newName, replicaSet);
-			
+
 		}  else {
 			obj.checkRename();
 			map.remove(obj.getName());
@@ -264,21 +264,21 @@ public class Schema extends DbObjectBase {
 		if (replicaSet == null && session != null) {
 			table = session.findLocalTempTable(name);
 		} else if (replicaSet != null){
-			
+
 			if ((replicaSet.size() == 1 && !locale.isStrict()) || locale == LocationPreference.NO_PREFERENCE){ //XXX more advanced logic to choose replica would go here.
 				table = replicaSet.getACopy();
 			} else if (locale == LocationPreference.LOCAL || locale == LocationPreference.LOCAL_STRICT){
-				
+
 				table = replicaSet.getLocalCopy(); //XXX what if no local copy exists?
 			} else if (locale == LocationPreference.PRIMARY || locale == LocationPreference.PRIMARY_STRICT){
 				table = replicaSet.getPrimaryCopy();
 			}
-			
+
 		}
 		return table;
 	}
 
-	
+
 	/**
 	 * Try to find a LOCAL VERSION of a table or view with this name. This method returns null if
 	 * no object with this name exists. Local temporary tables are also
@@ -457,20 +457,20 @@ public class Schema extends DbObjectBase {
 			table = tables.getACopy();
 		}
 
-//		if (table == null) {
-//			//System.err.println("Schema.getTableOrView: Table '" + name + "' not found.");
-//			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, name);
-//		}
+		//		if (table == null) {
+		//			//System.err.println("Schema.getTableOrView: Table '" + name + "' not found.");
+		//			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, name);
+		//		}
 		return table;
 	}
-	
+
 	public ReplicaSet getTablesOrViews(Session session, String name) throws SQLException {
 		ReplicaSet tables = tablesAndViews.get(name);
 
-//		if (tables == null) {
-//			//System.out.println("Schema.getTablesOrViews: Table '" + name + "' not found.");
-//			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, name);
-//		}
+		//		if (tables == null) {
+		//			//System.out.println("Schema.getTablesOrViews: Table '" + name + "' not found.");
+		//			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, name);
+		//		}
 		return tables;
 	}
 

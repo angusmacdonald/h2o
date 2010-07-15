@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
  * Version 1.0, and under the Eclipse Public License, Version 1.0
  * (http://h2database.com/html/license.html).
@@ -13,12 +13,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-
 import org.h2.h2o.util.locator.LocatorServer;
-import org.h2.store.FileLister;
 import org.h2.test.TestAll;
-import org.h2.test.TestBase;
 import org.h2.tools.DeleteDbFiles;
 import org.junit.After;
 import org.junit.Before;
@@ -36,174 +32,174 @@ public class TestBigResult extends H2TestBase {
 		ls = new LocatorServer(29999, "junitLocator");
 		ls.createNewLocatorFile();
 		ls.start();
-		
+
 		config = new TestAll();
-		
+
 		if (config.memory) {
-            return;
-        }
-    }
+			return;
+		}
+	}
 
 	@After
 	public void tearDown() throws SQLException{
 		DeleteDbFiles.execute("data\\test\\", "bigResult", true);
 		ls.setRunning(false);
 		while (!ls.isFinished()){};
-		
+
 	}
-	
+
 	@Test
 	public void testLargeSubquery() throws SQLException {
-        deleteDb("bigResult");
-        Connection conn = getConnection("bigResult");
-        Statement stat = conn.createStatement();
-        int len = getSize(1000, 4000);
-        stat.execute("SET MAX_MEMORY_ROWS " + (len / 10));
-        stat.execute("CREATE TABLE RECOVERY(TRANSACTION_ID INT, SQL_STMT VARCHAR)");
-        stat.execute("INSERT INTO RECOVERY " +
-                "SELECT X, CASE MOD(X, 2) WHEN 0 THEN 'commit' ELSE 'begin' END " +
-                "FROM SYSTEM_RANGE(1, "+len+")");
-        ResultSet rs = stat.executeQuery("SELECT * FROM RECOVERY WHERE SQL_STMT LIKE 'begin%' AND " +
-                "TRANSACTION_ID NOT IN(SELECT TRANSACTION_ID FROM RECOVERY " +
-                "WHERE SQL_STMT='commit' OR SQL_STMT='rollback')");
-        int count = 0, last = 1;
-        while (rs.next()) {
-            assertEquals(last, rs.getInt(1));
-            last += 2;
-            count++;
-        }
-        assertEquals(len / 2, count);
-        conn.close();
-    }
+		deleteDb("bigResult");
+		Connection conn = getConnection("bigResult");
+		Statement stat = conn.createStatement();
+		int len = getSize(1000, 4000);
+		stat.execute("SET MAX_MEMORY_ROWS " + (len / 10));
+		stat.execute("CREATE TABLE RECOVERY(TRANSACTION_ID INT, SQL_STMT VARCHAR)");
+		stat.execute("INSERT INTO RECOVERY " +
+				"SELECT X, CASE MOD(X, 2) WHEN 0 THEN 'commit' ELSE 'begin' END " +
+				"FROM SYSTEM_RANGE(1, "+len+")");
+		ResultSet rs = stat.executeQuery("SELECT * FROM RECOVERY WHERE SQL_STMT LIKE 'begin%' AND " +
+				"TRANSACTION_ID NOT IN(SELECT TRANSACTION_ID FROM RECOVERY " +
+		"WHERE SQL_STMT='commit' OR SQL_STMT='rollback')");
+		int count = 0, last = 1;
+		while (rs.next()) {
+			assertEquals(last, rs.getInt(1));
+			last += 2;
+			count++;
+		}
+		assertEquals(len / 2, count);
+		conn.close();
+	}
 
 	@Test
 	public void testLargeUpdateDelete() throws SQLException {
-        deleteDb("bigResult");
-        Connection conn = getConnection("bigResult");
-        Statement stat = conn.createStatement();
-        int len = getSize(10000, 100000);
-        stat.execute("DROP ALL OBJECTS;");
-        stat.execute("SET MAX_OPERATION_MEMORY 4096");
-        stat.execute("CREATE TABLE TEST AS SELECT * FROM SYSTEM_RANGE(1, " + len + ")");
-        stat.execute("UPDATE TEST SET X=X+1");
-        stat.execute("DELETE FROM TEST");
-        conn.close();
-    }
+		deleteDb("bigResult");
+		Connection conn = getConnection("bigResult");
+		Statement stat = conn.createStatement();
+		int len = getSize(10000, 100000);
+		stat.execute("DROP ALL OBJECTS;");
+		stat.execute("SET MAX_OPERATION_MEMORY 4096");
+		stat.execute("CREATE TABLE TEST AS SELECT * FROM SYSTEM_RANGE(1, " + len + ")");
+		stat.execute("UPDATE TEST SET X=X+1");
+		stat.execute("DELETE FROM TEST");
+		conn.close();
+	}
 
 	@Test
 	public void testLimitBufferedResult() throws SQLException {
-        deleteDb("bigResult");
-        Connection conn = getConnection("bigResult");
-        Statement stat = conn.createStatement();
-        stat.execute("DROP TABLE IF EXISTS TEST");
-        stat.execute("CREATE TABLE TEST(ID INT)");
-        for (int i = 0; i < 200; i++) {
-            stat.execute("INSERT INTO TEST(ID) VALUES(" + i + ")");
-        }
-        stat.execute("SET MAX_MEMORY_ROWS 100");
-        ResultSet rs;
-        rs = stat.executeQuery("select id from test order by id limit 10 offset 85");
-        for (int i = 85; rs.next(); i++) {
-            assertEquals(i, rs.getInt(1));
-        }
-        rs = stat.executeQuery("select id from test order by id limit 10 offset 95");
-        for (int i = 95; rs.next(); i++) {
-            assertEquals(i, rs.getInt(1));
-        }
-        rs = stat.executeQuery("select id from test order by id limit 10 offset 105");
-        for (int i = 105; rs.next(); i++) {
-            assertEquals(i, rs.getInt(1));
-        }
-        conn.close();
-    }
+		deleteDb("bigResult");
+		Connection conn = getConnection("bigResult");
+		Statement stat = conn.createStatement();
+		stat.execute("DROP TABLE IF EXISTS TEST");
+		stat.execute("CREATE TABLE TEST(ID INT)");
+		for (int i = 0; i < 200; i++) {
+			stat.execute("INSERT INTO TEST(ID) VALUES(" + i + ")");
+		}
+		stat.execute("SET MAX_MEMORY_ROWS 100");
+		ResultSet rs;
+		rs = stat.executeQuery("select id from test order by id limit 10 offset 85");
+		for (int i = 85; rs.next(); i++) {
+			assertEquals(i, rs.getInt(1));
+		}
+		rs = stat.executeQuery("select id from test order by id limit 10 offset 95");
+		for (int i = 95; rs.next(); i++) {
+			assertEquals(i, rs.getInt(1));
+		}
+		rs = stat.executeQuery("select id from test order by id limit 10 offset 105");
+		for (int i = 105; rs.next(); i++) {
+			assertEquals(i, rs.getInt(1));
+		}
+		conn.close();
+	}
 
 	@Test
-    public void testOrderGroup() throws SQLException {
-        deleteDb("bigResult");
-        Connection conn = getConnection("bigResult");
-        Statement stat = conn.createStatement();
-        stat.execute("DROP TABLE IF EXISTS TEST");
-        stat.execute("CREATE TABLE TEST(" + "ID INT PRIMARY KEY, " + "Name VARCHAR(255), " + "FirstName VARCHAR(255), "
-                + "Points INT," + "LicenseID INT)");
-        int len = getSize(10, 5000);
-        PreparedStatement prep = conn.prepareStatement("INSERT INTO TEST VALUES(?, ?, ?, ?, ?)");
-        for (int i = 0; i < len; i++) {
-            prep.setInt(1, i);
-            prep.setString(2, "Name " + i);
-            prep.setString(3, "First Name " + i);
-            prep.setInt(4, i * 10);
-            prep.setInt(5, i * i);
-            prep.execute();
-        }
-        conn.close();
-        conn = getConnection("bigResult");
-        stat = conn.createStatement();
-        stat.setMaxRows(len + 1);
-        ResultSet rs = stat.executeQuery("SELECT * FROM TEST ORDER BY ID");
-        for (int i = 0; i < len; i++) {
-            rs.next();
-            assertEquals(i, rs.getInt(1));
-            assertEquals("Name " + i, rs.getString(2));
-            assertEquals("First Name " + i, rs.getString(3));
-            assertEquals(i * 10, rs.getInt(4));
-            assertEquals(i * i, rs.getInt(5));
-        }
+	public void testOrderGroup() throws SQLException {
+		deleteDb("bigResult");
+		Connection conn = getConnection("bigResult");
+		Statement stat = conn.createStatement();
+		stat.execute("DROP TABLE IF EXISTS TEST");
+		stat.execute("CREATE TABLE TEST(" + "ID INT PRIMARY KEY, " + "Name VARCHAR(255), " + "FirstName VARCHAR(255), "
+				+ "Points INT," + "LicenseID INT)");
+		int len = getSize(10, 5000);
+		PreparedStatement prep = conn.prepareStatement("INSERT INTO TEST VALUES(?, ?, ?, ?, ?)");
+		for (int i = 0; i < len; i++) {
+			prep.setInt(1, i);
+			prep.setString(2, "Name " + i);
+			prep.setString(3, "First Name " + i);
+			prep.setInt(4, i * 10);
+			prep.setInt(5, i * i);
+			prep.execute();
+		}
+		conn.close();
+		conn = getConnection("bigResult");
+		stat = conn.createStatement();
+		stat.setMaxRows(len + 1);
+		ResultSet rs = stat.executeQuery("SELECT * FROM TEST ORDER BY ID");
+		for (int i = 0; i < len; i++) {
+			rs.next();
+			assertEquals(i, rs.getInt(1));
+			assertEquals("Name " + i, rs.getString(2));
+			assertEquals("First Name " + i, rs.getString(3));
+			assertEquals(i * 10, rs.getInt(4));
+			assertEquals(i * i, rs.getInt(5));
+		}
 
-        stat.setMaxRows(len + 1);
-        rs = stat.executeQuery("SELECT * FROM TEST WHERE ID >= 1000 ORDER BY ID");
-        for (int i = 1000; i < len; i++) {
-            rs.next();
-            assertEquals(i, rs.getInt(1));
-            assertEquals("Name " + i, rs.getString(2));
-            assertEquals("First Name " + i, rs.getString(3));
-            assertEquals(i * 10, rs.getInt(4));
-            assertEquals(i * i, rs.getInt(5));
-        }
+		stat.setMaxRows(len + 1);
+		rs = stat.executeQuery("SELECT * FROM TEST WHERE ID >= 1000 ORDER BY ID");
+		for (int i = 1000; i < len; i++) {
+			rs.next();
+			assertEquals(i, rs.getInt(1));
+			assertEquals("Name " + i, rs.getString(2));
+			assertEquals("First Name " + i, rs.getString(3));
+			assertEquals(i * 10, rs.getInt(4));
+			assertEquals(i * i, rs.getInt(5));
+		}
 
-        
-        stat.execute("SET MAX_MEMORY_ROWS 2");
-        rs = stat.executeQuery("SELECT Name, SUM(ID) FROM TEST GROUP BY NAME");
-        while (rs.next()) {
-            rs.getString(1);
-            rs.getInt(2);
-        }
 
-        conn.setAutoCommit(false);
-        stat.setMaxRows(0);
-        stat.execute("SET MAX_MEMORY_ROWS 0");
-        stat.execute("CREATE TABLE DATA(ID INT, NAME VARCHAR_IGNORECASE(255))");
-        prep = conn.prepareStatement("INSERT INTO DATA VALUES(?, ?)");
-        for (int i = 0; i < len; i++) {
-            prep.setInt(1, i);
-            prep.setString(2, "" + i / 200);
-            prep.execute();
-        }
-        Statement s2 = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-        rs = s2.executeQuery("SELECT NAME FROM DATA");
-        rs.last();
-        conn.setAutoCommit(true);
+		stat.execute("SET MAX_MEMORY_ROWS 2");
+		rs = stat.executeQuery("SELECT Name, SUM(ID) FROM TEST GROUP BY NAME");
+		while (rs.next()) {
+			rs.getString(1);
+			rs.getInt(2);
+		}
 
-        rs = s2.executeQuery("SELECT NAME FROM DATA ORDER BY ID");
-        while (rs.next()) {
-            // do nothing
-        }
+		conn.setAutoCommit(false);
+		stat.setMaxRows(0);
+		stat.execute("SET MAX_MEMORY_ROWS 0");
+		stat.execute("CREATE TABLE DATA(ID INT, NAME VARCHAR_IGNORECASE(255))");
+		prep = conn.prepareStatement("INSERT INTO DATA VALUES(?, ?)");
+		for (int i = 0; i < len; i++) {
+			prep.setInt(1, i);
+			prep.setString(2, "" + i / 200);
+			prep.execute();
+		}
+		Statement s2 = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+		rs = s2.executeQuery("SELECT NAME FROM DATA");
+		rs.last();
+		conn.setAutoCommit(true);
 
-        conn.close();
-    }
-	
+		rs = s2.executeQuery("SELECT NAME FROM DATA ORDER BY ID");
+		while (rs.next()) {
+			// do nothing
+		}
+
+		conn.close();
+	}
+
 
 	@Test
 	public void testDeleteAllObjects() throws SQLException {
-        deleteDb("bigResult");
-        Connection conn = getConnection("bigResult");
-        Statement stat = conn.createStatement();
-        int len = getSize(10000, 100000);
-        stat.execute("DROP TABLE IF EXISTS TEST");
-        stat.execute("CREATE TABLE TEST(ID INT)");
-        stat.execute("DROP ALL OBJECTS;");
-        stat.execute("DROP TABLE IF EXISTS TEST");
-        stat.execute("CREATE TABLE TEST AS SELECT * FROM SYSTEM_RANGE(1, " + len + ")");
-        conn.close();
-    }
+		deleteDb("bigResult");
+		Connection conn = getConnection("bigResult");
+		Statement stat = conn.createStatement();
+		int len = getSize(10000, 100000);
+		stat.execute("DROP TABLE IF EXISTS TEST");
+		stat.execute("CREATE TABLE TEST(ID INT)");
+		stat.execute("DROP ALL OBJECTS;");
+		stat.execute("DROP TABLE IF EXISTS TEST");
+		stat.execute("CREATE TABLE TEST AS SELECT * FROM SYSTEM_RANGE(1, " + len + ")");
+		conn.close();
+	}
 
 }

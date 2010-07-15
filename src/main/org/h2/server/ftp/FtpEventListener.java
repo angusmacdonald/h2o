@@ -11,25 +11,25 @@ package org.h2.server.ftp;
  */
 public interface FtpEventListener {
 
-    /**
-     * Called before the given command is processed.
-     *
-     * @param event the event
-     */
-    void beforeCommand(FtpEvent event);
+	/**
+	 * Called before the given command is processed.
+	 *
+	 * @param event the event
+	 */
+	void beforeCommand(FtpEvent event);
 
-    /**
-     * Called after the command has been processed.
-     *
-     * @param event the event
-     */
-    void afterCommand(FtpEvent event);
+	/**
+	 * Called after the command has been processed.
+	 *
+	 * @param event the event
+	 */
+	void afterCommand(FtpEvent event);
 
-    /**
-     * Called when an unsupported command is processed.
-     * This method is called after beforeCommand.
-     *
-     * @param event the event
-     */
-    void onUnsupportedCommand(FtpEvent event);
+	/**
+	 * Called when an unsupported command is processed.
+	 * This method is called after beforeCommand.
+	 *
+	 * @param event the event
+	 */
+	void onUnsupportedCommand(FtpEvent event);
 }

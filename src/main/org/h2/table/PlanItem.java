@@ -14,28 +14,28 @@ import org.h2.index.Index;
  */
 public class PlanItem {
 
-    /**
-     * The cost.
-     */
-    double cost;
+	/**
+	 * The cost.
+	 */
+	double cost;
 
-    private Index index;
-    private PlanItem joinPlan;
+	private Index index;
+	private PlanItem joinPlan;
 
-    void setIndex(Index index) {
-        this.index = index;
-    }
+	void setIndex(Index index) {
+		this.index = index;
+	}
 
-    public Index getIndex() {
-        return index;
-    }
+	public Index getIndex() {
+		return index;
+	}
 
-    PlanItem getJoinPlan() {
-        return joinPlan;
-    }
+	PlanItem getJoinPlan() {
+		return joinPlan;
+	}
 
-    void setJoinPlan(PlanItem joinPlan) {
-        this.joinPlan = joinPlan;
-    }
+	void setJoinPlan(PlanItem joinPlan) {
+		this.joinPlan = joinPlan;
+	}
 
 }

@@ -18,21 +18,21 @@ import org.h2.table.TableView;
  */
 public class AlterView extends DefineCommand {
 
-    private TableView view;
+	private TableView view;
 
-    public AlterView(Session session) {
-        super(session);
-    }
+	public AlterView(Session session) {
+		super(session);
+	}
 
-    public void setView(TableView view) {
-        this.view = view;
-    }
+	public void setView(TableView view) {
+		this.view = view;
+	}
 
-    public int update() throws SQLException {
-        session.commit(true);
-        session.getUser().checkRight(view, Right.ALL);
-        view.recompile(session);
-        return 0;
-    }
+	public int update() throws SQLException {
+		session.commit(true);
+		session.getUser().checkRight(view, Right.ALL);
+		view.recompile(session);
+		return 0;
+	}
 
 }

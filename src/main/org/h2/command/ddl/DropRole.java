@@ -21,37 +21,37 @@ import org.h2.message.Message;
  */
 public class DropRole extends DefineCommand {
 
-    private String roleName;
-    private boolean ifExists;
+	private String roleName;
+	private boolean ifExists;
 
-    public DropRole(Session session) {
-        super(session);
-    }
+	public DropRole(Session session) {
+		super(session);
+	}
 
-    public void setRoleName(String roleName) {
-        this.roleName = roleName;
-    }
+	public void setRoleName(String roleName) {
+		this.roleName = roleName;
+	}
 
-    public int update() throws SQLException {
-        session.getUser().checkAdmin();
-        session.commit(true);
-        Database db = session.getDatabase();
-        if (roleName.equals(Constants.PUBLIC_ROLE_NAME)) {
-            throw Message.getSQLException(ErrorCode.ROLE_CAN_NOT_BE_DROPPED_1, roleName);
-        }
-        Role role = db.findRole(roleName);
-        if (role == null) {
-            if (!ifExists) {
-                throw Message.getSQLException(ErrorCode.ROLE_NOT_FOUND_1, roleName);
-            }
-        } else {
-            db.removeDatabaseObject(session, role);
-        }
-        return 0;
-    }
+	public int update() throws SQLException {
+		session.getUser().checkAdmin();
+		session.commit(true);
+		Database db = session.getDatabase();
+		if (roleName.equals(Constants.PUBLIC_ROLE_NAME)) {
+			throw Message.getSQLException(ErrorCode.ROLE_CAN_NOT_BE_DROPPED_1, roleName);
+		}
+		Role role = db.findRole(roleName);
+		if (role == null) {
+			if (!ifExists) {
+				throw Message.getSQLException(ErrorCode.ROLE_NOT_FOUND_1, roleName);
+			}
+		} else {
+			db.removeDatabaseObject(session, role);
+		}
+		return 0;
+	}
 
-    public void setIfExists(boolean ifExists) {
-        this.ifExists = ifExists;
-    }
+	public void setIfExists(boolean ifExists) {
+		this.ifExists = ifExists;
+	}
 
 }

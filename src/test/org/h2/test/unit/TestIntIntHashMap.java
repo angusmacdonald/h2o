@@ -16,54 +16,54 @@ import org.h2.util.IntIntHashMap;
  */
 public class TestIntIntHashMap extends TestBase {
 
-    private Random rand = new Random();
+	private Random rand = new Random();
 
-    /**
-     * Run just this test.
-     *
-     * @param a ignored
-     */
-    public static void main(String[] a) throws Exception {
-        TestBase.createCaller().init().test();
-    }
+	/**
+	 * Run just this test.
+	 *
+	 * @param a ignored
+	 */
+	public static void main(String[] a) throws Exception {
+		TestBase.createCaller().init().test();
+	}
 
-    public void test() {
-        rand.setSeed(10);
-        test(true);
-        test(false);
-    }
+	public void test() {
+		rand.setSeed(10);
+		test(true);
+		test(false);
+	}
 
-    private void test(boolean random) {
-        int len = 2000;
-        int[] x = new int[len];
-        for (int i = 0; i < len; i++) {
-            int key = random ? rand.nextInt() : i;
-            x[i] = key;
-        }
-        IntIntHashMap map = new IntIntHashMap();
-        for (int i = 0; i < len; i++) {
-            map.put(x[i], i);
-        }
-        for (int i = 0; i < len; i++) {
-            if (map.get(x[i]) != i) {
-                throw new Error("get " + x[i] + " = " + map.get(i) + " should be " + i);
-            }
-        }
-        for (int i = 1; i < len; i += 2) {
-            map.remove(x[i]);
-        }
-        for (int i = 1; i < len; i += 2) {
-            if (map.get(x[i]) != -1) {
-                throw new Error("get " + x[i] + " = " + map.get(i) + " should be <=0");
-            }
-        }
-        for (int i = 1; i < len; i += 2) {
-            map.put(x[i], i);
-        }
-        for (int i = 0; i < len; i++) {
-            if (map.get(x[i]) != i) {
-                throw new Error("get " + x[i] + " = " + map.get(i) + " should be " + i);
-            }
-        }
-    }
+	private void test(boolean random) {
+		int len = 2000;
+		int[] x = new int[len];
+		for (int i = 0; i < len; i++) {
+			int key = random ? rand.nextInt() : i;
+			x[i] = key;
+		}
+		IntIntHashMap map = new IntIntHashMap();
+		for (int i = 0; i < len; i++) {
+			map.put(x[i], i);
+		}
+		for (int i = 0; i < len; i++) {
+			if (map.get(x[i]) != i) {
+				throw new Error("get " + x[i] + " = " + map.get(i) + " should be " + i);
+			}
+		}
+		for (int i = 1; i < len; i += 2) {
+			map.remove(x[i]);
+		}
+		for (int i = 1; i < len; i += 2) {
+			if (map.get(x[i]) != -1) {
+				throw new Error("get " + x[i] + " = " + map.get(i) + " should be <=0");
+			}
+		}
+		for (int i = 1; i < len; i += 2) {
+			map.put(x[i], i);
+		}
+		for (int i = 0; i < len; i++) {
+			if (map.get(x[i]) != i) {
+				throw new Error("get " + x[i] + " = " + map.get(i) + " should be " + i);
+			}
+		}
+	}
 }

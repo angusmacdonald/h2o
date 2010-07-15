@@ -6,8 +6,6 @@
  */
 package org.h2.jaqu;
 
-import org.h2.jaqu.util.Utils;
-
 /**
  * This class represents an incomplete condition.
  *

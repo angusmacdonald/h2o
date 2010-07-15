@@ -10,7 +10,7 @@ package org.h2.jaqu;
  * Classes implementing this interface can be used as a token in a statement.
  */
 interface Token {
-/*## Java 1.5 begin ##
+	/*## Java 1.5 begin ##
     void appendSQL(SqlStatement stat, Query query);
 ## Java 1.5 end ##*/
 }

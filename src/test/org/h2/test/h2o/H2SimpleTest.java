@@ -1,3 +1,20 @@
+﻿/*
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
+ * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
+ *
+ * H2O is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * H2O is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.h2.test.h2o;
 
 import static org.junit.Assert.fail;
@@ -40,18 +57,18 @@ public class H2SimpleTest {
 		ls.createNewLocatorFile();
 		ls.start();
 	}
-	
+
 	@After
 	public void tearDown() throws Exception {
 		ls.setRunning(false);
 		while (!ls.isFinished()){};
-		
+
 	}
-	
+
 	@Test
 	public void largeTest() throws Exception {
 
-		
+
 		Constants.IS_NON_SM_TEST = true;
 		LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:db_data/test/scriptSimple"));
 
@@ -60,7 +77,7 @@ public class H2SimpleTest {
 		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
 		properties.setProperty("databaseName", "testDB");
 		properties.saveAndClose();
-	
+
 		Constants.IS_TESTING_H2_TESTS = true;
 
 
@@ -78,9 +95,9 @@ public class H2SimpleTest {
 			}
 			sql = sql.trim();
 
-			
+
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Query: " + sql);
-			
+
 			try {
 
 				if ("@reconnect".equals(sql.toLowerCase())) {
@@ -113,7 +130,7 @@ public class H2SimpleTest {
 		if (conn != null) {
 			conn.close();
 		}
-		
+
 		LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:db_data/test/scriptSimple"));
 
 		properties.createNewFile();
@@ -121,15 +138,15 @@ public class H2SimpleTest {
 		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
 		properties.setProperty("databaseName", "testDB");
 		properties.saveAndClose();
-		
+
 		conn = getConnection("jdbc:h2:db_data/test/scriptSimple;LOG=1;LOCK_TIMEOUT=50");
 	}
-	
 
-    private Connection getConnection(String url) throws SQLException {
-        org.h2.Driver.load();
-        return DriverManager.getConnection(url, "sa", "");
-    }
+
+	private Connection getConnection(String url) throws SQLException {
+		org.h2.Driver.load();
+		return DriverManager.getConnection(url, "sa", "");
+	}
 
 	/**
 	 * Get the test directory for this test.

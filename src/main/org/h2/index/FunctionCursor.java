@@ -19,44 +19,44 @@ import org.h2.value.Value;
  */
 public class FunctionCursor implements Cursor {
 
-    private LocalResult result;
-    private Value[] values;
-    private Row row;
+	private LocalResult result;
+	private Value[] values;
+	private Row row;
 
-    FunctionCursor(LocalResult result) {
-        this.result = result;
-    }
+	FunctionCursor(LocalResult result) {
+		this.result = result;
+	}
 
-    public Row get() {
-        if (values == null) {
-            return null;
-        }
-        if (row == null) {
-            row = new Row(values, 0);
-        }
-        return row;
-    }
+	public Row get() {
+		if (values == null) {
+			return null;
+		}
+		if (row == null) {
+			row = new Row(values, 0);
+		}
+		return row;
+	}
 
-    public SearchRow getSearchRow() {
-        return get();
-    }
+	public SearchRow getSearchRow() {
+		return get();
+	}
 
-    public int getPos() {
-        throw Message.throwInternalError();
-    }
+	public int getPos() {
+		throw Message.throwInternalError();
+	}
 
-    public boolean next() throws SQLException {
-        row = null;
-        if (result.next()) {
-            values = result.currentRow();
-        } else {
-            values = null;
-        }
-        return values != null;
-    }
+	public boolean next() throws SQLException {
+		row = null;
+		if (result.next()) {
+			values = result.currentRow();
+		} else {
+			values = null;
+		}
+		return values != null;
+	}
 
-    public boolean previous() {
-        throw Message.throwInternalError();
-    }
+	public boolean previous() {
+		throw Message.throwInternalError();
+	}
 
 }

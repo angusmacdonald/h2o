@@ -24,80 +24,80 @@ import org.h2.table.TableView;
  */
 public class CreateView extends SchemaCommand {
 
-    private Query select;
-    private String viewName;
-    private boolean ifNotExists;
-    private String selectSQL;
-    private String[] columnNames;
-    private String comment;
-    private boolean recursive;
+	private Query select;
+	private String viewName;
+	private boolean ifNotExists;
+	private String selectSQL;
+	private String[] columnNames;
+	private String comment;
+	private boolean recursive;
 
-    public CreateView(Session session, Schema schema) {
-        super(session, schema);
-    }
+	public CreateView(Session session, Schema schema) {
+		super(session, schema);
+	}
 
-    public void setViewName(String name) {
-        viewName = name;
-    }
+	public void setViewName(String name) {
+		viewName = name;
+	}
 
-    public void setRecursive(boolean recursive) {
-        this.recursive = recursive;
-    }
+	public void setRecursive(boolean recursive) {
+		this.recursive = recursive;
+	}
 
-    public void setSelect(Query select) {
-        this.select = select;
-    }
+	public void setSelect(Query select) {
+		this.select = select;
+	}
 
-    public int update() throws SQLException {
-        // TODO rights: what rights are required to create a view?
-        session.commit(true);
-        Database db = session.getDatabase();
-        if (getSchema().findTableOrView(session, viewName, LocationPreference.NO_PREFERENCE) != null) {
-            if (ifNotExists) {
-                return 0;
-            }
-            throw Message.getSQLException(ErrorCode.VIEW_ALREADY_EXISTS_1, viewName);
-        }
-        int id = getObjectId(true, true);
-        String querySQL;
-        if (select == null) {
-            querySQL = selectSQL;
-        } else {
-            querySQL = select.getSQL();
-        }
-        Session sysSession = db.getSystemSession();
-        TableView view;
-        try {
-            Schema schema = session.getDatabase().getSchema(session.getCurrentSchemaName());
-            sysSession.setCurrentSchema(schema);
-            view = new TableView(getSchema(), id, viewName, querySQL, null, columnNames, sysSession, recursive);
-        } finally {
-            sysSession.setCurrentSchema(db.getSchema(Constants.SCHEMA_MAIN));
-        }
-        view.setComment(comment);
-        try {
-            view.recompileQuery(session);
-        } catch (SQLException e) {
-            // this is not strictly required - ignore exceptions, specially when using FORCE
-        }
-        db.addSchemaObject(session, view);
-        return 0;
-    }
+	public int update() throws SQLException {
+		// TODO rights: what rights are required to create a view?
+				session.commit(true);
+				Database db = session.getDatabase();
+				if (getSchema().findTableOrView(session, viewName, LocationPreference.NO_PREFERENCE) != null) {
+					if (ifNotExists) {
+						return 0;
+					}
+					throw Message.getSQLException(ErrorCode.VIEW_ALREADY_EXISTS_1, viewName);
+				}
+				int id = getObjectId(true, true);
+				String querySQL;
+				if (select == null) {
+					querySQL = selectSQL;
+				} else {
+					querySQL = select.getSQL();
+				}
+				Session sysSession = db.getSystemSession();
+				TableView view;
+				try {
+					Schema schema = session.getDatabase().getSchema(session.getCurrentSchemaName());
+					sysSession.setCurrentSchema(schema);
+					view = new TableView(getSchema(), id, viewName, querySQL, null, columnNames, sysSession, recursive);
+				} finally {
+					sysSession.setCurrentSchema(db.getSchema(Constants.SCHEMA_MAIN));
+				}
+				view.setComment(comment);
+				try {
+					view.recompileQuery(session);
+				} catch (SQLException e) {
+					// this is not strictly required - ignore exceptions, specially when using FORCE
+				}
+				db.addSchemaObject(session, view);
+				return 0;
+	}
 
-    public void setIfNotExists(boolean ifNotExists) {
-        this.ifNotExists = ifNotExists;
-    }
+	public void setIfNotExists(boolean ifNotExists) {
+		this.ifNotExists = ifNotExists;
+	}
 
-    public void setSelectSQL(String selectSQL) {
-        this.selectSQL = selectSQL;
-    }
+	public void setSelectSQL(String selectSQL) {
+		this.selectSQL = selectSQL;
+	}
 
-    public void setColumnNames(String[] cols) {
-        this.columnNames = cols;
-    }
+	public void setColumnNames(String[] cols) {
+		this.columnNames = cols;
+	}
 
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
+	public void setComment(String comment) {
+		this.comment = comment;
+	}
 
 }

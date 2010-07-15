@@ -3,25 +3,16 @@ package org.h2.command.dml;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
-import java.util.HashSet;
-
-import org.h2.constant.ErrorCode;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
-import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.manager.TableManager;
 import org.h2.h2o.manager.ISystemTableReference;
-import org.h2.h2o.manager.MigrationException;
-import org.h2.h2o.manager.MovedException;
-import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TableInfo;
-import org.h2.message.Message;
 import org.h2.schema.Schema;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
-import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
@@ -61,11 +52,11 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
 
 		Database db = this.session.getDatabase();
 		ISystemTableReference systemTableReference = db.getSystemTableReference();
-		
+
 		/*
 		 * TODO perform a check to see that it isn't already active. 
 		 */
-		
+
 		String schemaName = "";
 		if (getSchema() != null){
 			schemaName = getSchema().getName();
@@ -98,7 +89,7 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
-		
+
 
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, ti + " recreated on " + db.getURL() + ".");

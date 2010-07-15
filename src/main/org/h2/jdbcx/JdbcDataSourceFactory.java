@@ -28,61 +28,61 @@ implements ObjectFactory
 //## Java 1.4 end ##
 {
 
-    private static TraceSystem cachedTraceSystem;
-    private Trace trace;
+	private static TraceSystem cachedTraceSystem;
+	private Trace trace;
 
-    static {
-        org.h2.Driver.load();
-    }
+	static {
+		org.h2.Driver.load();
+	}
 
-    /**
-     * The public constructor to create new factory objects.
-     */
-    public JdbcDataSourceFactory() {
-        trace = getTraceSystem().getTrace("JDBCX");
-    }
+	/**
+	 * The public constructor to create new factory objects.
+	 */
+	public JdbcDataSourceFactory() {
+		trace = getTraceSystem().getTrace("JDBCX");
+	}
 
-    /**
-     * Creates a new object using the specified location or reference
-     * information.
-     *
-     * @param obj the reference (this factory only supports objects of type
-     *            javax.naming.Reference)
-     * @param name unused
-     * @param nameCtx unused
-     * @param environment unused
-     * @return the new JdbcDataSource, or null if the reference class name is
-     *         not JdbcDataSource.
-     */
-//## Java 1.4 begin ##
-    public synchronized Object getObjectInstance(Object obj, Name name, Context nameCtx, Hashtable environment) {
-        if (trace.isDebugEnabled()) {
-            trace.debug("getObjectInstance obj=" + obj + " name=" + name + " nameCtx=" + nameCtx + " environment=" + environment);
-        }
-        Reference ref = (Reference) obj;
-        if (ref.getClassName().equals(JdbcDataSource.class.getName())) {
-            JdbcDataSource dataSource = new JdbcDataSource();
-            dataSource.setURL((String) ref.get("url").getContent());
-            dataSource.setUser((String) ref.get("user").getContent());
-            dataSource.setPassword((String) ref.get("password").getContent());
-            String s = (String) ref.get("loginTimeout").getContent();
-            dataSource.setLoginTimeout(Integer.parseInt(s));
-            return dataSource;
-        }
-        return null;
-    }
-//## Java 1.4 end ##
+	/**
+	 * Creates a new object using the specified location or reference
+	 * information.
+	 *
+	 * @param obj the reference (this factory only supports objects of type
+	 *            javax.naming.Reference)
+	 * @param name unused
+	 * @param nameCtx unused
+	 * @param environment unused
+	 * @return the new JdbcDataSource, or null if the reference class name is
+	 *         not JdbcDataSource.
+	 */
+	//## Java 1.4 begin ##
+	public synchronized Object getObjectInstance(Object obj, Name name, Context nameCtx, Hashtable environment) {
+		if (trace.isDebugEnabled()) {
+			trace.debug("getObjectInstance obj=" + obj + " name=" + name + " nameCtx=" + nameCtx + " environment=" + environment);
+		}
+		Reference ref = (Reference) obj;
+		if (ref.getClassName().equals(JdbcDataSource.class.getName())) {
+			JdbcDataSource dataSource = new JdbcDataSource();
+			dataSource.setURL((String) ref.get("url").getContent());
+			dataSource.setUser((String) ref.get("user").getContent());
+			dataSource.setPassword((String) ref.get("password").getContent());
+			String s = (String) ref.get("loginTimeout").getContent();
+			dataSource.setLoginTimeout(Integer.parseInt(s));
+			return dataSource;
+		}
+		return null;
+	}
+	//## Java 1.4 end ##
 
-    private TraceSystem getTraceSystem() {
-        if (cachedTraceSystem == null) {
-            cachedTraceSystem = new TraceSystem(SysProperties.CLIENT_TRACE_DIRECTORY + "h2datasource" + Constants.SUFFIX_TRACE_FILE, false);
-            cachedTraceSystem.setLevelFile(SysProperties.DATASOURCE_TRACE_LEVEL);
-        }
-        return cachedTraceSystem;
-    }
+	private TraceSystem getTraceSystem() {
+		if (cachedTraceSystem == null) {
+			cachedTraceSystem = new TraceSystem(SysProperties.CLIENT_TRACE_DIRECTORY + "h2datasource" + Constants.SUFFIX_TRACE_FILE, false);
+			cachedTraceSystem.setLevelFile(SysProperties.DATASOURCE_TRACE_LEVEL);
+		}
+		return cachedTraceSystem;
+	}
 
-    Trace getTrace() {
-        return trace;
-    }
+	Trace getTrace() {
+		return trace;
+	}
 
 }

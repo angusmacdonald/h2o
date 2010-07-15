@@ -27,136 +27,136 @@ import org.h2.value.ValueNull;
  * An 'in' condition with a subquery, as in WHERE ID IN(SELECT ...)
  */
 public class ConditionInSelect extends Condition {
-    private Database database;
-    private Expression left;
-    private Query query;
-    private boolean all;
-    private int compareType;
-    private int queryLevel;
+	private Database database;
+	private Expression left;
+	private Query query;
+	private boolean all;
+	private int compareType;
+	private int queryLevel;
 
-    public ConditionInSelect(Database database, Expression left, Query query, boolean all, int compareType) {
-        this.database = database;
-        this.left = left;
-        this.query = query;
-        this.all = all;
-        this.compareType = compareType;
-    }
+	public ConditionInSelect(Database database, Expression left, Query query, boolean all, int compareType) {
+		this.database = database;
+		this.left = left;
+		this.query = query;
+		this.all = all;
+		this.compareType = compareType;
+	}
 
-    public Value getValue(Session session) throws SQLException {
-        query.setSession(session);
-        LocalResult rows = query.query(0);
-        session.addTemporaryResult(rows);
-        boolean hasNull = false;
-        boolean result = all;
-        Value l = left.getValue(session);
-        boolean hasRow = false;
-        while (rows.next()) {
-            if (!hasRow) {
-                if (l == ValueNull.INSTANCE) {
-                    return l;
-                }
-                hasRow = true;
-            }
-            boolean value;
-            Value r = rows.currentRow()[0];
-            if (r == ValueNull.INSTANCE) {
-                value = false;
-                hasNull = true;
-            } else {
-                value = Comparison.compareNotNull(database, l, r, compareType);
-            }
-            if (!value && all) {
-                result = false;
-                break;
-            } else if (value && !all) {
-                result = true;
-                break;
-            }
-        }
-        if (!hasRow) {
-            return ValueBoolean.get(false);
-        }
-        if (!result && hasNull) {
-            return ValueNull.INSTANCE;
-        }
-        return ValueBoolean.get(result);
-    }
+	public Value getValue(Session session) throws SQLException {
+		query.setSession(session);
+		LocalResult rows = query.query(0);
+		session.addTemporaryResult(rows);
+		boolean hasNull = false;
+		boolean result = all;
+		Value l = left.getValue(session);
+		boolean hasRow = false;
+		while (rows.next()) {
+			if (!hasRow) {
+				if (l == ValueNull.INSTANCE) {
+					return l;
+				}
+				hasRow = true;
+			}
+			boolean value;
+			Value r = rows.currentRow()[0];
+			if (r == ValueNull.INSTANCE) {
+				value = false;
+				hasNull = true;
+			} else {
+				value = Comparison.compareNotNull(database, l, r, compareType);
+			}
+			if (!value && all) {
+				result = false;
+				break;
+			} else if (value && !all) {
+				result = true;
+				break;
+			}
+		}
+		if (!hasRow) {
+			return ValueBoolean.get(false);
+		}
+		if (!result && hasNull) {
+			return ValueNull.INSTANCE;
+		}
+		return ValueBoolean.get(result);
+	}
 
-    public void mapColumns(ColumnResolver resolver, int queryLevel) throws SQLException {
-        left.mapColumns(resolver, queryLevel);
-        query.mapColumns(resolver, queryLevel + 1);
-        this.queryLevel = Math.max(queryLevel, this.queryLevel);
-    }
+	public void mapColumns(ColumnResolver resolver, int queryLevel) throws SQLException {
+		left.mapColumns(resolver, queryLevel);
+		query.mapColumns(resolver, queryLevel + 1);
+		this.queryLevel = Math.max(queryLevel, this.queryLevel);
+	}
 
-    public Expression optimize(Session session) throws SQLException {
-        left = left.optimize(session);
-        query.prepare();
-        if (query.getColumnCount() != 1) {
-            throw Message.getSQLException(ErrorCode.SUBQUERY_IS_NOT_SINGLE_COLUMN);
-        }
-        // Can not optimize IN(SELECT...): the data may change
-        // However, could transform to an inner join
-        return this;
-    }
+	public Expression optimize(Session session) throws SQLException {
+		left = left.optimize(session);
+		query.prepare();
+		if (query.getColumnCount() != 1) {
+			throw Message.getSQLException(ErrorCode.SUBQUERY_IS_NOT_SINGLE_COLUMN);
+		}
+		// Can not optimize IN(SELECT...): the data may change
+		// However, could transform to an inner join
+		return this;
+	}
 
-    public void setEvaluatable(TableFilter tableFilter, boolean b) {
-        left.setEvaluatable(tableFilter, b);
-        query.setEvaluatable(tableFilter, b);
-    }
+	public void setEvaluatable(TableFilter tableFilter, boolean b) {
+		left.setEvaluatable(tableFilter, b);
+		query.setEvaluatable(tableFilter, b);
+	}
 
-    public String getSQL() {
-        StringBuilder buff = new StringBuilder("(");
-        buff.append(left.getSQL());
-        buff.append(" IN(");
-        buff.append(query.getPlanSQL());
-        buff.append("))");
-        return buff.toString();
-    }
+	public String getSQL() {
+		StringBuilder buff = new StringBuilder("(");
+		buff.append(left.getSQL());
+		buff.append(" IN(");
+		buff.append(query.getPlanSQL());
+		buff.append("))");
+		return buff.toString();
+	}
 
-    public void updateAggregate(Session session) {
-        // TODO exists: is it allowed that the subquery contains aggregates?
-        // probably not
-        // select id from test group by id having 1 in (select * from test2
-        // where id=count(test.id))
-    }
+	public void updateAggregate(Session session) {
+		// TODO exists: is it allowed that the subquery contains aggregates?
+		// probably not
+		// select id from test group by id having 1 in (select * from test2
+		// where id=count(test.id))
+	}
 
-    public boolean isEverything(ExpressionVisitor visitor) {
-        return left.isEverything(visitor) && query.isEverything(visitor);
-    }
+	public boolean isEverything(ExpressionVisitor visitor) {
+		return left.isEverything(visitor) && query.isEverything(visitor);
+	}
 
-    public int getCost() {
-        return left.getCost() + 10 + (int) (10 * query.getCost());
-    }
+	public int getCost() {
+		return left.getCost() + 10 + (int) (10 * query.getCost());
+	}
 
-    public Expression optimizeInJoin(Session session, Select select) throws SQLException {
-        query.setDistinct(true);
-        if (all || compareType != Comparison.EQUAL) {
-            return this;
-        }
-        if (!query.isEverything(ExpressionVisitor.EVALUATABLE)) {
-            return this;
-        }
-        String alias = query.getFirstColumnAlias(session);
-        if (alias == null) {
-            return this;
-        }
-        if (!(left instanceof ExpressionColumn)) {
-            return this;
-        }
-        ExpressionColumn ec = (ExpressionColumn) left;
-        Index index = ec.getTableFilter().getTable().getIndexForColumn(ec.getColumn(), false);
-        if (index == null) {
-            return this;
-        }
-        String name = session.getNextSystemIdentifier(select.getSQL());
-        TableView view = TableView.createTempView(session, session.getUser(), name, query, select);
-        TableFilter filter = new TableFilter(session, view, name, false, select);
-        select.addTableFilter(filter, true);
-        ExpressionColumn column = new ExpressionColumn(session.getDatabase(), null, view.getName(), alias);
-        Expression on = new Comparison(session, Comparison.EQUAL, left, column);
-        on.mapColumns(filter, 0);
-        on = on.optimize(session);
-        return on;
-    }
+	public Expression optimizeInJoin(Session session, Select select) throws SQLException {
+		query.setDistinct(true);
+		if (all || compareType != Comparison.EQUAL) {
+			return this;
+		}
+		if (!query.isEverything(ExpressionVisitor.EVALUATABLE)) {
+			return this;
+		}
+		String alias = query.getFirstColumnAlias(session);
+		if (alias == null) {
+			return this;
+		}
+		if (!(left instanceof ExpressionColumn)) {
+			return this;
+		}
+		ExpressionColumn ec = (ExpressionColumn) left;
+		Index index = ec.getTableFilter().getTable().getIndexForColumn(ec.getColumn(), false);
+		if (index == null) {
+			return this;
+		}
+		String name = session.getNextSystemIdentifier(select.getSQL());
+		TableView view = TableView.createTempView(session, session.getUser(), name, query, select);
+		TableFilter filter = new TableFilter(session, view, name, false, select);
+		select.addTableFilter(filter, true);
+		ExpressionColumn column = new ExpressionColumn(session.getDatabase(), null, view.getName(), alias);
+		Expression on = new Comparison(session, Comparison.EQUAL, left, column);
+		on.mapColumns(filter, 0);
+		on = on.optimize(session);
+		return on;
+	}
 
 }

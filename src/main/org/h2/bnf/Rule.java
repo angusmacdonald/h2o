@@ -13,53 +13,53 @@ import java.util.HashMap;
  */
 public interface Rule {
 
-    /**
-     * Get the name of the rule.
-     *
-     * @return the name
-     */
-    String name();
+	/**
+	 * Get the name of the rule.
+	 *
+	 * @return the name
+	 */
+	String name();
 
-    /**
-     * Get a random entry.
-     *
-     * @param config the configuration
-     * @param level the call level
-     * @return the entry
-     */
-    String random(Bnf config, int level);
+	/**
+	 * Get a random entry.
+	 *
+	 * @param config the configuration
+	 * @param level the call level
+	 * @return the entry
+	 */
+	String random(Bnf config, int level);
 
-    /**
-     * Get the last entry.
-     *
-     * @return the last entry
-     */
-    Rule last();
+	/**
+	 * Get the last entry.
+	 *
+	 * @return the last entry
+	 */
+	Rule last();
 
-    /**
-     * Update cross references.
-     *
-     * @param ruleMap the reference map
-     */
-    void setLinks(HashMap ruleMap);
+	/**
+	 * Update cross references.
+	 *
+	 * @param ruleMap the reference map
+	 */
+	void setLinks(HashMap ruleMap);
 
-    /**
-     * Add the next possible token for a query.
-     * Used for autocomplete support.
-     *
-     * @param sentence the sentence context
-     */
-    void addNextTokenList(Sentence sentence);
+	/**
+	 * Add the next possible token for a query.
+	 * Used for autocomplete support.
+	 *
+	 * @param sentence the sentence context
+	 */
+	void addNextTokenList(Sentence sentence);
 
-    /**
-     * Remove a token from a sentence. Used for autocomplete support.
-     * If there was a match, the query in the sentence is updated
-     * (the matched token is removed).
-     *
-     * @param sentence
-     *            the sentence context
-     * @return false if not a match or a partial match, true if a full match
-     */
-    boolean matchRemove(Sentence sentence);
+	/**
+	 * Remove a token from a sentence. Used for autocomplete support.
+	 * If there was a match, the query in the sentence is updated
+	 * (the matched token is removed).
+	 *
+	 * @param sentence
+	 *            the sentence context
+	 * @return false if not a match or a partial match, true if a full match
+	 */
+	boolean matchRemove(Sentence sentence);
 
 }

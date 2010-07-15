@@ -14,18 +14,18 @@ import java.io.IOException;
  */
 public class FileSystemDiskNioMapped extends FileSystemDiskNio {
 
-    private static final FileSystemDiskNioMapped INSTANCE = new FileSystemDiskNioMapped();
+	private static final FileSystemDiskNioMapped INSTANCE = new FileSystemDiskNioMapped();
 
-    public static FileSystemDisk getInstance() {
-        return INSTANCE;
-    }
+	public static FileSystemDisk getInstance() {
+		return INSTANCE;
+	}
 
-    protected String getPrefix() {
-        return FileSystem.PREFIX_NIO_MAPPED;
-    }
+	protected String getPrefix() {
+		return FileSystem.PREFIX_NIO_MAPPED;
+	}
 
-    protected FileObject open(String fileName, String mode) throws IOException {
-        return new FileObjectDiskMapped(fileName, mode);
-    }
+	protected FileObject open(String fileName, String mode) throws IOException {
+		return new FileObjectDiskMapped(fileName, mode);
+	}
 
 }

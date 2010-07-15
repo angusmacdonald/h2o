@@ -18,39 +18,39 @@ import org.h2.test.TestBase;
  */
 public class TestSpaceReuse extends TestBase {
 
-    /**
-     * Run just this test.
-     *
-     * @param a ignored
-     */
-    public static void main(String[] a) throws Exception {
-        TestBase.createCaller().init().test();
-    }
+	/**
+	 * Run just this test.
+	 *
+	 * @param a ignored
+	 */
+	public static void main(String[] a) throws Exception {
+		TestBase.createCaller().init().test();
+	}
 
-    public void test() throws SQLException {
-        if (config.memory) {
-            return;
-        }
-        deleteDb("spaceReuse");
-        long first = 0, now = 0;
-        for (int i = 0; i < 10; i++) {
-            Connection conn = getConnection("spaceReuse");
-            Statement stat = conn.createStatement();
-            stat.execute("create table if not exists t(i int)");
-            stat.execute("insert into t select x from system_range(1, 500)");
-            conn.close();
-            conn = getConnection("spaceReuse");
-            conn.createStatement().execute("delete from t");
-            conn.close();
-            now = new File(baseDir + "/spaceReuse.data.db").length();
-            if (first == 0) {
-                first = now;
-            }
-        }
-        if (now > first) {
-            fail("first: " + first + " now: " + now);
-        }
-        deleteDb("spaceReuse");
-    }
+	public void test() throws SQLException {
+		if (config.memory) {
+			return;
+		}
+		deleteDb("spaceReuse");
+		long first = 0, now = 0;
+		for (int i = 0; i < 10; i++) {
+			Connection conn = getConnection("spaceReuse");
+			Statement stat = conn.createStatement();
+			stat.execute("create table if not exists t(i int)");
+			stat.execute("insert into t select x from system_range(1, 500)");
+			conn.close();
+			conn = getConnection("spaceReuse");
+			conn.createStatement().execute("delete from t");
+			conn.close();
+			now = new File(baseDir + "/spaceReuse.data.db").length();
+			if (first == 0) {
+				first = now;
+			}
+		}
+		if (now > first) {
+			fail("first: " + first + " now: " + now);
+		}
+		deleteDb("spaceReuse");
+	}
 
 }
