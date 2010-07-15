@@ -579,52 +579,52 @@ public class Select extends Query {
 
 	private void expandColumnList() throws SQLException {
 		// TODO this works: select distinct count(*)
-	// from system_columns group by table
-	for (int i = 0; i < expressions.size(); i++) {
-		Expression expr = (Expression) expressions.get(i);
-		if (!expr.isWildcard()) {
-			continue;
-		}
-		String schemaName = expr.getSchemaName();
-		String tableAlias = expr.getTableAlias();
-		if (tableAlias == null) {
-			int temp = i;
-			expressions.remove(i);
-			for (int j = 0; j < filters.size(); j++) {
-				TableFilter filter = (TableFilter) filters.get(j);
-				Wildcard c2 = new Wildcard(filter.getTable().getSchema().getName(), filter.getTableAlias());
-				expressions.add(i++, c2);
+		// from system_columns group by table
+		for (int i = 0; i < expressions.size(); i++) {
+			Expression expr = (Expression) expressions.get(i);
+			if (!expr.isWildcard()) {
+				continue;
 			}
-			i = temp - 1;
-		} else {
-			TableFilter filter = null;
-			for (int j = 0; j < filters.size(); j++) {
-				TableFilter f = (TableFilter) filters.get(j);
-				if (tableAlias.equals(f.getTableAlias())) {
-					if (schemaName == null || schemaName.equals(f.getSchemaName())) {
-						filter = f;
-						break;
+			String schemaName = expr.getSchemaName();
+			String tableAlias = expr.getTableAlias();
+			if (tableAlias == null) {
+				int temp = i;
+				expressions.remove(i);
+				for (int j = 0; j < filters.size(); j++) {
+					TableFilter filter = (TableFilter) filters.get(j);
+					Wildcard c2 = new Wildcard(filter.getTable().getSchema().getName(), filter.getTableAlias());
+					expressions.add(i++, c2);
+				}
+				i = temp - 1;
+			} else {
+				TableFilter filter = null;
+				for (int j = 0; j < filters.size(); j++) {
+					TableFilter f = (TableFilter) filters.get(j);
+					if (tableAlias.equals(f.getTableAlias())) {
+						if (schemaName == null || schemaName.equals(f.getSchemaName())) {
+							filter = f;
+							break;
+						}
 					}
 				}
-			}
-			if (filter == null) {
-				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableAlias);
-			}
-			Table t = filter.getTable();
-			String alias = filter.getTableAlias();
-			expressions.remove(i);
-			Column[] columns = t.getColumns();
-			for (int j = 0; j < columns.length; j++) {
-				Column c = columns[j];
-				if (filter.isNaturalJoinColumn(c)) {
-					continue;
+				if (filter == null) {
+					throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableAlias);
 				}
-				ExpressionColumn ec = new ExpressionColumn(session.getDatabase(), null, alias, c.getName());
-				expressions.add(i++, ec);
+				Table t = filter.getTable();
+				String alias = filter.getTableAlias();
+				expressions.remove(i);
+				Column[] columns = t.getColumns();
+				for (int j = 0; j < columns.length; j++) {
+					Column c = columns[j];
+					if (filter.isNaturalJoinColumn(c)) {
+						continue;
+					}
+					ExpressionColumn ec = new ExpressionColumn(session.getDatabase(), null, alias, c.getName());
+					expressions.add(i++, ec);
+				}
+				i--;
 			}
-			i--;
 		}
-	}
 	}
 
 	public void init() throws SQLException {
@@ -1152,30 +1152,32 @@ public class Select extends Query {
 	 * Specifies whether the user wishes the query to be evaluated locally (LOCAL), at the primary copy (PRIMARY), or if they have no preference (NO_PREFERENCE).
 	 * @param b true if local; false for remote evaluation (i.e. access remote copy of the data).
 	 */
-	 public void setLocationPreference(LocationPreference locale) {
-		 locationPreference = locale;
-	 }
+	public void setLocationPreference(LocationPreference locale) {
+		locationPreference = locale;
+	}
 
-	 /**
-	  * Whether the user wishes the query to be evaluated locally (LOCAL), at the primary copy (PRIMARY), or if they have no preference (NO_PREFERENCE).
-	  */
-	 public LocationPreference getLocationPreference() {
-		 return locationPreference;
-	 }
+	/**
+	 * Whether the user wishes the query to be evaluated locally (LOCAL), at the primary copy (PRIMARY), or if they have no preference (NO_PREFERENCE).
+	 */
+	public LocationPreference getLocationPreference() {
+		return locationPreference;
+	}
 
-	 /* (non-Javadoc)
-	  * @see org.h2.command.Prepared#acquireLocks(org.h2.h2o.comms.QueryProxyManager)
-	  */
-	 @Override
-	 public QueryProxy acquireLocks(QueryProxyManager queryProxyManager)
-	 throws SQLException {
+	/* (non-Javadoc)
+	 * @see org.h2.command.Prepared#acquireLocks(org.h2.h2o.comms.QueryProxyManager)
+	 */
+	@Override
+	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager)
+	throws SQLException {
 
-		 for (Table table: this.getTables()){
-			 queryProxyManager.addProxy(QueryProxy.getQueryProxyAndLock(table, LockType.READ, this.session.getDatabase()));
-		 }
+			for (Table table: this.getTables()){
+				QueryProxy qp = QueryProxy.getQueryProxyAndLock(table, LockType.READ, this.session.getDatabase());
 
-		 return null; 
-	 }
+				queryProxyManager.addProxy(qp);
+			}
+		
+		return null; 
+	}
 
 
 }

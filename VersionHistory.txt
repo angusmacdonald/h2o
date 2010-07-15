@@ -21,3 +21,5 @@ H2O Version 0.2.5 (Unreleased)
 	Changed from StringBuffer to StringBuilder.
 	Removed un-necessary repeated work in TransactionNameGenerator class.
 	VACUUM ANALYZE queries will execute ANALYZE command even though VACUUM isn't supported directly.
+	Added tests for Prepared Statements and batch updates.
+	Fixed batch update bug where individual components of batches were not committed as expected. Possible loss of speed.

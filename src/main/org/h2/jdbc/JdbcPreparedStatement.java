@@ -1041,6 +1041,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
 			boolean previousAutoCommit = conn.getAutoCommit();
 			conn.setAutoCommit(false);
 			int[] result = new int[batchParameters.size()];
+			
 			boolean error = false;
 			SQLException next = null;
 			for (int i = 0; i < batchParameters.size(); i++) {
@@ -1053,6 +1054,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
 				}
 				try {
 					result[i] = executeUpdateInternal(batchParameters.size()>1);
+					conn.commit();
 				} catch (SQLException e) {
 					if (next == null) {
 						next = e;

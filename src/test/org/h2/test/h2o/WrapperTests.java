@@ -79,6 +79,7 @@ public class WrapperTests {
 			try {
 				locatorProcess = Processes.runJavaProcess(H2OLocator.class, locatorArgs);
 			} catch (IOException e) {
+				e.printStackTrace();
 				fail("Unexpected IOException.");
 			}
 
@@ -99,8 +100,8 @@ public class WrapperTests {
 			/*
 			 * Kill off processes.
 			 */
-			locatorProcess.destroy();
-			databaseProcess.destroy();
+			if (locatorProcess != null) locatorProcess.destroy();
+			if (databaseProcess != null) databaseProcess.destroy();
 		}
 	}
 

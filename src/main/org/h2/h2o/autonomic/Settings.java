@@ -24,7 +24,9 @@
 package org.h2.h2o.autonomic;
 
 import java.util.Map.Entry;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 
 import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.DatabaseURL;
@@ -44,6 +46,17 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  */
 public class Settings {
 
+
+	/**
+	 * The set of table names that don't represent user tables, but system commands or specialized operations.
+	 */
+	public static Set<String> reservedTableNames = new HashSet<String>();
+	
+	static {
+		reservedTableNames.add("SYSTEM_RANGE");
+		reservedTableNames.add("TABLE");
+	}
+	
 	private LocalH2OProperties localSettings;
 
 	private DatabaseDescriptorFile globalSettings;

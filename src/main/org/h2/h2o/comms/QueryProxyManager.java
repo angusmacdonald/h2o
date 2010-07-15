@@ -153,6 +153,10 @@ public class QueryProxyManager {
 	 * @return true if locks are already held by one of the proxies; otherwise false.
 	 */
 	public boolean hasLock(QueryProxy proxy) {
+		
+		if (proxy == null){
+			System.err.println();
+		}
 		if (proxy.getLockGranted() != LockType.NONE)
 			return true; //this proxy already holds the required lock 
 

@@ -25,6 +25,7 @@ import java.util.Set;
 
 import org.h2.engine.Database;
 import org.h2.engine.Session;
+import org.h2.h2o.autonomic.Settings;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
@@ -79,7 +80,6 @@ public class QueryProxy implements Serializable{
 	 * @see #lockGranted
 	 */
 	private LockType lockRequested;
-
 
 	/**
 	 * @param lockGranted		The type of lock that has been granted
@@ -173,7 +173,10 @@ public class QueryProxy implements Serializable{
 	 * @throws SQLException
 	 */
 	public static QueryProxy getQueryProxyAndLock(Table table, LockType lockType, Database db) throws SQLException {
-		if (table != null){
+
+		// if the table is temporary it only exists as part of this transaction - i.e. no lock is needed.
+		// if one of the reserved table names is used (SYSTEM_RANGE, for example) it isn't a proper table so won't have a Table Manager.
+		if (table != null && !table.getTemporary() && !Settings.reservedTableNames.contains(table.getName())){
 			return getQueryProxyAndLock(db, table.getFullName(), lockType, db.getLocalDatabaseInstanceInWrapper());
 		} else {
 			return getDummyQueryProxy(db.getLocalDatabaseInstanceInWrapper());

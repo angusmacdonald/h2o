@@ -120,7 +120,9 @@ public class CommandContainer extends Command {
 		/*
 		 * If this is a SELECT query that does not target any meta-tables then locks must be acquired. If it is something else then no locks are needed.
 		 */
-		if (!prepared.sqlStatement.contains("H2O.") && !prepared.sqlStatement.contains("INFORMATION_SCHEMA.")&& !prepared.sqlStatement.contains("SYSTEM_RANGE") && !prepared.sqlStatement.contains("information_schema.") && prepared instanceof Select){
+		if (!prepared.sqlStatement.contains("H2O.") && !prepared.sqlStatement.contains("INFORMATION_SCHEMA.")&& 
+				!prepared.sqlStatement.contains("SYSTEM_RANGE") && !prepared.sqlStatement.contains("information_schema.") && 
+				prepared instanceof Select){
 
 			this.acquireLocks(proxyManager); 
 
@@ -155,10 +157,12 @@ public class CommandContainer extends Command {
 			//Acquire distributed locks. 
 			QueryProxy proxy = this.acquireLocks(proxyManager); 
 
-			assert(proxy != null);
+			//assert(proxy != null);
 
+			if (proxy != null){
 			proxyManager.addProxy(proxy);	//checks that a lock is held for table, then adds the proxy.
-
+			}
+			
 			if (Diagnostic.getLevel() == DiagnosticLevel.FULL){
 				proxyManager.addSQL(prepared.getSQL());
 			}
