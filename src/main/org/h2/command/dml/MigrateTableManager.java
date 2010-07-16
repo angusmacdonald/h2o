@@ -134,6 +134,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 		try {
 			newTableManager.buildTableManagerState(oldTableManager);
 		} catch (RemoteException e) {
+			e.printStackTrace();
 			throw new SQLException("Failed to migrate Table Manager [" + schemaName + "." + tableName + "] to new machine.");
 		} catch (MovedException e) {
 			throw new SQLException("This shouldn't be possible here. The Table Manager [" + schemaName + "." + tableName + "] has moved, but this instance should have had exclusive rights to it.");		
@@ -151,6 +152,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 			throw new SQLException("This shouldn't be possible here. The Table Manager has moved, but this instance should have had exclusive rights to it.");
 
 		} catch (MigrationException e) {
+			e.printStackTrace();
 			throw new SQLException("Migration process timed out [" + schemaName + "." + tableName + "]. It took too long.");
 		}
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Table Manager [" + schemaName + "." + tableName + "] officially migrated.");

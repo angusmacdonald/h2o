@@ -511,11 +511,11 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 			//If it hasn't moved, but is in the process of migration an exception will be thrown.
 			long currentTimeOfMigration = System.currentTimeMillis() - migrationTime;
 
-			if (currentTimeOfMigration < MIGRATION_TIMEOUT) {
-				throw new RemoteException();
-			} else {
+			if (currentTimeOfMigration > MIGRATION_TIMEOUT) {
 				inMigration = false; //Timeout request.
 				this.migrationTime = 0l;
+				
+				throw new RemoteException("Timeout exception. Migration took too long. Current time :" + currentTimeOfMigration + ", TIMEOUT time: " + MIGRATION_TIMEOUT);
 			}
 		}
 	}
