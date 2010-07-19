@@ -1054,7 +1054,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
 				}
 				try {
 					result[i] = executeUpdateInternal(batchParameters.size()>1);
-					conn.commit();
+					//conn.commit();  //XXX required for the testCoffee test in BatchTests to pass, but I don't think its the correct behaviour to commit here.
 				} catch (SQLException e) {
 					if (next == null) {
 						next = e;

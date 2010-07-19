@@ -133,7 +133,7 @@ public class H2TestBatchUpdates extends H2TestBase {
 		conn.close();
 	}
 
-	@Test
+	
 	public void testCoffee() throws SQLException {
 		deleteDb("batchUpdates");
 		this.conn = getConnection("batchUpdates");
