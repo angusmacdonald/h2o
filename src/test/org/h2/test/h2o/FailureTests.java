@@ -62,7 +62,7 @@ public class FailureTests extends TestBase {
 	private static final String BASEDIR = "db_data/multiprocesstests/";
 
 	private LocatorServer ls;
-	private static String[] dbs =  {"one", "two"};//, "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen"};
+	private static String[] dbs =  {"one", "two", "three"};//, "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen"};
 	//"sixteen", "seventeen", "eighteen", "nineteen", "twenty", "twenty-one", "twenty-one", "twenty-two", "twenty-three", "twenty-four", "twenty-five", "twenty-six", "twenty-seven"};
 	private String[] fullDbName = null;
 
@@ -176,13 +176,15 @@ public class FailureTests extends TestBase {
 
 
 	/**
-	 * Codenamed Problem B.
-	 * 
 	 * Connect to existing Database instance with ST state, but find no ST running.
+	 * 
+	 * The sleep time between failure and a new query is so short that it is the instance
+	 * performing the lookup that should notice and correct the failure. The next test has a longer sleep time that checks
+	 * that the maintenance mechanism notices failure and reacts.
 	 * @throws InterruptedException 
 	 */
 	@Test
-	public void systemTableMigrationOnFailure() throws InterruptedException{
+	public void systemTableMigrationOnFailureRequestingInstance() throws InterruptedException{
 		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
 		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
 		sql += "INSERT INTO TEST VALUES(2, 'World');";
@@ -202,12 +204,10 @@ public class FailureTests extends TestBase {
 			/*
 			 * Kill off the System Table process. 
 			 */
-			for (String instance: findSystemTableInstances()){
-				killDatabase(instance);
-				break;
-			}
+			killDatabase(findSystemTableInstance());
 
-			sleep(5000);
+
+			sleep(2000); //if 4000, location will be fixed through handlemovedexception, if 8000 fixed through predecessorChange.
 
 			//createConnectionsToDatabases();
 			
@@ -221,8 +221,51 @@ public class FailureTests extends TestBase {
 	}
 	
 	/**
-	 * Codenamed Problem B.
+	 * Connect to existing Database instance with ST state, but find no ST running.
 	 * 
+	 * The sleep time between failure and a new query is long enough that it is maintenance mechanism
+	 *  that should notice and correct the failure. The previous test has a shorter sleep time that checks
+	 * that the requesting instance notices failure and reacts.
+	 * @throws InterruptedException 
+	 */
+	@Test
+	public void systemTableMigrationOnFailureMaintenanceMechanism() throws InterruptedException{
+		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
+		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
+		sql += "INSERT INTO TEST VALUES(2, 'World');";
+
+		try {
+			sleep(1000);
+			/*
+			 * Create test table.
+			 */
+			executeUpdateOnFirstMachine(sql);
+
+			assertTestTableExists(2);
+			assertMetaDataExists(connections[0], 1);
+
+			sleep(2000);
+
+			/*
+			 * Kill off the System Table process. 
+			 */
+			killDatabase(findSystemTableInstance());
+
+
+			sleep(8000); //if 4000, location will be fixed through handlemovedexception, if 8000 fixed through predecessorChange.
+
+			//createConnectionsToDatabases();
+			
+			Statement stat = connections[1].createStatement();
+			createSecondTable(stat, "TEST2");
+			assertTrue(assertTest2TableExists(connections[1], 2));
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("Unexpected exception.");
+		}
+	}
+	
+	/**
 	 * Connect to existing Database instance with ST state and TM state, but find no ST or TM running.
 	 * @throws InterruptedException 
 	 */

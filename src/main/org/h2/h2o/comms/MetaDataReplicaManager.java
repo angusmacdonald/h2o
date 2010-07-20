@@ -103,7 +103,7 @@ public class MetaDataReplicaManager {
 
 
 		if (metaDataReplicationEnabled){
-			if (replicaManager.size() < managerStateReplicationFactor + 1){ //+1 because the local copy counts as a replica.
+			if (replicaManager.size() < managerStateReplicationFactor){ //+1 because the local copy counts as a replica.
 
 				//now replica state here.
 				try {
@@ -189,7 +189,7 @@ public class MetaDataReplicaManager {
 	}
 
 	private boolean isLocal(DatabaseInstanceWrapper replica) {
-		return replica.getDatabaseInstance().equals(localDatabase.getDatabaseInstance());
+		return replica.equals(localDatabase);
 	}
 
 	public String[] getReplicaLocations(boolean isSystemTable) {

@@ -24,3 +24,7 @@ H2O Version 0.2.5 (Unreleased)
 	Added tests for Prepared Statements and batch updates.
 	Fixed error in Table Manager migration.
 	In tests: removed reliance on descriptor file on a central server.
+	Fixed ordering of database locations on locator server - active System Table is always first.
+	System can recover from System Table failure regardless whether meta-data is held on successor, and is able
+		to recover if failure occurs before the maintenance mechanisms pick it up.
+	

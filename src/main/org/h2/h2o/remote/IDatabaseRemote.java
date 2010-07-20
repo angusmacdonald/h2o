@@ -98,6 +98,11 @@ public interface IDatabaseRemote {
 	 */
 	public DatabaseInstanceRemote getDatabaseInstanceAt(DatabaseURL databaseURL)  throws RemoteException;
 
-
+	/**
+	 * Reinstantiates the System Table by looking through valid locations from the locator server
+	 * and trying to reinstantiate on each one until the operation is successful.
+	 * @return True if the System Table was re-instantiated somewhere.
+	 */
+	public boolean reinstantiateSystemTable();
 
 }

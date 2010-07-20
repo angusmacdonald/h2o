@@ -25,6 +25,7 @@ import org.h2.command.Parser;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
 
@@ -140,8 +141,12 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	 */
 	@Override
 	public DatabaseURL getSystemTableURL() throws RemoteException {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Responding to request for System Table location at database '" + session.getDatabase().getDatabaseLocation() + "'.");
-		return session.getDatabase().getSystemTableReference().getSystemTableURL();
+		
+		DatabaseURL systemTableURL = session.getDatabase().getSystemTableReference().getSystemTableURL();
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Responding to request for System Table location at database '" + session.getDatabase().getDatabaseLocation() + "'. " +
+				"System table location: " + systemTableURL);
+		
+		return systemTableURL;
 	}
 
 	/* (non-Javadoc)
@@ -163,6 +168,16 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 		return result;
 	}
 
+	@Override
+	public boolean recreateSystemTable() throws RemoteException {
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Responding to request to recreate System Table on '" + session.getDatabase().getDatabaseLocation() + "'.");
+				
+		ISystemTableReference systemTableReference = this.session.getDatabase().getSystemTableReference();
+		systemTableReference.migrateSystemTableToLocalInstance(true, true);
+		
+		return true;
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#setSystemTableLocation(uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference)
 	 */
@@ -228,4 +243,5 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 			return false;
 		return true;
 	}
+
 }

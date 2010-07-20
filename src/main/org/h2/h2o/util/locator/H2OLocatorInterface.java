@@ -105,7 +105,7 @@ public class H2OLocatorInterface {
 		boolean foundMajority = false;
 
 		/*
-		 * Get responses. 
+		 * Get responses. Loop through each locator server.
 		 */
 		for (Entry<LocatorClientConnection, Integer> locatorLocation: locatorConnections.entrySet()){
 

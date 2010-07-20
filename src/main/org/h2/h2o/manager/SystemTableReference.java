@@ -17,19 +17,24 @@
  */
 package org.h2.h2o.manager;
 
+import java.io.IOException;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.h2.engine.Database;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.remote.IChordInterface;
+import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.DatabaseURL;
+import org.h2.h2o.util.LocalH2OProperties;
 import org.h2.h2o.util.SystemTableReplication;
 import org.h2.h2o.util.TableInfo;
 import org.h2.table.ReplicaSet;
@@ -530,6 +535,10 @@ public class SystemTableReference implements ISystemTableReference {
 		 * CHECK THREE: The Table Manager proxy is not known. Contact the System Table for the managers location.
 		 */
 		try {
+			if (systemTable == null) {
+				return makeAttemptToFindSystemTable(tableInfo, alreadyCalled); //recusrively calls lookup again if it hasn't tried to already.
+			}
+
 			TableManagerWrapper tableManagerWrapper = systemTable.lookup(tableInfo);
 
 			if (tableManagerWrapper == null) return null; //During a create table operation it is expected that the lookup will return null here.
@@ -545,15 +554,18 @@ public class SystemTableReference implements ISystemTableReference {
 			handleMovedException(e);
 			return lookup(tableInfo, true, false);
 		} catch (Exception e) {
-			e.printStackTrace();
-			if (alreadyCalled) throw new SQLException("Failed to find System Table. Query has been rolled back.");
-
-			/*
-			 * System Table no longer exists. Try to find new location.
-			 */
-			handleLostSystemTableConnection();
-			return lookup(tableInfo, true, false);
+			return makeAttemptToFindSystemTable(tableInfo, alreadyCalled);
 		}
+	}
+
+	private TableManagerRemote makeAttemptToFindSystemTable(TableInfo tableInfo, boolean alreadyCalled) throws SQLException {
+		if (alreadyCalled) throw new SQLException("Failed to find System Table. Query has been rolled back.");
+
+		/*
+		 * System Table no longer exists. Try to find new location.
+		 */
+		handleLostSystemTableConnection();
+		return lookup(tableInfo, true, false);
 	}
 
 
@@ -564,6 +576,9 @@ public class SystemTableReference implements ISystemTableReference {
 	 * @throws SQLException
 	 */
 	private void handleLostSystemTableConnection() throws SQLException {
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempting to fix a broken System Table connection.");
+
+
 		try {
 			IChordRemoteReference lookupLocation = null;
 
@@ -578,19 +593,41 @@ public class SystemTableReference implements ISystemTableReference {
 			} while (lookupLocation == null && attempts < 10);
 
 
+			String lookupHostname = lookupLocation.getRemote().getAddress().getHostName();
+			int lookupPort = lookupLocation.getRemote().getAddress().getPort();
 
-			DatabaseInstanceRemote lookupInstance  = null;
+			lookForSystemTableReferenceViaChord(lookupHostname, lookupPort, false);
 
-			if (this.db.getChordInterface().getLocalChordReference().equals(lookupLocation)){
-				lookupInstance = this.db.getLocalDatabaseInstance();
-			} else {
-				String lookupHostname = lookupLocation.getRemote().getAddress().getHostName();
-				int lookupPort = lookupLocation.getRemote().getAddress().getPort();
+		} catch (Exception e) {
+			throw new SQLException("Internal system error: failed to contact System Table.");
+		} 
+	}
 
-				IChordInterface chord = this.db.getChordInterface();
-				lookupInstance = chord.getDatabaseInstanceAt(lookupHostname, lookupPort);
-			}
+	private void lookForSystemTableReferenceViaChord(String hostname, int port, boolean alreadyCalled) throws RemoteException, NotBoundException, SQLException {
+		DatabaseInstanceRemote lookupInstance  = null;
 
+		DatabaseURL localURL = this.db.getURL();
+
+		if (localURL.getHostname().equals(hostname) && localURL.getRMIPort() == port){
+			lookupInstance = this.db.getLocalDatabaseInstance();
+		} else {
+			IChordInterface chord = this.db.getChordInterface();
+
+			lookupInstance = chord.getDatabaseInstanceAt(hostname, port);
+		}
+
+		/*
+		 * 1. Get the location of the System Table (as the lookup instance currently knows it.
+		 * 2. Contact the registry of that instance to get a direct reference to the system table.
+		 * 
+		 * If this registry (or the System Table) does not exist at this location any more an error will be thrown. This
+		 * happens when a query is made before maintenance mechanisms have kicked in.
+		 * 
+		 * When this happens this node should attempt to find a new location on which to reinstantiate a System Table. This replicates what is done
+		 * in ChordRemote.predecessorChangeEvent. 
+		 */
+
+		try {
 			DatabaseURL actualSystemTableLocation = lookupInstance.getSystemTableURL();
 
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Actual System Table location found at: " + actualSystemTableLocation.getRMIPort());
@@ -603,10 +640,23 @@ public class SystemTableReference implements ISystemTableReference {
 			this.systemTable = (SystemTableRemote)registry.lookup(SCHEMA_MANAGER);
 			this.systemTableNode = systemTable.getChordReference();
 
-		} catch (Exception e1) {
-			e1.printStackTrace();
-			throw new SQLException("Internal system error: failed to contact System Table.");
-		} 
+		} catch(Exception e){
+			if (!alreadyCalled){
+				//System Table is not active anymore, and maintenance mechanisms have not yet kicked in.
+				boolean successful = db.getRemoteInterface().reinstantiateSystemTable();
+
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempt to re-instantiate System Table: " + successful);
+
+				if (successful){
+					//Now update the local references to this new System Table.
+					DatabaseURL newSystemTableURL = getSystemTableURL();
+					//Call this method again but with the new System Table location.
+					lookForSystemTableReferenceViaChord(newSystemTableURL.getHostname(), newSystemTableURL.getRMIPort(), true);
+				}
+			} else {
+				throw new SQLException("Internal system error: failed to contact System Table.");
+			}
+		}
 	}
 
 	/* (non-Javadoc)
@@ -667,7 +717,6 @@ public class SystemTableReference implements ISystemTableReference {
 
 		systemTable.removeAllTableInformation();
 	}
-
 
 
 }

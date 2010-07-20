@@ -106,4 +106,6 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit  {
 	 */
 	public void setAlive(boolean alive) throws RemoteException;
 
+	public boolean recreateSystemTable() throws RemoteException;
+
 }
