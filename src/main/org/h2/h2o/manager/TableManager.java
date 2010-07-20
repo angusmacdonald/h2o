@@ -146,7 +146,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	private int relationReplicationFactor;
 
 	public TableManager(TableInfo tableDetails, Database database) throws Exception{
-		super(database, TABLES, REPLICAS, CONNECTIONS, TABLEMANAGERSTATE, Integer.parseInt(database.getDatabaseSettings().get("TABLE_MANAGER_REPLICATION_FACTOR")));
+		super(database, TABLES, REPLICAS, CONNECTIONS, TABLEMANAGERSTATE, false);
 
 		this.tableName = tableDetails.getTableName();
 
@@ -221,11 +221,14 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 * @see org.h2.h2o.manager.TableManagerRemote2#removeTableManager()
 	 */
 	@Override
-	public boolean removeTableManager() throws RemoteException, SQLException,
+	public boolean removeTableInformation() throws RemoteException, SQLException,
 	MovedException {
-		boolean successful = super.removeTableInformation(getTableInfo(), true);
-
-		return successful;
+		return removeTableInformation(getTableInfo(), true);
+	}
+	
+	@Override
+	public boolean removeTableInformation(TableInfo tableInfo, boolean removeReplicaInfo) {
+		return super.removeTableInformation(getTableInfo(), removeReplicaInfo);
 	}
 
 	/**
@@ -478,7 +481,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.TableManagerRemote2#getTableInfo()
 	 */
-	public TableInfo getTableInfo() throws RemoteException {
+	public TableInfo getTableInfo() {
 
 		return new TableInfo(tableName, schemaName, getDB().getURL());
 	}
@@ -696,17 +699,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	@Override
 	public boolean addStateReplicaLocation(
 			DatabaseInstanceWrapper databaseWrapper) throws RemoteException {
-		boolean added = super.addStateReplicaLocation(databaseWrapper);
-
-		//		if (added){
-		//			try {
-		//				addTableManagerReplicaInformation(getTableID(new TableInfo(tableName, schemaName)), getConnectionID(databaseWrapper.getDatabaseURL()), false);
-		//			} catch (SQLException e) {
-		//				throw new RemoteException(e.getMessage());
-		//			}
-		//		}
-
-		return added;
+		return super.addStateReplicaLocation(databaseWrapper);
 	}
 
 	/* (non-Javadoc)

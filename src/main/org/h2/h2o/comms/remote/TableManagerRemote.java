@@ -56,7 +56,7 @@ public interface TableManagerRemote extends H2ORemote, Migratable {
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.comms.remote.TableManagerRemote#removeTableManager()
 	 */
-	public boolean removeTableManager() throws RemoteException, SQLException,
+	public boolean removeTableInformation() throws RemoteException, SQLException,
 	MovedException;
 
 	/**

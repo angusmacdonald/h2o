@@ -26,6 +26,7 @@ import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
+import org.h2.h2o.comms.MetaDataReplicaManager;
 import org.h2.h2o.comms.ReplicaManager;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
@@ -44,7 +45,10 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  */
 public abstract class PersistentManager {
 
-	private ReplicaManager stateReplicaManager;
+	/**
+	 * Responsible for managing the locations to which this managers state is replicated.
+	 */
+	private MetaDataReplicaManager metaDataReplicaManager;
 
 	/**
 	 * Query parser instance to be used for all queries to the System Table.
@@ -62,21 +66,31 @@ public abstract class PersistentManager {
 	private String connectionRelation;
 	private String tableManagerRelation;
 
-	private int managerStateReplicationFactor;
+	private boolean isSystemTable;
 
-	private boolean metaDataReplicationEnabled;
-
-	public PersistentManager(Database db, String tables, String replicas, String connections, String tableManagerRelation, int managerStateReplicationFactor) throws Exception{
+	/**
+	 * 
+	 * @param db
+	 * @param tables
+	 * @param replicas
+	 * @param connections
+	 * @param tableManagerRelation
+	 * @param isSystemTable
+	 * @param tableInfo		null if this is the system table.
+	 * @throws Exception
+	 */
+	public PersistentManager(Database db, String tables, String replicas, String connections, String tableManagerRelation, boolean isSystemTable) throws Exception{
 		this.tableRelation = tables;
 		this.replicaRelation = replicas;
 		this.connectionRelation = connections;
 		this.tableManagerRelation = tableManagerRelation;
 		this.db = db;
+		this.isSystemTable = isSystemTable;
 
-		this.managerStateReplicationFactor = managerStateReplicationFactor;
+		this.metaDataReplicaManager = db.getMetaDataReplicaManager();
+
 		Session session = db.getSystemSession();
 
-		metaDataReplicationEnabled = Boolean.parseBoolean(db.getDatabaseSettings().get("METADATA_REPLICATION_ENABLED"));
 
 		if (session == null){
 			ErrorHandling.error("Couldn't find system session. Local database has been shutdown.");
@@ -84,13 +98,6 @@ public abstract class PersistentManager {
 		}
 
 		queryParser = new Parser(session, true);
-
-		this.stateReplicaManager = new ReplicaManager();
-
-		stateReplicaManager.add(db.getLocalDatabaseInstanceInWrapper());
-
-		//stateReplicaManager.add(db.getLocalDatabaseInstance());
-
 	}
 
 	/**
@@ -462,49 +469,7 @@ public abstract class PersistentManager {
 	protected int executeUpdate(String query) throws SQLException{
 		//	getNewQueryParser();
 
-		Set<DatabaseInstanceWrapper> replicas = stateReplicaManager.getActiveReplicas();
-		Set<DatabaseInstanceWrapper> failed = new HashSet<DatabaseInstanceWrapper>();
-		int result = -1;
-
-		for (DatabaseInstanceWrapper replica: replicas){
-			if (db.isLocal(replica)){
-				sqlQuery = queryParser.prepareCommand(query);
-
-				try {
-					result = sqlQuery.update();
-
-					sqlQuery.close();
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
-			} else {
-				try {
-					result = replica.getDatabaseInstance().executeUpdate(query, true);
-				} catch (RemoteException e) {
-					e.printStackTrace();
-					failed.add(replica);
-
-					if (this instanceof TableManager){
-						//Remove table replica information from the system table.
-						try {
-							this.db.getSystemTable().removeTableManagerStateReplica(this.getTableInfo(), this.getLocation());
-						} catch (RemoteException e1) {
-							e1.printStackTrace();
-						} catch (MovedException e1) {
-							e1.printStackTrace();
-						}
-					}
-				}
-			}
-		}
-
-		boolean hasRemoved = replicas.removeAll(failed);
-
-		if (hasRemoved){
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Removed one or more replica locations because they couldn't be contacted for the last update.");
-		}
-
-		return result;
+		return metaDataReplicaManager.executeUpdate(query, isSystemTable, getTableInfo());
 	}
 
 	/**
@@ -516,7 +481,7 @@ public abstract class PersistentManager {
 	/**
 	 * @return
 	 */
-	protected abstract TableInfo getTableInfo() throws RemoteException;
+	protected abstract TableInfo getTableInfo();
 
 	/**
 	 * Removes a particular replica from the System Table. 
@@ -558,43 +523,7 @@ public abstract class PersistentManager {
 	public boolean removeTableInformation(TableInfo ti, boolean removeReplicaInfo) {
 		try {
 
-			String sql = "";
-			if (ti.getTableName() == null){
-				/*
-				 * Deleting the entire schema.
-				 */
-				Integer[] tableIDs;
-
-				tableIDs = getTableIDs(ti.getSchemaName());
-
-
-				if (tableIDs.length > 0 && removeReplicaInfo){
-					sql = "DELETE FROM " + replicaRelation;
-					for (int i = 0; i < tableIDs.length; i++){
-						if (i==0){
-							sql +=" WHERE table_id=" + tableIDs[i];
-						} else {
-							sql +=" OR table_id=" + tableIDs[i];
-						}
-					}
-					sql += ";";
-				} else {
-					sql = "";
-				}
-
-				sql += "\nDELETE FROM " + tableRelation + " WHERE schemaname='" + ti.getSchemaName() + "'; ";
-			} else {
-
-				int tableID = getTableID(ti);
-
-				sql = "";
-
-				if (removeReplicaInfo){
-					sql = "DELETE FROM " + replicaRelation + " WHERE table_id=" + tableID + ";";
-				}
-				sql += "\nDELETE FROM " + tableRelation + " WHERE table_id=" + tableID + "; ";
-
-			}
+			String sql = constructRemoveReplicaQuery(ti, removeReplicaInfo);
 			executeUpdate(sql);
 
 
@@ -606,6 +535,47 @@ public abstract class PersistentManager {
 
 			return false;
 		}
+	}
+
+	private String constructRemoveReplicaQuery(TableInfo ti, boolean removeReplicaInfo) throws SQLException {
+		String sql = "";
+		if (ti.getTableName() == null){
+			/*
+			 * Deleting the entire schema.
+			 */
+			Integer[] tableIDs;
+
+			tableIDs = getTableIDs(ti.getSchemaName());
+
+
+			if (tableIDs.length > 0 && removeReplicaInfo){
+				sql = "DELETE FROM " + replicaRelation;
+				for (int i = 0; i < tableIDs.length; i++){
+					if (i==0){
+						sql +=" WHERE table_id=" + tableIDs[i];
+					} else {
+						sql +=" OR table_id=" + tableIDs[i];
+					}
+				}
+				sql += ";";
+			} else {
+				sql = "";
+			}
+
+			sql += "\nDELETE FROM " + tableRelation + " WHERE schemaname='" + ti.getSchemaName() + "'; ";
+		} else {
+
+			int tableID = getTableID(ti);
+
+			sql = "";
+
+			if (removeReplicaInfo){
+				sql = "DELETE FROM " + replicaRelation + " WHERE table_id=" + tableID + ";";
+			}
+			sql += "\nDELETE FROM " + tableRelation + " WHERE table_id=" + tableID + "; ";
+
+		}
+		return sql;
 	}
 
 
@@ -633,39 +603,29 @@ public abstract class PersistentManager {
 	 * Add a location where replicas of this managers state will be placed.
 	 * @param databaseWrapper
 	 * @throws RemoteException
+	 * @throws SQLException 
 	 */
-	public boolean addStateReplicaLocation(DatabaseInstanceWrapper databaseWrapper) throws RemoteException {
+	public boolean addStateReplicaLocation(DatabaseInstanceWrapper databaseWrapper) throws RemoteException{
+		String deleteOldEntries = null;
 
-		if (metaDataReplicationEnabled){
-			if (stateReplicaManager.size() < managerStateReplicationFactor + 1){ //+1 because the local copy counts as a replica.
-
-				//now replica state here.
-				try {
-					String query = "DROP REPLICA IF EXISTS ";
-					query += tableRelation + ", ";
-					query += (replicaRelation == null)? "": replicaRelation + ", ";
-					query += (tableManagerRelation == null)? "": tableManagerRelation + ", ";
-					query += (connectionRelation == null)? "": connectionRelation + ";";
-					databaseWrapper.getDatabaseInstance().executeUpdate(query, true);
-
-					query = "CREATE REPLICA " + tableRelation + ", " + ((replicaRelation==null)? "": (replicaRelation + ", ")) + 
-					connectionRelation + ((tableManagerRelation == null)? "": (", " + tableManagerRelation)) + " FROM '" + db.getURL().getOriginalURL() + "';";
-					databaseWrapper.getDatabaseInstance().executeUpdate(query, true);
-					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + databaseWrapper.getDatabaseURL().getDbLocation());
-
-					stateReplicaManager.add(databaseWrapper);
-
-					return true;
-				} catch (SQLException e) {
-					e.printStackTrace();
-					ErrorHandling.errorNoEvent("Failed to replicate manager/table state onto: " + databaseWrapper.getDatabaseURL().getDbLocation());
-				} catch (Exception e) {
-					throw new RemoteException(e.getMessage());
-				} 
-
+		if (isSystemTable){ //Drop the entire table.
+			deleteOldEntries = "DROP REPLICA IF EXISTS ";
+			deleteOldEntries += tableRelation + ", ";
+			deleteOldEntries += (replicaRelation == null)? "": replicaRelation + ", ";
+			deleteOldEntries += (tableManagerRelation == null)? "": tableManagerRelation + ", ";
+			deleteOldEntries += (connectionRelation == null)? "": connectionRelation + ";";
+		} else { //Remove only entries specific to this table.  
+			try {
+				deleteOldEntries = constructRemoveReplicaQuery(getTableInfo(), true);
+			} catch (SQLException e) {
+				e.printStackTrace();
 			}
 		}
-		return false;
+
+		String query = "CREATE REPLICA IF NOT EXISTS " + tableRelation + ", " + ((replicaRelation==null)? "": (replicaRelation + ", ")) + 
+		connectionRelation + ((tableManagerRelation == null)? "": (", " + tableManagerRelation)) + " FROM '" + db.getURL().getOriginalURL() + "';";
+
+		return metaDataReplicaManager.addReplicaLocation(databaseWrapper, isSystemTable, query, deleteOldEntries);
 	}
 
 	/**
@@ -683,7 +643,7 @@ public abstract class PersistentManager {
 		}
 		H2OLocatorInterface dl = new H2OLocatorInterface(databaseName, descriptorLocation);
 
-		boolean successful = dl.setLocations(stateReplicaManager.getReplicaLocations());
+		boolean successful = dl.setLocations(metaDataReplicaManager.getReplicaLocations(isSystemTable));
 
 		if (!successful){
 			ErrorHandling.errorNoEvent("Didn't successfully write new System Replica locations to a majority of locator servers.");
@@ -691,14 +651,13 @@ public abstract class PersistentManager {
 	}
 
 
-	public void removeConnectionInformation(
-			DatabaseInstanceRemote databaseInstance)
-	throws RemoteException, MovedException {
+	public void removeConnectionInformation(DatabaseInstanceRemote databaseInstance) throws RemoteException, MovedException {
 
 		/*
-		 * If the System Tables state is replicateed onto this machine remove it as a replica location.
+		 * If the System Tables state is replicated onto this machine remove it as a replica location.
 		 */
-		this.stateReplicaManager.remove(databaseInstance);
+		metaDataReplicaManager.remove(databaseInstance, isSystemTable);
+		
 		/*
 		 * TODO try to replicate somewhere else.
 		 */
@@ -748,5 +707,6 @@ public abstract class PersistentManager {
 			e.printStackTrace();
 		}	
 	}
+
 
 }

@@ -26,6 +26,7 @@ import org.h2.constant.LocationPreference;
 import org.h2.constant.SysProperties;
 import org.h2.constraint.Constraint;
 import org.h2.h2o.autonomic.Settings;
+import org.h2.h2o.comms.MetaDataReplicaManager;
 import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
@@ -201,6 +202,11 @@ public class Database implements DataHandler {
 	private boolean reconnectChangePending;
 
 	private ISystemTableReference systemTableRef;
+	private MetaDataReplicaManager metaDataReplicaManager;
+	
+	public MetaDataReplicaManager getMetaDataReplicaManager() {
+		return metaDataReplicaManager;
+	}
 
 	/**
 	 * Interface for this database instance to the rest of the database system.
@@ -234,6 +240,8 @@ public class Database implements DataHandler {
 		this.compareMode = new CompareMode(null, null, 0);
 
 		systemTableRef = new SystemTableReference(this);
+		
+
 		databaseRemote = new ChordRemote(localMachineLocation, systemTableRef);
 
 		this.persistent = ci.isPersistent();
@@ -714,13 +722,32 @@ public class Database implements DataHandler {
 		 */
 		if (Constants.IS_H2O && !isManagementDB()){ //don't run this code with the TCP server management DB
 
+			/*
+			 * Get Settings for Database.
+			 */
 			LocalH2OProperties localSettings = new LocalH2OProperties(localMachineLocation);
 			localSettings.loadProperties();
 			H2OLocatorInterface locatorInterface = databaseRemote.getLocatorServerReference(localSettings);
 
 			databaseSettings = new Settings(localSettings, locatorInterface.getDescriptor());
 
-			databaseRemote.connectToDatabaseSystem(h2oSystemSession, databaseSettings); //systemSession
+			/*
+			 * Connect to Database System.
+			 */
+			databaseRemote.connectToDatabaseSystem(h2oSystemSession, databaseSettings); 
+			
+
+			/*
+			 * Create Meta-Data Replication Manager.
+			 * 
+			 * Must be executed after call to databaseRemote because of getLocalDatabaseInstanceInWrapper() call.
+			 */
+			boolean metaDataReplicationEnabled = Boolean.parseBoolean(databaseSettings.get("METADATA_REPLICATION_ENABLED"));
+			int systemTableReplicationFactor = Integer.parseInt(databaseSettings.get("SYSTEM_TABLE_REPLICATION_FACTOR"));
+			int tableManagerReplicationFactor = Integer.parseInt(databaseSettings.get("TABLE_MANAGER_REPLICATION_FACTOR"));
+			
+			metaDataReplicaManager = new MetaDataReplicaManager(metaDataReplicationEnabled, systemTableReplicationFactor, tableManagerReplicationFactor, getLocalDatabaseInstanceInWrapper(), this);
+			
 		}
 
 		/*

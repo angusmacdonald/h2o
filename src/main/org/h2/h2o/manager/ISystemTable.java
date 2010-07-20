@@ -65,13 +65,6 @@ public interface ISystemTable extends Remote {
 	 */
 	public boolean addTableInformation(TableManagerRemote tableManager, TableInfo tableDetails) throws RemoteException, MovedException, SQLException;
 
-
-	//	/**
-	//	 * Remove a single replica from the database system (so there will be other replicas left).
-	//	 * @param ti			Information on the replicas location.
-	//	 */
-	//	public void removeReplicaInformation(TableInfo ti) throws RemoteException, MovedException;
-
 	/**
 	 * Remove Table Manager from the system. This is used when a table is being dropped completely
 	 * from the database system.

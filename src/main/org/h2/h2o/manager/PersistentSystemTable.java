@@ -76,7 +76,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
 
 	public PersistentSystemTable(Database db, boolean createTables) throws Exception{
-		super (db, TABLES, null, DATABASE_LOCATIONS, TABLEMANAGERSTATE, Integer.parseInt(db.getDatabaseSettings().get("SYSTEM_TABLE_REPLICATION_FACTOR")));
+		super (db, TABLES, null, DATABASE_LOCATIONS, TABLEMANAGERSTATE, true);
 
 
 		if (createTables){
@@ -661,7 +661,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 	 * @see org.h2.h2o.manager.PersistentManager#getTableInfo()
 	 */
 	@Override
-	protected TableInfo getTableInfo() throws RemoteException {
+	protected TableInfo getTableInfo() {
 		return null;
 	}
 
