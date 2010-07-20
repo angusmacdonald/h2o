@@ -154,7 +154,7 @@ public class H2O {
 
 			databaseName = "MyFirstDatabase";
 			port = "9999";
-			descriptorFileLocation = null; //e.g. "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o"
+			descriptorFileLocation = null; //e.g. AllTests.TEST_DESCRIPTOR_FILE
 			defaultLocation = "db_data"; //e.g. "db_data"
 			//webPort = 9990;
 		} else {
@@ -164,7 +164,7 @@ public class H2O {
 			 */
 			databaseName =arguments.get("-n");
 			port = arguments.get("-p");
-			descriptorFileLocation = arguments.get("-d"); //e.g. "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o"
+			descriptorFileLocation = arguments.get("-d"); //e.g. AllTests.TEST_DESCRIPTOR_FILE
 			defaultLocation = arguments.get("-f"); //e.g. "db_data"
 			web = arguments.get("-w");
 

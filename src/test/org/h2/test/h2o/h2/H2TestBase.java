@@ -21,6 +21,7 @@ import org.h2.jdbc.JdbcConnection;
 import org.h2.message.TraceSystem;
 import org.h2.store.FileLock;
 import org.h2.test.TestAll;
+import org.h2.test.h2o.AllTests;
 import org.h2.tools.DeleteDbFiles;
 
 /**
@@ -117,7 +118,7 @@ public abstract class H2TestBase {
 	public static void setUpDescriptorFiles(String url) {
 		LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(url));
 		properties.createNewFile();
-		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
 		properties.setProperty("databaseName", "testDB");
 		properties.setProperty("chordPort", "" + ++port);
 		properties.saveAndClose();

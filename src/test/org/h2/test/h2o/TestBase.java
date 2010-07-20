@@ -76,7 +76,7 @@ public class TestBase {
 
 		properties.createNewFile();
 		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
-		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
 		properties.setProperty("databaseName", "testDB");
 		properties.setProperty("chordPort", "" + chordPort++);
 		properties.saveAndClose();
@@ -85,7 +85,7 @@ public class TestBase {
 
 		properties.createNewFile();
 		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
-		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
 		properties.setProperty("databaseName", "testDB");
 		properties.setProperty("chordPort", "" + chordPort++);
 		properties.saveAndClose();
@@ -149,21 +149,21 @@ public class TestBase {
 
 		LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:mem:one"));
 		properties.createNewFile();
-		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
 		properties.setProperty("databaseName", "testDB");
 		properties.setProperty("chordPort", "" + chordPort++);
 		properties.saveAndClose();
 
 		properties = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"));
 		properties.createNewFile();
-		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
 		properties.setProperty("databaseName", "testDB");
 		properties.setProperty("chordPort", "" + chordPort++);
 		properties.saveAndClose();
 
 		properties = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:three"));
 		properties.createNewFile();
-		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
 		properties.setProperty("databaseName", "testDB");
 		properties.setProperty("chordPort", "" + chordPort++);
 		properties.saveAndClose();
@@ -171,7 +171,7 @@ public class TestBase {
 
 		properties = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"));
 		properties.createNewFile();
-		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
 		properties.setProperty("databaseName", "testDB");
 		properties.setProperty("chordPort", "" + chordPort++);
 		properties.saveAndClose();
@@ -187,7 +187,7 @@ public class TestBase {
 
 		properties.createNewFile();
 		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
-		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
 		properties.setProperty("databaseName", "testDB");
 		properties.saveAndClose();
 
@@ -195,7 +195,7 @@ public class TestBase {
 
 		properties.createNewFile();
 		//"jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
-		properties.setProperty("descriptor", "http://www.cs.st-andrews.ac.uk/~angus/databases/testDB.h2o");
+		properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
 		properties.setProperty("databaseName", "testDB");
 		properties.saveAndClose();
 

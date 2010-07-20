@@ -17,6 +17,8 @@
  */
 package org.h2.test.h2o;
 
+import java.io.File;
+
 import org.h2.test.h2o.h2.H2Tests;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -48,4 +50,6 @@ import org.junit.runners.Suite;
 })
 public class AllTests {
 	//The above annotations do all the work.
+	
+	public static final String TEST_DESCRIPTOR_FILE = "service" + File.separator + "testDB.h2o";
 }

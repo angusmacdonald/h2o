@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
  * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
  *
@@ -57,7 +57,7 @@ import uk.ac.standrews.cs.nds.util.Processes;
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class LocatorDatabaseTests extends TestBase {
+public class FailureTests extends TestBase {
 
 	private static final String BASEDIR = "db_data/multiprocesstests/";
 
@@ -122,9 +122,9 @@ public class LocatorDatabaseTests extends TestBase {
 
 		startDatabases(true);
 
-		sleep(5000);
+		sleep(2000);
 		createConnectionsToDatabases();
-		sleep(5000);
+		sleep(1000);
 
 
 		//		sas = new Statement[dbs.length + 1];
@@ -173,182 +173,6 @@ public class LocatorDatabaseTests extends TestBase {
 	 * ###########################################################
 	 */
 
-	/**
-	 * Starts up every database then creates a test table on one of them.
-	 */
-	@Test
-	public void createTestTable(){
-		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
-		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
-		sql += "INSERT INTO TEST VALUES(2, 'World');";
-
-		try {
-			executeUpdateOnFirstMachine(sql);
-
-			assertTestTableExists(2);
-		} catch (SQLException e) {
-			e.printStackTrace();
-			fail("Unexpected exception");
-		}
-	}
-
-	/**
-	 * Starts up every database, creates a test table, kills every database, restarts, 
-	 * then checks that the test table can still be accessed.
-	 * @throws InterruptedException
-	 */
-	@Test
-	public void killDatabasesThenRestart() throws InterruptedException{
-		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
-		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
-		sql += "INSERT INTO TEST VALUES(2, 'World');";
-		sleep(10000);
-		try {
-			executeUpdateOnFirstMachine(sql);
-
-			assertTestTableExists(2);
-			assertMetaDataExists(getSystemTableConnection(), 1);
-
-			sleep(10000);
-
-			/*
-			 * Kill off databases.
-			 */
-			killDatabases();
-
-			sleep(10000);
-
-			startDatabases(false);
-
-			sleep(10000);
-
-			createConnectionsToDatabases();
-
-			assertTestTableExists(2);
-			assertMetaDataExists(connections[0], 1);
-		} catch (SQLException e) {
-			e.printStackTrace();
-			fail("Unexpected exception");
-		}
-	}
-
-	/**
-	 * One node gets a majority while another backs out then tries again.
-	 * @throws InterruptedException 
-	 */
-	@Test
-	public void noMajorityForOneNode() throws InterruptedException{
-
-	}
-
-	/**
-	 * Each node gets exactly half of the locks required to create a schema manager. This checks that one of the nodes
-	 * eventually gets both locks.
-	 */
-	@Test
-	public void twoLocatorsEachProcessStuckOnOneLock(){
-
-	}
-
-
-	/**
-	 * Databases restart but no System Table instances are running. They shouldn't be able to start and will fail eventually.
-	 */
-	@Test
-	public void noSystemTableRunning() throws InterruptedException{
-		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
-		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
-		sql += "INSERT INTO TEST VALUES(2, 'World');";
-
-		try {
-			sleep(5000);
-
-			executeUpdateOnFirstMachine(sql);
-
-			assertTestTableExists(2);
-			assertMetaDataExists(connections[0], 1);
-
-			sleep(5000);
-
-			/*
-			 * Kill off databases.
-			 */
-			killDatabases();
-
-			sleep(4000);
-
-			/*
-			 * Start up all the instances which aren't System Tables.
-			 */
-			List<String> nonSystemTableInstances = findNonSystemTableInstances();
-			String singleInstance = nonSystemTableInstances.toArray(new String[0])[0];
-
-			startDatabases(nonSystemTableInstances);
-
-
-			Connection c = createConnectionToDatabase(singleInstance);
-
-			assertFalse(assertTestTableExists(c, 2)); //the connection should not have been created.
-		} catch (SQLException e) {}
-
-	}
-
-	/**
-	 * Databases restart but no System Table instances are running. They shouldn't be able to start initially. Then a
-	 * System Table instance is started and they should connect and operate normally.
-	 */
-	@Test
-	public void noSystemTableRunningAtFirst() throws InterruptedException{
-		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
-		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
-		sql += "INSERT INTO TEST VALUES(2, 'World');";
-
-		try {
-			sleep(5000);
-			/*
-			 * Create test table.
-			 */
-			executeUpdateOnFirstMachine(sql);
-
-			assertTestTableExists(2);
-			assertMetaDataExists(getSystemTableConnection(), 1);
-
-			sleep(4000);
-			/*
-			 * Kill off databases.
-			 */
-			killDatabases();
-
-
-			printSystemTableInstances();
-
-			sleep(4000);
-
-			/*
-			 * Start up all the instances which aren't System Tables.
-			 */
-			for (String instance: findNonSystemTableInstances()){
-				startDatabase(instance);
-			}
-
-			/*
-			 * Sleep, then start up all System Table instances.
-			 */
-			sleep(10000);
-			startDatabase(findSystemTableInstance());
-
-
-			createConnectionsToDatabases();
-
-			assertTrue(assertTestTableExists(2));
-		} catch (SQLException e) {
-			e.printStackTrace();
-			fail("Unexpected exception.");
-		}
-
-	}
-
-	
 
 
 	/**
@@ -364,7 +188,7 @@ public class LocatorDatabaseTests extends TestBase {
 		sql += "INSERT INTO TEST VALUES(2, 'World');";
 
 		try {
-			sleep(5000);
+			sleep(1000);
 			/*
 			 * Create test table.
 			 */
@@ -373,7 +197,7 @@ public class LocatorDatabaseTests extends TestBase {
 			assertTestTableExists(2);
 			assertMetaDataExists(connections[0], 1);
 
-			sleep(4000);
+			sleep(2000);
 
 			/*
 			 * Kill off the System Table process. 
@@ -383,7 +207,7 @@ public class LocatorDatabaseTests extends TestBase {
 				break;
 			}
 
-			sleep(10000);
+			sleep(5000);
 
 			//createConnectionsToDatabases();
 			
@@ -409,7 +233,7 @@ public class LocatorDatabaseTests extends TestBase {
 		sql += "INSERT INTO TEST VALUES(2, 'World');";
 
 		try {
-			sleep(5000);
+			sleep(1000);
 			/*
 			 * Create test table.
 			 */
@@ -418,12 +242,14 @@ public class LocatorDatabaseTests extends TestBase {
 			assertTestTableExists(2);
 			assertMetaDataExists(connections[0], 1);
 
-			sleep(4000);
+			sleep(2000);
 
 			sql = "CREATE REPLICA TEST;";
 			executeUpdateOnSecondMachine(sql);
 
-			sleep(4000);
+			sleep(3000);
+			
+			assertTrue(assertTestTableExists(connections[1], 2));
 			
 			/*
 			 * Kill off the System Table process. 
@@ -433,7 +259,7 @@ public class LocatorDatabaseTests extends TestBase {
 				break;
 			}
 
-			sleep(10000);
+			sleep(4000);
 
 			//createConnectionsToDatabases();
 
@@ -442,30 +268,6 @@ public class LocatorDatabaseTests extends TestBase {
 			e.printStackTrace();
 			fail("Unexpected exception.");
 		}
-	}
-
-
-	/**
-	 * Codenamed Problem B.
-	 * 
-	 * Connect to existing Database instance with ST state, but find no ST running.
-	 * @throws InterruptedException 
-	 */
-	@Test
-	public void instancesRunningButNoSystemTable() throws InterruptedException{
-
-	}
-
-	/**
-	 * When a database is first started the locator server is not running so an error is thrown. Then the
-	 * locator server is started and the database must now start.
-	 * 
-	 * This tests an edge case where the first time the database is started (before failing) it creates files on
-	 * disk, so the second time it thinks there should be system table tables on disk already.
-	 */
-	@Test
-	public void locatorServerNotRunning(){
-
 	}
 
 	/*
@@ -481,24 +283,17 @@ public class LocatorDatabaseTests extends TestBase {
 		s.executeUpdate(sql);
 	}
 
-	private void executeUpdateOnSecondMachine(String sql) throws SQLException {
-		Statement s = connections[1].createStatement();
-		s.executeUpdate(sql);
-	}
-
+	
 	private void sleep(int time) throws InterruptedException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "About to sleep for " + time/1000 + " seconds.");
 		Thread.sleep(time);
 	}
 	
-	private void printSystemTableInstances() {
-		List<String> sts = findSystemTableInstances();
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Printing list of valid System Table Instances: ");
-		for (String s: sts){
-			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Instance: " + s);
-		}
+	private void executeUpdateOnSecondMachine(String sql) throws SQLException {
+		Statement s = connections[1].createStatement();
+		s.executeUpdate(sql);
 	}
-	
+
 	/**
 	 * Get a set of all database instances which hold system table state
 	 */
@@ -721,7 +516,7 @@ public class LocatorDatabaseTests extends TestBase {
 	 */
 	private static void deleteDatabaseData() {
 		try {
-			for (String db: LocatorDatabaseTests.dbs){
+			for (String db: FailureTests.dbs){
 				DeleteDbFiles.execute(BASEDIR, db, true);
 			}
 		} catch (SQLException e) {
@@ -744,6 +539,10 @@ public class LocatorDatabaseTests extends TestBase {
 		}
 	}
 	
+	/**
+	 * Starts all databases, ensuring the first database, 'one', will be the intial System Table if the parameter is true.
+	 * @throws InterruptedException
+	 */
 	private void startDatabases(boolean guaranteeOneIsSystemTable) throws InterruptedException{
 		for (int i = 0; i < dbs.length; i ++){
 			int port = 9080 + i;

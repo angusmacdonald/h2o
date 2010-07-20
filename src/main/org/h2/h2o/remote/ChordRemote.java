@@ -739,6 +739,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		 */
 		Set<TableManagerWrapper> localTableManagers = null;
 		try {
+			/*
+			 * This will throw a nullpointerexception if the older successor has failed and was the System Table.
+			 */
 			localTableManagers = this.systemTableRef.getSystemTable().getLocalDatabaseInstances(localMachineLocation);
 		} catch (RemoteException e) {
 			ErrorHandling.errorNoEvent("Remote exception thrown. Happens when successor has very recently changed and chord ring hasn't stabilized.");
