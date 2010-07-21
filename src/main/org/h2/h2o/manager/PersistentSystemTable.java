@@ -51,17 +51,17 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 	/**
 	 * Name of tables' table in System Table.
 	 */
-	private static final String TABLES = SCHEMA + "H2O_TABLE";
+	public static final String TABLES = SCHEMA + "H2O_TABLE";
 
 	/**
 	 * Name of connections' table in System Table.
 	 */
-	private static final String DATABASE_LOCATIONS = SCHEMA + "H2O_CONNECTION";
+	public static final String DATABASE_LOCATIONS = SCHEMA + "H2O_CONNECTION";
 
 	/**
 	 * Name of the table which stores the location of table manager state replicas.
 	 */
-	private static final String TABLEMANAGERSTATE = SCHEMA + "H2O_TABLEMANAGER_STATE";;
+	public static final String TABLEMANAGERSTATE = SCHEMA + "H2O_TABLEMANAGER_STATE";;
 
 	/**
 	 * The database username used to communicate with System Table tables.

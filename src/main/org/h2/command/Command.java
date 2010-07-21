@@ -327,7 +327,7 @@ public abstract class Command implements CommandInterface {
 
 	/**
 	 * Is the given command meant to be propagated to all machines?
-	 * @param query 
+	 * @param addNewReplicaLocationQuery 
 	 * @return
 	 */
 	protected boolean isPropagatableCommand(Command command) {

@@ -166,7 +166,7 @@ public abstract class PersistentManager {
 			}
 
 			if (addReplicaInfo){
-				int tableID = getTableID(tableDetails);
+				int tableID = metaDataReplicaManager.getTableID(tableDetails, isSystemTable);
 				if (!isReplicaListed(tableDetails, connectionID)){ // the table doesn't already exist in the manager.
 					addReplicaInformation(tableDetails, tableID, connectionID);				
 				}
@@ -195,7 +195,7 @@ public abstract class PersistentManager {
 
 		try {
 			int connectionID = getConnectionID(tableDetails.getDbURL());
-			int tableID = getTableID(tableDetails);
+			int tableID = metaDataReplicaManager.getTableID(tableDetails, isSystemTable);
 
 			if (!isReplicaListed(tableDetails, connectionID)){ // the table doesn't already exist in the System Table.
 				addReplicaInformation(tableDetails, tableID, connectionID);				
@@ -315,32 +315,6 @@ public abstract class PersistentManager {
 		}
 	}
 
-	/**
-	 *  Gets the table ID for a given database table if it is present in the database. If not, an exception is thrown.
-	 * @param tableName		Name of the table
-	 * @param schemaName	Schema the table is in.
-	 * @return
-	 */
-	public int getTableID(TableInfo ti) throws SQLException{
-
-		String sql = "SELECT table_id FROM " + tableRelation + " WHERE tablename='" + ti.getTableName()
-		+ "' AND schemaname='" + ti.getSchemaName() + "';";
-
-		LocalResult result = null;
-
-		sqlQuery = queryParser.prepareCommand(sql);
-
-		result = sqlQuery.executeQueryLocal(1);
-
-		if (result.next()){
-			return result.currentRow()[0].getInt();
-		} else {
-			throw new SQLException("Internal problem: tableID not found in System Table.");
-		}
-
-
-	}
-
 
 	/**
 	 * A check whether a table is already listed in the System Table.
@@ -436,28 +410,6 @@ public abstract class PersistentManager {
 		return executeUpdate(sql);
 	}
 
-	/**
-	 * Gets all the table IDs for tables in a schema.
-	 * @param schemaName
-	 * @return
-	 * @throws SQLException 
-	 */
-	protected Integer[] getTableIDs(String schemaName) throws SQLException {
-		String sql = "SELECT table_id FROM " + tableRelation + " WHERE schemaname='" + schemaName + "';";
-
-		LocalResult result = null;
-
-		sqlQuery = queryParser.prepareCommand(sql);
-
-		result = sqlQuery.executeQueryLocal(0);
-
-		Set<Integer> ids = new HashSet<Integer>();
-		while (result.next()){
-			ids.add(result.currentRow()[0].getInt());
-		}
-
-		return ids.toArray(new Integer[0]);
-	}
 
 	protected LocalResult executeQuery(String query) throws SQLException{
 
@@ -502,7 +454,7 @@ public abstract class PersistentManager {
 			int connectionID = getConnectionID(ti.getDbURL());
 			int tableID;
 
-			tableID = getTableID(ti);
+			tableID = metaDataReplicaManager.getTableID(ti, isSystemTable);
 
 			String sql = "DELETE FROM " + replicaRelation + " WHERE table_id=" + tableID + " AND connection_id=" + connectionID  + "; ";
 
@@ -523,11 +475,8 @@ public abstract class PersistentManager {
 	public boolean removeTableInformation(TableInfo ti, boolean removeReplicaInfo) {
 		try {
 
-			String sql = constructRemoveReplicaQuery(ti, removeReplicaInfo);
+			String sql = metaDataReplicaManager.constructRemoveReplicaQuery(ti, removeReplicaInfo, isSystemTable);
 			executeUpdate(sql);
-
-
-			//int id = getTableID(new TableInfo("TEST", "PUBLIC"));
 
 			return true;
 		} catch (SQLException e) {
@@ -535,47 +484,6 @@ public abstract class PersistentManager {
 
 			return false;
 		}
-	}
-
-	private String constructRemoveReplicaQuery(TableInfo ti, boolean removeReplicaInfo) throws SQLException {
-		String sql = "";
-		if (ti.getTableName() == null){
-			/*
-			 * Deleting the entire schema.
-			 */
-			Integer[] tableIDs;
-
-			tableIDs = getTableIDs(ti.getSchemaName());
-
-
-			if (tableIDs.length > 0 && removeReplicaInfo){
-				sql = "DELETE FROM " + replicaRelation;
-				for (int i = 0; i < tableIDs.length; i++){
-					if (i==0){
-						sql +=" WHERE table_id=" + tableIDs[i];
-					} else {
-						sql +=" OR table_id=" + tableIDs[i];
-					}
-				}
-				sql += ";";
-			} else {
-				sql = "";
-			}
-
-			sql += "\nDELETE FROM " + tableRelation + " WHERE schemaname='" + ti.getSchemaName() + "'; ";
-		} else {
-
-			int tableID = getTableID(ti);
-
-			sql = "";
-
-			if (removeReplicaInfo){
-				sql = "DELETE FROM " + replicaRelation + " WHERE table_id=" + tableID + ";";
-			}
-			sql += "\nDELETE FROM " + tableRelation + " WHERE table_id=" + tableID + "; ";
-
-		}
-		return sql;
 	}
 
 
@@ -606,28 +514,14 @@ public abstract class PersistentManager {
 	 * @throws SQLException 
 	 */
 	public boolean addStateReplicaLocation(DatabaseInstanceWrapper databaseWrapper) throws RemoteException{
-		String deleteOldEntries = null;
 
-		if (isSystemTable){ //Drop the entire table.
-			deleteOldEntries = "DROP REPLICA IF EXISTS ";
-			deleteOldEntries += tableRelation + ", ";
-			deleteOldEntries += (replicaRelation == null)? "": replicaRelation + ", ";
-			deleteOldEntries += (tableManagerRelation == null)? "": tableManagerRelation + ", ";
-			deleteOldEntries += (connectionRelation == null)? "": connectionRelation + ";";
-		} else { //Remove only entries specific to this table.  
-			try {
-				deleteOldEntries = constructRemoveReplicaQuery(getTableInfo(), true);
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-		}
-
-		String query = "CREATE REPLICA IF NOT EXISTS " + tableRelation + ", " + ((replicaRelation==null)? "": (replicaRelation + ", ")) + 
-		connectionRelation + ((tableManagerRelation == null)? "": (", " + tableManagerRelation)) + " FROM '" + db.getURL().getOriginalURL() + "';";
-
-		return metaDataReplicaManager.addReplicaLocation(databaseWrapper, isSystemTable, query, deleteOldEntries);
+		return metaDataReplicaManager.addReplicaLocation(databaseWrapper, isSystemTable);
 	}
 
+	public int getTableID(TableInfo ti) throws SQLException{
+		return metaDataReplicaManager.getTableID(ti, isSystemTable);
+	}
+	
 	/**
 	 * 
 	 */

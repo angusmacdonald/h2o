@@ -66,19 +66,19 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	/**
 	 * Name of tables' table in Table Manager.
 	 */
-	protected static final String TABLES = SCHEMA + "H2O_TM_TABLE";
+	public static final String TABLES = SCHEMA + "H2O_TM_TABLE";
 
 	/**
 	 * Name of replicas' table in Table Manager.
 	 */
-	protected static final String REPLICAS = SCHEMA + "H2O_TM_REPLICA";
+	public static final String REPLICAS = SCHEMA + "H2O_TM_REPLICA";
 
 	/**
 	 * Name of connections' table in Table Manager.
 	 */
-	protected static final String CONNECTIONS = SCHEMA + "H2O_TM_CONNECTION";
+	public static final String CONNECTIONS = SCHEMA + "H2O_TM_CONNECTION";
 
-	private static final String TABLEMANAGERSTATE = SCHEMA + "H2O_TM_TABLEMANAGERS";
+	public static final String TABLEMANAGERSTATE = SCHEMA + "H2O_TM_TABLEMANAGERS";
 
 	/**
 	 * The name of the table that this Table Manager is responsible for.

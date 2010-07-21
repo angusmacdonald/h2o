@@ -242,7 +242,7 @@ public class Database implements DataHandler {
 		systemTableRef = new SystemTableReference(this);
 		
 
-		databaseRemote = new ChordRemote(localMachineLocation, systemTableRef);
+		databaseRemote = new ChordRemote(localMachineLocation, systemTableRef, metaDataReplicaManager);
 
 		this.persistent = ci.isPersistent();
 

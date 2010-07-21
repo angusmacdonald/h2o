@@ -350,7 +350,7 @@ public class ChordTests extends TestBase {
 			dts[0].getConnection().close();
 
 			Thread.sleep(5000);
-			System.err.println("heere");
+
 			sas[1].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 
 		} catch (SQLException e) {

@@ -37,6 +37,7 @@ import org.h2.engine.Constants;
 import org.h2.engine.Session;
 import org.h2.h2o.autonomic.Settings;
 import org.h2.h2o.comms.DatabaseInstance;
+import org.h2.h2o.comms.MetaDataReplicaManager;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
@@ -121,14 +122,17 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 	private Settings databaseSettings;
 
+	private MetaDataReplicaManager metaDataReplicaManager;
+
 	/**
 	 * Port to be used for the next database instance. Currently used for testing.
 	 */
 	public static int currentPort = 30000;
 
-	public ChordRemote(DatabaseURL localMachineLocation, ISystemTableReference systemTableRef){
+	public ChordRemote(DatabaseURL localMachineLocation, ISystemTableReference systemTableRef, MetaDataReplicaManager metaDataReplicaManager){
 		this.systemTableRef = systemTableRef;
 		this.localMachineLocation = localMachineLocation;
+		this.metaDataReplicaManager = metaDataReplicaManager;
 	}
 
 	/* (non-Javadoc)
@@ -883,11 +887,13 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 
 				if (localTableManagers != null){
-					for (TableManagerWrapper tableManager: localTableManagers){
-						//Check that each manager has enough replicas. If not, replicate to the new successor.
 
-
-					}
+					//delete query must remove entries for all table managers replicated on this machine.
+					
+					//
+					
+					//metaDataReplicaManager.addReplicaLocation(successorInstance, false, query, deleteOldEntries);
+					
 				}
 
 			} catch (RemoteException e2) {
