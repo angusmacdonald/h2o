@@ -345,11 +345,15 @@ public class FailureTests extends TestBase {
 		}
 	}
 
+
+	
 	/**
 	 * Connect to existing Database instance with ST state and TM state, but find no ST or TM running.
 	 * 
 	 * The failure is detected by the migration of the system table, as it is also on the failed machine and will recognise
 	 * that no Table Manager is available when it repopulates its in-memory state.
+	 * 
+	 * 
 	 * @throws InterruptedException 
 	 */
 	@Test
@@ -393,6 +397,102 @@ public class FailureTests extends TestBase {
 		}
 	}
 
+	
+	/**
+	 * Database instance with TM running fails, but the system table is somewhere else. Tests that it can recover.
+	 * 
+	 * The query which detects the failure is run locally (the next test does it through a linked table.
+	 * @throws InterruptedException 
+	 */
+	@Test
+	public void tableManagerMigrationOnFailureSystemTableDoesntFail() throws InterruptedException{
+		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
+		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
+		sql += "INSERT INTO TEST VALUES(2, 'World');";
+
+		try {
+			sleep(1000);
+			/*
+			 * Create test table.
+			 */
+			executeUpdateOnSecondMachine(sql);
+
+			assertTestTableExists(2);
+			assertMetaDataExists(connections[0], 1);
+
+			sleep(2000);
+
+			sql = "CREATE REPLICA TEST;";
+			executeUpdateOnFirstMachine(sql);
+
+			sleep(3000);
+			
+			assertTrue(assertTestTableExists(connections[1], 2));
+			
+			/*
+			 * Kill off the System Table process. 
+			 */
+			killDatabase(fullDbName[1]);
+
+			sleep(4000);
+
+			//createConnectionsToDatabases();
+
+			assertTrue(assertTestTableExists(connections[0], 2));
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("Unexpected exception.");
+		}
+	}
+	
+	/**
+	 * Database instance with TM running fails, but the system table is somewhere else. Tests that it can recover.
+	 * 
+	 * The query which detects the failure is through a linked table.
+	 * @throws InterruptedException 
+	 */
+	@Test
+	public void tableManagerMigrationOnFailureSystemTableDoesntFailLinkedTable() throws InterruptedException{
+		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
+		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
+		sql += "INSERT INTO TEST VALUES(2, 'World');";
+
+		try {
+			sleep(1000);
+			/*
+			 * Create test table.
+			 */
+			executeUpdateOnSecondMachine(sql);
+
+			assertTestTableExists(2);
+			assertMetaDataExists(connections[0], 1);
+
+			sleep(2000);
+
+			sql = "CREATE REPLICA TEST;";
+			executeUpdateOnFirstMachine(sql);
+
+			sleep(3000);
+			
+			assertTrue(assertTestTableExists(connections[1], 2));
+			
+			/*
+			 * Kill off the System Table process. 
+			 */
+			killDatabase(fullDbName[1]);
+
+			sleep(4000);
+
+			//createConnectionsToDatabases();
+
+			assertTrue(assertTestTableExists(connections[2], 2));
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("Unexpected exception.");
+		}
+	}
+	
+
 	/*
 	 * ###########################################################
 	 * ###########################################################
@@ -414,6 +514,11 @@ public class FailureTests extends TestBase {
 	
 	private void executeUpdateOnSecondMachine(String sql) throws SQLException {
 		Statement s = connections[1].createStatement();
+		s.executeUpdate(sql);
+	}
+	
+	private void executeUpdateOnNthMachine(String sql, int machineNumber) throws SQLException {
+		Statement s = connections[machineNumber].createStatement();
 		s.executeUpdate(sql);
 	}
 

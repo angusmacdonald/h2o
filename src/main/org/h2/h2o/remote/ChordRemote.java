@@ -49,9 +49,9 @@ import org.h2.h2o.manager.ISystemTable;
 import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.SystemTableReference;
+import org.h2.h2o.manager.monitorthreads.SystemTableReplication;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LocalH2OProperties;
-import org.h2.h2o.util.SystemTableReplication;
 import org.h2.h2o.util.TableInfo;
 import org.h2.h2o.util.locator.H2OLocatorInterface;
 import org.h2.test.h2o.ChordTests;
@@ -709,59 +709,11 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		if (newSystemTable != null){
 			//Now try to recreate any Table Managers that were on the failed machine.
 			//recreateTableManagers(oldPredecessorURL);
-		}
-
-	}
-
-	private void recreateTableManagers(DatabaseURL oldPredecessorURL) {
-		ISystemTable systemTable = this.systemTableRef.getSystemTable();
-
-		try {
-			Map<TableInfo, DatabaseURL> primaryLocations = systemTable.getPrimaryLocations();
-			Map<TableInfo, Set<DatabaseURL>> replicaLocations = systemTable.getReplicaLocations();
-			/*
-			 * Loop through all active Table Managers and check whether any were on the failed machine. 
-			 */
-			for (Entry<TableInfo, DatabaseURL> tableManagerLocation: primaryLocations.entrySet()){
-				TableInfo tableInfo = tableManagerLocation.getKey();
-				DatabaseURL primaryReplicaLocation = tableManagerLocation.getValue();
-
-
-				if (primaryReplicaLocation.equals(oldPredecessorURL)){
-					//Table Manager was located on old predecessor.
-
-					//Check to see if it is accessible.
-					boolean hasFailed = false;
-					try {
-						systemTable.lookup(tableInfo).getTableManager().checkConnection();
-					} catch (Exception e) {
-						hasFailed = true;
-					}
-
-					//If it has failed, recreate it somewhere else.
-					if (hasFailed){
-						for (DatabaseURL replicaLocation: replicaLocations.get(tableInfo)){
-
-							if (replicaLocation.equals(primaryReplicaLocation)) continue; //failed on this instance.
-
-							try{
-								DatabaseInstanceRemote instance = getDatabaseInstanceAt(replicaLocation);
-
-								boolean success = instance.recreateTableManager(tableInfo, primaryReplicaLocation);
-
-								if (success) break;
-							} catch (RemoteException e) {
-								e.printStackTrace();
-							}
-						}
-					}
-				} // end of if primary location = site of failed predecessor
-			} //loop round to next table manager.
-
-		} catch (RemoteException e) {
-			e.printStackTrace();
-		} catch (MovedException e) {
-			e.printStackTrace();
+			try {
+				newSystemTable.checkTableManagerAccessibility();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 
 	}

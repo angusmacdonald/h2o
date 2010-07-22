@@ -683,13 +683,13 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 	 * @see org.h2.h2o.manager.ISystemTable#addTableInformation(org.h2.h2o.comms.remote.TableManagerRemote, org.h2.h2o.util.TableInfo)
 	 */
 	@Override
-	public boolean addTableInformation(TableManagerRemote tableManager, TableInfo tableDetails) 
+	public boolean addTableInformation(TableManagerRemote tableManager, TableInfo tableDetails,  Set<DatabaseInstanceWrapper> replicaLocations) 
 	throws RemoteException, MovedException, SQLException {
 		boolean added = super.addTableInformation(tableManager.getDatabaseURL(), tableDetails, false);
 
 		if (added){
 			int connectionID = getConnectionID(tableDetails.getURL());
-			addTableManagerReplicaInformationOnCreateTable(getTableID(tableDetails), connectionID, true);
+			addTableManagerReplicaInformationOnCreateTable(getTableID(tableDetails), connectionID, true, replicaLocations);
 		}
 
 		return added;
@@ -810,8 +810,14 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 	public TableManagerRemote recreateTableManager(TableInfo table) throws RemoteException,
 			MovedException {
 				return null;
-		// TODO Auto-generated method stub
+				//Done by in-memory system table.
 		
+	}
+
+	@Override
+	public boolean checkTableManagerAccessibility() {
+		//Done by in-memory system table.
+		return false;
 	}
 
 

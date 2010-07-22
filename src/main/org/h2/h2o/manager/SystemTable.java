@@ -91,13 +91,13 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 	 * @see org.h2.h2o.ISystemTable#confirmTableCreation(java.lang.String, org.h2.h2o.comms.remote.TableManagerRemote, org.h2.h2o.TableInfo)
 	 */
 	@Override
-	public boolean addTableInformation(TableManagerRemote tableManager, TableInfo tableDetails) throws RemoteException, MovedException {
+	public boolean addTableInformation(TableManagerRemote tableManager, TableInfo tableDetails, Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException {
 		preMethodTest();
 		boolean success;
 		try {
-			success = inMemory.addTableInformation(tableManager, tableDetails);
+			success = inMemory.addTableInformation(tableManager, tableDetails,replicaLocations);
 			if (!success) return false;
-			success = persisted.addTableInformation(tableManager, tableDetails);
+			success = persisted.addTableInformation(tableManager, tableDetails, replicaLocations);
 		} catch (SQLException e) {
 			e.printStackTrace();
 			success = false;
@@ -395,6 +395,13 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 			MovedException {
 		preMethodTest();
 		return inMemory.recreateTableManager(table);
+		
+	}
+
+	@Override
+	public boolean checkTableManagerAccessibility() throws RemoteException, MovedException {
+		preMethodTest();
+		return inMemory.checkTableManagerAccessibility();
 		
 	}
 

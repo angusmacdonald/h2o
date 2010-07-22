@@ -20,6 +20,7 @@ package org.h2.h2o.comms;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.h2.command.Command;
@@ -47,9 +48,6 @@ public class MetaDataReplicaManager {
 	 * Manages the location of Table Manager replicas.
 	 */
 	private ReplicaManager tableManagerReplicas;
-
-	private Set<TableInfo> localTableManagers = new HashSet<TableInfo>();
-
 
 	/*
 	 * SYSTEM TABLE STATE.
@@ -148,14 +146,13 @@ public class MetaDataReplicaManager {
 	 * Attempts to replicate local meta-data to any available machines, until the desired replication factor is reached.
 	 * @param systemTableRef
 	 */
-	public synchronized void replicateIfPossible(ISystemTableReference systemTableRef) {
+	public synchronized void replicateTableManagersIfPossible(ISystemTableReference systemTableRef) {
 		
 		ReplicaManager replicaManager = tableManagerReplicas;
 		int managerStateReplicationFactor = tableManagerReplicationFactor;
 
 
 		if ( !metaDataReplicationEnabled || (replicaManager.size() >= managerStateReplicationFactor)){
-			
 			return; //replication factor already reached, or replication is not enabled.
 		}
 
@@ -194,7 +191,8 @@ public class MetaDataReplicaManager {
 		ReplicaManager replicaManager = (isSystemTable)? systemTableReplicas: tableManagerReplicas;
 		int managerStateReplicationFactor = (isSystemTable)? systemTableReplicationFactor: tableManagerReplicationFactor;
 
-
+		 Set<TableInfo> localTableManagers = db.getSystemTableReference().getLocalTableManagers().keySet();
+		
 		if (metaDataReplicationEnabled){
 			if (replicaManager.size() < managerStateReplicationFactor){ 
 
@@ -221,11 +219,12 @@ public class MetaDataReplicaManager {
 
 					newReplicaLocation.getDatabaseInstance().executeUpdate(createQuery, true);
 
-					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O " + ((isSystemTable)? "System Table": "Table Manager") + " tables replicated on new successor node: " + newReplicaLocation.getURL().getDbLocation());
+					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O " + ((isSystemTable)? "System Table": "Table Manager") + " tables on " + localDatabase.getURL() + " replicated onto new node: " + newReplicaLocation.getURL().getDbLocation());
 
 					replicaManager.add(newReplicaLocation);
 
 					for (TableInfo ti: localTableManagers){
+						
 						db.getSystemTableReference().getSystemTable().addTableManagerStateReplica(ti, newReplicaLocation.getURL(), localDatabase.getURL(), true);
 					}
 
@@ -365,7 +364,9 @@ public class MetaDataReplicaManager {
 		String deleteTable = "DELETE FROM " + replicaRelation + " WHERE ";
 
 		boolean includeAnd = false;
-
+		
+		Set<TableInfo> localTableManagers = db.getSystemTableReference().getLocalTableManagers().keySet();
+		
 		for (TableInfo ti: localTableManagers){
 
 			int tableID = getTableID(ti, false);

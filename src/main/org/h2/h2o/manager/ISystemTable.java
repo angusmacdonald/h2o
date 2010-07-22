@@ -59,12 +59,13 @@ public interface ISystemTable extends Remote {
 	 * manager.
 	 * 
 	 * @param tableManager	Table Manager for the given table.
+	 * @param replicaLocations 
 	 * @param session 
 	 * @return True if this action was successful on the System Table; otherwise false.
 	 * @throws RemoteException
 	 * @throws SQLException 
 	 */
-	public boolean addTableInformation(TableManagerRemote tableManager, TableInfo tableDetails) throws RemoteException, MovedException, SQLException;
+	public boolean addTableInformation(TableManagerRemote tableManager, TableInfo tableDetails, Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException, SQLException;
 
 	/**
 	 * Remove Table Manager from the system. This is used when a table is being dropped completely
@@ -222,5 +223,13 @@ public interface ISystemTable extends Remote {
 	 * @throws MovedException
 	 */
 	public TableManagerRemote recreateTableManager(TableInfo table)throws RemoteException, MovedException;
+
+	/**
+	 * Instructs the System Table to check that all Table Managers are currently active.
+	 * @return 
+	 * @throws MovedException 
+	 * @throws RemoteException 
+	 */
+	public boolean checkTableManagerAccessibility() throws RemoteException, MovedException;
 
 }

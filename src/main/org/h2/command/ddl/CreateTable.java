@@ -314,9 +314,11 @@ public class CreateTable extends SchemaCommand {
 	private void addInformationToSystemTable(ISystemTable systemTable, ISystemTableReference systemTableReference, TableInfo tableInfo)
 	throws RemoteException, MovedException, SQLException {
 		TableManagerRemote tableManager = queryProxy.getTableManager();
-
-
-		boolean successful = systemTableReference.addTableInformation(tableManager, tableInfo);
+		
+		//XXX its a hack to pass in replica locations like this, and it should be unncessesary.
+		Set<DatabaseInstanceWrapper> replicaLocations = this.session.getDatabase().getMetaDataReplicaManager().getTableManagerReplicaLocations();
+		replicaLocations.add(session.getDatabase().getLocalDatabaseInstanceInWrapper());
+		boolean successful = systemTableReference.addTableInformation(tableManager, tableInfo, replicaLocations);
 
 		if (!successful){
 			throw new SQLException("Failed to add Table Manager reference to System Table: " + systemTable);

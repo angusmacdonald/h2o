@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2.h2o.util;
+package org.h2.h2o.manager.monitorthreads;
 
 import java.rmi.RemoteException;
 

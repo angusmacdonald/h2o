@@ -3756,7 +3756,7 @@ public class Parser {
 		}
 		return false;
 	}
-	
+
 	private boolean readUpdateData() throws SQLException {
 		if (readIf("UPDATE")) {
 			read("DATA");
@@ -4450,51 +4450,49 @@ public class Parser {
 		 * Attempt to locate the table if it exists remotely.
 		 */
 		String tableLocation = null;
-		//		TableManagerRemote dm = null;
 
-		//		if (database != null){
-		//			dm = database.getTableManager(thisSchemaName + "." + tableName);
-		//			if (dm == null){
-		//				//Failed to find the given table.
-		//				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
-		//			}
-		//			try {
-		//				tableLocation = dm.getLocation();
-		//			} catch (RemoteException e) {
-		//				throw new SQLException("Couldn't connect with remote DB.");
-		//			}
-		//
-		//		} else {
-		//Old System Table method.
-
+		TableInfo tableInfo = new TableInfo(tableName, thisSchemaName);
 		TableManagerRemote tableManager = session.getDatabase().getSystemTableReference().lookup(new TableInfo(tableName, thisSchemaName), true);
 
 		if (tableManager == null){
-			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new TableInfo(tableName, thisSchemaName).toString());
+			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableInfo.toString());
 		}
 		//		dm = session.getDatabase().getSystemTable().lookup(new TableInfo(tableName, thisSchemaName));
 		//		
 
-		DatabaseURL dmURL = null;
+		DatabaseURL tableManagerURL = null;
 		try {
-			dmURL = tableManager.getReplicaManager().getPrimary().getURL();
+			tableManagerURL = tableManager.getReplicaManager().getPrimary().getURL();
 
 		} catch (MovedException e){
 			//Query System Table again, bypassing the cache.
 			tableManager = session.getDatabase().getSystemTableReference().lookup(new TableInfo(tableName, thisSchemaName), false);
 			try {
-				dmURL = tableManager.getReplicaManager().getPrimary().getURL();
+				tableManagerURL = tableManager.getReplicaManager().getPrimary().getURL();
+			} catch (MovedException e1) {
+				throw new SQLException("Unable to contact Table Manager for " + tableName + ":: " + e1.getMessage());
+			}
+		} catch (Exception e){
+			//Attempt to recreate the table manager in-case it has failed, then try again.
+			try {
+				session.getDatabase().getSystemTableReference().getSystemTable().recreateTableManager(tableInfo);
+			} catch (MovedException e2) {
+				throw new SQLException("Unable to contact the System Table for " + tableName + ":: " + e2.getMessage());
+			}
+
+			tableManager = session.getDatabase().getSystemTableReference().lookup(new TableInfo(tableName, thisSchemaName), false);
+			try {
+				tableManagerURL = tableManager.getReplicaManager().getPrimary().getURL();
 			} catch (MovedException e1) {
 				throw new SQLException("Unable to contact Table Manager for " + tableName + ":: " + e1.getMessage());
 			}
 		}
-		if (dmURL.equals(session.getDatabase().getURL())){
-			throw new SQLException("The database [" + dmURL.getDbLocation() + "] is incorrectly trying to create a linked table to itself. Illegal code path.");
+
+		if (tableManagerURL.equals(session.getDatabase().getURL())){
+			throw new SQLException("The database [" + tableManagerURL.getDbLocation() + "] is incorrectly trying to create a linked table to itself. Illegal code path.");
 		}
 
-		tableLocation = dmURL.getOriginalURL();
-
-		//		}
+		tableLocation = tableManagerURL.getURL();
 
 
 		/*
@@ -4511,6 +4509,7 @@ public class Parser {
 		String sql = "CREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + tableLocation + "', '" + PersistentSystemTable.USERNAME + "', '" + PersistentSystemTable.PASSWORD + "', '" + tableName + "');";
 
 		Command sqlQuery = queryParser.prepareCommand(sql);
+		System.err.println(sql);
 		int result = sqlQuery.update();
 
 
@@ -4902,16 +4901,16 @@ public class Parser {
 	 */
 	private Prepared parseRecreate() throws SQLException {
 		if (readIf("TABLEMANAGER")) {
-			
+
 
 			String tableName = readIdentifierWithSchema();
 			Schema schema = getSchema();
-			
+
 			String from = null;
 			if (readIf("FROM")){
 				from = readString();
 			}
-			
+
 			return new RecreateTableManager(session, schema, tableName, from);
 		} else {
 			throw new SQLException("Could not parse migrate command.");

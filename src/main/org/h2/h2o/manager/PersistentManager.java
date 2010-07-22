@@ -418,8 +418,7 @@ public abstract class PersistentManager {
 	}
 
 
-	protected void addTableManagerReplicaInformationOnCreateTable(int tableID, int connectionID, boolean active) throws SQLException {
-		Set<DatabaseInstanceWrapper> replicaLocations = metaDataReplicaManager.getTableManagerReplicaLocations();
+	protected void addTableManagerReplicaInformationOnCreateTable(int tableID, int connectionID, boolean active, Set<DatabaseInstanceWrapper> replicaLocations) throws SQLException {
 		
 		for (DatabaseInstanceWrapper replicaLocation: replicaLocations){
 			int replicaConnectionID = getConnectionID(replicaLocation.getURL());

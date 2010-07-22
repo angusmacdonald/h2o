@@ -27,15 +27,17 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.h2.engine.Database;
+import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.manager.monitorthreads.SystemTableReplication;
 import org.h2.h2o.remote.IChordInterface;
 import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LocalH2OProperties;
-import org.h2.h2o.util.SystemTableReplication;
 import org.h2.h2o.util.TableInfo;
 import org.h2.table.ReplicaSet;
 
@@ -703,11 +705,10 @@ public class SystemTableReference implements ISystemTableReference {
 	}
 
 	@Override
-	public boolean addTableInformation(TableManagerRemote tableManagerRemote, TableInfo ti) throws RemoteException, MovedException, SQLException { // changed by al
-
+	public boolean addTableInformation(TableManagerRemote tableManagerRemote, TableInfo ti, Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException, SQLException { // changed by al
 		localTableManagers.put(ti.getGenericTableInfo(), (TableManager) tableManagerRemote);
 
-		return systemTable.addTableInformation(tableManagerRemote, ti);
+		return systemTable.addTableInformation(tableManagerRemote, ti, replicaLocations);
 	}
 
 	@Override
@@ -726,5 +727,9 @@ public class SystemTableReference implements ISystemTableReference {
 		systemTable.removeAllTableInformation();
 	}
 
+
+	public Map<TableInfo, TableManager> getLocalTableManagers() {
+		return localTableManagers;
+	}
 
 }

@@ -33,6 +33,7 @@ import org.h2.engine.Database;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
+import org.h2.h2o.manager.monitorthreads.TableManagerLivenessCheckerThread;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
 import org.h2.h2o.util.filter.CollectionFilter;
@@ -75,7 +76,10 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 
 	private Map<TableInfo, DatabaseURL> primaryLocations;
 
-	private TableManagerAccessPinger tableManagerPingerThread;
+	/**
+	 * A thread which periodically checks that Table Managers are still alive.
+	 */
+	private TableManagerLivenessCheckerThread tableManagerPingerThread;
 	private boolean started = false;
 	/**
 	 * Locations where the state of the System Table is replicated.
@@ -89,8 +93,6 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	 */
 	public static HashSet<TableManagerRemote> tableManagerReferences = new HashSet<TableManagerRemote>();
 
-
-
 	public InMemorySystemTable(Database database) throws Exception{
 		this.database = database;
 
@@ -98,11 +100,13 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 		tmReplicaLocations = new HashMap<TableInfo, Set<DatabaseURL>>();
 
 		primaryLocations = new HashMap<TableInfo, DatabaseURL>();
-		tableManagerPingerThread = new TableManagerAccessPinger(this);
+
+		int replicationThreadSleepTime = Integer.parseInt(database.getDatabaseSettings().get("TABLE_MANAGER_LIVENESS_CHECKER_THREAD_SLEEP_TIME"));
+
+		tableManagerPingerThread = new TableManagerLivenessCheckerThread(this, replicationThreadSleepTime);
+		tableManagerPingerThread.setName("TableManagerLivenessCheckerThread");
 		tableManagerPingerThread.start();
-		//		systemTableState = new HashSet<DatabaseInstanceRemote>();
-		//
-		//		systemTableState.add(database.getLocalDatabaseInstance());
+
 		started = true;
 	}
 
@@ -113,7 +117,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.ISystemTable#confirmTableCreation(java.lang.String, org.h2.h2o.comms.remote.TableManagerRemote)
 	 */
-	public boolean addTableInformation(TableManagerRemote tableManager, TableInfo tableDetails) throws RemoteException {
+	public boolean addTableInformation(TableManagerRemote tableManager, TableInfo tableDetails, Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "New table successfully created: " + tableDetails);
 
 		TableInfo basicTableInfo = tableDetails.getGenericTableInfo();
@@ -135,7 +139,10 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 			replicas = new HashSet<DatabaseURL>();
 		}
 
-		replicas.add(tableDetails.getURL());
+		for (DatabaseInstanceWrapper wrapper: replicaLocations){
+			replicas.add(wrapper.getURL());
+		}
+
 
 		tmReplicaLocations.put(basicTableInfo, replicas);
 
@@ -439,7 +446,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 		 */
 
 		started = true;
-		
+
 	}
 
 
@@ -449,27 +456,36 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 
 	/**
 	 * Check that Table Managers are still alive.
+	 * @return 
 	 */
-	public synchronized void checkTableManagerAccessibility(){
-		
-		if (!started) return;
-		
-		for (TableManagerWrapper tableManagerWrapper: tableManagers.values()){
-			TableManagerRemote tm = tableManagerWrapper.getTableManager();
-			boolean alive = isAlive(tm);
-			
-			//Try to recreate the Table Manager somewhere.
-			if (!alive) recreateTableManager(tableManagerWrapper);
-		}
+	public boolean checkTableManagerAccessibility(){
+		boolean anyTableManagerRecreated = false;
 
+		if (started) {
+
+			for (TableManagerWrapper tableManagerWrapper: tableManagers.values()){
+				TableManagerRemote tm = tableManagerWrapper.getTableManager();
+
+				boolean thisTableManagerRecreated = recreateTableManagerIfNotAlive(tableManagerWrapper);
+
+				if (thisTableManagerRecreated) anyTableManagerRecreated = true;
+			}
+
+		}
+		return anyTableManagerRecreated;
 	}
 
-	private boolean isAlive(TableManagerRemote tm) {
+	/**
+	 * Checks whether a table manager is currently active.
+	 * @param tableManager
+	 * @return
+	 */
+	private static boolean isAlive(TableManagerRemote tableManager) {
 		boolean alive = true;
-		
-		if (tm == null) alive = false;
+
+		if (tableManager == null) alive = false;
 		try {
-			tm.checkConnection();
+			tableManager.checkConnection();
 		} catch (Exception e) {
 			alive = false;
 		}
@@ -478,19 +494,19 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 
 	public TableManagerRemote recreateTableManager(TableInfo tableInfo) {
 		TableManagerWrapper tableManager = tableManagers.get(tableInfo);
-		
-		boolean alive = isAlive(tableManager.getTableManager());
-		
-		if (!alive) recreateTableManager(tableManager);
-		
+
+		recreateTableManagerIfNotAlive(tableManager);
+
 		return tableManagers.get(tableInfo).getTableManager();
 	}
-	
-	public void recreateTableManager(TableManagerWrapper tableManagerWrapper) {
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempting to recreate Table Manager for " + tableManagerWrapper.getTableInfo());
+	public synchronized boolean recreateTableManagerIfNotAlive(TableManagerWrapper tableManagerWrapper) {
+
+		if (isAlive(tableManagerWrapper.getTableManager())) return false; //check that it isn't already active.
 
 		for (DatabaseURL replicaLocation: tmReplicaLocations.get(tableManagerWrapper.getTableInfo())){
+
+			if (replicaLocation.equals(tableManagerWrapper.getURL())) continue;
 
 			try{
 				DatabaseInstanceWrapper instance = databasesInSystem.get(replicaLocation);
@@ -500,12 +516,18 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 				if (success) {
 					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Table Manager for " + tableManagerWrapper.getTableInfo() + " recreated on " + instance.getURL());
 
-					break;
+					return true;
 				}
 			} catch (RemoteException e) {
-				e.printStackTrace();
+				//May fail on some nodes.
+
+				//TODO mark these instances as inactive.
 			}
 		}
+
+		ErrorHandling.errorNoEvent("Failed to recreate Table Manager for " + tableManagerWrapper.getTableInfo() + ". There were " + tmReplicaLocations.get(tableManagerWrapper.getTableInfo()).size() + 
+		" replicas available (including the failed machine).");
+		return false;
 	}
 
 	/* (non-Javadoc)

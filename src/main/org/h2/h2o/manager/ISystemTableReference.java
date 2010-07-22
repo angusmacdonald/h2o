@@ -20,7 +20,10 @@ package org.h2.h2o.manager;
 import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
 import java.sql.SQLException;
+import java.util.Map;
+import java.util.Set;
 
+import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
@@ -205,13 +208,16 @@ public interface ISystemTableReference {
 	 * to bypass RMI calls (which are extremely inefficient).
 	 * @param tableManagerRemote	The table manager being added to the System Table.
 	 * @param ti					Name of the table being added.
+	 * @param replicaLocations 
 	 * @return						True if the table was successfully added.
 	 * @throws RemoteException		Thrown if the System Table could not be contacted.
 	 * @throws MovedException		Thrown if the System Table has moved and a new reference is needed.
 	 */
-	public boolean addTableInformation(TableManagerRemote tableManagerRemote, TableInfo ti) throws RemoteException, MovedException, SQLException;
+	public boolean addTableInformation(TableManagerRemote tableManagerRemote, TableInfo ti, Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException, SQLException;
 
 	public void removeTableInformation(TableInfo tableInfo) throws RemoteException, MovedException;
 
 	public void removeAllTableInformation() throws RemoteException, MovedException;
+	
+	public Map<TableInfo, TableManager> getLocalTableManagers();
 }
