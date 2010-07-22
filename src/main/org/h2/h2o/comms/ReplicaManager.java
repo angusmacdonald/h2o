@@ -220,11 +220,11 @@ public class ReplicaManager implements Serializable {
 
 		int i = 0;
 		
-		locations[i++] = primaryLocation.getDatabaseURL().getURLwithRMIPort(); //the primary location should always be first.
+		locations[i++] = primaryLocation.getURL().getURLwithRMIPort(); //the primary location should always be first.
 		
 		for (DatabaseInstanceWrapper r: activeReplicas){
 			if (r.equals(primaryLocation)) continue;
-			locations[i++] = r.getDatabaseURL().getURLwithRMIPort();
+			locations[i++] = r.getURL().getURLwithRMIPort();
 		}
 
 		return locations;

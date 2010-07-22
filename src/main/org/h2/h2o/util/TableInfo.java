@@ -119,7 +119,7 @@ public class TableInfo implements Serializable {
 	/**
 	 * @return the dbLocation
 	 */
-	public DatabaseURL getDbURL() {
+	public DatabaseURL getURL() {
 		return dbLocation;
 	}
 

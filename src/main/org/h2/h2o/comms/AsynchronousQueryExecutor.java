@@ -63,7 +63,7 @@ public class AsynchronousQueryExecutor {
 			String localURL = session.getDatabase().getURL().getOriginalURL();
 
 			//Decide whether the query is to be executed locall or remotely.
-			boolean isReplicaLocal = (replicaToExecuteQueryOn == null || localURL.equals(replicaToExecuteQueryOn.getDatabaseURL().getOriginalURL()));
+			boolean isReplicaLocal = (replicaToExecuteQueryOn == null || localURL.equals(replicaToExecuteQueryOn.getURL().getOriginalURL()));
 
 			//Start execution of queries.
 			executeQueryOnSpecifiedReplica(query, transactionNameForQuery, replicaToExecuteQueryOn, isReplicaLocal, parser, executingQueries, i, commitOperation);

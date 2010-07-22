@@ -37,6 +37,8 @@ import org.h2.value.DataType;
 import org.h2.value.Value;
 import org.h2.value.ValueNull;
 
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
+
 /**
  * This is the base class for most tables.
  * A table contains a list of columns and a list of rows.
@@ -936,5 +938,9 @@ public abstract class Table extends SchemaObjectBase {
 	 */
 	public String getFullName() {
 		return getSchema().getName() + "." + getName();
+	}
+
+	public void setGlobalTemporary(boolean globalTemporary){
+		ErrorHandling.hardError("Should never be called. Implemented only by TableData, called in CreateReplica.");
 	}
 }

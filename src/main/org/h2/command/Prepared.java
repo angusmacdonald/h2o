@@ -85,7 +85,7 @@ public abstract class Prepared{
 	protected boolean isReplicaLocal(QueryProxy queryProxy) {
 
 		for (DatabaseInstanceWrapper replica: queryProxy.getReplicaLocations()){
-			if (!this.session.getDatabase().getURL().equals(replica.getDatabaseURL()))
+			if (!this.session.getDatabase().getURL().equals(replica.getURL()))
 				return false;
 		}
 

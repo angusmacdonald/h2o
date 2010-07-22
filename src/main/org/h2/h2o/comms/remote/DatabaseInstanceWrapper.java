@@ -77,7 +77,7 @@ public class DatabaseInstanceWrapper implements Serializable {
 	/**
 	 * @return
 	 */
-	public DatabaseURL getDatabaseURL() {
+	public DatabaseURL getURL() {
 		return databaseURL;
 	}
 

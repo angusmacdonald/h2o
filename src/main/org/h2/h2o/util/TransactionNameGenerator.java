@@ -56,7 +56,7 @@ public class TransactionNameGenerator {
 				hostname = "local";
 			}
 
-			part = (url.isTcp()? hostname.replace(".", "") + url.getPort(): "") + url.getDbLocationWithoutIllegalCharacters();
+			part = (url.isTcp()? hostname.replace(".", "") + url.getPort(): "") + url.sanitizedLocation();
 
 
 		}

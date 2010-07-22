@@ -122,17 +122,16 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 	private Settings databaseSettings;
 
-	private MetaDataReplicaManager metaDataReplicaManager;
+	private MetaDataReplicaManager metaDataReplicaManager = null;
 
 	/**
 	 * Port to be used for the next database instance. Currently used for testing.
 	 */
 	public static int currentPort = 30000;
 
-	public ChordRemote(DatabaseURL localMachineLocation, ISystemTableReference systemTableRef, MetaDataReplicaManager metaDataReplicaManager){
+	public ChordRemote(DatabaseURL localMachineLocation, ISystemTableReference systemTableRef){
 		this.systemTableRef = systemTableRef;
 		this.localMachineLocation = localMachineLocation;
-		this.metaDataReplicaManager = metaDataReplicaManager;
 	}
 
 	/* (non-Javadoc)
@@ -150,7 +149,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		 */
 		if (systemTableRef.getSystemTableURL() == null){
 			ErrorHandling.hardError("System Table not known. This can be fixed by creating a known hosts file (called " + 
-					localMachineLocation.getDbLocationWithoutIllegalCharacters() + ".instances.properties) and adding the location of a known host.");
+					localMachineLocation.sanitizedLocation() + ".instances.properties) and adding the location of a known host.");
 		}
 
 		return systemTableRef.getSystemTableURL();
@@ -389,7 +388,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			if (instanceURL.getRMIPort() == portToJoinOn) portToJoinOn++;
 
 			boolean connected = joinChordRing(localMachineLocation.getHostname(), portToJoinOn, instanceURL.getHostname(), instanceURL.getRMIPort(), 
-					localMachineLocation.getDbLocationWithoutIllegalCharacters());
+					localMachineLocation.sanitizedLocation());
 
 			if (connected){
 				persistedInstanceInformation.setProperty("chordPort", rmiPort + "");
@@ -547,7 +546,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 		((ChordNodeImpl)chordNode).addObserver(this);
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Started local Chord node on : " + databaseURL.getDbLocationWithoutIllegalCharacters() + " : " + hostname + ":" + port + 
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Started local Chord node on : " + databaseURL.sanitizedLocation() + " : " + hostname + ":" + port + 
 				" : initialized with key :" + chordNode.getKey().toString(10) + " : " + chordNode.getKey() + " : System Table at " + this.systemTableRef.getLookupLocation() + " : ");
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "System Table key: : : : :" + SystemTableReference.systemTableKey.toString(10) + " : " + SystemTableReference.systemTableKey);
 
@@ -664,10 +663,12 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		boolean systemTableWasOnPredecessor = systemTableRef.isThisSystemTableNode(this.predecessor);
 		this.predecessor = chordNode.getPredecessor();
 
+		boolean systemTableAlive = true;
+
 		if (systemTableWasOnPredecessor){
 
 			//Check whether the System Table is still active.
-			boolean systemTableAlive = false;
+			systemTableAlive = false;
 			try {
 				this.systemTableRef.getSystemTable().checkConnection();
 				systemTableAlive = true;
@@ -688,8 +689,16 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			 */
 
 			if (!systemTableAlive){
-				reinstantiateSystemTable();
+				systemTableAlive = reinstantiateSystemTable();
 			}
+		}
+
+		if (systemTableAlive){
+			/*
+			 * Now try to recreate any Table Managers that were on the failed machine.
+			 */
+
+
 		}
 
 	}
@@ -884,16 +893,15 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				 * Now do the same thing for table manager replication.
 				 */
 
-
-
-				if (localTableManagers != null){
+				if (localTableManagers != null && metaDataReplicaManager != null){
 
 					//delete query must remove entries for all table managers replicated on this machine.
-					
-					//
-					
-					//metaDataReplicaManager.addReplicaLocation(successorInstance, false, query, deleteOldEntries);
-					
+
+
+					DatabaseInstanceWrapper successorInstanceWrapper = new DatabaseInstanceWrapper(successorInstance.getConnectionURL(), successorInstance, true);
+
+					metaDataReplicaManager.addReplicaLocation(successorInstanceWrapper, false);
+
 				}
 
 			} catch (RemoteException e2) {
@@ -1155,5 +1163,16 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		if (!successful){
 			ErrorHandling.errorNoEvent("Failed to unlock database locator servers after creating the system table.");
 		}
+	}
+
+	/**
+	 * Called when the database is ready to replicate meta-data (i.e. it has created the local H2O meta-data tables at this point.
+	 * 
+	 * <p>This is called by the database  object at the end of startup, so it is limited in what it can do. Anything involving querying the local
+	 * database may have to be run asynchronously.
+	 * @param metaDataReplicaManager	The replica manager for this databases meta-data.
+	 */
+	public void setAsReadyToReplicateMetaData(MetaDataReplicaManager metaDataReplicaManager) {
+		this.metaDataReplicaManager = metaDataReplicaManager;
 	}
 }

@@ -66,20 +66,25 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	/**
 	 * Name of tables' table in Table Manager.
 	 */
-	public static final String TABLES = SCHEMA + "H2O_TM_TABLE";
+	public static final String TABLES = "H2O_TM_TABLE";
 
 	/**
 	 * Name of replicas' table in Table Manager.
 	 */
-	public static final String REPLICAS = SCHEMA + "H2O_TM_REPLICA";
+	public static final String REPLICAS = "H2O_TM_REPLICA";
 
 	/**
 	 * Name of connections' table in Table Manager.
 	 */
-	public static final String CONNECTIONS = SCHEMA + "H2O_TM_CONNECTION";
+	public static final String CONNECTIONS = "H2O_TM_CONNECTION";
 
-	public static final String TABLEMANAGERSTATE = SCHEMA + "H2O_TM_TABLEMANAGERS";
+	public static final String TABLEMANAGERSTATE = "H2O_TM_TABLEMANAGERS";
 
+	private String tablesTable = SCHEMA;
+	private String replicasTable = SCHEMA;
+	private String connectionsTable = SCHEMA;
+	private String managersTable = SCHEMA; 
+	
 	/**
 	 * The name of the table that this Table Manager is responsible for.
 	 */
@@ -146,8 +151,12 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	private int relationReplicationFactor;
 
 	public TableManager(TableInfo tableDetails, Database database) throws Exception{
-		super(database, TABLES, REPLICAS, CONNECTIONS, TABLEMANAGERSTATE, false);
-
+		super(database);
+		
+		String dbName = database.getURL().sanitizedLocation();
+		setMetaDataTableNames(getMetaTableName(dbName, TABLES), getMetaTableName(dbName, REPLICAS), getMetaTableName(dbName, CONNECTIONS), getMetaTableName(dbName, TABLEMANAGERSTATE));
+		
+		
 		this.tableName = tableDetails.getTableName();
 
 		this.schemaName = tableDetails.getSchemaName();
@@ -167,6 +176,10 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 		this.relationReplicationFactor = Integer.parseInt(database.getDatabaseSettings().get("RELATION_REPLICATION_FACTOR"));
 	}
+	
+	public static String getMetaTableName (String databaseName, String tablePostfix){
+		return SCHEMA + "H2O_" + databaseName + "_" + tablePostfix;
+	}
 
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.TableManagerRemote2#addTableInformation(org.h2.h2o.util.DatabaseURL, org.h2.h2o.util.TableInfo)
@@ -180,7 +193,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		if (!added) return false;
 
 		return super.addTableInformation(tableManagerURL, tableDetails, true);
-
+		
 		/*
 		 * The System Table isn't contacted here, but in the Create Table class. This is because the Table isn't officially
 		 * created until the end of CreateTable.update().
@@ -194,9 +207,9 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	public void addReplicaInformation(TableInfo tableDetails)throws RemoteException, MovedException, SQLException {
 		preMethodTest();
 
-		super.addConnectionInformation(tableDetails.getDbURL(), true);
+		super.addConnectionInformation(tableDetails.getURL(), true);
 		super.addReplicaInformation(tableDetails);
-		replicaManager.add(getDatabaseInstance(tableDetails.getDbURL()));
+		replicaManager.add(getDatabaseInstance(tableDetails.getURL()));
 	}
 
 	/* (non-Javadoc)
@@ -205,9 +218,9 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	public void removeReplicaInformation(TableInfo ti) throws RemoteException, MovedException{
 		super.removeReplicaInformation(ti);
 
-		DatabaseInstanceRemote dbInstance = getDB().getDatabaseInstance(ti.getDbURL());
+		DatabaseInstanceRemote dbInstance = getDB().getDatabaseInstance(ti.getURL());
 		if (dbInstance == null){
-			dbInstance =  getDB().getDatabaseInstance(ti.getDbURL());
+			dbInstance =  getDB().getDatabaseInstance(ti.getURL());
 			if (dbInstance == null){
 				ErrorHandling.errorNoEvent("Couldn't remove replica location.");
 			}
@@ -240,9 +253,10 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Creating Table Manager tables.");
 
-		String sql = createSQL(TABLES, CONNECTIONS);
+		String databaseName = session.getDatabase().getURL().sanitizedLocation().toUpperCase();
+		String sql = createSQL(getMetaTableName(databaseName, TableManager.TABLES), getMetaTableName(databaseName, TableManager.CONNECTIONS));
 
-		sql += "\n\nCREATE TABLE IF NOT EXISTS " + REPLICAS + "(" +
+		sql += "\n\nCREATE TABLE IF NOT EXISTS " + getMetaTableName(databaseName, TableManager.REPLICAS) + "(" +
 		"replica_id INTEGER NOT NULL auto_increment(1,1), " +
 		"table_id INTEGER NOT NULL, " +
 		"connection_id INTEGER NOT NULL, " + 
@@ -250,17 +264,16 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		"last_modification INT NOT NULL, " +
 		"table_set INT NOT NULL, " +
 		"PRIMARY KEY (replica_id), " +
-		"FOREIGN KEY (table_id) REFERENCES " + TABLES + " (table_id) ON DELETE CASCADE , " +
-		" FOREIGN KEY (connection_id) REFERENCES " + CONNECTIONS + " (connection_id));";
+		"FOREIGN KEY (table_id) REFERENCES " + getMetaTableName(databaseName, TableManager.TABLES) + " (table_id) ON DELETE CASCADE , " +
+		" FOREIGN KEY (connection_id) REFERENCES " + getMetaTableName(databaseName, TableManager.CONNECTIONS) + " (connection_id));";
 
 
 		Parser parser = new Parser(session, true);
-
+		
 		Command query = parser.prepareCommand(sql);
 		try {
 			return query.update();
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return -1;
 		}
@@ -671,8 +684,8 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		/*
 		 * Get Replica information from persisted state.
 		 */
-		String sql = "SELECT LOCAL ONLY connection_type, machine_name, db_location, connection_port, chord_port FROM " + REPLICAS + ", " + TABLES + ", " + CONNECTIONS + " WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND" +
-		" " + TABLES + ".table_id=" + REPLICAS + ".table_id AND " + CONNECTIONS + ".connection_id=" + REPLICAS + ".connection_id;";
+		String sql = "SELECT LOCAL ONLY connection_type, machine_name, db_location, connection_port, chord_port FROM " + replicaRelation + ", " + tableRelation + ", " + connectionRelation + " WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND" +
+		" " + tableRelation + ".table_id=" + replicaRelation + ".table_id AND " + connectionRelation + ".connection_id=" + replicaRelation + ".connection_id;";
 
 		try {
 			LocalResult rs = executeQuery(sql);

@@ -138,6 +138,11 @@ public class Settings {
 		 */
 		defaults.setProperty("METADATA_REPLICATION_ENABLED", "true");
 
+		/*
+		 * The time between checks to ensure that database meta-data is sufficiently replicated.
+		 */
+		defaults.setProperty("METADATA_REPLICATION_THREAD_SLEEP_TIME", "5000");
+
 		return defaults;
 	}
 

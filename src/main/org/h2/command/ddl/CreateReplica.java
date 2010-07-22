@@ -58,6 +58,7 @@ import org.h2.value.ValueString;
 import org.h2.value.ValueTime;
 import org.h2.value.ValueTimestamp;
 
+import sun.security.krb5.internal.UDPClient;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
@@ -110,6 +111,7 @@ public class CreateReplica extends SchemaCommand {
 	private int tableSet = -1; //the set of tables which this replica will belong to.
 	private boolean contactSystemTable = true;
 	private boolean empty;
+	private boolean updateData;
 
 	/**
 	 * 
@@ -117,13 +119,15 @@ public class CreateReplica extends SchemaCommand {
 	 * @param schema
 	 * @param empty		Whether the replica being created is of a table which is empty. If it is
 	 * no data has to be transferred initially.
+	 * @param updateData Whether to update the contents of the replica even if it already exists.
 	 */
-	public CreateReplica(Session session, Schema schema, boolean empty) {
+	public CreateReplica(Session session, Schema schema, boolean empty, boolean updateData) {
 		super(session, schema);
 
 		setOfIndexColumns = new HashSet<IndexColumn[]>();
 		pkIndexType = new HashSet<IndexType>();
 
+		this.updateData = updateData;
 		this.empty = empty;
 	}
 
@@ -228,12 +232,18 @@ public class CreateReplica extends SchemaCommand {
 			persistent = false;
 		}
 
+
+		boolean createEntirelyNewReplica = true;
 		if (getSchema().findLocalTableOrView(session, tableName) != null) { //H2O. Check for local version here.
-			if (ifNotExists) {
+			if (ifNotExists && !updateData) {
 				return 0;
+			} else if (updateData){
+				createEntirelyNewReplica = false;
+			} else {
+				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
 			}
-			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
 		}  
+
 
 		String fullTableName = getSchema().getName() + "." + tableName; //getSchema().getName() + "." + 
 
@@ -245,90 +255,108 @@ public class CreateReplica extends SchemaCommand {
 			sqlQuery.update();
 		}    
 
-		if (asQuery != null) {
-			asQuery.prepare();
-			if (columns.size() == 0) {
-				generateColumnsFromQuery();
-			} else if (columns.size() != asQuery.getColumnCount()) {
-				throw Message.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
-			}
-		}
-		if (pkColumns != null) {
-			int len = pkColumns.length;
-			for (int i = 0; i < columns.size(); i++) {
-				Column c = (Column) columns.get(i);
-				for (int j = 0; j < len; j++) {
-					if (pkColumns[j].columnName == null) 
-						pkColumns[j].columnName = pkColumns[j].column.getName();
-					if (c.getName().equals(pkColumns[j].columnName)) {
-						c.setNullable(false);
-					}
+		Table table = null;
 
-					c.setPrimaryKey(true);
-				}
-			}
-		}
-		ObjectArray sequences = new ObjectArray();
-		for (int i = 0; i < columns.size(); i++) {
-			Column c = (Column) columns.get(i);
-
-			if (fullTableName.startsWith("H2O.H2O") && i == 0){ //XXX nasty h2o-specific auto-increment hack.
-				c.setAutoIncrement(true, 1, 1);
-			}
-			if (c.getAutoIncrement()) {
-				int objId = getObjectId(true, true);
-				c.convertAutoIncrementToSequence(session, getSchema(), objId, temporary);
-			}
-			Sequence seq = c.getSequence();
-			if (seq != null) {
-				sequences.add(seq);
-			}
-		}
-		int id = getObjectId(true, true);
-
-		TableData table = getSchema().createTable(tableName, id, columns, persistent, clustered, headPos);
-		table.setComment(comment);
-		table.setTemporary(temporary);
-		table.setGlobalTemporary(globalTemporary);
-		if (temporary && !globalTemporary) {
-			if (onCommitDrop) {
-				table.setOnCommitDrop(true);
-			}
-			if (onCommitTruncate) {
-				table.setOnCommitTruncate(true);
-			}
-			session.addLocalTempTable(table);
-		} else {
-			db.addSchemaObject(session, table);
-		}
-		try {
-			for (int i = 0; i < columns.size(); i++) {
-				Column c = (Column) columns.get(i);
-				c.prepareExpression(session);
-			}
-			for (int i = 0; i < sequences.size(); i++) {
-				Sequence sequence = (Sequence) sequences.get(i);
-				table.addSequence(sequence);
-			}
-			for (int i = 0; i < constraintCommands.size(); i++) {
-				Prepared command = (Prepared) constraintCommands.get(i);
-				command.update();
-			}
+		if (createEntirelyNewReplica){
 			if (asQuery != null) {
-				boolean old = session.getUndoLogEnabled();
-				try {
-					session.setUndoLogEnabled(false);
-					Insert insert = null;
-					insert = new Insert(session, true);
-					insert.setQuery(asQuery);
-					insert.setTable(table);
-					insert.prepare();
-					insert.update();
-				} finally {
-					session.setUndoLogEnabled(old);
+				asQuery.prepare();
+				if (columns.size() == 0) {
+					generateColumnsFromQuery();
+				} else if (columns.size() != asQuery.getColumnCount()) {
+					throw Message.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
 				}
 			}
+			if (pkColumns != null) {
+				int len = pkColumns.length;
+				for (int i = 0; i < columns.size(); i++) {
+					Column c = (Column) columns.get(i);
+					for (int j = 0; j < len; j++) {
+						if (pkColumns[j].columnName == null) 
+							pkColumns[j].columnName = pkColumns[j].column.getName();
+						if (c.getName().equals(pkColumns[j].columnName)) {
+							c.setNullable(false);
+						}
 
+						c.setPrimaryKey(true);
+					}
+				}
+			}
+			ObjectArray sequences = new ObjectArray();
+			for (int i = 0; i < columns.size(); i++) {
+				Column c = (Column) columns.get(i);
+
+				if (fullTableName.startsWith("H2O.H2O") && i == 0){ //XXX nasty h2o-specific auto-increment hack.
+					c.setAutoIncrement(true, 1, 1);
+				}
+				if (c.getAutoIncrement()) {
+					int objId = getObjectId(true, true);
+					c.convertAutoIncrementToSequence(session, getSchema(), objId, temporary);
+				}
+				Sequence seq = c.getSequence();
+				if (seq != null) {
+					sequences.add(seq);
+				}
+			}
+			int id = getObjectId(true, true);
+
+			table = getSchema().createTable(tableName, id, columns, persistent, clustered, headPos);
+			table.setComment(comment);
+			table.setTemporary(temporary);
+			table.setGlobalTemporary(globalTemporary);
+			if (temporary && !globalTemporary) {
+				if (onCommitDrop) {
+					table.setOnCommitDrop(true);
+				}
+				if (onCommitTruncate) {
+					table.setOnCommitTruncate(true);
+				}
+				session.addLocalTempTable(table);
+			} else {
+				db.addSchemaObject(session, table);
+			}
+
+
+
+			try {
+				for (int i = 0; i < columns.size(); i++) {
+					Column c = (Column) columns.get(i);
+					c.prepareExpression(session);
+				}
+				for (int i = 0; i < sequences.size(); i++) {
+					Sequence sequence = (Sequence) sequences.get(i);
+					table.addSequence(sequence);
+				}
+				for (int i = 0; i < constraintCommands.size(); i++) {
+					Prepared command = (Prepared) constraintCommands.get(i);
+					command.update();
+				}
+				if (asQuery != null) {
+					boolean old = session.getUndoLogEnabled();
+					try {
+						session.setUndoLogEnabled(false);
+						Insert insert = null;
+						insert = new Insert(session, true);
+						insert.setQuery(asQuery);
+						insert.setTable(table);
+						insert.prepare();
+						insert.update();
+					} finally {
+						session.setUndoLogEnabled(old);
+					}
+				}
+
+
+			} catch (SQLException e) {
+				db.checkPowerOff();
+				db.removeSchemaObject(session, table);
+				throw e;
+			}
+
+		} else {
+			table = getSchema().findLocalTableOrView(session, tableName);
+		}
+
+		try {
 			/*
 			 * Copy over the data that we have stored in the 'inserts' set. This section of code loops
 			 * through that set and does some fairly primitive string splitting to get each value.
@@ -347,6 +375,7 @@ public class CreateReplica extends SchemaCommand {
 
 				boolean firstRun = true;
 				for (String statement: inserts){
+					
 					ObjectArray values = new ObjectArray();
 					statement = statement.substring(0, statement.length()-1);
 
@@ -362,7 +391,6 @@ public class CreateReplica extends SchemaCommand {
 								part = part.substring(1, part.length()-1);
 							}
 							ValueString val = ValueString.get(part);
-
 
 							values.add(ValueExpression.get(val.convertTo(types.get(i++))));
 						}
@@ -382,29 +410,30 @@ public class CreateReplica extends SchemaCommand {
 				command.update();
 			}
 
-			//	#############################
-			//  Add to Table Manager.
-			//	#############################
+			if (createEntirelyNewReplica){
+				//	#############################
+				//  Add to Table Manager.
+				//	#############################
 
 
-			TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getURL());
+				TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getURL());
 
-			if (!tableName.startsWith("H2O_")){
-				TableManagerRemote tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, true);
+				if (!tableName.startsWith("H2O_")){
+					TableManagerRemote tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, true);
 
-				if (tableManager == null){
-					throw new SQLException("Error creating replica for " + tableName + ". Table Manager not found.");
-				} else {
-					try {
-						tableManager.addReplicaInformation(ti);
-					} catch(MovedException e){
-						//If this is an old cached reference contact the system table directly.
-						tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, false);
-						tableManager.addReplicaInformation(ti);
-					}
-				} 
+					if (tableManager == null){
+						throw new SQLException("Error creating replica for " + tableName + ". Table Manager not found.");
+					} else {
+						try {
+							tableManager.addReplicaInformation(ti);
+						} catch(MovedException e){
+							//If this is an old cached reference contact the system table directly.
+							tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, false);
+							tableManager.addReplicaInformation(ti);
+						}
+					} 
+				}
 			}
-
 		} catch (SQLException e) {
 			db.checkPowerOff();
 			db.removeSchemaObject(session, table);
@@ -569,20 +598,21 @@ public class CreateReplica extends SchemaCommand {
 
 	private void connect(String tableLocation) throws SQLException {
 		Database db = session.getDatabase();
-
-		conn = db.getLinkConnection("org.h2.Driver", tableLocation, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-		synchronized (conn) {
-			try {
-				if (!empty) {
+		if (!empty) {
+			conn = db.getLinkConnection("org.h2.Driver", tableLocation, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+			synchronized (conn) {
+				try {
 					readMetaData();
 					getTableData();
+
+				} catch (SQLException e) {
+					conn.close();
+					conn = null;
+					throw e;
 				}
-			} catch (SQLException e) {
-				conn.close();
-				conn = null;
-				throw e;
 			}
 		}
+
 	}
 
 	/**
@@ -624,9 +654,7 @@ public class CreateReplica extends SchemaCommand {
 		storesMixedCase = meta.storesMixedCaseIdentifiers();
 		supportsMixedCaseIdentifiers = meta.supportsMixedCaseIdentifiers();
 		ResultSet rs = meta.getTables(null, originalSchema, tableName, null);
-		//		if (rs.next() && rs.next()) { //XXX this is ommited because there are duplicate table entries. does this matter.
-		//			throw Message.getSQLException(ErrorCode.SCHEMA_NAME_MUST_MATCH, tableName);
-		//		}
+
 		rs.close();
 		rs = meta.getColumns(null, originalSchema, tableName, null); 
 

@@ -154,6 +154,8 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	 */
 	@Override
 	public int executeUpdate(String sql, boolean systemTableCommand)  throws RemoteException, SQLException  {
+		if (!session.getDatabase().isRunning()) throw new SQLException("The database either hasn't fully started, or is being shut down.");
+		
 		Command command = null;
 		if (systemTableCommand){
 			Parser schemaParser = new Parser(session.getDatabase().getH2OSession(), true);

@@ -25,6 +25,7 @@ import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
 import org.h2.constant.SysProperties;
 import org.h2.constraint.Constraint;
+import org.h2.h2o.MetaDataReplicationThread;
 import org.h2.h2o.autonomic.Settings;
 import org.h2.h2o.comms.MetaDataReplicaManager;
 import org.h2.h2o.comms.QueryProxyManager;
@@ -203,6 +204,8 @@ public class Database implements DataHandler {
 
 	private ISystemTableReference systemTableRef;
 	private MetaDataReplicaManager metaDataReplicaManager;
+	private MetaDataReplicationThread metaDataReplicationThread;
+	private boolean running = false;
 	
 	public MetaDataReplicaManager getMetaDataReplicaManager() {
 		return metaDataReplicaManager;
@@ -242,7 +245,7 @@ public class Database implements DataHandler {
 		systemTableRef = new SystemTableReference(this);
 		
 
-		databaseRemote = new ChordRemote(localMachineLocation, systemTableRef, metaDataReplicaManager);
+		databaseRemote = new ChordRemote(localMachineLocation, systemTableRef);
 
 		this.persistent = ci.isPersistent();
 
@@ -746,8 +749,10 @@ public class Database implements DataHandler {
 			int systemTableReplicationFactor = Integer.parseInt(databaseSettings.get("SYSTEM_TABLE_REPLICATION_FACTOR"));
 			int tableManagerReplicationFactor = Integer.parseInt(databaseSettings.get("TABLE_MANAGER_REPLICATION_FACTOR"));
 			
-			metaDataReplicaManager = new MetaDataReplicaManager(metaDataReplicationEnabled, systemTableReplicationFactor, tableManagerReplicationFactor, getLocalDatabaseInstanceInWrapper(), this);
+			int replicationThreadSleepTime = Integer.parseInt(databaseSettings.get("METADATA_REPLICATION_THREAD_SLEEP_TIME"));
 			
+			metaDataReplicaManager = new MetaDataReplicaManager(metaDataReplicationEnabled, systemTableReplicationFactor, tableManagerReplicationFactor, getLocalDatabaseInstanceInWrapper(), this);
+			metaDataReplicationThread = new MetaDataReplicationThread(metaDataReplicaManager, systemTableRef, this, replicationThreadSleepTime);
 		}
 
 		/*
@@ -826,7 +831,10 @@ public class Database implements DataHandler {
 				e.printStackTrace();
 			}
 
-
+			databaseRemote.setAsReadyToReplicateMetaData(metaDataReplicaManager); //called here, because at this point the system is ready to replicate TM state.
+			if (!Constants.IS_NON_SM_TEST) 
+				metaDataReplicationThread.start();
+			
 		} else if (Constants.IS_H2O && !isManagementDB() && ( databaseExists && systemTableRef.isSystemTableLocal())){
 			/*
 			 * This is the System Table. Reclaim previously held state.
@@ -834,14 +842,17 @@ public class Database implements DataHandler {
 			try {
 				createH2OTables(true, databaseExists);
 				systemTableRef.getSystemTable().buildSystemTableState();
-
+				databaseRemote.setAsReadyToReplicateMetaData(metaDataReplicaManager); //called here, because at this point the system is ready to replicate TM state.
+				if (!Constants.IS_NON_SM_TEST) 
+					metaDataReplicationThread.start();
+				
 				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Re-created System Table state.");
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 
-
+		running = true;
 	}
 
 	/**
@@ -1338,7 +1349,8 @@ public class Database implements DataHandler {
 		stopServer();
 		if (Constants.IS_H2O && !isManagementDB() && !fromShutdownHook){
 
-
+			metaDataReplicationThread.setRunning(false);
+			running = false;
 			removeLocalDatabaseInstance();
 
 		}
@@ -2805,7 +2817,7 @@ public class Database implements DataHandler {
 		return transactionNameGenerator;
 	}
 
-
-
-
+	public synchronized boolean isRunning() {
+		return running;
+	}
 }

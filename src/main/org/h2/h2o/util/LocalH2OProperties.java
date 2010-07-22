@@ -60,7 +60,7 @@ public class LocalH2OProperties {
 	 */
 	public LocalH2OProperties(DatabaseURL dbURL) {
 		this.properties = new Properties();
-		this.propertiesFileLocation = "config" + File.separator + dbURL.getDbLocationWithoutIllegalCharacters() + ".properties";
+		this.propertiesFileLocation = "config" + File.separator + dbURL.sanitizedLocation() + ".properties";
 	}
 
 	/**
@@ -72,7 +72,7 @@ public class LocalH2OProperties {
 	}
 
 	public void setPropertiesFileLocation(DatabaseURL dbURL) {
-		this.propertiesFileLocation = dbURL.getDbLocationWithoutIllegalCharacters() + ".properties";
+		this.propertiesFileLocation = dbURL.sanitizedLocation() + ".properties";
 	}
 
 	public boolean loadProperties(){

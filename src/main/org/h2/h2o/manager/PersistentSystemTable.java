@@ -56,7 +56,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 	/**
 	 * Name of connections' table in System Table.
 	 */
-	public static final String DATABASE_LOCATIONS = SCHEMA + "H2O_CONNECTION";
+	public static final String CONNECTIONS = SCHEMA + "H2O_CONNECTION";
 
 	/**
 	 * Name of the table which stores the location of table manager state replicas.
@@ -76,7 +76,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
 
 	public PersistentSystemTable(Database db, boolean createTables) throws Exception{
-		super (db, TABLES, null, DATABASE_LOCATIONS, TABLEMANAGERSTATE, true);
+		super (db, TABLES, null, CONNECTIONS, TABLEMANAGERSTATE, true);
 
 
 		if (createTables){
@@ -84,14 +84,14 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 			 * Create a new set of schema tables locally.
 			 */
 			try {
-				String sql = createSQL(TABLES, DATABASE_LOCATIONS);
+				String sql = createSQL(TABLES, CONNECTIONS);
 				sql += "\n\nCREATE TABLE IF NOT EXISTS " + TABLEMANAGERSTATE + "(" +
 				"table_id INTEGER NOT NULL, " +
 				"connection_id INTEGER NOT NULL, " + 
+				"primary_location_connection_id INTEGER NOT NULL, " + 
 				"active BOOLEAN, " + 
 				"FOREIGN KEY (table_id) REFERENCES " + TABLES + " (table_id) ON DELETE CASCADE , " +
-				" FOREIGN KEY (connection_id) REFERENCES " + DATABASE_LOCATIONS + " (connection_id));";
-
+				" FOREIGN KEY (connection_id) REFERENCES " + CONNECTIONS + " (connection_id)); ";
 
 				boolean success = getNewQueryParser();
 
@@ -348,10 +348,11 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
 
 			Map<TableInfo, Set<DatabaseURL>> replicaLocations = otherSystemTable.getReplicaLocations();
-
+			Map<TableInfo, DatabaseURL> primaryLocations = otherSystemTable.getPrimaryLocations();
+			
 			for (Entry<TableInfo, Set<DatabaseURL>> databaseEntry: replicaLocations.entrySet()){
 				for (DatabaseURL tableInfo: databaseEntry.getValue()){
-					addTableManagerStateReplica(databaseEntry.getKey(), tableInfo, false);
+					addTableManagerStateReplica(databaseEntry.getKey(), tableInfo, primaryLocations.get(databaseEntry.getKey()), false);
 				}
 			}
 
@@ -371,7 +372,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
 		Map<DatabaseURL, DatabaseInstanceWrapper> databaseLocations = new HashMap<DatabaseURL, DatabaseInstanceWrapper>();
 
-		String sql = "SELECT * FROM " + DATABASE_LOCATIONS + ";";
+		String sql = "SELECT * FROM " + CONNECTIONS + ";";
 
 		LocalResult result = null;
 
@@ -429,8 +430,8 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 		 * Parse the query resultset to find the primary location of every table.
 		 */
 		String sql = "SELECT db_location, connection_type, machine_name, connection_port, tablename, schemaname, chord_port " +
-		"FROM " + DATABASE_LOCATIONS + ", " +  TABLES + " " +
-		"WHERE " + DATABASE_LOCATIONS + ".connection_id = " + TABLES + ".manager_location;";
+		"FROM " + CONNECTIONS + ", " +  TABLES + " " +
+		"WHERE " + CONNECTIONS + ".connection_id = " + TABLES + ".manager_location;";
 
 
 		//		SELECT db_location, connection_type, machine_name, connection_port, tablename, schemaname, chord_port FROM H2O.H2O_REPLICA, H2O.H2O_CONNECTION, H2O.H2O_TABLE 
@@ -552,16 +553,18 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 	 * @see org.h2.h2o.manager.ISystemTable#addTableInformation(org.h2.h2o.comms.remote.TableManagerRemote, org.h2.h2o.util.TableInfo)
 	 */
 	@Override
-	public boolean addTableInformation(TableManagerRemote tableManager,
-			TableInfo tableDetails) throws RemoteException, MovedException, SQLException {
+	public boolean addTableInformation(TableManagerRemote tableManager, TableInfo tableDetails) 
+		throws RemoteException, MovedException, SQLException {
 		boolean added = super.addTableInformation(tableManager.getDatabaseURL(), tableDetails, false);
 
 		if (added){
-			addTableManagerReplicaInformation(getTableID(tableDetails), getConnectionID(tableDetails.getDbURL()), true);
+			int connectionID = getConnectionID(tableDetails.getURL());
+			addTableManagerReplicaInformationOnCreateTable(getTableID(tableDetails), connectionID, true);
 		}
 
 		return added;
 	}
+
 
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISystemTable#addConnectionInformation(org.h2.h2o.util.DatabaseURL, org.h2.h2o.comms.remote.DatabaseInstanceWrapper)
@@ -578,7 +581,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 	 */
 	@Override
 	public Set<TableManagerWrapper> getLocalDatabaseInstances(DatabaseURL localMachineLocation)
-	throws RemoteException, MovedException {
+		throws RemoteException, MovedException {
 		int connectionID = getConnectionID(localMachineLocation);
 
 		assert connectionID != -1;
@@ -626,10 +629,9 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 	 * @see org.h2.h2o.manager.ISystemTable#addTableManagerStateReplica(org.h2.h2o.util.TableInfo, org.h2.h2o.util.DatabaseURL)
 	 */
 	@Override
-	public void addTableManagerStateReplica(TableInfo table,
-			DatabaseURL replicaLocation, boolean active) throws RemoteException, MovedException {
+	public void addTableManagerStateReplica(TableInfo table, DatabaseURL replicaLocation, DatabaseURL primaryLocation, boolean active) throws RemoteException, MovedException {
 		try {
-			addTableManagerReplicaInformation(getTableID(table), getConnectionID(replicaLocation), active);
+			addTableManagerReplicaInformation(getTableID(table), getConnectionID(replicaLocation), getConnectionID(primaryLocation), active);
 		} catch (SQLException e) {
 			throw new RemoteException(e.getMessage());
 		}
@@ -672,6 +674,13 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 	public boolean removeTableInformation(TableInfo ti) throws RemoteException,
 	MovedException {
 		return removeTableInformation(ti, false);
+	}
+
+	@Override
+	public Map<TableInfo, DatabaseURL> getPrimaryLocations()
+			throws RemoteException, MovedException {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 

@@ -19,6 +19,7 @@ package org.h2.h2o.manager;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -427,10 +428,10 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 	 */
 	@Override
 	public void addTableManagerStateReplica(TableInfo table,
-			DatabaseURL replicaLocation, boolean active) throws RemoteException, MovedException {
+			DatabaseURL replicaLocation, DatabaseURL primaryLocation, boolean active) throws RemoteException, MovedException {
 		preMethodTest();
-		inMemory.addTableManagerStateReplica(table, replicaLocation, active);
-		persisted.addTableManagerStateReplica(table, replicaLocation, active);
+		inMemory.addTableManagerStateReplica(table, replicaLocation, primaryLocation, active);
+		persisted.addTableManagerStateReplica(table, replicaLocation, primaryLocation, active);
 	}
 
 	/* (non-Javadoc)
@@ -442,6 +443,13 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 		preMethodTest();
 		inMemory.removeTableManagerStateReplica(table, replicaLocation);
 		persisted.removeTableManagerStateReplica(table, replicaLocation);
+	}
+
+	@Override
+	public Map<TableInfo, DatabaseURL> getPrimaryLocations()
+			throws RemoteException, MovedException {
+		preMethodTest();
+		return inMemory.getPrimaryLocations();
 	}
 
 }

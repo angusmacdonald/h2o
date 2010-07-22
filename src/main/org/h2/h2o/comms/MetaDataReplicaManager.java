@@ -27,6 +27,7 @@ import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
+import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.manager.TableManager;
@@ -61,9 +62,10 @@ public class MetaDataReplicaManager {
 	/*
 	 * QUERIES
 	 */
-	private String dropOldSystemTableReplica;
 	private String addNewReplicaLocationQuery;
 	private String addNewSystemTableQuery;
+	private String dropOldTableManagerReplica;
+	private String dropOldSystemTableReplica;
 
 	/*
 	 * CONFIGURATION OPTIONS.
@@ -124,18 +126,63 @@ public class MetaDataReplicaManager {
 		/*
 		 * Queries.
 		 */
-		addNewReplicaLocationQuery = "CREATE REPLICA IF NOT EXISTS " + TableManager.TABLES + ", " +  (TableManager.REPLICAS + ", ") + 
-		TableManager.CONNECTIONS + (", " + TableManager.TABLEMANAGERSTATE) + " FROM '" + db.getURL().getOriginalURL() + "';";
+		String databaseName = db.getURL().sanitizedLocation().toUpperCase();
+
+		addNewReplicaLocationQuery = "CREATE REPLICA IF NOT EXISTS " + TableManager.getMetaTableName(databaseName, TableManager.TABLES) + ", " + (TableManager.getMetaTableName(databaseName, TableManager.REPLICAS) + ", ") + 
+		TableManager.getMetaTableName(databaseName, TableManager.CONNECTIONS) + " FROM '" + db.getURL().getOriginalURL() + "';";
 
 		addNewSystemTableQuery = "CREATE REPLICA IF NOT EXISTS " + PersistentSystemTable.TABLES + ", " + 
-		PersistentSystemTable.DATABASE_LOCATIONS + (", " + PersistentSystemTable.TABLEMANAGERSTATE) + " FROM '" + db.getURL().getOriginalURL() + "';";
+		PersistentSystemTable.CONNECTIONS + (", " + PersistentSystemTable.TABLEMANAGERSTATE) + " FROM '" + db.getURL().getOriginalURL() + "';";
 
-		
+
 		dropOldSystemTableReplica = "DROP REPLICA IF EXISTS " + PersistentSystemTable.TABLES + ", " + 
-		PersistentSystemTable.DATABASE_LOCATIONS + ", " + PersistentSystemTable.TABLEMANAGERSTATE + ";";
+		PersistentSystemTable.CONNECTIONS + ", " + PersistentSystemTable.TABLEMANAGERSTATE + ";";
 
+		dropOldTableManagerReplica = "DROP REPLICA IF EXISTS " + TableManager.getMetaTableName(databaseName, TableManager.TABLES) + ", " + 
+		TableManager.getMetaTableName(databaseName, TableManager.CONNECTIONS) + ", " + TableManager.getMetaTableName(databaseName, TableManager.REPLICAS) + ";";
 	}
 
+
+	/**
+	 * Attempts to replicate local meta-data to any available machines, until the desired replication factor is reached.
+	 * @param systemTableRef
+	 */
+	public synchronized void replicateIfPossible(ISystemTableReference systemTableRef) {
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempting to replicate Table Manager state to another machine if possible [local machine:" + localDatabase.getURL() + "].");
+
+
+		ReplicaManager replicaManager = tableManagerReplicas;
+		int managerStateReplicationFactor = tableManagerReplicationFactor;
+
+
+		if ( !metaDataReplicationEnabled || (replicaManager.size() >= managerStateReplicationFactor)){
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Replication factor is already high enough, or there are no local table managers.");
+			return; //replication factor already reached, or replication is not enabled.
+		}
+
+		Set<DatabaseInstanceWrapper> databaseInstances = null;
+
+		try {
+			databaseInstances = systemTableRef.getSystemTable().getDatabaseInstances();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return; //just return, the system will attempt to replicate later on.
+		}
+
+		if (databaseInstances.size() == 1) return;
+
+		for (DatabaseInstanceWrapper databaseInstance: databaseInstances){
+			if (!isLocal(databaseInstance) && databaseInstance.isActive()){
+				try {
+					addReplicaLocation(databaseInstance, false);
+
+					if (replicaManager.size() >= managerStateReplicationFactor) break;
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
 
 	public boolean addReplicaLocation(DatabaseInstanceWrapper newReplicaLocation, boolean isSystemTable) throws RemoteException{
 		ReplicaManager replicaManager = (isSystemTable)? systemTableReplicas: tableManagerReplicas;
@@ -143,7 +190,7 @@ public class MetaDataReplicaManager {
 
 
 		if (metaDataReplicationEnabled){
-			if (replicaManager.size() < managerStateReplicationFactor){ //+1 because the local copy counts as a replica.
+			if (replicaManager.size() < managerStateReplicationFactor){ 
 
 				//now replica state here.
 				try {
@@ -154,7 +201,7 @@ public class MetaDataReplicaManager {
 					if (isSystemTable){
 						deleteOldEntries = this.dropOldSystemTableReplica;
 					} else if (localTableManagers.size() > 0){ //if there are any local Table Managers clear old meta data on them from remote machines.
-						deleteOldEntries = constructRemoveReplicaQuery();
+						deleteOldEntries = this.dropOldTableManagerReplica; //constructRemoveReplicaQuery();
 					}
 
 					if (deleteOldEntries != null){
@@ -165,17 +212,21 @@ public class MetaDataReplicaManager {
 					 * Create new replica if needed, then replicate state.
 					 */
 					String createQuery = (isSystemTable)? addNewSystemTableQuery: addNewReplicaLocationQuery;
-					
+
 					newReplicaLocation.getDatabaseInstance().executeUpdate(createQuery, true);
 
-					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O Schema Tables replicated on new successor node: " + newReplicaLocation.getDatabaseURL().getDbLocation());
+					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O " + ((isSystemTable)? "System Table": "Table Manager") + " tables replicated on new successor node: " + newReplicaLocation.getURL().getDbLocation());
 
 					replicaManager.add(newReplicaLocation);
+
+					for (TableInfo ti: localTableManagers){
+						db.getSystemTableReference().getSystemTable().addTableManagerStateReplica(ti, newReplicaLocation.getURL(), localDatabase.getURL(), true);
+					}
 
 					return true;
 				} catch (SQLException e) {
 					e.printStackTrace();
-					ErrorHandling.errorNoEvent("Failed to replicate manager/table state onto: " + newReplicaLocation.getDatabaseURL().getDbLocation());
+					ErrorHandling.errorNoEvent("Failed to replicate manager/table state onto: " + newReplicaLocation.getURL().getDbLocation() + ", local machine: " + localDatabase.getURL());
 				} catch (Exception e) {
 					throw new RemoteException(e.getMessage());
 				} 
@@ -218,7 +269,7 @@ public class MetaDataReplicaManager {
 					if (!isSystemTable){
 						//Remove table replica information from the system table.
 						try {
-							this.db.getSystemTable().removeTableManagerStateReplica(tableInfo, replica.getDatabaseURL());
+							this.db.getSystemTable().removeTableManagerStateReplica(tableInfo, replica.getURL());
 						} catch (RemoteException e1) {
 							e1.printStackTrace();
 						} catch (MovedException e1) {
@@ -237,6 +288,42 @@ public class MetaDataReplicaManager {
 
 		return result;
 	}
+
+	/**
+	 * Called when a new replica location is added by the local meta data replica manager.
+	 * 
+	 * 
+	 * 
+	 * @param tableID
+	 * @param connectionID
+	 * @param primaryLocationConnectionID
+	 * @param active
+	 * @return
+	 * @throws SQLException
+	 */
+	public int addTableManagerReplicaInformation(int tableID, int connectionID, int primaryLocationConnectionID, boolean active) throws SQLException{
+		String sql = "INSERT INTO " + PersistentSystemTable.TABLEMANAGERSTATE + " VALUES (" + tableID + ", " + connectionID + ", " + primaryLocationConnectionID + ", " + active + ");";
+
+		return executeUpdate(sql, true, null);
+	}
+
+
+	/**
+	 * When a table is created this must be called, and all replica locations should be added (there may be more than one
+	 * replica location when the table is created).
+	 * 
+	 * @param tableID
+	 * @param connectionID
+	 * @param primaryLocationConnectionID
+	 * @param active
+	 * @param tableDetails
+	 * @return
+	 */
+	public Set<DatabaseInstanceWrapper> getTableManagerReplicaLocations() {
+		return this.tableManagerReplicas.getActiveReplicas();
+	}
+
+
 
 	private boolean isLocal(DatabaseInstanceWrapper replica) {
 		return replica.equals(localDatabase);
@@ -265,8 +352,9 @@ public class MetaDataReplicaManager {
 	 * @throws SQLException
 	 */
 	public String constructRemoveReplicaQuery() throws SQLException {
-		String replicaRelation =  TableManager.REPLICAS;
-		String tableRelation =  TableManager.TABLES;
+		String databaseName = localDatabase.getURL().sanitizedLocation();
+		String replicaRelation =  TableManager.getMetaTableName(databaseName, TableManager.REPLICAS);
+		String tableRelation =  TableManager.getMetaTableName(databaseName, TableManager.TABLES);
 
 		String deleteReplica = "DELETE FROM " + tableRelation + " WHERE ";
 		String deleteTable = "DELETE FROM " + replicaRelation + " WHERE ";
@@ -296,8 +384,9 @@ public class MetaDataReplicaManager {
 	}
 
 	public String constructRemoveReplicaQuery(TableInfo ti, boolean removeReplicaInfo, boolean isSystemTable) throws SQLException {
-		String replicaRelation =  (isSystemTable)? null: TableManager.REPLICAS;
-		String tableRelation = (isSystemTable)? PersistentSystemTable.TABLES: TableManager.TABLES;
+		String databaseName = localDatabase.getURL().sanitizedLocation();
+		String replicaRelation =  (isSystemTable)? null: TableManager.getMetaTableName(databaseName, TableManager.REPLICAS);
+		String tableRelation = (isSystemTable)? PersistentSystemTable.TABLES: TableManager.getMetaTableName(databaseName, TableManager.TABLES);
 
 		String sql = "";
 		if (ti.getTableName() == null){
@@ -346,7 +435,9 @@ public class MetaDataReplicaManager {
 	 * @return
 	 */
 	public int getTableID(TableInfo ti, boolean isSystemTable) throws SQLException{
-		String tableRelation = (isSystemTable)? PersistentSystemTable.TABLES: TableManager.TABLES;
+		String databaseName = localDatabase.getURL().sanitizedLocation();
+
+		String tableRelation = (isSystemTable)? PersistentSystemTable.TABLES: TableManager.getMetaTableName(databaseName, TableManager.TABLES);
 
 		String sql = "SELECT table_id FROM " + tableRelation + " WHERE tablename='" + ti.getTableName()
 		+ "' AND schemaname='" + ti.getSchemaName() + "';";
@@ -372,7 +463,9 @@ public class MetaDataReplicaManager {
 	 * @throws SQLException 
 	 */
 	protected Integer[] getTableIDs(String schemaName, boolean isSystemTable) throws SQLException {
-		String tableRelation = (isSystemTable)? PersistentSystemTable.TABLES: TableManager.TABLES;
+		String databaseName = localDatabase.getURL().sanitizedLocation();
+
+		String tableRelation = (isSystemTable)? PersistentSystemTable.TABLES: TableManager.getMetaTableName(databaseName, TableManager.TABLES);
 
 
 		String sql = "SELECT table_id FROM " + tableRelation + " WHERE schemaname='" + schemaName + "';";

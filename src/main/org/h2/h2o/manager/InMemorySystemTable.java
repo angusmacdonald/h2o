@@ -73,10 +73,13 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	 */
 	private int tableSetNumber = 1;
 
+	private HashMap<TableInfo, DatabaseURL> primaryLocations;
+
 	/**
 	 * Locations where the state of the System Table is replicated.
 	 */
 	//private Set<DatabaseInstanceRemote> systemTableState;
+
 
 	/**
 	 * Maintained because a nosuchobjectexception is occasionally thrown. 
@@ -91,6 +94,8 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 
 		tableManagers = new HashMap<TableInfo, TableManagerWrapper>();
 		tmReplicaLocations = new HashMap<TableInfo, Set<DatabaseURL>>();
+
+		primaryLocations = new HashMap<TableInfo, DatabaseURL>();
 		//		systemTableState = new HashSet<DatabaseInstanceRemote>();
 		//
 		//		systemTableState.add(database.getLocalDatabaseInstance());
@@ -108,7 +113,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 
 		TableInfo basicTableInfo = tableDetails.getGenericTableInfo();
 
-		TableManagerWrapper tableManagerWrapper = new TableManagerWrapper(basicTableInfo, tableManager, tableDetails.getDbURL());
+		TableManagerWrapper tableManagerWrapper = new TableManagerWrapper(basicTableInfo, tableManager, tableDetails.getURL());
 
 		if (tableManagers.containsKey(basicTableInfo)){
 			return false; //this table already exists.
@@ -116,14 +121,16 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 
 		tableManagerReferences.add(tableManager);
 		tableManagers.put(basicTableInfo, tableManagerWrapper);
-		String fullName = tableDetails.getFullTableName();
+
+		primaryLocations.put(basicTableInfo, tableDetails.getURL());
+		
 		Set<DatabaseURL> replicas = tmReplicaLocations.get(basicTableInfo);
 
 		if (replicas == null){
 			replicas = new HashSet<DatabaseURL>();
 		}
 
-		replicas.add(tableDetails.getDbURL());
+		replicas.add(tableDetails.getURL());
 
 		tmReplicaLocations.put(basicTableInfo, replicas);
 
@@ -568,7 +575,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 			assert false;
 		}
 
-		TableManagerWrapper dmw = new TableManagerWrapper(tableInfo, stub, tableInfo.getDbURL());
+		TableManagerWrapper dmw = new TableManagerWrapper(tableInfo, stub, tableInfo.getURL());
 
 		this.tableManagers.put(tableInfo.getGenericTableInfo(), dmw);
 		tableManagerReferences.add(stub);
@@ -606,9 +613,10 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	 * @see org.h2.h2o.manager.ISystemTable#addTableManagerStateReplica(org.h2.h2o.util.TableInfo, org.h2.h2o.util.DatabaseURL)
 	 */
 	@Override
-	public void addTableManagerStateReplica(TableInfo table,
-			DatabaseURL replicaLocation, boolean active) throws RemoteException, MovedException {
+	public void addTableManagerStateReplica(TableInfo table, DatabaseURL replicaLocation, DatabaseURL primaryLocation, boolean active) throws RemoteException, MovedException {
 		Set<DatabaseURL> replicas = tmReplicaLocations.get(table.getGenericTableInfo());
+
+		primaryLocations.put(table.getGenericTableInfo(), primaryLocation);
 
 		if (replicas == null){
 			replicas = new HashSet<DatabaseURL>();
@@ -640,5 +648,8 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 
 	}
 
+	public HashMap<TableInfo, DatabaseURL> getPrimaryLocations() {
+		return primaryLocations;
+	}
 
 }

@@ -20,6 +20,7 @@ package org.h2.h2o.manager;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -202,8 +203,10 @@ public interface ISystemTable extends Remote {
 	 * @param table				The table whose manager has just replicated its state.
 	 * @param replicaLocation	Where the state has been replicated.
 	 */
-	public void addTableManagerStateReplica(TableInfo table, DatabaseURL replicaLocation, boolean active) throws RemoteException, MovedException;
+	public void addTableManagerStateReplica(TableInfo table, DatabaseURL replicaLocation, DatabaseURL primaryLocation, boolean active) throws RemoteException, MovedException;
 
+	public Map<TableInfo, DatabaseURL> getPrimaryLocations() throws RemoteException, MovedException;
+	
 	/**
 	 * Add a location where a given table managers state was replicated.
 	 * @param table				The table whose manager has removed/lost a replica of its state.

@@ -266,6 +266,38 @@ public class FailureTests extends TestBase {
 	}
 	
 	/**
+	 * Test that System Table correctly records the locations of Table Manager meta-data.
+	 * @throws InterruptedException 
+	 */
+	@Test
+	public void tableManagerMetaDataCorrect() throws InterruptedException{
+		String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
+		sql += "INSERT INTO TEST VALUES(1, 'Hello');";
+		sql += "INSERT INTO TEST VALUES(2, 'World');";
+
+		try {
+			sleep(1000);
+			/*
+			 * Create test table.
+			 */
+			executeUpdateOnFirstMachine(sql);
+
+			assertTestTableExists(2);
+			assertMetaDataExists(connections[0], 1);
+
+			sleep(8000); //maintenance thread should have replicated table manager meta-data.
+
+			
+			assertTableManagerMetaDataExists(connections[0], 2);
+		
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("Unexpected exception.");
+		}
+	}
+
+	
+	/**
 	 * Connect to existing Database instance with ST state and TM state, but find no ST or TM running.
 	 * @throws InterruptedException 
 	 */
@@ -302,7 +334,7 @@ public class FailureTests extends TestBase {
 				break;
 			}
 
-			sleep(4000);
+			sleep(8000);
 
 			//createConnectionsToDatabases();
 
@@ -425,6 +457,33 @@ public class FailureTests extends TestBase {
 	private void assertMetaDataExists(Connection connection, int expectedEntries) throws SQLException {
 		String tableName = "H2O.H2O_TABLE"; //default value.
 		tableName = getTableMetaTableName();
+
+		/*
+		 * Query database.
+		 */
+		Statement s = connection.createStatement();
+		ResultSet rs = s.executeQuery("SELECT * FROM " + tableName);
+
+		int actualEntries = 0;
+		while(rs.next()){
+			actualEntries++;
+		}
+
+		assertEquals(expectedEntries, actualEntries);
+
+		rs.close();
+		s.close();
+	}
+	
+	/**
+	 * Query the System Table's persisted state (specifically the H2O.H2O_TABLEMANAGER_STATE table) and check that
+	 * there are the correct number of entries.
+	 * @param connection		Connection to execute the query on.
+	 * @param expectedEntries	Number of entries expected in the table.
+	 * @throws SQLException
+	 */
+	private void assertTableManagerMetaDataExists(Connection connection, int expectedEntries) throws SQLException {
+		String tableName = "H2O.H2O_TABLEMANAGER_STATE";
 
 		/*
 		 * Query database.

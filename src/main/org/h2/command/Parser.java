@@ -3756,6 +3756,14 @@ public class Parser {
 		}
 		return false;
 	}
+	
+	private boolean readUpdateData() throws SQLException {
+		if (readIf("UPDATE")) {
+			read("DATA");
+			return true;
+		}
+		return false;
+	}
 
 	private CreateConstant parseCreateConstant() throws SQLException {
 		boolean ifNotExists = readIfNoExists();
@@ -4469,13 +4477,13 @@ public class Parser {
 
 		DatabaseURL dmURL = null;
 		try {
-			dmURL = tableManager.getReplicaManager().getPrimary().getDatabaseURL();
+			dmURL = tableManager.getReplicaManager().getPrimary().getURL();
 
 		} catch (MovedException e){
 			//Query System Table again, bypassing the cache.
 			tableManager = session.getDatabase().getSystemTableReference().lookup(new TableInfo(tableName, thisSchemaName), false);
 			try {
-				dmURL = tableManager.getReplicaManager().getPrimary().getDatabaseURL();
+				dmURL = tableManager.getReplicaManager().getPrimary().getURL();
 			} catch (MovedException e1) {
 				throw new SQLException("Unable to contact Table Manager for " + tableName + ":: " + e1.getMessage());
 			}
@@ -4904,6 +4912,7 @@ public class Parser {
 
 	private CreateReplica parseCreateReplica(boolean temp, boolean globalTemp, boolean persistent, boolean empty) throws SQLException, RemoteException {
 		boolean ifNotExists = readIfNoExists();
+		boolean updateData = readUpdateData();
 
 		CreateReplica command = null;
 
@@ -4925,9 +4934,9 @@ public class Parser {
 				int numTables = 0;
 
 				for (String shortTableName: tables){
-					String fullTableName = shortTableName;
+
 					if (numTables == 0){
-						command = new CreateReplica(session, s, false);
+						command = new CreateReplica(session, s, false, updateData);
 
 						command.setPersistent(persistent);
 						command.setTemporary(temp);
@@ -4936,7 +4945,7 @@ public class Parser {
 						command.setTableName(shortTableName);
 						command.setComment(readCommentIf());
 					} else {
-						CreateReplica next = new CreateReplica(session, getSchema(), false);
+						CreateReplica next = new CreateReplica(session, getSchema(), false, updateData);
 						next.setTableName(shortTableName);
 
 						next.setPersistent(persistent);
@@ -4964,7 +4973,7 @@ public class Parser {
 			}
 			checkForSchemaName();
 			Schema schema = getSchema();
-			command = new CreateReplica(session, schema, empty);
+			command = new CreateReplica(session, schema, empty, updateData);
 
 			command.setPersistent(persistent);
 			command.setTemporary(temp);
@@ -4979,7 +4988,7 @@ public class Parser {
 			while (readIf(",")) {
 				tableName = readIdentifierWithSchema();
 				checkForSchemaName();
-				CreateReplica next = new CreateReplica(session, getSchema(), empty);
+				CreateReplica next = new CreateReplica(session, getSchema(), empty, updateData);
 				next.setTableName(tableName);
 				command.addNextCreateReplica(next);
 

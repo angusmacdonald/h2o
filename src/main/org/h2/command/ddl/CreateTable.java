@@ -43,6 +43,7 @@ import org.h2.table.Column;
 import org.h2.table.IndexColumn;
 import org.h2.table.Table;
 import org.h2.table.TableData;
+import org.h2.test.db.Db;
 import org.h2.util.ObjectArray;
 import org.h2.value.DataType;
 
@@ -320,6 +321,7 @@ public class CreateTable extends SchemaCommand {
 		if (!successful){
 			throw new SQLException("Failed to add Table Manager reference to System Table: " + systemTable);
 		}
+
 
 		try {
 			tableManager.persistToCompleteStartup(tableInfo);

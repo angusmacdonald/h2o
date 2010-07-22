@@ -61,10 +61,10 @@ public abstract class PersistentManager {
 	protected Command sqlQuery;
 	private Database db;
 
-	private String tableRelation;
-	private String replicaRelation;
-	private String connectionRelation;
-	private String tableManagerRelation;
+	protected String tableRelation;
+	protected String replicaRelation;
+	protected String connectionRelation;
+	protected String tableManagerRelation;
 
 	private boolean isSystemTable;
 
@@ -99,7 +99,34 @@ public abstract class PersistentManager {
 
 		queryParser = new Parser(session, true);
 	}
+	
+	/*
+	 * Called by TableManager subclass which sets up table names later.
+	 */
+	public PersistentManager(Database db) throws Exception{
+		this.db = db;
+		this.isSystemTable = false;
 
+		this.metaDataReplicaManager = db.getMetaDataReplicaManager();
+
+		Session session = db.getSystemSession();
+
+
+		if (session == null){
+			ErrorHandling.error("Couldn't find system session. Local database has been shutdown.");
+			return;
+		}
+
+		queryParser = new Parser(session, true);
+	}
+
+	public void setMetaDataTableNames(String tables, String replicas, String connections, String tableManagerRelation){
+		this.tableRelation = tables;
+		this.replicaRelation = replicas;
+		this.connectionRelation = connections;
+		this.tableManagerRelation = tableManagerRelation;
+	}
+	
 	/**
 	 * @param tableRelation
 	 * @param replicaRelation
@@ -150,7 +177,7 @@ public abstract class PersistentManager {
 		try {
 			assert !tableDetails.getTableName().startsWith("H2O_");
 
-			DatabaseURL dbURL = tableDetails.getDbURL();
+			DatabaseURL dbURL = tableDetails.getURL();
 
 			if (dbURL == null){
 				//find the URL from the Table Manager.
@@ -194,7 +221,7 @@ public abstract class PersistentManager {
 		//queryParser = new Parser(db.getExclusiveSession(), true);
 
 		try {
-			int connectionID = getConnectionID(tableDetails.getDbURL());
+			int connectionID = getConnectionID(tableDetails.getURL());
 			int tableID = metaDataReplicaManager.getTableID(tableDetails, isSystemTable);
 
 			if (!isReplicaListed(tableDetails, connectionID)){ // the table doesn't already exist in the System Table.
@@ -386,11 +413,22 @@ public abstract class PersistentManager {
 		return executeUpdate(sql);
 	}
 
-	protected int addTableManagerReplicaInformation(int tableID, int connectionID, boolean active) throws SQLException{
-		String sql = "INSERT INTO " + tableManagerRelation + " VALUES (" + tableID + ", " + connectionID + ", " + active + ");";
-		return executeUpdate(sql);
+	protected int addTableManagerReplicaInformation(int tableID, int connectionID, int primaryLocationConnectionID, boolean active) throws SQLException{
+		
+		return metaDataReplicaManager.addTableManagerReplicaInformation(tableID, connectionID, primaryLocationConnectionID, active);
 	}
 
+
+	protected void addTableManagerReplicaInformationOnCreateTable(int tableID, int connectionID, boolean active) throws SQLException {
+		Set<DatabaseInstanceWrapper> replicaLocations = metaDataReplicaManager.getTableManagerReplicaLocations();
+		
+		for (DatabaseInstanceWrapper replicaLocation: replicaLocations){
+			int replicaConnectionID = getConnectionID(replicaLocation.getURL());
+			
+			addTableManagerReplicaInformation(tableID, connectionID, replicaConnectionID, active);
+		}
+	}
+	
 	protected int removeTableManagerReplicaInformation(int tableID, int connectionID) throws SQLException {
 		String sql = "DELETE FROM " + tableManagerRelation + " WHERE table_id=" + tableID + " AND connection_id=" + connectionID + ";";
 		return executeUpdate(sql);
@@ -419,8 +457,6 @@ public abstract class PersistentManager {
 	}
 
 	protected int executeUpdate(String query) throws SQLException{
-		//	getNewQueryParser();
-
 		return metaDataReplicaManager.executeUpdate(query, isSystemTable, getTableInfo());
 	}
 
@@ -451,7 +487,7 @@ public abstract class PersistentManager {
 
 		try {
 
-			int connectionID = getConnectionID(ti.getDbURL());
+			int connectionID = getConnectionID(ti.getURL());
 			int tableID;
 
 			tableID = metaDataReplicaManager.getTableID(ti, isSystemTable);
@@ -588,7 +624,7 @@ public abstract class PersistentManager {
 	public void changeTableManagerLocation(TableInfo tableInfo) {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "About to update the location of the Table Manager " + tableInfo + ".");
 
-		int connectionID = getConnectionID(tableInfo.getDbURL());
+		int connectionID = getConnectionID(tableInfo.getURL());
 
 		assert connectionID != -1;
 

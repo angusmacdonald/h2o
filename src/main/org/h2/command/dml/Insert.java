@@ -140,6 +140,7 @@ public class Insert extends Prepared{
 						try {
 							Value v = e.getValue(session).convertTo(c.getType());
 							newRow.setValue(index, v);
+	
 						} catch (SQLException ex) {
 							throw setRow(ex, x, getSQL(expr));
 						}

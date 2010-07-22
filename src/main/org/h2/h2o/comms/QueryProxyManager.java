@@ -154,9 +154,6 @@ public class QueryProxyManager {
 	 */
 	public boolean hasLock(QueryProxy proxy) {
 		
-		if (proxy == null){
-			System.err.println();
-		}
 		if (proxy.getLockGranted() != LockType.NONE)
 			return true; //this proxy already holds the required lock 
 
@@ -206,8 +203,8 @@ public class QueryProxyManager {
 
 
 		if (Diagnostic.getLevel() == DiagnosticLevel.FULL){
-			if (this.localDatabase.getDatabaseURL().getRMIPort() > 0){
-				System.out.println("\tQueries in transaction (on DB at " + this.localDatabase.getDatabaseURL().getRMIPort() + ": '" + transactionName + "'):");
+			if (this.localDatabase.getURL().getRMIPort() > 0){
+				System.out.println("\tQueries in transaction (on DB at " + this.localDatabase.getURL().getRMIPort() + ": '" + transactionName + "'):");
 				if (queries != null){
 					for (String query: queries){
 						if (query.equals("")) continue;
