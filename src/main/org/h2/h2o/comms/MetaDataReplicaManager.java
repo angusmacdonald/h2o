@@ -27,6 +27,7 @@ import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
+import org.h2.h2o.manager.ISystemTable;
 import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.PersistentSystemTable;
@@ -148,22 +149,27 @@ public class MetaDataReplicaManager {
 	 * @param systemTableRef
 	 */
 	public synchronized void replicateIfPossible(ISystemTableReference systemTableRef) {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempting to replicate Table Manager state to another machine if possible [local machine:" + localDatabase.getURL() + "].");
-
-
+		
 		ReplicaManager replicaManager = tableManagerReplicas;
 		int managerStateReplicationFactor = tableManagerReplicationFactor;
 
 
 		if ( !metaDataReplicationEnabled || (replicaManager.size() >= managerStateReplicationFactor)){
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Replication factor is already high enough, or there are no local table managers.");
+			
 			return; //replication factor already reached, or replication is not enabled.
 		}
 
 		Set<DatabaseInstanceWrapper> databaseInstances = null;
 
 		try {
-			databaseInstances = systemTableRef.getSystemTable().getDatabaseInstances();
+			ISystemTable systemTable = systemTableRef.getSystemTable();
+
+			if (systemTable == null){
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "System table was NULL so the meta-data manager is unable to replicate.");
+				return;
+			} else {
+				databaseInstances = systemTable.getDatabaseInstances();
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			return; //just return, the system will attempt to replicate later on.
@@ -263,7 +269,6 @@ public class MetaDataReplicaManager {
 				try {
 					result = replica.getDatabaseInstance().executeUpdate(query, true);
 				} catch (RemoteException e) {
-					e.printStackTrace();
 					failed.add(replica);
 
 					if (!isSystemTable){

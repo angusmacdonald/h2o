@@ -695,8 +695,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 		}
 
-		System.err.println(oldPredecessorURL);
-
 		boolean systemTableAlive = true;
 		ISystemTable newSystemTable = null;
 		if (systemTableWasOnPredecessor){

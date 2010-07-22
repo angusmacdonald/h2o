@@ -46,7 +46,8 @@ import org.junit.runners.Suite;
 	RestartTests.class,
 	LocatorTests.class,
 	//LocatorDatabaseTests.class,
-	ChordTests.class
+	ChordTests.class,
+	FailureTests.class
 })
 public class AllTests {
 	//The above annotations do all the work.
