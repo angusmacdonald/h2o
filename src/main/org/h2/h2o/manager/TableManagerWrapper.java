@@ -56,28 +56,28 @@ public class TableManagerWrapper implements Serializable, Remote {
 	/**
 	 * @return the tableInfo
 	 */
-	public TableInfo getTableInfo() throws RemoteException {
+	public TableInfo getTableInfo() {
 		return tableInfo;
 	}
 
 	/**
 	 * @param tableInfo the tableInfo to set
 	 */
-	public void setTableInfo(TableInfo tableInfo) throws RemoteException {
+	public void setTableInfo(TableInfo tableInfo) {
 		this.tableInfo = tableInfo.getGenericTableInfo();
 	}
 
 	/**
 	 * @return the tableManager
 	 */
-	public TableManagerRemote getTableManager()throws RemoteException {
+	public TableManagerRemote getTableManager() {
 		return tableManager;
 	}
 
 	/**
 	 * @param tableManager the tableManager to set
 	 */
-	public void setTableManager(TableManagerRemote tableManager)throws RemoteException {
+	public void setTableManager(TableManagerRemote tableManager) {
 		this.tableManager = tableManager;
 	}
 

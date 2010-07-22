@@ -29,9 +29,12 @@ import org.h2.h2o.autonomic.Settings;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.manager.ISystemTable;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.TableManager;
+import org.h2.h2o.manager.TableManagerWrapper;
 import org.h2.h2o.util.LockType;
+import org.h2.h2o.util.TableInfo;
 import org.h2.table.Table;
 import org.h2.test.h2o.H2OTest;
 
@@ -203,7 +206,7 @@ public class QueryProxy implements Serializable{
 	 * @return Query proxy for a specific table within H20.
 	 * @throws SQLException
 	 */
-	public static QueryProxy getQueryProxyAndLock(TableManagerRemote tableManager, String tableName, Database db, LockType lockType, DatabaseInstanceWrapper requestingDatabase) throws SQLException {
+	public static QueryProxy getQueryProxyAndLock(TableManagerRemote tableManager, String tableName, Database db, LockType lockType, DatabaseInstanceWrapper requestingDatabase, boolean alreadyCalled) throws SQLException {
 
 
 		if(requestingDatabase == null){
@@ -225,7 +228,32 @@ public class QueryProxy implements Serializable{
 			e.printStackTrace();
 			throw new SQLException("Table Manager could not be accessed. It may not have been exported to RMI correctly.");
 		} catch (RemoteException e) {
-			e.printStackTrace();
+
+			if (!alreadyCalled){
+
+				ISystemTable systemTable = db.getSystemTable();
+
+				boolean systemTableActive = true;
+
+				if (systemTable == null){
+					//reInstantiateSystemTable
+					systemTable = db.getRemoteInterface().reinstantiateSystemTable();
+				}
+
+				if (systemTableActive){
+					try {
+						TableManagerRemote newTableManager = db.getSystemTable().recreateTableManager(new TableInfo(tableName));
+						if (newTableManager != null){
+							return getQueryProxyAndLock(newTableManager, tableName, db, lockType, requestingDatabase, true);
+						}
+					} catch (RemoteException e1) {
+						e1.printStackTrace();
+					} catch (MovedException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+
 			throw new SQLException("Table Manager could not be accessed. The table is unavailable until the Table Manager is reactivated.");
 		} catch (MovedException e) {
 			throw new SQLException("Table Manager has moved and can't be accessed at this location.");
@@ -241,7 +269,7 @@ public class QueryProxy implements Serializable{
 			throw new SQLException("Table Manager not found for table.");
 		}
 
-		return getQueryProxyAndLock(tableManager, tableName, db, lockType, requestingDatabase);
+		return getQueryProxyAndLock(tableManager, tableName, db, lockType, requestingDatabase, false);
 	}
 
 	public LockType getLockGranted(){

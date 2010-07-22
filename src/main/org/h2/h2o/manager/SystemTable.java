@@ -19,7 +19,6 @@ package org.h2.h2o.manager;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,37 +47,10 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 	 */
 	private ISystemTable persisted;
 
-	/*
-	 * MIGRATION RELATED CODE.
-	 */
 	/**
-	 * If this System Table has been moved to another location (i.e. its state has been transferred to another machine
-	 * and it is no longer active) this field will not be null, and will note the new location of the System Table.
+	 * Fields related to the migration functionality of the System Table.
 	 */
-
-	private String movedLocation = null;
-
-	/**
-	 * Whether the System Table is in the process of being migrated. If this is true the System Table will be 'locked', unable to service requests.
-	 */
-	private boolean inMigration;
-
-	/**
-	 * Whether the System Table has been moved to another location.
-	 */
-	private boolean hasMoved = false;
-
-	/**
-	 * Whether the System Table has been shutdown.
-	 */
-	private boolean shutdown = false;
-
-	/**
-	 * The amount of time which has elapsed since migration began. Used to timeout requests which take too long.
-	 */
-	private long migrationTime = 0l;
-
-	private IChordRemoteReference location;
+	private SystemTableMigrationState migrationState;
 
 	/**
 	 * The timeout period for migrating the System Table.
@@ -90,7 +62,7 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 		this.inMemory = new InMemorySystemTable(db);
 		this.persisted = new PersistentSystemTable(db, createTables);
 
-		this.location = db.getChordInterface().getLocalChordReference();
+		this.migrationState = new SystemTableMigrationState(db.getChordInterface().getLocalChordReference());
 	}
 
 	/******************************************************************
@@ -115,21 +87,6 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 
 	}
 
-	//	/* (non-Javadoc)
-	//	 * @see org.h2.h2o.ISystemTable#addReplicaInformation(org.h2.h2o.TableInfo)
-	//	 */
-	//	@Override
-	//	public void addReplicaInformation(TableInfo ti) throws RemoteException, MovedException {
-	//		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Request to add a single replica to the system: " + ti);
-	//		preMethodTest();
-	//		try {
-	//			inMemory.addReplicaInformation(ti);
-	//			persisted.addReplicaInformation(ti);
-	//		} catch (SQLException e) {
-	//			e.printStackTrace();
-	//		}
-	//	}
-
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.ISystemTable#confirmTableCreation(java.lang.String, org.h2.h2o.comms.remote.TableManagerRemote, org.h2.h2o.TableInfo)
 	 */
@@ -147,17 +104,6 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 		}
 		return success;
 	}
-
-
-	//	/* (non-Javadoc)
-	//	 * @see org.h2.h2o.ISystemTable#removeReplicaInformation(org.h2.h2o.TableInfo)
-	//	 */
-	//	@Override
-	//	public void removeReplicaInformation(TableInfo ti) throws RemoteException, MovedException {
-	//		preMethodTest();
-	//		inMemory.removeReplicaInformation(ti);
-	//		persisted.removeReplicaInformation(ti);
-	//	}
 
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.ISystemTable#removeTableInformation(java.lang.String, java.lang.String)
@@ -203,16 +149,6 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 		return inMemory.getNewTableSetNumber();
 	}
 
-	//	/* (non-Javadoc)
-	//	 * @see org.h2.h2o.ISystemTable#getNumberofReplicas(java.lang.String, java.lang.String)
-	//	 */
-	//	@Override
-	//	public int getNumberofReplicas(String tableName, String schemaName)
-	//	throws RemoteException, MovedException {
-	//		preMethodTest();
-	//		return inMemory.getNumberofReplicas(tableName, schemaName);
-	//	}
-
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.ISystemTable#lookup(java.lang.String)
 	 */
@@ -242,6 +178,7 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 	throws RemoteException, MovedException, SQLException {
 		preMethodTest();
 		inMemory.buildSystemTableState(persisted);
+
 	}
 
 	/* (non-Javadoc)
@@ -325,23 +262,23 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 
 	private void preMethodTest() throws RemoteException, MovedException{
 
-		if (shutdown){
+		if (migrationState.shutdown){
 			throw new RemoteException(null);
-		} else if (hasMoved){
-			throw new MovedException(movedLocation);
+		} else if (migrationState.hasMoved){
+			throw new MovedException(migrationState.movedLocation);
 		}
 		/*
 		 * If the manager is being migrated, and has been migrated for less than 10 seconds (timeout period), throw an execption. 
 		 */
-		if (inMigration){
+		if (migrationState.inMigration){
 			//If it hasn't moved, but is in the process of migration an exception will be thrown.
-			long currentTimeOfMigration = System.currentTimeMillis() - migrationTime;
+			long currentTimeOfMigration = System.currentTimeMillis() - migrationState.migrationTime;
 
 			if (currentTimeOfMigration < MIGRATION_TIMEOUT) {
 				throw new RemoteException("System Table is in the process of being moved.");
 			} else {
-				inMigration = false; //Timeout request.
-				this.migrationTime = 0l;
+				migrationState.inMigration = false; //Timeout request.
+				this.migrationState.migrationTime = 0l;
 			}
 		}
 	}
@@ -353,11 +290,11 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 	public synchronized void prepareForMigration(String newLocation) throws RemoteException, MovedException, MigrationException {
 		preMethodTest();
 
-		movedLocation = newLocation;
+		migrationState.movedLocation = newLocation;
 
-		inMigration = true;
+		migrationState.inMigration = true;
 
-		migrationTime = System.currentTimeMillis();
+		migrationState.migrationTime = System.currentTimeMillis();
 	}
 
 
@@ -367,13 +304,14 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 	@Override
 	public void completeMigration() throws RemoteException,
 	MovedException, MigrationException {
-		if (!inMigration){ // the migration process has timed out.
+		if (!migrationState.inMigration){ // the migration process has timed out.
 			throw new MigrationException("Migration process has timed-out. Took too long to migrate (timeout: " + MIGRATION_TIMEOUT + "ms)");
 		}
 
-		this.hasMoved = true;
-		this.inMigration = false;
+		this.migrationState.hasMoved = true;
+		this.migrationState.inMigration = false;
 
+		((InMemorySystemTable)inMemory).removeTableManagerCheckerThread();
 	}
 
 	/* (non-Javadoc)
@@ -400,7 +338,7 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 	 */
 	@Override
 	public void shutdown(boolean shutdown) throws RemoteException, MovedException {
-		this.shutdown = shutdown;
+		this.migrationState.shutdown = shutdown;
 
 	}
 
@@ -409,7 +347,7 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 	 */
 	@Override
 	public IChordRemoteReference getChordReference() throws RemoteException {
-		return location;
+		return migrationState.location;
 	}
 
 
@@ -450,6 +388,14 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 			throws RemoteException, MovedException {
 		preMethodTest();
 		return inMemory.getPrimaryLocations();
+	}
+
+	@Override
+	public TableManagerRemote recreateTableManager(TableInfo table) throws RemoteException,
+			MovedException {
+		preMethodTest();
+		return inMemory.recreateTableManager(table);
+		
 	}
 
 }

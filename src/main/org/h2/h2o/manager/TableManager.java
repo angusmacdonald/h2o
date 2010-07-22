@@ -84,7 +84,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	private String replicasTable = SCHEMA;
 	private String connectionsTable = SCHEMA;
 	private String managersTable = SCHEMA; 
-	
+
 	/**
 	 * The name of the table that this Table Manager is responsible for.
 	 */
@@ -152,11 +152,11 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 	public TableManager(TableInfo tableDetails, Database database) throws Exception{
 		super(database);
-		
+
 		String dbName = database.getURL().sanitizedLocation();
 		setMetaDataTableNames(getMetaTableName(dbName, TABLES), getMetaTableName(dbName, REPLICAS), getMetaTableName(dbName, CONNECTIONS), getMetaTableName(dbName, TABLEMANAGERSTATE));
-		
-		
+
+
 		this.tableName = tableDetails.getTableName();
 
 		this.schemaName = tableDetails.getSchemaName();
@@ -176,7 +176,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 		this.relationReplicationFactor = Integer.parseInt(database.getDatabaseSettings().get("RELATION_REPLICATION_FACTOR"));
 	}
-	
+
 	public static String getMetaTableName (String databaseName, String tablePostfix){
 		return SCHEMA + "H2O_" + databaseName + "_" + tablePostfix;
 	}
@@ -193,7 +193,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		if (!added) return false;
 
 		return super.addTableInformation(tableManagerURL, tableDetails, true);
-		
+
 		/*
 		 * The System Table isn't contacted here, but in the Create Table class. This is because the Table isn't officially
 		 * created until the end of CreateTable.update().
@@ -238,7 +238,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	MovedException {
 		return removeTableInformation(getTableInfo(), true);
 	}
-	
+
 	@Override
 	public boolean removeTableInformation(TableInfo tableInfo, boolean removeReplicaInfo) {
 		return super.removeTableInformation(getTableInfo(), removeReplicaInfo);
@@ -269,7 +269,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 
 		Parser parser = new Parser(session, true);
-		
+
 		Command query = parser.prepareCommand(sql);
 		try {
 			return query.update();
@@ -285,8 +285,26 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 * @return null if the instance wasn't found (including if it wasn't active).
 	 */
 	private DatabaseInstanceWrapper getDatabaseInstance(DatabaseURL dbURL) {
-		DatabaseInstanceRemote dir = getDB().getDatabaseInstance(dbURL);
+		ISystemTable systemTable = getDB().getSystemTableReference().getSystemTable();
 
+		DatabaseInstanceRemote dir = null;
+
+		if (systemTable != null){
+			try {
+				dir = systemTable.getDatabaseInstance(dbURL);
+			} catch (RemoteException e1) {
+				e1.printStackTrace();
+			} catch (MovedException e1) {
+				try {
+					getDB().getSystemTableReference().handleMovedException(e1);
+					dir = systemTable.getDatabaseInstance(dbURL);
+
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
 		if (dir == null){
 			try {
 				//The System Table doesn't contain a proper reference for the remote database instance. Try and find one,
@@ -302,7 +320,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 				}
 
 			} catch (Exception e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 		}
 
@@ -530,7 +548,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 			if (currentTimeOfMigration > MIGRATION_TIMEOUT) {
 				inMigration = false; //Timeout request.
 				this.migrationTime = 0l;
-				
+
 				throw new RemoteException("Timeout exception. Migration took too long. Current time :" + currentTimeOfMigration + ", TIMEOUT time: " + MIGRATION_TIMEOUT);
 			}
 		}
@@ -678,14 +696,20 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 * @see org.h2.h2o.comms.remote.TableManagerRemote#recreateReplicaManagerState()
 	 */
 	@Override
-	public void recreateReplicaManagerState() throws RemoteException {
+	public void recreateReplicaManagerState(String oldPrimaryDatabaseName) throws RemoteException {
 		ReplicaManager rm = new ReplicaManager();
 
 		/*
 		 * Get Replica information from persisted state.
 		 */
-		String sql = "SELECT LOCAL ONLY connection_type, machine_name, db_location, connection_port, chord_port FROM " + replicaRelation + ", " + tableRelation + ", " + connectionRelation + " WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND" +
-		" " + tableRelation + ".table_id=" + replicaRelation + ".table_id AND " + connectionRelation + ".connection_id=" + replicaRelation + ".connection_id;";
+
+		String oldTableRelation = getMetaTableName(oldPrimaryDatabaseName, TABLES);
+		String oldconnectionRelation = getMetaTableName(oldPrimaryDatabaseName, CONNECTIONS);
+		String oldReplicaRelation = getMetaTableName(oldPrimaryDatabaseName, REPLICAS);
+
+		String sql = "SELECT LOCAL ONLY connection_type, machine_name, db_location, connection_port, chord_port FROM " + oldReplicaRelation + ", " + oldTableRelation + ", " + oldconnectionRelation + 
+		" WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND" +
+		" " + oldTableRelation + ".table_id=" + oldReplicaRelation + ".table_id AND " + oldconnectionRelation + ".connection_id=" + oldReplicaRelation + ".connection_id;";
 
 		try {
 			LocalResult rs = executeQuery(sql);
@@ -694,7 +718,15 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 			while (rs.next()){
 				DatabaseURL dbURL = new DatabaseURL(rs.currentRow()[0].getString(), rs.currentRow()[1].getString(), 
 						rs.currentRow()[3].getInt(), rs.currentRow()[2].getString(), false, rs.currentRow()[4].getInt());
-				replicaLocations.add(getDatabaseInstance(dbURL));
+
+				DatabaseInstanceWrapper replicaLocation = getDatabaseInstance(dbURL);
+				if (replicaLocation != null){
+					replicaLocations.add(replicaLocation);
+				}
+			}
+
+			if (replicaLocations.size() == 0){
+				throw new SQLException("No replicas were listed for this table. An internal error has occured.");
 			}
 
 			rm.add(replicaLocations);

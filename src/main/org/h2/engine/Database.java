@@ -25,12 +25,12 @@ import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
 import org.h2.constant.SysProperties;
 import org.h2.constraint.Constraint;
-import org.h2.h2o.MetaDataReplicationThread;
 import org.h2.h2o.autonomic.Settings;
 import org.h2.h2o.comms.MetaDataReplicaManager;
 import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
+import org.h2.h2o.manager.MetaDataReplicationThread;
 import org.h2.h2o.manager.TableManager;
 import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.manager.MovedException;
@@ -753,6 +753,7 @@ public class Database implements DataHandler {
 			
 			metaDataReplicaManager = new MetaDataReplicaManager(metaDataReplicationEnabled, systemTableReplicationFactor, tableManagerReplicationFactor, getLocalDatabaseInstanceInWrapper(), this);
 			metaDataReplicationThread = new MetaDataReplicationThread(metaDataReplicaManager, systemTableRef, this, replicationThreadSleepTime);
+			metaDataReplicationThread.setName("MetaDataReplicationThread");
 		}
 
 		/*
@@ -881,29 +882,6 @@ public class Database implements DataHandler {
 			systemTableRef.findSystemTable();
 		}
 	}
-
-	//	/**
-	//	 * Connect this database instance to the larger distributed database system. If a database system does not
-	//	 * currently exist this node will become the first in a new system. 
-	//	 */
-	//	private void connectInstanceToDatabaseSystem() {
-	//		this.systemTableLocation = databaseRemote.connectToDatabaseSystem(localMachineLocation, systemSession);
-	//		
-
-	//		this.isSystemTable = this.localMachineLocation.equals(this.systemTableLocation);
-	//
-	//		/*
-	//		 * The System Table location must be known at this point, otherwise the database instance will not start. 
-	//		 */
-	//		if (this.systemTableLocation != null){
-	//			databaseSettings = new H2oProperties(this.getDatabaseURL());
-	//			this.databaseSettings.loadProperties();	
-	//			this.databaseSettings.setProperty("systemTableLocation", this.systemTableLocation.getUrlMinusSM());
-	//		} else {
-	//			ErrorHandling.hardError("System Table not known. This can be fixed by creating a known hosts file (called " + 
-	//					this.getDatabaseURL().getDbLocationWithoutIllegalCharacters() + ".instances.properties) and adding the location of a known host.");
-	//		}
-	//	}
 
 	/**
 	 * @return

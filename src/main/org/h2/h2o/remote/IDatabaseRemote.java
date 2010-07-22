@@ -22,7 +22,9 @@ import java.rmi.RemoteException;
 import org.h2.engine.Session;
 import org.h2.h2o.autonomic.Settings;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.manager.ISystemTable;
 import org.h2.h2o.manager.ISystemTableReference;
+import org.h2.h2o.manager.SystemTableRemote;
 import org.h2.h2o.util.DatabaseURL;
 
 import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
@@ -101,8 +103,12 @@ public interface IDatabaseRemote {
 	/**
 	 * Reinstantiates the System Table by looking through valid locations from the locator server
 	 * and trying to reinstantiate on each one until the operation is successful.
-	 * @return True if the System Table was re-instantiated somewhere.
 	 */
-	public boolean reinstantiateSystemTable();
-
+	public SystemTableRemote reinstantiateSystemTable();
+	
+	/**
+	 * Update the location of the System Table on the node which is responsible for the #(SystemTable) lookup.
+	 * @throws RemoteException
+	 */
+	public void setSystemTableLocationAsLocal() throws RemoteException;
 }

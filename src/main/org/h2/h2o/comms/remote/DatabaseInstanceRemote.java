@@ -21,6 +21,8 @@ import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.h2o.comms.QueryProxy;
+import org.h2.h2o.manager.ISystemTable;
+import org.h2.h2o.manager.SystemTableRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
 
@@ -49,7 +51,7 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit  {
 	 * RMI port.
 	 * @return	Object containing all connection information for this database.
 	 */
-	public DatabaseURL getConnectionURL() throws RemoteException;
+	public DatabaseURL getURL() throws RemoteException;
 
 	/**
 	 * Get the URL of the System Table to which this instance is connected.
@@ -106,6 +108,19 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit  {
 	 */
 	public void setAlive(boolean alive) throws RemoteException;
 
-	public boolean recreateSystemTable() throws RemoteException;
+	/**
+	 * Recreate the System Table on this machine.
+	 * @return	True if the System Table was successfully recreated.
+	 * @throws RemoteException
+	 */
+	public SystemTableRemote recreateSystemTable() throws RemoteException;
+
+	/**
+	 * Recreate a Table Manager on this machine.
+	 * @param databaseURL The location on which the table manager was previously held. Used to find the correct meta-table.
+	 * @return	True if the Table Manager was successfully recreated.
+	 * @throws RemoteException
+	 */
+	public boolean recreateTableManager(TableInfo tableInfo, DatabaseURL databaseURL) throws RemoteException;
 
 }

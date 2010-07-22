@@ -4902,11 +4902,19 @@ public class Parser {
 	 */
 	private Prepared parseRecreate() throws SQLException {
 		if (readIf("TABLEMANAGER")) {
+			
+
 			String tableName = readIdentifierWithSchema();
 			Schema schema = getSchema();
-			return new RecreateTableManager(session, schema, tableName);
+			
+			String from = null;
+			if (readIf("FROM")){
+				from = readString();
+			}
+			
+			return new RecreateTableManager(session, schema, tableName, from);
 		} else {
-			throw new SQLException("Could parse migrate command.");
+			throw new SQLException("Could not parse migrate command.");
 		}
 	}
 

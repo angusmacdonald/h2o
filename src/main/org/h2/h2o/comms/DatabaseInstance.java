@@ -25,7 +25,9 @@ import org.h2.command.Parser;
 import org.h2.engine.Session;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
+import org.h2.h2o.manager.ISystemTable;
 import org.h2.h2o.manager.ISystemTableReference;
+import org.h2.h2o.manager.SystemTableRemote;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
 
@@ -132,7 +134,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#getLocation()
 	 */
 	@Override
-	public DatabaseURL getConnectionURL()  throws RemoteException {
+	public DatabaseURL getURL()  throws RemoteException {
 		return databaseURL;
 	}
 
@@ -141,11 +143,11 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	 */
 	@Override
 	public DatabaseURL getSystemTableURL() throws RemoteException {
-		
+
 		DatabaseURL systemTableURL = session.getDatabase().getSystemTableReference().getSystemTableURL();
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Responding to request for System Table location at database '" + session.getDatabase().getDatabaseLocation() + "'. " +
 				"System table location: " + systemTableURL);
-		
+
 		return systemTableURL;
 	}
 
@@ -155,7 +157,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	@Override
 	public int executeUpdate(String sql, boolean systemTableCommand)  throws RemoteException, SQLException  {
 		if (!session.getDatabase().isRunning()) throw new SQLException("The database either hasn't fully started, or is being shut down.");
-		
+
 		Command command = null;
 		if (systemTableCommand){
 			Parser schemaParser = new Parser(session.getDatabase().getH2OSession(), true);
@@ -171,15 +173,27 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	}
 
 	@Override
-	public boolean recreateSystemTable() throws RemoteException {
+	public SystemTableRemote recreateSystemTable() throws RemoteException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Responding to request to recreate System Table on '" + session.getDatabase().getDatabaseLocation() + "'.");
-				
+
 		ISystemTableReference systemTableReference = this.session.getDatabase().getSystemTableReference();
-		systemTableReference.migrateSystemTableToLocalInstance(true, true);
-		
-		return true;
+		return systemTableReference.migrateSystemTableToLocalInstance(true, true);
 	}
-	
+
+
+	@Override
+	public boolean recreateTableManager(TableInfo tableInfo, DatabaseURL previousLocation) throws RemoteException {
+		
+		boolean success = false; 
+		try {
+			executeUpdate("RECREATE TABLEMANAGER " + tableInfo.getFullTableName() + " FROM '" + previousLocation.sanitizedLocation() + "';", true);
+			success = true;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return success;
+	}
+
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#setSystemTableLocation(uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference)
 	 */
@@ -245,5 +259,6 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 			return false;
 		return true;
 	}
+
 
 }

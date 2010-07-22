@@ -93,7 +93,7 @@ public class SystemTableReplication extends Thread {
 			}
 
 			try {
-				createSystemTableReplicas(new DatabaseInstanceWrapper(instance.getConnectionURL(), instance, true));
+				createSystemTableReplicas(new DatabaseInstanceWrapper(instance.getURL(), instance, true));
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}

@@ -213,5 +213,14 @@ public interface ISystemTable extends Remote {
 	 * @param replicaLocation	Where the state was replicated.
 	 */
 	public void removeTableManagerStateReplica(TableInfo table, DatabaseURL replicaLocation) throws RemoteException, MovedException;
+	
+	/**
+	 * Recreate the table manager for the the table specified by the parameter if it has failed.
+	 * @param table
+	 * @return 
+	 * @throws RemoteException
+	 * @throws MovedException
+	 */
+	public TableManagerRemote recreateTableManager(TableInfo table)throws RemoteException, MovedException;
 
 }

@@ -161,10 +161,9 @@ public class SystemTableReference implements ISystemTableReference {
 				}
 			}
 		} catch (SQLException e){
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, e.getMessage());
 			return null;
 		} catch (Exception e) {
-
-
 			/*
 			 * Call this method again if we attempted to access a cached System Table reference and it didn't work.
 			 */
@@ -260,7 +259,7 @@ public class SystemTableReference implements ISystemTableReference {
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISystemTableReference#setSystemTable(org.h2.h2o.manager.SystemTable)
 	 */ 
-	public void setSystemTable(SystemTable systemTable) {
+	public void setSystemTable(SystemTableRemote systemTable) {
 		this.systemTable = systemTable;
 	}
 
@@ -295,7 +294,7 @@ public class SystemTableReference implements ISystemTableReference {
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISystemTableReference#migrateSystemTableToLocalInstance(boolean, boolean)
 	 */
-	public void migrateSystemTableToLocalInstance(boolean persistedSchemaTablesExist, boolean recreateFromPersistedState){
+	public SystemTableRemote migrateSystemTableToLocalInstance(boolean persistedSchemaTablesExist, boolean recreateFromPersistedState){
 
 		IChordRemoteReference oldSystemTableLocation = this.systemTableNode;
 
@@ -360,7 +359,7 @@ public class SystemTableReference implements ISystemTableReference {
 			}
 
 			/*
-			 * Build the System Table's state from that of the existing manager.
+			 * Build the System Table's state from that of the existing table.
 			 */
 			try {
 				newSystemTable.buildSystemTableState(systemTable);
@@ -407,6 +406,12 @@ public class SystemTableReference implements ISystemTableReference {
 			ErrorHandling.exceptionError(e, "System Table migration failed.");
 		}
 
+//		try {
+//			db.getRemoteInterface().setSystemTableLocationAsLocal();
+//		} catch (RemoteException e1) {
+//			//May fail.
+//		}
+//		
 		/*
 		 * Replicate state to new successor.
 		 */
@@ -434,6 +439,8 @@ public class SystemTableReference implements ISystemTableReference {
 		}
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Finished building new System Table on " + db.getURL().getDbLocation() + ".");
+		
+		return systemTable;
 	}
 
 	/* (non-Javadoc)
@@ -643,11 +650,12 @@ public class SystemTableReference implements ISystemTableReference {
 		} catch(Exception e){
 			if (!alreadyCalled){
 				//System Table is not active anymore, and maintenance mechanisms have not yet kicked in.
-				boolean successful = db.getRemoteInterface().reinstantiateSystemTable();
+				SystemTableRemote newSystemTable = db.getRemoteInterface().reinstantiateSystemTable();
 
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempt to re-instantiate System Table: " + successful);
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempt to re-instantiate System Table: " + newSystemTable != null);
 
-				if (successful){
+				if (newSystemTable != null){
+					systemTable = newSystemTable;
 					//Now update the local references to this new System Table.
 					DatabaseURL newSystemTableURL = getSystemTableURL();
 					//Call this method again but with the new System Table location.

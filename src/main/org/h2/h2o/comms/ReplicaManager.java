@@ -87,7 +87,7 @@ public class ReplicaManager implements Serializable {
 
 		assert replicaLocations != null;
 
-		if (primaryLocation == null){
+		if (primaryLocation == null && replicaLocations.size() > 0){
 			primaryLocation = replicaLocations.get(0);
 		}
 

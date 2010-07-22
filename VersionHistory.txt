@@ -27,4 +27,5 @@ H2O Version 0.2.5 (Unreleased)
 	Fixed ordering of database locations on locator server - active System Table is always first.
 	System can recover from System Table failure regardless whether meta-data is held on successor, and is able
 		to recover if failure occurs before the maintenance mechanisms pick it up.
-	
+	Table Manager meta-data replicated
+	Table Managers can recover from failure.

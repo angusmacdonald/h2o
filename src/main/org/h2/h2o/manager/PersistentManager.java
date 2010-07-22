@@ -255,7 +255,6 @@ public abstract class PersistentManager {
 	 */
 	public int addConnectionInformation(DatabaseURL dbURL, boolean isActive) throws SQLException{
 
-		//System.err.println("Adding connection info on " + db.getDatabaseURL().getURLwithRMIPort() + ". Info being added: "+ dbURL.getURLwithRMIPort());
 		Session s = db.getH2OSession();
 		queryParser = new Parser(s, true);
 
@@ -425,7 +424,7 @@ public abstract class PersistentManager {
 		for (DatabaseInstanceWrapper replicaLocation: replicaLocations){
 			int replicaConnectionID = getConnectionID(replicaLocation.getURL());
 			
-			addTableManagerReplicaInformation(tableID, connectionID, replicaConnectionID, active);
+			addTableManagerReplicaInformation(tableID, replicaConnectionID, connectionID, active);
 		}
 	}
 	
@@ -593,7 +592,7 @@ public abstract class PersistentManager {
 		 */
 
 
-		DatabaseURL dburl = databaseInstance.getConnectionURL(); 
+		DatabaseURL dburl = databaseInstance.getURL(); 
 		String sql = "\nUPDATE " + connectionRelation + " SET active = false WHERE machine_name='" + dburl.getHostname() + "' AND connection_port=" + dburl.getPort() +
 		" AND connection_type='" + dburl.getConnectionType() +"';";
 

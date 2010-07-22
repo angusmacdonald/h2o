@@ -28,6 +28,8 @@ import java.rmi.server.ExportException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Random;
@@ -50,6 +52,7 @@ import org.h2.h2o.manager.SystemTableReference;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LocalH2OProperties;
 import org.h2.h2o.util.SystemTableReplication;
+import org.h2.h2o.util.TableInfo;
 import org.h2.h2o.util.locator.H2OLocatorInterface;
 import org.h2.test.h2o.ChordTests;
 
@@ -123,6 +126,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	private Settings databaseSettings;
 
 	private MetaDataReplicaManager metaDataReplicaManager = null;
+
+	private DatabaseURL predecessorURL;
 
 	/**
 	 * Port to be used for the next database instance. Currently used for testing.
@@ -659,51 +664,135 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	 * Called when the successor has changed. Used to check whether the System Table was on the predecessor, and if it was (and has failed) restart the System Table elsewhere.
 	 */
 	private void predecessorChangeEvent() {
-
-		boolean systemTableWasOnPredecessor = systemTableRef.isThisSystemTableNode(this.predecessor);
-		this.predecessor = chordNode.getPredecessor();
-
-		boolean systemTableAlive = true;
-
-		if (systemTableWasOnPredecessor){
-
-			//Check whether the System Table is still active.
-			systemTableAlive = false;
-			try {
-				this.systemTableRef.getSystemTable().checkConnection();
-				systemTableAlive = true;
-			} catch (Exception e) {
-				systemTableAlive = false;
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "The System Table is no longer accessible.");
+		try {
+			if (this.predecessor == null){
+				this.predecessor = chordNode.getPredecessor();
+				return;
 			}
 
-			/*
-			 * There is no guarantee this node has a replica of the System Table state. Obtain the list of replicas from
-			 * the locator server. There are a number of cases:
-			 * 
-			 * 1. This node holds a copy of System Table state. It can then apply to the locator server
-			 * 		to become the new System Table.
-			 * 2. Another active node holds a copy of the System Table state. This node should be informed of the failure. It can then
-			 * 		apply to the locator server itself.
-			 * 3. No active node has System Table state. Nothing can be done.
-			 */
+			this.predecessor.getRemote().getPredecessor();
+			return; //the old predecessor has not failed, so nothing needs to be recovered.
+		} catch (RemoteException e1) {
+			//If the old predecessor is no longer available it has failed - try to recover processses.
+		}
+
+		boolean systemTableWasOnPredecessor = systemTableRef.isThisSystemTableNode(this.predecessor);
+		DatabaseURL oldPredecessorURL = predecessorURL;
+
+		this.predecessor = chordNode.getPredecessor();
+
+		/*
+		 * This will often be null at this point because it hasn't stabilized.
+		 */
+		if (predecessor != null){
+			try {
+				this.predecessorURL = getDatabaseInstanceAt(predecessor).getURL();
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+		} else {
+			predecessorURL = null;
+
+		}
+
+		System.err.println(oldPredecessorURL);
+
+		boolean systemTableAlive = true;
+		ISystemTable newSystemTable = null;
+		if (systemTableWasOnPredecessor){
+
+			systemTableAlive = isSystemTableActive();
 
 			if (!systemTableAlive){
-				systemTableAlive = reinstantiateSystemTable();
+				newSystemTable = reinstantiateSystemTable();
 			}
 		}
 
-		if (systemTableAlive){
-			/*
-			 * Now try to recreate any Table Managers that were on the failed machine.
-			 */
-
-
+		if (newSystemTable != null){
+			//Now try to recreate any Table Managers that were on the failed machine.
+			//recreateTableManagers(oldPredecessorURL);
 		}
 
 	}
 
-	public boolean reinstantiateSystemTable() {
+	private void recreateTableManagers(DatabaseURL oldPredecessorURL) {
+		ISystemTable systemTable = this.systemTableRef.getSystemTable();
+
+		try {
+			Map<TableInfo, DatabaseURL> primaryLocations = systemTable.getPrimaryLocations();
+			Map<TableInfo, Set<DatabaseURL>> replicaLocations = systemTable.getReplicaLocations();
+			/*
+			 * Loop through all active Table Managers and check whether any were on the failed machine. 
+			 */
+			for (Entry<TableInfo, DatabaseURL> tableManagerLocation: primaryLocations.entrySet()){
+				TableInfo tableInfo = tableManagerLocation.getKey();
+				DatabaseURL primaryReplicaLocation = tableManagerLocation.getValue();
+
+
+				if (primaryReplicaLocation.equals(oldPredecessorURL)){
+					//Table Manager was located on old predecessor.
+
+					//Check to see if it is accessible.
+					boolean hasFailed = false;
+					try {
+						systemTable.lookup(tableInfo).getTableManager().checkConnection();
+					} catch (Exception e) {
+						hasFailed = true;
+					}
+
+					//If it has failed, recreate it somewhere else.
+					if (hasFailed){
+						for (DatabaseURL replicaLocation: replicaLocations.get(tableInfo)){
+
+							if (replicaLocation.equals(primaryReplicaLocation)) continue; //failed on this instance.
+
+							try{
+								DatabaseInstanceRemote instance = getDatabaseInstanceAt(replicaLocation);
+
+								boolean success = instance.recreateTableManager(tableInfo, primaryReplicaLocation);
+
+								if (success) break;
+							} catch (RemoteException e) {
+								e.printStackTrace();
+							}
+						}
+					}
+				} // end of if primary location = site of failed predecessor
+			} //loop round to next table manager.
+
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		} catch (MovedException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	private boolean isSystemTableActive() {
+		boolean systemTableAlive;
+		try {
+			this.systemTableRef.getSystemTable().checkConnection();
+			systemTableAlive = true;
+		} catch (Exception e) {
+			systemTableAlive = false;
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "The System Table is no longer accessible.");
+		}
+		return systemTableAlive;
+	}
+
+	public SystemTableRemote reinstantiateSystemTable() {
+		/*
+		 * There is no guarantee this node has a replica of the System Table state. Obtain the list of replicas from
+		 * the locator server. There are a number of cases:
+		 * 
+		 * 1. This node holds a copy of System Table state. It can then apply to the locator server
+		 * 		to become the new System Table.
+		 * 2. Another active node holds a copy of the System Table state. This node should be informed of the failure. It can then
+		 * 		apply to the locator server itself.
+		 * 3. No active node has System Table state. Nothing can be done.
+		 */
+
+		SystemTableRemote newSystemTable = null;
 		/*
 		 * Obtain a reference to the locator servers if one is not already held.
 		 */
@@ -714,7 +803,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				this.locatorInterface = getLocatorServerReference(persistedInstanceInformation);
 			} catch (StartupException e) {
 				ErrorHandling.errorNoEvent("Failed to obtain a reference to the locator servers: " + e.getMessage());
-				return false;
+				return null;
 			}
 		}
 
@@ -724,28 +813,27 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			stLocations = locatorInterface.getLocations();
 		} catch (IOException e) {
 			ErrorHandling.errorNoEvent("Failed to obtain a list of instances which hold System Table state: " + e.getMessage());
-			return false;
+			return null;
 		}
 
 		boolean localMachineHoldsSystemTableState = false;
 		for (String location: stLocations){
-			System.out.println("ST Locations: " + location);
-			DatabaseURL st = DatabaseURL.parseURL(location);
-			localMachineHoldsSystemTableState = st.equals(localMachineLocation);
+			DatabaseURL url = DatabaseURL.parseURL(location);
+			localMachineHoldsSystemTableState = url.equals(localMachineLocation);
 		}
 
 		if (localMachineHoldsSystemTableState){
 			//Re-instantiate the System Table on this node
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "A copy of the System Table state exists on the successor to the failed machine [" + this.localMachineLocation + "]." +
 			" It will be re-instantiated here.");
-			systemTableRef.migrateSystemTableToLocalInstance(true, true);
+			newSystemTable = systemTableRef.migrateSystemTableToLocalInstance(true, true);
 		} else {
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempting to find another machine which can re-instantiate the System Table.");
 
 			/*
 			 * Try to find an active instance with System Table state.
 			 */
-			boolean successful = false;
+
 			for (String systemTableLocation: stLocations){
 				DatabaseURL url = DatabaseURL.parseURL(systemTableLocation);
 
@@ -753,7 +841,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				try {
 					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Looking for database instance at: " + url.getHostname() + ":" + url.getRMIPort());
 
-					databaseInstance = getDatabaseInstanceAt(url.getHostname(), url.getRMIPort());
+					databaseInstance = getDatabaseInstanceAt(url);
 				} catch (Exception e) {
 					//May be thrown if database isn't active.
 				}
@@ -763,12 +851,13 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				 */
 				if (databaseInstance != null){
 					try {
-						successful = databaseInstance.recreateSystemTable();
+						newSystemTable = databaseInstance.recreateSystemTable();
 
-						if (successful){
+						if (newSystemTable != null){
 							Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Successfully recreated the System Table on " + url);
 							systemTableRef.setSystemTableURL(url);
-							return true;
+							systemTableRef.setSystemTable(newSystemTable);
+							break;
 						}
 					} catch (Exception e) {
 						//May be thrown if database isn't active.
@@ -779,7 +868,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 		}
 
-		return false;
+		return newSystemTable;
 	}
 
 	/**
@@ -867,7 +956,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 							Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "There is only one node in the network so the System Table can't be replicated elsewhere.");
 						} else {
 							if (successorInstance.isAlive()){
-								this.systemTableRef.getSystemTable().addStateReplicaLocation(new DatabaseInstanceWrapper(successorInstance.getConnectionURL(), successorInstance, true));
+								this.systemTableRef.getSystemTable().addStateReplicaLocation(new DatabaseInstanceWrapper(successorInstance.getURL(), successorInstance, true));
 
 								//dbInstance.createNewSystemTableBackup(db.getSystemTable());
 								//dbInstance.executeUpdate("CREATE REPLICA SCHEMA H2O");
@@ -898,7 +987,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 					//delete query must remove entries for all table managers replicated on this machine.
 
 
-					DatabaseInstanceWrapper successorInstanceWrapper = new DatabaseInstanceWrapper(successorInstance.getConnectionURL(), successorInstance, true);
+					DatabaseInstanceWrapper successorInstanceWrapper = new DatabaseInstanceWrapper(successorInstance.getURL(), successorInstance, true);
 
 					metaDataReplicaManager.addReplicaLocation(successorInstanceWrapper, false);
 
@@ -1072,12 +1161,28 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		} catch (NotBoundException e) {
 			e.printStackTrace();
 		}
-
-
-
 		return actualSystemTableLocation;
 	}
 
+	public void setSystemTableLocationAsLocal() throws RemoteException{
+
+		IChordRemoteReference lookupLocation = null;
+		lookupLocation = lookupSystemTableNodeLocation();
+		systemTableRef.setLookupLocation(lookupLocation);
+
+		String lookupHostname = lookupLocation.getRemote().getAddress().getHostName();
+		int lookupPort = lookupLocation.getRemote().getAddress().getPort();
+
+		DatabaseInstanceRemote lookupInstance;
+		try {
+			lookupInstance = getDatabaseInstanceAt(lookupHostname, lookupPort);
+
+			lookupInstance.setSystemTableLocation(chordNode.getProxy(), localMachineLocation);
+			this.systemTableRef.setSystemTableLocation(chordNode.getProxy(), localMachineLocation);
+		} catch (NotBoundException e) {
+			e.printStackTrace();
+		}
+	}
 	/*
 	 * (non-Javadoc)
 	 * @see org.h2.h2o.remote.IChordInterface#lookupSystemTableNodeLocation()

@@ -349,7 +349,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
 			Map<TableInfo, Set<DatabaseURL>> replicaLocations = otherSystemTable.getReplicaLocations();
 			Map<TableInfo, DatabaseURL> primaryLocations = otherSystemTable.getPrimaryLocations();
-			
+
 			for (Entry<TableInfo, Set<DatabaseURL>> databaseEntry: replicaLocations.entrySet()){
 				for (DatabaseURL tableInfo: databaseEntry.getValue()){
 					addTableManagerStateReplica(databaseEntry.getKey(), tableInfo, primaryLocations.get(databaseEntry.getKey()), false);
@@ -416,6 +416,50 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 		 */
 	}
 
+
+	private DatabaseURL getDatabaseURL(int replicaConnectionID) {
+		DatabaseURL dbURL = null;
+		
+		String sql = "SELECT * FROM " + CONNECTIONS + " WHERE connection_id=" + replicaConnectionID +";";
+
+		LocalResult result = null;
+
+		try {
+			sqlQuery = getParser().prepareCommand(sql);
+
+
+			result = sqlQuery.executeQueryLocal(0);
+
+			while(result.next()){
+				/*
+				 * 		sql += "CREATE TABLE IF NOT EXISTS " + CONNECTIONS +"(" + 
+						"connection_id INT NOT NULL auto_increment," + 
+						"connection_type VARCHAR(5), " + 
+						"machine_name VARCHAR(255)," + 
+						"db_location VARCHAR(255)," +
+						"connection_port INT NOT NULL, " + 
+						"rmi_port INT NOT NULL, " + 
+						"PRIMARY KEY (connection_id) );";
+				 */
+				Value[] row = result.currentRow();
+				String connectionType = row[1].getString();
+				String hostName = row[2].getString();
+				String dbLocation = row[3].getString();
+				int dbPort = row[4].getInt();
+				int rmiPort = row[5].getInt();
+				dbURL = new DatabaseURL(connectionType, hostName, dbPort, dbLocation, false);
+				dbURL.setRMIPort(rmiPort);
+				
+			}
+
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return dbURL;
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISystemTable#getTableManagers()
 	 */
@@ -467,7 +511,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 				try {
 					dir = remoteInterface.getDatabaseInstanceAt(dbURL);   //.findTableManagerReference(ti, dbURL);
 				} catch (Exception e){
-					ErrorHandling.errorNoEvent("Couldn't find table manager at " + dbURL);
+					//Will happen if its no longer active.
 				}
 
 				if (dir != null){
@@ -494,13 +538,99 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 	 */
 	@Override
 	public Map<TableInfo, Set<DatabaseURL>> getReplicaLocations()  throws RemoteException{
-		// TODO Auto-generated method stub
-
 		/*
 		 * Parse the schema tables to obtain the required amount of table information.
 		 */
-		return null;
+
+		String sql = "SELECT connection_id, tablename, schemaname    FROM " + TABLEMANAGERSTATE + ", " + TABLES + " WHERE " + 
+		TABLES+".table_id" + "=" + TABLEMANAGERSTATE + ".table_id;";
+
+		LocalResult result = null;
+
+		Map<TableInfo, Set<DatabaseURL>> replicaLocations = new HashMap<TableInfo, Set<DatabaseURL>>();
+
+		try {
+			sqlQuery = getParser().prepareCommand(sql);
+
+			result = sqlQuery.executeQueryLocal(0);
+
+			while(result != null && result.next()){
+				Value[] row = result.currentRow();
+
+				int replicaConnectionID = row[0].getInt();
+				
+				String tableName = row[1].getString();
+				String schemaName = row[2].getString();
+
+				TableInfo ti = new TableInfo (tableName, schemaName);
+				DatabaseURL replicaURL = getDatabaseURL(replicaConnectionID);
+				//DatabaseURL primaryURL = getDatabaseURL(primaryManagerConnectionID);
+
+				/*
+				 * Add this replica to the set of replica locations for this table.
+				 */
+				Set<DatabaseURL> specificTableReplicaLocations = replicaLocations.get(ti);
+				if (specificTableReplicaLocations == null) specificTableReplicaLocations = new HashSet<DatabaseURL>();
+				specificTableReplicaLocations.add(replicaURL);
+				replicaLocations.put(ti, specificTableReplicaLocations);
+
+			}
+
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+		}
+
+
+		return replicaLocations;
 	}
+
+
+
+	@Override
+	public Map<TableInfo, DatabaseURL> getPrimaryLocations()
+	throws RemoteException, MovedException {
+		/*
+		 * Parse the schema tables to obtain the required amount of table information.
+		 */
+
+		String sql = "SELECT primary_location_connection_id, tablename, schemaname    FROM " + TABLEMANAGERSTATE + ", " + TABLES + " WHERE " + 
+		TABLES+".table_id" + "=" + TABLEMANAGERSTATE + ".table_id;";
+
+		LocalResult result = null;
+
+		Map<TableInfo, DatabaseURL> primaryLocations = new HashMap<TableInfo, DatabaseURL>();
+
+		try {
+			sqlQuery = getParser().prepareCommand(sql);
+
+			result = sqlQuery.executeQueryLocal(0);
+
+			while(result != null && result.next()){
+				Value[] row = result.currentRow();
+
+				int primaryManagerConnectionID = row[0].getInt();
+				String tableName = row[1].getString();
+				String schemaName = row[2].getString();
+
+				TableInfo ti = new TableInfo (tableName, schemaName);
+				DatabaseURL primaryURL = getDatabaseURL(primaryManagerConnectionID);
+
+
+				/*
+				 * Add this replica to the set of replica locations for this table.
+				 */
+				
+				primaryLocations.put(ti, primaryURL);
+			}
+
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+		}
+
+
+		return primaryLocations;
+	}
+
 
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISystemTable#buildSystemTableState()
@@ -554,7 +684,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 	 */
 	@Override
 	public boolean addTableInformation(TableManagerRemote tableManager, TableInfo tableDetails) 
-		throws RemoteException, MovedException, SQLException {
+	throws RemoteException, MovedException, SQLException {
 		boolean added = super.addTableInformation(tableManager.getDatabaseURL(), tableDetails, false);
 
 		if (added){
@@ -581,7 +711,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 	 */
 	@Override
 	public Set<TableManagerWrapper> getLocalDatabaseInstances(DatabaseURL localMachineLocation)
-		throws RemoteException, MovedException {
+	throws RemoteException, MovedException {
 		int connectionID = getConnectionID(localMachineLocation);
 
 		assert connectionID != -1;
@@ -677,10 +807,11 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 	}
 
 	@Override
-	public Map<TableInfo, DatabaseURL> getPrimaryLocations()
-			throws RemoteException, MovedException {
+	public TableManagerRemote recreateTableManager(TableInfo table) throws RemoteException,
+			MovedException {
+				return null;
 		// TODO Auto-generated method stub
-		return null;
+		
 	}
 
 

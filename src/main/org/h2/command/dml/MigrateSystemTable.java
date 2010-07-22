@@ -16,7 +16,6 @@ public class MigrateSystemTable extends org.h2.command.ddl.SchemaCommand {
 	 */
 	public MigrateSystemTable(Session session, Schema schema) {
 		super(session, schema);
-		// TODO Auto-generated constructor stub
 	}
 
 

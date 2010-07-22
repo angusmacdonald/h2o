@@ -1,8 +1,7 @@
-package org.h2.h2o;
+package org.h2.h2o.manager;
 
 import org.h2.engine.Database;
 import org.h2.h2o.comms.MetaDataReplicaManager;
-import org.h2.h2o.manager.ISystemTableReference;
 
 public class MetaDataReplicationThread extends Thread {
 	private MetaDataReplicaManager metaDataReplicaManager;

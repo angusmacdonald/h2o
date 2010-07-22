@@ -20,16 +20,22 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
 
 	private String tableName;
+	private String oldPrimaryLocation;
 
 
 	/**
 	 * @param session
 	 * @param schema
 	 */
-	public RecreateTableManager(Session session, Schema schema, String tableName) {
+	public RecreateTableManager(Session session, Schema schema, String tableName, String oldPrimaryLocation) {
 		super(session, schema);
 
-
+		
+		if (oldPrimaryLocation.startsWith("'")) oldPrimaryLocation = oldPrimaryLocation.substring(1);
+		if (oldPrimaryLocation.endsWith("'")) oldPrimaryLocation = oldPrimaryLocation.substring(0, oldPrimaryLocation.length()-1);
+		
+		this.oldPrimaryLocation = oldPrimaryLocation;
+		
 		this.tableName = tableName;
 	}
 
@@ -70,7 +76,7 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
 		//TableManager dm = TableManager.createTableManagerFromPersistentStore(ti.getSchemaName(), ti.getSchemaName());
 		try {
 			tm = new TableManager(ti, db);
-			tm.recreateReplicaManagerState();
+			tm.recreateReplicaManagerState(oldPrimaryLocation);
 		} catch (SQLException e) {
 
 			e.printStackTrace();

@@ -517,7 +517,7 @@ public class CreateTable extends SchemaCommand {
 				//May already be exported.
 			}
 
-			queryProxy = QueryProxy.getQueryProxyAndLock(tableManager, ti.getFullTableName(), db, LockType.CREATE, db.getLocalDatabaseInstanceInWrapper());
+			queryProxy = QueryProxy.getQueryProxyAndLock(tableManager, ti.getFullTableName(), db, LockType.CREATE, db.getLocalDatabaseInstanceInWrapper(), false);
 
 			queryProxyManager.addProxy(queryProxy);
 		} else if (Constants.IS_H2O){

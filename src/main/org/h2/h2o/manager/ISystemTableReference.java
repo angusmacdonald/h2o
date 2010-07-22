@@ -96,7 +96,7 @@ public interface ISystemTableReference {
 	 * Provide a reference to the actual System Table. This is typically called when a
 	 * database has just been started, or when a new System Table has been created.
 	 */
-	public void setSystemTable(SystemTable systemTable);
+	public void setSystemTable(SystemTableRemote systemTable);
 
 	/**
 	 * Change the System Table URL and its location on chord. This doesn't update the actual reference to the System Table,
@@ -127,8 +127,9 @@ public interface ISystemTableReference {
 	 * @param recreateFromPersistedState If true the new System Table will be re-instantiated from persisted state on disk. Otherwise
 	 * it will be migrated from an active in-memory copy. If the old System Table has failed the new manager must be recreated from
 	 * persisted state.
+	 * @return 
 	 */
-	public void migrateSystemTableToLocalInstance(
+	public SystemTableRemote migrateSystemTableToLocalInstance(
 			boolean persistedSchemaTablesExist,
 			boolean recreateFromPersistedState);
 
