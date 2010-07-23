@@ -120,6 +120,7 @@ import org.h2.expression.TableFunction;
 import org.h2.expression.ValueExpression;
 import org.h2.expression.Variable;
 import org.h2.expression.Wildcard;
+import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.manager.ISystemTable;
 import org.h2.h2o.manager.MovedException;
@@ -4460,17 +4461,17 @@ public class Parser {
 		//		dm = session.getDatabase().getSystemTable().lookup(new TableInfo(tableName, thisSchemaName));
 		//		
 
-		DatabaseURL tableManagerURL = null;
+		java.util.Set<DatabaseInstanceWrapper> replicaLocations = null;
 		try {
-			tableManagerURL = tableManager.getReplicaManager().getPrimary().getURL();
+			replicaLocations = tableManager.getReplicaManager().getActiveReplicas();
 
 		} catch (MovedException e){
 			//Query System Table again, bypassing the cache.
 
 			tableManager = session.getDatabase().getSystemTableReference().lookup(new TableInfo(tableName, thisSchemaName), false);
-			
+
 			try {
-				tableManagerURL = tableManager.getReplicaManager().getPrimary().getURL();
+				replicaLocations = tableManager.getReplicaManager().getActiveReplicas();
 			} catch (MovedException e1) {
 				throw new SQLException("Unable to contact Table Manager for " + tableName + ":: " + e1.getMessage());
 			}
@@ -4484,17 +4485,14 @@ public class Parser {
 
 			tableManager = session.getDatabase().getSystemTableReference().lookup(new TableInfo(tableName, thisSchemaName), false);
 			try {
-				tableManagerURL = tableManager.getReplicaManager().getPrimary().getURL();
+				replicaLocations = tableManager.getReplicaManager().getActiveReplicas();
 			} catch (MovedException e1) {
 				throw new SQLException("Unable to contact Table Manager for " + tableName + ":: " + e1.getMessage());
 			}
 		}
 
-		if (tableManagerURL.equals(session.getDatabase().getURL())){
-			throw new SQLException("The database [" + tableManagerURL.getDbLocation() + "] is incorrectly trying to create a linked table to itself. Illegal code path.");
-		}
 
-		tableLocation = tableManagerURL.getURL();
+	//	
 
 
 		/*
@@ -4508,23 +4506,33 @@ public class Parser {
 		}
 		Parser queryParser = new Parser(sessionToUse, true);
 
-		String sql = "CREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + tableLocation + "', '" + PersistentSystemTable.USERNAME + "', '" + PersistentSystemTable.PASSWORD + "', '" + tableName + "');";
+		int result = -1;
 
-		Command sqlQuery = queryParser.prepareCommand(sql);
-
-		int result = sqlQuery.update();
-
+		
+		for (DatabaseInstanceWrapper l: replicaLocations){
+			tableLocation = l.getURL().getURL();
+		
+			if (l.getURL().equals(session.getDatabase().getURL())){
+				continue;
+			}
+			String sql = "CREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + tableLocation + "', '" + PersistentSystemTable.USERNAME + "', '" + PersistentSystemTable.PASSWORD + "', '" + tableName + "');";
+			
+			try{
+				Command sqlQuery = queryParser.prepareCommand(sql);
+				result = sqlQuery.update();
+				break;
+			}catch(Exception e){
+				//Will happen if the connection that that table is broken.
+			}
+		}
 
 		if (result == 0){
 			//Linked table was successfully added.
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Successfully created linked table '" + tableName + "'. Attempting to access it.");
 			return readTableOrView(tableName, false, LocationPreference.PRIMARY);
 		} else {
-			ErrorHandling.hardError("Shouldn't have reached this point.");
+			throw new SQLException("Couldn't find active copy of table " + tableName + " to connect to.");
 		}
-
-
-		return null; //Not reachable.
 	}
 
 

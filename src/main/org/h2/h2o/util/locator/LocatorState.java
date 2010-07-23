@@ -78,7 +78,7 @@ public class LocatorState {
 	public ReplicaLocationsResponse readLocationsFromFile() {
 		startRead();
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Reader reading:");
+		//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Reader reading:");
 
 		List<String> locations = new LinkedList<String>();
 
@@ -104,7 +104,7 @@ public class LocatorState {
 		ReplicaLocationsResponse response = new ReplicaLocationsResponse(locations, updateCount);
 
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Finished reading.");
+		//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Finished reading.");
 		stopRead();
 
 
@@ -120,7 +120,7 @@ public class LocatorState {
 
 		boolean successful = false;
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Writer writing.");
+		//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Writer writing.");
 
 		try {
 			Writer output = new BufferedWriter(new FileWriter(locatorFile));
@@ -140,7 +140,7 @@ public class LocatorState {
 			e.printStackTrace();
 		}
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Finished writing.");
+		//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Finished writing.");
 		stopWrite();
 
 		return successful;

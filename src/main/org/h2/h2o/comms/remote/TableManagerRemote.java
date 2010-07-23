@@ -122,8 +122,9 @@ public interface TableManagerRemote extends H2ORemote, Migratable {
 
 	/**
 	 * Re-populate this Table Managers replica manager with state held locally on disk.
+	 * @throws SQLException 
 	 */
-	public void recreateReplicaManagerState(String oldPrimaryDatabaseName) throws RemoteException;
+	public void recreateReplicaManagerState(String oldPrimaryDatabaseName) throws RemoteException, SQLException;
 
 	/**
 	 * Number of replicas of this table.

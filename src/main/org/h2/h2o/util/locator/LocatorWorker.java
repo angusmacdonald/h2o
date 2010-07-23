@@ -56,7 +56,7 @@ public class LocatorWorker extends Thread {
 
 		try {
 			try { //ends with 'finally' to close the socket connection.
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Created new LocatorConnectionHandler thread.");
+				//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Created new LocatorConnectionHandler thread.");
 				socket.setSoTimeout(5000);
 
 				//Get single-line request from the client.

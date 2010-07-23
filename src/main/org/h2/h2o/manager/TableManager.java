@@ -304,7 +304,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 				}
 			}
 		}
-		
+
 		if (dir == null){
 			try {
 				//The System Table doesn't contain a proper reference for the remote database instance. Try and find one,
@@ -696,7 +696,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 * @see org.h2.h2o.comms.remote.TableManagerRemote#recreateReplicaManagerState()
 	 */
 	@Override
-	public void recreateReplicaManagerState(String oldPrimaryDatabaseName) throws RemoteException {
+	public void recreateReplicaManagerState(String oldPrimaryDatabaseName) throws RemoteException, SQLException {
 		ReplicaManager rm = new ReplicaManager();
 
 		/*
@@ -711,41 +711,36 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		" WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND" +
 		" " + oldTableRelation + ".table_id=" + oldReplicaRelation + ".table_id AND " + oldconnectionRelation + ".connection_id=" + oldReplicaRelation + ".connection_id;";
 
-		try {
-			LocalResult rs = executeQuery(sql);
+		LocalResult rs = executeQuery(sql);
 
-			List<DatabaseInstanceWrapper> replicaLocations = new LinkedList<DatabaseInstanceWrapper>();
-			while (rs.next()){
-				DatabaseURL dbURL = new DatabaseURL(rs.currentRow()[0].getString(), rs.currentRow()[1].getString(), 
-						rs.currentRow()[3].getInt(), rs.currentRow()[2].getString(), false, rs.currentRow()[4].getInt());
+		List<DatabaseInstanceWrapper> replicaLocations = new LinkedList<DatabaseInstanceWrapper>();
+		while (rs.next()){
+			DatabaseURL dbURL = new DatabaseURL(rs.currentRow()[0].getString(), rs.currentRow()[1].getString(), 
+					rs.currentRow()[3].getInt(), rs.currentRow()[2].getString(), false, rs.currentRow()[4].getInt());
 
-				
-				//Don't include the URL of the old instance unless it is still running.
-				DatabaseInstanceWrapper replicaLocation = getDatabaseInstance(dbURL);
-				
-				boolean alive = true;
-				if(dbURL.sanitizedLocation().equals(oldPrimaryDatabaseName)) {
-					try {
-						alive = replicaLocation.getDatabaseInstance().isAlive();
-					} catch (Exception e) {
-						alive = false;
-					}
-				}
-				
-				if (replicaLocation != null && alive){
-					replicaLocations.add(replicaLocation);
+
+			//Don't include the URL of the old instance unless it is still running.
+			DatabaseInstanceWrapper replicaLocation = getDatabaseInstance(dbURL);
+
+			boolean alive = true;
+			if(dbURL.sanitizedLocation().equals(oldPrimaryDatabaseName)) {
+				try {
+					alive = replicaLocation.getDatabaseInstance().isAlive();
+				} catch (Exception e) {
+					alive = false;
 				}
 			}
-
-			if (replicaLocations.size() == 0){
-				throw new SQLException("No replicas were listed for this table. An internal error has occured.");
-			}
-
-			rm.add(replicaLocations);
-		} catch (SQLException e) {
-			e.printStackTrace();
+			
+			replicaLocation.setActive(alive); //even dead replicas must be recorded.
+			replicaLocations.add(replicaLocation);
 
 		}
+
+		if (replicaLocations.size() == 0){
+			throw new SQLException("No replicas were listed for this table. An internal error has occured.");
+		}
+
+		rm.add(replicaLocations);
 
 		this.replicaManager = rm;
 	}

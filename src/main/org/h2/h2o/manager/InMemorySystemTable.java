@@ -466,7 +466,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 
 			//Note: done this way to avoid concurrent modification exceptions when a table manager entry is updated.
 			TableManagerWrapper[] tableManagerArray = tableManagers.values().toArray(new TableManagerWrapper[0]);
-			for (int i = 0; i < tableManagers.size(); i++){
+			for (int i = 0; i < tableManagerArray.length; i++){
 				TableManagerWrapper tableManagerWrapper =tableManagerArray[i];
 				boolean thisTableManagerRecreated = recreateTableManagerIfNotAlive(tableManagerWrapper);
 
