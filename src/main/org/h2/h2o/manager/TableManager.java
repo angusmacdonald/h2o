@@ -719,8 +719,20 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 				DatabaseURL dbURL = new DatabaseURL(rs.currentRow()[0].getString(), rs.currentRow()[1].getString(), 
 						rs.currentRow()[3].getInt(), rs.currentRow()[2].getString(), false, rs.currentRow()[4].getInt());
 
+				
+				//Don't include the URL of the old instance unless it is still running.
 				DatabaseInstanceWrapper replicaLocation = getDatabaseInstance(dbURL);
-				if (replicaLocation != null){
+				
+				boolean alive = true;
+				if(dbURL.sanitizedLocation().equals(oldPrimaryDatabaseName)) {
+					try {
+						alive = replicaLocation.getDatabaseInstance().isAlive();
+					} catch (Exception e) {
+						alive = false;
+					}
+				}
+				
+				if (replicaLocation != null && alive){
 					replicaLocations.add(replicaLocation);
 				}
 			}

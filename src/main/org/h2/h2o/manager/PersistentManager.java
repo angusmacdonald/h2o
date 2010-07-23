@@ -59,7 +59,7 @@ public abstract class PersistentManager {
 	 * Command used as the container for all queries taking place in this instance.
 	 */
 	protected Command sqlQuery;
-	private Database db;
+	protected Database db;
 
 	protected String tableRelation;
 	protected String replicaRelation;

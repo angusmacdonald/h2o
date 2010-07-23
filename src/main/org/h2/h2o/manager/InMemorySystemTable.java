@@ -292,7 +292,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 			//TableManager dm = TableManager.createTableManagerFromPersistentStore(ti.getSchemaName(), ti.getSchemaName());
 			try {
 				tm = new TableManager(ti, database);
-				tm.recreateReplicaManagerState(ti.getURL().sanitizedLocation());
+				tm.recreateReplicaManagerState(tableManagerWrapper.getURL().sanitizedLocation());
 			} catch (SQLException e) {
 				e.printStackTrace();
 			} catch (Exception e) {

@@ -4466,7 +4466,9 @@ public class Parser {
 
 		} catch (MovedException e){
 			//Query System Table again, bypassing the cache.
+
 			tableManager = session.getDatabase().getSystemTableReference().lookup(new TableInfo(tableName, thisSchemaName), false);
+			
 			try {
 				tableManagerURL = tableManager.getReplicaManager().getPrimary().getURL();
 			} catch (MovedException e1) {
@@ -4509,7 +4511,7 @@ public class Parser {
 		String sql = "CREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + tableLocation + "', '" + PersistentSystemTable.USERNAME + "', '" + PersistentSystemTable.PASSWORD + "', '" + tableName + "');";
 
 		Command sqlQuery = queryParser.prepareCommand(sql);
-		System.err.println(sql);
+
 		int result = sqlQuery.update();
 
 
