@@ -168,7 +168,6 @@ public class MetaDataReplicaManager {
 				databaseInstances = systemTable.getDatabaseInstances();
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			return; //just return, the system will attempt to replicate later on.
 		}
 
@@ -181,7 +180,7 @@ public class MetaDataReplicaManager {
 
 					if (replicaManager.size() >= managerStateReplicationFactor) break;
 				} catch (RemoteException e) {
-					e.printStackTrace();
+					//May fail. Try next database.
 				}
 			}
 		}
@@ -230,9 +229,14 @@ public class MetaDataReplicaManager {
 
 					return true;
 				} catch (SQLException e) {
-					e.printStackTrace();
-					ErrorHandling.errorNoEvent("Failed to replicate manager/table state onto: " + newReplicaLocation.getURL().getDbLocation() + ", local machine: " + localDatabase.getURL());
+					/*
+					 * Usually thrown if the CREATE REPLICA command couldn't connect back to this database.
+					 */
+					ErrorHandling.errorNoEvent(localDatabase.getURL() + " failed to replicate manager/table state onto: " + newReplicaLocation.getURL().getDbLocation() + ".");
 				} catch (Exception e) {
+					/*
+					 * Usually thrown if this database couldn't connect to the remote instance. 
+					 */
 					throw new RemoteException(e.getMessage());
 				} 
 

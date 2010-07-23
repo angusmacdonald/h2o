@@ -107,7 +107,7 @@ public class FailureTests extends TestBase {
 		org.h2.Driver.load();
 
 		getFullDatabaseName();
-		
+
 		for (String location: fullDbName){
 			LocalH2OProperties knownHosts = new LocalH2OProperties(DatabaseURL.parseURL(location));
 			knownHosts.createNewFile();
@@ -210,7 +210,7 @@ public class FailureTests extends TestBase {
 			sleep(2000); //if 4000, location will be fixed through handlemovedexception, if 8000 fixed through predecessorChange.
 
 			//createConnectionsToDatabases();
-			
+
 			Statement stat = connections[1].createStatement();
 			createSecondTable(stat, "TEST2");
 			assertTrue(assertTest2TableExists(connections[1], 2));
@@ -219,7 +219,7 @@ public class FailureTests extends TestBase {
 			fail("Unexpected exception.");
 		}
 	}
-	
+
 	/**
 	 * Connect to existing Database instance with ST state, but find no ST running.
 	 * 
@@ -255,7 +255,7 @@ public class FailureTests extends TestBase {
 			sleep(8000); //if 4000, location will be fixed through handlemovedexception, if 8000 fixed through predecessorChange.
 
 			//createConnectionsToDatabases();
-			
+
 			Statement stat = connections[1].createStatement();
 			createSecondTable(stat, "TEST2");
 			assertTrue(assertTest2TableExists(connections[1], 2));
@@ -264,7 +264,7 @@ public class FailureTests extends TestBase {
 			fail("Unexpected exception.");
 		}
 	}
-	
+
 	/**
 	 * Test that System Table correctly records the locations of Table Manager meta-data.
 	 * @throws InterruptedException 
@@ -287,16 +287,16 @@ public class FailureTests extends TestBase {
 
 			sleep(8000); //maintenance thread should have replicated table manager meta-data.
 
-			
+
 			assertTableManagerMetaDataExists(connections[0], 2);
-		
+
 		} catch (SQLException e) {
 			e.printStackTrace();
 			fail("Unexpected exception.");
 		}
 	}
 
-	
+
 	/**
 	 * Connect to existing Database instance with ST state and TM state, but find no ST or TM running.
 	 * 
@@ -326,9 +326,9 @@ public class FailureTests extends TestBase {
 			executeUpdateOnSecondMachine(sql);
 
 			sleep(3000);
-			
+
 			assertTrue(assertTestTableExists(connections[1], 2));
-			
+
 			/*
 			 * Kill off the System Table process. 
 			 */
@@ -346,7 +346,7 @@ public class FailureTests extends TestBase {
 	}
 
 
-	
+
 	/**
 	 * Connect to existing Database instance with ST state and TM state, but find no ST or TM running.
 	 * 
@@ -378,9 +378,9 @@ public class FailureTests extends TestBase {
 			executeUpdateOnSecondMachine(sql);
 
 			sleep(3000);
-			
+
 			assertTrue(assertTestTableExists(connections[1], 2));
-			
+
 			/*
 			 * Kill off the System Table process. 
 			 */
@@ -397,7 +397,7 @@ public class FailureTests extends TestBase {
 		}
 	}
 
-	
+
 	/**
 	 * Database instance with TM running fails, but the system table is somewhere else. Tests that it can recover.
 	 * 
@@ -426,9 +426,9 @@ public class FailureTests extends TestBase {
 			executeUpdateOnFirstMachine(sql);
 
 			sleep(3000);
-			
+
 			assertTrue(assertTestTableExists(connections[1], 2));
-			
+
 			/*
 			 * Kill off the System Table process. 
 			 */
@@ -444,7 +444,7 @@ public class FailureTests extends TestBase {
 			fail("Unexpected exception.");
 		}
 	}
-	
+
 	/**
 	 * Database instance with TM running fails, but the system table is somewhere else. Tests that it can recover.
 	 * 
@@ -473,9 +473,9 @@ public class FailureTests extends TestBase {
 			executeUpdateOnFirstMachine(sql);
 
 			sleep(3000);
-			
+
 			assertTrue(assertTestTableExists(connections[1], 2));
-			
+
 			/*
 			 * Kill off the System Table process. 
 			 */
@@ -491,8 +491,81 @@ public class FailureTests extends TestBase {
 			fail("Unexpected exception.");
 		}
 	}
-	
 
+	/**
+	 * Creates tables on every machine.
+	 * 
+	 * Kills off the machine with the SYSTEM TABLE and the table TEST.
+	 * 
+	 * Sleeps.
+	 * 
+	 * Restarts the machine that was killed off.
+	 * 
+	 * Sleeps.
+	 * 
+	 * Kills the database with TEST3.
+	 * 
+	 * Sleeps.
+	 * 
+	 * Queries every table to ensure they are still accessible.
+	 */
+	@Test
+	public void multipleFailuresTest() throws InterruptedException{
+		String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
+		"INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
+		String create2 = "CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
+		"INSERT INTO TEST2 VALUES(4, 'Meh'); INSERT INTO TEST2 VALUES(5, 'Heh');";
+		String create3 = "CREATE TABLE TEST3(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
+		"INSERT INTO TEST3 VALUES(4, 'Clouds'); INSERT INTO TEST3 VALUES(5, 'Rainbows');";
+
+		try {
+			sleep(1000);
+			/*
+			 * Create test table.
+			 */
+			executeUpdateOnNthMachine(create1, 0);
+			executeUpdateOnNthMachine(create2, 1);
+
+			executeUpdateOnNthMachine(create3, 2);
+
+			assertTestTableExists(2);
+			assertMetaDataExists(connections[0], 3);
+
+			sleep(2000);
+
+			create1 = "CREATE REPLICA TEST;";
+			executeUpdateOnNthMachine(create1, 1);
+			create2 = "CREATE REPLICA TEST2";
+			executeUpdateOnNthMachine(create2, 0);
+			create3 = "CREATE REPLICA TEST3";
+			executeUpdateOnNthMachine(create3, 0);
+
+			sleep(3000);
+
+			assertTrue(assertTestTableExists(connections[1], 2));
+
+			/*
+			 * Kill off the System Table process. 
+			 */
+			killDatabase(findSystemTableInstance());
+
+			sleep(15000);
+
+			startDatabase(0);
+			createConnectionsToDatabase(0);
+			//Database 0 tries to replicate to database 2, but database 2 is killed off before this can happen.
+			sleep(1000); 
+			killDatabase(2);
+			sleep(1000);
+
+			assertTrue(assertTestTableExists(connections[1], 2));
+			assertTrue(assertTest2TableExists(connections[1], 2));
+			assertTrue(assertTest3TableExists(connections[1], 2));
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("Unexpected exception.");
+		}
+	}
 	/*
 	 * ###########################################################
 	 * ###########################################################
@@ -506,17 +579,17 @@ public class FailureTests extends TestBase {
 		s.executeUpdate(sql);
 	}
 
-	
+
 	private void sleep(int time) throws InterruptedException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "About to sleep for " + time/1000 + " seconds.");
 		Thread.sleep(time);
 	}
-	
+
 	private void executeUpdateOnSecondMachine(String sql) throws SQLException {
 		Statement s = connections[1].createStatement();
 		s.executeUpdate(sql);
 	}
-	
+
 	private void executeUpdateOnNthMachine(String sql, int machineNumber) throws SQLException {
 		Statement s = connections[machineNumber].createStatement();
 		s.executeUpdate(sql);
@@ -627,7 +700,7 @@ public class FailureTests extends TestBase {
 		rs.close();
 		s.close();
 	}
-	
+
 	/**
 	 * Query the System Table's persisted state (specifically the H2O.H2O_TABLEMANAGER_STATE table) and check that
 	 * there are the correct number of entries.
@@ -727,7 +800,7 @@ public class FailureTests extends TestBase {
 
 		return true;
 	}
-	
+
 	private boolean assertTest2TableExists(Connection connnection, int expectedEntries) throws SQLException {
 		Statement s = null;
 		ResultSet rs = null;
@@ -766,6 +839,44 @@ public class FailureTests extends TestBase {
 		return true;
 	}
 
+	private boolean assertTest3TableExists(Connection connnection, int expectedEntries) throws SQLException {
+		Statement s = null;
+		ResultSet rs = null;
+
+		/*
+		 * Query database.
+		 */
+
+		if (connnection == null || connnection.isClosed()){
+			return false;
+		}
+
+		try {
+			s = connnection.createStatement();
+			rs = s.executeQuery("SELECT * FROM " + "TEST3" + ";");
+
+			int actualEntries = 0;
+			while(rs.next()){
+
+				if (actualEntries==0){
+					assertEquals(4, rs.getInt(1));
+					assertEquals("Clouds", rs.getString(2));
+				} else if (actualEntries==1){
+					assertEquals(5, rs.getInt(1));
+					assertEquals("Rainbows", rs.getString(2));
+				}
+
+				actualEntries++;
+			}
+			assertEquals(expectedEntries, actualEntries);
+		} finally {
+			if (rs != null) rs.close();
+			if (s != null) s.close();
+		}
+
+		return true;
+	}
+	
 	/**
 	 * Delete all of the database files created in these tests
 	 */
@@ -793,7 +904,7 @@ public class FailureTests extends TestBase {
 			fullDbName[i] = DatabaseURL.parseURL(fullDbName[i]).getURL();
 		}
 	}
-	
+
 	/**
 	 * Starts all databases, ensuring the first database, 'one', will be the intial System Table if the parameter is true.
 	 * @throws InterruptedException
@@ -802,7 +913,7 @@ public class FailureTests extends TestBase {
 		for (int i = 0; i < dbs.length; i ++){
 			int port = 9080 + i;
 			startDatabase(fullDbName[i], port);
-			
+
 			if (guaranteeOneIsSystemTable && i == 0) sleep (1000);
 		}
 	}
@@ -850,6 +961,15 @@ public class FailureTests extends TestBase {
 
 		startDatabase(connectionString, Integer.parseInt(port));
 	}
+	private void startDatabase(int i) {
+		// jdbc:h2:sm:tcp://localhost:9091/db_data/multiprocesstests/thirteen
+		String connectionString = fullDbName[i];
+		String port = connectionString.substring(connectionString.indexOf("tcp://")+"tcp://".length());
+		port = port.substring(port.indexOf(":")+";".length());
+		port = port.substring(0, port.indexOf("/"));
+
+		startDatabase(connectionString, Integer.parseInt(port));
+	}
 
 	/**
 	 * Create JDBC connections to every database in the LocatorDatabaseTests.dbs string array.
@@ -861,6 +981,10 @@ public class FailureTests extends TestBase {
 		}
 	}
 
+	private void createConnectionsToDatabase(int i) {
+		connections[i] = createConnectionToDatabase(fullDbName[i]);
+	}
+
 	/**
 	 * Create a connection to the database specified by the connection string parameter.
 	 * @param connectionString	Database URL of the database which this method connects to.
@@ -870,7 +994,7 @@ public class FailureTests extends TestBase {
 		try {
 			return DriverManager.getConnection(connectionString, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 		} catch (SQLException e) {
-			ErrorHandling.exceptionError(e, "Trying to connect to: " + connectionString);
+			ErrorHandling.errorNoEvent("Failed to connect to: " + connectionString);
 			return null;
 		}
 	}
@@ -892,6 +1016,10 @@ public class FailureTests extends TestBase {
 			p.destroy();
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Killed off the database process running " + instance);
 		}
+	}
+
+	private void killDatabase(int i) {
+		killDatabase(fullDbName[i]);
 	}
 
 }

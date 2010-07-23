@@ -21,6 +21,7 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -96,7 +97,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	public InMemorySystemTable(Database database) throws Exception{
 		this.database = database;
 
-		tableManagers = new HashMap<TableInfo, TableManagerWrapper>();
+		tableManagers = Collections.synchronizedMap(new HashMap<TableInfo, TableManagerWrapper>());
 		tmReplicaLocations = new HashMap<TableInfo, Set<DatabaseURL>>();
 
 		primaryLocations = new HashMap<TableInfo, DatabaseURL>();
@@ -463,9 +464,10 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 
 		if (started) {
 
-			for (TableManagerWrapper tableManagerWrapper: tableManagers.values()){
-				TableManagerRemote tm = tableManagerWrapper.getTableManager();
-
+			//Note: done this way to avoid concurrent modification exceptions when a table manager entry is updated.
+			TableManagerWrapper[] tableManagerArray = tableManagers.values().toArray(new TableManagerWrapper[0]);
+			for (int i = 0; i < tableManagers.size(); i++){
+				TableManagerWrapper tableManagerWrapper =tableManagerArray[i];
 				boolean thisTableManagerRecreated = recreateTableManagerIfNotAlive(tableManagerWrapper);
 
 				if (thisTableManagerRecreated) anyTableManagerRecreated = true;
