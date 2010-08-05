@@ -33,3 +33,5 @@ H2O Version 0.2.6 (Unreleased)
 	H2O can now be started by double-clicking on the JAR file.
 	When a new instance is started the database URL is placed in the browser window.
 	Auto-complete of tables now always chooses a new SELECT for the table that was selected, rather than appending its name.
+	Fixed error where locks aren't released on tables when a SELECT query is cancelled due to incorrect syntax.
+	Added the capability to create views (required ensuring correct read locks where taken out on relevant Table Managers).

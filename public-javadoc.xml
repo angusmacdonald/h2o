@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project default="javadoc">
-    <target name="javadoc">
-        <javadoc access="public" author="true" classpath="../nds/lib/mailapi.jar;C:\Program Files\eclipse\plugins\org.junit_4.8.1.v4_8_1_v20100114-1600\junit.jar;../nds/lib/mindterm.jar;../nds;../stachordRMI;service/wrapper.jar;ext/org.osgi.core-1.2.0.jar;../org.eclipse.jdt.junit_3.5.0.v20090526-2000.jar;C:\Program Files\eclipse\plugins\org.hamcrest.core_1.1.0.v20090501071000.jar;../stachordRMI/lib/mindterm.jar;C:\Program Files\Java\jdk1.6.0_16\lib\tools.jar;ext/lucene-core-2.2.0.jar;ext/servlet-api-2.4.jar;ext/slf4j-api-1.5.0.jar" destdir="doc" doctitle="H2O Database Startup" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="org.h2.h2o.deployment" source="1.6" sourcepath="src/test;src/main;src/tools" splitindex="true" use="true" version="true"/>
-    </target>
-</project>

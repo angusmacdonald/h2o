@@ -698,11 +698,11 @@ class WebThread extends Thread implements DatabaseEventListener {
 
 
 			//indentationLevel = 2;
-			buff.append("setNode(" + treeIndex + ", " + indentationLevel + ", " + tableLevel + ", 'column', '" + PageParser.escapeJavaScript(column.name)
+			buff.append("setNode(" + treeIndex + ", " + (indentationLevel+1) + ", " + tableLevel+1 + ", 'column', '" + PageParser.escapeJavaScript(column.name)
 					+ "', 'javascript:ins(\\'" + col + "\\')');\n");
 			treeIndex++;
 			if (showColumnTypes) {
-				buff.append("setNode(" + treeIndex + ", " + (indentationLevel+1) + ", " + (tableLevel+1) + ", 'type', '" + PageParser.escapeJavaScript(column.dataType)
+				buff.append("setNode(" + treeIndex + ", " + (indentationLevel+2) + ", " + (tableLevel+2) + ", 'type', '" + PageParser.escapeJavaScript(column.dataType)
 						+ "', null);\n");
 				treeIndex++;
 			}

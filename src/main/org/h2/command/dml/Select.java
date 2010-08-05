@@ -1173,7 +1173,11 @@ public class Select extends Query {
 	throws SQLException {
 
 		for (Table table: this.getTables()){
-			if (Table.VIEW.equals(table.getTableType())) { 
+			if (Table.TABLE.equals(table.getTableType())) { 
+				QueryProxy qp = QueryProxy.getQueryProxyAndLock(table, LockType.READ, this.session.getDatabase());
+
+				queryProxyManager.addProxy(qp);
+			} else if (Table.VIEW.equals(table.getTableType())){
 				//Get locks for the tables involved in executing the view.
 
 				List<Table> tables = ((TableView) table).getTables();
@@ -1183,10 +1187,6 @@ public class Select extends Query {
 					QueryProxy qp = QueryProxy.getQueryProxyAndLock(theseTables, LockType.READ, this.session.getDatabase());
 					queryProxyManager.addProxy(qp);
 				}
-			} else {
-				QueryProxy qp = QueryProxy.getQueryProxyAndLock(table, LockType.READ, this.session.getDatabase());
-
-				queryProxyManager.addProxy(qp);
 			}
 		}
 
