@@ -132,11 +132,15 @@ public class CommandContainer extends Command {
 			}
 		}
 
-		LocalResult result = prepared.query(maxrows);
-		prepared.trace(startTime, result.getRowCount());
-
-		proxyManager.endTransaction(null);
-		return result;
+		try {
+			LocalResult result = prepared.query(maxrows);
+			prepared.trace(startTime, result.getRowCount());
+			proxyManager.endTransaction(null);
+			return result;
+		} catch(SQLException e){
+			proxyManager.endTransaction(null);
+			throw e;
+		}
 	}
 
 	/* (non-Javadoc)
