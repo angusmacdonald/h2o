@@ -23,7 +23,7 @@ import org.junit.Test;
 /**
  * Test for big result sets.
  */
-public class TestBigResult extends H2TestBase {
+public class H2TestBigResult extends H2TestBase {
 
 	private LocatorServer ls;
 

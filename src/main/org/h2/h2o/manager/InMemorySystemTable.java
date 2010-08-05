@@ -485,11 +485,14 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	private static boolean isAlive(TableManagerRemote tableManager) {
 		boolean alive = true;
 
-		if (tableManager == null) alive = false;
-		try {
-			tableManager.checkConnection();
-		} catch (Exception e) {
+		if (tableManager == null) {
 			alive = false;
+		} else {
+			try {
+				tableManager.checkConnection();
+			} catch (Exception e) {
+				alive = false;
+			}
 		}
 		return alive;
 	}
@@ -507,8 +510,6 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 		if (isAlive(tableManagerWrapper.getTableManager())) return false; //check that it isn't already active.
 
 		for (DatabaseURL replicaLocation: tmReplicaLocations.get(tableManagerWrapper.getTableInfo())){
-
-			if (replicaLocation.equals(tableManagerWrapper.getURL())) continue;
 
 			try{
 				DatabaseInstanceWrapper instance = databasesInSystem.get(replicaLocation);

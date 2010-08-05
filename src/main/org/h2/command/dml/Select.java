@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
@@ -40,6 +41,7 @@ import org.h2.table.ColumnResolver;
 import org.h2.table.IndexColumn;
 import org.h2.table.Table;
 import org.h2.table.TableFilter;
+import org.h2.table.TableView;
 import org.h2.util.ObjectArray;
 import org.h2.util.ObjectUtils;
 import org.h2.util.StringUtils;
@@ -1170,12 +1172,24 @@ public class Select extends Query {
 	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager)
 	throws SQLException {
 
-			for (Table table: this.getTables()){
+		for (Table table: this.getTables()){
+			if (Table.VIEW.equals(table.getTableType())) { 
+				//Get locks for the tables involved in executing the view.
+
+				List<Table> tables = ((TableView) table).getTables();
+
+				for (Table theseTables: tables){
+
+					QueryProxy qp = QueryProxy.getQueryProxyAndLock(theseTables, LockType.READ, this.session.getDatabase());
+					queryProxyManager.addProxy(qp);
+				}
+			} else {
 				QueryProxy qp = QueryProxy.getQueryProxyAndLock(table, LockType.READ, this.session.getDatabase());
 
 				queryProxyManager.addProxy(qp);
 			}
-		
+		}
+
 		return null; 
 	}
 

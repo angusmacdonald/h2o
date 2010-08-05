@@ -7,6 +7,8 @@
 package org.h2.table;
 
 import java.sql.SQLException;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.h2.command.Prepared;
 import org.h2.command.dml.Query;
@@ -47,6 +49,26 @@ public class TableView extends Table {
 	private User owner;
 	private Query topQuery;
 
+	public List<Table> getTables(){
+		List<Table> ts = new LinkedList<Table>();
+		
+		Table[] tablesAndViews = new Table[tables.size()];
+		tables.toArray(tablesAndViews);
+		
+		for (Table tableOrView: tablesAndViews){
+			if (tableOrView != null && Table.TABLE.equals(tableOrView.getTableType())){
+				ts.add(tableOrView); //it's a table.
+			} else if (tableOrView != null && Table.VIEW.equals(tableOrView.getTableType())) {
+				//recurse - its a view.
+				TableView view = (TableView) tableOrView;
+				ts.addAll(view.getTables());
+			}
+		}
+		
+		return ts;
+		
+	}
+	
 	public TableView(Schema schema, int id, String name, String querySQL, ObjectArray params, String[] columnNames,
 			Session session, boolean recursive) throws SQLException {
 		super(schema, id, name, false);

@@ -620,7 +620,7 @@ public abstract class PersistentManager {
 	 * @param tableInfo 	New location of the Table Manager.
 	 */
 	public void changeTableManagerLocation(TableInfo tableInfo) {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "About to update the location of the Table Manager " + tableInfo + ".");
+		//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "About to update the location of the Table Manager " + tableInfo + ".");
 
 		int connectionID = getConnectionID(tableInfo.getURL());
 

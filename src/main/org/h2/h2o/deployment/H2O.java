@@ -18,18 +18,24 @@
 package org.h2.h2o.deployment;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
+import org.h2.engine.Constants;
 import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LocalH2OProperties;
+import org.h2.server.web.ConnectionInfo;
 import org.h2.tools.Server;
+import org.h2.util.FileUtils;
 import org.h2.util.NetUtils;
+import org.h2.util.SortedProperties;
 
 import uk.ac.standrews.cs.nds.util.CommandLineArgs;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -152,11 +158,11 @@ public class H2O {
 			//Fill with default arguments.
 			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "No user arguments were specified. Creating a database with default arguments.");
 
-			databaseName = "MyFirstDatabase";
-			port = "9999";
+			databaseName = "DefaultH2ODatabase";
+			port = "2121";
 			descriptorFileLocation = null; //e.g. AllTests.TEST_DESCRIPTOR_FILE
-			defaultLocation = "db_data"; //e.g. "db_data"
-			//webPort = 9990;
+			defaultLocation = "data"; //e.g. "db_data"
+			webPort = 2123;
 		} else {
 
 			/*
@@ -191,6 +197,7 @@ public class H2O {
 		return new H2O(databaseName, Integer.parseInt(port), webPort, defaultLocation, descriptorFileLocation);
 	}
 
+
 	/**
 	 * Start up an H2O server and initialize the database.
 	 */
@@ -202,15 +209,40 @@ public class H2O {
 			descriptorFileLocation = locator.start(true);
 		}
 
-		startServer();
-		initializeDatabase();
+		String databaseURL = generateDatabaseURL();
+		startServer(databaseURL);
+		initializeDatabase(databaseURL);
+	}
+
+	private String generateDatabaseURL() {
+		if (defaultLocation != null){
+			if (!defaultLocation.endsWith("/") && !defaultLocation.endsWith("\\")){ //add a trailing slash if it isn't already there.
+				defaultLocation = defaultLocation + "/";
+			}
+		}
+
+		String hostname = NetUtils.getLocalAddress();
+		String databaseLocation = ((defaultLocation != null)? defaultLocation : "") + databaseName + port;
+
+		String databaseURL = createDatabaseURL(port, hostname, databaseLocation);
+		/*
+		 * Display to user.
+		 */
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Database Name: " + databaseName);
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Port: " + port);
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Hostname: " + hostname);
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Generated JDBC URL: " + databaseURL);
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Specified Descriptor File Location: " + descriptorFileLocation);
+
+		return databaseURL;
 	}
 
 	/**
 	 * Call the H2O server class with the required parameters to initialize the TCP server.
+	 * @param databaseURL 
 	 * @param arguments
 	 */
-	private void startServer() {
+	private void startServer(String databaseURL) {
 
 		List<String> h2oArgs = new LinkedList<String>(); //arguments to be passed to the H2 server.
 		h2oArgs.add("-tcp");
@@ -240,6 +272,13 @@ public class H2O {
 		}
 
 
+		/*
+		 * Set URL to be displayed in browser.
+		 */
+		if (webPort != null){
+			setUpWebLink(databaseURL);
+		}
+
 		Server s = new Server();
 		try {
 			s.run(h2oArgs.toArray(new String[0]), System.out);
@@ -250,28 +289,11 @@ public class H2O {
 
 	/**
 	 * Connects to the server and initializes the database at a particular location on disk.
+	 * @param databaseURL 
 	 */
-	private void initializeDatabase() {
-		if (defaultLocation != null){
-			if (!defaultLocation.endsWith("/") && !defaultLocation.endsWith("\\")){ //add a trailing slash if it isn't already there.
-				defaultLocation = defaultLocation + "/";
-			}
-		}
+	private void initializeDatabase(String databaseURL) {
 
-		String hostname = NetUtils.getLocalAddress();
-		String databaseLocation = ((defaultLocation != null)? defaultLocation : "") + databaseName + port;
-		String generatedDatabaseURL = createDatabaseURL(port, hostname, databaseLocation);
-		/*
-		 * Display to user.
-		 */
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Database Name: " + databaseName);
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Port: " + port);
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Hostname: " + hostname);
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Generated JDBC URL: " + generatedDatabaseURL);
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Specified Descriptor File Location: " + descriptorFileLocation);
-
-
-		LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(generatedDatabaseURL));
+		LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(databaseURL));
 		if (!properties.loadProperties()){
 			properties.createNewFile();
 			properties.setProperty("diagnosticLevel", DiagnosticLevel.NONE.toString());
@@ -289,13 +311,67 @@ public class H2O {
 		}
 
 		try {
-			DriverManager.getConnection(generatedDatabaseURL, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+			DriverManager.getConnection(databaseURL, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 		} catch (SQLException e) {
 			e.printStackTrace();
 			System.exit(0);
 		}
 	}
+
+
+	/**
+	 * Set the primary database URL in the browser to equal the URL of this database.
+	 * @param databaseURL
+	 */
+	private void setUpWebLink(String databaseURL) {
+
+		try {
+			Properties serverProperties = loadServerProperties();
+			List<String> servers = new LinkedList<String>();
+
+			for (int i = 0;; i++) {
+				String data = serverProperties.getProperty(String.valueOf(i));
+				if (data == null) {
+					break;
+				}
+				if (!data.contains(databaseURL)) servers.add(data);
+
+				serverProperties.remove(String.valueOf(i));
+			}
+
+			int i = 0;
+			for (String server: servers){
+				serverProperties.setProperty(i + "", server);
+				i++;
+			}
+
+
+			serverProperties.setProperty(i + "", "QuickStart-H2O-Database|org.h2.Driver|" + databaseURL + "|sa");
+
+			OutputStream out = FileUtils.openFileOutputStream(getPropertiesFileName(), false);
+			serverProperties.store(out, Constants.SERVER_PROPERTIES_TITLE);
+
+			out.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	private String getPropertiesFileName() {
+		// store the properties in the user directory
+		return FileUtils.getFileInUserHome(Constants.SERVER_PROPERTIES_FILE);
+	}
+	private Properties loadServerProperties() {
+		String fileName = getPropertiesFileName();
+		try {
+			return SortedProperties.loadProperties(fileName);
+		} catch (IOException e) {
+			return new Properties();
+		}
+	}
+
 
 	protected static String removeParenthesis(String text) {
 		if (text == null) return null;

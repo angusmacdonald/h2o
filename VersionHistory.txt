@@ -16,7 +16,7 @@ H2O Version 0.2.4
 	CREATE TABLE operation now creates new replicas in parallel.
 	COMMIT operations now executed in parallel.
 	Fixed a remote access error for H2 TCP connections.
-H2O Version 0.2.5 (Unreleased)
+H2O Version 0.2.5 
 	Single machine local INSERT, UPDATE, and DELETE queries are only parsed once.
 	Changed from StringBuffer to StringBuilder.
 	Removed un-necessary repeated work in TransactionNameGenerator class.
@@ -28,4 +28,8 @@ H2O Version 0.2.5 (Unreleased)
 	System can recover from System Table failure regardless whether meta-data is held on successor, and is able
 		to recover if failure occurs before the maintenance mechanisms pick it up.
 	Table Manager meta-data replicated
-	Table Managers can recover from failure.
+	Table Managers recover from individual node failure failure.
+H2O Version 0.2.6 (Unreleased)
+	H2O can now be started by double-clicking on the JAR file.
+	When a new instance is started the database URL is placed in the browser window.
+	Auto-complete of tables now always chooses a new SELECT for the table that was selected, rather than appending its name.

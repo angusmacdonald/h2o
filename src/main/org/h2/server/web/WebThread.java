@@ -461,6 +461,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 				file = autoCompleteList();
 			} else if ("tools.do".equals(file)) {
 				file = tools();
+			} else if ("shutdown.do".equals(file)) {
+				System.exit(1);
 			} else {
 				file = "error.jsp";
 			}
@@ -1090,6 +1092,13 @@ class WebThread extends Thread implements DatabaseEventListener {
 			session.put("error", getLoginError(e, isH2));
 			return "login.jsp";
 		}
+	}
+
+	private String shutdown() {
+
+		session.put("error", "H2O has successfully been shutdown.");
+		return "login.jsp";
+
 	}
 
 	/**

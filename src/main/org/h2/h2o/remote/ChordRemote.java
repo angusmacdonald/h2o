@@ -553,7 +553,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Started local Chord node on : " + databaseURL.sanitizedLocation() + " : " + hostname + ":" + port + 
 				" : initialized with key :" + chordNode.getKey().toString(10) + " : " + chordNode.getKey() + " : System Table at " + this.systemTableRef.getLookupLocation() + " : ");
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "System Table key: : : : :" + SystemTableReference.systemTableKey.toString(10) + " : " + SystemTableReference.systemTableKey);
+		//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "System Table key: : : : :" + SystemTableReference.systemTableKey.toString(10) + " : " + SystemTableReference.systemTableKey);
 
 		return true;
 	}

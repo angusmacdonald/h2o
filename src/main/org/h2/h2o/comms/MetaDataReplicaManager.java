@@ -20,7 +20,6 @@ package org.h2.h2o.comms;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import org.h2.command.Command;

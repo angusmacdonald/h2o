@@ -124,17 +124,7 @@ public class FailureTests extends TestBase {
 
 		sleep(2000);
 		createConnectionsToDatabases();
-		sleep(1000);
-
-
-		//		sas = new Statement[dbs.length + 1];
-		//
-		//		for (int i = 0; i < dts.length; i ++){
-		//			sas[i] = dts[i].getConnection().createStatement();
-		//		}
-
-
-
+		
 	}
 
 	/**
@@ -147,24 +137,17 @@ public class FailureTests extends TestBase {
 		killDatabases();
 
 		try {
-			sleep(1000);
+			Thread.sleep(1000);
 		} catch (InterruptedException e1) {};
 
 		deleteDatabaseData();
 
 		ls.setRunning(false);
 
-		//		for (int i = 0; i < dbs.length; i ++){
-		//			try {
-		//				if (!connections[i].isClosed()) connections[i].close();
-		//			} catch (SQLException e) {
-		//				e.printStackTrace();
-		//			}
-		//		}
-
 		while (!ls.isFinished()){};
 	}
 
+	
 	/*
 	 * ###########################################################
 	 * ###########################################################
@@ -510,7 +493,7 @@ public class FailureTests extends TestBase {
 	 * Queries every table to ensure they are still accessible.
 	 */
 	@Test
-	public void multipleFailuresTest() throws InterruptedException{
+	public void multipleFailures() throws InterruptedException{
 		String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
 		"INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
 		String create2 = "CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
@@ -540,7 +523,7 @@ public class FailureTests extends TestBase {
 			create3 = "CREATE REPLICA TEST3";
 			executeUpdateOnNthMachine(create3, 0);
 
-			sleep(3000);
+			sleep("Wait for create replica commands to execute.", 3000);
 
 			assertTrue(assertTestTableExists(connections[1], 2));
 
@@ -549,14 +532,90 @@ public class FailureTests extends TestBase {
 			 */
 			killDatabase(findSystemTableInstance());
 
-			sleep(15000);
+			sleep("Killed off System Table database.", 15000);
+
+			assertTrue(assertTestTableExists(connections[1], 2));
 
 			startDatabase(0);
 			createConnectionsToDatabase(0);
 			//Database 0 tries to replicate to database 2, but database 2 is killed off before this can happen.
-			sleep(1000); 
+			sleep("About to kill off third database instance.", 1000); 
 			killDatabase(2);
+			sleep("About to test accessibility of test tables.", 1000);
+
+			assertTrue(assertTestTableExists(connections[1], 2));
+			assertTrue(assertTest2TableExists(connections[1], 2));
+			assertTrue(assertTest3TableExists(connections[1], 2));
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("Unexpected exception.");
+		}
+	}
+	
+	/**
+	 * Creates tables on every machine.
+	 * 
+	 * Kills off the machine with the SYSTEM TABLE and the table TEST.
+	 * 
+	 * Sleeps.
+	 * 
+	 * Restarts the machine that was killed off.
+	 * 
+	 * Sleeps.
+	 * 
+	 * Kills the database with TEST3.
+	 * 
+	 * Sleeps.
+	 * 
+	 * Queries every table to ensure they are still accessible.
+	 */
+	@Test
+	public void multipleSTFailures() throws InterruptedException{
+		String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
+		"INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
+		String create2 = "CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
+		"INSERT INTO TEST2 VALUES(4, 'Meh'); INSERT INTO TEST2 VALUES(5, 'Heh');";
+		String create3 = "CREATE TABLE TEST3(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
+		"INSERT INTO TEST3 VALUES(4, 'Clouds'); INSERT INTO TEST3 VALUES(5, 'Rainbows');";
+
+		try {
 			sleep(1000);
+			/*
+			 * Create test table.
+			 */
+			executeUpdateOnNthMachine(create1, 0);
+			executeUpdateOnNthMachine(create2, 1);
+
+			executeUpdateOnNthMachine(create3, 2);
+
+			assertTestTableExists(2);
+			assertMetaDataExists(connections[0], 3);
+
+			sleep(2000);
+
+			create1 = "CREATE REPLICA TEST;";
+			executeUpdateOnNthMachine(create1, 1);
+			executeUpdateOnNthMachine(create1, 2);
+			create2 = "CREATE REPLICA TEST2";
+			executeUpdateOnNthMachine(create2, 0);
+			create3 = "CREATE REPLICA TEST3";
+			executeUpdateOnNthMachine(create3, 0);
+
+			sleep("Waiting for create replica commands to execute.", 3000);
+
+			assertTrue(assertTestTableExists(connections[1], 2));
+
+			/*
+			 * Kill off the System Table process. 
+			 */
+			killDatabase(findSystemTableInstance());
+
+			sleep("Killed off System Table database.", 15000);
+
+			killDatabase(findSystemTableInstance());
+
+			sleep("Killed of another System Table database.", 15000);
+			
 
 			assertTrue(assertTestTableExists(connections[1], 2));
 			assertTrue(assertTest2TableExists(connections[1], 2));
@@ -574,14 +633,19 @@ public class FailureTests extends TestBase {
 	 * ###########################################################
 	 */
 
+
 	private void executeUpdateOnFirstMachine(String sql) throws SQLException {
 		Statement s = connections[0].createStatement();
 		s.executeUpdate(sql);
 	}
 
 
+	private void sleep(String message, int time) throws InterruptedException {
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, message.toUpperCase() + " SLEEPING FOR " + time/1000 + " SECONDS.");
+		Thread.sleep(time);
+	}
 	private void sleep(int time) throws InterruptedException {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "About to sleep for " + time/1000 + " seconds.");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, ">>>>> SLEEPING FOR " + time/1000 + " SECONDS.");
 		Thread.sleep(time);
 	}
 

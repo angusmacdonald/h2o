@@ -243,7 +243,7 @@ public class Constants {
 	/**
 	 * The name of the JDBC driver.
 	 */
-	public static final String DRIVER_NAME = "H2 JDBC Driver";
+	public static final String DRIVER_NAME = "H2O JDBC Driver";
 
 	/**
 	 * The password is hashed this many times

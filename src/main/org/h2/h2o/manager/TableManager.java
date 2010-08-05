@@ -79,12 +79,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	public static final String CONNECTIONS = "H2O_TM_CONNECTION";
 
 	public static final String TABLEMANAGERSTATE = "H2O_TM_TABLEMANAGERS";
-
-	private String tablesTable = SCHEMA;
-	private String replicasTable = SCHEMA;
-	private String connectionsTable = SCHEMA;
-	private String managersTable = SCHEMA; 
-
+	
 	/**
 	 * The name of the table that this Table Manager is responsible for.
 	 */
@@ -711,10 +706,17 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		" WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND" +
 		" " + oldTableRelation + ".table_id=" + oldReplicaRelation + ".table_id AND " + oldconnectionRelation + ".connection_id=" + oldReplicaRelation + ".connection_id;";
 
-		LocalResult rs = executeQuery(sql);
+		LocalResult rs = null;
+		try{
+			rs = executeQuery(sql);
+		} catch (SQLException e){
+			System.err.println("tablename: " + tableName + ", old primary: " + oldPrimaryDatabaseName);
+			throw e;
+		}
 
 		List<DatabaseInstanceWrapper> replicaLocations = new LinkedList<DatabaseInstanceWrapper>();
 		while (rs.next()){
+			
 			DatabaseURL dbURL = new DatabaseURL(rs.currentRow()[0].getString(), rs.currentRow()[1].getString(), 
 					rs.currentRow()[3].getInt(), rs.currentRow()[2].getString(), false, rs.currentRow()[4].getInt());
 

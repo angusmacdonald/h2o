@@ -29,10 +29,12 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
 	H2SimpleTest.class,
-	TestBigDb.class,
-	TestBigResult.class,
+	H2TestBigDb.class,
+	H2TestBigResult.class,
 	H2TestPreparedStatement.class,
-	H2TestBatchUpdates.class
+	H2TestBatchUpdates.class,
+	H2TestView.class,
+	H2TriggerSample.class
 })
 public class H2Tests {
 	//The above annotations do all the work.

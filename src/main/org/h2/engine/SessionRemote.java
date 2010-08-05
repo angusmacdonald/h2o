@@ -463,7 +463,7 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 	 */
 	public void checkClosed() throws SQLException {
 		if (isClosed()) {
-			throw Message.getSQLException(ErrorCode.CONNECTION_BROKEN);
+			throw new SQLException("Could not connect ot database instane specified: " + this.getDatabasePath());
 		}
 	}
 

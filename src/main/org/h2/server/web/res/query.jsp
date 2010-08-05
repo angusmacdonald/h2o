@@ -153,7 +153,7 @@ function insertText(s, isTable) {
     if(last != '.' && last != '\'' && last != '"' && last > ' ') {
         s += ' ';
     }
-    if(isTable && trim(field.value)=='') {
+    if(isTable) {
         field.value = 'SELECT * FROM ' + s;
     } else {
         if (document.selection) {

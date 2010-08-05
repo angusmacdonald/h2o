@@ -89,6 +89,8 @@ Initial Developer: H2 Group
                     <input type="submit" class="button" value="${text.login.connect}" />
                     &nbsp;
                     <input type="button" class="button" value="${text.login.testConnection}" onclick="javascript:document.login.action='test.do?jsessionid=${sessionId}';submit()" />
+                     &nbsp;
+                    <input type="button" class="button" value="Shutdown H2O" onclick="javascript:document.login.action='shutdown.do?jsessionid=${sessionId}';submit()" />
                     <br />
                     <br />
                 </td>

@@ -23,7 +23,7 @@ import org.junit.Test;
 /**
  * Test for big databases.
  */
-public class TestBigDb extends H2TestBase{
+public class H2TestBigDb extends H2TestBase{
 
 	protected LocatorServer ls;
 

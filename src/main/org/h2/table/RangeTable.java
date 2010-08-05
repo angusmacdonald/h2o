@@ -111,7 +111,7 @@ public class RangeTable extends Table {
 	}
 
 	public String getTableType() {
-		throw Message.throwInternalError();
+		return "RANGE_TABLE";
 	}
 
 	public Index getScanIndex(Session session) {
