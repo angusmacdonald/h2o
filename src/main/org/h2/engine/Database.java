@@ -226,8 +226,13 @@ public class Database implements DataHandler {
 
 	private TransactionNameGenerator transactionNameGenerator;
 
+	private Set<String> localSchema = new HashSet<String>();
+
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
 
+		localSchema.add(Constants.H2O_SCHEMA);
+		localSchema.add("RESOURCE_MONITORING");
+		
 		DatabaseURL localMachineLocation = DatabaseURL.parseURL(ci.getOriginalURL());
 
 		setDiagnosticLevel(localMachineLocation);
@@ -255,7 +260,6 @@ public class Database implements DataHandler {
 		this.databaseShortName = parseDatabaseShortName();
 
 		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O, Database '" + name + "'.");
-
 
 
 		this.multiThreaded = true; //H2O. Required for the H2O push replication feature, among other things.
@@ -2797,5 +2801,13 @@ public class Database implements DataHandler {
 
 	public synchronized boolean isRunning() {
 		return running;
+	}
+
+	public Set<String> getLocalSchema() {
+		return localSchema ;
+	}
+
+	public boolean isTableLocal(Schema schema) {
+		return localSchema.contains(schema.getName());
 	}
 }

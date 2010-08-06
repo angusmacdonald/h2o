@@ -1173,19 +1173,24 @@ public class Select extends Query {
 	throws SQLException {
 
 		for (Table table: this.getTables()){
-			if (Table.TABLE.equals(table.getTableType())) { 
-				QueryProxy qp = QueryProxy.getQueryProxyAndLock(table, LockType.READ, this.session.getDatabase());
+			if (!this.session.getDatabase().isTableLocal(table.getSchema())){
 
-				queryProxyManager.addProxy(qp);
-			} else if (Table.VIEW.equals(table.getTableType())){
-				//Get locks for the tables involved in executing the view.
+				if (Table.TABLE.equals(table.getTableType())) { 
+					QueryProxy qp = QueryProxy.getQueryProxyAndLock(table, LockType.READ, this.session.getDatabase());
 
-				List<Table> tables = ((TableView) table).getTables();
-
-				for (Table theseTables: tables){
-
-					QueryProxy qp = QueryProxy.getQueryProxyAndLock(theseTables, LockType.READ, this.session.getDatabase());
 					queryProxyManager.addProxy(qp);
+				} else if (Table.VIEW.equals(table.getTableType())){
+					//Get locks for the tables involved in executing the view.
+
+					List<Table> tables = ((TableView) table).getTables();
+
+					for (Table theseTables: tables){
+						if (!this.session.getDatabase().isTableLocal(theseTables.getSchema())){
+
+							QueryProxy qp = QueryProxy.getQueryProxyAndLock(theseTables, LockType.READ, this.session.getDatabase());
+							queryProxyManager.addProxy(qp);
+						}
+					}
 				}
 			}
 		}

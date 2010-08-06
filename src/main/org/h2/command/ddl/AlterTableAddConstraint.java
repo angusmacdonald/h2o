@@ -408,8 +408,8 @@ public class AlterTableAddConstraint extends SchemaCommand {
 	 * True if the table involved in the prepared statement is a regular table - i.e. not an H2O meta-data table.
 	 */
 	protected boolean isRegularTable() {
-
-		return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !isStartup() && !internalQuery && !tableName.startsWith(Constants.H2O_SCHEMA);
+		boolean isLocal = session.getDatabase().isTableLocal(getSchema());
+		return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !isStartup() && !internalQuery && !isLocal;
 
 	}
 

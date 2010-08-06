@@ -418,7 +418,8 @@ public class CreateReplica extends SchemaCommand {
 
 				TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getURL());
 
-				if (!tableName.startsWith("H2O_")){
+				
+				if (!db.isTableLocal(getSchema())){
 					TableManagerRemote tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, true);
 
 					if (tableManager == null){

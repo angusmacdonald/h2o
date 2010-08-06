@@ -8,6 +8,7 @@ package org.h2.command;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.Set;
 
 import org.h2.constant.ErrorCode;
 import org.h2.constant.SysProperties;
@@ -528,8 +529,9 @@ public abstract class Prepared{
 	 * True if the table involved in the prepared statement is a regular table - i.e. not an H2O meta-data table.
 	 */
 	protected boolean isRegularTable() {
+		Set<String> localSchema = session.getDatabase().getLocalSchema();
 		try {
-			return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery && !table.getName().startsWith(Constants.H2O_SCHEMA);
+			return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery && !localSchema.contains(table.getSchema().getName());
 		} catch(NullPointerException e){
 			//Shouldn't occur, ever. Something should have probably overridden this if it can't possibly know about a particular table.
 			ErrorHandling.hardError("isRegularTable() check failed."); return false;

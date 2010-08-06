@@ -223,8 +223,6 @@ public class ChordTests extends TestBase {
 			sas[1].executeUpdate("MIGRATE TABLEMANAGER testy");
 			fail("Didn't work.");
 		} catch (SQLException e) {
-			e.printStackTrace();
-
 		}
 	}
 

@@ -334,7 +334,8 @@ public class Update extends Prepared {
 	 */
 	@Override
 	protected boolean isRegularTable() {
-		return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery && !tableFilter.getTable().getName().startsWith(Constants.H2O_SCHEMA);
+		boolean isLocal = session.getDatabase().isTableLocal(tableFilter.getTable().getSchema());
+		return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery && !isLocal;
 	}
 
 }

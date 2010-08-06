@@ -238,7 +238,9 @@ public class CreateTable extends SchemaCommand {
 			 * 
 			 * #########################################################################
 			 */
-			if (Constants.IS_H2O && !db.isManagementDB() && !tableName.startsWith("H2O_") && !isStartup()){
+			
+			boolean localTable = db.isTableLocal(getSchema());
+			if (Constants.IS_H2O && !db.isManagementDB() && !localTable && !isStartup()){
 				ISystemTable systemTable = db.getSystemTable(); //db.getSystemSession()
 				ISystemTableReference systemTableReference = db.getSystemTableReference();
 
@@ -459,7 +461,8 @@ public class CreateTable extends SchemaCommand {
 	 */
 	@Override
 	protected boolean isRegularTable() {
-		return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery && !tableName.startsWith(Constants.H2O_SCHEMA);
+		boolean isLocal = session.getDatabase().isTableLocal(getSchema());
+		return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery && !isLocal;
 	}
 
 	/* (non-Javadoc)
@@ -482,7 +485,7 @@ public class CreateTable extends SchemaCommand {
 		 * #########################################################################
 		 */
 
-		if (Constants.IS_H2O && !db.getSystemTableReference().isSystemTableLocal() && !db.isManagementDB() && !tableName.startsWith("H2O_") && !isStartup()){
+		if (Constants.IS_H2O && !db.getSystemTableReference().isSystemTableLocal() && !db.isManagementDB() && !db.isTableLocal(getSchema()) && !isStartup()){
 
 			TableManagerRemote tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, false);
 
@@ -500,7 +503,7 @@ public class CreateTable extends SchemaCommand {
 		}
 
 		queryProxy = null;
-		if (Constants.IS_H2O && !tableName.startsWith("H2O_") && !db.isManagementDB() && !isStartup()){ //if it is startup then we don't want to create a table manager yet.
+		if (Constants.IS_H2O && !db.isTableLocal(getSchema()) && !db.isManagementDB() && !isStartup()){ //if it is startup then we don't want to create a table manager yet.
 
 			//TableInfo tableDetails, Database databas
 			TableInfo ti = new TableInfo(tableName, getSchema().getName(), 0l, 0, "TABLE", db.getURL());
