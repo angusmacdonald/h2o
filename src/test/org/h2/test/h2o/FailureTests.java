@@ -761,13 +761,146 @@ public class FailureTests extends TestBase {
 
 			assertTrue(assertTestTableExists(connections[0], 2));
 			assertTrue(assertTest2TableExists(connections[0], 2));
-			//assertTrue(assertTest3TableExists(connections[0], 2));
+			assertTrue(assertTest3TableExists(connections[0], 2));
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("Unexpected exception.");
+		}
+	}
+	
+
+	/**
+	 * Kills of a DB instance, then queries a table that requires the table manager to be moved. Then
+	 * restarts the old instance and checks that it can access the table through the new table manager.
+	 * 
+	 * 
+	 * TODO Also check that replication is working correctly...
+	 */
+	@Test
+	public void killOffTMqueryThenRestartMachine() throws InterruptedException{
+		String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
+		"INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
+		String create2 = "CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
+		"INSERT INTO TEST2 VALUES(4, 'Meh'); INSERT INTO TEST2 VALUES(5, 'Heh');";
+		String create3 = "CREATE TABLE TEST3(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
+		"INSERT INTO TEST3 VALUES(4, 'Clouds'); INSERT INTO TEST3 VALUES(5, 'Rainbows');";
+
+		try {
+			sleep(1000);
+			/*
+			 * Create test table.
+			 */
+			executeUpdateOnNthMachine(create1, 0);
+			executeUpdateOnNthMachine(create2, 1);
+
+			executeUpdateOnNthMachine(create3, 2);
+
+			assertTestTableExists(2);
+			assertMetaDataExists(connections[0], 3);
+
+			sleep(2000);
+
+			create1 = "CREATE REPLICA TEST;";
+			executeUpdateOnNthMachine(create1, 1);
+			create2 = "CREATE REPLICA TEST2";
+			executeUpdateOnNthMachine(create2, 0);
+			create3 = "CREATE REPLICA TEST3";
+			executeUpdateOnNthMachine(create3, 0);
+
+			sleep("Wait for create replica commands to execute.", 3000);
+
+			assertTrue(assertTestTableExists(connections[1], 2));
+
+			/*
+			 * Kill off the non-system table instances.
+			 */
+			killDatabase(2);
+			sleep("Killed off database.", 15000);
+			assertTrue(assertTest3TableExists(connections[0], 2));
+			
+			startDatabase(2);
+			sleep("Restarted old database.", 10000);
+			connections[2] = createConnectionToDatabase(fullDbName[2]);
+			assertTrue(assertTest3TableExists(connections[2], 2));
+			
+			//Query through restarted database.
 		} catch (SQLException e) {
 			e.printStackTrace();
 			fail("Unexpected exception.");
 		}
 	}
 
+	/**
+	 * Kills of a DB instance, then queries a table that requires the table manager to be moved. Then
+	 * restarts the old instance and checks that it can access the table through the new table manager.
+	 * 
+	 * Then the TM is killed off again (along with the whole database instance) and the table is queried again.
+	 */
+	@Test
+	public void killOffTMqueryThenRestartMachineTwice() throws InterruptedException{
+		String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
+		"INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
+		String create2 = "CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
+		"INSERT INTO TEST2 VALUES(4, 'Meh'); INSERT INTO TEST2 VALUES(5, 'Heh');";
+		String create3 = "CREATE TABLE TEST3(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
+		"INSERT INTO TEST3 VALUES(4, 'Clouds'); INSERT INTO TEST3 VALUES(5, 'Rainbows');";
+
+		try {
+			sleep(1000);
+			/*
+			 * Create test table.
+			 */
+			executeUpdateOnNthMachine(create1, 0);
+			executeUpdateOnNthMachine(create2, 1);
+
+			executeUpdateOnNthMachine(create3, 2);
+
+			assertTestTableExists(2);
+			assertMetaDataExists(connections[0], 3);
+
+			sleep(2000);
+
+			create1 = "CREATE REPLICA TEST;";
+			executeUpdateOnNthMachine(create1, 1);
+			create2 = "CREATE REPLICA TEST2";
+			executeUpdateOnNthMachine(create2, 0);
+			create3 = "CREATE REPLICA TEST3";
+			executeUpdateOnNthMachine(create3, 0);
+
+			sleep("Wait for create replica commands to execute.", 3000);
+
+			assertTrue(assertTestTableExists(connections[1], 2));
+
+			/*
+			 * Kill off the non-system table instances.
+			 */
+			killDatabase(2);
+			sleep("Killed off database.", 15000);
+			assertTrue(assertTest3TableExists(connections[0], 2));
+			
+			startDatabase(2);
+			sleep("Restarted old database.", 10000);
+			connections[2] = createConnectionToDatabase(fullDbName[2]);
+			assertTrue(assertTest3TableExists(connections[2], 2));
+			
+			killDatabase(0);
+			sleep("Killed off database.", 5000);
+			assertTrue(assertTest3TableExists(connections[2], 2));
+			
+			startDatabase(0);
+			sleep("Restarted old database.", 5000);
+			connections[0] = createConnectionToDatabase(fullDbName[0]);
+			assertTrue(assertTest3TableExists(connections[0], 2));
+			
+			
+			//Query through restarted database.
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("Unexpected exception.");
+		}
+	}
+
+	
 	/*
 	 * ###########################################################
 	 * ###########################################################

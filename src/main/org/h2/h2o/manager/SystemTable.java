@@ -98,7 +98,6 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 		try {
 			success = inMemory.addTableInformation(tableManager, tableDetails,replicaLocations);
 			if (!success) return false;
-			ErrorHandling.errorNoEvent("Moving onto persisted version...");
 			success = persisted.addTableInformation(tableManager, tableDetails, replicaLocations);
 		} catch (SQLException e) {
 			e.printStackTrace();
