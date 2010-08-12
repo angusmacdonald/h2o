@@ -190,10 +190,12 @@ public class MetaDataReplicaManager {
 		}
 	}
 	public boolean addReplicaLocation(DatabaseInstanceWrapper newReplicaLocation, boolean isSystemTable) throws RemoteException{
+		if (newReplicaLocation.getURL().equals(db.getURL())) return false; //can't replicate to the local machine
+		
 		return addReplicaLocation(newReplicaLocation, isSystemTable, 0);
 	}
 	
-	public boolean addReplicaLocation(DatabaseInstanceWrapper newReplicaLocation, boolean isSystemTable, int previousCalls) throws RemoteException{
+	public boolean addReplicaLocation(DatabaseInstanceWrapper newReplicaLocation, boolean isSystemTable, int numberOfPreviousAttempts) throws RemoteException{
 		ReplicaManager replicaManager = (isSystemTable)? systemTableReplicas: tableManagerReplicas;
 		int managerStateReplicationFactor = (isSystemTable)? systemTableReplicationFactor: tableManagerReplicationFactor;
 
@@ -246,9 +248,9 @@ public class MetaDataReplicaManager {
 					 * Usually thrown if the CREATE REPLICA command couldn't connect back to this database. This often happens when the database
 					 * has only recently started and hasn't fully initialized, so this code attempts the operation again.
 					 */
-					if (previousCalls < 3){
+					if (numberOfPreviousAttempts < 3){
 						try {Thread.sleep(10); } catch (InterruptedException e1) {}
-						return addReplicaLocation(newReplicaLocation, isSystemTable, previousCalls+1);
+						return addReplicaLocation(newReplicaLocation, isSystemTable, numberOfPreviousAttempts+1);
 					} else {
 						ErrorHandling.errorNoEvent(localDatabase.getURL() + " failed to replicate " + ((isSystemTable)? "System Table": "Table Manager") +  " state onto: " + newReplicaLocation.getURL().getDbLocation() + ".");
 					}

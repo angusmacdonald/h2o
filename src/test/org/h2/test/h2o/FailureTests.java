@@ -648,7 +648,13 @@ public class FailureTests extends TestBase {
 		}
 	}
 	
-	
+	/**
+	 * Kill off two database instances holding table managers and try to access the tables. There are replicas
+	 * of these tables on the remaining active machine, but the third table cannot be accessed because its table manager
+	 * state wasn't sufficiently replicated.
+	 * @throws InterruptedException
+	 */
+	@Test
 	public void killOffNonSTMachines() throws InterruptedException{
 		String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
 		"INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
@@ -688,19 +694,79 @@ public class FailureTests extends TestBase {
 			 */
 			killDatabase(1);
 			killDatabase(2);
-			sleep("Killed off System Table database.", 15000);
-
-			assertTrue(assertTestTableExists(connections[1], 2));
+			sleep("Killed off two databases.", 15000);
 
 			assertTrue(assertTestTableExists(connections[0], 2));
 			assertTrue(assertTest2TableExists(connections[0], 2));
-			assertTrue(assertTest3TableExists(connections[0], 2));
+			
+			try {
+				assertTrue(assertTest3TableExists(connections[0], 2));
+			} catch (SQLException e1){
+				//expected.
+			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 			fail("Unexpected exception.");
 		}
 	}
 
+	
+	/**
+	 * Same as {@link #killOffNonSTMachines()} but this time the third table should be accessible. There is a gap between killing
+	 * off machines that should allow it to re-replicate its state.
+	 * @throws InterruptedException
+	 */
+	@Test
+	public void killOffNonSTMachines2() throws InterruptedException{
+		String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
+		"INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
+		String create2 = "CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
+		"INSERT INTO TEST2 VALUES(4, 'Meh'); INSERT INTO TEST2 VALUES(5, 'Heh');";
+		String create3 = "CREATE TABLE TEST3(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
+		"INSERT INTO TEST3 VALUES(4, 'Clouds'); INSERT INTO TEST3 VALUES(5, 'Rainbows');";
+
+		try {
+			sleep(1000);
+			/*
+			 * Create test table.
+			 */
+			executeUpdateOnNthMachine(create1, 0);
+			executeUpdateOnNthMachine(create2, 1);
+
+			executeUpdateOnNthMachine(create3, 2);
+
+			assertTestTableExists(2);
+			assertMetaDataExists(connections[0], 3);
+
+			sleep(2000);
+
+			create1 = "CREATE REPLICA TEST;";
+			executeUpdateOnNthMachine(create1, 1);
+			create2 = "CREATE REPLICA TEST2";
+			executeUpdateOnNthMachine(create2, 0);
+			create3 = "CREATE REPLICA TEST3";
+			executeUpdateOnNthMachine(create3, 0);
+
+			sleep("Wait for create replica commands to execute.", 3000);
+
+			assertTrue(assertTestTableExists(connections[1], 2));
+
+			/*
+			 * Kill off the non-system table instances.
+			 */
+			killDatabase(2);
+			sleep("Waiting to kill off second database.", 10000);
+			killDatabase(1);
+			sleep("Killed off two databases.", 15000);
+
+			assertTrue(assertTestTableExists(connections[0], 2));
+			assertTrue(assertTest2TableExists(connections[0], 2));
+			//assertTrue(assertTest3TableExists(connections[0], 2));
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("Unexpected exception.");
+		}
+	}
 
 	/*
 	 * ###########################################################

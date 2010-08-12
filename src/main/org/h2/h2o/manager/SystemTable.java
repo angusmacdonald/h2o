@@ -29,6 +29,7 @@ import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.TableInfo;
 
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
 
 /**
@@ -97,6 +98,7 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 		try {
 			success = inMemory.addTableInformation(tableManager, tableDetails,replicaLocations);
 			if (!success) return false;
+			ErrorHandling.errorNoEvent("Moving onto persisted version...");
 			success = persisted.addTableInformation(tableManager, tableDetails, replicaLocations);
 		} catch (SQLException e) {
 			e.printStackTrace();

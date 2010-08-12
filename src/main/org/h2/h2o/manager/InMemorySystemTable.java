@@ -124,6 +124,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 		TableManagerWrapper tableManagerWrapper = new TableManagerWrapper(basicTableInfo, tableManager, tableDetails.getURL());
 
 		if (tableManagers.containsKey(basicTableInfo)){
+			ErrorHandling.errorNoEvent("Table " + tableDetails + " already exists.");
 			return false; //this table already exists.
 		}
 
@@ -719,13 +720,13 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 		Set<DatabaseURL> replicas = tmReplicaLocations.get(table.getGenericTableInfo());
 
 		if (replicas == null){
-			throw new RemoteException("Tried to remove table manager replica state for a table which wasn't found " + table);
+			ErrorHandling.errorNoEvent("Failed to remove Table Manager Replica state for a replica because it wasn't recorded. Table " + table + ".");
 		}
 
 		boolean removed = replicas.remove(replicaLocation);
 
 		if (!removed){
-			throw new RemoteException("Tried to remove table manager replica state for a replica which wasn't found " + table + " at " + replicaLocation);
+			ErrorHandling.errorNoEvent("Failed to remove Table Manager Replica state for a replica because it wasn't recorded. Table " + table + " at " + replicaLocation);
 		}
 
 	}
