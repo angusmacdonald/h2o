@@ -109,7 +109,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 			}
 		}
 
-		super.updateLocatorFiles();
+		super.updateLocatorFiles(true);
 	}
 
 	//	public DatabaseURL getTableManagerLocation(String tableName, String schemaName) throws SQLException{
@@ -743,14 +743,6 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 	public boolean addStateReplicaLocation(
 			DatabaseInstanceWrapper databaseWrapper) throws RemoteException {
 		boolean added = super.addStateReplicaLocation(databaseWrapper);
-
-		if (added){
-			try {
-				updateLocatorFiles();
-			} catch (Exception e) {
-				throw new RemoteException(e.getMessage());
-			}
-		}
 
 		return added;
 	}

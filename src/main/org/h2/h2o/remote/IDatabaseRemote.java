@@ -108,7 +108,8 @@ public interface IDatabaseRemote {
 	
 	/**
 	 * Update the location of the System Table on the node which is responsible for the #(SystemTable) lookup.
+	 * @return true if successful in setting the location
 	 * @throws RemoteException
 	 */
-	public void setSystemTableLocationAsLocal() throws RemoteException;
+	public boolean setSystemTableLocationAsLocal() throws RemoteException;
 }

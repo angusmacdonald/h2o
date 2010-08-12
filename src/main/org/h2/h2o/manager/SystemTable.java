@@ -386,7 +386,6 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 	@Override
 	public Map<TableInfo, DatabaseURL> getPrimaryLocations()
 			throws RemoteException, MovedException {
-		preMethodTest();
 		return inMemory.getPrimaryLocations();
 	}
 

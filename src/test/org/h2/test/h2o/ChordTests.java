@@ -262,7 +262,6 @@ public class ChordTests extends TestBase {
 
 	/**
 	 * Tests that when the System Table is migrated another database instance is able to connect to the new manager without any manual intervention.
-	 * 
 	 */
 	@Test
 	public void SystemTableMigration() throws InterruptedException {

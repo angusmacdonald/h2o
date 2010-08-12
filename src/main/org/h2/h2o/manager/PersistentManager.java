@@ -556,27 +556,6 @@ public abstract class PersistentManager {
 		return metaDataReplicaManager.getTableID(ti, isSystemTable);
 	}
 	
-	/**
-	 * 
-	 */
-	protected void updateLocatorFiles() throws Exception{
-		LocalH2OProperties persistedInstanceInformation = new LocalH2OProperties(db.getURL());
-		persistedInstanceInformation.loadProperties();
-
-		String descriptorLocation = persistedInstanceInformation.getProperty("descriptor");
-		String databaseName = persistedInstanceInformation.getProperty("databaseName");
-
-		if (descriptorLocation == null || databaseName == null){
-			throw new Exception("The location of the database descriptor must be specifed (it was not found). The database will now terminate.");
-		}
-		H2OLocatorInterface dl = new H2OLocatorInterface(databaseName, descriptorLocation);
-
-		boolean successful = dl.setLocations(metaDataReplicaManager.getReplicaLocations(isSystemTable));
-
-		if (!successful){
-			ErrorHandling.errorNoEvent("Didn't successfully write new System Replica locations to a majority of locator servers.");
-		}
-	}
 
 
 	public void removeConnectionInformation(DatabaseInstanceRemote databaseInstance) throws RemoteException, MovedException {
@@ -634,6 +613,10 @@ public abstract class PersistentManager {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}	
+	}
+
+	public void updateLocatorFiles(boolean isSystemTable) throws Exception {
+		metaDataReplicaManager.updateLocatorFiles(isSystemTable);
 	}
 
 

@@ -669,7 +669,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				this.predecessor = chordNode.getPredecessor();
 				return;
 			}
-
 			this.predecessor.getRemote().getPredecessor();
 			return; //the old predecessor has not failed, so nothing needs to be recovered.
 		} catch (RemoteException e1) {
@@ -698,7 +697,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		boolean systemTableAlive = true;
 		ISystemTable newSystemTable = null;
 		if (systemTableWasOnPredecessor){
-
 			systemTableAlive = isSystemTableActive();
 
 			if (!systemTableAlive){
@@ -1114,10 +1112,16 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		return actualSystemTableLocation;
 	}
 
-	public void setSystemTableLocationAsLocal() throws RemoteException{
+	public boolean setSystemTableLocationAsLocal() throws RemoteException{
 
 		IChordRemoteReference lookupLocation = null;
+		
+		try {
 		lookupLocation = lookupSystemTableNodeLocation();
+		} catch (Exception e){
+			ErrorHandling.errorNoEvent("Couldn't find the #(SM) location.");
+			return false;
+		}
 		systemTableRef.setLookupLocation(lookupLocation);
 
 		String lookupHostname = lookupLocation.getRemote().getAddress().getHostName();
@@ -1131,7 +1135,10 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			this.systemTableRef.setSystemTableLocation(chordNode.getProxy(), localMachineLocation);
 		} catch (NotBoundException e) {
 			e.printStackTrace();
+			return false;
 		}
+		
+		return true;
 	}
 	/*
 	 * (non-Javadoc)

@@ -79,7 +79,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	public static final String CONNECTIONS = "H2O_TM_CONNECTION";
 
 	public static final String TABLEMANAGERSTATE = "H2O_TM_TABLEMANAGERS";
-	
+
 	/**
 	 * The name of the table that this Table Manager is responsible for.
 	 */
@@ -716,7 +716,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 		List<DatabaseInstanceWrapper> replicaLocations = new LinkedList<DatabaseInstanceWrapper>();
 		while (rs.next()){
-			
+
 			DatabaseURL dbURL = new DatabaseURL(rs.currentRow()[0].getString(), rs.currentRow()[1].getString(), 
 					rs.currentRow()[3].getInt(), rs.currentRow()[2].getString(), false, rs.currentRow()[4].getInt());
 
@@ -732,7 +732,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 					alive = false;
 				}
 			}
-			
+
 			replicaLocation.setActive(alive); //even dead replicas must be recorded.
 			replicaLocations.add(replicaLocation);
 
@@ -778,6 +778,26 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 			throw new StartupException("Failed to persist table manager meta-data to disk: " + e.getMessage());
 		}
 
+	}
+
+	public void persistReplicaInformation() {
+		for (DatabaseInstanceWrapper dir: replicaManager.getActiveReplicas()){
+			TableInfo ti = new TableInfo(getTableInfo());
+			ti.setURL(dir.getURL());
+			try {
+				super.addConnectionInformation(ti.getURL(), true);
+				super.addReplicaInformation(ti);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (MovedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 
 }

@@ -49,8 +49,8 @@ import org.junit.runners.Suite;
 	ChordTests.class,
 	FailureTests.class
 })
+
 public class AllTests {
 	//The above annotations do all the work.
-	
 	public static final String TEST_DESCRIPTOR_FILE = "service" + File.separator + "testDB.h2o";
 }

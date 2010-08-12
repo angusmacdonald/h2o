@@ -215,7 +215,7 @@ public class SystemTableReference implements ISystemTableReference {
 			systemTable = (SystemTableRemote)registry.lookup(SCHEMA_MANAGER);
 			this.systemTableNode = systemTable.getChordReference();
 		} catch (Exception e) {
-			throw new SQLException("Unable to find System Table.");
+			throw new SQLException("Unable to find System Table. Attempted to find it through the registry at " + systemTableLocationURL);
 		}
 
 		return systemTable;
@@ -391,6 +391,8 @@ public class SystemTableReference implements ISystemTableReference {
 			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "System Table officially migrated to " + db.getURL().getDbLocation() + ".");
 
 			this.systemTable = newSystemTable;
+			db.getMetaDataReplicaManager().replicateMetaDataIfPossible(this, true); // replicate system table state.
+			
 		}
 
 		/*
@@ -408,40 +410,57 @@ public class SystemTableReference implements ISystemTableReference {
 			ErrorHandling.exceptionError(e, "System Table migration failed.");
 		}
 
-//		try {
-//			db.getRemoteInterface().setSystemTableLocationAsLocal();
-//		} catch (RemoteException e1) {
-//			//May fail.
-//		}
-//		
+		//		try {
+		//			db.getRemoteInterface().setSystemTableLocationAsLocal();
+		//		} catch (RemoteException e1) {
+		//			//May fail.
+		//		}
+		//		
 		/*
 		 * Replicate state to new successor.
 		 */
 
-		try {
+//		try {
+//
+//			IChordRemoteReference successor = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor();
+//			IChordRemoteReference localNode = db.getChordInterface().getLocalChordReference();
+//			//If the successor to this node is not itself (i.e. if this network has more than one node in it).
+//			if ( !successor.equals( localNode.getKey()) && !successor.equals(oldSystemTableLocation)){
+//
+//				String hostname = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getHostName();
+//				int port = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getPort();
+//				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting System Table replication thread on : " + db.getURL().getDbLocation() + ".");
+//
+//				int sleepTime = Integer.parseInt(db.getDatabaseSettings().get("REPLICATOR_SLEEP_TIME"));
+//
+//				SystemTableReplication newThread = new SystemTableReplication(hostname, port, this, this.db.getChordInterface(), sleepTime);
+//				newThread.start();
+//			} else {
+//				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "There is only one node in the network. There is no-where else to replicate the System Table.");
+//			}
+//		} catch (Exception e) {
+//			ErrorHandling.errorNoEvent("Failed to create replica for new System Table on its successor.");
+//		}
 
-			IChordRemoteReference successor = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor();
-			IChordRemoteReference localNode = db.getChordInterface().getLocalChordReference();
-			//If the successor to this node is not itself (i.e. if this network has more than one node in it).
-			if ( !successor.equals( localNode.getKey()) && !successor.equals(oldSystemTableLocation)){
-
-				String hostname = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getHostName();
-				int port = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getPort();
-				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting System Table replication thread on : " + db.getURL().getDbLocation() + ".");
-
-				int sleepTime = Integer.parseInt(db.getDatabaseSettings().get("REPLICATOR_SLEEP_TIME"));
-
-				SystemTableReplication newThread = new SystemTableReplication(hostname, port, this, this.db.getChordInterface(), sleepTime);
-				newThread.start();
-			} else {
-				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "There is only one node in the network. There is no-where else to replicate the System Table.");
+		boolean successful = false;
+		while (!successful){
+			try {
+				successful = db.getRemoteInterface().setSystemTableLocationAsLocal();
+			} catch (RemoteException e) {
+				ErrorHandling.errorNoEvent("Failed to set the location of the System Table on the #(SM) machine.");
 			}
-		} catch (Exception e) {
-			ErrorHandling.errorNoEvent("Failed to create replica for new System Table on its successor.");
 		}
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Finished building new System Table on " + db.getURL().getDbLocation() + ".");
+		try {
+			systemTable.checkTableManagerAccessibility();
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		} catch (MovedException e) {
+			e.printStackTrace();
+		}
 		
+		
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Finished building new System Table on " + db.getURL().getDbLocation() + ".");
 		return systemTable;
 	}
 
@@ -568,7 +587,7 @@ public class SystemTableReference implements ISystemTableReference {
 	}
 
 	private TableManagerRemote makeAttemptToFindSystemTable(TableInfo tableInfo, boolean alreadyCalled) throws SQLException {
-		if (alreadyCalled) throw new SQLException("Failed to find System Table. Query has been rolled back.");
+		if (alreadyCalled) throw new SQLException("Failed to find System Table. Query has been rolled back [location of request: " + this.db.getURL() + ", ST location: " + this.systemTableLocationURL + "].");
 
 		/*
 		 * System Table no longer exists. Try to find new location.
@@ -727,9 +746,21 @@ public class SystemTableReference implements ISystemTableReference {
 		systemTable.removeAllTableInformation();
 	}
 
-
 	public Map<TableInfo, TableManager> getLocalTableManagers() {
 		return localTableManagers;
+	}
+
+	@Override
+	public void pingHashLocation() {
+		if (!isLocal){
+			ErrorHandling.hardError("Shouldn't be called when this isn't the System Table.");
+		}
+
+		try {
+			db.getRemoteInterface().setSystemTableLocationAsLocal();
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
 	}
 
 }

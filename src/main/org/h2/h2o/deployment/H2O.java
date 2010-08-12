@@ -31,7 +31,6 @@ import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LocalH2OProperties;
-import org.h2.server.web.ConnectionInfo;
 import org.h2.tools.Server;
 import org.h2.util.FileUtils;
 import org.h2.util.NetUtils;

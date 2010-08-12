@@ -27,9 +27,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.h2.engine.Constants;
 import org.h2.h2o.manager.PersistentSystemTable;
@@ -106,14 +108,14 @@ public class FailureTests extends TestBase {
 
 		org.h2.Driver.load();
 
-		getFullDatabaseName();
+		fullDbName = getFullDatabaseName();
 
 		for (String location: fullDbName){
-			LocalH2OProperties knownHosts = new LocalH2OProperties(DatabaseURL.parseURL(location));
-			knownHosts.createNewFile();
-			knownHosts.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
-			knownHosts.setProperty("databaseName", "testDB");
-			knownHosts.saveAndClose();
+			LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(location));
+			properties.createNewFile();
+			properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
+			properties.setProperty("databaseName", "testDB");
+			properties.saveAndClose();
 		}
 
 		ls = new LocatorServer(29999, "junitLocator");
@@ -124,7 +126,7 @@ public class FailureTests extends TestBase {
 
 		sleep(2000);
 		createConnectionsToDatabases();
-		
+
 	}
 
 	/**
@@ -147,7 +149,7 @@ public class FailureTests extends TestBase {
 		while (!ls.isFinished()){};
 	}
 
-	
+
 	/*
 	 * ###########################################################
 	 * ###########################################################
@@ -539,7 +541,7 @@ public class FailureTests extends TestBase {
 			startDatabase(0);
 			createConnectionsToDatabase(0);
 			//Database 0 tries to replicate to database 2, but database 2 is killed off before this can happen.
-			sleep("About to kill off third database instance.", 1000); 
+			sleep("About to kill off third database instance.", 2000); 
 			killDatabase(2);
 			sleep("About to test accessibility of test tables.", 1000);
 
@@ -551,7 +553,7 @@ public class FailureTests extends TestBase {
 			fail("Unexpected exception.");
 		}
 	}
-	
+
 	/**
 	 * Creates tables on every machine.
 	 * 
@@ -598,33 +600,108 @@ public class FailureTests extends TestBase {
 			executeUpdateOnNthMachine(create1, 2);
 			create2 = "CREATE REPLICA TEST2";
 			executeUpdateOnNthMachine(create2, 0);
+			executeUpdateOnNthMachine(create2, 2);
 			create3 = "CREATE REPLICA TEST3";
 			executeUpdateOnNthMachine(create3, 0);
+			executeUpdateOnNthMachine(create3, 1);
 
 			sleep("Waiting for create replica commands to execute.", 3000);
 
 			assertTrue(assertTestTableExists(connections[1], 2));
 
+			Set<String> activeConnections = new HashSet<String>();
+			for (Connection c: connections){
+				activeConnections.add(c.getMetaData().getURL());
+			}
+
 			/*
 			 * Kill off the System Table process. 
 			 */
-			killDatabase(findSystemTableInstance());
+			String st = findSystemTableInstance();
+			activeConnections.remove(st);
+			killDatabase(st);
 
 			sleep("Killed off System Table database.", 15000);
 
-			killDatabase(findSystemTableInstance());
+			st = findSystemTableInstance();
+			activeConnections.remove(st);
+			killDatabase(st);
 
 			sleep("Killed of another System Table database.", 15000);
-			
 
-			assertTrue(assertTestTableExists(connections[1], 2));
-			assertTrue(assertTest2TableExists(connections[1], 2));
-			assertTrue(assertTest3TableExists(connections[1], 2));
+			Connection activeConnection = null;
+			for (Connection c: connections){
+				if (activeConnections.contains(c.getMetaData().getURL())){
+					activeConnection = c;
+					break;
+				}
+			}
+			
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Active connection to use: " + activeConnection.getMetaData().getURL());
+			
+		//	assertTrue(assertTestTableExists(activeConnection, 2));
+			assertTrue(assertTest2TableExists(activeConnection, 2));
+			assertTrue(assertTest3TableExists(activeConnection, 2));
 		} catch (SQLException e) {
 			e.printStackTrace();
 			fail("Unexpected exception.");
 		}
 	}
+	
+	
+	public void killOffNonSTMachines() throws InterruptedException{
+		String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
+		"INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
+		String create2 = "CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
+		"INSERT INTO TEST2 VALUES(4, 'Meh'); INSERT INTO TEST2 VALUES(5, 'Heh');";
+		String create3 = "CREATE TABLE TEST3(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
+		"INSERT INTO TEST3 VALUES(4, 'Clouds'); INSERT INTO TEST3 VALUES(5, 'Rainbows');";
+
+		try {
+			sleep(1000);
+			/*
+			 * Create test table.
+			 */
+			executeUpdateOnNthMachine(create1, 0);
+			executeUpdateOnNthMachine(create2, 1);
+
+			executeUpdateOnNthMachine(create3, 2);
+
+			assertTestTableExists(2);
+			assertMetaDataExists(connections[0], 3);
+
+			sleep(2000);
+
+			create1 = "CREATE REPLICA TEST;";
+			executeUpdateOnNthMachine(create1, 1);
+			create2 = "CREATE REPLICA TEST2";
+			executeUpdateOnNthMachine(create2, 0);
+			create3 = "CREATE REPLICA TEST3";
+			executeUpdateOnNthMachine(create3, 0);
+
+			sleep("Wait for create replica commands to execute.", 3000);
+
+			assertTrue(assertTestTableExists(connections[1], 2));
+
+			/*
+			 * Kill off the non-system table instances.
+			 */
+			killDatabase(1);
+			killDatabase(2);
+			sleep("Killed off System Table database.", 15000);
+
+			assertTrue(assertTestTableExists(connections[1], 2));
+
+			assertTrue(assertTestTableExists(connections[0], 2));
+			assertTrue(assertTest2TableExists(connections[0], 2));
+			assertTrue(assertTest3TableExists(connections[0], 2));
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("Unexpected exception.");
+		}
+	}
+
+
 	/*
 	 * ###########################################################
 	 * ###########################################################
@@ -712,8 +789,6 @@ public class FailureTests extends TestBase {
 					e.printStackTrace();
 				}
 			}
-
-
 		}
 
 		return null; //none found.
@@ -940,7 +1015,7 @@ public class FailureTests extends TestBase {
 
 		return true;
 	}
-	
+
 	/**
 	 * Delete all of the database files created in these tests
 	 */
@@ -954,11 +1029,7 @@ public class FailureTests extends TestBase {
 		}
 	}
 
-
-	/**
-	 * Start all the databases specified in the LocatorDatabaseTests.dbs string array.
-	 */
-	private void getFullDatabaseName() {
+	private String[] getFullDatabaseName() {
 		processes = new HashMap<String, Process>();
 
 		fullDbName = new String[dbs.length];
@@ -967,6 +1038,8 @@ public class FailureTests extends TestBase {
 			fullDbName[i] = "jdbc:h2:sm:tcp://localhost:" + port + "/db_data/multiprocesstests/" + dbs[i];
 			fullDbName[i] = DatabaseURL.parseURL(fullDbName[i]).getURL();
 		}
+		
+		return fullDbName;
 	}
 
 	/**

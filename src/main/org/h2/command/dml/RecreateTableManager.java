@@ -73,10 +73,11 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
 		TableInfo ti = new TableInfo(tableName, schemaName, db.getURL());
 		TableManager tm = null;
 
-		//TableManager dm = TableManager.createTableManagerFromPersistentStore(ti.getSchemaName(), ti.getSchemaName());
 		try {
 			tm = new TableManager(ti, db);
 			tm.recreateReplicaManagerState(oldPrimaryLocation);
+			tm.persistToCompleteStartup(ti);
+			tm.persistReplicaInformation();
 		} catch (SQLException e) {
 
 			e.printStackTrace();

@@ -238,6 +238,11 @@ public class QueryProxy implements Serializable{
 				if (systemTable == null){
 					//reInstantiateSystemTable
 					systemTable = db.getRemoteInterface().reinstantiateSystemTable();
+					
+					if (systemTable == null) {
+						systemTableActive = false;
+						throw new SQLException("The System Table could not be re-instantiated.");
+					}
 				}
 
 				if (systemTableActive){

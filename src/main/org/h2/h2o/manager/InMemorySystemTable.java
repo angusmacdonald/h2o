@@ -28,18 +28,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import org.h2.command.Command;
-import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.manager.monitorthreads.TableManagerLivenessCheckerThread;
 import org.h2.h2o.util.DatabaseURL;
+import org.h2.h2o.util.PrettyPrinter;
 import org.h2.h2o.util.TableInfo;
 import org.h2.h2o.util.filter.CollectionFilter;
 import org.h2.h2o.util.filter.Predicate;
-import org.h2.result.LocalResult;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -315,7 +313,27 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 			//Try to create the data manager at whereever it is meant to be. It may already be active.
 			// RECREATE TABLEMANAGER <tableName>
 			try {
-				this.getDatabaseInstance(tableManagerWrapper.getURL()).executeUpdate("RECREATE TABLEMANAGER " + ti.getFullTableName() + " FROM " + ti.getURL().sanitizedLocation(), false);
+				DatabaseInstanceRemote dir = this.getDatabaseInstance(tableManagerWrapper.getURL());
+				DatabaseURL url = tableManagerWrapper.getURL();
+				ti = tableManagerWrapper.getTableInfo();
+				if (dir != null){
+					dir.executeUpdate("RECREATE TABLEMANAGER " + ti.getFullTableName() + " FROM '" + url.sanitizedLocation() +"';", false);
+				} else {
+					//Remove location we know isn't active, then try to instantiate the table manager elsewhere.
+					Set<DatabaseURL> replicaLocations = this.tmReplicaLocations.get(tableManagerWrapper.getTableInfo());
+					replicaLocations.remove(tableManagerWrapper.getURL());
+					
+					for (DatabaseURL replicaLocation: replicaLocations){
+						System.err.println("Attempting to recreate table manager for " + tableManagerWrapper.getTableInfo() + " on " + replicaLocation);
+						
+						dir = this.getDatabaseInstance(replicaLocation);
+						if (dir != null){
+							System.err.println("recreating the table " + tableManagerWrapper.getTableInfo());
+							
+							dir.executeUpdate("RECREATE TABLEMANAGER " + ti.getFullTableName() + " FROM '" + url.sanitizedLocation() + "';", false);
+						}
+					}
+				}
 			} catch (SQLException e) {
 				e.printStackTrace();
 			} catch (MovedException e) {
@@ -373,17 +391,6 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	public int getNewTableSetNumber() throws RemoteException {
 		return tableSetNumber++;
 	}
-
-	//	/* (non-Javadoc)
-	//	 * @see org.h2.h2o.ISystemTable#getNumberofReplicas(java.lang.String, java.lang.String)
-	//	 */
-	//	@Override
-	//	public int getNumberofReplicas(String tableName, String schemaName) throws RemoteException {
-	//		Set<TableInfo> replicas = replicaLocations.get(schemaName + "." + tableName);
-	//
-	//		if (replicas == null) 	return 0;
-	//		else					return replicas.size();
-	//	}
 
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISystemTable#buildSystemTableState(org.h2.h2o.manager.ISystemTable)
@@ -461,7 +468,6 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	 */
 	public boolean checkTableManagerAccessibility(){
 		boolean anyTableManagerRecreated = false;
-
 		if (started) {
 
 			//Note: done this way to avoid concurrent modification exceptions when a table manager entry is updated.
@@ -506,20 +512,24 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	}
 
 	public synchronized boolean recreateTableManagerIfNotAlive(TableManagerWrapper tableManagerWrapper) {
-
 		if (isAlive(tableManagerWrapper.getTableManager())) return false; //check that it isn't already active.
 
 		for (DatabaseURL replicaLocation: tmReplicaLocations.get(tableManagerWrapper.getTableInfo())){
-
 			try{
 				DatabaseInstanceWrapper instance = databasesInSystem.get(replicaLocation);
 
-				boolean success = instance.getDatabaseInstance().recreateTableManager(tableManagerWrapper.getTableInfo(), tableManagerWrapper.getURL());
+				if (instance != null && instance.getDatabaseInstance() != null){
+					boolean success = instance.getDatabaseInstance().recreateTableManager(tableManagerWrapper.getTableInfo(), tableManagerWrapper.getURL());
 
-				if (success) {
-					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Table Manager for " + tableManagerWrapper.getTableInfo() + " recreated on " + instance.getURL());
+					if (success) {
+						Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Table Manager for " + tableManagerWrapper.getTableInfo() + " recreated on " + instance.getURL());
 
-					return true;
+						return true;
+					}
+				} else {
+					if (instance != null){
+						instance.setActive(false);
+					}
 				}
 			} catch (RemoteException e) {
 				//May fail on some nodes.
@@ -529,7 +539,8 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 		}
 
 		ErrorHandling.errorNoEvent("Failed to recreate Table Manager for " + tableManagerWrapper.getTableInfo() + ". There were " + tmReplicaLocations.get(tableManagerWrapper.getTableInfo()).size() + 
-		" replicas available (including the failed machine).");
+		" replicas available (including the failed machine) at " + PrettyPrinter.printSet(tmReplicaLocations.get(tableManagerWrapper.getTableInfo() ) ) + "."
+		);
 		return false;
 	}
 
@@ -563,28 +574,6 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	@Override
 	public void buildSystemTableState() throws RemoteException {
 		// TODO Auto-generated method stub
-	}
-
-
-	/**
-	 * Takes in an SQL count(*) query, which should return a single result, which is a single integer, indicating
-	 * the number of occurences of a given entry. If the number of entries is greater than zero true is returned; otherwise false.
-	 * @param query	SQL count query.
-	 * @return
-	 * @throws SQLException
-	 */
-	private boolean countCheck(String query) throws SQLException{
-		Parser queryParser = new Parser(database.getSystemSession(), true);
-
-		Command sqlQuery = queryParser.prepareCommand(query);
-
-		LocalResult result = sqlQuery.executeQueryLocal(0);
-		if (result.next()){
-			int count = result.currentRow()[0].getInt();
-
-			return (count>0);
-		}
-		return false;
 	}
 
 	/* (non-Javadoc)

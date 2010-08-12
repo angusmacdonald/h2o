@@ -215,9 +215,16 @@ public interface ISystemTableReference {
 	 */
 	public boolean addTableInformation(TableManagerRemote tableManagerRemote, TableInfo ti, Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException, SQLException;
 
+	/**
+	 * Ping the location of the #(SM) lookup to inform it of the current location of the System Table. This must be done
+	 * repeatedly because the #(SM) machine may change.
+	 */
+	public void pingHashLocation();
+	
 	public void removeTableInformation(TableInfo tableInfo) throws RemoteException, MovedException;
 
 	public void removeAllTableInformation() throws RemoteException, MovedException;
 	
 	public Map<TableInfo, TableManager> getLocalTableManagers();
+
 }

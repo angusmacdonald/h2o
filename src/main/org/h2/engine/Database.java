@@ -302,30 +302,13 @@ public class Database implements DataHandler {
 				TraceSystem.DEFAULT_TRACE_LEVEL_SYSTEM_OUT);
 		this.cacheType = StringUtils.toUpperEnglish(ci.removeProperty("CACHE_TYPE", CacheLRU.TYPE_NAME));
 		openDatabase(traceLevelFile, traceLevelSystemOut, closeAtVmShutdown, ci, localMachineLocation);
-		if (Constants.IS_H2O && !isManagementDB()) Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, " Completed startup on " + ci.getOriginalURL());
-	}
 
-	private void setDiagnosticLevel(DatabaseURL localMachineLocation) {
-		LocalH2OProperties databaseProperties = new LocalH2OProperties(localMachineLocation);
-		databaseProperties.loadProperties();
-
-		String diagnosticLevel = databaseProperties.getProperty("diagnosticLevel");
-
-		Diagnostic.setLevel((DiagnosticLevel.FULL));
-
-		if (diagnosticLevel != null){
-
-			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Setting diagnostic level to " + diagnosticLevel);
-
-			if (diagnosticLevel.equals("FINAL")) Diagnostic.setLevel(DiagnosticLevel.FINAL);
-			else if (diagnosticLevel.equals("NONE")) Diagnostic.setLevel(DiagnosticLevel.NONE);
-			else if (diagnosticLevel.equals("FULL")) Diagnostic.setLevel(DiagnosticLevel.FULL);
+		if (Constants.IS_H2O && !isManagementDB()) {
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, " Completed startup on " + ci.getOriginalURL());
+			if (!Constants.IS_NON_SM_TEST) 
+				metaDataReplicationThread.start();
 		}
-
-		Diagnostic.setTimestampFlag(true);
-		Diagnostic.setTimestampFormat(new SimpleDateFormat("HH:mm:ss:SSS "));
-		Diagnostic.setTimestampDelimiterFlag(false);
-		ErrorHandling.setTimestampFlag(false);
+		running = true;
 	}
 
 	private void openDatabase(int traceLevelFile, int traceLevelSystemOut, boolean closeAtVmShutdown, ConnectionInfo ci, DatabaseURL localMachineLocation) throws SQLException {
@@ -837,8 +820,6 @@ public class Database implements DataHandler {
 			}
 
 			databaseRemote.setAsReadyToReplicateMetaData(metaDataReplicaManager); //called here, because at this point the system is ready to replicate TM state.
-			if (!Constants.IS_NON_SM_TEST) 
-				metaDataReplicationThread.start();
 			
 		} else if (Constants.IS_H2O && !isManagementDB() && ( databaseExists && systemTableRef.isSystemTableLocal())){
 			/*
@@ -848,8 +829,6 @@ public class Database implements DataHandler {
 				createH2OTables(true, databaseExists);
 				systemTableRef.getSystemTable().buildSystemTableState();
 				databaseRemote.setAsReadyToReplicateMetaData(metaDataReplicaManager); //called here, because at this point the system is ready to replicate TM state.
-				if (!Constants.IS_NON_SM_TEST) 
-					metaDataReplicationThread.start();
 				
 				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Re-created System Table state.");
 			} catch (Exception e) {
@@ -857,7 +836,6 @@ public class Database implements DataHandler {
 			}
 		}
 
-		running = true;
 	}
 
 	/**
@@ -2810,4 +2788,29 @@ public class Database implements DataHandler {
 	public boolean isTableLocal(Schema schema) {
 		return localSchema.contains(schema.getName());
 	}
+	
+
+	private void setDiagnosticLevel(DatabaseURL localMachineLocation) {
+		LocalH2OProperties databaseProperties = new LocalH2OProperties(localMachineLocation);
+		databaseProperties.loadProperties();
+
+		String diagnosticLevel = databaseProperties.getProperty("diagnosticLevel");
+
+		Diagnostic.setLevel((DiagnosticLevel.FULL));
+
+		if (diagnosticLevel != null){
+
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Setting diagnostic level to " + diagnosticLevel);
+
+			if (diagnosticLevel.equals("FINAL")) Diagnostic.setLevel(DiagnosticLevel.FINAL);
+			else if (diagnosticLevel.equals("NONE")) Diagnostic.setLevel(DiagnosticLevel.NONE);
+			else if (diagnosticLevel.equals("FULL")) Diagnostic.setLevel(DiagnosticLevel.FULL);
+		}
+
+		Diagnostic.setTimestampFlag(true);
+		Diagnostic.setTimestampFormat(new SimpleDateFormat("HH:mm:ss:SSS "));
+		Diagnostic.setTimestampDelimiterFlag(false);
+		ErrorHandling.setTimestampFlag(false);
+	}
+
 }

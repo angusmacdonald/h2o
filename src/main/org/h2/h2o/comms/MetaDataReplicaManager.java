@@ -32,7 +32,9 @@ import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.manager.TableManager;
+import org.h2.h2o.util.LocalH2OProperties;
 import org.h2.h2o.util.TableInfo;
+import org.h2.h2o.util.locator.H2OLocatorInterface;
 import org.h2.result.LocalResult;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -139,19 +141,19 @@ public class MetaDataReplicaManager {
 		dropOldTableManagerReplica = "DROP REPLICA IF EXISTS " + TableManager.getMetaTableName(databaseName, TableManager.TABLES) + ", " + 
 		TableManager.getMetaTableName(databaseName, TableManager.CONNECTIONS) + ", " + TableManager.getMetaTableName(databaseName, TableManager.REPLICAS) + ";";
 	}
-
-
+	
 	/**
 	 * Attempts to replicate local meta-data to any available machines, until the desired replication factor is reached.
 	 * @param systemTableRef
 	 */
-	public synchronized void replicateTableManagersIfPossible(ISystemTableReference systemTableRef) {
+	public synchronized void replicateMetaDataIfPossible(ISystemTableReference systemTableRef, boolean isSystemTable) {
 		
-		ReplicaManager replicaManager = tableManagerReplicas;
-		int managerStateReplicationFactor = tableManagerReplicationFactor;
+		ReplicaManager replicaManager = (isSystemTable)? systemTableReplicas: tableManagerReplicas;
+		int managerStateReplicationFactor = (isSystemTable)? systemTableReplicationFactor: tableManagerReplicationFactor;
 
-
-		if ( !metaDataReplicationEnabled || (replicaManager.size() >= managerStateReplicationFactor)){
+		if (isSystemTable && !systemTableRef.isSystemTableLocal()) return;
+		
+		if ( !metaDataReplicationEnabled || (replicaManager.activeSize() >= managerStateReplicationFactor)){
 			return; //replication factor already reached, or replication is not enabled.
 		}
 
@@ -167,15 +169,18 @@ public class MetaDataReplicaManager {
 				databaseInstances = systemTable.getDatabaseInstances();
 			}
 		} catch (Exception e) {
+			e.printStackTrace();
 			return; //just return, the system will attempt to replicate later on.
 		}
-
+		
 		if (databaseInstances.size() == 1) return;
 
 		for (DatabaseInstanceWrapper databaseInstance: databaseInstances){
+
 			if (!isLocal(databaseInstance) && databaseInstance.isActive()){
 				try {
-					addReplicaLocation(databaseInstance, false);
+
+					addReplicaLocation(databaseInstance, isSystemTable);
 
 					if (replicaManager.size() >= managerStateReplicationFactor) break;
 				} catch (RemoteException e) {
@@ -184,16 +189,19 @@ public class MetaDataReplicaManager {
 			}
 		}
 	}
-
 	public boolean addReplicaLocation(DatabaseInstanceWrapper newReplicaLocation, boolean isSystemTable) throws RemoteException{
+		return addReplicaLocation(newReplicaLocation, isSystemTable, 0);
+	}
+	
+	public boolean addReplicaLocation(DatabaseInstanceWrapper newReplicaLocation, boolean isSystemTable, int previousCalls) throws RemoteException{
 		ReplicaManager replicaManager = (isSystemTable)? systemTableReplicas: tableManagerReplicas;
 		int managerStateReplicationFactor = (isSystemTable)? systemTableReplicationFactor: tableManagerReplicationFactor;
 
 		 Set<TableInfo> localTableManagers = db.getSystemTableReference().getLocalTableManagers().keySet();
-		
-		if (metaDataReplicationEnabled){
-			if (replicaManager.size() < managerStateReplicationFactor){ 
 
+		if (metaDataReplicationEnabled){
+			if (replicaManager.activeSize() < managerStateReplicationFactor){ 
+				
 				//now replica state here.
 				try {
 					/*
@@ -203,7 +211,7 @@ public class MetaDataReplicaManager {
 					if (isSystemTable){
 						deleteOldEntries = this.dropOldSystemTableReplica;
 					} else if (localTableManagers.size() > 0){ //if there are any local Table Managers clear old meta data on them from remote machines.
-						deleteOldEntries = this.dropOldTableManagerReplica; //constructRemoveReplicaQuery();
+						deleteOldEntries = this.dropOldTableManagerReplica;
 					}
 
 					if (deleteOldEntries != null){
@@ -214,7 +222,6 @@ public class MetaDataReplicaManager {
 					 * Create new replica if needed, then replicate state.
 					 */
 					String createQuery = (isSystemTable)? addNewSystemTableQuery: addNewReplicaLocationQuery;
-
 					newReplicaLocation.getDatabaseInstance().executeUpdate(createQuery, true);
 
 					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O " + ((isSystemTable)? "System Table": "Table Manager") + " tables on " + localDatabase.getURL() + " replicated onto new node: " + newReplicaLocation.getURL().getDbLocation());
@@ -222,16 +229,29 @@ public class MetaDataReplicaManager {
 					replicaManager.add(newReplicaLocation);
 
 					for (TableInfo ti: localTableManagers){
-						
 						db.getSystemTableReference().getSystemTable().addTableManagerStateReplica(ti, newReplicaLocation.getURL(), localDatabase.getURL(), true);
+					}
+					
+					if (isSystemTable){
+						try {
+							updateLocatorFiles(isSystemTable);
+						} catch (Exception e) {
+							throw new RemoteException(e.getMessage());
+						}
 					}
 
 					return true;
 				} catch (SQLException e) {
 					/*
-					 * Usually thrown if the CREATE REPLICA command couldn't connect back to this database.
+					 * Usually thrown if the CREATE REPLICA command couldn't connect back to this database. This often happens when the database
+					 * has only recently started and hasn't fully initialized, so this code attempts the operation again.
 					 */
-					ErrorHandling.errorNoEvent(localDatabase.getURL() + " failed to replicate manager/table state onto: " + newReplicaLocation.getURL().getDbLocation() + ".");
+					if (previousCalls < 3){
+						try {Thread.sleep(10); } catch (InterruptedException e1) {}
+						return addReplicaLocation(newReplicaLocation, isSystemTable, previousCalls+1);
+					} else {
+						ErrorHandling.errorNoEvent(localDatabase.getURL() + " failed to replicate " + ((isSystemTable)? "System Table": "Table Manager") +  " state onto: " + newReplicaLocation.getURL().getDbLocation() + ".");
+					}
 				} catch (Exception e) {
 					/*
 					 * Usually thrown if this database couldn't connect to the remote instance. 
@@ -243,20 +263,25 @@ public class MetaDataReplicaManager {
 		}
 		return false;
 	}
-
+	
 	public int executeUpdate(String query, boolean isSystemTable, TableInfo tableInfo) throws SQLException{
 
 		//Loop through replicas
 		//Asynchrously send update.
-
+		
 		ReplicaManager replicaManager = (isSystemTable)? systemTableReplicas: tableManagerReplicas;
+		int managerStateReplicationFactor = (isSystemTable)? systemTableReplicationFactor: tableManagerReplicationFactor;
 
+
+		
+		
 		Set<DatabaseInstanceWrapper> replicas = replicaManager.getActiveReplicas();
 		Set<DatabaseInstanceWrapper> failed = new HashSet<DatabaseInstanceWrapper>();
 
 		int result = -1;
 
 		for (DatabaseInstanceWrapper replica: replicas){
+			
 			if (isLocal(replica)){
 				Command sqlQuery = parser.prepareCommand(query);
 
@@ -290,12 +315,43 @@ public class MetaDataReplicaManager {
 		boolean hasRemoved = replicas.removeAll(failed);
 
 		if (hasRemoved){
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Removed one or more replica locations because they couldn't be contacted for the last update.");
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Removed one or more replica locations because they couldn't be contacted for the last update.");		
 		}
 
+		replicaManager.remove(failed);
+		
+		//Check that there is a sufficient replication factor.
+		if (!isSystemTable && metaDataReplicationEnabled && (replicas.size() < managerStateReplicationFactor)){
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Insufficient replication factor (" + replicas.size() + "<" + managerStateReplicationFactor + ") of Table Manager State on " + db.getURL());
+			replicateMetaDataIfPossible(db.getSystemTableReference(), isSystemTable);
+		}
+		
 		return result;
 	}
 
+
+	/**
+	 * 
+	 */
+	public void updateLocatorFiles(boolean isSystemTable) throws Exception{
+		LocalH2OProperties persistedInstanceInformation = new LocalH2OProperties(db.getURL());
+		persistedInstanceInformation.loadProperties();
+
+		String descriptorLocation = persistedInstanceInformation.getProperty("descriptor");
+		String databaseName = persistedInstanceInformation.getProperty("databaseName");
+
+		if (descriptorLocation == null || databaseName == null){
+			throw new Exception("The location of the database descriptor must be specifed (it was not found). The database will now terminate.");
+		}
+		H2OLocatorInterface dl = new H2OLocatorInterface(databaseName, descriptorLocation);
+
+		boolean successful = dl.setLocations(getReplicaLocations(isSystemTable));
+
+		if (!successful){
+			ErrorHandling.errorNoEvent("Didn't successfully write new System Replica locations to a majority of locator servers.");
+		}
+	}
+	
 	/**
 	 * Called when a new replica location is added by the local meta data replica manager.
 	 * 

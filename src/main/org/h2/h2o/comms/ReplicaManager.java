@@ -113,6 +113,14 @@ public class ReplicaManager implements Serializable {
 		return allReplicas.size();
 	}
 
+
+	/**
+	 * @return
+	 */
+	public int activeSize() {
+		return activeReplicas.size();
+	}
+	
 	/**
 	 * @return
 	 */
@@ -228,6 +236,10 @@ public class ReplicaManager implements Serializable {
 		}
 
 		return locations;
+	}
+
+	public void remove(Set<DatabaseInstanceWrapper> failed) {
+		this.activeReplicas.removeAll(failed);
 	}
 
 

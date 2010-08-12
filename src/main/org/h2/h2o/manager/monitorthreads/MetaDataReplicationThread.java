@@ -24,43 +24,52 @@ import org.h2.h2o.manager.ISystemTableReference;
 public class MetaDataReplicationThread extends Thread {
 	private MetaDataReplicaManager metaDataReplicaManager;
 	private ISystemTableReference systemTableReference;
-	
+
 	private boolean running = true;
 	private int threadSleepTime;
 	private Database database;
-	
+
 	public MetaDataReplicationThread(MetaDataReplicaManager metaDataReplicaManager, ISystemTableReference systemTableReference, Database database, int threadSleepTime) {
 		this.metaDataReplicaManager = metaDataReplicaManager;
 		this.systemTableReference = systemTableReference;
 		this.database = database;
 		this.threadSleepTime = threadSleepTime;
 	}
-	
+
 	public void run(){
-		
+		int i = 0;
 		while (isRunning()){
 			if (!database.isRunning()) continue;
-			
+
 			/*
 			 * Check that there are a sufficient number of replicas of Table Manager state.
 			 */
-			metaDataReplicaManager.replicateTableManagersIfPossible(systemTableReference);
+			metaDataReplicaManager.replicateMetaDataIfPossible(systemTableReference, false);
+
+			/*
+			 * Check that there are a sufficient number of replicas of System Table state.
+			 */
+			metaDataReplicaManager.replicateMetaDataIfPossible(systemTableReference, true);
+
+
+			if (i == 10){
+				if (systemTableReference.isSystemTableLocal()){
+					this.database.getSystemTableReference().pingHashLocation();
+				}
+				i = 0;
+			}
 			
 			/*
 			 * Sleep.
 			 */
-			try {
-				Thread.sleep(threadSleepTime);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			
-			if (!database.isRunning()) return;
+			try {Thread.sleep(threadSleepTime); } catch (InterruptedException e) {}
 
+			if (!database.isRunning()) return;
+			i++;
 		}
 	}
-	
-	
+
+
 	/**
 	 * @return the running
 	 */

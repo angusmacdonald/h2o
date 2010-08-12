@@ -81,6 +81,10 @@ public class TableInfo implements Serializable {
 		this.dbLocation = databaseURL;
 	}
 
+	public TableInfo(TableInfo tableInfo) {
+		this (tableInfo.getTableName(), tableInfo.getSchemaName());
+	}
+
 	/**
 	 * @return the schemaName
 	 */
@@ -142,6 +146,9 @@ public class TableInfo implements Serializable {
 	}
 
 
+	public void setURL(DatabaseURL url) {
+		this.dbLocation = url;
+	}
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
@@ -197,6 +204,7 @@ public class TableInfo implements Serializable {
 		return "TableInfo [" + schemaName + "."
 		+ tableName + "]";
 	}
+
 
 
 }
