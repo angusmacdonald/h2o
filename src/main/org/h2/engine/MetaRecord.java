@@ -11,7 +11,6 @@ import java.util.Comparator;
 
 import org.h2.api.DatabaseEventListener;
 import org.h2.command.Prepared;
-import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.message.Message;
 import org.h2.message.Trace;
 import org.h2.result.SearchRow;
@@ -19,6 +18,7 @@ import org.h2.schema.SchemaObject;
 import org.h2.util.ObjectArray;
 import org.h2.value.ValueInt;
 import org.h2.value.ValueString;
+import org.h2o.db.query.QueryProxyManager;
 
 /**
  * A record in the system table of the database.

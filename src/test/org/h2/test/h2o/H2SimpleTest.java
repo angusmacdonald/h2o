@@ -28,11 +28,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.h2.engine.Constants;
-import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.LocalH2OProperties;
-import org.h2.h2o.util.locator.LocatorServer;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.util.ScriptReader;
+import org.h2o.locator.LocatorServer;
+import org.h2o.util.DatabaseURL;
+import org.h2o.util.LocalH2OProperties;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

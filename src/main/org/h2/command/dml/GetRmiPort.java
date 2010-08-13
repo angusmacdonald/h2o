@@ -7,9 +7,9 @@ import java.sql.Statement;
 import org.h2.command.ddl.SchemaCommand;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
-import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.schema.Schema;
 import org.h2.table.TableLinkConnection;
+import org.h2o.db.manager.PersistentSystemTable;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)

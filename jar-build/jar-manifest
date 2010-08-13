@@ -1,4 +1,4 @@
 Manifest-Version: 1.0
 Sealed: true
-Main-Class: org.h2.h2o.deployment.H2O
+Main-Class: org.h2o.H2O
 

@@ -14,7 +14,6 @@ import org.h2.engine.Constants;
 import org.h2.engine.SessionRemote;
 import org.h2.expression.ParameterInterface;
 import org.h2.expression.ParameterRemote;
-import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.message.Trace;
 import org.h2.message.TraceObject;
 import org.h2.result.ResultInterface;
@@ -22,6 +21,7 @@ import org.h2.result.ResultRemote;
 import org.h2.util.ObjectArray;
 import org.h2.value.Transfer;
 import org.h2.value.Value;
+import org.h2o.db.query.QueryProxyManager;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 

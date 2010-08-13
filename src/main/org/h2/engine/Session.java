@@ -23,8 +23,6 @@ import org.h2.command.dml.SetTypes;
 import org.h2.constant.ErrorCode;
 import org.h2.constant.SysProperties;
 import org.h2.constraint.Constraint;
-import org.h2.h2o.comms.QueryProxyManager;
-import org.h2.h2o.remote.IDatabaseRemote;
 import org.h2.index.Index;
 import org.h2.jdbc.JdbcConnection;
 import org.h2.log.InDoubtTransaction;
@@ -46,6 +44,8 @@ import org.h2.value.ValueLob;
 import org.h2.value.ValueLong;
 import org.h2.value.ValueNull;
 import org.h2.value.ValueString;
+import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.remote.IDatabaseRemote;
 
 /**
  * A session represents an embedded database connection. When using the server

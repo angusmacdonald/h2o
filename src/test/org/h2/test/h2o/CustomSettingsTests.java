@@ -24,9 +24,9 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 import org.h2.engine.Constants;
-import org.h2.h2o.autonomic.Settings;
-import org.h2.h2o.manager.PersistentSystemTable;
-import org.h2.h2o.util.locator.LocatorServer;
+import org.h2o.autonomic.Settings;
+import org.h2o.db.manager.PersistentSystemTable;
+import org.h2o.locator.LocatorServer;
 import org.junit.Before;
 import org.junit.Test;
 

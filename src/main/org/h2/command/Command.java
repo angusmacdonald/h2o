@@ -13,8 +13,6 @@ import org.h2.constant.ErrorCode;
 import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
-import org.h2.h2o.comms.QueryProxy;
-import org.h2.h2o.comms.QueryProxyManager;
 import org.h2.message.Message;
 import org.h2.message.Trace;
 import org.h2.message.TraceObject;
@@ -22,6 +20,8 @@ import org.h2.result.LocalResult;
 import org.h2.result.ResultInterface;
 import org.h2.util.MemoryUtils;
 import org.h2.util.ObjectArray;
+import org.h2o.db.query.QueryProxy;
+import org.h2o.db.query.QueryProxyManager;
 
 /**
  * Represents a SQL statement. This object is only used on the server side.

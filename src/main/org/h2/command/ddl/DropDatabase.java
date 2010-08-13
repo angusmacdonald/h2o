@@ -15,11 +15,11 @@ import org.h2.engine.DbObject;
 import org.h2.engine.Role;
 import org.h2.engine.Session;
 import org.h2.engine.User;
-import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.schema.Schema;
 import org.h2.schema.SchemaObject;
 import org.h2.table.Table;
 import org.h2.util.ObjectArray;
+import org.h2o.db.manager.interfaces.ISystemTableReference;
 
 /**
  * This class represents the statement

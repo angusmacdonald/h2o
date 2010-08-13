@@ -13,10 +13,10 @@ import org.h2.constant.ErrorCode;
 import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
-import org.h2.h2o.manager.MovedException;
-import org.h2.h2o.util.TableInfo;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
+import org.h2o.util.TableInfo;
+import org.h2o.util.exceptions.MovedException;
 
 /**
  * This class represents the statement

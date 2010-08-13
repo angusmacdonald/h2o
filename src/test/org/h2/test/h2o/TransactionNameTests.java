@@ -19,7 +19,7 @@ package org.h2.test.h2o;
 
 import static org.junit.Assert.assertNotNull;
 
-import org.h2.h2o.util.TransactionNameGenerator;
+import org.h2o.util.TransactionNameGenerator;
 import org.junit.Test;
 
 public class TransactionNameTests {

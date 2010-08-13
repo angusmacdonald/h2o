@@ -29,11 +29,11 @@ import java.sql.Statement;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.h2.h2o.deployment.H2O;
-import org.h2.h2o.deployment.H2OLocator;
-import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.util.NetUtils;
+import org.h2o.H2O;
+import org.h2o.H2OLocator;
+import org.h2o.db.manager.PersistentSystemTable;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

@@ -24,7 +24,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import org.h2.h2o.manager.PersistentSystemTable;
+
+import org.h2o.db.manager.PersistentSystemTable;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;

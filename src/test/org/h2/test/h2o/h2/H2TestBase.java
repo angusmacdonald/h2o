@@ -15,14 +15,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import org.h2.engine.Constants;
-import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.LocalH2OProperties;
 import org.h2.jdbc.JdbcConnection;
 import org.h2.message.TraceSystem;
 import org.h2.store.FileLock;
 import org.h2.test.TestAll;
 import org.h2.test.h2o.AllTests;
 import org.h2.tools.DeleteDbFiles;
+import org.h2o.util.DatabaseURL;
+import org.h2o.util.LocalH2OProperties;
 
 /**
  * The base class for all tests.

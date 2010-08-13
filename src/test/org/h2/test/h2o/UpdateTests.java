@@ -25,7 +25,7 @@ import java.sql.SQLException;
 import junit.framework.Assert;
 
 import org.h2.engine.Constants;
-import org.h2.h2o.manager.PersistentSystemTable;
+import org.h2o.db.manager.PersistentSystemTable;
 import org.junit.Test;
 
 

@@ -19,9 +19,6 @@ import org.h2.engine.DbObject;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
-import org.h2.h2o.comms.QueryProxy;
-import org.h2.h2o.comms.QueryProxyManager;
-import org.h2.h2o.util.LockType;
 import org.h2.index.Index;
 import org.h2.index.IndexType;
 import org.h2.message.Message;
@@ -33,6 +30,9 @@ import org.h2.schema.TriggerObject;
 import org.h2.table.Column;
 import org.h2.table.TableData;
 import org.h2.util.ObjectArray;
+import org.h2o.db.query.QueryProxy;
+import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.locking.LockType;
 
 /**
  * This class represents the statements

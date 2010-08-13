@@ -18,9 +18,6 @@ import org.h2.expression.Expression;
 import org.h2.expression.Operation;
 import org.h2.expression.Parameter;
 import org.h2.expression.ValueExpression;
-import org.h2.h2o.comms.QueryProxy;
-import org.h2.h2o.comms.QueryProxyManager;
-import org.h2.h2o.util.LockType;
 import org.h2.message.Message;
 import org.h2.result.LocalResult;
 import org.h2.result.Row;
@@ -31,6 +28,9 @@ import org.h2.table.Table;
 import org.h2.table.TableFilter;
 import org.h2.util.StringUtils;
 import org.h2.value.Value;
+import org.h2o.db.query.QueryProxy;
+import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.locking.LockType;
 
 /**
  * This class represents the statement

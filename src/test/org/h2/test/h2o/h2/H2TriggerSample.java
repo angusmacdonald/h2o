@@ -16,9 +16,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.api.Trigger;
-import org.h2.h2o.util.locator.LocatorServer;
 import org.h2.test.TestAll;
 import org.h2.tools.DeleteDbFiles;
+import org.h2o.locator.LocatorServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

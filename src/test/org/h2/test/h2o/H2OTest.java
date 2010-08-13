@@ -23,7 +23,7 @@ import java.sql.SQLException;
 import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Engine;
-import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
+import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 /**
  * Utility class containing various methods that simulate failure in various parts of H2O. These methods are called from within the database codebase

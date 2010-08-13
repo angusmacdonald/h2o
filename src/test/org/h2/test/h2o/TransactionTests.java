@@ -28,8 +28,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
-import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.jdbc.JdbcConnection;
+import org.h2o.db.manager.PersistentSystemTable;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

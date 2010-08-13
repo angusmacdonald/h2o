@@ -4,15 +4,15 @@
     <options buildIfNeeded="true" compress="true" descriptionLocation="/h2o/jar-build/database.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="true" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
     <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
     <selectedProjects/>
-    <manifest generateManifest="false" mainClassHandleIdentifier="=h2o/src\/main&lt;org.h2.h2o.deployment{H2O.java[H2O" manifestLocation="/h2o/jar-build/jar-manifest" manifestVersion="1.0" reuseManifest="true" saveManifest="true" usesManifest="true">
+    <manifest generateManifest="false" mainClassHandleIdentifier="=h2o/src\/main&lt;org.h2o{H2O.java[H2O" manifestLocation="/h2o/jar-build/jar-manifest" manifestVersion="1.0" reuseManifest="true" saveManifest="true" usesManifest="true">
         <sealing sealJar="true">
             <packagesToSeal/>
             <packagesToUnSeal/>
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="true" exportOutputFolder="false">
-        <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.util"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.compress"/>
+        <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.util"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.security"/>
         <javaElement handleIdentifier="=stachordRMI/&lt;uk.ac.standrews.cs.stachordRMI.servers"/>
@@ -22,35 +22,39 @@
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.message"/>
         <file path="/h2o/src/main/org/h2/util/package.html"/>
         <javaElement handleIdentifier="=stachordRMI/&lt;uk.ac.standrews.cs.stachordRMI.impl"/>
-        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.h2o.util.event"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{ObjectArray.java"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{FileUtils.java"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.h2.build"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.command.h2o"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.util.filter"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.db.manager.monitorthreads"/>
         <javaElement handleIdentifier="=stachordRMI/&lt;uk.ac.standrews.cs.stachordRMI.factories"/>
         <file path="/h2o/jar-build/.cvsignore"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.command"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{HashBase.java"/>
         <javaElement handleIdentifier="=nds/&lt;lib"/>
-        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.h2o.util.filter"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.command.ddl"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{AutoCloseInputStream.java"/>
         <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.p2p.interfaces"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.db.manager"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{ClassUtils.java"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.autonomic"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.h2.mode"/>
         <file path="/h2o/jar-build/database-src.jardesc"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{IntHashMap.java"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{Permutations.java"/>
         <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.eventModel.eventBus.consumers"/>
-        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.h2o.util.locator"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.index"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.server.web"/>
         <file path="/stachordRMI/rmiPolicy"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.server.ftp"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.res"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.db"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.bnf"/>
         <file path="/stachordRMI/GPL.txt"/>
-        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.tools"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.db.replication"/>
         <javaElement handleIdentifier="=stachordRMI/&lt;uk.ac.standrews.cs.stachordRMI.test.routing"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.tools"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{JdbcUtils.java"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.table"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{DateTimeIso8601Utils.java"/>
@@ -60,54 +64,55 @@
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.hibernate.dialect"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.h2.build.indexer"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{MathUtils.java"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.db.query"/>
         <javaElement handleIdentifier="=stachordRMI/&lt;hudson"/>
         <file path="/h2o/VersionHistory.txt"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{RandomUtils.java"/>
-        <javaElement handleIdentifier="=stachordRMI/&lt;lib"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;com.caucho.jdbc"/>
+        <javaElement handleIdentifier="=stachordRMI/&lt;lib"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.db.interfaces"/>
         <folder path="/nds/Model Folder"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{Cache2Q.java"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.jdbcx"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{ScriptReader.java"/>
-        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.expression"/>
         <javaElement handleIdentifier="=stachordRMI/&lt;uk.ac.standrews.cs.stachordRMI"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.expression"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.value"/>
         <file path="/nds/.project"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{SmallMap.java"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{IntArray.java"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{ObjectUtils.java"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.db.manager.util"/>
         <folder path="/h2o/ext"/>
         <javaElement handleIdentifier="=h2o/src\/test&lt;org.h2.test.h2o.h2"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{JdbcDriverUtils.java"/>
         <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.util.test"/>
         <javaElement handleIdentifier="=stachordRMI/&lt;uk.ac.standrews.cs.stachordRMI.test"/>
-        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.h2o.deployment"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.h2.dev.jpox"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{CacheObject.java"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.util.event"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{DateTimeUtils.java"/>
         <file path="/h2o/jar-build/databaseManifest"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{Resources.java"/>
         <file path="/h2o/jar-build/database.jardesc"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.locator.messages"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.server"/>
-        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.h2o.comms.remote"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{MemoryUtils.java"/>
         <javaElement handleIdentifier="=stachordRMI/&lt;uk.ac.standrews.cs.stachordRMI.impl.exceptions"/>
         <file path="/nds/.classpath"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.h2.build.i18n"/>
-        <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.p2p.exceptions"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.api"/>
-        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.h2o.comms.management"/>
-        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.h2o.locking"/>
+        <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.p2p.exceptions"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{StringUtils.java"/>
-        <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.eventModel.eventBus.busInterfaces"/>
         <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.eventModel.eventBus.test"/>
+        <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.eventModel.eventBus.busInterfaces"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.server.web.res"/>
-        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.h2o.comms"/>
         <javaElement handleIdentifier="=stachordRMI/&lt;uk.ac.standrews.cs.stachordRMI.util"/>
         <file path="/nds/build.xml"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{Tool.java"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{ByteUtils.java"/>
         <folder path="/stachordRMI/.settings"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.util"/>
         <javaElement handleIdentifier="=stachordRMI/&lt;uk.ac.standrews.cs.stachordRMI.test.recovery"/>
         <javaElement handleIdentifier="=h2o/src\/test&lt;org.h2.test.h2o"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.h2.build.doc"/>
@@ -116,51 +121,54 @@
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.fulltext"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.constraint"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{CacheHead.java"/>
-        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.h2o.util.locator.messages"/>
         <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.test"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;net.java.ao.db"/>
-        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.h2o.remote"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.db.query.locking"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.command.dml"/>
         <file path="/h2o/build.sh"/>
         <javaElement handleIdentifier="=stachordRMI/&lt;uk.ac.standrews.cs.stachordRMI.test.factory"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{StringCache.java"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.h2.build.doclet"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.server.pg"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.autonomic.decision"/>
         <javaElement handleIdentifier="=stachordRMI/&lt;uk.ac.standrews.cs.stachordRMI.test.ringIntegrity"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{SortedProperties.java"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{JdbcConnectionListener.java"/>
-        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.h2o.util.examples"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.util.exceptions"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.engine"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{StartBrowser.java"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.jdbc"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.locator"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{TempFileDeleter.java"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;oracle.toplink.essentials.platform.database"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.util.examples"/>
         <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{CacheWriter.java"/>
-        <javaElement handleIdentifier="=stachordRMI/&lt;uk.ac.standrews.cs.stachordRMI.interfaces"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.h2.dev.net"/>
+        <javaElement handleIdentifier="=stachordRMI/&lt;uk.ac.standrews.cs.stachordRMI.interfaces"/>
         <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.p2p.impl"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{ExactUTF8InputStreamReader.java"/>
-        <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.eventModel"/>
         <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.eventModel.eventBus"/>
+        <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.eventModel"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.apache.openjpa.jdbc.sql"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.result"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{BitField.java"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.db.manager.interfaces"/>
         <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.p2p.util"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.store"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.h2.dev.util"/>
-        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.h2o.manager"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o"/>
         <file path="/h2o/build.bat"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{CacheLRU.java"/>
         <javaElement handleIdentifier="=stachordRMI/&lt;uk.ac.standrews.cs.stachordRMI.test.util"/>
-        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.h2o.util"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.h2.dev.security"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.db.wrappers"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.log"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{NetUtils.java"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.db.query.asynchronous"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.db.remote"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{SmallLRUCache.java"/>
-        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.h2o.manager.monitorthreads"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.schema"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.store.fs"/>
-        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.h2o.autonomic"/>
     </selectedElements>
 </jardesc>

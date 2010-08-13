@@ -26,9 +26,6 @@ import org.h2.expression.ExpressionColumn;
 import org.h2.expression.ExpressionVisitor;
 import org.h2.expression.Parameter;
 import org.h2.expression.Wildcard;
-import org.h2.h2o.comms.QueryProxy;
-import org.h2.h2o.comms.QueryProxyManager;
-import org.h2.h2o.util.LockType;
 import org.h2.index.Cursor;
 import org.h2.index.Index;
 import org.h2.index.IndexType;
@@ -49,6 +46,9 @@ import org.h2.util.ValueHashMap;
 import org.h2.value.Value;
 import org.h2.value.ValueArray;
 import org.h2.value.ValueNull;
+import org.h2o.db.query.QueryProxy;
+import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.locking.LockType;
 
 /**
  * This class represents a simple SELECT statement.

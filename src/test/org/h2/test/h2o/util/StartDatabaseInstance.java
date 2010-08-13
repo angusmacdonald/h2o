@@ -22,8 +22,8 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Map;
 
-import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.tools.Server;
+import org.h2o.db.manager.PersistentSystemTable;
 
 import uk.ac.standrews.cs.nds.util.CommandLineArgs;
 

@@ -17,10 +17,6 @@ import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
 import org.h2.expression.Parameter;
-import org.h2.h2o.comms.QueryProxy;
-import org.h2.h2o.comms.QueryProxyManager;
-import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
-import org.h2.h2o.util.LockType;
 import org.h2.index.Index;
 import org.h2.jdbc.JdbcSQLException;
 import org.h2.message.Message;
@@ -28,6 +24,10 @@ import org.h2.result.LocalResult;
 import org.h2.table.Table;
 import org.h2.util.ObjectArray;
 import org.h2.value.Value;
+import org.h2o.db.query.QueryProxy;
+import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.locking.LockType;
+import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
