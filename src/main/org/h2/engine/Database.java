@@ -44,6 +44,10 @@ import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LocalH2OProperties;
 import org.h2.h2o.util.TransactionNameGenerator;
+import org.h2.h2o.util.event.DatabaseStates;
+import org.h2.h2o.util.event.H2OEvent;
+import org.h2.h2o.util.event.H2OEventBus;
+import org.h2.h2o.util.event.H2OEventConsumer;
 import org.h2.h2o.util.locator.H2OLocatorInterface;
 import org.h2.index.Cursor;
 import org.h2.index.Index;
@@ -96,9 +100,13 @@ import org.h2.value.Value;
 import org.h2.value.ValueInt;
 import org.h2.value.ValueLob;
 
+import uk.ac.standrews.cs.nds.eventModel.EventFactory;
+import uk.ac.standrews.cs.nds.eventModel.eventBus.EventBus;
+import uk.ac.standrews.cs.nds.eventModel.eventBus.busInterfaces.IEventBus;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.test.DiagnosticTestAdapter;
 
 /**
  * There is one database object per open database.
@@ -206,7 +214,7 @@ public class Database implements DataHandler {
 	private MetaDataReplicaManager metaDataReplicaManager;
 	private MetaDataReplicationThread metaDataReplicationThread;
 	private boolean running = false;
-	
+
 	public MetaDataReplicaManager getMetaDataReplicaManager() {
 		return metaDataReplicaManager;
 	}
@@ -228,11 +236,13 @@ public class Database implements DataHandler {
 
 	private Set<String> localSchema = new HashSet<String>();
 
+	private H2OEventConsumer eventConsumer;
+
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
 
 		localSchema.add(Constants.H2O_SCHEMA);
 		localSchema.add("RESOURCE_MONITORING");
-		
+
 		DatabaseURL localMachineLocation = DatabaseURL.parseURL(ci.getOriginalURL());
 
 		setDiagnosticLevel(localMachineLocation);
@@ -248,7 +258,7 @@ public class Database implements DataHandler {
 		this.compareMode = new CompareMode(null, null, 0);
 
 		systemTableRef = new SystemTableReference(this);
-		
+
 
 		databaseRemote = new ChordRemote(localMachineLocation, systemTableRef);
 
@@ -304,7 +314,19 @@ public class Database implements DataHandler {
 		openDatabase(traceLevelFile, traceLevelSystemOut, closeAtVmShutdown, ci, localMachineLocation);
 
 		if (Constants.IS_H2O && !isManagementDB()) {
-			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, " Completed startup on " + ci.getOriginalURL());
+			/*
+			 * Set up events.
+			 */
+			if (databaseSettings.get("DATABASE_EVENTS_ENABLED").equals("true")){
+				IEventBus bus = new EventBus();
+				H2OEventBus.setBus(bus);
+
+				eventConsumer = new H2OEventConsumer();
+				bus.register(eventConsumer);
+			}
+			
+			H2OEventBus.publish(new H2OEvent(localMachineLocation, DatabaseStates.DATABASE_STARTUP, null));
+			
 			if (!Constants.IS_NON_SM_TEST) 
 				metaDataReplicationThread.start();
 		}
@@ -725,7 +747,7 @@ public class Database implements DataHandler {
 			 * Connect to Database System.
 			 */
 			databaseRemote.connectToDatabaseSystem(h2oSystemSession, databaseSettings); 
-			
+
 
 			/*
 			 * Create Meta-Data Replication Manager.
@@ -735,9 +757,9 @@ public class Database implements DataHandler {
 			boolean metaDataReplicationEnabled = Boolean.parseBoolean(databaseSettings.get("METADATA_REPLICATION_ENABLED"));
 			int systemTableReplicationFactor = Integer.parseInt(databaseSettings.get("SYSTEM_TABLE_REPLICATION_FACTOR"));
 			int tableManagerReplicationFactor = Integer.parseInt(databaseSettings.get("TABLE_MANAGER_REPLICATION_FACTOR"));
-			
+
 			int replicationThreadSleepTime = Integer.parseInt(databaseSettings.get("METADATA_REPLICATION_THREAD_SLEEP_TIME"));
-			
+
 			metaDataReplicaManager = new MetaDataReplicaManager(metaDataReplicationEnabled, systemTableReplicationFactor, tableManagerReplicationFactor, getLocalDatabaseInstanceInWrapper(), this);
 			metaDataReplicationThread = new MetaDataReplicationThread(metaDataReplicaManager, systemTableRef, this, replicationThreadSleepTime);
 			metaDataReplicationThread.setName("MetaDataReplicationThread");
@@ -820,7 +842,7 @@ public class Database implements DataHandler {
 			}
 
 			databaseRemote.setAsReadyToReplicateMetaData(metaDataReplicaManager); //called here, because at this point the system is ready to replicate TM state.
-			
+
 		} else if (Constants.IS_H2O && !isManagementDB() && ( databaseExists && systemTableRef.isSystemTableLocal())){
 			/*
 			 * This is the System Table. Reclaim previously held state.
@@ -829,7 +851,7 @@ public class Database implements DataHandler {
 				createH2OTables(true, databaseExists);
 				systemTableRef.getSystemTable().buildSystemTableState();
 				databaseRemote.setAsReadyToReplicateMetaData(metaDataReplicaManager); //called here, because at this point the system is ready to replicate TM state.
-				
+
 				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Re-created System Table state.");
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -1302,6 +1324,7 @@ public class Database implements DataHandler {
 		if (closing) {
 			return;
 		}
+		H2OEventBus.publish(new H2OEvent(this.getURL(), DatabaseStates.DATABASE_SHUTDOWN, null));
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, getURL().getURL());
 
@@ -2788,7 +2811,7 @@ public class Database implements DataHandler {
 	public boolean isTableLocal(Schema schema) {
 		return localSchema.contains(schema.getName());
 	}
-	
+
 
 	private void setDiagnosticLevel(DatabaseURL localMachineLocation) {
 		LocalH2OProperties databaseProperties = new LocalH2OProperties(localMachineLocation);
@@ -2810,6 +2833,7 @@ public class Database implements DataHandler {
 		Diagnostic.setTimestampFlag(true);
 		Diagnostic.setTimestampFormat(new SimpleDateFormat("HH:mm:ss:SSS "));
 		Diagnostic.setTimestampDelimiterFlag(false);
+
 		ErrorHandling.setTimestampFlag(false);
 	}
 

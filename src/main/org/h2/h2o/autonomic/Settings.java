@@ -148,6 +148,13 @@ public class Settings {
 		 */
 		defaults.setProperty("TABLE_MANAGER_LIVENESS_CHECKER_THREAD_SLEEP_TIME", "10000");
 
+		/*
+		 * Whether diagnostic events are to be consumed and sent to an event monitor.
+		 */
+		defaults.setProperty("DATABASE_EVENTS_ENABLED", "false");
+
+		
+		
 		return defaults;
 	}
 

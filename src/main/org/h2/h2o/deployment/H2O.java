@@ -258,6 +258,7 @@ public class H2O {
 		h2oArgs.add(tcpPort);
 
 		h2oArgs.add("-tcpAllowOthers"); //allow remote connections.
+		h2oArgs.add("-webAllowOthers");
 
 		/*
 		 * Web Interface

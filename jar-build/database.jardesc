@@ -22,10 +22,12 @@
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.message"/>
         <file path="/h2o/src/main/org/h2/util/package.html"/>
         <javaElement handleIdentifier="=stachordRMI/&lt;uk.ac.standrews.cs.stachordRMI.impl"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.h2o.util.event"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{ObjectArray.java"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{FileUtils.java"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.h2.build"/>
         <javaElement handleIdentifier="=stachordRMI/&lt;uk.ac.standrews.cs.stachordRMI.factories"/>
+        <file path="/h2o/jar-build/.cvsignore"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.command"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{HashBase.java"/>
         <javaElement handleIdentifier="=nds/&lt;lib"/>
@@ -35,6 +37,7 @@
         <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.p2p.interfaces"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{ClassUtils.java"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.h2.mode"/>
+        <file path="/h2o/jar-build/database-src.jardesc"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{IntHashMap.java"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{Permutations.java"/>
         <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.eventModel.eventBus.consumers"/>
@@ -53,6 +56,7 @@
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{DateTimeIso8601Utils.java"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{ValueHashMap.java"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{IOUtils.java"/>
+        <file path="/h2o/jar-build/databaseManifest-src"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.hibernate.dialect"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.h2.build.indexer"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{MathUtils.java"/>
@@ -81,7 +85,9 @@
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.h2.dev.jpox"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{CacheObject.java"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{DateTimeUtils.java"/>
+        <file path="/h2o/jar-build/databaseManifest"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{Resources.java"/>
+        <file path="/h2o/jar-build/database.jardesc"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.server"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.h2o.comms.remote"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{MemoryUtils.java"/>
@@ -93,7 +99,6 @@
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.h2o.comms.management"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.h2o.locking"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{StringUtils.java"/>
-        <folder path="/h2o/jar-build"/>
         <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.eventModel.eventBus.busInterfaces"/>
         <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.eventModel.eventBus.test"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.server.web.res"/>
@@ -106,6 +111,7 @@
         <javaElement handleIdentifier="=stachordRMI/&lt;uk.ac.standrews.cs.stachordRMI.test.recovery"/>
         <javaElement handleIdentifier="=h2o/src\/test&lt;org.h2.test.h2o"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.h2.build.doc"/>
+        <file path="/h2o/jar-build/jar-manifest"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{Cache.java"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.fulltext"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.constraint"/>

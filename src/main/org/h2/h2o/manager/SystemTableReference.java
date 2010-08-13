@@ -17,7 +17,6 @@
  */
 package org.h2.h2o.manager;
 
-import java.io.IOException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -25,7 +24,6 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,12 +31,12 @@ import org.h2.engine.Database;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
-import org.h2.h2o.manager.monitorthreads.SystemTableReplication;
 import org.h2.h2o.remote.IChordInterface;
-import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.DatabaseURL;
-import org.h2.h2o.util.LocalH2OProperties;
 import org.h2.h2o.util.TableInfo;
+import org.h2.h2o.util.event.DatabaseStates;
+import org.h2.h2o.util.event.H2OEvent;
+import org.h2.h2o.util.event.H2OEventBus;
 import org.h2.table.ReplicaSet;
 
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
@@ -298,8 +296,6 @@ public class SystemTableReference implements ISystemTableReference {
 	 */
 	public SystemTableRemote migrateSystemTableToLocalInstance(boolean persistedSchemaTablesExist, boolean recreateFromPersistedState){
 
-		IChordRemoteReference oldSystemTableLocation = this.systemTableNode;
-
 		if (recreateFromPersistedState){
 			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Preparing to re-instantiate System Table from persistent store.");
 			/*
@@ -410,38 +406,6 @@ public class SystemTableReference implements ISystemTableReference {
 			ErrorHandling.exceptionError(e, "System Table migration failed.");
 		}
 
-		//		try {
-		//			db.getRemoteInterface().setSystemTableLocationAsLocal();
-		//		} catch (RemoteException e1) {
-		//			//May fail.
-		//		}
-		//		
-		/*
-		 * Replicate state to new successor.
-		 */
-
-//		try {
-//
-//			IChordRemoteReference successor = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor();
-//			IChordRemoteReference localNode = db.getChordInterface().getLocalChordReference();
-//			//If the successor to this node is not itself (i.e. if this network has more than one node in it).
-//			if ( !successor.equals( localNode.getKey()) && !successor.equals(oldSystemTableLocation)){
-//
-//				String hostname = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getHostName();
-//				int port = db.getChordInterface().getLocalChordReference().getRemote().getSuccessor().getRemote().getAddress().getPort();
-//				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting System Table replication thread on : " + db.getURL().getDbLocation() + ".");
-//
-//				int sleepTime = Integer.parseInt(db.getDatabaseSettings().get("REPLICATOR_SLEEP_TIME"));
-//
-//				SystemTableReplication newThread = new SystemTableReplication(hostname, port, this, this.db.getChordInterface(), sleepTime);
-//				newThread.start();
-//			} else {
-//				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "There is only one node in the network. There is no-where else to replicate the System Table.");
-//			}
-//		} catch (Exception e) {
-//			ErrorHandling.errorNoEvent("Failed to create replica for new System Table on its successor.");
-//		}
-
 		boolean successful = false;
 		while (!successful){
 			try {
@@ -461,6 +425,7 @@ public class SystemTableReference implements ISystemTableReference {
 		
 		
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Finished building new System Table on " + db.getURL().getDbLocation() + ".");
+		H2OEventBus.publish(new H2OEvent(db.getURL(), DatabaseStates.SYSTEM_TABLE_MIGRATION));
 		return systemTable;
 	}
 

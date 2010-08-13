@@ -21,10 +21,16 @@ import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TableInfo;
+import org.h2.h2o.util.event.DatabaseStates;
+import org.h2.h2o.util.event.H2OEvent;
+import org.h2.h2o.util.event.H2OEventBus;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
 import org.h2.table.ReplicaSet;
 import org.h2.table.Table;
+
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
  * This class represents the statement
@@ -158,7 +164,7 @@ public class DropTable extends SchemaCommand {
 				}
 
 			}
-
+			H2OEventBus.publish(new H2OEvent(db.getURL(), DatabaseStates.TABLE_DELETION, getSchema().getName() + "." + tableName));	
 		}
 		if (next != null) {
 			next.executeDrop(transactionName);

@@ -221,17 +221,6 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISystemTable#addSystemTableDataLocation(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
-	 */
-	@Override
-	public boolean addStateReplicaLocation(
-			DatabaseInstanceWrapper databaseReference) throws RemoteException, MovedException {
-		preMethodTest();
-		inMemory.addStateReplicaLocation(databaseReference);
-		return persisted.addStateReplicaLocation(databaseReference);
-	}
-
-	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISystemTable#getDatabaseInstance(org.h2.h2o.util.DatabaseURL)
 	 */
 	@Override

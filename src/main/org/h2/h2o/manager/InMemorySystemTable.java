@@ -36,6 +36,9 @@ import org.h2.h2o.manager.monitorthreads.TableManagerLivenessCheckerThread;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.PrettyPrinter;
 import org.h2.h2o.util.TableInfo;
+import org.h2.h2o.util.event.DatabaseStates;
+import org.h2.h2o.util.event.H2OEvent;
+import org.h2.h2o.util.event.H2OEventBus;
 import org.h2.h2o.util.filter.CollectionFilter;
 import org.h2.h2o.util.filter.Predicate;
 
@@ -94,9 +97,9 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 
 	public InMemorySystemTable(Database database) throws Exception{
 		this.database = database;
-
+		databasesInSystem = Collections.synchronizedMap(new HashMap<DatabaseURL, DatabaseInstanceWrapper>());
 		tableManagers = Collections.synchronizedMap(new HashMap<TableInfo, TableManagerWrapper>());
-		tmReplicaLocations = new HashMap<TableInfo, Set<DatabaseURL>>();
+		tmReplicaLocations = Collections.synchronizedMap(new HashMap<TableInfo, Set<DatabaseURL>>());
 
 		primaryLocations = new HashMap<TableInfo, DatabaseURL>();
 
@@ -107,6 +110,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 		tableManagerPingerThread.start();
 
 		started = true;
+		H2OEventBus.publish(new H2OEvent(database.getURL(), DatabaseStates.SYSTEM_TABLE_CREATION));
 	}
 
 	/******************************************************************
@@ -601,15 +605,6 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 		}
 
 		tableManagers.clear();
-	}
-
-	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.ISystemTable#addSystemTableDataLocation(org.h2.h2o.comms.remote.DatabaseInstanceRemote)
-	 */
-	@Override
-	public boolean addStateReplicaLocation(
-			DatabaseInstanceWrapper databaseReference) throws RemoteException {
-		return true; //This class doesn't do replication. See the PersistentSystemTable class.
 	}
 
 

@@ -12,8 +12,14 @@ import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.manager.ISystemTable;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.util.TableInfo;
+import org.h2.h2o.util.event.DatabaseStates;
+import org.h2.h2o.util.event.H2OEvent;
+import org.h2.h2o.util.event.H2OEventBus;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
+
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
  * Represents the DROP REPLICA command, allowing individual replicas to be dropped.
@@ -125,7 +131,7 @@ public class DropReplica extends SchemaCommand {
 					throw new SQLException("System Table has moved.");
 				}
 			}
-
+			H2OEventBus.publish(new H2OEvent(this.session.getDatabase().getURL(), DatabaseStates.REPLICA_DELETION, getSchema().getName() + "." + tableName));
 		}
 		if (next != null) {
 			next.executeDrop();

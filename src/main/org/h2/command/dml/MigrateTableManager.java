@@ -14,6 +14,9 @@ import org.h2.h2o.manager.MigrationException;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TableInfo;
+import org.h2.h2o.util.event.DatabaseStates;
+import org.h2.h2o.util.event.H2OEvent;
+import org.h2.h2o.util.event.H2OEventBus;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
 
@@ -67,7 +70,9 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 			} else {
 				schemaName = "PUBLIC";
 			}
-			TableManagerRemote tableManager = sm.lookup(new TableInfo(tableName, schemaName), true);
+			
+			TableInfo ti = new TableInfo(tableName, schemaName);
+			TableManagerRemote tableManager = sm.lookup(ti, true);
 
 			if (tableManager == null){
 				Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, getSchema().getName() + tableName);
@@ -86,6 +91,9 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 			} else {
 				throw Message.getSQLException(ErrorCode.LOCK_TIMEOUT_1, getSchema().getName() + tableName);
 			}
+			
+			H2OEventBus.publish(new H2OEvent(db.getURL(), DatabaseStates.TABLE_MANAGER_MIGRATION, ti.getFullTableName()));
+			
 		} catch (MovedException e) {
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, getSchema().getName() + tableName);
 		} catch (SQLException e) {
@@ -93,7 +101,6 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 		}catch (Exception e) {
 			throw new SQLException("Failed to migrate table manager for " + getSchema().getName() + "." + tableName + ".");
 		}
-
 
 		return result;
 	}

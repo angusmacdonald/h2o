@@ -18,6 +18,7 @@
 package org.h2.h2o.comms;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -65,7 +66,7 @@ public class ReplicaManager implements Serializable {
 
 	public ReplicaManager(){
 		this.allReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
-		this.activeReplicas = new HashSet<DatabaseInstanceWrapper>();
+		this.activeReplicas = Collections.synchronizedSet(new HashSet<DatabaseInstanceWrapper>());
 		this.primaryLocation = null;
 
 		this.lastUpdate = 0;

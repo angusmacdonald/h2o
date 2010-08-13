@@ -36,6 +36,9 @@ import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TableInfo;
 import org.h2.h2o.util.TransactionNameGenerator;
+import org.h2.h2o.util.event.DatabaseStates;
+import org.h2.h2o.util.event.H2OEvent;
+import org.h2.h2o.util.event.H2OEventBus;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
 import org.h2.schema.Sequence;
@@ -304,6 +307,7 @@ public class CreateTable extends SchemaCommand {
 			throw e;
 		}
 
+		
 		return 0;
 	}
 
@@ -329,6 +333,7 @@ public class CreateTable extends SchemaCommand {
 
 		try {
 			tableManager.persistToCompleteStartup(tableInfo);
+			H2OEventBus.publish(new H2OEvent(this.session.getDatabase().getURL(), DatabaseStates.TABLE_CREATION, tableInfo.getFullTableName()));
 		} catch (StartupException e) {
 			throw new SQLException("Failed to create table. Couldn't persist table manager meta-data [" + e.getMessage() + "].");
 		}

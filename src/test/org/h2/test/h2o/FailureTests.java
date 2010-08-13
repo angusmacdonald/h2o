@@ -772,9 +772,6 @@ public class FailureTests extends TestBase {
 	/**
 	 * Kills of a DB instance, then queries a table that requires the table manager to be moved. Then
 	 * restarts the old instance and checks that it can access the table through the new table manager.
-	 * 
-	 * 
-	 * TODO Also check that replication is working correctly...
 	 */
 	@Test
 	public void killOffTMqueryThenRestartMachine() throws InterruptedException{

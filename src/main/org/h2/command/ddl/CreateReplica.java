@@ -38,6 +38,9 @@ import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.PersistentSystemTable;
 import org.h2.h2o.util.TableInfo;
+import org.h2.h2o.util.event.DatabaseStates;
+import org.h2.h2o.util.event.H2OEvent;
+import org.h2.h2o.util.event.H2OEventBus;
 import org.h2.index.IndexType;
 import org.h2.jdbc.JdbcSQLException;
 import org.h2.message.Message;
@@ -59,6 +62,8 @@ import org.h2.value.ValueTime;
 import org.h2.value.ValueTimestamp;
 
 import sun.security.krb5.internal.UDPClient;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
@@ -449,6 +454,7 @@ public class CreateReplica extends SchemaCommand {
 			next.update();
 		}
 
+		H2OEventBus.publish(new H2OEvent(this.session.getDatabase().getURL(), DatabaseStates.REPLICA_CREATION, getSchema().getName() + "." + tableName));
 		return 0;
 	}
 

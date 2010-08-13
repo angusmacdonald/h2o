@@ -737,17 +737,6 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 	}
 
 	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.PersistentManager#addStateReplicaLocation(org.h2.h2o.comms.remote.DatabaseInstanceWrapper)
-	 */
-	@Override
-	public boolean addStateReplicaLocation(
-			DatabaseInstanceWrapper databaseWrapper) throws RemoteException {
-		boolean added = super.addStateReplicaLocation(databaseWrapper);
-
-		return added;
-	}
-
-	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISystemTable#addTableManagerStateReplica(org.h2.h2o.util.TableInfo, org.h2.h2o.util.DatabaseURL)
 	 */
 	@Override

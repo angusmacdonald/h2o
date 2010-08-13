@@ -28,8 +28,6 @@ import java.rmi.server.ExportException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Random;
@@ -49,12 +47,12 @@ import org.h2.h2o.manager.ISystemTable;
 import org.h2.h2o.manager.ISystemTableReference;
 import org.h2.h2o.manager.MovedException;
 import org.h2.h2o.manager.SystemTableReference;
-import org.h2.h2o.manager.monitorthreads.SystemTableReplication;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LocalH2OProperties;
-import org.h2.h2o.util.TableInfo;
+import org.h2.h2o.util.event.DatabaseStates;
+import org.h2.h2o.util.event.H2OEvent;
+import org.h2.h2o.util.event.H2OEventBus;
 import org.h2.h2o.util.locator.H2OLocatorInterface;
-import org.h2.test.h2o.ChordTests;
 
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -673,6 +671,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			return; //the old predecessor has not failed, so nothing needs to be recovered.
 		} catch (RemoteException e1) {
 			//If the old predecessor is no longer available it has failed - try to recover processses.
+			if (predecessorURL != null){
+				H2OEventBus.publish(new H2OEvent(this.predecessorURL, DatabaseStates.DATABASE_FAILURE, null));
+			}
 		}
 
 		boolean systemTableWasOnPredecessor = systemTableRef.isThisSystemTableNode(this.predecessor);
@@ -857,7 +858,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 
 		IChordRemoteReference successor = chordNode.getSuccessor();
-		DatabaseInstanceRemote successorInstance = null;
 
 		/*
 		 * If table managers running locally or the System Table is located locally then get a reference to the suceessor instance so
@@ -865,85 +865,51 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		 * 
 		 * If not, don't go to the effort of looking up the successor.
 		 */
-		if (this.systemTableRef.isSystemTableLocal() || localTableManagers != null && localTableManagers.size() > 0){
+		try {
+
 			String hostname = null;
 			int port = 0;
-			try {
-				hostname = successor.getRemote().getAddress().getHostName();
 
-				port = successor.getRemote().getAddress().getPort();
+			hostname = successor.getRemote().getAddress().getHostName();
 
-				try {
-					successorInstance = getDatabaseInstanceAt(hostname, port);
-				} catch (NotBoundException e) {
-					//May happen. Ignore.
-				}
+			port = successor.getRemote().getAddress().getPort();
+
+			DatabaseInstanceRemote successorInstance = null;
+
+			successorInstance = getDatabaseInstanceAt(hostname, port);
 
 
-				if (this.systemTableRef.isSystemTableLocal()){
-					//The System Table is running locally. Replicate it's state to the new successor.
 
-					try {
-
-						if (successorInstance == null){
-							/*
-							 * The remote chord node hasn't been fully instantiated yet. Wait a while then try again.
-							 */
-
-							if (!Constants.IS_NON_SM_TEST){
-								//Don't bother trying to replicate the System Table if this is a test which doesn't require it.
-								Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting System Table replication thread on successor change on: " + this.localMachineLocation.getDbLocation() + ".");
-
-								int sleepTime = Integer.parseInt(databaseSettings.get("REPLICATOR_SLEEP_TIME"));
-								SystemTableReplication newThread = new SystemTableReplication(hostname, port, this.systemTableRef, this, sleepTime);
-								newThread.start();
-							}
-
-						} else if (successorInstance.equals(this.databaseInstance)) {
-							//Do nothing. There is only one node in the network.
-							Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "There is only one node in the network so the System Table can't be replicated elsewhere.");
-						} else {
-							if (successorInstance.isAlive()){
-								this.systemTableRef.getSystemTable().addStateReplicaLocation(new DatabaseInstanceWrapper(successorInstance.getURL(), successorInstance, true));
-
-								//dbInstance.createNewSystemTableBackup(db.getSystemTable());
-								//dbInstance.executeUpdate("CREATE REPLICA SCHEMA H2O");
-
-								if (Constants.IS_TEST){
-									ChordTests.setReplicated(true);
-								}
-							}
-						}
-					} catch (RemoteException e) {
-						ErrorHandling.errorNoEvent("Remote exception thrown. Happens when successor has very recently changed and chord ring hasn't stabilized.");
-					} catch (MovedException e) {
-						try {
-							systemTableRef.handleMovedException(e);
-						} catch (SQLException e1) {
-							e1.printStackTrace();
-						}
-					}
-
-				}
-
-				/*
-				 * Now do the same thing for table manager replication.
-				 */
-
-				if (localTableManagers != null && metaDataReplicaManager != null){
-
-					//delete query must remove entries for all table managers replicated on this machine.
+			if (this.systemTableRef.isSystemTableLocal() || localTableManagers != null && localTableManagers.size() > 0){
 
 
-					DatabaseInstanceWrapper successorInstanceWrapper = new DatabaseInstanceWrapper(successorInstance.getURL(), successorInstance, true);
 
-					metaDataReplicaManager.addReplicaLocation(successorInstanceWrapper, false);
+				DatabaseInstanceWrapper successorInstanceWrapper = new DatabaseInstanceWrapper(successorInstance.getURL(), successorInstance, true);
 
-				}
 
-			} catch (RemoteException e2) {
-				ErrorHandling.exceptionErrorNoEvent(e2, "Couldn't connect to successor.");
+				metaDataReplicaManager.replicateMetaDataIfPossible(systemTableRef, true, successorInstanceWrapper);
+
 			}
+
+			/*
+			 * Now do the same thing for table manager replication.
+			 */
+
+			if (localTableManagers != null && metaDataReplicaManager != null){
+
+				//delete query must remove entries for all table managers replicated on this machine.
+
+
+				DatabaseInstanceWrapper successorInstanceWrapper = new DatabaseInstanceWrapper(successorInstance.getURL(), successorInstance, true);
+
+				metaDataReplicaManager.replicateMetaDataIfPossible(systemTableRef, false, successorInstanceWrapper);
+
+
+			}
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		} catch (NotBoundException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -1115,9 +1081,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	public boolean setSystemTableLocationAsLocal() throws RemoteException{
 
 		IChordRemoteReference lookupLocation = null;
-		
+
 		try {
-		lookupLocation = lookupSystemTableNodeLocation();
+			lookupLocation = lookupSystemTableNodeLocation();
 		} catch (Exception e){
 			ErrorHandling.errorNoEvent("Couldn't find the #(SM) location.");
 			return false;
@@ -1137,7 +1103,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			e.printStackTrace();
 			return false;
 		}
-		
+
 		return true;
 	}
 	/*

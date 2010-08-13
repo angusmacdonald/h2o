@@ -42,6 +42,9 @@ import org.h2.h2o.remote.StartupException;
 import org.h2.h2o.util.DatabaseURL;
 import org.h2.h2o.util.LockType;
 import org.h2.h2o.util.TableInfo;
+import org.h2.h2o.util.event.DatabaseStates;
+import org.h2.h2o.util.event.H2OEvent;
+import org.h2.h2o.util.event.H2OEventBus;
 import org.h2.result.LocalResult;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -170,6 +173,8 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		this.location = database.getChordInterface().getLocalChordReference();
 
 		this.relationReplicationFactor = Integer.parseInt(database.getDatabaseSettings().get("RELATION_REPLICATION_FACTOR"));
+		
+		H2OEventBus.publish(new H2OEvent(database.getURL(), DatabaseStates.TABLE_MANAGER_CREATION, tableDetails.getFullTableName()));
 	}
 
 	public static String getMetaTableName (String databaseName, String tablePostfix){
@@ -745,15 +750,6 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		rm.add(replicaLocations);
 
 		this.replicaManager = rm;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.h2.h2o.manager.PersistentManager#addStateReplicaLocation(org.h2.h2o.comms.remote.DatabaseInstanceWrapper)
-	 */
-	@Override
-	public boolean addStateReplicaLocation(
-			DatabaseInstanceWrapper databaseWrapper) throws RemoteException {
-		return super.addStateReplicaLocation(databaseWrapper);
 	}
 
 	/* (non-Javadoc)

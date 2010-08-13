@@ -541,17 +541,6 @@ public abstract class PersistentManager {
 
 	}
 
-	/**
-	 * Add a location where replicas of this managers state will be placed.
-	 * @param databaseWrapper
-	 * @throws RemoteException
-	 * @throws SQLException 
-	 */
-	public boolean addStateReplicaLocation(DatabaseInstanceWrapper databaseWrapper) throws RemoteException{
-
-		return metaDataReplicaManager.addReplicaLocation(databaseWrapper, isSystemTable);
-	}
-
 	public int getTableID(TableInfo ti) throws SQLException{
 		return metaDataReplicaManager.getTableID(ti, isSystemTable);
 	}

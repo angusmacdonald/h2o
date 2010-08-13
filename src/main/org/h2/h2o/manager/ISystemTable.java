@@ -158,14 +158,6 @@ public interface ISystemTable extends Remote {
 	public void removeAllTableInformation() throws RemoteException, MovedException;
 
 	/**
-	 * Specify the remote location of a database instance where System Table state is to be replicated.
-	 * @param databaseReference
-	 * @throws RemoteException
-	 * @throws MovedException 
-	 */
-	public boolean addStateReplicaLocation(DatabaseInstanceWrapper databaseReference) throws RemoteException, MovedException;
-
-	/**
 	 * Get a remote reference to a database instance at the specified URL.
 	 * @param databaseURL	URL of the database reference.
 	 * @return Remote reference to the database instance.
