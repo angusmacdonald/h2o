@@ -677,7 +677,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		}
 
 		boolean systemTableWasOnPredecessor = systemTableRef.isThisSystemTableNode(this.predecessor);
-		DatabaseURL oldPredecessorURL = predecessorURL;
 
 		this.predecessor = chordNode.getPredecessor();
 

@@ -19,6 +19,7 @@ package org.h2.h2o.comms.remote;
 
 import java.io.Serializable;
 
+import org.h2.h2o.util.DatabaseInstanceProbability;
 import org.h2.h2o.util.DatabaseURL;
 
 
@@ -30,7 +31,7 @@ import org.h2.h2o.util.DatabaseURL;
  * has become inactive.
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class DatabaseInstanceWrapper implements Serializable {
+public class DatabaseInstanceWrapper implements Serializable, Comparable<DatabaseInstanceWrapper> {
 
 	private static final long serialVersionUID = 9193285872031823819L;
 
@@ -40,6 +41,8 @@ public class DatabaseInstanceWrapper implements Serializable {
 
 	private boolean active = true;
 
+	private DatabaseInstanceProbability availabilityInfo;
+	
 	/**
 	 * @param databaseURL 		The location of this database instance.
 	 * @param databaseInstance	Reference to the local database instance.
@@ -51,6 +54,7 @@ public class DatabaseInstanceWrapper implements Serializable {
 		this.databaseURL = databaseURL;
 		this.databaseInstance = databaseInstance;
 		this.active = active;
+		this.availabilityInfo = new DatabaseInstanceProbability(0.5);
 	}
 
 	/**
@@ -114,8 +118,14 @@ public class DatabaseInstanceWrapper implements Serializable {
 		return true;
 	}
 
+	public DatabaseInstanceProbability getAvailabilityInfo() {
+		return availabilityInfo;
+	}
 
-
-
+	@Override
+	public int compareTo(DatabaseInstanceWrapper o) {
+		return this.getAvailabilityInfo().compareTo(o.getAvailabilityInfo());
+		
+	}
 
 }

@@ -66,7 +66,7 @@ public class ReplicaManager implements Serializable {
 
 	public ReplicaManager(){
 		this.allReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
-		this.activeReplicas = Collections.synchronizedSet(new HashSet<DatabaseInstanceWrapper>());
+		this.activeReplicas = new HashSet<DatabaseInstanceWrapper>();
 		this.primaryLocation = null;
 
 		this.lastUpdate = 0;

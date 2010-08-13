@@ -22,6 +22,7 @@ import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 
 import org.h2.command.Command;
@@ -31,6 +32,7 @@ import org.h2.engine.Session;
 import org.h2.h2o.autonomic.AutonomicAction;
 import org.h2.h2o.autonomic.AutonomicController;
 import org.h2.h2o.autonomic.Updates;
+import org.h2.h2o.autonomic.decision.RequestType;
 import org.h2.h2o.comms.QueryProxy;
 import org.h2.h2o.comms.ReplicaManager;
 import org.h2.h2o.comms.remote.TableManagerRemote;
@@ -385,7 +387,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		/*
 		 * The set of all replica locations that could be involved in the query.
 		 */
-		Set<DatabaseInstanceWrapper> potentialReplicaLocations;
+		Queue<DatabaseInstanceWrapper> potentialReplicaLocations = null;
 
 		if (lockType == LockType.CREATE){
 			/*
@@ -398,7 +400,13 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 				return newReplicaLocations; //No more replicas are needed currently.
 			}
 
-			potentialReplicaLocations = getDB().getDatabaseInstances(); //the update could be sent to any or all machines in the system.
+			try {
+				potentialReplicaLocations = getDB().getSystemTable().getAvailableMachines(RequestType.CREATE_TABLE_QUERY); //the update could be sent to any or all machines in the system.
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			} catch (MovedException e) {
+				e.printStackTrace();
+			}
 
 			int currentReplicationFactor = 1; //currently one copy of the table.
 
@@ -407,7 +415,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 			 * replication fact. The location of the primary copy cannot be re-used.
 			 */
 
-			if (potentialReplicaLocations.size() > 0){
+			if (potentialReplicaLocations != null && potentialReplicaLocations.size() > 0){
 
 				for (DatabaseInstanceWrapper dbInstance: potentialReplicaLocations){
 					//This includes the location of the primary copy.

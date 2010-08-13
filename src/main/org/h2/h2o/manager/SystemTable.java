@@ -20,9 +20,11 @@ package org.h2.h2o.manager;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 
 import org.h2.engine.Database;
+import org.h2.h2o.autonomic.decision.RequestType;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
@@ -229,6 +231,14 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 		return inMemory.getDatabaseInstance(databaseURL);
 	}
 
+
+	@Override
+	public Queue<DatabaseInstanceWrapper> getAvailableMachines(
+			RequestType typeOfRequest) throws RemoteException, MovedException {
+		preMethodTest();
+		return inMemory.getAvailableMachines(typeOfRequest);
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.h2.h2o.manager.ISystemTable#getDatabaseInstances()
 	 */
@@ -393,5 +403,6 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 		return inMemory.checkTableManagerAccessibility();
 		
 	}
+
 
 }

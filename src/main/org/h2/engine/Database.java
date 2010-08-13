@@ -100,13 +100,12 @@ import org.h2.value.Value;
 import org.h2.value.ValueInt;
 import org.h2.value.ValueLob;
 
-import uk.ac.standrews.cs.nds.eventModel.EventFactory;
 import uk.ac.standrews.cs.nds.eventModel.eventBus.EventBus;
 import uk.ac.standrews.cs.nds.eventModel.eventBus.busInterfaces.IEventBus;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
-import uk.ac.standrews.cs.nds.util.test.DiagnosticTestAdapter;
+
 
 /**
  * There is one database object per open database.
@@ -2717,18 +2716,6 @@ public class Database implements DataHandler {
 	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL) {
 		try {
 			return systemTableRef.getSystemTable().getDatabaseInstance(databaseURL);
-		} catch (RemoteException e) {
-			e.printStackTrace();
-		} catch (MovedException e) {
-			e.printStackTrace();
-		}
-
-		return null;
-	}
-
-	public Set<DatabaseInstanceWrapper> getDatabaseInstances() {
-		try {
-			return systemTableRef.getSystemTable().getDatabaseInstances();
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (MovedException e) {

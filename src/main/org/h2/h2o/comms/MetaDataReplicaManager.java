@@ -20,11 +20,13 @@ package org.h2.h2o.comms;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.HashSet;
+import java.util.Queue;
 import java.util.Set;
 
 import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.engine.Database;
+import org.h2.h2o.autonomic.decision.RequestType;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
 import org.h2.h2o.manager.ISystemTable;
@@ -181,7 +183,7 @@ public class MetaDataReplicaManager {
 			return; //replication factor already reached, or replication is not enabled.
 		}
 
-		Set<DatabaseInstanceWrapper> databaseInstances = null;
+		Queue<DatabaseInstanceWrapper> databaseInstances = null;
 
 		try {
 			ISystemTable systemTable = systemTableRef.getSystemTable();
@@ -190,7 +192,7 @@ public class MetaDataReplicaManager {
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "System table was NULL so the meta-data manager is unable to replicate.");
 				return;
 			} else {
-				databaseInstances = systemTable.getDatabaseInstances();
+				databaseInstances = systemTable.getAvailableMachines(RequestType.PROCESS_MIGRATION);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -296,16 +298,13 @@ public class MetaDataReplicaManager {
 		return false;
 	}
 
-	public int executeUpdate(String query, boolean isSystemTable, TableInfo tableInfo) throws SQLException{
+	public synchronized int executeUpdate(String query, boolean isSystemTable, TableInfo tableInfo) throws SQLException{
 
 		//Loop through replicas
 		//Asynchrously send update.
 
 		ReplicaManager replicaManager = (isSystemTable)? systemTableReplicas: tableManagerReplicas;
 		int managerStateReplicationFactor = (isSystemTable)? systemTableReplicationFactor: tableManagerReplicationFactor;
-
-
-
 
 		Set<DatabaseInstanceWrapper> replicas = replicaManager.getActiveReplicas();
 		Set<DatabaseInstanceWrapper> failed = new HashSet<DatabaseInstanceWrapper>();

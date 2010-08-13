@@ -25,10 +25,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.Set;
 import java.util.Map.Entry;
 
 import org.h2.engine.Database;
+import org.h2.h2o.autonomic.decision.RequestType;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
@@ -728,6 +731,20 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 
 	public Map<TableInfo, DatabaseURL> getPrimaryLocations() {
 		return primaryLocations;
+	}
+
+	@Override
+	public Queue<DatabaseInstanceWrapper> getAvailableMachines(
+			RequestType typeOfRequest) {
+		Queue<DatabaseInstanceWrapper> sortedMachines = new PriorityQueue<DatabaseInstanceWrapper>();
+		
+		try {
+			sortedMachines.addAll(getDatabaseInstances());
+		} catch (Exception e) {
+			//Local call - won't happen.
+		}
+		
+		return sortedMachines;
 	}
 
 }

@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.h2.h2o.autonomic.decision.IReplicaChoice;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
@@ -33,7 +34,7 @@ import org.h2.h2o.util.TableInfo;
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public interface ISystemTable extends Remote {
+public interface ISystemTable extends Remote, IReplicaChoice {
 
 	/**
 	 * Find a reference for the Table Manager responsible for the given table.

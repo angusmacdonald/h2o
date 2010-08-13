@@ -22,10 +22,12 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.Map.Entry;
 
 import org.h2.engine.Database;
+import org.h2.h2o.autonomic.decision.RequestType;
 import org.h2.h2o.comms.remote.TableManagerRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceRemote;
 import org.h2.h2o.comms.remote.DatabaseInstanceWrapper;
@@ -799,6 +801,13 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 	public boolean checkTableManagerAccessibility() {
 		//Done by in-memory system table.
 		return false;
+	}
+
+	@Override
+	public Queue<DatabaseInstanceWrapper> getAvailableMachines(
+			RequestType typeOfRequest) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 
