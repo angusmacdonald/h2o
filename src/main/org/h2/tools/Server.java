@@ -54,33 +54,42 @@ public class Server implements Runnable, ShutdownHandler {
 		}
 		out.println("Starts H2 Servers");
 		out.println("By default, -tcp, -web, -browser and -pg are started. Options are case sensitive.");
-		out.println("java "+getClass().getName());
+		out.println("java " + getClass().getName());
 		out.println("-web                  Start the Web Server and H2 Console");
 		out.println("-webAllowOthers       Allow other computers to connect");
-		out.println("-webPort <port>       The port (default: " + Constants.DEFAULT_HTTP_PORT+")");
+		out.println("-webPort <port>       The port (default: "
+				+ Constants.DEFAULT_HTTP_PORT + ")");
 		out.println("-webSSL               Use encrypted HTTPS connections");
 		out.println("-browser              Start a browser to connect to the H2 Console");
 		out.println("-tcp                  Start the TCP Server");
 		out.println("-tcpAllowOthers       Allow other computers to connect");
-		out.println("-tcpPort <port>       The port (default: " + TcpServer.DEFAULT_PORT+")");
+		out.println("-tcpPort <port>       The port (default: "
+				+ TcpServer.DEFAULT_PORT + ")");
 		out.println("-tcpSSL               Use encrypted SSL connections");
 		out.println("-tcpPassword <pass>   The password for shutting down a TCP Server");
 		out.println("-tcpShutdown <url>    Shutdown the TCP Server; example: tcp://localhost:9094");
 		out.println("-tcpShutdownForce     Don't wait for other connections to close");
 		out.println("-pg                   Start the PG Server");
 		out.println("-pgAllowOthers        Allow other computers to connect");
-		out.println("-pgPort <port>        The port (default: " + PgServer.DEFAULT_PORT+")");
+		out.println("-pgPort <port>        The port (default: "
+				+ PgServer.DEFAULT_PORT + ")");
 		out.println("-ftp                  Start the FTP Server");
-		out.println("-ftpPort <port>       The port (default: " + Constants.DEFAULT_FTP_PORT+")");
-		out.println("-ftpDir <dir>         The base directory (default: " + FtpServer.DEFAULT_ROOT + ")");
-		out.println("-ftpRead <user>       The user name for reading (default: " + FtpServer.DEFAULT_READ+")");
-		out.println("-ftpWrite <user>      The user name for writing (default: " + FtpServer.DEFAULT_WRITE+")");
-		out.println("-ftpWritePassword <p> The write password (default: " + FtpServer.DEFAULT_WRITE_PASSWORD+")");
+		out.println("-ftpPort <port>       The port (default: "
+				+ Constants.DEFAULT_FTP_PORT + ")");
+		out.println("-ftpDir <dir>         The base directory (default: "
+				+ FtpServer.DEFAULT_ROOT + ")");
+		out.println("-ftpRead <user>       The user name for reading (default: "
+				+ FtpServer.DEFAULT_READ + ")");
+		out.println("-ftpWrite <user>      The user name for writing (default: "
+				+ FtpServer.DEFAULT_WRITE + ")");
+		out.println("-ftpWritePassword <p> The write password (default: "
+				+ FtpServer.DEFAULT_WRITE_PASSWORD + ")");
 		out.println("-baseDir <dir>        The base directory for H2 databases; for all servers");
 		out.println("-ifExists             Only existing databases may be opened; for all servers");
 		out.println("-trace                Print additional trace information; for all servers");
 		out.println("-SMLocation           The location (as a JDBC URL) of this system's System Table.");
-		out.println("See also http://h2database.com/javadoc/" + getClass().getName().replace('.', '/') + ".html");
+		out.println("See also http://h2database.com/javadoc/"
+				+ getClass().getName().replace('.', '/') + ".html");
 	}
 
 	/**
@@ -90,46 +99,42 @@ public class Server implements Runnable, ShutdownHandler {
 	 * the program terminates with an exit code of 1. Options are case
 	 * sensitive. The following options are supported:
 	 * <ul>
-	 * <li>-help or -? (print the list of options) </li>
-	 * <li>-web (start the Web Server and H2 Console) </li>
-	 * <li>-browser (start a browser and open a page to connect to the
-	 *     Web Server) </li>
-	 * <li>-tcp (start the TCP Server) </li>
-	 * <li>-tcpShutdown {url} (shutdown the running TCP Server,
-	 *     URL example: tcp://localhost:9094) </li>
-	 * <li>-pg (start the PG Server) </li>
-	 * <li>-ftp (start the FTP Server) </li>
-	 * <li>-trace (print additional trace information; for all servers) </li>
-	 * <li>-baseDir {directory} (sets the base directory for H2 databases;
-	 *     for all servers) </li>
-	 * <li>-ifExists (only existing databases may be opened;
-	 *     for all servers) </li>
+	 * <li>-help or -? (print the list of options)</li>
+	 * <li>-web (start the Web Server and H2 Console)</li>
+	 * <li>-browser (start a browser and open a page to connect to the Web
+	 * Server)</li>
+	 * <li>-tcp (start the TCP Server)</li>
+	 * <li>-tcpShutdown {url} (shutdown the running TCP Server, URL example:
+	 * tcp://localhost:9094)</li>
+	 * <li>-pg (start the PG Server)</li>
+	 * <li>-ftp (start the FTP Server)</li>
+	 * <li>-trace (print additional trace information; for all servers)</li>
+	 * <li>-baseDir {directory} (sets the base directory for H2 databases; for
+	 * all servers)</li>
+	 * <li>-ifExists (only existing databases may be opened; for all servers)</li>
 	 * </ul>
 	 * For each Server, additional options are available:
 	 * <ul>
-	 * <li>-webPort {port} (the port of Web Server, default: 8082) </li>
-	 * <li>-webSSL (HTTPS is to be be used) </li>
-	 * <li>-webAllowOthers (enable remote connections)
+	 * <li>-webPort {port} (the port of Web Server, default: 8082)</li>
+	 * <li>-webSSL (HTTPS is to be be used)</li>
+	 * <li>-webAllowOthers (enable remote connections)</li>
+	 * <li>-tcpPort {port} (the port of TCP Server, default: 9092)</li>
+	 * <li>-tcpSSL (SSL is to be used)</li>
+	 * <li>-tcpAllowOthers (enable remote connections)</li>
+	 * <li>-tcpPassword {password} (the password for shutting down a TCP Server)
 	 * </li>
-	 * <li>-tcpPort {port} (the port of TCP Server, default: 9092) </li>
-	 * <li>-tcpSSL (SSL is to be used) </li>
-	 * <li>-tcpAllowOthers (enable remote connections)
-	 * </li>
-	 * <li>-tcpPassword {password} (the password for shutting down a TCP
-	 * Server) </li>
-	 * <li>-tcpShutdownForce (don't wait for other connections to
-	 * close) </li>
-	 * <li>-pgPort {port} (the port of PG Server, default: 5435) </li>
-	 * <li>-pgAllowOthers (enable remote connections)
-	 * </li>
-	 * <li>-ftpPort {port} </li>
-	 * <li>-ftpDir {directory} </li>
-	 * <li>-ftpRead {readUserName} </li>
-	 * <li>-ftpWrite {writeUserName} </li>
-	 * <li>-ftpWritePassword {password} </li>
+	 * <li>-tcpShutdownForce (don't wait for other connections to close)</li>
+	 * <li>-pgPort {port} (the port of PG Server, default: 5435)</li>
+	 * <li>-pgAllowOthers (enable remote connections)</li>
+	 * <li>-ftpPort {port}</li>
+	 * <li>-ftpDir {directory}</li>
+	 * <li>-ftpRead {readUserName}</li>
+	 * <li>-ftpWrite {writeUserName}</li>
+	 * <li>-ftpWritePassword {password}</li>
 	 * </ul>
-	 *
-	 * @param args the command line arguments
+	 * 
+	 * @param args
+	 *            the command line arguments
 	 * @throws SQLException
 	 */
 	public static void main(String[] args) throws SQLException {
@@ -246,7 +251,8 @@ public class Server implements Runnable, ShutdownHandler {
 				}
 			} else if ("-trace".equals(arg)) {
 				// no parameters
-			} else if ("-log".equals(arg) && SysProperties.OLD_COMMAND_LINE_OPTIONS) {
+			} else if ("-log".equals(arg)
+					&& SysProperties.OLD_COMMAND_LINE_OPTIONS) {
 				i++;
 			} else if ("-ifExists".equals(arg)) {
 				if (Tool.readArgBoolean(args, i) != 0) {
@@ -335,18 +341,22 @@ public class Server implements Runnable, ShutdownHandler {
 	 * connections are killed. After calling the method with force=false, it is
 	 * not possible to call it again with force=true because new connections are
 	 * not allowed. Example:
-	 *
+	 * 
 	 * <pre>
 	 * Server.shutdownTcpServer(&quot;tcp://localhost:9094&quot;, password, true);
 	 * </pre>
-	 *
-	 * @param url example: tcp://localhost:9094
-	 * @param password the password to use ("" for no password)
-	 * @param force the shutdown (don't wait)
+	 * 
+	 * @param url
+	 *            example: tcp://localhost:9094
+	 * @param password
+	 *            the password to use ("" for no password)
+	 * @param force
+	 *            the shutdown (don't wait)
 	 * @throws ClassNotFoundException
 	 * @throws SQLException
 	 */
-	public static void shutdownTcpServer(String url, String password, boolean force) throws SQLException {
+	public static void shutdownTcpServer(String url, String password,
+			boolean force) throws SQLException {
 		TcpServer.shutdown(url, password, force);
 	}
 
@@ -364,7 +374,9 @@ public class Server implements Runnable, ShutdownHandler {
 			}
 			buff.append(")");
 		} else {
-			buff.append("The " + service.getType() + " server could not be started. Possible cause: another server is already running on ");
+			buff.append("The "
+					+ service.getType()
+					+ " server could not be started. Possible cause: another server is already running on ");
 			buff.append(service.getURL());
 		}
 		return buff.toString();
@@ -372,13 +384,13 @@ public class Server implements Runnable, ShutdownHandler {
 
 	/**
 	 * Create a new web server, but does not start it yet. Example:
-	 *
+	 * 
 	 * <pre>
-	 * Server server = Server.createWebServer(
-	 *     new String[] { &quot;-trace&quot; }).start();
+	 * Server server = Server.createWebServer(new String[] { &quot;-trace&quot; }).start();
 	 * </pre>
-	 *
-	 * @param args the argument list
+	 * 
+	 * @param args
+	 *            the argument list
 	 * @return the server
 	 */
 	public static Server createWebServer(String[] args) throws SQLException {
@@ -390,13 +402,13 @@ public class Server implements Runnable, ShutdownHandler {
 
 	/**
 	 * Create a new ftp server, but does not start it yet. Example:
-	 *
+	 * 
 	 * <pre>
-	 * Server server = Server.createFtpServer(
-	 *     new String[] { &quot;-trace&quot; }).start();
+	 * Server server = Server.createFtpServer(new String[] { &quot;-trace&quot; }).start();
 	 * </pre>
-	 *
-	 * @param args the argument list
+	 * 
+	 * @param args
+	 *            the argument list
 	 * @return the server
 	 */
 	public static Server createFtpServer(String[] args) throws SQLException {
@@ -405,13 +417,14 @@ public class Server implements Runnable, ShutdownHandler {
 
 	/**
 	 * Create a new TCP server, but does not start it yet. Example:
-	 *
+	 * 
 	 * <pre>
-	 * Server server = Server.createTcpServer(
-	 *     new String[] { &quot;-tcpAllowOthers&quot; }).start();
+	 * Server server = Server.createTcpServer(new String[] { &quot;-tcpAllowOthers&quot; })
+	 * 		.start();
 	 * </pre>
-	 *
-	 * @param args the argument list
+	 * 
+	 * @param args
+	 *            the argument list
 	 * @return the server
 	 */
 	public static Server createTcpServer(String[] args) throws SQLException {
@@ -419,15 +432,15 @@ public class Server implements Runnable, ShutdownHandler {
 	}
 
 	/**
-	 * Create a new PG server, but does not start it yet.
-	 * Example:
+	 * Create a new PG server, but does not start it yet. Example:
+	 * 
 	 * <pre>
-	 * Server server =
-	 *     Server.createPgServer(new String[]{
-	 *         "-pgAllowOthers"}).start();
+	 * Server server = Server.createPgServer(new String[] { &quot;-pgAllowOthers&quot; })
+	 * 		.start();
 	 * </pre>
-	 *
-	 * @param args the argument list
+	 * 
+	 * @param args
+	 *            the argument list
 	 * @return the server
 	 */
 	public static Server createPgServer(String[] args) throws SQLException {
@@ -436,8 +449,10 @@ public class Server implements Runnable, ShutdownHandler {
 
 	/**
 	 * Tries to start the server.
+	 * 
 	 * @return the server if successful
-	 * @throws SQLException if the server could not be started
+	 * @throws SQLException
+	 *             if the server could not be started
 	 */
 	public Server start() throws SQLException {
 		service.start();
@@ -455,7 +470,8 @@ public class Server implements Runnable, ShutdownHandler {
 		if (isRunning(true)) {
 			return this;
 		}
-		throw Message.getSQLException(ErrorCode.EXCEPTION_OPENING_PORT_2, new String[] { name, "timeout" });
+		throw Message.getSQLException(ErrorCode.EXCEPTION_OPENING_PORT_2,
+				new String[] { name, "timeout" });
 	}
 
 	private static void wait(int i) {
@@ -489,8 +505,9 @@ public class Server implements Runnable, ShutdownHandler {
 
 	/**
 	 * Checks if the server is running.
-	 *
-	 * @param traceError if errors should be written
+	 * 
+	 * @param traceError
+	 *            if errors should be written
 	 * @return if the server is running
 	 */
 	public boolean isRunning(boolean traceError) {
@@ -506,7 +523,7 @@ public class Server implements Runnable, ShutdownHandler {
 
 	/**
 	 * Gets the URL of this server.
-	 *
+	 * 
 	 * @return the url
 	 */
 	public String getURL() {
@@ -515,7 +532,7 @@ public class Server implements Runnable, ShutdownHandler {
 
 	/**
 	 * Gets the port this server is listening on.
-	 *
+	 * 
 	 * @return the port
 	 */
 	public int getPort() {
@@ -526,7 +543,6 @@ public class Server implements Runnable, ShutdownHandler {
 	 * INTERNAL
 	 */
 	public void run() {
-
 
 		try {
 			service.listen();
@@ -555,7 +571,7 @@ public class Server implements Runnable, ShutdownHandler {
 
 	/**
 	 * Get the service attached to this server.
-	 *
+	 * 
 	 * @return the service
 	 */
 	public Service getService() {
@@ -566,8 +582,9 @@ public class Server implements Runnable, ShutdownHandler {
 	 * Start a web server and a browser that uses the given connection. The
 	 * current transaction is preserved. This is specially useful to manually
 	 * inspect the database when debugging.
-	 *
-	 * @param conn the database connection (the database must be open)
+	 * 
+	 * @param conn
+	 *            the database connection (the database must be open)
 	 */
 	public static void startWebServer(Connection conn) throws SQLException {
 		final Object waitUntilDisconnected = new Object();

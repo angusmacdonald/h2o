@@ -22,9 +22,9 @@ import org.h2.util.ByteUtils;
 import org.h2.util.TempFileDeleter;
 
 /**
- * This class is an abstraction of a random access file.
- * Each file contains a magic header, and reading / writing is done in blocks.
- * See also {@link SecureFileStore}
+ * This class is an abstraction of a random access file. Each file contains a
+ * magic header, and reading / writing is done in blocks. See also
+ * {@link SecureFileStore}
  */
 public class FileStore {
 
@@ -62,12 +62,16 @@ public class FileStore {
 
 	/**
 	 * Create a new file using the given settings.
-	 *
-	 * @param handler the callback object
-	 * @param name the file name
-	 * @param mode the access mode ("r", "rw", "rws", "rwd")
+	 * 
+	 * @param handler
+	 *            the callback object
+	 * @param name
+	 *            the file name
+	 * @param mode
+	 *            the access mode ("r", "rw", "rws", "rwd")
 	 */
-	protected FileStore(DataHandler handler, String name, String mode) throws SQLException {
+	protected FileStore(DataHandler handler, String name, String mode)
+			throws SQLException {
 		FileSystem fs = FileSystem.getInstance(name);
 		this.handler = handler;
 		this.name = name;
@@ -87,61 +91,80 @@ public class FileStore {
 			}
 			fileLength = file.length();
 		} catch (IOException e) {
-			throw Message.convertIOException(e, "name: " + name + " mode: " + mode);
+			throw Message.convertIOException(e, "name: " + name + " mode: "
+					+ mode);
 		}
 	}
 
 	/**
 	 * Open a non encrypted file store with the given settings.
-	 *
-	 * @param handler the data handler
-	 * @param name the file name
-	 * @param mode the access mode (r, rw, rws, rwd)
+	 * 
+	 * @param handler
+	 *            the data handler
+	 * @param name
+	 *            the file name
+	 * @param mode
+	 *            the access mode (r, rw, rws, rwd)
 	 * @return the created object
 	 */
-	public static FileStore open(DataHandler handler, String name, String mode) throws SQLException {
+	public static FileStore open(DataHandler handler, String name, String mode)
+			throws SQLException {
 		return open(handler, name, mode, null, null, 0);
 	}
 
 	/**
 	 * Open an encrypted file store with the given settings.
-	 *
-	 * @param handler the data handler
-	 * @param name the file name
-	 * @param mode the access mode (r, rw, rws, rwd)
-	 * @param cipher the name of the cipher algorithm
-	 * @param key the encryption key
+	 * 
+	 * @param handler
+	 *            the data handler
+	 * @param name
+	 *            the file name
+	 * @param mode
+	 *            the access mode (r, rw, rws, rwd)
+	 * @param cipher
+	 *            the name of the cipher algorithm
+	 * @param key
+	 *            the encryption key
 	 * @return the created object
 	 */
-	public static FileStore open(DataHandler handler, String name, String mode, String cipher, byte[] key) throws SQLException {
-		return open(handler, name, mode, cipher, key, Constants.ENCRYPTION_KEY_HASH_ITERATIONS);
+	public static FileStore open(DataHandler handler, String name, String mode,
+			String cipher, byte[] key) throws SQLException {
+		return open(handler, name, mode, cipher, key,
+				Constants.ENCRYPTION_KEY_HASH_ITERATIONS);
 	}
 
 	/**
 	 * Open an encrypted file store with the given settings.
-	 *
-	 * @param handler the data handler
-	 * @param name the file name
-	 * @param mode the access mode (r, rw, rws, rwd)
-	 * @param cipher the name of the cipher algorithm
-	 * @param key the encryption key
-	 * @param keyIterations the number of iterations the key should be hashed
+	 * 
+	 * @param handler
+	 *            the data handler
+	 * @param name
+	 *            the file name
+	 * @param mode
+	 *            the access mode (r, rw, rws, rwd)
+	 * @param cipher
+	 *            the name of the cipher algorithm
+	 * @param key
+	 *            the encryption key
+	 * @param keyIterations
+	 *            the number of iterations the key should be hashed
 	 * @return the created object
 	 */
-	public static FileStore open(DataHandler handler, String name, String mode, String cipher,
-			byte[] key, int keyIterations) throws SQLException {
+	public static FileStore open(DataHandler handler, String name, String mode,
+			String cipher, byte[] key, int keyIterations) throws SQLException {
 		FileStore store;
 		if (cipher == null) {
 			store = new FileStore(handler, name, mode);
 		} else {
-			store = new SecureFileStore(handler, name, mode, cipher, key, keyIterations);
+			store = new SecureFileStore(handler, name, mode, cipher, key,
+					keyIterations);
 		}
 		return store;
 	}
 
 	/**
 	 * Generate the random salt bytes if required.
-	 *
+	 * 
 	 * @return the random salt or the magic
 	 */
 	protected byte[] generateSalt() {
@@ -150,8 +173,9 @@ public class FileStore {
 
 	/**
 	 * Initialize the key using the given salt.
-	 *
-	 * @param salt the salt
+	 * 
+	 * @param salt
+	 *            the salt
 	 */
 	protected void initKey(byte[] salt) {
 		// do nothing
@@ -203,7 +227,8 @@ public class FileStore {
 				}
 			}
 			if (ByteUtils.compareNotNull(buff, magic) != 0) {
-				throw Message.getSQLException(ErrorCode.FILE_VERSION_ERROR_1, name);
+				throw Message.getSQLException(ErrorCode.FILE_VERSION_ERROR_1,
+						name);
 			}
 			salt = new byte[len];
 			readFullyDirect(salt, 0, len);
@@ -214,7 +239,8 @@ public class FileStore {
 				buff[10] = 'B';
 			}
 			if (ByteUtils.compareNotNull(buff, magic) != 0) {
-				throw Message.getSQLException(ErrorCode.FILE_ENCRYPTION_ERROR_1, name);
+				throw Message.getSQLException(
+						ErrorCode.FILE_ENCRYPTION_ERROR_1, name);
 			}
 		}
 	}
@@ -259,21 +285,28 @@ public class FileStore {
 
 	/**
 	 * Read a number of bytes without decrypting.
-	 *
-	 * @param b the target buffer
-	 * @param off the offset
-	 * @param len the number of bytes to read
+	 * 
+	 * @param b
+	 *            the target buffer
+	 * @param off
+	 *            the offset
+	 * @param len
+	 *            the number of bytes to read
 	 */
-	protected void readFullyDirect(byte[] b, int off, int len) throws SQLException {
+	protected void readFullyDirect(byte[] b, int off, int len)
+			throws SQLException {
 		readFully(b, off, len);
 	}
 
 	/**
 	 * Read a number of bytes.
-	 *
-	 * @param b the target buffer
-	 * @param off the offset
-	 * @param len the number of bytes to read
+	 * 
+	 * @param b
+	 *            the target buffer
+	 * @param off
+	 *            the offset
+	 * @param len
+	 *            the number of bytes to read
 	 */
 	public void readFully(byte[] b, int off, int len) throws SQLException {
 		if (SysProperties.CHECK && len < 0) {
@@ -293,8 +326,9 @@ public class FileStore {
 
 	/**
 	 * Go to the specified file location.
-	 *
-	 * @param pos the location
+	 * 
+	 * @param pos
+	 *            the location
 	 */
 	public void seek(long pos) throws SQLException {
 		if (SysProperties.CHECK && pos % Constants.FILE_BLOCK_SIZE != 0) {
@@ -312,10 +346,13 @@ public class FileStore {
 
 	/**
 	 * Write a number of bytes without encrypting.
-	 *
-	 * @param b the source buffer
-	 * @param off the offset
-	 * @param len the number of bytes to write
+	 * 
+	 * @param b
+	 *            the source buffer
+	 * @param off
+	 *            the offset
+	 * @param len
+	 *            the number of bytes to write
 	 */
 	protected void writeDirect(byte[] b, int off, int len) throws SQLException {
 		write(b, off, len);
@@ -323,17 +360,21 @@ public class FileStore {
 
 	/**
 	 * Write a number of bytes.
-	 *
-	 * @param b the source buffer
-	 * @param off the offset
-	 * @param len the number of bytes to write
+	 * 
+	 * @param b
+	 *            the source buffer
+	 * @param off
+	 *            the offset
+	 * @param len
+	 *            the number of bytes to write
 	 */
 	public void write(byte[] b, int off, int len) throws SQLException {
 		if (SysProperties.CHECK && len < 0) {
 			Message.throwInternalError("read len " + len);
 		}
 		if (SysProperties.CHECK && len % Constants.FILE_BLOCK_SIZE != 0) {
-			Message.throwInternalError("unaligned write " + name + " len " + len);
+			Message.throwInternalError("unaligned write " + name + " len "
+					+ len);
 		}
 		checkWritingAllowed();
 		checkPowerOff();
@@ -379,12 +420,14 @@ public class FileStore {
 
 	/**
 	 * Set the length of the file. This will expand or shrink the file.
-	 *
-	 * @param newLength the new file size
+	 * 
+	 * @param newLength
+	 *            the new file size
 	 */
 	public void setLength(long newLength) throws SQLException {
 		if (SysProperties.CHECK && newLength % Constants.FILE_BLOCK_SIZE != 0) {
-			Message.throwInternalError("unaligned setLength " + name + " pos " + newLength);
+			Message.throwInternalError("unaligned setLength " + name + " pos "
+					+ newLength);
 		}
 		checkPowerOff();
 		checkWritingAllowed();
@@ -410,7 +453,7 @@ public class FileStore {
 
 	/**
 	 * Get the file size in bytes.
-	 *
+	 * 
 	 * @return the file size
 	 */
 	public long length() throws SQLException {
@@ -419,14 +462,17 @@ public class FileStore {
 			if (SysProperties.CHECK2) {
 				len = file.length();
 				if (len != fileLength) {
-					Message.throwInternalError("file " + name + " length " + len + " expected " + fileLength);
+					Message.throwInternalError("file " + name + " length "
+							+ len + " expected " + fileLength);
 				}
 			}
 			if (SysProperties.CHECK2 && len % Constants.FILE_BLOCK_SIZE != 0) {
-				long newLength = len + Constants.FILE_BLOCK_SIZE - (len % Constants.FILE_BLOCK_SIZE);
+				long newLength = len + Constants.FILE_BLOCK_SIZE
+						- (len % Constants.FILE_BLOCK_SIZE);
 				file.setFileLength(newLength);
 				fileLength = newLength;
-				Message.throwInternalError("unaligned file length " + name + " len " + len);
+				Message.throwInternalError("unaligned file length " + name
+						+ " len " + len);
 			}
 			return len;
 		} catch (IOException e) {
@@ -436,7 +482,7 @@ public class FileStore {
 
 	/**
 	 * Get the current location of the file pointer.
-	 *
+	 * 
 	 * @return the location
 	 */
 	public long getFilePointer() throws SQLException {
@@ -488,7 +534,7 @@ public class FileStore {
 
 	/**
 	 * Check if the file is encrypted.
-	 *
+	 * 
 	 * @return true if it is
 	 */
 	public boolean isEncrypted() {
@@ -516,13 +562,14 @@ public class FileStore {
 
 	private static void trace(String method, String fileName, Object o) {
 		if (SysProperties.TRACE_IO) {
-			System.out.println("FileStore." + method + " " + fileName + " " + o);
+			System.out
+					.println("FileStore." + method + " " + fileName + " " + o);
 		}
 	}
 
 	/**
 	 * Check if the file store is in text mode.
-	 *
+	 * 
 	 * @return true if it is
 	 */
 	public boolean isTextMode() {

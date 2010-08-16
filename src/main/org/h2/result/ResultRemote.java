@@ -18,9 +18,9 @@ import org.h2.value.Transfer;
 import org.h2.value.Value;
 
 /**
- * The client side part of a result set that is kept on the server.
- * In many cases, the complete data is kept on the client side,
- * but for large results only a subset is in-memory.
+ * The client side part of a result set that is kept on the server. In many
+ * cases, the complete data is kept on the client side, but for large results
+ * only a subset is in-memory.
  */
 public class ResultRemote implements ResultInterface {
 
@@ -34,8 +34,8 @@ public class ResultRemote implements ResultInterface {
 	private ObjectArray result;
 	private ObjectArray lobValues;
 
-	public ResultRemote(SessionRemote session, Transfer transfer, int id, int columnCount, int fetchSize)
-	throws IOException, SQLException {
+	public ResultRemote(SessionRemote session, Transfer transfer, int id,
+			int columnCount, int fetchSize) throws IOException, SQLException {
 		this.session = session;
 		this.transfer = transfer;
 		this.id = id;
@@ -100,7 +100,8 @@ public class ResultRemote implements ResultInterface {
 			session.checkClosed();
 			try {
 				session.traceOperation("RESULT_RESET", id);
-				transfer.writeInt(SessionRemote.RESULT_RESET).writeInt(id).flush();
+				transfer.writeInt(SessionRemote.RESULT_RESET).writeInt(id)
+						.flush();
 			} catch (IOException e) {
 				throw Message.convertIOException(e, null);
 			}
@@ -182,11 +183,13 @@ public class ResultRemote implements ResultInterface {
 			return;
 		}
 		try {
-			if (id <= session.getCurrentId() - SysProperties.SERVER_CACHED_OBJECTS / 2) {
+			if (id <= session.getCurrentId()
+					- SysProperties.SERVER_CACHED_OBJECTS / 2) {
 				// object is too old - we need to map it to a new id
 				int newId = session.getNextId();
 				session.traceOperation("CHANGE_ID", id);
-				transfer.writeInt(SessionRemote.CHANGE_ID).writeInt(id).writeInt(newId);
+				transfer.writeInt(SessionRemote.CHANGE_ID).writeInt(id)
+						.writeInt(newId);
 				id = newId;
 				// TODO remote result set: very old result sets may be
 				// already removed on the server (theoretically) - how to
@@ -206,7 +209,8 @@ public class ResultRemote implements ResultInterface {
 				int fetch = Math.min(fetchSize, rowCount - rowOffset);
 				if (sendFetch) {
 					session.traceOperation("RESULT_FETCH_ROWS", id);
-					transfer.writeInt(SessionRemote.RESULT_FETCH_ROWS).writeInt(id).writeInt(fetch);
+					transfer.writeInt(SessionRemote.RESULT_FETCH_ROWS)
+							.writeInt(id).writeInt(fetch);
 					session.done(transfer);
 				}
 				for (int r = 0; r < fetch; r++) {
@@ -238,7 +242,8 @@ public class ResultRemote implements ResultInterface {
 	}
 
 	public String toString() {
-		return "columns: " + columns.length + " rows: " + rowCount + " pos: " + rowId;
+		return "columns: " + columns.length + " rows: " + rowCount + " pos: "
+				+ rowId;
 	}
 
 	public int getFetchSize() {

@@ -22,8 +22,8 @@ import org.h2.value.Value;
 import org.h2.value.ValueNull;
 
 /**
- * This class is used for updatable result sets.
- * An updatable row provides functions to update the current row in a result set.
+ * This class is used for updatable result sets. An updatable row provides
+ * functions to update the current row in a result set.
  */
 public class UpdatableRow {
 
@@ -39,11 +39,14 @@ public class UpdatableRow {
 	/**
 	 * Construct a new object that is linked to the result set. The constructor
 	 * reads the database meta data to find out if the result set is updatable.
-	 *
-	 * @param conn the database connection
-	 * @param result the result
+	 * 
+	 * @param conn
+	 *            the database connection
+	 * @param result
+	 *            the result
 	 */
-	public UpdatableRow(JdbcConnection conn, ResultInterface result) throws SQLException {
+	public UpdatableRow(JdbcConnection conn, ResultInterface result)
+			throws SQLException {
 		this.conn = conn;
 		this.meta = conn.getMetaData();
 		this.result = result;
@@ -78,15 +81,14 @@ public class UpdatableRow {
 		}
 		key = new ObjectArray();
 		rs = meta.getPrimaryKeys(null,
-				JdbcUtils.escapeMetaDataPattern(schemaName),
-				tableName);
+				JdbcUtils.escapeMetaDataPattern(schemaName), tableName);
 		while (rs.next()) {
 			key.add(rs.getString("COLUMN_NAME"));
 		}
 		if (key.size() == 0) {
 			rs = meta.getIndexInfo(null,
-					JdbcUtils.escapeMetaDataPattern(schemaName),
-					tableName, true, true);
+					JdbcUtils.escapeMetaDataPattern(schemaName), tableName,
+					true, true);
 			while (rs.next()) {
 				key.add(rs.getString("COLUMN_NAME"));
 			}
@@ -96,7 +98,7 @@ public class UpdatableRow {
 
 	/**
 	 * Check if this result set is updatable.
-	 *
+	 * 
 	 * @return true if it is
 	 */
 	public boolean isUpdatable() {
@@ -137,7 +139,8 @@ public class UpdatableRow {
 		}
 	}
 
-	private void setKey(PreparedStatement prep, int start, Value[] current) throws SQLException {
+	private void setKey(PreparedStatement prep, int start, Value[] current)
+			throws SQLException {
 		for (int i = 0; i < key.size(); i++) {
 			String col = (String) key.get(i);
 			int idx = getColumnIndex(col);
@@ -151,17 +154,17 @@ public class UpdatableRow {
 		}
 	}
 
-	//    public boolean isRowDeleted(Value[] row) throws SQLException {
-	//        StringBuilder buff = new StringBuilder();
-	//        buff.append("SELECT COUNT(*) FROM ");
-	//        buff.append(StringUtils.quoteIdentifier(tableName));
-	//        appendKeyCondition(buff);
-	//        PreparedStatement prep = conn.prepareStatement(buff.toString());
-	//        setKey(prep, 1, row);
-	//        ResultSet rs = prep.executeQuery();
-	//        rs.next();
-	//        return rs.getInt(1) == 0;
-	//    }
+	// public boolean isRowDeleted(Value[] row) throws SQLException {
+	// StringBuilder buff = new StringBuilder();
+	// buff.append("SELECT COUNT(*) FROM ");
+	// buff.append(StringUtils.quoteIdentifier(tableName));
+	// appendKeyCondition(buff);
+	// PreparedStatement prep = conn.prepareStatement(buff.toString());
+	// setKey(prep, 1, row);
+	// ResultSet rs = prep.executeQuery();
+	// rs.next();
+	// return rs.getInt(1) == 0;
+	// }
 
 	private void appendTableName(StringBuilder buff) {
 		if (schemaName != null && schemaName.length() > 0) {
@@ -173,8 +176,9 @@ public class UpdatableRow {
 
 	/**
 	 * Re-reads a row from the database and updates the values in the array.
-	 *
-	 * @param row the values that contain the key
+	 * 
+	 * @param row
+	 *            the values that contain the key
 	 * @return the row
 	 */
 	public Value[] readRow(Value[] row) throws SQLException {
@@ -200,9 +204,11 @@ public class UpdatableRow {
 
 	/**
 	 * Delete the given row in the database.
-	 *
-	 * @param current the row
-	 * @throws SQLException if this row has already been deleted
+	 * 
+	 * @param current
+	 *            the row
+	 * @throws SQLException
+	 *             if this row has already been deleted
 	 */
 	public void deleteRow(Value[] current) throws SQLException {
 		StringBuilder buff = new StringBuilder();
@@ -220,12 +226,16 @@ public class UpdatableRow {
 
 	/**
 	 * Update a row in the database.
-	 *
-	 * @param current the old row
-	 * @param updateRow the new row
-	 * @throws SQLException if the row has been deleted
+	 * 
+	 * @param current
+	 *            the old row
+	 * @param updateRow
+	 *            the new row
+	 * @throws SQLException
+	 *             if the row has been deleted
 	 */
-	public void updateRow(Value[] current, Value[] updateRow) throws SQLException {
+	public void updateRow(Value[] current, Value[] updateRow)
+			throws SQLException {
 		StringBuilder buff = new StringBuilder();
 		buff.append("UPDATE ");
 		appendTableName(buff);
@@ -254,9 +264,11 @@ public class UpdatableRow {
 
 	/**
 	 * Insert a new row into the database.
-	 *
-	 * @param row the new row
-	 * @throws SQLException if the row could not be inserted
+	 * 
+	 * @param row
+	 *            the new row
+	 * @throws SQLException
+	 *             if the row could not be inserted
 	 */
 	public void insertRow(Value[] row) throws SQLException {
 		StringBuilder buff = new StringBuilder();

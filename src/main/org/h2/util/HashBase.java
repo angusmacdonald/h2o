@@ -53,14 +53,15 @@ public abstract class HashBase {
 
 	/**
 	 * Increase the size of the underlying table and re-distribute the elements.
-	 *
-	 * @param newLevel the new level
+	 * 
+	 * @param newLevel
+	 *            the new level
 	 */
 	protected abstract void rehash(int newLevel) throws SQLException;
 
 	/**
 	 * Get the size of the map.
-	 *
+	 * 
 	 * @return the size
 	 */
 	public int size() {
@@ -94,8 +95,9 @@ public abstract class HashBase {
 
 	/**
 	 * Clear the map and reset the level to the specified value.
-	 *
-	 * @param newLevel the new level
+	 * 
+	 * @param newLevel
+	 *            the new level
 	 */
 	protected void reset(int newLevel) {
 		minSize = size * 3 / 4;
@@ -110,8 +112,9 @@ public abstract class HashBase {
 
 	/**
 	 * Calculate the index for this hash code.
-	 *
-	 * @param hash the hash code
+	 * 
+	 * @param hash
+	 *            the hash code
 	 * @return the index
 	 */
 	protected int getIndex(int hash) {

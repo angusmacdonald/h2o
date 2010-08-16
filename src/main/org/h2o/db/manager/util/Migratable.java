@@ -25,15 +25,18 @@ import org.h2o.util.exceptions.MovedException;
 import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
 
 /**
- * Classes implementing this interface can be migrated to other machines in the system.
+ * Classes implementing this interface can be migrated to other machines in the
+ * system.
+ * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public interface Migratable {
 	/**
-	 * @throws MovedException 
+	 * @throws MovedException
 	 * 
 	 */
-	public void prepareForMigration(String newLocation) throws RemoteException, MigrationException, MovedException;
+	public void prepareForMigration(String newLocation) throws RemoteException,
+			MigrationException, MovedException;
 
 	/**
 	 * 
@@ -43,12 +46,14 @@ public interface Migratable {
 	/**
 	 * 
 	 */
-	public void completeMigration() throws RemoteException, MovedException, MigrationException ;
+	public void completeMigration() throws RemoteException, MovedException,
+			MigrationException;
 
 	/**
 	 * Tell the manager to stop accepting queries.
 	 */
-	public void shutdown(boolean shutdown) throws RemoteException, MovedException;
+	public void shutdown(boolean shutdown) throws RemoteException,
+			MovedException;
 
 	/**
 	 * 

@@ -14,8 +14,7 @@ import org.h2.engine.Session;
 import org.h2.message.Message;
 
 /**
- * This class represents the statement
- * TRUNCATE TABLE
+ * This class represents the statement TRUNCATE TABLE
  */
 public class TruncateTable extends DefineCommand {
 
@@ -26,7 +25,8 @@ public class TruncateTable extends DefineCommand {
 	public int update() throws SQLException {
 		session.commit(true);
 		if (!table.canTruncate()) {
-			throw Message.getSQLException(ErrorCode.CANNOT_TRUNCATE_1, table.getSQL());
+			throw Message.getSQLException(ErrorCode.CANNOT_TRUNCATE_1,
+					table.getSQL());
 		}
 		session.getUser().checkRight(table, Right.DELETE);
 		table.lock(session, true, true);

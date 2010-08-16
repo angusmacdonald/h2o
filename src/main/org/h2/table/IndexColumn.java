@@ -34,7 +34,7 @@ public class IndexColumn {
 
 	/**
 	 * Get the SQL snippet for this index column.
-	 *
+	 * 
 	 * @return the SQL snippet
 	 */
 	public String getSQL() {
@@ -53,8 +53,9 @@ public class IndexColumn {
 	/**
 	 * Create an array of index columns from a list of columns. The default sort
 	 * type is used.
-	 *
-	 * @param columns the column list
+	 * 
+	 * @param columns
+	 *            the column list
 	 * @return the index column array
 	 */
 	public static IndexColumn[] wrap(Column[] columns) {
@@ -68,13 +69,16 @@ public class IndexColumn {
 
 	/**
 	 * Map the columns using the column names and the specified table.
-	 *
-	 * @param indexColumns the column list with column names set
-	 * @param table the table from where to map the column names to columns
+	 * 
+	 * @param indexColumns
+	 *            the column list with column names set
+	 * @param table
+	 *            the table from where to map the column names to columns
 	 */
-	public static void mapColumns(IndexColumn[] indexColumns, Table table) throws SQLException {
-		for (int i = 0; i < indexColumns.length; i++) {
-			IndexColumn col = indexColumns[i];
+	public static void mapColumns(IndexColumn[] indexColumns, Table table)
+			throws SQLException {
+		for (IndexColumn indexColumn : indexColumns) {
+			IndexColumn col = indexColumn;
 			if (col.columnName == null && col.column != null)
 				col.columnName = col.column.getName();
 			col.column = table.getColumn(col.columnName);

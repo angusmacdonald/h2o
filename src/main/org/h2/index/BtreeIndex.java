@@ -27,18 +27,16 @@ import org.h2.value.Value;
 import org.h2.value.ValueNull;
 
 /**
- * This is the most common type of index, a btree index.
- * The index structure is:
+ * This is the most common type of index, a btree index. The index structure is:
  * <ul>
- * <li>There is one {@link BtreeHead} that points to the root page.
- * The head always stays where it is.
- * </li><li>There is a number of {@link BtreePage}s. Each page is either
- * a {@link BtreeNode} or a {@link BtreeLeaf}.
- * </li><li>A node page links to other leaf pages or to node pages.
- * Leaf pages don't point to other pages (but may have a parent).
- * </li><li>The uppermost page is the root page. If pages
- * are added or deleted, the root page may change.
- * </li>
+ * <li>There is one {@link BtreeHead} that points to the root page. The head
+ * always stays where it is.</li>
+ * <li>There is a number of {@link BtreePage}s. Each page is either a
+ * {@link BtreeNode} or a {@link BtreeLeaf}.</li>
+ * <li>A node page links to other leaf pages or to node pages. Leaf pages don't
+ * point to other pages (but may have a parent).</li>
+ * <li>The uppermost page is the root page. If pages are added or deleted, the
+ * root page may change.</li>
  * </ul>
  * Only the data of the indexed columns are stored in the index.
  */
@@ -59,18 +57,26 @@ public class BtreeIndex extends BaseIndex implements RecordReader {
 	/**
 	 * Create a new b tree index with the given properties. If the index does
 	 * not yet exist, a new empty one is created.
-	 *
-	 * @param session the session
-	 * @param table the base table
-	 * @param id the object id
-	 * @param indexName the name of the index
-	 * @param columns the indexed columns
-	 * @param indexType the index type
-	 * @param headPos the position of the index header page, or Index.EMPTY_HEAD
-	 *            for a new index
+	 * 
+	 * @param session
+	 *            the session
+	 * @param table
+	 *            the base table
+	 * @param id
+	 *            the object id
+	 * @param indexName
+	 *            the name of the index
+	 * @param columns
+	 *            the indexed columns
+	 * @param indexType
+	 *            the index type
+	 * @param headPos
+	 *            the position of the index header page, or Index.EMPTY_HEAD for
+	 *            a new index
 	 */
-	public BtreeIndex(Session session, TableData table, int id, String indexName, IndexColumn[] columns,
-			IndexType indexType, int headPos) throws SQLException {
+	public BtreeIndex(Session session, TableData table, int id,
+			String indexName, IndexColumn[] columns, IndexType indexType,
+			int headPos) throws SQLException {
 		initBaseIndex(table, id, indexName, columns, indexType);
 		this.tableData = table;
 		Database db = table.getDatabase();
@@ -96,7 +102,8 @@ public class BtreeIndex extends BaseIndex implements RecordReader {
 
 	private BtreePage getRoot(Session session) throws SQLException {
 		if (rootPage == null) {
-			setRoot((BtreePage) storage.getRecord(session, head.getRootPosition()));
+			setRoot((BtreePage) storage.getRecord(session,
+					head.getRootPosition()));
 		}
 		return rootPage;
 	}
@@ -136,9 +143,11 @@ public class BtreeIndex extends BaseIndex implements RecordReader {
 
 	/**
 	 * Update a page in the storage.
-	 *
-	 * @param session the session
-	 * @param p the page to update
+	 * 
+	 * @param session
+	 *            the session
+	 * @param p
+	 *            the page to update
 	 */
 	void updatePage(Session session, Record p) throws SQLException {
 		if (database.getLogIndexChanges()) {
@@ -150,9 +159,11 @@ public class BtreeIndex extends BaseIndex implements RecordReader {
 
 	/**
 	 * Delete a page from the storage.
-	 *
-	 * @param session the session
-	 * @param p the page to remove
+	 * 
+	 * @param session
+	 *            the session
+	 * @param p
+	 *            the page to remove
 	 */
 	void deletePage(Session session, Record p) throws SQLException {
 		if (database.getLogIndexChanges()) {
@@ -162,9 +173,11 @@ public class BtreeIndex extends BaseIndex implements RecordReader {
 
 	/**
 	 * Add a page to the storage.
-	 *
-	 * @param session the session
-	 * @param p the page to add
+	 * 
+	 * @param session
+	 *            the session
+	 * @param p
+	 *            the page to add
 	 */
 	void addPage(Session session, Record p) throws SQLException {
 		storage.addRecord(session, p, Storage.ALLOCATE_POS);
@@ -172,9 +185,11 @@ public class BtreeIndex extends BaseIndex implements RecordReader {
 
 	/**
 	 * Get or read a page from the storage.
-	 *
-	 * @param session the session
-	 * @param i the page position
+	 * 
+	 * @param session
+	 *            the session
+	 * @param i
+	 *            the page position
 	 * @return the page
 	 */
 	BtreePage getPage(Session session, int i) throws SQLException {
@@ -183,8 +198,9 @@ public class BtreeIndex extends BaseIndex implements RecordReader {
 
 	/**
 	 * Write all changed paged to disk and mark the index as valid.
-	 *
-	 * @param session the session
+	 * 
+	 * @param session
+	 *            the session
 	 */
 	public void flush(Session session) throws SQLException {
 		lastChange = 0;
@@ -193,9 +209,11 @@ public class BtreeIndex extends BaseIndex implements RecordReader {
 			if (!database.getReadOnly()) {
 				deletePage(session, head);
 				// if we log index changes now, then the index is consistent
-				// if we don't log index changes, then the index is only consistent
+				// if we don't log index changes, then the index is only
+				// consistent
 				// if there are no in doubt transactions
-				if (database.getLogIndexChanges() || !database.getLog().containsInDoubtTransactions()) {
+				if (database.getLogIndexChanges()
+						|| !database.getLog().containsInDoubtTransactions()) {
 					head.setConsistent(true);
 				}
 				flushHead(session);
@@ -213,8 +231,7 @@ public class BtreeIndex extends BaseIndex implements RecordReader {
 		setChanged(session);
 		Row row = table.getTemplateRow();
 		row.setPosAndVersion(r);
-		for (int i = 0; i < columns.length; i++) {
-			Column col = columns[i];
+		for (Column col : columns) {
 			int idx = col.getColumnId();
 			Value v = r.getValue(idx);
 			row.setValue(idx, v);
@@ -236,15 +253,16 @@ public class BtreeIndex extends BaseIndex implements RecordReader {
 
 	/**
 	 * Create a search row for this row.
-	 *
-	 * @param row the row
+	 * 
+	 * @param row
+	 *            the row
 	 * @return the search row
 	 */
 	SearchRow getSearchRow(Row row) {
 		SearchRow r = table.getTemplateSimpleRow(columns.length == 1);
 		r.setPosAndVersion(row);
-		for (int j = 0; j < columns.length; j++) {
-			int idx = columns[j].getColumnId();
+		for (Column column : columns) {
+			int idx = column.getColumnId();
 			r.setValue(idx, row.getValue(idx));
 		}
 		return r;
@@ -261,15 +279,18 @@ public class BtreeIndex extends BaseIndex implements RecordReader {
 		return true;
 	}
 
-	public Cursor findNext(Session session, SearchRow first, SearchRow last) throws SQLException {
+	public Cursor findNext(Session session, SearchRow first, SearchRow last)
+			throws SQLException {
 		return find(session, first, true, last);
 	}
 
-	public Cursor find(Session session, SearchRow first, SearchRow last) throws SQLException {
+	public Cursor find(Session session, SearchRow first, SearchRow last)
+			throws SQLException {
 		return find(session, first, false, last);
 	}
 
-	private Cursor find(Session session, SearchRow first, boolean bigger, SearchRow last) throws SQLException {
+	private Cursor find(Session session, SearchRow first, boolean bigger,
+			SearchRow last) throws SQLException {
 		if (SysProperties.CHECK && storage == null) {
 			throw Message.getSQLException(ErrorCode.OBJECT_CLOSED);
 		}
@@ -299,14 +320,16 @@ public class BtreeIndex extends BaseIndex implements RecordReader {
 		} else if (c == 'H') {
 			return new BtreeHead(s);
 		} else {
-			throw Message.getSQLException(ErrorCode.FILE_CORRUPTED_1, getName());
+			throw Message
+					.getSQLException(ErrorCode.FILE_CORRUPTED_1, getName());
 		}
 	}
 
 	/**
 	 * Read an array of rows from a data page.
-	 *
-	 * @param s the data page
+	 * 
+	 * @param s
+	 *            the data page
 	 * @return the array of rows
 	 */
 	ObjectArray readRowArray(DataPage s) throws SQLException {
@@ -320,8 +343,8 @@ public class BtreeIndex extends BaseIndex implements RecordReader {
 			} else {
 				r = table.getTemplateSimpleRow(columns.length == 1);
 				r.setPos(pos);
-				for (int j = 0; j < columns.length; j++) {
-					int idx = columns[j].getColumnId();
+				for (Column column : columns) {
+					int idx = column.getColumnId();
 					r.setValue(idx, s.readValue());
 				}
 			}
@@ -332,9 +355,11 @@ public class BtreeIndex extends BaseIndex implements RecordReader {
 
 	/**
 	 * Get a row from the data file.
-	 *
-	 * @param session the session
-	 * @param pos the position in the data file
+	 * 
+	 * @param session
+	 *            the session
+	 * @param pos
+	 *            the position in the data file
 	 * @return the row
 	 */
 	Row getRow(Session session, int pos) throws SQLException {
@@ -347,7 +372,8 @@ public class BtreeIndex extends BaseIndex implements RecordReader {
 			storage.flushRecord(head);
 		}
 		if (trace.isDebugEnabled()) {
-			trace.debug("Index " + getSQL() + " head consistent=" + head.getConsistent());
+			trace.debug("Index " + getSQL() + " head consistent="
+					+ head.getConsistent());
 		}
 	}
 
@@ -381,7 +407,7 @@ public class BtreeIndex extends BaseIndex implements RecordReader {
 
 	/**
 	 * Get the last change time or 0 if the index has not been changed.
-	 *
+	 * 
 	 * @return the last change time or 0
 	 */
 	public long getLastChange() {
@@ -392,7 +418,8 @@ public class BtreeIndex extends BaseIndex implements RecordReader {
 		return true;
 	}
 
-	public Cursor findFirstOrLast(Session session, boolean first) throws SQLException {
+	public Cursor findFirstOrLast(Session session, boolean first)
+			throws SQLException {
 		if (first) {
 			// TODO optimization: this loops through NULL elements
 			Cursor cursor = find(session, null, false, null);

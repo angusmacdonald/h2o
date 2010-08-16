@@ -16,10 +16,11 @@ public class IntHashMap {
 	private final HashMap map = new HashMap();
 
 	/**
-	 * Get the value for the given key. This method returns null if the
-	 * entry has not been found.
-	 *
-	 * @param key the key
+	 * Get the value for the given key. This method returns null if the entry
+	 * has not been found.
+	 * 
+	 * @param key
+	 *            the key
 	 * @return the value or null
 	 */
 	public Object get(int key) {
@@ -28,9 +29,11 @@ public class IntHashMap {
 
 	/**
 	 * Store the given key-value pair. The value is overwritten or added.
-	 *
-	 * @param key the key
-	 * @param value the value
+	 * 
+	 * @param key
+	 *            the key
+	 * @param value
+	 *            the value
 	 */
 	public void put(int key, Object value) {
 		map.put(ObjectUtils.getInteger(key), value);
@@ -38,8 +41,9 @@ public class IntHashMap {
 
 	/**
 	 * Remove the key-value pair with the given key.
-	 *
-	 * @param key the key
+	 * 
+	 * @param key
+	 *            the key
 	 */
 	public void remove(int key) {
 		map.remove(ObjectUtils.getInteger(key));
@@ -53,8 +57,8 @@ public class IntHashMap {
 	}
 
 	/**
-	 * Get all values  from the map.
-	 *
+	 * Get all values from the map.
+	 * 
 	 * @return the values
 	 */
 	public Collection values() {

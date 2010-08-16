@@ -27,7 +27,6 @@ import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.interfaces.TableManagerRemote;
-import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.manager.interfaces.SystemTableRemote;
 import org.h2o.db.query.QueryProxy;
@@ -38,8 +37,9 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
 
 /**
- * Proxy class exposed via RMI, allowing semi-parsed queries to be sent to remote replicas for execution.
- *
+ * Proxy class exposed via RMI, allowing semi-parsed queries to be sent to
+ * remote replicas for execution.
+ * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class DatabaseInstance implements DatabaseInstanceRemote {
@@ -60,50 +60,60 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	private Session session;
 
 	/**
-	 * Whether the database instance is alive or in the process of being shut down.
+	 * Whether the database instance is alive or in the process of being shut
+	 * down.
 	 */
 	private boolean alive = true;
 
-	public DatabaseInstance(DatabaseURL databaseURL, Session session){
+	public DatabaseInstance(DatabaseURL databaseURL, Session session) {
 		this.databaseURL = databaseURL;
 
 		this.parser = new Parser(session, true);
 		this.session = session;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.h2.command.dm.DatabaseInstanceRemote#executeUpdate(org.h2.command.Prepared)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.h2.command.dm.DatabaseInstanceRemote#executeUpdate(org.h2.command
+	 * .Prepared)
 	 */
-	public int execute(String query, String transactionName, boolean commitOperation) throws RemoteException, SQLException{
-		if (query == null){
+	public int execute(String query, String transactionName,
+			boolean commitOperation) throws RemoteException, SQLException {
+		if (query == null) {
 			ErrorHandling.hardError("Shouldn't happen.");
 		}
 
 		Command command = parser.prepareCommand(query);
 
-
 		try {
-			if (commitOperation){
-				return command.executeUpdate();						//This is a COMMIT.
+			if (commitOperation) {
+				return command.executeUpdate(); // This is a COMMIT.
 			} else {
 				/*
-				 * If called from here executeUpdate should always be told the query is part of a larger transaction, because it
-				 * was remotely initiated and consequently needs to wait for the remote machine to commit.
+				 * If called from here executeUpdate should always be told the
+				 * query is part of a larger transaction, because it was
+				 * remotely initiated and consequently needs to wait for the
+				 * remote machine to commit.
 				 */
 
 				command.executeUpdate(true);
-				return prepare(transactionName);	//This wasn't a COMMIT. Execute a PREPARE.
+				return prepare(transactionName); // This wasn't a COMMIT.
+													// Execute a PREPARE.
 			}
 		} finally {
 			command.close();
 		}
 	}
 
-	public int prepare(String transactionName) throws RemoteException, SQLException{
+	public int prepare(String transactionName) throws RemoteException,
+			SQLException {
 
 		assert session.getAutoCommit() == false;
 
-		Command command = parser.prepareCommand("PREPARE COMMIT " + transactionName);
+		Command command = parser.prepareCommand("PREPARE COMMIT "
+				+ transactionName);
 		return command.executeUpdate();
 	}
 
@@ -112,18 +122,20 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	/**
 	 * @Deprecated Because it doesn't currently pass in a transaction name. Do we generate one is this method???
 	 */
-	public int executeUpdate(QueryProxy queryProxy, String sql) throws RemoteException,
-	SQLException {
+	public int executeUpdate(QueryProxy queryProxy, String sql)
+			throws RemoteException, SQLException {
 		/*
-		 * TODO eventually this method could do a lot more - e.g. the query may only be run here, and asynchronously run elsewhere. Another
-		 * overloaded version of the method may take only the query string and be required to obtain the queryProxy seperately. 
+		 * TODO eventually this method could do a lot more - e.g. the query may
+		 * only be run here, and asynchronously run elsewhere. Another
+		 * overloaded version of the method may take only the query string and
+		 * be required to obtain the queryProxy seperately.
 		 */
 		return queryProxy.executeUpdate(sql, null, session);
 	}
 
-
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.h2o.comms.DatabaseInstanceRemote#getConnectionString()
 	 */
 	@Override
@@ -131,37 +143,53 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 		return databaseURL.getOriginalURL();
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#getLocation()
 	 */
 	@Override
-	public DatabaseURL getURL()  throws RemoteException {
+	public DatabaseURL getURL() throws RemoteException {
 		return databaseURL;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#getSystemTableLocation()
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.h2.h2o.comms.remote.DatabaseInstanceRemote#getSystemTableLocation()
 	 */
 	@Override
 	public DatabaseURL getSystemTableURL() throws RemoteException {
 
-		DatabaseURL systemTableURL = session.getDatabase().getSystemTableReference().getSystemTableURL();
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Responding to request for System Table location at database '" + session.getDatabase().getDatabaseLocation() + "'. " +
-				"System table location: " + systemTableURL);
+		DatabaseURL systemTableURL = session.getDatabase()
+				.getSystemTableReference().getSystemTableURL();
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
+				"Responding to request for System Table location at database '"
+						+ session.getDatabase().getDatabaseLocation() + "'. "
+						+ "System table location: " + systemTableURL);
 
 		return systemTableURL;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#executeUpdate(java.lang.String)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.h2.h2o.comms.remote.DatabaseInstanceRemote#executeUpdate(java.lang
+	 * .String)
 	 */
 	@Override
-	public int executeUpdate(String sql, boolean systemTableCommand)  throws RemoteException, SQLException  {
-		if (!session.getDatabase().isRunning()) throw new SQLException("The database either hasn't fully started, or is being shut down.");
+	public int executeUpdate(String sql, boolean systemTableCommand)
+			throws RemoteException, SQLException {
+		if (!session.getDatabase().isRunning())
+			throw new SQLException(
+					"The database either hasn't fully started, or is being shut down.");
 
 		Command command = null;
-		if (systemTableCommand){
-			Parser schemaParser = new Parser(session.getDatabase().getH2OSession(), true);
+		if (systemTableCommand) {
+			Parser schemaParser = new Parser(session.getDatabase()
+					.getH2OSession(), true);
 			command = schemaParser.prepareCommand(sql);
 		} else {
 			command = parser.prepareCommand(sql);
@@ -175,19 +203,26 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 
 	@Override
 	public SystemTableRemote recreateSystemTable() throws RemoteException {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Responding to request to recreate System Table on '" + session.getDatabase().getDatabaseLocation() + "'.");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
+				"Responding to request to recreate System Table on '"
+						+ session.getDatabase().getDatabaseLocation() + "'.");
 
-		ISystemTableReference systemTableReference = this.session.getDatabase().getSystemTableReference();
-		return systemTableReference.migrateSystemTableToLocalInstance(true, true);
+		ISystemTableReference systemTableReference = this.session.getDatabase()
+				.getSystemTableReference();
+		return systemTableReference.migrateSystemTableToLocalInstance(true,
+				true);
 	}
 
-
 	@Override
-	public boolean recreateTableManager(TableInfo tableInfo, DatabaseURL previousLocation) throws RemoteException {
-		
-		boolean success = false; 
+	public boolean recreateTableManager(TableInfo tableInfo,
+			DatabaseURL previousLocation) throws RemoteException {
+
+		boolean success = false;
 		try {
-			executeUpdate("RECREATE TABLEMANAGER " + tableInfo.getFullTableName() + " FROM '" + previousLocation.sanitizedLocation() + "';", true);
+			executeUpdate(
+					"RECREATE TABLEMANAGER " + tableInfo.getFullTableName()
+							+ " FROM '" + previousLocation.sanitizedLocation()
+							+ "';", true);
 			success = true;
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -195,24 +230,43 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 		return success;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#setSystemTableLocation(uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.h2.h2o.comms.remote.DatabaseInstanceRemote#setSystemTableLocation
+	 * (uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference)
 	 */
 	@Override
-	public void setSystemTableLocation(IChordRemoteReference systemTableLocation, DatabaseURL databaseURL) throws RemoteException {
-		this.session.getDatabase().getSystemTableReference().setSystemTableLocation(systemTableLocation, databaseURL);
+	public void setSystemTableLocation(
+			IChordRemoteReference systemTableLocation, DatabaseURL databaseURL)
+			throws RemoteException {
+		this.session.getDatabase().getSystemTableReference()
+				.setSystemTableLocation(systemTableLocation, databaseURL);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#findTableManagerReference(org.h2.h2o.util.TableInfo)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.h2.h2o.comms.remote.DatabaseInstanceRemote#findTableManagerReference
+	 * (org.h2.h2o.util.TableInfo)
 	 */
 	@Override
 	public TableManagerRemote findTableManagerReference(TableInfo ti)
-	throws RemoteException {
+			throws RemoteException {
 		try {
-			return this.session.getDatabase().getSystemTableReference().lookup(ti, true);
+			return this.session.getDatabase().getSystemTableReference()
+					.lookup(ti, true);
 		} catch (SQLException e) {
-			ErrorHandling.errorNoEvent("Couldn't find Table Manager at this machine. Table Manager needs to be re-instantiated.."); //TODO allow for re-instantiation at this point.
+			ErrorHandling
+					.errorNoEvent("Couldn't find Table Manager at this machine. Table Manager needs to be re-instantiated.."); // TODO
+																																// allow
+																																// for
+																																// re-instantiation
+																																// at
+																																// this
+																																// point.
 			return null;
 		}
 	}
@@ -221,7 +275,9 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 		this.alive = alive;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.h2o.comms.DatabaseInstanceRemote#testAvailability()
 	 */
 	@Override
@@ -229,8 +285,9 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 		return alive;
 	}
 
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -240,7 +297,9 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 		return result;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -255,11 +314,10 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 		if (databaseURL.getUrlMinusSM() == null) {
 			if (other.databaseURL.getUrlMinusSM() != null)
 				return false;
-		} else if (!databaseURL.getUrlMinusSM()
-				.equals(other.databaseURL.getUrlMinusSM()))
+		} else if (!databaseURL.getUrlMinusSM().equals(
+				other.databaseURL.getUrlMinusSM()))
 			return false;
 		return true;
 	}
-
 
 }

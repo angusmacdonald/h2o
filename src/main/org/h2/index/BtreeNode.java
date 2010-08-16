@@ -23,11 +23,12 @@ import org.h2.value.Value;
 
 /**
  * An inner page of a b-tree index.
- *
+ * 
  * Page format:
+ * 
  * <pre>
  * N children.len children[0..len] data.len { data[0].pos [data[0]], ...  }
- *</pre>
+ * </pre>
  */
 public class BtreeNode extends BtreePage {
 
@@ -74,26 +75,28 @@ public class BtreeNode extends BtreePage {
 
 	int add(Row newRow, Session session) throws SQLException {
 		int l = 0, r = pageData.size();
-		if (!Constants.ALLOW_EMPTY_BTREE_PAGES && !root && pageChildren.size() == 0) {
+		if (!Constants.ALLOW_EMPTY_BTREE_PAGES && !root
+				&& pageChildren.size() == 0) {
 			Message.throwInternalError("Empty btree page");
 		}
 		while (l < r) {
 			int i = (l + r) >>> 1;
-		SearchRow row = getData(i);
-		int comp = index.compareRows(row, newRow);
-		if (comp == 0) {
-			if (index.indexType.getUnique()) {
-				if (!index.containsNullAndAllowMultipleNull(session, newRow)) {
-					throw index.getDuplicateKeyException();
+			SearchRow row = getData(i);
+			int comp = index.compareRows(row, newRow);
+			if (comp == 0) {
+				if (index.indexType.getUnique()) {
+					if (!index
+							.containsNullAndAllowMultipleNull(session, newRow)) {
+						throw index.getDuplicateKeyException();
+					}
 				}
+				comp = index.compareKeys(row, newRow);
 			}
-			comp = index.compareKeys(row, newRow);
-		}
-		if (comp > 0) {
-			r = i;
-		} else {
-			l = i + 1;
-		}
+			if (comp > 0) {
+				r = i;
+			} else {
+				l = i + 1;
+			}
 		}
 		int at = l;
 		if (pageChildren.size() == 0) {
@@ -121,7 +124,8 @@ public class BtreeNode extends BtreePage {
 
 	SearchRow remove(Session session, Row oldRow) throws SQLException {
 		int l = 0, r = pageData.size();
-		if (!Constants.ALLOW_EMPTY_BTREE_PAGES && !root && pageChildren.size() == 0) {
+		if (!Constants.ALLOW_EMPTY_BTREE_PAGES && !root
+				&& pageChildren.size() == 0) {
 			Message.throwInternalError("Empty btree page");
 		}
 		int comp = 0;
@@ -192,7 +196,8 @@ public class BtreeNode extends BtreePage {
 		IntArray children = new IntArray();
 		splitPoint++;
 		int max = pageData.size();
-		if (SysProperties.CHECK && index.getDatabase().getLogIndexChanges() && !getDeleted()) {
+		if (SysProperties.CHECK && index.getDatabase().getLogIndexChanges()
+				&& !getDeleted()) {
 			// page must have been deleted already before calling
 			// getSplitPoint()
 			Message.throwInternalError();
@@ -216,23 +221,26 @@ public class BtreeNode extends BtreePage {
 		return pageChildren.get(i);
 	}
 
-	boolean findFirst(BtreeCursor cursor, SearchRow compare, boolean bigger) throws SQLException {
+	boolean findFirst(BtreeCursor cursor, SearchRow compare, boolean bigger)
+			throws SQLException {
 		int l = 0, r = pageData.size();
-		if (!Constants.ALLOW_EMPTY_BTREE_PAGES && !root && pageChildren.size() == 0) {
+		if (!Constants.ALLOW_EMPTY_BTREE_PAGES && !root
+				&& pageChildren.size() == 0) {
 			Message.throwInternalError("Empty btree page");
 		}
 		while (l < r) {
 			int i = (l + r) >>> 1;
-		SearchRow row = getData(i);
-		int comp = index.compareRows(row, compare);
-		if (comp > 0 || (!bigger && comp == 0)) {
-			r = i;
-		} else {
-			l = i + 1;
-		}
+			SearchRow row = getData(i);
+			int comp = index.compareRows(row, compare);
+			if (comp > 0 || (!bigger && comp == 0)) {
+				r = i;
+			} else {
+				l = i + 1;
+			}
 		}
 		if (l >= pageData.size()) {
-			BtreePage page = index.getPage(cursor.getSession(), pageChildren.get(l));
+			BtreePage page = index.getPage(cursor.getSession(),
+					pageChildren.get(l));
 			cursor.push(this, l);
 			boolean result = page.findFirst(cursor, compare, bigger);
 			if (result) {
@@ -241,7 +249,8 @@ public class BtreeNode extends BtreePage {
 			cursor.pop();
 			return false;
 		}
-		BtreePage page = index.getPage(cursor.getSession(), pageChildren.get(l));
+		BtreePage page = index
+				.getPage(cursor.getSession(), pageChildren.get(l));
 		cursor.push(this, l);
 		if (page.findFirst(cursor, compare, bigger)) {
 			return true;
@@ -274,7 +283,8 @@ public class BtreeNode extends BtreePage {
 		i++;
 		if (i <= pageData.size()) {
 			cursor.setStackPosition(i);
-			BtreePage page = index.getPage(cursor.getSession(), pageChildren.get(i));
+			BtreePage page = index.getPage(cursor.getSession(),
+					pageChildren.get(i));
 			page.first(cursor);
 			return;
 		}
@@ -285,7 +295,8 @@ public class BtreeNode extends BtreePage {
 		i--;
 		if (i >= 0) {
 			cursor.setStackPosition(i);
-			BtreePage page = index.getPage(cursor.getSession(), pageChildren.get(i));
+			BtreePage page = index.getPage(cursor.getSession(),
+					pageChildren.get(i));
 			page.last(cursor);
 			return;
 		}
@@ -323,7 +334,8 @@ public class BtreeNode extends BtreePage {
 			return;
 		}
 		cursor.push(this, 0);
-		BtreePage page = index.getPage(cursor.getSession(), pageChildren.get(0));
+		BtreePage page = index
+				.getPage(cursor.getSession(), pageChildren.get(0));
 		page.first(cursor);
 	}
 
@@ -337,7 +349,8 @@ public class BtreeNode extends BtreePage {
 			return;
 		}
 		cursor.push(this, last);
-		BtreePage page = index.getPage(cursor.getSession(), pageChildren.get(last));
+		BtreePage page = index.getPage(cursor.getSession(),
+				pageChildren.get(last));
 		page.last(cursor);
 	}
 
@@ -365,8 +378,8 @@ public class BtreeNode extends BtreePage {
 			} else {
 				SearchRow row = getData(i);
 				buff.writeInt(row.getPos());
-				for (int j = 0; j < columns.length; j++) {
-					Value v = row.getValue(columns[j].getColumnId());
+				for (Column column : columns) {
+					Value v = row.getValue(column.getColumnId());
 					buff.writeValue(v);
 				}
 			}

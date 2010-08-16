@@ -85,7 +85,8 @@ public class Column {
 		this(name, type, -1, -1, -1);
 	}
 
-	public Column(String name, int type, long precision, int scale, int displaySize) {
+	public Column(String name, int type, long precision, int scale,
+			int displaySize) {
 		this.name = name;
 		this.type = type;
 		if (precision == -1 && scale == -1 && displaySize == -1) {
@@ -106,7 +107,8 @@ public class Column {
 			return false;
 		}
 		Column other = (Column) o;
-		if (table == null || other.table == null || name == null || other.name == null) {
+		if (table == null || other.table == null || name == null
+				|| other.name == null) {
 			return false;
 		}
 		return table == other.table && name.equals(other.name);
@@ -143,9 +145,11 @@ public class Column {
 
 	/**
 	 * Compute the value of this computed column.
-	 *
-	 * @param session the session
-	 * @param row the row
+	 * 
+	 * @param session
+	 *            the session
+	 * @param row
+	 *            the row
 	 * @return the value
 	 */
 	Value computeValue(Session session, Row row) throws SQLException {
@@ -159,8 +163,9 @@ public class Column {
 	/**
 	 * Set the default value in the form of a computed expression of other
 	 * columns.
-	 *
-	 * @param expression the computed expression
+	 * 
+	 * @param expression
+	 *            the computed expression
 	 */
 	public void setComputedExpression(Expression expression) {
 		this.isComputed = true;
@@ -169,9 +174,11 @@ public class Column {
 
 	/**
 	 * Set the table and column id.
-	 *
-	 * @param table the table
-	 * @param columnId the column index
+	 * 
+	 * @param table
+	 *            the table
+	 * @param columnId
+	 *            the column index
 	 */
 	public void setTable(Table table, int columnId) {
 		this.table = table;
@@ -184,16 +191,20 @@ public class Column {
 
 	/**
 	 * Set the default expression.
-	 *
-	 * @param session the session
-	 * @param defaultExpression the default expression
+	 * 
+	 * @param session
+	 *            the session
+	 * @param defaultExpression
+	 *            the default expression
 	 */
-	public void setDefaultExpression(Session session, Expression defaultExpression) throws SQLException {
+	public void setDefaultExpression(Session session,
+			Expression defaultExpression) throws SQLException {
 		// also to test that no column names are used
 		if (defaultExpression != null) {
 			defaultExpression = defaultExpression.optimize(session);
 			if (defaultExpression.isConstant()) {
-				defaultExpression = ValueExpression.get(defaultExpression.getValue(session));
+				defaultExpression = ValueExpression.get(defaultExpression
+						.getValue(session));
 			}
 		}
 		this.defaultExpression = defaultExpression;
@@ -235,12 +246,15 @@ public class Column {
 	 * Validate the value, convert it if required, and update the sequence value
 	 * if required. If the value is null, the default value (NULL if no default
 	 * is set) is returned. Check constraints are validated as well.
-	 *
-	 * @param session the session
-	 * @param value the value or null
+	 * 
+	 * @param session
+	 *            the session
+	 * @param value
+	 *            the value or null
 	 * @return the new or converted value
 	 */
-	public Value validateConvertUpdateSequence(Session session, Value value) throws SQLException {
+	public Value validateConvertUpdateSequence(Session session, Value value)
+			throws SQLException {
 		if (value == null) {
 			if (defaultExpression == null) {
 				value = ValueNull.INSTANCE;
@@ -266,17 +280,21 @@ public class Column {
 					if (dt.decimal) {
 						value = ValueInt.get(0).convertTo(type);
 					} else if (dt.type == Value.TIMESTAMP) {
-						value = ValueTimestamp.getNoCopy(new Timestamp(System.currentTimeMillis()));
+						value = ValueTimestamp.getNoCopy(new Timestamp(System
+								.currentTimeMillis()));
 					} else if (dt.type == Value.TIME) {
 						// need to normalize
 						value = ValueTime.get(Time.valueOf("0:0:0"));
 					} else if (dt.type == Value.DATE) {
-						value = ValueTimestamp.getNoCopy(new Timestamp(System.currentTimeMillis())).convertTo(dt.type);
+						value = ValueTimestamp.getNoCopy(
+								new Timestamp(System.currentTimeMillis()))
+								.convertTo(dt.type);
 					} else {
 						value = ValueString.get("").convertTo(type);
 					}
 				} else {
-					throw Message.getSQLException(ErrorCode.NULL_NOT_ALLOWED, name);
+					throw Message.getSQLException(ErrorCode.NULL_NOT_ALLOWED,
+							name);
 				}
 			}
 		}
@@ -288,7 +306,9 @@ public class Column {
 			}
 			// Both TRUE and NULL are ok
 			if (Boolean.FALSE.equals(v.getBoolean())) {
-				throw Message.getSQLException(ErrorCode.CHECK_CONSTRAINT_VIOLATED_1, checkConstraint.getSQL());
+				throw Message.getSQLException(
+						ErrorCode.CHECK_CONSTRAINT_VIOLATED_1,
+						checkConstraint.getSQL());
 			}
 		}
 		value = value.convertScale(mode.convertOnlyToSmallerScale, scale);
@@ -298,14 +318,16 @@ public class Column {
 				if (s.length() > 127) {
 					s = s.substring(0, 128) + "...";
 				}
-				throw Message.getSQLException(ErrorCode.VALUE_TOO_LONG_2, new String[]{name, s});
+				throw Message.getSQLException(ErrorCode.VALUE_TOO_LONG_2,
+						new String[] { name, s });
 			}
 		}
 		updateSequenceIfRequired(session, value);
 		return value;
 	}
 
-	private void updateSequenceIfRequired(Session session, Value value) throws SQLException {
+	private void updateSequenceIfRequired(Session session, Value value)
+			throws SQLException {
 		if (sequence != null) {
 			long current = sequence.getCurrentValue();
 			long increment = sequence.getIncrement();
@@ -327,15 +349,19 @@ public class Column {
 	/**
 	 * Convert the auto-increment flag to a sequence that is linked with this
 	 * table.
-	 *
-	 * @param session the session
-	 * @param schema the schema where the sequence should be generated
-	 * @param id the object id
-	 * @param temporary true if the sequence is temporary and does not need to
-	 *            be stored
+	 * 
+	 * @param session
+	 *            the session
+	 * @param schema
+	 *            the schema where the sequence should be generated
+	 * @param id
+	 *            the object id
+	 * @param temporary
+	 *            true if the sequence is temporary and does not need to be
+	 *            stored
 	 */
-	public void convertAutoIncrementToSequence(Session session, Schema schema, int id, boolean temporary)
-	throws SQLException {
+	public void convertAutoIncrementToSequence(Session session, Schema schema,
+			int id, boolean temporary) throws SQLException {
 		if (!autoIncrement) {
 			Message.throwInternalError();
 		}
@@ -366,12 +392,14 @@ public class Column {
 
 	/**
 	 * Prepare all expressions of this column.
-	 *
-	 * @param session the session
+	 * 
+	 * @param session
+	 *            the session
 	 */
 	public void prepareExpression(Session session) throws SQLException {
 		if (defaultExpression != null) {
-			computeTableFilter = new TableFilter(session, table, null, false, null);
+			computeTableFilter = new TableFilter(session, table, null, false,
+					null);
 			defaultExpression.mapColumns(computeTableFilter, 0);
 			defaultExpression = defaultExpression.optimize(session);
 		}
@@ -467,10 +495,13 @@ public class Column {
 
 	/**
 	 * Set the autoincrement flag and related properties of this column.
-	 *
-	 * @param autoInc the new autoincrement flag
-	 * @param start the sequence start value
-	 * @param increment the sequence increment
+	 * 
+	 * @param autoInc
+	 *            the new autoincrement flag
+	 * @param start
+	 *            the sequence start value
+	 * @param increment
+	 *            the sequence increment
 	 */
 	public void setAutoIncrement(boolean autoInc, long start, long increment) {
 		this.autoIncrement = autoInc;
@@ -489,8 +520,9 @@ public class Column {
 	/**
 	 * Rename the column. This method will only set the column name to the new
 	 * value.
-	 *
-	 * @param newName the new column name
+	 * 
+	 * @param newName
+	 *            the new column name
 	 */
 	public void rename(String newName) {
 		this.name = newName;
@@ -507,7 +539,7 @@ public class Column {
 	/**
 	 * Get the selectivity of the column. Selectivity 100 means values are
 	 * unique, 10 means every distinct value appears 10 times on average.
-	 *
+	 * 
 	 * @return the selectivity
 	 */
 	public int getSelectivity() {
@@ -516,22 +548,27 @@ public class Column {
 
 	/**
 	 * Set the new selectivity of a column.
-	 *
-	 * @param selectivity the new value
+	 * 
+	 * @param selectivity
+	 *            the new value
 	 */
 	public void setSelectivity(int selectivity) {
-		selectivity = selectivity < 0 ? 0 : (selectivity > 100 ? 100 : selectivity);
+		selectivity = selectivity < 0 ? 0 : (selectivity > 100 ? 100
+				: selectivity);
 		this.selectivity = selectivity;
 	}
 
 	/**
 	 * Add a check constraint expression to this column. An existing check
 	 * constraint constraint is added using AND.
-	 *
-	 * @param session the session
-	 * @param expr the (additional) constraint
+	 * 
+	 * @param session
+	 *            the session
+	 * @param expr
+	 *            the (additional) constraint
 	 */
-	public void addCheckConstraint(Session session, Expression expr) throws SQLException {
+	public void addCheckConstraint(Session session, Expression expr)
+			throws SQLException {
 		resolver = new SingleColumnResolver(this);
 		synchronized (this) {
 			String oldName = name;
@@ -550,19 +587,23 @@ public class Column {
 		if (checkConstraint == null) {
 			checkConstraint = expr;
 		} else {
-			checkConstraint = new ConditionAndOr(ConditionAndOr.AND, checkConstraint, expr);
+			checkConstraint = new ConditionAndOr(ConditionAndOr.AND,
+					checkConstraint, expr);
 		}
 		checkConstraintSQL = getCheckConstraintSQL(session, name);
 	}
 
 	/**
 	 * Get the check constraint expression for this column if set.
-	 *
-	 * @param session the session
-	 * @param asColumnName the column name to use
+	 * 
+	 * @param session
+	 *            the session
+	 * @param asColumnName
+	 *            the column name to use
 	 * @return the constraint expression
 	 */
-	public Expression getCheckConstraint(Session session, String asColumnName) throws SQLException {
+	public Expression getCheckConstraint(Session session, String asColumnName)
+			throws SQLException {
 		if (checkConstraint == null) {
 			return null;
 		}
@@ -592,12 +633,15 @@ public class Column {
 
 	/**
 	 * Get the check constraint SQL snippet.
-	 *
-	 * @param session the session
-	 * @param asColumnName the column name to use
+	 * 
+	 * @param session
+	 *            the session
+	 * @param asColumnName
+	 *            the column name to use
 	 * @return the SQL snippet
 	 */
-	String getCheckConstraintSQL(Session session, String asColumnName) throws SQLException {
+	String getCheckConstraintSQL(Session session, String asColumnName)
+			throws SQLException {
 		Expression constraint = getCheckConstraint(session, asColumnName);
 		return constraint == null ? "" : constraint.getSQL();
 	}
@@ -617,8 +661,9 @@ public class Column {
 	/**
 	 * Visit the default expression, the check constraint, and the sequence (if
 	 * any).
-	 *
-	 * @param visitor the visitor
+	 * 
+	 * @param visitor
+	 *            the visitor
 	 * @return true if every visited expression returned true, or if there are
 	 *         no expressions
 	 */
@@ -628,7 +673,8 @@ public class Column {
 				visitor.getDependencies().add(sequence);
 			}
 		}
-		if (defaultExpression != null && !defaultExpression.isEverything(visitor)) {
+		if (defaultExpression != null
+				&& !defaultExpression.isEverything(visitor)) {
 			return false;
 		}
 		if (checkConstraint != null && !checkConstraint.isEverything(visitor)) {

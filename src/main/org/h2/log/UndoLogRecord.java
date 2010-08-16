@@ -46,10 +46,13 @@ public class UndoLogRecord {
 
 	/**
 	 * Create a new undo log record
-	 *
-	 * @param table the table
-	 * @param op the operation type
-	 * @param row the row that was deleted or inserted
+	 * 
+	 * @param table
+	 *            the table
+	 * @param op
+	 *            the operation type
+	 * @param row
+	 *            the row that was deleted or inserted
 	 */
 	public UndoLogRecord(Table table, short op, Row row) {
 		this.table = table;
@@ -60,7 +63,7 @@ public class UndoLogRecord {
 
 	/**
 	 * Check if the log record is stored in the file.
-	 *
+	 * 
 	 * @return true if it is
 	 */
 	boolean isStored() {
@@ -70,7 +73,7 @@ public class UndoLogRecord {
 	/**
 	 * Check if this undo log record can be store. Only record can be stored if
 	 * the table has a unique index.
-	 *
+	 * 
 	 * @return if it can be stored
 	 */
 	boolean canStore() {
@@ -80,8 +83,9 @@ public class UndoLogRecord {
 	/**
 	 * Un-do the operation. If the row was inserted before, it is deleted now,
 	 * and vice versa.
-	 *
-	 * @param session the session
+	 * 
+	 * @param session
+	 *            the session
 	 */
 	public void undo(Session session) throws SQLException {
 		switch (operation) {
@@ -136,9 +140,11 @@ public class UndoLogRecord {
 
 	/**
 	 * Save the row in the file using the data page as a buffer.
-	 *
-	 * @param buff the data page that is used as a buffer
-	 * @param file the file
+	 * 
+	 * @param buff
+	 *            the data page that is used as a buffer
+	 * @param file
+	 *            the file
 	 */
 	void save(DataPage buff, FileStore file) throws SQLException {
 		buff.reset();
@@ -159,8 +165,9 @@ public class UndoLogRecord {
 
 	/**
 	 * Go to the right position in the file.
-	 *
-	 * @param file the file
+	 * 
+	 * @param file
+	 *            the file
 	 */
 	void seek(FileStore file) throws SQLException {
 		file.seek(filePos * Constants.FILE_BLOCK_SIZE);
@@ -168,9 +175,11 @@ public class UndoLogRecord {
 
 	/**
 	 * Load an undo log record row using the data page as a buffer.
-	 *
-	 * @param buff the data page that is used as a buffer
-	 * @param file the source file
+	 * 
+	 * @param buff
+	 *            the data page that is used as a buffer
+	 * @param file
+	 *            the source file
 	 */
 	void load(DataPage buff, FileStore file) throws SQLException {
 		int min = Constants.FILE_BLOCK_SIZE;
@@ -186,7 +195,8 @@ public class UndoLogRecord {
 		int op = buff.readInt();
 		if (SysProperties.CHECK) {
 			if (operation != op) {
-				Message.throwInternalError("operation=" + operation + " op=" + op);
+				Message.throwInternalError("operation=" + operation + " op="
+						+ op);
 			}
 		}
 		int columnCount = buff.readInt();
@@ -200,7 +210,7 @@ public class UndoLogRecord {
 
 	/**
 	 * Get the table.
-	 *
+	 * 
 	 * @return the table
 	 */
 	public Table getTable() {
@@ -208,8 +218,8 @@ public class UndoLogRecord {
 	}
 
 	/**
-	 * This method is called after the operation was committed.
-	 * It commits the change to the indexes.
+	 * This method is called after the operation was committed. It commits the
+	 * change to the indexes.
 	 */
 	public void commit() throws SQLException {
 		ObjectArray list = table.getIndexes();
@@ -221,7 +231,7 @@ public class UndoLogRecord {
 
 	/**
 	 * Get the row that was deleted or inserted.
-	 *
+	 * 
 	 * @return the row
 	 */
 	public Row getRow() {

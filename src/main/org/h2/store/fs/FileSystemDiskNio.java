@@ -22,9 +22,10 @@ public class FileSystemDiskNio extends FileSystemDisk {
 		return INSTANCE;
 	}
 
-	public String createTempFile(String name, String suffix, boolean deleteOnExit, boolean inTempDir)
-	throws IOException {
-		String file = super.createTempFile(name, suffix, deleteOnExit, inTempDir);
+	public String createTempFile(String name, String suffix,
+			boolean deleteOnExit, boolean inTempDir) throws IOException {
+		String file = super.createTempFile(name, suffix, deleteOnExit,
+				inTempDir);
 		return getPrefix() + file;
 	}
 
@@ -59,7 +60,8 @@ public class FileSystemDiskNio extends FileSystemDisk {
 		return getPrefix() + super.getAbsolutePath(fileName);
 	}
 
-	public FileObject openFileObject(String fileName, String mode) throws IOException {
+	public FileObject openFileObject(String fileName, String mode)
+			throws IOException {
 		fileName = translateFileName(fileName);
 		FileObject f;
 		try {
@@ -79,7 +81,7 @@ public class FileSystemDiskNio extends FileSystemDisk {
 
 	/**
 	 * Get the prefix for this file system.
-	 *
+	 * 
 	 * @return the prefix
 	 */
 	protected String getPrefix() {
@@ -88,11 +90,14 @@ public class FileSystemDiskNio extends FileSystemDisk {
 
 	/**
 	 * Try to open a file with this name and mode.
-	 *
-	 * @param fileName the file name
-	 * @param mode the open mode
+	 * 
+	 * @param fileName
+	 *            the file name
+	 * @param mode
+	 *            the open mode
 	 * @return the file object
-	 * @throws IOException if opening fails
+	 * @throws IOException
+	 *             if opening fails
 	 */
 	protected FileObject open(String fileName, String mode) throws IOException {
 		return new FileObjectDiskChannel(fileName, mode);

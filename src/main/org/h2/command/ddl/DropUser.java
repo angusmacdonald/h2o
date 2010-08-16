@@ -15,8 +15,7 @@ import org.h2.engine.User;
 import org.h2.message.Message;
 
 /**
- * This class represents the statement
- * DROP USER
+ * This class represents the statement DROP USER
  */
 public class DropUser extends DefineCommand {
 
@@ -42,11 +41,13 @@ public class DropUser extends DefineCommand {
 		User user = db.findUser(userName);
 		if (user == null) {
 			if (!ifExists) {
-				throw Message.getSQLException(ErrorCode.USER_NOT_FOUND_1, userName);
+				throw Message.getSQLException(ErrorCode.USER_NOT_FOUND_1,
+						userName);
 			}
 		} else {
 			if (user == session.getUser()) {
-				throw Message.getSQLException(ErrorCode.CANNOT_DROP_CURRENT_USER);
+				throw Message
+						.getSQLException(ErrorCode.CANNOT_DROP_CURRENT_USER);
 			}
 			user.checkOwnsNoSchemas();
 			db.removeDatabaseObject(session, user);

@@ -43,7 +43,6 @@ import org.h2.schema.Sequence;
 import org.h2.table.Column;
 import org.h2.table.IndexColumn;
 import org.h2.table.Table;
-import org.h2.table.TableData;
 import org.h2.table.TableLinkConnection;
 import org.h2.util.JdbcUtils;
 import org.h2.util.MathUtils;
@@ -64,14 +63,10 @@ import org.h2o.event.client.H2OEvent;
 import org.h2o.event.client.H2OEventBus;
 import org.h2o.util.exceptions.MovedException;
 
-import sun.security.krb5.internal.UDPClient;
-import uk.ac.standrews.cs.nds.util.Diagnostic;
-import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
- * This class represents the statement
- * CREATE REPLICA
+ * This class represents the statement CREATE REPLICA
  */
 public class CreateReplica extends SchemaCommand {
 
@@ -96,7 +91,8 @@ public class CreateReplica extends SchemaCommand {
 	private boolean supportsMixedCaseIdentifiers = false;
 
 	/**
-	 * Array containing all of the insert statements required for this replicas state to match that of the primary.
+	 * Array containing all of the insert statements required for this replicas
+	 * state to match that of the primary.
 	 */
 	private List<String> inserts = null;
 
@@ -116,8 +112,8 @@ public class CreateReplica extends SchemaCommand {
 	private CreateReplica next = null;
 	private Set<IndexColumn[]> setOfIndexColumns;
 	private Set<IndexType> pkIndexType;
-	private int tableSet = -1; //the set of tables which this replica will belong to.
-	private boolean contactSystemTable = true;
+	private int tableSet = -1; // the set of tables which this replica will
+								// belong to.
 	private boolean empty;
 	private boolean updateData;
 
@@ -125,11 +121,15 @@ public class CreateReplica extends SchemaCommand {
 	 * 
 	 * @param session
 	 * @param schema
-	 * @param empty		Whether the replica being created is of a table which is empty. If it is
-	 * no data has to be transferred initially.
-	 * @param updateData Whether to update the contents of the replica even if it already exists.
+	 * @param empty
+	 *            Whether the replica being created is of a table which is
+	 *            empty. If it is no data has to be transferred initially.
+	 * @param updateData
+	 *            Whether to update the contents of the replica even if it
+	 *            already exists.
 	 */
-	public CreateReplica(Session session, Schema schema, boolean empty, boolean updateData) {
+	public CreateReplica(Session session, Schema schema, boolean empty,
+			boolean updateData) {
 		super(session, schema);
 
 		setOfIndexColumns = new HashSet<IndexColumn[]>();
@@ -149,7 +149,7 @@ public class CreateReplica extends SchemaCommand {
 
 	public void setTableName(String tableName) {
 
-		if (tableName.contains(".")){
+		if (tableName.contains(".")) {
 			this.tableName = tableName.split("\\.")[1];
 		} else {
 			this.tableName = tableName;
@@ -158,8 +158,9 @@ public class CreateReplica extends SchemaCommand {
 
 	/**
 	 * Add a column to this table.
-	 *
-	 * @param column the column to add
+	 * 
+	 * @param column
+	 *            the column to add
 	 */
 	public void addColumn(Column column) {
 		if (columns == null) {
@@ -169,10 +170,11 @@ public class CreateReplica extends SchemaCommand {
 	}
 
 	/**
-	 * Add a constraint statement to this statement.
-	 * The primary key definition is one possible constraint statement.
-	 *
-	 * @param command the statement to add
+	 * Add a constraint statement to this statement. The primary key definition
+	 * is one possible constraint statement.
+	 * 
+	 * @param command
+	 *            the statement to add
 	 */
 	public void addConstraintCommand(Prepared command) throws SQLException {
 		if (command instanceof CreateIndex) {
@@ -199,30 +201,41 @@ public class CreateReplica extends SchemaCommand {
 
 		Database db = session.getDatabase();
 
+		if (whereReplicaWillBeCreated != null
+				|| db.getFullDatabasePath().equals(whereReplicaWillBeCreated)) {
+			int result = pushCommand(whereReplicaWillBeCreated,
+					"CREATE REPLICA " + tableName + " FROM '"
+							+ whereDataWillBeTakenFrom + "'", true); // command
+																		// will
+																		// be
+																		// executed
+																		// elsewhere
 
-		if (whereReplicaWillBeCreated != null || db.getFullDatabasePath().equals(whereReplicaWillBeCreated)){
-			int result = pushCommand(whereReplicaWillBeCreated, "CREATE REPLICA " + tableName + " FROM '" + whereDataWillBeTakenFrom + "'", true); //command will be executed elsewhere
+			// Update the System Table here.
 
-			//Update the System Table here.
-
-			if (result == 0){
+			if (result == 0) {
 				try {
-					ISystemTable sm = db.getSystemTable(); //db.getSystemSession()
+					ISystemTable sm = db.getSystemTable(); // db.getSystemSession()
 
-					Table table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
+					Table table = getSchema().findTableOrView(session,
+							tableName, LocationPreference.NO_PREFERENCE);
 
-					if (tableSet  == -1){
-						tableSet = 1; //sm.getTableSetNumber(new TableInfo(tableName, getSchema().getName()));
+					if (tableSet == -1) {
+						tableSet = 1; // sm.getTableSetNumber(new
+										// TableInfo(tableName,
+										// getSchema().getName()));
 					} else {
-						if (next != null){
+						if (next != null) {
 							next.setTableSet(tableSet);
 						}
 					}
 
-					TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getURL());
+					TableInfo ti = new TableInfo(tableName, getSchema()
+							.getName(), table.getModificationId(), tableSet,
+							table.getTableType(), db.getURL());
 
-					sm.lookup(ti).getTableManager().addReplicaInformation(ti);	
-				} catch (MovedException e){
+					sm.lookup(ti).getTableManager().addReplicaInformation(ti);
+				} catch (MovedException e) {
 					throw new RemoteException("System Table has moved.");
 				}
 			}
@@ -230,7 +243,8 @@ public class CreateReplica extends SchemaCommand {
 			return result;
 
 		} else {
-			readSQL(); //command will be executed here - get the table meta-data and contents.
+			readSQL(); // command will be executed here - get the table
+						// meta-data and contents.
 		}
 
 		// TODO rights: what rights are required to create a table?
@@ -240,38 +254,68 @@ public class CreateReplica extends SchemaCommand {
 			persistent = false;
 		}
 
-
 		boolean createEntirelyNewReplica = true;
-		if (getSchema().findLocalTableOrView(session, tableName) != null) { //H2O. Check for local version here.
+		if (getSchema().findLocalTableOrView(session, tableName) != null) { // H2O.
+																			// Check
+																			// for
+																			// local
+																			// version
+																			// here.
 			if (ifNotExists && !updateData) {
 				return 0;
-			} else if (updateData){
+			} else if (updateData) {
 				createEntirelyNewReplica = false;
 			} else {
-				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
+				throw Message.getSQLException(
+						ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
 			}
-		}  
+		}
 
+		String fullTableName = getSchema().getName() + "." + tableName; // getSchema().getName()
+																		// + "."
+																		// +
 
-		String fullTableName = getSchema().getName() + "." + tableName; //getSchema().getName() + "." + 
-
-		if (!empty && getSchema().findTableOrView(session, fullTableName, LocationPreference.NO_PREFERENCE) == null) { //H2O. Check for the existence of any version. if a linked table version doesn't exist we must create it.
-			String createLinkedTable = "\nCREATE LINKED TABLE IF NOT EXISTS " + fullTableName + "('org.h2.Driver', '" + whereDataWillBeTakenFrom + "', '" + 
-			PersistentSystemTable.USERNAME + "', '" + PersistentSystemTable.PASSWORD + "', '" + fullTableName + "');";
+		if (!empty
+				&& getSchema().findTableOrView(session, fullTableName,
+						LocationPreference.NO_PREFERENCE) == null) { // H2O.
+																		// Check
+																		// for
+																		// the
+																		// existence
+																		// of
+																		// any
+																		// version.
+																		// if a
+																		// linked
+																		// table
+																		// version
+																		// doesn't
+																		// exist
+																		// we
+																		// must
+																		// create
+																		// it.
+			String createLinkedTable = "\nCREATE LINKED TABLE IF NOT EXISTS "
+					+ fullTableName + "('org.h2.Driver', '"
+					+ whereDataWillBeTakenFrom + "', '"
+					+ PersistentSystemTable.USERNAME + "', '"
+					+ PersistentSystemTable.PASSWORD + "', '" + fullTableName
+					+ "');";
 			Parser queryParser = new Parser(session, true);
 			Command sqlQuery = queryParser.prepareCommand(createLinkedTable);
 			sqlQuery.update();
-		}    
+		}
 
 		Table table = null;
 
-		if (createEntirelyNewReplica){
+		if (createEntirelyNewReplica) {
 			if (asQuery != null) {
 				asQuery.prepare();
 				if (columns.size() == 0) {
 					generateColumnsFromQuery();
 				} else if (columns.size() != asQuery.getColumnCount()) {
-					throw Message.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
+					throw Message
+							.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
 				}
 			}
 			if (pkColumns != null) {
@@ -279,8 +323,9 @@ public class CreateReplica extends SchemaCommand {
 				for (int i = 0; i < columns.size(); i++) {
 					Column c = (Column) columns.get(i);
 					for (int j = 0; j < len; j++) {
-						if (pkColumns[j].columnName == null) 
-							pkColumns[j].columnName = pkColumns[j].column.getName();
+						if (pkColumns[j].columnName == null)
+							pkColumns[j].columnName = pkColumns[j].column
+									.getName();
 						if (c.getName().equals(pkColumns[j].columnName)) {
 							c.setNullable(false);
 						}
@@ -293,12 +338,17 @@ public class CreateReplica extends SchemaCommand {
 			for (int i = 0; i < columns.size(); i++) {
 				Column c = (Column) columns.get(i);
 
-				if (fullTableName.startsWith("H2O.H2O") && i == 0){ //XXX nasty h2o-specific auto-increment hack.
+				if (fullTableName.startsWith("H2O.H2O") && i == 0) { // XXX
+																		// nasty
+																		// h2o-specific
+																		// auto-increment
+																		// hack.
 					c.setAutoIncrement(true, 1, 1);
 				}
 				if (c.getAutoIncrement()) {
 					int objId = getObjectId(true, true);
-					c.convertAutoIncrementToSequence(session, getSchema(), objId, temporary);
+					c.convertAutoIncrementToSequence(session, getSchema(),
+							objId, temporary);
 				}
 				Sequence seq = c.getSequence();
 				if (seq != null) {
@@ -307,7 +357,8 @@ public class CreateReplica extends SchemaCommand {
 			}
 			int id = getObjectId(true, true);
 
-			table = getSchema().createTable(tableName, id, columns, persistent, clustered, headPos);
+			table = getSchema().createTable(tableName, id, columns, persistent,
+					clustered, headPos);
 			table.setComment(comment);
 			table.setTemporary(temporary);
 			table.setGlobalTemporary(globalTemporary);
@@ -322,8 +373,6 @@ public class CreateReplica extends SchemaCommand {
 			} else {
 				db.addSchemaObject(session, table);
 			}
-
-
 
 			try {
 				for (int i = 0; i < columns.size(); i++) {
@@ -353,7 +402,6 @@ public class CreateReplica extends SchemaCommand {
 					}
 				}
 
-
 			} catch (SQLException e) {
 				db.checkPowerOff();
 				db.removeSchemaObject(session, table);
@@ -366,11 +414,13 @@ public class CreateReplica extends SchemaCommand {
 
 		try {
 			/*
-			 * Copy over the data that we have stored in the 'inserts' set. This section of code loops
-			 * through that set and does some fairly primitive string splitting to get each value.
+			 * Copy over the data that we have stored in the 'inserts' set. This
+			 * section of code loops through that set and does some fairly
+			 * primitive string splitting to get each value.
 			 */
 
-			if (!empty && inserts.size() > 1){ //the first entry contains type info
+			if (!empty && inserts.size() > 1) { // the first entry contains type
+												// info
 				Insert command = new Insert(session, true);
 
 				command.setTable(table);
@@ -382,30 +432,31 @@ public class CreateReplica extends SchemaCommand {
 				ArrayList<Integer> types = new ArrayList<Integer>();
 
 				boolean firstRun = true;
-				for (String statement: inserts){
-					
-					ObjectArray values = new ObjectArray();
-					statement = statement.substring(0, statement.length()-1);
+				for (String statement : inserts) {
 
+					ObjectArray values = new ObjectArray();
+					statement = statement.substring(0, statement.length() - 1);
 
 					int i = 0;
-					for (String part: statement.split(Constants.REPLICATION_DELIMETER)){
+					for (String part : statement
+							.split(Constants.REPLICATION_DELIMETER)) {
 						part = part.trim();
-						if (firstRun){
+						if (firstRun) {
 							types.add(new Integer(part));
 						} else {
 
-							if (part.startsWith("'") && part.endsWith("'")){
-								part = part.substring(1, part.length()-1);
+							if (part.startsWith("'") && part.endsWith("'")) {
+								part = part.substring(1, part.length() - 1);
 							}
 							ValueString val = ValueString.get(part);
 
-							values.add(ValueExpression.get(val.convertTo(types.get(i++))));
+							values.add(ValueExpression.get(val.convertTo(types
+									.get(i++))));
 						}
 
 					}
 
-					if (firstRun){
+					if (firstRun) {
 						firstRun = false;
 					} else {
 						Expression[] expr = new Expression[values.size()];
@@ -418,29 +469,36 @@ public class CreateReplica extends SchemaCommand {
 				command.update();
 			}
 
-			if (createEntirelyNewReplica){
-				//	#############################
-				//  Add to Table Manager.
-				//	#############################
+			if (createEntirelyNewReplica) {
+				// #############################
+				// Add to Table Manager.
+				// #############################
 
+				TableInfo ti = new TableInfo(tableName, getSchema().getName(),
+						table.getModificationId(), tableSet,
+						table.getTableType(), db.getURL());
 
-				TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getURL());
+				if (!db.isTableLocal(getSchema())) {
+					TableManagerRemote tableManager = db
+							.getSystemTableReference().lookup(
+									getSchema().getName() + "." + tableName,
+									true);
 
-				
-				if (!db.isTableLocal(getSchema())){
-					TableManagerRemote tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, true);
-
-					if (tableManager == null){
-						throw new SQLException("Error creating replica for " + tableName + ". Table Manager not found.");
+					if (tableManager == null) {
+						throw new SQLException("Error creating replica for "
+								+ tableName + ". Table Manager not found.");
 					} else {
 						try {
 							tableManager.addReplicaInformation(ti);
-						} catch(MovedException e){
-							//If this is an old cached reference contact the system table directly.
-							tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, false);
+						} catch (MovedException e) {
+							// If this is an old cached reference contact the
+							// system table directly.
+							tableManager = db.getSystemTableReference().lookup(
+									getSchema().getName() + "." + tableName,
+									false);
 							tableManager.addReplicaInformation(ti);
 						}
-					} 
+					}
 				}
 			}
 		} catch (SQLException e) {
@@ -457,12 +515,15 @@ public class CreateReplica extends SchemaCommand {
 			next.update();
 		}
 
-		H2OEventBus.publish(new H2OEvent(this.session.getDatabase().getURL(), DatabaseStates.REPLICA_CREATION, getSchema().getName() + "." + tableName));
+		H2OEventBus.publish(new H2OEvent(this.session.getDatabase().getURL(),
+				DatabaseStates.REPLICA_CREATION, getSchema().getName() + "."
+						+ tableName));
 		return 0;
 	}
 
 	/**
 	 * Set the tableSet number for this table.
+	 * 
 	 * @param tableSet2
 	 */
 	private void setTableSet(int tableSet) {
@@ -471,18 +532,24 @@ public class CreateReplica extends SchemaCommand {
 
 	/**
 	 * Push a command to a remote machine where it will be properly executed.
-	 * @param createReplica true, if the command being pushed is a create replica command. This results in any subsequent tables
-	 * involved in the command also being pushed.
+	 * 
+	 * @param createReplica
+	 *            true, if the command being pushed is a create replica command.
+	 *            This results in any subsequent tables involved in the command
+	 *            also being pushed.
 	 * @return The result of the update.
-	 * @throws SQLException 
-	 * @throws RemoteException 
+	 * @throws SQLException
+	 * @throws RemoteException
 	 */
-	private int pushCommand(String remoteDBLocation, String query, boolean createReplica) throws SQLException, RemoteException {
+	private int pushCommand(String remoteDBLocation, String query,
+			boolean createReplica) throws SQLException, RemoteException {
 
-		try{
+		try {
 			Database db = session.getDatabase();
 
-			conn = db.getLinkConnection("org.h2.Driver", remoteDBLocation, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+			conn = db.getLinkConnection("org.h2.Driver", remoteDBLocation,
+					PersistentSystemTable.USERNAME,
+					PersistentSystemTable.PASSWORD);
 
 			int result = -1;
 
@@ -490,7 +557,6 @@ public class CreateReplica extends SchemaCommand {
 				try {
 					Statement stat = conn.getConnection().createStatement();
 					String databaseName = null;
-
 
 					stat.execute(query);
 					result = stat.getUpdateCount();
@@ -509,7 +575,7 @@ public class CreateReplica extends SchemaCommand {
 
 			return result;
 
-		} catch (Exception e){
+		} catch (Exception e) {
 			e.printStackTrace();
 			return 0;
 		}
@@ -525,7 +591,8 @@ public class CreateReplica extends SchemaCommand {
 			long precision = expr.getPrecision();
 			int displaySize = expr.getDisplaySize();
 			DataType dt = DataType.getDataType(type);
-			if (precision > 0 && (dt.defaultPrecision == 0 || (dt.defaultPrecision > precision && dt.defaultPrecision < Byte.MAX_VALUE))) {
+			if (precision > 0
+					&& (dt.defaultPrecision == 0 || (dt.defaultPrecision > precision && dt.defaultPrecision < Byte.MAX_VALUE))) {
 				// dont' set precision to MAX_VALUE if this is the default
 				precision = dt.defaultPrecision;
 			}
@@ -539,19 +606,22 @@ public class CreateReplica extends SchemaCommand {
 	}
 
 	/**
-	 * Sets the primary key columns, but also check if a primary key
-	 * with different columns is already defined.
-	 *
-	 * @param columns the primary key columns
+	 * Sets the primary key columns, but also check if a primary key with
+	 * different columns is already defined.
+	 * 
+	 * @param columns
+	 *            the primary key columns
 	 * @return true if the same primary key columns where already set
 	 */
-	private boolean setPrimaryKeyColumns(IndexColumn[] columns) throws SQLException {
+	private boolean setPrimaryKeyColumns(IndexColumn[] columns)
+			throws SQLException {
 		if (pkColumns != null) {
 			if (columns.length != pkColumns.length) {
 				throw Message.getSQLException(ErrorCode.SECOND_PRIMARY_KEY);
 			}
 			for (int i = 0; i < columns.length; i++) {
-				String columnName = (columns[i].columnName == null)? columns[i].column.getName() : columns[i].columnName;
+				String columnName = (columns[i].columnName == null) ? columns[i].column
+						.getName() : columns[i].columnName;
 				if (!columnName.equals(pkColumns[i].columnName)) {
 					throw Message.getSQLException(ErrorCode.SECOND_PRIMARY_KEY);
 				}
@@ -593,22 +663,27 @@ public class CreateReplica extends SchemaCommand {
 	}
 
 	/**
-	 * Get the primary location of the given table and get meta-data from that location along with the contents of the table.
-	 * @throws JdbcSQLException 
+	 * Get the primary location of the given table and get meta-data from that
+	 * location along with the contents of the table.
+	 * 
+	 * @throws JdbcSQLException
 	 */
 	public void readSQL() throws JdbcSQLException {
 
 		try {
 			connect(whereDataWillBeTakenFrom);
 		} catch (SQLException e) {
-			throw Message.getSQLException(ErrorCode.CONNECTION_BROKEN, tableName);
+			throw Message.getSQLException(ErrorCode.CONNECTION_BROKEN,
+					tableName);
 		}
 	}
 
 	private void connect(String tableLocation) throws SQLException {
 		Database db = session.getDatabase();
 		if (!empty) {
-			conn = db.getLinkConnection("org.h2.Driver", tableLocation, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+			conn = db.getLinkConnection("org.h2.Driver", tableLocation,
+					PersistentSystemTable.USERNAME,
+					PersistentSystemTable.PASSWORD);
 			synchronized (conn) {
 				try {
 					readMetaData();
@@ -625,7 +700,8 @@ public class CreateReplica extends SchemaCommand {
 	}
 
 	/**
-	 * Get the data required to fill up this replica (to match the contents of the primary).
+	 * Get the data required to fill up this replica (to match the contents of
+	 * the primary).
 	 * 
 	 * Data is then stored in the 'inserts' field.
 	 */
@@ -635,13 +711,14 @@ public class CreateReplica extends SchemaCommand {
 		try {
 			stat = conn.getConnection().createStatement();
 
-			//String fullTableName = getSchema().getName() + "." + tableName;
+			// String fullTableName = getSchema().getName() + "." + tableName;
 
-			ResultSet rs = stat.executeQuery("SCRIPT TABLE " + getSchema().getName() + "." + tableName);
+			ResultSet rs = stat.executeQuery("SCRIPT TABLE "
+					+ getSchema().getName() + "." + tableName);
 
 			List<String> inserts = new LinkedList<String>();
 
-			while (rs.next()){
+			while (rs.next()) {
 				inserts.add(rs.getString(1));
 			}
 
@@ -665,7 +742,7 @@ public class CreateReplica extends SchemaCommand {
 		ResultSet rs = meta.getTables(null, originalSchema, tableName, null);
 
 		rs.close();
-		rs = meta.getColumns(null, originalSchema, tableName, null); 
+		rs = meta.getColumns(null, originalSchema, tableName, null);
 
 		int i = 0;
 		ObjectArray columnList = new ObjectArray();
@@ -685,16 +762,20 @@ public class CreateReplica extends SchemaCommand {
 			if (schema == null) {
 				schema = thisSchema;
 			}
-			if (!StringUtils.equals(catalog, thisCatalog) || !StringUtils.equals(schema, thisSchema)) {
+			if (!StringUtils.equals(catalog, thisCatalog)
+					|| !StringUtils.equals(schema, thisSchema)) {
 				// if the table exists in multiple schemas or tables,
 				// use the alternative solution
-				//				columnMap.clear();				//XXX this doesn't work in H2O.
-				//				columnList.clear();
+				// columnMap.clear(); //XXX this doesn't work in H2O.
+				// columnList.clear();
 				break;
 			}
 			String columnName = rs.getString("COLUMN_NAME");
 
-			if (currentColumns.contains(columnName)) //stops duplicate primary keys - this happens with multiple replicas.
+			if (currentColumns.contains(columnName)) // stops duplicate primary
+														// keys - this happens
+														// with multiple
+														// replicas.
 				continue;
 
 			currentColumns.add(columnName);
@@ -707,7 +788,8 @@ public class CreateReplica extends SchemaCommand {
 			int nullable = rs.getInt("NULLABLE");
 			int displaySize = MathUtils.convertLongToInt(precision);
 			int type = DataType.convertSQLTypeToValueType(sqlType);
-			Column col = new Column(columnName, type, precision, scale, displaySize);
+			Column col = new Column(columnName, type, precision, scale,
+					displaySize);
 
 			col.setNullable(nullable == 1);
 
@@ -715,7 +797,6 @@ public class CreateReplica extends SchemaCommand {
 			 * Add this new column to the 'columns' field.
 			 */
 			addColumn(col);
-
 
 			columnList.add(col);
 			columnMap.put(columnName, col);
@@ -731,13 +812,15 @@ public class CreateReplica extends SchemaCommand {
 		}
 
 		/*
-		 * Try to access the table, to ensure it actually exists and can be queried.
-		 * If no columns were added above, get them from the meta-data which results from this query.
+		 * Try to access the table, to ensure it actually exists and can be
+		 * queried. If no columns were added above, get them from the meta-data
+		 * which results from this query.
 		 */
 		Statement stat = null;
 		try {
 			stat = conn.getConnection().createStatement();
-			rs = stat.executeQuery("SELECT * FROM " + qualifiedTableName + " T WHERE 1=0");
+			rs = stat.executeQuery("SELECT * FROM " + qualifiedTableName
+					+ " T WHERE 1=0");
 			if (columns.size() == 0) {
 				// alternative solution
 				ResultSetMetaData rsMeta = rs.getMetaData();
@@ -750,7 +833,8 @@ public class CreateReplica extends SchemaCommand {
 					int scale = rsMeta.getScale(i + 1);
 					int displaySize = rsMeta.getColumnDisplaySize(i + 1);
 					int type = DataType.convertSQLTypeToValueType(sqlType);
-					Column col = new Column(n, type, precision, scale, displaySize);
+					Column col = new Column(n, type, precision, scale,
+							displaySize);
 					addColumn(col);
 					columnList.add(col);
 					columnMap.put(n, col);
@@ -758,11 +842,11 @@ public class CreateReplica extends SchemaCommand {
 			}
 			rs.close();
 		} catch (SQLException e) {
-			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new String[] { tableName }, e);
+			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1,
+					new String[] { tableName }, e);
 		} finally {
 			JdbcUtils.closeSilently(stat);
 		}
-
 
 		/*
 		 * Get information on the primary keys for this table.
@@ -791,7 +875,8 @@ public class CreateReplica extends SchemaCommand {
 				}
 
 				/*
-				 * Loop through adding a new 'null' entry in the object array for each column that may be included later. 
+				 * Loop through adding a new 'null' entry in the object array
+				 * for each column that may be included later.
 				 */
 				while (list.size() < idx) {
 					list.add(null);
@@ -809,7 +894,8 @@ public class CreateReplica extends SchemaCommand {
 			rs.close();
 		}
 		try {
-			rs = meta.getIndexInfo(null, originalSchema, tableName, false, true);
+			rs = meta
+					.getIndexInfo(null, originalSchema, tableName, false, true);
 		} catch (SQLException e) {
 			// Oracle throws an exception if the table is not found or is a
 			// SYNONYM
@@ -840,7 +926,8 @@ public class CreateReplica extends SchemaCommand {
 					list.clear();
 				}
 				boolean unique = !rs.getBoolean("NON_UNIQUE");
-				indexType = unique ? IndexType.createUnique(false, false) : IndexType.createNonUnique(false);
+				indexType = unique ? IndexType.createUnique(false, false)
+						: IndexType.createNonUnique(false);
 				String columnName = rs.getString("COLUMN_NAME");
 				columnName = convertColumnName(columnName);
 				Column column = (Column) columnMap.get(columnName);
@@ -854,20 +941,20 @@ public class CreateReplica extends SchemaCommand {
 		}
 	}
 
-
-	private void addConstraint(ObjectArray list, IndexType indexType) throws SQLException {
+	private void addConstraint(ObjectArray list, IndexType indexType)
+			throws SQLException {
 		/*
 		 * If this is a primary key constraint, do primary key stuff.
 		 */
-		if (indexType.getPrimaryKey()){
+		if (indexType.getPrimaryKey()) {
 			Column[] cols = new Column[list.size()];
 			list.toArray(cols);
 
 			/*
 			 * Set all primary key columns to be not nullable.
 			 */
-			for (Column c: cols){
-				if (c != null){
+			for (Column c : cols) {
+				if (c != null) {
 					c.setNullable(false);
 				} else {
 					ErrorHandling.errorNoEvent("This column was null.");
@@ -877,7 +964,8 @@ public class CreateReplica extends SchemaCommand {
 			IndexColumn[] indexColumn = new IndexColumn[list.size()];
 			indexColumn = IndexColumn.wrap(cols);
 
-			AlterTableAddConstraint pk = new AlterTableAddConstraint(session, getSchema(), false, internalQuery);
+			AlterTableAddConstraint pk = new AlterTableAddConstraint(session,
+					getSchema(), false, internalQuery);
 			pk.setType(AlterTableAddConstraint.PRIMARY_KEY);
 			pk.setTableName(tableName);
 			pk.setIndexColumns(indexColumn);
@@ -887,7 +975,8 @@ public class CreateReplica extends SchemaCommand {
 	}
 
 	private String convertColumnName(String columnName) {
-		if ((storesMixedCase || storesLowerCase) && columnName.equals(StringUtils.toLowerEnglish(columnName))) {
+		if ((storesMixedCase || storesLowerCase)
+				&& columnName.equals(StringUtils.toLowerEnglish(columnName))) {
 			columnName = StringUtils.toUpperEnglish(columnName);
 		} else if (storesMixedCase && !supportsMixedCaseIdentifiers) {
 			// TeraData
@@ -914,66 +1003,85 @@ public class CreateReplica extends SchemaCommand {
 	}
 
 	/**
-	 * Sets the location at which the replica will be located. If this method is called that location
-	 * is not the local machine, and so the command will be sent remotely to be executed.
-	 * @param replicationLocation	The location of the remote database.
+	 * Sets the location at which the replica will be located. If this method is
+	 * called that location is not the local machine, and so the command will be
+	 * sent remotely to be executed.
+	 * 
+	 * @param replicationLocation
+	 *            The location of the remote database.
 	 */
 	public void setReplicationLocation(String replicationLocation) {
 		this.whereReplicaWillBeCreated = replicationLocation;
 
-		if (whereReplicaWillBeCreated != null && whereReplicaWillBeCreated.startsWith("'") && whereReplicaWillBeCreated.endsWith("'")){
-			whereReplicaWillBeCreated = whereReplicaWillBeCreated.substring(1, whereReplicaWillBeCreated.length()-1);
+		if (whereReplicaWillBeCreated != null
+				&& whereReplicaWillBeCreated.startsWith("'")
+				&& whereReplicaWillBeCreated.endsWith("'")) {
+			whereReplicaWillBeCreated = whereReplicaWillBeCreated.substring(1,
+					whereReplicaWillBeCreated.length() - 1);
 		}
 
-		if (next != null){
+		if (next != null) {
 			next.setReplicationLocation(whereReplicaWillBeCreated);
 		}
 	}
 
 	/**
-	 * Sets the location at which the primary copy is located. If this method is called that location
-	 * is not the local machine - this location is used to get the meta-data and data from the given table.
+	 * Sets the location at which the primary copy is located. If this method is
+	 * called that location is not the local machine - this location is used to
+	 * get the meta-data and data from the given table.
+	 * 
 	 * @param originalLocation
-	 * @throws JdbcSQLException 
-	 * @throws RemoteException 
+	 * @throws JdbcSQLException
+	 * @throws RemoteException
 	 */
-	public void setOriginalLocation(String originalLocation, boolean contactSM) throws SQLException, RemoteException {
+	public void setOriginalLocation(String originalLocation, boolean contactSM)
+			throws SQLException, RemoteException {
 		contactSystemTableOnCompletion(contactSM);
 
 		this.whereDataWillBeTakenFrom = originalLocation;
 
-		if (whereDataWillBeTakenFrom != null && whereDataWillBeTakenFrom.startsWith("'") && whereDataWillBeTakenFrom.endsWith("'")){
-			whereDataWillBeTakenFrom = whereDataWillBeTakenFrom.substring(1, whereDataWillBeTakenFrom.length()-1);
+		if (whereDataWillBeTakenFrom != null
+				&& whereDataWillBeTakenFrom.startsWith("'")
+				&& whereDataWillBeTakenFrom.endsWith("'")) {
+			whereDataWillBeTakenFrom = whereDataWillBeTakenFrom.substring(1,
+					whereDataWillBeTakenFrom.length() - 1);
 		}
 
-		if (whereDataWillBeTakenFrom == null){
+		if (whereDataWillBeTakenFrom == null) {
 
-			ISystemTableReference sm = session.getDatabase().getSystemTableReference();
+			ISystemTableReference sm = session.getDatabase()
+					.getSystemTableReference();
 
 			TableManagerRemote tableManager;
 
-			tableManager = sm.lookup(new TableInfo(tableName, getSchema().getName()), true);
+			tableManager = sm.lookup(new TableInfo(tableName, getSchema()
+					.getName()), true);
 
-
-			if (tableManager == null){
-				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new TableInfo(tableName, getSchema().getName()).toString());
+			if (tableManager == null) {
+				throw Message.getSQLException(
+						ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new TableInfo(
+								tableName, getSchema().getName()).toString());
 			} else {
 				try {
-					whereDataWillBeTakenFrom = tableManager.getLocation().getOriginalURL();
+					whereDataWillBeTakenFrom = tableManager.getLocation()
+							.getOriginalURL();
 				} catch (MovedException e) {
-					//If this is an old cached reference contact the system table directly.
-					tableManager = sm.lookup(new TableInfo(tableName, getSchema().getName()), false);
+					// If this is an old cached reference contact the system
+					// table directly.
+					tableManager = sm.lookup(new TableInfo(tableName,
+							getSchema().getName()), false);
 					try {
-						whereDataWillBeTakenFrom = tableManager.getLocation().getOriginalURL();
+						whereDataWillBeTakenFrom = tableManager.getLocation()
+								.getOriginalURL();
 					} catch (MovedException e1) {
-						//This should not happen. Abort the query.
+						// This should not happen. Abort the query.
 						throw new SQLException(e1.getMessage());
 					}
 				}
 			}
 		}
 
-		if (next != null){
+		if (next != null) {
 			next.setOriginalLocation(whereDataWillBeTakenFrom, contactSM);
 		}
 	}
@@ -989,9 +1097,8 @@ public class CreateReplica extends SchemaCommand {
 		}
 	}
 
-
 	@Override
-	public String toString(){
+	public String toString() {
 		return tableName;
 	}
 
@@ -999,7 +1106,6 @@ public class CreateReplica extends SchemaCommand {
 	 * @param b
 	 */
 	public void contactSystemTableOnCompletion(boolean b) {
-		this.contactSystemTable = b;
 	}
 
 }

@@ -50,19 +50,21 @@ public class Right extends DbObjectBase {
 	private RightOwner grantee;
 
 	public Right(Database db, int id, RightOwner grantee, Role grantedRole) {
-		initDbObjectBase(db, id, "RIGHT_"+id, Trace.USER);
+		initDbObjectBase(db, id, "RIGHT_" + id, Trace.USER);
 		this.grantee = grantee;
 		this.grantedRole = grantedRole;
 	}
 
-	public Right(Database db, int id, RightOwner grantee, int grantedRight, Table grantedRightOnTable) {
-		initDbObjectBase(db, id, ""+id, Trace.USER);
+	public Right(Database db, int id, RightOwner grantee, int grantedRight,
+			Table grantedRightOnTable) {
+		initDbObjectBase(db, id, "" + id, Trace.USER);
 		this.grantee = grantee;
 		this.grantedRight = grantedRight;
 		this.grantedTable = grantedRightOnTable;
 	}
 
-	private boolean appendRight(StringBuilder buff, int right, int mask, String name, boolean comma) {
+	private boolean appendRight(StringBuilder buff, int right, int mask,
+			String name, boolean comma) {
 		if ((right & mask) != 0) {
 			if (comma) {
 				buff.append(", ");

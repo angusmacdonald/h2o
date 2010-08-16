@@ -50,7 +50,7 @@ public class PageFreeList extends Record {
 
 	/**
 	 * Allocate a page from the free list.
-	 *
+	 * 
 	 * @return the page, or -1 if all pages are used
 	 */
 	int allocate() throws SQLException {
@@ -73,8 +73,9 @@ public class PageFreeList extends Record {
 
 	/**
 	 * Allocate a page at the end of the file
-	 *
-	 * @param min the minimum page number
+	 * 
+	 * @param min
+	 *            the minimum page number
 	 * @return the page id
 	 */
 	int allocateAtEnd(int min) throws SQLException {
@@ -104,71 +105,74 @@ public class PageFreeList extends Record {
 
 	/**
 	 * Mark a page as used.
-	 *
-	 * @param pos the page id
+	 * 
+	 * @param pos
+	 *            the page id
 	 * @return the page id, or -1
 	 */
-	 int allocate(int pos) throws SQLException {
-		 if (pos - firstAddressed > pageCount) {
-			 PageFreeList next = getNext();
-			 if (next == null) {
-				 return -1;
-			 }
-			 return next.allocate(pos);
-		 } else {
-			 int idx = pos - firstAddressed;
-			 if (idx >= 0 && !used.get(idx)) {
-				 used.set(pos - firstAddressed);
-				 store.updateRecord(this, true, data);
-			 }
-			 return pos;
-		 }
-	 }
+	int allocate(int pos) throws SQLException {
+		if (pos - firstAddressed > pageCount) {
+			PageFreeList next = getNext();
+			if (next == null) {
+				return -1;
+			}
+			return next.allocate(pos);
+		} else {
+			int idx = pos - firstAddressed;
+			if (idx >= 0 && !used.get(idx)) {
+				used.set(pos - firstAddressed);
+				store.updateRecord(this, true, data);
+			}
+			return pos;
+		}
+	}
 
-	 /**
-	  * Add a page to the free list.
-	  *
-	  * @param pageId the page id to add
-	  */
-	 void free(int pageId) throws SQLException {
-		 full = false;
-		 used.clear(pageId - firstAddressed);
-		 store.updateRecord(this, true, data);
-	 }
+	/**
+	 * Add a page to the free list.
+	 * 
+	 * @param pageId
+	 *            the page id to add
+	 */
+	void free(int pageId) throws SQLException {
+		full = false;
+		used.clear(pageId - firstAddressed);
+		store.updateRecord(this, true, data);
+	}
 
-	 /**
-	  * Read the page from the disk.
-	  */
-	 void read() throws SQLException {
-		 data = store.createDataPage();
-		 store.readPage(getPos(), data);
-		 int p = data.readInt();
-		 int t = data.readByte();
-		 if (t == Page.TYPE_EMPTY) {
-			 return;
-		 }
-		 if (t != Page.TYPE_FREE_LIST || p != 0) {
-			 throw Message.getSQLException(ErrorCode.FILE_CORRUPTED_1, "pos:" + getPos() + " type:" + t + " parent:" + p
-					 + " expected type:" + Page.TYPE_FREE_LIST);
-		 }
-		 for (int i = 0; i < pageCount; i += 8) {
-			 used.setByte(i, data.readByte());
-		 }
-	 }
+	/**
+	 * Read the page from the disk.
+	 */
+	void read() throws SQLException {
+		data = store.createDataPage();
+		store.readPage(getPos(), data);
+		int p = data.readInt();
+		int t = data.readByte();
+		if (t == Page.TYPE_EMPTY) {
+			return;
+		}
+		if (t != Page.TYPE_FREE_LIST || p != 0) {
+			throw Message.getSQLException(ErrorCode.FILE_CORRUPTED_1, "pos:"
+					+ getPos() + " type:" + t + " parent:" + p
+					+ " expected type:" + Page.TYPE_FREE_LIST);
+		}
+		for (int i = 0; i < pageCount; i += 8) {
+			used.setByte(i, data.readByte());
+		}
+	}
 
-	 public int getByteCount(DataPage dummy) throws SQLException {
-		 return store.getPageSize();
-	 }
+	public int getByteCount(DataPage dummy) throws SQLException {
+		return store.getPageSize();
+	}
 
-	 public void write(DataPage buff) throws SQLException {
-		 data = store.createDataPage();
-		 data.writeInt(0);
-		 int type = Page.TYPE_FREE_LIST;
-		 data.writeByte((byte) type);
-		 for (int i = 0; i < pageCount; i += 8) {
-			 data.writeByte((byte) used.getByte(i));
-		 }
-		 store.writePage(getPos(), data);
-	 }
+	public void write(DataPage buff) throws SQLException {
+		data = store.createDataPage();
+		data.writeInt(0);
+		int type = Page.TYPE_FREE_LIST;
+		data.writeByte((byte) type);
+		for (int i = 0; i < pageCount; i += 8) {
+			data.writeByte((byte) used.getByte(i));
+		}
+		store.writePage(getPos(), data);
+	}
 
 }

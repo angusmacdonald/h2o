@@ -14,15 +14,14 @@ import org.h2.util.SmallLRUCache;
 import org.h2.util.StringUtils;
 
 /**
- * Instances of this class can compare strings.
- * Case sensitive and case insensitive comparison is supported,
- * and comparison using a collator.
+ * Instances of this class can compare strings. Case sensitive and case
+ * insensitive comparison is supported, and comparison using a collator.
  */
 public class CompareMode {
 
 	/**
-	 * This constant means there is no collator set,
-	 * and the default string comparison is to be used.
+	 * This constant means there is no collator set, and the default string
+	 * comparison is to be used.
 	 */
 	public static final String OFF = "OFF";
 
@@ -31,13 +30,16 @@ public class CompareMode {
 	private final SmallLRUCache collationKeys;
 
 	/**
-	 * Create a new compare mode with the given collator and cache size.
-	 * The cache is used to speed up comparison when using a collator;
-	 * CollationKey objects are cached.
-	 *
-	 * @param collator the collator or null
-	 * @param name the collation name or null
-	 * @param cacheSize the number of entries in the CollationKey cache
+	 * Create a new compare mode with the given collator and cache size. The
+	 * cache is used to speed up comparison when using a collator; CollationKey
+	 * objects are cached.
+	 * 
+	 * @param collator
+	 *            the collator or null
+	 * @param name
+	 *            the collation name or null
+	 * @param cacheSize
+	 *            the number of entries in the CollationKey cache
 	 */
 	public CompareMode(Collator collator, String name, int cacheSize) {
 		this.collator = collator;
@@ -51,17 +53,24 @@ public class CompareMode {
 
 	/**
 	 * Compare two characters in a string.
-	 *
-	 * @param a the first string
-	 * @param ai the character index in the first string
-	 * @param b the second string
-	 * @param bi the character index in the second string
-	 * @param ignoreCase true if a case-insensitive comparison should be made
+	 * 
+	 * @param a
+	 *            the first string
+	 * @param ai
+	 *            the character index in the first string
+	 * @param b
+	 *            the second string
+	 * @param bi
+	 *            the character index in the second string
+	 * @param ignoreCase
+	 *            true if a case-insensitive comparison should be made
 	 * @return true if the characters are equals
 	 */
-	public boolean equalsChars(String a, int ai, String b, int bi, boolean ignoreCase) {
+	public boolean equalsChars(String a, int ai, String b, int bi,
+			boolean ignoreCase) {
 		if (collator != null) {
-			return compareString(a.substring(ai, ai + 1), b.substring(bi, bi + 1), ignoreCase) == 0;
+			return compareString(a.substring(ai, ai + 1),
+					b.substring(bi, bi + 1), ignoreCase) == 0;
 		}
 		char ca = a.charAt(ai);
 		char cb = b.charAt(bi);
@@ -74,10 +83,13 @@ public class CompareMode {
 
 	/**
 	 * Compare two strings.
-	 *
-	 * @param a the first string
-	 * @param b the second string
-	 * @param ignoreCase true if a case-insensitive comparison should be made
+	 * 
+	 * @param a
+	 *            the first string
+	 * @param b
+	 *            the second string
+	 * @param ignoreCase
+	 *            true if a case-insensitive comparison should be made
 	 * @return -1 if the first string is 'smaller', 1 if the second string is
 	 *         smaller, and 0 if they are equal
 	 */
@@ -117,26 +129,30 @@ public class CompareMode {
 
 	/**
 	 * Get the collation name.
-	 *
-	 * @param l the locale
+	 * 
+	 * @param l
+	 *            the locale
 	 * @return the name of the collation
 	 */
 	public static String getName(Locale l) {
 		Locale english = Locale.ENGLISH;
-		String name = l.getDisplayLanguage(english) + ' ' + l.getDisplayCountry(english) + ' ' + l.getVariant();
+		String name = l.getDisplayLanguage(english) + ' '
+				+ l.getDisplayCountry(english) + ' ' + l.getVariant();
 		name = StringUtils.toUpperEnglish(name.trim().replace(' ', '_'));
 		return name;
 	}
 
 	private static boolean compareLocaleNames(Locale locale, String name) {
-		return name.equalsIgnoreCase(locale.toString()) || name.equalsIgnoreCase(getName(locale));
+		return name.equalsIgnoreCase(locale.toString())
+				|| name.equalsIgnoreCase(getName(locale));
 	}
 
 	/**
 	 * Get the collator object for the given language name or language / country
 	 * combination.
-	 *
-	 * @param name the language name
+	 * 
+	 * @param name
+	 *            the language name
 	 * @return the collator
 	 */
 	public static Collator getCollator(String name) {
@@ -160,8 +176,7 @@ public class CompareMode {
 		}
 		if (result == null) {
 			Locale[] locales = Collator.getAvailableLocales();
-			for (int i = 0; i < locales.length; i++) {
-				Locale locale = locales[i];
+			for (Locale locale : locales) {
 				if (compareLocaleNames(locale, name)) {
 					result = Collator.getInstance(locale);
 					break;

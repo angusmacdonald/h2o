@@ -67,8 +67,9 @@ public class ResultColumn {
 
 	/**
 	 * Read an object from the given transfer object.
-	 *
-	 * @param in the object from where to read the data
+	 * 
+	 * @param in
+	 *            the object from where to read the data
 	 */
 	ResultColumn(Transfer in) throws IOException {
 		alias = in.readString();
@@ -85,12 +86,16 @@ public class ResultColumn {
 
 	/**
 	 * Write a result column to the given output.
-	 *
-	 * @param out the object to where to write the data
-	 * @param result the result
-	 * @param i the column index
+	 * 
+	 * @param out
+	 *            the object to where to write the data
+	 * @param result
+	 *            the result
+	 * @param i
+	 *            the column index
 	 */
-	public static void writeColumn(Transfer out, ResultInterface result, int i) throws IOException {
+	public static void writeColumn(Transfer out, ResultInterface result, int i)
+			throws IOException {
 		out.writeString(result.getAlias(i));
 		out.writeString(result.getSchemaName(i));
 		out.writeString(result.getTableName(i));

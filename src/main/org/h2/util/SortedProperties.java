@@ -16,8 +16,8 @@ import java.util.Vector;
 import org.h2.message.TraceSystem;
 
 /**
- * Sorted properties file.
- * This implementation requires that store() internally calls keys().
+ * Sorted properties file. This implementation requires that store() internally
+ * calls keys().
  */
 public class SortedProperties extends Properties {
 
@@ -31,14 +31,18 @@ public class SortedProperties extends Properties {
 
 	/**
 	 * Get a boolean property value from a properties object.
-	 *
-	 * @param prop the properties object
-	 * @param key the key
-	 * @param def the default value
+	 * 
+	 * @param prop
+	 *            the properties object
+	 * @param key
+	 *            the key
+	 * @param def
+	 *            the default value
 	 * @return the value if set, or the default value if not
 	 */
-	public static boolean getBooleanProperty(Properties prop, String key, boolean def) {
-		String value = prop.getProperty(key, ""+def);
+	public static boolean getBooleanProperty(Properties prop, String key,
+			boolean def) {
+		String value = prop.getProperty(key, "" + def);
 		try {
 			return Boolean.valueOf(value).booleanValue();
 		} catch (Exception e) {
@@ -49,14 +53,17 @@ public class SortedProperties extends Properties {
 
 	/**
 	 * Get an int property value from a properties object.
-	 *
-	 * @param prop the properties object
-	 * @param key the key
-	 * @param def the default value
+	 * 
+	 * @param prop
+	 *            the properties object
+	 * @param key
+	 *            the key
+	 * @param def
+	 *            the default value
 	 * @return the value if set, or the default value if not
 	 */
 	public static int getIntProperty(Properties prop, String key, int def) {
-		String value = prop.getProperty(key, ""+def);
+		String value = prop.getProperty(key, "" + def);
 		try {
 			return MathUtils.decodeInt(value);
 		} catch (Exception e) {
@@ -67,11 +74,13 @@ public class SortedProperties extends Properties {
 
 	/**
 	 * Load a properties object from a file.
-	 *
-	 * @param fileName the name of the properties file
+	 * 
+	 * @param fileName
+	 *            the name of the properties file
 	 * @return the properties object
 	 */
-	public static synchronized SortedProperties loadProperties(String fileName) throws IOException {
+	public static synchronized SortedProperties loadProperties(String fileName)
+			throws IOException {
 		SortedProperties prop = new SortedProperties();
 		if (FileUtils.exists(fileName)) {
 			InputStream in = null;

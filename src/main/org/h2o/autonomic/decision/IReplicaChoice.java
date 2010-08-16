@@ -26,10 +26,15 @@ import org.h2o.util.exceptions.MovedException;
 
 public interface IReplicaChoice {
 	/**
-	 * Return an ordered set of machines on which data/procesess can be added to.
-	 * @param typeOfRequest	Type of request being made. For example, a new replica being created, or a table manager being migrated.
-	 * @throws MovedException 
-	 * @throws RemoteException 
+	 * Return an ordered set of machines on which data/procesess can be added
+	 * to.
+	 * 
+	 * @param typeOfRequest
+	 *            Type of request being made. For example, a new replica being
+	 *            created, or a table manager being migrated.
+	 * @throws MovedException
+	 * @throws RemoteException
 	 */
-	public Queue<DatabaseInstanceWrapper> getAvailableMachines(ActionRequest typeOfRequest) throws RemoteException, MovedException;
+	public Queue<DatabaseInstanceWrapper> getAvailableMachines(
+			ActionRequest typeOfRequest) throws RemoteException, MovedException;
 }

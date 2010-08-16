@@ -25,8 +25,7 @@ public class ValueInt extends Value {
 	public static final int PRECISION = 10;
 
 	/**
-	 * The maximum display size of an int.
-	 * Example: -2147483648
+	 * The maximum display size of an int. Example: -2147483648
 	 */
 	public static final int DISPLAY_SIZE = 11;
 
@@ -50,8 +49,9 @@ public class ValueInt extends Value {
 
 	/**
 	 * Get or create an int value for the given int.
-	 *
-	 * @param i the int
+	 * 
+	 * @param i
+	 *            the int
 	 * @return the value
 	 */
 	public static ValueInt get(int i) {
@@ -76,7 +76,8 @@ public class ValueInt extends Value {
 
 	private ValueInt checkRange(long value) throws SQLException {
 		if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
-			throw Message.getSQLException(ErrorCode.OVERFLOW_FOR_TYPE_1, DataType.getDataType(Value.INT).name);
+			throw Message.getSQLException(ErrorCode.OVERFLOW_FOR_TYPE_1,
+					DataType.getDataType(Value.INT).name);
 		}
 		return ValueInt.get((int) value);
 	}
@@ -111,7 +112,8 @@ public class ValueInt extends Value {
 	public Value divide(Value v) throws SQLException {
 		ValueInt other = (ValueInt) v;
 		if (other.value == 0) {
-			throw Message.getSQLException(ErrorCode.DIVISION_BY_ZERO_1, getSQL());
+			throw Message.getSQLException(ErrorCode.DIVISION_BY_ZERO_1,
+					getSQL());
 		}
 		return ValueInt.get(value / other.value);
 	}
@@ -152,7 +154,8 @@ public class ValueInt extends Value {
 		return ObjectUtils.getInteger(value);
 	}
 
-	public void set(PreparedStatement prep, int parameterIndex) throws SQLException {
+	public void set(PreparedStatement prep, int parameterIndex)
+			throws SQLException {
 		prep.setInt(parameterIndex, value);
 	}
 

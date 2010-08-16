@@ -20,8 +20,8 @@ import org.h2.value.ValueArray;
 import org.h2.value.ValueNull;
 
 /**
- * A query returning a single value.
- * Subqueries are used inside other statements.
+ * A query returning a single value. Subqueries are used inside other
+ * statements.
  */
 public class Subquery extends Expression {
 
@@ -37,7 +37,8 @@ public class Subquery extends Expression {
 		try {
 			int rowcount = result.getRowCount();
 			if (rowcount > 1) {
-				throw Message.getSQLException(ErrorCode.SCALAR_SUBQUERY_CONTAINS_MORE_THAN_ONE_ROW);
+				throw Message
+						.getSQLException(ErrorCode.SCALAR_SUBQUERY_CONTAINS_MORE_THAN_ONE_ROW);
 			}
 			Value v;
 			if (rowcount <= 0) {
@@ -61,7 +62,8 @@ public class Subquery extends Expression {
 		return getExpression().getType();
 	}
 
-	public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
+	public void mapColumns(ColumnResolver resolver, int level)
+			throws SQLException {
 		query.mapColumns(resolver, level + 1);
 	}
 

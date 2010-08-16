@@ -50,14 +50,17 @@ public class FtpControl extends Thread {
 
 	public void run() {
 		try {
-			output = new PrintWriter(new OutputStreamWriter(control.getOutputStream(), Constants.UTF8));
+			output = new PrintWriter(new OutputStreamWriter(
+					control.getOutputStream(), Constants.UTF8));
 			if (stop) {
 				reply(421, "Too many users");
 			} else {
 				reply(220, SERVER_NAME);
 				// TODO need option to configure the serverIpAddress?
-				serverIpAddress = control.getLocalAddress().getHostAddress().replace('.', ',');
-				BufferedReader input = new BufferedReader(new InputStreamReader(control.getInputStream()));
+				serverIpAddress = control.getLocalAddress().getHostAddress()
+						.replace('.', ',');
+				BufferedReader input = new BufferedReader(
+						new InputStreamReader(control.getInputStream()));
 				while (!stop) {
 					String command = null;
 					try {
@@ -144,7 +147,8 @@ public class FtpControl extends Thread {
 		}
 	}
 
-	private void processConnected(String command, String param) throws SQLException, IOException {
+	private void processConnected(String command, String param)
+			throws SQLException, IOException {
 		switch (command.charAt(0)) {
 		case 'C':
 			if ("CWD".equals(command)) {
@@ -161,7 +165,8 @@ public class FtpControl extends Thread {
 				}
 			} else if ("CDUP".equals(command)) {
 				if (currentDir.length() > 1) {
-					int idx = currentDir.lastIndexOf("/", currentDir.length() - 2);
+					int idx = currentDir.lastIndexOf("/",
+							currentDir.length() - 2);
 					currentDir = currentDir.substring(0, idx + 1);
 					reply(250, "Ok");
 				} else {
@@ -172,8 +177,10 @@ public class FtpControl extends Thread {
 		case 'D':
 			if ("DELE".equals(command)) {
 				String fileName = getFileName(param);
-				if (!readonly && fs.exists(fileName) && !fs.isDirectory(fileName) && fs.tryDelete(fileName)) {
-					if (server.getAllowTask() && fileName.endsWith(FtpServer.TASK_SUFFIX)) {
+				if (!readonly && fs.exists(fileName)
+						&& !fs.isDirectory(fileName) && fs.tryDelete(fileName)) {
+					if (server.getAllowTask()
+							&& fileName.endsWith(FtpServer.TASK_SUFFIX)) {
 						server.stopTask(fileName);
 					}
 					reply(250, "Ok");
@@ -214,23 +221,28 @@ public class FtpControl extends Thread {
 			break;
 		case 'P':
 			if ("PWD".equals(command)) {
-				reply(257, StringUtils.quoteIdentifier(currentDir) + " directory");
+				reply(257, StringUtils.quoteIdentifier(currentDir)
+						+ " directory");
 			} else if ("PASV".equals(command)) {
 				ServerSocket dataSocket = server.createDataSocket();
 				data = new FtpData(server, control.getInetAddress(), dataSocket);
 				data.start();
 				int port = dataSocket.getLocalPort();
-				reply(227, "Passive Mode (" + serverIpAddress + "," + (port >> 8) + "," + (port & 255) + ")");
+				reply(227, "Passive Mode (" + serverIpAddress + ","
+						+ (port >> 8) + "," + (port & 255) + ")");
 			} else if ("PORT".equals(command)) {
 				String[] list = StringUtils.arraySplit(param, ',', true);
-				String host = list[0] + "." + list[1] + "." + list[2] + "." + list[3];
-				int port = (Integer.parseInt(list[4]) << 8) | Integer.parseInt(list[5]);
+				String host = list[0] + "." + list[1] + "." + list[2] + "."
+						+ list[3];
+				int port = (Integer.parseInt(list[4]) << 8)
+						| Integer.parseInt(list[5]);
 				InetAddress address = InetAddress.getByName(host);
 				if (address.equals(control.getInetAddress())) {
 					data = new FtpData(server, address, port);
 					reply(200, "Ok");
 				} else {
-					server.trace("Port REJECTED:" + address + " expected:" + control.getInetAddress());
+					server.trace("Port REJECTED:" + address + " expected:"
+							+ control.getInetAddress());
 					reply(550, "Failed");
 				}
 			}
@@ -307,11 +319,13 @@ public class FtpControl extends Thread {
 				}
 			} else if ("STOR".equals(command)) {
 				String fileName = getFileName(param);
-				if (!readonly && !fs.exists(fileName) || !fs.isDirectory(fileName)) {
+				if (!readonly && !fs.exists(fileName)
+						|| !fs.isDirectory(fileName)) {
 					reply(150, "Starting transfer");
 					try {
 						data.receive(fs, fileName);
-						if (server.getAllowTask() && param.endsWith(FtpServer.TASK_SUFFIX)) {
+						if (server.getAllowTask()
+								&& param.endsWith(FtpServer.TASK_SUFFIX)) {
 							server.startTask(fileName);
 						}
 						reply(226, "Ok");
@@ -371,7 +385,8 @@ public class FtpControl extends Thread {
 
 	private void processRemoveDir(String param) {
 		String fileName = getFileName(param);
-		if (!readonly && fs.exists(fileName) && fs.isDirectory(fileName) && fs.tryDelete(fileName)) {
+		if (!readonly && fs.exists(fileName) && fs.isDirectory(fileName)
+				&& fs.tryDelete(fileName)) {
 			reply(250, "Ok");
 		} else {
 			reply(500, "Failed");
@@ -379,14 +394,16 @@ public class FtpControl extends Thread {
 	}
 
 	private String getFileName(String file) {
-		return server.getFileName(file.startsWith("/") ? file : currentDir + file);
+		return server.getFileName(file.startsWith("/") ? file : currentDir
+				+ file);
 	}
 
 	private String getPath(String path) {
 		return path.startsWith("/") ? path : currentDir + path;
 	}
 
-	private void processList(String param, boolean directories) throws SQLException, IOException {
+	private void processList(String param, boolean directories)
+			throws SQLException, IOException {
 		String directory = getFileName(param);
 		if (!fs.exists(directory)) {
 			reply(450, "Directory does not exist");

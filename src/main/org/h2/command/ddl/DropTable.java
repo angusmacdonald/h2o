@@ -29,12 +29,8 @@ import org.h2o.event.client.H2OEvent;
 import org.h2o.event.client.H2OEventBus;
 import org.h2o.util.exceptions.MovedException;
 
-import uk.ac.standrews.cs.nds.util.Diagnostic;
-import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
-
 /**
- * This class represents the statement
- * DROP TABLE
+ * This class represents the statement DROP TABLE
  */
 public class DropTable extends SchemaCommand {
 
@@ -42,6 +38,7 @@ public class DropTable extends SchemaCommand {
 	private String tableName;
 	ReplicaSet tables = null;
 	private DropTable next;
+
 	public DropTable(Session session, Schema schema, boolean internalQuery) {
 		super(session, schema);
 
@@ -50,8 +47,9 @@ public class DropTable extends SchemaCommand {
 
 	/**
 	 * Chain another drop table statement to this statement.
-	 *
-	 * @param drop the statement to add
+	 * 
+	 * @param drop
+	 *            the statement to add
 	 */
 	public void addNextDropTable(DropTable drop) {
 		if (next == null) {
@@ -74,36 +72,49 @@ public class DropTable extends SchemaCommand {
 
 	private void prepareDrop(String transactionName) throws SQLException {
 
-		if (Constants.IS_H2O){
+		if (Constants.IS_H2O) {
 			tables = getSchema().getTablesOrViews(session, tableName);
 
-			if (tables != null){
+			if (tables != null) {
 				table = tables.getACopy();
 			}
 		} else {
-			table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
+			table = getSchema().findTableOrView(session, tableName,
+					LocationPreference.NO_PREFERENCE);
 		}
 
-
 		TableManagerRemote tableManager = null;
-		if (table == null){
-			tableManager = getSchema().getDatabase().getSystemTableReference().lookup((getSchema().getName() + "." + tableName), false);
+		if (table == null) {
+			tableManager = getSchema().getDatabase().getSystemTableReference()
+					.lookup((getSchema().getName() + "." + tableName), false);
 		}
 
 		if (table == null && tableManager == null) {
-			//table = null;
+			// table = null;
 			if (!ifExists) {
-				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
+				throw Message.getSQLException(
+						ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
 			}
 		} else {
 			session.getUser().checkRight(table, Right.ALL);
 
-			//XXX changed to add the table null checks because some tests show up the tableManager existing when the local table doesn't.
-			if ((table != null && !table.canDrop()) || (Constants.IS_H2O && tableName.startsWith("H2O_"))) { //H2O - ensure schema tables aren't dropped.
-				throw Message.getSQLException(ErrorCode.CANNOT_DROP_TABLE_1, tableName);
+			// XXX changed to add the table null checks because some tests show
+			// up the tableManager existing when the local table doesn't.
+			if ((table != null && !table.canDrop())
+					|| (Constants.IS_H2O && tableName.startsWith("H2O_"))) { // H2O
+																				// -
+																				// ensure
+																				// schema
+																				// tables
+																				// aren't
+																				// dropped.
+				throw Message.getSQLException(ErrorCode.CANNOT_DROP_TABLE_1,
+						tableName);
 			}
-			if (Constants.IS_H2O && !internalQuery && table != null){
-				table.lock(session, true, true); //lock isn't acquired here - the query is distributed to each replica first.
+			if (Constants.IS_H2O && !internalQuery && table != null) {
+				table.lock(session, true, true); // lock isn't acquired here -
+													// the query is distributed
+													// to each replica first.
 			}
 		}
 		if (next != null) {
@@ -111,51 +122,60 @@ public class DropTable extends SchemaCommand {
 		}
 	}
 
-	private void executeDrop(String transactionName) throws SQLException, RemoteException {
+	private void executeDrop(String transactionName) throws SQLException,
+			RemoteException {
 		// need to get the table again, because it may be dropped already
 		// meanwhile (dependent object, or same object)
-		table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
+		table = getSchema().findTableOrView(session, tableName,
+				LocationPreference.NO_PREFERENCE);
 		if (table != null) {
 			Database db = session.getDatabase();
 			String fullTableName = getSchema().getName() + "." + tableName;
 
 			/*
-			 * #########################################################################
+			 * ##################################################################
+			 * #######
 			 * 
-			 *  Remove any System Table entries.
+			 * Remove any System Table entries.
 			 * 
-			 * #########################################################################
+			 * ##################################################################
+			 * #######
 			 */
 
+			if (Constants.IS_H2O && !db.isManagementDB()
+					&& !db.isTableLocal(getSchema()) && !internalQuery) {
 
-			if (Constants.IS_H2O && !db.isManagementDB() && !db.isTableLocal(getSchema()) && !internalQuery){
-
-				QueryProxy qp = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, session.getDatabase());
+				QueryProxy qp = QueryProxy.getQueryProxyAndLock(table,
+						LockType.WRITE, session.getDatabase());
 				qp.executeUpdate(sqlStatement, transactionName, session);
 
-				ISystemTableReference sm = db.getSystemTableReference(); 
-				try{
-					sm.removeTableInformation(new TableInfo(tableName, getSchema().getName()));
-				} catch (MovedException e){
+				ISystemTableReference sm = db.getSystemTableReference();
+				try {
+					sm.removeTableInformation(new TableInfo(tableName,
+							getSchema().getName()));
+				} catch (MovedException e) {
 					throw new RemoteException("System Table has moved.");
 				}
-				//db.removeTableManager(fullTableName, false);
+				// db.removeTableManager(fullTableName, false);
 
-			} else { //It's an internal query...
+			} else { // It's an internal query...
 
-				if (Constants.IS_H2O){
+				if (Constants.IS_H2O) {
 					/*
-					 * We want to remove the local copy of the data plus any other references to remote tables (i.e. linked tables need to
-					 * be removed as well) 
+					 * We want to remove the local copy of the data plus any
+					 * other references to remote tables (i.e. linked tables
+					 * need to be removed as well)
 					 */
-					Table[] tableArray = tables.getAllCopies().toArray(new Table[0]); // add to array to prevent concurrent modification exceptions.
+					Table[] tableArray = tables.getAllCopies().toArray(
+							new Table[0]); // add to array to prevent concurrent
+											// modification exceptions.
 
-					for (Table t: tableArray){
+					for (Table t : tableArray) {
 						t.setModified();
 						db.removeSchemaObject(session, t);
 					}
 
-					//db.removeTableManager(fullTableName, true);
+					// db.removeTableManager(fullTableName, true);
 				} else {
 					// Default H2 behaviour.
 					table.setModified();
@@ -164,7 +184,9 @@ public class DropTable extends SchemaCommand {
 				}
 
 			}
-			H2OEventBus.publish(new H2OEvent(db.getURL(), DatabaseStates.TABLE_DELETION, getSchema().getName() + "." + tableName));	
+			H2OEventBus.publish(new H2OEvent(db.getURL(),
+					DatabaseStates.TABLE_DELETION, getSchema().getName() + "."
+							+ tableName));
 		}
 		if (next != null) {
 			next.executeDrop(transactionName);
@@ -172,7 +194,8 @@ public class DropTable extends SchemaCommand {
 	}
 
 	@Override
-	public int update(String transactionName) throws SQLException, RemoteException {
+	public int update(String transactionName) throws SQLException,
+			RemoteException {
 		session.commit(true);
 		prepareDrop(transactionName);
 		executeDrop(transactionName);

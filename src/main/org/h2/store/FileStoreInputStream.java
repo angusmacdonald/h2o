@@ -28,7 +28,8 @@ public class FileStoreInputStream extends InputStream {
 	private boolean endOfFile;
 	private boolean alwaysClose;
 
-	public FileStoreInputStream(FileStore store, DataHandler handler, boolean compression, boolean alwaysClose) throws SQLException {
+	public FileStoreInputStream(FileStore store, DataHandler handler,
+			boolean compression, boolean alwaysClose) throws SQLException {
 		this.store = store;
 		this.alwaysClose = alwaysClose;
 		if (compression) {

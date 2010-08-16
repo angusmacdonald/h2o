@@ -83,7 +83,8 @@ public class SelectUnion extends Query {
 		orderList = order;
 	}
 
-	private Value[] convert(Value[] values, int columnCount) throws SQLException {
+	private Value[] convert(Value[] values, int columnCount)
+			throws SQLException {
 		for (int i = 0; i < columnCount; i++) {
 			Expression e = (Expression) expressions.get(i);
 			values[i] = values[i].convertTo(e.getType());
@@ -155,7 +156,8 @@ public class SelectUnion extends Query {
 			break;
 		}
 		case INTERSECT: {
-			LocalResult temp = new LocalResult(session, expressions, columnCount);
+			LocalResult temp = new LocalResult(session, expressions,
+					columnCount);
 			temp.setDistinct();
 			while (l.next()) {
 				temp.addRow(convert(l.currentRow(), columnCount));
@@ -190,7 +192,8 @@ public class SelectUnion extends Query {
 		right.init();
 		int len = left.getColumnCount();
 		if (len != right.getColumnCount()) {
-			throw Message.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
+			throw Message
+					.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
 		}
 		ObjectArray le = left.getExpressions();
 		// set the expressions to get the right column count and names,
@@ -225,7 +228,8 @@ public class SelectUnion extends Query {
 			long prec = Math.max(l.getPrecision(), r.getPrecision());
 			int scale = Math.max(l.getScale(), r.getScale());
 			int displaySize = Math.max(l.getDisplaySize(), r.getDisplaySize());
-			Column col = new Column(l.getAlias(), type, prec, scale, displaySize);
+			Column col = new Column(l.getAlias(), type, prec, scale,
+					displaySize);
 			Expression e = new ExpressionColumn(session.getDatabase(), col);
 			expressions.add(e);
 		}
@@ -264,7 +268,8 @@ public class SelectUnion extends Query {
 		return left.getColumnCount();
 	}
 
-	public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
+	public void mapColumns(ColumnResolver resolver, int level)
+			throws SQLException {
 		left.mapColumns(resolver, level);
 		right.mapColumns(resolver, level);
 	}
@@ -274,7 +279,8 @@ public class SelectUnion extends Query {
 		right.setEvaluatable(tableFilter, b);
 	}
 
-	public void addGlobalCondition(Parameter param, int columnId, int comparisonType) throws SQLException {
+	public void addGlobalCondition(Parameter param, int columnId,
+			int comparisonType) throws SQLException {
 		addParameter(param);
 		switch (unionType) {
 		case UNION_ALL:
@@ -340,7 +346,8 @@ public class SelectUnion extends Query {
 	}
 
 	public LocalResult query(int limit) throws SQLException {
-		// union doesn't always know the parameter list of the left and right queries
+		// union doesn't always know the parameter list of the left and right
+		// queries
 		return queryWithoutCache(limit);
 	}
 

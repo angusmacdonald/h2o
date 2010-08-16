@@ -44,9 +44,8 @@ public class QueryResult {
 		return exception;
 	}
 
-	public int getInstanceID(){
+	public int getInstanceID() {
 		return instanceID;
 	}
-
 
 }

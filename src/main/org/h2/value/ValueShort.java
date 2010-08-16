@@ -25,8 +25,7 @@ public class ValueShort extends Value {
 	static final int PRECISION = 5;
 
 	/**
-	 * The maximum display size of a short.
-	 * Example: -32768
+	 * The maximum display size of a short. Example: -32768
 	 */
 	static final int DISPLAY_SIZE = 6;
 
@@ -46,7 +45,8 @@ public class ValueShort extends Value {
 
 	private ValueShort checkRange(int value) throws SQLException {
 		if (value < Short.MIN_VALUE || value > Short.MAX_VALUE) {
-			throw Message.getSQLException(ErrorCode.OVERFLOW_FOR_TYPE_1, DataType.getDataType(Value.SHORT).name);
+			throw Message.getSQLException(ErrorCode.OVERFLOW_FOR_TYPE_1,
+					DataType.getDataType(Value.SHORT).name);
 		}
 		return ValueShort.get((short) value);
 	}
@@ -81,7 +81,8 @@ public class ValueShort extends Value {
 	public Value divide(Value v) throws SQLException {
 		ValueShort other = (ValueShort) v;
 		if (other.value == 0) {
-			throw Message.getSQLException(ErrorCode.DIVISION_BY_ZERO_1, getSQL());
+			throw Message.getSQLException(ErrorCode.DIVISION_BY_ZERO_1,
+					getSQL());
 		}
 		return ValueShort.get((short) (value / other.value));
 	}
@@ -122,26 +123,29 @@ public class ValueShort extends Value {
 		return ObjectUtils.getShort(value);
 	}
 
-	public void set(PreparedStatement prep, int parameterIndex) throws SQLException {
+	public void set(PreparedStatement prep, int parameterIndex)
+			throws SQLException {
 		prep.setShort(parameterIndex, value);
 	}
 
 	/**
 	 * Get or create a short value for the given short.
-	 *
-	 * @param i the short
+	 * 
+	 * @param i
+	 *            the short
 	 * @return the value
 	 */
-	 public static ValueShort get(short i) {
-		 return (ValueShort) Value.cache(new ValueShort(i));
-	 }
+	public static ValueShort get(short i) {
+		return (ValueShort) Value.cache(new ValueShort(i));
+	}
 
 	public int getDisplaySize() {
 		return DISPLAY_SIZE;
 	}
 
 	public boolean equals(Object other) {
-		return other instanceof ValueShort && value == ((ValueShort) other).value;
+		return other instanceof ValueShort
+				&& value == ((ValueShort) other).value;
 	}
 
 }

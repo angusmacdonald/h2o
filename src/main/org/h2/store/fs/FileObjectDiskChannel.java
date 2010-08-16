@@ -20,7 +20,8 @@ public class FileObjectDiskChannel implements FileObject {
 	private final String name;
 	private FileChannel channel;
 
-	FileObjectDiskChannel(String fileName, String mode) throws FileNotFoundException {
+	FileObjectDiskChannel(String fileName, String mode)
+			throws FileNotFoundException {
 		this.name = fileName;
 		RandomAccessFile file = new RandomAccessFile(fileName, mode);
 		channel = file.getChannel();
@@ -48,7 +49,7 @@ public class FileObjectDiskChannel implements FileObject {
 		}
 		// reading the size can reduce the performance
 		// if (channel.size() <= off + len) {
-			//    throw new java.io.EOFException();
+		// throw new java.io.EOFException();
 		// }
 		ByteBuffer buf = ByteBuffer.wrap(b);
 		buf.position(off);

@@ -129,11 +129,15 @@ public class Aggregate extends Expression {
 
 	/**
 	 * Create a new aggregate object.
-	 *
-	 * @param type the aggregate type
-	 * @param on the aggregated expression
-	 * @param select the select statement
-	 * @param distinct if distinct is used
+	 * 
+	 * @param type
+	 *            the aggregate type
+	 * @param on
+	 *            the aggregated expression
+	 * @param select
+	 *            the select statement
+	 * @param distinct
+	 *            if distinct is used
 	 */
 	public Aggregate(int type, Expression on, Select select, boolean distinct) {
 		this.type = type;
@@ -174,8 +178,9 @@ public class Aggregate extends Expression {
 	/**
 	 * Get the aggregate type for this name, or -1 if no aggregate has been
 	 * found.
-	 *
-	 * @param name the aggregate function name
+	 * 
+	 * @param name
+	 *            the aggregate function name
 	 * @return -1 if no aggregate function has been found, or the aggregate type
 	 */
 	public static int getAggregateType(String name) {
@@ -185,8 +190,9 @@ public class Aggregate extends Expression {
 
 	/**
 	 * Set the order for GROUP_CONCAT.
-	 *
-	 * @param orderBy the order by list
+	 * 
+	 * @param orderBy
+	 *            the order by list
 	 */
 	public void setOrder(ObjectArray orderBy) {
 		this.orderList = orderBy;
@@ -194,8 +200,9 @@ public class Aggregate extends Expression {
 
 	/**
 	 * Set the separator for GROUP_CONCAT.
-	 *
-	 * @param separator the separator expression
+	 * 
+	 * @param separator
+	 *            the separator expression
 	 */
 	public void setSeparator(Expression separator) {
 		this.separator = separator;
@@ -207,7 +214,8 @@ public class Aggregate extends Expression {
 		for (int i = 0; i < orderList.size(); i++) {
 			SelectOrderBy o = (SelectOrderBy) orderList.get(i);
 			index[i] = i + 1;
-			int order = o.descending ? SortOrder.DESCENDING : SortOrder.ASCENDING;
+			int order = o.descending ? SortOrder.DESCENDING
+					: SortOrder.ASCENDING;
 			sortType[i] = order;
 		}
 		return new SortOrder(session.getDatabase(), index, sortType);
@@ -283,7 +291,8 @@ public class Aggregate extends Expression {
 		}
 		HashMap group = select.getCurrentGroup();
 		if (group == null) {
-			throw Message.getSQLException(ErrorCode.INVALID_USE_OF_AGGREGATE_FUNCTION_1, getSQL());
+			throw Message.getSQLException(
+					ErrorCode.INVALID_USE_OF_AGGREGATE_FUNCTION_1, getSQL());
 		}
 		AggregateData data = (AggregateData) group.get(this);
 		if (data == null) {
@@ -314,7 +323,8 @@ public class Aggregate extends Expression {
 				}
 			}
 			StringBuilder buff = new StringBuilder();
-			String sep = separator == null ? "," : separator.getValue(session).getString();
+			String sep = separator == null ? "," : separator.getValue(session)
+					.getString();
 			for (int i = 0; i < list.size(); i++) {
 				Value val = (Value) list.get(i);
 				String s;
@@ -340,7 +350,8 @@ public class Aggregate extends Expression {
 		return dataType;
 	}
 
-	public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
+	public void mapColumns(ColumnResolver resolver, int level)
+			throws SQLException {
 		if (on != null) {
 			on.mapColumns(resolver, level);
 		}
@@ -395,13 +406,15 @@ public class Aggregate extends Expression {
 			break;
 		case SUM:
 			if (!DataType.supportsAdd(dataType)) {
-				throw Message.getSQLException(ErrorCode.SUM_OR_AVG_ON_WRONG_DATATYPE_1, getSQL());
+				throw Message.getSQLException(
+						ErrorCode.SUM_OR_AVG_ON_WRONG_DATATYPE_1, getSQL());
 			}
 			dataType = DataType.getAddProofType(dataType);
 			break;
 		case AVG:
 			if (!DataType.supportsAdd(dataType)) {
-				throw Message.getSQLException(ErrorCode.SUM_OR_AVG_ON_WRONG_DATATYPE_1, getSQL());
+				throw Message.getSQLException(
+						ErrorCode.SUM_OR_AVG_ON_WRONG_DATATYPE_1, getSQL());
 			}
 			break;
 		case MIN:

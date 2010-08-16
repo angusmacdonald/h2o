@@ -11,8 +11,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- * Keeps the meta data information of a column.
- * This class is used by the H2 Console.
+ * Keeps the meta data information of a column. This class is used by the H2
+ * Console.
  */
 class DbColumn {
 
@@ -33,7 +33,8 @@ class DbColumn {
 		int size = rs.getInt(DbContents.findColumn(rs, "COLUMN_SIZE", 7));
 		if (size > 0) {
 			type += "(" + size;
-			int prec = rs.getInt(DbContents.findColumn(rs, "DECIMAL_DIGITS", 9));
+			int prec = rs
+					.getInt(DbContents.findColumn(rs, "DECIMAL_DIGITS", 9));
 			if (prec > 0) {
 				type += ", " + prec;
 			}

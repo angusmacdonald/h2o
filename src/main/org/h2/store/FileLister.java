@@ -23,20 +23,23 @@ public class FileLister {
 	}
 
 	/**
-	 * Extract the name of the database from a given file name.
-	 * Only files ending with .data.db are considered, all others return null.
-	 *
-	 * @param fileName the file name (without directory)
+	 * Extract the name of the database from a given file name. Only files
+	 * ending with .data.db are considered, all others return null.
+	 * 
+	 * @param fileName
+	 *            the file name (without directory)
 	 * @return the database name or null
 	 */
 	public static String getDatabaseNameFromFileName(String fileName) {
 		if (SysProperties.PAGE_STORE) {
 			if (fileName.endsWith(Constants.SUFFIX_PAGE_FILE)) {
-				return fileName.substring(0, fileName.length() - Constants.SUFFIX_PAGE_FILE.length());
+				return fileName.substring(0, fileName.length()
+						- Constants.SUFFIX_PAGE_FILE.length());
 			}
 		} else {
 			if (fileName.endsWith(Constants.SUFFIX_DATA_FILE)) {
-				return fileName.substring(0, fileName.length() - Constants.SUFFIX_DATA_FILE.length());
+				return fileName.substring(0, fileName.length()
+						- Constants.SUFFIX_DATA_FILE.length());
 			}
 		}
 		return null;
@@ -44,15 +47,19 @@ public class FileLister {
 
 	/**
 	 * Get the list of database files.
-	 *
-	 * @param dir the directory (null for the current directory)
-	 * @param db the database name (null for all databases)
-	 * @param all  if true, files such as the lock, trace, hash index, and lob
+	 * 
+	 * @param dir
+	 *            the directory (null for the current directory)
+	 * @param db
+	 *            the database name (null for all databases)
+	 * @param all
+	 *            if true, files such as the lock, trace, hash index, and lob
 	 *            files are included. If false, only data, index and log files
 	 *            are returned
 	 * @return the list of files
 	 */
-	public static ArrayList getDatabaseFiles(String dir, String db, boolean all) throws SQLException {
+	public static ArrayList getDatabaseFiles(String dir, String db, boolean all)
+			throws SQLException {
 		if (dir == null || dir.equals("")) {
 			dir = ".";
 		}

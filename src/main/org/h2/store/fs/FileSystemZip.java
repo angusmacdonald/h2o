@@ -19,8 +19,8 @@ import java.util.zip.ZipFile;
 import org.h2.message.Message;
 
 /**
- * This is a read-only file system that allows
- * to access databases stored in a .zip or .jar file.
+ * This is a read-only file system that allows to access databases stored in a
+ * .zip or .jar file.
  */
 public class FileSystemZip extends FileSystem {
 
@@ -50,11 +50,13 @@ public class FileSystemZip extends FileSystem {
 		throw Message.getUnsupportedException();
 	}
 
-	public String createTempFile(String prefix, String suffix, boolean deleteOnExit, boolean inTempDir) throws IOException {
+	public String createTempFile(String prefix, String suffix,
+			boolean deleteOnExit, boolean inTempDir) throws IOException {
 		if (!inTempDir) {
 			throw new IOException("File system is read-only");
 		}
-		return FileSystemDisk.getInstance().createTempFile(prefix, suffix, deleteOnExit, true);
+		return FileSystemDisk.getInstance().createTempFile(prefix, suffix,
+				deleteOnExit, true);
 	}
 
 	public void delete(String fileName) throws SQLException {
@@ -127,7 +129,7 @@ public class FileSystemZip extends FileSystem {
 				String n = entry.getName();
 				if (n.equals(entryName)) {
 					return entry.isDirectory();
-				} else  if (n.startsWith(entryName)) {
+				} else if (n.startsWith(entryName)) {
 					if (n.length() == entryName.length() + 1) {
 						if (n.equals(entryName + "/")) {
 							return true;
@@ -199,7 +201,8 @@ public class FileSystemZip extends FileSystem {
 		return new FileObjectInputStream(file);
 	}
 
-	public FileObject openFileObject(String fileName, String mode) throws IOException {
+	public FileObject openFileObject(String fileName, String mode)
+			throws IOException {
 		ZipFile file = openZipFile(translateFileName(fileName));
 		ZipEntry entry = file.getEntry(getEntryName(fileName));
 		if (entry == null) {
@@ -208,7 +211,8 @@ public class FileSystemZip extends FileSystem {
 		return new FileObjectZip(file, entry);
 	}
 
-	public OutputStream openFileOutputStream(String fileName, boolean append) throws SQLException {
+	public OutputStream openFileOutputStream(String fileName, boolean append)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 

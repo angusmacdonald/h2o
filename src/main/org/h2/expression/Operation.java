@@ -24,7 +24,8 @@ import org.h2.value.ValueString;
 public class Operation extends Expression {
 
 	/**
-	 * This operation represents a string concatenation as in 'Hello' || 'World'.
+	 * This operation represents a string concatenation as in 'Hello' ||
+	 * 'World'.
 	 */
 	public static final int CONCAT = 0;
 
@@ -95,7 +96,8 @@ public class Operation extends Expression {
 
 	public Value getValue(Session session) throws SQLException {
 		Value l = left.getValue(session).convertTo(dataType);
-		Value r = right == null ? null : right.getValue(session).convertTo(dataType);
+		Value r = right == null ? null : right.getValue(session).convertTo(
+				dataType);
 
 		switch (opType) {
 		case NEGATE:
@@ -144,7 +146,8 @@ public class Operation extends Expression {
 		}
 	}
 
-	public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
+	public void mapColumns(ColumnResolver resolver, int level)
+			throws SQLException {
 		left.mapColumns(resolver, level);
 		if (right != null) {
 			right.mapColumns(resolver, level);
@@ -174,15 +177,18 @@ public class Operation extends Expression {
 			right = right.optimize(session);
 			int l = left.getType();
 			int r = right.getType();
-			if ((l == Value.NULL && r == Value.NULL) || (l == Value.UNKNOWN && r == Value.UNKNOWN)) {
+			if ((l == Value.NULL && r == Value.NULL)
+					|| (l == Value.UNKNOWN && r == Value.UNKNOWN)) {
 				// example: (? + ?) - the most safe data type is probably
 				// decimal
 				dataType = Value.DECIMAL;
 			} else if (l == Value.DATE || l == Value.TIMESTAMP) {
 				if (r == Value.INT && (opType == PLUS || opType == MINUS)) {
 					// Oracle date add
-					Function f = Function.getFunction(session.getDatabase(), "DATEADD");
-					f.setParameter(0, ValueExpression.get(ValueString.get("DAY")));
+					Function f = Function.getFunction(session.getDatabase(),
+							"DATEADD");
+					f.setParameter(0,
+							ValueExpression.get(ValueString.get("DAY")));
 					if (opType == MINUS) {
 						right = new Operation(NEGATE, right, null);
 						right = right.optimize(session);
@@ -191,10 +197,13 @@ public class Operation extends Expression {
 					f.setParameter(2, left);
 					f.doneWithParameters();
 					return f.optimize(session);
-				} else if (opType == MINUS && (l == Value.DATE || l == Value.TIMESTAMP)) {
+				} else if (opType == MINUS
+						&& (l == Value.DATE || l == Value.TIMESTAMP)) {
 					// Oracle date subtract
-					Function f = Function.getFunction(session.getDatabase(), "DATEDIFF");
-					f.setParameter(0, ValueExpression.get(ValueString.get("DAY")));
+					Function f = Function.getFunction(session.getDatabase(),
+							"DATEDIFF");
+					f.setParameter(0,
+							ValueExpression.get(ValueString.get("DAY")));
 					f.setParameter(1, right);
 					f.setParameter(2, left);
 					f.doneWithParameters();
@@ -240,7 +249,8 @@ public class Operation extends Expression {
 		if (right != null) {
 			switch (opType) {
 			case CONCAT:
-				return MathUtils.convertLongToInt((long) left.getDisplaySize() + (long) right.getDisplaySize());
+				return MathUtils.convertLongToInt((long) left.getDisplaySize()
+						+ (long) right.getDisplaySize());
 			default:
 				return Math.max(left.getDisplaySize(), right.getDisplaySize());
 			}
@@ -263,7 +273,8 @@ public class Operation extends Expression {
 	}
 
 	public boolean isEverything(ExpressionVisitor visitor) {
-		return left.isEverything(visitor) && (right == null || right.isEverything(visitor));
+		return left.isEverything(visitor)
+				&& (right == null || right.isEverything(visitor));
 	}
 
 	public int getCost() {

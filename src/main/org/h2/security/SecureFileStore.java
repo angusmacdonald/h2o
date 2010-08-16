@@ -16,8 +16,8 @@ import org.h2.store.FileStore;
 import org.h2.util.RandomUtils;
 
 /**
- * A file store that encrypts all data before writing,
- * and decrypts all data after reading.
+ * A file store that encrypts all data before writing, and decrypts all data
+ * after reading.
  */
 public class SecureFileStore extends FileStore {
 
@@ -29,7 +29,8 @@ public class SecureFileStore extends FileStore {
 	private byte[] bufferForInitVector;
 	private int keyIterations;
 
-	public SecureFileStore(DataHandler handler, String name, String mode, String cipher, byte[] key, int keyIterations) throws SQLException {
+	public SecureFileStore(DataHandler handler, String name, String mode,
+			String cipher, byte[] key, int keyIterations) throws SQLException {
 		super(handler, name, mode);
 		this.key = key;
 		if ("XTEA".equalsIgnoreCase(cipher)) {
@@ -76,7 +77,8 @@ public class SecureFileStore extends FileStore {
 		pos += len;
 	}
 
-	protected void readFullyDirect(byte[] b, int off, int len) throws SQLException {
+	protected void readFullyDirect(byte[] b, int off, int len)
+			throws SQLException {
 		super.readFully(b, off, len);
 		pos += len;
 	}
@@ -118,14 +120,14 @@ public class SecureFileStore extends FileStore {
 		while (len > 0) {
 			for (int i = 0; i < Constants.FILE_BLOCK_SIZE; i += 8) {
 				long block = (pos + i) >>> 3;
-		iv[i] = (byte) (block >> 56);
-		iv[i + 1] = (byte) (block >> 48);
-		iv[i + 2] = (byte) (block >> 40);
-		iv[i + 3] = (byte) (block >> 32);
-		iv[i + 4] = (byte) (block >> 24);
-		iv[i + 5] = (byte) (block >> 16);
-		iv[i + 6] = (byte) (block >> 8);
-		iv[i + 7] = (byte) block;
+				iv[i] = (byte) (block >> 56);
+				iv[i + 1] = (byte) (block >> 48);
+				iv[i + 2] = (byte) (block >> 40);
+				iv[i + 3] = (byte) (block >> 32);
+				iv[i + 4] = (byte) (block >> 24);
+				iv[i + 5] = (byte) (block >> 16);
+				iv[i + 6] = (byte) (block >> 8);
+				iv[i + 7] = (byte) block;
 			}
 			cipherForInitVector.encrypt(iv, 0, Constants.FILE_BLOCK_SIZE);
 			for (int i = 0; i < Constants.FILE_BLOCK_SIZE; i++) {

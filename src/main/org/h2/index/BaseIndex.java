@@ -40,15 +40,20 @@ public abstract class BaseIndex extends SchemaObjectBase implements Index {
 
 	/**
 	 * Initialize the base index.
-	 *
-	 * @param table the table
-	 * @param id the object id
-	 * @param name the index name
-	 * @param indexColumns the columns that are indexed or null if this is not
-	 *            yet known
-	 * @param indexType the index type
+	 * 
+	 * @param table
+	 *            the table
+	 * @param id
+	 *            the object id
+	 * @param name
+	 *            the index name
+	 * @param indexColumns
+	 *            the columns that are indexed or null if this is not yet known
+	 * @param indexType
+	 *            the index type
 	 */
-	void initBaseIndex(Table table, int id, String name, IndexColumn[] indexColumns, IndexType indexType) {
+	void initBaseIndex(Table table, int id, String name,
+			IndexColumn[] indexColumns, IndexType indexType) {
 		initSchemaObjectBase(table.getSchema(), id, name, Trace.INDEX);
 		this.indexType = indexType;
 		this.table = table;
@@ -66,63 +71,77 @@ public abstract class BaseIndex extends SchemaObjectBase implements Index {
 
 	/**
 	 * Close this index.
-	 *
-	 * @param session the session
+	 * 
+	 * @param session
+	 *            the session
 	 */
 	public abstract void close(Session session) throws SQLException;
 
 	/**
 	 * Add a row to this index.
-	 *
-	 * @param session the session
-	 * @param row the row to add
+	 * 
+	 * @param session
+	 *            the session
+	 * @param row
+	 *            the row to add
 	 */
 	public abstract void add(Session session, Row row) throws SQLException;
 
 	/**
 	 * Remove a row from the index.
-	 *
-	 * @param session the session
-	 * @param row the row
+	 * 
+	 * @param session
+	 *            the session
+	 * @param row
+	 *            the row
 	 */
 	public abstract void remove(Session session, Row row) throws SQLException;
 
 	/**
 	 * Create a cursor to iterate over a number of rows.
-	 *
-	 * @param session the session
-	 * @param first the first row to return (null if no limit)
-	 * @param last the last  row to return (null if no limit)
+	 * 
+	 * @param session
+	 *            the session
+	 * @param first
+	 *            the first row to return (null if no limit)
+	 * @param last
+	 *            the last row to return (null if no limit)
 	 * @return the cursor to iterate over the results
 	 */
-	public abstract Cursor find(Session session, SearchRow first, SearchRow last) throws SQLException;
+	public abstract Cursor find(Session session, SearchRow first, SearchRow last)
+			throws SQLException;
 
 	/**
 	 * Calculate the cost to find rows.
-	 *
-	 * @param session the session
-	 * @param masks the condition mask
+	 * 
+	 * @param session
+	 *            the session
+	 * @param masks
+	 *            the condition mask
 	 * @return the cost
 	 */
-	public abstract double getCost(Session session, int[] masks) throws SQLException;
+	public abstract double getCost(Session session, int[] masks)
+			throws SQLException;
 
 	/**
 	 * Remove the index.
-	 *
-	 * @param session the session
+	 * 
+	 * @param session
+	 *            the session
 	 */
 	public abstract void remove(Session session) throws SQLException;
 
 	/**
 	 * Truncate the index.
-	 *
-	 * @param session the session
+	 * 
+	 * @param session
+	 *            the session
 	 */
 	public abstract void truncate(Session session) throws SQLException;
 
 	/**
 	 * Check if this index can quickly find the first or last value.
-	 *
+	 * 
 	 * @return true if it can
 	 */
 	public abstract boolean canGetFirstOrLast();
@@ -130,16 +149,19 @@ public abstract class BaseIndex extends SchemaObjectBase implements Index {
 	/**
 	 * Find the first (or last) value of this index. The cursor returned is
 	 * positioned on the correct row, or on null if no row has been found.
-	 *
-	 * @param session the session
-	 * @param first true for the first value, false for the last
+	 * 
+	 * @param session
+	 *            the session
+	 * @param first
+	 *            true for the first value, false for the last
 	 * @return a cursor (never null)
 	 */
-	public abstract Cursor findFirstOrLast(Session session, boolean first) throws SQLException;
+	public abstract Cursor findFirstOrLast(Session session, boolean first)
+			throws SQLException;
 
 	/**
 	 * Check if this index needs to be re-built.
-	 *
+	 * 
 	 * @return true if it must be re-built.
 	 */
 	public abstract boolean needRebuild();
@@ -157,7 +179,8 @@ public abstract class BaseIndex extends SchemaObjectBase implements Index {
 		buff.append("(");
 		buff.append(getColumnListSQL());
 		buff.append(")");
-		return Message.getSQLException(ErrorCode.DUPLICATE_KEY_1, buff.toString());
+		return Message.getSQLException(ErrorCode.DUPLICATE_KEY_1,
+				buff.toString());
 	}
 
 	public String getPlanSQL() {
@@ -174,7 +197,8 @@ public abstract class BaseIndex extends SchemaObjectBase implements Index {
 		return false;
 	}
 
-	public Cursor findNext(Session session, SearchRow first, SearchRow last) throws SQLException {
+	public Cursor findNext(Session session, SearchRow first, SearchRow last)
+			throws SQLException {
 		throw Message.throwInternalError();
 	}
 
@@ -185,9 +209,11 @@ public abstract class BaseIndex extends SchemaObjectBase implements Index {
 	/**
 	 * Calculate the cost for the given mask as if this index was a typical
 	 * b-tree range index.
-	 *
-	 * @param masks the search mask
-	 * @param rowCount the number of rows in the index
+	 * 
+	 * @param masks
+	 *            the search mask
+	 * @param rowCount
+	 *            the number of rows in the index
 	 * @return the calculated cost
 	 */
 	public long getCostRangeIndex(int[] masks, long rowCount) {
@@ -204,7 +230,8 @@ public abstract class BaseIndex extends SchemaObjectBase implements Index {
 					cost = getLookupCost(rowCount) + 1;
 					break;
 				}
-				totalSelectivity = 100 - ((100 - totalSelectivity) * (100 - column.getSelectivity()) / 100);
+				totalSelectivity = 100 - ((100 - totalSelectivity)
+						* (100 - column.getSelectivity()) / 100);
 				long distinctRows = rowCount * totalSelectivity / 100;
 				if (distinctRows <= 0) {
 					distinctRows = 1;
@@ -227,7 +254,8 @@ public abstract class BaseIndex extends SchemaObjectBase implements Index {
 		return cost;
 	}
 
-	public int compareRows(SearchRow rowData, SearchRow compare) throws SQLException {
+	public int compareRows(SearchRow rowData, SearchRow compare)
+			throws SQLException {
 		for (int i = 0; i < indexColumns.length; i++) {
 			int index = columnIds[i];
 			Value v = compare.getValue(index);
@@ -235,7 +263,8 @@ public abstract class BaseIndex extends SchemaObjectBase implements Index {
 				// can't compare further
 				return 0;
 			}
-			int c = compareValues(rowData.getValue(index), v, indexColumns[i].sortType);
+			int c = compareValues(rowData.getValue(index), v,
+					indexColumns[i].sortType);
 			if (c != 0) {
 				return c;
 			}
@@ -281,7 +310,8 @@ public abstract class BaseIndex extends SchemaObjectBase implements Index {
 		return k1 > k2 ? 1 : -1;
 	}
 
-	private int compareValues(Value a, Value b, int sortType) throws SQLException {
+	private int compareValues(Value a, Value b, int sortType)
+			throws SQLException {
 		boolean aNull = a == null, bNull = b == null;
 		if (aNull || bNull) {
 			if (aNull == bNull) {

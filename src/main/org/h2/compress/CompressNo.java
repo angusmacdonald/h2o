@@ -26,7 +26,8 @@ public class CompressNo implements Compressor {
 		return outPos + inLen;
 	}
 
-	public void expand(byte[] in, int inPos, int inLen, byte[] out, int outPos, int outLen) {
+	public void expand(byte[] in, int inPos, int inLen, byte[] out, int outPos,
+			int outLen) {
 		System.arraycopy(in, inPos, out, outPos, outLen);
 	}
 

@@ -28,7 +28,8 @@ public class RuleOptional implements Rule {
 	}
 
 	public String random(Bnf config, int level) {
-		if (level > 10 ? config.getRandom().nextInt(level) == 1 : config.getRandom().nextInt(4) == 1) {
+		if (level > 10 ? config.getRandom().nextInt(level) == 1 : config
+				.getRandom().nextInt(4) == 1) {
 			return rule.random(config, level + 1);
 		}
 		return "";

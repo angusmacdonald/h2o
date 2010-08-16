@@ -15,8 +15,7 @@ import org.h2.engine.Session;
 import org.h2.message.Message;
 
 /**
- * This class represents the statement
- * CREATE ALIAS
+ * This class represents the statement CREATE ALIAS
  */
 public class CreateFunctionAlias extends DefineCommand {
 
@@ -36,11 +35,13 @@ public class CreateFunctionAlias extends DefineCommand {
 		Database db = session.getDatabase();
 		if (db.findFunctionAlias(aliasName) != null) {
 			if (!ifNotExists) {
-				throw Message.getSQLException(ErrorCode.FUNCTION_ALIAS_ALREADY_EXISTS_1, aliasName);
+				throw Message.getSQLException(
+						ErrorCode.FUNCTION_ALIAS_ALREADY_EXISTS_1, aliasName);
 			}
 		} else {
 			int id = getObjectId(false, true);
-			FunctionAlias functionAlias = new FunctionAlias(db, id, aliasName, javaClassMethod, force);
+			FunctionAlias functionAlias = new FunctionAlias(db, id, aliasName,
+					javaClassMethod, force);
 			functionAlias.setDeterministic(deterministic);
 			db.addDatabaseObject(session, functionAlias);
 		}

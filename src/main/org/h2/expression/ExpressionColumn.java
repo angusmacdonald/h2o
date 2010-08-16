@@ -44,7 +44,8 @@ public class ExpressionColumn extends Expression {
 		this.column = column;
 	}
 
-	public ExpressionColumn(Database database, String schemaName, String tableAlias, String columnName) {
+	public ExpressionColumn(Database database, String schemaName,
+			String tableAlias, String columnName) {
 		this.database = database;
 		this.schemaName = schemaName;
 		this.tableAlias = tableAlias;
@@ -71,7 +72,8 @@ public class ExpressionColumn extends Expression {
 		return resolver == null ? null : resolver.getTableFilter();
 	}
 
-	public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
+	public void mapColumns(ColumnResolver resolver, int level)
+			throws SQLException {
 		if (tableAlias != null && !tableAlias.equals(resolver.getTableAlias())) {
 			return;
 		}
@@ -79,8 +81,7 @@ public class ExpressionColumn extends Expression {
 			return;
 		}
 		Column[] columns = resolver.getColumns();
-		for (int i = 0; i < columns.length; i++) {
-			Column col = columns[i];
+		for (Column col : columns) {
 			if (columnName.equals(col.getName())) {
 				mapColumn(resolver, col, level);
 				return;
@@ -96,7 +97,8 @@ public class ExpressionColumn extends Expression {
 		}
 	}
 
-	private void mapColumn(ColumnResolver resolver, Column col, int level) throws SQLException {
+	private void mapColumn(ColumnResolver resolver, Column col, int level)
+			throws SQLException {
 		if (this.resolver == null) {
 			queryLevel = level;
 			column = col;
@@ -105,7 +107,8 @@ public class ExpressionColumn extends Expression {
 			if (resolver instanceof SelectListColumnResolver) {
 				// ignore - already mapped, that's ok
 			} else {
-				throw Message.getSQLException(ErrorCode.AMBIGUOUS_COLUMN_NAME_1, columnName);
+				throw Message.getSQLException(
+						ErrorCode.AMBIGUOUS_COLUMN_NAME_1, columnName);
 			}
 		}
 	}
@@ -113,7 +116,8 @@ public class ExpressionColumn extends Expression {
 	public Expression optimize(Session session) throws SQLException {
 		if (resolver == null) {
 			Schema schema = session.getDatabase().findSchema(
-					tableAlias == null ? session.getCurrentSchemaName() : tableAlias);
+					tableAlias == null ? session.getCurrentSchemaName()
+							: tableAlias);
 			if (schema != null) {
 				Constant constant = schema.findConstant(columnName);
 				if (constant != null) {
@@ -136,7 +140,8 @@ public class ExpressionColumn extends Expression {
 		Value now = resolver.getValue(column);
 		Select select = resolver.getSelect();
 		if (select == null) {
-			throw Message.getSQLException(ErrorCode.MUST_GROUP_BY_COLUMN_1, getSQL());
+			throw Message.getSQLException(ErrorCode.MUST_GROUP_BY_COLUMN_1,
+					getSQL());
 		}
 		HashMap values = select.getCurrentGroup();
 		if (values == null) {
@@ -148,7 +153,8 @@ public class ExpressionColumn extends Expression {
 			values.put(this, now);
 		} else {
 			if (!database.areEqual(now, v)) {
-				throw Message.getSQLException(ErrorCode.MUST_GROUP_BY_COLUMN_1, getSQL());
+				throw Message.getSQLException(ErrorCode.MUST_GROUP_BY_COLUMN_1,
+						getSQL());
 			}
 		}
 	}
@@ -169,7 +175,8 @@ public class ExpressionColumn extends Expression {
 		}
 		Value value = resolver.getValue(column);
 		if (value == null) {
-			throw Message.getSQLException(ErrorCode.MUST_GROUP_BY_COLUMN_1, getSQL());
+			throw Message.getSQLException(ErrorCode.MUST_GROUP_BY_COLUMN_1,
+					getSQL());
 		}
 		return value;
 	}
@@ -249,7 +256,8 @@ public class ExpressionColumn extends Expression {
 			// therefore just a parameter
 			return evaluatable || visitor.getQueryLevel() < this.queryLevel;
 		case ExpressionVisitor.SET_MAX_DATA_MODIFICATION_ID:
-			visitor.addDataModificationId(column.getTable().getMaxDataModificationId());
+			visitor.addDataModificationId(column.getTable()
+					.getMaxDataModificationId());
 			return true;
 		case ExpressionVisitor.NOT_FROM_RESOLVER:
 			return resolver != visitor.getResolver();
@@ -268,14 +276,15 @@ public class ExpressionColumn extends Expression {
 	public void createIndexConditions(Session session, TableFilter filter) {
 		TableFilter tf = getTableFilter();
 		if (filter == tf && column.getType() == Value.BOOLEAN) {
-			IndexCondition cond = new IndexCondition(Comparison.EQUAL, this, ValueExpression
-					.get(ValueBoolean.get(true)));
+			IndexCondition cond = new IndexCondition(Comparison.EQUAL, this,
+					ValueExpression.get(ValueBoolean.get(true)));
 			filter.addIndexCondition(cond);
 		}
 	}
 
 	public Expression getNotIfPossible(Session session) {
-		return new Comparison(session, Comparison.EQUAL, this, ValueExpression.get(ValueBoolean.get(false)));
+		return new Comparison(session, Comparison.EQUAL, this,
+				ValueExpression.get(ValueBoolean.get(false)));
 	}
 
 }

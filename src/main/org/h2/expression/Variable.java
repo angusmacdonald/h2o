@@ -56,7 +56,7 @@ public class Variable extends Expression {
 	}
 
 	public boolean isEverything(ExpressionVisitor visitor) {
-		switch(visitor.getType()) {
+		switch (visitor.getType()) {
 		case ExpressionVisitor.OPTIMIZABLE_MIN_MAX_COUNT_ALL:
 			return true;
 		case ExpressionVisitor.DETERMINISTIC:
@@ -69,14 +69,15 @@ public class Variable extends Expression {
 			// the value will be evaluated at execute time
 			return true;
 		case ExpressionVisitor.SET_MAX_DATA_MODIFICATION_ID:
-			// it is checked independently if the value is the same as the last time
+			// it is checked independently if the value is the same as the last
+			// time
 			return true;
 		case ExpressionVisitor.NOT_FROM_RESOLVER:
 			return true;
 		case ExpressionVisitor.GET_DEPENDENCIES:
 			return true;
 		default:
-			throw Message.throwInternalError("type="+visitor.getType());
+			throw Message.throwInternalError("type=" + visitor.getType());
 		}
 	}
 

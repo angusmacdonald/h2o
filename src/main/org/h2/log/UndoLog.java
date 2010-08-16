@@ -23,7 +23,7 @@ import org.h2.util.ObjectArray;
 public class UndoLog {
 	private Database database;
 	// TODO undo log entry: a chain would probably be faster
-	//  and use less memory than an array
+	// and use less memory than an array
 	private ObjectArray records = new ObjectArray();
 	private FileStore file;
 	private DataPage rowBuff;
@@ -31,8 +31,9 @@ public class UndoLog {
 
 	/**
 	 * Create a new undo log for the given session.
-	 *
-	 * @param session the session
+	 * 
+	 * @param session
+	 *            the session
 	 */
 	public UndoLog(Session session) {
 		this.database = session.getDatabase();
@@ -40,7 +41,7 @@ public class UndoLog {
 
 	/**
 	 * Get the number of active rows in this undo log.
-	 *
+	 * 
 	 * @return the number of rows
 	 */
 	public int size() {
@@ -66,7 +67,7 @@ public class UndoLog {
 
 	/**
 	 * Get the last record and remove it from the list of operations.
-	 *
+	 * 
 	 * @return the last record
 	 */
 	public UndoLogRecord getLast() throws SQLException {
@@ -92,8 +93,9 @@ public class UndoLog {
 
 	/**
 	 * Remove the last record from the list of operations.
-	 *
-	 * @param trimToSize if the undo array should shrink to conserve memory
+	 * 
+	 * @param trimToSize
+	 *            if the undo array should shrink to conserve memory
 	 */
 	public void removeLast(boolean trimToSize) {
 		int i = records.size() - 1;
@@ -108,8 +110,9 @@ public class UndoLog {
 
 	/**
 	 * Append an undo log entry to the log.
-	 *
-	 * @param entry the entry
+	 * 
+	 * @param entry
+	 *            the entry
 	 */
 	public void add(UndoLogRecord entry) throws SQLException {
 		records.add(entry);
@@ -121,7 +124,8 @@ public class UndoLog {
 				String fileName = database.createTempFile();
 				file = database.openFile(fileName, "rw", false);
 				file.seek(FileStore.HEADER_LENGTH);
-				rowBuff = DataPage.create(database, Constants.DEFAULT_DATA_PAGE_SIZE);
+				rowBuff = DataPage.create(database,
+						Constants.DEFAULT_DATA_PAGE_SIZE);
 				DataPage buff = rowBuff;
 				for (int i = 0; i < records.size(); i++) {
 					UndoLogRecord r = (UndoLogRecord) records.get(i);
@@ -134,7 +138,8 @@ public class UndoLog {
 		}
 	}
 
-	private void saveIfPossible(UndoLogRecord r, DataPage buff) throws SQLException {
+	private void saveIfPossible(UndoLogRecord r, DataPage buff)
+			throws SQLException {
 		if (!r.isStored() && r.canStore()) {
 			r.save(buff, file);
 			memoryUndo--;

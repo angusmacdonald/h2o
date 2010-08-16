@@ -24,8 +24,8 @@ public class ValueUuid extends Value {
 	private static final int PRECISION = 16;
 
 	/**
-	 * The display size of the textual representation of a UUID.
-	 * Example: cd38d882-7ada-4589-b5fb-7da0ca559d9a
+	 * The display size of the textual representation of a UUID. Example:
+	 * cd38d882-7ada-4589-b5fb-7da0ca559d9a
 	 */
 	private static final int DISPLAY_SIZE = 36;
 
@@ -42,7 +42,7 @@ public class ValueUuid extends Value {
 
 	/**
 	 * Create a new UUID using the pseudo random number generator.
-	 *
+	 * 
 	 * @return the new UUID
 	 */
 	public static ValueUuid getNewRandom() {
@@ -57,8 +57,9 @@ public class ValueUuid extends Value {
 
 	/**
 	 * Get or create a UUID for the given 32 bytes.
-	 *
-	 * @param binary the byte array (must be at least 32 bytes long)
+	 * 
+	 * @param binary
+	 *            the byte array (must be at least 32 bytes long)
 	 * @return the UUID
 	 */
 	public static ValueUuid get(byte[] binary) {
@@ -72,9 +73,11 @@ public class ValueUuid extends Value {
 
 	/**
 	 * Get or create a UUID for the given high and low order values.
-	 *
-	 * @param high the most significant bits
-	 * @param low the least significant bits
+	 * 
+	 * @param high
+	 *            the most significant bits
+	 * @param low
+	 *            the least significant bits
 	 * @return the UUID
 	 */
 	public static ValueUuid get(long high, long low) {
@@ -83,8 +86,9 @@ public class ValueUuid extends Value {
 
 	/**
 	 * Get or create a UUID for the given text representation.
-	 *
-	 * @param s the text representation of the UUID
+	 * 
+	 * @param s
+	 *            the text representation of the UUID
 	 * @return the UUID
 	 */
 	public static ValueUuid get(String s) {
@@ -152,12 +156,13 @@ public class ValueUuid extends Value {
 	}
 
 	public boolean equals(Object other) {
-		return other instanceof ValueUuid && compareSecure((Value) other, null) == 0;
+		return other instanceof ValueUuid
+				&& compareSecure((Value) other, null) == 0;
 	}
 
 	public Object getObject() {
 		// TODO needs to be documented
-		return new long[]{high, low};
+		return new long[] { high, low };
 	}
 
 	public byte[] getBytes() {
@@ -169,13 +174,14 @@ public class ValueUuid extends Value {
 		return buff;
 	}
 
-	public void set(PreparedStatement prep, int parameterIndex) throws SQLException {
+	public void set(PreparedStatement prep, int parameterIndex)
+			throws SQLException {
 		prep.setBytes(parameterIndex, getBytes());
 	}
 
 	/**
 	 * Get the most significant 64 bits of this UUID.
-	 *
+	 * 
 	 * @return the high order bits
 	 */
 	public long getHigh() {
@@ -184,7 +190,7 @@ public class ValueUuid extends Value {
 
 	/**
 	 * Get the least significant 64 bits of this UUID.
-	 *
+	 * 
 	 * @return the low order bits
 	 */
 	public long getLow() {

@@ -25,9 +25,10 @@ import java.net.SocketException;
 
 import org.h2o.event.client.H2OEvent;
 
-
 /**
- * Handles incoming connections from client databases looking to access (for read or write) the locator file.
+ * Handles incoming connections from client databases looking to access (for
+ * read or write) the locator file.
+ * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class EventWorker extends Thread {
@@ -36,8 +37,10 @@ public class EventWorker extends Thread {
 	private EventViewer eventViewer;
 
 	/**
-	 * @param newConnection		The new incoming connection on the server.
-	 * @param eventViewer 		The location of the locator file, which stores where 
+	 * @param newConnection
+	 *            The new incoming connection on the server.
+	 * @param eventViewer
+	 *            The location of the locator file, which stores where
 	 */
 	protected EventWorker(Socket newConnection, EventViewer eventViewer) {
 		this.eventViewer = eventViewer;
@@ -47,13 +50,14 @@ public class EventWorker extends Thread {
 	/**
 	 * Service the current incoming connection.
 	 */
-	public void run(){
-		
+	public void run() {
+
 		ObjectInputStream input = null;
-		
+
 		try {
 			socket.setSoTimeout(5000);
-			input = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
+			input = new ObjectInputStream(new BufferedInputStream(
+					socket.getInputStream()));
 		} catch (SocketException e1) {
 			e1.printStackTrace();
 		} catch (IOException e) {
@@ -61,17 +65,18 @@ public class EventWorker extends Thread {
 		}
 
 		try {
-			while (true){
-				try { //ends with 'finally' to close the socket connection.
-					//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Created new LocatorConnectionHandler thread.");
+			while (true) {
+				try { // ends with 'finally' to close the socket connection.
+						// Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
+						// "Created new LocatorConnectionHandler thread.");
 
-					//Get single-line request from the client.
+					// Get single-line request from the client.
 
-					if (input.available() > 0){
+					if (input.available() > 0) {
 						try {
 							H2OEvent event = (H2OEvent) input.readObject();
 
-							input.close();  
+							input.close();
 
 							eventViewer.pushEvent(event);
 						} catch (ClassNotFoundException e) {

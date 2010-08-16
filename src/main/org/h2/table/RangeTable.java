@@ -35,16 +35,18 @@ public class RangeTable extends Table {
 
 	/**
 	 * Create a new range with the given start and end expressions.
-	 *
-	 * @param schema the schema (always the main schema)
-	 * @param min the start expression
-	 * @param max the end expression
+	 * 
+	 * @param schema
+	 *            the schema (always the main schema)
+	 * @param min
+	 *            the start expression
+	 * @param max
+	 *            the end expression
 	 */
-	public RangeTable(Schema schema, Expression min, Expression max) throws SQLException {
+	public RangeTable(Schema schema, Expression min, Expression max)
+			throws SQLException {
 		super(schema, 0, NAME, true);
-		Column[] cols = new Column[]{
-				new Column("X", Value.LONG)
-		};
+		Column[] cols = new Column[] { new Column("X", Value.LONG) };
 		this.min = min;
 		this.max = max;
 		setColumns(cols);
@@ -78,7 +80,9 @@ public class RangeTable extends Table {
 		return false;
 	}
 
-	public Index addIndex(Session session, String indexName, int indexId, IndexColumn[] cols, IndexType indexType, int headPos, String comment) throws SQLException {
+	public Index addIndex(Session session, String indexName, int indexId,
+			IndexColumn[] cols, IndexType indexType, int headPos, String comment)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
@@ -120,8 +124,9 @@ public class RangeTable extends Table {
 
 	/**
 	 * Calculate and get the start value of this range.
-	 *
-	 * @param session the session
+	 * 
+	 * @param session
+	 *            the session
 	 * @return the start value
 	 */
 	public long getMin(Session session) throws SQLException {
@@ -131,8 +136,9 @@ public class RangeTable extends Table {
 
 	/**
 	 * Calculate and get the end value of this range.
-	 *
-	 * @param session the session
+	 * 
+	 * @param session
+	 *            the session
 	 * @return the end value
 	 */
 	public long getMax(Session session) throws SQLException {
@@ -168,11 +174,13 @@ public class RangeTable extends Table {
 		return 100;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.table.Table#isLocal()
 	 */
-	 @Override
-	 public boolean isLocal() {
-		 return true;
-	 }
+	@Override
+	public boolean isLocal() {
+		return true;
+	}
 }

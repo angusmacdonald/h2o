@@ -16,8 +16,7 @@ import org.h2.schema.Schema;
 import org.h2.table.Table;
 
 /**
- * This class represents the statement
- * ALTER TABLE SET
+ * This class represents the statement ALTER TABLE SET
  */
 public class AlterTableSet extends SchemaCommand {
 
@@ -56,7 +55,7 @@ public class AlterTableSet extends SchemaCommand {
 		Table table = getSchema().getTableOrView(session, tableName);
 		session.getUser().checkRight(table, Right.ALL);
 		table.lock(session, true, true);
-		switch(type) {
+		switch (type) {
 		case REFERENTIAL_INTEGRITY_TRUE:
 			table.setCheckForeignKeyConstraints(session, true, checkExisting);
 			break;
@@ -64,7 +63,7 @@ public class AlterTableSet extends SchemaCommand {
 			table.setCheckForeignKeyConstraints(session, false, false);
 			break;
 		default:
-			Message.throwInternalError("type="+type);
+			Message.throwInternalError("type=" + type);
 		}
 		return 0;
 	}

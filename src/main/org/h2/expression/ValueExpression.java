@@ -29,7 +29,8 @@ public class ValueExpression extends Expression {
 	 * UPDATE statements of the form SET COLUMN = DEFAULT. The value is
 	 * ValueNull.INSTANCE, but should never be accessed.
 	 */
-	private static final Object DEFAULT = new ValueExpression(ValueNull.INSTANCE);
+	private static final Object DEFAULT = new ValueExpression(
+			ValueNull.INSTANCE);
 
 	private final Value value;
 
@@ -39,7 +40,7 @@ public class ValueExpression extends Expression {
 
 	/**
 	 * Get the NULL expression.
-	 *
+	 * 
 	 * @return the NULL expression
 	 */
 	public static ValueExpression getNull() {
@@ -48,7 +49,7 @@ public class ValueExpression extends Expression {
 
 	/**
 	 * Get the DEFAULT expression.
-	 *
+	 * 
 	 * @return the DEFAULT expression
 	 */
 	public static ValueExpression getDefault() {
@@ -57,8 +58,9 @@ public class ValueExpression extends Expression {
 
 	/**
 	 * Create a new expression with the given value.
-	 *
-	 * @param value the value
+	 * 
+	 * @param value
+	 *            the value
 	 * @return the expression
 	 */
 	public static ValueExpression get(Value value) {
@@ -80,13 +82,15 @@ public class ValueExpression extends Expression {
 		if (value.getType() == Value.BOOLEAN) {
 			boolean v = ((ValueBoolean) value).getBoolean().booleanValue();
 			if (!v) {
-				filter.addIndexCondition(new IndexCondition(Comparison.FALSE, null, this));
+				filter.addIndexCondition(new IndexCondition(Comparison.FALSE,
+						null, this));
 			}
 		}
 	}
 
 	public Expression getNotIfPossible(Session session) {
-		return new Comparison(session, Comparison.EQUAL, this, ValueExpression.get(ValueBoolean.get(false)));
+		return new Comparison(session, Comparison.EQUAL, this,
+				ValueExpression.get(ValueBoolean.get(false)));
 	}
 
 	public void mapColumns(ColumnResolver resolver, int level) {

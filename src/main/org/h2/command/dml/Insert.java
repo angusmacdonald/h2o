@@ -28,10 +28,9 @@ import org.h2o.db.query.QueryProxyManager;
 import org.h2o.db.query.locking.LockType;
 
 /**
- * This class represents the statement
- * INSERT
+ * This class represents the statement INSERT
  */
-public class Insert extends Prepared{
+public class Insert extends Prepared {
 
 	private Column[] columns;
 	private ObjectArray list = new ObjectArray();
@@ -40,9 +39,12 @@ public class Insert extends Prepared{
 
 	/**
 	 * 
-	 * @param session The current session.
-	 * @param internalQuery	True if this query has been sent internally through the RMI interface, false if it has come from
-	 * an external JBDC connection.
+	 * @param session
+	 *            The current session.
+	 * @param internalQuery
+	 *            True if this query has been sent internally through the RMI
+	 *            interface, false if it has come from an external JBDC
+	 *            connection.
 	 */
 	public Insert(Session session, boolean internalQuery) {
 		super(session, internalQuery);
@@ -68,33 +70,39 @@ public class Insert extends Prepared{
 
 	/**
 	 * Add a row to this merge statement.
-	 *
-	 * @param expr the list of values
+	 * 
+	 * @param expr
+	 *            the list of values
 	 */
 	public void addRow(Expression[] expr) {
 		list.add(expr);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Prepared#acquireLocks()
 	 */
 	@Override
-	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager) throws SQLException {
+	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager)
+			throws SQLException {
 		/*
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
-		if (isRegularTable()){
+		if (isRegularTable()) {
 
 			queryProxy = queryProxyManager.getQueryProxy(table.getFullName());
 
-			if (queryProxy == null){
-				queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, session.getDatabase());
+			if (queryProxy == null) {
+				queryProxy = QueryProxy.getQueryProxyAndLock(table,
+						LockType.WRITE, session.getDatabase());
 			}
 
 			return queryProxy;
 		}
 
-		return QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper());
+		return QueryProxy.getDummyQueryProxy(session.getDatabase()
+				.getLocalDatabaseInstanceInWrapper());
 
 	}
 
@@ -111,10 +119,14 @@ public class Insert extends Prepared{
 		/*
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
-		if (isRegularTable() && (queryProxy.getNumberOfReplicas() > 1 || !isReplicaLocal(queryProxy))){ // && queryProxy.getNumberOfReplicas() > 1
+		if (isRegularTable()
+				&& (queryProxy.getNumberOfReplicas() > 1 || !isReplicaLocal(queryProxy))) { // &&
+																							// queryProxy.getNumberOfReplicas()
+																							// >
+																							// 1
 			String sql;
 
-			if (isPreparedStatement()){
+			if (isPreparedStatement()) {
 				sql = adjustForPreparedStatement();
 			} else {
 				sql = sqlStatement;
@@ -138,9 +150,10 @@ public class Insert extends Prepared{
 						// e can be null (DEFAULT)
 						e = e.optimize(session);
 						try {
-							Value v = e.getValue(session).convertTo(c.getType());
+							Value v = e.getValue(session)
+									.convertTo(c.getType());
 							newRow.setValue(index, v);
-	
+
 						} catch (SQLException ex) {
 							throw setRow(ex, x, getSQL(expr));
 						}
@@ -190,20 +203,22 @@ public class Insert extends Prepared{
 		return count;
 	}
 
-
 	/**
-	 * Adjusts the sqlStatement string to be a valid prepared statement. This is used when propagating prepared
-	 * statements within the system.
+	 * Adjusts the sqlStatement string to be a valid prepared statement. This is
+	 * used when propagating prepared statements within the system.
+	 * 
 	 * @param sql
 	 * @return
 	 * @throws SQLException
 	 */
 	private String adjustForPreparedStatement() throws SQLException {
 
-		//Adjust the sqlStatement string to contain actual data.
+		// Adjust the sqlStatement string to contain actual data.
 
-		//if this is a prepared statement the SQL must look like: insert into PUBLIC.TEST (id,name) values (?,?) {1: 99, 2: 'helloNumber99'};
-		//use the loop structure from below to obtain this information. how do you know if it is a prepared statement.
+		// if this is a prepared statement the SQL must look like: insert into
+		// PUBLIC.TEST (id,name) values (?,?) {1: 99, 2: 'helloNumber99'};
+		// use the loop structure from below to obtain this information. how do
+		// you know if it is a prepared statement.
 
 		Expression[] expr = (Expression[]) list.get(0);
 		String[] values = new String[columns.length];
@@ -213,29 +228,33 @@ public class Insert extends Prepared{
 			int index = c.getColumnId();
 			Expression e = expr[i];
 
-			//Only add the expression if it is unspecified in the query (there will be an instance of parameter somewhere).
-			if (e != null && e instanceof Parameter || ((e instanceof Operation) && e.toString().contains("?")) ) {
+			// Only add the expression if it is unspecified in the query (there
+			// will be an instance of parameter somewhere).
+			if (e != null && e instanceof Parameter
+					|| ((e instanceof Operation) && e.toString().contains("?"))) {
 				// e can be null (DEFAULT)
 				e = e.optimize(session);
 				try {
 					Value v = e.getValue(session).convertTo(c.getType());
 					values[i] = v.toString();
-					//newRow.setValue(index, v);
+					// newRow.setValue(index, v);
 				} catch (SQLException ex) {
 					throw setRow(ex, 0, getSQL(expr));
 				}
 			}
 		}
 
-		//Edit the SQL String
-		//insert into PUBLIC.TEST (id,name) values (?,?) {1: 99, 2: 'helloNumber99'};
+		// Edit the SQL String
+		// insert into PUBLIC.TEST (id,name) values (?,?) {1: 99, 2:
+		// 'helloNumber99'};
 
 		String sql = new String(sqlStatement) + " {";
 
-		for (int i = 1; i <= columns.length; i++){
-			if (values[i-1] != null){
-				if (i > 1) sql += ", ";
-				sql += i + ": " + values[i-1];
+		for (int i = 1; i <= columns.length; i++) {
+			if (values[i - 1] != null) {
+				if (i > 1)
+					sql += ", ";
+				sql += i + ": " + values[i - 1];
 
 			}
 		}
@@ -298,7 +317,8 @@ public class Insert extends Prepared{
 			for (int x = 0; x < list.size(); x++) {
 				Expression[] expr = (Expression[]) list.get(x);
 				if (expr.length != columns.length) {
-					throw Message.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
+					throw Message
+							.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
 				}
 				for (int i = 0; i < expr.length; i++) {
 					Expression e = expr[i];
@@ -315,7 +335,8 @@ public class Insert extends Prepared{
 		} else {
 			query.prepare();
 			if (query.getColumnCount() != columns.length) {
-				throw Message.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
+				throw Message
+						.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
 			}
 		}
 	}
@@ -330,16 +351,18 @@ public class Insert extends Prepared{
 		return null;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Prepared#shouldBePropagated()
 	 */
 	@Override
 	public boolean shouldBePropagated() {
 		/*
-		 * If this is not a regular table (i.e. it is a meta-data table, then it will not be propagated regardless.
+		 * If this is not a regular table (i.e. it is a meta-data table, then it
+		 * will not be propagated regardless.
 		 */
 		return isRegularTable();
 	}
-
 
 }

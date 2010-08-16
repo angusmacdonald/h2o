@@ -13,7 +13,8 @@ import java.sql.SQLException;
  */
 public class SessionFactoryEmbedded implements SessionFactory {
 
-	public SessionInterface createSession(ConnectionInfo ci) throws SQLException {
+	public SessionInterface createSession(ConnectionInfo ci)
+			throws SQLException {
 		return Engine.getInstance().getSession(ci);
 	}
 

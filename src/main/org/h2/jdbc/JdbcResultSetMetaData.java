@@ -19,7 +19,8 @@ import org.h2.value.DataType;
 /**
  * Represents the meta data for a ResultSet.
  */
-public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaData {
+public class JdbcResultSetMetaData extends TraceObject implements
+		ResultSetMetaData {
 
 	private final String catalog;
 	private final JdbcResultSet rs;
@@ -27,8 +28,8 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 	private final ResultInterface result;
 	private final int columnCount;
 
-	JdbcResultSetMetaData(JdbcResultSet rs, JdbcPreparedStatement prep, ResultInterface result,
-			String catalog, Trace trace, int id) {
+	JdbcResultSetMetaData(JdbcResultSet rs, JdbcPreparedStatement prep,
+			ResultInterface result, String catalog, Trace trace, int id) {
 		setTrace(trace, TraceObject.RESULT_SET_META_DATA, id);
 		this.catalog = catalog;
 		this.rs = rs;
@@ -39,9 +40,10 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 
 	/**
 	 * Returns the number of columns.
-	 *
+	 * 
 	 * @return the number of columns
-	 * @throws SQLException if the result set is closed or invalid
+	 * @throws SQLException
+	 *             if the result set is closed or invalid
 	 */
 	public int getColumnCount() throws SQLException {
 		try {
@@ -55,10 +57,12 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 
 	/**
 	 * Returns the column label.
-	 *
-	 * @param column the column index (1,2,...)
+	 * 
+	 * @param column
+	 *            the column index (1,2,...)
 	 * @return the column label
-	 * @throws SQLException if the result set is closed or invalid
+	 * @throws SQLException
+	 *             if the result set is closed or invalid
 	 */
 	public String getColumnLabel(int column) throws SQLException {
 		try {
@@ -72,10 +76,12 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 
 	/**
 	 * Returns the column name.
-	 *
-	 * @param column the column index (1,2,...)
+	 * 
+	 * @param column
+	 *            the column index (1,2,...)
 	 * @return the column name
-	 * @throws SQLException if the result set is closed or invalid
+	 * @throws SQLException
+	 *             if the result set is closed or invalid
 	 */
 	public String getColumnName(int column) throws SQLException {
 		try {
@@ -89,10 +95,12 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 
 	/**
 	 * Returns the data type of a column.
-	 *
-	 * @param column the column index (1,2,...)
+	 * 
+	 * @param column
+	 *            the column index (1,2,...)
 	 * @return the data type
-	 * @throws SQLException if the result set is closed or invalid
+	 * @throws SQLException
+	 *             if the result set is closed or invalid
 	 */
 	public int getColumnType(int column) throws SQLException {
 		try {
@@ -107,10 +115,12 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 
 	/**
 	 * Returns the data type name of a column.
-	 *
-	 * @param column the column index (1,2,...)
+	 * 
+	 * @param column
+	 *            the column index (1,2,...)
 	 * @return the data type
-	 * @throws SQLException if the result set is closed or invalid
+	 * @throws SQLException
+	 *             if the result set is closed or invalid
 	 */
 	public String getColumnTypeName(int column) throws SQLException {
 		try {
@@ -125,10 +135,12 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 
 	/**
 	 * Returns the schema name.
-	 *
-	 * @param column the column index (1,2,...)
+	 * 
+	 * @param column
+	 *            the column index (1,2,...)
 	 * @return the schema name
-	 * @throws SQLException if the result set is closed or invalid
+	 * @throws SQLException
+	 *             if the result set is closed or invalid
 	 */
 	public String getSchemaName(int column) throws SQLException {
 		try {
@@ -142,10 +154,12 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 
 	/**
 	 * Returns the table name.
-	 *
-	 * @param column the column index (1,2,...)
+	 * 
+	 * @param column
+	 *            the column index (1,2,...)
 	 * @return the table name
-	 * @throws SQLException if the result set is closed or invalid
+	 * @throws SQLException
+	 *             if the result set is closed or invalid
 	 */
 	public String getTableName(int column) throws SQLException {
 		try {
@@ -159,10 +173,12 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 
 	/**
 	 * Returns the catalog name.
-	 *
-	 * @param column the column index (1,2,...)
+	 * 
+	 * @param column
+	 *            the column index (1,2,...)
 	 * @return the catalog name
-	 * @throws SQLException if the result set is closed or invalid
+	 * @throws SQLException
+	 *             if the result set is closed or invalid
 	 */
 	public String getCatalogName(int column) throws SQLException {
 		try {
@@ -175,12 +191,13 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 	}
 
 	/**
-	 * Checks if this an autoincrement column.
-	 * It always returns false.
-	 *
-	 * @param column the column index (1,2,...)
+	 * Checks if this an autoincrement column. It always returns false.
+	 * 
+	 * @param column
+	 *            the column index (1,2,...)
 	 * @return false
-	 * @throws SQLException if the result set is closed or invalid
+	 * @throws SQLException
+	 *             if the result set is closed or invalid
 	 */
 	public boolean isAutoIncrement(int column) throws SQLException {
 		try {
@@ -193,12 +210,13 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 	}
 
 	/**
-	 * Checks if this column is case sensitive.
-	 * It always returns true.
-	 *
-	 * @param column the column index (1,2,...)
+	 * Checks if this column is case sensitive. It always returns true.
+	 * 
+	 * @param column
+	 *            the column index (1,2,...)
 	 * @return true
-	 * @throws SQLException if the result set is closed or invalid
+	 * @throws SQLException
+	 *             if the result set is closed or invalid
 	 */
 	public boolean isCaseSensitive(int column) throws SQLException {
 		try {
@@ -211,12 +229,13 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 	}
 
 	/**
-	 * Checks if this column is searchable.
-	 * It always returns true.
-	 *
-	 * @param column the column index (1,2,...)
+	 * Checks if this column is searchable. It always returns true.
+	 * 
+	 * @param column
+	 *            the column index (1,2,...)
 	 * @return true
-	 * @throws SQLException if the result set is closed or invalid
+	 * @throws SQLException
+	 *             if the result set is closed or invalid
 	 */
 	public boolean isSearchable(int column) throws SQLException {
 		try {
@@ -229,12 +248,13 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 	}
 
 	/**
-	 * Checks if this is a currency column.
-	 * It always returns false.
-	 *
-	 * @param column the column index (1,2,...)
+	 * Checks if this is a currency column. It always returns false.
+	 * 
+	 * @param column
+	 *            the column index (1,2,...)
 	 * @return false
-	 * @throws SQLException if the result set is closed or invalid
+	 * @throws SQLException
+	 *             if the result set is closed or invalid
 	 */
 	public boolean isCurrency(int column) throws SQLException {
 		try {
@@ -252,10 +272,12 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 	 * table. Otherwise, it returns ResultSetMetaData.columnNoNulls if the
 	 * column is not nullable, and ResultSetMetaData.columnNullable if it is
 	 * nullable.
-	 *
-	 * @param column the column index (1,2,...)
+	 * 
+	 * @param column
+	 *            the column index (1,2,...)
 	 * @return ResultSetMetaData.column*
-	 * @throws SQLException if the result set is closed or invalid
+	 * @throws SQLException
+	 *             if the result set is closed or invalid
 	 */
 	public int isNullable(int column) throws SQLException {
 		try {
@@ -268,12 +290,13 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 	}
 
 	/**
-	 * Checks if this column is signed.
-	 * It always returns true.
-	 *
-	 * @param column the column index (1,2,...)
+	 * Checks if this column is signed. It always returns true.
+	 * 
+	 * @param column
+	 *            the column index (1,2,...)
 	 * @return true
-	 * @throws SQLException if the result set is closed or invalid
+	 * @throws SQLException
+	 *             if the result set is closed or invalid
 	 */
 	public boolean isSigned(int column) throws SQLException {
 		try {
@@ -286,12 +309,13 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 	}
 
 	/**
-	 * Checks if this column is read only.
-	 * It always returns false.
-	 *
-	 * @param column the column index (1,2,...)
+	 * Checks if this column is read only. It always returns false.
+	 * 
+	 * @param column
+	 *            the column index (1,2,...)
 	 * @return false
-	 * @throws SQLException if the result set is closed or invalid
+	 * @throws SQLException
+	 *             if the result set is closed or invalid
 	 */
 	public boolean isReadOnly(int column) throws SQLException {
 		try {
@@ -304,12 +328,14 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 	}
 
 	/**
-	 * Checks whether it is possible for a write on this column to succeed.
-	 * It always returns true.
-	 *
-	 * @param column the column index (1,2,...)
+	 * Checks whether it is possible for a write on this column to succeed. It
+	 * always returns true.
+	 * 
+	 * @param column
+	 *            the column index (1,2,...)
 	 * @return true
-	 * @throws SQLException if the result set is closed or invalid
+	 * @throws SQLException
+	 *             if the result set is closed or invalid
 	 */
 	public boolean isWritable(int column) throws SQLException {
 		try {
@@ -322,12 +348,14 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 	}
 
 	/**
-	 * Checks whether a write on this column will definitely succeed.
-	 * It always returns false.
-	 *
-	 * @param column the column index (1,2,...)
+	 * Checks whether a write on this column will definitely succeed. It always
+	 * returns false.
+	 * 
+	 * @param column
+	 *            the column index (1,2,...)
 	 * @return false
-	 * @throws SQLException if the result set is closed or invalid
+	 * @throws SQLException
+	 *             if the result set is closed or invalid
 	 */
 	public boolean isDefinitelyWritable(int column) throws SQLException {
 		try {
@@ -340,12 +368,14 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 	}
 
 	/**
-	 * Gets the Java class name of the object that will be returned
-	 * if ResultSet.getObject is called.
-	 *
-	 * @param column the column index (1,2,...)
+	 * Gets the Java class name of the object that will be returned if
+	 * ResultSet.getObject is called.
+	 * 
+	 * @param column
+	 *            the column index (1,2,...)
 	 * @return the Java class name
-	 * @throws SQLException if the result set is closed or invalid
+	 * @throws SQLException
+	 *             if the result set is closed or invalid
 	 */
 	public String getColumnClassName(int column) throws SQLException {
 		try {
@@ -359,12 +389,13 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 	}
 
 	/**
-	 * Gets the precision for this column.
-	 * This method always returns 0.
-	 *
-	 * @param column the column index (1,2,...)
+	 * Gets the precision for this column. This method always returns 0.
+	 * 
+	 * @param column
+	 *            the column index (1,2,...)
 	 * @return the precision
-	 * @throws SQLException if the result set is closed or invalid
+	 * @throws SQLException
+	 *             if the result set is closed or invalid
 	 */
 	public int getPrecision(int column) throws SQLException {
 		try {
@@ -378,12 +409,13 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 	}
 
 	/**
-	 * Gets the scale for this column.
-	 * This method always returns 0.
-	 *
-	 * @param column the column index (1,2,...)
+	 * Gets the scale for this column. This method always returns 0.
+	 * 
+	 * @param column
+	 *            the column index (1,2,...)
 	 * @return the scale
-	 * @throws SQLException if the result set is closed or invalid
+	 * @throws SQLException
+	 *             if the result set is closed or invalid
 	 */
 	public int getScale(int column) throws SQLException {
 		try {
@@ -397,10 +429,12 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 
 	/**
 	 * Gets the maximum display size for this column.
-	 *
-	 * @param column the column index (1,2,...)
+	 * 
+	 * @param column
+	 *            the column index (1,2,...)
 	 * @return the display size
-	 * @throws SQLException if the result set is closed or invalid
+	 * @throws SQLException
+	 *             if the result set is closed or invalid
 	 */
 	public int getColumnDisplaySize(int column) throws SQLException {
 		try {
@@ -424,7 +458,8 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 	private void checkColumnIndex(int columnIndex) throws SQLException {
 		checkClosed();
 		if (columnIndex < 1 || columnIndex > columnCount) {
-			throw Message.getInvalidValueException("" + columnIndex, "columnIndex");
+			throw Message.getInvalidValueException("" + columnIndex,
+					"columnIndex");
 		}
 	}
 
@@ -437,16 +472,14 @@ public class JdbcResultSetMetaData extends TraceObject implements ResultSetMetaD
 		throw Message.getUnsupportedException();
 	}
 
-
 	/**
 	 * [Not supported] Checks if unwrap can return an object of this class.
 	 */
 
-	public boolean isWrapperFor(Class< ? > iface) throws SQLException {
+	public boolean isWrapperFor(Class<?> iface) throws SQLException {
 		debugCodeCall("isWrapperFor");
 		throw Message.getUnsupportedException();
 	}
-
 
 	/**
 	 * INTERNAL

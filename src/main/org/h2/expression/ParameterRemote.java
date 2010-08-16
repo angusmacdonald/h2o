@@ -44,7 +44,8 @@ public class ParameterRemote implements ParameterInterface {
 
 	public void checkSet() throws SQLException {
 		if (value == null) {
-			throw Message.getSQLException(ErrorCode.PARAMETER_NOT_SET_1, "#" + (index + 1));
+			throw Message.getSQLException(ErrorCode.PARAMETER_NOT_SET_1, "#"
+					+ (index + 1));
 		}
 	}
 
@@ -66,8 +67,9 @@ public class ParameterRemote implements ParameterInterface {
 
 	/**
 	 * Write the parameter meta data from the transfer object.
-	 *
-	 * @param transfer the transfer object
+	 * 
+	 * @param transfer
+	 *            the transfer object
 	 */
 	public void readMetaData(Transfer transfer) throws IOException {
 		dataType = transfer.readInt();
@@ -78,11 +80,14 @@ public class ParameterRemote implements ParameterInterface {
 
 	/**
 	 * Write the parameter meta data to the transfer object.
-	 *
-	 * @param transfer the transfer object
-	 * @param p the parameter
+	 * 
+	 * @param transfer
+	 *            the transfer object
+	 * @param p
+	 *            the parameter
 	 */
-	public static void writeMetaData(Transfer transfer, ParameterInterface p) throws IOException {
+	public static void writeMetaData(Transfer transfer, ParameterInterface p)
+			throws IOException {
 		transfer.writeInt(p.getType());
 		transfer.writeLong(p.getPrecision());
 		transfer.writeInt(p.getScale());

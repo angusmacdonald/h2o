@@ -24,8 +24,7 @@ import org.h2.value.DataType;
 import org.h2.value.Value;
 
 /**
- *A trigger is created using the statement
- * CREATE TRIGGER
+ * A trigger is created using the statement CREATE TRIGGER
  */
 public class TriggerObject extends SchemaObjectBase {
 
@@ -60,24 +59,31 @@ public class TriggerObject extends SchemaObjectBase {
 		}
 		try {
 			Connection c2 = session.createConnection(false);
-			Object obj = ClassUtils.loadUserClass(triggerClassName).newInstance();
+			Object obj = ClassUtils.loadUserClass(triggerClassName)
+					.newInstance();
 			triggerCallback = (Trigger) obj;
-			triggerCallback.init(c2, getSchema().getName(), getName(), table.getName(), before, typeMask);
+			triggerCallback.init(c2, getSchema().getName(), getName(),
+					table.getName(), before, typeMask);
 		} catch (Throwable e) {
-			throw Message.getSQLException(ErrorCode.ERROR_CREATING_TRIGGER_OBJECT_3, new String[] { getName(),
-					triggerClassName, e.toString() }, e);
+			throw Message.getSQLException(
+					ErrorCode.ERROR_CREATING_TRIGGER_OBJECT_3, new String[] {
+							getName(), triggerClassName, e.toString() }, e);
 		}
 	}
 
 	/**
 	 * Set the trigger class name and load the class if possible.
-	 *
-	 * @param session the session
-	 * @param triggerClassName the name of the trigger class
-	 * @param force whether exceptions (due to missing class or access rights)
+	 * 
+	 * @param session
+	 *            the session
+	 * @param triggerClassName
+	 *            the name of the trigger class
+	 * @param force
+	 *            whether exceptions (due to missing class or access rights)
 	 *            should be ignored
 	 */
-	public void setTriggerClassName(Session session, String triggerClassName, boolean force) throws SQLException {
+	public void setTriggerClassName(Session session, String triggerClassName,
+			boolean force) throws SQLException {
 		this.triggerClassName = triggerClassName;
 		try {
 			load(session);
@@ -92,9 +98,11 @@ public class TriggerObject extends SchemaObjectBase {
 	 * Call the trigger class if required. This method does nothing if the
 	 * trigger is not defined for the given action. This method is called before
 	 * or after any rows have been processed, once for each statement.
-	 *
-	 * @param session the session
-	 * @param beforeAction if this method is called before applying the changes
+	 * 
+	 * @param session
+	 *            the session
+	 * @param beforeAction
+	 *            if this method is called before applying the changes
 	 */
 	public void fire(Session session, boolean beforeAction) throws SQLException {
 		if (rowBased || before != beforeAction) {
@@ -106,8 +114,9 @@ public class TriggerObject extends SchemaObjectBase {
 		try {
 			triggerCallback.fire(c2, null, null);
 		} catch (Throwable e) {
-			throw Message.getSQLException(ErrorCode.ERROR_EXECUTING_TRIGGER_3, new String[] { getName(),
-					triggerClassName, e.toString() }, e);
+			throw Message.getSQLException(ErrorCode.ERROR_EXECUTING_TRIGGER_3,
+					new String[] { getName(), triggerClassName, e.toString() },
+					e);
 		} finally {
 			session.setCommitOrRollbackDisabled(old);
 		}
@@ -130,14 +139,18 @@ public class TriggerObject extends SchemaObjectBase {
 	 * method does nothing if the trigger is not defined for the given action.
 	 * This method is called before or after a row is processed, possibly many
 	 * times for each statement.
-	 *
-	 * @param session the session
-	 * @param oldRow the old row
-	 * @param newRow the new row
-	 * @param beforeAction true if this method is called before the operation is
-	 *            applied
+	 * 
+	 * @param session
+	 *            the session
+	 * @param oldRow
+	 *            the old row
+	 * @param newRow
+	 *            the new row
+	 * @param beforeAction
+	 *            true if this method is called before the operation is applied
 	 */
-	public void fireRow(Session session, Row oldRow, Row newRow, boolean beforeAction) throws SQLException {
+	public void fireRow(Session session, Row oldRow, Row newRow,
+			boolean beforeAction) throws SQLException {
 		if (!rowBased || before != beforeAction) {
 			return;
 		}
@@ -184,7 +197,8 @@ public class TriggerObject extends SchemaObjectBase {
 				for (int i = 0; i < newList.length; i++) {
 					Object o = newList[i];
 					if (o != newListBackup[i]) {
-						Value v = DataType.convertToValue(session, o, Value.UNKNOWN);
+						Value v = DataType.convertToValue(session, o,
+								Value.UNKNOWN);
 						newRow.setValue(i, v);
 					}
 				}
@@ -197,8 +211,9 @@ public class TriggerObject extends SchemaObjectBase {
 
 	/**
 	 * Set the trigger type.
-	 *
-	 * @param typeMask the type
+	 * 
+	 * @param typeMask
+	 *            the type
 	 */
 	public void setTypeMask(int typeMask) {
 		this.typeMask = typeMask;
@@ -302,7 +317,7 @@ public class TriggerObject extends SchemaObjectBase {
 
 	/**
 	 * Get the table of this trigger.
-	 *
+	 * 
 	 * @return the table
 	 */
 	public Table getTable() {
@@ -311,7 +326,7 @@ public class TriggerObject extends SchemaObjectBase {
 
 	/**
 	 * Check if this is a before trigger.
-	 *
+	 * 
 	 * @return true if it is
 	 */
 	public boolean getBefore() {
@@ -320,7 +335,7 @@ public class TriggerObject extends SchemaObjectBase {
 
 	/**
 	 * Get the trigger class name.
-	 *
+	 * 
 	 * @return the class name
 	 */
 	public String getTriggerClassName() {

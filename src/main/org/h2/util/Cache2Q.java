@@ -13,11 +13,10 @@ import org.h2.engine.Constants;
 import org.h2.message.Message;
 
 /**
- * A cache implementation based on the 2Q algorithm.
- * For about the algorithm, see
- * http://www.vldb.org/conf/1994/P439.PDF .
- * In this implementation, items are moved from 'in'
- * queue and move to the 'main' queue if the are referenced again.
+ * A cache implementation based on the 2Q algorithm. For about the algorithm,
+ * see http://www.vldb.org/conf/1994/P439.PDF . In this implementation, items
+ * are moved from 'in' queue and move to the 'main' queue if the are referenced
+ * again.
  */
 public class Cache2Q implements Cache {
 
@@ -81,7 +80,8 @@ public class Cache2Q implements Cache {
 	}
 
 	private void removeFromList(CacheObject rec) {
-		if (SysProperties.CHECK && (rec instanceof CacheHead && rec.cacheQueue != OUT)) {
+		if (SysProperties.CHECK
+				&& (rec instanceof CacheHead && rec.cacheQueue != OUT)) {
 			Message.throwInternalError();
 		}
 		rec.previous.next = rec.next;
@@ -178,7 +178,8 @@ public class Cache2Q implements Cache {
 				// can't remove any record, because the log is not written yet
 				// hopefully this does not happen too much, but it could happen
 				// theoretically
-				writer.getTrace().info("Cannot remove records, cache size too small?");
+				writer.getTrace().info(
+						"Cannot remove records, cache size too small?");
 				break;
 			}
 			if (sizeIn > maxIn) {
@@ -260,7 +261,8 @@ public class Cache2Q implements Cache {
 			for (int i = 0; i < rec.getBlockCount(); i++) {
 				CacheObject old = find(rec.getPos() + i);
 				if (old != null) {
-					Message.throwInternalError("try to add a record twice i=" + i);
+					Message.throwInternalError("try to add a record twice i="
+							+ i);
 				}
 			}
 		}
@@ -326,7 +328,7 @@ public class Cache2Q implements Cache {
 		return TYPE_NAME;
 	}
 
-	public int  getMaxSize() {
+	public int getMaxSize() {
 		return maxSize;
 	}
 

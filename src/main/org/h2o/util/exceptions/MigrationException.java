@@ -24,7 +24,7 @@ public class MigrationException extends Exception {
 
 	private static final long serialVersionUID = -2549559616713278150L;
 
-	public MigrationException(String message){
+	public MigrationException(String message) {
 		super(message);
 	}
 }

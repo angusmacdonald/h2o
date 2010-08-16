@@ -50,9 +50,11 @@ public class TempFileDeleter {
 	/**
 	 * Add a file to the list of temp files to delete. The file is deleted once
 	 * the file object is garbage collected.
-	 *
-	 * @param fileName the file name
-	 * @param file the object to monitor
+	 * 
+	 * @param fileName
+	 *            the file name
+	 * @param file
+	 *            the object to monitor
 	 * @return the reference that can be used to stop deleting the file
 	 */
 	public synchronized Reference addFile(String fileName, Object file) {
@@ -70,8 +72,9 @@ public class TempFileDeleter {
 	 * Update the last modified date of the auto-delete reference. If the file
 	 * was modified after that, it will not be deleted (because it might have
 	 * been deleted and then re-created).
-	 *
-	 * @param ref the reference
+	 * 
+	 * @param ref
+	 *            the reference
 	 */
 	public synchronized void updateAutoDelete(Reference ref) {
 		TempFile f2 = (TempFile) refMap.get(ref);
@@ -84,16 +87,20 @@ public class TempFileDeleter {
 
 	/**
 	 * Delete the given file now. This will remove the reference from the list.
-	 *
-	 * @param ref the reference as returned by addFile
-	 * @param fileName the file name
+	 * 
+	 * @param ref
+	 *            the reference as returned by addFile
+	 * @param fileName
+	 *            the file name
 	 */
 	public synchronized void deleteFile(Reference ref, String fileName) {
 		if (ref != null) {
 			TempFile f2 = (TempFile) refMap.remove(ref);
 			if (f2 != null) {
-				if (SysProperties.CHECK && fileName != null && !f2.fileName.equals(fileName)) {
-					Message.throwInternalError("f2:" + f2.fileName + " f:" + fileName);
+				if (SysProperties.CHECK && fileName != null
+						&& !f2.fileName.equals(fileName)) {
+					Message.throwInternalError("f2:" + f2.fileName + " f:"
+							+ fileName);
 				}
 				fileName = f2.fileName;
 				long mod = FileUtils.getLastModified(fileName);
@@ -142,16 +149,20 @@ public class TempFileDeleter {
 	/**
 	 * This method is called if a file should no longer be deleted if the object
 	 * is garbage collected.
-	 *
-	 * @param ref the reference as returned by addFile
-	 * @param fileName the file name
+	 * 
+	 * @param ref
+	 *            the reference as returned by addFile
+	 * @param fileName
+	 *            the file name
 	 */
 	public void stopAutoDelete(Reference ref, String fileName) {
 		FileUtils.trace("TempFileDeleter.stopAutoDelete", fileName, ref);
 		if (ref != null) {
 			TempFile f2 = (TempFile) refMap.remove(ref);
-			if (SysProperties.CHECK && (f2 == null || !f2.fileName.equals(fileName))) {
-				Message.throwInternalError("f2:" + f2 + " " + (f2 == null ? "" : f2.fileName) + " f:" + fileName);
+			if (SysProperties.CHECK
+					&& (f2 == null || !f2.fileName.equals(fileName))) {
+				Message.throwInternalError("f2:" + f2 + " "
+						+ (f2 == null ? "" : f2.fileName) + " f:" + fileName);
 			}
 		}
 		deleteUnused();

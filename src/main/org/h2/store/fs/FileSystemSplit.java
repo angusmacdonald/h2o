@@ -59,10 +59,12 @@ public class FileSystemSplit extends FileSystem {
 		return getFileSystem(fileName).createNewFile(fileName);
 	}
 
-	public String createTempFile(String prefix, String suffix, boolean deleteOnExit, boolean inTempDir)
-	throws IOException {
+	public String createTempFile(String prefix, String suffix,
+			boolean deleteOnExit, boolean inTempDir) throws IOException {
 		prefix = translateFileName(prefix);
-		return FileSystem.PREFIX_SPLIT + getFileSystem(prefix).createTempFile(prefix, suffix, deleteOnExit, inTempDir);
+		return FileSystem.PREFIX_SPLIT
+				+ getFileSystem(prefix).createTempFile(prefix, suffix,
+						deleteOnExit, inTempDir);
 	}
 
 	public void delete(String fileName) throws SQLException {
@@ -95,7 +97,8 @@ public class FileSystemSplit extends FileSystem {
 
 	public String getAbsolutePath(String fileName) {
 		fileName = translateFileName(fileName);
-		return FileSystem.PREFIX_SPLIT + getFileSystem(fileName).getAbsolutePath(fileName);
+		return FileSystem.PREFIX_SPLIT
+				+ getFileSystem(fileName).getAbsolutePath(fileName);
 	}
 
 	public String getFileName(String name) throws SQLException {
@@ -120,7 +123,8 @@ public class FileSystemSplit extends FileSystem {
 
 	public String getParent(String fileName) {
 		fileName = translateFileName(fileName);
-		return FileSystem.PREFIX_SPLIT + getFileSystem(fileName).getParent(fileName);
+		return FileSystem.PREFIX_SPLIT
+				+ getFileSystem(fileName).getParent(fileName);
 	}
 
 	public boolean isAbsolute(String fileName) {
@@ -173,12 +177,14 @@ public class FileSystemSplit extends FileSystem {
 
 	public String normalize(String fileName) throws SQLException {
 		fileName = translateFileName(fileName);
-		return FileSystem.PREFIX_SPLIT + getFileSystem(fileName).normalize(fileName);
+		return FileSystem.PREFIX_SPLIT
+				+ getFileSystem(fileName).normalize(fileName);
 	}
 
 	public InputStream openFileInputStream(String fileName) throws IOException {
 		fileName = translateFileName(fileName);
-		InputStream input = getFileSystem(fileName).openFileInputStream(fileName);
+		InputStream input = getFileSystem(fileName).openFileInputStream(
+				fileName);
 		for (int i = 1;; i++) {
 			String f = getFileName(fileName, i);
 			if (getFileSystem(f).exists(f)) {
@@ -191,7 +197,8 @@ public class FileSystemSplit extends FileSystem {
 		return input;
 	}
 
-	public FileObject openFileObject(String fileName, String mode) throws IOException {
+	public FileObject openFileObject(String fileName, String mode)
+			throws IOException {
 		fileName = translateFileName(fileName);
 		ArrayList list = new ArrayList();
 		FileObject o = getFileSystem(fileName).openFileObject(fileName, mode);
@@ -219,21 +226,25 @@ public class FileSystemSplit extends FileSystem {
 				long l = o.length();
 				length += l;
 				if (l != maxLength) {
-					throw new IOException("Expected file length: " + maxLength + " got: " + l + " for " + o.getName());
+					throw new IOException("Expected file length: " + maxLength
+							+ " got: " + l + " for " + o.getName());
 				}
 			}
 			o = array[array.length - 1];
 			long l = o.length();
 			length += l;
 			if (l > maxLength) {
-				throw new IOException("Expected file length: " + maxLength + " got: " + l + " for " + o.getName());
+				throw new IOException("Expected file length: " + maxLength
+						+ " got: " + l + " for " + o.getName());
 			}
 		}
-		FileObjectSplit fo = new FileObjectSplit(fileName, mode, array, length, maxLength);
+		FileObjectSplit fo = new FileObjectSplit(fileName, mode, array, length,
+				maxLength);
 		return fo;
 	}
 
-	public OutputStream openFileOutputStream(String fileName, boolean append) throws SQLException {
+	public OutputStream openFileOutputStream(String fileName, boolean append)
+			throws SQLException {
 		fileName = translateFileName(fileName);
 		// TODO the output stream is not split
 		return getFileSystem(fileName).openFileOutputStream(fileName, append);
@@ -271,7 +282,8 @@ public class FileSystemSplit extends FileSystem {
 
 	private String translateFileName(String fileName) {
 		if (!fileName.startsWith(FileSystem.PREFIX_SPLIT)) {
-			Message.throwInternalError(fileName + " doesn't start with " + FileSystem.PREFIX_SPLIT);
+			Message.throwInternalError(fileName + " doesn't start with "
+					+ FileSystem.PREFIX_SPLIT);
 		}
 		fileName = fileName.substring(FileSystem.PREFIX_SPLIT.length());
 		if (fileName.length() > 0 && Character.isDigit(fileName.charAt(0))) {
@@ -289,9 +301,11 @@ public class FileSystemSplit extends FileSystem {
 
 	/**
 	 * Get the file name of a part file.
-	 *
-	 * @param fileName the file name
-	 * @param id the part id
+	 * 
+	 * @param fileName
+	 *            the file name
+	 * @param id
+	 *            the part id
 	 * @return the file name including the part id
 	 */
 	static String getFileName(String fileName, int id) {

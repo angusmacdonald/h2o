@@ -15,8 +15,7 @@ import org.h2.engine.UserDataType;
 import org.h2.message.Message;
 
 /**
- * This class represents the statement
- * DROP DOMAIN
+ * This class represents the statement DROP DOMAIN
  */
 public class DropUserDataType extends DefineCommand {
 
@@ -38,7 +37,8 @@ public class DropUserDataType extends DefineCommand {
 		UserDataType type = db.findUserDataType(typeName);
 		if (type == null) {
 			if (!ifExists) {
-				throw Message.getSQLException(ErrorCode.USER_DATA_TYPE_NOT_FOUND_1, typeName);
+				throw Message.getSQLException(
+						ErrorCode.USER_DATA_TYPE_NOT_FOUND_1, typeName);
 			}
 		} else {
 			db.removeDatabaseObject(session, type);

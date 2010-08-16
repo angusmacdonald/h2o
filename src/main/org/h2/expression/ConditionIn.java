@@ -59,7 +59,8 @@ public class ConditionIn extends Condition {
 			if (r == ValueNull.INSTANCE) {
 				hasNull = true;
 			} else {
-				result = Comparison.compareNotNull(database, l, r, Comparison.EQUAL);
+				result = Comparison.compareNotNull(database, l, r,
+						Comparison.EQUAL);
 				if (result) {
 					break;
 				}
@@ -71,7 +72,8 @@ public class ConditionIn extends Condition {
 		return ValueBoolean.get(result);
 	}
 
-	public void mapColumns(ColumnResolver resolver, int queryLevel) throws SQLException {
+	public void mapColumns(ColumnResolver resolver, int queryLevel)
+			throws SQLException {
 		left.mapColumns(resolver, queryLevel);
 		for (int i = 0; i < values.size(); i++) {
 			Expression e = (Expression) values.get(i);
@@ -101,16 +103,19 @@ public class ConditionIn extends Condition {
 		if (constant && allValuesConstant) {
 			return ValueExpression.get(getValue(session));
 		}
-		// TODO optimization: could use index in some cases (sort, use min and max)
+		// TODO optimization: could use index in some cases (sort, use min and
+		// max)
 		if (values.size() == 1) {
 			Expression right = (Expression) values.get(0);
-			Expression expr = new Comparison(session, Comparison.EQUAL, left, right);
+			Expression expr = new Comparison(session, Comparison.EQUAL, left,
+					right);
 			expr = expr.optimize(session);
 			return expr;
 		}
 		if (SysProperties.OPTIMIZE_IN) {
 			int dataType = left.getType();
-			ExpressionVisitor independent = ExpressionVisitor.get(ExpressionVisitor.INDEPENDENT);
+			ExpressionVisitor independent = ExpressionVisitor
+					.get(ExpressionVisitor.INDEPENDENT);
 			independent.setQueryLevel(queryLevel);
 			if (areAllValues(independent)) {
 				if (left instanceof ExpressionColumn) {
@@ -151,8 +156,10 @@ public class ConditionIn extends Condition {
 		if (filter != l.getTableFilter()) {
 			return;
 		}
-		filter.addIndexCondition(new IndexCondition(Comparison.BIGGER_EQUAL, l, ValueExpression.get(min)));
-		filter.addIndexCondition(new IndexCondition(Comparison.SMALLER_EQUAL, l, ValueExpression.get(max)));
+		filter.addIndexCondition(new IndexCondition(Comparison.BIGGER_EQUAL, l,
+				ValueExpression.get(min)));
+		filter.addIndexCondition(new IndexCondition(Comparison.SMALLER_EQUAL,
+				l, ValueExpression.get(max)));
 	}
 
 	public void setEvaluatable(TableFilter tableFilter, boolean b) {
@@ -212,7 +219,8 @@ public class ConditionIn extends Condition {
 		return cost;
 	}
 
-	public Expression optimizeInJoin(Session session, Select select) throws SQLException {
+	public Expression optimizeInJoin(Session session, Select select)
+			throws SQLException {
 		if (!areAllValues(ExpressionVisitor.get(ExpressionVisitor.EVALUATABLE))) {
 			return this;
 		}
@@ -220,14 +228,16 @@ public class ConditionIn extends Condition {
 			return this;
 		}
 		ExpressionColumn ec = (ExpressionColumn) left;
-		Index index = ec.getTableFilter().getTable().getIndexForColumn(ec.getColumn(), false);
+		Index index = ec.getTableFilter().getTable()
+				.getIndexForColumn(ec.getColumn(), false);
 		if (index == null) {
 			return this;
 		}
 		Database db = session.getDatabase();
 		Schema mainSchema = db.getSchema(Constants.SCHEMA_MAIN);
 		int rowCount = values.size();
-		TableFunction function = new TableFunction(database, Function.getFunctionInfo("TABLE_DISTINCT"), rowCount);
+		TableFunction function = new TableFunction(database,
+				Function.getFunctionInfo("TABLE_DISTINCT"), rowCount);
 		Expression[] array = new Expression[rowCount];
 		for (int i = 0; i < rowCount; i++) {
 			Expression e = (Expression) values.get(i);
@@ -242,11 +252,14 @@ public class ConditionIn extends Condition {
 		Column col = new Column(columnName, dataType);
 		columns.add(col);
 		function.setColumns(columns);
-		FunctionTable table = new FunctionTable(mainSchema, session, function, function);
+		FunctionTable table = new FunctionTable(mainSchema, session, function,
+				function);
 		String viewName = session.getNextSystemIdentifier(select.getSQL());
-		TableFilter filter = new TableFilter(session, table, viewName, false, select);
+		TableFilter filter = new TableFilter(session, table, viewName, false,
+				select);
 		select.addTableFilter(filter, true);
-		ExpressionColumn column = new ExpressionColumn(db, null, viewName, columnName);
+		ExpressionColumn column = new ExpressionColumn(db, null, viewName,
+				columnName);
 		Expression on = new Comparison(session, Comparison.EQUAL, left, column);
 		on.mapColumns(filter, 0);
 		on = on.optimize(session);

@@ -13,8 +13,8 @@ import org.h2.table.ColumnResolver;
 import org.h2.table.Table;
 
 /**
- * The visitor pattern is used to iterate through all expressions of a query
- * to optimize a statement.
+ * The visitor pattern is used to iterate through all expressions of a query to
+ * optimize a statement.
  */
 public class ExpressionVisitor {
 
@@ -76,8 +76,9 @@ public class ExpressionVisitor {
 
 	/**
 	 * Create a new visitor object with the given type.
-	 *
-	 * @param type the visitor type
+	 * 
+	 * @param type
+	 *            the visitor type
 	 * @return the new visitor
 	 */
 	public static ExpressionVisitor get(int type) {
@@ -85,19 +86,19 @@ public class ExpressionVisitor {
 	}
 
 	/**
-	 * Add a new dependency to the set of dependencies.
-	 * This is used for GET_DEPENDENCIES visitors.
-	 *
-	 * @param obj the additional dependency.
+	 * Add a new dependency to the set of dependencies. This is used for
+	 * GET_DEPENDENCIES visitors.
+	 * 
+	 * @param obj
+	 *            the additional dependency.
 	 */
 	public void addDependency(DbObject obj) {
 		dependencies.add(obj);
 	}
 
 	/**
-	 * Get the dependency set.
-	 * This is used for GET_DEPENDENCIES visitors.
-	 *
+	 * Get the dependency set. This is used for GET_DEPENDENCIES visitors.
+	 * 
 	 * @return the set
 	 */
 	public Set getDependencies() {
@@ -105,10 +106,10 @@ public class ExpressionVisitor {
 	}
 
 	/**
-	 * Set all dependencies.
-	 * This is used for GET_DEPENDENCIES visitors.
-	 *
-	 * @param dependencies2 the dependency set
+	 * Set all dependencies. This is used for GET_DEPENDENCIES visitors.
+	 * 
+	 * @param dependencies2
+	 *            the dependency set
 	 */
 	public void setDependencies(Set dependencies2) {
 		this.dependencies = dependencies2;
@@ -116,17 +117,17 @@ public class ExpressionVisitor {
 
 	/**
 	 * Increment or decrement the query level.
-	 *
-	 * @param offset 1 to increment, -1 to decrement
+	 * 
+	 * @param offset
+	 *            1 to increment, -1 to decrement
 	 */
 	public void incrementQueryLevel(int offset) {
 		queryLevel += offset;
 	}
 
 	/**
-	 * Get the column resolver.
-	 * This is used for NOT_FROM_RESOLVER visitors.
-	 *
+	 * Get the column resolver. This is used for NOT_FROM_RESOLVER visitors.
+	 * 
 	 * @return the column resolver
 	 */
 	public ColumnResolver getResolver() {
@@ -134,30 +135,30 @@ public class ExpressionVisitor {
 	}
 
 	/**
-	 * Set the column resolver.
-	 * This is used for NOT_FROM_RESOLVER visitors.
-	 *
-	 * @param resolver the column resolver
+	 * Set the column resolver. This is used for NOT_FROM_RESOLVER visitors.
+	 * 
+	 * @param resolver
+	 *            the column resolver
 	 */
 	public void setResolver(ColumnResolver resolver) {
 		this.resolver = resolver;
 	}
 
 	/**
-	 * Update the field maxDataModificationId if this value is higher
-	 * than the current value.
-	 * This is used for SET_MAX_DATA_MODIFICATION_ID visitors.
-	 *
-	 * @param value the data modification id
+	 * Update the field maxDataModificationId if this value is higher than the
+	 * current value. This is used for SET_MAX_DATA_MODIFICATION_ID visitors.
+	 * 
+	 * @param value
+	 *            the data modification id
 	 */
 	public void addDataModificationId(long value) {
 		maxDataModificationId = Math.max(maxDataModificationId, value);
 	}
 
 	/**
-	 * Get the last data modification.
-	 * This is used for SET_MAX_DATA_MODIFICATION_ID visitors.
-	 *
+	 * Get the last data modification. This is used for
+	 * SET_MAX_DATA_MODIFICATION_ID visitors.
+	 * 
 	 * @return the maximum modification id
 	 */
 	public long getMaxDataModificationId() {
@@ -173,19 +174,18 @@ public class ExpressionVisitor {
 	}
 
 	/**
-	 * Set the table.
-	 * This is used for OPTIMIZABLE_MIN_MAX_COUNT_ALL visitors.
-	 *
-	 * @param table the table
+	 * Set the table. This is used for OPTIMIZABLE_MIN_MAX_COUNT_ALL visitors.
+	 * 
+	 * @param table
+	 *            the table
 	 */
 	public void setTable(Table table) {
 		this.table = table;
 	}
 
 	/**
-	 * Get the table.
-	 * This is used for OPTIMIZABLE_MIN_MAX_COUNT_ALL visitors.
-	 *
+	 * Get the table. This is used for OPTIMIZABLE_MIN_MAX_COUNT_ALL visitors.
+	 * 
 	 * @return the table
 	 */
 	public Table getTable() {
@@ -194,7 +194,7 @@ public class ExpressionVisitor {
 
 	/**
 	 * Get the visitor type.
-	 *
+	 * 
 	 * @return the type
 	 */
 	public int getType() {

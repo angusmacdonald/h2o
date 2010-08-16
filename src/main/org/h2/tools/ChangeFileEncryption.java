@@ -31,31 +31,35 @@ public class ChangeFileEncryption extends Tool {
 
 	private void showUsage() {
 		out.println("Allows changing the database file encryption password or algorithm.");
-		out.println("java "+getClass().getName() + "\n" +
-				" -cipher <type>    AES or XTEA\n" +
-				" [-dir <dir>]      The database directory (default: .)\n" +
-				" [-db <database>]  The database name (default: all databases)\n" +
-				" [-decrypt <pwd>]  The decryption password (default: the database is not yet encrypted)\n" +
-				" [-encrypt <pwd>]  The encryption password (default: the database should not be encrypted)\n" +
-		" [-quiet]          Do not print progress information");
-		out.println("See also http://h2database.com/javadoc/" + getClass().getName().replace('.', '/') + ".html");
+		out.println("java "
+				+ getClass().getName()
+				+ "\n"
+				+ " -cipher <type>    AES or XTEA\n"
+				+ " [-dir <dir>]      The database directory (default: .)\n"
+				+ " [-db <database>]  The database name (default: all databases)\n"
+				+ " [-decrypt <pwd>]  The decryption password (default: the database is not yet encrypted)\n"
+				+ " [-encrypt <pwd>]  The encryption password (default: the database should not be encrypted)\n"
+				+ " [-quiet]          Do not print progress information");
+		out.println("See also http://h2database.com/javadoc/"
+				+ getClass().getName().replace('.', '/') + ".html");
 	}
 
 	/**
-	 * The command line interface for this tool.
-	 * The options must be split into strings like this: "-db", "test",...
-	 * Options are case sensitive. The following options are supported:
+	 * The command line interface for this tool. The options must be split into
+	 * strings like this: "-db", "test",... Options are case sensitive. The
+	 * following options are supported:
 	 * <ul>
-	 * <li>-help or -? (print the list of options)
-	 * </li><li>-dir database directory (the default is the current directory)
-	 * </li><li>-db database name (all databases if no name is specified)
-	 * </li><li>-cipher type (AES or XTEA)
-	 * </li><li>-decrypt password (null if the database is not encrypted)
-	 * </li><li>-encrypt password (null if the database should not be encrypted)
-	 * </li><li>-quiet does not print progress information
-	 * </li></ul>
-	 *
-	 * @param args the command line arguments
+	 * <li>-help or -? (print the list of options)</li>
+	 * <li>-dir database directory (the default is the current directory)</li>
+	 * <li>-db database name (all databases if no name is specified)</li>
+	 * <li>-cipher type (AES or XTEA)</li>
+	 * <li>-decrypt password (null if the database is not encrypted)</li>
+	 * <li>-encrypt password (null if the database should not be encrypted)</li>
+	 * <li>-quiet does not print progress information</li>
+	 * </ul>
+	 * 
+	 * @param args
+	 *            the command line arguments
 	 * @throws SQLException
 	 */
 	public static void main(String[] args) throws SQLException {
@@ -92,7 +96,8 @@ public class ChangeFileEncryption extends Tool {
 				return;
 			}
 		}
-		if ((encryptPassword == null && decryptPassword == null) || cipher == null) {
+		if ((encryptPassword == null && decryptPassword == null)
+				|| cipher == null) {
 			showUsage();
 			return;
 		}
@@ -100,10 +105,11 @@ public class ChangeFileEncryption extends Tool {
 	}
 
 	/**
-	 * Get the file encryption key for a given password.
-	 * The password must be supplied as char arrays and is cleaned in this method.
-	 *
-	 * @param password the password as a char array
+	 * Get the file encryption key for a given password. The password must be
+	 * supplied as char arrays and is cleaned in this method.
+	 * 
+	 * @param password
+	 *            the password as a char array
 	 * @return the encryption key
 	 */
 	private static byte[] getFileEncryptionKey(char[] password) {
@@ -115,27 +121,39 @@ public class ChangeFileEncryption extends Tool {
 	}
 
 	/**
-	 * Changes the password for a database.
-	 * The passwords must be supplied as char arrays and are cleaned in this method.
-	 *
-	 * @param dir the directory (. for the current directory)
-	 * @param db the database name (null for all databases)
-	 * @param cipher the cipher (AES, XTEA)
-	 * @param decryptPassword the decryption password as a char array
-	 * @param encryptPassword the encryption password as a char array
-	 * @param quiet don't print progress information
+	 * Changes the password for a database. The passwords must be supplied as
+	 * char arrays and are cleaned in this method.
+	 * 
+	 * @param dir
+	 *            the directory (. for the current directory)
+	 * @param db
+	 *            the database name (null for all databases)
+	 * @param cipher
+	 *            the cipher (AES, XTEA)
+	 * @param decryptPassword
+	 *            the decryption password as a char array
+	 * @param encryptPassword
+	 *            the encryption password as a char array
+	 * @param quiet
+	 *            don't print progress information
 	 * @throws SQLException
 	 */
-	public static void execute(String dir, String db, String cipher, char[] decryptPassword, char[] encryptPassword, boolean quiet) throws SQLException {
-		new ChangeFileEncryption().process(dir, db, cipher, decryptPassword, encryptPassword, quiet);
+	public static void execute(String dir, String db, String cipher,
+			char[] decryptPassword, char[] encryptPassword, boolean quiet)
+			throws SQLException {
+		new ChangeFileEncryption().process(dir, db, cipher, decryptPassword,
+				encryptPassword, quiet);
 	}
 
-	private void process(String dir, String db, String cipher, char[] decryptPassword, char[] encryptPassword, boolean quiet) throws SQLException {
+	private void process(String dir, String db, String cipher,
+			char[] decryptPassword, char[] encryptPassword, boolean quiet)
+			throws SQLException {
 		ChangeFileEncryption change = new ChangeFileEncryption();
 		if (encryptPassword != null) {
-			for (int i = 0; i < encryptPassword.length; i++) {
-				if (encryptPassword[i] == ' ') {
-					throw new SQLException("The file password may not contain spaces");
+			for (char element : encryptPassword) {
+				if (element == ' ') {
+					throw new SQLException(
+							"The file password may not contain spaces");
 				}
 			}
 		}
@@ -178,7 +196,8 @@ public class ChangeFileEncryption extends Tool {
 		copy(fileName, in, encrypt);
 	}
 
-	private void copy(String fileName, FileStore in, byte[] key) throws SQLException {
+	private void copy(String fileName, FileStore in, byte[] key)
+			throws SQLException {
 		String temp = dir + "/temp.db";
 		FileUtils.delete(temp);
 		FileStore fileOut;
@@ -196,7 +215,8 @@ public class ChangeFileEncryption extends Tool {
 		long time = System.currentTimeMillis();
 		while (remaining > 0) {
 			if (System.currentTimeMillis() - time > 1000) {
-				out.println(fileName + ": " + (100 - 100 * remaining / total) + "%");
+				out.println(fileName + ": " + (100 - 100 * remaining / total)
+						+ "%");
 				time = System.currentTimeMillis();
 			}
 			int len = (int) Math.min(buffer.length, remaining);

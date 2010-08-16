@@ -11,10 +11,9 @@ import java.sql.SQLException;
 import org.h2.message.Message;
 
 /**
- * A hash map with int key and int values. There is a restriction: the
- * value -1 (NOT_FOUND) cannot be stored in the map. 0 can be stored.
- * An empty record has key=0 and value=0.
- * A deleted record has key=0 and value=DELETED
+ * A hash map with int key and int values. There is a restriction: the value -1
+ * (NOT_FOUND) cannot be stored in the map. 0 can be stored. An empty record has
+ * key=0 and value=0. A deleted record has key=0 and value=DELETED
  */
 public class IntIntHashMap extends HashBase {
 
@@ -36,9 +35,11 @@ public class IntIntHashMap extends HashBase {
 
 	/**
 	 * Store the given key-value pair. The value is overwritten or added.
-	 *
-	 * @param key the key
-	 * @param value the value (-1 is not supported)
+	 * 
+	 * @param key
+	 *            the key
+	 * @param value
+	 *            the value (-1 is not supported)
 	 */
 	public void put(int key, int value) {
 		if (key == 0) {
@@ -78,15 +79,16 @@ public class IntIntHashMap extends HashBase {
 				return;
 			}
 			index = (index + plus++) & mask;
-		} while(plus <= len);
+		} while (plus <= len);
 		// no space
 		Message.throwInternalError("hashmap is full");
 	}
 
 	/**
 	 * Remove the key-value pair with the given key.
-	 *
-	 * @param key the key
+	 * 
+	 * @param key
+	 *            the key
 	 */
 	public void remove(int key) {
 		if (key == 0) {
@@ -115,7 +117,7 @@ public class IntIntHashMap extends HashBase {
 				return;
 			}
 			index = (index + plus++) & mask;
-		} while(plus <= len);
+		} while (plus <= len);
 		// not found
 	}
 
@@ -134,8 +136,9 @@ public class IntIntHashMap extends HashBase {
 	/**
 	 * Get the value for the given key. This method returns NOT_FOUND if the
 	 * entry has not been found.
-	 *
-	 * @param key the key
+	 * 
+	 * @param key
+	 *            the key
 	 * @return the value or NOT_FOUND
 	 */
 	public int get(int key) {
@@ -154,7 +157,7 @@ public class IntIntHashMap extends HashBase {
 				return values[index];
 			}
 			index = (index + plus++) & mask;
-		} while(plus <= len);
+		} while (plus <= len);
 		return NOT_FOUND;
 	}
 

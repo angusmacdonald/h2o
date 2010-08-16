@@ -16,8 +16,7 @@ import org.h2.message.Trace;
 import org.h2.table.Table;
 
 /**
- *A sequence is created using the statement
- * CREATE SEQUENCE
+ * A sequence is created using the statement CREATE SEQUENCE
  */
 public class Sequence extends SchemaObjectBase {
 
@@ -52,7 +51,8 @@ public class Sequence extends SchemaObjectBase {
 
 	public void setIncrement(long inc) throws SQLException {
 		if (inc == 0) {
-			throw Message.getSQLException(ErrorCode.INVALID_VALUE_2, new String[] { "0", "INCREMENT" }, null);
+			throw Message.getSQLException(ErrorCode.INVALID_VALUE_2,
+					new String[] { "0", "INCREMENT" }, null);
 		}
 		this.increment = inc;
 	}
@@ -90,12 +90,14 @@ public class Sequence extends SchemaObjectBase {
 
 	/**
 	 * Get the next value for this sequence.
-	 *
-	 * @param session the session
+	 * 
+	 * @param session
+	 *            the session
 	 * @return the next value
 	 */
 	public synchronized long getNext(Session session) throws SQLException {
-		if ((increment > 0 && value >= valueWithMargin) || (increment < 0 && value <= valueWithMargin)) {
+		if ((increment > 0 && value >= valueWithMargin)
+				|| (increment < 0 && value <= valueWithMargin)) {
 			valueWithMargin += increment * cacheSize;
 			flush(session);
 		}
@@ -106,13 +108,15 @@ public class Sequence extends SchemaObjectBase {
 
 	/**
 	 * Flush the current value, including the margin, to disk.
-	 *
-	 * @param session the session
+	 * 
+	 * @param session
+	 *            the session
 	 */
 	public synchronized void flush(Session session) throws SQLException {
 		Session sysSession = database.getSystemSession();
 		if (session == null || !database.isSysTableLocked()) {
-			// this session may not lock the sys table (except if it already has locked it)
+			// this session may not lock the sys table (except if it already has
+			// locked it)
 			// because it must be committed immediately
 			// otherwise other threads can not access the sys table.
 			session = sysSession;

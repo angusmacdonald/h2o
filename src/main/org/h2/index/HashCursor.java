@@ -11,8 +11,7 @@ import org.h2.result.Row;
 import org.h2.result.SearchRow;
 
 /**
- * The cursor for a hash index.
- * At most one row can be accessed.
+ * The cursor for a hash index. At most one row can be accessed.
  */
 public class HashCursor implements Cursor {
 	private Row row;

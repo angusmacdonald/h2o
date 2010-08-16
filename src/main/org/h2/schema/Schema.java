@@ -31,8 +31,7 @@ import org.h2.table.TableLink;
 import org.h2.util.ObjectArray;
 
 /**
- * A schema as created by the SQL statement
- * CREATE SCHEMA
+ * A schema as created by the SQL statement CREATE SCHEMA
  */
 public class Schema extends DbObjectBase {
 
@@ -55,15 +54,20 @@ public class Schema extends DbObjectBase {
 
 	/**
 	 * Create a new schema object.
-	 *
-	 * @param database the database
-	 * @param id the object id
-	 * @param schemaName the schema name
-	 * @param owner the owner of the schema
-	 * @param system if this is a system schema (such a schema can not be
-	 *            dropped)
+	 * 
+	 * @param database
+	 *            the database
+	 * @param id
+	 *            the object id
+	 * @param schemaName
+	 *            the schema name
+	 * @param owner
+	 *            the owner of the schema
+	 * @param system
+	 *            if this is a system schema (such a schema can not be dropped)
 	 */
-	public Schema(Database database, int id, String schemaName, User owner, boolean system) {
+	public Schema(Database database, int id, String schemaName, User owner,
+			boolean system) {
 		initDbObjectBase(database, id, schemaName, Trace.SCHEMA);
 		this.owner = owner;
 		this.system = system;
@@ -71,7 +75,7 @@ public class Schema extends DbObjectBase {
 
 	/**
 	 * Check if this schema can be dropped. System schemas can not be dropped.
-	 *
+	 * 
 	 * @return true if it can be dropped
 	 */
 	public boolean canDrop() {
@@ -112,12 +116,12 @@ public class Schema extends DbObjectBase {
 			database.removeSchemaObject(session, obj);
 		}
 		while (tablesAndViews != null && tablesAndViews.size() > 0) {
-			ReplicaSet replicaSet = (ReplicaSet) tablesAndViews.values().toArray()[0];
+			ReplicaSet replicaSet = (ReplicaSet) tablesAndViews.values()
+					.toArray()[0];
 			Set<Table> tables = replicaSet.getAllCopies();
 			Table[] array = tables.toArray(new Table[0]);
 
-			for (int i=0; i<array.length; i++){
-				Table table = array[i];
+			for (Table table : array) {
 				database.removeSchemaObject(session, table);
 			}
 			replicaSet.removeAllCopies();
@@ -147,7 +151,7 @@ public class Schema extends DbObjectBase {
 
 	/**
 	 * Get the owner of this schema.
-	 *
+	 * 
 	 * @return the owner
 	 */
 	public User getOwner() {
@@ -175,8 +179,9 @@ public class Schema extends DbObjectBase {
 
 	/**
 	 * Add an object to this schema.
-	 *
-	 * @param obj the object to add
+	 * 
+	 * @param obj
+	 *            the object to add
 	 */
 	public void add(SchemaObject obj) {
 		if (SysProperties.CHECK && obj.getSchema() != this) {
@@ -186,17 +191,21 @@ public class Schema extends DbObjectBase {
 		int type = obj.getType();
 		Map map = getMap(type);
 
-		if (SysProperties.CHECK && map.get(name) != null && type != DbObject.TABLE_OR_VIEW) {
+		if (SysProperties.CHECK && map.get(name) != null
+				&& type != DbObject.TABLE_OR_VIEW) {
 			Message.throwInternalError("object already exists");
 		}
-		if (type == DbObject.TABLE_OR_VIEW){
-			//H2O. Do something special - this has to be added to a replica set if one doesn't exist.
+		if (type == DbObject.TABLE_OR_VIEW) {
+			// H2O. Do something special - this has to be added to a replica set
+			// if one doesn't exist.
 
-			if (tablesAndViews.get(name) == null){
+			if (tablesAndViews.get(name) == null) {
 				tablesAndViews.put(name, new ReplicaSet(obj));
 			} else {
 				ReplicaSet replicaSet = tablesAndViews.get(name);
-				replicaSet.addNewReplica(obj); //XXX assumes this will never try to over-write an existing table.
+				replicaSet.addNewReplica(obj); // XXX assumes this will never
+												// try to over-write an existing
+												// table.
 				tablesAndViews.put(name, replicaSet);
 			}
 		} else {
@@ -207,9 +216,11 @@ public class Schema extends DbObjectBase {
 
 	/**
 	 * Rename an object.
-	 *
-	 * @param obj the object to rename
-	 * @param newName the new name
+	 * 
+	 * @param obj
+	 *            the object to rename
+	 * @param newName
+	 *            the new name
 	 */
 	public void rename(SchemaObject obj, String newName) throws SQLException {
 		int type = obj.getType();
@@ -223,7 +234,7 @@ public class Schema extends DbObjectBase {
 				Message.throwInternalError("object already exists: " + newName);
 			}
 		}
-		if (type == DbObject.TABLE_OR_VIEW){
+		if (type == DbObject.TABLE_OR_VIEW) {
 
 			Table table = (Table) obj;
 			String tableName = table.getName();
@@ -237,7 +248,7 @@ public class Schema extends DbObjectBase {
 
 			tablesAndViews.put(newName, replicaSet);
 
-		}  else {
+		} else {
 			obj.checkRename();
 			map.remove(obj.getName());
 			freeUniqueName(obj.getName());
@@ -251,26 +262,41 @@ public class Schema extends DbObjectBase {
 	 * Try to find a table or view with this name. This method returns null if
 	 * no object with this name exists. Local temporary tables are also
 	 * returned.
-	 *
-	 * @param session the session
-	 * @param name the object name
-	 * @param locale 
+	 * 
+	 * @param session
+	 *            the session
+	 * @param name
+	 *            the object name
+	 * @param locale
 	 * @return the object or null
 	 */
-	public Table findTableOrView(Session session, String name, LocationPreference locale) {
+	public Table findTableOrView(Session session, String name,
+			LocationPreference locale) {
 		ReplicaSet replicaSet = tablesAndViews.get(name);
 
 		Table table = null;
 		if (replicaSet == null && session != null) {
 			table = session.findLocalTempTable(name);
-		} else if (replicaSet != null){
+		} else if (replicaSet != null) {
 
-			if ((replicaSet.size() == 1 && !locale.isStrict()) || locale == LocationPreference.NO_PREFERENCE){ //XXX more advanced logic to choose replica would go here.
+			if ((replicaSet.size() == 1 && !locale.isStrict())
+					|| locale == LocationPreference.NO_PREFERENCE) { // XXX more
+																		// advanced
+																		// logic
+																		// to
+																		// choose
+																		// replica
+																		// would
+																		// go
+																		// here.
 				table = replicaSet.getACopy();
-			} else if (locale == LocationPreference.LOCAL || locale == LocationPreference.LOCAL_STRICT){
+			} else if (locale == LocationPreference.LOCAL
+					|| locale == LocationPreference.LOCAL_STRICT) {
 
-				table = replicaSet.getLocalCopy(); //XXX what if no local copy exists?
-			} else if (locale == LocationPreference.PRIMARY || locale == LocationPreference.PRIMARY_STRICT){
+				table = replicaSet.getLocalCopy(); // XXX what if no local copy
+													// exists?
+			} else if (locale == LocationPreference.PRIMARY
+					|| locale == LocationPreference.PRIMARY_STRICT) {
 				table = replicaSet.getPrimaryCopy();
 			}
 
@@ -278,14 +304,15 @@ public class Schema extends DbObjectBase {
 		return table;
 	}
 
-
 	/**
-	 * Try to find a LOCAL VERSION of a table or view with this name. This method returns null if
-	 * no object with this name exists. Local temporary tables are also
-	 * returned.
-	 *
-	 * @param session the session
-	 * @param name the object name
+	 * Try to find a LOCAL VERSION of a table or view with this name. This
+	 * method returns null if no object with this name exists. Local temporary
+	 * tables are also returned.
+	 * 
+	 * @param session
+	 *            the session
+	 * @param name
+	 *            the object name
 	 * @return the object or null
 	 */
 	public Table findLocalTableOrView(Session session, String name) {
@@ -301,11 +328,13 @@ public class Schema extends DbObjectBase {
 	}
 
 	/**
-	 * Try to find an index with this name. This method returns null if
-	 * no object with this name exists.
-	 *
-	 * @param session the session
-	 * @param name the object name
+	 * Try to find an index with this name. This method returns null if no
+	 * object with this name exists.
+	 * 
+	 * @param session
+	 *            the session
+	 * @param name
+	 *            the object name
 	 * @return the object or null
 	 */
 	public Index findIndex(Session session, String name) {
@@ -317,10 +346,11 @@ public class Schema extends DbObjectBase {
 	}
 
 	/**
-	 * Try to find a trigger with this name. This method returns null if
-	 * no object with this name exists.
-	 *
-	 * @param name the object name
+	 * Try to find a trigger with this name. This method returns null if no
+	 * object with this name exists.
+	 * 
+	 * @param name
+	 *            the object name
 	 * @return the object or null
 	 */
 	public TriggerObject findTrigger(String name) {
@@ -328,10 +358,11 @@ public class Schema extends DbObjectBase {
 	}
 
 	/**
-	 * Try to find a sequence with this name. This method returns null if
-	 * no object with this name exists.
-	 *
-	 * @param sequenceName the object name
+	 * Try to find a sequence with this name. This method returns null if no
+	 * object with this name exists.
+	 * 
+	 * @param sequenceName
+	 *            the object name
 	 * @return the object or null
 	 */
 	public Sequence findSequence(String sequenceName) {
@@ -341,9 +372,11 @@ public class Schema extends DbObjectBase {
 	/**
 	 * Try to find a constraint with this name. This method returns null if no
 	 * object with this name exists.
-	 *
-	 * @param session the session
-	 * @param name the object name
+	 * 
+	 * @param session
+	 *            the session
+	 * @param name
+	 *            the object name
 	 * @return the object or null
 	 */
 	public Constraint findConstraint(Session session, String name) {
@@ -357,8 +390,9 @@ public class Schema extends DbObjectBase {
 	/**
 	 * Try to find a user defined constant with this name. This method returns
 	 * null if no object with this name exists.
-	 *
-	 * @param constantName the object name
+	 * 
+	 * @param constantName
+	 *            the object name
 	 * @return the object or null
 	 */
 	public Constant findConstant(String constantName) {
@@ -367,8 +401,9 @@ public class Schema extends DbObjectBase {
 
 	/**
 	 * Release a unique object name.
-	 *
-	 * @param name the object name
+	 * 
+	 * @param name
+	 *            the object name
 	 */
 	public void freeUniqueName(String name) {
 		if (name != null) {
@@ -379,12 +414,14 @@ public class Schema extends DbObjectBase {
 	}
 
 	private String getUniqueName(DbObject obj, Map map, String prefix) {
-		String hash = Integer.toHexString(obj.getName().hashCode()).toUpperCase();
+		String hash = Integer.toHexString(obj.getName().hashCode())
+				.toUpperCase();
 		String name = null;
 		synchronized (temporaryUniqueNames) {
 			for (int i = 1; i < hash.length(); i++) {
 				name = prefix + hash.substring(0, i);
-				if (!map.containsKey(name) && !temporaryUniqueNames.contains(name)) {
+				if (!map.containsKey(name)
+						&& !temporaryUniqueNames.contains(name)) {
 					break;
 				}
 				name = null;
@@ -393,7 +430,8 @@ public class Schema extends DbObjectBase {
 				prefix = prefix + hash + "_";
 				for (int i = 0;; i++) {
 					name = prefix + i;
-					if (!map.containsKey(name) && !temporaryUniqueNames.contains(name)) {
+					if (!map.containsKey(name)
+							&& !temporaryUniqueNames.contains(name)) {
 						break;
 					}
 				}
@@ -405,9 +443,11 @@ public class Schema extends DbObjectBase {
 
 	/**
 	 * Create a unique constraint name.
-	 *
-	 * @param session the session
-	 * @param table the constraint table
+	 * 
+	 * @param session
+	 *            the session
+	 * @param table
+	 *            the constraint table
 	 * @return the unique name
 	 */
 	public String getUniqueConstraintName(Session session, Table table) {
@@ -422,10 +462,13 @@ public class Schema extends DbObjectBase {
 
 	/**
 	 * Create a unique index name.
-	 *
-	 * @param session the session
-	 * @param table the indexed table
-	 * @param prefix the index name prefix
+	 * 
+	 * @param session
+	 *            the session
+	 * @param table
+	 *            the indexed table
+	 * @param prefix
+	 *            the index name prefix
 	 * @return the unique name
 	 */
 	public String getUniqueIndexName(Session session, Table table, String prefix) {
@@ -439,15 +482,19 @@ public class Schema extends DbObjectBase {
 	}
 
 	/**
-	 * Get the table or view with the given name.
-	 * Local temporary tables are also returned.
-	 *
-	 * @param session the session
-	 * @param name the table or view name
+	 * Get the table or view with the given name. Local temporary tables are
+	 * also returned.
+	 * 
+	 * @param session
+	 *            the session
+	 * @param name
+	 *            the table or view name
 	 * @return the table or view
-	 * @throws SQLException if no such object exists
+	 * @throws SQLException
+	 *             if no such object exists
 	 */
-	public Table getTableOrView(Session session, String name) throws SQLException {
+	public Table getTableOrView(Session session, String name)
+			throws SQLException {
 		ReplicaSet tables = tablesAndViews.get(name);
 
 		Table table;
@@ -460,7 +507,8 @@ public class Schema extends DbObjectBase {
 		return table;
 	}
 
-	public ReplicaSet getTablesOrViews(Session session, String name) throws SQLException {
+	public ReplicaSet getTablesOrViews(Session session, String name)
+			throws SQLException {
 		ReplicaSet tables = tablesAndViews.get(name);
 
 		return tables;
@@ -468,10 +516,12 @@ public class Schema extends DbObjectBase {
 
 	/**
 	 * Get the index with the given name.
-	 *
-	 * @param name the index name
+	 * 
+	 * @param name
+	 *            the index name
 	 * @return the index
-	 * @throws SQLException if no such object exists
+	 * @throws SQLException
+	 *             if no such object exists
 	 */
 	public Index getIndex(String name) throws SQLException {
 		Index index = (Index) indexes.get(name);
@@ -483,54 +533,64 @@ public class Schema extends DbObjectBase {
 
 	/**
 	 * Get the constraint with the given name.
-	 *
-	 * @param name the constraint name
+	 * 
+	 * @param name
+	 *            the constraint name
 	 * @return the constraint
-	 * @throws SQLException if no such object exists
+	 * @throws SQLException
+	 *             if no such object exists
 	 */
 	public Constraint getConstraint(String name) throws SQLException {
 		Constraint constraint = (Constraint) constraints.get(name);
 		if (constraint == null) {
-			throw Message.getSQLException(ErrorCode.CONSTRAINT_NOT_FOUND_1, name);
+			throw Message.getSQLException(ErrorCode.CONSTRAINT_NOT_FOUND_1,
+					name);
 		}
 		return constraint;
 	}
 
 	/**
 	 * Get the user defined constant with the given name.
-	 *
-	 * @param constantName the constant name
+	 * 
+	 * @param constantName
+	 *            the constant name
 	 * @return the constant
-	 * @throws SQLException if no such object exists
+	 * @throws SQLException
+	 *             if no such object exists
 	 */
 	public Constant getConstant(String constantName) throws SQLException {
 		Constant constant = (Constant) constants.get(constantName);
 		if (constant == null) {
-			throw Message.getSQLException(ErrorCode.CONSTANT_NOT_FOUND_1, constantName);
+			throw Message.getSQLException(ErrorCode.CONSTANT_NOT_FOUND_1,
+					constantName);
 		}
 		return constant;
 	}
 
 	/**
 	 * Get the sequence with the given name.
-	 *
-	 * @param sequenceName the sequence name
+	 * 
+	 * @param sequenceName
+	 *            the sequence name
 	 * @return the sequence
-	 * @throws SQLException if no such object exists
+	 * @throws SQLException
+	 *             if no such object exists
 	 */
 	public Sequence getSequence(String sequenceName) throws SQLException {
 		Sequence sequence = (Sequence) sequences.get(sequenceName);
 		if (sequence == null) {
-			throw Message.getSQLException(ErrorCode.SEQUENCE_NOT_FOUND_1, sequenceName);
+			throw Message.getSQLException(ErrorCode.SEQUENCE_NOT_FOUND_1,
+					sequenceName);
 		}
 		return sequence;
 	}
 
 	/**
 	 * Get all objects of the given type.
-	 *
-	 * @param type the object type
-	 * @return a  (possible empty) list of all objects
+	 * 
+	 * @param type
+	 *            the object type
+	 * @return a (possible empty) list of all objects
 	 */
 	public ObjectArray getAll(int type) {
 		Map map = getMap(type);
@@ -539,8 +599,9 @@ public class Schema extends DbObjectBase {
 
 	/**
 	 * Remove an object from this schema.
-	 *
-	 * @param obj the object to remove
+	 * 
+	 * @param obj
+	 *            the object to remove
 	 */
 	public void remove(SchemaObject obj) {
 		String objName = obj.getName();
@@ -548,18 +609,19 @@ public class Schema extends DbObjectBase {
 
 		if (SysProperties.CHECK && !map.containsKey(objName)) {
 			Message.throwInternalError("not found: " + objName);
-		} 
-		if (obj.getType() == DbObject.TABLE_OR_VIEW){
+		}
+		if (obj.getType() == DbObject.TABLE_OR_VIEW) {
 
 			Table table = (Table) obj;
 			ReplicaSet replicaSet = tablesAndViews.get(table.getName());
 
 			boolean inUse = replicaSet.removeCopy(table);
 
-			if (!inUse){
-				//Delete this replicaSet
+			if (!inUse) {
+				// Delete this replicaSet
 				tablesAndViews.remove(table.getName());
-				//System.out.println("H2O. Removing replica-set for table '" + table.getName() + "'.");
+				// System.out.println("H2O. Removing replica-set for table '" +
+				// table.getName() + "'.");
 			}
 		} else {
 			map.remove(objName);
@@ -569,38 +631,59 @@ public class Schema extends DbObjectBase {
 
 	/**
 	 * Add a table to the schema.
-	 *
-	 * @param tableName the table name
-	 * @param id the object id
-	 * @param columns the column list
-	 * @param persistent if the table should be persistent
-	 * @param clustered if a clustered table should be created
-	 * @param headPos the position (page number) of the head
+	 * 
+	 * @param tableName
+	 *            the table name
+	 * @param id
+	 *            the object id
+	 * @param columns
+	 *            the column list
+	 * @param persistent
+	 *            if the table should be persistent
+	 * @param clustered
+	 *            if a clustered table should be created
+	 * @param headPos
+	 *            the position (page number) of the head
 	 * @return the created {@link TableData} object
 	 */
-	public TableData createTable(String tableName, int id, ObjectArray columns, boolean persistent, boolean clustered, int headPos)
-	throws SQLException {
-		return new TableData(this, tableName, id, columns, persistent, clustered, headPos);
+	public TableData createTable(String tableName, int id, ObjectArray columns,
+			boolean persistent, boolean clustered, int headPos)
+			throws SQLException {
+		return new TableData(this, tableName, id, columns, persistent,
+				clustered, headPos);
 	}
 
 	/**
 	 * Add a linked table to the schema.
-	 *
-	 * @param id the object id
-	 * @param tableName the table name of the alias
-	 * @param driver the driver class name
-	 * @param url the database URL
-	 * @param user the user name
-	 * @param password the password
-	 * @param originalSchema the schema name of the target table
-	 * @param originalTable the table name of the target table
-	 * @param emitUpdates if updates should be emitted instead of delete/insert
-	 * @param force create the object even if the database can not be accessed
+	 * 
+	 * @param id
+	 *            the object id
+	 * @param tableName
+	 *            the table name of the alias
+	 * @param driver
+	 *            the driver class name
+	 * @param url
+	 *            the database URL
+	 * @param user
+	 *            the user name
+	 * @param password
+	 *            the password
+	 * @param originalSchema
+	 *            the schema name of the target table
+	 * @param originalTable
+	 *            the table name of the target table
+	 * @param emitUpdates
+	 *            if updates should be emitted instead of delete/insert
+	 * @param force
+	 *            create the object even if the database can not be accessed
 	 * @return the {@link TableLink} object
 	 */
-	public TableLink createTableLink(int id, String tableName, String driver, String url, String user, String password,
-			String originalSchema, String originalTable, boolean emitUpdates, boolean force) throws SQLException {
-		return new TableLink(this, id, tableName, driver, url, user, password, originalSchema, originalTable, emitUpdates, force);
+	public TableLink createTableLink(int id, String tableName, String driver,
+			String url, String user, String password, String originalSchema,
+			String originalTable, boolean emitUpdates, boolean force)
+			throws SQLException {
+		return new TableLink(this, id, tableName, driver, url, user, password,
+				originalSchema, originalTable, emitUpdates, force);
 	}
 
 	/**

@@ -18,34 +18,41 @@ public interface BlockCipher {
 
 	/**
 	 * Set the encryption key used for encrypting and decrypting.
-	 *
-	 * @param key the key
+	 * 
+	 * @param key
+	 *            the key
 	 */
 	void setKey(byte[] key);
 
 	/**
-	 * Encrypt a number of bytes. This is done in-place, that
-	 * means the bytes are overwritten.
-	 *
-	 * @param bytes the byte array
-	 * @param off the start index
-	 * @param len the number of bytes to encrypt
+	 * Encrypt a number of bytes. This is done in-place, that means the bytes
+	 * are overwritten.
+	 * 
+	 * @param bytes
+	 *            the byte array
+	 * @param off
+	 *            the start index
+	 * @param len
+	 *            the number of bytes to encrypt
 	 */
 	void encrypt(byte[] bytes, int off, int len);
 
 	/**
-	 * Decrypt a number of bytes. This is done in-place, that
-	 * means the bytes are overwritten.
-	 *
-	 * @param bytes the byte array
-	 * @param off the start index
-	 * @param len the number of bytes to decrypt
+	 * Decrypt a number of bytes. This is done in-place, that means the bytes
+	 * are overwritten.
+	 * 
+	 * @param bytes
+	 *            the byte array
+	 * @param off
+	 *            the start index
+	 * @param len
+	 *            the number of bytes to decrypt
 	 */
 	void decrypt(byte[] bytes, int off, int len);
 
 	/**
 	 * Get the length of the key in bytes.
-	 *
+	 * 
 	 * @return the length of the key
 	 */
 	int getKeyLength();

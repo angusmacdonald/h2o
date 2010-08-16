@@ -60,7 +60,8 @@ abstract class ValueBytesBase extends Value {
 		return getBytes();
 	}
 
-	public void set(PreparedStatement prep, int parameterIndex) throws SQLException {
+	public void set(PreparedStatement prep, int parameterIndex)
+			throws SQLException {
 		prep.setBytes(parameterIndex, value);
 	}
 
@@ -73,7 +74,9 @@ abstract class ValueBytesBase extends Value {
 	}
 
 	public boolean equals(Object other) {
-		return other instanceof ValueBytesBase && ByteUtils.compareNotNull(value, ((ValueBytesBase) other).value) == 0;
+		return other instanceof ValueBytesBase
+				&& ByteUtils.compareNotNull(value,
+						((ValueBytesBase) other).value) == 0;
 	}
 
 }

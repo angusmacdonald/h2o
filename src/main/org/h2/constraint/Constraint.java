@@ -57,55 +57,63 @@ public abstract class Constraint extends SchemaObjectBase implements Comparable 
 
 	/**
 	 * The constraint type name
-	 *
+	 * 
 	 * @return the name
 	 */
 	public abstract String getConstraintType();
 
 	/**
-	 * Check if this row fulfils the constraint.
-	 * This method throws an exception if not.
-	 *
-	 * @param session the session
-	 * @param t the table
-	 * @param oldRow the old row
-	 * @param newRow the new row
+	 * Check if this row fulfils the constraint. This method throws an exception
+	 * if not.
+	 * 
+	 * @param session
+	 *            the session
+	 * @param t
+	 *            the table
+	 * @param oldRow
+	 *            the old row
+	 * @param newRow
+	 *            the new row
 	 */
-	public abstract void checkRow(Session session, Table t, Row oldRow, Row newRow) throws SQLException;
+	public abstract void checkRow(Session session, Table t, Row oldRow,
+			Row newRow) throws SQLException;
 
 	/**
 	 * Check if this constraint needs the specified index.
-	 *
-	 * @param index the index
+	 * 
+	 * @param index
+	 *            the index
 	 * @return true if the index is used
 	 */
 	public abstract boolean usesIndex(Index index);
 
 	/**
 	 * This index is now the owner of the specified index.
-	 *
-	 * @param index the index
+	 * 
+	 * @param index
+	 *            the index
 	 */
 	public abstract void setIndexOwner(Index index);
 
 	/**
 	 * Check if this constraint contains the given column.
-	 *
-	 * @param col the column
+	 * 
+	 * @param col
+	 *            the column
 	 * @return true if it does
 	 */
 	public abstract boolean containsColumn(Column col);
 
 	/**
 	 * Get the SQL statement to create this constraint.
-	 *
+	 * 
 	 * @return the SQL statement
 	 */
-	public abstract String  getCreateSQLWithoutIndexes();
+	public abstract String getCreateSQLWithoutIndexes();
 
 	/**
 	 * Check if this constraint needs to be checked before updating the data.
-	 *
+	 * 
 	 * @return true if it must be checked before updating
 	 */
 	public abstract boolean isBefore();
@@ -113,21 +121,22 @@ public abstract class Constraint extends SchemaObjectBase implements Comparable 
 	/**
 	 * Check the existing data. This method is called if the constraint is added
 	 * after data has been inserted into the table.
-	 *
-	 * @param session the session
+	 * 
+	 * @param session
+	 *            the session
 	 */
 	public abstract void checkExistingData(Session session) throws SQLException;
 
 	/**
-	 * This method is called after a related table has changed
-	 * (the table was renamed, or columns have been renamed).
+	 * This method is called after a related table has changed (the table was
+	 * renamed, or columns have been renamed).
 	 */
 	public abstract void rebuild() throws SQLException;
 
 	/**
 	 * Get the unique index used to enforce this constraint, or null if no index
 	 * is used.
-	 *
+	 * 
 	 * @return the index
 	 */
 	public abstract Index getUniqueIndex();

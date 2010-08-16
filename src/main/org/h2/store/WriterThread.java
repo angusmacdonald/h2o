@@ -29,13 +29,11 @@ public class WriterThread extends Thread {
 
 	/**
 	 * The reference to the database.
-	 *
-	 * Thread objects are not garbage collected
-	 * until they returned from the run() method
-	 * (even if they where never started)
-	 * so if the connection was not closed,
-	 * the database object cannot get reclaimed
-	 * by the garbage collector if we use a hard reference.
+	 * 
+	 * Thread objects are not garbage collected until they returned from the
+	 * run() method (even if they where never started) so if the connection was
+	 * not closed, the database object cannot get reclaimed by the garbage
+	 * collector if we use a hard reference.
 	 */
 	private volatile WeakReference databaseRef;
 
@@ -52,8 +50,9 @@ public class WriterThread extends Thread {
 
 	/**
 	 * Change the write delay
-	 *
-	 * @param writeDelay the new write delay
+	 * 
+	 * @param writeDelay
+	 *            the new write delay
 	 */
 	public void setWriteDelay(int writeDelay) {
 		LogSystem log = getLog();
@@ -68,9 +67,11 @@ public class WriterThread extends Thread {
 
 	/**
 	 * Create and start a new writer thread for the given database.
-	 *
-	 * @param database the database
-	 * @param writeDelay the delay
+	 * 
+	 * @param database
+	 *            the database
+	 * @param writeDelay
+	 *            the delay
 	 * @return the writer thread object
 	 */
 	public static WriterThread create(Database database, int writeDelay) {
@@ -114,7 +115,8 @@ public class WriterThread extends Thread {
 					try {
 						idx.flush(database.getSystemSession());
 					} catch (SQLException e) {
-						database.getTrace(Trace.DATABASE).error("flush index " + idx.getName(), e);
+						database.getTrace(Trace.DATABASE).error(
+								"flush index " + idx.getName(), e);
 					}
 				}
 			}
@@ -149,7 +151,8 @@ public class WriterThread extends Thread {
 			} catch (SQLException e) {
 				TraceSystem traceSystem = database.getTraceSystem();
 				if (traceSystem != null) {
-					traceSystem.getTrace(Trace.LOG).error("reconnectCheckpoint", e);
+					traceSystem.getTrace(Trace.LOG).error(
+							"reconnectCheckpoint", e);
 				}
 			}
 
@@ -194,10 +197,12 @@ public class WriterThread extends Thread {
 	/**
 	 * Delete the following log file later on. If there is already a file to be
 	 * deleted, that one will be deleted immediately.
-	 *
-	 * @param fileName the name of the file to delete
+	 * 
+	 * @param fileName
+	 *            the name of the file to delete
 	 */
-	public synchronized void deleteLogFileLater(String fileName) throws SQLException {
+	public synchronized void deleteLogFileLater(String fileName)
+			throws SQLException {
 		if (oldLogFile != null) {
 			FileUtils.delete(oldLogFile);
 		}

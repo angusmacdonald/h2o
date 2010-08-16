@@ -78,8 +78,8 @@ import org.h2.util.StringUtils;
 import org.h2.util.Tool;
 
 /**
- * For each connection to a session, an object of this class is created.
- * This class is used by the H2 Console.
+ * For each connection to a session, an object of this class is created. This
+ * class is used by the H2 Console.
  */
 class WebThread extends Thread implements DatabaseEventListener {
 
@@ -108,9 +108,11 @@ class WebThread extends Thread implements DatabaseEventListener {
 
 	/**
 	 * Set the web session and attributes.
-	 *
-	 * @param session the session
-	 * @param attributes the attributes
+	 * 
+	 * @param session
+	 *            the session
+	 * @param attributes
+	 *            the attributes
 	 */
 	void setSession(WebSession session, Properties attributes) {
 		this.session = session;
@@ -141,9 +143,11 @@ class WebThread extends Thread implements DatabaseEventListener {
 
 	/**
 	 * Process an HTTP request.
-	 *
-	 * @param file the file that was requested
-	 * @param the host address
+	 * 
+	 * @param file
+	 *            the file that was requested
+	 * @param the
+	 *            host address
 	 * @return the name of the file to return to the client
 	 */
 	String processRequest(String file, String hostAddr) {
@@ -163,7 +167,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 		} else if ("css".equals(suffix)) {
 			cache = true;
 			mimeType = "text/css";
-		} else if ("html".equals(suffix) || "do".equals(suffix) || "jsp".equals(suffix)) {
+		} else if ("html".equals(suffix) || "do".equals(suffix)
+				|| "jsp".equals(suffix)) {
 			cache = false;
 			mimeType = "text/html";
 			if (session == null) {
@@ -246,7 +251,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 			}
 			String message;
 			byte[] bytes;
-			if (cache && ifModifiedSince != null && ifModifiedSince.equals(server.getStartDateTime())) {
+			if (cache && ifModifiedSince != null
+					&& ifModifiedSince.equals(server.getStartDateTime())) {
 				bytes = null;
 				message = "HTTP/1.1 304 Not Modified\n";
 			} else {
@@ -270,7 +276,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 						message += "Cache-Control: no-cache\n";
 					} else {
 						message += "Cache-Control: max-age=10\n";
-						message += "Last-Modified: " + server.getStartDateTime() + "\n";
+						message += "Last-Modified: "
+								+ server.getStartDateTime() + "\n";
 					}
 					message += "Content-Length: " + bytes.length + "\n";
 				}
@@ -288,8 +295,7 @@ class WebThread extends Thread implements DatabaseEventListener {
 
 	private String getComboBox(String[] elements, String selected) {
 		StringBuilder buff = new StringBuilder();
-		for (int i = 0; i < elements.length; i++) {
-			String value = elements[i];
+		for (String value : elements) {
 			buff.append("<option value=\"");
 			buff.append(PageParser.escapeHtmlData(value));
 			buff.append("\"");
@@ -305,8 +311,7 @@ class WebThread extends Thread implements DatabaseEventListener {
 
 	private String getComboBox(String[][] elements, String selected) {
 		StringBuilder buff = new StringBuilder();
-		for (int i = 0; i < elements.length; i++) {
-			String[] n = elements[i];
+		for (String[] n : elements) {
 			buff.append("<option value=\"");
 			buff.append(PageParser.escapeHtmlData(n[0]));
 			buff.append("\"");
@@ -381,13 +386,16 @@ class WebThread extends Thread implements DatabaseEventListener {
 					keepAlive = true;
 				}
 			} else if (lower.startsWith("content-length")) {
-				len = Integer.parseInt(line.substring(line.indexOf(':') + 1).trim());
+				len = Integer.parseInt(line.substring(line.indexOf(':') + 1)
+						.trim());
 				trace("len=" + len);
 			} else if (lower.startsWith("accept-language")) {
 				Locale locale = session == null ? null : session.locale;
 				if (locale == null) {
-					String languages = line.substring(line.indexOf(':') + 1).trim();
-					StringTokenizer tokenizer = new StringTokenizer(languages, ",;");
+					String languages = line.substring(line.indexOf(':') + 1)
+							.trim();
+					StringTokenizer tokenizer = new StringTokenizer(languages,
+							",;");
 					while (tokenizer.hasMoreTokens()) {
 						String token = tokenizer.nextToken();
 						if (!token.startsWith("q=")) {
@@ -404,7 +412,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 								if (session != null) {
 									session.locale = locale;
 									session.put("language", headerLanguage);
-									server.readTranslations(session, headerLanguage);
+									server.readTranslations(session,
+											headerLanguage);
 								}
 								break;
 							}
@@ -474,7 +483,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 	private String autoCompleteList() {
 		String query = (String) attributes.get("query");
 		boolean lowercase = false;
-		if (query.trim().length() > 0 && Character.isLowerCase(query.trim().charAt(0))) {
+		if (query.trim().length() > 0
+				&& Character.isLowerCase(query.trim().charAt(0))) {
 			lowercase = true;
 		}
 		try {
@@ -504,7 +514,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 				while (sql.length() > 0 && sql.charAt(0) <= ' ') {
 					sql = sql.substring(1);
 				}
-				if (sql.trim().length() > 0 && Character.isLowerCase(sql.trim().charAt(0))) {
+				if (sql.trim().length() > 0
+						&& Character.isLowerCase(sql.trim().charAt(0))) {
 					lowercase = true;
 				}
 				Bnf bnf = session.getBnf();
@@ -515,7 +526,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 				String space = "";
 				if (sql.length() > 0) {
 					char last = sql.charAt(sql.length() - 1);
-					if (!Character.isWhitespace(last) && (last != '.' && last >= ' ' && last != '\'' && last != '"')) {
+					if (!Character.isWhitespace(last)
+							&& (last != '.' && last >= ' ' && last != '\'' && last != '"')) {
 						space = " ";
 					}
 				}
@@ -571,8 +583,10 @@ class WebThread extends Thread implements DatabaseEventListener {
 	private String adminSave() {
 		try {
 			server.setPort(MathUtils.decodeInt((String) attributes.get("port")));
-			server.setAllowOthers(Boolean.valueOf((String) attributes.get("allowOthers")).booleanValue());
-			server.setSSL(Boolean.valueOf((String) attributes.get("ssl")).booleanValue());
+			server.setAllowOthers(Boolean.valueOf(
+					(String) attributes.get("allowOthers")).booleanValue());
+			server.setSSL(Boolean.valueOf((String) attributes.get("ssl"))
+					.booleanValue());
 			server.saveSettings();
 		} catch (Exception e) {
 			trace(e.toString());
@@ -649,7 +663,9 @@ class WebThread extends Thread implements DatabaseEventListener {
 		}
 		Locale locale = session.locale;
 		if (language != null) {
-			if (locale == null || !StringUtils.toLowerEnglish(locale.getLanguage()).equals(language)) {
+			if (locale == null
+					|| !StringUtils.toLowerEnglish(locale.getLanguage())
+							.equals(language)) {
 				locale = new Locale(language, "");
 				server.readTranslations(session, locale.getLanguage());
 				session.put("language", language);
@@ -685,7 +701,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 		return "query.jsp";
 	}
 
-	private int addColumns(DbTableOrView table, StringBuilder buff, int treeIndex, boolean showColumnTypes,
+	private int addColumns(DbTableOrView table, StringBuilder buff,
+			int treeIndex, boolean showColumnTypes,
 			StringBuilder columnsBuffer, int indentationLevel, int tableLevel) {
 		DbColumn[] columns = table.columns;
 		for (int i = 0; columns != null && i < columns.length; i++) {
@@ -694,15 +711,20 @@ class WebThread extends Thread implements DatabaseEventListener {
 				columnsBuffer.append(' ');
 			}
 			columnsBuffer.append(column.name);
-			String col = StringUtils.urlEncode(PageParser.escapeJavaScript(column.name));
+			String col = StringUtils.urlEncode(PageParser
+					.escapeJavaScript(column.name));
 
-
-			//indentationLevel = 2;
-			buff.append("setNode(" + treeIndex + ", " + (indentationLevel+1) + ", " + tableLevel+1 + ", 'column', '" + PageParser.escapeJavaScript(column.name)
+			// indentationLevel = 2;
+			buff.append("setNode(" + treeIndex + ", " + (indentationLevel + 1)
+					+ ", " + tableLevel + 1 + ", 'column', '"
+					+ PageParser.escapeJavaScript(column.name)
 					+ "', 'javascript:ins(\\'" + col + "\\')');\n");
 			treeIndex++;
 			if (showColumnTypes) {
-				buff.append("setNode(" + treeIndex + ", " + (indentationLevel+2) + ", " + (tableLevel+2) + ", 'type', '" + PageParser.escapeJavaScript(column.dataType)
+				buff.append("setNode(" + treeIndex + ", "
+						+ (indentationLevel + 2) + ", " + (tableLevel + 2)
+						+ ", 'type', '"
+						+ PageParser.escapeJavaScript(column.dataType)
 						+ "', null);\n");
 				treeIndex++;
 			}
@@ -731,8 +753,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 		String columns;
 	}
 
-	private int addIndexes(DatabaseMetaData meta, String table, String schema, StringBuilder buff, int treeIndex)
-	throws SQLException {
+	private int addIndexes(DatabaseMetaData meta, String table, String schema,
+			StringBuilder buff, int treeIndex) throws SQLException {
 		// index reading is very slow for oracle (2 seconds per index), so don't
 		// do it
 		ResultSet rs = meta.getIndexInfo(null, schema, table, false, true);
@@ -755,7 +777,9 @@ class WebThread extends Thread implements DatabaseEventListener {
 				if (name != null && type != null) {
 					info = new IndexInfo();
 					info.name = name;
-					type = (rs.getBoolean("NON_UNIQUE") ? "${text.tree.nonUnique}" : "${text.tree.unique}") + type;
+					type = (rs.getBoolean("NON_UNIQUE") ? "${text.tree.nonUnique}"
+							: "${text.tree.unique}")
+							+ type;
 					info.type = type;
 					info.columns = rs.getString("COLUMN_NAME");
 					indexMap.put(name, info);
@@ -766,16 +790,20 @@ class WebThread extends Thread implements DatabaseEventListener {
 		}
 		rs.close();
 		if (indexMap.size() > 0) {
-			buff.append("setNode(" + treeIndex + ", 1, 1, 'index_az', '${text.tree.indexes}', null);\n");
+			buff.append("setNode(" + treeIndex
+					+ ", 1, 1, 'index_az', '${text.tree.indexes}', null);\n");
 			treeIndex++;
 			for (Iterator it = indexMap.values().iterator(); it.hasNext();) {
 				IndexInfo info = (IndexInfo) it.next();
-				buff.append("setNode(" + treeIndex + ", 2, 1, 'index', '" + PageParser.escapeJavaScript(info.name)
+				buff.append("setNode(" + treeIndex + ", 2, 1, 'index', '"
+						+ PageParser.escapeJavaScript(info.name)
 						+ "', null);\n");
 				treeIndex++;
-				buff.append("setNode(" + treeIndex + ", 3, 2, 'type', '" + info.type + "', null);\n");
+				buff.append("setNode(" + treeIndex + ", 3, 2, 'type', '"
+						+ info.type + "', null);\n");
 				treeIndex++;
-				buff.append("setNode(" + treeIndex + ", 3, 2, 'type', '" + PageParser.escapeJavaScript(info.columns)
+				buff.append("setNode(" + treeIndex + ", 3, 2, 'type', '"
+						+ PageParser.escapeJavaScript(info.columns)
 						+ "', null);\n");
 				treeIndex++;
 			}
@@ -783,8 +811,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 		return treeIndex;
 	}
 
-	private int addTablesAndViews(DbSchema schema, boolean mainSchema, StringBuilder buff, int treeIndex)
-	throws SQLException {
+	private int addTablesAndViews(DbSchema schema, boolean mainSchema,
+			StringBuilder buff, int treeIndex) throws SQLException {
 		if (schema == null) {
 			return treeIndex;
 		}
@@ -804,27 +832,35 @@ class WebThread extends Thread implements DatabaseEventListener {
 		/*
 		 * Loop through replica-sets
 		 */
-		for (Entry<String, Set<DbTableOrView>> entrySet: tables.entrySet()){
+		for (Entry<String, Set<DbTableOrView>> entrySet : tables.entrySet()) {
 			int tableLevel = level + 1;
 			int indentLevel = level;
 
 			Set<DbTableOrView> tableSet = entrySet.getValue();
 
-
-			if (tableSet.size() > 1){
+			if (tableSet.size() > 1) {
 				String tableName = entrySet.getKey();
 
-				buff.append("setNode(" + treeIndex + ", " + indentLevel+ ", " + tableLevel + ", 'index', ' " + PageParser.escapeJavaScript(tableName + " [" + tableSet.size() + " copies]")
-						+ "', 'javascript:ins(\\'" + schema.name + "." + tableName + "\\',true)');\n");
+				buff.append("setNode("
+						+ treeIndex
+						+ ", "
+						+ indentLevel
+						+ ", "
+						+ tableLevel
+						+ ", 'index', ' "
+						+ PageParser.escapeJavaScript(tableName + " ["
+								+ tableSet.size() + " copies]")
+						+ "', 'javascript:ins(\\'" + schema.name + "."
+						+ tableName + "\\',true)');\n");
 				treeIndex++;
-				//tableLevel++;
+				// tableLevel++;
 				indentLevel++;
-			} 
+			}
 
 			/*
 			 * Loop through individual tables in replica-sets
 			 */
-			for (DbTableOrView table: tableSet) {
+			for (DbTableOrView table : tableSet) {
 				if (table.isView) {
 					continue;
 				}
@@ -836,24 +872,40 @@ class WebThread extends Thread implements DatabaseEventListener {
 				}
 				tab = StringUtils.urlEncode(PageParser.escapeJavaScript(tab));
 
-				String isLink = table.isLinked? "[R]": "";
-				buff.append("setNode(" + treeIndex + ", " + indentLevel+ ", " + tableLevel + ", 'table', '" + isLink + " " + PageParser.escapeJavaScript(table.name + ((tableSet.size()==1)? " [1 copy]":""))
+				String isLink = table.isLinked ? "[R]" : "";
+				buff.append("setNode("
+						+ treeIndex
+						+ ", "
+						+ indentLevel
+						+ ", "
+						+ tableLevel
+						+ ", 'table', '"
+						+ isLink
+						+ " "
+						+ PageParser.escapeJavaScript(table.name
+								+ ((tableSet.size() == 1) ? " [1 copy]" : ""))
 						+ "', 'javascript:ins(\\'" + tab + "\\',true)');\n");
 				treeIndex++;
 				if (mainSchema) {
 					StringBuilder columnsBuffer = new StringBuilder();
-					treeIndex = addColumns(table, buff, treeIndex, notManyTables, columnsBuffer, (indentLevel+1), tableLevel);
+					treeIndex = addColumns(table, buff, treeIndex,
+							notManyTables, columnsBuffer, (indentLevel + 1),
+							tableLevel);
 					if (!isOracle && notManyTables) {
-						treeIndex = addIndexes(meta, table.name, schema.name, buff, treeIndex);
+						treeIndex = addIndexes(meta, table.name, schema.name,
+								buff, treeIndex);
 					}
-					buff.append("addTable('" + PageParser.escapeJavaScript(table.name) + "', '"
-							+ PageParser.escapeJavaScript(columnsBuffer.toString()) + "', " + tableId + ");\n");
+					buff.append("addTable('"
+							+ PageParser.escapeJavaScript(table.name)
+							+ "', '"
+							+ PageParser.escapeJavaScript(columnsBuffer
+									.toString()) + "', " + tableId + ");\n");
 				}
 			}
 		}
 		tables = schema.tables;
-		for (Set<DbTableOrView> tableSet: tables.values()){
-			for (DbTableOrView view: tableSet) {
+		for (Set<DbTableOrView> tableSet : tables.values()) {
+			for (DbTableOrView view : tableSet) {
 				if (!view.isView) {
 					continue;
 				}
@@ -863,22 +915,30 @@ class WebThread extends Thread implements DatabaseEventListener {
 					tab = view.schema.quotedName + "." + tab;
 				}
 				tab = StringUtils.urlEncode(PageParser.escapeJavaScript(tab));
-				buff.append("setNode(" + treeIndex + indentation + " 'view', '" + PageParser.escapeJavaScript(view.name)
+				buff.append("setNode(" + treeIndex + indentation + " 'view', '"
+						+ PageParser.escapeJavaScript(view.name)
 						+ "', 'javascript:ins(\\'" + tab + "\\',true)');\n");
 				treeIndex++;
 				if (mainSchema) {
 					StringBuilder columnsBuffer = new StringBuilder();
-					treeIndex = addColumns(view, buff, treeIndex, notManyTables, columnsBuffer, level, 1); //XXX the '1' is temporary.
+					treeIndex = addColumns(view, buff, treeIndex,
+							notManyTables, columnsBuffer, level, 1); // XXX the
+																		// '1'
+																		// is
+																		// temporary.
 					if (schema.contents.isH2) {
 						PreparedStatement prep = null;
 						try {
-							prep = conn.prepareStatement("SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME=?");
+							prep = conn
+									.prepareStatement("SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME=?");
 							prep.setString(1, view.name);
 							ResultSet rs = prep.executeQuery();
 							if (rs.next()) {
 								String sql = rs.getString("SQL");
-								buff.append("setNode(" + treeIndex + indentNode + " 'type', '"
-										+ PageParser.escapeJavaScript(sql) + "', null);\n");
+								buff.append("setNode(" + treeIndex + indentNode
+										+ " 'type', '"
+										+ PageParser.escapeJavaScript(sql)
+										+ "', null);\n");
 								treeIndex++;
 							}
 							rs.close();
@@ -886,8 +946,11 @@ class WebThread extends Thread implements DatabaseEventListener {
 							JdbcUtils.closeSilently(prep);
 						}
 					}
-					buff.append("addTable('" + PageParser.escapeJavaScript(view.name) + "', '"
-							+ PageParser.escapeJavaScript(columnsBuffer.toString()) + "', " + tableId + ");\n");
+					buff.append("addTable('"
+							+ PageParser.escapeJavaScript(view.name)
+							+ "', '"
+							+ PageParser.escapeJavaScript(columnsBuffer
+									.toString()) + "', " + tableId + ");\n");
 				}
 			}
 		}
@@ -905,19 +968,20 @@ class WebThread extends Thread implements DatabaseEventListener {
 			isH2 = contents.isH2;
 
 			StringBuilder buff = new StringBuilder();
-			buff.append("setNode(0, 0, 0, 'database', '" + PageParser.escapeJavaScript((String) session.get("url"))
+			buff.append("setNode(0, 0, 0, 'database', '"
+					+ PageParser.escapeJavaScript((String) session.get("url"))
 					+ "', null);\n");
 			int treeIndex = 1;
 
 			DbSchema defaultSchema = contents.defaultSchema;
 			treeIndex = addTablesAndViews(defaultSchema, true, buff, treeIndex);
 			DbSchema[] schemas = contents.schemas;
-			for (int i = 0; i < schemas.length; i++) {
-				DbSchema schema = schemas[i];
+			for (DbSchema schema : schemas) {
 				if (schema == defaultSchema || schema == null) {
 					continue;
 				}
-				buff.append("setNode(" + treeIndex + ", 0, 1, 'folder', '" + PageParser.escapeJavaScript(schema.name)
+				buff.append("setNode(" + treeIndex + ", 0, 1, 'folder', '"
+						+ PageParser.escapeJavaScript(schema.name)
 						+ "', null);\n");
 				treeIndex++;
 				treeIndex = addTablesAndViews(schema, false, buff, treeIndex);
@@ -927,42 +991,57 @@ class WebThread extends Thread implements DatabaseEventListener {
 				try {
 					stat = conn.createStatement();
 					ResultSet rs = stat
-					.executeQuery("SELECT * FROM INFORMATION_SCHEMA.SEQUENCES ORDER BY SEQUENCE_NAME");
+							.executeQuery("SELECT * FROM INFORMATION_SCHEMA.SEQUENCES ORDER BY SEQUENCE_NAME");
 					for (int i = 0; rs.next(); i++) {
 						if (i == 0) {
-							buff.append("setNode(" + treeIndex
+							buff.append("setNode("
+									+ treeIndex
 									+ ", 0, 1, 'sequences', '${text.tree.sequences}', null);\n");
 							treeIndex++;
 						}
 						String name = rs.getString("SEQUENCE_NAME");
 						String current = rs.getString("CURRENT_VALUE");
 						String increment = rs.getString("INCREMENT");
-						buff.append("setNode(" + treeIndex + ", 1, 1, 'sequence', '"
-								+ PageParser.escapeJavaScript(name) + "', null);\n");
+						buff.append("setNode(" + treeIndex
+								+ ", 1, 1, 'sequence', '"
+								+ PageParser.escapeJavaScript(name)
+								+ "', null);\n");
 						treeIndex++;
-						buff.append("setNode(" + treeIndex + ", 2, 2, 'type', '${text.tree.current}: "
-								+ PageParser.escapeJavaScript(current) + "', null);\n");
+						buff.append("setNode(" + treeIndex
+								+ ", 2, 2, 'type', '${text.tree.current}: "
+								+ PageParser.escapeJavaScript(current)
+								+ "', null);\n");
 						treeIndex++;
 						if (!"1".equals(increment)) {
-							buff.append("setNode(" + treeIndex + ", 2, 2, 'type', '${text.tree.increment}: "
-									+ PageParser.escapeJavaScript(increment) + "', null);\n");
+							buff.append("setNode("
+									+ treeIndex
+									+ ", 2, 2, 'type', '${text.tree.increment}: "
+									+ PageParser.escapeJavaScript(increment)
+									+ "', null);\n");
 							treeIndex++;
 						}
 					}
 					rs.close();
-					rs = stat.executeQuery("SELECT * FROM INFORMATION_SCHEMA.USERS ORDER BY NAME");
+					rs = stat
+							.executeQuery("SELECT * FROM INFORMATION_SCHEMA.USERS ORDER BY NAME");
 					for (int i = 0; rs.next(); i++) {
 						if (i == 0) {
-							buff.append("setNode(" + treeIndex + ", 0, 1, 'users', '${text.tree.users}', null);\n");
+							buff.append("setNode("
+									+ treeIndex
+									+ ", 0, 1, 'users', '${text.tree.users}', null);\n");
 							treeIndex++;
 						}
 						String name = rs.getString("NAME");
 						String admin = rs.getString("ADMIN");
-						buff.append("setNode(" + treeIndex + ", 1, 1, 'user', '" + PageParser.escapeJavaScript(name)
+						buff.append("setNode(" + treeIndex
+								+ ", 1, 1, 'user', '"
+								+ PageParser.escapeJavaScript(name)
 								+ "', null);\n");
 						treeIndex++;
 						if (admin.equalsIgnoreCase("TRUE")) {
-							buff.append("setNode(" + treeIndex + ", 2, 2, 'type', '${text.tree.admin}', null);\n");
+							buff.append("setNode("
+									+ treeIndex
+									+ ", 2, 2, 'type', '${text.tree.admin}', null);\n");
 							treeIndex++;
 						}
 					}
@@ -971,21 +1050,21 @@ class WebThread extends Thread implements DatabaseEventListener {
 					JdbcUtils.closeSilently(stat);
 				}
 			}
-			String version = meta.getDatabaseProductName() + " " + meta.getDatabaseProductVersion();
-			buff.append("setNode(" + treeIndex + ", 0, 0, 'info', '" + PageParser.escapeJavaScript(version)
-					+ "', null);\n");
+			String version = meta.getDatabaseProductName() + " "
+					+ meta.getDatabaseProductVersion();
+			buff.append("setNode(" + treeIndex + ", 0, 0, 'info', '"
+					+ PageParser.escapeJavaScript(version) + "', null);\n");
 
 			/*
 			 * H2O. Add check for 'is System Table.
 			 */
 			String connectionUrl = (String) this.session.getInfo().get("url");
 
-			String isSM = (connectionUrl.contains(":sm:"))? "YES": "NO";	
+			String isSM = (connectionUrl.contains(":sm:")) ? "YES" : "NO";
 
-
-			buff.append("setNode(" + ++treeIndex + ", 0, 0, 'info', '" + PageParser.escapeJavaScript("System Table: " + isSM)
+			buff.append("setNode(" + ++treeIndex + ", 0, 0, 'info', '"
+					+ PageParser.escapeJavaScript("System Table: " + isSM)
 					+ "', null);\n");
-
 
 			buff.append("refreshQueryTables();");
 			session.put("tree", buff.toString());
@@ -1005,20 +1084,24 @@ class WebThread extends Thread implements DatabaseEventListener {
 			if (isH2) {
 				stackTrace = linkToSource(stackTrace);
 			}
-			stackTrace = StringUtils.replaceAll(stackTrace, "\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
+			stackTrace = StringUtils.replaceAll(stackTrace, "\t",
+					"&nbsp;&nbsp;&nbsp;&nbsp;");
 			String message = PageParser.escapeHtml(e.getMessage());
-			String error = "<a class=\"error\" href=\"#\" onclick=\"var x=document.getElementById('st" + id
-			+ "').style;x.display=x.display==''?'none':'';\">" + message + "</a>";
+			String error = "<a class=\"error\" href=\"#\" onclick=\"var x=document.getElementById('st"
+					+ id
+					+ "').style;x.display=x.display==''?'none':'';\">"
+					+ message + "</a>";
 			if (e instanceof SQLException) {
 				SQLException se = (SQLException) e;
 				error += " " + se.getSQLState() + "/" + se.getErrorCode();
 				if (isH2) {
 					int code = se.getErrorCode();
-					error += " <a href=\"http://h2database.com/javadoc/org/h2/constant/ErrorCode.html#c" + code
-					+ "\">(${text.a.help})</a>";
+					error += " <a href=\"http://h2database.com/javadoc/org/h2/constant/ErrorCode.html#c"
+							+ code + "\">(${text.a.help})</a>";
 				}
 			}
-			error += "<span style=\"display: none;\" id=\"st" + id + "\"><br />" + stackTrace + "</span>";
+			error += "<span style=\"display: none;\" id=\"st" + id
+					+ "\"><br />" + stackTrace + "</span>";
 			error = formatAsError(error);
 			return error;
 		} catch (OutOfMemoryError e2) {
@@ -1051,8 +1134,10 @@ class WebThread extends Thread implements DatabaseEventListener {
 				String packageName = element.substring(0, dotClass);
 				int colon = element.lastIndexOf(':');
 				String file = element.substring(open + 1, colon);
-				String lineNumber = element.substring(colon + 1, element.length());
-				String fullFileName = packageName.replace('.', '/') + "/" + file;
+				String lineNumber = element.substring(colon + 1,
+						element.length());
+				String fullFileName = packageName.replace('.', '/') + "/"
+						+ file;
 				result.append("<a href=\"http://h2database.com/html/source.html?file=");
 				result.append(fullFileName);
 				result.append("&line=");
@@ -1084,7 +1169,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 		session.put("user", user);
 		boolean isH2 = url.startsWith("jdbc:h2:");
 		try {
-			Connection conn = server.getConnection(driver, url, user, password, this);
+			Connection conn = server.getConnection(driver, url, user, password,
+					this);
 			JdbcUtils.closeSilently(conn);
 			session.put("error", "${text.login.testSuccessful}");
 			return "login.jsp";
@@ -1103,14 +1189,18 @@ class WebThread extends Thread implements DatabaseEventListener {
 
 	/**
 	 * Get the formatted login error message.
-	 *
-	 * @param e the exception
-	 * @param isH2 if the current database is a H2 database
+	 * 
+	 * @param e
+	 *            the exception
+	 * @param isH2
+	 *            if the current database is a H2 database
 	 * @return the formatted error message
 	 */
 	String getLoginError(Exception e, boolean isH2) {
-		if (e instanceof JdbcSQLException && ((JdbcSQLException) e).getErrorCode() == ErrorCode.CLASS_NOT_FOUND_1) {
-			return "${text.login.driverNotFound}<br />" + getStackTrace(0, e, isH2);
+		if (e instanceof JdbcSQLException
+				&& ((JdbcSQLException) e).getErrorCode() == ErrorCode.CLASS_NOT_FOUND_1) {
+			return "${text.login.driverNotFound}<br />"
+					+ getStackTrace(0, e, isH2);
 		}
 		return getStackTrace(0, e, isH2);
 	}
@@ -1120,19 +1210,22 @@ class WebThread extends Thread implements DatabaseEventListener {
 		final String url = attributes.getProperty("url", "");
 		final String user = attributes.getProperty("user", "");
 		final String password = attributes.getProperty("password", "");
-		//final String descriptor = attributes.getProperty("descriptor", "");
+		// final String descriptor = attributes.getProperty("descriptor", "");
 		session.put("autoCommit", "checked");
 		session.put("autoComplete", "1");
 		session.put("maxrows", "1000");
 		boolean thread = false;
-		if (socket != null && url.startsWith("jdbc:h2:") && !url.startsWith("jdbc:h2:tcp:")
-				&& !url.startsWith("jdbc:h2:ssl:") && !url.startsWith("jdbc:h2:mem:")) {
+		if (socket != null && url.startsWith("jdbc:h2:")
+				&& !url.startsWith("jdbc:h2:tcp:")
+				&& !url.startsWith("jdbc:h2:ssl:")
+				&& !url.startsWith("jdbc:h2:mem:")) {
 			thread = true;
 		}
 		if (!thread) {
 			boolean isH2 = url.startsWith("jdbc:h2:");
 			try {
-				Connection conn = server.getConnection(driver, url, user, password, this);
+				Connection conn = server.getConnection(driver, url, user,
+						password, this);
 				session.setConnection(conn);
 				session.put("url", url);
 				session.put("user", user);
@@ -1150,7 +1243,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 		 */
 		class LoginTask implements Runnable, DatabaseEventListener {
 			private final PrintWriter writer;
-			private final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss.SSS");
+			private final SimpleDateFormat dateFormat = new SimpleDateFormat(
+					"HH:mm:ss.SSS");
 
 			LoginTask() throws IOException {
 				String message = "HTTP/1.1 200 OK\n";
@@ -1158,9 +1252,12 @@ class WebThread extends Thread implements DatabaseEventListener {
 				output.write(message.getBytes());
 				writer = new PrintWriter(output);
 				writer.println("<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"stylesheet.css\" /></head>");
-				writer.println("<body><h2>Opening Database</h2>URL: " + PageParser.escapeHtml(url) + "<br />");
-				writer.println("User: " + PageParser.escapeHtml(user) + "<br />");
-				writer.println("Version: " + Constants.getFullVersion() + "<br /><br />");
+				writer.println("<body><h2>Opening Database</h2>URL: "
+						+ PageParser.escapeHtml(url) + "<br />");
+				writer.println("User: " + PageParser.escapeHtml(user)
+						+ "<br />");
+				writer.println("Version: " + Constants.getFullVersion()
+						+ "<br /><br />");
 				writer.flush();
 				log("Start...");
 			}
@@ -1174,7 +1271,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 			}
 
 			public void exceptionThrown(SQLException e, String sql) {
-				log("Exception: " + PageParser.escapeHtml(e.toString()) + " SQL: " + PageParser.escapeHtml(sql));
+				log("Exception: " + PageParser.escapeHtml(e.toString())
+						+ " SQL: " + PageParser.escapeHtml(sql));
 				server.traceError(e);
 			}
 
@@ -1228,19 +1326,20 @@ class WebThread extends Thread implements DatabaseEventListener {
 				String sessionId = (String) session.get("sessionId");
 				boolean isH2 = url.startsWith("jdbc:h2:");
 				try {
-					Connection conn = server.getConnection(driver, url, user, password, this);
+					Connection conn = server.getConnection(driver, url, user,
+							password, this);
 					session.setConnection(conn);
 					session.put("url", url);
 					session.put("user", user);
 					session.remove("error");
 					settingSave();
-					log("OK<script type=\"text/javascript\">top.location=\"frame.jsp?jsessionid=" + sessionId
-							+ "\"</script></body></htm>");
+					log("OK<script type=\"text/javascript\">top.location=\"frame.jsp?jsessionid="
+							+ sessionId + "\"</script></body></htm>");
 					// return "frame.jsp";
 				} catch (Exception e) {
 					session.put("error", getLoginError(e, isH2));
-					log("Error<script type=\"text/javascript\">top.location=\"index.jsp?jsessionid=" + sessionId
-							+ "\"</script></body></html>");
+					log("Error<script type=\"text/javascript\">top.location=\"index.jsp?jsessionid="
+							+ sessionId + "\"</script></body></html>");
 					// return "index.jsp";
 				}
 				synchronized (this) {
@@ -1308,18 +1407,25 @@ class WebThread extends Thread implements DatabaseEventListener {
 				conn.setAutoCommit(false);
 				result = "${text.result.autoCommitOff}";
 			} else if (sql.startsWith("@TRANSACTION_ISOLATION")) {
-				String s = sql.substring("@TRANSACTION_ISOLATION".length()).trim();
+				String s = sql.substring("@TRANSACTION_ISOLATION".length())
+						.trim();
 				if (s.length() > 0) {
 					int level = Integer.parseInt(s);
 					conn.setTransactionIsolation(level);
 				}
-				result = "Transaction Isolation: " + conn.getTransactionIsolation() + "<br />";
-				result += Connection.TRANSACTION_READ_UNCOMMITTED + ": READ_UNCOMMITTED<br />";
-				result += Connection.TRANSACTION_READ_COMMITTED + ": READ_COMMITTED<br />";
-				result += Connection.TRANSACTION_REPEATABLE_READ + ": REPEATABLE_READ<br />";
-				result += Connection.TRANSACTION_SERIALIZABLE + ": SERIALIZABLE";
+				result = "Transaction Isolation: "
+						+ conn.getTransactionIsolation() + "<br />";
+				result += Connection.TRANSACTION_READ_UNCOMMITTED
+						+ ": READ_UNCOMMITTED<br />";
+				result += Connection.TRANSACTION_READ_COMMITTED
+						+ ": READ_COMMITTED<br />";
+				result += Connection.TRANSACTION_REPEATABLE_READ
+						+ ": REPEATABLE_READ<br />";
+				result += Connection.TRANSACTION_SERIALIZABLE
+						+ ": SERIALIZABLE";
 			} else if (sql.startsWith("@SET MAXROWS ")) {
-				int maxrows = Integer.parseInt(sql.substring("@SET MAXROWS ".length()));
+				int maxrows = Integer.parseInt(sql.substring("@SET MAXROWS "
+						.length()));
 				session.put("maxrows", "" + maxrows);
 				result = "${text.result.maxrowsSet}";
 			} else {
@@ -1339,14 +1445,16 @@ class WebThread extends Thread implements DatabaseEventListener {
 						buff.append(PageParser.escapeHtml(s + ";"));
 						buff.append("<br />");
 					}
-					buff.append(getResult(conn, i + 1, s, list.size() == 1, false));
+					buff.append(getResult(conn, i + 1, s, list.size() == 1,
+							false));
 					buff.append("<br />");
 				}
 				result = buff.toString();
 			}
 			session.put("result", result);
 		} catch (Throwable e) {
-			session.put("result", getStackTrace(0, e, session.getContents().isH2));
+			session.put("result",
+					getStackTrace(0, e, session.getContents().isH2));
 		}
 		return "result.jsp";
 	}
@@ -1399,21 +1507,23 @@ class WebThread extends Thread implements DatabaseEventListener {
 				code = code.substring("@CODE".length() + endImport);
 			}
 			out.println(importCode);
-			out.println("public class Java { public static Object run() throws Throwable {" + code + "}}");
+			out.println("public class Java { public static Object run() throws Throwable {"
+					+ code + "}}");
 			out.close();
 			Class javacClass = Class.forName("com.sun.tools.javac.Main");
-			Method compile = javacClass.getMethod("compile", new Class[] { String[].class });
+			Method compile = javacClass.getMethod("compile",
+					new Class[] { String[].class });
 			Object javac = javacClass.newInstance();
-			compile.invoke(javac, new Object[] { new String[]{"Java.java"}});
+			compile.invoke(javac, new Object[] { new String[] { "Java.java" } });
 			byte[] data = new byte[(int) classFile.length()];
-			DataInputStream in = new DataInputStream(new FileInputStream(classFile));
+			DataInputStream in = new DataInputStream(new FileInputStream(
+					classFile));
 			in.readFully(data);
 			in.close();
 			DynamicClassLoader cl = new DynamicClassLoader("Java", data);
 			Class clazz = cl.loadClass("Java");
 			Method[] methods = clazz.getMethods();
-			for (int i = 0; i < methods.length; i++) {
-				Method m = methods[i];
+			for (Method m : methods) {
 				if (m.getName().equals("run")) {
 					return "" + m.invoke(null, new Object[0]);
 				}
@@ -1439,7 +1549,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 					rs.absolute(row);
 				}
 				for (int i = 0; i < rs.getMetaData().getColumnCount(); i++) {
-					String x = attributes.getProperty("r" + row + "c" + (i + 1));
+					String x = attributes
+							.getProperty("r" + row + "c" + (i + 1));
 					unescapeData(x, rs, i + 1);
 				}
 				if (insert) {
@@ -1464,19 +1575,23 @@ class WebThread extends Thread implements DatabaseEventListener {
 		return "result.jsp";
 	}
 
-	private ResultSet getMetaResultSet(Connection conn, String sql) throws SQLException {
+	private ResultSet getMetaResultSet(Connection conn, String sql)
+			throws SQLException {
 		DatabaseMetaData meta = conn.getMetaData();
 		if (sql.startsWith("@TABLES")) {
 			String[] p = split(sql);
-			String[] types = p[4] == null ? null : StringUtils.arraySplit(p[4], ',', false);
+			String[] types = p[4] == null ? null : StringUtils.arraySplit(p[4],
+					',', false);
 			return meta.getTables(p[1], p[2], p[3], types);
 		} else if (sql.startsWith("@COLUMNS")) {
 			String[] p = split(sql);
 			return meta.getColumns(p[1], p[2], p[3], p[4]);
 		} else if (sql.startsWith("@INDEX_INFO")) {
 			String[] p = split(sql);
-			boolean unique = p[4] == null ? false : Boolean.valueOf(p[4]).booleanValue();
-			boolean approx = p[5] == null ? false : Boolean.valueOf(p[5]).booleanValue();
+			boolean unique = p[4] == null ? false : Boolean.valueOf(p[4])
+					.booleanValue();
+			boolean approx = p[5] == null ? false : Boolean.valueOf(p[5])
+					.booleanValue();
 			return meta.getIndexInfo(p[1], p[2], p[3], unique, approx);
 		} else if (sql.startsWith("@PRIMARY_KEYS")) {
 			String[] p = split(sql);
@@ -1498,17 +1613,22 @@ class WebThread extends Thread implements DatabaseEventListener {
 			SimpleResultSet rs = new SimpleResultSet();
 			rs.addColumn("Type", Types.VARCHAR, 0, 0);
 			rs.addColumn("Value", Types.VARCHAR, 0, 0);
-			rs.addRow(new String[] { "Used Memory", "" + MemoryUtils.getMemoryUsed() });
-			rs.addRow(new String[] { "Free Memory", "" + MemoryUtils.getMemoryFree() });
+			rs.addRow(new String[] { "Used Memory",
+					"" + MemoryUtils.getMemoryUsed() });
+			rs.addRow(new String[] { "Free Memory",
+					"" + MemoryUtils.getMemoryFree() });
 			return rs;
 		} else if (sql.startsWith("@INFO")) {
 			SimpleResultSet rs = new SimpleResultSet();
 			rs.addColumn("KEY", Types.VARCHAR, 0, 0);
 			rs.addColumn("VALUE", Types.VARCHAR, 0, 0);
 			rs.addRow(new String[] { "conn.getCatalog", conn.getCatalog() });
-			rs.addRow(new String[] { "conn.getAutoCommit", "" + conn.getAutoCommit() });
-			rs.addRow(new String[] { "conn.getTransactionIsolation", "" + conn.getTransactionIsolation() });
-			rs.addRow(new String[] { "conn.getWarnings", "" + conn.getWarnings() });
+			rs.addRow(new String[] { "conn.getAutoCommit",
+					"" + conn.getAutoCommit() });
+			rs.addRow(new String[] { "conn.getTransactionIsolation",
+					"" + conn.getTransactionIsolation() });
+			rs.addRow(new String[] { "conn.getWarnings",
+					"" + conn.getWarnings() });
 			String map;
 			try {
 				map = "" + conn.getTypeMap();
@@ -1517,118 +1637,198 @@ class WebThread extends Thread implements DatabaseEventListener {
 			}
 			rs.addRow(new String[] { "conn.getTypeMap", "" + map });
 			rs.addRow(new String[] { "conn.isReadOnly", "" + conn.isReadOnly() });
-			rs.addRow(new String[] { "meta.getCatalogSeparator", "" + meta.getCatalogSeparator() });
-			rs.addRow(new String[] { "meta.getCatalogTerm", "" + meta.getCatalogTerm() });
-			rs.addRow(new String[] { "meta.getDatabaseProductName", "" + meta.getDatabaseProductName() });
-			rs.addRow(new String[] { "meta.getDatabaseProductVersion", "" + meta.getDatabaseProductVersion() });
-			rs
-			.addRow(new String[] { "meta.getDefaultTransactionIsolation",
+			rs.addRow(new String[] { "meta.getCatalogSeparator",
+					"" + meta.getCatalogSeparator() });
+			rs.addRow(new String[] { "meta.getCatalogTerm",
+					"" + meta.getCatalogTerm() });
+			rs.addRow(new String[] { "meta.getDatabaseProductName",
+					"" + meta.getDatabaseProductName() });
+			rs.addRow(new String[] { "meta.getDatabaseProductVersion",
+					"" + meta.getDatabaseProductVersion() });
+			rs.addRow(new String[] { "meta.getDefaultTransactionIsolation",
 					"" + meta.getDefaultTransactionIsolation() });
-			rs.addRow(new String[] { "meta.getDriverMajorVersion", "" + meta.getDriverMajorVersion() });
-			rs.addRow(new String[] { "meta.getDriverMinorVersion", "" + meta.getDriverMinorVersion() });
-			rs.addRow(new String[] { "meta.getDriverName", "" + meta.getDriverName() });
-			rs.addRow(new String[] { "meta.getDriverVersion", "" + meta.getDriverVersion() });
-			rs.addRow(new String[] { "meta.getExtraNameCharacters", "" + meta.getExtraNameCharacters() });
-			rs.addRow(new String[] { "meta.getIdentifierQuoteString", "" + meta.getIdentifierQuoteString() });
-			rs.addRow(new String[] { "meta.getMaxBinaryLiteralLength", "" + meta.getMaxBinaryLiteralLength() });
-			rs.addRow(new String[] { "meta.getMaxCatalogNameLength", "" + meta.getMaxCatalogNameLength() });
-			rs.addRow(new String[] { "meta.getMaxCharLiteralLength", "" + meta.getMaxCharLiteralLength() });
-			rs.addRow(new String[] { "meta.getMaxColumnNameLength", "" + meta.getMaxColumnNameLength() });
-			rs.addRow(new String[] { "meta.getMaxColumnsInGroupBy", "" + meta.getMaxColumnsInGroupBy() });
-			rs.addRow(new String[] { "meta.getMaxColumnsInIndex", "" + meta.getMaxColumnsInIndex() });
-			rs.addRow(new String[] { "meta.getMaxColumnsInOrderBy", "" + meta.getMaxColumnsInOrderBy() });
-			rs.addRow(new String[] { "meta.getMaxColumnsInSelect", "" + meta.getMaxColumnsInSelect() });
-			rs.addRow(new String[] { "meta.getMaxColumnsInTable", "" + meta.getMaxColumnsInTable() });
-			rs.addRow(new String[] { "meta.getMaxConnections", "" + meta.getMaxConnections() });
-			rs.addRow(new String[] { "meta.getMaxCursorNameLength", "" + meta.getMaxCursorNameLength() });
-			rs.addRow(new String[] { "meta.getMaxIndexLength", "" + meta.getMaxIndexLength() });
-			rs.addRow(new String[] { "meta.getMaxProcedureNameLength", "" + meta.getMaxProcedureNameLength() });
-			rs.addRow(new String[] { "meta.getMaxRowSize", "" + meta.getMaxRowSize() });
-			rs.addRow(new String[] { "meta.getMaxSchemaNameLength", "" + meta.getMaxSchemaNameLength() });
-			rs.addRow(new String[] { "meta.getMaxStatementLength", "" + meta.getMaxStatementLength() });
-			rs.addRow(new String[] { "meta.getMaxStatements", "" + meta.getMaxStatements() });
-			rs.addRow(new String[] { "meta.getMaxTableNameLength", "" + meta.getMaxTableNameLength() });
-			rs.addRow(new String[] { "meta.getMaxTablesInSelect", "" + meta.getMaxTablesInSelect() });
-			rs.addRow(new String[] { "meta.getMaxUserNameLength", "" + meta.getMaxUserNameLength() });
-			rs.addRow(new String[] { "meta.getNumericFunctions", "" + meta.getNumericFunctions() });
-			rs.addRow(new String[] { "meta.getProcedureTerm", "" + meta.getProcedureTerm() });
-			rs.addRow(new String[] { "meta.getSchemaTerm", "" + meta.getSchemaTerm() });
-			rs.addRow(new String[] { "meta.getSearchStringEscape", "" + meta.getSearchStringEscape() });
-			rs.addRow(new String[] { "meta.getSQLKeywords", "" + meta.getSQLKeywords() });
-			rs.addRow(new String[] { "meta.getStringFunctions", "" + meta.getStringFunctions() });
-			rs.addRow(new String[] { "meta.getSystemFunctions", "" + meta.getSystemFunctions() });
-			rs.addRow(new String[] { "meta.getTimeDateFunctions", "" + meta.getTimeDateFunctions() });
+			rs.addRow(new String[] { "meta.getDriverMajorVersion",
+					"" + meta.getDriverMajorVersion() });
+			rs.addRow(new String[] { "meta.getDriverMinorVersion",
+					"" + meta.getDriverMinorVersion() });
+			rs.addRow(new String[] { "meta.getDriverName",
+					"" + meta.getDriverName() });
+			rs.addRow(new String[] { "meta.getDriverVersion",
+					"" + meta.getDriverVersion() });
+			rs.addRow(new String[] { "meta.getExtraNameCharacters",
+					"" + meta.getExtraNameCharacters() });
+			rs.addRow(new String[] { "meta.getIdentifierQuoteString",
+					"" + meta.getIdentifierQuoteString() });
+			rs.addRow(new String[] { "meta.getMaxBinaryLiteralLength",
+					"" + meta.getMaxBinaryLiteralLength() });
+			rs.addRow(new String[] { "meta.getMaxCatalogNameLength",
+					"" + meta.getMaxCatalogNameLength() });
+			rs.addRow(new String[] { "meta.getMaxCharLiteralLength",
+					"" + meta.getMaxCharLiteralLength() });
+			rs.addRow(new String[] { "meta.getMaxColumnNameLength",
+					"" + meta.getMaxColumnNameLength() });
+			rs.addRow(new String[] { "meta.getMaxColumnsInGroupBy",
+					"" + meta.getMaxColumnsInGroupBy() });
+			rs.addRow(new String[] { "meta.getMaxColumnsInIndex",
+					"" + meta.getMaxColumnsInIndex() });
+			rs.addRow(new String[] { "meta.getMaxColumnsInOrderBy",
+					"" + meta.getMaxColumnsInOrderBy() });
+			rs.addRow(new String[] { "meta.getMaxColumnsInSelect",
+					"" + meta.getMaxColumnsInSelect() });
+			rs.addRow(new String[] { "meta.getMaxColumnsInTable",
+					"" + meta.getMaxColumnsInTable() });
+			rs.addRow(new String[] { "meta.getMaxConnections",
+					"" + meta.getMaxConnections() });
+			rs.addRow(new String[] { "meta.getMaxCursorNameLength",
+					"" + meta.getMaxCursorNameLength() });
+			rs.addRow(new String[] { "meta.getMaxIndexLength",
+					"" + meta.getMaxIndexLength() });
+			rs.addRow(new String[] { "meta.getMaxProcedureNameLength",
+					"" + meta.getMaxProcedureNameLength() });
+			rs.addRow(new String[] { "meta.getMaxRowSize",
+					"" + meta.getMaxRowSize() });
+			rs.addRow(new String[] { "meta.getMaxSchemaNameLength",
+					"" + meta.getMaxSchemaNameLength() });
+			rs.addRow(new String[] { "meta.getMaxStatementLength",
+					"" + meta.getMaxStatementLength() });
+			rs.addRow(new String[] { "meta.getMaxStatements",
+					"" + meta.getMaxStatements() });
+			rs.addRow(new String[] { "meta.getMaxTableNameLength",
+					"" + meta.getMaxTableNameLength() });
+			rs.addRow(new String[] { "meta.getMaxTablesInSelect",
+					"" + meta.getMaxTablesInSelect() });
+			rs.addRow(new String[] { "meta.getMaxUserNameLength",
+					"" + meta.getMaxUserNameLength() });
+			rs.addRow(new String[] { "meta.getNumericFunctions",
+					"" + meta.getNumericFunctions() });
+			rs.addRow(new String[] { "meta.getProcedureTerm",
+					"" + meta.getProcedureTerm() });
+			rs.addRow(new String[] { "meta.getSchemaTerm",
+					"" + meta.getSchemaTerm() });
+			rs.addRow(new String[] { "meta.getSearchStringEscape",
+					"" + meta.getSearchStringEscape() });
+			rs.addRow(new String[] { "meta.getSQLKeywords",
+					"" + meta.getSQLKeywords() });
+			rs.addRow(new String[] { "meta.getStringFunctions",
+					"" + meta.getStringFunctions() });
+			rs.addRow(new String[] { "meta.getSystemFunctions",
+					"" + meta.getSystemFunctions() });
+			rs.addRow(new String[] { "meta.getTimeDateFunctions",
+					"" + meta.getTimeDateFunctions() });
 			rs.addRow(new String[] { "meta.getURL", "" + meta.getURL() });
-			rs.addRow(new String[] { "meta.getUserName", "" + meta.getUserName() });
-			rs.addRow(new String[] { "meta.isCatalogAtStart", "" + meta.isCatalogAtStart() });
+			rs.addRow(new String[] { "meta.getUserName",
+					"" + meta.getUserName() });
+			rs.addRow(new String[] { "meta.isCatalogAtStart",
+					"" + meta.isCatalogAtStart() });
 			rs.addRow(new String[] { "meta.isReadOnly", "" + meta.isReadOnly() });
-			rs.addRow(new String[] { "meta.allProceduresAreCallable", "" + meta.allProceduresAreCallable() });
-			rs.addRow(new String[] { "meta.allTablesAreSelectable", "" + meta.allTablesAreSelectable() });
-			rs.addRow(new String[] { "meta.dataDefinitionCausesTransactionCommit",
+			rs.addRow(new String[] { "meta.allProceduresAreCallable",
+					"" + meta.allProceduresAreCallable() });
+			rs.addRow(new String[] { "meta.allTablesAreSelectable",
+					"" + meta.allTablesAreSelectable() });
+			rs.addRow(new String[] {
+					"meta.dataDefinitionCausesTransactionCommit",
 					"" + meta.dataDefinitionCausesTransactionCommit() });
-			rs.addRow(new String[] { "meta.dataDefinitionIgnoredInTransactions",
+			rs.addRow(new String[] {
+					"meta.dataDefinitionIgnoredInTransactions",
 					"" + meta.dataDefinitionIgnoredInTransactions() });
-			rs.addRow(new String[] { "meta.doesMaxRowSizeIncludeBlobs", "" + meta.doesMaxRowSizeIncludeBlobs() });
-			rs.addRow(new String[] { "meta.nullPlusNonNullIsNull", "" + meta.nullPlusNonNullIsNull() });
-			rs.addRow(new String[] { "meta.nullsAreSortedAtEnd", "" + meta.nullsAreSortedAtEnd() });
-			rs.addRow(new String[] { "meta.nullsAreSortedAtStart", "" + meta.nullsAreSortedAtStart() });
-			rs.addRow(new String[] { "meta.nullsAreSortedHigh", "" + meta.nullsAreSortedHigh() });
-			rs.addRow(new String[] { "meta.nullsAreSortedLow", "" + meta.nullsAreSortedLow() });
-			rs.addRow(new String[] { "meta.storesLowerCaseIdentifiers", "" + meta.storesLowerCaseIdentifiers() });
+			rs.addRow(new String[] { "meta.doesMaxRowSizeIncludeBlobs",
+					"" + meta.doesMaxRowSizeIncludeBlobs() });
+			rs.addRow(new String[] { "meta.nullPlusNonNullIsNull",
+					"" + meta.nullPlusNonNullIsNull() });
+			rs.addRow(new String[] { "meta.nullsAreSortedAtEnd",
+					"" + meta.nullsAreSortedAtEnd() });
+			rs.addRow(new String[] { "meta.nullsAreSortedAtStart",
+					"" + meta.nullsAreSortedAtStart() });
+			rs.addRow(new String[] { "meta.nullsAreSortedHigh",
+					"" + meta.nullsAreSortedHigh() });
+			rs.addRow(new String[] { "meta.nullsAreSortedLow",
+					"" + meta.nullsAreSortedLow() });
+			rs.addRow(new String[] { "meta.storesLowerCaseIdentifiers",
+					"" + meta.storesLowerCaseIdentifiers() });
 			rs.addRow(new String[] { "meta.storesLowerCaseQuotedIdentifiers",
 					"" + meta.storesLowerCaseQuotedIdentifiers() });
-			rs.addRow(new String[] { "meta.storesMixedCaseIdentifiers", "" + meta.storesMixedCaseIdentifiers() });
+			rs.addRow(new String[] { "meta.storesMixedCaseIdentifiers",
+					"" + meta.storesMixedCaseIdentifiers() });
 			rs.addRow(new String[] { "meta.storesMixedCaseQuotedIdentifiers",
 					"" + meta.storesMixedCaseQuotedIdentifiers() });
-			rs.addRow(new String[] { "meta.storesUpperCaseIdentifiers", "" + meta.storesUpperCaseIdentifiers() });
+			rs.addRow(new String[] { "meta.storesUpperCaseIdentifiers",
+					"" + meta.storesUpperCaseIdentifiers() });
 			rs.addRow(new String[] { "meta.storesUpperCaseQuotedIdentifiers",
 					"" + meta.storesUpperCaseQuotedIdentifiers() });
 			rs.addRow(new String[] { "meta.supportsAlterTableWithAddColumn",
 					"" + meta.supportsAlterTableWithAddColumn() });
 			rs.addRow(new String[] { "meta.supportsAlterTableWithDropColumn",
 					"" + meta.supportsAlterTableWithDropColumn() });
-			rs.addRow(new String[] { "meta.supportsANSI92EntryLevelSQL", "" + meta.supportsANSI92EntryLevelSQL() });
-			rs.addRow(new String[] { "meta.supportsANSI92FullSQL", "" + meta.supportsANSI92FullSQL() });
-			rs.addRow(new String[] { "meta.supportsANSI92IntermediateSQL", "" + meta.supportsANSI92IntermediateSQL() });
-			rs.addRow(new String[] { "meta.supportsBatchUpdates", "" + meta.supportsBatchUpdates() });
+			rs.addRow(new String[] { "meta.supportsANSI92EntryLevelSQL",
+					"" + meta.supportsANSI92EntryLevelSQL() });
+			rs.addRow(new String[] { "meta.supportsANSI92FullSQL",
+					"" + meta.supportsANSI92FullSQL() });
+			rs.addRow(new String[] { "meta.supportsANSI92IntermediateSQL",
+					"" + meta.supportsANSI92IntermediateSQL() });
+			rs.addRow(new String[] { "meta.supportsBatchUpdates",
+					"" + meta.supportsBatchUpdates() });
 			rs.addRow(new String[] { "meta.supportsCatalogsInDataManipulation",
 					"" + meta.supportsCatalogsInDataManipulation() });
 			rs.addRow(new String[] { "meta.supportsCatalogsInIndexDefinitions",
 					"" + meta.supportsCatalogsInIndexDefinitions() });
-			rs.addRow(new String[] { "meta.supportsCatalogsInPrivilegeDefinitions",
+			rs.addRow(new String[] {
+					"meta.supportsCatalogsInPrivilegeDefinitions",
 					"" + meta.supportsCatalogsInPrivilegeDefinitions() });
 			rs.addRow(new String[] { "meta.supportsCatalogsInProcedureCalls",
 					"" + meta.supportsCatalogsInProcedureCalls() });
 			rs.addRow(new String[] { "meta.supportsCatalogsInTableDefinitions",
 					"" + meta.supportsCatalogsInTableDefinitions() });
-			rs.addRow(new String[] { "meta.supportsColumnAliasing", "" + meta.supportsColumnAliasing() });
-			rs.addRow(new String[] { "meta.supportsConvert", "" + meta.supportsConvert() });
-			rs.addRow(new String[] { "meta.supportsCoreSQLGrammar", "" + meta.supportsCoreSQLGrammar() });
-			rs.addRow(new String[] { "meta.supportsCorrelatedSubqueries", "" + meta.supportsCorrelatedSubqueries() });
-			rs.addRow(new String[] { "meta.supportsDataDefinitionAndDataManipulationTransactions",
-					"" + meta.supportsDataDefinitionAndDataManipulationTransactions() });
-			rs.addRow(new String[] { "meta.supportsDataManipulationTransactionsOnly",
+			rs.addRow(new String[] { "meta.supportsColumnAliasing",
+					"" + meta.supportsColumnAliasing() });
+			rs.addRow(new String[] { "meta.supportsConvert",
+					"" + meta.supportsConvert() });
+			rs.addRow(new String[] { "meta.supportsCoreSQLGrammar",
+					"" + meta.supportsCoreSQLGrammar() });
+			rs.addRow(new String[] { "meta.supportsCorrelatedSubqueries",
+					"" + meta.supportsCorrelatedSubqueries() });
+			rs.addRow(new String[] {
+					"meta.supportsDataDefinitionAndDataManipulationTransactions",
+					""
+							+ meta.supportsDataDefinitionAndDataManipulationTransactions() });
+			rs.addRow(new String[] {
+					"meta.supportsDataManipulationTransactionsOnly",
 					"" + meta.supportsDataManipulationTransactionsOnly() });
-			rs.addRow(new String[] { "meta.supportsDifferentTableCorrelationNames",
+			rs.addRow(new String[] {
+					"meta.supportsDifferentTableCorrelationNames",
 					"" + meta.supportsDifferentTableCorrelationNames() });
-			rs.addRow(new String[] { "meta.supportsExpressionsInOrderBy", "" + meta.supportsExpressionsInOrderBy() });
-			rs.addRow(new String[] { "meta.supportsExtendedSQLGrammar", "" + meta.supportsExtendedSQLGrammar() });
-			rs.addRow(new String[] { "meta.supportsFullOuterJoins", "" + meta.supportsFullOuterJoins() });
-			rs.addRow(new String[] { "meta.supportsGroupBy", "" + meta.supportsGroupBy() });
+			rs.addRow(new String[] { "meta.supportsExpressionsInOrderBy",
+					"" + meta.supportsExpressionsInOrderBy() });
+			rs.addRow(new String[] { "meta.supportsExtendedSQLGrammar",
+					"" + meta.supportsExtendedSQLGrammar() });
+			rs.addRow(new String[] { "meta.supportsFullOuterJoins",
+					"" + meta.supportsFullOuterJoins() });
+			rs.addRow(new String[] { "meta.supportsGroupBy",
+					"" + meta.supportsGroupBy() });
 			// TODO meta data: more supports methods (I'm tired now)
-			rs.addRow(new String[] { "meta.usesLocalFilePerTable", "" + meta.usesLocalFilePerTable() });
-			rs.addRow(new String[] { "meta.usesLocalFiles", "" + meta.usesLocalFiles() });
-			//## Java 1.4 begin ##
-			rs.addRow(new String[] { "conn.getHoldability", "" + conn.getHoldability() });
-			rs.addRow(new String[] { "meta.getDatabaseMajorVersion", "" + meta.getDatabaseMajorVersion() });
-			rs.addRow(new String[] { "meta.getDatabaseMinorVersion", "" + meta.getDatabaseMinorVersion() });
-			rs.addRow(new String[] { "meta.getJDBCMajorVersion", "" + meta.getJDBCMajorVersion() });
-			rs.addRow(new String[] { "meta.getJDBCMinorVersion", "" + meta.getJDBCMinorVersion() });
-			rs.addRow(new String[] { "meta.getResultSetHoldability", "" + meta.getResultSetHoldability() });
-			rs.addRow(new String[] { "meta.getSQLStateType", "" + meta.getSQLStateType() });
-			rs.addRow(new String[] { "meta.supportsGetGeneratedKeys", "" + meta.supportsGetGeneratedKeys() });
-			rs.addRow(new String[] { "meta.locatorsUpdateCopy", "" + meta.locatorsUpdateCopy() });
-			//## Java 1.4 end ##
+			rs.addRow(new String[] { "meta.usesLocalFilePerTable",
+					"" + meta.usesLocalFilePerTable() });
+			rs.addRow(new String[] { "meta.usesLocalFiles",
+					"" + meta.usesLocalFiles() });
+			// ## Java 1.4 begin ##
+			rs.addRow(new String[] { "conn.getHoldability",
+					"" + conn.getHoldability() });
+			rs.addRow(new String[] { "meta.getDatabaseMajorVersion",
+					"" + meta.getDatabaseMajorVersion() });
+			rs.addRow(new String[] { "meta.getDatabaseMinorVersion",
+					"" + meta.getDatabaseMinorVersion() });
+			rs.addRow(new String[] { "meta.getJDBCMajorVersion",
+					"" + meta.getJDBCMajorVersion() });
+			rs.addRow(new String[] { "meta.getJDBCMinorVersion",
+					"" + meta.getJDBCMinorVersion() });
+			rs.addRow(new String[] { "meta.getResultSetHoldability",
+					"" + meta.getResultSetHoldability() });
+			rs.addRow(new String[] { "meta.getSQLStateType",
+					"" + meta.getSQLStateType() });
+			rs.addRow(new String[] { "meta.supportsGetGeneratedKeys",
+					"" + meta.supportsGetGeneratedKeys() });
+			rs.addRow(new String[] { "meta.locatorsUpdateCopy",
+					"" + meta.locatorsUpdateCopy() });
+			// ## Java 1.4 end ##
 			return rs;
 		} else if (sql.startsWith("@CATALOGS")) {
 			return meta.getCatalogs();
@@ -1643,7 +1843,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 		} else if (sql.startsWith("@BEST_ROW_IDENTIFIER")) {
 			String[] p = split(sql);
 			int scale = p[4] == null ? 0 : Integer.parseInt(p[4]);
-			boolean nullable = p[5] == null ? false : Boolean.valueOf(p[5]).booleanValue();
+			boolean nullable = p[5] == null ? false : Boolean.valueOf(p[5])
+					.booleanValue();
 			return meta.getBestRowIdentifier(p[1], p[2], p[3], scale, nullable);
 		} else if (sql.startsWith("@VERSION_COLUMNS")) {
 			String[] p = split(sql);
@@ -1672,7 +1873,7 @@ class WebThread extends Thread implements DatabaseEventListener {
 			return meta.getUDTs(p[1], p[2], p[3], types);
 		} else if (sql.startsWith("@TYPE_INFO")) {
 			return meta.getTypeInfo();
-			//## Java 1.4 begin ##
+			// ## Java 1.4 begin ##
 		} else if (sql.startsWith("@SUPER_TYPES")) {
 			String[] p = split(sql);
 			return meta.getSuperTypes(p[1], p[2], p[3]);
@@ -1682,7 +1883,7 @@ class WebThread extends Thread implements DatabaseEventListener {
 		} else if (sql.startsWith("@ATTRIBUTES")) {
 			String[] p = split(sql);
 			return meta.getAttributes(p[1], p[2], p[3], p[4]);
-			//## Java 1.4 end ##
+			// ## Java 1.4 end ##
 		}
 		return null;
 	}
@@ -1705,12 +1906,15 @@ class WebThread extends Thread implements DatabaseEventListener {
 		return maxrows;
 	}
 
-	private String getResult(Connection conn, int id, String sql, boolean allowEdit, boolean forceEdit) {
+	private String getResult(Connection conn, int id, String sql,
+			boolean allowEdit, boolean forceEdit) {
 		try {
 			sql = sql.trim();
 			StringBuilder buff = new StringBuilder();
 			String sqlUpper = StringUtils.toUpperEnglish(sql);
-			if (sqlUpper.indexOf("CREATE") >= 0 || sqlUpper.indexOf("DROP") >= 0 || sqlUpper.indexOf("ALTER") >= 0
+			if (sqlUpper.indexOf("CREATE") >= 0
+					|| sqlUpper.indexOf("DROP") >= 0
+					|| sqlUpper.indexOf("ALTER") >= 0
 					|| sqlUpper.indexOf("RUNSCRIPT") >= 0) {
 				String sessionId = attributes.getProperty("jsessionid");
 				buff.append("<script type=\"text/javascript\">top['h2menu'].location='tables.do?jsessionid="
@@ -1719,7 +1923,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 			Statement stat;
 			DbContents contents = session.getContents();
 			if (forceEdit || (allowEdit && contents.isH2)) {
-				stat = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+				stat = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+						ResultSet.CONCUR_UPDATABLE);
 			} else {
 				stat = conn.createStatement();
 			}
@@ -1780,12 +1985,13 @@ class WebThread extends Thread implements DatabaseEventListener {
 				session.addCommand(sql);
 				if (generatedKeys) {
 					rs = null;
-					//## Java 1.4 begin ##
+					// ## Java 1.4 begin ##
 					rs = stat.getGeneratedKeys();
-					//## Java 1.4 end ##
+					// ## Java 1.4 end ##
 				} else {
 					if (!isResultSet) {
-						buff.append("${text.result.updateCount}: " + stat.getUpdateCount());
+						buff.append("${text.result.updateCount}: "
+								+ stat.getUpdateCount());
 						time = System.currentTimeMillis() - time;
 						buff.append("<br />(");
 						buff.append(time);
@@ -1797,7 +2003,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 				}
 			}
 			time = System.currentTimeMillis() - time;
-			buff.append(getResultSet(sql, rs, metadata, list, edit, time, allowEdit));
+			buff.append(getResultSet(sql, rs, metadata, list, edit, time,
+					allowEdit));
 			// SQLWarning warning = stat.getWarnings();
 			// if(warning != null) {
 			// buff.append("<br />Warning:<br />");
@@ -1815,7 +2022,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 		}
 	}
 
-	private String executeLoop(Connection conn, int count, String sql) throws SQLException {
+	private String executeLoop(Connection conn, int count, String sql)
+			throws SQLException {
 		ArrayList params = new ArrayList();
 		int idx = 0;
 		while (!stop) {
@@ -1825,7 +2033,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 			}
 			if (sql.substring(idx).startsWith("?/*RND*/")) {
 				params.add(ObjectUtils.getInteger(1));
-				sql = sql.substring(0, idx) + "?" + sql.substring(idx + "/*RND*/".length() + 1);
+				sql = sql.substring(0, idx) + "?"
+						+ sql.substring(idx + "/*RND*/".length() + 1);
 			} else {
 				params.add(ObjectUtils.getInteger(0));
 			}
@@ -1845,7 +2054,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 					idx = s.indexOf('?');
 					Integer type = (Integer) params.get(j);
 					if (type.intValue() == 1) {
-						s = s.substring(0, idx) + random.nextInt(count) + s.substring(idx + 1);
+						s = s.substring(0, idx) + random.nextInt(count)
+								+ s.substring(idx + 1);
 					} else {
 						s = s.substring(0, idx) + i + s.substring(idx + 1);
 					}
@@ -1917,8 +2127,7 @@ class WebThread extends Thread implements DatabaseEventListener {
 			buff.append("<tr><td>");
 			buff.append("<a href=\"getHistory.do?id=");
 			buff.append(i);
-			buff
-			.append("&jsessionid=${sessionId}\" target=\"h2query\" ><img width=16 height=16 src=\"ico_write.gif\" onmouseover = \"this.className ='icon_hover'\" onmouseout = \"this.className ='icon'\" class=\"icon\" alt=\"${text.resultEdit.edit}\" title=\"${text.resultEdit.edit}\" border=\"1\"/></a>");
+			buff.append("&jsessionid=${sessionId}\" target=\"h2query\" ><img width=16 height=16 src=\"ico_write.gif\" onmouseover = \"this.className ='icon_hover'\" onmouseout = \"this.className ='icon'\" class=\"icon\" alt=\"${text.resultEdit.edit}\" title=\"${text.resultEdit.edit}\" border=\"1\"/></a>");
 			buff.append("</td><td>");
 			buff.append(PageParser.escapeHtml(sql));
 			buff.append("</td></tr>");
@@ -1927,7 +2136,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 		return buff.toString();
 	}
 
-	private String getParameterResultSet(ParameterMetaData meta) throws SQLException {
+	private String getParameterResultSet(ParameterMetaData meta)
+			throws SQLException {
 		StringBuilder buff = new StringBuilder();
 		if (meta == null) {
 			return "No parameter meta data";
@@ -1954,8 +2164,9 @@ class WebThread extends Thread implements DatabaseEventListener {
 		return buff.toString();
 	}
 
-	private String getResultSet(String sql, ResultSet rs, boolean metadata, boolean list, boolean edit, long time,
-			boolean allowEdit) throws SQLException {
+	private String getResultSet(String sql, ResultSet rs, boolean metadata,
+			boolean list, boolean edit, long time, boolean allowEdit)
+			throws SQLException {
 		int maxrows = getMaxrows();
 		time = System.currentTimeMillis() - time;
 		StringBuilder buff = new StringBuilder();
@@ -1980,26 +2191,47 @@ class WebThread extends Thread implements DatabaseEventListener {
 			for (int i = 1; i <= columns; i++) {
 				buff.append("<tr>");
 				buff.append("<td>").append(i).append("</td>");
-				buff.append("<td>").append(PageParser.escapeHtml(meta.getColumnLabel(i))).append("</td>");
-				buff.append("<td>").append(PageParser.escapeHtml(meta.getCatalogName(i))).append("</td>");
-				buff.append("<td>").append(PageParser.escapeHtml(meta.getSchemaName(i))).append("</td>");
-				buff.append("<td>").append(PageParser.escapeHtml(meta.getTableName(i))).append("</td>");
-				buff.append("<td>").append(PageParser.escapeHtml(meta.getColumnName(i))).append("</td>");
-				buff.append("<td>").append(meta.getColumnType(i)).append("</td>");
-				buff.append("<td>").append(PageParser.escapeHtml(meta.getColumnTypeName(i))).append("</td>");
-				buff.append("<td>").append(PageParser.escapeHtml(meta.getColumnClassName(i))).append("</td>");
-				buff.append("<td>").append(meta.getPrecision(i)).append("</td>");
+				buff.append("<td>")
+						.append(PageParser.escapeHtml(meta.getColumnLabel(i)))
+						.append("</td>");
+				buff.append("<td>")
+						.append(PageParser.escapeHtml(meta.getCatalogName(i)))
+						.append("</td>");
+				buff.append("<td>")
+						.append(PageParser.escapeHtml(meta.getSchemaName(i)))
+						.append("</td>");
+				buff.append("<td>")
+						.append(PageParser.escapeHtml(meta.getTableName(i)))
+						.append("</td>");
+				buff.append("<td>")
+						.append(PageParser.escapeHtml(meta.getColumnName(i)))
+						.append("</td>");
+				buff.append("<td>").append(meta.getColumnType(i))
+						.append("</td>");
+				buff.append("<td>")
+						.append(PageParser.escapeHtml(meta.getColumnTypeName(i)))
+						.append("</td>");
+				buff.append("<td>")
+						.append(PageParser.escapeHtml(meta
+								.getColumnClassName(i))).append("</td>");
+				buff.append("<td>").append(meta.getPrecision(i))
+						.append("</td>");
 				buff.append("<td>").append(meta.getScale(i)).append("</td>");
-				buff.append("<td>").append(meta.getColumnDisplaySize(i)).append("</td>");
-				buff.append("<td>").append(meta.isAutoIncrement(i)).append("</td>");
-				buff.append("<td>").append(meta.isCaseSensitive(i)).append("</td>");
+				buff.append("<td>").append(meta.getColumnDisplaySize(i))
+						.append("</td>");
+				buff.append("<td>").append(meta.isAutoIncrement(i))
+						.append("</td>");
+				buff.append("<td>").append(meta.isCaseSensitive(i))
+						.append("</td>");
 				buff.append("<td>").append(meta.isCurrency(i)).append("</td>");
 				buff.append("<td>").append(meta.isNullable(i)).append("</td>");
 				buff.append("<td>").append(meta.isReadOnly(i)).append("</td>");
-				buff.append("<td>").append(meta.isSearchable(i)).append("</td>");
+				buff.append("<td>").append(meta.isSearchable(i))
+						.append("</td>");
 				buff.append("<td>").append(meta.isSigned(i)).append("</td>");
 				buff.append("<td>").append(meta.isWritable(i)).append("</td>");
-				buff.append("<td>").append(meta.isDefinitelyWritable(i)).append("</td>");
+				buff.append("<td>").append(meta.isDefinitelyWritable(i))
+						.append("</td>");
 				buff.append("</tr>");
 			}
 		} else if (list) {
@@ -2014,7 +2246,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 				buff.append("</tr>");
 				for (int i = 0; i < columns; i++) {
 					buff.append("<tr><td>");
-					buff.append(PageParser.escapeHtml(meta.getColumnLabel(i + 1)));
+					buff.append(PageParser.escapeHtml(meta
+							.getColumnLabel(i + 1)));
 					buff.append("</td>");
 					buff.append("<td>");
 					buff.append(escapeData(rs, i + 1));
@@ -2043,12 +2276,10 @@ class WebThread extends Thread implements DatabaseEventListener {
 					buff.append("<img onclick=\"javascript:editRow(");
 					buff.append(rs.getRow());
 					buff.append(",'${sessionId}', '${text.resultEdit.save}', '${text.resultEdit.cancel}'");
-					buff
-					.append(")\" width=16 height=16 src=\"ico_write.gif\" onmouseover = \"this.className ='icon_hover'\" onmouseout = \"this.className ='icon'\" class=\"icon\" alt=\"${text.resultEdit.edit}\" title=\"${text.resultEdit.edit}\" border=\"1\"/>");
+					buff.append(")\" width=16 height=16 src=\"ico_write.gif\" onmouseover = \"this.className ='icon_hover'\" onmouseout = \"this.className ='icon'\" class=\"icon\" alt=\"${text.resultEdit.edit}\" title=\"${text.resultEdit.edit}\" border=\"1\"/>");
 					buff.append("<a href=\"editResult.do?op=2&row=");
 					buff.append(rs.getRow());
-					buff
-					.append("&jsessionid=${sessionId}\" target=\"h2result\" ><img width=16 height=16 src=\"ico_remove.gif\" onmouseover = \"this.className ='icon_hover'\" onmouseout = \"this.className ='icon'\" class=\"icon\" alt=\"${text.resultEdit.delete}\" title=\"${text.resultEdit.delete}\" border=\"1\" /></a>");
+					buff.append("&jsessionid=${sessionId}\" target=\"h2result\" ><img width=16 height=16 src=\"ico_remove.gif\" onmouseover = \"this.className ='icon_hover'\" onmouseout = \"this.className ='icon'\" class=\"icon\" alt=\"${text.resultEdit.delete}\" title=\"${text.resultEdit.delete}\" border=\"1\" /></a>");
 					buff.append("</td>");
 				}
 				for (int i = 0; i < columns; i++) {
@@ -2062,7 +2293,7 @@ class WebThread extends Thread implements DatabaseEventListener {
 		boolean isUpdatable = false;
 		try {
 			isUpdatable = rs.getConcurrency() == ResultSet.CONCUR_UPDATABLE
-			&& rs.getType() != ResultSet.TYPE_FORWARD_ONLY;
+					&& rs.getType() != ResultSet.TYPE_FORWARD_ONLY;
 		} catch (NullPointerException e) {
 			// ignore
 			// workaround for a JDBC-ODBC bridge problem
@@ -2078,10 +2309,8 @@ class WebThread extends Thread implements DatabaseEventListener {
 		}
 		if (edit) {
 			buff.append("<tr><td>");
-			buff
-			.append("<img onclick=\"javascript:editRow(-1, '${sessionId}', '${text.resultEdit.save}', '${text.resultEdit.cancel}'");
-			buff
-			.append(")\" width=16 height=16 src=\"ico_add.gif\" onmouseover = \"this.className ='icon_hover'\" onmouseout = \"this.className ='icon'\" class=\"icon\" alt=\"${text.resultEdit.add}\" title=\"${text.resultEdit.add}\" border=\"1\"/>");
+			buff.append("<img onclick=\"javascript:editRow(-1, '${sessionId}', '${text.resultEdit.save}', '${text.resultEdit.cancel}'");
+			buff.append(")\" width=16 height=16 src=\"ico_add.gif\" onmouseover = \"this.className ='icon_hover'\" onmouseout = \"this.className ='icon'\" class=\"icon\" alt=\"${text.resultEdit.add}\" title=\"${text.resultEdit.add}\" border=\"1\"/>");
 			buff.append("</td>");
 			for (int i = 0; i < columns; i++) {
 				buff.append("<td></td>");
@@ -2106,10 +2335,10 @@ class WebThread extends Thread implements DatabaseEventListener {
 		buff.append(time);
 		buff.append(" ms)");
 		if (!edit && isUpdatable && allowEdit) {
-			buff
-			.append("<br /><br /><form name=\"editResult\" method=\"post\" action=\"query.do?jsessionid=${sessionId}\" target=\"h2result\">");
+			buff.append("<br /><br /><form name=\"editResult\" method=\"post\" action=\"query.do?jsessionid=${sessionId}\" target=\"h2result\">");
 			buff.append("<input type=\"submit\" class=\"button\" value=\"${text.resultEdit.editResult}\" />");
-			buff.append("<input type=\"hidden\" name=\"sql\" value=\"@EDIT " + PageParser.escapeHtml(sql) + "\" />");
+			buff.append("<input type=\"hidden\" name=\"sql\" value=\"@EDIT "
+					+ PageParser.escapeHtml(sql) + "\" />");
 			buff.append("</form>");
 		}
 		return buff.toString();
@@ -2117,7 +2346,7 @@ class WebThread extends Thread implements DatabaseEventListener {
 
 	/**
 	 * Save the current connection settings to the properties file.
-	 *
+	 * 
 	 * @return the file to open afterwards
 	 */
 	String settingSave() {
@@ -2132,20 +2361,24 @@ class WebThread extends Thread implements DatabaseEventListener {
 		return "index.do";
 	}
 
-	private String escapeData(ResultSet rs, int columnIndex) throws SQLException {
+	private String escapeData(ResultSet rs, int columnIndex)
+			throws SQLException {
 		String d = rs.getString(columnIndex);
 		if (d == null) {
 			return "<i>null</i>";
 		} else if (d.length() > SysProperties.WEB_MAX_VALUE_LENGTH) {
-			return "<div style='display: none'>=+</div>" +
-			PageParser.escapeHtml(d.substring(0, 100) + "... (" + d.length() + ")");
+			return "<div style='display: none'>=+</div>"
+					+ PageParser.escapeHtml(d.substring(0, 100) + "... ("
+							+ d.length() + ")");
 		} else if (d.equals("null") || d.startsWith("= ") || d.startsWith("=+")) {
-			return "<div style='display: none'>= </div>" + PageParser.escapeHtml(d);
+			return "<div style='display: none'>= </div>"
+					+ PageParser.escapeHtml(d);
 		}
 		return PageParser.escapeHtml(d);
 	}
 
-	private void unescapeData(String d, ResultSet rs, int columnIndex) throws SQLException {
+	private void unescapeData(String d, ResultSet rs, int columnIndex)
+			throws SQLException {
 		if (d.equals("null")) {
 			rs.updateNull(columnIndex);
 		} else if (d.startsWith("=+")) {
@@ -2183,7 +2416,7 @@ class WebThread extends Thread implements DatabaseEventListener {
 
 	/**
 	 * Get the current mime type.
-	 *
+	 * 
 	 * @return the mime type
 	 */
 	String getMimeType() {

@@ -43,8 +43,9 @@ class FullTextSettings {
 
 	/**
 	 * Get the index information for the given index id.
-	 *
-	 * @param indexId the index id
+	 * 
+	 * @param indexId
+	 *            the index id
 	 * @return the index info
 	 */
 	IndexInfo getIndexInfo(long indexId) {
@@ -53,8 +54,9 @@ class FullTextSettings {
 
 	/**
 	 * Add an index.
-	 *
-	 * @param index the index
+	 * 
+	 * @param index
+	 *            the index
 	 */
 	void addIndexInfo(IndexInfo index) {
 		indexes.put(ObjectUtils.getLong(index.id), index);
@@ -63,8 +65,9 @@ class FullTextSettings {
 	/**
 	 * Convert a word to uppercase. This method returns null if the word is in
 	 * the ignore list.
-	 *
-	 * @param word the word to convert and check
+	 * 
+	 * @param word
+	 *            the word to convert and check
 	 * @return the uppercase version of the word or null
 	 */
 	String convertWord(String word) {
@@ -78,8 +81,9 @@ class FullTextSettings {
 
 	/**
 	 * Get or create the fulltext settings for this database.
-	 *
-	 * @param conn the connection
+	 * 
+	 * @param conn
+	 *            the connection
 	 * @return the settings
 	 */
 	static FullTextSettings getInstance(Connection conn) throws SQLException {
@@ -94,11 +98,13 @@ class FullTextSettings {
 
 	private static String getIndexPath(Connection conn) throws SQLException {
 		Statement stat = conn.createStatement();
-		ResultSet rs = stat.executeQuery("CALL IFNULL(DATABASE_PATH(), 'MEM:' || DATABASE())");
+		ResultSet rs = stat
+				.executeQuery("CALL IFNULL(DATABASE_PATH(), 'MEM:' || DATABASE())");
 		rs.next();
 		String path = rs.getString(1);
 		if ("MEM:UNNAMED".equals(path)) {
-			throw new SQLException("FULLTEXT", "Fulltext search for private (unnamed) in-memory databases is not supported.");
+			throw new SQLException("FULLTEXT",
+					"Fulltext search for private (unnamed) in-memory databases is not supported.");
 		}
 		rs.close();
 		return path;
@@ -129,8 +135,9 @@ class FullTextSettings {
 
 	/**
 	 * Remove an index from the settings.
-	 *
-	 * @param index the index to remove
+	 * 
+	 * @param index
+	 *            the index to remove
 	 */
 	void removeIndexInfo(IndexInfo index) {
 		indexes.remove(ObjectUtils.getLong(index.id));

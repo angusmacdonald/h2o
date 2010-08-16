@@ -18,9 +18,11 @@ public abstract class SchemaCommand extends DefineCommand {
 
 	/**
 	 * Create a new command.
-	 *
-	 * @param session the session
-	 * @param schema the schema
+	 * 
+	 * @param session
+	 *            the session
+	 * @param schema
+	 *            the schema
 	 */
 	public SchemaCommand(Session session, Schema schema) {
 		super(session);
@@ -29,7 +31,7 @@ public abstract class SchemaCommand extends DefineCommand {
 
 	/**
 	 * Get the schema
-	 *
+	 * 
 	 * @return the schema
 	 */
 	protected Schema getSchema() {

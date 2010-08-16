@@ -26,7 +26,8 @@ public class RuleElement implements Rule {
 			keyword = true;
 		}
 		topic = StringUtils.toLowerEnglish(topic);
-		this.type = topic.startsWith("function") ? Sentence.FUNCTION : Sentence.KEYWORD;
+		this.type = topic.startsWith("function") ? Sentence.FUNCTION
+				: Sentence.KEYWORD;
 	}
 
 	public String toString() {
@@ -83,7 +84,8 @@ public class RuleElement implements Rule {
 			String up = sentence.getQueryUpper();
 			if (up.startsWith(name)) {
 				query = query.substring(name.length());
-				while (!"_".equals(name) && query.length() > 0 && Character.isWhitespace(query.charAt(0))) {
+				while (!"_".equals(name) && query.length() > 0
+						&& Character.isWhitespace(query.charAt(0))) {
 					query = query.substring(1);
 				}
 				sentence.setQuery(query);
@@ -94,9 +96,11 @@ public class RuleElement implements Rule {
 		if (!link.matchRemove(sentence)) {
 			return false;
 		}
-		if (name != null && !name.startsWith("@") && (link.name() == null || !link.name().startsWith("@"))) {
+		if (name != null && !name.startsWith("@")
+				&& (link.name() == null || !link.name().startsWith("@"))) {
 			query = sentence.getQuery();
-			while (query.length() > 0 && Character.isWhitespace(query.charAt(0))) {
+			while (query.length() > 0
+					&& Character.isWhitespace(query.charAt(0))) {
 				query = query.substring(1);
 			}
 			sentence.setQuery(query);

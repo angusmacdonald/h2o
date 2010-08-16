@@ -44,9 +44,11 @@ public class BtreeCursor implements Cursor {
 
 	/**
 	 * Put this b-tree position on top of the stack.
-	 *
-	 * @param page the b-tree page to add
-	 * @param position the index in the row list in this page
+	 * 
+	 * @param page
+	 *            the b-tree page to add
+	 * @param position
+	 *            the index in the row list in this page
 	 */
 	void push(BtreePage page, int position) {
 		if (SysProperties.CHECK && (top != null && top.page == page)) {
@@ -57,7 +59,7 @@ public class BtreeCursor implements Cursor {
 
 	/**
 	 * Get the next b-tree position from the stack.
-	 *
+	 * 
 	 * @return the next position or null
 	 */
 	BtreePosition pop() {

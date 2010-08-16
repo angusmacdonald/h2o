@@ -34,8 +34,7 @@ import org.h2.util.IOUtils;
 import org.h2.util.ObjectArray;
 
 /**
- * This class represents the statement
- * BACKUP
+ * This class represents the statement BACKUP
  */
 public class BackupCommand extends Prepared {
 
@@ -91,12 +90,15 @@ public class BackupCommand extends Prepared {
 							LogFile lf = (LogFile) list.get(i);
 							fn = lf.getFileName();
 							backupFile(out, base, fn);
-							db.setProgress(DatabaseEventListener.STATE_BACKUP_FILE, name, i, max);
+							db.setProgress(
+									DatabaseEventListener.STATE_BACKUP_FILE,
+									name, i, max);
 						}
 					}
 					String prefix = db.getDatabasePath();
 					String dir = FileUtils.getParent(prefix);
-					ArrayList fileList = FileLister.getDatabaseFiles(dir, name, true);
+					ArrayList fileList = FileLister.getDatabaseFiles(dir, name,
+							true);
 					for (int i = 0; i < fileList.size(); i++) {
 						fn = (String) fileList.get(i);
 						if (fn.endsWith(Constants.SUFFIX_LOB_FILE)) {
@@ -114,7 +116,8 @@ public class BackupCommand extends Prepared {
 		}
 	}
 
-	private void backupPageStore(ZipOutputStream out, String fileName, PageStore store) throws SQLException, IOException {
+	private void backupPageStore(ZipOutputStream out, String fileName,
+			PageStore store) throws SQLException, IOException {
 		Database db = session.getDatabase();
 		fileName = FileUtils.getFileName(fileName);
 		out.putNextEntry(new ZipEntry(fileName));
@@ -125,12 +128,14 @@ public class BackupCommand extends Prepared {
 			if (pos < 0) {
 				break;
 			}
-			db.setProgress(DatabaseEventListener.STATE_BACKUP_FILE, fileName, pos, max);
+			db.setProgress(DatabaseEventListener.STATE_BACKUP_FILE, fileName,
+					pos, max);
 		}
 		out.closeEntry();
 	}
 
-	private void backupDiskFile(ZipOutputStream out, String fileName, DiskFile file) throws SQLException, IOException {
+	private void backupDiskFile(ZipOutputStream out, String fileName,
+			DiskFile file) throws SQLException, IOException {
 		Database db = session.getDatabase();
 		fileName = FileUtils.getFileName(fileName);
 		out.putNextEntry(new ZipEntry(fileName));
@@ -141,12 +146,14 @@ public class BackupCommand extends Prepared {
 			if (pos < 0) {
 				break;
 			}
-			db.setProgress(DatabaseEventListener.STATE_BACKUP_FILE, fileName, pos, max);
+			db.setProgress(DatabaseEventListener.STATE_BACKUP_FILE, fileName,
+					pos, max);
 		}
 		out.closeEntry();
 	}
 
-	private void backupFile(ZipOutputStream out, String base, String fn) throws IOException {
+	private void backupFile(ZipOutputStream out, String base, String fn)
+			throws IOException {
 		String f = FileUtils.getAbsolutePath(fn);
 		base = FileUtils.getAbsolutePath(base);
 		if (!f.startsWith(base)) {
@@ -166,8 +173,9 @@ public class BackupCommand extends Prepared {
 
 	/**
 	 * Fix the file name, replacing backslash with slash.
-	 *
-	 * @param f the file name
+	 * 
+	 * @param f
+	 *            the file name
 	 * @return the corrected file name
 	 */
 	public static String correctFileName(String f) {

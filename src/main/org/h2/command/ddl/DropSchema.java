@@ -19,8 +19,7 @@ import org.h2o.db.id.TableInfo;
 import org.h2o.util.exceptions.MovedException;
 
 /**
- * This class represents the statement
- * DROP SCHEMA
+ * This class represents the statement DROP SCHEMA
  */
 public class DropSchema extends DefineCommand {
 
@@ -42,18 +41,21 @@ public class DropSchema extends DefineCommand {
 		Schema schema = db.findSchema(schemaName);
 		if (schema == null) {
 			if (!ifExists) {
-				throw Message.getSQLException(ErrorCode.SCHEMA_NOT_FOUND_1, schemaName);
+				throw Message.getSQLException(ErrorCode.SCHEMA_NOT_FOUND_1,
+						schemaName);
 			}
 		} else {
 			if (!schema.canDrop()) {
-				throw Message.getSQLException(ErrorCode.SCHEMA_CAN_NOT_BE_DROPPED_1, schemaName);
+				throw Message.getSQLException(
+						ErrorCode.SCHEMA_CAN_NOT_BE_DROPPED_1, schemaName);
 			}
 			db.removeDatabaseObject(session, schema);
 
-			if (Constants.IS_H2O){
-				try{
-					db.getSystemTable().removeTableInformation(new TableInfo(null, schemaName));
-				} catch (MovedException e){
+			if (Constants.IS_H2O) {
+				try {
+					db.getSystemTable().removeTableInformation(
+							new TableInfo(null, schemaName));
+				} catch (MovedException e) {
 					throw new RemoteException("System Table has moved.");
 				}
 			}

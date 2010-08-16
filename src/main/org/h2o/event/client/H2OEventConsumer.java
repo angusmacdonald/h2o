@@ -29,21 +29,20 @@ import uk.ac.standrews.cs.nds.eventModel.eventBus.EventBus;
 import uk.ac.standrews.cs.nds.eventModel.eventBus.busInterfaces.IEventBus;
 import uk.ac.standrews.cs.nds.eventModel.eventBus.busInterfaces.IEventConsumer;
 
-public class H2OEventConsumer implements IEventConsumer  {
+public class H2OEventConsumer implements IEventConsumer {
 	IEventBus bus = new EventBus();
 
 	private Socket socket;
 
 	private ObjectOutputStream out;
 
-	public H2OEventConsumer(){
+	public H2OEventConsumer() {
 		try {
-		    getConnection();
+			getConnection();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-
 
 	@Override
 	public boolean interested(IEvent event) {
@@ -54,7 +53,7 @@ public class H2OEventConsumer implements IEventConsumer  {
 	public void receiveEvent(IEvent event) {
 		Object obj = event.get(H2OEventBus.H2O_EVENT);
 
-		if (!socket.isConnected()){
+		if (!socket.isConnected()) {
 			try {
 				getConnection();
 			} catch (UnknownHostException e) {
@@ -72,7 +71,6 @@ public class H2OEventConsumer implements IEventConsumer  {
 			e.printStackTrace();
 		}
 	}
-	
 
 	private void getConnection() throws UnknownHostException, IOException {
 		socket = new Socket(NetUtils.getLocalAddress(), 4444);

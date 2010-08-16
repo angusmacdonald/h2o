@@ -13,8 +13,8 @@ import java.util.Iterator;
 import org.h2.constant.SysProperties;
 
 /**
- * The object array is basically the same as ArrayList.
- * It is a bit faster than ArrayList in some versions of Java.
+ * The object array is basically the same as ArrayList. It is a bit faster than
+ * ArrayList in some versions of Java.
  */
 public class ObjectArray {
 	private static final int CAPACITY_INIT = 4, CAPACITY_SHRINK = 256;
@@ -31,8 +31,9 @@ public class ObjectArray {
 
 	/**
 	 * Create a new object with the given initial capacity.
-	 *
-	 * @param capacity the initial capacity
+	 * 
+	 * @param capacity
+	 *            the initial capacity
 	 */
 	public ObjectArray(int capacity) {
 		data = new Object[capacity > 1 ? capacity : 1];
@@ -40,8 +41,9 @@ public class ObjectArray {
 
 	/**
 	 * Create a new object with all elements of the given collection.
-	 *
-	 * @param collection the collection with all elements
+	 * 
+	 * @param collection
+	 *            the collection with all elements
 	 */
 	public ObjectArray(Collection collection) {
 		size = collection.size();
@@ -58,8 +60,9 @@ public class ObjectArray {
 
 	/**
 	 * Append an object at the end of the list.
-	 *
-	 * @param value the value
+	 * 
+	 * @param value
+	 *            the value
 	 */
 	public void add(Object value) {
 		if (size >= data.length) {
@@ -70,8 +73,9 @@ public class ObjectArray {
 
 	/**
 	 * Get the object at the given index.
-	 *
-	 * @param index the index
+	 * 
+	 * @param index
+	 *            the index
 	 * @return the value
 	 */
 	public Object get(int index) {
@@ -83,8 +87,9 @@ public class ObjectArray {
 
 	/**
 	 * Remove the object at the given index.
-	 *
-	 * @param index the index
+	 * 
+	 * @param index
+	 *            the index
 	 * @return the removed object
 	 */
 	public Object remove(int index) {
@@ -103,13 +108,16 @@ public class ObjectArray {
 
 	/**
 	 * Remove a number of elements from the given start and end index.
-	 *
-	 * @param from the start index
-	 * @param to the end index
+	 * 
+	 * @param from
+	 *            the start index
+	 * @param to
+	 *            the end index
 	 */
 	public void removeRange(int from, int to) {
 		if (SysProperties.CHECK && (to > size || from > to)) {
-			throw new ArrayIndexOutOfBoundsException("to=" + to + " from="+from+" size=" + size);
+			throw new ArrayIndexOutOfBoundsException("to=" + to + " from="
+					+ from + " size=" + size);
 		}
 		System.arraycopy(data, to, data, from, size - to);
 		size -= to - from;
@@ -120,8 +128,9 @@ public class ObjectArray {
 
 	/**
 	 * Fill the list with empty elements until it reaches the given size.
-	 *
-	 * @param size the new size
+	 * 
+	 * @param size
+	 *            the new size
 	 */
 	public void setSize(int size) {
 		ensureCapacity(size);
@@ -148,9 +157,11 @@ public class ObjectArray {
 	/**
 	 * Insert an element at the given position. The element at this position and
 	 * all elements with a higher index move one element.
-	 *
-	 * @param index the index where to insert the object
-	 * @param value the object to insert
+	 * 
+	 * @param index
+	 *            the index where to insert the object
+	 * @param value
+	 *            the object to insert
 	 */
 	public void add(int index, Object value) {
 		if (SysProperties.CHECK && index > size) {
@@ -168,9 +179,11 @@ public class ObjectArray {
 
 	/**
 	 * Update the object at the given index.
-	 *
-	 * @param index the index
-	 * @param value the new value
+	 * 
+	 * @param index
+	 *            the index
+	 * @param value
+	 *            the new value
 	 */
 	public void set(int index, Object value) {
 		if (SysProperties.CHECK && index >= size) {
@@ -181,7 +194,7 @@ public class ObjectArray {
 
 	/**
 	 * Get the size of the list.
-	 *
+	 * 
 	 * @return the size
 	 */
 	public int size() {
@@ -190,8 +203,9 @@ public class ObjectArray {
 
 	/**
 	 * Convert this list to an array. The target array must be big enough.
-	 *
-	 * @param array the target array
+	 * 
+	 * @param array
+	 *            the target array
 	 */
 	public void toArray(Object[] array) {
 		ObjectUtils.arrayCopy(data, array, size);
@@ -213,8 +227,9 @@ public class ObjectArray {
 
 	/**
 	 * Get the index of the given object, or -1 if not found.
-	 *
-	 * @param o the object to search
+	 * 
+	 * @param o
+	 *            the object to search
 	 * @return the index
 	 */
 	public int indexOf(Object o) {
@@ -228,8 +243,9 @@ public class ObjectArray {
 
 	/**
 	 * Add all objects from the given list.
-	 *
-	 * @param list the list
+	 * 
+	 * @param list
+	 *            the list
 	 */
 	public void addAll(ObjectArray list) {
 		for (int i = 0; i < list.size; i++) {
@@ -245,8 +261,9 @@ public class ObjectArray {
 
 	/**
 	 * Sort the elements using the given comparator.
-	 *
-	 * @param comp the comparator
+	 * 
+	 * @param comp
+	 *            the comparator
 	 */
 	public void sort(Comparator comp) {
 		sort(comp, 0, size - 1);
@@ -254,10 +271,13 @@ public class ObjectArray {
 
 	/**
 	 * Sort using the quicksort algorithm.
-	 *
-	 * @param comp the comparator
-	 * @param l the first element (left)
-	 * @param r the last element (right)
+	 * 
+	 * @param comp
+	 *            the comparator
+	 * @param l
+	 *            the first element (left)
+	 * @param r
+	 *            the last element (right)
 	 */
 	private void sort(Comparator comp, int l, int r) {
 		int i, j;
@@ -301,14 +321,14 @@ public class ObjectArray {
 		}
 	}
 
-	//    public void sortInsertion(Comparator comp) {
-	//        for (int i = 1, j; i < size(); i++) {
-	//            Object t = get(i);
-	//            for (j = i - 1; j >= 0 && (comp.compare(get(j), t) < 0); j--) {
-	//                set(j + 1, get(j));
-	//            }
-	//            set(j + 1, t);
-	//        }
-	//    }
+	// public void sortInsertion(Comparator comp) {
+	// for (int i = 1, j; i < size(); i++) {
+	// Object t = get(i);
+	// for (j = i - 1; j >= 0 && (comp.compare(get(j), t) < 0); j--) {
+	// set(j + 1, get(j));
+	// }
+	// set(j + 1, t);
+	// }
+	// }
 
 }

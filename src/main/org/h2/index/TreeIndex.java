@@ -27,7 +27,8 @@ public class TreeIndex extends BaseIndex {
 	private TableData tableData;
 	private long rowCount;
 
-	public TreeIndex(TableData table, int id, String indexName, IndexColumn[] columns, IndexType indexType) {
+	public TreeIndex(TableData table, int id, String indexName,
+			IndexColumn[] columns, IndexType indexType) {
 		initBaseIndex(table, id, indexName, columns, indexType);
 		tableData = table;
 	}
@@ -255,7 +256,8 @@ public class TreeIndex extends BaseIndex {
 		}
 	}
 
-	private TreeNode findFirstNode(SearchRow row, boolean withKey) throws SQLException {
+	private TreeNode findFirstNode(SearchRow row, boolean withKey)
+			throws SQLException {
 		TreeNode x = root, result = x;
 		while (x != null) {
 			result = x;
@@ -277,7 +279,8 @@ public class TreeIndex extends BaseIndex {
 		return result;
 	}
 
-	public Cursor find(Session session, SearchRow first, SearchRow last) throws SQLException {
+	public Cursor find(Session session, SearchRow first, SearchRow last)
+			throws SQLException {
 		if (first == null) {
 			TreeNode x = root, n;
 			while (x != null) {
@@ -308,119 +311,122 @@ public class TreeIndex extends BaseIndex {
 
 	/**
 	 * Get the next node if there is one.
-	 *
-	 * @param x the node
+	 * 
+	 * @param x
+	 *            the node
 	 * @return the next node or null
 	 */
-	 TreeNode next(TreeNode x) {
-		 if (x == null) {
-			 return null;
-		 }
-		 TreeNode r = x.right;
-		 if (r != null) {
-			 x = r;
-			 TreeNode l = x.left;
-			 while (l != null) {
-				 x = l;
-				 l = x.left;
-			 }
-			 return x;
-		 }
-		 TreeNode ch = x;
-		 x = x.parent;
-		 while (x != null && ch == x.right) {
-			 ch = x;
-			 x = x.parent;
-		 }
-		 return x;
-	 }
+	TreeNode next(TreeNode x) {
+		if (x == null) {
+			return null;
+		}
+		TreeNode r = x.right;
+		if (r != null) {
+			x = r;
+			TreeNode l = x.left;
+			while (l != null) {
+				x = l;
+				l = x.left;
+			}
+			return x;
+		}
+		TreeNode ch = x;
+		x = x.parent;
+		while (x != null && ch == x.right) {
+			ch = x;
+			x = x.parent;
+		}
+		return x;
+	}
 
-	 /**
-	  * Get the previous node if there is one.
-	  *
-	  * @param x the node
-	  * @return the previous node or null
-	  */
-	 TreeNode previous(TreeNode x) {
-		 if (x == null) {
-			 return null;
-		 }
-		 TreeNode l = x.left;
-		 if (l != null) {
-			 x = l;
-			 TreeNode r = x.right;
-			 while (r != null) {
-				 x = r;
-				 r = x.right;
-			 }
-			 return x;
-		 }
-		 TreeNode ch = x;
-		 x = x.parent;
-		 while (x != null && ch == x.left) {
-			 ch = x;
-			 x = x.parent;
-		 }
-		 return x;
-	 }
+	/**
+	 * Get the previous node if there is one.
+	 * 
+	 * @param x
+	 *            the node
+	 * @return the previous node or null
+	 */
+	TreeNode previous(TreeNode x) {
+		if (x == null) {
+			return null;
+		}
+		TreeNode l = x.left;
+		if (l != null) {
+			x = l;
+			TreeNode r = x.right;
+			while (r != null) {
+				x = r;
+				r = x.right;
+			}
+			return x;
+		}
+		TreeNode ch = x;
+		x = x.parent;
+		while (x != null && ch == x.left) {
+			ch = x;
+			x = x.parent;
+		}
+		return x;
+	}
 
-	 public void checkRename() {
-		 // nothing to do
-	 }
+	public void checkRename() {
+		// nothing to do
+	}
 
-	 public boolean needRebuild() {
-		 return true;
-	 }
+	public boolean needRebuild() {
+		return true;
+	}
 
-	 public boolean canGetFirstOrLast() {
-		 return true;
-	 }
+	public boolean canGetFirstOrLast() {
+		return true;
+	}
 
-	 public Cursor findFirstOrLast(Session session, boolean first) throws SQLException {
-		 if (first) {
-			 // TODO optimization: this loops through NULL values
-			 Cursor cursor = find(session, null, null);
-			 while (cursor.next()) {
-				 SearchRow row = cursor.getSearchRow();
-				 Value v = row.getValue(columnIds[0]);
-				 if (v != ValueNull.INSTANCE) {
-					 return cursor;
-				 }
-			 }
-			 return cursor;
-		 }
-		 TreeNode x = root, n;
-		 while (x != null) {
-			 n = x.right;
-			 if (n == null) {
-				 break;
-			 }
-			 x = n;
-		 }
-		 TreeCursor cursor = new TreeCursor(this, x, null, null);
-		 if (x == null) {
-			 return cursor;
-		 }
-		 // TODO optimization: this loops through NULL elements
-		 do {
-			 SearchRow row = cursor.getSearchRow();
-			 if (row == null) {
-				 break;
-			 }
-			 Value v = row.getValue(columnIds[0]);
-			 if (v != ValueNull.INSTANCE) {
-				 return cursor;
-			 }
-		 } while (cursor.previous());
-		 return cursor;
-	 }
+	public Cursor findFirstOrLast(Session session, boolean first)
+			throws SQLException {
+		if (first) {
+			// TODO optimization: this loops through NULL values
+			Cursor cursor = find(session, null, null);
+			while (cursor.next()) {
+				SearchRow row = cursor.getSearchRow();
+				Value v = row.getValue(columnIds[0]);
+				if (v != ValueNull.INSTANCE) {
+					return cursor;
+				}
+			}
+			return cursor;
+		}
+		TreeNode x = root, n;
+		while (x != null) {
+			n = x.right;
+			if (n == null) {
+				break;
+			}
+			x = n;
+		}
+		TreeCursor cursor = new TreeCursor(this, x, null, null);
+		if (x == null) {
+			return cursor;
+		}
+		// TODO optimization: this loops through NULL elements
+		do {
+			SearchRow row = cursor.getSearchRow();
+			if (row == null) {
+				break;
+			}
+			Value v = row.getValue(columnIds[0]);
+			if (v != ValueNull.INSTANCE) {
+				return cursor;
+			}
+		} while (cursor.previous());
+		return cursor;
+	}
 
-	 public long getRowCount(Session session) {
-		 return rowCount;
-	 }
+	public long getRowCount(Session session) {
+		return rowCount;
+	}
 
-	 public long getRowCountApproximation() {
-		 return rowCount;
-	 }
+	public long getRowCountApproximation() {
+		return rowCount;
+	}
 
 }

@@ -23,10 +23,11 @@ public class ValueHashMap extends HashBase {
 	private DataHandler handler;
 
 	/**
-	 * Create a new value hash map using the given data handler.
-	 * The data handler is used to compare values.
-	 *
-	 * @param handler the data handler
+	 * Create a new value hash map using the given data handler. The data
+	 * handler is used to compare values.
+	 * 
+	 * @param handler
+	 *            the data handler
 	 */
 	public ValueHashMap(DataHandler handler) {
 		this.handler = handler;
@@ -56,9 +57,11 @@ public class ValueHashMap extends HashBase {
 
 	/**
 	 * Add or update a key value pair.
-	 *
-	 * @param key the key
-	 * @param value the new value
+	 * 
+	 * @param key
+	 *            the key
+	 * @param value
+	 *            the new value
 	 */
 	public void put(Value key, Object value) throws SQLException {
 		checkSizePut();
@@ -95,8 +98,9 @@ public class ValueHashMap extends HashBase {
 
 	/**
 	 * Remove a key value pair.
-	 *
-	 * @param key the key
+	 * 
+	 * @param key
+	 *            the key
 	 */
 	public void remove(Value key) throws SQLException {
 		checkSizeRemove();
@@ -118,15 +122,16 @@ public class ValueHashMap extends HashBase {
 				return;
 			}
 			index = (index + plus++) & mask;
-		} while(plus <= len);
+		} while (plus <= len);
 		// not found
 	}
 
 	/**
 	 * Get the value for this key. This method returns null if the key was not
 	 * found.
-	 *
-	 * @param key the key
+	 * 
+	 * @param key
+	 *            the key
 	 * @return the value for the given key
 	 */
 	public Object get(Value key) throws SQLException {
@@ -150,13 +155,12 @@ public class ValueHashMap extends HashBase {
 
 	/**
 	 * Get the list of keys.
-	 *
+	 * 
 	 * @return all keys
 	 */
 	public ObjectArray keys() {
 		ObjectArray list = new ObjectArray(size);
-		for (int i = 0; i < keys.length; i++) {
-			Value k = keys[i];
+		for (Value k : keys) {
 			if (k != null && k != ValueNull.DELETED) {
 				list.add(k);
 			}
@@ -166,7 +170,7 @@ public class ValueHashMap extends HashBase {
 
 	/**
 	 * Get the list of values.
-	 *
+	 * 
 	 * @return all values
 	 */
 	public ObjectArray values() {

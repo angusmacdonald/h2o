@@ -18,9 +18,11 @@ public interface RowIndex extends Index {
 
 	/**
 	 * Get the row with the given key.
-	 *
-	 * @param session the session
-	 * @param key the position
+	 * 
+	 * @param session
+	 *            the session
+	 * @param key
+	 *            the position
 	 * @return the row
 	 */
 	Row getRow(Session session, int key) throws SQLException;

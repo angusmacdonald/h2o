@@ -23,16 +23,17 @@ import org.h2.value.Value;
  * Information about the parameters of a prepared statement.
  */
 public class JdbcParameterMetaData extends TraceObject
-//## Java 1.4 begin ##
-implements ParameterMetaData
-//## Java 1.4 end ##
+// ## Java 1.4 begin ##
+		implements ParameterMetaData
+// ## Java 1.4 end ##
 {
 
 	private JdbcPreparedStatement prep;
 	private int paramCount;
 	private ObjectArray parameters;
 
-	JdbcParameterMetaData(Trace trace, JdbcPreparedStatement prep, CommandInterface command, int id) {
+	JdbcParameterMetaData(Trace trace, JdbcPreparedStatement prep,
+			CommandInterface command, int id) {
 		setTrace(trace, TraceObject.PARAMETER_META_DATA, id);
 		this.prep = prep;
 		this.parameters = command.getParameters();
@@ -41,7 +42,7 @@ implements ParameterMetaData
 
 	/**
 	 * Returns the number of parameters.
-	 *
+	 * 
 	 * @return the number
 	 */
 	public int getParameterCount() throws SQLException {
@@ -55,13 +56,13 @@ implements ParameterMetaData
 	}
 
 	/**
-	 * Returns the parameter mode.
-	 * Always returns parameterModeIn.
-	 *
-	 * @param param the column index (1,2,...)
+	 * Returns the parameter mode. Always returns parameterModeIn.
+	 * 
+	 * @param param
+	 *            the column index (1,2,...)
 	 * @return parameterModeIn
 	 */
-	//## Java 1.4 begin ##
+	// ## Java 1.4 begin ##
 	public int getParameterMode(int param) throws SQLException {
 		try {
 			debugCodeCall("getParameterMode", param);
@@ -71,13 +72,15 @@ implements ParameterMetaData
 			throw logAndConvert(e);
 		}
 	}
-	//## Java 1.4 end ##
+
+	// ## Java 1.4 end ##
 
 	/**
-	 * Returns the parameter type.
-	 * java.sql.Types.VARCHAR is returned if the data type is not known.
-	 *
-	 * @param param the column index (1,2,...)
+	 * Returns the parameter type. java.sql.Types.VARCHAR is returned if the
+	 * data type is not known.
+	 * 
+	 * @param param
+	 *            the column index (1,2,...)
 	 * @return the data type
 	 */
 	public int getParameterType(int param) throws SQLException {
@@ -95,10 +98,11 @@ implements ParameterMetaData
 	}
 
 	/**
-	 * Returns the parameter precision.
-	 * The value 0 is returned if the precision is not known.
-	 *
-	 * @param param the column index (1,2,...)
+	 * Returns the parameter precision. The value 0 is returned if the precision
+	 * is not known.
+	 * 
+	 * @param param
+	 *            the column index (1,2,...)
 	 * @return the precision
 	 */
 	public int getPrecision(int param) throws SQLException {
@@ -112,10 +116,11 @@ implements ParameterMetaData
 	}
 
 	/**
-	 * Returns the parameter scale.
-	 * The value 0 is returned if the scale is not known.
-	 *
-	 * @param param the column index (1,2,...)
+	 * Returns the parameter scale. The value 0 is returned if the scale is not
+	 * known.
+	 * 
+	 * @param param
+	 *            the column index (1,2,...)
 	 * @return the scale
 	 */
 	public int getScale(int param) throws SQLException {
@@ -129,10 +134,11 @@ implements ParameterMetaData
 	}
 
 	/**
-	 * Checks if this is nullable parameter.
-	 * Returns ResultSetMetaData.columnNullableUnknown..
-	 *
-	 * @param param the column index (1,2,...)
+	 * Checks if this is nullable parameter. Returns
+	 * ResultSetMetaData.columnNullableUnknown..
+	 * 
+	 * @param param
+	 *            the column index (1,2,...)
 	 * @return ResultSetMetaData.columnNullableUnknown
 	 */
 	public int isNullable(int param) throws SQLException {
@@ -145,10 +151,10 @@ implements ParameterMetaData
 	}
 
 	/**
-	 * Checks if this parameter is signed.
-	 * It always returns true.
-	 *
-	 * @param param the column index (1,2,...)
+	 * Checks if this parameter is signed. It always returns true.
+	 * 
+	 * @param param
+	 *            the column index (1,2,...)
 	 * @return true
 	 */
 	public boolean isSigned(int param) throws SQLException {
@@ -162,10 +168,11 @@ implements ParameterMetaData
 	}
 
 	/**
-	 * Returns the Java class name of the parameter.
-	 * "java.lang.String" is returned if the type is not known.
-	 *
-	 * @param param the column index (1,2,...)
+	 * Returns the Java class name of the parameter. "java.lang.String" is
+	 * returned if the type is not known.
+	 * 
+	 * @param param
+	 *            the column index (1,2,...)
 	 * @return the Java class name
 	 */
 	public String getParameterClassName(int param) throws SQLException {
@@ -183,10 +190,11 @@ implements ParameterMetaData
 	}
 
 	/**
-	 * Returns the parameter type name.
-	 * "VARCHAR" is returned if the type is not known.
-	 *
-	 * @param param the column index (1,2,...)
+	 * Returns the parameter type name. "VARCHAR" is returned if the type is not
+	 * known.
+	 * 
+	 * @param param
+	 *            the column index (1,2,...)
 	 * @return the type name
 	 */
 	public String getParameterTypeName(int param) throws SQLException {
@@ -224,16 +232,14 @@ implements ParameterMetaData
 		throw Message.getUnsupportedException();
 	}
 
-
 	/**
 	 * [Not supported] Checks if unwrap can return an object of this class.
 	 */
 
-	public boolean isWrapperFor(Class< ? > iface) throws SQLException {
+	public boolean isWrapperFor(Class<?> iface) throws SQLException {
 		debugCodeCall("isWrapperFor");
 		throw Message.getUnsupportedException();
 	}
-
 
 	/**
 	 * INTERNAL

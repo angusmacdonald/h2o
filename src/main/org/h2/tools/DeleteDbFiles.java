@@ -23,25 +23,27 @@ public class DeleteDbFiles extends Tool {
 
 	private void showUsage() {
 		out.println("Deletes all files belonging to a database.");
-		out.println("java "+getClass().getName() + "\n" +
-				" [-dir <dir>]      The directory (default: .)\n" +
-				" [-db <database>]  The database name\n" +
-		" [-quiet]          Do not print progress information");
-		out.println("See also http://h2database.com/javadoc/" + getClass().getName().replace('.', '/') + ".html");
+		out.println("java " + getClass().getName() + "\n"
+				+ " [-dir <dir>]      The directory (default: .)\n"
+				+ " [-db <database>]  The database name\n"
+				+ " [-quiet]          Do not print progress information");
+		out.println("See also http://h2database.com/javadoc/"
+				+ getClass().getName().replace('.', '/') + ".html");
 	}
 
 	/**
-	 * The command line interface for this tool.
-	 * The options must be split into strings like this: "-db", "test",...
-	 * Options are case sensitive. The following options are supported:
+	 * The command line interface for this tool. The options must be split into
+	 * strings like this: "-db", "test",... Options are case sensitive. The
+	 * following options are supported:
 	 * <ul>
-	 * <li>-help or -? (print the list of options)
-	 * </li><li>-dir database directory (the default is the current directory)
-	 * </li><li>-db database name (all databases if no name is specified)
-	 * </li><li>-quiet does not print progress information
-	 * </li></ul>
-	 *
-	 * @param args the command line arguments
+	 * <li>-help or -? (print the list of options)</li>
+	 * <li>-dir database directory (the default is the current directory)</li>
+	 * <li>-db database name (all databases if no name is specified)</li>
+	 * <li>-quiet does not print progress information</li>
+	 * </ul>
+	 * 
+	 * @param args
+	 *            the command line arguments
 	 * @throws SQLException
 	 */
 	public static void main(String[] args) throws SQLException {
@@ -74,25 +76,33 @@ public class DeleteDbFiles extends Tool {
 
 	/**
 	 * Deletes the database files.
-	 *
-	 * @param dir the directory
-	 * @param db the database name (null for all databases)
-	 * @param quiet don't print progress information
+	 * 
+	 * @param dir
+	 *            the directory
+	 * @param db
+	 *            the database name (null for all databases)
+	 * @param quiet
+	 *            don't print progress information
 	 * @throws SQLException
 	 */
-	public static void execute(String dir, String db, boolean quiet) throws SQLException {
+	public static void execute(String dir, String db, boolean quiet)
+			throws SQLException {
 		new DeleteDbFiles().process(dir, db, quiet);
 	}
 
 	/**
 	 * Deletes the database files.
-	 *
-	 * @param dir the directory
-	 * @param db the database name (null for all databases)
-	 * @param quiet don't print progress information
+	 * 
+	 * @param dir
+	 *            the directory
+	 * @param db
+	 *            the database name (null for all databases)
+	 * @param quiet
+	 *            don't print progress information
 	 * @throws SQLException
 	 */
-	private void process(String dir, String db, boolean quiet) throws SQLException {
+	private void process(String dir, String db, boolean quiet)
+			throws SQLException {
 		DeleteDbFiles delete = new DeleteDbFiles();
 		ArrayList files = FileLister.getDatabaseFiles(dir, db, true);
 		if (files.size() == 0 && !quiet) {
@@ -116,7 +126,8 @@ public class DeleteDbFiles extends Tool {
 					throw e;
 				}
 			}
-		} else if (quiet || fileName.endsWith(Constants.SUFFIX_TEMP_FILE) || fileName.endsWith(Constants.SUFFIX_TRACE_FILE)) {
+		} else if (quiet || fileName.endsWith(Constants.SUFFIX_TEMP_FILE)
+				|| fileName.endsWith(Constants.SUFFIX_TRACE_FILE)) {
 			FileUtils.tryDelete(fileName);
 		} else {
 			FileUtils.delete(fileName);

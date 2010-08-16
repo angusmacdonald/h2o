@@ -28,33 +28,34 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.h2o.event.client.H2OEvent;
-import org.h2o.locator.messages.ReplicaLocationsResponse;
-
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
- * Used to write to database locator file. This class uses readers-writers model.
+ * Used to write to database locator file. This class uses readers-writers
+ * model.
+ * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class EventViewer {	
+public class EventViewer {
 	private int activeReaders = 0;
-	private boolean writerPresent = false;  
+	private boolean writerPresent = false;
 
 	private File file;
 	int updateCount = 1;
 
 	public final static int LOCK_TIMEOUT = 3000;
 
-	protected EventViewer(String location){
+	protected EventViewer(String location) {
 		file = new File(location);
 
-		if (file.getParentFile() != null){
+		if (file.getParentFile() != null) {
 			file.getParentFile().mkdirs();
 		}
 
 		try {
 			if (!(file.createNewFile() || file.isFile())) {
-				ErrorHandling.errorNoEvent("This is a directory, when I file should have been given.");
+				ErrorHandling
+						.errorNoEvent("This is a directory, when I file should have been given.");
 			}
 		} catch (IOException e1) {
 			e1.printStackTrace();
@@ -65,7 +66,7 @@ public class EventViewer {
 	public List<String> readEventsFromFile() {
 		startRead();
 
-		//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Reader reading:");
+		// Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Reader reading:");
 
 		List<String> events = new LinkedList<String>();
 
@@ -73,13 +74,12 @@ public class EventViewer {
 			BufferedReader input = new BufferedReader(new FileReader(file));
 
 			try {
-				String line = null; 
+				String line = null;
 
-				while (( line = input.readLine()) != null){
+				while ((line = input.readLine()) != null) {
 					events.add(line);
 				}
-			}
-			finally {
+			} finally {
 				input.close();
 			}
 
@@ -95,7 +95,6 @@ public class EventViewer {
 	public boolean pushEvent(H2OEvent event) {
 
 		boolean successful = false;
-
 
 		try {
 			Writer output = new BufferedWriter(new FileWriter(file));
@@ -138,28 +137,35 @@ public class EventViewer {
 
 	private synchronized void startRead() {
 		while (!readCondition())
-			try { wait(); } catch (InterruptedException ex) {}
-			++activeReaders;
+			try {
+				wait();
+			} catch (InterruptedException ex) {
+			}
+		++activeReaders;
 	}
 
-	private synchronized void stopRead()  { 
+	private synchronized void stopRead() {
 		--activeReaders;
 		notifyAll();
 	}
 
 	private synchronized void startWrite() {
-		while (!writeCondition()) 
-			try { wait(); } catch (InterruptedException ex) {}
-			writerPresent = true;
+		while (!writeCondition())
+			try {
+				wait();
+			} catch (InterruptedException ex) {
+			}
+		writerPresent = true;
 	}
 
-	private synchronized void stopWrite() { 
+	private synchronized void stopWrite() {
 		writerPresent = false;
 		notifyAll();
 	}
 
 	/**
-	 * Create a new locator file. This is used by various test classes to overwrite old locator files.
+	 * Create a new locator file. This is used by various test classes to
+	 * overwrite old locator files.
 	 */
 	public void createNewLocatorFile() {
 		startWrite();
@@ -178,7 +184,5 @@ public class EventViewer {
 	public String toString() {
 		return file.getAbsolutePath();
 	}
-
-
 
 }

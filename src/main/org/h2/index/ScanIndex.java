@@ -43,8 +43,10 @@ public class ScanIndex extends BaseIndex implements RowIndex {
 	private HashSet delta;
 	private long rowCount;
 
-	public ScanIndex(TableData table, int id, IndexColumn[] columns, IndexType indexType) {
-		initBaseIndex(table, id, table.getName() + "_TABLE_SCAN", columns, indexType);
+	public ScanIndex(TableData table, int id, IndexColumn[] columns,
+			IndexType indexType) {
+		initBaseIndex(table, id, table.getName() + "_TABLE_SCAN", columns,
+				indexType);
 		if (database.isMultiVersion()) {
 			sessionRowCount = new HashMap();
 		}
@@ -149,7 +151,8 @@ public class ScanIndex extends BaseIndex implements RowIndex {
 			if (delta != null) {
 				delta.remove(row);
 			}
-			incrementRowCount(row.getSessionId(), operation == UndoLogRecord.DELETE ? 1 : -1);
+			incrementRowCount(row.getSessionId(),
+					operation == UndoLogRecord.DELETE ? 1 : -1);
 		}
 	}
 
@@ -207,7 +210,8 @@ public class ScanIndex extends BaseIndex implements RowIndex {
 	}
 
 	public double getCost(Session session, int[] masks) {
-		long cost = tableData.getRowCountApproximation() + Constants.COST_ROW_OFFSET;
+		long cost = tableData.getRowCountApproximation()
+				+ Constants.COST_ROW_OFFSET;
 		if (storage != null) {
 			cost *= 10;
 		}
@@ -216,7 +220,8 @@ public class ScanIndex extends BaseIndex implements RowIndex {
 
 	public long getRowCount(Session session) {
 		if (database.isMultiVersion()) {
-			Integer i = (Integer) sessionRowCount.get(ObjectUtils.getInteger(session.getId()));
+			Integer i = (Integer) sessionRowCount.get(ObjectUtils
+					.getInteger(session.getId()));
 			long count = i == null ? 0 : i.intValue();
 			count += rowCount;
 			count -= rowCountDiff;
@@ -227,9 +232,11 @@ public class ScanIndex extends BaseIndex implements RowIndex {
 
 	/**
 	 * Get the next row that is stored after this row.
-	 *
-	 * @param session the session
-	 * @param row the current row or null to start the scan
+	 * 
+	 * @param session
+	 *            the session
+	 * @param row
+	 *            the current row or null to start the scan
 	 * @return the next row or null if there are no more rows
 	 */
 	Row getNextRow(Session session, Row row) throws SQLException {
@@ -275,12 +282,14 @@ public class ScanIndex extends BaseIndex implements RowIndex {
 		return false;
 	}
 
-	public Cursor findFirstOrLast(Session session, boolean first) throws SQLException {
+	public Cursor findFirstOrLast(Session session, boolean first)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
 	public Iterator getDelta() {
-		return delta == null ? Collections.EMPTY_LIST.iterator() : delta.iterator();
+		return delta == null ? Collections.EMPTY_LIST.iterator() : delta
+				.iterator();
 	}
 
 	public long getRowCountApproximation() {

@@ -42,50 +42,50 @@ import org.h2.util.StartBrowser;
  * This tool starts the H2 Console (web-) server, as well as the TCP and PG
  * server. For JDK 1.6, a system tray icon is created, for platforms that
  * support it. Otherwise, a small window opens.
- *
+ * 
  * @author Thomas Mueller, Ridvan Agar
  */
 public class Console implements
-//## AWT begin ##
-ActionListener, MouseListener,
-//## AWT end ##
-ShutdownHandler {
+// ## AWT begin ##
+		ActionListener, MouseListener,
+		// ## AWT end ##
+		ShutdownHandler {
 
 	private static final int EXIT_ERROR = 1;
 
-	//## AWT begin ##
+	// ## AWT begin ##
 	Frame frame;
 	private Font font;
 	private Image icon16, icon24;
 	private Button startBrowser;
-	//## AWT end ##
+	// ## AWT end ##
 	private Server web, tcp, pg;
 	private boolean isWindows;
 
 	/**
-	 * The command line interface for this tool.
-	 * The command line options are the same as in the Server tool,
-	 * but this tool will always start the TCP, TCP and PG server.
-	 * Options are case sensitive.
-	 *
+	 * The command line interface for this tool. The command line options are
+	 * the same as in the Server tool, but this tool will always start the TCP,
+	 * TCP and PG server. Options are case sensitive.
+	 * 
 	 * The command line interface for this tool. The options must be split into
 	 * strings like this: "-baseDir", "/temp/data",... By default, -tcp, -web,
 	 * -browser and -pg are started. If there is a problem starting a service,
 	 * the program terminates with an exit code of 1. Options are case
 	 * sensitive. The following options are supported:
 	 * <ul>
-	 * <li>-help or -? (print the list of options) </li>
-	 * <li>-web (start the Web Server and H2 Console) </li>
+	 * <li>-help or -? (print the list of options)</li>
+	 * <li>-web (start the Web Server and H2 Console)</li>
 	 * <li>-tool (start the icon or window that allows to start a browser)</li>
-	 * <li>-browser (start a browser and open a page to connect to the
-	 *     Web Server) </li>
-	 * <li>-tcp (start the TCP Server) </li>
-	 * <li>-pg (start the PG Server) </li>
+	 * <li>-browser (start a browser and open a page to connect to the Web
+	 * Server)</li>
+	 * <li>-tcp (start the TCP Server)</li>
+	 * <li>-pg (start the PG Server)</li>
 	 * </ul>
-	 * For each Server, additional options are available.
-	 * Those options are the same as in the Server tool.
-	 *
-	 * @param args the command line arguments
+	 * For each Server, additional options are available. Those options are the
+	 * same as in the Server tool.
+	 * 
+	 * @param args
+	 *            the command line arguments
 	 */
 	public static void main(String[] args) {
 		int exitCode = new Console().run(args, System.out);
@@ -97,17 +97,19 @@ ShutdownHandler {
 	private void showUsage(PrintStream out) {
 		out.println("Starts H2 Console");
 		out.println("By default, -web, -tool, -browser, -tcp, and -pg are started. Options are case sensitive.");
-		out.println("java "+getClass().getName());
+		out.println("java " + getClass().getName());
 		out.println("-web                  Start the Web Server and H2 Console");
 		out.println("-tool                 Start the icon or window that allows to start a browser (includes -web)");
 		out.println("-browser              Start a browser to connect to the H2 Console (includes -web)");
 		out.println("-tcp                  Start the TCP Server");
 		out.println("-pg                   Start the PG Server");
-		out.println("See also http://h2database.com/javadoc/" + getClass().getName().replace('.', '/') + ".html");
+		out.println("See also http://h2database.com/javadoc/"
+				+ getClass().getName().replace('.', '/') + ".html");
 	}
 
 	private int run(String[] args, PrintStream out) {
-		isWindows = SysProperties.getStringSetting("os.name", "").startsWith("Windows");
+		isWindows = SysProperties.getStringSetting("os.name", "").startsWith(
+				"Windows");
 		boolean tcpStart = false, pgStart = false, webStart = false, toolStart = false;
 		boolean browserStart = false;
 		boolean startDefaultServers = true;
@@ -171,7 +173,7 @@ ShutdownHandler {
 				printProblem(e, pg);
 			}
 		}
-		//## AWT begin ##
+		// ## AWT begin ##
 		if (toolStart && !GraphicsEnvironment.isHeadless()) {
 			if (isWindows) {
 				font = new Font("Dialog", Font.PLAIN, 11);
@@ -188,7 +190,7 @@ ShutdownHandler {
 				e.printStackTrace();
 			}
 		}
-		//## AWT end ##
+		// ## AWT end ##
 
 		// start browser anyway (even if the server is already running)
 		// because some people don't look at the output,
@@ -242,22 +244,22 @@ ShutdownHandler {
 			pg.stop();
 			pg = null;
 		}
-		//## AWT begin ##
+		// ## AWT begin ##
 		if (frame != null) {
 			frame.dispose();
 			frame = null;
 		}
-		//## AWT end ##
+		// ## AWT end ##
 		System.exit(0);
 	}
 
-	//## AWT begin ##
+	// ## AWT begin ##
 	private boolean createTrayIcon() {
 		try {
 			// SystemTray.isSupported();
-			Boolean supported = (Boolean) Class.forName("java.awt.SystemTray").
-			getMethod("isSupported", new Class[0]).
-			invoke(null, new Object[0]);
+			Boolean supported = (Boolean) Class.forName("java.awt.SystemTray")
+					.getMethod("isSupported", new Class[0])
+					.invoke(null, new Object[0]);
 
 			if (!supported.booleanValue()) {
 				return false;
@@ -281,31 +283,39 @@ ShutdownHandler {
 			menuConsole.add(itemExit);
 
 			// SystemTray tray = SystemTray.getSystemTray();
-			Object tray = Class.forName("java.awt.SystemTray").
-			getMethod("getSystemTray", new Class[0]).
-			invoke(null, new Object[0]);
+			Object tray = Class.forName("java.awt.SystemTray")
+					.getMethod("getSystemTray", new Class[0])
+					.invoke(null, new Object[0]);
 
 			// Dimension d = tray.getTrayIconSize();
-			Dimension d = (Dimension) Class.forName("java.awt.SystemTray").
-			getMethod("getTrayIconSize", new Class[0]).
-			invoke(tray, new Object[0]);
+			Dimension d = (Dimension) Class.forName("java.awt.SystemTray")
+					.getMethod("getTrayIconSize", new Class[0])
+					.invoke(tray, new Object[0]);
 
 			Image icon = (d.width >= 24 && d.height >= 24) ? icon24 : icon16;
 
-			// TrayIcon icon = new TrayIcon(image, "H2 Database Engine", menuConsole);
-			Object trayIcon = Class.forName("java.awt.TrayIcon").
-			getConstructor(new Class[] { Image.class, String.class, PopupMenu.class }).
-			newInstance(new Object[] { icon, "H2 Database Engine", menuConsole });
+			// TrayIcon icon = new TrayIcon(image, "H2 Database Engine",
+			// menuConsole);
+			Object trayIcon = Class
+					.forName("java.awt.TrayIcon")
+					.getConstructor(
+							new Class[] { Image.class, String.class,
+									PopupMenu.class })
+					.newInstance(
+							new Object[] { icon, "H2 Database Engine",
+									menuConsole });
 
 			// trayIcon.addMouseListener(this);
-			trayIcon.getClass().
-			getMethod("addMouseListener", new Class[]{MouseListener.class}).
-			invoke(trayIcon, new Object[]{this});
+			trayIcon.getClass()
+					.getMethod("addMouseListener",
+							new Class[] { MouseListener.class })
+					.invoke(trayIcon, new Object[] { this });
 
 			// tray.add(icon);
-			tray.getClass().
-			getMethod("add", new Class[] { Class.forName("java.awt.TrayIcon") }).
-			invoke(tray, new Object[] { trayIcon });
+			tray.getClass()
+					.getMethod("add",
+							new Class[] { Class.forName("java.awt.TrayIcon") })
+					.invoke(tray, new Object[] { trayIcon });
 
 			return true;
 		} catch (Exception e) {
@@ -386,7 +396,8 @@ ShutdownHandler {
 		int width = 300, height = 120;
 		frame.setSize(width, height);
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-		frame.setLocation((screenSize.width - width) / 2, (screenSize.height - height) / 2);
+		frame.setLocation((screenSize.width - width) / 2,
+				(screenSize.height - height) / 2);
 		try {
 			frame.setVisible(true);
 		} catch (Throwable t) {
@@ -401,12 +412,13 @@ ShutdownHandler {
 			StartBrowser.openURL(web.getURL());
 		}
 	}
-	//## AWT end ##
+
+	// ## AWT end ##
 
 	/**
 	 * INTERNAL
 	 */
-	//## AWT begin ##
+	// ## AWT begin ##
 	public void actionPerformed(ActionEvent e) {
 		String command = e.getActionCommand();
 		if ("exit".equals(command)) {
@@ -420,53 +432,58 @@ ShutdownHandler {
 			startBrowser();
 		}
 	}
-	//## AWT end ##
+
+	// ## AWT end ##
 
 	/**
 	 * INTERNAL
 	 */
-	//## AWT begin ##
+	// ## AWT begin ##
 	public void mouseClicked(MouseEvent e) {
 		if (e.getButton() == MouseEvent.BUTTON1) {
 			startBrowser();
 		}
 	}
-	//## AWT end ##
+
+	// ## AWT end ##
 
 	/**
 	 * INTERNAL
 	 */
-	//## AWT begin ##
+	// ## AWT begin ##
 	public void mouseEntered(MouseEvent e) {
 		// nothing to do
 	}
-	//## AWT end ##
+
+	// ## AWT end ##
 
 	/**
 	 * INTERNAL
 	 */
-	//## AWT begin ##
+	// ## AWT begin ##
 	public void mouseExited(MouseEvent e) {
 		// nothing to do
 	}
-	//## AWT end ##
+
+	// ## AWT end ##
 
 	/**
 	 * INTERNAL
 	 */
-	//## AWT begin ##
+	// ## AWT begin ##
 	public void mousePressed(MouseEvent e) {
 		// nothing to do
 	}
-	//## AWT end ##
+
+	// ## AWT end ##
 
 	/**
 	 * INTERNAL
 	 */
-	//## AWT begin ##
+	// ## AWT begin ##
 	public void mouseReleased(MouseEvent e) {
 		// nothing to do
 	}
-	//## AWT end ##
+	// ## AWT end ##
 
 }

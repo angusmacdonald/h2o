@@ -52,7 +52,8 @@ public class CacheLRU implements Cache {
 			for (int i = 0; i < rec.getBlockCount(); i++) {
 				CacheObject old = find(pos + i);
 				if (old != null) {
-					Message.throwInternalError("try to add a record twice pos:" + pos + " i:" + i);
+					Message.throwInternalError("try to add a record twice pos:"
+							+ pos + " i:" + i);
 				}
 			}
 		}
@@ -72,7 +73,8 @@ public class CacheLRU implements Cache {
 		} else {
 			if (SysProperties.CHECK) {
 				if (old != rec) {
-					Message.throwInternalError("old!=record pos:" + pos + " old:" + old + " new:" + rec);
+					Message.throwInternalError("old!=record pos:" + pos
+							+ " old:" + old + " new:" + rec);
 				}
 			}
 			removeFromLinkedList(rec);
@@ -91,7 +93,8 @@ public class CacheLRU implements Cache {
 	private void removeOld() throws SQLException {
 		int i = 0;
 		ObjectArray changed = new ObjectArray();
-		while (sizeMemory * 4 > maxSize * 3 && recordCount > Constants.CACHE_MIN_RECORDS) {
+		while (sizeMemory * 4 > maxSize * 3
+				&& recordCount > Constants.CACHE_MIN_RECORDS) {
 			i++;
 			if (i == recordCount) {
 				writer.flushLog();
@@ -100,7 +103,8 @@ public class CacheLRU implements Cache {
 				// can't remove any record, because the log is not written yet
 				// hopefully this does not happen too much, but it could happen
 				// theoretically
-				writer.getTrace().info("Cannot remove records, cache size too small?");
+				writer.getTrace().info(
+						"Cannot remove records, cache size too small?");
 				break;
 			}
 			CacheObject last = head.next;
@@ -198,39 +202,39 @@ public class CacheLRU implements Cache {
 		return rec;
 	}
 
-	//    private void testConsistency() {
-		//        int s = size;
-	//        HashSet set = new HashSet();
-	//        for(int i=0; i<values.length; i++) {
-	//            Record rec = values[i];
-	//            if(rec == null) {
-	//                continue;
-	//            }
-	//            set.add(rec);
-	//            while(rec.chained != null) {
-	//                rec = rec.chained;
-	//                set.add(rec);
-	//            }
-	//        }
-	//        Record rec = head.next;
-	//        while(rec != head) {
-	//            set.add(rec);
-	//            rec = rec.next;
-	//        }
-	//        rec = head.previous;
-	//        while(rec != head) {
-	//            set.add(rec);
-	//            rec = rec.previous;
-	//        }
-	//        if(set.size() != size) {
-	//            System.out.println("size="+size+" but el.size="+set.size());
-	//        }
-	//    }
+	// private void testConsistency() {
+	// int s = size;
+	// HashSet set = new HashSet();
+	// for(int i=0; i<values.length; i++) {
+	// Record rec = values[i];
+	// if(rec == null) {
+	// continue;
+	// }
+	// set.add(rec);
+	// while(rec.chained != null) {
+	// rec = rec.chained;
+	// set.add(rec);
+	// }
+	// }
+	// Record rec = head.next;
+	// while(rec != head) {
+	// set.add(rec);
+	// rec = rec.next;
+	// }
+	// rec = head.previous;
+	// while(rec != head) {
+	// set.add(rec);
+	// rec = rec.previous;
+	// }
+	// if(set.size() != size) {
+	// System.out.println("size="+size+" but el.size="+set.size());
+	// }
+	// }
 
 	public ObjectArray getAllChanged() {
-		//        if(Database.CHECK) {
-		//            testConsistency();
-		//        }
+		// if(Database.CHECK) {
+		// testConsistency();
+		// }
 		// TODO cache: should probably use the LRU list
 		ObjectArray list = new ObjectArray();
 		for (int i = 0; i < len; i++) {
@@ -266,7 +270,7 @@ public class CacheLRU implements Cache {
 		return TYPE_NAME;
 	}
 
-	public int  getMaxSize() {
+	public int getMaxSize() {
 		return maxSize;
 	}
 
@@ -277,63 +281,63 @@ public class CacheLRU implements Cache {
 }
 
 // Unmaintained reference code (very old)
-//import java.util.Iterator;
-//import java.util.LinkedHashMap;
-//import java.util.Map;
+// import java.util.Iterator;
+// import java.util.LinkedHashMap;
+// import java.util.Map;
 //
-//public class Cache extends LinkedHashMap {
+// public class Cache extends LinkedHashMap {
 //
-//    final static int MAX_SIZE = 1 << 10;
-//    private CacheWriter writer;
+// final static int MAX_SIZE = 1 << 10;
+// private CacheWriter writer;
 //
-//    public Cache(CacheWriter writer) {
-//        super(16, (float) 0.75, true);
-//        this.writer = writer;
-//    }
+// public Cache(CacheWriter writer) {
+// super(16, (float) 0.75, true);
+// this.writer = writer;
+// }
 //
-//    protected boolean removeEldestEntry(Map.Entry eldest) {
-//        if(size() <= MAX_SIZE) {
-//            return false;
-//        }
-//        Record entry = (Record) eldest.getValue();
-//        if(entry.getDeleted()) {
-//            return true;
-//        }
-//        if(entry.isChanged()) {
-//            try {
-////System.out.println("cache write "+entry.getPos());
-//                writer.writeBack(entry);
-//            } catch(SQLException e) {
-//                // printStackTrace not needed
-//                // if we use our own hashtable
-//                e.printStackTrace();
-//            }
-//        }
-//        return true;
-//    }
+// protected boolean removeEldestEntry(Map.Entry eldest) {
+// if(size() <= MAX_SIZE) {
+// return false;
+// }
+// Record entry = (Record) eldest.getValue();
+// if(entry.getDeleted()) {
+// return true;
+// }
+// if(entry.isChanged()) {
+// try {
+// //System.out.println("cache write "+entry.getPos());
+// writer.writeBack(entry);
+// } catch(SQLException e) {
+// // printStackTrace not needed
+// // if we use our own hashtable
+// e.printStackTrace();
+// }
+// }
+// return true;
+// }
 //
-//    public void put(Record rec) {
-//        put(new Integer(rec.getPos()), rec);
-//    }
+// public void put(Record rec) {
+// put(new Integer(rec.getPos()), rec);
+// }
 //
-//    public Record get(int pos) {
-//        return (Record)get(new Integer(pos));
-//    }
+// public Record get(int pos) {
+// return (Record)get(new Integer(pos));
+// }
 //
-//    public void remove(int pos) {
-//        remove(new Integer(pos));
-//    }
+// public void remove(int pos) {
+// remove(new Integer(pos));
+// }
 //
-//    public ObjectArray getAllChanged() {
-//        Iterator it = values().iterator();
-//        ObjectArray list = new ObjectArray();
-//        while(it.hasNext()) {
-//            Record rec = (Record)it.next();
-//            if(rec.isChanged()) {
-//                list.add(rec);
-//            }
-//        }
-//        return list;
-//    }
-//}
+// public ObjectArray getAllChanged() {
+// Iterator it = values().iterator();
+// ObjectArray list = new ObjectArray();
+// while(it.hasNext()) {
+// Record rec = (Record)it.next();
+// if(rec.isChanged()) {
+// list.add(rec);
+// }
+// }
+// return list;
+// }
+// }
 

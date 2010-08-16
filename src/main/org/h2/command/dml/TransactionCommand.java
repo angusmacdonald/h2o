@@ -106,12 +106,12 @@ public class TransactionCommand extends Prepared {
 	public int update() throws SQLException {
 		switch (type) {
 		case AUTOCOMMIT_TRUE:
-			//session.setAutoCommit(true);
+			// session.setAutoCommit(true);
 			session.setApplicationAutoCommit(true);
 			break;
 		case AUTOCOMMIT_FALSE:
-			//Old H2 Code: session.setAutoCommit(false);
-			//New H2O code:
+			// Old H2 Code: session.setAutoCommit(false);
+			// New H2O code:
 			session.setApplicationAutoCommit(false);
 			break;
 		case BEGIN:
@@ -162,8 +162,7 @@ public class TransactionCommand extends Prepared {
 			// execution of shutdown and query
 			session.throttle();
 			Session[] sessions = db.getSessions(false);
-			for (int i = 0; i < sessions.length; i++) {
-				Session s = sessions[i];
+			for (Session s : sessions) {
 				if (db.isMultiThreaded()) {
 					synchronized (s) {
 						s.rollback();
@@ -207,13 +206,14 @@ public class TransactionCommand extends Prepared {
 		return null;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Prepared#isTransactionCommand()
 	 */
 	@Override
 	public boolean isTransactionCommand() {
 		return true;
 	}
-
 
 }

@@ -23,13 +23,16 @@ public class CreateCluster extends Tool {
 
 	private void showUsage() {
 		out.println("Creates a cluster from a standalone database.");
-		out.println("java "+getClass().getName() + "\n" +
-				" -urlSource <url>    The database URL of the source database (jdbc:h2:...)\n" +
-				" -urlTarget <url>    The database URL of the target database (jdbc:h2:...)\n" +
-				" -user <user>        The user name\n" +
-				" [-password <pwd>]   The password\n" +
-		" -serverList <list>  The comma separated list of host names or IP addresses");
-		out.println("See also http://h2database.com/javadoc/" + getClass().getName().replace('.', '/') + ".html");
+		out.println("java "
+				+ getClass().getName()
+				+ "\n"
+				+ " -urlSource <url>    The database URL of the source database (jdbc:h2:...)\n"
+				+ " -urlTarget <url>    The database URL of the target database (jdbc:h2:...)\n"
+				+ " -user <user>        The user name\n"
+				+ " [-password <pwd>]   The password\n"
+				+ " -serverList <list>  The comma separated list of host names or IP addresses");
+		out.println("See also http://h2database.com/javadoc/"
+				+ getClass().getName().replace('.', '/') + ".html");
 	}
 
 	/**
@@ -37,16 +40,16 @@ public class CreateCluster extends Tool {
 	 * strings like this: "-urlSource", "jdbc:h2:test",... Options are case
 	 * sensitive. The following options are supported:
 	 * <ul>
-	 * <li>-help or -? (print the list of options) </li>
-	 * <li>-urlSource jdbc:h2:... (the database URL of the source database)
-	 * </li>
-	 * <li>-urlTarget jdbc:h2:... (the database URL of the target database)
-	 * </li><li>-user (the user name)
-	 * </li><li>-password (the password)
-	 * </li><li>-serverList (the server list)
-	 * </li></ul>
-	 *
-	 * @param args the command line arguments
+	 * <li>-help or -? (print the list of options)</li>
+	 * <li>-urlSource jdbc:h2:... (the database URL of the source database)</li>
+	 * <li>-urlTarget jdbc:h2:... (the database URL of the target database)</li>
+	 * <li>-user (the user name)</li>
+	 * <li>-password (the password)</li>
+	 * <li>-serverList (the server list)</li>
+	 * </ul>
+	 * 
+	 * @param args
+	 *            the command line arguments
 	 * @throws SQLException
 	 */
 	public static void main(String[] args) throws SQLException {
@@ -80,7 +83,8 @@ public class CreateCluster extends Tool {
 				return;
 			}
 		}
-		if (urlSource == null || urlTarget == null || user == null || serverList == null) {
+		if (urlSource == null || urlTarget == null || user == null
+				|| serverList == null) {
 			showUsage();
 			return;
 		}
@@ -89,29 +93,40 @@ public class CreateCluster extends Tool {
 
 	/**
 	 * Creates a cluster.
-	 *
-	 * @param urlSource the database URL of the original database
-	 * @param urlTarget the database URL of the copy
-	 * @param user the user name
-	 * @param password the password
-	 * @param serverList the server list
+	 * 
+	 * @param urlSource
+	 *            the database URL of the original database
+	 * @param urlTarget
+	 *            the database URL of the copy
+	 * @param user
+	 *            the user name
+	 * @param password
+	 *            the password
+	 * @param serverList
+	 *            the server list
 	 * @throws SQLException
 	 */
-	public void execute(String urlSource, String urlTarget, String user, String password, String serverList) throws SQLException {
-		new CreateCluster().process(urlSource, urlTarget, user, password, serverList);
+	public void execute(String urlSource, String urlTarget, String user,
+			String password, String serverList) throws SQLException {
+		new CreateCluster().process(urlSource, urlTarget, user, password,
+				serverList);
 	}
 
-	private void process(String urlSource, String urlTarget, String user, String password, String serverList) throws SQLException {
+	private void process(String urlSource, String urlTarget, String user,
+			String password, String serverList) throws SQLException {
 		Connection conn = null;
 		Statement stat = null;
 		try {
 			org.h2.Driver.load();
-			// use cluster='' so connecting is possible even if the cluster is enabled
-			conn = DriverManager.getConnection(urlSource + ";CLUSTER=''", user, password);
+			// use cluster='' so connecting is possible even if the cluster is
+			// enabled
+			conn = DriverManager.getConnection(urlSource + ";CLUSTER=''", user,
+					password);
 			conn.close();
 			boolean exists;
 			try {
-				conn = DriverManager.getConnection(urlTarget + ";IFEXISTS=TRUE", user, password);
+				conn = DriverManager.getConnection(
+						urlTarget + ";IFEXISTS=TRUE", user, password);
 				conn.close();
 				exists = true;
 			} catch (SQLException e) {
@@ -119,7 +134,8 @@ public class CreateCluster extends Tool {
 				exists = false;
 			}
 			if (exists) {
-				throw new SQLException("Target database must not yet exist. Please delete it first");
+				throw new SQLException(
+						"Target database must not yet exist. Please delete it first");
 			}
 
 			// TODO cluster: need to open the database in exclusive mode,
@@ -133,7 +149,8 @@ public class CreateCluster extends Tool {
 			sc.process(urlSource, user, password, scriptFile);
 			RunScript runscript = new RunScript();
 			runscript.setOut(out);
-			runscript.process(urlTarget, user, password, scriptFile, null, false);
+			runscript.process(urlTarget, user, password, scriptFile, null,
+					false);
 			FileUtils.delete(scriptFile);
 
 			// set the cluster to the serverList on both databases

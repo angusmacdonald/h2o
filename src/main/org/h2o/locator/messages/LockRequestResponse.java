@@ -23,6 +23,7 @@ package org.h2o.locator.messages;
 public class LockRequestResponse {
 	private int updateCount;
 	private boolean successful;
+
 	/**
 	 * @param updateCount
 	 * @param successful
@@ -32,18 +33,19 @@ public class LockRequestResponse {
 		this.updateCount = updateCount;
 		this.successful = successful;
 	}
+
 	/**
 	 * @return the updateCount
 	 */
 	public synchronized int getUpdateCount() {
 		return updateCount;
 	}
+
 	/**
 	 * @return the successful
 	 */
 	public synchronized boolean isSuccessful() {
 		return successful;
 	}
-
 
 }

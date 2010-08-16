@@ -51,10 +51,13 @@ public class FileObjectDiskMapped implements FileObject {
 			if (SysProperties.NIO_CLEANER_HACK) {
 				try {
 					useSystemGc = false;
-					Method cleanerMethod = mapped.getClass().getMethod("cleaner", new Class[0]);
+					Method cleanerMethod = mapped.getClass().getMethod(
+							"cleaner", new Class[0]);
 					cleanerMethod.setAccessible(true);
-					Object cleaner = cleanerMethod.invoke(mapped, new Object[0]);
-					Method clearMethod = cleaner.getClass().getMethod("clear", new Class[0]);
+					Object cleaner = cleanerMethod
+							.invoke(mapped, new Object[0]);
+					Method clearMethod = cleaner.getClass().getMethod("clear",
+							new Class[0]);
 					clearMethod.invoke(cleaner, new Object[0]);
 				} catch (Throwable e) {
 					useSystemGc = true;
@@ -68,8 +71,10 @@ public class FileObjectDiskMapped implements FileObject {
 				long start = System.currentTimeMillis();
 				while (bufferWeakRef.get() != null) {
 					if (System.currentTimeMillis() - start > GC_TIMEOUT_MS) {
-						throw new RuntimeException("Timeout (" + GC_TIMEOUT_MS
-								+ " ms) reached while trying to GC mapped buffer");
+						throw new RuntimeException(
+								"Timeout ("
+										+ GC_TIMEOUT_MS
+										+ " ms) reached while trying to GC mapped buffer");
 					}
 					System.gc();
 					Thread.yield();

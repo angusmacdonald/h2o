@@ -69,7 +69,7 @@ public class RuleList implements Rule {
 		}
 		StringBuilder buff = new StringBuilder();
 		for (int i = 0; i < list.size(); i++) {
-			buff.append(get(i).random(config, level+1));
+			buff.append(get(i).random(config, level + 1));
 		}
 		return buff.toString();
 	}

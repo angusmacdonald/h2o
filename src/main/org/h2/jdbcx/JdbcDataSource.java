@@ -32,7 +32,7 @@ import org.h2.util.StringUtils;
  * and Connection objects. This class is usually registered in a JNDI naming
  * service. To create a data source object and register it with a JNDI service,
  * use the following code:
- *
+ * 
  * <pre>
  * import org.h2.jdbcx.JdbcDataSource;
  * import javax.naming.Context;
@@ -44,9 +44,9 @@ import org.h2.util.StringUtils;
  * Context ctx = new InitialContext();
  * ctx.bind(&quot;jdbc/dsName&quot;, ds);
  * </pre>
- *
+ * 
  * To use a data source that is already registered, use the following code:
- *
+ * 
  * <pre>
  * import java.sql.Connection;
  * import javax.sql.DataSource;
@@ -56,14 +56,15 @@ import org.h2.util.StringUtils;
  * DataSource ds = (DataSource) ctx.lookup(&quot;jdbc/dsName&quot;);
  * Connection conn = ds.getConnection();
  * </pre>
- *
- * In this example the user name and password are serialized as
- * well; this may be a security problem in some cases.
+ * 
+ * In this example the user name and password are serialized as well; this may
+ * be a security problem in some cases.
  */
 public class JdbcDataSource extends TraceObject
-//## Java 1.4 begin ##
-implements XADataSource, DataSource, ConnectionPoolDataSource, Serializable, Referenceable
-//## Java 1.4 end ##
+		// ## Java 1.4 begin ##
+		implements XADataSource, DataSource, ConnectionPoolDataSource,
+		Serializable, Referenceable
+// ## Java 1.4 end ##
 {
 
 	private static final long serialVersionUID = 1288136338451857771L;
@@ -88,7 +89,8 @@ implements XADataSource, DataSource, ConnectionPoolDataSource, Serializable, Ref
 		setTrace(factory.getTrace(), TraceObject.DATA_SOURCE, id);
 	}
 
-	private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+	private void readObject(java.io.ObjectInputStream in) throws IOException,
+			ClassNotFoundException {
 		initFactory();
 		in.defaultReadObject();
 	}
@@ -99,7 +101,7 @@ implements XADataSource, DataSource, ConnectionPoolDataSource, Serializable, Ref
 
 	/**
 	 * Get the login timeout in seconds, 0 meaning no timeout.
-	 *
+	 * 
 	 * @return the timeout in seconds
 	 */
 	public int getLoginTimeout() {
@@ -108,11 +110,11 @@ implements XADataSource, DataSource, ConnectionPoolDataSource, Serializable, Ref
 	}
 
 	/**
-	 * Set the login timeout in seconds, 0 meaning no timeout.
-	 * The default value is 0.
-	 * This value is ignored by this database.
-	 *
-	 * @param timeout the timeout in seconds
+	 * Set the login timeout in seconds, 0 meaning no timeout. The default value
+	 * is 0. This value is ignored by this database.
+	 * 
+	 * @param timeout
+	 *            the timeout in seconds
 	 */
 	public void setLoginTimeout(int timeout) {
 		debugCodeCall("setLoginTimeout", timeout);
@@ -121,7 +123,7 @@ implements XADataSource, DataSource, ConnectionPoolDataSource, Serializable, Ref
 
 	/**
 	 * Get the current log writer for this object.
-	 *
+	 * 
 	 * @return the log writer
 	 */
 	public PrintWriter getLogWriter() {
@@ -130,10 +132,11 @@ implements XADataSource, DataSource, ConnectionPoolDataSource, Serializable, Ref
 	}
 
 	/**
-	 * Set the current log writer for this object.
-	 * This value is ignored by this database.
-	 *
-	 * @param out the log writer
+	 * Set the current log writer for this object. This value is ignored by this
+	 * database.
+	 * 
+	 * @param out
+	 *            the log writer
 	 */
 	public void setLogWriter(PrintWriter out) {
 		debugCodeCall("setLogWriter(out)");
@@ -142,7 +145,7 @@ implements XADataSource, DataSource, ConnectionPoolDataSource, Serializable, Ref
 
 	/**
 	 * Open a new connection using the current URL, user name and password.
-	 *
+	 * 
 	 * @return the connection
 	 */
 	public Connection getConnection() throws SQLException {
@@ -153,21 +156,25 @@ implements XADataSource, DataSource, ConnectionPoolDataSource, Serializable, Ref
 	/**
 	 * Open a new connection using the current URL and the specified user name
 	 * and password.
-	 *
-	 * @param user the user name
-	 * @param password the password
+	 * 
+	 * @param user
+	 *            the user name
+	 * @param password
+	 *            the password
 	 * @return the connection
 	 */
-	public Connection getConnection(String user, String password) throws SQLException {
+	public Connection getConnection(String user, String password)
+			throws SQLException {
 		if (isDebugEnabled()) {
-			debugCode("getConnection("+quote(user)+", \"\");");
+			debugCode("getConnection(" + quote(user) + ", \"\");");
 		}
 		return getJdbcConnection(user, convertToCharArray(password));
 	}
 
-	private JdbcConnection getJdbcConnection(String user, char[] password) throws SQLException {
+	private JdbcConnection getJdbcConnection(String user, char[] password)
+			throws SQLException {
 		if (isDebugEnabled()) {
-			debugCode("getJdbcConnection("+quote(user)+", new char[0]);");
+			debugCode("getJdbcConnection(" + quote(user) + ", new char[0]);");
 		}
 		Properties info = new Properties();
 		info.setProperty("user", user);
@@ -177,7 +184,7 @@ implements XADataSource, DataSource, ConnectionPoolDataSource, Serializable, Ref
 
 	/**
 	 * Get the current URL.
-	 *
+	 * 
 	 * @return the URL
 	 */
 	public String getURL() {
@@ -187,8 +194,9 @@ implements XADataSource, DataSource, ConnectionPoolDataSource, Serializable, Ref
 
 	/**
 	 * Set the current URL.
-	 *
-	 * @param url the new URL
+	 * 
+	 * @param url
+	 *            the new URL
 	 */
 	public void setURL(String url) {
 		debugCodeCall("setURL", url);
@@ -197,8 +205,9 @@ implements XADataSource, DataSource, ConnectionPoolDataSource, Serializable, Ref
 
 	/**
 	 * Set the current password.
-	 *
-	 * @param password the new password.
+	 * 
+	 * @param password
+	 *            the new password.
 	 */
 	public void setPassword(String password) {
 		debugCodeCall("setPassword", "");
@@ -207,8 +216,9 @@ implements XADataSource, DataSource, ConnectionPoolDataSource, Serializable, Ref
 
 	/**
 	 * Set the current password in the form of a char array.
-	 *
-	 * @param password the new password in the form of a char array.
+	 * 
+	 * @param password
+	 *            the new password in the form of a char array.
 	 */
 	public void setPasswordChars(char[] password) {
 		if (isDebugEnabled()) {
@@ -227,7 +237,7 @@ implements XADataSource, DataSource, ConnectionPoolDataSource, Serializable, Ref
 
 	/**
 	 * Get the current password.
-	 *
+	 * 
 	 * @return the password
 	 */
 	public String getPassword() {
@@ -237,7 +247,7 @@ implements XADataSource, DataSource, ConnectionPoolDataSource, Serializable, Ref
 
 	/**
 	 * Get the current user name.
-	 *
+	 * 
 	 * @return the user name
 	 */
 	public String getUser() {
@@ -247,8 +257,9 @@ implements XADataSource, DataSource, ConnectionPoolDataSource, Serializable, Ref
 
 	/**
 	 * Set the current user name.
-	 *
-	 * @param user the new user name
+	 * 
+	 * @param user
+	 *            the new user name
 	 */
 	public void setUser(String user) {
 		debugCodeCall("setUser", user);
@@ -257,103 +268,117 @@ implements XADataSource, DataSource, ConnectionPoolDataSource, Serializable, Ref
 
 	/**
 	 * Get a new reference for this object, using the current settings.
-	 *
+	 * 
 	 * @return the new reference
 	 */
-	//## Java 1.4 begin ##
+	// ## Java 1.4 begin ##
 	public Reference getReference() {
 		debugCodeCall("getReference");
 		String factoryClassName = JdbcDataSourceFactory.class.getName();
-		Reference ref = new Reference(getClass().getName(), factoryClassName, null);
+		Reference ref = new Reference(getClass().getName(), factoryClassName,
+				null);
 		ref.add(new StringRefAddr("url", url));
 		ref.add(new StringRefAddr("user", user));
 		ref.add(new StringRefAddr("password", convertToString(password)));
 		ref.add(new StringRefAddr("loginTimeout", String.valueOf(loginTimeout)));
 		return ref;
 	}
-	//## Java 1.4 end ##
+
+	// ## Java 1.4 end ##
 
 	/**
 	 * Open a new XA connection using the current URL, user name and password.
-	 *
+	 * 
 	 * @return the connection
 	 */
-	//## Java 1.4 begin ##
+	// ## Java 1.4 begin ##
 	public XAConnection getXAConnection() throws SQLException {
 		debugCodeCall("getXAConnection");
 		int id = getNextId(XA_DATA_SOURCE);
 		return new JdbcXAConnection(factory, id, url, user, password);
 	}
-	//## Java 1.4 end ##
+
+	// ## Java 1.4 end ##
 
 	/**
 	 * Open a new XA connection using the current URL and the specified user
 	 * name and password.
-	 *
-	 * @param user the user name
-	 * @param password the password
+	 * 
+	 * @param user
+	 *            the user name
+	 * @param password
+	 *            the password
 	 * @return the connection
 	 */
-	//## Java 1.4 begin ##
-	public XAConnection getXAConnection(String user, String password) throws SQLException {
+	// ## Java 1.4 begin ##
+	public XAConnection getXAConnection(String user, String password)
+			throws SQLException {
 		if (isDebugEnabled()) {
-			debugCode("getXAConnection("+quote(user)+", \"\");");
+			debugCode("getXAConnection(" + quote(user) + ", \"\");");
 		}
 		int id = getNextId(XA_DATA_SOURCE);
-		return new JdbcXAConnection(factory, id, url, user, convertToCharArray(password));
+		return new JdbcXAConnection(factory, id, url, user,
+				convertToCharArray(password));
 	}
-	//## Java 1.4 end ##
+
+	// ## Java 1.4 end ##
 
 	/**
-	 * Open a new pooled connection using the current URL, user name and password.
-	 *
+	 * Open a new pooled connection using the current URL, user name and
+	 * password.
+	 * 
 	 * @return the connection
 	 */
-	//## Java 1.4 begin ##
+	// ## Java 1.4 begin ##
 	public PooledConnection getPooledConnection() throws SQLException {
 		debugCodeCall("getPooledConnection");
 		return getXAConnection();
 	}
-	//## Java 1.4 end ##
+
+	// ## Java 1.4 end ##
 
 	/**
 	 * Open a new pooled connection using the current URL and the specified user
 	 * name and password.
-	 *
-	 * @param user the user name
-	 * @param password the password
+	 * 
+	 * @param user
+	 *            the user name
+	 * @param password
+	 *            the password
 	 * @return the connection
 	 */
-	//## Java 1.4 begin ##
-	public PooledConnection getPooledConnection(String user, String password) throws SQLException {
+	// ## Java 1.4 begin ##
+	public PooledConnection getPooledConnection(String user, String password)
+			throws SQLException {
 		if (isDebugEnabled()) {
-			debugCode("getPooledConnection("+quote(user)+", \"\");");
+			debugCode("getPooledConnection(" + quote(user) + ", \"\");");
 		}
 		return getXAConnection(user, password);
 	}
-	//## Java 1.4 end ##
+
+	// ## Java 1.4 end ##
 
 	/**
 	 * [Not supported] Return an object of this class if possible.
-	 *
-	 * @param iface the class
+	 * 
+	 * @param iface
+	 *            the class
 	 */
 
 	public <T> T unwrap(Class<T> iface) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
-
 	/**
 	 * [Not supported] Checks if unwrap can return an object of this class.
-	 *
-	 * @param iface the class
+	 * 
+	 * @param iface
+	 *            the class
 	 */
 
-	public boolean isWrapperFor(Class< ? > iface) throws SQLException {
+	public boolean isWrapperFor(Class<?> iface) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
 
 	/**
 	 * INTERNAL

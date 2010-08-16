@@ -37,12 +37,15 @@ public class NetUtils {
 	/**
 	 * Create a loopback socket (a socket that is connected to localhost) on
 	 * this port.
-	 *
-	 * @param port the port
-	 * @param ssl if SSL should be used
+	 * 
+	 * @param port
+	 *            the port
+	 * @param ssl
+	 *            if SSL should be used
 	 * @return the socket
 	 */
-	public static Socket createLoopbackSocket(int port, boolean ssl) throws IOException {
+	public static Socket createLoopbackSocket(int port, boolean ssl)
+			throws IOException {
 		InetAddress address = getBindAddress();
 		if (address == null) {
 			address = InetAddress.getLocalHost();
@@ -52,14 +55,17 @@ public class NetUtils {
 
 	/**
 	 * Create a client socket that is connected to the given address and port.
-	 *
-	 * @param server to connect to (including an optional port)
-	 * @param defaultPort the default port (if not specified in the server
-	 *            address)
-	 * @param ssl if SSL should be used
+	 * 
+	 * @param server
+	 *            to connect to (including an optional port)
+	 * @param defaultPort
+	 *            the default port (if not specified in the server address)
+	 * @param ssl
+	 *            if SSL should be used
 	 * @return the socket
 	 */
-	public static Socket createSocket(String server, int defaultPort, boolean ssl) throws IOException {
+	public static Socket createSocket(String server, int defaultPort,
+			boolean ssl) throws IOException {
 		int port = defaultPort;
 		// IPv6: RFC 2732 format is '[a:b:c:d:e:f:g:h]' or
 		// '[a:b:c:d:e:f:g:h]:port'
@@ -77,13 +83,17 @@ public class NetUtils {
 
 	/**
 	 * Create a client socket that is connected to the given address and port.
-	 *
-	 * @param address the address to connect to
-	 * @param port the port
-	 * @param ssl if SSL should be used
+	 * 
+	 * @param address
+	 *            the address to connect to
+	 * @param port
+	 *            the port
+	 * @param ssl
+	 *            if SSL should be used
 	 * @return the socket
 	 */
-	public static Socket createSocket(InetAddress address, int port, boolean ssl) throws IOException {
+	public static Socket createSocket(InetAddress address, int port, boolean ssl)
+			throws IOException {
 		if (ssl) {
 			return SecureSocketFactory.createSocket(address, port);
 		}
@@ -96,12 +106,15 @@ public class NetUtils {
 	/**
 	 * Create a server socket. The system property h2.bindAddress is used if
 	 * set.
-	 *
-	 * @param port the port to listen on
-	 * @param ssl if SSL should be used
+	 * 
+	 * @param port
+	 *            the port to listen on
+	 * @param ssl
+	 *            if SSL should be used
 	 * @return the server socket
 	 */
-	public static ServerSocket createServerSocket(int port, boolean ssl) throws SQLException {
+	public static ServerSocket createServerSocket(int port, boolean ssl)
+			throws SQLException {
 		try {
 			return createServerSocketTry(port, ssl);
 		} catch (SQLException e) {
@@ -113,7 +126,7 @@ public class NetUtils {
 	/**
 	 * Get the bind address if the system property h2.bindAddress is set, or
 	 * null if not.
-	 *
+	 * 
 	 * @return the bind address
 	 */
 	private static InetAddress getBindAddress() throws UnknownHostException {
@@ -129,11 +142,13 @@ public class NetUtils {
 		return bindAddress;
 	}
 
-	private static ServerSocket createServerSocketTry(int port, boolean ssl) throws SQLException {
+	private static ServerSocket createServerSocketTry(int port, boolean ssl)
+			throws SQLException {
 		try {
 			InetAddress bindAddress = getBindAddress();
 			if (ssl) {
-				return SecureSocketFactory.createServerSocket(port, bindAddress);
+				return SecureSocketFactory
+						.createServerSocket(port, bindAddress);
 			}
 			if (bindAddress == null) {
 				return new ServerSocket(port);
@@ -143,29 +158,31 @@ public class NetUtils {
 			throw Message.getSQLException(ErrorCode.EXCEPTION_OPENING_PORT_2,
 					new String[] { "" + port, be.toString() }, be);
 		} catch (IOException e) {
-			throw Message.convertIOException(e, "port: " + port + " ssl: " + ssl);
+			throw Message.convertIOException(e, "port: " + port + " ssl: "
+					+ ssl);
 		}
 	}
 
 	/**
 	 * Check if a socket is connected to a local address.
-	 *
-	 * @param socket the socket
+	 * 
+	 * @param socket
+	 *            the socket
 	 * @return true if it is
 	 */
-	public static boolean isLocalAddress(Socket socket) throws UnknownHostException {
+	public static boolean isLocalAddress(Socket socket)
+			throws UnknownHostException {
 		InetAddress test = socket.getInetAddress();
-		//## Java 1.4 begin ##
+		// ## Java 1.4 begin ##
 		if (test.isLoopbackAddress()) {
 			return true;
 		}
-		//## Java 1.4 end ##
+		// ## Java 1.4 end ##
 		InetAddress localhost = InetAddress.getLocalHost();
 		// localhost.getCanonicalHostName() is very very slow
 		String host = localhost.getHostAddress();
 		InetAddress[] list = InetAddress.getAllByName(host);
-		for (int i = 0; i < list.length; i++) {
-			InetAddress addr = list[i];
+		for (InetAddress addr : list) {
 			if (test.equals(addr)) {
 				return true;
 			}
@@ -175,8 +192,9 @@ public class NetUtils {
 
 	/**
 	 * Close a server socket and ignore any exceptions.
-	 *
-	 * @param socket the socket
+	 * 
+	 * @param socket
+	 *            the socket
 	 * @return null
 	 */
 	public static ServerSocket closeSilently(ServerSocket socket) {
@@ -191,9 +209,9 @@ public class NetUtils {
 	}
 
 	/**
-	 * Get the local host address as a string.
-	 * For performance, the result is cached for one second.
-	 *
+	 * Get the local host address as a string. For performance, the result is
+	 * cached for one second.
+	 * 
 	 * @return the local host address
 	 */
 	public static synchronized String getLocalAddress() {

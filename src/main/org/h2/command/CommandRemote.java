@@ -26,8 +26,8 @@ import org.h2o.db.query.QueryProxyManager;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
- * Represents the client-side part of a SQL statement.
- * This class is not used in embedded mode.
+ * Represents the client-side part of a SQL statement. This class is not used in
+ * embedded mode.
  */
 public class CommandRemote implements CommandInterface {
 
@@ -43,7 +43,8 @@ public class CommandRemote implements CommandInterface {
 	private int paramCount;
 	private int created;
 
-	public CommandRemote(SessionRemote session, ObjectArray transferList, String sql, int fetchSize) throws SQLException {
+	public CommandRemote(SessionRemote session, ObjectArray transferList,
+			String sql, int fetchSize) throws SQLException {
 		this.transferList = transferList;
 		trace = session.getTrace();
 		this.sql = sql;
@@ -56,7 +57,8 @@ public class CommandRemote implements CommandInterface {
 		created = session.getLastReconnect();
 	}
 
-	private void prepare(SessionRemote s, boolean createParams) throws SQLException {
+	private void prepare(SessionRemote s, boolean createParams)
+			throws SQLException {
 		id = s.getNextId();
 		paramCount = 0;
 		boolean readParams = s.getClientVersion() >= Constants.TCP_PROTOCOL_VERSION_6;
@@ -65,10 +67,12 @@ public class CommandRemote implements CommandInterface {
 				Transfer transfer = (Transfer) transferList.get(i);
 				if (readParams && createParams) {
 					s.traceOperation("SESSION_PREPARE_READ_PARAMS", id);
-					transfer.writeInt(SessionRemote.SESSION_PREPARE_READ_PARAMS).writeInt(id).writeString(sql);
+					transfer.writeInt(SessionRemote.SESSION_PREPARE_READ_PARAMS)
+							.writeInt(id).writeString(sql);
 				} else {
 					s.traceOperation("SESSION_PREPARE", id);
-					transfer.writeInt(SessionRemote.SESSION_PREPARE).writeInt(id).writeString(sql);
+					transfer.writeInt(SessionRemote.SESSION_PREPARE)
+							.writeInt(id).writeString(sql);
 				}
 				s.done(transfer);
 				isQuery = transfer.readBoolean();
@@ -89,7 +93,7 @@ public class CommandRemote implements CommandInterface {
 			} catch (IOException e) {
 
 				s.removeServer(e, i--, ++count);
-				
+
 			}
 		}
 	}
@@ -125,12 +129,15 @@ public class CommandRemote implements CommandInterface {
 				prepareIfRequired();
 				Transfer transfer = (Transfer) transferList.get(i);
 				try {
-					// TODO cluster: support load balance with values for each server / auto detect
+					// TODO cluster: support load balance with values for each
+					// server / auto detect
 					session.traceOperation("COMMAND_GET_META_DATA", id);
-					transfer.writeInt(SessionRemote.COMMAND_GET_META_DATA).writeInt(id).writeInt(objectId);
+					transfer.writeInt(SessionRemote.COMMAND_GET_META_DATA)
+							.writeInt(id).writeInt(objectId);
 					session.done(transfer);
 					int columnCount = transfer.readInt();
-					result = new ResultRemote(session, transfer, objectId, columnCount, Integer.MAX_VALUE);
+					result = new ResultRemote(session, transfer, objectId,
+							columnCount, Integer.MAX_VALUE);
 					break;
 				} catch (IOException e) {
 					session.removeServer(e, i--, ++count);
@@ -141,7 +148,8 @@ public class CommandRemote implements CommandInterface {
 		}
 	}
 
-	public ResultInterface executeQuery(int maxRows, boolean scrollable) throws SQLException {
+	public ResultInterface executeQuery(int maxRows, boolean scrollable)
+			throws SQLException {
 		checkParameters();
 		synchronized (session) {
 			int objectId = session.getNextId();
@@ -153,8 +161,8 @@ public class CommandRemote implements CommandInterface {
 					// TODO cluster: support load balance with values for each
 					// server / auto detect
 					session.traceOperation("COMMAND_EXECUTE_QUERY", id);
-					transfer.writeInt(SessionRemote.COMMAND_EXECUTE_QUERY).writeInt(id).writeInt(objectId).writeInt(
-							maxRows);
+					transfer.writeInt(SessionRemote.COMMAND_EXECUTE_QUERY)
+							.writeInt(id).writeInt(objectId).writeInt(maxRows);
 					int fetch;
 					if (session.isClustered() || scrollable) {
 						fetch = Integer.MAX_VALUE;
@@ -169,7 +177,8 @@ public class CommandRemote implements CommandInterface {
 						result.close();
 						result = null;
 					}
-					result = new ResultRemote(session, transfer, objectId, columnCount, fetch);
+					result = new ResultRemote(session, transfer, objectId,
+							columnCount, fetch);
 					if (readonly) {
 						break;
 					}
@@ -193,7 +202,8 @@ public class CommandRemote implements CommandInterface {
 				Transfer transfer = (Transfer) transferList.get(i);
 				try {
 					session.traceOperation("COMMAND_EXECUTE_UPDATE", id);
-					transfer.writeInt(SessionRemote.COMMAND_EXECUTE_UPDATE).writeInt(id);
+					transfer.writeInt(SessionRemote.COMMAND_EXECUTE_UPDATE)
+							.writeInt(id);
 					sendParameters(transfer);
 					session.done(transfer);
 					updateCount = transfer.readInt();
@@ -217,7 +227,8 @@ public class CommandRemote implements CommandInterface {
 		}
 	}
 
-	private void sendParameters(Transfer transfer) throws IOException, SQLException {
+	private void sendParameters(Transfer transfer) throws IOException,
+			SQLException {
 		int len = parameters.size();
 		transfer.writeInt(len);
 		for (int i = 0; i < len; i++) {
@@ -268,7 +279,9 @@ public class CommandRemote implements CommandInterface {
 		return TraceObject.toString(sql, getParameters());
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.CommandInterface#getQueryProxyManager()
 	 */
 	@Override
@@ -277,28 +290,36 @@ public class CommandRemote implements CommandInterface {
 		return null;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.CommandInterface#executeUpdate(boolean)
 	 */
 	@Override
-	public int executeUpdate(boolean isMultiQueryTransaction) throws SQLException {
+	public int executeUpdate(boolean isMultiQueryTransaction)
+			throws SQLException {
 		return executeUpdate();
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.CommandInterface#isPreparedStatement(boolean)
 	 */
 	@Override
 	public void setIsPreparedStatement(boolean preparedStatement) {
-		//ErrorHandling.hardError("Didn't expect this to be called.");
+		// ErrorHandling.hardError("Didn't expect this to be called.");
 	}
 
-	/* (non-Javadoc)
-	 * @see org.h2.command.Command#addQueryProxyManager(org.h2.h2o.comms.QueryProxyManager)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.h2.command.Command#addQueryProxyManager(org.h2.h2o.comms.
+	 * QueryProxyManager)
 	 */
 	@Override
 	public void addQueryProxyManager(QueryProxyManager proxyManager) {
-		//ErrorHandling.hardError("Didn't expect this to be called.");
+		// ErrorHandling.hardError("Didn't expect this to be called.");
 	}
 
 }

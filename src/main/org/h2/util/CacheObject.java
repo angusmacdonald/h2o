@@ -69,17 +69,18 @@ public abstract class CacheObject {
 	private boolean changed;
 
 	/**
-	 * Check if the object can be removed from the cache.
-	 * For example pinned objects can not be removed.
-	 *
+	 * Check if the object can be removed from the cache. For example pinned
+	 * objects can not be removed.
+	 * 
 	 * @return true if it can be removed
 	 */
 	public abstract boolean canRemove();
 
 	/**
 	 * Order the given list of cache objects by position.
-	 *
-	 * @param recordList the list of cache objects
+	 * 
+	 * @param recordList
+	 *            the list of cache objects
 	 */
 	public static void sort(ObjectArray recordList) {
 		recordList.sort(new CacheComparator());
@@ -94,7 +95,8 @@ public abstract class CacheObject {
 	}
 
 	public void setPos(int pos) {
-		if (SysProperties.CHECK && (previous != null || next != null || chained != null)) {
+		if (SysProperties.CHECK
+				&& (previous != null || next != null || chained != null)) {
 			Message.throwInternalError("setPos too late");
 		}
 		this.pos = pos;
@@ -107,7 +109,7 @@ public abstract class CacheObject {
 	/**
 	 * Check if this cache object has been changed and thus needs to be written
 	 * back to the storage.
-	 *
+	 * 
 	 * @return if it has been changed
 	 */
 	public boolean isChanged() {
@@ -120,7 +122,7 @@ public abstract class CacheObject {
 
 	/**
 	 * Check if this cache object can be removed from the cache.
-	 *
+	 * 
 	 * @return if it can be removed
 	 */
 	public boolean isPinned() {
@@ -129,7 +131,7 @@ public abstract class CacheObject {
 
 	/**
 	 * Get the estimated memory size.
-	 *
+	 * 
 	 * @return number of double words (4 bytes)
 	 */
 	public int getMemorySize() {

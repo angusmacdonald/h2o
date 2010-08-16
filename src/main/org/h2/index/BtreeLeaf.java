@@ -23,8 +23,9 @@ import org.h2.value.Value;
 
 /**
  * An outer page of a btree index.
- *
+ * 
  * Page format:
+ * 
  * <pre>
  * L { P(pointers) | D(data) } data.len { data[0].pos [data[0]], ...  }
  * </pre>
@@ -34,7 +35,8 @@ public class BtreeLeaf extends BtreePage {
 	private boolean writePos;
 	private int cachedRealByteCount;
 
-	BtreeLeaf(BtreeIndex index, Session session, DataPage s) throws SQLException {
+	BtreeLeaf(BtreeIndex index, Session session, DataPage s)
+			throws SQLException {
 		super(index);
 		writePos = s.readByte() == 'P';
 		if (writePos) {
@@ -63,7 +65,8 @@ public class BtreeLeaf extends BtreePage {
 			int comp = index.compareRows(row, newRow);
 			if (comp == 0) {
 				if (index.indexType.getUnique()) {
-					if (!index.containsNullAndAllowMultipleNull(session, newRow)) {
+					if (!index
+							.containsNullAndAllowMultipleNull(session, newRow)) {
 						throw index.getDuplicateKeyException();
 					}
 				}
@@ -129,7 +132,8 @@ public class BtreeLeaf extends BtreePage {
 				l = i + 1;
 			}
 		}
-		throw Message.getSQLException(ErrorCode.ROW_NOT_FOUND_WHEN_DELETING_1, index.getSQL());
+		throw Message.getSQLException(ErrorCode.ROW_NOT_FOUND_WHEN_DELETING_1,
+				index.getSQL());
 	}
 
 	BtreePage split(Session session, int splitPoint) throws SQLException {
@@ -146,20 +150,21 @@ public class BtreeLeaf extends BtreePage {
 		return n2;
 	}
 
-	boolean findFirst(BtreeCursor cursor, SearchRow compare, boolean bigger) throws SQLException {
+	boolean findFirst(BtreeCursor cursor, SearchRow compare, boolean bigger)
+			throws SQLException {
 		int l = 0, r = pageData.size();
 		if (r == 0 && !Constants.ALLOW_EMPTY_BTREE_PAGES && !root) {
 			Message.throwInternalError("Empty btree page");
 		}
 		while (l < r) {
 			int i = (l + r) >>> 1;
-		SearchRow row = (SearchRow) pageData.get(i);
-		int comp = index.compareRows(row, compare);
-		if (comp > 0 || (!bigger && comp == 0)) {
-			r = i;
-		} else {
-			l = i + 1;
-		}
+			SearchRow row = (SearchRow) pageData.get(i);
+			int comp = index.compareRows(row, compare);
+			if (comp > 0 || (!bigger && comp == 0)) {
+				r = i;
+			} else {
+				l = i + 1;
+			}
 		}
 		if (l >= pageData.size()) {
 			return false;
@@ -263,22 +268,24 @@ public class BtreeLeaf extends BtreePage {
 			SearchRow row = (SearchRow) pageData.get(i);
 			buff.writeInt(row.getPos());
 			if (!writePos) {
-				for (int j = 0; j < columns.length; j++) {
-					Value v = row.getValue(columns[j].getColumnId());
+				for (Column column : columns) {
+					Value v = row.getValue(column.getColumnId());
 					buff.writeValue(v);
 				}
 			}
 		}
 	}
 
-	private void updateRealByteCount(boolean add, SearchRow row) throws SQLException {
+	private void updateRealByteCount(boolean add, SearchRow row)
+			throws SQLException {
 		if (cachedRealByteCount == 0) {
 			return;
 		}
 		DataPage dummy = index.getDatabase().getDataPage();
 		int diff = getRowSize(dummy, row) + DataPage.LENGTH_INT;
 		cachedRealByteCount += add ? diff : -diff;
-		if (cachedRealByteCount + index.getRecordOverhead() >= DiskFile.BLOCK_SIZE * BLOCKS_PER_PAGE) {
+		if (cachedRealByteCount + index.getRecordOverhead() >= DiskFile.BLOCK_SIZE
+				* BLOCKS_PER_PAGE) {
 			cachedRealByteCount = 0;
 		}
 	}

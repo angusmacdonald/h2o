@@ -19,10 +19,7 @@ import org.h2.table.Table;
 import org.h2.util.ObjectArray;
 
 /**
- * This class represents the statements
- * GRANT RIGHT,
- * GRANT ROLE,
- * REVOKE RIGHT,
+ * This class represents the statements GRANT RIGHT, GRANT ROLE, REVOKE RIGHT,
  * REVOKE ROLE
  */
 public class GrantRevoke extends DefineCommand {
@@ -53,8 +50,9 @@ public class GrantRevoke extends DefineCommand {
 
 	/**
 	 * Add the specified right bit to the rights bitmap.
-	 *
-	 * @param right the right bit
+	 * 
+	 * @param right
+	 *            the right bit
 	 */
 	public void addRight(int right) {
 		this.rightMask |= right;
@@ -62,8 +60,9 @@ public class GrantRevoke extends DefineCommand {
 
 	/**
 	 * Add the specified role to the list of roles.
-	 *
-	 * @param roleName the role
+	 * 
+	 * @param roleName
+	 *            the role
 	 */
 	public void addRoleName(String roleName) {
 		if (roleNames == null) {
@@ -78,7 +77,8 @@ public class GrantRevoke extends DefineCommand {
 		if (grantee == null) {
 			grantee = db.findRole(granteeName);
 			if (grantee == null) {
-				throw Message.getSQLException(ErrorCode.USER_OR_ROLE_NOT_FOUND_1, granteeName);
+				throw Message.getSQLException(
+						ErrorCode.USER_OR_ROLE_NOT_FOUND_1, granteeName);
 			}
 		}
 	}
@@ -92,7 +92,8 @@ public class GrantRevoke extends DefineCommand {
 				String name = (String) roleNames.get(i);
 				Role grantedRole = db.findRole(name);
 				if (grantedRole == null) {
-					throw Message.getSQLException(ErrorCode.ROLE_NOT_FOUND_1, name);
+					throw Message.getSQLException(ErrorCode.ROLE_NOT_FOUND_1,
+							name);
 				}
 				if (operationType == GRANT) {
 					grantRole(grantedRole);
@@ -138,7 +139,8 @@ public class GrantRevoke extends DefineCommand {
 			Role granteeRole = (Role) grantee;
 			if (grantedRole.isRoleGranted(granteeRole)) {
 				// TODO role: should be 'cyclic role grants are not allowed'
-				throw Message.getSQLException(ErrorCode.ROLE_ALREADY_GRANTED_1, grantedRole.getSQL());
+				throw Message.getSQLException(ErrorCode.ROLE_ALREADY_GRANTED_1,
+						grantedRole.getSQL());
 			}
 		}
 		Database db = session.getDatabase();
@@ -182,8 +184,9 @@ public class GrantRevoke extends DefineCommand {
 
 	/**
 	 * Add the specified table to the list of tables.
-	 *
-	 * @param table the table
+	 * 
+	 * @param table
+	 *            the table
 	 */
 	public void addTable(Table table) {
 		tables.add(table);

@@ -14,14 +14,15 @@ import org.h2.server.web.DbTableOrView;
 import org.h2.util.StringUtils;
 
 /**
- * A query context object. It contains the list of table and alias objects.
- * Used for autocomplete.
+ * A query context object. It contains the list of table and alias objects. Used
+ * for autocomplete.
  */
 public class Sentence {
 
 	/**
-	 * This token type means the possible choices of the item depend on the context.
-	 * For example the item represents a table name of the current database.
+	 * This token type means the possible choices of the item depend on the
+	 * context. For example the item represents a table name of the current
+	 * database.
 	 */
 	public static final int CONTEXT = 0;
 
@@ -67,9 +68,9 @@ public class Sentence {
 	}
 
 	/**
-	 * Check if it's time to stop processing.
-	 * Processing auto-complete shouldn't take more than a few milliseconds.
-	 *
+	 * Check if it's time to stop processing. Processing auto-complete shouldn't
+	 * take more than a few milliseconds.
+	 * 
 	 * @return true if it's time to stop processing
 	 */
 	boolean shouldStop() {
@@ -78,20 +79,25 @@ public class Sentence {
 
 	/**
 	 * Add a word to the set of next tokens.
-	 *
-	 * @param n the token name
-	 * @param string an example text
-	 * @param type the token type
+	 * 
+	 * @param n
+	 *            the token name
+	 * @param string
+	 *            an example text
+	 * @param type
+	 *            the token type
 	 */
 	public void add(String n, String string, int type) {
-		next.put(type+"#"+n, string);
+		next.put(type + "#" + n, string);
 	}
 
 	/**
 	 * Add an alias name and object
-	 *
-	 * @param alias the alias name
-	 * @param table the alias table
+	 * 
+	 * @param alias
+	 *            the alias name
+	 * @param table
+	 *            the alias table
 	 */
 	public void addAlias(String alias, DbTableOrView table) {
 		if (aliases == null) {
@@ -102,8 +108,9 @@ public class Sentence {
 
 	/**
 	 * Add a table.
-	 *
-	 * @param table the table
+	 * 
+	 * @param table
+	 *            the table
 	 */
 	public void addTable(DbTableOrView table) {
 		lastTable = table;
@@ -115,7 +122,7 @@ public class Sentence {
 
 	/**
 	 * Get the set of tables.
-	 *
+	 * 
 	 * @return the set of tables
 	 */
 	public HashSet getTables() {
@@ -124,7 +131,7 @@ public class Sentence {
 
 	/**
 	 * Get the alias map.
-	 *
+	 * 
 	 * @return the alias map
 	 */
 	public HashMap getAliases() {
@@ -133,7 +140,7 @@ public class Sentence {
 
 	/**
 	 * Get the last added table.
-	 *
+	 * 
 	 * @return the last table
 	 */
 	public DbTableOrView getLastTable() {
@@ -142,7 +149,7 @@ public class Sentence {
 
 	/**
 	 * Get the last matched schema if the last match was a schema.
-	 *
+	 * 
 	 * @return the last schema or null
 	 */
 	public DbSchema getLastMatchedSchema() {
@@ -150,10 +157,11 @@ public class Sentence {
 	}
 
 	/**
-	 * Set the last matched schema if the last match was a schema,
-	 * or null if it was not.
-	 *
-	 * @param schema the last matched schema or null
+	 * Set the last matched schema if the last match was a schema, or null if it
+	 * was not.
+	 * 
+	 * @param schema
+	 *            the last matched schema or null
 	 */
 	public void setLastMatchedSchema(DbSchema schema) {
 		this.lastMatchedSchema = schema;
@@ -161,8 +169,9 @@ public class Sentence {
 
 	/**
 	 * Set the last matched table if the last match was a table.
-	 *
-	 * @param table the last matched table or null
+	 * 
+	 * @param table
+	 *            the last matched table or null
 	 */
 	public void setLastMatchedTable(DbTableOrView table) {
 		this.lastMatchedTable = table;
@@ -170,7 +179,7 @@ public class Sentence {
 
 	/**
 	 * Get the last matched table if the last match was a table.
-	 *
+	 * 
 	 * @return the last table or null
 	 */
 	public DbTableOrView getLastMatchedTable() {
@@ -179,8 +188,9 @@ public class Sentence {
 
 	/**
 	 * Set the query string.
-	 *
-	 * @param query the query string
+	 * 
+	 * @param query
+	 *            the query string
 	 */
 	public void setQuery(String query) {
 		if (!StringUtils.equals(this.query, query)) {
@@ -191,7 +201,7 @@ public class Sentence {
 
 	/**
 	 * Get the query string.
-	 *
+	 * 
 	 * @return the query
 	 */
 	public String getQuery() {
@@ -200,7 +210,7 @@ public class Sentence {
 
 	/**
 	 * Get the uppercase version of the query string.
-	 *
+	 * 
 	 * @return the uppercase query
 	 */
 	public String getQueryUpper() {
@@ -209,7 +219,7 @@ public class Sentence {
 
 	/**
 	 * Get the map of next tokens.
-	 *
+	 * 
 	 * @return the next token map
 	 */
 	public HashMap getNext() {

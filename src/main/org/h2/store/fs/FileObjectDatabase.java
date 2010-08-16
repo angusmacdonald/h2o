@@ -22,7 +22,8 @@ public class FileObjectDatabase implements FileObject {
 	private int pos, length;
 	private boolean changed;
 
-	FileObjectDatabase(FileSystemDatabase db, String fileName, byte[] data, boolean changed) {
+	FileObjectDatabase(FileSystemDatabase db, String fileName, byte[] data,
+			boolean changed) {
 		this.db = db;
 		this.fileName = fileName;
 		this.data = data;

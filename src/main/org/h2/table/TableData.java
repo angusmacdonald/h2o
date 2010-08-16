@@ -60,8 +60,9 @@ public class TableData extends Table implements RecordReader {
 	private long lastModificationId;
 	private boolean containsLargeObject;
 
-	public TableData(Schema schema, String tableName, int id, ObjectArray columns,
-			boolean persistent, boolean clustered, int headPos) throws SQLException {
+	public TableData(Schema schema, String tableName, int id,
+			ObjectArray columns, boolean persistent, boolean clustered,
+			int headPos) throws SQLException {
 		super(schema, id, tableName, persistent);
 		Column[] cols = new Column[columns.size()];
 		columns.toArray(cols);
@@ -69,14 +70,16 @@ public class TableData extends Table implements RecordReader {
 		this.clustered = clustered;
 		if (!clustered) {
 			if (SysProperties.PAGE_STORE && database.isPersistent()) {
-				scanIndex = new PageScanIndex(this, id, IndexColumn.wrap(cols), IndexType.createScan(persistent), headPos);
+				scanIndex = new PageScanIndex(this, id, IndexColumn.wrap(cols),
+						IndexType.createScan(persistent), headPos);
 			} else {
-				scanIndex = new ScanIndex(this, id, IndexColumn.wrap(cols), IndexType.createScan(persistent));
+				scanIndex = new ScanIndex(this, id, IndexColumn.wrap(cols),
+						IndexType.createScan(persistent));
 			}
 			indexes.add(scanIndex);
 		}
-		for (int i = 0; i < cols.length; i++) {
-			if (DataType.isLargeObject(cols[i].getType())) {
+		for (Column col : cols) {
+			if (DataType.isLargeObject(col.getType())) {
 				containsLargeObject = true;
 				memoryPerRow = Row.MEMORY_CALCULATE;
 			}
@@ -97,9 +100,11 @@ public class TableData extends Table implements RecordReader {
 
 	/**
 	 * Read the given row.
-	 *
-	 * @param session the session
-	 * @param key the position of the row in the file
+	 * 
+	 * @param session
+	 *            the session
+	 * @param key
+	 *            the position of the row in the file
 	 * @return the row
 	 */
 	public Row getRow(Session session, int key) throws SQLException {
@@ -141,7 +146,9 @@ public class TableData extends Table implements RecordReader {
 		if (SysProperties.CHECK && !database.isMultiVersion()) {
 			long rc = index.getRowCount(session);
 			if (rc != rowCount + offset) {
-				Message.throwInternalError("rowCount expected " + (rowCount + offset) + " got " + rc + " " + getName() + "." + index.getName());
+				Message.throwInternalError("rowCount expected "
+						+ (rowCount + offset) + " got " + rc + " " + getName()
+						+ "." + index.getName());
 			}
 		}
 	}
@@ -164,14 +171,17 @@ public class TableData extends Table implements RecordReader {
 		return indexes;
 	}
 
-	public Index addIndex(Session session, String indexName, int indexId, IndexColumn[] cols, IndexType indexType,
-			int headPos, String indexComment) throws SQLException {
+	public Index addIndex(Session session, String indexName, int indexId,
+			IndexColumn[] cols, IndexType indexType, int headPos,
+			String indexComment) throws SQLException {
 		if (indexType.getPrimaryKey()) {
-			for (int i = 0; i < cols.length; i++) {
-				Column column = cols[i].column;
+			for (IndexColumn col : cols) {
+				Column column = col.column;
 
 				if (column.getNullable()) {
-					throw Message.getSQLException(ErrorCode.COLUMN_MUST_NOT_BE_NULLABLE_1, column.getName());
+					throw Message.getSQLException(
+							ErrorCode.COLUMN_MUST_NOT_BE_NULLABLE_1,
+							column.getName());
 				}
 				column.setPrimaryKey(true);
 			}
@@ -179,9 +189,11 @@ public class TableData extends Table implements RecordReader {
 		Index index;
 		if (getPersistent() && indexType.getPersistent()) {
 			if (SysProperties.PAGE_STORE) {
-				index = new PageBtreeIndex(this, indexId, indexName, cols, indexType, headPos);
+				index = new PageBtreeIndex(this, indexId, indexName, cols,
+						indexType, headPos);
 			} else {
-				index = new BtreeIndex(session, this, indexId, indexName, cols, indexType, headPos);
+				index = new BtreeIndex(session, this, indexId, indexName, cols,
+						indexType, headPos);
 			}
 		} else {
 			if (indexType.getHash()) {
@@ -203,8 +215,11 @@ public class TableData extends Table implements RecordReader {
 				int bufferSize = Constants.DEFAULT_MAX_MEMORY_ROWS;
 				ObjectArray buffer = new ObjectArray(bufferSize);
 				while (cursor.next()) {
-					database.setProgress(DatabaseEventListener.STATE_CREATE_INDEX, getName() + ":" + index.getName(), MathUtils
-							.convertLongToInt(i++), MathUtils.convertLongToInt(total));
+					database.setProgress(
+							DatabaseEventListener.STATE_CREATE_INDEX, getName()
+									+ ":" + index.getName(),
+							MathUtils.convertLongToInt(i++),
+							MathUtils.convertLongToInt(total));
 					Row row = cursor.get();
 					// index.add(session, row);
 					buffer.add(row);
@@ -215,7 +230,8 @@ public class TableData extends Table implements RecordReader {
 				}
 				addRowsToIndex(session, buffer, index);
 				if (SysProperties.CHECK && remaining != 0) {
-					Message.throwInternalError("rowcount remaining=" + remaining + " " + getName());
+					Message.throwInternalError("rowcount remaining="
+							+ remaining + " " + getName());
 				}
 			} catch (SQLException e) {
 				getSchema().freeUniqueName(indexName);
@@ -241,11 +257,13 @@ public class TableData extends Table implements RecordReader {
 				database.addSchemaObject(session, index);
 			}
 			// Need to update, because maybe the index is rebuilt at startup,
-			// and so the head pos may have changed, which needs to be stored now.
+			// and so the head pos may have changed, which needs to be stored
+			// now.
 			// addSchemaObject doesn't update the sys table at startup
 			if (index.getIndexType().getPersistent() && !database.getReadOnly()
 					&& !database.getLog().containsInDoubtTransactions()) {
-				// can not save anything in the log file if it contains in-doubt transactions
+				// can not save anything in the log file if it contains in-doubt
+				// transactions
 				if (!SysProperties.PAGE_STORE) {
 					// must not do this when using the page store
 					// because recovery is not done yet
@@ -262,7 +280,8 @@ public class TableData extends Table implements RecordReader {
 		return true;
 	}
 
-	private void addRowsToIndex(Session session, ObjectArray list, Index index) throws SQLException {
+	private void addRowsToIndex(Session session, ObjectArray list, Index index)
+			throws SQLException {
 		final Index idx = index;
 		try {
 			list.sort(new Comparator() {
@@ -303,14 +322,16 @@ public class TableData extends Table implements RecordReader {
 
 		if (database.isMultiVersion()) {
 			if (row.getDeleted()) {
-				throw Message.getSQLException(ErrorCode.CONCURRENT_UPDATE_1, getName());
+				throw Message.getSQLException(ErrorCode.CONCURRENT_UPDATE_1,
+						getName());
 			}
 			int old = row.getSessionId();
 			int newId = session.getId();
 			if (old == 0) {
 				row.setSessionId(newId);
 			} else if (old != newId) {
-				throw Message.getSQLException(ErrorCode.CONCURRENT_UPDATE_1, getName());
+				throw Message.getSQLException(ErrorCode.CONCURRENT_UPDATE_1,
+						getName());
 			}
 		}
 		lastModificationId = database.getNextModificationDataId();
@@ -360,7 +381,8 @@ public class TableData extends Table implements RecordReader {
 		return lockExclusive == session;
 	}
 
-	public void lock(Session session, boolean exclusive, boolean force) throws SQLException {
+	public void lock(Session session, boolean exclusive, boolean force)
+			throws SQLException {
 		int lockMode = database.getLockMode();
 		if (lockMode == Constants.LOCK_MODE_OFF) {
 			return;
@@ -384,13 +406,17 @@ public class TableData extends Table implements RecordReader {
 		}
 	}
 
-	private void doLock(Session session, int lockMode, boolean exclusive) throws SQLException {
+	private void doLock(Session session, int lockMode, boolean exclusive)
+			throws SQLException {
 		long max = System.currentTimeMillis() + session.getLockTimeout();
 
 		boolean checkDeadlock = false;
 		while (true) {
-			if (lockExclusive != null){
-				session = lockExclusive; //XXX H2O hack to stop SYS table locking on B-to-A-to-B DB communication. Will cause issues with multiple users?
+			if (lockExclusive != null) {
+				session = lockExclusive; // XXX H2O hack to stop SYS table
+											// locking on B-to-A-to-B DB
+											// communication. Will cause issues
+											// with multiple users?
 			}
 
 			if (lockExclusive == session) {
@@ -404,7 +430,8 @@ public class TableData extends Table implements RecordReader {
 						session.addLock(this);
 						lockExclusive = session;
 						return;
-					} else if (lockShared.size() == 1 && lockShared.contains(session)) {
+					} else if (lockShared.size() == 1
+							&& lockShared.contains(session)) {
 						traceLock(session, exclusive, "add (upgraded) for ");
 						lockExclusive = session;
 						return;
@@ -413,7 +440,8 @@ public class TableData extends Table implements RecordReader {
 			} else {
 				if (lockExclusive == null) {
 					if (lockMode == Constants.LOCK_MODE_READ_COMMITTED) {
-						if (!database.isMultiThreaded() && !database.isMultiVersion()) {
+						if (!database.isMultiThreaded()
+								&& !database.isMultiVersion()) {
 							// READ_COMMITTED: a read lock is acquired,
 							// but released immediately after the operation
 							// is complete.
@@ -435,7 +463,8 @@ public class TableData extends Table implements RecordReader {
 			if (checkDeadlock) {
 				ObjectArray sessions = checkDeadlock(session, null);
 				if (sessions != null) {
-					throw Message.getSQLException(ErrorCode.DEADLOCK_1, getDeadlockDetails(sessions));
+					throw Message.getSQLException(ErrorCode.DEADLOCK_1,
+							getDeadlockDetails(sessions));
 				}
 			} else {
 				// check for deadlocks from now on
@@ -443,8 +472,10 @@ public class TableData extends Table implements RecordReader {
 			}
 			long now = System.currentTimeMillis();
 			if (now >= max) {
-				traceLock(session, exclusive, "timeout after " + session.getLockTimeout());
-				throw Message.getSQLException(ErrorCode.LOCK_TIMEOUT_1, getName());
+				traceLock(session, exclusive,
+						"timeout after " + session.getLockTimeout());
+				throw Message.getSQLException(ErrorCode.LOCK_TIMEOUT_1,
+						getName());
 			}
 			try {
 				traceLock(session, exclusive, "waiting for");
@@ -476,7 +507,8 @@ public class TableData extends Table implements RecordReader {
 			buff.append('\n');
 			Session s = (Session) sessions.get(i);
 			Table lock = s.getWaitForLock();
-			buff.append("Session ").append(s).append(" is waiting to lock ").append(lock);
+			buff.append("Session ").append(s).append(" is waiting to lock ")
+					.append(lock);
 			buff.append(" while locking ");
 			Table[] locks = s.getLocks();
 			for (int j = 0; j < locks.length; j++) {
@@ -539,7 +571,9 @@ public class TableData extends Table implements RecordReader {
 
 	private void traceLock(Session session, boolean exclusive, String s) {
 		if (traceLock.isDebugEnabled()) {
-			traceLock.debug(session.getId() + " " + (exclusive ? "exclusive write lock" : "shared read lock") + " " + s + " " + getName());
+			traceLock.debug(session.getId() + " "
+					+ (exclusive ? "exclusive write lock" : "shared read lock")
+					+ " " + s + " " + getName());
 		}
 	}
 
@@ -609,8 +643,9 @@ public class TableData extends Table implements RecordReader {
 
 	/**
 	 * Read a row from the data page.
-	 *
-	 * @param s the data page
+	 * 
+	 * @param s
+	 *            the data page
 	 * @return the row
 	 */
 	public Row readRow(DataPage s) throws SQLException {
@@ -625,8 +660,9 @@ public class TableData extends Table implements RecordReader {
 
 	/**
 	 * Set the row count of this table.
-	 *
-	 * @param count the row count
+	 * 
+	 * @param count
+	 *            the row count
 	 */
 	public void setRowCount(long count) {
 		this.rowCount = count;
@@ -646,7 +682,8 @@ public class TableData extends Table implements RecordReader {
 			for (int i = 0; i < list.size(); i++) {
 				Index index = (Index) list.get(i);
 				if (index.getTable() == this) {
-					Message.throwInternalError("index not dropped: " + index.getName());
+					Message.throwInternalError("index not dropped: "
+							+ index.getName());
 				}
 			}
 		}
@@ -713,7 +750,9 @@ public class TableData extends Table implements RecordReader {
 		return scanIndex.getRowCountApproximation();
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.table.Table#isLocal()
 	 */
 	@Override

@@ -42,27 +42,29 @@ import org.h2.util.JdbcUtils;
 import org.h2.util.StringUtils;
 
 /**
- * This class implements the full text search based on Apache Lucene.
- * Most methods can be called using SQL statements as well.
+ * This class implements the full text search based on Apache Lucene. Most
+ * methods can be called using SQL statements as well.
  */
 public class FullTextLucene extends FullText {
 
-	//## Java 1.4 begin ##
+	// ## Java 1.4 begin ##
 	private static final String TRIGGER_PREFIX = "FTL_";
 	private static final String SCHEMA = "FTL";
-	private static final boolean STORE_DOCUMENT_TEXT_IN_INDEX = Boolean.getBoolean("h2.storeDocumentTextInIndex");
+	private static final boolean STORE_DOCUMENT_TEXT_IN_INDEX = Boolean
+			.getBoolean("h2.storeDocumentTextInIndex");
 	private static final HashMap INDEX_MODIFIERS = new HashMap();
 	private static final String FIELD_DATA = "DATA";
 	private static final String FIELD_COLUMN_PREFIX = "_";
 	private static final String FIELD_QUERY = "QUERY";
-	//## Java 1.4 end ##
+
+	// ## Java 1.4 end ##
 
 	/**
 	 * Initializes full text search functionality for this database. This adds
 	 * the following Java functions to the database:
 	 * <ul>
-	 * <li>FTL_CREATE_INDEX(schemaNameString, tableNameString,
-	 * columnListString)</li>
+	 * <li>FTL_CREATE_INDEX(schemaNameString, tableNameString, columnListString)
+	 * </li>
 	 * <li>FTL_SEARCH(queryString, limitInt, offsetInt): result set</li>
 	 * <li>FTL_REINDEX()</li>
 	 * <li>FTL_DROP_ALL()</li>
@@ -70,45 +72,58 @@ public class FullTextLucene extends FullText {
 	 * It also adds a schema FTL to the database where bookkeeping information
 	 * is stored. This function may be called from a Java application, or by
 	 * using the SQL statements:
-	 *
+	 * 
 	 * <pre>
 	 * CREATE ALIAS IF NOT EXISTS FTL_INIT FOR
 	 *      &quot;org.h2.fulltext.FullTextLucene.init&quot;;
 	 * CALL FTL_INIT();
 	 * </pre>
-	 *
-	 * @param conn the connection
+	 * 
+	 * @param conn
+	 *            the connection
 	 */
-	//## Java 1.4 begin ##
+	// ## Java 1.4 begin ##
 	public static void init(Connection conn) throws SQLException {
 		Statement stat = conn.createStatement();
 		stat.execute("CREATE SCHEMA IF NOT EXISTS " + SCHEMA);
-		stat.execute("CREATE TABLE IF NOT EXISTS " + SCHEMA
+		stat.execute("CREATE TABLE IF NOT EXISTS "
+				+ SCHEMA
 				+ ".INDEXES(SCHEMA VARCHAR, TABLE VARCHAR, COLUMNS VARCHAR, PRIMARY KEY(SCHEMA, TABLE))");
-		stat.execute("CREATE ALIAS IF NOT EXISTS FTL_CREATE_INDEX FOR \"" + FullTextLucene.class.getName() + ".createIndex\"");
-		stat.execute("CREATE ALIAS IF NOT EXISTS FTL_SEARCH FOR \"" + FullTextLucene.class.getName() + ".search\"");
-		stat.execute("CREATE ALIAS IF NOT EXISTS FTL_SEARCH_DATA FOR \"" + FullTextLucene.class.getName() + ".searchData\"");
-		stat.execute("CREATE ALIAS IF NOT EXISTS FTL_REINDEX FOR \"" + FullTextLucene.class.getName() + ".reindex\"");
-		stat.execute("CREATE ALIAS IF NOT EXISTS FTL_DROP_ALL FOR \"" + FullTextLucene.class.getName() + ".dropAll\"");
+		stat.execute("CREATE ALIAS IF NOT EXISTS FTL_CREATE_INDEX FOR \""
+				+ FullTextLucene.class.getName() + ".createIndex\"");
+		stat.execute("CREATE ALIAS IF NOT EXISTS FTL_SEARCH FOR \""
+				+ FullTextLucene.class.getName() + ".search\"");
+		stat.execute("CREATE ALIAS IF NOT EXISTS FTL_SEARCH_DATA FOR \""
+				+ FullTextLucene.class.getName() + ".searchData\"");
+		stat.execute("CREATE ALIAS IF NOT EXISTS FTL_REINDEX FOR \""
+				+ FullTextLucene.class.getName() + ".reindex\"");
+		stat.execute("CREATE ALIAS IF NOT EXISTS FTL_DROP_ALL FOR \""
+				+ FullTextLucene.class.getName() + ".dropAll\"");
 		try {
 			getIndexModifier(conn);
 		} catch (Exception e) {
 			throw convertException(e);
 		}
 	}
-	//## Java 1.4 end ##
+
+	// ## Java 1.4 end ##
 
 	/**
 	 * Create a new full text index for a table and column list. Each table may
 	 * only have one index at any time.
-	 *
-	 * @param conn the connection
-	 * @param schema the schema name of the table (case sensitive)
-	 * @param table the table name (case sensitive)
-	 * @param columnList the column list (null for all columns)
+	 * 
+	 * @param conn
+	 *            the connection
+	 * @param schema
+	 *            the schema name of the table (case sensitive)
+	 * @param table
+	 *            the table name (case sensitive)
+	 * @param columnList
+	 *            the column list (null for all columns)
 	 */
-	//## Java 1.4 begin ##
-	public static void createIndex(Connection conn, String schema, String table, String columnList) throws SQLException {
+	// ## Java 1.4 begin ##
+	public static void createIndex(Connection conn, String schema,
+			String table, String columnList) throws SQLException {
 		init(conn);
 		PreparedStatement prep = conn.prepareStatement("INSERT INTO " + SCHEMA
 				+ ".INDEXES(SCHEMA, TABLE, COLUMNS) VALUES(?, ?, ?)");
@@ -119,20 +134,23 @@ public class FullTextLucene extends FullText {
 		createTrigger(conn, schema, table);
 		indexExistingRows(conn, schema, table);
 	}
-	//## Java 1.4 end ##
+
+	// ## Java 1.4 end ##
 
 	/**
 	 * Re-creates the full text index for this database.
-	 *
-	 * @param conn the connection
+	 * 
+	 * @param conn
+	 *            the connection
 	 */
-	//## Java 1.4 begin ##
+	// ## Java 1.4 begin ##
 	public static void reindex(Connection conn) throws SQLException {
 		init(conn);
 		removeAllTriggers(conn, TRIGGER_PREFIX);
 		removeIndexFiles(conn);
 		Statement stat = conn.createStatement();
-		ResultSet rs = stat.executeQuery("SELECT * FROM "+SCHEMA+".INDEXES");
+		ResultSet rs = stat
+				.executeQuery("SELECT * FROM " + SCHEMA + ".INDEXES");
 		while (rs.next()) {
 			String schema = rs.getString("SCHEMA");
 			String table = rs.getString("TABLE");
@@ -140,87 +158,105 @@ public class FullTextLucene extends FullText {
 			indexExistingRows(conn, schema, table);
 		}
 	}
-	//## Java 1.4 end ##
+
+	// ## Java 1.4 end ##
 
 	/**
 	 * Drops all full text indexes from the database.
-	 *
-	 * @param conn the connection
+	 * 
+	 * @param conn
+	 *            the connection
 	 */
-	//## Java 1.4 begin ##
+	// ## Java 1.4 begin ##
 	public static void dropAll(Connection conn) throws SQLException {
 		Statement stat = conn.createStatement();
 		stat.execute("DROP SCHEMA IF EXISTS " + SCHEMA);
 		removeAllTriggers(conn, TRIGGER_PREFIX);
 		removeIndexFiles(conn);
 	}
-	//## Java 1.4 end ##
+
+	// ## Java 1.4 end ##
 
 	/**
-	 * Searches from the full text index for this database.
-	 * The returned result set has the following column:
-	 * <ul><li>QUERY (varchar): The query to use to get the data.
-	 * The query does not include 'SELECT * FROM '. Example:
-	 * PUBLIC.TEST WHERE ID = 1
-	 * </li></ul>
-	 *
-	 * @param conn the connection
-	 * @param text the search query
-	 * @param limit the maximum number of rows or 0 for no limit
-	 * @param offset the offset or 0 for no offset
+	 * Searches from the full text index for this database. The returned result
+	 * set has the following column:
+	 * <ul>
+	 * <li>QUERY (varchar): The query to use to get the data. The query does not
+	 * include 'SELECT * FROM '. Example: PUBLIC.TEST WHERE ID = 1</li>
+	 * </ul>
+	 * 
+	 * @param conn
+	 *            the connection
+	 * @param text
+	 *            the search query
+	 * @param limit
+	 *            the maximum number of rows or 0 for no limit
+	 * @param offset
+	 *            the offset or 0 for no offset
 	 * @return the result set
 	 */
-	//## Java 1.4 begin ##
-	public static ResultSet search(Connection conn, String text, int limit, int offset) throws SQLException {
+	// ## Java 1.4 begin ##
+	public static ResultSet search(Connection conn, String text, int limit,
+			int offset) throws SQLException {
 		return search(conn, text, limit, offset, false);
 	}
-	//## Java 1.4 end ##
+
+	// ## Java 1.4 end ##
 
 	/**
 	 * Searches from the full text index for this database. The result contains
 	 * the primary key data as an array. The returned result set has the
 	 * following columns:
 	 * <ul>
-	 * <li>SCHEMA (varchar): The schema name. Example: PUBLIC </li>
-	 * <li>TABLE (varchar): The table name. Example: TEST </li>
+	 * <li>SCHEMA (varchar): The schema name. Example: PUBLIC</li>
+	 * <li>TABLE (varchar): The table name. Example: TEST</li>
 	 * <li>COLUMNS (array of varchar): Comma separated list of quoted column
-	 * names. The column names are quoted if necessary. Example: (ID) </li>
-	 * <li>KEYS (array of values): Comma separated list of values. Example: (1)
-	 * </li>
+	 * names. The column names are quoted if necessary. Example: (ID)</li>
+	 * <li>KEYS (array of values): Comma separated list of values. Example: (1)</li>
 	 * </ul>
-	 *
-	 * @param conn the connection
-	 * @param text the search query
-	 * @param limit the maximum number of rows or 0 for no limit
-	 * @param offset the offset or 0 for no offset
+	 * 
+	 * @param conn
+	 *            the connection
+	 * @param text
+	 *            the search query
+	 * @param limit
+	 *            the maximum number of rows or 0 for no limit
+	 * @param offset
+	 *            the offset or 0 for no offset
 	 * @return the result set
 	 */
-	//## Java 1.4 begin ##
-	public static ResultSet searchData(Connection conn, String text, int limit, int offset) throws SQLException {
+	// ## Java 1.4 begin ##
+	public static ResultSet searchData(Connection conn, String text, int limit,
+			int offset) throws SQLException {
 		return search(conn, text, limit, offset, true);
 	}
 
 	private static SQLException convertException(Exception e) {
-		SQLException e2 = new SQLException("FULLTEXT", "Error while indexing document");
+		SQLException e2 = new SQLException("FULLTEXT",
+				"Error while indexing document");
 		e2.initCause(e);
 		return e2;
 	}
 
-	private static void createTrigger(Connection conn, String schema, String table) throws SQLException {
+	private static void createTrigger(Connection conn, String schema,
+			String table) throws SQLException {
 		Statement stat = conn.createStatement();
-		String trigger = StringUtils.quoteIdentifier(schema) + "." + StringUtils.quoteIdentifier(TRIGGER_PREFIX + table);
+		String trigger = StringUtils.quoteIdentifier(schema) + "."
+				+ StringUtils.quoteIdentifier(TRIGGER_PREFIX + table);
 		stat.execute("DROP TRIGGER IF EXISTS " + trigger);
 		StringBuilder buff = new StringBuilder("CREATE TRIGGER IF NOT EXISTS ");
 		buff.append(trigger);
 		buff.append(" AFTER INSERT, UPDATE, DELETE ON ");
-		buff.append(StringUtils.quoteIdentifier(schema) + "." + StringUtils.quoteIdentifier(table));
+		buff.append(StringUtils.quoteIdentifier(schema) + "."
+				+ StringUtils.quoteIdentifier(table));
 		buff.append(" FOR EACH ROW CALL \"");
 		buff.append(FullTextLucene.FullTextTrigger.class.getName());
 		buff.append("\"");
 		stat.execute(buff.toString());
 	}
 
-	private static IndexModifier getIndexModifier(Connection conn) throws SQLException {
+	private static IndexModifier getIndexModifier(Connection conn)
+			throws SQLException {
 		String path = getIndexPath(conn);
 		IndexModifier indexer;
 		synchronized (INDEX_MODIFIERS) {
@@ -245,17 +281,20 @@ public class FullTextLucene extends FullText {
 		rs.next();
 		String path = rs.getString(1);
 		if (path == null) {
-			throw new SQLException("FULLTEXT", "Fulltext search for in-memory databases is not supported.");
+			throw new SQLException("FULLTEXT",
+					"Fulltext search for in-memory databases is not supported.");
 		}
 		rs.close();
 		return path;
 	}
 
-	private static void indexExistingRows(Connection conn, String schema, String table) throws SQLException {
+	private static void indexExistingRows(Connection conn, String schema,
+			String table) throws SQLException {
 		FullTextLucene.FullTextTrigger existing = new FullTextLucene.FullTextTrigger();
 		existing.init(conn, schema, null, table, false, Trigger.INSERT);
 		StringBuilder buff = new StringBuilder("SELECT * FROM ");
-		buff.append(StringUtils.quoteIdentifier(schema) + "." + StringUtils.quoteIdentifier(table));
+		buff.append(StringUtils.quoteIdentifier(schema) + "."
+				+ StringUtils.quoteIdentifier(table));
 		ResultSet rs = conn.createStatement().executeQuery(buff.toString());
 		int columnCount = rs.getMetaData().getColumnCount();
 		while (rs.next()) {
@@ -282,7 +321,8 @@ public class FullTextLucene extends FullText {
 		FileSystem.getInstance(path).deleteRecursive(path);
 	}
 
-	private static ResultSet search(Connection conn, String text, int limit, int offset, boolean data) throws SQLException {
+	private static ResultSet search(Connection conn, String text, int limit,
+			int offset, boolean data) throws SQLException {
 		SimpleResultSet result = createResultSet(data);
 		if (conn.getMetaData().getURL().startsWith("jdbc:columnlist:")) {
 			// this is just to query the result set columns
@@ -311,17 +351,14 @@ public class FullTextLucene extends FullText {
 					Session session = (Session) c.getSession();
 					Parser p = new Parser(session, true);
 					String tab = q.substring(0, idx);
-					ExpressionColumn expr = (ExpressionColumn) p.parseExpression(tab);
+					ExpressionColumn expr = (ExpressionColumn) p
+							.parseExpression(tab);
 					String schemaName = expr.getOriginalTableAliasName();
 					String tableName = expr.getColumnName();
 					q = q.substring(idx + " WHERE ".length());
 					Object[][] columnData = parseKey(conn, q);
-					Object[] row = new Object[] {
-							schemaName,
-							tableName,
-							columnData[0],
-							columnData[1]
-					};
+					Object[] row = new Object[] { schemaName, tableName,
+							columnData[0], columnData[1] };
 					result.addRow(row);
 				} else {
 					result.addRow(new Object[] { q });
@@ -334,18 +371,19 @@ public class FullTextLucene extends FullText {
 		}
 		return result;
 	}
-	//## Java 1.4 end ##
+
+	// ## Java 1.4 end ##
 
 	/**
 	 * Trigger updates the index when a inserting, updating, or deleting a row.
 	 */
 	public static class FullTextTrigger
-	//## Java 1.4 begin ##
-	implements Trigger, CloseListener
-	//## Java 1.4 end ##
+	// ## Java 1.4 begin ##
+			implements Trigger, CloseListener
+	// ## Java 1.4 end ##
 	{
 
-		//## Java 1.4 begin ##
+		// ## Java 1.4 begin ##
 		private String schema;
 		private String table;
 		private int[] keys;
@@ -354,14 +392,16 @@ public class FullTextLucene extends FullText {
 		private int[] columnTypes;
 		private String indexPath;
 		private IndexModifier indexModifier;
-		//## Java 1.4 end ##
+
+		// ## Java 1.4 end ##
 
 		/**
 		 * INTERNAL
 		 */
-		//## Java 1.4 begin ##
-		public void init(Connection conn, String schemaName, String triggerName,
-				String tableName, boolean before, int type) throws SQLException {
+		// ## Java 1.4 begin ##
+		public void init(Connection conn, String schemaName,
+				String triggerName, String tableName, boolean before, int type)
+				throws SQLException {
 			this.schema = schemaName;
 			this.table = tableName;
 			this.indexPath = getIndexPath(conn);
@@ -370,8 +410,7 @@ public class FullTextLucene extends FullText {
 			DatabaseMetaData meta = conn.getMetaData();
 			ResultSet rs = meta.getColumns(null,
 					JdbcUtils.escapeMetaDataPattern(schemaName),
-					JdbcUtils.escapeMetaDataPattern(tableName),
-					null);
+					JdbcUtils.escapeMetaDataPattern(tableName), null);
 			ArrayList columnList = new ArrayList();
 			while (rs.next()) {
 				columnList.add(rs.getString("COLUMN_NAME"));
@@ -381,15 +420,13 @@ public class FullTextLucene extends FullText {
 			columnList.toArray(columns);
 			rs = meta.getColumns(null,
 					JdbcUtils.escapeMetaDataPattern(schemaName),
-					JdbcUtils.escapeMetaDataPattern(tableName),
-					null);
+					JdbcUtils.escapeMetaDataPattern(tableName), null);
 			for (int i = 0; rs.next(); i++) {
 				columnTypes[i] = rs.getInt("DATA_TYPE");
 			}
 			if (keyList.size() == 0) {
 				rs = meta.getPrimaryKeys(null,
-						JdbcUtils.escapeMetaDataPattern(schemaName),
-						tableName);
+						JdbcUtils.escapeMetaDataPattern(schemaName), tableName);
 				while (rs.next()) {
 					keyList.add(rs.getString("COLUMN_NAME"));
 				}
@@ -398,9 +435,9 @@ public class FullTextLucene extends FullText {
 				throw new SQLException("No primary key for table " + tableName);
 			}
 			ArrayList indexList = new ArrayList<String>();
-			PreparedStatement prep = conn.prepareStatement(
-					"SELECT COLUMNS FROM " + SCHEMA
-					+ ".INDEXES WHERE SCHEMA=? AND TABLE=?");
+			PreparedStatement prep = conn
+					.prepareStatement("SELECT COLUMNS FROM " + SCHEMA
+							+ ".INDEXES WHERE SCHEMA=? AND TABLE=?");
 			prep.setString(1, schemaName);
 			prep.setString(2, tableName);
 			rs = prep.executeQuery();
@@ -408,8 +445,8 @@ public class FullTextLucene extends FullText {
 				String columns = rs.getString(1);
 				if (columns != null) {
 					String[] list = StringUtils.arraySplit(columns, ',', true);
-					for (int i = 0; i < list.length; i++) {
-						indexList.add(list[i]);
+					for (String element : list) {
+						indexList.add(element);
 					}
 				}
 			}
@@ -421,14 +458,15 @@ public class FullTextLucene extends FullText {
 			indexColumns = new int[indexList.size()];
 			setColumns(indexColumns, indexList, columnList);
 		}
-		//## Java 1.4 end ##
+
+		// ## Java 1.4 end ##
 
 		/**
 		 * INTERNAL
 		 */
-		//## Java 1.4 begin ##
+		// ## Java 1.4 begin ##
 		public void fire(Connection conn, Object[] oldRow, Object[] newRow)
-		throws SQLException {
+				throws SQLException {
 			if (oldRow != null) {
 				delete(oldRow);
 			}
@@ -436,12 +474,13 @@ public class FullTextLucene extends FullText {
 				insert(newRow);
 			}
 		}
-		//## Java 1.4 end ##
+
+		// ## Java 1.4 end ##
 
 		/**
 		 * INTERNAL
 		 */
-		//## Java 1.4 begin ##
+		// ## Java 1.4 begin ##
 		public void close() throws SQLException {
 			if (indexModifier != null) {
 				try {
@@ -454,7 +493,8 @@ public class FullTextLucene extends FullText {
 				}
 			}
 		}
-		//## Java 1.4 end ##
+
+		// ## Java 1.4 end ##
 
 		/**
 		 * INTERNAL
@@ -466,21 +506,26 @@ public class FullTextLucene extends FullText {
 		private void insert(Object[] row) throws SQLException {
 			String query = getQuery(row);
 			Document doc = new Document();
-			doc.add(new Field(FIELD_QUERY, query, Field.Store.YES, Field.Index.UN_TOKENIZED));
+			doc.add(new Field(FIELD_QUERY, query, Field.Store.YES,
+					Field.Index.UN_TOKENIZED));
 			long time = System.currentTimeMillis();
-			doc.add(new Field("modified", DateTools.timeToString(time, DateTools.Resolution.SECOND), Field.Store.YES, Field.Index.UN_TOKENIZED));
+			doc.add(new Field("modified", DateTools.timeToString(time,
+					DateTools.Resolution.SECOND), Field.Store.YES,
+					Field.Index.UN_TOKENIZED));
 			StringBuilder allData = new StringBuilder();
 			for (int i = 0; i < indexColumns.length; i++) {
 				int index = indexColumns[i];
 				String columnName = columns[index];
 				String data = asString(row[index], columnTypes[index]);
-				doc.add(new Field(FIELD_COLUMN_PREFIX + columnName, data, Field.Store.NO, Field.Index.TOKENIZED));
+				doc.add(new Field(FIELD_COLUMN_PREFIX + columnName, data,
+						Field.Store.NO, Field.Index.TOKENIZED));
 				if (i > 0) {
 					allData.append(" ");
 				}
 				allData.append(data);
 			}
-			Field.Store storeText = STORE_DOCUMENT_TEXT_IN_INDEX ? Field.Store.YES : Field.Store.NO;
+			Field.Store storeText = STORE_DOCUMENT_TEXT_IN_INDEX ? Field.Store.YES
+					: Field.Store.NO;
 			doc.add(new Field(FIELD_DATA, allData.toString(), storeText,
 					Field.Index.TOKENIZED));
 			try {

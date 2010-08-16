@@ -34,9 +34,11 @@ public class SessionState {
 
 	/**
 	 * Check if this session state is already committed at this point.
-	 *
-	 * @param logId the log file id
-	 * @param pos the position in the log file
+	 * 
+	 * @param logId
+	 *            the log file id
+	 * @param pos
+	 *            the position in the log file
 	 * @return true if it is committed
 	 */
 	public boolean isCommitted(int logId, int pos) {
@@ -47,6 +49,7 @@ public class SessionState {
 	}
 
 	public String toString() {
-		return "sessionId:" + sessionId + " log:" + lastCommitLog + " pos:" + lastCommitPos + " inDoubt:" + inDoubtTransaction;
+		return "sessionId:" + sessionId + " log:" + lastCommitLog + " pos:"
+				+ lastCommitPos + " inDoubt:" + inDoubtTransaction;
 	}
 }

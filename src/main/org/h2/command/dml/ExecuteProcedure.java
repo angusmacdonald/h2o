@@ -18,8 +18,7 @@ import org.h2.result.LocalResult;
 import org.h2.util.ObjectArray;
 
 /**
- * This class represents the statement
- * EXECUTE
+ * This class represents the statement EXECUTE
  */
 public class ExecuteProcedure extends Prepared {
 
@@ -36,9 +35,11 @@ public class ExecuteProcedure extends Prepared {
 
 	/**
 	 * Set the expression at the given index.
-	 *
-	 * @param index the index (0 based)
-	 * @param expr the expression
+	 * 
+	 * @param index
+	 *            the index (0 based)
+	 * @param expr
+	 *            the expression
 	 */
 	public void setExpression(int index, Expression expr) {
 		expressions.add(index, expr);
@@ -47,7 +48,8 @@ public class ExecuteProcedure extends Prepared {
 	private void setParameters() throws SQLException {
 		Prepared prepared = procedure.getPrepared();
 		ObjectArray params = prepared.getParameters();
-		for (int i = 0; params != null && i < params.size() && i < expressions.size(); i++) {
+		for (int i = 0; params != null && i < params.size()
+				&& i < expressions.size(); i++) {
 			Expression expr = (Expression) expressions.get(i);
 			Parameter p = (Parameter) params.get(i);
 			p.setValue(expr.getValue(session));

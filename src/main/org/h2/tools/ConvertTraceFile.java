@@ -5,6 +5,7 @@
  * Initial Developer: H2 Group
  */
 package org.h2.tools;
+
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.PrintWriter;
@@ -21,8 +22,8 @@ import org.h2.util.StringUtils;
 import org.h2.util.Tool;
 
 /**
- * Convert a trace file to a java class.
- * This is required because the find command truncates lines.
+ * Convert a trace file to a java class. This is required because the find
+ * command truncates lines.
  */
 public class ConvertTraceFile extends Tool {
 
@@ -45,7 +46,8 @@ public class ConvertTraceFile extends Tool {
 			}
 			int c = other.time > time ? 1 : other.time < time ? -1 : 0;
 			if (c == 0) {
-				c = other.executeCount > executeCount ? 1 : other.executeCount < executeCount ? -1 : 0;
+				c = other.executeCount > executeCount ? 1
+						: other.executeCount < executeCount ? -1 : 0;
 				if (c == 0) {
 					c = sql.compareTo(other.sql);
 				}
@@ -56,11 +58,14 @@ public class ConvertTraceFile extends Tool {
 
 	private void showUsage() {
 		out.println("Converts a .trace.db file to a SQL script and Java source code.");
-		out.println("java "+getClass().getName() + "\n" +
-				" [-traceFile <file>]  The trace file name (default: test.trace.db)\n" +
-				" [-script <file>]     The script file name (default: test.sql)\n" +
-		" [-javaClass <file>]  The Java directory and class file name (default: Test)");
-		out.println("See also http://h2database.com/javadoc/" + getClass().getName().replace('.', '/') + ".html");
+		out.println("java "
+				+ getClass().getName()
+				+ "\n"
+				+ " [-traceFile <file>]  The trace file name (default: test.trace.db)\n"
+				+ " [-script <file>]     The script file name (default: test.sql)\n"
+				+ " [-javaClass <file>]  The Java directory and class file name (default: Test)");
+		out.println("See also http://h2database.com/javadoc/"
+				+ getClass().getName().replace('.', '/') + ".html");
 	}
 
 	/**
@@ -68,13 +73,14 @@ public class ConvertTraceFile extends Tool {
 	 * strings like this: "-traceFile", "test.trace.db",... Options are case
 	 * sensitive. The following options are supported:
 	 * <ul>
-	 * <li>-help or -? (print the list of options) </li>
-	 * <li>-traceFile filename (the default is test.trace.db) </li>
-	 * <li>-script filename (the default is test.sql) </li>
-	 * <li>-javaClass className (the default is Test) </li>
+	 * <li>-help or -? (print the list of options)</li>
+	 * <li>-traceFile filename (the default is test.trace.db)</li>
+	 * <li>-script filename (the default is test.sql)</li>
+	 * <li>-javaClass className (the default is Test)</li>
 	 * </ul>
-	 *
-	 * @param args the command line arguments
+	 * 
+	 * @param args
+	 *            the command line arguments
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws SQLException {
@@ -111,15 +117,19 @@ public class ConvertTraceFile extends Tool {
 
 	/**
 	 * Converts a trace file to a Java class file and a script file.
-	 *
+	 * 
 	 * @param traceFileName
 	 * @param javaClassName
 	 * @throws IOException
 	 */
-	private void convertFile(String traceFileName, String javaClassName, String script) throws IOException, SQLException {
-		LineNumberReader reader = new LineNumberReader(IOUtils.getReader(FileUtils.openFileInputStream(traceFileName)));
-		PrintWriter javaWriter = new PrintWriter(IOUtils.getWriter(FileUtils.openFileOutputStream(javaClassName + ".java", false)));
-		PrintWriter scriptWriter = new PrintWriter(IOUtils.getWriter(FileUtils.openFileOutputStream(script, false)));
+	private void convertFile(String traceFileName, String javaClassName,
+			String script) throws IOException, SQLException {
+		LineNumberReader reader = new LineNumberReader(
+				IOUtils.getReader(FileUtils.openFileInputStream(traceFileName)));
+		PrintWriter javaWriter = new PrintWriter(IOUtils.getWriter(FileUtils
+				.openFileOutputStream(javaClassName + ".java", false)));
+		PrintWriter scriptWriter = new PrintWriter(IOUtils.getWriter(FileUtils
+				.openFileOutputStream(script, false)));
 		javaWriter.println("import java.io.*;");
 		javaWriter.println("import java.sql.*;");
 		javaWriter.println("import java.math.*;");
@@ -130,7 +140,8 @@ public class ConvertTraceFile extends Tool {
 			cn = cn.substring(idx + 1);
 		}
 		javaWriter.println("public class " + cn + " {");
-		javaWriter.println("    public static void main(String[] args) throws Exception {");
+		javaWriter
+				.println("    public static void main(String[] args) throws Exception {");
 		javaWriter.println("        Class.forName(\"org.h2.Driver\");");
 		while (true) {
 			String line = reader.readLine();
@@ -176,7 +187,8 @@ public class ConvertTraceFile extends Tool {
 		if (stats.size() > 0) {
 			scriptWriter.println("-----------------------------------------");
 			scriptWriter.println("-- SQL Statement Statistics");
-			scriptWriter.println("-- time: total time in milliseconds (accumulated)");
+			scriptWriter
+					.println("-- time: total time in milliseconds (accumulated)");
 			scriptWriter.println("-- count: how many times the statement ran");
 			scriptWriter.println("-- result: total update count or row count");
 			scriptWriter.println("-----------------------------------------");

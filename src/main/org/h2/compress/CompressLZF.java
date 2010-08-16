@@ -34,8 +34,8 @@
 package org.h2.compress;
 
 /**
- * This class implements the LZF lossless data compression algorithm.
- * LZF is optimized for speed.
+ * This class implements the LZF lossless data compression algorithm. LZF is
+ * optimized for speed.
  */
 public class CompressLZF implements Compressor {
 
@@ -85,7 +85,8 @@ public class CompressLZF implements Compressor {
 				int ref = hashTab[off];
 				hashTab[off] = inPos;
 				off = inPos - ref - 1;
-				if (off < MAX_OFF && ref > 0 && in[ref + 2] == in[inPos + 2] && in[ref + 1] == in[inPos + 1] && in[ref] == in[inPos]) {
+				if (off < MAX_OFF && ref > 0 && in[ref + 2] == in[inPos + 2]
+						&& in[ref + 1] == in[inPos + 1] && in[ref] == in[inPos]) {
 					int maxlen = inLen - inPos - 2;
 					maxlen = maxlen > MAX_REF ? MAX_REF : maxlen;
 					int len = 3;
@@ -138,7 +139,8 @@ public class CompressLZF implements Compressor {
 		return outPos;
 	}
 
-	public void expand(byte[] in, int inPos, int inLen, byte[] out, int outPos, int outLen) {
+	public void expand(byte[] in, int inPos, int inLen, byte[] out, int outPos,
+			int outLen) {
 		do {
 			int ctrl = in[inPos++] & 255;
 			if (ctrl < (1 << 5)) {

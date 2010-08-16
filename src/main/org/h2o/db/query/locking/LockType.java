@@ -19,25 +19,26 @@ package org.h2o.db.query.locking;
 
 /**
  * The type of lock granted for a given query.
+ * 
  * @author angus
- *
+ * 
  */
 public enum LockType {
 
 	/*
 	 * Permission to execute a SELECT statement (with no updates).
 	 */
-	READ, 
+	READ,
 
 	/*
 	 * Permission to execute an update (other than CREATE TABLE, CREATE SCHEMA).
 	 */
-	WRITE, 
+	WRITE,
 
 	/*
 	 * Permission to execute CREATE TABLE, CREATE SCHEMA.
 	 */
-	CREATE, 
+	CREATE,
 
 	/*
 	 * No lock granted.

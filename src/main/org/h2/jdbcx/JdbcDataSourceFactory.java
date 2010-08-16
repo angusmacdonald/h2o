@@ -19,13 +19,13 @@ import org.h2.message.Trace;
 import org.h2.message.TraceSystem;
 
 /**
- * This class is used to create new DataSource objects.
- * An application should not use this class directly.
+ * This class is used to create new DataSource objects. An application should
+ * not use this class directly.
  */
 public class JdbcDataSourceFactory
-//## Java 1.4 begin ##
-implements ObjectFactory
-//## Java 1.4 end ##
+// ## Java 1.4 begin ##
+		implements ObjectFactory
+// ## Java 1.4 end ##
 {
 
 	private static TraceSystem cachedTraceSystem;
@@ -45,19 +45,25 @@ implements ObjectFactory
 	/**
 	 * Creates a new object using the specified location or reference
 	 * information.
-	 *
-	 * @param obj the reference (this factory only supports objects of type
+	 * 
+	 * @param obj
+	 *            the reference (this factory only supports objects of type
 	 *            javax.naming.Reference)
-	 * @param name unused
-	 * @param nameCtx unused
-	 * @param environment unused
+	 * @param name
+	 *            unused
+	 * @param nameCtx
+	 *            unused
+	 * @param environment
+	 *            unused
 	 * @return the new JdbcDataSource, or null if the reference class name is
 	 *         not JdbcDataSource.
 	 */
-	//## Java 1.4 begin ##
-	public synchronized Object getObjectInstance(Object obj, Name name, Context nameCtx, Hashtable environment) {
+	// ## Java 1.4 begin ##
+	public synchronized Object getObjectInstance(Object obj, Name name,
+			Context nameCtx, Hashtable environment) {
 		if (trace.isDebugEnabled()) {
-			trace.debug("getObjectInstance obj=" + obj + " name=" + name + " nameCtx=" + nameCtx + " environment=" + environment);
+			trace.debug("getObjectInstance obj=" + obj + " name=" + name
+					+ " nameCtx=" + nameCtx + " environment=" + environment);
 		}
 		Reference ref = (Reference) obj;
 		if (ref.getClassName().equals(JdbcDataSource.class.getName())) {
@@ -71,12 +77,16 @@ implements ObjectFactory
 		}
 		return null;
 	}
-	//## Java 1.4 end ##
+
+	// ## Java 1.4 end ##
 
 	private TraceSystem getTraceSystem() {
 		if (cachedTraceSystem == null) {
-			cachedTraceSystem = new TraceSystem(SysProperties.CLIENT_TRACE_DIRECTORY + "h2datasource" + Constants.SUFFIX_TRACE_FILE, false);
-			cachedTraceSystem.setLevelFile(SysProperties.DATASOURCE_TRACE_LEVEL);
+			cachedTraceSystem = new TraceSystem(
+					SysProperties.CLIENT_TRACE_DIRECTORY + "h2datasource"
+							+ Constants.SUFFIX_TRACE_FILE, false);
+			cachedTraceSystem
+					.setLevelFile(SysProperties.DATASOURCE_TRACE_LEVEL);
 		}
 		return cachedTraceSystem;
 	}

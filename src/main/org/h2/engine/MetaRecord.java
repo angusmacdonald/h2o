@@ -21,8 +21,8 @@ import org.h2.value.ValueString;
 import org.h2o.db.query.QueryProxyManager;
 
 /**
- * A record in the system table of the database.
- * It contains the SQL statement to create the database object.
+ * A record in the system table of the database. It contains the SQL statement
+ * to create the database object.
  */
 public class MetaRecord {
 
@@ -54,8 +54,9 @@ public class MetaRecord {
 
 	/**
 	 * Sort the list of meta records by 'create order'.
-	 *
-	 * @param records the list of meta records
+	 * 
+	 * @param records
+	 *            the list of meta records
 	 */
 	public static void sort(ObjectArray records) {
 		records.sort(new Comparator() {
@@ -81,13 +82,18 @@ public class MetaRecord {
 
 	/**
 	 * Execute the meta data statement.
-	 *
-	 * @param db the database
-	 * @param systemSession the system session
-	 * @param listener the database event listener
-	 * @param proxyManager 
+	 * 
+	 * @param db
+	 *            the database
+	 * @param systemSession
+	 *            the system session
+	 * @param listener
+	 *            the database event listener
+	 * @param proxyManager
 	 */
-	void execute(Database db, Session systemSession, DatabaseEventListener listener, QueryProxyManager proxyManager) throws SQLException {
+	void execute(Database db, Session systemSession,
+			DatabaseEventListener listener, QueryProxyManager proxyManager)
+			throws SQLException {
 		try {
 			Prepared command = systemSession.prepare(sql);
 			command.setObjectId(id);
@@ -110,12 +116,16 @@ public class MetaRecord {
 
 	/**
 	 * Undo a metadata change.
-	 *
-	 * @param db the database
-	 * @param systemSession the system session
-	 * @param listener the database event listener
+	 * 
+	 * @param db
+	 *            the database
+	 * @param systemSession
+	 *            the system session
+	 * @param listener
+	 *            the database event listener
 	 */
-	void undo(Database db, Session systemSession, DatabaseEventListener listener) throws SQLException {
+	void undo(Database db, Session systemSession, DatabaseEventListener listener)
+			throws SQLException {
 		try {
 			DbObject obj = db.getDbObject(id);
 			// null if it was already removed

@@ -24,8 +24,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.h2.util.StringUtils;
 
 /**
- * This servlet lets the H2 Console be used in a standard servlet container
- * such as Tomcat or Jetty.
+ * This servlet lets the H2 Console be used in a standard servlet container such
+ * as Tomcat or Jetty.
  */
 public class WebServlet extends HttpServlet {
 
@@ -80,7 +80,8 @@ public class WebServlet extends HttpServlet {
 		return requestedFile;
 	}
 
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+			throws IOException {
 		req.setCharacterEncoding("utf-8");
 		String file = req.getPathInfo();
 		if (file == null) {
@@ -156,7 +157,8 @@ public class WebServlet extends HttpServlet {
 		}
 	}
 
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+			throws IOException {
 		doGet(req, resp);
 	}
 }

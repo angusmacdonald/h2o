@@ -15,7 +15,7 @@ public interface FileObject {
 
 	/**
 	 * Get the length of the file.
-	 *
+	 * 
 	 * @return the length
 	 */
 	long length() throws IOException;
@@ -27,31 +27,39 @@ public interface FileObject {
 
 	/**
 	 * Read from the file.
-	 * @param b the byte array
-	 * @param off the offset
-	 * @param len the number of bytes
+	 * 
+	 * @param b
+	 *            the byte array
+	 * @param off
+	 *            the offset
+	 * @param len
+	 *            the number of bytes
 	 */
 	void readFully(byte[] b, int off, int len) throws IOException;
 
 	/**
 	 * Go to the specified position in the file.
-	 *
-	 * @param pos the new position
+	 * 
+	 * @param pos
+	 *            the new position
 	 */
 	void seek(long pos) throws IOException;
 
 	/**
 	 * Write to the file.
-	 *
-	 * @param b the byte array
-	 * @param off the offset
-	 * @param len the number of bytes
+	 * 
+	 * @param b
+	 *            the byte array
+	 * @param off
+	 *            the offset
+	 * @param len
+	 *            the number of bytes
 	 */
 	void write(byte[] b, int off, int len) throws IOException;
 
 	/**
 	 * Get the file pointer.
-	 *
+	 * 
 	 * @return the current file pointer
 	 */
 	long getFilePointer() throws IOException;
@@ -63,14 +71,15 @@ public interface FileObject {
 
 	/**
 	 * Change the length of the file.
-	 *
-	 * @param newLength the new length
+	 * 
+	 * @param newLength
+	 *            the new length
 	 */
 	void setFileLength(long newLength) throws IOException;
 
 	/**
 	 * Get the full qualified name of this file.
-	 *
+	 * 
 	 * @return the name
 	 */
 	String getName();

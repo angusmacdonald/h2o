@@ -33,13 +33,12 @@ import javax.sql.PooledConnection;
 
 import org.h2.message.Message;
 
-
 /**
- * A simple standalone JDBC connection pool.
- * It is based on the
- * <a href="http://www.source-code.biz/snippets/java/8.htm">
- *  MiniConnectionPoolManager written by Christian d'Heureuse (Java 1.5)
- * </a>. It is used as follows:
+ * A simple standalone JDBC connection pool. It is based on the <a
+ * href="http://www.source-code.biz/snippets/java/8.htm">
+ * MiniConnectionPoolManager written by Christian d'Heureuse (Java 1.5) </a>. It
+ * is used as follows:
+ * 
  * <pre>
  * // init
  * import org.h2.jdbcx.*;
@@ -56,9 +55,9 @@ import org.h2.message.Message;
  * // dispose
  * cp.dispose();
  * </pre>
- *
- * @author Christian d'Heureuse
- *      (<a href="http://www.source-code.biz">www.source-code.biz</a>)
+ * 
+ * @author Christian d'Heureuse (<a
+ *         href="http://www.source-code.biz">www.source-code.biz</a>)
  * @author Thomas Mueller (ported to Java 1.4, some changes)
  */
 public class JdbcConnectionPool implements DataSource {
@@ -83,8 +82,9 @@ public class JdbcConnectionPool implements DataSource {
 
 	/**
 	 * Constructs a new connection pool.
-	 *
-	 * @param dataSource the data source to create connections
+	 * 
+	 * @param dataSource
+	 *            the data source to create connections
 	 * @return the connection pool
 	 */
 	public static JdbcConnectionPool create(ConnectionPoolDataSource dataSource) {
@@ -92,14 +92,16 @@ public class JdbcConnectionPool implements DataSource {
 	}
 
 	/**
-	 * Sets the maximum number of connections to use from now on.
-	 * The default value is 10 connections.
-	 *
-	 * @param max the maximum number of connections
+	 * Sets the maximum number of connections to use from now on. The default
+	 * value is 10 connections.
+	 * 
+	 * @param max
+	 *            the maximum number of connections
 	 */
 	public synchronized void setMaxConnections(int max) {
 		if (max < 1) {
-			throw new IllegalArgumentException("Invalid maxConnections value: " + max);
+			throw new IllegalArgumentException("Invalid maxConnections value: "
+					+ max);
 		}
 		this.maxConnections = max;
 		// notify waiting threads if the value was increased
@@ -108,7 +110,7 @@ public class JdbcConnectionPool implements DataSource {
 
 	/**
 	 * Gets the maximum number of connections to use.
-	 *
+	 * 
 	 * @return the max the maximum number of connections
 	 */
 	public synchronized int getMaxConnections() {
@@ -117,7 +119,7 @@ public class JdbcConnectionPool implements DataSource {
 
 	/**
 	 * Gets the maximum time in seconds to wait for a free connection.
-	 *
+	 * 
 	 * @return the timeout in seconds
 	 */
 	public synchronized int getLoginTimeout() {
@@ -125,10 +127,11 @@ public class JdbcConnectionPool implements DataSource {
 	}
 
 	/**
-	 * Sets the maximum time in seconds to wait for a free connection.
-	 * The default timeout is 60 seconds.
-	 *
-	 * @param seconds the maximum timeout
+	 * Sets the maximum time in seconds to wait for a free connection. The
+	 * default timeout is 60 seconds.
+	 * 
+	 * @param seconds
+	 *            the maximum timeout
 	 */
 	public synchronized void setLoginTimeout(int seconds) {
 		this.timeout = seconds;
@@ -163,13 +166,14 @@ public class JdbcConnectionPool implements DataSource {
 	 * <code>maxConnections</code> connections are already in use, the method
 	 * waits until a connection becomes available or <code>timeout</code>
 	 * seconds elapsed. When the application is finished using the connection,
-	 * it must close it in order to return it to the pool.
-	 * If no connection becomes available within the given timeout, an exception
-	 * with SQL state 08001 and vendor code 8001 is thrown.
-	 *
+	 * it must close it in order to return it to the pool. If no connection
+	 * becomes available within the given timeout, an exception with SQL state
+	 * 08001 and vendor code 8001 is thrown.
+	 * 
 	 * @return a new Connection object.
-	 * @throws SQLException when a new connection could not be established,
-	 *      or a timeout occurred
+	 * @throws SQLException
+	 *             when a new connection could not be established, or a timeout
+	 *             occurred
 	 */
 	public Connection getConnection() throws SQLException {
 		for (int i = 0;; i++) {
@@ -191,7 +195,8 @@ public class JdbcConnectionPool implements DataSource {
 
 	private Connection getConnectionNow() throws SQLException {
 		if (isDisposed) {
-			throw new IllegalStateException("Connection pool has been disposed.");
+			throw new IllegalStateException(
+					"Connection pool has been disposed.");
 		}
 		PooledConnection pc;
 		if (!recycledConnections.empty()) {
@@ -209,8 +214,9 @@ public class JdbcConnectionPool implements DataSource {
 	 * This method usually puts the connection back into the pool. There are
 	 * some exception: If the pool is disposed, the connection is disposed as
 	 * well. If the pool is full, the connection is closed.
-	 *
-	 * @param pc the pooled connection
+	 * 
+	 * @param pc
+	 *            the pooled connection
 	 */
 	synchronized void recycleConnection(PooledConnection pc) {
 		if (isDisposed) {
@@ -239,8 +245,9 @@ public class JdbcConnectionPool implements DataSource {
 
 	/**
 	 * Close the connection, and don't add it back to the pool.
-	 *
-	 * @param pc the pooled connection
+	 * 
+	 * @param pc
+	 *            the pooled connection
 	 */
 	synchronized void disposeConnection(PooledConnection pc) {
 		if (activeConnections <= 0) {
@@ -285,9 +292,9 @@ public class JdbcConnectionPool implements DataSource {
 	/**
 	 * Returns the number of active (open) connections of this pool. This is the
 	 * number of <code>Connection</code> objects that have been issued by
-	 * getConnection() for which <code>Connection.close()</code> has
-	 * not yet been called.
-	 *
+	 * getConnection() for which <code>Connection.close()</code> has not yet
+	 * been called.
+	 * 
 	 * @return the number of active connections.
 	 */
 	public synchronized int getActiveConnections() {
@@ -317,24 +324,24 @@ public class JdbcConnectionPool implements DataSource {
 
 	/**
 	 * [Not supported] Return an object of this class if possible.
-	 *
-	 * @param iface the class
+	 * 
+	 * @param iface
+	 *            the class
 	 */
 
 	public <T> T unwrap(Class<T> iface) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
-
 	/**
 	 * [Not supported] Checks if unwrap can return an object of this class.
-	 *
-	 * @param iface the class
+	 * 
+	 * @param iface
+	 *            the class
 	 */
 
-	public boolean isWrapperFor(Class< ? > iface) throws SQLException {
+	public boolean isWrapperFor(Class<?> iface) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
 
 }

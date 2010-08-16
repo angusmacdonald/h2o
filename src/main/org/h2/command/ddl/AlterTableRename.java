@@ -18,14 +18,15 @@ import org.h2.schema.Schema;
 import org.h2.table.Table;
 
 /**
- * This class represents the statement
- * ALTER TABLE RENAME
+ * This class represents the statement ALTER TABLE RENAME
  */
 public class AlterTableRename extends SchemaCommand {
 
 	private Table oldTable;
 	private String newTableName;
-	public AlterTableRename(Session session, Schema schema, boolean internalQuery) {
+
+	public AlterTableRename(Session session, Schema schema,
+			boolean internalQuery) {
 		super(session, schema);
 		this.internalQuery = internalQuery;
 	}
@@ -41,8 +42,11 @@ public class AlterTableRename extends SchemaCommand {
 	public int update() throws SQLException {
 		session.commit(true);
 		Database db = session.getDatabase();
-		if (getSchema().findTableOrView(session, newTableName, LocationPreference.NO_PREFERENCE) != null || newTableName.equals(oldTable.getName())) {
-			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, newTableName);
+		if (getSchema().findTableOrView(session, newTableName,
+				LocationPreference.NO_PREFERENCE) != null
+				|| newTableName.equals(oldTable.getName())) {
+			throw Message.getSQLException(
+					ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, newTableName);
 		}
 		session.getUser().checkRight(oldTable, Right.ALL);
 		if (oldTable.getTemporary()) {

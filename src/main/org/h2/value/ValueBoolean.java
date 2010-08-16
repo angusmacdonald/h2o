@@ -20,8 +20,7 @@ public class ValueBoolean extends Value {
 	public static final int PRECISION = 1;
 
 	/**
-	 * The maximum display size of a boolean.
-	 * Example: FALSE
+	 * The maximum display size of a boolean. Example: FALSE
 	 */
 	public static final int DISPLAY_SIZE = 5;
 
@@ -34,7 +33,7 @@ public class ValueBoolean extends Value {
 	private final Boolean value;
 
 	private ValueBoolean(boolean value) {
-		this.value = Boolean.valueOf(""+value);
+		this.value = Boolean.valueOf("" + value);
 	}
 
 	public int getType() {
@@ -75,14 +74,16 @@ public class ValueBoolean extends Value {
 		return value;
 	}
 
-	public void set(PreparedStatement prep, int parameterIndex) throws SQLException {
+	public void set(PreparedStatement prep, int parameterIndex)
+			throws SQLException {
 		prep.setBoolean(parameterIndex, value.booleanValue());
 	}
 
 	/**
 	 * Get the boolean value for the given boolean.
-	 *
-	 * @param b the boolean
+	 * 
+	 * @param b
+	 *            the boolean
 	 * @return the value
 	 */
 	public static ValueBoolean get(boolean b) {

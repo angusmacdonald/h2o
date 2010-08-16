@@ -45,7 +45,8 @@ public class CompareLike extends Condition {
 	private int patternLength;
 	private boolean ignoreCase;
 
-	public CompareLike(CompareMode compareMode, Expression left, Expression right, Expression escape, boolean regexp) {
+	public CompareLike(CompareMode compareMode, Expression left,
+			Expression right, Expression escape, boolean regexp) {
 		this.compareMode = compareMode;
 		this.regexp = regexp;
 		this.left = left;
@@ -99,13 +100,15 @@ public class CompareLike extends Condition {
 			initPattern(p, getEscapeChar(e));
 			if ("%".equals(p)) {
 				// optimization for X LIKE '%': convert to X IS NOT NULL
-				return new Comparison(session, Comparison.IS_NOT_NULL, left, null).optimize(session);
+				return new Comparison(session, Comparison.IS_NOT_NULL, left,
+						null).optimize(session);
 			}
 			if (isFullMatch()) {
 				// optimization for X LIKE 'Hello': convert to X = 'Hello'
 				Value value = ValueString.get(patternString);
 				Expression expr = ValueExpression.get(value);
-				return new Comparison(session, Comparison.EQUAL, left, expr).optimize(session);
+				return new Comparison(session, Comparison.EQUAL, left, expr)
+						.optimize(session);
 			}
 			isInit = true;
 		}
@@ -126,7 +129,8 @@ public class CompareLike extends Condition {
 		return esc;
 	}
 
-	public void createIndexConditions(Session session, TableFilter filter) throws SQLException {
+	public void createIndexConditions(Session session, TableFilter filter)
+			throws SQLException {
 		if (regexp) {
 			return;
 		}
@@ -161,7 +165,8 @@ public class CompareLike extends Condition {
 			return;
 		}
 		int dataType = l.getColumn().getType();
-		if (dataType != Value.STRING && dataType != Value.STRING_IGNORECASE && dataType != Value.STRING_FIXED) {
+		if (dataType != Value.STRING && dataType != Value.STRING_IGNORECASE
+				&& dataType != Value.STRING_FIXED) {
 			// column is not a varchar - can't use the index
 			return;
 		}
@@ -172,23 +177,26 @@ public class CompareLike extends Condition {
 		}
 		String begin = buff.toString();
 		if (maxMatch == patternLength) {
-			filter.addIndexCondition(new IndexCondition(Comparison.EQUAL, l, ValueExpression
-					.get(ValueString.get(begin))));
+			filter.addIndexCondition(new IndexCondition(Comparison.EQUAL, l,
+					ValueExpression.get(ValueString.get(begin))));
 		} else {
 			// TODO check if this is correct according to Unicode rules (code
 			// points)
 			String end;
 			if (begin.length() > 0) {
-				filter.addIndexCondition(new IndexCondition(Comparison.BIGGER_EQUAL, l, ValueExpression.get(ValueString
-						.get(begin))));
+				filter.addIndexCondition(new IndexCondition(
+						Comparison.BIGGER_EQUAL, l, ValueExpression
+								.get(ValueString.get(begin))));
 				char next = begin.charAt(begin.length() - 1);
 				// search the 'next' unicode character (or at least a character
 				// that is higher)
 				for (int i = 1; i < 2000; i++) {
-					end = begin.substring(0, begin.length() - 1) + (char) (next + i);
+					end = begin.substring(0, begin.length() - 1)
+							+ (char) (next + i);
 					if (compareMode.compareString(begin, end, ignoreCase) == -1) {
-						filter.addIndexCondition(new IndexCondition(Comparison.SMALLER, l, ValueExpression
-								.get(ValueString.get(end))));
+						filter.addIndexCondition(new IndexCondition(
+								Comparison.SMALLER, l, ValueExpression
+										.get(ValueString.get(end))));
 						break;
 					}
 				}
@@ -225,7 +233,8 @@ public class CompareLike extends Condition {
 	}
 
 	private boolean compare(String s, int pi, int si) {
-		// TODO check if this is correct according to Unicode rules (code points)
+		// TODO check if this is correct according to Unicode rules (code
+		// points)
 		return compareMode.equalsChars(patternString, pi, s, si, ignoreCase);
 	}
 
@@ -263,13 +272,17 @@ public class CompareLike extends Condition {
 
 	/**
 	 * Test if the value matches the pattern.
-	 *
-	 * @param pattern the pattern
-	 * @param value the value
-	 * @param escape the escape character
+	 * 
+	 * @param pattern
+	 *            the pattern
+	 * @param value
+	 *            the value
+	 * @param escape
+	 *            the escape character
 	 * @return true if the value matches
 	 */
-	public boolean test(String pattern, String value, char escape) throws SQLException {
+	public boolean test(String pattern, String value, char escape)
+			throws SQLException {
 		initPattern(pattern, escape);
 		return compareAt(value, 0, 0, value.length());
 	}
@@ -279,12 +292,14 @@ public class CompareLike extends Condition {
 			patternString = p;
 			try {
 				if (ignoreCase) {
-					patternRegexp = Pattern.compile(p, Pattern.CASE_INSENSITIVE);
+					patternRegexp = Pattern
+							.compile(p, Pattern.CASE_INSENSITIVE);
 				} else {
 					patternRegexp = Pattern.compile(p);
 				}
 			} catch (PatternSyntaxException e) {
-				throw Message.getSQLException(ErrorCode.LIKE_ESCAPE_ERROR_1, new String[]{p}, e);
+				throw Message.getSQLException(ErrorCode.LIKE_ESCAPE_ERROR_1,
+						new String[] { p }, e);
 			}
 			return;
 		}
@@ -303,11 +318,15 @@ public class CompareLike extends Condition {
 			int type;
 			if (escape == c) {
 				if (i >= len - 1) {
-					throw Message.getSQLException(ErrorCode.LIKE_ESCAPE_ERROR_1, StringUtils.addAsterisk(p, i));
+					throw Message.getSQLException(
+							ErrorCode.LIKE_ESCAPE_ERROR_1,
+							StringUtils.addAsterisk(p, i));
 				}
 				c = p.charAt(++i);
 				if (c != '_' && c != '%' && c != escape) {
-					throw Message.getSQLException(ErrorCode.LIKE_ESCAPE_ERROR_1, StringUtils.addAsterisk(p, i));
+					throw Message.getSQLException(
+							ErrorCode.LIKE_ESCAPE_ERROR_1,
+							StringUtils.addAsterisk(p, i));
 				}
 				type = MATCH;
 				lastAny = false;
@@ -339,15 +358,16 @@ public class CompareLike extends Condition {
 		if (types == null) {
 			return false;
 		}
-		for (int i = 0; i < types.length; i++) {
-			if (types[i] != MATCH) {
+		for (int type : types) {
+			if (type != MATCH) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
+	public void mapColumns(ColumnResolver resolver, int level)
+			throws SQLException {
 		left.mapColumns(resolver, level);
 		right.mapColumns(resolver, level);
 		if (escape != null) {
@@ -373,7 +393,7 @@ public class CompareLike extends Condition {
 
 	public boolean isEverything(ExpressionVisitor visitor) {
 		return left.isEverything(visitor) && right.isEverything(visitor)
-		&& (escape == null || escape.isEverything(visitor));
+				&& (escape == null || escape.isEverything(visitor));
 	}
 
 	public int getCost() {

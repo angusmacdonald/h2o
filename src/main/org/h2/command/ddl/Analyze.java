@@ -20,8 +20,7 @@ import org.h2.table.Table;
 import org.h2.table.TableData;
 
 /**
- * This class represents the statement
- * ANALYZE
+ * This class represents the statement ANALYZE
  */
 public class Analyze extends DefineCommand {
 
@@ -37,7 +36,7 @@ public class Analyze extends DefineCommand {
 		session.getUser().checkAdmin();
 		Set<ReplicaSet> replicaSet = db.getAllTables();
 		// TODO do we need to lock the table?
-		for (ReplicaSet replicas: replicaSet) {
+		for (ReplicaSet replicas : replicaSet) {
 			Table table = replicas.getACopy();
 			if (!(table instanceof TableData)) {
 				continue;

@@ -16,8 +16,7 @@ import org.h2.table.Column;
 import org.h2.util.ObjectArray;
 
 /**
- * This class represents the statement
- * ALTER TABLE ALTER COLUMN RENAME
+ * This class represents the statement ALTER TABLE ALTER COLUMN RENAME
  */
 public class AlterTableRenameColumn extends DefineCommand {
 

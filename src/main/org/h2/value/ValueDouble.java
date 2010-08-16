@@ -24,8 +24,7 @@ public class ValueDouble extends Value {
 	public static final int PRECISION = 17;
 
 	/**
-	 * The maximum display size of a double.
-	 * Example: -3.3333333333333334E-100
+	 * The maximum display size of a double. Example: -3.3333333333333334E-100
 	 */
 	public static final int DISPLAY_SIZE = 24;
 
@@ -62,7 +61,8 @@ public class ValueDouble extends Value {
 	public Value divide(Value v) throws SQLException {
 		ValueDouble v2 = (ValueDouble) v;
 		if (v2.value == 0.0) {
-			throw Message.getSQLException(ErrorCode.DIVISION_BY_ZERO_1, getSQL());
+			throw Message.getSQLException(ErrorCode.DIVISION_BY_ZERO_1,
+					getSQL());
 		}
 		return ValueDouble.get(value / v2.value);
 	}
@@ -106,7 +106,7 @@ public class ValueDouble extends Value {
 
 	public int getScale() {
 		// TODO value: what is the scale of a double?
-				return 0;
+		return 0;
 	}
 
 	public int hashCode() {
@@ -118,14 +118,16 @@ public class ValueDouble extends Value {
 		return ObjectUtils.getDouble(value);
 	}
 
-	public void set(PreparedStatement prep, int parameterIndex) throws SQLException {
+	public void set(PreparedStatement prep, int parameterIndex)
+			throws SQLException {
 		prep.setDouble(parameterIndex, value);
 	}
 
 	/**
 	 * Get or create double value for the given double.
-	 *
-	 * @param d the double
+	 * 
+	 * @param d
+	 *            the double
 	 * @return the value
 	 */
 	public static ValueDouble get(double d) {

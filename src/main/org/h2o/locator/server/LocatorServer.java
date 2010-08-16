@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.locator;
+package org.h2o.locator.server;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,12 +26,12 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
- * The locator server class. Creates a ServerSocket and listens for connections constantly.
+ * The locator server class. Creates a ServerSocket and listens for connections
+ * constantly.
+ * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class LocatorServer extends Thread{
-
-
+public class LocatorServer extends Thread {
 
 	private static final int LOCATOR_SERVER_PORT = 29999;
 	private boolean running = true;
@@ -45,14 +45,14 @@ public class LocatorServer extends Thread{
 	 */
 	public LocatorServer(int port, String databaseName) {
 		this.port = port;
-		locatorFile = new LocatorState("config" + File.separator + databaseName + port + ".locator");
+		locatorFile = new LocatorState("config" + File.separator + databaseName
+				+ port + ".locator");
 	}
-
 
 	/**
 	 * Starts the server and listens until the running field is set to false.
 	 */
-	public void run(){
+	public void run() {
 		try {
 			/*
 			 * Set up the server socket.
@@ -61,30 +61,39 @@ public class LocatorServer extends Thread{
 				ss = new ServerSocket(port);
 
 				ss.setSoTimeout(500);
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Server listening on port " + port + ", locator file at '" + locatorFile + "'.");
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
+						"Server listening on port " + port
+								+ ", locator file at '" + locatorFile + "'.");
 
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 
 			/*
-			 * Start listening for incoming connections. Pass them off to a worker thread if they come.
+			 * Start listening for incoming connections. Pass them off to a
+			 * worker thread if they come.
 			 */
-			while (isRunning()){
+			while (isRunning()) {
 				try {
 
 					Socket newConnection = ss.accept();
-					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "New connection from: " + newConnection.getInetAddress().getHostName() + "." +  newConnection.getPort());
+					Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
+							"New connection from: "
+									+ newConnection.getInetAddress()
+											.getHostName() + "."
+									+ newConnection.getPort());
 
-					LocatorWorker connectionHandler = new LocatorWorker(newConnection, locatorFile);
+					LocatorWorker connectionHandler = new LocatorWorker(
+							newConnection, locatorFile);
 					connectionHandler.start();
 				} catch (IOException e) {
-					//e.printStackTrace();
+					// e.printStackTrace();
 				}
 			}
 		} finally {
 			try {
-				if (ss != null) ss.close();
+				if (ss != null)
+					ss.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -99,7 +108,8 @@ public class LocatorServer extends Thread{
 	public static void main(String[] args) {
 
 		Diagnostic.setLevel(DiagnosticLevel.FULL);
-		LocatorServer server = new LocatorServer(LOCATOR_SERVER_PORT, "locatorFile");
+		LocatorServer server = new LocatorServer(LOCATOR_SERVER_PORT,
+				"locatorFile");
 		server.start();
 	}
 
@@ -110,7 +120,6 @@ public class LocatorServer extends Thread{
 		locatorFile.createNewLocatorFile();
 	}
 
-
 	/**
 	 * @return the running
 	 */
@@ -118,14 +127,13 @@ public class LocatorServer extends Thread{
 		return running;
 	}
 
-
 	/**
-	 * @param running the running to set
+	 * @param running
+	 *            the running to set
 	 */
 	public synchronized void setRunning(boolean running) {
 		this.running = running;
 	}
-
 
 	/**
 	 * @return the finished
@@ -134,9 +142,9 @@ public class LocatorServer extends Thread{
 		return finished;
 	}
 
-
 	/**
-	 * @param finished the finished to set
+	 * @param finished
+	 *            the finished to set
 	 */
 	public synchronized void setFinished(boolean finished) {
 		this.finished = finished;

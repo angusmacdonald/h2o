@@ -21,12 +21,15 @@ import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
 
 public class SystemTableMigrationState {
 	/**
-	 * If this System Table has been moved to another location (i.e. its state has been transferred to another machine
-	 * and it is no longer active) this field will not be null, and will note the new location of the System Table.
+	 * If this System Table has been moved to another location (i.e. its state
+	 * has been transferred to another machine and it is no longer active) this
+	 * field will not be null, and will note the new location of the System
+	 * Table.
 	 */
 	public String movedLocation = null;
 	/**
-	 * Whether the System Table is in the process of being migrated. If this is true the System Table will be 'locked', unable to service requests.
+	 * Whether the System Table is in the process of being migrated. If this is
+	 * true the System Table will be 'locked', unable to service requests.
 	 */
 	public boolean inMigration = false;
 	/**
@@ -38,10 +41,11 @@ public class SystemTableMigrationState {
 	 */
 	public boolean shutdown = false;
 	/**
-	 * The amount of time which has elapsed since migration began. Used to timeout requests which take too long.
+	 * The amount of time which has elapsed since migration began. Used to
+	 * timeout requests which take too long.
 	 */
 	public long migrationTime = 0l;
-	
+
 	public IChordRemoteReference location = null;
 
 	public SystemTableMigrationState(IChordRemoteReference localChordReference) {

@@ -15,9 +15,11 @@ public class IndexType {
 
 	/**
 	 * Create a primary key index.
-	 *
-	 * @param persistent if the index is persistent
-	 * @param hash if a hash index should be used
+	 * 
+	 * @param persistent
+	 *            if the index is persistent
+	 * @param hash
+	 *            if a hash index should be used
 	 * @return the index type
 	 */
 	public static IndexType createPrimaryKey(boolean persistent, boolean hash) {
@@ -31,9 +33,11 @@ public class IndexType {
 
 	/**
 	 * Create a unique index.
-	 *
-	 * @param persistent if the index is persistent
-	 * @param hash if a hash index should be used
+	 * 
+	 * @param persistent
+	 *            if the index is persistent
+	 * @param hash
+	 *            if a hash index should be used
 	 * @return the index type
 	 */
 	public static IndexType createUnique(boolean persistent, boolean hash) {
@@ -46,8 +50,9 @@ public class IndexType {
 
 	/**
 	 * Create a non-unique index.
-	 *
-	 * @param persistent if the index is persistent
+	 * 
+	 * @param persistent
+	 *            if the index is persistent
 	 * @return the index type
 	 */
 	public static IndexType createNonUnique(boolean persistent) {
@@ -58,8 +63,9 @@ public class IndexType {
 
 	/**
 	 * Create a scan pseudo-index.
-	 *
-	 * @param persistent if the index is persistent
+	 * 
+	 * @param persistent
+	 *            if the index is persistent
 	 * @return the index type
 	 */
 	public static IndexType createScan(boolean persistent) {
@@ -71,8 +77,9 @@ public class IndexType {
 
 	/**
 	 * Sets if this index belongs to a constraint.
-	 *
-	 * @param belongsToConstraint if the index belongs to a constraint
+	 * 
+	 * @param belongsToConstraint
+	 *            if the index belongs to a constraint
 	 */
 	public void setBelongsToConstraint(boolean belongsToConstraint) {
 		this.belongsToConstraint = belongsToConstraint;
@@ -81,7 +88,7 @@ public class IndexType {
 	/**
 	 * If the index is created because of a constraint. Such indexes are to be
 	 * dropped once the constraint is dropped.
-	 *
+	 * 
 	 * @return if the index belongs to a constraint
 	 */
 	public boolean getBelongsToConstraint() {
@@ -90,7 +97,7 @@ public class IndexType {
 
 	/**
 	 * Is this a hash index?
-	 *
+	 * 
 	 * @return true if it is a hash index
 	 */
 	public boolean getHash() {
@@ -99,7 +106,7 @@ public class IndexType {
 
 	/**
 	 * Is this index persistent?
-	 *
+	 * 
 	 * @return true if it is persistent
 	 */
 	public boolean getPersistent() {
@@ -108,7 +115,7 @@ public class IndexType {
 
 	/**
 	 * Does this index belong to a primary key constraint?
-	 *
+	 * 
 	 * @return true if it references a primary key constraint
 	 */
 	public boolean getPrimaryKey() {
@@ -117,7 +124,7 @@ public class IndexType {
 
 	/**
 	 * Is this a unique index?
-	 *
+	 * 
 	 * @return true if it is
 	 */
 	public boolean getUnique() {
@@ -126,7 +133,7 @@ public class IndexType {
 
 	/**
 	 * Get the SQL snippet to create such an index.
-	 *
+	 * 
 	 * @return the SQL snippet
 	 */
 	public String getSQL() {
@@ -150,7 +157,7 @@ public class IndexType {
 
 	/**
 	 * Is this a table scan pseudo-index?
-	 *
+	 * 
 	 * @return true if it is
 	 */
 	public boolean getScan() {

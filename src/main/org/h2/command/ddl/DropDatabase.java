@@ -22,8 +22,7 @@ import org.h2.util.ObjectArray;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 
 /**
- * This class represents the statement
- * DROP ALL OBJECTS
+ * This class represents the statement DROP ALL OBJECTS
  */
 public class DropDatabase extends DefineCommand {
 
@@ -53,44 +52,52 @@ public class DropDatabase extends DefineCommand {
 		/*
 		 * Drop everything from the System Table.
 		 */
-		ISystemTableReference systemTableReference = db.getSystemTableReference();
+		ISystemTableReference systemTableReference = db
+				.getSystemTableReference();
 
 		try {
 			systemTableReference.removeAllTableInformation();
 		} catch (Exception e) {
 			throw new SQLException(e.getMessage());
 		}
-		//**************************************
+		// **************************************
 
 		// TODO local temp tables are not removed
 		objects = db.getAllSchemas();
 		for (int i = 0; i < objects.size(); i++) {
 			Schema schema = (Schema) objects.get(i);
-			if (schema.canDrop() && !schema.getName().startsWith(Constants.H2O_SCHEMA)) {
+			if (schema.canDrop()
+					&& !schema.getName().startsWith(Constants.H2O_SCHEMA)) {
 				db.removeDatabaseObject(session, schema);
 			}
 		}
 
 		Set<Table> tables = db.getAllReplicas();
-		for (Table t: tables) {
-			if (t.getName() != null && t.getName().startsWith(Constants.H2O_SCHEMA)) continue;
+		for (Table t : tables) {
+			if (t.getName() != null
+					&& t.getName().startsWith(Constants.H2O_SCHEMA))
+				continue;
 			if (t.getName() != null && Table.VIEW.equals(t.getTableType())) {
 				db.removeSchemaObject(session, t);
 			}
 		}
-		for (Table t: tables) {
-			if (t.getName() != null && t.getName().startsWith(Constants.H2O_SCHEMA)) continue;
-			if (t.getName() != null && Table.TABLE_LINK.equals(t.getTableType())) {
+		for (Table t : tables) {
+			if (t.getName() != null
+					&& t.getName().startsWith(Constants.H2O_SCHEMA))
+				continue;
+			if (t.getName() != null
+					&& Table.TABLE_LINK.equals(t.getTableType())) {
 				db.removeSchemaObject(session, t);
 			}
 		}
-		for (Table t: tables) {
-			if (t.getName() != null && t.getName().startsWith(Constants.H2O_SCHEMA)) continue;
+		for (Table t : tables) {
+			if (t.getName() != null
+					&& t.getName().startsWith(Constants.H2O_SCHEMA))
+				continue;
 			if (t.getName() != null && Table.TABLE.equals(t.getTableType())) {
 				db.removeSchemaObject(session, t);
 			}
 		}
-
 
 		session.findLocalTempTable(null);
 		objects = db.getAllSchemaObjects(DbObject.SEQUENCE);
@@ -101,7 +108,7 @@ public class DropDatabase extends DefineCommand {
 		objects.addAll(db.getAllSchemaObjects(DbObject.CONSTANT));
 		for (int i = 0; i < objects.size(); i++) {
 			SchemaObject obj = (SchemaObject) objects.get(i);
-			if (!obj.getSchema().getName().startsWith(Constants.H2O_SCHEMA)){
+			if (!obj.getSchema().getName().startsWith(Constants.H2O_SCHEMA)) {
 				db.removeSchemaObject(session, obj);
 			}
 		}

@@ -57,8 +57,7 @@ import org.h2.value.ValueLob;
 import org.h2.value.ValueString;
 
 /**
- * This class represents the statement
- * SCRIPT
+ * This class represents the statement SCRIPT
  */
 public class ScriptCommand extends ScriptBase {
 
@@ -75,12 +74,12 @@ public class ScriptCommand extends ScriptBase {
 	private int lobBlockSize = Constants.IO_BUFFER_SIZE;
 
 	/**
-	 * H2O. Whether the command is to print out the insert statements for a single table.
+	 * H2O. Whether the command is to print out the insert statements for a
+	 * single table.
 	 */
 	private boolean singleTable = false;
 	private String tableName = null;
 	private String schemaName = null;
-
 
 	public ScriptCommand(Session session, boolean internalQuery) {
 		super(session, internalQuery);
@@ -119,8 +118,8 @@ public class ScriptCommand extends ScriptBase {
 	}
 
 	private LocalResult createResult() {
-		Expression[] expressions = new Expression[] { new ExpressionColumn(session.getDatabase(), new Column("SCRIPT",
-				Value.STRING)) };
+		Expression[] expressions = new Expression[] { new ExpressionColumn(
+				session.getDatabase(), new Column("SCRIPT", Value.STRING)) };
 		return new LocalResult(session, expressions, 1);
 	}
 
@@ -136,17 +135,28 @@ public class ScriptCommand extends ScriptBase {
 			}
 			Database db = session.getDatabase();
 
-			if (Constants.IS_H2O && singleTable){
+			if (Constants.IS_H2O && singleTable) {
 
 				/*
-				 * Beginning of H2O code to get insert statements for a single table. 
+				 * Beginning of H2O code to get insert statements for a single
+				 * table.
 				 */
 				if (schemaName == null)
 					schemaName = session.getCurrentSchemaName();
-				Table table = db.getSchema(schemaName).findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE); //TODO ensure it works in schema's other than 'public'.
+				Table table = db.getSchema(schemaName).findTableOrView(session,
+						tableName, LocationPreference.NO_PREFERENCE); // TODO
+																		// ensure
+																		// it
+																		// works
+																		// in
+																		// schema's
+																		// other
+																		// than
+																		// 'public'.
 
-				if (table == null){
-					throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
+				if (table == null) {
+					throw Message.getSQLException(
+							ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
 				}
 
 				table.lock(session, false, false);
@@ -159,9 +169,6 @@ public class ScriptCommand extends ScriptBase {
 					Index index = plan.getIndex();
 					Cursor cursor = index.find(session, null, null);
 					StringBuilder buff = new StringBuilder();
-
-
-
 
 					Column[] columns = table.getColumns();
 
@@ -192,10 +199,12 @@ public class ScriptCommand extends ScriptBase {
 								int id;
 								if (v.getType() == Value.CLOB) {
 									id = writeLobStream((ValueLob) v);
-									buff.append("SYSTEM_COMBINE_CLOB(" + id + ")");
+									buff.append("SYSTEM_COMBINE_CLOB(" + id
+											+ ")");
 								} else if (v.getType() == Value.BLOB) {
 									id = writeLobStream((ValueLob) v);
-									buff.append("SYSTEM_COMBINE_BLOB(" + id + ")");
+									buff.append("SYSTEM_COMBINE_BLOB(" + id
+											+ ")");
 								} else {
 									buff.append(v.getSQL());
 								}
@@ -214,17 +223,18 @@ public class ScriptCommand extends ScriptBase {
 					throw new SQLException("H2O. Incompatible Table Type.");
 				}
 
-				//XXX to add indexes the mechanism used above would have to become more complicated.
-				//				ObjectArray indexes = table.getIndexes();
-				//				for (int j = 0; indexes != null && j < indexes.size(); j++) {
-				//					Index index = (Index) indexes.get(j);
-				//					if (!index.getIndexType().getBelongsToConstraint()) {
-				//						add(index.getCreateSQL(), false);
-				//					}
-				//				}
+				// XXX to add indexes the mechanism used above would have to
+				// become more complicated.
+				// ObjectArray indexes = table.getIndexes();
+				// for (int j = 0; indexes != null && j < indexes.size(); j++) {
+				// Index index = (Index) indexes.get(j);
+				// if (!index.getIndexType().getBelongsToConstraint()) {
+				// add(index.getCreateSQL(), false);
+				// }
+				// }
 
 				/*
-				 * END of H2O code to get insert statements for a single table. 
+				 * END of H2O code to get insert statements for a single table.
 				 */
 			} else {
 
@@ -232,7 +242,8 @@ public class ScriptCommand extends ScriptBase {
 					ObjectArray settings = db.getAllSettings();
 					for (int i = 0; i < settings.size(); i++) {
 						Setting setting = (Setting) settings.get(i);
-						if (setting.getName().equals(SetTypes.getTypeName(SetTypes.CREATE_BUILD))) {
+						if (setting.getName().equals(
+								SetTypes.getTypeName(SetTypes.CREATE_BUILD))) {
 							// don't add CREATE_BUILD to the script
 							// (it is only set when creating the database)
 							continue;
@@ -266,14 +277,16 @@ public class ScriptCommand extends ScriptBase {
 					}
 					add(datatype.getCreateSQL(), false);
 				}
-				ObjectArray constants = db.getAllSchemaObjects(DbObject.CONSTANT);
+				ObjectArray constants = db
+						.getAllSchemaObjects(DbObject.CONSTANT);
 				for (int i = 0; i < constants.size(); i++) {
 					Constant constant = (Constant) constants.get(i);
 					add(constant.getCreateSQL(), false);
 				}
 				ObjectArray functionAliases = db.getAllFunctionAliases();
 				for (int i = 0; i < functionAliases.size(); i++) {
-					FunctionAlias alias = (FunctionAlias) functionAliases.get(i);
+					FunctionAlias alias = (FunctionAlias) functionAliases
+							.get(i);
 					if (drop) {
 						add(alias.getDropSQL(), false);
 					}
@@ -288,7 +301,7 @@ public class ScriptCommand extends ScriptBase {
 					add(agg.getCreateSQL(), false);
 				}
 
-				ObjectArray tables = new ObjectArray(db.getAllReplicas()); 
+				ObjectArray tables = new ObjectArray(db.getAllReplicas());
 
 				// sort by id, so that views are after tables and views on views
 				// after the base views
@@ -311,7 +324,8 @@ public class ScriptCommand extends ScriptBase {
 						add(table.getDropSQL(), false);
 					}
 				}
-				ObjectArray sequences = db.getAllSchemaObjects(DbObject.SEQUENCE);
+				ObjectArray sequences = db
+						.getAllSchemaObjects(DbObject.SEQUENCE);
 				for (int i = 0; i < sequences.size(); i++) {
 					Sequence sequence = (Sequence) sequences.get(i);
 					if (drop && !sequence.getBelongsToTable()) {
@@ -331,12 +345,15 @@ public class ScriptCommand extends ScriptBase {
 					add(sql, false);
 					if (Table.TABLE.equals(tableType)) {
 						if (table.canGetRowCount()) {
-							String rowcount = "-- " + table.getRowCountApproximation() + " +/- SELECT COUNT(*) FROM "
-							+ table.getSQL();
+							String rowcount = "-- "
+									+ table.getRowCountApproximation()
+									+ " +/- SELECT COUNT(*) FROM "
+									+ table.getSQL();
 							add(rowcount, false);
 						}
 						if (data) {
-							PlanItem plan = table.getBestPlanItem(session, null);
+							PlanItem plan = table
+									.getBestPlanItem(session, null);
 							Index index = plan.getIndex();
 							Cursor cursor = index.find(session, null, null);
 							Column[] columns = table.getColumns();
@@ -348,7 +365,8 @@ public class ScriptCommand extends ScriptBase {
 								if (j > 0) {
 									buff.append(", ");
 								}
-								buff.append(Parser.quoteIdentifier(columns[j].getName()));
+								buff.append(Parser.quoteIdentifier(columns[j]
+										.getName()));
 							}
 							buff.append(") VALUES");
 							if (!simple) {
@@ -373,10 +391,12 @@ public class ScriptCommand extends ScriptBase {
 										int id;
 										if (v.getType() == Value.CLOB) {
 											id = writeLobStream((ValueLob) v);
-											buff.append("SYSTEM_COMBINE_CLOB(" + id + ")");
+											buff.append("SYSTEM_COMBINE_CLOB("
+													+ id + ")");
 										} else if (v.getType() == Value.BLOB) {
 											id = writeLobStream((ValueLob) v);
-											buff.append("SYSTEM_COMBINE_BLOB(" + id + ")");
+											buff.append("SYSTEM_COMBINE_BLOB("
+													+ id + ")");
 										} else {
 											buff.append(v.getSQL());
 										}
@@ -385,7 +405,8 @@ public class ScriptCommand extends ScriptBase {
 									}
 								}
 								buff.append(")");
-								if (simple || buff.length() > Constants.IO_BUFFER_SIZE) {
+								if (simple
+										|| buff.length() > Constants.IO_BUFFER_SIZE) {
 									add(buff.toString(), true);
 									buff = null;
 								}
@@ -410,7 +431,8 @@ public class ScriptCommand extends ScriptBase {
 					add("DROP ALIAS IF EXISTS SYSTEM_COMBINE_BLOB", true);
 					tempLobTableCreated = false;
 				}
-				ObjectArray constraints = db.getAllSchemaObjects(DbObject.CONSTRAINT);
+				ObjectArray constraints = db
+						.getAllSchemaObjects(DbObject.CONSTRAINT);
 				constraints.sort(new Comparator() {
 					public int compare(Object o1, Object o2) {
 						Constraint c1 = (Constraint) o1;
@@ -436,12 +458,11 @@ public class ScriptCommand extends ScriptBase {
 				for (int i = 0; i < comments.size(); i++) {
 					Comment comment = (Comment) comments.get(i);
 					add(comment.getCreateSQL(), false);
-				} 
+				}
 			}
 			if (out != null) {
 				out.close();
 			}
-
 
 		} catch (IOException e) {
 			throw Message.convertIOException(e, getFileName());
@@ -456,9 +477,12 @@ public class ScriptCommand extends ScriptBase {
 
 	private int writeLobStream(ValueLob v) throws IOException, SQLException {
 		if (!tempLobTableCreated) {
-			add("CREATE TABLE IF NOT EXISTS SYSTEM_LOB_STREAM(ID INT, PART INT, CDATA VARCHAR, BDATA BINARY, PRIMARY KEY(ID, PART))", true);
-			add("CREATE ALIAS IF NOT EXISTS SYSTEM_COMBINE_CLOB FOR \"" + this.getClass().getName() + ".combineClob\"", true);
-			add("CREATE ALIAS IF NOT EXISTS SYSTEM_COMBINE_BLOB FOR \"" + this.getClass().getName() + ".combineBlob\"", true);
+			add("CREATE TABLE IF NOT EXISTS SYSTEM_LOB_STREAM(ID INT, PART INT, CDATA VARCHAR, BDATA BINARY, PRIMARY KEY(ID, PART))",
+					true);
+			add("CREATE ALIAS IF NOT EXISTS SYSTEM_COMBINE_CLOB FOR \""
+					+ this.getClass().getName() + ".combineClob\"", true);
+			add("CREATE ALIAS IF NOT EXISTS SYSTEM_COMBINE_BLOB FOR \""
+					+ this.getClass().getName() + ".combineBlob\"", true);
 			tempLobTableCreated = true;
 		}
 		int id = nextLobId++;
@@ -469,7 +493,8 @@ public class ScriptCommand extends ScriptBase {
 			try {
 				for (int i = 0;; i++) {
 					StringBuilder buff = new StringBuilder(lobBlockSize * 2);
-					buff.append("INSERT INTO SYSTEM_LOB_STREAM VALUES(" + id + ", " + i + ", NULL, '");
+					buff.append("INSERT INTO SYSTEM_LOB_STREAM VALUES(" + id
+							+ ", " + i + ", NULL, '");
 					int len = IOUtils.readFully(in, bytes, 0, lobBlockSize);
 					if (len <= 0) {
 						break;
@@ -490,12 +515,14 @@ public class ScriptCommand extends ScriptBase {
 			try {
 				for (int i = 0;; i++) {
 					StringBuilder buff = new StringBuilder(lobBlockSize * 2);
-					buff.append("INSERT INTO SYSTEM_LOB_STREAM VALUES(" + id + ", " + i + ", ");
+					buff.append("INSERT INTO SYSTEM_LOB_STREAM VALUES(" + id
+							+ ", " + i + ", ");
 					int len = IOUtils.readFully(in, chars, lobBlockSize);
 					if (len < 0) {
 						break;
 					}
-					buff.append(StringUtils.quoteStringSQL(new String(chars, 0, len)));
+					buff.append(StringUtils.quoteStringSQL(new String(chars, 0,
+							len)));
 					buff.append(", NULL)");
 					String sql = buff.toString();
 					add(sql, true);
@@ -512,15 +539,17 @@ public class ScriptCommand extends ScriptBase {
 	}
 
 	/**
-	 * Combine a BLOB.
-	 * This method is called from the script.
-	 * When calling with id -1, the file is deleted.
-	 *
-	 * @param conn a connection
-	 * @param id the lob id
+	 * Combine a BLOB. This method is called from the script. When calling with
+	 * id -1, the file is deleted.
+	 * 
+	 * @param conn
+	 *            a connection
+	 * @param id
+	 *            the lob id
 	 * @return a stream for the combined data
 	 */
-	public static InputStream combineBlob(Connection conn, int id) throws SQLException, IOException {
+	public static InputStream combineBlob(Connection conn, int id)
+			throws SQLException, IOException {
 		if (id < 0) {
 			return null;
 		}
@@ -528,6 +557,7 @@ public class ScriptCommand extends ScriptBase {
 		return new InputStream() {
 			private InputStream current;
 			private boolean closed;
+
 			public int read() throws IOException {
 				while (true) {
 					try {
@@ -552,6 +582,7 @@ public class ScriptCommand extends ScriptBase {
 					}
 				}
 			}
+
 			public void close() throws IOException {
 				if (closed) {
 					return;
@@ -567,14 +598,16 @@ public class ScriptCommand extends ScriptBase {
 	}
 
 	/**
-	 * Combine a CLOB.
-	 * This method is called from the script.
-	 *
-	 * @param conn a connection
-	 * @param id the lob id
+	 * Combine a CLOB. This method is called from the script.
+	 * 
+	 * @param conn
+	 *            a connection
+	 * @param id
+	 *            the lob id
 	 * @return a reader for the combined data
 	 */
-	public static Reader combineClob(Connection conn, int id) throws SQLException, IOException {
+	public static Reader combineClob(Connection conn, int id)
+			throws SQLException, IOException {
 		if (id < 0) {
 			return null;
 		}
@@ -582,6 +615,7 @@ public class ScriptCommand extends ScriptBase {
 		return new Reader() {
 			private Reader current;
 			private boolean closed;
+
 			public int read() throws IOException {
 				while (true) {
 					try {
@@ -606,6 +640,7 @@ public class ScriptCommand extends ScriptBase {
 					}
 				}
 			}
+
 			public void close() throws IOException {
 				if (closed) {
 					return;
@@ -617,6 +652,7 @@ public class ScriptCommand extends ScriptBase {
 					Message.convertToIOException(e);
 				}
 			}
+
 			public int read(char[] buffer, int off, int len) throws IOException {
 				if (len == 0) {
 					return 0;
@@ -639,9 +675,10 @@ public class ScriptCommand extends ScriptBase {
 		};
 	}
 
-	private static ResultSet getLobStream(Connection conn, String column, int id) throws SQLException {
-		PreparedStatement prep = conn.prepareStatement(
-				"SELECT " + column + " FROM SYSTEM_LOB_STREAM WHERE ID=? ORDER BY PART");
+	private static ResultSet getLobStream(Connection conn, String column, int id)
+			throws SQLException {
+		PreparedStatement prep = conn.prepareStatement("SELECT " + column
+				+ " FROM SYSTEM_LOB_STREAM WHERE ID=? ORDER BY PART");
 		prep.setInt(1, id);
 		return prep.executeQuery();
 	}
@@ -659,7 +696,8 @@ public class ScriptCommand extends ScriptBase {
 		s += ";";
 		if (out != null) {
 			byte[] buff = StringUtils.utf8Encode(s);
-			int len = MathUtils.roundUp(buff.length + lineSeparator.length, Constants.FILE_BLOCK_SIZE);
+			int len = MathUtils.roundUp(buff.length + lineSeparator.length,
+					Constants.FILE_BLOCK_SIZE);
 			buffer = ByteUtils.copy(buff, buffer);
 
 			if (len > buffer.length) {
@@ -691,7 +729,9 @@ public class ScriptCommand extends ScriptBase {
 
 	/**
 	 * H2O. Called if the insert statements for a single table are required.
-	 * @param tableName The table for which the insert statements are required.
+	 * 
+	 * @param tableName
+	 *            The table for which the insert statements are required.
 	 */
 	public void setTable(String tableName) {
 		singleTable = true;
@@ -701,7 +741,9 @@ public class ScriptCommand extends ScriptBase {
 
 	/**
 	 * Set the schema name.
-	 * <p>H2O. Called if the insert statements for a single table are required.
+	 * <p>
+	 * H2O. Called if the insert statements for a single table are required.
+	 * 
 	 * @param name
 	 */
 	public void setSchema(String name) {

@@ -21,16 +21,17 @@ import org.h2.util.BitField;
 import org.h2.value.Value;
 
 /**
- * Transaction log mechanism.
- * The format is:
- * <ul><li>0-3: log id
- * </li><li>records
- * </li></ul>
+ * Transaction log mechanism. The format is:
+ * <ul>
+ * <li>0-3: log id</li>
+ * <li>records</li>
+ * </ul>
  * The data format for a record is:
- * <ul><li>0-0: type (0: undo,...)
- * </li><li>1-4: page id
- * </li><li>5-: data
- * </li></ul>
+ * <ul>
+ * <li>0-0: type (0: undo,...)</li>
+ * <li>1-4: page id</li>
+ * <li>5-: data</li>
+ * </ul>
  */
 public class PageLog {
 
@@ -40,26 +41,22 @@ public class PageLog {
 	public static final int NO_OP = 0;
 
 	/**
-	 * An undo log entry.
-	 * Format: page id, page.
+	 * An undo log entry. Format: page id, page.
 	 */
 	public static final int UNDO = 1;
 
 	/**
-	 * A commit entry of a session.
-	 * Format: session id.
+	 * A commit entry of a session. Format: session id.
 	 */
 	public static final int COMMIT = 2;
 
 	/**
-	 * Add a record to a table.
-	 * Format: session id, table id, row.
+	 * Add a record to a table. Format: session id, table id, row.
 	 */
 	public static final int ADD = 3;
 
 	/**
-	 * Remove a record from a table.
-	 * Format: session id, table id, row.
+	 * Remove a record from a table. Format: session id, table id, row.
 	 */
 	public static final int REMOVE = 4;
 
@@ -85,10 +82,11 @@ public class PageLog {
 	}
 
 	/**
-	 * Open the log for writing. For an existing database, the recovery
-	 * must be run first.
-	 *
-	 * @param id the log id
+	 * Open the log for writing. For an existing database, the recovery must be
+	 * run first.
+	 * 
+	 * @param id
+	 *            the log id
 	 */
 	void openForWriting(int id) throws SQLException {
 		this.id = id;
@@ -105,14 +103,16 @@ public class PageLog {
 
 	/**
 	 * Open the log for reading. This will also read the log id.
-	 *
+	 * 
 	 * @return the log id
 	 */
 	int openForReading() throws SQLException {
-		in = new DataInputStream(new PageInputStream(store, 0, firstPage, Page.TYPE_LOG));
+		in = new DataInputStream(new PageInputStream(store, 0, firstPage,
+				Page.TYPE_LOG));
 		try {
 			id = in.readInt();
-			trace.debug("log openForReading " + id + " firstPage:" + firstPage + " id:" + id);
+			trace.debug("log openForReading " + id + " firstPage:" + firstPage
+					+ " id:" + id);
 			return id;
 		} catch (IOException e) {
 			return 0;
@@ -123,8 +123,9 @@ public class PageLog {
 	 * Run the recovery process. There are two recovery stages: first only the
 	 * undo steps are run (restoring the state before the last checkpoint). In
 	 * the second stage the committed operations are re-applied.
-	 *
-	 * @param undo true if the undo step should be run
+	 * 
+	 * @param undo
+	 *            true if the undo step should be run
 	 */
 	void recover(boolean undo) throws SQLException {
 		if (trace.isDebugEnabled()) {
@@ -158,7 +159,8 @@ public class PageLog {
 						Database db = store.getDatabase();
 						if (store.isSessionCommitted(sessionId, id, pos)) {
 							if (trace.isDebugEnabled()) {
-								trace.debug("log redo " + (x == ADD ? "+" : "-") + " " + row);
+								trace.debug("log redo "
+										+ (x == ADD ? "+" : "-") + " " + row);
 							}
 							db.redo(tableId, row, x == ADD);
 						}
@@ -180,12 +182,15 @@ public class PageLog {
 
 	/**
 	 * Read a row from an input stream.
-	 *
-	 * @param in the input stream
-	 * @param data a temporary buffer
+	 * 
+	 * @param in
+	 *            the input stream
+	 * @param data
+	 *            a temporary buffer
 	 * @return the row
 	 */
-	public static Row readRow(DataInputStream in, DataPage data) throws IOException, SQLException {
+	public static Row readRow(DataInputStream in, DataPage data)
+			throws IOException, SQLException {
 		int pos = in.readInt();
 		int len = in.readInt();
 		data.reset();
@@ -205,9 +210,11 @@ public class PageLog {
 	/**
 	 * Add an undo entry to the log. The page data is only written once until
 	 * the next checkpoint.
-	 *
-	 * @param pageId the page id
-	 * @param page the old page data
+	 * 
+	 * @param pageId
+	 *            the page id
+	 * @param page
+	 *            the old page data
 	 */
 	void addUndo(int pageId, DataPage page) throws SQLException {
 		try {
@@ -242,8 +249,9 @@ public class PageLog {
 
 	/**
 	 * Mark a committed transaction.
-	 *
-	 * @param session the session
+	 * 
+	 * @param session
+	 *            the session
 	 */
 	void commit(Session session) throws SQLException {
 		try {
@@ -261,17 +269,22 @@ public class PageLog {
 
 	/**
 	 * A record is added to a table, or removed from a table.
-	 *
-	 * @param session the session
-	 * @param tableId the table id
-	 * @param row the row to add
-	 * @param add true if the row is added, false if it is removed
+	 * 
+	 * @param session
+	 *            the session
+	 * @param tableId
+	 *            the table id
+	 * @param row
+	 *            the row to add
+	 * @param add
+	 *            true if the row is added, false if it is removed
 	 */
-	void logAddOrRemoveRow(Session session, int tableId, Row row, boolean add) throws SQLException {
+	void logAddOrRemoveRow(Session session, int tableId, Row row, boolean add)
+			throws SQLException {
 		try {
 			if (trace.isDebugEnabled()) {
-				trace.debug("log " + (add?"+":"-") + " table:" + tableId +
-						" row:" + row);
+				trace.debug("log " + (add ? "+" : "-") + " table:" + tableId
+						+ " row:" + row);
 			}
 			int todoLogPosShouldBeLong;
 			session.addLogPos(0, (int) operation);
@@ -310,23 +323,6 @@ public class PageLog {
 	}
 
 	/**
-	 * Close the log, truncate it, and re-open it.
-	 *
-	 * @param id the new log id
-	 */
-	private void reopen(int id) throws SQLException {
-		try {
-			trace.debug("log reopen");
-			out.close();
-			openForWriting(id);
-			flush();
-			int todoDeleteOrReUsePages;
-		} catch (IOException e) {
-			throw Message.convertIOException(e, null);
-		}
-	}
-
-	/**
 	 * Flush the transaction log.
 	 */
 	void flush() throws SQLException {
@@ -341,7 +337,7 @@ public class PageLog {
 
 	/**
 	 * Get the log id.
-	 *
+	 * 
 	 * @return the log id
 	 */
 	int getId() {
@@ -351,13 +347,13 @@ public class PageLog {
 	/**
 	 * Flush and close the log.
 	 */
-	//    public void close() throws SQLException {
-	//        try {
-	//            trace.debug("log close");
-	//            out.close();
-	//        } catch (IOException e) {
-	//            throw Message.convertIOException(e, null);
-	//        }
-	//    }
+	// public void close() throws SQLException {
+	// try {
+	// trace.debug("log close");
+	// out.close();
+	// } catch (IOException e) {
+	// throw Message.convertIOException(e, null);
+	// }
+	// }
 
 }

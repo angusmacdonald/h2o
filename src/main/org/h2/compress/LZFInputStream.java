@@ -12,8 +12,8 @@ import java.io.InputStream;
 import org.h2.util.ByteUtils;
 
 /**
- * An input stream to read from an LZF stream.
- * The data is automatically expanded.
+ * An input stream to read from an LZF stream. The data is automatically
+ * expanded.
  */
 public class LZFInputStream extends InputStream {
 
@@ -32,7 +32,8 @@ public class LZFInputStream extends InputStream {
 	}
 
 	private byte[] ensureSize(byte[] buff, int len) {
-		return buff == null || buff.length < len ? ByteUtils.newBytes(len) : buff;
+		return buff == null || buff.length < len ? ByteUtils.newBytes(len)
+				: buff;
 	}
 
 	private void fillBuffer() throws IOException {

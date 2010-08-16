@@ -30,9 +30,12 @@ public class DbStarter implements ServletContextListener {
 		try {
 			org.h2.Driver.load();
 
-			// This will get the setting from a context-param in web.xml if defined:
-			ServletContext servletContext = servletContextEvent.getServletContext();
-			String url = getParameter(servletContext, "db.url", "jdbc:h2:~/test");
+			// This will get the setting from a context-param in web.xml if
+			// defined:
+			ServletContext servletContext = servletContextEvent
+					.getServletContext();
+			String url = getParameter(servletContext, "db.url",
+					"jdbc:h2:~/test");
 			String user = getParameter(servletContext, "db.user", "sa");
 			String password = getParameter(servletContext, "db.password", "sa");
 
@@ -40,9 +43,11 @@ public class DbStarter implements ServletContextListener {
 			servletContext.setAttribute("connection", conn);
 
 			// Start the server if configured to do so
-			String serverParams = getParameter(servletContext, "db.tcpServer", null);
+			String serverParams = getParameter(servletContext, "db.tcpServer",
+					null);
 			if (serverParams != null) {
-				String[] params = StringUtils.arraySplit(serverParams, ' ', true);
+				String[] params = StringUtils.arraySplit(serverParams, ' ',
+						true);
 				server = Server.createTcpServer(params);
 				server.start();
 			}
@@ -54,14 +59,15 @@ public class DbStarter implements ServletContextListener {
 		}
 	}
 
-	private String getParameter(ServletContext servletContext, String key, String defaultValue) {
+	private String getParameter(ServletContext servletContext, String key,
+			String defaultValue) {
 		String value = servletContext.getInitParameter(key);
 		return value == null ? defaultValue : value;
 	}
 
 	/**
 	 * Get the connection.
-	 *
+	 * 
 	 * @return the connection
 	 */
 	public Connection getConnection() {

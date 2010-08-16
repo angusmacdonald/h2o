@@ -19,9 +19,12 @@ package org.h2o.util.exceptions;
 
 /**
  * Thrown when the database encounters an H2O specific error during startup.
+ * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class StartupException extends Exception {
+
+	private static final long serialVersionUID = -5874576242653632952L;
 
 	/**
 	 * 

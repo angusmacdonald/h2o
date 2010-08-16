@@ -39,7 +39,8 @@ public class JdbcStatement extends TraceObject implements Statement {
 	private ObjectArray batchCommands;
 	private boolean escapeProcessing = true;
 
-	JdbcStatement(JdbcConnection conn, int resultSetType, int id, boolean closeWithResultSet) {
+	JdbcStatement(JdbcConnection conn, int resultSetType, int id,
+			boolean closeWithResultSet) {
 		this.conn = conn;
 		this.session = conn.getSession();
 		setTrace(session.getTrace(), TraceObject.STATEMENT, id);
@@ -48,18 +49,20 @@ public class JdbcStatement extends TraceObject implements Statement {
 	}
 
 	/**
-	 * Executes a query (select statement) and returns the result set.
-	 * If another result set exists for this statement, this will be closed
-	 * (even if this statement fails).
-	 *
-	 * @param sql the SQL statement to execute
+	 * Executes a query (select statement) and returns the result set. If
+	 * another result set exists for this statement, this will be closed (even
+	 * if this statement fails).
+	 * 
+	 * @param sql
+	 *            the SQL statement to execute
 	 * @return the result set
 	 */
 	public ResultSet executeQuery(String sql) throws SQLException {
 		try {
 			int id = getNextId(TraceObject.RESULT_SET);
 			if (isDebugEnabled()) {
-				debugCodeAssign("ResultSet", TraceObject.RESULT_SET, id, "executeQuery(" + quote(sql) + ")");
+				debugCodeAssign("ResultSet", TraceObject.RESULT_SET, id,
+						"executeQuery(" + quote(sql) + ")");
 			}
 			checkClosed();
 			closeOldResultSet();
@@ -77,7 +80,8 @@ public class JdbcStatement extends TraceObject implements Statement {
 					setExecutingStatement(null);
 				}
 				command.close();
-				resultSet = new JdbcResultSet(conn, this, result, id, closedByResultSet, scrollable);
+				resultSet = new JdbcResultSet(conn, this, result, id,
+						closedByResultSet, scrollable);
 			}
 			return resultSet;
 		} catch (Exception e) {
@@ -86,21 +90,22 @@ public class JdbcStatement extends TraceObject implements Statement {
 	}
 
 	/**
-	 * Executes a statement (insert, update, delete, create, drop)
-	 * and returns the update count.
-	 * If another result set exists for this statement, this will be closed
-	 * (even if this statement fails).
-	 *
-	 * If the statement is a create or drop and does not throw an exception,
-	 * the current transaction (if any) is committed after executing the statement.
+	 * Executes a statement (insert, update, delete, create, drop) and returns
+	 * the update count. If another result set exists for this statement, this
+	 * will be closed (even if this statement fails).
+	 * 
+	 * If the statement is a create or drop and does not throw an exception, the
+	 * current transaction (if any) is committed after executing the statement.
 	 * If auto commit is on, this statement will be committed.
-	 *
-	 * @param sql the SQL statement
-	 * @return the update count (number of row affected by an insert,
-	 *         update or delete, or 0 if no rows or the statement was a
-	 *         create, drop, commit or rollback)
-	 * @throws SQLException if a database error occurred or a
-	 *         select statement was executed
+	 * 
+	 * @param sql
+	 *            the SQL statement
+	 * @return the update count (number of row affected by an insert, update or
+	 *         delete, or 0 if no rows or the statement was a create, drop,
+	 *         commit or rollback)
+	 * @throws SQLException
+	 *             if a database error occurred or a select statement was
+	 *             executed
 	 */
 	public int executeUpdate(String sql) throws SQLException {
 		try {
@@ -129,13 +134,14 @@ public class JdbcStatement extends TraceObject implements Statement {
 	/**
 	 * Executes an arbitrary statement. If another result set exists for this
 	 * statement, this will be closed (even if this statement fails).
-	 *
+	 * 
 	 * If the statement is a create or drop and does not throw an exception, the
 	 * current transaction (if any) is committed after executing the statement.
 	 * If auto commit is on, and the statement is not a select, this statement
 	 * will be committed.
-	 *
-	 * @param sql the SQL statement to execute
+	 * 
+	 * @param sql
+	 *            the SQL statement to execute
 	 * @return true if a result set is available, false if not
 	 */
 	public boolean execute(String sql) throws SQLException {
@@ -157,8 +163,10 @@ public class JdbcStatement extends TraceObject implements Statement {
 					if (command.isQuery()) {
 						returnsResultSet = true;
 						boolean scrollable = resultSetType != ResultSet.TYPE_FORWARD_ONLY;
-						ResultInterface result = command.executeQuery(maxRows, scrollable);
-						resultSet = new JdbcResultSet(conn, this, result, id, closedByResultSet, scrollable);
+						ResultInterface result = command.executeQuery(maxRows,
+								scrollable);
+						resultSet = new JdbcResultSet(conn, this, result, id,
+								closedByResultSet, scrollable);
 					} else {
 						returnsResultSet = false;
 						updateCount = command.executeUpdate();
@@ -177,7 +185,7 @@ public class JdbcStatement extends TraceObject implements Statement {
 
 	/**
 	 * Returns the last result set produces by this statement.
-	 *
+	 * 
 	 * @return the result set
 	 */
 	public ResultSet getResultSet() throws SQLException {
@@ -185,7 +193,8 @@ public class JdbcStatement extends TraceObject implements Statement {
 			checkClosed();
 			if (resultSet != null) {
 				int id = resultSet.getTraceId();
-				debugCodeAssign("ResultSet", TraceObject.RESULT_SET, id, "getResultSet()");
+				debugCodeAssign("ResultSet", TraceObject.RESULT_SET, id,
+						"getResultSet()");
 			} else {
 				debugCodeCall("getResultSet");
 			}
@@ -197,11 +206,12 @@ public class JdbcStatement extends TraceObject implements Statement {
 
 	/**
 	 * Returns the last update count of this statement.
-	 *
-	 * @return the update count (number of row affected by an insert,
-	 *         update or delete, or 0 if no rows or the statement was a
-	 *         create, drop, commit or rollback; -1 if the statement was a select).
-	 * @throws SQLException if this object is closed or invalid
+	 * 
+	 * @return the update count (number of row affected by an insert, update or
+	 *         delete, or 0 if no rows or the statement was a create, drop,
+	 *         commit or rollback; -1 if the statement was a select).
+	 * @throws SQLException
+	 *             if this object is closed or invalid
 	 */
 	public int getUpdateCount() throws SQLException {
 		try {
@@ -214,9 +224,8 @@ public class JdbcStatement extends TraceObject implements Statement {
 	}
 
 	/**
-	 * Closes this statement.
-	 * All result sets that where created by this statement
-	 * become invalid after calling this method.
+	 * Closes this statement. All result sets that where created by this
+	 * statement become invalid after calling this method.
 	 */
 	public void close() throws SQLException {
 		try {
@@ -232,7 +241,7 @@ public class JdbcStatement extends TraceObject implements Statement {
 
 	/**
 	 * Returns the connection that created this object.
-	 *
+	 * 
 	 * @return the connection
 	 */
 	public Connection getConnection() throws SQLException {
@@ -246,9 +255,9 @@ public class JdbcStatement extends TraceObject implements Statement {
 	}
 
 	/**
-	 * Gets the first warning reported by calls on this object.
-	 * This driver does not support warnings, and will always return null.
-	 *
+	 * Gets the first warning reported by calls on this object. This driver does
+	 * not support warnings, and will always return null.
+	 * 
 	 * @return null
 	 */
 	public SQLWarning getWarnings() throws SQLException {
@@ -262,8 +271,8 @@ public class JdbcStatement extends TraceObject implements Statement {
 	}
 
 	/**
-	 * Clears all warnings. As this driver does not support warnings,
-	 * this call is ignored.
+	 * Clears all warnings. As this driver does not support warnings, this call
+	 * is ignored.
 	 */
 	public void clearWarnings() throws SQLException {
 		try {
@@ -279,9 +288,10 @@ public class JdbcStatement extends TraceObject implements Statement {
 	 * set. This call also closes the current result set (if there is one).
 	 * Returns true if there is a next result set (that means - it always
 	 * returns false).
-	 *
+	 * 
 	 * @return false
-	 * @throws SQLException if this object is closed.
+	 * @throws SQLException
+	 *             if this object is closed.
 	 */
 	public boolean getMoreResults() throws SQLException {
 		try {
@@ -296,9 +306,11 @@ public class JdbcStatement extends TraceObject implements Statement {
 
 	/**
 	 * Sets the name of the cursor. This call is ignored.
-	 *
-	 * @param name ignored
-	 * @throws SQLException if this object is closed
+	 * 
+	 * @param name
+	 *            ignored
+	 * @throws SQLException
+	 *             if this object is closed
 	 */
 	public void setCursorName(String name) throws SQLException {
 		try {
@@ -310,11 +322,12 @@ public class JdbcStatement extends TraceObject implements Statement {
 	}
 
 	/**
-	 * Sets the fetch direction.
-	 * This call is ignored by this driver.
-	 *
-	 * @param direction ignored
-	 * @throws SQLException if this object is closed
+	 * Sets the fetch direction. This call is ignored by this driver.
+	 * 
+	 * @param direction
+	 *            ignored
+	 * @throws SQLException
+	 *             if this object is closed
 	 */
 	public void setFetchDirection(int direction) throws SQLException {
 		try {
@@ -327,9 +340,10 @@ public class JdbcStatement extends TraceObject implements Statement {
 
 	/**
 	 * Gets the fetch direction.
-	 *
+	 * 
 	 * @return FETCH_FORWARD
-	 * @throws SQLException if this object is closed
+	 * @throws SQLException
+	 *             if this object is closed
 	 */
 	public int getFetchDirection() throws SQLException {
 		try {
@@ -343,9 +357,10 @@ public class JdbcStatement extends TraceObject implements Statement {
 
 	/**
 	 * Gets the maximum number of rows for a ResultSet.
-	 *
+	 * 
 	 * @return the number of rows where 0 means no limit
-	 * @throws SQLException if this object is closed
+	 * @throws SQLException
+	 *             if this object is closed
 	 */
 	public int getMaxRows() throws SQLException {
 		try {
@@ -359,16 +374,18 @@ public class JdbcStatement extends TraceObject implements Statement {
 
 	/**
 	 * Gets the maximum number of rows for a ResultSet.
-	 *
-	 * @param maxRows the number of rows where 0 means no limit
-	 * @throws SQLException if this object is closed
+	 * 
+	 * @param maxRows
+	 *            the number of rows where 0 means no limit
+	 * @throws SQLException
+	 *             if this object is closed
 	 */
 	public void setMaxRows(int maxRows) throws SQLException {
 		try {
 			debugCodeCall("setMaxRows", maxRows);
 			checkClosed();
 			if (maxRows < 0) {
-				throw Message.getInvalidValueException(""+maxRows, "maxRows");
+				throw Message.getInvalidValueException("" + maxRows, "maxRows");
 			}
 			this.maxRows = maxRows;
 		} catch (Exception e) {
@@ -377,15 +394,16 @@ public class JdbcStatement extends TraceObject implements Statement {
 	}
 
 	/**
-	 * Sets the number of rows suggested to read in one step.
-	 * This value cannot be higher than the maximum rows (setMaxRows)
-	 * set by the statement or prepared statement, otherwise an exception
-	 * is throws. Setting the value to 0 will set the default value.
-	 * The default value can be changed using the system property
-	 * h2.serverResultSetFetchSize.
-	 *
-	 * @param rows the number of rows
-	 * @throws SQLException if this object is closed
+	 * Sets the number of rows suggested to read in one step. This value cannot
+	 * be higher than the maximum rows (setMaxRows) set by the statement or
+	 * prepared statement, otherwise an exception is throws. Setting the value
+	 * to 0 will set the default value. The default value can be changed using
+	 * the system property h2.serverResultSetFetchSize.
+	 * 
+	 * @param rows
+	 *            the number of rows
+	 * @throws SQLException
+	 *             if this object is closed
 	 */
 	public void setFetchSize(int rows) throws SQLException {
 		try {
@@ -405,9 +423,10 @@ public class JdbcStatement extends TraceObject implements Statement {
 
 	/**
 	 * Gets the number of rows suggested to read in one step.
-	 *
+	 * 
 	 * @return the current fetch size
-	 * @throws SQLException if this object is closed
+	 * @throws SQLException
+	 *             if this object is closed
 	 */
 	public int getFetchSize() throws SQLException {
 		try {
@@ -421,9 +440,10 @@ public class JdbcStatement extends TraceObject implements Statement {
 
 	/**
 	 * Gets the result set concurrency created by this object.
-	 *
+	 * 
 	 * @return ResultSet.CONCUR_UPDATABLE
-	 * @throws SQLException if this object is closed
+	 * @throws SQLException
+	 *             if this object is closed
 	 */
 	public int getResultSetConcurrency() throws SQLException {
 		try {
@@ -437,11 +457,12 @@ public class JdbcStatement extends TraceObject implements Statement {
 
 	/**
 	 * Gets the result set type.
-	 *
+	 * 
 	 * @return the type
-	 * @throws SQLException if this object is closed
+	 * @throws SQLException
+	 *             if this object is closed
 	 */
-	public int getResultSetType()  throws SQLException {
+	public int getResultSetType() throws SQLException {
 		try {
 			debugCodeCall("getResultSetType");
 			checkClosed();
@@ -453,9 +474,10 @@ public class JdbcStatement extends TraceObject implements Statement {
 
 	/**
 	 * Gets the maximum number of bytes for a result set column.
-	 *
+	 * 
 	 * @return always 0 for no limit
-	 * @throws SQLException if this object is closed
+	 * @throws SQLException
+	 *             if this object is closed
 	 */
 	public int getMaxFieldSize() throws SQLException {
 		try {
@@ -468,11 +490,13 @@ public class JdbcStatement extends TraceObject implements Statement {
 	}
 
 	/**
-	 * Sets the maximum number of bytes for a result set column.
-	 * This method does currently do nothing for this driver.
-	 *
-	 * @param max the maximum size - ignored
-	 * @throws SQLException if this object is closed
+	 * Sets the maximum number of bytes for a result set column. This method
+	 * does currently do nothing for this driver.
+	 * 
+	 * @param max
+	 *            the maximum size - ignored
+	 * @throws SQLException
+	 *             if this object is closed
 	 */
 	public void setMaxFieldSize(int max) throws SQLException {
 		try {
@@ -484,16 +508,18 @@ public class JdbcStatement extends TraceObject implements Statement {
 	}
 
 	/**
-	 * Enables or disables processing or JDBC escape syntax.
-	 * See also Connection.nativeSQL.
-	 *
-	 * @param enable - true (default) or false (no conversion is attempted)
-	 * @throws SQLException if this object is closed
+	 * Enables or disables processing or JDBC escape syntax. See also
+	 * Connection.nativeSQL.
+	 * 
+	 * @param enable
+	 *            - true (default) or false (no conversion is attempted)
+	 * @throws SQLException
+	 *             if this object is closed
 	 */
 	public void setEscapeProcessing(boolean enable) throws SQLException {
 		try {
 			if (isDebugEnabled()) {
-				debugCode("setEscapeProcessing("+enable+");");
+				debugCode("setEscapeProcessing(" + enable + ");");
 			}
 			checkClosed();
 			escapeProcessing = enable;
@@ -503,17 +529,17 @@ public class JdbcStatement extends TraceObject implements Statement {
 	}
 
 	/**
-	 * Cancels a currently running statement.
-	 * This method must be called from within another
-	 * thread than the execute method.
-	 *
-	 * @throws SQLException if this object is closed
+	 * Cancels a currently running statement. This method must be called from
+	 * within another thread than the execute method.
+	 * 
+	 * @throws SQLException
+	 *             if this object is closed
 	 */
 	public void cancel() throws SQLException {
 		try {
 			debugCodeCall("cancel");
 			checkClosed();
-			// executingCommand can be reset  by another thread
+			// executingCommand can be reset by another thread
 			CommandInterface c = executingCommand;
 			try {
 				if (c != null) {
@@ -528,12 +554,12 @@ public class JdbcStatement extends TraceObject implements Statement {
 	}
 
 	/**
-	 * Gets the current query timeout in seconds.
-	 * This method will return 0 if no query timeout is set.
-	 * The result is rounded to the next second.
-	 *
+	 * Gets the current query timeout in seconds. This method will return 0 if
+	 * no query timeout is set. The result is rounded to the next second.
+	 * 
 	 * @return the timeout in seconds
-	 * @throws SQLException if this object is closed
+	 * @throws SQLException
+	 *             if this object is closed
 	 */
 	public int getQueryTimeout() throws SQLException {
 		try {
@@ -551,10 +577,12 @@ public class JdbcStatement extends TraceObject implements Statement {
 	 * Changing the value will affect all statements of this connection. This
 	 * method does not commit a transaction, and rolling back a transaction does
 	 * not affect this setting.
-	 *
-	 * @param seconds the timeout in seconds - 0 means no timeout, values
-	 *            smaller 0 will throw an exception
-	 * @throws SQLException if this object is closed
+	 * 
+	 * @param seconds
+	 *            the timeout in seconds - 0 means no timeout, values smaller 0
+	 *            will throw an exception
+	 * @throws SQLException
+	 *             if this object is closed
 	 */
 	public void setQueryTimeout(int seconds) throws SQLException {
 		try {
@@ -571,8 +599,9 @@ public class JdbcStatement extends TraceObject implements Statement {
 
 	/**
 	 * Adds a statement to the batch.
-	 *
-	 * @param sql the SQL statement
+	 * 
+	 * @param sql
+	 *            the SQL statement
 	 */
 	public void addBatch(String sql) throws SQLException {
 		try {
@@ -605,7 +634,7 @@ public class JdbcStatement extends TraceObject implements Statement {
 
 	/**
 	 * Executes the batch.
-	 *
+	 * 
 	 * @return the array of update counts
 	 */
 	public int[] executeBatch() throws SQLException {
@@ -613,7 +642,8 @@ public class JdbcStatement extends TraceObject implements Statement {
 			debugCodeCall("executeBatch");
 			checkClosed();
 			if (batchCommands == null) {
-				// TODO batch: check what other database do if no commands are set
+				// TODO batch: check what other database do if no commands are
+				// set
 				batchCommands = new ObjectArray();
 			}
 			int[] result = new int[batchCommands.size()];
@@ -624,9 +654,9 @@ public class JdbcStatement extends TraceObject implements Statement {
 					result[i] = executeUpdate(sql);
 				} catch (SQLException e) {
 					logAndConvert(e);
-					//## Java 1.4 begin ##
+					// ## Java 1.4 begin ##
 					result[i] = Statement.EXECUTE_FAILED;
-					//## Java 1.4 end ##
+					// ## Java 1.4 end ##
 					error = true;
 				}
 			}
@@ -643,19 +673,22 @@ public class JdbcStatement extends TraceObject implements Statement {
 	/**
 	 * Return a result set that contains the last generated autoincrement key
 	 * for this connection.
-	 *
+	 * 
 	 * @return the result set with one row and one column containing the key
-	 * @throws SQLException if this object is closed
+	 * @throws SQLException
+	 *             if this object is closed
 	 */
 	public ResultSet getGeneratedKeys() throws SQLException {
 		try {
 			int id = getNextId(TraceObject.RESULT_SET);
 			if (isDebugEnabled()) {
-				debugCodeAssign("ResultSet", TraceObject.RESULT_SET, id, "getGeneratedKeys()");
+				debugCodeAssign("ResultSet", TraceObject.RESULT_SET, id,
+						"getGeneratedKeys()");
 			}
 			checkClosed();
 			ResultInterface result = conn.getGeneratedKeys();
-			ResultSet rs = new JdbcResultSet(conn, this, result, id, false, true);
+			ResultSet rs = new JdbcResultSet(conn, this, result, id, false,
+					true);
 			return rs;
 		} catch (Exception e) {
 			throw logAndConvert(e);
@@ -663,12 +696,11 @@ public class JdbcStatement extends TraceObject implements Statement {
 	}
 
 	/**
-	 * Move to the next result set.
-	 * This method always returns false.
-	 *
-	 * @param current Statement.CLOSE_CURRENT_RESULT,
-	 *          Statement.KEEP_CURRENT_RESULT,
-	 *          or Statement.CLOSE_ALL_RESULTS
+	 * Move to the next result set. This method always returns false.
+	 * 
+	 * @param current
+	 *            Statement.CLOSE_CURRENT_RESULT, Statement.KEEP_CURRENT_RESULT,
+	 *            or Statement.CLOSE_ALL_RESULTS
 	 * @return false
 	 */
 	public boolean getMoreResults(int current) throws SQLException {
@@ -683,9 +715,9 @@ public class JdbcStatement extends TraceObject implements Statement {
 				break;
 			case Statement.KEEP_CURRENT_RESULT:
 				// nothing to do
-					break;
+				break;
 			default:
-				throw Message.getInvalidValueException(""+current, "current");
+				throw Message.getInvalidValueException("" + current, "current");
 			}
 			return false;
 		} catch (Exception e) {
@@ -694,20 +726,24 @@ public class JdbcStatement extends TraceObject implements Statement {
 	}
 
 	/**
-	 * Executes a statement and returns the update count.
-	 * This method just calls executeUpdate(String sql).
-	 *
-	 * @param sql the SQL statement
-	 * @return the update count (number of row affected by an insert,
-	 *         update or delete, or 0 if no rows or the statement was a
-	 *         create, drop, commit or rollback)
-	 * @throws SQLException if a database error occurred or a
-	 *         select statement was executed
+	 * Executes a statement and returns the update count. This method just calls
+	 * executeUpdate(String sql).
+	 * 
+	 * @param sql
+	 *            the SQL statement
+	 * @return the update count (number of row affected by an insert, update or
+	 *         delete, or 0 if no rows or the statement was a create, drop,
+	 *         commit or rollback)
+	 * @throws SQLException
+	 *             if a database error occurred or a select statement was
+	 *             executed
 	 */
-	public int executeUpdate(String sql, int autoGeneratedKeys) throws SQLException {
+	public int executeUpdate(String sql, int autoGeneratedKeys)
+			throws SQLException {
 		try {
 			if (isDebugEnabled()) {
-				debugCode("executeUpdate("+quote(sql)+", "+autoGeneratedKeys+");");
+				debugCode("executeUpdate(" + quote(sql) + ", "
+						+ autoGeneratedKeys + ");");
 			}
 			return executeUpdate(sql);
 		} catch (Exception e) {
@@ -716,20 +752,24 @@ public class JdbcStatement extends TraceObject implements Statement {
 	}
 
 	/**
-	 * Executes a statement and returns the update count.
-	 * This method just calls executeUpdate(String sql).
-	 *
-	 * @param sql the SQL statement
-	 * @return the update count (number of row affected by an insert,
-	 *         update or delete, or 0 if no rows or the statement was a
-	 *         create, drop, commit or rollback)
-	 * @throws SQLException if a database error occurred or a
-	 *         select statement was executed
+	 * Executes a statement and returns the update count. This method just calls
+	 * executeUpdate(String sql).
+	 * 
+	 * @param sql
+	 *            the SQL statement
+	 * @return the update count (number of row affected by an insert, update or
+	 *         delete, or 0 if no rows or the statement was a create, drop,
+	 *         commit or rollback)
+	 * @throws SQLException
+	 *             if a database error occurred or a select statement was
+	 *             executed
 	 */
-	public int executeUpdate(String sql, int[] columnIndexes) throws SQLException {
+	public int executeUpdate(String sql, int[] columnIndexes)
+			throws SQLException {
 		try {
 			if (isDebugEnabled()) {
-				debugCode("executeUpdate("+quote(sql)+", "+quoteIntArray(columnIndexes)+");");
+				debugCode("executeUpdate(" + quote(sql) + ", "
+						+ quoteIntArray(columnIndexes) + ");");
 			}
 			return executeUpdate(sql);
 		} catch (Exception e) {
@@ -738,20 +778,24 @@ public class JdbcStatement extends TraceObject implements Statement {
 	}
 
 	/**
-	 * Executes a statement and returns the update count.
-	 * This method just calls executeUpdate(String sql).
-	 *
-	 * @param sql the SQL statement
-	 * @return the update count (number of row affected by an insert,
-	 *         update or delete, or 0 if no rows or the statement was a
-	 *         create, drop, commit or rollback)
-	 * @throws SQLException if a database error occurred or a
-	 *         select statement was executed
+	 * Executes a statement and returns the update count. This method just calls
+	 * executeUpdate(String sql).
+	 * 
+	 * @param sql
+	 *            the SQL statement
+	 * @return the update count (number of row affected by an insert, update or
+	 *         delete, or 0 if no rows or the statement was a create, drop,
+	 *         commit or rollback)
+	 * @throws SQLException
+	 *             if a database error occurred or a select statement was
+	 *             executed
 	 */
-	public int executeUpdate(String sql, String[] columnNames) throws SQLException {
+	public int executeUpdate(String sql, String[] columnNames)
+			throws SQLException {
 		try {
 			if (isDebugEnabled()) {
-				debugCode("executeUpdate("+quote(sql)+", "+quoteArray(columnNames)+");");
+				debugCode("executeUpdate(" + quote(sql) + ", "
+						+ quoteArray(columnNames) + ");");
 			}
 			return executeUpdate(sql);
 		} catch (Exception e) {
@@ -760,20 +804,24 @@ public class JdbcStatement extends TraceObject implements Statement {
 	}
 
 	/**
-	 * Executes a statement and returns the update count.
-	 * This method just calls execute(String sql).
-	 *
-	 * @param sql the SQL statement
-	 * @return the update count (number of row affected by an insert,
-	 *         update or delete, or 0 if no rows or the statement was a
-	 *         create, drop, commit or rollback)
-	 * @throws SQLException if a database error occurred or a
-	 *         select statement was executed
+	 * Executes a statement and returns the update count. This method just calls
+	 * execute(String sql).
+	 * 
+	 * @param sql
+	 *            the SQL statement
+	 * @return the update count (number of row affected by an insert, update or
+	 *         delete, or 0 if no rows or the statement was a create, drop,
+	 *         commit or rollback)
+	 * @throws SQLException
+	 *             if a database error occurred or a select statement was
+	 *             executed
 	 */
-	public boolean execute(String sql, int autoGeneratedKeys) throws SQLException {
+	public boolean execute(String sql, int autoGeneratedKeys)
+			throws SQLException {
 		try {
 			if (isDebugEnabled()) {
-				debugCode("execute("+quote(sql)+", "+autoGeneratedKeys+");");
+				debugCode("execute(" + quote(sql) + ", " + autoGeneratedKeys
+						+ ");");
 			}
 			return execute(sql);
 		} catch (Exception e) {
@@ -782,20 +830,23 @@ public class JdbcStatement extends TraceObject implements Statement {
 	}
 
 	/**
-	 * Executes a statement and returns the update count.
-	 * This method just calls execute(String sql).
-	 *
-	 * @param sql the SQL statement
-	 * @return the update count (number of row affected by an insert,
-	 *         update or delete, or 0 if no rows or the statement was a
-	 *         create, drop, commit or rollback)
-	 * @throws SQLException if a database error occurred or a
-	 *         select statement was executed
+	 * Executes a statement and returns the update count. This method just calls
+	 * execute(String sql).
+	 * 
+	 * @param sql
+	 *            the SQL statement
+	 * @return the update count (number of row affected by an insert, update or
+	 *         delete, or 0 if no rows or the statement was a create, drop,
+	 *         commit or rollback)
+	 * @throws SQLException
+	 *             if a database error occurred or a select statement was
+	 *             executed
 	 */
 	public boolean execute(String sql, int[] columnIndexes) throws SQLException {
 		try {
 			if (isDebugEnabled()) {
-				debugCode("execute("+quote(sql)+", "+quoteIntArray(columnIndexes)+");");
+				debugCode("execute(" + quote(sql) + ", "
+						+ quoteIntArray(columnIndexes) + ");");
 			}
 			return execute(sql);
 		} catch (Exception e) {
@@ -804,20 +855,24 @@ public class JdbcStatement extends TraceObject implements Statement {
 	}
 
 	/**
-	 * Executes a statement and returns the update count.
-	 * This method just calls execute(String sql).
-	 *
-	 * @param sql the SQL statement
-	 * @return the update count (number of row affected by an insert,
-	 *         update or delete, or 0 if no rows or the statement was a
-	 *         create, drop, commit or rollback)
-	 * @throws SQLException if a database error occurred or a
-	 *         select statement was executed
+	 * Executes a statement and returns the update count. This method just calls
+	 * execute(String sql).
+	 * 
+	 * @param sql
+	 *            the SQL statement
+	 * @return the update count (number of row affected by an insert, update or
+	 *         delete, or 0 if no rows or the statement was a create, drop,
+	 *         commit or rollback)
+	 * @throws SQLException
+	 *             if a database error occurred or a select statement was
+	 *             executed
 	 */
-	public boolean execute(String sql, String[] columnNames) throws SQLException {
+	public boolean execute(String sql, String[] columnNames)
+			throws SQLException {
 		try {
 			if (isDebugEnabled()) {
-				debugCode("execute("+quote(sql)+", "+quoteArray(columnNames)+");");
+				debugCode("execute(" + quote(sql) + ", "
+						+ quoteArray(columnNames) + ");");
 			}
 			return execute(sql);
 		} catch (Exception e) {
@@ -827,10 +882,10 @@ public class JdbcStatement extends TraceObject implements Statement {
 
 	/**
 	 * Gets the result set holdability.
-	 *
+	 * 
 	 * @return the holdability
 	 */
-	//## Java 1.4 begin ##
+	// ## Java 1.4 begin ##
 	public int getResultSetHoldability() throws SQLException {
 		try {
 			debugCodeCall("getResultSetHoldability");
@@ -840,15 +895,17 @@ public class JdbcStatement extends TraceObject implements Statement {
 			throw logAndConvert(e);
 		}
 	}
-	//## Java 1.4 end ##
+
+	// ## Java 1.4 end ##
 
 	// =============================================================
 
 	/**
 	 * Check if the statement is closed.
-	 *
+	 * 
 	 * @return true if a reconnect was required
-	 * @throws SQLException if it is closed
+	 * @throws SQLException
+	 *             if it is closed
 	 */
 	boolean checkClosed() throws SQLException {
 		if (conn == null) {
@@ -885,7 +942,7 @@ public class JdbcStatement extends TraceObject implements Statement {
 
 	/**
 	 * Returns whether this statement is closed.
-	 *
+	 * 
 	 * @return true if the statement is closed
 	 */
 	public boolean isClosed() throws SQLException {
@@ -905,18 +962,17 @@ public class JdbcStatement extends TraceObject implements Statement {
 		throw Message.getUnsupportedException();
 	}
 
-
 	/**
 	 * [Not supported] Checks if unwrap can return an object of this class.
 	 */
 
-	public boolean isWrapperFor(Class< ? > iface) throws SQLException {
+	public boolean isWrapperFor(Class<?> iface) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
-
 	/**
 	 * Returns whether this object is poolable.
+	 * 
 	 * @return false
 	 */
 	public boolean isPoolable() {
@@ -925,14 +981,14 @@ public class JdbcStatement extends TraceObject implements Statement {
 	}
 
 	/**
-	 * Requests that this object should be pooled or not.
-	 * This call is ignored.
-	 *
-	 * @param poolable the requested value
+	 * Requests that this object should be pooled or not. This call is ignored.
+	 * 
+	 * @param poolable
+	 *            the requested value
 	 */
 	public void setPoolable(boolean poolable) {
 		if (isDebugEnabled()) {
-			debugCode("setPoolable("+poolable+");");
+			debugCode("setPoolable(" + poolable + ");");
 		}
 	}
 
@@ -944,4 +1000,3 @@ public class JdbcStatement extends TraceObject implements Statement {
 	}
 
 }
-

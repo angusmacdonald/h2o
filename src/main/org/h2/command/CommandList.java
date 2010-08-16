@@ -28,21 +28,25 @@ public class CommandList extends Command {
 
 	// TODO lock if possible!
 
-	public CommandList(Parser parser, String sql, Command c, String remaining){
+	public CommandList(Parser parser, String sql, Command c, String remaining) {
 		super(parser, sql);
 		this.command = c;
 
 		/*
 		 * Split and store remaining commands.
 		 */
-		if (remaining != null){
-			this.remaining = remaining.split(";"); //TODO not particuarly safe. i.e. no query can contain a semi-colon.
+		if (remaining != null) {
+			this.remaining = remaining.split(";"); // TODO not particuarly safe.
+													// i.e. no query can contain
+													// a semi-colon.
 		}
 
-		if (!session.getApplicationAutoCommit() && session.getCurrentTransactionLocks() != null){
+		if (!session.getApplicationAutoCommit()
+				&& session.getCurrentTransactionLocks() != null) {
 			this.proxyManager = session.getCurrentTransactionLocks();
 		} else {
-			this.proxyManager = new QueryProxyManager(parser.getSession().getDatabase(), getSession());
+			this.proxyManager = new QueryProxyManager(parser.getSession()
+					.getDatabase(), getSession());
 			session.setCurrentTransactionLocks(this.proxyManager);
 		}
 
@@ -58,17 +62,20 @@ public class CommandList extends Command {
 		return executeUpdate(true);
 	}
 
-	private SQLException executeRemaining() throws SQLException, RemoteException {
+	private SQLException executeRemaining() throws SQLException,
+			RemoteException {
 		SQLException rollbackException = null;
 
-		if (remaining != null){
+		if (remaining != null) {
 			try {
 				/*
-				 * H2O. Iterate through remaining commands rather than recursively calling this method.
+				 * H2O. Iterate through remaining commands rather than
+				 * recursively calling this method.
 				 */
-				for (String sqlStatement: remaining){
+				for (String sqlStatement : remaining) {
 
-					Command remainingCommand = session.prepareLocal(sqlStatement);
+					Command remainingCommand = session
+							.prepareLocal(sqlStatement);
 					remainingCommand.addQueryProxyManager(proxyManager);
 
 					if (remainingCommand.isQuery()) {
@@ -80,30 +87,32 @@ public class CommandList extends Command {
 
 				H2OTest.queryFailure();
 
-			} catch (SQLException e){
+			} catch (SQLException e) {
 				rollbackException = e;
 			}
 		}
 
-
 		return rollbackException;
-
 
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Command#update(boolean)
 	 */
 	@Override
-	protected int update(boolean partOfMultiQueryTransaction) throws SQLException, RemoteException {
+	protected int update(boolean partOfMultiQueryTransaction)
+			throws SQLException, RemoteException {
 		return update();
 	}
 
 	public int update() throws SQLException, RemoteException {
 		/*
-		 * Execute the first update, then iterate through every subsequent update.
+		 * Execute the first update, then iterate through every subsequent
+		 * update.
 		 */
-		//proxyManager.begin();
+		// proxyManager.begin();
 
 		int updateCount = command.executeUpdate(true);
 		SQLException rollbackException = executeRemaining();
@@ -112,7 +121,6 @@ public class CommandList extends Command {
 
 		return updateCount;
 	}
-
 
 	public LocalResult query(int maxrows) throws SQLException, RemoteException {
 
@@ -125,24 +133,29 @@ public class CommandList extends Command {
 	}
 
 	/**
-	 * Commit or rollback a transaction based on whether an exception was thrown during the update/query.
-	 * @param rollbackException	Exception thrown during query. Will be null if none was thrown and transaction was successful.
+	 * Commit or rollback a transaction based on whether an exception was thrown
+	 * during the update/query.
+	 * 
+	 * @param rollbackException
+	 *            Exception thrown during query. Will be null if none was thrown
+	 *            and transaction was successful.
 	 * @throws SQLException
 	 */
-	private void commit(SQLException rollbackException)  throws SQLException {
+	private void commit(SQLException rollbackException) throws SQLException {
 
-
-		if (session.getApplicationAutoCommit() || rollbackException != null){
+		if (session.getApplicationAutoCommit() || rollbackException != null) {
 			/*
-			 * Having executed all commands, rollback if there was an exception. Otherwise, commit.
+			 * Having executed all commands, rollback if there was an exception.
+			 * Otherwise, commit.
 			 */
 			proxyManager.commit(rollbackException == null, true);
 			session.setCurrentTransactionLocks(null);
 
 			/*
-			 * If we did a rollback, rethrow the exception that caused this to happen.
+			 * If we did a rollback, rethrow the exception that caused this to
+			 * happen.
 			 */
-			if (rollbackException != null){
+			if (rollbackException != null) {
 				throw rollbackException;
 			}
 		}
@@ -164,15 +177,20 @@ public class CommandList extends Command {
 		return command.queryMeta();
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Command#acquireLocks()
 	 */
 	@Override
-	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager) throws SQLException {
+	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager)
+			throws SQLException {
 		return command.acquireLocks(queryProxyManager);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Command#shouldBePropagated()
 	 */
 	@Override
@@ -180,15 +198,20 @@ public class CommandList extends Command {
 		return command.shouldBePropagated();
 	}
 
-	/* (non-Javadoc)
-	 * @see org.h2.command.Command#addQueryProxyManager(org.h2.h2o.comms.QueryProxyManager)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.h2.command.Command#addQueryProxyManager(org.h2.h2o.comms.
+	 * QueryProxyManager)
 	 */
 	@Override
 	public void addQueryProxyManager(QueryProxyManager proxyManager) {
 		ErrorHandling.hardError("Didn't expect this to be called.");
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.CommandInterface#getQueryProxyManager()
 	 */
 	@Override
@@ -197,13 +220,14 @@ public class CommandList extends Command {
 		return proxyManager;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.CommandInterface#isPreparedStatement(boolean)
 	 */
 	@Override
 	public void setIsPreparedStatement(boolean preparedStatement) {
 		command.setIsPreparedStatement(preparedStatement);
 	}
-
 
 }

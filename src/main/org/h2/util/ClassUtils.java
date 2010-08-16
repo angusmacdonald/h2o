@@ -16,8 +16,8 @@ import org.h2.constant.SysProperties;
 import org.h2.message.Message;
 
 /**
- * This utility class contains functions related to class loading.
- * There is a mechanism to restrict class loading.
+ * This utility class contains functions related to class loading. There is a
+ * mechanism to restrict class loading.
  */
 public class ClassUtils {
 
@@ -30,8 +30,7 @@ public class ClassUtils {
 		String[] list = StringUtils.arraySplit(s, ',', true);
 		ArrayList prefixes = new ArrayList();
 		boolean allowAll = false;
-		for (int i = 0; i < list.length; i++) {
-			String p = list[i];
+		for (String p : list) {
 			if (p.equals("*")) {
 				allowAll = true;
 			} else if (p.endsWith("*")) {
@@ -51,11 +50,13 @@ public class ClassUtils {
 
 	/**
 	 * Load a class without performing access rights checking.
-	 *
-	 * @param className the name of the class
+	 * 
+	 * @param className
+	 *            the name of the class
 	 * @return the class object
 	 */
-	public static Class loadSystemClass(String className) throws ClassNotFoundException {
+	public static Class loadSystemClass(String className)
+			throws ClassNotFoundException {
 		return Class.forName(className);
 	}
 
@@ -63,40 +64,45 @@ public class ClassUtils {
 	 * Load a class, but check if it is allowed to load this class first. To
 	 * perform access rights checking, the system property h2.allowedClasses
 	 * needs to be set to a list of class file name prefixes.
-	 *
-	 * @param className the name of the class
+	 * 
+	 * @param className
+	 *            the name of the class
 	 * @return the class object
 	 */
 	public static Class loadUserClass(String className) throws SQLException {
 		if (!ALLOW_ALL && !ALLOWED_CLASS_NAMES.contains(className)) {
 			boolean allowed = false;
-			for (int i = 0; i < ALLOWED_CLASS_NAME_PREFIXES.length; i++) {
-				String s = ALLOWED_CLASS_NAME_PREFIXES[i];
+			for (String s : ALLOWED_CLASS_NAME_PREFIXES) {
 				if (className.startsWith(s)) {
 					allowed = true;
 				}
 			}
 			if (!allowed) {
-				throw Message.getSQLException(ErrorCode.ACCESS_DENIED_TO_CLASS_1, className);
+				throw Message.getSQLException(
+						ErrorCode.ACCESS_DENIED_TO_CLASS_1, className);
 			}
 		}
 		try {
 			return Class.forName(className);
 		} catch (ClassNotFoundException e) {
-			throw Message.getSQLException(ErrorCode.CLASS_NOT_FOUND_1, new String[] { className }, e);
+			throw Message.getSQLException(ErrorCode.CLASS_NOT_FOUND_1,
+					new String[] { className }, e);
 		} catch (NoClassDefFoundError e) {
-			throw Message.getSQLException(ErrorCode.CLASS_NOT_FOUND_1, new String[] { className }, e);
+			throw Message.getSQLException(ErrorCode.CLASS_NOT_FOUND_1,
+					new String[] { className }, e);
 		}
 	}
 
 	/**
 	 * Checks if the given method takes a variable number of arguments. For Java
 	 * 1.4 and older, false is returned. Example:
+	 * 
 	 * <pre>
 	 * public static double mean(double... values)
 	 * </pre>
-	 *
-	 * @param m the method to test
+	 * 
+	 * @param m
+	 *            the method to test
 	 * @return true if the method takes a variable number of arguments.
 	 */
 	public static boolean isVarArgs(Method m) {
@@ -104,7 +110,8 @@ public class ClassUtils {
 			return false;
 		}
 		try {
-			Method isVarArgs = m.getClass().getMethod("isVarArgs", new Class[0]);
+			Method isVarArgs = m.getClass()
+					.getMethod("isVarArgs", new Class[0]);
 			Boolean result = (Boolean) isVarArgs.invoke(m, new Object[0]);
 			return result.booleanValue();
 		} catch (Exception e) {

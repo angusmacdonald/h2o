@@ -41,7 +41,8 @@ abstract class ValueStringBase extends Value {
 		return value;
 	}
 
-	public void set(PreparedStatement prep, int parameterIndex) throws SQLException {
+	public void set(PreparedStatement prep, int parameterIndex)
+			throws SQLException {
 		prep.setString(parameterIndex, value);
 	}
 

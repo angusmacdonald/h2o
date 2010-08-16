@@ -24,7 +24,8 @@ public class FileObjectSplit implements FileObject {
 	private long filePointer;
 	private long length;
 
-	FileObjectSplit(String name, String mode, FileObject[] list, long length, long maxLength) {
+	FileObjectSplit(String name, String mode, FileObject[] list, long length,
+			long maxLength) {
 		this.name = name;
 		this.mode = mode;
 		this.list = list;
@@ -33,8 +34,8 @@ public class FileObjectSplit implements FileObject {
 	}
 
 	public void close() throws IOException {
-		for (int i = 0; i < list.length; i++) {
-			list[i].close();
+		for (FileObject element : list) {
+			element.close();
 		}
 	}
 
@@ -78,7 +79,8 @@ public class FileObjectSplit implements FileObject {
 			FileObject[] newList = new FileObject[i + 1];
 			System.arraycopy(list, 0, newList, 0, i);
 			String fileName = FileSystemSplit.getFileName(name, i);
-			newList[i] = FileSystem.getInstance(fileName).openFileObject(fileName, mode);
+			newList[i] = FileSystem.getInstance(fileName).openFileObject(
+					fileName, mode);
 			list = newList;
 		}
 		return list[id];
@@ -106,7 +108,8 @@ public class FileObjectSplit implements FileObject {
 					}
 				} else if (i >= list.length) {
 					String fileName = FileSystemSplit.getFileName(name, i);
-					FileObject o = FileSystem.getInstance(fileName).openFileObject(fileName, mode);
+					FileObject o = FileSystem.getInstance(fileName)
+							.openFileObject(fileName, mode);
 					o.setFileLength(size);
 					newList[i] = o;
 				} else {
@@ -123,8 +126,8 @@ public class FileObjectSplit implements FileObject {
 	}
 
 	public void sync() throws IOException {
-		for (int i = 0; i < list.length; i++) {
-			list[i].sync();
+		for (FileObject element : list) {
+			element.sync();
 		}
 	}
 

@@ -60,7 +60,8 @@ public class ConditionAndOr extends Condition {
 		return "(" + sql + ")";
 	}
 
-	public void createIndexConditions(Session session, TableFilter filter) throws SQLException {
+	public void createIndexConditions(Session session, TableFilter filter)
+			throws SQLException {
 		if (andOrType == AND) {
 			left.createIndexConditions(session, filter);
 			right.createIndexConditions(session, filter);
@@ -142,7 +143,8 @@ public class ConditionAndOr extends Condition {
 		// INSERT INTO TEST VALUES(1, NULL);
 		// SELECT * FROM TEST WHERE NOT (B=A AND B=0); // no rows
 		// SELECT * FROM TEST WHERE NOT (B=A AND B=0 AND A=0); // 1, NULL
-		if (SysProperties.OPTIMIZE_NOT && SysProperties.OPTIMIZE_TWO_EQUALS && andOrType == AND) {
+		if (SysProperties.OPTIMIZE_NOT && SysProperties.OPTIMIZE_TWO_EQUALS
+				&& andOrType == AND) {
 			// try to add conditions (A=B AND B=1: add A=1)
 			if (left instanceof Comparison && right instanceof Comparison) {
 				Comparison compLeft = (Comparison) left;
@@ -212,7 +214,8 @@ public class ConditionAndOr extends Condition {
 		}
 	}
 
-	public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
+	public void mapColumns(ColumnResolver resolver, int level)
+			throws SQLException {
 		left.mapColumns(resolver, level);
 		right.mapColumns(resolver, level);
 	}
@@ -235,7 +238,8 @@ public class ConditionAndOr extends Condition {
 		return left.getCost() + right.getCost();
 	}
 
-	public Expression optimizeInJoin(Session session, Select select) throws SQLException {
+	public Expression optimizeInJoin(Session session, Select select)
+			throws SQLException {
 		if (andOrType == AND) {
 			Expression l = left.optimizeInJoin(session, select);
 			Expression r = right.optimizeInJoin(session, select);
@@ -252,8 +256,9 @@ public class ConditionAndOr extends Condition {
 
 	/**
 	 * Get the left or the right sub-expression of this condition.
-	 *
-	 * @param left true to get the left sub-expression, false to get the right
+	 * 
+	 * @param left
+	 *            true to get the left sub-expression, false to get the right
 	 *            sub-expression.
 	 * @return the sub-expression
 	 */

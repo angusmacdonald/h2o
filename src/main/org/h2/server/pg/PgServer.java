@@ -29,8 +29,8 @@ import org.h2.util.Tool;
 
 /**
  * This class implements a subset of the PostgreSQL protocol as described here:
- * http://developer.postgresql.org/pgdocs/postgres/protocol.html
- * The PostgreSQL catalog is described here:
+ * http://developer.postgresql.org/pgdocs/postgres/protocol.html The PostgreSQL
+ * catalog is described here:
  * http://www.postgresql.org/docs/7.4/static/catalogs.html
  */
 public class PgServer implements Service {
@@ -53,7 +53,8 @@ public class PgServer implements Service {
 			String a = args[i];
 			if ("-trace".equals(a)) {
 				trace = true;
-			} else if ("-log".equals(a) && SysProperties.OLD_COMMAND_LINE_OPTIONS) {
+			} else if ("-log".equals(a)
+					&& SysProperties.OLD_COMMAND_LINE_OPTIONS) {
 				trace = Tool.readArgBoolean(args, i) == 1;
 				i++;
 			} else if ("-pgPort".equals(a)) {
@@ -77,8 +78,8 @@ public class PgServer implements Service {
 			}
 		}
 		org.h2.Driver.load();
-		//        int testing;
-		//        log = true;
+		// int testing;
+		// log = true;
 	}
 
 	boolean getTrace() {
@@ -87,8 +88,9 @@ public class PgServer implements Service {
 
 	/**
 	 * Print a message if the trace flag is enabled.
-	 *
-	 * @param s the message
+	 * 
+	 * @param s
+	 *            the message
 	 */
 	void trace(String s) {
 		if (trace) {
@@ -98,8 +100,9 @@ public class PgServer implements Service {
 
 	/**
 	 * Remove a thread from the list.
-	 *
-	 * @param t the thread to remove
+	 * 
+	 * @param t
+	 *            the thread to remove
 	 */
 	synchronized void remove(PgServerThread t) {
 		running.remove(t);
@@ -107,8 +110,9 @@ public class PgServer implements Service {
 
 	/**
 	 * Print the stack trace if the trace flag is enabled.
-	 *
-	 * @param e the exception
+	 * 
+	 * @param e
+	 *            the exception
 	 */
 	void traceError(Exception e) {
 		if (trace) {
@@ -153,7 +157,7 @@ public class PgServer implements Service {
 					running.add(c);
 					c.setProcessId(running.size());
 					Thread thread = new Thread(c);
-					thread.setName(threadName+" thread");
+					thread.setName(threadName + " thread");
 					c.setThread(thread);
 					thread.start();
 				}
@@ -201,7 +205,8 @@ public class PgServer implements Service {
 			return false;
 		}
 		try {
-			Socket s = NetUtils.createLoopbackSocket(serverSocket.getLocalPort(), false);
+			Socket s = NetUtils.createLoopbackSocket(
+					serverSocket.getLocalPort(), false);
 			s.close();
 			return true;
 		} catch (Exception e) {
@@ -236,18 +241,23 @@ public class PgServer implements Service {
 	 * The Java implementation of the PostgreSQL function pg_get_indexdef. The
 	 * method is used to get CREATE INDEX command for an index, or the column
 	 * definition of one column in the index.
-	 *
-	 * @param conn the connection
-	 * @param indexId the index id
-	 * @param ordinalPosition the ordinal position (null if the SQL statement
-	 *            should be returned)
-	 * @param pretty this flag is ignored
+	 * 
+	 * @param conn
+	 *            the connection
+	 * @param indexId
+	 *            the index id
+	 * @param ordinalPosition
+	 *            the ordinal position (null if the SQL statement should be
+	 *            returned)
+	 * @param pretty
+	 *            this flag is ignored
 	 * @return the SQL statement or the column name
 	 */
-	public static String getIndexColumn(Connection conn, int indexId, Integer ordinalPosition, Boolean pretty)
-	throws SQLException {
+	public static String getIndexColumn(Connection conn, int indexId,
+			Integer ordinalPosition, Boolean pretty) throws SQLException {
 		if (ordinalPosition == null || ordinalPosition.intValue() == 0) {
-			PreparedStatement prep = conn.prepareStatement("select sql from information_schema.indexes where id=?");
+			PreparedStatement prep = conn
+					.prepareStatement("select sql from information_schema.indexes where id=?");
 			prep.setInt(1, indexId);
 			ResultSet rs = prep.executeQuery();
 			if (rs.next()) {
@@ -255,7 +265,8 @@ public class PgServer implements Service {
 			}
 			return null;
 		}
-		PreparedStatement prep = conn.prepareStatement("select column_name from information_schema.indexes where id=? and ordinal_position=?");
+		PreparedStatement prep = conn
+				.prepareStatement("select column_name from information_schema.indexes where id=? and ordinal_position=?");
 		prep.setInt(1, indexId);
 		prep.setInt(2, ordinalPosition.intValue());
 		ResultSet rs = prep.executeQuery();
@@ -266,10 +277,11 @@ public class PgServer implements Service {
 	}
 
 	/**
-	 * Get the name of the current schema.
-	 * This method is called by the database.
-	 *
-	 * @param conn the connection
+	 * Get the name of the current schema. This method is called by the
+	 * database.
+	 * 
+	 * @param conn
+	 *            the connection
 	 * @return the schema name
 	 */
 	public static String getCurrentSchema(Connection conn) throws SQLException {
@@ -279,10 +291,11 @@ public class PgServer implements Service {
 	}
 
 	/**
-	 * Get the name of this encoding code.
-	 * This method is called by the database.
-	 *
-	 * @param code the encoding code
+	 * Get the name of this encoding code. This method is called by the
+	 * database.
+	 * 
+	 * @param code
+	 *            the encoding code
 	 * @return the encoding name
 	 */
 	public static String getEncodingName(int code) {
@@ -301,17 +314,17 @@ public class PgServer implements Service {
 	/**
 	 * Get the version. This method must return PostgreSQL to keep some clients
 	 * happy. This method is called by the database.
-	 *
+	 * 
 	 * @return the server name and version
 	 */
 	public static String getVersion() {
-		return "PostgreSQL 8.1.4  server protocol using H2 " + Constants.getFullVersion();
+		return "PostgreSQL 8.1.4  server protocol using H2 "
+				+ Constants.getFullVersion();
 	}
 
 	/**
-	 * Get the current system time.
-	 * This method is called by the database.
-	 *
+	 * Get the current system time. This method is called by the database.
+	 * 
 	 * @return the current system time
 	 */
 	public static Timestamp getStartTime() {
@@ -319,15 +332,18 @@ public class PgServer implements Service {
 	}
 
 	/**
-	 * Get the user name for this id.
-	 * This method is called by the database.
-	 *
-	 * @param conn the connection
-	 * @param id the user id
+	 * Get the user name for this id. This method is called by the database.
+	 * 
+	 * @param conn
+	 *            the connection
+	 * @param id
+	 *            the user id
 	 * @return the user name
 	 */
-	public static String getUserById(Connection conn, int id) throws SQLException {
-		PreparedStatement prep = conn.prepareStatement("SELECT NAME FROM INFORMATION_SCHEMA.USERS WHERE ID=?");
+	public static String getUserById(Connection conn, int id)
+			throws SQLException {
+		PreparedStatement prep = conn
+				.prepareStatement("SELECT NAME FROM INFORMATION_SCHEMA.USERS WHERE ID=?");
 		prep.setInt(1, id);
 		ResultSet rs = prep.executeQuery();
 		if (rs.next()) {
@@ -337,11 +353,13 @@ public class PgServer implements Service {
 	}
 
 	/**
-	 * Check if the this session has the given database privilege.
-	 * This method is called by the database.
-	 *
-	 * @param id the session id
-	 * @param privilege the privilege to check
+	 * Check if the this session has the given database privilege. This method
+	 * is called by the database.
+	 * 
+	 * @param id
+	 *            the session id
+	 * @param privilege
+	 *            the privilege to check
 	 * @return true
 	 */
 	public static boolean hasDatabasePrivilege(int id, String privilege) {
@@ -349,11 +367,13 @@ public class PgServer implements Service {
 	}
 
 	/**
-	 * Check if the current session has access to this table.
-	 * This method is called by the database.
-	 *
-	 * @param table the table name
-	 * @param privilege the privilege to check
+	 * Check if the current session has access to this table. This method is
+	 * called by the database.
+	 * 
+	 * @param table
+	 *            the table name
+	 * @param privilege
+	 *            the privilege to check
 	 * @return true
 	 */
 	public static boolean hasTablePrivilege(String table, String privilege) {
@@ -361,11 +381,12 @@ public class PgServer implements Service {
 	}
 
 	/**
-	 * Get the current transaction id.
-	 * This method is called by the database.
-	 *
-	 * @param table the table name
-	 * @param id the id
+	 * Get the current transaction id. This method is called by the database.
+	 * 
+	 * @param table
+	 *            the table name
+	 * @param id
+	 *            the id
 	 * @return 1
 	 */
 	public static int getCurrentTid(String table, String id) {

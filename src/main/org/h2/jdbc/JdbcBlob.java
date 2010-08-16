@@ -39,7 +39,7 @@ public class JdbcBlob extends TraceObject implements Blob {
 
 	/**
 	 * Returns the length.
-	 *
+	 * 
 	 * @return the length
 	 * @throws SQLException
 	 */
@@ -75,8 +75,9 @@ public class JdbcBlob extends TraceObject implements Blob {
 
 	/**
 	 * [Not supported] Truncates the object.
-	 *
-	 * @param len the new length
+	 * 
+	 * @param len
+	 *            the new length
 	 * @throws SQLException
 	 */
 	public void truncate(long len) throws SQLException {
@@ -86,15 +87,17 @@ public class JdbcBlob extends TraceObject implements Blob {
 
 	/**
 	 * Returns some bytes of the object.
-	 *
-	 * @param pos the index, the first byte is at position 1
-	 * @param length the number of bytes
+	 * 
+	 * @param pos
+	 *            the index, the first byte is at position 1
+	 * @param length
+	 *            the number of bytes
 	 * @return the bytes, at most length bytes
 	 * @throws SQLException
 	 */
 	public byte[] getBytes(long pos, int length) throws SQLException {
 		try {
-			debugCode("getBytes("+pos+", "+length+");");
+			debugCode("getBytes(" + pos + ", " + length + ");");
 			checkClosed();
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			InputStream in = value.getInputStream();
@@ -119,35 +122,42 @@ public class JdbcBlob extends TraceObject implements Blob {
 
 	/**
 	 * [Not supported] Sets some bytes of the object.
-	 *
-	 * @param pos the write position
-	 * @param bytes the bytes to set
+	 * 
+	 * @param pos
+	 *            the write position
+	 * @param bytes
+	 *            the bytes to set
 	 * @return how many bytes have been written
 	 * @throws SQLException
 	 */
 	public int setBytes(long pos, byte[] bytes) throws SQLException {
-		debugCode("setBytes("+pos+", bytes);");
+		debugCode("setBytes(" + pos + ", bytes);");
 		throw Message.getUnsupportedException();
 	}
 
 	/**
 	 * [Not supported] Sets some bytes of the object.
-	 *
-	 * @param pos the write position
-	 * @param bytes the bytes to set
-	 * @param offset the bytes offset
-	 * @param len the number of bytes to write
+	 * 
+	 * @param pos
+	 *            the write position
+	 * @param bytes
+	 *            the bytes to set
+	 * @param offset
+	 *            the bytes offset
+	 * @param len
+	 *            the number of bytes to write
 	 * @return how many bytes have been written
 	 * @throws SQLException
 	 */
-	public int setBytes(long pos, byte[] bytes, int offset, int len) throws SQLException {
-		debugCode("setBytes("+pos+", bytes, "+offset+", "+len+");");
+	public int setBytes(long pos, byte[] bytes, int offset, int len)
+			throws SQLException {
+		debugCode("setBytes(" + pos + ", bytes, " + offset + ", " + len + ");");
 		throw Message.getUnsupportedException();
 	}
 
 	/**
 	 * Returns the input stream.
-	 *
+	 * 
 	 * @return the input stream
 	 * @throws SQLException
 	 */
@@ -163,8 +173,9 @@ public class JdbcBlob extends TraceObject implements Blob {
 
 	/**
 	 * [Not supported] Returns an output stream.
-	 *
-	 * @param pos where to start writing
+	 * 
+	 * @param pos
+	 *            where to start writing
 	 * @return the output stream to write into
 	 * @throws SQLException
 	 */
@@ -175,14 +186,16 @@ public class JdbcBlob extends TraceObject implements Blob {
 
 	/**
 	 * [Not supported] Searches a pattern and return the position.
-	 *
-	 * @param pattern the pattern to search
-	 * @param start the index, the first byte is at position 1
+	 * 
+	 * @param pattern
+	 *            the pattern to search
+	 * @param start
+	 *            the index, the first byte is at position 1
 	 * @return the position (first byte is at position 1), or -1 for not found
 	 * @throws SQLException
 	 */
 	public long position(byte[] pattern, long start) throws SQLException {
-		debugCode("position(pattern, "+start+");");
+		debugCode("position(pattern, " + start + ");");
 		if (false) {
 			try {
 				debugCode("position(pattern, " + start + ");");
@@ -193,7 +206,8 @@ public class JdbcBlob extends TraceObject implements Blob {
 					return 1;
 				}
 				// TODO performance: blob pattern search is slow
-				BufferedInputStream in = new BufferedInputStream(value.getInputStream());
+				BufferedInputStream in = new BufferedInputStream(
+						value.getInputStream());
 				IOUtils.skipFully(in, start - 1);
 				int pos = 0;
 				int patternPos = 0;
@@ -228,14 +242,16 @@ public class JdbcBlob extends TraceObject implements Blob {
 
 	/**
 	 * [Not supported] Searches a pattern and return the position.
-	 *
-	 * @param blobPattern the pattern to search
-	 * @param start the index, the first byte is at position 1
+	 * 
+	 * @param blobPattern
+	 *            the pattern to search
+	 * @param start
+	 *            the index, the first byte is at position 1
 	 * @return the position (first byte is at position 1), or -1 for not found
 	 * @throws SQLException
 	 */
 	public long position(Blob blobPattern, long start) throws SQLException {
-		debugCode("position(blobPattern, "+start+");");
+		debugCode("position(blobPattern, " + start + ");");
 		if (false) {
 			try {
 				debugCode("position(blobPattern, " + start + ");");
@@ -269,14 +285,17 @@ public class JdbcBlob extends TraceObject implements Blob {
 
 	/**
 	 * [Not supported] Returns the input stream, starting from an offset.
-	 *
-	 * @param pos where to start reading
-	 * @param length the number of bytes that will be read
+	 * 
+	 * @param pos
+	 *            where to start reading
+	 * @param length
+	 *            the number of bytes that will be read
 	 * @return the input stream to read
 	 * @throws SQLException
 	 */
-	public InputStream getBinaryStream(long pos, long length) throws SQLException {
-		debugCode("getBinaryStream("+pos+", "+length+");");
+	public InputStream getBinaryStream(long pos, long length)
+			throws SQLException {
+		debugCode("getBinaryStream(" + pos + ", " + length + ");");
 		throw Message.getUnsupportedException();
 	}
 

@@ -21,8 +21,8 @@ import org.h2.message.Message;
 import org.h2.util.StringUtils;
 
 /**
- * A BNF terminal rule that is linked to the database context information.
- * This class is used by the H2 Console, to support auto-complete.
+ * A BNF terminal rule that is linked to the database context information. This
+ * class is used by the H2 Console, to support auto-complete.
  */
 public class DbContextRule implements Rule {
 
@@ -89,8 +89,8 @@ public class DbContextRule implements Rule {
 			addTableAlias(sentence);
 			break;
 		case COLUMN_ALIAS:
-			//            addColumnAlias(query, sentence);
-			//            break;
+			// addColumnAlias(query, sentence);
+			// break;
 		case COLUMN:
 			addColumn(sentence);
 			break;
@@ -111,7 +111,8 @@ public class DbContextRule implements Rule {
 				set.add(StringUtils.toUpperEnglish(table.name));
 				if (q.length() == 0 || alias.startsWith(q)) {
 					if (q.length() < alias.length()) {
-						sentence.add(alias + ".", alias.substring(q.length()) + ".", Sentence.CONTEXT);
+						sentence.add(alias + ".", alias.substring(q.length())
+								+ ".", Sentence.CONTEXT);
 					}
 				}
 			}
@@ -121,14 +122,16 @@ public class DbContextRule implements Rule {
 			for (Iterator it = tables.iterator(); it.hasNext();) {
 				DbTableOrView table = (DbTableOrView) it.next();
 				String tableName = StringUtils.toUpperEnglish(table.name);
-				//DbTableOrView[] tables = contents.defaultSchema.tables;
-				//for(int i=0; i<tables.length; i++) {
-				//    DbTableOrView table = tables[i];
-				//    String tableName = StringUtils.toUpperEnglish(table.name);
+				// DbTableOrView[] tables = contents.defaultSchema.tables;
+				// for(int i=0; i<tables.length; i++) {
+				// DbTableOrView table = tables[i];
+				// String tableName = StringUtils.toUpperEnglish(table.name);
 				if (!set.contains(tableName)) {
 					if (q.length() == 0 || tableName.startsWith(q)) {
 						if (q.length() < tableName.length()) {
-							sentence.add(tableName + ".", tableName.substring(q.length()) + ".", Sentence.CONTEXT);
+							sentence.add(tableName + ".",
+									tableName.substring(q.length()) + ".",
+									Sentence.CONTEXT);
 						}
 					}
 				}
@@ -143,7 +146,8 @@ public class DbContextRule implements Rule {
 			if (query.length() > 3) {
 				return;
 			}
-			String lastTableName = StringUtils.toUpperEnglish(sentence.getLastTable().name);
+			String lastTableName = StringUtils.toUpperEnglish(sentence
+					.getLastTable().name);
 			if (lastTableName == null) {
 				return;
 			}
@@ -160,26 +164,28 @@ public class DbContextRule implements Rule {
 				shortName += result;
 			}
 			String q = StringUtils.toUpperEnglish(query.trim());
-			if (q.length() == 0 || StringUtils.toUpperEnglish(shortName).startsWith(q)) {
+			if (q.length() == 0
+					|| StringUtils.toUpperEnglish(shortName).startsWith(q)) {
 				if (q.length() < shortName.length()) {
-					sentence.add(shortName, shortName.substring(q.length()), Sentence.CONTEXT);
+					sentence.add(shortName, shortName.substring(q.length()),
+							Sentence.CONTEXT);
 				}
 			}
 		}
 	}
 
-	//    private boolean startWithIgnoreCase(String a, String b) {
-	//        if(a.length() < b.length()) {
-	//            return false;
-	//        }
-	//        for(int i=0; i<b.length(); i++) {
-	//            if(Character.toUpperCase(a.charAt(i))
-	//                    != Character.toUpperCase(b.charAt(i))) {
-	//                return false;
-	//            }
-	//        }
-	//        return true;
-	//    }
+	// private boolean startWithIgnoreCase(String a, String b) {
+	// if(a.length() < b.length()) {
+	// return false;
+	// }
+	// for(int i=0; i<b.length(); i++) {
+	// if(Character.toUpperCase(a.charAt(i))
+	// != Character.toUpperCase(b.charAt(i))) {
+	// return false;
+	// }
+	// }
+	// return true;
+	// }
 
 	private void addSchema(Sentence sentence) {
 		String query = sentence.getQuery();
@@ -188,14 +194,16 @@ public class DbContextRule implements Rule {
 			q = q.trim();
 		}
 		DbSchema[] schemas = contents.schemas;
-		for (int i = 0; i < schemas.length; i++) {
-			DbSchema schema = schemas[i];
+		for (DbSchema schema : schemas) {
 			if (schema == contents.defaultSchema) {
 				continue;
 			}
-			if (q.length() == 0 || StringUtils.toUpperEnglish(schema.name).startsWith(q)) {
+			if (q.length() == 0
+					|| StringUtils.toUpperEnglish(schema.name).startsWith(q)) {
 				if (q.length() < schema.quotedName.length()) {
-					sentence.add(schema.quotedName + ".", schema.quotedName.substring(q.length()) + ".", Sentence.CONTEXT);
+					sentence.add(schema.quotedName + ".",
+							schema.quotedName.substring(q.length()) + ".",
+							Sentence.CONTEXT);
 				}
 			}
 		}
@@ -212,11 +220,14 @@ public class DbContextRule implements Rule {
 			q = q.trim();
 		}
 
-		for (Set<DbTableOrView> tableSet: schema.tables.values()){
-			for (DbTableOrView table: tableSet) {
-				if (q.length() == 0 || StringUtils.toUpperEnglish(table.name).startsWith(q)) {
+		for (Set<DbTableOrView> tableSet : schema.tables.values()) {
+			for (DbTableOrView table : tableSet) {
+				if (q.length() == 0
+						|| StringUtils.toUpperEnglish(table.name).startsWith(q)) {
 					if (q.length() < table.quotedName.length()) {
-						sentence.add(table.quotedName, table.quotedName.substring(q.length()), Sentence.CONTEXT);
+						sentence.add(table.quotedName,
+								table.quotedName.substring(q.length()),
+								Sentence.CONTEXT);
 					}
 				}
 			}
@@ -244,7 +255,8 @@ public class DbContextRule implements Rule {
 			set = sentence.getTables();
 		}
 		DbTableOrView table = null;
-		if (tableName != null && aliases != null && aliases.get(tableName) != null) {
+		if (tableName != null && aliases != null
+				&& aliases.get(tableName) != null) {
 			table = (DbTableOrView) aliases.get(tableName);
 			tableName = StringUtils.toUpperEnglish(table.name);
 		}
@@ -252,13 +264,15 @@ public class DbContextRule implements Rule {
 			if (set == null && aliases == null) {
 				return;
 			}
-			if ((set != null && set.size() > 1) || (aliases != null && aliases.size() > 1)) {
+			if ((set != null && set.size() > 1)
+					|| (aliases != null && aliases.size() > 1)) {
 				return;
 			}
 		}
 		if (table == null) {
-			for (Set<DbTableOrView> tableSet: contents.defaultSchema.tables.values()){
-				for (DbTableOrView tab: tableSet) {
+			for (Set<DbTableOrView> tableSet : contents.defaultSchema.tables
+					.values()) {
+				for (DbTableOrView tab : tableSet) {
 					String t = StringUtils.toUpperEnglish(tab.name);
 					if (tableName != null && !tableName.equals(t)) {
 						continue;
@@ -272,13 +286,16 @@ public class DbContextRule implements Rule {
 			}
 		}
 		if (table != null && table.columns != null) {
-			for (int j = 0; j < table.columns.length; j++) {
-				String columnName = table.columns[j].name;
-				if (!StringUtils.toUpperEnglish(columnName).startsWith(columnPattern)) {
+			for (DbColumn column2 : table.columns) {
+				String columnName = column2.name;
+				if (!StringUtils.toUpperEnglish(columnName).startsWith(
+						columnPattern)) {
 					continue;
 				}
 				if (columnPattern.length() < columnName.length()) {
-					sentence.add(columnName, columnName.substring(columnPattern.length()), Sentence.CONTEXT);
+					sentence.add(columnName,
+							columnName.substring(columnPattern.length()),
+							Sentence.CONTEXT);
 				}
 			}
 		}
@@ -324,8 +341,7 @@ public class DbContextRule implements Rule {
 		DbSchema[] schemas = contents.schemas;
 		String best = null;
 		DbSchema bestSchema = null;
-		for (int i = 0; i < schemas.length; i++) {
-			DbSchema schema = schemas[i];
+		for (DbSchema schema : schemas) {
 			String schemaName = StringUtils.toUpperEnglish(schema.name);
 			if (up.startsWith(schemaName)) {
 				if (best == null || schemaName.length() > best.length()) {
@@ -354,8 +370,8 @@ public class DbContextRule implements Rule {
 		}
 		String best = null;
 		DbTableOrView bestTable = null;
-		for (Set<DbTableOrView> tableSet: schema.tables.values()){
-			for (DbTableOrView table: tableSet) {
+		for (Set<DbTableOrView> tableSet : schema.tables.values()) {
+			for (DbTableOrView table : tableSet) {
 				String tableName = StringUtils.toUpperEnglish(table.name);
 				if (up.startsWith(tableName)) {
 					if (best == null || tableName.length() > best.length()) {
@@ -423,7 +439,8 @@ public class DbContextRule implements Rule {
 			sentence.addAlias(alias, sentence.getLastTable());
 		}
 		HashMap map = sentence.getAliases();
-		if ((map != null && map.containsKey(alias)) || (sentence.getLastTable() == null)) {
+		if ((map != null && map.containsKey(alias))
+				|| (sentence.getLastTable() == null)) {
 			if (add && query.length() == alias.length()) {
 				return query;
 			}
@@ -436,11 +453,12 @@ public class DbContextRule implements Rule {
 			for (Iterator it = tables.iterator(); it.hasNext();) {
 				DbTableOrView table = (DbTableOrView) it.next();
 				String tableName = StringUtils.toUpperEnglish(table.name);
-				//DbTableOrView[] tables = contents.defaultSchema.tables;
-				//for(int i=0; i<tables.length; i++) {
-				//    DbTableOrView table = tables[i];
-				//    String tableName = StringUtils.toUpperEnglish(table.name);
-				if (alias.startsWith(tableName) && (best == null || tableName.length() > best.length())) {
+				// DbTableOrView[] tables = contents.defaultSchema.tables;
+				// for(int i=0; i<tables.length; i++) {
+				// DbTableOrView table = tables[i];
+				// String tableName = StringUtils.toUpperEnglish(table.name);
+				if (alias.startsWith(tableName)
+						&& (best == null || tableName.length() > best.length())) {
 					sentence.setLastMatchedTable(table);
 					best = tableName;
 				}
@@ -460,8 +478,8 @@ public class DbContextRule implements Rule {
 		String best = null;
 		DbTableOrView last = sentence.getLastMatchedTable();
 		if (last != null && last.columns != null) {
-			for (int j = 0; j < last.columns.length; j++) {
-				String name = StringUtils.toUpperEnglish(last.columns[j].name);
+			for (DbColumn column2 : last.columns) {
+				String name = StringUtils.toUpperEnglish(column2.name);
 				if (up.startsWith(name)) {
 					String b = query.substring(name.length());
 					if (best == null || b.length() < best.length()) {
@@ -471,16 +489,17 @@ public class DbContextRule implements Rule {
 			}
 		}
 
-		for (Set<DbTableOrView> tableSet: contents.defaultSchema.tables.values()){
-			for (DbTableOrView table: tableSet) {
+		for (Set<DbTableOrView> tableSet : contents.defaultSchema.tables
+				.values()) {
+			for (DbTableOrView table : tableSet) {
 				if (table != last && set != null && !set.contains(table)) {
 					continue;
 				}
 				if (table == null || table.columns == null) {
 					continue;
 				}
-				for (int j = 0; j < table.columns.length; j++) {
-					String name = StringUtils.toUpperEnglish(table.columns[j].name);
+				for (DbColumn column2 : table.columns) {
+					String name = StringUtils.toUpperEnglish(column2.name);
 					if (up.startsWith(name)) {
 						String b = query.substring(name.length());
 						if (best == null || b.length() < best.length()) {

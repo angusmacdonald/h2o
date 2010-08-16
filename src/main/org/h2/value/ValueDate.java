@@ -25,8 +25,8 @@ public class ValueDate extends Value {
 	public static final int PRECISION = 8;
 
 	/**
-	 * The display size of the textual representation of a date.
-	 * Example: 2000-01-02
+	 * The display size of the textual representation of a date. Example:
+	 * 2000-01-02
 	 */
 	static final int DISPLAY_SIZE = 10;
 
@@ -38,12 +38,14 @@ public class ValueDate extends Value {
 
 	/**
 	 * Parse a string to a java.sql.Date object.
-	 *
-	 * @param s the string to parse
+	 * 
+	 * @param s
+	 *            the string to parse
 	 * @return the date
 	 */
 	public static Date parseDate(String s) throws SQLException {
-		return (Date) DateTimeUtils.parseDateTime(s, Value.DATE, ErrorCode.DATE_CONSTANT_2);
+		return (Date) DateTimeUtils.parseDateTime(s, Value.DATE,
+				ErrorCode.DATE_CONSTANT_2);
 	}
 
 	public Date getDate() {
@@ -96,15 +98,16 @@ public class ValueDate extends Value {
 		return getDate();
 	}
 
-	public void set(PreparedStatement prep, int parameterIndex) throws SQLException {
+	public void set(PreparedStatement prep, int parameterIndex)
+			throws SQLException {
 		prep.setDate(parameterIndex, value);
 	}
 
 	/**
-	 * Get or create a date value for the given date.
-	 * Clone the date.
-	 *
-	 * @param date the date
+	 * Get or create a date value for the given date. Clone the date.
+	 * 
+	 * @param date
+	 *            the date
 	 * @return the value
 	 */
 	public static ValueDate get(Date date) {
@@ -113,10 +116,10 @@ public class ValueDate extends Value {
 	}
 
 	/**
-	 * Get or create a date value for the given date.
-	 * Do not clone the date.
-	 *
-	 * @param date the date
+	 * Get or create a date value for the given date. Do not clone the date.
+	 * 
+	 * @param date
+	 *            the date
 	 * @return the value
 	 */
 	public static ValueDate getNoCopy(Date date) {
@@ -128,7 +131,8 @@ public class ValueDate extends Value {
 	}
 
 	public boolean equals(Object other) {
-		return other instanceof ValueDate && value.equals(((ValueDate) other).value);
+		return other instanceof ValueDate
+				&& value.equals(((ValueDate) other).value);
 	}
 
 }

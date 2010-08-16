@@ -28,8 +28,8 @@ public class ValueTimestamp extends Value {
 	public static final int PRECISION = 23;
 
 	/**
-	 * The display size of the textual representation of a timestamp.
-	 * Example: 2001-01-01 23:59:59.000
+	 * The display size of the textual representation of a timestamp. Example:
+	 * 2001-01-01 23:59:59.000
 	 */
 	static final int DISPLAY_SIZE = 23;
 
@@ -65,12 +65,14 @@ public class ValueTimestamp extends Value {
 
 	/**
 	 * Parse a string to a java.sql.Timestamp object.
-	 *
-	 * @param s the string to parse
+	 * 
+	 * @param s
+	 *            the string to parse
 	 * @return the timestamp
 	 */
 	public static Timestamp parseTimestamp(String s) throws SQLException {
-		return (Timestamp) DateTimeUtils.parseDateTime(s, Value.TIMESTAMP, ErrorCode.TIMESTAMP_CONSTANT_2);
+		return (Timestamp) DateTimeUtils.parseDateTime(s, Value.TIMESTAMP,
+				ErrorCode.TIMESTAMP_CONSTANT_2);
 	}
 
 	public int getType() {
@@ -114,15 +116,17 @@ public class ValueTimestamp extends Value {
 		return getTimestamp();
 	}
 
-	public void set(PreparedStatement prep, int parameterIndex) throws SQLException {
+	public void set(PreparedStatement prep, int parameterIndex)
+			throws SQLException {
 		prep.setTimestamp(parameterIndex, value);
 	}
 
 	/**
-	 * Get or create a timestamp value for the given timestamp.
-	 * Clone the timestamp.
-	 *
-	 * @param timestamp the timestamp
+	 * Get or create a timestamp value for the given timestamp. Clone the
+	 * timestamp.
+	 * 
+	 * @param timestamp
+	 *            the timestamp
 	 * @return the value
 	 */
 	public static ValueTimestamp get(Timestamp timestamp) {
@@ -131,20 +135,22 @@ public class ValueTimestamp extends Value {
 	}
 
 	/**
-	 * Get or create a timestamp value for the given timestamp.
-	 * Do not clone the timestamp.
-	 *
-	 * @param timestamp the timestamp
+	 * Get or create a timestamp value for the given timestamp. Do not clone the
+	 * timestamp.
+	 * 
+	 * @param timestamp
+	 *            the timestamp
 	 * @return the value
 	 */
 	public static ValueTimestamp getNoCopy(Timestamp timestamp) {
 		return (ValueTimestamp) Value.cache(new ValueTimestamp(timestamp));
 	}
 
-	public Value convertScale(boolean onlyToSmallerScale, int targetScale) throws SQLException {
+	public Value convertScale(boolean onlyToSmallerScale, int targetScale)
+			throws SQLException {
 		if (targetScale < 0 || targetScale > DEFAULT_SCALE) {
 			// TODO convertScale for Timestamps: may throw an exception?
-			throw Message.getInvalidValueException(""+targetScale, "scale");
+			throw Message.getInvalidValueException("" + targetScale, "scale");
 		}
 		int nanos = value.getNanos();
 		BigDecimal bd = new BigDecimal("" + nanos);
@@ -170,7 +176,8 @@ public class ValueTimestamp extends Value {
 	}
 
 	public boolean equals(Object other) {
-		return other instanceof ValueTimestamp && value.equals(((ValueTimestamp) other).value);
+		return other instanceof ValueTimestamp
+				&& value.equals(((ValueTimestamp) other).value);
 	}
 
 }

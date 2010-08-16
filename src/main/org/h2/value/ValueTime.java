@@ -24,8 +24,8 @@ public class ValueTime extends Value {
 	public static final int PRECISION = 6;
 
 	/**
-	 * The display size of the textual representation of a time.
-	 * Example: 10:00:00
+	 * The display size of the textual representation of a time. Example:
+	 * 10:00:00
 	 */
 	static final int DISPLAY_SIZE = 8;
 
@@ -37,12 +37,14 @@ public class ValueTime extends Value {
 
 	/**
 	 * Parse a string to a java.sql.Time object.
-	 *
-	 * @param s the string to parse
+	 * 
+	 * @param s
+	 *            the string to parse
 	 * @return the time
 	 */
 	public static Time parseTime(String s) throws SQLException {
-		return (Time) DateTimeUtils.parseDateTime(s, Value.TIME, ErrorCode.TIME_CONSTANT_2);
+		return (Time) DateTimeUtils.parseDateTime(s, Value.TIME,
+				ErrorCode.TIME_CONSTANT_2);
 	}
 
 	public Time getTime() {
@@ -84,15 +86,16 @@ public class ValueTime extends Value {
 		return getTime();
 	}
 
-	public void set(PreparedStatement prep, int parameterIndex) throws SQLException {
+	public void set(PreparedStatement prep, int parameterIndex)
+			throws SQLException {
 		prep.setTime(parameterIndex, value);
 	}
 
 	/**
-	 * Get or create a time value for the given time.
-	 * Clone the time.
-	 *
-	 * @param time the time
+	 * Get or create a time value for the given time. Clone the time.
+	 * 
+	 * @param time
+	 *            the time
 	 * @return the value
 	 */
 	public static ValueTime get(Time time) {
@@ -101,10 +104,10 @@ public class ValueTime extends Value {
 	}
 
 	/**
-	 * Get or create a time value for the given time.
-	 * Do not clone the time.
-	 *
-	 * @param time the time
+	 * Get or create a time value for the given time. Do not clone the time.
+	 * 
+	 * @param time
+	 *            the time
 	 * @return the value
 	 */
 	public static ValueTime getNoCopy(Time time) {
@@ -116,7 +119,8 @@ public class ValueTime extends Value {
 	}
 
 	public boolean equals(Object other) {
-		return other instanceof ValueTime && value.equals(((ValueTime) other).value);
+		return other instanceof ValueTime
+				&& value.equals(((ValueTime) other).value);
 	}
 
 }

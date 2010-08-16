@@ -30,10 +30,11 @@ import org.h2.util.StringUtils;
 import org.h2.util.Tool;
 
 /**
- * Executes the contents of a SQL script file against a database.
- * This tool is usually used to create a database from script.
- * It can also be used to analyze performance problems by running
- * the tool using Java profiler settings such as:
+ * Executes the contents of a SQL script file against a database. This tool is
+ * usually used to create a database from script. It can also be used to analyze
+ * performance problems by running the tool using Java profiler settings such
+ * as:
+ * 
  * <pre>
  * java -Xrunhprof:cpu=samples ...
  * </pre>
@@ -45,16 +46,19 @@ public class RunScript extends Tool {
 
 	private void showUsage() {
 		out.println("Runs a SQL script.");
-		out.println("java "+getClass().getName() + "\n" +
-				" -url <url>         The database URL\n" +
-				" -user <user>       The user name\n" +
-				" [-password <pwd>]  The password\n" +
-				" [-script <file>]   The script file to run (default: backup.sql)\n" +
-				" [-driver <class>]  The JDBC driver class to use (not required in most cases)\n" +
-				" [-showResults]     Show the statements and the results of queries\n" +
-				" [-checkResults]    Check if the query results match the expected results\n" +
-		" [-options ...]     The list of options (only for H2 embedded mode)");
-		out.println("See also http://h2database.com/javadoc/" + getClass().getName().replace('.', '/') + ".html");
+		out.println("java "
+				+ getClass().getName()
+				+ "\n"
+				+ " -url <url>         The database URL\n"
+				+ " -user <user>       The user name\n"
+				+ " [-password <pwd>]  The password\n"
+				+ " [-script <file>]   The script file to run (default: backup.sql)\n"
+				+ " [-driver <class>]  The JDBC driver class to use (not required in most cases)\n"
+				+ " [-showResults]     Show the statements and the results of queries\n"
+				+ " [-checkResults]    Check if the query results match the expected results\n"
+				+ " [-options ...]     The list of options (only for H2 embedded mode)");
+		out.println("See also http://h2database.com/javadoc/"
+				+ getClass().getName().replace('.', '/') + ".html");
 	}
 
 	/**
@@ -62,29 +66,30 @@ public class RunScript extends Tool {
 	 * strings like this: "-user", "sa",... Options are case sensitive. The
 	 * following options are supported:
 	 * <ul>
-	 * <li>-help or -? (print the list of options) </li>
-	 * <li>-url jdbc:h2:... (database URL) </li>
-	 * <li>-user username </li>
-	 * <li>-password password </li>
-	 * <li>-script filename (default file name is backup.sql) </li>
+	 * <li>-help or -? (print the list of options)</li>
+	 * <li>-url jdbc:h2:... (database URL)</li>
+	 * <li>-user username</li>
+	 * <li>-password password</li>
+	 * <li>-script filename (default file name is backup.sql)</li>
 	 * <li>-driver driver (the JDBC driver class name; not required for most
-	 * databases) </li>
+	 * databases)</li>
 	 * <li>-showResults (show the statements and the results of queries)</li>
 	 * <li>-checkResults (check if the query results match the expected results</li>
 	 * <li>-options (to specify a list of options ;only for H2 and only when
-	 * using the embedded mode) </li>
+	 * using the embedded mode)</li>
 	 * </ul>
 	 * To include local files when using remote databases, use the special
 	 * syntax:
-	 *
+	 * 
 	 * <pre>
 	 * &#064;INCLUDE fileName
 	 * </pre>
-	 *
+	 * 
 	 * This syntax is only supported by this tool. Embedded RUNSCRIPT SQL
 	 * statements will be executed by the database.
-	 *
-	 * @param args the command line arguments
+	 * 
+	 * @param args
+	 *            the command line arguments
 	 * @throws SQLException
 	 */
 	public static void main(String[] args) throws SQLException {
@@ -155,16 +160,20 @@ public class RunScript extends Tool {
 
 	/**
 	 * Executes the SQL commands in a script file against a database.
-	 *
-	 * @param conn the connection to a database
-	 * @param reader the reader
+	 * 
+	 * @param conn
+	 *            the connection to a database
+	 * @param reader
+	 *            the reader
 	 * @return the last result set
 	 */
-	public static ResultSet execute(Connection conn, Reader reader) throws SQLException {
+	public static ResultSet execute(Connection conn, Reader reader)
+			throws SQLException {
 		return new RunScript().process(conn, reader);
 	}
 
-	private ResultSet process(Connection conn, Reader reader) throws SQLException {
+	private ResultSet process(Connection conn, Reader reader)
+			throws SQLException {
 		reader = new BufferedReader(reader);
 		Statement stat = conn.createStatement();
 		ResultSet rs = null;
@@ -186,7 +195,9 @@ public class RunScript extends Tool {
 		return rs;
 	}
 
-	private void process(Connection conn, String fileName, boolean continueOnError, String charsetName) throws SQLException, IOException {
+	private void process(Connection conn, String fileName,
+			boolean continueOnError, String charsetName) throws SQLException,
+			IOException {
 		InputStream in = FileUtils.openFileInputStream(fileName);
 		String path = FileUtils.getParent(fileName);
 		try {
@@ -198,7 +209,8 @@ public class RunScript extends Tool {
 		}
 	}
 
-	private void process(Connection conn, boolean continueOnError, String path, Reader reader, String charsetName) throws SQLException, IOException {
+	private void process(Connection conn, boolean continueOnError, String path,
+			Reader reader, String charsetName) throws SQLException, IOException {
 		Statement stat = conn.createStatement();
 		ScriptReader r = new ScriptReader(new BufferedReader(reader));
 		while (true) {
@@ -207,7 +219,8 @@ public class RunScript extends Tool {
 				break;
 			}
 			String trim = sql.trim();
-			if (trim.startsWith("@") && StringUtils.toUpperEnglish(trim).startsWith("@INCLUDE")) {
+			if (trim.startsWith("@")
+					&& StringUtils.toUpperEnglish(trim).startsWith("@INCLUDE")) {
 				sql = trim;
 				sql = sql.substring("@INCLUDE".length()).trim();
 				if (!FileUtils.isAbsolute(sql)) {
@@ -231,9 +244,12 @@ public class RunScript extends Tool {
 									for (int i = 0; i < columns; i++) {
 										String s = rs.getString(i + 1);
 										if (s != null) {
-											s = StringUtils.replaceAll(s, "\r\n", "\n");
-											s = StringUtils.replaceAll(s, "\n", "\n-->    ");
-											s = StringUtils.replaceAll(s, "\r", "\r-->    ");
+											s = StringUtils.replaceAll(s,
+													"\r\n", "\n");
+											s = StringUtils.replaceAll(s, "\n",
+													"\n-->    ");
+											s = StringUtils.replaceAll(s, "\r",
+													"\r-->    ");
 										}
 										buff.append(' ');
 										buff.append(s);
@@ -246,12 +262,21 @@ public class RunScript extends Tool {
 								}
 								if (checkResults) {
 									String expected = r.readStatement() + ";";
-									expected = StringUtils.replaceAll(expected, "\r\n", "\n");
-									expected = StringUtils.replaceAll(expected, "\r", "\n");
+									expected = StringUtils.replaceAll(expected,
+											"\r\n", "\n");
+									expected = StringUtils.replaceAll(expected,
+											"\r", "\n");
 									if (!expected.equals(result)) {
-										expected = StringUtils.replaceAll(expected, " ", "+");
-										result = StringUtils.replaceAll(result, " ", "+");
-										throw new SQLException("Unexpected output for:\n" + sql.trim() + "\nGot:\n" + result + "\nExpected:\n" + expected);
+										expected = StringUtils.replaceAll(
+												expected, " ", "+");
+										result = StringUtils.replaceAll(result,
+												" ", "+");
+										throw new SQLException(
+												"Unexpected output for:\n"
+														+ sql.trim()
+														+ "\nGot:\n" + result
+														+ "\nExpected:\n"
+														+ expected);
 									}
 								}
 
@@ -271,7 +296,9 @@ public class RunScript extends Tool {
 		}
 	}
 
-	private static void processRunscript(String url, String user, String password, String fileName, String options) throws SQLException {
+	private static void processRunscript(String url, String user,
+			String password, String fileName, String options)
+			throws SQLException {
 		Connection conn = null;
 		Statement stat = null;
 		try {
@@ -288,29 +315,45 @@ public class RunScript extends Tool {
 
 	/**
 	 * Executes the SQL commands in a script file against a database.
-	 *
-	 * @param url the database URL
-	 * @param user the user name
-	 * @param password the password
-	 * @param fileName the script file
-	 * @param charsetName the character set name or null for UTF-8
-	 * @param continueOnError if execution should be continued if an error occurs
+	 * 
+	 * @param url
+	 *            the database URL
+	 * @param user
+	 *            the user name
+	 * @param password
+	 *            the password
+	 * @param fileName
+	 *            the script file
+	 * @param charsetName
+	 *            the character set name or null for UTF-8
+	 * @param continueOnError
+	 *            if execution should be continued if an error occurs
 	 */
-	public static void execute(String url, String user, String password, String fileName, String charsetName, boolean continueOnError) throws SQLException {
-		new RunScript().process(url, user, password, fileName, charsetName, continueOnError);
+	public static void execute(String url, String user, String password,
+			String fileName, String charsetName, boolean continueOnError)
+			throws SQLException {
+		new RunScript().process(url, user, password, fileName, charsetName,
+				continueOnError);
 	}
 
 	/**
 	 * Executes the SQL commands in a script file against a database.
-	 *
-	 * @param url the database URL
-	 * @param user the user name
-	 * @param password the password
-	 * @param fileName the script file
-	 * @param charsetName the character set name or null for UTF-8
-	 * @param continueOnError if execution should be continued if an error occurs
+	 * 
+	 * @param url
+	 *            the database URL
+	 * @param user
+	 *            the user name
+	 * @param password
+	 *            the password
+	 * @param fileName
+	 *            the script file
+	 * @param charsetName
+	 *            the character set name or null for UTF-8
+	 * @param continueOnError
+	 *            if execution should be continued if an error occurs
 	 */
-	void process(String url, String user, String password, String fileName, String charsetName, boolean continueOnError) throws SQLException {
+	void process(String url, String user, String password, String fileName,
+			String charsetName, boolean continueOnError) throws SQLException {
 		try {
 			org.h2.Driver.load();
 			Connection conn = DriverManager.getConnection(url, user, password);
@@ -329,8 +372,9 @@ public class RunScript extends Tool {
 
 	/**
 	 * If the statements as well as the results should be printed to the output.
-	 *
-	 * @param show true if yes
+	 * 
+	 * @param show
+	 *            true if yes
 	 */
 	public void setShowResults(boolean show) {
 		this.showResults = show;
@@ -339,8 +383,9 @@ public class RunScript extends Tool {
 	/**
 	 * If results of statements should be cross-checked with the expected
 	 * output. The expected result is the next line(s) of the script, commented.
-	 *
-	 * @param check true if yes
+	 * 
+	 * @param check
+	 *            true if yes
 	 */
 	public void setCheckResults(boolean check) {
 		this.checkResults = check;

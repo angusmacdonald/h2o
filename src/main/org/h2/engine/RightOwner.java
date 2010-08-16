@@ -18,27 +18,27 @@ import org.h2.table.Table;
 public abstract class RightOwner extends DbObjectBase {
 
 	/**
-	 * The map of granted roles.
-	 * The key is the role,
-	 * and the value is the right.
+	 * The map of granted roles. The key is the role, and the value is the
+	 * right.
 	 */
 	private HashMap grantedRoles;
 
 	/**
-	 * The map of granted rights.
-	 * The key is the table,
-	 * and the value is the right.
+	 * The map of granted rights. The key is the table, and the value is the
+	 * right.
 	 */
 	private HashMap grantedRights;
 
-	protected RightOwner(Database database, int id, String name, String traceModule) {
+	protected RightOwner(Database database, int id, String name,
+			String traceModule) {
 		initDbObjectBase(database, id, name, traceModule);
 	}
 
 	/**
 	 * Check if a role has been granted for this right owner.
-	 *
-	 * @param grantedRole the role
+	 * 
+	 * @param grantedRole
+	 *            the role
 	 * @return true if the role has been granted
 	 */
 	public boolean isRoleGranted(Role grantedRole) {
@@ -63,9 +63,11 @@ public abstract class RightOwner extends DbObjectBase {
 	/**
 	 * Check if a right is already granted to this object or to objects that
 	 * were granted to this object.
-	 *
-	 * @param table the table to check
-	 * @param rightMask the right mask to check
+	 * 
+	 * @param table
+	 *            the table to check
+	 * @param rightMask
+	 *            the right mask to check
 	 * @return true if the right was already granted
 	 */
 	boolean isRightGrantedRecursive(Table table, int rightMask) {
@@ -93,9 +95,11 @@ public abstract class RightOwner extends DbObjectBase {
 	/**
 	 * Grant a right for the given table. Only one right object per table is
 	 * supported.
-	 *
-	 * @param table the table
-	 * @param right the right
+	 * 
+	 * @param table
+	 *            the table
+	 * @param right
+	 *            the right
 	 */
 	public void grantRight(Table table, Right right) {
 		if (grantedRights == null) {
@@ -106,8 +110,9 @@ public abstract class RightOwner extends DbObjectBase {
 
 	/**
 	 * Revoke the right for the given table.
-	 *
-	 * @param table the table
+	 * 
+	 * @param table
+	 *            the table
 	 */
 	public void revokeRight(Table table) {
 		if (grantedRights == null) {
@@ -121,9 +126,11 @@ public abstract class RightOwner extends DbObjectBase {
 
 	/**
 	 * Grant a role to this object.
-	 *
-	 * @param role the role
-	 * @param right the right to grant
+	 * 
+	 * @param role
+	 *            the role
+	 * @param right
+	 *            the right to grant
 	 */
 	public void grantRole(Role role, Right right) {
 		if (grantedRoles == null) {
@@ -134,9 +141,11 @@ public abstract class RightOwner extends DbObjectBase {
 
 	/**
 	 * Remove the right for the given role.
-	 *
-	 * @param role the role to revoke
-	 * @throws SQLException if the right has not been granted
+	 * 
+	 * @param role
+	 *            the role to revoke
+	 * @throws SQLException
+	 *             if the right has not been granted
 	 */
 	public void revokeRole(Role role) {
 		if (grantedRoles == null) {
@@ -154,8 +163,9 @@ public abstract class RightOwner extends DbObjectBase {
 
 	/**
 	 * Get the 'grant table' right of this object.
-	 *
-	 * @param table the granted table
+	 * 
+	 * @param table
+	 *            the granted table
 	 * @return the right or null if the right has not been granted
 	 */
 	public Right getRightForTable(Table table) {
@@ -167,8 +177,9 @@ public abstract class RightOwner extends DbObjectBase {
 
 	/**
 	 * Get the 'grant role' right of this object.
-	 *
-	 * @param role the granted role
+	 * 
+	 * @param role
+	 *            the granted role
 	 * @return the right or null if the right has not been granted
 	 */
 	public Right getRightForRole(Role role) {

@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 import java.text.MessageFormat;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.Map.Entry;
@@ -33,20 +32,22 @@ public class Message {
 
 	static {
 		try {
-			byte[] messages = Resources.get("/org/h2/res/_messages_en.properties");
+			byte[] messages = Resources
+					.get("/org/h2/res/_messages_en.properties");
 			if (messages != null) {
 				MESSAGES.load(new ByteArrayInputStream(messages));
 			}
 			String language = Locale.getDefault().getLanguage();
 			if (!"en".equals(language)) {
-				byte[] translations = Resources.get("/org/h2/res/_messages_" + language + ".properties");
+				byte[] translations = Resources.get("/org/h2/res/_messages_"
+						+ language + ".properties");
 				// message: translated message + english
 				// (otherwise certain applications don't work)
 				if (translations != null) {
 					Properties p = new Properties();
 					p.load(new ByteArrayInputStream(translations));
-					for (Iterator it = p.entrySet().iterator(); it.hasNext();) {
-						Entry e = (Entry) it.next();
+					for (Object element : p.entrySet()) {
+						Entry e = (Entry) element;
 						String key = (String) e.getKey();
 						String translation = (String) e.getValue();
 						if (translation != null && !translation.startsWith("#")) {
@@ -68,9 +69,11 @@ public class Message {
 
 	/**
 	 * Gets the SQL exception object for a specific error code.
-	 *
-	 * @param errorCode the error code
-	 * @param p1 the first parameter of the message
+	 * 
+	 * @param errorCode
+	 *            the error code
+	 * @param p1
+	 *            the first parameter of the message
 	 * @return the SQLException object
 	 */
 	public static JdbcSQLException getSQLException(int errorCode, String p1) {
@@ -95,34 +98,44 @@ public class Message {
 
 	/**
 	 * Gets the SQL exception object for a specific error code.
-	 *
-	 * @param errorCode the error code
-	 * @param params the list of parameters of the message
-	 * @param cause the cause of the exception
+	 * 
+	 * @param errorCode
+	 *            the error code
+	 * @param params
+	 *            the list of parameters of the message
+	 * @param cause
+	 *            the cause of the exception
 	 * @return the SQLException object
 	 */
-	public static JdbcSQLException getSQLException(int errorCode, String[] params, Throwable cause) {
+	public static JdbcSQLException getSQLException(int errorCode,
+			String[] params, Throwable cause) {
 		String sqlstate = ErrorCode.getState(errorCode);
 		String message = translate(sqlstate, params);
-		return new JdbcSQLException(message, null, sqlstate, errorCode, cause, null);
+		return new JdbcSQLException(message, null, sqlstate, errorCode, cause,
+				null);
 	}
 
 	/**
 	 * Gets the SQL exception object for a specific error code.
-	 *
-	 * @param errorCode the error code
-	 * @param params the list of parameters of the message
+	 * 
+	 * @param errorCode
+	 *            the error code
+	 * @param params
+	 *            the list of parameters of the message
 	 * @return the SQLException object
 	 */
-	public static JdbcSQLException getSQLException(int errorCode, String[] params) {
+	public static JdbcSQLException getSQLException(int errorCode,
+			String[] params) {
 		return getSQLException(errorCode, params, null);
 	}
 
 	/**
 	 * Constructs a syntax error SQL exception.
-	 *
-	 * @param sql the SQL statement
-	 * @param index the position of the error in the SQL statement
+	 * 
+	 * @param sql
+	 *            the SQL statement
+	 * @param index
+	 *            the position of the error in the SQL statement
 	 * @return the SQLException object
 	 */
 	public static SQLException getSyntaxError(String sql, int index) {
@@ -132,21 +145,27 @@ public class Message {
 
 	/**
 	 * Constructs a syntax error SQL exception.
-	 *
-	 * @param sql the SQL statement
-	 * @param index the position of the error in the SQL statement
-	 * @param expected the expected keyword at the given position
+	 * 
+	 * @param sql
+	 *            the SQL statement
+	 * @param index
+	 *            the position of the error in the SQL statement
+	 * @param expected
+	 *            the expected keyword at the given position
 	 * @return the SQLException object
 	 */
-	public static SQLException getSyntaxError(String sql, int index, String expected) {
+	public static SQLException getSyntaxError(String sql, int index,
+			String expected) {
 		sql = StringUtils.addAsterisk(sql, index);
-		return getSQLException(ErrorCode.SYNTAX_ERROR_2, new String[] { sql, expected });
+		return getSQLException(ErrorCode.SYNTAX_ERROR_2, new String[] { sql,
+				expected });
 	}
 
 	/**
 	 * Gets the SQL exception object for a specific error code.
-	 *
-	 * @param errorCode the error code
+	 * 
+	 * @param errorCode
+	 *            the error code
 	 * @return the SQLException object
 	 */
 	public static JdbcSQLException getSQLException(int errorCode) {
@@ -155,7 +174,7 @@ public class Message {
 
 	/**
 	 * Gets a SQL exception meaning this feature is not supported.
-	 *
+	 * 
 	 * @return the SQLException object
 	 */
 	public static JdbcSQLException getUnsupportedException() {
@@ -164,23 +183,29 @@ public class Message {
 
 	/**
 	 * Gets a SQL exception meaning this value is invalid.
-	 *
-	 * @param value the value passed
-	 * @param param the name of the parameter
+	 * 
+	 * @param value
+	 *            the value passed
+	 * @param param
+	 *            the name of the parameter
 	 * @return the SQLException object
 	 */
-	public static JdbcSQLException getInvalidValueException(String value, String param) {
-		return getSQLException(ErrorCode.INVALID_VALUE_2, new String[] { value, param });
+	public static JdbcSQLException getInvalidValueException(String value,
+			String param) {
+		return getSQLException(ErrorCode.INVALID_VALUE_2, new String[] { value,
+				param });
 	}
 
 	/**
 	 * Throw an internal error. This method seems to return an exception object,
 	 * so that it can be used instead of 'return', but in fact it always throws
 	 * the exception.
-	 *
-	 * @param s the message
+	 * 
+	 * @param s
+	 *            the message
 	 * @return the RuntimeException object
-	 * @throws RuntimeException the exception
+	 * @throws RuntimeException
+	 *             the exception
 	 */
 	public static RuntimeException throwInternalError(String s) {
 		RuntimeException e = new RuntimeException(s);
@@ -195,7 +220,7 @@ public class Message {
 	 * Throw an internal error. This method seems to return an exception object,
 	 * so that it can be used instead of 'return', but in fact it always throws
 	 * the exception.
-	 *
+	 * 
 	 * @return the RuntimeException object
 	 */
 	public static RuntimeException throwInternalError() {
@@ -204,25 +229,29 @@ public class Message {
 
 	/**
 	 * Gets an internal error.
-	 *
-	 * @param s the message
-	 * @param e the root cause
+	 * 
+	 * @param s
+	 *            the message
+	 * @param e
+	 *            the root cause
 	 * @return the error object
 	 */
 	public static Error getInternalError(String s, Exception e) {
 		Error e2 = new Error(s);
-		//## Java 1.4 begin ##
+		// ## Java 1.4 begin ##
 		e2.initCause(e);
-		//## Java 1.4 end ##
+		// ## Java 1.4 end ##
 		TraceSystem.traceThrowable(e2);
 		return e2;
 	}
 
 	/**
 	 * Attach a SQL statement to the exception if this is not already done.
-	 *
-	 * @param e the original SQL exception
-	 * @param sql the SQL statement
+	 * 
+	 * @param e
+	 *            the original SQL exception
+	 * @param sql
+	 *            the SQL statement
 	 * @return the error object
 	 */
 	public static SQLException addSQL(SQLException e, String sql) {
@@ -233,14 +262,17 @@ public class Message {
 			}
 			return j;
 		}
-		return new JdbcSQLException(e.getMessage(), sql, e.getSQLState(), e.getErrorCode(), e, null);
+		return new JdbcSQLException(e.getMessage(), sql, e.getSQLState(),
+				e.getErrorCode(), e, null);
 	}
 
 	/**
 	 * Convert an exception to a SQL exception using the default mapping.
-	 *
-	 * @param e the root cause
-	 * @param sql the SQL statement or null if it is not known
+	 * 
+	 * @param e
+	 *            the root cause
+	 * @param sql
+	 *            the SQL statement or null if it is not known
 	 * @return the SQL exception object
 	 */
 	public static SQLException convert(Throwable e, String sql) {
@@ -253,8 +285,9 @@ public class Message {
 
 	/**
 	 * Convert an exception to a SQL exception using the default mapping.
-	 *
-	 * @param e the root cause
+	 * 
+	 * @param e
+	 *            the root cause
 	 * @return the SQL exception object
 	 */
 	public static SQLException convert(Throwable e) {
@@ -273,29 +306,36 @@ public class Message {
 			}
 			return getSQLException(ErrorCode.EXCEPTION_IN_FUNCTION, null, e);
 		} else if (e instanceof IOException) {
-			return getSQLException(ErrorCode.IO_EXCEPTION_1, new String[] { e.toString() }, e);
+			return getSQLException(ErrorCode.IO_EXCEPTION_1,
+					new String[] { e.toString() }, e);
 		}
-		return getSQLException(ErrorCode.GENERAL_ERROR_1, new String[] { e.toString() }, e);
+		return getSQLException(ErrorCode.GENERAL_ERROR_1,
+				new String[] { e.toString() }, e);
 	}
 
 	/**
 	 * Convert an IO exception to a SQL exception.
-	 *
-	 * @param e the root cause
-	 * @param message the message
+	 * 
+	 * @param e
+	 *            the root cause
+	 * @param message
+	 *            the message
 	 * @return the SQL exception object
 	 */
 	public static SQLException convertIOException(IOException e, String message) {
 		if (message == null) {
-			return getSQLException(ErrorCode.IO_EXCEPTION_1, new String[] { e.toString() }, e);
+			return getSQLException(ErrorCode.IO_EXCEPTION_1,
+					new String[] { e.toString() }, e);
 		}
-		return getSQLException(ErrorCode.IO_EXCEPTION_2, new String[] { e.toString(), message }, e);
+		return getSQLException(ErrorCode.IO_EXCEPTION_2,
+				new String[] { e.toString(), message }, e);
 	}
 
 	/**
 	 * Convert an exception to an internal runtime exception.
-	 *
-	 * @param e the root cause
+	 * 
+	 * @param e
+	 *            the root cause
 	 * @return the error object
 	 */
 	public static InternalException convertToInternal(Exception e) {
@@ -304,8 +344,9 @@ public class Message {
 
 	/**
 	 * Convert an exception to an IO exception.
-	 *
-	 * @param e the root cause
+	 * 
+	 * @param e
+	 *            the root cause
 	 * @return the IO exception
 	 */
 	public static IOException convertToIOException(Throwable e) {
@@ -316,9 +357,9 @@ public class Message {
 			}
 		}
 		IOException io = new IOException(e.toString());
-		//## Java 1.4 begin ##
+		// ## Java 1.4 begin ##
 		io.initCause(e);
-		//## Java 1.4 end ##
+		// ## Java 1.4 end ##
 		return io;
 	}
 

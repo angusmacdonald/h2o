@@ -24,8 +24,7 @@ import org.h2.util.IOUtils;
 import org.h2.util.StringUtils;
 
 /**
- * This file system stores files on disk.
- * This is the most common file system.
+ * This file system stores files on disk. This is the most common file system.
  */
 public class FileSystemDisk extends FileSystem {
 
@@ -48,10 +47,11 @@ public class FileSystemDisk extends FileSystem {
 	}
 
 	/**
-	 * Translate the file name to the native format.
-	 * This will expand the home directory (~).
-	 *
-	 * @param fileName the file name
+	 * Translate the file name to the native format. This will expand the home
+	 * directory (~).
+	 * 
+	 * @param fileName
+	 *            the file name
 	 * @return the native file name
 	 */
 	protected String translateFileName(String fileName) {
@@ -71,8 +71,8 @@ public class FileSystemDisk extends FileSystem {
 			Message.throwInternalError("rename file old=new");
 		}
 		if (!oldFile.exists()) {
-			throw Message.getSQLException(ErrorCode.FILE_RENAME_FAILED_2, new String[] { oldName + " (not found)",
-					newName });
+			throw Message.getSQLException(ErrorCode.FILE_RENAME_FAILED_2,
+					new String[] { oldName + " (not found)", newName });
 		}
 		if (newFile.exists()) {
 			throw Message.getSQLException(ErrorCode.FILE_RENAME_FAILED_2,
@@ -86,19 +86,24 @@ public class FileSystemDisk extends FileSystem {
 			}
 			wait(i);
 		}
-		throw Message.getSQLException(ErrorCode.FILE_RENAME_FAILED_2, new String[]{oldName, newName});
+		throw Message.getSQLException(ErrorCode.FILE_RENAME_FAILED_2,
+				new String[] { oldName, newName });
 	}
 
 	/**
 	 * Print a trace message if tracing is enabled.
-	 *
-	 * @param method the method
-	 * @param fileName the file name
-	 * @param o the object
+	 * 
+	 * @param method
+	 *            the method
+	 * @param fileName
+	 *            the file name
+	 * @param o
+	 *            the object
 	 */
 	protected void trace(String method, String fileName, Object o) {
 		if (SysProperties.TRACE_IO) {
-			System.out.println("FileSystem." + method + " " + fileName + " " + o);
+			System.out.println("FileSystem." + method + " " + fileName + " "
+					+ o);
 		}
 	}
 
@@ -146,7 +151,8 @@ public class FileSystemDisk extends FileSystem {
 				}
 				wait(i);
 			}
-			throw Message.getSQLException(ErrorCode.FILE_DELETE_FAILED_1, fileName);
+			throw Message.getSQLException(ErrorCode.FILE_DELETE_FAILED_1,
+					fileName);
 		}
 	}
 
@@ -156,8 +162,8 @@ public class FileSystemDisk extends FileSystem {
 		return new File(fileName).delete();
 	}
 
-	public String createTempFile(String name, String suffix, boolean deleteOnExit, boolean inTempDir)
-	throws IOException {
+	public String createTempFile(String name, String suffix,
+			boolean deleteOnExit, boolean inTempDir) throws IOException {
 		name = translateFileName(name);
 		name += ".";
 		String prefix = new File(name).getName();
@@ -282,7 +288,8 @@ public class FileSystemDisk extends FileSystem {
 			}
 			out.close();
 		} catch (IOException e) {
-			throw Message.convertIOException(e, "original: " + original + " copy: " + copy);
+			throw Message.convertIOException(e, "original: " + original
+					+ " copy: " + copy);
 		} finally {
 			IOUtils.closeSilently(in);
 			IOUtils.closeSilently(out);
@@ -304,7 +311,8 @@ public class FileSystemDisk extends FileSystem {
 				}
 				wait(i);
 			}
-			throw Message.getSQLException(ErrorCode.FILE_CREATION_FAILED_1, parent);
+			throw Message.getSQLException(ErrorCode.FILE_CREATION_FAILED_1,
+					parent);
 		}
 	}
 
@@ -317,7 +325,8 @@ public class FileSystemDisk extends FileSystem {
 		}
 		String fullFileName = normalize(name);
 		if (!fullFileName.startsWith(path)) {
-			Message.throwInternalError("file utils error: " + fullFileName + " does not start with " + path);
+			Message.throwInternalError("file utils error: " + fullFileName
+					+ " does not start with " + path);
 		}
 		String fileName = fullFileName.substring(path.length());
 		return fileName;
@@ -332,7 +341,8 @@ public class FileSystemDisk extends FileSystem {
 		return fileName.startsWith(prefix);
 	}
 
-	public OutputStream openFileOutputStream(String fileName, boolean append) throws SQLException {
+	public OutputStream openFileOutputStream(String fileName, boolean append)
+			throws SQLException {
 		fileName = translateFileName(fileName);
 		try {
 			File file = new File(fileName);
@@ -352,7 +362,8 @@ public class FileSystemDisk extends FileSystem {
 
 	public InputStream openFileInputStream(String fileName) throws IOException {
 		if (fileName.indexOf(':') > 1) {
-			// if the : is in position 1, a windows file access is assumed: C:.. or D:
+			// if the : is in position 1, a windows file access is assumed: C:..
+			// or D:
 			// otherwise a URL is assumed
 			URL url = new URL(fileName);
 			InputStream in = url.openStream();
@@ -365,8 +376,8 @@ public class FileSystemDisk extends FileSystem {
 	}
 
 	/**
-	 * Call the garbage collection and run finalization. This close all files that
-	 * were not closed, and are no longer referenced.
+	 * Call the garbage collection and run finalization. This close all files
+	 * that were not closed, and are no longer referenced.
 	 */
 	protected void freeMemoryAndFinalize() {
 		trace("freeMemoryAndFinalize", null, null);
@@ -383,7 +394,8 @@ public class FileSystemDisk extends FileSystem {
 		}
 	}
 
-	public FileObject openFileObject(String fileName, String mode) throws IOException {
+	public FileObject openFileObject(String fileName, String mode)
+			throws IOException {
 		fileName = translateFileName(fileName);
 		FileObjectDisk f;
 		try {

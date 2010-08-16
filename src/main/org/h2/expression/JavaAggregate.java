@@ -37,7 +37,8 @@ public class JavaAggregate extends Expression {
 	private Connection userConnection;
 	private int lastGroupRowId;
 
-	public JavaAggregate(UserAggregate userAggregate, Expression[] args, Select select) {
+	public JavaAggregate(UserAggregate userAggregate, Expression[] args,
+			Select select) {
 		this.userAggregate = userAggregate;
 		this.args = args;
 		this.select = select;
@@ -45,8 +46,8 @@ public class JavaAggregate extends Expression {
 
 	public int getCost() {
 		int cost = 5;
-		for (int i = 0; i < args.length; i++) {
-			cost += args[i].getCost();
+		for (Expression arg : args) {
+			cost += arg.getCost();
 		}
 		return cost;
 	}
@@ -83,7 +84,7 @@ public class JavaAggregate extends Expression {
 	}
 
 	public boolean isEverything(ExpressionVisitor visitor) {
-		switch(visitor.getType()) {
+		switch (visitor.getType()) {
 		case ExpressionVisitor.DETERMINISTIC:
 			// TODO optimization: some functions are deterministic, but we don't
 			// know (no setting for that)
@@ -96,8 +97,8 @@ public class JavaAggregate extends Expression {
 			return false;
 		default:
 		}
-		for (int i = 0; i < args.length; i++) {
-			Expression e = args[i];
+		for (Expression arg : args) {
+			Expression e = arg;
 			if (e != null && !e.isEverything(visitor)) {
 				return false;
 			}
@@ -105,9 +106,10 @@ public class JavaAggregate extends Expression {
 		return true;
 	}
 
-	public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
-		for (int i = 0; i < args.length; i++) {
-			args[i].mapColumns(resolver, level);
+	public void mapColumns(ColumnResolver resolver, int level)
+			throws SQLException {
+		for (Expression arg : args) {
+			arg.mapColumns(resolver, level);
 		}
 	}
 
@@ -123,13 +125,14 @@ public class JavaAggregate extends Expression {
 			argSqlTypes[i] = DataType.convertTypeToSQLType(type);
 		}
 		aggregate = getInstance();
-		dataType = DataType.convertSQLTypeToValueType(aggregate.getType(argSqlTypes));
+		dataType = DataType.convertSQLTypeToValueType(aggregate
+				.getType(argSqlTypes));
 		return this;
 	}
 
 	public void setEvaluatable(TableFilter tableFilter, boolean b) {
-		for (int i = 0; i < args.length; i++) {
-			args[i].setEvaluatable(tableFilter, b);
+		for (Expression arg : args) {
+			arg.setEvaluatable(tableFilter, b);
 		}
 	}
 
@@ -142,7 +145,8 @@ public class JavaAggregate extends Expression {
 	public Value getValue(Session session) throws SQLException {
 		HashMap group = select.getCurrentGroup();
 		if (group == null) {
-			throw Message.getSQLException(ErrorCode.INVALID_USE_OF_AGGREGATE_FUNCTION_1, getSQL());
+			throw Message.getSQLException(
+					ErrorCode.INVALID_USE_OF_AGGREGATE_FUNCTION_1, getSQL());
 		}
 		AggregateFunction agg = (AggregateFunction) group.get(this);
 		if (agg == null) {

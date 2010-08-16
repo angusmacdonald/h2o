@@ -16,8 +16,7 @@ import org.h2.schema.Schema;
 import org.h2.schema.Sequence;
 
 /**
- * This class represents the statement
- * DROP SEQUENCE
+ * This class represents the statement DROP SEQUENCE
  */
 public class DropSequence extends SchemaCommand {
 
@@ -44,11 +43,13 @@ public class DropSequence extends SchemaCommand {
 		Sequence sequence = getSchema().findSequence(sequenceName);
 		if (sequence == null) {
 			if (!ifExists) {
-				throw Message.getSQLException(ErrorCode.SEQUENCE_NOT_FOUND_1, sequenceName);
+				throw Message.getSQLException(ErrorCode.SEQUENCE_NOT_FOUND_1,
+						sequenceName);
 			}
 		} else {
 			if (sequence.getBelongsToTable()) {
-				throw Message.getSQLException(ErrorCode.SEQUENCE_BELONGS_TO_A_TABLE_1, sequenceName);
+				throw Message.getSQLException(
+						ErrorCode.SEQUENCE_BELONGS_TO_A_TABLE_1, sequenceName);
 			}
 			db.removeSchemaObject(session, sequence);
 		}

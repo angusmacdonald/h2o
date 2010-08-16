@@ -19,8 +19,7 @@ import org.h2.schema.Schema;
 import org.h2.table.TableView;
 
 /**
- * This class represents the statement
- * CREATE VIEW
+ * This class represents the statement CREATE VIEW
  */
 public class CreateView extends SchemaCommand {
 
@@ -50,38 +49,43 @@ public class CreateView extends SchemaCommand {
 
 	public int update() throws SQLException {
 		// TODO rights: what rights are required to create a view?
-				session.commit(true);
-				Database db = session.getDatabase();
-				if (getSchema().findTableOrView(session, viewName, LocationPreference.NO_PREFERENCE) != null) {
-					if (ifNotExists) {
-						return 0;
-					}
-					throw Message.getSQLException(ErrorCode.VIEW_ALREADY_EXISTS_1, viewName);
-				}
-				int id = getObjectId(true, true);
-				String querySQL;
-				if (select == null) {
-					querySQL = selectSQL;
-				} else {
-					querySQL = select.getSQL();
-				}
-				Session sysSession = db.getSystemSession();
-				TableView view;
-				try {
-					Schema schema = session.getDatabase().getSchema(session.getCurrentSchemaName());
-					sysSession.setCurrentSchema(schema);
-					view = new TableView(getSchema(), id, viewName, querySQL, null, columnNames, sysSession, recursive);
-				} finally {
-					sysSession.setCurrentSchema(db.getSchema(Constants.SCHEMA_MAIN));
-				}
-				view.setComment(comment);
-				try {
-					view.recompileQuery(session);
-				} catch (SQLException e) {
-					// this is not strictly required - ignore exceptions, specially when using FORCE
-				}
-				db.addSchemaObject(session, view);
+		session.commit(true);
+		Database db = session.getDatabase();
+		if (getSchema().findTableOrView(session, viewName,
+				LocationPreference.NO_PREFERENCE) != null) {
+			if (ifNotExists) {
 				return 0;
+			}
+			throw Message.getSQLException(ErrorCode.VIEW_ALREADY_EXISTS_1,
+					viewName);
+		}
+		int id = getObjectId(true, true);
+		String querySQL;
+		if (select == null) {
+			querySQL = selectSQL;
+		} else {
+			querySQL = select.getSQL();
+		}
+		Session sysSession = db.getSystemSession();
+		TableView view;
+		try {
+			Schema schema = session.getDatabase().getSchema(
+					session.getCurrentSchemaName());
+			sysSession.setCurrentSchema(schema);
+			view = new TableView(getSchema(), id, viewName, querySQL, null,
+					columnNames, sysSession, recursive);
+		} finally {
+			sysSession.setCurrentSchema(db.getSchema(Constants.SCHEMA_MAIN));
+		}
+		view.setComment(comment);
+		try {
+			view.recompileQuery(session);
+		} catch (SQLException e) {
+			// this is not strictly required - ignore exceptions, specially when
+			// using FORCE
+		}
+		db.addSchemaObject(session, view);
+		return 0;
 	}
 
 	public void setIfNotExists(boolean ifNotExists) {

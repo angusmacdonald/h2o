@@ -35,8 +35,9 @@ public class Role extends RightOwner {
 
 	/**
 	 * Get the CREATE SQL statement for this object.
-	 *
-	 * @param ifNotExists true if IF NOT EXISTS should be used
+	 * 
+	 * @param ifNotExists
+	 *            true if IF NOT EXISTS should be used
 	 * @return the SQL statement
 	 */
 	public String getCreateSQL(boolean ifNotExists) {

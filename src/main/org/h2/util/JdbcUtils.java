@@ -31,8 +31,9 @@ public class JdbcUtils {
 
 	/**
 	 * Close a statement without throwing an exception.
-	 *
-	 * @param stat the statement or null
+	 * 
+	 * @param stat
+	 *            the statement or null
 	 */
 	public static void closeSilently(Statement stat) {
 		if (stat != null) {
@@ -46,8 +47,9 @@ public class JdbcUtils {
 
 	/**
 	 * Close a connection without throwing an exception.
-	 *
-	 * @param conn the connection or null
+	 * 
+	 * @param conn
+	 *            the connection or null
 	 */
 	public static void closeSilently(Connection conn) {
 		if (conn != null) {
@@ -61,8 +63,9 @@ public class JdbcUtils {
 
 	/**
 	 * Close a result set without throwing an exception.
-	 *
-	 * @param rs the result set or null
+	 * 
+	 * @param rs
+	 *            the result set or null
 	 */
 	public static void closeSilently(ResultSet rs) {
 		if (rs != null) {
@@ -77,24 +80,27 @@ public class JdbcUtils {
 	/**
 	 * Get the result set containing the generated keys from the given
 	 * statement. This method returns null for Java versions older than 1.4.
-	 *
-	 * @param stat the statement
+	 * 
+	 * @param stat
+	 *            the statement
 	 * @return the result set or null
 	 */
-	public static ResultSet getGeneratedKeys(Statement stat) throws SQLException {
+	public static ResultSet getGeneratedKeys(Statement stat)
+			throws SQLException {
 		ResultSet rs = null;
-		//## Java 1.4 begin ##
+		// ## Java 1.4 begin ##
 		rs = stat.getGeneratedKeys();
-		//## Java 1.4 end ##
+		// ## Java 1.4 end ##
 		return rs;
 	}
 
 	/**
 	 * Close an XA connection set without throwing an exception.
-	 *
-	 * @param conn the XA connection or null
+	 * 
+	 * @param conn
+	 *            the XA connection or null
 	 */
-	//## Java 1.4 begin ##
+	// ## Java 1.4 begin ##
 	public static void closeSilently(XAConnection conn) {
 		if (conn != null) {
 			try {
@@ -104,18 +110,24 @@ public class JdbcUtils {
 			}
 		}
 	}
-	//## Java 1.4 end ##
+
+	// ## Java 1.4 end ##
 
 	/**
 	 * Open a new database connection with the given settings.
-	 *
-	 * @param driver the driver class name
-	 * @param url the database URL
-	 * @param user the user name
-	 * @param password the password
+	 * 
+	 * @param driver
+	 *            the driver class name
+	 * @param url
+	 *            the database URL
+	 * @param user
+	 *            the user name
+	 * @param password
+	 *            the password
 	 * @return the database connection
 	 */
-	public static Connection getConnection(String driver, String url, String user, String password) throws SQLException {
+	public static Connection getConnection(String driver, String url,
+			String user, String password) throws SQLException {
 		Properties prop = new Properties();
 		if (user != null) {
 			prop.setProperty("user", user);
@@ -128,8 +140,9 @@ public class JdbcUtils {
 
 	/**
 	 * Escape table or schema patterns used for DatabaseMetaData functions.
-	 *
-	 * @param pattern the pattern
+	 * 
+	 * @param pattern
+	 *            the pattern
 	 * @return the escaped pattern
 	 */
 	public static String escapeMetaDataPattern(String pattern) {
@@ -141,20 +154,24 @@ public class JdbcUtils {
 
 	/**
 	 * Open a new database connection with the given settings.
-	 *
-	 * @param driver the driver class name
-	 * @param url the database URL
-	 * @param prop the properties containing at least the user name and password
+	 * 
+	 * @param driver
+	 *            the driver class name
+	 * @param url
+	 *            the database URL
+	 * @param prop
+	 *            the properties containing at least the user name and password
 	 * @return the database connection
 	 */
-	public static Connection getConnection(String driver, String url, Properties prop) throws SQLException {
+	public static Connection getConnection(String driver, String url,
+			Properties prop) throws SQLException {
 		if (StringUtils.isNullOrEmpty(driver)) {
 			JdbcDriverUtils.load(url);
 		} else {
 			Class d = ClassUtils.loadUserClass(driver);
 			if (java.sql.Driver.class.isAssignableFrom(d)) {
 				return DriverManager.getConnection(url, prop);
-				//## Java 1.4 begin ##
+				// ## Java 1.4 begin ##
 			} else if (javax.naming.Context.class.isAssignableFrom(d)) {
 				// JNDI context
 				try {
@@ -162,7 +179,8 @@ public class JdbcUtils {
 					DataSource ds = (DataSource) context.lookup(url);
 					String user = prop.getProperty("user");
 					String password = prop.getProperty("password");
-					if (StringUtils.isNullOrEmpty(user) && StringUtils.isNullOrEmpty(password)) {
+					if (StringUtils.isNullOrEmpty(user)
+							&& StringUtils.isNullOrEmpty(password)) {
 						return ds.getConnection();
 					}
 					return ds.getConnection(user, password);
@@ -173,7 +191,7 @@ public class JdbcUtils {
 				} catch (NamingException e) {
 					throw Message.convert(e);
 				}
-				//## Java 1.4 end ##
+				// ## Java 1.4 end ##
 			} else {
 				// Don't know, but maybe it loaded a JDBC Driver
 				return DriverManager.getConnection(url, prop);

@@ -16,15 +16,16 @@ import org.h2.table.IndexColumn;
 import org.h2.table.RangeTable;
 
 /**
- * An index for the SYSTEM_RANGE table.
- * This index can only scan through all rows, search is not supported.
+ * An index for the SYSTEM_RANGE table. This index can only scan through all
+ * rows, search is not supported.
  */
 public class RangeIndex extends BaseIndex {
 
 	private RangeTable rangeTable;
 
 	public RangeIndex(RangeTable table, IndexColumn[] columns) {
-		initBaseIndex(table, 0, "RANGE_INDEX", columns, IndexType.createNonUnique(true));
+		initBaseIndex(table, 0, "RANGE_INDEX", columns,
+				IndexType.createNonUnique(true));
 		this.rangeTable = table;
 	}
 
@@ -40,11 +41,14 @@ public class RangeIndex extends BaseIndex {
 		throw Message.getUnsupportedException();
 	}
 
-	public Cursor find(Session session, SearchRow first, SearchRow last) throws SQLException {
+	public Cursor find(Session session, SearchRow first, SearchRow last)
+			throws SQLException {
 		long min = rangeTable.getMin(session);
 		long max = rangeTable.getMax(session);
-		long start = Math.max(min, first == null ? min : first.getValue(0).getLong());
-		long end = Math.min(max, last == null ? max : last.getValue(0).getLong());
+		long start = Math.max(min, first == null ? min : first.getValue(0)
+				.getLong());
+		long end = Math.min(max, last == null ? max : last.getValue(0)
+				.getLong());
 		return new RangeCursor(start, end);
 	}
 
@@ -76,8 +80,10 @@ public class RangeIndex extends BaseIndex {
 		return true;
 	}
 
-	public Cursor findFirstOrLast(Session session, boolean first) throws SQLException {
-		long pos = first ? rangeTable.getMin(session) : rangeTable.getMax(session);
+	public Cursor findFirstOrLast(Session session, boolean first)
+			throws SQLException {
+		long pos = first ? rangeTable.getMin(session) : rangeTable
+				.getMax(session);
 		return new RangeCursor(pos, pos);
 	}
 

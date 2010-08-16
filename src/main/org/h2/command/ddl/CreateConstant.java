@@ -18,8 +18,7 @@ import org.h2.schema.Schema;
 import org.h2.value.Value;
 
 /**
- * This class represents the statement
- * CREATE CONSTANT
+ * This class represents the statement CREATE CONSTANT
  */
 public class CreateConstant extends SchemaCommand {
 
@@ -44,7 +43,8 @@ public class CreateConstant extends SchemaCommand {
 			if (ifNotExists) {
 				return 0;
 			}
-			throw Message.getSQLException(ErrorCode.CONSTANT_ALREADY_EXISTS_1, constantName);
+			throw Message.getSQLException(ErrorCode.CONSTANT_ALREADY_EXISTS_1,
+					constantName);
 		}
 		int id = getObjectId(false, true);
 		Constant constant = new Constant(getSchema(), id, constantName);

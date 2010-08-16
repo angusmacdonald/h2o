@@ -69,7 +69,7 @@ public class ConstraintCheck extends Constraint {
 		return buff.toString();
 	}
 
-	public String  getCreateSQLWithoutIndexes() {
+	public String getCreateSQLWithoutIndexes() {
 		return getCreateSQL();
 	}
 
@@ -86,14 +86,17 @@ public class ConstraintCheck extends Constraint {
 		invalidate();
 	}
 
-	public void checkRow(Session session, Table t, Row oldRow, Row newRow) throws SQLException {
+	public void checkRow(Session session, Table t, Row oldRow, Row newRow)
+			throws SQLException {
 		if (newRow == null) {
 			return;
 		}
 		filter.set(newRow);
 		// Both TRUE and NULL are ok
 		if (Boolean.FALSE.equals(expr.getValue(session).getBoolean())) {
-			throw Message.getSQLException(ErrorCode.CHECK_CONSTRAINT_VIOLATED_1, getShortDescription());
+			throw Message.getSQLException(
+					ErrorCode.CHECK_CONSTRAINT_VIOLATED_1,
+					getShortDescription());
 		}
 	}
 
@@ -135,7 +138,8 @@ public class ConstraintCheck extends Constraint {
 		String sql = buff.toString();
 		LocalResult r = session.prepare(sql).query(1);
 		if (r.next()) {
-			throw Message.getSQLException(ErrorCode.CHECK_CONSTRAINT_VIOLATED_1, getName());
+			throw Message.getSQLException(
+					ErrorCode.CHECK_CONSTRAINT_VIOLATED_1, getName());
 		}
 	}
 

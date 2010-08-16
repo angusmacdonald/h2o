@@ -45,7 +45,7 @@ class TreeNode {
 	/**
 	 * Check if this node is the left child of its parent. This method returns
 	 * true if this is the root node.
-	 *
+	 * 
 	 * @return true if this node is the root or a left child
 	 */
 	boolean isFromLeft() {

@@ -21,10 +21,10 @@ public class ValueBytes extends ValueBytesBase {
 	}
 
 	/**
-	 * Get or create a bytes value for the given byte array.
-	 * Clone the data.
-	 *
-	 * @param b the byte array
+	 * Get or create a bytes value for the given byte array. Clone the data.
+	 * 
+	 * @param b
+	 *            the byte array
 	 * @return the value
 	 */
 	public static ValueBytes get(byte[] b) {
@@ -36,10 +36,11 @@ public class ValueBytes extends ValueBytesBase {
 	}
 
 	/**
-	 * Get or create a bytes value for the given byte array.
-	 * Do not clone the date.
-	 *
-	 * @param b the byte array
+	 * Get or create a bytes value for the given byte array. Do not clone the
+	 * date.
+	 * 
+	 * @param b
+	 *            the byte array
 	 * @return the value
 	 */
 	public static ValueBytes getNoCopy(byte[] b) {

@@ -16,6 +16,7 @@
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
 package org.h2o.util;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
@@ -47,21 +48,24 @@ public class LocalH2OProperties {
 
 	private FileInputStream fis = null;
 
-
 	@Deprecated
-	public LocalH2OProperties(){
+	public LocalH2OProperties() {
 		this.properties = new Properties();
-		//Required because this is a test class.
+		// Required because this is a test class.
 	}
 
 	/**
-	 * @param dbURL	The URL of this database instance. This is used to name and locate
-	 * the properties file for this database on disk.
-	 * @param appendum A string to be added on to the DBurl as part of the properties file name.
+	 * @param dbURL
+	 *            The URL of this database instance. This is used to name and
+	 *            locate the properties file for this database on disk.
+	 * @param appendum
+	 *            A string to be added on to the DBurl as part of the properties
+	 *            file name.
 	 */
 	public LocalH2OProperties(DatabaseURL dbURL) {
 		this.properties = new Properties();
-		this.propertiesFileLocation = "config" + File.separator + dbURL.sanitizedLocation() + ".properties";
+		this.propertiesFileLocation = "config" + File.separator
+				+ dbURL.sanitizedLocation() + ".properties";
 	}
 
 	/**
@@ -69,44 +73,47 @@ public class LocalH2OProperties {
 	 */
 	public LocalH2OProperties(String descriptorLocation) {
 		this.properties = new Properties();
-		this.propertiesFileLocation = "config" + File.separator + descriptorLocation + ".properties";
+		this.propertiesFileLocation = "config" + File.separator
+				+ descriptorLocation + ".properties";
 	}
 
 	public void setPropertiesFileLocation(DatabaseURL dbURL) {
 		this.propertiesFileLocation = dbURL.sanitizedLocation() + ".properties";
 	}
 
-	public boolean loadProperties(){
+	public boolean loadProperties() {
 		File f = new File(propertiesFileLocation);
-		if (!f.exists()) return false;
-		//This check is necessary because a file will be created when FileInputStream is created.
+		if (!f.exists())
+			return false;
+		// This check is necessary because a file will be created when
+		// FileInputStream is created.
 
-		if (fis == null){
+		if (fis == null) {
 			try {
 
 				this.fis = new FileInputStream(propertiesFileLocation);
 			} catch (FileNotFoundException e) {
-				//won't happen.
+				// won't happen.
 			}
 		}
 
-
-		try{
+		try {
 			this.properties.load(fis);
-		} catch (Exception e){
+		} catch (Exception e) {
 			return false;
 		}
 		return true;
 	}
 
 	/**
-	 * Deletes any existing properties file with the given name and creates a new one.
+	 * Deletes any existing properties file with the given name and creates a
+	 * new one.
 	 */
 	public void createNewFile() {
 		removePropertiesFile();
 
 		File f = new File("config");
-		if (!f.exists()){
+		if (!f.exists()) {
 			f.mkdir();
 		}
 
@@ -114,7 +121,9 @@ public class LocalH2OProperties {
 		try {
 			f.createNewFile();
 		} catch (IOException e) {
-			ErrorHandling.exceptionError(e, "Creation of properties file failed at " + propertiesFileLocation + ".");
+			ErrorHandling.exceptionError(e,
+					"Creation of properties file failed at "
+							+ propertiesFileLocation + ".");
 			e.printStackTrace();
 		}
 
@@ -143,10 +152,14 @@ public class LocalH2OProperties {
 
 	}
 
-	private boolean removePropertiesFile(){
+	private boolean removePropertiesFile() {
 		try {
-			if (fis != null) fis.close(); fis = null;
-			if (fos != null) fos.close(); fos = null;
+			if (fis != null)
+				fis.close();
+			fis = null;
+			if (fos != null)
+				fos.close();
+			fos = null;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -156,7 +169,6 @@ public class LocalH2OProperties {
 		return f.delete();
 	}
 
-
 	/**
 	 * 
 	 */
@@ -164,22 +176,25 @@ public class LocalH2OProperties {
 
 		try {
 
-			if (fos == null){
+			if (fos == null) {
 
 				this.fos = new FileOutputStream(propertiesFileLocation);
 			}
 
-			properties.store(this.fos, "Properties for a single database instance.");
+			properties.store(this.fos,
+					"Properties for a single database instance.");
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} 
+		}
 
 		try {
-			if (fos != null) fos.close();
+			if (fos != null)
+				fos.close();
 
-			if (fis != null) fis.close();
+			if (fis != null)
+				fis.close();
 
 		} catch (IOException e) {
 		}
@@ -193,7 +208,7 @@ public class LocalH2OProperties {
 	 * ####################################################
 	 */
 	@Test
-	public void testBasicProperties(){
+	public void testBasicProperties() {
 		DatabaseURL dbURL = DatabaseURL.parseURL("jdbc:h2:mem:two");
 		LocalH2OProperties testProp = new LocalH2OProperties(dbURL);
 
@@ -207,7 +222,7 @@ public class LocalH2OProperties {
 	}
 
 	@Test
-	public void testMultipleProperties(){
+	public void testMultipleProperties() {
 		DatabaseURL dbURL = DatabaseURL.parseURL("jdbc:h2:mem:two");
 		LocalH2OProperties testProp = new LocalH2OProperties(dbURL);
 
@@ -217,7 +232,7 @@ public class LocalH2OProperties {
 	}
 
 	@Test
-	public void testAlternateConstructor(){
+	public void testAlternateConstructor() {
 		DatabaseURL dbURL = DatabaseURL.parseURL("jdbc:h2:mem:two");
 		LocalH2OProperties testProp = new LocalH2OProperties();
 		testProp.setPropertiesFileLocation(dbURL);
@@ -228,24 +243,25 @@ public class LocalH2OProperties {
 	}
 
 	@Test
-	public void testAlternateConstructorFail(){
+	public void testAlternateConstructorFail() {
 		LocalH2OProperties testProp = new LocalH2OProperties();
 
 		try {
 			testProperties(testProp);
 			fail("Should throw an exception.");
-		} catch (NullPointerException e){
-			//expected.
+		} catch (NullPointerException e) {
+			// expected.
 		}
 	}
 
 	/**
 	 * Tests loading the properties from file.
 	 * 
-	 * This isn't a great unit test because it relies on being run after @see {@link #multiplePropertiesTest()}
+	 * This isn't a great unit test because it relies on being run after @see
+	 * {@link #multiplePropertiesTest()}
 	 */
 	@Test
-	public void testLoad(){
+	public void testLoad() {
 		DatabaseURL dbURL = DatabaseURL.parseURL("jdbc:h2:mem:two");
 		LocalH2OProperties testProp = new LocalH2OProperties(dbURL);
 
@@ -269,7 +285,7 @@ public class LocalH2OProperties {
 	 * Tries to load a properties file that doesn't exist. Should return false.
 	 */
 	@Test
-	public void testLoadPropertiesFail(){
+	public void testLoadPropertiesFail() {
 		DatabaseURL dbURL = DatabaseURL.parseURL("jdbc:h2:mem:two");
 		LocalH2OProperties testProp = new LocalH2OProperties(dbURL);
 
@@ -295,12 +311,11 @@ public class LocalH2OProperties {
 
 	/**
 	 * Returns a set of the keys in this properties file.
+	 * 
 	 * @return
 	 */
 	public Set<Object> getKeys() {
 		return properties.keySet();
 	}
-
-
 
 }

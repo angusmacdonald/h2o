@@ -27,7 +27,8 @@ public class JavaFunction extends Expression implements FunctionCall {
 	private FunctionAlias.JavaMethod javaMethod;
 	private Expression[] args;
 
-	public JavaFunction(FunctionAlias functionAlias, Expression[] args) throws SQLException {
+	public JavaFunction(FunctionAlias functionAlias, Expression[] args)
+			throws SQLException {
 		this.functionAlias = functionAlias;
 		this.javaMethod = functionAlias.findJavaMethod(args);
 		this.args = args;
@@ -41,9 +42,10 @@ public class JavaFunction extends Expression implements FunctionCall {
 		return javaMethod.getDataType();
 	}
 
-	public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
-		for (int i = 0; i < args.length; i++) {
-			args[i].mapColumns(resolver, level);
+	public void mapColumns(ColumnResolver resolver, int level)
+			throws SQLException {
+		for (Expression arg : args) {
+			arg.mapColumns(resolver, level);
 		}
 	}
 
@@ -59,8 +61,7 @@ public class JavaFunction extends Expression implements FunctionCall {
 	}
 
 	public void setEvaluatable(TableFilter tableFilter, boolean b) {
-		for (int i = 0; i < args.length; i++) {
-			Expression e = args[i];
+		for (Expression e : args) {
 			if (e != null) {
 				e.setEvaluatable(tableFilter, b);
 			}
@@ -95,8 +96,7 @@ public class JavaFunction extends Expression implements FunctionCall {
 	}
 
 	public void updateAggregate(Session session) throws SQLException {
-		for (int i = 0; i < args.length; i++) {
-			Expression e = args[i];
+		for (Expression e : args) {
 			if (e != null) {
 				e.updateAggregate(session);
 			}
@@ -111,7 +111,8 @@ public class JavaFunction extends Expression implements FunctionCall {
 		return javaMethod.getParameterCount();
 	}
 
-	public ValueResultSet getValueForColumnList(Session session, Expression[] args) throws SQLException {
+	public ValueResultSet getValueForColumnList(Session session,
+			Expression[] args) throws SQLException {
 		Value v = javaMethod.getValue(session, args, true);
 		return v == ValueNull.INSTANCE ? null : (ValueResultSet) v;
 	}
@@ -121,7 +122,7 @@ public class JavaFunction extends Expression implements FunctionCall {
 	}
 
 	public boolean isEverything(ExpressionVisitor visitor) {
-		switch(visitor.getType()) {
+		switch (visitor.getType()) {
 		case ExpressionVisitor.DETERMINISTIC:
 			if (!isDeterministic()) {
 				return false;
@@ -134,8 +135,8 @@ public class JavaFunction extends Expression implements FunctionCall {
 			break;
 		default:
 		}
-		for (int i = 0; i < args.length; i++) {
-			Expression e = args[i];
+		for (Expression arg : args) {
+			Expression e = arg;
 			if (e != null && !e.isEverything(visitor)) {
 				return false;
 			}
@@ -145,8 +146,8 @@ public class JavaFunction extends Expression implements FunctionCall {
 
 	public int getCost() {
 		int cost = javaMethod.hasConnectionParam() ? 25 : 5;
-		for (int i = 0; i < args.length; i++) {
-			cost += args[i].getCost();
+		for (Expression arg : args) {
+			cost += arg.getCost();
 		}
 		return cost;
 	}

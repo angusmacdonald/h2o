@@ -18,8 +18,9 @@ public interface CacheWriter {
 
 	/**
 	 * Persist a record.
-	 *
-	 * @param entry the cache entry
+	 * 
+	 * @param entry
+	 *            the cache entry
 	 */
 	void writeBack(CacheObject entry) throws SQLException;
 
@@ -33,7 +34,7 @@ public interface CacheWriter {
 
 	/**
 	 * Get the trace writer.
-	 *
+	 * 
 	 * @return the trace writer
 	 */
 	Trace getTrace();

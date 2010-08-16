@@ -32,7 +32,7 @@ public class RandomUtils {
 	 */
 	static volatile boolean seeded;
 
-	private static final Random RANDOM  = new Random();
+	private static final Random RANDOM = new Random();
 
 	private RandomUtils() {
 		// utility class
@@ -66,7 +66,8 @@ public class RandomUtils {
 				}
 			};
 			Thread t = new Thread(runnable);
-			// let the process terminate even if generating the seed is really slow
+			// let the process terminate even if generating the seed is really
+			// slow
 			t.setDaemon(true);
 			t.start();
 			Thread.yield();
@@ -106,7 +107,8 @@ public class RandomUtils {
 					out.writeUTF(o.toString());
 				}
 			} catch (Exception e) {
-				// nanoTime not found, this is ok (only exists for JDK 1.5 and higher)
+				// nanoTime not found, this is ok (only exists for JDK 1.5 and
+				// higher)
 			}
 
 			// memory
@@ -128,8 +130,8 @@ public class RandomUtils {
 				String hostName = InetAddress.getLocalHost().getHostName();
 				out.writeUTF(hostName);
 				InetAddress[] list = InetAddress.getAllByName(hostName);
-				for (int i = 0; i < list.length; i++) {
-					out.write(list[i].getAddress());
+				for (InetAddress element : list) {
+					out.write(element.getAddress());
 				}
 			} catch (Exception e) {
 				// on some system, InetAddress.getLocalHost() doesn't work
@@ -156,7 +158,7 @@ public class RandomUtils {
 
 	/**
 	 * Get a cryptographically secure pseudo random long value.
-	 *
+	 * 
 	 * @return the random long value
 	 */
 	public static long getSecureLong() {
@@ -168,8 +170,9 @@ public class RandomUtils {
 
 	/**
 	 * Get a number of cryptographically secure pseudo random bytes.
-	 *
-	 * @param len the number of bytes
+	 * 
+	 * @param len
+	 *            the number of bytes
 	 * @return the random bytes
 	 */
 	public static byte[] getSecureBytes(int len) {
@@ -187,8 +190,9 @@ public class RandomUtils {
 	/**
 	 * Get a pseudo random int value between 0 (including and the given value
 	 * (excluding). The value is not cryptographically secure.
-	 *
-	 * @param lowerThan the value returned will be lower than this value
+	 * 
+	 * @param lowerThan
+	 *            the value returned will be lower than this value
 	 * @return the random long value
 	 */
 	public static int nextInt(int lowerThan) {
@@ -198,8 +202,9 @@ public class RandomUtils {
 	/**
 	 * Get a cryptographically secure pseudo random int value between 0
 	 * (including and the given value (excluding).
-	 *
-	 * @param lowerThan the value returned will be lower than this value
+	 * 
+	 * @param lowerThan
+	 *            the value returned will be lower than this value
 	 * @return the random long value
 	 */
 	public static int nextSecureInt(int lowerThan) {
@@ -212,9 +217,11 @@ public class RandomUtils {
 	/**
 	 * Print a message to system output if there was a problem initializing the
 	 * random number generator.
-	 *
-	 * @param s the message to print
-	 * @param t the stack trace
+	 * 
+	 * @param s
+	 *            the message to print
+	 * @param t
+	 *            the stack trace
 	 */
 	static void warn(String s, Throwable t) {
 		// not a fatal problem, but maybe reduced security

@@ -55,7 +55,8 @@ public class ConditionExists extends Condition {
 		// where id=count(test.id))
 	}
 
-	public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
+	public void mapColumns(ColumnResolver resolver, int level)
+			throws SQLException {
 		query.mapColumns(resolver, level + 1);
 	}
 

@@ -20,8 +20,7 @@ import org.h2.table.IndexColumn;
 import org.h2.table.Table;
 
 /**
- * This class represents the statement
- * CREATE INDEX
+ * This class represents the statement CREATE INDEX
  */
 public class CreateIndex extends SchemaCommand {
 
@@ -65,21 +64,24 @@ public class CreateIndex extends SchemaCommand {
 		}
 		int id = getObjectId(true, false);
 		if (primaryKey) {
-			indexName = table.getSchema().getUniqueIndexName(session, table, Constants.PREFIX_PRIMARY_KEY);
+			indexName = table.getSchema().getUniqueIndexName(session, table,
+					Constants.PREFIX_PRIMARY_KEY);
 		} else if (indexName == null) {
-			indexName = table.getSchema().getUniqueIndexName(session, table, Constants.PREFIX_INDEX);
+			indexName = table.getSchema().getUniqueIndexName(session, table,
+					Constants.PREFIX_INDEX);
 		}
 		if (getSchema().findIndex(session, indexName) != null) {
 			if (ifNotExists) {
 				return 0;
 			}
-			throw Message.getSQLException(ErrorCode.INDEX_ALREADY_EXISTS_1, indexName);
+			throw Message.getSQLException(ErrorCode.INDEX_ALREADY_EXISTS_1,
+					indexName);
 		}
 		IndexType indexType;
 		if (primaryKey) {
 			if (table.findPrimaryKey() != null && isStartup()) {
 				return 0;
-			} else if (table.findPrimaryKey() != null){
+			} else if (table.findPrimaryKey() != null) {
 				throw Message.getSQLException(ErrorCode.SECOND_PRIMARY_KEY);
 			}
 			indexType = IndexType.createPrimaryKey(persistent, hash);
@@ -89,7 +91,8 @@ public class CreateIndex extends SchemaCommand {
 			indexType = IndexType.createNonUnique(persistent);
 		}
 		IndexColumn.mapColumns(indexColumns, table);
-		table.addIndex(session, indexName, id, indexColumns, indexType, headPos, comment);
+		table.addIndex(session, indexName, id, indexColumns, indexType,
+				headPos, comment);
 		return 0;
 	}
 

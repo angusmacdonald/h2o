@@ -17,9 +17,9 @@ import org.h2.util.ObjectUtils;
 import org.h2.util.StringUtils;
 
 /**
- * A tool to help an application execute multi-dimensional range queries.
- * The algorithm used is database independent, the only requirement
- * is that the engine supports a range index (for example b-tree).
+ * A tool to help an application execute multi-dimensional range queries. The
+ * algorithm used is database independent, the only requirement is that the
+ * engine supports a range index (for example b-tree).
  */
 public class MultiDimension {
 
@@ -31,7 +31,7 @@ public class MultiDimension {
 
 	/**
 	 * Get the singleton.
-	 *
+	 * 
 	 * @return the singleton
 	 */
 	public static MultiDimension getInstance() {
@@ -39,13 +39,14 @@ public class MultiDimension {
 	}
 
 	/**
-	 * Convert the multi-dimensional value into a one-dimensional (scalar) value.
-	 * This is done by interleaving the bits of the values.
-	 * Each values must be bigger or equal to 0. The maximum value
-	 * is dependent on the number of dimensions. For two keys, it is 32 bit,
-	 * for 3: 21 bit, 4: 16 bit, 5: 12 bit, 6: 10 bit, 7: 9 bit, 8: 8 bit.
-	 *
-	 * @param values the multi-dimensional value
+	 * Convert the multi-dimensional value into a one-dimensional (scalar)
+	 * value. This is done by interleaving the bits of the values. Each values
+	 * must be bigger or equal to 0. The maximum value is dependent on the
+	 * number of dimensions. For two keys, it is 32 bit, for 3: 21 bit, 4: 16
+	 * bit, 5: 12 bit, 6: 10 bit, 7: 9 bit, 8: 8 bit.
+	 * 
+	 * @param values
+	 *            the multi-dimensional value
 	 * @return the scalar value
 	 */
 	public long interleave(int[] values) {
@@ -57,7 +58,8 @@ public class MultiDimension {
 		for (int i = 0; i < dimensions; i++) {
 			long k = values[i];
 			if (k < 0 || k > max) {
-				throw new IllegalArgumentException("value out of range; value=" + values[i] + " min=0 max=" + max);
+				throw new IllegalArgumentException("value out of range; value="
+						+ values[i] + " min=0 max=" + max);
 			}
 			for (int b = 0; b < bitsPerValue; b++) {
 				x |= (k & (1L << b)) << (i + (dimensions - 1) * b);
@@ -74,10 +76,13 @@ public class MultiDimension {
 
 	/**
 	 * Gets one of the original multi-dimensional values from a scalar value.
-	 *
-	 * @param scalar the scalar value
-	 * @param dimensions the number of dimensions
-	 * @param dim the dimension of the returned value (starting from 0)
+	 * 
+	 * @param scalar
+	 *            the scalar value
+	 * @param dimensions
+	 *            the number of dimensions
+	 * @param dim
+	 *            the dimension of the returned value (starting from 0)
 	 * @return the value
 	 */
 	public int deinterleave(long scalar, int dimensions, int dim) {
@@ -89,33 +94,36 @@ public class MultiDimension {
 		return value;
 	}
 
-
-	//    public static int get(long z, int d) {
-	//        int n = 0;
-	//        for (int i = 0; i < 31; i++) {
-	//            n |= (z & (1 << (i + i + d))) >> (i + d);
-	//        }
-	//        return n;
-	//    }
+	// public static int get(long z, int d) {
+	// int n = 0;
+	// for (int i = 0; i < 31; i++) {
+	// n |= (z & (1 << (i + i + d))) >> (i + d);
+	// }
+	// return n;
+	// }
 
 	/**
-	 * Generates an optimized multi-dimensional range query.
-	 * The query contains parameters. It can only be used with the H2 database.
-	 *
-	 * @param table the table name
-	 * @param columns the list of columns
-	 * @param scalarColumn the column name of the computed scalar column
+	 * Generates an optimized multi-dimensional range query. The query contains
+	 * parameters. It can only be used with the H2 database.
+	 * 
+	 * @param table
+	 *            the table name
+	 * @param columns
+	 *            the list of columns
+	 * @param scalarColumn
+	 *            the column name of the computed scalar column
 	 * @return the query
 	 */
-	public String generatePreparedQuery(String table, String scalarColumn, String[] columns) {
+	public String generatePreparedQuery(String table, String scalarColumn,
+			String[] columns) {
 		StringBuilder buff = new StringBuilder("SELECT D.* FROM ");
 		buff.append(StringUtils.quoteIdentifier(table));
 		buff.append(" D, TABLE(_FROM_ BIGINT=?, _TO_ BIGINT=?) WHERE ");
 		buff.append(StringUtils.quoteIdentifier(scalarColumn));
 		buff.append(" BETWEEN _FROM_ AND _TO_");
-		for (int i = 0; i < columns.length; i++) {
+		for (String column : columns) {
 			buff.append(" AND ");
-			buff.append(StringUtils.quoteIdentifier(columns[i]));
+			buff.append(StringUtils.quoteIdentifier(column));
 			buff.append("+1 BETWEEN ?+1 AND ?+1");
 		}
 		return buff.toString();
@@ -123,13 +131,17 @@ public class MultiDimension {
 
 	/**
 	 * Executes a prepared query that was generated using generatePreparedQuery.
-	 *
-	 * @param prep the prepared statement
-	 * @param min the lower values
-	 * @param max the upper values
+	 * 
+	 * @param prep
+	 *            the prepared statement
+	 * @param min
+	 *            the lower values
+	 * @param max
+	 *            the upper values
 	 * @return the result set
 	 */
-	public ResultSet getResult(PreparedStatement prep, int[] min, int[] max) throws SQLException {
+	public ResultSet getResult(PreparedStatement prep, int[] min, int[] max)
+			throws SQLException {
 		long[][] ranges = getMortonRanges(min, max);
 		int len = ranges.length;
 		Long[] from = new Long[len];
@@ -149,18 +161,24 @@ public class MultiDimension {
 	}
 
 	/**
-	 * Generates an optimized multi-dimensional range query.
-	 * This query is database independent, however the performance is
-	 * not as good as when using generatePreparedQuery
-	 *
-	 * @param table the table name
-	 * @param columns the list of columns
-	 * @param min the lower values
-	 * @param max the upper values
-	 * @param scalarColumn the column name of the computed scalar column
+	 * Generates an optimized multi-dimensional range query. This query is
+	 * database independent, however the performance is not as good as when
+	 * using generatePreparedQuery
+	 * 
+	 * @param table
+	 *            the table name
+	 * @param columns
+	 *            the list of columns
+	 * @param min
+	 *            the lower values
+	 * @param max
+	 *            the upper values
+	 * @param scalarColumn
+	 *            the column name of the computed scalar column
 	 * @return the query
 	 */
-	public String generateQuery(String table, String scalarColumn, String[] columns, int[] min, int[] max) {
+	public String generateQuery(String table, String scalarColumn,
+			String[] columns, int[] min, int[] max) {
 		long[][] ranges = getMortonRanges(min, max);
 		StringBuilder buff = new StringBuilder("SELECT * FROM (");
 		for (int i = 0; i < ranges.length; i++) {
@@ -189,9 +207,11 @@ public class MultiDimension {
 	 * where min &lt;= value &lt;= max. In most cases, the ranges will be larger
 	 * than required in order to combine smaller ranges into one. Usually, about
 	 * double as much points will be included in the resulting range.
-	 *
-	 * @param min the minimum value
-	 * @param max the maximum value
+	 * 
+	 * @param min
+	 *            the minimum value
+	 * @param max
+	 *            the maximum value
 	 * @return the list of ranges
 	 */
 	private long[][] getMortonRanges(int[] min, int[] max) {
@@ -262,7 +282,8 @@ public class MultiDimension {
 		}
 	}
 
-	private void addMortonRanges(ArrayList list, int[] min, int[] max, int len, int level) {
+	private void addMortonRanges(ArrayList list, int[] min, int[] max, int len,
+			int level) {
 		if (level > 100) {
 			throw new IllegalArgumentException("Stop");
 		}

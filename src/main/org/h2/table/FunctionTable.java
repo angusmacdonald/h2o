@@ -29,7 +29,8 @@ import org.h2.value.ValueNull;
 import org.h2.value.ValueResultSet;
 
 /**
- * A table backed by a system or user-defined function that returns a result set.
+ * A table backed by a system or user-defined function that returns a result
+ * set.
  */
 public class FunctionTable extends Table {
 
@@ -39,7 +40,8 @@ public class FunctionTable extends Table {
 	private LocalResult cachedResult;
 	private Value cachedValue;
 
-	public FunctionTable(Schema schema, Session session, Expression functionExpr, FunctionCall function) throws SQLException {
+	public FunctionTable(Schema schema, Session session,
+			Expression functionExpr, FunctionCall function) throws SQLException {
 		super(schema, 0, function.getName(), false);
 		this.functionExpr = functionExpr;
 		this.function = function;
@@ -51,7 +53,9 @@ public class FunctionTable extends Table {
 		function.optimize(session);
 		int type = function.getType();
 		if (type != Value.RESULT_SET) {
-			throw Message.getSQLException(ErrorCode.FUNCTION_MUST_RETURN_RESULT_SET_1, function.getName());
+			throw Message.getSQLException(
+					ErrorCode.FUNCTION_MUST_RETURN_RESULT_SET_1,
+					function.getName());
 		}
 		int params = function.getParameterCount();
 		Expression[] columnListArgs = new Expression[params];
@@ -60,17 +64,22 @@ public class FunctionTable extends Table {
 			args[i] = args[i].optimize(session);
 			columnListArgs[i] = args[i];
 		}
-		ValueResultSet template = function.getValueForColumnList(session, columnListArgs);
+		ValueResultSet template = function.getValueForColumnList(session,
+				columnListArgs);
 		if (template == null) {
-			throw Message.getSQLException(ErrorCode.FUNCTION_MUST_RETURN_RESULT_SET_1, function.getName());
+			throw Message.getSQLException(
+					ErrorCode.FUNCTION_MUST_RETURN_RESULT_SET_1,
+					function.getName());
 		}
 		ResultSet rs = template.getResultSet();
 		ResultSetMetaData meta = rs.getMetaData();
 		int columnCount = meta.getColumnCount();
 		Column[] cols = new Column[columnCount];
 		for (int i = 0; i < columnCount; i++) {
-			cols[i] = new Column(meta.getColumnName(i + 1), DataType.convertSQLTypeToValueType(meta
-					.getColumnType(i + 1)), meta.getPrecision(i + 1), meta.getScale(i + 1), meta.getColumnDisplaySize(i + 1));
+			cols[i] = new Column(meta.getColumnName(i + 1),
+					DataType.convertSQLTypeToValueType(meta
+							.getColumnType(i + 1)), meta.getPrecision(i + 1),
+					meta.getScale(i + 1), meta.getColumnDisplaySize(i + 1));
 		}
 		setColumns(cols);
 	}
@@ -91,8 +100,9 @@ public class FunctionTable extends Table {
 		return false;
 	}
 
-	public Index addIndex(Session session, String indexName, int indexId, IndexColumn[] cols, IndexType indexType,
-			int headPos, String comment) throws SQLException {
+	public Index addIndex(Session session, String indexName, int indexId,
+			IndexColumn[] cols, IndexType indexType, int headPos, String comment)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
@@ -150,53 +160,56 @@ public class FunctionTable extends Table {
 
 	/**
 	 * Read the result set from the function.
-	 *
-	 * @param session the session
+	 * 
+	 * @param session
+	 *            the session
 	 * @return the result set
 	 */
-	 public LocalResult getResult(Session session) throws SQLException {
-		 functionExpr = functionExpr.optimize(session);
-		 Value v = functionExpr.getValue(session);
-		 if (cachedResult != null && cachedValue == v) {
-			 cachedResult.reset();
-			 return cachedResult;
-		 }
-		 if (v == ValueNull.INSTANCE) {
-			 return new LocalResult();
-		 }
-		 ValueResultSet value = (ValueResultSet) v;
-		 ResultSet rs = value.getResultSet();
-		 LocalResult result = LocalResult.read(session,  rs, 0);
-		 if (function.isDeterministic()) {
-			 cachedResult = result;
-			 cachedValue = v;
-		 }
-		 return result;
-	 }
+	public LocalResult getResult(Session session) throws SQLException {
+		functionExpr = functionExpr.optimize(session);
+		Value v = functionExpr.getValue(session);
+		if (cachedResult != null && cachedValue == v) {
+			cachedResult.reset();
+			return cachedResult;
+		}
+		if (v == ValueNull.INSTANCE) {
+			return new LocalResult();
+		}
+		ValueResultSet value = (ValueResultSet) v;
+		ResultSet rs = value.getResultSet();
+		LocalResult result = LocalResult.read(session, rs, 0);
+		if (function.isDeterministic()) {
+			cachedResult = result;
+			cachedValue = v;
+		}
+		return result;
+	}
 
-	 public long getMaxDataModificationId() {
-		 // TODO optimization: table-as-a-function currently doesn't know the
-		 // last modified date
-		 return Long.MAX_VALUE;
-	 }
+	public long getMaxDataModificationId() {
+		// TODO optimization: table-as-a-function currently doesn't know the
+		// last modified date
+		return Long.MAX_VALUE;
+	}
 
-	 public Index getUniqueIndex() {
-		 return null;
-	 }
+	public Index getUniqueIndex() {
+		return null;
+	}
 
-	 public String getSQL() {
-		 return function.getSQL();
-	 }
+	public String getSQL() {
+		return function.getSQL();
+	}
 
-	 public long getRowCountApproximation() {
-		 return rowCount;
-	 }
+	public long getRowCountApproximation() {
+		return rowCount;
+	}
 
-	 /* (non-Javadoc)
-	  * @see org.h2.table.Table#isLocal()
-	  */
-	 @Override
-	 public boolean isLocal() {
-		 return true;
-	 }
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.h2.table.Table#isLocal()
+	 */
+	@Override
+	public boolean isLocal() {
+		return true;
+	}
 }

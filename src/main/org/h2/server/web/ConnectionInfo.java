@@ -10,8 +10,8 @@ import org.h2.util.StringUtils;
 
 /**
  * The connection info object is a wrapper for database connection information
- * such as the database URL, user name and password.
- * This class is used by the H2 Console.
+ * such as the database URL, user name and password. This class is used by the
+ * H2 Console.
  */
 public class ConnectionInfo {
 	/**
@@ -56,7 +56,8 @@ public class ConnectionInfo {
 	}
 
 	String getString() {
-		return StringUtils.arrayCombine(new String[] { name, driver, url, user }, '|');
+		return StringUtils.arrayCombine(
+				new String[] { name, driver, url, user }, '|');
 	}
 
 }

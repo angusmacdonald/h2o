@@ -18,8 +18,9 @@ public abstract class DefineCommand extends Prepared {
 
 	/**
 	 * Create a new command for the given session.
-	 *
-	 * @param session the session
+	 * 
+	 * @param session
+	 *            the session
 	 */
 	public DefineCommand(Session session) {
 		super(session, false);

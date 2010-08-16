@@ -13,7 +13,8 @@ import java.util.Date;
  * <p>
  * Calculate day of week, week of year and year according to the ISO 8601
  * specification. See also http://en.wikipedia.org/wiki/ISO_8601
- * </p><p>
+ * </p>
+ * <p>
  * The specification defines that the week starts at Monday. The first week of
  * the year is defined as the week which contains at least 4 days of the new
  * year. Therefore if January 1st is on Thursday (or earlier) it belongs to the
@@ -27,8 +28,9 @@ public class DateTimeIso8601Utils {
 
 	/**
 	 * Return the day of week. Week starts at Monday.
-	 *
-	 * @param date the date object which day of week should be calculated
+	 * 
+	 * @param date
+	 *            the date object which day of week should be calculated
 	 * @return the day of the week, Monday as 1 to Sunday as 7
 	 */
 	public static int getIsoDayOfWeek(Date date) {
@@ -43,8 +45,9 @@ public class DateTimeIso8601Utils {
 	 * as this week which contains at least 4 days. The week starts at Monday.
 	 * Therefore December 29th - 31th could belong to the next year and January
 	 * 1st - 3th could belong to the previous year.
-	 *
-	 * @param date the date object which week of year should be calculated
+	 * 
+	 * @param date
+	 *            the date object which week of year should be calculated
 	 * @return the week of the year
 	 */
 	public static int getIsoWeek(Date date) {
@@ -57,8 +60,9 @@ public class DateTimeIso8601Utils {
 
 	/**
 	 * Returns the year according to the ISO week definition.
-	 *
-	 * @param date the date object which year should be calculated
+	 * 
+	 * @param date
+	 *            the date object which year should be calculated
 	 * @return the year
 	 */
 	public static int getIsoYear(Date date) {

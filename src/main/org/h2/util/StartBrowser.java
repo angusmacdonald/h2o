@@ -22,17 +22,19 @@ public class StartBrowser {
 
 	/**
 	 * Open a new browser tab or window with the given URL.
-	 *
-	 * @param url the URL to open
+	 * 
+	 * @param url
+	 *            the URL to open
 	 */
 	public static void openURL(String url) {
-		String osName = SysProperties.getStringSetting("os.name", "linux").toLowerCase();
+		String osName = SysProperties.getStringSetting("os.name", "linux")
+				.toLowerCase();
 		Runtime rt = Runtime.getRuntime();
 		try {
 			String browser = SysProperties.BROWSER;
 			if (browser != null) {
 				if (osName.indexOf("windows") >= 0) {
-					rt.exec(new String[] { "cmd.exe", "/C",  browser, url });
+					rt.exec(new String[] { "cmd.exe", "/C", browser, url });
 				} else {
 					rt.exec(new String[] { browser, url });
 				}
@@ -42,17 +44,17 @@ public class StartBrowser {
 			try {
 				Class desktopClass = Class.forName("java.awt.Desktop");
 				// Desktop.isDesktopSupported()
-				Boolean supported = (Boolean) desktopClass.
-				getMethod("isDesktopSupported", new Class[0]).
-				invoke(null, new Object[0]);
+				Boolean supported = (Boolean) desktopClass.getMethod(
+						"isDesktopSupported", new Class[0]).invoke(null,
+						new Object[0]);
 				URI uri = new URI(url);
 				if (supported.booleanValue()) {
 					// Desktop.getDesktop();
-					Object desktop = desktopClass.getMethod("getDesktop", new Class[0]).
-					invoke(null, new Object[0]);
+					Object desktop = desktopClass.getMethod("getDesktop",
+							new Class[0]).invoke(null, new Object[0]);
 					// desktop.browse(uri);
-					desktopClass.getMethod("browse", new Class[] { URI.class }).
-					invoke(desktop, new Object[] { uri });
+					desktopClass.getMethod("browse", new Class[] { URI.class })
+							.invoke(desktop, new Object[] { uri });
 					return;
 				}
 			} catch (Exception e) {
@@ -60,15 +62,17 @@ public class StartBrowser {
 			}
 
 			if (osName.indexOf("windows") >= 0) {
-				rt.exec(new String[] { "rundll32", "url.dll,FileProtocolHandler", url });
+				rt.exec(new String[] { "rundll32",
+						"url.dll,FileProtocolHandler", url });
 			} else if (osName.indexOf("mac") >= 0) {
 				Runtime.getRuntime().exec(new String[] { "open", url });
 			} else {
-				String[] browsers = { "firefox", "mozilla-firefox", "mozilla", "konqueror", "netscape", "opera" };
+				String[] browsers = { "firefox", "mozilla-firefox", "mozilla",
+						"konqueror", "netscape", "opera" };
 				boolean ok = false;
-				for (int i = 0; i < browsers.length; i++) {
+				for (String browser2 : browsers) {
 					try {
-						rt.exec(new String[] { browsers[i], url });
+						rt.exec(new String[] { browser2, url });
 						ok = true;
 						break;
 					} catch (Exception e) {
@@ -77,11 +81,13 @@ public class StartBrowser {
 				}
 				if (!ok) {
 					// No success in detection.
-					System.out.println("Please open a browser and go to " + url);
+					System.out
+							.println("Please open a browser and go to " + url);
 				}
 			}
 		} catch (IOException e) {
-			System.out.println("Failed to start a browser to open the URL " + url);
+			System.out.println("Failed to start a browser to open the URL "
+					+ url);
 			e.printStackTrace();
 		}
 	}

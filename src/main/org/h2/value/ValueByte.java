@@ -25,8 +25,7 @@ public class ValueByte extends Value {
 	static final int PRECISION = 3;
 
 	/**
-	 * The display size for a byte.
-	 * Example: -127
+	 * The display size for a byte. Example: -127
 	 */
 	static final int DISPLAY_SIZE = 4;
 
@@ -46,7 +45,8 @@ public class ValueByte extends Value {
 
 	private ValueByte checkRange(int value) throws SQLException {
 		if (value < Byte.MIN_VALUE || value > Byte.MAX_VALUE) {
-			throw Message.getSQLException(ErrorCode.OVERFLOW_FOR_TYPE_1, DataType.getDataType(Value.BYTE).name);
+			throw Message.getSQLException(ErrorCode.OVERFLOW_FOR_TYPE_1,
+					DataType.getDataType(Value.BYTE).name);
 		}
 		return ValueByte.get((byte) value);
 	}
@@ -81,7 +81,8 @@ public class ValueByte extends Value {
 	public Value divide(Value v) throws SQLException {
 		ValueByte other = (ValueByte) v;
 		if (other.value == 0) {
-			throw Message.getSQLException(ErrorCode.DIVISION_BY_ZERO_1, getSQL());
+			throw Message.getSQLException(ErrorCode.DIVISION_BY_ZERO_1,
+					getSQL());
 		}
 		return ValueByte.get((byte) (value / other.value));
 	}
@@ -122,19 +123,21 @@ public class ValueByte extends Value {
 		return ObjectUtils.getByte(value);
 	}
 
-	public void set(PreparedStatement prep, int parameterIndex) throws SQLException {
+	public void set(PreparedStatement prep, int parameterIndex)
+			throws SQLException {
 		prep.setByte(parameterIndex, value);
 	}
 
 	/**
 	 * Get or create byte value for the given byte.
-	 *
-	 * @param i the byte
+	 * 
+	 * @param i
+	 *            the byte
 	 * @return the value
 	 */
-	 public static ValueByte get(byte i) {
-		 return (ValueByte) Value.cache(new ValueByte(i));
-	 }
+	public static ValueByte get(byte i) {
+		return (ValueByte) Value.cache(new ValueByte(i));
+	}
 
 	public int getDisplaySize() {
 		return DISPLAY_SIZE;

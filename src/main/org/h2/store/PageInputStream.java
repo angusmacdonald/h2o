@@ -16,13 +16,13 @@ import org.h2.message.Message;
 import org.h2.message.Trace;
 
 /**
- * An output stream that writes into a page store.
- * The format is:
- * <ul><li>0-3: parent page id
- * </li><li>4-4: page type
- * </li><li>5-8: the next page (if there is one) or length
- * </li><li>9-remainder: data
- * </li></ul>
+ * An output stream that writes into a page store. The format is:
+ * <ul>
+ * <li>0-3: parent page id</li>
+ * <li>4-4: page type</li>
+ * <li>5-8: the next page (if there is one) or length</li>
+ * <li>9-remainder: data</li>
+ * </ul>
  */
 public class PageInputStream extends InputStream {
 
@@ -36,7 +36,8 @@ public class PageInputStream extends InputStream {
 	private int remaining;
 	private byte[] buffer = new byte[1];
 
-	public PageInputStream(PageStore store, int parentPage, int headPage, int type) {
+	public PageInputStream(PageStore store, int parentPage, int headPage,
+			int type) {
 		this.store = store;
 		this.trace = store.getTrace();
 		this.parentPage = parentPage;
@@ -99,10 +100,10 @@ public class PageInputStream extends InputStream {
 			t &= ~Page.FLAG_LAST;
 			if (type != t || p != parentPage) {
 				int todoNeedBetterWayToDetectEOF;
-				throw Message.getSQLException(
-						ErrorCode.FILE_CORRUPTED_1,
-						"page:" +nextPage+ " type:" + t + " parent:" + p +
-						" expected type:" + type + " expected parent:" + parentPage);
+				throw Message.getSQLException(ErrorCode.FILE_CORRUPTED_1,
+						"page:" + nextPage + " type:" + t + " parent:" + p
+								+ " expected type:" + type
+								+ " expected parent:" + parentPage);
 			}
 			parentPage = nextPage;
 			if (last) {
@@ -113,7 +114,8 @@ public class PageInputStream extends InputStream {
 				remaining = store.getPageSize() - page.length();
 			}
 			if (trace.isDebugEnabled()) {
-				trace.debug("pageIn.readPage " + parentPage + " next:" + nextPage);
+				trace.debug("pageIn.readPage " + parentPage + " next:"
+						+ nextPage);
 			}
 		} catch (SQLException e) {
 			throw Message.convertToIOException(e);

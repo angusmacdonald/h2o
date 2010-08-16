@@ -22,7 +22,7 @@ public class FtpEvent {
 
 	/**
 	 * Get the FTP command. Example: RETR
-	 *
+	 * 
 	 * @return the command
 	 */
 	public String getCommand() {
@@ -31,7 +31,7 @@ public class FtpEvent {
 
 	/**
 	 * Get the FTP control object.
-	 *
+	 * 
 	 * @return the control object
 	 */
 	public FtpControl getControl() {
@@ -40,7 +40,7 @@ public class FtpEvent {
 
 	/**
 	 * Get the parameter of the FTP command (if any).
-	 *
+	 * 
 	 * @return the parameter
 	 */
 	public String getParam() {

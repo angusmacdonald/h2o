@@ -12,8 +12,8 @@ import org.h2.expression.ExpressionColumn;
 import org.h2.value.Value;
 
 /**
- * The single column resolver is like a table with exactly one row.
- * It is used to parse a simple one-column check constraint.
+ * The single column resolver is like a table with exactly one row. It is used
+ * to parse a simple one-column check constraint.
  */
 public class SingleColumnResolver implements ColumnResolver {
 

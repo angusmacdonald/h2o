@@ -57,47 +57,48 @@ public abstract class Command implements CommandInterface {
 	}
 
 	/**
-	 * Check if this command is transactional.
-	 * If it is not, then it forces the current transaction to commit.
-	 *
+	 * Check if this command is transactional. If it is not, then it forces the
+	 * current transaction to commit.
+	 * 
 	 * @return true if it is
 	 */
 	public abstract boolean isTransactional();
 
 	/**
 	 * Check if this command is a query.
-	 *
+	 * 
 	 * @return true if it is
 	 */
 	public abstract boolean isQuery();
 
 	/**
 	 * Get the list of parameters.
-	 *
+	 * 
 	 * @return the list of parameters
 	 */
 	public abstract ObjectArray getParameters();
 
 	/**
 	 * Check if this command is read only.
-	 *
+	 * 
 	 * @return true if it is
 	 */
 	public abstract boolean isReadOnly();
 
 	/**
 	 * Get an empty result set containing the meta data.
-	 *
+	 * 
 	 * @return an empty result set
 	 */
 	public abstract LocalResult queryMeta() throws SQLException;
 
 	/**
 	 * Execute an updating statement, if this is possible.
-	 *
+	 * 
 	 * @return the update count
-	 * @throws SQLException if the command is not an updating statement
-	 * @throws RemoteException 
+	 * @throws SQLException
+	 *             if the command is not an updating statement
+	 * @throws RemoteException
 	 */
 	public int update() throws SQLException, RemoteException {
 		throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_QUERY);
@@ -107,22 +108,26 @@ public abstract class Command implements CommandInterface {
 	 * Local. Won't commit if it is part of a bigger transaction.
 	 * 
 	 * Execute an updating statement, if this is possible.
-	 *
+	 * 
 	 * @return the update count
-	 * @throws SQLException if the command is not an updating statement
-	 * @throws RemoteException 
+	 * @throws SQLException
+	 *             if the command is not an updating statement
+	 * @throws RemoteException
 	 */
-	protected int update(boolean partOfABiggerThing) throws SQLException, RemoteException {
+	protected int update(boolean partOfABiggerThing) throws SQLException,
+			RemoteException {
 		throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_QUERY);
 	}
 
 	/**
 	 * Execute a query statement, if this is possible.
-	 *
-	 * @param maxrows the maximum number of rows returned
+	 * 
+	 * @param maxrows
+	 *            the maximum number of rows returned
 	 * @return the local result set
-	 * @throws SQLException if the command is not a query
-	 * @throws RemoteException 
+	 * @throws SQLException
+	 *             if the command is not a query
+	 * @throws RemoteException
 	 */
 	public LocalResult query(int maxrows) throws SQLException, RemoteException {
 		throw Message.getSQLException(ErrorCode.METHOD_ONLY_ALLOWED_FOR_QUERY);
@@ -130,12 +135,15 @@ public abstract class Command implements CommandInterface {
 
 	/**
 	 * Local. Won't commit if it is part of a bigger transaction.
-	 *
-	 * @param maxrows the maximum number of rows returned
+	 * 
+	 * @param maxrows
+	 *            the maximum number of rows returned
 	 * @return the local result set
-	 * @throws SQLException if the command is not a query
+	 * @throws SQLException
+	 *             if the command is not a query
 	 */
-	protected LocalResult query(int maxrows, boolean partOfABiggerThing) throws SQLException {
+	protected LocalResult query(int maxrows, boolean partOfABiggerThing)
+			throws SQLException {
 		throw Message.getSQLException(ErrorCode.METHOD_ONLY_ALLOWED_FOR_QUERY);
 	}
 
@@ -147,21 +155,24 @@ public abstract class Command implements CommandInterface {
 		return queryMeta();
 	}
 
-	public ResultInterface executeQuery(int maxrows, boolean scrollable) throws SQLException {
+	public ResultInterface executeQuery(int maxrows, boolean scrollable)
+			throws SQLException {
 		return executeQueryLocal(maxrows);
 	}
 
 	/**
-	 * Execute a query and return a local result set.
-	 * This method prepares everything and calls {@link #query(int)} finally.
-	 *
-	 * @param maxrows the maximum number of rows to return
+	 * Execute a query and return a local result set. This method prepares
+	 * everything and calls {@link #query(int)} finally.
+	 * 
+	 * @param maxrows
+	 *            the maximum number of rows to return
 	 * @return the local result set
 	 */
 	public LocalResult executeQueryLocal(int maxrows) throws SQLException {
 		startTime = System.currentTimeMillis();
 		Database database = session.getDatabase();
-		Object sync = database.isMultiThreaded() ? (Object) session : (Object) database;
+		Object sync = database.isMultiThreaded() ? (Object) session
+				: (Object) database;
 		session.waitIfExclusiveModeEnabled();
 
 		synchronized (sync) {
@@ -189,8 +200,9 @@ public abstract class Command implements CommandInterface {
 
 	/**
 	 * Check if this command has been canceled, and throw an exception if yes.
-	 *
-	 * @throws SQLException if the statement has been canceled
+	 * 
+	 * @throws SQLException
+	 *             if the statement has been canceled
 	 */
 	public void checkCanceled() throws SQLException {
 		if (cancel) {
@@ -222,11 +234,13 @@ public abstract class Command implements CommandInterface {
 		}
 	}
 
-	public int executeUpdate(boolean partOfMultiQueryTransaction) throws SQLException {
+	public int executeUpdate(boolean partOfMultiQueryTransaction)
+			throws SQLException {
 		long start = startTime = System.currentTimeMillis();
 		Database database = session.getDatabase();
 		MemoryUtils.allocateReserveMemory();
-		Object sync = database.isMultiThreaded() ? (Object) session : (Object) database;
+		Object sync = database.isMultiThreaded() ? (Object) session
+				: (Object) database;
 		session.waitIfExclusiveModeEnabled();
 		// synchronized (sync) {
 		int rollback = session.getLogId();
@@ -289,7 +303,7 @@ public abstract class Command implements CommandInterface {
 		} finally {
 			stop();
 		}
-		//}
+		// }
 	}
 
 	public void close() {
@@ -305,12 +319,14 @@ public abstract class Command implements CommandInterface {
 	}
 
 	/**
-	 * Request a query proxy from the Table Manager of the table involved in the query. This proxy
-	 * contains the details of any locks that were acquired.
+	 * Request a query proxy from the Table Manager of the table involved in the
+	 * query. This proxy contains the details of any locks that were acquired.
+	 * 
 	 * @return
-	 * @throws SQLException 
+	 * @throws SQLException
 	 */
-	public abstract QueryProxy acquireLocks(QueryProxyManager queryProxyManager) throws SQLException;
+	public abstract QueryProxy acquireLocks(QueryProxyManager queryProxyManager)
+			throws SQLException;
 
 	/**
 	 * @return the session
@@ -326,7 +342,8 @@ public abstract class Command implements CommandInterface {
 
 	/**
 	 * Is the given command meant to be propagated to all machines?
-	 * @param addNewReplicaLocationQuery 
+	 * 
+	 * @param addNewReplicaLocationQuery
 	 * @return
 	 */
 	protected boolean isPropagatableCommand(Command command) {

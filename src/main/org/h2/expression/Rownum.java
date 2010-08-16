@@ -66,7 +66,7 @@ public class Rownum extends Expression {
 	}
 
 	public boolean isEverything(ExpressionVisitor visitor) {
-		switch(visitor.getType()) {
+		switch (visitor.getType()) {
 		case ExpressionVisitor.OPTIMIZABLE_MIN_MAX_COUNT_ALL:
 			return false;
 		case ExpressionVisitor.DETERMINISTIC:
@@ -85,7 +85,7 @@ public class Rownum extends Expression {
 		case ExpressionVisitor.GET_DEPENDENCIES:
 			return true;
 		default:
-			throw Message.throwInternalError("type="+visitor.getType());
+			throw Message.throwInternalError("type=" + visitor.getType());
 		}
 	}
 

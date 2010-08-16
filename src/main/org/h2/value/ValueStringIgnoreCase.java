@@ -16,7 +16,8 @@ import org.h2.util.StringUtils;
  */
 public class ValueStringIgnoreCase extends ValueStringBase {
 
-	private static final ValueStringIgnoreCase EMPTY = new ValueStringIgnoreCase("");
+	private static final ValueStringIgnoreCase EMPTY = new ValueStringIgnoreCase(
+			"");
 	private int hash;
 
 	protected ValueStringIgnoreCase(String value) {
@@ -33,7 +34,8 @@ public class ValueStringIgnoreCase extends ValueStringBase {
 	}
 
 	public boolean equals(Object other) {
-		return other instanceof ValueStringBase && value.equalsIgnoreCase(((ValueStringBase) other).value);
+		return other instanceof ValueStringBase
+				&& value.equalsIgnoreCase(((ValueStringBase) other).value);
 	}
 
 	public int hashCode() {
@@ -45,21 +47,24 @@ public class ValueStringIgnoreCase extends ValueStringBase {
 	}
 
 	public String getSQL() {
-		return "CAST(" + StringUtils.quoteStringSQL(value) + " AS VARCHAR_IGNORECASE)";
+		return "CAST(" + StringUtils.quoteStringSQL(value)
+				+ " AS VARCHAR_IGNORECASE)";
 	}
 
 	/**
-	 * Get or create a case insensitive string value for the given string.
-	 * The value will have the same case as the passed string.
-	 *
-	 * @param s the string
+	 * Get or create a case insensitive string value for the given string. The
+	 * value will have the same case as the passed string.
+	 * 
+	 * @param s
+	 *            the string
 	 * @return the value
 	 */
 	public static ValueStringIgnoreCase get(String s) {
 		if (s.length() == 0) {
 			return EMPTY;
 		}
-		ValueStringIgnoreCase obj = new ValueStringIgnoreCase(StringCache.get(s));
+		ValueStringIgnoreCase obj = new ValueStringIgnoreCase(
+				StringCache.get(s));
 		if (s.length() > SysProperties.OBJECT_CACHE_MAX_PER_ELEMENT_SIZE) {
 			return obj;
 		}

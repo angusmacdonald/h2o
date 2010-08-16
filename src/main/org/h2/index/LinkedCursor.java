@@ -31,7 +31,8 @@ public class LinkedCursor implements Cursor {
 	private final ResultSet rs;
 	private Row current;
 
-	LinkedCursor(TableLink tableLink, ResultSet rs, Session session, String sql, PreparedStatement prep) {
+	LinkedCursor(TableLink tableLink, ResultSet rs, Session session,
+			String sql, PreparedStatement prep) {
 		this.session = session;
 		this.tableLink = tableLink;
 		this.rs = rs;
@@ -55,7 +56,6 @@ public class LinkedCursor implements Cursor {
 	public int getPos() {
 		throw Message.throwInternalError();
 	}
-
 
 	public boolean next() throws SQLException {
 		boolean result = rs.next();

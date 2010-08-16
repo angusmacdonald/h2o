@@ -34,7 +34,8 @@ public class ConditionInSelect extends Condition {
 	private int compareType;
 	private int queryLevel;
 
-	public ConditionInSelect(Database database, Expression left, Query query, boolean all, int compareType) {
+	public ConditionInSelect(Database database, Expression left, Query query,
+			boolean all, int compareType) {
 		this.database = database;
 		this.left = left;
 		this.query = query;
@@ -82,7 +83,8 @@ public class ConditionInSelect extends Condition {
 		return ValueBoolean.get(result);
 	}
 
-	public void mapColumns(ColumnResolver resolver, int queryLevel) throws SQLException {
+	public void mapColumns(ColumnResolver resolver, int queryLevel)
+			throws SQLException {
 		left.mapColumns(resolver, queryLevel);
 		query.mapColumns(resolver, queryLevel + 1);
 		this.queryLevel = Math.max(queryLevel, this.queryLevel);
@@ -92,7 +94,8 @@ public class ConditionInSelect extends Condition {
 		left = left.optimize(session);
 		query.prepare();
 		if (query.getColumnCount() != 1) {
-			throw Message.getSQLException(ErrorCode.SUBQUERY_IS_NOT_SINGLE_COLUMN);
+			throw Message
+					.getSQLException(ErrorCode.SUBQUERY_IS_NOT_SINGLE_COLUMN);
 		}
 		// Can not optimize IN(SELECT...): the data may change
 		// However, could transform to an inner join
@@ -128,7 +131,8 @@ public class ConditionInSelect extends Condition {
 		return left.getCost() + 10 + (int) (10 * query.getCost());
 	}
 
-	public Expression optimizeInJoin(Session session, Select select) throws SQLException {
+	public Expression optimizeInJoin(Session session, Select select)
+			throws SQLException {
 		query.setDistinct(true);
 		if (all || compareType != Comparison.EQUAL) {
 			return this;
@@ -144,15 +148,18 @@ public class ConditionInSelect extends Condition {
 			return this;
 		}
 		ExpressionColumn ec = (ExpressionColumn) left;
-		Index index = ec.getTableFilter().getTable().getIndexForColumn(ec.getColumn(), false);
+		Index index = ec.getTableFilter().getTable()
+				.getIndexForColumn(ec.getColumn(), false);
 		if (index == null) {
 			return this;
 		}
 		String name = session.getNextSystemIdentifier(select.getSQL());
-		TableView view = TableView.createTempView(session, session.getUser(), name, query, select);
+		TableView view = TableView.createTempView(session, session.getUser(),
+				name, query, select);
 		TableFilter filter = new TableFilter(session, view, name, false, select);
 		select.addTableFilter(filter, true);
-		ExpressionColumn column = new ExpressionColumn(session.getDatabase(), null, view.getName(), alias);
+		ExpressionColumn column = new ExpressionColumn(session.getDatabase(),
+				null, view.getName(), alias);
 		Expression on = new Comparison(session, Comparison.EQUAL, left, column);
 		on.mapColumns(filter, 0);
 		on = on.optimize(session);

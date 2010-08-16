@@ -40,8 +40,8 @@ import org.h2.util.NetUtils;
 import org.h2.util.StringCache;
 
 /**
- * The transfer class is used to send and receive Value objects.
- * It is used on both the client side, and on the server side.
+ * The transfer class is used to send and receive Value objects. It is used on
+ * both the client side, and on the server side.
  */
 public class Transfer {
 
@@ -56,8 +56,9 @@ public class Transfer {
 
 	/**
 	 * Create a new transfer object for the specified session.
-	 *
-	 * @param session the session
+	 * 
+	 * @param session
+	 *            the session
 	 */
 	public Transfer(SessionInterface session) {
 		this.session = session;
@@ -65,8 +66,9 @@ public class Transfer {
 
 	/**
 	 * Set the socket this object uses.
-	 *
-	 * @param s the socket
+	 * 
+	 * @param s
+	 *            the socket
 	 */
 	public void setSocket(Socket s) {
 		socket = s;
@@ -77,8 +79,10 @@ public class Transfer {
 	 * output stream.
 	 */
 	public void init() throws IOException {
-		in = new DataInputStream(new BufferedInputStream(socket.getInputStream(), Transfer.BUFFER_SIZE));
-		out = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream(), Transfer.BUFFER_SIZE));
+		in = new DataInputStream(new BufferedInputStream(
+				socket.getInputStream(), Transfer.BUFFER_SIZE));
+		out = new DataOutputStream(new BufferedOutputStream(
+				socket.getOutputStream(), Transfer.BUFFER_SIZE));
 	}
 
 	/**
@@ -90,8 +94,9 @@ public class Transfer {
 
 	/**
 	 * Write a boolean.
-	 *
-	 * @param x the value
+	 * 
+	 * @param x
+	 *            the value
 	 * @return itself
 	 */
 	public Transfer writeBoolean(boolean x) throws IOException {
@@ -101,7 +106,7 @@ public class Transfer {
 
 	/**
 	 * Read a boolean.
-	 *
+	 * 
 	 * @return the value
 	 */
 	public boolean readBoolean() throws IOException {
@@ -110,8 +115,9 @@ public class Transfer {
 
 	/**
 	 * Write a byte.
-	 *
-	 * @param x the value
+	 * 
+	 * @param x
+	 *            the value
 	 * @return itself
 	 */
 	private Transfer writeByte(byte x) throws IOException {
@@ -121,7 +127,7 @@ public class Transfer {
 
 	/**
 	 * Read a byte.
-	 *
+	 * 
 	 * @return the value
 	 */
 	private byte readByte() throws IOException {
@@ -130,8 +136,9 @@ public class Transfer {
 
 	/**
 	 * Write an int.
-	 *
-	 * @param x the value
+	 * 
+	 * @param x
+	 *            the value
 	 * @return itself
 	 */
 	public Transfer writeInt(int x) throws IOException {
@@ -141,7 +148,7 @@ public class Transfer {
 
 	/**
 	 * Read an int.
-	 *
+	 * 
 	 * @return the value
 	 */
 	public int readInt() throws IOException {
@@ -150,8 +157,9 @@ public class Transfer {
 
 	/**
 	 * Write a long.
-	 *
-	 * @param x the value
+	 * 
+	 * @param x
+	 *            the value
 	 * @return itself
 	 */
 	public Transfer writeLong(long x) throws IOException {
@@ -161,7 +169,7 @@ public class Transfer {
 
 	/**
 	 * Read a long.
-	 *
+	 * 
 	 * @return the value
 	 */
 	public long readLong() throws IOException {
@@ -170,8 +178,9 @@ public class Transfer {
 
 	/**
 	 * Write a double.
-	 *
-	 * @param x the value
+	 * 
+	 * @param x
+	 *            the value
 	 * @return itself
 	 */
 	private Transfer writeDouble(double i) throws IOException {
@@ -181,8 +190,9 @@ public class Transfer {
 
 	/**
 	 * Write a float.
-	 *
-	 * @param x the value
+	 * 
+	 * @param x
+	 *            the value
 	 * @return itself
 	 */
 	private Transfer writeFloat(float i) throws IOException {
@@ -192,7 +202,7 @@ public class Transfer {
 
 	/**
 	 * Read a double.
-	 *
+	 * 
 	 * @return the value
 	 */
 	private double readDouble() throws IOException {
@@ -201,7 +211,7 @@ public class Transfer {
 
 	/**
 	 * Read a float.
-	 *
+	 * 
 	 * @return the value
 	 */
 	private float readFloat() throws IOException {
@@ -210,8 +220,9 @@ public class Transfer {
 
 	/**
 	 * Write a string. The maximum string length is Integer.MAX_VALUE.
-	 *
-	 * @param s the value
+	 * 
+	 * @param s
+	 *            the value
 	 * @return itself
 	 */
 	public Transfer writeString(String s) throws IOException {
@@ -229,7 +240,7 @@ public class Transfer {
 
 	/**
 	 * Read a string.
-	 *
+	 * 
 	 * @return the value
 	 */
 	public String readString() throws IOException {
@@ -237,7 +248,6 @@ public class Transfer {
 		if (len == -1) {
 			return null;
 		}
-
 
 		StringBuilder buff = new StringBuilder(len);
 		for (int i = 0; i < len; i++) {
@@ -250,8 +260,9 @@ public class Transfer {
 
 	/**
 	 * Write a byte array.
-	 *
-	 * @param data the value
+	 * 
+	 * @param data
+	 *            the value
 	 * @return itself
 	 */
 	public Transfer writeBytes(byte[] data) throws IOException {
@@ -266,7 +277,7 @@ public class Transfer {
 
 	/**
 	 * Read a byte array.
-	 *
+	 * 
 	 * @return the value
 	 */
 	public byte[] readBytes() throws IOException {
@@ -299,8 +310,9 @@ public class Transfer {
 
 	/**
 	 * Write a value.
-	 *
-	 * @param v the value
+	 * 
+	 * @param v
+	 *            the value
 	 */
 	public void writeValue(Value v) throws IOException, SQLException {
 		int type = v.getType();
@@ -368,7 +380,8 @@ public class Transfer {
 			InputStream in = v.getInputStream();
 			long written = IOUtils.copyAndCloseInput(in, out);
 			if (SysProperties.CHECK && written != length) {
-				Message.throwInternalError("length:" + length + " written:" + written);
+				Message.throwInternalError("length:" + length + " written:"
+						+ written);
 			}
 			writeInt(LOB_MAGIC);
 			break;
@@ -380,18 +393,23 @@ public class Transfer {
 			}
 			writeLong(length);
 			Reader reader = v.getReader();
-			// below, writer.flush needs to be called to ensure the buffer is written
-			// but, this will also flush the output stream, and this slows things down
-			// so construct an output stream that will ignore this chained flush call
+			// below, writer.flush needs to be called to ensure the buffer is
+			// written
+			// but, this will also flush the output stream, and this slows
+			// things down
+			// so construct an output stream that will ignore this chained flush
+			// call
 			java.io.OutputStream out2 = new java.io.FilterOutputStream(out) {
 				public void flush() {
 					// do nothing
 				}
 			};
-			Writer writer = new BufferedWriter(new OutputStreamWriter(out2, Constants.UTF8));
+			Writer writer = new BufferedWriter(new OutputStreamWriter(out2,
+					Constants.UTF8));
 			long written = IOUtils.copyAndCloseInput(reader, writer);
 			if (SysProperties.CHECK && written != length) {
-				Message.throwInternalError("length:" + length + " written:" + written);
+				Message.throwInternalError("length:" + length + " written:"
+						+ written);
 			}
 			writer.flush();
 			writeInt(LOB_MAGIC);
@@ -400,8 +418,8 @@ public class Transfer {
 		case Value.ARRAY: {
 			Value[] list = ((ValueArray) v).getList();
 			writeInt(list.length);
-			for (int i = 0; i < list.length; i++) {
-				writeValue(list[i]);
+			for (Value element : list) {
+				writeValue(element);
 			}
 			break;
 		}
@@ -420,7 +438,8 @@ public class Transfer {
 			while (rs.next()) {
 				writeBoolean(true);
 				for (int i = 0; i < columnCount; i++) {
-					int t = DataType.convertSQLTypeToValueType(meta.getColumnType(i + 1));
+					int t = DataType.convertSQLTypeToValueType(meta
+							.getColumnType(i + 1));
 					Value val = DataType.readValue(session, rs, i + 1, t);
 					writeValue(val);
 				}
@@ -436,12 +455,12 @@ public class Transfer {
 
 	/**
 	 * Read a value.
-	 *
+	 * 
 	 * @return the value
 	 */
 	public Value readValue() throws IOException, SQLException {
 		int type = readInt();
-		switch(type) {
+		switch (type) {
 		case Value.NULL:
 			return ValueNull.INSTANCE;
 		case Value.BYTES:
@@ -483,7 +502,8 @@ public class Transfer {
 			return ValueStringFixed.get(readString());
 		case Value.BLOB: {
 			long length = readLong();
-			ValueLob v = ValueLob.createBlob(in, length, session.getDataHandler());
+			ValueLob v = ValueLob.createBlob(in, length,
+					session.getDataHandler());
 			if (readInt() != LOB_MAGIC) {
 				throw Message.getSQLException(ErrorCode.CONNECTION_BROKEN);
 			}
@@ -491,7 +511,9 @@ public class Transfer {
 		}
 		case Value.CLOB: {
 			long length = readLong();
-			ValueLob v = ValueLob.createClob(new ExactUTF8InputStreamReader(in), length, session.getDataHandler());
+			ValueLob v = ValueLob.createClob(
+					new ExactUTF8InputStreamReader(in), length,
+					session.getDataHandler());
 			if (readInt() != LOB_MAGIC) {
 				throw Message.getSQLException(ErrorCode.CONNECTION_BROKEN);
 			}
@@ -524,13 +546,13 @@ public class Transfer {
 			return ValueResultSet.get(rs);
 		}
 		default:
-			throw Message.throwInternalError("type="+type);
+			throw Message.throwInternalError("type=" + type);
 		}
 	}
 
 	/**
 	 * Get the socket.
-	 *
+	 * 
 	 * @return the socket
 	 */
 	public Socket getSocket() {
@@ -539,8 +561,9 @@ public class Transfer {
 
 	/**
 	 * Set the session.
-	 *
-	 * @param session the session
+	 * 
+	 * @param session
+	 *            the session
 	 */
 	public void setSession(SessionInterface session) {
 		this.session = session;
@@ -548,8 +571,9 @@ public class Transfer {
 
 	/**
 	 * Enable or disable SSL.
-	 *
-	 * @param ssl the new value
+	 * 
+	 * @param ssl
+	 *            the new value
 	 */
 	public void setSSL(boolean ssl) {
 		this.ssl = ssl;
@@ -557,7 +581,7 @@ public class Transfer {
 
 	/**
 	 * Open a new new connection to the same address and port as this one.
-	 *
+	 * 
 	 * @return the new transfer object
 	 */
 	public Transfer openNewConnection() throws IOException {

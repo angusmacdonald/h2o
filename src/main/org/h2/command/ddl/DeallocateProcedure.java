@@ -9,8 +9,7 @@ package org.h2.command.ddl;
 import org.h2.engine.Session;
 
 /**
- * This class represents the statement
- * DEALLOCATE
+ * This class represents the statement DEALLOCATE
  */
 public class DeallocateProcedure extends DefineCommand {
 

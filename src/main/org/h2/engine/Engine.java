@@ -23,9 +23,8 @@ import org.h2.util.RandomUtils;
 import org.h2.util.StringUtils;
 
 /**
- * The engine contains a map of all open databases.
- * It is also responsible for opening and creating new databases.
- * This is a singleton class.
+ * The engine contains a map of all open databases. It is also responsible for
+ * opening and creating new databases. This is a singleton class.
  */
 public class Engine {
 
@@ -42,16 +41,18 @@ public class Engine {
 	}
 
 	/**
-	 * H2O. Access a given database instance.
-	 * It's possible there could be some concurrency issues here.
+	 * H2O. Access a given database instance. It's possible there could be some
+	 * concurrency issues here.
+	 * 
 	 * @param databaseName
 	 * @return
 	 */
-	public static Database getDatabase(String databaseName){
+	public static Database getDatabase(String databaseName) {
 		return DATABASES.get(databaseName);
 	}
 
-	private Session openSession(ConnectionInfo ci, boolean ifExists, String cipher) throws SQLException {
+	private Session openSession(ConnectionInfo ci, boolean ifExists,
+			String cipher) throws SQLException {
 		String name = ci.getName();
 		Database database;
 		boolean openNew = ci.getProperty("OPEN_NEW", false);
@@ -64,14 +65,17 @@ public class Engine {
 		boolean opened = false;
 		if (database == null) {
 			if (ifExists && !Database.exists(name)) {
-				throw Message.getSQLException(ErrorCode.DATABASE_NOT_FOUND_1, name);
+				throw Message.getSQLException(ErrorCode.DATABASE_NOT_FOUND_1,
+						name);
 			}
 			database = new Database(name, ci, cipher);
 			opened = true;
 			if (database.getAllUsers().size() == 0) {
 				// users is the last thing we add, so if no user is around,
 				// the database is not initialized correctly
-				user = new User(database, database.allocateObjectId(false, true), ci.getUserName(), false);
+				user = new User(database,
+						database.allocateObjectId(false, true),
+						ci.getUserName(), false);
 				user.setAdmin(true);
 				user.setUserPasswordHash(ci.getUserPasswordHash());
 				database.setMasterUser(user);
@@ -86,13 +90,15 @@ public class Engine {
 				return null;
 			}
 			if (user == null) {
-				if (database.validateFilePasswordHash(cipher, ci.getFilePasswordHash())) {
+				if (database.validateFilePasswordHash(cipher,
+						ci.getFilePasswordHash())) {
 					user = database.findUser(ci.getUserName());
 					if (user != null) {
-						if (!user.validateUserPasswordHash(ci.getUserPasswordHash())) {
+						if (!user.validateUserPasswordHash(ci
+								.getUserPasswordHash())) {
 							user = null;
 						}
-					} 
+					}
 				}
 				if (opened && (user == null || !user.getAdmin())) {
 					// reset - because the user is not an admin, and has no
@@ -112,8 +118,9 @@ public class Engine {
 
 	/**
 	 * Open a database connection with the given connection information.
-	 *
-	 * @param ci the connection information
+	 * 
+	 * @param ci
+	 *            the connection information
 	 * @return the session
 	 */
 	public Session getSession(ConnectionInfo ci) throws SQLException {
@@ -141,9 +148,11 @@ public class Engine {
 		}
 	}
 
-	private synchronized Session openSession(ConnectionInfo ci) throws SQLException {
+	private synchronized Session openSession(ConnectionInfo ci)
+			throws SQLException {
 		boolean ifExists = ci.removeProperty("IFEXISTS", false);
-		boolean ignoreUnknownSetting = ci.removeProperty("IGNORE_UNKNOWN_SETTINGS", false);
+		boolean ignoreUnknownSetting = ci.removeProperty(
+				"IGNORE_UNKNOWN_SETTINGS", false);
 		String cipher = ci.removeProperty("CIPHER", null);
 		Session session;
 		while (true) {
@@ -161,12 +170,12 @@ public class Engine {
 		}
 		String[] keys = ci.getKeys();
 		session.setAllowLiterals(true);
-		for (int i = 0; i < keys.length; i++) {
-			String setting = keys[i];
+		for (String setting : keys) {
 			String value = ci.getProperty(setting);
 			try {
-				CommandInterface command = session.prepareCommand("SET " + Parser.quoteIdentifier(setting) + " "
-						+ value, Integer.MAX_VALUE);
+				CommandInterface command = session.prepareCommand("SET "
+						+ Parser.quoteIdentifier(setting) + " " + value,
+						Integer.MAX_VALUE);
 				command.executeUpdate();
 			} catch (SQLException e) {
 				if (!ignoreUnknownSetting) {
@@ -177,11 +186,13 @@ public class Engine {
 		}
 		session.setAllowLiterals(false);
 		session.commit(true);
-		session.getDatabase().getTrace(Trace.SESSION).info("connected #" + session.getId());
+		session.getDatabase().getTrace(Trace.SESSION)
+				.info("connected #" + session.getId());
 		return session;
 	}
 
-	private void checkClustering(ConnectionInfo ci, Database database) throws SQLException {
+	private void checkClustering(ConnectionInfo ci, Database database)
+			throws SQLException {
 		String clusterSession = ci.getProperty(SetTypes.CLUSTER, null);
 		if (Constants.CLUSTERING_DISABLED.equals(clusterSession)) {
 			// in this case, no checking is made
@@ -192,9 +203,12 @@ public class Engine {
 		if (!Constants.CLUSTERING_DISABLED.equals(clusterDb)) {
 			if (!StringUtils.equals(clusterSession, clusterDb)) {
 				if (clusterDb.equals(Constants.CLUSTERING_DISABLED)) {
-					throw Message.getSQLException(ErrorCode.CLUSTER_ERROR_DATABASE_RUNS_ALONE);
+					throw Message
+							.getSQLException(ErrorCode.CLUSTER_ERROR_DATABASE_RUNS_ALONE);
 				}
-				throw Message.getSQLException(ErrorCode.CLUSTER_ERROR_DATABASE_RUNS_CLUSTERED_1, clusterDb);
+				throw Message.getSQLException(
+						ErrorCode.CLUSTER_ERROR_DATABASE_RUNS_CLUSTERED_1,
+						clusterDb);
 			}
 		}
 	}
@@ -202,8 +216,9 @@ public class Engine {
 	/**
 	 * Called after a database has been closed, to remove the object from the
 	 * list of open databases.
-	 *
-	 * @param name the database name
+	 * 
+	 * @param name
+	 *            the database name
 	 */
 	public void close(String name) {
 		DATABASES.remove(name);
@@ -215,17 +230,21 @@ public class Engine {
 	 * method waits some time (to make brute force / rainbow table attacks
 	 * harder) and then throws a 'wrong user or password' exception. The delay
 	 * is a bit randomized to protect against timing attacks. Also the delay
-	 * doubles after each unsuccessful logins, to make brute force attacks harder.
-	 *
+	 * doubles after each unsuccessful logins, to make brute force attacks
+	 * harder.
+	 * 
 	 * There is only one exception both for wrong user and for wrong password,
 	 * to make it harder to get the list of user names. This method must only be
 	 * called from one place, so it is not possible from the stack trace to see
 	 * if the user name was wrong or the password.
-	 *
-	 * @param correct if the user name or the password was correct
-	 * @throws SQLException the exception 'wrong user or password'
+	 * 
+	 * @param correct
+	 *            if the user name or the password was correct
+	 * @throws SQLException
+	 *             the exception 'wrong user or password'
 	 */
-	private static void validateUserAndPassword(boolean correct) throws SQLException {
+	private static void validateUserAndPassword(boolean correct)
+			throws SQLException {
 		int min = SysProperties.DELAY_WRONG_PASSWORD_MIN;
 		if (correct) {
 			long delay = wrongPasswordDelay;
@@ -273,7 +292,8 @@ public class Engine {
 
 	/**
 	 * Used for JUnit Testing in H2O to preserve independance of tests.
-	 * @return 
+	 * 
+	 * @return
 	 */
 	public Collection<Database> closeAllDatabases() {
 		Collection<Database> dbSet = DATABASES.values();

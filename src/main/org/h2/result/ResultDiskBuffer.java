@@ -34,8 +34,8 @@ class ResultDiskBuffer implements ResultExternal {
 	private int columnCount;
 
 	/**
-	 * Represents a virtual disk tape for the merge sort algorithm.
-	 * Each virtual disk tape is a region of the temp file.
+	 * Represents a virtual disk tape for the merge sort algorithm. Each virtual
+	 * disk tape is a region of the temp file.
 	 */
 	static class ResultDiskTape {
 
@@ -60,7 +60,8 @@ class ResultDiskBuffer implements ResultExternal {
 		ObjectArray buffer = new ObjectArray();
 	}
 
-	ResultDiskBuffer(Session session, SortOrder sort, int columnCount) throws SQLException {
+	ResultDiskBuffer(Session session, SortOrder sort, int columnCount)
+			throws SQLException {
 		this.sort = sort;
 		this.columnCount = columnCount;
 		Database db = session.getDatabase();
@@ -205,7 +206,8 @@ class ResultDiskBuffer implements ResultExternal {
 		return (ResultDiskTape) tapes.get(i);
 	}
 
-	private int compareTapes(ResultDiskTape a, ResultDiskTape b) throws SQLException {
+	private int compareTapes(ResultDiskTape a, ResultDiskTape b)
+			throws SQLException {
 		Value[] va = (Value[]) a.buffer.get(0);
 		Value[] vb = (Value[]) b.buffer.get(0);
 		return sort.compare(va, vb);

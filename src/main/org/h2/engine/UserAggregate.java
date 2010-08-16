@@ -23,7 +23,8 @@ public class UserAggregate extends DbObjectBase {
 	private String className;
 	private Class javaClass;
 
-	public UserAggregate(Database db, int id, String name, String className, boolean force) throws SQLException {
+	public UserAggregate(Database db, int id, String name, String className,
+			boolean force) throws SQLException {
 		initDbObjectBase(db, id, name, Trace.FUNCTION);
 		this.className = className;
 		if (!force) {
@@ -66,7 +67,8 @@ public class UserAggregate extends DbObjectBase {
 		return DbObject.AGGREGATE;
 	}
 
-	public synchronized void removeChildrenAndResources(Session session) throws SQLException {
+	public synchronized void removeChildrenAndResources(Session session)
+			throws SQLException {
 		database.removeMeta(session, getId());
 		className = null;
 		javaClass = null;

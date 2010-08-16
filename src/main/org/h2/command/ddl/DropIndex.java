@@ -20,8 +20,7 @@ import org.h2.table.Table;
 import org.h2.util.ObjectArray;
 
 /**
- * This class represents the statement
- * DROP INDEX
+ * This class represents the statement DROP INDEX
  */
 public class DropIndex extends SchemaCommand {
 
@@ -46,7 +45,8 @@ public class DropIndex extends SchemaCommand {
 		Index index = getSchema().findIndex(session, indexName);
 		if (index == null) {
 			if (!ifExists) {
-				throw Message.getSQLException(ErrorCode.INDEX_NOT_FOUND_1, indexName);
+				throw Message.getSQLException(ErrorCode.INDEX_NOT_FOUND_1,
+						indexName);
 			}
 		} else {
 			Table table = index.getTable();
@@ -60,7 +60,9 @@ public class DropIndex extends SchemaCommand {
 					if (Constraint.PRIMARY_KEY.equals(cons.getConstraintType())) {
 						pkConstraint = cons;
 					} else {
-						throw Message.getSQLException(ErrorCode.INDEX_BELONGS_TO_CONSTRAINT_1, indexName);
+						throw Message.getSQLException(
+								ErrorCode.INDEX_BELONGS_TO_CONSTRAINT_1,
+								indexName);
 					}
 				}
 			}

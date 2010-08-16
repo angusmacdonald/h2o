@@ -26,7 +26,7 @@ import java.util.Properties;
 import org.h2.engine.Constants;
 import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.manager.PersistentSystemTable;
-import org.h2o.locator.LocatorServer;
+import org.h2o.locator.server.LocatorServer;
 import org.junit.Before;
 import org.junit.Test;
 

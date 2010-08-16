@@ -20,7 +20,8 @@ public class RuleFixed implements Rule {
 	static final int ANY_UNTIL_END = 6;
 	static final int ANY_WORD = 7;
 	static final int ANY_EXCEPT_2_DOLLAR = 8;
-	static final int HEX_START = 10, CONCAT = 11, AZ_UNDERLINE = 12, AF = 13, DIGIT = 14;
+	static final int HEX_START = 10, CONCAT = 11, AZ_UNDERLINE = 12, AF = 13,
+			DIGIT = 14;
 
 	private final int type;
 
@@ -29,7 +30,7 @@ public class RuleFixed implements Rule {
 	}
 
 	public String toString() {
-		switch(type) {
+		switch (type) {
 		case YMD:
 			return "2000-01-01";
 		case HMS:
@@ -55,19 +56,21 @@ public class RuleFixed implements Rule {
 		case DIGIT:
 			return "0";
 		default:
-			throw new Error("type="+type);
+			throw new Error("type=" + type);
 		}
 	}
 
 	public String random(Bnf config, int level) {
 		Random r = config.getRandom();
-		switch(type) {
+		switch (type) {
 		case YMD:
-			return "" + (1800 + r.nextInt(200)) + "-" + (1 + r.nextInt(12)) + "-" + (1 + r.nextInt(31));
+			return "" + (1800 + r.nextInt(200)) + "-" + (1 + r.nextInt(12))
+					+ "-" + (1 + r.nextInt(31));
 		case HMS:
-			return ""+(r.nextInt(24))+"-"+(r.nextInt(60))+"-"+(r.nextInt(60));
+			return "" + (r.nextInt(24)) + "-" + (r.nextInt(60)) + "-"
+					+ (r.nextInt(60));
 		case NANOS:
-			return ""+(r.nextInt(100000)+r.nextInt(10000));
+			return "" + (r.nextInt(100000) + r.nextInt(10000));
 		case ANY_UNTIL_EOL:
 		case ANY_EXCEPT_SINGLE_QUOTE:
 		case ANY_EXCEPT_DOUBLE_QUOTE:
@@ -92,12 +95,12 @@ public class RuleFixed implements Rule {
 		case DIGIT:
 			return "" + (char) ('0' + r.nextInt(10));
 		default:
-			throw new Error("type="+type);
+			throw new Error("type=" + type);
 		}
 	}
 
 	public String name() {
-		return "type="+type;
+		return "type=" + type;
 	}
 
 	public Rule last() {
@@ -117,7 +120,7 @@ public class RuleFixed implements Rule {
 			return false;
 		}
 		String s = query;
-		switch(type) {
+		switch (type) {
 		case YMD:
 			while (s.length() > 0 && "0123456789- ".indexOf(s.charAt(0)) >= 0) {
 				s = s.substring(1);
@@ -195,7 +198,8 @@ public class RuleFixed implements Rule {
 			}
 			break;
 		case AZ_UNDERLINE:
-			if (s.length() > 0 && (Character.isLetter(s.charAt(0)) || s.charAt(0) == '_')) {
+			if (s.length() > 0
+					&& (Character.isLetter(s.charAt(0)) || s.charAt(0) == '_')) {
 				s = s.substring(1);
 			}
 			break;
@@ -227,7 +231,7 @@ public class RuleFixed implements Rule {
 			return;
 		}
 		String query = sentence.getQuery();
-		switch(type) {
+		switch (type) {
 		case YMD:
 			if (query.length() == 0) {
 				sentence.add("2006-01-01", "2006-01-01", Sentence.KEYWORD);
@@ -292,7 +296,7 @@ public class RuleFixed implements Rule {
 			}
 			break;
 		default:
-			throw new Error("type="+type);
+			throw new Error("type=" + type);
 		}
 	}
 

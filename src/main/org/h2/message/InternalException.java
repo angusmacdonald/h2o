@@ -7,9 +7,8 @@
 package org.h2.message;
 
 /**
- * This exception wraps a checked exception.
- * It is used in methods where checked exceptions are not supported,
- * for example in a Comparator.
+ * This exception wraps a checked exception. It is used in methods where checked
+ * exceptions are not supported, for example in a Comparator.
  */
 public class InternalException extends RuntimeException {
 

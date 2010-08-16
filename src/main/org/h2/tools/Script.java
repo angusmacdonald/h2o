@@ -27,30 +27,34 @@ public class Script extends Tool {
 
 	private void showUsage() {
 		out.println("Allows converting a database to a SQL script.");
-		out.println("java "+getClass().getName() + "\n" +
-				" -url <url>         The database URL\n" +
-				" -user <user>       The user name\n" +
-				" [-password <pwd>]  The password\n" +
-				" [-script <file>]   The script file to run (default: backup.sql)\n" +
-				" [-quiet]           Do not print progress information\n" +
-		" [-options ...]     The list of options (only for H2 embedded mode)");
-		out.println("See also http://h2database.com/javadoc/" + getClass().getName().replace('.', '/') + ".html");
+		out.println("java "
+				+ getClass().getName()
+				+ "\n"
+				+ " -url <url>         The database URL\n"
+				+ " -user <user>       The user name\n"
+				+ " [-password <pwd>]  The password\n"
+				+ " [-script <file>]   The script file to run (default: backup.sql)\n"
+				+ " [-quiet]           Do not print progress information\n"
+				+ " [-options ...]     The list of options (only for H2 embedded mode)");
+		out.println("See also http://h2database.com/javadoc/"
+				+ getClass().getName().replace('.', '/') + ".html");
 	}
 
 	/**
-	 * The command line interface for this tool.
-	 * The options must be split into strings like this: "-user", "sa",...
-	 * Options are case sensitive. The following options are supported:
+	 * The command line interface for this tool. The options must be split into
+	 * strings like this: "-user", "sa",... Options are case sensitive. The
+	 * following options are supported:
 	 * <ul>
-	 * <li>-help or -? (print the list of options)
-	 * </li><li>-url jdbc:h2:... (database URL)
-	 * </li><li>-user username
-	 * </li><li>-password password
-	 * </li><li>-script filename (default file name is backup.sql)
-	 * </li><li>-options to specify a list of options (only for H2)
-	 * </li></ul>
-	 *
-	 * @param args the command line arguments
+	 * <li>-help or -? (print the list of options)</li>
+	 * <li>-url jdbc:h2:... (database URL)</li>
+	 * <li>-user username</li>
+	 * <li>-password password</li>
+	 * <li>-script filename (default file name is backup.sql)</li>
+	 * <li>-options to specify a list of options (only for H2)</li>
+	 * </ul>
+	 * 
+	 * @param args
+	 *            the command line arguments
 	 * @throws SQLException
 	 */
 	public static void main(String[] args) throws SQLException {
@@ -110,14 +114,17 @@ public class Script extends Tool {
 		}
 	}
 
-	private void processScript(String url, String user, String password, String fileName, String options1, String options2) throws SQLException {
+	private void processScript(String url, String user, String password,
+			String fileName, String options1, String options2)
+			throws SQLException {
 		Connection conn = null;
 		Statement stat = null;
 		try {
 			org.h2.Driver.load();
 			conn = DriverManager.getConnection(url, user, password);
 			stat = conn.createStatement();
-			String sql = "SCRIPT " + options1 + " TO '" + fileName + "' " + options2;
+			String sql = "SCRIPT " + options1 + " TO '" + fileName + "' "
+					+ options2;
 			stat.execute(sql);
 		} finally {
 			JdbcUtils.closeSilently(stat);
@@ -127,25 +134,35 @@ public class Script extends Tool {
 
 	/**
 	 * Backs up a database to a SQL script file.
-	 *
-	 * @param url the database URL
-	 * @param user the user name
-	 * @param password the password
-	 * @param fileName the script file
+	 * 
+	 * @param url
+	 *            the database URL
+	 * @param user
+	 *            the user name
+	 * @param password
+	 *            the password
+	 * @param fileName
+	 *            the script file
 	 */
-	public static void execute(String url, String user, String password, String fileName) throws SQLException {
+	public static void execute(String url, String user, String password,
+			String fileName) throws SQLException {
 		new Script().process(url, user, password, fileName);
 	}
 
 	/**
 	 * Backs up a database to a SQL script file.
-	 *
-	 * @param url the database URL
-	 * @param user the user name
-	 * @param password the password
-	 * @param fileName the script file
+	 * 
+	 * @param url
+	 *            the database URL
+	 * @param user
+	 *            the user name
+	 * @param password
+	 *            the password
+	 * @param fileName
+	 *            the script file
 	 */
-	void process(String url, String user, String password, String fileName) throws SQLException {
+	void process(String url, String user, String password, String fileName)
+			throws SQLException {
 		Connection conn = null;
 		Statement stat = null;
 		Writer fileWriter = null;
@@ -153,7 +170,8 @@ public class Script extends Tool {
 			org.h2.Driver.load();
 			conn = DriverManager.getConnection(url, user, password);
 			stat = conn.createStatement();
-			fileWriter = IOUtils.getWriter(FileUtils.openFileOutputStream(fileName, false));
+			fileWriter = IOUtils.getWriter(FileUtils.openFileOutputStream(
+					fileName, false));
 			PrintWriter writer = new PrintWriter(fileWriter);
 			ResultSet rs = stat.executeQuery("SCRIPT");
 			while (rs.next()) {

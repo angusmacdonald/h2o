@@ -23,7 +23,7 @@ import org.h2.value.Value;
  * <p>
  * SELECT X/3 AS A, COUNT(*) FROM SYSTEM_RANGE(1, 10) GROUP BY A HAVING A>2;
  * </p>
- *
+ * 
  * @author Thomas Mueller
  */
 public class SelectListColumnResolver implements ColumnResolver {

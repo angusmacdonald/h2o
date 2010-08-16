@@ -41,7 +41,8 @@ import org.h2.value.ValueString;
  * The client side part of a session when using the server mode. This object
  * communicates with a Session on the server side.
  */
-public class SessionRemote extends SessionWithState implements SessionFactory, DataHandler {
+public class SessionRemote extends SessionWithState implements SessionFactory,
+		DataHandler {
 
 	public static final int SESSION_PREPARE = 0;
 	public static final int SESSION_CLOSE = 1;
@@ -91,8 +92,10 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 		this.connectionInfo = ci;
 	}
 
-	private Transfer initTransfer(ConnectionInfo ci, String db, String server) throws IOException, SQLException {
-		Socket socket = NetUtils.createSocket(server, Constants.DEFAULT_SERVER_PORT, ci.isSSL());
+	private Transfer initTransfer(ConnectionInfo ci, String db, String server)
+			throws IOException, SQLException {
+		Socket socket = NetUtils.createSocket(server,
+				Constants.DEFAULT_SERVER_PORT, ci.isSSL());
 		Transfer trans = new Transfer(this);
 		trans.setSocket(socket);
 		trans.setSSL(ci.isSSL());
@@ -108,8 +111,7 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 		trans.writeBytes(ci.getFilePasswordHash());
 		String[] keys = ci.getKeys();
 		trans.writeInt(keys.length);
-		for (int i = 0; i < keys.length; i++) {
-			String key = keys[i];
+		for (String key : keys) {
 			trans.writeString(key).writeString(ci.getProperty(key));
 		}
 		try {
@@ -133,8 +135,9 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 
 	/**
 	 * Cancel the statement with the given id.
-	 *
-	 * @param id the statement id
+	 * 
+	 * @param id
+	 *            the statement id
 	 */
 	public void cancelStatement(int id) {
 		if (clientVersion <= Constants.TCP_PROTOCOL_VERSION_5) {
@@ -165,7 +168,8 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 	private void switchOffAutoCommitIfCluster() throws SQLException {
 		if (autoCommit && transferList.size() > 1) {
 			if (switchOffAutoCommit == null) {
-				switchOffAutoCommit = prepareCommand("SET AUTOCOMMIT FALSE", Integer.MAX_VALUE);
+				switchOffAutoCommit = prepareCommand("SET AUTOCOMMIT FALSE",
+						Integer.MAX_VALUE);
 			}
 			// this will call setAutoCommit(false)
 			switchOffAutoCommit.executeUpdate();
@@ -222,11 +226,13 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 		throw Message.getUnsupportedException();
 	}
 
-	public SessionInterface createSession(ConnectionInfo ci) throws SQLException {
+	public SessionInterface createSession(ConnectionInfo ci)
+			throws SQLException {
 		return new SessionRemote(ci).connectEmbeddedOrServer(false);
 	}
 
-	private SessionInterface connectEmbeddedOrServer(boolean openNew) throws SQLException {
+	private SessionInterface connectEmbeddedOrServer(boolean openNew)
+			throws SQLException {
 		ConnectionInfo ci = connectionInfo;
 		if (ci.isRemote()) {
 			connectServer(ci);
@@ -234,14 +240,16 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 		}
 		// create the session using reflection,
 		// so that the JDBC layer can be compiled without it
-		boolean autoServerMode = Boolean.valueOf(ci.getProperty("AUTO_SERVER", "false")).booleanValue();
+		boolean autoServerMode = Boolean.valueOf(
+				ci.getProperty("AUTO_SERVER", "false")).booleanValue();
 		ConnectionInfo backup = null;
 		try {
 			if (autoServerMode) {
 				backup = (ConnectionInfo) ci.clone();
 				connectionInfo = (ConnectionInfo) ci.clone();
 			}
-			SessionFactory sf = (SessionFactory) ClassUtils.loadSystemClass("org.h2.engine.SessionFactoryEmbedded").newInstance();
+			SessionFactory sf = (SessionFactory) ClassUtils.loadSystemClass(
+					"org.h2.engine.SessionFactoryEmbedded").newInstance();
 			if (openNew) {
 				ci.setProperty("OPEN_NEW", "true");
 			}
@@ -250,7 +258,8 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 			int errorCode = e.getErrorCode();
 			if (errorCode == ErrorCode.DATABASE_ALREADY_OPEN_1) {
 				if (autoServerMode) {
-					String serverKey = (String) ((JdbcSQLException) e).getPayload();
+					String serverKey = (String) ((JdbcSQLException) e)
+							.getPayload();
 					if (serverKey != null) {
 						backup.setServerKey(serverKey);
 						// OPEN_NEW must be removed now, otherwise
@@ -281,15 +290,18 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 		String server = name.substring(0, idx);
 		traceSystem = new TraceSystem(null, false);
 		try {
-			String traceLevelFile = ci.getProperty(SetTypes.TRACE_LEVEL_FILE, null);
+			String traceLevelFile = ci.getProperty(SetTypes.TRACE_LEVEL_FILE,
+					null);
 			if (traceLevelFile != null) {
 				int level = Integer.parseInt(traceLevelFile);
 				String prefix = getFilePrefix(SysProperties.CLIENT_TRACE_DIRECTORY);
-				String file = FileUtils.createTempFile(prefix, Constants.SUFFIX_TRACE_FILE, false, false);
+				String file = FileUtils.createTempFile(prefix,
+						Constants.SUFFIX_TRACE_FILE, false, false);
 				traceSystem.setFileName(file);
 				traceSystem.setLevelFile(level);
 			}
-			String traceLevelSystemOut = ci.getProperty(SetTypes.TRACE_LEVEL_SYSTEM_OUT, null);
+			String traceLevelSystemOut = ci.getProperty(
+					SetTypes.TRACE_LEVEL_SYSTEM_OUT, null);
 			if (traceLevelSystemOut != null) {
 				int level = Integer.parseInt(traceLevelSystemOut);
 				traceSystem.setLevelSystemOut(level);
@@ -303,9 +315,11 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 			serverList = StringUtils.quoteStringSQL(server);
 			ci.setProperty("CLUSTER", serverList);
 		}
-		autoReconnect = Boolean.valueOf(ci.getProperty("AUTO_RECONNECT", "false")).booleanValue();
+		autoReconnect = Boolean.valueOf(
+				ci.getProperty("AUTO_RECONNECT", "false")).booleanValue();
 		// AUTO_SERVER implies AUTO_RECONNECT
-		autoReconnect |= Boolean.valueOf(ci.getProperty("AUTO_SERVER", "false")).booleanValue();
+		autoReconnect |= Boolean
+				.valueOf(ci.getProperty("AUTO_SERVER", "false")).booleanValue();
 		if (autoReconnect && serverList != null) {
 			throw Message.getSQLException(ErrorCode.FEATURE_NOT_SUPPORTED);
 		}
@@ -316,7 +330,8 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 				if (className != null) {
 					className = StringUtils.trim(className, true, true, "'");
 					try {
-						eventListener = (DatabaseEventListener) ClassUtils.loadUserClass(className).newInstance();
+						eventListener = (DatabaseEventListener) ClassUtils
+								.loadUserClass(className).newInstance();
 					} catch (Throwable e) {
 						throw Message.convert(e);
 					}
@@ -357,8 +372,11 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 		try {
 			// TODO check if a newer client version can be used
 			// not required when sending TCP_DRIVER_VERSION_6
-			CommandInterface command = prepareCommand("SELECT VALUE FROM INFORMATION_SCHEMA.SETTINGS WHERE NAME=?", 1);
-			ParameterInterface param = (ParameterInterface) command.getParameters().get(0);
+			CommandInterface command = prepareCommand(
+					"SELECT VALUE FROM INFORMATION_SCHEMA.SETTINGS WHERE NAME=?",
+					1);
+			ParameterInterface param = (ParameterInterface) command
+					.getParameters().get(0);
 			param.setValue(ValueString.get("info.BUILD_ID"), false);
 			ResultInterface result = command.executeQuery(1, false);
 			if (result.next()) {
@@ -374,7 +392,8 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 			// ignore
 		}
 		if (clientVersion >= Constants.TCP_PROTOCOL_VERSION_6) {
-			sessionId = ByteUtils.convertBytesToString(RandomUtils.getSecureBytes(32));
+			sessionId = ByteUtils.convertBytesToString(RandomUtils
+					.getSecureBytes(32));
 			synchronized (this) {
 				for (int i = 0; i < transferList.size(); i++) {
 					Transfer transfer = (Transfer) transferList.get(i);
@@ -393,19 +412,24 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 	}
 
 	private void switchOffCluster() throws SQLException {
-		CommandInterface ci = prepareCommand("SET CLUSTER ''", Integer.MAX_VALUE);
+		CommandInterface ci = prepareCommand("SET CLUSTER ''",
+				Integer.MAX_VALUE);
 		ci.executeUpdate();
 	}
 
 	/**
 	 * Remove a server from the list of cluster nodes and disables the cluster
 	 * mode.
-	 *
-	 * @param e the exception (used for debugging)
-	 * @param i the index of the server to remove
-	 * @param count the retry count index
+	 * 
+	 * @param e
+	 *            the exception (used for debugging)
+	 * @param i
+	 *            the index of the server to remove
+	 * @param count
+	 *            the retry count index
 	 */
-	public void removeServer(IOException e, int i, int count) throws SQLException {
+	public void removeServer(IOException e, int i, int count)
+			throws SQLException {
 		transferList.remove(i);
 		if (autoReconnect(count)) {
 			return;
@@ -414,7 +438,8 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 		switchOffCluster();
 	}
 
-	public CommandInterface prepareCommand(String sql, int fetchSize) throws SQLException {
+	public CommandInterface prepareCommand(String sql, int fetchSize)
+			throws SQLException {
 		synchronized (this) {
 			checkClosed();
 			return new CommandRemote(this, transferList, sql, fetchSize);
@@ -423,8 +448,9 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 
 	/**
 	 * Automatically re-connect if necessary and if configured to do so.
-	 *
-	 * @param count the retry count index
+	 * 
+	 * @param count
+	 *            the retry count index
 	 * @return true if reconnected
 	 */
 	public boolean autoReconnect(int count) throws SQLException {
@@ -441,7 +467,7 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 		embedded = connectEmbeddedOrServer(false);
 		if (embedded == this) {
 			// connected to a server somewhere else
-				embedded = null;
+			embedded = null;
 		} else {
 			// opened an embedded connection now -
 			// must connect to this database in server mode
@@ -450,20 +476,23 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 		}
 		recreateSessionState();
 		if (eventListener != null) {
-			eventListener.setProgress(DatabaseEventListener.STATE_RECONNECTED, databaseName, count,
-					SysProperties.MAX_RECONNECT);
+			eventListener.setProgress(DatabaseEventListener.STATE_RECONNECTED,
+					databaseName, count, SysProperties.MAX_RECONNECT);
 		}
 		return true;
 	}
 
 	/**
 	 * Check if this session is closed and throws an exception if so.
-	 *
-	 * @throws SQLException if the session is closed
+	 * 
+	 * @throws SQLException
+	 *             if the session is closed
 	 */
 	public void checkClosed() throws SQLException {
 		if (isClosed()) {
-			throw new SQLException("Could not connect to database instane specified: " + this.getDatabasePath());
+			throw new SQLException(
+					"Could not connect to database instane specified: "
+							+ this.getDatabasePath());
 		}
 	}
 
@@ -507,11 +536,13 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 	 * Called to flush the output after data has been sent to the server and
 	 * just before receiving data. This method also reads the status code from
 	 * the server and throws any exception the server sent.
-	 *
-	 * @param transfer the transfer object
-	 * @throws SQLException if the server sent an exception
-	 * @throws IOException if there is a communication problem between client
-	 *             and server
+	 * 
+	 * @param transfer
+	 *            the transfer object
+	 * @throws SQLException
+	 *             if the server sent an exception
+	 * @throws IOException
+	 *             if there is a communication problem between client and server
 	 */
 	public void done(Transfer transfer) throws SQLException, IOException {
 		transfer.flush();
@@ -522,7 +553,8 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 			String sql = transfer.readString();
 			int errorCode = transfer.readInt();
 			String stackTrace = transfer.readString();
-			throw new JdbcSQLException(message, sql, sqlstate, errorCode, null, stackTrace);
+			throw new JdbcSQLException(message, sql, sqlstate, errorCode, null,
+					stackTrace);
 		} else if (status == STATUS_CLOSED) {
 			transferList = null;
 		} else if (status == STATUS_OK_STATE_CHANGED) {
@@ -532,7 +564,7 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 
 	/**
 	 * Returns true if the connection is in cluster mode.
-	 *
+	 * 
 	 * @return true if it is
 	 */
 	public boolean isClustered() {
@@ -545,9 +577,11 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 
 	/**
 	 * Write the operation to the trace system if debug trace is enabled.
-	 *
-	 * @param operation the operation performed
-	 * @param id the id of the operation
+	 * 
+	 * @param operation
+	 *            the operation performed
+	 * @param id
+	 *            the id of the operation
 	 */
 	public void traceOperation(String operation, int id) {
 		if (trace.isDebugEnabled()) {
@@ -574,7 +608,8 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 	public String createTempFile() throws SQLException {
 		try {
 			String prefix = getFilePrefix(System.getProperty("java.io.tmpdir"));
-			return FileUtils.createTempFile(prefix, Constants.SUFFIX_TEMP_FILE, true, false);
+			return FileUtils.createTempFile(prefix, Constants.SUFFIX_TEMP_FILE,
+					true, false);
 		} catch (IOException e) {
 			throw Message.convertIOException(e, databaseName);
 		}
@@ -601,10 +636,12 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 	}
 
 	public void handleInvalidChecksum() throws SQLException {
-		throw Message.getSQLException(ErrorCode.FILE_CORRUPTED_1, "wrong checksum");
+		throw Message.getSQLException(ErrorCode.FILE_CORRUPTED_1,
+				"wrong checksum");
 	}
 
-	public FileStore openFile(String name, String mode, boolean mustExist) throws SQLException {
+	public FileStore openFile(String name, String mode, boolean mustExist)
+			throws SQLException {
 		if (mustExist && !FileUtils.exists(name)) {
 			throw Message.getSQLException(ErrorCode.FILE_CORRUPTED_1, name);
 		}
@@ -612,7 +649,8 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 		if (cipher == null) {
 			store = FileStore.open(this, name, mode);
 		} else {
-			store = FileStore.open(this, name, mode, cipher, fileEncryptionKey, 0);
+			store = FileStore.open(this, name, mode, cipher, fileEncryptionKey,
+					0);
 		}
 		store.setCheckedWriting(false);
 		try {

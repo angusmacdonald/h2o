@@ -12,14 +12,15 @@ package org.h2.engine;
 public class Constants {
 
 	/**
-	 * Is the database running as H2O, or as H2 (backwards compatibility maintained for tests.
+	 * Is the database running as H2O, or as H2 (backwards compatibility
+	 * maintained for tests.
 	 */
 	public static boolean IS_H2O = true;
 
 	/**
-	 * Is the database running as part of a JUnit test. A test may choose to set this to true to
-	 * induce failure in update propagation - this is used to test the system's ability to rollback
-	 * inserts on this type of failure.
+	 * Is the database running as part of a JUnit test. A test may choose to set
+	 * this to true to induce failure in update propagation - this is used to
+	 * test the system's ability to rollback inserts on this type of failure.
 	 */
 	public static boolean IS_TESTING_PRE_COMMIT_FAILURE = false;
 	public static boolean IS_TESTING_PRE_PREPARE_FAILURE = false;
@@ -32,7 +33,6 @@ public class Constants {
 	public static String DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test";
 
 	public static boolean IS_TESTING_H2_TESTS = false;
-
 
 	/**
 	 * The build id is incremented for each public release.
@@ -148,9 +148,9 @@ public class Constants {
 	public static final boolean CONVERT_TO_LONG_ROUND = true;
 
 	/**
-	 * The cost is calculated on rowcount + this offset,
-	 * to avoid using the wrong or no index if the table
-	 * contains no rows _currently_ (when preparing the statement)
+	 * The cost is calculated on rowcount + this offset, to avoid using the
+	 * wrong or no index if the table contains no rows _currently_ (when
+	 * preparing the statement)
 	 */
 	public static final int COST_ROW_OFFSET = 1000;
 
@@ -209,13 +209,14 @@ public class Constants {
 	public static final long DEFAULT_MAX_LOG_SIZE = 32 * 1024 * 1024;
 
 	/**
-	 * The default maximum length on an in-memory LOB object.
-	 * Larger objects will be written to a temporary file.
+	 * The default maximum length on an in-memory LOB object. Larger objects
+	 * will be written to a temporary file.
 	 */
 	public static final int DEFAULT_MAX_LENGTH_CLIENTSIDE_LOB = 65536;
 
 	/**
-	 * The default maximum length of an LOB that is stored in the data file itself.
+	 * The default maximum length of an LOB that is stored in the data file
+	 * itself.
 	 */
 	public static final int DEFAULT_MAX_LENGTH_INPLACE_LOB = 1024;
 
@@ -225,8 +226,8 @@ public class Constants {
 	public static final int DEFAULT_MAX_MEMORY_ROWS = 10000;
 
 	/**
-	 * The default port of the TCP server.
-	 * This port is also used in the documentation.
+	 * The default port of the TCP server. This port is also used in the
+	 * documentation.
 	 */
 	public static final int DEFAULT_SERVER_PORT = 9092;
 
@@ -246,8 +247,7 @@ public class Constants {
 	public static final String DRIVER_NAME = "H2O JDBC Driver";
 
 	/**
-	 * The password is hashed this many times
-	 * to slow down dictionary attacks.
+	 * The password is hashed this many times to slow down dictionary attacks.
 	 */
 	public static final int ENCRYPTION_KEY_HASH_ITERATIONS = 1024;
 
@@ -325,7 +325,8 @@ public class Constants {
 	/**
 	 * The file header used for binary files.
 	 */
-	public static final String MAGIC_FILE_HEADER = "-- H2 0.5/B --      ".substring(0, FILE_BLOCK_SIZE - 1) + "\n";
+	public static final String MAGIC_FILE_HEADER = "-- H2 0.5/B --      "
+			.substring(0, FILE_BLOCK_SIZE - 1) + "\n";
 
 	/**
 	 * If old text file headers should be supported. This setting can be removed
@@ -334,8 +335,8 @@ public class Constants {
 	public static final boolean MAGIC_FILE_HEADER_SUPPORT_TEXT = true;
 
 	/**
-	 * The name of the in-memory management database used by the TCP server
-	 * to keep the active sessions.
+	 * The name of the in-memory management database used by the TCP server to
+	 * keep the active sessions.
 	 */
 	public static final String MANAGEMENT_DB_PREFIX = "management_db_";
 
@@ -372,8 +373,8 @@ public class Constants {
 
 	/**
 	 * The product name. This value must stay like that, see
-	 * http://opensource.atlassian.com/projects/hibernate/browse/HHH-2682
-	 * H2O - Changed, assuming hibernate support isn't needed.
+	 * http://opensource.atlassian.com/projects/hibernate/browse/HHH-2682 H2O -
+	 * Changed, assuming hibernate support isn't needed.
 	 */
 	public static final String PRODUCT_NAME = "H2";
 
@@ -413,7 +414,8 @@ public class Constants {
 	public static final int SELECTIVITY_DISTINCT_COUNT = 10000;
 
 	/**
-	 * Whether Java objects should be serialized / de-serialized in the JDBC API.
+	 * Whether Java objects should be serialized / de-serialized in the JDBC
+	 * API.
 	 */
 	public static final boolean SERIALIZE_JAVA_OBJECTS = true;
 
@@ -498,8 +500,8 @@ public class Constants {
 	/**
 	 * The database URL format in simplified Backus-Naur form.
 	 */
-	public static final String URL_FORMAT = START_URL +
-	"{ {.|mem:}[name] | [file:]fileName | {tcp|ssl}:[//]server[:port][,server2[:port]]/name }[;key=value...]";
+	public static final String URL_FORMAT = START_URL
+			+ "{ {.|mem:}[name] | [file:]fileName | {tcp|ssl}:[//]server[:port][,server2[:port]]/name }[;key=value...]";
 
 	/**
 	 * Name of the character encoding format.
@@ -517,8 +519,8 @@ public class Constants {
 	public static final int VERSION_JDBC_MINOR = 0;
 
 	/**
-	 * The maximum time in milliseconds to keep the cost of a view.
-	 * 10000 means 10 seconds.
+	 * The maximum time in milliseconds to keep the cost of a view. 10000 means
+	 * 10 seconds.
 	 */
 	public static final int VIEW_COST_CACHE_MAX_AGE = 10000;
 
@@ -535,8 +537,10 @@ public class Constants {
 	public static boolean IS_TEAR_DOWN = false;
 
 	/**
-	 * True if a test is being run but this test doesn't require the state of the System Table to be replicated. This is done
-	 * because the mechanism by which System Tables are replicated requires creating multiple threads, and is unnecessary for most tests.
+	 * True if a test is being run but this test doesn't require the state of
+	 * the System Table to be replicated. This is done because the mechanism by
+	 * which System Tables are replicated requires creating multiple threads,
+	 * and is unnecessary for most tests.
 	 */
 	public static boolean IS_NON_SM_TEST = false;
 
@@ -547,9 +551,9 @@ public class Constants {
 	}
 
 	/**
-	 * Get the version of this product, consisting of major version, minor version,
-	 * and build id.
-	 *
+	 * Get the version of this product, consisting of major version, minor
+	 * version, and build id.
+	 * 
 	 * @return the version number
 	 */
 	public static String getVersion() {
@@ -558,7 +562,7 @@ public class Constants {
 
 	/**
 	 * Get the last stable version name.
-	 *
+	 * 
 	 * @return the version number
 	 */
 	public static Object getVersionStable() {
@@ -566,9 +570,9 @@ public class Constants {
 	}
 
 	/**
-	 * Get the complete version number of this database, consisting of
-	 * the major version, the minor version, the build id, and the build date.
-	 *
+	 * Get the complete version number of this database, consisting of the major
+	 * version, the minor version, the build id, and the build date.
+	 * 
 	 * @return the complete version
 	 */
 	public static String getFullVersion() {

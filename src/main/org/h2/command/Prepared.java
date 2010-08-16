@@ -34,7 +34,7 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
 /**
  * A prepared statement.
  */
-public abstract class Prepared{
+public abstract class Prepared {
 
 	/**
 	 * The session.
@@ -57,7 +57,8 @@ public abstract class Prepared{
 	protected ObjectArray parameters;
 
 	/**
-	 * H2O. Whether this query is being executed on startup as a meta-record. If it is, H2O needs to perform fewer checks with the remote System Table.
+	 * H2O. Whether this query is being executed on startup as a meta-record. If
+	 * it is, H2O needs to perform fewer checks with the remote System Table.
 	 */
 	private boolean startup = false;
 
@@ -77,15 +78,15 @@ public abstract class Prepared{
 
 	protected boolean internalQuery;
 
-	private boolean preparedStatement = false;
-
 	/**
-	 * True if every replica is local. This will only be the case if there is only one replica.
+	 * True if every replica is local. This will only be the case if there is
+	 * only one replica.
+	 * 
 	 * @return
 	 */
 	protected boolean isReplicaLocal(QueryProxy queryProxy) {
 
-		for (DatabaseInstanceWrapper replica: queryProxy.getReplicaLocations()){
+		for (DatabaseInstanceWrapper replica : queryProxy.getReplicaLocations()) {
 			if (!this.session.getDatabase().getURL().equals(replica.getURL()))
 				return false;
 		}
@@ -95,9 +96,10 @@ public abstract class Prepared{
 
 	/**
 	 * Create a new object.
-	 *
-	 * @param session the session
-	 * @param internalQuery2 
+	 * 
+	 * @param session
+	 *            the session
+	 * @param internalQuery2
 	 */
 	public Prepared(Session session, boolean internalQuery) {
 		this.session = session;
@@ -106,23 +108,23 @@ public abstract class Prepared{
 	}
 
 	/**
-	 * Check if this command is transactional.
-	 * If it is not, then it forces the current transaction to commit.
-	 *
+	 * Check if this command is transactional. If it is not, then it forces the
+	 * current transaction to commit.
+	 * 
 	 * @return true if it is
 	 */
 	public abstract boolean isTransactional();
 
 	/**
 	 * Get an empty result set containing the meta data.
-	 *
+	 * 
 	 * @return an empty result set
 	 */
 	public abstract LocalResult queryMeta() throws SQLException;
 
 	/**
 	 * Check if this command is read only.
-	 *
+	 * 
 	 * @return true if it is
 	 */
 	public boolean isReadOnly() {
@@ -131,7 +133,7 @@ public abstract class Prepared{
 
 	/**
 	 * Check if the statement needs to be re-compiled.
-	 *
+	 * 
 	 * @return true if it must
 	 */
 	public boolean needRecompile() throws SQLException {
@@ -141,13 +143,14 @@ public abstract class Prepared{
 		}
 		// TODO parser: currently, compiling every create/drop/... twice!
 		// because needRecompile return true even for the first execution
-		return SysProperties.RECOMPILE_ALWAYS || prepareAlways || modificationMetaId < db.getModificationMetaId();
+		return SysProperties.RECOMPILE_ALWAYS || prepareAlways
+				|| modificationMetaId < db.getModificationMetaId();
 	}
 
 	/**
 	 * Get the meta data modification id of the database when this statement was
 	 * compiled.
-	 *
+	 * 
 	 * @return the meta data modification id
 	 */
 	long getModificationMetaId() {
@@ -156,8 +159,9 @@ public abstract class Prepared{
 
 	/**
 	 * Set the meta data modification id of this statement.
-	 *
-	 * @param id the new id
+	 * 
+	 * @param id
+	 *            the new id
 	 */
 	void setModificationMetaId(long id) {
 		this.modificationMetaId = id;
@@ -165,8 +169,9 @@ public abstract class Prepared{
 
 	/**
 	 * Set the parameter list of this statement.
-	 *
-	 * @param parameters the parameter list
+	 * 
+	 * @param parameters
+	 *            the parameter list
 	 */
 	public void setParameterList(ObjectArray parameters) {
 		this.parameters = parameters;
@@ -174,7 +179,7 @@ public abstract class Prepared{
 
 	/**
 	 * Get the parameter list.
-	 *
+	 * 
 	 * @return the parameter list
 	 */
 	public ObjectArray getParameters() {
@@ -183,8 +188,9 @@ public abstract class Prepared{
 
 	/**
 	 * Check if all parameters have been set.
-	 *
-	 * @throws SQLException if any parameter has not been set
+	 * 
+	 * @throws SQLException
+	 *             if any parameter has not been set
 	 */
 	protected void checkParameters() throws SQLException {
 		for (int i = 0; parameters != null && i < parameters.size(); i++) {
@@ -195,8 +201,9 @@ public abstract class Prepared{
 
 	/**
 	 * Set the command.
-	 *
-	 * @param command the new command
+	 * 
+	 * @param command
+	 *            the new command
 	 */
 	public void setCommand(Command command) {
 		this.command = command;
@@ -204,7 +211,7 @@ public abstract class Prepared{
 
 	/**
 	 * Check if this object is a query.
-	 *
+	 * 
 	 * @return true if it is
 	 */
 	public boolean isQuery() {
@@ -220,10 +227,11 @@ public abstract class Prepared{
 
 	/**
 	 * Execute the statement.
-	 *
+	 * 
 	 * @return the update count
-	 * @throws SQLException if it is a query
-	 * @throws RemoteException 
+	 * @throws SQLException
+	 *             if it is a query
+	 * @throws RemoteException
 	 */
 	public int update() throws SQLException, RemoteException {
 		throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_QUERY);
@@ -231,48 +239,59 @@ public abstract class Prepared{
 
 	/**
 	 * H2O. Execute the statement.
+	 * 
 	 * @param transactionName
 	 * @return
 	 * @throws SQLException
-	 * @throws RemoteException 
+	 * @throws RemoteException
 	 */
-	public int update(String transactionName) throws SQLException, RemoteException {
+	public int update(String transactionName) throws SQLException,
+			RemoteException {
 
 		/*
-		 * If the subclass doesn't override this method, then it does not propagate the query to a remote machine.
-		 * As a result, it does not need to know the transactionName, so it is acceptable to simply call update().
+		 * If the subclass doesn't override this method, then it does not
+		 * propagate the query to a remote machine. As a result, it does not
+		 * need to know the transactionName, so it is acceptable to simply call
+		 * update().
 		 */
 		int result = update();
 
 		/*
-		 * Because these subclasses don't propagate the query, they also don't do anything to prepare the transaction locally.
-		 * Consquently this action is done here. 
+		 * Because these subclasses don't propagate the query, they also don't
+		 * do anything to prepare the transaction locally. Consquently this
+		 * action is done here.
 		 */
 		prepareTransaction(transactionName);
-
 
 		return result;
 	}
 
 	/**
 	 * Prepare the commit of a recently executed update.
-	 * @param transactionName 	Transaction name to be given to this transaction.
-	 * @throws SQLException 	Thrown if the PREPARE COMMIT statement fails.
+	 * 
+	 * @param transactionName
+	 *            Transaction name to be given to this transaction.
+	 * @throws SQLException
+	 *             Thrown if the PREPARE COMMIT statement fails.
 	 * 
 	 */
-	protected void prepareTransaction(String transactionName) throws SQLException {
-		if (!isTransactionCommand()){
-			Command command = new Parser(session, true).prepareCommand("PREPARE COMMIT " + transactionName);
+	protected void prepareTransaction(String transactionName)
+			throws SQLException {
+		if (!isTransactionCommand()) {
+			Command command = new Parser(session, true)
+					.prepareCommand("PREPARE COMMIT " + transactionName);
 			command.executeUpdate();
 		}
 	}
 
 	/**
 	 * Execute the query.
-	 *
-	 * @param maxrows the maximum number of rows to return
+	 * 
+	 * @param maxrows
+	 *            the maximum number of rows to return
 	 * @return the result set
-	 * @throws SQLException if it is not a query
+	 * @throws SQLException
+	 *             if it is not a query
 	 */
 	public LocalResult query(int maxrows) throws SQLException {
 		throw Message.getSQLException(ErrorCode.METHOD_ONLY_ALLOWED_FOR_QUERY);
@@ -280,8 +299,9 @@ public abstract class Prepared{
 
 	/**
 	 * Set the SQL statement.
-	 *
-	 * @param sql the SQL statement
+	 * 
+	 * @param sql
+	 *            the SQL statement
 	 */
 	public void setSQL(String sql) {
 		this.sqlStatement = sql;
@@ -289,7 +309,7 @@ public abstract class Prepared{
 
 	/**
 	 * Get the SQL statement.
-	 *
+	 * 
 	 * @return the SQL statement
 	 */
 	public String getSQL() {
@@ -298,9 +318,9 @@ public abstract class Prepared{
 
 	/**
 	 * Get the object id to use for the database object that is created in this
-	 * statement. This id is only set when the object is persistent.
-	 * If not set, this method returns 0.
-	 *
+	 * statement. This id is only set when the object is persistent. If not set,
+	 * this method returns 0.
+	 * 
 	 * @return the object id or 0 if not set
 	 */
 	protected int getCurrentObjectId() {
@@ -310,9 +330,11 @@ public abstract class Prepared{
 	/**
 	 * Get the current object id, or get a new id from the database. The object
 	 * id is used when creating new database object (CREATE statement).
-	 *
-	 * @param needFresh if a fresh id is required
-	 * @param dataFile if the object id is used for the
+	 * 
+	 * @param needFresh
+	 *            if a fresh id is required
+	 * @param dataFile
+	 *            if the object id is used for the
 	 * @return the object id
 	 */
 	protected int getObjectId(boolean needFresh, boolean dataFile) {
@@ -327,7 +349,7 @@ public abstract class Prepared{
 
 	/**
 	 * Get the SQL statement with the execution plan.
-	 *
+	 * 
 	 * @return the execution plan
 	 */
 	public String getPlanSQL() {
@@ -336,8 +358,9 @@ public abstract class Prepared{
 
 	/**
 	 * Check if this statement was canceled.
-	 *
-	 * @throws SQLException if it was canceled
+	 * 
+	 * @throws SQLException
+	 *             if it was canceled
 	 */
 	public void checkCanceled() throws SQLException {
 		session.checkCanceled();
@@ -349,8 +372,9 @@ public abstract class Prepared{
 
 	/**
 	 * Set the object id for this statement.
-	 *
-	 * @param i the object id
+	 * 
+	 * @param i
+	 *            the object id
 	 */
 	public void setObjectId(int i) {
 		this.objectId = i;
@@ -358,8 +382,9 @@ public abstract class Prepared{
 
 	/**
 	 * Set the head position.
-	 *
-	 * @param headPos the head position
+	 * 
+	 * @param headPos
+	 *            the head position
 	 */
 	public void setHeadPos(int headPos) {
 		this.headPos = headPos;
@@ -367,8 +392,9 @@ public abstract class Prepared{
 
 	/**
 	 * Set the session for this statement.
-	 *
-	 * @param currentSession the new session
+	 * 
+	 * @param currentSession
+	 *            the new session
 	 */
 	public void setSession(Session currentSession) {
 		this.session = currentSession;
@@ -377,9 +403,11 @@ public abstract class Prepared{
 	/**
 	 * Print information about the statement executed if info trace level is
 	 * enabled.
-	 *
-	 * @param startTime when the statement was started
-	 * @param count the update count
+	 * 
+	 * @param startTime
+	 *            when the statement was started
+	 * @param count
+	 *            the update count
 	 */
 	void trace(long startTime, int count) throws SQLException {
 		if (session.getTrace().isInfoEnabled()) {
@@ -408,10 +436,11 @@ public abstract class Prepared{
 	}
 
 	/**
-	 * Set the prepare always flag.
-	 * If set, the statement is re-compiled whenever it is executed.
-	 *
-	 * @param prepareAlways the new value
+	 * Set the prepare always flag. If set, the statement is re-compiled
+	 * whenever it is executed.
+	 * 
+	 * @param prepareAlways
+	 *            the new value
 	 */
 	public void setPrepareAlways(boolean prepareAlways) {
 		this.prepareAlways = prepareAlways;
@@ -419,8 +448,9 @@ public abstract class Prepared{
 
 	/**
 	 * Set the current row number.
-	 *
-	 * @param rowNumber the row number
+	 * 
+	 * @param rowNumber
+	 *            the row number
 	 */
 	protected void setCurrentRowNumber(int rowNumber) {
 		this.currentRowNumber = rowNumber;
@@ -428,7 +458,7 @@ public abstract class Prepared{
 
 	/**
 	 * Get the current row number.
-	 *
+	 * 
 	 * @return the row number
 	 */
 	public int getCurrentRowNumber() {
@@ -437,7 +467,7 @@ public abstract class Prepared{
 
 	/**
 	 * Convert the statement to a String.
-	 *
+	 * 
 	 * @return the SQL statement
 	 */
 	public String toString() {
@@ -446,8 +476,9 @@ public abstract class Prepared{
 
 	/**
 	 * Get the SQL snippet of the value list.
-	 *
-	 * @param values the value list
+	 * 
+	 * @param values
+	 *            the value list
 	 * @return the SQL snippet
 	 */
 	protected String getSQL(Value[] values) {
@@ -466,8 +497,9 @@ public abstract class Prepared{
 
 	/**
 	 * Get the SQL snippet of the expression list.
-	 *
-	 * @param list the expression list
+	 * 
+	 * @param list
+	 *            the expression list
 	 * @return the SQL snippet
 	 */
 	protected String getSQL(Expression[] list) {
@@ -486,10 +518,13 @@ public abstract class Prepared{
 
 	/**
 	 * Set the SQL statement of the exception to the given row.
-	 *
-	 * @param ex the exception
-	 * @param rowId the row number
-	 * @param values the values of the row
+	 * 
+	 * @param ex
+	 *            the exception
+	 * @param rowId
+	 *            the row number
+	 * @param values
+	 *            the values of the row
 	 * @return the exception
 	 */
 	protected SQLException setRow(SQLException ex, int rowId, String values) {
@@ -510,15 +545,20 @@ public abstract class Prepared{
 	}
 
 	/**
-	 * Whether this prepared statement is being created as part of the execution of a meta-record.
-	 * @param startup True, if it is; otherwise, false.
+	 * Whether this prepared statement is being created as part of the execution
+	 * of a meta-record.
+	 * 
+	 * @param startup
+	 *            True, if it is; otherwise, false.
 	 */
 	public void setStartup(boolean startup) {
 		this.startup = startup;
 	}
 
 	/**
-	 * Whether this prepared statement is being created as part of the execution of a meta-record.
+	 * Whether this prepared statement is being created as part of the execution
+	 * of a meta-record.
+	 * 
 	 * @param startup
 	 */
 	public boolean isStartup() {
@@ -526,15 +566,20 @@ public abstract class Prepared{
 	}
 
 	/**
-	 * True if the table involved in the prepared statement is a regular table - i.e. not an H2O meta-data table.
+	 * True if the table involved in the prepared statement is a regular table -
+	 * i.e. not an H2O meta-data table.
 	 */
 	protected boolean isRegularTable() {
 		Set<String> localSchema = session.getDatabase().getLocalSchema();
 		try {
-			return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery && !localSchema.contains(table.getSchema().getName());
-		} catch(NullPointerException e){
-			//Shouldn't occur, ever. Something should have probably overridden this if it can't possibly know about a particular table.
-			ErrorHandling.hardError("isRegularTable() check failed."); return false;
+			return Constants.IS_H2O && !session.getDatabase().isManagementDB()
+					&& !internalQuery
+					&& !localSchema.contains(table.getSchema().getName());
+		} catch (NullPointerException e) {
+			// Shouldn't occur, ever. Something should have probably overridden
+			// this if it can't possibly know about a particular table.
+			ErrorHandling.hardError("isRegularTable() check failed.");
+			return false;
 		}
 	}
 
@@ -543,25 +588,32 @@ public abstract class Prepared{
 	}
 
 	/**
-	 * Request a lock for the given query, in preparation for its execution. Must be called before update(). This
-	 * method will be overriden if a QueryProxy can be returned -  prepared statements have to acquire a lock in this manner.
-	 * @param queryProxyManager 
+	 * Request a lock for the given query, in preparation for its execution.
+	 * Must be called before update(). This method will be overriden if a
+	 * QueryProxy can be returned - prepared statements have to acquire a lock
+	 * in this manner.
+	 * 
+	 * @param queryProxyManager
 	 * @return
-	 * @throws SQLException 
+	 * @throws SQLException
 	 */
-	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager) throws SQLException{
-		return QueryProxy.getQueryProxyAndLock(table, LockType.READ, session.getDatabase());
+	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager)
+			throws SQLException {
+		return QueryProxy.getQueryProxyAndLock(table, LockType.READ,
+				session.getDatabase());
 	}
 
 	/**
-	 * Should this command be propagated to multiple sites. This method will be overridedn if true.
+	 * Should this command be propagated to multiple sites. This method will be
+	 * overridedn if true.
 	 */
 	public boolean shouldBePropagated() {
 		return false;
 	}
 
 	/**
-	 * Is this statement an instance of  transaction command.
+	 * Is this statement an instance of transaction command.
+	 * 
 	 * @return
 	 */
 	public boolean isTransactionCommand() {
@@ -569,7 +621,8 @@ public abstract class Prepared{
 	}
 
 	/**
-	 * @param internalQuery the internalQuery to set
+	 * @param internalQuery
+	 *            the internalQuery to set
 	 */
 	public void setInternalQuery(boolean internalQuery) {
 		this.internalQuery = internalQuery;
@@ -579,7 +632,6 @@ public abstract class Prepared{
 	 * @param preparedStatement
 	 */
 	public void setPreparedStatement(boolean preparedStatement) {
-		this.preparedStatement  = preparedStatement;
 	}
 
 	/**
@@ -587,9 +639,7 @@ public abstract class Prepared{
 	 */
 	public boolean isPreparedStatement() {
 		return sqlStatement.contains("?");
-		//return preparedStatement;
+		// return preparedStatement;
 	}
-
-
 
 }

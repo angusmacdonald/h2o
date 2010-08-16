@@ -17,8 +17,7 @@ import org.h2.schema.Schema;
 import org.h2.schema.Sequence;
 
 /**
- * This class represents the statement
- * CREATE SEQUENCE
+ * This class represents the statement CREATE SEQUENCE
  */
 public class CreateSequence extends SchemaCommand {
 
@@ -48,10 +47,12 @@ public class CreateSequence extends SchemaCommand {
 			if (ifNotExists) {
 				return 0;
 			}
-			throw Message.getSQLException(ErrorCode.SEQUENCE_ALREADY_EXISTS_1, sequenceName);
+			throw Message.getSQLException(ErrorCode.SEQUENCE_ALREADY_EXISTS_1,
+					sequenceName);
 		}
 		int id = getObjectId(false, true);
-		Sequence sequence = new Sequence(getSchema(), id, sequenceName, belongsToTable);
+		Sequence sequence = new Sequence(getSchema(), id, sequenceName,
+				belongsToTable);
 		sequence.setStartValue(getLong(start, 1));
 		sequence.setIncrement(getLong(increment, 1));
 		sequence.setCacheSize(getLong(cacheSize, Sequence.DEFAULT_CACHE_SIZE));
@@ -59,7 +60,8 @@ public class CreateSequence extends SchemaCommand {
 		return 0;
 	}
 
-	private long getLong(Expression expr, long defaultValue) throws SQLException {
+	private long getLong(Expression expr, long defaultValue)
+			throws SQLException {
 		if (expr == null) {
 			return defaultValue;
 		}

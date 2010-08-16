@@ -33,7 +33,8 @@ public class TableManagerWrapper implements Serializable, Remote {
 	private static final long serialVersionUID = -7088367740432999328L;
 
 	/**
-	 * Contains information on the table itself, such as its fully qualified name.
+	 * Contains information on the table itself, such as its fully qualified
+	 * name.
 	 */
 	private TableInfo tableInfo;
 
@@ -47,7 +48,8 @@ public class TableManagerWrapper implements Serializable, Remote {
 	 */
 	private DatabaseURL tableManagerURL;
 
-	public TableManagerWrapper(TableInfo tableInfo, TableManagerRemote tableManager, DatabaseURL tableManagerURL) {
+	public TableManagerWrapper(TableInfo tableInfo,
+			TableManagerRemote tableManager, DatabaseURL tableManagerURL) {
 		this.tableInfo = tableInfo.getGenericTableInfo();
 		this.tableManager = tableManager;
 		this.tableManagerURL = tableManagerURL;
@@ -61,7 +63,8 @@ public class TableManagerWrapper implements Serializable, Remote {
 	}
 
 	/**
-	 * @param tableInfo the tableInfo to set
+	 * @param tableInfo
+	 *            the tableInfo to set
 	 */
 	public void setTableInfo(TableInfo tableInfo) {
 		this.tableInfo = tableInfo.getGenericTableInfo();
@@ -75,7 +78,8 @@ public class TableManagerWrapper implements Serializable, Remote {
 	}
 
 	/**
-	 * @param tableManager the tableManager to set
+	 * @param tableManager
+	 *            the tableManager to set
 	 */
 	public void setTableManager(TableManagerRemote tableManager) {
 		this.tableManager = tableManager;
@@ -89,13 +93,17 @@ public class TableManagerWrapper implements Serializable, Remote {
 	}
 
 	/**
-	 * @param tableManagerURL the tableManagerURL to set
+	 * @param tableManagerURL
+	 *            the tableManagerURL to set
 	 */
-	public void setTableManagerURL(DatabaseURL tableManagerURL)throws RemoteException {
+	public void setTableManagerURL(DatabaseURL tableManagerURL)
+			throws RemoteException {
 		this.tableManagerURL = tableManagerURL;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -103,7 +111,9 @@ public class TableManagerWrapper implements Serializable, Remote {
 		return tableInfo.hashCode();
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -127,17 +137,20 @@ public class TableManagerWrapper implements Serializable, Remote {
 	 * @param localMachineLocation
 	 * @return
 	 */
-	public boolean isLocalTo(DatabaseURL localMachineLocation) throws RemoteException{
+	public boolean isLocalTo(DatabaseURL localMachineLocation)
+			throws RemoteException {
 		return tableManagerURL.equals(localMachineLocation);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
 	public String toString() {
-		return "TableManagerWrapper [tableInfo=" + tableInfo + ", tableManagerURL=" + tableManagerURL + "]";
+		return "TableManagerWrapper [tableInfo=" + tableInfo
+				+ ", tableManagerURL=" + tableManagerURL + "]";
 	}
-
 
 }

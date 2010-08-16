@@ -19,16 +19,20 @@ public interface JdbcConnectionListener {
 	// fatalErrorOccurred is called in the right situations
 	/**
 	 * A fatal error occurred.
-	 *
-	 * @param conn the connection
-	 * @param e the exception
+	 * 
+	 * @param conn
+	 *            the connection
+	 * @param e
+	 *            the exception
 	 */
-	void fatalErrorOccurred(JdbcConnection conn, SQLException e) throws SQLException;
+	void fatalErrorOccurred(JdbcConnection conn, SQLException e)
+			throws SQLException;
 
 	/**
 	 * A connection was closed
-	 *
-	 * @param conn the connection
+	 * 
+	 * @param conn
+	 *            the connection
 	 */
 	void closed(JdbcConnection conn);
 }

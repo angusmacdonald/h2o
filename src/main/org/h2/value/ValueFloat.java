@@ -24,8 +24,7 @@ public class ValueFloat extends Value {
 	static final int PRECISION = 7;
 
 	/**
-	 * The maximum display size of a float.
-	 * Example: -1.12345676E-20
+	 * The maximum display size of a float. Example: -1.12345676E-20
 	 */
 	static final int DISPLAY_SIZE = 15;
 
@@ -62,7 +61,8 @@ public class ValueFloat extends Value {
 	public Value divide(Value v) throws SQLException {
 		ValueFloat v2 = (ValueFloat) v;
 		if (v2.value == 0.0) {
-			throw Message.getSQLException(ErrorCode.DIVISION_BY_ZERO_1, getSQL());
+			throw Message.getSQLException(ErrorCode.DIVISION_BY_ZERO_1,
+					getSQL());
 		}
 		return ValueFloat.get(value / v2.value);
 	}
@@ -106,7 +106,7 @@ public class ValueFloat extends Value {
 
 	public int getScale() {
 		// TODO value: what is the scale of a float?
-				return 0;
+		return 0;
 	}
 
 	public int hashCode() {
@@ -118,14 +118,16 @@ public class ValueFloat extends Value {
 		return ObjectUtils.getFloat(value);
 	}
 
-	public void set(PreparedStatement prep, int parameterIndex) throws SQLException {
+	public void set(PreparedStatement prep, int parameterIndex)
+			throws SQLException {
 		prep.setFloat(parameterIndex, value);
 	}
 
 	/**
 	 * Get or create float value for the given float.
-	 *
-	 * @param d the float
+	 * 
+	 * @param d
+	 *            the float
 	 * @return the value
 	 */
 	public static ValueFloat get(float d) {

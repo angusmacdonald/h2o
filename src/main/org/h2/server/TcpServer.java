@@ -35,12 +35,11 @@ import org.h2.util.NetUtils;
 import org.h2.util.Tool;
 
 /**
- * The TCP server implements the native H2 database server protocol.
- * It supports multiple client connections to multiple databases
- * (many to many). The same database may be opened by multiple clients.
- * Also supported is the mixed mode: opening databases in embedded mode,
- * and at the same time start a TCP server to allow clients to connect to
- * the same database over the network.
+ * The TCP server implements the native H2 database server protocol. It supports
+ * multiple client connections to multiple databases (many to many). The same
+ * database may be opened by multiple clients. Also supported is the mixed mode:
+ * opening databases in embedded mode, and at the same time start a TCP server
+ * to allow clients to connect to the same database over the network.
  */
 public class TcpServer implements Service {
 
@@ -57,7 +56,8 @@ public class TcpServer implements Service {
 	private static final int SHUTDOWN_NORMAL = 0;
 	private static final int SHUTDOWN_FORCE = 1;
 
-	private static final Map SERVERS = Collections.synchronizedMap(new HashMap());
+	private static final Map SERVERS = Collections
+			.synchronizedMap(new HashMap());
 
 	private int port;
 	private boolean trace;
@@ -82,10 +82,11 @@ public class TcpServer implements Service {
 	private String systemTableLocation = null;
 
 	/**
-	 * Get the database name of the management database.
-	 * The management database contains a table with active sessions (SESSIONS).
-	 *
-	 * @param port the TCP server port
+	 * Get the database name of the management database. The management database
+	 * contains a table with active sessions (SESSIONS).
+	 * 
+	 * @param port
+	 *            the TCP server port
 	 * @return the database name (usually starting with mem:)
 	 */
 	public static String getManagementDbName(int port) {
@@ -97,15 +98,19 @@ public class TcpServer implements Service {
 		prop.setProperty("user", "sa");
 		prop.setProperty("password", managementPassword);
 		// avoid using the driver manager
-		Connection conn = Driver.load().connect("jdbc:h2:" + getManagementDbName(port), prop);
+		Connection conn = Driver.load().connect(
+				"jdbc:h2:" + getManagementDbName(port), prop);
 		managementDb = conn;
 		Statement stat = null;
 		try {
 			stat = conn.createStatement();
-			stat.execute("CREATE ALIAS IF NOT EXISTS STOP_SERVER FOR \"" + TcpServer.class.getName() + ".stopServer\"");
+			stat.execute("CREATE ALIAS IF NOT EXISTS STOP_SERVER FOR \""
+					+ TcpServer.class.getName() + ".stopServer\"");
 			stat.execute("CREATE TABLE IF NOT EXISTS SESSIONS(ID INT PRIMARY KEY, URL VARCHAR, USER VARCHAR, CONNECTED TIMESTAMP)");
-			managementDbAdd = conn.prepareStatement("INSERT INTO SESSIONS VALUES(?, ?, ?, NOW())");
-			managementDbRemove = conn.prepareStatement("DELETE FROM SESSIONS WHERE ID=?");
+			managementDbAdd = conn
+					.prepareStatement("INSERT INTO SESSIONS VALUES(?, ?, ?, NOW())");
+			managementDbRemove = conn
+					.prepareStatement("DELETE FROM SESSIONS WHERE ID=?");
 		} finally {
 			JdbcUtils.closeSilently(stat);
 		}
@@ -114,10 +119,13 @@ public class TcpServer implements Service {
 
 	/**
 	 * Add a connection to the management database.
-	 *
-	 * @param id the connection id
-	 * @param url the database URL
-	 * @param user the user name
+	 * 
+	 * @param id
+	 *            the connection id
+	 * @param url
+	 *            the database URL
+	 * @param user
+	 *            the user name
 	 */
 	synchronized void addConnection(int id, String url, String user) {
 		try {
@@ -132,8 +140,9 @@ public class TcpServer implements Service {
 
 	/**
 	 * Remove a connection from the management database.
-	 *
-	 * @param id the connection id
+	 * 
+	 * @param id
+	 *            the connection id
 	 */
 	synchronized void removeConnection(int id) {
 		try {
@@ -161,7 +170,8 @@ public class TcpServer implements Service {
 			String a = args[i];
 			if ("-trace".equals(a)) {
 				trace = true;
-			} else if ("-log".equals(a) && SysProperties.OLD_COMMAND_LINE_OPTIONS) {
+			} else if ("-log".equals(a)
+					&& SysProperties.OLD_COMMAND_LINE_OPTIONS) {
 				trace = Tool.readArgBoolean(args, i) == 1;
 				i++;
 			} else if ("-tcpSSL".equals(a)) {
@@ -194,8 +204,7 @@ public class TcpServer implements Service {
 				} else {
 					ifExists = true;
 				}
-			}
-			else if ("-SMLocation".equals(a)) {
+			} else if ("-SMLocation".equals(a)) {
 				systemTableLocation = args[++i];
 			}
 		}
@@ -203,7 +212,8 @@ public class TcpServer implements Service {
 	}
 
 	public String getURL() {
-		return (ssl ? "ssl" : "tcp") + "://" + NetUtils.getLocalAddress() + ":" + port;
+		return (ssl ? "ssl" : "tcp") + "://" + NetUtils.getLocalAddress() + ":"
+				+ port;
 	}
 
 	public int getPort() {
@@ -213,8 +223,9 @@ public class TcpServer implements Service {
 	/**
 	 * Check if this socket may connect to this server. Remote connections are
 	 * not allowed if the flag allowOthers is set.
-	 *
-	 * @param socket the socket
+	 * 
+	 * @param socket
+	 *            the socket
 	 * @return true if this client may connect
 	 */
 	boolean allow(Socket socket) {
@@ -299,7 +310,7 @@ public class TcpServer implements Service {
 			}
 		}
 		// TODO server: using a boolean 'now' argument? a timeout?
-				ArrayList list = new ArrayList(running);
+		ArrayList list = new ArrayList(running);
 		for (int i = 0; i < list.size(); i++) {
 			TcpServerThread c = (TcpServerThread) list.get(i);
 			if (c != null) {
@@ -316,10 +327,13 @@ public class TcpServer implements Service {
 	/**
 	 * Stop a running server. This method is called via reflection from the
 	 * STOP_SERVER function.
-	 *
-	 * @param port the port where the server runs
-	 * @param password the password
-	 * @param shutdownMode the shutdown mode, SHUTDOWN_NORMAL or SHUTDOWN_FORCE.
+	 * 
+	 * @param port
+	 *            the port where the server runs
+	 * @param password
+	 *            the password
+	 * @param shutdownMode
+	 *            the shutdown mode, SHUTDOWN_NORMAL or SHUTDOWN_FORCE.
 	 */
 	public static void stopServer(int port, String password, int shutdownMode) {
 		TcpServer server = (TcpServer) SERVERS.get("" + port);
@@ -345,8 +359,9 @@ public class TcpServer implements Service {
 
 	/**
 	 * Remove a thread from the list.
-	 *
-	 * @param t the thread to remove
+	 * 
+	 * @param t
+	 *            the thread to remove
 	 */
 	void remove(TcpServerThread t) {
 		running.remove(t);
@@ -354,7 +369,7 @@ public class TcpServer implements Service {
 
 	/**
 	 * Get the configured base directory.
-	 *
+	 * 
 	 * @return the base directory
 	 */
 	String getBaseDir() {
@@ -363,18 +378,21 @@ public class TcpServer implements Service {
 
 	/**
 	 * Print a message if the trace flag is enabled.
-	 *
-	 * @param s the message
+	 * 
+	 * @param s
+	 *            the message
 	 */
 	void trace(String s) {
 		if (trace) {
 			System.out.println(s);
 		}
 	}
+
 	/**
 	 * Print a stack trace if the trace flag is enabled.
-	 *
-	 * @param e the exception
+	 * 
+	 * @param e
+	 *            the exception
 	 */
 	void traceError(Throwable e) {
 		if (trace) {
@@ -400,12 +418,16 @@ public class TcpServer implements Service {
 
 	/**
 	 * Stop the TCP server with the given URL.
-	 *
-	 * @param url the database URL
-	 * @param password the password
-	 * @param force if the server should be stopped immediately
+	 * 
+	 * @param url
+	 *            the database URL
+	 * @param password
+	 *            the password
+	 * @param force
+	 *            if the server should be stopped immediately
 	 */
-	public static synchronized void shutdown(String url, String password, boolean force) throws SQLException {
+	public static synchronized void shutdown(String url, String password,
+			boolean force) throws SQLException {
 		int port = Constants.DEFAULT_SERVER_PORT;
 		int idx = url.indexOf(':', "jdbc:h2:".length());
 		if (idx >= 0) {
@@ -426,7 +448,8 @@ public class TcpServer implements Service {
 			Connection conn = null;
 			PreparedStatement prep = null;
 			try {
-				conn = DriverManager.getConnection("jdbc:h2:" + url + "/" + db, "sa", password);
+				conn = DriverManager.getConnection("jdbc:h2:" + url + "/" + db,
+						"sa", password);
 				prep = conn.prepareStatement("CALL STOP_SERVER(?, ?, ?)");
 				prep.setInt(1, port);
 				prep.setString(2, password);
@@ -454,9 +477,11 @@ public class TcpServer implements Service {
 
 	/**
 	 * Cancel a running statement.
-	 *
-	 * @param sessionId the session id
-	 * @param statementId the statement id
+	 * 
+	 * @param sessionId
+	 *            the session id
+	 * @param statementId
+	 *            the statement id
 	 */
 	void cancelStatement(String sessionId, int statementId) throws SQLException {
 		ArrayList list = new ArrayList(running);
@@ -472,10 +497,12 @@ public class TcpServer implements Service {
 	 * If no key is set, return the original database name. If a key is set,
 	 * check if the key matches. If yes, return the correct database name. If
 	 * not, throw an exception.
-	 *
-	 * @param db the key to test (or database name if no key is used)
+	 * 
+	 * @param db
+	 *            the key to test (or database name if no key is used)
 	 * @return the database name
-	 * @throws SQLException if a key is set but doesn't match
+	 * @throws SQLException
+	 *             if a key is set but doesn't match
 	 */
 	public String checkKeyAndGetDatabaseName(String db) throws SQLException {
 		if (key == null) {

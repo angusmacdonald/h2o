@@ -16,8 +16,7 @@ import org.h2.message.Message;
 import org.h2.schema.Schema;
 
 /**
- * This class represents the statement
- * CREATE SCHEMA
+ * This class represents the statement CREATE SCHEMA
  */
 public class CreateSchema extends DefineCommand {
 
@@ -43,7 +42,8 @@ public class CreateSchema extends DefineCommand {
 			if (ifNotExists) {
 				return 0;
 			}
-			throw Message.getSQLException(ErrorCode.SCHEMA_ALREADY_EXISTS_1, schemaName);
+			throw Message.getSQLException(ErrorCode.SCHEMA_ALREADY_EXISTS_1,
+					schemaName);
 		}
 		int id = getObjectId(true, true);
 		Schema schema = new Schema(db, id, schemaName, user, false);

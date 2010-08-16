@@ -20,9 +20,9 @@ import org.h2.util.ByteUtils;
  * An object of this class represents a transaction id.
  */
 public class JdbcXid extends TraceObject
-//## Java 1.4 begin ##
-implements Xid
-//## Java 1.4 end ##
+// ## Java 1.4 begin ##
+		implements Xid
+// ## Java 1.4 end ##
 {
 
 	private static final String PREFIX = "XID";
@@ -31,17 +31,21 @@ implements Xid
 	private byte[] branchQualifier;
 	private byte[] globalTransactionId;
 
-	JdbcXid(JdbcDataSourceFactory factory, int id, String tid) throws SQLException {
+	JdbcXid(JdbcDataSourceFactory factory, int id, String tid)
+			throws SQLException {
 		setTrace(factory.getTrace(), TraceObject.XID, id);
 		try {
 			StringTokenizer tokenizer = new StringTokenizer(tid, "_");
 			String prefix = tokenizer.nextToken();
 			if (!PREFIX.equals(prefix)) {
-				throw Message.getSQLException(ErrorCode.WRONG_XID_FORMAT_1, tid);
+				throw Message
+						.getSQLException(ErrorCode.WRONG_XID_FORMAT_1, tid);
 			}
 			formatId = Integer.parseInt(tokenizer.nextToken());
-			branchQualifier = ByteUtils.convertStringToBytes(tokenizer.nextToken());
-			globalTransactionId = ByteUtils.convertStringToBytes(tokenizer.nextToken());
+			branchQualifier = ByteUtils.convertStringToBytes(tokenizer
+					.nextToken());
+			globalTransactionId = ByteUtils.convertStringToBytes(tokenizer
+					.nextToken());
 		} catch (RuntimeException e) {
 			throw Message.getSQLException(ErrorCode.WRONG_XID_FORMAT_1, tid);
 		}
@@ -63,7 +67,7 @@ implements Xid
 
 	/**
 	 * Get the format id.
-	 *
+	 * 
 	 * @return the format id
 	 */
 	public int getFormatId() {
@@ -73,7 +77,7 @@ implements Xid
 
 	/**
 	 * The transaction branch identifier.
-	 *
+	 * 
 	 * @return the identifier
 	 */
 	public byte[] getBranchQualifier() {
@@ -83,7 +87,7 @@ implements Xid
 
 	/**
 	 * The global transaction identifier.
-	 *
+	 * 
 	 * @return the transaction id
 	 */
 	public byte[] getGlobalTransactionId() {

@@ -16,16 +16,16 @@ import org.h2.store.DataPage;
 import org.h2.store.PageStore;
 
 /**
- * A leaf page that contains index data.
- * Format:
- * <ul><li>0-3: parent page id (0 for root)
- * </li><li>4-4: page type
- * </li><li>5-8: table id
- * </li><li>9-10: entry count
- * </li><li>overflow: 11-14: the row key
- * </li><li>11-: list of key / offset pairs (4 bytes key, 2 bytes offset)
- * </li><li>data
- * </li></ul>
+ * A leaf page that contains index data. Format:
+ * <ul>
+ * <li>0-3: parent page id (0 for root)</li>
+ * <li>4-4: page type</li>
+ * <li>5-8: table id</li>
+ * <li>9-10: entry count</li>
+ * <li>overflow: 11-14: the row key</li>
+ * <li>11-: list of key / offset pairs (4 bytes key, 2 bytes offset)</li>
+ * <li>data</li>
+ * </ul>
  */
 class PageBtreeLeaf extends PageBtree {
 
@@ -34,7 +34,8 @@ class PageBtreeLeaf extends PageBtree {
 
 	private boolean written;
 
-	PageBtreeLeaf(PageBtreeIndex index, int pageId, int parentPageId, DataPage data) {
+	PageBtreeLeaf(PageBtreeIndex index, int pageId, int parentPageId,
+			DataPage data) {
 		super(index, pageId, parentPageId, data);
 		start = KEY_OFFSET_PAIR_START;
 	}
@@ -44,9 +45,9 @@ class PageBtreeLeaf extends PageBtree {
 		data.readByte();
 		int tableId = data.readInt();
 		if (tableId != index.getId()) {
-			throw Message.getSQLException(ErrorCode.FILE_CORRUPTED_1,
-					"page:" + getPageId() + " expected table:" + index.getId() +
-					"got:" + tableId);
+			throw Message.getSQLException(ErrorCode.FILE_CORRUPTED_1, "page:"
+					+ getPageId() + " expected table:" + index.getId() + "got:"
+					+ tableId);
 		}
 		entryCount = data.readShortInt();
 		offsets = new int[entryCount];
@@ -60,8 +61,9 @@ class PageBtreeLeaf extends PageBtree {
 	/**
 	 * Add a row if possible. If it is possible this method returns 0, otherwise
 	 * the split point. It is always possible to add one row.
-	 *
-	 * @param row the now to add
+	 * 
+	 * @param row
+	 *            the now to add
 	 * @return the split point of this page, or 0 if no split is required
 	 */
 	int addRow(SearchRow row) throws SQLException {
@@ -132,7 +134,8 @@ class PageBtreeLeaf extends PageBtree {
 
 	PageBtree split(int splitPoint) throws SQLException {
 		int newPageId = index.getPageStore().allocatePage();
-		PageBtreeLeaf p2 = new PageBtreeLeaf(index, newPageId, parentPageId, index.getPageStore().createDataPage());
+		PageBtreeLeaf p2 = new PageBtreeLeaf(index, newPageId, parentPageId,
+				index.getPageStore().createDataPage());
 		for (int i = splitPoint; i < entryCount;) {
 			p2.addRow(getRow(splitPoint));
 			removeRow(splitPoint);
@@ -147,7 +150,9 @@ class PageBtreeLeaf extends PageBtree {
 	boolean remove(SearchRow row) throws SQLException {
 		int at = find(row, false);
 		if (index.compareRows(row, getRow(at)) != 0) {
-			throw Message.getSQLException(ErrorCode.ROW_NOT_FOUND_WHEN_DELETING_1, index.getSQL() + ": " + row);
+			throw Message.getSQLException(
+					ErrorCode.ROW_NOT_FOUND_WHEN_DELETING_1, index.getSQL()
+							+ ": " + row);
 		}
 		if (entryCount == 1) {
 			return true;
@@ -205,7 +210,8 @@ class PageBtreeLeaf extends PageBtree {
 		return data;
 	}
 
-	void find(PageBtreeCursor cursor, SearchRow first, boolean bigger) throws SQLException {
+	void find(PageBtreeCursor cursor, SearchRow first, boolean bigger)
+			throws SQLException {
 		int i = find(first, bigger);
 		if (i > entryCount) {
 			if (parentPageId == Page.ROOT) {
@@ -223,8 +229,9 @@ class PageBtreeLeaf extends PageBtree {
 
 	/**
 	 * Set the cursor to the first row of the next page.
-	 *
-	 * @param cursor the cursor
+	 * 
+	 * @param cursor
+	 *            the cursor
 	 */
 	void nextPage(PageBtreeCursor cursor) throws SQLException {
 		if (parentPageId == Page.ROOT) {
@@ -236,7 +243,8 @@ class PageBtreeLeaf extends PageBtree {
 	}
 
 	public String toString() {
-		return "page[" + getPos() + "] btree leaf table:" + index.getId() + " entries:" + entryCount;
+		return "page[" + getPos() + "] btree leaf table:" + index.getId()
+				+ " entries:" + entryCount;
 	}
 
 }

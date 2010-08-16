@@ -113,8 +113,9 @@ public class Trace {
 	/**
 	 * Set the trace level of this component. This setting overrides the parent
 	 * trace level.
-	 *
-	 * @param level the new level
+	 * 
+	 * @param level
+	 *            the new level
 	 */
 	public void setLevel(int level) {
 		this.level = level;
@@ -129,7 +130,7 @@ public class Trace {
 
 	/**
 	 * Check if the trace level is equal or higher than INFO.
-	 *
+	 * 
 	 * @return true if it is
 	 */
 	public boolean isInfoEnabled() {
@@ -138,7 +139,7 @@ public class Trace {
 
 	/**
 	 * Check if the trace level is equal or higher than DEBUG.
-	 *
+	 * 
 	 * @return true if it is
 	 */
 	public boolean isDebugEnabled() {
@@ -147,8 +148,9 @@ public class Trace {
 
 	/**
 	 * Write a message with trace level ERROR to the trace system.
-	 *
-	 * @param s the message
+	 * 
+	 * @param s
+	 *            the message
 	 */
 	public void error(String s) {
 		if (isEnabled(TraceSystem.ERROR)) {
@@ -158,9 +160,11 @@ public class Trace {
 
 	/**
 	 * Write a message with trace level ERROR to the trace system.
-	 *
-	 * @param s the message
-	 * @param t the exception
+	 * 
+	 * @param s
+	 *            the message
+	 * @param t
+	 *            the exception
 	 */
 	public void error(String s, Throwable t) {
 		if (isEnabled(TraceSystem.ERROR)) {
@@ -170,8 +174,9 @@ public class Trace {
 
 	/**
 	 * Write a message with trace level INFO to the trace system.
-	 *
-	 * @param s the message
+	 * 
+	 * @param s
+	 *            the message
 	 */
 	public void info(String s) {
 		if (isEnabled(TraceSystem.INFO)) {
@@ -181,9 +186,11 @@ public class Trace {
 
 	/**
 	 * Write a message with trace level INFO to the trace system.
-	 *
-	 * @param s the message
-	 * @param t the exception
+	 * 
+	 * @param s
+	 *            the message
+	 * @param t
+	 *            the exception
 	 */
 	public void info(String s, Throwable t) {
 		if (isEnabled(TraceSystem.INFO)) {
@@ -193,28 +200,35 @@ public class Trace {
 
 	/**
 	 * Write Java source code with trace level INFO to the trace system.
-	 *
-	 * @param java the source code
+	 * 
+	 * @param java
+	 *            the source code
 	 */
 	public void infoCode(String java) {
 		if (isEnabled(TraceSystem.INFO)) {
-			traceWriter.write(TraceSystem.INFO, module, lineSeparator + "/**/" + java, null);
+			traceWriter.write(TraceSystem.INFO, module, lineSeparator + "/**/"
+					+ java, null);
 		}
 	}
 
 	/**
 	 * Write a SQL statement with trace level INFO to the trace system.
-	 *
-	 * @param sql the SQL statement
-	 * @param params the parameters used, in the for {1:...}
-	 * @param count the update count
-	 * @param time the time it took to run the statement in ms
+	 * 
+	 * @param sql
+	 *            the SQL statement
+	 * @param params
+	 *            the parameters used, in the for {1:...}
+	 * @param count
+	 *            the update count
+	 * @param time
+	 *            the time it took to run the statement in ms
 	 */
 	public void infoSQL(String sql, String params, int count, long time) {
 		if (!isEnabled(TraceSystem.INFO)) {
 			return;
 		}
-		StringBuilder buff = new StringBuilder(sql.length() + params.length() + 20);
+		StringBuilder buff = new StringBuilder(sql.length() + params.length()
+				+ 20);
 		buff.append(lineSeparator);
 		buff.append("/*SQL");
 		boolean space = false;
@@ -252,8 +266,9 @@ public class Trace {
 
 	/**
 	 * Write a message with trace level DEBUG to the trace system.
-	 *
-	 * @param s the message
+	 * 
+	 * @param s
+	 *            the message
 	 */
 	public void debug(String s) {
 		if (isEnabled(TraceSystem.DEBUG)) {
@@ -263,9 +278,11 @@ public class Trace {
 
 	/**
 	 * Write a message with trace level DEBUG to the trace system.
-	 *
-	 * @param s the message
-	 * @param t the exception
+	 * 
+	 * @param s
+	 *            the message
+	 * @param t
+	 *            the exception
 	 */
 	public void debug(String s, Throwable t) {
 		if (isEnabled(TraceSystem.DEBUG)) {
@@ -275,12 +292,14 @@ public class Trace {
 
 	/**
 	 * Write Java source code with trace level DEBUG to the trace system.
-	 *
-	 * @param java the source code
+	 * 
+	 * @param java
+	 *            the source code
 	 */
 	public void debugCode(String java) {
 		if (isEnabled(TraceSystem.DEBUG)) {
-			traceWriter.write(TraceSystem.DEBUG, module, lineSeparator + "/**/" + java, null);
+			traceWriter.write(TraceSystem.DEBUG, module, lineSeparator + "/**/"
+					+ java, null);
 		}
 	}
 

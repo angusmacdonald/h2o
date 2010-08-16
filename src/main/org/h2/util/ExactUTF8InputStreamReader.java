@@ -11,8 +11,8 @@ import java.io.InputStream;
 import java.io.Reader;
 
 /**
- * The regular InputStreamReader may read some more bytes than required.
- * If this is a problem, use this class.
+ * The regular InputStreamReader may read some more bytes than required. If this
+ * is a problem, use this class.
  */
 public class ExactUTF8InputStreamReader extends Reader {
 
@@ -36,7 +36,8 @@ public class ExactUTF8InputStreamReader extends Reader {
 			if (x < 0x80) {
 				chars[off] = (char) x;
 			} else if (x >= 0xe0) {
-				chars[off] = (char) (((x & 0xf) << 12) + ((in.read() & 0x3f) << 6) + (in.read() & 0x3f));
+				chars[off] = (char) (((x & 0xf) << 12)
+						+ ((in.read() & 0x3f) << 6) + (in.read() & 0x3f));
 			} else {
 				chars[off] = (char) (((x & 0x1f) << 6) + (in.read() & 0x3f));
 			}

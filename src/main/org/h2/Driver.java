@@ -22,11 +22,10 @@ import org.h2.message.TraceSystem;
  * only thing the application needs to do is load the driver. This can be done
  * using Class.forName. To load the driver and open a database connection, use
  * the following code:
- *
+ * 
  * <pre>
  * Class.forName(&quot;org.h2.Driver&quot;);
- * Connection conn = DriverManager.getConnection(
- *      &quot;jdbc:h2:&tilde;/test&quot;, &quot;sa&quot;, &quot;sa&quot;);
+ * Connection conn = DriverManager.getConnection(&quot;jdbc:h2:&tilde;/test&quot;, &quot;sa&quot;, &quot;sa&quot;);
  * </pre>
  */
 public class Driver implements java.sql.Driver {
@@ -39,12 +38,14 @@ public class Driver implements java.sql.Driver {
 	}
 
 	/**
-	 * Open a database connection.
-	 * This method should not be called by an application.
-	 * Instead, the method DriverManager.getConnection should be used.
-	 *
-	 * @param url the database URL
-	 * @param info the connection properties
+	 * Open a database connection. This method should not be called by an
+	 * application. Instead, the method DriverManager.getConnection should be
+	 * used.
+	 * 
+	 * @param url
+	 *            the database URL
+	 * @param info
+	 *            the connection properties
 	 * @return the new connection
 	 */
 	public Connection connect(String url, Properties info) throws SQLException {
@@ -62,10 +63,11 @@ public class Driver implements java.sql.Driver {
 	}
 
 	/**
-	 * Check if the driver understands this URL.
-	 * This method should not be called by an application.
-	 *
-	 * @param url the database URL
+	 * Check if the driver understands this URL. This method should not be
+	 * called by an application.
+	 * 
+	 * @param url
+	 *            the database URL
 	 * @return if the driver understands the URL
 	 */
 	public boolean acceptsURL(String url) {
@@ -73,9 +75,9 @@ public class Driver implements java.sql.Driver {
 	}
 
 	/**
-	 * Get the major version number of the driver.
-	 * This method should not be called by an application.
-	 *
+	 * Get the major version number of the driver. This method should not be
+	 * called by an application.
+	 * 
 	 * @return the major version number
 	 */
 	public int getMajorVersion() {
@@ -83,9 +85,9 @@ public class Driver implements java.sql.Driver {
 	}
 
 	/**
-	 * Get the minor version number of the driver.
-	 * This method should not be called by an application.
-	 *
+	 * Get the minor version number of the driver. This method should not be
+	 * called by an application.
+	 * 
 	 * @return the minor version number
 	 */
 	public int getMinorVersion() {
@@ -93,11 +95,13 @@ public class Driver implements java.sql.Driver {
 	}
 
 	/**
-	 * Get the list of supported properties.
-	 * This method should not be called by an application.
-	 *
-	 * @param url the database URL
-	 * @param info the connection properties
+	 * Get the list of supported properties. This method should not be called by
+	 * an application.
+	 * 
+	 * @param url
+	 *            the database URL
+	 * @param info
+	 *            the connection properties
 	 * @return a zero length array
 	 */
 	public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) {
@@ -105,9 +109,9 @@ public class Driver implements java.sql.Driver {
 	}
 
 	/**
-	 * Check if this driver is compliant to the JDBC specification.
-	 * This method should not be called by an application.
-	 *
+	 * Check if this driver is compliant to the JDBC specification. This method
+	 * should not be called by an application.
+	 * 
 	 * @return true
 	 */
 	public boolean jdbcCompliant() {

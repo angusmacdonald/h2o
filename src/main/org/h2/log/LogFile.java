@@ -28,15 +28,17 @@ import org.h2.util.ObjectArray;
 
 /**
  * Each transaction log file contains a number of log records.
- *
+ * 
  * Header format:
+ * 
  * <pre>
  * int logId (<0 means ignore: rolled back already)
  * int firstUncommittedLogRecordId (-1 if none)
  * int firstUnwrittenLogRecordId (-1 if none)
  * </pre>
- *
+ * 
  * Record format:
+ * 
  * <pre>
  * int block size
  * byte 'D' (delete) / 'I' (insert) / 'C' (commit) /
@@ -98,21 +100,25 @@ public class LogFile {
 
 	/**
 	 * Open the file if it is in fact a log file for this database.
-	 *
-	 * @param log the log system
-	 * @param fileNamePrefix the expected file name prefix
-	 * @param fileName the file name
+	 * 
+	 * @param log
+	 *            the log system
+	 * @param fileNamePrefix
+	 *            the expected file name prefix
+	 * @param fileName
+	 *            the file name
 	 * @return null or the log file
 	 */
-	static LogFile openIfLogFile(LogSystem log, String fileNamePrefix, String fileName) throws SQLException {
+	static LogFile openIfLogFile(LogSystem log, String fileNamePrefix,
+			String fileName) throws SQLException {
 		if (!fileName.endsWith(Constants.SUFFIX_LOG_FILE)) {
 			return null;
 		}
 		if (!FileUtils.fileStartsWith(fileName, fileNamePrefix + ".")) {
 			return null;
 		}
-		String s = fileName.substring(fileNamePrefix.length() + 1, fileName.length()
-				- Constants.SUFFIX_LOG_FILE.length());
+		String s = fileName.substring(fileNamePrefix.length() + 1,
+				fileName.length() - Constants.SUFFIX_LOG_FILE.length());
 		for (int i = 0; i < s.length(); i++) {
 			if (!Character.isDigit(s.charAt(i))) {
 				return null;
@@ -120,7 +126,8 @@ public class LogFile {
 		}
 		int id = Integer.parseInt(s);
 		if (!FileUtils.exists(fileName)) {
-			// the file could have been deleted by now (by the DelayedFileDeleter)
+			// the file could have been deleted by now (by the
+			// DelayedFileDeleter)
 			return null;
 		}
 		return new LogFile(log, id, fileNamePrefix);
@@ -128,7 +135,7 @@ public class LogFile {
 
 	/**
 	 * Get the name of this transaction log file.
-	 *
+	 * 
 	 * @return the file name
 	 */
 	public String getFileName() {
@@ -150,13 +157,14 @@ public class LogFile {
 		if (file == null) {
 			throw Message.getSQLException(ErrorCode.SIMULATED_POWER_OFF);
 		}
-		int size = MathUtils.roundUp(buff.length() + DataPage.LENGTH_FILLER, BLOCK_SIZE);
+		int size = MathUtils.roundUp(buff.length() + DataPage.LENGTH_FILLER,
+				BLOCK_SIZE);
 		int blockCount = size / BLOCK_SIZE;
 		buff.fill(size);
 		buff.setInt(0, blockCount);
 		buff.updateChecksum();
 		// IOLogger.getInstance().logWrite(this.fileName,
-				//     file.getFilePointer(), buff.length());
+		// file.getFilePointer(), buff.length());
 		if (rec != null) {
 			unwritten.add(rec);
 		}
@@ -165,7 +173,8 @@ public class LogFile {
 			flush();
 		}
 		if (buff.length() >= buffer.length) {
-			// special case really long write request: write it without buffering
+			// special case really long write request: write it without
+			// buffering
 			file.write(buff.getBytes(), 0, buff.length());
 			pos = getBlock();
 			return;
@@ -177,8 +186,9 @@ public class LogFile {
 
 	/**
 	 * Write a commit entry for this session.
-	 *
-	 * @param session the session
+	 * 
+	 * @param session
+	 *            the session
 	 */
 	void commit(Session session) throws SQLException {
 		DataPage buff = rowBuff;
@@ -194,9 +204,11 @@ public class LogFile {
 
 	/**
 	 * Write a prepare commit entry for this session.
-	 *
-	 * @param session the session
-	 * @param transaction the transaction name
+	 * 
+	 * @param session
+	 *            the session
+	 * @param transaction
+	 *            the transaction name
 	 */
 	void prepareCommit(Session session, String transaction) throws SQLException {
 		DataPage buff = rowBuff;
@@ -232,12 +244,15 @@ public class LogFile {
 
 	/**
 	 * Redo or undo one item in the log file.
-	 *
-	 * @param undo true if the operation should be undone
-	 * @param readOnly if the file is read only
+	 * 
+	 * @param undo
+	 *            true if the operation should be undone
+	 * @param readOnly
+	 *            if the file is read only
 	 * @return true if there are potentially more operations
 	 */
-	private boolean redoOrUndo(boolean undo, boolean readOnly) throws SQLException {
+	private boolean redoOrUndo(boolean undo, boolean readOnly)
+			throws SQLException {
 		int pos = getBlock();
 		DataPage in = readPage();
 		int blocks = in.readInt();
@@ -254,7 +269,8 @@ public class LogFile {
 				Message.throwInternalError("can't undo prepare commit");
 			}
 			String transaction = in.readString();
-			logSystem.setPreparedCommitForSession(this, sessionId, pos, transaction, blocks);
+			logSystem.setPreparedCommitForSession(this, sessionId, pos,
+					transaction, blocks);
 			return true;
 		} else if (type == 'C') {
 			if (undo) {
@@ -295,7 +311,7 @@ public class LogFile {
 		if (type != 'T') {
 			rec = in.readDataPageNoSize();
 		}
-		switch(type) {
+		switch (type) {
 		case 'S': {
 			int fileType = in.readByte();
 			boolean diskFile;
@@ -325,7 +341,8 @@ public class LogFile {
 			}
 			logSystem.addRedoLog(storage, recordId, blockCount, null);
 			storage.setRecordCount(0);
-			storage.getDiskFile().setPageOwner(recordId / DiskFile.BLOCKS_PER_PAGE, -1);
+			storage.getDiskFile().setPageOwner(
+					recordId / DiskFile.BLOCKS_PER_PAGE, -1);
 			logSystem.setLastCommitForSession(sessionId, id, pos);
 			break;
 		case 'I':
@@ -368,7 +385,8 @@ public class LogFile {
 			int max = (int) (length / BLOCK_SIZE);
 			while (true) {
 				pos = getBlock();
-				database.setProgress(DatabaseEventListener.STATE_RECOVER, fileName, pos, max);
+				database.setProgress(DatabaseEventListener.STATE_RECOVER,
+						fileName, pos, max);
 				if ((long) pos * BLOCK_SIZE >= length) {
 					break;
 				}
@@ -377,18 +395,22 @@ public class LogFile {
 					break;
 				}
 			}
-			database.setProgress(DatabaseEventListener.STATE_RECOVER, fileName, max, max);
+			database.setProgress(DatabaseEventListener.STATE_RECOVER, fileName,
+					max, max);
 		} catch (SQLException e) {
-			database.getTrace(Trace.LOG).debug("Stop reading log file: " + e.getMessage(), e);
+			database.getTrace(Trace.LOG).debug(
+					"Stop reading log file: " + e.getMessage(), e);
 			// wrong checksum (at the end of the log file)
 		} catch (OutOfMemoryError e) {
 			// OutOfMemoryError means not enough memory is allocated to the VM.
 			// this is not necessarily at the end of the log file
-			// set the log system to read only so the current log file stays when closing
+			// set the log system to read only so the current log file stays
+			// when closing
 			logSystem.setReadOnly(true);
 			throw Message.convert(e);
 		} catch (Throwable e) {
-			database.getTrace(Trace.LOG).error("Error reading log file (non-fatal)", e);
+			database.getTrace(Trace.LOG).error(
+					"Error reading log file (non-fatal)", e);
 			// on power loss, sometime there is garbage at the end of the file
 			// we stop recovering in this case (checksum mismatch)
 		}
@@ -397,8 +419,9 @@ public class LogFile {
 
 	/**
 	 * Go to the specified location in the file.
-	 *
-	 * @param pos the position
+	 * 
+	 * @param pos
+	 *            the position
 	 */
 	void go(int pos) throws SQLException {
 		file.seek((long) pos * BLOCK_SIZE);
@@ -407,8 +430,9 @@ public class LogFile {
 	/**
 	 * Undo the changes of this transaction log entry. This method is called
 	 * when opening the database.
-	 *
-	 * @param pos the position of the log entry
+	 * 
+	 * @param pos
+	 *            the position of the log entry
 	 */
 	void undo(int pos) throws SQLException {
 		go(pos);
@@ -432,7 +456,8 @@ public class LogFile {
 			unwritten.clear();
 			bufferPos = 0;
 			long min = (long) pos * BLOCK_SIZE;
-			min = MathUtils.scaleUp50Percent(Constants.FILE_MIN_SIZE, min, Constants.FILE_PAGE_SIZE, Constants.FILE_MAX_INCREMENT);
+			min = MathUtils.scaleUp50Percent(Constants.FILE_MIN_SIZE, min,
+					Constants.FILE_PAGE_SIZE, Constants.FILE_MAX_INCREMENT);
 			if (min > file.length()) {
 				file.setLength(min);
 			}
@@ -441,8 +466,9 @@ public class LogFile {
 
 	/**
 	 * Close the log file.
-	 *
-	 * @param delete if the file should be deleted shortly afterwards
+	 * 
+	 * @param delete
+	 *            if the file should be deleted shortly afterwards
 	 */
 	void close(boolean delete) throws SQLException {
 		SQLException closeException = null;
@@ -451,7 +477,8 @@ public class LogFile {
 		} catch (SQLException e) {
 			closeException = e;
 		}
-		// continue with close even if flush was not possible (file storage problem)
+		// continue with close even if flush was not possible (file storage
+		// problem)
 		if (file != null) {
 			try {
 				file.close();
@@ -478,9 +505,11 @@ public class LogFile {
 
 	/**
 	 * Write a file summary (storage allocation table) to the log file.
-	 *
-	 * @param dataFile if his summary is for the data file
-	 * @param summary the summary
+	 * 
+	 * @param dataFile
+	 *            if his summary is for the data file
+	 * @param summary
+	 *            the summary
 	 */
 	void addSummary(boolean dataFile, byte[] summary) throws SQLException {
 		DataPage buff = DataPage.create(database, 256);
@@ -506,13 +535,18 @@ public class LogFile {
 
 	/**
 	 * Append a truncate entry to the transaction log file.
-	 *
-	 * @param session the session
-	 * @param storageId the id of the storage that was truncated
-	 * @param recordId the record id
-	 * @param blockCount the number of blocks to delete
+	 * 
+	 * @param session
+	 *            the session
+	 * @param storageId
+	 *            the id of the storage that was truncated
+	 * @param recordId
+	 *            the record id
+	 * @param blockCount
+	 *            the number of blocks to delete
 	 */
-	void addTruncate(Session session, int storageId, int recordId, int blockCount) throws SQLException {
+	void addTruncate(Session session, int storageId, int recordId,
+			int blockCount) throws SQLException {
 		DataPage buff = rowBuff;
 		buff.reset();
 		buff.writeInt(0);
@@ -526,10 +560,13 @@ public class LogFile {
 
 	/**
 	 * Add a record to the transaction log file.
-	 *
-	 * @param session the session
-	 * @param storageId the storage id
-	 * @param record the record
+	 * 
+	 * @param session
+	 *            the session
+	 * @param storageId
+	 *            the storage id
+	 * @param record
+	 *            the record
 	 */
 	void add(Session session, int storageId, Record record) throws SQLException {
 		record.prepareWrite();
@@ -617,14 +654,19 @@ public class LogFile {
 
 	/**
 	 * Commit or roll back a prepared transaction.
-	 *
-	 * @param commit if the transaction should be committed (true) or rolled
-	 *            back (false)
-	 * @param pos the position of the prepare log entry
-	 * @param sessionId the session id
-	 * @param blocks the number of blocks occupied by the prepare log entry
+	 * 
+	 * @param commit
+	 *            if the transaction should be committed (true) or rolled back
+	 *            (false)
+	 * @param pos
+	 *            the position of the prepare log entry
+	 * @param sessionId
+	 *            the session id
+	 * @param blocks
+	 *            the number of blocks occupied by the prepare log entry
 	 */
-	void updatePreparedCommit(boolean commit, int pos, int sessionId, int blocks) throws SQLException {
+	void updatePreparedCommit(boolean commit, int pos, int sessionId, int blocks)
+			throws SQLException {
 		synchronized (database) {
 			int posNow = getBlock();
 			DataPage buff = rowBuff;

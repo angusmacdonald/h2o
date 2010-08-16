@@ -19,8 +19,9 @@ public class AutoCloseInputStream extends InputStream {
 
 	/**
 	 * Create a new input stream.
-	 *
-	 * @param in the input stream
+	 * 
+	 * @param in
+	 *            the input stream
 	 */
 	public AutoCloseInputStream(InputStream in) {
 		this.in = in;

@@ -35,12 +35,15 @@ public class SimpleRowValue implements SearchRow {
 	public int getColumnCount() {
 		return virtualColumnCount;
 	}
+
 	public int getPos() {
 		return pos;
 	}
+
 	public Value getValue(int idx) {
 		return idx == index ? data : null;
 	}
+
 	public void setPos(int pos) {
 		this.pos = pos;
 	}

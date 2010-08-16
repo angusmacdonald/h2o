@@ -23,7 +23,7 @@ public class Comment extends DbObjectBase {
 	private String commentText;
 
 	public Comment(Database database, int id, DbObject obj) {
-		initDbObjectBase(database, id,  getKey(obj), Trace.DATABASE);
+		initDbObjectBase(database, id, getKey(obj), Trace.DATABASE);
 		this.objectType = obj.getType();
 		this.objectName = obj.getSQL();
 	}
@@ -33,7 +33,7 @@ public class Comment extends DbObjectBase {
 	}
 
 	private static String getTypeName(int type) {
-		switch(type) {
+		switch (type) {
 		case DbObject.CONSTANT:
 			return "CONSTANT";
 		case DbObject.CONSTRAINT:
@@ -57,7 +57,8 @@ public class Comment extends DbObjectBase {
 		case DbObject.USER_DATATYPE:
 			return "DOMAIN";
 		default:
-			// not supported by parser, but required when trying to find a comment
+			// not supported by parser, but required when trying to find a
+			// comment
 			return "type" + type;
 		}
 	}
@@ -96,8 +97,9 @@ public class Comment extends DbObjectBase {
 	/**
 	 * Get the comment key name for the given database object. This key name is
 	 * used internally to associate the comment to the object.
-	 *
-	 * @param obj the object
+	 * 
+	 * @param obj
+	 *            the object
 	 * @return the key name
 	 */
 	public static String getKey(DbObject obj) {
@@ -106,8 +108,9 @@ public class Comment extends DbObjectBase {
 
 	/**
 	 * Set the comment text.
-	 *
-	 * @param comment the text
+	 * 
+	 * @param comment
+	 *            the text
 	 */
 	public void setCommentText(String comment) {
 		this.commentText = comment;

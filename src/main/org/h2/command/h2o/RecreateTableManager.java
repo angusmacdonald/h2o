@@ -22,26 +22,28 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
 	private String tableName;
 	private String oldPrimaryLocation;
 
-
 	/**
 	 * @param session
 	 * @param schema
 	 */
-	public RecreateTableManager(Session session, Schema schema, String tableName, String oldPrimaryLocation) {
+	public RecreateTableManager(Session session, Schema schema,
+			String tableName, String oldPrimaryLocation) {
 		super(session, schema);
 
-		
-		if (oldPrimaryLocation.startsWith("'")) oldPrimaryLocation = oldPrimaryLocation.substring(1);
-		if (oldPrimaryLocation.endsWith("'")) oldPrimaryLocation = oldPrimaryLocation.substring(0, oldPrimaryLocation.length()-1);
-		
+		if (oldPrimaryLocation.startsWith("'"))
+			oldPrimaryLocation = oldPrimaryLocation.substring(1);
+		if (oldPrimaryLocation.endsWith("'"))
+			oldPrimaryLocation = oldPrimaryLocation.substring(0,
+					oldPrimaryLocation.length() - 1);
+
 		this.oldPrimaryLocation = oldPrimaryLocation;
-		
+
 		this.tableName = tableName;
 	}
 
-
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Prepared#isTransactional()
 	 */
 	@Override
@@ -49,22 +51,24 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
 		return false;
 	}
 
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Prepared#update()
 	 */
 	@Override
 	public int update() throws SQLException, RemoteException {
 
 		Database db = this.session.getDatabase();
-		ISystemTableReference systemTableReference = db.getSystemTableReference();
+		ISystemTableReference systemTableReference = db
+				.getSystemTableReference();
 
 		/*
-		 * TODO perform a check to see that it isn't already active. 
+		 * TODO perform a check to see that it isn't already active.
 		 */
 
 		String schemaName = "";
-		if (getSchema() != null){
+		if (getSchema() != null) {
 			schemaName = getSchema().getName();
 		} else {
 			schemaName = "PUBLIC";
@@ -91,29 +95,30 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
 		 * Make Table Manager serializable first.
 		 */
 		try {
-			TableManagerRemote tmr = (TableManagerRemote) UnicastRemoteObject.exportObject(tm, 0);
+			TableManagerRemote tmr = (TableManagerRemote) UnicastRemoteObject
+					.exportObject(tm, 0);
 			db.getChordInterface().bind(ti.getFullTableName(), tmr);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
 
-
-
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, ti + " recreated on " + db.getURL() + ".");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, ti + " recreated on "
+				+ db.getURL() + ".");
 
 		systemTableReference.addNewTableManagerReference(ti, tm);
 
 		return 1;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Prepared#update(java.lang.String)
 	 */
 	@Override
 	public int update(String transactionName) throws SQLException,
-	RemoteException {
+			RemoteException {
 		return update();
 	}
-
 
 }

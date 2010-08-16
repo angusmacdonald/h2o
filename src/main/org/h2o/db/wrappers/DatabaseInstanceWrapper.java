@@ -23,16 +23,18 @@ import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.util.DatabaseInstanceProbability;
 
-
 /**
- * Wrapper for remote database instance proxies. Contains a reference to the proxy itself
- * and whether the database is actually alive.
+ * Wrapper for remote database instance proxies. Contains a reference to the
+ * proxy itself and whether the database is actually alive.
  * 
- * <p>This is done because connection information is maintained in the System Table even when a connection itself
- * has become inactive.
+ * <p>
+ * This is done because connection information is maintained in the System Table
+ * even when a connection itself has become inactive.
+ * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class DatabaseInstanceWrapper implements Serializable, Comparable<DatabaseInstanceWrapper> {
+public class DatabaseInstanceWrapper implements Serializable,
+		Comparable<DatabaseInstanceWrapper> {
 
 	private static final long serialVersionUID = 9193285872031823819L;
 
@@ -43,14 +45,17 @@ public class DatabaseInstanceWrapper implements Serializable, Comparable<Databas
 	private boolean active = true;
 
 	private DatabaseInstanceProbability availabilityInfo;
-	
+
 	/**
-	 * @param databaseURL 		The location of this database instance.
-	 * @param databaseInstance	Reference to the local database instance.
-	 * @param active			Whether the database is currently active.
+	 * @param databaseURL
+	 *            The location of this database instance.
+	 * @param databaseInstance
+	 *            Reference to the local database instance.
+	 * @param active
+	 *            Whether the database is currently active.
 	 */
-	public DatabaseInstanceWrapper(DatabaseURL databaseURL, DatabaseInstanceRemote databaseInstance,
-			boolean active) {
+	public DatabaseInstanceWrapper(DatabaseURL databaseURL,
+			DatabaseInstanceRemote databaseInstance, boolean active) {
 		super();
 		this.databaseURL = databaseURL;
 		this.databaseInstance = databaseInstance;
@@ -66,7 +71,8 @@ public class DatabaseInstanceWrapper implements Serializable, Comparable<Databas
 	}
 
 	/**
-	 * Set the database instance as active (allowing incoming connections) or inactive (not running).
+	 * Set the database instance as active (allowing incoming connections) or
+	 * inactive (not running).
 	 */
 	public void setActive(boolean active) {
 		this.active = active;
@@ -86,7 +92,9 @@ public class DatabaseInstanceWrapper implements Serializable, Comparable<Databas
 		return databaseURL;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -94,12 +102,14 @@ public class DatabaseInstanceWrapper implements Serializable, Comparable<Databas
 		final int prime = 31;
 		int result = 1;
 		result = prime
-		* result
-		+ ((databaseInstance == null) ? 0 : databaseInstance.hashCode());
+				* result
+				+ ((databaseInstance == null) ? 0 : databaseInstance.hashCode());
 		return result;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -126,7 +136,7 @@ public class DatabaseInstanceWrapper implements Serializable, Comparable<Databas
 	@Override
 	public int compareTo(DatabaseInstanceWrapper o) {
 		return this.getAvailabilityInfo().compareTo(o.getAvailabilityInfo());
-		
+
 	}
 
 }

@@ -127,11 +127,13 @@ public abstract class ScriptBase extends Prepared implements DataHandler {
 			initStore();
 			out = new FileStoreOutputStream(store, this, compressionAlgorithm);
 			// always use a big buffer, otherwise end-of-block is written a lot
-			out = new BufferedOutputStream(out, Constants.IO_BUFFER_SIZE_COMPRESS);
+			out = new BufferedOutputStream(out,
+					Constants.IO_BUFFER_SIZE_COMPRESS);
 		} else {
 			OutputStream o = FileUtils.openFileOutputStream(fileName, false);
 			out = new BufferedOutputStream(o, Constants.IO_BUFFER_SIZE);
-			out = CompressTool.wrapOutputStream(out, compressionAlgorithm, Constants.SCRIPT_SQL);
+			out = CompressTool.wrapOutputStream(out, compressionAlgorithm,
+					Constants.SCRIPT_SQL);
 		}
 	}
 
@@ -145,7 +147,8 @@ public abstract class ScriptBase extends Prepared implements DataHandler {
 		}
 		if (isEncrypted()) {
 			initStore();
-			in = new FileStoreInputStream(store, this, compressionAlgorithm != null, false);
+			in = new FileStoreInputStream(store, this,
+					compressionAlgorithm != null, false);
 		} else {
 			InputStream inStream;
 			try {
@@ -154,9 +157,11 @@ public abstract class ScriptBase extends Prepared implements DataHandler {
 				throw Message.convertIOException(e, fileName);
 			}
 			in = new BufferedInputStream(inStream, Constants.IO_BUFFER_SIZE);
-			in = CompressTool.wrapInputStream(in, compressionAlgorithm, Constants.SCRIPT_SQL);
+			in = CompressTool.wrapInputStream(in, compressionAlgorithm,
+					Constants.SCRIPT_SQL);
 			if (in == null) {
-				throw Message.getSQLException(ErrorCode.FILE_NOT_FOUND_1, Constants.SCRIPT_SQL + " in " + fileName);
+				throw Message.getSQLException(ErrorCode.FILE_NOT_FOUND_1,
+						Constants.SCRIPT_SQL + " in " + fileName);
 			}
 		}
 	}

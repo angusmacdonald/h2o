@@ -18,8 +18,7 @@ import org.h2.value.Value;
 import org.h2.value.ValueString;
 
 /**
- * This class represents the statement
- * EXPLAIN
+ * This class represents the statement EXPLAIN
  */
 public class ExplainPlan extends Prepared {
 
@@ -45,10 +44,9 @@ public class ExplainPlan extends Prepared {
 	public LocalResult query(int maxrows) throws SQLException {
 		// TODO rights: are rights required for explain?
 		Column column = new Column("PLAN", Value.STRING);
-		ExpressionColumn expr = new ExpressionColumn(session.getDatabase(), column);
-		Expression[] expressions = new Expression[] {
-				expr
-		};
+		ExpressionColumn expr = new ExpressionColumn(session.getDatabase(),
+				column);
+		Expression[] expressions = new Expression[] { expr };
 		result = new LocalResult(session, expressions, 1);
 		if (maxrows >= 0) {
 			String plan = command.getPlanSQL();

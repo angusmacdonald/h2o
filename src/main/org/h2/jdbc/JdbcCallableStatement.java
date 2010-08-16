@@ -31,10 +31,11 @@ import org.h2.message.TraceObject;
 /**
  * Represents a callable statement.
  */
-public class JdbcCallableStatement extends JdbcPreparedStatement implements CallableStatement {
+public class JdbcCallableStatement extends JdbcPreparedStatement implements
+		CallableStatement {
 
-	JdbcCallableStatement(JdbcConnection conn, String sql, int resultSetType, int id)
-	throws SQLException {
+	JdbcCallableStatement(JdbcConnection conn, String sql, int resultSetType,
+			int id) throws SQLException {
 		super(conn, sql, resultSetType, id, false);
 		setTrace(session.getTrace(), TraceObject.CALLABLE_STATEMENT, id);
 	}
@@ -42,14 +43,16 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 	/**
 	 * [Not supported]
 	 */
-	public void registerOutParameter(int parameterIndex, int sqlType) throws SQLException {
+	public void registerOutParameter(int parameterIndex, int sqlType)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
 	/**
 	 * [Not supported]
 	 */
-	public void registerOutParameter(int parameterIndex, int sqlType, int scale) throws SQLException {
+	public void registerOutParameter(int parameterIndex, int sqlType, int scale)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
@@ -118,9 +121,11 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 
 	/**
 	 * [Not supported]
+	 * 
 	 * @deprecated
 	 */
-	public BigDecimal getBigDecimal(int parameterIndex, int scale) throws SQLException {
+	public BigDecimal getBigDecimal(int parameterIndex, int scale)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
@@ -218,20 +223,22 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 	/**
 	 * [Not supported]
 	 */
-	public Timestamp getTimestamp(int parameterIndex, Calendar cal) throws SQLException {
+	public Timestamp getTimestamp(int parameterIndex, Calendar cal)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
 	/**
 	 * [Not supported]
 	 */
-	public void registerOutParameter(int paramIndex, int sqlType, String typeName) throws SQLException {
+	public void registerOutParameter(int paramIndex, int sqlType,
+			String typeName) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
 	/**
 	 * [Not supported]
-	 *
+	 * 
 	 */
 	public URL getURL(String parameterName) throws SQLException {
 		throw Message.getUnsupportedException();
@@ -239,9 +246,10 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 
 	/**
 	 * [Not supported]
-	 *
+	 * 
 	 */
-	public Timestamp getTimestamp(String parameterName, Calendar cal) throws SQLException {
+	public Timestamp getTimestamp(String parameterName, Calendar cal)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
@@ -397,35 +405,40 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 	/**
 	 * [Not supported]
 	 */
-	public void setNull(String parameterName, int sqlType, String typeName) throws SQLException {
+	public void setNull(String parameterName, int sqlType, String typeName)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
 	/**
 	 * [Not supported]
 	 */
-	public void setTimestamp(String parameterName, Timestamp x, Calendar cal) throws SQLException {
+	public void setTimestamp(String parameterName, Timestamp x, Calendar cal)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
 	/**
 	 * [Not supported]
 	 */
-	public void setTime(String parameterName, Time x, Calendar cal) throws SQLException {
+	public void setTime(String parameterName, Time x, Calendar cal)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
 	/**
 	 * [Not supported]
 	 */
-	public void setDate(String parameterName, Date x, Calendar cal) throws SQLException {
+	public void setDate(String parameterName, Date x, Calendar cal)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
 	/**
 	 * [Not supported]
 	 */
-	public void setCharacterStream(String parameterName, Reader reader, int length) throws SQLException {
+	public void setCharacterStream(String parameterName, Reader reader,
+			int length) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
@@ -439,21 +452,24 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 	/**
 	 * [Not supported]
 	 */
-	public void setObject(String parameterName, Object x, int targetSqlType) throws SQLException {
+	public void setObject(String parameterName, Object x, int targetSqlType)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
 	/**
 	 * [Not supported]
 	 */
-	public void setObject(String parameterName, Object x, int targetSqlType, int scale) throws SQLException {
+	public void setObject(String parameterName, Object x, int targetSqlType,
+			int scale) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
 	/**
 	 * [Not supported]
 	 */
-	public void setBinaryStream(String parameterName, InputStream x, int length) throws SQLException {
+	public void setBinaryStream(String parameterName, InputStream x, int length)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
@@ -462,15 +478,15 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 	 */
 
 	public void setAsciiStream(String parameterName, InputStream x, long length)
-	throws SQLException {
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
 
 	/**
 	 * [Not supported]
 	 */
-	public void setTimestamp(String parameterName, Timestamp x) throws SQLException {
+	public void setTimestamp(String parameterName, Timestamp x)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
@@ -505,7 +521,8 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 	/**
 	 * [Not supported]
 	 */
-	public void setBigDecimal(String parameterName, BigDecimal x) throws SQLException {
+	public void setBigDecimal(String parameterName, BigDecimal x)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
@@ -584,21 +601,24 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 	/**
 	 * [Not supported]
 	 */
-	public void registerOutParameter(String parameterName, int sqlType, String typeName) throws SQLException {
+	public void registerOutParameter(String parameterName, int sqlType,
+			String typeName) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
 	/**
 	 * [Not supported]
 	 */
-	public void registerOutParameter(String parameterName, int sqlType, int scale) throws SQLException {
+	public void registerOutParameter(String parameterName, int sqlType,
+			int scale) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
 	/**
 	 * [Not supported]
 	 */
-	public void registerOutParameter(String parameterName, int sqlType) throws SQLException {
+	public void registerOutParameter(String parameterName, int sqlType)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
@@ -612,7 +632,6 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 		throw Message.getUnsupportedException();
 	}
 
-
 	/**
 	 * [Not supported]
 	 */
@@ -620,7 +639,6 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 	public RowId getRowId(String parameterName) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
 
 	/**
 	 * [Not supported]
@@ -630,65 +648,58 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 		throw Message.getUnsupportedException();
 	}
 
+	/**
+	 * [Not supported]
+	 */
+
+	public void setNString(String parameterName, String value)
+			throws SQLException {
+		throw Message.getUnsupportedException();
+	}
 
 	/**
 	 * [Not supported]
 	 */
 
-	public void setNString(String parameterName, String value) throws SQLException {
+	public void setNCharacterStream(String parameterName, Reader value,
+			long length) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
 
 	/**
 	 * [Not supported]
 	 */
 
-	public void setNCharacterStream(String parameterName, Reader value, long length)
-	throws SQLException {
+	public void setNClob(String parameterName, NClob value) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
-
-	/**
-	 * [Not supported]
-	 */
-
-	public void setNClob(String parameterName, NClob value)
-	throws SQLException {
-		throw Message.getUnsupportedException();
-	}
-
 
 	/**
 	 * [Not supported]
 	 */
 
 	public void setClob(String parameterName, Reader reader, long length)
-	throws SQLException {
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
 
 	/**
 	 * [Not supported]
 	 */
 
-	public void setBlob(String parameterName, InputStream inputStream, long length)
-	throws SQLException {
+	public void setBlob(String parameterName, InputStream inputStream,
+			long length) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
 
 	/**
 	 * [Not supported]
 	 */
 
 	public void setNClob(String parameterName, Reader reader, long length)
-	throws SQLException {
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
 
 	/**
 	 * [Not supported]
@@ -698,7 +709,6 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 		throw Message.getUnsupportedException();
 	}
 
-
 	/**
 	 * [Not supported]
 	 */
@@ -707,16 +717,14 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 		throw Message.getUnsupportedException();
 	}
 
-
 	/**
 	 * [Not supported]
 	 */
 
 	public void setSQLXML(String parameterName, SQLXML xmlObject)
-	throws SQLException {
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
 
 	/**
 	 * [Not supported]
@@ -726,7 +734,6 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 		throw Message.getUnsupportedException();
 	}
 
-
 	/**
 	 * [Not supported]
 	 */
@@ -734,7 +741,6 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 	public SQLXML getSQLXML(String parameterName) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
 
 	/**
 	 * [Not supported]
@@ -744,7 +750,6 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 		throw Message.getUnsupportedException();
 	}
 
-
 	/**
 	 * [Not supported]
 	 */
@@ -753,26 +758,21 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 		throw Message.getUnsupportedException();
 	}
 
+	/**
+	 * [Not supported]
+	 */
+
+	public Reader getNCharacterStream(int parameterIndex) throws SQLException {
+		throw Message.getUnsupportedException();
+	}
 
 	/**
 	 * [Not supported]
 	 */
 
-	public Reader getNCharacterStream(int parameterIndex)
-	throws SQLException {
+	public Reader getNCharacterStream(String parameterName) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
-
-	/**
-	 * [Not supported]
-	 */
-
-	public Reader getNCharacterStream(String parameterName)
-	throws SQLException {
-		throw Message.getUnsupportedException();
-	}
-
 
 	/**
 	 * [Not supported]
@@ -782,16 +782,13 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 		throw Message.getUnsupportedException();
 	}
 
-
 	/**
 	 * [Not supported]
 	 */
 
-	public Reader getCharacterStream(String parameterName)
-	throws SQLException {
+	public Reader getCharacterStream(String parameterName) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
 
 	/**
 	 * [Not supported]
@@ -801,7 +798,6 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 		throw Message.getUnsupportedException();
 	}
 
-
 	/**
 	 * [Not supported]
 	 */
@@ -810,21 +806,20 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 		throw Message.getUnsupportedException();
 	}
 
-
 	/**
 	 * [Not supported]
 	 */
 
 	public void setAsciiStream(String parameterName, InputStream x)
-	throws SQLException {
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
 
 	/**
 	 * [Not supported]
 	 */
-	public void setAsciiStream(String parameterName, InputStream x, int length) throws SQLException {
+	public void setAsciiStream(String parameterName, InputStream x, int length)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
@@ -833,50 +828,45 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 	 */
 
 	public void setBinaryStream(String parameterName, InputStream x)
-	throws SQLException {
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
 
 	/**
 	 * [Not supported]
 	 */
 
 	public void setBinaryStream(String parameterName, InputStream x, long length)
-	throws SQLException {
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
 
 	/**
 	 * [Not supported]
 	 */
 
 	public void setBlob(String parameterName, InputStream x)
-	throws SQLException {
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
 
 	/**
 	 * [Not supported]
 	 */
 
 	public void setCharacterStream(String parameterName, Reader x)
-	throws SQLException {
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
 
 	/**
 	 * [Not supported]
 	 */
 
 	public void setCharacterStream(String parameterName, Reader x, long length)
-	throws SQLException {
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
 
 	/**
 	 * [Not supported]
@@ -886,16 +876,14 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 		throw Message.getUnsupportedException();
 	}
 
-
 	/**
 	 * [Not supported]
 	 */
 
 	public void setNCharacterStream(String parameterName, Reader x)
-	throws SQLException {
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
 
 	/**
 	 * [Not supported]
@@ -904,6 +892,5 @@ public class JdbcCallableStatement extends JdbcPreparedStatement implements Call
 	public void setNClob(String parameterName, Reader x) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
 
 }

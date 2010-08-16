@@ -15,8 +15,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Contains meta data information about a database schema.
- * This class is used by the H2 Console.
+ * Contains meta data information about a database schema. This class is used by
+ * the H2 Console.
  */
 public class DbSchema {
 
@@ -58,7 +58,7 @@ public class DbSchema {
 	DbSchema(DbContents contents, String name, boolean isDefault) {
 		this.contents = contents;
 		this.name = name;
-		this.quotedName =  contents.quoteIdentifier(name);
+		this.quotedName = contents.quoteIdentifier(name);
 		this.isDefault = isDefault;
 
 		tables = new HashMap<String, Set<DbTableOrView>>();
@@ -66,11 +66,14 @@ public class DbSchema {
 
 	/**
 	 * Read all tables for this schema from the database meta data.
-	 *
-	 * @param meta the database meta data
-	 * @param tableTypes the table types to read
+	 * 
+	 * @param meta
+	 *            the database meta data
+	 * @param tableTypes
+	 *            the table types to read
 	 */
-	void readTables(DatabaseMetaData meta, String[] tableTypes) throws SQLException {
+	void readTables(DatabaseMetaData meta, String[] tableTypes)
+			throws SQLException {
 		ResultSet rs = meta.getTables(null, name, null, tableTypes);
 
 		while (rs.next()) {
@@ -79,9 +82,9 @@ public class DbSchema {
 				continue;
 			}
 
-			if (tables.get(table.name) != null){
+			if (tables.get(table.name) != null) {
 				Set<DbTableOrView> set = tables.get(table.name);
-				set.add(table);	
+				set.add(table);
 			} else {
 				Set<DbTableOrView> set = new HashSet<DbTableOrView>();
 				set.add(table);
@@ -91,8 +94,8 @@ public class DbSchema {
 		rs.close();
 
 		if (tables.size() < MAX_TABLES_LIST_COLUMNS) {
-			for (Set<DbTableOrView> tableSet: tables.values()) {
-				for (DbTableOrView dbtab: tableSet){
+			for (Set<DbTableOrView> tableSet : tables.values()) {
+				for (DbTableOrView dbtab : tableSet) {
 					dbtab.readColumns(meta);
 				}
 			}

@@ -41,13 +41,18 @@ public abstract class DbObjectBase implements DbObject {
 
 	/**
 	 * Initialize some attributes of this object.
-	 *
-	 * @param database the database
-	 * @param id the object id
-	 * @param name the name
-	 * @param traceModule the trace module name
+	 * 
+	 * @param database
+	 *            the database
+	 * @param id
+	 *            the object id
+	 * @param name
+	 *            the name
+	 * @param traceModule
+	 *            the trace module name
 	 */
-	protected void initDbObjectBase(Database database, int id, String name, String traceModule) {
+	protected void initDbObjectBase(Database database, int id, String name,
+			String traceModule) {
 		this.database = database;
 		this.trace = database.getTrace(traceModule);
 		this.id = id;
@@ -58,7 +63,7 @@ public abstract class DbObjectBase implements DbObject {
 	/**
 	 * Build a SQL statement to re-create the object, or to create a copy of the
 	 * object with a different name or referencing a different table
-	 *
+	 * 
 	 * @param table
 	 *            the new table name
 	 * @param quotedName
@@ -69,21 +74,21 @@ public abstract class DbObjectBase implements DbObject {
 
 	/**
 	 * Build a SQL statement to re-create this object.
-	 *
+	 * 
 	 * @return the SQL statement
 	 */
 	public abstract String getCreateSQL();
 
 	/**
 	 * Build a SQL statement to drop this object.
-	 *
+	 * 
 	 * @return the SQL statement
 	 */
 	public abstract String getDropSQL();
 
 	/**
 	 * Get the object type.
-	 *
+	 * 
 	 * @return the object type
 	 */
 	public abstract int getType();
@@ -91,10 +96,12 @@ public abstract class DbObjectBase implements DbObject {
 	/**
 	 * Remove all dependent objects and free all resources (files, blocks in
 	 * files) of this object.
-	 *
-	 * @param session the session
+	 * 
+	 * @param session
+	 *            the session
 	 */
-	public abstract void removeChildrenAndResources(Session session) throws SQLException;
+	public abstract void removeChildrenAndResources(Session session)
+			throws SQLException;
 
 	/**
 	 * Check if this object can be renamed. System objects may not be renamed.
@@ -102,7 +109,8 @@ public abstract class DbObjectBase implements DbObject {
 	public abstract void checkRename() throws SQLException;
 
 	public void setModified() {
-		this.modificationId = database == null ? -1 : database.getNextModificationMetaId();
+		this.modificationId = database == null ? -1 : database
+				.getNextModificationMetaId();
 	}
 
 	public long getModificationId() {
@@ -174,12 +182,13 @@ public abstract class DbObjectBase implements DbObject {
 	/**
 	 * Get the sort order id for this object type. Objects are created in this
 	 * order when opening a database.
-	 *
-	 * @param type the database object type
+	 * 
+	 * @param type
+	 *            the database object type
 	 * @return the sort index
 	 */
 	static int getCreateOrder(int type) {
-		switch(type) {
+		switch (type) {
 		case SETTING:
 			return 0;
 		case USER:
@@ -211,11 +220,11 @@ public abstract class DbObjectBase implements DbObject {
 		case COMMENT:
 			return 14;
 		default:
-			throw Message.throwInternalError("type="+type);
+			throw Message.throwInternalError("type=" + type);
 		}
 	}
 
-	public String toString(){
+	public String toString() {
 		return objectName;
 	}
 }

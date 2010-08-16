@@ -59,14 +59,16 @@ public class Resources {
 
 	/**
 	 * Get a resource from the resource map.
-	 *
-	 * @param name the name of the resource
+	 * 
+	 * @param name
+	 *            the name of the resource
 	 * @return the resource data
 	 */
 	public static byte[] get(String name) throws IOException {
 		byte[] data;
 		if (FILES.size() == 0) {
-			// TODO web: security (check what happens with files like 'lpt1.txt' on windows)
+			// TODO web: security (check what happens with files like 'lpt1.txt'
+			// on windows)
 			InputStream in = Resources.class.getResourceAsStream(name);
 			if (in == null) {
 				data = null;

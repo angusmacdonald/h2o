@@ -43,7 +43,8 @@ public class MetaIndex extends BaseIndex {
 		throw Message.getUnsupportedException();
 	}
 
-	public Cursor find(Session session, SearchRow first, SearchRow last) throws SQLException {
+	public Cursor find(Session session, SearchRow first, SearchRow last)
+			throws SQLException {
 		ObjectArray rows = meta.generateRows(session, first, last);
 		return new MetaCursor(rows);
 	}
@@ -87,7 +88,8 @@ public class MetaIndex extends BaseIndex {
 		return false;
 	}
 
-	public Cursor findFirstOrLast(Session session, boolean first) throws SQLException {
+	public Cursor findFirstOrLast(Session session, boolean first)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 

@@ -17,8 +17,7 @@ import org.h2.schema.TriggerObject;
 import org.h2.table.Table;
 
 /**
- * This class represents the statement
- * CREATE TRIGGER
+ * This class represents the statement CREATE TRIGGER
  */
 public class CreateTrigger extends SchemaCommand {
 
@@ -83,11 +82,13 @@ public class CreateTrigger extends SchemaCommand {
 			if (ifNotExists) {
 				return 0;
 			}
-			throw Message.getSQLException(ErrorCode.TRIGGER_ALREADY_EXISTS_1, triggerName);
+			throw Message.getSQLException(ErrorCode.TRIGGER_ALREADY_EXISTS_1,
+					triggerName);
 		}
 		int id = getObjectId(false, true);
 		Table table = getSchema().getTableOrView(session, tableName);
-		TriggerObject trigger = new TriggerObject(getSchema(), id, triggerName, table);
+		TriggerObject trigger = new TriggerObject(getSchema(), id, triggerName,
+				table);
 		trigger.setBefore(before);
 		trigger.setNoWait(noWait);
 		trigger.setQueueSize(queueSize);

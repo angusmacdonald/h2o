@@ -26,10 +26,11 @@ public class ValueResultSet extends Value {
 	}
 
 	/**
-	 * Create a result set value for the given result set.
-	 * The result set will be wrapped.
-	 *
-	 * @param rs the result set
+	 * Create a result set value for the given result set. The result set will
+	 * be wrapped.
+	 * 
+	 * @param rs
+	 *            the result set
 	 * @return the value
 	 */
 	public static ValueResultSet get(ResultSet rs) {
@@ -40,13 +41,16 @@ public class ValueResultSet extends Value {
 	/**
 	 * Create a result set value for the given result set. The result set will
 	 * be fully read in memory.
-	 *
-	 * @param rs the result set
-	 * @param maxrows the maximum number of rows to read (0 to just read the
-	 *            meta data)
+	 * 
+	 * @param rs
+	 *            the result set
+	 * @param maxrows
+	 *            the maximum number of rows to read (0 to just read the meta
+	 *            data)
 	 * @return the value
 	 */
-	public static ValueResultSet getCopy(ResultSet rs, int maxrows) throws SQLException {
+	public static ValueResultSet getCopy(ResultSet rs, int maxrows)
+			throws SQLException {
 		ResultSetMetaData meta = rs.getMetaData();
 		int columnCount = meta.getColumnCount();
 		SimpleResultSet simple = new SimpleResultSet();
@@ -97,8 +101,9 @@ public class ValueResultSet extends Value {
 					if (j > 0) {
 						buff.append(", ");
 					}
-					int t = DataType.convertSQLTypeToValueType(meta.getColumnType(j + 1));
-					Value v = DataType.readValue(null, result, j+1, t);
+					int t = DataType.convertSQLTypeToValueType(meta
+							.getColumnType(j + 1));
+					Value v = DataType.readValue(null, result, j + 1, t);
 					buff.append(v.getString());
 				}
 				buff.append(')');
@@ -131,7 +136,8 @@ public class ValueResultSet extends Value {
 		return result;
 	}
 
-	public void set(PreparedStatement prep, int parameterIndex) throws SQLException {
+	public void set(PreparedStatement prep, int parameterIndex)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 

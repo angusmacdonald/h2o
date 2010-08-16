@@ -18,8 +18,7 @@ import org.h2.security.SHA256;
 import org.h2.util.ByteUtils;
 
 /**
- * This class represents the statement
- * CREATE USER
+ * This class represents the statement CREATE USER
  */
 public class CreateUser extends DefineCommand {
 
@@ -60,13 +59,15 @@ public class CreateUser extends DefineCommand {
 		session.commit(true);
 		Database db = session.getDatabase();
 		if (db.findRole(userName) != null) {
-			throw Message.getSQLException(ErrorCode.ROLE_ALREADY_EXISTS_1, userName);
+			throw Message.getSQLException(ErrorCode.ROLE_ALREADY_EXISTS_1,
+					userName);
 		}
 		if (db.findUser(userName) != null) {
 			if (ifNotExists) {
 				return 0;
 			}
-			throw Message.getSQLException(ErrorCode.USER_ALREADY_EXISTS_1, userName);
+			throw Message.getSQLException(ErrorCode.USER_ALREADY_EXISTS_1,
+					userName);
 		}
 		int id = getObjectId(false, true);
 		User user = new User(db, id, userName, false);
@@ -77,7 +78,8 @@ public class CreateUser extends DefineCommand {
 		} else {
 			SHA256 sha = new SHA256();
 			char[] passwordChars = getCharArray(password);
-			byte[] userPasswordHash = sha.getKeyPasswordHash(userName, passwordChars);
+			byte[] userPasswordHash = sha.getKeyPasswordHash(userName,
+					passwordChars);
 			user.setUserPasswordHash(userPasswordHash);
 		}
 		db.addDatabaseObject(session, user);

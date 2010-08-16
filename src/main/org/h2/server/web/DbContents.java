@@ -15,8 +15,8 @@ import org.h2.command.Parser;
 import org.h2.util.StringUtils;
 
 /**
- * Keeps meta data information about a database.
- * This class is used by the H2 Console.
+ * Keeps meta data information about a database. This class is used by the H2
+ * Console.
  */
 public class DbContents {
 
@@ -67,15 +67,19 @@ public class DbContents {
 
 	/**
 	 * Get the column index of a column in a result set. If the column is not
-	 * found, the default column index is returned.
-	 * This is a workaround for a JDBC-ODBC bridge problem.
-	 *
-	 * @param rs the result set
-	 * @param columnName the column name
-	 * @param defaultColumnIndex the default column index
+	 * found, the default column index is returned. This is a workaround for a
+	 * JDBC-ODBC bridge problem.
+	 * 
+	 * @param rs
+	 *            the result set
+	 * @param columnName
+	 *            the column name
+	 * @param defaultColumnIndex
+	 *            the default column index
 	 * @return the column index
 	 */
-	static int findColumn(ResultSet rs, String columnName, int defaultColumnIndex) {
+	static int findColumn(ResultSet rs, String columnName,
+			int defaultColumnIndex) {
 		try {
 			return rs.findColumn(columnName);
 		} catch (SQLException e) {
@@ -85,8 +89,9 @@ public class DbContents {
 
 	/**
 	 * Read the contents of this database from the database meta data.
-	 *
-	 * @param meta the database meta data
+	 * 
+	 * @param meta
+	 *            the database meta data
 	 */
 	void readContents(DatabaseMetaData meta) throws SQLException {
 		String prod = StringUtils.toLowerEnglish(meta.getDatabaseProductName());
@@ -106,27 +111,29 @@ public class DbContents {
 		schemas = new DbSchema[schemaNames.length];
 		for (int i = 0; i < schemaNames.length; i++) {
 			String schemaName = schemaNames[i];
-			boolean isDefault = defaultSchemaName == null || defaultSchemaName.equals(schemaName);
+			boolean isDefault = defaultSchemaName == null
+					|| defaultSchemaName.equals(schemaName);
 			DbSchema schema = new DbSchema(this, schemaName, isDefault);
 			if (schema.isDefault) {
 				defaultSchema = schema;
 			}
 			schemas[i] = schema;
-			String[] tableTypes = new String[] { "TABLE", "SYSTEM TABLE", "VIEW", "SYSTEM VIEW", "TABLE LINK",
-					"SYNONYM" };
+			String[] tableTypes = new String[] { "TABLE", "SYSTEM TABLE",
+					"VIEW", "SYSTEM VIEW", "TABLE LINK", "SYNONYM" };
 			schema.readTables(meta, tableTypes);
 		}
 		if (defaultSchema == null) {
 			String best = null;
-			for (int i = 0; i < schemas.length; i++) {
-				if ("dbo".equals(schemas[i].name)) {
+			for (DbSchema schema : schemas) {
+				if ("dbo".equals(schema.name)) {
 					// MS SQL Server
-					defaultSchema = schemas[i];
+					defaultSchema = schema;
 					break;
 				}
-				if (defaultSchema == null || best == null || schemas[i].name.length() < best.length()) {
-					best = schemas[i].name;
-					defaultSchema = schemas[i];
+				if (defaultSchema == null || best == null
+						|| schema.name.length() < best.length()) {
+					best = schema.name;
+					defaultSchema = schema;
 				}
 			}
 		}
@@ -181,11 +188,11 @@ public class DbContents {
 	}
 
 	/**
-	 * Add double quotes around an identifier if required.
-	 * For the H2 database, only keywords are quoted; for other databases,
-	 * all identifiers are.
-	 *
-	 * @param identifier the identifier
+	 * Add double quotes around an identifier if required. For the H2 database,
+	 * only keywords are quoted; for other databases, all identifiers are.
+	 * 
+	 * @param identifier
+	 *            the identifier
 	 * @return the quoted identifier
 	 */
 	String quoteIdentifier(String identifier) {

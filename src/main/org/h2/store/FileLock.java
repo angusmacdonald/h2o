@@ -62,7 +62,8 @@ public class FileLock {
 	public static final int LOCK_SERIALIZED = 3;
 
 	private static final String MAGIC = "FileLock";
-	private static final String FILE = "file", SOCKET = "socket", SERIALIZED = "serialized";
+	private static final String FILE = "file", SOCKET = "socket",
+			SERIALIZED = "serialized";
 	private static final int RANDOM_BYTES = 16;
 	private static final int SLEEP_GAP = 25;
 	private static final int TIME_GRANULARITY = 2000;
@@ -104,9 +105,11 @@ public class FileLock {
 
 	/**
 	 * Create a new file locking object.
-	 *
-	 * @param traceSystem the trace system to use
-	 * @param sleep the number of milliseconds to sleep
+	 * 
+	 * @param traceSystem
+	 *            the trace system to use
+	 * @param sleep
+	 *            the number of milliseconds to sleep
 	 */
 	public FileLock(TraceSystem traceSystem, String fileName, int sleep) {
 		this.trace = traceSystem.getTrace(Trace.FILE_LOCK);
@@ -116,9 +119,11 @@ public class FileLock {
 
 	/**
 	 * Lock the file if possible. A file may only be locked once.
-	 *
-	 * @param fileLockMethod the file locking method to use
-	 * @throws SQLException if locking was not successful
+	 * 
+	 * @param fileLockMethod
+	 *            the file locking method to use
+	 * @throws SQLException
+	 *             if locking was not successful
 	 */
 	public synchronized void lock(int fileLockMethod) throws SQLException {
 		this.fs = FileSystem.getInstance(fileName);
@@ -168,9 +173,11 @@ public class FileLock {
 	/**
 	 * Add or change a setting to the properties. This call does not save the
 	 * file.
-	 *
-	 * @param key the key
-	 * @param value the value
+	 * 
+	 * @param key
+	 *            the key
+	 * @param value
+	 *            the value
 	 */
 	public void setProperty(String key, String value) throws SQLException {
 		if (value == null) {
@@ -192,12 +199,12 @@ public class FileLock {
 		}
 	}
 
-	//    void kill() {
-	//        socket = null;
-	//        file = null;
-	//        locked = false;
-	//        trace("killed", null);
-	//    }
+	// void kill() {
+	// socket = null;
+	// file = null;
+	// locked = false;
+	// trace("killed", null);
+	// }
 
 	/**
 	 * Save the lock file.
@@ -228,7 +235,8 @@ public class FileLock {
 		boolean running = false;
 		String id = prop.getProperty("id");
 		try {
-			Socket socket = NetUtils.createSocket(server, Constants.DEFAULT_SERVER_PORT, false);
+			Socket socket = NetUtils.createSocket(server,
+					Constants.DEFAULT_SERVER_PORT, false);
 			Transfer transfer = new Transfer(null);
 			transfer.setSocket(socket);
 			transfer.init();
@@ -250,7 +258,8 @@ public class FileLock {
 		}
 		if (running) {
 			String payload = server + "/" + id;
-			JdbcSQLException ex = Message.getSQLException(ErrorCode.DATABASE_ALREADY_OPEN_1, "Server is running");
+			JdbcSQLException ex = Message.getSQLException(
+					ErrorCode.DATABASE_ALREADY_OPEN_1, "Server is running");
 			ex.setPayload(payload);
 			throw ex;
 		}
@@ -258,7 +267,7 @@ public class FileLock {
 
 	/**
 	 * Load the properties file.
-	 *
+	 * 
 	 * @return the properties
 	 */
 	public Properties load() throws SQLException {
@@ -278,7 +287,8 @@ public class FileLock {
 			long last = fs.getLastModified(fileName);
 			long dist = System.currentTimeMillis() - last;
 			if (dist < -TIME_GRANULARITY) {
-				throw getExceptionFatal("Lock file modified in the future: dist=" + dist, null);
+				throw getExceptionFatal(
+						"Lock file modified in the future: dist=" + dist, null);
 			} else if (dist > TIME_GRANULARITY) {
 				return;
 			}
@@ -338,7 +348,8 @@ public class FileLock {
 					while (fileName != null) {
 						// trace.debug("watchdog check");
 						try {
-							if (!fs.exists(fileName) || fs.getLastModified(fileName) != lastWrite) {
+							if (!fs.exists(fileName)
+									|| fs.getLastModified(fileName) != lastWrite) {
 								save();
 							}
 							Thread.sleep(sleep);
@@ -380,7 +391,8 @@ public class FileLock {
 			}
 			String ip = p2.getProperty("ipAddress", ipAddress);
 			if (!ipAddress.equals(ip)) {
-				throw getExceptionAlreadyInUse("Locked by another computer: " + ip);
+				throw getExceptionAlreadyInUse("Locked by another computer: "
+						+ ip);
 			}
 			String port = p2.getProperty("port", "0");
 			int portId = Integer.parseInt(port);
@@ -452,16 +464,19 @@ public class FileLock {
 	}
 
 	private SQLException getExceptionFatal(String reason, Throwable t) {
-		return Message.getSQLException(ErrorCode.ERROR_OPENING_DATABASE_1, new String[]{reason}, t);
+		return Message.getSQLException(ErrorCode.ERROR_OPENING_DATABASE_1,
+				new String[] { reason }, t);
 	}
 
 	private SQLException getExceptionAlreadyInUse(String reason) {
-		JdbcSQLException ex = Message.getSQLException(ErrorCode.DATABASE_ALREADY_OPEN_1, reason);
+		JdbcSQLException ex = Message.getSQLException(
+				ErrorCode.DATABASE_ALREADY_OPEN_1, reason);
 		String payload = null;
 		if (fileName != null) {
 			try {
 				Properties prop = load();
-				payload = prop.getProperty("server") + "/" + prop.getProperty("id");
+				payload = prop.getProperty("server") + "/"
+						+ prop.getProperty("id");
 			} catch (SQLException e) {
 				// ignore
 			}
@@ -472,10 +487,12 @@ public class FileLock {
 
 	/**
 	 * Get the file locking method type given a method name.
-	 *
-	 * @param method the method name
+	 * 
+	 * @param method
+	 *            the method name
 	 * @return the method type
-	 * @throws SQLException if the method name is unknown
+	 * @throws SQLException
+	 *             if the method name is unknown
 	 */
 	public static int getFileLockMethod(String method) throws SQLException {
 		if (method == null || method.equalsIgnoreCase("FILE")) {
@@ -487,7 +504,8 @@ public class FileLock {
 		} else if (method.equalsIgnoreCase("SERIALIZED")) {
 			return FileLock.LOCK_SERIALIZED;
 		} else {
-			throw Message.getSQLException(ErrorCode.UNSUPPORTED_LOCK_METHOD_1, method);
+			throw Message.getSQLException(ErrorCode.UNSUPPORTED_LOCK_METHOD_1,
+					method);
 		}
 	}
 

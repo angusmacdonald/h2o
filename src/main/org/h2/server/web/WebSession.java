@@ -20,8 +20,8 @@ import org.h2.bnf.Bnf;
 import org.h2.message.TraceSystem;
 
 /**
- * The web session keeps all data of a user session.
- * This class is used by the H2 Console.
+ * The web session keeps all data of a user session. This class is used by the
+ * H2 Console.
  */
 class WebSession {
 
@@ -74,9 +74,11 @@ class WebSession {
 
 	/**
 	 * Put an attribute value in the map.
-	 *
-	 * @param key the key
-	 * @param value the new value
+	 * 
+	 * @param key
+	 *            the key
+	 * @param value
+	 *            the new value
 	 */
 	void put(String key, Object value) {
 		map.put(key, value);
@@ -84,8 +86,9 @@ class WebSession {
 
 	/**
 	 * Get the value for the given key.
-	 *
-	 * @param key the key
+	 * 
+	 * @param key
+	 *            the key
 	 * @return the value
 	 */
 	Object get(String key) {
@@ -97,8 +100,9 @@ class WebSession {
 
 	/**
 	 * Remove a session attribute from the map.
-	 *
-	 * @param key the key
+	 * 
+	 * @param key
+	 *            the key
 	 */
 	void remove(String key) {
 		map.remove(key);
@@ -106,7 +110,7 @@ class WebSession {
 
 	/**
 	 * Get the BNF object.
-	 *
+	 * 
 	 * @return the BNF object
 	 */
 	Bnf getBnf() {
@@ -120,11 +124,13 @@ class WebSession {
 		try {
 			Bnf newBnf = Bnf.getInstance(null);
 			columnRule = new DbContextRule(contents, DbContextRule.COLUMN);
-			newAliasRule = new DbContextRule(contents, DbContextRule.NEW_TABLE_ALIAS);
+			newAliasRule = new DbContextRule(contents,
+					DbContextRule.NEW_TABLE_ALIAS);
 			aliasRule = new DbContextRule(contents, DbContextRule.TABLE_ALIAS);
 			tableRule = new DbContextRule(contents, DbContextRule.TABLE);
 			schemaRule = new DbContextRule(contents, DbContextRule.SCHEMA);
-			columnAliasRule = new DbContextRule(contents, DbContextRule.COLUMN_ALIAS);
+			columnAliasRule = new DbContextRule(contents,
+					DbContextRule.COLUMN_ALIAS);
 			newBnf.updateTopic("columnName", columnRule);
 			newBnf.updateTopic("newTableAlias", newAliasRule);
 			newBnf.updateTopic("tableAlias", aliasRule);
@@ -141,8 +147,9 @@ class WebSession {
 
 	/**
 	 * Get the SQL statement from history.
-	 *
-	 * @param id the history id
+	 * 
+	 * @param id
+	 *            the history id
 	 * @return the SQL statement
 	 */
 	String getCommand(int id) {
@@ -151,8 +158,9 @@ class WebSession {
 
 	/**
 	 * Add a SQL statement to the history.
-	 *
-	 * @param sql the SQL statement
+	 * 
+	 * @param sql
+	 *            the SQL statement
 	 */
 	void addCommand(String sql) {
 		if (sql == null) {
@@ -174,7 +182,7 @@ class WebSession {
 
 	/**
 	 * Get the list of SQL statements in the history.
-	 *
+	 * 
 	 * @return the commands
 	 */
 	ArrayList getCommands() {
@@ -183,7 +191,7 @@ class WebSession {
 
 	/**
 	 * Update session meta data information and get the information in a map.
-	 *
+	 * 
 	 * @return a map containing the session meta data
 	 */
 	HashMap getInfo() {
@@ -191,9 +199,11 @@ class WebSession {
 		m.putAll(map);
 		m.put("lastAccess", new Timestamp(lastAccess).toString());
 		try {
-			m.put("url", conn == null ? "not connected" : conn.getMetaData().getURL());
+			m.put("url", conn == null ? "not connected" : conn.getMetaData()
+					.getURL());
 			m.put("user", conn == null ? "-" : conn.getMetaData().getUserName());
-			m.put("lastQuery", commandHistory.size() == 0 ? "" : commandHistory.get(0));
+			m.put("lastQuery",
+					commandHistory.size() == 0 ? "" : commandHistory.get(0));
 			m.put("executing", executingStatement == null ? "no" : "yes");
 		} catch (SQLException e) {
 			TraceSystem.traceThrowable(e);

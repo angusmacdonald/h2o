@@ -15,8 +15,8 @@ import org.h2.compress.CompressLZF;
 import org.h2.util.MathUtils;
 
 /**
- * This class is an abstraction of an in-memory random access file.
- * Data compression using the LZF algorithm is supported as well.
+ * This class is an abstraction of an in-memory random access file. Data
+ * compression using the LZF algorithm is supported as well.
  */
 public class FileObjectMemory implements FileObject {
 	private static final int CACHE_SIZE = 8;
@@ -27,9 +27,9 @@ public class FileObjectMemory implements FileObject {
 	private static final byte[] BUFFER = new byte[BLOCK_SIZE * 2];
 	private static byte[] cachedCompressedEmptyBlock;
 
-	//## Java 1.4 begin ##
+	// ## Java 1.4 begin ##
 	private static final Cache COMPRESS_LATER = new Cache(CACHE_SIZE);
-	//## Java 1.4 end ##
+	// ## Java 1.4 end ##
 
 	private String name;
 	private final boolean compress;
@@ -41,7 +41,7 @@ public class FileObjectMemory implements FileObject {
 	/**
 	 * This small cache compresses the data if an element leaves the cache.
 	 */
-	//## Java 1.4 begin ##
+	// ## Java 1.4 begin ##
 	static class Cache extends LinkedHashMap {
 		private static final long serialVersionUID = 5549197956072850355L;
 		private int size;
@@ -87,7 +87,8 @@ public class FileObjectMemory implements FileObject {
 			return false;
 		}
 	}
-	//## Java 1.4 end ##
+
+	// ## Java 1.4 end ##
 
 	FileObjectMemory(String name, boolean compress) {
 		this.name = name;
@@ -97,14 +98,14 @@ public class FileObjectMemory implements FileObject {
 	}
 
 	private static void compressLater(byte[][] data, int page) {
-		//## Java 1.4 begin ##
+		// ## Java 1.4 begin ##
 		CompressItem c = new CompressItem();
 		c.data = data;
 		c.page = page;
 		synchronized (LZF) {
 			COMPRESS_LATER.put(c, c);
 		}
-		//## Java 1.4 end ##
+		// ## Java 1.4 end ##
 	}
 
 	private static void expand(byte[][] data, int page) {
@@ -121,9 +122,11 @@ public class FileObjectMemory implements FileObject {
 
 	/**
 	 * Compress the data in a byte array.
-	 *
-	 * @param data the page array
-	 * @param page which page to compress
+	 * 
+	 * @param data
+	 *            the page array
+	 * @param page
+	 *            which page to compress
 	 */
 	static void compress(byte[][] data, int page) {
 		byte[] d = data[page];
@@ -196,7 +199,8 @@ public class FileObjectMemory implements FileObject {
 
 	}
 
-	private void readWrite(byte[] b, int off, int len, boolean write) throws IOException {
+	private void readWrite(byte[] b, int off, int len, boolean write)
+			throws IOException {
 		long end = pos + len;
 		if (end > length) {
 			if (write) {

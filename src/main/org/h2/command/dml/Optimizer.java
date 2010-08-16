@@ -19,8 +19,8 @@ import org.h2.util.ObjectUtils;
 import org.h2.util.Permutations;
 
 /**
- * The optimizer is responsible to find the best execution plan
- * for a given query.
+ * The optimizer is responsible to find the best execution plan for a given
+ * query.
  */
 public class Optimizer {
 
@@ -30,16 +30,16 @@ public class Optimizer {
 	private long start;
 	private BitSet switched;
 
-	//  possible plans for filters, if using brute force:
-	//  1 filter 1 plan
-	//  2 filters 2 plans
-	//  3 filters 6 plans
-	//  4 filters 24 plans
-	//  5 filters 120 plans
-	//  6 filters 720 plans
-	//  7 filters 5040 plans
-	//  8 filters 40320 plan
-	//  9 filters 362880 plans
+	// possible plans for filters, if using brute force:
+	// 1 filter 1 plan
+	// 2 filters 2 plans
+	// 3 filters 6 plans
+	// 4 filters 24 plans
+	// 5 filters 120 plans
+	// 6 filters 720 plans
+	// 7 filters 5040 plans
+	// 8 filters 40320 plan
+	// 9 filters 362880 plans
 	// 10 filters 3628800 filters
 
 	private TableFilter[] filters;
@@ -63,8 +63,9 @@ public class Optimizer {
 	 * n) = (n * (n-1) / 2) for n filters. The brute force algorithm has a
 	 * runtime of n * (n-1) * ... * (n-m) when calculating m brute force of n
 	 * total. The combined runtime is (brute force) * (greedy).
-	 *
-	 * @param filterCount the number of filters total
+	 * 
+	 * @param filterCount
+	 *            the number of filters total
 	 * @return the number of filters to calculate using brute force
 	 */
 	private static int getMaxBruteForceFilters(int filterCount) {
@@ -117,8 +118,8 @@ public class Optimizer {
 		Permutations p = new Permutations(filters, list, bruteForce);
 		for (int x = 0; !canStop(x) && p.next(); x++) {
 			// find out what filters are not used yet
-			for (int i = 0; i < filters.length; i++) {
-				filters[i].setUsed(false);
+			for (TableFilter filter : filters) {
+				filter.setUsed(false);
 			}
 			for (int i = 0; i < bruteForce; i++) {
 				list[i].setUsed(true);
@@ -134,7 +135,7 @@ public class Optimizer {
 							break;
 						}
 						list[i] = filters[j];
-						Plan part = new Plan(list, i+1, condition);
+						Plan part = new Plan(list, i + 1, condition);
 						double costNow = part.calculateCost(session);
 						if (costPart < 0 || costNow < costPart) {
 							costPart = costNow;
@@ -230,7 +231,7 @@ public class Optimizer {
 	/**
 	 * Calculate the best query plan to use.
 	 */
-	 void optimize() throws SQLException {
+	void optimize() throws SQLException {
 		calculateBestPlan();
 		bestPlan.removeUnusableIndexConditions();
 		TableFilter[] f2 = bestPlan.getFilters();
@@ -238,18 +239,18 @@ public class Optimizer {
 		for (int i = 0; i < f2.length - 1; i++) {
 			f2[i].addJoin(f2[i + 1], false, null);
 		}
-		for (int i = 0; i < f2.length; i++) {
-			PlanItem item = bestPlan.getItem(f2[i]);
-			f2[i].setPlanItem(item);
+		for (TableFilter element : f2) {
+			PlanItem item = bestPlan.getItem(element);
+			element.setPlanItem(item);
 		}
-	 }
+	}
 
-	 public TableFilter getTopFilter() {
-		 return topFilter;
-	 }
+	public TableFilter getTopFilter() {
+		return topFilter;
+	}
 
-	 double getCost() {
-		 return cost;
-	 }
+	double getCost() {
+		return cost;
+	}
 
 }

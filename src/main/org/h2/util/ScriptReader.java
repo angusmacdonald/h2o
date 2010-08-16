@@ -14,9 +14,8 @@ import org.h2.constant.SysProperties;
 import org.h2.message.Message;
 
 /**
- * This class can split SQL scripts to single SQL statements.
- * Each SQL statement ends with the character ';', however it is ignored
- * in comments and quotes.
+ * This class can split SQL scripts to single SQL statements. Each SQL statement
+ * ends with the character ';', however it is ignored in comments and quotes.
  */
 public class ScriptReader {
 	private Reader reader;
@@ -27,8 +26,9 @@ public class ScriptReader {
 
 	/**
 	 * Create a new SQL script reader from the given reader
-	 *
-	 * @param reader the reader
+	 * 
+	 * @param reader
+	 *            the reader
 	 */
 	public ScriptReader(Reader reader) {
 		this.reader = reader;
@@ -56,7 +56,7 @@ public class ScriptReader {
 	/**
 	 * Read a statement from the reader. This method returns null if the end has
 	 * been reached.
-	 *
+	 * 
 	 * @return the SQL statement or null
 	 */
 	public String readStatement() throws SQLException {
@@ -241,7 +241,7 @@ public class ScriptReader {
 	/**
 	 * Check if this is the last statement, and if the single line or block
 	 * comment is not finished yet.
-	 *
+	 * 
 	 * @return true if the current position is inside a remark
 	 */
 	public boolean isInsideRemark() {
@@ -251,7 +251,7 @@ public class ScriptReader {
 	/**
 	 * If currently inside a remark, this method tells if it is a block comment
 	 * (true) or single line comment (false)
-	 *
+	 * 
 	 * @return true if inside a block comment
 	 */
 	public boolean isBlockRemark() {
@@ -260,8 +260,9 @@ public class ScriptReader {
 
 	/**
 	 * If comments should be skipped completely by this reader.
-	 *
-	 * @param skipRemarks true if comments should be skipped
+	 * 
+	 * @param skipRemarks
+	 *            true if comments should be skipped
 	 */
 	public void setSkipRemarks(boolean skipRemarks) {
 		this.skipRemarks = skipRemarks;

@@ -16,14 +16,14 @@ import org.h2.store.PageStore;
 import org.h2.store.Record;
 
 /**
- * Overflow data for a leaf page.
- * Format:
- * <ul><li>0-3: parent page id (0 for root)
- * </li><li>4-4: page type
- * </li><li>if there is more data: 5-8: next overflow page id
- * </li><li>otherwise: 5-6: remaining size
- * </li><li>data
- * </li></ul>
+ * Overflow data for a leaf page. Format:
+ * <ul>
+ * <li>0-3: parent page id (0 for root)</li>
+ * <li>4-4: page type</li>
+ * <li>if there is more data: 5-8: next overflow page id</li>
+ * <li>otherwise: 5-6: remaining size</li>
+ * <li>data</li>
+ * </ul>
  */
 public class PageDataLeafOverflow extends Record {
 
@@ -60,14 +60,15 @@ public class PageDataLeafOverflow extends Record {
 	private final int size;
 
 	/**
-	 * The first content byte starts at the given position
-	 * in the leaf page when the page size is unlimited.
+	 * The first content byte starts at the given position in the leaf page when
+	 * the page size is unlimited.
 	 */
 	private final int offset;
 
 	private DataPage data;
 
-	PageDataLeafOverflow(PageDataLeaf leaf, int pageId, int type, int previous, int next, int offset, int size) {
+	PageDataLeafOverflow(PageDataLeaf leaf, int pageId, int type, int previous,
+			int next, int offset, int size) {
 		this.leaf = leaf;
 		setPos(pageId);
 		this.type = type;
@@ -77,7 +78,8 @@ public class PageDataLeafOverflow extends Record {
 		this.size = size;
 	}
 
-	public PageDataLeafOverflow(PageDataLeaf leaf, int pageId, DataPage data, int offset) throws JdbcSQLException {
+	public PageDataLeafOverflow(PageDataLeaf leaf, int pageId, DataPage data,
+			int offset) throws JdbcSQLException {
 		this.leaf = leaf;
 		setPos(pageId);
 		this.data = data;
@@ -91,14 +93,16 @@ public class PageDataLeafOverflow extends Record {
 			size = leaf.getPageStore().getPageSize() - START_MORE;
 			next = data.readInt();
 		} else {
-			throw Message.getSQLException(ErrorCode.FILE_CORRUPTED_1, "page:" + getPos() + " type:" + type);
+			throw Message.getSQLException(ErrorCode.FILE_CORRUPTED_1, "page:"
+					+ getPos() + " type:" + type);
 		}
 	}
 
 	/**
 	 * Read the data into a target buffer.
-	 *
-	 * @param target the target data page
+	 * 
+	 * @param target
+	 *            the target data page
 	 * @return the next page, or 0 if no next page
 	 */
 	int readInto(DataPage target) {
@@ -131,7 +135,8 @@ public class PageDataLeafOverflow extends Record {
 	}
 
 	public String toString() {
-		return "page[" + getPos() + "] data leaf overflow prev:" + previous + " next:" + next;
+		return "page[" + getPos() + "] data leaf overflow prev:" + previous
+				+ " next:" + next;
 	}
 
 }

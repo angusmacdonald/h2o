@@ -26,8 +26,7 @@ import org.h2.util.ObjectArray;
 import org.h2.value.Value;
 
 /**
- * This class represents the statement
- * MERGE
+ * This class represents the statement MERGE
  */
 public class Merge extends Prepared {
 
@@ -62,8 +61,9 @@ public class Merge extends Prepared {
 
 	/**
 	 * Add a row to this merge statement.
-	 *
-	 * @param expr the list of values
+	 * 
+	 * @param expr
+	 *            the list of values
 	 */
 	public void addRow(Expression[] expr) {
 		list.add(expr);
@@ -76,7 +76,8 @@ public class Merge extends Prepared {
 		if (keys == null) {
 			Index idx = table.getPrimaryKey();
 			if (idx == null) {
-				throw Message.getSQLException(ErrorCode.CONSTRAINT_NOT_FOUND_1, "PRIMARY KEY");
+				throw Message.getSQLException(ErrorCode.CONSTRAINT_NOT_FOUND_1,
+						"PRIMARY KEY");
 			}
 			keys = idx.getColumns();
 		}
@@ -114,7 +115,8 @@ public class Merge extends Prepared {
 					if (e != null) {
 						// e can be null (DEFAULT)
 						try {
-							Value v = expr[i].getValue(session).convertTo(c.getType());
+							Value v = expr[i].getValue(session).convertTo(
+									c.getType());
 							newRow.setValue(index, v);
 						} catch (SQLException ex) {
 							throw setRow(ex, count, getSQL(expr));
@@ -165,7 +167,8 @@ public class Merge extends Prepared {
 			Column col = keys[i];
 			Value v = row.getValue(col.getColumnId());
 			if (v == null) {
-				throw Message.getSQLException(ErrorCode.COLUMN_CONTAINS_NULL_VALUES_1, col.getSQL());
+				throw Message.getSQLException(
+						ErrorCode.COLUMN_CONTAINS_NULL_VALUES_1, col.getSQL());
 			}
 			Parameter p = (Parameter) k.get(columns.length + i);
 			p.setValue(v);
@@ -181,7 +184,8 @@ public class Merge extends Prepared {
 			table.fireAfter(session);
 			table.fireAfterRow(session, null, row);
 		} else if (count != 1) {
-			throw Message.getSQLException(ErrorCode.DUPLICATE_KEY_1, table.getSQL());
+			throw Message.getSQLException(ErrorCode.DUPLICATE_KEY_1,
+					table.getSQL());
 		}
 	}
 
@@ -248,7 +252,8 @@ public class Merge extends Prepared {
 			for (int x = 0; x < list.size(); x++) {
 				Expression[] expr = (Expression[]) list.get(x);
 				if (expr.length != columns.length) {
-					throw Message.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
+					throw Message
+							.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
 				}
 				for (int i = 0; i < expr.length; i++) {
 					Expression e = expr[i];
@@ -260,7 +265,8 @@ public class Merge extends Prepared {
 		} else {
 			query.prepare();
 			if (query.getColumnCount() != columns.length) {
-				throw Message.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
+				throw Message
+						.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
 			}
 		}
 	}

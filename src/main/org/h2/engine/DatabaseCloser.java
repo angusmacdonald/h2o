@@ -41,7 +41,8 @@ public class DatabaseCloser extends Thread {
 		ThreadGroup threadGroup = getThreadGroup();
 		// the threadGroup could be null if the thread was run in the meantime
 		if (threadGroup != null && threadGroup.activeCount() > 100) {
-			// in JDK 1.4 and below, all Thread objects are added to the ThreadGroup,
+			// in JDK 1.4 and below, all Thread objects are added to the
+			// ThreadGroup,
 			// and cause a memory leak if never started.
 			// Need to start it, otherwise it leaks memory in JDK 1.4 and below
 			stopImmediately = true;

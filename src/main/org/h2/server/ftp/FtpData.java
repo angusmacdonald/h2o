@@ -47,11 +47,13 @@ public class FtpData extends Thread {
 			synchronized (this) {
 				Socket s = serverSocket.accept();
 				if (s.getInetAddress().equals(address)) {
-					server.trace("Data connected:" + s.getInetAddress() + " expected:" + address);
+					server.trace("Data connected:" + s.getInetAddress()
+							+ " expected:" + address);
 					socket = s;
 					notifyAll();
 				} else {
-					server.trace("Data REJECTED:" + s.getInetAddress() + " expected:" + address);
+					server.trace("Data REJECTED:" + s.getInetAddress()
+							+ " expected:" + address);
 					close();
 				}
 			}
@@ -89,11 +91,14 @@ public class FtpData extends Thread {
 
 	/**
 	 * Read a file from a client.
-	 *
-	 * @param fs the target file system
-	 * @param fileName the target file name
+	 * 
+	 * @param fs
+	 *            the target file system
+	 * @param fileName
+	 *            the target file name
 	 */
-	synchronized void receive(FileSystem fs, String fileName) throws IOException, SQLException {
+	synchronized void receive(FileSystem fs, String fileName)
+			throws IOException, SQLException {
 		connect();
 		try {
 			InputStream in = socket.getInputStream();
@@ -109,12 +114,16 @@ public class FtpData extends Thread {
 	/**
 	 * Send a file to the client. This method waits until the client has
 	 * connected.
-	 *
-	 * @param fs the source file system
-	 * @param fileName the source file name
-	 * @param skip the number of bytes to skip
+	 * 
+	 * @param fs
+	 *            the source file system
+	 * @param fileName
+	 *            the source file name
+	 * @param skip
+	 *            the number of bytes to skip
 	 */
-	synchronized void send(FileSystem fs, String fileName, long skip) throws IOException {
+	synchronized void send(FileSystem fs, String fileName, long skip)
+			throws IOException {
 		connect();
 		try {
 			OutputStream out = socket.getOutputStream();
@@ -130,8 +139,9 @@ public class FtpData extends Thread {
 
 	/**
 	 * Wait until the client has connected, and then send the data to him.
-	 *
-	 * @param data the data to send
+	 * 
+	 * @param data
+	 *            the data to send
 	 */
 	synchronized void send(byte[] data) throws IOException {
 		connect();

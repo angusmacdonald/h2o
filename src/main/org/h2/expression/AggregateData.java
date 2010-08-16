@@ -40,10 +40,13 @@ class AggregateData {
 
 	/**
 	 * Add a value to this aggregate.
-	 *
-	 * @param database the database
-	 * @param distinct if the calculation should be distinct
-	 * @param v the value
+	 * 
+	 * @param database
+	 *            the database
+	 * @param distinct
+	 *            if the calculation should be distinct
+	 * @param v
+	 *            the value
 	 */
 	void add(Database database, boolean distinct, Value v) throws SQLException {
 		if (aggregateType == Aggregate.SELECTIVITY) {
@@ -130,7 +133,8 @@ class AggregateData {
 			if (value == null) {
 				value = v;
 			} else {
-				value = ValueBoolean.get(value.getBoolean().booleanValue() && v.getBoolean().booleanValue());
+				value = ValueBoolean.get(value.getBoolean().booleanValue()
+						&& v.getBoolean().booleanValue());
 			}
 			break;
 		case Aggregate.BOOL_OR:
@@ -138,7 +142,8 @@ class AggregateData {
 			if (value == null) {
 				value = v;
 			} else {
-				value = ValueBoolean.get(value.getBoolean().booleanValue() || v.getBoolean().booleanValue());
+				value = ValueBoolean.get(value.getBoolean().booleanValue()
+						|| v.getBoolean().booleanValue());
 			}
 			break;
 		default:
@@ -152,9 +157,11 @@ class AggregateData {
 
 	/**
 	 * Get the aggregate result.
-	 *
-	 * @param database the database
-	 * @param distinct if distinct is used
+	 * 
+	 * @param database
+	 *            the database
+	 * @param distinct
+	 *            if distinct is used
 	 * @return the value
 	 */
 	Value getValue(Database database, boolean distinct) throws SQLException {

@@ -18,8 +18,7 @@ import org.h2.table.ReplicaSet;
 import org.h2.value.DataType;
 
 /**
- * This class represents the statement
- * CREATE DOMAIN
+ * This class represents the statement CREATE DOMAIN
  */
 public class CreateUserDataType extends DefineCommand {
 
@@ -52,16 +51,20 @@ public class CreateUserDataType extends DefineCommand {
 			if (ifNotExists) {
 				return 0;
 			}
-			throw Message.getSQLException(ErrorCode.USER_DATA_TYPE_ALREADY_EXISTS_1, typeName);
+			throw Message.getSQLException(
+					ErrorCode.USER_DATA_TYPE_ALREADY_EXISTS_1, typeName);
 		}
 		DataType builtIn = DataType.getTypeByName(typeName);
 		if (builtIn != null) {
 			if (!builtIn.hidden) {
-				throw Message.getSQLException(ErrorCode.USER_DATA_TYPE_ALREADY_EXISTS_1, typeName);
+				throw Message.getSQLException(
+						ErrorCode.USER_DATA_TYPE_ALREADY_EXISTS_1, typeName);
 			}
 			ReplicaSet replicaSet = session.getDatabase().getFirstUserTable();
 			if (replicaSet != null) {
-				throw Message.getSQLException(ErrorCode.USER_DATA_TYPE_ALREADY_EXISTS_1, typeName + " (" + replicaSet.getSQL() + ")");
+				throw Message.getSQLException(
+						ErrorCode.USER_DATA_TYPE_ALREADY_EXISTS_1, typeName
+								+ " (" + replicaSet.getSQL() + ")");
 			}
 		}
 		int id = getObjectId(false, true);

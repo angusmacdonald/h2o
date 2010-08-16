@@ -135,7 +135,8 @@ public class ValueNull extends Value {
 		return null;
 	}
 
-	public void set(PreparedStatement prep, int parameterIndex) throws SQLException {
+	public void set(PreparedStatement prep, int parameterIndex)
+			throws SQLException {
 		prep.setNull(parameterIndex, DataType.convertTypeToSQLType(Value.NULL));
 	}
 

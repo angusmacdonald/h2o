@@ -33,13 +33,18 @@ public class PageOutputStream extends OutputStream {
 
 	/**
 	 * Create a new page output stream.
-	 *
-	 * @param store the page store
-	 * @param parentPage the parent page id
-	 * @param headPage the first page
-	 * @param type the page type
+	 * 
+	 * @param store
+	 *            the page store
+	 * @param parentPage
+	 *            the parent page id
+	 * @param headPage
+	 *            the first page
+	 * @param type
+	 *            the page type
 	 */
-	public PageOutputStream(PageStore store, int parentPage, int headPage, int type, boolean allocateAtEnd) {
+	public PageOutputStream(PageStore store, int parentPage, int headPage,
+			int type, boolean allocateAtEnd) {
 		this.trace = store.getTrace();
 		this.store = store;
 		this.parentPage = parentPage;

@@ -22,7 +22,7 @@ public class GetRmiPort extends SchemaCommand {
 	/**
 	 * @param session
 	 * @param internalQuery
-	 * @param databaseLocation 
+	 * @param databaseLocation
 	 */
 	public GetRmiPort(Session session, Schema schema, String databaseLocation) {
 		super(session, schema);
@@ -30,7 +30,9 @@ public class GetRmiPort extends SchemaCommand {
 		this.databaseLocation = databaseLocation;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Prepared#isTransactional()
 	 */
 	@Override
@@ -38,13 +40,14 @@ public class GetRmiPort extends SchemaCommand {
 		return false;
 	}
 
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Prepared#update()
 	 */
 	@Override
 	public int update() throws SQLException, RemoteException {
-		if (databaseLocation == null){
+		if (databaseLocation == null) {
 			/*
 			 * Return the RMI port on which this database is running.
 			 */
@@ -58,27 +61,34 @@ public class GetRmiPort extends SchemaCommand {
 		}
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Prepared#update(java.lang.String)
 	 */
 	@Override
 	public int update(String transactionName) throws SQLException,
-	RemoteException {
+			RemoteException {
 		return update();
 	}
 
 	/**
 	 * Push a command to a remote machine where it will be properly executed.
-	 * @param createReplica true, if the command being pushed is a create replica command. This results in any subsequent tables
-	 * involved in the command also being pushed.
+	 * 
+	 * @param createReplica
+	 *            true, if the command being pushed is a create replica command.
+	 *            This results in any subsequent tables involved in the command
+	 *            also being pushed.
 	 * @return The result of the update.
-	 * @throws SQLException 
-	 * @throws RemoteException 
+	 * @throws SQLException
+	 * @throws RemoteException
 	 */
-	private int pushCommand(String remoteDBLocation, String query) throws SQLException, RemoteException {
+	private int pushCommand(String remoteDBLocation, String query)
+			throws SQLException, RemoteException {
 		Database db = session.getDatabase();
 
-		conn = db.getLinkConnection("org.h2.Driver", remoteDBLocation, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+		conn = db.getLinkConnection("org.h2.Driver", remoteDBLocation,
+				PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 		int result = -1;
 

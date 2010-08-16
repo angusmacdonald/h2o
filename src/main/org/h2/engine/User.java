@@ -48,9 +48,11 @@ public class User extends RightOwner {
 
 	/**
 	 * Set the salt and hash of the password for this user.
-	 *
-	 * @param salt the salt
-	 * @param hash the password hash
+	 * 
+	 * @param salt
+	 *            the salt
+	 * @param hash
+	 *            the password hash
 	 */
 	public void setSaltAndHash(byte[] salt, byte[] hash) {
 		this.salt = salt;
@@ -58,10 +60,11 @@ public class User extends RightOwner {
 	}
 
 	/**
-	 * Set the user name password hash. A random salt is generated as well.
-	 * The parameter is filled with zeros after use.
-	 *
-	 * @param userPasswordHash the user name password hash
+	 * Set the user name password hash. A random salt is generated as well. The
+	 * parameter is filled with zeros after use.
+	 * 
+	 * @param userPasswordHash
+	 *            the user name password hash
 	 */
 	public void setUserPasswordHash(byte[] userPasswordHash) {
 		if (userPasswordHash != null) {
@@ -85,10 +88,13 @@ public class User extends RightOwner {
 
 	/**
 	 * Checks that this user has the given rights for this database object.
-	 *
-	 * @param table the database object
-	 * @param rightMask the rights required
-	 * @throws SQLException if this user does not have the required rights
+	 * 
+	 * @param table
+	 *            the database object
+	 * @param rightMask
+	 *            the rights required
+	 * @throws SQLException
+	 *             if this user does not have the required rights
 	 */
 	public void checkRight(Table table, int rightMask) throws SQLException {
 		if (rightMask != Right.SELECT && !systemUser) {
@@ -122,16 +128,19 @@ public class User extends RightOwner {
 				// the owner has all rights on local temporary tables
 				return;
 			}
-			throw Message.getSQLException(ErrorCode.NOT_ENOUGH_RIGHTS_FOR_1, table.getSQL());
+			throw Message.getSQLException(ErrorCode.NOT_ENOUGH_RIGHTS_FOR_1,
+					table.getSQL());
 		}
 	}
 
 	/**
 	 * Get the CREATE SQL statement for this object.
-	 *
-	 * @param password true if the password (actually the salt and hash) should
-	 *            be returned
-	 * @param ifNotExists true if IF NOT EXISTS should be used
+	 * 
+	 * @param password
+	 *            true if the password (actually the salt and hash) should be
+	 *            returned
+	 * @param ifNotExists
+	 *            true if IF NOT EXISTS should be used
 	 * @return the SQL statement
 	 */
 	public String getCreateSQL(boolean password, boolean ifNotExists) {
@@ -162,8 +171,9 @@ public class User extends RightOwner {
 
 	/**
 	 * Check the password of this user.
-	 *
-	 * @param userPasswordHash the password data (the user password hash)
+	 * 
+	 * @param userPasswordHash
+	 *            the password data (the user password hash)
 	 * @return true if the user password hash is correct
 	 */
 	public boolean validateUserPasswordHash(byte[] userPasswordHash) {
@@ -175,8 +185,9 @@ public class User extends RightOwner {
 	/**
 	 * Check if this user has admin rights. An exception is thrown if he does
 	 * not have them.
-	 *
-	 * @throws SQLException if this user is not an admin
+	 * 
+	 * @throws SQLException
+	 *             if this user is not an admin
 	 */
 	public void checkAdmin() throws SQLException {
 		if (!admin) {
@@ -227,20 +238,23 @@ public class User extends RightOwner {
 	}
 
 	/**
-	 * Check that this user does not own any schema. An exception is thrown if he
-	 * owns one or more schemas.
-	 *
-	 * @throws SQLException if this user owns a schema
+	 * Check that this user does not own any schema. An exception is thrown if
+	 * he owns one or more schemas.
+	 * 
+	 * @throws SQLException
+	 *             if this user owns a schema
 	 */
-	 public void checkOwnsNoSchemas() throws SQLException {
-		 if (database == null) return;
-		 ObjectArray schemas = database.getAllSchemas();
-		 for (int i = 0; i < schemas.size(); i++) {
-			 Schema s = (Schema) schemas.get(i);
-			 if (this == s.getOwner()) {
-				 throw Message.getSQLException(ErrorCode.CANNOT_DROP_2, new String[]{ getName(), s.getName() });
-			 }
-		 }
-	 }
+	public void checkOwnsNoSchemas() throws SQLException {
+		if (database == null)
+			return;
+		ObjectArray schemas = database.getAllSchemas();
+		for (int i = 0; i < schemas.size(); i++) {
+			Schema s = (Schema) schemas.get(i);
+			if (this == s.getOwner()) {
+				throw Message.getSQLException(ErrorCode.CANNOT_DROP_2,
+						new String[] { getName(), s.getName() });
+			}
+		}
+	}
 
 }

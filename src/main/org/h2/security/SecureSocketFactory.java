@@ -57,15 +57,19 @@ public class SecureSocketFactory {
 	}
 
 	/**
-	 * Create a secure client socket that is connected to the given address and port.
-	 *
-	 * @param address the address to connect to
-	 * @param port the port
+	 * Create a secure client socket that is connected to the given address and
+	 * port.
+	 * 
+	 * @param address
+	 *            the address to connect to
+	 * @param port
+	 *            the port
 	 * @return the socket
 	 */
-	public static Socket createSocket(InetAddress address, int port) throws IOException {
+	public static Socket createSocket(InetAddress address, int port)
+			throws IOException {
 		Socket socket = null;
-		//## Java 1.4 begin ##
+		// ## Java 1.4 begin ##
 		setKeystore();
 		SSLSocketFactory f = (SSLSocketFactory) SSLSocketFactory.getDefault();
 		SSLSocket secureSocket = (SSLSocket) f.createSocket();
@@ -77,29 +81,32 @@ public class SecureSocketFactory {
 			secureSocket.setEnabledCipherSuites(list);
 		}
 		socket = secureSocket;
-		//## Java 1.4 end ##
+		// ## Java 1.4 end ##
 		return socket;
 	}
 
 	/**
 	 * Create a secure server socket. If a bind address is specified, the socket
 	 * is only bound to this address.
-	 *
-	 * @param port the port to listen on
-	 * @param bindAddress the address to bind to, or null to bind to all
-	 *            addresses
+	 * 
+	 * @param port
+	 *            the port to listen on
+	 * @param bindAddress
+	 *            the address to bind to, or null to bind to all addresses
 	 * @return the server socket
 	 */
-	public static ServerSocket createServerSocket(int port, InetAddress bindAddress) throws IOException {
+	public static ServerSocket createServerSocket(int port,
+			InetAddress bindAddress) throws IOException {
 		ServerSocket socket = null;
-		//## Java 1.4 begin ##
+		// ## Java 1.4 begin ##
 		setKeystore();
 		ServerSocketFactory f = SSLServerSocketFactory.getDefault();
 		SSLServerSocket secureSocket;
 		if (bindAddress == null) {
 			secureSocket = (SSLServerSocket) f.createServerSocket(port);
 		} else {
-			secureSocket = (SSLServerSocket) f.createServerSocket(port, 0, bindAddress);
+			secureSocket = (SSLServerSocket) f.createServerSocket(port, 0,
+					bindAddress);
 		}
 		if (SysProperties.ENABLE_ANONYMOUS_SSL) {
 			String[] list = secureSocket.getEnabledCipherSuites();
@@ -107,16 +114,17 @@ public class SecureSocketFactory {
 			secureSocket.setEnabledCipherSuites(list);
 		}
 		socket = secureSocket;
-		//## Java 1.4 end ##
+		// ## Java 1.4 end ##
 		return socket;
 	}
 
-	//## Java 1.4 begin ##
+	// ## Java 1.4 begin ##
 	private static byte[] getBytes(String hex) throws SQLException {
 		return ByteUtils.convertStringToBytes(hex);
 	}
 
-	private static byte[] getKeyStoreBytes(KeyStore store, String password) throws IOException {
+	private static byte[] getKeyStoreBytes(KeyStore store, String password)
+			throws IOException {
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 		try {
 			store.store(bout, password.toCharArray());
@@ -125,16 +133,17 @@ public class SecureSocketFactory {
 		}
 		return bout.toByteArray();
 	}
-	//## Java 1.4 end ##
 
+	// ## Java 1.4 end ##
 
 	/**
 	 * Get the keystore object using the given password.
-	 *
-	 * @param password the keystore password
+	 * 
+	 * @param password
+	 *            the keystore password
 	 * @return the keystore
 	 */
-	//## Java 1.4 begin ##
+	// ## Java 1.4 begin ##
 	public static KeyStore getKeyStore(String password) throws IOException {
 		try {
 			// The following source code can be re-generated
@@ -170,9 +179,11 @@ public class SecureSocketFactory {
 		Properties p = System.getProperties();
 		if (p.getProperty(KEYSTORE_KEY) == null) {
 			String fileName = FileUtils.getFileInUserHome(KEYSTORE);
-			byte[] data = getKeyStoreBytes(getKeyStore(KEYSTORE_PASSWORD), KEYSTORE_PASSWORD);
+			byte[] data = getKeyStoreBytes(getKeyStore(KEYSTORE_PASSWORD),
+					KEYSTORE_PASSWORD);
 			boolean needWrite = true;
-			if (FileUtils.exists(fileName) && FileUtils.length(fileName) == data.length) {
+			if (FileUtils.exists(fileName)
+					&& FileUtils.length(fileName) == data.length) {
 				// don't need to overwrite the file if it did not change
 				InputStream fin = FileUtils.openFileInputStream(fileName);
 				byte[] now = IOUtils.readBytesAndClose(fin, 0);
@@ -182,7 +193,8 @@ public class SecureSocketFactory {
 			}
 			if (needWrite) {
 				try {
-					OutputStream out = FileUtils.openFileOutputStream(fileName, false);
+					OutputStream out = FileUtils.openFileOutputStream(fileName,
+							false);
 					out.write(data);
 					out.close();
 				} catch (SQLException e) {
@@ -204,6 +216,6 @@ public class SecureSocketFactory {
 		return newList;
 	}
 
-	//## Java 1.4 end ##
+	// ## Java 1.4 end ##
 
 }

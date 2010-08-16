@@ -29,9 +29,10 @@ public class H2OEventBus {
 		bus = busParam;
 	}
 
-	public static void publish(H2OEvent h2oEvent){
-		if (bus == null) return;
-		
+	public static void publish(H2OEvent h2oEvent) {
+		if (bus == null)
+			return;
+
 		Event event = new Event(H2O_EVENT);
 		event.put(H2O_EVENT, h2oEvent);
 

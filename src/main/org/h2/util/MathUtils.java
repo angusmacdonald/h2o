@@ -26,9 +26,11 @@ public class MathUtils {
 	 * of two. As an example, using the block size of 8, the following rounding
 	 * operations are done: 0 stays 0; values 1..8 results in 8, 9..16 results
 	 * in 16, and so on.
-	 *
-	 * @param x the value to be rounded
-	 * @param blockSizePowerOf2 the block size
+	 * 
+	 * @param x
+	 *            the value to be rounded
+	 * @param blockSizePowerOf2
+	 *            the block size
 	 * @return the rounded value
 	 */
 	public static int roundUp(int x, int blockSizePowerOf2) {
@@ -40,9 +42,11 @@ public class MathUtils {
 	 * of two. As an example, using the block size of 8, the following rounding
 	 * operations are done: 0 stays 0; values 1..8 results in 8, 9..16 results
 	 * in 16, and so on.
-	 *
-	 * @param x the value to be rounded
-	 * @param blockSizePowerOf2 the block size
+	 * 
+	 * @param x
+	 *            the value to be rounded
+	 * @param blockSizePowerOf2
+	 *            the block size
 	 * @return the rounded value
 	 */
 	public static long roundUpLong(long x, long blockSizePowerOf2) {
@@ -51,9 +55,11 @@ public class MathUtils {
 
 	/**
 	 * Check if a value is a power of two.
-	 *
-	 * @param len the value to check
-	 * @throws RuntimeException if it is not a power of two
+	 * 
+	 * @param len
+	 *            the value to check
+	 * @throws RuntimeException
+	 *             if it is not a power of two
 	 */
 	public static void checkPowerOf2(int len) {
 		if ((len & (len - 1)) != 0 && len > 0) {
@@ -64,8 +70,9 @@ public class MathUtils {
 	/**
 	 * Get the value that is equal or higher than this value, and that is a
 	 * power of two.
-	 *
-	 * @param x the original value
+	 * 
+	 * @param x
+	 *            the original value
 	 * @return the next power of two value
 	 */
 	public static int nextPowerOf2(int x) {
@@ -79,14 +86,19 @@ public class MathUtils {
 	/**
 	 * Increase the value by about 50%. The method is used to increase the file
 	 * size in larger steps.
-	 *
-	 * @param start the smallest possible returned value
-	 * @param min the current value
-	 * @param blockSize the block size
-	 * @param maxIncrease the maximum increment
+	 * 
+	 * @param start
+	 *            the smallest possible returned value
+	 * @param min
+	 *            the current value
+	 * @param blockSize
+	 *            the block size
+	 * @param maxIncrease
+	 *            the maximum increment
 	 * @return the new value
 	 */
-	public static long scaleUp50Percent(long start, long min, long blockSize, long maxIncrease) {
+	public static long scaleUp50Percent(long start, long min, long blockSize,
+			long maxIncrease) {
 		long len;
 		if (min > maxIncrease * 2) {
 			len = MathUtils.roundUpLong(min, maxIncrease);
@@ -102,12 +114,15 @@ public class MathUtils {
 
 	/**
 	 * Set the scale of a BigDecimal value.
-	 *
-	 * @param bd the BigDecimal value
-	 * @param scale the new scale
+	 * 
+	 * @param bd
+	 *            the BigDecimal value
+	 * @param scale
+	 *            the new scale
 	 * @return the scaled value
 	 */
-	public static BigDecimal setScale(BigDecimal bd, int scale) throws SQLException {
+	public static BigDecimal setScale(BigDecimal bd, int scale)
+			throws SQLException {
 		if (scale > Constants.BIG_DECIMAL_SCALE_MAX) {
 			throw Message.getInvalidValueException("" + scale, "scale");
 		} else if (scale < -Constants.BIG_DECIMAL_SCALE_MAX) {
@@ -119,8 +134,9 @@ public class MathUtils {
 	/**
 	 * Parse a string to a byte. This method uses the decode method to support
 	 * decimal, hexadecimal and octal values.
-	 *
-	 * @param s the string to parse
+	 * 
+	 * @param s
+	 *            the string to parse
 	 * @return the value
 	 */
 	public static byte decodeByte(String s) {
@@ -130,8 +146,9 @@ public class MathUtils {
 	/**
 	 * Parse a string to a short. This method uses the decode method to support
 	 * decimal, hexadecimal and octal values.
-	 *
-	 * @param s the string to parse
+	 * 
+	 * @param s
+	 *            the string to parse
 	 * @return the value
 	 */
 	public static short decodeShort(String s) {
@@ -141,8 +158,9 @@ public class MathUtils {
 	/**
 	 * Parse a string to an int. This method uses the decode method to support
 	 * decimal, hexadecimal and octal values.
-	 *
-	 * @param s the string to parse
+	 * 
+	 * @param s
+	 *            the string to parse
 	 * @return the value
 	 */
 	public static int decodeInt(String s) {
@@ -152,8 +170,9 @@ public class MathUtils {
 	/**
 	 * Parse a string to a long. This method uses the decode method to support
 	 * decimal, hexadecimal and octal values.
-	 *
-	 * @param s the string to parse
+	 * 
+	 * @param s
+	 *            the string to parse
 	 * @return the value
 	 */
 	public static long decodeLong(String s) {
@@ -164,8 +183,9 @@ public class MathUtils {
 	 * Convert a long value to an int value. Values larger than the biggest int
 	 * value is converted to the biggest int value, and values smaller than the
 	 * smallest int value are converted to the smallest int value.
-	 *
-	 * @param l the value to convert
+	 * 
+	 * @param l
+	 *            the value to convert
 	 * @return the converted int value
 	 */
 	public static int convertLongToInt(long l) {

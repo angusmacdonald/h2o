@@ -24,7 +24,7 @@ public class MemoryUtils {
 
 	/**
 	 * Get the used memory in KB.
-	 *
+	 * 
 	 * @return the used memory
 	 */
 	public static int getMemoryUsed() {
@@ -36,7 +36,7 @@ public class MemoryUtils {
 
 	/**
 	 * Get the free memory in KB.
-	 *
+	 * 
 	 * @return the used memory
 	 */
 	public static int getMemoryFree() {

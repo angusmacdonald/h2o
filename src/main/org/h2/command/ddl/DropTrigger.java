@@ -18,8 +18,7 @@ import org.h2.schema.TriggerObject;
 import org.h2.table.Table;
 
 /**
- * This class represents the statement
- * DROP TRIGGER
+ * This class represents the statement DROP TRIGGER
  */
 public class DropTrigger extends SchemaCommand {
 
@@ -44,7 +43,8 @@ public class DropTrigger extends SchemaCommand {
 		TriggerObject trigger = getSchema().findTrigger(triggerName);
 		if (trigger == null) {
 			if (!ifExists) {
-				throw Message.getSQLException(ErrorCode.TRIGGER_NOT_FOUND_1, triggerName);
+				throw Message.getSQLException(ErrorCode.TRIGGER_NOT_FOUND_1,
+						triggerName);
 			}
 		} else {
 			Table table = trigger.getTable();

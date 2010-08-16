@@ -23,9 +23,9 @@ import org.h2.value.Value;
 import org.h2.value.ValueNull;
 
 /**
- * A multi-version index is a combination of a regular index,
- * and a in-memory tree index that contains uncommitted changes.
- * Uncommitted changes can include new rows, and deleted rows.
+ * A multi-version index is a combination of a regular index, and a in-memory
+ * tree index that contains uncommitted changes. Uncommitted changes can include
+ * new rows, and deleted rows.
  */
 public class MultiVersionIndex implements Index {
 
@@ -39,7 +39,8 @@ public class MultiVersionIndex implements Index {
 		this.base = base;
 		this.table = table;
 		IndexType deltaIndexType = IndexType.createNonUnique(false);
-		this.delta = new TreeIndex(table, -1, "DELTA", base.getIndexColumns(), deltaIndexType);
+		this.delta = new TreeIndex(table, -1, "DELTA", base.getIndexColumns(),
+				deltaIndexType);
 		delta.setMultiVersion(true);
 		this.sync = base.getDatabase();
 		this.firstColumn = base.getColumns()[0];
@@ -63,11 +64,13 @@ public class MultiVersionIndex implements Index {
 		}
 	}
 
-	public Cursor find(Session session, SearchRow first, SearchRow last) throws SQLException {
+	public Cursor find(Session session, SearchRow first, SearchRow last)
+			throws SQLException {
 		synchronized (sync) {
 			Cursor baseCursor = base.find(session, first, last);
 			Cursor deltaCursor = delta.find(session, first, last);
-			return new MultiVersionCursor(session, this, baseCursor, deltaCursor, sync);
+			return new MultiVersionCursor(session, this, baseCursor,
+					deltaCursor, sync);
 		}
 	}
 
@@ -84,7 +87,8 @@ public class MultiVersionIndex implements Index {
 		return base.canGetFirstOrLast() && delta.canGetFirstOrLast();
 	}
 
-	public Cursor findFirstOrLast(Session session, boolean first) throws SQLException {
+	public Cursor findFirstOrLast(Session session, boolean first)
+			throws SQLException {
 		if (first) {
 			// TODO optimization: this loops through NULL elements
 			Cursor cursor = find(session, null, null);
@@ -99,7 +103,8 @@ public class MultiVersionIndex implements Index {
 		}
 		Cursor baseCursor = base.findFirstOrLast(session, false);
 		Cursor deltaCursor = delta.findFirstOrLast(session, false);
-		MultiVersionCursor cursor = new MultiVersionCursor(session, this, baseCursor, deltaCursor, sync);
+		MultiVersionCursor cursor = new MultiVersionCursor(session, this,
+				baseCursor, deltaCursor, sync);
 		cursor.loadCurrent();
 		// TODO optimization: this loops through NULL elements
 		while (cursor.previous()) {
@@ -123,13 +128,16 @@ public class MultiVersionIndex implements Index {
 		return base.needRebuild();
 	}
 
-	private boolean removeIfExists(Session session, Row row) throws SQLException {
+	private boolean removeIfExists(Session session, Row row)
+			throws SQLException {
 		// maybe it was inserted by the same session just before
 		Cursor c = delta.find(session, row, row);
 		while (c.next()) {
 			Row r = c.get();
-			if (r.getPos() == row.getPos() && r.getVersion() == row.getVersion()) {
-				if (r != row && table.getScanIndex(session).compareRows(r, row) != 0) {
+			if (r.getPos() == row.getPos()
+					&& r.getVersion() == row.getVersion()) {
+				if (r != row
+						&& table.getScanIndex(session).compareRows(r, row) != 0) {
 					row.setVersion(r.getVersion() + 1);
 				} else {
 					delta.remove(session, r);
@@ -174,7 +182,8 @@ public class MultiVersionIndex implements Index {
 		return base.compareKeys(rowData, compare);
 	}
 
-	public int compareRows(SearchRow rowData, SearchRow compare) throws SQLException {
+	public int compareRows(SearchRow rowData, SearchRow compare)
+			throws SQLException {
 		return base.compareRows(rowData, compare);
 	}
 
@@ -194,7 +203,8 @@ public class MultiVersionIndex implements Index {
 		return base.getIndexColumns();
 	}
 
-	public long getCostRangeIndex(int[] masks, long rowCount) throws SQLException {
+	public long getCostRangeIndex(int[] masks, long rowCount)
+			throws SQLException {
 		return base.getCostRangeIndex(masks, rowCount);
 	}
 

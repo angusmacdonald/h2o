@@ -31,7 +31,7 @@ import org.h2.engine.Constants;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;
 import org.h2o.db.manager.PersistentSystemTable;
-import org.h2o.locator.LocatorServer;
+import org.h2o.locator.server.LocatorServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;

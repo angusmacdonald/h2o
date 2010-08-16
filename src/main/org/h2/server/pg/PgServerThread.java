@@ -149,7 +149,8 @@ public class PgServerThread implements Runnable {
 				out.write('N');
 			} else {
 				server.trace("StartupMessage");
-				server.trace(" version " + version + " (" + (version >> 16) + "." + (version & 0xff) + ")");
+				server.trace(" version " + version + " (" + (version >> 16)
+						+ "." + (version & 0xff) + ")");
 				while (true) {
 					String param = readString();
 					if (param.length() == 0) {
@@ -187,7 +188,8 @@ public class PgServerThread implements Runnable {
 					ci.setProperty("IFEXISTS", "TRUE");
 				}
 				ci.setProperty("MODE", "PostgreSQL");
-				ci.setOriginalURL("jdbc:h2:" + databaseName + ";MODE=PostgreSQL");
+				ci.setOriginalURL("jdbc:h2:" + databaseName
+						+ ";MODE=PostgreSQL");
 				ci.setUserName(userName);
 				ci.setProperty("PASSWORD", password);
 				ci.convertPasswords();
@@ -395,7 +397,8 @@ public class PgServerThread implements Runnable {
 		return s;
 	}
 
-	private void sendCommandComplete(String sql, int updateCount) throws IOException {
+	private void sendCommandComplete(String sql, int updateCount)
+			throws IOException {
 		startMessage('C');
 		sql = sql.trim().toUpperCase();
 		// TODO remove remarks at the beginning
@@ -451,7 +454,8 @@ public class PgServerThread implements Runnable {
 		return clientEncoding;
 	}
 
-	private void setParameter(PreparedStatement prep, int i, byte[] d2, int[] formatCodes) throws SQLException {
+	private void setParameter(PreparedStatement prep, int i, byte[] d2,
+			int[] formatCodes) throws SQLException {
 		boolean text = (i >= formatCodes.length) || (formatCodes[i] == 0);
 		String s;
 		try {
@@ -591,11 +595,13 @@ public class PgServerThread implements Runnable {
 		ResultSet rs = null;
 		Reader r = null;
 		try {
-			rs = conn.getMetaData().getTables(null, "PG_CATALOG", "PG_VERSION", null);
+			rs = conn.getMetaData().getTables(null, "PG_CATALOG", "PG_VERSION",
+					null);
 			boolean tableFound = rs.next();
 			stat = conn.createStatement();
 			if (tableFound) {
-				rs = stat.executeQuery("SELECT VERSION FROM PG_CATALOG.PG_VERSION");
+				rs = stat
+						.executeQuery("SELECT VERSION FROM PG_CATALOG.PG_VERSION");
 				if (rs.next()) {
 					if (rs.getInt(1) == 1) {
 						// already installed
@@ -605,9 +611,11 @@ public class PgServerThread implements Runnable {
 				}
 			}
 			try {
-				r = new InputStreamReader(new ByteArrayInputStream(Resources.get("/org/h2/server/pg/pg_catalog.sql")));
+				r = new InputStreamReader(new ByteArrayInputStream(
+						Resources.get("/org/h2/server/pg/pg_catalog.sql")));
 			} catch (IOException e) {
-				throw Message.convertIOException(e, "Can not read pg_catalog resource");
+				throw Message.convertIOException(e,
+						"Can not read pg_catalog resource");
 			}
 			ScriptReader reader = new ScriptReader(new BufferedReader(r));
 			while (true) {
@@ -737,7 +745,8 @@ public class PgServerThread implements Runnable {
 		dataOut.flush();
 	}
 
-	private void sendParameterStatus(String param, String value) throws IOException {
+	private void sendParameterStatus(String param, String value)
+			throws IOException {
 		startMessage('S');
 		writeString(param);
 		writeString(value);

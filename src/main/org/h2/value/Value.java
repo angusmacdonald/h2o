@@ -30,8 +30,8 @@ import org.h2.util.MathUtils;
 import org.h2.util.StringUtils;
 
 /**
- * This is the base class for all value classes.
- * It provides conversion and comparison methods.
+ * This is the base class for all value classes. It provides conversion and
+ * comparison methods.
  */
 public abstract class Value {
 
@@ -155,40 +155,42 @@ public abstract class Value {
 	public static final int TYPE_COUNT = STRING_FIXED + 1;
 
 	private static SoftReference softCache = new SoftReference(null);
-	private static final BigDecimal MAX_LONG_DECIMAL = new BigDecimal("" + Long.MAX_VALUE);
-	private static final BigDecimal MIN_LONG_DECIMAL = new BigDecimal("" + Long.MIN_VALUE);
+	private static final BigDecimal MAX_LONG_DECIMAL = new BigDecimal(""
+			+ Long.MAX_VALUE);
+	private static final BigDecimal MIN_LONG_DECIMAL = new BigDecimal(""
+			+ Long.MIN_VALUE);
 
 	/**
 	 * Get the SQL expression for this value.
-	 *
+	 * 
 	 * @return the SQL expression
 	 */
 	public abstract String getSQL();
 
 	/**
 	 * Get the value type.
-	 *
+	 * 
 	 * @return the type
 	 */
 	public abstract int getType();
 
 	/**
 	 * Get the precision.
-	 *
+	 * 
 	 * @return the precision
 	 */
 	public abstract long getPrecision();
 
 	/**
 	 * Get the display size in characters.
-	 *
+	 * 
 	 * @return the display size
 	 */
 	public abstract int getDisplaySize();
 
 	/**
 	 * Get the memory used by this object.
-	 *
+	 * 
 	 * @return the memory used in bytes
 	 */
 	public int getMemory() {
@@ -197,56 +199,63 @@ public abstract class Value {
 
 	/**
 	 * Get the value as a string.
-	 *
+	 * 
 	 * @return the string
 	 */
 	public abstract String getString();
 
 	/**
 	 * Get the value as an object.
-	 *
+	 * 
 	 * @return the object
 	 */
 	public abstract Object getObject();
 
 	/**
 	 * Set the value as a parameter in a prepared statement.
-	 *
-	 * @param prep the prepared statement
-	 * @param parameterIndex the parameter index
+	 * 
+	 * @param prep
+	 *            the prepared statement
+	 * @param parameterIndex
+	 *            the parameter index
 	 */
-	public abstract void set(PreparedStatement prep, int parameterIndex) throws SQLException;
+	public abstract void set(PreparedStatement prep, int parameterIndex)
+			throws SQLException;
 
 	/**
 	 * Compare the value with another value of the same type.
-	 *
-	 * @param v the other value
-	 * @param mode the compare mode
+	 * 
+	 * @param v
+	 *            the other value
+	 * @param mode
+	 *            the compare mode
 	 * @return 0 if both values are equal, -1 if the other value is smaller, and
 	 *         1 otherwise
 	 */
-	protected abstract int compareSecure(Value v, CompareMode mode) throws SQLException;
+	protected abstract int compareSecure(Value v, CompareMode mode)
+			throws SQLException;
 
 	public abstract int hashCode();
 
 	/**
-	 * Check if the two values are equal.
-	 * No data conversion is made; this method returns false
-	 * if the other object is not of the same class.
-	 *
-	 * @param other the other value
+	 * Check if the two values are equal. No data conversion is made; this
+	 * method returns false if the other object is not of the same class.
+	 * 
+	 * @param other
+	 *            the other value
 	 * @return true if they are equal
 	 */
 	public abstract boolean equals(Object other);
 
 	/**
 	 * Get the order of this value type.
-	 *
-	 * @param type the value type
+	 * 
+	 * @param type
+	 *            the value type
 	 * @return the order number
 	 */
 	static int getOrder(int type) {
-		switch(type) {
+		switch (type) {
 		case UNKNOWN:
 			return 1;
 		case NULL:
@@ -294,7 +303,7 @@ public abstract class Value {
 		case RESULT_SET:
 			return 51;
 		default:
-			throw Message.throwInternalError("type:"+type);
+			throw Message.throwInternalError("type:" + type);
 		}
 	}
 
@@ -302,15 +311,18 @@ public abstract class Value {
 	 * Get the higher value order type of two value types. If values need to be
 	 * converted to match the other operands value type, the value with the
 	 * lower order is converted to the value with the higher order.
-	 *
-	 * @param t1 the first value type
-	 * @param t2 the second value type
+	 * 
+	 * @param t1
+	 *            the first value type
+	 * @param t2
+	 *            the second value type
 	 * @return the higher value type of the two
 	 */
 	public static int getHigherOrder(int t1, int t2) throws SQLException {
 		if (t1 == t2) {
 			if (t1 == Value.UNKNOWN) {
-				throw Message.getSQLException(ErrorCode.UNKNOWN_DATA_TYPE_1, "?, ?");
+				throw Message.getSQLException(ErrorCode.UNKNOWN_DATA_TYPE_1,
+						"?, ?");
 			}
 			return t1;
 		}
@@ -323,8 +335,9 @@ public abstract class Value {
 	 * Check if a value is in the cache that is equal to this value. If yes,
 	 * this value should be used to save memory. If the value is not in the
 	 * cache yet, it is added.
-	 *
-	 * @param v the value to look for
+	 * 
+	 * @param v
+	 *            the value to look for
 	 * @return the value in the cache or the value passed
 	 */
 	static Value cache(Value v) {
@@ -348,7 +361,8 @@ public abstract class Value {
 			}
 			// cacheMiss++;
 			// cache[cacheCleaner] = null;
-			// cacheCleaner = (cacheCleaner + 1) & (Constants.OBJECT_CACHE_SIZE - 1);
+			// cacheCleaner = (cacheCleaner + 1) & (Constants.OBJECT_CACHE_SIZE
+			// - 1);
 			cache[index] = v;
 		}
 		return v;
@@ -379,7 +393,8 @@ public abstract class Value {
 	}
 
 	public Timestamp getTimestampNoCopy() throws SQLException {
-		return ((ValueTimestamp) convertTo(Value.TIMESTAMP)).getTimestampNoCopy();
+		return ((ValueTimestamp) convertTo(Value.TIMESTAMP))
+				.getTimestampNoCopy();
 	}
 
 	public byte[] getBytes() throws SQLException {
@@ -428,564 +443,605 @@ public abstract class Value {
 
 	/**
 	 * Add a value and return the result.
-	 *
-	 * @param v the value to add
+	 * 
+	 * @param v
+	 *            the value to add
 	 * @return the result
 	 */
-	 public Value add(Value v) throws SQLException {
+	public Value add(Value v) throws SQLException {
 		throw Message.getUnsupportedException();
-	 }
+	}
 
-	 public int getSignum() throws SQLException {
-		 throw Message.getUnsupportedException();
-	 }
+	public int getSignum() throws SQLException {
+		throw Message.getUnsupportedException();
+	}
 
-	 /**
-	  * Return -value if this value support arithmetic operations.
-	  *
-	  * @return the negative
-	  */
-	 public Value negate() throws SQLException {
-		 throw Message.getUnsupportedException();
-	 }
+	/**
+	 * Return -value if this value support arithmetic operations.
+	 * 
+	 * @return the negative
+	 */
+	public Value negate() throws SQLException {
+		throw Message.getUnsupportedException();
+	}
 
-	 /**
-	  * Subtract a value and return the result.
-	  *
-	  * @param v the value to subtract
-	  * @return the result
-	  */
-	 public Value subtract(Value v) throws SQLException {
-		 throw Message.getUnsupportedException();
-	 }
+	/**
+	 * Subtract a value and return the result.
+	 * 
+	 * @param v
+	 *            the value to subtract
+	 * @return the result
+	 */
+	public Value subtract(Value v) throws SQLException {
+		throw Message.getUnsupportedException();
+	}
 
-	 /**
-	  * Divide by a value and return the result.
-	  *
-	  * @param v the value to divide by
-	  * @return the result
-	  */
-	 public Value divide(Value v) throws SQLException {
-		 throw Message.getUnsupportedException();
-	 }
+	/**
+	 * Divide by a value and return the result.
+	 * 
+	 * @param v
+	 *            the value to divide by
+	 * @return the result
+	 */
+	public Value divide(Value v) throws SQLException {
+		throw Message.getUnsupportedException();
+	}
 
-	 /**
-	  * Multiply with a value and return the result.
-	  *
-	  * @param v the value to multiply with
-	  * @return the result
-	  */
-	 public Value multiply(Value v) throws SQLException {
-		 throw Message.getUnsupportedException();
-	 }
+	/**
+	 * Multiply with a value and return the result.
+	 * 
+	 * @param v
+	 *            the value to multiply with
+	 * @return the result
+	 */
+	public Value multiply(Value v) throws SQLException {
+		throw Message.getUnsupportedException();
+	}
 
-	 /**
-	  * Compare a value to the specified type.
-	  *
-	  * @param type the value type
-	  * @return the value
-	  */
-	 public Value convertTo(int type) throws SQLException {
-		 // converting NULL done in ValueNull
-		 // converting BLOB to CLOB and vice versa is done in ValueLob
-		 if (getType() == type) {
-			 return this;
-		 }
-		 // decimal conversion
-		 switch (type) {
-		 case BOOLEAN: {
-			 switch (getType()) {
-			 case BYTE:
-			 case SHORT:
-			 case INT:
-			 case LONG:
-			 case DECIMAL:
-			 case DOUBLE:
-			 case FLOAT:
-				 return ValueBoolean.get(getSignum() != 0);
-			 case TIME:
-			 case DATE:
-			 case TIMESTAMP:
-			 case BYTES:
-			 case JAVA_OBJECT:
-			 case UUID:
-				 throw Message.getSQLException(ErrorCode.DATA_CONVERSION_ERROR_1, getString());
-			 }
-			 break;
-		 }
-		 case BYTE: {
-			 switch (getType()) {
-			 case BOOLEAN:
-				 return ValueByte.get(getBoolean().booleanValue() ? (byte) 1 : (byte) 0);
-			 case SHORT:
-				 return ValueByte.get(convertToByte(getShort()));
-			 case INT:
-				 return ValueByte.get(convertToByte(getInt()));
-			 case LONG:
-				 return ValueByte.get(convertToByte(getLong()));
-			 case DECIMAL:
-				 return ValueByte.get(convertToByte(convertToLong(getBigDecimal())));
-			 case DOUBLE:
-				 return ValueByte.get(convertToByte(convertToLong(getDouble())));
-			 case FLOAT:
-				 return ValueByte.get(convertToByte(convertToLong(getFloat())));
-			 }
-			 break;
-		 }
-		 case SHORT: {
-			 switch (getType()) {
-			 case BOOLEAN:
-				 return ValueShort.get(getBoolean().booleanValue() ? (short) 1 : (short) 0);
-			 case BYTE:
-				 return ValueShort.get(getByte());
-			 case INT:
-				 return ValueShort.get(convertToShort(getInt()));
-			 case LONG:
-				 return ValueShort.get(convertToShort(getLong()));
-			 case DECIMAL:
-				 return ValueShort.get(convertToShort(convertToLong(getBigDecimal())));
-			 case DOUBLE:
-				 return ValueShort.get(convertToShort(convertToLong(getDouble())));
-			 case FLOAT:
-				 return ValueShort.get(convertToShort(convertToLong(getFloat())));
-			 }
-			 break;
-		 }
-		 case INT: {
-			 switch (getType()) {
-			 case BOOLEAN:
-				 return ValueInt.get(getBoolean().booleanValue() ? 1 : 0);
-			 case BYTE:
-				 return ValueInt.get(getByte());
-			 case SHORT:
-				 return ValueInt.get(getShort());
-			 case LONG:
-				 return ValueInt.get(convertToInt(getLong()));
-			 case DECIMAL:
-				 return ValueInt.get(convertToInt(convertToLong(getBigDecimal())));
-			 case DOUBLE:
-				 return ValueInt.get(convertToInt(convertToLong(getDouble())));
-			 case FLOAT:
-				 return ValueInt.get(convertToInt(convertToLong(getFloat())));
-			 }
-			 break;
-		 }
-		 case LONG: {
-			 switch (getType()) {
-			 case BOOLEAN:
-				 return ValueLong.get(getBoolean().booleanValue() ? 1 : 0);
-			 case BYTE:
-				 return ValueLong.get(getByte());
-			 case SHORT:
-				 return ValueLong.get(getShort());
-			 case INT:
-				 return ValueLong.get(getInt());
-			 case DECIMAL:
-				 return ValueLong.get(convertToLong(getBigDecimal()));
-			 case DOUBLE:
-				 return ValueLong.get(convertToLong(getDouble()));
-			 case FLOAT:
-				 return ValueLong.get(convertToLong(getFloat()));
-			 }
-			 break;
-		 }
-		 case DECIMAL: {
-			 // convert to string is required for JDK 1.4
-			 switch (getType()) {
-			 case BOOLEAN:
-				 return ValueDecimal.get(new BigDecimal(getBoolean().booleanValue() ? "1" : "0"));
-			 case BYTE:
-				 return ValueDecimal.get(new BigDecimal("" + getByte()));
-			 case SHORT:
-				 return ValueDecimal.get(new BigDecimal("" + getShort()));
-			 case INT:
-				 return ValueDecimal.get(new BigDecimal("" + getInt()));
-			 case LONG:
-				 return ValueDecimal.get(new BigDecimal("" + getLong()));
-			 case DOUBLE: {
-				 double d = getDouble();
-				 if (Double.isInfinite(d) || Double.isNaN(d)) {
-					 throw Message.getSQLException(ErrorCode.DATA_CONVERSION_ERROR_1, "" + d);
-				 }
-				 return ValueDecimal.get(new BigDecimal(d));
-			 }
-			 case FLOAT: {
-				 float f = getFloat();
-				 if (Float.isInfinite(f) || Float.isNaN(f)) {
-					 throw Message.getSQLException(ErrorCode.DATA_CONVERSION_ERROR_1, ""+f);
-				 }
-				 return ValueDecimal.get(new BigDecimal(f));
-			 }
-			 }
-			 break;
-		 }
-		 case DOUBLE: {
-			 switch (getType()) {
-			 case BOOLEAN:
-				 return ValueDouble.get(getBoolean().booleanValue() ? 1 : 0);
-			 case BYTE:
-				 return ValueDouble.get(getByte());
-			 case SHORT:
-				 return ValueDouble.get(getShort());
-			 case INT:
-				 return ValueDouble.get(getInt());
-			 case LONG:
-				 return ValueDouble.get(getLong());
-			 case DECIMAL:
-				 return ValueDouble.get(getBigDecimal().doubleValue());
-			 case FLOAT:
-				 return ValueDouble.get(getFloat());
-			 }
-			 break;
-		 }
-		 case FLOAT: {
-			 switch (getType()) {
-			 case BOOLEAN:
-				 return ValueFloat.get(getBoolean().booleanValue() ? 1 : 0);
-			 case BYTE:
-				 return ValueFloat.get(getByte());
-			 case SHORT:
-				 return ValueFloat.get(getShort());
-			 case INT:
-				 return ValueFloat.get(getInt());
-			 case LONG:
-				 return ValueFloat.get(getLong());
-			 case DECIMAL:
-				 return ValueFloat.get(getBigDecimal().floatValue());
-			 case DOUBLE:
-				 return ValueFloat.get((float) getDouble());
-			 }
-			 break;
-		 }
-		 case DATE: {
-			 switch (getType()) {
-			 case TIME:
-				 return ValueDate.get(new Date(getTimeNoCopy().getTime()));
-			 case TIMESTAMP:
-				 return ValueDate.get(new Date(getTimestampNoCopy().getTime()));
-			 }
-			 break;
-		 }
-		 case TIME: {
-			 switch (getType()) {
-			 case DATE:
-				 // need to normalize the year, month and day
-				 return ValueTime.get(new Time(getDateNoCopy().getTime()));
-			 case TIMESTAMP:
-				 // need to normalize the year, month and day
-				 return ValueTime.get(new Time(getTimestampNoCopy().getTime()));
-			 }
-			 break;
-		 }
-		 case TIMESTAMP: {
-			 switch (getType()) {
-			 case TIME:
-				 return ValueTimestamp.getNoCopy(new Timestamp(getTimeNoCopy().getTime()));
-			 case DATE:
-				 return ValueTimestamp.getNoCopy(new Timestamp(getDateNoCopy().getTime()));
-			 }
-			 break;
-		 }
-		 case BYTES: {
-			 switch(getType()) {
-			 case JAVA_OBJECT:
-			 case BLOB:
-				 return ValueBytes.getNoCopy(getBytesNoCopy());
-			 case UUID:
-				 return ValueBytes.getNoCopy(getBytes());
-			 }
-			 break;
-		 }
-		 case JAVA_OBJECT: {
-			 switch(getType()) {
-			 case BYTES:
-			 case BLOB:
-				 return ValueBytes.getNoCopy(getBytesNoCopy());
-			 }
-			 break;
-		 }
-		 case BLOB: {
-			 switch(getType()) {
-			 case BYTES:
-				 return ValueLob.createSmallLob(Value.BLOB, getBytesNoCopy());
-			 }
-			 break;
-		 }
-		 case UUID: {
-			 switch(getType()) {
-			 case BYTES:
-				 return ValueUuid.get(getBytesNoCopy());
-			 }
-		 }
-		 }
-		 // conversion by parsing the string value
-		 String s = getString();
-		 try {
-			 switch (type) {
-			 case NULL:
-				 return ValueNull.INSTANCE;
-			 case BOOLEAN: {
-				 if (s.equalsIgnoreCase("true") || s.equalsIgnoreCase("t") || s.equalsIgnoreCase("yes") || s.equalsIgnoreCase("y")) {
-					 return ValueBoolean.get(true);
-				 } else if (s.equalsIgnoreCase("false") || s.equalsIgnoreCase("f") || s.equalsIgnoreCase("no") || s.equalsIgnoreCase("n")) {
-					 return ValueBoolean.get(false);
-				 } else {
-					 // convert to a number, and if it is not 0 then it is true
-					 return ValueBoolean.get(new BigDecimal(s).signum() != 0);
-				 }
-			 }
-			 case BYTE:
-				 return ValueByte.get(MathUtils.decodeByte(s.trim()));
-			 case SHORT:
-				 return ValueShort.get(MathUtils.decodeShort(s.trim()));
-			 case INT:
-				 return ValueInt.get(MathUtils.decodeInt(s.trim()));
-			 case LONG:
-				 return ValueLong.get(MathUtils.decodeLong(s.trim()));
-			 case DECIMAL:
-				 return ValueDecimal.get(new BigDecimal(s.trim()));
-			 case TIME:
-				 return ValueTime.getNoCopy(ValueTime.parseTime(s.trim()));
-			 case DATE:
-				 return ValueDate.getNoCopy(ValueDate.parseDate(s.trim()));
-			 case TIMESTAMP:
-				 return ValueTimestamp.getNoCopy(ValueTimestamp.parseTimestamp(s.trim()));
-			 case BYTES:
-				 return ValueBytes.getNoCopy(ByteUtils.convertStringToBytes(s.trim()));
-			 case JAVA_OBJECT:
-				 return ValueJavaObject.getNoCopy(ByteUtils.convertStringToBytes(s.trim()));
-			 case STRING:
-				 return ValueString.get(s);
-			 case STRING_IGNORECASE:
-				 return ValueStringIgnoreCase.get(s);
-			 case STRING_FIXED:
-				 return ValueStringFixed.get(s);
-			 case DOUBLE:
-				 return ValueDouble.get(Double.parseDouble(s.trim()));
-			 case FLOAT:
-				 return ValueFloat.get(Float.parseFloat(s.trim()));
-			 case CLOB:
-				 return ValueLob.createSmallLob(CLOB, StringUtils.utf8Encode(s));
-			 case BLOB:
-				 return ValueLob.createSmallLob(BLOB, ByteUtils.convertStringToBytes(s.trim()));
-			 case ARRAY:
-				 return ValueArray.get(new Value[]{ValueString.get(s)});
-			 case RESULT_SET: {
-				 SimpleResultSet rs = new SimpleResultSet();
-				 rs.addColumn("X", Types.VARCHAR, s.length(), 0);
-				 rs.addRow(new String[]{s});
-				 return ValueResultSet.get(rs);
-			 }
-			 case UUID:
-				 return ValueUuid.get(s);
-			 default:
-				 throw Message.throwInternalError("type=" + type);
-			 }
-		 } catch (NumberFormatException e) {
-			 throw Message.getSQLException(ErrorCode.DATA_CONVERSION_ERROR_1, new String[] { s }, e);
-		 }
-	 }
+	/**
+	 * Compare a value to the specified type.
+	 * 
+	 * @param type
+	 *            the value type
+	 * @return the value
+	 */
+	public Value convertTo(int type) throws SQLException {
+		// converting NULL done in ValueNull
+		// converting BLOB to CLOB and vice versa is done in ValueLob
+		if (getType() == type) {
+			return this;
+		}
+		// decimal conversion
+		switch (type) {
+		case BOOLEAN: {
+			switch (getType()) {
+			case BYTE:
+			case SHORT:
+			case INT:
+			case LONG:
+			case DECIMAL:
+			case DOUBLE:
+			case FLOAT:
+				return ValueBoolean.get(getSignum() != 0);
+			case TIME:
+			case DATE:
+			case TIMESTAMP:
+			case BYTES:
+			case JAVA_OBJECT:
+			case UUID:
+				throw Message.getSQLException(
+						ErrorCode.DATA_CONVERSION_ERROR_1, getString());
+			}
+			break;
+		}
+		case BYTE: {
+			switch (getType()) {
+			case BOOLEAN:
+				return ValueByte.get(getBoolean().booleanValue() ? (byte) 1
+						: (byte) 0);
+			case SHORT:
+				return ValueByte.get(convertToByte(getShort()));
+			case INT:
+				return ValueByte.get(convertToByte(getInt()));
+			case LONG:
+				return ValueByte.get(convertToByte(getLong()));
+			case DECIMAL:
+				return ValueByte
+						.get(convertToByte(convertToLong(getBigDecimal())));
+			case DOUBLE:
+				return ValueByte.get(convertToByte(convertToLong(getDouble())));
+			case FLOAT:
+				return ValueByte.get(convertToByte(convertToLong(getFloat())));
+			}
+			break;
+		}
+		case SHORT: {
+			switch (getType()) {
+			case BOOLEAN:
+				return ValueShort.get(getBoolean().booleanValue() ? (short) 1
+						: (short) 0);
+			case BYTE:
+				return ValueShort.get(getByte());
+			case INT:
+				return ValueShort.get(convertToShort(getInt()));
+			case LONG:
+				return ValueShort.get(convertToShort(getLong()));
+			case DECIMAL:
+				return ValueShort
+						.get(convertToShort(convertToLong(getBigDecimal())));
+			case DOUBLE:
+				return ValueShort
+						.get(convertToShort(convertToLong(getDouble())));
+			case FLOAT:
+				return ValueShort
+						.get(convertToShort(convertToLong(getFloat())));
+			}
+			break;
+		}
+		case INT: {
+			switch (getType()) {
+			case BOOLEAN:
+				return ValueInt.get(getBoolean().booleanValue() ? 1 : 0);
+			case BYTE:
+				return ValueInt.get(getByte());
+			case SHORT:
+				return ValueInt.get(getShort());
+			case LONG:
+				return ValueInt.get(convertToInt(getLong()));
+			case DECIMAL:
+				return ValueInt
+						.get(convertToInt(convertToLong(getBigDecimal())));
+			case DOUBLE:
+				return ValueInt.get(convertToInt(convertToLong(getDouble())));
+			case FLOAT:
+				return ValueInt.get(convertToInt(convertToLong(getFloat())));
+			}
+			break;
+		}
+		case LONG: {
+			switch (getType()) {
+			case BOOLEAN:
+				return ValueLong.get(getBoolean().booleanValue() ? 1 : 0);
+			case BYTE:
+				return ValueLong.get(getByte());
+			case SHORT:
+				return ValueLong.get(getShort());
+			case INT:
+				return ValueLong.get(getInt());
+			case DECIMAL:
+				return ValueLong.get(convertToLong(getBigDecimal()));
+			case DOUBLE:
+				return ValueLong.get(convertToLong(getDouble()));
+			case FLOAT:
+				return ValueLong.get(convertToLong(getFloat()));
+			}
+			break;
+		}
+		case DECIMAL: {
+			// convert to string is required for JDK 1.4
+			switch (getType()) {
+			case BOOLEAN:
+				return ValueDecimal.get(new BigDecimal(getBoolean()
+						.booleanValue() ? "1" : "0"));
+			case BYTE:
+				return ValueDecimal.get(new BigDecimal("" + getByte()));
+			case SHORT:
+				return ValueDecimal.get(new BigDecimal("" + getShort()));
+			case INT:
+				return ValueDecimal.get(new BigDecimal("" + getInt()));
+			case LONG:
+				return ValueDecimal.get(new BigDecimal("" + getLong()));
+			case DOUBLE: {
+				double d = getDouble();
+				if (Double.isInfinite(d) || Double.isNaN(d)) {
+					throw Message.getSQLException(
+							ErrorCode.DATA_CONVERSION_ERROR_1, "" + d);
+				}
+				return ValueDecimal.get(new BigDecimal(d));
+			}
+			case FLOAT: {
+				float f = getFloat();
+				if (Float.isInfinite(f) || Float.isNaN(f)) {
+					throw Message.getSQLException(
+							ErrorCode.DATA_CONVERSION_ERROR_1, "" + f);
+				}
+				return ValueDecimal.get(new BigDecimal(f));
+			}
+			}
+			break;
+		}
+		case DOUBLE: {
+			switch (getType()) {
+			case BOOLEAN:
+				return ValueDouble.get(getBoolean().booleanValue() ? 1 : 0);
+			case BYTE:
+				return ValueDouble.get(getByte());
+			case SHORT:
+				return ValueDouble.get(getShort());
+			case INT:
+				return ValueDouble.get(getInt());
+			case LONG:
+				return ValueDouble.get(getLong());
+			case DECIMAL:
+				return ValueDouble.get(getBigDecimal().doubleValue());
+			case FLOAT:
+				return ValueDouble.get(getFloat());
+			}
+			break;
+		}
+		case FLOAT: {
+			switch (getType()) {
+			case BOOLEAN:
+				return ValueFloat.get(getBoolean().booleanValue() ? 1 : 0);
+			case BYTE:
+				return ValueFloat.get(getByte());
+			case SHORT:
+				return ValueFloat.get(getShort());
+			case INT:
+				return ValueFloat.get(getInt());
+			case LONG:
+				return ValueFloat.get(getLong());
+			case DECIMAL:
+				return ValueFloat.get(getBigDecimal().floatValue());
+			case DOUBLE:
+				return ValueFloat.get((float) getDouble());
+			}
+			break;
+		}
+		case DATE: {
+			switch (getType()) {
+			case TIME:
+				return ValueDate.get(new Date(getTimeNoCopy().getTime()));
+			case TIMESTAMP:
+				return ValueDate.get(new Date(getTimestampNoCopy().getTime()));
+			}
+			break;
+		}
+		case TIME: {
+			switch (getType()) {
+			case DATE:
+				// need to normalize the year, month and day
+				return ValueTime.get(new Time(getDateNoCopy().getTime()));
+			case TIMESTAMP:
+				// need to normalize the year, month and day
+				return ValueTime.get(new Time(getTimestampNoCopy().getTime()));
+			}
+			break;
+		}
+		case TIMESTAMP: {
+			switch (getType()) {
+			case TIME:
+				return ValueTimestamp.getNoCopy(new Timestamp(getTimeNoCopy()
+						.getTime()));
+			case DATE:
+				return ValueTimestamp.getNoCopy(new Timestamp(getDateNoCopy()
+						.getTime()));
+			}
+			break;
+		}
+		case BYTES: {
+			switch (getType()) {
+			case JAVA_OBJECT:
+			case BLOB:
+				return ValueBytes.getNoCopy(getBytesNoCopy());
+			case UUID:
+				return ValueBytes.getNoCopy(getBytes());
+			}
+			break;
+		}
+		case JAVA_OBJECT: {
+			switch (getType()) {
+			case BYTES:
+			case BLOB:
+				return ValueBytes.getNoCopy(getBytesNoCopy());
+			}
+			break;
+		}
+		case BLOB: {
+			switch (getType()) {
+			case BYTES:
+				return ValueLob.createSmallLob(Value.BLOB, getBytesNoCopy());
+			}
+			break;
+		}
+		case UUID: {
+			switch (getType()) {
+			case BYTES:
+				return ValueUuid.get(getBytesNoCopy());
+			}
+		}
+		}
+		// conversion by parsing the string value
+		String s = getString();
+		try {
+			switch (type) {
+			case NULL:
+				return ValueNull.INSTANCE;
+			case BOOLEAN: {
+				if (s.equalsIgnoreCase("true") || s.equalsIgnoreCase("t")
+						|| s.equalsIgnoreCase("yes") || s.equalsIgnoreCase("y")) {
+					return ValueBoolean.get(true);
+				} else if (s.equalsIgnoreCase("false")
+						|| s.equalsIgnoreCase("f") || s.equalsIgnoreCase("no")
+						|| s.equalsIgnoreCase("n")) {
+					return ValueBoolean.get(false);
+				} else {
+					// convert to a number, and if it is not 0 then it is true
+					return ValueBoolean.get(new BigDecimal(s).signum() != 0);
+				}
+			}
+			case BYTE:
+				return ValueByte.get(MathUtils.decodeByte(s.trim()));
+			case SHORT:
+				return ValueShort.get(MathUtils.decodeShort(s.trim()));
+			case INT:
+				return ValueInt.get(MathUtils.decodeInt(s.trim()));
+			case LONG:
+				return ValueLong.get(MathUtils.decodeLong(s.trim()));
+			case DECIMAL:
+				return ValueDecimal.get(new BigDecimal(s.trim()));
+			case TIME:
+				return ValueTime.getNoCopy(ValueTime.parseTime(s.trim()));
+			case DATE:
+				return ValueDate.getNoCopy(ValueDate.parseDate(s.trim()));
+			case TIMESTAMP:
+				return ValueTimestamp.getNoCopy(ValueTimestamp.parseTimestamp(s
+						.trim()));
+			case BYTES:
+				return ValueBytes.getNoCopy(ByteUtils.convertStringToBytes(s
+						.trim()));
+			case JAVA_OBJECT:
+				return ValueJavaObject.getNoCopy(ByteUtils
+						.convertStringToBytes(s.trim()));
+			case STRING:
+				return ValueString.get(s);
+			case STRING_IGNORECASE:
+				return ValueStringIgnoreCase.get(s);
+			case STRING_FIXED:
+				return ValueStringFixed.get(s);
+			case DOUBLE:
+				return ValueDouble.get(Double.parseDouble(s.trim()));
+			case FLOAT:
+				return ValueFloat.get(Float.parseFloat(s.trim()));
+			case CLOB:
+				return ValueLob.createSmallLob(CLOB, StringUtils.utf8Encode(s));
+			case BLOB:
+				return ValueLob.createSmallLob(BLOB,
+						ByteUtils.convertStringToBytes(s.trim()));
+			case ARRAY:
+				return ValueArray.get(new Value[] { ValueString.get(s) });
+			case RESULT_SET: {
+				SimpleResultSet rs = new SimpleResultSet();
+				rs.addColumn("X", Types.VARCHAR, s.length(), 0);
+				rs.addRow(new String[] { s });
+				return ValueResultSet.get(rs);
+			}
+			case UUID:
+				return ValueUuid.get(s);
+			default:
+				throw Message.throwInternalError("type=" + type);
+			}
+		} catch (NumberFormatException e) {
+			throw Message.getSQLException(ErrorCode.DATA_CONVERSION_ERROR_1,
+					new String[] { s }, e);
+		}
+	}
 
-	 /**
-	  * Compare this value against another value given that the values are of the
-	  * same data type.
-	  *
-	  * @param v the other value
-	  * @param mode the compare mode
-	  * @return 0 if both values are equal, -1 if the other value is smaller, and
-	  *         1 otherwise
-	  */
-	 public final int compareTypeSave(Value v, CompareMode mode) throws SQLException {
-		 if (this == ValueNull.INSTANCE) {
-			 return v == ValueNull.INSTANCE ? 0 : -1;
-		 } else if (v == ValueNull.INSTANCE) {
-			 return 1;
-		 }
-		 return compareSecure(v, mode);
-	 }
+	/**
+	 * Compare this value against another value given that the values are of the
+	 * same data type.
+	 * 
+	 * @param v
+	 *            the other value
+	 * @param mode
+	 *            the compare mode
+	 * @return 0 if both values are equal, -1 if the other value is smaller, and
+	 *         1 otherwise
+	 */
+	public final int compareTypeSave(Value v, CompareMode mode)
+			throws SQLException {
+		if (this == ValueNull.INSTANCE) {
+			return v == ValueNull.INSTANCE ? 0 : -1;
+		} else if (v == ValueNull.INSTANCE) {
+			return 1;
+		}
+		return compareSecure(v, mode);
+	}
 
-	 /**
-	  * Compare two values and return true if they contain the same data.
-	  *
-	  * @param v the value to compare against
-	  * @return true if both values are the same     * @throws SQLException
-	  */
-	 public final boolean compareEqual(Value v) throws SQLException {
-		 if (this == ValueNull.INSTANCE) {
-			 return v == ValueNull.INSTANCE;
-		 } else if (v == ValueNull.INSTANCE) {
-			 return false;
-		 }
-		 if (getType() == v.getType()) {
-			 return equals(v);
-		 }
-		 int t2 = Value.getHigherOrder(getType(), v.getType());
-		 return convertTo(t2).equals(v.convertTo(t2));
-	 }
+	/**
+	 * Compare two values and return true if they contain the same data.
+	 * 
+	 * @param v
+	 *            the value to compare against
+	 * @return true if both values are the same * @throws SQLException
+	 */
+	public final boolean compareEqual(Value v) throws SQLException {
+		if (this == ValueNull.INSTANCE) {
+			return v == ValueNull.INSTANCE;
+		} else if (v == ValueNull.INSTANCE) {
+			return false;
+		}
+		if (getType() == v.getType()) {
+			return equals(v);
+		}
+		int t2 = Value.getHigherOrder(getType(), v.getType());
+		return convertTo(t2).equals(v.convertTo(t2));
+	}
 
-	 /**
-	  * Compare this value against another value using the specified compare
-	  * mode.
-	  *
-	  * @param v the other value
-	  * @param mode the compare mode
-	  * @return 0 if both values are equal, -1 if the other value is smaller, and
-	  *         1 otherwise
-	  */
-	 public final int compareTo(Value v, CompareMode mode) throws SQLException {
-		 if (this == v) {
-			 return 0;
-		 }
-		 if (this == ValueNull.INSTANCE) {
-			 return v == ValueNull.INSTANCE ? 0 : -1;
-		 } else if (v == ValueNull.INSTANCE) {
-			 return 1;
-		 }
-		 if (getType() == v.getType()) {
-			 return compareSecure(v, mode);
-		 }
-		 int t2 = Value.getHigherOrder(getType(), v.getType());
-		 return convertTo(t2).compareSecure(v.convertTo(t2), mode);
-	 }
+	/**
+	 * Compare this value against another value using the specified compare
+	 * mode.
+	 * 
+	 * @param v
+	 *            the other value
+	 * @param mode
+	 *            the compare mode
+	 * @return 0 if both values are equal, -1 if the other value is smaller, and
+	 *         1 otherwise
+	 */
+	public final int compareTo(Value v, CompareMode mode) throws SQLException {
+		if (this == v) {
+			return 0;
+		}
+		if (this == ValueNull.INSTANCE) {
+			return v == ValueNull.INSTANCE ? 0 : -1;
+		} else if (v == ValueNull.INSTANCE) {
+			return 1;
+		}
+		if (getType() == v.getType()) {
+			return compareSecure(v, mode);
+		}
+		int t2 = Value.getHigherOrder(getType(), v.getType());
+		return convertTo(t2).compareSecure(v.convertTo(t2), mode);
+	}
 
-	 public int getScale() {
-		 return 0;
-	 }
+	public int getScale() {
+		return 0;
+	}
 
-	 /**
-	  * Convert the scale.
-	  *
-	  * @param onlyToSmallerScale if the scale should not reduced
-	  * @param targetScale the requested scale
-	  * @return the value
-	  */
-	 public Value convertScale(boolean onlyToSmallerScale, int targetScale) throws SQLException {
-		 return this;
-	 }
+	/**
+	 * Convert the scale.
+	 * 
+	 * @param onlyToSmallerScale
+	 *            if the scale should not reduced
+	 * @param targetScale
+	 *            the requested scale
+	 * @return the value
+	 */
+	public Value convertScale(boolean onlyToSmallerScale, int targetScale)
+			throws SQLException {
+		return this;
+	}
 
-	 /**
-	  * Convert the precision to the requested value.
-	  *
-	  * @param precision the new precision
-	  * @return the new value
-	  */
-	 public Value convertPrecision(long precision) throws SQLException {
-		 return this;
-	 }
+	/**
+	 * Convert the precision to the requested value.
+	 * 
+	 * @param precision
+	 *            the new precision
+	 * @return the new value
+	 */
+	public Value convertPrecision(long precision) throws SQLException {
+		return this;
+	}
 
-	 private byte convertToByte(long x) throws SQLException {
-		 if (x > Byte.MAX_VALUE || x < Byte.MIN_VALUE) {
-			 throw Message.getSQLException(ErrorCode.NUMERIC_VALUE_OUT_OF_RANGE);
-		 }
-		 return (byte) x;
-	 }
+	private byte convertToByte(long x) throws SQLException {
+		if (x > Byte.MAX_VALUE || x < Byte.MIN_VALUE) {
+			throw Message.getSQLException(ErrorCode.NUMERIC_VALUE_OUT_OF_RANGE);
+		}
+		return (byte) x;
+	}
 
-	 private short convertToShort(long x) throws SQLException {
-		 if (x > Short.MAX_VALUE || x < Short.MIN_VALUE) {
-			 throw Message.getSQLException(ErrorCode.NUMERIC_VALUE_OUT_OF_RANGE);
-		 }
-		 return (short) x;
-	 }
+	private short convertToShort(long x) throws SQLException {
+		if (x > Short.MAX_VALUE || x < Short.MIN_VALUE) {
+			throw Message.getSQLException(ErrorCode.NUMERIC_VALUE_OUT_OF_RANGE);
+		}
+		return (short) x;
+	}
 
-	 private int convertToInt(long x) throws SQLException {
-		 if (x > Integer.MAX_VALUE || x < Integer.MIN_VALUE) {
-			 throw Message.getSQLException(ErrorCode.NUMERIC_VALUE_OUT_OF_RANGE);
-		 }
-		 return (int) x;
-	 }
+	private int convertToInt(long x) throws SQLException {
+		if (x > Integer.MAX_VALUE || x < Integer.MIN_VALUE) {
+			throw Message.getSQLException(ErrorCode.NUMERIC_VALUE_OUT_OF_RANGE);
+		}
+		return (int) x;
+	}
 
-	 private long convertToLong(double x) throws SQLException {
-		 if (x > Long.MAX_VALUE || x < Long.MIN_VALUE) {
-			 // TODO document that +Infinity, -Infinity throw an exception and NaN returns 0
-			 throw Message.getSQLException(ErrorCode.NUMERIC_VALUE_OUT_OF_RANGE);
-		 }
-		 if (Constants.CONVERT_TO_LONG_ROUND) {
-			 return Math.round(x);
-		 }
-		 return (long) x;
-	 }
+	private long convertToLong(double x) throws SQLException {
+		if (x > Long.MAX_VALUE || x < Long.MIN_VALUE) {
+			// TODO document that +Infinity, -Infinity throw an exception and
+			// NaN returns 0
+			throw Message.getSQLException(ErrorCode.NUMERIC_VALUE_OUT_OF_RANGE);
+		}
+		if (Constants.CONVERT_TO_LONG_ROUND) {
+			return Math.round(x);
+		}
+		return (long) x;
+	}
 
-	 private long convertToLong(BigDecimal x) throws SQLException {
-		 if (x.compareTo(MAX_LONG_DECIMAL) > 0 || x.compareTo(Value.MIN_LONG_DECIMAL) < 0) {
-			 throw Message.getSQLException(ErrorCode.NUMERIC_VALUE_OUT_OF_RANGE);
-		 }
-		 if (Constants.CONVERT_TO_LONG_ROUND) {
-			 return x.setScale(0, BigDecimal.ROUND_HALF_UP).longValue();
-		 }
-		 return x.longValue();
-	 }
+	private long convertToLong(BigDecimal x) throws SQLException {
+		if (x.compareTo(MAX_LONG_DECIMAL) > 0
+				|| x.compareTo(Value.MIN_LONG_DECIMAL) < 0) {
+			throw Message.getSQLException(ErrorCode.NUMERIC_VALUE_OUT_OF_RANGE);
+		}
+		if (Constants.CONVERT_TO_LONG_ROUND) {
+			return x.setScale(0, BigDecimal.ROUND_HALF_UP).longValue();
+		}
+		return x.longValue();
+	}
 
-	 /**
-	  * Link a large value to a given table. For values that are kept fully in
-	  * memory this method has no effect.
-	  *
-	  * @param handler the data handler
-	  * @param tableId the table to link to
-	  * @return the new value or itself
-	  */
-	 public Value link(DataHandler handler, int tableId) throws SQLException {
-		 return this;
-	 }
+	/**
+	 * Link a large value to a given table. For values that are kept fully in
+	 * memory this method has no effect.
+	 * 
+	 * @param handler
+	 *            the data handler
+	 * @param tableId
+	 *            the table to link to
+	 * @return the new value or itself
+	 */
+	public Value link(DataHandler handler, int tableId) throws SQLException {
+		return this;
+	}
 
-	 /**
-	  * Check if this value is linked to a specific table. For values that are
-	  * kept fully in memory, this method returns false.
-	  *
-	  * @return true if it is
-	  */
-	 public boolean isLinked() {
-		 return false;
-	 }
+	/**
+	 * Check if this value is linked to a specific table. For values that are
+	 * kept fully in memory, this method returns false.
+	 * 
+	 * @return true if it is
+	 */
+	public boolean isLinked() {
+		return false;
+	}
 
-	 /**
-	  * Mark any underlying resource as 'not linked to any table'. For values
-	  * that are kept fully in memory this method has no effect.
-	  */
-	 public void unlink() throws SQLException {
-		 // nothing to do
-	 }
+	/**
+	 * Mark any underlying resource as 'not linked to any table'. For values
+	 * that are kept fully in memory this method has no effect.
+	 */
+	public void unlink() throws SQLException {
+		// nothing to do
+	}
 
-	 /**
-	  * Check if this value is stored in it's own file. For values that are
-	  * kept fully in memory, this method returns false.
-	  *
-	  * @return true if it is
-	  */
-	 public boolean isFileBased() {
-		 return false;
-	 }
+	/**
+	 * Check if this value is stored in it's own file. For values that are kept
+	 * fully in memory, this method returns false.
+	 * 
+	 * @return true if it is
+	 */
+	public boolean isFileBased() {
+		return false;
+	}
 
-	 /**
-	  * Close the underlying resource, if any. For values that are kept fully in
-	  * memory this method has no effect.
-	  */
-	 public void close() throws SQLException {
-		 // nothing to do
-	 }
+	/**
+	 * Close the underlying resource, if any. For values that are kept fully in
+	 * memory this method has no effect.
+	 */
+	public void close() throws SQLException {
+		// nothing to do
+	}
 
-	 /**
-	  * Check if the precision is smaller or equal than the given precision.
-	  *
-	  * @param precision the maximum precision
-	  * @return true if the precision of this value is smaller or equal to the
-	  *         given precision
-	  */
-	 public boolean checkPrecision(long precision) {
-		 return getPrecision() <= precision;
-	 }
+	/**
+	 * Check if the precision is smaller or equal than the given precision.
+	 * 
+	 * @param precision
+	 *            the maximum precision
+	 * @return true if the precision of this value is smaller or equal to the
+	 *         given precision
+	 */
+	public boolean checkPrecision(long precision) {
+		return getPrecision() <= precision;
+	}
 
-	 /**
-	  * Get a medium size SQL expression for debugging or tracing. If the precision is
-	  * too large, only a subset of the value is returned.
-	  *
-	  * @return the SQL expression
-	  */
-	 public String getTraceSQL() {
-		 return getSQL();
-	 }
+	/**
+	 * Get a medium size SQL expression for debugging or tracing. If the
+	 * precision is too large, only a subset of the value is returned.
+	 * 
+	 * @return the SQL expression
+	 */
+	public String getTraceSQL() {
+		return getSQL();
+	}
 
-	 public String toString() {
-		 return getTraceSQL();
-	 }
+	public String toString() {
+		return getTraceSQL();
+	}
 
 }

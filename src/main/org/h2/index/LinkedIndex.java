@@ -22,8 +22,8 @@ import org.h2.value.Value;
 import org.h2.value.ValueNull;
 
 /**
- * A linked index is a index for a linked (remote) table.
- * It is backed by an index on the remote table which is accessed over JDBC.
+ * A linked index is a index for a linked (remote) table. It is backed by an
+ * index on the remote table which is accessed over JDBC.
  */
 public class LinkedIndex extends BaseIndex {
 
@@ -31,7 +31,8 @@ public class LinkedIndex extends BaseIndex {
 	private String targetTableName;
 	private long rowCount;
 
-	public LinkedIndex(TableLink table, int id, IndexColumn[] columns, IndexType indexType) {
+	public LinkedIndex(TableLink table, int id, IndexColumn[] columns,
+			IndexType indexType) {
 		initBaseIndex(table, id, null, columns, indexType);
 		link = table;
 		targetTableName = link.getQualifiedTable();
@@ -85,7 +86,8 @@ public class LinkedIndex extends BaseIndex {
 		}
 	}
 
-	public Cursor find(Session session, SearchRow first, SearchRow last) throws SQLException {
+	public Cursor find(Session session, SearchRow first, SearchRow last)
+			throws SQLException {
 		StringBuilder buff = new StringBuilder();
 		for (int i = 0; first != null && i < first.getColumnCount(); i++) {
 			Value v = first.getValue(i);
@@ -157,7 +159,8 @@ public class LinkedIndex extends BaseIndex {
 	}
 
 	public double getCost(Session session, int[] masks) {
-		return 100 + getCostRangeIndex(masks, rowCount + Constants.COST_ROW_OFFSET);
+		return 100 + getCostRangeIndex(masks, rowCount
+				+ Constants.COST_ROW_OFFSET);
 	}
 
 	public void remove(Session session) {
@@ -180,7 +183,8 @@ public class LinkedIndex extends BaseIndex {
 		return false;
 	}
 
-	public Cursor findFirstOrLast(Session session, boolean first) throws SQLException {
+	public Cursor findFirstOrLast(Session session, boolean first)
+			throws SQLException {
 		// TODO optimization: could get the first or last value (in any case;
 		// maybe not optimized)
 		throw Message.getUnsupportedException();
@@ -227,9 +231,11 @@ public class LinkedIndex extends BaseIndex {
 	/**
 	 * Update a row using a UPDATE statement. This method is to be called if the
 	 * emit updates option is enabled.
-	 *
-	 * @param oldRow the old data
-	 * @param newRow the new data
+	 * 
+	 * @param oldRow
+	 *            the old data
+	 * @param newRow
+	 *            the new data
 	 */
 	public void update(Row oldRow, Row newRow) throws SQLException {
 		StringBuilder buff = new StringBuilder("UPDATE ");
@@ -273,7 +279,8 @@ public class LinkedIndex extends BaseIndex {
 					}
 				}
 				int count = prep.executeUpdate();
-				// this has no effect but at least it allows to debug the update count
+				// this has no effect but at least it allows to debug the update
+				// count
 				rowCount = rowCount + count - count;
 			} catch (SQLException e) {
 				throw link.wrapException(sql, e);

@@ -15,8 +15,8 @@ import org.h2.value.Value;
 import org.h2.value.ValueArray;
 
 /**
- * A list of expressions, as in (ID, NAME).
- * The result of this expression is an array.
+ * A list of expressions, as in (ID, NAME). The result of this expression is an
+ * array.
  */
 public class ExpressionList extends Expression {
 
@@ -38,9 +38,10 @@ public class ExpressionList extends Expression {
 		return Value.ARRAY;
 	}
 
-	public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
-		for (int i = 0; i < list.length; i++) {
-			list[i].mapColumns(resolver, level);
+	public void mapColumns(ColumnResolver resolver, int level)
+			throws SQLException {
+		for (Expression element : list) {
+			element.mapColumns(resolver, level);
 		}
 	}
 
@@ -60,8 +61,8 @@ public class ExpressionList extends Expression {
 	}
 
 	public void setEvaluatable(TableFilter tableFilter, boolean b) {
-		for (int i = 0; i < list.length; i++) {
-			list[i].setEvaluatable(tableFilter, b);
+		for (Expression element : list) {
+			element.setEvaluatable(tableFilter, b);
 		}
 	}
 
@@ -91,8 +92,8 @@ public class ExpressionList extends Expression {
 	}
 
 	public void updateAggregate(Session session) throws SQLException {
-		for (int i = 0; i < list.length; i++) {
-			list[i].updateAggregate(session);
+		for (Expression element : list) {
+			element.updateAggregate(session);
 		}
 	}
 
@@ -107,8 +108,8 @@ public class ExpressionList extends Expression {
 
 	public int getCost() {
 		int cost = 1;
-		for (int i = 0; i < list.length; i++) {
-			cost += list[i].getCost();
+		for (Expression element : list) {
+			cost += element.getCost();
 		}
 		return cost;
 	}

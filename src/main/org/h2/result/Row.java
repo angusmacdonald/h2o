@@ -46,8 +46,7 @@ public class Row extends Record implements SearchRow {
 
 	public void write(DataPage buff) throws SQLException {
 		buff.writeInt(data.length);
-		for (int i = 0; i < data.length; i++) {
-			Value v = data[i];
+		for (Value v : data) {
 			buff.writeValue(v);
 		}
 	}

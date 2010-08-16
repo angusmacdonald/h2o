@@ -35,8 +35,9 @@ public class IntArray {
 
 	/**
 	 * Append a value.
-	 *
-	 * @param value the value to append
+	 * 
+	 * @param value
+	 *            the value to append
 	 */
 	public void add(int value) {
 		checkCapacity();
@@ -45,25 +46,29 @@ public class IntArray {
 
 	/**
 	 * Get the value at the given index.
-	 *
-	 * @param index the index
+	 * 
+	 * @param index
+	 *            the index
 	 * @return the value
 	 */
 	public int get(int index) {
 		if (SysProperties.CHECK && index >= size) {
-			throw new ArrayIndexOutOfBoundsException("i=" + index + " size=" + size);
+			throw new ArrayIndexOutOfBoundsException("i=" + index + " size="
+					+ size);
 		}
 		return data[index];
 	}
 
 	/**
 	 * Remove the value at the given index.
-	 *
-	 * @param index the index
+	 * 
+	 * @param index
+	 *            the index
 	 */
 	public void remove(int index) {
 		if (SysProperties.CHECK && index >= size) {
-			throw new ArrayIndexOutOfBoundsException("i=" + index + " size=" + size);
+			throw new ArrayIndexOutOfBoundsException("i=" + index + " size="
+					+ size);
 		}
 		System.arraycopy(data, index + 1, data, index, size - index - 1);
 		size--;
@@ -80,13 +85,16 @@ public class IntArray {
 	/**
 	 * Insert an element at the given position. The element at this position and
 	 * all elements with a higher index move one element.
-	 *
-	 * @param index the index where to insert the value
-	 * @param value the value to insert
+	 * 
+	 * @param index
+	 *            the index where to insert the value
+	 * @param value
+	 *            the value to insert
 	 */
 	public void add(int index, int value) {
 		if (SysProperties.CHECK && index > size) {
-			throw new ArrayIndexOutOfBoundsException("i=" + index + " size=" + size);
+			throw new ArrayIndexOutOfBoundsException("i=" + index + " size="
+					+ size);
 		}
 		checkCapacity();
 		if (index == size) {
@@ -100,13 +108,16 @@ public class IntArray {
 
 	/**
 	 * Update the value at the given index.
-	 *
-	 * @param index the index
-	 * @param value the new value
+	 * 
+	 * @param index
+	 *            the index
+	 * @param value
+	 *            the new value
 	 */
 	public void set(int index, int value) {
 		if (SysProperties.CHECK && index >= size) {
-			throw new ArrayIndexOutOfBoundsException("i=" + index + " size=" + size);
+			throw new ArrayIndexOutOfBoundsException("i=" + index + " size="
+					+ size);
 		}
 		data[index] = value;
 	}
@@ -141,7 +152,7 @@ public class IntArray {
 
 	/**
 	 * Get the size of the list.
-	 *
+	 * 
 	 * @return the size
 	 */
 	public int size() {
@@ -149,47 +160,49 @@ public class IntArray {
 	}
 
 	/**
-	 * Insert an element at the correct position in a sorted list.
-	 * If the list is not sorted, the result of this operation is undefined.
-	 *
-	 * @param value the value to insert
+	 * Insert an element at the correct position in a sorted list. If the list
+	 * is not sorted, the result of this operation is undefined.
+	 * 
+	 * @param value
+	 *            the value to insert
 	 */
 	public void addValueSorted(int value) {
 		int l = 0, r = size;
 		while (l < r) {
 			int i = (l + r) >>> 1;
-		int d = data[i];
-		if (d == value) {
-			return;
-		} else if (d > value) {
-			r = i;
-		} else {
-			l = i + 1;
-		}
+			int d = data[i];
+			if (d == value) {
+				return;
+			} else if (d > value) {
+				r = i;
+			} else {
+				l = i + 1;
+			}
 		}
 		add(l, value);
 	}
 
-	//    public void addValueSorted(int value) {
-	//        int l = 0, r = size - 1;
-	//        while(l <= r) {
-	//            int i = (l + r) >>> 1;
-	//            int d = data[i];
-	//            if(d == value) {
-	//                return;
-	//            } else if(d > value) {
-	//                r = i - 1;
-	//            } else {
-	//                l =  i + 1;
-	//            }
-	//        }
-	//        add(l, value);
-	//    }
+	// public void addValueSorted(int value) {
+	// int l = 0, r = size - 1;
+	// while(l <= r) {
+	// int i = (l + r) >>> 1;
+	// int d = data[i];
+	// if(d == value) {
+	// return;
+	// } else if(d > value) {
+	// r = i - 1;
+	// } else {
+	// l = i + 1;
+	// }
+	// }
+	// add(l, value);
+	// }
 
 	/**
 	 * Remove the first element of this list that matches this value.
-	 *
-	 * @param value the value to be remove
+	 * 
+	 * @param value
+	 *            the value to be remove
 	 */
 	public void removeValue(int value) {
 		for (int i = 0; i < size; i++) {
@@ -203,8 +216,9 @@ public class IntArray {
 
 	/**
 	 * Remove the last element of this list that matches this value.
-	 *
-	 * @param value the value to be remove
+	 * 
+	 * @param value
+	 *            the value to be remove
 	 */
 	public void removeLastValue(int value) {
 		for (int i = size - 1; i >= 0; i--) {
@@ -217,10 +231,11 @@ public class IntArray {
 	}
 
 	/**
-	 * Return the index with a this value.
-	 * If the list is not sorted, the result of this operation is undefined.
-	 *
-	 * @param value the value to find
+	 * Return the index with a this value. If the list is not sorted, the result
+	 * of this operation is undefined.
+	 * 
+	 * @param value
+	 *            the value to find
 	 * @return the index or -1 if not found
 	 */
 	public int findIndexSorted(int value) {
@@ -240,10 +255,11 @@ public class IntArray {
 	}
 
 	/**
-	 * Return the next index with a value larger than this one.
-	 * If the list is not sorted, the result of this operation is undefined.
-	 *
-	 * @param value the value to find
+	 * Return the next index with a value larger than this one. If the list is
+	 * not sorted, the result of this operation is undefined.
+	 * 
+	 * @param value
+	 *            the value to find
 	 * @return the index
 	 */
 	public int findNextIndexSorted(int value) {
@@ -276,8 +292,9 @@ public class IntArray {
 
 	/**
 	 * Convert this list to an array. The target array must be big enough.
-	 *
-	 * @param array the target array
+	 * 
+	 * @param array
+	 *            the target array
 	 */
 	public void toArray(int[] array) {
 		System.arraycopy(data, 0, array, 0, size);
@@ -285,8 +302,9 @@ public class IntArray {
 
 	/**
 	 * Remove all values from the given sorted list from this sorted list.
-	 *
-	 * @param removeSorted the value to remove
+	 * 
+	 * @param removeSorted
+	 *            the value to remove
 	 */
 	public void removeAllSorted(IntArray removeSorted) {
 		int[] d = new int[data.length];
@@ -301,39 +319,39 @@ public class IntArray {
 		size = newSize;
 	}
 
-	//    ArrayList data = new ArrayList();
+	// ArrayList data = new ArrayList();
 	//
-	//    public IntArray() {
-	//    }
+	// public IntArray() {
+	// }
 	//
-	//    public IntArray(int[] data) {
-	//        for (int i = 0; i < data.length; i++) {
-	//            this.data.add(new Integer(data[i]));
-	//        }
-	//    }
+	// public IntArray(int[] data) {
+	// for (int i = 0; i < data.length; i++) {
+	// this.data.add(new Integer(data[i]));
+	// }
+	// }
 	//
-	//    public void add(int value) {
-	//        this.data.add(new Integer(value));
-	//    }
+	// public void add(int value) {
+	// this.data.add(new Integer(value));
+	// }
 	//
-	//    public int get(int i) {
-	//        return ((Integer) data.get(i)).intValue();
-	//    }
+	// public int get(int i) {
+	// return ((Integer) data.get(i)).intValue();
+	// }
 	//
-	//    public void remove(int i) {
-	//        data.remove(i);
-	//    }
+	// public void remove(int i) {
+	// data.remove(i);
+	// }
 	//
-	//    public void add(int i, int value) {
-	//        data.add(i, new Integer(value));
-	//    }
+	// public void add(int i, int value) {
+	// data.add(i, new Integer(value));
+	// }
 	//
-	//    public void set(int i, int value) {
-	//        data.set(i, new Integer(value));
-	//    }
+	// public void set(int i, int value) {
+	// data.set(i, new Integer(value));
+	// }
 	//
-	//    public int size() {
-	//        return data.size();
-	//    }
+	// public int size() {
+	// return data.size();
+	// }
 
 }

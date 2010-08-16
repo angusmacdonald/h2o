@@ -26,8 +26,7 @@ public class ValueLong extends Value {
 	public static final int PRECISION = 19;
 
 	/**
-	 * The maximum display size of a long.
-	 * Example: 9223372036854775808
+	 * The maximum display size of a long. Example: 9223372036854775808
 	 */
 	public static final int DISPLAY_SIZE = 20;
 
@@ -82,7 +81,8 @@ public class ValueLong extends Value {
 	}
 
 	private SQLException getOverflow() {
-		return Message.getSQLException(ErrorCode.OVERFLOW_FOR_TYPE_1, DataType.getDataType(Value.LONG).name);
+		return Message.getSQLException(ErrorCode.OVERFLOW_FOR_TYPE_1,
+				DataType.getDataType(Value.LONG).name);
 	}
 
 	public Value subtract(Value v) throws SQLException {
@@ -110,7 +110,8 @@ public class ValueLong extends Value {
 		ValueLong other = (ValueLong) v;
 		if (SysProperties.OVERFLOW_EXCEPTIONS) {
 			long result = value * other.value;
-			if (value == 0 || value == 1 || other.value == 0 || other.value == 1) {
+			if (value == 0 || value == 1 || other.value == 0
+					|| other.value == 1) {
 				return ValueLong.get(result);
 			}
 			if (isInteger(value) && isInteger(other.value)) {
@@ -118,9 +119,10 @@ public class ValueLong extends Value {
 			}
 			// just checking one case is not enough: Long.MIN_VALUE * -1
 			// probably this is correct but I'm not sure
-			// if(result / value == other.value && result / other.value == value) {
-			//    return ValueLong.get(result);
-			//}
+			// if(result / value == other.value && result / other.value ==
+			// value) {
+			// return ValueLong.get(result);
+			// }
 			BigInteger bv = new BigInteger("" + value);
 			BigInteger bo = new BigInteger("" + other.value);
 			BigInteger br = bv.multiply(bo);
@@ -135,7 +137,8 @@ public class ValueLong extends Value {
 	public Value divide(Value v) throws SQLException {
 		ValueLong other = (ValueLong) v;
 		if (other.value == 0) {
-			throw Message.getSQLException(ErrorCode.DIVISION_BY_ZERO_1, getSQL());
+			throw Message.getSQLException(ErrorCode.DIVISION_BY_ZERO_1,
+					getSQL());
 		}
 		return ValueLong.get(value / other.value);
 	}
@@ -176,29 +179,31 @@ public class ValueLong extends Value {
 		return ObjectUtils.getLong(value);
 	}
 
-	public void set(PreparedStatement prep, int parameterIndex) throws SQLException {
+	public void set(PreparedStatement prep, int parameterIndex)
+			throws SQLException {
 		prep.setLong(parameterIndex, value);
 	}
 
 	/**
 	 * Get or create a long value for the given long.
-	 *
-	 * @param i the long
+	 * 
+	 * @param i
+	 *            the long
 	 * @return the value
 	 */
-	 public static ValueLong get(long i) {
-		 if (i >= 0 && i < STATIC_SIZE) {
-			 return STATIC_CACHE[(int) i];
-		 }
-		 return (ValueLong) Value.cache(new ValueLong(i));
-	 }
+	public static ValueLong get(long i) {
+		if (i >= 0 && i < STATIC_SIZE) {
+			return STATIC_CACHE[(int) i];
+		}
+		return (ValueLong) Value.cache(new ValueLong(i));
+	}
 
-	 public int getDisplaySize() {
-		 return DISPLAY_SIZE;
-	 }
+	public int getDisplaySize() {
+		return DISPLAY_SIZE;
+	}
 
-	 public boolean equals(Object other) {
-		 return other instanceof ValueLong && value == ((ValueLong) other).value;
-	 }
+	public boolean equals(Object other) {
+		return other instanceof ValueLong && value == ((ValueLong) other).value;
+	}
 
 }

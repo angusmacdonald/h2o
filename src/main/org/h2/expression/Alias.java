@@ -41,7 +41,8 @@ public class Alias extends Expression {
 		return expr.getType();
 	}
 
-	public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
+	public void mapColumns(ColumnResolver resolver, int level)
+			throws SQLException {
 		expr.mapColumns(resolver, level);
 	}
 

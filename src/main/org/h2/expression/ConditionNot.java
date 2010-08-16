@@ -38,7 +38,8 @@ public class ConditionNot extends Condition {
 		return v.convertTo(Value.BOOLEAN).negate();
 	}
 
-	public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
+	public void mapColumns(ColumnResolver resolver, int level)
+			throws SQLException {
 		condition.mapColumns(resolver, level);
 	}
 

@@ -17,7 +17,6 @@
  */
 package org.h2o.event.server;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -26,14 +25,16 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
- * The locator server class. Creates a ServerSocket and listens for connections constantly.
+ * The locator server class. Creates a ServerSocket and listens for connections
+ * constantly.
+ * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class EventServer extends Thread{
+public class EventServer extends Thread {
 
 	private static final int EVENT_SERVER_PORT = 4444;
 	private boolean running = true;
-	
+
 	private ServerSocket ss;
 	private EventViewer eventViewer;
 	private int port;
@@ -47,11 +48,10 @@ public class EventServer extends Thread{
 		eventViewer = new EventViewer("eventlog.txt");
 	}
 
-
 	/**
 	 * Starts the server and listens until the running field is set to false.
 	 */
-	public void run(){
+	public void run() {
 		try {
 			/*
 			 * Set up the server socket.
@@ -60,30 +60,39 @@ public class EventServer extends Thread{
 				ss = new ServerSocket(port);
 
 				ss.setSoTimeout(500);
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Server listening on port " + port + ", event log at '" + eventViewer + "'.");
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
+						"Server listening on port " + port + ", event log at '"
+								+ eventViewer + "'.");
 
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 
 			/*
-			 * Start listening for incoming connections. Pass them off to a worker thread if they come.
+			 * Start listening for incoming connections. Pass them off to a
+			 * worker thread if they come.
 			 */
-			while (isRunning()){
+			while (isRunning()) {
 				try {
 
 					Socket newConnection = ss.accept();
-					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "New connection from: " + newConnection.getInetAddress().getHostName() + "." +  newConnection.getPort());
+					Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
+							"New connection from: "
+									+ newConnection.getInetAddress()
+											.getHostName() + "."
+									+ newConnection.getPort());
 
-					EventWorker connectionHandler = new EventWorker(newConnection, eventViewer);
+					EventWorker connectionHandler = new EventWorker(
+							newConnection, eventViewer);
 					connectionHandler.start();
 				} catch (IOException e) {
-					//e.printStackTrace();
+					// e.printStackTrace();
 				}
 			}
 		} finally {
 			try {
-				if (ss != null) ss.close();
+				if (ss != null)
+					ss.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -109,14 +118,13 @@ public class EventServer extends Thread{
 		return running;
 	}
 
-
 	/**
-	 * @param running the running to set
+	 * @param running
+	 *            the running to set
 	 */
 	public synchronized void setRunning(boolean running) {
 		this.running = running;
 	}
-
 
 	/**
 	 * @return the finished
@@ -125,9 +133,9 @@ public class EventServer extends Thread{
 		return finished;
 	}
 
-
 	/**
-	 * @param finished the finished to set
+	 * @param finished
+	 *            the finished to set
 	 */
 	public synchronized void setFinished(boolean finished) {
 		this.finished = finished;

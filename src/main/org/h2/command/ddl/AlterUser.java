@@ -18,9 +18,7 @@ import org.h2.security.SHA256;
 import org.h2.util.ByteUtils;
 
 /**
- * This class represents the statements
- * ALTER USER ADMIN,
- * ALTER USER RENAME,
+ * This class represents the statements ALTER USER ADMIN, ALTER USER RENAME,
  * ALTER USER SET PASSWORD
  */
 public class AlterUser extends DefineCommand {
@@ -102,14 +100,16 @@ public class AlterUser extends DefineCommand {
 				String name = newName == null ? user.getName() : newName;
 				SHA256 sha = new SHA256();
 				char[] passwordChars = getCharArray(password);
-				byte[] userPasswordHash = sha.getKeyPasswordHash(name, passwordChars);
+				byte[] userPasswordHash = sha.getKeyPasswordHash(name,
+						passwordChars);
 				user.setUserPasswordHash(userPasswordHash);
 			}
 			break;
 		case RENAME:
 			session.getUser().checkAdmin();
 			if (db.findUser(newName) != null || newName.equals(user.getName())) {
-				throw Message.getSQLException(ErrorCode.USER_ALREADY_EXISTS_1, newName);
+				throw Message.getSQLException(ErrorCode.USER_ALREADY_EXISTS_1,
+						newName);
 			}
 			db.renameDatabaseObject(session, user, newName);
 			break;

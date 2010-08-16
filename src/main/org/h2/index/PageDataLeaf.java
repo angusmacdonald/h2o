@@ -5,6 +5,7 @@
  * Initial Developer: H2 Group
  */
 package org.h2.index;
+
 import java.sql.SQLException;
 
 import org.h2.constant.ErrorCode;
@@ -16,16 +17,16 @@ import org.h2.store.PageStore;
 import org.h2.store.Record;
 
 /**
- * A leaf page that contains data of one or multiple rows.
- * Format:
- * <ul><li>0-3: parent page id (0 for root)
- * </li><li>4-4: page type
- * </li><li>5-8: table id
- * </li><li>9-10: entry count
- * </li><li>with overflow: 11-14: the first overflow page id
- * </li><li>11- or 15-: list of key / offset pairs (4 bytes key, 2 bytes offset)
- * </li><li>data
- * </li></ul>
+ * A leaf page that contains data of one or multiple rows. Format:
+ * <ul>
+ * <li>0-3: parent page id (0 for root)</li>
+ * <li>4-4: page type</li>
+ * <li>5-8: table id</li>
+ * <li>9-10: entry count</li>
+ * <li>with overflow: 11-14: the first overflow page id</li>
+ * <li>11- or 15-: list of key / offset pairs (4 bytes key, 2 bytes offset)</li>
+ * <li>data</li>
+ * </ul>
  */
 class PageDataLeaf extends PageData {
 
@@ -54,7 +55,8 @@ class PageDataLeaf extends PageData {
 
 	private boolean written;
 
-	PageDataLeaf(PageScanIndex index, int pageId, int parentPageId, DataPage data) {
+	PageDataLeaf(PageScanIndex index, int pageId, int parentPageId,
+			DataPage data) {
 		super(index, pageId, parentPageId, data);
 		start = KEY_OFFSET_PAIR_START;
 	}
@@ -64,9 +66,9 @@ class PageDataLeaf extends PageData {
 		int type = data.readByte();
 		int tableId = data.readInt();
 		if (tableId != index.getId()) {
-			throw Message.getSQLException(ErrorCode.FILE_CORRUPTED_1,
-					"page:" + getPageId() + " expected table:" + index.getId() +
-					" got:" + tableId + " type:" + type);
+			throw Message.getSQLException(ErrorCode.FILE_CORRUPTED_1, "page:"
+					+ getPageId() + " expected table:" + index.getId()
+					+ " got:" + tableId + " type:" + type);
 		}
 		entryCount = data.readShortInt();
 		offsets = new int[entryCount];
@@ -85,8 +87,9 @@ class PageDataLeaf extends PageData {
 	/**
 	 * Add a row if possible. If it is possible this method returns 0, otherwise
 	 * the split point. It is always possible to add one row.
-	 *
-	 * @param row the now to add
+	 * 
+	 * @param row
+	 *            the now to add
 	 * @return the split point of this page, or 0 if no split is required
 	 */
 	int addRow(Row row) throws SQLException {
@@ -153,7 +156,8 @@ class PageDataLeaf extends PageData {
 					size = pageSize - PageDataLeafOverflow.START_MORE;
 					next = index.getPageStore().allocatePage();
 				}
-				PageDataLeafOverflow overflow = new PageDataLeafOverflow(this, page, type, previous, next, dataOffset, size);
+				PageDataLeafOverflow overflow = new PageDataLeafOverflow(this,
+						page, type, previous, next, dataOffset, size);
 				index.getPageStore().updateRecord(overflow, true, null);
 				dataOffset += size;
 				remaining -= size;
@@ -190,8 +194,9 @@ class PageDataLeaf extends PageData {
 
 	/**
 	 * Get the row at the given index.
-	 *
-	 * @param at the index
+	 * 
+	 * @param at
+	 *            the index
 	 * @return the row
 	 */
 	Row getRowAt(int at) throws SQLException {
@@ -209,10 +214,12 @@ class PageDataLeaf extends PageData {
 					PageDataLeafOverflow page;
 					if (record == null) {
 						DataPage data = store.readPage(next);
-						page = new PageDataLeafOverflow(this, next, data, offset);
+						page = new PageDataLeafOverflow(this, next, data,
+								offset);
 					} else {
 						if (!(record instanceof PageDataLeafOverflow)) {
-							throw Message.getInternalError("page:"+ next + " " + record, null);
+							throw Message.getInternalError("page:" + next + " "
+									+ record, null);
 						}
 						page = (PageDataLeafOverflow) record;
 					}
@@ -233,7 +240,8 @@ class PageDataLeaf extends PageData {
 
 	PageData split(int splitPoint) throws SQLException {
 		int newPageId = index.getPageStore().allocatePage();
-		PageDataLeaf p2 = new PageDataLeaf(index, newPageId, parentPageId, index.getPageStore().createDataPage());
+		PageDataLeaf p2 = new PageDataLeaf(index, newPageId, parentPageId,
+				index.getPageStore().createDataPage());
 		for (int i = splitPoint; i < entryCount;) {
 			p2.addRow(getRowAt(splitPoint));
 			removeRow(splitPoint);
@@ -266,18 +274,20 @@ class PageDataLeaf extends PageData {
 			return;
 		}
 		int testIfReallyNotRequired;
-		//        PageStore store = index.getPageStore();
-		//        store.updateRecord(firstOverflowPageId);
-		//        DataPage overflow = store.readPage(firstOverflowPageId);
-		//        overflow.reset();
-		//        overflow.writeInt(getPos());
-		//        store.writePage(firstOverflowPageId, overflow);
+		// PageStore store = index.getPageStore();
+		// store.updateRecord(firstOverflowPageId);
+		// DataPage overflow = store.readPage(firstOverflowPageId);
+		// overflow.reset();
+		// overflow.writeInt(getPos());
+		// store.writePage(firstOverflowPageId, overflow);
 	}
 
 	boolean remove(int key) throws SQLException {
 		int i = find(key);
 		if (keys[i] != key) {
-			throw Message.getSQLException(ErrorCode.ROW_NOT_FOUND_WHEN_DELETING_1, index.getSQL() + ": " + key);
+			throw Message.getSQLException(
+					ErrorCode.ROW_NOT_FOUND_WHEN_DELETING_1, index.getSQL()
+							+ ": " + key);
 		}
 		if (entryCount == 1) {
 			return true;
@@ -352,7 +362,8 @@ class PageDataLeaf extends PageData {
 	}
 
 	public String toString() {
-		return "page[" + getPos() + "] data leaf table:" + index.getId() + " entries:" + entryCount;
+		return "page[" + getPos() + "] data leaf table:" + index.getId()
+				+ " entries:" + entryCount;
 	}
 
 }

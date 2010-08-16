@@ -27,7 +27,8 @@ public class FunctionIndex extends BaseIndex {
 	private LocalResult result;
 
 	public FunctionIndex(FunctionTable functionTable, IndexColumn[] columns) {
-		initBaseIndex(functionTable, 0, null, columns, IndexType.createNonUnique(true));
+		initBaseIndex(functionTable, 0, null, columns,
+				IndexType.createNonUnique(true));
 		this.functionTable = functionTable;
 	}
 
@@ -43,7 +44,8 @@ public class FunctionIndex extends BaseIndex {
 		throw Message.getUnsupportedException();
 	}
 
-	public Cursor find(Session session, SearchRow first, SearchRow last) throws SQLException {
+	public Cursor find(Session session, SearchRow first, SearchRow last)
+			throws SQLException {
 		// TODO sometimes result.reset() would be enough (but not when
 		// parameters are used)
 		result = functionTable.getResult(session);
@@ -83,7 +85,8 @@ public class FunctionIndex extends BaseIndex {
 		return false;
 	}
 
-	public Cursor findFirstOrLast(Session session, boolean first) throws SQLException {
+	public Cursor findFirstOrLast(Session session, boolean first)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 

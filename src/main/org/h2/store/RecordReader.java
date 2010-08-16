@@ -17,9 +17,11 @@ public interface RecordReader {
 
 	/**
 	 * Read a record from the data page.
-	 *
-	 * @param session the session
-	 * @param s the data page
+	 * 
+	 * @param session
+	 *            the session
+	 * @param s
+	 *            the data page
 	 * @return the record
 	 */
 	Record read(Session session, DataPage s) throws SQLException;

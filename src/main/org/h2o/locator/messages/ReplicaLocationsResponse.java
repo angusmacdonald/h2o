@@ -26,7 +26,6 @@ public class ReplicaLocationsResponse {
 	private List<String> locations;
 	private int updateCount;
 
-
 	/**
 	 * @param locations
 	 * @param updateCount
@@ -43,6 +42,7 @@ public class ReplicaLocationsResponse {
 	public List<String> getLocations() {
 		return locations;
 	}
+
 	/**
 	 * @return the updateCount
 	 */
@@ -50,7 +50,9 @@ public class ReplicaLocationsResponse {
 		return updateCount;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -58,7 +60,9 @@ public class ReplicaLocationsResponse {
 		return 31 + ((locations == null) ? 0 : locations.hashCode());
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -77,6 +81,5 @@ public class ReplicaLocationsResponse {
 			return false;
 		return true;
 	}
-
 
 }

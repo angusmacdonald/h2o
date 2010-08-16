@@ -39,15 +39,16 @@ public class SortOrder {
 	public static final int NULLS_FIRST = 2;
 
 	/**
-	 * This bit mask means NULLs should be sorted after other data, no matter
-	 * if ascending or descending order is used.
+	 * This bit mask means NULLs should be sorted after other data, no matter if
+	 * ascending or descending order is used.
 	 */
 	public static final int NULLS_LAST = 4;
 
 	/**
 	 * The default sort order for NULL.
 	 */
-	private static final int DEFAULT_NULL_SORT = SysProperties.SORT_NULLS_HIGH ? 1 : -1;
+	private static final int DEFAULT_NULL_SORT = SysProperties.SORT_NULLS_HIGH ? 1
+			: -1;
 
 	private final Database database;
 	private final int len;
@@ -56,10 +57,13 @@ public class SortOrder {
 
 	/**
 	 * Construct a new sort order object.
-	 *
-	 * @param database the database
-	 * @param index the column index list
-	 * @param sortType the sort order bit masks
+	 * 
+	 * @param database
+	 *            the database
+	 * @param index
+	 *            the column index list
+	 * @param sortType
+	 *            the sort order bit masks
 	 */
 	public SortOrder(Database database, int[] index, int[] sortType) {
 		this.database = database;
@@ -69,11 +73,13 @@ public class SortOrder {
 	}
 
 	/**
-	 * Create the SQL snippet that describes this sort order.
-	 * This is the SQL snippet that usually appears after the ORDER BY clause.
-	 *
-	 * @param list the expression list
-	 * @param visible the number of columns in the select list
+	 * Create the SQL snippet that describes this sort order. This is the SQL
+	 * snippet that usually appears after the ORDER BY clause.
+	 * 
+	 * @param list
+	 *            the expression list
+	 * @param visible
+	 *            the number of columns in the select list
 	 * @return the SQL snippet
 	 */
 	public String getSQL(Expression[] list, int visible) {
@@ -104,10 +110,13 @@ public class SortOrder {
 
 	/**
 	 * Compare two expressions where one of them is NULL.
-	 *
-	 * @param aNull whether the first expression is null
-	 * @param bNull whether the second expression is null
-	 * @param sortType the sort bit mask to use
+	 * 
+	 * @param aNull
+	 *            whether the first expression is null
+	 * @param bNull
+	 *            whether the second expression is null
+	 * @param sortType
+	 *            the sort bit mask to use
 	 * @return the result of the comparison (-1 meaning the first expression
 	 *         should appear before the second, 0 if they are equal)
 	 */
@@ -125,9 +134,11 @@ public class SortOrder {
 
 	/**
 	 * Compare two expression lists.
-	 *
-	 * @param a the first expression list
-	 * @param b the second expression list
+	 * 
+	 * @param a
+	 *            the first expression list
+	 * @param b
+	 *            the second expression list
 	 * @return the result of the comparison
 	 */
 	public int compare(Value[] a, Value[] b) throws SQLException {
@@ -153,8 +164,9 @@ public class SortOrder {
 
 	/**
 	 * Sort a list of rows.
-	 *
-	 * @param rows the list of rows
+	 * 
+	 * @param rows
+	 *            the list of rows
 	 */
 	public void sort(ObjectArray rows) throws SQLException {
 		sort(rows, 0, rows.size() - 1);
@@ -211,7 +223,7 @@ public class SortOrder {
 
 	/**
 	 * Get the column index list.
-	 *
+	 * 
 	 * @return the list
 	 */
 	public int[] getIndexes() {
@@ -220,7 +232,7 @@ public class SortOrder {
 
 	/**
 	 * Get the sort order bit masks.
-	 *
+	 * 
 	 * @return the list
 	 */
 	public int[] getSortTypes() {

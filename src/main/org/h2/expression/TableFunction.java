@@ -43,8 +43,8 @@ public class TableFunction extends Function implements FunctionCall {
 
 	protected void checkParameterCount(int len) throws SQLException {
 		if (len < 1) {
-			throw Message.getSQLException(ErrorCode.INVALID_PARAMETER_COUNT_2, new String[] { getName(),
-					">0" });
+			throw Message.getSQLException(ErrorCode.INVALID_PARAMETER_COUNT_2,
+					new String[] { getName(), ">0" });
 		}
 	}
 
@@ -65,12 +65,12 @@ public class TableFunction extends Function implements FunctionCall {
 		return buff.toString();
 	}
 
-
 	public String getName() {
 		return distinct ? "TABLE_DISTINCT" : "TABLE";
 	}
 
-	public ValueResultSet getValueForColumnList(Session session, Expression[] nullArgs) throws SQLException {
+	public ValueResultSet getValueForColumnList(Session session,
+			Expression[] nullArgs) throws SQLException {
 		return getTable(session, args, true, false);
 	}
 
@@ -79,7 +79,8 @@ public class TableFunction extends Function implements FunctionCall {
 		columns.toArray(columnList);
 	}
 
-	private ValueResultSet getTable(Session session, Expression[] args, boolean onlyColumnList, boolean distinct) throws SQLException {
+	private ValueResultSet getTable(Session session, Expression[] args,
+			boolean onlyColumnList, boolean distinct) throws SQLException {
 		int len = columnList.length;
 		Expression[] header = new Expression[len];
 		Database db = session.getDatabase();
@@ -126,17 +127,20 @@ public class TableFunction extends Function implements FunctionCall {
 			}
 		}
 		result.done();
-		ValueResultSet vr = ValueResultSet.get(getSimpleResultSet(result, Integer.MAX_VALUE));
+		ValueResultSet vr = ValueResultSet.get(getSimpleResultSet(result,
+				Integer.MAX_VALUE));
 		return vr;
 	}
 
-	private SimpleResultSet getSimpleResultSet(LocalResult rs,  int maxrows) throws SQLException {
+	private SimpleResultSet getSimpleResultSet(LocalResult rs, int maxrows)
+			throws SQLException {
 		int columnCount = rs.getVisibleColumnCount();
 		SimpleResultSet simple = new SimpleResultSet();
 		for (int i = 0; i < columnCount; i++) {
 			String name = rs.getColumnName(i);
 			int sqlType = DataType.convertTypeToSQLType(rs.getColumnType(i));
-			int precision = MathUtils.convertLongToInt(rs.getColumnPrecision(i));
+			int precision = MathUtils
+					.convertLongToInt(rs.getColumnPrecision(i));
 			int scale = rs.getColumnScale(i);
 			simple.addColumn(name, sqlType, precision, scale);
 		}

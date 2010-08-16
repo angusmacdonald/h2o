@@ -45,13 +45,13 @@ public class ConnectionInfo implements Cloneable {
 	private boolean persistent;
 	private boolean unnamed;
 
-	private boolean schemamanager;
 	private String schema_manager_location = null;
 
 	/**
 	 * Create a connection info object.
-	 *
-	 * @param name the database name (including tags)
+	 * 
+	 * @param name
+	 *            the database name (including tags)
 	 */
 	public ConnectionInfo(String name) {
 		this.name = name;
@@ -67,9 +67,11 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Create a connection info object.
-	 *
-	 * @param u the database URL (must start with jdbc:h2:)
-	 * @param info the connection properties
+	 * 
+	 * @param u
+	 *            the database URL (must start with jdbc:h2:)
+	 * @param info
+	 *            the connection properties
 	 */
 	public ConnectionInfo(String u, Properties info) throws SQLException {
 		this.originalURL = u;
@@ -92,12 +94,13 @@ public class ConnectionInfo implements Cloneable {
 			set.add(list.get(i));
 		}
 		// TODO document these settings
-		String[] connectionTime = new String[] { "ACCESS_MODE_LOG", "ACCESS_MODE_DATA", "AUTOCOMMIT", "CIPHER",
-				"CREATE", "CACHE_TYPE", "DB_CLOSE_ON_EXIT", "FILE_LOCK", "IGNORE_UNKNOWN_SETTINGS", "IFEXISTS",
-				"PASSWORD", "RECOVER", "USER", "DATABASE_EVENT_LISTENER_OBJECT", "AUTO_SERVER",
+		String[] connectionTime = new String[] { "ACCESS_MODE_LOG",
+				"ACCESS_MODE_DATA", "AUTOCOMMIT", "CIPHER", "CREATE",
+				"CACHE_TYPE", "DB_CLOSE_ON_EXIT", "FILE_LOCK",
+				"IGNORE_UNKNOWN_SETTINGS", "IFEXISTS", "PASSWORD", "RECOVER",
+				"USER", "DATABASE_EVENT_LISTENER_OBJECT", "AUTO_SERVER",
 				"AUTO_RECONNECT", "OPEN_NEW" };
-		for (int i = 0; i < connectionTime.length; i++) {
-			String key = connectionTime[i];
+		for (String key : connectionTime) {
 			if (SysProperties.CHECK && set.contains(key)) {
 				Message.throwInternalError(key);
 			}
@@ -119,39 +122,27 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * (2009-04-16) Modified to allow for another keyword to be read - 'sm'.
+	 * 
 	 * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
-	 *//*
-    private void parseName() {
-    	if (".".equals(name)) {
-            name = "mem";
-        }
-    	//persistent = true;
-    	unnamed = true;
-
-    	String[] info = name.split((":"));
-
-    	int i = 0;
-        for (String part: info){
-        	if (part.equals("tcp")) {
-                remote = true;
-            } else if (part.equals("ssl")) {
-                remote = true;
-                ssl = true;
-            } else if (part.equals("mem")) {
-                persistent = false;
-            } else if (part.equals("sm")) { //System Table
-                schemamanager = true;
-            } else {
-            	name = part;
-            	unnamed = false;
-
-            	persistent = (i==0); //if only the DB name is included then the ConnectionInfo will be set to true.
-            }
-        	i++;
-        }
-
-
-    }*/
+	 */
+	/*
+	 * private void parseName() { if (".".equals(name)) { name = "mem"; }
+	 * //persistent = true; unnamed = true;
+	 * 
+	 * String[] info = name.split((":"));
+	 * 
+	 * int i = 0; for (String part: info){ if (part.equals("tcp")) { remote =
+	 * true; } else if (part.equals("ssl")) { remote = true; ssl = true; } else
+	 * if (part.equals("mem")) { persistent = false; } else if
+	 * (part.equals("sm")) { //System Table schemamanager = true; } else { name
+	 * = part; unnamed = false;
+	 * 
+	 * persistent = (i==0); //if only the DB name is included then the
+	 * ConnectionInfo will be set to true. } i++; }
+	 * 
+	 * 
+	 * }
+	 */
 
 	/*
 	 * THE OLD PARSENAME CODE:
@@ -160,8 +151,7 @@ public class ConnectionInfo implements Cloneable {
 		if (".".equals(name)) {
 			name = "mem:";
 		}
-		if (name.startsWith("sm:")){
-			schemamanager = true;
+		if (name.startsWith("sm:")) {
 			name = name.substring("sm:".length());
 		}
 		if (name.startsWith("tcp:")) {
@@ -187,8 +177,9 @@ public class ConnectionInfo implements Cloneable {
 	/**
 	 * Set the base directory of persistent databases, unless the database is in
 	 * the user home folder (~).
-	 *
-	 * @param dir the new base directory
+	 * 
+	 * @param dir
+	 *            the new base directory
 	 */
 	public void setBaseDir(String dir) {
 		if (persistent) {
@@ -200,7 +191,7 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Check if this is a remote connection.
-	 *
+	 * 
 	 * @return true if it is
 	 */
 	public boolean isRemote() {
@@ -209,7 +200,7 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Check if the referenced database is persistent.
-	 *
+	 * 
 	 * @return true if it is
 	 */
 	boolean isPersistent() {
@@ -218,7 +209,7 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Check if the referenced database is an unnamed in-memory database.
-	 *
+	 * 
 	 * @return true if it is
 	 */
 	boolean isUnnamedInMemory() {
@@ -228,13 +219,14 @@ public class ConnectionInfo implements Cloneable {
 	private void readProperties(Properties info) throws SQLException {
 		Object[] list = new Object[info.size()];
 		info.keySet().toArray(list);
-		for (int i = 0; i < list.length; i++) {
-			String key = StringUtils.toUpperEnglish(list[i].toString());
+		for (Object element : list) {
+			String key = StringUtils.toUpperEnglish(element.toString());
 			if (prop.containsKey(key)) {
-				throw Message.getSQLException(ErrorCode.DUPLICATE_PROPERTY_1, key);
+				throw Message.getSQLException(ErrorCode.DUPLICATE_PROPERTY_1,
+						key);
 			}
 			if (isKnownSetting(key)) {
-				prop.put(key, info.get(list[i]));
+				prop.put(key, info.get(element));
 			}
 		}
 	}
@@ -245,8 +237,7 @@ public class ConnectionInfo implements Cloneable {
 			String settings = url.substring(idx + 1);
 			url = url.substring(0, idx);
 			String[] list = StringUtils.arraySplit(settings, ';', false);
-			for (int i = 0; i < list.length; i++) {
-				String setting = list[i];
+			for (String setting : list) {
 				int equal = setting.indexOf('=');
 				if (equal < 0) {
 					throw getFormatException();
@@ -255,11 +246,13 @@ public class ConnectionInfo implements Cloneable {
 				String key = setting.substring(0, equal);
 				key = StringUtils.toUpperEnglish(key);
 				if (!isKnownSetting(key)) {
-					throw Message.getSQLException(ErrorCode.UNSUPPORTED_SETTING_1, key);
+					throw Message.getSQLException(
+							ErrorCode.UNSUPPORTED_SETTING_1, key);
 				}
 				String old = prop.getProperty(key);
 				if (old != null && !old.equals(value)) {
-					throw Message.getSQLException(ErrorCode.DUPLICATE_PROPERTY_1, key);
+					throw Message.getSQLException(
+							ErrorCode.DUPLICATE_PROPERTY_1, key);
 				}
 				prop.setProperty(key, value);
 			}
@@ -277,7 +270,7 @@ public class ConnectionInfo implements Cloneable {
 	 * Return the database event listener object set as a Java object. If the
 	 * event listener is not set or set as a string (the class name), then this
 	 * method returns null.
-	 *
+	 * 
 	 * @return the database event listener object or null
 	 */
 	DatabaseEventListener getDatabaseEventListenerObject() throws SQLException {
@@ -288,7 +281,8 @@ public class ConnectionInfo implements Cloneable {
 		if (p instanceof DatabaseEventListener) {
 			return (DatabaseEventListener) p;
 		}
-		throw Message.getSQLException(ErrorCode.DATA_CONVERSION_ERROR_1, p.getClass().getName());
+		throw Message.getSQLException(ErrorCode.DATA_CONVERSION_ERROR_1, p
+				.getClass().getName());
 	}
 
 	private char[] removePassword() {
@@ -334,9 +328,11 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Get a boolean property if it is set and return the value.
-	 *
-	 * @param key the property name
-	 * @param defaultValue the default value
+	 * 
+	 * @param key
+	 *            the property name
+	 * @param defaultValue
+	 *            the default value
 	 * @return the value
 	 */
 	public boolean getProperty(String key, boolean defaultValue) {
@@ -346,9 +342,11 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Remove a boolean property if it is set and return the value.
-	 *
-	 * @param key the property name
-	 * @param defaultValue the default value
+	 * 
+	 * @param key
+	 *            the property name
+	 * @param defaultValue
+	 *            the default value
 	 * @return the value
 	 */
 	public boolean removeProperty(String key, boolean defaultValue) {
@@ -358,9 +356,11 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Remove a String property if it is set and return the value.
-	 *
-	 * @param key the property name
-	 * @param defaultValue the default value
+	 * 
+	 * @param key
+	 *            the property name
+	 * @param defaultValue
+	 *            the default value
 	 * @return the value
 	 */
 	String removeProperty(String key, String defaultValue) {
@@ -373,7 +373,7 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Get the unique and normalized database name (excluding settings).
-	 *
+	 * 
 	 * @return the database name
 	 */
 	String getName() throws SQLException {
@@ -381,7 +381,8 @@ public class ConnectionInfo implements Cloneable {
 			String n = FileUtils.normalize(name + Constants.SUFFIX_DATA_FILE);
 			String fileName = FileUtils.getFileName(n);
 			if (fileName.length() < Constants.SUFFIX_DATA_FILE.length() + 1) {
-				throw Message.getSQLException(ErrorCode.INVALID_DATABASE_NAME_1, name);
+				throw Message.getSQLException(
+						ErrorCode.INVALID_DATABASE_NAME_1, name);
 			}
 			n = n.substring(0, n.length() - Constants.SUFFIX_DATA_FILE.length());
 			return FileUtils.normalize(n);
@@ -391,15 +392,16 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Returns the un-normalized database name.
+	 * 
 	 * @return the database name
 	 */
-	public String getSmallName(){
-		return name;	
+	public String getSmallName() {
+		return name;
 	}
 
 	/**
 	 * Get the file password hash if it is set.
-	 *
+	 * 
 	 * @return the password hash or null
 	 */
 	byte[] getFilePasswordHash() {
@@ -408,19 +410,21 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Get the name of the user.
-	 *
+	 * 
 	 * @return the user name
 	 */
 	public String getUserName() {
 		String u = user;
-		if (u.charAt(0) =='"') u = u.substring(1);
-		if (u.charAt(u.length()-1) =='"') u = u.substring(0, u.length()-1);
+		if (u.charAt(0) == '"')
+			u = u.substring(1);
+		if (u.charAt(u.length() - 1) == '"')
+			u = u.substring(0, u.length() - 1);
 		return user;
 	}
 
 	/**
 	 * Get the user password hash.
-	 *
+	 * 
 	 * @return the password hash
 	 */
 	byte[] getUserPasswordHash() {
@@ -429,7 +433,7 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Get the property keys.
-	 *
+	 * 
 	 * @return the property keys
 	 */
 	String[] getKeys() {
@@ -440,8 +444,9 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Get the value of the given property.
-	 *
-	 * @param key the property key
+	 * 
+	 * @param key
+	 *            the property key
 	 * @return the value as a String
 	 */
 	String getProperty(String key) {
@@ -454,9 +459,11 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Get the value of the given property.
-	 *
-	 * @param key the property key
-	 * @param defaultValue the default value
+	 * 
+	 * @param key
+	 *            the property key
+	 * @param defaultValue
+	 *            the default value
 	 * @return the value as a String
 	 */
 	public String getProperty(String key, String defaultValue) {
@@ -469,9 +476,11 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Get the value of the given property.
-	 *
-	 * @param setting the setting id
-	 * @param defaultValue the default value
+	 * 
+	 * @param setting
+	 *            the setting id
+	 * @param defaultValue
+	 *            the default value
 	 * @return the value as a String
 	 */
 	String getProperty(int setting, String defaultValue) {
@@ -482,9 +491,11 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Get the value of the given property.
-	 *
-	 * @param setting the setting id
-	 * @param defaultValue the default value
+	 * 
+	 * @param setting
+	 *            the setting id
+	 * @param defaultValue
+	 *            the default value
 	 * @return the value as an integer
 	 */
 	int getIntProperty(int setting, int defaultValue) {
@@ -499,7 +510,7 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Check if this is a remote connection with SSL enabled.
-	 *
+	 * 
 	 * @return true if it is
 	 */
 	boolean isSSL() {
@@ -509,8 +520,9 @@ public class ConnectionInfo implements Cloneable {
 	/**
 	 * Overwrite the user name. The user name is case-insensitive and stored in
 	 * uppercase. English conversion is used.
-	 *
-	 * @param name the user name
+	 * 
+	 * @param name
+	 *            the user name
 	 */
 	public void setUserName(String name) {
 		this.user = StringUtils.toUpperEnglish(name);
@@ -518,8 +530,9 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Set the user password hash.
-	 *
-	 * @param hash the new hash value
+	 * 
+	 * @param hash
+	 *            the new hash value
 	 */
 	public void setUserPasswordHash(byte[] hash) {
 		this.userPasswordHash = hash;
@@ -527,8 +540,9 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Set the file password hash.
-	 *
-	 * @param hash the new hash value
+	 * 
+	 * @param hash
+	 *            the new hash value
 	 */
 	public void setFilePasswordHash(byte[] hash) {
 		this.filePasswordHash = hash;
@@ -536,9 +550,11 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Overwrite a property.
-	 *
-	 * @param key the property name
-	 * @param value the value
+	 * 
+	 * @param key
+	 *            the property name
+	 * @param value
+	 *            the value
 	 */
 	public void setProperty(String key, String value) {
 		// value is null if the value is an object
@@ -549,7 +565,7 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Get the database URL.
-	 *
+	 * 
 	 * @return the URL
 	 */
 	public String getURL() {
@@ -558,7 +574,7 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Get the complete original database URL.
-	 *
+	 * 
 	 * @return the database URL
 	 */
 	public String getOriginalURL() {
@@ -567,8 +583,9 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Set the original database URL.
-	 *
-	 * @param url the database url
+	 * 
+	 * @param url
+	 *            the database url
 	 */
 	public void setOriginalURL(String url) {
 		originalURL = url;
@@ -576,18 +593,20 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Generate an URL format exception.
-	 *
+	 * 
 	 * @return the exception
 	 */
 	SQLException getFormatException() {
 		String format = Constants.URL_FORMAT;
-		return Message.getSQLException(ErrorCode.URL_FORMAT_ERROR_2, new String[] { format, url });
+		return Message.getSQLException(ErrorCode.URL_FORMAT_ERROR_2,
+				new String[] { format, url });
 	}
 
 	/**
 	 * Switch to server mode, and set the server name and database key.
-	 *
-	 * @param serverKey the server name, '/', and the security key
+	 * 
+	 * @param serverKey
+	 *            the server name, '/', and the security key
 	 */
 	public void setServerKey(String serverKey) {
 		remote = true;
@@ -596,12 +615,13 @@ public class ConnectionInfo implements Cloneable {
 	}
 
 	/**
-	 * Check if the referenced database is a System Table to other databases in the system.
-	 *
+	 * Check if the referenced database is a System Table to other databases in
+	 * the system.
+	 * 
 	 * @return true if it is
 	 */
 	public boolean isSystemTable() {
-		if (originalURL != null){
+		if (originalURL != null) {
 			return (originalURL.contains(":sm:"));
 		} else {
 			return false;
@@ -610,6 +630,7 @@ public class ConnectionInfo implements Cloneable {
 
 	/**
 	 * Return the port on which the connection was made.
+	 * 
 	 * @return
 	 */
 	public int getPort() {
@@ -617,10 +638,12 @@ public class ConnectionInfo implements Cloneable {
 	}
 
 	/**
-	 * Get the specified location of the System Table. Will be null if none was specified.
+	 * Get the specified location of the System Table. Will be null if none was
+	 * specified.
+	 * 
 	 * @return
 	 */
-	public String getSystemTableLocation(){
+	public String getSystemTableLocation() {
 		return schema_manager_location;
 	}
 

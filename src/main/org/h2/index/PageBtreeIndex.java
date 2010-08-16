@@ -17,14 +17,15 @@ import org.h2.result.SearchRow;
 import org.h2.store.DataPage;
 import org.h2.store.PageStore;
 import org.h2.store.Record;
+import org.h2.table.Column;
 import org.h2.table.IndexColumn;
 import org.h2.table.TableData;
 import org.h2.value.Value;
 import org.h2.value.ValueLob;
 
 /**
- * This is the most common type of index, a b tree index.
- * Only the data of the indexed columns are stored in the index.
+ * This is the most common type of index, a b tree index. Only the data of the
+ * indexed columns are stored in the index.
  */
 public class PageBtreeIndex extends BaseIndex {
 
@@ -34,8 +35,9 @@ public class PageBtreeIndex extends BaseIndex {
 	private long rowCount;
 	private boolean needRebuild;
 
-	public PageBtreeIndex(TableData table, int id, String indexName, IndexColumn[] columns,
-			IndexType indexType, int headPos) throws SQLException {
+	public PageBtreeIndex(TableData table, int id, String indexName,
+			IndexColumn[] columns, IndexType indexType, int headPos)
+			throws SQLException {
 		initBaseIndex(table, id, indexName, columns, indexType);
 		// trace.setLevel(TraceSystem.DEBUG);
 		if (database.isMultiVersion()) {
@@ -51,14 +53,15 @@ public class PageBtreeIndex extends BaseIndex {
 			// new index
 			needRebuild = true;
 			headPos = store.allocatePage();
-			PageBtreeLeaf root = new PageBtreeLeaf(this, headPos, Page.ROOT, store.createDataPage());
+			PageBtreeLeaf root = new PageBtreeLeaf(this, headPos, Page.ROOT,
+					store.createDataPage());
 			store.updateRecord(root, true, root.data);
 			int test;
-			//        } else if (store.isNew()) {
-			//            // the system table for a new database
-			//            PageBtreeLeaf root = new PageBtreeLeaf(this,
-			//                    headPos, Page.ROOT, store.createDataPage());
-			//            store.updateRecord(root, true, root.data);
+			// } else if (store.isNew()) {
+			// // the system table for a new database
+			// PageBtreeLeaf root = new PageBtreeLeaf(this,
+			// headPos, Page.ROOT, store.createDataPage());
+			// store.updateRecord(root, true, root.data);
 		} else {
 			rowCount = getPage(headPos).getRowCount();
 			int reuseKeysIfManyDeleted;
@@ -106,7 +109,8 @@ public class PageBtreeIndex extends BaseIndex {
 			page1.setPageId(id);
 			page1.setParentPageId(headPos);
 			page2.setParentPageId(headPos);
-			PageBtreeNode newRoot = new PageBtreeNode(this, rootPageId, Page.ROOT, store.createDataPage());
+			PageBtreeNode newRoot = new PageBtreeNode(this, rootPageId,
+					Page.ROOT, store.createDataPage());
 			newRoot.init(page1, pivot, page2);
 			store.updateRecord(page1, true, page1.data);
 			store.updateRecord(page2, true, page2.data);
@@ -118,8 +122,9 @@ public class PageBtreeIndex extends BaseIndex {
 
 	/**
 	 * Read the given page.
-	 *
-	 * @param id the page id
+	 * 
+	 * @param id
+	 *            the page id
 	 * @return the page
 	 */
 	PageBtree getPage(int id) throws SQLException {
@@ -140,10 +145,12 @@ public class PageBtreeIndex extends BaseIndex {
 			result = new PageBtreeNode(this, id, parentPageId, data);
 			break;
 		case Page.TYPE_EMPTY:
-			PageBtreeLeaf empty = new PageBtreeLeaf(this, id, parentPageId, data);
+			PageBtreeLeaf empty = new PageBtreeLeaf(this, id, parentPageId,
+					data);
 			return empty;
 		default:
-			throw Message.getSQLException(ErrorCode.FILE_CORRUPTED_1, "page=" + id + " type=" + type);
+			throw Message.getSQLException(ErrorCode.FILE_CORRUPTED_1, "page="
+					+ id + " type=" + type);
 		}
 		result.read();
 		return result;
@@ -153,15 +160,18 @@ public class PageBtreeIndex extends BaseIndex {
 		return false;
 	}
 
-	public Cursor findNext(Session session, SearchRow first, SearchRow last) throws SQLException {
+	public Cursor findNext(Session session, SearchRow first, SearchRow last)
+			throws SQLException {
 		return find(session, first, true, last);
 	}
 
-	public Cursor find(Session session, SearchRow first, SearchRow last) throws SQLException {
+	public Cursor find(Session session, SearchRow first, SearchRow last)
+			throws SQLException {
 		return find(session, first, false, last);
 	}
 
-	private Cursor find(Session session, SearchRow first, boolean bigger, SearchRow last) throws SQLException {
+	private Cursor find(Session session, SearchRow first, boolean bigger,
+			SearchRow last) throws SQLException {
 		if (SysProperties.CHECK && store == null) {
 			throw Message.getSQLException(ErrorCode.OBJECT_CLOSED);
 		}
@@ -171,7 +181,8 @@ public class PageBtreeIndex extends BaseIndex {
 		return cursor;
 	}
 
-	public Cursor findFirstOrLast(Session session, boolean first) throws SQLException {
+	public Cursor findFirstOrLast(Session session, boolean first)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
@@ -230,7 +241,8 @@ public class PageBtreeIndex extends BaseIndex {
 		store.removeRecord(headPos);
 		int todoLogOldData;
 		int freePages;
-		PageBtreeLeaf root = new PageBtreeLeaf(this, headPos, Page.ROOT, store.createDataPage());
+		PageBtreeLeaf root = new PageBtreeLeaf(this, headPos, Page.ROOT,
+				store.createDataPage());
 		store.updateRecord(root, true, null);
 		rowCount = 0;
 	}
@@ -241,9 +253,11 @@ public class PageBtreeIndex extends BaseIndex {
 
 	/**
 	 * Get a row from the data file.
-	 *
-	 * @param session the session
-	 * @param key the row key
+	 * 
+	 * @param session
+	 *            the session
+	 * @param key
+	 *            the row key
 	 * @return the row
 	 */
 	public Row getRow(Session session, int key) throws SQLException {
@@ -256,8 +270,9 @@ public class PageBtreeIndex extends BaseIndex {
 
 	/**
 	 * Read a row from the data page at the given position.
-	 *
-	 * @param data the data page
+	 * 
+	 * @param data
+	 *            the data page
 	 * @return the row
 	 */
 	Row readRow(DataPage data) throws SQLException {
@@ -283,17 +298,19 @@ public class PageBtreeIndex extends BaseIndex {
 
 	/**
 	 * Read a row from the data page at the given offset.
-	 *
-	 * @param data the data
-	 * @param offset the offset
+	 * 
+	 * @param data
+	 *            the data
+	 * @param offset
+	 *            the offset
 	 * @return the row
 	 */
 	SearchRow readRow(DataPage data, int offset) throws SQLException {
 		data.setPos(offset);
 		SearchRow row = table.getTemplateSimpleRow(columns.length == 1);
 		row.setPos(data.readInt());
-		for (int i = 0; i < columns.length; i++) {
-			int idx = columns[i].getColumnId();
+		for (Column column : columns) {
+			int idx = column.getColumnId();
 			row.setValue(idx, data.readValue());
 		}
 		return row;
@@ -301,31 +318,36 @@ public class PageBtreeIndex extends BaseIndex {
 
 	/**
 	 * Write a row to the data page at the given offset.
-	 *
-	 * @param data the data
-	 * @param offset the offset
-	 * @param row the row to write
+	 * 
+	 * @param data
+	 *            the data
+	 * @param offset
+	 *            the offset
+	 * @param row
+	 *            the row to write
 	 */
 	void writeRow(DataPage data, int offset, SearchRow row) throws SQLException {
 		data.setPos(offset);
 		data.writeInt(row.getPos());
-		for (int i = 0; i < columns.length; i++) {
-			int idx = columns[i].getColumnId();
+		for (Column column : columns) {
+			int idx = column.getColumnId();
 			data.writeValue(row.getValue(idx));
 		}
 	}
 
 	/**
 	 * Get the size of a row (only the part that is stored in the index).
-	 *
-	 * @param dummy a dummy data page to calculate the size
-	 * @param row the row
+	 * 
+	 * @param dummy
+	 *            a dummy data page to calculate the size
+	 * @param row
+	 *            the row
 	 * @return the number of bytes
 	 */
 	int getRowSize(DataPage dummy, SearchRow row) throws SQLException {
 		int rowsize = DataPage.LENGTH_INT;
-		for (int i = 0; i < columns.length; i++) {
-			Value v = row.getValue(columns[i].getColumnId());
+		for (Column column : columns) {
+			Value v = row.getValue(column.getColumnId());
 			rowsize += dummy.getValueLen(v);
 		}
 		return rowsize;

@@ -69,7 +69,7 @@ public class SetTypes {
 	public static final int TRACE_MAX_FILE_SIZE = 11;
 
 	/**
-	 * The type of a SET COLLATION  statement.
+	 * The type of a SET COLLATION statement.
 	 */
 	public static final int COLLATION = 12;
 
@@ -242,8 +242,9 @@ public class SetTypes {
 
 	/**
 	 * Get the set type number.
-	 *
-	 * @param name the set type name
+	 * 
+	 * @param name
+	 *            the set type name
 	 * @return the number
 	 */
 	public static int getType(String name) {
@@ -261,8 +262,9 @@ public class SetTypes {
 
 	/**
 	 * Get the set type name.
-	 *
-	 * @param type the type number
+	 * 
+	 * @param type
+	 *            the type number
 	 * @return the name
 	 */
 	public static String getTypeName(int type) {

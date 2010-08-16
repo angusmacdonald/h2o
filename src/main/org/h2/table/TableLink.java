@@ -37,14 +37,15 @@ import org.h2.value.ValueTime;
 import org.h2.value.ValueTimestamp;
 
 /**
- * A linked table contains connection information for a table accessible by JDBC.
- * The table may be stored in a different database.
+ * A linked table contains connection information for a table accessible by
+ * JDBC. The table may be stored in a different database.
  */
 public class TableLink extends Table {
 
 	private static final long ROW_COUNT_APPROXIMATION = 100000;
 
-	private String driver, url, user, password, originalSchema, originalTable, qualifiedTableName;
+	private String driver, url, user, password, originalSchema, originalTable,
+			qualifiedTableName;
 	private TableLinkConnection conn;
 	private HashMap prepared = new HashMap();
 	private final ObjectArray indexes = new ObjectArray();
@@ -57,8 +58,10 @@ public class TableLink extends Table {
 	private boolean globalTemporary;
 	private boolean readOnly;
 
-	public TableLink(Schema schema, int id, String name, String driver, String url, String user, String password,
-			String originalSchema, String originalTable, boolean emitUpdates, boolean force) throws SQLException {
+	public TableLink(Schema schema, int id, String name, String driver,
+			String url, String user, String password, String originalSchema,
+			String originalTable, boolean emitUpdates, boolean force)
+			throws SQLException {
 		super(schema, id, name, false);
 		this.driver = driver;
 		this.url = url;
@@ -76,7 +79,8 @@ public class TableLink extends Table {
 			}
 			Column[] cols = new Column[0];
 			setColumns(cols);
-			linkedIndex = new LinkedIndex(this, id, IndexColumn.wrap(cols), IndexType.createNonUnique(false));
+			linkedIndex = new LinkedIndex(this, id, IndexColumn.wrap(cols),
+					IndexType.createNonUnique(false));
 			indexes.add(linkedIndex);
 		}
 	}
@@ -99,13 +103,15 @@ public class TableLink extends Table {
 		storesLowerCase = meta.storesLowerCaseIdentifiers();
 		storesMixedCase = meta.storesMixedCaseIdentifiers();
 		supportsMixedCaseIdentifiers = meta.supportsMixedCaseIdentifiers();
-		ResultSet rs = meta.getTables(null, originalSchema, originalTable, null);
-		//		if (rs.next() && rs.next()) {
-		//			throw Message.getSQLException(ErrorCode.SCHEMA_NAME_MUST_MATCH, originalTable);
-		//		}
+		ResultSet rs = meta
+				.getTables(null, originalSchema, originalTable, null);
+		// if (rs.next() && rs.next()) {
+		// throw Message.getSQLException(ErrorCode.SCHEMA_NAME_MUST_MATCH,
+		// originalTable);
+		// }
 		rs.close();
 
-		if (originalTable.contains(".")){
+		if (originalTable.contains(".")) {
 			String[] split = originalTable.split("\\.");
 			originalSchema = split[0];
 			originalTable = split[1];
@@ -124,7 +130,8 @@ public class TableLink extends Table {
 			if (schema == null) {
 				schema = thisSchema;
 			}
-			if (!StringUtils.equals(catalog, thisCatalog) || !StringUtils.equals(schema, thisSchema)) {
+			if (!StringUtils.equals(catalog, thisCatalog)
+					|| !StringUtils.equals(schema, thisSchema)) {
 				// if the table exists in multiple schemas or tables,
 				// use the alternative solution
 				columnMap.clear();
@@ -141,7 +148,7 @@ public class TableLink extends Table {
 			int displaySize = MathUtils.convertLongToInt(precision);
 			int type = DataType.convertSQLTypeToValueType(sqlType);
 			Column col = new Column(n, type, precision, scale, displaySize);
-			if (rs.getString("COLUMN_DEF") == null){
+			if (rs.getString("COLUMN_DEF") == null) {
 				col.setNullable(rs.getBoolean("IS_NULLABLE"));
 			}
 			col.setTable(this, i++);
@@ -149,7 +156,8 @@ public class TableLink extends Table {
 			columnMap.put(n, col);
 		}
 		rs.close();
-		if (originalTable.indexOf('.') < 0 && !StringUtils.isNullOrEmpty(schema)) {
+		if (originalTable.indexOf('.') < 0
+				&& !StringUtils.isNullOrEmpty(schema)) {
 			qualifiedTableName = schema + "." + originalTable;
 		} else {
 			qualifiedTableName = originalTable;
@@ -158,7 +166,8 @@ public class TableLink extends Table {
 		Statement stat = null;
 		try {
 			stat = conn.getConnection().createStatement();
-			rs = stat.executeQuery("SELECT * FROM " + qualifiedTableName + " T WHERE 1=0");
+			rs = stat.executeQuery("SELECT * FROM " + qualifiedTableName
+					+ " T WHERE 1=0");
 			if (columnList.size() == 0) {
 				// alternative solution
 				ResultSetMetaData rsMeta = rs.getMetaData();
@@ -171,7 +180,8 @@ public class TableLink extends Table {
 					int scale = rsMeta.getScale(i + 1);
 					int displaySize = rsMeta.getColumnDisplaySize(i + 1);
 					int type = DataType.convertSQLTypeToValueType(sqlType);
-					Column col = new Column(n, type, precision, scale, displaySize);
+					Column col = new Column(n, type, precision, scale,
+							displaySize);
 					col.setTable(this, i++);
 					columnList.add(col);
 					columnMap.put(n, col);
@@ -179,8 +189,9 @@ public class TableLink extends Table {
 			}
 			rs.close();
 		} catch (SQLException e) {
-			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new String[] { originalTable + "("
-					+ e.toString() + ")" }, e);
+			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1,
+					new String[] { originalTable + "(" + e.toString() + ")" },
+					e);
 		} finally {
 			JdbcUtils.closeSilently(stat);
 		}
@@ -188,7 +199,8 @@ public class TableLink extends Table {
 		columnList.toArray(cols);
 		setColumns(cols);
 		int id = getId();
-		linkedIndex = new LinkedIndex(this, id, IndexColumn.wrap(cols), IndexType.createNonUnique(false));
+		linkedIndex = new LinkedIndex(this, id, IndexColumn.wrap(cols),
+				IndexType.createNonUnique(false));
 		indexes.add(linkedIndex);
 		try {
 			rs = meta.getPrimaryKeys(null, originalSchema, originalTable);
@@ -220,7 +232,8 @@ public class TableLink extends Table {
 			rs.close();
 		}
 		try {
-			rs = meta.getIndexInfo(null, originalSchema, originalTable, false, true);
+			rs = meta.getIndexInfo(null, originalSchema, originalTable, false,
+					true);
 		} catch (SQLException e) {
 			// Oracle throws an exception if the table is not found or is a
 			// SYNONYM
@@ -248,7 +261,8 @@ public class TableLink extends Table {
 					list.clear();
 				}
 				boolean unique = !rs.getBoolean("NON_UNIQUE");
-				indexType = unique ? IndexType.createUnique(false, false) : IndexType.createNonUnique(false);
+				indexType = unique ? IndexType.createUnique(false, false)
+						: IndexType.createNonUnique(false);
 				String col = rs.getString("COLUMN_NAME");
 				col = convertColumnName(col);
 				Column column = (Column) columnMap.get(col);
@@ -279,7 +293,8 @@ public class TableLink extends Table {
 	}
 
 	private String convertColumnName(String columnName) {
-		if ((storesMixedCase || storesLowerCase) && columnName.equals(StringUtils.toLowerEnglish(columnName))) {
+		if ((storesMixedCase || storesLowerCase)
+				&& columnName.equals(StringUtils.toLowerEnglish(columnName))) {
 			columnName = StringUtils.toUpperEnglish(columnName);
 		} else if (storesMixedCase && !supportsMixedCaseIdentifiers) {
 			// TeraData
@@ -291,7 +306,8 @@ public class TableLink extends Table {
 	private void addIndex(ObjectArray list, IndexType indexType) {
 		Column[] cols = new Column[list.size()];
 		list.toArray(cols);
-		Index index = new LinkedIndex(this, 0, IndexColumn.wrap(cols), indexType);
+		Index index = new LinkedIndex(this, 0, IndexColumn.wrap(cols),
+				indexType);
 		indexes.add(index);
 	}
 
@@ -334,8 +350,9 @@ public class TableLink extends Table {
 		return buff.toString();
 	}
 
-	public Index addIndex(Session session, String indexName, int indexId, IndexColumn[] cols, IndexType indexType,
-			int headPos, String comment) throws SQLException {
+	public Index addIndex(Session session, String indexName, int indexId,
+			IndexColumn[] cols, IndexType indexType, int headPos, String comment)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
@@ -393,13 +410,17 @@ public class TableLink extends Table {
 
 	/**
 	 * Wrap a SQL exception that occurred while accessing a linked table.
-	 *
-	 * @param sql the SQL statement
-	 * @param e the SQL exception from the remote database
+	 * 
+	 * @param sql
+	 *            the SQL statement
+	 * @param e
+	 *            the SQL exception from the remote database
 	 * @return the wrapped SQL exception
 	 */
 	public SQLException wrapException(String sql, SQLException e) {
-		return Message.getSQLException(ErrorCode.ERROR_ACCESSING_LINKED_TABLE_2, new String[] { sql, e.toString() }, e);
+		return Message.getSQLException(
+				ErrorCode.ERROR_ACCESSING_LINKED_TABLE_2,
+				new String[] { sql, e.toString() }, e);
 	}
 
 	public String getQualifiedTable() {
@@ -409,13 +430,16 @@ public class TableLink extends Table {
 	/**
 	 * Get a prepared statement object for the given statement. Prepared
 	 * statements are kept in a hash map to avoid re-creating them.
-	 *
-	 * @param sql the SQL statement
-	 * @param exclusive if the prepared statement must be removed from the map
-	 *          until reusePreparedStatement is called (only required for queries)
+	 * 
+	 * @param sql
+	 *            the SQL statement
+	 * @param exclusive
+	 *            if the prepared statement must be removed from the map until
+	 *            reusePreparedStatement is called (only required for queries)
 	 * @return the prepared statement
 	 */
-	public PreparedStatement getPreparedStatement(String sql, boolean exclusive) throws SQLException {
+	public PreparedStatement getPreparedStatement(String sql, boolean exclusive)
+			throws SQLException {
 		Trace trace = database.getTrace(Trace.TABLE);
 		if (trace.isDebugEnabled()) {
 			trace.debug(getName() + ":\n" + sql);
@@ -496,7 +520,7 @@ public class TableLink extends Table {
 	}
 
 	public void updateRows(Prepared prepared, Session session, RowList rows)
-	throws SQLException {
+			throws SQLException {
 		boolean deleteInsert;
 		checkReadOnly();
 		if (emitUpdates) {
@@ -535,15 +559,19 @@ public class TableLink extends Table {
 
 	/**
 	 * Add this prepared statement to the list of cached statements.
-	 *
-	 * @param prep the prepared statement
-	 * @param sql the SQL statement
+	 * 
+	 * @param prep
+	 *            the prepared statement
+	 * @param sql
+	 *            the SQL statement
 	 */
 	public void reusePreparedStatement(PreparedStatement prep, String sql) {
 		prepared.put(sql, prep);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.table.Table#isLocal()
 	 */
 	@Override

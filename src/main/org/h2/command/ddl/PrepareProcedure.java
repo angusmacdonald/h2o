@@ -13,8 +13,7 @@ import org.h2.engine.Procedure;
 import org.h2.engine.Session;
 
 /**
- * This class represents the statement
- * PREPARE
+ * This class represents the statement PREPARE
  */
 public class PrepareProcedure extends DefineCommand {
 

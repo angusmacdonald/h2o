@@ -23,8 +23,7 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
- * Represents a single SQL statements.
- * It wraps a prepared statement.
+ * Represents a single SQL statements. It wraps a prepared statement.
  */
 public class CommandContainer extends Command {
 
@@ -38,15 +37,20 @@ public class CommandContainer extends Command {
 		this.prepared = prepared;
 
 		/*
-		 * If this command is part of a larger transaction then this query proxy manager will be
-		 * over-written later on by a call from the Command list class. 
+		 * If this command is part of a larger transaction then this query proxy
+		 * manager will be over-written later on by a call from the Command list
+		 * class.
 		 */
-		if (!session.getApplicationAutoCommit() && session.getCurrentTransactionLocks() != null){
-			//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Using an existing proxy manager.");
+		if (!session.getApplicationAutoCommit()
+				&& session.getCurrentTransactionLocks() != null) {
+			// Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
+			// "Using an existing proxy manager.");
 			this.proxyManager = session.getCurrentTransactionLocks();
 		} else {
-			//Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Creating a new proxy manager.");
-			this.proxyManager = new QueryProxyManager(parser.getSession().getDatabase(), getSession());
+			// Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
+			// "Creating a new proxy manager.");
+			this.proxyManager = new QueryProxyManager(parser.getSession()
+					.getDatabase(), getSession());
 			session.setCurrentTransactionLocks(this.proxyManager);
 		}
 	}
@@ -94,9 +98,9 @@ public class CommandContainer extends Command {
 	public int update() throws SQLException, RemoteException {
 		int resultOfUpdate = update(false);
 
-		//		if (!getSession().getAutoCommit()){
-		//			ErrorHandling.hardError("Unexpected code path. This shouldn't be called when auto-commit is off.");
-		//		}
+		// if (!getSession().getAutoCommit()){
+		// ErrorHandling.hardError("Unexpected code path. This shouldn't be called when auto-commit is off.");
+		// }
 
 		return resultOfUpdate;
 	}
@@ -105,30 +109,37 @@ public class CommandContainer extends Command {
 		return query(maxrows, false);
 	}
 
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Command#query(int, boolean)
 	 */
 	@Override
 	protected LocalResult query(int maxrows, boolean partOfMultiQueryTransaction)
-	throws SQLException {
+			throws SQLException {
 		recompileIfRequired();
 
 		start();
 		prepared.checkParameters();
 
 		/*
-		 * If this is a SELECT query that does not target any meta-tables then locks must be acquired. If it is something else then no locks are needed.
+		 * If this is a SELECT query that does not target any meta-tables then
+		 * locks must be acquired. If it is something else then no locks are
+		 * needed.
 		 */
-		if (!prepared.sqlStatement.contains("H2O.") && !prepared.sqlStatement.contains("INFORMATION_SCHEMA.")&& 
-				!prepared.sqlStatement.contains("SYSTEM_RANGE") && !prepared.sqlStatement.contains("information_schema.") && 
-				prepared instanceof Select){
+		if (!prepared.sqlStatement.contains("H2O.")
+				&& !prepared.sqlStatement.contains("INFORMATION_SCHEMA.")
+				&& !prepared.sqlStatement.contains("SYSTEM_RANGE")
+				&& !prepared.sqlStatement.contains("information_schema.")
+				&& prepared instanceof Select) {
 
-			this.acquireLocks(proxyManager); 
+			this.acquireLocks(proxyManager);
 
-			if (!proxyManager.hasAllLocks()){
-				//TODO implement lock request timeout - look at TableData.doLock().
-				throw new SQLException("Couldn't obtain locks for all tables involved in query.");
+			if (!proxyManager.hasAllLocks()) {
+				// TODO implement lock request timeout - look at
+				// TableData.doLock().
+				throw new SQLException(
+						"Couldn't obtain locks for all tables involved in query.");
 			}
 		}
 
@@ -137,53 +148,60 @@ public class CommandContainer extends Command {
 			prepared.trace(startTime, result.getRowCount());
 			proxyManager.endTransaction(null);
 			return result;
-		} catch(SQLException e){
+		} catch (SQLException e) {
 			proxyManager.endTransaction(null);
 			throw e;
 		}
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Command#update(boolean)
 	 */
 	@Override
-	protected int update(boolean partOfMultiQueryTransaction) throws SQLException, RemoteException {
+	protected int update(boolean partOfMultiQueryTransaction)
+			throws SQLException, RemoteException {
 		recompileIfRequired();
 		start();
 		prepared.checkParameters();
 		int updateCount;
 
-		boolean singleQuery = !partOfMultiQueryTransaction, transactionCommand = prepared.isTransactionCommand();
+		boolean singleQuery = !partOfMultiQueryTransaction, transactionCommand = prepared
+				.isTransactionCommand();
 
-		if (!transactionCommand){ //Not a prepare or commit.
-			assert(proxyManager != null);
+		if (!transactionCommand) { // Not a prepare or commit.
+			assert (proxyManager != null);
 
-			//Acquire distributed locks. 
-			QueryProxy proxy = this.acquireLocks(proxyManager); 
+			// Acquire distributed locks.
+			QueryProxy proxy = this.acquireLocks(proxyManager);
 
-			//assert(proxy != null);
+			// assert(proxy != null);
 
-			if (proxy != null){
-			proxyManager.addProxy(proxy);	//checks that a lock is held for table, then adds the proxy.
+			if (proxy != null) {
+				proxyManager.addProxy(proxy); // checks that a lock is held for
+												// table, then adds the proxy.
 			}
-			
-			if (Diagnostic.getLevel() == DiagnosticLevel.FULL){
+
+			if (Diagnostic.getLevel() == DiagnosticLevel.FULL) {
 				proxyManager.addSQL(prepared.getSQL());
 			}
 
 			try {
 
-				updateCount = prepared.update(proxyManager.getTransactionName());
+				updateCount = prepared
+						.update(proxyManager.getTransactionName());
 
-				boolean commit = true; //An exception would already have been thrown if it should have been a rollback.
-
+				boolean commit = true; // An exception would already have been
+										// thrown if it should have been a
+										// rollback.
 
 				H2OTest.createTableFailure();
 
-
-				if (singleQuery && session.getApplicationAutoCommit()){ 
+				if (singleQuery && session.getApplicationAutoCommit()) {
 					/*
-					 * If it is one of a number of queries in the transaction then we must wait for the entire transaction to finish.
+					 * If it is one of a number of queries in the transaction
+					 * then we must wait for the entire transaction to finish.
 					 */
 
 					proxyManager.commit(commit, true);
@@ -192,7 +210,7 @@ public class CommandContainer extends Command {
 					session.setCurrentTransactionLocks(proxyManager);
 				}
 
-			} catch (SQLException e){
+			} catch (SQLException e) {
 				proxyManager.commit(false, true);
 				session.setCurrentTransactionLocks(null);
 				throw e;
@@ -206,17 +224,16 @@ public class CommandContainer extends Command {
 				updateCount = prepared.update();
 
 				session.setCurrentTransactionLocks(null);
-			} catch (SQLException e){
-				ErrorHandling.errorNoEvent("Transaction not found for query: " + prepared.getSQL());
+			} catch (SQLException e) {
+				ErrorHandling.errorNoEvent("Transaction not found for query: "
+						+ prepared.getSQL());
 				throw e;
 			}
 		}
 
-
 		prepared.trace(startTime, updateCount);
 		return updateCount;
 	}
-
 
 	public boolean isReadOnly() {
 		return prepared.isReadOnly();
@@ -226,22 +243,27 @@ public class CommandContainer extends Command {
 		return prepared.queryMeta();
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Command#acquireLocks()
 	 */
 	@Override
-	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager2) throws SQLException {
+	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager2)
+			throws SQLException {
 		return prepared.acquireLocks(proxyManager);
 	}
 
 	/**
 	 * @return
 	 */
-	public  String getTableName(){
+	public String getTableName() {
 		return prepared.table.getFullName();
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Command#shouldBePropagated()
 	 */
 	@Override
@@ -249,16 +271,22 @@ public class CommandContainer extends Command {
 		return prepared.shouldBePropagated();
 	}
 
-	/* (non-Javadoc)
-	 * @see org.h2.command.Command#addQueryProxyManager(org.h2.h2o.comms.QueryProxyManager)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.h2.command.Command#addQueryProxyManager(org.h2.h2o.comms.
+	 * QueryProxyManager)
 	 */
 	@Override
 	public void addQueryProxyManager(QueryProxyManager proxyManager) {
-		if (proxyManager == null) return;
+		if (proxyManager == null)
+			return;
 		this.proxyManager = proxyManager;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.CommandInterface#getQueryProxyManager()
 	 */
 	@Override
@@ -266,7 +294,9 @@ public class CommandContainer extends Command {
 		return proxyManager;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.CommandInterface#isPreparedStatement(boolean)
 	 */
 	@Override

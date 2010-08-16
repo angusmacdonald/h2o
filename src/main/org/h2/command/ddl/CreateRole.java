@@ -15,8 +15,7 @@ import org.h2.engine.Session;
 import org.h2.message.Message;
 
 /**
- * This class represents the statement
- * CREATE ROLE
+ * This class represents the statement CREATE ROLE
  */
 public class CreateRole extends DefineCommand {
 
@@ -40,13 +39,15 @@ public class CreateRole extends DefineCommand {
 		session.commit(true);
 		Database db = session.getDatabase();
 		if (db.findUser(roleName) != null) {
-			throw Message.getSQLException(ErrorCode.USER_ALREADY_EXISTS_1, roleName);
+			throw Message.getSQLException(ErrorCode.USER_ALREADY_EXISTS_1,
+					roleName);
 		}
 		if (db.findRole(roleName) != null) {
 			if (ifNotExists) {
 				return 0;
 			}
-			throw Message.getSQLException(ErrorCode.ROLE_ALREADY_EXISTS_1, roleName);
+			throw Message.getSQLException(ErrorCode.ROLE_ALREADY_EXISTS_1,
+					roleName);
 		}
 		int id = getObjectId(false, true);
 		Role role = new Role(db, id, roleName, false);

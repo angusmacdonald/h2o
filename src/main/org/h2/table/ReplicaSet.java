@@ -14,10 +14,10 @@ import org.h2.util.ObjectArray;
 
 /**
  * H2O. Contains a set of replicas for a single table instance.
- *
+ * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class ReplicaSet{
+public class ReplicaSet {
 
 	/**
 	 * The name of the table for which these replicas represent.
@@ -40,11 +40,12 @@ public class ReplicaSet{
 	private Table localCopy;
 
 	/**
-	 * Create a ReplicaSet for a new table in the system. The first instance of this table is automatically
-	 * made the primary.
+	 * Create a ReplicaSet for a new table in the system. The first instance of
+	 * this table is automatically made the primary.
+	 * 
 	 * @param obj
 	 */
-	public ReplicaSet(SchemaObject obj){
+	public ReplicaSet(SchemaObject obj) {
 
 		Table table = (Table) obj;
 
@@ -53,57 +54,63 @@ public class ReplicaSet{
 		replicas.add(table);
 
 		primaryCopy = table;
-		localCopy = (table.isLocal())? table: null;
+		localCopy = (table.isLocal()) ? table : null;
 
 		tableName = primaryCopy.getName();
 	}
 
 	/**
 	 * Get the Table instance associated with the primary copy of this table.
+	 * 
 	 * @return
 	 */
-	public Table getPrimaryCopy(){
+	public Table getPrimaryCopy() {
 		return primaryCopy;
 	}
 
 	/**
-	 * Get a reference to a local copy of the data, if one exists. If not, null is returned.
+	 * Get a reference to a local copy of the data, if one exists. If not, null
+	 * is returned.
+	 * 
 	 * @return
 	 */
-	public Table getLocalCopy(){
+	public Table getLocalCopy() {
 		return localCopy;
 	}
 
-	public Set<Table> getAllCopies(){
+	public Set<Table> getAllCopies() {
 		return replicas;
 	}
 
 	/**
 	 * Add a new replica for the table this replica set represents.
-	 * @param table	The replica to be added.
+	 * 
+	 * @param table
+	 *            The replica to be added.
 	 */
-	public void addNewReplica(SchemaObject obj){
+	public void addNewReplica(SchemaObject obj) {
 		Table table = (Table) obj;
 
-		localCopy = (table.isLocal())? table: null;
+		localCopy = (table.isLocal()) ? table : null;
 
 		replicas.add(table);
 
-		if (primaryCopy == null){
+		if (primaryCopy == null) {
 			primaryCopy = table;
 		}
 	}
 
 	/**
 	 * The name of the table which these replicas represent.
+	 * 
 	 * @return Table name.
 	 */
-	public String getTableName(){
+	public String getTableName() {
 		return tableName;
 	}
 
 	@Override
-	public String toString(){
+	public String toString() {
 		return getTableName();
 	}
 
@@ -117,17 +124,22 @@ public class ReplicaSet{
 	}
 
 	/**
-	 * Return a single copy of the replica. Try to get a local copy first, but if none exists get another one.
+	 * Return a single copy of the replica. Try to get a local copy first, but
+	 * if none exists get another one.
+	 * 
 	 * @return
 	 */
 	public Table getACopy() {
-		return (getLocalCopy() == null)? getPrimaryCopy(): getLocalCopy();
+		return (getLocalCopy() == null) ? getPrimaryCopy() : getLocalCopy();
 	}
 
 	/**
-	 * Remove a single copy of this data. If no more copies exist this method will return false; otherwise, true.
-	 * @param table	Table to be removed.
-	 * @return	True, if other tables exist.
+	 * Remove a single copy of this data. If no more copies exist this method
+	 * will return false; otherwise, true.
+	 * 
+	 * @param table
+	 *            Table to be removed.
+	 * @return True, if other tables exist.
 	 */
 	public boolean removeCopy(Table table) {
 		replicas.remove(table);
@@ -137,16 +149,17 @@ public class ReplicaSet{
 		if (table == primaryCopy)
 			primaryCopy = null;
 
-		return (replicas.size() == 0)? false: true;
+		return (replicas.size() == 0) ? false : true;
 	}
 
-	/** 
+	/**
 	 * Add dependancies to each copy.
+	 * 
 	 * @param set
 	 */
 	public void addDependencies(Set set) {
-		if (replicas != null && replicas.size() > 0){
-			for (Table table: replicas){
+		if (replicas != null && replicas.size() > 0) {
+			for (Table table : replicas) {
 				table.addDependencies(set);
 			}
 		}
@@ -154,37 +167,39 @@ public class ReplicaSet{
 
 	/**
 	 * Get the SQL required to create the table and everything it relies on.
+	 * 
 	 * @return
 	 */
 	public String getSQL() {
-		if (getLocalCopy() != null){
+		if (getLocalCopy() != null) {
 			return getLocalCopy().getSQL();
-		} else if (getPrimaryCopy() != null){
+		} else if (getPrimaryCopy() != null) {
 			return getPrimaryCopy().getSQL();
-		} 
+		}
 		return null;
 	}
 
 	/**
 	 * The SQL required to create the table
+	 * 
 	 * @return
 	 */
 	public String getCreateSQL() {
-		if (getLocalCopy() != null){
+		if (getLocalCopy() != null) {
 			return getLocalCopy().getCreateSQL();
-		} else if (getPrimaryCopy() != null){
+		} else if (getPrimaryCopy() != null) {
 			return getPrimaryCopy().getCreateSQL();
-		} 
+		}
 		return null;
 	}
 
 	/**
-	 * @throws SQLException 
+	 * @throws SQLException
 	 * 
 	 */
 	public void checkRename() throws SQLException {
-		if (replicas != null && replicas.size() > 0){
-			for (Table table: replicas){
+		if (replicas != null && replicas.size() > 0) {
+			for (Table table : replicas) {
 				table.checkRename();
 			}
 		}
@@ -192,11 +207,11 @@ public class ReplicaSet{
 
 	/**
 	 * @param newName
-	 * @throws SQLException 
+	 * @throws SQLException
 	 */
 	public void rename(String newName) throws SQLException {
-		if (replicas != null && replicas.size() > 0){
-			for (Table table: replicas){
+		if (replicas != null && replicas.size() > 0) {
+			for (Table table : replicas) {
 				table.rename(newName);
 			}
 		}
@@ -204,75 +219,89 @@ public class ReplicaSet{
 
 	public Index addIndex(Session session, String indexName, int indexId,
 			IndexColumn[] cols, IndexType indexType, int headPos, String comment)
-	throws SQLException {
+			throws SQLException {
 
 		Index index = null;
-		for (Table table: replicas){
-			Index tempIndex = table.addIndex(session, indexName, indexId, cols, indexType, headPos, comment);
+		for (Table table : replicas) {
+			Index tempIndex = table.addIndex(session, indexName, indexId, cols,
+					indexType, headPos, comment);
 
-			if (table == localCopy){
+			if (table == localCopy) {
 				index = tempIndex;
 			}
 		}
 		return index;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.table.Table#addRow(org.h2.engine.Session, org.h2.result.Row)
 	 */
 
 	public void addRow(Session session, Row row) throws SQLException {
-		for (Table table: replicas){
+		for (Table table : replicas) {
 			table.addRow(session, row);
 		}
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.table.Table#canDrop()
 	 */
 
 	public boolean canDrop() {
-		if (localCopy == primaryCopy){
+		if (localCopy == primaryCopy) {
 			return primaryCopy.canDrop();
 		} else {
 			return false;
 		}
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.table.Table#canGetRowCount()
 	 */
 
 	public boolean canGetRowCount() {
-		if (localCopy != null){
+		if (localCopy != null) {
 			return localCopy.canGetRowCount();
-		} else if (primaryCopy != null){
-			return primaryCopy.canGetRowCount(); 
+		} else if (primaryCopy != null) {
+			return primaryCopy.canGetRowCount();
 		} else {
-			return ((Table)replicas.toArray()[0]).canGetRowCount();
+			return ((Table) replicas.toArray()[0]).canGetRowCount();
 		}
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.table.Table#checkSupportAlter()
 	 */
 
 	public void checkSupportAlter() throws SQLException {
-		for (Table table: replicas){
-			table.checkSupportAlter();		}
+		for (Table table : replicas) {
+			table.checkSupportAlter();
+		}
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.table.Table#close(org.h2.engine.Session)
 	 */
 
 	public void close(Session session) throws SQLException {
-		for (Table table: replicas){
+		for (Table table : replicas) {
 			table.close(session);
 		}
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.table.Table#getIndexes()
 	 */
 
@@ -282,7 +311,9 @@ public class ReplicaSet{
 		return null;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.table.Table#getMaxDataModificationId()
 	 */
 
@@ -290,43 +321,49 @@ public class ReplicaSet{
 
 		long max = 0;
 
-		for (Table table: replicas){
-			if (max < table.getMaxDataModificationId()){
+		for (Table table : replicas) {
+			if (max < table.getMaxDataModificationId()) {
 				max = table.getMaxDataModificationId();
 			}
 		}
 		return max;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.table.Table#getRowCount(org.h2.engine.Session)
 	 */
 
 	public long getRowCount(Session session) throws SQLException {
-		if (localCopy != null){
+		if (localCopy != null) {
 			return localCopy.getRowCount(session);
-		} else if (primaryCopy != null){
+		} else if (primaryCopy != null) {
 			return primaryCopy.getRowCount(session);
 		} else {
-			return ((Table)replicas.toArray()[0]).getRowCount(session);
+			return ((Table) replicas.toArray()[0]).getRowCount(session);
 		}
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.table.Table#getRowCountApproximation()
 	 */
 
 	public long getRowCountApproximation() {
-		if (localCopy != null){
+		if (localCopy != null) {
 			return localCopy.getRowCountApproximation();
-		} else if (primaryCopy != null){
+		} else if (primaryCopy != null) {
 			return primaryCopy.getRowCountApproximation();
 		} else {
-			return ((Table)replicas.toArray()[0]).getRowCountApproximation();
+			return ((Table) replicas.toArray()[0]).getRowCountApproximation();
 		}
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.table.Table#getScanIndex(org.h2.engine.Session)
 	 */
 
@@ -336,7 +373,9 @@ public class ReplicaSet{
 		return null;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.table.Table#getTableType()
 	 */
 
@@ -345,7 +384,9 @@ public class ReplicaSet{
 		return null;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.table.Table#getUniqueIndex()
 	 */
 
@@ -354,7 +395,9 @@ public class ReplicaSet{
 		return null;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.table.Table#isLocal()
 	 */
 
@@ -363,7 +406,9 @@ public class ReplicaSet{
 		return false;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.table.Table#isLockedExclusively()
 	 */
 
@@ -372,26 +417,33 @@ public class ReplicaSet{
 		return false;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.table.Table#lock(org.h2.engine.Session, boolean, boolean)
 	 */
 
 	public void lock(Session session, boolean exclusive, boolean force)
-	throws SQLException {
+			throws SQLException {
 		Message.throwInternalError("Shouldn't be called.");
 	}
 
-	/* (non-Javadoc)
-	 * @see org.h2.table.Table#removeRow(org.h2.engine.Session, org.h2.result.Row)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.h2.table.Table#removeRow(org.h2.engine.Session,
+	 * org.h2.result.Row)
 	 */
 
 	public void removeRow(Session session, Row row) throws SQLException {
-		for (Table table: replicas){
+		for (Table table : replicas) {
 			table.removeRow(session, row);
 		}
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.table.Table#truncate(org.h2.engine.Session)
 	 */
 
@@ -399,7 +451,9 @@ public class ReplicaSet{
 		Message.throwInternalError("Can't be called yet.");
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.table.Table#unlock(org.h2.engine.Session)
 	 */
 
@@ -407,23 +461,26 @@ public class ReplicaSet{
 		Message.throwInternalError("Can't be called yet.");
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.engine.DbObjectBase#getDropSQL()
 	 */
 
 	public String getDropSQL() {
-		if (localCopy != null){
+		if (localCopy != null) {
 			return localCopy.getDropSQL();
-		} else if (primaryCopy != null){
+		} else if (primaryCopy != null) {
 			return primaryCopy.getDropSQL();
 		} else {
-			return ((Table)replicas.toArray()[0]).getDropSQL();
+			return ((Table) replicas.toArray()[0]).getDropSQL();
 		}
 	}
 
 	/**
 	 * The number of replicas for this table.
-	 * @return	Number of replicas.
+	 * 
+	 * @return Number of replicas.
 	 */
 	public int size() {
 		return replicas.size();

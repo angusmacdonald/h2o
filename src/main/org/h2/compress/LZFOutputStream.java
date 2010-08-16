@@ -12,8 +12,8 @@ import java.io.OutputStream;
 import org.h2.engine.Constants;
 
 /**
- * An output stream to write an LZF stream.
- * The data is automatically compressed.
+ * An output stream to write an LZF stream. The data is automatically
+ * compressed.
  */
 public class LZFOutputStream extends OutputStream {
 

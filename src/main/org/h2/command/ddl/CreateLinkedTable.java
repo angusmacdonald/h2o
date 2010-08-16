@@ -17,8 +17,7 @@ import org.h2.schema.Schema;
 import org.h2.table.TableLink;
 
 /**
- * This class represents the statement
- * CREATE LINKED TABLE
+ * This class represents the statement CREATE LINKED TABLE
  */
 public class CreateLinkedTable extends SchemaCommand {
 
@@ -68,15 +67,18 @@ public class CreateLinkedTable extends SchemaCommand {
 		session.commit(true);
 		Database db = session.getDatabase();
 		session.getUser().checkAdmin();
-		if (getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE) != null) {
+		if (getSchema().findTableOrView(session, tableName,
+				LocationPreference.NO_PREFERENCE) != null) {
 			if (ifNotExists) {
 				return 0;
 			}
-			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1,
-					tableName);
+			throw Message.getSQLException(
+					ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
 		}
 		int id = getObjectId(false, true);
-		TableLink table = getSchema().createTableLink(id, tableName, driver, url, user, password, originalSchema, originalTable, emitUpdates, force);
+		TableLink table = getSchema().createTableLink(id, tableName, driver,
+				url, user, password, originalSchema, originalTable,
+				emitUpdates, force);
 		table.setTemporary(temporary);
 		table.setGlobalTemporary(globalTemporary);
 		table.setComment(comment);

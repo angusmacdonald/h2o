@@ -18,17 +18,19 @@ import org.h2.util.ObjectUtils;
  */
 public class ValueJavaObject extends ValueBytesBase {
 
-	private static final ValueJavaObject EMPTY = new ValueJavaObject(new byte[0]);
+	private static final ValueJavaObject EMPTY = new ValueJavaObject(
+			new byte[0]);
 
 	protected ValueJavaObject(byte[] v) {
 		super(v);
 	}
 
 	/**
-	 * Get or create a java object value for the given byte array.
-	 * Do not clone the data.
-	 *
-	 * @param b the byte array
+	 * Get or create a java object value for the given byte array. Do not clone
+	 * the data.
+	 * 
+	 * @param b
+	 *            the byte array
 	 * @return the value
 	 */
 	public static ValueJavaObject getNoCopy(byte[] b) {
@@ -46,7 +48,8 @@ public class ValueJavaObject extends ValueBytesBase {
 		return Value.JAVA_OBJECT;
 	}
 
-	public void set(PreparedStatement prep, int parameterIndex) throws SQLException {
+	public void set(PreparedStatement prep, int parameterIndex)
+			throws SQLException {
 		Object obj = ObjectUtils.deserialize(getBytesNoCopy());
 		prep.setObject(parameterIndex, obj, Types.JAVA_OBJECT);
 	}

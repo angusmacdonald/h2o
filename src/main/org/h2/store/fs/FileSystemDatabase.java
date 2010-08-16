@@ -37,7 +37,8 @@ public class FileSystemDatabase extends FileSystem {
 	private HashMap preparedMap = new HashMap();
 	private boolean log;
 
-	private FileSystemDatabase(String url, Connection conn, boolean log) throws SQLException {
+	private FileSystemDatabase(String url, Connection conn, boolean log)
+			throws SQLException {
 		this.url = url;
 		this.conn = conn;
 		this.log = log;
@@ -50,21 +51,23 @@ public class FileSystemDatabase extends FileSystem {
 				+ "UNIQUE(PARENTID, NAME))");
 		stat.execute("CREATE TABLE IF NOT EXISTS FILEDATA("
 				+ "ID BIGINT PRIMARY KEY, DATA BLOB)");
-		PreparedStatement prep = conn.prepareStatement("SET MAX_LENGTH_INPLACE_LOB ?");
+		PreparedStatement prep = conn
+				.prepareStatement("SET MAX_LENGTH_INPLACE_LOB ?");
 		prep.setLong(1, 4096);
 		prep.execute();
 		stat.execute("MERGE INTO FILES VALUES(ZERO(), NULL, SPACE(ZERO()), ZERO(), NULL)");
 		commit();
 		if (log) {
-			ResultSet rs = stat.executeQuery("SELECT * FROM FILES ORDER BY PARENTID, NAME");
+			ResultSet rs = stat
+					.executeQuery("SELECT * FROM FILES ORDER BY PARENTID, NAME");
 			while (rs.next()) {
 				long id = rs.getLong("ID");
 				long parentId = rs.getLong("PARENTID");
 				String name = rs.getString("NAME");
 				long lastModified = rs.getLong("LASTMODIFIED");
 				long length = rs.getLong("LENGTH");
-				log(id + " " + name + " parent:" + parentId + " length:" + length + " lastMod:"
-						+ lastModified);
+				log(id + " " + name + " parent:" + parentId + " length:"
+						+ length + " lastMod:" + lastModified);
 			}
 		}
 	}
@@ -189,7 +192,8 @@ public class FileSystemDatabase extends FileSystem {
 			IOUtils.copyAndClose(in, out);
 		} catch (IOException e) {
 			rollback();
-			throw Message.convertIOException(e, "Can not copy " + original + " to " + copy);
+			throw Message.convertIOException(e, "Can not copy " + original
+					+ " to " + copy);
 		}
 	}
 
@@ -240,7 +244,8 @@ public class FileSystemDatabase extends FileSystem {
 		}
 	}
 
-	public String createTempFile(String name, String suffix, boolean deleteOnExit, boolean inTempDir) throws IOException {
+	public String createTempFile(String name, String suffix,
+			boolean deleteOnExit, boolean inTempDir) throws IOException {
 		name += ".";
 		for (int i = 0;; i++) {
 			String n = name + i + suffix;
@@ -292,7 +297,7 @@ public class FileSystemDatabase extends FileSystem {
 		return path[path.length - 1];
 	}
 
-	public synchronized  long getLastModified(String fileName) {
+	public synchronized long getLastModified(String fileName) {
 		try {
 			long id = getId(fileName, false);
 			PreparedStatement prep = prepare("SELECT LASTMODIFIED FROM FILES WHERE ID=?");
@@ -375,7 +380,8 @@ public class FileSystemDatabase extends FileSystem {
 		return new FileObjectInputStream(openFileObject(fileName, "r"));
 	}
 
-	public FileObject openFileObject(String fileName, String mode) throws IOException {
+	public FileObject openFileObject(String fileName, String mode)
+			throws IOException {
 		try {
 			long id = getId(fileName, false);
 			PreparedStatement prep = prepare("SELECT DATA FROM FILEDATA WHERE ID=?");
@@ -394,9 +400,11 @@ public class FileSystemDatabase extends FileSystem {
 		}
 	}
 
-	public OutputStream openFileOutputStream(String fileName, boolean append) throws SQLException {
+	public OutputStream openFileOutputStream(String fileName, boolean append)
+			throws SQLException {
 		try {
-			return new FileObjectOutputStream(openFileObject(fileName, "rw"), append);
+			return new FileObjectOutputStream(openFileObject(fileName, "rw"),
+					append);
 		} catch (IOException e) {
 			throw Message.convertIOException(e, fileName);
 		}
@@ -429,10 +437,13 @@ public class FileSystemDatabase extends FileSystem {
 
 	/**
 	 * Update a file in the file system.
-	 *
-	 * @param fileName the file name
-	 * @param b the data
-	 * @param len the number of bytes
+	 * 
+	 * @param fileName
+	 *            the file name
+	 * @param b
+	 *            the data
+	 * @param len
+	 *            the number of bytes
 	 */
 	synchronized void write(String fileName, byte[] b, int len) {
 		try {

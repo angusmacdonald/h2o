@@ -20,54 +20,57 @@ package org.h2o.db.manager.monitorthreads;
 import org.h2o.db.manager.InMemorySystemTable;
 
 /**
- * Periodically checks that Table Managers are still running. Attempts to re-instantiate them if they aren't.
+ * Periodically checks that Table Managers are still running. Attempts to
+ * re-instantiate them if they aren't.
  */
 public class TableManagerLivenessCheckerThread extends Thread {
 
 	private InMemorySystemTable inMemorySystemTable;
 
 	private boolean running = true;
-	
+
 	private final int defaultSleepTime;
 	private int sleepTime;
-	
-	public TableManagerLivenessCheckerThread(InMemorySystemTable inMemorySystemTable, int sleepTime) {
+
+	public TableManagerLivenessCheckerThread(
+			InMemorySystemTable inMemorySystemTable, int sleepTime) {
 		this.inMemorySystemTable = inMemorySystemTable;
 		this.sleepTime = sleepTime;
 		this.defaultSleepTime = sleepTime;
 	}
 
-	public void run(){
-		
-		while (isRunning()){
+	public void run() {
+
+		while (isRunning()) {
 			/*
 			 * Sleep.
 			 */
 			try {
 				Thread.sleep(sleepTime);
-			} catch (InterruptedException e) {}
-			
-			boolean updated = inMemorySystemTable.checkTableManagerAccessibility();
-			
-			if (!updated && sleepTime < Integer.MAX_VALUE){
+			} catch (InterruptedException e) {
+			}
+
+			boolean updated = inMemorySystemTable
+					.checkTableManagerAccessibility();
+
+			if (!updated && sleepTime < Integer.MAX_VALUE) {
 				sleepTime += 1000;
 			} else if (updated) {
 				sleepTime = defaultSleepTime;
 			}
 		}
 	}
-	
-	
+
 	/**
 	 * @return the running
 	 */
 	public synchronized boolean isRunning() {
-		return running ;
+		return running;
 	}
 
-
 	/**
-	 * @param running the running to set
+	 * @param running
+	 *            the running to set
 	 */
 	public synchronized void setRunning(boolean running) {
 		this.running = running;

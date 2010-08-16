@@ -19,12 +19,15 @@ public interface SessionInterface {
 
 	/**
 	 * Parse a command and prepare it for execution.
-	 *
-	 * @param sql the SQL statement
-	 * @param fetchSize the number of rows to fetch in one step
+	 * 
+	 * @param sql
+	 *            the SQL statement
+	 * @param fetchSize
+	 *            the number of rows to fetch in one step
 	 * @return the prepared command
 	 */
-	CommandInterface prepareCommand(String sql, int fetchSize) throws SQLException;
+	CommandInterface prepareCommand(String sql, int fetchSize)
+			throws SQLException;
 
 	/**
 	 * Roll back pending transactions and close the session.
@@ -33,37 +36,38 @@ public interface SessionInterface {
 
 	/**
 	 * Get the trace object
-	 *
+	 * 
 	 * @return the trace object
 	 */
 	Trace getTrace();
 
 	/**
 	 * Check if close was called.
-	 *
+	 * 
 	 * @return if the session has been closed
 	 */
 	boolean isClosed();
 
 	/**
-	 * Get the number of disk operations before power failure is simulated.
-	 * This is used for testing. If not set, 0 is returned
-	 *
+	 * Get the number of disk operations before power failure is simulated. This
+	 * is used for testing. If not set, 0 is returned
+	 * 
 	 * @return the number of operations, or 0
 	 */
 	int getPowerOffCount();
 
 	/**
-	 * Set the number of disk operations before power failure is simulated.
-	 * To disable the countdown, use 0.
-	 *
-	 * @param i the number of operations
+	 * Set the number of disk operations before power failure is simulated. To
+	 * disable the countdown, use 0.
+	 * 
+	 * @param i
+	 *            the number of operations
 	 */
 	void setPowerOffCount(int i) throws SQLException;
 
 	/**
 	 * Get the data handler object.
-	 *
+	 * 
 	 * @return the data handler
 	 */
 	DataHandler getDataHandler();
@@ -75,14 +79,14 @@ public interface SessionInterface {
 
 	/**
 	 * Check if the database changed and therefore reconnecting is required.
-	 *
+	 * 
 	 * @return true if reconnecting is required
 	 */
 	boolean isReconnectNeeded();
 
 	/**
 	 * Close the connection and open a new connection.
-	 *
+	 * 
 	 * @return the new connection
 	 */
 	SessionInterface reconnect() throws SQLException;

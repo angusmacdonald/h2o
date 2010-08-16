@@ -20,8 +20,7 @@ import org.h2o.db.query.QueryProxyManager;
 import org.h2o.db.query.locking.LockType;
 
 /**
- * This class represents the statement
- * ALTER TABLE DROP CONSTRAINT
+ * This class represents the statement ALTER TABLE DROP CONSTRAINT
  */
 public class AlterTableDropConstraint extends SchemaCommand {
 
@@ -29,7 +28,8 @@ public class AlterTableDropConstraint extends SchemaCommand {
 	private boolean ifExists;
 	private QueryProxy queryProxy = null;
 
-	public AlterTableDropConstraint(Session session, Schema schema, boolean ifExists, boolean internalQuery) {
+	public AlterTableDropConstraint(Session session, Schema schema,
+			boolean ifExists, boolean internalQuery) {
 		super(session, schema);
 		this.ifExists = ifExists;
 		setInternalQuery(internalQuery);
@@ -39,21 +39,23 @@ public class AlterTableDropConstraint extends SchemaCommand {
 		constraintName = string;
 	}
 
-
 	public int update(String transactionName) throws SQLException {
 		session.commit(true);
 
 		/*
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
-		if (isRegularTable()){
-			return queryProxy.executeUpdate(sqlStatement, transactionName, session);
+		if (isRegularTable()) {
+			return queryProxy.executeUpdate(sqlStatement, transactionName,
+					session);
 		}
 
-		Constraint constraint = getSchema().findConstraint(session, constraintName);
+		Constraint constraint = getSchema().findConstraint(session,
+				constraintName);
 		if (constraint == null) {
 			if (!ifExists) {
-				throw Message.getSQLException(ErrorCode.CONSTRAINT_NOT_FOUND_1, constraintName);
+				throw Message.getSQLException(ErrorCode.CONSTRAINT_NOT_FOUND_1,
+						constraintName);
 			}
 		} else {
 			session.getUser().checkRight(constraint.getTable(), Right.ALL);
@@ -63,35 +65,45 @@ public class AlterTableDropConstraint extends SchemaCommand {
 		return 0;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Prepared#acquireLocks()
 	 */
 	@Override
-	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager) throws SQLException {
+	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager)
+			throws SQLException {
 		/*
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
-		if (isRegularTable()){
+		if (isRegularTable()) {
 
-			queryProxy = queryProxyManager.getQueryProxy(getSchema().findConstraint(session, constraintName).getTable().getFullName());
+			queryProxy = queryProxyManager.getQueryProxy(getSchema()
+					.findConstraint(session, constraintName).getTable()
+					.getFullName());
 
-			if (queryProxy == null){
-				queryProxy = QueryProxy.getQueryProxyAndLock(getSchema().findConstraint(session, constraintName).getTable(), LockType.WRITE, session.getDatabase());
+			if (queryProxy == null) {
+				queryProxy = QueryProxy.getQueryProxyAndLock(getSchema()
+						.findConstraint(session, constraintName).getTable(),
+						LockType.WRITE, session.getDatabase());
 			}
 
 			return queryProxy;
 		}
 
-		return QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper());
+		return QueryProxy.getDummyQueryProxy(session.getDatabase()
+				.getLocalDatabaseInstanceInWrapper());
 
 	}
 
 	/**
-	 * True if the table involved in the prepared statement is a regular table - i.e. not an H2O meta-data table.
+	 * True if the table involved in the prepared statement is a regular table -
+	 * i.e. not an H2O meta-data table.
 	 */
 	protected boolean isRegularTable() {
 
-		return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery;
+		return Constants.IS_H2O && !session.getDatabase().isManagementDB()
+				&& !internalQuery;
 
 	}
 }

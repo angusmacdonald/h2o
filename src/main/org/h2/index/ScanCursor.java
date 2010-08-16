@@ -56,12 +56,14 @@ public class ScanCursor implements Cursor {
 						continue;
 					}
 					row = (Row) delta.next();
-					if (!row.getDeleted() || row.getSessionId() == session.getId()) {
+					if (!row.getDeleted()
+							|| row.getSessionId() == session.getId()) {
 						continue;
 					}
 				} else {
 					row = scan.getNextRow(session, row);
-					if (row != null && row.getSessionId() != 0 && row.getSessionId() != session.getId()) {
+					if (row != null && row.getSessionId() != 0
+							&& row.getSessionId() != session.getId()) {
 						continue;
 					}
 				}

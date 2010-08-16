@@ -17,8 +17,7 @@ import org.h2.schema.Schema;
 import org.h2.table.Table;
 
 /**
- * This class represents the statement
- * DROP VIEW
+ * This class represents the statement DROP VIEW
  */
 public class DropView extends SchemaCommand {
 
@@ -40,14 +39,17 @@ public class DropView extends SchemaCommand {
 	public int update() throws SQLException {
 		// TODO rights: what rights are required to drop a view?
 		session.commit(true);
-		Table view = getSchema().findTableOrView(session, viewName, LocationPreference.NO_PREFERENCE);
+		Table view = getSchema().findTableOrView(session, viewName,
+				LocationPreference.NO_PREFERENCE);
 		if (view == null) {
 			if (!ifExists) {
-				throw Message.getSQLException(ErrorCode.VIEW_NOT_FOUND_1, viewName);
+				throw Message.getSQLException(ErrorCode.VIEW_NOT_FOUND_1,
+						viewName);
 			}
 		} else {
 			if (!Table.VIEW.equals(view.getTableType())) {
-				throw Message.getSQLException(ErrorCode.VIEW_NOT_FOUND_1, viewName);
+				throw Message.getSQLException(ErrorCode.VIEW_NOT_FOUND_1,
+						viewName);
 			}
 			session.getUser().checkRight(view, Right.ALL);
 			view.lock(session, true, true);

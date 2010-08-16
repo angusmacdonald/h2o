@@ -12,8 +12,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 /**
- * Contains meta data information about a table or a view.
- * This class is used by the H2 Console.
+ * Contains meta data information about a table or a view. This class is used by
+ * the H2 Console.
  */
 public class DbTableOrView {
 
@@ -58,13 +58,13 @@ public class DbTableOrView {
 
 	/**
 	 * Read the column for this table from the database meta data.
-	 *
-	 * @param meta the database meta data
+	 * 
+	 * @param meta
+	 *            the database meta data
 	 */
 	void readColumns(DatabaseMetaData meta) throws SQLException {
 
 		ResultSet rs = meta.getColumns(null, schema.name, name, null);
-
 
 		ArrayList list = new ArrayList();
 		while (rs.next()) {

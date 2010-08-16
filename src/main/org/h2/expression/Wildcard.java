@@ -17,9 +17,9 @@ import org.h2.util.StringUtils;
 import org.h2.value.Value;
 
 /**
- * A wildcard expression as in SELECT * FROM TEST.
- * This object is only used temporarily during the parsing phase, and later
- * replaced by column expressions.
+ * A wildcard expression as in SELECT * FROM TEST. This object is only used
+ * temporarily during the parsing phase, and later replaced by column
+ * expressions.
  */
 public class Wildcard extends Expression {
 	private String schema;
@@ -42,7 +42,8 @@ public class Wildcard extends Expression {
 		throw Message.throwInternalError();
 	}
 
-	public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
+	public void mapColumns(ColumnResolver resolver, int level)
+			throws SQLException {
 		throw Message.getSQLException(ErrorCode.SYNTAX_ERROR_1, table);
 	}
 

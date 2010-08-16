@@ -21,7 +21,6 @@ import org.h2.message.TraceObject;
 import org.h2.util.IOUtils;
 import org.h2.value.Value;
 
-
 /**
  * Represents a CLOB value.
  */
@@ -45,7 +44,7 @@ public class JdbcClob extends TraceObject implements Clob
 
 	/**
 	 * Returns the length.
-	 *
+	 * 
 	 * @return the length
 	 */
 	public long length() throws SQLException {
@@ -88,7 +87,7 @@ public class JdbcClob extends TraceObject implements Clob
 
 	/**
 	 * Returns the input stream.
-	 *
+	 * 
 	 * @return the input stream
 	 */
 	public InputStream getAsciiStream() throws SQLException {
@@ -103,7 +102,7 @@ public class JdbcClob extends TraceObject implements Clob
 	}
 
 	/**
-	 * [Not supported] Returns an output  stream.
+	 * [Not supported] Returns an output stream.
 	 */
 	public OutputStream setAsciiStream(long pos) throws SQLException {
 		debugCodeCall("setAsciiStream", pos);
@@ -112,7 +111,7 @@ public class JdbcClob extends TraceObject implements Clob
 
 	/**
 	 * Returns the reader.
-	 *
+	 * 
 	 * @return the reader
 	 */
 	public Reader getCharacterStream() throws SQLException {
@@ -135,9 +134,11 @@ public class JdbcClob extends TraceObject implements Clob
 
 	/**
 	 * Returns a substring.
-	 *
-	 * @param pos the position (the first character is at position 1)
-	 * @param length the number of characters
+	 * 
+	 * @param pos
+	 *            the position (the first character is at position 1)
+	 * @param length
+	 *            the number of characters
 	 * @return the string
 	 */
 	public String getSubString(long pos, int length) throws SQLException {
@@ -174,15 +175,17 @@ public class JdbcClob extends TraceObject implements Clob
 	 * [Not supported] Sets a substring.
 	 */
 	public int setString(long pos, String str) throws SQLException {
-		debugCode("setString("+pos+", "+quote(str)+");");
+		debugCode("setString(" + pos + ", " + quote(str) + ");");
 		throw Message.getUnsupportedException();
 	}
 
 	/**
 	 * [Not supported] Sets a substring.
 	 */
-	public int setString(long pos, String str, int offset, int len) throws SQLException {
-		debugCode("setString("+pos+", "+quote(str)+", "+offset+", "+len+");");
+	public int setString(long pos, String str, int offset, int len)
+			throws SQLException {
+		debugCode("setString(" + pos + ", " + quote(str) + ", " + offset + ", "
+				+ len + ");");
 		throw Message.getUnsupportedException();
 	}
 
@@ -190,7 +193,7 @@ public class JdbcClob extends TraceObject implements Clob
 	 * [Not supported] Searches a pattern and return the position.
 	 */
 	public long position(String pattern, long start) throws SQLException {
-		debugCode("position("+quote(pattern)+", "+start+");");
+		debugCode("position(" + quote(pattern) + ", " + start + ");");
 		throw Message.getUnsupportedException();
 	}
 
@@ -198,7 +201,7 @@ public class JdbcClob extends TraceObject implements Clob
 	 * [Not supported] Searches a pattern and return the position.
 	 */
 	public long position(Clob clobPattern, long start) throws SQLException {
-		debugCode("position(clobPattern, "+start+");");
+		debugCode("position(clobPattern, " + start + ");");
 		throw Message.getUnsupportedException();
 	}
 
@@ -214,7 +217,7 @@ public class JdbcClob extends TraceObject implements Clob
 	 * [Not supported] Returns the reader, starting from an offset.
 	 */
 	public Reader getCharacterStream(long pos, long length) throws SQLException {
-		debugCode("getCharacterStream("+pos+", "+length+");");
+		debugCode("getCharacterStream(" + pos + ", " + length + ");");
 		throw Message.getUnsupportedException();
 	}
 

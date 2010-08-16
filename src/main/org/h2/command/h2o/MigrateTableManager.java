@@ -31,7 +31,6 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 
 	private String tableName;
 
-
 	/**
 	 * @param session
 	 * @param schema
@@ -39,13 +38,12 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 	public MigrateTableManager(Session session, Schema schema, String tableName) {
 		super(session, schema);
 
-
 		this.tableName = tableName;
 	}
 
-
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Prepared#isTransactional()
 	 */
 	@Override
@@ -53,8 +51,9 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 		return false;
 	}
 
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Prepared#update()
 	 */
 	@Override
@@ -65,74 +64,96 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 			Database db = this.session.getDatabase();
 			ISystemTableReference sm = db.getSystemTableReference();
 			String schemaName = "";
-			if (getSchema() != null){
+			if (getSchema() != null) {
 				schemaName = getSchema().getName();
 			} else {
 				schemaName = "PUBLIC";
 			}
-			
+
 			TableInfo ti = new TableInfo(tableName, schemaName);
 			TableManagerRemote tableManager = sm.lookup(ti, true);
 
-			if (tableManager == null){
-				Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, getSchema().getName() + tableName);
+			if (tableManager == null) {
+				Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1,
+						getSchema().getName() + tableName);
 			}
 
 			QueryProxy qp = null;
 			try {
-				qp = tableManager.getQueryProxy(LockType.WRITE, db.getLocalDatabaseInstanceInWrapper());
-			} catch (MovedException e){
-				tableManager = sm.lookup(new TableInfo(tableName, schemaName), false);
-				qp = tableManager.getQueryProxy(LockType.WRITE, db.getLocalDatabaseInstanceInWrapper());
+				qp = tableManager.getQueryProxy(LockType.WRITE,
+						db.getLocalDatabaseInstanceInWrapper());
+			} catch (MovedException e) {
+				tableManager = sm.lookup(new TableInfo(tableName, schemaName),
+						false);
+				qp = tableManager.getQueryProxy(LockType.WRITE,
+						db.getLocalDatabaseInstanceInWrapper());
 			}
 
-			if (!qp.getLockGranted().equals(LockType.NONE)){
-				result = migrateTableManagerToLocalInstance(tableManager, schemaName, db);
+			if (!qp.getLockGranted().equals(LockType.NONE)) {
+				result = migrateTableManagerToLocalInstance(tableManager,
+						schemaName, db);
 			} else {
-				throw Message.getSQLException(ErrorCode.LOCK_TIMEOUT_1, getSchema().getName() + tableName);
+				throw Message.getSQLException(ErrorCode.LOCK_TIMEOUT_1,
+						getSchema().getName() + tableName);
 			}
-			
-			H2OEventBus.publish(new H2OEvent(db.getURL(), DatabaseStates.TABLE_MANAGER_MIGRATION, ti.getFullTableName()));
-			
+
+			H2OEventBus.publish(new H2OEvent(db.getURL(),
+					DatabaseStates.TABLE_MANAGER_MIGRATION, ti
+							.getFullTableName()));
+
 		} catch (MovedException e) {
-			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, getSchema().getName() + tableName);
+			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1,
+					getSchema().getName() + tableName);
 		} catch (SQLException e) {
 			throw e;
-		}catch (Exception e) {
-			throw new SQLException("Failed to migrate table manager for " + getSchema().getName() + "." + tableName + ".");
+		} catch (Exception e) {
+			throw new SQLException("Failed to migrate table manager for "
+					+ getSchema().getName() + "." + tableName + ".");
 		}
 
 		return result;
 	}
 
-	public int migrateTableManagerToLocalInstance(TableManagerRemote oldTableManager, String schemaName, Database db) throws SQLException{
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Preparing to migrate Table Manager for [" + schemaName + "." + tableName);
+	public int migrateTableManagerToLocalInstance(
+			TableManagerRemote oldTableManager, String schemaName, Database db)
+			throws SQLException {
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL,
+				"Preparing to migrate Table Manager for [" + schemaName + "."
+						+ tableName);
 
 		/*
 		 * Create a new System Table instance locally.
 		 */
 		TableManagerRemote newTableManager = null;
 
-		TableInfo ti = new TableInfo(tableName, schemaName, 0l, 0, "TABLE", db.getURL());
+		TableInfo ti = new TableInfo(tableName, schemaName, 0l, 0, "TABLE",
+				db.getURL());
 
 		try {
 			newTableManager = new TableManager(ti, db);
 			newTableManager.persistToCompleteStartup(ti);
 		} catch (Exception e) {
-			ErrorHandling.exceptionError(e, "Failed to create new Table Manager [" + schemaName + "." + tableName + "].");
+			ErrorHandling.exceptionError(e,
+					"Failed to create new Table Manager [" + schemaName + "."
+							+ tableName + "].");
 		}
 
 		/*
 		 * Stop the old, remote, manager from accepting any more requests.
 		 */
 		try {
-			oldTableManager.prepareForMigration(db.getURL().getURLwithRMIPort());
+			oldTableManager
+					.prepareForMigration(db.getURL().getURLwithRMIPort());
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (MigrationException e) {
-			throw new SQLException("This Table Manager [" + schemaName + "." + tableName + "] is already being migrated to another instance.");
+			throw new SQLException("This Table Manager [" + schemaName + "."
+					+ tableName
+					+ "] is already being migrated to another instance.");
 		} catch (MovedException e) {
-			throw new SQLException("This Table Manager [" + schemaName + "." + tableName + "] is already being migrated to another instance.");
+			throw new SQLException("This Table Manager [" + schemaName + "."
+					+ tableName
+					+ "] is already being migrated to another instance.");
 		}
 
 		/*
@@ -142,55 +163,69 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 			newTableManager.buildTableManagerState(oldTableManager);
 		} catch (RemoteException e) {
 			e.printStackTrace();
-			throw new SQLException("Failed to migrate Table Manager [" + schemaName + "." + tableName + "] to new machine.");
+			throw new SQLException("Failed to migrate Table Manager ["
+					+ schemaName + "." + tableName + "] to new machine.");
 		} catch (MovedException e) {
-			throw new SQLException("This shouldn't be possible here. The Table Manager [" + schemaName + "." + tableName + "] has moved, but this instance should have had exclusive rights to it.");		
+			throw new SQLException(
+					"This shouldn't be possible here. The Table Manager ["
+							+ schemaName
+							+ "."
+							+ tableName
+							+ "] has moved, but this instance should have had exclusive rights to it.");
 		}
 
 		/*
-		 * Shut down the old, remote, System Table. Redirect requests to new manager.
+		 * Shut down the old, remote, System Table. Redirect requests to new
+		 * manager.
 		 */
 		try {
 			oldTableManager.completeMigration();
 		} catch (RemoteException e) {
-			throw new SQLException("Failed to complete migration [" + schemaName + "." + tableName + "].");
+			throw new SQLException("Failed to complete migration ["
+					+ schemaName + "." + tableName + "].");
 
 		} catch (MovedException e) {
-			throw new SQLException("This shouldn't be possible here. The Table Manager has moved, but this instance should have had exclusive rights to it.");
+			throw new SQLException(
+					"This shouldn't be possible here. The Table Manager has moved, but this instance should have had exclusive rights to it.");
 
 		} catch (MigrationException e) {
 			e.printStackTrace();
-			throw new SQLException("Migration process timed out [" + schemaName + "." + tableName + "]. It took too long.");
+			throw new SQLException("Migration process timed out [" + schemaName
+					+ "." + tableName + "]. It took too long.");
 		}
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Table Manager [" + schemaName + "." + tableName + "] officially migrated.");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Table Manager ["
+				+ schemaName + "." + tableName + "] officially migrated.");
 
 		/*
 		 * Confirm the new System Tables location by updating all local state.
 		 */
 		oldTableManager = newTableManager;
 
-
 		try {
 
-			TableManagerRemote stub = (TableManagerRemote) UnicastRemoteObject.exportObject(newTableManager, 0);
+			TableManagerRemote stub = (TableManagerRemote) UnicastRemoteObject
+					.exportObject(newTableManager, 0);
 
-			db.getSystemTableReference().getSystemTable().changeTableManagerLocation(stub, ti);
+			db.getSystemTableReference().getSystemTable()
+					.changeTableManagerLocation(stub, ti);
 			db.getSystemTableReference().addProxy(ti, newTableManager);
 		} catch (Exception e) {
-			ErrorHandling.exceptionError(e, "Table Manager migration failed [" + schemaName + "." + tableName + "].");
+			ErrorHandling.exceptionError(e, "Table Manager migration failed ["
+					+ schemaName + "." + tableName + "].");
 		}
 
 		return 1;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Prepared#update(java.lang.String)
 	 */
 	@Override
 	public int update(String transactionName) throws SQLException,
-	RemoteException {
+			RemoteException {
 		return update();
 	}
-
 
 }

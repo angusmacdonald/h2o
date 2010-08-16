@@ -18,9 +18,9 @@ public class MigrateSystemTable extends org.h2.command.ddl.SchemaCommand {
 		super(session, schema);
 	}
 
-
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Prepared#isTransactional()
 	 */
 	@Override
@@ -28,25 +28,28 @@ public class MigrateSystemTable extends org.h2.command.ddl.SchemaCommand {
 		return false;
 	}
 
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Prepared#update()
 	 */
 	@Override
 	public int update() throws SQLException, RemoteException {
-		this.session.getDatabase().getSystemTableReference().migrateSystemTableToLocalInstance();
+		this.session.getDatabase().getSystemTableReference()
+				.migrateSystemTableToLocalInstance();
 
 		return 0;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.h2.command.Prepared#update(java.lang.String)
 	 */
 	@Override
 	public int update(String transactionName) throws SQLException,
-	RemoteException {
+			RemoteException {
 		return update();
 	}
-
 
 }

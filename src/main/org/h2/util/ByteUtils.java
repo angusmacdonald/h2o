@@ -23,19 +23,23 @@ public class ByteUtils {
 	}
 
 	private static int readInt(byte[] buff, int pos) {
-		return (buff[pos++] << 24) + ((buff[pos++] & 0xff) << 16) + ((buff[pos++] & 0xff) << 8) + (buff[pos] & 0xff);
+		return (buff[pos++] << 24) + ((buff[pos++] & 0xff) << 16)
+				+ ((buff[pos++] & 0xff) << 8) + (buff[pos] & 0xff);
 	}
 
 	/**
 	 * Read a long value from the byte array at the given position. The most
 	 * significant byte is read first.
-	 *
-	 * @param buff the byte array
-	 * @param pos the position
+	 * 
+	 * @param buff
+	 *            the byte array
+	 * @param pos
+	 *            the position
 	 * @return the value
 	 */
 	public static long readLong(byte[] buff, int pos) {
-		return ((long) (readInt(buff, pos)) << 32) + (readInt(buff, pos + 4) & 0xffffffffL);
+		return ((long) (readInt(buff, pos)) << 32)
+				+ (readInt(buff, pos + 4) & 0xffffffffL);
 	}
 
 	/**
@@ -43,10 +47,13 @@ public class ByteUtils {
 	 * array, starting with the given index. This methods returns -1 if the
 	 * pattern has not been found, and the start position if the pattern is
 	 * empty.
-	 *
-	 * @param bytes the byte array
-	 * @param pattern the pattern
-	 * @param start the start index from where to search
+	 * 
+	 * @param bytes
+	 *            the byte array
+	 * @param pattern
+	 *            the pattern
+	 * @param start
+	 *            the start index from where to search
 	 * @return the index
 	 */
 	public static int indexOf(byte[] bytes, byte[] pattern, int start) {
@@ -70,8 +77,9 @@ public class ByteUtils {
 
 	/**
 	 * Convert a hex encoded string to a byte array.
-	 *
-	 * @param s the hex encoded string
+	 * 
+	 * @param s
+	 *            the hex encoded string
 	 * @return the byte array
 	 */
 	public static byte[] convertStringToBytes(String s) throws SQLException {
@@ -82,7 +90,8 @@ public class ByteUtils {
 		len /= 2;
 		byte[] buff = new byte[len];
 		for (int i = 0; i < len; i++) {
-			buff[i] = (byte) ((getHexDigit(s, i + i) << 4) | getHexDigit(s, i + i + 1));
+			buff[i] = (byte) ((getHexDigit(s, i + i) << 4) | getHexDigit(s, i
+					+ i + 1));
 		}
 		return buff;
 	}
@@ -102,8 +111,9 @@ public class ByteUtils {
 
 	/**
 	 * Calculate the hash code of the given byte array.
-	 *
-	 * @param value the byte array
+	 * 
+	 * @param value
+	 *            the byte array
 	 * @return the hash code
 	 */
 	public static int getByteArrayHash(byte[] value) {
@@ -128,8 +138,9 @@ public class ByteUtils {
 
 	/**
 	 * Convert a byte array to a hex encoded string.
-	 *
-	 * @param value the byte array
+	 * 
+	 * @param value
+	 *            the byte array
 	 * @return the hex encoded string
 	 */
 	public static String convertBytesToString(byte[] value) {
@@ -138,9 +149,11 @@ public class ByteUtils {
 
 	/**
 	 * Convert a byte array to a hex encoded string.
-	 *
-	 * @param value the byte array
-	 * @param len the number of bytes to encode
+	 * 
+	 * @param value
+	 *            the byte array
+	 * @param len
+	 *            the number of bytes to encode
 	 * @return the hex encoded string
 	 */
 	public static String convertBytesToString(byte[] value, int len) {
@@ -158,9 +171,11 @@ public class ByteUtils {
 	 * Compare two byte arrays. This method will always loop over all bytes and
 	 * doesn't use conditional operations in the loop to make sure an attacker
 	 * can not use a timing attack when trying out passwords.
-	 *
-	 * @param test the first array
-	 * @param good the second array
+	 * 
+	 * @param test
+	 *            the first array
+	 * @param good
+	 *            the second array
 	 * @return true if both byte arrays contain the same bytes
 	 */
 	public static boolean compareSecure(byte[] test, byte[] good) {
@@ -184,8 +199,9 @@ public class ByteUtils {
 
 	/**
 	 * Set all elements of the array to zero.
-	 *
-	 * @param buff the byte array
+	 * 
+	 * @param buff
+	 *            the byte array
 	 */
 	public static void clear(byte[] buff) {
 		for (int i = 0; buff != null && i < buff.length; i++) {
@@ -198,9 +214,11 @@ public class ByteUtils {
 	 * first array is smaller than the second array, -1 is returned. If the
 	 * content or length of the second array is smaller than the first array, 1
 	 * is returned. If the contents and lengths are the same, 0 is returned.
-	 *
-	 * @param data1 the first byte array (must not be null)
-	 * @param data2 the second byte array (must not be null)
+	 * 
+	 * @param data1
+	 *            the first byte array (must not be null)
+	 * @param data2
+	 *            the second byte array (must not be null)
 	 * @return the result of the comparison (-1, 1 or 0)
 	 */
 	public static int compareNotNull(byte[] data1, byte[] data2) {
@@ -219,9 +237,11 @@ public class ByteUtils {
 	/**
 	 * Copy the contents of the source array to the target array. If the size if
 	 * the target array is too small, a larger array is created.
-	 *
-	 * @param source the source array
-	 * @param target the target array
+	 * 
+	 * @param source
+	 *            the source array
+	 * @param target
+	 *            the target array
 	 * @return the target array or a new one if the target array was too small
 	 */
 	public static byte[] copy(byte[] source, byte[] target) {
@@ -236,8 +256,9 @@ public class ByteUtils {
 	/**
 	 * Create a new byte array and copy all the data. If the size of the byte
 	 * array is zero, the same array is returned.
-	 *
-	 * @param b the byte array (may not be null)
+	 * 
+	 * @param b
+	 *            the byte array (may not be null)
 	 * @return a new byte array
 	 */
 	public static byte[] cloneByteArray(byte[] b) {
@@ -257,8 +278,9 @@ public class ByteUtils {
 	 * Create an array of bytes with the given size. If this is not possible
 	 * because not enough memory is available, an OutOfMemoryError with the
 	 * requested size in the message is thrown.
-	 *
-	 * @param len the number of bytes requested
+	 * 
+	 * @param len
+	 *            the number of bytes requested
 	 * @return the byte array
 	 * @throws OutOfMemoryError
 	 */

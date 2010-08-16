@@ -15,8 +15,7 @@ import org.h2.engine.Session;
 import org.h2.message.Message;
 
 /**
- * This class represents the statement
- * DROP ALIAS
+ * This class represents the statement DROP ALIAS
  */
 public class DropFunctionAlias extends DefineCommand {
 
@@ -34,7 +33,8 @@ public class DropFunctionAlias extends DefineCommand {
 		FunctionAlias functionAlias = db.findFunctionAlias(aliasName);
 		if (functionAlias == null) {
 			if (!ifExists) {
-				throw Message.getSQLException(ErrorCode.FUNCTION_ALIAS_NOT_FOUND_1, aliasName);
+				throw Message.getSQLException(
+						ErrorCode.FUNCTION_ALIAS_NOT_FOUND_1, aliasName);
 			}
 		} else {
 			db.removeDatabaseObject(session, functionAlias);

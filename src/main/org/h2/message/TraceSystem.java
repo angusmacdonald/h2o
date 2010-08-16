@@ -97,9 +97,11 @@ public class TraceSystem implements TraceWriter {
 
 	/**
 	 * Create a new trace system object.
-	 *
-	 * @param fileName the file name
-	 * @param init if the trace system should be initialized
+	 * 
+	 * @param fileName
+	 *            the file name
+	 * @param init
+	 *            if the trace system should be initialized
 	 */
 	public TraceSystem(String fileName, boolean init) {
 		this.fileName = fileName;
@@ -121,8 +123,9 @@ public class TraceSystem implements TraceWriter {
 
 	/**
 	 * Write the exception to the driver manager log writer if configured.
-	 *
-	 * @param e the exception
+	 * 
+	 * @param e
+	 *            the exception
 	 */
 	public static void traceThrowable(Throwable e) {
 		PrintWriter writer = DriverManager.getLogWriter();
@@ -133,8 +136,9 @@ public class TraceSystem implements TraceWriter {
 
 	/**
 	 * Get or create a trace object for this module.
-	 *
-	 * @param module the module name
+	 * 
+	 * @param module
+	 *            the module name
 	 * @return the trace object
 	 */
 	public synchronized Trace getTrace(String module) {
@@ -152,8 +156,9 @@ public class TraceSystem implements TraceWriter {
 
 	/**
 	 * Set the trace file name.
-	 *
-	 * @param name the file name
+	 * 
+	 * @param name
+	 *            the file name
 	 */
 	public void setFileName(String name) {
 		this.fileName = name;
@@ -161,8 +166,9 @@ public class TraceSystem implements TraceWriter {
 
 	/**
 	 * Set the maximum trace file size in bytes.
-	 *
-	 * @param max the maximum size
+	 * 
+	 * @param max
+	 *            the maximum size
 	 */
 	public void setMaxFileSize(int max) {
 		this.maxFileSize = max;
@@ -170,8 +176,9 @@ public class TraceSystem implements TraceWriter {
 
 	/**
 	 * Set the trace level to use for System.out
-	 *
-	 * @param level the new level
+	 * 
+	 * @param level
+	 *            the new level
 	 */
 	public void setLevelSystemOut(int level) {
 		levelSystemOut = level;
@@ -184,25 +191,30 @@ public class TraceSystem implements TraceWriter {
 
 	/**
 	 * Set the file trace level.
-	 *
-	 * @param level the new level
+	 * 
+	 * @param level
+	 *            the new level
 	 */
 	public void setLevelFile(int level) {
 		if (level == ADAPTER) {
 			String adapterClass = "org.h2.message.TraceWriterAdapter";
 			try {
-				writer = (TraceWriter) ClassUtils.loadSystemClass(adapterClass).newInstance();
+				writer = (TraceWriter) ClassUtils.loadSystemClass(adapterClass)
+						.newInstance();
 			} catch (Throwable e) {
-				e = Message.getSQLException(ErrorCode.CLASS_NOT_FOUND_1, new String[] { adapterClass }, e);
+				e = Message.getSQLException(ErrorCode.CLASS_NOT_FOUND_1,
+						new String[] { adapterClass }, e);
 				write(ERROR, Trace.DATABASE, adapterClass, e);
 				return;
 			}
 			String name = fileName;
 			if (name != null) {
 				if (name.endsWith(Constants.SUFFIX_TRACE_FILE)) {
-					name = name.substring(0, name.length() - Constants.SUFFIX_TRACE_FILE.length());
+					name = name.substring(0, name.length()
+							- Constants.SUFFIX_TRACE_FILE.length());
 				}
-				int idx = Math.max(name.lastIndexOf('/'), name.lastIndexOf('\\'));
+				int idx = Math.max(name.lastIndexOf('/'),
+						name.lastIndexOf('\\'));
 				if (idx >= 0) {
 					name = name.substring(idx + 1);
 				}
@@ -273,8 +285,8 @@ public class TraceSystem implements TraceWriter {
 			return;
 		}
 		writingErrorLogged = true;
-		SQLException se = Message.getSQLException(ErrorCode.TRACE_FILE_ERROR_2, new String[] { fileName, e.toString() },
-				e);
+		SQLException se = Message.getSQLException(ErrorCode.TRACE_FILE_ERROR_2,
+				new String[] { fileName, e.toString() }, e);
 		// print this error only once
 		fileName = null;
 		System.out.println(se);
@@ -285,12 +297,14 @@ public class TraceSystem implements TraceWriter {
 		if (printWriter == null) {
 			try {
 				FileUtils.createDirs(fileName);
-				if (FileUtils.exists(fileName) && FileUtils.isReadOnly(fileName)) {
+				if (FileUtils.exists(fileName)
+						&& FileUtils.isReadOnly(fileName)) {
 					// read only database: don't log error if the trace file
 					// can't be opened
 					return false;
 				}
-				fileWriter = IOUtils.getWriter(FileUtils.openFileOutputStream(fileName, true));
+				fileWriter = IOUtils.getWriter(FileUtils.openFileOutputStream(
+						fileName, true));
 				printWriter = new PrintWriter(fileWriter, true);
 			} catch (Exception e) {
 				logWritingError(e);

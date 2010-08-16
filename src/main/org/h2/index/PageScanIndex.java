@@ -36,8 +36,10 @@ public class PageScanIndex extends BaseIndex implements RowIndex {
 	private int lastKey;
 	private long rowCount;
 
-	public PageScanIndex(TableData table, int id, IndexColumn[] columns, IndexType indexType, int headPos) throws SQLException {
-		initBaseIndex(table, id, table.getName() + "_TABLE_SCAN", columns, indexType);
+	public PageScanIndex(TableData table, int id, IndexColumn[] columns,
+			IndexType indexType, int headPos) throws SQLException {
+		initBaseIndex(table, id, table.getName() + "_TABLE_SCAN", columns,
+				indexType);
 		// trace.setLevel(TraceSystem.DEBUG);
 		if (database.isMultiVersion()) {
 			int todoMvcc;
@@ -51,14 +53,15 @@ public class PageScanIndex extends BaseIndex implements RowIndex {
 		if (headPos == Index.EMPTY_HEAD) {
 			// new table
 			headPos = store.allocatePage();
-			PageDataLeaf root = new PageDataLeaf(this, headPos, Page.ROOT, store.createDataPage());
+			PageDataLeaf root = new PageDataLeaf(this, headPos, Page.ROOT,
+					store.createDataPage());
 			store.updateRecord(root, true, root.data);
 			int test;
-			//        } else if (store.isNew()) {
-			//            // the system table for a new database
-			//            PageDataLeaf root = new PageDataLeaf(this, headPos,
-			//                    Page.ROOT, store.createDataPage());
-			//            store.updateRecord(root, true, root.data);
+			// } else if (store.isNew()) {
+			// // the system table for a new database
+			// PageDataLeaf root = new PageDataLeaf(this, headPos,
+			// Page.ROOT, store.createDataPage());
+			// store.updateRecord(root, true, root.data);
 		} else {
 			PageData root = getPage(headPos);
 			lastKey = root.getLastKey();
@@ -112,7 +115,8 @@ public class PageScanIndex extends BaseIndex implements RowIndex {
 			page1.setPageId(id);
 			page1.setParentPageId(headPos);
 			page2.setParentPageId(headPos);
-			PageDataNode newRoot = new PageDataNode(this, rootPageId, Page.ROOT, store.createDataPage());
+			PageDataNode newRoot = new PageDataNode(this, rootPageId,
+					Page.ROOT, store.createDataPage());
 			newRoot.init(page1, pivot, page2);
 			store.updateRecord(page1, true, page1.data);
 			store.updateRecord(page2, true, page2.data);
@@ -125,8 +129,9 @@ public class PageScanIndex extends BaseIndex implements RowIndex {
 
 	/**
 	 * Read the given page.
-	 *
-	 * @param id the page id
+	 * 
+	 * @param id
+	 *            the page id
 	 * @return the page
 	 */
 	PageData getPage(int id) throws SQLException {
@@ -154,7 +159,8 @@ public class PageScanIndex extends BaseIndex implements RowIndex {
 			PageDataLeaf empty = new PageDataLeaf(this, id, parentPageId, data);
 			return empty;
 		default:
-			throw Message.getSQLException(ErrorCode.FILE_CORRUPTED_1, "page=" + id + " type=" + type);
+			throw Message.getSQLException(ErrorCode.FILE_CORRUPTED_1, "page="
+					+ id + " type=" + type);
 		}
 		result.read();
 		return result;
@@ -164,12 +170,14 @@ public class PageScanIndex extends BaseIndex implements RowIndex {
 		return false;
 	}
 
-	public Cursor find(Session session, SearchRow first, SearchRow last) throws SQLException {
+	public Cursor find(Session session, SearchRow first, SearchRow last)
+			throws SQLException {
 		PageData root = getPage(headPos);
 		return root.find();
 	}
 
-	public Cursor findFirstOrLast(Session session, boolean first) throws SQLException {
+	public Cursor findFirstOrLast(Session session, boolean first)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
@@ -205,9 +213,9 @@ public class PageScanIndex extends BaseIndex implements RowIndex {
 			root.remove(key);
 			rowCount--;
 			int todoReuseKeys;
-			//            if (key == lastKey - 1) {
-				//                lastKey--;
-			//            }
+			// if (key == lastKey - 1) {
+			// lastKey--;
+			// }
 		}
 		store.logAddOrRemoveRow(session, tableData.getId(), row, false);
 	}
@@ -234,7 +242,8 @@ public class PageScanIndex extends BaseIndex implements RowIndex {
 		store.removeRecord(headPos);
 		int todoLogOldData;
 		int freePages;
-		PageDataLeaf root = new PageDataLeaf(this, headPos, Page.ROOT, store.createDataPage());
+		PageDataLeaf root = new PageDataLeaf(this, headPos, Page.ROOT,
+				store.createDataPage());
 		store.updateRecord(root, true, null);
 		rowCount = 0;
 		lastKey = 0;
@@ -255,8 +264,9 @@ public class PageScanIndex extends BaseIndex implements RowIndex {
 
 	/**
 	 * Read a row from the data page at the given position.
-	 *
-	 * @param data the data page
+	 * 
+	 * @param data
+	 *            the data page
 	 * @return the row
 	 */
 	Row readRow(DataPage data) throws SQLException {

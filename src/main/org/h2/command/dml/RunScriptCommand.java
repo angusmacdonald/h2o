@@ -21,8 +21,7 @@ import org.h2.result.LocalResult;
 import org.h2.util.ScriptReader;
 
 /**
- * This class represents the statement
- * RUNSCRIPT
+ * This class represents the statement RUNSCRIPT
  */
 public class RunScriptCommand extends ScriptBase {
 

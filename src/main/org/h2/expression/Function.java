@@ -72,40 +72,57 @@ import org.h2.value.ValueUuid;
  * This class implements most built-in functions of this database.
  */
 public class Function extends Expression implements FunctionCall {
-	public static final int ABS = 0, ACOS = 1, ASIN = 2, ATAN = 3, ATAN2 = 4, BITAND = 5, BITOR = 6, BITXOR = 7,
-	CEILING = 8, COS = 9, COT = 10, DEGREES = 11, EXP = 12, FLOOR = 13, LOG = 14, LOG10 = 15, MOD = 16,
-	PI = 17, POWER = 18, RADIANS = 19, RAND = 20, ROUND = 21, ROUNDMAGIC = 22, SIGN = 23, SIN = 24, SQRT = 25,
-	TAN = 26, TRUNCATE = 27, SECURE_RAND = 28, HASH = 29, ENCRYPT = 30, DECRYPT = 31, COMPRESS = 32,
-	EXPAND = 33, ZERO = 34, RANDOM_UUID = 35;
+	public static final int ABS = 0, ACOS = 1, ASIN = 2, ATAN = 3, ATAN2 = 4,
+			BITAND = 5, BITOR = 6, BITXOR = 7, CEILING = 8, COS = 9, COT = 10,
+			DEGREES = 11, EXP = 12, FLOOR = 13, LOG = 14, LOG10 = 15, MOD = 16,
+			PI = 17, POWER = 18, RADIANS = 19, RAND = 20, ROUND = 21,
+			ROUNDMAGIC = 22, SIGN = 23, SIN = 24, SQRT = 25, TAN = 26,
+			TRUNCATE = 27, SECURE_RAND = 28, HASH = 29, ENCRYPT = 30,
+			DECRYPT = 31, COMPRESS = 32, EXPAND = 33, ZERO = 34,
+			RANDOM_UUID = 35;
 
-	public static final int ASCII = 50, BIT_LENGTH = 51, CHAR = 52, CHAR_LENGTH = 53, CONCAT = 54, DIFFERENCE = 55,
-	HEXTORAW = 56, INSERT = 57, INSTR = 58, LCASE = 59, LEFT = 60, LENGTH = 61, LOCATE = 62, LTRIM = 63,
-	OCTET_LENGTH = 64, RAWTOHEX = 65, REPEAT = 66, REPLACE = 67, RIGHT = 68, RTRIM = 69, SOUNDEX = 70,
-	SPACE = 71, SUBSTR = 72, SUBSTRING = 73, UCASE = 74, LOWER = 75, UPPER = 76, POSITION = 77, TRIM = 78,
-	STRINGENCODE = 79, STRINGDECODE = 80, STRINGTOUTF8 = 81, UTF8TOSTRING = 82, XMLATTR = 83, XMLNODE = 84,
-	XMLCOMMENT = 85, XMLCDATA = 86, XMLSTARTDOC = 87, XMLTEXT = 88, REGEXP_REPLACE = 89, RPAD = 90, LPAD = 91;
+	public static final int ASCII = 50, BIT_LENGTH = 51, CHAR = 52,
+			CHAR_LENGTH = 53, CONCAT = 54, DIFFERENCE = 55, HEXTORAW = 56,
+			INSERT = 57, INSTR = 58, LCASE = 59, LEFT = 60, LENGTH = 61,
+			LOCATE = 62, LTRIM = 63, OCTET_LENGTH = 64, RAWTOHEX = 65,
+			REPEAT = 66, REPLACE = 67, RIGHT = 68, RTRIM = 69, SOUNDEX = 70,
+			SPACE = 71, SUBSTR = 72, SUBSTRING = 73, UCASE = 74, LOWER = 75,
+			UPPER = 76, POSITION = 77, TRIM = 78, STRINGENCODE = 79,
+			STRINGDECODE = 80, STRINGTOUTF8 = 81, UTF8TOSTRING = 82,
+			XMLATTR = 83, XMLNODE = 84, XMLCOMMENT = 85, XMLCDATA = 86,
+			XMLSTARTDOC = 87, XMLTEXT = 88, REGEXP_REPLACE = 89, RPAD = 90,
+			LPAD = 91;
 
-	public static final int CURDATE = 100, CURTIME = 101, DATE_ADD = 102, DATE_DIFF = 103, DAY_NAME = 104,
-	DAY_OF_MONTH = 105, DAY_OF_WEEK = 106, DAY_OF_YEAR = 107, HOUR = 108, MINUTE = 109, MONTH = 110, MONTH_NAME = 111,
-	NOW = 112, QUARTER = 113, SECOND = 114, WEEK = 115, YEAR = 116, CURRENT_DATE = 117, CURRENT_TIME = 118,
-	CURRENT_TIMESTAMP = 119, EXTRACT = 120, FORMATDATETIME = 121, PARSEDATETIME = 122,
-	ISO_YEAR = 123, ISO_WEEK = 124, ISO_DAY_OF_WEEK = 125;
+	public static final int CURDATE = 100, CURTIME = 101, DATE_ADD = 102,
+			DATE_DIFF = 103, DAY_NAME = 104, DAY_OF_MONTH = 105,
+			DAY_OF_WEEK = 106, DAY_OF_YEAR = 107, HOUR = 108, MINUTE = 109,
+			MONTH = 110, MONTH_NAME = 111, NOW = 112, QUARTER = 113,
+			SECOND = 114, WEEK = 115, YEAR = 116, CURRENT_DATE = 117,
+			CURRENT_TIME = 118, CURRENT_TIMESTAMP = 119, EXTRACT = 120,
+			FORMATDATETIME = 121, PARSEDATETIME = 122, ISO_YEAR = 123,
+			ISO_WEEK = 124, ISO_DAY_OF_WEEK = 125;
 
-	public static final int DATABASE = 150, USER = 151, CURRENT_USER = 152, IDENTITY = 153, AUTOCOMMIT = 154,
-	READONLY = 155, DATABASE_PATH = 156, LOCK_TIMEOUT = 157;
+	public static final int DATABASE = 150, USER = 151, CURRENT_USER = 152,
+			IDENTITY = 153, AUTOCOMMIT = 154, READONLY = 155,
+			DATABASE_PATH = 156, LOCK_TIMEOUT = 157;
 
-	public static final int IFNULL = 200, CASEWHEN = 201, CONVERT = 202, CAST = 203, COALESCE = 204, NULLIF = 205,
-	CASE = 206, NEXTVAL = 207, CURRVAL = 208, ARRAY_GET = 209, CSVREAD = 210, CSVWRITE = 211,
-	MEMORY_FREE = 212, MEMORY_USED = 213, LOCK_MODE = 214, SCHEMA = 215, SESSION_ID = 216, ARRAY_LENGTH = 217,
-	LINK_SCHEMA = 218, GREATEST = 219, LEAST = 220, CANCEL_SESSION = 221, SET = 222, TABLE = 223, TABLE_DISTINCT = 224,
-	FILE_READ = 225, TRANSACTION_ID = 226;
+	public static final int IFNULL = 200, CASEWHEN = 201, CONVERT = 202,
+			CAST = 203, COALESCE = 204, NULLIF = 205, CASE = 206,
+			NEXTVAL = 207, CURRVAL = 208, ARRAY_GET = 209, CSVREAD = 210,
+			CSVWRITE = 211, MEMORY_FREE = 212, MEMORY_USED = 213,
+			LOCK_MODE = 214, SCHEMA = 215, SESSION_ID = 216,
+			ARRAY_LENGTH = 217, LINK_SCHEMA = 218, GREATEST = 219, LEAST = 220,
+			CANCEL_SESSION = 221, SET = 222, TABLE = 223, TABLE_DISTINCT = 224,
+			FILE_READ = 225, TRANSACTION_ID = 226;
 
 	private static final int VAR_ARGS = -1;
 
 	private static final HashMap FUNCTIONS = new HashMap();
 	private static final HashMap DATE_PART = new HashMap();
-	private static final SimpleDateFormat FORMAT_DAYNAME = new SimpleDateFormat("EEEE", Locale.ENGLISH);
-	private static final SimpleDateFormat FORMAT_MONTHNAME = new SimpleDateFormat("MMMM", Locale.ENGLISH);
+	private static final SimpleDateFormat FORMAT_DAYNAME = new SimpleDateFormat(
+			"EEEE", Locale.ENGLISH);
+	private static final SimpleDateFormat FORMAT_MONTHNAME = new SimpleDateFormat(
+			"MMMM", Locale.ENGLISH);
 	private static final char[] SOUNDEX_INDEX = new char[128];
 
 	protected Expression[] args;
@@ -130,8 +147,10 @@ public class Function extends Expression implements FunctionCall {
 		DATE_PART.put("DAY", ObjectUtils.getInteger(Calendar.DAY_OF_MONTH));
 		DATE_PART.put("DD", ObjectUtils.getInteger(Calendar.DAY_OF_MONTH));
 		DATE_PART.put("D", ObjectUtils.getInteger(Calendar.DAY_OF_MONTH));
-		DATE_PART.put("DAYOFYEAR", ObjectUtils.getInteger(Calendar.DAY_OF_YEAR));
-		DATE_PART.put("DAY_OF_YEAR", ObjectUtils.getInteger(Calendar.DAY_OF_YEAR));
+		DATE_PART
+				.put("DAYOFYEAR", ObjectUtils.getInteger(Calendar.DAY_OF_YEAR));
+		DATE_PART.put("DAY_OF_YEAR",
+				ObjectUtils.getInteger(Calendar.DAY_OF_YEAR));
 		DATE_PART.put("DY", ObjectUtils.getInteger(Calendar.DAY_OF_YEAR));
 		DATE_PART.put("DOY", ObjectUtils.getInteger(Calendar.DAY_OF_YEAR));
 		DATE_PART.put("HOUR", ObjectUtils.getInteger(Calendar.HOUR_OF_DAY));
@@ -142,7 +161,8 @@ public class Function extends Expression implements FunctionCall {
 		DATE_PART.put("SECOND", ObjectUtils.getInteger(Calendar.SECOND));
 		DATE_PART.put("SS", ObjectUtils.getInteger(Calendar.SECOND));
 		DATE_PART.put("S", ObjectUtils.getInteger(Calendar.SECOND));
-		DATE_PART.put("MILLISECOND", ObjectUtils.getInteger(Calendar.MILLISECOND));
+		DATE_PART.put("MILLISECOND",
+				ObjectUtils.getInteger(Calendar.MILLISECOND));
 		DATE_PART.put("MS", ObjectUtils.getInteger(Calendar.MILLISECOND));
 
 		// SOUNDEX_INDEX
@@ -253,7 +273,8 @@ public class Function extends Expression implements FunctionCall {
 		addFunctionNotDeterministic("CURDATE", CURDATE, 0, Value.DATE);
 		addFunctionNotDeterministic("CURRENT_TIME", CURRENT_TIME, 0, Value.TIME);
 		addFunctionNotDeterministic("CURTIME", CURTIME, 0, Value.TIME);
-		addFunctionNotDeterministic("CURRENT_TIMESTAMP", CURRENT_TIMESTAMP, VAR_ARGS, Value.TIMESTAMP);
+		addFunctionNotDeterministic("CURRENT_TIMESTAMP", CURRENT_TIMESTAMP,
+				VAR_ARGS, Value.TIMESTAMP);
 		addFunctionNotDeterministic("NOW", NOW, VAR_ARGS, Value.TIMESTAMP);
 		addFunction("DATEADD", DATE_ADD, 3, Value.TIMESTAMP);
 		addFunction("DATEDIFF", DATE_DIFF, 3, Value.LONG);
@@ -275,17 +296,21 @@ public class Function extends Expression implements FunctionCall {
 		addFunction("WEEK", WEEK, 1, Value.INT);
 		addFunction("YEAR", YEAR, 1, Value.INT);
 		addFunction("EXTRACT", EXTRACT, 2, Value.INT);
-		addFunctionWithNull("FORMATDATETIME", FORMATDATETIME, VAR_ARGS, Value.STRING);
-		addFunctionWithNull("PARSEDATETIME", PARSEDATETIME, VAR_ARGS, Value.TIMESTAMP);
+		addFunctionWithNull("FORMATDATETIME", FORMATDATETIME, VAR_ARGS,
+				Value.STRING);
+		addFunctionWithNull("PARSEDATETIME", PARSEDATETIME, VAR_ARGS,
+				Value.TIMESTAMP);
 		addFunction("ISO_YEAR", ISO_YEAR, 1, Value.INT);
 		addFunction("ISO_WEEK", ISO_WEEK, 1, Value.INT);
 		addFunction("ISO_DAY_OF_WEEK", ISO_DAY_OF_WEEK, 1, Value.INT);
 		// system
 		addFunctionNotDeterministic("DATABASE", DATABASE, 0, Value.STRING);
 		addFunctionNotDeterministic("USER", USER, 0, Value.STRING);
-		addFunctionNotDeterministic("CURRENT_USER", CURRENT_USER, 0, Value.STRING);
+		addFunctionNotDeterministic("CURRENT_USER", CURRENT_USER, 0,
+				Value.STRING);
 		addFunctionNotDeterministic("IDENTITY", IDENTITY, 0, Value.LONG);
-		addFunctionNotDeterministic("IDENTITY_VAL_LOCAL", IDENTITY, 0, Value.LONG);
+		addFunctionNotDeterministic("IDENTITY_VAL_LOCAL", IDENTITY, 0,
+				Value.LONG);
 		addFunctionNotDeterministic("LAST_INSERT_ID", IDENTITY, 0, Value.LONG);
 		addFunctionNotDeterministic("AUTOCOMMIT", AUTOCOMMIT, 0, Value.BOOLEAN);
 		addFunctionNotDeterministic("READONLY", READONLY, 0, Value.BOOLEAN);
@@ -302,7 +327,8 @@ public class Function extends Expression implements FunctionCall {
 		addFunctionNotDeterministic("NEXTVAL", NEXTVAL, VAR_ARGS, Value.LONG);
 		addFunctionNotDeterministic("CURRVAL", CURRVAL, VAR_ARGS, Value.LONG);
 		addFunction("ARRAY_GET", ARRAY_GET, 2, Value.STRING);
-		addFunction("CSVREAD", CSVREAD, VAR_ARGS, Value.RESULT_SET, false, false);
+		addFunction("CSVREAD", CSVREAD, VAR_ARGS, Value.RESULT_SET, false,
+				false);
 		addFunction("CSVWRITE", CSVWRITE, VAR_ARGS, Value.INT, false, false);
 		addFunctionNotDeterministic("MEMORY_FREE", MEMORY_FREE, 0, Value.INT);
 		addFunctionNotDeterministic("MEMORY_USED", MEMORY_USED, 0, Value.INT);
@@ -316,11 +342,13 @@ public class Function extends Expression implements FunctionCall {
 		addFunction("CANCEL_SESSION", CANCEL_SESSION, 1, Value.BOOLEAN);
 		addFunction("SET", SET, 2, Value.NULL, false, false);
 		addFunction("FILE_READ", FILE_READ, VAR_ARGS, Value.NULL, false, true);
-		addFunctionNotDeterministic("TRANSACTION_ID", TRANSACTION_ID, 0, Value.STRING);
+		addFunctionNotDeterministic("TRANSACTION_ID", TRANSACTION_ID, 0,
+				Value.STRING);
 
 		// TableFunction
 		addFunctionWithNull("TABLE", TABLE, VAR_ARGS, Value.RESULT_SET);
-		addFunctionWithNull("TABLE_DISTINCT", TABLE_DISTINCT, VAR_ARGS, Value.RESULT_SET);
+		addFunctionWithNull("TABLE_DISTINCT", TABLE_DISTINCT, VAR_ARGS,
+				Value.RESULT_SET);
 	}
 
 	protected Function(Database database, FunctionInfo info) {
@@ -333,8 +361,8 @@ public class Function extends Expression implements FunctionCall {
 		}
 	}
 
-	private static void addFunction(String name, int type, int parameterCount, int dataType,
-			boolean nullIfParameterIsNull, boolean deterministic) {
+	private static void addFunction(String name, int type, int parameterCount,
+			int dataType, boolean nullIfParameterIsNull, boolean deterministic) {
 		FunctionInfo info = new FunctionInfo();
 		info.name = name;
 		info.type = type;
@@ -345,23 +373,27 @@ public class Function extends Expression implements FunctionCall {
 		FUNCTIONS.put(name, info);
 	}
 
-	private static void addFunctionNotDeterministic(String name, int type, int parameterCount, int dataType) {
+	private static void addFunctionNotDeterministic(String name, int type,
+			int parameterCount, int dataType) {
 		addFunction(name, type, parameterCount, dataType, true, false);
 	}
 
-	private static void addFunction(String name, int type, int parameterCount, int dataType) {
+	private static void addFunction(String name, int type, int parameterCount,
+			int dataType) {
 		addFunction(name, type, parameterCount, dataType, true, true);
 	}
 
-	private static void addFunctionWithNull(String name, int type, int parameterCount, int dataType) {
+	private static void addFunctionWithNull(String name, int type,
+			int parameterCount, int dataType) {
 		addFunction(name, type, parameterCount, dataType, false, true);
 	}
 
 	/**
 	 * Get the function info object for this function, or null if there is no
 	 * such function.
-	 *
-	 * @param name the function name
+	 * 
+	 * @param name
+	 *            the function name
 	 * @return the function info
 	 */
 	public static FunctionInfo getFunctionInfo(String name) {
@@ -369,11 +401,13 @@ public class Function extends Expression implements FunctionCall {
 	}
 
 	/**
-	 * Get an instance of the given function for this database.
-	 * If no function with this name is found, null is returned.
-	 *
-	 * @param database the database
-	 * @param name the function name
+	 * Get an instance of the given function for this database. If no function
+	 * with this name is found, null is returned.
+	 * 
+	 * @param database
+	 *            the database
+	 * @param name
+	 *            the function name
 	 * @return the function object or null
 	 */
 	public static Function getFunction(Database database, String name) {
@@ -381,7 +415,7 @@ public class Function extends Expression implements FunctionCall {
 		if (info == null) {
 			return null;
 		}
-		switch(info.type) {
+		switch (info.type) {
 		case TABLE:
 		case TABLE_DISTINCT:
 			return new TableFunction(database, info, Long.MAX_VALUE);
@@ -392,17 +426,20 @@ public class Function extends Expression implements FunctionCall {
 
 	/**
 	 * Set the parameter expression at the given index.
-	 *
-	 * @param index the index (0, 1,...)
-	 * @param param the expression
+	 * 
+	 * @param index
+	 *            the index (0, 1,...)
+	 * @param param
+	 *            the expression
 	 */
 	public void setParameter(int index, Expression param) throws SQLException {
 		if (varArgs != null) {
 			varArgs.add(param);
 		} else {
 			if (index >= args.length) {
-				throw Message.getSQLException(ErrorCode.INVALID_PARAMETER_COUNT_2, new String[] { info.name,
-						"" + args.length });
+				throw Message.getSQLException(
+						ErrorCode.INVALID_PARAMETER_COUNT_2, new String[] {
+								info.name, "" + args.length });
 			}
 			args[index] = param;
 		}
@@ -416,7 +453,8 @@ public class Function extends Expression implements FunctionCall {
 		return getValueWithArgs(session, args);
 	}
 
-	private Value getNullOrValue(Session session, Expression[] x, int i) throws SQLException {
+	private Value getNullOrValue(Session session, Expression[] x, int i)
+			throws SQLException {
 		if (i < x.length) {
 			Expression e = x[i];
 			if (e != null) {
@@ -426,7 +464,8 @@ public class Function extends Expression implements FunctionCall {
 		return null;
 	}
 
-	private Value getSimpleValue(Session session, Value v0, Expression[] args) throws SQLException {
+	private Value getSimpleValue(Session session, Value v0, Expression[] args)
+			throws SQLException {
 		Value result;
 		switch (info.type) {
 		case ABS:
@@ -450,7 +489,8 @@ public class Function extends Expression implements FunctionCall {
 		case COT: {
 			double d = Math.tan(v0.getDouble());
 			if (d == 0.0) {
-				throw Message.getSQLException(ErrorCode.DIVISION_BY_ZERO_1, getSQL());
+				throw Message.getSQLException(ErrorCode.DIVISION_BY_ZERO_1,
+						getSQL());
 			}
 			result = ValueDouble.get(1. / d);
 			break;
@@ -482,7 +522,7 @@ public class Function extends Expression implements FunctionCall {
 			}
 			// TODO function rand: if seed value is set,
 			// return a random value? probably yes
-					result = ValueDouble.get(session.getRandom().nextDouble());
+			result = ValueDouble.get(session.getRandom().nextDouble());
 			break;
 		}
 		case ROUNDMAGIC:
@@ -501,10 +541,12 @@ public class Function extends Expression implements FunctionCall {
 			result = ValueDouble.get(Math.tan(v0.getDouble()));
 			break;
 		case SECURE_RAND:
-			result = ValueBytes.getNoCopy(RandomUtils.getSecureBytes(v0.getInt()));
+			result = ValueBytes.getNoCopy(RandomUtils.getSecureBytes(v0
+					.getInt()));
 			break;
 		case EXPAND:
-			result = ValueBytes.getNoCopy(CompressTool.getInstance().expand(v0.getBytesNoCopy()));
+			result = ValueBytes.getNoCopy(CompressTool.getInstance().expand(
+					v0.getBytesNoCopy()));
 			break;
 		case ZERO:
 			result = ValueInt.get(0);
@@ -512,7 +554,7 @@ public class Function extends Expression implements FunctionCall {
 		case RANDOM_UUID:
 			result = ValueUuid.getNewRandom();
 			break;
-			// string
+		// string
 		case ASCII: {
 			String s = v0.getString();
 			if (s.length() == 0) {
@@ -537,15 +579,16 @@ public class Function extends Expression implements FunctionCall {
 			break;
 		case CONCAT: {
 			result = ValueNull.INSTANCE;
-			for (int i = 0; i < args.length; i++) {
-				Value v = args[i].getValue(session);
+			for (Expression arg : args) {
+				Value v = arg.getValue(session);
 				if (v == ValueNull.INSTANCE) {
 					continue;
 				}
 				if (result == ValueNull.INSTANCE) {
 					result = v;
 				} else {
-					result = ValueString.get(result.getString().concat(v.getString()));
+					result = ValueString.get(result.getString().concat(
+							v.getString()));
 				}
 			}
 			break;
@@ -588,10 +631,12 @@ public class Function extends Expression implements FunctionCall {
 			result = ValueString.get(StringUtils.javaDecode(v0.getString()));
 			break;
 		case STRINGTOUTF8:
-			result = ValueBytes.getNoCopy(StringUtils.utf8Encode(v0.getString()));
+			result = ValueBytes
+					.getNoCopy(StringUtils.utf8Encode(v0.getString()));
 			break;
 		case UTF8TOSTRING:
-			result = ValueString.get(StringUtils.utf8Decode(v0.getBytesNoCopy()));
+			result = ValueString
+					.get(StringUtils.utf8Decode(v0.getBytesNoCopy()));
 			break;
 		case XMLCOMMENT:
 			result = ValueString.get(StringUtils.xmlComment(v0.getString()));
@@ -607,54 +652,69 @@ public class Function extends Expression implements FunctionCall {
 			break;
 		case DAY_NAME: {
 			synchronized (FORMAT_DAYNAME) {
-				result = ValueString.get(FORMAT_DAYNAME.format(v0.getDateNoCopy()));
+				result = ValueString.get(FORMAT_DAYNAME.format(v0
+						.getDateNoCopy()));
 			}
 			break;
 		}
 		case DAY_OF_MONTH:
-			result = ValueInt.get(DateTimeUtils.getDatePart(v0.getDateNoCopy(), Calendar.DAY_OF_MONTH));
+			result = ValueInt.get(DateTimeUtils.getDatePart(v0.getDateNoCopy(),
+					Calendar.DAY_OF_MONTH));
 			break;
 		case DAY_OF_WEEK:
-			result = ValueInt.get(DateTimeUtils.getDatePart(v0.getDateNoCopy(), Calendar.DAY_OF_WEEK));
+			result = ValueInt.get(DateTimeUtils.getDatePart(v0.getDateNoCopy(),
+					Calendar.DAY_OF_WEEK));
 			break;
 		case DAY_OF_YEAR:
-			result = ValueInt.get(DateTimeUtils.getDatePart(v0.getDateNoCopy(), Calendar.DAY_OF_YEAR));
+			result = ValueInt.get(DateTimeUtils.getDatePart(v0.getDateNoCopy(),
+					Calendar.DAY_OF_YEAR));
 			break;
 		case HOUR:
-			result = ValueInt.get(DateTimeUtils.getDatePart(v0.getTimestampNoCopy(), Calendar.HOUR_OF_DAY));
+			result = ValueInt.get(DateTimeUtils.getDatePart(
+					v0.getTimestampNoCopy(), Calendar.HOUR_OF_DAY));
 			break;
 		case MINUTE:
-			result = ValueInt.get(DateTimeUtils.getDatePart(v0.getTimestampNoCopy(), Calendar.MINUTE));
+			result = ValueInt.get(DateTimeUtils.getDatePart(
+					v0.getTimestampNoCopy(), Calendar.MINUTE));
 			break;
 		case MONTH:
-			result = ValueInt.get(DateTimeUtils.getDatePart(v0.getDateNoCopy(), Calendar.MONTH));
+			result = ValueInt.get(DateTimeUtils.getDatePart(v0.getDateNoCopy(),
+					Calendar.MONTH));
 			break;
 		case MONTH_NAME: {
 			synchronized (FORMAT_MONTHNAME) {
-				result = ValueString.get(FORMAT_MONTHNAME.format(v0.getDateNoCopy()));
+				result = ValueString.get(FORMAT_MONTHNAME.format(v0
+						.getDateNoCopy()));
 			}
 			break;
 		}
 		case QUARTER:
-			result = ValueInt.get((DateTimeUtils.getDatePart(v0.getDateNoCopy(), Calendar.MONTH) - 1) / 3 + 1);
+			result = ValueInt.get((DateTimeUtils.getDatePart(
+					v0.getDateNoCopy(), Calendar.MONTH) - 1) / 3 + 1);
 			break;
 		case SECOND:
-			result = ValueInt.get(DateTimeUtils.getDatePart(v0.getTimestampNoCopy(), Calendar.SECOND));
+			result = ValueInt.get(DateTimeUtils.getDatePart(
+					v0.getTimestampNoCopy(), Calendar.SECOND));
 			break;
 		case WEEK:
-			result = ValueInt.get(DateTimeUtils.getDatePart(v0.getDateNoCopy(), Calendar.WEEK_OF_YEAR));
+			result = ValueInt.get(DateTimeUtils.getDatePart(v0.getDateNoCopy(),
+					Calendar.WEEK_OF_YEAR));
 			break;
 		case YEAR:
-			result = ValueInt.get(DateTimeUtils.getDatePart(v0.getDateNoCopy(), Calendar.YEAR));
+			result = ValueInt.get(DateTimeUtils.getDatePart(v0.getDateNoCopy(),
+					Calendar.YEAR));
 			break;
 		case ISO_YEAR:
-			result = ValueInt.get(DateTimeIso8601Utils.getIsoYear(v0.getDateNoCopy()));
+			result = ValueInt.get(DateTimeIso8601Utils.getIsoYear(v0
+					.getDateNoCopy()));
 			break;
 		case ISO_WEEK:
-			result = ValueInt.get(DateTimeIso8601Utils.getIsoWeek(v0.getDateNoCopy()));
+			result = ValueInt.get(DateTimeIso8601Utils.getIsoWeek(v0
+					.getDateNoCopy()));
 			break;
 		case ISO_DAY_OF_WEEK:
-			result = ValueInt.get(DateTimeIso8601Utils.getIsoDayOfWeek(v0.getDateNoCopy()));
+			result = ValueInt.get(DateTimeIso8601Utils.getIsoDayOfWeek(v0
+					.getDateNoCopy()));
 			break;
 		case CURDATE:
 		case CURRENT_DATE:
@@ -668,10 +728,12 @@ public class Function extends Expression implements FunctionCall {
 			break;
 		case NOW:
 		case CURRENT_TIMESTAMP: {
-			ValueTimestamp vt = ValueTimestamp.getNoCopy(new Timestamp(System.currentTimeMillis()));
+			ValueTimestamp vt = ValueTimestamp.getNoCopy(new Timestamp(System
+					.currentTimeMillis()));
 			if (v0 != null) {
 				Mode mode = database.getMode();
-				vt = (ValueTimestamp) vt.convertScale(mode.convertOnlyToSmallerScale, v0.getInt());
+				vt = (ValueTimestamp) vt.convertScale(
+						mode.convertOnlyToSmallerScale, v0.getInt());
 			}
 			result = vt;
 			break;
@@ -694,7 +756,8 @@ public class Function extends Expression implements FunctionCall {
 			break;
 		case DATABASE_PATH: {
 			String path = database.getDatabasePath();
-			result = path == null ? (Value) ValueNull.INSTANCE : ValueString.get(path);
+			result = path == null ? (Value) ValueNull.INSTANCE : ValueString
+					.get(path);
 			break;
 		}
 		case LOCK_TIMEOUT:
@@ -784,7 +847,8 @@ public class Function extends Expression implements FunctionCall {
 				}
 			}
 			if (result == null) {
-				result = i < args.length ? args[i].getValue(session) : ValueNull.INSTANCE;
+				result = i < args.length ? args[i].getValue(session)
+						: ValueNull.INSTANCE;
 			}
 			break;
 		}
@@ -826,11 +890,11 @@ public class Function extends Expression implements FunctionCall {
 		return result;
 	}
 
-	private boolean cancelStatement(Session session, int targetSessionId) throws SQLException {
+	private boolean cancelStatement(Session session, int targetSessionId)
+			throws SQLException {
 		session.getUser().checkAdmin();
 		Session[] sessions = session.getDatabase().getSessions(false);
-		for (int i = 0; i < sessions.length; i++) {
-			Session s = sessions[i];
+		for (Session s : sessions) {
 			if (s.getId() == targetSessionId) {
 				Command c = s.getCurrentCommand();
 				if (c == null) {
@@ -843,7 +907,8 @@ public class Function extends Expression implements FunctionCall {
 		return false;
 	}
 
-	private Value getValueWithArgs(Session session, Expression[] args) throws SQLException {
+	private Value getValueWithArgs(Session session, Expression[] args)
+			throws SQLException {
 		if (info.nullIfParameterIsNull) {
 			for (int i = 0; i < args.length; i++) {
 				if (getNullOrValue(session, args, i) == ValueNull.INSTANCE) {
@@ -864,7 +929,8 @@ public class Function extends Expression implements FunctionCall {
 		Value result;
 		switch (info.type) {
 		case ATAN2:
-			result = ValueDouble.get(Math.atan2(v0.getDouble(), v1.getDouble()));
+			result = ValueDouble
+					.get(Math.atan2(v0.getDouble(), v1.getDouble()));
 			break;
 		case BITAND:
 			result = ValueLong.get(v0.getLong() & v1.getLong());
@@ -878,7 +944,8 @@ public class Function extends Expression implements FunctionCall {
 		case MOD: {
 			long x = v1.getLong();
 			if (x == 0) {
-				throw Message.getSQLException(ErrorCode.DIVISION_BY_ZERO_1, getSQL());
+				throw Message.getSQLException(ErrorCode.DIVISION_BY_ZERO_1,
+						getSQL());
 			}
 			result = ValueLong.get(v0.getLong() % x);
 			break;
@@ -896,34 +963,41 @@ public class Function extends Expression implements FunctionCall {
 			int p = v1.getInt();
 			double f = Math.pow(10., p);
 			double g = d * f;
-			result = ValueDouble.get(((d < 0) ? Math.ceil(g) : Math.floor(g)) / f);
+			result = ValueDouble.get(((d < 0) ? Math.ceil(g) : Math.floor(g))
+					/ f);
 			break;
 		}
 		case HASH:
-			result = ValueBytes.getNoCopy(getHash(v0.getString(), v1.getBytesNoCopy(), v2.getInt()));
+			result = ValueBytes.getNoCopy(getHash(v0.getString(),
+					v1.getBytesNoCopy(), v2.getInt()));
 			break;
 		case ENCRYPT:
-			result = ValueBytes.getNoCopy(encrypt(v0.getString(), v1.getBytesNoCopy(), v2.getBytesNoCopy()));
+			result = ValueBytes.getNoCopy(encrypt(v0.getString(),
+					v1.getBytesNoCopy(), v2.getBytesNoCopy()));
 			break;
 		case DECRYPT:
-			result = ValueBytes.getNoCopy(decrypt(v0.getString(), v1.getBytesNoCopy(), v2.getBytesNoCopy()));
+			result = ValueBytes.getNoCopy(decrypt(v0.getString(),
+					v1.getBytesNoCopy(), v2.getBytesNoCopy()));
 			break;
 		case COMPRESS: {
 			String algorithm = null;
 			if (v1 != null) {
 				algorithm = v1.getString();
 			}
-			result = ValueBytes.getNoCopy(CompressTool.getInstance().compress(v0.getBytesNoCopy(), algorithm));
+			result = ValueBytes.getNoCopy(CompressTool.getInstance().compress(
+					v0.getBytesNoCopy(), algorithm));
 			break;
 		}
 		case DIFFERENCE:
-			result = ValueInt.get(getDifference(v0.getString(), v1.getString()));
+			result = ValueInt
+					.get(getDifference(v0.getString(), v1.getString()));
 			break;
 		case INSERT: {
 			if (v1 == ValueNull.INSTANCE || v2 == ValueNull.INSTANCE) {
 				result = v1;
 			} else {
-				result = ValueString.get(insert(v0.getString(), v1.getInt(), v2.getInt(), v3.getString()));
+				result = ValueString.get(insert(v0.getString(), v1.getInt(),
+						v2.getInt(), v3.getString()));
 			}
 			break;
 		}
@@ -932,12 +1006,14 @@ public class Function extends Expression implements FunctionCall {
 			break;
 		case LOCATE: {
 			int start = v2 == null ? 0 : v2.getInt();
-			result = ValueInt.get(locate(v0.getString(), v1.getString(), start));
+			result = ValueInt
+					.get(locate(v0.getString(), v1.getString(), start));
 			break;
 		}
 		case INSTR: {
 			int start = v2 == null ? 0 : v2.getInt();
-			result = ValueInt.get(locate(v1.getString(), v0.getString(), start));
+			result = ValueInt
+					.get(locate(v1.getString(), v0.getString(), start));
 			break;
 		}
 		case REPEAT: {
@@ -948,7 +1024,8 @@ public class Function extends Expression implements FunctionCall {
 		case REPLACE: {
 			String s0 = v0 == ValueNull.INSTANCE ? "" : v0.getString();
 			String s1 = v1 == ValueNull.INSTANCE ? "" : v1.getString();
-			String s2 = (v2 == null || v2 == ValueNull.INSTANCE) ? "" : v2.getString();
+			String s2 = (v2 == null || v2 == ValueNull.INSTANCE) ? "" : v2
+					.getString();
 			result = ValueString.get(replace(s0, s1, s2));
 			break;
 		}
@@ -956,13 +1033,16 @@ public class Function extends Expression implements FunctionCall {
 			result = ValueString.get(right(v0.getString(), v1.getInt()));
 			break;
 		case LTRIM:
-			result = ValueString.get(StringUtils.trim(v0.getString(), true, false, v1 == null ? " " : v1.getString()));
+			result = ValueString.get(StringUtils.trim(v0.getString(), true,
+					false, v1 == null ? " " : v1.getString()));
 			break;
 		case TRIM:
-			result = ValueString.get(StringUtils.trim(v0.getString(), true, true, v1 == null ? " " : v1.getString()));
+			result = ValueString.get(StringUtils.trim(v0.getString(), true,
+					true, v1 == null ? " " : v1.getString()));
 			break;
 		case RTRIM:
-			result = ValueString.get(StringUtils.trim(v0.getString(), false, true, v1 == null ? " " : v1.getString()));
+			result = ValueString.get(StringUtils.trim(v0.getString(), false,
+					true, v1 == null ? " " : v1.getString()));
 			break;
 		case SUBSTR:
 		case SUBSTRING: {
@@ -975,48 +1055,62 @@ public class Function extends Expression implements FunctionCall {
 			result = ValueInt.get(locate(v0.getString(), v1.getString(), 0));
 			break;
 		case XMLATTR:
-			result = ValueString.get(StringUtils.xmlAttr(v0.getString(), v1.getString()));
+			result = ValueString.get(StringUtils.xmlAttr(v0.getString(),
+					v1.getString()));
 			break;
 		case XMLNODE: {
-			String attr = v1 == null ? null : v1 == ValueNull.INSTANCE ? null : v1.getString();
-			String content = v2 == null ? null : v2 == ValueNull.INSTANCE ? null : v2.getString();
-			result = ValueString.get(StringUtils.xmlNode(v0.getString(), attr, content));
+			String attr = v1 == null ? null : v1 == ValueNull.INSTANCE ? null
+					: v1.getString();
+			String content = v2 == null ? null
+					: v2 == ValueNull.INSTANCE ? null : v2.getString();
+			result = ValueString.get(StringUtils.xmlNode(v0.getString(), attr,
+					content));
 			break;
 		}
 		case REGEXP_REPLACE: {
 			String regexp = v1.getString();
 			try {
-				result = ValueString.get(v0.getString().replaceAll(regexp, v2.getString()));
+				result = ValueString.get(v0.getString().replaceAll(regexp,
+						v2.getString()));
 			} catch (PatternSyntaxException e) {
-				throw Message.getSQLException(ErrorCode.LIKE_ESCAPE_ERROR_1, new String[]{regexp}, e);
+				throw Message.getSQLException(ErrorCode.LIKE_ESCAPE_ERROR_1,
+						new String[] { regexp }, e);
 			}
 			break;
 		}
 		case RPAD:
-			result = ValueString.get(StringUtils.pad(v0.getString(), v1.getInt(), v2 == null ? null : v2.getString(), true));
+			result = ValueString.get(StringUtils.pad(v0.getString(),
+					v1.getInt(), v2 == null ? null : v2.getString(), true));
 			break;
 		case LPAD:
-			result = ValueString.get(StringUtils.pad(v0.getString(), v1.getInt(), v2 == null ? null : v2.getString(), false));
+			result = ValueString.get(StringUtils.pad(v0.getString(),
+					v1.getInt(), v2 == null ? null : v2.getString(), false));
 			break;
-			// date
+		// date
 		case DATE_ADD:
-			result = ValueTimestamp.getNoCopy(dateadd(v0.getString(), v1.getInt(), v2.getTimestampNoCopy()));
+			result = ValueTimestamp.getNoCopy(dateadd(v0.getString(),
+					v1.getInt(), v2.getTimestampNoCopy()));
 			break;
 		case DATE_DIFF:
-			result = ValueLong.get(datediff(v0.getString(), v1.getTimestampNoCopy(), v2.getTimestampNoCopy()));
+			result = ValueLong.get(datediff(v0.getString(),
+					v1.getTimestampNoCopy(), v2.getTimestampNoCopy()));
 			break;
 		case EXTRACT: {
 			int field = getDatePart(v0.getString());
-			result = ValueInt.get(DateTimeUtils.getDatePart(v1.getTimestamp(), field));
+			result = ValueInt.get(DateTimeUtils.getDatePart(v1.getTimestamp(),
+					field));
 			break;
 		}
 		case FORMATDATETIME: {
 			if (v0 == ValueNull.INSTANCE || v1 == ValueNull.INSTANCE) {
 				result = ValueNull.INSTANCE;
 			} else {
-				String locale = v2 == null ? null : v2 == ValueNull.INSTANCE ? null : v2.getString();
-				String tz = v3 == null ? null : v3 == ValueNull.INSTANCE ? null : v3.getString();
-				result = ValueString.get(StringUtils.formatDateTime(v0.getTimestamp(), v1.getString(), locale, tz));
+				String locale = v2 == null ? null
+						: v2 == ValueNull.INSTANCE ? null : v2.getString();
+				String tz = v3 == null ? null : v3 == ValueNull.INSTANCE ? null
+						: v3.getString();
+				result = ValueString.get(StringUtils.formatDateTime(
+						v0.getTimestamp(), v1.getString(), locale, tz));
 			}
 			break;
 		}
@@ -1024,9 +1118,12 @@ public class Function extends Expression implements FunctionCall {
 			if (v0 == ValueNull.INSTANCE || v1 == ValueNull.INSTANCE) {
 				result = ValueNull.INSTANCE;
 			} else {
-				String locale = v2 == null ? null : v2 == ValueNull.INSTANCE ? null : v2.getString();
-				String tz = v3 == null ? null : v3 == ValueNull.INSTANCE ? null : v3.getString();
-				java.util.Date d = StringUtils.parseDateTime(v0.getString(), v1.getString(), locale, tz);
+				String locale = v2 == null ? null
+						: v2 == ValueNull.INSTANCE ? null : v2.getString();
+				String tz = v3 == null ? null : v3 == ValueNull.INSTANCE ? null
+						: v3.getString();
+				java.util.Date d = StringUtils.parseDateTime(v0.getString(),
+						v1.getString(), locale, tz);
 				result = ValueTimestamp.getNoCopy(new Timestamp(d.getTime()));
 			}
 			break;
@@ -1034,7 +1131,7 @@ public class Function extends Expression implements FunctionCall {
 		case NULLIF:
 			result = database.areEqual(v0, v1) ? ValueNull.INSTANCE : v0;
 			break;
-			// system
+		// system
 		case NEXTVAL: {
 			Sequence sequence = getSequence(session, v0, v1);
 			SequenceValue value = new SequenceValue(sequence);
@@ -1056,18 +1153,22 @@ public class Function extends Expression implements FunctionCall {
 			Value v6 = getNullOrValue(session, args, 6);
 			String nullString = v6 == null ? null : v6.getString();
 			Csv csv = Csv.getInstance();
-			setCsvDelimiterEscape(csv, fieldSeparatorRead, fieldDelimiter, escapeCharacter);
+			setCsvDelimiterEscape(csv, fieldSeparatorRead, fieldDelimiter,
+					escapeCharacter);
 			csv.setNullString(nullString);
 			char fieldSeparator = csv.getFieldSeparatorRead();
-			String[] columns = StringUtils.arraySplit(columnList, fieldSeparator, true);
-			ValueResultSet vr = ValueResultSet.get(csv.read(fileName, columns, charset));
+			String[] columns = StringUtils.arraySplit(columnList,
+					fieldSeparator, true);
+			ValueResultSet vr = ValueResultSet.get(csv.read(fileName, columns,
+					charset));
 			result = vr;
 			break;
 		}
 		case LINK_SCHEMA: {
 			session.getUser().checkAdmin();
 			Connection conn = session.createConnection(false);
-			ResultSet rs = LinkSchema.linkSchema(conn, v0.getString(), v1.getString(), v2.getString(), v3.getString(),
+			ResultSet rs = LinkSchema.linkSchema(conn, v0.getString(),
+					v1.getString(), v2.getString(), v3.getString(),
 					v4.getString(), v5.getString());
 			result = ValueResultSet.get(rs);
 			break;
@@ -1084,7 +1185,8 @@ public class Function extends Expression implements FunctionCall {
 			Value v7 = getNullOrValue(session, args, 7);
 			String lineSeparator = v7 == null ? null : v7.getString();
 			Csv csv = Csv.getInstance();
-			setCsvDelimiterEscape(csv, fieldSeparatorWrite, fieldDelimiter, escapeCharacter);
+			setCsvDelimiterEscape(csv, fieldSeparatorWrite, fieldDelimiter,
+					escapeCharacter);
 			csv.setNullString(nullString);
 			if (lineSeparator != null) {
 				csv.setLineSeparator(lineSeparator);
@@ -1104,7 +1206,8 @@ public class Function extends Expression implements FunctionCall {
 			String fileName = v0.getString();
 			boolean blob = args.length == 1;
 			try {
-				InputStream in = new AutoCloseInputStream(FileUtils.openFileInputStream(fileName));
+				InputStream in = new AutoCloseInputStream(
+						FileUtils.openFileInputStream(fileName));
 				if (blob) {
 					result = ValueLob.createBlob(in, -1, database);
 				} else {
@@ -1127,7 +1230,8 @@ public class Function extends Expression implements FunctionCall {
 		return result;
 	}
 
-	private Sequence getSequence(Session session, Value v0, Value v1) throws SQLException {
+	private Sequence getSequence(Session session, Value v0, Value v1)
+			throws SQLException {
 		String schemaName, sequenceName;
 		if (v1 == null) {
 			Parser p = new Parser(session, true);
@@ -1139,12 +1243,14 @@ public class Function extends Expression implements FunctionCall {
 				if (schemaName == null) {
 					schemaName = session.getCurrentSchemaName();
 				} else {
-					if (schemaName.equals(StringUtils.toLowerEnglish(schemaName))) {
+					if (schemaName.equals(StringUtils
+							.toLowerEnglish(schemaName))) {
 						schemaName = StringUtils.toUpperEnglish(schemaName);
 					}
 				}
 				sequenceName = seq.getColumnName();
-				if (sequenceName.equals(StringUtils.toLowerEnglish(sequenceName))) {
+				if (sequenceName.equals(StringUtils
+						.toLowerEnglish(sequenceName))) {
 					sequenceName = StringUtils.toUpperEnglish(sequenceName);
 				}
 			} else {
@@ -1176,7 +1282,8 @@ public class Function extends Expression implements FunctionCall {
 		return newData;
 	}
 
-	private byte[] decrypt(String algorithm, byte[] key, byte[] data) throws SQLException {
+	private byte[] decrypt(String algorithm, byte[] key, byte[] data)
+			throws SQLException {
 		BlockCipher cipher = CipherFactory.getBlockCipher(algorithm);
 		byte[] newKey = getPaddedArrayCopy(key, cipher.getKeyLength());
 		cipher.setKey(newKey);
@@ -1185,7 +1292,8 @@ public class Function extends Expression implements FunctionCall {
 		return newData;
 	}
 
-	private byte[] encrypt(String algorithm, byte[] key, byte[] data) throws SQLException {
+	private byte[] encrypt(String algorithm, byte[] key, byte[] data)
+			throws SQLException {
 		BlockCipher cipher = CipherFactory.getBlockCipher(algorithm);
 		byte[] newKey = getPaddedArrayCopy(key, cipher.getKeyLength());
 		cipher.setKey(newKey);
@@ -1194,7 +1302,8 @@ public class Function extends Expression implements FunctionCall {
 		return newData;
 	}
 
-	private byte[] getHash(String algorithm, byte[] bytes, int iterations) throws SQLException {
+	private byte[] getHash(String algorithm, byte[] bytes, int iterations)
+			throws SQLException {
 		SHA256 hash = CipherFactory.getHash(algorithm);
 		for (int i = 0; i < iterations; i++) {
 			bytes = hash.getHash(bytes, false);
@@ -1204,741 +1313,780 @@ public class Function extends Expression implements FunctionCall {
 
 	/**
 	 * Check if a given string is a valid date part string.
-	 *
-	 * @param part the string
+	 * 
+	 * @param part
+	 *            the string
 	 * @return true if it is
 	 */
-	 public static boolean isDatePart(String part) {
-		 Integer p = (Integer) DATE_PART.get(StringUtils.toUpperEnglish(part));
-		 return p != null;
-	 }
+	public static boolean isDatePart(String part) {
+		Integer p = (Integer) DATE_PART.get(StringUtils.toUpperEnglish(part));
+		return p != null;
+	}
 
-	 private static int getDatePart(String part) throws SQLException {
-		 Integer p = (Integer) DATE_PART.get(StringUtils.toUpperEnglish(part));
-		 if (p == null) {
-			 throw Message.getSQLException(ErrorCode.INVALID_VALUE_2, new String[] { "date part", part });
-		 }
-		 return p.intValue();
-	 }
+	private static int getDatePart(String part) throws SQLException {
+		Integer p = (Integer) DATE_PART.get(StringUtils.toUpperEnglish(part));
+		if (p == null) {
+			throw Message.getSQLException(ErrorCode.INVALID_VALUE_2,
+					new String[] { "date part", part });
+		}
+		return p.intValue();
+	}
 
-	 private static Timestamp dateadd(String part, int count, Timestamp d) throws SQLException {
-		 int field = getDatePart(part);
-		 Calendar calendar = Calendar.getInstance();
-		 int nanos = d.getNanos() % 1000000;
-		 calendar.setTime(d);
-		 calendar.add(field, count);
-		 long t = calendar.getTime().getTime();
-		 Timestamp ts = new Timestamp(t);
-		 ts.setNanos(ts.getNanos() + nanos);
-		 return ts;
-	 }
+	private static Timestamp dateadd(String part, int count, Timestamp d)
+			throws SQLException {
+		int field = getDatePart(part);
+		Calendar calendar = Calendar.getInstance();
+		int nanos = d.getNanos() % 1000000;
+		calendar.setTime(d);
+		calendar.add(field, count);
+		long t = calendar.getTime().getTime();
+		Timestamp ts = new Timestamp(t);
+		ts.setNanos(ts.getNanos() + nanos);
+		return ts;
+	}
 
-	 private static long datediff(String part, Timestamp d1, Timestamp d2) throws SQLException {
-		 // diff (yy, 31.12.2004, 1.1.2005) = 1
-		 int field = getDatePart(part);
-		 Calendar calendar = Calendar.getInstance();
-		 long t1 = d1.getTime(), t2 = d2.getTime();
-		 // need to convert to UTC, otherwise we get inconsistent results with
-		 // certain time zones (those that are 30 minutes off)
-		 TimeZone zone = calendar.getTimeZone();
-		 calendar.setTime(d1);
-		 t1 += zone.getOffset(calendar.get(Calendar.ERA), calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH),
-				 calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.DAY_OF_WEEK), calendar
-				 .get(Calendar.MILLISECOND));
-		 calendar.setTime(d2);
-		 t2 += zone.getOffset(calendar.get(Calendar.ERA), calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH),
-				 calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.DAY_OF_WEEK), calendar
-				 .get(Calendar.MILLISECOND));
-		 switch (field) {
-		 case Calendar.MILLISECOND:
-			 return t2 - t1;
-		 case Calendar.SECOND:
-		 case Calendar.MINUTE:
-		 case Calendar.HOUR_OF_DAY: {
-			 // first 'normalize' the numbers so both are not negative
-			 long hour = 60 * 60 * 1000;
-			 long add = Math.min(t1 / hour * hour, t2 / hour * hour);
-			 t1 -= add;
-			 t2 -= add;
-			 switch (field) {
-			 case Calendar.SECOND:
-				 return t2 / 1000 - t1 / 1000;
-			 case Calendar.MINUTE:
-				 return t2 / (60 * 1000) - t1 / (60 * 1000);
-			 case Calendar.HOUR_OF_DAY:
-				 return t2 / hour - t1 / hour;
-			 default:
-				 throw Message.throwInternalError("field:" + field);
-			 }
-		 }
-		 case Calendar.DATE:
-			 return t2 / (24 * 60 * 60 * 1000) - t1 / (24 * 60 * 60 * 1000);
-		 default:
-			 break;
-		 }
-		 calendar.setTime(new Timestamp(t1));
-		 int year1 = calendar.get(Calendar.YEAR);
-		 int month1 = calendar.get(Calendar.MONTH);
-		 calendar.setTime(new Timestamp(t2));
-		 int year2 = calendar.get(Calendar.YEAR);
-		 int month2 = calendar.get(Calendar.MONTH);
-		 int result = year2 - year1;
-		 if (field == Calendar.MONTH) {
-			 result = 12 * result + (month2 - month1);
-		 }
-		 return result;
-	 }
+	private static long datediff(String part, Timestamp d1, Timestamp d2)
+			throws SQLException {
+		// diff (yy, 31.12.2004, 1.1.2005) = 1
+		int field = getDatePart(part);
+		Calendar calendar = Calendar.getInstance();
+		long t1 = d1.getTime(), t2 = d2.getTime();
+		// need to convert to UTC, otherwise we get inconsistent results with
+		// certain time zones (those that are 30 minutes off)
+		TimeZone zone = calendar.getTimeZone();
+		calendar.setTime(d1);
+		t1 += zone.getOffset(calendar.get(Calendar.ERA),
+				calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH),
+				calendar.get(Calendar.DAY_OF_MONTH),
+				calendar.get(Calendar.DAY_OF_WEEK),
+				calendar.get(Calendar.MILLISECOND));
+		calendar.setTime(d2);
+		t2 += zone.getOffset(calendar.get(Calendar.ERA),
+				calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH),
+				calendar.get(Calendar.DAY_OF_MONTH),
+				calendar.get(Calendar.DAY_OF_WEEK),
+				calendar.get(Calendar.MILLISECOND));
+		switch (field) {
+		case Calendar.MILLISECOND:
+			return t2 - t1;
+		case Calendar.SECOND:
+		case Calendar.MINUTE:
+		case Calendar.HOUR_OF_DAY: {
+			// first 'normalize' the numbers so both are not negative
+			long hour = 60 * 60 * 1000;
+			long add = Math.min(t1 / hour * hour, t2 / hour * hour);
+			t1 -= add;
+			t2 -= add;
+			switch (field) {
+			case Calendar.SECOND:
+				return t2 / 1000 - t1 / 1000;
+			case Calendar.MINUTE:
+				return t2 / (60 * 1000) - t1 / (60 * 1000);
+			case Calendar.HOUR_OF_DAY:
+				return t2 / hour - t1 / hour;
+			default:
+				throw Message.throwInternalError("field:" + field);
+			}
+		}
+		case Calendar.DATE:
+			return t2 / (24 * 60 * 60 * 1000) - t1 / (24 * 60 * 60 * 1000);
+		default:
+			break;
+		}
+		calendar.setTime(new Timestamp(t1));
+		int year1 = calendar.get(Calendar.YEAR);
+		int month1 = calendar.get(Calendar.MONTH);
+		calendar.setTime(new Timestamp(t2));
+		int year2 = calendar.get(Calendar.YEAR);
+		int month2 = calendar.get(Calendar.MONTH);
+		int result = year2 - year1;
+		if (field == Calendar.MONTH) {
+			result = 12 * result + (month2 - month1);
+		}
+		return result;
+	}
 
-	 private static String substring(String s, int start, int length) {
-		 int len = s.length();
-		 start--;
-		 if (start < 0) {
-			 start = 0;
-		 }
-		 if (length < 0) {
-			 length = 0;
-		 }
-		 start = (start > len) ? len : start;
-		 if (start + length > len) {
-			 length = len - start;
-		 }
-		 return s.substring(start, start + length);
-	 }
+	private static String substring(String s, int start, int length) {
+		int len = s.length();
+		start--;
+		if (start < 0) {
+			start = 0;
+		}
+		if (length < 0) {
+			length = 0;
+		}
+		start = (start > len) ? len : start;
+		if (start + length > len) {
+			length = len - start;
+		}
+		return s.substring(start, start + length);
+	}
 
-	 private static String replace(String s, String replace, String with) {
-		 if (replace == null || replace.length() == 0) {
-			 // avoid out of memory
-			 return s;
-		 }
-		 StringBuilder buff = new StringBuilder(s.length());
-		 int start = 0;
-		 int len = replace.length();
-		 while (true) {
-			 int i = s.indexOf(replace, start);
-			 if (i == -1) {
-				 break;
-			 }
-			 buff.append(s.substring(start, i));
-			 buff.append(with);
-			 start = i + len;
-		 }
-		 buff.append(s.substring(start));
-		 return buff.toString();
-	 }
+	private static String replace(String s, String replace, String with) {
+		if (replace == null || replace.length() == 0) {
+			// avoid out of memory
+			return s;
+		}
+		StringBuilder buff = new StringBuilder(s.length());
+		int start = 0;
+		int len = replace.length();
+		while (true) {
+			int i = s.indexOf(replace, start);
+			if (i == -1) {
+				break;
+			}
+			buff.append(s.substring(start, i));
+			buff.append(with);
+			start = i + len;
+		}
+		buff.append(s.substring(start));
+		return buff.toString();
+	}
 
-	 private static String repeat(String s, int count) {
-		 StringBuilder buff = new StringBuilder(s.length() * count);
-		 while (count-- > 0) {
-			 buff.append(s);
-		 }
-		 return buff.toString();
-	 }
+	private static String repeat(String s, int count) {
+		StringBuilder buff = new StringBuilder(s.length() * count);
+		while (count-- > 0) {
+			buff.append(s);
+		}
+		return buff.toString();
+	}
 
-	 private static String rawToHex(String s) {
-		 StringBuilder buff = new StringBuilder(4 * s.length());
-		 for (int i = 0; i < s.length(); i++) {
-			 String hex = Integer.toHexString(s.charAt(i) & 0xffff);
-			 for (int j = hex.length(); j < 4; j++) {
-				 buff.append('0');
-			 }
-			 buff.append(hex);
-		 }
-		 return buff.toString();
-	 }
+	private static String rawToHex(String s) {
+		StringBuilder buff = new StringBuilder(4 * s.length());
+		for (int i = 0; i < s.length(); i++) {
+			String hex = Integer.toHexString(s.charAt(i) & 0xffff);
+			for (int j = hex.length(); j < 4; j++) {
+				buff.append('0');
+			}
+			buff.append(hex);
+		}
+		return buff.toString();
+	}
 
-	 private static int locate(String search, String s, int start) {
-		 if (start < 0) {
-			 int i = s.length() + start;
-			 return s.lastIndexOf(search, i) + 1;
-		 }
-		 int i = (start == 0) ? 0 : start - 1;
-		 return s.indexOf(search, i) + 1;
-	 }
+	private static int locate(String search, String s, int start) {
+		if (start < 0) {
+			int i = s.length() + start;
+			return s.lastIndexOf(search, i) + 1;
+		}
+		int i = (start == 0) ? 0 : start - 1;
+		return s.indexOf(search, i) + 1;
+	}
 
-	 private static String right(String s, int count) {
-		 if (count < 0) {
-			 count = 0;
-		 } else if (count > s.length()) {
-			 count = s.length();
-		 }
-		 return s.substring(s.length() - count);
-	 }
+	private static String right(String s, int count) {
+		if (count < 0) {
+			count = 0;
+		} else if (count > s.length()) {
+			count = s.length();
+		}
+		return s.substring(s.length() - count);
+	}
 
-	 private static String left(String s, int count) {
-		 if (count < 0) {
-			 count = 0;
-		 } else if (count > s.length()) {
-			 count = s.length();
-		 }
-		 return s.substring(0, count);
-	 }
+	private static String left(String s, int count) {
+		if (count < 0) {
+			count = 0;
+		} else if (count > s.length()) {
+			count = s.length();
+		}
+		return s.substring(0, count);
+	}
 
-	 private static String insert(String s1, int start, int length, String s2) {
-		 if (s1 == null) {
-			 return s2;
-		 }
-		 if (s2 == null) {
-			 return s1;
-		 }
-		 int len1 = s1.length();
-		 int len2 = s2.length();
-		 start--;
-		 if (start < 0 || length <= 0 || len2 == 0 || start > len1) {
-			 return s1;
-		 }
-		 if (start + length > len1) {
-			 length = len1 - start;
-		 }
-		 return s1.substring(0, start) + s2 + s1.substring(start + length);
-	 }
+	private static String insert(String s1, int start, int length, String s2) {
+		if (s1 == null) {
+			return s2;
+		}
+		if (s2 == null) {
+			return s1;
+		}
+		int len1 = s1.length();
+		int len2 = s2.length();
+		start--;
+		if (start < 0 || length <= 0 || len2 == 0 || start > len1) {
+			return s1;
+		}
+		if (start + length > len1) {
+			length = len1 - start;
+		}
+		return s1.substring(0, start) + s2 + s1.substring(start + length);
+	}
 
-	 private static String hexToRaw(String s) throws SQLException {
-		 // TODO function hextoraw compatibility with oracle
-		 int len = s.length();
-		 if (len % 4 != 0) {
-			 throw Message.getSQLException(ErrorCode.DATA_CONVERSION_ERROR_1, s);
-		 }
-		 StringBuilder buff = new StringBuilder(len / 4);
-		 for (int i = 0; i < len; i += 4) {
-			 try {
-				 char raw = (char) Integer.parseInt(s.substring(i, i + 4), 16);
-				 buff.append(raw);
-			 } catch (NumberFormatException e) {
-				 throw Message.getSQLException(ErrorCode.DATA_CONVERSION_ERROR_1, s);
-			 }
-		 }
-		 return buff.toString();
-	 }
+	private static String hexToRaw(String s) throws SQLException {
+		// TODO function hextoraw compatibility with oracle
+		int len = s.length();
+		if (len % 4 != 0) {
+			throw Message.getSQLException(ErrorCode.DATA_CONVERSION_ERROR_1, s);
+		}
+		StringBuilder buff = new StringBuilder(len / 4);
+		for (int i = 0; i < len; i += 4) {
+			try {
+				char raw = (char) Integer.parseInt(s.substring(i, i + 4), 16);
+				buff.append(raw);
+			} catch (NumberFormatException e) {
+				throw Message.getSQLException(
+						ErrorCode.DATA_CONVERSION_ERROR_1, s);
+			}
+		}
+		return buff.toString();
+	}
 
-	 private static int getDifference(String s1, String s2) {
-		 // TODO function difference: compatibility with SQL Server and HSQLDB
-		 s1 = getSoundex(s1);
-		 s2 = getSoundex(s2);
-		 int e = 0;
-		 for (int i = 0; i < 4; i++) {
-			 if (s1.charAt(i) == s2.charAt(i)) {
-				 e++;
-			 }
-		 }
-		 return e;
-	 }
+	private static int getDifference(String s1, String s2) {
+		// TODO function difference: compatibility with SQL Server and HSQLDB
+		s1 = getSoundex(s1);
+		s2 = getSoundex(s2);
+		int e = 0;
+		for (int i = 0; i < 4; i++) {
+			if (s1.charAt(i) == s2.charAt(i)) {
+				e++;
+			}
+		}
+		return e;
+	}
 
-	 private double roundmagic(double d) {
-		 if ((d < 0.0000000000001) && (d > -0.0000000000001)) {
-			 return 0.0;
-		 }
-		 if ((d > 1000000000000.) || (d < -1000000000000.)) {
-			 return d;
-		 }
-		 StringBuilder s = new StringBuilder();
-		 s.append(d);
-		 if (s.toString().indexOf("E") >= 0) {
-			 return d;
-		 }
-		 int len = s.length();
-		 if (len < 16) {
-			 return d;
-		 }
-		 if (s.toString().indexOf(".") > len - 3) {
-			 return d;
-		 }
-		 s.delete(len - 2, len);
-		 len -= 2;
-		 char c1 = s.charAt(len - 2);
-		 char c2 = s.charAt(len - 3);
-		 char c3 = s.charAt(len - 4);
-		 if ((c1 == '0') && (c2 == '0') && (c3 == '0')) {
-			 s.setCharAt(len - 1, '0');
-		 } else if ((c1 == '9') && (c2 == '9') && (c3 == '9')) {
-			 s.setCharAt(len - 1, '9');
-			 s.append('9');
-			 s.append('9');
-			 s.append('9');
-		 }
-		 return Double.valueOf(s.toString()).doubleValue();
-	 }
+	private double roundmagic(double d) {
+		if ((d < 0.0000000000001) && (d > -0.0000000000001)) {
+			return 0.0;
+		}
+		if ((d > 1000000000000.) || (d < -1000000000000.)) {
+			return d;
+		}
+		StringBuilder s = new StringBuilder();
+		s.append(d);
+		if (s.toString().indexOf("E") >= 0) {
+			return d;
+		}
+		int len = s.length();
+		if (len < 16) {
+			return d;
+		}
+		if (s.toString().indexOf(".") > len - 3) {
+			return d;
+		}
+		s.delete(len - 2, len);
+		len -= 2;
+		char c1 = s.charAt(len - 2);
+		char c2 = s.charAt(len - 3);
+		char c3 = s.charAt(len - 4);
+		if ((c1 == '0') && (c2 == '0') && (c3 == '0')) {
+			s.setCharAt(len - 1, '0');
+		} else if ((c1 == '9') && (c2 == '9') && (c3 == '9')) {
+			s.setCharAt(len - 1, '9');
+			s.append('9');
+			s.append('9');
+			s.append('9');
+		}
+		return Double.valueOf(s.toString()).doubleValue();
+	}
 
-	 private static String getSoundex(String s) {
-		 int len = s.length();
-		 char[] chars = new char[] { '0', '0', '0', '0' };
-		 char lastDigit = '0';
-		 for (int i = 0, j = 0; i < len && j < 4; i++) {
-			 char c = s.charAt(i);
-			 char newDigit = c > SOUNDEX_INDEX.length ? 0 : SOUNDEX_INDEX[c];
-			 if (newDigit != 0) {
-				 if (j == 0) {
-					 chars[j++] = c;
-					 lastDigit = newDigit;
-				 } else if (newDigit <= '6') {
-					 if (newDigit != lastDigit) {
-						 chars[j++] = newDigit;
-						 lastDigit = newDigit;
-					 }
-				 } else if (newDigit == '7') {
-					 lastDigit = newDigit;
-				 }
-			 }
-		 }
-		 return new String(chars);
-	 }
+	private static String getSoundex(String s) {
+		int len = s.length();
+		char[] chars = new char[] { '0', '0', '0', '0' };
+		char lastDigit = '0';
+		for (int i = 0, j = 0; i < len && j < 4; i++) {
+			char c = s.charAt(i);
+			char newDigit = c > SOUNDEX_INDEX.length ? 0 : SOUNDEX_INDEX[c];
+			if (newDigit != 0) {
+				if (j == 0) {
+					chars[j++] = c;
+					lastDigit = newDigit;
+				} else if (newDigit <= '6') {
+					if (newDigit != lastDigit) {
+						chars[j++] = newDigit;
+						lastDigit = newDigit;
+					}
+				} else if (newDigit == '7') {
+					lastDigit = newDigit;
+				}
+			}
+		}
+		return new String(chars);
+	}
 
-	 public int getType() {
-		 return dataType;
-	 }
+	public int getType() {
+		return dataType;
+	}
 
-	 public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
-		 for (int i = 0; i < args.length; i++) {
-			 args[i].mapColumns(resolver, level);
-		 }
-	 }
+	public void mapColumns(ColumnResolver resolver, int level)
+			throws SQLException {
+		for (Expression arg : args) {
+			arg.mapColumns(resolver, level);
+		}
+	}
 
-	 /**
-	  * Check if the parameter count is correct.
-	  *
-	  * @param len the number of parameters set
-	  * @throws SQLException if the parameter count is incorrect
-	  */
-	 protected void checkParameterCount(int len) throws SQLException {
-		 int min = 0, max = Integer.MAX_VALUE;
-		 switch (info.type) {
-		 case COALESCE:
-		 case CSVREAD:
-		 case LEAST:
-		 case GREATEST:
-			 min = 1;
-			 break;
-		 case NOW:
-		 case CURRENT_TIMESTAMP:
-		 case RAND:
-			 max = 1;
-			 break;
-		 case COMPRESS:
-		 case LTRIM:
-		 case RTRIM:
-		 case TRIM:
-		 case FILE_READ:
-			 min = 1;
-			 max = 2;
-			 break;
-		 case REPLACE:
-		 case LOCATE:
-		 case INSTR:
-		 case SUBSTR:
-		 case SUBSTRING:
-		 case LPAD:
-		 case RPAD:
-			 min = 2;
-			 max = 3;
-			 break;
-		 case CASE:
-		 case CONCAT:
-		 case CSVWRITE:
-			 min = 2;
-			 break;
-		 case XMLNODE:
-			 min = 1;
-			 max = 3;
-			 break;
-		 case FORMATDATETIME:
-		 case PARSEDATETIME:
-			 min = 2;
-			 max = 4;
-			 break;
-		 case CURRVAL:
-		 case NEXTVAL:
-			 min = 1;
-			 max = 2;
-			 break;
-		 default:
-			 Message.throwInternalError("type=" + info.type);
-		 }
-		 boolean ok = (len >= min) && (len <= max);
-		 if (!ok) {
-			 throw Message.getSQLException(ErrorCode.INVALID_PARAMETER_COUNT_2, new String[] { info.name,
-					 min + ".." + max });
-		 }
-	 }
+	/**
+	 * Check if the parameter count is correct.
+	 * 
+	 * @param len
+	 *            the number of parameters set
+	 * @throws SQLException
+	 *             if the parameter count is incorrect
+	 */
+	protected void checkParameterCount(int len) throws SQLException {
+		int min = 0, max = Integer.MAX_VALUE;
+		switch (info.type) {
+		case COALESCE:
+		case CSVREAD:
+		case LEAST:
+		case GREATEST:
+			min = 1;
+			break;
+		case NOW:
+		case CURRENT_TIMESTAMP:
+		case RAND:
+			max = 1;
+			break;
+		case COMPRESS:
+		case LTRIM:
+		case RTRIM:
+		case TRIM:
+		case FILE_READ:
+			min = 1;
+			max = 2;
+			break;
+		case REPLACE:
+		case LOCATE:
+		case INSTR:
+		case SUBSTR:
+		case SUBSTRING:
+		case LPAD:
+		case RPAD:
+			min = 2;
+			max = 3;
+			break;
+		case CASE:
+		case CONCAT:
+		case CSVWRITE:
+			min = 2;
+			break;
+		case XMLNODE:
+			min = 1;
+			max = 3;
+			break;
+		case FORMATDATETIME:
+		case PARSEDATETIME:
+			min = 2;
+			max = 4;
+			break;
+		case CURRVAL:
+		case NEXTVAL:
+			min = 1;
+			max = 2;
+			break;
+		default:
+			Message.throwInternalError("type=" + info.type);
+		}
+		boolean ok = (len >= min) && (len <= max);
+		if (!ok) {
+			throw Message.getSQLException(ErrorCode.INVALID_PARAMETER_COUNT_2,
+					new String[] { info.name, min + ".." + max });
+		}
+	}
 
-	 /**
-	  * This method is called after all the parameters have been set.
-	  * It checks if the parameter count is correct.
-	  *
-	  * @throws SQLException if the parameter count is incorrect.
-	  */
-	 public void doneWithParameters() throws SQLException {
-		 if (info.parameterCount == VAR_ARGS) {
-			 int len = varArgs.size();
-			 checkParameterCount(len);
-			 args = new Expression[len];
-			 varArgs.toArray(args);
-			 varArgs = null;
-		 } else {
-			 int len = args.length;
-			 if (len > 0 && args[len - 1] == null) {
-				 throw Message
-				 .getSQLException(ErrorCode.INVALID_PARAMETER_COUNT_2, new String[] { info.name, "" + len });
-			 }
-		 }
-	 }
+	/**
+	 * This method is called after all the parameters have been set. It checks
+	 * if the parameter count is correct.
+	 * 
+	 * @throws SQLException
+	 *             if the parameter count is incorrect.
+	 */
+	public void doneWithParameters() throws SQLException {
+		if (info.parameterCount == VAR_ARGS) {
+			int len = varArgs.size();
+			checkParameterCount(len);
+			args = new Expression[len];
+			varArgs.toArray(args);
+			varArgs = null;
+		} else {
+			int len = args.length;
+			if (len > 0 && args[len - 1] == null) {
+				throw Message.getSQLException(
+						ErrorCode.INVALID_PARAMETER_COUNT_2, new String[] {
+								info.name, "" + len });
+			}
+		}
+	}
 
-	 /**
-	  * Set the result data type of this function.
-	  *
-	  * @param dataType the data type
-	  * @param precision the precision
-	  * @param scale the scale
-	  * @param displaySize the display size
-	  */
-	 public void setDataType(int dataType, long precision, int scale, int displaySize) {
-		 this.dataType = dataType;
-		 this.precision = precision;
-		 this.displaySize = displaySize;
-		 this.scale = scale;
-	 }
+	/**
+	 * Set the result data type of this function.
+	 * 
+	 * @param dataType
+	 *            the data type
+	 * @param precision
+	 *            the precision
+	 * @param scale
+	 *            the scale
+	 * @param displaySize
+	 *            the display size
+	 */
+	public void setDataType(int dataType, long precision, int scale,
+			int displaySize) {
+		this.dataType = dataType;
+		this.precision = precision;
+		this.displaySize = displaySize;
+		this.scale = scale;
+	}
 
-	 public void setDataType(Column col) {
-		 dataType = col.getType();
-		 precision = col.getPrecision();
-		 displaySize = col.getDisplaySize();
-		 scale = col.getScale();
-	 }
+	public void setDataType(Column col) {
+		dataType = col.getType();
+		precision = col.getPrecision();
+		displaySize = col.getDisplaySize();
+		scale = col.getScale();
+	}
 
-	 public Expression optimize(Session session) throws SQLException {
-		 boolean allConst = info.deterministic;
-		 for (int i = 0; i < args.length; i++) {
-			 Expression e = args[i].optimize(session);
-			 args[i] = e;
-			 if (!e.isConstant()) {
-				 allConst = false;
-			 }
-		 }
-		 Expression p0 = args.length < 1 ? null : args[0];
-		 switch (info.type) {
-		 case IFNULL:
-		 case NULLIF:
-		 case COALESCE:
-		 case LEAST:
-		 case GREATEST: {
-			 dataType = Value.UNKNOWN;
-			 scale = 0;
-			 precision = 0;
-			 displaySize = 0;
-			 for (int i = 0; i < args.length; i++) {
-				 Expression e = args[i];
-				 if (e != ValueExpression.getNull() && e.getType() != Value.UNKNOWN) {
-					 dataType = Value.getHigherOrder(dataType, e.getType());
-					 scale = Math.max(scale, e.getScale());
-					 precision = Math.max(precision, e.getPrecision());
-					 displaySize = Math.max(displaySize, e.getDisplaySize());
-				 }
-			 }
-			 if (dataType == Value.UNKNOWN) {
-				 dataType = Value.STRING;
-				 scale = 0;
-				 precision = Integer.MAX_VALUE;
-				 displaySize = Integer.MAX_VALUE;
-			 }
-			 break;
-		 }
-		 case CASEWHEN:
-			 dataType = Value.getHigherOrder(args[1].getType(), args[2].getType());
-			 precision = Math.max(args[1].getPrecision(), args[2].getPrecision());
-			 displaySize = Math.max(args[1].getDisplaySize(), args[2].getDisplaySize());
-			 scale = Math.max(args[1].getScale(), args[2].getScale());
-			 break;
-		 case CAST:
-		 case CONVERT:
-			 // data type, precision and scale is already set
-			 break;
-		 case ABS:
-		 case FLOOR:
-		 case RADIANS:
-		 case ROUND:
-		 case TRUNCATE:
-		 case POWER:
-			 dataType = p0.getType();
-			 scale = p0.getScale();
-			 precision = p0.getPrecision();
-			 displaySize = p0.getDisplaySize();
-			 if (dataType == Value.NULL) {
-				 dataType = Value.INT;
-				 precision = ValueInt.PRECISION;
-				 displaySize = ValueInt.DISPLAY_SIZE;
-				 scale = 0;
-			 }
-			 break;
-		 case SET: {
-			 Expression p1 = args[1];
-			 dataType = p1.getType();
-			 precision = p1.getPrecision();
-			 scale = p1.getScale();
-			 displaySize = p1.getDisplaySize();
-			 if (!(p0 instanceof Variable)) {
-				 throw Message.getSQLException(ErrorCode.CAN_ONLY_ASSIGN_TO_VARIABLE_1, p0.getSQL());
-			 }
-			 break;
-		 }
-		 case FILE_READ: {
-			 if (args.length == 1) {
-				 dataType = Value.BLOB;
-			 } else {
-				 dataType = Value.CLOB;
-			 }
-			 precision = Integer.MAX_VALUE;
-			 scale = 0;
-			 displaySize = Integer.MAX_VALUE;
-			 break;
-		 }
-		 case SUBSTRING:
-		 case SUBSTR: {
-			 precision = args[0].getPrecision();
-			 if (args[1].isConstant()) {
-				 // if only two arguments are used,
-				 // subtract offset from first argument length
-				 precision -= args[1].getValue(session).getLong() - 1;
-			 }
-			 if (args.length == 3 && args[2].isConstant()) {
-				 // if the third argument is constant it is at most this value
-				 precision = Math.min(precision, args[2].getValue(session).getLong());
-			 }
-			 precision = Math.max(0, precision);
-			 displaySize = MathUtils.convertLongToInt(precision);
-			 break;
-		 }
-		 default:
-			 dataType = info.dataType;
-			 DataType type = DataType.getDataType(dataType);
-			 precision = 0;
-			 displaySize = 0;
-			 scale = type.defaultScale;
-		 }
-		 if (allConst) {
-			 return ValueExpression.get(getValue(session));
-		 }
-		 return this;
-	 }
+	public Expression optimize(Session session) throws SQLException {
+		boolean allConst = info.deterministic;
+		for (int i = 0; i < args.length; i++) {
+			Expression e = args[i].optimize(session);
+			args[i] = e;
+			if (!e.isConstant()) {
+				allConst = false;
+			}
+		}
+		Expression p0 = args.length < 1 ? null : args[0];
+		switch (info.type) {
+		case IFNULL:
+		case NULLIF:
+		case COALESCE:
+		case LEAST:
+		case GREATEST: {
+			dataType = Value.UNKNOWN;
+			scale = 0;
+			precision = 0;
+			displaySize = 0;
+			for (Expression e : args) {
+				if (e != ValueExpression.getNull()
+						&& e.getType() != Value.UNKNOWN) {
+					dataType = Value.getHigherOrder(dataType, e.getType());
+					scale = Math.max(scale, e.getScale());
+					precision = Math.max(precision, e.getPrecision());
+					displaySize = Math.max(displaySize, e.getDisplaySize());
+				}
+			}
+			if (dataType == Value.UNKNOWN) {
+				dataType = Value.STRING;
+				scale = 0;
+				precision = Integer.MAX_VALUE;
+				displaySize = Integer.MAX_VALUE;
+			}
+			break;
+		}
+		case CASEWHEN:
+			dataType = Value.getHigherOrder(args[1].getType(),
+					args[2].getType());
+			precision = Math
+					.max(args[1].getPrecision(), args[2].getPrecision());
+			displaySize = Math.max(args[1].getDisplaySize(),
+					args[2].getDisplaySize());
+			scale = Math.max(args[1].getScale(), args[2].getScale());
+			break;
+		case CAST:
+		case CONVERT:
+			// data type, precision and scale is already set
+			break;
+		case ABS:
+		case FLOOR:
+		case RADIANS:
+		case ROUND:
+		case TRUNCATE:
+		case POWER:
+			dataType = p0.getType();
+			scale = p0.getScale();
+			precision = p0.getPrecision();
+			displaySize = p0.getDisplaySize();
+			if (dataType == Value.NULL) {
+				dataType = Value.INT;
+				precision = ValueInt.PRECISION;
+				displaySize = ValueInt.DISPLAY_SIZE;
+				scale = 0;
+			}
+			break;
+		case SET: {
+			Expression p1 = args[1];
+			dataType = p1.getType();
+			precision = p1.getPrecision();
+			scale = p1.getScale();
+			displaySize = p1.getDisplaySize();
+			if (!(p0 instanceof Variable)) {
+				throw Message.getSQLException(
+						ErrorCode.CAN_ONLY_ASSIGN_TO_VARIABLE_1, p0.getSQL());
+			}
+			break;
+		}
+		case FILE_READ: {
+			if (args.length == 1) {
+				dataType = Value.BLOB;
+			} else {
+				dataType = Value.CLOB;
+			}
+			precision = Integer.MAX_VALUE;
+			scale = 0;
+			displaySize = Integer.MAX_VALUE;
+			break;
+		}
+		case SUBSTRING:
+		case SUBSTR: {
+			precision = args[0].getPrecision();
+			if (args[1].isConstant()) {
+				// if only two arguments are used,
+				// subtract offset from first argument length
+				precision -= args[1].getValue(session).getLong() - 1;
+			}
+			if (args.length == 3 && args[2].isConstant()) {
+				// if the third argument is constant it is at most this value
+				precision = Math.min(precision, args[2].getValue(session)
+						.getLong());
+			}
+			precision = Math.max(0, precision);
+			displaySize = MathUtils.convertLongToInt(precision);
+			break;
+		}
+		default:
+			dataType = info.dataType;
+			DataType type = DataType.getDataType(dataType);
+			precision = 0;
+			displaySize = 0;
+			scale = type.defaultScale;
+		}
+		if (allConst) {
+			return ValueExpression.get(getValue(session));
+		}
+		return this;
+	}
 
-	 public void setEvaluatable(TableFilter tableFilter, boolean b) {
-		 for (int i = 0; i < args.length; i++) {
-			 Expression e = args[i];
-			 if (e != null) {
-				 e.setEvaluatable(tableFilter, b);
-			 }
-		 }
-	 }
+	public void setEvaluatable(TableFilter tableFilter, boolean b) {
+		for (Expression e : args) {
+			if (e != null) {
+				e.setEvaluatable(tableFilter, b);
+			}
+		}
+	}
 
-	 public int getScale() {
-		 return scale;
-	 }
+	public int getScale() {
+		return scale;
+	}
 
-	 public long getPrecision() {
-		 if (precision == 0) {
-			 calculatePrecisionAndDisplaySize();
-		 }
-		 return precision;
-	 }
+	public long getPrecision() {
+		if (precision == 0) {
+			calculatePrecisionAndDisplaySize();
+		}
+		return precision;
+	}
 
-	 public int getDisplaySize() {
-		 if (precision == 0) {
-			 calculatePrecisionAndDisplaySize();
-		 }
-		 return displaySize;
-	 }
+	public int getDisplaySize() {
+		if (precision == 0) {
+			calculatePrecisionAndDisplaySize();
+		}
+		return displaySize;
+	}
 
-	 private void calculatePrecisionAndDisplaySize() {
-		 switch (info.type) {
-		 case ENCRYPT:
-		 case DECRYPT:
-			 precision = args[2].getPrecision();
-			 displaySize = args[2].getDisplaySize();
-			 break;
-		 case COMPRESS:
-			 precision = args[0].getPrecision();
-			 displaySize = args[0].getDisplaySize();
-			 break;
-		 case CHAR:
-			 precision = 1;
-			 displaySize = 1;
-			 break;
-		 case CONCAT:
-			 precision = 0;
-			 displaySize = 0;
-			 for (int i = 0; i < args.length; i++) {
-				 precision += args[i].getPrecision();
-				 displaySize = MathUtils.convertLongToInt((long) displaySize + args[i].getDisplaySize());
-				 if (precision < 0) {
-					 precision = Long.MAX_VALUE;
-				 }
-			 }
-			 break;
-		 case HEXTORAW:
-			 precision = (args[0].getPrecision() + 3) / 4;
-			 displaySize = MathUtils.convertLongToInt(precision);
-			 break;
-		 case LCASE:
-		 case LTRIM:
-		 case RIGHT:
-		 case RTRIM:
-		 case UCASE:
-		 case LOWER:
-		 case UPPER:
-		 case TRIM:
-		 case STRINGDECODE:
-		 case UTF8TOSTRING:
-			 precision = args[0].getPrecision();
-			 displaySize = args[0].getDisplaySize();
-			 break;
-		 case RAWTOHEX:
-			 precision = args[0].getPrecision() * 4;
-			 displaySize = MathUtils.convertLongToInt(precision);
-			 break;
-		 case SOUNDEX:
-			 precision = 4;
-			 displaySize = (int) precision;
-			 break;
-		 case DAY_NAME:
-		 case MONTH_NAME:
-			 // day and month names may be long in some languages
-			 precision = 20;
-			 displaySize = (int) precision;
-			 break;
-		 default:
-			 DataType type = DataType.getDataType(dataType);
-			 precision = type.defaultPrecision;
-			 displaySize = type.defaultDisplaySize;
-		 }
-	 }
+	private void calculatePrecisionAndDisplaySize() {
+		switch (info.type) {
+		case ENCRYPT:
+		case DECRYPT:
+			precision = args[2].getPrecision();
+			displaySize = args[2].getDisplaySize();
+			break;
+		case COMPRESS:
+			precision = args[0].getPrecision();
+			displaySize = args[0].getDisplaySize();
+			break;
+		case CHAR:
+			precision = 1;
+			displaySize = 1;
+			break;
+		case CONCAT:
+			precision = 0;
+			displaySize = 0;
+			for (Expression arg : args) {
+				precision += arg.getPrecision();
+				displaySize = MathUtils.convertLongToInt((long) displaySize
+						+ arg.getDisplaySize());
+				if (precision < 0) {
+					precision = Long.MAX_VALUE;
+				}
+			}
+			break;
+		case HEXTORAW:
+			precision = (args[0].getPrecision() + 3) / 4;
+			displaySize = MathUtils.convertLongToInt(precision);
+			break;
+		case LCASE:
+		case LTRIM:
+		case RIGHT:
+		case RTRIM:
+		case UCASE:
+		case LOWER:
+		case UPPER:
+		case TRIM:
+		case STRINGDECODE:
+		case UTF8TOSTRING:
+			precision = args[0].getPrecision();
+			displaySize = args[0].getDisplaySize();
+			break;
+		case RAWTOHEX:
+			precision = args[0].getPrecision() * 4;
+			displaySize = MathUtils.convertLongToInt(precision);
+			break;
+		case SOUNDEX:
+			precision = 4;
+			displaySize = (int) precision;
+			break;
+		case DAY_NAME:
+		case MONTH_NAME:
+			// day and month names may be long in some languages
+			precision = 20;
+			displaySize = (int) precision;
+			break;
+		default:
+			DataType type = DataType.getDataType(dataType);
+			precision = type.defaultPrecision;
+			displaySize = type.defaultDisplaySize;
+		}
+	}
 
-	 public String getSQL() {
-		 StringBuilder buff = new StringBuilder();
-		 buff.append(info.name);
-		 buff.append('(');
-		 switch (info.type) {
-		 case CAST: {
-			 buff.append(args[0].getSQL());
-			 buff.append(" AS ");
-			 buff.append(new Column(null, dataType, precision, scale, displaySize).getCreateSQL());
-			 break;
-		 }
-		 case CONVERT: {
-			 buff.append(args[0].getSQL());
-			 buff.append(",");
-			 buff.append(new Column(null, dataType, precision, scale, displaySize).getCreateSQL());
-			 break;
-		 }
-		 case EXTRACT: {
-			 ValueString v = (ValueString) ((ValueExpression) args[0]).getValue(null);
-			 buff.append(v.getString());
-			 buff.append(" FROM ");
-			 buff.append(args[1].getSQL());
-			 break;
-		 }
-		 default: {
-			 for (int i = 0; i < args.length; i++) {
-				 if (i > 0) {
-					 buff.append(", ");
-				 }
-				 Expression e = args[i];
-				 buff.append(e.getSQL());
-			 }
-		 }
-		 }
-		 buff.append(')');
-		 return buff.toString();
-	 }
+	public String getSQL() {
+		StringBuilder buff = new StringBuilder();
+		buff.append(info.name);
+		buff.append('(');
+		switch (info.type) {
+		case CAST: {
+			buff.append(args[0].getSQL());
+			buff.append(" AS ");
+			buff.append(new Column(null, dataType, precision, scale,
+					displaySize).getCreateSQL());
+			break;
+		}
+		case CONVERT: {
+			buff.append(args[0].getSQL());
+			buff.append(",");
+			buff.append(new Column(null, dataType, precision, scale,
+					displaySize).getCreateSQL());
+			break;
+		}
+		case EXTRACT: {
+			ValueString v = (ValueString) ((ValueExpression) args[0])
+					.getValue(null);
+			buff.append(v.getString());
+			buff.append(" FROM ");
+			buff.append(args[1].getSQL());
+			break;
+		}
+		default: {
+			for (int i = 0; i < args.length; i++) {
+				if (i > 0) {
+					buff.append(", ");
+				}
+				Expression e = args[i];
+				buff.append(e.getSQL());
+			}
+		}
+		}
+		buff.append(')');
+		return buff.toString();
+	}
 
-	 public void updateAggregate(Session session) throws SQLException {
-		 for (int i = 0; i < args.length; i++) {
-			 Expression e = args[i];
-			 if (e != null) {
-				 e.updateAggregate(session);
-			 }
-		 }
-	 }
+	public void updateAggregate(Session session) throws SQLException {
+		for (Expression e : args) {
+			if (e != null) {
+				e.updateAggregate(session);
+			}
+		}
+	}
 
-	 public int getFunctionType() {
-		 return info.type;
-	 }
+	public int getFunctionType() {
+		return info.type;
+	}
 
-	 public String getName() {
-		 return info.name;
-	 }
+	public String getName() {
+		return info.name;
+	}
 
-	 public int getParameterCount() {
-		 return args.length;
-	 }
+	public int getParameterCount() {
+		return args.length;
+	}
 
-	 public ValueResultSet getValueForColumnList(Session session, Expression[] args) throws SQLException {
-		 switch (info.type) {
-		 case CSVREAD: {
-			 String fileName = args[0].getValue(session).getString();
-			 if (fileName == null) {
-				 throw Message.getSQLException(ErrorCode.PARAMETER_NOT_SET_1, "fileName");
-			 }
-			 String columnList = args.length < 2 ? null : args[1].getValue(session).getString();
-			 String charset = args.length < 3 ? null : args[2].getValue(session).getString();
-			 String fieldSeparatorRead = args.length < 4 ? null : args[3].getValue(session).getString();
-			 String fieldDelimiter = args.length < 5 ? null : args[4].getValue(session).getString();
-			 String escapeCharacter = args.length < 6 ? null : args[5].getValue(session).getString();
-			 Csv csv = Csv.getInstance();
-			 setCsvDelimiterEscape(csv, fieldSeparatorRead, fieldDelimiter, escapeCharacter);
-			 char fieldSeparator = csv.getFieldSeparatorRead();
-			 String[] columns = StringUtils.arraySplit(columnList, fieldSeparator, true);
-			 ResultSet rs = csv.read(fileName, columns, charset);
-			 ValueResultSet vr = ValueResultSet.getCopy(rs, 0);
-			 return vr;
-		 }
-		 default:
-			 break;
-		 }
-		 return (ValueResultSet) getValueWithArgs(session, args);
-	 }
+	public ValueResultSet getValueForColumnList(Session session,
+			Expression[] args) throws SQLException {
+		switch (info.type) {
+		case CSVREAD: {
+			String fileName = args[0].getValue(session).getString();
+			if (fileName == null) {
+				throw Message.getSQLException(ErrorCode.PARAMETER_NOT_SET_1,
+						"fileName");
+			}
+			String columnList = args.length < 2 ? null : args[1].getValue(
+					session).getString();
+			String charset = args.length < 3 ? null : args[2].getValue(session)
+					.getString();
+			String fieldSeparatorRead = args.length < 4 ? null : args[3]
+					.getValue(session).getString();
+			String fieldDelimiter = args.length < 5 ? null : args[4].getValue(
+					session).getString();
+			String escapeCharacter = args.length < 6 ? null : args[5].getValue(
+					session).getString();
+			Csv csv = Csv.getInstance();
+			setCsvDelimiterEscape(csv, fieldSeparatorRead, fieldDelimiter,
+					escapeCharacter);
+			char fieldSeparator = csv.getFieldSeparatorRead();
+			String[] columns = StringUtils.arraySplit(columnList,
+					fieldSeparator, true);
+			ResultSet rs = csv.read(fileName, columns, charset);
+			ValueResultSet vr = ValueResultSet.getCopy(rs, 0);
+			return vr;
+		}
+		default:
+			break;
+		}
+		return (ValueResultSet) getValueWithArgs(session, args);
+	}
 
-	 private void setCsvDelimiterEscape(Csv csv, String fieldSeparator, String fieldDelimiter, String escapeCharacter) {
-		 if (fieldSeparator != null) {
-			 csv.setFieldSeparatorWrite(fieldSeparator);
-			 if (fieldSeparator.length() > 0) {
-				 char fs = fieldSeparator.charAt(0);
-				 csv.setFieldSeparatorRead(fs);
-			 }
-		 }
-		 if (fieldDelimiter != null) {
-			 char fd = fieldDelimiter.length() == 0 ? 0 : fieldDelimiter.charAt(0);
-			 csv.setFieldDelimiter(fd);
-		 }
-		 if (escapeCharacter != null) {
-			 char ec = escapeCharacter.length() == 0 ? 0 : escapeCharacter.charAt(0);
-			 csv.setEscapeCharacter(ec);
-		 }
-	 }
+	private void setCsvDelimiterEscape(Csv csv, String fieldSeparator,
+			String fieldDelimiter, String escapeCharacter) {
+		if (fieldSeparator != null) {
+			csv.setFieldSeparatorWrite(fieldSeparator);
+			if (fieldSeparator.length() > 0) {
+				char fs = fieldSeparator.charAt(0);
+				csv.setFieldSeparatorRead(fs);
+			}
+		}
+		if (fieldDelimiter != null) {
+			char fd = fieldDelimiter.length() == 0 ? 0 : fieldDelimiter
+					.charAt(0);
+			csv.setFieldDelimiter(fd);
+		}
+		if (escapeCharacter != null) {
+			char ec = escapeCharacter.length() == 0 ? 0 : escapeCharacter
+					.charAt(0);
+			csv.setEscapeCharacter(ec);
+		}
+	}
 
-	 public Expression[] getArgs() {
-		 return args;
-	 }
+	public Expression[] getArgs() {
+		return args;
+	}
 
-	 public boolean isEverything(ExpressionVisitor visitor) {
-		 if (visitor.getType() == ExpressionVisitor.DETERMINISTIC && !info.deterministic) {
-			 return false;
-		 }
-		 for (int i = 0; i < args.length; i++) {
-			 Expression e = args[i];
-			 if (e != null && !e.isEverything(visitor)) {
-				 return false;
-			 }
-		 }
-		 return true;
-	 }
+	public boolean isEverything(ExpressionVisitor visitor) {
+		if (visitor.getType() == ExpressionVisitor.DETERMINISTIC
+				&& !info.deterministic) {
+			return false;
+		}
+		for (Expression arg : args) {
+			Expression e = arg;
+			if (e != null && !e.isEverything(visitor)) {
+				return false;
+			}
+		}
+		return true;
+	}
 
-	 public int getCost() {
-		 int cost = 3;
-		 for (int i = 0; i < args.length; i++) {
-			 cost += args[i].getCost();
-		 }
-		 return cost;
-	 }
+	public int getCost() {
+		int cost = 3;
+		for (Expression arg : args) {
+			cost += arg.getCost();
+		}
+		return cost;
+	}
 
-	 public boolean isDeterministic() {
-		 return info.deterministic;
-	 }
+	public boolean isDeterministic() {
+		return info.deterministic;
+	}
 
 }

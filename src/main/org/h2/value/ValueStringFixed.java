@@ -38,7 +38,8 @@ public class ValueStringFixed extends ValueStringBase {
 	}
 
 	public boolean equals(Object other) {
-		return other instanceof ValueStringBase && value.equals(((ValueStringBase) other).value);
+		return other instanceof ValueStringBase
+				&& value.equals(((ValueStringBase) other).value);
 	}
 
 	public int hashCode() {
@@ -52,10 +53,11 @@ public class ValueStringFixed extends ValueStringBase {
 	}
 
 	/**
-	 * Get or create a fixed length string value for the given string.
-	 * Spaces at the end of the string will be removed.
-	 *
-	 * @param s the string
+	 * Get or create a fixed length string value for the given string. Spaces at
+	 * the end of the string will be removed.
+	 * 
+	 * @param s
+	 *            the string
 	 * @return the value
 	 */
 	public static ValueStringFixed get(String s) {

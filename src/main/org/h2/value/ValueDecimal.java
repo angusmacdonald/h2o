@@ -48,9 +48,11 @@ public class ValueDecimal extends Value {
 	private ValueDecimal(BigDecimal value) {
 		if (value == null) {
 			throw new IllegalArgumentException();
-		} else if (!SysProperties.ALLOW_BIG_DECIMAL_EXTENSIONS && !value.getClass().equals(BigDecimal.class)) {
-			SQLException e = Message.getSQLException(ErrorCode.INVALID_CLASS_2, new String[] {
-					BigDecimal.class.getName(), value.getClass().getName() });
+		} else if (!SysProperties.ALLOW_BIG_DECIMAL_EXTENSIONS
+				&& !value.getClass().equals(BigDecimal.class)) {
+			SQLException e = Message.getSQLException(ErrorCode.INVALID_CLASS_2,
+					new String[] { BigDecimal.class.getName(),
+							value.getClass().getName() });
 			throw Message.convertToInternal(e);
 		}
 		this.value = value;
@@ -78,26 +80,28 @@ public class ValueDecimal extends Value {
 	public Value divide(Value v) throws SQLException {
 		ValueDecimal dec = (ValueDecimal) v;
 		// TODO value: divide decimal: rounding?
-				if (dec.value.signum() == 0) {
-					throw Message.getSQLException(ErrorCode.DIVISION_BY_ZERO_1, getSQL());
+		if (dec.value.signum() == 0) {
+			throw Message.getSQLException(ErrorCode.DIVISION_BY_ZERO_1,
+					getSQL());
+		}
+		BigDecimal bd = value.divide(dec.value, value.scale()
+				+ DIVIDE_SCALE_ADD, BigDecimal.ROUND_HALF_DOWN);
+		if (bd.signum() == 0) {
+			bd = DEC_ZERO;
+		} else if (bd.scale() > 0) {
+			if (!bd.unscaledValue().testBit(0)) {
+				String s = bd.toString();
+				int i = s.length() - 1;
+				while (i >= 0 && s.charAt(i) == '0') {
+					i--;
 				}
-				BigDecimal bd = value.divide(dec.value, value.scale() + DIVIDE_SCALE_ADD, BigDecimal.ROUND_HALF_DOWN);
-				if (bd.signum() == 0) {
-					bd = DEC_ZERO;
-				} else if (bd.scale() > 0) {
-					if (!bd.unscaledValue().testBit(0)) {
-						String s = bd.toString();
-						int i = s.length() - 1;
-						while (i >= 0 && s.charAt(i) == '0') {
-							i--;
-						}
-						if (i < s.length() - 1) {
-							s = s.substring(0, i + 1);
-							bd = new BigDecimal(s);
-						}
-					}
+				if (i < s.length() - 1) {
+					s = s.substring(0, i + 1);
+					bd = new BigDecimal(s);
 				}
-				return ValueDecimal.get(bd);
+			}
+		}
+		return ValueDecimal.get(bd);
 	}
 
 	public String getSQL() {
@@ -155,11 +159,13 @@ public class ValueDecimal extends Value {
 		return value;
 	}
 
-	public void set(PreparedStatement prep, int parameterIndex) throws SQLException {
+	public void set(PreparedStatement prep, int parameterIndex)
+			throws SQLException {
 		prep.setBigDecimal(parameterIndex, value);
 	}
 
-	public Value convertScale(boolean onlyToSmallerScale, int targetScale) throws SQLException {
+	public Value convertScale(boolean onlyToSmallerScale, int targetScale)
+			throws SQLException {
 		if (value.scale() == targetScale) {
 			return this;
 		}
@@ -176,37 +182,40 @@ public class ValueDecimal extends Value {
 		if (getPrecision() <= precision) {
 			return this;
 		}
-		throw Message.getSQLException(ErrorCode.VALUE_TOO_LARGE_FOR_PRECISION_1, "" + precision);
+		throw Message.getSQLException(
+				ErrorCode.VALUE_TOO_LARGE_FOR_PRECISION_1, "" + precision);
 	}
 
 	/**
 	 * Get or create big decimal value for the given big decimal.
-	 *
-	 * @param dec the bit decimal
+	 * 
+	 * @param dec
+	 *            the bit decimal
 	 * @return the value
 	 */
-	 public static ValueDecimal get(BigDecimal dec) {
-		 if (DEC_ZERO.equals(dec)) {
-			 return (ValueDecimal) ZERO;
-		 } else if (DEC_ONE.equals(dec)) {
-			 return (ValueDecimal) ONE;
-		 }
-		 // TODO value optimization: find a way to read size of BigDecimal,
-		 // check max cache size
-		 return (ValueDecimal) Value.cache(new ValueDecimal(dec));
-	 }
+	public static ValueDecimal get(BigDecimal dec) {
+		if (DEC_ZERO.equals(dec)) {
+			return (ValueDecimal) ZERO;
+		} else if (DEC_ONE.equals(dec)) {
+			return (ValueDecimal) ONE;
+		}
+		// TODO value optimization: find a way to read size of BigDecimal,
+		// check max cache size
+		return (ValueDecimal) Value.cache(new ValueDecimal(dec));
+	}
 
-	 public int getDisplaySize() {
-		 // add 2 characters for '-' and '.'
-		 return MathUtils.convertLongToInt(getPrecision() + 2);
-	 }
+	public int getDisplaySize() {
+		// add 2 characters for '-' and '.'
+		return MathUtils.convertLongToInt(getPrecision() + 2);
+	}
 
-	 public boolean equals(Object other) {
-		 return other instanceof ValueDecimal && value.equals(((ValueDecimal) other).value);
-	 }
+	public boolean equals(Object other) {
+		return other instanceof ValueDecimal
+				&& value.equals(((ValueDecimal) other).value);
+	}
 
-	 public int getMemory() {
-		 return getString().length() * 3 + 120;
-	 }
+	public int getMemory() {
+		return getString().length() * 3 + 120;
+	}
 
 }

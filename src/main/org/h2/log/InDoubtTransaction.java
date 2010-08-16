@@ -40,7 +40,8 @@ public class InDoubtTransaction {
 	private int blocks;
 	private int state;
 
-	InDoubtTransaction(LogFile log, int sessionId, int pos, String transaction, int blocks) {
+	InDoubtTransaction(LogFile log, int sessionId, int pos, String transaction,
+			int blocks) {
 		this.log = log;
 		this.sessionId = sessionId;
 		this.pos = pos;
@@ -50,13 +51,13 @@ public class InDoubtTransaction {
 	}
 
 	/**
-	 * Change the state of this transaction.
-	 * This will also update the log file.
-	 *
-	 * @param state the new state
+	 * Change the state of this transaction. This will also update the log file.
+	 * 
+	 * @param state
+	 *            the new state
 	 */
 	public void setState(int state) throws SQLException {
-		switch(state) {
+		switch (state) {
 		case COMMIT:
 			log.updatePreparedCommit(true, pos, sessionId, blocks);
 			break;
@@ -64,18 +65,18 @@ public class InDoubtTransaction {
 			log.updatePreparedCommit(false, pos, sessionId, blocks);
 			break;
 		default:
-			Message.throwInternalError("state="+state);
+			Message.throwInternalError("state=" + state);
 		}
 		this.state = state;
 	}
 
 	/**
 	 * Get the state of this transaction as a text.
-	 *
+	 * 
 	 * @return the transaction state text
 	 */
 	public String getState() {
-		switch(state) {
+		switch (state) {
 		case IN_DOUBT:
 			return "IN_DOUBT";
 		case COMMIT:
@@ -83,13 +84,13 @@ public class InDoubtTransaction {
 		case ROLLBACK:
 			return "ROLLBACK";
 		default:
-			throw Message.throwInternalError("state="+state);
+			throw Message.throwInternalError("state=" + state);
 		}
 	}
 
 	/**
 	 * Get the name of the transaction.
-	 *
+	 * 
 	 * @return the transaction name
 	 */
 	public String getTransaction() {

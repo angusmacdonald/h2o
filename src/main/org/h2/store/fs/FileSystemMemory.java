@@ -19,8 +19,8 @@ import org.h2.util.ObjectArray;
 import org.h2.util.RandomUtils;
 
 /**
- * This file system keeps files fully in memory.
- * There is an option to compress file blocks to safe memory.
+ * This file system keeps files fully in memory. There is an option to compress
+ * file blocks to safe memory.
  */
 public class FileSystemMemory extends FileSystem {
 
@@ -82,7 +82,8 @@ public class FileSystemMemory extends FileSystem {
 		return true;
 	}
 
-	public String createTempFile(String name, String suffix, boolean deleteOnExit, boolean inTempDir) {
+	public String createTempFile(String name, String suffix,
+			boolean deleteOnExit, boolean inTempDir) {
 		name += ".";
 		synchronized (MEMORY_FILES) {
 			for (int i = 0;; i++) {
@@ -131,7 +132,8 @@ public class FileSystemMemory extends FileSystem {
 		fileName = fileName.replace('\\', '/');
 		int idx = fileName.indexOf(":/");
 		if (idx > 0) {
-			fileName = fileName.substring(0, idx + 1) + fileName.substring(idx + 2);
+			fileName = fileName.substring(0, idx + 1)
+					+ fileName.substring(idx + 2);
 		}
 		return fileName;
 	}
@@ -174,7 +176,8 @@ public class FileSystemMemory extends FileSystem {
 			InputStream in = openFileInputStream(original);
 			IOUtils.copyAndClose(in, out);
 		} catch (IOException e) {
-			throw Message.convertIOException(e, "Can not copy " + original + " to " + copy);
+			throw Message.convertIOException(e, "Can not copy " + original
+					+ " to " + copy);
 		}
 	}
 
@@ -193,7 +196,8 @@ public class FileSystemMemory extends FileSystem {
 		return fileName.startsWith(prefix);
 	}
 
-	public OutputStream openFileOutputStream(String fileName, boolean append) throws SQLException {
+	public OutputStream openFileOutputStream(String fileName, boolean append)
+			throws SQLException {
 		try {
 			FileObjectMemory obj = getMemoryFile(fileName);
 			obj.seek(0);
@@ -220,7 +224,8 @@ public class FileSystemMemory extends FileSystem {
 		synchronized (MEMORY_FILES) {
 			FileObjectMemory m = (FileObjectMemory) MEMORY_FILES.get(fileName);
 			if (m == null) {
-				boolean compress = fileName.startsWith(FileSystem.PREFIX_MEMORY_LZF);
+				boolean compress = fileName
+						.startsWith(FileSystem.PREFIX_MEMORY_LZF);
 				m = new FileObjectMemory(fileName, compress);
 				MEMORY_FILES.put(fileName, m);
 			}

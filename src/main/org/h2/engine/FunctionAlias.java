@@ -27,7 +27,7 @@ import org.h2.value.ValueNull;
 
 /**
  * Represents a user-defined function, or alias.
- *
+ * 
  * @author Thomas Mueller
  * @author Gary Tong
  */
@@ -38,12 +38,15 @@ public class FunctionAlias extends DbObjectBase {
 	private JavaMethod[] javaMethods;
 	private boolean deterministic;
 
-	public FunctionAlias(Database db, int id, String name, String javaClassMethod, boolean force) throws SQLException {
+	public FunctionAlias(Database db, int id, String name,
+			String javaClassMethod, boolean force) throws SQLException {
 		initDbObjectBase(db, id, name, Trace.FUNCTION);
 		int paren = javaClassMethod.indexOf('(');
-		int lastDot = javaClassMethod.lastIndexOf('.', paren < 0 ? javaClassMethod.length() : paren);
+		int lastDot = javaClassMethod.lastIndexOf('.',
+				paren < 0 ? javaClassMethod.length() : paren);
 		if (lastDot < 0) {
-			throw Message.getSQLException(ErrorCode.SYNTAX_ERROR_1, javaClassMethod);
+			throw Message.getSQLException(ErrorCode.SYNTAX_ERROR_1,
+					javaClassMethod);
 		}
 		className = javaClassMethod.substring(0, lastDot);
 		methodName = javaClassMethod.substring(lastDot + 1);
@@ -70,24 +73,27 @@ public class FunctionAlias extends DbObjectBase {
 			if (!Modifier.isStatic(m.getModifiers())) {
 				continue;
 			}
-			if (m.getName().equals(methodName) || getMethodSignature(m).equals(methodName)) {
+			if (m.getName().equals(methodName)
+					|| getMethodSignature(m).equals(methodName)) {
 				JavaMethod javaMethod = new JavaMethod(m, i);
 				for (int j = 0; j < list.size(); j++) {
 					JavaMethod old = (JavaMethod) list.get(j);
-					if (old.getParameterCount() == javaMethod.getParameterCount()) {
-						throw Message.getSQLException(ErrorCode.METHODS_MUST_HAVE_DIFFERENT_PARAMETER_COUNTS_2,
-								new String[] {
-								old.toString(),
-								javaMethod.toString()
-						}
-						);
+					if (old.getParameterCount() == javaMethod
+							.getParameterCount()) {
+						throw Message
+								.getSQLException(
+										ErrorCode.METHODS_MUST_HAVE_DIFFERENT_PARAMETER_COUNTS_2,
+										new String[] { old.toString(),
+												javaMethod.toString() });
 					}
 				}
 				list.add(javaMethod);
 			}
 		}
 		if (list.size() == 0) {
-			throw Message.getSQLException(ErrorCode.PUBLIC_STATIC_JAVA_METHOD_NOT_FOUND_1, methodName + " (" + className + ")");
+			throw Message.getSQLException(
+					ErrorCode.PUBLIC_STATIC_JAVA_METHOD_NOT_FOUND_1, methodName
+							+ " (" + className + ")");
 		}
 		javaMethods = new JavaMethod[list.size()];
 		list.toArray(javaMethods);
@@ -143,7 +149,8 @@ public class FunctionAlias extends DbObjectBase {
 		return DbObject.FUNCTION_ALIAS;
 	}
 
-	public synchronized void removeChildrenAndResources(Session session) throws SQLException {
+	public synchronized void removeChildrenAndResources(Session session)
+			throws SQLException {
 		database.removeMeta(session, getId());
 		className = null;
 		methodName = null;
@@ -157,22 +164,26 @@ public class FunctionAlias extends DbObjectBase {
 
 	/**
 	 * Find the Java method that matches the arguments.
-	 *
-	 * @param args the argument list
+	 * 
+	 * @param args
+	 *            the argument list
 	 * @return the Java method
-	 * @throws SQLException if no matching method could be found
+	 * @throws SQLException
+	 *             if no matching method could be found
 	 */
 	public JavaMethod findJavaMethod(Expression[] args) throws SQLException {
 		load();
 		int parameterCount = args.length;
-		for (int i = 0; i < javaMethods.length; i++) {
-			JavaMethod m = javaMethods[i];
+		for (JavaMethod m : javaMethods) {
 			int count = m.getParameterCount();
-			if (count == parameterCount || (m.isVarArgs() && count <= parameterCount + 1)) {
+			if (count == parameterCount
+					|| (m.isVarArgs() && count <= parameterCount + 1)) {
 				return m;
 			}
 		}
-		throw Message.getSQLException(ErrorCode.METHOD_NOT_FOUND_1, methodName + " (" + className + ", parameter count: " + parameterCount + ")");
+		throw Message.getSQLException(ErrorCode.METHOD_NOT_FOUND_1, methodName
+				+ " (" + className + ", parameter count: " + parameterCount
+				+ ")");
 	}
 
 	public String getJavaClassName() {
@@ -185,7 +196,7 @@ public class FunctionAlias extends DbObjectBase {
 
 	/**
 	 * Get the Java methods mapped by this function.
-	 *
+	 * 
 	 * @return the Java methods.
 	 */
 	public JavaMethod[] getJavaMethods() throws SQLException {
@@ -194,9 +205,9 @@ public class FunctionAlias extends DbObjectBase {
 	}
 
 	/**
-	 * There may be multiple Java methods that match a function name.
-	 * Each method must have a different number of parameters however.
-	 * This helper class represents one such method.
+	 * There may be multiple Java methods that match a function name. Each
+	 * method must have a different number of parameters however. This helper
+	 * class represents one such method.
 	 */
 	public static class JavaMethod implements Comparable {
 		private final int id;
@@ -236,121 +247,132 @@ public class FunctionAlias extends DbObjectBase {
 
 		/**
 		 * Check if this function requires a database connection.
-		 *
+		 * 
 		 * @return if the function requires a connection
 		 */
-		 public boolean hasConnectionParam() {
-			 return this.hasConnectionParam;
-		 }
+		public boolean hasConnectionParam() {
+			return this.hasConnectionParam;
+		}
 
 		/**
 		 * Call the user-defined function and return the value.
-		 *
-		 * @param session the session
-		 * @param args the argument list
-		 * @param columnList true if the function should only return the column list
+		 * 
+		 * @param session
+		 *            the session
+		 * @param args
+		 *            the argument list
+		 * @param columnList
+		 *            true if the function should only return the column list
 		 * @return the value
 		 */
-		 public Value getValue(Session session, Expression[] args, boolean columnList) throws SQLException {
-			 Class[] paramClasses = method.getParameterTypes();
-			 Object[] params = new Object[paramClasses.length];
-			 int p = 0;
-			 if (hasConnectionParam && params.length > 0) {
-				 params[p++] = session.createConnection(columnList);
-			 }
+		public Value getValue(Session session, Expression[] args,
+				boolean columnList) throws SQLException {
+			Class[] paramClasses = method.getParameterTypes();
+			Object[] params = new Object[paramClasses.length];
+			int p = 0;
+			if (hasConnectionParam && params.length > 0) {
+				params[p++] = session.createConnection(columnList);
+			}
 
-			 // allocate array for varArgs parameters
-			 Object varArg = null;
-			 if (varArgs) {
-				 int len = args.length - params.length + 1 + (hasConnectionParam ? 1 : 0);
-				 varArg = Array.newInstance(varArgClass, len);
-				 params[params.length - 1] = varArg;
-			 }
+			// allocate array for varArgs parameters
+			Object varArg = null;
+			if (varArgs) {
+				int len = args.length - params.length + 1
+						+ (hasConnectionParam ? 1 : 0);
+				varArg = Array.newInstance(varArgClass, len);
+				params[params.length - 1] = varArg;
+			}
 
-			 for (int a = 0; a < args.length; a++, p++) {
-				 boolean currentIsVarArg = varArgs && p >= paramClasses.length - 1;
-				 Class paramClass;
-				 if (currentIsVarArg) {
-					 paramClass = varArgClass;
-				 } else {
-					 paramClass = paramClasses[p];
-				 }
-				 int type = DataType.getTypeFromClass(paramClass);
-				 Value v = args[a].getValue(session);
-				 v = v.convertTo(type);
-				 Object o = v.getObject();
-				 if (o == null) {
-					 if (paramClass.isPrimitive()) {
-						 if (columnList) {
-							 // if the column list is requested, the parameters may
-							 // be null
-							 // need to set to default value otherwise the function
-							 // can't be called at all
-							 o = DataType.getDefaultForPrimitiveType(paramClass);
-						 } else {
-							 // NULL for a java primitive: return NULL
-							 return ValueNull.INSTANCE;
-						 }
-					 }
-				 } else {
-					 if (!paramClass.isAssignableFrom(o.getClass()) && !paramClass.isPrimitive()) {
-						 o = DataType.convertTo(session, session.createConnection(false), v, paramClass);
-					 }
-				 }
-				 if (currentIsVarArg) {
-					 Array.set(varArg, p - params.length + 1, o);
-				 } else {
-					 params[p] = o;
-				 }
-			 }
-			 boolean old = session.getAutoCommit();
-			 try {
-				 session.setAutoCommit(false);
-				 try {
-					 Object returnValue;
-					 returnValue = method.invoke(null, params);
-					 if (returnValue == null) {
-						 return ValueNull.INSTANCE;
-					 }
-					 Value ret = DataType.convertToValue(session, returnValue, dataType);
-					 return ret.convertTo(dataType);
-				 } catch (Exception e) {
-					 throw Message.convert(e);
-				 }
-			 } finally {
-				 session.setAutoCommit(old);
-			 }
-		 }
+			for (int a = 0; a < args.length; a++, p++) {
+				boolean currentIsVarArg = varArgs
+						&& p >= paramClasses.length - 1;
+				Class paramClass;
+				if (currentIsVarArg) {
+					paramClass = varArgClass;
+				} else {
+					paramClass = paramClasses[p];
+				}
+				int type = DataType.getTypeFromClass(paramClass);
+				Value v = args[a].getValue(session);
+				v = v.convertTo(type);
+				Object o = v.getObject();
+				if (o == null) {
+					if (paramClass.isPrimitive()) {
+						if (columnList) {
+							// if the column list is requested, the parameters
+							// may
+							// be null
+							// need to set to default value otherwise the
+							// function
+							// can't be called at all
+							o = DataType.getDefaultForPrimitiveType(paramClass);
+						} else {
+							// NULL for a java primitive: return NULL
+							return ValueNull.INSTANCE;
+						}
+					}
+				} else {
+					if (!paramClass.isAssignableFrom(o.getClass())
+							&& !paramClass.isPrimitive()) {
+						o = DataType.convertTo(session,
+								session.createConnection(false), v, paramClass);
+					}
+				}
+				if (currentIsVarArg) {
+					Array.set(varArg, p - params.length + 1, o);
+				} else {
+					params[p] = o;
+				}
+			}
+			boolean old = session.getAutoCommit();
+			try {
+				session.setAutoCommit(false);
+				try {
+					Object returnValue;
+					returnValue = method.invoke(null, params);
+					if (returnValue == null) {
+						return ValueNull.INSTANCE;
+					}
+					Value ret = DataType.convertToValue(session, returnValue,
+							dataType);
+					return ret.convertTo(dataType);
+				} catch (Exception e) {
+					throw Message.convert(e);
+				}
+			} finally {
+				session.setAutoCommit(old);
+			}
+		}
 
-		 public Class[] getColumnClasses() throws SQLException {
-			 return method.getParameterTypes();
-		 }
+		public Class[] getColumnClasses() throws SQLException {
+			return method.getParameterTypes();
+		}
 
-		 public int getDataType() {
-			 return dataType;
-		 }
+		public int getDataType() {
+			return dataType;
+		}
 
-		 public int getParameterCount() throws SQLException {
-			 return paramCount;
-		 }
+		public int getParameterCount() throws SQLException {
+			return paramCount;
+		}
 
-		 public boolean isVarArgs() {
-			 return varArgs;
-		 }
+		public boolean isVarArgs() {
+			return varArgs;
+		}
 
-		 public int compareTo(Object o) {
-			 JavaMethod m = (JavaMethod) o;
-			 if (varArgs != m.varArgs) {
-				 return varArgs ? 1 : -1;
-			 }
-			 if (paramCount != m.paramCount) {
-				 return paramCount - m.paramCount;
-			 }
-			 if (hasConnectionParam != m.hasConnectionParam) {
-				 return hasConnectionParam ? 1 : -1;
-			 }
-			 return id - m.id;
-		 }
+		public int compareTo(Object o) {
+			JavaMethod m = (JavaMethod) o;
+			if (varArgs != m.varArgs) {
+				return varArgs ? 1 : -1;
+			}
+			if (paramCount != m.paramCount) {
+				return paramCount - m.paramCount;
+			}
+			if (hasConnectionParam != m.hasConnectionParam) {
+				return hasConnectionParam ? 1 : -1;
+			}
+			return id - m.id;
+		}
 
 	}
 

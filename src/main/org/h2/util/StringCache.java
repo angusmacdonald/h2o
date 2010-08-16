@@ -11,9 +11,9 @@ import java.lang.ref.SoftReference;
 import org.h2.constant.SysProperties;
 
 /**
- * The string cache helps re-use string objects and therefore save memory.
- * It uses a soft reference cache to keep frequently used strings in memory.
- * The effect is similar to calling String.intern(), but faster.
+ * The string cache helps re-use string objects and therefore save memory. It
+ * uses a soft reference cache to keep frequently used strings in memory. The
+ * effect is similar to calling String.intern(), but faster.
  */
 public class StringCache {
 
@@ -28,8 +28,9 @@ public class StringCache {
 	 * Get the string from the cache if possible. If the string has not been
 	 * found, it is added to the cache. If there is such a string in the cache,
 	 * that one is returned.
-	 *
-	 * @param s the original string
+	 * 
+	 * @param s
+	 *            the original string
 	 * @return a string with the same content, if possible from the cache
 	 */
 	public static String get(String s) {
@@ -61,8 +62,9 @@ public class StringCache {
 	 * a new one with only this content. This solves out of memory problems if
 	 * the string is a substring of another, large string. In Java, strings are
 	 * shared, which could lead to memory problems. This avoid such problems.
-	 *
-	 * @param s the string
+	 * 
+	 * @param s
+	 *            the string
 	 * @return a string that is guaranteed not be a substring of a large string
 	 */
 	public static String getNew(String s) {

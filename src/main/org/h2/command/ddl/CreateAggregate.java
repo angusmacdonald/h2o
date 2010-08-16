@@ -15,8 +15,7 @@ import org.h2.engine.UserAggregate;
 import org.h2.message.Message;
 
 /**
- * This class represents the statement
- * CREATE AGGREGATE
+ * This class represents the statement CREATE AGGREGATE
  */
 public class CreateAggregate extends DefineCommand {
 
@@ -33,13 +32,16 @@ public class CreateAggregate extends DefineCommand {
 		session.commit(true);
 		session.getUser().checkAdmin();
 		Database db = session.getDatabase();
-		if (db.findAggregate(name) != null || db.findFunctionAlias(name) != null) {
+		if (db.findAggregate(name) != null
+				|| db.findFunctionAlias(name) != null) {
 			if (!ifNotExists) {
-				throw Message.getSQLException(ErrorCode.FUNCTION_ALIAS_ALREADY_EXISTS_1, name);
+				throw Message.getSQLException(
+						ErrorCode.FUNCTION_ALIAS_ALREADY_EXISTS_1, name);
 			}
 		} else {
 			int id = getObjectId(false, true);
-			UserAggregate aggregate = new UserAggregate(db, id, name, javaClassMethod, force);
+			UserAggregate aggregate = new UserAggregate(db, id, name,
+					javaClassMethod, force);
 			db.addDatabaseObject(session, aggregate);
 		}
 		return 0;

@@ -9,8 +9,7 @@ package org.h2.log;
 import org.h2.store.Storage;
 
 /**
- * Represents a redo-log record.
- * Such records are only used when recovering.
+ * Represents a redo-log record. Such records are only used when recovering.
  */
 public class RedoLogRecord {
 
@@ -42,7 +41,7 @@ public class RedoLogRecord {
 
 	/**
 	 * Get the estimated memory size used by this object.
-	 *
+	 * 
 	 * @return the estimated memory size
 	 */
 	public int getSize() {

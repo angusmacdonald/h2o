@@ -21,59 +21,62 @@ public interface ColumnResolver {
 
 	/**
 	 * Get the table alias.
-	 *
+	 * 
 	 * @return the table alias
 	 */
 	String getTableAlias();
 
 	/**
 	 * Get the column list.
-	 *
+	 * 
 	 * @return the column list
 	 */
 	Column[] getColumns();
 
 	/**
 	 * Get the list of system columns, if any.
-	 *
+	 * 
 	 * @return the system columns
 	 */
 	Column[] getSystemColumns();
 
 	/**
 	 * Get the schema name.
-	 *
+	 * 
 	 * @return the schema name
 	 */
 	String getSchemaName();
 
 	/**
 	 * Get the value for the given column.
-	 *
-	 * @param column the column
+	 * 
+	 * @param column
+	 *            the column
 	 * @return the value
 	 */
 	Value getValue(Column column) throws SQLException;
 
 	/**
 	 * Get the table filter.
-	 *
+	 * 
 	 * @return the table filter
 	 */
 	TableFilter getTableFilter();
 
 	/**
 	 * Get the select statement.
-	 *
+	 * 
 	 * @return the select statement
 	 */
 	Select getSelect();
 
 	/**
 	 * Get the expression that represents this column.
-	 *
-	 * @param expressionColumn the expression column
-	 * @param column the column
+	 * 
+	 * @param expressionColumn
+	 *            the expression column
+	 * @param column
+	 *            the column
 	 * @return the optimized expression
 	 */
 	Expression optimize(ExpressionColumn expressionColumn, Column column);

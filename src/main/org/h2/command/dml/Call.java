@@ -23,8 +23,7 @@ import org.h2.value.ValueArray;
 import org.h2.value.ValueResultSet;
 
 /**
- * This class represents the statement
- * CALL.
+ * This class represents the statement CALL.
  */
 public class Call extends Prepared {
 	private Expression value;
@@ -43,7 +42,7 @@ public class Call extends Prepared {
 	public int update() throws SQLException, RemoteException {
 		Value v = value.getValue(session);
 		int type = v.getType();
-		switch(type) {
+		switch (type) {
 		case Value.RESULT_SET:
 		case Value.ARRAY:
 			// this will throw an exception
@@ -68,7 +67,8 @@ public class Call extends Prepared {
 			ObjectArray expr = new ObjectArray();
 			for (int i = 0; i < list.length; i++) {
 				Value e = list[i];
-				Column col = new Column("C" + (i + 1), e.getType(), e.getPrecision(), e.getScale(), e.getDisplaySize());
+				Column col = new Column("C" + (i + 1), e.getType(),
+						e.getPrecision(), e.getScale(), e.getDisplaySize());
 				expr.add(new ExpressionColumn(session.getDatabase(), col));
 			}
 			LocalResult result = new LocalResult(session, expr, list.length);

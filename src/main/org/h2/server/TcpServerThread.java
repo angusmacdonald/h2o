@@ -67,14 +67,18 @@ public class TcpServerThread implements Runnable {
 			try {
 				clientVersion = transfer.readInt();
 				if (!server.allow(transfer.getSocket())) {
-					throw Message.getSQLException(ErrorCode.REMOTE_CONNECTION_NOT_ALLOWED);
+					throw Message
+							.getSQLException(ErrorCode.REMOTE_CONNECTION_NOT_ALLOWED);
 				}
 				if (clientVersion >= Constants.TCP_PROTOCOL_VERSION_6) {
-					// version 6 and newer: read max version (currently not used)
+					// version 6 and newer: read max version (currently not
+					// used)
 					transfer.readInt();
 				} else if (clientVersion != Constants.TCP_PROTOCOL_VERSION_5) {
-					throw Message.getSQLException(ErrorCode.DRIVER_VERSION_ERROR_2, new String[] { "" + clientVersion,
-							"" + Constants.TCP_PROTOCOL_VERSION_5 });
+					throw Message.getSQLException(
+							ErrorCode.DRIVER_VERSION_ERROR_2, new String[] {
+									"" + clientVersion,
+									"" + Constants.TCP_PROTOCOL_VERSION_5 });
 				}
 				String db = transfer.readString();
 				String originalURL = transfer.readString();
@@ -101,7 +105,8 @@ public class TcpServerThread implements Runnable {
 					baseDir = SysProperties.getBaseDir();
 				}
 				db = server.checkKeyAndGetDatabaseName(db);
-				ConnectionInfo ci = new ConnectionInfo(db, server.getPort(), server.getSystemTableLocation());
+				ConnectionInfo ci = new ConnectionInfo(db, server.getPort(),
+						server.getSystemTableLocation());
 				if (baseDir != null) {
 					ci.setBaseDir(baseDir);
 				}
@@ -192,8 +197,10 @@ public class TcpServerThread implements Runnable {
 				message = e.getMessage();
 				sql = null;
 			}
-			transfer.writeInt(SessionRemote.STATUS_ERROR).writeString(s.getSQLState()).writeString(message)
-			.writeString(sql).writeInt(s.getErrorCode()).writeString(trace).flush();
+			transfer.writeInt(SessionRemote.STATUS_ERROR)
+					.writeString(s.getSQLState()).writeString(message)
+					.writeString(sql).writeInt(s.getErrorCode())
+					.writeString(trace).flush();
 		} catch (IOException e2) {
 			server.traceError(e2);
 			// if writing the error does not work, close the connection
@@ -201,7 +208,8 @@ public class TcpServerThread implements Runnable {
 		}
 	}
 
-	private void setParameters(Command command) throws IOException, SQLException {
+	private void setParameters(Command command) throws IOException,
+			SQLException {
 		int len = transfer.readInt();
 		ObjectArray params = command.getParameters();
 		for (int i = 0; i < len; i++) {
@@ -224,8 +232,8 @@ public class TcpServerThread implements Runnable {
 			boolean isQuery = command.isQuery();
 			ObjectArray params = command.getParameters();
 			int paramCount = params.size();
-			transfer.writeInt(getState(old)).writeBoolean(isQuery).writeBoolean(readonly)
-			.writeInt(paramCount);
+			transfer.writeInt(getState(old)).writeBoolean(isQuery)
+					.writeBoolean(readonly).writeInt(paramCount);
 			if (operation == SessionRemote.SESSION_PREPARE_READ_PARAMS) {
 				for (int i = 0; i < paramCount; i++) {
 					Parameter p = (Parameter) params.get(i);
@@ -257,7 +265,8 @@ public class TcpServerThread implements Runnable {
 			LocalResult result = command.getMetaDataLocal();
 			cache.addObject(objectId, result);
 			int columnCount = result.getVisibleColumnCount();
-			transfer.writeInt(SessionRemote.STATUS_OK).writeInt(columnCount).writeInt(0);
+			transfer.writeInt(SessionRemote.STATUS_OK).writeInt(columnCount)
+					.writeInt(0);
 			for (int i = 0; i < columnCount; i++) {
 				ResultColumn.writeColumn(transfer, result, i);
 			}
@@ -301,7 +310,8 @@ public class TcpServerThread implements Runnable {
 			} else {
 				status = getState(old);
 			}
-			transfer.writeInt(status).writeInt(updateCount).writeBoolean(session.getAutoCommit());
+			transfer.writeInt(status).writeInt(updateCount)
+					.writeBoolean(session.getAutoCommit());
 			transfer.flush();
 			break;
 		}
@@ -389,9 +399,11 @@ public class TcpServerThread implements Runnable {
 
 	/**
 	 * Cancel a running statement.
-	 *
-	 * @param sessionId the session id
-	 * @param statementId the statement to cancel
+	 * 
+	 * @param sessionId
+	 *            the session id
+	 * @param statementId
+	 *            the statement to cancel
 	 */
 	void cancelStatement(String sessionId, int statementId) throws SQLException {
 		if (StringUtils.equals(sessionId, this.sessionId)) {

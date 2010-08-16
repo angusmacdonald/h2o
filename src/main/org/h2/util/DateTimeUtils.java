@@ -52,12 +52,15 @@ public class DateTimeUtils {
 
 	/**
 	 * Convert the timestamp to the specified time zone.
-	 *
-	 * @param x the timestamp
-	 * @param calendar the calendar
+	 * 
+	 * @param x
+	 *            the timestamp
+	 * @param calendar
+	 *            the calendar
 	 * @return the timestamp using the correct time zone
 	 */
-	public static Timestamp convertTimestampToCalendar(Timestamp x, Calendar calendar) throws SQLException {
+	public static Timestamp convertTimestampToCalendar(Timestamp x,
+			Calendar calendar) throws SQLException {
 		if (x != null) {
 			Timestamp y = new Timestamp(getLocalTime(x, calendar));
 			// fix the nano seconds
@@ -69,8 +72,9 @@ public class DateTimeUtils {
 
 	/**
 	 * Clone a time object and reset the day to 1970-01-01.
-	 *
-	 * @param value the time value
+	 * 
+	 * @param value
+	 *            the time value
 	 * @return the time value without the date component
 	 */
 	public static Time cloneAndNormalizeTime(Time value) {
@@ -88,8 +92,9 @@ public class DateTimeUtils {
 	/**
 	 * Clone a date object and reset the hour, minutes, seconds, and
 	 * milliseconds to zero.
-	 *
-	 * @param value the date value
+	 * 
+	 * @param value
+	 *            the date value
 	 * @return the date value at midnight
 	 */
 	public static Date cloneAndNormalizeDate(Date value) {
@@ -114,34 +119,43 @@ public class DateTimeUtils {
 
 	/**
 	 * Convert the date from the specified time zone to UTC.
-	 *
-	 * @param x the date
-	 * @param source the calendar
+	 * 
+	 * @param x
+	 *            the date
+	 * @param source
+	 *            the calendar
 	 * @return the date in UTC
 	 */
-	public static Value convertDateToUniversal(Date x, Calendar source) throws SQLException {
+	public static Value convertDateToUniversal(Date x, Calendar source)
+			throws SQLException {
 		return ValueDate.get(new Date(getUniversalTime(source, x)));
 	}
 
 	/**
 	 * Convert the time from the specified time zone to UTC.
-	 *
-	 * @param x the time
-	 * @param source the calendar
+	 * 
+	 * @param x
+	 *            the time
+	 * @param source
+	 *            the calendar
 	 * @return the time in UTC
 	 */
-	public static Value convertTimeToUniversal(Time x, Calendar source) throws SQLException {
+	public static Value convertTimeToUniversal(Time x, Calendar source)
+			throws SQLException {
 		return ValueTime.get(new Time(getUniversalTime(source, x)));
 	}
 
 	/**
 	 * Convert the timestamp from the specified time zone to UTC.
-	 *
-	 * @param x the time
-	 * @param source the calendar
+	 * 
+	 * @param x
+	 *            the time
+	 * @param source
+	 *            the calendar
 	 * @return the timestamp in UTC
 	 */
-	public static Value convertTimestampToUniversal(Timestamp x, Calendar source) throws SQLException {
+	public static Value convertTimestampToUniversal(Timestamp x, Calendar source)
+			throws SQLException {
 		Timestamp y = new Timestamp(getUniversalTime(source, x));
 		// fix the nano seconds
 		y.setNanos(x.getNanos());
@@ -150,12 +164,15 @@ public class DateTimeUtils {
 
 	/**
 	 * Convert the date value to UTC using the given calendar.
-	 *
-	 * @param source the source calendar
-	 * @param x the date
+	 * 
+	 * @param source
+	 *            the source calendar
+	 * @param x
+	 *            the date
 	 * @return the UTC number of milliseconds.
 	 */
-	private static long getUniversalTime(Calendar source, java.util.Date x) throws SQLException {
+	private static long getUniversalTime(Calendar source, java.util.Date x)
+			throws SQLException {
 		if (source == null) {
 			throw Message.getInvalidValueException("calendar", null);
 		}
@@ -168,7 +185,8 @@ public class DateTimeUtils {
 		}
 	}
 
-	private static long getLocalTime(java.util.Date x, Calendar target) throws SQLException {
+	private static long getLocalTime(java.util.Date x, Calendar target)
+			throws SQLException {
 		if (target == null) {
 			throw Message.getInvalidValueException("calendar", null);
 		}
@@ -193,23 +211,29 @@ public class DateTimeUtils {
 
 	/**
 	 * Convert the date to the specified time zone.
-	 *
-	 * @param x the date
-	 * @param calendar the calendar
+	 * 
+	 * @param x
+	 *            the date
+	 * @param calendar
+	 *            the calendar
 	 * @return the date using the correct time zone
 	 */
-	public static Date convertDateToCalendar(Date x, Calendar calendar) throws SQLException {
+	public static Date convertDateToCalendar(Date x, Calendar calendar)
+			throws SQLException {
 		return x == null ? null : new Date(getLocalTime(x, calendar));
 	}
 
 	/**
 	 * Convert the time to the specified time zone.
-	 *
-	 * @param x the time
-	 * @param calendar the calendar
+	 * 
+	 * @param x
+	 *            the time
+	 * @param calendar
+	 *            the calendar
 	 * @return the time using the correct time zone
 	 */
-	public static Time convertTimeToCalendar(Time x, Calendar calendar) throws SQLException {
+	public static Time convertTimeToCalendar(Time x, Calendar calendar)
+			throws SQLException {
 		return x == null ? null : new Time(getLocalTime(x, calendar));
 	}
 
@@ -217,13 +241,17 @@ public class DateTimeUtils {
 	 * Parse a date, time or timestamp value. This method supports the format
 	 * +/-year-month-day hour:minute:seconds.fractional and an optional timezone
 	 * part.
-	 *
-	 * @param original the original string
-	 * @param type the value type (Value.TIME, TIMESTAMP, or DATE)
-	 * @param errorCode the error code to use if an error occurs
+	 * 
+	 * @param original
+	 *            the original string
+	 * @param type
+	 *            the value type (Value.TIME, TIMESTAMP, or DATE)
+	 * @param errorCode
+	 *            the error code to use if an error occurs
 	 * @return the date object
 	 */
-	public static java.util.Date parseDateTime(String original, int type, int errorCode) throws SQLException {
+	public static java.util.Date parseDateTime(String original, int type,
+			int errorCode) throws SQLException {
 		String s = original;
 		if (s == null) {
 			return null;
@@ -251,7 +279,8 @@ public class DateTimeUtils {
 				int s1 = s.indexOf('-', 1);
 				int s2 = s.indexOf('-', s1 + 1);
 				if (s1 <= 0 || s2 <= s1) {
-					throw Message.getSQLException(errorCode, new String[] { s, "format yyyy-mm-dd" });
+					throw Message.getSQLException(errorCode, new String[] { s,
+							"format yyyy-mm-dd" });
 				}
 				year = Integer.parseInt(s.substring(0, s1));
 				month = Integer.parseInt(s.substring(s1 + 1, s2));
@@ -264,7 +293,8 @@ public class DateTimeUtils {
 				int s2 = s.indexOf(':', s1 + 1);
 				int s3 = s.indexOf('.', s2 + 1);
 				if (s1 <= 0 || s2 <= s1) {
-					throw Message.getSQLException(errorCode, new String[] { s, "format hh:mm:ss" });
+					throw Message.getSQLException(errorCode, new String[] { s,
+							"format hh:mm:ss" });
 				}
 
 				if (s.endsWith("Z")) {
@@ -279,7 +309,9 @@ public class DateTimeUtils {
 						String tzName = "GMT" + s.substring(timeZoneStart);
 						tz = TimeZone.getTimeZone(tzName);
 						if (!tz.getID().equals(tzName)) {
-							throw Message.getSQLException(errorCode, new String[] { s, tz.getID() + " <>" + tzName });
+							throw Message.getSQLException(errorCode,
+									new String[] { s,
+											tz.getID() + " <>" + tzName });
 						}
 						s = s.substring(0, timeZoneStart).trim();
 					}
@@ -297,7 +329,8 @@ public class DateTimeUtils {
 			}
 			long time;
 			try {
-				time = getTime(false, tz, year, month, day, hour, minute, second, type != Value.TIMESTAMP, nano);
+				time = getTime(false, tz, year, month, day, hour, minute,
+						second, type != Value.TIMESTAMP, nano);
 			} catch (IllegalArgumentException e) {
 				// special case: if the time simply doesn't exist because of
 				// daylight saving time changes, use the lenient version
@@ -306,11 +339,13 @@ public class DateTimeUtils {
 					if (hour < 0 || hour > 23) {
 						throw e;
 					}
-					time = getTime(true, tz, year, month, day, hour, minute, second, type != Value.TIMESTAMP, nano);
+					time = getTime(true, tz, year, month, day, hour, minute,
+							second, type != Value.TIMESTAMP, nano);
 				} else if (message.indexOf("DAY_OF_MONTH") > 0) {
 					int maxDay;
 					if (month == 2) {
-						maxDay = new GregorianCalendar().isLeapYear(year) ? 29 : 28;
+						maxDay = new GregorianCalendar().isLeapYear(year) ? 29
+								: 28;
 					} else {
 						maxDay = 30 + ((month + (month > 7 ? 1 : 0)) & 1);
 					}
@@ -321,7 +356,8 @@ public class DateTimeUtils {
 					// using the timezone Brasilia and others,
 					// for example for 2042-10-12 00:00:00.
 					hour += 6;
-					time = getTime(true, tz, year, month, day, hour, minute, second, type != Value.TIMESTAMP, nano);
+					time = getTime(true, tz, year, month, day, hour, minute,
+							second, type != Value.TIMESTAMP, nano);
 				} else {
 					throw e;
 				}
@@ -340,11 +376,14 @@ public class DateTimeUtils {
 				throw Message.throwInternalError("type:" + type);
 			}
 		} catch (IllegalArgumentException e) {
-			throw Message.getSQLException(errorCode, new String[]{original, e.toString()}, e);
+			throw Message.getSQLException(errorCode,
+					new String[] { original, e.toString() }, e);
 		}
 	}
 
-	private static long getTime(boolean lenient, TimeZone tz, int year, int month, int day, int hour, int minute, int second, boolean setMillis, int nano) {
+	private static long getTime(boolean lenient, TimeZone tz, int year,
+			int month, int day, int hour, int minute, int second,
+			boolean setMillis, int nano) {
 		Calendar c;
 		if (tz == null) {
 			c = getCalendar();
@@ -376,9 +415,11 @@ public class DateTimeUtils {
 	/**
 	 * Get the specified field of a date, however with years normalized to
 	 * positive or negative, and month starting with 1.
-	 *
-	 * @param d the date
-	 * @param field the field type
+	 * 
+	 * @param d
+	 *            the date
+	 * @param field
+	 *            the field type
 	 * @return the value
 	 */
 	public static int getDatePart(java.util.Date d, int field) {

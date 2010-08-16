@@ -18,7 +18,7 @@ public class BitField {
 
 	/**
 	 * Get the index of the last bit that is set.
-	 *
+	 * 
 	 * @return the index of the last enabled bit, or -1
 	 */
 	public int getLastSetBit() {
@@ -34,8 +34,9 @@ public class BitField {
 
 	/**
 	 * Get the index of the next bit that is set.
-	 *
-	 * @param fromIndex where to start searching
+	 * 
+	 * @param fromIndex
+	 *            where to start searching
 	 * @return the index of the next enabled bit
 	 */
 	public int nextSetBit(int fromIndex) {
@@ -58,31 +59,33 @@ public class BitField {
 
 	/**
 	 * Get the index of the next bit that is not set.
-	 *
-	 * @param fromIndex where to start searching
+	 * 
+	 * @param fromIndex
+	 *            where to start searching
 	 * @return the index of the next disabled bit
 	 */
 	public int nextClearBit(int fromIndex) {
 		int i = fromIndex >> ADDRESS_BITS;
-			int max = data.length;
-			for (; i < max; i++) {
-				if (data[i] == -1) {
-					continue;
-				}
-				int j = Math.max(fromIndex, i << ADDRESS_BITS);
-				for (int end = j + 64; j < end; j++) {
-					if (!get(j)) {
-						return j;
-					}
+		int max = data.length;
+		for (; i < max; i++) {
+			if (data[i] == -1) {
+				continue;
+			}
+			int j = Math.max(fromIndex, i << ADDRESS_BITS);
+			for (int end = j + 64; j < end; j++) {
+				if (!get(j)) {
+					return j;
 				}
 			}
-			return max << ADDRESS_BITS;
+		}
+		return max << ADDRESS_BITS;
 	}
 
 	/**
 	 * Get the bit mask of the bits at the given index.
-	 *
-	 * @param i the index (must be a multiple of 64)
+	 * 
+	 * @param i
+	 *            the index (must be a multiple of 64)
 	 * @return the bit mask as a long
 	 */
 	public long getLong(int i) {
@@ -95,8 +98,9 @@ public class BitField {
 
 	/**
 	 * Get the bit at the given index.
-	 *
-	 * @param i the index
+	 * 
+	 * @param i
+	 *            the index
 	 * @return true if the bit is enabled
 	 */
 	public boolean get(int i) {
@@ -108,10 +112,11 @@ public class BitField {
 	}
 
 	/**
-	 * Get the next 8 bits at the given index.
-	 * The index must be a multiple of 8.
-	 *
-	 * @param i the index
+	 * Get the next 8 bits at the given index. The index must be a multiple of
+	 * 8.
+	 * 
+	 * @param i
+	 *            the index
 	 * @return the next 8 bits
 	 */
 	public int getByte(int i) {
@@ -123,11 +128,13 @@ public class BitField {
 	}
 
 	/**
-	 * Combine the next 8 bits at the given index with OR.
-	 * The index must be a multiple of 8.
-	 *
-	 * @param i the index
-	 * @param x the next 8 bits (0 - 255)
+	 * Combine the next 8 bits at the given index with OR. The index must be a
+	 * multiple of 8.
+	 * 
+	 * @param i
+	 *            the index
+	 * @param x
+	 *            the next 8 bits (0 - 255)
 	 */
 	public void setByte(int i, int x) {
 		int addr = getAddress(i);
@@ -137,8 +144,9 @@ public class BitField {
 
 	/**
 	 * Set bit at the given index to 'true'.
-	 *
-	 * @param i the index
+	 * 
+	 * @param i
+	 *            the index
 	 */
 	public void set(int i) {
 		int addr = getAddress(i);
@@ -148,8 +156,9 @@ public class BitField {
 
 	/**
 	 * Set bit at the given index to 'false'.
-	 *
-	 * @param i the index
+	 * 
+	 * @param i
+	 *            the index
 	 */
 	public void clear(int i) {
 		int addr = getAddress(i);
@@ -184,10 +193,13 @@ public class BitField {
 
 	/**
 	 * Enable or disable a number of bits.
-	 *
-	 * @param start the index of the first bit to enable or disable
-	 * @param len the number of bits to enable or disable
-	 * @param value the new value
+	 * 
+	 * @param start
+	 *            the index of the first bit to enable or disable
+	 * @param len
+	 *            the number of bits to enable or disable
+	 * @param value
+	 *            the new value
 	 */
 	public void setRange(int start, int len, boolean value) {
 		// go backwards so that OutOfMemory happens

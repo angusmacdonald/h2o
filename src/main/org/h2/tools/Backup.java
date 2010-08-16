@@ -30,27 +30,31 @@ public class Backup extends Tool {
 
 	private void showUsage() {
 		out.println("Creates a backup of a database.");
-		out.println("java "+getClass().getName() + "\n" +
-				" [-file <filename>]  The target file name (default: backup.zip)\n" +
-				" [-dir <dir>]        Source directory (default: .)\n" +
-				" [-db <database>]    Source database name\n" +
-		" [-quiet]            Do not print progress information");
-		out.println("See also http://h2database.com/javadoc/" + getClass().getName().replace('.', '/') + ".html");
+		out.println("java "
+				+ getClass().getName()
+				+ "\n"
+				+ " [-file <filename>]  The target file name (default: backup.zip)\n"
+				+ " [-dir <dir>]        Source directory (default: .)\n"
+				+ " [-db <database>]    Source database name\n"
+				+ " [-quiet]            Do not print progress information");
+		out.println("See also http://h2database.com/javadoc/"
+				+ getClass().getName().replace('.', '/') + ".html");
 	}
 
 	/**
-	 * The command line interface for this tool.
-	 * The options must be split into strings like this: "-db", "test",...
-	 * Options are case sensitive. The following options are supported:
+	 * The command line interface for this tool. The options must be split into
+	 * strings like this: "-db", "test",... Options are case sensitive. The
+	 * following options are supported:
 	 * <ul>
-	 * <li>-help or -? (print the list of options)
-	 * </li><li>-file filename (the default is backup.zip)
-	 * </li><li>-dir database directory (the default is the current directory)
-	 * </li><li>-db database name (not required if there is only one database)
-	 * </li><li>-quiet does not print progress information
-	 * </li></ul>
-	 *
-	 * @param args the command line arguments
+	 * <li>-help or -? (print the list of options)</li>
+	 * <li>-file filename (the default is backup.zip)</li>
+	 * <li>-dir database directory (the default is the current directory)</li>
+	 * <li>-db database name (not required if there is only one database)</li>
+	 * <li>-quiet does not print progress information</li>
+	 * </ul>
+	 * 
+	 * @param args
+	 *            the command line arguments
 	 * @throws SQLException
 	 */
 	public static void main(String[] args) throws SQLException {
@@ -86,18 +90,24 @@ public class Backup extends Tool {
 
 	/**
 	 * Backs up database files.
-	 *
-	 * @param zipFileName the name of the target backup file (including path)
-	 * @param directory the source directory name
-	 * @param db the source database name (null if there is only one database)
-	 * @param quiet don't print progress information
+	 * 
+	 * @param zipFileName
+	 *            the name of the target backup file (including path)
+	 * @param directory
+	 *            the source directory name
+	 * @param db
+	 *            the source database name (null if there is only one database)
+	 * @param quiet
+	 *            don't print progress information
 	 * @throws SQLException
 	 */
-	public static void execute(String zipFileName, String directory, String db, boolean quiet) throws SQLException {
+	public static void execute(String zipFileName, String directory, String db,
+			boolean quiet) throws SQLException {
 		new Backup().process(zipFileName, directory, db, quiet);
 	}
 
-	private void process(String zipFileName, String directory, String db, boolean quiet) throws SQLException {
+	private void process(String zipFileName, String directory, String db,
+			boolean quiet) throws SQLException {
 		ArrayList list = FileLister.getDatabaseFiles(directory, db, true);
 		if (list.size() == 0) {
 			if (!quiet) {
@@ -124,7 +134,8 @@ public class Backup extends Tool {
 				String fileName = (String) list.get(i);
 				String f = FileUtils.getAbsolutePath(fileName);
 				if (!f.startsWith(base)) {
-					Message.throwInternalError(f + " does not start with " + base);
+					Message.throwInternalError(f + " does not start with "
+							+ base);
 				}
 				f = f.substring(base.length());
 				f = BackupCommand.correctFileName(f);

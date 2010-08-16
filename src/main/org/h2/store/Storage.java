@@ -21,9 +21,9 @@ import org.h2.util.MathUtils;
  * an index. An object contains a list of records, see {@link Record}. For each
  * storage there is a {@link RecordReader} object that knows how to convert
  * records into a byte array and vice versa. The data is stored in a
- * {@link DiskFile}. A storage occupies a number of pages in a file.
- * File format:
- *
+ * {@link DiskFile}. A storage occupies a number of pages in a file. File
+ * format:
+ * 
  * <pre>
  * int block size
  * int storage id
@@ -39,7 +39,8 @@ public class Storage {
 	 * space needs to be allocated.
 	 */
 	public static final int ALLOCATE_POS = -1;
-	private static final int FREE_LIST_SIZE = Math.max(1024, DiskFile.BLOCKS_PER_PAGE * 4);
+	private static final int FREE_LIST_SIZE = Math.max(1024,
+			DiskFile.BLOCKS_PER_PAGE * 4);
 	private DiskFile file;
 	private int recordCount;
 	private RecordReader reader;
@@ -53,11 +54,15 @@ public class Storage {
 
 	/**
 	 * Create a new storage object for this file.
-	 *
-	 * @param database the database
-	 * @param file the file
-	 * @param reader the reader that can parse records
-	 * @param id the storage id
+	 * 
+	 * @param database
+	 *            the database
+	 * @param file
+	 *            the file
+	 * @param reader
+	 *            the reader that can parse records
+	 * @param id
+	 *            the storage id
 	 */
 	public Storage(Database database, DiskFile file, RecordReader reader, int id) {
 		this.database = database;
@@ -69,7 +74,7 @@ public class Storage {
 
 	/**
 	 * Get the record parser for this storage.
-	 *
+	 * 
 	 * @return the record parser
 	 */
 	public RecordReader getRecordReader() {
@@ -85,9 +90,11 @@ public class Storage {
 
 	/**
 	 * Read a record from the file or cache.
-	 *
-	 * @param session the session
-	 * @param pos the position of the record
+	 * 
+	 * @param session
+	 *            the session
+	 * @param pos
+	 *            the position of the record
 	 * @return the record
 	 */
 	public Record getRecord(Session session, int pos) throws SQLException {
@@ -96,18 +103,23 @@ public class Storage {
 
 	/**
 	 * Read a record if it is stored at that location.
-	 *
-	 * @param session the session
-	 * @param pos the position where it is stored
+	 * 
+	 * @param session
+	 *            the session
+	 * @param pos
+	 *            the position where it is stored
 	 * @return the record or null
 	 */
-	public Record getRecordIfStored(Session session, int pos) throws SQLException {
+	public Record getRecordIfStored(Session session, int pos)
+			throws SQLException {
 		return file.getRecordIfStored(session, pos, reader, id);
 	}
 
 	/**
 	 * Gets the position of the next record.
-	 * @param record the last record (null to get the first record)
+	 * 
+	 * @param record
+	 *            the last record (null to get the first record)
 	 * @return -1 if no record is found, otherwise the position
 	 */
 	public int getNext(Record record) {
@@ -140,7 +152,8 @@ public class Storage {
 						return -1;
 					}
 					lastCheckedPage = pages.get(pageIndex);
-					next = Math.max(next, DiskFile.BLOCKS_PER_PAGE * lastCheckedPage);
+					next = Math.max(next, DiskFile.BLOCKS_PER_PAGE
+							* lastCheckedPage);
 				}
 				if (used.get(next)) {
 					return next;
@@ -156,23 +169,30 @@ public class Storage {
 
 	/**
 	 * Update an existing record.
-	 *
-	 * @param session the session
-	 * @param record the record
+	 * 
+	 * @param session
+	 *            the session
+	 * @param record
+	 *            the record
 	 */
-	public void updateRecord(Session session, Record record) throws SQLException {
+	public void updateRecord(Session session, Record record)
+			throws SQLException {
 		record.setDeleted(false);
 		file.updateRecord(session, record);
 	}
 
 	/**
 	 * Add or update a record in the file.
-	 *
-	 * @param session the session
-	 * @param record the record
-	 * @param pos the position (use ALLOCATE_POS to add a new record)
+	 * 
+	 * @param session
+	 *            the session
+	 * @param record
+	 *            the record
+	 * @param pos
+	 *            the position (use ALLOCATE_POS to add a new record)
 	 */
-	public void addRecord(Session session, Record record, int pos) throws SQLException {
+	public void addRecord(Session session, Record record, int pos)
+			throws SQLException {
 		record.setStorageId(id);
 		int size = file.getRecordOverhead() + record.getByteCount(dummy);
 		size = MathUtils.roundUp(size, DiskFile.BLOCK_SIZE);
@@ -192,9 +212,11 @@ public class Storage {
 
 	/**
 	 * Remove a record.
-	 *
-	 * @param session the session
-	 * @param pos where the record is stored
+	 * 
+	 * @param session
+	 *            the session
+	 * @param pos
+	 *            where the record is stored
 	 */
 	public void removeRecord(Session session, int pos) throws SQLException {
 		checkOnePage();
@@ -232,7 +254,8 @@ public class Storage {
 		// if we came here, all free records must be in the list
 		// otherwise it would have returned early
 		if (SysProperties.CHECK2 && freeCount > freeList.size()) {
-			Message.throwInternalError("freeCount expected " + freeList.size() + ", got: " + freeCount);
+			Message.throwInternalError("freeCount expected " + freeList.size()
+					+ ", got: " + freeCount);
 		}
 		freeCount = freeList.size();
 	}
@@ -243,51 +266,50 @@ public class Storage {
 			synchronized (database) {
 				BitField used = file.getUsed();
 				int lastPage = Integer.MIN_VALUE;
-				int lastBlockLow  = Integer.MAX_VALUE;
+				int lastBlockLow = Integer.MAX_VALUE;
 				int lastBlockHigh = 0;
 
-				nextEntry:
-					for (int i = 0; i < freeList.size(); i++) {
-						int px = freeList.get(i);
+				nextEntry: for (int i = 0; i < freeList.size(); i++) {
+					int px = freeList.get(i);
 
-						if (px >= lastBlockLow && px <= lastBlockHigh) {
-							// we have already tested this block
-							// and found that it's used
-							continue;
-						}
+					if (px >= lastBlockLow && px <= lastBlockHigh) {
+						// we have already tested this block
+						// and found that it's used
+						continue;
+					}
 
-						if (used.get(px)) {
-							// sometimes some entries in the freeList
-							// are not free (free 2, free 1, allocate 1+2)
-							// these entries are removed right here
-							freeList.remove(i--);
-							continue;
-						}
+					if (used.get(px)) {
+						// sometimes some entries in the freeList
+						// are not free (free 2, free 1, allocate 1+2)
+						// these entries are removed right here
+						freeList.remove(i--);
+						continue;
+					}
 
-						lastBlockLow = px;
-						lastBlockHigh = px + blockCount - 1;
+					lastBlockLow = px;
+					lastBlockHigh = px + blockCount - 1;
 
-						while (lastBlockHigh >= lastBlockLow) {
-							int page = file.getPage(lastBlockHigh);
-							if (page != lastPage) {
-								if (file.getPageOwner(page) != id) {
-									continue nextEntry;
-								}
-								lastPage = page;
-							}
-							if (used.get(lastBlockHigh)) {
+					while (lastBlockHigh >= lastBlockLow) {
+						int page = file.getPage(lastBlockHigh);
+						if (page != lastPage) {
+							if (file.getPageOwner(page) != id) {
 								continue nextEntry;
 							}
-							--lastBlockHigh;
+							lastPage = page;
 						}
-
-						// range found
-						int pos = px;
-						freeList.remove(i);
-						file.setUsed(pos, blockCount);
-						freeCount -= blockCount;
-						return pos;
+						if (used.get(lastBlockHigh)) {
+							continue nextEntry;
+						}
+						--lastBlockHigh;
 					}
+
+					// range found
+					int pos = px;
+					freeList.remove(i);
+					file.setUsed(pos, blockCount);
+					freeCount -= blockCount;
+					return pos;
+				}
 			}
 		}
 		int pos = file.allocate(this, blockCount);
@@ -298,9 +320,11 @@ public class Storage {
 
 	/**
 	 * Called after a record has been deleted.
-	 *
-	 * @param pos the position
-	 * @param blockCount the number of blocks
+	 * 
+	 * @param pos
+	 *            the position
+	 * @param blockCount
+	 *            the number of blocks
 	 */
 	void free(int pos, int blockCount) {
 		file.free(pos, blockCount);
@@ -310,22 +334,22 @@ public class Storage {
 		freeCount += blockCount;
 	}
 
-	//    private int allocateBest(int start, int blocks) {
-	//        while (true) {
-	//            int p = getLastUsedPlusOne(start, blocks);
-	//            if (p == start) {
-	//                start = p;
-	//                break;
-	//            }
-	//            start = p;
-	//        }
-	//        allocate(start, blocks);
-	//        return start;
-	//    }
+	// private int allocateBest(int start, int blocks) {
+	// while (true) {
+	// int p = getLastUsedPlusOne(start, blocks);
+	// if (p == start) {
+	// start = p;
+	// break;
+	// }
+	// start = p;
+	// }
+	// allocate(start, blocks);
+	// return start;
+	// }
 
 	/**
 	 * Get the unique storage id.
-	 *
+	 * 
 	 * @return the id
 	 */
 	public int getId() {
@@ -334,7 +358,7 @@ public class Storage {
 
 	/**
 	 * Get the number of records in this storage.
-	 *
+	 * 
 	 * @return the number of records
 	 */
 	public int getRecordCount() {
@@ -343,8 +367,9 @@ public class Storage {
 
 	/**
 	 * Delete all records from this storage.
-	 *
-	 * @param session the session
+	 * 
+	 * @param session
+	 *            the session
 	 */
 	public void truncate(Session session) throws SQLException {
 		freeList = new IntArray();
@@ -355,8 +380,9 @@ public class Storage {
 
 	/**
 	 * Set the record parser for this storage.
-	 *
-	 * @param reader the record parser
+	 * 
+	 * @param reader
+	 *            the record parser
 	 */
 	public void setReader(RecordReader reader) {
 		this.reader = reader;
@@ -364,8 +390,9 @@ public class Storage {
 
 	/**
 	 * Write this record now.
-	 *
-	 * @param rec the record to write
+	 * 
+	 * @param rec
+	 *            the record to write
 	 */
 	public void flushRecord(Record rec) throws SQLException {
 		file.writeBack(rec);
@@ -373,7 +400,7 @@ public class Storage {
 
 	/**
 	 * Get the overhead to store a record (header data) in number of bytes.
-	 *
+	 * 
 	 * @return the overhead
 	 */
 	public int getRecordOverhead() {
@@ -386,8 +413,9 @@ public class Storage {
 
 	/**
 	 * Update the record count.
-	 *
-	 * @param recordCount the new record count
+	 * 
+	 * @param recordCount
+	 *            the new record count
 	 */
 	public void setRecordCount(int recordCount) {
 		this.recordCount = recordCount;
@@ -395,8 +423,9 @@ public class Storage {
 
 	/**
 	 * Add a page to this storage.
-	 *
-	 * @param i the page id to add
+	 * 
+	 * @param i
+	 *            the page id to add
 	 */
 	void addPage(int i) {
 		pages.addValueSorted(i);
@@ -404,8 +433,9 @@ public class Storage {
 
 	/**
 	 * Remove a list of page from this storage.
-	 *
-	 * @param removeSorted the pages to remove
+	 * 
+	 * @param removeSorted
+	 *            the pages to remove
 	 */
 	void removePages(IntArray removeSorted) {
 		pages.removeAllSorted(removeSorted);
@@ -413,8 +443,9 @@ public class Storage {
 
 	/**
 	 * Remove a page from this storage.
-	 *
-	 * @param i the page to remove
+	 * 
+	 * @param i
+	 *            the page to remove
 	 */
 	void removePage(int i) {
 		int idx = pages.findIndexSorted(i);

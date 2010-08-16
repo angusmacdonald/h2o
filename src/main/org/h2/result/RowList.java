@@ -40,12 +40,14 @@ public class RowList {
 
 	/**
 	 * Construct a new row list for this session.
-	 *
-	 * @param session the session
+	 * 
+	 * @param session
+	 *            the session
 	 */
 	public RowList(Session session) {
 		this.session = session;
-		if (SysProperties.DEFAULT_MAX_OPERATION_MEMORY > 0 && session.getDatabase().isPersistent()) {
+		if (SysProperties.DEFAULT_MAX_OPERATION_MEMORY > 0
+				&& session.getDatabase().isPersistent()) {
 			maxMemory = session.getDatabase().getMaxOperationMemory();
 		}
 	}
@@ -122,8 +124,9 @@ public class RowList {
 
 	/**
 	 * Add a row to the list.
-	 *
-	 * @param r the row to add
+	 * 
+	 * @param r
+	 *            the row to add
 	 */
 	public void add(Row r) throws SQLException {
 		list.add(r);
@@ -152,7 +155,7 @@ public class RowList {
 
 	/**
 	 * Check if there are more rows in this list.
-	 *
+	 * 
 	 * @return true it there are more rows
 	 */
 	public boolean hasNext() {
@@ -203,7 +206,7 @@ public class RowList {
 
 	/**
 	 * Get the next row from the list.
-	 *
+	 * 
 	 * @return the next row
 	 */
 	public Row next() throws SQLException {
@@ -240,7 +243,7 @@ public class RowList {
 
 	/**
 	 * Get the number of rows in this list.
-	 *
+	 * 
 	 * @return the number of rows
 	 */
 	public int size() {

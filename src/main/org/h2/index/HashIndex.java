@@ -31,7 +31,8 @@ public class HashIndex extends BaseIndex {
 	private TableData tableData;
 	private long rowCount;
 
-	public HashIndex(TableData table, int id, String indexName, IndexColumn[] columns, IndexType indexType) {
+	public HashIndex(TableData table, int id, String indexName,
+			IndexColumn[] columns, IndexType indexType) {
 		initBaseIndex(table, id, indexName, columns, indexType);
 		this.tableData = table;
 		reset();
@@ -100,7 +101,8 @@ public class HashIndex extends BaseIndex {
 		return ValueArray.get(list);
 	}
 
-	public Cursor find(Session session, SearchRow first, SearchRow last) throws SQLException {
+	public Cursor find(Session session, SearchRow first, SearchRow last)
+			throws SQLException {
 		if (first == null || last == null) {
 			// TODO hash index: should additionally check if values are the same
 			Message.throwInternalError();
@@ -126,8 +128,7 @@ public class HashIndex extends BaseIndex {
 	}
 
 	public double getCost(Session session, int[] masks) {
-		for (int i = 0; i < columns.length; i++) {
-			Column column = columns[i];
+		for (Column column : columns) {
 			int index = column.getColumnId();
 			int mask = masks[index];
 			if ((mask & IndexCondition.EQUALITY) != IndexCondition.EQUALITY) {
@@ -149,7 +150,8 @@ public class HashIndex extends BaseIndex {
 		return false;
 	}
 
-	public Cursor findFirstOrLast(Session session, boolean first) throws SQLException {
+	public Cursor findFirstOrLast(Session session, boolean first)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 

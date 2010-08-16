@@ -27,10 +27,13 @@ public class Plan {
 
 	/**
 	 * Create a query plan with the given order.
-	 *
-	 * @param filters the tables of the query
-	 * @param count the number of table items
-	 * @param condition the condition in the WHERE clause
+	 * 
+	 * @param filters
+	 *            the tables of the query
+	 * @param count
+	 *            the number of table items
+	 * @param condition
+	 *            the condition in the WHERE clause
 	 */
 	public Plan(TableFilter[] filters, int count, Expression condition) {
 		this.filters = new TableFilter[count];
@@ -48,7 +51,7 @@ public class Plan {
 					allCond.add(f.getJoinCondition());
 				}
 				f = f.getJoin();
-			} while(f != null);
+			} while (f != null);
 		}
 		allConditions = new Expression[allCond.size()];
 		allCond.toArray(allConditions);
@@ -58,8 +61,9 @@ public class Plan {
 
 	/**
 	 * Get the plan item for the given table.
-	 *
-	 * @param filter the table
+	 * 
+	 * @param filter
+	 *            the table
 	 * @return the plan item
 	 */
 	public PlanItem getItem(TableFilter filter) {
@@ -68,7 +72,7 @@ public class Plan {
 
 	/**
 	 * The the list of tables.
-	 *
+	 * 
 	 * @return the list of tables
 	 */
 	public TableFilter[] getFilters() {
@@ -90,23 +94,22 @@ public class Plan {
 			}
 			f.removeUnusableIndexConditions();
 		}
-		for (int i = 0; i < allFilters.length; i++) {
-			TableFilter f = allFilters[i];
+		for (TableFilter f : allFilters) {
 			setEvaluatable(f, false);
 		}
 	}
 
 	/**
 	 * Calculate the cost of this query plan.
-	 *
-	 * @param session the session
+	 * 
+	 * @param session
+	 *            the session
 	 * @return the cost
 	 */
 	public double calculateCost(Session session) throws SQLException {
 		double cost = 1;
 		boolean invalidPlan = false;
-		for (int i = 0; i < allFilters.length; i++) {
-			TableFilter tableFilter = allFilters[i];
+		for (TableFilter tableFilter : allFilters) {
 			PlanItem item = tableFilter.getBestPlanItem(session);
 			planItems.put(tableFilter, item);
 			cost += cost * item.cost;
@@ -122,15 +125,15 @@ public class Plan {
 		if (invalidPlan) {
 			cost = Double.POSITIVE_INFINITY;
 		}
-		for (int i = 0; i < allFilters.length; i++) {
-			setEvaluatable(allFilters[i], false);
+		for (TableFilter allFilter : allFilters) {
+			setEvaluatable(allFilter, false);
 		}
 		return cost;
 	}
 
 	private void setEvaluatable(TableFilter filter, boolean b) {
-		for (int j = 0; j < allConditions.length; j++) {
-			allConditions[j].setEvaluatable(filter, b);
+		for (Expression allCondition : allConditions) {
+			allCondition.setEvaluatable(filter, b);
 		}
 	}
 }

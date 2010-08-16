@@ -12,8 +12,8 @@ import org.h2.result.SearchRow;
 import org.h2.util.ObjectArray;
 
 /**
- * An index for a meta data table.
- * This index can only scan through all rows, search is not supported.
+ * An index for a meta data table. This index can only scan through all rows,
+ * search is not supported.
  */
 public class MetaCursor implements Cursor {
 
@@ -38,7 +38,7 @@ public class MetaCursor implements Cursor {
 	}
 
 	public boolean next() {
-		current =  (Row) (index >= rows.size() ? null : rows.get(index++));
+		current = (Row) (index >= rows.size() ? null : rows.get(index++));
 		return current != null;
 	}
 

@@ -24,10 +24,11 @@ public class ValueArray extends Value {
 	}
 
 	/**
-	 * Get or create a array value for the given value array.
-	 * Do not clone the data.
-	 *
-	 * @param list the value array
+	 * Get or create a array value for the given value array. Do not clone the
+	 * data.
+	 * 
+	 * @param list
+	 *            the value array
 	 * @return the value
 	 */
 	public static ValueArray get(Value[] list) {
@@ -98,7 +99,8 @@ public class ValueArray extends Value {
 		return list;
 	}
 
-	public void set(PreparedStatement prep, int parameterIndex) throws SQLException {
+	public void set(PreparedStatement prep, int parameterIndex)
+			throws SQLException {
 		throw Message.getUnsupportedException();
 	}
 
@@ -127,10 +129,11 @@ public class ValueArray extends Value {
 		buff.append(')');
 		return buff.toString();
 	}
+
 	public int getDisplaySize() {
 		long size = 0;
-		for (int i = 0; i < values.length; i++) {
-			size += values[i].getDisplaySize();
+		for (Value value : values) {
+			size += value.getDisplaySize();
 		}
 		return MathUtils.convertLongToInt(size);
 	}
@@ -156,8 +159,8 @@ public class ValueArray extends Value {
 
 	public int getMemory() {
 		int memory = 0;
-		for (int i = 0; i < values.length; i++) {
-			memory += values[i].getMemory();
+		for (Value value : values) {
+			memory += value.getMemory();
 		}
 		return memory;
 	}

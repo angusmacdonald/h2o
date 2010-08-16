@@ -27,25 +27,29 @@ public class Restore extends Tool {
 
 	private void showUsage() {
 		out.println("Restores a database backup.");
-		out.println("java "+getClass().getName() + "\n" +
-				" [-file <filename>]  The source file name (default: backup.zip)\n" +
-				" [-dir <dir>]        Target directory (default: .)\n" +
-		" [-db <database>]    Target database name");
-		out.println("See also http://h2database.com/javadoc/" + getClass().getName().replace('.', '/') + ".html");
+		out.println("java "
+				+ getClass().getName()
+				+ "\n"
+				+ " [-file <filename>]  The source file name (default: backup.zip)\n"
+				+ " [-dir <dir>]        Target directory (default: .)\n"
+				+ " [-db <database>]    Target database name");
+		out.println("See also http://h2database.com/javadoc/"
+				+ getClass().getName().replace('.', '/') + ".html");
 	}
 
 	/**
-	 * The command line interface for this tool.
-	 * The options must be split into strings like this: "-db", "test",...
-	 * Options are case sensitive. The following options are supported:
+	 * The command line interface for this tool. The options must be split into
+	 * strings like this: "-db", "test",... Options are case sensitive. The
+	 * following options are supported:
 	 * <ul>
-	 * <li>-help or -? (print the list of options)
-	 * </li><li>-file filename (the default is backup.zip)
-	 * </li><li>-dir database directory (the default is the current directory)
-	 * </li><li>-db database name (as stored in the backup if no name is specified)
-	 * </li></ul>
-	 *
-	 * @param args the command line arguments
+	 * <li>-help or -? (print the list of options)</li>
+	 * <li>-file filename (the default is backup.zip)</li>
+	 * <li>-dir database directory (the default is the current directory)</li>
+	 * <li>-db database name (as stored in the backup if no name is specified)</li>
+	 * </ul>
+	 * 
+	 * @param args
+	 *            the command line arguments
 	 * @throws SQLException
 	 */
 	public static void main(String[] args) throws SQLException {
@@ -78,7 +82,8 @@ public class Restore extends Tool {
 		process(zipFileName, dir, db);
 	}
 
-	private static String getOriginalDbName(String fileName, String db) throws IOException {
+	private static String getOriginalDbName(String fileName, String db)
+			throws IOException {
 		InputStream in = null;
 		try {
 			in = FileUtils.openFileInputStream(fileName);
@@ -120,27 +125,37 @@ public class Restore extends Tool {
 
 	/**
 	 * Restores database files.
-	 *
-	 * @param zipFileName the name of the backup file
-	 * @param directory the directory name
-	 * @param db the database name (null for all databases)
-	 * @param quiet don't print progress information
+	 * 
+	 * @param zipFileName
+	 *            the name of the backup file
+	 * @param directory
+	 *            the directory name
+	 * @param db
+	 *            the database name (null for all databases)
+	 * @param quiet
+	 *            don't print progress information
 	 * @throws SQLException
 	 */
-	public static void execute(String zipFileName, String directory, String db, boolean quiet) throws SQLException {
+	public static void execute(String zipFileName, String directory, String db,
+			boolean quiet) throws SQLException {
 		new Restore().process(zipFileName, directory, db);
 	}
 
 	/**
 	 * Restores database files.
-	 *
-	 * @param zipFileName the name of the backup file
-	 * @param directory the directory name
-	 * @param db the database name (null for all databases)
-	 * @param quiet don't print progress information
+	 * 
+	 * @param zipFileName
+	 *            the name of the backup file
+	 * @param directory
+	 *            the directory name
+	 * @param db
+	 *            the database name (null for all databases)
+	 * @param quiet
+	 *            don't print progress information
 	 * @throws SQLException
 	 */
-	private void process(String zipFileName, String directory, String db) throws SQLException {
+	private void process(String zipFileName, String directory, String db)
+			throws SQLException {
 		InputStream in = null;
 		try {
 			if (!FileUtils.exists(zipFileName)) {
@@ -180,7 +195,8 @@ public class Restore extends Tool {
 				if (copy) {
 					OutputStream out = null;
 					try {
-						out = FileUtils.openFileOutputStream(directory + File.separator + fileName, false);
+						out = FileUtils.openFileOutputStream(directory
+								+ File.separator + fileName, false);
 						IOUtils.copy(zipIn, out);
 						out.close();
 					} finally {

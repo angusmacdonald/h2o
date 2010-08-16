@@ -78,8 +78,8 @@ public class Mode {
 	public boolean squareBracketQuotedNames;
 
 	/**
-	 * Support for the syntax [OFFSET .. ROW] [FETCH ... ONLY]
-	 * as an alternative syntax for LIMIT .. OFFSET.
+	 * Support for the syntax [OFFSET .. ROW] [FETCH ... ONLY] as an alternative
+	 * syntax for LIMIT .. OFFSET.
 	 */
 	public boolean supportOffsetFetch;
 
@@ -95,9 +95,9 @@ public class Mode {
 	public boolean uniqueIndexSingleNull;
 
 	/**
-	 * When using unique indexes, multiple rows with NULL in all columns
-	 * are allowed, however it is not allowed to have multiple rows with the
-	 * same values otherwise.
+	 * When using unique indexes, multiple rows with NULL in all columns are
+	 * allowed, however it is not allowed to have multiple rows with the same
+	 * values otherwise.
 	 */
 	public boolean uniqueIndexSingleNullExceptAllColumnsAreNull;
 
@@ -161,8 +161,9 @@ public class Mode {
 
 	/**
 	 * Get the mode with the given name.
-	 *
-	 * @param name the name of the mode
+	 * 
+	 * @param name
+	 *            the name of the mode
 	 * @return the mode object
 	 */
 	public static Mode getInstance(String name) {

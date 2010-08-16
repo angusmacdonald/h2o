@@ -46,14 +46,22 @@ public class RemoteQueryExecutor extends Thread {
 	 * @param query
 	 * @param transactionName
 	 * @param replica
-	 * @param instanceID If the transaction has to be rolled back this ID is used to identify the instance in question.
-	 * @param parser Only used to execute the transaction if local is true.
-	 * @param local	Whether the transaction is to be executed locally, or sent remotely.
-	 * @param commitOperation True if this is a COMMIT, false if it is another type of query. If it is false a PREPARE command will
-	 * be executed to get ready for the eventual commit.
+	 * @param instanceID
+	 *            If the transaction has to be rolled back this ID is used to
+	 *            identify the instance in question.
+	 * @param parser
+	 *            Only used to execute the transaction if local is true.
+	 * @param local
+	 *            Whether the transaction is to be executed locally, or sent
+	 *            remotely.
+	 * @param commitOperation
+	 *            True if this is a COMMIT, false if it is another type of
+	 *            query. If it is false a PREPARE command will be executed to
+	 *            get ready for the eventual commit.
 	 */
-	public RemoteQueryExecutor(String query, String transactionName, DatabaseInstanceWrapper replica, 
-			int instanceID, Parser parser, boolean local, boolean commitOperation) {
+	public RemoteQueryExecutor(String query, String transactionName,
+			DatabaseInstanceWrapper replica, int instanceID, Parser parser,
+			boolean local, boolean commitOperation) {
 		this.query = query;
 		this.transactionName = transactionName;
 		this.databaseWrapper = replica;
@@ -63,8 +71,8 @@ public class RemoteQueryExecutor extends Thread {
 		this.commitOperation = commitOperation;
 	}
 
-	public QueryResult executeQuery(){
-		if (local){
+	public QueryResult executeQuery() {
+		if (local) {
 			return executeLocal();
 		} else {
 			return executeRemote();
@@ -76,26 +84,28 @@ public class RemoteQueryExecutor extends Thread {
 		try {
 			int result = 0;
 
+			if (!commitOperation) {
 
-			if (!commitOperation){
-
-				//Execute query.
+				// Execute query.
 				Command command = parser.prepareCommand(query);
-				command.executeUpdate(true); //True because it may need to wait for the remote machine to commit.
+				command.executeUpdate(true); // True because it may need to wait
+												// for the remote machine to
+												// commit.
 
-				//Prepare query for commit.
-				command = parser.prepareCommand("PREPARE COMMIT " + transactionName);
+				// Prepare query for commit.
+				command = parser.prepareCommand("PREPARE COMMIT "
+						+ transactionName);
 				result = command.executeUpdate();
 			} else {
-				//Prepare for commit.
-				Command prepare = parser.prepareCommand("PREPARE COMMIT " + transactionName);
+				// Prepare for commit.
+				Command prepare = parser.prepareCommand("PREPARE COMMIT "
+						+ transactionName);
 				prepare.executeUpdate();
 
-				//Execute query.
+				// Execute query.
 				Command command = parser.prepareCommand(query);
 				result = command.executeUpdate();
 			}
-
 
 			qr = new QueryResult(result, instanceID);
 
@@ -106,13 +116,13 @@ public class RemoteQueryExecutor extends Thread {
 		return qr;
 	}
 
-
 	private QueryResult executeRemote() {
 		QueryResult qr = null;
 		try {
 			H2OTest.rmiFailure(databaseWrapper);
 
-			int result = databaseWrapper.getDatabaseInstance().execute(query, transactionName, commitOperation);
+			int result = databaseWrapper.getDatabaseInstance().execute(query,
+					transactionName, commitOperation);
 
 			qr = new QueryResult(result, instanceID);
 

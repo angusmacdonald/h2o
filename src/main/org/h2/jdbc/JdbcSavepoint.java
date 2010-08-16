@@ -21,9 +21,9 @@ import org.h2.util.StringUtils;
  * back in this case.
  */
 public class JdbcSavepoint extends TraceObject
-//## Java 1.4 begin ##
-implements Savepoint
-//## Java 1.4 end ##
+// ## Java 1.4 begin ##
+		implements Savepoint
+// ## Java 1.4 end ##
 {
 
 	private static final String SYSTEM_SAVEPOINT_PREFIX = "SYSTEM_SAVEPOINT_";
@@ -32,7 +32,8 @@ implements Savepoint
 	private String name;
 	private JdbcConnection conn;
 
-	JdbcSavepoint(JdbcConnection conn, int savepointId, String name, Trace trace, int id) {
+	JdbcSavepoint(JdbcConnection conn, int savepointId, String name,
+			Trace trace, int id) {
 		setTrace(trace, TraceObject.SAVEPOINT, id);
 		this.conn = conn;
 		this.savepointId = savepointId;
@@ -48,11 +49,13 @@ implements Savepoint
 	}
 
 	/**
-	 * Get the savepoint name for this name or id.
-	 * If the name is null, the id is used.
-	 *
-	 * @param name the name (may be null)
-	 * @param id the id
+	 * Get the savepoint name for this name or id. If the name is null, the id
+	 * is used.
+	 * 
+	 * @param name
+	 *            the name (may be null)
+	 * @param id
+	 *            the id
 	 * @return the savepoint name
 	 */
 	static String getName(String name, int id) {
@@ -67,17 +70,21 @@ implements Savepoint
 	 */
 	void rollback() throws SQLException {
 		checkValid();
-		conn.prepareCommand("ROLLBACK TO SAVEPOINT " + getName(name, savepointId), Integer.MAX_VALUE).executeUpdate();
+		conn.prepareCommand(
+				"ROLLBACK TO SAVEPOINT " + getName(name, savepointId),
+				Integer.MAX_VALUE).executeUpdate();
 	}
 
 	private void checkValid() throws SQLException {
 		if (conn == null) {
-			throw Message.getSQLException(ErrorCode.SAVEPOINT_IS_INVALID_1, getName(name, savepointId));
+			throw Message.getSQLException(ErrorCode.SAVEPOINT_IS_INVALID_1,
+					getName(name, savepointId));
 		}
 	}
 
 	/**
 	 * Get the generated id of this savepoint.
+	 * 
 	 * @return the id
 	 */
 	public int getSavepointId() throws SQLException {
@@ -95,6 +102,7 @@ implements Savepoint
 
 	/**
 	 * Get the name of this savepoint.
+	 * 
 	 * @return the name
 	 */
 	public String getSavepointName() throws SQLException {
@@ -116,6 +124,5 @@ implements Savepoint
 	public String toString() {
 		return getTraceObjectName() + ": id=" + savepointId + " name=" + name;
 	}
-
 
 }

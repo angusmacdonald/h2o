@@ -15,8 +15,7 @@ import org.h2.engine.UserAggregate;
 import org.h2.message.Message;
 
 /**
- * This class represents the statement
- * DROP AGGREGATE
+ * This class represents the statement DROP AGGREGATE
  */
 public class DropAggregate extends DefineCommand {
 
@@ -34,7 +33,8 @@ public class DropAggregate extends DefineCommand {
 		UserAggregate aggregate = db.findAggregate(name);
 		if (aggregate == null) {
 			if (!ifExists) {
-				throw Message.getSQLException(ErrorCode.AGGREGATE_NOT_FOUND_1, name);
+				throw Message.getSQLException(ErrorCode.AGGREGATE_NOT_FOUND_1,
+						name);
 			}
 		} else {
 			db.removeDatabaseObject(session, aggregate);

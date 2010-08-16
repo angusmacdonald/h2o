@@ -17,8 +17,7 @@ import org.h2.table.Table;
 import org.h2.value.Value;
 
 /**
- * A user-defined constant as created by the SQL statement
- * CREATE CONSTANT
+ * A user-defined constant as created by the SQL statement CREATE CONSTANT
  */
 public class Constant extends SchemaObjectBase {
 

@@ -54,15 +54,16 @@ public class Shell {
 	 * strings like this: "-user", "sa",... Options are case sensitive. The
 	 * following options are supported:
 	 * <ul>
-	 * <li>-help or -? (print the list of options) </li>
-	 * <li>-url jdbc:h2:... (database URL) </li>
-	 * <li>-user username </li>
-	 * <li>-password password </li>
+	 * <li>-help or -? (print the list of options)</li>
+	 * <li>-url jdbc:h2:... (database URL)</li>
+	 * <li>-user username</li>
+	 * <li>-password password</li>
 	 * <li>-driver driver the JDBC driver class name (not required for most
-	 * databases) </li>
+	 * databases)</li>
 	 * </ul>
-	 *
-	 * @param args the command line arguments
+	 * 
+	 * @param args
+	 *            the command line arguments
 	 * @throws SQLException
 	 */
 	public static void main(String[] args) throws SQLException {
@@ -71,21 +72,27 @@ public class Shell {
 
 	private void showUsage() {
 		println("An interactive command line database tool.");
-		println("java "+getClass().getName() + "\n" +
-				" [-url <url>]       The database URL\n" +
-				" [-user <user>]     The user name\n" +
-				" [-password <pwd>]  The password\n" +
-		" [-driver <class>]  The JDBC driver class to use (not required in most cases)");
-		println("See also http://h2database.com/javadoc/" + getClass().getName().replace('.', '/') + ".html");
+		println("java "
+				+ getClass().getName()
+				+ "\n"
+				+ " [-url <url>]       The database URL\n"
+				+ " [-user <user>]     The user name\n"
+				+ " [-password <pwd>]  The password\n"
+				+ " [-driver <class>]  The JDBC driver class to use (not required in most cases)");
+		println("See also http://h2database.com/javadoc/"
+				+ getClass().getName().replace('.', '/') + ".html");
 	}
 
 	/**
 	 * Redirects the input and output. By default, System.in, out and err are
 	 * used.
-	 *
-	 * @param in the input stream to use
-	 * @param out the output stream to use
-	 * @param err the output error stream to use
+	 * 
+	 * @param in
+	 *            the input stream to use
+	 * @param out
+	 *            the output stream to use
+	 * @param err
+	 *            the output error stream to use
 	 */
 	public void setStreams(InputStream in, PrintStream out, PrintStream err) {
 		this.in = in;
@@ -96,12 +103,16 @@ public class Shell {
 	/**
 	 * Redirects the input and output. By default, System.in, out and err are
 	 * used.
-	 *
-	 * @param reader the input stream reader to use
-	 * @param out the output stream to use
-	 * @param err the output error stream to use
+	 * 
+	 * @param reader
+	 *            the input stream reader to use
+	 * @param out
+	 *            the output stream to use
+	 * @param err
+	 *            the output error stream to use
 	 */
-	public void setStreams(BufferedReader reader, PrintStream out, PrintStream err) {
+	public void setStreams(BufferedReader reader, PrintStream out,
+			PrintStream err) {
 		this.reader = reader;
 		this.out = out;
 		this.err = err;
@@ -109,8 +120,9 @@ public class Shell {
 
 	/**
 	 * Run the shell tool with the given command line settings.
-	 *
-	 * @param args the command line settings
+	 * 
+	 * @param args
+	 *            the command line settings
 	 */
 	public void run(String[] args) throws SQLException {
 		String url = null;
@@ -192,9 +204,11 @@ public class Shell {
 					showHelp();
 				} else if ("LIST".equals(upper)) {
 					listMode = !listMode;
-					println("Result list mode is now " + (listMode ? "on" : "off"));
+					println("Result list mode is now "
+							+ (listMode ? "on" : "off"));
 				} else if (upper.startsWith("DESCRIBE")) {
-					String tableName = upper.substring("DESCRIBE".length()).trim();
+					String tableName = upper.substring("DESCRIBE".length())
+							.trim();
 					if (tableName.length() == 0) {
 						println("Usage: describe [<schema name>.]<table name>");
 					} else {
@@ -207,13 +221,13 @@ public class Shell {
 						PreparedStatement prep = null;
 						ResultSet rs = null;
 						try {
-							String sql = "SELECT CAST(COLUMN_NAME AS VARCHAR(32)) \"Column Name\", " +
-							"CAST(TYPE_NAME AS VARCHAR(14)) \"Type\", " +
-							"NUMERIC_PRECISION \"Precision\", " +
-							"CAST(IS_NULLABLE AS VARCHAR(8)) \"Nullable\", " +
-							"CAST(COLUMN_DEFAULT AS VARCHAR(20)) \"Default\" " +
-							"FROM INFORMATION_SCHEMA.COLUMNS " +
-							"WHERE UPPER(TABLE_NAME)=?";
+							String sql = "SELECT CAST(COLUMN_NAME AS VARCHAR(32)) \"Column Name\", "
+									+ "CAST(TYPE_NAME AS VARCHAR(14)) \"Type\", "
+									+ "NUMERIC_PRECISION \"Precision\", "
+									+ "CAST(IS_NULLABLE AS VARCHAR(8)) \"Nullable\", "
+									+ "CAST(COLUMN_DEFAULT AS VARCHAR(20)) \"Default\" "
+									+ "FROM INFORMATION_SCHEMA.COLUMNS "
+									+ "WHERE UPPER(TABLE_NAME)=?";
 							if (schemaName != null) {
 								sql += " AND UPPER(TABLE_SCHEMA)=?";
 							}
@@ -236,9 +250,9 @@ public class Shell {
 				} else if (upper.startsWith("SHOW")) {
 					ResultSet rs = null;
 					try {
-						rs = stat.executeQuery(
-								"SELECT CAST(TABLE_SCHEMA AS VARCHAR(32)) \"Schema\", TABLE_NAME \"Table Name\" " +
-						"FROM INFORMATION_SCHEMA.TABLES ORDER BY TABLE_SCHEMA, TABLE_NAME");
+						rs = stat
+								.executeQuery("SELECT CAST(TABLE_SCHEMA AS VARCHAR(32)) \"Schema\", TABLE_NAME \"Table Name\" "
+										+ "FROM INFORMATION_SCHEMA.TABLES ORDER BY TABLE_SCHEMA, TABLE_NAME");
 						printResult(rs, false);
 					} catch (SQLException e) {
 						println("Exception: " + e.toString());
@@ -289,12 +303,14 @@ public class Shell {
 	}
 
 	private void connect() throws IOException, SQLException {
-		String propertiesFileName = FileUtils.getFileInUserHome(Constants.SERVER_PROPERTIES_FILE);
+		String propertiesFileName = FileUtils
+				.getFileInUserHome(Constants.SERVER_PROPERTIES_FILE);
 		String url = "jdbc:h2:~/test";
 		String user = "sa";
 		String driver = null;
 		try {
-			Properties prop = SortedProperties.loadProperties(propertiesFileName);
+			Properties prop = SortedProperties
+					.loadProperties(propertiesFileName);
 			String data = null;
 			boolean found = false;
 			for (int i = 0;; i++) {
@@ -353,19 +369,22 @@ public class Shell {
 		try {
 			Method getConsole = System.class.getMethod("console", new Class[0]);
 			Object console = getConsole.invoke(null, (Object[]) null);
-			Method readPassword = console.getClass().getMethod("readPassword", new Class[0]);
+			Method readPassword = console.getClass().getMethod("readPassword",
+					new Class[0]);
 			print("Password  ");
-			char[] password = (char[]) readPassword.invoke(console, (Object[]) null);
+			char[] password = (char[]) readPassword.invoke(console,
+					(Object[]) null);
 			return password == null ? null : new String(password);
 		} catch (Exception e) {
 			// ignore, use the default solution
 		}
 		/**
-		 * This thread hides the password by repeatedly printing
-		 * backspace, backspace, &gt;, &lt;.
+		 * This thread hides the password by repeatedly printing backspace,
+		 * backspace, &gt;, &lt;.
 		 */
 		class PasswordHider extends Thread {
 			volatile boolean stop;
+
 			public void run() {
 				while (!stop) {
 					out.print("\b\b><");
@@ -419,7 +438,8 @@ public class Shell {
 				rs = stat.getResultSet();
 				int rowCount = printResult(rs, listMode);
 				time = System.currentTimeMillis() - time;
-				println("(" + rowCount + (rowCount == 1 ? " row, " : " rows, ") + time + " ms)");
+				println("(" + rowCount + (rowCount == 1 ? " row, " : " rows, ")
+						+ time + " ms)");
 			} else {
 				int updateCount = stat.getUpdateCount();
 				time = System.currentTimeMillis() - time;

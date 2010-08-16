@@ -16,8 +16,7 @@ import org.h2.schema.Constant;
 import org.h2.schema.Schema;
 
 /**
- * This class represents the statement
- * DROP CONSTANT
+ * This class represents the statement DROP CONSTANT
  */
 public class DropConstant extends SchemaCommand {
 
@@ -43,7 +42,8 @@ public class DropConstant extends SchemaCommand {
 		Constant constant = getSchema().findConstant(constantName);
 		if (constant == null) {
 			if (!ifExists) {
-				throw Message.getSQLException(ErrorCode.CONSTANT_NOT_FOUND_1, constantName);
+				throw Message.getSQLException(ErrorCode.CONSTANT_NOT_FOUND_1,
+						constantName);
 			}
 		} else {
 			db.removeSchemaObject(session, constant);

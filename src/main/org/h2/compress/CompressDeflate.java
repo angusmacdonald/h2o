@@ -16,14 +16,13 @@ import org.h2.constant.ErrorCode;
 import org.h2.message.Message;
 
 /**
- * This is a wrapper class for the Deflater class.
- * This algorithm supports the following options:
+ * This is a wrapper class for the Deflater class. This algorithm supports the
+ * following options:
  * <ul>
- * <li>l or level: -1 (default), 0 (no compression),
- *  1 (best speed), ..., 9 (best compression)
- * </li><li>s or strategy: 0 (default),
- *  1 (filtered), 2 (huffman only)
- * </li></ul>
+ * <li>l or level: -1 (default), 0 (no compression), 1 (best speed), ..., 9
+ * (best compression)</li>
+ * <li>s or strategy: 0 (default), 1 (filtered), 2 (huffman only)</li>
+ * </ul>
  * See also java.util.zip.Deflater for details.
  */
 public class CompressDeflate implements Compressor {
@@ -48,7 +47,8 @@ public class CompressDeflate implements Compressor {
 				deflater.setStrategy(strategy);
 			}
 		} catch (Exception e) {
-			throw Message.getSQLException(ErrorCode.UNSUPPORTED_COMPRESSION_OPTIONS_1, options);
+			throw Message.getSQLException(
+					ErrorCode.UNSUPPORTED_COMPRESSION_OPTIONS_1, options);
 		}
 	}
 
@@ -65,7 +65,8 @@ public class CompressDeflate implements Compressor {
 		return Compressor.DEFLATE;
 	}
 
-	public void expand(byte[] in, int inPos, int inLen, byte[] out, int outPos, int outLen) throws SQLException {
+	public void expand(byte[] in, int inPos, int inLen, byte[] out, int outPos,
+			int outLen) throws SQLException {
 		Inflater decompresser = new Inflater();
 		decompresser.setInput(in, inPos, inLen);
 		decompresser.finished();

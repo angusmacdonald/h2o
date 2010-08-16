@@ -27,26 +27,30 @@ public class JdbcSQLException extends SQLException {
 
 	/**
 	 * Creates a SQLException a message, sqlstate and cause.
-	 *
-	 * @param message the reason
-	 * @param state the SQL state
-	 * @param cause the exception that was the reason for this exception
+	 * 
+	 * @param message
+	 *            the reason
+	 * @param state
+	 *            the SQL state
+	 * @param cause
+	 *            the exception that was the reason for this exception
 	 */
-	public JdbcSQLException(String message, String sql, String state, int errorCode, Throwable cause, String stackTrace) {
+	public JdbcSQLException(String message, String sql, String state,
+			int errorCode, Throwable cause, String stackTrace) {
 		super(message, state, errorCode);
 		this.originalMessage = message;
 		this.sql = sql;
 		this.cause = cause;
 		this.stackTrace = stackTrace;
 		buildMessage();
-		//## Java 1.4 begin ##
+		// ## Java 1.4 begin ##
 		initCause(cause);
-		//## Java 1.4 end ##
+		// ## Java 1.4 end ##
 	}
 
 	/**
 	 * Get the detail error message.
-	 *
+	 * 
 	 * @return the message
 	 */
 	public String getMessage() {
@@ -73,17 +77,17 @@ public class JdbcSQLException extends SQLException {
 
 	/**
 	 * Prints the stack trace to the specified print writer.
-	 *
-	 * @param s the print writer
+	 * 
+	 * @param s
+	 *            the print writer
 	 */
 	public void printStackTrace(PrintWriter s) {
 		if (s != null) {
 			super.printStackTrace(s);
-			/*## Java 1.3 only begin ##
-            if (cause != null) {
-                cause.printStackTrace(s);
-            }
-            ## Java 1.3 only end ##*/
+			/*
+			 * ## Java 1.3 only begin ## if (cause != null) {
+			 * cause.printStackTrace(s); } ## Java 1.3 only end ##
+			 */
 			// getNextException().printStackTrace(s) would be very very slow
 			// if many exceptions are joined
 			SQLException next = getNextException();
@@ -99,17 +103,17 @@ public class JdbcSQLException extends SQLException {
 
 	/**
 	 * Prints the stack trace to the specified print stream.
-	 *
-	 * @param s the print stream
+	 * 
+	 * @param s
+	 *            the print stream
 	 */
 	public void printStackTrace(PrintStream s) {
 		if (s != null) {
 			super.printStackTrace(s);
-			/*## Java 1.3 only begin ##
-            if (cause != null) {
-                cause.printStackTrace(s);
-            }
-            ## Java 1.3 only end ##*/
+			/*
+			 * ## Java 1.3 only begin ## if (cause != null) {
+			 * cause.printStackTrace(s); } ## Java 1.3 only end ##
+			 */
 			// getNextException().printStackTrace(s) would be very very slow
 			// if many exceptions are joined
 			SQLException next = getNextException();
@@ -132,7 +136,7 @@ public class JdbcSQLException extends SQLException {
 
 	/**
 	 * Returns the SQL statement.
-	 *
+	 * 
 	 * @return the SQL statement
 	 */
 	public String getSQL() {
@@ -148,7 +152,8 @@ public class JdbcSQLException extends SQLException {
 	}
 
 	private void buildMessage() {
-		StringBuilder buff = new StringBuilder(originalMessage == null ? "- " : originalMessage);
+		StringBuilder buff = new StringBuilder(originalMessage == null ? "- "
+				: originalMessage);
 		if (sql != null) {
 			buff.append("; SQL statement:\n");
 			buff.append(sql);
@@ -164,7 +169,7 @@ public class JdbcSQLException extends SQLException {
 	/**
 	 * Returns the class name, the message, and in the server mode, the stack
 	 * trace of the server
-	 *
+	 * 
 	 * @return the string representation
 	 */
 	public String toString() {
@@ -176,7 +181,7 @@ public class JdbcSQLException extends SQLException {
 
 	/**
 	 * Get the error related payload object.
-	 *
+	 * 
 	 * @return the payload
 	 */
 	public Object getPayload() {
@@ -185,8 +190,9 @@ public class JdbcSQLException extends SQLException {
 
 	/**
 	 * Set the error related payload object.
-	 *
-	 * @param payload the new payload
+	 * 
+	 * @param payload
+	 *            the new payload
 	 */
 	public void setPayload(Object payload) {
 		this.payload = payload;

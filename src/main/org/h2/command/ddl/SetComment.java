@@ -18,8 +18,7 @@ import org.h2.message.Message;
 import org.h2.table.Table;
 
 /**
- * This class represents the statement
- * COMMENT
+ * This class represents the statement COMMENT
  */
 public class SetComment extends DefineCommand {
 
@@ -72,7 +71,8 @@ public class SetComment extends DefineCommand {
 			object = db.getSchema(schemaName).getSequence(objectName);
 			break;
 		case DbObject.TABLE_OR_VIEW:
-			object = db.getSchema(schemaName).getTableOrView(session, objectName);
+			object = db.getSchema(schemaName).getTableOrView(session,
+					objectName);
 			break;
 		case DbObject.TRIGGER:
 			object = db.getSchema(schemaName).findTrigger(objectName);
@@ -99,8 +99,9 @@ public class SetComment extends DefineCommand {
 		} else {
 			object.setComment(text);
 		}
-		if (column || objectType == DbObject.TABLE_OR_VIEW || objectType == DbObject.USER
-				|| objectType == DbObject.INDEX || objectType == DbObject.CONSTRAINT) {
+		if (column || objectType == DbObject.TABLE_OR_VIEW
+				|| objectType == DbObject.USER || objectType == DbObject.INDEX
+				|| objectType == DbObject.CONSTRAINT) {
 			db.update(session, object);
 		} else {
 			Comment comment = db.findComment(object);

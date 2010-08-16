@@ -46,18 +46,21 @@ public class ResultTempTable implements ResultExternal {
 		columns.add(column);
 		int tableId = session.getDatabase().allocateObjectId(true, true);
 		String tableName = "TEMP_RESULT_SET_" + tableId;
-		table = schema.createTable(tableName, tableId, columns, false, false, Index.EMPTY_HEAD);
+		table = schema.createTable(tableName, tableId, columns, false, false,
+				Index.EMPTY_HEAD);
 		int indexId = session.getDatabase().allocateObjectId(true, false);
 		IndexColumn indexColumn = new IndexColumn();
 		indexColumn.column = column;
 		indexColumn.columnName = COLUMN_NAME;
 		IndexType indexType;
 		indexType = IndexType.createPrimaryKey(true, false);
-		IndexColumn[] indexCols = new IndexColumn[]{indexColumn};
+		IndexColumn[] indexCols = new IndexColumn[] { indexColumn };
 		if (SysProperties.PAGE_STORE) {
-			index = new PageBtreeIndex(table, indexId, tableName, indexCols, indexType, Index.EMPTY_HEAD);
+			index = new PageBtreeIndex(table, indexId, tableName, indexCols,
+					indexType, Index.EMPTY_HEAD);
 		} else {
-			index = new BtreeIndex(session, table, indexId, tableName, indexCols, indexType, Index.EMPTY_HEAD);
+			index = new BtreeIndex(session, table, indexId, tableName,
+					indexCols, indexType, Index.EMPTY_HEAD);
 		}
 		table.getIndexes().add(index);
 	}
@@ -129,7 +132,7 @@ public class ResultTempTable implements ResultExternal {
 
 	private Row convertToRow(Value[] values) {
 		ValueArray data = ValueArray.get(values);
-		return new Row(new Value[]{data}, data.getMemory());
+		return new Row(new Value[] { data }, data.getMemory());
 	}
 
 	private Cursor find(Row row) throws SQLException {
@@ -145,4 +148,3 @@ public class ResultTempTable implements ResultExternal {
 	}
 
 }
-

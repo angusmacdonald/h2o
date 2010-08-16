@@ -12,8 +12,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A page parser can parse an HTML page and replace the tags there.
- * This class is used by the H2 Console.
+ * A page parser can parse an HTML page and replace the tags there. This class
+ * is used by the H2 Console.
  */
 public class PageParser {
 	private String page;
@@ -32,9 +32,11 @@ public class PageParser {
 
 	/**
 	 * Replace the tags in the HTML page with the given settings.
-	 *
-	 * @param page the HTML page
-	 * @param settings the settings
+	 * 
+	 * @param page
+	 *            the HTML page
+	 * @param settings
+	 *            the settings
 	 * @return the converted page
 	 */
 	public static String parse(String page, Map settings) {
@@ -211,8 +213,9 @@ public class PageParser {
 
 	/**
 	 * Convert data to HTML, but don't convert newlines and multiple spaces.
-	 *
-	 * @param s the data
+	 * 
+	 * @param s
+	 *            the data
 	 * @return the escaped html text
 	 */
 	static String escapeHtmlData(String s) {
@@ -221,8 +224,9 @@ public class PageParser {
 
 	/**
 	 * Convert data to HTML, including newlines and multiple spaces.
-	 *
-	 * @param s the data
+	 * 
+	 * @param s
+	 *            the data
 	 * @return the escaped html text
 	 */
 	public static String escapeHtml(String s) {
@@ -296,8 +300,9 @@ public class PageParser {
 
 	/**
 	 * Escape text as a the javascript string.
-	 *
-	 * @param s the text
+	 * 
+	 * @param s
+	 *            the text
 	 * @return the javascript string
 	 */
 	static String escapeJavaScript(String s) {
