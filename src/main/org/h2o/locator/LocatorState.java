@@ -68,10 +68,6 @@ public class LocatorState {
 
 	}
 
-	private boolean isLocked(){
-		return locked;
-	}
-
 	/**
 	 * Read the set of database locations from the file.
 	 * @return Set of db locations which hold system table replicas.

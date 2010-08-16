@@ -19,9 +19,9 @@ package org.h2o.db.wrappers;
 
 import java.io.Serializable;
 
+import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.util.DatabaseInstanceProbability;
-import org.h2o.util.DatabaseURL;
 
 
 /**
@@ -59,7 +59,7 @@ public class DatabaseInstanceWrapper implements Serializable, Comparable<Databas
 	}
 
 	/**
-	 * Wether the database instance this proxy points to is still active.
+	 * Whether the database instance this proxy points to is still active.
 	 */
 	public boolean isActive() {
 		return active;

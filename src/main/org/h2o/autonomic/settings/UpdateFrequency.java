@@ -15,12 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-package org.h2o.autonomic;
+package org.h2o.autonomic.settings;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public interface AutonomicAction {
+public enum UpdateFrequency {
 
 }

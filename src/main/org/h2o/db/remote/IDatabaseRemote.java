@@ -20,12 +20,12 @@ package org.h2o.db.remote;
 import java.rmi.RemoteException;
 
 import org.h2.engine.Session;
-import org.h2o.autonomic.Settings;
+import org.h2o.autonomic.settings.Settings;
+import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.manager.interfaces.SystemTableRemote;
-import org.h2o.util.DatabaseURL;
 import org.h2o.util.exceptions.StartupException;
 
 import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;

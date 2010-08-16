@@ -35,8 +35,9 @@ import java.util.Set;
 
 import org.h2.engine.Constants;
 import org.h2.engine.Session;
-import org.h2o.autonomic.Settings;
+import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.DatabaseInstance;
+import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.SystemTableReference;
@@ -46,12 +47,11 @@ import org.h2o.db.manager.interfaces.SystemTableRemote;
 import org.h2o.db.replication.MetaDataReplicaManager;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
+import org.h2o.event.DatabaseStates;
+import org.h2o.event.client.H2OEvent;
+import org.h2o.event.client.H2OEventBus;
 import org.h2o.locator.H2OLocatorInterface;
-import org.h2o.util.DatabaseURL;
 import org.h2o.util.LocalH2OProperties;
-import org.h2o.util.event.DatabaseStates;
-import org.h2o.util.event.H2OEvent;
-import org.h2o.util.event.H2OEventBus;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.util.exceptions.StartupException;
 

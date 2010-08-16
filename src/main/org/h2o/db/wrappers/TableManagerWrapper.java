@@ -21,9 +21,9 @@ import java.io.Serializable;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
+import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.TableManagerRemote;
-import org.h2o.util.DatabaseURL;
-import org.h2o.util.TableInfo;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)

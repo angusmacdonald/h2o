@@ -22,26 +22,24 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
-import java.util.Map.Entry;
 
 import org.h2.engine.Database;
 import org.h2.result.LocalResult;
 import org.h2.value.Value;
-import org.h2o.autonomic.decision.RequestType;
+import org.h2o.autonomic.decision.requests.ActionRequest;
+import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.remote.IDatabaseRemote;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
-import org.h2o.util.DatabaseURL;
-import org.h2o.util.TableInfo;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.util.exceptions.StartupException;
-
-import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
@@ -650,9 +648,8 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 	 * @see org.h2.h2o.manager.ISystemTable#removeAllTableInformation()
 	 */
 	@Override
-	public void removeAllTableInformation() {
-		// TODO Auto-generated method stub
-
+	public void removeAllTableInformation() throws RemoteException, MovedException {
+		removeTableInformation(null);
 	}
 
 
@@ -808,7 +805,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
 	@Override
 	public Queue<DatabaseInstanceWrapper> getAvailableMachines(
-			RequestType typeOfRequest) {
+			ActionRequest typeOfRequest) {
 		// TODO Auto-generated method stub
 		return null;
 	}

@@ -20,9 +20,9 @@ package org.h2o.db.remote;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 
+import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.interfaces.TableManagerRemote;
-import org.h2o.util.DatabaseURL;
 
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
 import uk.ac.standrews.cs.stachordRMI.impl.ChordNodeImpl;

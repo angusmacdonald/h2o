@@ -15,13 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.util.event;
+package org.h2o.event.client;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.UnknownHostException;
 
-import uk.ac.standrews.cs.nds.eventModel.EventFactory;
+import org.h2.util.NetUtils;
+
 import uk.ac.standrews.cs.nds.eventModel.IEvent;
 import uk.ac.standrews.cs.nds.eventModel.eventBus.EventBus;
 import uk.ac.standrews.cs.nds.eventModel.eventBus.busInterfaces.IEventBus;
@@ -30,34 +32,50 @@ import uk.ac.standrews.cs.nds.eventModel.eventBus.busInterfaces.IEventConsumer;
 public class H2OEventConsumer implements IEventConsumer  {
 	IEventBus bus = new EventBus();
 
-	FileWriter fstream;
-	BufferedWriter out;
+	private Socket socket;
+
+	private ObjectOutputStream out;
 
 	public H2OEventConsumer(){
 		try {
-			fstream = new FileWriter("events.txt");
-			out = new BufferedWriter(fstream);
+		    getConnection();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
+
 	@Override
 	public boolean interested(IEvent event) {
-		return event.getType().equals(EventFactory.DIAGNOSTIC_EVENT);
+		return event.getType().equals(H2OEventBus.H2O_EVENT);
 	}
 
 	@Override
 	public void receiveEvent(IEvent event) {
-		Object obj = event.get(EventFactory.DIAGNOSTIC_EVENT_MSG);
-//
-//		H2OEvent h2oEvent = (H2OEvent) obj;
+		Object obj = event.get(H2OEventBus.H2O_EVENT);
 
+		if (!socket.isConnected()){
+			try {
+				getConnection();
+			} catch (UnknownHostException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		try {
-			out.write(obj + "\n");
+			out.writeObject(obj);
 			out.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+
+	private void getConnection() throws UnknownHostException, IOException {
+		socket = new Socket(NetUtils.getLocalAddress(), 4444);
+		out = new ObjectOutputStream(socket.getOutputStream());
 	}
 }

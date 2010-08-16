@@ -35,3 +35,5 @@ H2O Version 0.2.6 (Unreleased)
 	Auto-complete of tables now always chooses a new SELECT for the table that was selected, rather than appending its name.
 	Fixed error where locks aren't released on tables when a SELECT query is cancelled due to incorrect syntax.
 	Added the capability to create views (required ensuring correct read locks where taken out on relevant Table Managers).
+	Refactored package structure
+	DROP ALL OBJECTS now correctly removes table meta-data from the System Table / Table Manager.

@@ -29,6 +29,8 @@ import java.util.Set;
 
 import org.h2.engine.Database;
 import org.h2.table.ReplicaSet;
+import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
@@ -36,11 +38,9 @@ import org.h2o.db.manager.interfaces.SystemTableRemote;
 import org.h2o.db.remote.IChordInterface;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
-import org.h2o.util.DatabaseURL;
-import org.h2o.util.TableInfo;
-import org.h2o.util.event.DatabaseStates;
-import org.h2o.util.event.H2OEvent;
-import org.h2o.util.event.H2OEventBus;
+import org.h2o.event.DatabaseStates;
+import org.h2o.event.client.H2OEvent;
+import org.h2o.event.client.H2OEventBus;
 import org.h2o.util.exceptions.MigrationException;
 import org.h2o.util.exceptions.MovedException;
 

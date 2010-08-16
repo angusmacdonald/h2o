@@ -15,10 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.autonomic;
+package org.h2o.autonomic.framework;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+
 
 /**
  * <p>An autonomic monitor is responsible for monitoring some aspect of the database systems performance. For example,

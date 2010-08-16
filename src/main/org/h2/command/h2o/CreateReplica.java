@@ -54,14 +54,14 @@ import org.h2.value.ValueDate;
 import org.h2.value.ValueString;
 import org.h2.value.ValueTime;
 import org.h2.value.ValueTimestamp;
+import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
-import org.h2o.util.TableInfo;
-import org.h2o.util.event.DatabaseStates;
-import org.h2o.util.event.H2OEvent;
-import org.h2o.util.event.H2OEventBus;
+import org.h2o.event.DatabaseStates;
+import org.h2o.event.client.H2OEvent;
+import org.h2o.event.client.H2OEventBus;
 import org.h2o.util.exceptions.MovedException;
 
 import sun.security.krb5.internal.UDPClient;

@@ -25,8 +25,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
+import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.manager.PersistentSystemTable;
-import org.h2o.util.DatabaseURL;
 import org.h2o.util.LocalH2OProperties;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;

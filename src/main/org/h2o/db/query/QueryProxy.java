@@ -27,7 +27,8 @@ import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.table.Table;
 import org.h2.test.h2o.H2OTest;
-import org.h2o.autonomic.Settings;
+import org.h2o.autonomic.settings.Settings;
+import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.TableManager;
@@ -36,7 +37,6 @@ import org.h2o.db.query.asynchronous.AsynchronousQueryExecutor;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
-import org.h2o.util.TableInfo;
 import org.h2o.util.exceptions.MovedException;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;

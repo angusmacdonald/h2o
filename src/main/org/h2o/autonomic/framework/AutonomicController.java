@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
  * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
  *
@@ -15,26 +15,26 @@
  * You should have received a copy of the GNU General Public License
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.util.event;
+package org.h2o.autonomic.framework;
 
-import uk.ac.standrews.cs.nds.eventModel.Event;
-import uk.ac.standrews.cs.nds.eventModel.eventBus.busInterfaces.IEventBus;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
 
-public class H2OEventBus {
+/**
+ * The components of the database system being monitored implement the AutonomicController class to provide a mechanism for autonomic
+ * manager to update the functionality being managed.
+ * 
+ * 
+ * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
+ */
+public interface AutonomicController extends Remote{
 
-	private static final String H2O_EVENT = "H2O_EVENT";
-	private static IEventBus bus = null;
+	/**
+	 * Adjust some configuration of the component being controlled.
+	 * @param action	The action (modification) to be performed.
+	 * @return Whether the change was successfully applied.
+	 */
+	public boolean changeSetting(AutonomicAction action) throws RemoteException;
 
-	public static void setBus(IEventBus busParam) {
-		bus = busParam;
-	}
 
-	public static void publish(H2OEvent h2oEvent){
-		if (bus == null) return;
-		
-		Event event = new Event(H2O_EVENT);
-		event.put(H2O_EVENT, h2oEvent);
-
-		bus.publishEvent(event);
-	}
 }

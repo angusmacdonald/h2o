@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
  * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
  *
@@ -15,28 +15,26 @@
  * You should have received a copy of the GNU General Public License
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.autonomic;
+package org.h2o.event.client;
 
-/**
- * Instances of monitoring data store data describing the current state of some aspect of the database system.
- * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
- */
-public interface MonitoringData {
-	/**
-	 * Specifies where the monitoring data originated.
-	 * @return Location of monitoring data (e.g. Table Manager, Database Instance, Local Resource Monitoring)
-	 */
-	public MonitoringDataLocation getDataLocation();
+import uk.ac.standrews.cs.nds.eventModel.Event;
+import uk.ac.standrews.cs.nds.eventModel.eventBus.busInterfaces.IEventBus;
 
-	/**
-	 * Specifies precisely what is being monitored.
-	 * @return	
-	 */
-	public String getAspectBeingMonitored();
+public class H2OEventBus {
 
-	/**
-	 * The results of the monitoring.
-	 * @return
-	 */
-	public Object getData();
+	public static final String H2O_EVENT = "H2O_EVENT";
+	private static IEventBus bus = null;
+
+	public static void setBus(IEventBus busParam) {
+		bus = busParam;
+	}
+
+	public static void publish(H2OEvent h2oEvent){
+		if (bus == null) return;
+		
+		Event event = new Event(H2O_EVENT);
+		event.put(H2O_EVENT, h2oEvent);
+
+		bus.publishEvent(event);
+	}
 }

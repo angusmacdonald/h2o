@@ -19,7 +19,7 @@ package org.h2o.locator;
 
 import java.io.File;
 
-import org.h2o.util.DatabaseURL;
+import org.h2o.db.id.DatabaseURL;
 import org.h2o.util.LocalH2OProperties;
 
 /**

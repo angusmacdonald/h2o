@@ -11,12 +11,12 @@ import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
+import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
-import org.h2o.util.TableInfo;
-import org.h2o.util.event.DatabaseStates;
-import org.h2o.util.event.H2OEvent;
-import org.h2o.util.event.H2OEventBus;
+import org.h2o.event.DatabaseStates;
+import org.h2o.event.client.H2OEvent;
+import org.h2o.event.client.H2OEventBus;
 import org.h2o.util.exceptions.MovedException;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;

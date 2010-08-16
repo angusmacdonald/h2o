@@ -17,6 +17,8 @@
  */
 package org.h2o.util;
 
+import org.h2o.db.id.DatabaseURL;
+
 /**
  *Utility class which generates unique names for transactions. 
  *

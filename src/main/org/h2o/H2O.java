@@ -31,8 +31,8 @@ import org.h2.tools.Server;
 import org.h2.util.FileUtils;
 import org.h2.util.NetUtils;
 import org.h2.util.SortedProperties;
+import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.manager.PersistentSystemTable;
-import org.h2o.util.DatabaseURL;
 import org.h2o.util.LocalH2OProperties;
 import org.h2o.util.exceptions.StartupException;
 

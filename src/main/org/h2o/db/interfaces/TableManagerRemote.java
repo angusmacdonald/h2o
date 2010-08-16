@@ -21,13 +21,13 @@ import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Set;
 
+import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.TableInfo;
 import org.h2o.db.manager.util.Migratable;
 import org.h2o.db.query.QueryProxy;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.db.replication.ReplicaManager;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
-import org.h2o.util.DatabaseURL;
-import org.h2o.util.TableInfo;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.util.exceptions.StartupException;
 
@@ -81,8 +81,10 @@ public interface TableManagerRemote extends H2ORemote, Migratable {
 	/**
 	 * Deconstruct this Table Manager. This is required for testing where a remote reference to a Table Manager may not completely die when
 	 * expected - this method should essentially render the Table Manager unusable.
+	 * 
+	 * <p>Also called when a table is dropped. If dropCommand is true all persisted state is removed as well.
 	 */
-	public void shutdown() throws RemoteException;
+	public void remove(boolean dropCommand) throws RemoteException;
 
 	/**
 	 * The name of the schema which this table is in.

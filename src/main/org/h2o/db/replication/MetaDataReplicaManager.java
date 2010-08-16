@@ -28,18 +28,19 @@ import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.result.LocalResult;
 import org.h2o.autonomic.decision.RequestType;
+import org.h2o.autonomic.decision.requests.CreateReplicaRequest;
+import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.db.manager.TableManager;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
+import org.h2o.event.DatabaseStates;
+import org.h2o.event.client.H2OEvent;
+import org.h2o.event.client.H2OEventBus;
 import org.h2o.locator.H2OLocatorInterface;
 import org.h2o.util.LocalH2OProperties;
-import org.h2o.util.TableInfo;
-import org.h2o.util.event.DatabaseStates;
-import org.h2o.util.event.H2OEvent;
-import org.h2o.util.event.H2OEventBus;
 import org.h2o.util.exceptions.MovedException;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -192,7 +193,7 @@ public class MetaDataReplicaManager {
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "System table was NULL so the meta-data manager is unable to replicate.");
 				return;
 			} else {
-				databaseInstances = systemTable.getAvailableMachines(RequestType.PROCESS_MIGRATION);
+				databaseInstances = systemTable.getAvailableMachines(new CreateReplicaRequest(20, 100, 200));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -485,7 +486,16 @@ public class MetaDataReplicaManager {
 		String tableRelation = (isSystemTable)? PersistentSystemTable.TABLES: TableManager.getMetaTableName(databaseName, TableManager.TABLES);
 
 		String sql = "";
-		if (ti.getTableName() == null){
+		
+		if (ti == null || (ti.getTableName() == null && ti.getSchemaName() == null)){
+			/*
+			 * Deleting everything
+			 */
+			
+			if (removeReplicaInfo) sql = "DELETE FROM " + replicaRelation + ";";
+			
+			sql += "\nDELETE FROM " + tableRelation + ";";
+		} else if (ti.getTableName() == null){
 			/*
 			 * Deleting the entire schema.
 			 */

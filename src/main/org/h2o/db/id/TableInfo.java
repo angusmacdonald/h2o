@@ -15,10 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.util;
+package org.h2o.db.id;
 
 import java.io.Serializable;
-
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)

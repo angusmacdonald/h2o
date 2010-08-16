@@ -32,18 +32,19 @@ import java.util.Map.Entry;
 
 import org.h2.engine.Database;
 import org.h2o.autonomic.decision.RequestType;
+import org.h2o.autonomic.decision.requests.ActionRequest;
+import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.monitorthreads.TableManagerLivenessCheckerThread;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
-import org.h2o.util.DatabaseURL;
+import org.h2o.event.DatabaseStates;
+import org.h2o.event.client.H2OEvent;
+import org.h2o.event.client.H2OEventBus;
 import org.h2o.util.PrettyPrinter;
-import org.h2o.util.TableInfo;
-import org.h2o.util.event.DatabaseStates;
-import org.h2o.util.event.H2OEvent;
-import org.h2o.util.event.H2OEventBus;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.util.filter.CollectionFilter;
 import org.h2o.util.filter.Predicate;
@@ -602,7 +603,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 				}
 
 				if (dm != null){
-					dm.shutdown();
+					dm.remove(true);
 
 					UnicastRemoteObject.unexportObject(dm, true);
 				}
@@ -737,10 +738,10 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	}
 
 	@Override
-	public Queue<DatabaseInstanceWrapper> getAvailableMachines(
-			RequestType typeOfRequest) {
+	public Queue<DatabaseInstanceWrapper> getAvailableMachines(ActionRequest typeOfRequest) {
 		Queue<DatabaseInstanceWrapper> sortedMachines = new PriorityQueue<DatabaseInstanceWrapper>();
 		
+		//TODO make use of action request.
 		try {
 			sortedMachines.addAll(getDatabaseInstances());
 		} catch (Exception e) {

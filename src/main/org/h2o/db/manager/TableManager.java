@@ -30,10 +30,13 @@ import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.result.LocalResult;
-import org.h2o.autonomic.AutonomicAction;
-import org.h2o.autonomic.AutonomicController;
-import org.h2o.autonomic.Updates;
 import org.h2o.autonomic.decision.RequestType;
+import org.h2o.autonomic.decision.requests.CreateTableRequest;
+import org.h2o.autonomic.framework.AutonomicAction;
+import org.h2o.autonomic.framework.AutonomicController;
+import org.h2o.autonomic.settings.Updates;
+import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
@@ -44,11 +47,9 @@ import org.h2o.db.query.locking.LockType;
 import org.h2o.db.query.locking.LockingTable;
 import org.h2o.db.replication.ReplicaManager;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
-import org.h2o.util.DatabaseURL;
-import org.h2o.util.TableInfo;
-import org.h2o.util.event.DatabaseStates;
-import org.h2o.util.event.H2OEvent;
-import org.h2o.util.event.H2OEventBus;
+import org.h2o.event.DatabaseStates;
+import org.h2o.event.client.H2OEvent;
+import org.h2o.event.client.H2OEventBus;
 import org.h2o.util.exceptions.MigrationException;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.util.exceptions.StartupException;
@@ -405,7 +406,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 			}
 
 			try {
-				potentialReplicaLocations = getDB().getSystemTable().getAvailableMachines(RequestType.CREATE_TABLE_QUERY); //the update could be sent to any or all machines in the system.
+				potentialReplicaLocations = getDB().getSystemTable().getAvailableMachines(new CreateTableRequest(0)); //the update could be sent to any or all machines in the system.
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			} catch (MovedException e) {
@@ -418,7 +419,6 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 			 * Loop through all potential replica locations, selecting enough to satisfy the system's
 			 * replication fact. The location of the primary copy cannot be re-used.
 			 */
-
 			if (potentialReplicaLocations != null && potentialReplicaLocations.size() > 0){
 
 				for (DatabaseInstanceWrapper dbInstance: potentialReplicaLocations){
@@ -537,8 +537,9 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 * @see org.h2.h2o.manager.TableManagerRemote2#shutdown()
 	 */
 	@Override
-	public void shutdown() {
-		//		isAlive = false;
+	public void remove(boolean dropCommand) {
+				//Remove all persisted information
+			removeTableInformation(getTableInfo(), true);
 	}
 
 	/*******************************************************

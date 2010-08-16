@@ -15,26 +15,28 @@
  * You should have received a copy of the GNU General Public License
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.autonomic;
-
-import java.rmi.Remote;
-import java.rmi.RemoteException;
+package org.h2o.autonomic.framework;
 
 /**
- * The components of the database system being monitored implement the AutonomicController class to provide a mechanism for autonomic
- * manager to update the functionality being managed.
- * 
- * 
+ * Instances of monitoring data store data describing the current state of some aspect of the database system.
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public interface AutonomicController extends Remote{
+public interface MonitoringData {
+	/**
+	 * Specifies where the monitoring data originated.
+	 * @return Location of monitoring data (e.g. Table Manager, Database Instance, Local Resource Monitoring)
+	 */
+	public MonitoringDataLocation getDataLocation();
 
 	/**
-	 * Adjust some configuration of the component being controlled.
-	 * @param action	The action (modification) to be performed.
-	 * @return Whether the change was successfully applied.
+	 * Specifies precisely what is being monitored.
+	 * @return	
 	 */
-	public boolean changeSetting(AutonomicAction action) throws RemoteException;
+	public String getAspectBeingMonitored();
 
-
+	/**
+	 * The results of the monitoring.
+	 * @return
+	 */
+	public Object getData();
 }

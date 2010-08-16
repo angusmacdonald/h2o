@@ -15,11 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.autonomic;
+package org.h2o.autonomic.framework;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public enum UpdateFrequency {
-
+public enum MonitoringDataLocation {
+	DATA_MANAGER,
+	DATABASE_INSTANCE,
+	LOCAL_RESOURCE_MONITORING,
+	AUTONOMIC_MANAGER
 }

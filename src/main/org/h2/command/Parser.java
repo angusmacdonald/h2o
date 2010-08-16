@@ -150,12 +150,12 @@ import org.h2.value.ValueLong;
 import org.h2.value.ValueString;
 import org.h2.value.ValueTime;
 import org.h2.value.ValueTimestamp;
+import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
-import org.h2o.util.DatabaseURL;
-import org.h2o.util.TableInfo;
 import org.h2o.util.exceptions.MovedException;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;

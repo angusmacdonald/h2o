@@ -15,14 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.autonomic;
+package org.h2o.autonomic.settings;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public enum MonitoringDataLocation {
-	DATA_MANAGER,
-	DATABASE_INSTANCE,
-	LOCAL_RESOURCE_MONITORING,
-	AUTONOMIC_MANAGER
+public class Updates {
+	/**
+	 * Whether updates in the system are propagated synchronously (to all replicas at the same time), or asynchronously (to one replica initially, then
+	 * eventually to the rest.
+	 */
+	public static boolean SYNCHRONOUS_UPDATE = true;
 }

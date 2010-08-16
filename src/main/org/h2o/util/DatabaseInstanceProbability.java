@@ -26,6 +26,4 @@ public class DatabaseInstanceProbability implements Serializable, Comparable<Dat
 		else if 		( this.getProbability() < o.getProbability() ) 	return -1;
 		else 															return 0;
 	}
-	
-	
 }

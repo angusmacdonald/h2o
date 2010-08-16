@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.util;
+package org.h2o.db.id;
 
 import java.io.Serializable;
 
@@ -198,14 +198,6 @@ public class DatabaseURL implements Serializable {
 
 	}
 
-	/**
-	 * @param string
-	 * @param string2
-	 * @param int1
-	 * @param string3
-	 * @param b
-	 * @param int2
-	 */
 	public DatabaseURL(String connectionType, String hostname, int port, String dbLocation, boolean systemTable, int rmiPort) {
 		this(connectionType, hostname, port, dbLocation, systemTable);
 		this.rmiPort = rmiPort;
@@ -219,14 +211,12 @@ public class DatabaseURL implements Serializable {
 		return newURL;
 	}
 
-
 	/**
 	 * @return
 	 */
 	public String getUrlMinusSM() {
 		return urlWithoutSM;
 	}
-
 
 	/**
 	 * @return the hostname

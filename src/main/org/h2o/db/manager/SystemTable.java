@@ -25,6 +25,9 @@ import java.util.Set;
 
 import org.h2.engine.Database;
 import org.h2o.autonomic.decision.RequestType;
+import org.h2o.autonomic.decision.requests.ActionRequest;
+import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
@@ -32,8 +35,6 @@ import org.h2o.db.manager.interfaces.SystemTableRemote;
 import org.h2o.db.manager.util.SystemTableMigrationState;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
-import org.h2o.util.DatabaseURL;
-import org.h2o.util.TableInfo;
 import org.h2o.util.exceptions.MigrationException;
 import org.h2o.util.exceptions.MovedException;
 
@@ -240,7 +241,7 @@ public class SystemTable implements SystemTableRemote { //, ISystemTable, Migrat
 
 	@Override
 	public Queue<DatabaseInstanceWrapper> getAvailableMachines(
-			RequestType typeOfRequest) throws RemoteException, MovedException {
+			ActionRequest typeOfRequest) throws RemoteException, MovedException {
 		preMethodTest();
 		return inMemory.getAvailableMachines(typeOfRequest);
 	}

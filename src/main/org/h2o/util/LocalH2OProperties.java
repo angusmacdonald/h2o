@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.Set;
 
+import org.h2o.db.id.DatabaseURL;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;

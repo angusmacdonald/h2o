@@ -15,12 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.util.event;
+package org.h2o.event.client;
 
 import java.io.Serializable;
 import java.util.Date;
 
-import org.h2o.util.DatabaseURL;
+import org.h2o.db.id.DatabaseURL;
+import org.h2o.event.DatabaseStates;
 
 public class H2OEvent implements Serializable {
 
@@ -55,7 +56,6 @@ public class H2OEvent implements Serializable {
 		this.eventValue = eventValue;
 		this.eventSize = eventSize;
 	}
-
 
 	public Date getTime() {
 		return time;

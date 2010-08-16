@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.util.event;
+package org.h2o.event;
 
 public enum DatabaseStates { //comments - what information is appropriate
 	DATABASE_STARTUP, //database name, chord position					in Database.java								(Implemented)

@@ -23,11 +23,11 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Set;
 
+import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.TableManager;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
-import org.h2o.util.DatabaseURL;
-import org.h2o.util.TableInfo;
 import org.h2o.util.exceptions.MovedException;
 
 import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;

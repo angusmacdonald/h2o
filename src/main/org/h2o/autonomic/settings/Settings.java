@@ -21,15 +21,15 @@
  * Initial Developer: University of St Andrews
  */
 
-package org.h2o.autonomic;
+package org.h2o.autonomic.settings;
 
 import java.util.Map.Entry;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
+import org.h2o.db.id.DatabaseURL;
 import org.h2o.locator.DatabaseDescriptorFile;
-import org.h2o.util.DatabaseURL;
 import org.h2o.util.LocalH2OProperties;
 import org.h2o.util.exceptions.StartupException;
 

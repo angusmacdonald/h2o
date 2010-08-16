@@ -15,10 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.autonomic;
+package org.h2o.autonomic.framework;
 
 import java.io.Serializable;
 import java.util.Observer;
+
 
 /**
  * <p>An autonomic manager is responsible for some aspect of the database system's operation, such as replication factor.
