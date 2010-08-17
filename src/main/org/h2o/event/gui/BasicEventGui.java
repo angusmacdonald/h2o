@@ -1,4 +1,4 @@
-package org.h2o.event.server.handlers;
+package org.h2o.event.gui;
 import java.awt.BorderLayout;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -11,6 +11,7 @@ import javax.swing.WindowConstants;
 
 import org.h2o.event.client.H2OEvent;
 import org.h2o.event.server.EventServer;
+import org.h2o.event.server.handlers.EventHandler;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;

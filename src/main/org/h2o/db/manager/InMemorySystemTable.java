@@ -128,8 +128,8 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 		tableManagerPingerThread.start();
 
 		started = true;
-		H2OEventBus.publish(new H2OEvent(database.getURL(),
-				DatabaseStates.SYSTEM_TABLE_CREATION));
+		
+		H2OEventBus.publish(new H2OEvent(database.getURL(), DatabaseStates.SYSTEM_TABLE_CREATION));
 	}
 
 	/******************************************************************

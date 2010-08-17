@@ -17,7 +17,9 @@
  */
 package org.h2o.db.manager;
 
+import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -677,6 +679,8 @@ public class TableManager extends PersistentManager implements
 		
 		H2OEventBus.publish(new H2OEvent(this.db.getURL(),
 				DatabaseStates.TABLE_MANAGER_SHUTDOWN));
+		
+		try { UnicastRemoteObject.unexportObject(this, true); } catch (NoSuchObjectException e) {}
 	}
 
 	/*******************************************************

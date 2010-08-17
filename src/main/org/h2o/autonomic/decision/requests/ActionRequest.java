@@ -35,19 +35,10 @@ public class ActionRequest implements Serializable {
 	 */
 	public long immediateDiskSpace;
 
-	/**
-	 * An estimate of the amount of disk space that may be needed after
-	 * completing the action.
-	 * 
-	 * <p>
-	 * For example, a create table operation does not require much disk space
-	 * immediately, but if a lot of data is subsequently added to the table it
-	 * needs more space.
-	 */
-	public long expectedDiskSpace;
-
 	/*
 	 * ####################### PROBABILITY-BASED. #######################
+	 * 
+	 * cpu + memory + network + disk should add up to one.
 	 */
 	/**
 	 * The importance of CPU capacity in this operation.
@@ -63,15 +54,25 @@ public class ActionRequest implements Serializable {
 	 * The importance of network capacity in this operation.
 	 */
 	public double network;
+	
+	/**
+	 * The perceived importance of disk space in the future.
+	 * 
+	 * For example, a create table operation does not require much disk space
+	 * immediately, but if a lot of data is subsequently added to the table it
+	 * needs more space.
+	 */
+	public double disk;
 
 	public ActionRequest(long expectedTimeToCompletion,
-			long immediateDiskSpace, long expectedDiskSpace, double cpu,
-			double memory, double network) {
+			long immediateDiskSpace, double cpu,
+			double memory, double network, double disk) {
 		this.expectedTimeToCompletion = expectedTimeToCompletion;
 		this.immediateDiskSpace = immediateDiskSpace;
-		this.expectedDiskSpace = expectedDiskSpace;
+
 		this.cpu = cpu;
 		this.memory = memory;
 		this.network = network;
+		this.disk = disk;
 	}
 }
