@@ -176,6 +176,11 @@ public class Settings {
 	public String get(String string) {
 		return localSettings.getProperty(string);
 	}
+	
+
+	public void set(String key, String value) {
+		localSettings.setProperty(key, value);
+	}
 
 	public static void saveAsLocalProperties(Properties newSettings,
 			String databaseName) {
@@ -200,4 +205,5 @@ public class Settings {
 
 		localSettings.saveAndClose();
 	}
+
 }

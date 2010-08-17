@@ -33,6 +33,7 @@ public enum DatabaseStates { // comments - what information is appropriate
 							// (Implemented)
 	TABLE_MANAGER_MIGRATION, // table name, database name in
 								// MigrateTableManager.java (Implemented)
+	TABLE_MANAGER_SHUTDOWN, // TableManager.java (Implemented).
 	TABLE_MANAGER_REPLICA_CREATION, // database name, location of replicasin
 									// MetaDataReplicationManager.java
 									// (Implemented)
@@ -43,4 +44,5 @@ public enum DatabaseStates { // comments - what information is appropriate
 	SYSTEM_TABLE_REPLICA_CREATION
 	// database name, location of replicas in MetaDataReplicationManager.java
 	// (Implemented)
+
 }

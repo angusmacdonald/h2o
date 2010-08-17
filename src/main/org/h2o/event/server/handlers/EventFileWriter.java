@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.event.server;
+package org.h2o.event.server.handlers;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -23,7 +23,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Writer;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -36,16 +35,12 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class EventViewer {
-	private int activeReaders = 0;
-	private boolean writerPresent = false;
+public class EventFileWriter implements EventHandler {
 
 	private File file;
-	int updateCount = 1;
+	private BufferedWriter output;
 
-	public final static int LOCK_TIMEOUT = 3000;
-
-	protected EventViewer(String location) {
+	public EventFileWriter(String location) {
 		file = new File(location);
 
 		if (file.getParentFile() != null) {
@@ -55,10 +50,16 @@ public class EventViewer {
 		try {
 			if (!(file.createNewFile() || file.isFile())) {
 				ErrorHandling
-						.errorNoEvent("This is a directory, when I file should have been given.");
+				.errorNoEvent("This is a directory, when I file should have been given.");
 			}
 		} catch (IOException e1) {
 			e1.printStackTrace();
+		}
+
+		try {
+			output = new BufferedWriter(new FileWriter(file));
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 
 	}
@@ -92,21 +93,19 @@ public class EventViewer {
 		return events;
 	}
 
+
+	@Override
 	public boolean pushEvent(H2OEvent event) {
+
+		startWrite();
 
 		boolean successful = false;
 
 		try {
-			Writer output = new BufferedWriter(new FileWriter(file));
-
-			try {
-				output.write(event.toString() + "\n");
-				successful = true;
-			}
-
-			finally {
-				output.close();
-			}
+			System.out.println(event);
+			output.write(event.toString() + "\n");
+			output.flush();
+			successful = true;
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -127,47 +126,11 @@ public class EventViewer {
 	 * #####################################
 	 */
 
-	private boolean writeCondition() {
-		return activeReaders == 0 && !writerPresent;
-	}
-
-	private boolean readCondition() {
-		return !writerPresent;
-	}
-
-	private synchronized void startRead() {
-		while (!readCondition())
-			try {
-				wait();
-			} catch (InterruptedException ex) {
-			}
-		++activeReaders;
-	}
-
-	private synchronized void stopRead() {
-		--activeReaders;
-		notifyAll();
-	}
-
-	private synchronized void startWrite() {
-		while (!writeCondition())
-			try {
-				wait();
-			} catch (InterruptedException ex) {
-			}
-		writerPresent = true;
-	}
-
-	private synchronized void stopWrite() {
-		writerPresent = false;
-		notifyAll();
-	}
-
 	/**
 	 * Create a new locator file. This is used by various test classes to
 	 * overwrite old locator files.
 	 */
-	public void createNewLocatorFile() {
+	public void createNewFile() {
 		startWrite();
 
 		file.delete();
@@ -183,6 +146,50 @@ public class EventViewer {
 	@Override
 	public String toString() {
 		return file.getAbsolutePath();
+	}
+
+	
+	
+	
+	
+
+	int activeReaders = 0;
+	boolean writerPresent = false;
+	
+	private boolean writeCondition() {
+		return activeReaders == 0 && !writerPresent;
+	}
+
+	private boolean readCondition() {
+		return !writerPresent;
+	}
+
+	protected synchronized void startRead() {
+		while (!readCondition())
+			try {
+				wait();
+			} catch (InterruptedException ex) {
+			}
+			++activeReaders;
+	}
+
+	protected synchronized void stopRead() {
+		--activeReaders;
+		notifyAll();
+	}
+
+	protected synchronized void startWrite() {
+		while (!writeCondition())
+			try {
+				wait();
+			} catch (InterruptedException ex) {
+			}
+			writerPresent = true;
+	}
+
+	protected synchronized void stopWrite() {
+		writerPresent = false;
+		notifyAll();
 	}
 
 }

@@ -672,6 +672,11 @@ public class TableManager extends PersistentManager implements
 	public void remove(boolean dropCommand) {
 		// Remove all persisted information
 		removeTableInformation(getTableInfo(), true);
+		
+		this.shutdown = true;
+		
+		H2OEventBus.publish(new H2OEvent(this.db.getURL(),
+				DatabaseStates.TABLE_MANAGER_SHUTDOWN));
 	}
 
 	/*******************************************************

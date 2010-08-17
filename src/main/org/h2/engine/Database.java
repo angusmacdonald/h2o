@@ -1485,14 +1485,14 @@ public class Database implements DataHandler {
 		if (closing) {
 			return;
 		}
-		H2OEventBus.publish(new H2OEvent(this.getURL(),
-				DatabaseStates.DATABASE_SHUTDOWN, null));
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, getURL().getURL());
 
 		closing = true;
 		stopServer();
 		if (Constants.IS_H2O && !isManagementDB() && !fromShutdownHook) {
+			H2OEventBus.publish(new H2OEvent(this.getURL(),
+					DatabaseStates.DATABASE_SHUTDOWN, null));
 
 			metaDataReplicationThread.setRunning(false);
 			running = false;

@@ -24,6 +24,8 @@ import java.net.Socket;
 import java.net.SocketException;
 
 import org.h2o.event.client.H2OEvent;
+import org.h2o.event.server.handlers.EventFileWriter;
+import org.h2o.event.server.handlers.EventHandler;
 
 /**
  * Handles incoming connections from client databases looking to access (for
@@ -34,16 +36,16 @@ import org.h2o.event.client.H2OEvent;
 public class EventWorker extends Thread {
 
 	private Socket socket;
-	private EventViewer eventViewer;
+	private EventHandler eventHandler;
 
 	/**
 	 * @param newConnection
 	 *            The new incoming connection on the server.
-	 * @param eventViewer
+	 * @param eventHandler
 	 *            The location of the locator file, which stores where
 	 */
-	protected EventWorker(Socket newConnection, EventViewer eventViewer) {
-		this.eventViewer = eventViewer;
+	protected EventWorker(Socket newConnection, EventHandler eventHandler) {
+		this.eventHandler = eventHandler;
 		this.socket = newConnection;
 	}
 
@@ -65,27 +67,25 @@ public class EventWorker extends Thread {
 		}
 
 		try {
-			while (true) {
-				try { // ends with 'finally' to close the socket connection.
-						// Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
-						// "Created new LocatorConnectionHandler thread.");
+			try { // ends with 'finally' to close the socket connection.
+				// Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
+				// "Created new LocatorConnectionHandler thread.");
 
-					// Get single-line request from the client.
+				// Get single-line request from the client.
 
-					if (input.available() > 0) {
-						try {
-							H2OEvent event = (H2OEvent) input.readObject();
+				try {
+					H2OEvent event = (H2OEvent) input.readObject();
 
-							input.close();
 
-							eventViewer.pushEvent(event);
-						} catch (ClassNotFoundException e) {
-							e.printStackTrace();
-						}
-					}
-				} finally {
-					socket.close();
+					input.close();
+
+					eventHandler.pushEvent(event);
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
 				}
+
+			} finally {
+				socket.close();
 			}
 		} catch (IOException e) {
 

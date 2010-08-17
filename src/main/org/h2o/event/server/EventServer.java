@@ -21,6 +21,10 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import org.h2o.event.server.handlers.BasicEventGui;
+import org.h2o.event.server.handlers.EventFileWriter;
+import org.h2o.event.server.handlers.EventHandler;
+
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
@@ -32,20 +36,20 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  */
 public class EventServer extends Thread {
 
-	private static final int EVENT_SERVER_PORT = 4444;
+	public static final int EVENT_SERVER_PORT = 4444;
 	private boolean running = true;
 
 	private ServerSocket ss;
-	private EventViewer eventViewer;
+	private EventHandler eventHandler;
 	private int port;
 	private boolean finished = false;
 
 	/**
 	 * @param locatorServerPort
 	 */
-	public EventServer(int port, String databaseName) {
+	public EventServer(int port, EventHandler eventHandler) {
 		this.port = port;
-		eventViewer = new EventViewer("eventlog.txt");
+		this.eventHandler = eventHandler;
 	}
 
 	/**
@@ -62,7 +66,7 @@ public class EventServer extends Thread {
 				ss.setSoTimeout(500);
 				Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
 						"Server listening on port " + port + ", event log at '"
-								+ eventViewer + "'.");
+								+ eventHandler + "'.");
 
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -82,8 +86,7 @@ public class EventServer extends Thread {
 											.getHostName() + "."
 									+ newConnection.getPort());
 
-					EventWorker connectionHandler = new EventWorker(
-							newConnection, eventViewer);
+					EventWorker connectionHandler = new EventWorker(newConnection, eventHandler);
 					connectionHandler.start();
 				} catch (IOException e) {
 					// e.printStackTrace();
@@ -107,7 +110,7 @@ public class EventServer extends Thread {
 	public static void main(String[] args) {
 
 		Diagnostic.setLevel(DiagnosticLevel.FULL);
-		EventServer server = new EventServer(EVENT_SERVER_PORT, "locatorFile");
+		EventServer server = new EventServer(EVENT_SERVER_PORT, new EventFileWriter("eventlog.txt"));
 		server.start();
 	}
 
