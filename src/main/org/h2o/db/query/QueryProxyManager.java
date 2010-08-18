@@ -134,37 +134,35 @@ public class QueryProxyManager {
 	 */
 	public void addProxy(QueryProxy proxy) throws SQLException {
 
-		if (!hasLock(proxy)) {
-			throw new SQLException(
-					"Table already locked. Cannot perform query.");
-		}
+		if (hasLock(proxy)) {
 
-		if (proxy.getReplicaLocations() != null
-				&& proxy.getReplicaLocations().size() > 0) {
-			allReplicas.addAll(proxy.getReplicaLocations());
-		} else {
-			/*
-			 * Adds the local database to the set of databases holding something
-			 * relevent to the query, IF the set is currently empty. Executed if
-			 * no replica location was specified by the query proxy, which will
-			 * happen on queries which don't involve a particular table (these
-			 * are always local anyway).
-			 */
-			allReplicas.add(parser.getSession().getDatabase()
-					.getLocalDatabaseInstanceInWrapper());
-		}
+			if (proxy.getReplicaLocations() != null
+					&& proxy.getReplicaLocations().size() > 0) {
+				allReplicas.addAll(proxy.getReplicaLocations());
+			} else {
+				/*
+				 * Adds the local database to the set of databases holding something
+				 * relevent to the query, IF the set is currently empty. Executed if
+				 * no replica location was specified by the query proxy, which will
+				 * happen on queries which don't involve a particular table (these
+				 * are always local anyway).
+				 */
+				allReplicas.add(parser.getSession().getDatabase()
+						.getLocalDatabaseInstanceInWrapper());
+			}
 
-		if (proxy.getTableManager() != null) {
-			tableManagers.add(proxy.getTableManager());
-		}
+			if (proxy.getTableManager() != null) {
+				tableManagers.add(proxy.getTableManager());
+			}
 
-		if (proxy.getUpdateID() > this.updateID) { // the update ID should be
-													// the highest of all the
-													// proxy update IDs
-			this.updateID = proxy.getUpdateID();
+			if (proxy.getUpdateID() > this.updateID) { // the update ID should be
+				// the highest of all the
+				// proxy update IDs
+				this.updateID = proxy.getUpdateID();
+			}
 		}
-
 		queryProxies.put(proxy.getTableName(), proxy);
+
 	}
 
 	/**
@@ -225,7 +223,7 @@ public class QueryProxyManager {
 		}
 
 		String sql = (commit ? "commit" : "rollback")
-				+ ((h2oCommit) ? " TRANSACTION " + transactionName : ";");
+		+ ((h2oCommit) ? " TRANSACTION " + transactionName : ";");
 
 		AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor();
 
@@ -236,8 +234,8 @@ public class QueryProxyManager {
 
 		if (actionSuccessful && commit)
 			updatedReplicas = allReplicas; // For asynchronous updates this
-											// should check for each replicas
-											// success.
+		// should check for each replicas
+		// success.
 
 		endTransaction(updatedReplicas);
 
@@ -284,7 +282,7 @@ public class QueryProxyManager {
 	 * @throws SQLException
 	 */
 	private boolean commitLocal(boolean commit, boolean h2oCommit)
-			throws SQLException {
+	throws SQLException {
 		prepare();
 
 		Command commitCommand = parser.prepareCommand((commit ? "COMMIT"
@@ -322,12 +320,12 @@ public class QueryProxyManager {
 			}
 		} catch (RemoteException e) {
 			ErrorHandling
-					.exceptionError(e,
-							"Failed to release lock - couldn't contact the Table Manager");
+			.exceptionError(e,
+					"Failed to release lock - couldn't contact the Table Manager");
 		} catch (MovedException e) {
 			ErrorHandling
-					.exceptionError(e,
-							"This should never happen - migrating process should hold the lock.");
+			.exceptionError(e,
+					"This should never happen - migrating process should hold the lock.");
 		}
 	}
 

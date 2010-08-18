@@ -19,10 +19,13 @@ package org.h2.test.h2o;
 
 import static org.junit.Assert.fail;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 
 import junit.framework.Assert;
 
+import org.h2o.db.manager.PersistentSystemTable;
 import org.junit.Test;
 
 
@@ -48,8 +51,9 @@ public class CompetingTests extends TestBase {
 			fail("This wasn't even the interesting part of the test.");
 		}
 
-		int entries = 100;
+		try {Thread.sleep(100);} catch (InterruptedException e) {} int entries = 100;
 		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
+		
 		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
 		new Thread(cta).start();
 
@@ -68,7 +72,7 @@ public class CompetingTests extends TestBase {
 			fail("This wasn't even the interesting part of the test.");
 		}
 
-		int entries = 100;
+		try {Thread.sleep(100);} catch (InterruptedException e) {} int entries = 100;
 		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
 		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
 		new Thread(cta).start();
@@ -88,7 +92,7 @@ public class CompetingTests extends TestBase {
 			fail("This wasn't even the interesting part of the test.");
 		}
 
-		int entries = 100;
+		try {Thread.sleep(100);} catch (InterruptedException e) {} int entries = 100;
 		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
 		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
 		new Thread(cta).start();
@@ -108,7 +112,7 @@ public class CompetingTests extends TestBase {
 			fail("This wasn't even the interesting part of the test.");
 		}
 
-		int entries = 100;
+		try {Thread.sleep(100);} catch (InterruptedException e) {} int entries = 100;
 		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
 		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
 		new Thread(cta).start();
@@ -128,7 +132,7 @@ public class CompetingTests extends TestBase {
 			fail("This wasn't even the interesting part of the test.");
 		}
 
-		int entries = 100;
+		try {Thread.sleep(100);} catch (InterruptedException e) {} int entries = 100;
 		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
 		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
 		new Thread(cta).start();
@@ -149,7 +153,7 @@ public class CompetingTests extends TestBase {
 			fail("This wasn't even the interesting part of the test.");
 		}
 
-		int entries = 100;
+		try {Thread.sleep(100);} catch (InterruptedException e) {} int entries = 100;
 		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
 		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
 		new Thread(cta).start();
@@ -169,7 +173,7 @@ public class CompetingTests extends TestBase {
 			fail("This wasn't even the interesting part of the test.");
 		}
 
-		int entries = 100;
+		try {Thread.sleep(100);} catch (InterruptedException e) {} int entries = 100;
 		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
 		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
 		new Thread(cta).start();
@@ -189,7 +193,8 @@ public class CompetingTests extends TestBase {
 			fail("This wasn't even the interesting part of the test.");
 		}
 
-		int entries = 100;
+		try {Thread.sleep(100);} catch (InterruptedException e) {}
+		try {Thread.sleep(100);} catch (InterruptedException e) {} int entries = 100;
 		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
 		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
 		new Thread(cta).start();
@@ -209,7 +214,7 @@ public class CompetingTests extends TestBase {
 			fail("This wasn't even the interesting part of the test.");
 		}
 
-		int entries = 100;
+		try {Thread.sleep(100);} catch (InterruptedException e) {} int entries = 100;
 		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
 		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
 		new Thread(cta).start();
@@ -229,7 +234,7 @@ public class CompetingTests extends TestBase {
 			fail("This wasn't even the interesting part of the test.");
 		}
 
-		int entries = 100;
+		try {Thread.sleep(100);} catch (InterruptedException e) {} int entries = 100;
 		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
 		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
 		new Thread(cta).start();
@@ -249,7 +254,7 @@ public class CompetingTests extends TestBase {
 			fail("This wasn't even the interesting part of the test.");
 		}
 
-		int entries = 100;
+		try {Thread.sleep(100);} catch (InterruptedException e) {} int entries = 100;
 		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
 		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
 		new Thread(cta).start();
@@ -269,7 +274,7 @@ public class CompetingTests extends TestBase {
 			fail("This wasn't even the interesting part of the test.");
 		}
 
-		int entries = 100;
+		try {Thread.sleep(100);} catch (InterruptedException e) {} int entries = 100;
 		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
 		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
 		new Thread(cta).start();
@@ -289,7 +294,7 @@ public class CompetingTests extends TestBase {
 			fail("This wasn't even the interesting part of the test.");
 		}
 
-		int entries = 100;
+		try {Thread.sleep(100);} catch (InterruptedException e) {} int entries = 100;
 		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
 		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
 		new Thread(cta).start();
@@ -309,7 +314,7 @@ public class CompetingTests extends TestBase {
 			fail("This wasn't even the interesting part of the test.");
 		}
 
-		int entries = 100;
+		try {Thread.sleep(100);} catch (InterruptedException e) {} int entries = 100;
 		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
 		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
 		new Thread(cta).start();
@@ -329,7 +334,7 @@ public class CompetingTests extends TestBase {
 			fail("This wasn't even the interesting part of the test.");
 		}
 
-		int entries = 100;
+		try {Thread.sleep(100);} catch (InterruptedException e) {} int entries = 100;
 		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
 		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
 		new Thread(cta).start();
@@ -349,7 +354,7 @@ public class CompetingTests extends TestBase {
 			fail("This wasn't even the interesting part of the test.");
 		}
 
-		int entries = 100;
+		try {Thread.sleep(100);} catch (InterruptedException e) {} int entries = 100;
 		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
 		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
 		new Thread(cta).start();

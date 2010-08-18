@@ -136,10 +136,8 @@ public class CommandContainer extends Command {
 			this.acquireLocks(proxyManager);
 
 			if (!proxyManager.hasAllLocks()) {
-				// TODO implement lock request timeout - look at
-				// TableData.doLock().
-				throw new SQLException(
-						"Couldn't obtain locks for all tables involved in query.");
+				// TODO implement lock request timeout - look at TableData.doLock().
+				throw new SQLException("Couldn't obtain locks for all tables involved in query.");
 			}
 		}
 
@@ -174,13 +172,12 @@ public class CommandContainer extends Command {
 			assert (proxyManager != null);
 
 			// Acquire distributed locks.
-			QueryProxy proxy = this.acquireLocks(proxyManager);
+			this.acquireLocks(proxyManager);
 
 			// assert(proxy != null);
 
-			if (proxy != null) {
-				proxyManager.addProxy(proxy); // checks that a lock is held for
-												// table, then adds the proxy.
+			if (!proxyManager.hasAllLocks()){
+				throw new SQLException("Couldn't obtain locks needed for update.");
 			}
 
 			if (Diagnostic.getLevel() == DiagnosticLevel.FULL) {
@@ -195,7 +192,7 @@ public class CommandContainer extends Command {
 				boolean commit = true; // An exception would already have been
 										// thrown if it should have been a
 										// rollback.
-
+ 
 				H2OTest.createTableFailure();
 
 				if (singleQuery && session.getApplicationAutoCommit()) {
@@ -249,9 +246,9 @@ public class CommandContainer extends Command {
 	 * @see org.h2.command.Command#acquireLocks()
 	 */
 	@Override
-	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager2)
+	public void acquireLocks(QueryProxyManager queryProxyManager2)
 			throws SQLException {
-		return prepared.acquireLocks(proxyManager);
+		prepared.acquireLocks(proxyManager);
 	}
 
 	/**

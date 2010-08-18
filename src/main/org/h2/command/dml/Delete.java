@@ -198,8 +198,8 @@ public class Delete extends Prepared {
 	 * @see org.h2.command.Prepared#acquireLocks()
 	 */
 	@Override
-	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager)
-			throws SQLException {
+	public void acquireLocks(QueryProxyManager queryProxyManager)
+	throws SQLException {
 		/*
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
@@ -210,11 +210,11 @@ public class Delete extends Prepared {
 				queryProxy = QueryProxy.getQueryProxyAndLock(table,
 						LockType.WRITE, session.getDatabase());
 			}
-			return queryProxy;
+			queryProxyManager.addProxy(queryProxy);
+		} else {
+			queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(session.getDatabase()
+					.getLocalDatabaseInstanceInWrapper()));
 		}
-
-		return QueryProxy.getDummyQueryProxy(session.getDatabase()
-				.getLocalDatabaseInstanceInWrapper());
 
 	}
 

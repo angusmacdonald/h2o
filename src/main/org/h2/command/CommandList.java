@@ -183,9 +183,9 @@ public class CommandList extends Command {
 	 * @see org.h2.command.Command#acquireLocks()
 	 */
 	@Override
-	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager)
+	public void acquireLocks(QueryProxyManager queryProxyManager)
 			throws SQLException {
-		return command.acquireLocks(queryProxyManager);
+		command.acquireLocks(queryProxyManager);
 	}
 
 	/*

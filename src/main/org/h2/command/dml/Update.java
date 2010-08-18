@@ -340,7 +340,7 @@ public class Update extends Prepared {
 	 * @see org.h2.command.Prepared#acquireLocks()
 	 */
 	@Override
-	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager)
+	public void acquireLocks(QueryProxyManager queryProxyManager)
 			throws SQLException {
 		/*
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
@@ -355,12 +355,10 @@ public class Update extends Prepared {
 						tableFilter.getTable(), LockType.WRITE,
 						session.getDatabase());
 			}
-			return queryProxy;
-		}
-
-		return QueryProxy.getDummyQueryProxy(session.getDatabase()
-				.getLocalDatabaseInstanceInWrapper());
-
+			queryProxyManager.addProxy(queryProxy);
+		} else {
+			queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper()));
+		}	
 	}
 
 	/*

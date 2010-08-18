@@ -325,7 +325,7 @@ public abstract class Command implements CommandInterface {
 	 * @return
 	 * @throws SQLException
 	 */
-	public abstract QueryProxy acquireLocks(QueryProxyManager queryProxyManager)
+	public abstract void acquireLocks(QueryProxyManager queryProxyManager)
 			throws SQLException;
 
 	/**

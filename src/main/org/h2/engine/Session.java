@@ -688,9 +688,7 @@ public class Session extends SessionWithState {
 			int lockMode = database.getLockMode();
 			if (lockMode != Constants.LOCK_MODE_OFF
 					&& !database.isMultiVersion()) {
-				if (locks.indexOf(log.getTable()) < 0
-						&& !Table.TABLE_LINK.equals(log.getTable()
-								.getTableType())) {
+				if (locks.indexOf(log.getTable()) < 0 && !Table.TABLE_LINK.equals(log.getTable().getTableType())) {
 					Message.throwInternalError();
 				}
 			}

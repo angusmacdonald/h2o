@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 
 import javax.swing.JButton;
@@ -49,8 +50,13 @@ public class AdvancedEventGui extends javax.swing.JPanel implements EventHandler
 
 	private Map<String, Label> tableManagers = new HashMap<String, Label>();
 
+	private Map<String, Map<DatabaseURL, Label>> replicas = new HashMap<String, Map<DatabaseURL, Label>>();
+
+	private Label systemTable = null;
 
 	private Queue<H2OEvent> events = new LinkedList<H2OEvent>();
+
+	private JPanel systemTablePanel;
 
 	/**
 	 * Auto-generated main method to display this 
@@ -85,13 +91,16 @@ public class AdvancedEventGui extends javax.swing.JPanel implements EventHandler
 
 		events.add(event);
 
+		System.out.println(event);
+		
 		DatabaseStates state = (event.getEventType());
 
+		try {
+			
+		
 		switch (state){
 		case DATABASE_STARTUP:
-			JPanel panel = new JPanel(true);
-			panel.setVisible(true);
-			panel.setBorder(new TitledBorder("Database: " + event.getDatabase().getDbLocation()));
+			JPanel panel = createDatabasePanel(event);
 
 			this.add(panel);
 
@@ -99,17 +108,16 @@ public class AdvancedEventGui extends javax.swing.JPanel implements EventHandler
 			break;
 
 		case TABLE_CREATION:
-			JPanel dbPanel = dbs.get(event.getDatabase());
+		case REPLICA_CREATION:
+			JPanel dbPanel = getPanel(event);
 
-			Label l = new Label("Table: " + event.getEventValue());
-			l.setBackground(Color.BLUE);
-			l.setForeground(Color.WHITE);
-			dbPanel.add(l);
+			Label l = setTableReplica(event, dbPanel);
+
+			addTableToReplicas(event, l);
 			break;
-		case TABLE_DELETION:
-			break;
+	
 		case TABLE_MANAGER_CREATION:
-			dbPanel = dbs.get(event.getDatabase());
+			dbPanel = getPanel(event);
 			l = new Label("Table Manager: " + event.getEventValue());
 			l.setBackground(Color.YELLOW);
 
@@ -121,38 +129,128 @@ public class AdvancedEventGui extends javax.swing.JPanel implements EventHandler
 			break;
 		case TABLE_MANAGER_REPLICA_CREATION:
 			break;
+		case TABLE_DELETION:
+			
+			Map<DatabaseURL, Label> replicaLocations = replicas.get(event.getEventValue());
+			
+			
+			for (Entry<DatabaseURL, Label> location: replicaLocations.entrySet()){
+				dbPanel = getPanel(location.getKey());
+				dbPanel.remove(location.getValue());
+			}
+			
 		case TABLE_MANAGER_SHUTDOWN:
-			System.err.println("shutdown");
-			dbPanel = dbs.get(event.getDatabase());
+			dbPanel = getPanel(event);
 			dbPanel.remove(tableManagers.get(event.getEventValue()));
-
-			break;
-		case TABLE_UPDATE:
-			break;
-		case TABLE_WRITE:
+			tableManagers.remove(event.getEventValue());
 			break;
 		case DATABASE_FAILURE:
+			dbPanel = getPanel(event);
+			dbPanel.setBackground(Color.RED);
 			break;
 		case DATABASE_SHUTDOWN:
-			break;
-		case REPLICA_CREATION:
+			dbPanel = getPanel(event);
+			dbPanel.setBackground(Color.BLACK);
+			dbPanel.setBorder(new TitledBorder("Database (Inactive): " + event.getDatabase().getDbLocation()));
 			break;
 		case REPLICA_DELETION:
+			dbPanel = getPanel(event);
+
+			replicaLocations = replicas.get(event.getEventValue());
+			
+			l = replicaLocations.remove(event.getDatabase());
+			if (l != null) dbPanel.remove(l);
+
 			break;
 		case SYSTEM_TABLE_CREATION:
+			dbPanel = getPanel(event);
+
+			setSystemTable(dbPanel);
 			break;
 		case SYSTEM_TABLE_MIGRATION:
-			break;
+			dbPanel = getPanel(event);
 
+			systemTablePanel.remove(systemTable);
+			
+			setSystemTable(dbPanel);
+			break;
 		case SYSTEM_TABLE_REPLICA_CREATION:
-			break;			
+			//TODO implement.
+			break;
+		case TABLE_UPDATE:
+			//TODO implement.
+			break;
+		case TABLE_WRITE:
+			//TODO implement.
+			break;
 		default:
 			System.err.println(state + " not found.");
 		}
 
+		
+		} catch(NullPointerException e){
+			e.printStackTrace();
+		}
+		
 		repaint();
 
 		return true;
+	}
+
+	private void addTableToReplicas(H2OEvent event, Label l) {
+
+		Map<DatabaseURL, Label> replicasForTable = replicas.remove(event.getEventValue());
+		
+		if (replicasForTable == null) replicasForTable = new HashMap<DatabaseURL, Label>();
+		
+		replicasForTable.put(event.getDatabase(), l);
+		
+		replicas.put(event.getEventValue(), replicasForTable);
+	}
+
+	private JPanel createDatabasePanel(H2OEvent event) {
+		JPanel panel = new JPanel(true);
+		panel.setVisible(true);
+		panel.setBorder(new TitledBorder("Database: " + event.getDatabase().getDbLocation()));
+		return panel;
+	}
+
+	private JPanel getPanel(H2OEvent event) {
+		JPanel dbPanel = dbs.get(event.getDatabase());
+		
+		if (dbPanel == null) return createDatabasePanel(event);
+		
+		return dbPanel;
+	}
+	
+	private JPanel getPanel(DatabaseURL db) {
+		JPanel dbPanel = dbs.get(db);
+	
+		return dbPanel;
+	}
+
+	private Label setTableReplica(H2OEvent event, JPanel dbPanel) {
+		Label l;
+		l = new Label("Table Replica: " + event.getEventValue());
+		l.setBackground(Color.BLUE);
+		l.setForeground(Color.WHITE);
+		dbPanel.add(l);
+		return l;
+	}
+
+	private void setSystemTable(JPanel dbPanel) {
+		Label l;
+		l = new Label("SYSTEM TABLE");
+		l.setBackground(Color.GREEN);
+		l.setForeground(Color.WHITE);
+		dbPanel.add(l);
+
+		systemTable = l;
+		systemTablePanel = dbPanel;
+	}
+
+	private String getTableKey(H2OEvent event) {
+		return event.getDatabase() + event.getEventValue();
 	}
 
 }

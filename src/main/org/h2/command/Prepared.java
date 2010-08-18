@@ -597,9 +597,9 @@ public abstract class Prepared {
 	 * @return
 	 * @throws SQLException
 	 */
-	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager)
+	public void acquireLocks(QueryProxyManager queryProxyManager)
 			throws SQLException {
-		return QueryProxy.getQueryProxyAndLock(table, LockType.READ,
+		QueryProxy.getQueryProxyAndLock(table, LockType.READ,
 				session.getDatabase());
 	}
 

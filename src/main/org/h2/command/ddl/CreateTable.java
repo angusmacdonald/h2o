@@ -515,7 +515,7 @@ public class CreateTable extends SchemaCommand {
 	 * can't have a proxy for something which hasn't yet been created.
 	 */
 	@Override
-	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager)
+	public void acquireLocks(QueryProxyManager queryProxyManager)
 			throws SQLException {
 		Database db = session.getDatabase();
 
@@ -596,7 +596,7 @@ public class CreateTable extends SchemaCommand {
 
 		}
 
-		return queryProxy;
+		queryProxyManager.addProxy(queryProxy);
 	}
 
 }

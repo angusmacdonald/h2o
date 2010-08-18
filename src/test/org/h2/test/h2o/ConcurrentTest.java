@@ -42,12 +42,14 @@ public class ConcurrentTest extends Thread {
 		for (int i = startNum; i < (totalIterations + startNum); i++){
 			try {
 				if (update){
-					stat.execute("INSERT INTO TEST VALUES(" + i + ", 'hello');");
+					successful = stat.execute("INSERT INTO TEST VALUES(" + i + ", 'hello');");
+					stat.clearBatch();
 				} else {
-					stat.execute("SELECT * FROM TEST;");
+					successful = stat.execute("SELECT * FROM TEST;");
 				}
-				successful = true;
+				
 			} catch (Exception e) {
+				e.printStackTrace();
 				successful = false;
 			}
 		}

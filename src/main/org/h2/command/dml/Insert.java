@@ -84,8 +84,8 @@ public class Insert extends Prepared {
 	 * @see org.h2.command.Prepared#acquireLocks()
 	 */
 	@Override
-	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager)
-			throws SQLException {
+	public void acquireLocks(QueryProxyManager queryProxyManager)
+	throws SQLException {
 		/*
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
@@ -98,11 +98,11 @@ public class Insert extends Prepared {
 						LockType.WRITE, session.getDatabase());
 			}
 
-			return queryProxy;
+			queryProxyManager.addProxy(queryProxy);
+		} else {
+			queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(session.getDatabase()
+					.getLocalDatabaseInstanceInWrapper()));
 		}
-
-		return QueryProxy.getDummyQueryProxy(session.getDatabase()
-				.getLocalDatabaseInstanceInWrapper());
 
 	}
 
@@ -121,9 +121,9 @@ public class Insert extends Prepared {
 		 */
 		if (isRegularTable()
 				&& (queryProxy.getNumberOfReplicas() > 1 || !isReplicaLocal(queryProxy))) { // &&
-																							// queryProxy.getNumberOfReplicas()
-																							// >
-																							// 1
+			// queryProxy.getNumberOfReplicas()
+			// >
+			// 1
 			String sql;
 
 			if (isPreparedStatement()) {
@@ -151,7 +151,7 @@ public class Insert extends Prepared {
 						e = e.optimize(session);
 						try {
 							Value v = e.getValue(session)
-									.convertTo(c.getType());
+							.convertTo(c.getType());
 							newRow.setValue(index, v);
 
 						} catch (SQLException ex) {
@@ -318,7 +318,7 @@ public class Insert extends Prepared {
 				Expression[] expr = (Expression[]) list.get(x);
 				if (expr.length != columns.length) {
 					throw Message
-							.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
+					.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
 				}
 				for (int i = 0; i < expr.length; i++) {
 					Expression e = expr[i];
@@ -336,7 +336,7 @@ public class Insert extends Prepared {
 			query.prepare();
 			if (query.getColumnCount() != columns.length) {
 				throw Message
-						.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
+				.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
 			}
 		}
 	}

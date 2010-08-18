@@ -80,11 +80,6 @@ public class EventServer extends Thread {
 				try {
 
 					Socket newConnection = ss.accept();
-					Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
-							"New connection from: "
-									+ newConnection.getInetAddress()
-											.getHostName() + "."
-									+ newConnection.getPort());
 
 					EventWorker connectionHandler = new EventWorker(newConnection, eventHandler);
 					connectionHandler.start();

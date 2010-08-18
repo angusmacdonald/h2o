@@ -1218,7 +1218,7 @@ public class Select extends Query {
 	 * org.h2.command.Prepared#acquireLocks(org.h2.h2o.comms.QueryProxyManager)
 	 */
 	@Override
-	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager)
+	public void acquireLocks(QueryProxyManager queryProxyManager)
 			throws SQLException {
 
 		for (Table table : this.getTables()) {
@@ -1247,8 +1247,6 @@ public class Select extends Query {
 				}
 			}
 		}
-
-		return null;
 	}
 
 }

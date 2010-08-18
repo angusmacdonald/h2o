@@ -71,7 +71,7 @@ public class AlterTableDropConstraint extends SchemaCommand {
 	 * @see org.h2.command.Prepared#acquireLocks()
 	 */
 	@Override
-	public QueryProxy acquireLocks(QueryProxyManager queryProxyManager)
+	public void acquireLocks(QueryProxyManager queryProxyManager)
 			throws SQLException {
 		/*
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
@@ -88,12 +88,12 @@ public class AlterTableDropConstraint extends SchemaCommand {
 						LockType.WRITE, session.getDatabase());
 			}
 
-			return queryProxy;
+			queryProxyManager.addProxy(queryProxy);
+		} else {
+
+			queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(session.getDatabase()
+				.getLocalDatabaseInstanceInWrapper()));
 		}
-
-		return QueryProxy.getDummyQueryProxy(session.getDatabase()
-				.getLocalDatabaseInstanceInWrapper());
-
 	}
 
 	/**
