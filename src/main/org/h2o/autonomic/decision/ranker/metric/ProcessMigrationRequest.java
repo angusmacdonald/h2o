@@ -1,4 +1,4 @@
-package org.h2o.autonomic.decision.requests;
+package org.h2o.autonomic.decision.ranker.metric;
 
 public class ProcessMigrationRequest extends ActionRequest {
 

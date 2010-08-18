@@ -20,7 +20,7 @@ package org.h2o.autonomic.decision;
 import java.rmi.RemoteException;
 import java.util.Queue;
 
-import org.h2o.autonomic.decision.requests.ActionRequest;
+import org.h2o.autonomic.decision.ranker.metric.ActionRequest;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
 

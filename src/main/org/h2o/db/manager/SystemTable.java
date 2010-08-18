@@ -24,7 +24,7 @@ import java.util.Queue;
 import java.util.Set;
 
 import org.h2.engine.Database;
-import org.h2o.autonomic.decision.requests.ActionRequest;
+import org.h2o.autonomic.decision.ranker.metric.ActionRequest;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;

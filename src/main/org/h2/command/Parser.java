@@ -4616,10 +4616,7 @@ public class Parser {
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1,
 					tableInfo.toString());
 		}
-		// dm = session.getDatabase().getSystemTable().lookup(new
-		// TableInfo(tableName, thisSchemaName));
-		//
-
+		
 		java.util.Set<DatabaseInstanceWrapper> replicaLocations = null;
 		try {
 			replicaLocations = tableManager.getReplicaManager()
@@ -4699,9 +4696,7 @@ public class Parser {
 
 		if (result == 0) {
 			// Linked table was successfully added.
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
-					"Successfully created linked table '" + tableName
-							+ "'. Attempting to access it.");
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Successfully created linked table '" + tableName + "'. Attempting to access it.");
 			return readTableOrView(tableName, false, LocationPreference.PRIMARY);
 		} else {
 			throw new SQLException("Couldn't find active copy of table "

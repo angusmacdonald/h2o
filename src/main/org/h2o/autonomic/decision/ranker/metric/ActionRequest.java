@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.autonomic.decision.requests;
+package org.h2o.autonomic.decision.ranker.metric;
 
 import java.io.Serializable;
 

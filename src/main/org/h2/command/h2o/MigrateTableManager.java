@@ -97,9 +97,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 						getSchema().getName() + tableName);
 			}
 
-			H2OEventBus.publish(new H2OEvent(db.getURL(),
-					DatabaseStates.TABLE_MANAGER_MIGRATION, ti
-							.getFullTableName()));
+			H2OEventBus.publish(new H2OEvent(db.getURL(), DatabaseStates.TABLE_MANAGER_MIGRATION, ti.getFullTableName()));
 
 		} catch (MovedException e) {
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1,

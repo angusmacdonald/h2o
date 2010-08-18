@@ -10,6 +10,9 @@ import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.TableManager;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
+import org.h2o.event.DatabaseStates;
+import org.h2o.event.client.H2OEvent;
+import org.h2o.event.client.H2OEventBus;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -82,8 +85,9 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
 			tm.recreateReplicaManagerState(oldPrimaryLocation);
 			tm.persistToCompleteStartup(ti);
 			tm.persistReplicaInformation();
+			H2OEventBus.publish(new H2OEvent(db.getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
+			
 		} catch (SQLException e) {
-
 			e.printStackTrace();
 			return -1;
 		} catch (Exception e) {

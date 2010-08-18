@@ -32,7 +32,7 @@ import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.result.LocalResult;
-import org.h2o.autonomic.decision.requests.CreateTableRequest;
+import org.h2o.autonomic.decision.ranker.metric.CreateTableRequest;
 import org.h2o.autonomic.framework.AutonomicAction;
 import org.h2o.autonomic.framework.AutonomicController;
 import org.h2o.autonomic.settings.Updates;
@@ -203,9 +203,7 @@ public class TableManager extends PersistentManager implements
 		this.relationReplicationFactor = Integer.parseInt(database
 				.getDatabaseSettings().get("RELATION_REPLICATION_FACTOR"));
 
-		H2OEventBus.publish(new H2OEvent(database.getURL(),
-				DatabaseStates.TABLE_MANAGER_CREATION, tableDetails
-						.getFullTableName()));
+		
 	}
 
 	public static String getMetaTableName(String databaseName,

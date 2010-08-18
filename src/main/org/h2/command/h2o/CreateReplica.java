@@ -113,7 +113,7 @@ public class CreateReplica extends SchemaCommand {
 	private Set<IndexColumn[]> setOfIndexColumns;
 	private Set<IndexType> pkIndexType;
 	private int tableSet = -1; // the set of tables which this replica will
-								// belong to.
+	// belong to.
 	private boolean empty;
 	private boolean updateData;
 
@@ -205,11 +205,11 @@ public class CreateReplica extends SchemaCommand {
 				|| db.getFullDatabasePath().equals(whereReplicaWillBeCreated)) {
 			int result = pushCommand(whereReplicaWillBeCreated,
 					"CREATE REPLICA " + tableName + " FROM '"
-							+ whereDataWillBeTakenFrom + "'", true); // command
-																		// will
-																		// be
-																		// executed
-																		// elsewhere
+					+ whereDataWillBeTakenFrom + "'", true); // command
+			// will
+			// be
+			// executed
+			// elsewhere
 
 			// Update the System Table here.
 
@@ -222,8 +222,8 @@ public class CreateReplica extends SchemaCommand {
 
 					if (tableSet == -1) {
 						tableSet = 1; // sm.getTableSetNumber(new
-										// TableInfo(tableName,
-										// getSchema().getName()));
+						// TableInfo(tableName,
+						// getSchema().getName()));
 					} else {
 						if (next != null) {
 							next.setTableSet(tableSet);
@@ -244,7 +244,7 @@ public class CreateReplica extends SchemaCommand {
 
 		} else {
 			readSQL(); // command will be executed here - get the table
-						// meta-data and contents.
+			// meta-data and contents.
 		}
 
 		// TODO rights: what rights are required to create a table?
@@ -256,11 +256,11 @@ public class CreateReplica extends SchemaCommand {
 
 		boolean createEntirelyNewReplica = true;
 		if (getSchema().findLocalTableOrView(session, tableName) != null) { // H2O.
-																			// Check
-																			// for
-																			// local
-																			// version
-																			// here.
+			// Check
+			// for
+			// local
+			// version
+			// here.
 			if (ifNotExists && !updateData) {
 				return 0;
 			} else if (updateData) {
@@ -272,35 +272,35 @@ public class CreateReplica extends SchemaCommand {
 		}
 
 		String fullTableName = getSchema().getName() + "." + tableName; // getSchema().getName()
-																		// + "."
-																		// +
+		// + "."
+		// +
 
 		if (!empty
 				&& getSchema().findTableOrView(session, fullTableName,
 						LocationPreference.NO_PREFERENCE) == null) { // H2O.
-																		// Check
-																		// for
-																		// the
-																		// existence
-																		// of
-																		// any
-																		// version.
-																		// if a
-																		// linked
-																		// table
-																		// version
-																		// doesn't
-																		// exist
-																		// we
-																		// must
-																		// create
-																		// it.
+			// Check
+			// for
+			// the
+			// existence
+			// of
+			// any
+			// version.
+			// if a
+			// linked
+			// table
+			// version
+			// doesn't
+			// exist
+			// we
+			// must
+			// create
+			// it.
 			String createLinkedTable = "\nCREATE LINKED TABLE IF NOT EXISTS "
-					+ fullTableName + "('org.h2.Driver', '"
-					+ whereDataWillBeTakenFrom + "', '"
-					+ PersistentSystemTable.USERNAME + "', '"
-					+ PersistentSystemTable.PASSWORD + "', '" + fullTableName
-					+ "');";
+				+ fullTableName + "('org.h2.Driver', '"
+				+ whereDataWillBeTakenFrom + "', '"
+				+ PersistentSystemTable.USERNAME + "', '"
+				+ PersistentSystemTable.PASSWORD + "', '" + fullTableName
+				+ "');";
 			Parser queryParser = new Parser(session, true);
 			Command sqlQuery = queryParser.prepareCommand(createLinkedTable);
 			sqlQuery.update();
@@ -315,7 +315,7 @@ public class CreateReplica extends SchemaCommand {
 					generateColumnsFromQuery();
 				} else if (columns.size() != asQuery.getColumnCount()) {
 					throw Message
-							.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
+					.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
 				}
 			}
 			if (pkColumns != null) {
@@ -325,7 +325,7 @@ public class CreateReplica extends SchemaCommand {
 					for (int j = 0; j < len; j++) {
 						if (pkColumns[j].columnName == null)
 							pkColumns[j].columnName = pkColumns[j].column
-									.getName();
+							.getName();
 						if (c.getName().equals(pkColumns[j].columnName)) {
 							c.setNullable(false);
 						}
@@ -339,10 +339,10 @@ public class CreateReplica extends SchemaCommand {
 				Column c = (Column) columns.get(i);
 
 				if (fullTableName.startsWith("H2O.H2O") && i == 0) { // XXX
-																		// nasty
-																		// h2o-specific
-																		// auto-increment
-																		// hack.
+					// nasty
+					// h2o-specific
+					// auto-increment
+					// hack.
 					c.setAutoIncrement(true, 1, 1);
 				}
 				if (c.getAutoIncrement()) {
@@ -420,7 +420,7 @@ public class CreateReplica extends SchemaCommand {
 			 */
 
 			if (!empty && inserts.size() > 1) { // the first entry contains type
-												// info
+				// info
 				Insert command = new Insert(session, true);
 
 				command.setTable(table);
@@ -480,9 +480,9 @@ public class CreateReplica extends SchemaCommand {
 
 				if (!db.isTableLocal(getSchema())) {
 					TableManagerRemote tableManager = db
-							.getSystemTableReference().lookup(
-									getSchema().getName() + "." + tableName,
-									true);
+					.getSystemTableReference().lookup(
+							getSchema().getName() + "." + tableName,
+							true);
 
 					if (tableManager == null) {
 						throw new SQLException("Error creating replica for "
@@ -499,6 +499,11 @@ public class CreateReplica extends SchemaCommand {
 							tableManager.addReplicaInformation(ti);
 						}
 					}
+
+					H2OEventBus.publish(new H2OEvent(this.session.getDatabase().getURL(), DatabaseStates.REPLICA_CREATION, getSchema().getName() + "." + tableName));
+
+				} else {
+					H2OEventBus.publish(new H2OEvent(this.session.getDatabase().getURL(),DatabaseStates.META_TABLE_REPLICA_CREATION, getSchema().getName() + "." + tableName));
 				}
 			}
 		} catch (SQLException e) {
@@ -515,9 +520,6 @@ public class CreateReplica extends SchemaCommand {
 			next.update();
 		}
 
-		H2OEventBus.publish(new H2OEvent(this.session.getDatabase().getURL(),
-				DatabaseStates.REPLICA_CREATION, getSchema().getName() + "."
-						+ tableName));
 		return 0;
 	}
 
@@ -614,7 +616,7 @@ public class CreateReplica extends SchemaCommand {
 	 * @return true if the same primary key columns where already set
 	 */
 	private boolean setPrimaryKeyColumns(IndexColumn[] columns)
-			throws SQLException {
+	throws SQLException {
 		if (pkColumns != null) {
 			if (columns.length != pkColumns.length) {
 				throw Message.getSQLException(ErrorCode.SECOND_PRIMARY_KEY);
@@ -622,9 +624,9 @@ public class CreateReplica extends SchemaCommand {
 			for (int i = 0; i < columns.length; i++) {
 				String columnName = (columns[i].columnName == null) ? columns[i].column
 						.getName() : columns[i].columnName;
-				if (!columnName.equals(pkColumns[i].columnName)) {
-					throw Message.getSQLException(ErrorCode.SECOND_PRIMARY_KEY);
-				}
+						if (!columnName.equals(pkColumns[i].columnName)) {
+							throw Message.getSQLException(ErrorCode.SECOND_PRIMARY_KEY);
+						}
 			}
 			return true;
 		}
@@ -773,9 +775,9 @@ public class CreateReplica extends SchemaCommand {
 			String columnName = rs.getString("COLUMN_NAME");
 
 			if (currentColumns.contains(columnName)) // stops duplicate primary
-														// keys - this happens
-														// with multiple
-														// replicas.
+				// keys - this happens
+				// with multiple
+				// replicas.
 				continue;
 
 			currentColumns.add(columnName);
@@ -895,7 +897,7 @@ public class CreateReplica extends SchemaCommand {
 		}
 		try {
 			rs = meta
-					.getIndexInfo(null, originalSchema, tableName, false, true);
+			.getIndexInfo(null, originalSchema, tableName, false, true);
 		} catch (SQLException e) {
 			// Oracle throws an exception if the table is not found or is a
 			// SYNONYM
@@ -942,7 +944,7 @@ public class CreateReplica extends SchemaCommand {
 	}
 
 	private void addConstraint(ObjectArray list, IndexType indexType)
-			throws SQLException {
+	throws SQLException {
 		/*
 		 * If this is a primary key constraint, do primary key stuff.
 		 */
@@ -1035,7 +1037,7 @@ public class CreateReplica extends SchemaCommand {
 	 * @throws RemoteException
 	 */
 	public void setOriginalLocation(String originalLocation, boolean contactSM)
-			throws SQLException, RemoteException {
+	throws SQLException, RemoteException {
 		contactSystemTableOnCompletion(contactSM);
 
 		this.whereDataWillBeTakenFrom = originalLocation;
@@ -1050,7 +1052,7 @@ public class CreateReplica extends SchemaCommand {
 		if (whereDataWillBeTakenFrom == null) {
 
 			ISystemTableReference sm = session.getDatabase()
-					.getSystemTableReference();
+			.getSystemTableReference();
 
 			TableManagerRemote tableManager;
 
@@ -1064,7 +1066,7 @@ public class CreateReplica extends SchemaCommand {
 			} else {
 				try {
 					whereDataWillBeTakenFrom = tableManager.getLocation()
-							.getOriginalURL();
+					.getOriginalURL();
 				} catch (MovedException e) {
 					// If this is an old cached reference contact the system
 					// table directly.
@@ -1072,7 +1074,7 @@ public class CreateReplica extends SchemaCommand {
 							getSchema().getName()), false);
 					try {
 						whereDataWillBeTakenFrom = tableManager.getLocation()
-								.getOriginalURL();
+						.getOriginalURL();
 					} catch (MovedException e1) {
 						// This should not happen. Abort the query.
 						throw new SQLException(e1.getMessage());

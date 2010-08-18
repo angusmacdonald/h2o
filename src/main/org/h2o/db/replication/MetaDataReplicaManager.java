@@ -27,7 +27,7 @@ import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.result.LocalResult;
-import org.h2o.autonomic.decision.requests.CreateReplicaRequest;
+import org.h2o.autonomic.decision.ranker.metric.CreateReplicaRequest;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.manager.PersistentSystemTable;
@@ -321,9 +321,7 @@ public class MetaDataReplicaManager {
 							+ " replicated onto new node: "
 							+ newReplicaLocation.getURL().getDbLocation());
 
-					DatabaseStates state = (isSystemTable) ? DatabaseStates.SYSTEM_TABLE_REPLICA_CREATION
-							: DatabaseStates.TABLE_MANAGER_REPLICA_CREATION;
-					H2OEventBus.publish(new H2OEvent(db.getURL(), state,
+					H2OEventBus.publish(new H2OEvent(db.getURL(), DatabaseStates.META_TABLE_REPLICA_CREATION,
 							newReplicaLocation.getURL().getURL()));
 
 					replicaManager.add(newReplicaLocation);

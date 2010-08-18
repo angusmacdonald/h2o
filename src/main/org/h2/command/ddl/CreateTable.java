@@ -250,8 +250,7 @@ public class CreateTable extends SchemaCommand {
 			 */
 
 			boolean localTable = db.isTableLocal(getSchema());
-			if (Constants.IS_H2O && !db.isManagementDB() && !localTable
-					&& !isStartup()) {
+			if (Constants.IS_H2O && !db.isManagementDB() && !localTable && !isStartup()) {
 				ISystemTable systemTable = db.getSystemTable(); // db.getSystemSession()
 				ISystemTableReference systemTableReference = db
 						.getSystemTableReference();
@@ -278,8 +277,7 @@ public class CreateTable extends SchemaCommand {
 
 						if (thisTableReferencesAnExistingTable) {
 							if (referencedTables.size() > 1) {
-								System.err
-										.println("Unexpected. Test that this still works.");
+								System.err.println("Unexpected. Test that this still works.");
 							}
 							for (Table tab : referencedTables) {
 								tableSet = tab.getTableSet();
@@ -580,7 +578,8 @@ public class CreateTable extends SchemaCommand {
 			} catch (Exception e) {
 				// May already be exported.
 			}
-
+			H2OEventBus.publish(new H2OEvent(db.getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
+			
 			queryProxy = QueryProxy.getQueryProxyAndLock(tableManager,
 					ti.getFullTableName(), db, LockType.CREATE,
 					db.getLocalDatabaseInstanceInWrapper(), false);
