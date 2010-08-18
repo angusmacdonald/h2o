@@ -10,6 +10,7 @@ import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.command.dml.Select;
+import org.h2.engine.Constants;
 import org.h2.expression.Parameter;
 import org.h2.result.LocalResult;
 import org.h2.test.h2o.H2OTest;
@@ -133,7 +134,7 @@ public class CommandContainer extends Command {
 				&& !prepared.sqlStatement.contains("information_schema.")
 				&& prepared instanceof Select) {
 
-			this.acquireLocks(proxyManager);
+			getLock();
 
 			if (!proxyManager.hasAllLocks()) {
 				// TODO implement lock request timeout - look at TableData.doLock().
@@ -150,6 +151,20 @@ public class CommandContainer extends Command {
 			proxyManager.endTransaction(null);
 			throw e;
 		}
+	}
+
+	private void getLock() throws SQLException {
+//		System.err.println(prepared.getSQL());
+//		if (prepared.getSQL().contains("DROP TABLE TEST")){
+//		System.err.println(prepared.getSQL());
+//		}
+		//synchronized (this.session) {
+			try {
+				doLock();
+			} finally {
+				session.setWaitForLock(null);
+			}
+		//}
 	}
 
 	/*
@@ -171,8 +186,7 @@ public class CommandContainer extends Command {
 		if (!transactionCommand) { // Not a prepare or commit.
 			assert (proxyManager != null);
 
-			// Acquire distributed locks.
-			this.acquireLocks(proxyManager);
+			getLock();
 
 			// assert(proxy != null);
 
@@ -299,5 +313,49 @@ public class CommandContainer extends Command {
 	@Override
 	public void setIsPreparedStatement(boolean preparedStatement) {
 		prepared.setPreparedStatement(preparedStatement);
+	}
+	
+	private void doLock() throws SQLException {
+		long max = System.currentTimeMillis() + session.getLockTimeout();
+
+		while (true) {
+
+			/*
+			 * Check if lock has been obtained.
+			 */
+			this.acquireLocks(proxyManager);
+			
+			if ( proxyManager.hasAllLocks() ) return;
+
+			System.out.println("no lock: " + prepared.getSQL());
+
+			/*
+			 * Check current time.. wait. 
+			 */
+			long now = System.currentTimeMillis();
+			if (now >= max) {
+				throw new SQLException("Couldn't obtain locks for all tables involved in query.");
+			}
+			try {
+
+				for (int i = 0; i < 20; i++) {
+					long free = Runtime.getRuntime().freeMemory();
+					System.gc();
+					long free2 = Runtime.getRuntime().freeMemory();
+					if (free == free2) {
+						break;
+					}
+				}
+
+				// don't wait too long so that deadlocks are detected early
+				long sleep = Math.min(Constants.DEADLOCK_CHECK, max - now);
+				if (sleep == 0) {
+					sleep = 1;
+				}
+				Thread.sleep(sleep);
+			} catch (InterruptedException e) {
+				// ignore
+			}
+		}
 	}
 }
