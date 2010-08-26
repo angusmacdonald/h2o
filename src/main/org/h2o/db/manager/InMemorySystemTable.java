@@ -43,7 +43,6 @@ import org.h2o.db.wrappers.TableManagerWrapper;
 import org.h2o.event.DatabaseStates;
 import org.h2o.event.client.H2OEvent;
 import org.h2o.event.client.H2OEventBus;
-import org.h2o.util.PrettyPrinter;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.util.filter.CollectionFilter;
 import org.h2o.util.filter.Predicate;
@@ -51,6 +50,7 @@ import org.h2o.util.filter.Predicate;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 public class InMemorySystemTable implements ISystemTable, Remote {
 
@@ -652,7 +652,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 				+ tmReplicaLocations.get(tableManagerWrapper.getTableInfo())
 				.size()
 				+ " replicas available (including the failed machine) at "
-				+ PrettyPrinter.printSet(tmReplicaLocations
+				+ PrettyPrinter.print(tmReplicaLocations
 						.get(tableManagerWrapper.getTableInfo())) + ".");
 		return false;
 	}

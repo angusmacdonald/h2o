@@ -504,7 +504,12 @@ public class LocatorDatabaseTests extends TestBase {
 	 */
 	private List<String> findSystemTableInstances(){
 		LocalH2OProperties persistedInstanceInformation = new LocalH2OProperties(DatabaseURL.parseURL(fullDbName[0]));
-		persistedInstanceInformation.loadProperties();
+		try {
+			persistedInstanceInformation.loadProperties();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 
 		/*
 		 * Contact descriptor for SM locations.

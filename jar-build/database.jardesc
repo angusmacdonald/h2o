@@ -5,7 +5,7 @@
     <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
     <selectedProjects/>
     <manifest generateManifest="false" mainClassHandleIdentifier="=h2o/src\/main&lt;org.h2o{H2O.java[H2O" manifestLocation="/h2o/jar-build/jar-manifest" manifestVersion="1.0" reuseManifest="true" saveManifest="true" usesManifest="true">
-        <sealing sealJar="true">
+        <sealing sealJar="false">
             <packagesToSeal/>
             <packagesToUnSeal/>
         </sealing>
@@ -21,6 +21,7 @@
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.h2.build.code"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.constant"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.message"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.autonomic.decision.ranker"/>
         <file path="/h2o/src/main/org/h2/util/package.html"/>
         <javaElement handleIdentifier="=stachordRMI/&lt;uk.ac.standrews.cs.stachordRMI.impl"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.autonomic.framework"/>
@@ -36,7 +37,6 @@
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.command"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{HashBase.java"/>
         <javaElement handleIdentifier="=nds/&lt;lib"/>
-        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.autonomic.decision.requests"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.command.ddl"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{AutoCloseInputStream.java"/>
         <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.p2p.interfaces"/>
@@ -75,6 +75,7 @@
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{RandomUtils.java"/>
         <javaElement handleIdentifier="=stachordRMI/&lt;lib"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;com.caucho.jdbc"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.autonomic.decision.filter"/>
         <folder path="/nds/Model Folder"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.db.interfaces"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{Cache2Q.java"/>
@@ -83,6 +84,7 @@
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.expression"/>
         <javaElement handleIdentifier="=stachordRMI/&lt;uk.ac.standrews.cs.stachordRMI"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.value"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.autonomic.decision.ranker.metric"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.event"/>
         <file path="/nds/.project"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{SmallMap.java"/>
@@ -136,6 +138,7 @@
         <javaElement handleIdentifier="=stachordRMI/&lt;uk.ac.standrews.cs.stachordRMI.test.factory"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{StringCache.java"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.h2.build.doclet"/>
+        <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.autonomic.decision.test"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.server.pg"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.autonomic.decision"/>
         <javaElement handleIdentifier="=stachordRMI/&lt;uk.ac.standrews.cs.stachordRMI.test.ringIntegrity"/>
@@ -156,8 +159,8 @@
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.h2.dev.net"/>
         <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.p2p.impl"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.util{ExactUTF8InputStreamReader.java"/>
-        <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.eventModel"/>
         <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.eventModel.eventBus"/>
+        <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.eventModel"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2o.event.client"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.apache.openjpa.jdbc.sql"/>
         <javaElement handleIdentifier="=h2o/src\/main&lt;org.h2.result"/>

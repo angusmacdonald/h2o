@@ -17,6 +17,7 @@
  */
 package org.h2o;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.sql.DriverManager;
@@ -379,11 +380,17 @@ public class H2O {
 
 		LocalH2OProperties properties = new LocalH2OProperties(
 				DatabaseURL.parseURL(databaseURL));
-		if (!properties.loadProperties()) {
+		
+		try {
+			properties.loadProperties();
+		} catch (IOException e1) {
 			properties.createNewFile();
 			properties.setProperty("diagnosticLevel",
 					DiagnosticLevel.NONE.toString());
 		}
+		
+			
+		
 		// Overwrite these properties regardless of whether properties file
 		// exists or not.
 		properties.setProperty("descriptor", descriptorFileLocation);

@@ -242,11 +242,17 @@ public class Database implements DataHandler {
 		localSchema.add(Constants.H2O_SCHEMA);
 		localSchema.add("RESOURCE_MONITORING");
 
+		this.databaseName = name;
+		this.databaseShortName = parseDatabaseShortName();
+
+
 		DatabaseURL localMachineLocation = DatabaseURL.parseURL(ci
 				.getOriginalURL());
 
-		setDiagnosticLevel(localMachineLocation);
+		if (Constants.IS_H2O && !isManagementDB()) 
+			setDiagnosticLevel(localMachineLocation);
 
+		
 
 		// Ensure testing constants are all set to false.
 		Constants.IS_TESTING_PRE_COMMIT_FAILURE = false;
@@ -266,11 +272,11 @@ public class Database implements DataHandler {
 		this.persistent = ci.isPersistent();
 
 		this.filePasswordHash = ci.getFilePasswordHash();
-		this.databaseName = name;
-		this.databaseShortName = parseDatabaseShortName();
-
 
 		if (Constants.IS_H2O && !isManagementDB()) {
+		
+
+			
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O, Database '"
 					+ name + "'.");
 
@@ -278,7 +284,12 @@ public class Database implements DataHandler {
 			 * Get Settings for Database.
 			 */
 			LocalH2OProperties localSettings = new LocalH2OProperties(localMachineLocation);
-			localSettings.loadProperties();
+			try {
+				localSettings.loadProperties();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 			H2OLocatorInterface locatorInterface;
 			try {
 				locatorInterface = databaseRemote.getLocatorServerReference(localSettings);
@@ -3065,7 +3076,11 @@ public class Database implements DataHandler {
 	private void setDiagnosticLevel(DatabaseURL localMachineLocation) {
 		LocalH2OProperties databaseProperties = new LocalH2OProperties(
 				localMachineLocation);
-		databaseProperties.loadProperties();
+		try {
+			databaseProperties.loadProperties();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 		String diagnosticLevel = databaseProperties
 		.getProperty("diagnosticLevel");

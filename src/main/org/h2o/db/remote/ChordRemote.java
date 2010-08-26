@@ -942,7 +942,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		if (this.locatorInterface == null) {
 			LocalH2OProperties persistedInstanceInformation = new LocalH2OProperties(
 					localMachineLocation);
-			persistedInstanceInformation.loadProperties();
+			try {persistedInstanceInformation.loadProperties();} catch (IOException e) { e.printStackTrace(); }
 			try {
 				this.locatorInterface = getLocatorServerReference(persistedInstanceInformation);
 			} catch (StartupException e) {

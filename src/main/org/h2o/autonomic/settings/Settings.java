@@ -23,6 +23,7 @@
 
 package org.h2o.autonomic.settings;
 
+import java.io.IOException;
 import java.util.Map.Entry;
 import java.util.HashSet;
 import java.util.Properties;
@@ -73,7 +74,11 @@ public class Settings {
 		/*
 		 * 1. Load Local Settings.
 		 */
-		localSettings.loadProperties();
+		try {
+			localSettings.loadProperties();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 		/*
 		 * 2. Iterate through global settings. If there is a setting here which
@@ -192,7 +197,7 @@ public class Settings {
 		 */
 		LocalH2OProperties localSettings = new LocalH2OProperties(
 				DatabaseURL.parseURL(databaseName));
-		localSettings.loadProperties();
+		try {localSettings.loadProperties();} catch (IOException e) { e.printStackTrace(); }
 
 		// Overwrite local database settings with those provided via newSettings
 		// parameter.

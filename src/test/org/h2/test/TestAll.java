@@ -56,7 +56,6 @@ import org.h2.test.db.TestTransaction;
 import org.h2.test.db.TestTriggersConstraints;
 import org.h2.test.db.TestTwoPhaseCommit;
 import org.h2.test.db.TestView;
-import org.h2.test.jaqu.SamplesTest;
 import org.h2.test.jdbc.TestBatchUpdates;
 import org.h2.test.jdbc.TestCallableStatement;
 import org.h2.test.jdbc.TestCancel;
@@ -555,8 +554,6 @@ http://www.w3schools.com/sql/
 		new TestTwoPhaseCommit().runTest(this);
 		new TestView().runTest(this);
 
-		// jaqu
-		new SamplesTest().runTest(this);
 
 		// jdbc
 		new TestBatchUpdates().runTest(this);

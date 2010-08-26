@@ -18,6 +18,8 @@
 package org.h2o.locator.server;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.locator.DatabaseDescriptorFile;
@@ -30,15 +32,17 @@ public class StaticServerSetup {
 
 	/**
 	 * @param args
+	 * @throws IOException 
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		setUpStaticDescriptorFiles();
 	}
 
 	/**
+	 * @throws IOException 
 	 * 
 	 */
-	public static void setUpStaticDescriptorFiles() {
+	public static void setUpStaticDescriptorFiles() throws IOException {
 		String databaseName = "angusDB";
 
 		String descriptorFile = "http://www.cs.st-andrews.ac.uk/~angus/databases/"

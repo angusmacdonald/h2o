@@ -236,6 +236,7 @@ public class CommandContainer extends Command {
 
 				session.setCurrentTransactionLocks(null);
 			} catch (SQLException e) {
+				e.printStackTrace();
 				ErrorHandling.errorNoEvent("Transaction not found for query: "
 						+ prepared.getSQL());
 				throw e;

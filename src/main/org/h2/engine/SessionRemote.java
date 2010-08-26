@@ -491,7 +491,7 @@ public class SessionRemote extends SessionWithState implements SessionFactory,
 	public void checkClosed() throws SQLException {
 		if (isClosed()) {
 			throw new SQLException(
-					"Could not connect to database instane specified: "
+					"Could not connect to database instance specified: "
 							+ this.getDatabasePath());
 		}
 	}
