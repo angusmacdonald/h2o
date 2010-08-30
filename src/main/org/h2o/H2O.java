@@ -17,7 +17,6 @@
  */
 package org.h2o;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.sql.DriverManager;
@@ -48,7 +47,7 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  * more customisable set-up:
  * <ul>
  * <li>Standalone start-up. A single H2O instance will be started with its own
- * locator server. This requires minimum options at initialization. This option
+ * locator server. This requires minimum options at initialisation. This option
  * restricts the H2O locator server to the same process as the H2O instance, and
  * is not recommended for multi-machine database set-ups.</li>
  * <li>Custom start-up. An H2O instance will be started and will connect to the
