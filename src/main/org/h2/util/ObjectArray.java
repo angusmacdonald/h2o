@@ -6,6 +6,7 @@
  */
 package org.h2.util;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -321,6 +322,11 @@ public class ObjectArray {
 		}
 	}
 
+	@Override
+	public String toString() {
+		return "ObjectArray [data=" + Arrays.toString(data) + ", size=" + size + "]";
+	}
+
 	// public void sortInsertion(Comparator comp) {
 	// for (int i = 1, j; i < size(); i++) {
 	// Object t = get(i);
@@ -331,4 +337,5 @@ public class ObjectArray {
 	// }
 	// }
 
+	
 }

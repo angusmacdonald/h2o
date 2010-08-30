@@ -42,8 +42,7 @@ public class Insert extends Prepared {
 	 * @param session
 	 *            The current session.
 	 * @param internalQuery
-	 *            True if this query has been sent internally through the RMI
-	 *            interface, false if it has come from an external JBDC
+	 *            True if this query has been sent internally through the RMI interface, false if it has come from an external JBDC
 	 *            connection.
 	 */
 	public Insert(Session session, boolean internalQuery) {
@@ -84,8 +83,7 @@ public class Insert extends Prepared {
 	 * @see org.h2.command.Prepared#acquireLocks()
 	 */
 	@Override
-	public void acquireLocks(QueryProxyManager queryProxyManager)
-	throws SQLException {
+	public void acquireLocks(QueryProxyManager queryProxyManager) throws SQLException {
 		/*
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
@@ -93,15 +91,14 @@ public class Insert extends Prepared {
 
 			queryProxy = queryProxyManager.getQueryProxy(table.getFullName());
 
-			if (queryProxy == null) {
-				queryProxy = QueryProxy.getQueryProxyAndLock(table,
-						LockType.WRITE, session.getDatabase());
+			if (queryProxy == null || queryProxy.getLockGranted().equals(LockType.WRITE)) {
+				queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, session.getDatabase());
+				System.err.println("locky: " + this.getSQL() + ": " + queryProxy.getLockGranted());
 			}
 
 			queryProxyManager.addProxy(queryProxy);
 		} else {
-			queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(session.getDatabase()
-					.getLocalDatabaseInstanceInWrapper()));
+			queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper()));
 		}
 
 	}
@@ -119,8 +116,7 @@ public class Insert extends Prepared {
 		/*
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
-		if (isRegularTable()
-				&& (queryProxy.getNumberOfReplicas() > 1 || !isReplicaLocal(queryProxy))) { // &&
+		if (isRegularTable() && (queryProxy.getNumberOfReplicas() > 1 || !isReplicaLocal(queryProxy))) { // &&
 			// queryProxy.getNumberOfReplicas()
 			// >
 			// 1
@@ -150,8 +146,7 @@ public class Insert extends Prepared {
 						// e can be null (DEFAULT)
 						e = e.optimize(session);
 						try {
-							Value v = e.getValue(session)
-							.convertTo(c.getType());
+							Value v = e.getValue(session).convertTo(c.getType());
 							newRow.setValue(index, v);
 
 						} catch (SQLException ex) {
@@ -204,8 +199,8 @@ public class Insert extends Prepared {
 	}
 
 	/**
-	 * Adjusts the sqlStatement string to be a valid prepared statement. This is
-	 * used when propagating prepared statements within the system.
+	 * Adjusts the sqlStatement string to be a valid prepared statement. This is used when propagating prepared statements within the
+	 * system.
 	 * 
 	 * @param sql
 	 * @return
@@ -230,8 +225,7 @@ public class Insert extends Prepared {
 
 			// Only add the expression if it is unspecified in the query (there
 			// will be an instance of parameter somewhere).
-			if (e != null && e instanceof Parameter
-					|| ((e instanceof Operation) && e.toString().contains("?"))) {
+			if (e != null && e instanceof Parameter || ((e instanceof Operation) && e.toString().contains("?"))) {
 				// e can be null (DEFAULT)
 				e = e.optimize(session);
 				try {
@@ -317,8 +311,7 @@ public class Insert extends Prepared {
 			for (int x = 0; x < list.size(); x++) {
 				Expression[] expr = (Expression[]) list.get(x);
 				if (expr.length != columns.length) {
-					throw Message
-					.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
+					throw Message.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
 				}
 				for (int i = 0; i < expr.length; i++) {
 					Expression e = expr[i];
@@ -335,8 +328,7 @@ public class Insert extends Prepared {
 		} else {
 			query.prepare();
 			if (query.getColumnCount() != columns.length) {
-				throw Message
-				.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
+				throw Message.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
 			}
 		}
 	}
@@ -359,8 +351,7 @@ public class Insert extends Prepared {
 	@Override
 	public boolean shouldBePropagated() {
 		/*
-		 * If this is not a regular table (i.e. it is a meta-data table, then it
-		 * will not be propagated regardless.
+		 * If this is not a regular table (i.e. it is a meta-data table, then it will not be propagated regardless.
 		 */
 		return isRegularTable();
 	}

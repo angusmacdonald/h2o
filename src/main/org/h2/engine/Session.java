@@ -47,6 +47,8 @@ import org.h2.value.ValueString;
 import org.h2o.db.query.QueryProxyManager;
 import org.h2o.db.remote.IDatabaseRemote;
 
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
+
 /**
  * A session represents an embedded database connection. When using the server
  * mode, this object resides on the server side and communicates with a
@@ -684,15 +686,22 @@ public class Session extends SessionWithState {
 	private void log(UndoLogRecord log) throws SQLException {
 		// called _after_ the row was inserted successfully into the table,
 		// otherwise rollback will try to rollback a not-inserted row
-		if (SysProperties.CHECK) {
-			int lockMode = database.getLockMode();
-			if (lockMode != Constants.LOCK_MODE_OFF
-					&& !database.isMultiVersion()) {
-				if (locks.indexOf(log.getTable()) < 0 && !Table.TABLE_LINK.equals(log.getTable().getTableType())) {
-					Message.throwInternalError();
-				}
-			}
-		}
+		
+		//XXX because of exclusive locking at the H2O level, it is assumed that this is not needed.
+//		if (SysProperties.CHECK) {
+//			int lockMode = database.getLockMode();
+//			if (lockMode != Constants.LOCK_MODE_OFF
+//					&& !database.isMultiVersion()) {
+//				if (locks.indexOf(log.getTable()) < 0 && !Table.TABLE_LINK.equals(log.getTable().getTableType())) {
+//					
+//					/*
+//					 * Thrown if we try to log something, but a lock isn't held.
+//					 */
+//					
+//				Message.throwInternalError();
+//				}
+//			}
+//		}
 		if (undoLogEnabled) {
 			undoLog.add(log);
 		} else {
@@ -902,7 +911,7 @@ public class Session extends SessionWithState {
 					break;
 				}
 			}
-			if (!found) {
+			if (!found && commit) { //XXX only called on commit because of the way ROLLBACKS could be sent to machines unaware of a problem.
 				throw Message.getSQLException(
 						ErrorCode.TRANSACTION_NOT_FOUND_1, transactionName);
 			}

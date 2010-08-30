@@ -474,6 +474,8 @@ public class TableData extends Table implements RecordReader {
 			if (now >= max) {
 				traceLock(session, exclusive,
 						"timeout after " + session.getLockTimeout());
+				
+				System.err.println(this.lockExclusive);
 				throw Message.getSQLException(ErrorCode.LOCK_TIMEOUT_1,
 						getName());
 			}

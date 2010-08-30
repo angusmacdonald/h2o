@@ -23,7 +23,6 @@ import java.sql.SQLException;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.manager.interfaces.SystemTableRemote;
-import org.h2o.db.query.QueryProxy;
 
 import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
 
@@ -63,23 +62,6 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit {
 	 *         Table.
 	 */
 	public DatabaseURL getSystemTableURL() throws RemoteException;
-
-	/**
-	 * Execute a query on this machine using the supplied query proxy (which
-	 * contains permission to execute a given type of query).
-	 * 
-	 * @param queryProxy
-	 *            The query proxy for the table(s) involved in the query.
-	 * @param sql
-	 *            The query to be executed
-	 * @return Result of the update.
-	 * @throws RemoteException
-	 *             Thrown if there were problems connecting to the instance.
-	 * @throws SQLException
-	 *             Thrown if there was an error in the queries execution.
-	 */
-	public int executeUpdate(QueryProxy queryProxy, String sql)
-			throws RemoteException, SQLException;
 
 	/**
 	 * Execute the given SQL update on this instance. Since no query proxy is

@@ -38,20 +38,17 @@ public class CommandContainer extends Command {
 		this.prepared = prepared;
 
 		/*
-		 * If this command is part of a larger transaction then this query proxy
-		 * manager will be over-written later on by a call from the Command list
-		 * class.
+		 * If this command is part of a larger transaction then this query proxy manager will be over-written later on by a call from the
+		 * Command list class.
 		 */
-		if (!session.getApplicationAutoCommit()
-				&& session.getCurrentTransactionLocks() != null) {
+		if (!session.getApplicationAutoCommit() && session.getCurrentTransactionLocks() != null) {
 			// Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
 			// "Using an existing proxy manager.");
 			this.proxyManager = session.getCurrentTransactionLocks();
 		} else {
 			// Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
 			// "Creating a new proxy manager.");
-			this.proxyManager = new QueryProxyManager(parser.getSession()
-					.getDatabase(), getSession());
+			this.proxyManager = new QueryProxyManager(parser.getSession().getDatabase(), getSession());
 			session.setCurrentTransactionLocks(this.proxyManager);
 		}
 	}
@@ -116,22 +113,18 @@ public class CommandContainer extends Command {
 	 * @see org.h2.command.Command#query(int, boolean)
 	 */
 	@Override
-	protected LocalResult query(int maxrows, boolean partOfMultiQueryTransaction)
-			throws SQLException {
+	protected LocalResult query(int maxrows, boolean partOfMultiQueryTransaction) throws SQLException {
 		recompileIfRequired();
 
 		start();
 		prepared.checkParameters();
 
 		/*
-		 * If this is a SELECT query that does not target any meta-tables then
-		 * locks must be acquired. If it is something else then no locks are
-		 * needed.
+		 * If this is a SELECT query that does not target any meta-tables then locks must be acquired. If it is something else then no locks
+		 * are needed.
 		 */
-		if (!prepared.sqlStatement.contains("H2O.")
-				&& !prepared.sqlStatement.contains("INFORMATION_SCHEMA.")
-				&& !prepared.sqlStatement.contains("SYSTEM_RANGE")
-				&& !prepared.sqlStatement.contains("information_schema.")
+		if (!prepared.sqlStatement.contains("H2O.") && !prepared.sqlStatement.contains("INFORMATION_SCHEMA.")
+				&& !prepared.sqlStatement.contains("SYSTEM_RANGE") && !prepared.sqlStatement.contains("information_schema.")
 				&& prepared instanceof Select) {
 
 			getLock();
@@ -154,17 +147,11 @@ public class CommandContainer extends Command {
 	}
 
 	private void getLock() throws SQLException {
-//		System.err.println(prepared.getSQL());
-//		if (prepared.getSQL().contains("DROP TABLE TEST")){
-//		System.err.println(prepared.getSQL());
-//		}
-		//synchronized (this.session) {
-			try {
-				doLock();
-			} finally {
-				session.setWaitForLock(null);
-			}
-		//}
+		try {
+			doLock();
+		} finally {
+			session.setWaitForLock(null);
+		}
 	}
 
 	/*
@@ -173,26 +160,18 @@ public class CommandContainer extends Command {
 	 * @see org.h2.command.Command#update(boolean)
 	 */
 	@Override
-	protected int update(boolean partOfMultiQueryTransaction)
-			throws SQLException, RemoteException {
+	protected int update(boolean partOfMultiQueryTransaction) throws SQLException, RemoteException {
 		recompileIfRequired();
 		start();
 		prepared.checkParameters();
 		int updateCount;
 
-		boolean singleQuery = !partOfMultiQueryTransaction, transactionCommand = prepared
-				.isTransactionCommand();
+		boolean singleQuery = !partOfMultiQueryTransaction, transactionCommand = prepared.isTransactionCommand();
 
 		if (!transactionCommand) { // Not a prepare or commit.
 			assert (proxyManager != null);
 
-			getLock();
-
-			// assert(proxy != null);
-
-			if (!proxyManager.hasAllLocks()){
-				throw new SQLException("Couldn't obtain locks needed for update.");
-			}
+			getLock(); // this throws an SQLException if no lock is found.
 
 			if (Diagnostic.getLevel() == DiagnosticLevel.FULL) {
 				proxyManager.addSQL(prepared.getSQL());
@@ -200,19 +179,15 @@ public class CommandContainer extends Command {
 
 			try {
 
-				updateCount = prepared
-						.update(proxyManager.getTransactionName());
+				updateCount = prepared.update(proxyManager.getTransactionName());
 
-				boolean commit = true; // An exception would already have been
-										// thrown if it should have been a
-										// rollback.
- 
+				boolean commit = true; // An exception would already have been thrown if it should have been a rollback.
+
 				H2OTest.createTableFailure();
 
 				if (singleQuery && session.getApplicationAutoCommit()) {
 					/*
-					 * If it is one of a number of queries in the transaction
-					 * then we must wait for the entire transaction to finish.
+					 * If it is one of a number of queries in the transaction then we must wait for the entire transaction to finish.
 					 */
 
 					proxyManager.commit(commit, true);
@@ -237,8 +212,7 @@ public class CommandContainer extends Command {
 				session.setCurrentTransactionLocks(null);
 			} catch (SQLException e) {
 				e.printStackTrace();
-				ErrorHandling.errorNoEvent("Transaction not found for query: "
-						+ prepared.getSQL());
+				ErrorHandling.errorNoEvent("Transaction not found for query: " + prepared.getSQL());
 				throw e;
 			}
 		}
@@ -261,8 +235,7 @@ public class CommandContainer extends Command {
 	 * @see org.h2.command.Command#acquireLocks()
 	 */
 	@Override
-	public void acquireLocks(QueryProxyManager queryProxyManager2)
-			throws SQLException {
+	public void acquireLocks(QueryProxyManager queryProxyManager2) throws SQLException {
 		prepared.acquireLocks(proxyManager);
 	}
 
@@ -286,8 +259,7 @@ public class CommandContainer extends Command {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.h2.command.Command#addQueryProxyManager(org.h2.h2o.comms.
-	 * QueryProxyManager)
+	 * @see org.h2.command.Command#addQueryProxyManager(org.h2.h2o.comms. QueryProxyManager)
 	 */
 	@Override
 	public void addQueryProxyManager(QueryProxyManager proxyManager) {
@@ -315,7 +287,7 @@ public class CommandContainer extends Command {
 	public void setIsPreparedStatement(boolean preparedStatement) {
 		prepared.setPreparedStatement(preparedStatement);
 	}
-	
+
 	private void doLock() throws SQLException {
 		long max = System.currentTimeMillis() + session.getLockTimeout();
 
@@ -325,13 +297,14 @@ public class CommandContainer extends Command {
 			 * Check if lock has been obtained.
 			 */
 			this.acquireLocks(proxyManager);
-			
-			if ( proxyManager.hasAllLocks() ) return;
 
-			System.out.println("no lock: " + prepared.getSQL());
+			if (proxyManager.hasAllLocks())
+				return;
+
+			ErrorHandling.errorNoEvent("No lock obtained yet: " + prepared.getSQL());
 
 			/*
-			 * Check current time.. wait. 
+			 * Check current time.. wait.
 			 */
 			long now = System.currentTimeMillis();
 			if (now >= max) {
@@ -353,6 +326,7 @@ public class CommandContainer extends Command {
 				if (sleep == 0) {
 					sleep = 1;
 				}
+				System.err.println(sleep);
 				Thread.sleep(sleep);
 			} catch (InterruptedException e) {
 				// ignore
