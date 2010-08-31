@@ -21,7 +21,11 @@ import static org.junit.Assert.*;
 
 import java.sql.SQLException;
 
+import org.h2.table.Table;
+import org.h2o.autonomic.settings.Settings;
 import org.junit.Test;
+
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 
 
@@ -36,19 +40,32 @@ public class AsynchronousTests extends MultiProcessTestBase {
 	 * Tests that an update can complete with only two machines.
 	 * @throws InterruptedException
 	 */
-	@Test
+	@Test(timeout=30000)
 	public void basicAsynchronousUpdate() throws InterruptedException{
 		String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
 		"INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
 
 		try {
+			
+			killDatabase(2);
+			
+			sleep(5000);
+			
+			delayQueryCommit(2);
+			
+			startDatabase(2);
+			
+			sleep("About to create recreate connections to the newly restarted database.", 2000);
+			
+			createConnectionsToDatabase(2);
+			
 			executeUpdateOnNthMachine(create1, 0);
 			
 			sleep(1000);
 			/*
 			 * Create test table.
 			 */
-			assertTestTableExists(2);
+			assertTestTableExists(2, 0);
 			assertMetaDataExists(connections[0], 1);
 
 			sleep(2000);
@@ -64,10 +81,36 @@ public class AsynchronousTests extends MultiProcessTestBase {
 			executeUpdateOnNthMachine(update, 0);
 			
 			assertTrue(assertTestTableExists(connections[0], 3));
+			assertTrue(assertTestTableExists(connections[1], 3));
+			assertTrue(assertTestTableExists(connections[2], 3));
 		} catch (SQLException e) {
 			e.printStackTrace();
 			fail("Unexpected exception.");
 		}
+	}
+
+	public static void pauseThreadIfTestingAsynchronousUpdates(Table table, Settings databaseSettings) {
+		
+		if (databaseSettings == null) {
+			return;
+		}
+		
+		if (!table.getName().equals("TEST")){
+			return;
+		}
+		
+		boolean delay = Boolean.parseBoolean(databaseSettings.get("DELAY_QUERY_COMMIT"));
+		
+		if (delay){
+			try {
+				ErrorHandling.errorNoEvent("Delay");
+				
+				Thread.sleep(30000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
 	}
 
 }

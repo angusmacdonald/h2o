@@ -46,6 +46,14 @@ public class MetaDataReplicationThread extends Thread {
 				continue;
 
 			/*
+			 * Sleep.
+			 */
+			try {
+				Thread.sleep(threadSleepTime);
+			} catch (InterruptedException e) {
+			}
+			
+			/*
 			 * Check that there are a sufficient number of replicas of Table
 			 * Manager state.
 			 */
@@ -66,13 +74,6 @@ public class MetaDataReplicationThread extends Thread {
 				i = 0;
 			}
 
-			/*
-			 * Sleep.
-			 */
-			try {
-				Thread.sleep(threadSleepTime);
-			} catch (InterruptedException e) {
-			}
 
 			if (!database.isRunning())
 				return;

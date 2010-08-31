@@ -40,9 +40,9 @@ public class MultiProcessTestBase extends TestBase {
 	private LocatorServer ls;
 	private static String[] dbs = {"one", "two", "three"};
 	protected String[] fullDbName = null;
-	
+
 	Map<String, Process> processes;
-	
+
 	protected Connection[] connections;
 	/**
 	 * Whether the System Table state has been replicated yet.
@@ -54,7 +54,7 @@ public class MultiProcessTestBase extends TestBase {
 		Diagnostic.setLevel(DiagnosticLevel.FULL);
 		Constants.IS_TEST = true;
 		Constants.IS_NON_SM_TEST = false;
-	
+
 		setReplicated(false);
 		deleteDatabaseData();
 		ChordRemote.currentPort=40000;
@@ -86,16 +86,16 @@ public class MultiProcessTestBase extends TestBase {
 	 */
 	@Before
 	public void setUp() throws Exception {
-	
+
 		ls = new LocatorServer(29999, "junitLocator");
 		ls.createNewLocatorFile();
-	
+
 		Constants.IS_TEAR_DOWN = false; 
-	
+
 		org.h2.Driver.load();
-	
+
 		fullDbName = getFullDatabaseName();
-	
+
 		for (String location: fullDbName){
 			LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(location));
 			properties.createNewFile();
@@ -103,16 +103,16 @@ public class MultiProcessTestBase extends TestBase {
 			properties.setProperty("databaseName", "testDB");
 			properties.saveAndClose();
 		}
-	
+
 		ls = new LocatorServer(29999, "junitLocator");
 		ls.createNewLocatorFile();
 		ls.start();
-	
+
 		startDatabases(true);
-	
+
 		sleep(2000);
 		createConnectionsToDatabases();
-	
+
 	}
 
 	/**
@@ -121,17 +121,17 @@ public class MultiProcessTestBase extends TestBase {
 	@After
 	public void tearDown() {
 		Constants.IS_TEAR_DOWN = true; 
-	
+
 		killDatabases();
-	
+
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException e1) {};
-	
+
 		deleteDatabaseData();
-	
+
 		ls.setRunning(false);
-	
+
 		while (!ls.isFinished()){};
 	}
 
@@ -171,15 +171,15 @@ public class MultiProcessTestBase extends TestBase {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-	
+
 		/*
 		 * Contact descriptor for SM locations.
 		 */
 		String descriptorLocation = persistedInstanceInformation.getProperty("descriptor");
 		String databaseName = persistedInstanceInformation.getProperty("databaseName");
-	
+
 		List<String> locations = null;
-	
+
 		try {
 			H2OLocatorInterface dl = new H2OLocatorInterface(databaseName, descriptorLocation);
 			locations = dl.getLocations();
@@ -188,7 +188,7 @@ public class MultiProcessTestBase extends TestBase {
 		} catch (StartupException e) {
 			fail("Failed to find System Table locations.");
 		}
-	
+
 		/*
 		 * Parse these locations to ensure they are of the correct form.
 		 */
@@ -196,8 +196,18 @@ public class MultiProcessTestBase extends TestBase {
 		for (String l: locations){
 			parsedLocations.add(DatabaseURL.parseURL(l).getURL());
 		}
-	
+
 		return parsedLocations;
+	}
+
+	protected void delayQueryCommit(int dbName){
+		String location = fullDbName[dbName];
+		LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(location));
+		properties.createNewFile();
+		properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
+		properties.setProperty("databaseName", "testDB");
+		properties.setProperty("DELAY_QUERY_COMMIT", "true");
+		properties.saveAndClose();
 	}
 
 	protected String findSystemTableInstance() {
@@ -219,7 +229,7 @@ public class MultiProcessTestBase extends TestBase {
 				}
 			}
 		}
-	
+
 		return null; //none found.
 	}
 
@@ -228,16 +238,16 @@ public class MultiProcessTestBase extends TestBase {
 	 */
 	protected List<String> findNonSystemTableInstances() {
 		List<String> systemTableInstances = findSystemTableInstances();
-	
+
 		List<String> nonSystemTableInstances = new LinkedList<String>();
-	
+
 		for (String instance: this.fullDbName){
-	
+
 			if (!systemTableInstances.contains(instance)){
 				nonSystemTableInstances.add(instance);
 			} 
 		}
-	
+
 		return nonSystemTableInstances;
 	}
 
@@ -251,20 +261,20 @@ public class MultiProcessTestBase extends TestBase {
 	protected void assertMetaDataExists(Connection connection, int expectedEntries) throws SQLException {
 		String tableName = "H2O.H2O_TABLE"; //default value.
 		tableName = getTableMetaTableName();
-	
+
 		/*
 		 * Query database.
 		 */
 		Statement s = connection.createStatement();
 		ResultSet rs = s.executeQuery("SELECT * FROM " + tableName);
-	
+
 		int actualEntries = 0;
 		while(rs.next()){
 			actualEntries++;
 		}
-	
+
 		assertEquals(expectedEntries, actualEntries);
-	
+
 		rs.close();
 		s.close();
 	}
@@ -278,20 +288,20 @@ public class MultiProcessTestBase extends TestBase {
 	 */
 	protected void assertTableManagerMetaDataExists(Connection connection, int expectedEntries) throws SQLException {
 		String tableName = "H2O.H2O_TABLEMANAGER_STATE";
-	
+
 		/*
 		 * Query database.
 		 */
 		Statement s = connection.createStatement();
 		ResultSet rs = s.executeQuery("SELECT * FROM " + tableName);
-	
+
 		int actualEntries = 0;
 		while(rs.next()){
 			actualEntries++;
 		}
-	
+
 		assertEquals(expectedEntries, actualEntries);
-	
+
 		rs.close();
 		s.close();
 	}
@@ -303,13 +313,13 @@ public class MultiProcessTestBase extends TestBase {
 	 */
 	private String getTableMetaTableName() {
 		String tableName = null;
-	
+
 		try {
 			Field field = PersistentSystemTable.class.getDeclaredField("TABLES");
 			field.setAccessible(true);
 			tableName = (String) field.get(String.class);
 		} catch (Exception e) {}
-	
+
 		return tableName;
 	}
 
@@ -317,11 +327,12 @@ public class MultiProcessTestBase extends TestBase {
 	 * Select all entries from the test table. Checks that the number of entries in the table
 	 * matches the number of entries expected. Matches the contents of the first two entries as well.
 	 * @param expectedEntries The number of entries that should be in the test table.
+	 * @param databaseNumber 
 	 * @return true if the connection was active. false if the connection wasn't open.
 	 * @throws SQLException
 	 */
-	protected boolean assertTestTableExists(int expectedEntries) throws SQLException {
-		return assertTestTableExists(connections[1], expectedEntries);
+	protected boolean assertTestTableExists(int expectedEntries, int databaseNumber) throws SQLException {
+		return assertTestTableExists(connections[databaseNumber], expectedEntries);
 	}
 
 	/**
@@ -334,22 +345,22 @@ public class MultiProcessTestBase extends TestBase {
 	protected boolean assertTestTableExists(Connection connnection, int expectedEntries) throws SQLException {
 		Statement s = null;
 		ResultSet rs = null;
-	
+
 		/*
 		 * Query database.
 		 */
-	
+
 		if (connnection == null || connnection.isClosed()){
 			return false;
 		}
-	
+
 		try {
 			s = connnection.createStatement();
-			rs = s.executeQuery("SELECT * FROM " + "TEST" + ";");
-	
+			rs = s.executeQuery("SELECT LOCAL ONLY * FROM " + "TEST" + ";");
+
 			int actualEntries = 0;
 			while(rs.next()){
-	
+
 				if (actualEntries==0){
 					assertEquals(1, rs.getInt(1));
 					assertEquals("Hello", rs.getString(2));
@@ -357,7 +368,7 @@ public class MultiProcessTestBase extends TestBase {
 					assertEquals(2, rs.getInt(1));
 					assertEquals("World", rs.getString(2));
 				}
-	
+
 				actualEntries++;
 			}
 			assertEquals(expectedEntries, actualEntries);
@@ -365,29 +376,29 @@ public class MultiProcessTestBase extends TestBase {
 			if (rs != null) rs.close();
 			if (s != null) s.close();
 		}
-	
+
 		return true;
 	}
 
 	protected boolean assertTest2TableExists(Connection connnection, int expectedEntries) throws SQLException {
 		Statement s = null;
 		ResultSet rs = null;
-	
+
 		/*
 		 * Query database.
 		 */
-	
+
 		if (connnection == null || connnection.isClosed()){
 			return false;
 		}
-	
+
 		try {
 			s = connnection.createStatement();
 			rs = s.executeQuery("SELECT * FROM " + "TEST2" + ";");
-	
+
 			int actualEntries = 0;
 			while(rs.next()){
-	
+
 				if (actualEntries==0){
 					assertEquals(4, rs.getInt(1));
 					assertEquals("Meh", rs.getString(2));
@@ -395,7 +406,7 @@ public class MultiProcessTestBase extends TestBase {
 					assertEquals(5, rs.getInt(1));
 					assertEquals("Heh", rs.getString(2));
 				}
-	
+
 				actualEntries++;
 			}
 			assertEquals(expectedEntries, actualEntries);
@@ -403,29 +414,29 @@ public class MultiProcessTestBase extends TestBase {
 			if (rs != null) rs.close();
 			if (s != null) s.close();
 		}
-	
+
 		return true;
 	}
 
 	protected boolean assertTest3TableExists(Connection connnection, int expectedEntries) throws SQLException {
 		Statement s = null;
 		ResultSet rs = null;
-	
+
 		/*
 		 * Query database.
 		 */
-	
+
 		if (connnection == null || connnection.isClosed()){
 			return false;
 		}
-	
+
 		try {
 			s = connnection.createStatement();
 			rs = s.executeQuery("SELECT * FROM " + "TEST3" + ";");
-	
+
 			int actualEntries = 0;
 			while(rs.next()){
-	
+
 				if (actualEntries==0){
 					assertEquals(4, rs.getInt(1));
 					assertEquals("Clouds", rs.getString(2));
@@ -433,7 +444,7 @@ public class MultiProcessTestBase extends TestBase {
 					assertEquals(5, rs.getInt(1));
 					assertEquals("Rainbows", rs.getString(2));
 				}
-	
+
 				actualEntries++;
 			}
 			assertEquals(expectedEntries, actualEntries);
@@ -441,7 +452,7 @@ public class MultiProcessTestBase extends TestBase {
 			if (rs != null) rs.close();
 			if (s != null) s.close();
 		}
-	
+
 		return true;
 	}
 
@@ -451,14 +462,14 @@ public class MultiProcessTestBase extends TestBase {
 
 	private String[] getFullDatabaseName() {
 		processes = new HashMap<String, Process>();
-	
+
 		fullDbName = new String[dbs.length];
 		for (int i = 0; i < dbs.length; i ++){
 			int port = 9080 + i;
 			fullDbName[i] = "jdbc:h2:sm:tcp://localhost:" + port + "/db_data/multiprocesstests/" + dbs[i];
 			fullDbName[i] = DatabaseURL.parseURL(fullDbName[i]).getURL();
 		}
-		
+
 		return fullDbName;
 	}
 
@@ -470,7 +481,7 @@ public class MultiProcessTestBase extends TestBase {
 		for (int i = 0; i < dbs.length; i ++){
 			int port = 9080 + i;
 			startDatabase(fullDbName[i], port);
-	
+
 			if (guaranteeOneIsSystemTable && i == 0) sleep (1000);
 		}
 	}
@@ -492,11 +503,11 @@ public class MultiProcessTestBase extends TestBase {
 	 */
 	private void startDatabase(String connectionString, int port) {
 		String connectionArgument = "-l\""+ connectionString + "\"";
-	
+
 		List<String> args = new LinkedList<String>();
 		args.add(connectionArgument);
 		args.add("-p" + port);
-	
+
 		try {
 			processes.put(connectionString, Processes.runJavaProcess(StartDatabaseInstance.class, args));
 		} catch (IOException e) {
@@ -511,11 +522,11 @@ public class MultiProcessTestBase extends TestBase {
 	 */
 	private void startDatabase(String connectionString) {
 		// jdbc:h2:sm:tcp://localhost:9091/db_data/multiprocesstests/thirteen
-	
+
 		String port = connectionString.substring(connectionString.indexOf("tcp://")+"tcp://".length());
 		port = port.substring(port.indexOf(":")+";".length());
 		port = port.substring(0, port.indexOf("/"));
-	
+
 		startDatabase(connectionString, Integer.parseInt(port));
 	}
 
@@ -525,7 +536,7 @@ public class MultiProcessTestBase extends TestBase {
 		String port = connectionString.substring(connectionString.indexOf("tcp://")+"tcp://".length());
 		port = port.substring(port.indexOf(":")+";".length());
 		port = port.substring(0, port.indexOf("/"));
-	
+
 		startDatabase(connectionString, Integer.parseInt(port));
 	}
 

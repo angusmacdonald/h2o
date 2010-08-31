@@ -162,14 +162,30 @@ public class Settings {
 		 * The time between checks to ensure that Table Managers are still
 		 * running.
 		 */
-		defaults.setProperty(
-				"TABLE_MANAGER_LIVENESS_CHECKER_THREAD_SLEEP_TIME", "10000");
+		defaults.setProperty("TABLE_MANAGER_LIVENESS_CHECKER_THREAD_SLEEP_TIME", "10000");
 
 		/*
 		 * Whether diagnostic events are to be consumed and sent to an event
 		 * monitor.
 		 */
 		defaults.setProperty("DATABASE_EVENTS_ENABLED", "false");
+
+
+		/*
+		 * The number of replicas that must update before an update can take place.
+		 */
+		defaults.setProperty("ASYNCHRONOUS_REPLICATION_FACTOR", "2");
+
+		/*
+		 * The number of replicas that must update before an update can take place.
+		 */
+		defaults.setProperty("ASYNCHRONOUS_REPLICATION_FACTOR", "2");
+
+		/*
+		 * If true this delays the commit of an insert query. This should always be false
+		 * unless you are testing asynchronous updates.
+		 */
+		defaults.setProperty("DELAY_QUERY_COMMIT", "false");
 
 		return defaults;
 	}

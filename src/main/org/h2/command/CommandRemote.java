@@ -91,7 +91,7 @@ public class CommandRemote implements CommandInterface {
 					}
 				}
 			} catch (IOException e) {
-
+				e.printStackTrace();
 				s.removeServer(e, i--, ++count);
 
 			}

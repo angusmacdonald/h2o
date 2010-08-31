@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import org.h2.command.Command;
 import org.h2.command.Prepared;
 import org.h2.constant.ErrorCode;
+import org.h2.engine.Constants;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
@@ -21,6 +22,7 @@ import org.h2.message.Message;
 import org.h2.result.LocalResult;
 import org.h2.result.Row;
 import org.h2.table.Column;
+import org.h2.test.h2o.AsynchronousTests;
 import org.h2.util.ObjectArray;
 import org.h2.value.Value;
 import org.h2o.db.query.QueryProxy;
@@ -90,10 +92,9 @@ public class Insert extends Prepared {
 		if (isRegularTable()) {
 
 			queryProxy = queryProxyManager.getQueryProxy(table.getFullName());
-
+			
 			if (queryProxy == null || queryProxy.getLockGranted().equals(LockType.WRITE)) {
 				queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, session.getDatabase());
-				System.err.println("locky: " + this.getSQL() + ": " + queryProxy.getLockGranted());
 			}
 
 			queryProxyManager.addProxy(queryProxy);
@@ -130,6 +131,8 @@ public class Insert extends Prepared {
 
 			return queryProxy.executeUpdate(sql, transactionName, session);
 		}
+		
+		AsynchronousTests.pauseThreadIfTestingAsynchronousUpdates(table, session.getDatabase().getDatabaseSettings());
 
 		setCurrentRowNumber(0);
 		if (list.size() > 0) {

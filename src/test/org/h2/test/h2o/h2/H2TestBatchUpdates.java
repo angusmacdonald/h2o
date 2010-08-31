@@ -125,7 +125,6 @@ public class H2TestBatchUpdates extends H2TestBase {
 				ByteArrayOutputStream buff = new ByteArrayOutputStream();
 				PrintStream p = new PrintStream(buff);
 				System.setErr(p);
-				e.printStackTrace();
 			} finally {
 				System.setErr(temp);
 			}

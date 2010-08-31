@@ -1129,7 +1129,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 			}
 		} catch (RemoteException e) {
-			e.printStackTrace();
+			ErrorHandling.errorNoEvent("Successor not known: " + e.getMessage());
 		} catch (NotBoundException e) {
 			e.printStackTrace();
 		}

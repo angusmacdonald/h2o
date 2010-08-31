@@ -59,7 +59,7 @@ public class FailureTests extends MultiProcessTestBase{
 			 */
 			executeUpdateOnFirstMachine(sql);
 
-			assertTestTableExists(2);
+			assertTestTableExists(2, 0);
 			assertMetaDataExists(connections[0], 1);
 
 			sleep(2000);
@@ -104,7 +104,7 @@ public class FailureTests extends MultiProcessTestBase{
 			 */
 			executeUpdateOnFirstMachine(sql);
 
-			assertTestTableExists(2);
+			assertTestTableExists(2, 0);
 			assertMetaDataExists(connections[0], 1);
 
 			sleep(2000);
@@ -145,7 +145,7 @@ public class FailureTests extends MultiProcessTestBase{
 			 */
 			executeUpdateOnFirstMachine(sql);
 
-			assertTestTableExists(2);
+			assertTestTableExists(2, 0);
 			assertMetaDataExists(connections[0], 1);
 
 			sleep(8000); //maintenance thread should have replicated table manager meta-data.
@@ -180,7 +180,7 @@ public class FailureTests extends MultiProcessTestBase{
 			 */
 			executeUpdateOnFirstMachine(sql);
 
-			assertTestTableExists(2);
+			assertTestTableExists(2, 0);
 			assertMetaDataExists(connections[0], 1);
 
 			sleep(2000);
@@ -232,7 +232,7 @@ public class FailureTests extends MultiProcessTestBase{
 			 */
 			executeUpdateOnFirstMachine(sql);
 
-			assertTestTableExists(2);
+			assertTestTableExists(2, 0);
 			assertMetaDataExists(connections[0], 1);
 
 			sleep(2000);
@@ -280,7 +280,7 @@ public class FailureTests extends MultiProcessTestBase{
 			 */
 			executeUpdateOnSecondMachine(sql);
 
-			assertTestTableExists(2);
+			assertTestTableExists(2, 1);
 			assertMetaDataExists(connections[0], 1);
 
 			sleep(2000);
@@ -327,7 +327,7 @@ public class FailureTests extends MultiProcessTestBase{
 			 */
 			executeUpdateOnSecondMachine(sql);
 
-			assertTestTableExists(2);
+			assertTestTableExists(2, 1);
 			assertMetaDataExists(connections[0], 1);
 
 			sleep(2000);
@@ -391,7 +391,7 @@ public class FailureTests extends MultiProcessTestBase{
 
 			executeUpdateOnNthMachine(create3, 2);
 
-			assertTestTableExists(2);
+			assertTestTableExists(2, 0);
 			assertMetaDataExists(connections[0], 3);
 
 			sleep(2000);
@@ -468,7 +468,7 @@ public class FailureTests extends MultiProcessTestBase{
 
 			executeUpdateOnNthMachine(create3, 2);
 
-			assertTestTableExists(2);
+			assertTestTableExists(2, 0);
 			assertMetaDataExists(connections[0], 3);
 
 			sleep(2000);
@@ -551,7 +551,7 @@ public class FailureTests extends MultiProcessTestBase{
 
 			executeUpdateOnNthMachine(create3, 2);
 
-			assertTestTableExists(2);
+			assertTestTableExists(2, 0);
 			assertMetaDataExists(connections[0], 3);
 
 			sleep(2000);
@@ -613,7 +613,7 @@ public class FailureTests extends MultiProcessTestBase{
 
 			executeUpdateOnNthMachine(create3, 2);
 
-			assertTestTableExists(2);
+			assertTestTableExists(2, 0);
 			assertMetaDataExists(connections[0], 3);
 
 			sleep(2000);
@@ -670,7 +670,7 @@ public class FailureTests extends MultiProcessTestBase{
 
 			executeUpdateOnNthMachine(create3, 2);
 
-			assertTestTableExists(2);
+			assertTestTableExists(2, 0);
 			assertMetaDataExists(connections[0], 3);
 
 			sleep(2000);
@@ -730,7 +730,7 @@ public class FailureTests extends MultiProcessTestBase{
 
 			executeUpdateOnNthMachine(create3, 2);
 
-			assertTestTableExists(2);
+			assertTestTableExists(2, 0);
 			assertMetaDataExists(connections[0], 3);
 
 			sleep(2000);
