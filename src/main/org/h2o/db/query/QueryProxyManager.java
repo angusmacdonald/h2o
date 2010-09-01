@@ -41,13 +41,11 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
- * Manages query proxies where multiple instances are required in a single
- * transaction.
+ * Manages query proxies where multiple instances are required in a single transaction.
  * 
  * <p>
- * Situations where this is important, include: where multiple tables are on the
- * same machines, and where a table is accessed by multiple queries (meaning
- * locks only need to be taken out once).
+ * Situations where this is important, include: where multiple tables are on the same machines, and where a table is accessed by multiple
+ * queries (meaning locks only need to be taken out once).
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
@@ -59,7 +57,7 @@ public class QueryProxyManager {
 
 	private Parser parser;
 
-	private Set<DatabaseInstanceWrapper> allReplicas;
+	private Map<DatabaseInstanceWrapper, Integer> allReplicas;
 
 	private Set<TableManagerRemote> tableManagers;
 
@@ -70,8 +68,7 @@ public class QueryProxyManager {
 	private Command prepareCommand = null;
 
 	/**
-	 * The update ID for this transaction. This is the highest update ID
-	 * returned by the query proxies held in this manager.
+	 * The update ID for this transaction. This is the highest update ID returned by the query proxies held in this manager.
 	 */
 	private int updateID = 0;
 
@@ -81,10 +78,8 @@ public class QueryProxyManager {
 	 * 
 	 * @param db
 	 * @param session
-	 *            The session on which this set of queries is being executed.
-	 *            This must be the same session as the one used to execute the
-	 *            set of queries, otherwise commit won't work correctly (it
-	 *            won't be able to unlock anything).
+	 *            The session on which this set of queries is being executed. This must be the same session as the one used to execute the
+	 *            set of queries, otherwise commit won't work correctly (it won't be able to unlock anything).
 	 */
 	public QueryProxyManager(Database db, Session session) {
 		this(db, session, false);
@@ -97,22 +92,20 @@ public class QueryProxyManager {
 	 * @param db
 	 * @param systemSession
 	 * @param metaRecordProxy
-	 *            True if this proxy manager is being used to execute
-	 *            meta-records on system startup. This just adds the local
-	 *            database as the only replica.
+	 *            True if this proxy manager is being used to execute meta-records on system startup. This just adds the local database as
+	 *            the only replica.
 	 */
-	public QueryProxyManager(Database db, Session session,
-			boolean metaRecordProxy) {
+	public QueryProxyManager(Database db, Session session, boolean metaRecordProxy) {
 		this.localDatabase = db.getLocalDatabaseInstanceInWrapper();
 
 		this.transactionName = db.getTransactionNameGenerator().generateName();
 
 		this.parser = new Parser(session, true);
 
-		this.allReplicas = new HashSet<DatabaseInstanceWrapper>();
+		this.allReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
 
 		if (metaRecordProxy) {
-			this.allReplicas.add(localDatabase);
+			this.allReplicas.put(localDatabase, 0);
 		}
 
 		this.tableManagers = new HashSet<TableManagerRemote>();
@@ -124,9 +117,8 @@ public class QueryProxyManager {
 	}
 
 	/**
-	 * Adds a proxy object for one of the SQL statements being executed in this
-	 * transaction. The proxy object contains details of any locks this database
-	 * instance now holds for a given table.
+	 * Adds a proxy object for one of the SQL statements being executed in this transaction. The proxy object contains details of any locks
+	 * this database instance now holds for a given table.
 	 * 
 	 * @param proxy
 	 *            Proxy for a particular table.
@@ -134,24 +126,9 @@ public class QueryProxyManager {
 	public void addProxy(QueryProxy proxy) throws SQLException {
 
 		if (hasLock(proxy)) {
-			//throw new SQLException("Table already locked. Cannot perform query.");
+			// throw new SQLException("Table already locked. Cannot perform query.");
 
-
-			if (proxy.getReplicaLocations() != null
-					&& proxy.getReplicaLocations().size() > 0) {
-				allReplicas.addAll(proxy.getReplicaLocations());
-			} else {
-				/*
-				 * Adds the local database to the set of databases holding something
-				 * relevent to the query, IF the set is currently empty. Executed if
-				 * no replica location was specified by the query proxy, which will
-				 * happen on queries which don't involve a particular table (these
-				 * are always local anyway).
-				 */
-				allReplicas.add(parser.getSession().getDatabase()
-						.getLocalDatabaseInstanceInWrapper());
-			}
-
+		
 			if (proxy.getTableManager() != null) {
 				tableManagers.add(proxy.getTableManager());
 			}
@@ -161,18 +138,30 @@ public class QueryProxyManager {
 				// proxy update IDs
 				this.updateID = proxy.getUpdateID();
 			}
+			
+			
+			if (proxy.getReplicaLocations() != null && proxy.getReplicaLocations().size() > 0) {
+				allReplicas.putAll(proxy.getReplicaLocations());
+			} else {
+				/*
+				 * Adds the local database to the set of databases holding something relevent to the query, IF the set is currently empty.
+				 * Executed if no replica location was specified by the query proxy, which will happen on queries which don't involve a
+				 * particular table (these are always local anyway).
+				 */
+				allReplicas.put(parser.getSession().getDatabase().getLocalDatabaseInstanceInWrapper(), this.updateID);
+			}
+
+
 		}
 		queryProxies.put(proxy.getTableName(), proxy);
 	}
 
 	/**
-	 * Tests whether any locks are already held for the given table, either by
-	 * the new proxy, or by the manager itself.
+	 * Tests whether any locks are already held for the given table, either by the new proxy, or by the manager itself.
 	 * 
 	 * @param proxy
 	 *            New proxy.
-	 * @return true if locks are already held by one of the proxies; otherwise
-	 *         false.
+	 * @return true if locks are already held by one of the proxies; otherwise false.
 	 */
 	public boolean hasLock(QueryProxy proxy) {
 
@@ -190,27 +179,22 @@ public class QueryProxyManager {
 	}
 
 	/**
-	 * Commit the transaction being run through this proxy manager. Involves
-	 * contacting each machine taking part in the transaction and sending a
-	 * commit for the correct transaction name.
+	 * Commit the transaction being run through this proxy manager. Involves contacting each machine taking part in the transaction and
+	 * sending a commit for the correct transaction name.
 	 * 
 	 * @param commit
-	 *            True if the transaction is to be committed. False if the
-	 *            transaction should be rolled back.
+	 *            True if the transaction is to be committed. False if the transaction should be rolled back.
 	 * @param h2oCommit
-	 *            If the application has turned off auto-commit, this parameter
-	 *            will be false and the only commits the database will receive
-	 *            will be from the application - in this case no transaction
-	 *            name is attached to the commit because this only happens when
+	 *            If the application has turned off auto-commit, this parameter will be false and the only commits the database will receive
+	 *            will be from the application - in this case no transaction name is attached to the commit because this only happens when
 	 *            h2o is auto-committing.
 	 * @throws SQLException
 	 */
 	public void commit(boolean commit, boolean h2oCommit) throws SQLException {
 		/*
-		 * The set of replicas that were updated. This is returned to the DM
-		 * when locks are released.
+		 * The set of replicas that were updated. This is returned to the DM when locks are released.
 		 */
-		Set<DatabaseInstanceWrapper> updatedReplicas = new HashSet<DatabaseInstanceWrapper>();
+		Map<DatabaseInstanceWrapper, Integer> updatedReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
 
 		if (tableManagers.size() == 0 && allReplicas.size() > 0) {
 			// tableManagers.size() == 0 - indicates this is a local internal
@@ -222,15 +206,13 @@ public class QueryProxyManager {
 			return;
 		}
 
-		String sql = (commit ? "commit" : "rollback")
-		+ ((h2oCommit) ? " TRANSACTION " + transactionName : ";");
+		String sql = (commit ? "commit" : "rollback") + ((h2oCommit) ? " TRANSACTION " + transactionName : ";");
 
 		AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor();
 
 		boolean[] commitCheck = new boolean[allReplicas.size()];
-		boolean actionSuccessful = queryExecutor.executeQuery(sql,
-				transactionName, allReplicas, this.parser.getSession(),
-				commitCheck, true);
+		boolean actionSuccessful = queryExecutor.executeQuery(sql, transactionName, allReplicas, this.parser.getSession(), commitCheck,
+				true);
 
 		if (actionSuccessful && commit)
 			updatedReplicas = allReplicas; // For asynchronous updates this
@@ -241,8 +223,7 @@ public class QueryProxyManager {
 
 		if (Diagnostic.getLevel() == DiagnosticLevel.FULL) {
 			if (this.localDatabase.getURL().getRMIPort() > 0) {
-				System.out.println("\tQueries in transaction (on DB at "
-						+ this.localDatabase.getURL().getRMIPort() + ": '"
+				System.out.println("\tQueries in transaction (on DB at " + this.localDatabase.getURL().getRMIPort() + ": '"
 						+ transactionName + "'):");
 				if (queries != null) {
 					for (String query : queries) {
@@ -255,8 +236,7 @@ public class QueryProxyManager {
 		}
 
 		/*
-		 * If rollback was performed - throw an exception informing requesting
-		 * party of this.
+		 * If rollback was performed - throw an exception informing requesting party of this.
 		 */
 		// if (!globalCommit){
 		// if (exception != null){
@@ -277,16 +257,13 @@ public class QueryProxyManager {
 	 * @param commit
 	 *            Whether to commit or rollback (true if commit)
 	 * @param h2oCommit
-	 * @return true if the commit was successful. False if it wasn't, or if it
-	 *         was a rollback.
+	 * @return true if the commit was successful. False if it wasn't, or if it was a rollback.
 	 * @throws SQLException
 	 */
-	private boolean commitLocal(boolean commit, boolean h2oCommit)
-	throws SQLException {
+	private boolean commitLocal(boolean commit, boolean h2oCommit) throws SQLException {
 		prepare();
 
-		Command commitCommand = parser.prepareCommand((commit ? "COMMIT"
-				: "ROLLBACK")
+		Command commitCommand = parser.prepareCommand((commit ? "COMMIT" : "ROLLBACK")
 				+ ((h2oCommit) ? " TRANSACTION " + transactionName : ";"));
 		int result = commitCommand.executeUpdate();
 
@@ -303,29 +280,22 @@ public class QueryProxyManager {
 	}
 
 	/**
-	 * Release locks for every table that is part of this update. This also
-	 * updates the information on which replicas were updated (which are
-	 * currently active), hence the parameter
+	 * Release locks for every table that is part of this update. This also updates the information on which replicas were updated (which
+	 * are currently active), hence the parameter
 	 * 
 	 * @param updatedReplicas
-	 *            The set of replicas which were updated. This is NOT used to
-	 *            release locks, but to update the Table Managers state on which
+	 *            The set of replicas which were updated. This is NOT used to release locks, but to update the Table Managers state on which
 	 *            replicas are up-to-date. Null if none have changed.
 	 */
-	public void endTransaction(Set<DatabaseInstanceWrapper> updatedReplicas) {
+	public void endTransaction(Map<DatabaseInstanceWrapper, Integer> updatedReplicas) {
 		try {
 			for (TableManagerRemote tableManagerProxy : tableManagers) {
-				tableManagerProxy.releaseLock(requestingDatabase,
-						updatedReplicas, updateID);
+				tableManagerProxy.releaseLock(requestingDatabase, updatedReplicas, updateID);
 			}
 		} catch (RemoteException e) {
-			ErrorHandling
-			.exceptionError(e,
-					"Failed to release lock - couldn't contact the Table Manager");
+			ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the Table Manager");
 		} catch (MovedException e) {
-			ErrorHandling
-			.exceptionError(e,
-					"This should never happen - migrating process should hold the lock.");
+			ErrorHandling.exceptionError(e, "This should never happen - migrating process should hold the lock.");
 		}
 	}
 
@@ -344,8 +314,7 @@ public class QueryProxyManager {
 	 */
 	public void prepare() throws SQLException {
 		if (prepareCommand == null) {
-			prepareCommand = parser.prepareCommand("PREPARE COMMIT "
-					+ transactionName);
+			prepareCommand = parser.prepareCommand("PREPARE COMMIT " + transactionName);
 		}
 
 		prepareCommand.executeUpdate();
@@ -361,8 +330,8 @@ public class QueryProxyManager {
 	}
 
 	/**
-	 * Adds the current SQL query to the set of all queries that are part of
-	 * this transaction. This is only used when full diagnostics are on.
+	 * Adds the current SQL query to the set of all queries that are part of this transaction. This is only used when full diagnostics are
+	 * on.
 	 * 
 	 * @param sql
 	 */

@@ -348,7 +348,7 @@ public class FailureTests extends MultiProcessTestBase{
 
 			//createConnectionsToDatabases();
 
-			assertTrue(assertTestTableExists(connections[2], 2));
+			assertTrue(assertTestTableExists(connections[2], 2, false));
 		} catch (SQLException e) {
 			e.printStackTrace();
 			fail("Unexpected exception.");

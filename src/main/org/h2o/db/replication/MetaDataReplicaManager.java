@@ -19,7 +19,9 @@ package org.h2o.db.replication;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
@@ -157,7 +159,7 @@ public class MetaDataReplicaManager {
 		ReplicaManager replicaManager = (isSystemTable) ? systemTableReplicas : tableManagerReplicas;
 		int managerStateReplicationFactor = (isSystemTable) ? systemTableReplicationFactor : tableManagerReplicationFactor;
 
-		if (!metaDataReplicationEnabled || (replicaManager.activeSize() >= managerStateReplicationFactor)) {
+		if (!metaDataReplicationEnabled || (replicaManager.allReplicasSize() >= managerStateReplicationFactor)) {
 			return; // replication factor already reached, or replication is not
 					// enabled.
 		}
@@ -183,7 +185,7 @@ public class MetaDataReplicaManager {
 		ReplicaManager replicaManager = (isSystemTable) ? systemTableReplicas : tableManagerReplicas;
 		int managerStateReplicationFactor = (isSystemTable) ? systemTableReplicationFactor : tableManagerReplicationFactor;
 
-		if (!metaDataReplicationEnabled || (replicaManager.activeSize() >= managerStateReplicationFactor)) {
+		if (!metaDataReplicationEnabled || (replicaManager.allReplicasSize() >= managerStateReplicationFactor)) {
 			return; // replication factor already reached, or replication is not
 					// enabled.
 		}
@@ -215,7 +217,7 @@ public class MetaDataReplicaManager {
 
 					addReplicaLocation(databaseInstance, isSystemTable);
 
-					if (replicaManager.size() >= managerStateReplicationFactor)
+					if (replicaManager.allReplicasSize() >= managerStateReplicationFactor)
 						break;
 				} catch (RemoteException e) {
 					// May fail. Try next database.
@@ -239,7 +241,7 @@ public class MetaDataReplicaManager {
 		Set<TableInfo> localTableManagers = db.getSystemTableReference().getLocalTableManagers().keySet();
 
 		if (metaDataReplicationEnabled) {
-			if (replicaManager.activeSize() < managerStateReplicationFactor) {
+			if (replicaManager.allReplicasSize() < managerStateReplicationFactor) {
 
 				// now replica state here.
 				try {
@@ -319,16 +321,16 @@ public class MetaDataReplicaManager {
 	public synchronized int executeUpdate(String query, boolean isSystemTable, TableInfo tableInfo) throws SQLException {
 
 		// Loop through replicas
-		// Asynchrously send update.
+		// Asynchronously send update.
 
 		ReplicaManager replicaManager = (isSystemTable) ? systemTableReplicas : tableManagerReplicas;
 		int managerStateReplicationFactor = (isSystemTable) ? systemTableReplicationFactor : tableManagerReplicationFactor;
 
-		Set<DatabaseInstanceWrapper> replicas = replicaManager.getActiveReplicas();
-		Set<DatabaseInstanceWrapper> failed = new HashSet<DatabaseInstanceWrapper>();
+		Map<DatabaseInstanceWrapper, Integer> replicas = replicaManager.getActiveReplicas();
+		Map<DatabaseInstanceWrapper, Integer> failed = new HashMap<DatabaseInstanceWrapper, Integer>();
 
 		int result = -1;
-		for (DatabaseInstanceWrapper replica : replicas) {
+		for (DatabaseInstanceWrapper replica : replicas.keySet()) {
 
 			if (isLocal(replica)) {
 				Command sqlQuery = parser.prepareCommand(query);
@@ -344,17 +346,17 @@ public class MetaDataReplicaManager {
 				try {
 					result = replica.getDatabaseInstance().executeUpdate(query, true);
 				} catch (RemoteException e) {
-					failed.add(replica);
+					failed.put(replica, replicas.get(replica));
 				}
 			}
 		}
 
-		boolean hasRemoved = replicas.removeAll(failed);
+		boolean hasRemoved = failed.size() > 0;
 
 		if (hasRemoved) {
 			if (!isSystemTable) {
 				// Remove table replica information from the system table.
-				for (DatabaseInstanceWrapper replica : failed) {
+				for (DatabaseInstanceWrapper replica : failed.keySet()) {
 					try {
 						this.db.getSystemTable().removeTableManagerStateReplica(tableInfo, replica.getURL());
 					} catch (RemoteException e1) {
@@ -368,7 +370,7 @@ public class MetaDataReplicaManager {
 					"Removed one or more replica locations because they couldn't be contacted for the last update.");
 		}
 
-		replicaManager.remove(failed);
+		replicaManager.remove(failed.keySet());
 
 		// Check that there is a sufficient replication factor.
 		if (!isSystemTable && metaDataReplicationEnabled && (replicas.size() < managerStateReplicationFactor)) {
@@ -435,7 +437,7 @@ public class MetaDataReplicaManager {
 	 * @return
 	 */
 	public Set<DatabaseInstanceWrapper> getTableManagerReplicaLocations() {
-		return this.tableManagerReplicas.getActiveReplicas();
+		return new HashSet<DatabaseInstanceWrapper>(this.tableManagerReplicas.getActiveReplicas().keySet());
 	}
 
 	private boolean isLocal(DatabaseInstanceWrapper replica) {
@@ -445,9 +447,9 @@ public class MetaDataReplicaManager {
 	public String[] getReplicaLocations(boolean isSystemTable) {
 
 		if (isSystemTable) {
-			return systemTableReplicas.getReplicaLocations();
+			return systemTableReplicas.getReplicaLocationsAsStrings();
 		} else {
-			return tableManagerReplicas.getReplicaLocations();
+			return tableManagerReplicas.getReplicaLocationsAsStrings();
 		}
 	}
 

@@ -19,6 +19,7 @@ package org.h2o.db.interfaces;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.Set;
 
 import org.h2o.db.id.DatabaseURL;
@@ -102,7 +103,7 @@ public interface TableManagerRemote extends H2ORemote, Migratable {
 	 * @throws MovedException
 	 */
 	public void releaseLock(DatabaseInstanceWrapper requestingDatabase,
-			Set<DatabaseInstanceWrapper> updatedReplicas, int updateID)
+			Map<DatabaseInstanceWrapper, Integer> updatedReplicas, int updateID)
 			throws RemoteException, MovedException;
 
 	/**

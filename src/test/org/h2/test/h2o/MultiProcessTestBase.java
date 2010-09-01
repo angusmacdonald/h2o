@@ -331,18 +331,22 @@ public class MultiProcessTestBase extends TestBase {
 	 * @return true if the connection was active. false if the connection wasn't open.
 	 * @throws SQLException
 	 */
+	protected boolean assertTestTableExists(int expectedEntries, int databaseNumber, boolean localOnly) throws SQLException {
+		return assertTestTableExists(connections[databaseNumber], expectedEntries, localOnly);
+	}
 	protected boolean assertTestTableExists(int expectedEntries, int databaseNumber) throws SQLException {
-		return assertTestTableExists(connections[databaseNumber], expectedEntries);
+		return assertTestTableExists(connections[databaseNumber], expectedEntries, true);
 	}
 
 	/**
 	 * Select all entries from the test table. Checks that the number of entries in the table
 	 * matches the number of entries expected. Matches the contents of the first two entries as well.
 	 * @param expectedEntries The number of entries that should be in the test table.
+	 * @param localOnly 
 	 * @return true if the connection was active. false if the connection wasn't open.
 	 * @throws SQLException
 	 */
-	protected boolean assertTestTableExists(Connection connnection, int expectedEntries) throws SQLException {
+	protected boolean assertTestTableExists(Connection connnection, int expectedEntries, boolean localOnly) throws SQLException {
 		Statement s = null;
 		ResultSet rs = null;
 
@@ -356,7 +360,11 @@ public class MultiProcessTestBase extends TestBase {
 
 		try {
 			s = connnection.createStatement();
-			rs = s.executeQuery("SELECT LOCAL ONLY * FROM " + "TEST" + ";");
+			if (localOnly){
+				rs = s.executeQuery("SELECT LOCAL ONLY * FROM " + "TEST" + ";");
+			} else {
+				rs = s.executeQuery("SELECT * FROM " + "TEST" + ";");
+			}
 
 			int actualEntries = 0;
 			while(rs.next()){
@@ -378,6 +386,9 @@ public class MultiProcessTestBase extends TestBase {
 		}
 
 		return true;
+	}
+	protected boolean assertTestTableExists(Connection connnection, int expectedEntries) throws SQLException {
+		return assertTestTableExists(connnection, expectedEntries, true);
 	}
 
 	protected boolean assertTest2TableExists(Connection connnection, int expectedEntries) throws SQLException {

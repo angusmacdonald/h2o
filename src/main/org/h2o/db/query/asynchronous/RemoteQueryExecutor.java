@@ -41,6 +41,8 @@ public class RemoteQueryExecutor extends Thread {
 
 	private boolean commitOperation;
 
+	private int updateID;
+
 	/**
 	 * 
 	 * @param query
@@ -49,6 +51,8 @@ public class RemoteQueryExecutor extends Thread {
 	 * @param instanceID
 	 *            If the transaction has to be rolled back this ID is used to
 	 *            identify the instance in question.
+	 * @param updateID 
+	 * 			  The current update ID of the table involved in this query.
 	 * @param parser
 	 *            Only used to execute the transaction if local is true.
 	 * @param local
@@ -60,7 +64,7 @@ public class RemoteQueryExecutor extends Thread {
 	 *            get ready for the eventual commit.
 	 */
 	public RemoteQueryExecutor(String query, String transactionName,
-			DatabaseInstanceWrapper replica, int instanceID, Parser parser,
+			DatabaseInstanceWrapper replica, int updateID, int instanceID, Parser parser,
 			boolean local, boolean commitOperation) {
 		this.query = query;
 		this.transactionName = transactionName;
@@ -69,6 +73,7 @@ public class RemoteQueryExecutor extends Thread {
 		this.parser = parser;
 		this.local = local;
 		this.commitOperation = commitOperation;
+		this.updateID = updateID;
 	}
 
 	public QueryResult executeQuery() {
@@ -107,10 +112,10 @@ public class RemoteQueryExecutor extends Thread {
 				result = command.executeUpdate();
 			}
 
-			qr = new QueryResult(result, instanceID);
+			qr = new QueryResult(result, instanceID, updateID);
 
 		} catch (SQLException e) {
-			qr = new QueryResult(e, instanceID);
+			qr = new QueryResult(e, instanceID, updateID);
 		}
 
 		return qr;
@@ -124,12 +129,12 @@ public class RemoteQueryExecutor extends Thread {
 			int result = databaseWrapper.getDatabaseInstance().execute(query,
 					transactionName, commitOperation);
 
-			qr = new QueryResult(result, instanceID);
+			qr = new QueryResult(result, instanceID, updateID);
 
 		} catch (RemoteException e) {
-			qr = new QueryResult(new SQLException(e.getMessage()), instanceID);
+			qr = new QueryResult(new SQLException(e.getMessage()), instanceID, updateID);
 		} catch (SQLException e) {
-			qr = new QueryResult(e, instanceID);
+			qr = new QueryResult(e, instanceID, updateID);
 		}
 
 		return qr;

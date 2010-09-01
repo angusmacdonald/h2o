@@ -19,6 +19,8 @@ package org.h2o.db.query.asynchronous;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -34,16 +36,14 @@ import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 public class AsynchronousQueryExecutor {
 
-	private static ExecutorService queryExecutor = Executors
-			.newCachedThreadPool(new QueryThreadFactory() {
-				public Thread newThread(Runnable r) {
-					return new Thread(r);
-				}
-			});
+	private static ExecutorService queryExecutor = Executors.newCachedThreadPool(new QueryThreadFactory() {
+		public Thread newThread(Runnable r) {
+			return new Thread(r);
+		}
+	});
 
 	/**
-	 * Aysnchronously executes the query on each database instance that requires
-	 * the update.
+	 * Aysnchronously executes the query on each database instance that requires the update.
 	 * 
 	 * @param query
 	 *            Query to be executed.
@@ -52,16 +52,13 @@ public class AsynchronousQueryExecutor {
 	 * @param session
 	 *            The session we are in - used to create the query parser.
 	 * @param commit
-	 *            The array that will be used to store (for each replica)
-	 *            whether the transaction was executed successfully.
+	 *            The array that will be used to store (for each replica) whether the transaction was executed successfully.
 	 * @param commitOperation
-	 *            True if this is a COMMIT, false if it is another type of
-	 *            query. If it is false a PREPARE command will be executed to
-	 *            get ready for the eventual commit.
+	 *            True if this is a COMMIT, false if it is another type of query. If it is false a PREPARE command will be executed to get
+	 *            ready for the eventual commit.
 	 * @return True if everything was executed successfully (a global commit).
 	 */
-	public boolean executeQuery(String query, String transactionNameForQuery,
-			Set<DatabaseInstanceWrapper> replicasInvolvedInQuery,
+	public boolean executeQuery(String query, String transactionNameForQuery, Map<DatabaseInstanceWrapper, Integer> allReplicas,
 			Session session, boolean[] commit, boolean commitOperation) {
 
 		Parser parser = new Parser(session, true);
@@ -69,17 +66,15 @@ public class AsynchronousQueryExecutor {
 		List<FutureTask<QueryResult>> executingQueries = new LinkedList<FutureTask<QueryResult>>();
 
 		int i = 0;
-		for (DatabaseInstanceWrapper replicaToExecuteQueryOn : replicasInvolvedInQuery) {
+		for (Entry<DatabaseInstanceWrapper, Integer> replicaToExecuteQueryOn : allReplicas.entrySet()) {
 
 			String localURL = session.getDatabase().getURL().getOriginalURL();
 
 			// Decide whether the query is to be executed locall or remotely.
-			boolean isReplicaLocal = (replicaToExecuteQueryOn == null || localURL
-					.equals(replicaToExecuteQueryOn.getURL().getOriginalURL()));
+			boolean isReplicaLocal = (replicaToExecuteQueryOn == null || localURL.equals(replicaToExecuteQueryOn.getKey().getURL().getOriginalURL()));
 
 			// Start execution of queries.
-			executeQueryOnSpecifiedReplica(query, transactionNameForQuery,
-					replicaToExecuteQueryOn, isReplicaLocal, parser,
+			executeQueryOnSpecifiedReplica(query, transactionNameForQuery, replicaToExecuteQueryOn.getKey(), replicaToExecuteQueryOn.getValue(), isReplicaLocal, parser,
 					executingQueries, i, commitOperation);
 			i++;
 		}
@@ -89,14 +84,12 @@ public class AsynchronousQueryExecutor {
 	}
 
 	/**
-	 * Execute a query on the specified database instance by creating a new
-	 * asynchronous callable executor ({@link Executors}, {@link Future}).
+	 * Execute a query on the specified database instance by creating a new asynchronous callable executor ({@link Executors},
+	 * {@link Future}).
 	 * 
 	 * <p>
-	 * This method begins execution of the queries but does not actually return
-	 * their results (because it is asynchronous). See
-	 * {@link QueryProxy#waitUntilRemoteQueriesFinish(boolean[], List)} for the
-	 * result.
+	 * This method begins execution of the queries but does not actually return their results (because it is asynchronous). See
+	 * {@link QueryProxy#waitUntilRemoteQueriesFinish(boolean[], List)} for the result.
 	 * 
 	 * @param sql
 	 *            The query to be executed
@@ -104,39 +97,30 @@ public class AsynchronousQueryExecutor {
 	 *            The name of the transaction in which this query is in.
 	 * @param replicaToExecuteQueryOn
 	 *            The database instance where this query will be sent.
+	 * @param updateID 
 	 * @param isReplicaLocal
-	 *            Whether this database instance is the local instance, or it is
-	 *            remote.
+	 *            Whether this database instance is the local instance, or it is remote.
 	 * @param parser
 	 *            The parser to be used to parser the query if it is local.
 	 * @param executingQueries
-	 *            The list of queries that have already been sent. The latest
-	 *            query will be added to this list.
+	 *            The list of queries that have already been sent. The latest query will be added to this list.
 	 * @param i
-	 *            A basic counter used to identify which execution has
-	 *            failed/passed when the results of queries are returned.
+	 *            A basic counter used to identify which execution has failed/passed when the results of queries are returned.
 	 * @param commitOperation
-	 *            True if this is a COMMIT, false if it is another type of
-	 *            query. If it is false a PREPARE command will be executed to
-	 *            get ready for the eventual commit.
+	 *            True if this is a COMMIT, false if it is another type of query. If it is false a PREPARE command will be executed to get
+	 *            ready for the eventual commit.
 	 */
-	private void executeQueryOnSpecifiedReplica(String sql,
-			String transactionName,
-			DatabaseInstanceWrapper replicaToExecuteQueryOn,
-			boolean isReplicaLocal, Parser parser,
-			List<FutureTask<QueryResult>> executingQueries, int i,
-			boolean commitOperation) {
+	private void executeQueryOnSpecifiedReplica(String sql, String transactionName, DatabaseInstanceWrapper replicaToExecuteQueryOn,
+			Integer updateID, boolean isReplicaLocal, Parser parser, List<FutureTask<QueryResult>> executingQueries, int i, boolean commitOperation) {
 
-		final RemoteQueryExecutor qt = new RemoteQueryExecutor(sql,
-				transactionName, replicaToExecuteQueryOn, i, parser,
-				isReplicaLocal, commitOperation);
+		final RemoteQueryExecutor qt = new RemoteQueryExecutor(sql, transactionName, replicaToExecuteQueryOn, updateID, i, parser, isReplicaLocal,
+				commitOperation);
 
-		FutureTask<QueryResult> future = new FutureTask<QueryResult>(
-				new Callable<QueryResult>() {
-					public QueryResult call() {
-						return qt.executeQuery();
-					}
-				});
+		FutureTask<QueryResult> future = new FutureTask<QueryResult>(new Callable<QueryResult>() {
+			public QueryResult call() {
+				return qt.executeQuery();
+			}
+		});
 
 		executingQueries.add(future);
 		queryExecutor.execute(future);
@@ -144,18 +128,15 @@ public class AsynchronousQueryExecutor {
 	}
 
 	/**
-	 * Waits on the result of a number of asynchronous queries to be completed
-	 * and returned.
+	 * Waits on the result of a number of asynchronous queries to be completed and returned.
 	 * 
 	 * @param commit
-	 *            The array that will be used to store (for each replica)
-	 *            whether the transaction was executed successfully.
+	 *            The array that will be used to store (for each replica) whether the transaction was executed successfully.
 	 * @param remoteQueries
 	 *            The list of tasks currently being executed.
 	 * @return True if everything was executed successfully (a global commit).
 	 */
-	private boolean waitUntilRemoteQueriesFinish(boolean[] commit,
-			List<FutureTask<QueryResult>> remoteQueries) {
+	private boolean waitUntilRemoteQueriesFinish(boolean[] commit, List<FutureTask<QueryResult>> remoteQueries) {
 		if (remoteQueries.size() == 0)
 			return true; // the commit value has not changed.
 
@@ -182,8 +163,7 @@ public class AsynchronousQueryExecutor {
 		boolean globalCommit = true;
 
 		/*
-		 * All of the queries have now completed. Iterate through these queries
-		 * and check that they executed successfully.
+		 * All of the queries have now completed. Iterate through these queries and check that they executed successfully.
 		 */
 		for (FutureTask<QueryResult> completedQuery : completedQueries) {
 			QueryResult asyncResult = null;

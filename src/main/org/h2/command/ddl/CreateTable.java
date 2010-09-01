@@ -10,6 +10,7 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.h2.command.Prepared;
@@ -315,8 +316,7 @@ public class CreateTable extends SchemaCommand {
 
 		// XXX its a hack to pass in replica locations like this, and it should
 		// be unncessesary.
-		Set<DatabaseInstanceWrapper> replicaLocations = this.session.getDatabase().getMetaDataReplicaManager()
-				.getTableManagerReplicaLocations();
+		Set<DatabaseInstanceWrapper> replicaLocations = this.session.getDatabase().getMetaDataReplicaManager().getTableManagerReplicaLocations();
 		replicaLocations.add(session.getDatabase().getLocalDatabaseInstanceInWrapper());
 		boolean successful = systemTableReference.addTableInformation(tableManager, tableInfo, replicaLocations);
 
@@ -344,7 +344,7 @@ public class CreateTable extends SchemaCommand {
 	 */
 	private void createReplicas(TableInfo tableInfo, String transactionName) throws RemoteException, SQLException, MovedException {
 
-		Set<DatabaseInstanceWrapper> replicaLocations = queryProxy.getRemoteReplicaLocations();
+		Map<DatabaseInstanceWrapper, Integer> replicaLocations = queryProxy.getRemoteReplicaLocations();
 
 		if (replicaLocations != null && replicaLocations.size() > 0) {
 			/*

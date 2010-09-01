@@ -26,14 +26,18 @@ public class QueryResult {
 
 	private int instanceID;
 
-	public QueryResult(int result, int instanceID) {
+	private int updateID;
+
+	public QueryResult(int result, int instanceID, int updateID) {
 		this.result = result;
 		this.instanceID = instanceID;
+		this.updateID = updateID;
 	}
 
-	public QueryResult(SQLException exception, int instanceID) {
+	public QueryResult(SQLException exception, int instanceID, int updateID) {
 		this.exception = exception;
 		this.instanceID = instanceID;
+		this.updateID = updateID;
 	}
 
 	public int getResult() {
@@ -48,4 +52,7 @@ public class QueryResult {
 		return instanceID;
 	}
 
+	public int getUpdateID(){
+		return updateID;
+	}
 }

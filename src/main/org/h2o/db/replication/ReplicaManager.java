@@ -18,6 +18,7 @@
 package org.h2o.db.replication;
 
 import java.io.Serializable;
+import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -25,12 +26,12 @@ import java.util.Map;
 import java.util.Set;
 
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
+import org.h2o.db.query.locking.LockType;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 /**
- * Stores the location of each replica for a give table, including the update ID
- * for each of these replicas (stating the last time a replica was updated), and
- * the set of replicas that are currently active (i.e. up-to-date).
+ * Stores the location of each replica for a give table, including the update ID for each of these replicas (stating the last time a replica
+ * was updated), and the set of replicas that are currently active (i.e. up-to-date).
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
@@ -39,8 +40,7 @@ public class ReplicaManager implements Serializable {
 	private static final long serialVersionUID = 6064010173578943054L;
 
 	/**
-	 * Set of databases which hold replicas for this table. All replica
-	 * locations are held here.
+	 * Set of databases which hold replicas for this table. All replica locations are held here.
 	 * 
 	 * <p>
 	 * Key: Location of the replica
@@ -50,10 +50,9 @@ public class ReplicaManager implements Serializable {
 	private Map<DatabaseInstanceWrapper, Integer> allReplicas;
 
 	/**
-	 * The set of replicas that are currently active - i.e. up-to-date. Queries
-	 * can only be executed on this set of replicas.
+	 * The set of replicas that are currently active - i.e. up-to-date. Queries can only be executed on this set of replicas.
 	 */
-	private Set<DatabaseInstanceWrapper> activeReplicas;
+	private Map<DatabaseInstanceWrapper, Integer> activeReplicas;
 
 	/**
 	 * The database instance which is running this Table Manager.
@@ -67,12 +66,17 @@ public class ReplicaManager implements Serializable {
 
 	public ReplicaManager() {
 		this.allReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
-		this.activeReplicas = new HashSet<DatabaseInstanceWrapper>();
+		this.activeReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
 		this.primaryLocation = null;
 
 		this.lastUpdate = 0;
 	}
 
+	/**
+	 * Add a database to the active set of replicas. It will be given the
+	 * last update ID recorded.
+	 * @param replicaLocation
+	 */
 	public void add(DatabaseInstanceWrapper replicaLocation) {
 
 		assert replicaLocation != null;
@@ -82,65 +86,53 @@ public class ReplicaManager implements Serializable {
 		}
 
 		allReplicas.put(replicaLocation, lastUpdate);
-		activeReplicas.add(replicaLocation);
+		activeReplicas.put(replicaLocation, lastUpdate);
 	}
 
+	/**
+	 * Add a set of databases to the active set of replicas. This just calls
+	 * the {@link #add(DatabaseInstanceWrapper)} method on each replica location
+	 * in the list.
+	 * @param replicaLocations a number of replica locations.
+	 */
 	public void add(List<DatabaseInstanceWrapper> replicaLocations) {
 
 		assert replicaLocations != null;
 
-		if (primaryLocation == null && replicaLocations.size() > 0) {
-			primaryLocation = replicaLocations.get(0);
+		if (replicaLocations.size() == 0) {
+			return;
 		}
 
 		for (DatabaseInstanceWrapper diw : replicaLocations) {
-			allReplicas.put(diw, lastUpdate);
+			add (diw);
 		}
-
-		activeReplicas.addAll(replicaLocations);
 	}
 
 	/**
-	 * @param instance
-	 * @param updateID
+	 * @return The number of replicas for this table. Some may not currently be up-to-date.
 	 */
-	public void add(DatabaseInstanceWrapper instance, int updateID) {
-		allReplicas.put(instance, updateID);
-	}
-
-	/**
-	 * @return
-	 */
-	public int size() {
+	public int allReplicasSize() {
 		return allReplicas.size();
 	}
 
 	/**
-	 * @return
+	 * Called when a new request is made to this table. The update ID is incremented and returned to the
+	 * requesting party if a write lock has been granted.
+	 * @param lockGranted 
+	 * @return	The update ID. This is first incremented by one if a write lock has been obtained.
 	 */
-	public int activeSize() {
-		return activeReplicas.size();
-	}
-
-	/**
-	 * @return
-	 */
-	public DatabaseInstanceWrapper getPrimary() {
-		return primaryLocation;
-	}
-
-	/**
-	 * @return
-	 */
-	public int getNewUpdateID() {
-		this.lastUpdate++;
+	public int getNewUpdateID(LockType lockGranted) {
+		if (lockGranted.equals(LockType.WRITE)){
+			this.lastUpdate++;
+		}
 		return this.lastUpdate;
+
 	}
 
 	/**
 	 * @return
 	 */
-	public Set<DatabaseInstanceWrapper> getActiveReplicas() {
+	public Map<DatabaseInstanceWrapper, Integer> getActiveReplicas() {
 		return activeReplicas;
 	}
 
@@ -167,16 +159,14 @@ public class ReplicaManager implements Serializable {
 	}
 
 	/**
-	 * Finish an update by revising the set of replica locations with new
-	 * information on:
+	 * Finish an update by revising the set of replica locations with new information on:
 	 * 
 	 * <p>
 	 * The updateID of the last update committed on each replica.
 	 * <p>
 	 * The set of replicas which are deemed active.
 	 */
-	public void completeUpdate(Set<DatabaseInstanceWrapper> updatedReplicas,
-			int updateID, boolean synchronousUpdate) {
+	public void completeUpdate(Map<DatabaseInstanceWrapper, Integer> updatedReplicas, int updateID, boolean synchronousUpdate) {
 
 		if (synchronousUpdate) {
 			// Don't change anything.
@@ -186,11 +176,10 @@ public class ReplicaManager implements Serializable {
 				activeReplicas = updatedReplicas;
 
 				/*
-				 * Loop through each replica which was updated, re-adding them
-				 * into the replicaLocations hashmap along with the new
+				 * Loop through each replica which was updated, re-adding them into the replicaLocations hashmap along with the new
 				 * updateID.
 				 */
-				for (DatabaseInstanceWrapper instance : updatedReplicas) {
+				for (DatabaseInstanceWrapper instance : updatedReplicas.keySet()) {
 					if (allReplicas.containsKey(instance)) {
 						Integer previousID = allReplicas.get(instance);
 
@@ -200,8 +189,8 @@ public class ReplicaManager implements Serializable {
 						allReplicas.put(instance, updateID);
 
 					} // In many cases it won't contain this key, but another
-						// table (part of the same transaction) was on this
-						// machine.
+					// table (part of the same transaction) was on this
+					// machine.
 				}
 			}
 		}
@@ -210,8 +199,7 @@ public class ReplicaManager implements Serializable {
 	/**
 	 * Whether every replica contains the most recent copy of the data.
 	 * 
-	 * @return True if every replica is deemed active - false, if some are
-	 *         inactive because they don't contain the latest updates.
+	 * @return True if every replica is deemed active - false, if some are inactive because they don't contain the latest updates.
 	 */
 	public boolean areReplicasConsistent() {
 		return (activeReplicas.size() == allReplicas.size());
@@ -237,20 +225,14 @@ public class ReplicaManager implements Serializable {
 	/**
 	 * @return
 	 */
-	public String[] getReplicaLocations() {
+	public String[] getReplicaLocationsAsStrings() {
 		String[] locations = new String[activeReplicas.size()];
 
 		int i = 0;
 
-		locations[i++] = primaryLocation.getURL().getURLwithRMIPort(); // the
-																		// primary
-																		// location
-																		// should
-																		// always
-																		// be
-																		// first.
+		locations[i++] = primaryLocation.getURL().getURLwithRMIPort(); // the primary location should always be first.
 
-		for (DatabaseInstanceWrapper r : activeReplicas) {
+		for (DatabaseInstanceWrapper r : activeReplicas.keySet()) {
 			if (r.equals(primaryLocation))
 				continue;
 			locations[i++] = r.getURL().getURLwithRMIPort();
@@ -260,7 +242,13 @@ public class ReplicaManager implements Serializable {
 	}
 
 	public void remove(Set<DatabaseInstanceWrapper> failed) {
-		this.activeReplicas.removeAll(failed);
+		for (DatabaseInstanceWrapper wrapper: failed){
+			this.activeReplicas.remove(wrapper);
+		}
+	}
+
+	public boolean contains(DatabaseInstanceWrapper databaseInstanceWrapper) throws RemoteException {
+		return activeReplicas.containsKey(databaseInstanceWrapper);
 	}
 
 }
