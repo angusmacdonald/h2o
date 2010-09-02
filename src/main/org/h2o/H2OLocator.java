@@ -33,10 +33,9 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
- * This class starts a new H2O locator server. If this is the first locator
- * server to be started an H2O database descriptor file can also be created.
- * This file specifies the location of the newly created locator server, and is
- * used to allow new database instances to make contact.
+ * This class starts a new H2O locator server. If this is the first locator server to be started an H2O database descriptor file can also be
+ * created. This file specifies the location of the newly created locator server, and is used to allow new database instances to make
+ * contact.
  * 
  * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
  */
@@ -52,28 +51,20 @@ public class H2OLocator {
 	 * 
 	 * @param args
 	 *            <ul>
-	 *            <li><em>-n</em>. Specify the name of the database for which
-	 *            this locator server is running.</li>
-	 *            <li><em>-p</em>. The port on which the locator server is to
-	 *            run.</li>
-	 *            <li><em>-d</em>. Optional. Create a database descriptor file
-	 *            which includes the location of this locator server.
-	 *            <li><em>-f</em>. Optional. Specify the folder into which the
-	 *            descriptor file will be generated. The default is the folder
-	 *            this class is being run from. If this option is not chosen you
-	 *            must add the location of this locator server to an existing
+	 *            <li><em>-n</em>. Specify the name of the database for which this locator server is running.</li>
+	 *            <li><em>-p</em>. The port on which the locator server is to run.</li>
+	 *            <li><em>-d</em>. Optional. Create a database descriptor file which includes the location of this locator server.
+	 *            <li><em>-f</em>. Optional. Specify the folder into which the descriptor file will be generated. The default is the folder
+	 *            this class is being run from. If this option is not chosen you must add the location of this locator server to an existing
 	 *            descriptor file.</li>
 	 *            </ul>
-	 *            <em>Example: StartLocatorServer -lMyFirstDatabase -p20000 -d</em>
-	 *            . This creates a new locator server for the database called
-	 *            <em>MyFirstDatabase</em> on port 20000, and creates a
-	 *            descriptor file specifying this in the local folder.
+	 *            <em>Example: StartLocatorServer -lMyFirstDatabase -p20000 -d</em> . This creates a new locator server for the database
+	 *            called <em>MyFirstDatabase</em> on port 20000, and creates a descriptor file specifying this in the local folder.
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException {
 
-		Map<String, String> arguments = CommandLineArgs
-				.parseCommandLineArgs(args);
+		Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
 
 		String databaseName = arguments.get("-n");
 		String port = arguments.get("-p");
@@ -81,14 +72,12 @@ public class H2OLocator {
 		String defaultLocation = arguments.get("-f"); // e.g. "db_data/wrapper"
 		defaultLocation = removeParenthesis(defaultLocation);
 
-		H2OLocator locator = new H2OLocator(databaseName,
-				Integer.parseInt(port), createDescriptor, defaultLocation);
+		H2OLocator locator = new H2OLocator(databaseName, Integer.parseInt(port), createDescriptor, defaultLocation);
 
 		locator.start(false);
 	}
 
-	public H2OLocator(String databaseName, int port, boolean createDescriptor,
-			String defaultLocation) {
+	public H2OLocator(String databaseName, int port, boolean createDescriptor, String defaultLocation) {
 		Diagnostic.setLevel(DiagnosticLevel.FINAL);
 
 		this.databaseName = databaseName;
@@ -101,32 +90,25 @@ public class H2OLocator {
 
 		String locatorLocation = NetUtils.getLocalAddress() + ":" + port;
 		String descriptorFileLocation = null;
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL,
-				"Starting locator server.");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting locator server.");
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Port: " + port);
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Name: " + databaseName);
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Locator location: "
-				+ locatorLocation);
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Locator location: " + locatorLocation);
 
 		if (!createDescriptor) {
-			Diagnostic
-					.traceNoEvent(
-							DiagnosticLevel.FINAL,
-							"IMPORTANT NOTE: The location of this server must appear in the database descriptor file.");
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL,
+					"IMPORTANT NOTE: The location of this server must appear in the database descriptor file.");
 		} else {
 			try {
 				descriptorFileLocation = createDescriptorFile(locatorLocation);
 			} catch (Exception e) {
-				ErrorHandling
-						.exceptionError(
-								e,
-								"Failed to create descriptor file. If you manually create this file the location of this server must be included.");
+				ErrorHandling.exceptionError(e,
+						"Failed to create descriptor file. If you manually create this file the location of this server must be included.");
 			}
 		}
 
-		LocatorServer server = new LocatorServer(Integer.parseInt(port),
-				databaseName);
+		LocatorServer server = new LocatorServer(Integer.parseInt(port), databaseName);
 
 		if (startInNewThead) {
 			server.start();
@@ -137,11 +119,9 @@ public class H2OLocator {
 		return descriptorFileLocation;
 	}
 
-	private String createDescriptorFile(String locatorLocation)
-			throws FileNotFoundException, IOException {
+	private String createDescriptorFile(String locatorLocation) throws FileNotFoundException, IOException {
 
-		String descriptorFilename = defaultLocation + File.separator
-				+ databaseName + ".h2od";
+		String descriptorFilename = defaultLocation + File.separator + databaseName + ".h2od";
 
 		File f = new File(defaultLocation);
 

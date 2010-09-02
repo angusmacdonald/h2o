@@ -40,16 +40,16 @@ public class QueryResult {
 		this.updateID = updateID;
 	}
 
-	public int getResult() {
-		return result;
-	}
-
 	public SQLException getException() {
 		return exception;
 	}
 
 	public int getInstanceID() {
 		return instanceID;
+	}
+
+	public int getResult() {
+		return result;
 	}
 
 	public int getUpdateID(){

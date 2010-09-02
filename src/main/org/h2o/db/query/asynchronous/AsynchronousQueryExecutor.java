@@ -21,7 +21,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -43,7 +42,7 @@ public class AsynchronousQueryExecutor {
 	});
 
 	/**
-	 * Aysnchronously executes the query on each database instance that requires the update.
+	 * Asynchronously executes the query on each database instance that requires the update.
 	 * 
 	 * @param query
 	 *            Query to be executed.
@@ -65,22 +64,44 @@ public class AsynchronousQueryExecutor {
 
 		List<FutureTask<QueryResult>> executingQueries = new LinkedList<FutureTask<QueryResult>>();
 
+		int expectedUpdateID = getExpectedUpdateID(allReplicas);
+		int updatesNeededBeforeCommit = allReplicas.size(); // fully synchronous updates required.
+
 		int i = 0;
 		for (Entry<DatabaseInstanceWrapper, Integer> replicaToExecuteQueryOn : allReplicas.entrySet()) {
 
 			String localURL = session.getDatabase().getURL().getOriginalURL();
 
-			// Decide whether the query is to be executed locall or remotely.
-			boolean isReplicaLocal = (replicaToExecuteQueryOn == null || localURL.equals(replicaToExecuteQueryOn.getKey().getURL().getOriginalURL()));
+			// Decide whether the query is to be executed local or remotely.
+			boolean isReplicaLocal = (replicaToExecuteQueryOn == null || localURL.equals(replicaToExecuteQueryOn.getKey().getURL()
+					.getOriginalURL()));
 
 			// Start execution of queries.
-			executeQueryOnSpecifiedReplica(query, transactionNameForQuery, replicaToExecuteQueryOn.getKey(), replicaToExecuteQueryOn.getValue(), isReplicaLocal, parser,
-					executingQueries, i, commitOperation);
+			executeQueryOnSpecifiedReplica(query, transactionNameForQuery, replicaToExecuteQueryOn.getKey(),
+					replicaToExecuteQueryOn.getValue(), isReplicaLocal, parser, executingQueries, i, commitOperation);
 			i++;
 		}
 
 		// Wait for all queries to execute, then return the result.
-		return waitUntilRemoteQueriesFinish(commit, executingQueries);
+		return waitUntilRemoteQueriesFinish(commit, executingQueries, updatesNeededBeforeCommit);
+	}
+
+	/**
+	 * Get the update ID that must be reached on the Table Manager for the update to commit. If it is not reached there has been an
+	 * out-of-order query execution and the replica must be removed.
+	 * 
+	 * @param allReplicas
+	 * @return
+	 */
+	private int getExpectedUpdateID(Map<DatabaseInstanceWrapper, Integer> allReplicas) {
+		int expectedUpdateID = 0;
+
+		for (Integer updateID : allReplicas.values()) {
+			if (updateID > expectedUpdateID) {
+				expectedUpdateID = updateID;
+			}
+		}
+		return expectedUpdateID;
 	}
 
 	/**
@@ -97,24 +118,25 @@ public class AsynchronousQueryExecutor {
 	 *            The name of the transaction in which this query is in.
 	 * @param replicaToExecuteQueryOn
 	 *            The database instance where this query will be sent.
-	 * @param updateID 
+	 * @param updateID
 	 * @param isReplicaLocal
 	 *            Whether this database instance is the local instance, or it is remote.
 	 * @param parser
 	 *            The parser to be used to parser the query if it is local.
 	 * @param executingQueries
 	 *            The list of queries that have already been sent. The latest query will be added to this list.
-	 * @param i
+	 * @param instanceID
 	 *            A basic counter used to identify which execution has failed/passed when the results of queries are returned.
 	 * @param commitOperation
 	 *            True if this is a COMMIT, false if it is another type of query. If it is false a PREPARE command will be executed to get
 	 *            ready for the eventual commit.
 	 */
 	private void executeQueryOnSpecifiedReplica(String sql, String transactionName, DatabaseInstanceWrapper replicaToExecuteQueryOn,
-			Integer updateID, boolean isReplicaLocal, Parser parser, List<FutureTask<QueryResult>> executingQueries, int i, boolean commitOperation) {
+			Integer updateID, boolean isReplicaLocal, Parser parser, List<FutureTask<QueryResult>> executingQueries, int instanceID,
+			boolean commitOperation) {
 
-		final RemoteQueryExecutor qt = new RemoteQueryExecutor(sql, transactionName, replicaToExecuteQueryOn, updateID, i, parser, isReplicaLocal,
-				commitOperation);
+		final RemoteQueryExecutor qt = new RemoteQueryExecutor(sql, transactionName, replicaToExecuteQueryOn, updateID, instanceID, parser,
+				isReplicaLocal, commitOperation);
 
 		FutureTask<QueryResult> future = new FutureTask<QueryResult>(new Callable<QueryResult>() {
 			public QueryResult call() {
@@ -134,9 +156,12 @@ public class AsynchronousQueryExecutor {
 	 *            The array that will be used to store (for each replica) whether the transaction was executed successfully.
 	 * @param remoteQueries
 	 *            The list of tasks currently being executed.
+	 * @param updatesNeededBeforeCommit
+	 *            The number of replicas that must be updated for this query to return.
 	 * @return True if everything was executed successfully (a global commit).
 	 */
-	private boolean waitUntilRemoteQueriesFinish(boolean[] commit, List<FutureTask<QueryResult>> remoteQueries) {
+	private boolean waitUntilRemoteQueriesFinish(boolean[] commit, List<FutureTask<QueryResult>> remoteQueries,
+			int updatesNeededBeforeCommit) {
 		if (remoteQueries.size() == 0)
 			return true; // the commit value has not changed.
 
@@ -145,7 +170,7 @@ public class AsynchronousQueryExecutor {
 		/*
 		 * Wait until all remote queries have been completed.
 		 */
-		while (remoteQueries.size() > 0) {
+		while (remoteQueries.size() > 0 && completedQueries.size() < updatesNeededBeforeCommit) {
 			for (int y = 0; y < remoteQueries.size(); y++) {
 				FutureTask<QueryResult> remoteQuery = remoteQueries.get(y);
 
@@ -175,8 +200,7 @@ public class AsynchronousQueryExecutor {
 				e.printStackTrace();
 			}
 
-			if (asyncResult.getException() == null) { // If the query executed
-														// successfully.
+			if (asyncResult.getException() == null) { // If the query executed successfully.
 				int result = asyncResult.getResult();
 				int x = asyncResult.getInstanceID();
 				if (result != 0) {

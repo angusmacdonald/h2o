@@ -128,7 +128,6 @@ public class QueryProxyManager {
 		if (hasLock(proxy)) {
 			// throw new SQLException("Table already locked. Cannot perform query.");
 
-		
 			if (proxy.getTableManager() != null) {
 				tableManagers.add(proxy.getTableManager());
 			}
@@ -138,8 +137,7 @@ public class QueryProxyManager {
 				// proxy update IDs
 				this.updateID = proxy.getUpdateID();
 			}
-			
-			
+
 			if (proxy.getReplicaLocations() != null && proxy.getReplicaLocations().size() > 0) {
 				allReplicas.putAll(proxy.getReplicaLocations());
 			} else {
@@ -150,7 +148,6 @@ public class QueryProxyManager {
 				 */
 				allReplicas.put(parser.getSession().getDatabase().getLocalDatabaseInstanceInWrapper(), this.updateID);
 			}
-
 
 		}
 		queryProxies.put(proxy.getTableName(), proxy);
@@ -197,11 +194,12 @@ public class QueryProxyManager {
 		Map<DatabaseInstanceWrapper, Integer> updatedReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
 
 		if (tableManagers.size() == 0 && allReplicas.size() > 0) {
-			// tableManagers.size() == 0 - indicates this is a local internal
-			// database operation (e.g. the TCP server doing something).
-			// allReplicas.size() > 0 - confirms it is an internal operation.
-			// otherwise it may be a COMMIT from the application or a prepared
-			// statement.
+			/*
+			 * tableManagers.size() == 0 - indicates this is a local internal database operation (e.g. the TCP server doing something).
+			 * allReplicas.size() > 0 - confirms it is an internal operation. otherwise it may be a COMMIT from the application or a
+			 * prepared statement.
+			 */
+
 			commitLocal(commit, h2oCommit);
 			return;
 		}
@@ -215,9 +213,7 @@ public class QueryProxyManager {
 				true);
 
 		if (actionSuccessful && commit)
-			updatedReplicas = allReplicas; // For asynchronous updates this
-		// should check for each replicas
-		// success.
+			updatedReplicas = allReplicas; // For asynchronous updates this should check for each replicas success.
 
 		endTransaction(updatedReplicas);
 

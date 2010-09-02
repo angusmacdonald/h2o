@@ -11,7 +11,6 @@ import java.sql.SQLException;
 import org.h2.command.Command;
 import org.h2.command.Prepared;
 import org.h2.constant.ErrorCode;
-import org.h2.engine.Constants;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
@@ -117,10 +116,7 @@ public class Insert extends Prepared {
 		/*
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
-		if (isRegularTable() && (queryProxy.getNumberOfReplicas() > 1 || !isReplicaLocal(queryProxy))) { // &&
-			// queryProxy.getNumberOfReplicas()
-			// >
-			// 1
+		if (isRegularTable() && (queryProxy.getNumberOfReplicas() > 1 || !isReplicaLocal(queryProxy))) { // && queryProxy.getNumberOfReplicas() > 1
 			String sql;
 
 			if (isPreparedStatement()) {

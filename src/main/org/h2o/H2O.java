@@ -41,26 +41,19 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
- * This class starts an instance of an H2O database. It can be run from the
- * command line (see the main method for applicable arguments), or
- * programmatically. The instance can start in standalone mode, or as part of a
- * more customisable set-up:
+ * This class starts an instance of an H2O database. It can be run from the command line (see the main method for applicable arguments), or
+ * programmatically. The instance can start in standalone mode, or as part of a more customisable set-up:
  * <ul>
- * <li>Standalone start-up. A single H2O instance will be started with its own
- * locator server. This requires minimum options at initialisation. This option
- * restricts the H2O locator server to the same process as the H2O instance, and
- * is not recommended for multi-machine database set-ups.</li>
- * <li>Custom start-up. An H2O instance will be started and will connect to the
- * database system via a database descriptor file. This file should already
- * exist, and should specify the location of an H2O Locator server. The locator
- * server should already be running at the address specified. For information on
- * how to create a descriptor file and naming server see the {@link H2OLocator}
- * class.</li>
+ * <li>Standalone start-up. A single H2O instance will be started with its own locator server. This requires minimum options at
+ * initialisation. This option restricts the H2O locator server to the same process as the H2O instance, and is not recommended for
+ * multi-machine database set-ups.</li>
+ * <li>Custom start-up. An H2O instance will be started and will connect to the database system via a database descriptor file. This file
+ * should already exist, and should specify the location of an H2O Locator server. The locator server should already be running at the
+ * address specified. For information on how to create a descriptor file and naming server see the {@link H2OLocator} class.</li>
  * </ul>
  * <p>
- * If the H2O web interface is required please use one of the constructors that
- * requires a web port as a parameter. If this interface is not required, use
- * another constructor.
+ * If the H2O web interface is required please use one of the constructors that requires a web port as a parameter. If this interface is not
+ * required, use another constructor.
  * 
  * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
  */
@@ -77,64 +70,48 @@ public class H2O {
 	 * 
 	 * @param args
 	 *            <ul>
-	 *            <li><em>-n</em>. Specify the name of the database for which
-	 *            this locator server is running.</li>
-	 *            <li><em>-p</em>. The port on which the databases TCP server is
-	 *            to run.</li>
-	 *            <li><em>-w</em>. Specify that a web port should be opened and
-	 *            the web interface should be started. The web port must be
+	 *            <li><em>-n</em>. Specify the name of the database for which this locator server is running.</li>
+	 *            <li><em>-p</em>. The port on which the databases TCP server is to run.</li>
+	 *            <li><em>-w</em>. Specify that a web port should be opened and the web interface should be started. The web port must be
 	 *            specified.</li>
 	 *            </ul>
-	 *            <li><em>-d</em>. Specify the location of the database
-	 *            descriptor file. Can be local on disk, or remote via HTTP. If
-	 *            no descriptor file is specified the database will start up its
-	 *            own locator server locally, and create a descriptor file for
-	 *            the purpose. Essentially, this creates an entirely new
-	 *            database without complex setup.</li></ul> <li><em>-f</em>.
-	 *            Optional. Specify the folder in which the database will be
-	 *            created. The default is the folder this class is being run
-	 *            from.
-	 *            <em>Example: StartDatabase -nMyFirstDatabase -p9999 -d'config\MyFirstDatabase.h2od'</em>
-	 *            . This creates a new database instance for the database called
-	 *            <em>MyFirstDatabase</em> on port 9999, and initializes by
-	 *            connecting to the locator files specified in the file
-	 *            <em>'config\MyFirstDatabase.h2od'</em>.
+	 *            <li><em>-d</em>. Specify the location of the database descriptor file. Can be local on disk, or remote via HTTP. If no
+	 *            descriptor file is specified the database will start up its own locator server locally, and create a descriptor file for
+	 *            the purpose. Essentially, this creates an entirely new database without complex setup.</li></ul> <li><em>-f</em>.
+	 *            Optional. Specify the folder in which the database will be created. The default is the folder this class is being run
+	 *            from. <em>Example: StartDatabase -nMyFirstDatabase -p9999 -d'config\MyFirstDatabase.h2od'</em> . This creates a new
+	 *            database instance for the database called <em>MyFirstDatabase</em> on port 9999, and initializes by connecting to the
+	 *            locator files specified in the file <em>'config\MyFirstDatabase.h2od'</em>.
 	 * @throws StartupException
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws StartupException {
 		Diagnostic.setLevel(DiagnosticLevel.FINAL);
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL,
-				"Starting H2O Server Instance.");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting H2O Server Instance.");
 
-		Map<String, String> arguments = CommandLineArgs
-				.parseCommandLineArgs(args);
+		Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
 		H2O db = parseArguments(arguments);
 
 		db.startDatabase();
 	}
 
 	/**
-	 * Start a new H2O instance using the specified descriptor file to find an
-	 * existing, running, locator server. This also starts H2O's web interface.
+	 * Start a new H2O instance using the specified descriptor file to find an existing, running, locator server. This also starts H2O's web
+	 * interface.
 	 * 
 	 * @param databaseName
-	 *            The name of the database being created. This is the global
-	 *            name (it is the same for all database instances that are to be
-	 *            part of this database world (i.e. with the same global
-	 *            schema).
+	 *            The name of the database being created. This is the global name (it is the same for all database instances that are to be
+	 *            part of this database world (i.e. with the same global schema).
 	 * @param port
 	 *            The port on which this databases TCP server is being run on.
 	 * @param webPort
 	 *            The port on which this databases web interface is to be run.
 	 * @param databaseDescriptorLocation
-	 *            The location of the database decscriptor file for this
-	 *            database world.
+	 *            The location of the database decscriptor file for this database world.
 	 * @param defaultFolder
 	 *            The folder in which database files will be created.
 	 */
-	public H2O(String databaseName, int port, int webPort,
-			String defaultFolder, String databaseDescriptorLocation) {
+	public H2O(String databaseName, int port, int webPort, String defaultFolder, String databaseDescriptorLocation) {
 		this.databaseName = databaseName;
 		this.port = port + "";
 		this.webPort = webPort + "";
@@ -143,40 +120,31 @@ public class H2O {
 	}
 
 	/**
-	 * Start a new H2O instance using the specified descriptor file to find an
-	 * existing, running, locator server. This option does not start H2O's web
-	 * interface.
+	 * Start a new H2O instance using the specified descriptor file to find an existing, running, locator server. This option does not start
+	 * H2O's web interface.
 	 * 
 	 * @param databaseName
-	 *            The name of the database being created. This is the global
-	 *            name (it is the same for all database instances that are to be
-	 *            part of this database world (i.e. with the same global
-	 *            schema).
+	 *            The name of the database being created. This is the global name (it is the same for all database instances that are to be
+	 *            part of this database world (i.e. with the same global schema).
 	 * @param port
 	 *            The port on which this databases TCP server is being run on.
 	 * @param databaseDescriptorLocation
-	 *            The location of the database decscriptor file for this
-	 *            database world.
+	 *            The location of the database decscriptor file for this database world.
 	 * @param defaultFolder
 	 *            The folder in which database files will be created.
 	 */
-	public H2O(String databaseName, int port, String defaultFolder,
-			String databaseDescriptorLocation) {
+	public H2O(String databaseName, int port, String defaultFolder, String databaseDescriptorLocation) {
 		this(databaseName, port, 0, defaultFolder, databaseDescriptorLocation);
 	}
 
 	/**
-	 * Start a local H2O instance with a running TCP server <strong>and web
-	 * interface </strong>. This will automatically start a local locator file,
-	 * and doesn't need a descriptor file to run. A descriptor file will be
-	 * created if you subsequently want to start another H2O instance as part of
-	 * the same database.
+	 * Start a local H2O instance with a running TCP server <strong>and web interface </strong>. This will automatically start a local
+	 * locator file, and doesn't need a descriptor file to run. A descriptor file will be created if you subsequently want to start another
+	 * H2O instance as part of the same database.
 	 * 
 	 * @param databaseName
-	 *            The name of the database being created. This is the global
-	 *            name (it is the same for all database instances that are to be
-	 *            part of this database world (i.e. with the same global
-	 *            schema).
+	 *            The name of the database being created. This is the global name (it is the same for all database instances that are to be
+	 *            part of this database world (i.e. with the same global schema).
 	 * @param port
 	 *            The port on which this databases TCP server is being run on.
 	 * @param webPort
@@ -189,17 +157,13 @@ public class H2O {
 	}
 
 	/**
-	 * Start a local H2O instance with a running TCP server, <strong>but without
-	 * a web interface</strong>. This will automatically start a local locator
-	 * file, and doesn't need a descriptor file to run. A descriptor file will
-	 * be created if you subsequently want to start another H2O instance as part
-	 * of the same database.
+	 * Start a local H2O instance with a running TCP server, <strong>but without a web interface</strong>. This will automatically start a
+	 * local locator file, and doesn't need a descriptor file to run. A descriptor file will be created if you subsequently want to start
+	 * another H2O instance as part of the same database.
 	 * 
 	 * @param databaseName
-	 *            The name of the database being created. This is the global
-	 *            name (it is the same for all database instances that are to be
-	 *            part of this database world (i.e. with the same global
-	 *            schema).
+	 *            The name of the database being created. This is the global name (it is the same for all database instances that are to be
+	 *            part of this database world (i.e. with the same global schema).
 	 * @param port
 	 *            The port on which this databases TCP server is being run on.
 	 * @param defaultFolder
@@ -209,8 +173,7 @@ public class H2O {
 		this(databaseName, port, 0, defaultFolder, null);
 	}
 
-	private static H2O parseArguments(Map<String, String> arguments)
-			throws StartupException {
+	private static H2O parseArguments(Map<String, String> arguments) throws StartupException {
 
 		String databaseName = null;
 		String port = null;
@@ -221,9 +184,7 @@ public class H2O {
 
 		if (arguments.size() == 0) {
 			// Fill with default arguments.
-			Diagnostic
-					.traceNoEvent(DiagnosticLevel.FINAL,
-							"No user arguments were specified. Creating a database with default arguments.");
+			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "No user arguments were specified. Creating a database with default arguments.");
 
 			databaseName = "DefaultH2ODatabase";
 			port = "2121";
@@ -261,8 +222,7 @@ public class H2O {
 			}
 		}
 
-		return new H2O(databaseName, Integer.parseInt(port), webPort,
-				defaultLocation, descriptorFileLocation);
+		return new H2O(databaseName, Integer.parseInt(port), webPort, defaultLocation, descriptorFileLocation);
 	}
 
 	/**
@@ -273,8 +233,7 @@ public class H2O {
 		if (descriptorFileLocation == null) { // A new locator server should be
 												// started.
 			int locatorPort = Integer.parseInt(port) + 1;
-			H2OLocator locator = new H2OLocator(databaseName, locatorPort,
-					true, defaultLocation);
+			H2OLocator locator = new H2OLocator(databaseName, locatorPort, true, defaultLocation);
 			descriptorFileLocation = locator.start(true);
 		}
 
@@ -285,39 +244,31 @@ public class H2O {
 
 	private String generateDatabaseURL() {
 		if (defaultLocation != null) {
-			if (!defaultLocation.endsWith("/")
-					&& !defaultLocation.endsWith("\\")) { // add a trailing
-															// slash if it isn't
-															// already there.
+			if (!defaultLocation.endsWith("/") && !defaultLocation.endsWith("\\")) { // add a trailing
+																						// slash if it isn't
+																						// already there.
 				defaultLocation = defaultLocation + "/";
 			}
 		}
 
 		String hostname = NetUtils.getLocalAddress();
-		String databaseLocation = ((defaultLocation != null) ? defaultLocation
-				: "") + databaseName + port;
+		String databaseLocation = ((defaultLocation != null) ? defaultLocation : "") + databaseName + port;
 
 		String databaseURL = createDatabaseURL(port, hostname, databaseLocation);
 		/*
 		 * Display to user.
 		 */
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Database Name: "
-				+ databaseName);
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Database Name: " + databaseName);
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Port: " + port);
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Hostname: " + hostname);
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Generated JDBC URL: "
-				+ databaseURL);
-		Diagnostic
-				.traceNoEvent(DiagnosticLevel.FINAL,
-						"Specified Descriptor File Location: "
-								+ descriptorFileLocation);
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Generated JDBC URL: " + databaseURL);
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Specified Descriptor File Location: " + descriptorFileLocation);
 
 		return databaseURL;
 	}
 
 	/**
-	 * Call the H2O server class with the required parameters to initialize the
-	 * TCP server.
+	 * Call the H2O server class with the required parameters to initialize the TCP server.
 	 * 
 	 * @param databaseURL
 	 * @param arguments
@@ -370,26 +321,21 @@ public class H2O {
 	}
 
 	/**
-	 * Connects to the server and initializes the database at a particular
-	 * location on disk.
+	 * Connects to the server and initializes the database at a particular location on disk.
 	 * 
 	 * @param databaseURL
 	 */
 	private void initializeDatabase(String databaseURL) {
 
-		LocalH2OProperties properties = new LocalH2OProperties(
-				DatabaseURL.parseURL(databaseURL));
-		
+		LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(databaseURL));
+
 		try {
 			properties.loadProperties();
 		} catch (IOException e1) {
 			properties.createNewFile();
-			properties.setProperty("diagnosticLevel",
-					DiagnosticLevel.NONE.toString());
+			properties.setProperty("diagnosticLevel", DiagnosticLevel.NONE.toString());
 		}
-		
-			
-		
+
 		// Overwrite these properties regardless of whether properties file
 		// exists or not.
 		properties.setProperty("descriptor", descriptorFileLocation);
@@ -404,9 +350,7 @@ public class H2O {
 		}
 
 		try {
-			DriverManager.getConnection(databaseURL,
-					PersistentSystemTable.USERNAME,
-					PersistentSystemTable.PASSWORD);
+			DriverManager.getConnection(databaseURL, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -415,8 +359,7 @@ public class H2O {
 	}
 
 	/**
-	 * Set the primary database URL in the browser to equal the URL of this
-	 * database.
+	 * Set the primary database URL in the browser to equal the URL of this database.
 	 * 
 	 * @param databaseURL
 	 */
@@ -443,12 +386,9 @@ public class H2O {
 				i++;
 			}
 
-			serverProperties.setProperty(i + "",
-					"QuickStart-H2O-Database|org.h2.Driver|" + databaseURL
-							+ "|sa");
+			serverProperties.setProperty(i + "", "QuickStart-H2O-Database|org.h2.Driver|" + databaseURL + "|sa");
 
-			OutputStream out = FileUtils.openFileOutputStream(
-					getPropertiesFileName(), false);
+			OutputStream out = FileUtils.openFileOutputStream(getPropertiesFileName(), false);
 			serverProperties.store(out, Constants.SERVER_PROPERTIES_TITLE);
 
 			out.close();
@@ -483,8 +423,7 @@ public class H2O {
 		return text;
 	}
 
-	protected static String createDatabaseURL(String port, String hostname,
-			String databaseLocation) {
+	protected static String createDatabaseURL(String port, String hostname, String databaseLocation) {
 		if (!databaseLocation.startsWith("/")) {
 			databaseLocation = "/" + databaseLocation;
 		}
