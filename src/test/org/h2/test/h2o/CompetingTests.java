@@ -19,13 +19,10 @@ package org.h2.test.h2o;
 
 import static org.junit.Assert.fail;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 
 import junit.framework.Assert;
 
-import org.h2o.db.manager.PersistentSystemTable;
 import org.junit.Test;
 
 

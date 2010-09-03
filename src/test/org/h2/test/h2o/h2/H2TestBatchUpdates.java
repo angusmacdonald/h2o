@@ -6,7 +6,7 @@
  */
 package org.h2.test.h2o.h2;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -20,7 +20,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.test.TestAll;
-import org.h2.test.TestBase;
 import org.h2.tools.DeleteDbFiles;
 import org.h2o.locator.server.LocatorServer;
 import org.junit.After;

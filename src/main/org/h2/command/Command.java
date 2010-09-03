@@ -20,7 +20,6 @@ import org.h2.result.LocalResult;
 import org.h2.result.ResultInterface;
 import org.h2.util.MemoryUtils;
 import org.h2.util.ObjectArray;
-import org.h2o.db.query.QueryProxy;
 import org.h2o.db.query.QueryProxyManager;
 
 /**

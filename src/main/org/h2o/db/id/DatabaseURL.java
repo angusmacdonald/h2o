@@ -185,8 +185,7 @@ public class DatabaseURL implements Serializable {
 			String dbLocation, boolean tcp, boolean mem, boolean systemTable,
 			int rmiPort) {
 		this.originalURL = originalURL;
-		this.newURL = "jdbc:h2:" + ((systemTable) ? "sm:" : "")
-				+ ((tcp) ? "tcp://" + hostname + ":" + port + "/" : "")
+		this.newURL = "jdbc:h2:" + ((tcp) ? "tcp://" + hostname + ":" + port + "/" : "")
 				+ ((mem) ? "mem:" : "") + dbLocation;
 		this.urlWithoutSM = "jdbc:h2:"
 				+ ((tcp) ? "tcp://" + hostname + ":" + port + "/" : "")
@@ -228,13 +227,6 @@ public class DatabaseURL implements Serializable {
 	 */
 	public String getURL() {
 		return newURL;
-	}
-
-	/**
-	 * @return
-	 */
-	public String getUrlMinusSM() {
-		return urlWithoutSM;
 	}
 
 	/**

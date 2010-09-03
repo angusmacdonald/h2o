@@ -6,7 +6,7 @@
  */
 package org.h2.test.h2o.h2;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

@@ -24,8 +24,8 @@
 package org.h2o.autonomic.settings;
 
 import java.io.IOException;
-import java.util.Map.Entry;
 import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 

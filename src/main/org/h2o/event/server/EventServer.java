@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import org.h2o.event.gui.BasicEventGui;
 import org.h2o.event.server.handlers.EventFileWriter;
 import org.h2o.event.server.handlers.EventHandler;
 

@@ -21,9 +21,7 @@ import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import org.h2.engine.Database;
 import org.h2.engine.Session;
@@ -159,16 +157,11 @@ public class QueryProxy implements Serializable {
 		}
 
 		/*
-		 * Whether an individual replica is able to commit. Used to stop ROLLBACK calls being made to unavailable replicas.
-		 */
-		boolean[] commit = new boolean[allReplicas.size()];
-
-		/*
 		 * Execute the query. Send the query to each DB instance holding a replica.
 		 */
 
 		AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor();
-		boolean globalCommit = queryExecutor.executeQuery(query, transactionNameForQuery, allReplicas, session, commit, false);
+		boolean globalCommit = queryExecutor.executeQuery(query, transactionNameForQuery, allReplicas, session, false);
 
 		H2OTest.rmiFailure(); // Test code to simulate the failure of DB
 								// instances at this point.

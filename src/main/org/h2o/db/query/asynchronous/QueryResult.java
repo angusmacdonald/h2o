@@ -19,24 +19,32 @@ package org.h2o.db.query.asynchronous;
 
 import java.sql.SQLException;
 
+import org.h2o.db.id.DatabaseURL;
+
+/**
+ * Encapsulates the result of executing a query. This class is returned as the result
+ * of the {@link AsynchronousQueryExecutor} class.
+ *
+ * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
+ */
 public class QueryResult {
 	private int result;
 
 	private SQLException exception = null;
 
-	private int instanceID;
+	private DatabaseURL databaseURL;
 
 	private int updateID;
 
-	public QueryResult(int result, int instanceID, int updateID) {
+	public QueryResult(int result, DatabaseURL databaseURL, int updateID) {
 		this.result = result;
-		this.instanceID = instanceID;
+		this.databaseURL = databaseURL;
 		this.updateID = updateID;
 	}
 
-	public QueryResult(SQLException exception, int instanceID, int updateID) {
+	public QueryResult(SQLException exception, DatabaseURL databaseURL, int updateID) {
 		this.exception = exception;
-		this.instanceID = instanceID;
+		this.databaseURL = databaseURL;
 		this.updateID = updateID;
 	}
 
@@ -44,8 +52,8 @@ public class QueryResult {
 		return exception;
 	}
 
-	public int getInstanceID() {
-		return instanceID;
+	public DatabaseURL getURL() {
+		return databaseURL;
 	}
 
 	public int getResult() {

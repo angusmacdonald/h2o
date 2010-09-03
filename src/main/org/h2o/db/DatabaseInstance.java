@@ -245,7 +245,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	 */
 	@Override
 	public int hashCode() {
-		int result = 31 + ((databaseURL.getUrlMinusSM() == null) ? 0 : databaseURL.getUrlMinusSM().hashCode());
+		int result = 31 + ((databaseURL.getURL() == null) ? 0 : databaseURL.getURL().hashCode());
 		return result;
 	}
 
@@ -263,10 +263,10 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 		if (getClass() != obj.getClass())
 			return false;
 		DatabaseInstance other = (DatabaseInstance) obj;
-		if (databaseURL.getUrlMinusSM() == null) {
-			if (other.databaseURL.getUrlMinusSM() != null)
+		if (databaseURL.getURL() == null) {
+			if (other.databaseURL.getURL() != null)
 				return false;
-		} else if (!databaseURL.getUrlMinusSM().equals(other.databaseURL.getUrlMinusSM()))
+		} else if (!databaseURL.getURL().equals(other.databaseURL.getURL()))
 			return false;
 		return true;
 	}

@@ -358,11 +358,9 @@ public class CreateTable extends SchemaCommand {
 
 			// Get the set of only remote replica locations.
 
-			boolean[] commit = new boolean[replicaLocations.size()];
-
 			// Execute query.
 			AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor();
-			queryExecutor.executeQuery(sql, transactionName, replicaLocations, session, commit, false);
+			queryExecutor.executeQuery(sql, transactionName, replicaLocations, session, false);
 		}
 	}
 

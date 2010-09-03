@@ -47,8 +47,6 @@ import org.h2.value.ValueString;
 import org.h2o.db.query.QueryProxyManager;
 import org.h2o.db.remote.IDatabaseRemote;
 
-import uk.ac.standrews.cs.nds.util.PrettyPrinter;
-
 /**
  * A session represents an embedded database connection. When using the server
  * mode, this object resides on the server side and communicates with a

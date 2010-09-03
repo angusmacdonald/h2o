@@ -20,7 +20,6 @@ package org.h2o.db.interfaces;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Map;
-import java.util.Set;
 
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;

@@ -19,28 +19,19 @@ package org.h2o.event.gui;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Label;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Queue;
 
-import javax.swing.WindowConstants;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.WindowConstants;
 import javax.swing.border.TitledBorder;
 
 import org.h2o.db.id.DatabaseURL;
-import org.h2o.event.DatabaseStates;
 import org.h2o.event.client.H2OEvent;
-import org.h2o.event.server.EventServer;
-import org.h2o.event.server.handlers.EventHandler;
-
-import uk.ac.standrews.cs.nds.util.Diagnostic;
-import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 
 /**

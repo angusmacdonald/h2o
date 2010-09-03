@@ -12,8 +12,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.Locale;
-import java.util.Properties;
 import java.util.Map.Entry;
+import java.util.Properties;
 
 import org.h2.constant.ErrorCode;
 import org.h2.jdbc.JdbcSQLException;

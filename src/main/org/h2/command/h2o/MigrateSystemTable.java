@@ -2,6 +2,7 @@ package org.h2.command.h2o;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
+
 import org.h2.engine.Session;
 import org.h2.schema.Schema;
 

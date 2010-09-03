@@ -24,7 +24,6 @@ import java.net.Socket;
 import java.net.SocketException;
 
 import org.h2o.event.client.H2OEvent;
-import org.h2o.event.server.handlers.EventFileWriter;
 import org.h2o.event.server.handlers.EventHandler;
 
 /**

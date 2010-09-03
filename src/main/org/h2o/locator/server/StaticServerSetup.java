@@ -18,7 +18,6 @@
 package org.h2o.locator.server;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.h2o.db.id.DatabaseURL;

@@ -208,9 +208,7 @@ public class QueryProxyManager {
 
 		AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor();
 
-		boolean[] commitCheck = new boolean[allReplicas.size()];
-		boolean actionSuccessful = queryExecutor.executeQuery(sql, transactionName, allReplicas, this.parser.getSession(), commitCheck,
-				true);
+		boolean actionSuccessful = queryExecutor.executeQuery(sql, transactionName, allReplicas, this.parser.getSession(), true);
 
 		if (actionSuccessful && commit)
 			updatedReplicas = allReplicas; // For asynchronous updates this should check for each replicas success.

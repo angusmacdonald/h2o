@@ -3,9 +3,8 @@ import java.awt.BorderLayout;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import javax.swing.JTextPane;
-
 import javax.swing.JFrame;
+import javax.swing.JTextPane;
 import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 

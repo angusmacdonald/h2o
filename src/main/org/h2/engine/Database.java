@@ -84,6 +84,7 @@ import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.manager.interfaces.SystemTableRemote;
 import org.h2o.db.manager.monitorthreads.MetaDataReplicationThread;
 import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.asynchronous.AsynchronousQueryExecutor;
 import org.h2o.db.remote.ChordRemote;
 import org.h2o.db.remote.IChordInterface;
 import org.h2o.db.remote.IDatabaseRemote;
@@ -220,6 +221,8 @@ public class Database implements DataHandler {
 	 */
 	private ChordRemote databaseRemote;
 
+	private AsynchronousQueryExecutor asynchronousQueryExecutor;
+	
 	private User h2oSchemaUser;
 	private Session h2oSession;
 
@@ -2943,6 +2946,10 @@ public class Database implements DataHandler {
 		Diagnostic.setTimestampDelimiterFlag(false);
 
 		ErrorHandling.setTimestampFlag(false);
+	}
+
+	public AsynchronousQueryExecutor getAsynchronousQueryExecutor() {
+		return asynchronousQueryExecutor;
 	}
 
 }

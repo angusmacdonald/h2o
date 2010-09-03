@@ -17,11 +17,13 @@
  */
 package org.h2.test.h2o;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+
 import org.h2.engine.Constants;
 import org.h2.test.h2o.util.StartDatabaseInstance;
 import org.h2o.locator.server.LocatorServer;
