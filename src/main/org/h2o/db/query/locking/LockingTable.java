@@ -22,6 +22,8 @@ import java.util.Set;
 
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
+
 /**
  * Represents a locking table for a given table - this is maintained by the
  * table's Table Manager.
@@ -82,7 +84,7 @@ public class LockingTable implements ILockingTable {
 	 * @see org.h2.h2o.util.ILockingTable#releaseLock(org.h2.h2o.comms.remote.
 	 * DatabaseInstanceRemote)
 	 */
-	public synchronized boolean releaseLock(
+	public synchronized LockType releaseLock(
 			DatabaseInstanceWrapper requestingMachine) {
 
 		// Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName +
@@ -91,13 +93,14 @@ public class LockingTable implements ILockingTable {
 
 		if (writeLock != null && writeLock.equals(requestingMachine)) {
 			writeLock = null;
-			return true;
+			return LockType.WRITE;
 		} else if (readLocks.remove(requestingMachine)) {
-			return true;
+			return LockType.READ;
 		}
 
-		// ErrorHandling.hardError("UNEXPECTED CODE PATH: FAILED TO RELEASE LOCK.");
-		return false;
+		ErrorHandling.errorNoEvent("Unexpected code path.");
+		
+		return null; // should never get to this.
 	}
 
 }

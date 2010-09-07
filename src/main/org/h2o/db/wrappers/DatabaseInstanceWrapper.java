@@ -139,4 +139,11 @@ public class DatabaseInstanceWrapper implements Serializable,
 
 	}
 
+	@Override
+	public String toString() {
+		return "DatabaseInstanceWrapper [databaseURL=" + databaseURL + "]";
+	}
+	
+	
+
 }

@@ -20,13 +20,17 @@ package org.h2o.db.replication;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
+import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
+
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * Stores the location of each replica for a give table, including the update ID for each of these replicas (stating the last time a replica
@@ -58,22 +62,21 @@ public class ReplicaManager implements Serializable {
 	 */
 	private DatabaseInstanceWrapper primaryLocation;
 
-	/**
-	 * Number given to the last update to a replica.
-	 */
-	private int lastUpdate;
+	//	/**
+	//	 * Number given to the last update to a replica.
+	//	 */
+	//	private int lastUpdate;
 
 	public ReplicaManager() {
 		this.allReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
 		this.activeReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
 		this.primaryLocation = null;
 
-		this.lastUpdate = 0;
 	}
 
 	/**
-	 * Add a database to the active set of replicas. It will be given the
-	 * last update ID recorded.
+	 * Add a new replica to the active set of replicas. It will be given the latest update ID recorded.
+	 * 
 	 * @param replicaLocation
 	 */
 	public void add(DatabaseInstanceWrapper replicaLocation) {
@@ -84,15 +87,30 @@ public class ReplicaManager implements Serializable {
 			primaryLocation = replicaLocation;
 		}
 
-		allReplicas.put(replicaLocation, lastUpdate);
-		activeReplicas.put(replicaLocation, lastUpdate);
+		addToAllReplicas(replicaLocation, getCurrentUpdateID());
+		activeReplicas.put(replicaLocation, getCurrentUpdateID());
+	}
+
+	private Integer addToAllReplicas(DatabaseInstanceWrapper replicaLocation, Integer newUpdateID) {
+
+		return getAllReplicas().put(replicaLocation, newUpdateID);
+	}
+
+	public int getCurrentUpdateID() {
+		for (Integer updateID: activeReplicas.values()){
+
+			return updateID; // all the update IDs will be the same because all these replicas are active.
+		}
+
+		return 0; // will return this for inserts where there are not yet any active replicas.
 	}
 
 	/**
-	 * Add a set of databases to the active set of replicas. This just calls
-	 * the {@link #add(DatabaseInstanceWrapper)} method on each replica location
-	 * in the list.
-	 * @param replicaLocations a number of replica locations.
+	 * Add a set of databases to the active set of replicas. This just calls the {@link #add(DatabaseInstanceWrapper)} method on each
+	 * replica location in the list.
+	 * 
+	 * @param replicaLocations
+	 *            a number of replica locations.
 	 */
 	public void add(List<DatabaseInstanceWrapper> replicaLocations) {
 
@@ -103,7 +121,7 @@ public class ReplicaManager implements Serializable {
 		}
 
 		for (DatabaseInstanceWrapper diw : replicaLocations) {
-			add (diw);
+			add(diw);
 		}
 	}
 
@@ -111,22 +129,9 @@ public class ReplicaManager implements Serializable {
 	 * @return The number of replicas for this table. Some may not currently be up-to-date.
 	 */
 	public int allReplicasSize() {
-		return allReplicas.size();
+		return getAllReplicas().size();
 	}
 
-	/**
-	 * Called when a new request is made to this table. The update ID is incremented and returned to the
-	 * requesting party if a write lock has been granted.
-	 * @param lockGranted 
-	 * @return	The update ID. This is first incremented by one if a write lock has been obtained.
-	 */
-	public int getNewUpdateID(LockType lockGranted) {
-		if (lockGranted.equals(LockType.WRITE)){
-			this.lastUpdate++;
-		}
-		return this.lastUpdate;
-
-	}
 
 	/**
 	 * @return
@@ -141,58 +146,103 @@ public class ReplicaManager implements Serializable {
 	 * @param createFullDatabaseLocation
 	 */
 	public void remove(DatabaseInstanceRemote dbInstance) {
-		allReplicas.remove(dbInstance);
+		getAllReplicas().remove(dbInstance);
 		activeReplicas.remove(dbInstance);
-		// XXX the following code logic may not work when an instance is being
-		// removed then added with a new value.
-		// if (primaryLocation.equals(dbInstance)){
-		// if (replicaLocations.size()==0){
-		// ErrorHandling.hardError("All replicas have now been removed. DROP TABLE should have been called.");
-		// } else {
-		// ErrorHandling.hardError("New primary location needed - this isn't implemented yet.");
-		// //TODO implement.
-		// }
-		//
-		// }
-
 	}
+
 
 	/**
 	 * Finish an update by revising the set of replica locations with new information on:
-	 * 
 	 * <p>
 	 * The updateID of the last update committed on each replica.
 	 * <p>
 	 * The set of replicas which are deemed active.
+	 * @param commit True if all replicas are committing.
+	 * 
+	 * @param committedQueries	The queries which are to be committed.
+	 * @param updateID	The update ID expected for each of the replicas to be able to commit.
+	 * @param synchronousUpdate
+	 * @return	The set of queries that were actually committed. Those that were on incoming list of 
+	 * committed queries will be returned if their update IDs match up. If they don't appear on the returned list
+	 * then they are no longer active replicas.
 	 */
-	public void completeUpdate(Map<DatabaseInstanceWrapper, Integer> updatedReplicas, int updateID, boolean synchronousUpdate) {
+	public List<CommitResult> completeUpdate(boolean commit, List<CommitResult> committedQueries, int updateID, boolean synchronousUpdate) {
 
-		if (synchronousUpdate) {
-			// Don't change anything.
+		List<CommitResult> successfullyCommittedQueries = new LinkedList<CommitResult>(); // queries that were successfully committed here.
 
-		} else {
-			if (updatedReplicas != null && updatedReplicas.size() != 0) {
-				activeReplicas = updatedReplicas;
 
-				/*
-				 * Loop through each replica which was updated, re-adding them into the replicaLocations hashmap along with the new
-				 * updateID.
-				 */
-				for (DatabaseInstanceWrapper instance : updatedReplicas.keySet()) {
-					if (allReplicas.containsKey(instance)) {
-						Integer previousID = allReplicas.get(instance);
+		/*
+		 * Check whether all updates were rollbacks. If they were there is no need to remove any replicas
+		 * from the set of active replicas.
+		 */
+		boolean allRollback = false;
 
-						assert updateID >= previousID;
-
-						allReplicas.remove(instance);
-						allReplicas.put(instance, updateID);
-
-					} // In many cases it won't contain this key, but another
-					// table (part of the same transaction) was on this
-					// machine.
+		if (!commit){
+			if (committedQueries == null){
+				allRollback = true;
+			} else {
+				for (CommitResult commitResult: committedQueries){
+					if (!commitResult.isCommit()) {
+						allRollback = true;
+						break;
+					}
 				}
 			}
 		}
+
+
+		if (committedQueries != null && committedQueries.size() != 0) {
+
+			/*
+			 * Loop through each replica which was updated, re-adding them into the replicaLocations hashmap along with the new
+			 * updateID.
+			 */
+			for (CommitResult commitResult : committedQueries) {
+
+				DatabaseInstanceWrapper wrapper = commitResult.getDatabaseInstanceWrapper();
+				if (getAllReplicas().containsKey(wrapper)) {
+
+					final Integer previousID = getAllReplicas().get(wrapper);
+
+					if (updateID == previousID) {
+						/*
+						 * The updateID of this current replica equals the update ID that was expected of this replica at this point.
+						 * Commit can proceed.
+						 */
+
+						int newUpdateID = previousID + 1;
+
+						if (commitResult.isCommit()) {
+							activeReplicas.put(wrapper, newUpdateID);
+							addToAllReplicas(wrapper, newUpdateID);
+
+							successfullyCommittedQueries.add(commitResult); //this query has been successfully updated.
+						} else {
+							if (!allRollback){
+								/*
+								 * Only remove replicas in case of rollback if some of the replicas managed to commit.
+								 * Otherwise they are all still in a consistent state and all still active.
+								 */
+								activeReplicas.remove(wrapper);
+								getAllReplicas().remove(wrapper);
+							}
+						}
+
+
+					} else {
+						/*
+						 * The update ID of this replica does not match that which was expected. This replica will not commit.
+						 */
+						ErrorHandling.errorNoEvent("Replica will not commit because update IDs did not match. Expected: " + updateID + "; Actual current: " + previousID);
+					}
+
+
+
+				} // In many cases it won't contain this key, but another table (part of the same transaction) was on this machine.
+			}
+		}
+
+		return successfullyCommittedQueries;
 	}
 
 	/**
@@ -201,7 +251,7 @@ public class ReplicaManager implements Serializable {
 	 * @return True if every replica is deemed active - false, if some are inactive because they don't contain the latest updates.
 	 */
 	public boolean areReplicasConsistent() {
-		return (activeReplicas.size() == allReplicas.size());
+		return (activeReplicas.size() == getAllReplicas().size());
 	}
 
 	/*
@@ -211,7 +261,7 @@ public class ReplicaManager implements Serializable {
 	 */
 	@Override
 	public String toString() {
-		return "ReplicaManager [number of replicas=" + allReplicas.size() + "]";
+		return "ReplicaManager [number of replicas=" + getAllReplicas().size() + "]";
 	}
 
 	/**
@@ -241,13 +291,17 @@ public class ReplicaManager implements Serializable {
 	}
 
 	public void remove(Set<DatabaseInstanceWrapper> failed) {
-		for (DatabaseInstanceWrapper wrapper: failed){
+		for (DatabaseInstanceWrapper wrapper : failed) {
 			this.activeReplicas.remove(wrapper);
 		}
 	}
 
 	public boolean contains(DatabaseInstanceWrapper databaseInstanceWrapper) throws RemoteException {
 		return activeReplicas.containsKey(databaseInstanceWrapper);
+	}
+
+	public Map<DatabaseInstanceWrapper, Integer> getAllReplicas() {
+		return allReplicas;
 	}
 
 }

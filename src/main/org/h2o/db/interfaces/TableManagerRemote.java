@@ -19,12 +19,14 @@ package org.h2o.db.interfaces;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.manager.util.Migratable;
 import org.h2o.db.query.QueryProxy;
+import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.db.replication.ReplicaManager;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
@@ -88,6 +90,7 @@ public interface TableManagerRemote extends H2ORemote, Migratable {
 	 * Release a lock held by the database instance specified in the parameter.
 	 * Called at the end of QueryProxy.executeQuery() to indicate that the
 	 * transaction has finished (it may have succeeded or failed).
+	 * @param commit 
 	 * 
 	 * @param requestingDatabase
 	 *            Database which made the original request. Lock was taken out
@@ -96,13 +99,13 @@ public interface TableManagerRemote extends H2ORemote, Migratable {
 	 *            The ID given to the update by the Table Manager. It is
 	 *            returned here to confirm execution of this specific
 	 *            transaction.
-	 * @param updatedReplicas
+	 * @param committedQueries
 	 *            The set of replicas that were successfully updated by this
 	 *            query.
 	 * @throws MovedException
 	 */
-	public void releaseLock(DatabaseInstanceWrapper requestingDatabase,
-			Map<DatabaseInstanceWrapper, Integer> updatedReplicas, int updateID)
+	public void releaseLock(boolean commit, DatabaseInstanceWrapper requestingDatabase,
+			List<CommitResult> committedQueries, int updateID)
 			throws RemoteException, MovedException;
 
 	/**

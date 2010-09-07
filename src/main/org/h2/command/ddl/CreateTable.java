@@ -359,7 +359,7 @@ public class CreateTable extends SchemaCommand {
 			// Get the set of only remote replica locations.
 
 			// Execute query.
-			AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor();
+			AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor(this.getSchema().getDatabase());
 			queryExecutor.executeQuery(sql, transactionName, replicaLocations, session, false);
 		}
 	}

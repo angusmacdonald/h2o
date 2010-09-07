@@ -147,7 +147,7 @@ public class QueryProxy implements Serializable {
 			 * If there are no replicas on which to execute the query.
 			 */
 			try {
-				tableManager.releaseLock(requestingDatabase, null, updateID);
+				tableManager.releaseLock(true, requestingDatabase, null, updateID);
 			} catch (RemoteException e) {
 				ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the Table Manager");
 			} catch (MovedException e) {
@@ -160,7 +160,7 @@ public class QueryProxy implements Serializable {
 		 * Execute the query. Send the query to each DB instance holding a replica.
 		 */
 
-		AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor();
+		AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor(session.getDatabase());
 		boolean globalCommit = queryExecutor.executeQuery(query, transactionNameForQuery, allReplicas, session, false);
 
 		H2OTest.rmiFailure(); // Test code to simulate the failure of DB

@@ -34,8 +34,6 @@ public class RemoteQueryExecutor extends Thread {
 
 	private DatabaseInstanceWrapper databaseWrapper;
 
-	private DatabaseURL databaseURL;
-
 	private boolean local;
 
 	private Parser parser;
@@ -49,9 +47,6 @@ public class RemoteQueryExecutor extends Thread {
 	 * @param query
 	 * @param transactionName
 	 * @param replica
-	 * @param databaseURL
-	 *            If the transaction has to be rolled back this ID is used to
-	 *            identify the instance in question.
 	 * @param updateID 
 	 * 			  The current update ID of the table involved in this query.
 	 * @param parser
@@ -64,13 +59,11 @@ public class RemoteQueryExecutor extends Thread {
 	 *            query. If it is false a PREPARE command will be executed to
 	 *            get ready for the eventual commit.
 	 */
-	public RemoteQueryExecutor(String query, String transactionName,
-			DatabaseInstanceWrapper replica, int updateID, DatabaseURL databaseURL, Parser parser,
+	public RemoteQueryExecutor(String query, String transactionName, DatabaseInstanceWrapper replica, int updateID, Parser parser,
 			boolean local, boolean commitOperation) {
 		this.query = query;
 		this.transactionName = transactionName;
 		this.databaseWrapper = replica;
-		this.databaseURL = databaseURL;
 		this.parser = parser;
 		this.local = local;
 		this.commitOperation = commitOperation;
@@ -113,10 +106,10 @@ public class RemoteQueryExecutor extends Thread {
 				result = command.executeUpdate();
 			}
 
-			qr = new QueryResult(result, databaseURL, updateID);
+			qr = new QueryResult(result, databaseWrapper, updateID);
 
 		} catch (SQLException e) {
-			qr = new QueryResult(e, databaseURL, updateID);
+			qr = new QueryResult(e, databaseWrapper, updateID);
 		}
 
 		return qr;
@@ -130,12 +123,12 @@ public class RemoteQueryExecutor extends Thread {
 			int result = databaseWrapper.getDatabaseInstance().execute(query,
 					transactionName, commitOperation);
 
-			qr = new QueryResult(result, databaseURL, updateID);
+			qr = new QueryResult(result, databaseWrapper, updateID);
 
 		} catch (RemoteException e) {
-			qr = new QueryResult(new SQLException(e.getMessage()), databaseURL, updateID);
+			qr = new QueryResult(new SQLException(e.getMessage()), databaseWrapper, updateID);
 		} catch (SQLException e) {
-			qr = new QueryResult(e, databaseURL, updateID);
+			qr = new QueryResult(e, databaseWrapper, updateID);
 		}
 
 		return qr;

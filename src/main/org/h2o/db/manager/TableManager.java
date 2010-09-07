@@ -42,6 +42,7 @@ import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.util.Migratable;
 import org.h2o.db.query.QueryProxy;
+import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.query.locking.ILockingTable;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.db.query.locking.LockingTable;
@@ -381,7 +382,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		LockType lockGranted = lockingTable.requestLock(lockRequested, databaseInstanceWrapper);
 
 		QueryProxy qp = new QueryProxy(lockGranted, fullName, selectReplicaLocations(lockRequested, databaseInstanceWrapper), this,
-				databaseInstanceWrapper, replicaManager.getNewUpdateID(lockGranted), lockRequested);
+				databaseInstanceWrapper, replicaManager.getCurrentUpdateID(), lockRequested);
 
 		return qp;
 	}
@@ -469,7 +470,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 			}
 
 		} else if (lockType == LockType.WRITE) {
-			Map<DatabaseInstanceWrapper, Integer> replicaLocations = this.replicaManager.getActiveReplicas(); // The update could be sent to any or
+			Map<DatabaseInstanceWrapper, Integer> replicaLocations = this.replicaManager.getAllReplicas(); // The update could be sent to any or
 			// all machines holding the given
 			// table.
 
@@ -523,27 +524,30 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.h2.h2o.comms.remote.TableManagerRemote#releaseLock(org.h2.h2o.comms .remote.DatabaseInstanceRemote)
-	 */
-	/*
-	 * (non-Javadoc)
-	 * 
 	 * @see org.h2.h2o.manager.TableManagerRemote2#releaseLock(org.h2.h2o.comms.remote .DatabaseInstanceRemote, java.util.Set, int)
 	 */
 	@Override
-	public void releaseLock(DatabaseInstanceWrapper requestingDatabase, Map<DatabaseInstanceWrapper, Integer> updatedReplicas, int updateID)
+	public void releaseLock(boolean commit, DatabaseInstanceWrapper requestingDatabase, List<CommitResult> committedQueries, int updateID)
 	throws RemoteException, MovedException {
 		preMethodTest();
 
 		/*
-		 * Update the set of 'active replicas' and their update IDs.
-		 */
-		replicaManager.completeUpdate(updatedReplicas, updateID, true);
-
-		/*
 		 * Release the locks.
 		 */
-		lockingTable.releaseLock(requestingDatabase);
+		LockType lockType = lockingTable.releaseLock(requestingDatabase);
+
+		/*
+		 * Update the set of 'active replicas' and their update IDs.
+		 */
+
+		if (lockType == LockType.WRITE){ //creates are viewed as writes in the locking table.
+			replicaManager.completeUpdate(commit, committedQueries, updateID, true);
+			
+			/*
+			 * TODO update persisted state with update IDs (or something indicating whether a replica is 'current').
+			 */
+			
+		} //reads don't change the set of active replicas.
 
 	}
 

@@ -328,6 +328,7 @@ public class TestBase {
 		}
 
 		if (rs.next()){
+			System.err.println(rs.getInt(1) + ": " + rs.getString(2));
 			fail("Too many entries.");
 		}
 

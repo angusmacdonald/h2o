@@ -271,7 +271,7 @@ public abstract class Command implements CommandInterface {
 					}
 					throw e;
 				} catch (Throwable e) {
-					//e.printStackTrace();
+					e.printStackTrace();
 					throw Message.convert(e);
 				}
 			}

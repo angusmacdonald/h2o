@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.h2.command.Command;
@@ -32,6 +33,8 @@ import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.query.asynchronous.AsynchronousQueryExecutor;
+import org.h2o.db.query.asynchronous.CommitResult;
+import org.h2o.db.query.asynchronous.Transaction;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
@@ -39,6 +42,7 @@ import org.h2o.util.exceptions.MovedException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 /**
  * Manages query proxies where multiple instances are required in a single transaction.
@@ -187,11 +191,7 @@ public class QueryProxyManager {
 	 *            h2o is auto-committing.
 	 * @throws SQLException
 	 */
-	public void commit(boolean commit, boolean h2oCommit) throws SQLException {
-		/*
-		 * The set of replicas that were updated. This is returned to the DM when locks are released.
-		 */
-		Map<DatabaseInstanceWrapper, Integer> updatedReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
+	public void commit(boolean commit, boolean h2oCommit, Database db) throws SQLException {
 
 		if (tableManagers.size() == 0 && allReplicas.size() > 0) {
 			/*
@@ -202,32 +202,54 @@ public class QueryProxyManager {
 
 			commitLocal(commit, h2oCommit);
 			return;
+		} else if(tableManagers.size() == 0 && allReplicas.size() == 0) {
+
+		//	commitLocal(commit, h2oCommit);
+
+
+			return;
+		} else if (db.getAsynchronousQueryManager() == null) {
+			return; //management db etc may call this.
 		}
 
-		String sql = (commit ? "commit" : "rollback") + ((h2oCommit) ? " TRANSACTION " + transactionName : ";");
 
-		AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor();
+		Transaction committingTransaction = db.getAsynchronousQueryManager().getTransaction(transactionName);
 
-		boolean actionSuccessful = queryExecutor.executeQuery(sql, transactionName, allReplicas, this.parser.getSession(), true);
 
-		if (actionSuccessful && commit)
-			updatedReplicas = allReplicas; // For asynchronous updates this should check for each replicas success.
+		List<CommitResult> commitedQueries = null;
 
-		endTransaction(updatedReplicas);
+		if (committingTransaction == null){
+			commitedQueries = new LinkedList<CommitResult>();
 
-		if (Diagnostic.getLevel() == DiagnosticLevel.FULL) {
-			if (this.localDatabase.getURL().getRMIPort() > 0) {
-				System.out.println("\tQueries in transaction (on DB at " + this.localDatabase.getURL().getRMIPort() + ": '"
-						+ transactionName + "'):");
-				if (queries != null) {
-					for (String query : queries) {
-						if (query.equals(""))
-							continue;
-						System.out.println("\t\t" + query);
-					}
-				}
+			for (Entry<DatabaseInstanceWrapper, Integer> replica: allReplicas.entrySet()){
+				commitedQueries.add(new CommitResult(commit, replica.getKey(), replica.getValue(), updateID));
 			}
+		} else {
+			/*
+			 * The set of replicas that were updated. This is returned to the DM when locks are released.
+			 */
+			Map<DatabaseInstanceWrapper, Integer> updatedReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
+
+			commitedQueries = committingTransaction.getCompletedQueries();
+			
+			
 		}
+		
+//		if (!commit){
+//			PrettyPrinter.print(commitedQueries);
+//		}
+
+		endTransaction(commitedQueries, commit);
+
+
+		boolean commitActionSuccessful = sendCommitMessagesToReplicas(commit, h2oCommit, db);
+
+		//		if (commitActionSuccessful && commit)
+		//			updatedReplicas = allReplicas; // For asynchronous updates this should check for each replicas success.
+		//
+		//		endTransaction(commitedQueries);
+
+		printTraceOutputOfExecutedQueries();
 
 		/*
 		 * If rollback was performed - throw an exception informing requesting party of this.
@@ -243,6 +265,31 @@ public class QueryProxyManager {
 
 		// XXX not throwing any exceptions at this point because the system is
 		// coming to a point where the asynchronous updates are acceptable.
+	}
+
+	private void printTraceOutputOfExecutedQueries() {
+		if (Diagnostic.getLevel() == DiagnosticLevel.FULL) {
+			if (this.localDatabase.getURL().getRMIPort() > 0) {
+				System.out.println("\tQueries in transaction (on DB at " + this.localDatabase.getURL().getRMIPort() + ": '"
+						+ transactionName + "'):");
+				if (queries != null) {
+					for (String query : queries) {
+						if (query.equals(""))
+							continue;
+						System.out.println("\t\t" + query);
+					}
+				}
+			}
+		}
+	}
+
+	private boolean sendCommitMessagesToReplicas(boolean commit, boolean h2oCommit, Database db) {
+		String sql = (commit ? "commit" : "rollback") + ((h2oCommit) ? " TRANSACTION " + transactionName : ";");
+
+		AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor(db);
+
+		boolean actionSuccessful = queryExecutor.executeQuery(sql, transactionName, allReplicas, this.parser.getSession(), true);
+		return actionSuccessful;
 	}
 
 	/**
@@ -276,15 +323,16 @@ public class QueryProxyManager {
 	/**
 	 * Release locks for every table that is part of this update. This also updates the information on which replicas were updated (which
 	 * are currently active), hence the parameter
+	 * @param commit 
 	 * 
 	 * @param updatedReplicas
 	 *            The set of replicas which were updated. This is NOT used to release locks, but to update the Table Managers state on which
 	 *            replicas are up-to-date. Null if none have changed.
 	 */
-	public void endTransaction(Map<DatabaseInstanceWrapper, Integer> updatedReplicas) {
+	public void endTransaction(List<CommitResult> committedQueries, boolean commit) {
 		try {
 			for (TableManagerRemote tableManagerProxy : tableManagers) {
-				tableManagerProxy.releaseLock(requestingDatabase, updatedReplicas, updateID);
+				tableManagerProxy.releaseLock(commit, requestingDatabase, committedQueries, updateID);
 			}
 		} catch (RemoteException e) {
 			ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the Table Manager");

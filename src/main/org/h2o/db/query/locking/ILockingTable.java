@@ -50,6 +50,6 @@ public interface ILockingTable {
 	 *            Proxy for the machine making the request.
 	 * @return True if the success was successful.
 	 */
-	public boolean releaseLock(DatabaseInstanceWrapper requestingMachine);
+	public LockType releaseLock(DatabaseInstanceWrapper requestingMachine);
 
 }

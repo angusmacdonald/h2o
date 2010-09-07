@@ -20,6 +20,7 @@ package org.h2o.db.query.asynchronous;
 import java.sql.SQLException;
 
 import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 /**
  * Encapsulates the result of executing a query. This class is returned as the result
@@ -32,19 +33,19 @@ public class QueryResult {
 
 	private SQLException exception = null;
 
-	private DatabaseURL databaseURL;
+	private DatabaseInstanceWrapper wrapper;
 
 	private int updateID;
 
-	public QueryResult(int result, DatabaseURL databaseURL, int updateID) {
+	public QueryResult(int result, DatabaseInstanceWrapper wrapper, int updateID) {
 		this.result = result;
-		this.databaseURL = databaseURL;
+		this.wrapper = wrapper;
 		this.updateID = updateID;
 	}
 
-	public QueryResult(SQLException exception, DatabaseURL databaseURL, int updateID) {
+	public QueryResult(SQLException exception, DatabaseInstanceWrapper wrapper, int updateID) {
 		this.exception = exception;
-		this.databaseURL = databaseURL;
+		this.wrapper = wrapper;
 		this.updateID = updateID;
 	}
 
@@ -52,8 +53,8 @@ public class QueryResult {
 		return exception;
 	}
 
-	public DatabaseURL getURL() {
-		return databaseURL;
+	public DatabaseInstanceWrapper getWrapper() {
+		return wrapper;
 	}
 
 	public int getResult() {

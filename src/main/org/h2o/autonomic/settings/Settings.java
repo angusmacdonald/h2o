@@ -177,9 +177,9 @@ public class Settings {
 		defaults.setProperty("ASYNCHRONOUS_REPLICATION_FACTOR", "2");
 
 		/*
-		 * The number of replicas that must update before an update can take place.
+		 * Whether asynchronous replication is enabled.
 		 */
-		defaults.setProperty("ASYNCHRONOUS_REPLICATION_FACTOR", "2");
+		defaults.setProperty("ASYNCHRONOUS_REPLICATION_ENABLED", "true");
 
 		/*
 		 * If true this delays the commit of an insert query. This should always be false

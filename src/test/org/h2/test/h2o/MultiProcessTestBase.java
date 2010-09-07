@@ -574,6 +574,7 @@ public class MultiProcessTestBase extends TestBase {
 		try {
 			return DriverManager.getConnection(connectionString, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 		} catch (SQLException e) {
+			e.printStackTrace();
 			ErrorHandling.errorNoEvent("Failed to connect to: " + connectionString);
 			return null;
 		}

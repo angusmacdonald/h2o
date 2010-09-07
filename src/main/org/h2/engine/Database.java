@@ -85,6 +85,7 @@ import org.h2o.db.manager.interfaces.SystemTableRemote;
 import org.h2o.db.manager.monitorthreads.MetaDataReplicationThread;
 import org.h2o.db.query.QueryProxyManager;
 import org.h2o.db.query.asynchronous.AsynchronousQueryExecutor;
+import org.h2o.db.query.asynchronous.AsynchronousQueryManager;
 import org.h2o.db.remote.ChordRemote;
 import org.h2o.db.remote.IChordInterface;
 import org.h2o.db.remote.IDatabaseRemote;
@@ -221,8 +222,8 @@ public class Database implements DataHandler {
 	 */
 	private ChordRemote databaseRemote;
 
-	private AsynchronousQueryExecutor asynchronousQueryExecutor;
-	
+	private AsynchronousQueryManager asynchronousQueryManager;
+
 	private User h2oSchemaUser;
 	private Session h2oSession;
 
@@ -257,6 +258,8 @@ public class Database implements DataHandler {
 		Constants.IS_TESTING_CREATETABLE_FAILURE = false;
 
 		this.transactionNameGenerator = new TransactionNameGenerator(localMachineLocation);
+		this.asynchronousQueryManager = new AsynchronousQueryManager();
+
 
 		this.compareMode = new CompareMode(null, null, 0);
 
@@ -624,7 +627,7 @@ public class Database implements DataHandler {
 	}
 
 	private synchronized void open(int traceLevelFile, int traceLevelSystemOut, ConnectionInfo ci, DatabaseURL localMachineLocation)
-			throws SQLException, StartupException {
+	throws SQLException, StartupException {
 		boolean databaseExists = false; // whether the database already exists
 		// on disk. i.e. with .db.data files,
 		// etc.
@@ -833,7 +836,7 @@ public class Database implements DataHandler {
 				rec.execute(this, systemSession, eventListener, proxyManager);
 			}
 
-			proxyManager.commit(true, true);
+			proxyManager.commit(true, true, this);
 		}
 
 		if (Constants.IS_H2O && !isManagementDB())
@@ -2948,8 +2951,7 @@ public class Database implements DataHandler {
 		ErrorHandling.setTimestampFlag(false);
 	}
 
-	public AsynchronousQueryExecutor getAsynchronousQueryExecutor() {
-		return asynchronousQueryExecutor;
+	public AsynchronousQueryManager getAsynchronousQueryManager() {
+		return asynchronousQueryManager;
 	}
-
 }

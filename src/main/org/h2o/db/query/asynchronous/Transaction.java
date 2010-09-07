@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
 import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 public class Transaction {
 
@@ -26,13 +27,17 @@ public class Transaction {
 	 */
 	private boolean transactionHasCommitted = false;
 
+	private final int expectedUpdateID;
+
 	/**
 	 * @param transactionID
 	 * @param executingQueries
+	 * @param expectedUpdateID 
 	 */
-	public Transaction(String transactionID, List<FutureTask<QueryResult>> executingQueries) {
+	public Transaction(String transactionID, List<FutureTask<QueryResult>> executingQueries, int expectedUpdateID) {
 		this.transactionID = transactionID;
 		this.incompleteQueries = executingQueries;
+		this.expectedUpdateID = expectedUpdateID;
 	}
 
 	/**
@@ -81,19 +86,19 @@ public class Transaction {
 
 			if (asyncResult.getException() == null) { // If the query executed successfully.
 				int result = asyncResult.getResult();
-				DatabaseURL url = asyncResult.getURL();
+				DatabaseInstanceWrapper wrapper = asyncResult.getWrapper();
 				if (result != 0) {
 					// Prepare operation failed at remote machine
-					CommitResult commitResult = new CommitResult(false, url, asyncResult.getUpdateID());
+					CommitResult commitResult = new CommitResult(false, wrapper, asyncResult.getUpdateID(), expectedUpdateID);
 					recentlyCompletedCommits.add(commitResult);
 					
 				} else {
-					CommitResult commitResult = new CommitResult(true, url, asyncResult.getUpdateID());
+					CommitResult commitResult = new CommitResult(true, wrapper, asyncResult.getUpdateID(), expectedUpdateID);
 					recentlyCompletedCommits.add(commitResult);
 				}
 
 			} else {
-				CommitResult commitResult = new CommitResult(true, asyncResult.getURL(), asyncResult.getUpdateID());
+				CommitResult commitResult = new CommitResult(true, asyncResult.getWrapper(), asyncResult.getUpdateID(), expectedUpdateID);
 				recentlyCompletedCommits.add(commitResult);
 			}
 
@@ -109,10 +114,11 @@ public class Transaction {
 	}
 
 	/**
-	 * 
+	 * Called from within this class when some updates have recently completed, but the transaction has already
+	 * been committed. These updates should now be reflected in the Table Manager for the given table.
 	 * @param completedUpdates
 	 */
-	public void commit(List<CommitResult> completedUpdates){
+	public synchronized void commit(List<CommitResult> completedUpdates){
 		/*
 		 * TODO Called by the query proxy manager to commit a transaction. All the updated replicas (based on
 		 * information in this class) will be committed to the table manager.
@@ -121,6 +127,24 @@ public class Transaction {
 		 * information on their update ID, etc...
 		 */
 	}
+	
+	/**
+	 * Called by the QueryProxyManager for a transaction when it is committing the transaction. It must send details of the
+	 * completed updates to the Table Manager.
+	 */
+	public synchronized List<CommitResult> getCompletedQueries(){
+		return completedQueries;
+		
+		/*
+		 * TODO Called by the query proxy manager to commit a transaction. All the updated replicas (based on
+		 * information in this class) will be committed to the table manager.
+		 * 
+		 * This method should return some data structure containing the names of updated replicas and
+		 * information on their update ID, etc...
+		 */
+	}
+	
+	
 
 	public String getTransactionID() {
 		return transactionID;
@@ -130,5 +154,9 @@ public class Transaction {
 
 	public boolean hasCommitted() {
 		return transactionHasCommitted;
+	}
+
+	public void addQueries(List<FutureTask<QueryResult>> newIncompleteQueries) {
+		incompleteQueries.addAll(newIncompleteQueries);
 	}
 }

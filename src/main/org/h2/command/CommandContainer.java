@@ -137,10 +137,10 @@ public class CommandContainer extends Command {
 		try {
 			LocalResult result = prepared.query(maxrows);
 			prepared.trace(startTime, result.getRowCount());
-			proxyManager.endTransaction(null);
+			proxyManager.endTransaction(null, true);
 			return result;
 		} catch (SQLException e) {
-			proxyManager.endTransaction(null);
+			proxyManager.endTransaction(null, true);
 			throw e;
 		}
 	}
@@ -192,14 +192,14 @@ public class CommandContainer extends Command {
 					 * If it is one of a number of queries in the transaction then we must wait for the entire transaction to finish.
 					 */
 
-					proxyManager.commit(commit, true);
+					proxyManager.commit(commit, true, session.getDatabase());
 					session.setCurrentTransactionLocks(null);
 				} else {
 					session.setCurrentTransactionLocks(proxyManager);
 				}
 
 			} catch (SQLException e) {
-				proxyManager.commit(false, true);
+				proxyManager.commit(false, true, session.getDatabase());
 				session.setCurrentTransactionLocks(null);
 				throw e;
 			}
@@ -329,7 +329,6 @@ public class CommandContainer extends Command {
 				if (sleep == 0) {
 					sleep = 1;
 				}
-				System.err.println(sleep);
 				Thread.sleep(sleep);
 			} catch (InterruptedException e) {
 				// ignore

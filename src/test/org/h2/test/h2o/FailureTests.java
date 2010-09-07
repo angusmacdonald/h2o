@@ -606,6 +606,7 @@ public class FailureTests extends MultiProcessTestBase{
 
 		try {
 			sleep(1000);
+			
 			/*
 			 * Create test table.
 			 */

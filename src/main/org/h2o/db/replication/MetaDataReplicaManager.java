@@ -460,7 +460,7 @@ public class MetaDataReplicaManager {
 	}
 
 	/**
-	 * Called when a new Table Manager replica lcoation is added, or a new Table Manager is added.
+	 * Called when a new Table Manager replica location is added, or a new Table Manager is added.
 	 * 
 	 * This deletes any outdated information held by remote machines on local Table Managers.
 	 * 
