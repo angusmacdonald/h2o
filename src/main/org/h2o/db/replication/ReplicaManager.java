@@ -27,7 +27,6 @@ import java.util.Set;
 
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.query.asynchronous.CommitResult;
-import org.h2o.db.query.locking.LockType;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -61,11 +60,6 @@ public class ReplicaManager implements Serializable {
 	 * The database instance which is running this Table Manager.
 	 */
 	private DatabaseInstanceWrapper primaryLocation;
-
-	//	/**
-	//	 * Number given to the last update to a replica.
-	//	 */
-	//	private int lastUpdate;
 
 	public ReplicaManager() {
 		this.allReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();

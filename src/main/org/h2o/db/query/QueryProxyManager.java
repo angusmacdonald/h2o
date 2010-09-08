@@ -204,7 +204,7 @@ public class QueryProxyManager {
 			return;
 		} else if(tableManagers.size() == 0 && allReplicas.size() == 0) {
 
-		//	commitLocal(commit, h2oCommit);
+			//	commitLocal(commit, h2oCommit);
 
 
 			return;
@@ -231,18 +231,12 @@ public class QueryProxyManager {
 			Map<DatabaseInstanceWrapper, Integer> updatedReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
 
 			commitedQueries = committingTransaction.getCompletedQueries();
-			
-			
+
 		}
-		
-//		if (!commit){
-//			PrettyPrinter.print(commitedQueries);
-//		}
 
 		endTransaction(commitedQueries, commit);
 
-
-		boolean commitActionSuccessful = sendCommitMessagesToReplicas(commit, h2oCommit, db);
+		boolean commitActionSuccessful = sendCommitMessagesToReplicas(commit, h2oCommit, db, commitedQueries);
 
 		//		if (commitActionSuccessful && commit)
 		//			updatedReplicas = allReplicas; // For asynchronous updates this should check for each replicas success.
@@ -283,13 +277,34 @@ public class QueryProxyManager {
 		}
 	}
 
-	private boolean sendCommitMessagesToReplicas(boolean commit, boolean h2oCommit, Database db) {
+	/**
+	 * 
+	 * @param commit
+	 * @param h2oCommit
+	 * @param db
+	 * @param commitedQueries	Locations where replicas have committed. Send the commit message here.
+	 * @return
+	 */
+	private boolean sendCommitMessagesToReplicas(boolean commit, boolean h2oCommit, Database db, List<CommitResult> commitedQueries) {
 		String sql = (commit ? "commit" : "rollback") + ((h2oCommit) ? " TRANSACTION " + transactionName : ";");
 
 		AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor(db);
 
-		boolean actionSuccessful = queryExecutor.executeQuery(sql, transactionName, allReplicas, this.parser.getSession(), true);
+
+		Map<DatabaseInstanceWrapper, Integer> commitLocations = getCommittedLocations(commitedQueries);
+
+		boolean actionSuccessful = queryExecutor.executeQuery(sql, transactionName, commitLocations, this.parser.getSession(), true);
 		return actionSuccessful;
+	}
+
+	private Map<DatabaseInstanceWrapper, Integer> getCommittedLocations(List<CommitResult> commitedQueries) {
+		Map<DatabaseInstanceWrapper, Integer> commitLocations = new HashMap<DatabaseInstanceWrapper, Integer>();
+		for (CommitResult commitResult: commitedQueries){
+			if (commitResult.isCommit()){
+				commitLocations.put(commitResult.getDatabaseInstanceWrapper(), commitResult.getUpdateID());
+			}
+		}
+		return commitLocations;
 	}
 
 	/**

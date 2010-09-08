@@ -127,8 +127,8 @@ public class Insert extends Prepared {
 
 			return queryProxy.executeUpdate(sql, transactionName, session);
 		}
-		
-		AsynchronousTests.pauseThreadIfTestingAsynchronousUpdates(table, session.getDatabase().getDatabaseSettings());
+
+		AsynchronousTests.pauseThreadIfTestingAsynchronousUpdates(table, session.getDatabase().getDatabaseSettings(), session.getDatabase().getURL(), getSQL());
 
 		setCurrentRowNumber(0);
 		if (list.size() > 0) {

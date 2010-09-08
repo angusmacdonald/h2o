@@ -79,7 +79,6 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 			ErrorHandling.hardError("Shouldn't happen.");
 		}
 
-		//System.err.println("query: " + query);
 		Command command = parser.prepareCommand(query);
 
 		try {

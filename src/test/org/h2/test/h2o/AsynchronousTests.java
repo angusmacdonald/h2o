@@ -24,6 +24,7 @@ import java.sql.SQLException;
 
 import org.h2.table.Table;
 import org.h2o.autonomic.settings.Settings;
+import org.h2o.db.id.DatabaseURL;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -41,7 +42,7 @@ public class AsynchronousTests extends MultiProcessTestBase {
 	 * Tests that an update can complete with only two machines.
 	 * @throws InterruptedException
 	 */
-	@Test(timeout=30000)
+	@Test//(timeout=40000)
 	public void basicAsynchronousUpdate() throws InterruptedException{
 		String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " +
 		"INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
@@ -63,6 +64,7 @@ public class AsynchronousTests extends MultiProcessTestBase {
 			executeUpdateOnNthMachine(create1, 0);
 			
 			sleep(1000);
+			
 			/*
 			 * Create test table.
 			 */
@@ -75,7 +77,7 @@ public class AsynchronousTests extends MultiProcessTestBase {
 			executeUpdateOnNthMachine(createReplica, 1);
 			executeUpdateOnNthMachine(createReplica, 2);
 
-			sleep("Wait for create replica commands to execute.", 3000);
+			sleep("About to begin test.\n\n\n\n", 3000);
 
 			String update = "INSERT INTO TEST VALUES(3, 'Third');";
 			
@@ -83,14 +85,18 @@ public class AsynchronousTests extends MultiProcessTestBase {
 			
 			assertTrue(assertTestTableExists(connections[0], 3));
 			assertTrue(assertTestTableExists(connections[1], 3));
-			assertTrue(assertTestTableExists(connections[2], 3));
+			assertTrue(assertTestTableExists(connections[2], 3, false));
 		} catch (SQLException e) {
 			e.printStackTrace();
 			fail("Unexpected exception.");
 		}
 	}
 
-	public static void pauseThreadIfTestingAsynchronousUpdates(Table table, Settings databaseSettings) {
+	public static void pauseThreadIfTestingAsynchronousUpdates(Table table, Settings databaseSettings, DatabaseURL dbURL, String query) {
+	
+		if (query == null || !query.contains("INSERT INTO TEST VALUES(3, 'Third')")){
+			return;
+		}
 		
 		if (databaseSettings == null) {
 			return;
@@ -104,7 +110,7 @@ public class AsynchronousTests extends MultiProcessTestBase {
 		
 		if (delay){
 			try {
-				ErrorHandling.errorNoEvent("Delay");
+				ErrorHandling.errorNoEvent("Delay " + dbURL.getURL() + ": " + query);
 				
 				Thread.sleep(30000);
 			} catch (InterruptedException e) {

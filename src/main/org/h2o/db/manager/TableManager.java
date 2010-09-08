@@ -179,13 +179,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		this.fullName = schemaName + "." + tableName;
 
 		this.replicaManager = new ReplicaManager();
-		this.replicaManager.add(database.getLocalDatabaseInstanceInWrapper()); // the
-		// first
-		// replica
-		// will
-		// be
-		// created
-		// here.
+		this.replicaManager.add(database.getLocalDatabaseInstanceInWrapper()); // the first replica will be created here.
 
 		this.lockingTable = new LockingTable(schemaName + "." + tableName);
 

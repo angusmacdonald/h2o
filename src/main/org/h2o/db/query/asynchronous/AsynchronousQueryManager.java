@@ -21,14 +21,14 @@ public class AsynchronousQueryManager {
 	 */
 	Map <String, Transaction> activeTransactions = new HashMap  <String, Transaction>();
 
-	public void addTransaction(String transactionNameForQuery, List<FutureTask<QueryResult>> remoteQueries, int expectedUpdateID) {
+	public void addTransaction(String transactionNameForQuery, List<FutureTask<QueryResult>> incompleteQueries, List<CommitResult> recentlyCompletedQueries, int expectedUpdateID) {
 		if (activeTransactions.containsKey(transactionNameForQuery)){
 			Transaction existingTransaction = activeTransactions.get(transactionNameForQuery);
-			existingTransaction.addQueries(remoteQueries);
-			
+			existingTransaction.addQueries(incompleteQueries);
+			existingTransaction.addCompletedQueries(recentlyCompletedQueries);
 			activeTransactions.put(transactionNameForQuery, existingTransaction);
 		} else {
-			Transaction newTransaction = new Transaction(transactionNameForQuery, remoteQueries, expectedUpdateID);
+			Transaction newTransaction = new Transaction(transactionNameForQuery, incompleteQueries, recentlyCompletedQueries, expectedUpdateID);
 			
 			activeTransactions.put(transactionNameForQuery, newTransaction);
 		}

@@ -32,12 +32,18 @@ public class Transaction {
 	/**
 	 * @param transactionID
 	 * @param executingQueries
+	 * @param recentlyCompletedQueries 
 	 * @param expectedUpdateID 
 	 */
-	public Transaction(String transactionID, List<FutureTask<QueryResult>> executingQueries, int expectedUpdateID) {
+	public Transaction(String transactionID, List<FutureTask<QueryResult>> executingQueries, List<CommitResult> recentlyCompletedQueries, int expectedUpdateID) {
 		this.transactionID = transactionID;
 		this.incompleteQueries = executingQueries;
 		this.expectedUpdateID = expectedUpdateID;
+		this.completedQueries = recentlyCompletedQueries;
+		
+		if (completedQueries == null){
+			completedQueries = new LinkedList<CommitResult>();
+		}
 	}
 
 	/**
@@ -158,5 +164,9 @@ public class Transaction {
 
 	public void addQueries(List<FutureTask<QueryResult>> newIncompleteQueries) {
 		incompleteQueries.addAll(newIncompleteQueries);
+	}
+
+	public void addCompletedQueries(List<CommitResult> recentlyCompletedQueries) {
+		completedQueries.addAll(recentlyCompletedQueries);
 	}
 }

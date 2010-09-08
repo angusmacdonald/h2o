@@ -39,11 +39,18 @@ public class AsynchronousQueryExecutor {
 
 	private Database database;
 	
+	int updatesNeededBeforeCommit = 0;
+			
 	/**
 	 * @param database
 	 */
 	public AsynchronousQueryExecutor(Database database) {
 		this.database = database;
+
+		if (database.getDatabaseSettings().get("ASYNCHRONOUS_REPLICATION_ENABLED").equals("true")){
+			updatesNeededBeforeCommit = Integer.parseInt(database.getDatabaseSettings().get("ASYNCHRONOUS_REPLICATION_FACTOR"));
+		}
+
 	}
 
 	private static ExecutorService queryExecutor = Executors.newCachedThreadPool(new QueryThreadFactory() {
@@ -77,15 +84,14 @@ public class AsynchronousQueryExecutor {
 
 		int expectedUpdateID = getExpectedUpdateID(allReplicas);
 		
-		int updatesNeededBeforeCommit = allReplicas.size();
-		
-		if (session.getDatabase().getDatabaseSettings().get("ASYNCHRONOUS_REPLICATION_ENABLED").equals("true")){
-			updatesNeededBeforeCommit = Integer.parseInt(session.getDatabase().getDatabaseSettings().get("ASYNCHRONOUS_REPLICATION_FACTOR"));
+		if (updatesNeededBeforeCommit == 0){ //will be zero if asynchronous updates are off.
+			updatesNeededBeforeCommit = allReplicas.size();
 		}
-
+		
 		int i = 0;
 		for (Entry<DatabaseInstanceWrapper, Integer> replicaToExecuteQueryOn : allReplicas.entrySet()) {
 
+			
 			String localURL = session.getDatabase().getURL().getURL();
 
 			// Decide whether the query is to be executed local or remotely.
@@ -164,7 +170,7 @@ public class AsynchronousQueryExecutor {
 	/**
 	 * Waits on the result of a number of asynchronous queries to be completed and returned.
 	 * 
-	 * @param remoteQueries
+	 * @param incompleteQueries
 	 *            The list of tasks currently being executed.
 	 * @param updatesNeededBeforeCommit
 	 *            The number of replicas that must be updated for this query to return.
@@ -172,9 +178,9 @@ public class AsynchronousQueryExecutor {
 	 * @param expectedUpdateID 
 	 * @return True if everything was executed successfully (a global commit).
 	 */
-	private boolean waitUntilRemoteQueriesFinish(List<FutureTask<QueryResult>> remoteQueries,
+	private boolean waitUntilRemoteQueriesFinish(List<FutureTask<QueryResult>> incompleteQueries,
 			int updatesNeededBeforeCommit, String transactionNameForQuery, int expectedUpdateID) {
-		if (remoteQueries.size() == 0)
+		if (incompleteQueries.size() == 0)
 			return true; // the commit value has not changed.
 
 		List<FutureTask<QueryResult>> completedQueries = new LinkedList<FutureTask<QueryResult>>();
@@ -182,15 +188,16 @@ public class AsynchronousQueryExecutor {
 		/*
 		 * Wait until all remote queries have been completed.
 		 */
-		while (remoteQueries.size() > 0 && completedQueries.size() < updatesNeededBeforeCommit) {
-			for (int y = 0; y < remoteQueries.size(); y++) {
-				FutureTask<QueryResult> remoteQuery = remoteQueries.get(y);
+		while (incompleteQueries.size() > 0 && completedQueries.size() < updatesNeededBeforeCommit) {
+			
+			for (int y = 0; y < incompleteQueries.size(); y++) {
+				FutureTask<QueryResult> remoteQuery = incompleteQueries.get(y);
 
 				if (remoteQuery.isDone()) {
 					// If the query is done add it to the list of completed
 					// queries.
 					completedQueries.add(remoteQuery);
-					remoteQueries.remove(y);
+					incompleteQueries.remove(y);
 				} else {
 					// We could sleep for a time here before checking again.
 				}
@@ -203,7 +210,7 @@ public class AsynchronousQueryExecutor {
 		 * All of the queries have now completed. Iterate through these queries and check that they executed successfully.
 		 */
 		
-		List<CommitResult> recentlyCompletedCommits = new LinkedList<CommitResult>();
+		List<CommitResult> recentlyCompletedQueries = new LinkedList<CommitResult>();
 
 		
 		
@@ -225,21 +232,21 @@ public class AsynchronousQueryExecutor {
 				if (result != 0) {
 					// Prepare operation failed at remote machine
 					CommitResult commitResult = new CommitResult(false, url, asyncResult.getUpdateID(), expectedUpdateID);
-					recentlyCompletedCommits.add(commitResult);
+					recentlyCompletedQueries.add(commitResult);
 					globalCommit = false;
 				} else {
 					CommitResult commitResult = new CommitResult(true, url, asyncResult.getUpdateID(), expectedUpdateID);
-					recentlyCompletedCommits.add(commitResult);
+					recentlyCompletedQueries.add(commitResult);
 				}
 			} else {
 				CommitResult commitResult = new CommitResult(true, asyncResult.getWrapper(), asyncResult.getUpdateID(), expectedUpdateID);
-				recentlyCompletedCommits.add(commitResult);
+				recentlyCompletedQueries.add(commitResult);
 				globalCommit = false;
 			}
 			
 		}
 		
-		database.getAsynchronousQueryManager().addTransaction(transactionNameForQuery, remoteQueries, expectedUpdateID);
+		database.getAsynchronousQueryManager().addTransaction(transactionNameForQuery, incompleteQueries, recentlyCompletedQueries, expectedUpdateID);
 
 		return globalCommit;
 
