@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.FutureTask;
 
+import org.h2o.db.id.TableInfo;
+
 /**
  * Manages the set of updates currently being executed by this database instance. There is one
  * instance of this class per database instance.
@@ -21,7 +23,7 @@ public class AsynchronousQueryManager {
 	 */
 	Map <String, Transaction> activeTransactions = new HashMap  <String, Transaction>();
 
-	public void addTransaction(String transactionNameForQuery, List<FutureTask<QueryResult>> incompleteQueries, List<CommitResult> recentlyCompletedQueries, int expectedUpdateID) {
+	public void addTransaction(String transactionNameForQuery, TableInfo tableName, List<FutureTask<QueryResult>> incompleteQueries, List<CommitResult> recentlyCompletedQueries, int expectedUpdateID) {
 		if (activeTransactions.containsKey(transactionNameForQuery)){
 			Transaction existingTransaction = activeTransactions.get(transactionNameForQuery);
 			existingTransaction.addQueries(incompleteQueries);

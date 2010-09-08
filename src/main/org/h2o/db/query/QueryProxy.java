@@ -59,7 +59,7 @@ public class QueryProxy implements Serializable {
 
 	private LockType lockGranted;
 
-	private String tableName;
+	private TableInfo tableName;
 
 	private Map<DatabaseInstanceWrapper, Integer> allReplicas;
 
@@ -99,7 +99,7 @@ public class QueryProxy implements Serializable {
 	 * @param updateID
 	 *            ID given to this update.
 	 */
-	public QueryProxy(LockType lockGranted, String tableName, Map<DatabaseInstanceWrapper, Integer> allReplicas, TableManager tableManager,
+	public QueryProxy(LockType lockGranted, TableInfo tableName, Map<DatabaseInstanceWrapper, Integer> allReplicas, TableManager tableManager,
 			DatabaseInstanceWrapper requestingMachine, int updateID, LockType lockRequested) {
 		this.lockGranted = lockGranted;
 		this.lockRequested = lockRequested;
@@ -123,6 +123,7 @@ public class QueryProxy implements Serializable {
 			this.allReplicas.put(localDatabaseInstance, 0);
 		}
 		this.requestingDatabase = localDatabaseInstance;
+		this.tableName = new TableInfo("Dummy", "Table");
 	}
 
 	/**
@@ -161,7 +162,7 @@ public class QueryProxy implements Serializable {
 		 */
 
 		AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor(session.getDatabase());
-		boolean globalCommit = queryExecutor.executeQuery(query, transactionNameForQuery, allReplicas, session, false);
+		boolean globalCommit = queryExecutor.executeQuery(query, transactionNameForQuery, allReplicas, tableName,  session, false);
 
 		H2OTest.rmiFailure(); // Test code to simulate the failure of DB
 								// instances at this point.
@@ -381,7 +382,7 @@ public class QueryProxy implements Serializable {
 	 * 
 	 * @return
 	 */
-	public String getTableName() {
+	public TableInfo getTableName() {
 		return tableName;
 	}
 

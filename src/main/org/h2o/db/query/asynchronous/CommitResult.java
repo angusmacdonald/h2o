@@ -2,7 +2,7 @@ package org.h2o.db.query.asynchronous;
 
 import java.io.Serializable;
 
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.TableInfo;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 public class CommitResult implements Serializable {
@@ -15,6 +15,8 @@ public class CommitResult implements Serializable {
 
 	private final int expectedUpdateID;
 
+	private final TableInfo tableName;
+
 	/**
 	 * 
 	 * @param commit
@@ -26,12 +28,15 @@ public class CommitResult implements Serializable {
 	 * @param expectedUpdateID
 	 *            The update ID that the replica should match when it commits to the table manager.
 	 * @param expectedUpdateID
+	 * @param tableName
+	 *            Name of the table which is being updated by this query.
 	 */
-	public CommitResult(boolean commit, DatabaseInstanceWrapper wrapper, int updateID, int expectedUpdateID) {
+	public CommitResult(boolean commit, DatabaseInstanceWrapper wrapper, int updateID, int expectedUpdateID, TableInfo tableName) {
 		this.commit = commit;
 		this.wrapper = wrapper;
 		this.updateID = updateID;
 		this.expectedUpdateID = expectedUpdateID;
+		this.tableName = tableName;
 	}
 
 	public DatabaseInstanceWrapper getDatabaseInstanceWrapper() {
@@ -45,9 +50,14 @@ public class CommitResult implements Serializable {
 	public int getUpdateID() {
 		return updateID;
 	}
-	
+
 	public int getExpectedUpdateID() {
 		return expectedUpdateID;
+	}
+	
+
+	public Object getTable() {
+		return tableName;
 	}
 
 	@Override

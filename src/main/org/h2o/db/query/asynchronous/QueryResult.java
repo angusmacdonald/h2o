@@ -19,7 +19,7 @@ package org.h2o.db.query.asynchronous;
 
 import java.sql.SQLException;
 
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.TableInfo;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 /**
@@ -35,18 +35,22 @@ public class QueryResult {
 
 	private DatabaseInstanceWrapper wrapper;
 
+	private TableInfo tableInfo;
+	
 	private int updateID;
 
-	public QueryResult(int result, DatabaseInstanceWrapper wrapper, int updateID) {
+	public QueryResult(int result, DatabaseInstanceWrapper wrapper, int updateID, TableInfo tableInfo) {
 		this.result = result;
 		this.wrapper = wrapper;
 		this.updateID = updateID;
+		this.tableInfo = tableInfo;
 	}
 
-	public QueryResult(SQLException exception, DatabaseInstanceWrapper wrapper, int updateID) {
+	public QueryResult(SQLException exception, DatabaseInstanceWrapper wrapper, int updateID, TableInfo tableInfo) {
 		this.exception = exception;
 		this.wrapper = wrapper;
 		this.updateID = updateID;
+		this.tableInfo = tableInfo;
 	}
 
 	public SQLException getException() {
@@ -63,5 +67,9 @@ public class QueryResult {
 
 	public int getUpdateID(){
 		return updateID;
+	}
+	
+	public TableInfo getTable(){
+		return tableInfo;
 	}
 }

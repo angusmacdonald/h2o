@@ -360,7 +360,7 @@ public class CreateTable extends SchemaCommand {
 
 			// Execute query.
 			AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor(this.getSchema().getDatabase());
-			queryExecutor.executeQuery(sql, transactionName, replicaLocations, session, false);
+			queryExecutor.executeQuery(sql, transactionName, replicaLocations, tableInfo, session, false);
 		}
 	}
 

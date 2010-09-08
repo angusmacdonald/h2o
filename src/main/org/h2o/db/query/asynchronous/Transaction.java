@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
 import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.TableInfo;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 public class Transaction {
@@ -34,6 +35,7 @@ public class Transaction {
 	 * @param executingQueries
 	 * @param recentlyCompletedQueries 
 	 * @param expectedUpdateID 
+	 * @param tableName 
 	 */
 	public Transaction(String transactionID, List<FutureTask<QueryResult>> executingQueries, List<CommitResult> recentlyCompletedQueries, int expectedUpdateID) {
 		this.transactionID = transactionID;
@@ -95,16 +97,16 @@ public class Transaction {
 				DatabaseInstanceWrapper wrapper = asyncResult.getWrapper();
 				if (result != 0) {
 					// Prepare operation failed at remote machine
-					CommitResult commitResult = new CommitResult(false, wrapper, asyncResult.getUpdateID(), expectedUpdateID);
+					CommitResult commitResult = new CommitResult(false, wrapper, asyncResult.getUpdateID(), expectedUpdateID, asyncResult.getTable());
 					recentlyCompletedCommits.add(commitResult);
 					
 				} else {
-					CommitResult commitResult = new CommitResult(true, wrapper, asyncResult.getUpdateID(), expectedUpdateID);
+					CommitResult commitResult = new CommitResult(true, wrapper, asyncResult.getUpdateID(), expectedUpdateID, asyncResult.getTable());
 					recentlyCompletedCommits.add(commitResult);
 				}
 
 			} else {
-				CommitResult commitResult = new CommitResult(true, asyncResult.getWrapper(), asyncResult.getUpdateID(), expectedUpdateID);
+				CommitResult commitResult = new CommitResult(true, asyncResult.getWrapper(), asyncResult.getUpdateID(), expectedUpdateID, asyncResult.getTable());
 				recentlyCompletedCommits.add(commitResult);
 			}
 

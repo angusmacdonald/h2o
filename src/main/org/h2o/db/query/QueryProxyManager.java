@@ -154,7 +154,7 @@ public class QueryProxyManager {
 			}
 
 		}
-		queryProxies.put(proxy.getTableName(), proxy);
+		queryProxies.put(proxy.getTableName().getFullTableName(), proxy);
 	}
 
 	/**
@@ -203,10 +203,6 @@ public class QueryProxyManager {
 			commitLocal(commit, h2oCommit);
 			return;
 		} else if(tableManagers.size() == 0 && allReplicas.size() == 0) {
-
-			//	commitLocal(commit, h2oCommit);
-
-
 			return;
 		} else if (db.getAsynchronousQueryManager() == null) {
 			return; //management db etc may call this.
@@ -222,7 +218,7 @@ public class QueryProxyManager {
 			commitedQueries = new LinkedList<CommitResult>();
 
 			for (Entry<DatabaseInstanceWrapper, Integer> replica: allReplicas.entrySet()){
-				commitedQueries.add(new CommitResult(commit, replica.getKey(), replica.getValue(), updateID));
+				commitedQueries.add(new CommitResult(commit, replica.getKey(), replica.getValue(), updateID, null));
 			}
 		} else {
 			/*
@@ -293,7 +289,7 @@ public class QueryProxyManager {
 
 		Map<DatabaseInstanceWrapper, Integer> commitLocations = getCommittedLocations(commitedQueries);
 
-		boolean actionSuccessful = queryExecutor.executeQuery(sql, transactionName, commitLocations, this.parser.getSession(), true);
+		boolean actionSuccessful = queryExecutor.executeQuery(sql, transactionName, commitLocations, null, this.parser.getSession(), true);
 		return actionSuccessful;
 	}
 

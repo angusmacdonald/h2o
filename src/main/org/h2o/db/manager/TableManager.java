@@ -161,6 +161,8 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 	private int relationReplicationFactor;
 
+	private TableInfo tableInfo;
+
 	public TableManager(TableInfo tableDetails, Database database) throws Exception {
 		super(database);
 
@@ -177,7 +179,8 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		}
 
 		this.fullName = schemaName + "." + tableName;
-
+		this.tableInfo = tableDetails.getGenericTableInfo();
+		
 		this.replicaManager = new ReplicaManager();
 		this.replicaManager.add(database.getLocalDatabaseInstanceInWrapper()); // the first replica will be created here.
 
@@ -375,7 +378,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 		LockType lockGranted = lockingTable.requestLock(lockRequested, databaseInstanceWrapper);
 
-		QueryProxy qp = new QueryProxy(lockGranted, fullName, selectReplicaLocations(lockRequested, databaseInstanceWrapper), this,
+		QueryProxy qp = new QueryProxy(lockGranted, tableInfo, selectReplicaLocations(lockRequested, databaseInstanceWrapper), this,
 				databaseInstanceWrapper, replicaManager.getCurrentUpdateID(), lockRequested);
 
 		return qp;
@@ -535,7 +538,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		 */
 
 		if (lockType == LockType.WRITE){ //creates are viewed as writes in the locking table.
-			replicaManager.completeUpdate(commit, committedQueries, updateID, true);
+			replicaManager.completeUpdate(commit, committedQueries, updateID, true, tableInfo);
 			
 			/*
 			 * TODO update persisted state with update IDs (or something indicating whether a replica is 'current').

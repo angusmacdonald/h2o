@@ -20,11 +20,13 @@ package org.h2o.db.replication;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
@@ -160,7 +162,7 @@ public class ReplicaManager implements Serializable {
 	 * committed queries will be returned if their update IDs match up. If they don't appear on the returned list
 	 * then they are no longer active replicas.
 	 */
-	public List<CommitResult> completeUpdate(boolean commit, List<CommitResult> committedQueries, int updateID, boolean synchronousUpdate) {
+	public List<CommitResult> completeUpdate(boolean commit, List<CommitResult> committedQueries, int updateID, boolean synchronousUpdate, TableInfo tableInfo) {
 
 		List<CommitResult> successfullyCommittedQueries = new LinkedList<CommitResult>(); // queries that were successfully committed here.
 
@@ -187,15 +189,31 @@ public class ReplicaManager implements Serializable {
 
 		if (committedQueries != null && committedQueries.size() != 0) {
 
+			Set<DatabaseInstanceWrapper> instancesUpdated = new HashSet<DatabaseInstanceWrapper>();
+			
 			/*
 			 * Loop through each replica which was updated, re-adding them into the replicaLocations hashmap along with the new
 			 * updateID.
 			 */
 			for (CommitResult commitResult : committedQueries) {
-
+				
 				DatabaseInstanceWrapper wrapper = commitResult.getDatabaseInstanceWrapper();
-				if (getAllReplicas().containsKey(wrapper)) {
+				
+				if (instancesUpdated.contains(wrapper)) continue; //don't update info for the same replica twice.
+				
+				/*
+				 * Meaning of IF statement:
+				 * IF this replica location is actually a replica location for this table
+				 * AND
+				 * the commit information is for this table OR no table is specified (which is the case for queries which have bypassed the asynchronous update
+				 * manager.
+				 * THEN...
+				 * Update the active/all replica set with new update IDs where appropriate.
+				 */
+				if (getAllReplicas().containsKey(wrapper) && (!tableInfo.equals(commitResult.getTable()) || commitResult.getTable() == null)) {
 
+					instancesUpdated.add(wrapper);
+					
 					final Integer previousID = getAllReplicas().get(wrapper);
 
 					if (updateID == previousID) {
@@ -229,8 +247,6 @@ public class ReplicaManager implements Serializable {
 						 */
 						ErrorHandling.errorNoEvent("Replica will not commit because update IDs did not match. Expected: " + updateID + "; Actual current: " + previousID);
 					}
-
-
 
 				} // In many cases it won't contain this key, but another table (part of the same transaction) was on this machine.
 			}

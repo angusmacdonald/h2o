@@ -24,6 +24,7 @@ import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.test.h2o.H2OTest;
 import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.TableInfo;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 public class RemoteQueryExecutor extends Thread {
@@ -41,6 +42,8 @@ public class RemoteQueryExecutor extends Thread {
 	private boolean commitOperation;
 
 	private int updateID;
+
+	private final TableInfo tableInfo;
 
 	/**
 	 * 
@@ -60,7 +63,7 @@ public class RemoteQueryExecutor extends Thread {
 	 *            get ready for the eventual commit.
 	 */
 	public RemoteQueryExecutor(String query, String transactionName, DatabaseInstanceWrapper replica, int updateID, Parser parser,
-			boolean local, boolean commitOperation) {
+			boolean local, boolean commitOperation, TableInfo tableInfo) {
 		this.query = query;
 		this.transactionName = transactionName;
 		this.databaseWrapper = replica;
@@ -68,6 +71,7 @@ public class RemoteQueryExecutor extends Thread {
 		this.local = local;
 		this.commitOperation = commitOperation;
 		this.updateID = updateID;
+		this.tableInfo = tableInfo;
 	}
 
 	public QueryResult executeQuery() {
@@ -106,10 +110,10 @@ public class RemoteQueryExecutor extends Thread {
 				result = command.executeUpdate();
 			}
 
-			qr = new QueryResult(result, databaseWrapper, updateID);
+			qr = new QueryResult(result, databaseWrapper, updateID, tableInfo);
 
 		} catch (SQLException e) {
-			qr = new QueryResult(e, databaseWrapper, updateID);
+			qr = new QueryResult(e, databaseWrapper, updateID, tableInfo);
 		}
 
 		return qr;
@@ -123,12 +127,12 @@ public class RemoteQueryExecutor extends Thread {
 			int result = databaseWrapper.getDatabaseInstance().execute(query,
 					transactionName, commitOperation);
 
-			qr = new QueryResult(result, databaseWrapper, updateID);
+			qr = new QueryResult(result, databaseWrapper, updateID, tableInfo);
 
 		} catch (RemoteException e) {
-			qr = new QueryResult(new SQLException(e.getMessage()), databaseWrapper, updateID);
+			qr = new QueryResult(new SQLException(e.getMessage()), databaseWrapper, updateID, tableInfo);
 		} catch (SQLException e) {
-			qr = new QueryResult(e, databaseWrapper, updateID);
+			qr = new QueryResult(e, databaseWrapper, updateID, tableInfo);
 		}
 
 		return qr;
