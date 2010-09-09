@@ -94,11 +94,11 @@ public class TableLinkConnection {
 	}
 
 	private void open() throws SQLException {
-		conn = JdbcUtils.getConnection(driver, url, user, password);
+		conn = JdbcUtils.getConnection(driver, getUrl(), user, password);
 	}
 
 	public int hashCode() {
-		return ObjectUtils.hashCode(driver) ^ ObjectUtils.hashCode(url)
+		return ObjectUtils.hashCode(driver) ^ ObjectUtils.hashCode(getUrl())
 				^ ObjectUtils.hashCode(user) ^ ObjectUtils.hashCode(password);
 	}
 
@@ -106,7 +106,7 @@ public class TableLinkConnection {
 		if (o instanceof TableLinkConnection) {
 			TableLinkConnection other = (TableLinkConnection) o;
 			return StringUtils.equals(driver, other.driver)
-					&& StringUtils.equals(url, other.url)
+					&& StringUtils.equals(getUrl(), other.getUrl())
 					&& StringUtils.equals(user, other.user)
 					&& StringUtils.equals(password, other.password);
 		}
@@ -134,6 +134,10 @@ public class TableLinkConnection {
 				map.remove(this);
 			}
 		}
+	}
+
+	public String getUrl() {
+		return url;
 	}
 
 }

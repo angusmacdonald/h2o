@@ -26,6 +26,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 
 import org.h2.command.Command;
 import org.h2.command.Parser;
@@ -403,7 +404,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 */
 	private Map<DatabaseInstanceWrapper, Integer> selectReplicaLocations(LockType lockType, DatabaseInstanceWrapper requestingDatabase) {
 
-		if (lockType == LockType.READ) {
+		if (lockType == LockType.READ || lockType == LockType.NONE) {
 			return this.replicaManager.getActiveReplicas();
 		}// else, a more informed decision is needed.
 
@@ -524,7 +525,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 * @see org.h2.h2o.manager.TableManagerRemote2#releaseLock(org.h2.h2o.comms.remote .DatabaseInstanceRemote, java.util.Set, int)
 	 */
 	@Override
-	public void releaseLock(boolean commit, DatabaseInstanceWrapper requestingDatabase, List<CommitResult> committedQueries, int updateID)
+	public void releaseLock(boolean commit, DatabaseInstanceWrapper requestingDatabase, Set<CommitResult> committedQueries)
 	throws RemoteException, MovedException {
 		preMethodTest();
 
@@ -538,7 +539,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		 */
 
 		if (lockType == LockType.WRITE){ //creates are viewed as writes in the locking table.
-			replicaManager.completeUpdate(commit, committedQueries, updateID, true, tableInfo);
+			replicaManager.completeUpdate(commit, committedQueries, true, tableInfo);
 			
 			/*
 			 * TODO update persisted state with update IDs (or something indicating whether a replica is 'current').

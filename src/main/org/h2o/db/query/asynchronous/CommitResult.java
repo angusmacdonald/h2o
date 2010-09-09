@@ -60,10 +60,14 @@ public class CommitResult implements Serializable {
 		return tableName;
 	}
 
+
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + (commit ? 1231 : 1237);
+		result = prime * result + ((tableName == null) ? 0 : tableName.hashCode());
 		result = prime * result + updateID;
 		result = prime * result + ((wrapper == null) ? 0 : wrapper.hashCode());
 		return result;
@@ -78,6 +82,13 @@ public class CommitResult implements Serializable {
 		if (getClass() != obj.getClass())
 			return false;
 		CommitResult other = (CommitResult) obj;
+		if (commit != other.commit)
+			return false;
+		if (tableName == null) {
+			if (other.tableName != null)
+				return false;
+		} else if (!tableName.equals(other.tableName))
+			return false;
 		if (updateID != other.updateID)
 			return false;
 		if (wrapper == null) {

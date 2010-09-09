@@ -19,6 +19,7 @@ package org.h2o.db.query;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -31,6 +32,7 @@ import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
+import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.query.asynchronous.AsynchronousQueryExecutor;
 import org.h2o.db.query.asynchronous.CommitResult;
@@ -72,7 +74,15 @@ public class QueryProxyManager {
 	private Command prepareCommand = null;
 
 	/**
+	 * Hack to ensure single table updates work when auto-commit is off.
+	 */
+	private TableInfo tableName = null;
+	
+	/**
 	 * The update ID for this transaction. This is the highest update ID returned by the query proxies held in this manager.
+	 * 
+	 * The update ID is only used for single update local transactions - where more than one update is involved there is a different update ID
+	 * per table being updated.
 	 */
 	private int updateID = 0;
 
@@ -136,6 +146,7 @@ public class QueryProxyManager {
 				tableManagers.add(proxy.getTableManager());
 			}
 
+			tableName = proxy.getTableName();
 			if (proxy.getUpdateID() > this.updateID) { // the update ID should be
 				// the highest of all the
 				// proxy update IDs
@@ -212,13 +223,13 @@ public class QueryProxyManager {
 		Transaction committingTransaction = db.getAsynchronousQueryManager().getTransaction(transactionName);
 
 
-		List<CommitResult> commitedQueries = null;
+		Set<CommitResult> commitedQueries = null;
 
 		if (committingTransaction == null){
-			commitedQueries = new LinkedList<CommitResult>();
+			commitedQueries = new HashSet<CommitResult>();
 
 			for (Entry<DatabaseInstanceWrapper, Integer> replica: allReplicas.entrySet()){
-				commitedQueries.add(new CommitResult(commit, replica.getKey(), replica.getValue(), updateID, null));
+				commitedQueries.add(new CommitResult(commit, replica.getKey(), replica.getValue(), updateID, tableName));
 			}
 		} else {
 			/*
@@ -281,7 +292,7 @@ public class QueryProxyManager {
 	 * @param commitedQueries	Locations where replicas have committed. Send the commit message here.
 	 * @return
 	 */
-	private boolean sendCommitMessagesToReplicas(boolean commit, boolean h2oCommit, Database db, List<CommitResult> commitedQueries) {
+	private boolean sendCommitMessagesToReplicas(boolean commit, boolean h2oCommit, Database db, Set<CommitResult> commitedQueries) {
 		String sql = (commit ? "commit" : "rollback") + ((h2oCommit) ? " TRANSACTION " + transactionName : ";");
 
 		AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor(db);
@@ -293,7 +304,7 @@ public class QueryProxyManager {
 		return actionSuccessful;
 	}
 
-	private Map<DatabaseInstanceWrapper, Integer> getCommittedLocations(List<CommitResult> commitedQueries) {
+	private Map<DatabaseInstanceWrapper, Integer> getCommittedLocations(Collection<CommitResult> commitedQueries) {
 		Map<DatabaseInstanceWrapper, Integer> commitLocations = new HashMap<DatabaseInstanceWrapper, Integer>();
 		for (CommitResult commitResult: commitedQueries){
 			if (commitResult.isCommit()){
@@ -340,10 +351,10 @@ public class QueryProxyManager {
 	 *            The set of replicas which were updated. This is NOT used to release locks, but to update the Table Managers state on which
 	 *            replicas are up-to-date. Null if none have changed.
 	 */
-	public void endTransaction(List<CommitResult> committedQueries, boolean commit) {
+	public void endTransaction(Set<CommitResult> commitedQueries, boolean commit) {
 		try {
 			for (TableManagerRemote tableManagerProxy : tableManagers) {
-				tableManagerProxy.releaseLock(commit, requestingDatabase, committedQueries, updateID);
+				tableManagerProxy.releaseLock(commit, requestingDatabase, commitedQueries);
 			}
 		} catch (RemoteException e) {
 			ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the Table Manager");

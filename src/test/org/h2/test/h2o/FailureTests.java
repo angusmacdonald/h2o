@@ -422,7 +422,7 @@ public class FailureTests extends MultiProcessTestBase{
 			//Database 0 tries to replicate to database 2, but database 2 is killed off before this can happen.
 			sleep("About to kill off third database instance.", 2000); 
 			killDatabase(2);
-			sleep("About to test accessibility of test tables.", 1000);
+			sleep("About to test accessibility of test tables.", 4000);
 
 			assertTrue(assertTestTableExists(connections[1], 2));
 			assertTrue(assertTest2TableExists(connections[1], 2));

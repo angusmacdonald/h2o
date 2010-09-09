@@ -53,9 +53,8 @@ import org.h2o.db.query.locking.LockType;
 /**
  * This class represents a simple SELECT statement.
  * 
- * For each select statement, visibleColumnCount &lt;= distinctColumnCount &lt;=
- * expressionCount. The expression list count could include ORDER BY and GROUP
- * BY expressions that are not in the select list.
+ * For each select statement, visibleColumnCount &lt;= distinctColumnCount &lt;= expressionCount. The expression list count could include
+ * ORDER BY and GROUP BY expressions that are not in the select list.
  * 
  * The call sequence is init(), mapColumns() if it's a subquery, prepare().
  * 
@@ -160,16 +159,14 @@ public class Select extends Query {
 		}
 	}
 
-	private void queryGroupSorted(int columnCount, LocalResult result)
-			throws SQLException {
+	private void queryGroupSorted(int columnCount, LocalResult result) throws SQLException {
 		int rowNumber = 0;
 		setCurrentRowNumber(0);
 		Value[] previousKeyValues = null;
 		while (topTableFilter.next()) {
 			checkCanceled();
 			setCurrentRowNumber(rowNumber + 1);
-			if (condition == null
-					|| Boolean.TRUE.equals(condition.getBooleanValue(session))) {
+			if (condition == null || Boolean.TRUE.equals(condition.getBooleanValue(session))) {
 				rowNumber++;
 				Value[] keyValues = new Value[groupIndex.length];
 				// update group
@@ -202,8 +199,7 @@ public class Select extends Query {
 		}
 	}
 
-	private void addGroupSortedRow(Value[] keyValues, int columnCount,
-			LocalResult result) throws SQLException {
+	private void addGroupSortedRow(Value[] keyValues, int columnCount, LocalResult result) throws SQLException {
 		Value[] row = new Value[columnCount];
 		for (int j = 0; groupIndex != null && j < groupIndex.length; j++) {
 			row[groupIndex[j]] = keyValues[j];
@@ -310,8 +306,7 @@ public class Select extends Query {
 		return count;
 	}
 
-	private void queryGroup(int columnCount, LocalResult result)
-			throws SQLException {
+	private void queryGroup(int columnCount, LocalResult result) throws SQLException {
 		ValueHashMap groups = new ValueHashMap(session.getDatabase());
 		int rowNumber = 0;
 		setCurrentRowNumber(0);
@@ -319,8 +314,7 @@ public class Select extends Query {
 		while (topTableFilter.next()) {
 			checkCanceled();
 			setCurrentRowNumber(rowNumber + 1);
-			if (condition == null
-					|| Boolean.TRUE.equals(condition.getBooleanValue(session))) {
+			if (condition == null || Boolean.TRUE.equals(condition.getBooleanValue(session))) {
 				Value key;
 				rowNumber++;
 				if (groupIndex == null) {
@@ -382,10 +376,8 @@ public class Select extends Query {
 	}
 
 	/**
-	 * Get the index that matches the ORDER BY list, if one exists. This is to
-	 * avoid running a separate ORDER BY if an index can be used. This is
-	 * specially important for large result sets, if only the first few rows are
-	 * important (LIMIT is used)
+	 * Get the index that matches the ORDER BY list, if one exists. This is to avoid running a separate ORDER BY if an index can be used.
+	 * This is specially important for large result sets, if only the first few rows are important (LIMIT is used)
 	 * 
 	 * @return the index if one is found
 	 */
@@ -397,8 +389,7 @@ public class Select extends Query {
 		ObjectArray sortColumns = new ObjectArray();
 		for (int idx : indexes) {
 			if (idx < 0 || idx >= expressions.size()) {
-				throw Message.getInvalidValueException("" + (idx + 1),
-						"ORDER BY");
+				throw Message.getInvalidValueException("" + (idx + 1), "ORDER BY");
 			}
 			Expression expr = (Expression) expressions.get(idx);
 			expr = expr.getNonAliasExpression();
@@ -459,8 +450,7 @@ public class Select extends Query {
 		return null;
 	}
 
-	private void queryDistinct(LocalResult result, long limitRows)
-			throws SQLException {
+	private void queryDistinct(LocalResult result, long limitRows) throws SQLException {
 		if (limitRows != 0 && offset != null) {
 			// limitRows must be long, otherwise we get an int overflow
 			// if limitRows is at or near Integer.MAX_VALUE
@@ -488,8 +478,7 @@ public class Select extends Query {
 			row[0] = value;
 			result.addRow(row);
 			rowNumber++;
-			if ((sort == null || sortUsingIndex) && limitRows != 0
-					&& result.getRowCount() >= limitRows) {
+			if ((sort == null || sortUsingIndex) && limitRows != 0 && result.getRowCount() >= limitRows) {
 				break;
 			}
 			if (sampleSize > 0 && rowNumber >= sampleSize) {
@@ -498,8 +487,7 @@ public class Select extends Query {
 		}
 	}
 
-	private void queryFlat(int columnCount, LocalResult result, long limitRows)
-			throws SQLException {
+	private void queryFlat(int columnCount, LocalResult result, long limitRows) throws SQLException {
 		if (limitRows != 0 && offset != null) {
 			// limitRows must be long, otherwise we get an int overflow
 			// if limitRows is at or near Integer.MAX_VALUE
@@ -510,8 +498,7 @@ public class Select extends Query {
 		while (topTableFilter.next()) {
 			checkCanceled();
 			setCurrentRowNumber(rowNumber + 1);
-			if (condition == null
-					|| Boolean.TRUE.equals(condition.getBooleanValue(session))) {
+			if (condition == null || Boolean.TRUE.equals(condition.getBooleanValue(session))) {
 				Value[] row = new Value[columnCount];
 				for (int i = 0; i < columnCount; i++) {
 					Expression expr = (Expression) expressions.get(i);
@@ -519,8 +506,7 @@ public class Select extends Query {
 				}
 				result.addRow(row);
 				rowNumber++;
-				if ((sort == null || sortUsingIndex) && limitRows != 0
-						&& result.getRowCount() >= limitRows) {
+				if ((sort == null || sortUsingIndex) && limitRows != 0 && result.getRowCount() >= limitRows) {
 					break;
 				}
 				if (sampleSize > 0 && rowNumber >= sampleSize) {
@@ -530,8 +516,7 @@ public class Select extends Query {
 		}
 	}
 
-	private void queryQuick(int columnCount, LocalResult result)
-			throws SQLException {
+	private void queryQuick(int columnCount, LocalResult result) throws SQLException {
 		Value[] row = new Value[columnCount];
 		for (int i = 0; i < columnCount; i++) {
 			Expression expr = (Expression) expressions.get(i);
@@ -541,8 +526,7 @@ public class Select extends Query {
 	}
 
 	public LocalResult queryMeta() throws SQLException {
-		LocalResult result = new LocalResult(session, expressions,
-				visibleColumnCount);
+		LocalResult result = new LocalResult(session, expressions, visibleColumnCount);
 		result.done();
 		return result;
 	}
@@ -558,8 +542,7 @@ public class Select extends Query {
 			}
 		}
 		int columnCount = expressions.size();
-		LocalResult result = new LocalResult(session, expressions,
-				visibleColumnCount);
+		LocalResult result = new LocalResult(session, expressions, visibleColumnCount);
 		if (!sortUsingIndex) {
 			result.setSortOrder(sort);
 		}
@@ -607,8 +590,7 @@ public class Select extends Query {
 				expressions.remove(i);
 				for (int j = 0; j < filters.size(); j++) {
 					TableFilter filter = (TableFilter) filters.get(j);
-					Wildcard c2 = new Wildcard(filter.getTable().getSchema()
-							.getName(), filter.getTableAlias());
+					Wildcard c2 = new Wildcard(filter.getTable().getSchema().getName(), filter.getTableAlias());
 					expressions.add(i++, c2);
 				}
 				i = temp - 1;
@@ -617,16 +599,14 @@ public class Select extends Query {
 				for (int j = 0; j < filters.size(); j++) {
 					TableFilter f = (TableFilter) filters.get(j);
 					if (tableAlias.equals(f.getTableAlias())) {
-						if (schemaName == null
-								|| schemaName.equals(f.getSchemaName())) {
+						if (schemaName == null || schemaName.equals(f.getSchemaName())) {
 							filter = f;
 							break;
 						}
 					}
 				}
 				if (filter == null) {
-					throw Message.getSQLException(
-							ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableAlias);
+					throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableAlias);
 				}
 				Table t = filter.getTable();
 				String alias = filter.getTableAlias();
@@ -636,8 +616,7 @@ public class Select extends Query {
 					if (filter.isNaturalJoinColumn(c)) {
 						continue;
 					}
-					ExpressionColumn ec = new ExpressionColumn(
-							session.getDatabase(), null, alias, c.getName());
+					ExpressionColumn ec = new ExpressionColumn(session.getDatabase(), null, alias, c.getName());
 					expressions.add(i++, ec);
 				}
 				i--;
@@ -664,8 +643,7 @@ public class Select extends Query {
 			expressionSQL = null;
 		}
 		if (orderList != null) {
-			initOrder(expressions, expressionSQL, orderList,
-					visibleColumnCount, distinct);
+			initOrder(expressions, expressionSQL, orderList, visibleColumnCount, distinct);
 		}
 		distinctColumnCount = expressions.size();
 		if (having != null) {
@@ -762,43 +740,33 @@ public class Select extends Query {
 				condition.createIndexConditions(session, f);
 			}
 		}
-		if (isGroupQuery && groupIndex == null && havingIndex < 0
-				&& filters.size() == 1) {
+		if (isGroupQuery && groupIndex == null && havingIndex < 0 && filters.size() == 1) {
 			if (condition == null) {
-				ExpressionVisitor optimizable = ExpressionVisitor
-						.get(ExpressionVisitor.OPTIMIZABLE_MIN_MAX_COUNT_ALL);
+				ExpressionVisitor optimizable = ExpressionVisitor.get(ExpressionVisitor.OPTIMIZABLE_MIN_MAX_COUNT_ALL);
 				optimizable.setTable(((TableFilter) filters.get(0)).getTable());
 				isQuickAggregateQuery = isEverything(optimizable);
 			}
 		}
 		cost = preparePlan();
-		if (SysProperties.OPTIMIZE_DISTINCT && distinct && !isGroupQuery
-				&& filters.size() == 1 && expressions.size() == 1
+		if (SysProperties.OPTIMIZE_DISTINCT && distinct && !isGroupQuery && filters.size() == 1 && expressions.size() == 1
 				&& condition == null) {
 			Expression expr = (Expression) expressions.get(0);
 			expr = expr.getNonAliasExpression();
 			if (expr instanceof ExpressionColumn) {
 				Column column = ((ExpressionColumn) expr).getColumn();
 				int selectivity = column.getSelectivity();
-				Index columnIndex = topTableFilter.getTable()
-						.getIndexForColumn(column, true);
-				if (columnIndex != null
-						&& selectivity != Constants.SELECTIVITY_DEFAULT
-						&& selectivity < 20) {
+				Index columnIndex = topTableFilter.getTable().getIndexForColumn(column, true);
+				if (columnIndex != null && selectivity != Constants.SELECTIVITY_DEFAULT && selectivity < 20) {
 					// the first column must be ascending
 					boolean ascending = columnIndex.getIndexColumns()[0].sortType == SortOrder.ASCENDING;
 					Index current = topTableFilter.getIndex();
 					// if another index is faster
-					if (columnIndex.canFindNext()
-							&& ascending
-							&& (current == null
-									|| current.getIndexType().getScan() || columnIndex == current)) {
+					if (columnIndex.canFindNext() && ascending
+							&& (current == null || current.getIndexType().getScan() || columnIndex == current)) {
 						IndexType type = columnIndex.getIndexType();
 						// hash indexes don't work, and unique single column
 						// indexes don't work
-						if (!type.getHash()
-								&& (!type.getUnique() || columnIndex
-										.getColumns().length > 1)) {
+						if (!type.getHash() && (!type.getUnique() || columnIndex.getColumns().length > 1)) {
 							topTableFilter.setIndex(columnIndex);
 							isDistinctQuery = true;
 						}
@@ -809,8 +777,7 @@ public class Select extends Query {
 		if (sort != null && !isQuickAggregateQuery && !isGroupQuery) {
 			Index index = getSortIndex();
 			Index current = topTableFilter.getIndex();
-			if (index != null
-					&& (current.getIndexType().getScan() || current == index)) {
+			if (index != null && (current.getIndexType().getScan() || current == index)) {
 				topTableFilter.setIndex(index);
 				if (!distinct || isDistinctQuery) {
 					// sort using index would not work correctly for distinct
@@ -820,12 +787,10 @@ public class Select extends Query {
 				}
 			}
 		}
-		if (SysProperties.OPTIMIZE_GROUP_SORTED && !isQuickAggregateQuery
-				&& isGroupQuery && getGroupByExpressionCount() > 0) {
+		if (SysProperties.OPTIMIZE_GROUP_SORTED && !isQuickAggregateQuery && isGroupQuery && getGroupByExpressionCount() > 0) {
 			Index index = getGroupSortedIndex();
 			Index current = topTableFilter.getIndex();
-			if (index != null
-					&& (current.getIndexType().getScan() || current == index)) {
+			if (index != null && (current.getIndexType().getScan() || current == index)) {
 				topTableFilter.setIndex(index);
 				isGroupSortedQuery = true;
 			}
@@ -873,9 +838,7 @@ public class Select extends Query {
 						// not throw an exception
 						on = on.optimize(session);
 						// it is not supported even if the columns exist
-						throw Message.getSQLException(
-								ErrorCode.UNSUPPORTED_OUTER_JOIN_CONDITION_1,
-								on.getSQL());
+						throw Message.getSQLException(ErrorCode.UNSUPPORTED_OUTER_JOIN_CONDITION_1, on.getSQL());
 					}
 					f.removeJoinCondition();
 					// need to check that all added are bound to a table
@@ -1041,8 +1004,7 @@ public class Select extends Query {
 		this.isForUpdate = b;
 	}
 
-	public void mapColumns(ColumnResolver resolver, int level)
-			throws SQLException {
+	public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
 		for (int i = 0; i < expressions.size(); i++) {
 			Expression e = (Expression) expressions.get(i);
 			e.mapColumns(resolver, level);
@@ -1063,8 +1025,8 @@ public class Select extends Query {
 	}
 
 	/**
-	 * Check if this is an aggregate query with direct lookup, for example a
-	 * query of the type SELECT COUNT(*) FROM TEST or SELECT MAX(ID) FROM TEST.
+	 * Check if this is an aggregate query with direct lookup, for example a query of the type SELECT COUNT(*) FROM TEST or SELECT MAX(ID)
+	 * FROM TEST.
 	 * 
 	 * @return true if a direct lookup is possible
 	 */
@@ -1072,8 +1034,7 @@ public class Select extends Query {
 		return isQuickAggregateQuery;
 	}
 
-	public void addGlobalCondition(Parameter param, int columnId,
-			int comparisonType) throws SQLException {
+	public void addGlobalCondition(Parameter param, int columnId, int comparisonType) throws SQLException {
 		addParameter(param);
 		Expression col = (Expression) expressions.get(columnId);
 		col = col.getNonAliasExpression();
@@ -1095,8 +1056,7 @@ public class Select extends Query {
 				if (having == null) {
 					having = comp;
 				} else {
-					having = new ConditionAndOr(ConditionAndOr.AND, having,
-							comp);
+					having = new ConditionAndOr(ConditionAndOr.AND, having, comp);
 				}
 			}
 		}
@@ -1104,8 +1064,7 @@ public class Select extends Query {
 			if (condition == null) {
 				condition = comp;
 			} else {
-				condition = new ConditionAndOr(ConditionAndOr.AND, condition,
-						comp);
+				condition = new ConditionAndOr(ConditionAndOr.AND, condition, comp);
 			}
 		}
 	}
@@ -1191,21 +1150,19 @@ public class Select extends Query {
 	}
 
 	/**
-	 * Specifies whether the user wishes the query to be evaluated locally
-	 * (LOCAL), at the primary copy (PRIMARY), or if they have no preference
-	 * (NO_PREFERENCE).
+	 * Specifies whether the user wishes the query to be evaluated locally (LOCAL), at the primary copy (PRIMARY), or if they have no
+	 * preference (NO_PREFERENCE).
 	 * 
 	 * @param b
-	 *            true if local; false for remote evaluation (i.e. access remote
-	 *            copy of the data).
+	 *            true if local; false for remote evaluation (i.e. access remote copy of the data).
 	 */
 	public void setLocationPreference(LocationPreference locale) {
 		locationPreference = locale;
 	}
 
 	/**
-	 * Whether the user wishes the query to be evaluated locally (LOCAL), at the
-	 * primary copy (PRIMARY), or if they have no preference (NO_PREFERENCE).
+	 * Whether the user wishes the query to be evaluated locally (LOCAL), at the primary copy (PRIMARY), or if they have no preference
+	 * (NO_PREFERENCE).
 	 */
 	public LocationPreference getLocationPreference() {
 		return locationPreference;
@@ -1214,19 +1171,16 @@ public class Select extends Query {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * org.h2.command.Prepared#acquireLocks(org.h2.h2o.comms.QueryProxyManager)
+	 * @see org.h2.command.Prepared#acquireLocks(org.h2.h2o.comms.QueryProxyManager)
 	 */
 	@Override
-	public void acquireLocks(QueryProxyManager queryProxyManager)
-			throws SQLException {
+	public void acquireLocks(QueryProxyManager queryProxyManager) throws SQLException {
 
 		for (Table table : this.getTables()) {
 			if (!this.session.getDatabase().isTableLocal(table.getSchema())) {
 
 				if (Table.TABLE.equals(table.getTableType())) {
-					QueryProxy qp = QueryProxy.getQueryProxyAndLock(table,
-							LockType.READ, this.session.getDatabase());
+					QueryProxy qp = QueryProxy.getQueryProxyAndLock(table, LockType.READ, this.session.getDatabase());
 
 					queryProxyManager.addProxy(qp);
 				} else if (Table.VIEW.equals(table.getTableType())) {
@@ -1235,12 +1189,9 @@ public class Select extends Query {
 					List<Table> tables = ((TableView) table).getTables();
 
 					for (Table theseTables : tables) {
-						if (!this.session.getDatabase().isTableLocal(
-								theseTables.getSchema())) {
+						if (!this.session.getDatabase().isTableLocal(theseTables.getSchema())) {
 
-							QueryProxy qp = QueryProxy.getQueryProxyAndLock(
-									theseTables, LockType.READ,
-									this.session.getDatabase());
+							QueryProxy qp = QueryProxy.getQueryProxyAndLock(theseTables, LockType.READ, this.session.getDatabase());
 							queryProxyManager.addProxy(qp);
 						}
 					}

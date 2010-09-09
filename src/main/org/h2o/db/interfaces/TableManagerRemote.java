@@ -20,7 +20,7 @@ package org.h2o.db.interfaces;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
@@ -95,17 +95,13 @@ public interface TableManagerRemote extends H2ORemote, Migratable {
 	 * @param requestingDatabase
 	 *            Database which made the original request. Lock was taken out
 	 *            in its name.
-	 * @param updateID
-	 *            The ID given to the update by the Table Manager. It is
-	 *            returned here to confirm execution of this specific
-	 *            transaction.
-	 * @param committedQueries
+	 * @param commitedQueries
 	 *            The set of replicas that were successfully updated by this
 	 *            query.
 	 * @throws MovedException
 	 */
 	public void releaseLock(boolean commit, DatabaseInstanceWrapper requestingDatabase,
-			List<CommitResult> committedQueries, int updateID)
+			Set<CommitResult> commitedQueries)
 			throws RemoteException, MovedException;
 
 	/**

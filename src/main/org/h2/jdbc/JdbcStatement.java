@@ -200,6 +200,7 @@ public class JdbcStatement extends TraceObject implements Statement {
 			}
 			return resultSet;
 		} catch (Exception e) {
+			
 			throw logAndConvert(e);
 		}
 	}

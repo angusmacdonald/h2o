@@ -242,7 +242,8 @@ public class Database implements DataHandler {
 
 		localSchema.add(Constants.H2O_SCHEMA);
 		localSchema.add("RESOURCE_MONITORING");
-
+		localSchema.add(Constants.SCHEMA_INFORMATION);
+		
 		this.databaseName = name;
 		this.databaseShortName = parseDatabaseShortName();
 

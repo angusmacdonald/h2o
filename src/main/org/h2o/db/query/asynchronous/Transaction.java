@@ -1,12 +1,12 @@
 package org.h2o.db.query.asynchronous;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
-import org.h2o.db.id.DatabaseURL;
-import org.h2o.db.id.TableInfo;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 public class Transaction {
@@ -15,8 +15,11 @@ public class Transaction {
 
 	/**
 	 * The set of all queries being executed as part of this transaction.
+	 * 
+	 * This is a set (rather than a list) because there may be many commit messages for the same table
+	 * and there is no need to duplicate them.
 	 */
-	private List<CommitResult> completedQueries;
+	private Set<CommitResult> completedQueries;
 
 	/**
 	 * The set of queries still being executed as part of this transaction.
@@ -41,10 +44,10 @@ public class Transaction {
 		this.transactionID = transactionID;
 		this.incompleteQueries = executingQueries;
 		this.expectedUpdateID = expectedUpdateID;
-		this.completedQueries = recentlyCompletedQueries;
+		this.completedQueries = new HashSet<CommitResult>(recentlyCompletedQueries);
 		
 		if (completedQueries == null){
-			completedQueries = new LinkedList<CommitResult>();
+			completedQueries = new HashSet<CommitResult>();
 		}
 	}
 
@@ -140,7 +143,7 @@ public class Transaction {
 	 * Called by the QueryProxyManager for a transaction when it is committing the transaction. It must send details of the
 	 * completed updates to the Table Manager.
 	 */
-	public synchronized List<CommitResult> getCompletedQueries(){
+	public synchronized Set<CommitResult> getCompletedQueries(){
 		return completedQueries;
 		
 		/*
@@ -165,6 +168,9 @@ public class Transaction {
 	}
 
 	public void addQueries(List<FutureTask<QueryResult>> newIncompleteQueries) {
+		if (newIncompleteQueries == null ) return;
+		if (incompleteQueries == null) incompleteQueries = new LinkedList<FutureTask<QueryResult>>();
+		
 		incompleteQueries.addAll(newIncompleteQueries);
 	}
 

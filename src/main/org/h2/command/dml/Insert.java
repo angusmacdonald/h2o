@@ -7,6 +7,8 @@
 package org.h2.command.dml;
 
 import java.sql.SQLException;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.h2.command.Command;
 import org.h2.command.Prepared;
@@ -24,8 +26,10 @@ import org.h2.table.Column;
 import org.h2.test.h2o.AsynchronousTests;
 import org.h2.util.ObjectArray;
 import org.h2.value.Value;
+import org.h2o.db.id.TableInfo;
 import org.h2o.db.query.QueryProxy;
 import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.query.locking.LockType;
 
 /**
@@ -124,8 +128,16 @@ public class Insert extends Prepared {
 			} else {
 				sql = sqlStatement;
 			}
-
+			
 			return queryProxy.executeUpdate(sql, transactionName, session);
+		} else if (isRegularTable()){
+			/*
+			 * If this is going to be an entirely local query we still need to create a record of it incase it is part of a larger transaction.
+			 */
+			List<CommitResult> recentlyCompletedQueries = new LinkedList<CommitResult>();
+			recentlyCompletedQueries.add(new CommitResult(true, session.getDatabase().getLocalDatabaseInstanceInWrapper(), 
+					queryProxy.getUpdateID(), queryProxy.getUpdateID(), new TableInfo(table.getFullName()) ));
+			session.getDatabase().getAsynchronousQueryManager().addTransaction(transactionName, new TableInfo(table.getFullName()), null, recentlyCompletedQueries , 0);
 		}
 
 		AsynchronousTests.pauseThreadIfTestingAsynchronousUpdates(table, session.getDatabase().getDatabaseSettings(), session.getDatabase().getURL(), getSQL());

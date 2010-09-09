@@ -441,7 +441,7 @@ public class Session extends SessionWithState {
 	 */
 	public Prepared prepare(String sql, boolean rightsChecked)
 			throws SQLException {
-		Parser parser = new Parser(this, false);
+		Parser parser = new Parser(this, true);
 		parser.setRightsChecked(rightsChecked);
 		return parser.prepare(sql);
 	}

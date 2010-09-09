@@ -148,7 +148,7 @@ public class QueryProxy implements Serializable {
 			 * If there are no replicas on which to execute the query.
 			 */
 			try {
-				tableManager.releaseLock(true, requestingDatabase, null, updateID);
+				tableManager.releaseLock(true, requestingDatabase, null);
 			} catch (RemoteException e) {
 				ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the Table Manager");
 			} catch (MovedException e) {
