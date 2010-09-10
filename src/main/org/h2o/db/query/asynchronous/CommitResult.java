@@ -17,6 +17,8 @@ public class CommitResult implements Serializable {
 
 	private final TableInfo tableName;
 
+	private final boolean isCommitQuery;
+
 	/**
 	 * 
 	 * @param commit
@@ -37,6 +39,21 @@ public class CommitResult implements Serializable {
 		this.updateID = updateID;
 		this.expectedUpdateID = expectedUpdateID;
 		this.tableName = tableName;
+
+		if (tableName == null){
+			this.isCommitQuery = true;
+		} else {
+			this.isCommitQuery = false;
+		}
+	}
+
+	public CommitResult(boolean commit, DatabaseInstanceWrapper wrapper, int updateID, int expectedUpdateID) {
+		this.commit = commit;
+		this.wrapper = wrapper;
+		this.updateID = updateID;
+		this.expectedUpdateID = expectedUpdateID;
+		this.isCommitQuery = true;
+		this.tableName = null;
 	}
 
 	public DatabaseInstanceWrapper getDatabaseInstanceWrapper() {
@@ -54,9 +71,9 @@ public class CommitResult implements Serializable {
 	public int getExpectedUpdateID() {
 		return expectedUpdateID;
 	}
-	
 
-	public Object getTable() {
+
+	public TableInfo getTable() {
 		return tableName;
 	}
 
@@ -102,7 +119,11 @@ public class CommitResult implements Serializable {
 	@Override
 	public String toString() {
 		return "CommitResult [wrapper=" + wrapper + ", commit=" + commit + ", updateID=" + updateID + ", expectedUpdateID="
-				+ expectedUpdateID + "]";
+		+ expectedUpdateID + "]";
+	}
+
+	public boolean isCommitQuery() {
+		return isCommitQuery;
 	}
 
 

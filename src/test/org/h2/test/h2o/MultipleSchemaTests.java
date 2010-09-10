@@ -40,7 +40,7 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 public class MultipleSchemaTests extends TestBase {
 
 	/**
-	 * Tests that a table in a non-default schema is added succussfully to the System Table.
+	 * Tests that a table in a non-default schema is added successfully to the System Table.
 	 */
 	@Test
 	public void TestSystemTableAdd(){
@@ -75,7 +75,7 @@ public class MultipleSchemaTests extends TestBase {
 	}
 
 	/**
-	 * Tests that a table in a non-default schema is dropped succussfully from the System Table.
+	 * Tests that a table in a non-default schema is dropped successfully from the System Table.
 	 */
 	@Test
 	public void TestSystemTableDrop(){

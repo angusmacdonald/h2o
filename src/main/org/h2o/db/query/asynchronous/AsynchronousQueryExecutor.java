@@ -31,7 +31,6 @@ import java.util.concurrent.FutureTask;
 import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
-import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.query.QueryProxy;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
@@ -183,8 +182,8 @@ public class AsynchronousQueryExecutor {
 	 * @param tableName 
 	 * @return True if everything was executed successfully (a global commit).
 	 */
-	private boolean waitUntilRemoteQueriesFinish(List<FutureTask<QueryResult>> incompleteQueries,
-			int updatesNeededBeforeCommit, String transactionNameForQuery, int expectedUpdateID, TableInfo tableName) {
+	private boolean waitUntilRemoteQueriesFinish(List<FutureTask<QueryResult>> incompleteQueries,int updatesNeededBeforeCommit, 
+			String transactionNameForQuery, int expectedUpdateID, TableInfo tableName) {
 		if (incompleteQueries.size() == 0)
 			return true; // the commit value has not changed.
 

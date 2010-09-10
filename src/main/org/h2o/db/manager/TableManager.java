@@ -21,6 +21,7 @@ import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -525,21 +526,23 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 * @see org.h2.h2o.manager.TableManagerRemote2#releaseLock(org.h2.h2o.comms.remote .DatabaseInstanceRemote, java.util.Set, int)
 	 */
 	@Override
-	public void releaseLock(boolean commit, DatabaseInstanceWrapper requestingDatabase, Set<CommitResult> committedQueries)
+	public void releaseLock(boolean commit, DatabaseInstanceWrapper requestingDatabase, Collection<CommitResult> committedQueries, boolean asynchronousCommit)
 	throws RemoteException, MovedException {
 		preMethodTest();
 
 		/*
 		 * Release the locks.
 		 */
-		LockType lockType = lockingTable.releaseLock(requestingDatabase);
-
+		LockType lockType = LockType.NONE;
+		if (!asynchronousCommit){
+		lockType = lockingTable.releaseLock(requestingDatabase);
+		}
 		/*
 		 * Update the set of 'active replicas' and their update IDs.
 		 */
 
-		if (lockType == LockType.WRITE){ //creates are viewed as writes in the locking table.
-			replicaManager.completeUpdate(commit, committedQueries, true, tableInfo);
+		if (lockType == LockType.WRITE || asynchronousCommit){ //creates are viewed as writes in the locking table.
+			replicaManager.completeUpdate(commit, committedQueries, tableInfo);
 			
 			/*
 			 * TODO update persisted state with update IDs (or something indicating whether a replica is 'current').

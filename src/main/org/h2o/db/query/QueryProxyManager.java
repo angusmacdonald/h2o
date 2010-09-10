@@ -77,7 +77,7 @@ public class QueryProxyManager {
 	 * Hack to ensure single table updates work when auto-commit is off.
 	 */
 	private TableInfo tableName = null;
-	
+
 	/**
 	 * The update ID for this transaction. This is the highest update ID returned by the query proxies held in this manager.
 	 * 
@@ -238,12 +238,19 @@ public class QueryProxyManager {
 			Map<DatabaseInstanceWrapper, Integer> updatedReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
 
 			commitedQueries = committingTransaction.getCompletedQueries();
-
+			committingTransaction.setHasCommitted(h2oCommit);
 		}
 
 		endTransaction(commitedQueries, commit);
 
+
+
+
 		boolean commitActionSuccessful = sendCommitMessagesToReplicas(commit, h2oCommit, db, commitedQueries);
+
+		if (!commitActionSuccessful){
+			ErrorHandling.errorNoEvent("Commit message to replicas was unsuccessful for transaction '" + transactionName + "'.");
+		}
 
 		//		if (commitActionSuccessful && commit)
 		//			updatedReplicas = allReplicas; // For asynchronous updates this should check for each replicas success.
@@ -354,7 +361,7 @@ public class QueryProxyManager {
 	public void endTransaction(Set<CommitResult> commitedQueries, boolean commit) {
 		try {
 			for (TableManagerRemote tableManagerProxy : tableManagers) {
-				tableManagerProxy.releaseLock(commit, requestingDatabase, commitedQueries);
+				tableManagerProxy.releaseLock(commit, requestingDatabase, commitedQueries, false);
 			}
 		} catch (RemoteException e) {
 			ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the Table Manager");

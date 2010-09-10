@@ -1,5 +1,8 @@
 package org.h2o.db.query.asynchronous;
 
+import java.rmi.RemoteException;
+import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -7,7 +10,15 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
+import org.h2.engine.Database;
+import org.h2o.db.id.TableInfo;
+import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
+import org.h2o.util.exceptions.MovedException;
+
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 public class Transaction {
 
@@ -45,7 +56,7 @@ public class Transaction {
 		this.incompleteQueries = executingQueries;
 		this.expectedUpdateID = expectedUpdateID;
 		this.completedQueries = new HashSet<CommitResult>(recentlyCompletedQueries);
-		
+
 		if (completedQueries == null){
 			completedQueries = new HashSet<CommitResult>();
 		}
@@ -53,19 +64,24 @@ public class Transaction {
 
 	/**
 	 * Check whether any active queries have finished executing.
+	 * @param db 
+	 * @return true if the transaction has fully committed and can be removed.
 	 */
-	public void checkForCompletion() {
+	public boolean checkForCompletion(Database db) {
 
 		List<FutureTask<QueryResult>> recentlyCompletedQueries = new LinkedList<FutureTask<QueryResult>>();
+
+		if (incompleteQueries == null && transactionHasCommitted) return true;
 
 		/*
 		 * Wait until all remote queries have been completed.
 		 */
-		while (incompleteQueries.size() > 0) {
+		while (incompleteQueries != null && incompleteQueries.size() > 0) {
 			for (int y = 0; y < incompleteQueries.size(); y++) {
 				FutureTask<QueryResult> incompleteQuery = incompleteQueries.get(y);
 
 				if (incompleteQuery.isDone()) {
+
 					incompleteQueries.remove(y);
 					recentlyCompletedQueries.add(incompleteQuery);
 
@@ -102,7 +118,7 @@ public class Transaction {
 					// Prepare operation failed at remote machine
 					CommitResult commitResult = new CommitResult(false, wrapper, asyncResult.getUpdateID(), expectedUpdateID, asyncResult.getTable());
 					recentlyCompletedCommits.add(commitResult);
-					
+
 				} else {
 					CommitResult commitResult = new CommitResult(true, wrapper, asyncResult.getUpdateID(), expectedUpdateID, asyncResult.getTable());
 					recentlyCompletedCommits.add(commitResult);
@@ -112,14 +128,16 @@ public class Transaction {
 				CommitResult commitResult = new CommitResult(true, asyncResult.getWrapper(), asyncResult.getUpdateID(), expectedUpdateID, asyncResult.getTable());
 				recentlyCompletedCommits.add(commitResult);
 			}
-
 		}
 
-
 		if (transactionHasCommitted){ //Send all new commits to the table manager.
-			commit(recentlyCompletedCommits);
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Asynchronous updates completed for transaction '" + transactionID + "'.");
+			commit(recentlyCompletedCommits, db);
+
+			return (incompleteQueries.size() == 0);
 		} else { //Store new commits along with other commits for this transaction.
 			completedQueries.addAll(recentlyCompletedCommits);
+			return false;
 		}
 
 	}
@@ -129,23 +147,55 @@ public class Transaction {
 	 * been committed. These updates should now be reflected in the Table Manager for the given table.
 	 * @param completedUpdates
 	 */
-	public synchronized void commit(List<CommitResult> completedUpdates){
-		/*
-		 * TODO Called by the query proxy manager to commit a transaction. All the updated replicas (based on
-		 * information in this class) will be committed to the table manager.
-		 * 
-		 * This method should return some data structure containing the names of updated replicas and
-		 * information on their update ID, etc...
-		 */
+	public synchronized void commit(Collection<CommitResult> completedUpdates, Database db){
+
+		if (!db.isRunning()) return;
+		
+		for (CommitResult completedQuery: completedQueries){
+
+
+			if (completedQuery.isCommitQuery()){
+				if (!completedQuery.isCommit()){
+					ErrorHandling.errorNoEvent("Error sending COMMIT message for transaction " + transactionID);
+				}
+			} else {
+				TableInfo tableName = completedQuery.getTable();
+
+				TableManagerRemote tableManager = null;
+
+				try {
+					tableManager = db.getSystemTableReference().lookup(tableName, true);
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+
+				if (tableManager != null){
+					try {
+						tableManager.releaseLock(true, db.getLocalDatabaseInstanceInWrapper(), completedUpdates, true);
+					} catch (RemoteException e) {
+						e.printStackTrace();
+					} catch (MovedException e) {
+						try {
+							tableManager = db.getSystemTableReference().lookup(tableName, false);
+							tableManager.releaseLock(true, db.getLocalDatabaseInstanceInWrapper(), completedUpdates, true);
+						} catch (Exception e1) {
+							e1.printStackTrace();
+						}
+					}
+				} else {
+					//ErrorHandling.errorNoEvent("Table Manager not found for table : " + tableName);
+				}
+			}
+		}
 	}
-	
+
 	/**
 	 * Called by the QueryProxyManager for a transaction when it is committing the transaction. It must send details of the
 	 * completed updates to the Table Manager.
 	 */
 	public synchronized Set<CommitResult> getCompletedQueries(){
 		return completedQueries;
-		
+
 		/*
 		 * TODO Called by the query proxy manager to commit a transaction. All the updated replicas (based on
 		 * information in this class) will be committed to the table manager.
@@ -154,27 +204,31 @@ public class Transaction {
 		 * information on their update ID, etc...
 		 */
 	}
-	
-	
+
+
 
 	public String getTransactionID() {
 		return transactionID;
 	}
 
-
-
 	public boolean hasCommitted() {
 		return transactionHasCommitted;
+	}
+
+	public void setHasCommitted(boolean transactionHasCommitted) {
+		this.transactionHasCommitted = transactionHasCommitted;
 	}
 
 	public void addQueries(List<FutureTask<QueryResult>> newIncompleteQueries) {
 		if (newIncompleteQueries == null ) return;
 		if (incompleteQueries == null) incompleteQueries = new LinkedList<FutureTask<QueryResult>>();
-		
+
 		incompleteQueries.addAll(newIncompleteQueries);
 	}
 
 	public void addCompletedQueries(List<CommitResult> recentlyCompletedQueries) {
 		completedQueries.addAll(recentlyCompletedQueries);
 	}
+
+
 }

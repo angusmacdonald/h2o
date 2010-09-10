@@ -23,7 +23,6 @@ import java.sql.SQLException;
 import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.test.h2o.H2OTest;
-import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 

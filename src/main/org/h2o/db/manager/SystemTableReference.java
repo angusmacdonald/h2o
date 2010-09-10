@@ -541,6 +541,8 @@ public class SystemTableReference implements ISystemTableReference {
 	 * @see org.h2.h2o.manager.ISystemTableReference#lookup(org.h2.h2o.util.TableInfo )
 	 */
 	public TableManagerRemote lookup(TableInfo tableInfo, boolean useCache) throws SQLException {
+		if (tableInfo == null) return null;
+		
 		return lookup(tableInfo, false, useCache);
 	}
 
@@ -575,16 +577,8 @@ public class SystemTableReference implements ISystemTableReference {
 		 */
 		try {
 			if (systemTable == null) {
-				return makeAttemptToFindSystemTable(tableInfo, alreadyCalled); // recusrively
-																				// calls
-																				// lookup
-																				// again
-																				// if
-																				// it
-																				// hasn't
-																				// tried
-																				// to
-																				// already.
+				System.err.println("SYSTEM TABLE NULL");
+				return makeAttemptToFindSystemTable(tableInfo, alreadyCalled); // Recursively calls lookup again if it hasn't tried to already.
 			}
 
 			TableManagerWrapper tableManagerWrapper = systemTable.lookup(tableInfo);
@@ -604,6 +598,7 @@ public class SystemTableReference implements ISystemTableReference {
 			handleMovedException(e);
 			return lookup(tableInfo, true, false);
 		} catch (Exception e) {
+			ErrorHandling.errorNoEvent("Error looking up System Table: " + e.getMessage());
 			return makeAttemptToFindSystemTable(tableInfo, alreadyCalled);
 		}
 	}

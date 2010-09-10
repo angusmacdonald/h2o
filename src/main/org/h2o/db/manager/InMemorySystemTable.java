@@ -310,6 +310,11 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	 */
 	@Override
 	public TableManagerWrapper lookup(TableInfo ti) throws RemoteException {
+		
+		if (ti == null){
+			throw new RemoteException("The table information provided was null.");
+		}
+		
 		ti = ti.getGenericTableInfo();
 		TableManagerWrapper tableManagerWrapper = tableManagers.get(ti);
 		TableManagerRemote tm = null;

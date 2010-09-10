@@ -1,5 +1,8 @@
 package org.h2o.db.query.asynchronous;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+
 /**
  * Thread that continuously checks whether a set of queries have been completed.
  *
@@ -12,7 +15,7 @@ public class AsynchronousQueryCheckerThread extends Thread {
 	 */
 	AsynchronousQueryManager queryManager;
 	
-	private static final int SLEEP_TIME = 10;
+	private static final int SLEEP_TIME = 100;
 	
 	public AsynchronousQueryCheckerThread(AsynchronousQueryManager queryManager) {
 		this.queryManager = queryManager;
@@ -23,6 +26,7 @@ public class AsynchronousQueryCheckerThread extends Thread {
 		while (true){
 			
 			try { Thread.sleep(SLEEP_TIME); } catch (InterruptedException e) { }
+			
 			
 			queryManager.checkForCompletion();
 		}

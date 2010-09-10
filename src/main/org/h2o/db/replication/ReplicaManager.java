@@ -94,7 +94,7 @@ public class ReplicaManager implements Serializable {
 	}
 
 	public int getCurrentUpdateID() {
-		for (Integer updateID: activeReplicas.values()){
+		for (Integer updateID : activeReplicas.values()) {
 
 			return updateID; // all the update IDs will be the same because all these replicas are active.
 		}
@@ -129,7 +129,6 @@ public class ReplicaManager implements Serializable {
 		return getAllReplicas().size();
 	}
 
-
 	/**
 	 * @return
 	 */
@@ -147,38 +146,38 @@ public class ReplicaManager implements Serializable {
 		activeReplicas.remove(dbInstance);
 	}
 
-
 	/**
 	 * Finish an update by revising the set of replica locations with new information on:
 	 * <p>
 	 * The updateID of the last update committed on each replica.
 	 * <p>
 	 * The set of replicas which are deemed active.
-	 * @param commit True if all replicas are committing.
 	 * 
-	 * @param committedQueries	The queries which are to be committed.
+	 * @param commit
+	 *            True if all replicas are committing.
+	 * 
+	 * @param committedQueries
+	 *            The queries which are to be committed.
 	 * @param synchronousUpdate
-	 * @return	The set of queries that were actually committed. Those that were on incoming list of 
-	 * committed queries will be returned if their update IDs match up. If they don't appear on the returned list
-	 * then they are no longer active replicas.
+	 * @return The set of queries that were actually committed. Those that were on incoming list of committed queries will be returned if
+	 *         their update IDs match up. If they don't appear on the returned list then they are no longer active replicas.
 	 */
-	public List<CommitResult> completeUpdate(boolean commit, Set<CommitResult> committedQueries, boolean synchronousUpdate, TableInfo tableInfo) {
+	public List<CommitResult> completeUpdate(boolean commit, Collection<CommitResult> committedQueries, TableInfo tableInfo) {
 
 		List<CommitResult> successfullyCommittedQueries = new LinkedList<CommitResult>(); // queries that were successfully committed here.
 
 		int updateID = getUpdateIDFromCommittedQueries(committedQueries, tableInfo);
 
 		/*
-		 * Check whether all updates were rollbacks. If they were there is no need to remove any replicas
-		 * from the set of active replicas.
+		 * Check whether all updates were rollbacks. If they were there is no need to remove any replicas from the set of active replicas.
 		 */
 		boolean allRollback = false;
 
-		if (!commit){
-			if (committedQueries == null){
+		if (!commit) {
+			if (committedQueries == null) {
 				allRollback = true;
 			} else {
-				for (CommitResult commitResult: committedQueries){
+				for (CommitResult commitResult : committedQueries) {
 					if (!commitResult.isCommit()) {
 						allRollback = true;
 						break;
@@ -189,44 +188,39 @@ public class ReplicaManager implements Serializable {
 
 		if (committedQueries != null && committedQueries.size() != 0) {
 
-			
-			if (!allRollback){
-				//Reset the active set.
+			if (!allRollback) {
+				// Reset the active set.
 				activeReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
 			}
-			
+
 			Set<DatabaseInstanceWrapper> instancesUpdated = new HashSet<DatabaseInstanceWrapper>();
-			
+
 			/*
-			 * Loop through each replica which was updated, re-adding them into the replicaLocations hashmap along with the new
-			 * updateID.
+			 * Loop through each replica which was updated, re-adding them into the replicaLocations hashmap along with the new updateID.
 			 */
-			
+
 			for (CommitResult commitResult : committedQueries) {
-				
+
 				DatabaseInstanceWrapper wrapper = commitResult.getDatabaseInstanceWrapper();
-				
-				if (instancesUpdated.contains(wrapper)) continue; //don't update info for the same replica twice.
-				
+
+				if (instancesUpdated.contains(wrapper))
+					continue; // don't update info for the same replica twice.
+
 				/*
-				 * Meaning of IF statement:
-				 * IF this replica location is actually a replica location for this table
-				 * AND
-				 * the commit information is for this table OR no table is specified (which is the case for queries which have bypassed the asynchronous update
-				 * manager.
-				 * THEN...
-				 * Update the active/all replica set with new update IDs where appropriate.
+				 * Meaning of IF statement: IF this replica location is actually a replica location for this table AND the commit
+				 * information is for this table OR no table is specified (which is the case for queries which have bypassed the
+				 * asynchronous update manager. THEN... Update the active/all replica set with new update IDs where appropriate.
 				 */
 				if (getAllReplicas().containsKey(wrapper) && (tableInfo.equals(commitResult.getTable()) || commitResult.getTable() == null)) {
 
 					instancesUpdated.add(wrapper);
-					
+
 					final Integer previousID = getAllReplicas().get(wrapper);
 
 					if (updateID == previousID) {
 						/*
-						 * The updateID of this current replica equals the update ID that was expected of this replica at this point.
-						 * Commit can proceed.
+						 * The updateID of this current replica equals the update ID that was expected of this replica at this point. Commit
+						 * can proceed.
 						 */
 
 						int newUpdateID = previousID + 1;
@@ -235,12 +229,12 @@ public class ReplicaManager implements Serializable {
 							activeReplicas.put(wrapper, newUpdateID);
 							addToAllReplicas(wrapper, newUpdateID);
 
-							successfullyCommittedQueries.add(commitResult); //this query has been successfully updated.
+							successfullyCommittedQueries.add(commitResult); // this query has been successfully updated.
 						} else {
-							if (!allRollback){
+							if (!allRollback) {
 								/*
-								 * Only remove replicas in case of rollback if some of the replicas managed to commit.
-								 * Otherwise they are all still in a consistent state and all still active.
+								 * Only remove replicas in case of rollback if some of the replicas managed to commit. Otherwise they are
+								 * all still in a consistent state and all still active.
 								 */
 								activeReplicas.remove(wrapper);
 								getAllReplicas().remove(wrapper);
@@ -251,39 +245,38 @@ public class ReplicaManager implements Serializable {
 						/*
 						 * The update ID of this replica does not match that which was expected. This replica will not commit.
 						 */
-						ErrorHandling.errorNoEvent("Replica will not commit because update IDs did not match. Expected: " + updateID + "; Actual current: " + previousID);
+						ErrorHandling.errorNoEvent("Replica will not commit because update IDs did not match. Expected: " + updateID
+								+ "; Actual current: " + previousID);
 					}
 
 				} // In many cases it won't contain this key, but another table (part of the same transaction) was on this machine.
 				else {
-					//ErrorHandling.errorNoEvent("Update wasn't applicable to this table " + tableInfo); - valid state to be in...
+					// ErrorHandling.errorNoEvent("Update wasn't applicable to this table " + tableInfo); - valid state to be in...
 				}
 			}
 		}
-		
+
 		return successfullyCommittedQueries;
 	}
 
 	private int getUpdateIDFromCommittedQueries(Collection<CommitResult> committedQueries, TableInfo tableInfo) {
 		int updateID = 0;
-		
-		if (committedQueries == null){
-			return 0 ;
+
+		if (committedQueries == null) {
+			return 0;
 		}
-		
-		for (CommitResult cr: committedQueries){
-			//XXX should expected update ID always be the same?
+
+		for (CommitResult cr : committedQueries) {
+			// XXX should expected update ID always be the same?
 			try {
-				if (cr.getExpectedUpdateID() > updateID && 
-						(((cr.getTable() != null && tableInfo != null) && cr.getTable().equals(tableInfo)) ) ){
+				if (cr.getExpectedUpdateID() > updateID && (((cr.getTable() != null && tableInfo != null) && cr.getTable().equals(tableInfo)))) {
 					updateID = cr.getExpectedUpdateID();
 				}
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
-		
+
 		return updateID;
 	}
 

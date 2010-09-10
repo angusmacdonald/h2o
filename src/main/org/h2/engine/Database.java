@@ -259,7 +259,7 @@ public class Database implements DataHandler {
 		Constants.IS_TESTING_CREATETABLE_FAILURE = false;
 
 		this.transactionNameGenerator = new TransactionNameGenerator(localMachineLocation);
-		this.asynchronousQueryManager = new AsynchronousQueryManager();
+		this.asynchronousQueryManager = new AsynchronousQueryManager(this);
 
 
 		this.compareMode = new CompareMode(null, null, 0);
