@@ -116,10 +116,12 @@ public class CommitResult implements Serializable {
 		return true;
 	}
 
+	
+
 	@Override
 	public String toString() {
 		return "CommitResult [wrapper=" + wrapper + ", commit=" + commit + ", updateID=" + updateID + ", expectedUpdateID="
-		+ expectedUpdateID + "]";
+				+ expectedUpdateID + ", tableName=" + tableName + ", isCommitQuery=" + isCommitQuery + "]";
 	}
 
 	public boolean isCommitQuery() {

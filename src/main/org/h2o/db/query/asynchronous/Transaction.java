@@ -77,12 +77,13 @@ public class Transaction {
 		 * Wait until all remote queries have been completed.
 		 */
 		while (incompleteQueries != null && incompleteQueries.size() > 0) {
-			for (int y = 0; y < incompleteQueries.size(); y++) {
+			for (int y = 0; y < incompleteQueries.size();) {
 				FutureTask<QueryResult> incompleteQuery = incompleteQueries.get(y);
 
 				if (incompleteQuery.isDone()) {
 
 					incompleteQueries.remove(y);
+					
 					recentlyCompletedQueries.add(incompleteQuery);
 
 					/*
@@ -90,6 +91,8 @@ public class Transaction {
 					 * recently completed queries, and information should be sent to the table
 					 * manager *if* the transaction has completed already.
 					 */
+				} else {
+					y++;
 				}
 			}
 		}
@@ -147,13 +150,14 @@ public class Transaction {
 	 * been committed. These updates should now be reflected in the Table Manager for the given table.
 	 * @param completedUpdates
 	 */
-	public synchronized void commit(Collection<CommitResult> completedUpdates, Database db){
+	public synchronized void commit(Collection<CommitResult> newlyCompletedUpdates, Database db){
 
+		
+		
 		if (!db.isRunning()) return;
 		
-		for (CommitResult completedQuery: completedQueries){
-
-
+		for (CommitResult completedQuery: newlyCompletedUpdates){
+			
 			if (completedQuery.isCommitQuery()){
 				if (!completedQuery.isCommit()){
 					ErrorHandling.errorNoEvent("Error sending COMMIT message for transaction " + transactionID);
@@ -171,13 +175,13 @@ public class Transaction {
 
 				if (tableManager != null){
 					try {
-						tableManager.releaseLock(true, db.getLocalDatabaseInstanceInWrapper(), completedUpdates, true);
+						tableManager.releaseLock(true, db.getLocalDatabaseInstanceInWrapper(), newlyCompletedUpdates, true);
 					} catch (RemoteException e) {
 						e.printStackTrace();
 					} catch (MovedException e) {
 						try {
 							tableManager = db.getSystemTableReference().lookup(tableName, false);
-							tableManager.releaseLock(true, db.getLocalDatabaseInstanceInWrapper(), completedUpdates, true);
+							tableManager.releaseLock(true, db.getLocalDatabaseInstanceInWrapper(), newlyCompletedUpdates, true);
 						} catch (Exception e1) {
 							e1.printStackTrace();
 						}

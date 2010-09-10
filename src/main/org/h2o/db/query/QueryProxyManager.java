@@ -358,10 +358,11 @@ public class QueryProxyManager {
 	 *            The set of replicas which were updated. This is NOT used to release locks, but to update the Table Managers state on which
 	 *            replicas are up-to-date. Null if none have changed.
 	 */
-	public void endTransaction(Set<CommitResult> commitedQueries, boolean commit) {
+	public void endTransaction(Set<CommitResult> committedQueries, boolean commit) {
+		
 		try {
 			for (TableManagerRemote tableManagerProxy : tableManagers) {
-				tableManagerProxy.releaseLock(commit, requestingDatabase, commitedQueries, false);
+				tableManagerProxy.releaseLock(commit, requestingDatabase, committedQueries, false);
 			}
 		} catch (RemoteException e) {
 			ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the Table Manager");

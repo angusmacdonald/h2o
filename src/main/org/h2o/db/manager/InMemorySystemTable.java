@@ -657,7 +657,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 				+ tmReplicaLocations.get(tableManagerWrapper.getTableInfo())
 				.size()
 				+ " replicas available (including the failed machine) at "
-				+ PrettyPrinter.print(tmReplicaLocations
+				+ PrettyPrinter.toString(tmReplicaLocations
 						.get(tableManagerWrapper.getTableInfo())) + ".");
 		return false;
 	}

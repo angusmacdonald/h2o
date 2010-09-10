@@ -72,4 +72,12 @@ public class QueryResult {
 	public TableInfo getTable(){
 		return tableInfo;
 	}
+
+	@Override
+	public String toString() {
+		return "QueryResult [result=" + result + ", exception=" + exception + ", wrapper=" + wrapper + ", tableInfo=" + tableInfo
+				+ ", updateID=" + updateID + "]";
+	}
+	
+	
 }

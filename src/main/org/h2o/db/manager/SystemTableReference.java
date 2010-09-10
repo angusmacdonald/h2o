@@ -329,17 +329,12 @@ public class SystemTableReference implements ISystemTableReference {
 			 * INSTANTIATE A NEW System Table FROM PERSISTED STATE. This must be called if the previous System Table has failed.
 			 */
 			if (!persistedSchemaTablesExist) {
-				ErrorHandling
-						.hardError("The system doesn't have a mechanism for recreating the state of the System Table from remote machines.");
+				ErrorHandling.hardError("The system doesn't have a mechanism for recreating the state of the System Table from remote machines.");
 			}
 
 			SystemTableRemote newSystemTable = null;
 			try {
-				newSystemTable = new SystemTable(db, false); // false - don't
-																// overwrite
-																// saved
-																// persisted
-																// state.
+				newSystemTable = new SystemTable(db, false); // false - don't overwrite saved persisted state.
 			} catch (Exception e) {
 				ErrorHandling.exceptionError(e, "Failed to create new in-memory System Table.");
 			}
@@ -541,8 +536,9 @@ public class SystemTableReference implements ISystemTableReference {
 	 * @see org.h2.h2o.manager.ISystemTableReference#lookup(org.h2.h2o.util.TableInfo )
 	 */
 	public TableManagerRemote lookup(TableInfo tableInfo, boolean useCache) throws SQLException {
-		if (tableInfo == null) return null;
-		
+		if (tableInfo == null)
+			return null;
+
 		return lookup(tableInfo, false, useCache);
 	}
 
@@ -578,7 +574,8 @@ public class SystemTableReference implements ISystemTableReference {
 		try {
 			if (systemTable == null) {
 				System.err.println("SYSTEM TABLE NULL");
-				return makeAttemptToFindSystemTable(tableInfo, alreadyCalled); // Recursively calls lookup again if it hasn't tried to already.
+				return makeAttemptToFindSystemTable(tableInfo, alreadyCalled); // Recursively calls lookup again if it hasn't tried to
+																				// already.
 			}
 
 			TableManagerWrapper tableManagerWrapper = systemTable.lookup(tableInfo);
@@ -648,7 +645,7 @@ public class SystemTableReference implements ISystemTableReference {
 	}
 
 	private void lookForSystemTableReferenceViaChord(String hostname, int port, boolean alreadyCalled) throws RemoteException,
-			NotBoundException, SQLException { //TODO change this method to rely on locator servers rather than chord.
+			NotBoundException, SQLException { // TODO change this method to rely on locator servers rather than chord.
 		DatabaseInstanceRemote lookupInstance = null;
 
 		DatabaseURL localURL = this.db.getURL();

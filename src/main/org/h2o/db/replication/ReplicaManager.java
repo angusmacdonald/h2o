@@ -33,6 +33,7 @@ import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 /**
  * Stores the location of each replica for a give table, including the update ID for each of these replicas (stating the last time a replica
@@ -163,10 +164,11 @@ public class ReplicaManager implements Serializable {
 	 *         their update IDs match up. If they don't appear on the returned list then they are no longer active replicas.
 	 */
 	public List<CommitResult> completeUpdate(boolean commit, Collection<CommitResult> committedQueries, TableInfo tableInfo) {
-
+		
+		
 		List<CommitResult> successfullyCommittedQueries = new LinkedList<CommitResult>(); // queries that were successfully committed here.
 
-		int updateID = getUpdateIDFromCommittedQueries(committedQueries, tableInfo);
+		int expectedUpdateID = getUpdateIDFromCommittedQueries(committedQueries, tableInfo);
 
 		/*
 		 * Check whether all updates were rollbacks. If they were there is no need to remove any replicas from the set of active replicas.
@@ -215,15 +217,15 @@ public class ReplicaManager implements Serializable {
 
 					instancesUpdated.add(wrapper);
 
-					final Integer previousID = getAllReplicas().get(wrapper);
-
-					if (updateID == previousID) {
+					final Integer currentID = allReplicas.get(wrapper);
+					
+					if (expectedUpdateID == currentID) {
 						/*
 						 * The updateID of this current replica equals the update ID that was expected of this replica at this point. Commit
 						 * can proceed.
 						 */
 
-						int newUpdateID = previousID + 1;
+						int newUpdateID = currentID + 1;
 
 						if (commitResult.isCommit()) {
 							activeReplicas.put(wrapper, newUpdateID);
@@ -245,10 +247,11 @@ public class ReplicaManager implements Serializable {
 						/*
 						 * The update ID of this replica does not match that which was expected. This replica will not commit.
 						 */
-						ErrorHandling.errorNoEvent("Replica will not commit because update IDs did not match. Expected: " + updateID
-								+ "; Actual current: " + previousID);
+						ErrorHandling.errorNoEvent("Replica will not commit because update IDs did not match. Expected: " + expectedUpdateID
+								+ "; Actual current: " + currentID);
+						
 					}
-
+					
 				} // In many cases it won't contain this key, but another table (part of the same transaction) was on this machine.
 				else {
 					// ErrorHandling.errorNoEvent("Update wasn't applicable to this table " + tableInfo); - valid state to be in...
