@@ -47,6 +47,7 @@ import org.junit.runners.Suite;
 	LocatorTests.class,
 	//LocatorDatabaseTests.class,
 	ChordTests.class,
+	AsynchronousTests.class,
 	FailureTests.class
 })
 

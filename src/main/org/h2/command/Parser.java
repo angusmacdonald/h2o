@@ -4540,7 +4540,12 @@ public class Parser {
 			// Attempt to recreate the table manager in-case it has failed, then
 			// try again.
 			try {
-				session.getDatabase().getSystemTableReference().getSystemTable().recreateTableManager(tableInfo);
+				ISystemTable systemTable = session.getDatabase().getSystemTableReference().getSystemTable();
+				if (systemTable != null){
+					systemTable.recreateTableManager(tableInfo);
+				} else {
+					throw new SQLException("System table was returned null.");
+				}
 			} catch (Exception e2) {
 				e2.printStackTrace();
 				throw new SQLException("Unable to contact the System Table for " + tableInfo + ":: " + e2.getMessage());

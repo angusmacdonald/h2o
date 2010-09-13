@@ -875,9 +875,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	 * manager.
 	 */
 	private void successorChangeEvent() {
+
 		if (Constants.IS_NON_SM_TEST)
-			return; // Don't do this if we're testing something that isn't to do
-					// with this replication.
+			return; // Don't do this if we're testing something that isn't to do with this replication.
 
 		/*
 		 * Check whether there are any table managers running locally.
@@ -885,7 +885,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		Set<TableManagerWrapper> localTableManagers = null;
 		try {
 			/*
-			 * This will throw a nullpointerexception if the older successor has failed and was the System Table.
+			 * This will throw a NullPointerException if the older successor has failed and was the System Table.
 			 */
 
 			SystemTableRemote systemTable = this.systemTableRef.getSystemTable();
@@ -899,8 +899,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				localTableManagers = this.systemTableRef.getSystemTable().getLocalDatabaseInstances(localMachineLocation);
 			}
 		} catch (RemoteException e) {
-			ErrorHandling
-					.errorNoEvent("Remote exception thrown. Happens when successor has very recently changed and chord ring hasn't stabilized.");
+			ErrorHandling.errorNoEvent("Remote exception thrown. Happens when successor has very recently changed and chord ring hasn't stabilized.");
 		} catch (MovedException e) {
 			try {
 				systemTableRef.handleMovedException(e);
@@ -1036,12 +1035,13 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				for (TableManagerWrapper wrapper : localManagers) {
 
 					TableManagerRemote dmr = wrapper.getTableManager();
-					if (dmr.getReplicaManager().contains(new DatabaseInstanceWrapper(localMachineLocation, localInstance, true)) && dmr.getReplicaManager().getNumberOfReplicas() == 1) {
+					if (dmr.getReplicaManager().contains(new DatabaseInstanceWrapper(localMachineLocation, localInstance, true))
+							&& dmr.getReplicaManager().getNumberOfReplicas() == 1) {
 						// This machine holds the only replica - replicate on
 						// the successor as well.
 						Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Replicating table [" + wrapper.getTableInfo().getFullTableName()
 								+ "] to successor: " + successor);
-						
+
 						successorDB.executeUpdate("CREATE REPLICA " + wrapper.getTableInfo().getFullTableName() + ";", false);
 					}
 				}

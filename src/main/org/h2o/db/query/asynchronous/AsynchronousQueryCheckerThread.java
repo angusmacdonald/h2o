@@ -1,8 +1,5 @@
 package org.h2o.db.query.asynchronous;
 
-import uk.ac.standrews.cs.nds.util.Diagnostic;
-import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
-
 /**
  * Thread that continuously checks whether a set of queries have been completed.
  *

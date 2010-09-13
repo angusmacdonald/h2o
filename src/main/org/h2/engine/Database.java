@@ -352,8 +352,10 @@ public class Database implements DataHandler {
 
 		if (Constants.IS_H2O && !isManagementDB()) {
 
-			if (!Constants.IS_NON_SM_TEST)
+			if (!Constants.IS_NON_SM_TEST) {
 				metaDataReplicationThread.start();
+			}
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Started database at " + getURL());
 		}
 		running = true;
 	}

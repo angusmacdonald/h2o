@@ -215,7 +215,7 @@ public class FailureTests extends MultiProcessTestBase{
 	 * Connect to existing Database instance with ST state and TM state, but find no ST or TM running.
 	 * 
 	 * The failure is detected by the migration of the system table, as it is also on the failed machine and will recognise
-	 * that no Table Manager is available when it repopulates its in-memory state.
+	 * that no Table Manager is available when it re-populates its in-memory state.
 	 * 
 	 * 
 	 * @throws InterruptedException 
@@ -241,7 +241,7 @@ public class FailureTests extends MultiProcessTestBase{
 			sql = "CREATE REPLICA TEST;";
 			executeUpdateOnSecondMachine(sql);
 
-			sleep(3000);
+			sleep("Created replica of test.", 3000);
 
 			assertTrue(assertTestTableExists(connections[1], 2));
 
@@ -250,7 +250,7 @@ public class FailureTests extends MultiProcessTestBase{
 			 */
 			killDatabase(findSystemTableInstance());
 
-			sleep(4000);
+			sleep("Killed off system table instance.", 4000);
 
 			//createConnectionsToDatabases();
 

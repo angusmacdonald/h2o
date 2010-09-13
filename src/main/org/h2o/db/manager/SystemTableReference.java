@@ -152,7 +152,6 @@ public class SystemTableReference implements ISystemTableReference {
 			if (systemTable == null) {
 				performedSystemTableLookup = true;
 				systemTable = this.findSystemTable();
-
 			}
 
 			systemTable.checkConnection();
@@ -165,9 +164,21 @@ public class SystemTableReference implements ISystemTableReference {
 				}
 			}
 		} catch (SQLException e) {
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, e.getMessage());
-			return null;
+			/*
+			 * Called when findSystemTable() has failed to find the System Table instances registry.
+			 * This indicates that the system table instance has failed, so we should try to recreate the
+			 * System Table somewhere else.
+			 */
+//			try {
+				ErrorHandling.errorNoEvent(this.db.getURL() + ": Failed to find System Table. Attempting to re-instantiate it on a valid instance (via locator servers).");
+//				recreateSchemaManager();
+//			} catch (RemoteException e1) {
+//				e1.printStackTrace();
+//			}
+
+			return systemTable;
 		} catch (Exception e) {
+			ErrorHandling.errorNoEvent("Failed to find System Table: " + e.getMessage());
 			/*
 			 * Call this method again if we attempted to access a cached System Table reference and it didn't work.
 			 */
@@ -179,13 +190,25 @@ public class SystemTableReference implements ISystemTableReference {
 			ErrorHandling.errorNoEvent("System Table is not accessible");
 		}
 
-		try {
-			this.systemTableNode = systemTable.getChordReference();
-		} catch (RemoteException e) {
-			e.printStackTrace();
+		if (systemTable != null){
+			try {
+				this.systemTableNode = systemTable.getChordReference();
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
 		}
 
 		return systemTable;
+	}
+
+	/**
+	 * Recreates the System Table somewhere using the locator server(s).
+	 * @throws RemoteException 
+	 */
+	private void recreateSchemaManager() throws RemoteException {
+		systemTable = this.db.getRemoteInterface().reinstantiateSystemTable();
+
+		this.systemTableNode = systemTable.getChordReference();
 	}
 
 	/*
@@ -342,7 +365,7 @@ public class SystemTableReference implements ISystemTableReference {
 			try {
 				newSystemTable.buildSystemTableState();
 
-				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "New System Table created.");
+				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, db.getURL() + ": New System Table created.");
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			} catch (MovedException e) {
@@ -391,8 +414,8 @@ public class SystemTableReference implements ISystemTableReference {
 				ErrorHandling.exceptionError(e, "Failed to migrate System Table to new machine.");
 			} catch (MovedException e) {
 				ErrorHandling
-						.exceptionError(e,
-								"This shouldn't be possible here. The System Table has moved, but this instance should have had exclusive rights to it.");
+				.exceptionError(e,
+				"This shouldn't be possible here. The System Table has moved, but this instance should have had exclusive rights to it.");
 			} catch (SQLException e) {
 				ErrorHandling.exceptionError(e, "Couldn't create persisted tables as expected.");
 			} catch (NullPointerException e) {
@@ -409,8 +432,8 @@ public class SystemTableReference implements ISystemTableReference {
 				ErrorHandling.exceptionError(e, "Failed to complete migration.");
 			} catch (MovedException e) {
 				ErrorHandling
-						.exceptionError(e,
-								"This shouldn't be possible here. The System Table has moved, but this instance should have had exclusive rights to it.");
+				.exceptionError(e,
+				"This shouldn't be possible here. The System Table has moved, but this instance should have had exclusive rights to it.");
 			} catch (MigrationException e) {
 				ErrorHandling.exceptionError(e, "Migration process timed out. It took too long.");
 			}
@@ -464,7 +487,7 @@ public class SystemTableReference implements ISystemTableReference {
 	 * @see org.h2.h2o.manager.ISystemTableReference#migrateSystemTableToLocalInstance ()
 	 */
 	public void migrateSystemTableToLocalInstance() {
-
+	
 		boolean persistedSchemaTablesExist = false;
 
 		for (ReplicaSet rs : db.getAllTables()) {
@@ -575,14 +598,14 @@ public class SystemTableReference implements ISystemTableReference {
 			if (systemTable == null) {
 				System.err.println("SYSTEM TABLE NULL");
 				return makeAttemptToFindSystemTable(tableInfo, alreadyCalled); // Recursively calls lookup again if it hasn't tried to
-																				// already.
+				// already.
 			}
 
 			TableManagerWrapper tableManagerWrapper = systemTable.lookup(tableInfo);
 
 			if (tableManagerWrapper == null)
 				return null; // During a create table operation it is expected
-								// that the lookup will return null here.
+			// that the lookup will return null here.
 
 			// Put this Table Manager in the local cache then return it.
 			TableManagerRemote tableManager = tableManagerWrapper.getTableManager();
@@ -645,7 +668,8 @@ public class SystemTableReference implements ISystemTableReference {
 	}
 
 	private void lookForSystemTableReferenceViaChord(String hostname, int port, boolean alreadyCalled) throws RemoteException,
-			NotBoundException, SQLException { // TODO change this method to rely on locator servers rather than chord.
+	NotBoundException, SQLException { // TODO change this method to rely on locator servers rather than chord.
+
 		DatabaseInstanceRemote lookupInstance = null;
 
 		DatabaseURL localURL = this.db.getURL();
@@ -665,7 +689,7 @@ public class SystemTableReference implements ISystemTableReference {
 		 * If this registry (or the System Table) does not exist at this location any more an error will be thrown. This happens when a
 		 * query is made before maintenance mechanisms have kicked in.
 		 * 
-		 * When this happens this node should attempt to find a new location on which to reinstantiate a System Table. This replicates what
+		 * When this happens this node should attempt to find a new location on which to re-instantiate a System Table. This replicates what
 		 * is done in ChordRemote.predecessorChangeEvent.
 		 */
 
@@ -750,8 +774,8 @@ public class SystemTableReference implements ISystemTableReference {
 
 	@Override
 	public boolean addTableInformation(TableManagerRemote tableManagerRemote, TableInfo ti, Set<DatabaseInstanceWrapper> replicaLocations)
-			throws RemoteException, MovedException, SQLException { // changed by
-																	// al
+	throws RemoteException, MovedException, SQLException { // changed by
+		// al
 		localTableManagers.put(ti.getGenericTableInfo(), (TableManager) tableManagerRemote);
 
 		return systemTable.addTableInformation(tableManagerRemote, ti, replicaLocations);
