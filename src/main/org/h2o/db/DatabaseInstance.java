@@ -22,6 +22,7 @@ import java.sql.SQLException;
 
 import org.h2.command.Command;
 import org.h2.command.Parser;
+import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
@@ -29,6 +30,7 @@ import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.manager.interfaces.SystemTableRemote;
+import org.h2o.db.manager.recovery.SystemTableAccessException;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -62,9 +64,11 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	 */
 	private boolean alive = true;
 
+	private Database database;
+
 	public DatabaseInstance(DatabaseURL databaseURL, Session session) {
 		this.databaseURL = databaseURL;
-
+		this.database = session.getDatabase();
 		this.parser = new Parser(session, true);
 		this.session = session;
 	}
@@ -137,9 +141,9 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	@Override
 	public DatabaseURL getSystemTableURL() throws RemoteException {
 
-		DatabaseURL systemTableURL = session.getDatabase().getSystemTableReference().getSystemTableURL();
+		DatabaseURL systemTableURL = database.getSystemTableReference().getSystemTableURL();
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Responding to request for System Table location at database '"
-				+ session.getDatabase().getDatabaseLocation() + "'. " + "System table location: " + systemTableURL);
+				+ database.getDatabaseLocation() + "'. " + "System table location: " + systemTableURL);
 
 		return systemTableURL;
 	}
@@ -151,12 +155,13 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	 */
 	@Override
 	public int executeUpdate(String sql, boolean systemTableCommand) throws RemoteException, SQLException {
-		if (!session.getDatabase().isRunning())
+		if (!database.isRunning())
 			throw new SQLException("The database either hasn't fully started, or is being shut down.");
 
 		Command command = null;
 		if (systemTableCommand) {
-			Parser schemaParser = new Parser(session.getDatabase().getH2OSession(), true);
+			
+			Parser schemaParser = new Parser(database.getH2OSession(), true);
 			command = schemaParser.prepareCommand(sql);
 		} else {
 			command = parser.prepareCommand(sql);
@@ -169,11 +174,11 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	}
 
 	@Override
-	public SystemTableRemote recreateSystemTable() throws RemoteException {
+	public SystemTableRemote recreateSystemTable() throws RemoteException, SystemTableAccessException {
 		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Responding to request to recreate System Table on '"
-				+ session.getDatabase().getDatabaseLocation() + "'.");
+				+ database.getDatabaseLocation() + "'.");
 
-		ISystemTableReference systemTableReference = this.session.getDatabase().getSystemTableReference();
+		ISystemTableReference systemTableReference = this.database.getSystemTableReference();
 		return systemTableReference.migrateSystemTableToLocalInstance(true, true);
 	}
 
@@ -199,7 +204,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	 */
 	@Override
 	public void setSystemTableLocation(IChordRemoteReference systemTableLocation, DatabaseURL databaseURL) throws RemoteException {
-		this.session.getDatabase().getSystemTableReference().setSystemTableLocation(systemTableLocation, databaseURL);
+		this.database.getSystemTableReference().setSystemTableLocation(systemTableLocation, databaseURL);
 	}
 
 	/*
@@ -210,7 +215,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	@Override
 	public TableManagerRemote findTableManagerReference(TableInfo ti) throws RemoteException {
 		try {
-			return this.session.getDatabase().getSystemTableReference().lookup(ti, true);
+			return this.database.getSystemTableReference().lookup(ti, true);
 		} catch (SQLException e) {
 			ErrorHandling.errorNoEvent("Couldn't find Table Manager at this machine. Table Manager needs to be re-instantiated.."); // TODO
 																																	// allow
@@ -268,6 +273,16 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 		} else if (!databaseURL.getURL().equals(other.databaseURL.getURL()))
 			return false;
 		return true;
+	}
+
+	@Override
+	public boolean isSystemTable() throws RemoteException{
+		return database.getSystemTableReference().isSystemTableLocal();
+	}
+
+	@Override
+	public SystemTableRemote getSystemTable()throws RemoteException {
+		return database.getSystemTableReference().getLocalSystemTable();
 	}
 
 }

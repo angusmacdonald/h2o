@@ -746,20 +746,23 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			systemTableAlive = isSystemTableActive();
 
 			if (!systemTableAlive) {
-				newSystemTable = reinstantiateSystemTable();
+				try {
+					newSystemTable = systemTableRef.findSystemTable();
+					
+					// Now try to recreate any Table Managers that were on the failed
+					// machine.
+					// recreateTableManagers(oldPredecessorURL);
+					try {
+						newSystemTable.checkTableManagerAccessibility();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				} catch (SQLException e) {
+					//If this fails it doesn't matter at this point.
+				}
 			}
 		}
 
-		if (newSystemTable != null) {
-			// Now try to recreate any Table Managers that were on the failed
-			// machine.
-			// recreateTableManagers(oldPredecessorURL);
-			try {
-				newSystemTable.checkTableManagerAccessibility();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
 
 	}
 
@@ -775,100 +778,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		return systemTableAlive;
 	}
 
-	public SystemTableRemote reinstantiateSystemTable() {
-		/*
-		 * There is no guarantee this node has a replica of the System Table state. Obtain the list of replicas from the locator server.
-		 * There are a number of cases:
-		 * 
-		 * 1. This node holds a copy of System Table state. It can then apply to the locator server to become the new System Table. 2.
-		 * Another active node holds a copy of the System Table state. This node should be informed of the failure. It can then apply to the
-		 * locator server itself. 3. No active node has System Table state. Nothing can be done.
-		 */
-
-		SystemTableRemote newSystemTable = null;
-		/*
-		 * Obtain a reference to the locator servers if one is not already held.
-		 */
-		if (this.locatorInterface == null) {
-			LocalH2OProperties persistedInstanceInformation = new LocalH2OProperties(localMachineLocation);
-			try {
-				persistedInstanceInformation.loadProperties();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			try {
-				this.locatorInterface = getLocatorServerReference(persistedInstanceInformation);
-			} catch (StartupException e) {
-				ErrorHandling.errorNoEvent("Failed to obtain a reference to the locator servers: " + e.getMessage());
-				return null;
-			}
-		}
-
-		List<String> stLocations = null;
-
-		try {
-			stLocations = locatorInterface.getLocations();
-		} catch (IOException e) {
-			ErrorHandling.errorNoEvent("Failed to obtain a list of instances which hold System Table state: " + e.getMessage());
-			return null;
-		}
-
-		boolean localMachineHoldsSystemTableState = false;
-		for (String location : stLocations) {
-			DatabaseURL url = DatabaseURL.parseURL(location);
-			localMachineHoldsSystemTableState = url.equals(localMachineLocation);
-		}
-
-		if (localMachineHoldsSystemTableState) {
-			// Re-instantiate the System Table on this node
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
-					"A copy of the System Table state exists on the successor to the failed machine [" + this.localMachineLocation + "]."
-							+ " It will be re-instantiated here.");
-			newSystemTable = systemTableRef.migrateSystemTableToLocalInstance(true, true);
-		} else {
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempting to find another machine which can re-instantiate the System Table.");
-
-			/*
-			 * Try to find an active instance with System Table state.
-			 */
-
-			for (String systemTableLocation : stLocations) {
-				DatabaseURL url = DatabaseURL.parseURL(systemTableLocation);
-
-				DatabaseInstanceRemote databaseInstance = null;
-				try {
-					Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
-							"Looking for database instance at: " + url.getHostname() + ":" + url.getRMIPort());
-
-					databaseInstance = getDatabaseInstanceAt(url);
-				} catch (Exception e) {
-					// May be thrown if database isn't active.
-				}
-
-				/*
-				 * Attempt to recreate the System Table here.
-				 */
-				if (databaseInstance != null) {
-					try {
-						newSystemTable = databaseInstance.recreateSystemTable();
-
-						if (newSystemTable != null) {
-							Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Successfully recreated the System Table on " + url);
-							systemTableRef.setSystemTableURL(url);
-							systemTableRef.setSystemTable(newSystemTable);
-							break;
-						}
-					} catch (Exception e) {
-						// May be thrown if database isn't active.
-					}
-
-				}
-			}
-
-		}
-
-		return newSystemTable;
-	}
+	
 
 	/**
 	 * The successor has changed. Make sure the System Table is replicated to the new successor if this instance is controlling the schema
@@ -1127,35 +1037,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		return actualSystemTableLocation;
 	}
 
-	public boolean setSystemTableLocationAsLocal() throws RemoteException {
-
-		IChordRemoteReference lookupLocation = null;
-
-		try {
-			lookupLocation = lookupSystemTableNodeLocation();
-		} catch (Exception e) {
-			ErrorHandling.errorNoEvent("Couldn't find the #(SM) location.");
-			return false;
-		}
-		systemTableRef.setLookupLocation(lookupLocation);
-
-		String lookupHostname = lookupLocation.getRemote().getAddress().getHostName();
-		int lookupPort = lookupLocation.getRemote().getAddress().getPort();
-
-		DatabaseInstanceRemote lookupInstance;
-		try {
-			lookupInstance = getDatabaseInstanceAt(lookupHostname, lookupPort);
-
-			lookupInstance.setSystemTableLocation(chordNode.getProxy(), localMachineLocation);
-			this.systemTableRef.setSystemTableLocation(chordNode.getProxy(), localMachineLocation);
-		} catch (NotBoundException e) {
-			e.printStackTrace();
-			return false;
-		}
-
-		return true;
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -1265,4 +1146,26 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	public void setAsReadyToReplicateMetaData(MetaDataReplicaManager metaDataReplicaManager) {
 		this.metaDataReplicaManager = metaDataReplicaManager;
 	}
+	
+	public H2OLocatorInterface getLocatorInterface() {
+		/*
+		 * Obtain a reference to the locator servers if one is not already held.
+		 */
+		if (this.locatorInterface == null) {
+			LocalH2OProperties persistedInstanceInformation = new LocalH2OProperties(localMachineLocation);
+			try {
+				persistedInstanceInformation.loadProperties();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			try {
+				this.locatorInterface = getLocatorServerReference(persistedInstanceInformation);
+			} catch (StartupException e) {
+				ErrorHandling.errorNoEvent("Failed to obtain a reference to the locator servers: " + e.getMessage());
+			}
+		}
+		
+		return locatorInterface;
+	}
+
 }

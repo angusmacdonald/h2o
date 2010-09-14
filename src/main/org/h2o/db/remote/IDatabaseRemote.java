@@ -24,7 +24,7 @@ import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
-import org.h2o.db.manager.interfaces.SystemTableRemote;
+import org.h2o.locator.client.H2OLocatorInterface;
 import org.h2o.util.exceptions.StartupException;
 
 import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
@@ -123,19 +123,5 @@ public interface IDatabaseRemote {
 	public DatabaseInstanceRemote getDatabaseInstanceAt(DatabaseURL databaseURL)
 			throws RemoteException;
 
-	/**
-	 * Reinstantiates the System Table by looking through valid locations from
-	 * the locator server and trying to reinstantiate on each one until the
-	 * operation is successful.
-	 */
-	public SystemTableRemote reinstantiateSystemTable();
-
-	/**
-	 * Update the location of the System Table on the node which is responsible
-	 * for the #(SystemTable) lookup.
-	 * 
-	 * @return true if successful in setting the location
-	 * @throws RemoteException
-	 */
-	public boolean setSystemTableLocationAsLocal() throws RemoteException;
+	public H2OLocatorInterface getLocatorInterface();
 }

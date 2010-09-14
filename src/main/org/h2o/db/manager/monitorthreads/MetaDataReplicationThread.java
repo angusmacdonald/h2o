@@ -67,14 +67,6 @@ public class MetaDataReplicationThread extends Thread {
 			metaDataReplicaManager.replicateMetaDataIfPossible(
 					systemTableReference, true);
 
-			if (i == 10) {
-				if (systemTableReference.isSystemTableLocal()) {
-					this.database.getSystemTableReference().pingHashLocation();
-				}
-				i = 0;
-			}
-
-
 			if (!database.isRunning())
 				return;
 			i++;

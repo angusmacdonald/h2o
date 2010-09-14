@@ -27,6 +27,9 @@ import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.TableManager;
+import org.h2o.db.manager.recovery.ISystemTableFailureRecovery;
+import org.h2o.db.manager.recovery.LocatorException;
+import org.h2o.db.manager.recovery.SystemTableAccessException;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
 
@@ -159,15 +162,17 @@ public interface ISystemTableReference {
 	 *            active in-memory copy. If the old System Table has failed the
 	 *            new manager must be recreated from persisted state.
 	 * @return
+	 * @throws SystemTableAccessException 
 	 */
 	public SystemTableRemote migrateSystemTableToLocalInstance(
 			boolean persistedSchemaTablesExist,
-			boolean recreateFromPersistedState);
+			boolean recreateFromPersistedState) throws SystemTableAccessException;
 
 	/**
 	 * If called the System Table will be moved to the local database instance.
+	 * @throws SystemTableAccessException 
 	 */
-	public void migrateSystemTableToLocalInstance();
+	public void migrateSystemTableToLocalInstance() throws SystemTableAccessException;
 
 	/**
 	 * An exception has been thrown trying to access the System Table because it
@@ -281,13 +286,6 @@ public interface ISystemTableReference {
 			TableInfo ti, Set<DatabaseInstanceWrapper> replicaLocations)
 			throws RemoteException, MovedException, SQLException;
 
-	/**
-	 * Ping the location of the #(SM) lookup to inform it of the current
-	 * location of the System Table. This must be done repeatedly because the
-	 * #(SM) machine may change.
-	 */
-	public void pingHashLocation();
-
 	public void removeTableInformation(TableInfo tableInfo)
 			throws RemoteException, MovedException;
 
@@ -295,5 +293,14 @@ public interface ISystemTableReference {
 			MovedException;
 
 	public Map<TableInfo, TableManager> getLocalTableManagers();
+
+	/** 
+	 * Get the reference to the System Table that is held locally, regardless of whether
+	 * the reference is still active.
+	 * @return
+	 */
+	public SystemTableRemote getLocalSystemTable();
+
+	public ISystemTable failureRecovery() throws LocatorException, SQLException, SystemTableAccessException;
 
 }

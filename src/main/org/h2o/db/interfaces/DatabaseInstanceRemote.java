@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.manager.interfaces.SystemTableRemote;
+import org.h2o.db.manager.recovery.SystemTableAccessException;
 
 import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
 
@@ -131,8 +132,9 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit {
 	 * 
 	 * @return True if the System Table was successfully recreated.
 	 * @throws RemoteException
+	 * @throws SystemTableAccessException 
 	 */
-	public SystemTableRemote recreateSystemTable() throws RemoteException;
+	public SystemTableRemote recreateSystemTable() throws RemoteException, SQLException, SystemTableAccessException;
 
 	/**
 	 * Recreate a Table Manager on this machine.
@@ -145,5 +147,18 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit {
 	 */
 	public boolean recreateTableManager(TableInfo tableInfo,
 			DatabaseURL databaseURL) throws RemoteException;
+
+	/**
+	 * Checks if this instance is running the System Table.
+	 * @return True if this is machine is running the System Table; otherwise false.
+	 * @throws RemoteException 
+	 */
+	public boolean isSystemTable() throws RemoteException;
+
+	/**
+	 * Get a reference to the reference for the System Table that this machine has.
+	 * @return
+	 */
+	public SystemTableRemote getSystemTable() throws RemoteException;
 
 }

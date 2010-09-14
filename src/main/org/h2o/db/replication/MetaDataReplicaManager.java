@@ -203,8 +203,7 @@ public class MetaDataReplicaManager {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			return; // just return, the system will attempt to replicate later
-					// on.
+			return; // just return, the system will attempt to replicate later on.
 		}
 
 		if (databaseInstances.size() == 1)

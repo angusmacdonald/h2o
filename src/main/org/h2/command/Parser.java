@@ -160,6 +160,7 @@ import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.db.manager.interfaces.ISystemTable;
+import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.query.QueryProxy;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
@@ -4551,13 +4552,18 @@ public class Parser {
 				throw new SQLException("Unable to contact the System Table for " + tableInfo + ":: " + e2.getMessage());
 			}
 
-			tableManager = session.getDatabase().getSystemTableReference().lookup(tableInfo, false);
-			try {
-				qp = tableManager.getQueryProxy(LockType.NONE, this.database.getLocalDatabaseInstanceInWrapper());
+			ISystemTableReference systemTableReference = session.getDatabase().getSystemTableReference();
+			tableManager = systemTableReference.lookup(tableInfo, false);
+		
+				try {
+					qp = tableManager.getQueryProxy(LockType.NONE, this.database.getLocalDatabaseInstanceInWrapper());
+				} catch (RemoteException e1) {
+					e1.printStackTrace();
+				} catch (MovedException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 
-			} catch (Exception e1) {
-				throw new SQLException("Unable to contact Table Manager for " + tableInfo + ":: " + e1.getMessage());
-			}
 		}
 		return qp;
 	}

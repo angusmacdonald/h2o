@@ -33,6 +33,8 @@ import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.TableManager;
 import org.h2o.db.manager.interfaces.ISystemTable;
+import org.h2o.db.manager.recovery.LocatorException;
+import org.h2o.db.manager.recovery.SystemTableAccessException;
 import org.h2o.db.query.asynchronous.AsynchronousQueryExecutor;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
@@ -252,9 +254,11 @@ public class QueryProxy implements Serializable {
 
 				if (systemTable == null) {
 					// reInstantiateSystemTable
-					systemTable = db.getRemoteInterface().reinstantiateSystemTable();
-
-					if (systemTable == null) {
+					try {
+						systemTable = db.getSystemTableReference().failureRecovery();
+					} catch (LocatorException e1) {
+						ErrorHandling.exceptionError(e1, "Failed to contact locator servers.");
+					} catch (SystemTableAccessException e1) {
 						systemTableActive = false;
 						throw new SQLException("The System Table could not be re-instantiated.");
 					}
