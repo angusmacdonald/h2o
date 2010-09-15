@@ -42,8 +42,7 @@ import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class SystemTable implements SystemTableRemote { // , ISystemTable,
-														// Migratable
+public class SystemTable implements SystemTableRemote {
 
 	/**
 	 * Interface to the in-memory state of the System Table.
