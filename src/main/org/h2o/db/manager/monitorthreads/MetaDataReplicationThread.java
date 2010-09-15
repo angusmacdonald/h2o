@@ -41,6 +41,16 @@ public class MetaDataReplicationThread extends Thread {
 
 	public void run() {
 		int i = 0;
+		
+		/*
+		 * Sleep.
+		 */
+		try {
+			Thread.sleep(threadSleepTime);
+		} catch (InterruptedException e) {
+		}
+		
+		
 		while (isRunning()) {
 			if (!database.isRunning())
 				continue;

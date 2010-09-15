@@ -3,10 +3,8 @@ package org.h2o.db.manager.recovery;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 
-import org.h2.engine.Database;
-import org.h2o.db.manager.SystemTableWrapper;
 import org.h2o.db.manager.interfaces.SystemTableRemote;
-import org.h2o.db.remote.IDatabaseRemote;
+import org.h2o.db.wrappers.SystemTableWrapper;
 import org.h2o.util.exceptions.MovedException;
 
 /**

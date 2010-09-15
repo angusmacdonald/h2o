@@ -1,4 +1,4 @@
-package org.h2o.db.manager;
+package org.h2o.db.wrappers;
 
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.manager.interfaces.SystemTableRemote;

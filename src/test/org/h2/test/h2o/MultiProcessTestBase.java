@@ -100,7 +100,9 @@ public class MultiProcessTestBase extends TestBase {
 			LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(location));
 			properties.createNewFile();
 			properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
+		//			properties.setProperty("RELATION_REPLICATION_FACTOR", "2");	
 			properties.setProperty("databaseName", "testDB");
+
 			properties.saveAndClose();
 		}
 

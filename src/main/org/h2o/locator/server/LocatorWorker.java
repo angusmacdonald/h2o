@@ -30,8 +30,7 @@ import org.h2o.locator.messages.ReplicaLocationsResponse;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
- * Handles incoming connections from client databases looking to access (for
- * read or write) the locator file.
+ * Handles incoming connections from client databases looking to access (for read or write) the locator file.
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
@@ -65,19 +64,10 @@ public class LocatorWorker extends Thread {
 
 				// Get single-line request from the client.
 
-				BufferedReader br = new BufferedReader(new InputStreamReader(
-						socket.getInputStream()));
+				BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
 				String requestLine = "", request = "";
-				String requestType = requestLine = br.readLine(); // The first
-																	// line
-																	// always
-																	// specifies
-																	// the type
-																	// of the
-																	// request
-																	// being
-																	// made.
+				String requestType = requestLine = br.readLine(); // The first line always specifies the type of the request being made.
 
 				if (requestType == null) { // Request didn't contain anything.
 					return;
@@ -91,36 +81,29 @@ public class LocatorWorker extends Thread {
 				}
 
 				if (request.length() > SEPARATOR.length()) {
-					request = request.substring(0,
-							request.length() - SEPARATOR.length());
+					request = request.substring(0, request.length() - SEPARATOR.length());
 				}
 				/*
-				 * If the request is empty this is interpreted as a request for
-				 * the database locations. Read from the locator file and return
-				 * this list.
+				 * If the request is empty this is interpreted as a request for the database locations. Read from the locator file and
+				 * return this list.
 				 * 
-				 * If the list does contain some text then this is a new set of
-				 * database instance locations which hold system table state.
+				 * If the list does contain some text then this is a new set of database instance locations which hold system table state.
 				 * Write these to the locator file
 				 */
 
 				if (requestType.equals(LocatorProtocol.GET)) {
-					ReplicaLocationsResponse response = locatorState
-							.readLocationsFromFile();
+					ReplicaLocationsResponse response = locatorState.readLocationsFromFile();
 					sendResponse(LocatorProtocol.constructGetResponse(response));
 				} else if (requestType.equals(LocatorProtocol.SET)) {
 					String[] databaseLocations = request.split(SEPARATOR);
-					sendResponse(locatorState
-							.writeLocationsToFile(databaseLocations));
+					sendResponse(locatorState.writeLocationsToFile(databaseLocations));
 				} else if (requestType.equals(LocatorProtocol.LOCK)) {
 					LockRequestResponse response = locatorState.lock(request);
-					sendResponse(LocatorProtocol
-							.constructLockResponse(response));
+					sendResponse(LocatorProtocol.constructLockResponse(response));
 				} else if (requestType.equals(LocatorProtocol.COMMIT)) {
 					sendResponse(locatorState.releaseLockOnFile(request));
 				} else {
-					ErrorHandling.errorNoEvent("Request not recognized: "
-							+ requestType);
+					ErrorHandling.errorNoEvent("Request not recognized: " + requestType);
 				}
 			} finally {
 				socket.close();
@@ -131,8 +114,7 @@ public class LocatorWorker extends Thread {
 	}
 
 	/**
-	 * Send a response (the parameter of this method) to the client connected on
-	 * the socket connection.
+	 * Send a response (the parameter of this method) to the client connected on the socket connection.
 	 * 
 	 * @param response
 	 *            The response to be sent.

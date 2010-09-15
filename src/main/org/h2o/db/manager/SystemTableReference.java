@@ -38,6 +38,7 @@ import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.db.manager.recovery.SystemTableAccessException;
 import org.h2o.db.manager.recovery.SystemTableFailureRecovery;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
+import org.h2o.db.wrappers.SystemTableWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
 import org.h2o.event.DatabaseStates;
 import org.h2o.event.client.H2OEvent;
@@ -155,8 +156,7 @@ public class SystemTableReference implements ISystemTableReference {
 			 * SQLException when: findSystemTable() has failed to find the System Table instances registry. This indicates that the system table
 			 * instance has failed, so we should try to recreate the System Table somewhere else.
 			 */
-			ErrorHandling.errorNoEvent(this.db.getURL()
-					+ ": Failed to find System Table. Attempting to re-instantiate it on a valid instance (via locator servers).");
+			ErrorHandling.errorNoEvent(this.db.getURL() + ": Failed to find System Table. Attempting to re-instantiate it on a valid instance (via locator servers).");
 
 			try {
 				systemTableWrapper = systemTableRecovery.get();

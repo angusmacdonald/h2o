@@ -263,12 +263,14 @@ public class MetaDataReplicaManager {
 					 * Create new replica if needed, then replicate state.
 					 */
 					String createQuery = (isSystemTable) ? addNewSystemTableQuery : addNewReplicaLocationQuery;
+					
 					newReplicaLocation.getDatabaseInstance().executeUpdate(createQuery, true);
 
 					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O " + ((isSystemTable) ? "System Table" : "Table Manager")
 							+ " tables on " + localDatabase.getURL() + " replicated onto new node: "
 							+ newReplicaLocation.getURL().getDbLocation());
 
+					
 					H2OEventBus.publish(new H2OEvent(db.getURL(), DatabaseStates.META_TABLE_REPLICA_CREATION, newReplicaLocation.getURL()
 							.getURL()));
 

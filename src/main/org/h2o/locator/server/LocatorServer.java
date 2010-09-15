@@ -26,8 +26,7 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
- * The locator server class. Creates a ServerSocket and listens for connections
- * constantly.
+ * The locator server class. Creates a ServerSocket and listens for connections constantly.
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
@@ -45,8 +44,7 @@ public class LocatorServer extends Thread {
 	 */
 	public LocatorServer(int port, String databaseName) {
 		this.port = port;
-		locatorFile = new LocatorState("config" + File.separator + databaseName
-				+ port + ".locator");
+		locatorFile = new LocatorState("config" + File.separator + databaseName + port + ".locator");
 	}
 
 	/**
@@ -61,30 +59,22 @@ public class LocatorServer extends Thread {
 				ss = new ServerSocket(port);
 
 				ss.setSoTimeout(500);
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
-						"Server listening on port " + port
-								+ ", locator file at '" + locatorFile + "'.");
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Server listening on port " + port + ", locator file at '" + locatorFile
+						+ "'.");
 
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 
 			/*
-			 * Start listening for incoming connections. Pass them off to a
-			 * worker thread if they come.
+			 * Start listening for incoming connections. Pass them off to a worker thread if they come.
 			 */
 			while (isRunning()) {
 				try {
 
 					Socket newConnection = ss.accept();
-					Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
-							"New connection from: "
-									+ newConnection.getInetAddress()
-											.getHostName() + "."
-									+ newConnection.getPort());
 
-					LocatorWorker connectionHandler = new LocatorWorker(
-							newConnection, locatorFile);
+					LocatorWorker connectionHandler = new LocatorWorker(newConnection, locatorFile);
 					connectionHandler.start();
 				} catch (IOException e) {
 					// e.printStackTrace();
@@ -108,8 +98,7 @@ public class LocatorServer extends Thread {
 	public static void main(String[] args) {
 
 		Diagnostic.setLevel(DiagnosticLevel.FULL);
-		LocatorServer server = new LocatorServer(LOCATOR_SERVER_PORT,
-				"locatorFile");
+		LocatorServer server = new LocatorServer(LOCATOR_SERVER_PORT, "locatorFile");
 		server.start();
 	}
 

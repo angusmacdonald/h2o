@@ -350,7 +350,6 @@ public class SessionRemote extends SessionWithState implements SessionFactory,
 		try {
 			for (int i = 0; i < len; i++) {
 				try {
-					System.err.println("Connecting to server: " + databaseName);
 					Transfer trans = initTransfer(ci, databaseName, servers[i]);
 					transferList.add(trans);
 				} catch (IOException e) {

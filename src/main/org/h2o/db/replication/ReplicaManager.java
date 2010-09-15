@@ -33,7 +33,6 @@ import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
-import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 /**
  * Stores the location of each replica for a give table, including the update ID for each of these replicas (stating the last time a replica

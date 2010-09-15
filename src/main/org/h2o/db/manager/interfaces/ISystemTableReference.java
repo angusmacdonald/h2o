@@ -27,7 +27,6 @@ import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.TableManager;
-import org.h2o.db.manager.recovery.ISystemTableFailureRecovery;
 import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.db.manager.recovery.SystemTableAccessException;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
@@ -231,6 +230,7 @@ public interface ISystemTableReference {
 	 *            The table name and schema name are used in the lookup.
 	 * @return
 	 * @throws SQLException
+	 * 	Thrown if the System Table cannot be found.
 	 */
 	public TableManagerRemote lookup(TableInfo tableInfo, boolean useCache)
 			throws SQLException;

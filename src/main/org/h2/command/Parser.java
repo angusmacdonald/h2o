@@ -13,10 +13,8 @@ import java.sql.SQLException;
 import java.text.Collator;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Stack;
 
 import org.h2.api.Trigger;
 import org.h2.command.ddl.AlterIndexRename;
@@ -137,7 +135,6 @@ import org.h2.table.RangeTable;
 import org.h2.table.Table;
 import org.h2.table.TableData;
 import org.h2.table.TableFilter;
-import org.h2.table.TableLink;
 import org.h2.table.TableView;
 import org.h2.util.ByteUtils;
 import org.h2.util.MathUtils;
@@ -169,7 +166,6 @@ import org.h2o.util.exceptions.MovedException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
-import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 /**
  * The parser is used to convert a SQL statement string to an command object.
@@ -4389,7 +4385,8 @@ public class Parser {
 	 * @return
 	 * @throws SQLException
 	 */
-	private Table readTableOrView(String tableName, boolean searchRemote, LocationPreference locale, boolean alreadyCalled) throws SQLException {
+	private Table readTableOrView(String tableName, boolean searchRemote, LocationPreference locale, boolean alreadyCalled)
+			throws SQLException {
 		// System.out.println("Looking for table '" + tableName + "'");
 		// same algorithm than readSequence
 
@@ -4399,48 +4396,48 @@ public class Parser {
 			localSchemaName = getSchema().getName();
 
 		/*
-		 * The database will actually request a lock for a table as necessary in CommandContainer. The following code checks
-		 * with the Table Manager to find active copies of replicas so that an inactive local copy is not used by mistake.
+		 * The database will actually request a lock for a table as necessary in CommandContainer. The following code checks with the Table
+		 * Manager to find active copies of replicas so that an inactive local copy is not used by mistake.
 		 * 
-		 * XXX this check happens at the wrong place and introduces a possible race condition if one of the copies that is found
-		 * becomes unavailable before the query is executed.
-		 * 
+		 * XXX this check happens at the wrong place and introduces a possible race condition if one of the copies that is found becomes
+		 * unavailable before the query is executed.
 		 */
-		Queue<DatabaseInstanceWrapper> replicaLocations = new LinkedList<DatabaseInstanceWrapper>(); //set of valid locations for this replica.
+		Queue<DatabaseInstanceWrapper> replicaLocations = new LinkedList<DatabaseInstanceWrapper>(); // set of valid locations for this
+																										// replica.
 
-		boolean tableFound = false; //whether the table has been found via the System Table.
+		boolean tableFound = false; // whether the table has been found via the System Table.
 
-		if (!tableName.equals("SESSIONS") && !tableName.contains("H2O_") && !database.getLocalSchema().contains(schemaName) && !internalQuery && searchRemote) {
+		if (!tableName.equals("SESSIONS") && !tableName.contains("H2O_") && !database.getLocalSchema().contains(schemaName)
+				&& !internalQuery && searchRemote) {
 			/*
-			 * Internal Query: if false it indicates that this is not part of some larger update.
-			 * Search Remote: only false if this method has already been called, and a linked table has been created.
-			 * Other evaluations: eliminate local tables.
+			 * Internal Query: if false it indicates that this is not part of some larger update. Search Remote: only false if this method
+			 * has already been called, and a linked table has been created. Other evaluations: eliminate local tables.
 			 */
 
-			if (localSchemaName == null) localSchemaName = Constants.SCHEMA_MAIN;
+			if (localSchemaName == null)
+				localSchemaName = Constants.SCHEMA_MAIN;
 
 			TableInfo tableInfo = new TableInfo(tableName, localSchemaName);
-			
+
 			TableManagerRemote tableManager = session.getDatabase().getSystemTableReference().lookup(tableInfo, true);
 
-			if (tableManager!= null){
+			if (tableManager != null) {
 				QueryProxy qp = null;
 
 				qp = getQueryProxyFromTableManager(tableInfo, tableManager, qp);
 
-
-				if (qp != null && qp.getReplicaLocations() != null){
-				replicaLocations.addAll(qp.getReplicaLocations().keySet());
+				if (qp != null && qp.getReplicaLocations() != null) {
+					replicaLocations.addAll(qp.getReplicaLocations().keySet());
 				}
-				
-				if (replicaLocations.size() == 0){
+
+				if (replicaLocations.size() == 0) {
 					ErrorHandling.errorNoEvent("There should be at least one active replica.");
 				}
-				
+
 				tableFound = true;
-				//				System.err.println("USER TABLE: ");
+				// System.err.println("USER TABLE: ");
 			} else {
-				//It might be a view. Continue on and check.
+				// It might be a view. Continue on and check.
 				replicaLocations.add(database.getLocalDatabaseInstanceInWrapper());
 			}
 		} else {
@@ -4452,10 +4449,8 @@ public class Parser {
 		/*
 		 * If there is an active copy of the database locally, use that.
 		 * 
-		 *  <p>If not, try to access a remote copy.
+		 * <p>If not, try to access a remote copy.
 		 */
-
-
 
 		if (schemaName != null) {
 			Table table = getSchema().getTableOrView(session, tableName);
@@ -4465,13 +4460,12 @@ public class Parser {
 		Table table = database.getSchema(session.getCurrentSchemaName()).findTableOrView(session, tableName, locale);
 
 		/*
-		 * Return if:
-		 * the table was found by the ST and is local
-		 * the table was found by the ST, and isn't local but a LinkedTable is,
-		 * or if it wasn't found but this is a view.
+		 * Return if: the table was found by the ST and is local the table was found by the ST, and isn't local but a LinkedTable is, or if
+		 * it wasn't found but this is a view.
 		 */
-		if (table != null && ( replicaLocations.contains(database.getLocalDatabaseInstanceInWrapper()) || ( tableFound && table.getTableType().equals(Table.TABLE_LINK))) && 
-				( (!tableFound && table.getTableType().equals(Table.VIEW)) || tableFound ) ){
+		if (table != null
+				&& (replicaLocations.contains(database.getLocalDatabaseInstanceInWrapper()) || (tableFound && table.getTableType().equals(
+						Table.TABLE_LINK))) && ((!tableFound && table.getTableType().equals(Table.VIEW)) || tableFound)) {
 			// TODO Check that this is a table link to a valid location - ( (TableLink) table).getConnection().getUrl();
 			return table;
 		}
@@ -4490,14 +4484,13 @@ public class Parser {
 		for (int i = 0; schemaNames != null && i < schemaNames.length; i++) {
 			Schema s = database.getSchema(schemaNames[i]);
 			table = s.findTableOrView(session, tableName, locale);
-			
-			if (table != null && ( replicaLocations.contains(database.getLocalDatabaseInstanceInWrapper()) || ( tableFound && table.getTableType().equals(Table.TABLE_LINK))) && 
-					( (!tableFound && table.getTableType().equals(Table.VIEW)) || tableFound ) ){
+
+			if (table != null
+					&& (replicaLocations.contains(database.getLocalDatabaseInstanceInWrapper()) || (tableFound && table.getTableType()
+							.equals(Table.TABLE_LINK))) && ((!tableFound && table.getTableType().equals(Table.VIEW)) || tableFound)) {
 				return table;
-			} 
+			}
 		}
-
-
 
 		/*
 		 * If the table could be found locally this would have returned by now.
@@ -4507,7 +4500,8 @@ public class Parser {
 		 * The table has not been found, but exists in some remote location.
 		 */
 
-		if (Constants.IS_H2O && searchRemote && database.getSystemTableReference().isConnectedToSM() && !(locale == LocationPreference.LOCAL_STRICT)) { // 2 or 3
+		if (Constants.IS_H2O && searchRemote && database.getSystemTableReference().isConnectedToSM()
+				&& !(locale == LocationPreference.LOCAL_STRICT)) { // 2 or 3
 
 			try {
 				return findViaSystemTable(tableName, localSchemaName);
@@ -4542,28 +4536,30 @@ public class Parser {
 			// try again.
 			try {
 				ISystemTable systemTable = session.getDatabase().getSystemTableReference().getSystemTable();
-				if (systemTable != null){
+				if (systemTable != null) {
 					systemTable.recreateTableManager(tableInfo);
 				} else {
-					throw new SQLException("System table was returned null.");
+					throw new SQLException("System table was returned as null.");
 				}
 			} catch (Exception e2) {
-				e2.printStackTrace();
 				throw new SQLException("Unable to contact the System Table for " + tableInfo + ":: " + e2.getMessage());
 			}
 
 			ISystemTableReference systemTableReference = session.getDatabase().getSystemTableReference();
+
 			tableManager = systemTableReference.lookup(tableInfo, false);
-		
+
+			if (tableManager == null) {
+				ErrorHandling.errorNoEvent("Table Manager was null for table lookup: " + tableInfo);
+			} else {
 				try {
 					qp = tableManager.getQueryProxy(LockType.NONE, this.database.getLocalDatabaseInstanceInWrapper());
 				} catch (RemoteException e1) {
 					e1.printStackTrace();
 				} catch (MovedException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
-
+			}
 		}
 		return qp;
 	}
@@ -4589,7 +4585,7 @@ public class Parser {
 
 		TableInfo tableInfo = new TableInfo(tableName, thisSchemaName);
 		TableManagerRemote tableManager = session.getDatabase().getSystemTableReference()
-		.lookup(new TableInfo(tableName, thisSchemaName), true);
+				.lookup(new TableInfo(tableName, thisSchemaName), true);
 
 		if (tableManager == null) {
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableInfo.toString());
@@ -4647,7 +4643,7 @@ public class Parser {
 				continue;
 			}
 			String sql = "CREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + tableLocation + "', '"
-			+ PersistentSystemTable.USERNAME + "', '" + PersistentSystemTable.PASSWORD + "', '" + tableName + "');";
+					+ PersistentSystemTable.USERNAME + "', '" + PersistentSystemTable.PASSWORD + "', '" + tableName + "');";
 
 			try {
 				Command sqlQuery = queryParser.prepareCommand(sql);
@@ -4660,7 +4656,8 @@ public class Parser {
 
 		if (result == 0) {
 			// Linked table was successfully added.
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Successfully created linked table '" + tableName + "'. Attempting to access it.");
+			Diagnostic
+					.traceNoEvent(DiagnosticLevel.FULL, "Successfully created linked table '" + tableName + "'. Attempting to access it.");
 			return readTableOrView(tableName, false, LocationPreference.PRIMARY, true);
 		} else {
 			throw new SQLException("Couldn't find active copy of table " + tableName + " to connect to.");
@@ -5058,7 +5055,7 @@ public class Parser {
 	}
 
 	private CreateReplica parseCreateReplica(boolean temp, boolean globalTemp, boolean persistent, boolean empty) throws SQLException,
-	RemoteException {
+			RemoteException {
 		boolean ifNotExists = readIfNoExists();
 		boolean updateData = readUpdateData();
 

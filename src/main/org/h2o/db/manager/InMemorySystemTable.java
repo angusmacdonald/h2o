@@ -73,8 +73,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	 * <p>
 	 * <ul>
 	 * <li>Key: Full table name (inc. schema name)</li>
-	 * <li>Value: reference to the location of a table manager state replica for
-	 * that table.</li>
+	 * <li>Value: reference to the location of a table manager state replica for that table.</li>
 	 * </ul>
 	 */
 	private Map<TableInfo, Set<DatabaseURL>> tmReplicaLocations;
@@ -82,8 +81,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	private Map<DatabaseURL, DatabaseInstanceWrapper> databasesInSystem = new HashMap<DatabaseURL, DatabaseInstanceWrapper>();
 
 	/**
-	 * The next valid table set number which can be assigned by the System
-	 * Table.
+	 * The next valid table set number which can be assigned by the System Table.
 	 */
 	private int tableSetNumber = 1;
 
@@ -100,30 +98,23 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	// private Set<DatabaseInstanceRemote> systemTableState;
 
 	/**
-	 * Maintained because a nosuchobjectexception is occasionally thrown. See
-	 * http
-	 * ://stackoverflow.com/questions/645208/java-rmi-nosuchobjectexception-no
-	 * -such-object-in-table/854097#854097.
+	 * Maintained because a nosuchobjectexception is occasionally thrown. See http
+	 * ://stackoverflow.com/questions/645208/java-rmi-nosuchobjectexception-no -such-object-in-table/854097#854097.
 	 */
 	public static HashSet<TableManagerRemote> tableManagerReferences = new HashSet<TableManagerRemote>();
 
 	public InMemorySystemTable(Database database) throws Exception {
 		this.database = database;
-		databasesInSystem = Collections
-		.synchronizedMap(new HashMap<DatabaseURL, DatabaseInstanceWrapper>());
-		tableManagers = Collections
-		.synchronizedMap(new HashMap<TableInfo, TableManagerWrapper>());
-		tmReplicaLocations = Collections
-		.synchronizedMap(new HashMap<TableInfo, Set<DatabaseURL>>());
+		databasesInSystem = Collections.synchronizedMap(new HashMap<DatabaseURL, DatabaseInstanceWrapper>());
+		tableManagers = Collections.synchronizedMap(new HashMap<TableInfo, TableManagerWrapper>());
+		tmReplicaLocations = Collections.synchronizedMap(new HashMap<TableInfo, Set<DatabaseURL>>());
 
 		primaryLocations = new HashMap<TableInfo, DatabaseURL>();
 
-		int replicationThreadSleepTime = Integer.parseInt(database
-				.getDatabaseSettings().get(
-						"TABLE_MANAGER_LIVENESS_CHECKER_THREAD_SLEEP_TIME"));
+		int replicationThreadSleepTime = Integer.parseInt(database.getDatabaseSettings().get(
+				"TABLE_MANAGER_LIVENESS_CHECKER_THREAD_SLEEP_TIME"));
 
-		tableManagerPingerThread = new TableManagerLivenessCheckerThread(this,
-				replicationThreadSleepTime);
+		tableManagerPingerThread = new TableManagerLivenessCheckerThread(this, replicationThreadSleepTime);
 		tableManagerPingerThread.setName("TableManagerLivenessCheckerThread");
 		tableManagerPingerThread.start();
 
@@ -139,24 +130,18 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.h2.h2o.ISystemTable#confirmTableCreation(java.lang.String,
-	 * org.h2.h2o.comms.remote.TableManagerRemote)
+	 * @see org.h2.h2o.ISystemTable#confirmTableCreation(java.lang.String, org.h2.h2o.comms.remote.TableManagerRemote)
 	 */
-	public boolean addTableInformation(TableManagerRemote tableManager,
-			TableInfo tableDetails,
-			Set<DatabaseInstanceWrapper> replicaLocations)
-	throws RemoteException {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL,
-				"New table successfully created: " + tableDetails);
+	public boolean addTableInformation(TableManagerRemote tableManager, TableInfo tableDetails,
+			Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException {
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "New table successfully created: " + tableDetails);
 
 		TableInfo basicTableInfo = tableDetails.getGenericTableInfo();
 
-		TableManagerWrapper tableManagerWrapper = new TableManagerWrapper(
-				basicTableInfo, tableManager, tableDetails.getURL());
+		TableManagerWrapper tableManagerWrapper = new TableManagerWrapper(basicTableInfo, tableManager, tableDetails.getURL());
 
 		if (tableManagers.containsKey(basicTableInfo)) {
-			ErrorHandling.errorNoEvent("Table " + tableDetails
-					+ " already exists.");
+			ErrorHandling.errorNoEvent("Table " + tableDetails + " already exists.");
 			return false; // this table already exists.
 		}
 
@@ -183,14 +168,11 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.h2.h2o.ISystemTable#removeTable(java.lang.String,
-	 * java.lang.String)
+	 * @see org.h2.h2o.ISystemTable#removeTable(java.lang.String, java.lang.String)
 	 */
 	@Override
 	public boolean removeTableInformation(TableInfo ti) throws RemoteException {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL,
-				"Request to completely drop table '" + ti.getFullTableName()
-				+ "' from the system.");
+		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Request to completely drop table '" + ti.getFullTableName() + "' from the system.");
 
 		Set<TableInfo> toRemove = new HashSet<TableInfo>();
 
@@ -213,8 +195,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 
 		} else { // Just remove the single table.
 
-			TableManagerWrapper tmw = this.tableManagers.remove(ti
-					.getGenericTableInfo());
+			TableManagerWrapper tmw = this.tableManagers.remove(ti.getGenericTableInfo());
 			setTableManagerAsShutdown(tmw);
 		}
 
@@ -222,15 +203,13 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	}
 
 	/**
-	 * Specify that the Table Manager is no longer in use. This ensures that if
-	 * any remote instances have cached references of the manager, they will
-	 * become aware that it is no longer active.
+	 * Specify that the Table Manager is no longer in use. This ensures that if any remote instances have cached references of the manager,
+	 * they will become aware that it is no longer active.
 	 * 
 	 * @param tmw
 	 * @throws RemoteException
 	 */
-	private void setTableManagerAsShutdown(TableManagerWrapper tmw)
-	throws RemoteException {
+	private void setTableManagerAsShutdown(TableManagerWrapper tmw) throws RemoteException {
 		if (tmw.getTableManager() != null) {
 			try {
 				tmw.getTableManager().shutdown(true);
@@ -245,14 +224,10 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * org.h2.h2o.ISystemTable#addConnectionInformation(org.h2.h2o.util.DatabaseURL
-	 * )
+	 * @see org.h2.h2o.ISystemTable#addConnectionInformation(org.h2.h2o.util.DatabaseURL )
 	 */
 	@Override
-	public int addConnectionInformation(DatabaseURL databaseURL,
-			DatabaseInstanceWrapper databaseInstanceRemote)
-	throws RemoteException {
+	public int addConnectionInformation(DatabaseURL databaseURL, DatabaseInstanceWrapper databaseInstanceRemote) throws RemoteException {
 
 		databasesInSystem.remove(databaseURL);
 		databasesInSystem.put(databaseURL, databaseInstanceRemote);
@@ -310,11 +285,11 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	 */
 	@Override
 	public TableManagerWrapper lookup(TableInfo ti) throws RemoteException {
-		
-		if (ti == null){
+
+		if (ti == null) {
 			throw new RemoteException("The table information provided was null.");
 		}
-		
+
 		ti = ti.getGenericTableInfo();
 		TableManagerWrapper tableManagerWrapper = tableManagers.get(ti);
 		TableManagerRemote tm = null;
@@ -323,8 +298,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 			tm = tableManagerWrapper.getTableManager();
 		}
 		/*
-		 * If there is a null reference to a Table Manager we can try to
-		 * reinstantiate it, but if there is no reference at all just return
+		 * If there is a null reference to a Table Manager we can try to reinstantiate it, but if there is no reference at all just return
 		 * null for the lookup.
 		 */
 		boolean containsTableManager = tableManagers.containsKey(ti);
@@ -337,13 +311,11 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 		}
 
 		/*
-		 * The DM reference is null so we must look to create a new DM. XXX is
-		 * it possible that a data manager is running and the SM doesn't know of
-		 * it?
+		 * The DM reference is null so we must look to create a new DM. XXX is it possible that a data manager is running and the SM doesn't
+		 * know of it?
 		 */
 
-		if (tableManagerWrapper != null
-				&& this.database.getURL().equals(tableManagerWrapper.getURL())) {
+		if (tableManagerWrapper != null && this.database.getURL().equals(tableManagerWrapper.getURL())) {
 			/*
 			 * It is okay to re-instantiate the Table Manager here.
 			 */
@@ -352,10 +324,9 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 			// ti.getSchemaName());
 			try {
 				tm = new TableManager(ti, database);
-				tm.recreateReplicaManagerState(tableManagerWrapper.getURL()
-						.sanitizedLocation());
+				tm.recreateReplicaManagerState(tableManagerWrapper.getURL().sanitizedLocation());
 				H2OEventBus.publish(new H2OEvent(database.getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
-				
+
 			} catch (SQLException e) {
 				e.printStackTrace();
 			} catch (Exception e) {
@@ -366,8 +337,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 			 * Make Table Manager serializable first.
 			 */
 			try {
-				tm = (TableManagerRemote) UnicastRemoteObject.exportObject(tm,
-						0);
+				tm = (TableManagerRemote) UnicastRemoteObject.exportObject(tm, 0);
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
@@ -383,9 +353,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 				DatabaseURL url = tableManagerWrapper.getURL();
 				ti = tableManagerWrapper.getTableInfo();
 				if (dir != null) {
-					dir.executeUpdate("RECREATE TABLEMANAGER " + ti.getFullTableName()
-							+ " FROM '" + url.sanitizedLocation()
-							+ "';", false);
+					dir.executeUpdate("RECREATE TABLEMANAGER " + ti.getFullTableName() + " FROM '" + url.sanitizedLocation() + "';", false);
 				} else {
 					// Remove location we know isn't active, then try to
 					// instantiate the table manager elsewhere.
@@ -393,19 +361,15 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 					replicaLocations.remove(tableManagerWrapper.getURL());
 
 					for (DatabaseURL replicaLocation : replicaLocations) {
-						System.err.println("Attempting to recreate table manager for "
-								+ tableManagerWrapper.getTableInfo()
-								+ " on " + replicaLocation);
+						Diagnostic
+								.traceNoEvent(DiagnosticLevel.FULL,
+										"Attempting to recreate table manager for " + tableManagerWrapper.getTableInfo() + " on "
+												+ replicaLocation);
 
 						dir = this.getDatabaseInstance(replicaLocation);
 						if (dir != null) {
-							System.err.println("recreating the table "
-									+ tableManagerWrapper.getTableInfo());
-
-							dir.executeUpdate("RECREATE TABLEMANAGER "
-									+ ti.getFullTableName() + " FROM '"
-									+ url.sanitizedLocation() + "';",
-									false);
+							dir.executeUpdate(
+									"RECREATE TABLEMANAGER " + ti.getFullTableName() + " FROM '" + url.sanitizedLocation() + "';", false);
 						}
 					}
 				}
@@ -420,15 +384,11 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 
 		} else {
 			// Table Manager location is not known.
-			ErrorHandling
-			.errorNoEvent("Couldn't find the location of the table manager for table "
-					+ ti
-					+ ". This should never happen - the relevant information"
-					+ " should be found in persisted state.");
+			ErrorHandling.errorNoEvent("Couldn't find the location of the table manager for table " + ti
+					+ ". This should never happen - the relevant information" + " should be found in persisted state.");
 		}
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, ti.getFullTableName()
-				+ "'s table manager has been recreated on "
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, ti.getFullTableName() + "'s table manager has been recreated on "
 				+ tableManagerWrapper.getURL() + ".");
 
 		tableManagerWrapper.setTableManager(tm);
@@ -453,8 +413,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	 * @see org.h2.h2o.ISystemTable#getAllTablesInSchema(java.lang.String)
 	 */
 	@Override
-	public Set<String> getAllTablesInSchema(String schemaName)
-	throws RemoteException {
+	public Set<String> getAllTablesInSchema(String schemaName) throws RemoteException {
 
 		Set<String> tableNames = new HashSet<String>();
 
@@ -480,26 +439,21 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * org.h2.h2o.manager.ISystemTable#buildSystemTableState(org.h2.h2o.manager
-	 * .ISystemTable)
+	 * @see org.h2.h2o.manager.ISystemTable#buildSystemTableState(org.h2.h2o.manager .ISystemTable)
 	 */
 	@Override
-	public void buildSystemTableState(ISystemTable otherSystemTable)
-	throws RemoteException, MovedException, SQLException {
+	public void buildSystemTableState(ISystemTable otherSystemTable) throws RemoteException, MovedException, SQLException {
 		started = false;
 		/*
 		 * Obtain references to connected machines.
 		 */
-		Map<DatabaseURL, DatabaseInstanceWrapper> connectedMachines = otherSystemTable
-		.getConnectionInformation();
+		Map<DatabaseURL, DatabaseInstanceWrapper> connectedMachines = otherSystemTable.getConnectionInformation();
 
 		databasesInSystem = new HashMap<DatabaseURL, DatabaseInstanceWrapper>();
 
 		// Make sure this contains remote references for each URL
 
-		for (Entry<DatabaseURL, DatabaseInstanceWrapper> remoteDB : connectedMachines
-				.entrySet()) {
+		for (Entry<DatabaseURL, DatabaseInstanceWrapper> remoteDB : connectedMachines.entrySet()) {
 			DatabaseInstanceWrapper wrapper = remoteDB.getValue();
 
 			DatabaseInstanceRemote dir = null;
@@ -507,8 +461,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 			if (wrapper != null)
 				wrapper.getDatabaseInstance();
 
-			boolean active = (remoteDB.getValue() == null) ? true : remoteDB
-					.getValue().isActive();
+			boolean active = (remoteDB.getValue() == null) ? true : remoteDB.getValue().isActive();
 
 			if (dir == null) {
 				if (remoteDB.getKey().equals(database.getURL())) {
@@ -517,8 +470,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 				} else {
 					// Look for a remote reference.
 					try {
-						dir = database.getRemoteInterface()
-						.getDatabaseInstanceAt(remoteDB.getKey());
+						dir = database.getRemoteInterface().getDatabaseInstanceAt(remoteDB.getKey());
 
 						if (dir != null)
 							active = true;
@@ -530,14 +482,11 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 
 			}
 
-			databasesInSystem
-			.put(remoteDB.getKey(), new DatabaseInstanceWrapper(
-					remoteDB.getKey(), dir, active));
+			databasesInSystem.put(remoteDB.getKey(), new DatabaseInstanceWrapper(remoteDB.getKey(), dir, active));
 		}
 
 		/*
-		 * Obtain references to Table Managers, though not necessarily
-		 * references to active TM proxies.
+		 * Obtain references to Table Managers, though not necessarily references to active TM proxies.
 		 */
 		tableManagers = otherSystemTable.getTableManagers();
 
@@ -545,11 +494,10 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 		primaryLocations = otherSystemTable.getPrimaryLocations();
 
 		/*
-		 * At this point some of the Table Manager references will be null if
-		 * the Table Managers could not be found at their old location.
+		 * At this point some of the Table Manager references will be null if the Table Managers could not be found at their old location.
 		 * 
-		 * BUT, a new Table Manager cannot be created at this point because it
-		 * would require contact with the System Table, which is not yet active.
+		 * BUT, a new Table Manager cannot be created at this point because it would require contact with the System Table, which is not yet
+		 * active.
 		 */
 
 		started = true;
@@ -571,8 +519,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 
 			// Note: done this way to avoid concurrent modification exceptions
 			// when a table manager entry is updated.
-			TableManagerWrapper[] tableManagerArray = tableManagers.values()
-			.toArray(new TableManagerWrapper[0]);
+			TableManagerWrapper[] tableManagerArray = tableManagers.values().toArray(new TableManagerWrapper[0]);
 			for (TableManagerWrapper tableManagerWrapper : tableManagerArray) {
 				boolean thisTableManagerRecreated = recreateTableManagerIfNotAlive(tableManagerWrapper);
 
@@ -613,28 +560,20 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 		return tableManagers.get(tableInfo).getTableManager();
 	}
 
-	public synchronized boolean recreateTableManagerIfNotAlive(
-			TableManagerWrapper tableManagerWrapper) {
+	public synchronized boolean recreateTableManagerIfNotAlive(TableManagerWrapper tableManagerWrapper) {
 		if (isAlive(tableManagerWrapper.getTableManager()))
 			return false; // check that it isn't already active.
 
-		for (DatabaseURL replicaLocation : tmReplicaLocations
-				.get(tableManagerWrapper.getTableInfo())) {
+		for (DatabaseURL replicaLocation : tmReplicaLocations.get(tableManagerWrapper.getTableInfo())) {
 			try {
-				DatabaseInstanceWrapper instance = databasesInSystem
-				.get(replicaLocation);
+				DatabaseInstanceWrapper instance = databasesInSystem.get(replicaLocation);
 
 				if (instance != null && instance.getDatabaseInstance() != null) {
-					boolean success = instance.getDatabaseInstance()
-					.recreateTableManager(
-							tableManagerWrapper.getTableInfo(),
+					boolean success = instance.getDatabaseInstance().recreateTableManager(tableManagerWrapper.getTableInfo(),
 							tableManagerWrapper.getURL());
 
 					if (success) {
-						Diagnostic.traceNoEvent(
-								DiagnosticLevel.FULL,
-								"Table Manager for "
-								+ tableManagerWrapper.getTableInfo()
+						Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Table Manager for " + tableManagerWrapper.getTableInfo()
 								+ " recreated on " + instance.getURL());
 
 						return true;
@@ -651,14 +590,10 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 			}
 		}
 
-		ErrorHandling.errorNoEvent("Failed to recreate Table Manager for "
-				+ tableManagerWrapper.getTableInfo()
-				+ ". There were "
-				+ tmReplicaLocations.get(tableManagerWrapper.getTableInfo())
-				.size()
+		ErrorHandling.errorNoEvent("Failed to recreate Table Manager for " + tableManagerWrapper.getTableInfo() + ". There were "
+				+ tmReplicaLocations.get(tableManagerWrapper.getTableInfo()).size()
 				+ " replicas available (including the failed machine) at "
-				+ PrettyPrinter.toString(tmReplicaLocations
-						.get(tableManagerWrapper.getTableInfo())) + ".");
+				+ PrettyPrinter.toString(tmReplicaLocations.get(tableManagerWrapper.getTableInfo())) + ".");
 		return false;
 	}
 
@@ -668,8 +603,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	 * @see org.h2.h2o.manager.ISystemTable#getConnectionInformation()
 	 */
 	@Override
-	public Map<DatabaseURL, DatabaseInstanceWrapper> getConnectionInformation()
-	throws RemoteException {
+	public Map<DatabaseURL, DatabaseInstanceWrapper> getConnectionInformation() throws RemoteException {
 		return databasesInSystem;
 	}
 
@@ -734,12 +668,10 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.h2.h2o.manager.ISystemTable#getDatabaseInstance(org.h2.h2o.util.
-	 * DatabaseURL)
+	 * @see org.h2.h2o.manager.ISystemTable#getDatabaseInstance(org.h2.h2o.util. DatabaseURL)
 	 */
 	@Override
-	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL)
-	throws RemoteException, MovedException {
+	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL) throws RemoteException, MovedException {
 		DatabaseInstanceWrapper wrapper = databasesInSystem.get(databaseURL);
 		if (wrapper == null)
 			return null;
@@ -752,24 +684,18 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	 * @see org.h2.h2o.manager.ISystemTable#getDatabaseInstances()
 	 */
 	@Override
-	public Set<DatabaseInstanceWrapper> getDatabaseInstances()
-	throws RemoteException, MovedException {
+	public Set<DatabaseInstanceWrapper> getDatabaseInstances() throws RemoteException, MovedException {
 		return new HashSet<DatabaseInstanceWrapper>(databasesInSystem.values());
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * org.h2.h2o.manager.ISystemTable#removeDatabaseInstance(org.h2.h2o.comms
-	 * .remote.DatabaseInstanceRemote)
+	 * @see org.h2.h2o.manager.ISystemTable#removeDatabaseInstance(org.h2.h2o.comms .remote.DatabaseInstanceRemote)
 	 */
 	@Override
-	public void removeConnectionInformation(
-			DatabaseInstanceRemote localDatabaseInstance)
-	throws RemoteException, MovedException {
-		DatabaseInstanceWrapper wrapper = this.databasesInSystem
-		.get(localDatabaseInstance.getURL());
+	public void removeConnectionInformation(DatabaseInstanceRemote localDatabaseInstance) throws RemoteException, MovedException {
+		DatabaseInstanceWrapper wrapper = this.databasesInSystem.get(localDatabaseInstance.getURL());
 
 		assert wrapper != null;
 
@@ -779,50 +705,38 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * org.h2.h2o.manager.ISystemTable#changeTableManagerLocation(org.h2.h2o
-	 * .comms.remote.TableManagerRemote)
+	 * @see org.h2.h2o.manager.ISystemTable#changeTableManagerLocation(org.h2.h2o .comms.remote.TableManagerRemote)
 	 */
-	public void changeTableManagerLocation(TableManagerRemote stub,
-			TableInfo tableInfo) {
-		Object result = this.tableManagers.remove(tableInfo
-				.getGenericTableInfo());
+	public void changeTableManagerLocation(TableManagerRemote stub, TableInfo tableInfo) {
+		Object result = this.tableManagers.remove(tableInfo.getGenericTableInfo());
 
 		if (result == null) {
 			ErrorHandling
-			.errorNoEvent("There is an inconsistency in the storage of Table Managers which has caused inconsistencies in the set of managers.");
+					.errorNoEvent("There is an inconsistency in the storage of Table Managers which has caused inconsistencies in the set of managers.");
 			assert false;
 		}
 
-		TableManagerWrapper dmw = new TableManagerWrapper(tableInfo, stub,
-				tableInfo.getURL());
+		TableManagerWrapper dmw = new TableManagerWrapper(tableInfo, stub, tableInfo.getURL());
 
 		this.tableManagers.put(tableInfo.getGenericTableInfo(), dmw);
 		tableManagerReferences.add(stub);
-		this.database.getChordInterface().bind(tableInfo.getFullTableName(),
-				stub);
+		this.database.getChordInterface().bind(tableInfo.getFullTableName(), stub);
 
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * org.h2.h2o.manager.ISystemTable#getLocalDatabaseInstances(org.h2.h2o.
-	 * util.DatabaseURL)
+	 * @see org.h2.h2o.manager.ISystemTable#getLocalDatabaseInstances(org.h2.h2o. util.DatabaseURL)
 	 */
 	@Override
-	public Set<TableManagerWrapper> getLocalDatabaseInstances(
-			DatabaseURL databaseInstance) throws RemoteException,
-			MovedException {
+	public Set<TableManagerWrapper> getLocalDatabaseInstances(DatabaseURL databaseInstance) throws RemoteException, MovedException {
 
 		/*
-		 * Create an interator to go through and chec whether a given Table
-		 * Manager is local to the specified machine.
+		 * Create an interator to go through and chec whether a given Table Manager is local to the specified machine.
 		 */
 		Predicate<TableManagerWrapper, DatabaseURL> isLocal = new Predicate<TableManagerWrapper, DatabaseURL>() {
-			public boolean apply(TableManagerWrapper wrapper,
-					DatabaseURL databaseInstance) {
+			public boolean apply(TableManagerWrapper wrapper, DatabaseURL databaseInstance) {
 				try {
 					return wrapper.isLocalTo(databaseInstance);
 				} catch (RemoteException e) {
@@ -832,8 +746,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 
 		};
 
-		Set<TableManagerWrapper> localManagers = CollectionFilter.filter(
-				this.tableManagers.values(), isLocal, databaseInstance);
+		Set<TableManagerWrapper> localManagers = CollectionFilter.filter(this.tableManagers.values(), isLocal, databaseInstance);
 
 		return localManagers;
 	}
@@ -841,16 +754,12 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * org.h2.h2o.manager.ISystemTable#addTableManagerStateReplica(org.h2.h2o
-	 * .util.TableInfo, org.h2.h2o.util.DatabaseURL)
+	 * @see org.h2.h2o.manager.ISystemTable#addTableManagerStateReplica(org.h2.h2o .util.TableInfo, org.h2.h2o.util.DatabaseURL)
 	 */
 	@Override
-	public void addTableManagerStateReplica(TableInfo table,
-			DatabaseURL replicaLocation, DatabaseURL primaryLocation,
-			boolean active) throws RemoteException, MovedException {
-		Set<DatabaseURL> replicas = tmReplicaLocations.get(table
-				.getGenericTableInfo());
+	public void addTableManagerStateReplica(TableInfo table, DatabaseURL replicaLocation, DatabaseURL primaryLocation, boolean active)
+			throws RemoteException, MovedException {
+		Set<DatabaseURL> replicas = tmReplicaLocations.get(table.getGenericTableInfo());
 
 		primaryLocations.put(table.getGenericTableInfo(), primaryLocation);
 
@@ -867,27 +776,21 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * org.h2.h2o.manager.ISystemTable#removeTableManagerStateReplica(org.h2
-	 * .h2o.util.TableInfo, org.h2.h2o.util.DatabaseURL)
+	 * @see org.h2.h2o.manager.ISystemTable#removeTableManagerStateReplica(org.h2 .h2o.util.TableInfo, org.h2.h2o.util.DatabaseURL)
 	 */
 	@Override
-	public void removeTableManagerStateReplica(TableInfo table,
-			DatabaseURL replicaLocation) throws RemoteException, MovedException {
-		Set<DatabaseURL> replicas = tmReplicaLocations.get(table
-				.getGenericTableInfo());
+	public void removeTableManagerStateReplica(TableInfo table, DatabaseURL replicaLocation) throws RemoteException, MovedException {
+		Set<DatabaseURL> replicas = tmReplicaLocations.get(table.getGenericTableInfo());
 
 		if (replicas == null) {
-			ErrorHandling
-			.errorNoEvent("Failed to remove Table Manager Replica state for a replica because it wasn't recorded. Table "
+			ErrorHandling.errorNoEvent("Failed to remove Table Manager Replica state for a replica because it wasn't recorded. Table "
 					+ table + ".");
 		}
 
 		boolean removed = replicas.remove(replicaLocation);
 
 		if (!removed) {
-			ErrorHandling
-			.errorNoEvent("Failed to remove Table Manager Replica state for a replica because it wasn't recorded. Table "
+			ErrorHandling.errorNoEvent("Failed to remove Table Manager Replica state for a replica because it wasn't recorded. Table "
 					+ table + " at " + replicaLocation);
 		}
 
@@ -898,8 +801,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 	}
 
 	@Override
-	public Queue<DatabaseInstanceWrapper> getAvailableMachines(
-			ActionRequest typeOfRequest) {
+	public Queue<DatabaseInstanceWrapper> getAvailableMachines(ActionRequest typeOfRequest) {
 		Queue<DatabaseInstanceWrapper> sortedMachines = new PriorityQueue<DatabaseInstanceWrapper>();
 
 		// TODO make use of action request.

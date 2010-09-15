@@ -10,9 +10,9 @@ import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.manager.SystemTable;
 import org.h2o.db.manager.SystemTableReference;
-import org.h2o.db.manager.SystemTableWrapper;
 import org.h2o.db.manager.interfaces.SystemTableRemote;
 import org.h2o.db.remote.IDatabaseRemote;
+import org.h2o.db.wrappers.SystemTableWrapper;
 import org.h2o.locator.client.H2OLocatorInterface;
 import org.h2o.util.exceptions.MigrationException;
 import org.h2o.util.exceptions.MovedException;
@@ -40,8 +40,8 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
 	 * org.h2o.db.manager.SystemTableReference)
 	 */
 	@Override
-	public synchronized SystemTableWrapper get() throws LocatorException, SystemTableAccessException {
-
+	public SystemTableWrapper get() throws LocatorException, SystemTableAccessException {
+		
 		/*
 		 * 1. Get the location of the System Table (as the lookup instance currently knows it. 2. Contact the registry of that instance to
 		 * get a direct reference to the system table.
@@ -69,7 +69,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
 	 * 
 	 * @see org.h2o.db.manager.ISystemTableFailureRecovery#find(org.h2o.util.exceptions.MovedException, org.h2o.db.remote.ChordRemote)
 	 */
-	public synchronized SystemTableWrapper find(MovedException e) throws SQLException, RemoteException {
+	public SystemTableWrapper find(MovedException e) throws SQLException, RemoteException {
 
 		String newLocation = e.getMessage();
 
@@ -96,7 +96,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
 	 * @see org.h2o.db.manager.ISystemTableFailureRecovery#restart(org.h2.engine.Database, boolean, boolean,
 	 * org.h2o.db.manager.interfaces.SystemTableRemote)
 	 */
-	public synchronized SystemTableWrapper restart(boolean persistedSchemaTablesExist, boolean recreateFromPersistedState,
+	public SystemTableWrapper restart(boolean persistedSchemaTablesExist, boolean recreateFromPersistedState,
 			SystemTableRemote oldSystemTable) throws SystemTableAccessException {
 
 		if (recreateFromPersistedState) {

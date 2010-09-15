@@ -807,7 +807,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		try {
 			rs = executeQuery(sql);
 		} catch (SQLException e) {
-			System.err.println("tablename: " + tableName + ", old primary: " + oldPrimaryDatabaseName);
+			ErrorHandling.errorNoEvent("Error replicating table manager state.");
 			throw e;
 		}
 
