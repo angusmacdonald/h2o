@@ -52,7 +52,8 @@ import org.junit.Test;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
-import uk.ac.standrews.cs.nds.util.Processes;
+import uk.ac.standrews.cs.remote_management.server.UnknownPlatformException;
+import uk.ac.standrews.cs.remote_management.util.ProcessInvocation;
 
 
 /**
@@ -784,8 +785,10 @@ public class LocatorDatabaseTests extends TestBase {
 		args.add("-p" + port);
 
 		try {
-			processes.put(connectionString, Processes.runJavaProcess(StartDatabaseInstance.class, args));
+			processes.put(connectionString, ProcessInvocation.runJavaProcess(StartDatabaseInstance.class, args));
 		} catch (IOException e) {
+			ErrorHandling.error("Failed to create new database process.");
+		} catch (UnknownPlatformException e) {
 			ErrorHandling.error("Failed to create new database process.");
 		}
 	}

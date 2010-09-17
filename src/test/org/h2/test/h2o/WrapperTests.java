@@ -41,7 +41,9 @@ import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
-import uk.ac.standrews.cs.nds.util.Processes;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.remote_management.server.UnknownPlatformException;
+import uk.ac.standrews.cs.remote_management.util.ProcessInvocation;
 
 public class WrapperTests {
 	private Process locatorProcess = null;
@@ -78,10 +80,13 @@ public class WrapperTests {
 			locatorArgs.add("-f'" + defaultLocation + "'");
 
 			try {
-				locatorProcess = Processes.runJavaProcess(H2OLocator.class, locatorArgs);
+				locatorProcess = ProcessInvocation.runJavaProcess(H2OLocator.class, locatorArgs);
 			} catch (IOException e) {
 				e.printStackTrace();
 				fail("Unexpected IOException.");
+			} catch (UnknownPlatformException e) {
+				e.printStackTrace();
+				fail("Unexpected UnknownPlatformException.");
 			}
 
 			Thread.sleep(1000);
@@ -146,9 +151,11 @@ public class WrapperTests {
 			databaseArgs.add("-d'" + defaultLocation + File.separator + databaseName + ".h2od'");
 			databaseArgs.add("-f'" + defaultLocation + "'");
 
-			databaseProcess = Processes.runJavaProcess(H2O.class, databaseArgs);
+			databaseProcess = ProcessInvocation.runJavaProcess(H2O.class, databaseArgs);
 		} catch (IOException e) {
 			fail("Unexpected IOException.");
+		} catch (UnknownPlatformException e) {
+			fail("Unexpected UnknownPlatformException.");
 		}
 	}
 
