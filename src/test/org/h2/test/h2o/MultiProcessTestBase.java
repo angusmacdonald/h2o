@@ -29,11 +29,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+import uk.ac.standrews.cs.nds.remote_management.ProcessInvocation;
+import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
-import uk.ac.standrews.cs.nds.util.ProcessInvocation;
-import uk.ac.standrews.cs.nds.util.UnknownPlatformException;
 
 public class MultiProcessTestBase extends TestBase {
 
