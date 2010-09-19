@@ -11,7 +11,7 @@
 
 	<!-- Compile current version. -->
 	<target name="do-compile" depends="remove-class-files">
-		<javac srcdir="./src" destdir="./bin" classpath="${classpath}">
+		<javac srcdir="src" destdir="bin" classpath="${classpath}">
 			<compilerarg value="-Xlint:unchecked" />
 		</javac>
 	</target>
@@ -30,10 +30,8 @@
 			<!-- Run tests with assertions enabled. -->
 			<jvmarg value="-ea" />
 			<formatter type="xml"/>
-			<classpath path="${classpath}"/>
-	        <batchtest todir="junit">
-	            <fileset dir="src/main/org/h2o/test" includes="**/CheckInTests.java"/>
-	        </batchtest>
+			<classpath path="bin:${classpath}"/>
+			<test name="org.h2o.test.CheckInTests" todir="junit"/>
 		</junit>
 	</target>
 	
