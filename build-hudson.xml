@@ -1,0 +1,68 @@
+<project>
+
+	<target name="build" depends="do-init-release, do-compile, do-test, project-jar, release-doc" />
+
+	<!-- Initialise release directory structure. -->
+	<target name="do-init-release">
+		<mkdir dir="bin" />
+		<mkdir dir="doc" />
+		<mkdir dir="junit" />
+	</target>
+
+	<!-- Compile current version. -->
+	<target name="do-compile" depends="remove-class-files">
+		<javac srcdir="./src" destdir="./bin" classpath="${classpath}">
+			<compilerarg value="-Xlint:unchecked" />
+		</javac>
+	</target>
+	
+	<!-- Delete any existing .class files to force complete recompilation. -->
+	<target name="remove-class-files">
+		<delete failonerror="false">
+			<fileset dir="./bin" includes="**/*.class"/>
+		</delete>
+	</target>
+
+	<!-- Run check-in tests. -->
+	<target name="do-test">
+		<echo message="classpath: ${classpath}" />
+		<junit fork="yes" clonevm="true" maxmemory="256m" printsummary="no" showoutput="yes" failureproperty="test-failed" errorproperty="test-failed" filtertrace="no">
+			<!-- Run tests with assertions enabled. -->
+			<jvmarg value="-ea" />
+			<formatter type="xml"/>
+			<test name="org.h2o.test.CheckInTests" todir="junit"/>
+			<classpath path="${classpath}"/>
+		</junit>
+	</target>
+	
+	<!-- Generate project jar. -->
+	<target name="project-jar">
+		<jar destfile="bin/h2o.jar">
+			<fileset dir="bin" includes="uk/**" />
+			<fileset dir="src" includes="uk/**" />
+		</jar>
+	</target>
+
+	<!-- Generate javadoc. -->
+	<target name="release-doc">
+		<javadoc
+				classpath="${classpath}" sourcepath="src" destdir="doc" packagenames="uk.ac.standrews.cs.h2o.*"
+				access="public" linksource="yes" source="1.6" nodeprecated="false" nodeprecatedlist="false"
+				noindex="false" nonavbar="false" notree="false" splitindex="false" use="false" author="true" version="true" verbose="true">
+
+			<!-- Link to Java API from generated documentation. -->
+			<link href="${doc-java}" />
+		</javadoc>
+	</target>
+	
+	<property name="lib-junit-4.1"        location="/projects/systems/InstallerSoftware/junit4.1/junit-4.1.jar" />
+
+	<property name="lib-nds"              location="../../nds/lastStable/archive/bin/nds.jar" />
+	<property name="lib-stachordRMI"      location="../../stachordRMI/lastStable/archive/bin/stachordRMI.jar" />
+	<property name="lib-mindterm"         location="../../nds/lastStable/archive/lib/mindterm.jar" />
+	<property name="lib-tools"            location="/usr/java/default/lib/tools.jar" />
+
+	<property name="classpath"            value="${lib-nds}:${lib-junit-4.1}:${lib-tools}:${lib-mindterm}" />
+    <property name="doc-java"             value="http://download-llnw.oracle.com/javase/6/docs/api/" />
+
+</project>
