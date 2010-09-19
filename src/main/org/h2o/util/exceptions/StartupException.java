@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
  * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
  *
