@@ -38,15 +38,15 @@
 	<!-- Generate project jar. -->
 	<target name="project-jar">
 		<jar destfile="bin/h2o.jar">
-			<fileset dir="bin" includes="uk/**" />
-			<fileset dir="src" includes="uk/**" />
+			<fileset dir="bin" includes="**/*.class" />
+			<fileset dir="src/main" includes="**/*.java" />
 		</jar>
 	</target>
 
 	<!-- Generate javadoc. -->
 	<target name="release-doc">
 		<javadoc
-				classpath="${classpath}" sourcepath="src" destdir="doc" packagenames="uk.ac.standrews.cs.h2o.*"
+				classpath="${classpath}" sourcepath="src/main" destdir="doc" packagenames="org.h2o.*"
 				access="public" linksource="yes" source="1.6" nodeprecated="false" nodeprecatedlist="false"
 				noindex="false" nonavbar="false" notree="false" splitindex="false" use="false" author="true" version="true" verbose="true">
 
