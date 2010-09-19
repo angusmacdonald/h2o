@@ -32,7 +32,7 @@
 			<formatter type="xml"/>
 			<classpath path="${classpath}"/>
 	        <batchtest todir="junit">
-	            <fileset dir="src/main/org/h2o/test" includes="CheckInTests.java"/>
+	            <fileset dir="src/main/org/h2o/test" includes="**/CheckInTests.java"/>
 	        </batchtest>
 		</junit>
 	</target>
