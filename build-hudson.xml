@@ -62,7 +62,7 @@
 	<property name="lib-mindterm"         location="../../nds/lastStable/archive/lib/mindterm.jar" />
 	<property name="lib-tools"            location="/usr/java/default/lib/tools.jar" />
 
-	<property name="classpath"            value="${lib-nds}:${lib-junit-4.1}:${lib-tools}:${lib-mindterm}" />
+	<property name="classpath"            value="${lib-nds}:${lib-stachordRMI}:${lib-junit-4.1}:${lib-tools}:${lib-mindterm}" />
     <property name="doc-java"             value="http://download-llnw.oracle.com/javase/6/docs/api/" />
 
 </project>
