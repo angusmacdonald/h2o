@@ -30,8 +30,10 @@
 			<!-- Run tests with assertions enabled. -->
 			<jvmarg value="-ea" />
 			<formatter type="xml"/>
-			<test name="org.h2o.test.CheckInTests" todir="junit"/>
 			<classpath path="${classpath}"/>
+	        <batchtest todir="junit">
+	            <fileset dir="src/main/org/h2o/test" includes="CheckInTests.java"/>
+	        </batchtest>
 		</junit>
 	</target>
 	
