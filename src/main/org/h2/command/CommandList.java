@@ -10,9 +10,9 @@ import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.result.LocalResult;
-import org.h2.test.h2o.H2OTest;
 import org.h2.util.ObjectArray;
 import org.h2o.db.query.QueryProxyManager;
+import org.h2o.test.H2OTest;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 

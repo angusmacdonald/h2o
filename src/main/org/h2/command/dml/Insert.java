@@ -23,7 +23,6 @@ import org.h2.message.Message;
 import org.h2.result.LocalResult;
 import org.h2.result.Row;
 import org.h2.table.Column;
-import org.h2.test.h2o.AsynchronousTests;
 import org.h2.util.ObjectArray;
 import org.h2.value.Value;
 import org.h2o.db.id.TableInfo;
@@ -31,6 +30,7 @@ import org.h2o.db.query.QueryProxy;
 import org.h2o.db.query.QueryProxyManager;
 import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.query.locking.LockType;
+import org.h2o.test.AsynchronousTests;
 
 /**
  * This class represents the statement INSERT
