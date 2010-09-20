@@ -200,7 +200,7 @@ public class Database implements DataHandler {
 	private SmallLRUCache lobFileListCache = new SmallLRUCache(128);
 	private boolean autoServerMode;
 	private Server server;
-	private HashMap<?, ?> linkConnections;
+	private HashMap<TableLinkConnection, TableLinkConnection> linkConnections;
 	private TempFileDeleter tempFileDeleter = TempFileDeleter.getInstance();
 	private PageStore pageStore;
 
@@ -2546,7 +2546,7 @@ public class Database implements DataHandler {
 	 */
 	public TableLinkConnection getLinkConnection(String driver, String url, String user, String password) throws SQLException {
 		if (linkConnections == null) {
-			linkConnections = new HashMap();
+			linkConnections = new HashMap<TableLinkConnection, TableLinkConnection>();
 		}
 		return TableLinkConnection.open(linkConnections, driver, url, user, password);
 	}

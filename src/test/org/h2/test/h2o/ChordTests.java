@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
  * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
  *
@@ -164,7 +164,7 @@ public class ChordTests extends TestBase {
 
 	/**
 	 * This sequence of events used to lock the sys table causing entries to not be included in the System Table.
-	 * This tests that it never happens again.
+	 * If this fails or holds then the problem is still there.
 	 */
 	@Test
 	public void sysTableLock(){

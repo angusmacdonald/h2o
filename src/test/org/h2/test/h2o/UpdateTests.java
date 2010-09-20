@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
  * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
  *
@@ -17,6 +17,7 @@
  */
 package org.h2.test.h2o;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 import java.sql.DriverManager;
@@ -233,7 +234,7 @@ public class UpdateTests extends TestBase {
 
 		boolean result = ctb.successful;
 
-		Assert.assertEquals(true, result);
+		assertFalse(result);
 	}
 
 	/**

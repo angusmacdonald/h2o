@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
  * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
  *
@@ -33,6 +33,8 @@ import org.h2o.db.replication.MetaDataReplicaManager;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
@@ -93,7 +95,7 @@ public abstract class PersistentManager {
 
 		if (session == null) {
 			ErrorHandling
-					.error("Couldn't find system session. Local database has been shutdown.");
+			.error("Couldn't find system session. Local database has been shutdown.");
 			return;
 		}
 
@@ -113,7 +115,7 @@ public abstract class PersistentManager {
 
 		if (session == null) {
 			ErrorHandling
-					.error("Couldn't find system session. Local database has been shutdown.");
+			.error("Couldn't find system session. Local database has been shutdown.");
 			return;
 		}
 
@@ -138,22 +140,22 @@ public abstract class PersistentManager {
 		String sql = "CREATE SCHEMA IF NOT EXISTS H2O; ";
 
 		sql += "CREATE TABLE IF NOT EXISTS " + connections + "("
-				+ "connection_id INTEGER NOT NULL auto_increment(1,1),"
-				+ "connection_type VARCHAR(5), " + "machine_name VARCHAR(255),"
-				+ "db_location VARCHAR(255),"
-				+ "connection_port INT NOT NULL, "
-				+ "chord_port INT NOT NULL, " + "active BOOLEAN, "
-				+ "PRIMARY KEY (connection_id) );";
+		+ "connection_id INTEGER NOT NULL auto_increment(1,1),"
+		+ "connection_type VARCHAR(5), " + "machine_name VARCHAR(255),"
+		+ "db_location VARCHAR(255),"
+		+ "connection_port INT NOT NULL, "
+		+ "chord_port INT NOT NULL, " + "active BOOLEAN, "
+		+ "PRIMARY KEY (connection_id) );";
 
 		sql += "CREATE SCHEMA IF NOT EXISTS H2O; "
-				+ "\n\nCREATE TABLE IF NOT EXISTS " + tables
-				+ "( table_id INT NOT NULL auto_increment(1,1), "
-				+ "schemaname VARCHAR(255), tablename VARCHAR(255), "
-				+ "last_modification INT NOT NULL, "
-				+ "manager_location INTEGER NOT NULL, "
-				+ "PRIMARY KEY (table_id), "
-				+ "FOREIGN KEY (manager_location) REFERENCES " + connections
-				+ " (connection_id));";
+			+ "\n\nCREATE TABLE IF NOT EXISTS " + tables
+			+ "( table_id INT NOT NULL auto_increment(1,1), "
+			+ "schemaname VARCHAR(255), tablename VARCHAR(255), "
+			+ "last_modification INT NOT NULL, "
+			+ "manager_location INTEGER NOT NULL, "
+			+ "PRIMARY KEY (table_id), "
+			+ "FOREIGN KEY (manager_location) REFERENCES " + connections
+			+ " (connection_id));";
 
 		return sql;
 	}
@@ -182,7 +184,7 @@ public abstract class PersistentManager {
 	 */
 	public boolean addTableInformation(DatabaseURL tableManagerURL,
 			TableInfo tableDetails, boolean addReplicaInfo)
-			throws RemoteException, MovedException, SQLException {
+	throws RemoteException, MovedException, SQLException {
 
 		getNewQueryParser();
 
@@ -201,7 +203,7 @@ public abstract class PersistentManager {
 			assert connectionID != -1;
 
 			if (!isTableListed(tableDetails)) { // the table doesn't already
-												// exist in the System Table.
+				// exist in the System Table.
 				addTableInformation(tableDetails, connectionID);
 			}
 
@@ -209,11 +211,11 @@ public abstract class PersistentManager {
 				int tableID = metaDataReplicaManager.getTableID(tableDetails,
 						isSystemTable);
 				if (!isReplicaListed(tableDetails, connectionID)) { // the table
-																	// doesn't
-																	// already
-																	// exist in
-																	// the
-																	// manager.
+					// doesn't
+					// already
+					// exist in
+					// the
+					// manager.
 					addReplicaInformation(tableDetails, tableID, connectionID);
 				}
 			}
@@ -235,13 +237,13 @@ public abstract class PersistentManager {
 	 *            Fully qualified name of the table, and its location (as a
 	 *            DatabaseURL).
 	 * @throws RemoteException
-	 *             Thrown if there was a problem connnecting to this instance.
+	 *             Thrown if there was a problem connecting to this instance.
 	 * @throws MovedException
 	 *             Thrown if the instance has been migrated to another machine.
 	 * @throws SQLException
 	 */
 	public void addReplicaInformation(TableInfo tableDetails)
-			throws RemoteException, MovedException, SQLException {
+	throws RemoteException, MovedException, SQLException {
 		// getNewQueryParser();
 
 		// queryParser = new Parser(db.getExclusiveSession(), true);
@@ -251,11 +253,7 @@ public abstract class PersistentManager {
 			int tableID = metaDataReplicaManager.getTableID(tableDetails,
 					isSystemTable);
 
-			if (!isReplicaListed(tableDetails, connectionID)) { // the table
-																// doesn't
-																// already exist
-																// in the System
-																// Table.
+			if (!isReplicaListed(tableDetails, connectionID)) { // the table doesn't already exist in the System Table.
 				addReplicaInformation(tableDetails, tableID, connectionID);
 			}
 		} catch (SQLException e) {
@@ -263,6 +261,36 @@ public abstract class PersistentManager {
 		}
 	}
 
+	public void persistInactiveInformation(TableInfo tableDetails, Set<DatabaseInstanceWrapper> newlyInactiveReplicas) {
+		persistReplicaActiveInformation(tableDetails, newlyInactiveReplicas, false);
+		
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Set " + newlyInactiveReplicas.size() + " replicas as inactive");
+	}
+
+	public void persistActiveInformation(TableInfo tableDetails, Set<DatabaseInstanceWrapper> newlyInactiveReplicas) {
+		persistReplicaActiveInformation(tableDetails, newlyInactiveReplicas, true);
+		
+		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Set " + newlyInactiveReplicas.size() + " replicas as active");
+	}
+
+	private void persistReplicaActiveInformation(TableInfo tableDetails, Set<DatabaseInstanceWrapper> newlyInactiveReplicas, boolean active) {
+		if (newlyInactiveReplicas.size() == 0){
+			return;
+		}
+
+		for (DatabaseInstanceWrapper wrapper: newlyInactiveReplicas){
+			try {
+				int connectionID = getConnectionID(wrapper.getURL());
+				int tableID = metaDataReplicaManager.getTableID(tableDetails, isSystemTable);
+
+				toggleReplicasActive(tableID, connectionID, active);
+				
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
 	/**
 	 * Check if the System Table contains connection information for this
 	 * database.
@@ -276,12 +304,12 @@ public abstract class PersistentManager {
 	 * @throws SQLException
 	 */
 	public boolean connectionInformationExists(DatabaseURL dbURL)
-			throws SQLException {
+	throws SQLException {
 		String sql = "SELECT count(connection_id) FROM " + connectionRelation
-				+ " WHERE machine_name='" + dbURL.getHostname()
-				+ "' AND db_location='" + dbURL.getDbLocation()
-				+ "' AND connection_port=" + dbURL.getPort()
-				+ " AND connection_type='" + dbURL.getConnectionType() + "';";
+		+ " WHERE machine_name='" + dbURL.getHostname()
+		+ "' AND db_location='" + dbURL.getDbLocation()
+		+ "' AND connection_port=" + dbURL.getPort()
+		+ " AND connection_type='" + dbURL.getConnectionType() + "';";
 
 		return countCheck(sql);
 	}
@@ -300,7 +328,7 @@ public abstract class PersistentManager {
 	 * @return Result of the update.
 	 */
 	public int addConnectionInformation(DatabaseURL dbURL, boolean isActive)
-			throws SQLException {
+	throws SQLException {
 
 		Session s = db.getH2OSession();
 		queryParser = new Parser(s, true);
@@ -313,18 +341,18 @@ public abstract class PersistentManager {
 			// Update existing information - the chord port may have changed.
 
 			sql = "\nUPDATE " + connectionRelation + " SET chord_port = "
-					+ dbURL.getRMIPort() + ", active = " + isActive
-					+ " WHERE machine_name='" + dbURL.getHostname()
-					+ "' AND connection_port=" + dbURL.getPort()
-					+ " AND connection_type='" + dbURL.getConnectionType()
-					+ "';";
+			+ dbURL.getRMIPort() + ", active ='" + isActive
+			+ "' WHERE machine_name='" + dbURL.getHostname()
+			+ "' AND connection_port=" + dbURL.getPort()
+			+ " AND connection_type='" + dbURL.getConnectionType()
+			+ "';";
 
 		} else {
 			// Create a new entry.
 			sql = "\nINSERT INTO " + connectionRelation + " VALUES (null, '"
-					+ connection_type + "', '" + dbURL.getHostname() + "', '"
-					+ dbURL.getDbLocation() + "', " + dbURL.getPort() + ", "
-					+ dbURL.getRMIPort() + ", " + isActive + ");\n";
+			+ connection_type + "', '" + dbURL.getHostname() + "', '"
+			+ dbURL.getDbLocation() + "', " + dbURL.getPort() + ", "
+			+ dbURL.getRMIPort() + ", " + isActive + ");\n";
 
 		}
 
@@ -336,9 +364,9 @@ public abstract class PersistentManager {
 	 */
 	public int getNumberofReplicas(String tableName, String schemaName) {
 		String sql = "SELECT count(*) FROM " + replicaRelation + ", "
-				+ tableRelation + " WHERE tablename = '" + tableName
-				+ "' AND schemaname='" + schemaName + "' AND" + " "
-				+ tableRelation + ".table_id=" + replicaRelation + ".table_id;";
+		+ tableRelation + " WHERE tablename = '" + tableName
+		+ "' AND schemaname='" + schemaName + "' AND" + " "
+		+ tableRelation + ".table_id=" + replicaRelation + ".table_id;";
 
 		try {
 			return getCount(sql);
@@ -371,10 +399,10 @@ public abstract class PersistentManager {
 		String connection_type = dbURL.getConnectionType();
 
 		String sql = "SELECT connection_id FROM " + connectionRelation
-				+ " WHERE machine_name='" + machine_name
-				+ "' AND connection_port=" + connection_port
-				+ " AND connection_type='" + connection_type
-				+ "' AND db_location = '" + dbURL.getDbLocation() + "';";
+		+ " WHERE machine_name='" + machine_name
+		+ "' AND connection_port=" + connection_port
+		+ " AND connection_type='" + connection_type
+		+ "' AND db_location = '" + dbURL.getDbLocation() + "';";
 
 		LocalResult result = null;
 		try {
@@ -386,7 +414,7 @@ public abstract class PersistentManager {
 				return result.currentRow()[0].getInt();
 			} else {
 				ErrorHandling
-						.errorNoEvent("No connection ID was found - this shouldn't happen if the system has started correctly.");
+				.errorNoEvent("No connection ID was found - this shouldn't happen if the system has started correctly.");
 				return -1;
 			}
 
@@ -409,8 +437,8 @@ public abstract class PersistentManager {
 	 */
 	public boolean isTableListed(TableInfo ti) throws SQLException {
 		String sql = "SELECT count(*) FROM " + tableRelation
-				+ " WHERE tablename='" + ti.getTableName()
-				+ "' AND schemaname='" + ti.getSchemaName() + "';";
+		+ " WHERE tablename='" + ti.getTableName()
+		+ "' AND schemaname='" + ti.getSchemaName() + "';";
 
 		return countCheck(sql);
 	}
@@ -427,15 +455,15 @@ public abstract class PersistentManager {
 	 * @throws SQLException
 	 */
 	public boolean isReplicaListed(TableInfo ti, int connectionID)
-			throws SQLException {
+	throws SQLException {
 		String sql = "SELECT count(*) FROM " + replicaRelation + ", "
-				+ tableRelation + ", " + connectionRelation
-				+ " WHERE tablename='" + ti.getTableName()
-				+ "' AND schemaname='" + ti.getSchemaName() + "' AND "
-				+ tableRelation + ".table_id=" + replicaRelation
-				+ ".table_id AND " + replicaRelation + ".connection_id = "
-				+ connectionRelation + ".connection_id AND "
-				+ connectionRelation + ".connection_id = " + connectionID + ";";
+		+ tableRelation + ", " + connectionRelation
+		+ " WHERE tablename='" + ti.getTableName()
+		+ "' AND schemaname='" + ti.getSchemaName() + "' AND "
+		+ tableRelation + ".table_id=" + replicaRelation
+		+ ".table_id AND " + replicaRelation + ".connection_id = "
+		+ connectionRelation + ".connection_id AND "
+		+ connectionRelation + ".connection_id = " + connectionID + ";";
 
 		return countCheck(sql);
 	}
@@ -488,17 +516,17 @@ public abstract class PersistentManager {
 	 * @throws SQLException
 	 */
 	private int addTableInformation(TableInfo tableInfo, int connectionID)
-			throws SQLException {
+	throws SQLException {
 		String sql = "INSERT INTO " + tableRelation + " VALUES (null, '"
-				+ tableInfo.getSchemaName() + "', '" + tableInfo.getTableName()
-				+ "', " + tableInfo.getModificationID() + ", " + connectionID
-				+ ");";
+		+ tableInfo.getSchemaName() + "', '" + tableInfo.getTableName()
+		+ "', " + tableInfo.getModificationID() + ", " + connectionID
+		+ ");";
 		return executeUpdate(sql);
 	}
 
 	protected int addTableManagerReplicaInformation(int tableID,
 			int connectionID, int primaryLocationConnectionID, boolean active)
-			throws SQLException {
+	throws SQLException {
 
 		return metaDataReplicaManager.addTableManagerReplicaInformation(
 				tableID, connectionID, primaryLocationConnectionID, active);
@@ -519,7 +547,7 @@ public abstract class PersistentManager {
 	protected int removeTableManagerReplicaInformation(int tableID,
 			int connectionID) throws SQLException {
 		String sql = "DELETE FROM " + tableManagerRelation + " WHERE table_id="
-				+ tableID + " AND connection_id=" + connectionID + ";";
+		+ tableID + " AND connection_id=" + connectionID + ";";
 		return executeUpdate(sql);
 	}
 
@@ -537,11 +565,32 @@ public abstract class PersistentManager {
 			int connectionID) throws SQLException {
 
 		String sql = "INSERT INTO " + replicaRelation + " VALUES (null, "
-				+ tableID + ", " + connectionID + ", '" + ti.getTableType()
-				+ "', " + ti.getModificationID() + ", " + ti.getTableSet()
-				+ ");\n";
+		+ tableID + ", " + connectionID + ", '" + ti.getTableType()
+		+ "', true, " + ti.getTableSet()
+		+ ");\n";
 		return executeUpdate(sql);
 	}
+
+
+	/**
+	 * Update the System Table with new replica information
+	 * 
+	 * @param tableID
+	 *            Name of the replica being added.
+	 * @param active 
+	 * @param replicaID 
+	 * @param modificationID
+	 *            Modification ID of the table.
+	 * @return Result of the update.
+	 * @throws SQLException
+	 */
+	protected int toggleReplicasActive(int tableID, int connectionID, boolean active) throws SQLException {
+
+		String sql = "UPDATE " + replicaRelation + " SET active=" + active + " WHERE table_id=" + tableID + " AND connection_id=" + connectionID +";\n";
+		
+		return executeUpdate(sql);
+	}
+
 
 	protected LocalResult executeQuery(String query) throws SQLException {
 
@@ -560,7 +609,7 @@ public abstract class PersistentManager {
 	 * @throws MovedException
 	 */
 	protected abstract DatabaseURL getLocation() throws RemoteException,
-			MovedException;
+	MovedException;
 
 	/**
 	 * @return
@@ -581,7 +630,7 @@ public abstract class PersistentManager {
 	 * @throws SQLException
 	 */
 	public void removeReplicaInformation(TableInfo ti) throws RemoteException,
-			MovedException {
+	MovedException {
 
 		try {
 
@@ -591,7 +640,7 @@ public abstract class PersistentManager {
 			tableID = metaDataReplicaManager.getTableID(ti, isSystemTable);
 
 			String sql = "DELETE FROM " + replicaRelation + " WHERE table_id="
-					+ tableID + " AND connection_id=" + connectionID + "; ";
+			+ tableID + " AND connection_id=" + connectionID + "; ";
 
 			executeUpdate(sql);
 
@@ -669,10 +718,10 @@ public abstract class PersistentManager {
 
 		DatabaseURL dburl = databaseInstance.getURL();
 		String sql = "\nUPDATE " + connectionRelation
-				+ " SET active = false WHERE machine_name='"
-				+ dburl.getHostname() + "' AND connection_port="
-				+ dburl.getPort() + " AND connection_type='"
-				+ dburl.getConnectionType() + "';";
+		+ " SET active = false WHERE machine_name='"
+		+ dburl.getHostname() + "' AND connection_port="
+		+ dburl.getPort() + " AND connection_type='"
+		+ dburl.getConnectionType() + "';";
 
 		try {
 			executeUpdate(sql);
@@ -709,9 +758,9 @@ public abstract class PersistentManager {
 		assert connectionID != -1;
 
 		String sql = "\nUPDATE " + tableRelation + " SET manager_location = "
-				+ connectionID + " WHERE schemaname='"
-				+ tableInfo.getSchemaName() + "' AND tablename='"
-				+ tableInfo.getTableName() + "';";
+		+ connectionID + " WHERE schemaname='"
+		+ tableInfo.getSchemaName() + "' AND tablename='"
+		+ tableInfo.getTableName() + "';";
 
 		try {
 			executeUpdate(sql);

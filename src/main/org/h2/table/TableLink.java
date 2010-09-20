@@ -578,4 +578,9 @@ public class TableLink extends Table {
 	public boolean isLocal() {
 		return false;
 	}
+
+
+	public String getUrl() {
+		return url;
+	}
 }

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
  * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
  *
@@ -158,15 +158,19 @@ public class ReplicaManager implements Serializable {
 	 * 
 	 * @param committedQueries
 	 *            The queries which are to be committed.
-	 * @param synchronousUpdate
-	 * @return The set of queries that were actually committed. Those that were on incoming list of committed queries will be returned if
-	 *         their update IDs match up. If they don't appear on the returned list then they are no longer active replicas.
+	 * @param firstPartOfUpdate
+	 *            True if this is the first part of an update that is executing asynchronously. False if it is one of the later replicas
+	 *            being committed.
+	 * @return If this is the first part of the update, this returns the set of replicas that are now inactive. If it is the second part of the update
+	 * this returns the replicas that are now active.
 	 */
-	public List<CommitResult> completeUpdate(boolean commit, Collection<CommitResult> committedQueries, TableInfo tableInfo) {
-		
-		
+	public Set<DatabaseInstanceWrapper> completeUpdate(boolean commit, Collection<CommitResult> committedQueries, TableInfo tableInfo,
+			boolean firstPartOfUpdate) {
+
 		List<CommitResult> successfullyCommittedQueries = new LinkedList<CommitResult>(); // queries that were successfully committed here.
 
+		Set<DatabaseInstanceWrapper> instancesUpdated = new HashSet<DatabaseInstanceWrapper>();
+		
 		int expectedUpdateID = getUpdateIDFromCommittedQueries(committedQueries, tableInfo);
 
 		/*
@@ -189,12 +193,10 @@ public class ReplicaManager implements Serializable {
 
 		if (committedQueries != null && committedQueries.size() != 0) {
 
-			if (!allRollback) {
+			if (!allRollback && firstPartOfUpdate) {
 				// Reset the active set.
 				activeReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
 			}
-
-			Set<DatabaseInstanceWrapper> instancesUpdated = new HashSet<DatabaseInstanceWrapper>();
 
 			/*
 			 * Loop through each replica which was updated, re-adding them into the replicaLocations hashmap along with the new updateID.
@@ -217,7 +219,7 @@ public class ReplicaManager implements Serializable {
 					instancesUpdated.add(wrapper);
 
 					final Integer currentID = allReplicas.get(wrapper);
-					
+
 					if (expectedUpdateID == currentID) {
 						/*
 						 * The updateID of this current replica equals the update ID that was expected of this replica at this point. Commit
@@ -246,19 +248,44 @@ public class ReplicaManager implements Serializable {
 						/*
 						 * The update ID of this replica does not match that which was expected. This replica will not commit.
 						 */
-						ErrorHandling.errorNoEvent("Replica will not commit because update IDs did not match. Expected: " + expectedUpdateID
-								+ "; Actual current: " + currentID);
-						
+						ErrorHandling.errorNoEvent("Replica will not commit because update IDs did not match. Expected: "
+								+ expectedUpdateID + "; Actual current: " + currentID);
 					}
-					
+
 				} // In many cases it won't contain this key, but another table (part of the same transaction) was on this machine.
-				else {
-					// ErrorHandling.errorNoEvent("Update wasn't applicable to this table " + tableInfo); - valid state to be in...
-				}
+				
 			}
 		}
 
-		return successfullyCommittedQueries;
+		/*
+		 * We return the set of replicas that have become inactive as a result of this commit, or if this is the asynchronous commit, we return
+		 * the set of queries that have become active.
+		 */
+		
+		if (firstPartOfUpdate){
+		return getInactiveReplicas();
+		} else {
+			return instancesUpdated;
+		}
+	}
+
+	/**
+	 * Get the set of replicas that are currently inactive.
+	 * 
+	 * @return
+	 */
+	private Set<DatabaseInstanceWrapper> getInactiveReplicas() {
+		Set<DatabaseInstanceWrapper> inactiveReplicas = new HashSet<DatabaseInstanceWrapper>();
+
+		for (DatabaseInstanceWrapper replica : allReplicas.keySet()) {
+
+			if (!activeReplicas.containsKey(replica)) {
+				inactiveReplicas.add(replica);
+			}
+
+		}
+
+		return inactiveReplicas;
 	}
 
 	private int getUpdateIDFromCommittedQueries(Collection<CommitResult> committedQueries, TableInfo tableInfo) {
@@ -271,7 +298,8 @@ public class ReplicaManager implements Serializable {
 		for (CommitResult cr : committedQueries) {
 			// XXX should expected update ID always be the same?
 			try {
-				if (cr.getExpectedUpdateID() > updateID && (((cr.getTable() != null && tableInfo != null) && cr.getTable().equals(tableInfo)))) {
+				if (cr.getExpectedUpdateID() > updateID
+						&& (((cr.getTable() != null && tableInfo != null) && cr.getTable().equals(tableInfo)))) {
 					updateID = cr.getExpectedUpdateID();
 				}
 			} catch (Exception e) {

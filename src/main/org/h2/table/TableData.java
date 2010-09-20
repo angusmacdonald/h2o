@@ -43,6 +43,8 @@ import org.h2.util.StringUtils;
 import org.h2.value.DataType;
 import org.h2.value.Value;
 
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
+
 /**
  * Most tables are an instance of this class. For this table, the data is stored
  * in the database. The actual data is not kept here, instead it is kept in the
@@ -146,6 +148,9 @@ public class TableData extends Table implements RecordReader {
 		if (SysProperties.CHECK && !database.isMultiVersion()) {
 			long rc = index.getRowCount(session);
 			if (rc != rowCount + offset) {
+				ErrorHandling.error("rowCount expected "
+						+ (rowCount + offset) + " got " + rc + " " + getName()
+						+ "." + index.getName());
 				Message.throwInternalError("rowCount expected "
 						+ (rowCount + offset) + " got " + rc + " " + getName()
 						+ "." + index.getName());

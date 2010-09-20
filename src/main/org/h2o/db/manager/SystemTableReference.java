@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
  * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
  *
@@ -171,7 +171,7 @@ public class SystemTableReference implements ISystemTableReference {
 			try {
 				this.systemTableNode = systemTableWrapper.getSystemTable().getChordReference();
 			} catch (RemoteException e) {
-				e.printStackTrace();
+				ErrorHandling.errorNoEvent("Failed to obtain the System Table's chord reference.");
 			}
 		}
 
@@ -335,7 +335,7 @@ public class SystemTableReference implements ISystemTableReference {
 			getSystemTableRegistry().rebind(SCHEMA_MANAGER, stub);
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Binding System Table on port " + systemTableWrapper.getURL().getRMIPort());
 		} catch (Exception e) {
-			ErrorHandling.exceptionError(e, "System Table migration failed.");
+			ErrorHandling.errorNoEvent("Failed to export System Table object: " + e.getMessage());
 		}
 
 		// try {

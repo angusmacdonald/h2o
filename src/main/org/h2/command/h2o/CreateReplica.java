@@ -634,6 +634,7 @@ public class CreateReplica extends SchemaCommand {
 			connect(whereDataWillBeTakenFrom);
 		} catch (SQLException e) {
 			ErrorHandling.errorNoEvent("whereDataWillBeTakenFrom: " + whereDataWillBeTakenFrom);
+			e.printStackTrace();
 			throw Message.getSQLException(ErrorCode.CONNECTION_BROKEN, tableName);
 		}
 	}

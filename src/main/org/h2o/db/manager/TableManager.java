@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
  * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
  *
@@ -20,6 +20,7 @@ package org.h2o.db.manager;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -182,7 +183,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 		this.fullName = schemaName + "." + tableName;
 		this.tableInfo = tableDetails.getGenericTableInfo();
-		
+
 		this.replicaManager = new ReplicaManager();
 		this.replicaManager.add(database.getLocalDatabaseInstanceInWrapper()); // the first replica will be created here.
 
@@ -285,7 +286,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 		sql += "\n\nCREATE TABLE IF NOT EXISTS " + getMetaTableName(databaseName, TableManager.REPLICAS) + "("
 		+ "replica_id INTEGER NOT NULL auto_increment(1,1), " + "table_id INTEGER NOT NULL, " + "connection_id INTEGER NOT NULL, "
-		+ "storage_type VARCHAR(255), " + "last_modification INT NOT NULL, " + "table_set INT NOT NULL, "
+		+ "storage_type VARCHAR(255), " + "active boolean NOT NULL, " + "table_set INT NOT NULL, "
 		+ "PRIMARY KEY (replica_id), " + "FOREIGN KEY (table_id) REFERENCES " + getMetaTableName(databaseName, TableManager.TABLES)
 		+ " (table_id) ON DELETE CASCADE , " + " FOREIGN KEY (connection_id) REFERENCES "
 		+ getMetaTableName(databaseName, TableManager.CONNECTIONS) + " (connection_id));";
@@ -535,21 +536,63 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		 */
 		LockType lockType = LockType.NONE;
 		if (!asynchronousCommit){
-		lockType = lockingTable.releaseLock(requestingDatabase);
+			lockType = lockingTable.releaseLock(requestingDatabase);
 		}
 		/*
 		 * Update the set of 'active replicas' and their update IDs.
 		 */
 
 		if (lockType == LockType.WRITE || asynchronousCommit){ //creates are viewed as writes in the locking table.
-			replicaManager.completeUpdate(commit, committedQueries, tableInfo);
-			
-			/*
-			 * TODO update persisted state with update IDs (or something indicating whether a replica is 'current').
-			 */
-			
+			Set<DatabaseInstanceWrapper> changed = replicaManager.completeUpdate(commit, committedQueries, tableInfo, !asynchronousCommit);
+
+			if (!asynchronousCommit){
+				//This is the first part of a query. Some replicas will be made inactive.
+				persistInactiveInformation(this.tableInfo, changed);
+
+				printCurrentActiveReplicas();
+
+
+			} else {
+				//This is the asynchronous part of the query. Some replicas will be made active.
+				
+				System.err.println("PERSISTING ACTIVE INFORMATION!!!!");
+				persistActiveInformation(this.tableInfo, changed);
+				
+			}
+
+
 		} //reads don't change the set of active replicas.
 
+	}
+
+	private void printCurrentActiveReplicas() {
+		if (Diagnostic.getLevel().equals(DiagnosticLevel.FULL)){
+
+			String databaseName = db.getURL().sanitizedLocation();
+			String sql = "SELECT LOCAL ONLY " +  "connection_type, machine_name, db_location, connection_port, chord_port, " + 
+			getMetaTableName(databaseName, REPLICAS) + ".table_id, " +  getMetaTableName(databaseName, REPLICAS) + 
+			".connection_id FROM " + getMetaTableName(databaseName, REPLICAS)
+			+ ", " + getMetaTableName(databaseName, TABLES) + ", " + getMetaTableName(databaseName, CONNECTIONS) + " WHERE tablename = '" + tableName + "' AND schemaname='"
+			+ schemaName + "' AND " + getMetaTableName(databaseName, REPLICAS) + ".active='true' AND " + getMetaTableName(databaseName, TABLES) + ".table_id=" + getMetaTableName(databaseName, REPLICAS) + ".table_id AND "
+			+ getMetaTableName(databaseName, REPLICAS) + ".connection_id=" + getMetaTableName(databaseName, CONNECTIONS) + ".connection_id;";
+
+			try {
+
+				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Current Active Replicas for table: " + this.tableName); 
+				LocalResult rs = executeQuery(sql);
+
+				while (rs.next()) {
+
+					DatabaseURL dbURL = new DatabaseURL(rs.currentRow()[0].getString(), rs.currentRow()[1].getString(),
+							rs.currentRow()[3].getInt(), rs.currentRow()[2].getString(), false, rs.currentRow()[4].getInt());
+
+					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tLocation: " + dbURL + "; tableID = " + rs.currentRow()[5].getString() + "; connectionID = " + rs.currentRow()[6].getString()); 
+
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	/*
@@ -566,11 +609,6 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 * (non-Javadoc)
 	 * 
 	 * @see org.h2.h2o.comms.remote.TableManagerRemote#shutdown()
-	 */
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.h2.h2o.manager.TableManagerRemote2#shutdown()
 	 */
 	@Override
 	public void remove(boolean dropCommand) {
@@ -800,7 +838,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 		String sql = "SELECT LOCAL ONLY connection_type, machine_name, db_location, connection_port, chord_port FROM " + oldReplicaRelation
 		+ ", " + oldTableRelation + ", " + oldconnectionRelation + " WHERE tablename = '" + tableName + "' AND schemaname='"
-		+ schemaName + "' AND" + " " + oldTableRelation + ".table_id=" + oldReplicaRelation + ".table_id AND "
+		+ schemaName + "' AND " + oldReplicaRelation + ".active='true' AND " + oldTableRelation + ".table_id=" + oldReplicaRelation + ".table_id AND "
 		+ oldconnectionRelation + ".connection_id=" + oldReplicaRelation + ".connection_id;";
 
 		LocalResult rs = null;
@@ -817,8 +855,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 			DatabaseURL dbURL = new DatabaseURL(rs.currentRow()[0].getString(), rs.currentRow()[1].getString(),
 					rs.currentRow()[3].getInt(), rs.currentRow()[2].getString(), false, rs.currentRow()[4].getInt());
 
-			// Don't include the URL of the old instance unless it is still
-			// running.
+			// Don't include the URL of the old instance unless it is still running.
 			DatabaseInstanceWrapper replicaLocation = getDatabaseInstance(dbURL);
 
 			boolean alive = true;
@@ -830,9 +867,10 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 				}
 			}
 
-			replicaLocation.setActive(alive); // even dead replicas must be
-			// recorded.
+			replicaLocation.setActive(alive); // even dead replicas must be recorded.
 			replicaLocations.add(replicaLocation);
+			
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Active replica for " + tableName + " found on " + dbURL);
 
 		}
 

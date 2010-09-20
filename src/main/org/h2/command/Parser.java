@@ -4510,6 +4510,7 @@ public class Parser {
 				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
 			} // XXX this might fail if its not the default schema.
 		} else { // 1
+		
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
 		}
 
@@ -4555,7 +4556,15 @@ public class Parser {
 				try {
 					qp = tableManager.getQueryProxy(LockType.NONE, this.database.getLocalDatabaseInstanceInWrapper());
 				} catch (RemoteException e1) {
-					e1.printStackTrace();
+					//Recreate Table Manager then try again.
+					try {
+						tableManager = systemTableReference.getSystemTable().recreateTableManager(tableInfo);
+						qp = tableManager.getQueryProxy(LockType.NONE, this.database.getLocalDatabaseInstanceInWrapper());
+					} catch (RemoteException e2) {
+						ErrorHandling.errorNoEvent("Failed to contact Table Manager: " + e.getMessage());
+					} catch (MovedException e2) {
+						e2.printStackTrace();
+					}
 				} catch (MovedException e1) {
 					e1.printStackTrace();
 				}
@@ -4638,10 +4647,18 @@ public class Parser {
 
 		for (DatabaseInstanceWrapper l : replicaLocations.keySet()) {
 			tableLocation = l.getURL().getURL();
-
-			if (l.getURL().equals(session.getDatabase().getURL())) {
-				continue;
+			
+			
+			try {
+				if (l.getURL().equals(session.getDatabase().getURL()) || !l.getDatabaseInstance().isAlive()) {
+					continue;
+				}
+			} catch (Exception e) {
+				continue; //remote db isn't accessible.
 			}
+			
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Creating linked table for " + tableName + " to " + l.getURL()); 
+			
 			String sql = "CREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + tableLocation + "', '"
 					+ PersistentSystemTable.USERNAME + "', '" + PersistentSystemTable.PASSWORD + "', '" + tableName + "');";
 
@@ -4656,8 +4673,7 @@ public class Parser {
 
 		if (result == 0) {
 			// Linked table was successfully added.
-			Diagnostic
-					.traceNoEvent(DiagnosticLevel.FULL, "Successfully created linked table '" + tableName + "'. Attempting to access it.");
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Successfully created linked table '" + tableName + "'. Attempting to access it.");
 			return readTableOrView(tableName, false, LocationPreference.PRIMARY, true);
 		} else {
 			throw new SQLException("Couldn't find active copy of table " + tableName + " to connect to.");

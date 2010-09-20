@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 
 import org.h2.constant.SysProperties;
+import org.h2.engine.Constants;
 import org.h2.util.JdbcUtils;
 import org.h2.util.ObjectUtils;
 import org.h2.util.StringUtils;
@@ -24,7 +25,7 @@ public class TableLinkConnection {
 	/**
 	 * The map where the link is kept.
 	 */
-	private HashMap map;
+	private HashMap<TableLinkConnection, TableLinkConnection> map;
 
 	/**
 	 * The connection information.
@@ -41,7 +42,7 @@ public class TableLinkConnection {
 	 */
 	private int useCounter;
 
-	private TableLinkConnection(HashMap map, String driver, String url,
+	private TableLinkConnection(HashMap<TableLinkConnection, TableLinkConnection> map, String driver, String url,
 			String user, String password) {
 		this.map = map;
 		this.driver = driver;
@@ -53,7 +54,7 @@ public class TableLinkConnection {
 	/**
 	 * Open a new connection.
 	 * 
-	 * @param map
+	 * @param linkConnections
 	 *            the map where the connection should be stored (if shared
 	 *            connections are enabled).
 	 * @param driver
@@ -66,24 +67,24 @@ public class TableLinkConnection {
 	 *            the password
 	 * @return a connection
 	 */
-	public static TableLinkConnection open(HashMap map, String driver,
+	public static TableLinkConnection open(HashMap<TableLinkConnection, TableLinkConnection> linkConnections, String driver,
 			String url, String user, String password) throws SQLException {
-		TableLinkConnection t = new TableLinkConnection(map, driver, url, user,
+		TableLinkConnection t = new TableLinkConnection(linkConnections, driver, url, user,
 				password);
-		if (!SysProperties.SHARE_LINKED_CONNECTIONS) {
+		if (Constants.IS_H2O || !SysProperties.SHARE_LINKED_CONNECTIONS) {
 			t.open();
 			return t;
 		}
-		synchronized (map) {
+		synchronized (linkConnections) {
 			TableLinkConnection result;
-			result = (TableLinkConnection) map.get(t);
+			result = linkConnections.get(t);
 			if (result == null) {
 				synchronized (t) {
 					t.open();
 				}
 				// put the connection in the map after is has been opened,
 				// so we know it works
-				map.put(t, t);
+				linkConnections.put(t, t);
 				result = t;
 			}
 			synchronized (result) {

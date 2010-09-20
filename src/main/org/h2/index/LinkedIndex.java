@@ -21,6 +21,8 @@ import org.h2.table.TableLink;
 import org.h2.value.Value;
 import org.h2.value.ValueNull;
 
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
+
 /**
  * A linked index is a index for a linked (remote) table. It is backed by an
  * index on the remote table which is accessed over JDBC.
@@ -139,6 +141,7 @@ public class LinkedIndex extends BaseIndex {
 				ResultSet rs = prep.executeQuery();
 				return new LinkedCursor(link, rs, session, sql, prep);
 			} catch (SQLException e) {
+				ErrorHandling.errorNoEvent("Failed to connect via linked table to table on " + link.getUrl()); 
 				throw link.wrapException(sql, e);
 			}
 		}

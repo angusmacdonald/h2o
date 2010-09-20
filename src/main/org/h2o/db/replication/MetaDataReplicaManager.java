@@ -291,7 +291,7 @@ public class MetaDataReplicaManager {
 
 					return true;
 				} catch (SQLException e) {
-					e.printStackTrace();
+					//e.printStackTrace();
 					/*
 					 * Usually thrown if the CREATE REPLICA command couldn't connect back to this database. This often happens when the
 					 * database has only recently started and hasn't fully initialized, so this code attempts the operation again.
@@ -322,7 +322,7 @@ public class MetaDataReplicaManager {
 	public synchronized int executeUpdate(String query, boolean isSystemTable, TableInfo tableInfo) throws SQLException {
 
 		// Loop through replicas
-		// Asynchronously send update.
+		// TODO Parallelise sending of update.
 
 		ReplicaManager replicaManager = (isSystemTable) ? systemTableReplicas : tableManagerReplicas;
 		int managerStateReplicationFactor = (isSystemTable) ? systemTableReplicationFactor : tableManagerReplicationFactor;

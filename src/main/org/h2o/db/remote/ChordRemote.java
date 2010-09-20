@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
  * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
  *
@@ -726,7 +726,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 		this.predecessor = chordNode.getPredecessor();
 
-		/*
+		/* 
 		 * This will often be null at this point because it hasn't stabilized.
 		 */
 		if (predecessor != null) {
@@ -1125,6 +1125,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		try {
 			successful = locatorInterface.commitLocators(this.localMachineLocation.getDbLocation());
 		} catch (Exception e) {
+			e.printStackTrace();
 			successful = false;
 		}
 

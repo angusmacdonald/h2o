@@ -23,6 +23,8 @@ import org.h2.value.Transfer;
 import org.h2.value.Value;
 import org.h2o.db.query.QueryProxyManager;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
@@ -91,7 +93,7 @@ public class CommandRemote implements CommandInterface {
 					}
 				}
 			} catch (IOException e) {
-				e.printStackTrace();
+				//Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Error contacting server. It will be removed from the active set.");
 				s.removeServer(e, i--, ++count);
 
 			}

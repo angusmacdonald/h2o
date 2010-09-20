@@ -85,6 +85,7 @@ public class Bnf {
 		csv = new BufferedReader(csv);
 		Rule functions = null;
 		statements = new ArrayList();
+		
 		ResultSet rs = Csv.getInstance().read(csv, null);
 		for (int id = 0; rs.next(); id++) {
 			String section = rs.getString("SECTION").trim();

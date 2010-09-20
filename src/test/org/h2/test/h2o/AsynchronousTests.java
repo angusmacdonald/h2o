@@ -17,6 +17,7 @@
  */
 package org.h2.test.h2o;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -174,40 +175,52 @@ public class AsynchronousTests extends MultiProcessTestBase {
 
 			createConnectionsToDatabase(2);
 
-			executeUpdateOnNthMachine(create1, 0);
+			executeUpdateOnNthMachine(create1, 1);
 
 			sleep(1000);
 
 			/*
 			 * Create test table.
 			 */
-			assertTestTableExists(2, 0);
+			assertTestTableExists(2, 1);
 			assertMetaDataExists(connections[0], 1);
 
 			sleep(2000);
 
 			String createReplica = "CREATE REPLICA TEST;";
-			executeUpdateOnNthMachine(createReplica, 1);
+			executeUpdateOnNthMachine(createReplica, 0);
 			executeUpdateOnNthMachine(createReplica, 2);
 
 			sleep("About to begin test.\n\n\n\n", 3000);
 
 			String update = "INSERT INTO TEST VALUES(3, 'Third');";
 
-			executeUpdateOnNthMachine(update, 0);
+			executeUpdateOnNthMachine(update, 1);
 
 			assertTrue(assertTestTableExists(connections[0], 3));
 			assertTrue(assertTestTableExists(connections[1], 3));
 
-			killDatabase(2);
+			sleep (2000);
+			
+			killDatabase(1);
 
 			sleep(5000);
 
-			startDatabase(2);
+//			startDatabase(1);
+//
+//			sleep(2000);
+//
+//			createConnectionsToDatabase(1);
 
-			sleep(10000);
+			sleep("Wait for database to startup and reconnect.", 10000);
 
-			assertTrue(assertTestTableExists(connections[2], 3));
+//			try {
+//				assertFalse(assertTestTableExists(connections[2], 3));
+//				fail("Expected Exception.");
+//			} catch (SQLException e) {
+//			}
+
+			assertTrue(assertTestTableExists(connections[2], 3, false));
 		} catch (SQLException e) {
 			e.printStackTrace();
 			fail("Unexpected exception.");
