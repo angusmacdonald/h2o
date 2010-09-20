@@ -23,13 +23,13 @@ import java.io.IOException;
 
 import org.h2o.db.id.DatabaseURL;
 
-import uk.ac.standrews.cs.nds.util.PropertiesWrapper;
+import uk.ac.standrews.cs.nds.util.H2OPropertiesWrapper;
 
 /**
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class LocalH2OProperties extends PropertiesWrapper {
+public class LocalH2OProperties extends H2OPropertiesWrapper {
 
 	/**
 	 * @param dbURL
