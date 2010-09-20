@@ -31,7 +31,7 @@
 			<jvmarg value="-ea" />
 			<formatter type="xml"/>
 			<classpath path="bin:${classpath}"/>
-			<test name="org.h2o.test.CheckInTests" todir="junit"/>
+			<test name="org.h2o.run.CheckInTests" todir="junit"/>
 		</junit>
 	</target>
 	
