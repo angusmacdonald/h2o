@@ -57,7 +57,7 @@
 	<property name="lib-junit-4.1"        location="/projects/systems/InstallerSoftware/junit4.1/junit-4.1.jar" />
 
 	<property name="lib-nds"              location="../../nds/lastStable/archive/bin/nds.jar" />
-	<property name="lib-stachord"         location="../../stachordRMI/lastStable/archive/bin/stachord.jar" />
+	<property name="lib-stachord"         location="../../stachord/lastStable/archive/bin/stachord.jar" />
 	<property name="lib-mindterm"         location="../../nds/lastStable/archive/lib/mindterm.jar" />
 	<property name="lib-tools"            location="/usr/java/default/lib/tools.jar" />
 
