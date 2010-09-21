@@ -17,7 +17,7 @@
  */
 package org.h2o.db.manager.util;
 
-import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
+import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 public class SystemTableMigrationState {
 	/**

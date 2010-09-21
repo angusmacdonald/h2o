@@ -25,7 +25,7 @@ import org.h2o.db.id.TableInfo;
 import org.h2o.db.manager.interfaces.SystemTableRemote;
 import org.h2o.db.manager.recovery.SystemTableAccessException;
 
-import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
+import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 /**
  * Interface to a database instance. For each database instance in the H2O

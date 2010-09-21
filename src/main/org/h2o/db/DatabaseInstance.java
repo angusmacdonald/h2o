@@ -35,7 +35,7 @@ import org.h2o.db.manager.recovery.SystemTableAccessException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
-import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
+import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 /**
  * Proxy class exposed via RMI, allowing semi-parsed queries to be sent to remote replicas for execution.

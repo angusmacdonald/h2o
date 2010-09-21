@@ -61,7 +61,7 @@ import org.h2o.util.exceptions.StartupException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
-import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
+import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 /**
  * <p>

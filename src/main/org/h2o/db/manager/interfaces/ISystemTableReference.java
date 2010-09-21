@@ -32,7 +32,7 @@ import org.h2o.db.manager.recovery.SystemTableAccessException;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
 
-import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
+import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)

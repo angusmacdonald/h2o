@@ -27,7 +27,7 @@ import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.locator.client.H2OLocatorInterface;
 import org.h2o.util.exceptions.StartupException;
 
-import uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference;
+import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 /**
  * The interface between a local database instance and the rest of the database
