@@ -146,7 +146,7 @@ public class DropTable extends SchemaCommand {
 					&& !db.isTableLocal(getSchema()) && !internalQuery) {
 
 				QueryProxy qp = QueryProxy.getQueryProxyAndLock(table,
-						LockType.WRITE, session.getDatabase());
+						LockType.DROP, session.getDatabase());
 				qp.executeUpdate(sqlStatement, transactionName, session);
 
 				ISystemTableReference sm = db.getSystemTableReference();

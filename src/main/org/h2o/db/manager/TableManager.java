@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 
@@ -379,10 +380,28 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 			}
 		}
 
+		int currentUpdateID = replicaManager.getCurrentUpdateID();
+		boolean isDrop = false;
+		
+		if (lockRequested == LockType.DROP){
+			/*
+			 * If a table is dropped then created again with auto-commit turned off the update ID given here is higher than it
+			 * is expected to be on the create table operation. This just resets the update ID on the preceeding drop.
+			 * 
+			 *  The LockType of DROP is not used anywhere else, so the request is processed in the locking table as a write.
+			 */
+			currentUpdateID = 0;
+			isDrop = true;
+			lockRequested = LockType.WRITE;
+		}
+		
+		
 		LockType lockGranted = lockingTable.requestLock(lockRequested, databaseInstanceWrapper);
 
-		QueryProxy qp = new QueryProxy(lockGranted, tableInfo, selectReplicaLocations(lockRequested, databaseInstanceWrapper), this,
-				databaseInstanceWrapper, replicaManager.getCurrentUpdateID(), lockRequested);
+
+
+		QueryProxy qp = new QueryProxy(lockGranted, tableInfo, selectReplicaLocations(lockRequested, databaseInstanceWrapper, isDrop), this,
+				databaseInstanceWrapper, currentUpdateID, lockRequested);
 
 		return qp;
 	}
@@ -399,12 +418,13 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 *            The location of the primary copy - also the location of the Table Manager. This location will NOT be returned in the list
 	 *            of replica locations (because the primary copy already exists there).
 	 * @param lockType
+	 * @param isDrop 
 	 * @param databaseInstanceRemote
 	 *            Requesting machine.
 	 * @return The set of database instances that should host a replica for the given table/schema. The return value will be NULL if no more
 	 *         replicas need to be created.
 	 */
-	private Map<DatabaseInstanceWrapper, Integer> selectReplicaLocations(LockType lockType, DatabaseInstanceWrapper requestingDatabase) {
+	private Map<DatabaseInstanceWrapper, Integer> selectReplicaLocations(LockType lockType, DatabaseInstanceWrapper requestingDatabase, boolean isDrop) {
 
 		if (lockType == LockType.READ || lockType == LockType.NONE) {
 			return this.replicaManager.getActiveReplicas();
@@ -470,9 +490,21 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 			}
 
 		} else if (lockType == LockType.WRITE) {
-			Map<DatabaseInstanceWrapper, Integer> replicaLocations = this.replicaManager.getAllReplicas(); // The update could be sent to any or
-			// all machines holding the given
-			// table.
+			Map<DatabaseInstanceWrapper, Integer> replicaLocations;
+			
+			if (isDrop){
+				/*
+				 * If this is a drop table request we return a hashmap where the update IDs are all zero. This is due to a problem
+				 * where AUTO COMMIT is off, and a new table is created after a table ahs been dropped. This results in the update
+				 * ID being higher than expected unless we reset them on DROP.
+				 */
+				replicaLocations = new HashMap<DatabaseInstanceWrapper, Integer>();
+				for (Entry<DatabaseInstanceWrapper, Integer> entry: this.replicaManager.getAllReplicas().entrySet()){
+					replicaLocations.put(entry.getKey(), 0);
+				}
+			} else {
+				 replicaLocations = this.replicaManager.getAllReplicas(); // The update could be sent to any or all machines holding the given table.
+			}
 
 			return replicaLocations;
 		}
@@ -554,10 +586,10 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 			} else {
 				//This is the asynchronous part of the query. Some replicas will be made active.
-				
+
 				System.err.println("PERSISTING ACTIVE INFORMATION!!!!");
 				persistActiveInformation(this.tableInfo, changed);
-				
+
 			}
 
 
@@ -869,7 +901,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 			replicaLocation.setActive(alive); // even dead replicas must be recorded.
 			replicaLocations.add(replicaLocation);
-			
+
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Active replica for " + tableName + " found on " + dbURL);
 
 		}

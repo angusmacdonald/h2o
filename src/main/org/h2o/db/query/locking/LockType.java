@@ -43,5 +43,10 @@ public enum LockType {
 	/*
 	 * No lock granted.
 	 */
-	NONE
+	NONE,
+	
+	/*
+	 * DROP TABLE request.
+	 */
+	DROP
 }

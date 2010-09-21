@@ -71,10 +71,7 @@ public class Session extends SessionWithState {
 	private QueryProxyManager currentTransactionLocks = null;
 
 	private UndoLog undoLog;
-	private final boolean autoCommit = false; // H2O. Default value used to be
-												// true. Don't change it now...
-												// use applicationAutoCommit
-												// instead.
+	private final boolean autoCommit = false; // H2O. Default value used to be true. Don't change it now... use applicationAutoCommit instead.
 	private Random random;
 	private LogSystem logSystem;
 	private int lockTimeout;

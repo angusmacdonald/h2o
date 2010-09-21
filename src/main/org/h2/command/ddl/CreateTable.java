@@ -532,7 +532,7 @@ public class CreateTable extends SchemaCommand {
 			queryProxy = QueryProxy.getQueryProxyAndLock(tableManager, ti.getFullTableName(), db, LockType.CREATE,
 					db.getLocalDatabaseInstanceInWrapper(), false);
 
-			queryProxyManager.addProxy(queryProxy);
+
 		} else if (Constants.IS_H2O) {
 			/*
 			 * This is a system table, but it still needs a QueryProxy to indicate that it is acceptable to execute the query.

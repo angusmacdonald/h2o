@@ -178,6 +178,7 @@ public class H2TestBigResult extends H2TestBase {
 		Statement s2 = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
 		rs = s2.executeQuery("SELECT NAME FROM DATA");
 		rs.last();
+		conn.commit();
 		conn.setAutoCommit(true);
 
 		rs = s2.executeQuery("SELECT NAME FROM DATA ORDER BY ID");

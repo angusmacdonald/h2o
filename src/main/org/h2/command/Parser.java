@@ -296,6 +296,7 @@ public class Parser {
 	}
 
 	private Prepared parse(String sql) throws SQLException {
+		
 		Prepared p;
 		try {
 			// first, try the fast variant

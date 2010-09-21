@@ -128,16 +128,12 @@ public class CommandContainer extends Command {
 
 			getLock();
 
-			if (!proxyManager.hasAllLocks()) {
-				// TODO implement lock request timeout - look at TableData.doLock().
-				throw new SQLException("Couldn't obtain locks for all tables involved in query.");
-			}
 		}
 
 		try {
 			LocalResult result = prepared.query(maxrows);
 			prepared.trace(startTime, result.getRowCount());
-			proxyManager.endTransaction(null, true);
+			if (session.getApplicationAutoCommit()) proxyManager.endTransaction(null, true);
 			return result;
 		} catch (SQLException e) {
 			proxyManager.endTransaction(null, true);
