@@ -50,8 +50,8 @@ import org.junit.runners.Suite;
 //	MultiQueryTransactionTests.class
 //	H2Tests.class
 //	WrapperTests.class
-	RestartTests.class
-//	LocatorTests.class
+//	RestartTests.class
+	LocatorTests.class
 })
 public class CheckInTests {
 	// Empty.
