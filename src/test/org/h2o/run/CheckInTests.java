@@ -47,8 +47,8 @@ import org.junit.runners.Suite;
 	CustomSettingsTests.class,
 	IndexTests.class,
 //	UpdateTests.class
-	MultiQueryTransactionTests.class
-//	H2Tests.class,
+//	MultiQueryTransactionTests.class
+	H2Tests.class
 //	WrapperTests.class,
 //	RestartTests.class,
 //	LocatorTests.class
