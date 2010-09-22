@@ -41,8 +41,8 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
 	TransactionNameTests.class,
 //	//Database Tests
-	SystemTableTests.class
-//	MultipleSchemaTests.class,
+	SystemTableTests.class,
+	MultipleSchemaTests.class
 //	ReplicaTests.class,
 //	CustomSettingsTests.class,
 //	IndexTests.class,
