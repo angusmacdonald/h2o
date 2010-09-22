@@ -43,8 +43,8 @@ import org.junit.runners.Suite;
 //	//Database Tests
 	SystemTableTests.class,
 //	MultipleSchemaTests.class
-	ReplicaTests.class
-//	CustomSettingsTests.class,
+//	ReplicaTests.class
+	CustomSettingsTests.class
 //	IndexTests.class,
 //	UpdateTests.class,
 //	MultiQueryTransactionTests.class,
