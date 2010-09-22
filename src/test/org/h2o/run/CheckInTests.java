@@ -39,7 +39,7 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-//	TransactionNameTests.class,
+	TransactionNameTests.class,
 //	//Database Tests
 //	SystemTableTests.class,
 //	MultipleSchemaTests.class,
