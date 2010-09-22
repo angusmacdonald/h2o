@@ -45,13 +45,13 @@ import org.junit.runners.Suite;
 //	MultipleSchemaTests.class
 //	ReplicaTests.class
 	CustomSettingsTests.class,
-	IndexTests.class,
+	IndexTests.class
 //	UpdateTests.class
 //	MultiQueryTransactionTests.class
 //	H2Tests.class
 //	WrapperTests.class
 //	RestartTests.class
-	LocatorTests.class
+//	LocatorTests.class
 })
 public class CheckInTests {
 	// Empty.
