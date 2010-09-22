@@ -49,8 +49,8 @@ import org.junit.runners.Suite;
 //	UpdateTests.class
 //	MultiQueryTransactionTests.class
 //	H2Tests.class
-	WrapperTests.class
-//	RestartTests.class,
+//	WrapperTests.class
+	RestartTests.class
 //	LocatorTests.class
 })
 public class CheckInTests {
