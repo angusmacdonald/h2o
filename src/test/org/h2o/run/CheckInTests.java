@@ -41,7 +41,7 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
 	TransactionNameTests.class,
 //	//Database Tests
-//	SystemTableTests.class,
+	SystemTableTests.class
 //	MultipleSchemaTests.class,
 //	ReplicaTests.class,
 //	CustomSettingsTests.class,
@@ -52,8 +52,6 @@ import org.junit.runners.Suite;
 //	WrapperTests.class,
 //	RestartTests.class,
 //	LocatorTests.class
-	
-	DummyTest.class
 })
 public class CheckInTests {
 	// Empty.
