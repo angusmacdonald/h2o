@@ -42,8 +42,8 @@ import org.junit.runners.Suite;
 	TransactionNameTests.class,
 //	//Database Tests
 	SystemTableTests.class,
-	MultipleSchemaTests.class
-//	ReplicaTests.class,
+//	MultipleSchemaTests.class
+	ReplicaTests.class
 //	CustomSettingsTests.class,
 //	IndexTests.class,
 //	UpdateTests.class,
