@@ -18,19 +18,6 @@
  */
 package org.h2o.run;
 
-import org.h2o.test.ChordTests;
-import org.h2o.test.CustomSettingsTests;
-import org.h2o.test.IndexTests;
-import org.h2o.test.LocatorTests;
-import org.h2o.test.MultiQueryTransactionTests;
-import org.h2o.test.MultipleSchemaTests;
-import org.h2o.test.ReplicaTests;
-import org.h2o.test.RestartTests;
-import org.h2o.test.SystemTableTests;
-import org.h2o.test.TransactionNameTests;
-import org.h2o.test.UpdateTests;
-import org.h2o.test.WrapperTests;
-import org.h2o.test.h2.H2Tests;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -39,19 +26,7 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	TransactionNameTests.class,
-//	//Database Tests
-	SystemTableTests.class,
-//	MultipleSchemaTests.class
-//	ReplicaTests.class
-	CustomSettingsTests.class,
-	IndexTests.class
-//	UpdateTests.class
-//	MultiQueryTransactionTests.class
-//	H2Tests.class
-//	WrapperTests.class
-//	RestartTests.class
-//	LocatorTests.class
+	DummyTest.class
 })
 public class CheckInTests {
 	// Empty.
