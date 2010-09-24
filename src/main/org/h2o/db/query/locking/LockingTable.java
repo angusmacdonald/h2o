@@ -22,6 +22,8 @@ import java.util.Set;
 
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
@@ -35,8 +37,10 @@ public class LockingTable implements ILockingTable {
 
 	private DatabaseInstanceWrapper writeLock;
 	private Set<DatabaseInstanceWrapper> readLocks;
+	private final String tableName;
 
 	public LockingTable(String tableName) {
+		this.tableName = tableName;
 		this.writeLock = null;
 		this.readLocks = new HashSet<DatabaseInstanceWrapper>();
 	}
@@ -55,23 +59,25 @@ public class LockingTable implements ILockingTable {
 
 		if (lockType == LockType.READ) {
 
-			// Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName +
+			// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "'" + tableName +
 			// "' READ locked by: " +
 			// requestingMachine.getDatabaseURL().getOriginalURL());
 
 			readLocks.add(requestingMachine);
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "READ lock taken out on " + tableName);
 			return LockType.READ;
 
 		} else if ((lockType == LockType.WRITE || lockType == LockType.CREATE)
-				&& readLocks.size() == 0) {
+				&& (readLocks.size() == 0)) { // || readLocks.contains(requestingMachine)
 			// if write lock request + no read locks held.
 
-			// Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName +
+			// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "'" + tableName +
 			// "' " + ((LockType.CREATE == lockType)? "CREATE": "WRITE") +
 			// " locked by: " +
 			// requestingMachine.getDatabaseURL().getOriginalURL());
 
 			writeLock = requestingMachine;
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "WRITE lock taken out on " + tableName);
 			return lockType; // will either be WRITE or CREATE
 		}
 
@@ -87,20 +93,29 @@ public class LockingTable implements ILockingTable {
 	public synchronized LockType releaseLock(
 			DatabaseInstanceWrapper requestingMachine) {
 
-		// Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'" + tableName +
+		// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "'" + tableName +
 		// "' unlocked by " +
 		// requestingMachine.getDatabaseURL().getOriginalURL());
 
 		if (writeLock != null && writeLock.equals(requestingMachine)) {
 			writeLock = null;
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "WRITE lock released on " + tableName);
 			return LockType.WRITE;
 		} else if (readLocks.remove(requestingMachine)) {
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "READ lock released on " + tableName);
 			return LockType.READ;
 		}
 
-		ErrorHandling.errorNoEvent("Unexpected code path.");
+		ErrorHandling.errorNoEvent("Unexpected code path: attempted to release a lock which wasn't held.");
 		
 		return null; // should never get to this.
 	}
 
+	@Override
+	public String toString() {
+		return "LockingTable [writeLock=" + writeLock + ", readLocksSize=" + readLocks.size() + "]";
+	}
+
+	
+	
 }

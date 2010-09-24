@@ -260,8 +260,10 @@ public abstract class Prepared {
 		 * Because these subclasses don't propagate the query, they also don't
 		 * do anything to prepare the transaction locally. Consquently this
 		 * action is done here.
+		 * 
+		 * 23/09/2010 - it doesn't need prepared if auto-commit is off.
 		 */
-		prepareTransaction(transactionName);
+		if (session.getApplicationAutoCommit()) prepareTransaction(transactionName);
 
 		return result;
 	}

@@ -362,7 +362,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 
 					for (DatabaseURL replicaLocation : replicaLocations) {
 						Diagnostic
-								.traceNoEvent(DiagnosticLevel.FULL,
+								.traceNoEvent(DiagnosticLevel.INIT,
 										"Attempting to recreate table manager for " + tableManagerWrapper.getTableInfo() + " on "
 												+ replicaLocation);
 
@@ -388,7 +388,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 					+ ". This should never happen - the relevant information" + " should be found in persisted state.");
 		}
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, ti.getFullTableName() + "'s table manager has been recreated on "
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, ti.getFullTableName() + "'s table manager has been recreated on "
 				+ tableManagerWrapper.getURL() + ".");
 
 		tableManagerWrapper.setTableManager(tm);
@@ -573,7 +573,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 							tableManagerWrapper.getURL());
 
 					if (success) {
-						Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Table Manager for " + tableManagerWrapper.getTableInfo()
+						Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Table Manager for " + tableManagerWrapper.getTableInfo()
 								+ " recreated on " + instance.getURL());
 
 						return true;

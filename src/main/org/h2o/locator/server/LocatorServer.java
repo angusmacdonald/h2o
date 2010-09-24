@@ -59,7 +59,7 @@ public class LocatorServer extends Thread {
 				ss = new ServerSocket(port);
 
 				ss.setSoTimeout(500);
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Server listening on port " + port + ", locator file at '" + locatorFile
+				Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Server listening on port " + port + ", locator file at '" + locatorFile
 						+ "'.");
 
 			} catch (IOException e) {
@@ -97,7 +97,7 @@ public class LocatorServer extends Thread {
 	 */
 	public static void main(String[] args) {
 
-		Diagnostic.setLevel(DiagnosticLevel.FULL);
+		Diagnostic.setLevel(DiagnosticLevel.INIT);
 		LocatorServer server = new LocatorServer(LOCATOR_SERVER_PORT, "locatorFile");
 		server.start();
 	}

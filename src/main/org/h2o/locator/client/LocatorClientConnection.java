@@ -263,7 +263,7 @@ public class LocatorClientConnection {
 	}
 
 	public static void main(String[] args) throws InterruptedException {
-		Diagnostic.setLevel(DiagnosticLevel.FULL);
+		Diagnostic.setLevel(DiagnosticLevel.INIT);
 		LocatorClientConnection lcc = new LocatorClientConnection("eigg", 29999);
 		List<String> ls;
 		try {

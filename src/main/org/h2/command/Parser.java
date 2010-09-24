@@ -297,6 +297,11 @@ public class Parser {
 
 	private Prepared parse(String sql) throws SQLException {
 		
+		
+		if (!internalQuery && Diagnostic.getLevel().equals(DiagnosticLevel.FULL)){
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Incoming Query: " + sql);
+		}
+		
 		Prepared p;
 		try {
 			// first, try the fast variant
@@ -4411,8 +4416,8 @@ public class Parser {
 		if (!tableName.equals("SESSIONS") && !tableName.contains("H2O_") && !database.getLocalSchema().contains(schemaName)
 				&& !internalQuery && searchRemote) {
 			/*
-			 * Internal Query: if false it indicates that this is not part of some larger update. Search Remote: only false if this method
-			 * has already been called, and a linked table has been created. Other evaluations: eliminate local tables.
+			 * Internal Query: if false it indicates that this is not part of some larger update. 
+			 * Search Remote: only false if this method has already been called, and a linked table has been created. Other evaluations: eliminate local tables.
 			 */
 
 			if (localSchemaName == null)
@@ -4520,6 +4525,10 @@ public class Parser {
 	private QueryProxy getQueryProxyFromTableManager(TableInfo tableInfo, TableManagerRemote tableManager, QueryProxy qp)
 			throws SQLException {
 		try {
+			/*
+			 * This requests LockType.NONE because it doesn't need a lock for the table at this point - only the location
+			 * of active instances. It will request a read/write lock at a later point. 
+			 */
 			qp = tableManager.getQueryProxy(LockType.NONE, this.database.getLocalDatabaseInstanceInWrapper());
 
 		} catch (MovedException e) {
@@ -4658,7 +4667,7 @@ public class Parser {
 				continue; //remote db isn't accessible.
 			}
 			
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Creating linked table for " + tableName + " to " + l.getURL()); 
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Creating linked table for " + tableName + " to " + l.getURL()); 
 			
 			String sql = "CREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + tableLocation + "', '"
 					+ PersistentSystemTable.USERNAME + "', '" + PersistentSystemTable.PASSWORD + "', '" + tableName + "');";
@@ -4674,7 +4683,7 @@ public class Parser {
 
 		if (result == 0) {
 			// Linked table was successfully added.
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Successfully created linked table '" + tableName + "'. Attempting to access it.");
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Successfully created linked table '" + tableName + "'. Attempting to access it.");
 			return readTableOrView(tableName, false, LocationPreference.PRIMARY, true);
 		} else {
 			throw new SQLException("Couldn't find active copy of table " + tableName + " to connect to.");

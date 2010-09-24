@@ -333,13 +333,13 @@ public class SystemTableReference implements ISystemTableReference {
 			SystemTableRemote stub = (SystemTableRemote) UnicastRemoteObject.exportObject(systemTableWrapper.getSystemTable(), 0);
 
 			getSystemTableRegistry().rebind(SCHEMA_MANAGER, stub);
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Binding System Table on port " + systemTableWrapper.getURL().getRMIPort());
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Binding System Table on port " + systemTableWrapper.getURL().getRMIPort());
 		} catch (Exception e) {
 			ErrorHandling.errorNoEvent("Failed to export System Table object: " + e.getMessage());
 		}
 
 		// try {
-		// Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Checking System Table Accessibility...");
+		// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Checking System Table Accessibility...");
 		// systemTableWrapper.getSystemTable().checkTableManagerAccessibility();
 		// System.err.println("...");
 		// } catch (RemoteException e) {

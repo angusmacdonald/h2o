@@ -142,7 +142,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	public DatabaseURL getSystemTableURL() throws RemoteException {
 
 		DatabaseURL systemTableURL = database.getSystemTableReference().getSystemTableURL();
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Responding to request for System Table location at database '"
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Responding to request for System Table location at database '"
 				+ database.getDatabaseLocation() + "'. " + "System table location: " + systemTableURL);
 
 		return systemTableURL;
@@ -175,7 +175,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 
 	@Override
 	public SystemTableRemote recreateSystemTable() throws RemoteException, SystemTableAccessException {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Responding to request to recreate System Table on '"
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Responding to request to recreate System Table on '"
 				+ database.getDatabaseLocation() + "'.");
 
 		ISystemTableReference systemTableReference = this.database.getSystemTableReference();

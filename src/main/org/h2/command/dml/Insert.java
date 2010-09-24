@@ -96,7 +96,7 @@ public class Insert extends Prepared {
 
 			queryProxy = queryProxyManager.getQueryProxy(table.getFullName());
 			
-			if (queryProxy == null || queryProxy.getLockGranted().equals(LockType.WRITE)) {
+			if (queryProxy == null || !queryProxy.getLockGranted().equals(LockType.WRITE)) {
 				queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, session.getDatabase());
 			}
 

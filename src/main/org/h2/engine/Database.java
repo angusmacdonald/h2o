@@ -84,7 +84,6 @@ import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.manager.interfaces.SystemTableRemote;
 import org.h2o.db.manager.monitorthreads.MetaDataReplicationThread;
 import org.h2o.db.query.QueryProxyManager;
-import org.h2o.db.query.asynchronous.AsynchronousQueryExecutor;
 import org.h2o.db.query.asynchronous.AsynchronousQueryManager;
 import org.h2o.db.remote.ChordRemote;
 import org.h2o.db.remote.IChordInterface;
@@ -274,7 +273,7 @@ public class Database implements DataHandler {
 
 		if (Constants.IS_H2O && !isManagementDB()) {
 
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O, Database '" + name + "'.");
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "H2O, Database '" + name + "'.");
 
 			/*
 			 * Get Settings for Database.
@@ -355,7 +354,7 @@ public class Database implements DataHandler {
 			if (!Constants.IS_NON_SM_TEST) {
 				metaDataReplicationThread.start();
 			}
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Started database at " + getURL());
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Started database at " + getURL());
 		}
 		running = true;
 	}
@@ -648,9 +647,9 @@ public class Database implements DataHandler {
 			databaseExists = FileUtils.exists(dataFileName);
 
 			if (databaseExists) {
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Database already exists at: " + dataFileName);
+				Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Database already exists at: " + dataFileName);
 			} else {
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Database doesn't exist at: " + dataFileName);
+				Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Database doesn't exist at: " + dataFileName);
 			}
 
 			if (FileUtils.exists(dataFileName)) {
@@ -843,7 +842,7 @@ public class Database implements DataHandler {
 		}
 
 		if (Constants.IS_H2O && !isManagementDB())
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, " Executed meta-records.");
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, " Executed meta-records.");
 
 		// try to recompile the views that are invalid
 		recompileInvalidViews(systemSession);
@@ -1409,7 +1408,7 @@ public class Database implements DataHandler {
 			return;
 		}
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, getURL().getURL());
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, getURL().getURL());
 
 		closing = true;
 		stopServer();
@@ -2731,7 +2730,7 @@ public class Database implements DataHandler {
 
 		if (!databaseExists) {
 			commitSystemTableCreation(databaseExists, persistedSchemaTablesExist, true);
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, " Created new System Table tables.");
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, " Created new System Table tables.");
 		}
 
 		if (!persistedSchemaTablesExist) {
@@ -2943,6 +2942,8 @@ public class Database implements DataHandler {
 				Diagnostic.setLevel(DiagnosticLevel.FINAL);
 			else if (diagnosticLevel.equals("NONE"))
 				Diagnostic.setLevel(DiagnosticLevel.NONE);
+			else if (diagnosticLevel.equals("INIT"))
+				Diagnostic.setLevel(DiagnosticLevel.INIT);
 			else if (diagnosticLevel.equals("FULL"))
 				Diagnostic.setLevel(DiagnosticLevel.FULL);
 		}

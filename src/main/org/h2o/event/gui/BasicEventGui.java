@@ -40,7 +40,7 @@ public class BasicEventGui extends JFrame implements EventHandler {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		Diagnostic.setLevel(DiagnosticLevel.FULL);
+		Diagnostic.setLevel(DiagnosticLevel.INIT);
 		EventServer server = new EventServer(EventServer.EVENT_SERVER_PORT, this);
 		server.start();
 	}

@@ -36,21 +36,9 @@ public class CommandContainer extends Command {
 		prepared.setCommand(this);
 		this.prepared = prepared;
 
-		/*
-		 * If this command is part of a larger transaction then this query proxy manager will be over-written later on by a call from the
-		 * Command list class.
-		 */
-		if (!session.getApplicationAutoCommit() && session.getCurrentTransactionLocks() != null) {
-			// Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
-			// "Using an existing proxy manager.");
-			this.proxyManager = session.getCurrentTransactionLocks();
-		} else {
-			// Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
-			// "Creating a new proxy manager.");
-			this.proxyManager = new QueryProxyManager(parser.getSession().getDatabase(), getSession());
-			session.setCurrentTransactionLocks(this.proxyManager);
-		}
+		this.proxyManager = createOrObtainQueryProxyManager();
 	}
+
 
 	public ObjectArray getParameters() {
 		return prepared.getParameters();
@@ -168,7 +156,7 @@ public class CommandContainer extends Command {
 
 			getLock(); // this throws an SQLException if no lock is found.
 
-			if (Diagnostic.getLevel() == DiagnosticLevel.FULL) {
+			if (Diagnostic.getLevel() == DiagnosticLevel.INIT) {
 				proxyManager.addSQL(prepared.getSQL());
 			}
 
@@ -187,6 +175,7 @@ public class CommandContainer extends Command {
 
 					proxyManager.commit(commit, true, session.getDatabase());
 					session.setCurrentTransactionLocks(null);
+					this.resetQueryProxyManager();
 				} else {
 					session.setCurrentTransactionLocks(proxyManager);
 				}
@@ -194,6 +183,7 @@ public class CommandContainer extends Command {
 			} catch (SQLException e) {
 				proxyManager.commit(false, true, session.getDatabase());
 				session.setCurrentTransactionLocks(null);
+				this.resetQueryProxyManager();
 				throw e;
 			}
 		} else {
@@ -204,7 +194,13 @@ public class CommandContainer extends Command {
 			try {
 				updateCount = prepared.update();
 
-				session.setCurrentTransactionLocks(null);
+				if (!prepared.getSQL().contains("PREPARE COMMIT")){
+					
+					session.setCurrentTransactionLocks(null);
+				}
+				
+
+				
 			} catch (SQLException e) {
 				ErrorHandling.errorNoEvent("Transaction not found for query: " + prepared.getSQL());
 
@@ -327,5 +323,10 @@ public class CommandContainer extends Command {
 				// ignore
 			}
 		}
+	}
+
+	@Override
+	public void resetQueryProxyManager() {
+		this.proxyManager = createOrObtainQueryProxyManager();
 	}
 }

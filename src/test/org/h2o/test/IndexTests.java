@@ -110,7 +110,7 @@ public class IndexTests{
 
 			ca.close();	
 			cb.close();	
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "END OF LAST TEST (TEAR DOWN 1).");
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "END OF LAST TEST (TEAR DOWN 1).");
 			TestBase.closeDatabaseCompletely();
 		} catch (Exception e){
 			e.printStackTrace();
@@ -118,7 +118,7 @@ public class IndexTests{
 		}
 		ls.setRunning(false);
 		while (!ls.isFinished()){};
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "END OF LAST TEST (TEAR DOWN 2).");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "END OF LAST TEST (TEAR DOWN 2).");
 	}
 
 	/**
@@ -130,7 +130,7 @@ public class IndexTests{
 	 */
 	@Test
 	public void checkTableSetID(){
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 		try{
 			/*
 			 * These fail because the command which links the two tables doesn't work when query propagation is used on AlterTableAddConstraint.
@@ -164,7 +164,7 @@ public class IndexTests{
 	public void checkTableSetID2(){
 
 		TestBase.resetLocatorFile();
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 		try{
 			sa.execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 
@@ -192,7 +192,7 @@ public class IndexTests{
 			fail("An Unexpected SQLException was thrown.");
 		}
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "END OF LAST TEST (MAIN BODY).");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "END OF LAST TEST (MAIN BODY).");
 
 	}
 

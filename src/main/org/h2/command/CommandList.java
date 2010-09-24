@@ -35,20 +35,11 @@ public class CommandList extends Command {
 		 * Split and store remaining commands.
 		 */
 		if (remaining != null) {
-			this.remaining = remaining.split(";"); // TODO not particuarly safe.
-													// i.e. no query can contain
-													// a semi-colon.
+			this.remaining = remaining.split(";"); // TODO not particuarly safe. i.e. no query can contain a semi-colon.
 		}
 
-		if (!session.getApplicationAutoCommit()
-				&& session.getCurrentTransactionLocks() != null) {
-			this.proxyManager = session.getCurrentTransactionLocks();
-		} else {
-			this.proxyManager = new QueryProxyManager(parser.getSession()
-					.getDatabase(), getSession());
-			session.setCurrentTransactionLocks(this.proxyManager);
-		}
-
+		this.proxyManager = createOrObtainQueryProxyManager();
+		
 		command.addQueryProxyManager(proxyManager);
 
 	}
@@ -61,20 +52,17 @@ public class CommandList extends Command {
 		return executeUpdate(true);
 	}
 
-	private SQLException executeRemaining() throws SQLException,
-			RemoteException {
+	private SQLException executeRemaining() throws SQLException, RemoteException {
 		SQLException rollbackException = null;
 
 		if (remaining != null) {
 			try {
 				/*
-				 * H2O. Iterate through remaining commands rather than
-				 * recursively calling this method.
+				 * H2O. Iterate through remaining commands rather than recursively calling this method.
 				 */
 				for (String sqlStatement : remaining) {
 
-					Command remainingCommand = session
-							.prepareLocal(sqlStatement);
+					Command remainingCommand = session.prepareLocal(sqlStatement);
 					remainingCommand.addQueryProxyManager(proxyManager);
 
 					if (remainingCommand.isQuery()) {
@@ -101,15 +89,13 @@ public class CommandList extends Command {
 	 * @see org.h2.command.Command#update(boolean)
 	 */
 	@Override
-	protected int update(boolean partOfMultiQueryTransaction)
-			throws SQLException, RemoteException {
+	protected int update(boolean partOfMultiQueryTransaction) throws SQLException, RemoteException {
 		return update();
 	}
 
 	public int update() throws SQLException, RemoteException {
 		/*
-		 * Execute the first update, then iterate through every subsequent
-		 * update.
+		 * Execute the first update, then iterate through every subsequent update.
 		 */
 		// proxyManager.begin();
 
@@ -132,27 +118,23 @@ public class CommandList extends Command {
 	}
 
 	/**
-	 * Commit or rollback a transaction based on whether an exception was thrown
-	 * during the update/query.
+	 * Commit or rollback a transaction based on whether an exception was thrown during the update/query.
 	 * 
 	 * @param rollbackException
-	 *            Exception thrown during query. Will be null if none was thrown
-	 *            and transaction was successful.
+	 *            Exception thrown during query. Will be null if none was thrown and transaction was successful.
 	 * @throws SQLException
 	 */
 	private void commit(SQLException rollbackException) throws SQLException {
 
 		if (session.getApplicationAutoCommit() || rollbackException != null) {
 			/*
-			 * Having executed all commands, rollback if there was an exception.
-			 * Otherwise, commit.
+			 * Having executed all commands, rollback if there was an exception. Otherwise, commit.
 			 */
 			proxyManager.commit(rollbackException == null, true, session.getDatabase());
 			session.setCurrentTransactionLocks(null);
 
 			/*
-			 * If we did a rollback, rethrow the exception that caused this to
-			 * happen.
+			 * If we did a rollback, rethrow the exception that caused this to happen.
 			 */
 			if (rollbackException != null) {
 				throw rollbackException;
@@ -182,8 +164,7 @@ public class CommandList extends Command {
 	 * @see org.h2.command.Command#acquireLocks()
 	 */
 	@Override
-	public void acquireLocks(QueryProxyManager queryProxyManager)
-			throws SQLException {
+	public void acquireLocks(QueryProxyManager queryProxyManager) throws SQLException {
 		command.acquireLocks(queryProxyManager);
 	}
 
@@ -200,8 +181,7 @@ public class CommandList extends Command {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.h2.command.Command#addQueryProxyManager(org.h2.h2o.comms.
-	 * QueryProxyManager)
+	 * @see org.h2.command.Command#addQueryProxyManager(org.h2.h2o.comms. QueryProxyManager)
 	 */
 	@Override
 	public void addQueryProxyManager(QueryProxyManager proxyManager) {
@@ -227,6 +207,12 @@ public class CommandList extends Command {
 	@Override
 	public void setIsPreparedStatement(boolean preparedStatement) {
 		command.setIsPreparedStatement(preparedStatement);
+	}
+
+	@Override
+	public void resetQueryProxyManager() {
+		// TODO Auto-generated method stub
+
 	}
 
 }

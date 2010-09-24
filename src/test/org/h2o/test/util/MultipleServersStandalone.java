@@ -56,7 +56,7 @@ public class MultipleServersStandalone {
 	}
 
 	public void initialSetUp(){
-		Diagnostic.setLevel(DiagnosticLevel.FULL);
+		Diagnostic.setLevel(DiagnosticLevel.INIT);
 
 
 		createMultiplePropertiesFiles(dbs);

@@ -21,7 +21,7 @@ public class H2OEventViewer implements EventHandler {
 	 * JPanel inside a new JFrame.
 	 */
 	public static void main(String[] args) {
-		Diagnostic.setLevel(DiagnosticLevel.FULL);
+		Diagnostic.setLevel(DiagnosticLevel.INIT);
 
 		AdvancedEventGui gui = new AdvancedEventGui();
 		JFrame frame = new JFrame();
@@ -37,7 +37,7 @@ public class H2OEventViewer implements EventHandler {
 	public H2OEventViewer(EventActions action) {
 		this.action = action;
 		
-		Diagnostic.setLevel(DiagnosticLevel.FULL);
+		Diagnostic.setLevel(DiagnosticLevel.INIT);
 		server = new EventServer(EventServer.EVENT_SERVER_PORT, this);
 		
 

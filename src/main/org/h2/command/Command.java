@@ -56,8 +56,7 @@ public abstract class Command implements CommandInterface {
 	}
 
 	/**
-	 * Check if this command is transactional. If it is not, then it forces the
-	 * current transaction to commit.
+	 * Check if this command is transactional. If it is not, then it forces the current transaction to commit.
 	 * 
 	 * @return true if it is
 	 */
@@ -113,8 +112,7 @@ public abstract class Command implements CommandInterface {
 	 *             if the command is not an updating statement
 	 * @throws RemoteException
 	 */
-	protected int update(boolean partOfABiggerThing) throws SQLException,
-			RemoteException {
+	protected int update(boolean partOfABiggerThing) throws SQLException, RemoteException {
 		throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_QUERY);
 	}
 
@@ -141,8 +139,7 @@ public abstract class Command implements CommandInterface {
 	 * @throws SQLException
 	 *             if the command is not a query
 	 */
-	protected LocalResult query(int maxrows, boolean partOfABiggerThing)
-			throws SQLException {
+	protected LocalResult query(int maxrows, boolean partOfABiggerThing) throws SQLException {
 		throw Message.getSQLException(ErrorCode.METHOD_ONLY_ALLOWED_FOR_QUERY);
 	}
 
@@ -154,14 +151,12 @@ public abstract class Command implements CommandInterface {
 		return queryMeta();
 	}
 
-	public ResultInterface executeQuery(int maxrows, boolean scrollable)
-			throws SQLException {
+	public ResultInterface executeQuery(int maxrows, boolean scrollable) throws SQLException {
 		return executeQueryLocal(maxrows);
 	}
 
 	/**
-	 * Execute a query and return a local result set. This method prepares
-	 * everything and calls {@link #query(int)} finally.
+	 * Execute a query and return a local result set. This method prepares everything and calls {@link #query(int)} finally.
 	 * 
 	 * @param maxrows
 	 *            the maximum number of rows to return
@@ -170,8 +165,7 @@ public abstract class Command implements CommandInterface {
 	public LocalResult executeQueryLocal(int maxrows) throws SQLException {
 		startTime = System.currentTimeMillis();
 		Database database = session.getDatabase();
-		Object sync = database.isMultiThreaded() ? (Object) session
-				: (Object) database;
+		Object sync = database.isMultiThreaded() ? (Object) session : (Object) database;
 		session.waitIfExclusiveModeEnabled();
 
 		synchronized (sync) {
@@ -233,13 +227,11 @@ public abstract class Command implements CommandInterface {
 		}
 	}
 
-	public int executeUpdate(boolean partOfMultiQueryTransaction)
-			throws SQLException {
+	public int executeUpdate(boolean partOfMultiQueryTransaction) throws SQLException {
 		long start = startTime = System.currentTimeMillis();
 		Database database = session.getDatabase();
 		MemoryUtils.allocateReserveMemory();
-		Object sync = database.isMultiThreaded() ? (Object) session
-				: (Object) database;
+		Object sync = database.isMultiThreaded() ? (Object) session : (Object) database;
 		session.waitIfExclusiveModeEnabled();
 		// synchronized (sync) {
 		int rollback = session.getLogId();
@@ -318,14 +310,13 @@ public abstract class Command implements CommandInterface {
 	}
 
 	/**
-	 * Request a query proxy from the Table Manager of the table involved in the
-	 * query. This proxy contains the details of any locks that were acquired.
+	 * Request a query proxy from the Table Manager of the table involved in the query. This proxy contains the details of any locks that
+	 * were acquired.
 	 * 
 	 * @return
 	 * @throws SQLException
 	 */
-	public abstract void acquireLocks(QueryProxyManager queryProxyManager)
-			throws SQLException;
+	public abstract void acquireLocks(QueryProxyManager queryProxyManager) throws SQLException;
 
 	/**
 	 * @return the session
@@ -349,4 +340,30 @@ public abstract class Command implements CommandInterface {
 		return command.shouldBePropagated();
 	}
 
+	/**
+	 * Command objects are cached and re-used where possible. This call resets the query proxy manager involved in a command when it is
+	 * re-used, because locks may need to be acquired again.
+	 */
+	public abstract void resetQueryProxyManager();
+
+	public QueryProxyManager createOrObtainQueryProxyManager() {
+		QueryProxyManager qpm = null;
+		
+		/*
+		 * If this command is part of a larger transaction then this query proxy manager will be over-written later on by a call from the
+		 * Command list class.
+		 */
+		if (!session.getApplicationAutoCommit() && session.getCurrentTransactionLocks() != null) {
+			// Diagnostic.traceNoEvent(DiagnosticLevel.INIT,
+			// "Using an existing proxy manager.");
+			qpm = session.getCurrentTransactionLocks();
+		} else {
+			// Diagnostic.traceNoEvent(DiagnosticLevel.INIT,
+			// "Creating a new proxy manager.");
+			qpm = new QueryProxyManager(session.getDatabase(), session);
+			session.setCurrentTransactionLocks(qpm);
+		}
+		
+		return qpm;
+	}
 }

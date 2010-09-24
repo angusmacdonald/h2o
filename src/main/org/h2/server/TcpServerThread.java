@@ -262,6 +262,7 @@ public class TcpServerThread implements Runnable {
 			int id = transfer.readInt();
 			int objectId = transfer.readInt();
 			Command command = (Command) cache.getObject(id, false);
+			
 			LocalResult result = command.getMetaDataLocal();
 			cache.addObject(objectId, result);
 			int columnCount = result.getVisibleColumnCount();
@@ -301,6 +302,9 @@ public class TcpServerThread implements Runnable {
 		case SessionRemote.COMMAND_EXECUTE_UPDATE: {
 			int id = transfer.readInt();
 			Command command = (Command) cache.getObject(id, false);
+			
+			command.resetQueryProxyManager();
+			
 			setParameters(command);
 			int old = session.getModificationId();
 			int updateCount = command.update();

@@ -516,7 +516,7 @@ public class FailureTests extends MultiProcessTestBase{
 				}
 			}
 			
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Active connection to use: " + activeConnection.getMetaData().getURL());
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Active connection to use: " + activeConnection.getMetaData().getURL());
 			
 		//	assertTrue(assertTestTableExists(activeConnection, 2));
 			assertTrue(assertTest2TableExists(activeConnection, 2));

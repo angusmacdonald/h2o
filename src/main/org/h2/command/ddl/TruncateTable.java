@@ -12,6 +12,9 @@ import org.h2.constant.ErrorCode;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.message.Message;
+import org.h2o.db.query.QueryProxy;
+import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.locking.LockType;
 
 /**
  * This class represents the statement TRUNCATE TABLE
@@ -32,6 +35,31 @@ public class TruncateTable extends DefineCommand {
 		table.lock(session, true, true);
 		table.truncate(session);
 		return 0;
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.h2.command.Prepared#acquireLocks()
+	 */
+	@Override
+	public void acquireLocks(QueryProxyManager queryProxyManager) throws SQLException {
+		/*
+		 * (QUERY PROPAGATED TO ALL REPLICAS).
+		 */
+		if (isRegularTable()) {
+			
+			QueryProxy queryProxy = queryProxyManager.getQueryProxy(table.getFullName());
+			
+			if (queryProxy == null || !queryProxy.getLockGranted().equals(LockType.WRITE)) {
+				queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, session.getDatabase());
+			}
+
+			queryProxyManager.addProxy(queryProxy);
+		} else {
+			queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper()));
+		}
+
 	}
 
 }

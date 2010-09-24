@@ -78,7 +78,7 @@ public class LocatorState {
 	public ReplicaLocationsResponse readLocationsFromFile() {
 		startRead();
 
-		// Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Reader reading:");
+		// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Reader reading:");
 
 		List<String> locations = new LinkedList<String>();
 
@@ -103,7 +103,7 @@ public class LocatorState {
 		ReplicaLocationsResponse response = new ReplicaLocationsResponse(
 				locations, updateCount);
 
-		// Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Finished reading.");
+		// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Finished reading.");
 		stopRead();
 
 		return response;
@@ -120,7 +120,7 @@ public class LocatorState {
 
 		boolean successful = false;
 
-		// Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Writer writing.");
+		// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Writer writing.");
 
 		try {
 			Writer output = new BufferedWriter(new FileWriter(locatorFile));
@@ -140,7 +140,7 @@ public class LocatorState {
 			e.printStackTrace();
 		}
 
-		// Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Finished writing.");
+		// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Finished writing.");
 		stopWrite();
 
 		return successful;
@@ -185,7 +185,7 @@ public class LocatorState {
 		stopWrite();
 
 		if (success) {
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT,
 					"LOCATOR LOCKED by database instance '"
 							+ requestingDatabase + "'");
 		} else {
@@ -228,14 +228,14 @@ public class LocatorState {
 		if (result == 1) {
 			Diagnostic
 					.traceNoEvent(
-							DiagnosticLevel.FULL,
+							DiagnosticLevel.INIT,
 							"Database instance at '"
 									+ requestingDatabase
 									+ "' has committed its creation of the system table.");
 		} else {
 			Diagnostic
 					.traceNoEvent(
-							DiagnosticLevel.FULL,
+							DiagnosticLevel.INIT,
 							"Database instance at '"
 									+ requestingDatabase
 									+ "' has failed to commit its creation of the system table.");

@@ -196,7 +196,7 @@ public class MetaDataReplicaManager {
 			ISystemTable systemTable = systemTableRef.getSystemTable();
 
 			if (systemTable == null) {
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "System table was NULL so the meta-data manager is unable to replicate.");
+				Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "System table was NULL so the meta-data manager is unable to replicate.");
 				return;
 			} else {
 				databaseInstances = systemTable.getAvailableMachines(new CreateReplicaRequest(20, 100, 200));
@@ -266,7 +266,7 @@ public class MetaDataReplicaManager {
 					
 					newReplicaLocation.getDatabaseInstance().executeUpdate(createQuery, true);
 
-					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "H2O " + ((isSystemTable) ? "System Table" : "Table Manager")
+					Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "H2O " + ((isSystemTable) ? "System Table" : "Table Manager")
 							+ " tables on " + localDatabase.getURL() + " replicated onto new node: "
 							+ newReplicaLocation.getURL().getDbLocation());
 
@@ -367,7 +367,7 @@ public class MetaDataReplicaManager {
 					}
 				}
 			}
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT,
 					"Removed one or more replica locations because they couldn't be contacted for the last update.");
 		}
 
@@ -375,7 +375,7 @@ public class MetaDataReplicaManager {
 
 		// Check that there is a sufficient replication factor.
 		if (!isSystemTable && metaDataReplicationEnabled && (replicas.size() < managerStateReplicationFactor)) {
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Insufficient replication factor (" + replicas.size() + "<"
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Insufficient replication factor (" + replicas.size() + "<"
 					+ managerStateReplicationFactor + ") of Table Manager State on " + db.getURL());
 			replicateMetaDataIfPossible(db.getSystemTableReference(), isSystemTable);
 		}

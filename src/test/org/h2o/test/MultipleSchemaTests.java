@@ -44,7 +44,7 @@ public class MultipleSchemaTests extends TestBase {
 	 */
 	@Test
 	public void TestSystemTableAdd(){
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 
 		try{
 
@@ -79,7 +79,7 @@ public class MultipleSchemaTests extends TestBase {
 	 */
 	@Test
 	public void TestSystemTableDrop(){
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 
 
 		try{
@@ -137,7 +137,7 @@ public class MultipleSchemaTests extends TestBase {
 	 */
 	@Test
 	public void TestSystemTableDropSchema(){
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 		try{
 
 			sa.execute("CREATE SCHEMA SCHEMA2");
@@ -196,7 +196,7 @@ public class MultipleSchemaTests extends TestBase {
 	 */
 	@Test
 	public void CreateMultipleTestTablesLocal(){
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 		try{
 
 			sa.execute("CREATE SCHEMA SCHEMA2");
@@ -239,7 +239,7 @@ public class MultipleSchemaTests extends TestBase {
 	 */
 	@Test
 	public void CreateMultipleTestReplicas(){
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 
 		try{
 
@@ -284,7 +284,7 @@ public class MultipleSchemaTests extends TestBase {
 	 */
 	@Test
 	public void TestTableDoesntExist(){
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 		try{
 
 			sa.execute("SELECT * FROM SCEMA2.TEST");
@@ -304,7 +304,7 @@ public class MultipleSchemaTests extends TestBase {
 	 */
 	@Test
 	public void TestTableDoesntExistForReplica(){
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 		try{
 
 			sb.execute("CREATE REPLICA SCEMA2.TEST;");
@@ -324,7 +324,7 @@ public class MultipleSchemaTests extends TestBase {
 	 */
 	@Test
 	public void TestTableDoesntExistForReplica2(){
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 		try{
 
 			sb.execute("CREATE REPLICA SCEMA2;");
@@ -344,7 +344,7 @@ public class MultipleSchemaTests extends TestBase {
 	 */
 	@Test
 	public void ReplicateSchema(){
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 		try{
 
 			sa.execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");

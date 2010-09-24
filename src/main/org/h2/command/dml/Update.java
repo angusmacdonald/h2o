@@ -64,12 +64,10 @@ public class Update extends Prepared {
 	 * @param expression
 	 *            the expression
 	 */
-	public void setAssignment(Column column, Expression expression)
-			throws SQLException {
+	public void setAssignment(Column column, Expression expression) throws SQLException {
 		int id = column.getColumnId();
 		if (expressions[id] != null) {
-			throw Message.getSQLException(ErrorCode.DUPLICATE_COLUMN_NAME_1,
-					column.getName());
+			throw Message.getSQLException(ErrorCode.DUPLICATE_COLUMN_NAME_1, column.getName());
 		}
 		expressions[id] = expression;
 		if (expression instanceof Parameter) {
@@ -90,8 +88,7 @@ public class Update extends Prepared {
 			/*
 			 * (QUERY PROPAGATED TO ALL REPLICAS).
 			 */
-			if (isRegularTable()
-					&& ((queryProxy != null && queryProxy.getNumberOfReplicas() > 1) || !isReplicaLocal(queryProxy))) {
+			if (isRegularTable() && ((queryProxy != null && queryProxy.getNumberOfReplicas() > 1) || !isReplicaLocal(queryProxy))) {
 
 				String sql = null;
 				if (isPreparedStatement()) {
@@ -101,10 +98,7 @@ public class Update extends Prepared {
 				}
 
 				if (queryProxy == null)
-					queryProxy = new QueryProxy(session.getDatabase()
-							.getLocalDatabaseInstanceInWrapper()); // in case of
-																	// MERGE
-																	// statement.
+					queryProxy = new QueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper()); // in case of MERGE statement.
 				return queryProxy.executeUpdate(sql, transactionName, session);
 			}
 
@@ -117,9 +111,7 @@ public class Update extends Prepared {
 			while (tableFilter.next()) {
 				checkCanceled();
 				setCurrentRowNumber(count + 1);
-				if (condition == null
-						|| Boolean.TRUE.equals(condition
-								.getBooleanValue(session))) {
+				if (condition == null || Boolean.TRUE.equals(condition.getBooleanValue(session))) {
 					Row oldRow = tableFilter.get();
 					Row newRow = table.getTemplateRow();
 					for (int i = 0; i < columnCount; i++) {
@@ -129,12 +121,10 @@ public class Update extends Prepared {
 							newValue = oldRow.getValue(i);
 						} else if (newExpr == ValueExpression.getDefault()) {
 							Column column = table.getColumn(i);
-							Expression defaultExpr = column
-									.getDefaultExpression();
+							Expression defaultExpr = column.getDefaultExpression();
 							Value v;
 							if (defaultExpr == null) {
-								v = column.validateConvertUpdateSequence(
-										session, null);
+								v = column.validateConvertUpdateSequence(session, null);
 							} else {
 								v = defaultExpr.getValue(session);
 							}
@@ -142,8 +132,7 @@ public class Update extends Prepared {
 							newValue = v.convertTo(type);
 						} else {
 							Column column = table.getColumn(i);
-							newValue = newExpr.getValue(session).convertTo(
-									column.getType());
+							newValue = newExpr.getValue(session).convertTo(column.getType());
 						}
 						newRow.setValue(i, newValue);
 					}
@@ -182,8 +171,8 @@ public class Update extends Prepared {
 	}
 
 	/**
-	 * Adjusts the sqlStatement string to be a valid prepared statement. This is
-	 * used when propagating prepared statements within the system.
+	 * Adjusts the sqlStatement string to be a valid prepared statement. This is used when propagating prepared statements within the
+	 * system.
 	 * 
 	 * @param sql
 	 * @return
@@ -216,8 +205,7 @@ public class Update extends Prepared {
 			Column[] columns = table.getColumns();
 
 			/*
-			 * 'Expressions' stores all of the expressions being set by this
-			 * update. The expression will be null if nothing is being set.
+			 * 'Expressions' stores all of the expressions being set by this update. The expression will be null if nothing is being set.
 			 * 'Condition' stores the set condition.
 			 */
 			for (int i = 0; i < (expressions.length); i++) {
@@ -234,8 +222,7 @@ public class Update extends Prepared {
 			Comparison comparison = ((Comparison) condition);
 			Expression setExpression = comparison.getExpression(false);
 
-			evaluateExpression(setExpression, values, y,
-					setExpression.getType(), expr);
+			evaluateExpression(setExpression, values, y, setExpression.getType(), expr);
 
 			// Edit the SQL String
 			// Example: update bahrain set Name=? where ID=? {1: 'PILOT_1', 2:
@@ -264,12 +251,10 @@ public class Update extends Prepared {
 		return sql;
 	}
 
-	private void evaluateExpression(Expression e, String[] values, int i,
-			int colummType, Expression[] expr) throws SQLException {
+	private void evaluateExpression(Expression e, String[] values, int i, int colummType, Expression[] expr) throws SQLException {
 		// Only add the expression if it is unspecified in the query (there will
 		// be an instance of parameter somewhere).
-		if (e != null && e instanceof Parameter
-				|| ((e instanceof Operation) && e.toString().contains("?"))) {
+		if (e != null && e instanceof Parameter || ((e instanceof Operation) && e.toString().contains("?"))) {
 			// e can be null (DEFAULT)
 			e = e.optimize(session);
 			try {
@@ -340,25 +325,21 @@ public class Update extends Prepared {
 	 * @see org.h2.command.Prepared#acquireLocks()
 	 */
 	@Override
-	public void acquireLocks(QueryProxyManager queryProxyManager)
-			throws SQLException {
+	public void acquireLocks(QueryProxyManager queryProxyManager) throws SQLException {
 		/*
 		 * (QUERY PROPAGATED TO ALL REPLICAS).
 		 */
 		if (isRegularTable()) {
 
-			queryProxy = queryProxyManager.getQueryProxy(tableFilter.getTable()
-					.getFullName());
+			queryProxy = queryProxyManager.getQueryProxy(tableFilter.getTable().getFullName());
 
-			if (queryProxy == null) {
-				queryProxy = QueryProxy.getQueryProxyAndLock(
-						tableFilter.getTable(), LockType.WRITE,
-						session.getDatabase());
+			if (queryProxy == null || !queryProxy.getLockGranted().equals(LockType.WRITE)) {
+				queryProxy = QueryProxy.getQueryProxyAndLock(tableFilter.getTable(), LockType.WRITE, session.getDatabase());
 			}
 			queryProxyManager.addProxy(queryProxy);
 		} else {
 			queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper()));
-		}	
+		}
 	}
 
 	/*
@@ -368,10 +349,8 @@ public class Update extends Prepared {
 	 */
 	@Override
 	protected boolean isRegularTable() {
-		boolean isLocal = session.getDatabase().isTableLocal(
-				tableFilter.getTable().getSchema());
-		return Constants.IS_H2O && !session.getDatabase().isManagementDB()
-				&& !internalQuery && !isLocal;
+		boolean isLocal = session.getDatabase().isTableLocal(tableFilter.getTable().getSchema());
+		return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery && !isLocal;
 	}
 
 }

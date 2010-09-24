@@ -79,7 +79,7 @@ public class CustomSettingsTests extends TestBase{
 	 */
 	@Test
 	public void ReplicaAutomaticallyCreated() throws SQLException, InterruptedException{
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 
 
 		try{

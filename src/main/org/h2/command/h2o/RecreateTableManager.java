@@ -107,7 +107,7 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
 			e.printStackTrace();
 		}
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, ti + " recreated on "
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, ti + " recreated on "
 				+ db.getURL() + ".");
 
 		systemTableReference.addNewTableManagerReference(ti, tm);

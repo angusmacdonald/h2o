@@ -55,7 +55,7 @@ public class LocatorTests{
 
 	@BeforeClass
 	public static void initialSetUp(){
-		Diagnostic.setLevel(DiagnosticLevel.FULL);
+		Diagnostic.setLevel(DiagnosticLevel.INIT);
 		Constants.IS_TEST = true;
 		Constants.IS_NON_SM_TEST = false;
 

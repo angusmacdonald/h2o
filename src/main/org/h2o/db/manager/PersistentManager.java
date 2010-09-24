@@ -262,15 +262,17 @@ public abstract class PersistentManager {
 	}
 
 	public void persistInactiveInformation(TableInfo tableDetails, Set<DatabaseInstanceWrapper> newlyInactiveReplicas) {
+		if (newlyInactiveReplicas == null || newlyInactiveReplicas.size() == 0) return;
+		
 		persistReplicaActiveInformation(tableDetails, newlyInactiveReplicas, false);
 		
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Set " + newlyInactiveReplicas.size() + " replicas as inactive");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Set " + newlyInactiveReplicas.size() + " replicas as inactive");
 	}
 
 	public void persistActiveInformation(TableInfo tableDetails, Set<DatabaseInstanceWrapper> newlyInactiveReplicas) {
 		persistReplicaActiveInformation(tableDetails, newlyInactiveReplicas, true);
 		
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Set " + newlyInactiveReplicas.size() + " replicas as active");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Set " + newlyInactiveReplicas.size() + " replicas as active");
 	}
 
 	private void persistReplicaActiveInformation(TableInfo tableDetails, Set<DatabaseInstanceWrapper> newlyInactiveReplicas, boolean active) {
@@ -749,7 +751,7 @@ public abstract class PersistentManager {
 	 *            New location of the Table Manager.
 	 */
 	public void changeTableManagerLocation(TableInfo tableInfo) {
-		// Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
+		// Diagnostic.traceNoEvent(DiagnosticLevel.INIT,
 		// "About to update the location of the Table Manager " + tableInfo +
 		// ".");
 

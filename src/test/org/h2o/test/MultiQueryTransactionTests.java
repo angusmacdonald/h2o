@@ -17,6 +17,7 @@
  */
 package org.h2o.test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.sql.Connection;
@@ -32,8 +33,6 @@ import org.h2.tools.Server;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.locator.server.LocatorServer;
 import org.junit.Test;
-
-import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
@@ -938,58 +937,152 @@ public class MultiQueryTransactionTests extends TestBase {
 			mStmt.setInt(5, 400);
 			mStmt.addBatch();
 
-
 			ResultSet rs = ca.createStatement().executeQuery("select * from australia");
 
 			/*
 			 * H2O used to throw an error here because the prepared statement command would use the 'CALL AUTOCOMMIT()' query to find
 			 * whether auto commit was on, and this call would somehow result in a commit being made.
 			 */
-			if (rs.next()){
+			if (rs.next()) {
 				fail("The table shouldn't have any entries yet. Update hasn't happened.");
 			}
-			
+
 			System.err.println("About to execute batch.");
 			mStmt.executeBatch();
 			System.err.println("Executed batch.");
-			
-			
+
 			System.err.println("About to execute select.");
-			
+
 			rs = cb.createStatement().executeQuery("select * from australia");
 
 			System.err.println("Executed select.");
-			
-			
-//			if (rs.next()){
-//				ErrorHandling.errorNoEvent("Contents:" + rs.getString(2));
-//				fail("The table shouldn't have any entries yet. Update hasn't committed.");
-//			}
-			
+
+			// if (rs.next()){
+			// ErrorHandling.errorNoEvent("Contents:" + rs.getString(2));
+			// fail("The table shouldn't have any entries yet. Update hasn't committed.");
+			// }
+
 			ca.commit();
 
 			ca.setAutoCommit(false);
 
 			rs = ca.createStatement().executeQuery("select * from australia");
 
-			if (!rs.next()){
+			if (!rs.next()) {
 				fail("The table should have one entry.");
 			}
-			
+
 			ca.setAutoCommit(false);
 
 			ca.createStatement().execute("drop table australia");
-			
-			ca.createStatement().execute("create table australia (ID  INTEGER NOT NULL, Name VARCHAR(100), FirstName VARCHAR(100), Points INTEGER, LicenseID INTEGER, PRIMARY KEY(ID))");
-			
+
+			ca.createStatement()
+					.execute(
+							"create table australia (ID  INTEGER NOT NULL, Name VARCHAR(100), FirstName VARCHAR(100), Points INTEGER, LicenseID INTEGER, PRIMARY KEY(ID))");
+
 			ca.commit();
 
-			
 		} catch (SQLException ex) {
 			ex.printStackTrace();
 			fail("Unexpected SQL Exception was thrown. Not cool.");
 		}
 	}
+
+	/**
+	 * Tests that the system can cope with a large number of inserts onto a single table. It tries to recreate a bug where the row count
+	 * becomes incorrect on a table scan after a while.
+	 * 
+	 * @throws SQLException
+	 * @throws ClassNotFoundException 
+	 */
+	//@Test
+	public void largeNumberOfInsertsCoupleAtATime() throws SQLException, ClassNotFoundException {
+		// update bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
+		// createReplicaOnB();
+		/*
+		 * Reset the locator file. This test doesn't use the in-memory database.
+		 */
+		ls.setRunning(false);
+		while (!ls.isFinished()) {
+		}
+		;
+
+		ls = new LocatorServer(29999, "junitLocator");
+		ls.createNewLocatorFile();
+		ls.start();
+
+		try {
+			DeleteDbFiles.execute("db_data/unittests/", "schema_test", true);
+		} catch (SQLException e) {
+		}
+		Connection conn = null;
+		// start the server, allows to access the database remotely
+		Server server = null;
+		try {
+			server = Server.createTcpServer(new String[] { "-tcpPort", "9990", "-SMLocation",
+					"jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test" });
+			server.start();
+
+			Class.forName("org.h2.Driver");
+			conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test",
+					PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+
+			conn.setAutoCommit(true);
+			Statement sa = conn.createStatement();
+
+			sa.execute("create schema if not exists RESOURCE_MONITORING");
+
+			sa.execute("drop table if exists RESOURCE_MONITORING.PROCESS");
+			sa.execute("drop table if exists RESOURCE_MONITORING.SYS_INFO");
+
+			sa.execute(
+							"CREATE TABLE IF NOT EXISTS RESOURCE_MONITORING.SYS_INFO( machine_id VARCHAR(40), hostname VARCHAR(255), "
+									+ "primary_ip VARCHAR(15), cpu_vendor VARCHAR(100), cpu_model VARCHAR(100), num_cores TINYINT(2), num_cpus TINYINT(2), cpu_mhz INT, "
+									+ "cpu_cache_size BIGINT, os_name VARCHAR(255), os_version VARCHAR(100), "
+									+ "default_gateway VARCHAR(15), memory_total BIGINT, swap_total BIGINT, PRIMARY KEY (machine_id));");
+
+			sa.execute("INSERT INTO RESOURCE_MONITORING.SYS_INFO VALUES('"
+					+ "MY_MACHINE_ID" + "', '" + "data.hostname" + "', '"
+					+ "data.primary_ip" + "', '" + "data.cpu_vendor" + "', '"
+					+ "data.cpu_model" + "', " + 2 + ", "
+					+ "2" + ", " + "2000" + ", "
+					+ "-1" + ", '" + "data.os_name" + "', '"
+					+ "data.os_version" + "', '" + "gateway" + "', "
+					+ "2000" + ", " + "2000" + ");");
+			
+			sa.execute("CREATE TABLE IF NOT EXISTS RESOURCE_MONITORING.PROCESS( machine_id VARCHAR(40), start_ts TIMESTAMP, end_ts TIMESTAMP, measurements INT, "
+									+ "process_name VARCHAR(255), "
+									+ "process_start_time BIGINT, process_cpu_percent_avg DOUBLE, process_cpu_percent_min DOUBLE, process_cpu_percent_max DOUBLE, "
+									+ "process_mem_avg BIGINT, process_mem_min BIGINT,process_mem_max BIGINT,"
+									+ "process_resident_avg BIGINT, process_resident_min BIGINT, process_resident_max BIGINT"
+									+ ", FOREIGN KEY (machine_id) REFERENCES SYS_INFO(machine_id));");
+
+			int numberOfInserts = 5000000;
+			for (int i = 0; i < numberOfInserts; i++) {
+				String insert = "INSERT INTO RESOURCE_MONITORING.PROCESS VALUES('" + "MY_MACHINE_ID" + "',  '" + "2010-09-22" + "', '" + "2010-09-22"
+						+ "', " + 5 + ", '" + "num:" + i + "', '" + "000022442" + "', " + 0.2 + ", " + 0.2 + ", " + 0.2 + ", " + 3000
+						+ ", " + 3000 + ", " + 3000 + ", " + 3000 + ", " + 3000 + ", " + 3000 + ");";
+
+				sa.executeUpdate(insert);
+
+				System.out.println(i);
+			}
+
+			ResultSet rs = sa.executeQuery("select * from RESOURCE_MONITORING.PROCESS");
+
+			rs = sa.executeQuery("select count(*) from RESOURCE_MONITORING.PROCESS");
+
+			if (rs.next()) {
+				assertEquals(numberOfInserts, rs.getInt(1));
+			}
+			sa.execute("drop table if exists RESOURCE_MONITORING.PROCESS");
+		} catch (SQLException ex) {
+			ex.printStackTrace();
+			fail("Unexpected SQL Exception was thrown.");
+		}
+	}
+	
+
 
 	/*
 	 * ############### Utility Methods ###############

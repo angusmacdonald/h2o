@@ -44,7 +44,6 @@ import org.h2o.util.exceptions.MovedException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
-import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 /**
  * Manages query proxies where multiple instances are required in a single transaction.
@@ -243,9 +242,6 @@ public class QueryProxyManager {
 
 		endTransaction(commitedQueries, commit);
 
-
-
-
 		boolean commitActionSuccessful = sendCommitMessagesToReplicas(commit, h2oCommit, db, commitedQueries);
 
 		if (!commitActionSuccessful){
@@ -300,6 +296,8 @@ public class QueryProxyManager {
 	 * @return
 	 */
 	private boolean sendCommitMessagesToReplicas(boolean commit, boolean h2oCommit, Database db, Set<CommitResult> commitedQueries) {
+		if (!h2oCommit) return true; //the application has set auto-commit to true.
+		
 		String sql = (commit ? "commit" : "rollback") + ((h2oCommit) ? " TRANSACTION " + transactionName : ";");
 
 		AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor(db);

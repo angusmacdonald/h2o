@@ -53,7 +53,7 @@ public class MultiProcessTestBase extends TestBase {
 
 	@BeforeClass
 	public static void initialSetUp() {
-		Diagnostic.setLevel(DiagnosticLevel.FULL);
+		Diagnostic.setLevel(DiagnosticLevel.INIT);
 		Constants.IS_TEST = true;
 		Constants.IS_NON_SM_TEST = false;
 
@@ -145,12 +145,12 @@ public class MultiProcessTestBase extends TestBase {
 	}
 
 	protected void sleep(String message, int time) throws InterruptedException {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, message.toUpperCase() + " SLEEPING FOR " + time/1000 + " SECONDS.");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, message.toUpperCase() + " SLEEPING FOR " + time/1000 + " SECONDS.");
 		Thread.sleep(time);
 	}
 
 	protected void sleep(int time) throws InterruptedException {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, ">>>>> SLEEPING FOR " + time/1000 + " SECONDS.");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, ">>>>> SLEEPING FOR " + time/1000 + " SECONDS.");
 		Thread.sleep(time);
 	}
 
@@ -601,7 +601,7 @@ public class MultiProcessTestBase extends TestBase {
 			fail("Test failed to work as expected.");
 		} else {
 			p.destroy();
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Killed off the database process running " + instance);
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Killed off the database process running " + instance);
 		}
 	}
 

@@ -68,7 +68,7 @@ public class EventFileWriter implements EventHandler {
 	public List<String> readEventsFromFile() {
 		startRead();
 
-		// Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Reader reading:");
+		// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Reader reading:");
 
 		List<String> events = new LinkedList<String>();
 

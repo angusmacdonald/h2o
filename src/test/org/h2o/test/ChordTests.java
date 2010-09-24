@@ -55,7 +55,7 @@ public class ChordTests extends TestBase {
 
 	@BeforeClass
 	public static void initialSetUp(){
-		Diagnostic.setLevel(DiagnosticLevel.FULL);
+		Diagnostic.setLevel(DiagnosticLevel.INIT);
 		Constants.IS_TEST = true;
 		Constants.IS_NON_SM_TEST = false;
 
@@ -196,7 +196,7 @@ public class ChordTests extends TestBase {
 	 */
 	@Test
 	public void TableManagerMigration() throws InterruptedException {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 		try {
 			sas[1].executeUpdate("MIGRATE TABLEMANAGER test");
 
@@ -221,7 +221,7 @@ public class ChordTests extends TestBase {
 	 */
 	@Test
 	public void TableManagerMigrationFail() throws InterruptedException {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 		try {
 			sas[1].executeUpdate("MIGRATE TABLEMANAGER testy");
 			fail("Didn't work.");
@@ -231,7 +231,7 @@ public class ChordTests extends TestBase {
 
 	@Test
 	public void TableManagerMigrationWithCachedReference() throws InterruptedException {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 		try {
 			sas[0].executeUpdate("INSERT INTO TEST VALUES(7, '7');");
 			sas[1].executeUpdate("INSERT INTO TEST VALUES(6, '6');");
@@ -268,7 +268,7 @@ public class ChordTests extends TestBase {
 	 */
 	@Test
 	public void SystemTableMigration() throws InterruptedException {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 		try {
 			sas[1].executeUpdate("MIGRATE SYSTEMTABLE");
 
@@ -283,7 +283,7 @@ public class ChordTests extends TestBase {
 	@SuppressWarnings("deprecation")
 	@Test
 	public void SystemTableFailure() throws InterruptedException {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 		try {
 
 			dts[0].stop();
@@ -301,7 +301,7 @@ public class ChordTests extends TestBase {
 
 	@Test
 	public void FirstMachineDisconnect() throws InterruptedException {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "STARTING TEST");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 		try {
 			sas[0].close();
 			dts[0].getConnection().close();

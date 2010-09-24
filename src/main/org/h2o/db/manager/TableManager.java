@@ -279,7 +279,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 */
 	public static int createTableManagerTables(Session session) throws SQLException {
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Creating Table Manager tables.");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Creating Table Manager tables.");
 
 		String databaseName = session.getDatabase().getURL().sanitizedLocation().toUpperCase();
 		String sql = createSQL(getMetaTableName(databaseName, TableManager.TABLES),
@@ -386,7 +386,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		if (lockRequested == LockType.DROP){
 			/*
 			 * If a table is dropped then created again with auto-commit turned off the update ID given here is higher than it
-			 * is expected to be on the create table operation. This just resets the update ID on the preceeding drop.
+			 * is expected to be on the create table operation. This just resets the update ID on the preceding drop.
 			 * 
 			 *  The LockType of DROP is not used anywhere else, so the request is processed in the locking table as a write.
 			 */
@@ -485,7 +485,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 			if (currentReplicationFactor < relationReplicationFactor) {
 				// Couldn't replicate to enough machines.
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Insufficient number of machines available to reach a replication factor of "
+				Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Insufficient number of machines available to reach a replication factor of "
 						+ relationReplicationFactor + ". The table will be replicated on " + currentReplicationFactor + " instances.");
 			}
 
@@ -575,20 +575,19 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		 */
 
 		if (lockType == LockType.WRITE || asynchronousCommit){ //creates are viewed as writes in the locking table.
-			Set<DatabaseInstanceWrapper> changed = replicaManager.completeUpdate(commit, committedQueries, tableInfo, !asynchronousCommit);
+			Set<DatabaseInstanceWrapper> newlyInactive = replicaManager.completeUpdate(commit, committedQueries, tableInfo, !asynchronousCommit);
 
 			if (!asynchronousCommit){
 				//This is the first part of a query. Some replicas will be made inactive.
-				persistInactiveInformation(this.tableInfo, changed);
+				persistInactiveInformation(this.tableInfo, newlyInactive);
 
-				printCurrentActiveReplicas();
+				//printCurrentActiveReplicas();
 
 
 			} else {
 				//This is the asynchronous part of the query. Some replicas will be made active.
-
-				System.err.println("PERSISTING ACTIVE INFORMATION!!!!");
-				persistActiveInformation(this.tableInfo, changed);
+				
+				persistActiveInformation(this.tableInfo, newlyInactive);
 
 			}
 
@@ -598,7 +597,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	}
 
 	private void printCurrentActiveReplicas() {
-		if (Diagnostic.getLevel().equals(DiagnosticLevel.FULL)){
+		if (Diagnostic.getLevel().equals(DiagnosticLevel.INIT)){
 
 			String databaseName = db.getURL().sanitizedLocation();
 			String sql = "SELECT LOCAL ONLY " +  "connection_type, machine_name, db_location, connection_port, chord_port, " + 
@@ -610,7 +609,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 			try {
 
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Current Active Replicas for table: " + this.tableName); 
+				Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Current Active Replicas for table: " + this.tableName); 
 				LocalResult rs = executeQuery(sql);
 
 				while (rs.next()) {
@@ -618,7 +617,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 					DatabaseURL dbURL = new DatabaseURL(rs.currentRow()[0].getString(), rs.currentRow()[1].getString(),
 							rs.currentRow()[3].getInt(), rs.currentRow()[2].getString(), false, rs.currentRow()[4].getInt());
 
-					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\tLocation: " + dbURL + "; tableID = " + rs.currentRow()[5].getString() + "; connectionID = " + rs.currentRow()[6].getString()); 
+					Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "\tLocation: " + dbURL + "; tableID = " + rs.currentRow()[5].getString() + "; connectionID = " + rs.currentRow()[6].getString()); 
 
 				}
 			} catch (SQLException e) {
@@ -663,7 +662,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 	private void preMethodTest() throws RemoteException, MovedException {
 		if (hasMoved || shutdown) {
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Table Manager has moved. Throwing MovedException.");
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Table Manager has moved. Throwing MovedException.");
 			throw new MovedException(movedLocation);
 		}
 		/*
@@ -902,7 +901,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 			replicaLocation.setActive(alive); // even dead replicas must be recorded.
 			replicaLocations.add(replicaLocation);
 
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Active replica for " + tableName + " found on " + dbURL);
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Active replica for " + tableName + " found on " + dbURL);
 
 		}
 
@@ -964,4 +963,11 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		}
 	}
 
+	@Override
+	public String toString() {
+		return "TableManager [fullName=" + fullName + ", lockingTable=" + lockingTable + "]";
+	}
+
+	
+	
 }

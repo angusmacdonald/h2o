@@ -168,14 +168,14 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
 
 		if (localMachineHoldsSystemTableState) {
 			// Re-instantiate the System Table on this node
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, db.getURL() + ": A copy of the System Table state exists on " + db.getURL()
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, db.getURL() + ": A copy of the System Table state exists on " + db.getURL()
 					+ ". It will be re-instantiated here.");
 			SystemTableRemote newSystemTable = stReference.migrateSystemTableToLocalInstance(true, true); // throws SystemTableCreationException if it fails.
 			newSystemTableWrapper = new SystemTableWrapper(newSystemTable, db.getURL());
 
 		} else {
 
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, db.getURL() + ": Attempting to find another machine which can re-instantiate the System Table.");
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, db.getURL() + ": Attempting to find another machine which can re-instantiate the System Table.");
 
 			/*
 			 * Try to find an active instance with System Table state.
@@ -225,7 +225,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
 	 * @throws LocatorException
 	 */
 	private SystemTableWrapper tryToFindSystemTableViaLocator() throws SQLException, LocatorException {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, db.getURL() + ": Attempting to fix a broken System Table connection.");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, db.getURL() + ": Attempting to fix a broken System Table connection.");
 
 		List<String> locatorLocations = getActiveSystemTableLocationsFromLocator();
 
@@ -298,7 +298,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
 
 	private DatabaseInstanceRemote lookForDatabaseInstanceAt(IDatabaseRemote iDatabaseRemote, DatabaseURL url) throws RemoteException {
 		DatabaseInstanceRemote databaseInstance;
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Looking for database instance at: " + url.getHostname() + ":" + url.getRMIPort());
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Looking for database instance at: " + url.getHostname() + ":" + url.getRMIPort());
 		databaseInstance = iDatabaseRemote.getDatabaseInstanceAt(url);
 		return databaseInstance;
 	}

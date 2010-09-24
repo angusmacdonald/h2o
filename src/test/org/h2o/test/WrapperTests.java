@@ -65,7 +65,7 @@ public class WrapperTests {
 
 	@Test
 	public void startSingleDatabaseInstance() throws InterruptedException{
-		Diagnostic.setLevel(DiagnosticLevel.FULL);
+		Diagnostic.setLevel(DiagnosticLevel.INIT);
 
 		int locatorPort = 29990;
 

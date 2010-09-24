@@ -256,7 +256,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 						int portToUse = currentPort++;
 						if (chordPort != null) {
-							Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Obtained chord port from disk: " + chordPort);
+							Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Obtained chord port from disk: " + chordPort);
 							portToUse = Integer.parseInt(chordPort);
 						}
 
@@ -410,7 +410,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				persistedInstanceInformation.saveAndClose();
 				((ChordNodeImpl) chordNode).addObserver(this);
 
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Successfully connected to an existing chord ring at " + url);
+				Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Successfully connected to an existing chord ring at " + url);
 				return true;
 			}
 
@@ -537,7 +537,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		this.rmiPort = port;
 
 		InetSocketAddress localChordAddress = new InetSocketAddress(hostname, port);
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Deploying new Chord ring on " + hostname + ":" + port);
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Deploying new Chord ring on " + hostname + ":" + port);
 
 		/*
 		 * Join the existing Chord Ring.
@@ -568,10 +568,10 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 		((ChordNodeImpl) chordNode).addObserver(this);
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Started local Chord node on : " + databaseURL.sanitizedLocation() + " : " + hostname
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Started local Chord node on : " + databaseURL.sanitizedLocation() + " : " + hostname
 				+ ":" + port + " : initialized with key :" + chordNode.getKey().toString(10) + " : " + chordNode.getKey()
 				+ " : System Table at " + this.systemTableRef.getLookupLocation() + " : ");
-		// Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
+		// Diagnostic.traceNoEvent(DiagnosticLevel.INIT,
 		// "System Table key: : : : :" +
 		// SystemTableReference.systemTableKey.toString(10) + " : " +
 		// SystemTableReference.systemTableKey);
@@ -597,7 +597,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	 */
 	private boolean joinChordRing(String localHostname, int localPort, String remoteHostname, int remotePort, String databaseName) {
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Trying to connect to existing Chord ring on " + remoteHostname + ":" + remotePort);
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Trying to connect to existing Chord ring on " + remoteHostname + ":" + remotePort);
 
 		this.rmiPort = localPort;
 
@@ -670,7 +670,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			e.printStackTrace();
 		}
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Started local Chord node on : " + databaseName + " : " + localHostname + " : "
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Started local Chord node on : " + databaseName + " : " + localHostname + " : "
 				+ rmiPort + " : initialized with key :" + chordNode.getKey().toString(10) + " : " + chordNode.getKey()
 				+ " : System Table at " + this.systemTableRef.getLookupLocation() + " : " + chordNode.getSuccessor().getKey());
 
@@ -690,7 +690,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	 */
 	@Override
 	public void update(Observable o, Object arg) {
-		// Diagnostic.traceNoEvent(DiagnosticLevel.FULL, arg);
+		// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, arg);
 
 		/*
 		 * If the predecessor of this node has changed.
@@ -773,7 +773,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			systemTableAlive = true;
 		} catch (Exception e) {
 			systemTableAlive = false;
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "The System Table is no longer accessible.");
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "The System Table is no longer accessible.");
 		}
 		return systemTableAlive;
 	}
@@ -897,16 +897,16 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	public void shutdown() {
 
 		if (inShutdown) {
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Chord node is already shutting down: " + chordNode);
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Chord node is already shutting down: " + chordNode);
 			return;
 		}
 
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Shutting down node: " + chordNode);
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Shutting down node: " + chordNode);
 
 		inShutdown = true;
 
 		if (chordNode == null) {
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT,
 					"Chord node was not initialized so the system is shutting down without transferring any active tables or managers.");
 			return;
 		}
@@ -949,7 +949,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 							&& dmr.getReplicaManager().getNumberOfReplicas() == 1) {
 						// This machine holds the only replica - replicate on
 						// the successor as well.
-						Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Replicating table [" + wrapper.getTableInfo().getFullTableName()
+						Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Replicating table [" + wrapper.getTableInfo().getFullTableName()
 								+ "] to successor: " + successor);
 
 						successorDB.executeUpdate("CREATE REPLICA " + wrapper.getTableInfo().getFullTableName() + ";", false);
@@ -961,7 +961,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 				 */
 				for (TableManagerWrapper wrapper : localManagers) {
 
-					Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Migrating Table Manager [" + wrapper.getTableInfo().getFullTableName()
+					Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Migrating Table Manager [" + wrapper.getTableInfo().getFullTableName()
 							+ "] to successor: " + successor);
 
 					successorDB.executeUpdate("MIGRATE TABLEMANAGER " + wrapper.getTableInfo().getFullTableName(), false);
@@ -984,7 +984,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
 			// Migrate the System Table to this node before shutdown.
 			try {
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Migrating System Table to successor: " + successor);
+				Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Migrating System Table to successor: " + successor);
 				successorDB = getDatabaseInstanceAt(successor);
 
 				successorDB.executeUpdate("MIGRATE SYSTEMTABLE", false);

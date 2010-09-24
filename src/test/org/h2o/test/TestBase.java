@@ -71,7 +71,7 @@ public class TestBase {
 		Constants.IS_TEAR_DOWN = false; 
 		Constants.IS_NON_SM_TEST = true;
 
-		Diagnostic.setLevel(DiagnosticLevel.FULL);
+		Diagnostic.setLevel(DiagnosticLevel.INIT);
 
 		LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"));
 
@@ -340,17 +340,19 @@ public class TestBase {
 	 * Create a replica on the second test database.
 	 * @throws SQLException
 	 */
-	protected void createReplicaOnB() throws SQLException {
+	protected void createReplicaOnB(String tableName) throws SQLException {
 		/*
 		 * Create replica on B.
 		 */
-		sb.execute("CREATE REPLICA TEST;");
+		sb.execute("CREATE REPLICA " + tableName + ";");
 
 		if (sb.getUpdateCount() != 0){
 			fail("Expected update count to be '0'");
 		}
 	}
-
+	protected void createReplicaOnB() throws SQLException {
+		createReplicaOnB("TEST");
+	}
 
 	/**
 	 * Validate the result of a query on the first replica against expected values by selecting

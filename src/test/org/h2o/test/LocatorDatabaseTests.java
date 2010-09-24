@@ -81,7 +81,7 @@ public class LocatorDatabaseTests extends TestBase {
 
 	@BeforeClass
 	public static void initialSetUp(){
-		Diagnostic.setLevel(DiagnosticLevel.FULL);
+		Diagnostic.setLevel(DiagnosticLevel.INIT);
 		Constants.IS_TEST = true;
 		Constants.IS_NON_SM_TEST = false;
 
@@ -492,7 +492,7 @@ public class LocatorDatabaseTests extends TestBase {
 	}
 
 	private void sleep(int time) throws InterruptedException {
-		Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "About to sleep for " + time/1000 + " seconds.");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "About to sleep for " + time/1000 + " seconds.");
 		Thread.sleep(time);
 	}
 	
@@ -848,7 +848,7 @@ public class LocatorDatabaseTests extends TestBase {
 			fail("Test failed to work as expected.");
 		} else {
 			p.destroy();
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Killed off the database process running " + instance);
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Killed off the database process running " + instance);
 		}
 	}
 

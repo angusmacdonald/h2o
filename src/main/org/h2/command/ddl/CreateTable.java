@@ -350,7 +350,7 @@ public class CreateTable extends SchemaCommand {
 			/*
 			 * If true, this table should be immediately replicated onto a number of other instances.
 			 */
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Creating replica of table " + tableInfo.getFullTableName() + " onto "
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Creating replica of table " + tableInfo.getFullTableName() + " onto "
 					+ (queryProxy.getReplicaLocations().size() - 1) + " other instances.");
 
 			String sql = sqlStatement.substring("CREATE TABLE".length());

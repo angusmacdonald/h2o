@@ -151,7 +151,7 @@ public class Transaction {
 		}
 
 		if (transactionHasCommitted){ //Send all new commits to the table manager.
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Asynchronous updates completed for transaction '" + transactionID + "'.");
+			//Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Asynchronous updates completed for transaction '" + transactionID + "'.");
 			commit(recentlyCompletedCommits, db);
 
 			return (incompleteQueries.size() == 0);

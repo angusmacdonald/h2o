@@ -97,7 +97,7 @@ public class H2SimpleTest {
 			sql = sql.trim();
 
 
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Query: " + sql);
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Query: " + sql);
 
 			try {
 

@@ -67,7 +67,7 @@ public class EventWorker extends Thread {
 
 		try {
 			try { // ends with 'finally' to close the socket connection.
-				// Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
+				// Diagnostic.traceNoEvent(DiagnosticLevel.INIT,
 				// "Created new LocatorConnectionHandler thread.");
 
 				// Get single-line request from the client.

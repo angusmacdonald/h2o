@@ -63,7 +63,7 @@ public class EventServer extends Thread {
 				ss = new ServerSocket(port);
 
 				ss.setSoTimeout(500);
-				Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
+				Diagnostic.traceNoEvent(DiagnosticLevel.INIT,
 						"Server listening on port " + port + ", event log at '"
 								+ eventHandler + "'.");
 
@@ -103,7 +103,7 @@ public class EventServer extends Thread {
 	 */
 	public static void main(String[] args) {
 
-		Diagnostic.setLevel(DiagnosticLevel.FULL);
+		Diagnostic.setLevel(DiagnosticLevel.INIT);
 		EventServer server = new EventServer(EVENT_SERVER_PORT, new EventFileWriter("eventlog.txt"));
 		server.start();
 	}
