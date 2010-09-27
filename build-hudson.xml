@@ -1,6 +1,6 @@
 <project>
 
-	<target name="build" depends="do-init-release, do-compile, do-test, project-jar, release-doc" />
+	<target name="build" depends="do-init-release, do-compile, do-test, project-jar, release-doc, do-checkstyle, do-findbugs, do-pmd, do-cpd" />
 
 	<!-- Initialise release directory structure. -->
 	<target name="do-init-release">
@@ -54,7 +54,59 @@
 		</javadoc>
 	</target>
 	
-	<property name="lib-junit-4.1"        location="/projects/systems/InstallerSoftware/junit4.1/junit-4.1.jar" />
+	<!-- Run style check. -->
+	<target name="do-checkstyle">
+		<taskdef resource="checkstyletask.properties" classpath="${lib-checkstyle}"/>
+		<checkstyle config="checkstyle-config.xml" failOnViolation="false">
+			<formatter type="xml" tofile="checkstyle-result.xml" />
+			<fileset dir="src" includes="**/*.java" />
+			<classpath path="${classpath}" />
+		</checkstyle>
+	</target>
+	
+	<!-- Run bug scan. -->
+	<target name="do-findbugs">
+		<taskdef name="findbugs" classname="edu.umd.cs.findbugs.anttask.FindBugsTask">
+			<classpath><pathelement location="${lib-findbugs}"/></classpath>
+		</taskdef>
+	    <findbugs home="${hudson-tools-lib-dir}" output="xml:withMessages" outputFile="findbugs.xml" excludeFilter="findbugs-exclude.xml">
+	        <auxClasspath path="${classpath}" />
+	        <sourcePath path="src" />
+	        <class location="bin/h2o.jar" />
+	    </findbugs>
+    </target>
+	
+	<!-- Run PMD check. -->
+	<target name="do-pmd">
+		<taskdef name="pmd" classname="net.sourceforge.pmd.ant.PMDTask">
+			<classpath><pathelement location="${lib-pmd}"/></classpath>
+		</taskdef>
+	    <pmd rulesetfiles="rulesets/favorites.xml, rulesets/basic.xml, rulesets/controversial.xml, rulesets/naming.xml, rulesets/strings.xml">
+	        <formatter type="xml" toFile="pmd.xml"/>
+	        <fileset dir="src">
+	            <include name="**/*.java"/>
+	        </fileset>
+	    </pmd>
+	</target>
+	
+	<!-- Run duplicate code check. -->
+	<target name="do-cpd">
+	    <taskdef name="cpd" classname="net.sourceforge.pmd.cpd.CPDTask">
+			<classpath><pathelement location="${lib-pmd}"/></classpath>
+		</taskdef>
+	    <cpd minimumTokenCount="100" format="xml" outputFile="cpd.xml">
+	        <fileset dir="src">
+	            <include name="**/*.java"/>
+	        </fileset>
+	    </cpd>
+	</target>
+
+	<property name="hudson-tools-lib-dir"  location="../../hudson_tools/lastStable/archive/lib" />
+	
+	<property name="lib-junit"             location="${hudson-tools-lib-dir}/junit-4.8.2.jar" />
+	<property name="lib-findbugs"          location="${hudson-tools-lib-dir}/findbugs-ant.jar" />
+	<property name="lib-checkstyle"        location="${hudson-tools-lib-dir}/checkstyle-5.2-all.jar" />
+	<property name="lib-pmd"               location="${hudson-tools-lib-dir}/pmd-4.2.5.jar" />
 
 	<property name="lib-nds"              location="../../nds/lastStable/archive/bin/nds.jar" />
 	<property name="lib-stachord"         location="../../stachord/lastStable/archive/bin/stachord.jar" />
@@ -66,7 +118,7 @@
 	<property name="lib-servlet"          location="ext/servlet-api-2.4.jar" />
 	<property name="lib-slf4j"            location="ext/slf4j-api-1.5.0.jar" />
 
-	<property name="classpath"            value="${lib-nds}:${lib-stachord}:${lib-junit-4.1}:${lib-tools}:${lib-mindterm}:${lib-lucene}:${lib-osgi}:${lib-servlet}:${lib-slf4j}" />
+	<property name="classpath"            value="${lib-nds}:${lib-stachord}:${lib-junit}:${lib-tools}:${lib-mindterm}:${lib-lucene}:${lib-osgi}:${lib-servlet}:${lib-slf4j}" />
     <property name="doc-java"             value="http://download-llnw.oracle.com/javase/6/docs/api/" />
 
 </project>
