@@ -101,12 +101,12 @@
 	    </cpd>
 	</target>
 
-	<property name="hudson-tools-lib-dir"  location="../../hudson_tools/lastStable/archive/lib" />
+	<property name="hudson-tools-lib-dir" location="../../hudson_tools/lastStable/archive/lib" />
 	
-	<property name="lib-junit"             location="${hudson-tools-lib-dir}/junit-4.8.2.jar" />
-	<property name="lib-findbugs"          location="${hudson-tools-lib-dir}/findbugs-ant.jar" />
-	<property name="lib-checkstyle"        location="${hudson-tools-lib-dir}/checkstyle-5.2-all.jar" />
-	<property name="lib-pmd"               location="${hudson-tools-lib-dir}/pmd-4.2.5.jar" />
+	<property name="lib-junit"            location="${hudson-tools-lib-dir}/junit-4.8.2.jar" />
+	<property name="lib-findbugs"         location="${hudson-tools-lib-dir}/findbugs-ant.jar" />
+	<property name="lib-checkstyle"       location="${hudson-tools-lib-dir}/checkstyle-5.2-all.jar" />
+	<property name="lib-pmd"              location="${hudson-tools-lib-dir}/pmd-4.2.5.jar" />
 
 	<property name="lib-nds"              location="../../nds/lastStable/archive/bin/nds.jar" />
 	<property name="lib-stachord"         location="../../stachord/lastStable/archive/bin/stachord.jar" />
