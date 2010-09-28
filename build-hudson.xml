@@ -59,7 +59,7 @@
 		<taskdef resource="checkstyletask.properties" classpath="${lib-checkstyle}"/>
 		<checkstyle config="checkstyle-config.xml" failOnViolation="false">
 			<formatter type="xml" tofile="checkstyle-result.xml" />
-			<fileset dir="src" includes="**/*.java" />
+			<fileset dir="src/main/org/h2o" includes="**/*.java" />
 			<classpath path="${classpath}" />
 		</checkstyle>
 	</target>
