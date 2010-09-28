@@ -83,7 +83,7 @@
 		</taskdef>
 	    <pmd rulesetfiles="rulesets/favorites.xml, rulesets/basic.xml, rulesets/controversial.xml, rulesets/naming.xml, rulesets/strings.xml">
 	        <formatter type="xml" toFile="pmd.xml"/>
-	        <fileset dir="src">
+	        <fileset dir="src/main/org/h2o">
 	            <include name="**/*.java"/>
 	        </fileset>
 	    </pmd>
@@ -95,7 +95,7 @@
 			<classpath><pathelement location="${lib-pmd}"/></classpath>
 		</taskdef>
 	    <cpd minimumTokenCount="100" format="xml" outputFile="cpd.xml">
-	        <fileset dir="src">
+	        <fileset dir="src/main/org/h2o">
 	            <include name="**/*.java"/>
 	        </fileset>
 	    </cpd>
