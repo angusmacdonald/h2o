@@ -72,7 +72,7 @@
 	    <findbugs home="${hudson-tools-lib-dir}" output="xml:withMessages" outputFile="findbugs.xml" excludeFilter="findbugs-exclude.xml">
 	        <auxClasspath path="${classpath}" />
 	        <sourcePath path="src" />
-	        <class location="bin/h2o.jar" />
+	        <class location="bin/org/h2o" />
 	    </findbugs>
     </target>
 	
