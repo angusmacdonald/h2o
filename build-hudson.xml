@@ -71,7 +71,7 @@
 		</taskdef>
 	    <findbugs home="${hudson-tools-lib-dir}" output="xml:withMessages" outputFile="findbugs.xml" excludeFilter="findbugs-exclude.xml">
 	        <auxClasspath path="${classpath}" />
-	        <sourcePath path="src" />
+	        <sourcePath path="src/main/org/h2o" />
 	        <class location="bin/org/h2o" />
 	    </findbugs>
     </target>
