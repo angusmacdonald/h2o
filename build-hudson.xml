@@ -23,7 +23,7 @@
 	</target>
 
     <property name="compile-src-dir" value="src" />
-	<property name="compile-includes" value="src/**" />
+	<property name="compile-includes" value="**/*.java" />
     <property name="compile-dest-dir" value="bin" />
 
 
