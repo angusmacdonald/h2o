@@ -1,6 +1,19 @@
 <project>
 
+	<!-- This depends on the Hudson workspace structure. -->
+	<property name="hudson-tools-archive-dir" location="../../hudson_tools/lastStable/archive" />
+       
+	<import file="${hudson-tools-archive-dir}/build-common.xml"/>
+
 	<target name="build" depends="do-init-release, do-compile, do-test, project-jar, release-doc, do-checkstyle, do-findbugs, do-pmd, do-cpd" />
+
+
+	<property name="lib-lucene"           location="ext/lucene-core-2.2.0.jar" />
+	<property name="lib-osgi"             location="ext/org.osgi.core-1.2.0.jar" />
+	<property name="lib-servlet"          location="ext/servlet-api-2.4.jar" />
+	<property name="lib-slf4j"            location="ext/slf4j-api-1.5.0.jar" />
+
+	<property name="classpath"            value="${lib-nds}:${lib-stachord}:${lib-junit}:${lib-tools}:${lib-mindterm}:${lib-lucene}:${lib-osgi}:${lib-servlet}:${lib-slf4j}" />
 
 	<!-- Initialise release directory structure. -->
 	<target name="do-init-release">
@@ -54,16 +67,9 @@
 		</javadoc>
 	</target>
 	
-	<!-- Run style check. -->
-	<target name="do-checkstyle">
-		<taskdef resource="checkstyletask.properties" classpath="${lib-checkstyle}"/>
-		<checkstyle config="checkstyle-config.xml" failOnViolation="false">
-			<formatter type="xml" tofile="checkstyle-result.xml" />
-			<fileset dir="src/main/org/h2o" includes="**/*.java" />
-			<classpath path="${classpath}" />
-		</checkstyle>
-	</target>
-	
+
+    <property name="checkstyle-check-dir" value="src/main/org/h2o" />
+
 	<!-- Run bug scan. -->
 	<target name="do-findbugs">
 		<taskdef name="findbugs" classname="edu.umd.cs.findbugs.anttask.FindBugsTask">
@@ -101,24 +107,5 @@
 	    </cpd>
 	</target>
 
-	<property name="hudson-tools-lib-dir" location="../../hudson_tools/lastStable/archive/lib" />
-	
-	<property name="lib-junit"            location="${hudson-tools-lib-dir}/junit-4.8.2.jar" />
-	<property name="lib-findbugs"         location="${hudson-tools-lib-dir}/findbugs-ant.jar" />
-	<property name="lib-checkstyle"       location="${hudson-tools-lib-dir}/checkstyle-5.2-all.jar" />
-	<property name="lib-pmd"              location="${hudson-tools-lib-dir}/pmd-4.2.5.jar" />
-
-	<property name="lib-nds"              location="../../nds/lastStable/archive/bin/nds.jar" />
-	<property name="lib-stachord"         location="../../stachord/lastStable/archive/bin/stachord.jar" />
-	<property name="lib-mindterm"         location="../../nds/lastStable/archive/lib/mindterm.jar" />
-	<property name="lib-tools"            location="/usr/java/default/lib/tools.jar" />
-
-	<property name="lib-lucene"           location="ext/lucene-core-2.2.0.jar" />
-	<property name="lib-osgi"             location="ext/org.osgi.core-1.2.0.jar" />
-	<property name="lib-servlet"          location="ext/servlet-api-2.4.jar" />
-	<property name="lib-slf4j"            location="ext/slf4j-api-1.5.0.jar" />
-
-	<property name="classpath"            value="${lib-nds}:${lib-stachord}:${lib-junit}:${lib-tools}:${lib-mindterm}:${lib-lucene}:${lib-osgi}:${lib-servlet}:${lib-slf4j}" />
-    <property name="doc-java"             value="http://download-llnw.oracle.com/javase/6/docs/api/" />
 
 </project>
