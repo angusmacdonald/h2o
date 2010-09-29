@@ -13,7 +13,7 @@
 	<property name="lib-servlet"          location="ext/servlet-api-2.4.jar" />
 	<property name="lib-slf4j"            location="ext/slf4j-api-1.5.0.jar" />
 
-	<property name="classpath"            value="${lib-nds}:${lib-stachord}:${lib-junit}:${lib-tools}:${lib-mindterm}:${lib-lucene}:${lib-osgi}:${lib-servlet}:${lib-slf4j}" />
+	<property name="classpath"            value="bin:${lib-nds}:${lib-stachord}:${lib-junit}:${lib-tools}:${lib-mindterm}:${lib-lucene}:${lib-osgi}:${lib-servlet}:${lib-slf4j}" />
 
 	<!-- Initialise release directory structure. -->
 	<target name="do-init-release">
@@ -25,18 +25,9 @@
     <property name="compile-src-dir" value="src" />
 	<property name="compile-includes" value="**/*.java" />
     <property name="compile-dest-dir" value="bin" />
+	
+	<property name="test-name" value="org.h2o.run.CheckInTests" />
 
-
-	<!-- Run check-in tests. -->
-	<target name="do-test">
-		<junit fork="yes" clonevm="true" maxmemory="256m" printsummary="no" showoutput="yes" failureproperty="test-failed" errorproperty="test-failed" filtertrace="no">
-			<!-- Run tests with assertions enabled. -->
-			<jvmarg value="-ea" />
-			<formatter type="xml"/>
-			<classpath path="bin:${classpath}"/>
-			<test name="org.h2o.run.CheckInTests" todir="junit"/>
-		</junit>
-	</target>
 	
 	<!-- Generate project jar. -->
 	<target name="project-jar">
