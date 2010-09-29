@@ -69,6 +69,7 @@
 	
 
     <property name="checkstyle-check-dir" value="src/main/org/h2o" />
+    <property name="pmd-check-dir" value="src/main/org/h2o" />
 
 	<!-- Run bug scan. -->
 	<target name="do-findbugs">
@@ -81,19 +82,6 @@
 	        <class location="bin/org/h2o" />
 	    </findbugs>
     </target>
-	
-	<!-- Run PMD check. -->
-	<target name="do-pmd">
-		<taskdef name="pmd" classname="net.sourceforge.pmd.ant.PMDTask">
-			<classpath><pathelement location="${lib-pmd}"/></classpath>
-		</taskdef>
-	    <pmd rulesetfiles="rulesets/favorites.xml, rulesets/basic.xml, rulesets/controversial.xml, rulesets/naming.xml, rulesets/strings.xml">
-	        <formatter type="xml" toFile="pmd.xml"/>
-	        <fileset dir="src/main/org/h2o">
-	            <include name="**/*.java"/>
-	        </fileset>
-	    </pmd>
-	</target>
 	
 	<!-- Run duplicate code check. -->
 	<target name="do-cpd">
