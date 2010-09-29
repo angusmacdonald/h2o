@@ -7,6 +7,7 @@
 
 	<target name="build" depends="do-init-release, do-compile, do-test, project-jar, release-doc, do-checkstyle, do-findbugs, do-pmd, do-cpd" />
 
+	<!-- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! -->
 
 	<property name="lib-lucene"           location="ext/lucene-core-2.2.0.jar" />
 	<property name="lib-osgi"             location="ext/org.osgi.core-1.2.0.jar" />
@@ -15,19 +16,27 @@
 
 	<property name="classpath"            value="bin:${lib-nds}:${lib-stachord}:${lib-junit}:${lib-tools}:${lib-mindterm}:${lib-lucene}:${lib-osgi}:${lib-servlet}:${lib-slf4j}" />
 
+    <property name="checkstyle-check-dir" value="src/main/org/h2o" />
+    <property name="pmd-check-dir"        value="src/main/org/h2o" />
+	<property name="cpd-check-dir"        value="src/main/org/h2o" />
+
+	<property name="findbugs-src-dir"     value="src/main/org/h2o" />
+	<property name="findbugs-check-dir"   value="bin/org/h2o" />
+
+    <property name="compile-src-dir"      value="src" />
+	<property name="compile-includes"     value="**/*.java" />
+    <property name="compile-dest-dir"     value="bin" />
+	
+	<property name="test-name" value="org.h2o.run.CheckInTests" />
+
+	<!-- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! -->
+
 	<!-- Initialise release directory structure. -->
 	<target name="do-init-release">
 		<mkdir dir="bin" />
 		<mkdir dir="doc" />
 		<mkdir dir="junit" />
 	</target>
-
-    <property name="compile-src-dir" value="src" />
-	<property name="compile-includes" value="**/*.java" />
-    <property name="compile-dest-dir" value="bin" />
-	
-	<property name="test-name" value="org.h2o.run.CheckInTests" />
-
 	
 	<!-- Generate project jar. -->
 	<target name="project-jar">
@@ -48,16 +57,5 @@
 			<link href="${doc-java}" />
 		</javadoc>
 	</target>
-	
-
-    <property name="checkstyle-check-dir" value="src/main/org/h2o" />
-    <property name="pmd-check-dir" value="src/main/org/h2o" />
-
-	
-	<property name="findbugs-src-dir" value="src/main/org/h2o" />
-	<property name="findbugs-check-dir" value="bin/org/h2o" />
-	
-	<property name="cpd-check-dir" value="src/main/org/h2o" />
-
 
 </project>
