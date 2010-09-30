@@ -550,13 +550,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		} catch (RemoteException e) {
 			e.printStackTrace();
 			return false;
-		} catch (NotBoundException e) {
-			e.printStackTrace();
-			return false;
-		}
-
-		if (chordNode == null) {
-			ErrorHandling.hardError("Failed to create Chord Node.");
 		}
 
 		this.systemTableRef.setLookupLocation(chordNode.getSelfReference());
