@@ -25,7 +25,7 @@ import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.interfaces.TableManagerRemote;
 
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
-import uk.ac.standrews.cs.stachord.impl.ChordNodeImpl;
+import uk.ac.standrews.cs.stachord.interfaces.IChordNode;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 /**
@@ -102,7 +102,7 @@ public interface IChordInterface {
 	 * 
 	 * @return the chord node of the local database instance.
 	 */
-	public ChordNodeImpl getChordNode();
+	public IChordNode getChordNode();
 
 	/**
 	 * Bind the given Table Manager to the local registry. This isn't used to

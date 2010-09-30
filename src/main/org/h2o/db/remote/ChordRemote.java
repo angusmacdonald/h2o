@@ -59,7 +59,7 @@ import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
-import uk.ac.standrews.cs.stachord.impl.ChordNodeImpl;
+import uk.ac.standrews.cs.stachord.impl.ChordNodeFactory;
 import uk.ac.standrews.cs.stachord.interfaces.IChordNode;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
@@ -408,12 +408,11 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			if (connected) {
 				persistedInstanceInformation.setProperty("chordPort", rmiPort + "");
 				persistedInstanceInformation.saveAndClose();
-				((ChordNodeImpl) chordNode).addObserver(this);
+				chordNode.addObserver(this);
 
 				Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Successfully connected to an existing chord ring at " + url);
 				return true;
 			}
-
 		}
 
 		return false;
@@ -540,10 +539,10 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Deploying new Chord ring on " + hostname + ":" + port);
 
 		/*
-		 * Join the existing Chord Ring.
+		 * Create a new Chord Ring.
 		 */
 		try {
-			chordNode = new ChordNodeImpl(localChordAddress, null);
+			chordNode = ChordNodeFactory.createNode(localChordAddress);
 
 			if (Constants.IS_TEST) {
 				// allNodes.add(chordNode);
@@ -560,13 +559,13 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			ErrorHandling.hardError("Failed to create Chord Node.");
 		}
 
-		this.systemTableRef.setLookupLocation(chordNode.getProxy());
+		this.systemTableRef.setLookupLocation(chordNode.getSelfReference());
 
 		this.actualSystemTableLocation = databaseURL;
 
 		this.systemTableRef.setInKeyRange(true);
 
-		((ChordNodeImpl) chordNode).addObserver(this);
+		chordNode.addObserver(this);
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Started local Chord node on : " + databaseURL.sanitizedLocation() + " : " + hostname
 				+ ":" + port + " : initialized with key :" + chordNode.getKey().toString(10) + " : " + chordNode.getKey()
@@ -620,7 +619,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 																// returns
 																// false.
 			try {
-				chordNode = new ChordNodeImpl(localChordAddress, knownHostAddress);
+				chordNode = ChordNodeFactory.createNode(localChordAddress, knownHostAddress);
 			} catch (ConnectException e) { // database instance we're trying to
 											// connect to doesn't exist.
 				// e.printStackTrace();
@@ -695,9 +694,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		/*
 		 * If the predecessor of this node has changed.
 		 */
-		if (arg.equals(ChordNodeImpl.PREDECESSOR_CHANGE_EVENT))
+		if (arg.equals(IChordNode.PREDECESSOR_CHANGE_EVENT))
 			predecessorChangeEvent();
-		else if (arg.equals(ChordNodeImpl.SUCCESSOR_CHANGE_EVENT))
+		else if (arg.equals(IChordNode.SUCCESSOR_CHANGE_EVENT))
 			successorChangeEvent();
 	}
 
@@ -995,7 +994,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		}
 
 		if (!Constants.IS_NON_SM_TEST) {
-			((ChordNodeImpl) chordNode).shutDown();
+			chordNode.shutDown();
 		}
 	}
 
@@ -1004,8 +1003,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	 * 
 	 * @see org.h2.h2o.remote.IChordInterface#getChordNode()
 	 */
-	public ChordNodeImpl getChordNode() {
-		return (ChordNodeImpl) chordNode;
+	public IChordNode getChordNode() {
+		return chordNode;
 	}
 
 	/*
@@ -1076,7 +1075,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 	 * @see org.h2.h2o.remote.IChordInterface#getLocalChordReference()
 	 */
 	public IChordRemoteReference getLocalChordReference() {
-		return chordNode.getProxy();
+		return chordNode.getSelfReference();
 	}
 
 	/*
