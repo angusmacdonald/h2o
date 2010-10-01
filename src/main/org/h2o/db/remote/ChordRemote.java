@@ -542,7 +542,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 		 * Create a new Chord Ring.
 		 */
 		try {
-			chordNode = ChordNodeFactory.createNode(localChordAddress);
+			chordNode = ChordNodeFactory.createLocalNode(localChordAddress);
 
 			if (Constants.IS_TEST) {
 				// allNodes.add(chordNode);
@@ -612,7 +612,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 																// returns
 																// false.
 			try {
-				chordNode = ChordNodeFactory.createNode(localChordAddress, knownHostAddress);
+				chordNode = ChordNodeFactory.createLocalNode(localChordAddress);
+				chordNode.join(ChordNodeFactory.bindToRemoteNode(knownHostAddress));
+			
 			} catch (ConnectException e) { // database instance we're trying to
 											// connect to doesn't exist.
 				// e.printStackTrace();
