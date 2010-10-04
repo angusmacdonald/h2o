@@ -5,7 +5,7 @@
        
 	<import file="${hudson-tools-archive-dir}/build-common.xml"/>
 
-	<target name="build" depends="do-init-release, do-compile, do-test, project-jar, release-doc, do-checkstyle, do-findbugs, do-pmd, do-cpd" />
+	<target name="build" depends="do-init-release, do-compile, do-test, project-jar, release-doc, do-checkstyle, do-findbugs, do-pmd, do-cpd, do-highlight" />
 
 	<!-- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! -->
 
@@ -34,6 +34,7 @@
 	<!-- Initialise release directory structure. -->
 	<target name="do-init-release">
 		<mkdir dir="bin" />
+		<mkdir dir="colored" />
 		<mkdir dir="doc" />
 		<mkdir dir="junit" />
 	</target>
