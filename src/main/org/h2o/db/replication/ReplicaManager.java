@@ -161,16 +161,19 @@ public class ReplicaManager implements Serializable {
 	 * @param firstPartOfUpdate
 	 *            True if this is the first part of an update that is executing asynchronously. False if it is one of the later replicas
 	 *            being committed.
-	 * @return If this is the first part of the update, this returns the set of replicas that are now inactive. If it is the second part of the update
-	 * this returns the replicas that are now active.
+	 * @return If this is the first part of the update, this returns the set of replicas that are now inactive. If it is the second part of
+	 *         the update this returns the replicas that are now active.
 	 */
 	public Set<DatabaseInstanceWrapper> completeUpdate(boolean commit, Collection<CommitResult> committedQueries, TableInfo tableInfo,
 			boolean firstPartOfUpdate) {
 
+		HashMap<DatabaseInstanceWrapper, Integer> oldActiveReplicas = new HashMap<DatabaseInstanceWrapper, Integer>(activeReplicas);
+		
+		
 		List<CommitResult> successfullyCommittedQueries = new LinkedList<CommitResult>(); // queries that were successfully committed here.
 
 		Set<DatabaseInstanceWrapper> instancesUpdated = new HashSet<DatabaseInstanceWrapper>();
-		
+
 		int expectedUpdateID = getUpdateIDFromCommittedQueries(committedQueries, tableInfo);
 
 		/*
@@ -191,8 +194,9 @@ public class ReplicaManager implements Serializable {
 			}
 		}
 
-		if (committedQueries != null && committedQueries.size() != 0) {
+		if (committedQueries != null && committedQueries.size() > 0) {
 
+			
 			if (!allRollback && firstPartOfUpdate) {
 				// Reset the active set.
 				activeReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
@@ -253,17 +257,22 @@ public class ReplicaManager implements Serializable {
 					}
 
 				} // In many cases it won't contain this key, but another table (part of the same transaction) was on this machine.
-				
+
 			}
 		}
 
 		/*
-		 * We return the set of replicas that have become inactive as a result of this commit, or if this is the asynchronous commit, we return
-		 * the set of queries that have become active.
+		 * We return the set of replicas that have become inactive as a result of this commit, or if this is the asynchronous commit, we
+		 * return the set of queries that have become active.
 		 */
+
 		
-		if (firstPartOfUpdate){
-		return getInactiveReplicas();
+		if (firstPartOfUpdate && instancesUpdated.size() > 0) {
+			return getInactiveReplicas();
+		} else if (firstPartOfUpdate && instancesUpdated.size() == 0){
+			//If no replicas were updated make sure that the original set of active replicas is still valid.
+			activeReplicas = oldActiveReplicas;
+			return getInactiveReplicas();
 		} else {
 			return instancesUpdated;
 		}

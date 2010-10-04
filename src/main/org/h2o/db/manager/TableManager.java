@@ -20,7 +20,6 @@ package org.h2o.db.manager;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -570,6 +569,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		if (!asynchronousCommit){
 			lockType = lockingTable.releaseLock(requestingDatabase);
 		}
+		
 		/*
 		 * Update the set of 'active replicas' and their update IDs.
 		 */
@@ -577,6 +577,8 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		if (lockType == LockType.WRITE || asynchronousCommit){ //creates are viewed as writes in the locking table.
 			Set<DatabaseInstanceWrapper> newlyInactive = replicaManager.completeUpdate(commit, committedQueries, tableInfo, !asynchronousCommit);
 
+			
+			
 			if (!asynchronousCommit){
 				//This is the first part of a query. Some replicas will be made inactive.
 				persistInactiveInformation(this.tableInfo, newlyInactive);
@@ -591,7 +593,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 			}
 
-
+			printCurrentActiveReplicas();
 		} //reads don't change the set of active replicas.
 
 	}
@@ -906,7 +908,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		}
 
 		if (replicaLocations.size() == 0) {
-			throw new SQLException("No replicas were listed for this table. An internal error has occured.");
+			throw new SQLException("No replicas were listed for this table (" + fullName + "). An internal error has occured.");
 		}
 
 		rm.add(replicaLocations);

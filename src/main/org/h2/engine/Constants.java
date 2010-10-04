@@ -534,6 +534,8 @@ public class Constants {
 
 	public static final String REPLICATION_DELIMETER = "###";
 
+	public static final boolean LOCK_ELEVATION_ENABLED = false; //XXX this hasn't been fully tested - safest to keep it as false.
+
 	public static boolean IS_TEAR_DOWN = false;
 
 	/**

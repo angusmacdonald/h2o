@@ -121,7 +121,11 @@ public class CommandContainer extends Command {
 		try {
 			LocalResult result = prepared.query(maxrows);
 			prepared.trace(startTime, result.getRowCount());
-			if (session.getApplicationAutoCommit()) proxyManager.endTransaction(null, true);
+			if (session.getApplicationAutoCommit()) {
+				proxyManager.endTransaction(null, true);
+			} else {
+				proxyManager.releaseReadLocks();
+			}
 			return result;
 		} catch (SQLException e) {
 			proxyManager.endTransaction(null, true);
