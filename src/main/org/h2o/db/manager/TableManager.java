@@ -560,8 +560,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	@Override
 	public void releaseLock(boolean commit, DatabaseInstanceWrapper requestingDatabase, Collection<CommitResult> committedQueries, boolean asynchronousCommit)
 	throws RemoteException, MovedException {
-		preMethodTest();
-
+		
 		/*
 		 * Release the locks.
 		 */
@@ -579,7 +578,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 			
 			
-			if (!asynchronousCommit){
+			if (!asynchronousCommit && newlyInactive.size() < replicaManager.getActiveReplicas().size() && newlyInactive.size() > 1){
 				//This is the first part of a query. Some replicas will be made inactive.
 				persistInactiveInformation(this.tableInfo, newlyInactive);
 

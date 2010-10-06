@@ -10,6 +10,7 @@ import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.command.dml.Select;
+import org.h2.command.dml.TransactionCommand;
 import org.h2.engine.Constants;
 import org.h2.expression.Parameter;
 import org.h2.result.LocalResult;
@@ -35,8 +36,19 @@ public class CommandContainer extends Command {
 		super(parser, sql);
 		prepared.setCommand(this);
 		this.prepared = prepared;
+		if (!(prepared instanceof TransactionCommand)){ //commits don't need query proxy managers.
 
-		this.proxyManager = createOrObtainQueryProxyManager();
+			if (session.getCurrentTransactionLocks() != null) { 
+				//This used to execute only if auto-commit was off - but I don't think that matters. If it was on then the queryproxymanager for a committed
+				//transaction shouldn't be here. [may be a problem with pole position].
+				this.proxyManager = session.getCurrentTransactionLocks();
+			} else {
+				// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Creating a new proxy manager.");
+				this.proxyManager = new QueryProxyManager(session.getDatabase(), session);
+				//session.setCurrentTransactionLocks(this.proxyManager);
+			}
+			
+		}
 	}
 
 
@@ -83,9 +95,7 @@ public class CommandContainer extends Command {
 	public int update() throws SQLException, RemoteException {
 		int resultOfUpdate = update(false);
 
-		// if (!getSession().getAutoCommit()){
-		// ErrorHandling.hardError("Unexpected code path. This shouldn't be called when auto-commit is off.");
-		// }
+		assert !getSession().getApplicationAutoCommit(): "Unexpected code path. This shouldn't be called when auto-commit is off.";
 
 		return resultOfUpdate;
 	}
@@ -111,7 +121,8 @@ public class CommandContainer extends Command {
 		 * are needed.
 		 */
 		if (!prepared.sqlStatement.contains("H2O.") && !prepared.sqlStatement.contains("INFORMATION_SCHEMA.")
-				&& !prepared.sqlStatement.contains("SYSTEM_RANGE") && !prepared.sqlStatement.contains("information_schema.")
+				&& !prepared.sqlStatement.contains("SYSTEM_RANGE") && !prepared.sqlStatement.contains("information_schema.") &&
+				!prepared.sqlStatement.contains("CALL DATABASE()")
 				&& prepared instanceof Select) {
 
 			getLock();
@@ -123,6 +134,14 @@ public class CommandContainer extends Command {
 			prepared.trace(startTime, result.getRowCount());
 			if (session.getApplicationAutoCommit()) {
 				proxyManager.endTransaction(null, true);
+				
+				//Remove and reset this query proxy manager.
+				session.setCurrentTransactionLocks(null);
+				
+				QueryProxyManager.removeProxyManager(proxyManager);
+				
+				resetQueryProxyManager();
+				
 			} else {
 				proxyManager.releaseReadLocks();
 			}
@@ -199,15 +218,15 @@ public class CommandContainer extends Command {
 				updateCount = prepared.update();
 
 				if (!prepared.getSQL().contains("PREPARE COMMIT")){
-					
+
 					session.setCurrentTransactionLocks(null);
 				}
-				
 
-				
+
+
 			} catch (SQLException e) {
 				ErrorHandling.errorNoEvent("Transaction not found for query: " + prepared.getSQL());
-
+				this.resetQueryProxyManager();
 				e.printStackTrace();
 				throw e;
 			}
@@ -331,6 +350,6 @@ public class CommandContainer extends Command {
 
 	@Override
 	public void resetQueryProxyManager() {
-		this.proxyManager = createOrObtainQueryProxyManager();
+		this.proxyManager = new QueryProxyManager(session.getDatabase(), session);
 	}
 }

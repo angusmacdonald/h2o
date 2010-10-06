@@ -56,6 +56,30 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  */
 public class QueryProxyManager {
 
+	private static Set<QueryProxyManager> activeProxyManagers = new HashSet<QueryProxyManager>();
+
+
+	public static void addNewProxyManager(QueryProxyManager newProxyManager, Session session) {
+
+		if (!activeProxyManagers.contains(newProxyManager)){
+			//System.err.println("Adding new query proxy manager: "+ newProxyManager + ", Session: " + session);
+
+			QueryProxyManager.activeProxyManagers.add(newProxyManager);
+		}
+		
+		if (activeProxyManagers.size() > 1){
+			//System.out.println("There are multiple active query proxy managers...");
+		}
+	}
+
+	public static void removeProxyManager(QueryProxyManager oldProxyManager) {
+		if (activeProxyManagers.contains(oldProxyManager)){
+			//System.err.println("\tCommitting old query proxy manager: "+ oldProxyManager);
+
+			QueryProxyManager.activeProxyManagers.remove(oldProxyManager);
+		}
+	}
+
 	private String transactionName;
 
 	private DatabaseInstanceWrapper localDatabase;
@@ -103,6 +127,8 @@ public class QueryProxyManager {
 		this(db, session, false);
 
 		queries = new LinkedList<String>();
+
+		addNewProxyManager(this, session);
 	}
 
 	/**
@@ -132,6 +158,7 @@ public class QueryProxyManager {
 
 		this.queryProxies = new HashMap<String, QueryProxy>();
 
+		addNewProxyManager(this, session);
 	}
 
 	/**
@@ -181,13 +208,13 @@ public class QueryProxyManager {
 	 */
 	private void addTableManagerToTableManagerSet(QueryProxy proxy) {
 		Integer currentCount = tableManagers.get(proxy.getTableManager());
-		
+
 		if (currentCount == null){
 			currentCount = 0;
 		}
-		
+
 		currentCount++;
-		
+
 		tableManagers.put(proxy.getTableManager(), currentCount);
 	}
 
@@ -228,16 +255,16 @@ public class QueryProxyManager {
 			}
 		}
 
-		
+
 		for (QueryProxy qpToRemove : toRemove) {
 			Integer currentTmCount = tableManagers.get(qpToRemove.getTableManager());
-			
+
 			if (currentTmCount == 1){ //remove the table manager if this is the only place it is referenced.
 				tableManagers.remove(qpToRemove.getTableManager());
 			} else {
 				tableManagers.put(qpToRemove.getTableManager(), currentTmCount-1);
 			}
-			
+
 			queryProxies.remove(qpToRemove.getTableName().getFullTableName());
 		}
 	}
@@ -256,18 +283,22 @@ public class QueryProxyManager {
 	 */
 	public void commit(boolean commit, boolean h2oCommit, Database db) throws SQLException {
 
-		if (tableManagers.size() == 0 && allReplicas.size() > 0) {
+		if (tableManagers.size() == 0 && allReplicas.size() > 0 && h2oCommit) { 
+			//H2O commit required to prevent stack overflow on recursive commit calls. testExecuteCall test fails without this.
 			/*
 			 * tableManagers.size() == 0 - indicates this is a local internal database operation (e.g. the TCP server doing something).
 			 * allReplicas.size() > 0 - confirms it is an internal operation. otherwise it may be a COMMIT from the application or a
 			 * prepared statement.
 			 */
-
+			
 			commitLocal(commit, h2oCommit);
+			removeProxyManager(this);
 			return;
 		} else if (tableManagers.size() == 0 && allReplicas.size() == 0) {
+			removeProxyManager(this);
 			return;
 		} else if (db.getAsynchronousQueryManager() == null) {
+			removeProxyManager(this);
 			return; // management db etc may call this.
 		}
 
@@ -318,6 +349,8 @@ public class QueryProxyManager {
 
 		// XXX not throwing any exceptions at this point because the system is
 		// coming to a point where the asynchronous updates are acceptable.
+
+		removeProxyManager(this);
 	}
 
 	private void printTraceOutputOfExecutedQueries() {
@@ -476,5 +509,12 @@ public class QueryProxyManager {
 
 		return true;
 	}
+
+	@Override
+	public String toString() {
+		return "QueryProxyManager [transactionName=" + transactionName + ", localDatabase=" + localDatabase + "]";
+	}
+
+
 
 }

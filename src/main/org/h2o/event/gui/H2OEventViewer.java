@@ -78,6 +78,7 @@ public class H2OEventViewer implements EventHandler {
 		} catch(NullPointerException e){
 			e.printStackTrace();
 		}
+		
 
 		return true;
 	}

@@ -268,7 +268,7 @@ public abstract class Command implements CommandInterface {
 				}
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 			Message.addSQL(e, sql);
 			database.exceptionThrown(e, sql);
 			database.checkPowerOff();
@@ -347,24 +347,26 @@ public abstract class Command implements CommandInterface {
 	 */
 	public abstract void resetQueryProxyManager();
 
-	public QueryProxyManager createOrObtainQueryProxyManager() {
-		QueryProxyManager qpm = null;
-		
-		/*
-		 * If this command is part of a larger transaction then this query proxy manager will be over-written later on by a call from the
-		 * Command list class.
-		 */
-		if (!session.getApplicationAutoCommit() && session.getCurrentTransactionLocks() != null) {
-			// Diagnostic.traceNoEvent(DiagnosticLevel.INIT,
-			// "Using an existing proxy manager.");
-			qpm = session.getCurrentTransactionLocks();
-		} else {
-			// Diagnostic.traceNoEvent(DiagnosticLevel.INIT,
-			// "Creating a new proxy manager.");
-			qpm = new QueryProxyManager(session.getDatabase(), session);
-			session.setCurrentTransactionLocks(qpm);
-		}
-		
-		return qpm;
-	}
+//	public QueryProxyManager createOrObtainQueryProxyManager() {
+//		QueryProxyManager qpm = null;
+//		
+//		/*
+//		 * Command objects are cached and re-used where possible. This call resets the query proxy manager involved in a command when it is
+//		 * re-used, because locks may need to be acquired again.
+//		 * 
+//		 * If this command is part of a larger transaction then this query proxy manager will be over-written later on by a call from the
+//		 * Command list class.
+//		 */
+//		if (session.getCurrentTransactionLocks() != null) { 
+//			//This used to execute only if auto-commit was off - but I don't think that matters. If it was on then the queryproxymanager for a committed
+//			//transaction shouldn't be here. [may be a problem with pole position].
+//			qpm = session.getCurrentTransactionLocks();
+//		} else {
+//			// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Creating a new proxy manager.");
+//			qpm = new QueryProxyManager(session.getDatabase(), session);
+//			session.setCurrentTransactionLocks(qpm);
+//		}
+//		
+//		return qpm;
+//	}
 }

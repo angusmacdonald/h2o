@@ -8,6 +8,7 @@ package org.h2.command.ddl;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.Set;
 
 import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
@@ -23,11 +24,14 @@ import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.query.QueryProxy;
+import org.h2o.db.query.QueryProxyManager;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.event.DatabaseStates;
 import org.h2o.event.client.H2OEvent;
 import org.h2o.event.client.H2OEventBus;
 import org.h2o.util.exceptions.MovedException;
+
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * This class represents the statement DROP TABLE
@@ -38,6 +42,7 @@ public class DropTable extends SchemaCommand {
 	private String tableName;
 	ReplicaSet tables = null;
 	private DropTable next;
+	private QueryProxy queryProxy;
 
 	public DropTable(Session session, Schema schema, boolean internalQuery) {
 		super(session, schema);
@@ -79,42 +84,37 @@ public class DropTable extends SchemaCommand {
 				table = tables.getACopy();
 			}
 		} else {
-			table = getSchema().findTableOrView(session, tableName,
-					LocationPreference.NO_PREFERENCE);
+			table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
 		}
 
 		TableManagerRemote tableManager = null;
 		if (table == null) {
-			tableManager = getSchema().getDatabase().getSystemTableReference()
-					.lookup((getSchema().getName() + "." + tableName), false);
+			tableManager = getSchema().getDatabase().getSystemTableReference().lookup((getSchema().getName() + "." + tableName), false);
 		}
 
 		if (table == null && tableManager == null) {
 			// table = null;
 			if (!ifExists) {
-				throw Message.getSQLException(
-						ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
+				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
 			}
 		} else {
 			session.getUser().checkRight(table, Right.ALL);
 
 			// XXX changed to add the table null checks because some tests show
 			// up the tableManager existing when the local table doesn't.
-			if ((table != null && !table.canDrop())
-					|| (Constants.IS_H2O && tableName.startsWith("H2O_"))) { // H2O
-																				// -
-																				// ensure
-																				// schema
-																				// tables
-																				// aren't
-																				// dropped.
-				throw Message.getSQLException(ErrorCode.CANNOT_DROP_TABLE_1,
-						tableName);
+			if ((table != null && !table.canDrop()) || (Constants.IS_H2O && tableName.startsWith("H2O_"))) { // H2O
+				// -
+				// ensure
+				// schema
+				// tables
+				// aren't
+				// dropped.
+				throw Message.getSQLException(ErrorCode.CANNOT_DROP_TABLE_1, tableName);
 			}
 			if (Constants.IS_H2O && !internalQuery && table != null) {
 				table.lock(session, true, true); // lock isn't acquired here -
-													// the query is distributed
-													// to each replica first.
+				// the query is distributed
+				// to each replica first.
 			}
 		}
 		if (next != null) {
@@ -122,71 +122,55 @@ public class DropTable extends SchemaCommand {
 		}
 	}
 
-	private void executeDrop(String transactionName) throws SQLException,
-			RemoteException {
+	private void executeDrop(String transactionName) throws SQLException, RemoteException {
 		// need to get the table again, because it may be dropped already
 		// meanwhile (dependent object, or same object)
-		table = getSchema().findTableOrView(session, tableName,
-				LocationPreference.NO_PREFERENCE);
+		table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
 		if (table != null) {
 			Database db = session.getDatabase();
-			String fullTableName = getSchema().getName() + "." + tableName;
-
 			/*
-			 * ##################################################################
-			 * #######
+			 * ################################################################## #######
 			 * 
 			 * Remove any System Table entries.
 			 * 
-			 * ##################################################################
-			 * #######
+			 * ################################################################## #######
 			 */
 
-			if (Constants.IS_H2O && !db.isManagementDB()
-					&& !db.isTableLocal(getSchema()) && !internalQuery) {
+			if (Constants.IS_H2O && !db.isManagementDB() && !db.isTableLocal(getSchema()) && !internalQuery) {
 
-				QueryProxy qp = QueryProxy.getQueryProxyAndLock(table,
-						LockType.DROP, session.getDatabase());
-				qp.executeUpdate(sqlStatement, transactionName, session);
+				queryProxy.executeUpdate(sqlStatement, transactionName, session);
 
 				ISystemTableReference sm = db.getSystemTableReference();
 				try {
-					sm.removeTableInformation(new TableInfo(tableName,
-							getSchema().getName()));
+					sm.removeTableInformation(new TableInfo(tableName, getSchema().getName()));
 				} catch (MovedException e) {
-					throw new RemoteException("System Table has moved.");
+					db.getSystemTableReference().handleMovedException(e);
+
+					try {
+						sm.removeTableInformation(new TableInfo(tableName, getSchema().getName()));
+					} catch (MovedException e1) {
+						throw new RemoteException("System Table has moved.");
+					}
 				}
-				// db.removeTableManager(fullTableName, false);
 
 			} else { // It's an internal query...
 
-				if (Constants.IS_H2O) {
-					/*
-					 * We want to remove the local copy of the data plus any
-					 * other references to remote tables (i.e. linked tables
-					 * need to be removed as well)
-					 */
-					Table[] tableArray = tables.getAllCopies().toArray(
-							new Table[0]); // add to array to prevent concurrent
-											// modification exceptions.
+				/*
+				 * We want to remove the local copy of the data plus any other references to remote tables (i.e. linked tables need to be
+				 * removed as well)
+				 */
+				Table[] tableArray = tables.getAllCopies().toArray(new Table[0]); // add to array to prevent concurrent
+				// modification exceptions.
 
-					for (Table t : tableArray) {
-						t.setModified();
-						db.removeSchemaObject(session, t);
-					}
-
-					// db.removeTableManager(fullTableName, true);
-				} else {
-					// Default H2 behaviour.
-					table.setModified();
-					db.removeSchemaObject(session, table);
-
+				for (Table t : tableArray) {
+					t.setModified();
+					db.removeSchemaObject(session, t);
 				}
 
+				// db.removeTableManager(fullTableName, true);
+
 			}
-			H2OEventBus.publish(new H2OEvent(db.getURL(),
-					DatabaseStates.TABLE_DELETION, getSchema().getName() + "."
-							+ tableName));
+			H2OEventBus.publish(new H2OEvent(db.getURL(), DatabaseStates.TABLE_DELETION, getSchema().getName() + "." + tableName));
 		}
 		if (next != null) {
 			next.executeDrop(transactionName);
@@ -194,8 +178,7 @@ public class DropTable extends SchemaCommand {
 	}
 
 	@Override
-	public int update(String transactionName) throws SQLException,
-			RemoteException {
+	public int update(String transactionName) throws SQLException, RemoteException {
 		session.commit(true);
 		prepareDrop(transactionName);
 		executeDrop(transactionName);
@@ -210,6 +193,61 @@ public class DropTable extends SchemaCommand {
 		prepareDrop(transactionName);
 		executeDrop(transactionName);
 		return 0;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.h2.command.Prepared#acquireLocks()
+	 */
+	@Override
+	public void acquireLocks(QueryProxyManager queryProxyManager) throws SQLException {
+		/*
+		 * (QUERY PROPAGATED TO ALL REPLICAS).
+		 */
+		if (isRegularTable()) {
+
+			String fullTableName = getSchema().getName() + "." + tableName;
+			queryProxy = queryProxyManager.getQueryProxy(fullTableName);
+
+			if (queryProxy == null || !queryProxy.getLockGranted().equals(LockType.WRITE)) {
+
+				Database database = this.getSchema().getDatabase();
+				TableManagerRemote tableManager = database.getSystemTableReference().lookup(fullTableName, true);
+
+
+				if (tableManager == null){
+					//Will happen if the table doesn't exist but IF NOT EXISTS has been specified.
+					queryProxy = QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper());
+				} else {
+					queryProxy = QueryProxy.getQueryProxyAndLock(tableManager, fullTableName, database, LockType.WRITE, session.getDatabase()
+							.getLocalDatabaseInstanceInWrapper(), false);
+				}
+			}
+			queryProxyManager.addProxy(queryProxy);
+		} else {
+			queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper()));
+		}
+
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.h2.command.Prepared#isRegularTable()
+	 */
+	@Override
+	protected boolean isRegularTable() {
+		Set<String> localSchema = session.getDatabase().getLocalSchema();
+		try {
+			return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery
+			&& !localSchema.contains(getSchema().getName());
+		} catch (NullPointerException e) {
+			// Shouldn't occur, ever. Something should have probably overridden
+			// this if it can't possibly know about a particular table.
+			ErrorHandling.hardError("isRegularTable() check failed.");
+			return false;
+		}
 	}
 
 }

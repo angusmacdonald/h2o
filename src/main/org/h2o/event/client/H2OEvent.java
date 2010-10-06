@@ -39,21 +39,21 @@ public class H2OEvent implements Serializable {
 
 	private int eventSize;
 
-	public H2OEvent(DatabaseURL database, DatabaseStates databaseStartup) {
-		this(database, databaseStartup, null, 0);
+	public H2OEvent(DatabaseURL database, DatabaseStates state) {
+		this(database, state, null, 0);
 	}
 
-	public H2OEvent(DatabaseURL database, DatabaseStates databaseStartup,
+	public H2OEvent(DatabaseURL database, DatabaseStates state,
 			String eventValue) {
-		this(database, databaseStartup, eventValue, 0);
+		this(database, state, eventValue, 0);
 	}
 
-	public H2OEvent(DatabaseURL database, DatabaseStates databaseStartup,
+	public H2OEvent(DatabaseURL database, DatabaseStates state,
 			String eventValue, int eventSize) {
 		this.time = new Date();
 		this.database = database;
 
-		this.eventType = databaseStartup;
+		this.eventType = state;
 		this.eventValue = eventValue;
 		this.eventSize = eventSize;
 	}
@@ -83,5 +83,9 @@ public class H2OEvent implements Serializable {
 		return "H2OEvent [time=" + time + ", database=" + database
 				+ ", eventType=" + eventType + ", eventValue=" + eventValue
 				+ "]";
+	}
+
+	public String getDescription() {
+		return toString();
 	}
 }

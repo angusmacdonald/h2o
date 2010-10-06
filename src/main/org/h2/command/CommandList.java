@@ -35,10 +35,19 @@ public class CommandList extends Command {
 		 * Split and store remaining commands.
 		 */
 		if (remaining != null) {
-			this.remaining = remaining.split(";"); // TODO not particuarly safe. i.e. no query can contain a semi-colon.
+			this.remaining = remaining.split(";"); // TODO not particularly safe. i.e. no query can contain a semi-colon.
 		}
 
-		this.proxyManager = createOrObtainQueryProxyManager();
+
+		if (session.getCurrentTransactionLocks() != null) { 
+			//This used to execute only if auto-commit was off - but I don't think that matters. If it was on then the queryproxymanager for a committed
+			//transaction shouldn't be here. [may be a problem with pole position].
+			this.proxyManager = session.getCurrentTransactionLocks();
+		} else {
+			// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Creating a new proxy manager.");
+			this.proxyManager = new QueryProxyManager(session.getDatabase(), session);
+			//session.setCurrentTransactionLocks(this.proxyManager);
+		}
 		
 		command.addQueryProxyManager(proxyManager);
 
@@ -211,8 +220,6 @@ public class CommandList extends Command {
 
 	@Override
 	public void resetQueryProxyManager() {
-		// TODO Auto-generated method stub
-
 	}
 
 }
