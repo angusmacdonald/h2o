@@ -41,7 +41,7 @@
 	
 	<!-- Generate project jar. -->
 	<target name="project-jar">
-		<jar destfile="bin/h2o.jar">
+		<jar destfile="bin/h2o.jar" manifest="jar-manifest.txt">
 			<fileset dir="bin" includes="**/*.class" />
 			<fileset dir="src/main" includes="**/*.java" />
 		</jar>
