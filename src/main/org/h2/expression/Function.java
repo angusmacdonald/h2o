@@ -749,7 +749,7 @@ public class Function extends Expression implements FunctionCall {
 			result = session.getLastIdentity();
 			break;
 		case AUTOCOMMIT:
-			result = ValueBoolean.get(session.getAutoCommit());
+			result = ValueBoolean.get(session.getApplicationAutoCommit());
 			break;
 		case READONLY:
 			result = ValueBoolean.get(database.getReadOnly());

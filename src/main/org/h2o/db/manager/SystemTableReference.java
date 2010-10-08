@@ -40,10 +40,10 @@ import org.h2o.db.manager.recovery.SystemTableFailureRecovery;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.SystemTableWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
-import org.h2o.event.DatabaseStates;
-import org.h2o.event.client.H2OEvent;
-import org.h2o.event.client.H2OEventBus;
 import org.h2o.util.exceptions.MovedException;
+import org.h2o.viewer.client.DatabaseStates;
+import org.h2o.viewer.client.H2OEvent;
+import org.h2o.viewer.client.H2OEventBus;
 
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
 import uk.ac.standrews.cs.nds.p2p.util.SHA1KeyFactory;
@@ -349,7 +349,7 @@ public class SystemTableReference implements ISystemTableReference {
 		// }
 
 		Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Finished building new System Table on " + db.getURL().getDbLocation() + ".");
-		H2OEventBus.publish(new H2OEvent(db.getURL(), DatabaseStates.SYSTEM_TABLE_MIGRATION));
+		H2OEventBus.publish(new H2OEvent(db.getURL().getDbLocation(), DatabaseStates.SYSTEM_TABLE_MIGRATION));
 		return systemTableWrapper.getSystemTable();
 	}
 

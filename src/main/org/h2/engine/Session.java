@@ -71,7 +71,6 @@ public class Session extends SessionWithState {
 	private QueryProxyManager currentTransactionLocks = null;
 
 	private UndoLog undoLog;
-	private final boolean autoCommit = false; // H2O. Default value used to be true. Don't change it now... use applicationAutoCommit instead.
 	private Random random;
 	private LogSystem logSystem;
 	private int lockTimeout;
@@ -382,24 +381,8 @@ public class Session extends SessionWithState {
 		}
 	}
 
-	public boolean getAutoCommit() {
-		return autoCommit;
-	}
-
 	public User getUser() {
 		return user;
-	}
-
-	/**
-	 * Change the autocommit setting for this session.
-	 * 
-	 * @param b
-	 *            the new value
-	 */
-	public void setAutoCommit(boolean b) {
-		// autoCommit = b;
-
-		assert false;
 	}
 
 	public int getLockTimeout() {
@@ -536,7 +519,7 @@ public class Session extends SessionWithState {
 			// create/drop
 			cleanTempTables(false);
 			if (autoCommitAtTransactionEnd) {
-				setAutoCommit(true);
+				setApplicationAutoCommit(true);
 				autoCommitAtTransactionEnd = false;
 			}
 		}
@@ -585,7 +568,7 @@ public class Session extends SessionWithState {
 		cleanTempTables(false);
 		unlockAll();
 		if (autoCommitAtTransactionEnd) {
-			setAutoCommit(true);
+			setApplicationAutoCommit(true);
 			autoCommitAtTransactionEnd = false;
 		}
 	}
@@ -1142,8 +1125,8 @@ public class Session extends SessionWithState {
 	 * Begin a transaction.
 	 */
 	public void begin() {
-		autoCommitAtTransactionEnd = getAutoCommit();
-		setAutoCommit(false);
+		autoCommitAtTransactionEnd = getApplicationAutoCommit();
+		setApplicationAutoCommit(false);
 	}
 
 	public long getSessionStart() {

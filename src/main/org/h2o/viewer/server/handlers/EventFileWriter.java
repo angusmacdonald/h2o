@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.event.server.handlers;
+package org.h2o.viewer.server.handlers;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.h2o.event.client.H2OEvent;
+import org.h2o.viewer.client.H2OEvent;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 

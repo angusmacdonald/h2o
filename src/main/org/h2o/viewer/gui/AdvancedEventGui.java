@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.event.gui;
+package org.h2o.viewer.gui;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -30,8 +30,7 @@ import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 import javax.swing.border.TitledBorder;
 
-import org.h2o.db.id.DatabaseURL;
-import org.h2o.event.client.H2OEvent;
+import org.h2o.viewer.client.H2OEvent;
 
 
 /**
@@ -50,11 +49,11 @@ public class AdvancedEventGui extends javax.swing.JPanel implements EventActions
 
 	private static final long serialVersionUID = 4823972128575647792L;
 
-	private Map<DatabaseURL, JPanel> dbs = new HashMap<DatabaseURL, JPanel>();
+	private Map<String, JPanel> dbs = new HashMap<String, JPanel>();
 
 	private Map<String, Label> tableManagers = new HashMap<String, Label>();
 
-	private Map<String, Map<DatabaseURL, Label>> replicas = new HashMap<String, Map<DatabaseURL, Label>>();
+	private Map<String, Map<String, Label>> replicas = new HashMap<String, Map<String, Label>>();
 
 	private Label systemTable = null;
 
@@ -184,7 +183,7 @@ public class AdvancedEventGui extends javax.swing.JPanel implements EventActions
 	 */
 	@Override
 	public void replicaDeletion(H2OEvent event) {
-		Map<DatabaseURL, Label> replicaLocations;
+		Map<String, Label> replicaLocations;
 		JPanel dbPanel;
 		Label l;
 		dbPanel = getPanel(event);
@@ -204,7 +203,7 @@ public class AdvancedEventGui extends javax.swing.JPanel implements EventActions
 		JPanel dbPanel;
 		dbPanel = getPanel(event);
 		dbPanel.setBackground(Color.BLACK);
-		dbPanel.setBorder(new TitledBorder("Database (Inactive): " + event.getDatabase().getDbLocation()));
+		dbPanel.setBorder(new TitledBorder("Database (Inactive): " + event.getDatabase()));
 	}
 
 	/* (non-Javadoc)
@@ -234,10 +233,10 @@ public class AdvancedEventGui extends javax.swing.JPanel implements EventActions
 	@Override
 	public void tableDeletion(H2OEvent event) {
 		JPanel dbPanel;
-		Map<DatabaseURL, Label> replicaLocations = replicas.get(event.getEventValue());
+		Map<String, Label> replicaLocations = replicas.get(event.getEventValue());
 
 
-		for (Entry<DatabaseURL, Label> location: replicaLocations.entrySet()){
+		for (Entry<String, Label> location: replicaLocations.entrySet()){
 			dbPanel = getPanel(location.getKey());
 			dbPanel.remove(location.getValue());
 		}
@@ -245,9 +244,9 @@ public class AdvancedEventGui extends javax.swing.JPanel implements EventActions
 
 	public void addTableToReplicas(H2OEvent event, Label l) {
 
-		Map<DatabaseURL, Label> replicasForTable = replicas.remove(event.getEventValue());
+		Map<String, Label> replicasForTable = replicas.remove(event.getEventValue());
 
-		if (replicasForTable == null) replicasForTable = new HashMap<DatabaseURL, Label>();
+		if (replicasForTable == null) replicasForTable = new HashMap<String, Label>();
 
 		replicasForTable.put(event.getDatabase(), l);
 
@@ -261,7 +260,7 @@ public class AdvancedEventGui extends javax.swing.JPanel implements EventActions
 	public JPanel createDatabasePanel(H2OEvent event) {
 		JPanel panel = new JPanel(true);
 		panel.setVisible(true);
-		panel.setBorder(new TitledBorder("Database: " + event.getDatabase().getDbLocation()));
+		panel.setBorder(new TitledBorder("Database: " + event.getDatabase()));
 		return panel;
 	}
 
@@ -273,7 +272,7 @@ public class AdvancedEventGui extends javax.swing.JPanel implements EventActions
 		return dbPanel;
 	}
 
-	public JPanel getPanel(DatabaseURL db) {
+	public JPanel getPanel(String db) {
 		JPanel dbPanel = dbs.get(db);
 
 		return dbPanel;

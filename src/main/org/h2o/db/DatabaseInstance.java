@@ -106,9 +106,6 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 	}
 
 	public int prepare(String transactionName) throws RemoteException, SQLException {
-		//System.err.println("preparing " + transactionName + " on " + this.databaseURL);
-		assert session.getAutoCommit() == false;
-
 		Command command = parser.prepareCommand("PREPARE COMMIT " + transactionName);
 		return command.executeUpdate();
 	}

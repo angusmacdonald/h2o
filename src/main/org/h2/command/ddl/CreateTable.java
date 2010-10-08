@@ -43,12 +43,12 @@ import org.h2o.db.query.QueryProxyManager;
 import org.h2o.db.query.asynchronous.AsynchronousQueryExecutor;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
-import org.h2o.event.DatabaseStates;
-import org.h2o.event.client.H2OEvent;
-import org.h2o.event.client.H2OEventBus;
 import org.h2o.util.TransactionNameGenerator;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.util.exceptions.StartupException;
+import org.h2o.viewer.client.DatabaseStates;
+import org.h2o.viewer.client.H2OEvent;
+import org.h2o.viewer.client.H2OEventBus;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -326,7 +326,7 @@ public class CreateTable extends SchemaCommand {
 
 		try {
 			tableManager.persistToCompleteStartup(tableInfo);
-			H2OEventBus.publish(new H2OEvent(this.session.getDatabase().getURL(), DatabaseStates.TABLE_CREATION, tableInfo
+			H2OEventBus.publish(new H2OEvent(this.session.getDatabase().getURL().getDbLocation(), DatabaseStates.TABLE_CREATION, tableInfo
 					.getFullTableName()));
 		} catch (StartupException e) {
 			throw new SQLException("Failed to create table. Couldn't persist table manager meta-data [" + e.getMessage() + "].");
@@ -527,7 +527,7 @@ public class CreateTable extends SchemaCommand {
 			} catch (Exception e) {
 				// May already be exported.
 			}
-			H2OEventBus.publish(new H2OEvent(db.getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
+			H2OEventBus.publish(new H2OEvent(db.getURL().getDbLocation(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
 
 			queryProxy = QueryProxy.getQueryProxyAndLock(tableManager, ti.getFullTableName(), db, LockType.CREATE,
 					db.getLocalDatabaseInstanceInWrapper(), false);

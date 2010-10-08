@@ -1,6 +1,6 @@
-package org.h2o.event.server.handlers;
+package org.h2o.viewer.server.handlers;
 
-import org.h2o.event.client.H2OEvent;
+import org.h2o.viewer.client.H2OEvent;
 
 public interface EventHandler {
 

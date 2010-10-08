@@ -14,14 +14,13 @@ import org.h2.schema.Schema;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
-import org.h2o.event.DatabaseStates;
-import org.h2o.event.client.H2OEvent;
-import org.h2o.event.client.H2OEventBus;
 import org.h2o.util.exceptions.MovedException;
+import org.h2o.viewer.client.DatabaseStates;
+import org.h2o.viewer.client.H2OEvent;
+import org.h2o.viewer.client.H2OEventBus;
 
 /**
- * Represents the DROP REPLICA command, allowing individual replicas to be
- * dropped.
+ * Represents the DROP REPLICA command, allowing individual replicas to be dropped.
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
@@ -67,15 +66,13 @@ public class DropReplica extends SchemaCommand {
 
 		if (table == null) {
 			if (!ifExists) {
-				throw Message.getSQLException(
-						ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
+				throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
 			}
 		} else {
 			session.getUser().checkRight(table, Right.ALL);
 			if (!table.canDrop()) { // H2O - ensure schema tables aren't
 									// dropped.
-				throw Message.getSQLException(ErrorCode.CANNOT_DROP_TABLE_1,
-						tableName);
+				throw Message.getSQLException(ErrorCode.CANNOT_DROP_TABLE_1, tableName);
 			}
 
 			if (!table.getName().startsWith("H2O_")) {
@@ -83,22 +80,16 @@ public class DropReplica extends SchemaCommand {
 				int numberOfReplicas = 0;
 
 				try {
-					numberOfReplicas = session
-							.getDatabase()
-							.getSystemTable()
-							.lookup(new TableInfo(tableName, getSchema()
-									.getName())).getTableManager()
-							.getNumberofReplicas();
+					numberOfReplicas = session.getDatabase().getSystemTable().lookup(new TableInfo(tableName, getSchema().getName()))
+							.getTableManager().getNumberofReplicas();
 				} catch (RemoteException e) {
-					throw new SQLException(
-							"Failed in communication with the System Table.");
+					throw new SQLException("Failed in communication with the System Table.");
 				} catch (MovedException e) {
 					throw new SQLException("System Table has moved.");
 				}
 
 				if (numberOfReplicas == 1) { // can't drop the only replica.
-					throw Message.getSQLException(
-							ErrorCode.CANNOT_DROP_TABLE_1, tableName);
+					throw Message.getSQLException(ErrorCode.CANNOT_DROP_TABLE_1, tableName);
 				}
 
 			}
@@ -120,35 +111,29 @@ public class DropReplica extends SchemaCommand {
 			db.removeSchemaObject(session, table);
 
 			/*
-			 * ##################################################################
-			 * #######
+			 * ################################################################## #######
 			 * 
 			 * Remove any System Table entries.
 			 * 
-			 * ##################################################################
-			 * #######
+			 * ################################################################## #######
 			 */
-			if (Constants.IS_H2O && !db.isManagementDB()
-					&& !db.isTableLocal(getSchema())) {
+			if (Constants.IS_H2O && !db.isManagementDB() && !db.isTableLocal(getSchema())) {
 				ISystemTable sm = db.getSystemTable(); // db.getSystemSession()
 
-				TableInfo ti = new TableInfo(tableName, getSchema().getName(),
-						table.getModificationId(), 0, table.getTableType(),
+				TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), 0, table.getTableType(),
 						db.getURL());
 
 				try {
 					TableManagerRemote tmr = sm.lookup(ti).getTableManager();
 					tmr.removeReplicaInformation(ti);
 				} catch (RemoteException e) {
-					throw new SQLException(
-							"Failed to remove replica on System Table/Table Manager");
+					throw new SQLException("Failed to remove replica on System Table/Table Manager");
 				} catch (MovedException e) {
 					throw new SQLException("System Table has moved.");
 				}
 			}
-			H2OEventBus.publish(new H2OEvent(this.session.getDatabase()
-					.getURL(), DatabaseStates.REPLICA_DELETION, getSchema()
-					.getName() + "." + tableName));
+			H2OEventBus.publish(new H2OEvent(this.session.getDatabase().getURL().getDbLocation(), DatabaseStates.REPLICA_DELETION,
+					getSchema().getName() + "." + tableName));
 		}
 		if (next != null) {
 			next.executeDrop();

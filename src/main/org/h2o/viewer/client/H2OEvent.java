@@ -15,13 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.event.client;
+package org.h2o.viewer.client;
 
 import java.io.Serializable;
 import java.util.Date;
 
-import org.h2o.db.id.DatabaseURL;
-import org.h2o.event.DatabaseStates;
 
 public class H2OEvent implements Serializable {
 
@@ -29,26 +27,28 @@ public class H2OEvent implements Serializable {
 
 	public static final String DATABASE_STARTUP = "DATABASE_STARTUP";
 
-	private Date time;
+	public Date time;
 
-	private DatabaseURL database;
+	public String database;
 
-	private DatabaseStates eventType;
+	public DatabaseStates eventType;
 
-	private String eventValue;
+	public String eventValue;
 
-	private int eventSize;
+	public int eventSize;
 
-	public H2OEvent(DatabaseURL database, DatabaseStates state) {
+	public H2OEvent(){};
+	
+	public H2OEvent(String database, DatabaseStates state) {
 		this(database, state, null, 0);
 	}
 
-	public H2OEvent(DatabaseURL database, DatabaseStates state,
+	public H2OEvent(String database, DatabaseStates state,
 			String eventValue) {
 		this(database, state, eventValue, 0);
 	}
 
-	public H2OEvent(DatabaseURL database, DatabaseStates state,
+	public H2OEvent(String database, DatabaseStates state,
 			String eventValue, int eventSize) {
 		this.time = new Date();
 		this.database = database;
@@ -70,7 +70,7 @@ public class H2OEvent implements Serializable {
 		return eventValue;
 	}
 
-	public DatabaseURL getDatabase() {
+	public String getDatabase() {
 		return database;
 	}
 

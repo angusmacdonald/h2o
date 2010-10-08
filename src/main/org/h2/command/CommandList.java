@@ -141,7 +141,7 @@ public class CommandList extends Command {
 			 */
 			proxyManager.commit(rollbackException == null, true, session.getDatabase());
 			session.setCurrentTransactionLocks(null);
-
+			proxyManager = new QueryProxyManager(session.getDatabase(), session);
 			/*
 			 * If we did a rollback, rethrow the exception that caused this to happen.
 			 */

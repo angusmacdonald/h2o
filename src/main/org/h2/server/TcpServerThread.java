@@ -32,6 +32,9 @@ import org.h2.util.StringUtils;
 import org.h2.value.Transfer;
 import org.h2.value.Value;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+
 /**
  * One server thread is opened per client connection.
  */
@@ -225,6 +228,9 @@ public class TcpServerThread implements Runnable {
 		case SessionRemote.SESSION_PREPARE: {
 			int id = transfer.readInt();
 			String sql = transfer.readString();
+			
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Incoming Query from TCP Server: " + sql);
+			
 			int old = session.getModificationId();
 			Command command = session.prepareLocal(sql);
 			boolean readonly = command.isReadOnly();
@@ -303,7 +309,9 @@ public class TcpServerThread implements Runnable {
 			int id = transfer.readInt();
 			Command command = (Command) cache.getObject(id, false);
 			
-			command.resetQueryProxyManager();
+			if (session.getCurrentTransactionLocks() == null){
+				command.resetQueryProxyManager();
+			}
 			
 			setParameters(command);
 			int old = session.getModificationId();
@@ -315,7 +323,7 @@ public class TcpServerThread implements Runnable {
 				status = getState(old);
 			}
 			transfer.writeInt(status).writeInt(updateCount)
-					.writeBoolean(session.getAutoCommit());
+					.writeBoolean(session.getApplicationAutoCommit());
 			transfer.flush();
 			break;
 		}

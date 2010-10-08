@@ -37,12 +37,12 @@ import org.h2o.db.manager.TableManager;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
-import org.h2o.event.DatabaseStates;
-import org.h2o.event.client.H2OEvent;
-import org.h2o.event.client.H2OEventBus;
 import org.h2o.locator.client.H2OLocatorInterface;
 import org.h2o.util.LocalH2OProperties;
 import org.h2o.util.exceptions.MovedException;
+import org.h2o.viewer.client.DatabaseStates;
+import org.h2o.viewer.client.H2OEvent;
+import org.h2o.viewer.client.H2OEventBus;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -271,7 +271,7 @@ public class MetaDataReplicaManager {
 							+ newReplicaLocation.getURL().getDbLocation());
 
 					
-					H2OEventBus.publish(new H2OEvent(db.getURL(), DatabaseStates.META_TABLE_REPLICA_CREATION, newReplicaLocation.getURL()
+					H2OEventBus.publish(new H2OEvent(db.getURL().getDbLocation(), DatabaseStates.META_TABLE_REPLICA_CREATION, newReplicaLocation.getURL()
 							.getURL()));
 
 					replicaManager.add(newReplicaLocation);

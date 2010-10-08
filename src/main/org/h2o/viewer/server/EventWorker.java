@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.event.server;
+package org.h2o.viewer.server;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -23,8 +23,8 @@ import java.io.ObjectInputStream;
 import java.net.Socket;
 import java.net.SocketException;
 
-import org.h2o.event.client.H2OEvent;
-import org.h2o.event.server.handlers.EventHandler;
+import org.h2o.viewer.client.H2OEvent;
+import org.h2o.viewer.server.handlers.EventHandler;
 
 /**
  * Handles incoming connections from client databases looking to access (for

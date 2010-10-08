@@ -51,12 +51,12 @@ import org.h2o.db.query.locking.LockType;
 import org.h2o.db.query.locking.LockingTable;
 import org.h2o.db.replication.ReplicaManager;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
-import org.h2o.event.DatabaseStates;
-import org.h2o.event.client.H2OEvent;
-import org.h2o.event.client.H2OEventBus;
 import org.h2o.util.exceptions.MigrationException;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.util.exceptions.StartupException;
+import org.h2o.viewer.client.DatabaseStates;
+import org.h2o.viewer.client.H2OEvent;
+import org.h2o.viewer.client.H2OEventBus;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -397,8 +397,6 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		
 		LockType lockGranted = lockingTable.requestLock(lockRequested, databaseInstanceWrapper);
 
-
-
 		QueryProxy qp = new QueryProxy(lockGranted, tableInfo, selectReplicaLocations(lockRequested, databaseInstanceWrapper, isDrop), this,
 				databaseInstanceWrapper, currentUpdateID, lockRequested);
 
@@ -649,7 +647,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
 		this.shutdown = true;
 
-		H2OEventBus.publish(new H2OEvent(this.db.getURL(), DatabaseStates.TABLE_MANAGER_SHUTDOWN));
+		H2OEventBus.publish(new H2OEvent(this.db.getURL().getDbLocation(), DatabaseStates.TABLE_MANAGER_SHUTDOWN));
 
 		try {
 			UnicastRemoteObject.unexportObject(this, true);

@@ -324,9 +324,9 @@ public class FunctionAlias extends DbObjectBase {
 					params[p] = o;
 				}
 			}
-			boolean old = session.getAutoCommit();
+			boolean old = session.getApplicationAutoCommit();
 			try {
-				session.setAutoCommit(false);
+				session.setApplicationAutoCommit(false);
 				try {
 					Object returnValue;
 					returnValue = method.invoke(null, params);
@@ -340,7 +340,7 @@ public class FunctionAlias extends DbObjectBase {
 					throw Message.convert(e);
 				}
 			} finally {
-				session.setAutoCommit(old);
+				session.setApplicationAutoCommit(old);
 			}
 		}
 

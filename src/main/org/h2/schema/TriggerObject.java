@@ -188,10 +188,10 @@ public class TriggerObject extends SchemaObjectBase {
 			newListBackup = null;
 		}
 		Connection c2 = session.createConnection(false);
-		boolean old = session.getAutoCommit();
+		boolean old = session.getApplicationAutoCommit();
 		boolean oldDisabled = session.setCommitOrRollbackDisabled(true);
 		try {
-			session.setAutoCommit(false);
+			session.setApplicationAutoCommit(false);
 			triggerCallback.fire(c2, oldList, newList);
 			if (newListBackup != null) {
 				for (int i = 0; i < newList.length; i++) {
@@ -205,7 +205,7 @@ public class TriggerObject extends SchemaObjectBase {
 			}
 		} finally {
 			session.setCommitOrRollbackDisabled(oldDisabled);
-			session.setAutoCommit(old);
+			session.setApplicationAutoCommit(old);
 		}
 	}
 

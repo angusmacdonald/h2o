@@ -15,14 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.event.server;
+package org.h2o.viewer.server;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import org.h2o.event.server.handlers.EventFileWriter;
-import org.h2o.event.server.handlers.EventHandler;
+import org.h2o.viewer.server.handlers.EventFileWriter;
+import org.h2o.viewer.server.handlers.EventHandler;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;

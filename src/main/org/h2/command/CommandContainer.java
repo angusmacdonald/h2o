@@ -47,7 +47,9 @@ public class CommandContainer extends Command {
 				this.proxyManager = new QueryProxyManager(session.getDatabase(), session);
 				//session.setCurrentTransactionLocks(this.proxyManager);
 			}
-			
+
+		} else {
+			this.proxyManager = session.getCurrentTransactionLocks(); //if this is a rollback, the locks will be released on TMs specified by the QPM.
 		}
 	}
 
@@ -95,8 +97,6 @@ public class CommandContainer extends Command {
 	public int update() throws SQLException, RemoteException {
 		int resultOfUpdate = update(false);
 
-		assert !getSession().getApplicationAutoCommit(): "Unexpected code path. This shouldn't be called when auto-commit is off.";
-
 		return resultOfUpdate;
 	}
 
@@ -134,14 +134,14 @@ public class CommandContainer extends Command {
 			prepared.trace(startTime, result.getRowCount());
 			if (session.getApplicationAutoCommit()) {
 				proxyManager.endTransaction(null, true);
-				
+
 				//Remove and reset this query proxy manager.
 				session.setCurrentTransactionLocks(null);
-				
+
 				QueryProxyManager.removeProxyManager(proxyManager);
-				
+
 				resetQueryProxyManager();
-				
+
 			} else {
 				proxyManager.releaseReadLocks();
 			}
@@ -215,11 +215,25 @@ public class CommandContainer extends Command {
 			 */
 
 			try {
-				updateCount = prepared.update();
 
-				if (!prepared.getSQL().contains("PREPARE COMMIT")){
-
+				/*
+				 * If this is a rollback and there is a proxy manager, release locks on all affected table managers first.
+				 * The commit command will execute the ROLLBACK / COMMIT later on.
+				 */
+				if (prepared.getSQL().contains("ROLLBACK") && proxyManager != null){
+					proxyManager.commit(false, false, session.getDatabase());
+					updateCount = 0;
+				} else {
+					updateCount = prepared.update();
+				}
+				
+				if (!prepared.getSQL().contains("PREPARE COMMIT")){ //COMMIT or ROLLBACK.
 					session.setCurrentTransactionLocks(null);
+					this.resetQueryProxyManager();
+					
+					if (QueryProxyManager.areThereAnyQueryProxyManagersWithLocks()){
+						System.err.println("");
+					}
 				}
 
 
@@ -316,7 +330,7 @@ public class CommandContainer extends Command {
 			if (proxyManager.hasAllLocks())
 				return;
 
-			ErrorHandling.errorNoEvent("No lock obtained yet: " + prepared.getSQL());
+			//ErrorHandling.errorNoEvent("No lock obtained yet: " + prepared.getSQL());
 
 			/*
 			 * Check current time.. wait.
@@ -338,7 +352,7 @@ public class CommandContainer extends Command {
 
 				// don't wait too long so that deadlocks are detected early
 				long sleep = Math.min(Constants.DEADLOCK_CHECK, max - now);
-				if (sleep == 0) {
+				if (sleep <= 0) {
 					sleep = 1;
 				}
 				Thread.sleep(sleep);
@@ -350,6 +364,7 @@ public class CommandContainer extends Command {
 
 	@Override
 	public void resetQueryProxyManager() {
+		//System.err.println("Resetting query proxy manager...");
 		this.proxyManager = new QueryProxyManager(session.getDatabase(), session);
 	}
 }

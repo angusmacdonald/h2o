@@ -1,12 +1,12 @@
-package org.h2o.event.gui;
+package org.h2o.viewer.gui;
 
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
-import org.h2o.event.DatabaseStates;
-import org.h2o.event.client.H2OEvent;
-import org.h2o.event.server.EventServer;
-import org.h2o.event.server.handlers.EventHandler;
+import org.h2o.viewer.client.DatabaseStates;
+import org.h2o.viewer.client.H2OEvent;
+import org.h2o.viewer.server.EventServer;
+import org.h2o.viewer.server.handlers.EventHandler;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;

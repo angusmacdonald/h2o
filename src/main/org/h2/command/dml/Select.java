@@ -1180,8 +1180,12 @@ public class Select extends Query {
 			if (!this.session.getDatabase().isTableLocal(table.getSchema())) {
 
 				if (Table.TABLE.equals(table.getTableType())) {
-					QueryProxy qp = QueryProxy.getQueryProxyAndLock(table, LockType.READ, this.session.getDatabase());
-
+					QueryProxy qp = queryProxyManager.getQueryProxy(table.getFullName());
+					
+					if (qp == null || qp.getLockGranted().equals(LockType.NONE)){
+						qp = QueryProxy.getQueryProxyAndLock(table, LockType.READ, this.session.getDatabase());
+					}
+					
 					queryProxyManager.addProxy(qp);
 				} else if (Table.VIEW.equals(table.getTableType())) {
 					// Get locks for the tables involved in executing the view.

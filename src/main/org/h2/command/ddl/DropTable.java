@@ -26,10 +26,10 @@ import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.query.QueryProxy;
 import org.h2o.db.query.QueryProxyManager;
 import org.h2o.db.query.locking.LockType;
-import org.h2o.event.DatabaseStates;
-import org.h2o.event.client.H2OEvent;
-import org.h2o.event.client.H2OEventBus;
 import org.h2o.util.exceptions.MovedException;
+import org.h2o.viewer.client.DatabaseStates;
+import org.h2o.viewer.client.H2OEvent;
+import org.h2o.viewer.client.H2OEventBus;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
@@ -170,7 +170,7 @@ public class DropTable extends SchemaCommand {
 				// db.removeTableManager(fullTableName, true);
 
 			}
-			H2OEventBus.publish(new H2OEvent(db.getURL(), DatabaseStates.TABLE_DELETION, getSchema().getName() + "." + tableName));
+			H2OEventBus.publish(new H2OEvent(db.getURL().getDbLocation(), DatabaseStates.TABLE_DELETION, getSchema().getName() + "." + tableName));
 		}
 		if (next != null) {
 			next.executeDrop(transactionName);

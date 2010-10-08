@@ -58,10 +58,10 @@ import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
-import org.h2o.event.DatabaseStates;
-import org.h2o.event.client.H2OEvent;
-import org.h2o.event.client.H2OEventBus;
 import org.h2o.util.exceptions.MovedException;
+import org.h2o.viewer.client.DatabaseStates;
+import org.h2o.viewer.client.H2OEvent;
+import org.h2o.viewer.client.H2OEventBus;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
@@ -466,11 +466,11 @@ public class CreateReplica extends SchemaCommand {
 						}
 					}
 
-					H2OEventBus.publish(new H2OEvent(this.session.getDatabase().getURL(), DatabaseStates.REPLICA_CREATION, getSchema()
+					H2OEventBus.publish(new H2OEvent(this.session.getDatabase().getURL().getDbLocation(), DatabaseStates.REPLICA_CREATION, getSchema()
 							.getName() + "." + tableName));
 
 				} else {
-					H2OEventBus.publish(new H2OEvent(this.session.getDatabase().getURL(), DatabaseStates.META_TABLE_REPLICA_CREATION,
+					H2OEventBus.publish(new H2OEvent(this.session.getDatabase().getURL().getDbLocation(), DatabaseStates.META_TABLE_REPLICA_CREATION,
 							getSchema().getName() + "." + tableName));
 				}
 			}

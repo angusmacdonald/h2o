@@ -15,11 +15,11 @@ import org.h2o.db.manager.TableManager;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.query.QueryProxy;
 import org.h2o.db.query.locking.LockType;
-import org.h2o.event.DatabaseStates;
-import org.h2o.event.client.H2OEvent;
-import org.h2o.event.client.H2OEventBus;
 import org.h2o.util.exceptions.MigrationException;
 import org.h2o.util.exceptions.MovedException;
+import org.h2o.viewer.client.DatabaseStates;
+import org.h2o.viewer.client.H2OEvent;
+import org.h2o.viewer.client.H2OEventBus;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -98,7 +98,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 						getSchema().getName() + tableName);
 			}
 
-			H2OEventBus.publish(new H2OEvent(db.getURL(), DatabaseStates.TABLE_MANAGER_MIGRATION, ti.getFullTableName()));
+			H2OEventBus.publish(new H2OEvent(db.getURL().getDbLocation(), DatabaseStates.TABLE_MANAGER_MIGRATION, ti.getFullTableName()));
 
 		} catch (MovedException e) {
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1,

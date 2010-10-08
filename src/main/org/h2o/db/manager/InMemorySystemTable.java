@@ -40,12 +40,12 @@ import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.monitorthreads.TableManagerLivenessCheckerThread;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
-import org.h2o.event.DatabaseStates;
-import org.h2o.event.client.H2OEvent;
-import org.h2o.event.client.H2OEventBus;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.util.filter.CollectionFilter;
 import org.h2o.util.filter.Predicate;
+import org.h2o.viewer.client.DatabaseStates;
+import org.h2o.viewer.client.H2OEvent;
+import org.h2o.viewer.client.H2OEventBus;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -120,7 +120,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 
 		started = true;
 
-		H2OEventBus.publish(new H2OEvent(database.getURL(), DatabaseStates.SYSTEM_TABLE_CREATION));
+		H2OEventBus.publish(new H2OEvent(database.getURL().getDbLocation(), DatabaseStates.SYSTEM_TABLE_CREATION));
 	}
 
 	/******************************************************************
@@ -325,7 +325,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 			try {
 				tm = new TableManager(ti, database);
 				tm.recreateReplicaManagerState(tableManagerWrapper.getURL().sanitizedLocation());
-				H2OEventBus.publish(new H2OEvent(database.getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
+				H2OEventBus.publish(new H2OEvent(database.getURL().getDbLocation(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
 
 			} catch (SQLException e) {
 				e.printStackTrace();

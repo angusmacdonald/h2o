@@ -47,13 +47,13 @@ import org.h2o.db.manager.interfaces.SystemTableRemote;
 import org.h2o.db.replication.MetaDataReplicaManager;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
-import org.h2o.event.DatabaseStates;
-import org.h2o.event.client.H2OEvent;
-import org.h2o.event.client.H2OEventBus;
 import org.h2o.locator.client.H2OLocatorInterface;
 import org.h2o.util.LocalH2OProperties;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.util.exceptions.StartupException;
+import org.h2o.viewer.client.DatabaseStates;
+import org.h2o.viewer.client.H2OEvent;
+import org.h2o.viewer.client.H2OEventBus;
 
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -712,7 +712,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 			// If the old predecessor is no longer available it has failed - try
 			// to recover processses.
 			if (predecessorURL != null) {
-				H2OEventBus.publish(new H2OEvent(this.predecessorURL, DatabaseStates.DATABASE_FAILURE, null));
+				H2OEventBus.publish(new H2OEvent(this.predecessorURL.getDbLocation(), DatabaseStates.DATABASE_FAILURE, null));
 			}
 		}
 

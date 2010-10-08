@@ -90,15 +90,15 @@ import org.h2o.db.remote.IChordInterface;
 import org.h2o.db.remote.IDatabaseRemote;
 import org.h2o.db.replication.MetaDataReplicaManager;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
-import org.h2o.event.DatabaseStates;
-import org.h2o.event.client.H2OEvent;
-import org.h2o.event.client.H2OEventBus;
-import org.h2o.event.client.H2OEventConsumer;
 import org.h2o.locator.client.H2OLocatorInterface;
 import org.h2o.util.LocalH2OProperties;
 import org.h2o.util.TransactionNameGenerator;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.util.exceptions.StartupException;
+import org.h2o.viewer.client.DatabaseStates;
+import org.h2o.viewer.client.H2OEvent;
+import org.h2o.viewer.client.H2OEventBus;
+import org.h2o.viewer.client.H2OEventConsumer;
 
 import uk.ac.standrews.cs.nds.eventModel.eventBus.EventBus;
 import uk.ac.standrews.cs.nds.eventModel.eventBus.busInterfaces.IEventBus;
@@ -305,7 +305,7 @@ public class Database implements DataHandler {
 				bus.register(eventConsumer);
 			}
 
-			H2OEventBus.publish(new H2OEvent(localMachineLocation, DatabaseStates.DATABASE_STARTUP, null));
+			H2OEventBus.publish(new H2OEvent(localMachineLocation.getDbLocation(), DatabaseStates.DATABASE_STARTUP, null));
 		}
 
 		this.multiThreaded = true; // H2O. Required for the H2O push replication
@@ -1413,7 +1413,7 @@ public class Database implements DataHandler {
 		closing = true;
 		stopServer();
 		if (Constants.IS_H2O && !isManagementDB() && !fromShutdownHook) {
-			H2OEventBus.publish(new H2OEvent(this.getURL(), DatabaseStates.DATABASE_SHUTDOWN, null));
+			H2OEventBus.publish(new H2OEvent(this.getURL().getDbLocation(), DatabaseStates.DATABASE_SHUTDOWN, null));
 
 			metaDataReplicationThread.setRunning(false);
 			running = false;
