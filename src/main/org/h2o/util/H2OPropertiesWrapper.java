@@ -53,9 +53,9 @@ public class H2OPropertiesWrapper {
 		if (propertiesFileLocation.startsWith("http:")) { // Parse URL, request file from webpage.
 
 			URL url = new URL(propertiesFileLocation);
-			InputStreamReader isr = new InputStreamReader(url.openStream());
+			InputStreamReader inputReader = new InputStreamReader(url.openStream());
 
-			properties.load(isr);
+			properties.load(inputReader);
 
 		} else { // Try to open the file from disk.
 
