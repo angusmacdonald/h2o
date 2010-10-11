@@ -23,7 +23,6 @@ import java.io.IOException;
 
 import org.h2o.db.id.DatabaseURL;
 
-import uk.ac.standrews.cs.nds.util.H2OPropertiesWrapper;
 
 /**
  * 
