@@ -18,6 +18,7 @@
  */
 package org.h2o.run;
 
+import org.h2o.test.util.PropertiesWrapperTest;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -26,7 +27,7 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	DummyTest.class
+	PropertiesWrapperTest.class
 })
 public class CheckInTests {
 	// Empty.

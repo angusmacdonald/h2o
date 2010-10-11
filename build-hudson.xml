@@ -41,7 +41,7 @@
 	
 	<!-- Generate project jar. -->
 	<target name="project-jar">
-		<jar destfile="bin/h2o.jar" manifest="jar-manifest.txt">
+		<jar destfile="bin/h2o.jar">
             <manifest>
                 <attribute name="Main-Class" value="org.h2o.H2O"/>
             </manifest>
