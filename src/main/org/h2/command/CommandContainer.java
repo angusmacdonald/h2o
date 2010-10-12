@@ -45,7 +45,7 @@ public class CommandContainer extends Command {
 			} else {
 				// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Creating a new proxy manager.");
 				this.proxyManager = new QueryProxyManager(session.getDatabase(), session);
-				//session.setCurrentTransactionLocks(this.proxyManager);
+				session.setCurrentTransactionLocks(this.proxyManager);
 			}
 
 		} else {
@@ -205,6 +205,7 @@ public class CommandContainer extends Command {
 
 			} catch (SQLException e) {
 				proxyManager.commit(false, true, session.getDatabase());
+				session.rollback();
 				session.setCurrentTransactionLocks(null);
 				this.resetQueryProxyManager();
 				throw e;

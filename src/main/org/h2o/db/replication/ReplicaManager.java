@@ -220,8 +220,7 @@ public class ReplicaManager implements Serializable {
 				 */
 				if (getAllReplicas().containsKey(wrapper) && (tableInfo.equals(commitResult.getTable()) || commitResult.getTable() == null)) {
 
-					instancesUpdated.add(wrapper);
-
+					
 					final Integer currentID = allReplicas.get(wrapper);
 
 					if (expectedUpdateID == currentID) {
@@ -233,6 +232,9 @@ public class ReplicaManager implements Serializable {
 						int newUpdateID = currentID + 1;
 
 						if (commitResult.isCommit()) {
+							instancesUpdated.add(wrapper);
+
+							
 							activeReplicas.put(wrapper, newUpdateID);
 							addToAllReplicas(wrapper, newUpdateID);
 
@@ -254,6 +256,8 @@ public class ReplicaManager implements Serializable {
 						 */
 						ErrorHandling.errorNoEvent("Replica will not commit because update IDs did not match. Expected: "
 								+ expectedUpdateID + "; Actual current: " + currentID);
+						
+						assert false: "Update IDs did not match. This is an internal error.";
 					}
 
 				} // In many cases it won't contain this key, but another table (part of the same transaction) was on this machine.

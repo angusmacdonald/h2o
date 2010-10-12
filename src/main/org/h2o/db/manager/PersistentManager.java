@@ -223,7 +223,7 @@ public abstract class PersistentManager {
 			return true;
 		} catch (SQLException e) {
 
-			e.printStackTrace();
+			ErrorHandling.exceptionError(e, "Failed to update meta-data tables.");
 			return false;
 		}
 	}
@@ -272,7 +272,7 @@ public abstract class PersistentManager {
 	public void persistActiveInformation(TableInfo tableDetails, Set<DatabaseInstanceWrapper> newlyInactiveReplicas) {
 		persistReplicaActiveInformation(tableDetails, newlyInactiveReplicas, true);
 		
-		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Set " + newlyInactiveReplicas.size() + " replicas as active");
+		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Set " + newlyInactiveReplicas.size() + " replicas as inactive");
 	}
 
 	private void persistReplicaActiveInformation(TableInfo tableDetails, Set<DatabaseInstanceWrapper> newlyInactiveReplicas, boolean active) {
@@ -673,8 +673,7 @@ public abstract class PersistentManager {
 
 			return true;
 		} catch (SQLException e) {
-			e.printStackTrace();
-
+			ErrorHandling.errorNoEvent("Failed to remove table information for : " + ti);
 			return false;
 		}
 	}

@@ -220,7 +220,14 @@ public class DropTable extends SchemaCommand {
 					//Will happen if the table doesn't exist but IF NOT EXISTS has been specified.
 					queryProxy = QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper());
 				} else {
-					queryProxy = QueryProxy.getQueryProxyAndLock(tableManager, fullTableName, database, LockType.WRITE, session.getDatabase()
+					/*
+					 * A DROP lock is requested if auto-commit is off (so that the update ID returned is 0), but a WRITE lock is given. If auto-commit
+					 * is on then no other queries can come in after the drop request so the write lock is sufficient.
+					 */
+					
+					LockType lockToRequest = (session.getApplicationAutoCommit())? LockType.WRITE: LockType.DROP;
+					
+					queryProxy = QueryProxy.getQueryProxyAndLock(tableManager, fullTableName, database, lockToRequest, session.getDatabase()
 							.getLocalDatabaseInstanceInWrapper(), false);
 				}
 			}

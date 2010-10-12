@@ -156,8 +156,8 @@ public class LockingTable implements ILockingTable {
 			return toReturn;
 		}
 
-		ErrorHandling.errorNoEvent("Unexpected code path: attempted to release a lock which wasn't held for table: " + tableName);
-
+		assert false: "Unexpected code path: attempted to release a lock which wasn't held for table: " + tableName;
+		
 		return toReturn; // should never get to this.
 	}
 

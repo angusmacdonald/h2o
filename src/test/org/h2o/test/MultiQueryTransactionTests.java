@@ -452,10 +452,15 @@ public class MultiQueryTransactionTests extends TestBase {
 			if (rs.next() && rs.next()) {
 				fail("There should only be one table in the System Table.");
 			}
+
 		} catch (SQLException e) {
 			e.printStackTrace();
 			fail("An Unexpected SQLException was thrown.");
 		}
+
+		Constants.IS_TESTING_CREATETABLE_FAILURE = false;
+		Constants.IS_TESTING_QUERY_FAILURE = false;
+
 	}
 
 	// /**
@@ -957,10 +962,7 @@ public class MultiQueryTransactionTests extends TestBase {
 
 			System.err.println("Executed select.");
 
-			// if (rs.next()){
-			// ErrorHandling.errorNoEvent("Contents:" + rs.getString(2));
-			// fail("The table shouldn't have any entries yet. Update hasn't committed.");
-			// }
+			// Execute batch seems to auto-commit, so the table's already exist before this point.
 
 			ca.commit();
 
@@ -976,9 +978,8 @@ public class MultiQueryTransactionTests extends TestBase {
 
 			ca.createStatement().execute("drop table australia");
 
-			ca.createStatement()
-					.execute(
-							"create table australia (ID  INTEGER NOT NULL, Name VARCHAR(100), FirstName VARCHAR(100), Points INTEGER, LicenseID INTEGER, PRIMARY KEY(ID))");
+			ca.createStatement().execute("create table australia (ID  INTEGER NOT NULL, Name VARCHAR(100), "
+							+ "FirstName VARCHAR(100), Points INTEGER, LicenseID INTEGER, PRIMARY KEY(ID))");
 
 			ca.commit();
 
@@ -993,9 +994,9 @@ public class MultiQueryTransactionTests extends TestBase {
 	 * becomes incorrect on a table scan after a while.
 	 * 
 	 * @throws SQLException
-	 * @throws ClassNotFoundException 
+	 * @throws ClassNotFoundException
 	 */
-	//@Test
+	// @Test
 	public void largeNumberOfInsertsCoupleAtATime() throws SQLException, ClassNotFoundException {
 		// update bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
 		// createReplicaOnB();
@@ -1035,33 +1036,44 @@ public class MultiQueryTransactionTests extends TestBase {
 			sa.execute("drop table if exists RESOURCE_MONITORING.PROCESS");
 			sa.execute("drop table if exists RESOURCE_MONITORING.SYS_INFO");
 
-			sa.execute(
-							"CREATE TABLE IF NOT EXISTS RESOURCE_MONITORING.SYS_INFO( machine_id VARCHAR(40), hostname VARCHAR(255), "
-									+ "primary_ip VARCHAR(15), cpu_vendor VARCHAR(100), cpu_model VARCHAR(100), num_cores TINYINT(2), num_cpus TINYINT(2), cpu_mhz INT, "
-									+ "cpu_cache_size BIGINT, os_name VARCHAR(255), os_version VARCHAR(100), "
-									+ "default_gateway VARCHAR(15), memory_total BIGINT, swap_total BIGINT, PRIMARY KEY (machine_id));");
+			sa.execute("CREATE TABLE IF NOT EXISTS RESOURCE_MONITORING.SYS_INFO( machine_id VARCHAR(40), hostname VARCHAR(255), "
+					+ "primary_ip VARCHAR(15), cpu_vendor VARCHAR(100), cpu_model VARCHAR(100), num_cores TINYINT(2), num_cpus TINYINT(2), cpu_mhz INT, "
+					+ "cpu_cache_size BIGINT, os_name VARCHAR(255), os_version VARCHAR(100), "
+					+ "default_gateway VARCHAR(15), memory_total BIGINT, swap_total BIGINT, PRIMARY KEY (machine_id));");
 
-			sa.execute("INSERT INTO RESOURCE_MONITORING.SYS_INFO VALUES('"
-					+ "MY_MACHINE_ID" + "', '" + "data.hostname" + "', '"
-					+ "data.primary_ip" + "', '" + "data.cpu_vendor" + "', '"
-					+ "data.cpu_model" + "', " + 2 + ", "
-					+ "2" + ", " + "2000" + ", "
-					+ "-1" + ", '" + "data.os_name" + "', '"
-					+ "data.os_version" + "', '" + "gateway" + "', "
-					+ "2000" + ", " + "2000" + ");");
-			
+			sa.execute("INSERT INTO RESOURCE_MONITORING.SYS_INFO VALUES('" + "MY_MACHINE_ID" + "', '" + "data.hostname" + "', '"
+					+ "data.primary_ip" + "', '" + "data.cpu_vendor" + "', '" + "data.cpu_model" + "', " + 2 + ", " + "2" + ", " + "2000"
+					+ ", " + "-1" + ", '" + "data.os_name" + "', '" + "data.os_version" + "', '" + "gateway" + "', " + "2000" + ", "
+					+ "2000" + ");");
+
 			sa.execute("CREATE TABLE IF NOT EXISTS RESOURCE_MONITORING.PROCESS( machine_id VARCHAR(40), start_ts TIMESTAMP, end_ts TIMESTAMP, measurements INT, "
-									+ "process_name VARCHAR(255), "
-									+ "process_start_time BIGINT, process_cpu_percent_avg DOUBLE, process_cpu_percent_min DOUBLE, process_cpu_percent_max DOUBLE, "
-									+ "process_mem_avg BIGINT, process_mem_min BIGINT,process_mem_max BIGINT,"
-									+ "process_resident_avg BIGINT, process_resident_min BIGINT, process_resident_max BIGINT"
-									+ ", FOREIGN KEY (machine_id) REFERENCES SYS_INFO(machine_id));");
+					+ "process_name VARCHAR(255), "
+					+ "process_start_time BIGINT, process_cpu_percent_avg DOUBLE, process_cpu_percent_min DOUBLE, process_cpu_percent_max DOUBLE, "
+					+ "process_mem_avg BIGINT, process_mem_min BIGINT,process_mem_max BIGINT,"
+					+ "process_resident_avg BIGINT, process_resident_min BIGINT, process_resident_max BIGINT"
+					+ ", FOREIGN KEY (machine_id) REFERENCES SYS_INFO(machine_id));");
 
 			int numberOfInserts = 5000000;
 			for (int i = 0; i < numberOfInserts; i++) {
-				String insert = "INSERT INTO RESOURCE_MONITORING.PROCESS VALUES('" + "MY_MACHINE_ID" + "',  '" + "2010-09-22" + "', '" + "2010-09-22"
-						+ "', " + 5 + ", '" + "num:" + i + "', '" + "000022442" + "', " + 0.2 + ", " + 0.2 + ", " + 0.2 + ", " + 3000
-						+ ", " + 3000 + ", " + 3000 + ", " + 3000 + ", " + 3000 + ", " + 3000 + ");";
+				String insert = "INSERT INTO RESOURCE_MONITORING.PROCESS VALUES('" + "MY_MACHINE_ID" + "',  '" + "2010-09-22" + "', '"
+						+ "2010-09-22" + "', "
+						+ 5
+						+ ", '"
+						+ "num:"
+						+ i
+						+ "', '"
+						+ "000022442"
+						+ "', "
+						+ 0.2
+						+ ", "
+						+ 0.2
+						+ ", "
+						+ 0.2
+						+ ", "
+						+ 3000
+						+ ", "
+						+ 3000
+						+ ", " + 3000 + ", " + 3000 + ", " + 3000 + ", " + 3000 + ");";
 
 				sa.executeUpdate(insert);
 
@@ -1081,8 +1093,6 @@ public class MultiQueryTransactionTests extends TestBase {
 			fail("Unexpected SQL Exception was thrown.");
 		}
 	}
-	
-
 
 	/*
 	 * ############### Utility Methods ###############

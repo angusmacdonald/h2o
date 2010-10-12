@@ -58,49 +58,6 @@ public class QueryProxyManager {
 
 	private static Set<QueryProxyManager> activeProxyManagers = new HashSet<QueryProxyManager>();
 
-
-	public synchronized static void addNewProxyManager(QueryProxyManager newProxyManager, Session session) {
-
-		if (!activeProxyManagers.contains(newProxyManager)){
-			//System.err.println("Adding new query proxy manager: "+ newProxyManager + ", Session: " + session);
-
-			QueryProxyManager.activeProxyManagers.add(newProxyManager);
-		}
-
-		if (activeProxyManagers.size() > 1){
-			//System.out.println("There are multiple active query proxy managers...");
-		}
-	}
-
-	public synchronized static void removeProxyManager(QueryProxyManager oldProxyManager) {
-		if (activeProxyManagers.contains(oldProxyManager)){
-			//System.err.println("\tCommitting old query proxy manager: "+ oldProxyManager);
-
-			QueryProxyManager.activeProxyManagers.remove(oldProxyManager);
-		}
-	}
-
-	/**
-	 * Checks whether any of the active QueryProxyManagers have locks held on them.
-	 * 
-	 * This method is intended to be called from methods 
-	 * @return returns true if a query proxy is found with a table manager reference and a granted lock. The requirement for
-	 * a table manager eliminates meta-data replication from the test.
-	 */
-	public synchronized static boolean areThereAnyQueryProxyManagersWithLocks(){
-		for (QueryProxyManager qpm: activeProxyManagers){
-			for (QueryProxy qp: qpm.getQueryProxies()){
-				if (qp.getTableManager() != null && !qp.getLockGranted().equals(LockType.NONE)){
-					return true;
-				}
-			}
-		}
-
-		return false;
-	}
-
-
-
 	private String transactionName;
 
 	private DatabaseInstanceWrapper localDatabase;
@@ -108,13 +65,6 @@ public class QueryProxyManager {
 	private Parser parser;
 
 	private Map<DatabaseInstanceWrapper, Integer> allReplicas;
-
-	/**
-	 * Key: table managers involved in this transaction.
-	 * Value:the number of query proxies that this table manager
-	 * appears in.
-	 */
-	private HashMap<TableManagerRemote, Integer> tableManagers2;
 
 	private DatabaseInstanceWrapper requestingDatabase;
 
@@ -329,21 +279,10 @@ public class QueryProxyManager {
 
 		printTraceOutputOfExecutedQueries();
 
-		/*
-		 * If rollback was performed - throw an exception informing requesting party of this.
-		 */
-		// if (!globalCommit){
-		// if (exception != null){
-		// throw exception;
-		// } else {
-		// throw new
-		// SQLException("Couldn't complete update because one or a number of replicas failed.");
-		// }
-		// }
-
-		// XXX not throwing any exceptions at this point because the system is
-		// coming to a point where the asynchronous updates are acceptable.
-
+		if (h2oCommit){
+			queryProxies.clear();
+		}
+		
 		removeProxyManager(this);
 	}
 
@@ -544,5 +483,47 @@ public class QueryProxyManager {
 
 		return null;
 	}
+
+
+	public synchronized static void addNewProxyManager(QueryProxyManager newProxyManager, Session session) {
+
+		if (!activeProxyManagers.contains(newProxyManager)){
+			//System.err.println("Adding new query proxy manager: "+ newProxyManager + ", Session: " + session);
+
+			QueryProxyManager.activeProxyManagers.add(newProxyManager);
+		}
+
+		if (activeProxyManagers.size() > 1){
+			//System.out.println("There are multiple active query proxy managers...");
+		}
+	}
+
+	public synchronized static void removeProxyManager(QueryProxyManager oldProxyManager) {
+		if (activeProxyManagers.contains(oldProxyManager)){
+			//System.err.println("\tCommitting old query proxy manager: "+ oldProxyManager);
+
+			QueryProxyManager.activeProxyManagers.remove(oldProxyManager);
+		}
+	}
+
+	/**
+	 * Checks whether any of the active QueryProxyManagers have locks held on them.
+	 * 
+	 * This method is intended to be called from methods 
+	 * @return returns true if a query proxy is found with a table manager reference and a granted lock. The requirement for
+	 * a table manager eliminates meta-data replication from the test.
+	 */
+	public synchronized static boolean areThereAnyQueryProxyManagersWithLocks(){
+		for (QueryProxyManager qpm: activeProxyManagers){
+			for (QueryProxy qp: qpm.getQueryProxies()){
+				if (qp.getTableManager() != null && !qp.getLockGranted().equals(LockType.NONE)){
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
 
 }

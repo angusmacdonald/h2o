@@ -666,20 +666,22 @@ public class Session extends SessionWithState {
 		// otherwise rollback will try to rollback a not-inserted row
 		
 		//XXX because of exclusive locking at the H2O level, it is assumed that this is not needed.
-//		if (SysProperties.CHECK) {
-//			int lockMode = database.getLockMode();
-//			if (lockMode != Constants.LOCK_MODE_OFF
-//					&& !database.isMultiVersion()) {
-//				if (locks.indexOf(log.getTable()) < 0 && !Table.TABLE_LINK.equals(log.getTable().getTableType())) {
-//					
-//					/*
-//					 * Thrown if we try to log something, but a lock isn't held.
-//					 */
-//					
-//				Message.throwInternalError();
-//				}
-//			}
-//		}
+		if (SysProperties.CHECK) {
+			int lockMode = database.getLockMode();
+			if (lockMode != Constants.LOCK_MODE_OFF
+					&& !database.isMultiVersion()) {
+				if (locks.indexOf(log.getTable()) < 0 && !Table.TABLE_LINK.equals(log.getTable().getTableType())) {
+					
+					/*
+					 * Thrown if we try to log something, but a lock isn't held.
+					 */
+					
+				Message.throwInternalError();
+				}
+			}
+		}
+		// end of check
+		
 		if (undoLogEnabled) {
 			undoLog.add(log);
 		} else {
@@ -889,7 +891,7 @@ public class Session extends SessionWithState {
 					break;
 				}
 			}
-			if (!found && commit) { //XXX only called on commit because of the way ROLLBACKS could be sent to machines unaware of a problem.
+			if (!found && commit) { //only called on commit because of the way ROLLBACKS could be sent to machines unaware of a problem.
 				throw Message.getSQLException(
 						ErrorCode.TRANSACTION_NOT_FOUND_1, transactionName);
 			}

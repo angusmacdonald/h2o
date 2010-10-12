@@ -368,8 +368,6 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	throws RemoteException, SQLException, MovedException {
 		preMethodTest();
 
-		// if (!isAlive ) return null;
-
 		if (replicaManager.allReplicasSize() == 0 && !lockRequested.equals(LockType.CREATE)) {
 			try {
 				throw new Exception("Illegal State. There must be at least one replica");
@@ -572,13 +570,13 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 		 */
 
 		if (lockType == LockType.WRITE || asynchronousCommit){ //creates are viewed as writes in the locking table.
-			Set<DatabaseInstanceWrapper> newlyInactive = replicaManager.completeUpdate(commit, committedQueries, tableInfo, !asynchronousCommit);
+			Set<DatabaseInstanceWrapper> changed = replicaManager.completeUpdate(commit, committedQueries, tableInfo, !asynchronousCommit);
 
 			
 			
-			if (!asynchronousCommit && newlyInactive.size() < replicaManager.getActiveReplicas().size() && newlyInactive.size() > 1){
+			if (!asynchronousCommit && changed.size() < replicaManager.getActiveReplicas().size() && changed.size() > 1){
 				//This is the first part of a query. Some replicas will be made inactive.
-				persistInactiveInformation(this.tableInfo, newlyInactive);
+				persistInactiveInformation(this.tableInfo, changed);
 
 				//printCurrentActiveReplicas();
 
@@ -586,7 +584,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 			} else {
 				//This is the asynchronous part of the query. Some replicas will be made active.
 				
-				persistActiveInformation(this.tableInfo, newlyInactive);
+				persistActiveInformation(this.tableInfo, changed);
 
 			}
 

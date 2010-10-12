@@ -305,7 +305,7 @@ public class Database implements DataHandler {
 				bus.register(eventConsumer);
 			}
 
-			H2OEventBus.publish(new H2OEvent(localMachineLocation.getDbLocation(), DatabaseStates.DATABASE_STARTUP, null));
+			H2OEventBus.publish(new H2OEvent(localMachineLocation.getDbLocation(), DatabaseStates.DATABASE_STARTUP, localMachineLocation.getURL()));
 		}
 
 		this.multiThreaded = true; // H2O. Required for the H2O push replication
