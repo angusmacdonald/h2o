@@ -15,6 +15,8 @@ import org.h2.message.Message;
 import org.h2.message.Trace;
 import org.h2.table.Table;
 
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
+
 /**
  * A sequence is created using the statement CREATE SEQUENCE
  */
@@ -133,7 +135,8 @@ public class Sequence extends SchemaObjectBase {
 			if (session == sysSession) {
 				// if the system session is used,
 				// the transaction must be committed immediately
-				sysSession.commit(false);
+				// sysSession.commit(false);
+				ErrorHandling.errorNoEvent("Commented out commit in: Sequence::flush()"); //TODO XXX <<<<
 			}
 		}
 	}

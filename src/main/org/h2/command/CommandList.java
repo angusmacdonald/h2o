@@ -23,7 +23,6 @@ public class CommandList extends Command {
 
 	private final Command command;
 	private String[] remaining;
-	private QueryProxyManager proxyManager;
 
 	// TODO lock if possible!
 
@@ -37,20 +36,7 @@ public class CommandList extends Command {
 		if (remaining != null) {
 			this.remaining = remaining.split(";"); // TODO not particularly safe. i.e. no query can contain a semi-colon.
 		}
-
-
-		if (session.getCurrentTransactionLocks() != null) { 
-			//This used to execute only if auto-commit was off - but I don't think that matters. If it was on then the queryproxymanager for a committed
-			//transaction shouldn't be here. [may be a problem with pole position].
-			this.proxyManager = session.getCurrentTransactionLocks();
-		} else {
-			// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Creating a new proxy manager.");
-			this.proxyManager = new QueryProxyManager(session.getDatabase(), session);
-			//session.setCurrentTransactionLocks(this.proxyManager);
-		}
 		
-		command.addQueryProxyManager(proxyManager);
-
 	}
 
 	public ObjectArray getParameters() {
@@ -72,8 +58,7 @@ public class CommandList extends Command {
 				for (String sqlStatement : remaining) {
 
 					Command remainingCommand = session.prepareLocal(sqlStatement);
-					remainingCommand.addQueryProxyManager(proxyManager);
-
+					
 					if (remainingCommand.isQuery()) {
 						remainingCommand.query(0, true);
 					} else {
@@ -139,9 +124,11 @@ public class CommandList extends Command {
 			/*
 			 * Having executed all commands, rollback if there was an exception. Otherwise, commit.
 			 */
-			proxyManager.commit(rollbackException == null, true, session.getDatabase());
-			session.setCurrentTransactionLocks(null);
-			proxyManager = new QueryProxyManager(session.getDatabase(), session);
+			
+			
+			QueryProxyManager currentProxyManager = session.getProxyManagerForTransaction();
+			currentProxyManager.finishTransaction(rollbackException == null, true, session.getDatabase());
+			
 			/*
 			 * If we did a rollback, rethrow the exception that caused this to happen.
 			 */
@@ -173,8 +160,8 @@ public class CommandList extends Command {
 	 * @see org.h2.command.Command#acquireLocks()
 	 */
 	@Override
-	public void acquireLocks(QueryProxyManager queryProxyManager) throws SQLException {
-		command.acquireLocks(queryProxyManager);
+	public void acquireLocks() throws SQLException {
+		command.acquireLocks();
 	}
 
 	/*
@@ -187,26 +174,6 @@ public class CommandList extends Command {
 		return command.shouldBePropagated();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.h2.command.Command#addQueryProxyManager(org.h2.h2o.comms. QueryProxyManager)
-	 */
-	@Override
-	public void addQueryProxyManager(QueryProxyManager proxyManager) {
-		ErrorHandling.hardError("Didn't expect this to be called.");
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.h2.command.CommandInterface#getQueryProxyManager()
-	 */
-	@Override
-	public QueryProxyManager getQueryProxyManager() {
-		ErrorHandling.hardError("Didn't expect this to be called.");
-		return proxyManager;
-	}
 
 	/*
 	 * (non-Javadoc)
@@ -217,9 +184,4 @@ public class CommandList extends Command {
 	public void setIsPreparedStatement(boolean preparedStatement) {
 		command.setIsPreparedStatement(preparedStatement);
 	}
-
-	@Override
-	public void resetQueryProxyManager() {
-	}
-
 }

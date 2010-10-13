@@ -138,8 +138,7 @@ public class LockingTable implements ILockingTable {
 	public synchronized LockType releaseLock(DatabaseInstanceWrapper requestingMachine) {
 		LockType toReturn = LockType.NONE;
 		// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "'" + tableName +
-		// "' unlocked by " +
-		// requestingMachine.getDatabaseURL().getOriginalURL());
+		// "' unlocked by " + requestingMachine.getDatabaseURL().getOriginalURL());
 
 		if (readLocks.remove(requestingMachine)) {
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "READ lock released on " + tableName);

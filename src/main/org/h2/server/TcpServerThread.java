@@ -31,6 +31,7 @@ import org.h2.util.SmallMap;
 import org.h2.util.StringUtils;
 import org.h2.value.Transfer;
 import org.h2.value.Value;
+import org.h2o.db.query.QueryProxyManager;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -308,10 +309,6 @@ public class TcpServerThread implements Runnable {
 		case SessionRemote.COMMAND_EXECUTE_UPDATE: {
 			int id = transfer.readInt();
 			Command command = (Command) cache.getObject(id, false);
-			
-			if (session.getCurrentTransactionLocks() == null){
-				command.resetQueryProxyManager();
-			}
 			
 			setParameters(command);
 			int old = session.getModificationId();

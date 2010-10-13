@@ -46,7 +46,6 @@ public class CommitResult implements Serializable {
 	 *            The update ID corresponding to this update.
 	 * @param expectedUpdateID
 	 *            The update ID that the replica should match when it commits to the table manager.
-	 * @param expectedUpdateID
 	 * @param tableName
 	 *            Name of the table which is being updated by this query.
 	 */
@@ -57,11 +56,7 @@ public class CommitResult implements Serializable {
 		this.expectedUpdateID = expectedUpdateID;
 		this.tableName = tableName;
 
-		if (tableName == null){
-			this.isCommitQuery = true;
-		} else {
-			this.isCommitQuery = false;
-		}
+		this.isCommitQuery = (tableName == null);
 	}
 
 	public CommitResult(boolean commit, DatabaseInstanceWrapper wrapper, int updateID, int expectedUpdateID) {

@@ -101,7 +101,7 @@ public interface TableManagerRemote extends H2ORemote, Migratable {
 	 * 	other replicas have already committed, and this is being done asynchronously. 
 	 * @throws MovedException
 	 */
-	public void releaseLock(boolean commit, DatabaseInstanceWrapper requestingDatabase,
+	public void releaseLockAndUpdateReplicaState(boolean commit, DatabaseInstanceWrapper requestingDatabase,
 			Collection<CommitResult> commitedQueries, boolean asynchronousCommit)
 			throws RemoteException, MovedException;
 

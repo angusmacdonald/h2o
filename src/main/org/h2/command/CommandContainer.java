@@ -30,29 +30,12 @@ public class CommandContainer extends Command {
 
 	private Prepared prepared;
 
-	private QueryProxyManager proxyManager = null;
-
 	CommandContainer(Parser parser, String sql, Prepared prepared) {
 		super(parser, sql);
 		prepared.setCommand(this);
 		this.prepared = prepared;
-		if (!(prepared instanceof TransactionCommand)){ //commits don't need query proxy managers.
 
-			if (session.getCurrentTransactionLocks() != null) { 
-				//This used to execute only if auto-commit was off - but I don't think that matters. If it was on then the queryproxymanager for a committed
-				//transaction shouldn't be here. [may be a problem with pole position].
-				this.proxyManager = session.getCurrentTransactionLocks();
-			} else {
-				// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Creating a new proxy manager.");
-				this.proxyManager = new QueryProxyManager(session.getDatabase(), session);
-				session.setCurrentTransactionLocks(this.proxyManager);
-			}
-
-		} else {
-			this.proxyManager = session.getCurrentTransactionLocks(); //if this is a rollback, the locks will be released on TMs specified by the QPM.
-		}
 	}
-
 
 	public ObjectArray getParameters() {
 		return prepared.getParameters();
@@ -121,33 +104,31 @@ public class CommandContainer extends Command {
 		 * are needed.
 		 */
 		if (!prepared.sqlStatement.contains("H2O.") && !prepared.sqlStatement.contains("INFORMATION_SCHEMA.")
-				&& !prepared.sqlStatement.contains("SYSTEM_RANGE") && !prepared.sqlStatement.contains("information_schema.") &&
-				!prepared.sqlStatement.contains("CALL DATABASE()")
-				&& prepared instanceof Select) {
+				&& !prepared.sqlStatement.contains("SYSTEM_RANGE") && !prepared.sqlStatement.contains("information_schema.")
+				&& !prepared.sqlStatement.contains("CALL DATABASE()") && prepared instanceof Select) {
 
 			getLock();
 
 		}
 
+		QueryProxyManager currentProxyManager = session.getProxyManagerForTransaction();
+
 		try {
 			LocalResult result = prepared.query(maxrows);
 			prepared.trace(startTime, result.getRowCount());
 			if (session.getApplicationAutoCommit()) {
-				proxyManager.endTransaction(null, true);
+				currentProxyManager.releaseLocksAndUpdateReplicaState(null, true);
 
-				//Remove and reset this query proxy manager.
-				session.setCurrentTransactionLocks(null);
+				QueryProxyManager.removeProxyManager(session.getProxyManager());
 
-				QueryProxyManager.removeProxyManager(proxyManager);
-
-				resetQueryProxyManager();
+				session.completeTransaction();
 
 			} else {
-				proxyManager.releaseReadLocks();
+				currentProxyManager.releaseReadLocks();
 			}
 			return result;
 		} catch (SQLException e) {
-			proxyManager.endTransaction(null, true);
+			currentProxyManager.releaseLocksAndUpdateReplicaState(null, true);
 			throw e;
 		}
 	}
@@ -175,17 +156,20 @@ public class CommandContainer extends Command {
 		boolean singleQuery = !partOfMultiQueryTransaction, transactionCommand = prepared.isTransactionCommand();
 
 		if (!transactionCommand) { // Not a prepare or commit.
-			assert (proxyManager != null);
+
+			QueryProxyManager currentProxyManager = session.getProxyManagerForTransaction();
+
+			assert (currentProxyManager != null);
 
 			getLock(); // this throws an SQLException if no lock is found.
 
-			if (Diagnostic.getLevel() == DiagnosticLevel.INIT) {
-				proxyManager.addSQL(prepared.getSQL());
+			if (Diagnostic.getLevel() == DiagnosticLevel.INIT || Diagnostic.getLevel() == DiagnosticLevel.FULL) {
+				currentProxyManager.addSQL(prepared.getSQL());
 			}
 
 			try {
 
-				updateCount = prepared.update(proxyManager.getTransactionName());
+				updateCount = prepared.update(currentProxyManager.getTransactionName());
 
 				boolean commit = true; // An exception would already have been thrown if it should have been a rollback.
 
@@ -196,18 +180,13 @@ public class CommandContainer extends Command {
 					 * If it is one of a number of queries in the transaction then we must wait for the entire transaction to finish.
 					 */
 
-					proxyManager.commit(commit, true, session.getDatabase());
-					session.setCurrentTransactionLocks(null);
-					this.resetQueryProxyManager();
-				} else {
-					session.setCurrentTransactionLocks(proxyManager);
+					currentProxyManager.finishTransaction(commit, true, session.getDatabase());
 				}
 
 			} catch (SQLException e) {
-				proxyManager.commit(false, true, session.getDatabase());
+				currentProxyManager.finishTransaction(false, true, session.getDatabase());
 				session.rollback();
-				session.setCurrentTransactionLocks(null);
-				this.resetQueryProxyManager();
+
 				throw e;
 			}
 		} else {
@@ -218,30 +197,18 @@ public class CommandContainer extends Command {
 			try {
 
 				/*
-				 * If this is a rollback and there is a proxy manager, release locks on all affected table managers first.
-				 * The commit command will execute the ROLLBACK / COMMIT later on.
+				 * If this is a rollback and there is a proxy manager, release locks on all affected table managers first. The commit
+				 * command will execute the ROLLBACK / COMMIT later on.
 				 */
-				if (prepared.getSQL().contains("ROLLBACK") && proxyManager != null){
-					proxyManager.commit(false, false, session.getDatabase());
+				if (prepared.getSQL().contains("ROLLBACK") && session.getProxyManager() != null) {
+					session.getProxyManager().finishTransaction(false, false, session.getDatabase());
 					updateCount = 0;
 				} else {
 					updateCount = prepared.update();
 				}
-				
-				if (!prepared.getSQL().contains("PREPARE COMMIT")){ //COMMIT or ROLLBACK.
-					session.setCurrentTransactionLocks(null);
-					this.resetQueryProxyManager();
-					
-					if (QueryProxyManager.areThereAnyQueryProxyManagersWithLocks()){
-						System.err.println("");
-					}
-				}
-
-
 
 			} catch (SQLException e) {
 				ErrorHandling.errorNoEvent("Transaction not found for query: " + prepared.getSQL());
-				this.resetQueryProxyManager();
 				e.printStackTrace();
 				throw e;
 			}
@@ -265,8 +232,9 @@ public class CommandContainer extends Command {
 	 * @see org.h2.command.Command#acquireLocks()
 	 */
 	@Override
-	public void acquireLocks(QueryProxyManager queryProxyManager2) throws SQLException {
-		prepared.acquireLocks(proxyManager);
+	public void acquireLocks() throws SQLException {
+
+		prepared.acquireLocks(session.getProxyManagerForTransaction());
 	}
 
 	/**
@@ -289,28 +257,6 @@ public class CommandContainer extends Command {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.h2.command.Command#addQueryProxyManager(org.h2.h2o.comms. QueryProxyManager)
-	 */
-	@Override
-	public void addQueryProxyManager(QueryProxyManager proxyManager) {
-		if (proxyManager == null)
-			return;
-		this.proxyManager = proxyManager;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.h2.command.CommandInterface#getQueryProxyManager()
-	 */
-	@Override
-	public QueryProxyManager getQueryProxyManager() {
-		return proxyManager;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
 	 * @see org.h2.command.CommandInterface#isPreparedStatement(boolean)
 	 */
 	@Override
@@ -326,12 +272,12 @@ public class CommandContainer extends Command {
 			/*
 			 * Check if lock has been obtained.
 			 */
-			this.acquireLocks(proxyManager);
+			this.acquireLocks();
 
-			if (proxyManager.hasAllLocks())
+			if (session.getProxyManager().hasAllLocks())
 				return;
 
-			//ErrorHandling.errorNoEvent("No lock obtained yet: " + prepared.getSQL());
+			// ErrorHandling.errorNoEvent("No lock obtained yet: " + prepared.getSQL());
 
 			/*
 			 * Check current time.. wait.
@@ -341,7 +287,7 @@ public class CommandContainer extends Command {
 				throw new SQLException("Couldn't obtain locks for all tables involved in query.");
 			}
 			try {
-
+				// TODO al says: WTF
 				for (int i = 0; i < 20; i++) {
 					long free = Runtime.getRuntime().freeMemory();
 					System.gc();
@@ -361,11 +307,5 @@ public class CommandContainer extends Command {
 				// ignore
 			}
 		}
-	}
-
-	@Override
-	public void resetQueryProxyManager() {
-		//System.err.println("Resetting query proxy manager...");
-		this.proxyManager = new QueryProxyManager(session.getDatabase(), session);
 	}
 }

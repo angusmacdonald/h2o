@@ -554,7 +554,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 	 * @see org.h2.h2o.manager.TableManagerRemote2#releaseLock(org.h2.h2o.comms.remote .DatabaseInstanceRemote, java.util.Set, int)
 	 */
 	@Override
-	public void releaseLock(boolean commit, DatabaseInstanceWrapper requestingDatabase, Collection<CommitResult> committedQueries, boolean asynchronousCommit)
+	public void releaseLockAndUpdateReplicaState(boolean commit, DatabaseInstanceWrapper requestingDatabase, Collection<CommitResult> committedQueries, boolean asynchronousCommit)
 	throws RemoteException, MovedException {
 		
 		/*

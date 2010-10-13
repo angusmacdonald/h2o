@@ -68,16 +68,6 @@ public interface CommandInterface {
 	ResultInterface getMetaData() throws SQLException;
 
 	/**
-	 * @param proxyManager
-	 */
-	void addQueryProxyManager(QueryProxyManager proxyManager);
-
-	/**
-	 * @return
-	 */
-	QueryProxyManager getQueryProxyManager();
-
-	/**
 	 * @param isMultiQueryTransaction
 	 * @return
 	 */
@@ -87,4 +77,5 @@ public interface CommandInterface {
 	 * @param b
 	 */
 	void setIsPreparedStatement(boolean preparedStatement);
+
 }

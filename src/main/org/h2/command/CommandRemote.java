@@ -284,17 +284,6 @@ public class CommandRemote implements CommandInterface {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.h2.command.CommandInterface#getQueryProxyManager()
-	 */
-	@Override
-	public QueryProxyManager getQueryProxyManager() {
-		ErrorHandling.hardError("Didn't expect this to be called.");
-		return null;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
 	 * @see org.h2.command.CommandInterface#executeUpdate(boolean)
 	 */
 	@Override
@@ -313,15 +302,5 @@ public class CommandRemote implements CommandInterface {
 		// ErrorHandling.hardError("Didn't expect this to be called.");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.h2.command.Command#addQueryProxyManager(org.h2.h2o.comms.
-	 * QueryProxyManager)
-	 */
-	@Override
-	public void addQueryProxyManager(QueryProxyManager proxyManager) {
-		// ErrorHandling.hardError("Didn't expect this to be called.");
-	}
 
 }

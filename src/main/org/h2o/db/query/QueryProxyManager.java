@@ -30,6 +30,7 @@ import java.util.Set;
 
 import org.h2.command.Command;
 import org.h2.command.Parser;
+import org.h2.command.QPMMap;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2o.db.id.TableInfo;
@@ -56,7 +57,7 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  */
 public class QueryProxyManager {
 
-	private static Set<QueryProxyManager> activeProxyManagers = new HashSet<QueryProxyManager>();
+	private static Set<QueryProxyManager> activeProxyManagers = new QPMMap<QueryProxyManager>();
 
 	private String transactionName;
 
@@ -86,6 +87,10 @@ public class QueryProxyManager {
 	private int updateID = 0;
 
 	private List<String> queries;
+	
+	private boolean hasCommitted = false;
+
+	private Session session;
 
 	/**
 	 * 
@@ -99,7 +104,6 @@ public class QueryProxyManager {
 
 		queries = new LinkedList<String>();
 
-		addNewProxyManager(this, session);
 	}
 
 	/**
@@ -111,6 +115,8 @@ public class QueryProxyManager {
 	 *            the only replica.
 	 */
 	public QueryProxyManager(Database db, Session session, boolean metaRecordProxy) {
+		this.session = session;
+		
 		this.localDatabase = db.getLocalDatabaseInstanceInWrapper();
 
 		this.transactionName = db.getTransactionNameGenerator().generateName();
@@ -166,7 +172,6 @@ public class QueryProxyManager {
 		queryProxies.put(proxy.getTableName().getFullTableName(), proxy);
 	}
 
-
 	/**
 	 * Tests whether any locks are already held for the given table, either by the new proxy, or by the manager itself.
 	 * 
@@ -183,9 +188,9 @@ public class QueryProxyManager {
 		if (getTableManagers().contains(newProxy.getTableManager())) {
 
 			QueryProxy qpWithTM = getQueryProxyWithTableManager(newProxy.getTableManager());
-			
-			newProxy.setLockType(qpWithTM.getLockGranted()); 
-			return true; 
+
+			newProxy.setLockType(qpWithTM.getLockGranted());
+			return true;
 		} else {
 			return false;
 		}
@@ -198,7 +203,7 @@ public class QueryProxyManager {
 			if (qp.getLockGranted().equals(LockType.READ)) {
 				try {
 					toRemove.add(qp);
-					qp.getTableManager().releaseLock(false, requestingDatabase, null, false);
+					qp.getTableManager().releaseLockAndUpdateReplicaState(false, requestingDatabase, null, false);
 				} catch (Exception e) {
 					ErrorHandling.errorNoEvent("Table Manager could not be contacted: " + e.getMessage());
 					// If it couldn't be found at this location it doesn't matter, because a failed table manager doesn't hold any locks.
@@ -206,15 +211,14 @@ public class QueryProxyManager {
 			}
 		}
 
-
 		for (QueryProxy qpToRemove : toRemove) {
-	
+
 			queryProxies.remove(qpToRemove.getTableName().getFullTableName());
 		}
 	}
 
 	/**
-	 * Commit the transaction being run through this proxy manager. Involves contacting each machine taking part in the transaction and
+	 * Commit or rollback the transaction being run through this proxy manager. Involves contacting each machine taking part in the transaction and
 	 * sending a commit for the correct transaction name.
 	 * 
 	 * @param commit
@@ -225,65 +229,72 @@ public class QueryProxyManager {
 	 *            h2o is auto-committing.
 	 * @throws SQLException
 	 */
-	public void commit(boolean commit, boolean h2oCommit, Database db) throws SQLException {
+	public void finishTransaction(boolean commit, boolean h2oCommit, Database db) throws SQLException {
 
-		if (getTableManagers().size() == 0 && allReplicas.size() > 0 && h2oCommit) { 
-			//H2O commit required to prevent stack overflow on recursive commit calls. testExecuteCall test fails without this.
-			/*
-			 * tableManagers.size() == 0 - indicates this is a local internal database operation (e.g. the TCP server doing something).
-			 * allReplicas.size() > 0 - confirms it is an internal operation. otherwise it may be a COMMIT from the application or a
-			 * prepared statement.
-			 */
+		try {
+			if (getTableManagers().size() == 0 && allReplicas.size() > 0 && h2oCommit) {
+				// H2O commit required to prevent stack overflow on recursive commit calls. testExecuteCall test fails without this.
+				/*
+				 * tableManagers.size() == 0 - indicates this is a local internal database operation (e.g. the TCP server doing something).
+				 * allReplicas.size() > 0 - confirms it is an internal operation. otherwise it may be a COMMIT from the application or a
+				 * prepared statement.
+				 */
 
-			commitLocal(commit, h2oCommit);
-			removeProxyManager(this);
-			return;
-		} else if (getTableManagers().size() == 0 && allReplicas.size() == 0) {
-			removeProxyManager(this);
-			return;
-		} else if (db.getAsynchronousQueryManager() == null) {
-			removeProxyManager(this);
-			return; // management db etc may call this.
-		}
+				commitLocal(commit, h2oCommit);
 
-		Transaction committingTransaction = db.getAsynchronousQueryManager().getTransaction(transactionName);
+				return;
+			} else if (getTableManagers().size() == 0 && allReplicas.size() == 0) {
 
-		Set<CommitResult> commitedQueries = null;
+				return;
+			} else if (db.getAsynchronousQueryManager() == null) {
 
-		if (committingTransaction == null) {
-			commitedQueries = new HashSet<CommitResult>();
-
-			for (Entry<DatabaseInstanceWrapper, Integer> replica : allReplicas.entrySet()) {
-				commitedQueries.add(new CommitResult(commit, replica.getKey(), replica.getValue(), updateID, tableName));
+				return; // management db etc may call this.
 			}
-		} else {
-			/*
-			 * The set of replicas that were updated. This is returned to the DM when locks are released.
-			 */
-			commitedQueries = committingTransaction.getCompletedQueries();
-			committingTransaction.setHasCommitted(h2oCommit);
+
+			Transaction committingTransaction = db.getAsynchronousQueryManager().getTransaction(transactionName);
+
+			Set<CommitResult> commitedQueries = null;
+
+			if (committingTransaction == null) {
+				commitedQueries = new HashSet<CommitResult>();
+
+				for (Entry<DatabaseInstanceWrapper, Integer> replica : allReplicas.entrySet()) {
+					commitedQueries.add(new CommitResult(commit, replica.getKey(), replica.getValue(), updateID, tableName));
+				}
+			} else {
+				/*
+				 * The set of replicas that were updated. This is returned to the DM when locks are released.
+				 */
+				commitedQueries = committingTransaction.getCompletedQueries();
+				committingTransaction.setHasCommitted(h2oCommit);
+			}
+
+			releaseLocksAndUpdateReplicaState(commitedQueries, commit);
+
+			boolean commitActionSuccessful = sendCommitMessagesToReplicas(commit, h2oCommit, db, commitedQueries);
+
+			if (!commitActionSuccessful) {
+				ErrorHandling.errorNoEvent("Commit message to replicas was unsuccessful for transaction '" + transactionName + "'.");
+			}
+
+			// if (commitActionSuccessful && commit)
+			// updatedReplicas = allReplicas; // For asynchronous updates this should check for each replicas success.
+			//
+			// endTransaction(commitedQueries);
+
+			printTraceOutputOfExecutedQueries();
+
+			if (h2oCommit) {
+				queryProxies.clear();
+			}
+
+		} finally {
+			hasCommitted = true;
+			
+			removeProxyManager(this);
+			
+			this.session.completeTransaction();
 		}
-
-		endTransaction(commitedQueries, commit);
-
-		boolean commitActionSuccessful = sendCommitMessagesToReplicas(commit, h2oCommit, db, commitedQueries);
-
-		if (!commitActionSuccessful) {
-			ErrorHandling.errorNoEvent("Commit message to replicas was unsuccessful for transaction '" + transactionName + "'.");
-		}
-
-		// if (commitActionSuccessful && commit)
-		// updatedReplicas = allReplicas; // For asynchronous updates this should check for each replicas success.
-		//
-		// endTransaction(commitedQueries);
-
-		printTraceOutputOfExecutedQueries();
-
-		if (h2oCommit){
-			queryProxies.clear();
-		}
-		
-		removeProxyManager(this);
 	}
 
 	private void printTraceOutputOfExecutedQueries() {
@@ -367,22 +378,23 @@ public class QueryProxyManager {
 	 * Release locks for every table that is part of this update. This also updates the information on which replicas were updated (which
 	 * are currently active), hence the parameter
 	 * 
-	 * @param commit
+	 * @param commit True if the transaction was committed, false if it is a rollback.
+	 * @param committedQueries The set of updates that have been attempted on tables involved in this transaction.
+	 * 	This will be null if a query was performed (because there were no updates).
 	 * 
-	 * @param updatedReplicas
-	 *            The set of replicas which were updated. This is NOT used to release locks, but to update the Table Managers state on which
-	 *            replicas are up-to-date. Null if none have changed.
 	 */
-	public void endTransaction(Set<CommitResult> committedQueries, boolean commit) {
+	public void releaseLocksAndUpdateReplicaState(Set<CommitResult> committedQueries, boolean commit) {
 
 		try {
 			for (TableManagerRemote tableManagerProxy : getTableManagers()) {
-				tableManagerProxy.releaseLock(commit, requestingDatabase, committedQueries, false);
+				tableManagerProxy.releaseLockAndUpdateReplicaState(commit, requestingDatabase, committedQueries, false);
 			}
 		} catch (RemoteException e) {
 			ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the Table Manager");
 		} catch (MovedException e) {
 			ErrorHandling.exceptionError(e, "This should never happen - migrating process should hold the lock.");
+		} finally {
+			hasCommitted = true;
 		}
 	}
 
@@ -454,14 +466,15 @@ public class QueryProxyManager {
 
 	/**
 	 * Get all of the table managers referenced in this object.
+	 * 
 	 * @return
 	 */
 	private Set<TableManagerRemote> getTableManagers() {
 		Set<TableManagerRemote> tableManagers = new HashSet<TableManagerRemote>();
 
-		for (QueryProxy qp: queryProxies.values()){
+		for (QueryProxy qp : queryProxies.values()) {
 
-			if (qp.getTableManager() != null){
+			if (qp.getTableManager() != null) {
 				tableManagers.add(qp.getTableManager());
 			}
 		}
@@ -473,10 +486,10 @@ public class QueryProxyManager {
 	 * Get the query proxy that holds a lock for the specified table manager.
 	 */
 	private QueryProxy getQueryProxyWithTableManager(TableManagerRemote tableManager) {
-		
-		for (QueryProxy qp: queryProxies.values()){
 
-			if (qp.getTableManager() != null && qp.getTableManager().equals(tableManager)){
+		for (QueryProxy qp : queryProxies.values()) {
+
+			if (qp.getTableManager() != null && qp.getTableManager().equals(tableManager)) {
 				return qp;
 			}
 		}
@@ -484,39 +497,44 @@ public class QueryProxyManager {
 		return null;
 	}
 
-
 	public synchronized static void addNewProxyManager(QueryProxyManager newProxyManager, Session session) {
 
-		if (!activeProxyManagers.contains(newProxyManager)){
-			//System.err.println("Adding new query proxy manager: "+ newProxyManager + ", Session: " + session);
+		if (!activeProxyManagers.contains(newProxyManager)) {
+			// System.err.println("Adding new query proxy manager: "+ newProxyManager + ", Session: " + session);
 
 			QueryProxyManager.activeProxyManagers.add(newProxyManager);
 		}
 
-		if (activeProxyManagers.size() > 1){
-			//System.out.println("There are multiple active query proxy managers...");
+		if (activeProxyManagers.size() > 1) {
+			// System.out.println("There are multiple active query proxy managers...");
 		}
 	}
 
 	public synchronized static void removeProxyManager(QueryProxyManager oldProxyManager) {
-		if (activeProxyManagers.contains(oldProxyManager)){
-			//System.err.println("\tCommitting old query proxy manager: "+ oldProxyManager);
+		if (activeProxyManagers.contains(oldProxyManager)) {
+			 //System.err.println("Removed old query proxy manager: "+ oldProxyManager);
 
-			QueryProxyManager.activeProxyManagers.remove(oldProxyManager);
+			boolean removed = activeProxyManagers.remove(oldProxyManager);
+			
+			
+			assert removed: "This will never ever happen, but graham and al insisted.";
+		} else {
+			System.err.println("old proxy manager not there: " + oldProxyManager);
 		}
 	}
 
 	/**
 	 * Checks whether any of the active QueryProxyManagers have locks held on them.
 	 * 
-	 * This method is intended to be called from methods 
-	 * @return returns true if a query proxy is found with a table manager reference and a granted lock. The requirement for
-	 * a table manager eliminates meta-data replication from the test.
+	 * This method is intended to be called from methods
+	 * 
+	 * @return returns true if a query proxy is found with a table manager reference and a granted lock. The requirement for a table manager
+	 *         eliminates meta-data replication from the test.
 	 */
-	public synchronized static boolean areThereAnyQueryProxyManagersWithLocks(){
-		for (QueryProxyManager qpm: activeProxyManagers){
-			for (QueryProxy qp: qpm.getQueryProxies()){
-				if (qp.getTableManager() != null && !qp.getLockGranted().equals(LockType.NONE)){
+	public synchronized static boolean areThereAnyQueryProxyManagersWithLocks() {
+		for (QueryProxyManager qpm : activeProxyManagers) {
+			for (QueryProxy qp : qpm.getQueryProxies()) {
+				if (qp.getTableManager() != null && !qp.getLockGranted().equals(LockType.NONE)) {
 					return true;
 				}
 			}
@@ -525,5 +543,37 @@ public class QueryProxyManager {
 		return false;
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((transactionName == null) ? 0 : transactionName.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		QueryProxyManager other = (QueryProxyManager) obj;
+		if (transactionName == null) {
+			if (other.transactionName != null)
+				return false;
+		} else if (!transactionName.equals(other.transactionName))
+			return false;
+		return true;
+	}
+
+	public boolean hasCommitted() {
+		return hasCommitted;
+	}
+
+	public void setCommitted(boolean hasCommitted) {
+		this.hasCommitted = hasCommitted;
+	}
 
 }

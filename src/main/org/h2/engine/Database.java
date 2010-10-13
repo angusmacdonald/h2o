@@ -838,7 +838,7 @@ public class Database implements DataHandler {
 				rec.execute(this, systemSession, eventListener, proxyManager);
 			}
 
-			proxyManager.commit(true, true, this);
+			proxyManager.finishTransaction(true, true, this);
 		}
 
 		if (Constants.IS_H2O && !isManagementDB())

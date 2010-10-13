@@ -192,13 +192,13 @@ public class Transaction {
 
 				if (tableManager != null){
 					try {
-						tableManager.releaseLock(true, db.getLocalDatabaseInstanceInWrapper(), newlyCompletedUpdates, true);
+						tableManager.releaseLockAndUpdateReplicaState(true, db.getLocalDatabaseInstanceInWrapper(), newlyCompletedUpdates, true);
 					} catch (RemoteException e) {
 						e.printStackTrace();
 					} catch (MovedException e) {
 						try {
 							tableManager = db.getSystemTableReference().lookup(tableName, false);
-							tableManager.releaseLock(true, db.getLocalDatabaseInstanceInWrapper(), newlyCompletedUpdates, true);
+							tableManager.releaseLockAndUpdateReplicaState(true, db.getLocalDatabaseInstanceInWrapper(), newlyCompletedUpdates, true);
 						} catch (Exception e1) {
 							e1.printStackTrace();
 						}
