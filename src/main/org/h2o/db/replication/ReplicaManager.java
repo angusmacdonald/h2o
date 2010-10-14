@@ -244,8 +244,6 @@ public class ReplicaManager implements Serializable {
 						 */
 						ErrorHandling.errorNoEvent("Replica will not commit because update IDs did not match. Expected: "
 								+ expectedUpdateID + "; Actual current: " + currentID);
-						
-						assert false : "Update IDs did not match. This is an internal error.";
 					}
 					
 				} // In many cases it won't contain this key, but another table (part of the same transaction) was on this machine.

@@ -140,7 +140,17 @@ public class AsynchronousTests extends MultiProcessTestBase {
 			
 			Thread.sleep(10000);
 			
-			assertTrue(assertTestTableExists(connections[2], 3));
+			
+			try {
+				assertTestTableExists(connections[2], 4);
+				fail("Expected an exception to be thrown because this replica is now inactive.");
+			} catch ( Exception e ) {
+				//Expected.
+			}
+			
+			assertTrue(assertTestTableExists(connections[0], 4));
+			assertTrue(assertTestTableExists(connections[1], 4));
+			
 		} catch ( SQLException e ) {
 			e.printStackTrace();
 			fail("Unexpected exception.");
