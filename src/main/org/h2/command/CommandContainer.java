@@ -118,9 +118,7 @@ public class CommandContainer extends Command {
 			prepared.trace(startTime, result.getRowCount());
 			if (session.getApplicationAutoCommit()) {
 				currentProxyManager.releaseLocksAndUpdateReplicaState(null, true);
-
-				QueryProxyManager.removeProxyManager(session.getProxyManager());
-
+				
 				session.completeTransaction();
 
 			} else {

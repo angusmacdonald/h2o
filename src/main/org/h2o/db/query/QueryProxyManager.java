@@ -30,7 +30,6 @@ import java.util.Set;
 
 import org.h2.command.Command;
 import org.h2.command.Parser;
-import org.h2.command.QPMMap;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2o.db.id.TableInfo;
@@ -56,8 +55,6 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class QueryProxyManager {
-
-	private static Set<QueryProxyManager> activeProxyManagers = new QPMMap<QueryProxyManager>();
 
 	private String transactionName;
 
@@ -133,7 +130,6 @@ public class QueryProxyManager {
 
 		this.queryProxies = new HashMap<String, QueryProxy>();
 
-		addNewProxyManager(this, session);
 	}
 
 	/**
@@ -290,8 +286,6 @@ public class QueryProxyManager {
 
 		} finally {
 			hasCommitted = true;
-			
-			removeProxyManager(this);
 			
 			this.session.completeTransaction();
 		}
@@ -460,10 +454,6 @@ public class QueryProxyManager {
 		return "QueryProxyManager [transactionName=" + transactionName + ", localDatabase=" + localDatabase + "]";
 	}
 
-	private Collection<QueryProxy> getQueryProxies() {
-		return queryProxies.values();
-	}
-
 	/**
 	 * Get all of the table managers referenced in this object.
 	 * 
@@ -495,52 +485,6 @@ public class QueryProxyManager {
 		}
 
 		return null;
-	}
-
-	public synchronized static void addNewProxyManager(QueryProxyManager newProxyManager, Session session) {
-
-		if (!activeProxyManagers.contains(newProxyManager)) {
-			// System.err.println("Adding new query proxy manager: "+ newProxyManager + ", Session: " + session);
-
-			QueryProxyManager.activeProxyManagers.add(newProxyManager);
-		}
-
-		if (activeProxyManagers.size() > 1) {
-			// System.out.println("There are multiple active query proxy managers...");
-		}
-	}
-
-	public synchronized static void removeProxyManager(QueryProxyManager oldProxyManager) {
-		if (activeProxyManagers.contains(oldProxyManager)) {
-			 //System.err.println("Removed old query proxy manager: "+ oldProxyManager);
-
-			boolean removed = activeProxyManagers.remove(oldProxyManager);
-			
-			
-			assert removed: "This will never ever happen, but graham and al insisted.";
-		} else {
-			System.err.println("old proxy manager not there: " + oldProxyManager);
-		}
-	}
-
-	/**
-	 * Checks whether any of the active QueryProxyManagers have locks held on them.
-	 * 
-	 * This method is intended to be called from methods
-	 * 
-	 * @return returns true if a query proxy is found with a table manager reference and a granted lock. The requirement for a table manager
-	 *         eliminates meta-data replication from the test.
-	 */
-	public synchronized static boolean areThereAnyQueryProxyManagersWithLocks() {
-		for (QueryProxyManager qpm : activeProxyManagers) {
-			for (QueryProxy qp : qpm.getQueryProxies()) {
-				if (qp.getTableManager() != null && !qp.getLockGranted().equals(LockType.NONE)) {
-					return true;
-				}
-			}
-		}
-
-		return false;
 	}
 
 	@Override

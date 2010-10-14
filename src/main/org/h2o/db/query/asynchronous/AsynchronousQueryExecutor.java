@@ -100,8 +100,10 @@ public class AsynchronousQueryExecutor {
 			boolean isReplicaLocal = (replicaToExecuteQueryOn == null || localURL.equals(replicaToExecuteQueryOn.getKey().getURL().getURL()));
 
 			// Start execution of queries.
+			Integer replicaUpdateID = replicaToExecuteQueryOn.getValue();
+			
 			executeQueryOnSpecifiedReplica(query, transactionNameForQuery, replicaToExecuteQueryOn.getKey(),
-					replicaToExecuteQueryOn.getValue(), isReplicaLocal, parser, executingQueries, commitOperation, tableName);
+					replicaUpdateID, isReplicaLocal, parser, executingQueries, commitOperation, tableName);
 			i++;
 		}
 

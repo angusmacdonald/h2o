@@ -136,7 +136,7 @@ public class Sequence extends SchemaObjectBase {
 				// if the system session is used,
 				// the transaction must be committed immediately
 				// sysSession.commit(false);
-				ErrorHandling.errorNoEvent("Commented out commit in: Sequence::flush()"); //TODO XXX <<<<
+				//ErrorHandling.errorNoEvent("Commented out commit in: Sequence::flush()"); //TODO XXX <<<<
 			}
 		}
 	}

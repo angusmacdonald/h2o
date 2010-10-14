@@ -309,11 +309,10 @@ public class ReplicaManager implements Serializable {
 		}
 
 		for (CommitResult cr : committedQueries) {
-			// XXX should expected update ID always be the same?
 			try {
 				if (cr.getExpectedUpdateID() > updateID
 						&& (((cr.getTable() != null && tableInfo != null) && cr.getTable().equals(tableInfo)))) {
-					updateID = cr.getExpectedUpdateID();
+					updateID = cr.getUpdateID(); //XXX this used to be expected update ID, but was changed because the expected update ID was often too high.
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
