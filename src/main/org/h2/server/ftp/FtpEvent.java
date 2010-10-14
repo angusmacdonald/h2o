@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.server.ftp;
 
@@ -10,16 +8,19 @@ package org.h2.server.ftp;
  * Describes an FTP event. This class is used by the FtpEventListener.
  */
 public class FtpEvent {
+	
 	private final FtpControl control;
+	
 	private final String command;
+	
 	private final String param;
-
+	
 	FtpEvent(FtpControl control, String command, String param) {
 		this.control = control;
 		this.command = command;
 		this.param = param;
 	}
-
+	
 	/**
 	 * Get the FTP command. Example: RETR
 	 * 
@@ -28,7 +29,7 @@ public class FtpEvent {
 	public String getCommand() {
 		return command;
 	}
-
+	
 	/**
 	 * Get the FTP control object.
 	 * 
@@ -37,7 +38,7 @@ public class FtpEvent {
 	public FtpControl getControl() {
 		return control;
 	}
-
+	
 	/**
 	 * Get the parameter of the FTP command (if any).
 	 * 

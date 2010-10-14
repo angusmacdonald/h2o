@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.unit;
 
@@ -29,16 +27,17 @@ import org.h2.util.IntArray;
  * Test the page store.
  */
 public class TestPageStore extends TestBase {
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws Exception {
 		testAllocateFree();
 		testStreamFuzz();
@@ -46,7 +45,7 @@ public class TestPageStore extends TestBase {
 		// testPerformance(true, 1000000);
 		// testPerformance(false, 1000000);
 	}
-
+	
 	private void testAllocateFree() throws SQLException {
 		String fileName = getTestDir("/pageStore");
 		new File(fileName).delete();
@@ -58,15 +57,15 @@ public class TestPageStore extends TestBase {
 		store.open();
 		IntArray list = new IntArray();
 		int size = 270;
-		for (int i = 0; i < size; i++) {
+		for ( int i = 0; i < size; i++ ) {
 			int id = store.allocatePage();
 			list.add(id);
 		}
-		for (int i = 0; i < size; i++) {
+		for ( int i = 0; i < size; i++ ) {
 			int id = list.get(i);
 			store.freePage(id);
 		}
-		for (int i = 0; i < size; i++) {
+		for ( int i = 0; i < size; i++ ) {
 			int id = store.allocatePage();
 			int expected = list.get(list.size() - 1 - i);
 			assertEquals(expected, id);
@@ -76,13 +75,13 @@ public class TestPageStore extends TestBase {
 		new File(fileName).delete();
 		f.delete();
 	}
-
+	
 	private Database getDatabase() throws SQLException {
 		String name = "mem:pageStore";
 		ConnectionInfo ci = new ConnectionInfo(name);
 		return new Database(name, ci, null);
 	}
-
+	
 	private void testStreamPerformance(boolean file, int count) throws Exception {
 		String fileName = getTestDir("/pageStore");
 		new File(fileName).delete();
@@ -97,35 +96,34 @@ public class TestPageStore extends TestBase {
 		OutputStream out;
 		InputStream in;
 		long start = System.currentTimeMillis();
-		if (file) {
+		if ( file ) {
 			out = new BufferedOutputStream(new FileOutputStream(f), 4 * 1024);
 		} else {
 			out = new PageOutputStream(store, 0, head, Page.TYPE_LOG, false);
 		}
-		for (int i = 0; i < count; i++) {
+		for ( int i = 0; i < count; i++ ) {
 			out.write(buff);
 		}
 		out.close();
-		if (file) {
+		if ( file ) {
 			in = new BufferedInputStream(new FileInputStream(f), 4 * 1024);
 		} else {
 			in = new PageInputStream(store, 0, head, Page.TYPE_LOG);
 		}
-		while (true) {
+		while ( true ) {
 			int len = in.read(buff);
-			if (len < 0) {
+			if ( len < 0 ) {
 				break;
 			}
 		}
 		in.close();
-		println((file ? "file" : "pageStore") +
-				" " + (System.currentTimeMillis() - start));
+		println(( file ? "file" : "pageStore" ) + " " + ( System.currentTimeMillis() - start ));
 		store.close();
 		db.shutdownImmediately();
 		new File(fileName).delete();
 		f.delete();
 	}
-
+	
 	private void testStreamFuzz() throws Exception {
 		String name = "mem:pageStoreStreams";
 		ConnectionInfo ci = new ConnectionInfo(name);
@@ -135,13 +133,13 @@ public class TestPageStore extends TestBase {
 		PageStore store = new PageStore(db, fileName, "rw", 8192);
 		store.open();
 		Random random = new Random(1);
-		for (int i = 0; i < 10000; i += 1000) {
+		for ( int i = 0; i < 10000; i += 1000 ) {
 			int len = i == 0 ? 0 : random.nextInt(i);
 			byte[] data = new byte[len];
 			random.nextBytes(data);
 			int head = store.allocatePage();
 			PageOutputStream out = new PageOutputStream(store, 0, head, Page.TYPE_LOG, false);
-			for (int p = 0; p < len;) {
+			for ( int p = 0; p < len; ) {
 				int l = len == 0 ? 0 : Math.min(len - p, random.nextInt(len / 10));
 				out.write(data, p, l);
 				p += l;
@@ -149,10 +147,10 @@ public class TestPageStore extends TestBase {
 			out.close();
 			PageInputStream in = new PageInputStream(store, 0, head, Page.TYPE_LOG);
 			byte[] data2 = new byte[len];
-			for (int off = 0;;) {
+			for ( int off = 0;; ) {
 				int l = random.nextInt(1 + len / 10) + 1;
 				l = in.read(data2, off, l);
-				if (l < 0) {
+				if ( l < 0 ) {
 					break;
 				}
 				off += l;
@@ -164,5 +162,5 @@ public class TestPageStore extends TestBase {
 		db.shutdownImmediately();
 		new File(fileName).delete();
 	}
-
+	
 }

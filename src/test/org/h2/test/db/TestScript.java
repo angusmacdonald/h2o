@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.db;
 
@@ -26,39 +24,49 @@ import org.h2.test.TestBase;
 import org.h2.util.StringUtils;
 
 /**
- * This test runs a SQL script file and compares the output with the expected
- * output.
+ * This test runs a SQL script file and compares the output with the expected output.
  */
 public class TestScript extends TestBase {
-
+	
 	private boolean failFast;
-
+	
 	private boolean alwaysReconnect;
+	
 	private Connection conn;
+	
 	private Statement stat;
+	
 	private LineNumberReader in;
+	
 	private int line;
+	
 	private PrintStream out;
+	
 	private ArrayList result = new ArrayList();
+	
 	private String putBack;
+	
 	private StringBuilder errors;
+	
 	private ArrayList statements;
-	private String fileName = "org/h2/test/test-" +
-	Constants.VERSION_MAJOR + "." + Constants.VERSION_MINOR + ".txt";
-
+	
+	private String fileName = "org/h2/test/test-" + Constants.VERSION_MAJOR + "." + Constants.VERSION_MINOR + ".txt";
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	/**
 	 * Get all SQL statements of this file.
-	 *
-	 * @param conf the configuration
+	 * 
+	 * @param conf
+	 *            the configuration
 	 * @return the list of statements
 	 */
 	public ArrayList getAllStatements(TestAll conf) throws Exception {
@@ -67,22 +75,22 @@ public class TestScript extends TestBase {
 		test();
 		return statements;
 	}
-
+	
 	public void test() throws Exception {
-		if (config.networked && config.big) {
+		if ( config.networked && config.big ) {
 			return;
 		}
 		alwaysReconnect = false;
 		testScript();
-		if (!config.memory) {
-			if (config.big) {
+		if ( !config.memory ) {
+			if ( config.big ) {
 				alwaysReconnect = true;
 				testScript();
 			}
 		}
 		deleteDb("script");
 	}
-
+	
 	private void testScript() throws Exception {
 		deleteDb("script");
 		String outFile = "test.out.txt";
@@ -94,44 +102,44 @@ public class TestScript extends TestBase {
 		testFile(inFile);
 		conn.close();
 		out.close();
-		if (errors.length() > 0) {
+		if ( errors.length() > 0 ) {
 			throw new Exception("errors:\n" + errors.toString());
 		}
 		// new File(outFile).delete();
 	}
-
+	
 	private String readLine() throws IOException {
-		if (putBack != null) {
+		if ( putBack != null ) {
 			String s = putBack;
 			putBack = null;
 			return s;
 		}
-		while (true) {
+		while ( true ) {
 			String s = in.readLine();
-			if (s == null) {
+			if ( s == null ) {
 				return s;
 			}
 			s = s.trim();
-			if (s.length() > 0) {
+			if ( s.length() > 0 ) {
 				return s;
 			}
 		}
 	}
-
+	
 	private void testFile(String inFile) throws Exception {
 		InputStream is = getClass().getClassLoader().getResourceAsStream(inFile);
 		in = new LineNumberReader(new InputStreamReader(is, "Cp1252"));
 		StringBuilder buff = new StringBuilder();
-		while (true) {
+		while ( true ) {
 			String sql = readLine();
-			if (sql == null) {
+			if ( sql == null ) {
 				break;
 			}
-			if (sql.startsWith("--")) {
+			if ( sql.startsWith("--") ) {
 				write(sql);
-			} else if (sql.startsWith(">")) {
+			} else if ( sql.startsWith(">") ) {
 				// do nothing
-			} else if (sql.endsWith(";")) {
+			} else if ( sql.endsWith(";") ) {
 				write(sql);
 				buff.append(sql.substring(0, sql.length() - 1));
 				sql = buff.toString();
@@ -144,25 +152,25 @@ public class TestScript extends TestBase {
 			}
 		}
 	}
-
+	
 	private boolean containsTempTables() throws SQLException {
 		ResultSet rs = conn.getMetaData().getTables(null, null, null, new String[] { "TABLE" });
-		while (rs.next()) {
+		while ( rs.next() ) {
 			String sql = rs.getString("SQL");
-			if (sql != null) {
-				if (sql.indexOf("TEMPORARY") >= 0) {
+			if ( sql != null ) {
+				if ( sql.indexOf("TEMPORARY") >= 0 ) {
 					return true;
 				}
 			}
 		}
 		return false;
 	}
-
+	
 	private void process(String sql) throws Exception {
-		if (alwaysReconnect) {
-			if (!containsTempTables()) {
+		if ( alwaysReconnect ) {
+			if ( !containsTempTables() ) {
 				boolean autocommit = conn.getAutoCommit();
-				if (autocommit) {
+				if ( autocommit ) {
 					conn.close();
 					conn = getConnection("script");
 					conn.setAutoCommit(autocommit);
@@ -170,116 +178,116 @@ public class TestScript extends TestBase {
 				}
 			}
 		}
-		if (statements != null) {
+		if ( statements != null ) {
 			statements.add(sql);
 		}
-		if (sql.indexOf('?') == -1) {
+		if ( sql.indexOf('?') == -1 ) {
 			processStatement(sql);
 		} else {
 			String param = readLine();
 			write(param);
-			if (!param.equals("{")) {
+			if ( !param.equals("{") ) {
 				throw new Error("expected '{', got " + param + " in " + sql);
 			}
 			try {
 				PreparedStatement prep = conn.prepareStatement(sql);
 				int count = 0;
-				while (true) {
+				while ( true ) {
 					param = readLine();
 					write(param);
-					if (param.startsWith("}")) {
+					if ( param.startsWith("}") ) {
 						break;
 					}
 					count += processPrepared(sql, prep, param);
 				}
 				writeResult("update count: " + count, null);
-			} catch (SQLException e) {
+			} catch ( SQLException e ) {
 				writeException(e);
 			}
 		}
 		write("");
 	}
-
+	
 	private void setParameter(PreparedStatement prep, int i, String param) throws SQLException {
-		if (param.equalsIgnoreCase("null")) {
+		if ( param.equalsIgnoreCase("null") ) {
 			param = null;
 		}
 		prep.setString(i, param);
 	}
-
+	
 	private int processPrepared(String sql, PreparedStatement prep, String param) throws Exception {
 		try {
 			StringBuilder buff = new StringBuilder();
 			int index = 0;
-			for (int i = 0; i < param.length(); i++) {
+			for ( int i = 0; i < param.length(); i++ ) {
 				char c = param.charAt(i);
-				if (c == ',') {
+				if ( c == ',' ) {
 					setParameter(prep, ++index, buff.toString());
 					buff = new StringBuilder();
-				} else if (c == '"') {
-					while (true) {
+				} else if ( c == '"' ) {
+					while ( true ) {
 						c = param.charAt(++i);
-						if (c == '"') {
+						if ( c == '"' ) {
 							break;
 						}
 						buff.append(c);
 					}
-				} else if (c > ' ') {
+				} else if ( c > ' ' ) {
 					buff.append(c);
 				}
 			}
-			if (buff.length() > 0) {
+			if ( buff.length() > 0 ) {
 				setParameter(prep, ++index, buff.toString());
 			}
-			if (prep.execute()) {
+			if ( prep.execute() ) {
 				writeResultSet(sql, prep.getResultSet());
 				return 0;
 			}
 			return prep.getUpdateCount();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			writeException(e);
 			return 0;
 		}
 	}
-
+	
 	private int processStatement(String sql) throws Exception {
 		try {
-			if (stat.execute(sql)) {
+			if ( stat.execute(sql) ) {
 				writeResultSet(sql, stat.getResultSet());
 			} else {
 				int count = stat.getUpdateCount();
 				writeResult(count < 1 ? "ok" : "update count: " + count, null);
 			}
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			writeException(e);
 		}
 		return 0;
 	}
-
+	
 	private String formatString(String s) {
-		if (s == null) {
+		if ( s == null ) {
 			return "null";
 		}
 		return s.replace('\n', ' ');
 	}
-
+	
 	private void writeResultSet(String sql, ResultSet rs) throws Exception {
 		boolean ordered = StringUtils.toLowerEnglish(sql).indexOf("order by") >= 0;
 		ResultSetMetaData meta = rs.getMetaData();
 		int len = meta.getColumnCount();
 		int[] max = new int[len];
 		String[] head = new String[len];
-		for (int i = 0; i < len; i++) {
+		for ( int i = 0; i < len; i++ ) {
 			String label = formatString(meta.getColumnLabel(i + 1));
 			max[i] = label.length();
 			head[i] = label;
 		}
 		result.clear();
-		while (rs.next()) {
+		while ( rs.next() ) {
 			String[] row = new String[len];
-			for (int i = 0; i < len; i++) {
+			for ( int i = 0; i < len; i++ ) {
 				String data = formatString(rs.getString(i + 1));
-				if (max[i] < data.length()) {
+				if ( max[i] < data.length() ) {
 					max[i] = data.length();
 				}
 				row[i] = data;
@@ -290,35 +298,35 @@ public class TestScript extends TestBase {
 		writeResult(format(head, max), null);
 		writeResult(format(null, max), null);
 		String[] array = new String[result.size()];
-		for (int i = 0; i < result.size(); i++) {
+		for ( int i = 0; i < result.size(); i++ ) {
 			array[i] = format((String[]) result.get(i), max);
 		}
-		if (!ordered) {
+		if ( !ordered ) {
 			sort(array);
 		}
 		int i = 0;
-		for (; i < array.length; i++) {
+		for ( ; i < array.length; i++ ) {
 			writeResult(array[i], null);
 		}
-		writeResult((ordered ? "rows (ordered): " : "rows: ") + i, null);
+		writeResult(( ordered ? "rows (ordered): " : "rows: " ) + i, null);
 	}
-
+	
 	private String format(String[] row, int[] max) throws SQLException {
 		int length = max.length;
 		StringBuilder buff = new StringBuilder();
-		for (int i = 0; i < length; i++) {
-			if (i > 0) {
+		for ( int i = 0; i < length; i++ ) {
+			if ( i > 0 ) {
 				buff.append(' ');
 			}
-			if (row == null) {
-				for (int j = 0; j < max[i]; j++) {
+			if ( row == null ) {
+				for ( int j = 0; j < max[i]; j++ ) {
 					buff.append('-');
 				}
 			} else {
 				int len = row[i].length();
 				buff.append(row[i]);
-				if (i < length - 1) {
-					for (int j = len; j < max[i]; j++) {
+				if ( i < length - 1 ) {
+					for ( int j = len; j < max[i]; j++ ) {
 						buff.append(' ');
 					}
 				}
@@ -326,17 +334,17 @@ public class TestScript extends TestBase {
 		}
 		return buff.toString();
 	}
-
+	
 	private void writeException(SQLException e) throws Exception {
 		writeResult("exception", e);
 	}
-
+	
 	private void writeResult(String s, SQLException e) throws Exception {
 		assertKnownException(e);
-		s = ("> " + s).trim();
+		s = ( "> " + s ).trim();
 		String compare = readLine();
-		if (compare != null && compare.startsWith(">")) {
-			if (!compare.equals(s)) {
+		if ( compare != null && compare.startsWith(">") ) {
+			if ( !compare.equals(s) ) {
 				errors.append("line: ");
 				errors.append(line);
 				errors.append("\n" + "exp: ");
@@ -344,10 +352,10 @@ public class TestScript extends TestBase {
 				errors.append("\n" + "got: ");
 				errors.append(s);
 				errors.append("\n");
-				if (e != null) {
+				if ( e != null ) {
 					TestBase.logError("script", e);
 				}
-				if (failFast) {
+				if ( failFast ) {
 					TestBase.logError(errors.toString(), null);
 					conn.close();
 					System.exit(1);
@@ -357,22 +365,22 @@ public class TestScript extends TestBase {
 			putBack = compare;
 		}
 		write(s);
-
+		
 	}
-
+	
 	private void write(String s) {
 		line++;
 		out.println(s);
 	}
-
+	
 	private void sort(String[] a) {
-		for (int i = 1, j, len = a.length; i < len; i++) {
+		for ( int i = 1, j, len = a.length; i < len; i++ ) {
 			String t = a[i];
-			for (j = i - 1; j >= 0 && t.compareTo(a[j]) < 0; j--) {
+			for ( j = i - 1; j >= 0 && t.compareTo(a[j]) < 0; j-- ) {
 				a[j + 1] = a[j];
 			}
 			a[j + 1] = t;
 		}
 	}
-
+	
 }

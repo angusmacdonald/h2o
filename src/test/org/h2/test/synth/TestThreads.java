@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.synth;
 
@@ -16,42 +14,48 @@ import java.util.Random;
 import org.h2.test.TestBase;
 
 /**
- * This test starts multiple threads and executes random operations in each
- * thread.
+ * This test starts multiple threads and executes random operations in each thread.
  */
 public class TestThreads extends TestBase implements Runnable {
-
+	
 	private static final int INSERT = 0, UPDATE = 1, DELETE = 2;
+	
 	private static final int SELECT_ONE = 3, SELECT_ALL = 4, CHECKPOINT = 5, RECONNECT = 6;
+	
 	private static final int OP_TYPES = RECONNECT + 1;
-
+	
 	private int maxId = 1;
-
+	
 	private volatile boolean stop;
+	
 	private TestThreads master;
+	
 	private int type;
+	
 	private String table;
+	
 	private Random random = new Random();
-
+	
 	public TestThreads() {
 		// nothing to do
 	}
-
+	
 	TestThreads(TestThreads master, int type, String table) {
 		this.master = master;
 		this.type = type;
 		this.table = table;
 	}
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws Exception {
 		deleteDb("threads");
 		Connection conn = getConnection("threads;MAX_LOG_SIZE=1");
@@ -66,18 +70,18 @@ public class TestThreads extends TestBase implements Runnable {
 		maxId = len;
 		int threadCount = 4;
 		Thread[] threads = new Thread[threadCount];
-		for (int i = 0; i < threadCount; i++) {
+		for ( int i = 0; i < threadCount; i++ ) {
 			String table = random.nextBoolean() ? null : getRandomTable();
 			int op = random.nextInt(OP_TYPES);
 			op = i % 2 == 0 ? RECONNECT : CHECKPOINT;
 			threads[i] = new Thread(new TestThreads(this, op, table));
 		}
-		for (int i = 0; i < threadCount; i++) {
+		for ( int i = 0; i < threadCount; i++ ) {
 			threads[i].start();
 		}
 		Thread.sleep(10000);
 		stop = true;
-		for (int i = 0; i < threadCount; i++) {
+		for ( int i = 0; i < threadCount; i++ ) {
 			threads[i].join();
 		}
 		conn.close();
@@ -87,37 +91,37 @@ public class TestThreads extends TestBase implements Runnable {
 		checkTable(conn, "TEST_C");
 		conn.close();
 	}
-
+	
 	private void insertRows(Connection conn, String tableName, int len) throws SQLException {
 		PreparedStatement prep = conn.prepareStatement("INSERT INTO " + tableName + " VALUES(?, 'Hi')");
-		for (int i = 0; i < len; i++) {
+		for ( int i = 0; i < len; i++ ) {
 			prep.setInt(1, i);
 			prep.execute();
 		}
 	}
-
+	
 	private void checkTable(Connection conn, String tableName) throws SQLException {
 		Statement stat = conn.createStatement();
 		ResultSet rs = stat.executeQuery("SELECT * FROM " + tableName + " ORDER BY ID");
-		while (rs.next()) {
+		while ( rs.next() ) {
 			int id = rs.getInt(1);
 			String name = rs.getString(2);
 			System.out.println("id=" + id + " name=" + name);
 		}
 	}
-
+	
 	private int getMaxId() {
 		return maxId;
 	}
-
+	
 	private synchronized int incrementMaxId() {
 		return maxId++;
 	}
-
+	
 	private String getRandomTable() {
-		return "TEST_" + (char) ('A' + random.nextInt(3));
+		return "TEST_" + (char) ( 'A' + random.nextInt(3) );
 	}
-
+	
 	public void run() {
 		try {
 			String t = table == null ? getRandomTable() : table;
@@ -126,7 +130,7 @@ public class TestThreads extends TestBase implements Runnable {
 			ResultSet rs;
 			int max = master.getMaxId();
 			int rid = random.nextInt(max);
-			for (int i = 0; !master.stop; i++) {
+			for ( int i = 0; !master.stop; i++ ) {
 				switch (type) {
 				case INSERT:
 					max = master.incrementMaxId();
@@ -140,13 +144,13 @@ public class TestThreads extends TestBase implements Runnable {
 					break;
 				case SELECT_ALL:
 					rs = stat.executeQuery("SELECT * FROM " + t + " ORDER BY ID");
-					while (rs.next()) {
+					while ( rs.next() ) {
 						// nothing
 					}
 					break;
 				case SELECT_ONE:
 					rs = stat.executeQuery("SELECT * FROM " + t + " WHERE ID=" + rid);
-					while (rs.next()) {
+					while ( rs.next() ) {
 						// nothing
 					}
 					break;
@@ -161,9 +165,9 @@ public class TestThreads extends TestBase implements Runnable {
 				}
 			}
 			conn.close();
-		} catch (Exception e) {
+		} catch ( Exception e ) {
 			TestBase.logError("error", e);
 		}
 	}
-
+	
 }

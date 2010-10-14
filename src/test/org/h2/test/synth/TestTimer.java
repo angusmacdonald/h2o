@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.synth;
 
@@ -18,27 +16,27 @@ import org.h2.tools.Backup;
 import org.h2.tools.DeleteDbFiles;
 
 /**
- * A recovery test that checks the consistency of a database (if it exists),
- * then deletes everything and runs in an endless loop executing random
- * operations. This loop is usually stopped by switching off the computer.
+ * A recovery test that checks the consistency of a database (if it exists), then deletes everything and runs in an endless loop executing
+ * random operations. This loop is usually stopped by switching off the computer.
  */
 public class TestTimer extends TestBase {
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws SQLException {
 		validateOld();
 		DeleteDbFiles.execute(baseDir, "timer", true);
 		loop();
 	}
-
+	
 	private void loop() throws SQLException {
 		println("loop");
 		Connection conn = getConnection("timer");
@@ -48,7 +46,7 @@ public class TestTimer extends TestBase {
 		int max = 0;
 		int count = 0;
 		long start = System.currentTimeMillis();
-		while (true) {
+		while ( true ) {
 			int action = random.nextInt(10);
 			int x = max == 0 ? 0 : random.nextInt(max);
 			switch (action) {
@@ -64,14 +62,14 @@ public class TestTimer extends TestBase {
 				break;
 			case 3:
 			case 4:
-				if (count == 0) {
+				if ( count == 0 ) {
 					break;
 				}
 				stat.execute("UPDATE TEST SET NAME=NAME||'+' WHERE ID=" + x);
 				break;
 			case 5:
 			case 6:
-				if (count == 0) {
+				if ( count == 0 ) {
 					break;
 				}
 				count -= stat.executeUpdate("DELETE FROM TEST WHERE ID=" + x);
@@ -82,7 +80,7 @@ public class TestTimer extends TestBase {
 				int c = rs.getInt(1);
 				assertEquals(c, count);
 				long time = System.currentTimeMillis();
-				if (time > start + 5000) {
+				if ( time > start + 5000 ) {
 					println("rows: " + count);
 					start = time;
 				}
@@ -91,7 +89,7 @@ public class TestTimer extends TestBase {
 			}
 		}
 	}
-
+	
 	private void validateOld() {
 		println("validate");
 		try {
@@ -105,39 +103,39 @@ public class TestTimer extends TestBase {
 			println("row count: " + count);
 			int real = 0;
 			rs = stat.executeQuery("SELECT * FROM TEST");
-			while (rs.next()) {
+			while ( rs.next() ) {
 				real++;
 			}
-			if (real != count) {
+			if ( real != count ) {
 				println("real count: " + real);
 				throw new Error("COUNT(*)=" + count + " SELECT=" + real);
 			}
 			rs = stat.executeQuery("SCRIPT");
-			while (rs.next()) {
+			while ( rs.next() ) {
 				rs.getString(1);
 			}
 			conn.close();
-		} catch (Throwable e) {
+		} catch ( Throwable e ) {
 			logError("validate", e);
 			backup();
 		}
 	}
-
+	
 	private void backup() {
 		println("backup");
-		for (int i = 0;; i++) {
+		for ( int i = 0;; i++ ) {
 			String s = "timer." + i + ".zip";
 			File f = new File(s);
-			if (f.exists()) {
+			if ( f.exists() ) {
 				continue;
 			}
 			try {
 				Backup.execute(s, baseDir, "timer", true);
-			} catch (SQLException e) {
+			} catch ( SQLException e ) {
 				logError("backup", e);
 			}
 			break;
 		}
 	}
-
+	
 }

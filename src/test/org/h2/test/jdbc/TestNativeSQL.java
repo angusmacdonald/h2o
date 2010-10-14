@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.jdbc;
 
@@ -18,52 +16,48 @@ import org.h2.test.TestBase;
  * Tests the Connection.nativeSQL method.
  */
 public class TestNativeSQL extends TestBase {
+	
+	private static final String[] PAIRS = new String[] { "CREATE TABLE TEST(ID INT PRIMARY KEY)", "CREATE TABLE TEST(ID INT PRIMARY KEY)",
 
-	private static final String[] PAIRS = new String[] {
-		"CREATE TABLE TEST(ID INT PRIMARY KEY)",
-		"CREATE TABLE TEST(ID INT PRIMARY KEY)",
+	"INSERT INTO TEST VALUES(1)", "INSERT INTO TEST VALUES(1)", "SELECT '{nothing}' FROM TEST", "SELECT '{nothing}' FROM TEST",
 
-		"INSERT INTO TEST VALUES(1)", "INSERT INTO TEST VALUES(1)",
-		"SELECT '{nothing}' FROM TEST", "SELECT '{nothing}' FROM TEST",
+	"SELECT '{fn ABS(1)}' FROM TEST", "SELECT '{fn ABS(1)}' FROM TEST",
 
-		"SELECT '{fn ABS(1)}' FROM TEST", "SELECT '{fn ABS(1)}' FROM TEST",
+	"SELECT {d '2001-01-01'} FROM TEST", "SELECT    '2001-01-01'  FROM TEST",
 
-		"SELECT {d '2001-01-01'} FROM TEST", "SELECT    '2001-01-01'  FROM TEST",
+	"SELECT {t '20:00:00'} FROM TEST", "SELECT    '20:00:00'  FROM TEST",
 
-		"SELECT {t '20:00:00'} FROM TEST", "SELECT    '20:00:00'  FROM TEST",
+	"SELECT {ts '2001-01-01 20:00:00'} FROM TEST", "SELECT     '2001-01-01 20:00:00'  FROM TEST",
 
-		"SELECT {ts '2001-01-01 20:00:00'} FROM TEST", "SELECT     '2001-01-01 20:00:00'  FROM TEST",
+	"SELECT {fn CONCAT('{fn x}','{oj}')} FROM TEST", "SELECT     CONCAT('{fn x}','{oj}')  FROM TEST",
 
-		"SELECT {fn CONCAT('{fn x}','{oj}')} FROM TEST", "SELECT     CONCAT('{fn x}','{oj}')  FROM TEST",
+	"SELECT * FROM {oj TEST T1 LEFT OUTER JOIN TEST T2 ON T1.ID=T2.ID}",
+			"SELECT * FROM     TEST T1 LEFT OUTER JOIN TEST T2 ON T1.ID=T2.ID ",
 
-		"SELECT * FROM {oj TEST T1 LEFT OUTER JOIN TEST T2 ON T1.ID=T2.ID}",
-		"SELECT * FROM     TEST T1 LEFT OUTER JOIN TEST T2 ON T1.ID=T2.ID ",
+			"SELECT * FROM TEST WHERE '{' LIKE '{{' {escape '{'}", "SELECT * FROM TEST WHERE '{' LIKE '{{'  escape '{' ",
 
-		"SELECT * FROM TEST WHERE '{' LIKE '{{' {escape '{'}",
-		"SELECT * FROM TEST WHERE '{' LIKE '{{'  escape '{' ",
+			"SELECT * FROM TEST WHERE '}' LIKE '}}' {escape '}'}", "SELECT * FROM TEST WHERE '}' LIKE '}}'  escape '}' ",
 
-		"SELECT * FROM TEST WHERE '}' LIKE '}}' {escape '}'}",
-		"SELECT * FROM TEST WHERE '}' LIKE '}}'  escape '}' ",
+			"{call TEST('}')}", " call TEST('}') ",
 
-		"{call TEST('}')}", " call TEST('}') ",
+			"{?= call TEST('}')}", "    call TEST('}') ",
 
-		"{?= call TEST('}')}", "    call TEST('}') ",
+			"{? = call TEST('}')}", "     call TEST('}') ",
 
-		"{? = call TEST('}')}", "     call TEST('}') ",
-
-		"{{{{this is a bug}", null, };
-
+			"{{{{this is a bug}", null, };
+	
 	private Connection conn;
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws SQLException {
 		deleteDb("nativeSql");
 		conn = getConnection("nativeSql");
@@ -75,19 +69,19 @@ public class TestNativeSQL extends TestBase {
 		assertTrue(conn.isClosed());
 		deleteDb("nativeSql");
 	}
-
+	
 	private void testQuotes() throws SQLException {
 		Statement stat = conn.createStatement();
 		Random random = new Random(1);
 		String s = "'\"$/-* \n";
-		for (int i = 0; i < 200; i++) {
+		for ( int i = 0; i < 200; i++ ) {
 			StringBuilder buffQuoted = new StringBuilder();
 			StringBuilder buffRaw = new StringBuilder();
-			if (random.nextBoolean()) {
+			if ( random.nextBoolean() ) {
 				buffQuoted.append("'");
-				for (int j = 0; j < 10; j++) {
+				for ( int j = 0; j < 10; j++ ) {
 					char c = s.charAt(random.nextInt(s.length()));
-					if (c == '\'') {
+					if ( c == '\'' ) {
 						buffQuoted.append('\'');
 					}
 					buffQuoted.append(c);
@@ -96,11 +90,11 @@ public class TestNativeSQL extends TestBase {
 				buffQuoted.append("'");
 			} else {
 				buffQuoted.append("$$");
-				for (int j = 0; j < 10; j++) {
+				for ( int j = 0; j < 10; j++ ) {
 					char c = s.charAt(random.nextInt(s.length()));
 					buffQuoted.append(c);
 					buffRaw.append(c);
-					if (c == '$') {
+					if ( c == '$' ) {
 						buffQuoted.append(' ');
 						buffRaw.append(' ');
 					}
@@ -114,32 +108,32 @@ public class TestNativeSQL extends TestBase {
 			assertEquals(raw, rs.getString(1));
 		}
 	}
-
+	
 	private void testRandom() throws SQLException {
 		Random random = new Random(1);
-		for (int i = 0; i < 100; i++) {
+		for ( int i = 0; i < 100; i++ ) {
 			StringBuilder buff = new StringBuilder("{oj }");
 			String s = "{}\'\"-/*$ $-";
-			for (int j = random.nextInt(30); j > 0; j--) {
+			for ( int j = random.nextInt(30); j > 0; j-- ) {
 				buff.append(s.charAt(random.nextInt(s.length())));
 			}
 			String sql = buff.toString();
 			try {
 				conn.nativeSQL(sql);
-			} catch (SQLException e) {
+			} catch ( SQLException e ) {
 				assertKnownException(sql, e);
 			}
 		}
 		String smallest = null;
-		for (int i = 0; i < 1000; i++) {
+		for ( int i = 0; i < 1000; i++ ) {
 			StringBuilder buff = new StringBuilder("{oj }");
-			for (int j = random.nextInt(10); j > 0; j--) {
+			for ( int j = random.nextInt(10); j > 0; j-- ) {
 				String s;
-				switch(random.nextInt(7)) {
+				switch (random.nextInt(7)) {
 				case 0:
 					buff.append(" $$");
 					s = "{}\'\"-/* a\n";
-					for (int k = random.nextInt(5); k > 0; k--) {
+					for ( int k = random.nextInt(5); k > 0; k-- ) {
 						buff.append(s.charAt(random.nextInt(s.length())));
 					}
 					buff.append("$$");
@@ -147,7 +141,7 @@ public class TestNativeSQL extends TestBase {
 				case 1:
 					buff.append("'");
 					s = "{}\"-/*$ a\n";
-					for (int k = random.nextInt(5); k > 0; k--) {
+					for ( int k = random.nextInt(5); k > 0; k-- ) {
 						buff.append(s.charAt(random.nextInt(s.length())));
 					}
 					buff.append("'");
@@ -155,7 +149,7 @@ public class TestNativeSQL extends TestBase {
 				case 2:
 					buff.append("\"");
 					s = "{}'-/*$ a\n";
-					for (int k = random.nextInt(5); k > 0; k--) {
+					for ( int k = random.nextInt(5); k > 0; k-- ) {
 						buff.append(s.charAt(random.nextInt(s.length())));
 					}
 					buff.append("\"");
@@ -163,7 +157,7 @@ public class TestNativeSQL extends TestBase {
 				case 3:
 					buff.append("/*");
 					s = "{}'\"-/$ a\n";
-					for (int k = random.nextInt(5); k > 0; k--) {
+					for ( int k = random.nextInt(5); k > 0; k-- ) {
 						buff.append(s.charAt(random.nextInt(s.length())));
 					}
 					buff.append("*/");
@@ -171,7 +165,7 @@ public class TestNativeSQL extends TestBase {
 				case 4:
 					buff.append("--");
 					s = "{}'\"-/$ a";
-					for (int k = random.nextInt(5); k > 0; k--) {
+					for ( int k = random.nextInt(5); k > 0; k-- ) {
 						buff.append(s.charAt(random.nextInt(s.length())));
 					}
 					buff.append("\n");
@@ -179,14 +173,14 @@ public class TestNativeSQL extends TestBase {
 				case 5:
 					buff.append("//");
 					s = "{}'\"-/$ a";
-					for (int k = random.nextInt(5); k > 0; k--) {
+					for ( int k = random.nextInt(5); k > 0; k-- ) {
 						buff.append(s.charAt(random.nextInt(s.length())));
 					}
 					buff.append("\n");
 					break;
 				case 6:
 					s = " a\n";
-					for (int k = random.nextInt(5); k > 0; k--) {
+					for ( int k = random.nextInt(5); k > 0; k-- ) {
 						buff.append(s.charAt(random.nextInt(s.length())));
 					}
 					break;
@@ -196,23 +190,23 @@ public class TestNativeSQL extends TestBase {
 			String sql = buff.toString();
 			try {
 				conn.nativeSQL(sql);
-			} catch (Exception e) {
-				if (smallest == null || sql.length() < smallest.length()) {
+			} catch ( Exception e ) {
+				if ( smallest == null || sql.length() < smallest.length() ) {
 					smallest = sql;
 				}
 			}
 		}
-		if (smallest != null) {
+		if ( smallest != null ) {
 			conn.nativeSQL(smallest);
 		}
 	}
-
+	
 	private void testPairs() throws SQLException {
-		for (int i = 0; i < PAIRS.length; i += 2) {
+		for ( int i = 0; i < PAIRS.length; i += 2 ) {
 			test(conn, PAIRS[i], PAIRS[i + 1]);
 		}
 	}
-
+	
 	private void testCases() throws SQLException {
 		conn.nativeSQL("TEST");
 		conn.nativeSQL("TEST--testing");
@@ -235,12 +229,12 @@ public class TestNativeSQL extends TestBase {
 		try {
 			stat.execute("CALL {d '2001-01-01'} // this is a test");
 			fail("expected error if setEscapeProcessing=false");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		assertFalse(conn.isClosed());
 	}
-
+	
 	private void test(Connection conn, String original, String expected) throws SQLException {
 		trace("original: <" + original + ">");
 		trace("expected: <" + expected + ">");
@@ -248,11 +242,11 @@ public class TestNativeSQL extends TestBase {
 			String result = conn.nativeSQL(original);
 			trace("result: <" + result + ">");
 			assertEquals(expected, result);
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertEquals(expected, null);
 			assertKnownException(e);
 			trace("got exception, good");
 		}
 	}
-
+	
 }

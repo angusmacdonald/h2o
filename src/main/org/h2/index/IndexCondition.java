@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.index;
 
@@ -18,41 +16,42 @@ import org.h2.table.Column;
 import org.h2.value.Value;
 
 /**
- * A index condition object is made for each condition that can potentially use
- * an index. This class does not extend expression, but in general there is one
- * expression that maps to each index condition.
+ * A index condition object is made for each condition that can potentially use an index. This class does not extend expression, but in
+ * general there is one expression that maps to each index condition.
  */
 public class IndexCondition {
-
+	
 	/**
 	 * A bit of a search mask meaning 'equal'.
 	 */
 	public static final int EQUALITY = 1;
-
+	
 	/**
 	 * A bit of a search mask meaning 'larger or equal'.
 	 */
 	public static final int START = 2;
-
+	
 	/**
 	 * A bit of a search mask meaning 'smaller or equal'.
 	 */
 	public static final int END = 4;
-
+	
 	/**
 	 * A search mask meaning 'between'.
 	 */
 	public static final int RANGE = START | END;
-
+	
 	/**
 	 * A bit of a search mask meaning 'the condition is always false'.
 	 */
 	public static final int ALWAYS_FALSE = 8;
-
+	
 	private Column column;
+	
 	private Expression expression;
+	
 	private int compareType;
-
+	
 	/**
 	 * Create an index condition with the given parameters.
 	 * 
@@ -63,13 +62,12 @@ public class IndexCondition {
 	 * @param expression
 	 *            the expression
 	 */
-	public IndexCondition(int compareType, ExpressionColumn column,
-			Expression expression) {
+	public IndexCondition(int compareType, ExpressionColumn column, Expression expression) {
 		this.compareType = compareType;
 		this.column = column == null ? null : column.getColumn();
 		this.expression = expression;
 	}
-
+	
 	/**
 	 * Get the current value of the expression.
 	 * 
@@ -80,14 +78,14 @@ public class IndexCondition {
 	public Value getCurrentValue(Session session) throws SQLException {
 		return expression.getValue(session);
 	}
-
+	
 	/**
 	 * Get the SQL snippet of this comparison.
 	 * 
 	 * @return the SQL snippet
 	 */
 	public String getSQL() {
-		if (compareType == Comparison.FALSE) {
+		if ( compareType == Comparison.FALSE ) {
 			return "FALSE";
 		}
 		StringBuilder buff = new StringBuilder();
@@ -114,7 +112,7 @@ public class IndexCondition {
 		buff.append(expression.getSQL());
 		return buff.toString();
 	}
-
+	
 	/**
 	 * Get the comparison bit mask.
 	 * 
@@ -136,7 +134,7 @@ public class IndexCondition {
 			throw Message.throwInternalError("type=" + compareType);
 		}
 	}
-
+	
 	/**
 	 * Check if the result is always false.
 	 * 
@@ -145,10 +143,9 @@ public class IndexCondition {
 	public boolean isAlwaysFalse() {
 		return compareType == Comparison.FALSE;
 	}
-
+	
 	/**
-	 * Check if this index condition is of the type column larger or equal to
-	 * value.
+	 * Check if this index condition is of the type column larger or equal to value.
 	 * 
 	 * @return true if this is a start condition
 	 */
@@ -162,10 +159,9 @@ public class IndexCondition {
 			return false;
 		}
 	}
-
+	
 	/**
-	 * Check if this index condition is of the type column smaller or equal to
-	 * value.
+	 * Check if this index condition is of the type column smaller or equal to value.
 	 * 
 	 * @return true if this is a end condition
 	 */
@@ -179,7 +175,7 @@ public class IndexCondition {
 			return false;
 		}
 	}
-
+	
 	/**
 	 * Get the referenced column.
 	 * 
@@ -188,7 +184,7 @@ public class IndexCondition {
 	public Column getColumn() {
 		return column;
 	}
-
+	
 	/**
 	 * Check if the expression can be evaluated.
 	 * 
@@ -197,5 +193,5 @@ public class IndexCondition {
 	public boolean isEvaluatable() {
 		return expression.isEverything(ExpressionVisitor.EVALUATABLE);
 	}
-
+	
 }

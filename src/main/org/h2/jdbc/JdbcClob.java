@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.jdbc;
 
@@ -29,10 +27,11 @@ public class JdbcClob extends TraceObject implements Clob
 , NClob
 
 {
-
+	
 	private Value value;
+	
 	private JdbcConnection conn;
-
+	
 	/**
 	 * INTERNAL
 	 */
@@ -41,7 +40,7 @@ public class JdbcClob extends TraceObject implements Clob
 		this.conn = conn;
 		this.value = value;
 	}
-
+	
 	/**
 	 * Returns the length.
 	 * 
@@ -51,9 +50,9 @@ public class JdbcClob extends TraceObject implements Clob
 		try {
 			debugCodeCall("length");
 			checkClosed();
-			if (value.getType() == Value.CLOB) {
+			if ( value.getType() == Value.CLOB ) {
 				long precision = value.getPrecision();
-				if (precision > 0) {
+				if ( precision > 0 ) {
 					return precision;
 				}
 			}
@@ -61,9 +60,9 @@ public class JdbcClob extends TraceObject implements Clob
 			try {
 				long size = 0;
 				char[] buff = new char[Constants.FILE_BLOCK_SIZE];
-				while (true) {
+				while ( true ) {
 					int len = in.read(buff, 0, Constants.FILE_BLOCK_SIZE);
-					if (len <= 0) {
+					if ( len <= 0 ) {
 						break;
 					}
 					size += len;
@@ -72,11 +71,11 @@ public class JdbcClob extends TraceObject implements Clob
 			} finally {
 				in.close();
 			}
-		} catch (Exception e) {
+		} catch ( Exception e ) {
 			throw logAndConvert(e);
 		}
 	}
-
+	
 	/**
 	 * [Not supported] Truncates the object.
 	 */
@@ -84,7 +83,7 @@ public class JdbcClob extends TraceObject implements Clob
 		debugCodeCall("truncate", len);
 		throw Message.getUnsupportedException();
 	}
-
+	
 	/**
 	 * Returns the input stream.
 	 * 
@@ -96,11 +95,11 @@ public class JdbcClob extends TraceObject implements Clob
 			checkClosed();
 			String s = value.getString();
 			return IOUtils.getInputStream(s);
-		} catch (Exception e) {
+		} catch ( Exception e ) {
 			throw logAndConvert(e);
 		}
 	}
-
+	
 	/**
 	 * [Not supported] Returns an output stream.
 	 */
@@ -108,7 +107,7 @@ public class JdbcClob extends TraceObject implements Clob
 		debugCodeCall("setAsciiStream", pos);
 		throw Message.getUnsupportedException();
 	}
-
+	
 	/**
 	 * Returns the reader.
 	 * 
@@ -119,11 +118,11 @@ public class JdbcClob extends TraceObject implements Clob
 			debugCodeCall("getCharacterStream");
 			checkClosed();
 			return value.getReader();
-		} catch (Exception e) {
+		} catch ( Exception e ) {
 			throw logAndConvert(e);
 		}
 	}
-
+	
 	/**
 	 * [Not supported] Returns a writer starting from a given position.
 	 */
@@ -131,7 +130,7 @@ public class JdbcClob extends TraceObject implements Clob
 		debugCodeCall("setCharacterStream", pos);
 		throw Message.getUnsupportedException();
 	}
-
+	
 	/**
 	 * Returns a substring.
 	 * 
@@ -145,19 +144,19 @@ public class JdbcClob extends TraceObject implements Clob
 		try {
 			debugCode("getSubString(" + pos + ", " + length + ");");
 			checkClosed();
-			if (pos < 1) {
+			if ( pos < 1 ) {
 				throw Message.getInvalidValueException("pos", "" + pos);
 			}
-			if (length < 0) {
+			if ( length < 0 ) {
 				throw Message.getInvalidValueException("length", "" + length);
 			}
 			StringBuilder buff = new StringBuilder(Math.min(4096, length));
 			Reader reader = value.getReader();
 			try {
 				IOUtils.skipFully(reader, pos - 1);
-				for (int i = 0; i < length; i++) {
+				for ( int i = 0; i < length; i++ ) {
 					int ch = reader.read();
-					if (ch < 0) {
+					if ( ch < 0 ) {
 						break;
 					}
 					buff.append((char) ch);
@@ -166,11 +165,11 @@ public class JdbcClob extends TraceObject implements Clob
 				reader.close();
 			}
 			return buff.toString();
-		} catch (Exception e) {
+		} catch ( Exception e ) {
 			throw logAndConvert(e);
 		}
 	}
-
+	
 	/**
 	 * [Not supported] Sets a substring.
 	 */
@@ -178,17 +177,15 @@ public class JdbcClob extends TraceObject implements Clob
 		debugCode("setString(" + pos + ", " + quote(str) + ");");
 		throw Message.getUnsupportedException();
 	}
-
+	
 	/**
 	 * [Not supported] Sets a substring.
 	 */
-	public int setString(long pos, String str, int offset, int len)
-			throws SQLException {
-		debugCode("setString(" + pos + ", " + quote(str) + ", " + offset + ", "
-				+ len + ");");
+	public int setString(long pos, String str, int offset, int len) throws SQLException {
+		debugCode("setString(" + pos + ", " + quote(str) + ", " + offset + ", " + len + ");");
 		throw Message.getUnsupportedException();
 	}
-
+	
 	/**
 	 * [Not supported] Searches a pattern and return the position.
 	 */
@@ -196,7 +193,7 @@ public class JdbcClob extends TraceObject implements Clob
 		debugCode("position(" + quote(pattern) + ", " + start + ");");
 		throw Message.getUnsupportedException();
 	}
-
+	
 	/**
 	 * [Not supported] Searches a pattern and return the position.
 	 */
@@ -204,7 +201,7 @@ public class JdbcClob extends TraceObject implements Clob
 		debugCode("position(clobPattern, " + start + ");");
 		throw Message.getUnsupportedException();
 	}
-
+	
 	/**
 	 * Release all resources of this object.
 	 */
@@ -212,7 +209,7 @@ public class JdbcClob extends TraceObject implements Clob
 		debugCodeCall("free");
 		value = null;
 	}
-
+	
 	/**
 	 * [Not supported] Returns the reader, starting from an offset.
 	 */
@@ -220,19 +217,19 @@ public class JdbcClob extends TraceObject implements Clob
 		debugCode("getCharacterStream(" + pos + ", " + length + ");");
 		throw Message.getUnsupportedException();
 	}
-
+	
 	private void checkClosed() throws SQLException {
 		conn.checkClosed();
-		if (value == null) {
+		if ( value == null ) {
 			throw Message.getSQLException(ErrorCode.OBJECT_CLOSED);
 		}
 	}
-
+	
 	/**
 	 * INTERNAL
 	 */
 	public String toString() {
 		return getTraceObjectName() + ": " + value.getTraceSQL();
 	}
-
+	
 }

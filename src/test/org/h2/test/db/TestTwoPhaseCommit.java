@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.db;
 
@@ -18,33 +16,34 @@ import org.h2.test.TestBase;
  * Tests for the two-phase-commit feature.
  */
 public class TestTwoPhaseCommit extends TestBase {
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws SQLException {
-		if (config.memory || config.networked || config.logMode == 0) {
+		if ( config.memory || config.networked || config.logMode == 0 ) {
 			return;
 		}
-
+		
 		deleteDb("twoPhaseCommit");
-
+		
 		prepare();
 		openWith(true);
 		test(true);
-
+		
 		prepare();
 		openWith(false);
 		test(false);
 		deleteDb("twoPhaseCommit");
 	}
-
+	
 	private void test(boolean rolledBack) throws SQLException {
 		Connection conn = getConnection("twoPhaseCommit");
 		Statement stat = conn.createStatement();
@@ -53,7 +52,7 @@ public class TestTwoPhaseCommit extends TestBase {
 		rs.next();
 		assertEquals(rs.getInt(1), 1);
 		assertEquals(rs.getString(2), "Hello");
-		if (!rolledBack) {
+		if ( !rolledBack ) {
 			rs.next();
 			assertEquals(rs.getInt(1), 2);
 			assertEquals(rs.getString(2), "World");
@@ -61,18 +60,18 @@ public class TestTwoPhaseCommit extends TestBase {
 		assertFalse(rs.next());
 		conn.close();
 	}
-
+	
 	private void openWith(boolean rollback) throws SQLException {
 		Connection conn = getConnection("twoPhaseCommit");
 		Statement stat = conn.createStatement();
 		ArrayList list = new ArrayList();
 		ResultSet rs = stat.executeQuery("SELECT * FROM INFORMATION_SCHEMA.IN_DOUBT");
-		while (rs.next()) {
+		while ( rs.next() ) {
 			list.add(rs.getString("TRANSACTION"));
 		}
-		for (int i = 0; i < list.size(); i++) {
+		for ( int i = 0; i < list.size(); i++ ) {
 			String s = (String) list.get(i);
-			if (rollback) {
+			if ( rollback ) {
 				stat.execute("ROLLBACK TRANSACTION " + s);
 			} else {
 				stat.execute("COMMIT TRANSACTION " + s);
@@ -80,7 +79,7 @@ public class TestTwoPhaseCommit extends TestBase {
 		}
 		conn.close();
 	}
-
+	
 	private void prepare() throws SQLException {
 		deleteDb("twoPhaseCommit");
 		Connection conn = getConnection("twoPhaseCommit");

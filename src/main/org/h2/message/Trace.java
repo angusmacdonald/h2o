@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.message;
 
@@ -13,106 +11,108 @@ import org.h2.util.StringUtils;
  * This class represents a trace module.
  */
 public class Trace {
-
+	
 	/**
 	 * The trace module name for commands.
 	 */
 	public static final String COMMAND = "command";
-
+	
 	/**
 	 * The trace module name for constraints.
 	 */
 	public static final String CONSTRAINT = "constraint";
-
+	
 	/**
 	 * The trace module name for databases.
 	 */
 	public static final String DATABASE = "database";
-
+	
 	/**
 	 * The trace module name for functions.
 	 */
 	public static final String FUNCTION = "function";
-
+	
 	/**
 	 * The trace module name for file locks.
 	 */
 	public static final String FILE_LOCK = "fileLock";
-
+	
 	/**
 	 * The trace module name for indexes.
 	 */
 	public static final String INDEX = "index";
-
+	
 	/**
 	 * The trace module name for the JDBC API.
 	 */
 	public static final String JDBC = "jdbc";
-
+	
 	/**
 	 * The trace module name for locks.
 	 */
 	public static final String LOCK = "lock";
-
+	
 	/**
 	 * The trace module name for the transaction log.
 	 */
 	public static final String LOG = "log";
-
+	
 	/**
 	 * The trace module name for schemas.
 	 */
 	public static final String SCHEMA = "schema";
-
+	
 	/**
 	 * The trace module name for sessions.
 	 */
 	public static final String SESSION = "session";
-
+	
 	/**
 	 * The trace module name for sequences.
 	 */
 	public static final String SEQUENCE = "sequence";
-
+	
 	/**
 	 * The trace module name for settings.
 	 */
 	public static final String SETTING = "setting";
-
+	
 	/**
 	 * The trace module name for tables.
 	 */
 	public static final String TABLE = "table";
-
+	
 	/**
 	 * The trace module name for triggers.
 	 */
 	public static final String TRIGGER = "trigger";
-
+	
 	/**
 	 * The trace module name for users.
 	 */
 	public static final String USER = "user";
-
+	
 	/**
 	 * The trace module name for the page store.
 	 */
 	public static final String PAGE_STORE = "pageStore";
-
+	
 	private TraceWriter traceWriter;
+	
 	private String module;
+	
 	private String lineSeparator;
+	
 	private int level = TraceSystem.PARENT;
-
+	
 	Trace(TraceWriter traceWriter, String module) {
 		this.traceWriter = traceWriter;
 		this.module = module;
 		this.lineSeparator = SysProperties.LINE_SEPARATOR;
 	}
-
+	
 	/**
-	 * Set the trace level of this component. This setting overrides the parent
-	 * trace level.
+	 * Set the trace level of this component. This setting overrides the parent trace level.
 	 * 
 	 * @param level
 	 *            the new level
@@ -120,14 +120,14 @@ public class Trace {
 	public void setLevel(int level) {
 		this.level = level;
 	}
-
+	
 	private boolean isEnabled(int level) {
-		if (this.level == TraceSystem.PARENT) {
+		if ( this.level == TraceSystem.PARENT ) {
 			return traceWriter.isEnabled(level);
 		}
 		return level <= this.level;
 	}
-
+	
 	/**
 	 * Check if the trace level is equal or higher than INFO.
 	 * 
@@ -136,7 +136,7 @@ public class Trace {
 	public boolean isInfoEnabled() {
 		return isEnabled(TraceSystem.INFO);
 	}
-
+	
 	/**
 	 * Check if the trace level is equal or higher than DEBUG.
 	 * 
@@ -145,7 +145,7 @@ public class Trace {
 	public boolean isDebugEnabled() {
 		return isEnabled(TraceSystem.DEBUG);
 	}
-
+	
 	/**
 	 * Write a message with trace level ERROR to the trace system.
 	 * 
@@ -153,11 +153,11 @@ public class Trace {
 	 *            the message
 	 */
 	public void error(String s) {
-		if (isEnabled(TraceSystem.ERROR)) {
+		if ( isEnabled(TraceSystem.ERROR) ) {
 			traceWriter.write(TraceSystem.ERROR, module, s, null);
 		}
 	}
-
+	
 	/**
 	 * Write a message with trace level ERROR to the trace system.
 	 * 
@@ -167,11 +167,11 @@ public class Trace {
 	 *            the exception
 	 */
 	public void error(String s, Throwable t) {
-		if (isEnabled(TraceSystem.ERROR)) {
+		if ( isEnabled(TraceSystem.ERROR) ) {
 			traceWriter.write(TraceSystem.ERROR, module, s, t);
 		}
 	}
-
+	
 	/**
 	 * Write a message with trace level INFO to the trace system.
 	 * 
@@ -179,11 +179,11 @@ public class Trace {
 	 *            the message
 	 */
 	public void info(String s) {
-		if (isEnabled(TraceSystem.INFO)) {
+		if ( isEnabled(TraceSystem.INFO) ) {
 			traceWriter.write(TraceSystem.INFO, module, s, null);
 		}
 	}
-
+	
 	/**
 	 * Write a message with trace level INFO to the trace system.
 	 * 
@@ -193,11 +193,11 @@ public class Trace {
 	 *            the exception
 	 */
 	public void info(String s, Throwable t) {
-		if (isEnabled(TraceSystem.INFO)) {
+		if ( isEnabled(TraceSystem.INFO) ) {
 			traceWriter.write(TraceSystem.INFO, module, s, t);
 		}
 	}
-
+	
 	/**
 	 * Write Java source code with trace level INFO to the trace system.
 	 * 
@@ -205,12 +205,11 @@ public class Trace {
 	 *            the source code
 	 */
 	public void infoCode(String java) {
-		if (isEnabled(TraceSystem.INFO)) {
-			traceWriter.write(TraceSystem.INFO, module, lineSeparator + "/**/"
-					+ java, null);
+		if ( isEnabled(TraceSystem.INFO) ) {
+			traceWriter.write(TraceSystem.INFO, module, lineSeparator + "/**/" + java, null);
 		}
 	}
-
+	
 	/**
 	 * Write a SQL statement with trace level INFO to the trace system.
 	 * 
@@ -224,15 +223,14 @@ public class Trace {
 	 *            the time it took to run the statement in ms
 	 */
 	public void infoSQL(String sql, String params, int count, long time) {
-		if (!isEnabled(TraceSystem.INFO)) {
+		if ( !isEnabled(TraceSystem.INFO) ) {
 			return;
 		}
-		StringBuilder buff = new StringBuilder(sql.length() + params.length()
-				+ 20);
+		StringBuilder buff = new StringBuilder(sql.length() + params.length() + 20);
 		buff.append(lineSeparator);
 		buff.append("/*SQL");
 		boolean space = false;
-		if (params.length() > 0) {
+		if ( params.length() > 0 ) {
 			// This looks like a bug, but it is intentional:
 			// If there are no parameters, the SQL statement is
 			// the rest of the line. If there are parameters, they
@@ -243,17 +241,17 @@ public class Trace {
 			buff.append(" l:");
 			buff.append(sql.length());
 		}
-		if (count > 0) {
+		if ( count > 0 ) {
 			space = true;
 			buff.append(" #:");
 			buff.append(count);
 		}
-		if (time > 0) {
+		if ( time > 0 ) {
 			space = true;
 			buff.append(" t:");
 			buff.append(time);
 		}
-		if (!space) {
+		if ( !space ) {
 			buff.append(' ');
 		}
 		buff.append("*/");
@@ -263,7 +261,7 @@ public class Trace {
 		sql = buff.toString();
 		traceWriter.write(TraceSystem.INFO, module, sql, null);
 	}
-
+	
 	/**
 	 * Write a message with trace level DEBUG to the trace system.
 	 * 
@@ -271,11 +269,11 @@ public class Trace {
 	 *            the message
 	 */
 	public void debug(String s) {
-		if (isEnabled(TraceSystem.DEBUG)) {
+		if ( isEnabled(TraceSystem.DEBUG) ) {
 			traceWriter.write(TraceSystem.DEBUG, module, s, null);
 		}
 	}
-
+	
 	/**
 	 * Write a message with trace level DEBUG to the trace system.
 	 * 
@@ -285,11 +283,11 @@ public class Trace {
 	 *            the exception
 	 */
 	public void debug(String s, Throwable t) {
-		if (isEnabled(TraceSystem.DEBUG)) {
+		if ( isEnabled(TraceSystem.DEBUG) ) {
 			traceWriter.write(TraceSystem.DEBUG, module, s, t);
 		}
 	}
-
+	
 	/**
 	 * Write Java source code with trace level DEBUG to the trace system.
 	 * 
@@ -297,10 +295,9 @@ public class Trace {
 	 *            the source code
 	 */
 	public void debugCode(String java) {
-		if (isEnabled(TraceSystem.DEBUG)) {
-			traceWriter.write(TraceSystem.DEBUG, module, lineSeparator + "/**/"
-					+ java, null);
+		if ( isEnabled(TraceSystem.DEBUG) ) {
+			traceWriter.write(TraceSystem.DEBUG, module, lineSeparator + "/**/" + java, null);
 		}
 	}
-
+	
 }

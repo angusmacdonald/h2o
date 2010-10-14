@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.build.i18n;
 
@@ -29,41 +27,42 @@ import org.h2.util.SortedProperties;
 import org.h2.util.StringUtils;
 
 /**
- * This class converts a file stored in the UTF-8 encoding format to
- * a properties file and vice versa.
+ * This class converts a file stored in the UTF-8 encoding format to a properties file and vice versa.
  */
 public class PropertiesToUTF8 {
-
+	
 	private PropertiesToUTF8() {
 		// utility class
 	}
-
+	
 	/**
-	 * This method is called when executing this application from the command
-	 * line.
-	 *
-	 * @param args the command line parameters
+	 * This method is called when executing this application from the command line.
+	 * 
+	 * @param args
+	 *            the command line parameters
 	 */
 	public static void main(String[] args) throws Exception {
 		convert("bin/org/h2/res");
 		convert("bin/org/h2/server/web/res");
 	}
-
+	
 	/**
 	 * Convert a properties file to a UTF-8 text file.
-	 *
-	 * @param source the name of the properties file
-	 * @param target the target file name
+	 * 
+	 * @param source
+	 *            the name of the properties file
+	 * @param target
+	 *            the target file name
 	 */
 	static void propertiesToTextUTF8(String source, String target) throws Exception {
-		if (!new File(source).exists()) {
+		if ( !new File(source).exists() ) {
 			return;
 		}
 		Properties prop = SortedProperties.loadProperties(source);
 		FileOutputStream out = new FileOutputStream(target);
 		PrintWriter writer = new PrintWriter(new OutputStreamWriter(out, "UTF-8"));
 		// keys is sorted
-		for (Enumeration en = prop.keys(); en.hasMoreElements();) {
+		for ( Enumeration en = prop.keys(); en.hasMoreElements(); ) {
 			String key = (String) en.nextElement();
 			String value = prop.getProperty(key, null);
 			writer.println("@" + key);
@@ -72,16 +71,17 @@ public class PropertiesToUTF8 {
 		}
 		writer.close();
 	}
-
+	
 	/**
-	 * Convert a translation file (in UTF-8) to a properties file (without
-	 * special characters).
-	 *
-	 * @param source the source file name
-	 * @param target the target file name
+	 * Convert a translation file (in UTF-8) to a properties file (without special characters).
+	 * 
+	 * @param source
+	 *            the source file name
+	 * @param target
+	 *            the target file name
 	 */
 	static void textUTF8ToProperties(String source, String target) throws Exception {
-		if (!new File(source).exists()) {
+		if ( !new File(source).exists() ) {
 			return;
 		}
 		LineNumberReader reader = new LineNumberReader(new InputStreamReader(new FileInputStream(source), "UTF-8"));
@@ -90,30 +90,30 @@ public class PropertiesToUTF8 {
 			StringBuilder buff = new StringBuilder();
 			String key = null;
 			boolean found = false;
-			while (true) {
+			while ( true ) {
 				String line = reader.readLine();
-				if (line == null) {
+				if ( line == null ) {
 					break;
 				}
 				line = line.trim();
-				if (line.length() == 0) {
+				if ( line.length() == 0 ) {
 					continue;
 				}
-				if (line.startsWith("@")) {
-					if (key != null) {
+				if ( line.startsWith("@") ) {
+					if ( key != null ) {
 						prop.setProperty(key, buff.toString());
 						buff.setLength(0);
 					}
 					found = true;
 					key = line.substring(1);
 				} else {
-					if (buff.length() > 0) {
+					if ( buff.length() > 0 ) {
 						buff.append(System.getProperty("line.separator"));
 					}
 					buff.append(line);
 				}
 			}
-			if (found) {
+			if ( found ) {
 				prop.setProperty(key, buff.toString());
 			}
 			storeProperties(prop, target);
@@ -121,12 +121,12 @@ public class PropertiesToUTF8 {
 			reader.close();
 		}
 	}
-
+	
 	private static void convert(String source) throws Exception {
 		File[] list = new File(source).listFiles();
-		for (int i = 0; list != null && i < list.length; i++) {
+		for ( int i = 0; list != null && i < list.length; i++ ) {
 			File f = list[i];
-			if (!f.getName().endsWith(".properties")) {
+			if ( !f.getName().endsWith(".properties") ) {
 				continue;
 			}
 			FileInputStream in = new FileInputStream(f);
@@ -135,7 +135,7 @@ public class PropertiesToUTF8 {
 			in.close();
 			String name = f.getName();
 			String utf8, html;
-			if (name.startsWith("utf8")) {
+			if ( name.startsWith("utf8") ) {
 				utf8 = HtmlConverter.convertHtmlToString(s);
 				html = HtmlConverter.convertStringToHtml(utf8);
 				RandomAccessFile out = new RandomAccessFile("_" + name.substring(4), "rw");
@@ -163,12 +163,14 @@ public class PropertiesToUTF8 {
 			out.close();
 		}
 	}
-
+	
 	/**
 	 * Store a properties file.
-	 *
-	 * @param p the properties
-	 * @param fileName the file name
+	 * 
+	 * @param p
+	 *            the properties
+	 * @param fileName
+	 *            the file name
 	 */
 	static void storeProperties(Properties p, String fileName) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -178,16 +180,16 @@ public class PropertiesToUTF8 {
 		LineNumberReader r = new LineNumberReader(reader);
 		FileWriter w = new FileWriter(fileName);
 		PrintWriter writer = new PrintWriter(new BufferedWriter(w));
-		while (true) {
+		while ( true ) {
 			String line = r.readLine();
-			if (line == null) {
+			if ( line == null ) {
 				break;
 			}
-			if (!line.startsWith("#")) {
+			if ( !line.startsWith("#") ) {
 				writer.println(line);
 			}
 		}
 		writer.close();
 	}
-
+	
 }

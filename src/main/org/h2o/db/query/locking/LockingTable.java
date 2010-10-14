@@ -1,19 +1,10 @@
 /*
- * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
- * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
- *
- * H2O is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
-
- * H2O is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
-
- * You should have received a copy of the GNU General Public License
- * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved. Project Homepage:
+ * http://blogs.cs.st-andrews.ac.uk/h2o H2O is free software: you can redistribute it and/or modify it under the terms of the GNU General
+ * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. H2O
+ * is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General
+ * Public License along with H2O. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.h2o.db.query.locking;
 
@@ -25,7 +16,6 @@ import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
-import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * Represents a locking table for a given table - this is maintained by the table's Table Manager.
@@ -34,135 +24,78 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  * 
  */
 public class LockingTable implements ILockingTable {
-
+	
 	private DatabaseInstanceWrapper writeLock;
+	
 	private Set<DatabaseInstanceWrapper> readLocks;
+	
 	private final String tableName;
-
+	
 	public LockingTable(String tableName) {
 		this.tableName = tableName;
 		this.writeLock = null;
 		this.readLocks = new HashSet<DatabaseInstanceWrapper>();
 	}
-
+	
 	/*
 	 * (non-Javadoc)
-	 * 
 	 * @see org.h2.h2o.util.ILockingTable#requestLock(org.h2.h2o.util.LockType, org.h2.h2o.comms.remote.DatabaseInstanceRemote)
 	 */
 	public synchronized LockType requestLock(LockType lockType, DatabaseInstanceWrapper requestingMachine) {
-
-		if (Constants.LOCK_ELEVATION_ENABLED) {
-			return withLockingElevation(lockType, requestingMachine);
-		} else {
-			return withoutLockElevation(lockType, requestingMachine);
-		}
-	}
-
-	/**
-	 * Locking manager implementation where a read lock <em>cannot</em> be elevated to a write lock.
-	 */
-	private LockType withoutLockElevation(LockType lockType, DatabaseInstanceWrapper requestingMachine) {
-		if (writeLock != null && !(requestingMachine.equals(writeLock) && lockType.equals(LockType.WRITE))) {
+		if ( writeLock != null && !( requestingMachine.equals(writeLock) && lockType.equals(LockType.WRITE) ) ) {
 			return LockType.NONE; // exclusive lock held.
 		}
-
-		if (lockType == LockType.READ) {
-
+		
+		if ( lockType == LockType.READ ) {
+			
 			readLocks.add(requestingMachine);
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "READ lock taken out on " + tableName);
 			return LockType.READ;
-
-		} else if ((lockType == LockType.WRITE || lockType == LockType.CREATE) && (readLocks.size() == 0)) { // ||
-																												// readLocks.contains(requestingMachine)
+			
+		} else if ( ( lockType == LockType.WRITE || lockType == LockType.CREATE ) && ( readLocks.size() == 0 ) ) { // ||
+																													// readLocks.contains(requestingMachine)
 			// if write lock request + no read locks held.
-
+			
 			writeLock = requestingMachine;
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "WRITE lock taken out on " + tableName);
 			return lockType; // will either be WRITE or CREATE
 		}
-
+		
 		return LockType.NONE;
 	}
-
-	/**
-	 * Locking manager implementation where a read lock can be elevated to a write lock where the same machine is making the request.
-	 */
-	private LockType withLockingElevation(LockType lockType, DatabaseInstanceWrapper requestingMachine) {
-		/*
-		 * If a write lock is already held by the requesting database then it can continue.
-		 * 
-		 * If a write lock is already held, but a read lock is requested, then a read lock
-		 * 
-		 * If a write lock is requested, but a read lock is already held then the lock is elevated - the read lock is removed and a write
-		 * (exclusive) lock is taken out.
-		 */
-		if (writeLock != null && !requestingMachine.equals(writeLock))
-			return LockType.NONE; // exclusive lock held.
-
-		if (lockType == LockType.READ) {
-
-			// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "'" + tableName + "' READ locked by: " +
-			// requestingMachine.getDatabaseURL().getOriginalURL());
-
-			readLocks.add(requestingMachine);
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "READ lock taken out on " + tableName);
-
-			return LockType.READ;
-
-		} else if ((lockType == LockType.WRITE || lockType == LockType.CREATE)
-				&& (readLocks.size() == 0 || readLocks.contains(requestingMachine))) { //
-			// if write lock request + no read locks held.
-
-			// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "'" + tableName +
-			// "' " + ((LockType.CREATE == lockType)? "CREATE": "WRITE") +
-			// " locked by: " +
-			// requestingMachine.getDatabaseURL().getOriginalURL());
-
-			writeLock = requestingMachine;
-
-			readLocks.remove(requestingMachine);
-
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "WRITE lock taken out on " + tableName);
-			return lockType; // will either be WRITE or CREATE
-		}
-
-		return LockType.NONE;
-	}
-
+	
 	/*
 	 * (non-Javadoc)
-	 * 
 	 * @see org.h2.h2o.util.ILockingTable#releaseLock(org.h2.h2o.comms.remote. DatabaseInstanceRemote)
 	 */
 	public synchronized LockType releaseLock(DatabaseInstanceWrapper requestingMachine) {
 		LockType toReturn = LockType.NONE;
 		// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "'" + tableName +
 		// "' unlocked by " + requestingMachine.getDatabaseURL().getOriginalURL());
-
-		if (readLocks.remove(requestingMachine)) {
+		
+		if ( readLocks.remove(requestingMachine) ) {
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "READ lock released on " + tableName);
 			toReturn = LockType.READ;
 		}
-
-		if (writeLock != null && writeLock.equals(requestingMachine)) {
+		
+		if ( writeLock != null && writeLock.equals(requestingMachine) ) {
 			writeLock = null;
 			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "WRITE lock released on " + tableName);
 			toReturn = LockType.WRITE;
 		}
-
-		if (!toReturn.equals(LockType.NONE)) {
+		
+		if ( !toReturn.equals(LockType.NONE) ) {
 			return toReturn;
 		}
-
-		assert false: "Unexpected code path: attempted to release a lock which wasn't held for table: " + tableName;
+		
+		assert false : "Unexpected code path: attempted to release a lock which wasn't held for table: " + tableName;
 		
 		return toReturn; // should never get to this.
 	}
-
+	
 	@Override
 	public String toString() {
 		return "LockingTable [writeLock=" + writeLock + ", readLocksSize=" + readLocks.size() + "]";
 	}
-
+	
 }

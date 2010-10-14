@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.dev.net;
 
@@ -17,21 +15,20 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 /**
- * This class helps debug the PostgreSQL network protocol.
- * It listens on one port, and sends the exact same data to another port.
+ * This class helps debug the PostgreSQL network protocol. It listens on one port, and sends the exact same data to another port.
  */
 public class PgTcpRedirect {
-
+	
 	/**
-	 * This method is called when executing this application from the command
-	 * line.
-	 *
-	 * @param args the command line parameters
+	 * This method is called when executing this application from the command line.
+	 * 
+	 * @param args
+	 *            the command line parameters
 	 */
 	public static void main(String[] args) throws Exception {
 		new PgTcpRedirect().loop(args);
 	}
-
+	
 	private void loop(String[] args) throws Exception {
 		// MySQL protocol:
 		// http://www.redferni.uklinux.net/mysql/MySQL-Protocol.html
@@ -43,16 +40,16 @@ public class PgTcpRedirect {
 		// int portServer = 5435, portClient = 5433;
 		// PostgreSQL
 		int portServer = 5432, portClient = 5433;
-
-		for (int i = 0; i < args.length; i++) {
-			if ("-client".equals(args[i])) {
+		
+		for ( int i = 0; i < args.length; i++ ) {
+			if ( "-client".equals(args[i]) ) {
 				portClient = Integer.parseInt(args[++i]);
-			} else if ("-server".equals(args[i])) {
+			} else if ( "-server".equals(args[i]) ) {
 				portServer = Integer.parseInt(args[++i]);
 			}
 		}
 		ServerSocket listener = new ServerSocket(portClient);
-		while (true) {
+		while ( true ) {
 			Socket client = listener.accept();
 			Socket server = new Socket("localhost", portServer);
 			TcpRedirectThread c = new TcpRedirectThread(client, server, true);
@@ -61,47 +58,50 @@ public class PgTcpRedirect {
 			new Thread(s).start();
 		}
 	}
-
+	
 	/**
 	 * This is the working thread of the TCP redirector.
 	 */
 	private class TcpRedirectThread implements Runnable {
-
+		
 		private static final int STATE_INIT_CLIENT = 0, STATE_REGULAR = 1;
+		
 		private Socket read, write;
+		
 		private int state;
+		
 		private boolean client;
-
+		
 		TcpRedirectThread(Socket read, Socket write, boolean client) {
 			this.read = read;
 			this.write = write;
 			this.client = client;
 			state = client ? STATE_INIT_CLIENT : STATE_REGULAR;
 		}
-
+		
 		String readStringNull(InputStream in) throws IOException {
 			StringBuilder buff = new StringBuilder();
-			while (true) {
+			while ( true ) {
 				int x = in.read();
-				if (x <= 0) {
+				if ( x <= 0 ) {
 					break;
 				}
 				buff.append((char) x);
 			}
 			return buff.toString();
 		}
-
+		
 		private void println(String s) {
-			if (false) {
+			if ( false ) {
 				System.out.println(s);
 			}
 		}
-
+		
 		private boolean processClient(InputStream inStream, OutputStream outStream) throws IOException {
 			DataInputStream dataIn = new DataInputStream(inStream);
 			ByteArrayOutputStream buff = new ByteArrayOutputStream();
 			DataOutputStream dataOut = new DataOutputStream(buff);
-			if (state == STATE_INIT_CLIENT) {
+			if ( state == STATE_INIT_CLIENT ) {
 				state = STATE_REGULAR;
 				int len = dataIn.readInt();
 				dataOut.writeInt(len);
@@ -111,18 +111,18 @@ public class PgTcpRedirect {
 				dataOut.write(data);
 				dataIn = new DataInputStream(new ByteArrayInputStream(data, 0, len));
 				int version = dataIn.readInt();
-				if (version == 80877102) {
+				if ( version == 80877102 ) {
 					println("CancelRequest");
 					println(" pid: " + dataIn.readInt());
 					println(" key: " + dataIn.readInt());
-				} else if (version == 80877103) {
+				} else if ( version == 80877103 ) {
 					println("SSLRequest");
 				} else {
 					println("StartupMessage");
-					println(" version " + version + " (" + (version >> 16) + "." + (version & 0xff) + ")");
-					while (true) {
+					println(" version " + version + " (" + ( version >> 16 ) + "." + ( version & 0xff ) + ")");
+					while ( true ) {
 						String param = readStringNull(dataIn);
-						if (param.length() == 0) {
+						if ( param.length() == 0 ) {
 							break;
 						}
 						String value = readStringNull(dataIn);
@@ -131,7 +131,7 @@ public class PgTcpRedirect {
 				}
 			} else {
 				int x = dataIn.read();
-				if (x < 0) {
+				if ( x < 0 ) {
 					println("end");
 					return false;
 				}
@@ -150,18 +150,18 @@ public class PgTcpRedirect {
 					println(" destPortal: " + readStringNull(dataIn));
 					println(" prepName: " + readStringNull(dataIn));
 					int formatCodesCount = dataIn.readShort();
-					for (int i = 0; i < formatCodesCount; i++) {
+					for ( int i = 0; i < formatCodesCount; i++ ) {
 						println(" formatCode[" + i + "]=" + dataIn.readShort());
 					}
 					int paramCount = dataIn.readShort();
-					for (int i = 0; i < paramCount; i++) {
+					for ( int i = 0; i < paramCount; i++ ) {
 						int paramLen = dataIn.readInt();
 						println(" length[" + i + "]=" + paramLen);
 						byte[] d2 = new byte[paramLen];
 						dataIn.readFully(d2);
 					}
 					int resultCodeCount = dataIn.readShort();
-					for (int i = 0; i < resultCodeCount; i++) {
+					for ( int i = 0; i < resultCodeCount; i++ ) {
 						println(" resultCodeCount[" + i + "]=" + dataIn.readShort());
 					}
 					break;
@@ -204,15 +204,15 @@ public class PgTcpRedirect {
 					println("FunctionCall");
 					println(" objectId:" + dataIn.readInt());
 					int columns = dataIn.readShort();
-					for (int i = 0; i < columns; i++) {
+					for ( int i = 0; i < columns; i++ ) {
 						println(" formatCode[" + i + "]: " + dataIn.readShort());
 					}
 					int count = dataIn.readShort();
-					for (int i = 0; i < count; i++) {
+					for ( int i = 0; i < count; i++ ) {
 						int l = dataIn.readInt();
 						println(" len[" + i + "]: " + l);
-						if (l >= 0) {
-							for (int j = 0; j < l; j++) {
+						if ( l >= 0 ) {
+							for ( int j = 0; j < l; j++ ) {
 								dataIn.readByte();
 							}
 						}
@@ -225,7 +225,7 @@ public class PgTcpRedirect {
 					println(" name:" + readStringNull(dataIn));
 					println(" query:" + readStringNull(dataIn));
 					int count = dataIn.readShort();
-					for (int i = 0; i < count; i++) {
+					for ( int i = 0; i < count; i++ ) {
 						println(" [" + i + "]: " + dataIn.readInt());
 					}
 					break;
@@ -258,18 +258,18 @@ public class PgTcpRedirect {
 			try {
 				outStream.write(buffer, 0, buffer.length);
 				outStream.flush();
-			} catch (IOException e) {
+			} catch ( IOException e ) {
 				e.printStackTrace();
 			}
 			return true;
 		}
-
+		
 		private boolean processServer(InputStream inStream, OutputStream outStream) throws IOException {
 			DataInputStream dataIn = new DataInputStream(inStream);
 			ByteArrayOutputStream buff = new ByteArrayOutputStream();
 			DataOutputStream dataOut = new DataOutputStream(buff);
 			int x = dataIn.read();
-			if (x < 0) {
+			if ( x < 0 ) {
 				println("end");
 				return false;
 			}
@@ -286,25 +286,25 @@ public class PgTcpRedirect {
 			case 'R': {
 				println("Authentication");
 				int value = dataIn.readInt();
-				if (value == 0) {
+				if ( value == 0 ) {
 					println(" Ok");
-				} else if (value == 2) {
+				} else if ( value == 2 ) {
 					println(" KerberosV5");
-				} else if (value == 3) {
+				} else if ( value == 3 ) {
 					println(" CleartextPassword");
-				} else if (value == 4) {
+				} else if ( value == 4 ) {
 					println(" CryptPassword");
 					byte b1 = dataIn.readByte();
 					byte b2 = dataIn.readByte();
 					println(" salt1=" + b1 + " salt2=" + b2);
-				} else if (value == 5) {
+				} else if ( value == 5 ) {
 					println(" MD5Password");
 					byte b1 = dataIn.readByte();
 					byte b2 = dataIn.readByte();
 					byte b3 = dataIn.readByte();
 					byte b4 = dataIn.readByte();
 					println(" salt1=" + b1 + " salt2=" + b2 + " 3=" + b3 + " 4=" + b4);
-				} else if (value == 6) {
+				} else if ( value == 6 ) {
 					println(" SCMCredential");
 				}
 				break;
@@ -340,7 +340,7 @@ public class PgTcpRedirect {
 				println("CopyInResponse");
 				println(" format: " + dataIn.readByte());
 				int columns = dataIn.readShort();
-				for (int i = 0; i < columns; i++) {
+				for ( int i = 0; i < columns; i++ ) {
 					println(" formatCode[" + i + "]: " + dataIn.readShort());
 				}
 				break;
@@ -349,7 +349,7 @@ public class PgTcpRedirect {
 				println("CopyOutResponse");
 				println(" format: " + dataIn.readByte());
 				int columns = dataIn.readShort();
-				for (int i = 0; i < columns; i++) {
+				for ( int i = 0; i < columns; i++ ) {
 					println(" formatCode[" + i + "]: " + dataIn.readShort());
 				}
 				break;
@@ -358,10 +358,10 @@ public class PgTcpRedirect {
 				println("DataRow");
 				int columns = dataIn.readShort();
 				println(" columns : " + columns);
-				for (int i = 0; i < columns; i++) {
+				for ( int i = 0; i < columns; i++ ) {
 					int l = dataIn.readInt();
-					if (l > 0) {
-						for (int j = 0; j < l; j++) {
+					if ( l > 0 ) {
+						for ( int j = 0; j < l; j++ ) {
 							dataIn.readByte();
 						}
 					}
@@ -375,9 +375,9 @@ public class PgTcpRedirect {
 			}
 			case 'E': {
 				println("ErrorResponse");
-				while (true) {
+				while ( true ) {
 					int fieldType = dataIn.readByte();
-					if (fieldType == 0) {
+					if ( fieldType == 0 ) {
 						break;
 					}
 					String msg = readStringNull(dataIn);
@@ -410,9 +410,9 @@ public class PgTcpRedirect {
 			}
 			case 'N': {
 				println("NoticeResponse");
-				while (true) {
+				while ( true ) {
 					int fieldType = dataIn.readByte();
-					if (fieldType == 0) {
+					if ( fieldType == 0 ) {
 						break;
 					}
 					String msg = readStringNull(dataIn);
@@ -444,7 +444,7 @@ public class PgTcpRedirect {
 				println("ParameterDescription");
 				println(" processID: " + dataIn.readInt());
 				int count = dataIn.readShort();
-				for (int i = 0; i < count; i++) {
+				for ( int i = 0; i < count; i++ ) {
 					println(" [" + i + "] objectId: " + dataIn.readInt());
 				}
 				break;
@@ -471,7 +471,7 @@ public class PgTcpRedirect {
 				println("RowDescription");
 				int columns = dataIn.readShort();
 				println(" columns : " + columns);
-				for (int i = 0; i < columns; i++) {
+				for ( int i = 0; i < columns; i++ ) {
 					println(" [" + i + "]");
 					println("  name:" + readStringNull(dataIn));
 					println("  tableId:" + dataIn.readInt());
@@ -492,55 +492,57 @@ public class PgTcpRedirect {
 			try {
 				outStream.write(buffer, 0, buffer.length);
 				outStream.flush();
-			} catch (IOException e) {
+			} catch ( IOException e ) {
 				e.printStackTrace();
 			}
 			return true;
 		}
-
+		
 		public void run() {
 			try {
 				OutputStream out = write.getOutputStream();
 				InputStream in = read.getInputStream();
-				while (true) {
+				while ( true ) {
 					boolean more;
-					if (client) {
+					if ( client ) {
 						more = processClient(in, out);
 					} else {
 						more = processServer(in, out);
 					}
-					if (!more) {
+					if ( !more ) {
 						break;
 					}
 				}
 				try {
 					read.close();
-				} catch (IOException e) {
+				} catch ( IOException e ) {
 					// ignore
 				}
 				try {
 					write.close();
-				} catch (IOException e) {
+				} catch ( IOException e ) {
 					// ignore
 				}
-			} catch (Throwable e) {
+			} catch ( Throwable e ) {
 				e.printStackTrace();
 			}
 		}
 	}
-
+	
 	/**
 	 * Print the uninterpreted byte array.
-	 *
-	 * @param buffer the byte array
-	 * @param len the length
+	 * 
+	 * @param buffer
+	 *            the byte array
+	 * @param len
+	 *            the length
 	 */
 	synchronized void printData(byte[] buffer, int len) {
-		if (false) {
+		if ( false ) {
 			System.out.print(" ");
-			for (int i = 0; i < len; i++) {
+			for ( int i = 0; i < len; i++ ) {
 				int c = buffer[i] & 255;
-				if (c >= ' ' && c <= 127 && c != '[' & c != ']') {
+				if ( c >= ' ' && c <= 127 && c != '[' & c != ']' ) {
 					System.out.print((char) c);
 				} else {
 					System.out.print("[" + Integer.toHexString(c) + "]");

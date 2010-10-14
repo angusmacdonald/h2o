@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.db;
 
@@ -27,26 +25,28 @@ import org.h2.util.JdbcUtils;
  * Tests simulated power off conditions.
  */
 public class TestPowerOff extends TestBase {
-
+	
 	private String dbName = "powerOff";
+	
 	private String dir, url;
-
+	
 	private int maxPowerOffCount;
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws SQLException {
-		if (config.memory || config.logMode == 0) {
+		if ( config.memory || config.logMode == 0 ) {
 			return;
 		}
-		if (config.big) {
+		if ( config.big ) {
 			dir = baseDir;
 		} else {
 			dir = "memFS:";
@@ -60,41 +60,41 @@ public class TestPowerOff extends TestBase {
 		testPersistentTables();
 		deleteDb(dir, dbName);
 	}
-
+	
 	private void testSummaryCrash() throws SQLException {
-		if (config.networked) {
+		if ( config.networked ) {
 			return;
 		}
 		deleteDb(dir, dbName);
 		Connection conn = getConnection(url);
 		Statement stat = conn.createStatement();
-		for (int i = 0; i < 10; i++) {
+		for ( int i = 0; i < 10; i++ ) {
 			stat.execute("CREATE TABLE TEST" + i + "(ID INT PRIMARY KEY, NAME VARCHAR)");
-			for (int j = 0; j < 10; j++) {
+			for ( int j = 0; j < 10; j++ ) {
 				stat.execute("INSERT INTO TEST" + i + " VALUES(" + j + ", 'Hello')");
 			}
 		}
-		for (int i = 0; i < 10; i += 2) {
+		for ( int i = 0; i < 10; i += 2 ) {
 			stat.execute("DROP TABLE TEST" + i);
 		}
 		stat.execute("SET WRITE_DELAY 0");
 		stat.execute("CHECKPOINT");
-		for (int j = 0; j < 10; j++) {
-			stat.execute("INSERT INTO TEST1 VALUES(" + (10 + j) + ", 'World')");
+		for ( int j = 0; j < 10; j++ ) {
+			stat.execute("INSERT INTO TEST1 VALUES(" + ( 10 + j ) + ", 'World')");
 		}
 		stat.execute("SHUTDOWN IMMEDIATELY");
 		JdbcUtils.closeSilently(conn);
 		conn = getConnection(url);
 		stat = conn.createStatement();
-		for (int i = 1; i < 10; i += 2) {
+		for ( int i = 1; i < 10; i += 2 ) {
 			ResultSet rs = stat.executeQuery("SELECT * FROM TEST" + i + " ORDER BY ID");
-			for (int j = 0; j < 10; j++) {
+			for ( int j = 0; j < 10; j++ ) {
 				rs.next();
 				assertEquals(rs.getInt(1), j);
 				assertEquals(rs.getString(2), "Hello");
 			}
-			if (i == 1) {
-				for (int j = 0; j < 10; j++) {
+			if ( i == 1 ) {
+				for ( int j = 0; j < 10; j++ ) {
 					rs.next();
 					assertEquals(rs.getInt(1), j + 10);
 					assertEquals(rs.getString(2), "World");
@@ -104,47 +104,47 @@ public class TestPowerOff extends TestBase {
 		}
 		conn.close();
 	}
-
+	
 	private void testCrash() throws SQLException {
-		if (config.networked) {
+		if ( config.networked ) {
 			return;
 		}
 		deleteDb(dir, dbName);
 		Random random = new Random(1);
 		SysProperties.runFinalize = false;
 		int repeat = getSize(1, 20);
-		for (int i = 0; i < repeat; i++) {
+		for ( int i = 0; i < repeat; i++ ) {
 			Connection conn = getConnection(url);
 			conn.close();
 			conn = getConnection(url);
 			Statement stat = conn.createStatement();
 			stat.execute("SET WRITE_DELAY 0");
-			((JdbcConnection) conn).setPowerOffCount(random.nextInt(100));
+			( (JdbcConnection) conn ).setPowerOffCount(random.nextInt(100));
 			try {
 				stat.execute("DROP TABLE IF EXISTS TEST");
 				stat.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255))");
 				conn.setAutoCommit(false);
 				int len = getSize(3, 100);
-				for (int j = 0; j < len; j++) {
+				for ( int j = 0; j < len; j++ ) {
 					stat.execute("INSERT INTO TEST VALUES(" + j + ", 'Hello')");
-					if (random.nextInt(5) == 0) {
+					if ( random.nextInt(5) == 0 ) {
 						conn.commit();
 					}
-					if (random.nextInt(10) == 0) {
+					if ( random.nextInt(10) == 0 ) {
 						stat.execute("DROP TABLE IF EXISTS TEST");
 						stat.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255))");
 					}
 				}
 				stat.execute("DROP TABLE IF EXISTS TEST");
 				conn.close();
-			} catch (SQLException e) {
-				if (!e.getSQLState().equals("90098")) {
+			} catch ( SQLException e ) {
+				if ( !e.getSQLState().equals("90098") ) {
 					TestBase.logError("power", e);
 				}
 			}
 		}
 	}
-
+	
 	private void testShutdown() throws SQLException {
 		deleteDb(dir, dbName);
 		Connection conn = getConnection(url);
@@ -153,7 +153,7 @@ public class TestPowerOff extends TestBase {
 		stat.execute("INSERT INTO TEST VALUES(1, 'Hello')");
 		stat.execute("SHUTDOWN");
 		conn.close();
-
+		
 		conn = getConnection(url);
 		stat = conn.createStatement();
 		ResultSet rs = stat.executeQuery("SELECT * FROM TEST");
@@ -161,9 +161,9 @@ public class TestPowerOff extends TestBase {
 		assertFalse(rs.next());
 		conn.close();
 	}
-
+	
 	private void testNoIndexFile() throws SQLException {
-		if (config.networked) {
+		if ( config.networked ) {
 			return;
 		}
 		deleteDb(dir, dbName);
@@ -171,19 +171,19 @@ public class TestPowerOff extends TestBase {
 		Statement stat = conn.createStatement();
 		stat.execute("CREATE MEMORY TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255))");
 		stat.execute("INSERT INTO TEST VALUES(1, 'Hello')");
-		((JdbcConnection) conn).setPowerOffCount(1);
+		( (JdbcConnection) conn ).setPowerOffCount(1);
 		try {
 			stat.execute("INSERT INTO TEST VALUES(2, 'Hello')");
 			stat.execute("CHECKPOINT");
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		boolean deleted = false;
 		ArrayList files = FileLister.getDatabaseFiles(dir, dbName, false);
-		for (int i = 0; i < files.size(); i++) {
+		for ( int i = 0; i < files.size(); i++ ) {
 			String fileName = (String) files.get(i);
-			if (fileName.endsWith(Constants.SUFFIX_INDEX_FILE)) {
+			if ( fileName.endsWith(Constants.SUFFIX_INDEX_FILE) ) {
 				FileUtils.delete(fileName);
 				deleted = true;
 			}
@@ -192,29 +192,29 @@ public class TestPowerOff extends TestBase {
 		conn = getConnection(url);
 		conn.close();
 	}
-
+	
 	private void testMemoryTables() throws SQLException {
-		if (config.networked) {
+		if ( config.networked ) {
 			return;
 		}
 		deleteDb(dir, dbName);
-
+		
 		Connection conn = getConnection(url);
 		Statement stat = conn.createStatement();
 		stat.execute("CREATE MEMORY TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255))");
 		stat.execute("INSERT INTO TEST VALUES(1, 'Hello')");
 		stat.execute("CHECKPOINT");
-		((JdbcConnection) conn).setPowerOffCount(1);
+		( (JdbcConnection) conn ).setPowerOffCount(1);
 		try {
 			stat.execute("INSERT INTO TEST VALUES(2, 'Hello')");
 			stat.execute("INSERT INTO TEST VALUES(3, 'Hello')");
 			stat.execute("CHECKPOINT");
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
-
-		((JdbcConnection) conn).setPowerOffCount(0);
+		
+		( (JdbcConnection) conn ).setPowerOffCount(0);
 		conn = getConnection(url);
 		stat = conn.createStatement();
 		ResultSet rs = stat.executeQuery("SELECT COUNT(*) FROM TEST");
@@ -222,18 +222,18 @@ public class TestPowerOff extends TestBase {
 		assertEquals(rs.getInt(1), 1);
 		conn.close();
 	}
-
+	
 	private void testPersistentTables() throws SQLException {
-		if (config.networked) {
+		if ( config.networked ) {
 			return;
 		}
-		if (config.cipher != null) {
+		if ( config.cipher != null ) {
 			// this would take too long (setLength uses
 			// individual writes, many thousand operations)
 			return;
 		}
 		deleteDb(dir, dbName);
-
+		
 		// ((JdbcConnection)conn).setPowerOffCount(Integer.MAX_VALUE);
 		testRun(true);
 		int max = maxPowerOffCount;
@@ -243,13 +243,13 @@ public class TestPowerOff extends TestBase {
 		runTest(0, max, false);
 		recoverAndCheckConsistency();
 	}
-
+	
 	private void runTest(int min, int max, boolean withConsistencyCheck) throws SQLException {
-		for (int i = min; i < max; i++) {
+		for ( int i = min; i < max; i++ ) {
 			deleteDb(dir, dbName);
 			Database.setInitialPowerOffCount(i);
 			int expect = testRun(false);
-			if (withConsistencyCheck) {
+			if ( withConsistencyCheck ) {
 				int got = recoverAndCheckConsistency();
 				trace("test " + i + " of " + max + " expect=" + expect + " got=" + got);
 			} else {
@@ -258,9 +258,9 @@ public class TestPowerOff extends TestBase {
 		}
 		Database.setInitialPowerOffCount(0);
 	}
-
+	
 	private int testRun(boolean init) throws SQLException {
-		if (init) {
+		if ( init ) {
 			Database.setInitialPowerOffCount(Integer.MAX_VALUE);
 		}
 		int state = 0;
@@ -285,12 +285,12 @@ public class TestPowerOff extends TestBase {
 			state = 1;
 			stat.execute("DROP TABLE TEST");
 			state = 0;
-			if (init) {
-				maxPowerOffCount = Integer.MAX_VALUE - ((JdbcConnection) conn).getPowerOffCount();
+			if ( init ) {
+				maxPowerOffCount = Integer.MAX_VALUE - ( (JdbcConnection) conn ).getPowerOffCount();
 			}
 			conn.close();
-		} catch (SQLException e) {
-			if (e.getSQLState().equals("90098")) {
+		} catch ( SQLException e ) {
+			if ( e.getSQLState().equals("90098") ) {
 				// this is ok
 			} else {
 				throw e;
@@ -298,23 +298,23 @@ public class TestPowerOff extends TestBase {
 		}
 		return state;
 	}
-
+	
 	private int recoverAndCheckConsistency() throws SQLException {
 		int state;
 		Database.setInitialPowerOffCount(0);
 		Connection conn = getConnection(url);
-		if (((JdbcConnection) conn).getPowerOffCount() != 0) {
+		if ( ( (JdbcConnection) conn ).getPowerOffCount() != 0 ) {
 			fail("power off count is not 0");
 		}
 		Statement stat = conn.createStatement();
 		DatabaseMetaData meta = conn.getMetaData();
 		ResultSet rs = meta.getTables(null, null, "TEST", null);
-		if (!rs.next()) {
+		if ( !rs.next() ) {
 			state = 0;
 		} else {
 			// table does not exist
 			rs = stat.executeQuery("SELECT * FROM TEST ORDER BY ID");
-			if (!rs.next()) {
+			if ( !rs.next() ) {
 				state = 1;
 			} else {
 				assertEquals(rs.getInt(1), 1);
@@ -323,7 +323,7 @@ public class TestPowerOff extends TestBase {
 				assertEquals(rs.getInt(1), 2);
 				String name2 = rs.getString(2);
 				assertFalse(rs.next());
-				if ("Hello".equals(name1)) {
+				if ( "Hello".equals(name1) ) {
 					assertEquals(name2, "World");
 					state = 2;
 				} else {
@@ -336,5 +336,5 @@ public class TestPowerOff extends TestBase {
 		conn.close();
 		return state;
 	}
-
+	
 }

@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.jdbc;
 
@@ -18,16 +16,17 @@ import org.h2.test.TestBase;
  * Tests for the CallableStatement class.
  */
 public class TestCallableStatement extends TestBase {
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws SQLException {
 		deleteDb("callableStatement");
 		Connection conn = getConnection("preparedStatement");
@@ -35,7 +34,7 @@ public class TestCallableStatement extends TestBase {
 		conn.close();
 		deleteDb("callableStatement");
 	}
-
+	
 	private void testPrepare(Connection conn) throws SQLException {
 		Statement stat = conn.createStatement();
 		CallableStatement call;
@@ -51,12 +50,13 @@ public class TestCallableStatement extends TestBase {
 		assertEquals(1, rs.getInt(1));
 		assertEquals("Hello", rs.getString(2));
 		assertFalse(rs.next());
-		call = conn.prepareCall("SELECT * FROM TEST", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+		call = conn.prepareCall("SELECT * FROM TEST", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY,
+				ResultSet.HOLD_CURSORS_OVER_COMMIT);
 		rs = call.executeQuery();
 		rs.next();
 		assertEquals(1, rs.getInt(1));
 		assertEquals("Hello", rs.getString(2));
 		assertFalse(rs.next());
 	}
-
+	
 }

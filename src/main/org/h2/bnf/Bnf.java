@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.bnf;
 
@@ -26,26 +24,34 @@ import org.h2.util.StringCache;
 import org.h2.util.StringUtils;
 
 /**
- * This class can read a file that is similar to BNF (Backus-Naur form). It is
- * made specially to support SQL grammar.
+ * This class can read a file that is similar to BNF (Backus-Naur form). It is made specially to support SQL grammar.
  */
 public class Bnf {
-
+	
 	private final Random random = new Random();
+	
 	private final HashMap ruleMap = new HashMap();
+	
 	private String syntax;
+	
 	private String currentToken;
+	
 	private String[] tokens;
+	
 	private char firstChar;
+	
 	private int index;
+	
 	private Rule lastRepeat;
+	
 	private ArrayList statements;
+	
 	private String currentTopic;
-
+	
 	Bnf() {
 		random.setSeed(1);
 	}
-
+	
 	/**
 	 * Create an instance using the grammar specified in the CSV file.
 	 * 
@@ -55,68 +61,66 @@ public class Bnf {
 	 */
 	public static Bnf getInstance(Reader csv) throws SQLException, IOException {
 		Bnf bnf = new Bnf();
-		if (csv == null) {
+		if ( csv == null ) {
 			byte[] data = Resources.get("/org/h2/res/help.csv");
 			csv = new InputStreamReader(new ByteArrayInputStream(data));
 		}
 		bnf.parse(csv);
 		return bnf;
 	}
-
+	
 	private void addFixedRule(String name, int fixedType) {
 		Rule rule = new RuleFixed(fixedType);
 		addRule(name, "Fixed", rule);
 	}
-
+	
 	private RuleHead addRule(String topic, String section, Rule rule) {
 		RuleHead head = new RuleHead(section, topic, rule);
-		if (ruleMap.get(StringUtils.toLowerEnglish(topic)) != null) {
+		if ( ruleMap.get(StringUtils.toLowerEnglish(topic)) != null ) {
 			throw new Error("already exists: " + topic);
 		}
 		ruleMap.put(StringUtils.toLowerEnglish(topic), head);
 		return head;
 	}
-
+	
 	public Random getRandom() {
 		return random;
 	}
-
+	
 	private void parse(Reader csv) throws SQLException, IOException {
 		csv = new BufferedReader(csv);
 		Rule functions = null;
 		statements = new ArrayList();
 		
 		ResultSet rs = Csv.getInstance().read(csv, null);
-		for (int id = 0; rs.next(); id++) {
+		for ( int id = 0; rs.next(); id++ ) {
 			String section = rs.getString("SECTION").trim();
-			if (section.startsWith("System")) {
+			if ( section.startsWith("System") ) {
 				continue;
 			}
-			String topic = StringUtils.toLowerEnglish(rs.getString("TOPIC")
-					.trim());
+			String topic = StringUtils.toLowerEnglish(rs.getString("TOPIC").trim());
 			topic = StringUtils.replaceAll(topic, " ", "");
 			topic = StringUtils.replaceAll(topic, "_", "");
 			syntax = rs.getString("SYNTAX").trim();
 			currentTopic = section;
-			if (section.startsWith("Function")) {
+			if ( section.startsWith("Function") ) {
 				int end = syntax.indexOf(':');
 				syntax = syntax.substring(0, end);
 			}
 			tokens = tokenize();
 			index = 0;
 			Rule rule = parseRule();
-			if (section.startsWith("Command")) {
-				rule = new RuleList(rule,
-						new RuleElement(";\n\n", currentTopic), false);
+			if ( section.startsWith("Command") ) {
+				rule = new RuleList(rule, new RuleElement(";\n\n", currentTopic), false);
 			}
 			RuleHead head = addRule(topic, section, rule);
-			if (section.startsWith("Function")) {
-				if (functions == null) {
+			if ( section.startsWith("Function") ) {
+				if ( functions == null ) {
 					functions = rule;
 				} else {
 					functions = new RuleList(rule, functions, true);
 				}
-			} else if (section.startsWith("Commands")) {
+			} else if ( section.startsWith("Commands") ) {
 				statements.add(head);
 			}
 		}
@@ -124,14 +128,11 @@ public class Bnf {
 		addFixedRule("@ymd@", RuleFixed.YMD);
 		addFixedRule("@hms@", RuleFixed.HMS);
 		addFixedRule("@nanos@", RuleFixed.NANOS);
-		addFixedRule("anythingExceptSingleQuote",
-				RuleFixed.ANY_EXCEPT_SINGLE_QUOTE);
-		addFixedRule("anythingExceptDoubleQuote",
-				RuleFixed.ANY_EXCEPT_DOUBLE_QUOTE);
+		addFixedRule("anythingExceptSingleQuote", RuleFixed.ANY_EXCEPT_SINGLE_QUOTE);
+		addFixedRule("anythingExceptDoubleQuote", RuleFixed.ANY_EXCEPT_DOUBLE_QUOTE);
 		addFixedRule("anythingUntilEndOfLine", RuleFixed.ANY_UNTIL_EOL);
 		addFixedRule("anythingUntilEndComment", RuleFixed.ANY_UNTIL_END);
-		addFixedRule("anythingExceptTwoDollarSigns",
-				RuleFixed.ANY_EXCEPT_2_DOLLAR);
+		addFixedRule("anythingExceptTwoDollarSigns", RuleFixed.ANY_EXCEPT_2_DOLLAR);
 		addFixedRule("anything", RuleFixed.ANY_WORD);
 		addFixedRule("@hexStart@", RuleFixed.HEX_START);
 		addFixedRule("@concat@", RuleFixed.CONCAT);
@@ -139,7 +140,7 @@ public class Bnf {
 		addFixedRule("@af@", RuleFixed.AF);
 		addFixedRule("@digit@", RuleFixed.DIGIT);
 	}
-
+	
 	/**
 	 * Get the HTML documentation for a given syntax.
 	 * 
@@ -150,29 +151,29 @@ public class Bnf {
 	public String getSyntaxHtml(String bnf) {
 		StringTokenizer tokenizer = getTokenizer(bnf);
 		StringBuilder buff = new StringBuilder();
-		while (tokenizer.hasMoreTokens()) {
+		while ( tokenizer.hasMoreTokens() ) {
 			String s = tokenizer.nextToken();
-			if (s.length() == 1 || StringUtils.toUpperEnglish(s).equals(s)) {
+			if ( s.length() == 1 || StringUtils.toUpperEnglish(s).equals(s) ) {
 				buff.append(s);
 				continue;
 			}
 			RuleHead found = null;
-			for (int i = 0; i < s.length(); i++) {
+			for ( int i = 0; i < s.length(); i++ ) {
 				String test = StringUtils.toLowerEnglish(s.substring(i));
 				RuleHead r = (RuleHead) ruleMap.get(test);
-				if (r != null) {
+				if ( r != null ) {
 					found = r;
 					break;
 				}
 			}
-			if (found == null || found.getRule() instanceof RuleFixed) {
+			if ( found == null || found.getRule() instanceof RuleFixed ) {
 				buff.append(s);
 				continue;
 			}
 			String page = "grammar.html";
-			if (found.getSection().startsWith("Data Types")) {
+			if ( found.getSection().startsWith("Data Types") ) {
 				page = "datatypes.html";
-			} else if (found.getSection().startsWith("Functions")) {
+			} else if ( found.getSection().startsWith("Functions") ) {
 				page = "functions.html";
 			}
 			String link = StringUtils.urlEncode(found.getTopic().toLowerCase());
@@ -182,58 +183,53 @@ public class Bnf {
 		}
 		return buff.toString();
 	}
-
+	
 	private Rule parseRule() {
 		read();
 		return parseOr();
 	}
-
+	
 	private Rule parseOr() {
 		Rule r = parseList();
-		if (firstChar == '|') {
+		if ( firstChar == '|' ) {
 			read();
 			r = new RuleList(r, parseOr(), true);
 		}
 		lastRepeat = r;
 		return r;
 	}
-
+	
 	private Rule parseList() {
 		Rule r = parseToken();
-		if (firstChar != '|' && firstChar != ']' && firstChar != '}'
-				&& firstChar != 0) {
+		if ( firstChar != '|' && firstChar != ']' && firstChar != '}' && firstChar != 0 ) {
 			r = new RuleList(r, parseList(), false);
 		}
 		lastRepeat = r;
 		return r;
 	}
-
+	
 	private Rule parseToken() {
 		Rule r;
-		if ((firstChar >= 'A' && firstChar <= 'Z')
-				|| (firstChar >= 'a' && firstChar <= 'z')) {
+		if ( ( firstChar >= 'A' && firstChar <= 'Z' ) || ( firstChar >= 'a' && firstChar <= 'z' ) ) {
 			// r = new RuleElement(currentToken+ " syntax:" + syntax);
 			r = new RuleElement(currentToken, currentTopic);
-		} else if (firstChar == '[') {
+		} else if ( firstChar == '[' ) {
 			read();
 			Rule r2 = parseOr();
 			r = new RuleOptional(r2);
-			if (firstChar != ']') {
-				throw new Error("expected ], got " + currentToken + " syntax:"
-						+ syntax);
+			if ( firstChar != ']' ) {
+				throw new Error("expected ], got " + currentToken + " syntax:" + syntax);
 			}
-		} else if (firstChar == '{') {
+		} else if ( firstChar == '{' ) {
 			read();
 			r = parseOr();
-			if (firstChar != '}') {
-				throw new Error("expected }, got " + currentToken + " syntax:"
-						+ syntax);
+			if ( firstChar != '}' ) {
+				throw new Error("expected }, got " + currentToken + " syntax:" + syntax);
 			}
-		} else if ("@commaDots@".equals(currentToken)) {
-			r = new RuleList(new RuleElement(",", currentTopic), lastRepeat,
-					false);
+		} else if ( "@commaDots@".equals(currentToken) ) {
+			r = new RuleList(new RuleElement(",", currentTopic), lastRepeat, false);
 			r = new RuleRepeat(r);
-		} else if ("@dots@".equals(currentToken)) {
+		} else if ( "@dots@".equals(currentToken) ) {
 			r = new RuleRepeat(lastRepeat);
 		} else {
 			r = new RuleElement(currentToken, currentTopic);
@@ -242,9 +238,9 @@ public class Bnf {
 		read();
 		return r;
 	}
-
+	
 	private void read() {
-		if (index < tokens.length) {
+		if ( index < tokens.length ) {
 			currentToken = tokens[index++];
 			firstChar = currentToken.charAt(0);
 		} else {
@@ -252,7 +248,7 @@ public class Bnf {
 			firstChar = 0;
 		}
 	}
-
+	
 	private String[] tokenize() {
 		ArrayList list = new ArrayList();
 		syntax = StringUtils.replaceAll(syntax, "yyyy-MM-dd", "@ymd@");
@@ -269,12 +265,12 @@ public class Bnf {
 		syntax = StringUtils.replaceAll(syntax, "A-F", "@af@");
 		syntax = StringUtils.replaceAll(syntax, "0-9", "@digit@");
 		StringTokenizer tokenizer = getTokenizer(syntax);
-		while (tokenizer.hasMoreTokens()) {
+		while ( tokenizer.hasMoreTokens() ) {
 			String s = tokenizer.nextToken();
 			// avoid duplicate strings
 			s = StringCache.get(s);
-			if (s.length() == 1) {
-				if (" \r\n".indexOf(s.charAt(0)) >= 0) {
+			if ( s.length() == 1 ) {
+				if ( " \r\n".indexOf(s.charAt(0)) >= 0 ) {
 					continue;
 				}
 			}
@@ -282,10 +278,9 @@ public class Bnf {
 		}
 		return (String[]) list.toArray(new String[0]);
 	}
-
+	
 	/**
-	 * Get the list of tokens that can follow. This is the main autocomplete
-	 * method. The returned map for the query 'S' may look like this:
+	 * Get the list of tokens that can follow. This is the main autocomplete method. The returned map for the query 'S' may look like this:
 	 * 
 	 * <pre>
 	 * key: 1#SELECT, value: ELECT
@@ -299,9 +294,9 @@ public class Bnf {
 	public HashMap getNextTokenList(String query) {
 		Sentence sentence = new Sentence();
 		sentence.setQuery(query);
-		for (int i = 0; i < statements.size(); i++) {
+		for ( int i = 0; i < statements.size(); i++ ) {
 			RuleHead head = (RuleHead) statements.get(i);
-			if (!head.getSection().startsWith("Commands")) {
+			if ( !head.getSection().startsWith("Commands") ) {
 				continue;
 			}
 			sentence.start();
@@ -309,21 +304,19 @@ public class Bnf {
 		}
 		return sentence.getNext();
 	}
-
+	
 	/**
-	 * Cross-link all statements with each other. This method is called after
-	 * updating the topics.
+	 * Cross-link all statements with each other. This method is called after updating the topics.
 	 */
 	public void linkStatements() {
-		for (Iterator it = ruleMap.values().iterator(); it.hasNext();) {
+		for ( Iterator it = ruleMap.values().iterator(); it.hasNext(); ) {
 			RuleHead r = (RuleHead) it.next();
 			r.getRule().setLinks(ruleMap);
 		}
 	}
-
+	
 	/**
-	 * Update a topic with a context specific rule. This is used for
-	 * autocomplete support.
+	 * Update a topic with a context specific rule. This is used for autocomplete support.
 	 * 
 	 * @param topic
 	 *            the topic
@@ -333,7 +326,7 @@ public class Bnf {
 	public void updateTopic(String topic, DbContextRule rule) {
 		topic = StringUtils.toLowerEnglish(topic);
 		RuleHead head = (RuleHead) ruleMap.get(topic);
-		if (head == null) {
+		if ( head == null ) {
 			head = new RuleHead("db", topic, rule);
 			ruleMap.put(topic, head);
 			statements.add(head);
@@ -341,7 +334,7 @@ public class Bnf {
 			head.setRule(rule);
 		}
 	}
-
+	
 	/**
 	 * Get the list of possible statements.
 	 * 
@@ -350,10 +343,9 @@ public class Bnf {
 	public ArrayList getStatements() {
 		return statements;
 	}
-
+	
 	private StringTokenizer getTokenizer(String syntax) {
-		return new StringTokenizer(syntax, " [](){}|.,\r\n<>:-+*/=<\">!'$",
-				true);
+		return new StringTokenizer(syntax, " [](){}|.,\r\n<>:-+*/=<\">!'$", true);
 	}
-
+	
 }

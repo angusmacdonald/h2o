@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.command;
 
@@ -16,21 +14,21 @@ import org.h2o.db.query.QueryProxyManager;
  * Represents a SQL statement.
  */
 public interface CommandInterface {
-
+	
 	/**
 	 * Check if this is a query.
 	 * 
 	 * @return true if it is a query
 	 */
 	boolean isQuery();
-
+	
 	/**
 	 * Get the parameters (if any).
 	 * 
 	 * @return the parameters
 	 */
 	ObjectArray getParameters();
-
+	
 	/**
 	 * Execute the query.
 	 * 
@@ -40,42 +38,41 @@ public interface CommandInterface {
 	 *            if the result set must be scrollable
 	 * @return the result
 	 */
-	ResultInterface executeQuery(int maxRows, boolean scrollable)
-			throws SQLException;
-
+	ResultInterface executeQuery(int maxRows, boolean scrollable) throws SQLException;
+	
 	/**
 	 * Execute the statement
 	 * 
 	 * @return the update count
 	 */
 	int executeUpdate() throws SQLException;
-
+	
 	/**
 	 * Close the statement.
 	 */
 	void close();
-
+	
 	/**
 	 * Cancel the statement if it is still processing.
 	 */
 	void cancel();
-
+	
 	/**
 	 * Get an empty result set containing the meta data of the result.
 	 * 
 	 * @return the empty result
 	 */
 	ResultInterface getMetaData() throws SQLException;
-
+	
 	/**
 	 * @param isMultiQueryTransaction
 	 * @return
 	 */
 	int executeUpdate(boolean isMultiQueryTransaction) throws SQLException;
-
+	
 	/**
 	 * @param b
 	 */
 	void setIsPreparedStatement(boolean preparedStatement);
-
+	
 }

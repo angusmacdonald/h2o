@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.db;
 
@@ -17,25 +15,26 @@ import org.h2.test.TestBase;
  * Tests the meta data tables information_schema.locks and sessions.
  */
 public class TestSessionsLocks extends TestBase {
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws Exception {
-		if (config.mvcc) {
+		if ( config.mvcc ) {
 			return;
 		}
 		testCancelStatement();
 		testLocks();
 		deleteDb("sessionsLocks");
 	}
-
+	
 	private void testLocks() throws SQLException {
 		deleteDb("sessionsLocks");
 		Connection conn = getConnection("sessionsLocks;MULTI_THREADED=1");
@@ -53,7 +52,7 @@ public class TestSessionsLocks extends TestBase {
 		assertEquals("PUBLIC", rs.getString("TABLE_SCHEMA"));
 		assertEquals("TEST", rs.getString("TABLE_NAME"));
 		rs.getString("SESSION_ID");
-		if (config.mvcc) {
+		if ( config.mvcc ) {
 			assertEquals("READ", rs.getString("LOCK_TYPE"));
 		} else {
 			assertEquals("WRITE", rs.getString("LOCK_TYPE"));
@@ -63,7 +62,7 @@ public class TestSessionsLocks extends TestBase {
 		conn2.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
 		stat2.execute("SELECT * FROM TEST");
 		rs = stat.executeQuery("select * from information_schema.locks order by session_id");
-		if (!config.mvcc) {
+		if ( !config.mvcc ) {
 			rs.next();
 			assertEquals("PUBLIC", rs.getString("TABLE_SCHEMA"));
 			assertEquals("TEST", rs.getString("TABLE_NAME"));
@@ -77,7 +76,7 @@ public class TestSessionsLocks extends TestBase {
 		conn.close();
 		conn2.close();
 	}
-
+	
 	private void testCancelStatement() throws Exception {
 		deleteDb("sessionsLocks");
 		Connection conn = getConnection("sessionsLocks;MULTI_THREADED=1");
@@ -103,24 +102,25 @@ public class TestSessionsLocks extends TestBase {
 		stat2.execute("set throttle 1");
 		final boolean[] done = new boolean[1];
 		Runnable runnable = new Runnable() {
+			
 			public void run() {
 				try {
 					stat2.execute("select count(*) from system_range(1, 10000000) t1, system_range(1, 10000000) t2");
 					new Error("Unexpected success").printStackTrace();
-				} catch (SQLException e) {
+				} catch ( SQLException e ) {
 					done[0] = true;
 				}
 			}
 		};
 		new Thread(runnable).start();
-		while (true) {
+		while ( true ) {
 			Thread.sleep(100);
 			rs = stat.executeQuery("CALL CANCEL_SESSION(" + otherId + ")");
 			rs.next();
-			if (rs.getBoolean(1)) {
-				for (int i = 0; i < 20; i++) {
+			if ( rs.getBoolean(1) ) {
+				for ( int i = 0; i < 20; i++ ) {
 					Thread.sleep(100);
-					if (done[0]) {
+					if ( done[0] ) {
 						break;
 					}
 				}
@@ -131,5 +131,5 @@ public class TestSessionsLocks extends TestBase {
 		conn2.close();
 		conn.close();
 	}
-
+	
 }

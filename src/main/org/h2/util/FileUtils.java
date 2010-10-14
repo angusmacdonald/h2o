@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.util;
 
@@ -20,11 +18,11 @@ import org.h2.store.fs.FileSystem;
  * This utility class supports basic operations on files
  */
 public class FileUtils {
-
+	
 	private FileUtils() {
 		// utility class
 	}
-
+	
 	/**
 	 * Change the length of the file.
 	 * 
@@ -33,14 +31,13 @@ public class FileUtils {
 	 * @param newLength
 	 *            the new length
 	 */
-	public static void setLength(RandomAccessFile file, long newLength)
-			throws IOException {
+	public static void setLength(RandomAccessFile file, long newLength) throws IOException {
 		try {
 			trace("setLength", null, file);
 			file.setLength(newLength);
-		} catch (IOException e) {
+		} catch ( IOException e ) {
 			long length = file.length();
-			if (newLength < length) {
+			if ( newLength < length ) {
 				throw e;
 			}
 			long pos = file.getFilePointer();
@@ -49,7 +46,7 @@ public class FileUtils {
 			int maxSize = 1024 * 1024;
 			int block = (int) Math.min(remaining, maxSize);
 			byte[] buffer = new byte[block];
-			while (remaining > 0) {
+			while ( remaining > 0 ) {
 				int write = (int) Math.min(remaining, maxSize);
 				file.write(buffer, 0, write);
 				remaining -= write;
@@ -57,7 +54,7 @@ public class FileUtils {
 			file.seek(pos);
 		}
 	}
-
+	
 	/**
 	 * Get the absolute file path of a file in the user home directory.
 	 * 
@@ -67,13 +64,13 @@ public class FileUtils {
 	 */
 	public static String getFileInUserHome(String fileName) {
 		String userDir = SysProperties.USER_HOME;
-		if (userDir == null) {
+		if ( userDir == null ) {
 			return fileName;
 		}
 		File file = new File(userDir, fileName);
 		return file.getAbsolutePath();
 	}
-
+	
 	/**
 	 * Trace input or output operations if enabled.
 	 * 
@@ -85,12 +82,11 @@ public class FileUtils {
 	 *            the object to append to the message
 	 */
 	static void trace(String method, String fileName, Object o) {
-		if (SysProperties.TRACE_IO) {
-			System.out
-					.println("FileUtils." + method + " " + fileName + " " + o);
+		if ( SysProperties.TRACE_IO ) {
+			System.out.println("FileUtils." + method + " " + fileName + " " + o);
 		}
 	}
-
+	
 	/**
 	 * Get the file name (without directory part).
 	 * 
@@ -101,7 +97,7 @@ public class FileUtils {
 	public static String getFileName(String name) throws SQLException {
 		return FileSystem.getInstance(name).getFileName(name);
 	}
-
+	
 	/**
 	 * Normalize a file name.
 	 * 
@@ -112,7 +108,7 @@ public class FileUtils {
 	public static String normalize(String fileName) throws SQLException {
 		return FileSystem.getInstance(fileName).normalize(fileName);
 	}
-
+	
 	/**
 	 * Try to delete a file.
 	 * 
@@ -122,7 +118,7 @@ public class FileUtils {
 	public static void tryDelete(String fileName) {
 		FileSystem.getInstance(fileName).tryDelete(fileName);
 	}
-
+	
 	/**
 	 * Check if a file is read-only.
 	 * 
@@ -133,7 +129,7 @@ public class FileUtils {
 	public static boolean isReadOnly(String fileName) {
 		return FileSystem.getInstance(fileName).isReadOnly(fileName);
 	}
-
+	
 	/**
 	 * Checks if a file exists.
 	 * 
@@ -144,7 +140,7 @@ public class FileUtils {
 	public static boolean exists(String fileName) {
 		return FileSystem.getInstance(fileName).exists(fileName);
 	}
-
+	
 	/**
 	 * Get the length of a file.
 	 * 
@@ -155,13 +151,12 @@ public class FileUtils {
 	public static long length(String fileName) {
 		return FileSystem.getInstance(fileName).length(fileName);
 	}
-
+	
 	/**
 	 * Create a new temporary file.
 	 * 
 	 * @param prefix
-	 *            the prefix of the file name (including directory name if
-	 *            required)
+	 *            the prefix of the file name (including directory name if required)
 	 * @param suffix
 	 *            the suffix
 	 * @param deleteOnExit
@@ -170,12 +165,10 @@ public class FileUtils {
 	 *            if the file should be stored in the temporary directory
 	 * @return the name of the created file
 	 */
-	public static String createTempFile(String prefix, String suffix,
-			boolean deleteOnExit, boolean inTempDir) throws IOException {
-		return FileSystem.getInstance(prefix).createTempFile(prefix, suffix,
-				deleteOnExit, inTempDir);
+	public static String createTempFile(String prefix, String suffix, boolean deleteOnExit, boolean inTempDir) throws IOException {
+		return FileSystem.getInstance(prefix).createTempFile(prefix, suffix, deleteOnExit, inTempDir);
 	}
-
+	
 	/**
 	 * Get the parent directory of a file or directory.
 	 * 
@@ -186,7 +179,7 @@ public class FileUtils {
 	public static String getParent(String fileName) {
 		return FileSystem.getInstance(fileName).getParent(fileName);
 	}
-
+	
 	/**
 	 * List the files in the given directory.
 	 * 
@@ -197,7 +190,7 @@ public class FileUtils {
 	public static String[] listFiles(String path) throws SQLException {
 		return FileSystem.getInstance(path).listFiles(path);
 	}
-
+	
 	/**
 	 * Check if it is a file or a directory.
 	 * 
@@ -208,7 +201,7 @@ public class FileUtils {
 	public static boolean isDirectory(String fileName) {
 		return FileSystem.getInstance(fileName).isDirectory(fileName);
 	}
-
+	
 	/**
 	 * Check if the file name includes a path.
 	 * 
@@ -219,7 +212,7 @@ public class FileUtils {
 	public static boolean isAbsolute(String fileName) {
 		return FileSystem.getInstance(fileName).isAbsolute(fileName);
 	}
-
+	
 	/**
 	 * Get the absolute file name.
 	 * 
@@ -230,7 +223,7 @@ public class FileUtils {
 	public static String getAbsolutePath(String fileName) {
 		return FileSystem.getInstance(fileName).getAbsolutePath(fileName);
 	}
-
+	
 	/**
 	 * Check if a file starts with a given prefix.
 	 * 
@@ -241,10 +234,9 @@ public class FileUtils {
 	 * @return true if it starts with the prefix
 	 */
 	public static boolean fileStartsWith(String fileName, String prefix) {
-		return FileSystem.getInstance(fileName)
-				.fileStartsWith(fileName, prefix);
+		return FileSystem.getInstance(fileName).fileStartsWith(fileName, prefix);
 	}
-
+	
 	/**
 	 * Create an input stream to read from the file.
 	 * 
@@ -252,27 +244,23 @@ public class FileUtils {
 	 *            the file name
 	 * @return the input stream
 	 */
-	public static InputStream openFileInputStream(String fileName)
-			throws IOException {
+	public static InputStream openFileInputStream(String fileName) throws IOException {
 		return FileSystem.getInstance(fileName).openFileInputStream(fileName);
 	}
-
+	
 	/**
 	 * Create an output stream to write into the file.
 	 * 
 	 * @param fileName
 	 *            the file name
 	 * @param append
-	 *            if true, the file will grow, if false, the file will be
-	 *            truncated first
+	 *            if true, the file will grow, if false, the file will be truncated first
 	 * @return the output stream
 	 */
-	public static OutputStream openFileOutputStream(String fileName,
-			boolean append) throws SQLException {
-		return FileSystem.getInstance(fileName).openFileOutputStream(fileName,
-				append);
+	public static OutputStream openFileOutputStream(String fileName, boolean append) throws SQLException {
+		return FileSystem.getInstance(fileName).openFileOutputStream(fileName, append);
 	}
-
+	
 	/**
 	 * Rename a file if this is allowed.
 	 * 
@@ -282,11 +270,10 @@ public class FileUtils {
 	 *            the new fully qualified file name
 	 * @throws SQLException
 	 */
-	public static void rename(String oldName, String newName)
-			throws SQLException {
+	public static void rename(String oldName, String newName) throws SQLException {
 		FileSystem.getInstance(oldName).rename(oldName, newName);
 	}
-
+	
 	/**
 	 * Create all required directories that are required for this file.
 	 * 
@@ -296,7 +283,7 @@ public class FileUtils {
 	public static void createDirs(String fileName) throws SQLException {
 		FileSystem.getInstance(fileName).createDirs(fileName);
 	}
-
+	
 	/**
 	 * Delete a file.
 	 * 
@@ -306,7 +293,7 @@ public class FileUtils {
 	public static void delete(String fileName) throws SQLException {
 		FileSystem.getInstance(fileName).delete(fileName);
 	}
-
+	
 	/**
 	 * Get the last modified date of a file
 	 * 
@@ -317,5 +304,5 @@ public class FileUtils {
 	public static long getLastModified(String fileName) {
 		return FileSystem.getInstance(fileName).getLastModified(fileName);
 	}
-
+	
 }

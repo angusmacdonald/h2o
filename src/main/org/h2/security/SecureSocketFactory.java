@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.security;
 
@@ -37,28 +35,29 @@ import org.h2.util.FileUtils;
 import org.h2.util.IOUtils;
 
 /**
- * A factory to create encrypted sockets. To generate new keystore, use the
- * SecureKeyStoreBuilder tool.
+ * A factory to create encrypted sockets. To generate new keystore, use the SecureKeyStoreBuilder tool.
  */
 public class SecureSocketFactory {
-
+	
 	/**
 	 * The default password to use for the .h2.keystore file
 	 */
 	public static final String KEYSTORE_PASSWORD = "h2pass";
-
+	
 	private static final String KEYSTORE = ".h2.keystore";
+	
 	private static final String KEYSTORE_KEY = "javax.net.ssl.keyStore";
+	
 	private static final String KEYSTORE_PASSWORD_KEY = "javax.net.ssl.keyStorePassword";
+	
 	private static final String ANONYMOUS_CIPHER_SUITE = "SSL_DH_anon_WITH_RC4_128_MD5";
-
+	
 	private SecureSocketFactory() {
 		// utility class
 	}
-
+	
 	/**
-	 * Create a secure client socket that is connected to the given address and
-	 * port.
+	 * Create a secure client socket that is connected to the given address and port.
 	 * 
 	 * @param address
 	 *            the address to connect to
@@ -66,16 +65,14 @@ public class SecureSocketFactory {
 	 *            the port
 	 * @return the socket
 	 */
-	public static Socket createSocket(InetAddress address, int port)
-			throws IOException {
+	public static Socket createSocket(InetAddress address, int port) throws IOException {
 		Socket socket = null;
 		// ## Java 1.4 begin ##
 		setKeystore();
 		SSLSocketFactory f = (SSLSocketFactory) SSLSocketFactory.getDefault();
 		SSLSocket secureSocket = (SSLSocket) f.createSocket();
-		secureSocket.connect(new InetSocketAddress(address, port),
-				SysProperties.SOCKET_CONNECT_TIMEOUT);
-		if (SysProperties.ENABLE_ANONYMOUS_SSL) {
+		secureSocket.connect(new InetSocketAddress(address, port), SysProperties.SOCKET_CONNECT_TIMEOUT);
+		if ( SysProperties.ENABLE_ANONYMOUS_SSL ) {
 			String[] list = secureSocket.getEnabledCipherSuites();
 			list = addAnonymous(list);
 			secureSocket.setEnabledCipherSuites(list);
@@ -84,10 +81,9 @@ public class SecureSocketFactory {
 		// ## Java 1.4 end ##
 		return socket;
 	}
-
+	
 	/**
-	 * Create a secure server socket. If a bind address is specified, the socket
-	 * is only bound to this address.
+	 * Create a secure server socket. If a bind address is specified, the socket is only bound to this address.
 	 * 
 	 * @param port
 	 *            the port to listen on
@@ -95,20 +91,18 @@ public class SecureSocketFactory {
 	 *            the address to bind to, or null to bind to all addresses
 	 * @return the server socket
 	 */
-	public static ServerSocket createServerSocket(int port,
-			InetAddress bindAddress) throws IOException {
+	public static ServerSocket createServerSocket(int port, InetAddress bindAddress) throws IOException {
 		ServerSocket socket = null;
 		// ## Java 1.4 begin ##
 		setKeystore();
 		ServerSocketFactory f = SSLServerSocketFactory.getDefault();
 		SSLServerSocket secureSocket;
-		if (bindAddress == null) {
+		if ( bindAddress == null ) {
 			secureSocket = (SSLServerSocket) f.createServerSocket(port);
 		} else {
-			secureSocket = (SSLServerSocket) f.createServerSocket(port, 0,
-					bindAddress);
+			secureSocket = (SSLServerSocket) f.createServerSocket(port, 0, bindAddress);
 		}
-		if (SysProperties.ENABLE_ANONYMOUS_SSL) {
+		if ( SysProperties.ENABLE_ANONYMOUS_SSL ) {
 			String[] list = secureSocket.getEnabledCipherSuites();
 			list = addAnonymous(list);
 			secureSocket.setEnabledCipherSuites(list);
@@ -117,25 +111,24 @@ public class SecureSocketFactory {
 		// ## Java 1.4 end ##
 		return socket;
 	}
-
+	
 	// ## Java 1.4 begin ##
 	private static byte[] getBytes(String hex) throws SQLException {
 		return ByteUtils.convertStringToBytes(hex);
 	}
-
-	private static byte[] getKeyStoreBytes(KeyStore store, String password)
-			throws IOException {
+	
+	private static byte[] getKeyStoreBytes(KeyStore store, String password) throws IOException {
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 		try {
 			store.store(bout, password.toCharArray());
-		} catch (Exception e) {
+		} catch ( Exception e ) {
 			throw Message.convertToIOException(e);
 		}
 		return bout.toByteArray();
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
 	 * Get the keystore object using the given password.
 	 * 
@@ -153,9 +146,9 @@ public class SecureSocketFactory {
 			// http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4887561
 			// (1.4.2 cannot read keystore written with 1.4.1)
 			// --- generated code start ---
-
+			
 			KeyStore store = KeyStore.getInstance(KeyStore.getDefaultType());
-
+			
 			store.load(null, password.toCharArray());
 			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 			store.load(null, password.toCharArray());
@@ -170,52 +163,49 @@ public class SecureSocketFactory {
 			store.setKeyEntry("h2", privateKey, password.toCharArray(), certs);
 			// --- generated code end ---
 			return store;
-		} catch (Exception e) {
+		} catch ( Exception e ) {
 			throw Message.convertToIOException(e);
 		}
 	}
-
+	
 	private static void setKeystore() throws IOException {
 		Properties p = System.getProperties();
-		if (p.getProperty(KEYSTORE_KEY) == null) {
+		if ( p.getProperty(KEYSTORE_KEY) == null ) {
 			String fileName = FileUtils.getFileInUserHome(KEYSTORE);
-			byte[] data = getKeyStoreBytes(getKeyStore(KEYSTORE_PASSWORD),
-					KEYSTORE_PASSWORD);
+			byte[] data = getKeyStoreBytes(getKeyStore(KEYSTORE_PASSWORD), KEYSTORE_PASSWORD);
 			boolean needWrite = true;
-			if (FileUtils.exists(fileName)
-					&& FileUtils.length(fileName) == data.length) {
+			if ( FileUtils.exists(fileName) && FileUtils.length(fileName) == data.length ) {
 				// don't need to overwrite the file if it did not change
 				InputStream fin = FileUtils.openFileInputStream(fileName);
 				byte[] now = IOUtils.readBytesAndClose(fin, 0);
-				if (now != null && ByteUtils.compareNotNull(data, now) == 0) {
+				if ( now != null && ByteUtils.compareNotNull(data, now) == 0 ) {
 					needWrite = false;
 				}
 			}
-			if (needWrite) {
+			if ( needWrite ) {
 				try {
-					OutputStream out = FileUtils.openFileOutputStream(fileName,
-							false);
+					OutputStream out = FileUtils.openFileOutputStream(fileName, false);
 					out.write(data);
 					out.close();
-				} catch (SQLException e) {
+				} catch ( SQLException e ) {
 					throw Message.convertToIOException(e);
 				}
 			}
 			String absolutePath = FileUtils.getAbsolutePath(fileName);
 			System.setProperty(KEYSTORE_KEY, absolutePath);
 		}
-		if (p.getProperty(KEYSTORE_PASSWORD_KEY) == null) {
+		if ( p.getProperty(KEYSTORE_PASSWORD_KEY) == null ) {
 			System.setProperty(KEYSTORE_PASSWORD_KEY, KEYSTORE_PASSWORD);
 		}
 	}
-
+	
 	private static String[] addAnonymous(String[] list) {
 		String[] newList = new String[list.length + 1];
 		System.arraycopy(list, 0, newList, 1, list.length);
 		newList[0] = ANONYMOUS_CIPHER_SUITE;
 		return newList;
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 }

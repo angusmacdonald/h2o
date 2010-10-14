@@ -1,12 +1,10 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.jdbcx;
 
-//## Java 1.4 begin ##
+// ## Java 1.4 begin ##
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -30,34 +28,39 @@ import org.h2.util.JdbcUtils;
 import org.h2.util.StringUtils;
 
 /**
- * This class provides support for distributed transactions. An application
- * developer usually does not use this interface. It is used by the transaction
- * manager internally.
+ * This class provides support for distributed transactions. An application developer usually does not use this interface. It is used by the
+ * transaction manager internally.
  */
 public class JdbcXAConnection extends TraceObject
 // ## Java 1.4 begin ##
 		implements XAConnection, XAResource, JdbcConnectionListener
 // ## Java 1.4 end ##
 {
-
+	
 	// ## Java 1.4 begin ##
 	private static int nextTransactionId;
-
+	
 	private JdbcDataSourceFactory factory;
+	
 	private String url, user;
+	
 	private char[] password;
+	
 	private JdbcConnection connSentinel;
+	
 	private JdbcConnection conn;
+	
 	private ArrayList listeners = new ArrayList();
+	
 	private Xid currentTransaction;
+	
 	private int currentTransactionId;
-
+	
 	static {
 		org.h2.Driver.load();
 	}
-
-	JdbcXAConnection(JdbcDataSourceFactory factory, int id, String url,
-			String user, char[] password) throws SQLException {
+	
+	JdbcXAConnection(JdbcDataSourceFactory factory, int id, String url, String user, char[] password) throws SQLException {
 		this.factory = factory;
 		setTrace(factory.getTrace(), TraceObject.XA_DATA_SOURCE, id);
 		this.url = url;
@@ -66,9 +69,9 @@ public class JdbcXAConnection extends TraceObject
 		connSentinel = openConnection();
 		getConnection();
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
 	 * Get the XAResource object.
 	 * 
@@ -79,12 +82,11 @@ public class JdbcXAConnection extends TraceObject
 		debugCodeCall("getXAResource");
 		return this;
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
-	 * Close the physical connection. This method is usually called by the
-	 * connection pool.
+	 * Close the physical connection. This method is usually called by the connection pool.
 	 * 
 	 * @throws SQLException
 	 */
@@ -99,12 +101,11 @@ public class JdbcXAConnection extends TraceObject
 			connSentinel = null;
 		}
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
-	 * Get a new connection. This method is usually called by the connection
-	 * pool when there are no more connections in the pool.
+	 * Get a new connection. This method is usually called by the connection pool when there are no more connections in the pool.
 	 * 
 	 * @return the connection
 	 * @throws SQLException
@@ -112,7 +113,7 @@ public class JdbcXAConnection extends TraceObject
 	// ## Java 1.4 begin ##
 	public Connection getConnection() throws SQLException {
 		debugCodeCall("getConnection");
-		if (conn != null) {
+		if ( conn != null ) {
 			closeConnection(conn);
 			conn = null;
 		}
@@ -120,9 +121,9 @@ public class JdbcXAConnection extends TraceObject
 		conn.setJdbcConnectionListener(this);
 		return conn;
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
 	 * Register a new listener for the connection.
 	 * 
@@ -133,13 +134,13 @@ public class JdbcXAConnection extends TraceObject
 	public void addConnectionEventListener(ConnectionEventListener listener) {
 		debugCode("addConnectionEventListener(listener);");
 		listeners.add(listener);
-		if (conn != null) {
+		if ( conn != null ) {
 			conn.setJdbcConnectionListener(this);
 		}
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
 	 * Remove the event listener.
 	 * 
@@ -151,43 +152,40 @@ public class JdbcXAConnection extends TraceObject
 		debugCode("removeConnectionEventListener(listener);");
 		listeners.remove(listener);
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
 	 * INTERNAL
 	 */
 	// ## Java 1.4 begin ##
-	public void fatalErrorOccurred(JdbcConnection conn, SQLException e)
-			throws SQLException {
+	public void fatalErrorOccurred(JdbcConnection conn, SQLException e) throws SQLException {
 		debugCode("fatalErrorOccurred(conn, e);");
-		for (int i = 0; i < listeners.size(); i++) {
-			ConnectionEventListener listener = (ConnectionEventListener) listeners
-					.get(i);
+		for ( int i = 0; i < listeners.size(); i++ ) {
+			ConnectionEventListener listener = (ConnectionEventListener) listeners.get(i);
 			ConnectionEvent event = new ConnectionEvent(this, e);
 			listener.connectionErrorOccurred(event);
 		}
 		close();
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
 	 * INTERNAL
 	 */
 	// ## Java 1.4 begin ##
 	public void closed(JdbcConnection conn) {
 		debugCode("closed(conn);");
-		for (int i = 0; i < listeners.size(); i++) {
-			ConnectionEventListener listener = (ConnectionEventListener) listeners
-					.get(i);
+		for ( int i = 0; i < listeners.size(); i++ ) {
+			ConnectionEventListener listener = (ConnectionEventListener) listeners.get(i);
 			ConnectionEvent event = new ConnectionEvent(this);
 			listener.connectionClosed(event);
 		}
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
 	 * Get the transaction timeout.
 	 * 
@@ -198,9 +196,9 @@ public class JdbcXAConnection extends TraceObject
 		debugCodeCall("getTransactionTimeout");
 		return 0;
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
 	 * Set the transaction timeout.
 	 * 
@@ -213,9 +211,9 @@ public class JdbcXAConnection extends TraceObject
 		debugCodeCall("setTransactionTimeout", seconds);
 		return false;
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
 	 * Checks if this is the same XAResource.
 	 * 
@@ -228,16 +226,14 @@ public class JdbcXAConnection extends TraceObject
 		debugCode("isSameRM(xares);");
 		return xares == this;
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
-	 * Get the list of prepared transaction branches. This method is called by
-	 * the transaction manager during recovery.
+	 * Get the list of prepared transaction branches. This method is called by the transaction manager during recovery.
 	 * 
 	 * @param flag
-	 *            TMSTARTRSCAN, TMENDRSCAN, or TMNOFLAGS. If no other flags are
-	 *            set, TMNOFLAGS must be used.
+	 *            TMSTARTRSCAN, TMENDRSCAN, or TMNOFLAGS. If no other flags are set, TMNOFLAGS must be used.
 	 * @return zero or more Xid objects
 	 * @throws XAException
 	 */
@@ -248,10 +244,9 @@ public class JdbcXAConnection extends TraceObject
 		Statement stat = null;
 		try {
 			stat = conn.createStatement();
-			ResultSet rs = stat
-					.executeQuery("SELECT * FROM INFORMATION_SCHEMA.IN_DOUBT ORDER BY TRANSACTION");
+			ResultSet rs = stat.executeQuery("SELECT * FROM INFORMATION_SCHEMA.IN_DOUBT ORDER BY TRANSACTION");
 			ArrayList list = new ArrayList();
-			while (rs.next()) {
+			while ( rs.next() ) {
 				String tid = rs.getString("TRANSACTION");
 				int id = getNextId(XID);
 				Xid xid = new JdbcXid(factory, id, tid);
@@ -261,15 +256,15 @@ public class JdbcXAConnection extends TraceObject
 			Xid[] result = new Xid[list.size()];
 			list.toArray(result);
 			return result;
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			throw new XAException(XAException.XAER_RMERR);
 		} finally {
 			JdbcUtils.closeSilently(stat);
 		}
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
 	 * Prepare a transaction.
 	 * 
@@ -280,11 +275,11 @@ public class JdbcXAConnection extends TraceObject
 	 */
 	// ## Java 1.4 begin ##
 	public int prepare(Xid xid) throws XAException {
-		if (isDebugEnabled()) {
+		if ( isDebugEnabled() ) {
 			debugCode("prepare(" + quoteXid(xid) + ");");
 		}
 		checkOpen();
-		if (!currentTransaction.equals(xid)) {
+		if ( !currentTransaction.equals(xid) ) {
 			throw new XAException(XAException.XAER_INVAL);
 		}
 		Statement stat = null;
@@ -292,32 +287,31 @@ public class JdbcXAConnection extends TraceObject
 			stat = conn.createStatement();
 			currentTransactionId = nextTransactionId++;
 			stat.execute("PREPARE COMMIT TX_" + currentTransactionId);
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			throw convertException(e);
 		} finally {
 			JdbcUtils.closeSilently(stat);
 		}
 		return XA_OK;
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
-	 * Forget a transaction. This method does not have an effect for this
-	 * database.
+	 * Forget a transaction. This method does not have an effect for this database.
 	 * 
 	 * @param xid
 	 *            the transaction id
 	 */
 	// ## Java 1.4 begin ##
 	public void forget(Xid xid) {
-		if (isDebugEnabled()) {
+		if ( isDebugEnabled() ) {
 			debugCode("forget(" + quoteXid(xid) + ");");
 		}
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
 	 * Roll back a transaction.
 	 * 
@@ -327,19 +321,19 @@ public class JdbcXAConnection extends TraceObject
 	 */
 	// ## Java 1.4 begin ##
 	public void rollback(Xid xid) throws XAException {
-		if (isDebugEnabled()) {
+		if ( isDebugEnabled() ) {
 			debugCode("rollback(" + quoteXid(xid) + ");");
 		}
 		try {
 			conn.rollback();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			throw convertException(e);
 		}
 		currentTransaction = null;
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
 	 * End a transaction.
 	 * 
@@ -351,20 +345,20 @@ public class JdbcXAConnection extends TraceObject
 	 */
 	// ## Java 1.4 begin ##
 	public void end(Xid xid, int flags) throws XAException {
-		if (isDebugEnabled()) {
+		if ( isDebugEnabled() ) {
 			debugCode("end(" + quoteXid(xid) + ", " + quoteFlags(flags) + ");");
 		}
 		// TODO transaction end: implement this method
-		if (flags == TMSUSPEND) {
+		if ( flags == TMSUSPEND ) {
 			return;
 		}
-		if (!currentTransaction.equals(xid)) {
+		if ( !currentTransaction.equals(xid) ) {
 			throw new XAException(XAException.XAER_OUTSIDE);
 		}
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
 	 * Start or continue to work on a transaction.
 	 * 
@@ -376,26 +370,25 @@ public class JdbcXAConnection extends TraceObject
 	 */
 	// ## Java 1.4 begin ##
 	public void start(Xid xid, int flags) throws XAException {
-		if (isDebugEnabled()) {
-			debugCode("start(" + quoteXid(xid) + ", " + quoteFlags(flags)
-					+ ");");
+		if ( isDebugEnabled() ) {
+			debugCode("start(" + quoteXid(xid) + ", " + quoteFlags(flags) + ");");
 		}
-		if (flags == TMRESUME) {
+		if ( flags == TMRESUME ) {
 			return;
 		}
-		if (currentTransaction != null) {
+		if ( currentTransaction != null ) {
 			throw new XAException(XAException.XAER_NOTA);
 		}
 		try {
 			conn.setAutoCommit(false);
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			throw convertException(e);
 		}
 		currentTransaction = xid;
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
 	 * Commit a transaction.
 	 * 
@@ -407,49 +400,49 @@ public class JdbcXAConnection extends TraceObject
 	 */
 	// ## Java 1.4 begin ##
 	public void commit(Xid xid, boolean onePhase) throws XAException {
-		if (isDebugEnabled()) {
+		if ( isDebugEnabled() ) {
 			debugCode("commit(" + quoteXid(xid) + ", " + onePhase + ");");
 		}
 		Statement stat = null;
 		try {
-			if (onePhase) {
+			if ( onePhase ) {
 				conn.commit();
 			} else {
 				stat = conn.createStatement();
 				stat.execute("COMMIT TRANSACTION TX_" + currentTransactionId);
 			}
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			throw convertException(e);
 		} finally {
 			JdbcUtils.closeSilently(stat);
 		}
 		currentTransaction = null;
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
 	 * [Not supported] Add a statement event listener.
 	 * 
 	 * @param listener
 	 *            the new statement event listener
 	 */
-
+	
 	public void addStatementEventListener(StatementEventListener listener) {
 		throw new UnsupportedOperationException();
 	}
-
+	
 	/**
 	 * [Not supported] Remove a statement event listener.
 	 * 
 	 * @param listener
 	 *            the statement event listener
 	 */
-
+	
 	public void removeStatementEventListener(StatementEventListener listener) {
 		throw new UnsupportedOperationException();
 	}
-
+	
 	/**
 	 * INTERNAL
 	 */
@@ -457,31 +450,31 @@ public class JdbcXAConnection extends TraceObject
 	public String toString() {
 		return getTraceObjectName() + ": url=" + url + " user=" + user;
 	}
-
+	
 	private void closeConnection(JdbcConnection conn) throws SQLException {
-		if (conn != null) {
+		if ( conn != null ) {
 			conn.closeConnection();
 		}
 	}
-
+	
 	private JdbcConnection openConnection() throws SQLException {
 		Properties info = new Properties();
 		info.setProperty("user", user);
 		info.put("password", StringUtils.cloneCharArray(password));
 		JdbcConnection conn = new JdbcConnection(url, info);
 		conn.setJdbcConnectionListener(this);
-		if (currentTransaction != null) {
+		if ( currentTransaction != null ) {
 			conn.setAutoCommit(false);
 		}
 		return conn;
 	}
-
+	
 	private XAException convertException(SQLException e) {
 		XAException xa = new XAException(e.getMessage());
 		xa.initCause(e);
 		return xa;
 	}
-
+	
 	private String quoteXid(Xid xid) {
 		StringBuilder buff = new StringBuilder();
 		buff.append("\"f:");
@@ -495,47 +488,47 @@ public class JdbcXAConnection extends TraceObject
 		buff.append("\"");
 		return buff.toString();
 	}
-
+	
 	private String quoteFlags(int flags) {
 		StringBuilder buff = new StringBuilder();
-		if ((flags & XAResource.TMENDRSCAN) != 0) {
+		if ( ( flags & XAResource.TMENDRSCAN ) != 0 ) {
 			buff.append("|XAResource.TMENDRSCAN");
 		}
-		if ((flags & XAResource.TMFAIL) != 0) {
+		if ( ( flags & XAResource.TMFAIL ) != 0 ) {
 			buff.append("|XAResource.TMFAIL");
 		}
-		if ((flags & XAResource.TMJOIN) != 0) {
+		if ( ( flags & XAResource.TMJOIN ) != 0 ) {
 			buff.append("|XAResource.TMJOIN");
 		}
-		if ((flags & XAResource.TMONEPHASE) != 0) {
+		if ( ( flags & XAResource.TMONEPHASE ) != 0 ) {
 			buff.append("|XAResource.TMONEPHASE");
 		}
-		if ((flags & XAResource.TMRESUME) != 0) {
+		if ( ( flags & XAResource.TMRESUME ) != 0 ) {
 			buff.append("|XAResource.TMRESUME");
 		}
-		if ((flags & XAResource.TMSTARTRSCAN) != 0) {
+		if ( ( flags & XAResource.TMSTARTRSCAN ) != 0 ) {
 			buff.append("|XAResource.TMSTARTRSCAN");
 		}
-		if ((flags & XAResource.TMSUCCESS) != 0) {
+		if ( ( flags & XAResource.TMSUCCESS ) != 0 ) {
 			buff.append("|XAResource.TMSUCCESS");
 		}
-		if ((flags & XAResource.TMSUSPEND) != 0) {
+		if ( ( flags & XAResource.TMSUSPEND ) != 0 ) {
 			buff.append("|XAResource.TMSUSPEND");
 		}
-		if ((flags & XAResource.XA_RDONLY) != 0) {
+		if ( ( flags & XAResource.XA_RDONLY ) != 0 ) {
 			buff.append("|XAResource.XA_RDONLY");
 		}
-		if (buff.length() == 0) {
+		if ( buff.length() == 0 ) {
 			buff.append("|XAResource.TMNOFLAGS");
 		}
 		return buff.toString().substring(1);
 	}
-
+	
 	private void checkOpen() throws XAException {
-		if (conn == null) {
+		if ( conn == null ) {
 			throw new XAException(XAException.XAER_RMERR);
 		}
 	}
 	// ## Java 1.4 end ##
-
+	
 }

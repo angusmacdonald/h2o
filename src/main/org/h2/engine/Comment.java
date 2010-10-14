@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.engine;
 
@@ -17,21 +15,23 @@ import org.h2.util.StringUtils;
  * Represents a database object comment.
  */
 public class Comment extends DbObjectBase {
-
+	
 	private final int objectType;
+	
 	private final String objectName;
+	
 	private String commentText;
-
+	
 	public Comment(Database database, int id, DbObject obj) {
 		initDbObjectBase(database, id, getKey(obj), Trace.DATABASE);
 		this.objectType = obj.getType();
 		this.objectName = obj.getSQL();
 	}
-
+	
 	public String getCreateSQLForCopy(Table table, String quotedName) {
 		throw Message.throwInternalError();
 	}
-
+	
 	private static String getTypeName(int type) {
 		switch (type) {
 		case DbObject.CONSTANT:
@@ -62,11 +62,11 @@ public class Comment extends DbObjectBase {
 			return "type" + type;
 		}
 	}
-
+	
 	public String getDropSQL() {
 		return null;
 	}
-
+	
 	public String getCreateSQL() {
 		StringBuilder buff = new StringBuilder();
 		buff.append("COMMENT ON ");
@@ -74,29 +74,28 @@ public class Comment extends DbObjectBase {
 		buff.append(' ');
 		buff.append(objectName);
 		buff.append(" IS ");
-		if (commentText == null) {
+		if ( commentText == null ) {
 			buff.append("NULL");
 		} else {
 			buff.append(StringUtils.quoteStringSQL(commentText));
 		}
 		return buff.toString();
 	}
-
+	
 	public int getType() {
 		return DbObject.COMMENT;
 	}
-
+	
 	public void removeChildrenAndResources(Session session) throws SQLException {
 		database.removeMeta(session, getId());
 	}
-
+	
 	public void checkRename() {
 		Message.throwInternalError();
 	}
-
+	
 	/**
-	 * Get the comment key name for the given database object. This key name is
-	 * used internally to associate the comment to the object.
+	 * Get the comment key name for the given database object. This key name is used internally to associate the comment to the object.
 	 * 
 	 * @param obj
 	 *            the object
@@ -105,7 +104,7 @@ public class Comment extends DbObjectBase {
 	public static String getKey(DbObject obj) {
 		return getTypeName(obj.getType()) + " " + obj.getSQL();
 	}
-
+	
 	/**
 	 * Set the comment text.
 	 * 
@@ -115,5 +114,5 @@ public class Comment extends DbObjectBase {
 	public void setCommentText(String comment) {
 		this.commentText = comment;
 	}
-
+	
 }

@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.db;
 
@@ -22,30 +20,31 @@ import org.h2.test.TestBase;
  * Test for the read-only database feature.
  */
 public class TestReadOnly extends TestBase {
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws Exception {
-		if (config.memory) {
+		if ( config.memory ) {
 			return;
 		}
 		testReadOnlyDbCreate();
 		testReadOnlyFiles(true);
-		if (!config.deleteIndex) {
+		if ( !config.deleteIndex ) {
 			testReadOnlyFiles(false);
 		}
 		deleteDb("readonly");
 	}
-
+	
 	private void testReadOnlyDbCreate() throws SQLException {
-		if (config.deleteIndex) {
+		if ( config.deleteIndex ) {
 			return;
 		}
 		deleteDb("readonly");
@@ -56,13 +55,13 @@ public class TestReadOnly extends TestBase {
 		try {
 			stat.execute("CREATE TABLE TEST(ID INT)");
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		try {
 			stat.execute("SELECT * FROM TEST");
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		stat.execute("create local temporary linked table test(null, 'jdbc:h2:mem:test3', 'sa', 'sa', 'INFORMATION_SCHEMA.TABLES')");
@@ -70,14 +69,14 @@ public class TestReadOnly extends TestBase {
 		assertTrue(rs.next());
 		conn.close();
 	}
-
+	
 	private void testReadOnlyFiles(boolean setReadOnly) throws Exception {
 		File f = File.createTempFile("test", "temp");
 		assertTrue(f.canWrite());
 		f.setReadOnly();
 		assertTrue(!f.canWrite());
 		f.delete();
-
+		
 		f = File.createTempFile("test", "temp");
 		RandomAccessFile r = new RandomAccessFile(f, "rw");
 		r.write(1);
@@ -85,7 +84,7 @@ public class TestReadOnly extends TestBase {
 		r.close();
 		assertTrue(!f.canWrite());
 		f.delete();
-
+		
 		deleteDb("readonly");
 		Connection conn = getConnection("readonly");
 		Statement stat = conn.createStatement();
@@ -94,8 +93,8 @@ public class TestReadOnly extends TestBase {
 		stat.execute("INSERT INTO TEST VALUES(2, 'World')");
 		assertTrue(!conn.isReadOnly());
 		conn.close();
-
-		if (setReadOnly) {
+		
+		if ( setReadOnly ) {
 			setReadOnly();
 			conn = getConnection("readonly");
 		} else {
@@ -107,12 +106,12 @@ public class TestReadOnly extends TestBase {
 		try {
 			stat.execute("DELETE FROM TEST");
 			fail("read only delete");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		conn.close();
-
-		if (setReadOnly) {
+		
+		if ( setReadOnly ) {
 			conn = getConnection("readonly;DB_CLOSE_DELAY=1");
 		} else {
 			conn = getConnection("readonly;DB_CLOSE_DELAY=1;ACCESS_MODE_DATA=r");
@@ -122,36 +121,36 @@ public class TestReadOnly extends TestBase {
 		try {
 			stat.execute("DELETE FROM TEST");
 			fail("read only delete");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		stat.execute("SET DB_CLOSE_DELAY=0");
 		conn.close();
 	}
-
+	
 	private void setReadOnly() throws SQLException {
 		String lastLogFile = null;
 		ArrayList list = FileLister.getDatabaseFiles(TestBase.baseDir, "readonly", true);
-		for (int i = 0; i < list.size(); i++) {
+		for ( int i = 0; i < list.size(); i++ ) {
 			String fileName = (String) list.get(i);
 			File file = new File(fileName);
 			file.setReadOnly();
-			if (fileName.endsWith(Constants.SUFFIX_LOG_FILE)) {
-				if (lastLogFile == null || lastLogFile.compareTo(fileName) < 0) {
+			if ( fileName.endsWith(Constants.SUFFIX_LOG_FILE) ) {
+				if ( lastLogFile == null || lastLogFile.compareTo(fileName) < 0 ) {
 					lastLogFile = fileName;
 				}
 			}
 		}
 		// delete all log files except the last one
-		for (int i = 0; i < list.size(); i++) {
+		for ( int i = 0; i < list.size(); i++ ) {
 			String fileName = (String) list.get(i);
-			if (fileName.endsWith(Constants.SUFFIX_LOG_FILE)) {
-				if (!lastLogFile.equals(fileName)) {
+			if ( fileName.endsWith(Constants.SUFFIX_LOG_FILE) ) {
+				if ( !lastLogFile.equals(fileName) ) {
 					File file = new File(fileName);
 					file.delete();
 				}
 			}
 		}
 	}
-
+	
 }

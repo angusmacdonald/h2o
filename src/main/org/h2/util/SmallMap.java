@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.util;
 
@@ -17,12 +15,17 @@ import org.h2.message.Message;
  * A simple hash table with an optimization for the last recently used object.
  */
 public class SmallMap {
+	
 	private HashMap map = new HashMap();
+	
 	private Object cache;
+	
 	private int cacheId;
+	
 	private int lastId;
+	
 	private int maxElements;
-
+	
 	/**
 	 * Create a map with the given maximum number of entries.
 	 * 
@@ -32,10 +35,9 @@ public class SmallMap {
 	public SmallMap(int maxElements) {
 		this.maxElements = maxElements;
 	}
-
+	
 	/**
-	 * Add an object to the map. If the size of the map is larger than twice the
-	 * maximum size, objects with a low id are removed.
+	 * Add an object to the map. If the size of the map is larger than twice the maximum size, objects with a low id are removed.
 	 * 
 	 * @param id
 	 *            the object id
@@ -44,16 +46,16 @@ public class SmallMap {
 	 * @return the id
 	 */
 	public int addObject(int id, Object o) {
-		if (map.size() > maxElements * 2) {
+		if ( map.size() > maxElements * 2 ) {
 			Iterator it = map.keySet().iterator();
-			while (it.hasNext()) {
+			while ( it.hasNext() ) {
 				Integer k = (Integer) it.next();
-				if (k.intValue() + maxElements < lastId) {
+				if ( k.intValue() + maxElements < lastId ) {
 					it.remove();
 				}
 			}
 		}
-		if (id > lastId) {
+		if ( id > lastId ) {
 			lastId = id;
 		}
 		map.put(ObjectUtils.getInteger(id), o);
@@ -61,7 +63,7 @@ public class SmallMap {
 		cache = o;
 		return id;
 	}
-
+	
 	/**
 	 * Remove an object from the map.
 	 * 
@@ -69,13 +71,13 @@ public class SmallMap {
 	 *            the id of the object to remove
 	 */
 	public void freeObject(int id) {
-		if (cacheId == id) {
+		if ( cacheId == id ) {
 			cacheId = -1;
 			cache = null;
 		}
 		map.remove(ObjectUtils.getInteger(id));
 	}
-
+	
 	/**
 	 * Get an object from the map if it is stored.
 	 * 
@@ -88,14 +90,14 @@ public class SmallMap {
 	 *             if isAvailable is false and the object has not been found
 	 */
 	public Object getObject(int id, boolean ifAvailable) throws SQLException {
-		if (id == cacheId) {
+		if ( id == cacheId ) {
 			return cache;
 		}
 		Object obj = map.get(ObjectUtils.getInteger(id));
-		if (obj == null && !ifAvailable) {
+		if ( obj == null && !ifAvailable ) {
 			throw Message.getSQLException(ErrorCode.OBJECT_CLOSED);
 		}
 		return obj;
 	}
-
+	
 }

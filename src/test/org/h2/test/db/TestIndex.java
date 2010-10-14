@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.db;
 
@@ -20,45 +18,48 @@ import org.h2.test.TestBase;
  * Index tests.
  */
 public class TestIndex extends TestBase {
-
+	
 	private Connection conn;
+	
 	private Statement stat;
+	
 	private Random random = new Random();
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws SQLException {
 		testDescIndex();
 		testHashIndex();
-
-		if (config.networked && config.big) {
+		
+		if ( config.networked && config.big ) {
 			return;
 		}
-
+		
 		random.setSeed(100);
-
+		
 		deleteDb("index");
 		testWideIndex(147);
 		testWideIndex(313);
 		testWideIndex(979);
 		testWideIndex(1200);
 		testWideIndex(2400);
-		if (config.big && config.logMode == 2) {
-			for (int i = 0; i < 2000; i++) {
-				if ((i % 100) == 0) {
+		if ( config.big && config.logMode == 2 ) {
+			for ( int i = 0; i < 2000; i++ ) {
+				if ( ( i % 100 ) == 0 ) {
 					System.out.println("width: " + i);
 				}
 				testWideIndex(i);
 			}
 		}
-
+		
 		testLike();
 		reconnect();
 		testConstraint();
@@ -67,20 +68,20 @@ public class TestIndex extends TestBase {
 		// long time;
 		// time = System.currentTimeMillis();
 		testHashIndex(true, false);
-
+		
 		testHashIndex(false, false);
 		// System.out.println("btree="+(System.currentTimeMillis()-time));
 		// time = System.currentTimeMillis();
 		testHashIndex(true, true);
 		testHashIndex(false, true);
 		// System.out.println("hash="+(System.currentTimeMillis()-time));
-
+		
 		testMultiColumnHashIndex();
-
+		
 		conn.close();
 		deleteDb("index");
 	}
-
+	
 	private void testHashIndex() throws SQLException {
 		reconnect();
 		stat.execute("create table testA(id int primary key, name varchar)");
@@ -89,10 +90,10 @@ public class TestIndex extends TestBase {
 		stat.execute("insert into testA select x, 'Hello' from system_range(1, " + len + ")");
 		stat.execute("insert into testB select x, 'Hello' from system_range(1, " + len + ")");
 		Random random = new Random(1);
-		for (int i = 0; i < len; i++) {
+		for ( int i = 0; i < len; i++ ) {
 			int x = random.nextInt(len);
 			String sql = "";
-			switch(random.nextInt(3)) {
+			switch (random.nextInt(3)) {
 			case 0:
 				sql = "delete from testA where id = " + x;
 				break;
@@ -105,7 +106,7 @@ public class TestIndex extends TestBase {
 			default:
 			}
 			boolean result = stat.execute(sql);
-			if (result) {
+			if ( result ) {
 				ResultSet rs = stat.getResultSet();
 				String s1 = rs.next() ? rs.getString(1) : null;
 				rs = stat.executeQuery(sql.replace('A', 'B'));
@@ -120,18 +121,18 @@ public class TestIndex extends TestBase {
 		stat.execute("drop table testA, testB");
 		conn.close();
 	}
-
+	
 	private void reconnect() throws SQLException {
-		if (conn != null) {
+		if ( conn != null ) {
 			conn.close();
 			conn = null;
 		}
 		conn = getConnection("index");
 		stat = conn.createStatement();
 	}
-
+	
 	private void testDescIndex() throws SQLException {
-		if (config.memory) {
+		if ( config.memory ) {
 			return;
 		}
 		ResultSet rs;
@@ -157,32 +158,32 @@ public class TestIndex extends TestBase {
 		stat.execute("DROP TABLE TEST");
 		conn.close();
 	}
-
+	
 	private String getRandomString(int len) {
 		StringBuilder buff = new StringBuilder();
-		for (int i = 0; i < len; i++) {
-			buff.append((char) ('a' + random.nextInt(26)));
+		for ( int i = 0; i < len; i++ ) {
+			buff.append((char) ( 'a' + random.nextInt(26) ));
 		}
 		return buff.toString();
 	}
-
+	
 	private void testWideIndex(int length) throws SQLException {
 		reconnect();
 		stat.execute("CREATE TABLE TEST(ID INT, NAME VARCHAR)");
 		stat.execute("CREATE INDEX IDXNAME ON TEST(NAME)");
-		for (int i = 0; i < 100; i++) {
+		for ( int i = 0; i < 100; i++ ) {
 			stat.execute("INSERT INTO TEST VALUES(" + i + ", SPACE(" + length + ") || " + i + " )");
 		}
 		ResultSet rs = stat.executeQuery("SELECT * FROM TEST ORDER BY NAME");
-		while (rs.next()) {
+		while ( rs.next() ) {
 			int id = rs.getInt("ID");
 			String name = rs.getString("NAME");
 			assertEquals("" + id, name.trim());
 		}
-		if (!config.memory) {
+		if ( !config.memory ) {
 			reconnect();
 			rs = stat.executeQuery("SELECT * FROM TEST ORDER BY NAME");
-			while (rs.next()) {
+			while ( rs.next() ) {
 				int id = rs.getInt("ID");
 				String name = rs.getString("NAME");
 				assertEquals("" + id, name.trim());
@@ -190,7 +191,7 @@ public class TestIndex extends TestBase {
 		}
 		stat.execute("DROP TABLE TEST");
 	}
-
+	
 	private void testLike() throws SQLException {
 		reconnect();
 		stat.execute("CREATE TABLE ABC(ID INT, NAME VARCHAR)");
@@ -200,9 +201,9 @@ public class TestIndex extends TestBase {
 		prep.execute();
 		stat.execute("DROP TABLE ABC");
 	}
-
+	
 	private void testConstraint() throws SQLException {
-		if (config.memory) {
+		if ( config.memory ) {
 			return;
 		}
 		stat.execute("CREATE TABLE PARENT(ID INT PRIMARY KEY)");
@@ -211,19 +212,19 @@ public class TestIndex extends TestBase {
 		stat.execute("DROP TABLE PARENT");
 		stat.execute("DROP TABLE CHILD");
 	}
-
+	
 	private void testLargeIndex() throws SQLException {
 		random.setSeed(10);
-		for (int i = 1; i < 100; i += getSize(1000, 3)) {
+		for ( int i = 1; i < 100; i += getSize(1000, 3) ) {
 			stat.execute("DROP TABLE IF EXISTS TEST");
 			stat.execute("CREATE TABLE TEST(NAME VARCHAR(" + i + "))");
 			stat.execute("CREATE INDEX IDXNAME ON TEST(NAME)");
 			PreparedStatement prep = conn.prepareStatement("INSERT INTO TEST VALUES(?)");
-			for (int j = 0; j < getSize(2, 5); j++) {
+			for ( int j = 0; j < getSize(2, 5); j++ ) {
 				prep.setString(1, getRandomString(i));
 				prep.execute();
 			}
-			if (!config.memory) {
+			if ( !config.memory ) {
 				conn.close();
 				conn = getConnection("index");
 				stat = conn.createStatement();
@@ -233,40 +234,40 @@ public class TestIndex extends TestBase {
 			int count = rs.getInt(1);
 			trace(i + " count=" + count);
 		}
-
+		
 		stat.execute("DROP TABLE IF EXISTS TEST");
 	}
-
+	
 	private void testHashIndex(boolean primaryKey, boolean hash) throws SQLException {
-		if (config.memory) {
+		if ( config.memory ) {
 			return;
 		}
-
+		
 		reconnect();
-
+		
 		stat.execute("DROP TABLE IF EXISTS TEST");
-		if (primaryKey) {
-			stat.execute("CREATE TABLE TEST(A INT PRIMARY KEY " + (hash ? "HASH" : "") + ", B INT)");
+		if ( primaryKey ) {
+			stat.execute("CREATE TABLE TEST(A INT PRIMARY KEY " + ( hash ? "HASH" : "" ) + ", B INT)");
 		} else {
 			stat.execute("CREATE TABLE TEST(A INT, B INT)");
-			stat.execute("CREATE UNIQUE " + (hash ? "HASH" : "") + " INDEX ON TEST(A)");
+			stat.execute("CREATE UNIQUE " + ( hash ? "HASH" : "" ) + " INDEX ON TEST(A)");
 		}
 		PreparedStatement prep;
 		prep = conn.prepareStatement("INSERT INTO TEST VALUES(?, ?)");
 		int len = getSize(5, 1000);
-		for (int a = 0; a < len; a++) {
+		for ( int a = 0; a < len; a++ ) {
 			prep.setInt(1, a);
 			prep.setInt(2, a);
 			prep.execute();
 			assertEquals(1, getValue(stat, "SELECT COUNT(*) FROM TEST WHERE A=" + a));
 			assertEquals(0, getValue(stat, "SELECT COUNT(*) FROM TEST WHERE A=-1-" + a));
 		}
-
+		
 		reconnect();
-
+		
 		prep = conn.prepareStatement("DELETE FROM TEST WHERE A=?");
-		for (int a = 0; a < len; a++) {
-			if (getValue(stat, "SELECT COUNT(*) FROM TEST WHERE A=" + a) != 1) {
+		for ( int a = 0; a < len; a++ ) {
+			if ( getValue(stat, "SELECT COUNT(*) FROM TEST WHERE A=" + a) != 1 ) {
 				assertEquals(1, getValue(stat, "SELECT COUNT(*) FROM TEST WHERE A=" + a));
 			}
 			prep.setInt(1, a);
@@ -274,14 +275,14 @@ public class TestIndex extends TestBase {
 		}
 		assertEquals(0, getValue(stat, "SELECT COUNT(*) FROM TEST"));
 	}
-
+	
 	private void testMultiColumnIndex() throws SQLException {
 		stat.execute("DROP TABLE IF EXISTS TEST");
 		stat.execute("CREATE TABLE TEST(A INT, B INT)");
 		PreparedStatement prep;
 		prep = conn.prepareStatement("INSERT INTO TEST VALUES(?, ?)");
 		int len = getSize(3, 260);
-		for (int a = 0; a < len; a++) {
+		for ( int a = 0; a < len; a++ ) {
 			prep.setInt(1, a);
 			prep.setInt(2, a);
 			prep.execute();
@@ -289,21 +290,21 @@ public class TestIndex extends TestBase {
 		stat.execute("INSERT INTO TEST SELECT A, B FROM TEST");
 		stat.execute("CREATE INDEX ON TEST(A, B)");
 		prep = conn.prepareStatement("DELETE FROM TEST WHERE A=?");
-		for (int a = 0; a < len; a++) {
+		for ( int a = 0; a < len; a++ ) {
 			log(stat, "SELECT * FROM TEST");
-			assertEquals(2, getValue(stat, "SELECT COUNT(*) FROM TEST WHERE A=" + (len - a - 1)));
-			assertEquals((len - a) * 2, getValue(stat, "SELECT COUNT(*) FROM TEST"));
+			assertEquals(2, getValue(stat, "SELECT COUNT(*) FROM TEST WHERE A=" + ( len - a - 1 )));
+			assertEquals(( len - a ) * 2, getValue(stat, "SELECT COUNT(*) FROM TEST"));
 			prep.setInt(1, len - a - 1);
 			prep.execute();
 		}
 		assertEquals(0, getValue(stat, "SELECT COUNT(*) FROM TEST"));
 	}
-
+	
 	private void testMultiColumnHashIndex() throws SQLException {
-		if (config.memory) {
+		if ( config.memory ) {
 			return;
 		}
-
+		
 		stat.execute("DROP TABLE IF EXISTS TEST");
 		stat.execute("CREATE TABLE TEST(A INT, B INT, DATA VARCHAR(255))");
 		stat.execute("CREATE UNIQUE HASH INDEX IDX_AB ON TEST(A, B)");
@@ -311,49 +312,49 @@ public class TestIndex extends TestBase {
 		prep = conn.prepareStatement("INSERT INTO TEST VALUES(?, ?, ?)");
 		// speed is quadratic (len*len)
 		int len = getSize(2, 14);
-		for (int a = 0; a < len; a++) {
-			for (int b = 0; b < len; b += 2) {
+		for ( int a = 0; a < len; a++ ) {
+			for ( int b = 0; b < len; b += 2 ) {
 				prep.setInt(1, a);
 				prep.setInt(2, b);
 				prep.setString(3, "i(" + a + "," + b + ")");
 				prep.execute();
 			}
 		}
-
+		
 		reconnect();
-
+		
 		prep = conn.prepareStatement("UPDATE TEST SET DATA=DATA||? WHERE A=? AND B=?");
-		for (int a = 0; a < len; a++) {
-			for (int b = 0; b < len; b += 2) {
+		for ( int a = 0; a < len; a++ ) {
+			for ( int b = 0; b < len; b += 2 ) {
 				prep.setString(1, "u(" + a + "," + b + ")");
 				prep.setInt(2, a);
 				prep.setInt(3, b);
 				prep.execute();
 			}
 		}
-
+		
 		reconnect();
-
+		
 		ResultSet rs = stat.executeQuery("SELECT * FROM TEST WHERE DATA <> 'i('||a||','||b||')u('||a||','||b||')'");
 		assertFalse(rs.next());
-		assertEquals(len * (len / 2), getValue(stat, "SELECT COUNT(*) FROM TEST"));
+		assertEquals(len * ( len / 2 ), getValue(stat, "SELECT COUNT(*) FROM TEST"));
 		stat.execute("DROP TABLE TEST");
 	}
-
+	
 	private int getValue(Statement stat, String sql) throws SQLException {
 		ResultSet rs = stat.executeQuery(sql);
 		rs.next();
 		return rs.getInt(1);
 	}
-
+	
 	private void log(Statement stat, String sql) throws SQLException {
 		trace(sql);
 		ResultSet rs = stat.executeQuery(sql);
 		int cols = rs.getMetaData().getColumnCount();
-		while (rs.next()) {
+		while ( rs.next() ) {
 			StringBuilder buff = new StringBuilder();
-			for (int i = 0; i < cols; i++) {
-				if (i > 0) {
+			for ( int i = 0; i < cols; i++ ) {
+				if ( i > 0 ) {
 					buff.append(", ");
 				}
 				buff.append("[" + i + "]=" + rs.getString(i + 1));
@@ -362,5 +363,5 @@ public class TestIndex extends TestBase {
 		}
 		trace("---done---");
 	}
-
+	
 }

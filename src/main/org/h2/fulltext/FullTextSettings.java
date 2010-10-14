@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.fulltext;
 
@@ -20,27 +18,31 @@ import org.h2.util.ObjectUtils;
  * The global settings of a full text search.
  */
 class FullTextSettings {
-
+	
 	private static final HashMap SETTINGS = new HashMap();
-
+	
 	private HashSet ignoreList = new HashSet();
+	
 	private HashMap words = new HashMap();
+	
 	private HashMap indexes = new HashMap();
+	
 	private PreparedStatement prepSelectMapByWordId;
+	
 	private PreparedStatement prepSelectRowById;
-
+	
 	private FullTextSettings() {
 		// don't allow construction
 	}
-
+	
 	HashSet getIgnoreList() {
 		return ignoreList;
 	}
-
+	
 	HashMap getWordList() {
 		return words;
 	}
-
+	
 	/**
 	 * Get the index information for the given index id.
 	 * 
@@ -51,7 +53,7 @@ class FullTextSettings {
 	IndexInfo getIndexInfo(long indexId) {
 		return (IndexInfo) indexes.get(ObjectUtils.getLong(indexId));
 	}
-
+	
 	/**
 	 * Add an index.
 	 * 
@@ -61,10 +63,9 @@ class FullTextSettings {
 	void addIndexInfo(IndexInfo index) {
 		indexes.put(ObjectUtils.getLong(index.id), index);
 	}
-
+	
 	/**
-	 * Convert a word to uppercase. This method returns null if the word is in
-	 * the ignore list.
+	 * Convert a word to uppercase. This method returns null if the word is in the ignore list.
 	 * 
 	 * @param word
 	 *            the word to convert and check
@@ -73,12 +74,12 @@ class FullTextSettings {
 	String convertWord(String word) {
 		// TODO this is locale specific, document
 		word = word.toUpperCase();
-		if (ignoreList.contains(word)) {
+		if ( ignoreList.contains(word) ) {
 			return null;
 		}
 		return word;
 	}
-
+	
 	/**
 	 * Get or create the fulltext settings for this database.
 	 * 
@@ -89,50 +90,48 @@ class FullTextSettings {
 	static FullTextSettings getInstance(Connection conn) throws SQLException {
 		String path = getIndexPath(conn);
 		FullTextSettings setting = (FullTextSettings) SETTINGS.get(path);
-		if (setting == null) {
+		if ( setting == null ) {
 			setting = new FullTextSettings();
 			SETTINGS.put(path, setting);
 		}
 		return setting;
 	}
-
+	
 	private static String getIndexPath(Connection conn) throws SQLException {
 		Statement stat = conn.createStatement();
-		ResultSet rs = stat
-				.executeQuery("CALL IFNULL(DATABASE_PATH(), 'MEM:' || DATABASE())");
+		ResultSet rs = stat.executeQuery("CALL IFNULL(DATABASE_PATH(), 'MEM:' || DATABASE())");
 		rs.next();
 		String path = rs.getString(1);
-		if ("MEM:UNNAMED".equals(path)) {
-			throw new SQLException("FULLTEXT",
-					"Fulltext search for private (unnamed) in-memory databases is not supported.");
+		if ( "MEM:UNNAMED".equals(path) ) {
+			throw new SQLException("FULLTEXT", "Fulltext search for private (unnamed) in-memory databases is not supported.");
 		}
 		rs.close();
 		return path;
 	}
-
+	
 	PreparedStatement getPrepSelectMapByWordId() {
 		return prepSelectMapByWordId;
 	}
-
+	
 	void setPrepSelectMapByWordId(PreparedStatement prepSelectMapByWordId) {
 		this.prepSelectMapByWordId = prepSelectMapByWordId;
 	}
-
+	
 	PreparedStatement getPrepSelectRowById() {
 		return prepSelectRowById;
 	}
-
+	
 	void setPrepSelectRowById(PreparedStatement prepSelectRowById) {
 		this.prepSelectRowById = prepSelectRowById;
 	}
-
+	
 	/**
 	 * Remove all indexes from the settings.
 	 */
 	void removeAllIndexes() {
 		indexes.clear();
 	}
-
+	
 	/**
 	 * Remove an index from the settings.
 	 * 
@@ -142,5 +141,5 @@ class FullTextSettings {
 	void removeIndexInfo(IndexInfo index) {
 		indexes.remove(ObjectUtils.getLong(index.id));
 	}
-
+	
 }

@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.unit;
 
@@ -26,16 +24,17 @@ import org.h2.test.TestBase;
  * Tests various file system.
  */
 public class TestFileSystem extends TestBase {
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws Exception {
 		testDatabaseInMemFileSys();
 		testDatabaseInJar();
@@ -49,7 +48,7 @@ public class TestFileSystem extends TestBase {
 		testFileSystem(FileSystem.PREFIX_MEMORY_LZF);
 		testUserHome();
 	}
-
+	
 	private void testDatabaseInMemFileSys() throws SQLException {
 		org.h2.Driver.load();
 		deleteDb("fsMem");
@@ -58,15 +57,15 @@ public class TestFileSystem extends TestBase {
 		conn.createStatement().execute("CREATE TABLE TEST AS SELECT * FROM DUAL");
 		conn.createStatement().execute("BACKUP TO '" + baseDir + "/fsMem.zip'");
 		conn.close();
-		org.h2.tools.Restore.main(new String[]{"-file", baseDir + "/fsMem.zip", "-dir", "memFS:"});
+		org.h2.tools.Restore.main(new String[] { "-file", baseDir + "/fsMem.zip", "-dir", "memFS:" });
 		conn = DriverManager.getConnection("jdbc:h2:memFS:fsMem", "sa", "sa");
 		ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM TEST");
 		rs.close();
 		conn.close();
 	}
-
+	
 	private void testDatabaseInJar() throws SQLException {
-		if (config.networked) {
+		if ( config.networked ) {
 			return;
 		}
 		org.h2.Driver.load();
@@ -85,11 +84,11 @@ public class TestFileSystem extends TestBase {
 		stat = conn.createStatement();
 		stat.execute("backup to '" + baseDir + "/fsJar.zip'");
 		conn.close();
-
+		
 		deleteDb("fsJar");
 		FileSystem fs = FileSystem.getInstance("zip:" + baseDir + "/fsJar.zip");
 		String[] files = fs.listFiles("zip:" + baseDir + "/fsJar.zip");
-		for (int i = 0; i < files.length; i++) {
+		for ( int i = 0; i < files.length; i++ ) {
 			String f = files[i];
 			assertTrue(fs.isAbsolute(f));
 			assertTrue(!fs.isDirectory(f));
@@ -112,25 +111,25 @@ public class TestFileSystem extends TestBase {
 		assertFalse(rs.next());
 		conn.close();
 	}
-
+	
 	private void testUserHome() throws SQLException {
 		FileSystem fs = FileSystem.getInstance("~/test");
 		String fileName = fs.getAbsolutePath("~/test");
 		String userDir = System.getProperty("user.home");
 		assertTrue(fileName.startsWith(userDir));
 	}
-
+	
 	private void testFileSystem(String fsBase) throws Exception {
 		testSimple(fsBase);
 		testTempFile(fsBase);
 		testRandomAccess(fsBase);
 	}
-
+	
 	private void testSimple(String fsBase) throws Exception {
 		FileSystem fs = FileSystem.getInstance(fsBase);
 		long time = System.currentTimeMillis();
 		String[] list = fs.listFiles(fsBase);
-		for (int i = 0; i < list.length; i++) {
+		for ( int i = 0; i < list.length; i++ ) {
 			fs.delete(list[i]);
 		}
 		fs.mkdirs(fsBase + "/test");
@@ -145,7 +144,7 @@ public class TestFileSystem extends TestBase {
 		fo.write(buffer, 0, 10000);
 		fo.close();
 		long lastMod = fs.getLastModified(fsBase + "/test");
-		if (lastMod < time - 1999) {
+		if ( lastMod < time - 1999 ) {
 			// at most 2 seconds difference
 			assertEquals(lastMod, time);
 		}
@@ -153,7 +152,7 @@ public class TestFileSystem extends TestBase {
 		list = fs.listFiles(fsBase);
 		assertEquals(list.length, 1);
 		assertTrue(list[0].endsWith("test"));
-
+		
 		fs.copy(fsBase + "/test", fsBase + "/test3");
 		fs.rename(fsBase + "/test3", fsBase + "/test2");
 		assertTrue(!fs.exists(fsBase + "/test3"));
@@ -162,9 +161,9 @@ public class TestFileSystem extends TestBase {
 		byte[] buffer2 = new byte[10000];
 		InputStream in = fs.openFileInputStream(fsBase + "/test2");
 		int pos = 0;
-		while (true) {
+		while ( true ) {
 			int l = in.read(buffer2, pos, Math.min(10000 - pos, 1000));
-			if (l <= 0) {
+			if ( l <= 0 ) {
 				break;
 			}
 			pos += l;
@@ -172,21 +171,21 @@ public class TestFileSystem extends TestBase {
 		in.close();
 		assertEquals(10000, pos);
 		assertEquals(buffer, buffer2);
-
+		
 		assertTrue(fs.tryDelete(fsBase + "/test2"));
 		fs.delete(fsBase + "/test");
-
-		if (!fsBase.startsWith(FileSystem.PREFIX_MEMORY) && !fsBase.startsWith(FileSystem.PREFIX_MEMORY_LZF)) {
+		
+		if ( !fsBase.startsWith(FileSystem.PREFIX_MEMORY) && !fsBase.startsWith(FileSystem.PREFIX_MEMORY_LZF) ) {
 			fs.createDirs(fsBase + "/testDir/test");
 			assertTrue(fs.isDirectory(fsBase + "/testDir"));
-			if (!fsBase.startsWith(FileSystem.PREFIX_DB)) {
+			if ( !fsBase.startsWith(FileSystem.PREFIX_DB) ) {
 				fs.deleteRecursive(fsBase + "/testDir");
 				assertTrue(!fs.exists(fsBase + "/testDir"));
 			}
 		}
 		fs.close();
 	}
-
+	
 	private void testRandomAccess(String fsBase) throws Exception {
 		FileSystem fs = FileSystem.getInstance(fsBase);
 		String s = fs.createTempFile(fsBase + "/temp", ".tmp", false, false);
@@ -198,15 +197,15 @@ public class TestFileSystem extends TestBase {
 		try {
 			f.readFully(new byte[1], 0, 1);
 			fail();
-		} catch (EOFException e) {
+		} catch ( EOFException e ) {
 			// expected
 		}
 		f.sync();
 		Random random = new Random(1);
 		int size = getSize(100, 500);
-		for (int i = 0; i < size; i++) {
+		for ( int i = 0; i < size; i++ ) {
 			int pos = random.nextInt(10000);
-			switch(random.nextInt(7)) {
+			switch (random.nextInt(7)) {
 			case 0: {
 				pos = (int) Math.min(pos, ra.length());
 				trace("seek " + pos);
@@ -225,7 +224,7 @@ public class TestFileSystem extends TestBase {
 			case 2: {
 				f.setFileLength(pos);
 				ra.setLength(pos);
-				if (ra.getFilePointer() > pos) {
+				if ( ra.getFilePointer() > pos ) {
 					f.seek(0);
 					ra.seek(0);
 				}
@@ -269,7 +268,7 @@ public class TestFileSystem extends TestBase {
 		ra.close();
 		fs.close();
 	}
-
+	
 	private void testTempFile(String fsBase) throws Exception {
 		FileSystem fs = FileSystem.getInstance(fsBase);
 		String s = fs.createTempFile(fsBase + "/temp", ".tmp", false, false);
@@ -281,7 +280,7 @@ public class TestFileSystem extends TestBase {
 		out.write(1);
 		out.close();
 		InputStream in = fs.openFileInputStream(s);
-		for (int i = 0; i < 10000; i++) {
+		for ( int i = 0; i < 10000; i++ ) {
 			assertEquals(in.read(), 0);
 		}
 		assertEquals(in.read(), 1);
@@ -290,6 +289,5 @@ public class TestFileSystem extends TestBase {
 		out.close();
 		fs.close();
 	}
-
-
+	
 }

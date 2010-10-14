@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.tools;
 
@@ -27,24 +25,18 @@ import org.h2.util.Tool;
  * Backs up a H2 database by creating a .zip file from the database files.
  */
 public class Backup extends Tool {
-
+	
 	private void showUsage() {
 		out.println("Creates a backup of a database.");
-		out.println("java "
-				+ getClass().getName()
-				+ "\n"
-				+ " [-file <filename>]  The target file name (default: backup.zip)\n"
-				+ " [-dir <dir>]        Source directory (default: .)\n"
-				+ " [-db <database>]    Source database name\n"
+		out.println("java " + getClass().getName() + "\n" + " [-file <filename>]  The target file name (default: backup.zip)\n"
+				+ " [-dir <dir>]        Source directory (default: .)\n" + " [-db <database>]    Source database name\n"
 				+ " [-quiet]            Do not print progress information");
-		out.println("See also http://h2database.com/javadoc/"
-				+ getClass().getName().replace('.', '/') + ".html");
+		out.println("See also http://h2database.com/javadoc/" + getClass().getName().replace('.', '/') + ".html");
 	}
-
+	
 	/**
-	 * The command line interface for this tool. The options must be split into
-	 * strings like this: "-db", "test",... Options are case sensitive. The
-	 * following options are supported:
+	 * The command line interface for this tool. The options must be split into strings like this: "-db", "test",... Options are case
+	 * sensitive. The following options are supported:
 	 * <ul>
 	 * <li>-help or -? (print the list of options)</li>
 	 * <li>-file filename (the default is backup.zip)</li>
@@ -60,23 +52,23 @@ public class Backup extends Tool {
 	public static void main(String[] args) throws SQLException {
 		new Backup().run(args);
 	}
-
+	
 	public void run(String[] args) throws SQLException {
 		String zipFileName = "backup.zip";
 		String dir = ".";
 		String db = null;
 		boolean quiet = false;
-		for (int i = 0; args != null && i < args.length; i++) {
+		for ( int i = 0; args != null && i < args.length; i++ ) {
 			String arg = args[i];
-			if (arg.equals("-dir")) {
+			if ( arg.equals("-dir") ) {
 				dir = args[++i];
-			} else if (arg.equals("-db")) {
+			} else if ( arg.equals("-db") ) {
 				db = args[++i];
-			} else if (arg.equals("-quiet")) {
+			} else if ( arg.equals("-quiet") ) {
 				quiet = true;
-			} else if (arg.equals("-file")) {
+			} else if ( arg.equals("-file") ) {
 				zipFileName = args[++i];
-			} else if (arg.equals("-help") || arg.equals("-?")) {
+			} else if ( arg.equals("-help") || arg.equals("-?") ) {
 				showUsage();
 				return;
 			} else {
@@ -87,7 +79,7 @@ public class Backup extends Tool {
 		}
 		process(zipFileName, dir, db, quiet);
 	}
-
+	
 	/**
 	 * Backs up database files.
 	 * 
@@ -101,22 +93,20 @@ public class Backup extends Tool {
 	 *            don't print progress information
 	 * @throws SQLException
 	 */
-	public static void execute(String zipFileName, String directory, String db,
-			boolean quiet) throws SQLException {
+	public static void execute(String zipFileName, String directory, String db, boolean quiet) throws SQLException {
 		new Backup().process(zipFileName, directory, db, quiet);
 	}
-
-	private void process(String zipFileName, String directory, String db,
-			boolean quiet) throws SQLException {
+	
+	private void process(String zipFileName, String directory, String db, boolean quiet) throws SQLException {
 		ArrayList list = FileLister.getDatabaseFiles(directory, db, true);
-		if (list.size() == 0) {
-			if (!quiet) {
+		if ( list.size() == 0 ) {
+			if ( !quiet ) {
 				printNoDatabaseFilesFound(directory, db);
 			}
 			return;
 		}
 		zipFileName = FileUtils.normalize(zipFileName);
-		if (FileUtils.exists(zipFileName)) {
+		if ( FileUtils.exists(zipFileName) ) {
 			FileUtils.delete(zipFileName);
 		}
 		OutputStream fileOut = null;
@@ -124,18 +114,17 @@ public class Backup extends Tool {
 			fileOut = FileUtils.openFileOutputStream(zipFileName, false);
 			ZipOutputStream zipOut = new ZipOutputStream(fileOut);
 			String base = "";
-			for (int i = 0; i < list.size(); i++) {
+			for ( int i = 0; i < list.size(); i++ ) {
 				String fileName = (String) list.get(i);
-				if (fileName.endsWith(Constants.SUFFIX_DATA_FILE)) {
+				if ( fileName.endsWith(Constants.SUFFIX_DATA_FILE) ) {
 					base = FileUtils.getParent(fileName);
 				}
 			}
-			for (int i = 0; i < list.size(); i++) {
+			for ( int i = 0; i < list.size(); i++ ) {
 				String fileName = (String) list.get(i);
 				String f = FileUtils.getAbsolutePath(fileName);
-				if (!f.startsWith(base)) {
-					Message.throwInternalError(f + " does not start with "
-							+ base);
+				if ( !f.startsWith(base) ) {
+					Message.throwInternalError(f + " does not start with " + base);
 				}
 				f = f.substring(base.length());
 				f = BackupCommand.correctFileName(f);
@@ -145,24 +134,24 @@ public class Backup extends Tool {
 				try {
 					in = FileUtils.openFileInputStream(fileName);
 					IOUtils.copyAndCloseInput(in, zipOut);
-				} catch (FileNotFoundException e) {
+				} catch ( FileNotFoundException e ) {
 					// the file could have been deleted in the meantime
 					// ignore this (in this case an empty file is created)
 				} finally {
 					IOUtils.closeSilently(in);
 				}
 				zipOut.closeEntry();
-				if (!quiet) {
+				if ( !quiet ) {
 					out.println("Processed: " + fileName);
 				}
 			}
 			zipOut.closeEntry();
 			zipOut.close();
-		} catch (IOException e) {
+		} catch ( IOException e ) {
 			throw Message.convertIOException(e, zipFileName);
 		} finally {
 			IOUtils.closeSilently(fileOut);
 		}
 	}
-
+	
 }

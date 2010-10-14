@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.expression;
 
@@ -27,33 +25,35 @@ import org.h2.value.ValueResultSet;
  * Implementation of the functions TABLE(..) and TABLE_DISTINCT(..).
  */
 public class TableFunction extends Function implements FunctionCall {
+	
 	private final boolean distinct;
+	
 	private final long rowCount;
+	
 	private Column[] columnList;
-
+	
 	TableFunction(Database database, FunctionInfo info, long rowCount) {
 		super(database, info);
 		distinct = info.type == Function.TABLE_DISTINCT;
 		this.rowCount = rowCount;
 	}
-
+	
 	public Value getValue(Session session) throws SQLException {
 		return getTable(session, args, false, distinct);
 	}
-
+	
 	protected void checkParameterCount(int len) throws SQLException {
-		if (len < 1) {
-			throw Message.getSQLException(ErrorCode.INVALID_PARAMETER_COUNT_2,
-					new String[] { getName(), ">0" });
+		if ( len < 1 ) {
+			throw Message.getSQLException(ErrorCode.INVALID_PARAMETER_COUNT_2, new String[] { getName(), ">0" });
 		}
 	}
-
+	
 	public String getSQL() {
 		StringBuilder buff = new StringBuilder();
 		buff.append(getName());
 		buff.append('(');
-		for (int i = 0; i < args.length; i++) {
-			if (i > 0) {
+		for ( int i = 0; i < args.length; i++ ) {
+			if ( i > 0 ) {
 				buff.append(", ");
 			}
 			buff.append(columnList[i].getCreateSQL());
@@ -64,41 +64,39 @@ public class TableFunction extends Function implements FunctionCall {
 		buff.append(')');
 		return buff.toString();
 	}
-
+	
 	public String getName() {
 		return distinct ? "TABLE_DISTINCT" : "TABLE";
 	}
-
-	public ValueResultSet getValueForColumnList(Session session,
-			Expression[] nullArgs) throws SQLException {
+	
+	public ValueResultSet getValueForColumnList(Session session, Expression[] nullArgs) throws SQLException {
 		return getTable(session, args, true, false);
 	}
-
+	
 	public void setColumns(ObjectArray columns) {
 		this.columnList = new Column[columns.size()];
 		columns.toArray(columnList);
 	}
-
-	private ValueResultSet getTable(Session session, Expression[] args,
-			boolean onlyColumnList, boolean distinct) throws SQLException {
+	
+	private ValueResultSet getTable(Session session, Expression[] args, boolean onlyColumnList, boolean distinct) throws SQLException {
 		int len = columnList.length;
 		Expression[] header = new Expression[len];
 		Database db = session.getDatabase();
-		for (int i = 0; i < len; i++) {
+		for ( int i = 0; i < len; i++ ) {
 			Column c = columnList[i];
 			ExpressionColumn col = new ExpressionColumn(db, c);
 			header[i] = col;
 		}
 		LocalResult result = new LocalResult(session, header, len);
-		if (distinct) {
+		if ( distinct ) {
 			result.setDistinct();
 		}
-		if (!onlyColumnList) {
+		if ( !onlyColumnList ) {
 			Value[][] list = new Value[len][];
 			int rowCount = 0;
-			for (int i = 0; i < len; i++) {
+			for ( int i = 0; i < len; i++ ) {
 				Value v = args[i].getValue(session);
-				if (v == ValueNull.INSTANCE) {
+				if ( v == ValueNull.INSTANCE ) {
 					list[i] = new Value[0];
 				} else {
 					ValueArray array = (ValueArray) v.convertTo(Value.ARRAY);
@@ -107,12 +105,12 @@ public class TableFunction extends Function implements FunctionCall {
 					rowCount = Math.max(rowCount, l.length);
 				}
 			}
-			for (int row = 0; row < rowCount; row++) {
+			for ( int row = 0; row < rowCount; row++ ) {
 				Value[] r = new Value[len];
-				for (int j = 0; j < len; j++) {
+				for ( int j = 0; j < len; j++ ) {
 					Value[] l = list[j];
 					Value v;
-					if (l.length <= row) {
+					if ( l.length <= row ) {
 						v = ValueNull.INSTANCE;
 					} else {
 						Column c = columnList[j];
@@ -127,36 +125,33 @@ public class TableFunction extends Function implements FunctionCall {
 			}
 		}
 		result.done();
-		ValueResultSet vr = ValueResultSet.get(getSimpleResultSet(result,
-				Integer.MAX_VALUE));
+		ValueResultSet vr = ValueResultSet.get(getSimpleResultSet(result, Integer.MAX_VALUE));
 		return vr;
 	}
-
-	private SimpleResultSet getSimpleResultSet(LocalResult rs, int maxrows)
-			throws SQLException {
+	
+	private SimpleResultSet getSimpleResultSet(LocalResult rs, int maxrows) throws SQLException {
 		int columnCount = rs.getVisibleColumnCount();
 		SimpleResultSet simple = new SimpleResultSet();
-		for (int i = 0; i < columnCount; i++) {
+		for ( int i = 0; i < columnCount; i++ ) {
 			String name = rs.getColumnName(i);
 			int sqlType = DataType.convertTypeToSQLType(rs.getColumnType(i));
-			int precision = MathUtils
-					.convertLongToInt(rs.getColumnPrecision(i));
+			int precision = MathUtils.convertLongToInt(rs.getColumnPrecision(i));
 			int scale = rs.getColumnScale(i);
 			simple.addColumn(name, sqlType, precision, scale);
 		}
 		rs.reset();
-		for (int i = 0; i < maxrows && rs.next(); i++) {
+		for ( int i = 0; i < maxrows && rs.next(); i++ ) {
 			Object[] list = new Object[columnCount];
-			for (int j = 0; j < columnCount; j++) {
+			for ( int j = 0; j < columnCount; j++ ) {
 				list[j] = rs.currentRow()[j].getObject();
 			}
 			simple.addRow(list);
 		}
 		return simple;
 	}
-
+	
 	public long getRowCount() {
 		return rowCount;
 	}
-
+	
 }

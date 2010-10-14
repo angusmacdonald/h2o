@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.jdbc;
 
@@ -26,20 +24,21 @@ import org.h2.test.TestBase;
  * Tests for the PreparedStatement implementation.
  */
 public class TestPreparedStatement extends TestBase {
-
+	
 	private static final int LOB_SIZE = 4000, LOB_SIZE_BIG = 512 * 1024;
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws Exception {
-
+		
 		deleteDb("preparedStatement");
 		Connection conn = getConnection("preparedStatement");
 		testLobTempFiles(conn);
@@ -61,7 +60,7 @@ public class TestPreparedStatement extends TestBase {
 		testCasewhen(conn);
 		testSubquery(conn);
 		testObject(conn);
-		if (config.jdk14) {
+		if ( config.jdk14 ) {
 			testIdentity(conn);
 		}
 		testDataTypes(conn);
@@ -71,74 +70,71 @@ public class TestPreparedStatement extends TestBase {
 		conn.close();
 		deleteDb("preparedStatement");
 	}
-
+	
 	private void testLobTempFiles(Connection conn) throws SQLException {
 		Statement stat = conn.createStatement();
 		stat.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, DATA CLOB)");
 		PreparedStatement prep = conn.prepareStatement("INSERT INTO TEST VALUES(?, ?)");
-		for (int i = 0; i < 5; i++) {
+		for ( int i = 0; i < 5; i++ ) {
 			prep.setInt(1, i);
-			if (i % 2 == 0) {
+			if ( i % 2 == 0 ) {
 				prep.setCharacterStream(2, new StringReader(getString(i)), -1);
 			}
 			prep.execute();
 		}
 		ResultSet rs = stat.executeQuery("SELECT * FROM TEST ORDER BY ID");
 		int check = 0;
-		for (int i = 0; i < 5; i++) {
+		for ( int i = 0; i < 5; i++ ) {
 			assertTrue(rs.next());
-			if (i % 2 == 0) {
+			if ( i % 2 == 0 ) {
 				check = i;
 			}
 			assertEquals(getString(check), rs.getString(2));
 		}
 		assertFalse(rs.next());
 		stat.execute("DELETE FROM TEST");
-		for (int i = 0; i < 3; i++) {
+		for ( int i = 0; i < 3; i++ ) {
 			prep.setInt(1, i);
 			prep.setCharacterStream(2, new StringReader(getString(i)), -1);
 			prep.addBatch();
 		}
 		prep.executeBatch();
 		rs = stat.executeQuery("SELECT * FROM TEST ORDER BY ID");
-		for (int i = 0; i < 3; i++) {
+		for ( int i = 0; i < 3; i++ ) {
 			assertTrue(rs.next());
 			assertEquals(getString(i), rs.getString(2));
 		}
 		assertFalse(rs.next());
 		stat.execute("DROP TABLE TEST");
 	}
-
+	
 	private String getString(int i) {
-		return new String(new char[100000]).replace('\0', (char) ('0' + i));
+		return new String(new char[100000]).replace('\0', (char) ( '0' + i ));
 	}
-
-
+	
 	private void testExecuteErrorTwice(Connection conn) throws SQLException {
 		PreparedStatement prep = conn.prepareStatement("CREATE TABLE BAD AS SELECT A");
 		try {
 			prep.execute();
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		try {
 			prep.execute();
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 	}
-
-
+	
 	private void testTempView(Connection conn) throws SQLException {
 		Statement stat = conn.createStatement();
 		PreparedStatement prep;
 		stat.execute("CREATE TABLE TEST(FIELD INT PRIMARY KEY)");
 		stat.execute("INSERT INTO TEST VALUES(1)");
 		stat.execute("INSERT INTO TEST VALUES(2)");
-		prep = conn.prepareStatement("select FIELD FROM "
-				+ "(select FIELD FROM (SELECT FIELD  FROM TEST WHERE FIELD = ?) AS T2 "
+		prep = conn.prepareStatement("select FIELD FROM " + "(select FIELD FROM (SELECT FIELD  FROM TEST WHERE FIELD = ?) AS T2 "
 				+ "WHERE T2.FIELD = ?) AS T3 WHERE T3.FIELD = ?");
 		prep.setInt(1, 1);
 		prep.setInt(2, 1);
@@ -154,12 +150,12 @@ public class TestPreparedStatement extends TestBase {
 		assertEquals(2, rs.getInt(1));
 		stat.execute("DROP TABLE TEST");
 	}
-
+	
 	private void testInsertFunction(Connection conn) throws SQLException {
 		Statement stat = conn.createStatement();
 		PreparedStatement prep;
 		ResultSet rs;
-
+		
 		stat.execute("CREATE TABLE TEST(ID INT, H BINARY)");
 		prep = conn.prepareStatement("INSERT INTO TEST VALUES(?, HASH('SHA256', STRINGTOUTF8(?), 5))");
 		prep.setInt(1, 1);
@@ -171,15 +167,15 @@ public class TestPreparedStatement extends TestBase {
 		rs = stat.executeQuery("SELECT COUNT(DISTINCT H) FROM TEST");
 		rs.next();
 		assertEquals(rs.getInt(1), 2);
-
+		
 		stat.execute("DROP TABLE TEST");
 	}
-
+	
 	private void testPrepareRecompile(Connection conn) throws SQLException {
 		Statement stat = conn.createStatement();
 		PreparedStatement prep;
 		ResultSet rs;
-
+		
 		prep = conn.prepareStatement("SELECT COUNT(*) FROM DUAL WHERE ? IS NULL");
 		prep.setString(1, null);
 		prep.executeQuery();
@@ -191,7 +187,7 @@ public class TestPreparedStatement extends TestBase {
 		rs = prep.executeQuery();
 		rs.next();
 		assertEquals(rs.getInt(1), 0);
-
+		
 		stat.execute("CREATE TABLE t1 (c1 INT, c2 VARCHAR(10))");
 		stat.execute("INSERT INTO t1 SELECT X, CONCAT('Test', X)  FROM SYSTEM_RANGE(1, 5);");
 		prep = conn.prepareStatement("SELECT c1, c2 FROM t1 WHERE c1 = ?");
@@ -207,30 +203,29 @@ public class TestPreparedStatement extends TestBase {
 		rs.next();
 		assertEquals(rs.getInt(1), 3);
 		stat.execute("DROP TABLE t1, t2");
-
+		
 	}
-
+	
 	private void testMaxRowsChange(Connection conn) throws SQLException {
 		PreparedStatement prep = conn.prepareStatement("SELECT * FROM SYSTEM_RANGE(1, 100)");
 		ResultSet rs;
-		for (int j = 1; j < 20; j++) {
+		for ( int j = 1; j < 20; j++ ) {
 			prep.setMaxRows(j);
 			rs = prep.executeQuery();
-			for (int i = 0; i < j; i++) {
+			for ( int i = 0; i < j; i++ ) {
 				assertTrue(rs.next());
 			}
 			assertFalse(rs.next());
 		}
 	}
-
+	
 	private void testUnknownDataType(Connection conn) throws SQLException {
 		try {
-			PreparedStatement prep = conn.prepareStatement(
-					"SELECT * FROM (SELECT ? FROM DUAL)");
+			PreparedStatement prep = conn.prepareStatement("SELECT * FROM (SELECT ? FROM DUAL)");
 			prep.setInt(1, 1);
 			prep.execute();
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		PreparedStatement prep = conn.prepareStatement("SELECT -?");
@@ -241,16 +236,17 @@ public class TestPreparedStatement extends TestBase {
 		prep.setInt(2, 2);
 		prep.execute();
 	}
-
+	
 	private void testCancelReuse(Connection conn) throws Exception {
 		conn.createStatement().execute("CREATE ALIAS YIELD FOR \"java.lang.Thread.yield\"");
 		final PreparedStatement prep = conn.prepareStatement("SELECT YIELD() FROM SYSTEM_RANGE(1, 1000000) LIMIT ?");
 		prep.setInt(1, 100000000);
 		Thread t = new Thread() {
+			
 			public void run() {
 				try {
 					prep.execute();
-				} catch (SQLException e) {
+				} catch ( SQLException e ) {
 					// ignore
 				}
 			}
@@ -259,7 +255,7 @@ public class TestPreparedStatement extends TestBase {
 		Thread.sleep(10);
 		try {
 			prep.cancel();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			this.assertKnownException(e);
 		}
 		prep.setInt(1, 1);
@@ -268,7 +264,7 @@ public class TestPreparedStatement extends TestBase {
 		assertEquals(rs.getInt(1), 0);
 		assertFalse(rs.next());
 	}
-
+	
 	private void testCoalesce(Connection conn) throws SQLException {
 		Statement stat = conn.createStatement();
 		stat.executeUpdate("create table test(tm timestamp)");
@@ -278,7 +274,7 @@ public class TestPreparedStatement extends TestBase {
 		prep.executeUpdate();
 		stat.executeUpdate("drop table test");
 	}
-
+	
 	private void testPreparedStatementMetaData(Connection conn) throws SQLException {
 		PreparedStatement prep = conn.prepareStatement("select * from table(x int = ?, name varchar = ?)");
 		ResultSetMetaData meta = prep.getMetaData();
@@ -290,7 +286,7 @@ public class TestPreparedStatement extends TestBase {
 		assertEquals(meta.getColumnCount(), 1);
 		assertEquals(meta.getColumnTypeName(1), "INTEGER");
 	}
-
+	
 	private void testArray(Connection conn) throws SQLException {
 		PreparedStatement prep = conn.prepareStatement("select * from table(x int = ?) order by x");
 		prep.setObject(1, new Object[] { new BigDecimal("1"), "2" });
@@ -301,7 +297,7 @@ public class TestPreparedStatement extends TestBase {
 		assertEquals(rs.getString(1), "2");
 		assertFalse(rs.next());
 	}
-
+	
 	private void testUUIDGeneratedKeys(Connection conn) throws SQLException {
 		Statement stat = conn.createStatement();
 		stat.execute("CREATE TABLE TEST_UUID(id UUID DEFAULT random_UUID() PRIMARY KEY)");
@@ -312,7 +308,7 @@ public class TestPreparedStatement extends TestBase {
 		assertEquals(data.length, 16);
 		stat.execute("DROP TABLE TEST_UUID");
 	}
-
+	
 	private void testSetObject(Connection conn) throws SQLException {
 		Statement stat = conn.createStatement();
 		stat.execute("CREATE TABLE TEST(ID INT, DATA BINARY, JAVA OTHER)");
@@ -336,11 +332,11 @@ public class TestPreparedStatement extends TestBase {
 		assertTrue(o instanceof byte[]);
 		o = rs.getObject(3);
 		assertTrue(o instanceof Integer);
-		assertEquals(((Integer) o).intValue(), 103);
+		assertEquals(( (Integer) o ).intValue(), 103);
 		assertFalse(rs.next());
 		stat.execute("DROP TABLE TEST");
 	}
-
+	
 	private void testDate(Connection conn) throws SQLException {
 		PreparedStatement prep = conn.prepareStatement("SELECT ?");
 		Timestamp ts = Timestamp.valueOf("2001-02-03 04:05:06");
@@ -350,7 +346,7 @@ public class TestPreparedStatement extends TestBase {
 		Timestamp ts2 = rs.getTimestamp(1);
 		assertEquals(ts.toString(), ts2.toString());
 	}
-
+	
 	private void testPreparedSubquery(Connection conn) throws SQLException {
 		Statement s = conn.createStatement();
 		s.executeUpdate("CREATE TABLE TEST(ID IDENTITY, FLAG BIT)");
@@ -371,7 +367,7 @@ public class TestPreparedStatement extends TestBase {
 		assertTrue(rs.next());
 		assertEquals(rs.getInt(1), 1);
 		assertTrue(rs.getBoolean(2));
-
+		
 		p = conn.prepareStatement("SELECT * FROM TEST WHERE EXISTS(SELECT * FROM TEST WHERE ID=?)");
 		p.setInt(1, -1);
 		rs = p.executeQuery();
@@ -379,10 +375,10 @@ public class TestPreparedStatement extends TestBase {
 		p.setInt(1, 1);
 		rs = p.executeQuery();
 		assertTrue(rs.next());
-
+		
 		s.executeUpdate("DROP TABLE IF EXISTS TEST");
 	}
-
+	
 	private void testParameterMetaData(Connection conn) throws SQLException {
 		PreparedStatement prep = conn.prepareStatement("SELECT ?, ?, ? FROM DUAL");
 		ParameterMetaData pm = prep.getParameterMetaData();
@@ -398,23 +394,23 @@ public class TestPreparedStatement extends TestBase {
 		try {
 			pm.getPrecision(0);
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		try {
 			pm.getPrecision(4);
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		prep.close();
 		try {
 			pm.getPrecision(1);
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
-
+		
 		Statement stat = conn.createStatement();
 		stat.execute("CREATE TABLE TEST3(ID INT, NAME VARCHAR(255), DATA DECIMAL(10,2))");
 		PreparedStatement prep1 = conn.prepareStatement("UPDATE TEST3 SET ID=?, NAME=?, DATA=?");
@@ -431,8 +427,9 @@ public class TestPreparedStatement extends TestBase {
 		checkParameter(prep3, 3, "java.math.BigDecimal", 3, "DECIMAL", 10, 2);
 		stat.execute("DROP TABLE TEST3");
 	}
-
-	private void checkParameter(PreparedStatement prep, int index, String className, int type, String typeName, int precision, int scale) throws SQLException {
+	
+	private void checkParameter(PreparedStatement prep, int index, String className, int type, String typeName, int precision, int scale)
+			throws SQLException {
 		ParameterMetaData meta = prep.getParameterMetaData();
 		assertEquals(className, meta.getParameterClassName(index));
 		assertEquals(type, meta.getParameterType(index));
@@ -440,7 +437,7 @@ public class TestPreparedStatement extends TestBase {
 		assertEquals(precision, meta.getPrecision(index));
 		assertEquals(scale, meta.getScale(index));
 	}
-
+	
 	private void testLikeIndex(Connection conn) throws SQLException {
 		Statement stat = conn.createStatement();
 		stat.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255))");
@@ -448,7 +445,7 @@ public class TestPreparedStatement extends TestBase {
 		stat.execute("INSERT INTO TEST VALUES(2, 'World')");
 		stat.execute("create index idxname on test(name);");
 		PreparedStatement prep, prepExe;
-
+		
 		prep = conn.prepareStatement("EXPLAIN SELECT * FROM TEST WHERE NAME LIKE ?");
 		assertEquals(prep.getParameterMetaData().getParameterCount(), 1);
 		prepExe = conn.prepareStatement("SELECT * FROM TEST WHERE NAME LIKE ?");
@@ -462,7 +459,7 @@ public class TestPreparedStatement extends TestBase {
 		rs.next();
 		assertEquals(rs.getString(2), "World");
 		assertFalse(rs.next());
-
+		
 		prep.setString(1, "H%");
 		prepExe.setString(1, "H%");
 		rs = prep.executeQuery();
@@ -473,10 +470,10 @@ public class TestPreparedStatement extends TestBase {
 		rs.next();
 		assertEquals(rs.getString(2), "Hello");
 		assertFalse(rs.next());
-
+		
 		stat.execute("DROP TABLE IF EXISTS TEST");
 	}
-
+	
 	private void testCasewhen(Connection conn) throws SQLException {
 		Statement stat = conn.createStatement();
 		stat.execute("CREATE TABLE TEST(ID INT)");
@@ -491,28 +488,27 @@ public class TestPreparedStatement extends TestBase {
 		trace(plan);
 		rs.close();
 		prep = conn
-		.prepareStatement("EXPLAIN SELECT COUNT(*) FROM TEST WHERE CASE ID WHEN 1 THEN ID WHEN 2 THEN ID ELSE ID END=? GROUP BY ID");
+				.prepareStatement("EXPLAIN SELECT COUNT(*) FROM TEST WHERE CASE ID WHEN 1 THEN ID WHEN 2 THEN ID ELSE ID END=? GROUP BY ID");
 		prep.setInt(1, 1);
 		rs = prep.executeQuery();
 		rs.next();
 		plan = rs.getString(1);
 		trace(plan);
-
+		
 		prep = conn.prepareStatement("SELECT COUNT(*) FROM TEST WHERE CASEWHEN(ID=1, ID, ID)=? GROUP BY ID");
 		prep.setInt(1, 1);
 		rs = prep.executeQuery();
 		assertTrue(rs.next());
 		assertEquals(rs.getInt(1), 1);
 		assertFalse(rs.next());
-
-		prep = conn
-		.prepareStatement("SELECT COUNT(*) FROM TEST WHERE CASE ID WHEN 1 THEN ID WHEN 2 THEN ID ELSE ID END=? GROUP BY ID");
+		
+		prep = conn.prepareStatement("SELECT COUNT(*) FROM TEST WHERE CASE ID WHEN 1 THEN ID WHEN 2 THEN ID ELSE ID END=? GROUP BY ID");
 		prep.setInt(1, 1);
 		rs = prep.executeQuery();
 		assertTrue(rs.next());
 		assertEquals(rs.getInt(1), 1);
 		assertFalse(rs.next());
-
+		
 		prep = conn.prepareStatement("SELECT * FROM TEST WHERE ? IS NULL");
 		prep.setString(1, "Hello");
 		rs = prep.executeQuery();
@@ -520,7 +516,7 @@ public class TestPreparedStatement extends TestBase {
 		try {
 			prep = conn.prepareStatement("select ? from dual union select ? from dual");
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		prep = conn.prepareStatement("select cast(? as varchar) from dual union select ? from dual");
@@ -532,10 +528,10 @@ public class TestPreparedStatement extends TestBase {
 		assertEquals(rs.getString(1), "a");
 		assertEquals(rs.getString(1), "a");
 		assertFalse(rs.next());
-
+		
 		stat.execute("DROP TABLE TEST");
 	}
-
+	
 	private void testSubquery(Connection conn) throws SQLException {
 		Statement stat = conn.createStatement();
 		stat.execute("CREATE TABLE TEST(ID INT)");
@@ -554,7 +550,7 @@ public class TestPreparedStatement extends TestBase {
 		assertFalse(rs.next());
 		stat.execute("DROP TABLE TEST");
 	}
-
+	
 	private void testDataTypes(Connection conn) throws SQLException {
 		conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 		conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
@@ -567,8 +563,7 @@ public class TestPreparedStatement extends TestBase {
 		stat.execute("CREATE TABLE T_DECIMAL_0(ID INT PRIMARY KEY,VALUE DECIMAL(30,0))");
 		stat.execute("CREATE TABLE T_DECIMAL_10(ID INT PRIMARY KEY,VALUE DECIMAL(20,10))");
 		stat.execute("CREATE TABLE T_DATETIME(ID INT PRIMARY KEY,VALUE DATETIME)");
-		prep = conn.prepareStatement("INSERT INTO T_INT VALUES(?,?)", ResultSet.TYPE_FORWARD_ONLY,
-				ResultSet.CONCUR_READ_ONLY);
+		prep = conn.prepareStatement("INSERT INTO T_INT VALUES(?,?)", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 		prep.setInt(1, 1);
 		prep.setInt(2, 0);
 		prep.executeUpdate();
@@ -620,7 +615,7 @@ public class TestPreparedStatement extends TestBase {
 		prep.setShort(2, (short) 30000);
 		prep.executeUpdate();
 		prep.setInt(1, 17);
-		prep.setShort(2, (short) (-30000));
+		prep.setShort(2, (short) ( -30000 ));
 		prep.executeUpdate();
 		prep.setInt(1, 18);
 		prep.setLong(2, Integer.MAX_VALUE);
@@ -628,14 +623,15 @@ public class TestPreparedStatement extends TestBase {
 		prep.setInt(1, 19);
 		prep.setLong(2, Integer.MIN_VALUE);
 		prep.executeUpdate();
-
+		
 		assertTrue(stat.execute("SELECT * FROM T_INT ORDER BY ID"));
 		rs = stat.getResultSet();
-		assertResultSetOrdered(rs, new String[][] { { "1", "0" }, { "2", "-1" }, { "3", "3" }, { "4", null },
-				{ "5", "0" }, { "6", "-1" }, { "7", "3" }, { "8", null }, { "9", "-4" }, { "10", "5" }, { "11", null },
-				{ "12", "1" }, { "13", "0" }, { "14", "-20" }, { "15", "100" }, { "16", "30000" }, { "17", "-30000" },
-				{ "18", "" + Integer.MAX_VALUE }, { "19", "" + Integer.MIN_VALUE }, });
-
+		assertResultSetOrdered(rs,
+				new String[][] { { "1", "0" }, { "2", "-1" }, { "3", "3" }, { "4", null }, { "5", "0" }, { "6", "-1" }, { "7", "3" },
+						{ "8", null }, { "9", "-4" }, { "10", "5" }, { "11", null }, { "12", "1" }, { "13", "0" }, { "14", "-20" },
+						{ "15", "100" }, { "16", "30000" }, { "17", "-30000" }, { "18", "" + Integer.MAX_VALUE },
+						{ "19", "" + Integer.MIN_VALUE }, });
+		
 		prep = conn.prepareStatement("INSERT INTO T_DECIMAL_0 VALUES(?,?)");
 		prep.setInt(1, 1);
 		prep.setLong(2, Long.MAX_VALUE);
@@ -655,10 +651,10 @@ public class TestPreparedStatement extends TestBase {
 		prep.setInt(1, 6);
 		prep.setFloat(2, -40);
 		prep.executeUpdate();
-
+		
 		rs = stat.executeQuery("SELECT VALUE FROM T_DECIMAL_0 ORDER BY ID");
 		checkBigDecimal(rs, new String[] { "" + Long.MAX_VALUE, "" + Long.MIN_VALUE, "10", "-20", "30", "-40" });
-
+		
 		// getMoreResults
 		stat.execute("CREATE TABLE TEST(ID INT)");
 		stat.execute("INSERT INTO TEST VALUES(1)");
@@ -672,7 +668,7 @@ public class TestPreparedStatement extends TestBase {
 			// supposed to be closed now
 			rs.next();
 			fail("getMoreResults didn't close this result set");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			trace("no error - getMoreResults is supposed to close the result set");
 		}
 		assertTrue(prep.getUpdateCount() == -1);
@@ -681,14 +677,13 @@ public class TestPreparedStatement extends TestBase {
 		assertFalse(prep.getMoreResults());
 		assertTrue(prep.getUpdateCount() == -1);
 	}
-
+	
 	private void testObject(Connection conn) throws SQLException {
 		Statement stat = conn.createStatement();
 		ResultSet rs;
 		stat.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255))");
 		stat.execute("INSERT INTO TEST VALUES(1, 'Hello')");
-		PreparedStatement prep = conn
-		.prepareStatement("SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? FROM TEST");
+		PreparedStatement prep = conn.prepareStatement("SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? FROM TEST");
 		prep.setObject(1, new Boolean(true));
 		prep.setObject(2, "Abc");
 		prep.setObject(3, new BigDecimal("10.2"));
@@ -733,7 +728,7 @@ public class TestPreparedStatement extends TestBase {
 		assertTrue(rs.getObject(18).equals(new Double(3.725)));
 		assertTrue(rs.getObject(19).equals(java.sql.Time.valueOf("23:22:21")));
 		assertTrue(rs.getObject(20).equals(new java.math.BigInteger("12345")));
-
+		
 		// } else if(x instanceof java.io.Reader) {
 		// return session.createLob(Value.CLOB,
 		// TypeConverter.getInputStream((java.io.Reader)x), 0);
@@ -741,11 +736,11 @@ public class TestPreparedStatement extends TestBase {
 		// return session.createLob(Value.BLOB, (java.io.InputStream)x, 0);
 		// } else {
 		// return ValueBytes.get(TypeConverter.serialize(x));
-
+		
 		stat.execute("DROP TABLE TEST");
-
+		
 	}
-
+	
 	private void testIdentity(Connection conn) throws SQLException {
 		Statement stat = conn.createStatement();
 		stat.execute("CREATE SEQUENCE SEQ");
@@ -777,11 +772,11 @@ public class TestPreparedStatement extends TestBase {
 		assertFalse(rs.next());
 		stat.execute("DROP TABLE TEST");
 	}
-
+	
 	private int getLength() throws SQLException {
 		return getSize(LOB_SIZE, LOB_SIZE_BIG);
 	}
-
+	
 	private void testBlob(Connection conn) throws SQLException {
 		trace("testBlob");
 		Statement stat = conn.createStatement();
@@ -790,30 +785,30 @@ public class TestPreparedStatement extends TestBase {
 		stat.execute("CREATE TABLE T_BLOB(ID INT PRIMARY KEY,V1 BLOB,V2 BLOB)");
 		trace("table created");
 		prep = conn.prepareStatement("INSERT INTO T_BLOB VALUES(?,?,?)");
-
+		
 		prep.setInt(1, 1);
 		prep.setBytes(2, null);
 		prep.setNull(3, Types.BINARY);
 		prep.executeUpdate();
-
+		
 		prep.setInt(1, 2);
 		prep.setBinaryStream(2, null, 0);
 		prep.setNull(3, Types.BLOB);
 		prep.executeUpdate();
-
+		
 		int length = getLength();
 		byte[] big1 = new byte[length];
 		byte[] big2 = new byte[length];
-		for (int i = 0; i < big1.length; i++) {
-			big1[i] = (byte) ((i * 11) % 254);
-			big2[i] = (byte) ((i * 17) % 251);
+		for ( int i = 0; i < big1.length; i++ ) {
+			big1[i] = (byte) ( ( i * 11 ) % 254 );
+			big2[i] = (byte) ( ( i * 17 ) % 251 );
 		}
-
+		
 		prep.setInt(1, 3);
 		prep.setBytes(2, big1);
 		prep.setBytes(3, big2);
 		prep.executeUpdate();
-
+		
 		prep.setInt(1, 4);
 		ByteArrayInputStream buffer;
 		buffer = new ByteArrayInputStream(big2);
@@ -824,47 +819,47 @@ public class TestPreparedStatement extends TestBase {
 		try {
 			buffer.close();
 			trace("buffer not closed");
-		} catch (IOException e) {
+		} catch ( IOException e ) {
 			trace("buffer closed");
 		}
-
+		
 		prep.setInt(1, 5);
 		buffer = new ByteArrayInputStream(big2);
 		prep.setObject(2, buffer, Types.BLOB, 0);
 		buffer = new ByteArrayInputStream(big1);
 		prep.setObject(3, buffer);
 		prep.executeUpdate();
-
+		
 		rs = stat.executeQuery("SELECT ID, V1, V2 FROM T_BLOB ORDER BY ID");
-
+		
 		rs.next();
 		assertEquals(rs.getInt(1), 1);
 		assertTrue(rs.getBytes(2) == null && rs.wasNull());
 		assertTrue(rs.getBytes(3) == null && rs.wasNull());
-
+		
 		rs.next();
 		assertEquals(rs.getInt(1), 2);
 		assertTrue(rs.getBytes(2) == null && rs.wasNull());
 		assertTrue(rs.getBytes(3) == null && rs.wasNull());
-
+		
 		rs.next();
 		assertEquals(rs.getInt(1), 3);
 		assertEquals(rs.getBytes(2), big1);
 		assertEquals(rs.getBytes(3), big2);
-
+		
 		rs.next();
 		assertEquals(rs.getInt(1), 4);
 		assertEquals(rs.getBytes(2), big2);
 		assertEquals(rs.getBytes(3), big1);
-
+		
 		rs.next();
 		assertEquals(rs.getInt(1), 5);
 		assertEquals(rs.getBytes(2), big2);
 		assertEquals(rs.getBytes(3), big1);
-
+		
 		assertFalse(rs.next());
 	}
-
+	
 	private void testClob(Connection conn) throws SQLException {
 		trace("testClob");
 		Statement stat = conn.createStatement();
@@ -873,31 +868,31 @@ public class TestPreparedStatement extends TestBase {
 		stat.execute("CREATE TABLE T_CLOB(ID INT PRIMARY KEY,V1 CLOB,V2 CLOB)");
 		StringBuilder asciiBuffer = new StringBuilder();
 		int len = getLength();
-		for (int i = 0; i < len; i++) {
-			asciiBuffer.append((char) ('a' + (i % 20)));
+		for ( int i = 0; i < len; i++ ) {
+			asciiBuffer.append((char) ( 'a' + ( i % 20 ) ));
 		}
 		String ascii1 = asciiBuffer.toString();
 		String ascii2 = "Number2 " + ascii1;
 		prep = conn.prepareStatement("INSERT INTO T_CLOB VALUES(?,?,?)");
-
+		
 		prep.setInt(1, 1);
 		prep.setString(2, null);
 		prep.setNull(3, Types.CLOB);
 		prep.executeUpdate();
-
+		
 		prep.clearParameters();
 		prep.setInt(1, 2);
 		prep.setAsciiStream(2, null, 0);
 		prep.setCharacterStream(3, null, 0);
 		prep.executeUpdate();
-
+		
 		prep.clearParameters();
 		prep.setInt(1, 3);
 		prep.setCharacterStream(2, new StringReader(ascii1), ascii1.length());
 		prep.setCharacterStream(3, null, 0);
 		prep.setAsciiStream(3, new ByteArrayInputStream(ascii2.getBytes()), ascii2.length());
 		prep.executeUpdate();
-
+		
 		prep.clearParameters();
 		prep.setInt(1, 4);
 		prep.setNull(2, Types.CLOB);
@@ -906,54 +901,54 @@ public class TestPreparedStatement extends TestBase {
 		prep.setNull(3, Types.CLOB);
 		prep.setString(3, ascii1);
 		prep.executeUpdate();
-
+		
 		prep.clearParameters();
 		prep.setInt(1, 5);
 		prep.setObject(2, new StringReader(ascii1));
 		prep.setObject(3, new StringReader(ascii2), Types.CLOB, 0);
 		prep.executeUpdate();
-
+		
 		rs = stat.executeQuery("SELECT ID, V1, V2 FROM T_CLOB ORDER BY ID");
-
+		
 		rs.next();
 		assertEquals(rs.getInt(1), 1);
 		assertTrue(rs.getCharacterStream(2) == null && rs.wasNull());
 		assertTrue(rs.getAsciiStream(3) == null && rs.wasNull());
-
+		
 		rs.next();
 		assertEquals(rs.getInt(1), 2);
 		assertTrue(rs.getString(2) == null && rs.wasNull());
 		assertTrue(rs.getString(3) == null && rs.wasNull());
-
+		
 		rs.next();
 		assertEquals(rs.getInt(1), 3);
 		assertEquals(rs.getString(2), ascii1);
 		assertEquals(rs.getString(3), ascii2);
-
+		
 		rs.next();
 		assertEquals(rs.getInt(1), 4);
 		assertEquals(rs.getString(2), ascii2);
 		assertEquals(rs.getString(3), ascii1);
-
+		
 		rs.next();
 		assertEquals(rs.getInt(1), 5);
 		assertEquals(rs.getString(2), ascii1);
 		assertEquals(rs.getString(3), ascii2);
-
+		
 		assertFalse(rs.next());
 		assertTrue(prep.getWarnings() == null);
 		prep.clearWarnings();
 		assertTrue(prep.getWarnings() == null);
 		assertTrue(conn == prep.getConnection());
 	}
-
+	
 	private void checkBigDecimal(ResultSet rs, String[] value) throws SQLException {
-		for (int i = 0; i < value.length; i++) {
+		for ( int i = 0; i < value.length; i++ ) {
 			String v = value[i];
 			assertTrue(rs.next());
 			java.math.BigDecimal x = rs.getBigDecimal(1);
 			trace("v=" + v + " x=" + x);
-			if (v == null) {
+			if ( v == null ) {
 				assertTrue(x == null);
 			} else {
 				assertTrue(x.compareTo(new java.math.BigDecimal(v)) == 0);
@@ -961,5 +956,5 @@ public class TestPreparedStatement extends TestBase {
 		}
 		assertTrue(!rs.next());
 	}
-
+	
 }

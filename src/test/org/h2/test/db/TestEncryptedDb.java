@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.db;
 
@@ -17,18 +15,19 @@ import org.h2.test.TestBase;
  * Test using an encrypted database.
  */
 public class TestEncryptedDb extends TestBase {
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws SQLException {
-		if (config.memory || config.cipher != null) {
+		if ( config.memory || config.cipher != null ) {
 			return;
 		}
 		deleteDb("exclusive");
@@ -41,26 +40,26 @@ public class TestEncryptedDb extends TestBase {
 		stat.execute("SHUTDOWN IMMEDIATELY");
 		try {
 			conn.close();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
-
+		
 		try {
 			conn = getConnection("exclusive;CIPHER=AES", "sa", "1234 1234");
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
-
+		
 		conn = getConnection("exclusive;CIPHER=AES", "sa", "123 123");
 		stat = conn.createStatement();
 		ResultSet rs = stat.executeQuery("SELECT * FROM TEST");
 		assertTrue(rs.next());
 		assertEquals(1, rs.getInt(1));
 		assertFalse(rs.next());
-
+		
 		conn.close();
 		deleteDb("exclusive");
 	}
-
+	
 }

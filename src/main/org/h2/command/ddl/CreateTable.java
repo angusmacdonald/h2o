@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.command.ddl;
 
@@ -57,38 +55,51 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  * This class represents the statement CREATE TABLE
  */
 public class CreateTable extends SchemaCommand {
-
+	
 	private String tableName;
+	
 	private ObjectArray constraintCommands = new ObjectArray();
+	
 	private ObjectArray columns = new ObjectArray();
+	
 	private IndexColumn[] pkColumns;
+	
 	private boolean ifNotExists;
+	
 	private boolean persistent = true;
+	
 	private boolean temporary;
+	
 	private boolean globalTemporary;
+	
 	private boolean onCommitDrop;
+	
 	private boolean onCommitTruncate;
+	
 	private Query asQuery;
+	
 	private String comment;
+	
 	private boolean clustered;
+	
 	private QueryProxy queryProxy = null;
-
+	
 	public CreateTable(Session session, Schema schema) {
 		super(session, schema);
 	}
-
+	
 	public void setQuery(Query query) {
 		this.asQuery = query;
 	}
-
+	
 	public void setTemporary(boolean temporary) {
 		this.temporary = temporary;
 	}
-
+	
 	public void setTableName(String tableName) {
 		this.tableName = tableName;
 	}
-
+	
 	/**
 	 * Add a column to this table.
 	 * 
@@ -96,12 +107,12 @@ public class CreateTable extends SchemaCommand {
 	 *            the column to add
 	 */
 	public void addColumn(Column column) {
-		if (columns == null) {
+		if ( columns == null ) {
 			columns = new ObjectArray();
 		}
 		columns.add(column);
 	}
-
+	
 	/**
 	 * Add a constraint statement to this statement. The primary key definition is one possible constraint statement.
 	 * 
@@ -109,26 +120,26 @@ public class CreateTable extends SchemaCommand {
 	 *            the statement to add
 	 */
 	public void addConstraintCommand(Prepared command) throws SQLException {
-		if (command instanceof CreateIndex) {
+		if ( command instanceof CreateIndex ) {
 			constraintCommands.add(command);
 		} else {
 			AlterTableAddConstraint con = (AlterTableAddConstraint) command;
 			boolean alreadySet;
-			if (con.getType() == AlterTableAddConstraint.PRIMARY_KEY) {
+			if ( con.getType() == AlterTableAddConstraint.PRIMARY_KEY ) {
 				alreadySet = setPrimaryKeyColumns(con.getIndexColumns());
 			} else {
 				alreadySet = false;
 			}
-			if (!alreadySet) {
+			if ( !alreadySet ) {
 				constraintCommands.add(command);
 			}
 		}
 	}
-
+	
 	public void setIfNotExists(boolean ifNotExists) {
 		this.ifNotExists = ifNotExists;
 	}
-
+	
 	public int update() throws SQLException, RemoteException {
 		/*
 		 * The only time this is called is when a CreateTable command is replayed at database startup. This differs from the normal
@@ -138,65 +149,65 @@ public class CreateTable extends SchemaCommand {
 		 */
 		return update(TransactionNameGenerator.generateName("NULLCREATION"));
 	}
-
+	
 	public int update(String transactionName) throws SQLException, RemoteException {
 		// TODO rights: what rights are required to create a table?
 		session.commit(true);
 		Database db = session.getDatabase();
-		if (!db.isPersistent()) {
+		if ( !db.isPersistent() ) {
 			persistent = false;
 		}
-
-		if ((getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE) != null && !isStartup())
-				|| getSchema().findLocalTableOrView(session, tableName) != null) {
-			if (ifNotExists || isStartup()) {
+		
+		if ( ( getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE) != null && !isStartup() )
+				|| getSchema().findLocalTableOrView(session, tableName) != null ) {
+			if ( ifNotExists || isStartup() ) {
 				return 0;
 			}
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
 		}
-
-		if (asQuery != null) {
+		
+		if ( asQuery != null ) {
 			asQuery.prepare();
-			if (columns.size() == 0) {
+			if ( columns.size() == 0 ) {
 				generateColumnsFromQuery();
-			} else if (columns.size() != asQuery.getColumnCount()) {
+			} else if ( columns.size() != asQuery.getColumnCount() ) {
 				throw Message.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH);
 			}
 		}
-		if (pkColumns != null) {
+		if ( pkColumns != null ) {
 			int len = pkColumns.length;
-			for (int i = 0; i < columns.size(); i++) {
+			for ( int i = 0; i < columns.size(); i++ ) {
 				Column c = (Column) columns.get(i);
-				for (int j = 0; j < len; j++) {
-					if (c.getName().equals(pkColumns[j].columnName)) {
+				for ( int j = 0; j < len; j++ ) {
+					if ( c.getName().equals(pkColumns[j].columnName) ) {
 						c.setNullable(false);
 					}
 				}
 			}
 		}
 		ObjectArray sequences = new ObjectArray();
-		for (int i = 0; i < columns.size(); i++) {
+		for ( int i = 0; i < columns.size(); i++ ) {
 			Column c = (Column) columns.get(i);
-			if (c.getAutoIncrement()) {
+			if ( c.getAutoIncrement() ) {
 				int objId = getObjectId(true, true);
 				c.convertAutoIncrementToSequence(session, getSchema(), objId, temporary);
 			}
 			Sequence seq = c.getSequence();
-			if (seq != null) {
+			if ( seq != null ) {
 				sequences.add(seq);
 			}
 		}
 		int id = getObjectId(true, true);
-
+		
 		TableData table = getSchema().createTable(tableName, id, columns, persistent, clustered, headPos);
 		table.setComment(comment);
 		table.setTemporary(temporary);
 		table.setGlobalTemporary(globalTemporary);
-		if (temporary && !globalTemporary) {
-			if (onCommitDrop) {
+		if ( temporary && !globalTemporary ) {
+			if ( onCommitDrop ) {
 				table.setOnCommitDrop(true);
 			}
-			if (onCommitTruncate) {
+			if ( onCommitTruncate ) {
 				table.setOnCommitTruncate(true);
 			}
 			session.addLocalTempTable(table);
@@ -204,19 +215,19 @@ public class CreateTable extends SchemaCommand {
 			db.addSchemaObject(session, table);
 		}
 		try {
-			for (int i = 0; i < columns.size(); i++) {
+			for ( int i = 0; i < columns.size(); i++ ) {
 				Column c = (Column) columns.get(i);
 				c.prepareExpression(session);
 			}
-			for (int i = 0; i < sequences.size(); i++) {
+			for ( int i = 0; i < sequences.size(); i++ ) {
 				Sequence sequence = (Sequence) sequences.get(i);
 				table.addSequence(sequence);
 			}
-			for (int i = 0; i < constraintCommands.size(); i++) {
+			for ( int i = 0; i < constraintCommands.size(); i++ ) {
 				Prepared command = (Prepared) constraintCommands.get(i);
 				command.update();
 			}
-			if (asQuery != null) {
+			if ( asQuery != null ) {
 				boolean old = session.getUndoLogEnabled();
 				try {
 					session.setUndoLogEnabled(false);
@@ -230,44 +241,41 @@ public class CreateTable extends SchemaCommand {
 					session.setUndoLogEnabled(old);
 				}
 			}
-
+			
 			/*
-			 * ################################################################## #######
-			 * 
-			 * Create a System Table entry.
-			 * 
+			 * ################################################################## ####### Create a System Table entry.
 			 * ################################################################## #######
 			 */
 
 			boolean localTable = db.isTableLocal(getSchema());
-			if (Constants.IS_H2O && !db.isManagementDB() && !localTable && !isStartup()) {
+			if ( Constants.IS_H2O && !db.isManagementDB() && !localTable && !isStartup() ) {
 				ISystemTable systemTable = db.getSystemTable(); // db.getSystemSession()
 				ISystemTableReference systemTableReference = db.getSystemTableReference();
-
+				
 				assert systemTable != null;
-
+				
 				int tableSet = -1;
 				boolean thisTableReferencesAnExistingTable = false;
-
+				
 				try {
-
-					if (table.getConstraints() != null) {
+					
+					if ( table.getConstraints() != null ) {
 						Constraint[] constraints = new Constraint[table.getConstraints().size()];
 						table.getConstraints().toArray(constraints);
-
+						
 						Set<Table> referencedTables = new HashSet<Table>();
-						for (Constraint con : constraints) {
-							if (con instanceof ConstraintReferential) {
+						for ( Constraint con : constraints ) {
+							if ( con instanceof ConstraintReferential ) {
 								thisTableReferencesAnExistingTable = true;
 								referencedTables.add(con.getRefTable());
 							}
 						}
-
-						if (thisTableReferencesAnExistingTable) {
-							if (referencedTables.size() > 1) {
+						
+						if ( thisTableReferencesAnExistingTable ) {
+							if ( referencedTables.size() > 1 ) {
 								System.err.println("Unexpected. Test that this still works.");
 							}
-							for (Table tab : referencedTables) {
+							for ( Table tab : referencedTables ) {
 								tableSet = tab.getTableSet();
 							}
 						} else {
@@ -276,33 +284,33 @@ public class CreateTable extends SchemaCommand {
 					} else {
 						tableSet = systemTable.getNewTableSetNumber();
 					}
-
+					
 					TableInfo tableInfo = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet,
 							table.getTableType(), db.getURL());
-
+					
 					addInformationToSystemTable(systemTable, systemTableReference, tableInfo);
-
+					
 					createReplicas(tableInfo, transactionName);
-
-				} catch (MovedException e) {
+					
+				} catch ( MovedException e ) {
 					throw new RemoteException("System Table has moved. Cannot complete query.");
 				}
 				table.setTableSet(tableSet);
 			}
-
-			if (Constants.IS_H2O && !db.isManagementDB()) {
+			
+			if ( Constants.IS_H2O && !db.isManagementDB() ) {
 				prepareTransaction(transactionName);
 			}
-
-		} catch (SQLException e) {
+			
+		} catch ( SQLException e ) {
 			db.checkPowerOff();
 			db.removeSchemaObject(session, table);
 			throw e;
 		}
-
+		
 		return 0;
 	}
-
+	
 	/**
 	 * Inform the System Table that the new table has been created.
 	 * 
@@ -313,26 +321,27 @@ public class CreateTable extends SchemaCommand {
 	private void addInformationToSystemTable(ISystemTable systemTable, ISystemTableReference systemTableReference, TableInfo tableInfo)
 			throws RemoteException, MovedException, SQLException {
 		TableManagerRemote tableManager = queryProxy.getTableManager();
-
+		
 		// XXX its a hack to pass in replica locations like this, and it should
 		// be unncessesary.
-		Set<DatabaseInstanceWrapper> replicaLocations = this.session.getDatabase().getMetaDataReplicaManager().getTableManagerReplicaLocations();
+		Set<DatabaseInstanceWrapper> replicaLocations = this.session.getDatabase().getMetaDataReplicaManager()
+				.getTableManagerReplicaLocations();
 		replicaLocations.add(session.getDatabase().getLocalDatabaseInstanceInWrapper());
 		boolean successful = systemTableReference.addTableInformation(tableManager, tableInfo, replicaLocations);
-
-		if (!successful) {
+		
+		if ( !successful ) {
 			throw new SQLException("Failed to add Table Manager reference to System Table: " + systemTable);
 		}
-
+		
 		try {
 			tableManager.persistToCompleteStartup(tableInfo);
 			H2OEventBus.publish(new H2OEvent(this.session.getDatabase().getURL().getDbLocation(), DatabaseStates.TABLE_CREATION, tableInfo
 					.getFullTableName()));
-		} catch (StartupException e) {
+		} catch ( StartupException e ) {
 			throw new SQLException("Failed to create table. Couldn't persist table manager meta-data [" + e.getMessage() + "].");
 		}
 	}
-
+	
 	/**
 	 * Create replicas if required by the system configuration (Settings.RELATION_REPLICATION_FACTOR).
 	 * 
@@ -343,50 +352,51 @@ public class CreateTable extends SchemaCommand {
 	 * @throws MovedException
 	 */
 	private void createReplicas(TableInfo tableInfo, String transactionName) throws RemoteException, SQLException, MovedException {
-
+		
 		Map<DatabaseInstanceWrapper, Integer> replicaLocations = queryProxy.getRemoteReplicaLocations();
-
-		if (replicaLocations != null && replicaLocations.size() > 0) {
+		
+		if ( replicaLocations != null && replicaLocations.size() > 0 ) {
 			/*
 			 * If true, this table should be immediately replicated onto a number of other instances.
 			 */
 			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Creating replica of table " + tableInfo.getFullTableName() + " onto "
-					+ (queryProxy.getReplicaLocations().size() - 1) + " other instances.");
-
+					+ ( queryProxy.getReplicaLocations().size() - 1 ) + " other instances.");
+			
 			String sql = sqlStatement.substring("CREATE TABLE".length());
 			sql = "CREATE EMPTY REPLICA" + sql;
-
+			
 			// Get the set of only remote replica locations.
-
+			
 			// Execute query.
 			AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor(this.getSchema().getDatabase());
 			queryExecutor.executeQuery(sql, transactionName, replicaLocations, tableInfo, session, false);
 		}
 	}
-
+	
 	private void generateColumnsFromQuery() {
 		int columnCount = asQuery.getColumnCount();
 		ObjectArray expressions = asQuery.getExpressions();
-		for (int i = 0; i < columnCount; i++) {
+		for ( int i = 0; i < columnCount; i++ ) {
 			Expression expr = (Expression) expressions.get(i);
 			int type = expr.getType();
 			String name = expr.getAlias();
 			long precision = expr.getPrecision();
 			int displaySize = expr.getDisplaySize();
 			DataType dt = DataType.getDataType(type);
-			if (precision > 0 && (dt.defaultPrecision == 0 || (dt.defaultPrecision > precision && dt.defaultPrecision < Byte.MAX_VALUE))) {
+			if ( precision > 0
+					&& ( dt.defaultPrecision == 0 || ( dt.defaultPrecision > precision && dt.defaultPrecision < Byte.MAX_VALUE ) ) ) {
 				// dont' set precision to MAX_VALUE if this is the default
 				precision = dt.defaultPrecision;
 			}
 			int scale = expr.getScale();
-			if (scale > 0 && (dt.defaultScale == 0 || dt.defaultScale > scale)) {
+			if ( scale > 0 && ( dt.defaultScale == 0 || dt.defaultScale > scale ) ) {
 				scale = dt.defaultScale;
 			}
 			Column col = new Column(name, type, precision, scale, displaySize);
 			addColumn(col);
 		}
 	}
-
+	
 	/**
 	 * Sets the primary key columns, but also check if a primary key with different columns is already defined.
 	 * 
@@ -395,12 +405,12 @@ public class CreateTable extends SchemaCommand {
 	 * @return true if the same primary key columns where already set
 	 */
 	private boolean setPrimaryKeyColumns(IndexColumn[] columns) throws SQLException {
-		if (pkColumns != null) {
-			if (columns.length != pkColumns.length) {
+		if ( pkColumns != null ) {
+			if ( columns.length != pkColumns.length ) {
 				throw Message.getSQLException(ErrorCode.SECOND_PRIMARY_KEY);
 			}
-			for (int i = 0; i < columns.length; i++) {
-				if (!columns[i].columnName.equals(pkColumns[i].columnName)) {
+			for ( int i = 0; i < columns.length; i++ ) {
+				if ( !columns[i].columnName.equals(pkColumns[i].columnName) ) {
 					throw Message.getSQLException(ErrorCode.SECOND_PRIMARY_KEY);
 				}
 			}
@@ -409,40 +419,39 @@ public class CreateTable extends SchemaCommand {
 		this.pkColumns = columns;
 		return false;
 	}
-
+	
 	public void setPersistent(boolean persistent) {
 		this.persistent = persistent;
 	}
-
+	
 	public void setGlobalTemporary(boolean globalTemporary) {
 		this.globalTemporary = globalTemporary;
 	}
-
+	
 	/**
 	 * This temporary table is dropped on commit.
 	 */
 	public void setOnCommitDrop() {
 		this.onCommitDrop = true;
 	}
-
+	
 	/**
 	 * This temporary table is truncated on commit.
 	 */
 	public void setOnCommitTruncate() {
 		this.onCommitTruncate = true;
 	}
-
+	
 	public void setComment(String comment) {
 		this.comment = comment;
 	}
-
+	
 	public void setClustered(boolean clustered) {
 		this.clustered = clustered;
 	}
-
+	
 	/*
 	 * (non-Javadoc)
-	 * 
 	 * @see org.h2.command.Prepared#shouldBePropagated()
 	 */
 	@Override
@@ -452,10 +461,9 @@ public class CreateTable extends SchemaCommand {
 		 */
 		return isRegularTable();
 	}
-
+	
 	/*
 	 * (non-Javadoc)
-	 * 
 	 * @see org.h2.command.Prepared#isRegularTable()
 	 */
 	@Override
@@ -463,60 +471,55 @@ public class CreateTable extends SchemaCommand {
 		boolean isLocal = session.getDatabase().isTableLocal(getSchema());
 		return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery && !isLocal;
 	}
-
+	
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see org.h2.command.Prepared#acquireLocks()
-	 * 
-	 * The queryProxyManager variable isn't used in create table, because it can't have a proxy for something which hasn't yet been created.
+	 * @see org.h2.command.Prepared#acquireLocks() The queryProxyManager variable isn't used in create table, because it can't have a proxy
+	 * for something which hasn't yet been created.
 	 */
 	@Override
 	public void acquireLocks(QueryProxyManager queryProxyManager) throws SQLException {
 		Database db = session.getDatabase();
-
+		
 		assert queryProxyManager.getQueryProxy(tableName) == null; // should
 																	// never
 																	// exist.
-
+		
 		/*
-		 * ###################################################################### ###
-		 * 
-		 * H2O. Check that the table doesn't already exist elsewhere.
-		 * 
-		 * ###################################################################### ###
+		 * ###################################################################### ### H2O. Check that the table doesn't already exist
+		 * elsewhere. ###################################################################### ###
 		 */
 
-		if (Constants.IS_H2O && !db.getSystemTableReference().isSystemTableLocal() && !db.isManagementDB() && !db.isTableLocal(getSchema())
-				&& !isStartup()) {
-
+		if ( Constants.IS_H2O && !db.getSystemTableReference().isSystemTableLocal() && !db.isManagementDB()
+				&& !db.isTableLocal(getSchema()) && !isStartup() ) {
+			
 			TableManagerRemote tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, false);
-
-			if (tableManager != null) {
+			
+			if ( tableManager != null ) {
 				try {
-					if (tableManager.isAlive()) {
+					if ( tableManager.isAlive() ) {
 						throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, tableName);
 					}
-				} catch (Exception e) {
+				} catch ( Exception e ) {
 					// The TableManager is not alive.
 				}
 			}
-
+			
 		}
-
+		
 		queryProxy = null;
-		if (Constants.IS_H2O && !db.isTableLocal(getSchema()) && !db.isManagementDB() && !isStartup()) { // if it is startup
+		if ( Constants.IS_H2O && !db.isTableLocal(getSchema()) && !db.isManagementDB() && !isStartup() ) { // if it is startup
 																											// then we don't
 																											// want to create a
 																											// table manager
 																											// yet.
-
+			
 			// TableInfo tableDetails, Database databas
 			TableInfo ti = new TableInfo(tableName, getSchema().getName(), 0l, 0, "TABLE", db.getURL());
 			TableManager tableManager = null;
 			try {
 				tableManager = new TableManager(ti, db);
-			} catch (Exception e1) {
+			} catch ( Exception e1 ) {
 				e1.printStackTrace();
 			}
 			/*
@@ -524,24 +527,23 @@ public class CreateTable extends SchemaCommand {
 			 */
 			try {
 				UnicastRemoteObject.exportObject(tableManager, 0);
-			} catch (Exception e) {
+			} catch ( Exception e ) {
 				// May already be exported.
 			}
 			H2OEventBus.publish(new H2OEvent(db.getURL().getDbLocation(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
-
+			
 			queryProxy = QueryProxy.getQueryProxyAndLock(tableManager, ti.getFullTableName(), db, LockType.CREATE,
 					db.getLocalDatabaseInstanceInWrapper(), false);
-
-
-		} else if (Constants.IS_H2O) {
+			
+		} else if ( Constants.IS_H2O ) {
 			/*
 			 * This is a system table, but it still needs a QueryProxy to indicate that it is acceptable to execute the query.
 			 */
 			queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.CREATE, db);
-
+			
 		}
-
+		
 		queryProxyManager.addProxy(queryProxy);
 	}
-
+	
 }

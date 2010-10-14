@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.util;
 
@@ -16,23 +14,20 @@ import org.h2.constant.ErrorCode;
 import org.h2.message.Message;
 
 /**
- * Utility class for object creation and serialization. Starting with Java 1.5,
- * some objects are re-used.
+ * Utility class for object creation and serialization. Starting with Java 1.5, some objects are re-used.
  */
 public class ObjectUtils {
-
+	
 	/**
-	 * The maximum number of elements to copy using a Java loop. This value was
-	 * found by running tests using the Sun JDK 1.4 and JDK 1.6 on Windows XP.
-	 * The biggest difference is for size smaller than 40 (more than 50%
-	 * saving).
+	 * The maximum number of elements to copy using a Java loop. This value was found by running tests using the Sun JDK 1.4 and JDK 1.6 on
+	 * Windows XP. The biggest difference is for size smaller than 40 (more than 50% saving).
 	 */
 	private static final int MAX_JAVA_LOOP_COPY = 100;
-
+	
 	private ObjectUtils() {
 		// utility class
 	}
-
+	
 	/**
 	 * Create a new object or get a cached object for the given value.
 	 * 
@@ -42,14 +37,14 @@ public class ObjectUtils {
 	 */
 	public static Integer getInteger(int x) {
 		// ## Java 1.5 begin ##
-		if (true) {
+		if ( true ) {
 			return Integer.valueOf(x);
 		}
 		// ## Java 1.5 end ##
 		// NOPMD
 		return new Integer(x);
 	}
-
+	
 	/**
 	 * Create a new object or get a cached object for the given value.
 	 * 
@@ -59,13 +54,13 @@ public class ObjectUtils {
 	 */
 	public static Character getCharacter(char x) {
 		// ## Java 1.5 begin ##
-		if (true) {
+		if ( true ) {
 			return Character.valueOf(x);
 		}
 		// ## Java 1.5 end ##
 		return new Character(x);
 	}
-
+	
 	/**
 	 * Create a new object or get a cached object for the given value.
 	 * 
@@ -75,14 +70,14 @@ public class ObjectUtils {
 	 */
 	public static Long getLong(long x) {
 		// ## Java 1.5 begin ##
-		if (true) {
+		if ( true ) {
 			return Long.valueOf(x);
 		}
 		// ## Java 1.5 end ##
 		// NOPMD
 		return new Long(x);
 	}
-
+	
 	/**
 	 * Create a new object or get a cached object for the given value.
 	 * 
@@ -92,14 +87,14 @@ public class ObjectUtils {
 	 */
 	public static Short getShort(short x) {
 		// ## Java 1.5 begin ##
-		if (true) {
+		if ( true ) {
 			return Short.valueOf(x);
 		}
 		// ## Java 1.5 end ##
 		// NOPMD
 		return new Short(x);
 	}
-
+	
 	/**
 	 * Create a new object or get a cached object for the given value.
 	 * 
@@ -109,14 +104,14 @@ public class ObjectUtils {
 	 */
 	public static Byte getByte(byte x) {
 		// ## Java 1.5 begin ##
-		if (true) {
+		if ( true ) {
 			return Byte.valueOf(x);
 		}
 		// ## Java 1.5 end ##
 		// NOPMD
 		return new Byte(x);
 	}
-
+	
 	/**
 	 * Create a new object or get a cached object for the given value.
 	 * 
@@ -126,13 +121,13 @@ public class ObjectUtils {
 	 */
 	public static Float getFloat(float x) {
 		// ## Java 1.5 begin ##
-		if (true) {
+		if ( true ) {
 			return Float.valueOf(x);
 		}
 		// ## Java 1.5 end ##
 		return new Float(x);
 	}
-
+	
 	/**
 	 * Create a new object or get a cached object for the given value.
 	 * 
@@ -142,13 +137,13 @@ public class ObjectUtils {
 	 */
 	public static Double getDouble(double x) {
 		// ## Java 1.5 begin ##
-		if (true) {
+		if ( true ) {
 			return Double.valueOf(x);
 		}
 		// ## Java 1.5 end ##
 		return new Double(x);
 	}
-
+	
 	/**
 	 * Serialize the object to a byte array.
 	 * 
@@ -162,12 +157,11 @@ public class ObjectUtils {
 			ObjectOutputStream os = new ObjectOutputStream(out);
 			os.writeObject(obj);
 			return out.toByteArray();
-		} catch (Throwable e) {
-			throw Message.getSQLException(ErrorCode.SERIALIZATION_FAILED_1,
-					new String[] { e.toString() }, e);
+		} catch ( Throwable e ) {
+			throw Message.getSQLException(ErrorCode.SERIALIZATION_FAILED_1, new String[] { e.toString() }, e);
 		}
 	}
-
+	
 	/**
 	 * De-serialize the byte array to an object.
 	 * 
@@ -182,15 +176,13 @@ public class ObjectUtils {
 			ObjectInputStream is = new ObjectInputStream(in);
 			Object obj = is.readObject();
 			return obj;
-		} catch (Throwable e) {
-			throw Message.getSQLException(ErrorCode.DESERIALIZATION_FAILED_1,
-					new String[] { e.toString() }, e);
+		} catch ( Throwable e ) {
+			throw Message.getSQLException(ErrorCode.DESERIALIZATION_FAILED_1, new String[] { e.toString() }, e);
 		}
 	}
-
+	
 	/**
-	 * Copy the elements of the source array to the target array.
-	 * System.arraycopy is used for larger arrays, but for very small arrays it
+	 * Copy the elements of the source array to the target array. System.arraycopy is used for larger arrays, but for very small arrays it
 	 * is faster to use a regular loop.
 	 * 
 	 * @param source
@@ -201,15 +193,15 @@ public class ObjectUtils {
 	 *            the number of elements to copy
 	 */
 	public static void arrayCopy(Object[] source, Object[] target, int size) {
-		if (size > MAX_JAVA_LOOP_COPY) {
+		if ( size > MAX_JAVA_LOOP_COPY ) {
 			System.arraycopy(source, 0, target, 0, size);
 		} else {
-			for (int i = 0; i < size; i++) {
+			for ( int i = 0; i < size; i++ ) {
 				target[i] = source[i];
 			}
 		}
 	}
-
+	
 	/**
 	 * Calculate the hash code of the given object. The object may be null.
 	 * 
@@ -220,5 +212,5 @@ public class ObjectUtils {
 	public static int hashCode(Object o) {
 		return o == null ? 0 : o.hashCode();
 	}
-
+	
 }

@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.synth.sql;
 
@@ -13,35 +11,39 @@ import java.util.ArrayList;
  * Represents an expression.
  */
 public class Expression {
-
+	
 	private String sql;
+	
 	private TestSynth config;
+	
 	private Command command;
-
+	
 	private Expression(TestSynth config, Command command) {
 		this.config = config;
 		this.command = command;
 		sql = "";
 	}
-
+	
 	/**
 	 * Create a random select list.
-	 *
-	 * @param config the configuration
-	 * @param command the command
+	 * 
+	 * @param config
+	 *            the configuration
+	 * @param command
+	 *            the command
 	 * @return the select list
 	 */
 	static String[] getRandomSelectList(TestSynth config, Command command) {
-		if (config.random().getBoolean(30)) {
+		if ( config.random().getBoolean(30) ) {
 			return new String[] { "*" };
 		}
 		ArrayList exp = new ArrayList();
 		String sql = "";
-		if (config.random().getBoolean(10)) {
+		if ( config.random().getBoolean(10) ) {
 			sql += "DISTINCT ";
 		}
 		int len = config.random().getLog(8) + 1;
-		for (int i = 0; i < len; i++) {
+		for ( int i = 0; i < len; i++ ) {
 			sql += getRandomExpression(config, command).getSQL();
 			sql += " AS A" + i + " ";
 			exp.add(sql);
@@ -51,45 +53,50 @@ public class Expression {
 		exp.toArray(list);
 		return list;
 	}
-
+	
 	/**
 	 * Generate a random condition.
-	 *
-	 * @param config the configuration
-	 * @param command the command
+	 * 
+	 * @param config
+	 *            the configuration
+	 * @param command
+	 *            the command
 	 * @return the random condition expression
 	 */
 	static Expression getRandomCondition(TestSynth config, Command command) {
 		Expression condition = new Expression(config, command);
-		if (config.random().getBoolean(50)) {
+		if ( config.random().getBoolean(50) ) {
 			condition.create();
 		}
 		return condition;
 	}
-
+	
 	private static Expression getRandomExpression(TestSynth config, Command command) {
 		Expression expression = new Expression(config, command);
 		String alias = command.getRandomTableAlias();
 		Column column = command.getTable(alias).getRandomConditionColumn();
-		if (column == null) {
+		if ( column == null ) {
 			expression.createValue();
 		} else {
 			expression.createExpression(alias, column);
 		}
 		return expression;
 	}
-
+	
 	private void createValue() {
 		Value v = Column.getRandomColumn(config).getRandomValue();
 		sql = v.getSQL();
 	}
-
+	
 	/**
 	 * Generate a random join condition.
-	 *
-	 * @param config the configuration
-	 * @param command the command
-	 * @param alias the alias name
+	 * 
+	 * @param config
+	 *            the configuration
+	 * @param command
+	 *            the command
+	 * @param alias
+	 *            the alias name
 	 * @return the join condition
 	 */
 	static Expression getRandomJoinOn(TestSynth config, Command command, String alias) {
@@ -97,19 +104,21 @@ public class Expression {
 		expression.createJoinComparison(alias);
 		return expression;
 	}
-
+	
 	/**
 	 * Generate a random sort order list.
-	 *
-	 * @param config the configuration
-	 * @param command the command
+	 * 
+	 * @param config
+	 *            the configuration
+	 * @param command
+	 *            the command
 	 * @return the ORDER BY list
 	 */
 	static String getRandomOrder(TestSynth config, Command command) {
 		int len = config.random().getLog(6);
 		String sql = "";
-		for (int i = 0; i < len; i++) {
-			if (i > 0) {
+		for ( int i = 0; i < len; i++ ) {
+			if ( i > 0 ) {
 				sql += ", ";
 			}
 			int max = command.selectList.length;
@@ -120,8 +129,8 @@ public class Expression {
 			// } else {
 			// sql += String.valueOf(idx + 1);
 			// }
-			if (config.random().getBoolean(50)) {
-				if (config.random().getBoolean(10)) {
+			if ( config.random().getBoolean(50) ) {
+				if ( config.random().getBoolean(10) ) {
 					sql += " ASC";
 				} else {
 					sql += " DESC";
@@ -130,44 +139,44 @@ public class Expression {
 		}
 		return sql;
 	}
-
+	
 	/**
 	 * Get the SQL snippet of this expression.
-	 *
+	 * 
 	 * @return the SQL snippet
 	 */
 	String getSQL() {
 		return sql.trim().length() == 0 ? null : sql.trim();
 	}
-
+	
 	private boolean is(int percent) {
 		return config.random().getBoolean(percent);
 	}
-
+	
 	private String oneOf(String[] list) {
 		int i = config.random().getInt(list.length);
-		if (!sql.endsWith(" ")) {
+		if ( !sql.endsWith(" ") ) {
 			sql += " ";
 		}
 		sql += list[i] + " ";
 		return list[i];
 	}
-
+	
 	private String getColumnName(String alias, Column column) {
-		if (alias == null) {
+		if ( alias == null ) {
 			return column.getName();
 		}
 		return alias + "." + column.getName();
 	}
-
+	
 	private void createJoinComparison(String alias) {
 		int len = config.random().getLog(5) + 1;
-		for (int i = 0; i < len; i++) {
-			if (i > 0) {
+		for ( int i = 0; i < len; i++ ) {
+			if ( i > 0 ) {
 				sql += "AND ";
 			}
 			Column column = command.getTable(alias).getRandomConditionColumn();
-			if (column == null) {
+			if ( column == null ) {
 				sql += "1=1";
 				return;
 			}
@@ -176,10 +185,10 @@ public class Expression {
 			String a2;
 			do {
 				a2 = command.getRandomTableAlias();
-			} while (a2.equals(alias));
+			} while ( a2.equals(alias) );
 			Table t2 = command.getTable(a2);
 			Column c2 = t2.getRandomColumnOfType(column.getType());
-			if (c2 == null) {
+			if ( c2 == null ) {
 				sql += column.getRandomValue().getSQL();
 			} else {
 				sql += getColumnName(a2, c2);
@@ -187,15 +196,15 @@ public class Expression {
 			sql += " ";
 		}
 	}
-
+	
 	private void create() {
 		createComparison();
-		while (is(50)) {
+		while ( is(50) ) {
 			oneOf(new String[] { "AND", "OR" });
 			createComparison();
 		}
 	}
-
+	
 	// private void createSubquery() {
 	// // String alias = command.getRandomTableAlias();
 	// // Table t1 = command.getTable(alias);
@@ -207,9 +216,9 @@ public class Expression {
 	// createComparison();
 	// command.removeSubqueryTable(a2);
 	// }
-
+	
 	private void createComparison() {
-		if (is(5)) {
+		if ( is(5) ) {
 			sql += " NOT( ";
 			createComparisonSub();
 			sql += ")";
@@ -217,13 +226,12 @@ public class Expression {
 			createComparisonSub();
 		}
 	}
-
+	
 	private void createComparisonSub() {
 		/*
-		 * if (is(10)) { sql += " EXISTS("; createSubquery(); sql += ")";
-		 * return; } else
+		 * if (is(10)) { sql += " EXISTS("; createSubquery(); sql += ")"; return; } else
 		 */
-		if (is(10)) {
+		if ( is(10) ) {
 			sql += "(";
 			create();
 			sql += ")";
@@ -231,8 +239,8 @@ public class Expression {
 		}
 		String alias = command.getRandomTableAlias();
 		Column column = command.getTable(alias).getRandomConditionColumn();
-		if (column == null) {
-			if (is(50)) {
+		if ( column == null ) {
+			if ( is(50) ) {
 				sql += "1=1";
 			} else {
 				sql += "1=0";
@@ -240,15 +248,15 @@ public class Expression {
 			return;
 		}
 		boolean columnFirst = is(90);
-		if (columnFirst) {
+		if ( columnFirst ) {
 			sql += getColumnName(alias, column);
 		} else {
 			Value v = column.getRandomValue();
 			sql += v.getSQL();
 		}
-		if (is(10)) {
+		if ( is(10) ) {
 			oneOf(new String[] { "IS NULL", "IS NOT NULL" });
-		} else if (is(10)) {
+		} else if ( is(10) ) {
 			oneOf(new String[] { "BETWEEN", "NOT BETWEEN" });
 			Value v = column.getRandomValue();
 			sql += v.getSQL();
@@ -268,12 +276,12 @@ public class Expression {
 			// }
 			// sql += ")";
 		} else {
-			if (column.getType() == Types.VARCHAR) {
+			if ( column.getType() == Types.VARCHAR ) {
 				oneOf(new String[] { "=", "=", "=", "<", ">", "<=", ">=", "<>", "LIKE", "NOT LIKE" });
 			} else {
 				oneOf(new String[] { "=", "=", "=", "<", ">", "<=", ">=", "<>" });
 			}
-			if (columnFirst) {
+			if ( columnFirst ) {
 				Value v = column.getRandomValue();
 				sql += v.getSQL();
 			} else {
@@ -281,18 +289,18 @@ public class Expression {
 			}
 		}
 	}
-
+	
 	private void createExpression(String alias, Column type) {
 		boolean op = is(20);
 		// no null values if there is an operation
 		boolean allowNull = !op;
 		// boolean allowNull =true;
-
+		
 		createTerm(alias, type, true);
-		if (op) {
+		if ( op ) {
 			switch (type.getType()) {
 			case Types.INTEGER:
-				if (config.is(TestSynth.POSTGRESQL)) {
+				if ( config.is(TestSynth.POSTGRESQL) ) {
 					oneOf(new String[] { "+", "-", "/" });
 				} else {
 					oneOf(new String[] { "+", "-", "*", "/" });
@@ -315,20 +323,20 @@ public class Expression {
 			}
 		}
 	}
-
+	
 	private void createTerm(String alias, Column type, boolean allowNull) {
 		int dt = type.getType();
-		if (is(5) && (dt == Types.INTEGER) || (dt == Types.DECIMAL)) {
+		if ( is(5) && ( dt == Types.INTEGER ) || ( dt == Types.DECIMAL ) ) {
 			sql += " - ";
 			allowNull = false;
 		}
-		if (is(10)) {
+		if ( is(10) ) {
 			sql += "(";
 			createTerm(alias, type, allowNull);
 			sql += ")";
 			return;
 		}
-		if (is(20)) {
+		if ( is(20) ) {
 			// if (is(10)) {
 			// sql += "CAST(";
 			// // TODO cast
@@ -357,21 +365,21 @@ public class Expression {
 			}
 			return;
 		}
-		if (is(60)) {
+		if ( is(60) ) {
 			String a2 = command.getRandomTableAlias();
 			Column column = command.getTable(a2).getRandomColumnOfType(dt);
-			if (column != null) {
+			if ( column != null ) {
 				sql += getColumnName(a2, column);
 				return;
 			}
 		}
-
+		
 		Value v = Value.getRandom(config, dt, 20, 2, allowNull);
 		sql += v.getSQL();
 	}
-
+	
 	public String toString() {
 		throw new Error("hey!");
 	}
-
+	
 }

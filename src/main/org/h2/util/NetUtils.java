@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.util;
 
@@ -24,19 +22,21 @@ import org.h2.security.SecureSocketFactory;
  * This utility class contains socket helper functions.
  */
 public class NetUtils {
-
+	
 	private static final int CACHE_MILLIS = 1000;
+	
 	private static InetAddress bindAddress;
+	
 	private static String cachedLocalAddress;
+	
 	private static long cachedLocalAddressTime;
-
+	
 	private NetUtils() {
 		// utility class
 	}
-
+	
 	/**
-	 * Create a loopback socket (a socket that is connected to localhost) on
-	 * this port.
+	 * Create a loopback socket (a socket that is connected to localhost) on this port.
 	 * 
 	 * @param port
 	 *            the port
@@ -44,15 +44,14 @@ public class NetUtils {
 	 *            if SSL should be used
 	 * @return the socket
 	 */
-	public static Socket createLoopbackSocket(int port, boolean ssl)
-			throws IOException {
+	public static Socket createLoopbackSocket(int port, boolean ssl) throws IOException {
 		InetAddress address = getBindAddress();
-		if (address == null) {
+		if ( address == null ) {
 			address = InetAddress.getLocalHost();
 		}
 		return createSocket(address.getHostAddress(), port, ssl);
 	}
-
+	
 	/**
 	 * Create a client socket that is connected to the given address and port.
 	 * 
@@ -64,8 +63,7 @@ public class NetUtils {
 	 *            if SSL should be used
 	 * @return the socket
 	 */
-	public static Socket createSocket(String server, int defaultPort,
-			boolean ssl) throws IOException {
+	public static Socket createSocket(String server, int defaultPort, boolean ssl) throws IOException {
 		int port = defaultPort;
 		// IPv6: RFC 2732 format is '[a:b:c:d:e:f:g:h]' or
 		// '[a:b:c:d:e:f:g:h]:port'
@@ -73,14 +71,14 @@ public class NetUtils {
 		// 'hostname:port'
 		int startIndex = server.startsWith("[") ? server.indexOf(']') : 0;
 		int idx = server.indexOf(':', startIndex);
-		if (idx >= 0) {
+		if ( idx >= 0 ) {
 			port = MathUtils.decodeInt(server.substring(idx + 1));
 			server = server.substring(0, idx);
 		}
 		InetAddress address = InetAddress.getByName(server);
 		return createSocket(address, port, ssl);
 	}
-
+	
 	/**
 	 * Create a client socket that is connected to the given address and port.
 	 * 
@@ -92,20 +90,17 @@ public class NetUtils {
 	 *            if SSL should be used
 	 * @return the socket
 	 */
-	public static Socket createSocket(InetAddress address, int port, boolean ssl)
-			throws IOException {
-		if (ssl) {
+	public static Socket createSocket(InetAddress address, int port, boolean ssl) throws IOException {
+		if ( ssl ) {
 			return SecureSocketFactory.createSocket(address, port);
 		}
 		Socket socket = new Socket();
-		socket.connect(new InetSocketAddress(address, port),
-				SysProperties.SOCKET_CONNECT_TIMEOUT);
+		socket.connect(new InetSocketAddress(address, port), SysProperties.SOCKET_CONNECT_TIMEOUT);
 		return socket;
 	}
-
+	
 	/**
-	 * Create a server socket. The system property h2.bindAddress is used if
-	 * set.
+	 * Create a server socket. The system property h2.bindAddress is used if set.
 	 * 
 	 * @param port
 	 *            the port to listen on
@@ -113,56 +108,50 @@ public class NetUtils {
 	 *            if SSL should be used
 	 * @return the server socket
 	 */
-	public static ServerSocket createServerSocket(int port, boolean ssl)
-			throws SQLException {
+	public static ServerSocket createServerSocket(int port, boolean ssl) throws SQLException {
 		try {
 			return createServerSocketTry(port, ssl);
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			// try again
 			return createServerSocketTry(port, ssl);
 		}
 	}
-
+	
 	/**
-	 * Get the bind address if the system property h2.bindAddress is set, or
-	 * null if not.
+	 * Get the bind address if the system property h2.bindAddress is set, or null if not.
 	 * 
 	 * @return the bind address
 	 */
 	private static InetAddress getBindAddress() throws UnknownHostException {
 		String host = SysProperties.BIND_ADDRESS;
-		if (host == null || host.length() == 0) {
+		if ( host == null || host.length() == 0 ) {
 			return null;
 		}
-		synchronized (NetUtils.class) {
-			if (bindAddress == null) {
+		synchronized ( NetUtils.class ) {
+			if ( bindAddress == null ) {
 				bindAddress = InetAddress.getByName(host);
 			}
 		}
 		return bindAddress;
 	}
-
-	private static ServerSocket createServerSocketTry(int port, boolean ssl)
-			throws SQLException {
+	
+	private static ServerSocket createServerSocketTry(int port, boolean ssl) throws SQLException {
 		try {
 			InetAddress bindAddress = getBindAddress();
-			if (ssl) {
-				return SecureSocketFactory
-						.createServerSocket(port, bindAddress);
+			if ( ssl ) {
+				return SecureSocketFactory.createServerSocket(port, bindAddress);
 			}
-			if (bindAddress == null) {
+			if ( bindAddress == null ) {
 				return new ServerSocket(port);
 			}
 			return new ServerSocket(port, 0, bindAddress);
-		} catch (BindException be) {
-			throw Message.getSQLException(ErrorCode.EXCEPTION_OPENING_PORT_2,
-					new String[] { "" + port, be.toString() }, be);
-		} catch (IOException e) {
-			throw Message.convertIOException(e, "port: " + port + " ssl: "
-					+ ssl);
+		} catch ( BindException be ) {
+			throw Message.getSQLException(ErrorCode.EXCEPTION_OPENING_PORT_2, new String[] { "" + port, be.toString() }, be);
+		} catch ( IOException e ) {
+			throw Message.convertIOException(e, "port: " + port + " ssl: " + ssl);
 		}
 	}
-
+	
 	/**
 	 * Check if a socket is connected to a local address.
 	 * 
@@ -170,11 +159,10 @@ public class NetUtils {
 	 *            the socket
 	 * @return true if it is
 	 */
-	public static boolean isLocalAddress(Socket socket)
-			throws UnknownHostException {
+	public static boolean isLocalAddress(Socket socket) throws UnknownHostException {
 		InetAddress test = socket.getInetAddress();
 		// ## Java 1.4 begin ##
-		if (test.isLoopbackAddress()) {
+		if ( test.isLoopbackAddress() ) {
 			return true;
 		}
 		// ## Java 1.4 end ##
@@ -182,14 +170,14 @@ public class NetUtils {
 		// localhost.getCanonicalHostName() is very very slow
 		String host = localhost.getHostAddress();
 		InetAddress[] list = InetAddress.getAllByName(host);
-		for (InetAddress addr : list) {
-			if (test.equals(addr)) {
+		for ( InetAddress addr : list ) {
+			if ( test.equals(addr) ) {
 				return true;
 			}
 		}
 		return false;
 	}
-
+	
 	/**
 	 * Close a server socket and ignore any exceptions.
 	 * 
@@ -198,45 +186,44 @@ public class NetUtils {
 	 * @return null
 	 */
 	public static ServerSocket closeSilently(ServerSocket socket) {
-		if (socket != null) {
+		if ( socket != null ) {
 			try {
 				socket.close();
-			} catch (IOException e) {
+			} catch ( IOException e ) {
 				// ignore
 			}
 		}
 		return null;
 	}
-
+	
 	/**
-	 * Get the local host address as a string. For performance, the result is
-	 * cached for one second.
+	 * Get the local host address as a string. For performance, the result is cached for one second.
 	 * 
 	 * @return the local host address
 	 */
 	public static synchronized String getLocalAddress() {
 		long now = System.currentTimeMillis();
-		if (cachedLocalAddress != null) {
-			if (cachedLocalAddressTime + CACHE_MILLIS > now) {
+		if ( cachedLocalAddress != null ) {
+			if ( cachedLocalAddressTime + CACHE_MILLIS > now ) {
 				return cachedLocalAddress;
 			}
 		}
 		InetAddress bind = null;
 		try {
 			bind = getBindAddress();
-			if (bind == null) {
+			if ( bind == null ) {
 				bind = InetAddress.getLocalHost();
 			}
-		} catch (UnknownHostException e) {
+		} catch ( UnknownHostException e ) {
 			// ignore
 		}
 		String address = bind == null ? "localhost" : bind.getHostAddress();
-		if (address.equals("127.0.0.1")) {
+		if ( address.equals("127.0.0.1") ) {
 			address = "localhost";
 		}
 		cachedLocalAddress = address;
 		cachedLocalAddressTime = now;
 		return address;
 	}
-
+	
 }

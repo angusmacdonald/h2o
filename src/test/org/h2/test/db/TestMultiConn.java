@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.db;
 
@@ -18,18 +16,19 @@ import org.h2.test.TestBase;
  * Multi-connection tests.
  */
 public class TestMultiConn extends TestBase implements DatabaseEventListener {
-
+	
 	private static int wait;
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws Exception {
 		testConcurrentShutdownQuery();
 		testCommitRollback();
@@ -37,7 +36,7 @@ public class TestMultiConn extends TestBase implements DatabaseEventListener {
 		testThreeThreads();
 		deleteDb("multiConn");
 	}
-
+	
 	private void testConcurrentShutdownQuery() throws Exception {
 		Connection conn1 = getConnection("multiConn");
 		Connection conn2 = getConnection("multiConn");
@@ -46,30 +45,31 @@ public class TestMultiConn extends TestBase implements DatabaseEventListener {
 		final Statement stat2 = conn2.createStatement();
 		stat1.execute("SET THROTTLE 100");
 		new Thread() {
+			
 			public void run() {
 				try {
 					stat2.executeQuery("CALL SLEEP(100)");
 					try {
 						Thread.sleep(10);
-					} catch (Exception e) {
+					} catch ( Exception e ) {
 						// ignore
 					}
 					stat2.executeQuery("CALL SLEEP(100)");
-				} catch (SQLException e) {
+				} catch ( SQLException e ) {
 					// ignore
 				}
 			}
-		} .start();
+		}.start();
 		Thread.sleep(50);
 		stat1.execute("SHUTDOWN");
 		conn1.close();
 		try {
 			conn2.close();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			// ignore
 		}
 	}
-
+	
 	private void testThreeThreads() throws Exception {
 		deleteDb("multiConn");
 		final Connection conn1 = getConnection("multiConn");
@@ -91,11 +91,12 @@ public class TestMultiConn extends TestBase implements DatabaseEventListener {
 		s2.execute("SET LOCK_TIMEOUT 1000");
 		s3.execute("SET LOCK_TIMEOUT 1000");
 		Thread t1 = new Thread(new Runnable() {
+			
 			public void run() {
 				try {
 					s3.execute("INSERT INTO TEST2 VALUES(4)");
 					conn3.commit();
-				} catch (SQLException e) {
+				} catch ( SQLException e ) {
 					TestBase.logError("insert", e);
 				}
 			}
@@ -103,11 +104,12 @@ public class TestMultiConn extends TestBase implements DatabaseEventListener {
 		t1.start();
 		Thread.sleep(20);
 		Thread t2 = new Thread(new Runnable() {
+			
 			public void run() {
 				try {
 					s2.execute("INSERT INTO TEST1 VALUES(5)");
 					conn2.commit();
-				} catch (SQLException e) {
+				} catch ( SQLException e ) {
 					TestBase.logError("insert", e);
 				}
 			}
@@ -127,9 +129,9 @@ public class TestMultiConn extends TestBase implements DatabaseEventListener {
 		conn2.close();
 		conn3.close();
 	}
-
+	
 	private void testConcurrentOpen() throws Exception {
-		if (config.memory) {
+		if ( config.memory ) {
 			return;
 		}
 		deleteDb("multiConn");
@@ -140,12 +142,12 @@ public class TestMultiConn extends TestBase implements DatabaseEventListener {
 		conn.close();
 		final String listener = getClass().getName();
 		Runnable r = new Runnable() {
+			
 			public void run() {
 				try {
-					Connection c1 = getConnection("multiConn;DATABASE_EVENT_LISTENER='" + listener
-							+ "';file_lock=socket");
+					Connection c1 = getConnection("multiConn;DATABASE_EVENT_LISTENER='" + listener + "';file_lock=socket");
 					c1.close();
-				} catch (Exception e) {
+				} catch ( Exception e ) {
 					TestBase.logError("connect", e);
 				}
 			}
@@ -157,29 +159,29 @@ public class TestMultiConn extends TestBase implements DatabaseEventListener {
 		c2.close();
 		thread.join();
 	}
-
+	
 	public void diskSpaceIsLow(long stillAvailable) {
 		// do nothing
 	}
-
+	
 	public void exceptionThrown(SQLException e, String sql) {
 		// do nothing
 	}
-
+	
 	public void setProgress(int state, String name, int x, int max) {
-		if (wait > 0) {
+		if ( wait > 0 ) {
 			try {
 				Thread.sleep(wait);
-			} catch (InterruptedException e) {
+			} catch ( InterruptedException e ) {
 				TestBase.logError("sleep", e);
 			}
 		}
 	}
-
+	
 	public void closingDatabase() {
 		// do nothing
 	}
-
+	
 	private void testCommitRollback() throws SQLException {
 		deleteDb("multiConn");
 		Connection c1 = getConnection("multiConn");
@@ -202,8 +204,8 @@ public class TestMultiConn extends TestBase implements DatabaseEventListener {
 		c2.commit();
 		c1.close();
 		c2.close();
-
-		if (!config.memory) {
+		
+		if ( !config.memory ) {
 			Connection conn = getConnection("multiConn");
 			ResultSet rs;
 			rs = conn.createStatement().executeQuery("SELECT * FROM MULTI_A ORDER BY ID");
@@ -216,15 +218,15 @@ public class TestMultiConn extends TestBase implements DatabaseEventListener {
 			assertFalse(rs.next());
 			conn.close();
 		}
-
+		
 	}
-
+	
 	public void init(String url) {
 		// do nothing
 	}
-
+	
 	public void opened() {
 		// do nothing
 	}
-
+	
 }

@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.log;
 
@@ -26,24 +24,29 @@ import org.h2.value.Value;
  * An entry in a undo log.
  */
 public class UndoLogRecord {
-
+	
 	/**
 	 * Operation type meaning the row was inserted.
 	 */
 	public static final short INSERT = 0;
-
+	
 	/**
 	 * Operation type meaning the row was deleted.
 	 */
 	public static final short DELETE = 1;
-
+	
 	private static final int IN_MEMORY = 0, STORED = 1, IN_MEMORY_READ_POS = 2;
+	
 	private Table table;
+	
 	private Row row;
+	
 	private short operation;
+	
 	private short state;
+	
 	private int filePos;
-
+	
 	/**
 	 * Create a new undo log record
 	 * 
@@ -60,7 +63,7 @@ public class UndoLogRecord {
 		this.operation = op;
 		this.state = IN_MEMORY;
 	}
-
+	
 	/**
 	 * Check if the log record is stored in the file.
 	 * 
@@ -69,20 +72,18 @@ public class UndoLogRecord {
 	boolean isStored() {
 		return state == STORED;
 	}
-
+	
 	/**
-	 * Check if this undo log record can be store. Only record can be stored if
-	 * the table has a unique index.
+	 * Check if this undo log record can be store. Only record can be stored if the table has a unique index.
 	 * 
 	 * @return if it can be stored
 	 */
 	boolean canStore() {
 		return table.getUniqueIndex() != null;
 	}
-
+	
 	/**
-	 * Un-do the operation. If the row was inserted before, it is deleted now,
-	 * and vice versa.
+	 * Un-do the operation. If the row was inserted before, it is deleted now, and vice versa.
 	 * 
 	 * @param session
 	 *            the session
@@ -90,7 +91,7 @@ public class UndoLogRecord {
 	public void undo(Session session) throws SQLException {
 		switch (operation) {
 		case INSERT:
-			if (state == IN_MEMORY_READ_POS) {
+			if ( state == IN_MEMORY_READ_POS ) {
 				Index index = table.getUniqueIndex();
 				Cursor cursor = index.find(session, row, row);
 				cursor.next();
@@ -98,17 +99,17 @@ public class UndoLogRecord {
 				row.setPos(pos);
 				state = IN_MEMORY;
 			}
-			if (session.getDatabase().getLockMode() == Constants.LOCK_MODE_OFF) {
-				if (row.getDeleted()) {
+			if ( session.getDatabase().getLockMode() == Constants.LOCK_MODE_OFF ) {
+				if ( row.getDeleted() ) {
 					// it might have been deleted by another thread
 					return;
 				}
 			}
 			try {
 				table.removeRow(session, row);
-			} catch (SQLException e) {
-				if (session.getDatabase().getLockMode() == Constants.LOCK_MODE_OFF
-						&& e.getErrorCode() == ErrorCode.ROW_NOT_FOUND_WHEN_DELETING_1) {
+			} catch ( SQLException e ) {
+				if ( session.getDatabase().getLockMode() == Constants.LOCK_MODE_OFF
+						&& e.getErrorCode() == ErrorCode.ROW_NOT_FOUND_WHEN_DELETING_1 ) {
 					// it might have been deleted by another thread
 					// ignore
 				} else {
@@ -123,9 +124,8 @@ public class UndoLogRecord {
 				// reset session id, otherwise other session think
 				// that this row was inserted by this session
 				row.commit();
-			} catch (SQLException e) {
-				if (session.getDatabase().getLockMode() == Constants.LOCK_MODE_OFF
-						&& e.getErrorCode() == ErrorCode.DUPLICATE_KEY_1) {
+			} catch ( SQLException e ) {
+				if ( session.getDatabase().getLockMode() == Constants.LOCK_MODE_OFF && e.getErrorCode() == ErrorCode.DUPLICATE_KEY_1 ) {
 					// it might have been added by another thread
 					// ignore
 				} else {
@@ -137,7 +137,7 @@ public class UndoLogRecord {
 			Message.throwInternalError("op=" + operation);
 		}
 	}
-
+	
 	/**
 	 * Save the row in the file using the data page as a buffer.
 	 * 
@@ -151,18 +151,18 @@ public class UndoLogRecord {
 		buff.writeInt(0);
 		buff.writeInt(operation);
 		buff.writeInt(row.getColumnCount());
-		for (int i = 0; i < row.getColumnCount(); i++) {
+		for ( int i = 0; i < row.getColumnCount(); i++ ) {
 			buff.writeValue(row.getValue(i));
 		}
 		buff.fillAligned();
 		buff.setInt(0, buff.length() / Constants.FILE_BLOCK_SIZE);
 		buff.updateChecksum();
-		filePos = (int) (file.getFilePointer() / Constants.FILE_BLOCK_SIZE);
+		filePos = (int) ( file.getFilePointer() / Constants.FILE_BLOCK_SIZE );
 		file.write(buff.getBytes(), 0, buff.length());
 		row = null;
 		state = STORED;
 	}
-
+	
 	/**
 	 * Go to the right position in the file.
 	 * 
@@ -172,7 +172,7 @@ public class UndoLogRecord {
 	void seek(FileStore file) throws SQLException {
 		file.seek(filePos * Constants.FILE_BLOCK_SIZE);
 	}
-
+	
 	/**
 	 * Load an undo log record row using the data page as a buffer.
 	 * 
@@ -188,26 +188,25 @@ public class UndoLogRecord {
 		file.readFully(buff.getBytes(), 0, min);
 		int len = buff.readInt() * Constants.FILE_BLOCK_SIZE;
 		buff.checkCapacity(len);
-		if (len - min > 0) {
+		if ( len - min > 0 ) {
 			file.readFully(buff.getBytes(), min, len - min);
 		}
 		buff.check(len);
 		int op = buff.readInt();
-		if (SysProperties.CHECK) {
-			if (operation != op) {
-				Message.throwInternalError("operation=" + operation + " op="
-						+ op);
+		if ( SysProperties.CHECK ) {
+			if ( operation != op ) {
+				Message.throwInternalError("operation=" + operation + " op=" + op);
 			}
 		}
 		int columnCount = buff.readInt();
 		Value[] values = new Value[columnCount];
-		for (int i = 0; i < columnCount; i++) {
+		for ( int i = 0; i < columnCount; i++ ) {
 			values[i] = buff.readValue();
 		}
 		row = new Row(values, 0);
 		state = IN_MEMORY_READ_POS;
 	}
-
+	
 	/**
 	 * Get the table.
 	 * 
@@ -216,19 +215,18 @@ public class UndoLogRecord {
 	public Table getTable() {
 		return table;
 	}
-
+	
 	/**
-	 * This method is called after the operation was committed. It commits the
-	 * change to the indexes.
+	 * This method is called after the operation was committed. It commits the change to the indexes.
 	 */
 	public void commit() throws SQLException {
 		ObjectArray list = table.getIndexes();
-		for (int i = 0; i < list.size(); i++) {
+		for ( int i = 0; i < list.size(); i++ ) {
 			Index index = (Index) list.get(i);
 			index.commit(operation, row);
 		}
 	}
-
+	
 	/**
 	 * Get the row that was deleted or inserted.
 	 * 

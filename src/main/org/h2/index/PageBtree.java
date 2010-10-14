@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.index;
 
@@ -16,61 +14,61 @@ import org.h2.store.Record;
  * A page that contains index data.
  */
 abstract class PageBtree extends Record {
-
+	
 	/**
 	 * Indicator that the row count is not known.
 	 */
 	static final int UNKNOWN_ROWCOUNT = -1;
-
+	
 	/**
 	 * The index.
 	 */
 	protected final PageBtreeIndex index;
-
+	
 	/**
 	 * The page number of the parent.
 	 */
 	protected int parentPageId;
-
+	
 	/**
 	 * The data page.
 	 */
 	protected final DataPage data;
-
+	
 	/**
 	 * The row offsets.
 	 */
 	protected int[] offsets;
-
+	
 	/**
 	 * The number of entries.
 	 */
 	protected int entryCount;
-
+	
 	/**
 	 * The index data
 	 */
 	protected SearchRow[] rows;
-
+	
 	/**
 	 * The start of the data area.
 	 */
 	protected int start;
-
+	
 	PageBtree(PageBtreeIndex index, int pageId, int parentPageId, DataPage data) {
 		this.index = index;
 		this.parentPageId = parentPageId;
 		this.data = data;
 		setPos(pageId);
 	}
-
+	
 	/**
 	 * Get the real row count. If required, this will read all child pages.
 	 * 
 	 * @return the row count
 	 */
 	abstract int getRowCount() throws SQLException;
-
+	
 	/**
 	 * Set the stored row count. This will write the page.
 	 * 
@@ -78,7 +76,7 @@ abstract class PageBtree extends Record {
 	 *            the stored row count
 	 */
 	abstract void setRowCountStored(int rowCount) throws SQLException;
-
+	
 	/**
 	 * Find an entry.
 	 * 
@@ -89,15 +87,15 @@ abstract class PageBtree extends Record {
 	 * @return the index of the found row
 	 */
 	int find(SearchRow compare, boolean bigger) throws SQLException {
-		if (compare == null) {
+		if ( compare == null ) {
 			return 0;
 		}
 		int l = 0, r = entryCount;
-		while (l < r) {
-			int i = (l + r) >>> 1;
+		while ( l < r ) {
+			int i = ( l + r ) >>> 1;
 			SearchRow row = getRow(i);
 			int comp = index.compareRows(row, compare);
-			if (comp > 0 || (!bigger && comp == 0)) {
+			if ( comp > 0 || ( !bigger && comp == 0 ) ) {
 				r = i;
 			} else {
 				l = i + 1;
@@ -105,22 +103,21 @@ abstract class PageBtree extends Record {
 		}
 		return l;
 	}
-
+	
 	/**
 	 * Read the data.
 	 */
 	abstract void read() throws SQLException;
-
+	
 	/**
 	 * Add a row.
 	 * 
 	 * @param row
 	 *            the row
-	 * @return 0 if successful, or the split position if the page needs to be
-	 *         split
+	 * @return 0 if successful, or the split position if the page needs to be split
 	 */
 	abstract int addRow(SearchRow row) throws SQLException;
-
+	
 	/**
 	 * Find the first row.
 	 * 
@@ -130,9 +127,8 @@ abstract class PageBtree extends Record {
 	 *            the row to find
 	 * @param if the row should be bigger
 	 */
-	abstract void find(PageBtreeCursor cursor, SearchRow first, boolean bigger)
-			throws SQLException;
-
+	abstract void find(PageBtreeCursor cursor, SearchRow first, boolean bigger) throws SQLException;
+	
 	/**
 	 * Get the row at this position.
 	 * 
@@ -142,13 +138,13 @@ abstract class PageBtree extends Record {
 	 */
 	SearchRow getRow(int at) throws SQLException {
 		SearchRow row = rows[at];
-		if (row == null) {
+		if ( row == null ) {
 			row = index.readRow(data, offsets[at]);
 			rows[at] = row;
 		}
 		return row;
 	}
-
+	
 	/**
 	 * Split the index page at the given point.
 	 * 
@@ -157,7 +153,7 @@ abstract class PageBtree extends Record {
 	 * @return the new page that contains about half the entries
 	 */
 	abstract PageBtree split(int splitPoint) throws SQLException;
-
+	
 	/**
 	 * Change the page id.
 	 * 
@@ -169,18 +165,18 @@ abstract class PageBtree extends Record {
 		setPos(id);
 		remapChildren();
 	}
-
+	
 	int getPageId() {
 		return getPos();
 	}
-
+	
 	/**
 	 * Get the first child leaf page of a page.
 	 * 
 	 * @return the page
 	 */
 	abstract PageBtreeLeaf getFirstLeaf() throws SQLException;
-
+	
 	/**
 	 * Change the parent page id.
 	 * 
@@ -190,12 +186,12 @@ abstract class PageBtree extends Record {
 	void setParentPageId(int id) {
 		this.parentPageId = id;
 	}
-
+	
 	/**
 	 * Update the parent id of all children.
 	 */
 	abstract void remapChildren() throws SQLException;
-
+	
 	/**
 	 * Remove a row.
 	 * 
@@ -204,5 +200,5 @@ abstract class PageBtree extends Record {
 	 * @return true if this page is now empty
 	 */
 	abstract boolean remove(SearchRow row) throws SQLException;
-
+	
 }

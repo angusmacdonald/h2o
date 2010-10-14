@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.server.ftp;
 
@@ -21,66 +19,69 @@ import org.h2.util.IOUtils;
  * The implementation of the data channel of the FTP server.
  */
 public class FtpData extends Thread {
-
+	
 	private FtpServer server;
+	
 	private InetAddress address;
+	
 	private ServerSocket serverSocket;
+	
 	private volatile Socket socket;
+	
 	private boolean active;
+	
 	private int port;
-
+	
 	FtpData(FtpServer server, InetAddress address, ServerSocket serverSocket) {
 		this.server = server;
 		this.address = address;
 		this.serverSocket = serverSocket;
 	}
-
+	
 	FtpData(FtpServer server, InetAddress address, int port) {
 		this.server = server;
 		this.address = address;
 		this.port = port;
 		active = true;
 	}
-
+	
 	public void run() {
 		try {
-			synchronized (this) {
+			synchronized ( this ) {
 				Socket s = serverSocket.accept();
-				if (s.getInetAddress().equals(address)) {
-					server.trace("Data connected:" + s.getInetAddress()
-							+ " expected:" + address);
+				if ( s.getInetAddress().equals(address) ) {
+					server.trace("Data connected:" + s.getInetAddress() + " expected:" + address);
 					socket = s;
 					notifyAll();
 				} else {
-					server.trace("Data REJECTED:" + s.getInetAddress()
-							+ " expected:" + address);
+					server.trace("Data REJECTED:" + s.getInetAddress() + " expected:" + address);
 					close();
 				}
 			}
-		} catch (IOException e) {
+		} catch ( IOException e ) {
 			e.printStackTrace();
 		}
 	}
-
+	
 	private void connect() throws IOException {
-		if (active) {
+		if ( active ) {
 			socket = new Socket(address, port);
 		} else {
 			waitUntilConnected();
 		}
 	}
-
+	
 	private void waitUntilConnected() {
-		while (serverSocket != null && socket == null) {
+		while ( serverSocket != null && socket == null ) {
 			try {
 				wait();
-			} catch (InterruptedException e) {
+			} catch ( InterruptedException e ) {
 				// ignore
 			}
 		}
 		server.trace("connected");
 	}
-
+	
 	/**
 	 * Close the socket.
 	 */
@@ -88,7 +89,7 @@ public class FtpData extends Thread {
 		serverSocket = null;
 		socket = null;
 	}
-
+	
 	/**
 	 * Read a file from a client.
 	 * 
@@ -97,8 +98,7 @@ public class FtpData extends Thread {
 	 * @param fileName
 	 *            the target file name
 	 */
-	synchronized void receive(FileSystem fs, String fileName)
-			throws IOException, SQLException {
+	synchronized void receive(FileSystem fs, String fileName) throws IOException, SQLException {
 		connect();
 		try {
 			InputStream in = socket.getInputStream();
@@ -110,10 +110,9 @@ public class FtpData extends Thread {
 		}
 		server.trace("closed");
 	}
-
+	
 	/**
-	 * Send a file to the client. This method waits until the client has
-	 * connected.
+	 * Send a file to the client. This method waits until the client has connected.
 	 * 
 	 * @param fs
 	 *            the source file system
@@ -122,8 +121,7 @@ public class FtpData extends Thread {
 	 * @param skip
 	 *            the number of bytes to skip
 	 */
-	synchronized void send(FileSystem fs, String fileName, long skip)
-			throws IOException {
+	synchronized void send(FileSystem fs, String fileName, long skip) throws IOException {
 		connect();
 		try {
 			OutputStream out = socket.getOutputStream();
@@ -136,7 +134,7 @@ public class FtpData extends Thread {
 		}
 		server.trace("closed");
 	}
-
+	
 	/**
 	 * Wait until the client has connected, and then send the data to him.
 	 * 
@@ -153,5 +151,5 @@ public class FtpData extends Thread {
 		}
 		server.trace("closed");
 	}
-
+	
 }

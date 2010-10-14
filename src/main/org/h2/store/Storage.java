@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.store;
 
@@ -17,12 +15,9 @@ import org.h2.util.IntArray;
 import org.h2.util.MathUtils;
 
 /**
- * This class represents an persistent container that stores data of a table or
- * an index. An object contains a list of records, see {@link Record}. For each
- * storage there is a {@link RecordReader} object that knows how to convert
- * records into a byte array and vice versa. The data is stored in a
- * {@link DiskFile}. A storage occupies a number of pages in a file. File
- * format:
+ * This class represents an persistent container that stores data of a table or an index. An object contains a list of records, see
+ * {@link Record}. For each storage there is a {@link RecordReader} object that knows how to convert records into a byte array and vice
+ * versa. The data is stored in a {@link DiskFile}. A storage occupies a number of pages in a file. File format:
  * 
  * <pre>
  * int block size
@@ -33,25 +28,34 @@ import org.h2.util.MathUtils;
  * </pre>
  */
 public class Storage {
-
+	
 	/**
-	 * This value is used to indicate that the position is not yet known, and
-	 * space needs to be allocated.
+	 * This value is used to indicate that the position is not yet known, and space needs to be allocated.
 	 */
 	public static final int ALLOCATE_POS = -1;
-	private static final int FREE_LIST_SIZE = Math.max(1024,
-			DiskFile.BLOCKS_PER_PAGE * 4);
+	
+	private static final int FREE_LIST_SIZE = Math.max(1024, DiskFile.BLOCKS_PER_PAGE * 4);
+	
 	private DiskFile file;
+	
 	private int recordCount;
+	
 	private RecordReader reader;
+	
 	private int freeCount;
+	
 	private IntArray freeList = new IntArray();
+	
 	private IntArray pages = new IntArray();
+	
 	private int id;
+	
 	private Database database;
+	
 	private DataPage dummy;
+	
 	private int pageCheckIndex;
-
+	
 	/**
 	 * Create a new storage object for this file.
 	 * 
@@ -71,7 +75,7 @@ public class Storage {
 		this.id = id;
 		dummy = DataPage.create(database, 0);
 	}
-
+	
 	/**
 	 * Get the record parser for this storage.
 	 * 
@@ -80,14 +84,14 @@ public class Storage {
 	public RecordReader getRecordReader() {
 		return reader;
 	}
-
+	
 	/**
 	 * Increment the record count (used when initializing the file).
 	 */
 	void incrementRecordCount() {
 		recordCount++;
 	}
-
+	
 	/**
 	 * Read a record from the file or cache.
 	 * 
@@ -100,7 +104,7 @@ public class Storage {
 	public Record getRecord(Session session, int pos) throws SQLException {
 		return file.getRecord(session, pos, reader, id);
 	}
-
+	
 	/**
 	 * Read a record if it is stored at that location.
 	 * 
@@ -110,11 +114,10 @@ public class Storage {
 	 *            the position where it is stored
 	 * @return the record or null
 	 */
-	public Record getRecordIfStored(Session session, int pos)
-			throws SQLException {
+	public Record getRecordIfStored(Session session, int pos) throws SQLException {
 		return file.getRecordIfStored(session, pos, reader, id);
 	}
-
+	
 	/**
 	 * Gets the position of the next record.
 	 * 
@@ -126,8 +129,8 @@ public class Storage {
 		int next;
 		int lastCheckedPage;
 		int pageIndex = -1;
-		if (record == null) {
-			if (pages.size() == 0) {
+		if ( record == null ) {
+			if ( pages.size() == 0 ) {
 				return -1;
 			}
 			pageIndex = 0;
@@ -138,27 +141,26 @@ public class Storage {
 			lastCheckedPage = file.getPage(record.getPos());
 			next = record.getPos() + blockCount;
 		}
-		synchronized (database) {
+		synchronized ( database ) {
 			BitField used = file.getUsed();
-			while (true) {
+			while ( true ) {
 				int page = file.getPage(next);
-				if (lastCheckedPage != page) {
-					if (pageIndex < 0) {
+				if ( lastCheckedPage != page ) {
+					if ( pageIndex < 0 ) {
 						pageIndex = pages.findNextIndexSorted(page);
 					} else {
 						pageIndex++;
 					}
-					if (pageIndex >= pages.size()) {
+					if ( pageIndex >= pages.size() ) {
 						return -1;
 					}
 					lastCheckedPage = pages.get(pageIndex);
-					next = Math.max(next, DiskFile.BLOCKS_PER_PAGE
-							* lastCheckedPage);
+					next = Math.max(next, DiskFile.BLOCKS_PER_PAGE * lastCheckedPage);
 				}
-				if (used.get(next)) {
+				if ( used.get(next) ) {
 					return next;
 				}
-				if (used.getLong(next) == 0) {
+				if ( used.getLong(next) == 0 ) {
 					next = MathUtils.roundUp(next + 1, 64);
 				} else {
 					next++;
@@ -166,7 +168,7 @@ public class Storage {
 			}
 		}
 	}
-
+	
 	/**
 	 * Update an existing record.
 	 * 
@@ -175,12 +177,11 @@ public class Storage {
 	 * @param record
 	 *            the record
 	 */
-	public void updateRecord(Session session, Record record)
-			throws SQLException {
+	public void updateRecord(Session session, Record record) throws SQLException {
 		record.setDeleted(false);
 		file.updateRecord(session, record);
 	}
-
+	
 	/**
 	 * Add or update a record in the file.
 	 * 
@@ -191,14 +192,13 @@ public class Storage {
 	 * @param pos
 	 *            the position (use ALLOCATE_POS to add a new record)
 	 */
-	public void addRecord(Session session, Record record, int pos)
-			throws SQLException {
+	public void addRecord(Session session, Record record, int pos) throws SQLException {
 		record.setStorageId(id);
 		int size = file.getRecordOverhead() + record.getByteCount(dummy);
 		size = MathUtils.roundUp(size, DiskFile.BLOCK_SIZE);
 		record.setDeleted(false);
 		int blockCount = size / DiskFile.BLOCK_SIZE;
-		if (pos == ALLOCATE_POS) {
+		if ( pos == ALLOCATE_POS ) {
 			pos = allocate(blockCount);
 		} else {
 			file.setUsed(pos, blockCount);
@@ -209,7 +209,7 @@ public class Storage {
 		recordCount++;
 		file.addRecord(session, record);
 	}
-
+	
 	/**
 	 * Remove a record.
 	 * 
@@ -221,7 +221,7 @@ public class Storage {
 	public void removeRecord(Session session, int pos) throws SQLException {
 		checkOnePage();
 		Record record = getRecord(session, pos);
-		if (SysProperties.CHECK && record.getDeleted()) {
+		if ( SysProperties.CHECK && record.getDeleted() ) {
 			Message.throwInternalError("duplicate delete " + pos);
 		}
 		record.setDeleted(true);
@@ -231,18 +231,18 @@ public class Storage {
 		recordCount--;
 		file.removeRecord(session, pos, record, blockCount);
 	}
-
+	
 	private void refillFreeList() {
-		if (freeList.size() != 0 || freeCount == 0) {
+		if ( freeList.size() != 0 || freeCount == 0 ) {
 			return;
 		}
 		BitField used = file.getUsed();
-		for (int i = 0; i < pages.size(); i++) {
+		for ( int i = 0; i < pages.size(); i++ ) {
 			int p = pages.get(i);
 			int block = DiskFile.BLOCKS_PER_PAGE * p;
-			for (int j = 0; j < DiskFile.BLOCKS_PER_PAGE; j++) {
-				if (!used.get(block)) {
-					if (freeList.size() < FREE_LIST_SIZE) {
+			for ( int j = 0; j < DiskFile.BLOCKS_PER_PAGE; j++ ) {
+				if ( !used.get(block) ) {
+					if ( freeList.size() < FREE_LIST_SIZE ) {
 						freeList.add(block);
 					} else {
 						return;
@@ -253,56 +253,55 @@ public class Storage {
 		}
 		// if we came here, all free records must be in the list
 		// otherwise it would have returned early
-		if (SysProperties.CHECK2 && freeCount > freeList.size()) {
-			Message.throwInternalError("freeCount expected " + freeList.size()
-					+ ", got: " + freeCount);
+		if ( SysProperties.CHECK2 && freeCount > freeList.size() ) {
+			Message.throwInternalError("freeCount expected " + freeList.size() + ", got: " + freeCount);
 		}
 		freeCount = freeList.size();
 	}
-
+	
 	private int allocate(int blockCount) throws SQLException {
 		refillFreeList();
-		if (freeList.size() > 0) {
-			synchronized (database) {
+		if ( freeList.size() > 0 ) {
+			synchronized ( database ) {
 				BitField used = file.getUsed();
 				int lastPage = Integer.MIN_VALUE;
 				int lastBlockLow = Integer.MAX_VALUE;
 				int lastBlockHigh = 0;
-
-				nextEntry: for (int i = 0; i < freeList.size(); i++) {
+				
+				nextEntry: for ( int i = 0; i < freeList.size(); i++ ) {
 					int px = freeList.get(i);
-
-					if (px >= lastBlockLow && px <= lastBlockHigh) {
+					
+					if ( px >= lastBlockLow && px <= lastBlockHigh ) {
 						// we have already tested this block
 						// and found that it's used
 						continue;
 					}
-
-					if (used.get(px)) {
+					
+					if ( used.get(px) ) {
 						// sometimes some entries in the freeList
 						// are not free (free 2, free 1, allocate 1+2)
 						// these entries are removed right here
 						freeList.remove(i--);
 						continue;
 					}
-
+					
 					lastBlockLow = px;
 					lastBlockHigh = px + blockCount - 1;
-
-					while (lastBlockHigh >= lastBlockLow) {
+					
+					while ( lastBlockHigh >= lastBlockLow ) {
 						int page = file.getPage(lastBlockHigh);
-						if (page != lastPage) {
-							if (file.getPageOwner(page) != id) {
+						if ( page != lastPage ) {
+							if ( file.getPageOwner(page) != id ) {
 								continue nextEntry;
 							}
 							lastPage = page;
 						}
-						if (used.get(lastBlockHigh)) {
+						if ( used.get(lastBlockHigh) ) {
 							continue nextEntry;
 						}
 						--lastBlockHigh;
 					}
-
+					
 					// range found
 					int pos = px;
 					freeList.remove(i);
@@ -317,7 +316,7 @@ public class Storage {
 		freeCount -= blockCount;
 		return pos;
 	}
-
+	
 	/**
 	 * Called after a record has been deleted.
 	 * 
@@ -328,12 +327,12 @@ public class Storage {
 	 */
 	void free(int pos, int blockCount) {
 		file.free(pos, blockCount);
-		if (freeList.size() < FREE_LIST_SIZE) {
+		if ( freeList.size() < FREE_LIST_SIZE ) {
 			freeList.add(pos);
 		}
 		freeCount += blockCount;
 	}
-
+	
 	// private int allocateBest(int start, int blocks) {
 	// while (true) {
 	// int p = getLastUsedPlusOne(start, blocks);
@@ -346,7 +345,7 @@ public class Storage {
 	// allocate(start, blocks);
 	// return start;
 	// }
-
+	
 	/**
 	 * Get the unique storage id.
 	 * 
@@ -355,7 +354,7 @@ public class Storage {
 	public int getId() {
 		return id;
 	}
-
+	
 	/**
 	 * Get the number of records in this storage.
 	 * 
@@ -364,7 +363,7 @@ public class Storage {
 	public int getRecordCount() {
 		return recordCount;
 	}
-
+	
 	/**
 	 * Delete all records from this storage.
 	 * 
@@ -377,7 +376,7 @@ public class Storage {
 		recordCount = 0;
 		file.truncateStorage(session, this, pages);
 	}
-
+	
 	/**
 	 * Set the record parser for this storage.
 	 * 
@@ -387,7 +386,7 @@ public class Storage {
 	public void setReader(RecordReader reader) {
 		this.reader = reader;
 	}
-
+	
 	/**
 	 * Write this record now.
 	 * 
@@ -397,7 +396,7 @@ public class Storage {
 	public void flushRecord(Record rec) throws SQLException {
 		file.writeBack(rec);
 	}
-
+	
 	/**
 	 * Get the overhead to store a record (header data) in number of bytes.
 	 * 
@@ -406,11 +405,11 @@ public class Storage {
 	public int getRecordOverhead() {
 		return file.getRecordOverhead();
 	}
-
+	
 	public DiskFile getDiskFile() {
 		return file;
 	}
-
+	
 	/**
 	 * Update the record count.
 	 * 
@@ -420,7 +419,7 @@ public class Storage {
 	public void setRecordCount(int recordCount) {
 		this.recordCount = recordCount;
 	}
-
+	
 	/**
 	 * Add a page to this storage.
 	 * 
@@ -430,7 +429,7 @@ public class Storage {
 	void addPage(int i) {
 		pages.addValueSorted(i);
 	}
-
+	
 	/**
 	 * Remove a list of page from this storage.
 	 * 
@@ -440,7 +439,7 @@ public class Storage {
 	void removePages(IntArray removeSorted) {
 		pages.removeAllSorted(removeSorted);
 	}
-
+	
 	/**
 	 * Remove a page from this storage.
 	 * 
@@ -449,17 +448,17 @@ public class Storage {
 	 */
 	void removePage(int i) {
 		int idx = pages.findIndexSorted(i);
-		if (idx != -1) {
+		if ( idx != -1 ) {
 			pages.remove(idx);
 		}
 	}
-
+	
 	private void checkOnePage() throws SQLException {
-		pageCheckIndex = (pageCheckIndex + 1) % pages.size();
+		pageCheckIndex = ( pageCheckIndex + 1 ) % pages.size();
 		int page = pages.get(pageCheckIndex);
-		if (file.isPageFree(page) && file.getPageOwner(page) == id) {
+		if ( file.isPageFree(page) && file.getPageOwner(page) == id ) {
 			file.freePage(page);
 		}
 	}
-
+	
 }

@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.db;
 
@@ -20,19 +18,21 @@ import org.h2.test.TestBase;
  * Tests for trigger and constraints.
  */
 public class TestTriggersConstraints extends TestBase implements Trigger {
-
+	
 	private static boolean mustNotCallTrigger;
+	
 	private String triggerName;
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws SQLException {
 		deleteDb("trigger");
 		testTriggerAlterTable();
@@ -40,22 +40,21 @@ public class TestTriggersConstraints extends TestBase implements Trigger {
 		testConstraints();
 		deleteDb("trigger");
 	}
-
+	
 	/**
 	 * A test trigger implementation.
 	 */
 	public static class Test implements Trigger {
-
+		
 		public void fire(Connection conn, Object[] oldRow, Object[] newRow) throws SQLException {
 			conn.createStatement().execute("call seq.nextval");
 		}
-
-		public void init(Connection conn, String schemaName, String triggerName, String tableName, boolean before,
-				int type) {
+		
+		public void init(Connection conn, String schemaName, String triggerName, String tableName, boolean before, int type) {
 			// nothing to do
 		}
 	}
-
+	
 	private void testTriggerAlterTable() throws SQLException {
 		Connection conn = getConnection("trigger");
 		Statement stat = conn.createStatement();
@@ -73,7 +72,7 @@ public class TestTriggersConstraints extends TestBase implements Trigger {
 		stat.execute("drop table test");
 		conn.close();
 	}
-
+	
 	private void testConstraints() throws SQLException {
 		Connection conn = getConnection("trigger");
 		Statement stat = conn.createStatement();
@@ -86,7 +85,7 @@ public class TestTriggersConstraints extends TestBase implements Trigger {
 		stat.execute("drop table test");
 		conn.close();
 	}
-
+	
 	private void testTriggers() throws SQLException {
 		mustNotCallTrigger = false;
 		Connection conn = getConnection("trigger");
@@ -95,31 +94,29 @@ public class TestTriggersConstraints extends TestBase implements Trigger {
 		stat.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255))");
 		// CREATE TRIGGER trigger {BEFORE|AFTER} {INSERT|UPDATE|DELETE} ON table
 		// [FOR EACH ROW] [QUEUE n] [NOWAIT] CALL triggeredClass
-		stat.execute("CREATE TRIGGER IF NOT EXISTS INS_BEFORE BEFORE INSERT ON TEST FOR EACH ROW NOWAIT CALL \""
-				+ getClass().getName() + "\"");
-		stat.execute("CREATE TRIGGER IF NOT EXISTS INS_BEFORE BEFORE INSERT ON TEST FOR EACH ROW NOWAIT CALL \""
-				+ getClass().getName() + "\"");
-		stat.execute("CREATE TRIGGER INS_AFTER AFTER INSERT ON TEST FOR EACH ROW NOWAIT CALL \"" + getClass().getName()
+		stat.execute("CREATE TRIGGER IF NOT EXISTS INS_BEFORE BEFORE INSERT ON TEST FOR EACH ROW NOWAIT CALL \"" + getClass().getName()
 				+ "\"");
-		stat.execute("CREATE TRIGGER UPD_BEFORE BEFORE UPDATE ON TEST FOR EACH ROW NOWAIT CALL \""
-				+ getClass().getName() + "\"");
+		stat.execute("CREATE TRIGGER IF NOT EXISTS INS_BEFORE BEFORE INSERT ON TEST FOR EACH ROW NOWAIT CALL \"" + getClass().getName()
+				+ "\"");
+		stat.execute("CREATE TRIGGER INS_AFTER AFTER INSERT ON TEST FOR EACH ROW NOWAIT CALL \"" + getClass().getName() + "\"");
+		stat.execute("CREATE TRIGGER UPD_BEFORE BEFORE UPDATE ON TEST FOR EACH ROW NOWAIT CALL \"" + getClass().getName() + "\"");
 		stat.execute("INSERT INTO TEST VALUES(1, 'Hello')");
 		ResultSet rs;
 		rs = stat.executeQuery("SCRIPT");
 		checkRows(rs, new String[] {
-				"CREATE FORCE TRIGGER PUBLIC.INS_BEFORE BEFORE INSERT ON PUBLIC.TEST FOR EACH ROW NOWAIT CALL \""
-				+ getClass().getName() + "\";",
-				"CREATE FORCE TRIGGER PUBLIC.INS_AFTER AFTER INSERT ON PUBLIC.TEST FOR EACH ROW NOWAIT CALL \""
-				+ getClass().getName() + "\";",
-				"CREATE FORCE TRIGGER PUBLIC.UPD_BEFORE BEFORE UPDATE ON PUBLIC.TEST FOR EACH ROW NOWAIT CALL \""
-				+ getClass().getName() + "\";" });
-		while (rs.next()) {
+				"CREATE FORCE TRIGGER PUBLIC.INS_BEFORE BEFORE INSERT ON PUBLIC.TEST FOR EACH ROW NOWAIT CALL \"" + getClass().getName()
+						+ "\";",
+				"CREATE FORCE TRIGGER PUBLIC.INS_AFTER AFTER INSERT ON PUBLIC.TEST FOR EACH ROW NOWAIT CALL \"" + getClass().getName()
+						+ "\";",
+				"CREATE FORCE TRIGGER PUBLIC.UPD_BEFORE BEFORE UPDATE ON PUBLIC.TEST FOR EACH ROW NOWAIT CALL \"" + getClass().getName()
+						+ "\";" });
+		while ( rs.next() ) {
 			String sql = rs.getString(1);
-			if (sql.startsWith("CREATE TRIGGER")) {
+			if ( sql.startsWith("CREATE TRIGGER") ) {
 				System.out.println(sql);
 			}
 		}
-
+		
 		rs = stat.executeQuery("SELECT * FROM TEST");
 		rs.next();
 		assertEquals(rs.getString(2), "Hello-updated");
@@ -129,14 +126,14 @@ public class TestTriggersConstraints extends TestBase implements Trigger {
 		rs.next();
 		assertEquals(rs.getString(2), "Hello-updated-upd-updated2");
 		assertFalse(rs.next());
-
+		
 		mustNotCallTrigger = true;
 		stat.execute("DROP TRIGGER IF EXISTS INS_BEFORE");
 		stat.execute("DROP TRIGGER IF EXISTS INS_BEFORE");
 		try {
 			stat.execute("DROP TRIGGER INS_BEFORE");
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		stat.execute("DROP TRIGGER  INS_AFTER");
@@ -144,81 +141,82 @@ public class TestTriggersConstraints extends TestBase implements Trigger {
 		stat.execute("UPDATE TEST SET NAME=NAME||'-upd-no_trigger'");
 		stat.execute("INSERT INTO TEST VALUES(100, 'Insert-no_trigger')");
 		conn.close();
-
+		
 		conn = getConnection("trigger");
-
+		
 		mustNotCallTrigger = false;
 		conn.close();
 	}
-
+	
 	private void checkRows(ResultSet rs, String[] expected) throws SQLException {
 		HashSet set = new HashSet(Arrays.asList(expected));
-		while (rs.next()) {
+		while ( rs.next() ) {
 			set.remove(rs.getString(1));
 		}
-		if (set.size() > 0) {
+		if ( set.size() > 0 ) {
 			fail("set should be empty: " + set);
 		}
 	}
-
+	
 	public void fire(Connection conn, Object[] oldRow, Object[] newRow) {
-		if (mustNotCallTrigger) {
+		if ( mustNotCallTrigger ) {
 			throw new Error("must not be called now");
 		}
-		if (conn == null) {
+		if ( conn == null ) {
 			throw new Error("connection is null");
 		}
-		if (triggerName.startsWith("INS_BEFORE")) {
+		if ( triggerName.startsWith("INS_BEFORE") ) {
 			newRow[1] = newRow[1] + "-updated";
-		} else if (triggerName.startsWith("INS_AFTER")) {
-			if (!newRow[1].toString().endsWith("-updated")) {
+		} else if ( triggerName.startsWith("INS_AFTER") ) {
+			if ( !newRow[1].toString().endsWith("-updated") ) {
 				throw new Error("supposed to be updated");
 			}
 			checkCommit(conn);
-		} else if (triggerName.startsWith("UPD_BEFORE")) {
+		} else if ( triggerName.startsWith("UPD_BEFORE") ) {
 			newRow[1] = newRow[1] + "-updated2";
-		} else if (triggerName.startsWith("UPD_AFTER")) {
-			if (!newRow[1].toString().endsWith("-updated2")) {
+		} else if ( triggerName.startsWith("UPD_AFTER") ) {
+			if ( !newRow[1].toString().endsWith("-updated2") ) {
 				throw new Error("supposed to be updated2");
 			}
 			checkCommit(conn);
 		}
 	}
-
+	
 	private void checkCommit(Connection conn) {
 		try {
 			conn.commit();
 			throw new Error("Commit must not work here");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			try {
 				assertKnownException(e);
-			} catch (Exception e2) {
+			} catch ( Exception e2 ) {
 				throw new Error("Unexpected: " + e.toString());
 			}
 		}
 		try {
 			conn.createStatement().execute("CREATE TABLE X(ID INT)");
 			throw new Error("CREATE TABLE WORKED, but implicitly commits");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			try {
 				assertKnownException(e);
-			} catch (Exception e2) {
+			} catch ( Exception e2 ) {
 				throw new Error("Unexpected: " + e.toString());
 			}
 		}
 	}
-
+	
 	public void init(Connection conn, String schemaName, String triggerName, String tableName, boolean before, int type) {
 		this.triggerName = triggerName;
-		if (!"TEST".equals(tableName)) {
+		if ( !"TEST".equals(tableName) ) {
 			throw new Error("supposed to be TEST");
 		}
-		if ((triggerName.endsWith("AFTER") && before) || (triggerName.endsWith("BEFORE") && !before)) {
+		if ( ( triggerName.endsWith("AFTER") && before ) || ( triggerName.endsWith("BEFORE") && !before ) ) {
 			throw new Error("triggerName: " + triggerName + " before:" + before);
 		}
-		if ((triggerName.startsWith("UPD") && type != UPDATE) || (triggerName.startsWith("INS") && type != INSERT) || (triggerName.startsWith("DEL") && type != DELETE)) {
+		if ( ( triggerName.startsWith("UPD") && type != UPDATE ) || ( triggerName.startsWith("INS") && type != INSERT )
+				|| ( triggerName.startsWith("DEL") && type != DELETE ) ) {
 			throw new Error("triggerName: " + triggerName + " type:" + type);
 		}
 	}
-
+	
 }

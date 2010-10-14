@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.table;
 
@@ -20,19 +18,19 @@ import org.h2.util.ObjectArray;
 import org.h2.value.Value;
 
 /**
- * The table SYSTEM_RANGE is a virtual table that generates incrementing numbers
- * with a given start end end point.
+ * The table SYSTEM_RANGE is a virtual table that generates incrementing numbers with a given start end end point.
  */
 public class RangeTable extends Table {
-
+	
 	/**
 	 * The name of the range table.
 	 */
 	public static final String NAME = "SYSTEM_RANGE";
-
+	
 	private Expression min, max;
+	
 	private boolean optimized;
-
+	
 	/**
 	 * Create a new range with the given start and end expressions.
 	 * 
@@ -43,85 +41,83 @@ public class RangeTable extends Table {
 	 * @param max
 	 *            the end expression
 	 */
-	public RangeTable(Schema schema, Expression min, Expression max)
-			throws SQLException {
+	public RangeTable(Schema schema, Expression min, Expression max) throws SQLException {
 		super(schema, 0, NAME, true);
 		Column[] cols = new Column[] { new Column("X", Value.LONG) };
 		this.min = min;
 		this.max = max;
 		setColumns(cols);
 	}
-
+	
 	public String getDropSQL() {
 		return null;
 	}
-
+	
 	public String getCreateSQL() {
 		return null;
 	}
-
+	
 	public String getSQL() {
 		return NAME + "(" + min.getSQL() + ", " + max.getSQL() + ")";
 	}
-
+	
 	public void lock(Session session, boolean exclusive, boolean force) {
 		// nothing to do
 	}
-
+	
 	public void close(Session session) {
 		// nothing to do
 	}
-
+	
 	public void unlock(Session s) {
 		// nothing to do
 	}
-
+	
 	public boolean isLockedExclusively() {
 		return false;
 	}
-
-	public Index addIndex(Session session, String indexName, int indexId,
-			IndexColumn[] cols, IndexType indexType, int headPos, String comment)
-			throws SQLException {
+	
+	public Index addIndex(Session session, String indexName, int indexId, IndexColumn[] cols, IndexType indexType, int headPos,
+			String comment) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
+	
 	public void removeRow(Session session, Row row) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
+	
 	public void addRow(Session session, Row row) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
+	
 	public void checkSupportAlter() throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
+	
 	public void checkRename() throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
+	
 	public boolean canGetRowCount() {
 		return true;
 	}
-
+	
 	public boolean canDrop() {
 		return false;
 	}
-
+	
 	public long getRowCount(Session session) throws SQLException {
 		return getMax(session) - getMin(session);
 	}
-
+	
 	public String getTableType() {
 		return "RANGE_TABLE";
 	}
-
+	
 	public Index getScanIndex(Session session) {
 		return new RangeIndex(this, IndexColumn.wrap(columns));
 	}
-
+	
 	/**
 	 * Calculate and get the start value of this range.
 	 * 
@@ -133,7 +129,7 @@ public class RangeTable extends Table {
 		optimize(session);
 		return min.getValue(session).getLong();
 	}
-
+	
 	/**
 	 * Calculate and get the end value of this range.
 	 * 
@@ -145,38 +141,37 @@ public class RangeTable extends Table {
 		optimize(session);
 		return max.getValue(session).getLong();
 	}
-
+	
 	private void optimize(Session s) throws SQLException {
-		if (!optimized) {
+		if ( !optimized ) {
 			min = min.optimize(s);
 			max = max.optimize(s);
 			optimized = true;
 		}
 	}
-
+	
 	public ObjectArray getIndexes() {
 		return null;
 	}
-
+	
 	public void truncate(Session session) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
+	
 	public long getMaxDataModificationId() {
 		return 0;
 	}
-
+	
 	public Index getUniqueIndex() {
 		return null;
 	}
-
+	
 	public long getRowCountApproximation() {
 		return 100;
 	}
-
+	
 	/*
 	 * (non-Javadoc)
-	 * 
 	 * @see org.h2.table.Table#isLocal()
 	 */
 	@Override

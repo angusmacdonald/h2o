@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.command.dml;
 
@@ -19,38 +17,40 @@ import org.h2.table.Table;
  * This class represents the statement ALTER TABLE SET
  */
 public class AlterTableSet extends SchemaCommand {
-
+	
 	/**
 	 * Enable the referential integrity.
 	 */
 	public static final int REFERENTIAL_INTEGRITY_TRUE = 0;
-
+	
 	/**
 	 * Disable the referential integrity.
 	 */
 	public static final int REFERENTIAL_INTEGRITY_FALSE = 1;
-
+	
 	private String tableName;
+	
 	private final int type;
+	
 	private boolean checkExisting;
-
+	
 	public AlterTableSet(Session session, Schema schema, int type) {
 		super(session, schema);
 		this.type = type;
 	}
-
+	
 	public void setCheckExisting(boolean b) {
 		this.checkExisting = b;
 	}
-
+	
 	public boolean isTransactional() {
 		return true;
 	}
-
+	
 	public void setTableName(String tableName) {
 		this.tableName = tableName;
 	}
-
+	
 	public int update() throws SQLException {
 		Table table = getSchema().getTableOrView(session, tableName);
 		session.getUser().checkRight(table, Right.ALL);
@@ -67,5 +67,5 @@ public class AlterTableSet extends SchemaCommand {
 		}
 		return 0;
 	}
-
+	
 }

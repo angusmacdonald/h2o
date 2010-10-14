@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.synth;
 
@@ -39,70 +37,74 @@ import org.h2.test.synth.sql.RandomGen;
 import org.h2.util.RandomUtils;
 
 /**
- * A test that calls random methods with random parameters from JDBC objects.
- * This is sometimes called 'Fuzz Testing'.
+ * A test that calls random methods with random parameters from JDBC objects. This is sometimes called 'Fuzz Testing'.
  */
 public class TestCrashAPI extends TestBase {
-
-	private static final Class[] INTERFACES = { Connection.class, PreparedStatement.class, Statement.class,
-		ResultSet.class, ResultSetMetaData.class, Savepoint.class,
-		ParameterMetaData.class, Clob.class, Blob.class, Array.class, CallableStatement.class };
-
+	
+	private static final Class[] INTERFACES = { Connection.class, PreparedStatement.class, Statement.class, ResultSet.class,
+			ResultSetMetaData.class, Savepoint.class, ParameterMetaData.class, Clob.class, Blob.class, Array.class, CallableStatement.class };
+	
 	private static final String DIR = "synth";
-
+	
 	private ArrayList objects = new ArrayList();
+	
 	private HashMap classMethods = new HashMap();
+	
 	private RandomGen random = new RandomGen();
+	
 	private ArrayList statements = new ArrayList();
+	
 	private int openCount;
+	
 	private long callCount;
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	private void deleteDb() {
 		try {
 			deleteDb(baseDir + "/" + DIR, null);
-		} catch (Exception e) {
+		} catch ( Exception e ) {
 			// ignore
 		}
 	}
-
+	
 	private Connection getConnection(int seed, boolean delete) throws SQLException {
 		openCount++;
-		if (delete) {
+		if ( delete ) {
 			deleteDb();
 		}
 		// can not use FILE_LOCK=NO, otherwise something could be written into
 		// the database in the finalize method
-
+		
 		String add = "";
-
-		//         int testing;
-		//        if(openCount >= 32) {
-		//            int test;
-		//            Runtime.getRuntime().halt(0);
-		//            System.exit(1);
-		//        }
+		
+		// int testing;
+		// if(openCount >= 32) {
+		// int test;
+		// Runtime.getRuntime().halt(0);
+		// System.exit(1);
+		// }
 		// add = ";LOG=2";
 		// System.out.println("now open " + openCount);
 		// add += ";TRACE_LEVEL_FILE=3";
 		// config.logMode = 2;
 		// }
-
+		
 		String url = getURL(DIR + "/crashApi" + seed, true) + add;
-
-		//        int test;
-		//        url += ";DB_CLOSE_ON_EXIT=FALSE";
-		//      int test;
-		//      url += ";TRACE_LEVEL_FILE=3";
-
+		
+		// int test;
+		// url += ";DB_CLOSE_ON_EXIT=FALSE";
+		// int test;
+		// url += ";TRACE_LEVEL_FILE=3";
+		
 		Connection conn = null;
 		// System.gc();
 		conn = DriverManager.getConnection(url, "sa", getPassword(""));
@@ -112,8 +114,8 @@ public class TestCrashAPI extends TestBase {
 		Statement stat = conn.createStatement();
 		stat.execute("SET LOCK_TIMEOUT 10");
 		stat.execute("SET WRITE_DELAY 0");
-		if (random.nextBoolean()) {
-			if (random.nextBoolean()) {
+		if ( random.nextBoolean() ) {
+			if ( random.nextBoolean() ) {
 				double g = random.nextGaussian();
 				int size = (int) Math.abs(10000 * g * g);
 				stat.execute("SET CACHE_SIZE " + size);
@@ -122,39 +124,39 @@ public class TestCrashAPI extends TestBase {
 			}
 		}
 		stat.execute("SCRIPT NOPASSWORDS NOSETTINGS");
-		for (int i = start; i < end && i < statements.size(); i++) {
+		for ( int i = start; i < end && i < statements.size(); i++ ) {
 			try {
 				stat.execute("SELECT * FROM TEST WHERE ID=1");
-			} catch (Throwable t) {
+			} catch ( Throwable t ) {
 				printIfBad(seed, -i, -1, t);
 			}
 			try {
 				stat.execute("SELECT * FROM TEST WHERE ID=1 OR ID=1");
-			} catch (Throwable t) {
+			} catch ( Throwable t ) {
 				printIfBad(seed, -i, -1, t);
 			}
-
+			
 			String sql = (String) statements.get(i);
 			try {
-				//                if(openCount == 32) {
-				//                    int test;
-				//                    System.out.println("stop!");
-				//                }
+				// if(openCount == 32) {
+				// int test;
+				// System.out.println("stop!");
+				// }
 				stat.execute(sql);
-			} catch (Throwable t) {
+			} catch ( Throwable t ) {
 				printIfBad(seed, -i, -1, t);
 			}
 		}
-		if (random.nextBoolean()) {
+		if ( random.nextBoolean() ) {
 			try {
 				conn.commit();
-			} catch (Throwable t) {
+			} catch ( Throwable t ) {
 				printIfBad(seed, 0, -1, t);
 			}
 		}
 		return conn;
 	}
-
+	
 	private void testOne(int seed) throws SQLException {
 		printTime("seed: " + seed);
 		callCount = 0;
@@ -163,34 +165,34 @@ public class TestCrashAPI extends TestBase {
 		random.setSeed(seed);
 		Connection c1 = getConnection(seed, true);
 		Connection conn = null;
-		for (int i = 0; i < 2000; i++) {
+		for ( int i = 0; i < 2000; i++ ) {
 			// if(i % 10 == 0) {
-				// for(int j=0; j<objects.size(); j++) {
+			// for(int j=0; j<objects.size(); j++) {
 			// System.out.print(objects.get(j));
 			// System.out.print(" ");
 			// }
 			// System.out.println();
 			// Thread.sleep(1);
 			// }
-
-			if (objects.size() == 0) {
+			
+			if ( objects.size() == 0 ) {
 				try {
 					conn = getConnection(seed, false);
-				} catch (SQLException e) {
-					if (e.getSQLState().equals("08004")) {
+				} catch ( SQLException e ) {
+					if ( e.getSQLState().equals("08004") ) {
 						// Wrong user/password [08004]
 						try {
 							c1.createStatement().execute("SET PASSWORD ''");
-						} catch (Throwable t) {
+						} catch ( Throwable t ) {
 							// power off or so
 							break;
 						}
 						try {
 							conn = getConnection(seed, false);
-						} catch (Throwable t) {
+						} catch ( Throwable t ) {
 							printIfBad(seed, -i, -1, t);
 						}
-					} else if (e.getSQLState().equals("90098")) {
+					} else if ( e.getSQLState().equals("90098") ) {
 						// The database has been closed
 						break;
 					} else {
@@ -200,15 +202,15 @@ public class TestCrashAPI extends TestBase {
 				objects.add(conn);
 			}
 			int objectId = random.getInt(objects.size());
-			if (random.getBoolean(1)) {
+			if ( random.getBoolean(1) ) {
 				objects.remove(objectId);
 				continue;
 			}
-			if (random.getInt(2000) == 0 && conn != null) {
-				((JdbcConnection) conn).setPowerOffCount(random.getInt(50));
+			if ( random.getInt(2000) == 0 && conn != null ) {
+				( (JdbcConnection) conn ).setPowerOffCount(random.getInt(50));
 			}
 			Object o = objects.get(objectId);
-			if (o == null) {
+			if ( o == null ) {
 				objects.remove(objectId);
 				continue;
 			}
@@ -216,81 +218,79 @@ public class TestCrashAPI extends TestBase {
 			ArrayList methods = (ArrayList) classMethods.get(in);
 			Method m = (Method) methods.get(random.getInt(methods.size()));
 			Object o2 = callRandom(seed, i, objectId, o, m);
-			if (o2 != null) {
+			if ( o2 != null ) {
 				objects.add(o2);
 			}
 		}
 		try {
-			if (conn != null) {
+			if ( conn != null ) {
 				conn.close();
 			}
 			c1.close();
-		} catch (Throwable t) {
+		} catch ( Throwable t ) {
 			printIfBad(seed, -101010, -1, t);
 			try {
 				deleteDb(null, "test");
-			} catch (Throwable t2) {
+			} catch ( Throwable t2 ) {
 				printIfBad(seed, -101010, -1, t2);
 			}
 		}
 		objects.clear();
 	}
-
+	
 	private void printError(int seed, int id, Throwable t) {
 		StringWriter writer = new StringWriter();
 		t.printStackTrace(new PrintWriter(writer));
 		String s = writer.toString();
-		TestBase.logError("new TestCrashAPI().init(test).testCase(" +
-				seed + "); // Bug " + s.hashCode() + " id=" + id +
-				" callCount=" + callCount + " openCount=" + openCount +
-				" " + t.getMessage(), t);
+		TestBase.logError("new TestCrashAPI().init(test).testCase(" + seed + "); // Bug " + s.hashCode() + " id=" + id + " callCount="
+				+ callCount + " openCount=" + openCount + " " + t.getMessage(), t);
 	}
-
+	
 	private Object callRandom(int seed, int id, int objectId, Object o, Method m) throws SQLException {
 		Class[] paramClasses = m.getParameterTypes();
 		Object[] params = new Object[paramClasses.length];
-		for (int i = 0; i < params.length; i++) {
+		for ( int i = 0; i < params.length; i++ ) {
 			params[i] = getRandomParam(paramClasses[i]);
 		}
 		Object result = null;
 		try {
 			callCount++;
 			result = m.invoke(o, params);
-		} catch (IllegalArgumentException e) {
+		} catch ( IllegalArgumentException e ) {
 			TestBase.logError("error", e);
-		} catch (IllegalAccessException e) {
+		} catch ( IllegalAccessException e ) {
 			TestBase.logError("error", e);
-		} catch (InvocationTargetException e) {
+		} catch ( InvocationTargetException e ) {
 			Throwable t = e.getTargetException();
 			printIfBad(seed, id, objectId, t);
 		}
-		if (result == null) {
+		if ( result == null ) {
 			return null;
 		}
 		Class in = getJdbcInterface(result);
-		if (in == null) {
+		if ( in == null ) {
 			return null;
 		}
 		return result;
 	}
-
+	
 	private void printIfBad(int seed, int id, int objectId, Throwable t) {
-		if (t instanceof BatchUpdateException) {
+		if ( t instanceof BatchUpdateException ) {
 			// do nothing
-		} else if (t.getClass().getName().indexOf("SQLClientInfoException") >= 0) {
+		} else if ( t.getClass().getName().indexOf("SQLClientInfoException") >= 0 ) {
 			// do nothing
-		} else if (t instanceof SQLException) {
+		} else if ( t instanceof SQLException ) {
 			SQLException s = (SQLException) t;
 			int errorCode = s.getErrorCode();
-			if (errorCode == 0) {
+			if ( errorCode == 0 ) {
 				printError(seed, id, s);
-			} else if (errorCode == ErrorCode.OBJECT_CLOSED) {
-				if (objectId >= 0) {
+			} else if ( errorCode == ErrorCode.OBJECT_CLOSED ) {
+				if ( objectId >= 0 ) {
 					// TODO at least call a few more times after close - maybe
 					// there is still an error
 					objects.remove(objectId);
 				}
-			} else if (errorCode == ErrorCode.GENERAL_ERROR_1) {
+			} else if ( errorCode == ErrorCode.GENERAL_ERROR_1 ) {
 				// General error [HY000]
 				printError(seed, id, s);
 			}
@@ -298,107 +298,107 @@ public class TestCrashAPI extends TestBase {
 			printError(seed, id, t);
 		}
 	}
-
+	
 	private Object getRandomParam(Class type) {
-		if (type == int.class) {
+		if ( type == int.class ) {
 			return new Integer(random.getRandomInt());
-		} else if (type == byte.class) {
+		} else if ( type == byte.class ) {
 			return new Byte((byte) random.getRandomInt());
-		} else if (type == short.class) {
+		} else if ( type == short.class ) {
 			return new Short((short) random.getRandomInt());
-		} else if (type == long.class) {
+		} else if ( type == long.class ) {
 			return new Long(random.getRandomLong());
-		} else if (type == float.class) {
+		} else if ( type == float.class ) {
 			return new Float(random.getRandomDouble());
-		} else if (type == boolean.class) {
+		} else if ( type == boolean.class ) {
 			return new Boolean(random.nextBoolean());
-		} else if (type == double.class) {
+		} else if ( type == double.class ) {
 			return new Double(random.getRandomDouble());
-		} else if (type == String.class) {
-			if (random.getInt(10) == 0) {
+		} else if ( type == String.class ) {
+			if ( random.getInt(10) == 0 ) {
 				return null;
 			}
 			int randomId = random.getInt(statements.size());
 			String sql = (String) statements.get(randomId);
-			if (random.getInt(10) == 0) {
+			if ( random.getInt(10) == 0 ) {
 				sql = random.modify(sql);
 			}
 			return sql;
-		} else if (type == int[].class) {
+		} else if ( type == int[].class ) {
 			// TODO test with 'shared' arrays (make sure database creates a
-					// copy)
-					return random.getIntArray();
-		} else if (type == java.io.Reader.class) {
+			// copy)
+			return random.getIntArray();
+		} else if ( type == java.io.Reader.class ) {
 			return null;
-		} else if (type == java.sql.Array.class) {
+		} else if ( type == java.sql.Array.class ) {
 			return null;
-		} else if (type == byte[].class) {
+		} else if ( type == byte[].class ) {
 			// TODO test with 'shared' arrays (make sure database creates a
 			// copy)
 			return random.getByteArray();
-		} else if (type == Map.class) {
+		} else if ( type == Map.class ) {
 			return null;
-		} else if (type == Object.class) {
+		} else if ( type == Object.class ) {
 			return null;
-		} else if (type == java.sql.Date.class) {
+		} else if ( type == java.sql.Date.class ) {
 			return random.randomDate();
-		} else if (type == java.sql.Time.class) {
+		} else if ( type == java.sql.Time.class ) {
 			return random.randomTime();
-		} else if (type == java.sql.Timestamp.class) {
+		} else if ( type == java.sql.Timestamp.class ) {
 			return random.randomTimestamp();
-		} else if (type == java.io.InputStream.class) {
+		} else if ( type == java.io.InputStream.class ) {
 			return null;
-		} else if (type == String[].class) {
+		} else if ( type == String[].class ) {
 			return null;
-		} else if (type == java.sql.Clob.class) {
+		} else if ( type == java.sql.Clob.class ) {
 			return null;
-		} else if (type == java.sql.Blob.class) {
+		} else if ( type == java.sql.Blob.class ) {
 			return null;
-		} else if (type == Savepoint.class) {
+		} else if ( type == Savepoint.class ) {
 			// TODO should use generated savepoints
 			return null;
-		} else if (type == Calendar.class) {
+		} else if ( type == Calendar.class ) {
 			return Calendar.getInstance();
-		} else if (type == java.net.URL.class) {
+		} else if ( type == java.net.URL.class ) {
 			return null;
-		} else if (type == java.math.BigDecimal.class) {
+		} else if ( type == java.math.BigDecimal.class ) {
 			return new java.math.BigDecimal("" + random.getRandomDouble());
-		} else if (type == java.sql.Ref.class) {
+		} else if ( type == java.sql.Ref.class ) {
 			return null;
 		}
 		return null;
 	}
-
+	
 	private Class getJdbcInterface(Object o) {
 		Class[] list = o.getClass().getInterfaces();
-		for (int i = 0; i < list.length; i++) {
+		for ( int i = 0; i < list.length; i++ ) {
 			Class in = list[i];
-			if (classMethods.get(in) != null) {
+			if ( classMethods.get(in) != null ) {
 				return in;
 			}
 		}
 		return null;
 	}
-
+	
 	private void initMethods() {
-		for (int i = 0; i < INTERFACES.length; i++) {
+		for ( int i = 0; i < INTERFACES.length; i++ ) {
 			Class inter = INTERFACES[i];
 			classMethods.put(inter, new ArrayList());
 		}
-		for (int i = 0; i < INTERFACES.length; i++) {
+		for ( int i = 0; i < INTERFACES.length; i++ ) {
 			Class inter = INTERFACES[i];
 			ArrayList list = (ArrayList) classMethods.get(inter);
 			Method[] methods = inter.getMethods();
-			for (int j = 0; j < methods.length; j++) {
+			for ( int j = 0; j < methods.length; j++ ) {
 				Method m = methods[j];
 				list.add(m);
 			}
 		}
 	}
-
+	
 	public TestBase init(TestAll conf) throws Exception {
 		super.init(conf);
-		if (config.mvcc || config.networked || config.logMode == 0) {
+		if ( config.mvcc || config.networked || config.logMode == 0 ) {
 			return this;
 		}
 		baseDir = TestBase.getTestDir("crash");
@@ -410,7 +410,7 @@ public class TestCrashAPI extends TestBase {
 		statements.addAll(add);
 		return this;
 	}
-
+	
 	public void testCase(int i) throws SQLException {
 		int old = SysProperties.getMaxQueryTimeout();
 		String oldBaseDir = baseDir;
@@ -423,17 +423,17 @@ public class TestCrashAPI extends TestBase {
 			System.setProperty(SysProperties.H2_MAX_QUERY_TIMEOUT, "" + old);
 		}
 	}
-
+	
 	public void test() throws SQLException {
-		if (config.mvcc || config.networked || config.logMode == 0) {
+		if ( config.mvcc || config.networked || config.logMode == 0 ) {
 			return;
 		}
 		int len = getSize(2, 6);
-		for (int i = 0; i < len; i++) {
+		for ( int i = 0; i < len; i++ ) {
 			int seed = RandomUtils.nextInt(Integer.MAX_VALUE);
 			testCase(seed);
 			deleteDb();
 		}
 	}
-
+	
 }

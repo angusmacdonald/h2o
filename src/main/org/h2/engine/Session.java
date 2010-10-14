@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.engine;
 
@@ -55,65 +53,107 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  * with a SessionRemote object on the client side.
  */
 public class Session extends SessionWithState {
-
+	
 	/**
 	 * The prefix of generated identifiers. It may not have letters, because they are case sensitive.
 	 */
 	private static final String SYSTEM_IDENTIFIER_PREFIX = "_";
+	
 	private static int nextSerialId;
-
+	
 	private final int serialId = nextSerialId++;
+	
 	private Database database;
+	
 	private ConnectionInfo connectionInfo;
+	
 	private User user;
+	
 	private int id;
+	
 	private ObjectArray locks = new ObjectArray();
-
+	
 	private QueryProxyManager proxyManagerForCurrentTransaction = null;
-
+	
 	private UndoLog undoLog;
+	
 	private Random random;
+	
 	private LogSystem logSystem;
+	
 	private int lockTimeout;
+	
 	private Value lastIdentity = ValueLong.get(0);
+	
 	private int firstUncommittedLog = LogSystem.LOG_WRITTEN;
+	
 	private int firstUncommittedPos = LogSystem.LOG_WRITTEN;
+	
 	private HashMap<String, Integer> savepoints;
+	
 	private Exception stackTrace = new Exception();
+	
 	private Map<String, Table> localTempTables;
+	
 	private Map<String, Index> localTempTableIndexes;
+	
 	private Map<String, Constraint> localTempTableConstraints;
+	
 	private int throttle;
+	
 	private long lastThrottle;
+	
 	private Command currentCommand;
+	
 	private boolean allowLiterals;
+	
 	private String currentSchemaName;
+	
 	private String[] schemaSearchPath;
+	
 	private String traceModuleName;
+	
 	private Map<String, ValueLob> unlinkMap;
+	
 	private int systemIdentifier;
+	
 	private Map<String, Procedure> procedures;
+	
 	private boolean undoLogEnabled = true;
+	
 	private boolean autoCommitAtTransactionEnd;
+	
 	private String currentTransactionName;
+	
 	private volatile long cancelAt;
+	
 	private boolean closed;
+	
 	private long sessionStart = System.currentTimeMillis();
+	
 	private long currentCommandStart;
+	
 	private Map<String, Value> variables;
+	
 	private Set<LocalResult> temporaryResults;
+	
 	private int queryTimeout = SysProperties.getMaxQueryTimeout();
+	
 	private int lastUncommittedDelete;
+	
 	private boolean commitOrRollbackDisabled;
+	
 	private Table waitForLock;
+	
 	private int modificationId;
+	
 	private int modificationIdState;
-
+	
 	/*
 	 * The auto commit field that an external application can actually control in H2O.
 	 */
 	private boolean applicationAutoCommit = true;
-
+	
 	public Session(Database database, User user, int id) { // TODO remove public
 															// identifier - only
 															// needed for RMI
@@ -128,19 +168,19 @@ public class Session extends SessionWithState {
 		this.lockTimeout = setting == null ? Constants.INITIAL_LOCK_TIMEOUT : setting.getIntValue();
 		this.currentSchemaName = Constants.SCHEMA_MAIN;
 	}
-
+	
 	public boolean setCommitOrRollbackDisabled(boolean x) {
 		boolean old = commitOrRollbackDisabled;
 		commitOrRollbackDisabled = x;
 		return old;
 	}
-
+	
 	private void initVariables() {
-		if (variables == null) {
+		if ( variables == null ) {
 			variables = new HashMap<String, Value>();
 		}
 	}
-
+	
 	/**
 	 * Set the value of the given variable for this session.
 	 * 
@@ -153,22 +193,22 @@ public class Session extends SessionWithState {
 		initVariables();
 		modificationId++;
 		Value old;
-		if (value == ValueNull.INSTANCE) {
+		if ( value == ValueNull.INSTANCE ) {
 			old = variables.remove(name);
 		} else {
-			if (value instanceof ValueLob) {
+			if ( value instanceof ValueLob ) {
 				// link it, to make sure we have our own file
 				value = value.link(database, ValueLob.TABLE_ID_SESSION_VARIABLE);
 			}
 			old = variables.put(name, value);
 		}
-		if (old != null) {
+		if ( old != null ) {
 			// close the old value (in case it is a lob)
 			old.unlink();
 			old.close();
 		}
 	}
-
+	
 	/**
 	 * Get the value of the specified user defined variable. This method always returns a value; it returns ValueNull.INSTANCE if the
 	 * variable doesn't exist.
@@ -182,21 +222,21 @@ public class Session extends SessionWithState {
 		Value v = variables.get(name);
 		return v == null ? ValueNull.INSTANCE : v;
 	}
-
+	
 	/**
 	 * Get the list of variable names that are set for this session.
 	 * 
 	 * @return the list of names
 	 */
 	public String[] getVariableNames() {
-		if (variables == null) {
+		if ( variables == null ) {
 			return new String[0];
 		}
 		String[] list = new String[variables.size()];
 		variables.keySet().toArray(list);
 		return list;
 	}
-
+	
 	/**
 	 * Get the local temporary table if one exists with that name, or null if not.
 	 * 
@@ -205,19 +245,19 @@ public class Session extends SessionWithState {
 	 * @return the table, or null
 	 */
 	public Table findLocalTempTable(String name) {
-		if (localTempTables == null) {
+		if ( localTempTables == null ) {
 			return null;
 		}
 		return localTempTables.get(name);
 	}
-
+	
 	public ObjectArray getLocalTempTables() {
-		if (localTempTables == null) {
+		if ( localTempTables == null ) {
 			return new ObjectArray();
 		}
 		return new ObjectArray(localTempTables.values());
 	}
-
+	
 	/**
 	 * Add a local temporary table to this session.
 	 * 
@@ -227,16 +267,16 @@ public class Session extends SessionWithState {
 	 *             if a table with this name already exists
 	 */
 	public void addLocalTempTable(Table table) throws SQLException {
-		if (localTempTables == null) {
+		if ( localTempTables == null ) {
 			localTempTables = new HashMap<String, Table>();
 		}
-		if (localTempTables.get(table.getName()) != null) {
+		if ( localTempTables.get(table.getName()) != null ) {
 			throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_ALREADY_EXISTS_1, table.getSQL());
 		}
 		modificationId++;
 		localTempTables.put(table.getName(), table);
 	}
-
+	
 	/**
 	 * Drop and remove the given local temporary table from this session.
 	 * 
@@ -248,7 +288,7 @@ public class Session extends SessionWithState {
 		localTempTables.remove(table.getName());
 		table.removeChildrenAndResources(this);
 	}
-
+	
 	/**
 	 * Get the local temporary index if one exists with that name, or null if not.
 	 * 
@@ -257,19 +297,19 @@ public class Session extends SessionWithState {
 	 * @return the table, or null
 	 */
 	public Index findLocalTempTableIndex(String name) {
-		if (localTempTableIndexes == null) {
+		if ( localTempTableIndexes == null ) {
 			return null;
 		}
 		return localTempTableIndexes.get(name);
 	}
-
+	
 	public Map<String, Index> getLocalTempTableIndexes() {
-		if (localTempTableIndexes == null) {
+		if ( localTempTableIndexes == null ) {
 			return new HashMap<String, Index>();
 		}
 		return localTempTableIndexes;
 	}
-
+	
 	/**
 	 * Add a local temporary index to this session.
 	 * 
@@ -279,15 +319,15 @@ public class Session extends SessionWithState {
 	 *             if a index with this name already exists
 	 */
 	public void addLocalTempTableIndex(Index index) throws SQLException {
-		if (localTempTableIndexes == null) {
+		if ( localTempTableIndexes == null ) {
 			localTempTableIndexes = new HashMap<String, Index>();
 		}
-		if (localTempTableIndexes.get(index.getName()) != null) {
+		if ( localTempTableIndexes.get(index.getName()) != null ) {
 			throw Message.getSQLException(ErrorCode.INDEX_ALREADY_EXISTS_1, index.getSQL());
 		}
 		localTempTableIndexes.put(index.getName(), index);
 	}
-
+	
 	/**
 	 * Drop and remove the given local temporary index from this session.
 	 * 
@@ -295,12 +335,12 @@ public class Session extends SessionWithState {
 	 *            the index
 	 */
 	public void removeLocalTempTableIndex(Index index) throws SQLException {
-		if (localTempTableIndexes != null) {
+		if ( localTempTableIndexes != null ) {
 			localTempTableIndexes.remove(index.getName());
 			index.removeChildrenAndResources(this);
 		}
 	}
-
+	
 	/**
 	 * Get the local temporary constraint if one exists with that name, or null if not.
 	 * 
@@ -309,24 +349,24 @@ public class Session extends SessionWithState {
 	 * @return the constraint, or null
 	 */
 	public Constraint findLocalTempTableConstraint(String name) {
-		if (localTempTableConstraints == null) {
+		if ( localTempTableConstraints == null ) {
 			return null;
 		}
 		return localTempTableConstraints.get(name);
 	}
-
+	
 	/**
 	 * Get the map of constraints for all constraints on local, temporary tables, if any. The map's keys are the constraints' names.
 	 * 
 	 * @return the map of constraints, or null
 	 */
 	public Map<String, Constraint> getLocalTempTableConstraints() {
-		if (localTempTableConstraints == null) {
+		if ( localTempTableConstraints == null ) {
 			return new HashMap<String, Constraint>();
 		}
 		return localTempTableConstraints;
 	}
-
+	
 	/**
 	 * Add a local temporary constraint to this session.
 	 * 
@@ -336,16 +376,16 @@ public class Session extends SessionWithState {
 	 *             if a constraint with the same name already exists
 	 */
 	public void addLocalTempTableConstraint(Constraint constraint) throws SQLException {
-		if (localTempTableConstraints == null) {
+		if ( localTempTableConstraints == null ) {
 			localTempTableConstraints = new HashMap<String, Constraint>();
 		}
 		String name = constraint.getName();
-		if (localTempTableConstraints.get(name) != null) {
+		if ( localTempTableConstraints.get(name) != null ) {
 			throw Message.getSQLException(ErrorCode.CONSTRAINT_ALREADY_EXISTS_1, constraint.getSQL());
 		}
 		localTempTableConstraints.put(name, constraint);
 	}
-
+	
 	/**
 	 * Drop and remove the given local temporary constraint from this session.
 	 * 
@@ -353,37 +393,37 @@ public class Session extends SessionWithState {
 	 *            the constraint
 	 */
 	public void removeLocalTempTableConstraint(Constraint constraint) throws SQLException {
-		if (localTempTableConstraints != null) {
+		if ( localTempTableConstraints != null ) {
 			localTempTableConstraints.remove(constraint.getName());
 			constraint.removeChildrenAndResources(this);
 		}
 	}
-
+	
 	protected void finalize() {
-		if (!SysProperties.runFinalize) {
+		if ( !SysProperties.runFinalize ) {
 			return;
 		}
-		if (!closed) {
+		if ( !closed ) {
 			throw Message.getInternalError("not closed", stackTrace);
 		}
 	}
-
+	
 	public User getUser() {
 		return user;
 	}
-
+	
 	public int getLockTimeout() {
 		return lockTimeout;
 	}
-
+	
 	public void setLockTimeout(int lockTimeout) {
 		this.lockTimeout = lockTimeout;
 	}
-
+	
 	public CommandInterface prepareCommand(String sql, int fetchSize) throws SQLException {
 		return prepareLocal(sql);
 	}
-
+	
 	/**
 	 * Parse and prepare the given SQL statement. This method also checks the rights.
 	 * 
@@ -394,7 +434,7 @@ public class Session extends SessionWithState {
 	public Prepared prepare(String sql) throws SQLException {
 		return prepare(sql, false);
 	}
-
+	
 	/**
 	 * Parse and prepare the given SQL statement.
 	 * 
@@ -409,7 +449,7 @@ public class Session extends SessionWithState {
 		parser.setRightsChecked(rightsChecked);
 		return parser.prepare(sql);
 	}
-
+	
 	/**
 	 * Parse and prepare the given SQL statement. This method also checks if the connection has been closed.
 	 * 
@@ -418,33 +458,33 @@ public class Session extends SessionWithState {
 	 * @return the prepared statement
 	 */
 	public Command prepareLocal(String sql) throws SQLException {
-		if (closed) {
+		if ( closed ) {
 			throw Message.getSQLException(ErrorCode.CONNECTION_BROKEN);
 		}
 		Parser parser = new Parser(this, false);
 		return parser.prepareCommand(sql);
 	}
-
+	
 	public Database getDatabase() {
 		return database;
 	}
-
+	
 	public int getPowerOffCount() {
 		return database.getPowerOffCount();
 	}
-
+	
 	public void setPowerOffCount(int count) {
 		database.setPowerOffCount(count);
 	}
-
+	
 	public int getLastUncommittedDelete() {
 		return lastUncommittedDelete;
 	}
-
+	
 	public void setLastUncommittedDelete(int deleteId) {
 		lastUncommittedDelete = deleteId;
 	}
-
+	
 	/**
 	 * Commit the current transaction. If the statement was not a data definition statement, and if there are temporary tables that should
 	 * be dropped or truncated at commit, this is done as well.
@@ -455,7 +495,7 @@ public class Session extends SessionWithState {
 	public void commit(boolean ddl) throws SQLException {
 		commit(ddl, false);
 	}
-
+	
 	/**
 	 * Commit the current transaction. If the statement was not a data definition statement, and if there are temporary tables that should
 	 * be dropped or truncated at commit, this is done as well.
@@ -470,22 +510,22 @@ public class Session extends SessionWithState {
 		checkCommitRollback();
 		lastUncommittedDelete = 0;
 		currentTransactionName = null;
-		if (containsUncommitted()) {
+		if ( containsUncommitted() ) {
 			// need to commit even if rollback is not possible
 			// (create/drop table and so on)
 			logSystem.commit(this);
 		}
-		if (undoLog.size() > 0) {
-			if (database.isMultiVersion()) {
+		if ( undoLog.size() > 0 ) {
+			if ( database.isMultiVersion() ) {
 				ArrayList<Row> rows = new ArrayList<Row>();
-				synchronized (database) {
-					while (undoLog.size() > 0) {
+				synchronized ( database ) {
+					while ( undoLog.size() > 0 ) {
 						UndoLogRecord entry = undoLog.getLast();
 						entry.commit();
 						rows.add(entry.getRow());
 						undoLog.removeLast(false);
 					}
-					for (int i = 0; i < rows.size(); i++) {
+					for ( int i = 0; i < rows.size(); i++ ) {
 						Row r = rows.get(i);
 						r.commit();
 					}
@@ -493,41 +533,41 @@ public class Session extends SessionWithState {
 			}
 			undoLog.clear();
 		}
-		if (!ddl) {
+		if ( !ddl ) {
 			// do not clean the temp tables if the last command was a
 			// create/drop
 			cleanTempTables(false);
-			if (autoCommitAtTransactionEnd) {
+			if ( autoCommitAtTransactionEnd ) {
 				setApplicationAutoCommit(true);
 				autoCommitAtTransactionEnd = false;
 			}
 		}
-		if (unlinkMap != null && unlinkMap.size() > 0) {
+		if ( unlinkMap != null && unlinkMap.size() > 0 ) {
 			// need to flush the log file, because we can't unlink lobs if the
 			// commit record is not written
 			logSystem.flush();
 			Iterator<ValueLob> it = unlinkMap.values().iterator();
-			while (it.hasNext()) {
+			while ( it.hasNext() ) {
 				Value v = it.next();
 				v.unlink();
 			}
 			unlinkMap = null;
 		}
-
-		if (proxyManagerForCurrentTransaction != null && !ddl && !hasAlreadyCommittedQueryProxy) {
+		
+		if ( proxyManagerForCurrentTransaction != null && !ddl && !hasAlreadyCommittedQueryProxy ) {
 			proxyManagerForCurrentTransaction.finishTransaction(true, applicationAutoCommit, getDatabase());
 			proxyManagerForCurrentTransaction = null;
 		}
-
+		
 		unlockAll();
 	}
-
+	
 	private void checkCommitRollback() throws SQLException {
-		if (commitOrRollbackDisabled && locks.size() > 0) {
+		if ( commitOrRollbackDisabled && locks.size() > 0 ) {
 			throw Message.getSQLException(ErrorCode.COMMIT_ROLLBACK_NOT_ALLOWED);
 		}
 	}
-
+	
 	/**
 	 * Fully roll back the current transaction.
 	 */
@@ -535,21 +575,21 @@ public class Session extends SessionWithState {
 		checkCommitRollback();
 		currentTransactionName = null;
 		boolean needCommit = false;
-		if (undoLog.size() > 0) {
+		if ( undoLog.size() > 0 ) {
 			rollbackTo(0, false);
 			needCommit = true;
 		}
-		if (locks.size() > 0 || needCommit) {
+		if ( locks.size() > 0 || needCommit ) {
 			logSystem.commit(this);
 		}
 		cleanTempTables(false);
 		unlockAll();
-		if (autoCommitAtTransactionEnd) {
+		if ( autoCommitAtTransactionEnd ) {
 			setApplicationAutoCommit(true);
 			autoCommitAtTransactionEnd = false;
 		}
 	}
-
+	
 	/**
 	 * Partially roll back the current transaction.
 	 * 
@@ -559,53 +599,54 @@ public class Session extends SessionWithState {
 	 *            if the list should be trimmed
 	 */
 	public void rollbackTo(int index, boolean trimToSize) throws SQLException {
-		while (undoLog.size() > index) {
+		while ( undoLog.size() > index ) {
 			UndoLogRecord entry = undoLog.getLast();
 			entry.undo(this);
 			undoLog.removeLast(trimToSize);
 		}
-		if (savepoints != null) {
+		if ( savepoints != null ) {
 			String[] names = new String[savepoints.size()];
 			savepoints.keySet().toArray(names);
-			for (String name : names) {
+			for ( String name : names ) {
 				Integer id = savepoints.get(name);
-				if (id.intValue() > index) {
+				if ( id.intValue() > index ) {
 					savepoints.remove(name);
 				}
 			}
 		}
 	}
-
+	
 	public int getLogId() {
 		return undoLog.size();
 	}
-
+	
 	public int getId() {
 		return id;
 	}
-
+	
 	public void cancel() {
 		cancelAt = System.currentTimeMillis();
 	}
-
+	
 	public void close() throws SQLException {
-		if (!closed) {
+		if ( !closed ) {
 			try {
 				cleanTempTables(true);
 				this.user.sessions--;
-
-				if (this.user.sessions == 0 && (Constants.IS_NON_SM_TEST || this.getDatabase().getSystemSession().getUser().sessions == 0)) {
+				
+				if ( this.user.sessions == 0
+						&& ( Constants.IS_NON_SM_TEST || this.getDatabase().getSystemSession().getUser().sessions == 0 ) ) {
 					IDatabaseRemote cr = database.getRemoteInterface();
 					cr.shutdown();
 					database.removeSession(this);
 				}
-
+				
 			} finally {
 				closed = true;
 			}
 		}
 	}
-
+	
 	/**
 	 * Add a lock for the given table. The object is unlocked on commit or rollback.
 	 * 
@@ -613,14 +654,14 @@ public class Session extends SessionWithState {
 	 *            the table that is locked
 	 */
 	public void addLock(Table table) {
-		if (SysProperties.CHECK) {
-			if (locks.indexOf(table) >= 0) {
+		if ( SysProperties.CHECK ) {
+			if ( locks.indexOf(table) >= 0 ) {
 				Message.throwInternalError();
 			}
 		}
 		locks.add(table);
 	}
-
+	
 	/**
 	 * Add an undo log entry to this session.
 	 * 
@@ -634,17 +675,17 @@ public class Session extends SessionWithState {
 	public void log(Table table, short type, Row row) throws SQLException {
 		log(new UndoLogRecord(table, type, row));
 	}
-
+	
 	private void log(UndoLogRecord log) throws SQLException {
 		// called _after_ the row was inserted successfully into the table,
 		// otherwise rollback will try to rollback a not-inserted row
-
+		
 		// XXX because of exclusive locking at the H2O level, it is assumed that this is not needed.
-		if (SysProperties.CHECK) {
+		if ( SysProperties.CHECK ) {
 			int lockMode = database.getLockMode();
-			if (lockMode != Constants.LOCK_MODE_OFF && !database.isMultiVersion()) {
-				if (locks.indexOf(log.getTable()) < 0 && !Table.TABLE_LINK.equals(log.getTable().getTableType())) {
-
+			if ( lockMode != Constants.LOCK_MODE_OFF && !database.isMultiVersion() ) {
+				if ( locks.indexOf(log.getTable()) < 0 && !Table.TABLE_LINK.equals(log.getTable().getTableType()) ) {
+					
 					/*
 					 * Thrown if we try to log something, but a lock isn't held.
 					 */
@@ -654,27 +695,27 @@ public class Session extends SessionWithState {
 			}
 		}
 		// end of check
-
-		if (undoLogEnabled) {
+		
+		if ( undoLogEnabled ) {
 			undoLog.add(log);
 		} else {
 			log.commit();
 			log.getRow().commit();
 		}
 	}
-
+	
 	/**
 	 * Unlock all read locks. This is done if the transaction isolation mode is READ_COMMITTED.
 	 */
 	public void unlockReadLocks() {
-		if (database.isMultiVersion()) {
+		if ( database.isMultiVersion() ) {
 			// MVCC: keep shared locks (insert / update / delete)
 			return;
 		}
-		for (int i = 0; i < locks.size(); i++) {
+		for ( int i = 0; i < locks.size(); i++ ) {
 			Table t = (Table) locks.get(i);
-			if (!t.isLockedExclusively()) {
-				synchronized (database) {
+			if ( !t.isLockedExclusively() ) {
+				synchronized ( database ) {
 					t.unlock(this);
 					locks.remove(i);
 				}
@@ -682,17 +723,17 @@ public class Session extends SessionWithState {
 			}
 		}
 	}
-
+	
 	private void unlockAll() throws SQLException {
-		if (SysProperties.CHECK) {
-			if (undoLog.size() > 0) {
+		if ( SysProperties.CHECK ) {
+			if ( undoLog.size() > 0 ) {
 				Message.throwInternalError();
 			}
 		}
 		database.afterWriting();
-		if (locks.size() > 0) {
-			synchronized (database) {
-				for (int i = 0; i < locks.size(); i++) {
+		if ( locks.size() > 0 ) {
+			synchronized ( database ) {
+				for ( int i = 0; i < locks.size(); i++ ) {
 					Table t = (Table) locks.get(i);
 					t.unlock(this);
 				}
@@ -700,54 +741,54 @@ public class Session extends SessionWithState {
 			}
 		}
 		savepoints = null;
-
-		if (modificationIdState != modificationId) {
+		
+		if ( modificationIdState != modificationId ) {
 			sessionStateChanged = true;
 		}
 	}
-
+	
 	private void cleanTempTables(boolean closeSession) throws SQLException {
-		if (localTempTables != null && localTempTables.size() > 0) {
+		if ( localTempTables != null && localTempTables.size() > 0 ) {
 			ObjectArray list = new ObjectArray(localTempTables.values());
-			for (int i = 0; i < list.size(); i++) {
+			for ( int i = 0; i < list.size(); i++ ) {
 				Table table = (Table) list.get(i);
-				if (closeSession || table.getOnCommitDrop()) {
+				if ( closeSession || table.getOnCommitDrop() ) {
 					modificationId++;
 					table.setModified();
 					localTempTables.remove(table.getName());
 					table.removeChildrenAndResources(this);
-				} else if (table.getOnCommitTruncate()) {
+				} else if ( table.getOnCommitTruncate() ) {
 					table.truncate(this);
 				}
 			}
 		}
 	}
-
+	
 	public Random getRandom() {
-		if (random == null) {
+		if ( random == null ) {
 			random = new Random();
 		}
 		return random;
 	}
-
+	
 	public Trace getTrace() {
-		if (traceModuleName == null) {
+		if ( traceModuleName == null ) {
 			traceModuleName = Trace.JDBC + "[" + id + "]";
 		}
-		if (closed) {
+		if ( closed ) {
 			return new TraceSystem(null, false).getTrace(traceModuleName);
 		}
 		return database.getTrace(traceModuleName);
 	}
-
+	
 	public void setLastIdentity(Value last) {
 		this.lastIdentity = last;
 	}
-
+	
 	public Value getLastIdentity() {
 		return lastIdentity;
 	}
-
+	
 	/**
 	 * Called when a log entry for this session is added. The session keeps track of the first entry in the log file that is not yet
 	 * committed.
@@ -758,20 +799,20 @@ public class Session extends SessionWithState {
 	 *            the position of the log entry in the log file
 	 */
 	public void addLogPos(int logId, int pos) {
-		if (firstUncommittedLog == LogSystem.LOG_WRITTEN) {
+		if ( firstUncommittedLog == LogSystem.LOG_WRITTEN ) {
 			firstUncommittedLog = logId;
 			firstUncommittedPos = pos;
 		}
 	}
-
+	
 	public int getFirstUncommittedLog() {
 		return firstUncommittedLog;
 	}
-
+	
 	public int getFirstUncommittedPos() {
 		return firstUncommittedPos;
 	}
-
+	
 	/**
 	 * This method is called after the log file has committed this session.
 	 */
@@ -779,11 +820,11 @@ public class Session extends SessionWithState {
 		firstUncommittedLog = LogSystem.LOG_WRITTEN;
 		firstUncommittedPos = LogSystem.LOG_WRITTEN;
 	}
-
+	
 	private boolean containsUncommitted() {
 		return firstUncommittedLog != LogSystem.LOG_WRITTEN;
 	}
-
+	
 	/**
 	 * Create a savepoint that is linked to the current log position.
 	 * 
@@ -791,12 +832,12 @@ public class Session extends SessionWithState {
 	 *            the savepoint name
 	 */
 	public void addSavepoint(String name) {
-		if (savepoints == null) {
+		if ( savepoints == null ) {
 			savepoints = new HashMap<String, Integer>();
 		}
 		savepoints.put(name, ObjectUtils.getInteger(getLogId()));
 	}
-
+	
 	/**
 	 * Undo all operations back to the log position of the given savepoint.
 	 * 
@@ -805,17 +846,17 @@ public class Session extends SessionWithState {
 	 */
 	public void rollbackToSavepoint(String name) throws SQLException {
 		checkCommitRollback();
-		if (savepoints == null) {
+		if ( savepoints == null ) {
 			throw Message.getSQLException(ErrorCode.SAVEPOINT_IS_INVALID_1, name);
 		}
 		Integer id = savepoints.get(name);
-		if (id == null) {
+		if ( id == null ) {
 			throw Message.getSQLException(ErrorCode.SAVEPOINT_IS_INVALID_1, name);
 		}
 		int i = id.intValue();
 		rollbackTo(i, false);
 	}
-
+	
 	/**
 	 * Prepare the given transaction.
 	 * 
@@ -823,14 +864,14 @@ public class Session extends SessionWithState {
 	 *            the name of the transaction
 	 */
 	public void prepareCommit(String transactionName) throws SQLException {
-		if (containsUncommitted()) {
+		if ( containsUncommitted() ) {
 			// need to commit even if rollback is not possible (create/drop
 			// table and so on)
 			logSystem.prepareCommit(this, transactionName);
 		}
 		currentTransactionName = transactionName;
 	}
-
+	
 	/**
 	 * Commit or roll back the given transaction.
 	 * 
@@ -840,8 +881,8 @@ public class Session extends SessionWithState {
 	 *            true for commit, false for rollback
 	 */
 	public void setPreparedTransaction(String transactionName, boolean commit) throws SQLException {
-		if (currentTransactionName != null && currentTransactionName.equals(transactionName)) {
-			if (commit) {
+		if ( currentTransactionName != null && currentTransactionName.equals(transactionName) ) {
+			if ( commit ) {
 				commit(false, true);
 			} else {
 				rollback();
@@ -850,47 +891,47 @@ public class Session extends SessionWithState {
 			ObjectArray list = logSystem.getInDoubtTransactions();
 			int state = commit ? InDoubtTransaction.COMMIT : InDoubtTransaction.ROLLBACK;
 			boolean found = false;
-			for (int i = 0; list != null && i < list.size(); i++) {
+			for ( int i = 0; list != null && i < list.size(); i++ ) {
 				InDoubtTransaction p = (InDoubtTransaction) list.get(i);
-				if (p.getTransaction().equals(transactionName)) {
+				if ( p.getTransaction().equals(transactionName) ) {
 					p.setState(state);
 					found = true;
 					break;
 				}
 			}
-			if (!found && commit) { // only called on commit because of the way ROLLBACKS could be sent to machines unaware of a problem.
+			if ( !found && commit ) { // only called on commit because of the way ROLLBACKS could be sent to machines unaware of a problem.
 				throw Message.getSQLException(ErrorCode.TRANSACTION_NOT_FOUND_1, transactionName);
 			}
 		}
 	}
-
+	
 	public boolean isClosed() {
 		return closed;
 	}
-
+	
 	public void setThrottle(int throttle) {
 		this.throttle = throttle;
 	}
-
+	
 	/**
 	 * Wait for some time if this session is throttled (slowed down).
 	 */
 	public void throttle() {
-		if (throttle == 0) {
+		if ( throttle == 0 ) {
 			return;
 		}
 		long time = System.currentTimeMillis();
-		if (lastThrottle + Constants.THROTTLE_DELAY > time) {
+		if ( lastThrottle + Constants.THROTTLE_DELAY > time ) {
 			return;
 		}
 		lastThrottle = time + throttle;
 		try {
 			Thread.sleep(throttle);
-		} catch (Exception e) {
+		} catch ( Exception e ) {
 			// ignore
 		}
 	}
-
+	
 	/**
 	 * Set the current command of this session. This is done just before executing the statement.
 	 * 
@@ -902,11 +943,11 @@ public class Session extends SessionWithState {
 	public void setCurrentCommand(Command command, long startTime) {
 		this.currentCommand = command;
 		this.currentCommandStart = startTime;
-		if (queryTimeout > 0 && startTime != 0) {
+		if ( queryTimeout > 0 && startTime != 0 ) {
 			cancelAt = startTime + queryTimeout;
 		}
 	}
-
+	
 	/**
 	 * Check if the current transaction is canceled by calling Statement.cancel() or because a session timeout was set and expired.
 	 * 
@@ -915,41 +956,41 @@ public class Session extends SessionWithState {
 	 */
 	public void checkCanceled() throws SQLException {
 		throttle();
-		if (cancelAt == 0) {
+		if ( cancelAt == 0 ) {
 			return;
 		}
 		long time = System.currentTimeMillis();
-		if (time >= cancelAt) {
+		if ( time >= cancelAt ) {
 			cancelAt = 0;
 			throw Message.getSQLException(ErrorCode.STATEMENT_WAS_CANCELED);
 		}
 	}
-
+	
 	public Command getCurrentCommand() {
 		return currentCommand;
 	}
-
+	
 	public long getCurrentCommandStart() {
 		return currentCommandStart;
 	}
-
+	
 	public boolean getAllowLiterals() {
 		return allowLiterals;
 	}
-
+	
 	public void setAllowLiterals(boolean b) {
 		this.allowLiterals = b;
 	}
-
+	
 	public void setCurrentSchema(Schema schema) {
 		modificationId++;
 		this.currentSchemaName = schema.getName();
 	}
-
+	
 	public String getCurrentSchemaName() {
 		return currentSchemaName;
 	}
-
+	
 	/**
 	 * Create an internal connection. This connection is used when initializing triggers, and when calling user defined functions.
 	 * 
@@ -959,18 +1000,18 @@ public class Session extends SessionWithState {
 	 */
 	public JdbcConnection createConnection(boolean columnList) {
 		String url;
-		if (columnList) {
+		if ( columnList ) {
 			url = Constants.CONN_URL_COLUMNLIST;
 		} else {
 			url = Constants.CONN_URL_INTERNAL;
 		}
 		return new JdbcConnection(this, getUser().getName(), url);
 	}
-
+	
 	public DataHandler getDataHandler() {
 		return database;
 	}
-
+	
 	/**
 	 * Remember that the given LOB value must be un-linked (disconnected from the table) at commit.
 	 * 
@@ -978,15 +1019,15 @@ public class Session extends SessionWithState {
 	 *            the value
 	 */
 	public void unlinkAtCommit(ValueLob v) {
-		if (SysProperties.CHECK && !v.isLinked()) {
+		if ( SysProperties.CHECK && !v.isLinked() ) {
 			Message.throwInternalError();
 		}
-		if (unlinkMap == null) {
+		if ( unlinkMap == null ) {
 			unlinkMap = new HashMap<String, ValueLob>();
 		}
 		unlinkMap.put(v.toString(), v);
 	}
-
+	
 	/**
 	 * Do not unlink this LOB value at commit any longer.
 	 * 
@@ -994,11 +1035,11 @@ public class Session extends SessionWithState {
 	 *            the value
 	 */
 	public void unlinkAtCommitStop(Value v) {
-		if (unlinkMap != null) {
+		if ( unlinkMap != null ) {
 			unlinkMap.remove(v.toString());
 		}
 	}
-
+	
 	/**
 	 * Get the next system generated identifiers. The identifier returned does not occur within the given SQL statement.
 	 * 
@@ -1010,10 +1051,10 @@ public class Session extends SessionWithState {
 		String id;
 		do {
 			id = SYSTEM_IDENTIFIER_PREFIX + systemIdentifier++;
-		} while (sql.indexOf(id) >= 0);
+		} while ( sql.indexOf(id) >= 0 );
 		return id;
 	}
-
+	
 	/**
 	 * Add a procedure to this session.
 	 * 
@@ -1021,12 +1062,12 @@ public class Session extends SessionWithState {
 	 *            the procedure to add
 	 */
 	public void addProcedure(Procedure procedure) {
-		if (procedures == null) {
+		if ( procedures == null ) {
 			procedures = new HashMap<String, Procedure>();
 		}
 		procedures.put(procedure.getName(), procedure);
 	}
-
+	
 	/**
 	 * Remove a procedure from this session.
 	 * 
@@ -1034,11 +1075,11 @@ public class Session extends SessionWithState {
 	 *            the name of the procedure to remove
 	 */
 	public void removeProcedure(String name) {
-		if (procedures != null) {
+		if ( procedures != null ) {
 			procedures.remove(name);
 		}
 	}
-
+	
 	/**
 	 * Get the procedure with the given name, or null if none exists.
 	 * 
@@ -1047,43 +1088,43 @@ public class Session extends SessionWithState {
 	 * @return the procedure or null
 	 */
 	public Procedure getProcedure(String name) {
-		if (procedures == null) {
+		if ( procedures == null ) {
 			return null;
 		}
 		return procedures.get(name);
 	}
-
+	
 	public void setSchemaSearchPath(String[] schemas) {
 		modificationId++;
 		this.schemaSearchPath = schemas;
 	}
-
+	
 	public String[] getSchemaSearchPath() {
 		return schemaSearchPath;
 	}
-
+	
 	public int hashCode() {
 		return user.getName().hashCode();
-
+		
 		// return serialId;
 	}
-
+	
 	public boolean equals(Object obj) {
-		return user.getName().equals(((Session) obj).getUser().getName());
+		return user.getName().equals(( (Session) obj ).getUser().getName());
 	}
-
+	
 	public String toString() {
 		return "#" + serialId + " (user: " + user.getName() + ")";
 	}
-
+	
 	public void setUndoLogEnabled(boolean b) {
 		this.undoLogEnabled = b;
 	}
-
+	
 	public boolean getUndoLogEnabled() {
 		return undoLogEnabled;
 	}
-
+	
 	/**
 	 * Begin a transaction.
 	 */
@@ -1091,36 +1132,36 @@ public class Session extends SessionWithState {
 		autoCommitAtTransactionEnd = getApplicationAutoCommit();
 		setApplicationAutoCommit(false);
 	}
-
+	
 	public long getSessionStart() {
 		return sessionStart;
 	}
-
+	
 	public Table[] getLocks() {
-		synchronized (database) {
+		synchronized ( database ) {
 			Table[] list = new Table[locks.size()];
 			locks.toArray(list);
 			return list;
 		}
 	}
-
+	
 	/**
 	 * Wait if the exclusive mode has been enabled for another session. This method returns as soon as the exclusive mode has been disabled.
 	 */
 	public void waitIfExclusiveModeEnabled() {
-		while (true) {
+		while ( true ) {
 			Session exclusive = database.getExclusiveSession();
-			if (exclusive == null || exclusive == this) {
+			if ( exclusive == null || exclusive == this ) {
 				break;
 			}
 			try {
 				Thread.sleep(100);
-			} catch (InterruptedException e) {
+			} catch ( InterruptedException e ) {
 				// ignore
 			}
 		}
 	}
-
+	
 	/**
 	 * Remember the result set and close it as soon as the transaction is committed (if it needs to be closed). This is done to delete
 	 * temporary files as soon as possible.
@@ -1129,33 +1170,33 @@ public class Session extends SessionWithState {
 	 *            the temporary result set
 	 */
 	public void addTemporaryResult(LocalResult result) {
-		if (!result.needToClose()) {
+		if ( !result.needToClose() ) {
 			return;
 		}
-		if (temporaryResults == null) {
+		if ( temporaryResults == null ) {
 			temporaryResults = new HashSet<LocalResult>();
 		}
-		if (temporaryResults.size() < 100) {
+		if ( temporaryResults.size() < 100 ) {
 			// reference at most 100 result sets to avoid memory problems
 			temporaryResults.add(result);
 		}
 	}
-
+	
 	/**
 	 * Close all temporary result set. This also deletes all temporary files held by the result sets.
 	 */
 	public void closeTemporaryResults() {
-		if (temporaryResults != null) {
-			for (LocalResult result : temporaryResults) {
+		if ( temporaryResults != null ) {
+			for ( LocalResult result : temporaryResults ) {
 				result.close();
 			}
 			temporaryResults = null;
 		}
 	}
-
+	
 	public void setQueryTimeout(int queryTimeout) {
 		int max = SysProperties.getMaxQueryTimeout();
-		if (max != 0 && (max < queryTimeout || queryTimeout == 0)) {
+		if ( max != 0 && ( max < queryTimeout || queryTimeout == 0 ) ) {
 			// the value must be at most max
 			queryTimeout = max;
 		}
@@ -1164,27 +1205,27 @@ public class Session extends SessionWithState {
 		// otherwise it is still used
 		this.cancelAt = 0;
 	}
-
+	
 	public int getQueryTimeout() {
 		return queryTimeout;
 	}
-
+	
 	public void setWaitForLock(Table table) {
 		this.waitForLock = table;
 	}
-
+	
 	public Table getWaitForLock() {
 		return waitForLock;
 	}
-
+	
 	public int getModificationId() {
 		return modificationId;
 	}
-
+	
 	public boolean isReconnectNeeded() {
 		return database.isReconnectNeeded();
 	}
-
+	
 	public SessionInterface reconnect() throws SQLException {
 		readSessionState();
 		close();
@@ -1193,52 +1234,53 @@ public class Session extends SessionWithState {
 		newSession.recreateSessionState();
 		return newSession;
 	}
-
+	
 	public void setConnectionInfo(ConnectionInfo ci) {
 		connectionInfo = ci;
 	}
-
+	
 	public Value getTransactionId() {
-		if (undoLog.size() == 0 || !database.isPersistent()) {
+		if ( undoLog.size() == 0 || !database.isPersistent() ) {
 			return ValueNull.INSTANCE;
 		}
 		return ValueString.get(firstUncommittedLog + "-" + firstUncommittedPos + "-" + id);
 	}
-
+	
 	public void setApplicationAutoCommit(boolean applicationAutoCommit) {
 		this.applicationAutoCommit = applicationAutoCommit;
 	}
-
+	
 	public boolean getApplicationAutoCommit() {
 		return applicationAutoCommit;
 	}
-
+	
 	/**
 	 * @return the currentTransactionLocks
 	 */
 	public QueryProxyManager getProxyManager() {
 		return proxyManagerForCurrentTransaction;
 	}
-
+	
 	/**
-	 * Returns a proxy manager for a transaction. If there is an active transaction an existing
-	 * proxy manager will be returned. Otherwise a new proxy manager will be created, indicating
-	 * the start of a new transaction.
+	 * Returns a proxy manager for a transaction. If there is an active transaction an existing proxy manager will be returned. Otherwise a
+	 * new proxy manager will be created, indicating the start of a new transaction.
+	 * 
 	 * @return
 	 */
 	public QueryProxyManager getProxyManagerForTransaction() {
-		if (this.proxyManagerForCurrentTransaction == null){
+		if ( this.proxyManagerForCurrentTransaction == null ) {
 			this.proxyManagerForCurrentTransaction = new QueryProxyManager(getDatabase(), this);
-			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "New transaction started: " + this.proxyManagerForCurrentTransaction.getTransactionName());
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
+					"New transaction started: " + this.proxyManagerForCurrentTransaction.getTransactionName());
 		}
 		return this.proxyManagerForCurrentTransaction;
 	}
-
+	
 	/**
 	 * Completes the transaction by resetting the QueryProxyManager for this session.
 	 */
 	public void completeTransaction() {
 		this.proxyManagerForCurrentTransaction = new QueryProxyManager(getDatabase(), this);
 	}
-
+	
 }

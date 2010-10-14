@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.db;
 
@@ -21,19 +19,20 @@ import org.h2.test.TestBase;
  * Fulltext search tests.
  */
 public class TestFullText extends TestBase {
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws SQLException {
 		testCreateDrop();
-		if (config.memory) {
+		if ( config.memory ) {
 			return;
 		}
 		test(false, "VARCHAR");
@@ -47,17 +46,17 @@ public class TestFullText extends TestBase {
 			test(true, "CLOB");
 			testPerformance(true);
 			testReopen(true);
-		} catch (ClassNotFoundException e) {
+		} catch ( ClassNotFoundException e ) {
 			println("Class not found, not tested: " + luceneFullTextClassName);
 			// ok
-		} catch (NoClassDefFoundError e) {
+		} catch ( NoClassDefFoundError e ) {
 			println("Class not found, not tested: " + luceneFullTextClassName);
 			// ok
 		}
 		deleteDb("fullText");
 		deleteDb("fullTextReopen");
 	}
-
+	
 	private void testCreateDrop() throws SQLException {
 		deleteDb("fullText");
 		FileSystem.getInstance(baseDir).deleteRecursive(baseDir + "/fullText");
@@ -65,7 +64,7 @@ public class TestFullText extends TestBase {
 		Statement stat = conn.createStatement();
 		stat.execute("CREATE ALIAS IF NOT EXISTS FT_INIT FOR \"org.h2.fulltext.FullText.init\"");
 		stat.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR)");
-		for (int i = 0; i < 10; i++) {
+		for ( int i = 0; i < 10; i++ ) {
 			FullText.createIndex(conn, "PUBLIC", "TEST", null);
 			FullText.dropIndex(conn, "PUBLIC", "TEST");
 		}
@@ -73,7 +72,7 @@ public class TestFullText extends TestBase {
 		deleteDb("fullText");
 		FileSystem.getInstance(baseDir).deleteRecursive(baseDir + "/fullText");
 	}
-
+	
 	private void testReopen(boolean lucene) throws SQLException {
 		String prefix = lucene ? "FTL" : "FT";
 		deleteDb("fullTextReopen");
@@ -87,14 +86,14 @@ public class TestFullText extends TestBase {
 		stat.execute("INSERT INTO TEST VALUES(1, 'Hello World')");
 		stat.execute("CALL " + prefix + "_CREATE_INDEX('PUBLIC', 'TEST', NULL)");
 		conn.close();
-
+		
 		conn = getConnection("fullTextReopen");
 		stat = conn.createStatement();
 		ResultSet rs = stat.executeQuery("SELECT * FROM " + prefix + "_SEARCH('Hello', 0, 0)");
 		assertTrue(rs.next());
 		conn.close();
 	}
-
+	
 	private void testPerformance(boolean lucene) throws SQLException {
 		deleteDb("fullText");
 		FileSystem.getInstance(baseDir).deleteRecursive(baseDir + "/fullText");
@@ -110,32 +109,32 @@ public class TestFullText extends TestBase {
 		stat.execute("CREATE PRIMARY KEY ON TEST(ID)");
 		long time = System.currentTimeMillis();
 		stat.execute("CALL " + prefix + "_CREATE_INDEX('PUBLIC', 'TEST', NULL)");
-		println("create " + prefix + ": " + (System.currentTimeMillis() - time));
+		println("create " + prefix + ": " + ( System.currentTimeMillis() - time ));
 		PreparedStatement prep = conn.prepareStatement("SELECT * FROM " + prefix + "_SEARCH(?, 0, 0)");
 		time = System.currentTimeMillis();
 		ResultSet rs = stat.executeQuery("SELECT TEXT FROM TEST");
 		int count = 0;
-		while (rs.next()) {
+		while ( rs.next() ) {
 			String text = rs.getString(1);
 			StringTokenizer tokenizer = new StringTokenizer(text, " ()[].,;:-+*/!?=<>{}#@'\"~$_%&|");
-			while (tokenizer.hasMoreTokens()) {
+			while ( tokenizer.hasMoreTokens() ) {
 				String word = tokenizer.nextToken();
-				if (word.length() < 10) {
+				if ( word.length() < 10 ) {
 					continue;
 				}
 				prep.setString(1, word);
 				ResultSet rs2 = prep.executeQuery();
-				while (rs2.next()) {
+				while ( rs2.next() ) {
 					rs2.getString(1);
 					count++;
 				}
 			}
 		}
-		println("search " + prefix + ": " + (System.currentTimeMillis() - time) + " count: " + count);
+		println("search " + prefix + ": " + ( System.currentTimeMillis() - time ) + " count: " + count);
 		stat.execute("CALL " + prefix + "_DROP_ALL()");
 		conn.close();
 	}
-
+	
 	private void test(boolean lucene, String dataType) throws SQLException {
 		deleteDb("fullText");
 		Connection conn = getConnection("fullText");
@@ -164,7 +163,7 @@ public class TestFullText extends TestBase {
 		rs.next();
 		assertEquals(rs.getString(1), "\"PUBLIC\".\"TEST\" WHERE \"ID\"=2");
 		assertFalse(rs.next());
-
+		
 		stat.execute("CALL " + prefix + "REINDEX()");
 		rs = stat.executeQuery("SELECT * FROM " + prefix + "SEARCH('Hello', 0, 0)");
 		rs.next();
@@ -174,11 +173,11 @@ public class TestFullText extends TestBase {
 		rs.next();
 		assertEquals(rs.getString(1), "\"PUBLIC\".\"TEST\" WHERE \"ID\"=2");
 		assertFalse(rs.next());
-
+		
 		stat.execute("INSERT INTO TEST VALUES(3, 'Hello World')");
 		stat.execute("INSERT INTO TEST VALUES(4, 'Hello World')");
 		stat.execute("INSERT INTO TEST VALUES(5, 'Hello World')");
-
+		
 		rs = stat.executeQuery("SELECT * FROM " + prefix + "SEARCH('World', 0, 0) ORDER BY QUERY");
 		rs.next();
 		assertEquals(rs.getString(1), "\"PUBLIC\".\"TEST\" WHERE \"ID\"=1");
@@ -189,41 +188,41 @@ public class TestFullText extends TestBase {
 		rs.next();
 		assertEquals(rs.getString(1), "\"PUBLIC\".\"TEST\" WHERE \"ID\"=5");
 		assertFalse(rs.next());
-
+		
 		rs = stat.executeQuery("SELECT * FROM " + prefix + "SEARCH('World', 1, 0)");
 		rs.next();
 		assertTrue(rs.getString(1).startsWith("\"PUBLIC\".\"TEST\" WHERE \"ID\"="));
 		assertFalse(rs.next());
-
+		
 		rs = stat.executeQuery("SELECT * FROM " + prefix + "SEARCH('World', 0, 2) ORDER BY QUERY");
 		rs.next();
 		assertTrue(rs.getString(1).startsWith("\"PUBLIC\".\"TEST\" WHERE \"ID\"="));
 		rs.next();
 		assertTrue(rs.getString(1).startsWith("\"PUBLIC\".\"TEST\" WHERE \"ID\"="));
 		assertFalse(rs.next());
-
+		
 		rs = stat.executeQuery("SELECT * FROM " + prefix + "SEARCH('World', 2, 1) ORDER BY QUERY");
 		rs.next();
 		assertTrue(rs.getString(1).startsWith("\"PUBLIC\".\"TEST\" WHERE \"ID\"="));
 		rs.next();
 		assertTrue(rs.getString(1).startsWith("\"PUBLIC\".\"TEST\" WHERE \"ID\"="));
 		assertFalse(rs.next());
-
+		
 		rs = stat.executeQuery("SELECT * FROM " + prefix + "SEARCH('1', 0, 0)");
 		rs.next();
 		assertEquals(rs.getString(1), "\"PUBLIC\".\"TEST\" WHERE \"ID\"=1");
 		assertFalse(rs.next());
 		conn.close();
-
+		
 		conn = getConnection("fullText");
 		stat = conn.createStatement();
 		rs = stat.executeQuery("SELECT * FROM " + prefix + "SEARCH('World', 0, 0)");
-
+		
 		stat.execute("CALL " + prefix + "DROP_ALL()");
 		rs = stat.executeQuery("SELECT * FROM " + prefix + "SEARCH('World', 2, 1)");
 		stat.execute("CALL " + prefix + "DROP_ALL()");
-
+		
 		conn.close();
-
+		
 	}
 }

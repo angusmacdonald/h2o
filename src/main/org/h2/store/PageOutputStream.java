@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.store;
 
@@ -18,19 +16,29 @@ import org.h2.message.Trace;
  * An output stream that writes into a page store.
  */
 public class PageOutputStream extends OutputStream {
-
+	
 	private final Trace trace;
+	
 	private PageStore store;
+	
 	private int type;
+	
 	private int parentPage;
+	
 	private int pageId;
+	
 	private int nextPage;
+	
 	private DataPage page;
+	
 	private int remaining;
+	
 	private final boolean allocateAtEnd;
+	
 	private byte[] buffer = new byte[1];
+	
 	private boolean needFlush;
-
+	
 	/**
 	 * Create a new page output stream.
 	 * 
@@ -43,8 +51,7 @@ public class PageOutputStream extends OutputStream {
 	 * @param type
 	 *            the page type
 	 */
-	public PageOutputStream(PageStore store, int parentPage, int headPage,
-			int type, boolean allocateAtEnd) {
+	public PageOutputStream(PageStore store, int parentPage, int headPage, int type, boolean allocateAtEnd) {
 		this.trace = store.getTrace();
 		this.store = store;
 		this.parentPage = parentPage;
@@ -54,16 +61,16 @@ public class PageOutputStream extends OutputStream {
 		page = store.createDataPage();
 		initPage();
 	}
-
+	
 	public void write(int b) throws IOException {
 		buffer[0] = (byte) b;
 		write(buffer);
 	}
-
+	
 	public void write(byte[] b) throws IOException {
 		write(b, 0, b.length);
 	}
-
+	
 	private void initPage() {
 		page.reset();
 		page.writeInt(parentPage);
@@ -71,18 +78,18 @@ public class PageOutputStream extends OutputStream {
 		page.writeInt(0);
 		remaining = store.getPageSize() - page.length();
 	}
-
+	
 	public void write(byte[] b, int off, int len) throws IOException {
-		if (len <= 0) {
+		if ( len <= 0 ) {
 			return;
 		}
-		while (len >= remaining) {
+		while ( len >= remaining ) {
 			page.write(b, off, remaining);
 			off += remaining;
 			len -= remaining;
 			try {
 				nextPage = store.allocatePage(allocateAtEnd);
-			} catch (SQLException e) {
+			} catch ( SQLException e ) {
 				throw Message.convertToIOException(e);
 			}
 			page.setPos(4);
@@ -97,33 +104,33 @@ public class PageOutputStream extends OutputStream {
 		needFlush = true;
 		remaining -= len;
 	}
-
+	
 	private void storePage() throws IOException {
 		try {
-			if (trace.isDebugEnabled()) {
+			if ( trace.isDebugEnabled() ) {
 				trace.debug("pageOut.storePage " + pageId + " next:" + nextPage);
 			}
 			store.writePage(pageId, page);
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			throw Message.convertToIOException(e);
 		}
 	}
-
+	
 	public void flush() throws IOException {
-		if (needFlush) {
+		if ( needFlush ) {
 			int len = page.length();
 			page.setPos(4);
-			page.writeByte((byte) (type | Page.FLAG_LAST));
+			page.writeByte((byte) ( type | Page.FLAG_LAST ));
 			page.writeInt(store.getPageSize() - remaining - 9);
 			page.setPos(len);
 			storePage();
 			needFlush = false;
 		}
 	}
-
+	
 	public void close() throws IOException {
 		flush();
 		store = null;
 	}
-
+	
 }

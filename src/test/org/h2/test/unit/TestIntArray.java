@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.unit;
 
@@ -16,31 +14,32 @@ import org.h2.util.IntArray;
  * Tests the IntArray class.
  */
 public class TestIntArray extends TestBase {
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() {
 		testInit();
 		testRandom();
 	}
-
+	
 	private void testInit() {
 		IntArray array = new IntArray(new int[0]);
 		array.add(10);
 	}
-
+	
 	private void testRandom() {
 		IntArray array = new IntArray();
 		int[] test = new int[0];
 		Random random = new Random(1);
-		for (int i = 0; i < 10000; i++) {
+		for ( int i = 0; i < 10000; i++ ) {
 			int idx = test.length == 0 ? 0 : random.nextInt(test.length);
 			int v = random.nextInt(100);
 			int op = random.nextInt(9);
@@ -67,7 +66,7 @@ public class TestIntArray extends TestBase {
 				assertEquals(a, b);
 				break;
 			case 4:
-				if (test.length > idx) {
+				if ( test.length > idx ) {
 					assertEquals(array.get(idx), get(test, idx));
 				}
 				break;
@@ -76,7 +75,7 @@ public class TestIntArray extends TestBase {
 				test = remove(test, idx);
 				break;
 			case 6:
-				if (test.length > idx) {
+				if ( test.length > idx ) {
 					v = test[idx];
 					array.removeValue(v);
 					test = removeValue(test, v);
@@ -92,80 +91,80 @@ public class TestIntArray extends TestBase {
 			default:
 			}
 			assertEquals(array.size(), test.length);
-			for (int j = 0; j < test.length; j++) {
+			for ( int j = 0; j < test.length; j++ ) {
 				assertEquals(test[j], array.get(j));
 			}
-
+			
 		}
 	}
-
+	
 	private int[] add(int[] array, int i, int value) {
 		int[] a2 = new int[array.length + 1];
 		System.arraycopy(array, 0, a2, 0, array.length);
-		if (i < array.length) {
+		if ( i < array.length ) {
 			System.arraycopy(a2, i, a2, i + 1, a2.length - i - 1);
 		}
 		array = a2;
 		array[i] = value;
 		return array;
 	}
-
+	
 	private int[] add(int[] array, int value) {
 		return add(array, array.length, value);
 	}
-
+	
 	private int[] addValueSorted(int[] array, int value) {
-		for (int i = 0; i < array.length; i++) {
-			if (array[i] < value) {
+		for ( int i = 0; i < array.length; i++ ) {
+			if ( array[i] < value ) {
 				continue;
 			}
-			if (array[i] == value) {
+			if ( array[i] == value ) {
 				return array;
 			}
 			return add(array, i, value);
 		}
 		return add(array, value);
 	}
-
+	
 	private int findNextValueIndex(int[] array, int value) {
-		for (int i = 0; i < array.length; i++) {
-			if (array[i] >= value) {
+		for ( int i = 0; i < array.length; i++ ) {
+			if ( array[i] >= value ) {
 				return i;
 			}
 		}
 		return array.length;
 	}
-
+	
 	private int get(int[] array, int i) {
 		return array[i];
 	}
-
+	
 	private int[] remove(int[] array, int i) {
 		int[] a2 = new int[array.length - 1];
 		System.arraycopy(array, 0, a2, 0, i);
-		if (i < a2.length) {
+		if ( i < a2.length ) {
 			System.arraycopy(array, i + 1, a2, i, array.length - i - 1);
 		}
 		return a2;
 	}
-
+	
 	private int[] removeValue(int[] array, int value) {
-		for (int i = 0; i < array.length; i++) {
-			if (array[i] == value) {
+		for ( int i = 0; i < array.length; i++ ) {
+			if ( array[i] == value ) {
 				return remove(array, i);
 			}
 		}
 		return array;
 	}
-
+	
 	private int[] set(int[] array, int i, int value) {
 		array[i] = value;
 		return array;
 	}
-
+	
 	private int[] sort(int[] array) {
 		Arrays.sort(array);
 		return array;
 	}
-
+	
 }

@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.synth.sql;
 
@@ -20,40 +18,46 @@ import org.h2.test.TestBase;
  * Represents an in-memory result.
  */
 class Result implements Comparable {
+	
 	static final int SUCCESS = 0, BOOLEAN = 1, INT = 2, EXCEPTION = 3, RESULT_SET = 4;
-
+	
 	String sql;
-
+	
 	private int type;
+	
 	private boolean bool;
+	
 	private int intValue;
+	
 	private SQLException exception;
+	
 	private ArrayList rows;
+	
 	private ArrayList header;
-
+	
 	Result(String sql) {
 		this.sql = sql;
 		type = SUCCESS;
 	}
-
+	
 	Result(String sql, SQLException e) {
 		this.sql = sql;
 		type = EXCEPTION;
 		exception = e;
 	}
-
+	
 	Result(String sql, boolean b) {
 		this.sql = sql;
 		type = BOOLEAN;
 		this.bool = b;
 	}
-
+	
 	Result(String sql, int i) {
 		this.sql = sql;
 		type = INT;
 		this.intValue = i;
 	}
-
+	
 	Result(TestSynth config, String sql, ResultSet rs) {
 		this.sql = sql;
 		type = RESULT_SET;
@@ -63,21 +67,21 @@ class Result implements Comparable {
 			ResultSetMetaData meta = rs.getMetaData();
 			int len = meta.getColumnCount();
 			Column[] cols = new Column[len];
-			for (int i = 0; i < len; i++) {
+			for ( int i = 0; i < len; i++ ) {
 				cols[i] = new Column(meta, i + 1);
 			}
-			while (rs.next()) {
+			while ( rs.next() ) {
 				Row row = new Row(config, rs, len);
 				rows.add(row);
 			}
 			Collections.sort(rows);
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			// type = EXCEPTION;
 			// exception = e;
 			TestBase.logError("error reading result set", e);
 		}
 	}
-
+	
 	public String toString() {
 		switch (type) {
 		case SUCCESS:
@@ -93,12 +97,12 @@ class Result implements Comparable {
 		}
 		case RESULT_SET:
 			String result = "ResultSet { // size=" + rows.size() + "\r\n  ";
-			for (int i = 0; i < header.size(); i++) {
+			for ( int i = 0; i < header.size(); i++ ) {
 				Column column = (Column) header.get(i);
 				result += column.toString() + "; ";
 			}
 			result += "} = {\r\n";
-			for (int i = 0; i < rows.size(); i++) {
+			for ( int i = 0; i < rows.size(); i++ ) {
 				Row row = (Row) rows.get(i);
 				result += "  { " + row.toString() + "};\r\n";
 			}
@@ -107,12 +111,12 @@ class Result implements Comparable {
 			throw new Error("internal");
 		}
 	}
-
+	
 	public int compareTo(Object o) {
 		Result r = (Result) o;
 		switch (type) {
 		case EXCEPTION:
-			if (r.type != EXCEPTION) {
+			if ( r.type != EXCEPTION ) {
 				return 1;
 			}
 			return 0;
@@ -127,28 +131,28 @@ class Result implements Comparable {
 			throw new Error("internal");
 		}
 	}
-
-	//    public void log() {
-	//        switch (type) {
-	//        case SUCCESS:
-	//            System.out.println("> ok");
-	//            break;
-	//        case EXCEPTION:
-	//            System.out.println("> exception");
-	//            break;
-	//        case INT:
-	//            if (intValue == 0) {
-	//                System.out.println("> ok");
-	//            } else {
-	//                System.out.println("> update count: " + intValue);
-	//            }
-	//            break;
-	//        case RESULT_SET:
-	//            System.out.println("> rs " + rows.size());
-	//            break;
-	//        default:
-	//        }
-	//        System.out.println();
-	//    }
-
+	
+	// public void log() {
+	// switch (type) {
+	// case SUCCESS:
+	// System.out.println("> ok");
+	// break;
+	// case EXCEPTION:
+	// System.out.println("> exception");
+	// break;
+	// case INT:
+	// if (intValue == 0) {
+	// System.out.println("> ok");
+	// } else {
+	// System.out.println("> update count: " + intValue);
+	// }
+	// break;
+	// case RESULT_SET:
+	// System.out.println("> rs " + rows.size());
+	// break;
+	// default:
+	// }
+	// System.out.println();
+	// }
+	
 }

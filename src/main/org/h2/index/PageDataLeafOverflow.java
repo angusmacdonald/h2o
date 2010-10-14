@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.index;
 
@@ -26,49 +24,47 @@ import org.h2.store.Record;
  * </ul>
  */
 public class PageDataLeafOverflow extends Record {
-
+	
 	/**
 	 * The start of the data in the last overflow page.
 	 */
 	static final int START_LAST = 7;
-
+	
 	/**
 	 * The start of the data in a overflow page that is not the last one.
 	 */
 	static final int START_MORE = 9;
-
+	
 	private final PageDataLeaf leaf;
-
+	
 	/**
 	 * The page type.
 	 */
 	private final int type;
-
+	
 	/**
 	 * The previous page (overflow or leaf).
 	 */
 	private final int previous;
-
+	
 	/**
 	 * The next overflow page, or 0.
 	 */
 	private final int next;
-
+	
 	/**
 	 * The number of content bytes.
 	 */
 	private final int size;
-
+	
 	/**
-	 * The first content byte starts at the given position in the leaf page when
-	 * the page size is unlimited.
+	 * The first content byte starts at the given position in the leaf page when the page size is unlimited.
 	 */
 	private final int offset;
-
+	
 	private DataPage data;
-
-	PageDataLeafOverflow(PageDataLeaf leaf, int pageId, int type, int previous,
-			int next, int offset, int size) {
+	
+	PageDataLeafOverflow(PageDataLeaf leaf, int pageId, int type, int previous, int next, int offset, int size) {
 		this.leaf = leaf;
 		setPos(pageId);
 		this.type = type;
@@ -77,27 +73,25 @@ public class PageDataLeafOverflow extends Record {
 		this.offset = offset;
 		this.size = size;
 	}
-
-	public PageDataLeafOverflow(PageDataLeaf leaf, int pageId, DataPage data,
-			int offset) throws JdbcSQLException {
+	
+	public PageDataLeafOverflow(PageDataLeaf leaf, int pageId, DataPage data, int offset) throws JdbcSQLException {
 		this.leaf = leaf;
 		setPos(pageId);
 		this.data = data;
 		this.offset = offset;
 		previous = data.readInt();
 		type = data.readByte();
-		if (type == (Page.TYPE_DATA_OVERFLOW | Page.FLAG_LAST)) {
+		if ( type == ( Page.TYPE_DATA_OVERFLOW | Page.FLAG_LAST ) ) {
 			size = data.readShortInt();
 			next = 0;
-		} else if (type == Page.TYPE_DATA_OVERFLOW) {
+		} else if ( type == Page.TYPE_DATA_OVERFLOW ) {
 			size = leaf.getPageStore().getPageSize() - START_MORE;
 			next = data.readInt();
 		} else {
-			throw Message.getSQLException(ErrorCode.FILE_CORRUPTED_1, "page:"
-					+ getPos() + " type:" + type);
+			throw Message.getSQLException(ErrorCode.FILE_CORRUPTED_1, "page:" + getPos() + " type:" + type);
 		}
 	}
-
+	
 	/**
 	 * Read the data into a target buffer.
 	 * 
@@ -106,7 +100,7 @@ public class PageDataLeafOverflow extends Record {
 	 * @return the next page, or 0 if no next page
 	 */
 	int readInto(DataPage target) {
-		if (type == (Page.TYPE_DATA_OVERFLOW | Page.FLAG_LAST)) {
+		if ( type == ( Page.TYPE_DATA_OVERFLOW | Page.FLAG_LAST ) ) {
 			target.write(data.getBytes(), START_LAST, size);
 			return 0;
 		} else {
@@ -114,18 +108,18 @@ public class PageDataLeafOverflow extends Record {
 			return next;
 		}
 	}
-
+	
 	public int getByteCount(DataPage dummy) throws SQLException {
 		return leaf.getByteCount(dummy);
 	}
-
+	
 	public void write(DataPage buff) throws SQLException {
 		PageStore store = leaf.getPageStore();
 		DataPage overflow = store.createDataPage();
 		DataPage data = leaf.getDataPage();
 		overflow.writeInt(previous);
 		overflow.writeByte((byte) type);
-		if (type == Page.TYPE_DATA_OVERFLOW) {
+		if ( type == Page.TYPE_DATA_OVERFLOW ) {
 			overflow.writeInt(next);
 		} else {
 			overflow.writeShortInt(size);
@@ -133,10 +127,9 @@ public class PageDataLeafOverflow extends Record {
 		overflow.write(data.getBytes(), offset, size);
 		store.writePage(getPos(), overflow);
 	}
-
+	
 	public String toString() {
-		return "page[" + getPos() + "] data leaf overflow prev:" + previous
-				+ " next:" + next;
+		return "page[" + getPos() + "] data leaf overflow prev:" + previous + " next:" + next;
 	}
-
+	
 }

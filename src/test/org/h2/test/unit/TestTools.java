@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.unit;
 
@@ -40,20 +38,21 @@ import org.h2.util.FileUtils;
  * Tests the database tools.
  */
 public class TestTools extends TestBase {
-
+	
 	private Server server;
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws Exception {
-		if (config.networked) {
+		if ( config.networked ) {
 			return;
 		}
 		org.h2.Driver.load();
@@ -72,7 +71,7 @@ public class TestTools extends TestBase {
 		testRecover();
 		deleteDb("utils");
 	}
-
+	
 	private void testDeleteFiles() throws SQLException {
 		DeleteDbFiles.execute(null, "utilsMore", true);
 		Connection conn = DriverManager.getConnection("jdbc:h2:utilsMore");
@@ -88,50 +87,48 @@ public class TestTools extends TestBase {
 		rs.getString(1);
 		conn.close();
 	}
-
+	
 	private void testServerMain() throws SQLException {
 		String result;
 		Connection conn;
-
-		result = runServer(new String[]{"-?"}, 1);
+		
+		result = runServer(new String[] { "-?" }, 1);
 		assertTrue(result.indexOf("Starts H2 Servers") >= 0);
 		assertTrue(result.indexOf("Unknown option") < 0);
-
-		result = runServer(new String[]{"-xy"}, 1);
+		
+		result = runServer(new String[] { "-xy" }, 1);
 		assertTrue(result.indexOf("Starts H2 Servers") >= 0);
 		assertTrue(result.indexOf("Unsupported option") >= 0);
-		result = runServer(new String[]{"-tcp", "-tcpPort", "9001", "-tcpPassword", "abc"}, 0);
+		result = runServer(new String[] { "-tcp", "-tcpPort", "9001", "-tcpPassword", "abc" }, 0);
 		assertTrue(result.indexOf("tcp://") >= 0);
 		assertTrue(result.indexOf(":9001") >= 0);
 		assertTrue(result.indexOf("only local") >= 0);
 		assertTrue(result.indexOf("Starts H2 Servers") < 0);
 		conn = DriverManager.getConnection("jdbc:h2:tcp://localhost:9001/mem:", "sa", "sa");
 		conn.close();
-		result = runServer(new String[]{"-tcpShutdown", "tcp://localhost:9001", "-tcpPassword", "abc", "-tcpShutdownForce"}, 0);
+		result = runServer(new String[] { "-tcpShutdown", "tcp://localhost:9001", "-tcpPassword", "abc", "-tcpShutdownForce" }, 0);
 		assertTrue(result.indexOf("Shutting down") >= 0);
-
-		result = runServer(new String[]{"-tcp", "-tcpAllowOthers", "-tcpPort", "9001", "-tcpPassword", "abcdef", "-tcpSSL"}, 0);
+		
+		result = runServer(new String[] { "-tcp", "-tcpAllowOthers", "-tcpPort", "9001", "-tcpPassword", "abcdef", "-tcpSSL" }, 0);
 		assertTrue(result.indexOf("ssl://") >= 0);
 		assertTrue(result.indexOf(":9001") >= 0);
 		assertTrue(result.indexOf("others can") >= 0);
 		assertTrue(result.indexOf("Starts H2 Servers") < 0);
 		conn = DriverManager.getConnection("jdbc:h2:ssl://localhost:9001/mem:", "sa", "sa");
 		conn.close();
-
-		result = runServer(new String[]{"-tcpShutdown", "ssl://localhost:9001", "-tcpPassword", "abcdef"}, 0);
+		
+		result = runServer(new String[] { "-tcpShutdown", "ssl://localhost:9001", "-tcpPassword", "abcdef" }, 0);
 		assertTrue(result.indexOf("Shutting down") >= 0);
 		try {
 			DriverManager.getConnection("jdbc:h2:ssl://localhost:9001/mem:", "sa", "sa");
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
-
-		result = runServer(new String[]{
-				"-web", "-webPort", "9002", "-webAllowOthers", "-webSSL",
-				"-pg", "-pgAllowOthers", "-pgPort", "9003",
-				"-ftp", "-ftpPort", "9004", "-ftpDir", ".", "-ftpRead", "guest", "-ftpWrite", "sa", "-ftpWritePassword", "sa", "-ftpTask",
-				"-tcp", "-tcpAllowOthers", "-tcpPort", "9006", "-tcpPassword", "abc"}, 0);
+		
+		result = runServer(new String[] { "-web", "-webPort", "9002", "-webAllowOthers", "-webSSL", "-pg", "-pgAllowOthers", "-pgPort",
+				"9003", "-ftp", "-ftpPort", "9004", "-ftpDir", ".", "-ftpRead", "guest", "-ftpWrite", "sa", "-ftpWritePassword", "sa",
+				"-ftpTask", "-tcp", "-tcpAllowOthers", "-tcpPort", "9006", "-tcpPassword", "abc" }, 0);
 		Server stop = server;
 		assertTrue(result.indexOf("https://") >= 0);
 		assertTrue(result.indexOf(":9002") >= 0);
@@ -143,21 +140,21 @@ public class TestTools extends TestBase {
 		assertTrue(result.indexOf(":9004") >= 0);
 		assertTrue(result.indexOf("tcp://") >= 0);
 		assertTrue(result.indexOf(":9006") >= 0);
-
+		
 		conn = DriverManager.getConnection("jdbc:h2:tcp://localhost:9006/mem:", "sa", "sa");
 		conn.close();
-
-		result = runServer(new String[]{"-tcpShutdown", "tcp://localhost:9006", "-tcpPassword", "abc", "-tcpShutdownForce"}, 0);
+		
+		result = runServer(new String[] { "-tcpShutdown", "tcp://localhost:9006", "-tcpPassword", "abc", "-tcpShutdownForce" }, 0);
 		assertTrue(result.indexOf("Shutting down") >= 0);
 		stop.shutdown();
 		try {
 			conn = DriverManager.getConnection("jdbc:h2:tcp://localhost:9006/mem:", "sa", "sa");
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 	}
-
+	
 	private String runServer(String[] args, int exitCode) throws SQLException {
 		ByteArrayOutputStream buff = new ByteArrayOutputStream();
 		PrintStream ps = new PrintStream(buff);
@@ -168,7 +165,7 @@ public class TestTools extends TestBase {
 		String s = new String(buff.toByteArray());
 		return s;
 	}
-
+	
 	private void testConvertTraceFile() throws Exception {
 		deleteDb("toolsConvertTraceFile");
 		org.h2.Driver.load();
@@ -181,8 +178,8 @@ public class TestTools extends TestBase {
 		prep.setString(2, "Hello \\'Joe\n\\'");
 		prep.setBigDecimal(3, new BigDecimal("10.20"));
 		prep.executeUpdate();
-		stat.execute("create table test2(id int primary key, a real, b double, c bigint, " +
-		"d smallint, e boolean, f binary, g date, h time, i timestamp)");
+		stat.execute("create table test2(id int primary key, a real, b double, c bigint, "
+				+ "d smallint, e boolean, f binary, g date, h time, i timestamp)");
 		prep = conn.prepareStatement("insert into test2 values(1, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 		prep.setFloat(1, Float.MIN_VALUE);
 		prep.setDouble(2, Double.MIN_VALUE);
@@ -195,27 +192,28 @@ public class TestTools extends TestBase {
 		prep.setTimestamp(9, java.sql.Timestamp.valueOf("2007-12-31 23:59:59"));
 		prep.execute();
 		conn.close();
-
-		ConvertTraceFile.main(new String[]{"-traceFile", baseDir + "/toolsConvertTraceFile.trace.db", "-javaClass", baseDir + "/Test", "-script", baseDir + "/test.sql"});
+		
+		ConvertTraceFile.main(new String[] { "-traceFile", baseDir + "/toolsConvertTraceFile.trace.db", "-javaClass", baseDir + "/Test",
+				"-script", baseDir + "/test.sql" });
 		new File(baseDir + "/Test.java").delete();
-
+		
 		File trace = new File(baseDir + "/toolsConvertTraceFile.trace.db");
 		assertTrue(trace.exists());
 		File newTrace = new File(baseDir + "/test.trace.db");
 		newTrace.delete();
 		assertTrue(trace.renameTo(newTrace));
 		deleteDb("toolsConvertTraceFile");
-		Player.main(new String[]{baseDir + "/test.trace.db"});
+		Player.main(new String[] { baseDir + "/test.trace.db" });
 		testTraceFile(url);
-
+		
 		deleteDb("toolsConvertTraceFile");
-		RunScript.main(new String[]{"-url", url, "-user", "sa", "-script", baseDir + "/test.sql"});
+		RunScript.main(new String[] { "-url", url, "-user", "sa", "-script", baseDir + "/test.sql" });
 		testTraceFile(url);
 	}
-
+	
 	private void testTraceFile(String url) throws SQLException {
 		Connection conn;
-		Recover.main(new String[]{"-removePassword", "-dir", baseDir, "-db", "toolsConvertTraceFile"});
+		Recover.main(new String[] { "-removePassword", "-dir", baseDir, "-db", "toolsConvertTraceFile" });
 		conn = DriverManager.getConnection(url, "sa", "");
 		Statement stat = conn.createStatement();
 		ResultSet rs;
@@ -239,7 +237,7 @@ public class TestTools extends TestBase {
 		assertFalse(rs.next());
 		conn.close();
 	}
-
+	
 	private void testRemove() throws SQLException {
 		deleteDb("toolsRemove");
 		org.h2.Driver.load();
@@ -250,13 +248,13 @@ public class TestTools extends TestBase {
 		stat.execute("insert into test values(1, 'Hello')");
 		conn.close();
 		ArrayList list = FileLister.getDatabaseFiles(baseDir, "toolsRemove", true);
-		for (int i = 0; i < list.size(); i++) {
+		for ( int i = 0; i < list.size(); i++ ) {
 			String fileName = (String) list.get(i);
-			if (fileName.endsWith(Constants.SUFFIX_LOG_FILE)) {
+			if ( fileName.endsWith(Constants.SUFFIX_LOG_FILE) ) {
 				FileUtils.delete(fileName);
 			}
 		}
-		Recover.main(new String[]{"-dir", baseDir, "-db", "toolsRemove", "-removePassword"});
+		Recover.main(new String[] { "-dir", baseDir, "-db", "toolsRemove", "-removePassword" });
 		conn = DriverManager.getConnection(url, "sa", "");
 		stat = conn.createStatement();
 		ResultSet rs;
@@ -266,7 +264,7 @@ public class TestTools extends TestBase {
 		assertEquals("Hello", rs.getString(2));
 		conn.close();
 	}
-
+	
 	private void testRecover() throws SQLException {
 		deleteDb("toolsRecover");
 		org.h2.Driver.load();
@@ -282,20 +280,20 @@ public class TestTools extends TestBase {
 		rs.next();
 		byte[] b1 = rs.getBytes(3);
 		String s1 = rs.getString(4);
-
+		
 		conn.close();
-		Recover.main(new String[]{"-dir", baseDir, "-db", "toolsRecover"});
-
+		Recover.main(new String[] { "-dir", baseDir, "-db", "toolsRecover" });
+		
 		// deleteDb would delete the .lob.db directory as well
 		// deleteDb("toolsRecover");
 		ArrayList list = FileLister.getDatabaseFiles(baseDir, "toolsRecover", true);
-		for (int i = 0; i < list.size(); i++) {
+		for ( int i = 0; i < list.size(); i++ ) {
 			String fileName = (String) list.get(i);
-			if (!FileUtils.isDirectory(fileName)) {
+			if ( !FileUtils.isDirectory(fileName) ) {
 				FileUtils.delete(fileName);
 			}
 		}
-
+		
 		conn = DriverManager.getConnection(url, "another", "another");
 		stat = conn.createStatement();
 		String suffix = SysProperties.PAGE_STORE ? ".h2.sql" : ".data.sql";
@@ -315,17 +313,17 @@ public class TestTools extends TestBase {
 		assertFalse(rs.next());
 		conn.close();
 	}
-
+	
 	private void testManagementDb() throws SQLException {
 		int count = getSize(2, 10);
-		for (int i = 0; i < count; i++) {
-			Server server = Server.createTcpServer(new String[] {"-tcpPort", "9192"}).start();
+		for ( int i = 0; i < count; i++ ) {
+			Server server = Server.createTcpServer(new String[] { "-tcpPort", "9192" }).start();
 			server.stop();
 			server = Server.createTcpServer(new String[] { "-tcpPassword", "abc", "-tcpPort", "9192" }).start();
 			server.stop();
 		}
 	}
-
+	
 	private void testScriptRunscriptLob() throws Exception {
 		org.h2.Driver.load();
 		String url = "jdbc:h2:" + baseDir + "/utils";
@@ -334,17 +332,17 @@ public class TestTools extends TestBase {
 		Connection conn = DriverManager.getConnection(url, user, password);
 		conn.createStatement().execute("CREATE TABLE TEST(ID INT PRIMARY KEY, BDATA BLOB, CDATA CLOB)");
 		PreparedStatement prep = conn.prepareStatement("INSERT INTO TEST VALUES(?, ?, ?)");
-
+		
 		prep.setInt(1, 1);
 		prep.setNull(2, Types.BLOB);
 		prep.setNull(3, Types.CLOB);
 		prep.execute();
-
+		
 		prep.setInt(1, 2);
 		prep.setString(2, "face");
 		prep.setString(3, "face");
 		prep.execute();
-
+		
 		Random random = new Random(1);
 		prep.setInt(1, 3);
 		byte[] large = new byte[getSize(10 * 1024, 100 * 1024)];
@@ -353,8 +351,8 @@ public class TestTools extends TestBase {
 		String largeText = new String(large, "ISO-8859-1");
 		prep.setString(3, largeText);
 		prep.execute();
-
-		for (int i = 0; i < 2; i++) {
+		
+		for ( int i = 0; i < 2; i++ ) {
 			ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM TEST ORDER BY ID");
 			rs.next();
 			assertEquals(1, rs.getInt(1));
@@ -369,17 +367,17 @@ public class TestTools extends TestBase {
 			assertEquals(large, rs.getBytes(2));
 			assertEquals(largeText, rs.getString(3));
 			assertFalse(rs.next());
-
+			
 			conn.close();
-			Script.main(new String[] { "-url", url, "-user", user, "-password", password, "-script", fileName});
+			Script.main(new String[] { "-url", url, "-user", user, "-password", password, "-script", fileName });
 			DeleteDbFiles.main(new String[] { "-dir", baseDir, "-db", "utils", "-quiet" });
-			RunScript.main(new String[] { "-url", url, "-user", user, "-password", password, "-script", fileName});
+			RunScript.main(new String[] { "-url", url, "-user", user, "-password", password, "-script", fileName });
 			conn = DriverManager.getConnection("jdbc:h2:" + baseDir + "/utils", "sa", "abc");
 		}
 		conn.close();
-
+		
 	}
-
+	
 	private void testScriptRunscript() throws SQLException {
 		org.h2.Driver.load();
 		String url = "jdbc:h2:" + baseDir + "/utils";
@@ -389,17 +387,17 @@ public class TestTools extends TestBase {
 		conn.createStatement().execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR)");
 		conn.createStatement().execute("INSERT INTO TEST VALUES(1, 'Hello')");
 		conn.close();
-		Script.main(new String[] { "-url", url, "-user", user, "-password", password, "-script", fileName, "-options",
-				"nodata", "compression", "lzf", "cipher", "xtea", "password", "'123'" });
+		Script.main(new String[] { "-url", url, "-user", user, "-password", password, "-script", fileName, "-options", "nodata",
+				"compression", "lzf", "cipher", "xtea", "password", "'123'" });
 		DeleteDbFiles.main(new String[] { "-dir", baseDir, "-db", "utils", "-quiet" });
-		RunScript.main(new String[] { "-url", url, "-user", user, "-password", password, "-script", fileName,
-				"-options", "compression", "lzf", "cipher", "xtea", "password", "'123'" });
+		RunScript.main(new String[] { "-url", url, "-user", user, "-password", password, "-script", fileName, "-options", "compression",
+				"lzf", "cipher", "xtea", "password", "'123'" });
 		conn = DriverManager.getConnection("jdbc:h2:" + baseDir + "/utils", "sa", "abc");
 		ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM TEST");
 		assertFalse(rs.next());
 		conn.close();
 	}
-
+	
 	private void testBackupRestore() throws SQLException {
 		org.h2.Driver.load();
 		String url = "jdbc:h2:" + baseDir + "/utils";
@@ -420,11 +418,10 @@ public class TestTools extends TestBase {
 		conn.close();
 		DeleteDbFiles.main(new String[] { "-dir", baseDir, "-db", "utils", "-quiet" });
 	}
-
+	
 	private void testChangeFileEncryption() throws SQLException {
 		org.h2.Driver.load();
-		Connection conn = DriverManager.getConnection("jdbc:h2:" + baseDir + "/utils;CIPHER=XTEA", "sa",
-		"abc 123");
+		Connection conn = DriverManager.getConnection("jdbc:h2:" + baseDir + "/utils;CIPHER=XTEA", "sa", "abc 123");
 		Statement stat = conn.createStatement();
 		stat.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255))");
 		conn.close();
@@ -439,7 +436,7 @@ public class TestTools extends TestBase {
 		args = new String[] { "-dir", baseDir, "-db", "utils", "-quiet" };
 		DeleteDbFiles.main(args);
 	}
-
+	
 	private void testServer() throws SQLException {
 		Connection conn;
 		deleteDb("test");
@@ -447,12 +444,11 @@ public class TestTools extends TestBase {
 		conn = DriverManager.getConnection("jdbc:h2:tcp://localhost:9192/test", "sa", "");
 		conn.close();
 		server.stop();
-		Server.createTcpServer(
-				new String[] { "-ifExists", "-tcpPassword", "abc", "-baseDir", baseDir, "-tcpPort", "9192" }).start();
+		Server.createTcpServer(new String[] { "-ifExists", "-tcpPassword", "abc", "-baseDir", baseDir, "-tcpPort", "9192" }).start();
 		try {
 			conn = DriverManager.getConnection("jdbc:h2:tcp://localhost:9192/test2", "sa", "");
 			fail("should not be able to create new db");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		conn = DriverManager.getConnection("jdbc:h2:tcp://localhost:9192/test", "sa", "");
@@ -460,7 +456,7 @@ public class TestTools extends TestBase {
 		try {
 			Server.shutdownTcpServer("tcp://localhost:9192", "", true);
 			fail("shouldn't work and should throw an exception");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		conn = DriverManager.getConnection("jdbc:h2:tcp://localhost:9192/test", "sa", "");
@@ -471,9 +467,9 @@ public class TestTools extends TestBase {
 		try {
 			conn = DriverManager.getConnection("jdbc:h2:tcp://localhost:9192/test", "sa", "");
 			fail("server must have been closed");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 	}
-
+	
 }

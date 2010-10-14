@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.synth;
 
@@ -21,15 +19,16 @@ import org.h2.test.unit.SelfDestructor;
  * Test application for TestKill.
  */
 public class TestKillProcess {
-
+	
 	private TestKillProcess() {
 		// utility class
 	}
-
+	
 	/**
 	 * This method is called when executing this application.
-	 *
-	 * @param args the command line parameters
+	 * 
+	 * @param args
+	 *            the command line parameters
 	 */
 	public static void main(String[] args) throws SQLException {
 		SelfDestructor.startCountdown(60);
@@ -38,23 +37,23 @@ public class TestKillProcess {
 			String url = args[0], user = args[1], password = args[2];
 			String baseDir = args[3];
 			int accounts = Integer.parseInt(args[4]);
-
+			
 			Random random = new Random();
 			Connection conn1 = DriverManager.getConnection(url, user, password);
-
+			
 			PreparedStatement prep1a = conn1.prepareStatement("INSERT INTO LOG(ACCOUNTID, AMOUNT) VALUES(?, ?)");
 			PreparedStatement prep1b = conn1.prepareStatement("UPDATE ACCOUNT SET SUM=SUM+? WHERE ID=?");
 			conn1.setAutoCommit(false);
 			long time = System.currentTimeMillis();
 			String d = null;
-			for (int i = 0;; i++) {
+			for ( int i = 0;; i++ ) {
 				long t = System.currentTimeMillis();
-				if (t > time + 1000) {
+				if ( t > time + 1000 ) {
 					ArrayList list = FileLister.getDatabaseFiles(baseDir, "kill", true);
 					System.out.println("inserting... i:" + i + " d:" + d + " files:" + list.size());
 					time = t;
 				}
-				if (i > 10000) {
+				if ( i > 10000 ) {
 					// System.out.println("halt");
 					// Runtime.getRuntime().halt(0);
 					// conn.createStatement().execute("SHUTDOWN IMMEDIATELY");
@@ -69,16 +68,16 @@ public class TestKillProcess {
 				prep1b.setInt(2, account);
 				prep1b.execute();
 				conn1.commit();
-				if (random.nextInt(100) < 2) {
+				if ( random.nextInt(100) < 2 ) {
 					d = "D" + random.nextInt(1000);
 					account = random.nextInt(accounts);
 					conn1.createStatement().execute("UPDATE TEST_A SET DATA='" + d + "' WHERE ID=" + account);
 					conn1.createStatement().execute("UPDATE TEST_B SET DATA='" + d + "' WHERE ID=" + account);
 				}
 			}
-		} catch (Throwable e) {
+		} catch ( Throwable e ) {
 			TestBase.logError("error", e);
 		}
 	}
-
+	
 }

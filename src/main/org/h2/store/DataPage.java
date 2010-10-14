@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 
 package org.h2.store;
@@ -41,62 +39,61 @@ import org.h2.value.ValueTimestamp;
 import org.h2.value.ValueUuid;
 
 /**
- * A data page is a byte buffer that contains persistent data of a row or index
- * page.
+ * A data page is a byte buffer that contains persistent data of a row or index page.
  */
 public class DataPage {
-
+	
 	/**
 	 * The space required for the checksum and additional fillers.
 	 */
 	public static final int LENGTH_FILLER = 2;
-
+	
 	/**
 	 * The length of an integer value.
 	 */
 	public static final int LENGTH_INT = 4;
-
+	
 	/**
 	 * The length of a long value.
 	 */
 	public static final int LENGTH_LONG = 8;
-
+	
 	/**
 	 * Whether calculating (and checking) the checksum is enabled.
 	 */
 	private static final boolean CHECKSUM = true;
-
+	
 	/**
 	 * The data handler responsible for lob objects.
 	 */
 	private DataHandler handler;
-
+	
 	/**
 	 * The data itself.
 	 */
 	private byte[] data;
-
+	
 	/**
 	 * The current write or read position.
 	 */
 	private int pos;
-
+	
 	private DataPage(DataHandler handler, byte[] data) {
 		this.handler = handler;
 		this.data = data;
 	}
-
+	
 	/**
 	 * Calculate the checksum and write.
 	 * 
 	 */
 	public void updateChecksum() {
-		if (CHECKSUM) {
+		if ( CHECKSUM ) {
 			int x = handler.getChecksum(data, 0, pos - 2);
 			data[pos - 2] = (byte) x;
 		}
 	}
-
+	
 	/**
 	 * Test if the checksum is correct.
 	 * 
@@ -106,18 +103,17 @@ public class DataPage {
 	 *             if the checksum does not match
 	 */
 	public void check(int len) throws SQLException {
-		if (CHECKSUM) {
+		if ( CHECKSUM ) {
 			int x = handler.getChecksum(data, 0, len - 2);
-			if (data[len - 2] == (byte) x) {
+			if ( data[len - 2] == (byte) x ) {
 				return;
 			}
 			handler.handleInvalidChecksum();
 		}
 	}
-
+	
 	/**
-	 * Update an integer at the given position. The current position is not
-	 * change.
+	 * Update an integer at the given position. The current position is not change.
 	 * 
 	 * @param pos
 	 *            the position
@@ -126,39 +122,36 @@ public class DataPage {
 	 */
 	public void setInt(int pos, int x) {
 		byte[] buff = data;
-		buff[pos] = (byte) (x >> 24);
-		buff[pos + 1] = (byte) (x >> 16);
-		buff[pos + 2] = (byte) (x >> 8);
+		buff[pos] = (byte) ( x >> 24 );
+		buff[pos + 1] = (byte) ( x >> 16 );
+		buff[pos + 2] = (byte) ( x >> 8 );
 		buff[pos + 3] = (byte) x;
 	}
-
+	
 	/**
-	 * Write an integer at the current position. The current position is
-	 * incremented.
+	 * Write an integer at the current position. The current position is incremented.
 	 * 
 	 * @param x
 	 *            the value
 	 */
 	public void writeInt(int x) {
 		byte[] buff = data;
-		buff[pos++] = (byte) (x >> 24);
-		buff[pos++] = (byte) (x >> 16);
-		buff[pos++] = (byte) (x >> 8);
+		buff[pos++] = (byte) ( x >> 24 );
+		buff[pos++] = (byte) ( x >> 16 );
+		buff[pos++] = (byte) ( x >> 8 );
 		buff[pos++] = (byte) x;
 	}
-
+	
 	/**
-	 * Read an integer at the current position. The current position is
-	 * incremented.
+	 * Read an integer at the current position. The current position is incremented.
 	 * 
 	 * @return the value
 	 */
 	public int readInt() {
 		byte[] buff = data;
-		return (buff[pos++] << 24) + ((buff[pos++] & 0xff) << 16)
-				+ ((buff[pos++] & 0xff) << 8) + (buff[pos++] & 0xff);
+		return ( buff[pos++] << 24 ) + ( ( buff[pos++] & 0xff ) << 16 ) + ( ( buff[pos++] & 0xff ) << 8 ) + ( buff[pos++] & 0xff );
 	}
-
+	
 	/**
 	 * Get the length of a String value.
 	 * 
@@ -169,7 +162,7 @@ public class DataPage {
 	public int getStringLen(String s) {
 		return getStringLenUTF8(s);
 	}
-
+	
 	/**
 	 * Read a String value. The current position is incremented.
 	 * 
@@ -178,24 +171,22 @@ public class DataPage {
 	public String readString() {
 		byte[] buff = data;
 		int p = pos;
-		int len = ((buff[p++] & 0xff) << 24) + ((buff[p++] & 0xff) << 16)
-				+ ((buff[p++] & 0xff) << 8) + (buff[p++] & 0xff);
+		int len = ( ( buff[p++] & 0xff ) << 24 ) + ( ( buff[p++] & 0xff ) << 16 ) + ( ( buff[p++] & 0xff ) << 8 ) + ( buff[p++] & 0xff );
 		char[] chars = new char[len];
-		for (int i = 0; i < len; i++) {
+		for ( int i = 0; i < len; i++ ) {
 			int x = buff[p++] & 0xff;
-			if (x < 0x80) {
+			if ( x < 0x80 ) {
 				chars[i] = (char) x;
-			} else if (x >= 0xe0) {
-				chars[i] = (char) (((x & 0xf) << 12)
-						+ ((buff[p++] & 0x3f) << 6) + (buff[p++] & 0x3f));
+			} else if ( x >= 0xe0 ) {
+				chars[i] = (char) ( ( ( x & 0xf ) << 12 ) + ( ( buff[p++] & 0x3f ) << 6 ) + ( buff[p++] & 0x3f ) );
 			} else {
-				chars[i] = (char) (((x & 0x1f) << 6) + (buff[p++] & 0x3f));
+				chars[i] = (char) ( ( ( x & 0x1f ) << 6 ) + ( buff[p++] & 0x3f ) );
 			}
 		}
 		pos = p;
 		return new String(chars);
 	}
-
+	
 	/**
 	 * Write a String value. The current position is incremented.
 	 * 
@@ -207,44 +198,42 @@ public class DataPage {
 		checkCapacity(len * 3 + 4);
 		int p = pos;
 		byte[] buff = data;
-		buff[p++] = (byte) (len >> 24);
-		buff[p++] = (byte) (len >> 16);
-		buff[p++] = (byte) (len >> 8);
+		buff[p++] = (byte) ( len >> 24 );
+		buff[p++] = (byte) ( len >> 16 );
+		buff[p++] = (byte) ( len >> 8 );
 		buff[p++] = (byte) len;
-		for (int i = 0; i < len; i++) {
+		for ( int i = 0; i < len; i++ ) {
 			int c = s.charAt(i);
-			if (c > 0 && c < 0x80) {
+			if ( c > 0 && c < 0x80 ) {
 				buff[p++] = (byte) c;
-			} else if (c >= 0x800) {
-				buff[p++] = (byte) (0xe0 | (c >> 12));
-				buff[p++] = (byte) (0x80 | ((c >> 6) & 0x3f));
-				buff[p++] = (byte) (0x80 | (c & 0x3f));
+			} else if ( c >= 0x800 ) {
+				buff[p++] = (byte) ( 0xe0 | ( c >> 12 ) );
+				buff[p++] = (byte) ( 0x80 | ( ( c >> 6 ) & 0x3f ) );
+				buff[p++] = (byte) ( 0x80 | ( c & 0x3f ) );
 			} else {
-				buff[p++] = (byte) (0xc0 | (c >> 6));
-				buff[p++] = (byte) (0x80 | (c & 0x3f));
+				buff[p++] = (byte) ( 0xc0 | ( c >> 6 ) );
+				buff[p++] = (byte) ( 0x80 | ( c & 0x3f ) );
 			}
 		}
 		pos = p;
 	}
-
+	
 	/**
-	 * Increase the size to the given length. The current position is set to the
-	 * given value.
+	 * Increase the size to the given length. The current position is set to the given value.
 	 * 
 	 * @param len
 	 *            the new length
 	 */
 	public void fill(int len) {
-		if (pos > len) {
+		if ( pos > len ) {
 			pos = len;
 		}
 		checkCapacity(len - pos);
 		pos = len;
 	}
-
+	
 	/**
-	 * Create a new data page for the given handler. The handler will decide
-	 * what type of buffer is created.
+	 * Create a new data page for the given handler. The handler will decide what type of buffer is created.
 	 * 
 	 * @param handler
 	 *            the data handler
@@ -255,10 +244,9 @@ public class DataPage {
 	public static DataPage create(DataHandler handler, int capacity) {
 		return new DataPage(handler, new byte[capacity]);
 	}
-
+	
 	/**
-	 * Create a new data page using the given data for the given handler. The
-	 * handler will decide what type of buffer is created.
+	 * Create a new data page using the given data for the given handler. The handler will decide what type of buffer is created.
 	 * 
 	 * @param handler
 	 *            the data handler
@@ -269,34 +257,32 @@ public class DataPage {
 	public static DataPage create(DataHandler handler, byte[] buff) {
 		return new DataPage(handler, buff);
 	}
-
+	
 	/**
-	 * Check if there is still enough capacity in the buffer. This method
-	 * extends the buffer if required.
+	 * Check if there is still enough capacity in the buffer. This method extends the buffer if required.
 	 * 
 	 * @param plus
 	 *            the number of additional bytes required
 	 */
 	public void checkCapacity(int plus) {
-		if (pos + plus >= data.length) {
-			byte[] d = ByteUtils.newBytes((data.length + plus) * 2);
+		if ( pos + plus >= data.length ) {
+			byte[] d = ByteUtils.newBytes(( data.length + plus ) * 2);
 			// must copy everything, because pos could be 0 and data may be
 			// still required
 			System.arraycopy(data, 0, d, 0, data.length);
 			data = d;
 		}
 	}
-
+	
 	/**
-	 * Get the current write position of this data page, which is the current
-	 * length.
+	 * Get the current write position of this data page, which is the current length.
 	 * 
 	 * @return the length
 	 */
 	public int length() {
 		return pos;
 	}
-
+	
 	/**
 	 * Get the byte array used for this page.
 	 * 
@@ -305,17 +291,16 @@ public class DataPage {
 	public byte[] getBytes() {
 		return data;
 	}
-
+	
 	/**
 	 * Set the position to 0.
 	 */
 	public void reset() {
 		pos = 0;
 	}
-
+	
 	/**
-	 * Append the contents of the given data page to this page. The filler is
-	 * not appended.
+	 * Append the contents of the given data page to this page. The filler is not appended.
 	 * 
 	 * @param page
 	 *            the page that will be appended
@@ -327,10 +312,9 @@ public class DataPage {
 		System.arraycopy(page.data, 0, data, pos, len);
 		pos += len;
 	}
-
+	
 	/**
-	 * Read a data page from this page. The data from the current position to
-	 * the end of the page is copied.
+	 * Read a data page from this page. The data from the current position to the end of the page is copied.
 	 * 
 	 * @return the new page
 	 */
@@ -341,7 +325,7 @@ public class DataPage {
 		page.pos = len;
 		return page;
 	}
-
+	
 	/**
 	 * Append a number of bytes to this data page.
 	 * 
@@ -357,10 +341,9 @@ public class DataPage {
 		System.arraycopy(buff, off, data, pos, len);
 		pos += len;
 	}
-
+	
 	/**
-	 * Copy a number of bytes to the given buffer from the current position. The
-	 * current position is incremented accordingly.
+	 * Copy a number of bytes to the given buffer from the current position. The current position is incremented accordingly.
 	 * 
 	 * @param buff
 	 *            the output buffer
@@ -373,7 +356,7 @@ public class DataPage {
 		System.arraycopy(data, pos, buff, off, len);
 		pos += len;
 	}
-
+	
 	/**
 	 * Append one single byte.
 	 * 
@@ -383,7 +366,7 @@ public class DataPage {
 	public void writeByte(byte x) {
 		data[pos++] = x;
 	}
-
+	
 	/**
 	 * Read one single byte.
 	 * 
@@ -392,16 +375,16 @@ public class DataPage {
 	public int readByte() {
 		return data[pos++];
 	}
-
+	
 	/**
 	 * Read a long value. This method reads two int values and combines them.
 	 * 
 	 * @return the long value
 	 */
 	public long readLong() {
-		return ((long) (readInt()) << 32) + (readInt() & 0xffffffffL);
+		return ( (long) ( readInt() ) << 32 ) + ( readInt() & 0xffffffffL );
 	}
-
+	
 	/**
 	 * Append a long value. This method writes two int values.
 	 * 
@@ -409,10 +392,10 @@ public class DataPage {
 	 *            the value
 	 */
 	public void writeLong(long x) {
-		writeInt((int) (x >>> 32));
+		writeInt((int) ( x >>> 32 ));
 		writeInt((int) x);
 	}
-
+	
 	/**
 	 * Append a value.
 	 * 
@@ -420,16 +403,16 @@ public class DataPage {
 	 *            the value
 	 */
 	public void writeValue(Value v) throws SQLException {
-		if (SysProperties.CHECK) {
+		if ( SysProperties.CHECK ) {
 			checkCapacity(8);
 		}
 		// TODO text output: could be in the Value... classes
-		if (v == ValueNull.INSTANCE) {
+		if ( v == ValueNull.INSTANCE ) {
 			data[pos++] = '-';
 			return;
 		}
 		int start = pos;
-		data[pos++] = (byte) (v.getType() + 'a');
+		data[pos++] = (byte) ( v.getType() + 'a' );
 		switch (v.getType()) {
 		case Value.BOOLEAN:
 		case Value.BYTE:
@@ -485,18 +468,18 @@ public class DataPage {
 			ValueLob lob = (ValueLob) v;
 			lob.convertToFileIfRequired(handler);
 			byte[] small = lob.getSmall();
-			if (small == null) {
+			if ( small == null ) {
 				// -2 for historical reasons (-1 didn't store precision)
 				int type = -2;
-				if (!lob.isLinked()) {
+				if ( !lob.isLinked() ) {
 					type = -3;
 				}
 				writeInt(type);
 				writeInt(lob.getTableId());
 				writeInt(lob.getObjectId());
 				writeLong(lob.getPrecision());
-				writeByte((byte) (lob.useCompression() ? 1 : 0));
-				if (type == -3) {
+				writeByte((byte) ( lob.useCompression() ? 1 : 0 ));
+				if ( type == -3 ) {
 					writeString(lob.getFileName());
 				}
 			} else {
@@ -506,9 +489,9 @@ public class DataPage {
 			break;
 		}
 		case Value.ARRAY: {
-			Value[] list = ((ValueArray) v).getList();
+			Value[] list = ( (ValueArray) v ).getList();
 			writeInt(list.length);
-			for (Value element : list) {
+			for ( Value element : list ) {
 				writeValue(element);
 			}
 			break;
@@ -516,14 +499,13 @@ public class DataPage {
 		default:
 			Message.throwInternalError("type=" + v.getType());
 		}
-		if (SysProperties.CHECK2) {
-			if (pos - start != getValueLen(v)) {
-				throw Message.throwInternalError("value size error: got "
-						+ (pos - start) + " expected " + getValueLen(v));
+		if ( SysProperties.CHECK2 ) {
+			if ( pos - start != getValueLen(v) ) {
+				throw Message.throwInternalError("value size error: got " + ( pos - start ) + " expected " + getValueLen(v));
 			}
 		}
 	}
-
+	
 	/**
 	 * Calculate the number of bytes required to encode the given value.
 	 * 
@@ -532,7 +514,7 @@ public class DataPage {
 	 * @return the number of bytes required to store this value
 	 */
 	public int getValueLen(Value v) throws SQLException {
-		if (v == ValueNull.INSTANCE) {
+		if ( v == ValueNull.INSTANCE ) {
 			return 1;
 		}
 		switch (v.getType()) {
@@ -572,20 +554,20 @@ public class DataPage {
 			ValueLob lob = (ValueLob) v;
 			lob.convertToFileIfRequired(handler);
 			byte[] small = lob.getSmall();
-			if (small != null) {
+			if ( small != null ) {
 				len += LENGTH_INT + small.length;
 			} else {
 				len += LENGTH_INT + LENGTH_INT + LENGTH_INT + LENGTH_LONG + 1;
-				if (!lob.isLinked()) {
+				if ( !lob.isLinked() ) {
 					len += getStringLen(lob.getFileName());
 				}
 			}
 			return len;
 		}
 		case Value.ARRAY: {
-			Value[] list = ((ValueArray) v).getList();
+			Value[] list = ( (ValueArray) v ).getList();
 			int len = 1 + LENGTH_INT;
-			for (Value element : list) {
+			for ( Value element : list ) {
 				len += getValueLen(element);
 			}
 			return len;
@@ -594,7 +576,7 @@ public class DataPage {
 			throw Message.throwInternalError("type=" + v.getType());
 		}
 	}
-
+	
 	/**
 	 * Read a value.
 	 * 
@@ -602,7 +584,7 @@ public class DataPage {
 	 */
 	public Value readValue() throws SQLException {
 		int dataType = data[pos++];
-		if (dataType == '-') {
+		if ( dataType == '-' ) {
 			return ValueNull.INSTANCE;
 		}
 		dataType = dataType - 'a';
@@ -656,7 +638,7 @@ public class DataPage {
 		case Value.BLOB:
 		case Value.CLOB: {
 			int smallLen = readInt();
-			if (smallLen >= 0) {
+			if ( smallLen >= 0 ) {
 				byte[] small = ByteUtils.newBytes(smallLen);
 				read(small, 0, smallLen);
 				return ValueLob.createSmallLob(dataType, small);
@@ -668,13 +650,12 @@ public class DataPage {
 			// -1: historical (didn't store precision)
 			// -2: regular
 			// -3: regular, but not linked (in this case: including file name)
-			if (smallLen == -2 || smallLen == -3) {
+			if ( smallLen == -2 || smallLen == -3 ) {
 				precision = readLong();
 				compression = readByte() == 1;
 			}
-			ValueLob lob = ValueLob.open(dataType, handler, tableId, objectId,
-					precision, compression);
-			if (smallLen == -3) {
+			ValueLob lob = ValueLob.open(dataType, handler, tableId, objectId, precision, compression);
+			if ( smallLen == -3 ) {
 				lob.setFileName(readString(), false);
 			}
 			return lob;
@@ -682,7 +663,7 @@ public class DataPage {
 		case Value.ARRAY: {
 			int len = readInt();
 			Value[] list = new Value[len];
-			for (int i = 0; i < len; i++) {
+			for ( int i = 0; i < len; i++ ) {
 				list[i] = readValue();
 			}
 			return ValueArray.get(list);
@@ -691,17 +672,16 @@ public class DataPage {
 			throw Message.throwInternalError("type=" + dataType);
 		}
 	}
-
+	
 	/**
-	 * Fill up the buffer with empty space and an (initially empty) checksum
-	 * until the size is a multiple of Constants.FILE_BLOCK_SIZE.
+	 * Fill up the buffer with empty space and an (initially empty) checksum until the size is a multiple of Constants.FILE_BLOCK_SIZE.
 	 */
 	public void fillAligned() {
 		// TODO datapage: fillAligned should not use a fixed constant '2'
 		// 0..6 > 8, 7..14 > 16, 15..22 > 24, ...
 		fill(MathUtils.roundUp(pos + 2, Constants.FILE_BLOCK_SIZE));
 	}
-
+	
 	/**
 	 * Set the current read / write position.
 	 * 
@@ -711,42 +691,40 @@ public class DataPage {
 	public void setPos(int pos) {
 		this.pos = pos;
 	}
-
+	
 	/**
-	 * Write a short integer at the current position. The current position is
-	 * incremented.
+	 * Write a short integer at the current position. The current position is incremented.
 	 * 
 	 * @param x
 	 *            the value
 	 */
 	public void writeShortInt(int x) {
 		byte[] buff = data;
-		buff[pos++] = (byte) (x >> 8);
+		buff[pos++] = (byte) ( x >> 8 );
 		buff[pos++] = (byte) x;
 	}
-
+	
 	/**
-	 * Read an short integer at the current position. The current position is
-	 * incremented.
+	 * Read an short integer at the current position. The current position is incremented.
 	 * 
 	 * @return the value
 	 */
 	public int readShortInt() {
 		byte[] buff = data;
-		return ((buff[pos++] & 0xff) << 8) + (buff[pos++] & 0xff);
+		return ( ( buff[pos++] & 0xff ) << 8 ) + ( buff[pos++] & 0xff );
 	}
-
+	
 	private static int getStringLenUTF8(String s) {
 		int plus = 4, len = s.length();
-		for (int i = 0; i < len; i++) {
+		for ( int i = 0; i < len; i++ ) {
 			char c = s.charAt(i);
-			if (c >= 0x800) {
+			if ( c >= 0x800 ) {
 				plus += 2;
-			} else if (c == 0 || c >= 0x80) {
+			} else if ( c == 0 || c >= 0x80 ) {
 				plus++;
 			}
 		}
 		return len + plus;
 	}
-
+	
 }

@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.db;
 
@@ -20,35 +18,36 @@ import org.h2.test.TestBase;
  * Tests the compatibility with other databases.
  */
 public class TestCompatibility extends TestBase {
-
+	
 	private Connection conn;
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws SQLException {
 		deleteDb("compatibility");
 		conn = getConnection("compatibility");
-
+		
 		testDomain();
 		testColumnAlias();
 		testUniqueIndexSingleNull();
 		testUniqueIndexOracle();
 		testHsqlDb();
 		testMySQL();
-
+		
 		conn.close();
 		deleteDb("compatibility");
 	}
-
+	
 	private void testDomain() throws SQLException {
-		if (config.memory) {
+		if ( config.memory ) {
 			return;
 		}
 		Statement stat = conn.createStatement();
@@ -56,7 +55,7 @@ public class TestCompatibility extends TestBase {
 		try {
 			stat.execute("create domain int as varchar");
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		conn.close();
@@ -65,27 +64,27 @@ public class TestCompatibility extends TestBase {
 		stat.execute("insert into test values(2)");
 		stat.execute("drop table test");
 	}
-
+	
 	private void testColumnAlias() throws SQLException {
 		Statement stat = conn.createStatement();
 		String[] modes = new String[] { "PostgreSQL", "MySQL", "HSQLDB", "MSSQLServer", "Derby", "Oracle", "Regular" };
 		String columnAlias;
-		if (Constants.VERSION_MINOR == 0) {
+		if ( Constants.VERSION_MINOR == 0 ) {
 			columnAlias = "MySQL";
 		} else {
 			columnAlias = "MySQL,Regular";
 		}
 		stat.execute("CREATE TABLE TEST(ID INT)");
-		for (int i = 0; i < modes.length; i++) {
+		for ( int i = 0; i < modes.length; i++ ) {
 			String mode = modes[i];
 			stat.execute("SET MODE " + mode);
 			ResultSet rs = stat.executeQuery("SELECT ID I FROM TEST");
 			ResultSetMetaData meta = rs.getMetaData();
 			String columnName = meta.getColumnName(1);
 			String tableName = meta.getTableName(1);
-			if ("ID".equals(columnName) && "TEST".equals(tableName)) {
+			if ( "ID".equals(columnName) && "TEST".equals(tableName) ) {
 				assertTrue(mode + " mode should not support columnAlias", columnAlias.indexOf(mode) >= 0);
-			} else if ("I".equals(columnName) && tableName == null) {
+			} else if ( "I".equals(columnName) && tableName == null ) {
 				assertTrue(mode + " mode should support columnAlias", columnAlias.indexOf(mode) < 0);
 			} else {
 				fail();
@@ -93,12 +92,12 @@ public class TestCompatibility extends TestBase {
 		}
 		stat.execute("DROP TABLE TEST");
 	}
-
+	
 	private void testUniqueIndexSingleNull() throws SQLException {
 		Statement stat = conn.createStatement();
 		String[] modes = new String[] { "PostgreSQL", "MySQL", "HSQLDB", "MSSQLServer", "Derby", "Oracle", "Regular" };
 		String multiNull = "PostgreSQL,MySQL,Oracle,Regular";
-		for (int i = 0; i < modes.length; i++) {
+		for ( int i = 0; i < modes.length; i++ ) {
 			String mode = modes[i];
 			stat.execute("SET MODE " + mode);
 			stat.execute("CREATE TABLE TEST(ID INT)");
@@ -106,13 +105,13 @@ public class TestCompatibility extends TestBase {
 			try {
 				stat.execute("INSERT INTO TEST VALUES(1), (2), (NULL), (NULL)");
 				assertTrue(mode + " mode should not support multiple NULL", multiNull.indexOf(mode) >= 0);
-			} catch (SQLException e) {
+			} catch ( SQLException e ) {
 				assertTrue(mode + " mode should support multiple NULL", multiNull.indexOf(mode) < 0);
 			}
 			stat.execute("DROP TABLE TEST");
 		}
 	}
-
+	
 	private void testUniqueIndexOracle() throws SQLException {
 		Statement stat = conn.createStatement();
 		stat.execute("SET MODE ORACLE");
@@ -122,7 +121,7 @@ public class TestCompatibility extends TestBase {
 		try {
 			stat.execute("insert into t2 values (null, 1)");
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		stat.execute("insert into t2 values (null, null)");
@@ -131,12 +130,12 @@ public class TestCompatibility extends TestBase {
 		try {
 			stat.execute("insert into t2 values (1, null)");
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		stat.execute("DROP TABLE T2");
 	}
-
+	
 	private void testHsqlDb() throws SQLException {
 		Statement stat = conn.createStatement();
 		stat.execute("DROP TABLE TEST IF EXISTS; CREATE TABLE TEST(ID INT PRIMARY KEY); ");
@@ -145,7 +144,7 @@ public class TestCompatibility extends TestBase {
 		stat.execute("CALL CURRENT_DATE");
 		stat.execute("CALL SYSDATE");
 		stat.execute("CALL TODAY");
-
+		
 		stat.execute("DROP TABLE TEST IF EXISTS");
 		stat.execute("CREATE TABLE TEST(ID INT)");
 		stat.execute("INSERT INTO TEST VALUES(1)");
@@ -153,9 +152,9 @@ public class TestCompatibility extends TestBase {
 		prep.setInt(1, 2);
 		prep.executeQuery();
 		stat.execute("DROP TABLE TEST IF EXISTS");
-
+		
 	}
-
+	
 	private void testMySQL() throws SQLException {
 		Statement stat = conn.createStatement();
 		stat.execute("SELECT 1");
@@ -167,7 +166,7 @@ public class TestCompatibility extends TestBase {
 		assertResult(stat, "SELECT UNIX_TIMESTAMP(FROM_UNIXTIME(1196418619))", "1196418619");
 		assertResult(stat, "SELECT FROM_UNIXTIME(1196300000, '%Y %M')", "2007 November");
 		assertResult(stat, "SELECT DATE('2003-12-31 11:02:03')", "2003-12-31");
-
+		
 	}
-
+	
 }

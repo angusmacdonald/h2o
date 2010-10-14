@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.db;
 
@@ -22,16 +20,17 @@ import org.h2.test.TestBase;
  * Tests the linked table feature (CREATE LINKED TABLE).
  */
 public class TestLinkedTable extends TestBase {
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws SQLException {
 		// testLinkAutoAdd();
 		testNestedQueriesToSameTable();
@@ -46,29 +45,29 @@ public class TestLinkedTable extends TestBase {
 		testLinkTwoTables();
 		deleteDb("linkedTable");
 	}
-
+	
 	// this is not a bug, it is the documented behavior
-	//    private void testLinkAutoAdd() throws SQLException {
-	//        Class.forName("org.h2.Driver");
-	//        Connection ca =
-	//            DriverManager.getConnection("jdbc:h2:mem:one", "sa", "sa");
-	//        Connection cb =
-	//            DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
-	//        Statement sa = ca.createStatement();
-	//        Statement sb = cb.createStatement();
-	//        sa.execute("CREATE TABLE ONE (X NUMBER)");
-	//        sb.execute(
-	//            "CALL LINK_SCHEMA('GOOD', '', " +
-	//            "'jdbc:h2:mem:one', 'sa', 'sa', 'PUBLIC'); ");
-	//        sb.executeQuery("SELECT * FROM GOOD.ONE");
-	//        sa.execute("CREATE TABLE TWO (X NUMBER)");
-	//        sb.executeQuery("SELECT * FROM GOOD.TWO"); // FAILED
-	//        ca.close();
-	//        cb.close();
-	//    }
-
+	// private void testLinkAutoAdd() throws SQLException {
+	// Class.forName("org.h2.Driver");
+	// Connection ca =
+	// DriverManager.getConnection("jdbc:h2:mem:one", "sa", "sa");
+	// Connection cb =
+	// DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
+	// Statement sa = ca.createStatement();
+	// Statement sb = cb.createStatement();
+	// sa.execute("CREATE TABLE ONE (X NUMBER)");
+	// sb.execute(
+	// "CALL LINK_SCHEMA('GOOD', '', " +
+	// "'jdbc:h2:mem:one', 'sa', 'sa', 'PUBLIC'); ");
+	// sb.executeQuery("SELECT * FROM GOOD.ONE");
+	// sa.execute("CREATE TABLE TWO (X NUMBER)");
+	// sb.executeQuery("SELECT * FROM GOOD.TWO"); // FAILED
+	// ca.close();
+	// cb.close();
+	// }
+	
 	private void testNestedQueriesToSameTable() throws SQLException {
-		if (config.memory || !SysProperties.SHARE_LINKED_CONNECTIONS) {
+		if ( config.memory || !SysProperties.SHARE_LINKED_CONNECTIONS ) {
 			return;
 		}
 		org.h2.Driver.load();
@@ -82,14 +81,14 @@ public class TestLinkedTable extends TestBase {
 		ca.close();
 		Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
 		Statement sb = cb.createStatement();
-		sb.execute("CREATE LINKED TABLE T1(NULL, '" + url + "', '"+user+"', '"+password+"', 'TEST')");
+		sb.execute("CREATE LINKED TABLE T1(NULL, '" + url + "', '" + user + "', '" + password + "', 'TEST')");
 		sb.executeQuery("SELECT * FROM DUAL A LEFT OUTER JOIN T1 A ON A.ID=1 LEFT OUTER JOIN T1 B ON B.ID=1");
 		sb.execute("DROP ALL OBJECTS");
 		cb.close();
 	}
-
+	
 	private void testSharedConnection() throws SQLException {
-		if (config.memory || !SysProperties.SHARE_LINKED_CONNECTIONS) {
+		if ( config.memory || !SysProperties.SHARE_LINKED_CONNECTIONS ) {
 			return;
 		}
 		org.h2.Driver.load();
@@ -103,12 +102,12 @@ public class TestLinkedTable extends TestBase {
 		ca.close();
 		Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", "sa", "sa");
 		Statement sb = cb.createStatement();
-		sb.execute("CREATE LINKED TABLE T1(NULL, '" + url + ";OPEN_NEW=TRUE', '"+user+"', '"+password+"', 'TEST')");
-		sb.execute("CREATE LINKED TABLE T2(NULL, '" + url + ";OPEN_NEW=TRUE', '"+user+"', '"+password+"', 'TEST')");
+		sb.execute("CREATE LINKED TABLE T1(NULL, '" + url + ";OPEN_NEW=TRUE', '" + user + "', '" + password + "', 'TEST')");
+		sb.execute("CREATE LINKED TABLE T2(NULL, '" + url + ";OPEN_NEW=TRUE', '" + user + "', '" + password + "', 'TEST')");
 		sb.execute("DROP ALL OBJECTS");
 		cb.close();
 	}
-
+	
 	private void testMultipleSchemas() throws SQLException {
 		org.h2.Driver.load();
 		Connection ca = DriverManager.getConnection("jdbc:h2:mem:one", "sa", "sa");
@@ -123,7 +122,7 @@ public class TestLinkedTable extends TestBase {
 		try {
 			sb.execute("CREATE LINKED TABLE T(NULL, 'jdbc:h2:mem:one', 'sa', 'sa', 'TEST')");
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		sb.execute("CREATE LINKED TABLE T(NULL, 'jdbc:h2:mem:one', 'sa', 'sa', 'PUBLIC', 'TEST')");
@@ -135,7 +134,7 @@ public class TestLinkedTable extends TestBase {
 		ca.close();
 		cb.close();
 	}
-
+	
 	private void testReadOnlyLinkedTable() throws SQLException {
 		org.h2.Driver.load();
 		Connection ca = DriverManager.getConnection("jdbc:h2:mem:one", "sa", "sa");
@@ -144,20 +143,20 @@ public class TestLinkedTable extends TestBase {
 		Statement sb = cb.createStatement();
 		sa.execute("CREATE TABLE TEST(ID INT)");
 		sa.execute("INSERT INTO TEST VALUES(1)");
-		String[] suffix = new String[]{"", "READONLY", "EMIT UPDATES"};
-		for (int i = 0; i < suffix.length; i++) {
+		String[] suffix = new String[] { "", "READONLY", "EMIT UPDATES" };
+		for ( int i = 0; i < suffix.length; i++ ) {
 			String sql = "CREATE LINKED TABLE T(NULL, 'jdbc:h2:mem:one', 'sa', 'sa', 'TEST')" + suffix[i];
 			sb.execute(sql);
 			sb.executeQuery("SELECT * FROM T");
-			String[] update = new String[]{"DELETE FROM T", "INSERT INTO T VALUES(2)", "UPDATE T SET ID = 3"};
-			for (int j = 0; j < update.length; j++) {
+			String[] update = new String[] { "DELETE FROM T", "INSERT INTO T VALUES(2)", "UPDATE T SET ID = 3" };
+			for ( int j = 0; j < update.length; j++ ) {
 				try {
 					sb.execute(update[j]);
-					if (i == 1) {
+					if ( i == 1 ) {
 						fail();
 					}
-				} catch (SQLException e) {
-					if (i == 1) {
+				} catch ( SQLException e ) {
+					if ( i == 1 ) {
 						assertKnownException(e);
 					} else {
 						throw e;
@@ -169,7 +168,7 @@ public class TestLinkedTable extends TestBase {
 		ca.close();
 		cb.close();
 	}
-
+	
 	private void testLinkOtherSchema() throws SQLException {
 		org.h2.Driver.load();
 		Connection ca = DriverManager.getConnection("jdbc:h2:mem:one", "sa", "sa");
@@ -188,7 +187,7 @@ public class TestLinkedTable extends TestBase {
 		ca.close();
 		cb.close();
 	}
-
+	
 	private void testLinkTwoTables() throws SQLException {
 		org.h2.Driver.load();
 		Connection conn = DriverManager.getConnection("jdbc:h2:mem:one", "sa", "sa");
@@ -211,7 +210,7 @@ public class TestLinkedTable extends TestBase {
 		conn.close();
 		conn2.close();
 	}
-
+	
 	private void testLinkDrop() throws SQLException {
 		org.h2.Driver.load();
 		Connection connA = DriverManager.getConnection("jdbc:h2:mem:a");
@@ -232,20 +231,19 @@ public class TestLinkedTable extends TestBase {
 		connA.close();
 		connB.close();
 	}
-
+	
 	private void testLinkEmitUpdates() throws SQLException {
 		deleteDb("linked1");
 		deleteDb("linked2");
 		org.h2.Driver.load();
-
+		
 		Connection conn = DriverManager.getConnection("jdbc:h2:" + baseDir + "/linked1", "sa1", "abc");
 		Statement stat = conn.createStatement();
 		stat.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR)");
-
+		
 		Connection conn2 = DriverManager.getConnection("jdbc:h2:" + baseDir + "/linked2", "sa2", "def");
 		Statement stat2 = conn2.createStatement();
-		String link = "CREATE LINKED TABLE TEST_LINK_U('', 'jdbc:h2:" + baseDir
-		+ "/linked1', 'sa1', 'abc', 'TEST') EMIT UPDATES";
+		String link = "CREATE LINKED TABLE TEST_LINK_U('', 'jdbc:h2:" + baseDir + "/linked1', 'sa1', 'abc', 'TEST') EMIT UPDATES";
 		stat2.execute(link);
 		link = "CREATE LINKED TABLE TEST_LINK_DI('', 'jdbc:h2:" + baseDir + "/linked1', 'sa1', 'abc', 'TEST')";
 		stat2.execute(link);
@@ -254,13 +252,13 @@ public class TestLinkedTable extends TestBase {
 		try {
 			stat2.executeUpdate("UPDATE TEST_LINK_U SET ID=ID+1");
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		stat2.executeUpdate("UPDATE TEST_LINK_DI SET ID=ID+1");
 		stat2.executeUpdate("UPDATE TEST_LINK_U SET NAME=NAME || ID");
 		ResultSet rs;
-
+		
 		rs = stat2.executeQuery("SELECT * FROM TEST_LINK_DI ORDER BY ID");
 		rs.next();
 		assertEquals(rs.getInt(1), 2);
@@ -269,7 +267,7 @@ public class TestLinkedTable extends TestBase {
 		assertEquals(rs.getInt(1), 3);
 		assertEquals(rs.getString(2), "World3");
 		assertFalse(rs.next());
-
+		
 		rs = stat2.executeQuery("SELECT * FROM TEST_LINK_U ORDER BY ID");
 		rs.next();
 		assertEquals(rs.getInt(1), 2);
@@ -278,7 +276,7 @@ public class TestLinkedTable extends TestBase {
 		assertEquals(rs.getInt(1), 3);
 		assertEquals(rs.getString(2), "World3");
 		assertFalse(rs.next());
-
+		
 		rs = stat.executeQuery("SELECT * FROM TEST ORDER BY ID");
 		rs.next();
 		assertEquals(rs.getInt(1), 2);
@@ -287,68 +285,64 @@ public class TestLinkedTable extends TestBase {
 		assertEquals(rs.getInt(1), 3);
 		assertEquals(rs.getString(2), "World3");
 		assertFalse(rs.next());
-
+		
 		conn.close();
 		conn2.close();
 	}
-
+	
 	private void testLinkSchema() throws SQLException {
 		deleteDb("linked1");
 		deleteDb("linked2");
 		org.h2.Driver.load();
-
+		
 		Connection conn = DriverManager.getConnection("jdbc:h2:" + baseDir + "/linked1", "sa1", "abc");
 		Statement stat = conn.createStatement();
 		stat.execute("CREATE TABLE TEST1(ID INT PRIMARY KEY)");
-
+		
 		Connection conn2 = DriverManager.getConnection("jdbc:h2:" + baseDir + "/linked2", "sa2", "def");
 		Statement stat2 = conn2.createStatement();
 		String link = "CALL LINK_SCHEMA('LINKED', '', 'jdbc:h2:" + baseDir + "/linked1', 'sa1', 'abc', 'PUBLIC')";
 		stat2.execute(link);
 		stat2.executeQuery("SELECT * FROM LINKED.TEST1");
-
+		
 		stat.execute("CREATE TABLE TEST2(ID INT PRIMARY KEY)");
 		stat2.execute(link);
 		stat2.executeQuery("SELECT * FROM LINKED.TEST1");
 		stat2.executeQuery("SELECT * FROM LINKED.TEST2");
-
+		
 		conn.close();
 		conn2.close();
 	}
-
+	
 	private void testLinkTable() throws SQLException {
 		deleteDb("linked1");
 		deleteDb("linked2");
 		org.h2.Driver.load();
-
+		
 		Connection conn = DriverManager.getConnection("jdbc:h2:" + baseDir + "/linked1", "sa1", "abc");
 		Statement stat = conn.createStatement();
 		stat.execute("CREATE TEMP TABLE TEST_TEMP(ID INT PRIMARY KEY)");
-		stat
-		.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(200), XT TINYINT, XD DECIMAL(10,2), XTS TIMESTAMP, XBY BINARY(255), XBO BIT, XSM SMALLINT, XBI BIGINT, XBL BLOB, XDA DATE, XTI TIME, XCL CLOB, XDO DOUBLE)");
+		stat.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(200), XT TINYINT, XD DECIMAL(10,2), XTS TIMESTAMP, XBY BINARY(255), XBO BIT, XSM SMALLINT, XBI BIGINT, XBL BLOB, XDA DATE, XTI TIME, XCL CLOB, XDO DOUBLE)");
 		stat.execute("CREATE INDEX IDXNAME ON TEST(NAME)");
-		stat
-		.execute("INSERT INTO TEST VALUES(0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)");
-		stat
-		.execute("INSERT INTO TEST VALUES(1, 'Hello', -1, 10.30, '2001-02-03 11:22:33.4455', X'FF0102', TRUE, 3000, 1234567890123456789, X'1122AA', DATE '0002-01-01', TIME '00:00:00', 'J\u00fcrg', 2.25)");
+		stat.execute("INSERT INTO TEST VALUES(0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)");
+		stat.execute("INSERT INTO TEST VALUES(1, 'Hello', -1, 10.30, '2001-02-03 11:22:33.4455', X'FF0102', TRUE, 3000, 1234567890123456789, X'1122AA', DATE '0002-01-01', TIME '00:00:00', 'J\u00fcrg', 2.25)");
 		testRow(stat, "TEST");
-		stat
-		.execute("INSERT INTO TEST VALUES(2, 'World', 30, 100.05, '2005-12-31 12:34:56.789', X'FFEECC33', FALSE, 1, -1234567890123456789, X'4455FF', DATE '9999-12-31', TIME '23:59:59', 'George', -2.5)");
+		stat.execute("INSERT INTO TEST VALUES(2, 'World', 30, 100.05, '2005-12-31 12:34:56.789', X'FFEECC33', FALSE, 1, -1234567890123456789, X'4455FF', DATE '9999-12-31', TIME '23:59:59', 'George', -2.5)");
 		testRow(stat, "TEST");
 		stat.execute("SELECT * FROM TEST_TEMP");
 		conn.close();
-
+		
 		conn = DriverManager.getConnection("jdbc:h2:" + baseDir + "/linked1", "sa1", "abc");
 		stat = conn.createStatement();
 		testRow(stat, "TEST");
 		try {
 			stat.execute("SELECT * FROM TEST_TEMP");
 			fail("temp table must not be persistent");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		conn.close();
-
+		
 		conn = DriverManager.getConnection("jdbc:h2:" + baseDir + "/linked2", "sa2", "def");
 		stat = conn.createStatement();
 		stat.execute("CREATE LINKED TABLE IF NOT EXISTS LINK_TEST('org.h2.Driver', 'jdbc:h2:" + baseDir
@@ -360,33 +354,32 @@ public class TestLinkedTable extends TestBase {
 		ResultSetMetaData meta = rs.getMetaData();
 		assertEquals(10, meta.getPrecision(1));
 		assertEquals(200, meta.getPrecision(2));
-
+		
 		conn.close();
 		conn = DriverManager.getConnection("jdbc:h2:" + baseDir + "/linked2", "sa2", "def");
 		stat = conn.createStatement();
-
-		stat
-		.execute("INSERT INTO LINK_TEST VALUES(3, 'Link Test', 30, 100.05, '2005-12-31 12:34:56.789', X'FFEECC33', FALSE, 1, -1234567890123456789, X'4455FF', DATE '9999-12-31', TIME '23:59:59', 'George', -2.5)");
-
+		
+		stat.execute("INSERT INTO LINK_TEST VALUES(3, 'Link Test', 30, 100.05, '2005-12-31 12:34:56.789', X'FFEECC33', FALSE, 1, -1234567890123456789, X'4455FF', DATE '9999-12-31', TIME '23:59:59', 'George', -2.5)");
+		
 		rs = stat.executeQuery("SELECT COUNT(*) FROM LINK_TEST");
 		rs.next();
 		assertEquals(rs.getInt(1), 4);
-
+		
 		rs = stat.executeQuery("SELECT COUNT(*) FROM LINK_TEST WHERE NAME='Link Test'");
 		rs.next();
 		assertEquals(rs.getInt(1), 1);
-
+		
 		int uc = stat.executeUpdate("DELETE FROM LINK_TEST WHERE ID=3");
 		assertEquals(uc, 1);
-
+		
 		rs = stat.executeQuery("SELECT COUNT(*) FROM LINK_TEST");
 		rs.next();
 		assertEquals(rs.getInt(1), 3);
-
+		
 		rs = stat.executeQuery("SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='LINK_TEST'");
 		rs.next();
 		assertEquals(rs.getString("TABLE_TYPE"), "TABLE LINK");
-
+		
 		rs.next();
 		rs = stat.executeQuery("SELECT * FROM LINK_TEST WHERE ID=0");
 		rs.next();
@@ -405,22 +398,22 @@ public class TestLinkedTable extends TestBase {
 		assertTrue(rs.getString("XCL") == null && rs.wasNull());
 		assertTrue(rs.getString("XDO") == null && rs.wasNull());
 		assertFalse(rs.next());
-
+		
 		stat.execute("DROP TABLE LINK_TEST");
-
+		
 		stat.execute("CREATE LINKED TABLE LINK_TEST('org.h2.Driver', 'jdbc:h2:" + baseDir
 				+ "/linked1', 'sa1', 'abc', '(SELECT COUNT(*) FROM TEST)')");
 		rs = stat.executeQuery("SELECT * FROM LINK_TEST");
 		rs.next();
 		assertEquals(rs.getInt(1), 3);
 		assertFalse(rs.next());
-
+		
 		conn.close();
-
+		
 		deleteDb("linked1");
 		deleteDb("linked2");
 	}
-
+	
 	private void testRow(Statement stat, String name) throws SQLException {
 		ResultSet rs = stat.executeQuery("SELECT * FROM " + name + " WHERE ID=1");
 		rs.next();
@@ -441,7 +434,7 @@ public class TestLinkedTable extends TestBase {
 		assertEquals(rs.getString("XTI"), "00:00:00");
 		assertEquals(rs.getString("XCL"), "J\u00fcrg");
 		assertEquals(rs.getString("XDO"), "2.25");
-
+		
 	}
-
+	
 }

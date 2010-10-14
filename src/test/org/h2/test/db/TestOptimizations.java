@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.db;
 
@@ -22,25 +20,25 @@ import org.h2.test.TestBase;
 import org.h2.tools.SimpleResultSet;
 
 /**
- * Test various optimizations (query cache, optimization for MIN(..), and
- * MAX(..)).
+ * Test various optimizations (query cache, optimization for MIN(..), and MAX(..)).
  */
 public class TestOptimizations extends TestBase {
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws Exception {
 		testNestedInSelectAndLike();
 		testInSelectJoin();
 		testMinMaxNullOptimization();
-		if (config.networked) {
+		if ( config.networked ) {
 			return;
 		}
 		testOptimizeInJoinSelect();
@@ -56,7 +54,7 @@ public class TestOptimizations extends TestBase {
 		testMinMaxCountOptimization(false);
 		deleteDb("optimizations");
 	}
-
+	
 	private void testNestedInSelectAndLike() throws SQLException {
 		deleteDb("optimizations");
 		Connection conn = getConnection("optimizations");
@@ -70,126 +68,118 @@ public class TestOptimizations extends TestBase {
 		prep.executeQuery();
 		conn.close();
 	}
-
+	
 	private void testInSelectJoin() throws SQLException {
 		deleteDb("optimizations");
 		Connection conn = getConnection("optimizations");
 		Statement stat = conn.createStatement();
-		stat.execute("create table test(a int, b int, c int, d int) " +
-		"as select 1, 1, 1, 1 from dual;");
+		stat.execute("create table test(a int, b int, c int, d int) " + "as select 1, 1, 1, 1 from dual;");
 		ResultSet rs;
 		PreparedStatement prep;
-		prep = conn.prepareStatement("SELECT 2 FROM TEST A "
-				+ "INNER JOIN (SELECT DISTINCT B.C AS X FROM TEST B "
+		prep = conn.prepareStatement("SELECT 2 FROM TEST A " + "INNER JOIN (SELECT DISTINCT B.C AS X FROM TEST B "
 				+ "WHERE B.D = ?2) V ON 1=1 WHERE (A = ?1) AND (B = V.X)");
 		prep.setInt(1, 1);
 		prep.setInt(2, 1);
 		rs = prep.executeQuery();
 		assertTrue(rs.next());
 		assertFalse(rs.next());
-
+		
 		boolean old = SysProperties.optimizeInJoin;
 		SysProperties.optimizeInJoin = true;
-
-		prep = conn.prepareStatement(
-				"select 2 from test a where a=? and b in(" +
-		"select b.c from test b where b.d=?)");
+		
+		prep = conn.prepareStatement("select 2 from test a where a=? and b in(" + "select b.c from test b where b.d=?)");
 		prep.setInt(1, 1);
 		prep.setInt(2, 1);
 		rs = prep.executeQuery();
 		assertTrue(rs.next());
 		assertFalse(rs.next());
 		conn.close();
-
+		
 		SysProperties.optimizeInJoin = old;
 	}
-
-
+	
 	private void testOptimizeInJoinSelect() throws SQLException {
 		boolean old = SysProperties.optimizeInJoin;
 		SysProperties.optimizeInJoin = true;
-
+		
 		deleteDb("optimizations");
 		Connection conn = getConnection("optimizations");
 		Statement stat = conn.createStatement();
 		stat.execute("create table item(id int primary key)");
 		stat.execute("insert into item values(1)");
-		stat.execute("create alias opt for \"" +
-				getClass().getName() +
-		".optimizeInJoinSelect\"");
-		PreparedStatement prep = conn.prepareStatement(
-		"select * from item where id in (select x from opt())");
+		stat.execute("create alias opt for \"" + getClass().getName() + ".optimizeInJoinSelect\"");
+		PreparedStatement prep = conn.prepareStatement("select * from item where id in (select x from opt())");
 		ResultSet rs = prep.executeQuery();
 		assertTrue(rs.next());
 		assertEquals(1, rs.getInt(1));
 		assertFalse(rs.next());
 		conn.close();
-
+		
 		SysProperties.optimizeInJoin = old;
-
+		
 	}
-
+	
 	/**
 	 * This method is called via reflection from the database.
-	 *
+	 * 
 	 * @return a result set
 	 */
 	public static ResultSet optimizeInJoinSelect() throws SQLException {
 		SimpleResultSet rs = new SimpleResultSet();
 		rs.addColumn("X", Types.INTEGER, 0, 0);
-		rs.addRow(new Object[]{new Integer(1)});
+		rs.addRow(new Object[] { new Integer(1) });
 		return rs;
 	}
-
+	
 	private void testOptimizeInJoin() throws SQLException {
 		boolean old = SysProperties.optimizeInJoin;
 		SysProperties.optimizeInJoin = true;
-
+		
 		deleteDb("optimizations");
 		Connection conn = getConnection("optimizations");
 		Statement stat = conn.createStatement();
-
+		
 		stat.execute("create table test(id int primary key)");
 		stat.execute("insert into test select x from system_range(1, 1000)");
 		ResultSet rs = stat.executeQuery("explain select * from test where id in (400, 300)");
 		rs.next();
 		String plan = rs.getString(1);
-		if (plan.indexOf("/* PUBLIC.PRIMARY_KEY_") < 0) {
+		if ( plan.indexOf("/* PUBLIC.PRIMARY_KEY_") < 0 ) {
 			fail("Expected using the primary key, got: " + plan);
 		}
 		conn.close();
-
+		
 		SysProperties.optimizeInJoin = old;
 	}
-
+	
 	private void testMinMaxNullOptimization() throws SQLException {
 		deleteDb("optimizations");
 		Connection conn = getConnection("optimizations");
 		Statement stat = conn.createStatement();
 		Random random = new Random(1);
 		int len = getSize(50, 500);
-		for (int i = 0; i < len; i++) {
+		for ( int i = 0; i < len; i++ ) {
 			stat.execute("drop table if exists test");
 			stat.execute("create table test(x int)");
-			if (random.nextBoolean()) {
+			if ( random.nextBoolean() ) {
 				int count = random.nextBoolean() ? 1 : 1 + random.nextInt(len);
-				if (count > 0) {
+				if ( count > 0 ) {
 					stat.execute("insert into test select null from system_range(1, " + count + ")");
 				}
 			}
 			int maxExpected = -1;
 			int minExpected = -1;
-			if (random.nextInt(10) != 1) {
+			if ( random.nextInt(10) != 1 ) {
 				minExpected = 1;
 				maxExpected = 1 + random.nextInt(len);
 				stat.execute("insert into test select x from system_range(1, " + maxExpected + ")");
 			}
 			String sql = "create index idx on test(x";
-			if (random.nextBoolean()) {
+			if ( random.nextBoolean() ) {
 				sql += " desc";
 			}
-			if (random.nextBoolean()) {
-				if (random.nextBoolean()) {
+			if ( random.nextBoolean() ) {
+				if ( random.nextBoolean() ) {
 					sql += " nulls first";
 				} else {
 					sql += " nulls last";
@@ -199,18 +189,18 @@ public class TestOptimizations extends TestBase {
 			stat.execute(sql);
 			ResultSet rs = stat.executeQuery("explain select min(x), max(x) from test");
 			rs.next();
-			if (!config.mvcc) {
+			if ( !config.mvcc ) {
 				String plan = rs.getString(1);
 				assertTrue(plan.indexOf("direct") > 0);
 			}
 			rs = stat.executeQuery("select min(x), max(x) from test");
 			rs.next();
 			int min = rs.getInt(1);
-			if (rs.wasNull()) {
+			if ( rs.wasNull() ) {
 				min = -1;
 			}
 			int max = rs.getInt(2);
-			if (rs.wasNull()) {
+			if ( rs.wasNull() ) {
 				max = -1;
 			}
 			assertEquals(minExpected, min);
@@ -218,7 +208,7 @@ public class TestOptimizations extends TestBase {
 		}
 		conn.close();
 	}
-
+	
 	private void testMultiColumnRangeQuery() throws SQLException {
 		deleteDb("optimizations");
 		Connection conn = getConnection("optimizations");
@@ -234,7 +224,7 @@ public class TestOptimizations extends TestBase {
 		assertTrue(plan.indexOf("TYPE_INDEX") > 0);
 		conn.close();
 	}
-
+	
 	private void testDistinctOptimization() throws SQLException {
 		deleteDb("optimizations");
 		Connection conn = getConnection("optimizations");
@@ -245,7 +235,7 @@ public class TestOptimizations extends TestBase {
 		int len = getSize(10000, 100000);
 		int[] groupCount = new int[10];
 		PreparedStatement prep = conn.prepareStatement("INSERT INTO TEST VALUES(?, ?, ?)");
-		for (int i = 0; i < len; i++) {
+		for ( int i = 0; i < len; i++ ) {
 			prep.setInt(1, i);
 			prep.setString(2, "Hello World");
 			int type = random.nextInt(10);
@@ -255,25 +245,25 @@ public class TestOptimizations extends TestBase {
 		}
 		ResultSet rs;
 		rs = stat.executeQuery("SELECT TYPE, COUNT(*) FROM TEST GROUP BY TYPE ORDER BY TYPE");
-		for (int i = 0; rs.next(); i++) {
+		for ( int i = 0; rs.next(); i++ ) {
 			assertEquals(i, rs.getInt(1));
 			assertEquals(groupCount[i], rs.getInt(2));
 		}
 		assertFalse(rs.next());
 		rs = stat.executeQuery("SELECT DISTINCT TYPE FROM TEST ORDER BY TYPE");
-		for (int i = 0; rs.next(); i++) {
+		for ( int i = 0; rs.next(); i++ ) {
 			assertEquals(i, rs.getInt(1));
 		}
 		assertFalse(rs.next());
 		stat.execute("ANALYZE");
 		rs = stat.executeQuery("SELECT DISTINCT TYPE FROM TEST ORDER BY TYPE");
-		for (int i = 0; i < 10; i++) {
+		for ( int i = 0; i < 10; i++ ) {
 			assertTrue(rs.next());
 			assertEquals(i, rs.getInt(1));
 		}
 		assertFalse(rs.next());
 		rs = stat.executeQuery("SELECT DISTINCT TYPE FROM TEST ORDER BY TYPE LIMIT 5 OFFSET 2");
-		for (int i = 2; i < 7; i++) {
+		for ( int i = 2; i < 7; i++ ) {
 			assertTrue(rs.next());
 			assertEquals(i, rs.getInt(1));
 		}
@@ -281,16 +271,16 @@ public class TestOptimizations extends TestBase {
 		rs = stat.executeQuery("SELECT DISTINCT TYPE FROM TEST ORDER BY TYPE LIMIT 0 OFFSET 0 SAMPLE_SIZE 3");
 		// must have at least one row
 		assertTrue(rs.next());
-		for (int i = 0; i < 3; i++) {
+		for ( int i = 0; i < 3; i++ ) {
 			rs.getInt(1);
-			if (i > 0 && !rs.next()) {
+			if ( i > 0 && !rs.next() ) {
 				break;
 			}
 		}
 		assertFalse(rs.next());
 		conn.close();
 	}
-
+	
 	private void testQueryCacheTimestamp() throws Exception {
 		deleteDb("optimizations");
 		Connection conn = getConnection("optimizations");
@@ -305,21 +295,19 @@ public class TestOptimizations extends TestBase {
 		assertFalse(a.equals(b));
 		conn.close();
 	}
-
+	
 	private void testQueryCacheSpeed() throws SQLException {
 		deleteDb("optimizations");
 		Connection conn = getConnection("optimizations");
 		Statement stat = conn.createStatement();
 		// if h2.optimizeInJoin is enabled, the following query can not be improved
-		if (!SysProperties.optimizeInJoin) {
-			testQuerySpeed(stat,
-					"select sum(x) from system_range(1, 10000) a where a.x in (select b.x from system_range(1, 30) b)");
+		if ( !SysProperties.optimizeInJoin ) {
+			testQuerySpeed(stat, "select sum(x) from system_range(1, 10000) a where a.x in (select b.x from system_range(1, 30) b)");
 		}
-		testQuerySpeed(stat,
-		"select sum(a.n), sum(b.x) from system_range(1, 100) b, (select sum(x) n from system_range(1, 4000)) a");
+		testQuerySpeed(stat, "select sum(a.n), sum(b.x) from system_range(1, 100) b, (select sum(x) n from system_range(1, 4000)) a");
 		conn.close();
 	}
-
+	
 	private void testQuerySpeed(Statement stat, String sql) throws SQLException {
 		stat.execute("set OPTIMIZE_REUSE_RESULTS 0");
 		stat.execute(sql);
@@ -331,16 +319,16 @@ public class TestOptimizations extends TestBase {
 		long time2 = System.currentTimeMillis();
 		stat.execute(sql);
 		time2 = System.currentTimeMillis() - time2;
-		if (time2 > time * 2) {
+		if ( time2 > time * 2 ) {
 			fail("not optimized: " + time + " optimized: " + time2 + " sql:" + sql);
 		}
 	}
-
+	
 	private void testQueryCache(boolean optimize) throws SQLException {
 		deleteDb("optimizations");
 		Connection conn = getConnection("optimizations");
 		Statement stat = conn.createStatement();
-		if (optimize) {
+		if ( optimize ) {
 			stat.execute("set OPTIMIZE_REUSE_RESULTS 1");
 		} else {
 			stat.execute("set OPTIMIZE_REUSE_RESULTS 0");
@@ -356,28 +344,28 @@ public class TestOptimizations extends TestBase {
 		rs1.next();
 		assertEquals(rs1.getInt(1), 1);
 		assertFalse(rs1.next());
-
+		
 		stat.execute("update test2 set id = 2");
 		ResultSet rs2 = prep.executeQuery();
 		rs2.next();
 		assertEquals(rs2.getInt(1), 2);
-
+		
 		conn.close();
 	}
-
+	
 	private void testMinMaxCountOptimization(boolean memory) throws SQLException {
 		deleteDb("optimizations");
 		Connection conn = getConnection("optimizations");
 		Statement stat = conn.createStatement();
-		stat.execute("create " + (memory ? "memory" : "") + " table test(id int primary key, value int)");
+		stat.execute("create " + ( memory ? "memory" : "" ) + " table test(id int primary key, value int)");
 		stat.execute("create index idx_value_id on test(value, id);");
 		int len = getSize(1000, 10000);
 		HashMap map = new HashMap();
 		TreeSet set = new TreeSet();
 		Random random = new Random(1);
-		for (int i = 0; i < len; i++) {
-			if (i == len / 2) {
-				if (!config.memory) {
+		for ( int i = 0; i < len; i++ ) {
+			if ( i == len / 2 ) {
+				if ( !config.memory ) {
 					conn.close();
 					conn = getConnection("optimizations");
 					stat = conn.createStatement();
@@ -390,7 +378,7 @@ public class TestOptimizations extends TestBase {
 			case 3:
 			case 4:
 			case 5:
-				if (random.nextInt(1000) == 1) {
+				if ( random.nextInt(1000) == 1 ) {
 					stat.execute("insert into test values(" + i + ", null)");
 					map.put(new Integer(i), null);
 				} else {
@@ -403,11 +391,11 @@ public class TestOptimizations extends TestBase {
 			case 6:
 			case 7:
 			case 8: {
-				if (map.size() > 0) {
-					for (int j = random.nextInt(i), k = 0; k < 10; k++, j++) {
-						if (map.containsKey(new Integer(j))) {
+				if ( map.size() > 0 ) {
+					for ( int j = random.nextInt(i), k = 0; k < 10; k++, j++ ) {
+						if ( map.containsKey(new Integer(j)) ) {
 							Integer x = (Integer) map.remove(new Integer(j));
-							if (x != null) {
+							if ( x != null ) {
 								set.remove(x);
 							}
 							stat.execute("delete from test where id=" + j);
@@ -420,7 +408,7 @@ public class TestOptimizations extends TestBase {
 				ArrayList list = new ArrayList(map.values());
 				int count = list.size();
 				Integer min = null, max = null;
-				if (count > 0) {
+				if ( count > 0 ) {
 					min = (Integer) set.first();
 					max = (Integer) set.last();
 				}
@@ -439,7 +427,7 @@ public class TestOptimizations extends TestBase {
 		}
 		conn.close();
 	}
-
+	
 	private void testIn() throws SQLException {
 		deleteDb("optimizations");
 		Connection conn = getConnection("optimizations");
@@ -449,7 +437,7 @@ public class TestOptimizations extends TestBase {
 		stat.execute("insert into test values(2, 'World')");
 		PreparedStatement prep;
 		ResultSet rs;
-
+		
 		prep = conn.prepareStatement("select * from test t1 where t1.id in(?)");
 		prep.setInt(1, 1);
 		rs = prep.executeQuery();
@@ -457,7 +445,7 @@ public class TestOptimizations extends TestBase {
 		assertEquals(rs.getInt(1), 1);
 		assertEquals(rs.getString(2), "Hello");
 		assertFalse(rs.next());
-
+		
 		prep = conn.prepareStatement("select * from test t1 where t1.id in(?, ?) order by id");
 		prep.setInt(1, 1);
 		prep.setInt(2, 2);
@@ -469,7 +457,7 @@ public class TestOptimizations extends TestBase {
 		assertEquals(rs.getInt(1), 2);
 		assertEquals(rs.getString(2), "World");
 		assertFalse(rs.next());
-
+		
 		prep = conn.prepareStatement("select * from test t1 where t1.id in(select t2.id from test t2 where t2.id=?)");
 		prep.setInt(1, 2);
 		rs = prep.executeQuery();
@@ -477,20 +465,19 @@ public class TestOptimizations extends TestBase {
 		assertEquals(rs.getInt(1), 2);
 		assertEquals(rs.getString(2), "World");
 		assertFalse(rs.next());
-
-		prep = conn
-		.prepareStatement("select * from test t1 where t1.id in(select t2.id from test t2 where t2.id=? and t1.id<>t2.id)");
+		
+		prep = conn.prepareStatement("select * from test t1 where t1.id in(select t2.id from test t2 where t2.id=? and t1.id<>t2.id)");
 		prep.setInt(1, 2);
 		rs = prep.executeQuery();
 		assertFalse(rs.next());
-
+		
 		prep = conn
-		.prepareStatement("select * from test t1 where t1.id in(select t2.id from test t2 where t2.id in(cast(?+10 as varchar)))");
+				.prepareStatement("select * from test t1 where t1.id in(select t2.id from test t2 where t2.id in(cast(?+10 as varchar)))");
 		prep.setInt(1, 2);
 		rs = prep.executeQuery();
 		assertFalse(rs.next());
-
+		
 		conn.close();
 	}
-
+	
 }

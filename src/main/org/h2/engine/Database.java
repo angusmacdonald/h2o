@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.engine;
 
@@ -114,232 +112,310 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  * @since 2004-04-15 22:49
  */
 public class Database implements DataHandler {
-
+	
 	private static int initialPowerOffCount;
-
+	
 	private final boolean persistent;
-
+	
 	private final String databaseName;
+	
 	private final String databaseShortName;
+	
 	private final String databaseURL;
+	
 	private final String cipher;
+	
 	private final byte[] filePasswordHash;
-
+	
 	private final HashMap<String, DbObject> roles = new HashMap<String, DbObject>();
+	
 	private final HashMap<String, DbObject> users = new HashMap<String, DbObject>();
+	
 	private final HashMap<String, DbObject> settings = new HashMap<String, DbObject>();
+	
 	private final HashMap<String, DbObject> schemas = new HashMap<String, DbObject>();
+	
 	private final HashMap<String, DbObject> rights = new HashMap<String, DbObject>();
+	
 	private final HashMap<String, DbObject> functionAliases = new HashMap<String, DbObject>();
+	
 	private final HashMap<String, DbObject> userDataTypes = new HashMap<String, DbObject>();
+	
 	private final HashMap<String, DbObject> aggregates = new HashMap<String, DbObject>();
+	
 	private final HashMap<String, DbObject> comments = new HashMap<String, DbObject>();
+	
 	private IntHashMap tableMap = new IntHashMap();
+	
 	private final HashMap<Integer, DbObject> databaseObjects = new HashMap<Integer, DbObject>();
-
+	
 	private final Set<Session> userSessions = Collections.synchronizedSet(new HashSet<Session>());
+	
 	private Session exclusiveSession;
+	
 	private final BitField objectIds = new BitField();
+	
 	private final Object lobSyncObject = new Object();
-
+	
 	private Schema mainSchema;
+	
 	private Schema infoSchema;
-
+	
 	private int nextSessionId;
+	
 	private User systemUser;
+	
 	private Session systemSession;
+	
 	private TableData meta;
+	
 	private Index metaIdIndex;
+	
 	private FileLock lock;
+	
 	private LogSystem log;
+	
 	private WriterThread writer;
+	
 	private IntHashMap storageMap = new IntHashMap();
+	
 	private boolean starting;
+	
 	private DiskFile fileData, fileIndex;
+	
 	private TraceSystem traceSystem;
+	
 	private DataPage dummy;
+	
 	private int fileLockMethod;
+	
 	private Role publicRole;
+	
 	private long modificationDataId;
+	
 	private long modificationMetaId;
+	
 	private CompareMode compareMode;
+	
 	private String cluster = Constants.CLUSTERING_DISABLED;
+	
 	private boolean readOnly;
+	
 	private boolean noDiskSpace;
+	
 	private int writeDelay = Constants.DEFAULT_WRITE_DELAY;
+	
 	private DatabaseEventListener eventListener;
+	
 	private int maxMemoryRows = Constants.DEFAULT_MAX_MEMORY_ROWS;
+	
 	private int maxMemoryUndo = SysProperties.DEFAULT_MAX_MEMORY_UNDO;
+	
 	private int lockMode = SysProperties.DEFAULT_LOCK_MODE;
+	
 	private boolean logIndexChanges;
+	
 	private int logLevel = 1;
+	
 	private int maxLengthInplaceLob = Constants.DEFAULT_MAX_LENGTH_INPLACE_LOB;
+	
 	private int allowLiterals = Constants.DEFAULT_ALLOW_LITERALS;
-
+	
 	private int powerOffCount = initialPowerOffCount;
+	
 	private int closeDelay;
+	
 	private DatabaseCloser delayedCloser;
+	
 	private boolean recovery;
+	
 	private volatile boolean closing;
+	
 	private boolean ignoreCase;
+	
 	private boolean deleteFilesOnDisconnect;
+	
 	private String lobCompressionAlgorithm;
+	
 	private boolean optimizeReuseResults = true;
+	
 	private String cacheType;
+	
 	private boolean indexSummaryValid = true;
+	
 	private String accessModeLog, accessModeData;
+	
 	private boolean referentialIntegrity = true;
+	
 	private boolean multiVersion;
+	
 	private DatabaseCloser closeOnExit;
+	
 	private Mode mode = Mode.getInstance(Mode.REGULAR);
+	
 	// TODO change in version 1.2
 	private boolean multiThreaded;
+	
 	private int maxOperationMemory = SysProperties.DEFAULT_MAX_OPERATION_MEMORY;
+	
 	private boolean lobFilesInDirectories = SysProperties.LOB_FILES_IN_DIRECTORIES;
+	
 	private SmallLRUCache lobFileListCache = new SmallLRUCache(128);
+	
 	private boolean autoServerMode;
+	
 	private Server server;
+	
 	private HashMap<TableLinkConnection, TableLinkConnection> linkConnections;
+	
 	private TempFileDeleter tempFileDeleter = TempFileDeleter.getInstance();
+	
 	private PageStore pageStore;
-
+	
 	private Properties reconnectLastLock;
+	
 	private long reconnectCheckNext;
+	
 	private boolean reconnectChangePending;
-
+	
 	private ISystemTableReference systemTableRef;
+	
 	private MetaDataReplicaManager metaDataReplicaManager;
+	
 	private MetaDataReplicationThread metaDataReplicationThread;
+	
 	private boolean running = false;
-
+	
 	public MetaDataReplicaManager getMetaDataReplicaManager() {
 		return metaDataReplicaManager;
 	}
-
+	
 	/**
 	 * Interface for this database instance to the rest of the database system.
 	 */
 	private ChordRemote databaseRemote;
-
+	
 	private AsynchronousQueryManager asynchronousQueryManager;
-
+	
 	private User h2oSchemaUser;
+	
 	private Session h2oSession;
-
+	
 	private User h2oSystemUser;
+	
 	private Session h2oSystemSession;
-
+	
 	private Settings databaseSettings;
-
+	
 	private TransactionNameGenerator transactionNameGenerator;
-
+	
 	private Set<String> localSchema = new HashSet<String>();
-
+	
 	private H2OEventConsumer eventConsumer;
-
+	
 	public Database(String name, ConnectionInfo ci, String cipher) throws SQLException {
-
+		
 		localSchema.add(Constants.H2O_SCHEMA);
 		localSchema.add("RESOURCE_MONITORING");
 		localSchema.add(Constants.SCHEMA_INFORMATION);
 		
 		this.databaseName = name;
 		this.databaseShortName = parseDatabaseShortName();
-
+		
 		DatabaseURL localMachineLocation = DatabaseURL.parseURL(ci.getOriginalURL());
-
-		if (Constants.IS_H2O && !isManagementDB())
+		
+		if ( Constants.IS_H2O && !isManagementDB() )
 			setDiagnosticLevel(localMachineLocation);
-
+		
 		// Ensure testing constants are all set to false.
 		Constants.IS_TESTING_PRE_COMMIT_FAILURE = false;
 		Constants.IS_TESTING_PRE_PREPARE_FAILURE = false;
 		Constants.IS_TESTING_QUERY_FAILURE = false;
 		Constants.IS_TESTING_CREATETABLE_FAILURE = false;
-
+		
 		this.transactionNameGenerator = new TransactionNameGenerator(localMachineLocation);
 		this.asynchronousQueryManager = new AsynchronousQueryManager(this);
-
-
+		
 		this.compareMode = new CompareMode(null, null, 0);
-
+		
 		systemTableRef = new SystemTableReference(this);
-
+		
 		databaseRemote = new ChordRemote(localMachineLocation, systemTableRef);
-
+		
 		this.persistent = ci.isPersistent();
-
+		
 		this.filePasswordHash = ci.getFilePasswordHash();
-
-		if (Constants.IS_H2O && !isManagementDB()) {
-
+		
+		if ( Constants.IS_H2O && !isManagementDB() ) {
+			
 			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "H2O, Database '" + name + "'.");
-
+			
 			/*
 			 * Get Settings for Database.
 			 */
 			LocalH2OProperties localSettings = new LocalH2OProperties(localMachineLocation);
 			try {
 				localSettings.loadProperties();
-			} catch (IOException e1) {
+			} catch ( IOException e1 ) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
 			H2OLocatorInterface locatorInterface;
 			try {
 				locatorInterface = databaseRemote.getLocatorServerReference(localSettings);
-
+				
 				databaseSettings = new Settings(localSettings, locatorInterface.getDescriptor());
-			} catch (StartupException e) {
+			} catch ( StartupException e ) {
 				throw new SQLException(e.getMessage());
 			}
-
+			
 			/*
 			 * Set up events.
 			 */
-			if (databaseSettings.get("DATABASE_EVENTS_ENABLED").equals("true")) {
+			if ( databaseSettings.get("DATABASE_EVENTS_ENABLED").equals("true") ) {
 				IEventBus bus = new EventBus();
 				H2OEventBus.setBus(bus);
-
+				
 				eventConsumer = new H2OEventConsumer();
 				bus.register(eventConsumer);
 			}
-
-			H2OEventBus.publish(new H2OEvent(localMachineLocation.getDbLocation(), DatabaseStates.DATABASE_STARTUP, localMachineLocation.getURL()));
+			
+			H2OEventBus.publish(new H2OEvent(localMachineLocation.getDbLocation(), DatabaseStates.DATABASE_STARTUP, localMachineLocation
+					.getURL()));
 		}
-
+		
 		this.multiThreaded = true; // H2O. Required for the H2O push replication
 		// feature, among other things.
-
+		
 		this.cipher = cipher;
 		String lockMethodName = ci.getProperty("FILE_LOCK", null);
 		this.accessModeLog = ci.getProperty("ACCESS_MODE_LOG", "rw").toLowerCase();
 		this.accessModeData = ci.getProperty("ACCESS_MODE_DATA", "rw").toLowerCase();
 		this.autoServerMode = ci.getProperty("AUTO_SERVER", false);
-		if ("r".equals(accessModeData)) {
+		if ( "r".equals(accessModeData) ) {
 			readOnly = true;
 			accessModeLog = "r";
 		}
 		this.fileLockMethod = FileLock.getFileLockMethod(lockMethodName);
-		if (fileLockMethod == FileLock.LOCK_SERIALIZED) {
+		if ( fileLockMethod == FileLock.LOCK_SERIALIZED ) {
 			writeDelay = SysProperties.MIN_WRITE_DELAY;
 		}
 		this.databaseURL = ci.getURL();
 		this.eventListener = ci.getDatabaseEventListenerObject();
 		ci.removeDatabaseEventListenerObject();
-		if (eventListener == null) {
+		if ( eventListener == null ) {
 			String listener = ci.removeProperty("DATABASE_EVENT_LISTENER", null);
-			if (listener != null) {
+			if ( listener != null ) {
 				listener = StringUtils.trim(listener, true, true, "'");
 				setEventListenerClass(listener);
 			}
 		}
 		String log = ci.getProperty(SetTypes.LOG, null);
-		if (log != null) {
+		if ( log != null ) {
 			this.logIndexChanges = "2".equals(log);
 		}
 		String ignoreSummary = ci.getProperty("RECOVER", null);
-		if (ignoreSummary != null) {
+		if ( ignoreSummary != null ) {
 			this.recovery = true;
 		}
 		this.multiVersion = ci.getProperty("MVCC", false);
@@ -348,39 +424,39 @@ public class Database implements DataHandler {
 		int traceLevelSystemOut = ci.getIntProperty(SetTypes.TRACE_LEVEL_SYSTEM_OUT, TraceSystem.DEFAULT_TRACE_LEVEL_SYSTEM_OUT);
 		this.cacheType = StringUtils.toUpperEnglish(ci.removeProperty("CACHE_TYPE", CacheLRU.TYPE_NAME));
 		openDatabase(traceLevelFile, traceLevelSystemOut, closeAtVmShutdown, ci, localMachineLocation);
-
-		if (Constants.IS_H2O && !isManagementDB()) {
-
-			if (!Constants.IS_NON_SM_TEST) {
+		
+		if ( Constants.IS_H2O && !isManagementDB() ) {
+			
+			if ( !Constants.IS_NON_SM_TEST ) {
 				metaDataReplicationThread.start();
 			}
 			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Started database at " + getURL());
 		}
 		running = true;
 	}
-
+	
 	private void openDatabase(int traceLevelFile, int traceLevelSystemOut, boolean closeAtVmShutdown, ConnectionInfo ci,
 			DatabaseURL localMachineLocation) throws SQLException {
 		try {
 			open(traceLevelFile, traceLevelSystemOut, ci, localMachineLocation);
-			if (closeAtVmShutdown) {
+			if ( closeAtVmShutdown ) {
 				closeOnExit = new DatabaseCloser(this, 0, true);
 				try {
 					Runtime.getRuntime().addShutdownHook(closeOnExit);
-				} catch (IllegalStateException e) {
+				} catch ( IllegalStateException e ) {
 					// shutdown in progress - just don't register the handler
 					// (maybe an application wants to write something into a
 					// database at shutdown time)
-				} catch (SecurityException e) {
+				} catch ( SecurityException e ) {
 					// applets may not do that - ignore
 				}
 			}
-		} catch (Throwable e) {
+		} catch ( Throwable e ) {
 			e.printStackTrace();
-			if (traceSystem != null) {
-				if (e instanceof SQLException) {
+			if ( traceSystem != null ) {
+				if ( e instanceof SQLException ) {
 					SQLException e2 = (SQLException) e;
-					if (e2.getErrorCode() != ErrorCode.DATABASE_ALREADY_OPEN_1) {
+					if ( e2.getErrorCode() != ErrorCode.DATABASE_ALREADY_OPEN_1 ) {
 						// only write if the database is not already in use
 						traceSystem.getTrace(Trace.DATABASE).error("opening " + databaseName, e);
 					}
@@ -391,18 +467,18 @@ public class Database implements DataHandler {
 			throw Message.convert(e);
 		}
 	}
-
+	
 	public static void setInitialPowerOffCount(int count) {
 		initialPowerOffCount = count;
 	}
-
+	
 	public void setPowerOffCount(int count) {
-		if (powerOffCount == -1) {
+		if ( powerOffCount == -1 ) {
 			return;
 		}
 		powerOffCount = count;
 	}
-
+	
 	/**
 	 * Check if two values are equal with the current comparison mode.
 	 * 
@@ -415,7 +491,7 @@ public class Database implements DataHandler {
 	public boolean areEqual(Value a, Value b) throws SQLException {
 		return a.compareTo(b, compareMode) == 0;
 	}
-
+	
 	/**
 	 * Compare two values with the current comparison mode. The values may not be of the same type.
 	 * 
@@ -428,7 +504,7 @@ public class Database implements DataHandler {
 	public int compare(Value a, Value b) throws SQLException {
 		return a.compareTo(b, compareMode);
 	}
-
+	
 	/**
 	 * Compare two values with the current comparison mode. The values must be of the same type.
 	 * 
@@ -441,19 +517,19 @@ public class Database implements DataHandler {
 	public int compareTypeSave(Value a, Value b) throws SQLException {
 		return a.compareTypeSave(b, compareMode);
 	}
-
+	
 	public long getModificationDataId() {
 		return modificationDataId;
 	}
-
+	
 	private void reconnectModified(boolean pending) {
-		if (readOnly || pending == reconnectChangePending || lock == null) {
+		if ( readOnly || pending == reconnectChangePending || lock == null ) {
 			return;
 		}
 		try {
-			if (pending) {
+			if ( pending ) {
 				getTrace().debug("wait before writing");
-				Thread.sleep((int) (SysProperties.RECONNECT_CHECK_DELAY * 1.1));
+				Thread.sleep((int) ( SysProperties.RECONNECT_CHECK_DELAY * 1.1 ));
 			}
 			lock.setProperty("modificationDataId", Long.toString(modificationDataId));
 			lock.setProperty("modificationMetaId", Long.toString(modificationMetaId));
@@ -461,90 +537,90 @@ public class Database implements DataHandler {
 			lock.save();
 			reconnectLastLock = lock.load();
 			reconnectChangePending = pending;
-		} catch (Exception e) {
+		} catch ( Exception e ) {
 			getTrace().error("pending:" + pending, e);
 		}
 	}
-
+	
 	public long getNextModificationDataId() {
 		return ++modificationDataId;
 	}
-
+	
 	public long getModificationMetaId() {
 		return modificationMetaId;
 	}
-
+	
 	public long getNextModificationMetaId() {
 		// if the meta data has been modified, the data is modified as well
 		// (because MetaTable returns modificationDataId)
 		modificationDataId++;
 		return modificationMetaId++;
 	}
-
+	
 	public int getPowerOffCount() {
 		return powerOffCount;
 	}
-
+	
 	public void checkPowerOff() throws SQLException {
-		if (powerOffCount == 0) {
+		if ( powerOffCount == 0 ) {
 			return;
 		}
-		if (powerOffCount > 1) {
+		if ( powerOffCount > 1 ) {
 			powerOffCount--;
 			return;
 		}
-		if (powerOffCount != -1) {
+		if ( powerOffCount != -1 ) {
 			try {
 				powerOffCount = -1;
-				if (log != null) {
+				if ( log != null ) {
 					try {
 						stopWriter();
 						log.close();
-					} catch (SQLException e) {
+					} catch ( SQLException e ) {
 						// ignore
 					}
 					log = null;
 				}
-				if (fileData != null) {
+				if ( fileData != null ) {
 					try {
 						fileData.close();
-					} catch (SQLException e) {
+					} catch ( SQLException e ) {
 						// ignore
 					}
 					fileData = null;
 				}
-				if (fileIndex != null) {
+				if ( fileIndex != null ) {
 					try {
 						fileIndex.close();
-					} catch (SQLException e) {
+					} catch ( SQLException e ) {
 						// ignore
 					}
 					fileIndex = null;
 				}
-				if (pageStore != null) {
+				if ( pageStore != null ) {
 					try {
 						pageStore.close();
-					} catch (SQLException e) {
+					} catch ( SQLException e ) {
 						// ignore
 					}
 					pageStore = null;
 				}
-				if (lock != null) {
+				if ( lock != null ) {
 					stopServer();
-					if (fileLockMethod != FileLock.LOCK_SERIALIZED) {
+					if ( fileLockMethod != FileLock.LOCK_SERIALIZED ) {
 						// allow testing shutdown
 						lock.unlock();
 					}
 					lock = null;
 				}
-			} catch (Exception e) {
+			} catch ( Exception e ) {
 				TraceSystem.traceThrowable(e);
 			}
 		}
 		Engine.getInstance().close(databaseName);
 		throw Message.getSQLException(ErrorCode.SIMULATED_POWER_OFF);
 	}
-
+	
 	/**
 	 * Check if a database with the given name exists.
 	 * 
@@ -555,7 +631,7 @@ public class Database implements DataHandler {
 	public static boolean exists(String name) {
 		return FileUtils.exists(name + Constants.SUFFIX_DATA_FILE);
 	}
-
+	
 	/**
 	 * Get the trace object for the given module.
 	 * 
@@ -566,21 +642,21 @@ public class Database implements DataHandler {
 	public Trace getTrace(String module) {
 		return traceSystem.getTrace(module);
 	}
-
+	
 	public FileStore openFile(String name, String mode, boolean mustExist) throws SQLException {
-		if (mustExist && !FileUtils.exists(name)) {
+		if ( mustExist && !FileUtils.exists(name) ) {
 			throw Message.getSQLException(ErrorCode.FILE_NOT_FOUND_1, name);
 		}
 		FileStore store = FileStore.open(this, name, mode, cipher, filePasswordHash);
 		try {
 			store.init();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			store.closeSilently();
 			throw e;
 		}
 		return store;
 	}
-
+	
 	/**
 	 * Check if the file password hash is correct.
 	 * 
@@ -591,72 +667,72 @@ public class Database implements DataHandler {
 	 * @return true if the cipher algorithm and the password match
 	 */
 	public boolean validateFilePasswordHash(String cipher, byte[] hash) throws SQLException {
-		if (!StringUtils.equals(cipher, this.cipher)) {
+		if ( !StringUtils.equals(cipher, this.cipher) ) {
 			return false;
 		}
 		return ByteUtils.compareSecure(hash, filePasswordHash);
 	}
-
+	
 	private void openFileData() throws SQLException {
 		fileData = new DiskFile(this, databaseName + Constants.SUFFIX_DATA_FILE, accessModeData, true, true,
 				SysProperties.CACHE_SIZE_DEFAULT);
 	}
-
+	
 	private void openFileIndex() throws SQLException {
 		fileIndex = new DiskFile(this, databaseName + Constants.SUFFIX_INDEX_FILE, accessModeData, false, logIndexChanges,
 				SysProperties.CACHE_SIZE_INDEX_DEFAULT);
 	}
-
+	
 	public DataPage getDataPage() {
 		return dummy;
 	}
-
+	
 	private String parseDatabaseShortName() {
 		String n = databaseName;
-		if (n.endsWith(":")) {
+		if ( n.endsWith(":") ) {
 			n = null;
 		}
-		if (n != null) {
+		if ( n != null ) {
 			StringTokenizer tokenizer = new StringTokenizer(n, "/\\:,;");
-			while (tokenizer.hasMoreTokens()) {
+			while ( tokenizer.hasMoreTokens() ) {
 				n = tokenizer.nextToken();
 			}
 		}
-		if (n == null || n.length() == 0) {
+		if ( n == null || n.length() == 0 ) {
 			n = "UNNAMED";
 		}
 		return StringUtils.toUpperEnglish(n);
 	}
-
+	
 	private synchronized void open(int traceLevelFile, int traceLevelSystemOut, ConnectionInfo ci, DatabaseURL localMachineLocation)
-	throws SQLException, StartupException {
+			throws SQLException, StartupException {
 		boolean databaseExists = false; // whether the database already exists
 		// on disk. i.e. with .db.data files,
 		// etc.
-
-		if (persistent) {
-
-			if (SysProperties.PAGE_STORE) {
+		
+		if ( persistent ) {
+			
+			if ( SysProperties.PAGE_STORE ) {
 				String pageFileName = databaseName + Constants.SUFFIX_PAGE_FILE;
-				if (FileUtils.exists(pageFileName) && FileUtils.isReadOnly(pageFileName)) {
+				if ( FileUtils.exists(pageFileName) && FileUtils.isReadOnly(pageFileName) ) {
 					readOnly = true;
 				}
 			}
 			String dataFileName = databaseName + Constants.SUFFIX_DATA_FILE;
-
+			
 			databaseExists = FileUtils.exists(dataFileName);
-
-			if (databaseExists) {
+			
+			if ( databaseExists ) {
 				Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Database already exists at: " + dataFileName);
 			} else {
 				Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Database doesn't exist at: " + dataFileName);
 			}
-
-			if (FileUtils.exists(dataFileName)) {
+			
+			if ( FileUtils.exists(dataFileName) ) {
 				// if it is already read-only because ACCESS_MODE_DATA=r
 				readOnly = readOnly | FileUtils.isReadOnly(dataFileName);
 			}
-			if (readOnly) {
+			if ( readOnly ) {
 				traceSystem = new TraceSystem(null, false);
 			} else {
 				traceSystem = new TraceSystem(databaseName + Constants.SUFFIX_TRACE_FILE, true);
@@ -664,32 +740,32 @@ public class Database implements DataHandler {
 			traceSystem.setLevelFile(traceLevelFile);
 			traceSystem.setLevelSystemOut(traceLevelSystemOut);
 			traceSystem.getTrace(Trace.DATABASE).info("opening " + databaseName + " (build " + Constants.BUILD_ID + ")");
-			if (autoServerMode) {
-				if (readOnly || fileLockMethod == FileLock.LOCK_NO) {
+			if ( autoServerMode ) {
+				if ( readOnly || fileLockMethod == FileLock.LOCK_NO ) {
 					throw Message.getSQLException(ErrorCode.FEATURE_NOT_SUPPORTED);
 				}
 			}
-			if (!readOnly && fileLockMethod != FileLock.LOCK_NO) {
+			if ( !readOnly && fileLockMethod != FileLock.LOCK_NO ) {
 				lock = new FileLock(traceSystem, databaseName + Constants.SUFFIX_LOCK_FILE, Constants.LOCK_SLEEP);
 				lock.lock(fileLockMethod);
-				if (autoServerMode) {
+				if ( autoServerMode ) {
 					startServer(lock.getUniqueId());
 				}
 			}
 			// wait until pending changes are written
 			isReconnectNeeded();
-			if (SysProperties.PAGE_STORE) {
+			if ( SysProperties.PAGE_STORE ) {
 				PageStore store = getPageStore();
 				store.recover();
 			}
-			if (FileUtils.exists(dataFileName)) {
+			if ( FileUtils.exists(dataFileName) ) {
 				lobFilesInDirectories &= !ValueLob.existsLobFile(getDatabasePath());
 				lobFilesInDirectories |= FileUtils.exists(databaseName + Constants.SUFFIX_LOBS_DIRECTORY);
 			}
 			dummy = DataPage.create(this, 0);
 			deleteOldTempFiles();
 			log = new LogSystem(this, databaseName, readOnly, accessModeLog, pageStore);
-			if (pageStore == null) {
+			if ( pageStore == null ) {
 				openFileData();
 				log.open();
 				openFileIndex();
@@ -697,13 +773,13 @@ public class Database implements DataHandler {
 				fileData.init();
 				try {
 					fileIndex.init();
-				} catch (Exception e) {
-					if (recovery) {
+				} catch ( Exception e ) {
+					if ( recovery ) {
 						traceSystem.getTrace(Trace.DATABASE).error("opening index", e);
 						ArrayList<DbObject> list = new ArrayList<DbObject>(storageMap.values());
-						for (int i = 0; i < list.size(); i++) {
+						for ( int i = 0; i < list.size(); i++ ) {
 							Storage s = (Storage) list.get(i);
-							if (s.getDiskFile() == fileIndex) {
+							if ( s.getDiskFile() == fileIndex ) {
 								removeStorage(s.getId(), fileIndex);
 							}
 						}
@@ -723,10 +799,10 @@ public class Database implements DataHandler {
 		systemUser = new User(this, 0, Constants.DBA_NAME, true);
 		h2oSchemaUser = new User(this, 1, "H2O", true);
 		h2oSystemUser = new User(this, 1, "system", true);
-
+		
 		mainSchema = new Schema(this, 0, Constants.SCHEMA_MAIN, systemUser, true);
 		infoSchema = new Schema(this, -1, Constants.SCHEMA_INFORMATION, systemUser, true);
-
+		
 		schemas.put(mainSchema.getName(), mainSchema);
 		schemas.put(infoSchema.getName(), infoSchema);
 		publicRole = new Role(this, 0, Constants.PUBLIC_ROLE_NAME, true);
@@ -736,9 +812,9 @@ public class Database implements DataHandler {
 		h2oSystemUser.setAdmin(true);
 		systemSession = new Session(this, systemUser, ++nextSessionId);
 		h2oSession = new Session(this, h2oSchemaUser, ++nextSessionId);
-
+		
 		h2oSystemSession = new Session(this, h2oSystemUser, ++nextSessionId);
-
+		
 		ObjectArray cols = new ObjectArray();
 		Column columnId = new Column("ID", Value.INT);
 		columnId.setNullable(false);
@@ -747,7 +823,7 @@ public class Database implements DataHandler {
 		cols.add(new Column("TYPE", Value.INT));
 		cols.add(new Column("SQL", Value.STRING));
 		int headPos = 0;
-		if (pageStore != null) {
+		if ( pageStore != null ) {
 			headPos = pageStore.getMetaTableHeadPos();
 		}
 		meta = mainSchema.createTable("SYS", 0, cols, persistent, false, headPos);
@@ -756,97 +832,92 @@ public class Database implements DataHandler {
 		metaIdIndex = meta.addIndex(systemSession, "SYS_ID", 0, pkCols, IndexType.createPrimaryKey(false, false), Index.EMPTY_HEAD, null);
 		objectIds.set(0);
 		// there could be views on system tables, so they must be added first
-		for (int i = 0; i < MetaTable.getMetaTableTypeCount(); i++) {
+		for ( int i = 0; i < MetaTable.getMetaTableTypeCount(); i++ ) {
 			addMetaData(i);
 		}
-
+		
 		starting = true;
-
+		
 		/*
 		 * H2O STARTUP CODE FOR System Table, TABLE INSTANITATION
 		 */
-		if (Constants.IS_H2O && !isManagementDB()) { // don't run this code with
+		if ( Constants.IS_H2O && !isManagementDB() ) { // don't run this code with
 			// the TCP server
 			// management DB
-
+			
 			/*
 			 * Connect to Database System.
 			 */
 			databaseRemote.connectToDatabaseSystem(h2oSystemSession, databaseSettings);
-
+			
 			/*
-			 * Create Meta-Data Replication Manager.
-			 * 
-			 * Must be executed after call to databaseRemote because of getLocalDatabaseInstanceInWrapper() call.
+			 * Create Meta-Data Replication Manager. Must be executed after call to databaseRemote because of
+			 * getLocalDatabaseInstanceInWrapper() call.
 			 */
 			boolean metaDataReplicationEnabled = Boolean.parseBoolean(databaseSettings.get("METADATA_REPLICATION_ENABLED"));
 			int systemTableReplicationFactor = Integer.parseInt(databaseSettings.get("SYSTEM_TABLE_REPLICATION_FACTOR"));
 			int tableManagerReplicationFactor = Integer.parseInt(databaseSettings.get("TABLE_MANAGER_REPLICATION_FACTOR"));
-
+			
 			int replicationThreadSleepTime = Integer.parseInt(databaseSettings.get("METADATA_REPLICATION_THREAD_SLEEP_TIME"));
-
+			
 			metaDataReplicaManager = new MetaDataReplicaManager(metaDataReplicationEnabled, systemTableReplicationFactor,
 					tableManagerReplicationFactor, getLocalDatabaseInstanceInWrapper(), this);
 			metaDataReplicationThread = new MetaDataReplicationThread(metaDataReplicaManager, systemTableRef, this,
 					replicationThreadSleepTime);
 			metaDataReplicationThread.setName("MetaDataReplicationThread");
 		}
-
+		
 		/*
-		 * ###################################################################### ######
-		 * 
-		 * END OF System Table STARTUP CODE
-		 * 
-		 * At this point in the code this database instance will be connected to a System Table, so when tables are generated (below), it
-		 * will be possible for them to re-instantiate Table Managers where possible.
-		 * 
-		 * ###################################################################### ######
+		 * ###################################################################### ###### END OF System Table STARTUP CODE At this point in
+		 * the code this database instance will be connected to a System Table, so when tables are generated (below), it will be possible
+		 * for them to re-instantiate Table Managers where possible. ######################################################################
+		 * ######
 		 */
 
 		Cursor cursor = metaIdIndex.find(systemSession, null, null);
 		// first, create all function aliases and sequences because
 		// they might be used in create table / view / constraints and so on
-
+		
 		ObjectArray records = new ObjectArray();
-
-		while (cursor.next()) {
+		
+		while ( cursor.next() ) {
 			MetaRecord rec = new MetaRecord(cursor.get());
 			objectIds.set(rec.getId());
-
+			
 			records.add(rec);
 		}
-
+		
 		MetaRecord.sort(records);
-
-		if (Constants.IS_H2O && !isManagementDB() && databaseExists) {
+		
+		if ( Constants.IS_H2O && !isManagementDB() && databaseExists ) {
 			/*
 			 * Create or connect to a new System Table instance if this node already has tables on it.
 			 */
 			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Database already exists. No need to recreate the System Table.");
 			commitSystemTableCreation(true, systemTableRef.isSystemTableLocal(), false);
 		}
-
-		if (records.size() > 0) {
+		
+		if ( records.size() > 0 ) {
 			QueryProxyManager proxyManager = new QueryProxyManager(this, systemSession, true);
-
-			for (int i = 0; i < records.size(); i++) {
+			
+			for ( int i = 0; i < records.size(); i++ ) {
 				MetaRecord rec = (MetaRecord) records.get(i);
-
-				if (rec.getSQL().startsWith("CREATE FORCE LINKED TABLE"))
+				
+				if ( rec.getSQL().startsWith("CREATE FORCE LINKED TABLE") )
 					continue;
-
+				
 				rec.execute(this, systemSession, eventListener, proxyManager);
 			}
-
+			
 			proxyManager.finishTransaction(true, true, this);
 		}
-
-		if (Constants.IS_H2O && !isManagementDB())
+		
+		if ( Constants.IS_H2O && !isManagementDB() )
 			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, " Executed meta-records.");
-
+		
 		// try to recompile the views that are invalid
 		recompileInvalidViews(systemSession);
-
+		
 		starting = false;
 		addDefaultSetting(systemSession, SetTypes.DEFAULT_LOCK_TIMEOUT, null, Constants.INITIAL_LOCK_TIMEOUT);
 		addDefaultSetting(systemSession, SetTypes.DEFAULT_TABLE_TYPE, null, Constants.DEFAULT_TABLE_TYPE);
@@ -854,14 +925,14 @@ public class Database implements DataHandler {
 		addDefaultSetting(systemSession, SetTypes.CLUSTER, Constants.CLUSTERING_DISABLED, 0);
 		addDefaultSetting(systemSession, SetTypes.WRITE_DELAY, null, Constants.DEFAULT_WRITE_DELAY);
 		addDefaultSetting(systemSession, SetTypes.CREATE_BUILD, null, Constants.BUILD_ID);
-		if (!readOnly) {
+		if ( !readOnly ) {
 			removeUnusedStorages(systemSession);
 		}
-
+		
 		systemSession.commit(true);
 		traceSystem.getTrace(Trace.DATABASE).info("opened " + databaseName);
-
-		if (Constants.IS_H2O && !isManagementDB() && (!databaseExists || !systemTableRef.isSystemTableLocal())) { // don't
+		
+		if ( Constants.IS_H2O && !isManagementDB() && ( !databaseExists || !systemTableRef.isSystemTableLocal() ) ) { // don't
 			// run
 			// this
 			// code
@@ -871,13 +942,13 @@ public class Database implements DataHandler {
 			// server
 			// management
 			// DB
-
+			
 			try {
 				createH2OTables(false, databaseExists);
-			} catch (Exception e) {
+			} catch ( Exception e ) {
 				e.printStackTrace();
 			}
-
+			
 			databaseRemote.setAsReadyToReplicateMetaData(metaDataReplicaManager); // called
 			// here,
 			// because
@@ -892,8 +963,8 @@ public class Database implements DataHandler {
 			// replicate
 			// TM
 			// state.
-
-		} else if (Constants.IS_H2O && !isManagementDB() && (databaseExists && systemTableRef.isSystemTableLocal())) {
+			
+		} else if ( Constants.IS_H2O && !isManagementDB() && ( databaseExists && systemTableRef.isSystemTableLocal() ) ) {
 			/*
 			 * This is the System Table. Reclaim previously held state.
 			 */
@@ -914,55 +985,55 @@ public class Database implements DataHandler {
 				// replicate
 				// TM
 				// state.
-
+				
 				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Re-created System Table state.");
-			} catch (Exception e) {
+			} catch ( Exception e ) {
 				e.printStackTrace();
 			}
 		}
-
+		
 	}
-
+	
 	/**
 	 * @param databaseExists
 	 * @param persistedTablesExist
 	 * @param isStartup
 	 */
 	private void commitSystemTableCreation(boolean databaseExists, boolean persistedTablesExist, boolean createTables) throws SQLException {
-		if (systemTableRef.isSystemTableLocal()) { // Create the System Table
+		if ( systemTableRef.isSystemTableLocal() ) { // Create the System Table
 			// tables and immediately
 			// add local tables to this
 			// manager.
-
+			
 			SystemTable systemTable = null;
 			try {
 				systemTable = new SystemTable(this, createTables);
-			} catch (Exception e) {
+			} catch ( Exception e ) {
 				e.printStackTrace();
 				ErrorHandling.hardError(e.getMessage());
 			}
-
+			
 			systemTableRef.setSystemTable(systemTable);
 			databaseRemote.exportSystemTable(systemTableRef);
-
+			
 			databaseRemote.commitSystemTableCreation();
-
+			
 		} else { // Not a System Table - Get a reference to the System Table.
 			systemTableRef.findSystemTable();
 		}
 	}
-
+	
 	/**
 	 * @return
 	 */
 	public DatabaseURL getURL() {
 		return databaseRemote.getLocalMachineLocation();
 	}
-
+	
 	public Schema getMainSchema() {
 		return mainSchema;
 	}
-
+	
 	private void startServer(String key) throws SQLException {
 		server = Server.createTcpServer(new String[] { "-tcpPort", "0", "-tcpAllowOthers", "true", "-key", key, databaseName });
 		server.start();
@@ -971,9 +1042,9 @@ public class Database implements DataHandler {
 		lock.setProperty("server", address);
 		lock.save();
 	}
-
+	
 	private void stopServer() {
-		if (server != null) {
+		if ( server != null ) {
 			Server s = server;
 			// avoid calling stop recursively
 			// because stopping the server will
@@ -982,70 +1053,70 @@ public class Database implements DataHandler {
 			s.stop();
 		}
 	}
-
+	
 	private void recompileInvalidViews(Session session) {
 		boolean recompileSuccessful;
 		do {
 			recompileSuccessful = false;
-
+			
 			Set<Table> alltables = getAllReplicas();
-
-			for (Table table : alltables) {
-				if (table instanceof TableView) {
+			
+			for ( Table table : alltables ) {
+				if ( table instanceof TableView ) {
 					TableView view = (TableView) table;
-					if (view.getInvalid()) {
+					if ( view.getInvalid() ) {
 						try {
 							view.recompile(session);
-						} catch (SQLException e) {
+						} catch ( SQLException e ) {
 							// ignore
 						}
-						if (!view.getInvalid()) {
+						if ( !view.getInvalid() ) {
 							recompileSuccessful = true;
 						}
 					}
 				}
 			}
-		} while (recompileSuccessful);
+		} while ( recompileSuccessful );
 		// when opening a database, views are initialized before indexes,
 		// so they may not have the optimal plan yet
 		// this is not a problem, it is just nice to see the newest plan
-
+		
 		Set<Table> allTables = getAllReplicas();
-
-		for (Table table : allTables) {
-			if (table instanceof TableView) {
+		
+		for ( Table table : allTables ) {
+			if ( table instanceof TableView ) {
 				TableView view = (TableView) table;
-				if (!view.getInvalid()) {
+				if ( !view.getInvalid() ) {
 					try {
 						view.recompile(systemSession);
-					} catch (SQLException e) {
+					} catch ( SQLException e ) {
 						// ignore
 					}
 				}
 			}
 		}
 	}
-
+	
 	private void removeUnusedStorages(Session session) throws SQLException {
-		if (persistent) {
+		if ( persistent ) {
 			ObjectArray storages = getAllStorages();
-			for (int i = 0; i < storages.size(); i++) {
+			for ( int i = 0; i < storages.size(); i++ ) {
 				Storage storage = (Storage) storages.get(i);
-				if (storage != null && storage.getRecordReader() == null) {
+				if ( storage != null && storage.getRecordReader() == null ) {
 					storage.truncate(session);
 				}
 			}
 		}
 	}
-
+	
 	private void addDefaultSetting(Session session, int type, String stringValue, int intValue) throws SQLException {
-		if (readOnly) {
+		if ( readOnly ) {
 			return;
 		}
 		String name = SetTypes.getTypeName(type);
-		if (settings.get(name) == null) {
+		if ( settings.get(name) == null ) {
 			Setting setting = new Setting(this, allocateObjectId(false, true), name);
-			if (stringValue == null) {
+			if ( stringValue == null ) {
 				setting.setIntValue(intValue);
 			} else {
 				setting.setStringValue(stringValue);
@@ -1053,7 +1124,7 @@ public class Database implements DataHandler {
 			addDatabaseObject(session, setting);
 		}
 	}
-
+	
 	/**
 	 * Remove the storage object from the file.
 	 * 
@@ -1063,15 +1134,15 @@ public class Database implements DataHandler {
 	 *            the file
 	 */
 	public void removeStorage(int id, DiskFile file) {
-		if (SysProperties.CHECK) {
+		if ( SysProperties.CHECK ) {
 			Storage s = (Storage) storageMap.get(id);
-			if (s == null || s.getDiskFile() != file) {
+			if ( s == null || s.getDiskFile() != file ) {
 				Message.throwInternalError();
 			}
 		}
 		storageMap.remove(id);
 	}
-
+	
 	/**
 	 * Get the storage object for the given file. An new object is created if required.
 	 * 
@@ -1083,8 +1154,8 @@ public class Database implements DataHandler {
 	 */
 	public Storage getStorage(int id, DiskFile file) {
 		Storage storage = (Storage) storageMap.get(id);
-		if (storage != null) {
-			if (SysProperties.CHECK && storage.getDiskFile() != file) {
+		if ( storage != null ) {
+			if ( SysProperties.CHECK && storage.getDiskFile() != file ) {
 				Message.throwInternalError();
 			}
 		} else {
@@ -1093,32 +1164,32 @@ public class Database implements DataHandler {
 		}
 		return storage;
 	}
-
+	
 	private void addMetaData(int type) throws SQLException {
 		MetaTable m = new MetaTable(infoSchema, -1 - type, type);
 		infoSchema.add(m);
 	}
-
+	
 	private synchronized void addMeta(Session session, DbObject obj) throws SQLException {
 		int id = obj.getId();
-		if (id > 0 && !starting && !obj.getTemporary()) {
+		if ( id > 0 && !starting && !obj.getTemporary() ) {
 			Row r = meta.getTemplateRow();
 			MetaRecord rec = new MetaRecord(obj);
 			rec.setRecord(r);
 			objectIds.set(id);
 			meta.lock(session, true, true);
 			meta.addRow(session, r);
-			if (isMultiVersion()) {
+			if ( isMultiVersion() ) {
 				// TODO this should work without MVCC, but avoid risks at the
 				// moment
 				session.log(meta, UndoLogRecord.INSERT, r);
 			}
 		}
-		if (SysProperties.PAGE_STORE && id > 0) {
+		if ( SysProperties.PAGE_STORE && id > 0 ) {
 			databaseObjects.put(ObjectUtils.getInteger(id), obj);
 		}
 	}
-
+	
 	/**
 	 * Remove the given object from the meta data.
 	 * 
@@ -1128,31 +1199,31 @@ public class Database implements DataHandler {
 	 *            the id of the object to remove
 	 */
 	public synchronized void removeMeta(Session session, int id) throws SQLException {
-		if (id > 0 && !starting) {
+		if ( id > 0 && !starting ) {
 			SearchRow r = meta.getTemplateSimpleRow(false);
 			r.setValue(0, ValueInt.get(id));
 			Cursor cursor = metaIdIndex.find(session, r, r);
-			if (cursor.next()) {
+			if ( cursor.next() ) {
 				Row found = cursor.get();
 				meta.lock(session, true, true);
 				meta.removeRow(session, found);
-				if (isMultiVersion()) {
+				if ( isMultiVersion() ) {
 					// TODO this should work without MVCC, but avoid risks at
 					// the
 					// moment
 					session.log(meta, UndoLogRecord.DELETE, found);
 				}
 				objectIds.clear(id);
-				if (SysProperties.CHECK) {
+				if ( SysProperties.CHECK ) {
 					checkMetaFree(session, id);
 				}
 			}
 		}
-		if (SysProperties.PAGE_STORE) {
+		if ( SysProperties.PAGE_STORE ) {
 			databaseObjects.remove(ObjectUtils.getInteger(id));
 		}
 	}
-
+	
 	private HashMap<String, DbObject> getMap(int type) {
 		switch (type) {
 		case DbObject.USER:
@@ -1177,7 +1248,7 @@ public class Database implements DataHandler {
 			throw Message.throwInternalError("type=" + type);
 		}
 	}
-
+	
 	/**
 	 * Add a schema object to the database.
 	 * 
@@ -1188,16 +1259,16 @@ public class Database implements DataHandler {
 	 */
 	public synchronized void addSchemaObject(Session session, SchemaObject obj) throws SQLException {
 		int id = obj.getId();
-		if (id > 0 && !starting) {
+		if ( id > 0 && !starting ) {
 			checkWritingAllowed();
 		}
 		obj.getSchema().add(obj);
 		addMeta(session, obj);
-		if (obj instanceof TableData) {
+		if ( obj instanceof TableData ) {
 			tableMap.put(id, obj);
 		}
 	}
-
+	
 	/**
 	 * Add an object to the database.
 	 * 
@@ -1208,24 +1279,24 @@ public class Database implements DataHandler {
 	 */
 	public synchronized void addDatabaseObject(Session session, DbObject obj) throws SQLException {
 		int id = obj.getId();
-		if (id > 0 && !starting) {
+		if ( id > 0 && !starting ) {
 			checkWritingAllowed();
 		}
 		HashMap<String, DbObject> map = getMap(obj.getType());
-		if (obj.getType() == DbObject.USER) {
+		if ( obj.getType() == DbObject.USER ) {
 			User user = (User) obj;
-			if (user.getAdmin() && systemUser.getName().equals(Constants.DBA_NAME)) {
+			if ( user.getAdmin() && systemUser.getName().equals(Constants.DBA_NAME) ) {
 				systemUser.rename(user.getName());
 			}
 		}
 		String name = obj.getName();
-		if (SysProperties.CHECK && map.get(name) != null) {
+		if ( SysProperties.CHECK && map.get(name) != null ) {
 			Message.throwInternalError("object already exists");
 		}
 		addMeta(session, obj);
 		map.put(name, obj);
 	}
-
+	
 	/**
 	 * Get the user defined aggregate function if it exists, or null if not.
 	 * 
@@ -1236,7 +1307,7 @@ public class Database implements DataHandler {
 	public UserAggregate findAggregate(String name) {
 		return (UserAggregate) aggregates.get(name);
 	}
-
+	
 	/**
 	 * Get the comment for the given database object if one exists, or null if not.
 	 * 
@@ -1245,13 +1316,13 @@ public class Database implements DataHandler {
 	 * @return the comment or null
 	 */
 	public Comment findComment(DbObject object) {
-		if (object.getType() == DbObject.COMMENT) {
+		if ( object.getType() == DbObject.COMMENT ) {
 			return null;
 		}
 		String key = Comment.getKey(object);
 		return (Comment) comments.get(key);
 	}
-
+	
 	/**
 	 * Get the user defined function if it exists, or null if not.
 	 * 
@@ -1262,7 +1333,7 @@ public class Database implements DataHandler {
 	public FunctionAlias findFunctionAlias(String name) {
 		return (FunctionAlias) functionAliases.get(name);
 	}
-
+	
 	/**
 	 * Get the role if it exists, or null if not.
 	 * 
@@ -1273,7 +1344,7 @@ public class Database implements DataHandler {
 	public Role findRole(String roleName) {
 		return (Role) roles.get(roleName);
 	}
-
+	
 	/**
 	 * Get the schema if it exists, or null if not.
 	 * 
@@ -1284,7 +1355,7 @@ public class Database implements DataHandler {
 	public Schema findSchema(String schemaName) {
 		return (Schema) schemas.get(schemaName);
 	}
-
+	
 	/**
 	 * Get the setting if it exists, or null if not.
 	 * 
@@ -1295,7 +1366,7 @@ public class Database implements DataHandler {
 	public Setting findSetting(String name) {
 		return (Setting) settings.get(name);
 	}
-
+	
 	/**
 	 * Get the user if it exists, or null if not.
 	 * 
@@ -1306,7 +1377,7 @@ public class Database implements DataHandler {
 	public User findUser(String name) {
 		return (User) users.get(name);
 	}
-
+	
 	/**
 	 * Get the user defined data type if it exists, or null if not.
 	 * 
@@ -1317,7 +1388,7 @@ public class Database implements DataHandler {
 	public UserDataType findUserDataType(String name) {
 		return (UserDataType) userDataTypes.get(name);
 	}
-
+	
 	/**
 	 * Get user with the given name. This method throws an exception if the user does not exist.
 	 * 
@@ -1330,15 +1401,15 @@ public class Database implements DataHandler {
 	public User getUser(String name) throws SQLException {
 		User user = findUser(name);
 		// H2O bug fix (where admin user is not found on startup queries
-		if (user == null) {
+		if ( user == null ) {
 			user = systemUser;
 		}
-		if (user == null) {
+		if ( user == null ) {
 			throw Message.getSQLException(ErrorCode.USER_NOT_FOUND_1, name);
 		}
 		return user;
 	}
-
+	
 	/**
 	 * Create a session for the given user.
 	 * 
@@ -1349,19 +1420,19 @@ public class Database implements DataHandler {
 	 *             if the database is in exclusive mode
 	 */
 	public synchronized Session createSession(User user) throws SQLException {
-		if (exclusiveSession != null) {
+		if ( exclusiveSession != null ) {
 			throw Message.getSQLException(ErrorCode.DATABASE_IS_IN_EXCLUSIVE_MODE);
 		}
 		Session session = new Session(this, user, ++nextSessionId);
 		userSessions.add(session);
 		traceSystem.getTrace(Trace.SESSION).info("connecting #" + session.getId() + " to " + databaseName);
-		if (delayedCloser != null) {
+		if ( delayedCloser != null ) {
 			delayedCloser.reset();
 			delayedCloser = null;
 		}
 		return session;
 	}
-
+	
 	/**
 	 * Remove a session. This method is called after the user has disconnected.
 	 * 
@@ -1369,20 +1440,20 @@ public class Database implements DataHandler {
 	 *            the session
 	 */
 	public synchronized void removeSession(Session session) {
-
-		if (session != null) {
-			if (exclusiveSession == session) {
+		
+		if ( session != null ) {
+			if ( exclusiveSession == session ) {
 				exclusiveSession = null;
 			}
 			userSessions.remove(session);
-			if (session != systemSession) {
+			if ( session != systemSession ) {
 				traceSystem.getTrace(Trace.SESSION).info("disconnecting #" + session.getId());
 			}
 		}
-		if (userSessions.size() == 0 && session != systemSession) {
-			if (closeDelay == 0) {
+		if ( userSessions.size() == 0 && session != systemSession ) {
+			if ( closeDelay == 0 ) {
 				close(false);
-			} else if (closeDelay < 0) {
+			} else if ( closeDelay < 0 ) {
 				return;
 			} else {
 				delayedCloser = new DatabaseCloser(this, closeDelay * 1000, false);
@@ -1391,11 +1462,11 @@ public class Database implements DataHandler {
 				delayedCloser.start();
 			}
 		}
-		if (session != systemSession && session != null) {
+		if ( session != systemSession && session != null ) {
 			traceSystem.getTrace(Trace.SESSION).info("disconnected #" + session.getId());
 		}
 	}
-
+	
 	/**
 	 * Close the database.
 	 * 
@@ -1403,74 +1474,74 @@ public class Database implements DataHandler {
 	 *            true if this method is called from the shutdown hook
 	 */
 	public synchronized void close(boolean fromShutdownHook) {
-
-		if (closing) {
+		
+		if ( closing ) {
 			return;
 		}
-
+		
 		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, getURL().getURL());
-
+		
 		closing = true;
 		stopServer();
-		if (Constants.IS_H2O && !isManagementDB() && !fromShutdownHook) {
+		if ( Constants.IS_H2O && !isManagementDB() && !fromShutdownHook ) {
 			H2OEventBus.publish(new H2OEvent(this.getURL().getDbLocation(), DatabaseStates.DATABASE_SHUTDOWN, null));
-
+			
 			metaDataReplicationThread.setRunning(false);
 			running = false;
 			removeLocalDatabaseInstance();
-
+			
 		}
-
-		if (userSessions.size() > 0) {
-			if (!fromShutdownHook) {
+		
+		if ( userSessions.size() > 0 ) {
+			if ( !fromShutdownHook ) {
 				return;
 			}
 			traceSystem.getTrace(Trace.DATABASE).info("closing " + databaseName + " from shutdown hook");
 			Session[] all = new Session[userSessions.size()];
 			userSessions.toArray(all);
-			for (Session s : all) {
+			for ( Session s : all ) {
 				try {
 					// must roll back, otherwise the session is removed and
 					// the log file that contains its uncommitted operations as
 					// well
 					s.rollback();
 					s.close();
-				} catch (SQLException e) {
+				} catch ( SQLException e ) {
 					traceSystem.getTrace(Trace.SESSION).error("disconnecting #" + s.getId(), e);
 				}
 			}
 		}
-		if (log != null) {
+		if ( log != null ) {
 			log.setDisabled(false);
 		}
 		traceSystem.getTrace(Trace.DATABASE).info("closing " + databaseName);
-		if (eventListener != null) {
+		if ( eventListener != null ) {
 			// allow the event listener to connect to the database
 			closing = false;
 			DatabaseEventListener e = eventListener;
 			// set it to null, to make sure it's called only once
 			eventListener = null;
 			e.closingDatabase();
-			if (userSessions.size() > 0) {
+			if ( userSessions.size() > 0 ) {
 				// if a connection was opened, we can't close the database
 				return;
 			}
 			closing = true;
 		}
 		try {
-			if (systemSession != null) {
+			if ( systemSession != null ) {
 				Set<Table> alltables = getAllReplicas();
-
-				for (Table table : alltables) {
+				
+				for ( Table table : alltables ) {
 					table.close(systemSession);
 				}
 				ObjectArray sequences = getAllSchemaObjects(DbObject.SEQUENCE);
-				for (int i = 0; i < sequences.size(); i++) {
+				for ( int i = 0; i < sequences.size(); i++ ) {
 					Sequence sequence = (Sequence) sequences.get(i);
 					sequence.close();
 				}
 				ObjectArray triggers = getAllSchemaObjects(DbObject.TRIGGER);
-				for (int i = 0; i < triggers.size(); i++) {
+				for ( int i = 0; i < triggers.size(); i++ ) {
 					TriggerObject trigger = (TriggerObject) triggers.get(i);
 					trigger.close();
 				}
@@ -1478,176 +1549,176 @@ public class Database implements DataHandler {
 				systemSession.commit(true);
 				indexSummaryValid = true;
 			}
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			traceSystem.getTrace(Trace.DATABASE).error("close", e);
 		}
 		// remove all session variables
-		if (persistent) {
+		if ( persistent ) {
 			try {
 				ValueLob.removeAllForTable(this, ValueLob.TABLE_ID_SESSION_VARIABLE);
-			} catch (SQLException e) {
+			} catch ( SQLException e ) {
 				traceSystem.getTrace(Trace.DATABASE).error("close", e);
 			}
 		}
 		tempFileDeleter.deleteAll();
 		try {
 			closeOpenFilesAndUnlock();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			traceSystem.getTrace(Trace.DATABASE).error("close", e);
 		}
 		traceSystem.getTrace(Trace.DATABASE).info("closed");
 		traceSystem.close();
-		if (closeOnExit != null) {
+		if ( closeOnExit != null ) {
 			closeOnExit.reset();
 			try {
 				Runtime.getRuntime().removeShutdownHook(closeOnExit);
-			} catch (IllegalStateException e) {
+			} catch ( IllegalStateException e ) {
 				// ignore
-			} catch (SecurityException e) {
+			} catch ( SecurityException e ) {
 				// applets may not do that - ignore
 			}
 			closeOnExit = null;
 		}
 		Engine.getInstance().close(databaseName);
-		if (deleteFilesOnDisconnect && persistent) {
+		if ( deleteFilesOnDisconnect && persistent ) {
 			deleteFilesOnDisconnect = false;
 			try {
 				String directory = FileUtils.getParent(databaseName);
 				String name = FileUtils.getFileName(databaseName);
 				DeleteDbFiles.execute(directory, name, true);
-			} catch (Exception e) {
+			} catch ( Exception e ) {
 				// ignore (the trace is closed already)
 			}
 		}
 		closing = false;
 	}
-
+	
 	private void stopWriter() {
-		if (writer != null) {
+		if ( writer != null ) {
 			try {
 				writer.stopThread();
-			} catch (SQLException e) {
+			} catch ( SQLException e ) {
 				traceSystem.getTrace(Trace.DATABASE).error("close", e);
 			}
 			writer = null;
 		}
 	}
-
+	
 	private synchronized void closeOpenFilesAndUnlock() throws SQLException {
-		if (log != null) {
+		if ( log != null ) {
 			stopWriter();
 			try {
 				log.close();
-			} catch (Throwable e) {
+			} catch ( Throwable e ) {
 				traceSystem.getTrace(Trace.DATABASE).error("close", e);
 			}
 			log = null;
 		}
-		if (pageStore != null) {
+		if ( pageStore != null ) {
 			pageStore.checkpoint();
 		}
 		closeFiles();
-		if (persistent && lock == null && fileLockMethod != FileLock.LOCK_NO) {
+		if ( persistent && lock == null && fileLockMethod != FileLock.LOCK_NO ) {
 			// everything already closed (maybe in checkPowerOff)
 			// don't delete temp files in this case because
 			// the database could be open now (even from within another process)
 			return;
 		}
-		if (persistent) {
+		if ( persistent ) {
 			deleteOldTempFiles();
 		}
-		if (systemSession != null) {
+		if ( systemSession != null ) {
 			systemSession.close();
 			systemSession = null;
 		}
-		if (lock != null) {
+		if ( lock != null ) {
 			lock.unlock();
 			lock = null;
 		}
 	}
-
+	
 	private void closeFiles() {
 		try {
-			if (fileData != null) {
+			if ( fileData != null ) {
 				fileData.close();
 				fileData = null;
 			}
-			if (fileIndex != null) {
+			if ( fileIndex != null ) {
 				fileIndex.close();
 				fileIndex = null;
 			}
-			if (pageStore != null) {
+			if ( pageStore != null ) {
 				pageStore.close();
 				pageStore = null;
 			}
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			traceSystem.getTrace(Trace.DATABASE).error("close", e);
 		}
 		storageMap.clear();
 	}
-
+	
 	private void checkMetaFree(Session session, int id) throws SQLException {
 		SearchRow r = meta.getTemplateSimpleRow(false);
 		r.setValue(0, ValueInt.get(id));
 		Cursor cursor = metaIdIndex.find(session, r, r);
-		if (cursor.next()) {
+		if ( cursor.next() ) {
 			Message.throwInternalError();
 		}
 	}
-
+	
 	public synchronized int allocateObjectId(boolean needFresh, boolean dataFile) {
 		// TODO refactor: use hash map instead of bit field for object ids
 		needFresh = true;
 		int i;
-		if (needFresh) {
+		if ( needFresh ) {
 			i = objectIds.getLastSetBit() + 1;
-			if ((i & 1) != (dataFile ? 1 : 0)) {
+			if ( ( i & 1 ) != ( dataFile ? 1 : 0 ) ) {
 				i++;
 			}
-
-			while (storageMap.get(i) != null || objectIds.get(i)) {
+			
+			while ( storageMap.get(i) != null || objectIds.get(i) ) {
 				i++;
-				if ((i & 1) != (dataFile ? 1 : 0)) {
+				if ( ( i & 1 ) != ( dataFile ? 1 : 0 ) ) {
 					i++;
 				}
 			}
 		} else {
 			i = objectIds.nextClearBit(0);
 		}
-		if (SysProperties.CHECK && objectIds.get(i)) {
+		if ( SysProperties.CHECK && objectIds.get(i) ) {
 			Message.throwInternalError();
 		}
 		objectIds.set(i);
 		return i;
 	}
-
+	
 	public ObjectArray getAllAggregates() {
 		return new ObjectArray(aggregates.values());
 	}
-
+	
 	public ObjectArray getAllComments() {
 		return new ObjectArray(comments.values());
 	}
-
+	
 	public ObjectArray getAllFunctionAliases() {
 		return new ObjectArray(functionAliases.values());
 	}
-
+	
 	public int getAllowLiterals() {
-		if (starting) {
+		if ( starting ) {
 			return Constants.ALLOW_LITERALS_ALL;
 		}
 		return allowLiterals;
 	}
-
+	
 	public ObjectArray getAllRights() {
 		return new ObjectArray(rights.values());
 	}
-
+	
 	public ObjectArray getAllRoles() {
 		return new ObjectArray(roles.values());
 	}
-
+	
 	/**
 	 * Get all schema objects of the given type.
 	 * 
@@ -1657,13 +1728,13 @@ public class Database implements DataHandler {
 	 */
 	public ObjectArray getAllSchemaObjects(int type) {
 		ObjectArray list = new ObjectArray();
-		for (DbObject dbObject : schemas.values()) {
+		for ( DbObject dbObject : schemas.values() ) {
 			Schema schema = (Schema) dbObject;
 			list.addAll(schema.getAll(type));
 		}
 		return list;
 	}
-
+	
 	/**
 	 * Get all tables. Replaces the getAllSchemaObjects method for this particular call.
 	 * 
@@ -1673,13 +1744,13 @@ public class Database implements DataHandler {
 	 */
 	public Set<ReplicaSet> getAllTables() {
 		Set<ReplicaSet> list = new HashSet<ReplicaSet>();
-		for (DbObject dbObject : schemas.values()) {
+		for ( DbObject dbObject : schemas.values() ) {
 			Schema schema = (Schema) dbObject;
 			list.addAll(schema.getTablesAndViews().values());
 		}
 		return list;
 	}
-
+	
 	/**
 	 * Get every single table instance, including replicas for the same table.
 	 * 
@@ -1687,74 +1758,74 @@ public class Database implements DataHandler {
 	 */
 	public Set<Table> getAllReplicas() {
 		Set<ReplicaSet> allReplicaSets = getAllTables();
-
+		
 		Set<Table> alltables = new HashSet<Table>();
-		for (ReplicaSet tableSet : allReplicaSets) {
+		for ( ReplicaSet tableSet : allReplicaSets ) {
 			alltables.addAll(tableSet.getAllCopies());
 		}
-
+		
 		return alltables;
 	}
-
+	
 	public ObjectArray getAllSchemas() {
 		return new ObjectArray(schemas.values());
 	}
-
+	
 	public ObjectArray getAllSettings() {
 		return new ObjectArray(settings.values());
 	}
-
+	
 	public ObjectArray getAllStorages() {
 		return new ObjectArray(storageMap.values());
 	}
-
+	
 	public ObjectArray getAllUserDataTypes() {
 		return new ObjectArray(userDataTypes.values());
 	}
-
+	
 	public ObjectArray getAllUsers() {
 		return new ObjectArray(users.values());
 	}
-
+	
 	public String getCacheType() {
 		return cacheType;
 	}
-
+	
 	public int getChecksum(byte[] data, int start, int end) {
 		int x = 0;
-		while (start < end) {
+		while ( start < end ) {
 			x += data[start++];
 		}
 		return x;
 	}
-
+	
 	public String getCluster() {
 		return cluster;
 	}
-
+	
 	public CompareMode getCompareMode() {
 		return compareMode;
 	}
-
+	
 	public String getDatabasePath() {
-		if (persistent) {
+		if ( persistent ) {
 			return FileUtils.getAbsolutePath(databaseName);
 		}
 		return null;
 	}
-
+	
 	public String getShortName() {
 		return databaseShortName;
 	}
-
+	
 	public String getName() {
 		return databaseName;
 	}
-
+	
 	public LogSystem getLog() {
 		return log;
 	}
-
+	
 	/**
 	 * Get all sessions that are currently connected to the database.
 	 * 
@@ -1764,14 +1835,14 @@ public class Database implements DataHandler {
 	 */
 	public Session[] getSessions(boolean includingSystemSession) {
 		ArrayList<Session> list = new ArrayList<Session>(userSessions);
-		if (includingSystemSession && systemSession != null) {
+		if ( includingSystemSession && systemSession != null ) {
 			list.add(systemSession);
 		}
 		Session[] array = new Session[list.size()];
 		list.toArray(array);
 		return array;
 	}
-
+	
 	/**
 	 * Update an object in the system table.
 	 * 
@@ -1785,7 +1856,7 @@ public class Database implements DataHandler {
 		removeMeta(session, id);
 		addMeta(session, obj);
 	}
-
+	
 	/**
 	 * Rename a schema object.
 	 * 
@@ -1801,23 +1872,23 @@ public class Database implements DataHandler {
 		obj.getSchema().rename(obj, newName);
 		updateWithChildren(session, obj);
 	}
-
+	
 	private synchronized void updateWithChildren(Session session, DbObject obj) throws SQLException {
 		ObjectArray list = obj.getChildren();
 		Comment comment = findComment(obj);
-		if (comment != null) {
+		if ( comment != null ) {
 			Message.throwInternalError();
 		}
 		update(session, obj);
 		// remember that this scans only one level deep!
-		for (int i = 0; list != null && i < list.size(); i++) {
+		for ( int i = 0; list != null && i < list.size(); i++ ) {
 			DbObject o = (DbObject) list.get(i);
-			if (o.getCreateSQL() != null) {
+			if ( o.getCreateSQL() != null ) {
 				update(session, o);
 			}
 		}
 	}
-
+	
 	/**
 	 * Rename a database object.
 	 * 
@@ -1832,11 +1903,11 @@ public class Database implements DataHandler {
 		checkWritingAllowed();
 		int type = obj.getType();
 		HashMap<String, DbObject> map = getMap(type);
-		if (SysProperties.CHECK) {
-			if (!map.containsKey(obj.getName())) {
+		if ( SysProperties.CHECK ) {
+			if ( !map.containsKey(obj.getName()) ) {
 				Message.throwInternalError("not found: " + obj.getName());
 			}
-			if (obj.getName().equals(newName) || map.containsKey(newName)) {
+			if ( obj.getName().equals(newName) || map.containsKey(newName) ) {
 				Message.throwInternalError("object already exists: " + newName);
 			}
 		}
@@ -1848,31 +1919,31 @@ public class Database implements DataHandler {
 		map.put(newName, obj);
 		updateWithChildren(session, obj);
 	}
-
+	
 	public String createTempFile() throws SQLException {
 		try {
 			boolean inTempDir = readOnly;
 			String name = databaseName;
-			if (!persistent) {
+			if ( !persistent ) {
 				name = FileSystem.PREFIX_MEMORY + name;
 			}
 			return FileUtils.createTempFile(name, Constants.SUFFIX_TEMP_FILE, true, inTempDir);
-		} catch (IOException e) {
+		} catch ( IOException e ) {
 			throw Message.convertIOException(e, databaseName);
 		}
 	}
-
+	
 	private void reserveLobFileObjectIds() throws SQLException {
 		String prefix = FileUtils.normalize(databaseName) + ".";
 		String path = FileUtils.getParent(databaseName);
 		String[] list = FileUtils.listFiles(path);
-		for (String element : list) {
+		for ( String element : list ) {
 			String name = element;
-			if (name.endsWith(Constants.SUFFIX_LOB_FILE) && FileUtils.fileStartsWith(name, prefix)) {
+			if ( name.endsWith(Constants.SUFFIX_LOB_FILE) && FileUtils.fileStartsWith(name, prefix) ) {
 				name = name.substring(prefix.length());
 				name = name.substring(0, name.length() - Constants.SUFFIX_LOB_FILE.length());
 				int dot = name.indexOf('.');
-				if (dot >= 0) {
+				if ( dot >= 0 ) {
 					String id = name.substring(dot + 1);
 					int objectId = Integer.parseInt(id);
 					objectIds.set(objectId);
@@ -1880,19 +1951,19 @@ public class Database implements DataHandler {
 			}
 		}
 	}
-
+	
 	private void deleteOldTempFiles() throws SQLException {
 		String path = FileUtils.getParent(databaseName);
 		String prefix = FileUtils.normalize(databaseName);
 		String[] list = FileUtils.listFiles(path);
-		for (String name : list) {
-			if (name.endsWith(Constants.SUFFIX_TEMP_FILE) && FileUtils.fileStartsWith(name, prefix)) {
+		for ( String name : list ) {
+			if ( name.endsWith(Constants.SUFFIX_TEMP_FILE) && FileUtils.fileStartsWith(name, prefix) ) {
 				// can't always delete the files, they may still be open
 				FileUtils.tryDelete(name);
 			}
 		}
 	}
-
+	
 	/**
 	 * Get or create the specified storage object.
 	 * 
@@ -1906,7 +1977,7 @@ public class Database implements DataHandler {
 	 */
 	public Storage getStorage(RecordReader reader, int id, boolean dataFile) {
 		DiskFile file;
-		if (dataFile) {
+		if ( dataFile ) {
 			file = fileData;
 		} else {
 			file = fileIndex;
@@ -1915,7 +1986,7 @@ public class Database implements DataHandler {
 		storage.setReader(reader);
 		return storage;
 	}
-
+	
 	/**
 	 * Get the schema. If the schema does not exist, an exception is thrown.
 	 * 
@@ -1927,12 +1998,12 @@ public class Database implements DataHandler {
 	 */
 	public Schema getSchema(String schemaName) throws SQLException {
 		Schema schema = findSchema(schemaName);
-		if (schema == null) {
+		if ( schema == null ) {
 			throw Message.getSQLException(ErrorCode.SCHEMA_NOT_FOUND_1, schemaName);
 		}
 		return schema;
 	}
-
+	
 	/**
 	 * Remove the object from the database.
 	 * 
@@ -1946,11 +2017,11 @@ public class Database implements DataHandler {
 		String objName = obj.getName();
 		int type = obj.getType();
 		HashMap<String, DbObject> map = getMap(type);
-		if (SysProperties.CHECK && !map.containsKey(objName)) {
+		if ( SysProperties.CHECK && !map.containsKey(objName) ) {
 			Message.throwInternalError("not found: " + objName);
 		}
 		Comment comment = findComment(obj);
-		if (comment != null) {
+		if ( comment != null ) {
 			removeDatabaseObject(session, comment);
 		}
 		int id = obj.getId();
@@ -1958,7 +2029,7 @@ public class Database implements DataHandler {
 		map.remove(objName);
 		removeMeta(session, id);
 	}
-
+	
 	/**
 	 * Get the first table that depends on this object.
 	 * 
@@ -1981,39 +2052,40 @@ public class Database implements DataHandler {
 		}
 		Set<ReplicaSet> list = getAllTables();
 		Set set = new HashSet();
-
+		
 		Set<ReplicaSet> allreplicas = getAllTables();
-
-		for (ReplicaSet replicaSet : allreplicas) {
-
-			if ((except != null) && (replicaSet.getACopy() != null) && except.getName().equalsIgnoreCase(replicaSet.getACopy().getName())) {
+		
+		for ( ReplicaSet replicaSet : allreplicas ) {
+			
+			if ( ( except != null ) && ( replicaSet.getACopy() != null )
+					&& except.getName().equalsIgnoreCase(replicaSet.getACopy().getName()) ) {
 				continue;
 			}
-
+			
 			set.clear();
 			replicaSet.addDependencies(set);
-			if (set.contains(obj)) {
+			if ( set.contains(obj) ) {
 				return replicaSet;
 			}
 		}
 		return null;
 	}
-
+	
 	private String getFirstInvalidTable(Session session) {
 		String conflict = null;
 		try {
 			Set<ReplicaSet> list = getAllTables();
-			for (ReplicaSet replicaSet : list) {
-
+			for ( ReplicaSet replicaSet : list ) {
+				
 				conflict = replicaSet.getSQL();
 				session.prepare(replicaSet.getCreateSQL());
 			}
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			return conflict;
 		}
 		return null;
 	}
-
+	
 	/**
 	 * Remove an object from the system table.
 	 * 
@@ -2024,42 +2096,42 @@ public class Database implements DataHandler {
 	 */
 	public synchronized void removeSchemaObject(Session session, SchemaObject obj) throws SQLException {
 		int type = obj.getType();
-		if (type == DbObject.TABLE_OR_VIEW) {
+		if ( type == DbObject.TABLE_OR_VIEW ) {
 			Table table = (Table) obj;
-			if (table.getTemporary() && !table.getGlobalTemporary()) {
+			if ( table.getTemporary() && !table.getGlobalTemporary() ) {
 				session.removeLocalTempTable(table);
 				return;
 			}
-		} else if (type == DbObject.INDEX) {
+		} else if ( type == DbObject.INDEX ) {
 			Index index = (Index) obj;
 			Table table = index.getTable();
-			if (table.getTemporary() && !table.getGlobalTemporary()) {
+			if ( table.getTemporary() && !table.getGlobalTemporary() ) {
 				session.removeLocalTempTableIndex(index);
 				return;
 			}
-		} else if (type == DbObject.CONSTRAINT) {
+		} else if ( type == DbObject.CONSTRAINT ) {
 			Constraint constraint = (Constraint) obj;
 			Table table = constraint.getTable();
-			if (table.getTemporary() && !table.getGlobalTemporary()) {
+			if ( table.getTemporary() && !table.getGlobalTemporary() ) {
 				session.removeLocalTempTableConstraint(constraint);
 				return;
 			}
 		}
 		checkWritingAllowed();
 		Comment comment = findComment(obj);
-		if (comment != null) {
+		if ( comment != null ) {
 			removeDatabaseObject(session, comment);
 		}
 		obj.getSchema().remove(obj);
-		if (!starting) {
+		if ( !starting ) {
 			String invalid;
-			if (SysProperties.OPTIMIZE_DROP_DEPENDENCIES) {
+			if ( SysProperties.OPTIMIZE_DROP_DEPENDENCIES ) {
 				ReplicaSet replicaSet = getDependentTable(obj, null);
 				invalid = replicaSet == null ? null : replicaSet.getSQL();
 			} else {
 				invalid = getFirstInvalidTable(session);
 			}
-			if (invalid != null) {
+			if ( invalid != null ) {
 				obj.getSchema().add(obj);
 				throw Message.getSQLException(ErrorCode.CANNOT_DROP_2, new String[] { obj.getSQL(), invalid });
 			}
@@ -2067,11 +2139,11 @@ public class Database implements DataHandler {
 		}
 		int id = obj.getId();
 		removeMeta(session, id);
-		if (obj instanceof TableData) {
+		if ( obj instanceof TableData ) {
 			tableMap.remove(id);
 		}
 	}
-
+	
 	/**
 	 * Check if this database disk-based.
 	 * 
@@ -2080,36 +2152,36 @@ public class Database implements DataHandler {
 	public boolean isPersistent() {
 		return persistent;
 	}
-
+	
 	public TraceSystem getTraceSystem() {
 		return traceSystem;
 	}
-
+	
 	public DiskFile getDataFile() {
 		return fileData;
 	}
-
+	
 	public DiskFile getIndexFile() {
 		return fileIndex;
 	}
-
+	
 	public synchronized void setCacheSize(int kb) throws SQLException {
-		if (fileData != null) {
+		if ( fileData != null ) {
 			fileData.getCache().setMaxSize(kb);
-			int valueIndex = kb <= 32 ? kb : (kb >>> SysProperties.CACHE_SIZE_INDEX_SHIFT);
+			int valueIndex = kb <= 32 ? kb : ( kb >>> SysProperties.CACHE_SIZE_INDEX_SHIFT );
 			fileIndex.getCache().setMaxSize(valueIndex);
 		}
 	}
-
+	
 	public synchronized void setMasterUser(User user) throws SQLException {
 		addDatabaseObject(systemSession, user);
 		systemSession.commit(true);
 	}
-
+	
 	public Role getPublicRole() {
 		return publicRole;
 	}
-
+	
 	/**
 	 * Get a unique temporary table name.
 	 * 
@@ -2119,43 +2191,43 @@ public class Database implements DataHandler {
 	 */
 	public String getTempTableName(int sessionId) {
 		String tempName;
-		for (int i = 0;; i++) {
+		for ( int i = 0;; i++ ) {
 			tempName = Constants.TEMP_TABLE_PREFIX + sessionId + "_" + i;
-			if (mainSchema.findTableOrView(null, tempName, LocationPreference.NO_PREFERENCE) == null) {
+			if ( mainSchema.findTableOrView(null, tempName, LocationPreference.NO_PREFERENCE) == null ) {
 				break;
 			}
 		}
 		return tempName;
 	}
-
+	
 	public void setCompareMode(CompareMode compareMode) {
 		this.compareMode = compareMode;
 	}
-
+	
 	public void setCluster(String cluster) {
 		this.cluster = cluster;
 	}
-
+	
 	public void checkWritingAllowed() throws SQLException {
-		if (readOnly) {
+		if ( readOnly ) {
 			throw Message.getSQLException(ErrorCode.DATABASE_IS_READ_ONLY);
 		}
-		if (noDiskSpace) {
+		if ( noDiskSpace ) {
 			throw Message.getSQLException(ErrorCode.NO_DISK_SPACE_AVAILABLE);
 		}
 	}
-
+	
 	public boolean getReadOnly() {
 		return readOnly;
 	}
-
+	
 	public void setWriteDelay(int value) {
 		writeDelay = value;
-		if (writer != null) {
+		if ( writer != null ) {
 			writer.setWriteDelay(value);
 		}
 	}
-
+	
 	/**
 	 * Delete an unused log file. It is deleted immediately if no writer thread is running, or deleted later on if one is running. Deleting
 	 * is delayed because the hard drive otherwise may delete the file a bit before the data is written to the new file, which can cause
@@ -2165,41 +2237,41 @@ public class Database implements DataHandler {
 	 *            the name of the file to be deleted
 	 */
 	public void deleteLogFileLater(String fileName) throws SQLException {
-		if (writer != null) {
+		if ( writer != null ) {
 			writer.deleteLogFileLater(fileName);
 		} else {
 			FileUtils.delete(fileName);
 		}
 	}
-
+	
 	public void setEventListener(DatabaseEventListener eventListener) {
 		this.eventListener = eventListener;
 	}
-
+	
 	public void setEventListenerClass(String className) throws SQLException {
-		if (className == null || className.length() == 0) {
+		if ( className == null || className.length() == 0 ) {
 			eventListener = null;
 		} else {
 			try {
 				eventListener = (DatabaseEventListener) ClassUtils.loadUserClass(className).newInstance();
 				String url = databaseURL;
-				if (cipher != null) {
+				if ( cipher != null ) {
 					url += ";CIPHER=" + cipher;
 				}
 				eventListener.init(url);
-			} catch (Throwable e) {
+			} catch ( Throwable e ) {
 				throw Message.getSQLException(ErrorCode.ERROR_SETTING_DATABASE_EVENT_LISTENER_2, new String[] { className, e.toString() },
 						e);
 			}
 		}
 	}
-
+	
 	public synchronized void freeUpDiskSpace() throws SQLException {
-		if (eventListener != null) {
+		if ( eventListener != null ) {
 			eventListener.diskSpaceIsLow(0);
 		}
 	}
-
+	
 	/**
 	 * Set the progress of a long running operation. This method calls the {@link DatabaseEventListener} if one is registered.
 	 * 
@@ -2212,17 +2284,17 @@ public class Database implements DataHandler {
 	 * @param max
 	 *            the highest value
 	 */
-
+	
 	public void setProgress(int state, String name, int x, int max) {
-		if (eventListener != null) {
+		if ( eventListener != null ) {
 			try {
 				eventListener.setProgress(state, name, x, max);
-			} catch (Exception e2) {
+			} catch ( Exception e2 ) {
 				// ignore this second (user made) exception
 			}
 		}
 	}
-
+	
 	/**
 	 * This method is called after an exception occurred, to inform the database event listener (if one is set).
 	 * 
@@ -2232,46 +2304,46 @@ public class Database implements DataHandler {
 	 *            the SQL statement
 	 */
 	public void exceptionThrown(SQLException e, String sql) {
-		if (eventListener != null) {
+		if ( eventListener != null ) {
 			try {
 				eventListener.exceptionThrown(e, sql);
-			} catch (Exception e2) {
+			} catch ( Exception e2 ) {
 				// ignore this second (user made) exception
 			}
 		}
 	}
-
+	
 	/**
 	 * Synchronize the files with the file system. This method is called when executing the SQL statement CHECKPOINT SYNC.
 	 */
 	public void sync() throws SQLException {
-		if (log != null) {
+		if ( log != null ) {
 			log.sync();
 		}
-		if (fileData != null) {
+		if ( fileData != null ) {
 			fileData.sync();
 		}
-		if (fileIndex != null) {
+		if ( fileIndex != null ) {
 			fileIndex.sync();
 		}
 	}
-
+	
 	public int getMaxMemoryRows() {
 		return maxMemoryRows;
 	}
-
+	
 	public void setMaxMemoryRows(int value) {
 		this.maxMemoryRows = value;
 	}
-
+	
 	public void setMaxMemoryUndo(int value) {
 		this.maxMemoryUndo = value;
 	}
-
+	
 	public int getMaxMemoryUndo() {
 		return maxMemoryUndo;
 	}
-
+	
 	public void setLockMode(int lockMode) throws SQLException {
 		switch (lockMode) {
 		case Constants.LOCK_MODE_OFF:
@@ -2284,21 +2356,21 @@ public class Database implements DataHandler {
 		}
 		this.lockMode = lockMode;
 	}
-
+	
 	public int getLockMode() {
 		return lockMode;
 	}
-
+	
 	public synchronized void setCloseDelay(int value) {
 		this.closeDelay = value;
 	}
-
+	
 	public boolean getLogIndexChanges() {
 		return logIndexChanges;
 	}
-
+	
 	public synchronized void setLog(int level) throws SQLException {
-		if (logLevel == level) {
+		if ( logLevel == level ) {
 			return;
 		}
 		boolean logData;
@@ -2319,34 +2391,34 @@ public class Database implements DataHandler {
 		default:
 			throw Message.throwInternalError("level=" + level);
 		}
-		if (fileIndex != null) {
+		if ( fileIndex != null ) {
 			fileIndex.setLogChanges(logIndex);
 		}
 		logIndexChanges = logIndex;
-		if (log != null) {
+		if ( log != null ) {
 			log.setDisabled(!logData);
 			log.checkpoint();
 		}
 		traceSystem.getTrace(Trace.DATABASE).error("SET LOG " + level, null);
 		logLevel = level;
 	}
-
+	
 	public boolean getRecovery() {
 		return recovery;
 	}
-
+	
 	public Session getSystemSession() {
 		return systemSession;
 	}
-
+	
 	public void handleInvalidChecksum() throws SQLException {
 		SQLException e = Message.getSQLException(ErrorCode.FILE_CORRUPTED_1, "wrong checksum");
-		if (!recovery) {
+		if ( !recovery ) {
 			throw e;
 		}
 		traceSystem.getTrace(Trace.DATABASE).error("recover", e);
 	}
-
+	
 	/**
 	 * Check if the database is in the process of closing.
 	 * 
@@ -2355,39 +2427,39 @@ public class Database implements DataHandler {
 	public boolean isClosing() {
 		return closing;
 	}
-
+	
 	public void setMaxLengthInplaceLob(int value) {
 		this.maxLengthInplaceLob = value;
 	}
-
+	
 	public int getMaxLengthInplaceLob() {
 		return persistent ? maxLengthInplaceLob : Integer.MAX_VALUE;
 	}
-
+	
 	public void setIgnoreCase(boolean b) {
 		ignoreCase = b;
 	}
-
+	
 	public boolean getIgnoreCase() {
-		if (starting) {
+		if ( starting ) {
 			// tables created at startup must not be converted to ignorecase
 			return false;
 		}
 		return ignoreCase;
 	}
-
+	
 	public synchronized void setDeleteFilesOnDisconnect(boolean b) {
 		this.deleteFilesOnDisconnect = b;
 	}
-
+	
 	public String getLobCompressionAlgorithm(int type) {
 		return lobCompressionAlgorithm;
 	}
-
+	
 	public void setLobCompressionAlgorithm(String stringValue) {
 		this.lobCompressionAlgorithm = stringValue;
 	}
-
+	
 	/**
 	 * Called when the size if the data or index file has been changed.
 	 * 
@@ -2397,58 +2469,58 @@ public class Database implements DataHandler {
 	public void notifyFileSize(long length) {
 		// ignore
 	}
-
+	
 	public synchronized void setMaxLogSize(long value) {
 		getLog().setMaxLogSize(value);
 	}
-
+	
 	public void setAllowLiterals(int value) {
 		this.allowLiterals = value;
 	}
-
+	
 	public boolean getOptimizeReuseResults() {
 		return optimizeReuseResults;
 	}
-
+	
 	public void setOptimizeReuseResults(boolean b) {
 		optimizeReuseResults = b;
 	}
-
+	
 	/**
 	 * Called when the summary of the index in the log file has become invalid. This method is only called if index changes are not logged,
 	 * and if an index has been changed.
 	 */
 	public void invalidateIndexSummary() throws SQLException {
-		if (indexSummaryValid) {
+		if ( indexSummaryValid ) {
 			indexSummaryValid = false;
-
-			if (log == null) {
+			
+			if ( log == null ) {
 				log = new LogSystem(this, databaseName, readOnly, accessModeLog, pageStore);
 			}
 			log.invalidateIndexSummary();
 		}
 	}
-
+	
 	public boolean getIndexSummaryValid() {
 		return indexSummaryValid;
 	}
-
+	
 	public Object getLobSyncObject() {
 		return lobSyncObject;
 	}
-
+	
 	public int getSessionCount() {
 		return userSessions.size();
 	}
-
+	
 	public void setReferentialIntegrity(boolean b) {
 		referentialIntegrity = b;
 	}
-
+	
 	public boolean getReferentialIntegrity() {
 		return referentialIntegrity;
 	}
-
+	
 	/**
 	 * Check if the database is currently opening. This is true until all stored SQL statements have been executed.
 	 * 
@@ -2457,7 +2529,7 @@ public class Database implements DataHandler {
 	public boolean isStarting() {
 		return starting;
 	}
-
+	
 	/**
 	 * Check if multi version concurrency is enabled for this database.
 	 * 
@@ -2466,61 +2538,61 @@ public class Database implements DataHandler {
 	public boolean isMultiVersion() {
 		return multiVersion;
 	}
-
+	
 	/**
 	 * Called after the database has been opened and initialized. This method notifies the event listener if one has been set.
 	 */
 	public void opened() {
-		if (eventListener != null) {
+		if ( eventListener != null ) {
 			eventListener.opened();
 		}
 	}
-
+	
 	public void setMode(Mode mode) {
 		this.mode = mode;
 	}
-
+	
 	public Mode getMode() {
 		return mode;
 	}
-
+	
 	public boolean isMultiThreaded() {
 		return multiThreaded;
 	}
-
+	
 	public void setMultiThreaded(boolean multiThreaded) throws SQLException {
-		if (multiThreaded && multiVersion && this.multiThreaded != multiThreaded) {
+		if ( multiThreaded && multiVersion && this.multiThreaded != multiThreaded ) {
 			// currently the combination of MVCC and MULTI_THREADED is not
 			// supported
 			throw Message.getSQLException(ErrorCode.CANNOT_CHANGE_SETTING_WHEN_OPEN_1, "MVCC & MULTI_THREADED");
 		}
 		this.multiThreaded = multiThreaded;
 	}
-
+	
 	public void setMaxOperationMemory(int maxOperationMemory) {
 		this.maxOperationMemory = maxOperationMemory;
 	}
-
+	
 	public int getMaxOperationMemory() {
 		return maxOperationMemory;
 	}
-
+	
 	public Session getExclusiveSession() {
 		return exclusiveSession;
 	}
-
+	
 	public void setExclusiveSession(Session session) {
 		this.exclusiveSession = session;
 	}
-
+	
 	public boolean getLobFilesInDirectories() {
 		return lobFilesInDirectories;
 	}
-
+	
 	public SmallLRUCache getLobFileListCache() {
 		return lobFileListCache;
 	}
-
+	
 	/**
 	 * Checks if the system table (containing the catalog) is locked.
 	 * 
@@ -2529,7 +2601,7 @@ public class Database implements DataHandler {
 	public boolean isSysTableLocked() {
 		return meta.isLockedExclusively();
 	}
-
+	
 	/**
 	 * Open a new connection or get an existing connection to another database.
 	 * 
@@ -2544,16 +2616,16 @@ public class Database implements DataHandler {
 	 * @return the connection
 	 */
 	public TableLinkConnection getLinkConnection(String driver, String url, String user, String password) throws SQLException {
-		if (linkConnections == null) {
+		if ( linkConnections == null ) {
 			linkConnections = new HashMap<TableLinkConnection, TableLinkConnection>();
 		}
 		return TableLinkConnection.open(linkConnections, driver, url, user, password);
 	}
-
+	
 	public String toString() {
 		return databaseShortName + ":" + super.toString();
 	}
-
+	
 	/**
 	 * Immediately close the database.
 	 */
@@ -2561,27 +2633,27 @@ public class Database implements DataHandler {
 		setPowerOffCount(1);
 		try {
 			checkPowerOff();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			// ignore
 		}
 	}
-
+	
 	public TempFileDeleter getTempFileDeleter() {
 		return tempFileDeleter;
 	}
-
+	
 	public Trace getTrace() {
 		return getTrace(Trace.DATABASE);
 	}
-
+	
 	public PageStore getPageStore() throws SQLException {
-		if (pageStore == null && SysProperties.PAGE_STORE) {
+		if ( pageStore == null && SysProperties.PAGE_STORE ) {
 			pageStore = new PageStore(this, databaseName + Constants.SUFFIX_PAGE_FILE, accessModeData, SysProperties.CACHE_SIZE_DEFAULT);
 			pageStore.open();
 		}
 		return pageStore;
 	}
-
+	
 	/**
 	 * Redo a change in a table.
 	 * 
@@ -2594,121 +2666,121 @@ public class Database implements DataHandler {
 	 */
 	public void redo(int tableId, Row row, boolean add) throws SQLException {
 		TableData table = (TableData) tableMap.get(tableId);
-		if (add) {
+		if ( add ) {
 			table.addRow(systemSession, row);
 		} else {
 			table.removeRow(systemSession, row);
 		}
-		if (tableId == 0) {
+		if ( tableId == 0 ) {
 			MetaRecord m = new MetaRecord(row);
-			if (add) {
+			if ( add ) {
 				objectIds.set(m.getId());
-
+				
 				QueryProxyManager proxyManager = new QueryProxyManager(this, systemSession, true);
-
+				
 				m.execute(this, systemSession, eventListener, proxyManager);
 			} else {
 				m.undo(this, systemSession, eventListener);
 			}
 		}
 	}
-
+	
 	/**
 	 * Get the first user defined table.
 	 * 
 	 * @return the table or null if no table is defined
 	 */
 	public ReplicaSet getFirstUserTable() {
-
+		
 		Set<ReplicaSet> list = getAllTables();
-		for (ReplicaSet replicaSet : list) {
-
-			if (replicaSet.getCreateSQL() != null) {
+		for ( ReplicaSet replicaSet : list ) {
+			
+			if ( replicaSet.getCreateSQL() != null ) {
 				return replicaSet;
 			}
 		}
-
+		
 		return null;
 	}
-
+	
 	public boolean isReconnectNeeded() {
-		if (fileLockMethod != FileLock.LOCK_SERIALIZED) {
+		if ( fileLockMethod != FileLock.LOCK_SERIALIZED ) {
 			return false;
 		}
 		long now = System.currentTimeMillis();
-		if (now < reconnectCheckNext) {
+		if ( now < reconnectCheckNext ) {
 			return false;
 		}
 		reconnectCheckNext = now + SysProperties.RECONNECT_CHECK_DELAY;
-		if (lock == null) {
+		if ( lock == null ) {
 			lock = new FileLock(traceSystem, databaseName + Constants.SUFFIX_LOCK_FILE, Constants.LOCK_SLEEP);
 		}
 		Properties prop;
 		try {
-			while (true) {
+			while ( true ) {
 				prop = lock.load();
-				if (prop.equals(reconnectLastLock)) {
+				if ( prop.equals(reconnectLastLock) ) {
 					return false;
 				}
-				if (prop.getProperty("changePending", null) == null) {
+				if ( prop.getProperty("changePending", null) == null ) {
 					break;
 				}
 				getTrace().debug("delay (change pending)");
 				Thread.sleep(SysProperties.RECONNECT_CHECK_DELAY);
 			}
 			reconnectLastLock = prop;
-		} catch (Exception e) {
+		} catch ( Exception e ) {
 			getTrace().error("readOnly:" + readOnly, e);
 			// ignore
 		}
 		return true;
 	}
-
+	
 	/**
 	 * This method is called after writing to the database.
 	 */
 	public void afterWriting() throws SQLException {
-		if (fileLockMethod != FileLock.LOCK_SERIALIZED || readOnly) {
+		if ( fileLockMethod != FileLock.LOCK_SERIALIZED || readOnly ) {
 			return;
 		}
 		reconnectCheckNext = System.currentTimeMillis() + 1;
 	}
-
+	
 	/**
 	 * Flush all changes when using the serialized mode, and if there are pending changes.
 	 */
 	public void checkpointIfRequired() throws SQLException {
-		if (fileLockMethod != FileLock.LOCK_SERIALIZED || readOnly || !reconnectChangePending) {
+		if ( fileLockMethod != FileLock.LOCK_SERIALIZED || readOnly || !reconnectChangePending ) {
 			return;
 		}
 		long now = System.currentTimeMillis();
-		if (now > reconnectCheckNext) {
+		if ( now > reconnectCheckNext ) {
 			getTrace().debug("checkpoint");
 			checkpoint();
 			reconnectModified(false);
 		}
 	}
-
+	
 	/**
 	 * Flush all changes and open a new log file.
 	 */
 	public void checkpoint() throws SQLException {
-		if (SysProperties.PAGE_STORE) {
+		if ( SysProperties.PAGE_STORE ) {
 			pageStore.checkpoint();
 		}
 		getLog().checkpoint();
 		getTempFileDeleter().deleteUnused();
 	}
-
+	
 	/**
 	 * This method is called before writing to the log file.
 	 */
 	public void beforeWriting() {
-		if (fileLockMethod == FileLock.LOCK_SERIALIZED) {
+		if ( fileLockMethod == FileLock.LOCK_SERIALIZED ) {
 			reconnectModified(true);
 		}
 	}
-
+	
 	/**
 	 * Get a database object.
 	 * 
@@ -2719,7 +2791,7 @@ public class Database implements DataHandler {
 	DbObject getDbObject(int id) {
 		return databaseObjects.get(ObjectUtils.getInteger(id));
 	}
-
+	
 	/**
 	 * H2O Creates H2O schema meta-data tables, including System Table tables if this machine is a System Table.
 	 * 
@@ -2727,34 +2799,34 @@ public class Database implements DataHandler {
 	 * @throws SQLException
 	 */
 	private void createH2OTables(boolean persistedSchemaTablesExist, boolean databaseExists) throws Exception {
-
-		if (!databaseExists) {
+		
+		if ( !databaseExists ) {
 			commitSystemTableCreation(databaseExists, persistedSchemaTablesExist, true);
 			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, " Created new System Table tables.");
 		}
-
-		if (!persistedSchemaTablesExist) {
+		
+		if ( !persistedSchemaTablesExist ) {
 			try {
 				TableManager.createTableManagerTables(systemSession);
-			} catch (SQLException e) {
-
+			} catch ( SQLException e ) {
+				
 				e.printStackTrace();
 			}
 		}
-
+		
 		systemTableRef.getSystemTable().addConnectionInformation(getURL(),
 				new DatabaseInstanceWrapper(getURL(), this.databaseRemote.getLocalDatabaseInstance(), true));
-
+		
 	}
-
+	
 	public ISystemTableReference getSystemTableReference() {
 		return systemTableRef;
 	}
-
+	
 	public SystemTableRemote getSystemTable() {
 		return systemTableRef.getSystemTable();
 	}
-
+	
 	/**
 	 * @param dbLocation
 	 * @return
@@ -2762,7 +2834,7 @@ public class Database implements DataHandler {
 	public boolean isLocal(DatabaseInstanceWrapper dbLocation) {
 		return dbLocation.getDatabaseInstance().equals(getLocalDatabaseInstance());
 	}
-
+	
 	/**
 	 * Examples:
 	 * <ul>
@@ -2775,7 +2847,7 @@ public class Database implements DataHandler {
 	public String getDatabaseLocation() {
 		return getURL().getDbLocation();
 	}
-
+	
 	/**
 	 * Is this database instance an H2 management database?
 	 * 
@@ -2784,21 +2856,21 @@ public class Database implements DataHandler {
 	public boolean isManagementDB() {
 		return databaseShortName.startsWith("MANAGEMENT_DB_");
 	}
-
+	
 	/**
 	 * @return the localMachineAddress
 	 */
 	public String getLocalMachineAddress() {
 		return getURL().getHostname();
 	}
-
+	
 	/**
 	 * @return the localMachinePort
 	 */
 	public int getLocalMachinePort() {
 		return getURL().getPort();
 	}
-
+	
 	/**
 	 * Gets the full address of the database - i.e. one that can be used to connect to it remotely through JDBC. An example path:
 	 * jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db
@@ -2816,10 +2888,10 @@ public class Database implements DataHandler {
 		//
 		// return "jdbc:h2:" + ((systemTableRef.isSystemTableLocal())? "sm:":
 		// "") + isTCP + url + getDatabaseLocation();
-
+		
 		return databaseRemote.getLocalMachineLocation().getURL();
 	}
-
+	
 	/**
 	 * Returns the type of connection this database is open on (e.g. tcp, mem).
 	 * 
@@ -2828,133 +2900,133 @@ public class Database implements DataHandler {
 	public String getConnectionType() {
 		return getURL().getConnectionType();
 	}
-
+	
 	/**
 	 * @param replicaLocationString
 	 * @return
 	 */
-
+	
 	public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL) {
 		try {
 			return systemTableRef.getSystemTable().getDatabaseInstance(databaseURL);
-		} catch (RemoteException e) {
+		} catch ( RemoteException e ) {
 			e.printStackTrace();
-		} catch (MovedException e) {
+		} catch ( MovedException e ) {
 			e.printStackTrace();
 		}
-
+		
 		return null;
 	}
-
+	
 	/**
 	 * @return
 	 */
 	public DatabaseInstanceRemote getLocalDatabaseInstance() {
 		return databaseRemote.getLocalDatabaseInstance();
 	}
-
+	
 	/**
 	 * @return
 	 */
 	public DatabaseInstanceWrapper getLocalDatabaseInstanceInWrapper() {
 		return new DatabaseInstanceWrapper(this.getURL(), databaseRemote.getLocalDatabaseInstance(), true);
 	}
-
+	
 	public void removeLocalDatabaseInstance() {
 		try {
-
+			
 			this.getLocalDatabaseInstance().setAlive(false);
 			// this.systemTableRef.getSystemTable(true).removeConnectionInformation(this.databaseRemote.getLocalDatabaseInstance());
 			// new
 			// RemoveConnectionInfo(this.systemTableRef.getSystemTable(true),
 			// this.databaseRemote.getLocalDatabaseInstance()).start();
-		} catch (Exception e) {
+		} catch ( Exception e ) {
 			// An error here isn't critical.
 		}
-
+		
 	}
-
+	
 	/**
 	 * 
 	 */
 	public IDatabaseRemote getRemoteInterface() {
 		return databaseRemote;
 	}
-
+	
 	/**
 	 * 
 	 */
 	public IChordInterface getChordInterface() {
 		return databaseRemote;
 	}
-
+	
 	/**
 	 * @return
 	 */
 	public Session getH2OSession() {
 		return h2oSession;
 	}
-
+	
 	/**
 	 * @return
 	 */
 	public int getUserSessionsSize() {
 		return userSessions.size();
 	}
-
+	
 	public Settings getDatabaseSettings() {
 		return databaseSettings;
 	}
-
+	
 	public TransactionNameGenerator getTransactionNameGenerator() {
 		return transactionNameGenerator;
 	}
-
+	
 	public synchronized boolean isRunning() {
 		return running;
 	}
-
+	
 	public Set<String> getLocalSchema() {
 		return localSchema;
 	}
-
+	
 	public boolean isTableLocal(Schema schema) {
 		return localSchema.contains(schema.getName());
 	}
-
+	
 	private void setDiagnosticLevel(DatabaseURL localMachineLocation) {
 		LocalH2OProperties databaseProperties = new LocalH2OProperties(localMachineLocation);
 		try {
 			databaseProperties.loadProperties();
-		} catch (IOException e) {
+		} catch ( IOException e ) {
 			e.printStackTrace();
 		}
-
+		
 		String diagnosticLevel = databaseProperties.getProperty("diagnosticLevel");
-
-		Diagnostic.setLevel((DiagnosticLevel.FULL));
-
-		if (diagnosticLevel != null) {
-
+		
+		Diagnostic.setLevel(( DiagnosticLevel.FULL ));
+		
+		if ( diagnosticLevel != null ) {
+			
 			Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Setting diagnostic level to " + diagnosticLevel);
-
-			if (diagnosticLevel.equals("FINAL"))
+			
+			if ( diagnosticLevel.equals("FINAL") )
 				Diagnostic.setLevel(DiagnosticLevel.FINAL);
-			else if (diagnosticLevel.equals("NONE"))
+			else if ( diagnosticLevel.equals("NONE") )
 				Diagnostic.setLevel(DiagnosticLevel.NONE);
-			else if (diagnosticLevel.equals("INIT"))
+			else if ( diagnosticLevel.equals("INIT") )
 				Diagnostic.setLevel(DiagnosticLevel.INIT);
-			else if (diagnosticLevel.equals("FULL"))
+			else if ( diagnosticLevel.equals("FULL") )
 				Diagnostic.setLevel(DiagnosticLevel.FULL);
 		}
-
+		
 		Diagnostic.setTimestampFlag(true);
 		Diagnostic.setTimestampFormat(new SimpleDateFormat("HH:mm:ss:SSS "));
 		Diagnostic.setTimestampDelimiterFlag(false);
-
+		
 		ErrorHandling.setTimestampFlag(false);
 	}
-
+	
 	public AsynchronousQueryManager getAsynchronousQueryManager() {
 		return asynchronousQueryManager;
 	}

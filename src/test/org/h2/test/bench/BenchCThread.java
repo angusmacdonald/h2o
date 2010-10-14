@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.bench;
 
@@ -17,21 +15,24 @@ import java.util.HashMap;
  * This class implements the functionality of one thread of BenchC.
  */
 public class BenchCThread {
-
-	private static final int OP_NEW_ORDER = 0, OP_PAYMENT = 1,
-	OP_ORDER_STATUS = 2, OP_DELIVERY = 3,
-	OP_STOCK_LEVEL = 4;
+	
+	private static final int OP_NEW_ORDER = 0, OP_PAYMENT = 1, OP_ORDER_STATUS = 2, OP_DELIVERY = 3, OP_STOCK_LEVEL = 4;
+	
 	private static final BigDecimal ONE = new BigDecimal("1");
-
+	
 	private Database db;
+	
 	private int warehouseId;
+	
 	private int terminalId;
+	
 	private HashMap prepared = new HashMap();
+	
 	private BenchCRandom random;
+	
 	private BenchC bench;
-
-	BenchCThread(Database db, BenchC bench, BenchCRandom random, int terminal)
-	throws SQLException {
+	
+	BenchCThread(Database db, BenchC bench, BenchCRandom random, int terminal) throws SQLException {
 		this.db = db;
 		this.bench = bench;
 		this.terminalId = terminal;
@@ -39,25 +40,22 @@ public class BenchCThread {
 		this.random = random;
 		warehouseId = random.getInt(1, bench.warehouses);
 	}
-
+	
 	/**
 	 * Process the list of operations (a 'deck') in random order.
 	 */
 	void process() throws SQLException {
-		int[] deck = new int[] { OP_NEW_ORDER, OP_NEW_ORDER, OP_NEW_ORDER,
-				OP_NEW_ORDER, OP_NEW_ORDER, OP_NEW_ORDER, OP_NEW_ORDER,
-				OP_NEW_ORDER, OP_NEW_ORDER, OP_NEW_ORDER, OP_PAYMENT,
-				OP_PAYMENT, OP_PAYMENT, OP_PAYMENT, OP_PAYMENT, OP_PAYMENT,
-				OP_PAYMENT, OP_PAYMENT, OP_PAYMENT, OP_PAYMENT,
-				OP_ORDER_STATUS, OP_DELIVERY, OP_STOCK_LEVEL };
+		int[] deck = new int[] { OP_NEW_ORDER, OP_NEW_ORDER, OP_NEW_ORDER, OP_NEW_ORDER, OP_NEW_ORDER, OP_NEW_ORDER, OP_NEW_ORDER,
+				OP_NEW_ORDER, OP_NEW_ORDER, OP_NEW_ORDER, OP_PAYMENT, OP_PAYMENT, OP_PAYMENT, OP_PAYMENT, OP_PAYMENT, OP_PAYMENT,
+				OP_PAYMENT, OP_PAYMENT, OP_PAYMENT, OP_PAYMENT, OP_ORDER_STATUS, OP_DELIVERY, OP_STOCK_LEVEL };
 		int len = deck.length;
-		for (int i = 0; i < len; i++) {
+		for ( int i = 0; i < len; i++ ) {
 			int temp = deck[i];
 			int j = random.getInt(0, len);
 			deck[i] = deck[j];
 			deck[j] = temp;
 		}
-		for (int i = 0; i < len; i++) {
+		for ( int i = 0; i < len; i++ ) {
 			int op = deck[i];
 			switch (op) {
 			case OP_NEW_ORDER:
@@ -80,7 +78,7 @@ public class BenchCThread {
 			}
 		}
 	}
-
+	
 	private void processNewOrder() throws SQLException {
 		int dId = random.getInt(1, bench.districtsPerWarehouse);
 		int cId = random.getNonUniform(1023, 1, bench.customersPerDistrict);
@@ -90,19 +88,19 @@ public class BenchCThread {
 		int[] itemId = new int[olCnt];
 		int[] quantity = new int[olCnt];
 		int allLocal = 1;
-		for (int i = 0; i < olCnt; i++) {
+		for ( int i = 0; i < olCnt; i++ ) {
 			int w;
-			if (bench.warehouses > 1 && random.getInt(1, 100) == 1) {
+			if ( bench.warehouses > 1 && random.getInt(1, 100) == 1 ) {
 				do {
 					w = random.getInt(1, bench.warehouses);
-				} while (w != warehouseId);
+				} while ( w != warehouseId );
 				allLocal = 0;
 			} else {
 				w = warehouseId;
 			}
 			supplyId[i] = w;
 			int item;
-			if (rollback && i == olCnt - 1) {
+			if ( rollback && i == olCnt - 1 ) {
 				// unused order number
 				item = -1;
 			} else {
@@ -117,14 +115,12 @@ public class BenchCThread {
 		Timestamp datetime = new Timestamp(System.currentTimeMillis());
 		PreparedStatement prep;
 		ResultSet rs;
-
-		prep = prepare("UPDATE DISTRICT SET D_NEXT_O_ID=D_NEXT_O_ID+1 "
-				+ "WHERE D_ID=? AND D_W_ID=?");
+		
+		prep = prepare("UPDATE DISTRICT SET D_NEXT_O_ID=D_NEXT_O_ID+1 " + "WHERE D_ID=? AND D_W_ID=?");
 		prep.setInt(1, dId);
 		prep.setInt(2, warehouseId);
 		db.update(prep, "updateDistrict");
-		prep = prepare("SELECT D_NEXT_O_ID, D_TAX FROM DISTRICT "
-				+ "WHERE D_ID=? AND D_W_ID=?");
+		prep = prepare("SELECT D_NEXT_O_ID, D_TAX FROM DISTRICT " + "WHERE D_ID=? AND D_W_ID=?");
 		prep.setInt(1, dId);
 		prep.setInt(2, warehouseId);
 		rs = db.query(prep);
@@ -134,11 +130,10 @@ public class BenchCThread {
 		rs.close();
 		// TODO optimizer: such cases can be optimized! A=1 AND B=A means
 		// also B=1!
-		//        prep = prepare("SELECT C_DISCOUNT, C_LAST, C_CREDIT, W_TAX "
-		//                + "FROM CUSTOMER, WAREHOUSE "
-		//                + "WHERE C_ID=? AND W_ID=? AND C_W_ID=W_ID AND C_D_ID=?");
-		prep = prepare("SELECT C_DISCOUNT, C_LAST, C_CREDIT, W_TAX "
-				+ "FROM CUSTOMER, WAREHOUSE "
+		// prep = prepare("SELECT C_DISCOUNT, C_LAST, C_CREDIT, W_TAX "
+		// + "FROM CUSTOMER, WAREHOUSE "
+		// + "WHERE C_ID=? AND W_ID=? AND C_W_ID=W_ID AND C_D_ID=?");
+		prep = prepare("SELECT C_DISCOUNT, C_LAST, C_CREDIT, W_TAX " + "FROM CUSTOMER, WAREHOUSE "
 				+ "WHERE C_ID=? AND C_W_ID=? AND C_W_ID=W_ID AND C_D_ID=?");
 		prep.setInt(1, cId);
 		prep.setInt(2, warehouseId);
@@ -153,80 +148,70 @@ public class BenchCThread {
 		BigDecimal wTax = rs.getBigDecimal(4);
 		rs.close();
 		BigDecimal total = new BigDecimal("0");
-		for (int number = 1; number <= olCnt; number++) {
+		for ( int number = 1; number <= olCnt; number++ ) {
 			int olId = itemId[number - 1];
 			int olSupplyId = supplyId[number - 1];
 			int olQuantity = quantity[number - 1];
-			prep = prepare("SELECT I_PRICE, I_NAME, I_DATA "
-					+ "FROM ITEM WHERE I_ID=?");
+			prep = prepare("SELECT I_PRICE, I_NAME, I_DATA " + "FROM ITEM WHERE I_ID=?");
 			prep.setInt(1, olId);
 			rs = db.query(prep);
-			if (!rs.next()) {
-				if (rollback) {
+			if ( !rs.next() ) {
+				if ( rollback ) {
 					// item not found - correct behavior
 					db.rollback();
 					return;
 				}
-				throw new SQLException("item not found: " + olId + " "
-						+ olSupplyId);
+				throw new SQLException("item not found: " + olId + " " + olSupplyId);
 			}
 			BigDecimal price = rs.getBigDecimal(1);
 			// i_name
 			rs.getString(2);
 			String data = rs.getString(3);
 			rs.close();
-			prep = prepare("SELECT S_QUANTITY, S_DATA, "
-					+ "S_DIST_01, S_DIST_02, S_DIST_03, S_DIST_04, S_DIST_05, "
-					+ "S_DIST_06, S_DIST_07, S_DIST_08, S_DIST_09, S_DIST_10 "
-					+ "FROM STOCK WHERE S_I_ID=? AND S_W_ID=?");
+			prep = prepare("SELECT S_QUANTITY, S_DATA, " + "S_DIST_01, S_DIST_02, S_DIST_03, S_DIST_04, S_DIST_05, "
+					+ "S_DIST_06, S_DIST_07, S_DIST_08, S_DIST_09, S_DIST_10 " + "FROM STOCK WHERE S_I_ID=? AND S_W_ID=?");
 			prep.setInt(1, olId);
 			prep.setInt(2, olSupplyId);
 			rs = db.query(prep);
-			if (!rs.next()) {
-				if (rollback) {
+			if ( !rs.next() ) {
+				if ( rollback ) {
 					// item not found - correct behavior
 					db.rollback();
 					return;
 				}
-				throw new SQLException("item not found: " + olId + " "
-						+ olSupplyId);
+				throw new SQLException("item not found: " + olId + " " + olSupplyId);
 			}
 			int sQuantity = rs.getInt(1);
 			String sData = rs.getString(2);
 			String[] dist = new String[10];
-			for (int i = 0; i < 10; i++) {
+			for ( int i = 0; i < 10; i++ ) {
 				dist[i] = rs.getString(3 + i);
 			}
 			rs.close();
 			String distInfo = dist[dId - 1];
 			stock[number - 1] = sQuantity;
-			if ((data.indexOf("original") != -1)
-					&& (sData.indexOf("original") != -1)) {
+			if ( ( data.indexOf("original") != -1 ) && ( sData.indexOf("original") != -1 ) ) {
 				bg[number - 1] = 'B';
 			} else {
 				bg[number - 1] = 'G';
 			}
-			if (sQuantity > olQuantity) {
+			if ( sQuantity > olQuantity ) {
 				sQuantity = sQuantity - olQuantity;
 			} else {
 				sQuantity = sQuantity - olQuantity + 91;
 			}
-			prep = prepare("UPDATE STOCK SET S_QUANTITY=? "
-					+ "WHERE S_W_ID=? AND S_I_ID=?");
+			prep = prepare("UPDATE STOCK SET S_QUANTITY=? " + "WHERE S_W_ID=? AND S_I_ID=?");
 			prep.setInt(1, sQuantity);
 			prep.setInt(2, olSupplyId);
 			prep.setInt(3, olId);
 			db.update(prep, "updateStock");
-			BigDecimal olAmount = new BigDecimal(olQuantity).multiply(
-					price).multiply(ONE.add(wTax).add(tax)).multiply(
-							ONE.subtract(discount));
+			BigDecimal olAmount = new BigDecimal(olQuantity).multiply(price).multiply(ONE.add(wTax).add(tax))
+					.multiply(ONE.subtract(discount));
 			olAmount = olAmount.setScale(2, BigDecimal.ROUND_HALF_UP);
 			amt[number - 1] = olAmount;
 			total = total.add(olAmount);
-			prep = prepare("INSERT INTO ORDER_LINE (OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER, "
-					+ "OL_I_ID, OL_SUPPLY_W_ID, "
-					+ "OL_QUANTITY, OL_AMOUNT, OL_DIST_INFO) "
-					+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+			prep = prepare("INSERT INTO ORDER_LINE (OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER, " + "OL_I_ID, OL_SUPPLY_W_ID, "
+					+ "OL_QUANTITY, OL_AMOUNT, OL_DIST_INFO) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 			prep.setInt(1, oId);
 			prep.setInt(2, dId);
 			prep.setInt(3, warehouseId);
@@ -238,8 +223,7 @@ public class BenchCThread {
 			prep.setString(9, distInfo);
 			db.update(prep, "insertOrderLine");
 		}
-		prep = prepare("INSERT INTO ORDERS (O_ID, O_D_ID, O_W_ID, O_C_ID, "
-				+ "O_ENTRY_D, O_OL_CNT, O_ALL_LOCAL) "
+		prep = prepare("INSERT INTO ORDERS (O_ID, O_D_ID, O_W_ID, O_C_ID, " + "O_ENTRY_D, O_OL_CNT, O_ALL_LOCAL) "
 				+ "VALUES (?, ?, ?, ?, ?, ?, ?)");
 		prep.setInt(1, oId);
 		prep.setInt(2, dId);
@@ -249,22 +233,21 @@ public class BenchCThread {
 		prep.setInt(6, olCnt);
 		prep.setInt(7, allLocal);
 		db.update(prep, "insertOrders");
-		prep = prepare("INSERT INTO NEW_ORDER (NO_O_ID, NO_D_ID, NO_W_ID) "
-				+ "VALUES (?, ?, ?)");
+		prep = prepare("INSERT INTO NEW_ORDER (NO_O_ID, NO_D_ID, NO_W_ID) " + "VALUES (?, ?, ?)");
 		prep.setInt(1, oId);
 		prep.setInt(2, dId);
 		prep.setInt(3, warehouseId);
 		db.update(prep, "insertNewOrder");
 		db.commit();
 	}
-
+	
 	private void processPayment() throws SQLException {
 		int dId = random.getInt(1, bench.districtsPerWarehouse);
 		int wId, cdId;
-		if (bench.warehouses > 1 && random.getInt(1, 100) <= 15) {
+		if ( bench.warehouses > 1 && random.getInt(1, 100) <= 15 ) {
 			do {
 				wId = random.getInt(1, bench.warehouses);
-			} while (wId != warehouseId);
+			} while ( wId != warehouseId );
 			cdId = random.getInt(1, bench.districtsPerWarehouse);
 		} else {
 			wId = warehouseId;
@@ -273,7 +256,7 @@ public class BenchCThread {
 		boolean byName;
 		String last;
 		int cId = 1;
-		if (random.getInt(1, 100) <= 60) {
+		if ( random.getInt(1, 100) <= 60 ) {
 			byName = true;
 			last = random.getLastname(random.getNonUniform(255, 0, 999));
 		} else {
@@ -281,14 +264,12 @@ public class BenchCThread {
 			last = "";
 			cId = random.getNonUniform(1023, 1, bench.customersPerDistrict);
 		}
-		BigDecimal amount = random.getBigDecimal(random.getInt(100, 500000),
-				2);
+		BigDecimal amount = random.getBigDecimal(random.getInt(100, 500000), 2);
 		Timestamp datetime = new Timestamp(System.currentTimeMillis());
 		PreparedStatement prep;
 		ResultSet rs;
-
-		prep = prepare("UPDATE DISTRICT SET D_YTD = D_YTD+? "
-				+ "WHERE D_ID=? AND D_W_ID=?");
+		
+		prep = prepare("UPDATE DISTRICT SET D_YTD = D_YTD+? " + "WHERE D_ID=? AND D_W_ID=?");
 		prep.setBigDecimal(1, amount);
 		prep.setInt(2, dId);
 		prep.setInt(3, warehouseId);
@@ -297,8 +278,7 @@ public class BenchCThread {
 		prep.setBigDecimal(1, amount);
 		prep.setInt(2, warehouseId);
 		db.update(prep, "updateWarehouse");
-		prep = prepare("SELECT W_STREET_1, W_STREET_2, W_CITY, W_STATE, W_ZIP, W_NAME "
-				+ "FROM WAREHOUSE WHERE W_ID=?");
+		prep = prepare("SELECT W_STREET_1, W_STREET_2, W_CITY, W_STATE, W_ZIP, W_NAME " + "FROM WAREHOUSE WHERE W_ID=?");
 		prep.setInt(1, warehouseId);
 		rs = db.query(prep);
 		rs.next();
@@ -314,8 +294,7 @@ public class BenchCThread {
 		rs.getString(5);
 		String wName = rs.getString(6);
 		rs.close();
-		prep = prepare("SELECT D_STREET_1, D_STREET_2, D_CITY, D_STATE, D_ZIP, D_NAME "
-				+ "FROM DISTRICT WHERE D_ID=? AND D_W_ID=?");
+		prep = prepare("SELECT D_STREET_1, D_STREET_2, D_CITY, D_STATE, D_ZIP, D_NAME " + "FROM DISTRICT WHERE D_ID=? AND D_W_ID=?");
 		prep.setInt(1, dId);
 		prep.setInt(2, warehouseId);
 		rs = db.query(prep);
@@ -334,9 +313,8 @@ public class BenchCThread {
 		rs.close();
 		BigDecimal balance;
 		String credit;
-		if (byName) {
-			prep = prepare("SELECT COUNT(C_ID) FROM CUSTOMER "
-					+ "WHERE C_LAST=? AND C_D_ID=? AND C_W_ID=?");
+		if ( byName ) {
+			prep = prepare("SELECT COUNT(C_ID) FROM CUSTOMER " + "WHERE C_LAST=? AND C_D_ID=? AND C_W_ID=?");
 			prep.setString(1, last);
 			prep.setInt(2, cdId);
 			prep.setInt(3, wId);
@@ -344,26 +322,23 @@ public class BenchCThread {
 			rs.next();
 			int namecnt = rs.getInt(1);
 			rs.close();
-			if (namecnt == 0) {
+			if ( namecnt == 0 ) {
 				// TODO TPC-C: check if this can happen
 				db.rollback();
 				return;
 			}
-			prep = prepare("SELECT C_FIRST, C_MIDDLE, C_ID, "
-					+ "C_STREET_1, C_STREET_2, C_CITY, C_STATE, C_ZIP, "
-					+ "C_PHONE, C_CREDIT, C_CREDIT_LIM, "
-					+ "C_DISCOUNT, C_BALANCE, C_SINCE FROM CUSTOMER "
-					+ "WHERE C_LAST=? AND C_D_ID=? AND C_W_ID=? "
-					+ "ORDER BY C_FIRST");
+			prep = prepare("SELECT C_FIRST, C_MIDDLE, C_ID, " + "C_STREET_1, C_STREET_2, C_CITY, C_STATE, C_ZIP, "
+					+ "C_PHONE, C_CREDIT, C_CREDIT_LIM, " + "C_DISCOUNT, C_BALANCE, C_SINCE FROM CUSTOMER "
+					+ "WHERE C_LAST=? AND C_D_ID=? AND C_W_ID=? " + "ORDER BY C_FIRST");
 			prep.setString(1, last);
 			prep.setInt(2, cdId);
 			prep.setInt(3, wId);
 			rs = db.query(prep);
 			// locate midpoint customer
-			if (namecnt % 2 != 0) {
+			if ( namecnt % 2 != 0 ) {
 				namecnt++;
 			}
-			for (int n = 0; n < namecnt / 2; n++) {
+			for ( int n = 0; n < namecnt / 2; n++ ) {
 				rs.next();
 			}
 			// c_first
@@ -393,10 +368,8 @@ public class BenchCThread {
 			rs.getTimestamp(14);
 			rs.close();
 		} else {
-			prep = prepare("SELECT C_FIRST, C_MIDDLE, C_LAST, "
-					+ "C_STREET_1, C_STREET_2, C_CITY, C_STATE, C_ZIP, "
-					+ "C_PHONE, C_CREDIT, C_CREDIT_LIM, "
-					+ "C_DISCOUNT, C_BALANCE, C_SINCE FROM CUSTOMER "
+			prep = prepare("SELECT C_FIRST, C_MIDDLE, C_LAST, " + "C_STREET_1, C_STREET_2, C_CITY, C_STATE, C_ZIP, "
+					+ "C_PHONE, C_CREDIT, C_CREDIT_LIM, " + "C_DISCOUNT, C_BALANCE, C_SINCE FROM CUSTOMER "
 					+ "WHERE C_ID=? AND C_D_ID=? AND C_W_ID=?");
 			prep.setInt(1, cId);
 			prep.setInt(2, cdId);
@@ -432,9 +405,8 @@ public class BenchCThread {
 			rs.close();
 		}
 		balance = balance.add(amount);
-		if (credit.equals("BC")) {
-			prep = prepare("SELECT C_DATA INTO FROM CUSTOMER "
-					+ "WHERE C_ID=? AND C_D_ID=? AND C_W_ID=?");
+		if ( credit.equals("BC") ) {
+			prep = prepare("SELECT C_DATA INTO FROM CUSTOMER " + "WHERE C_ID=? AND C_D_ID=? AND C_W_ID=?");
 			prep.setInt(1, cId);
 			prep.setInt(2, cdId);
 			prep.setInt(3, wId);
@@ -442,14 +414,11 @@ public class BenchCThread {
 			rs.next();
 			String cData = rs.getString(1);
 			rs.close();
-			String cNewData = "| " + cId + " " + cdId + " " + wId
-			+ " " + dId + " " + warehouseId + " " + amount + " "
-			+ cData;
-			if (cNewData.length() > 500) {
+			String cNewData = "| " + cId + " " + cdId + " " + wId + " " + dId + " " + warehouseId + " " + amount + " " + cData;
+			if ( cNewData.length() > 500 ) {
 				cNewData = cNewData.substring(0, 500);
 			}
-			prep = prepare("UPDATE CUSTOMER SET C_BALANCE=?, C_DATA=? "
-					+ "WHERE C_ID=? AND C_D_ID=? AND C_W_ID=?");
+			prep = prepare("UPDATE CUSTOMER SET C_BALANCE=?, C_DATA=? " + "WHERE C_ID=? AND C_D_ID=? AND C_W_ID=?");
 			prep.setBigDecimal(1, balance);
 			prep.setString(2, cNewData);
 			prep.setInt(3, cId);
@@ -457,8 +426,7 @@ public class BenchCThread {
 			prep.setInt(5, wId);
 			db.update(prep, "updateCustomer");
 		} else {
-			prep = prepare("UPDATE CUSTOMER SET C_BALANCE=? "
-					+ "WHERE C_ID=? AND C_D_ID=? AND C_W_ID=?");
+			prep = prepare("UPDATE CUSTOMER SET C_BALANCE=? " + "WHERE C_ID=? AND C_D_ID=? AND C_W_ID=?");
 			prep.setBigDecimal(1, balance);
 			prep.setInt(2, cId);
 			prep.setInt(3, cdId);
@@ -466,10 +434,9 @@ public class BenchCThread {
 			db.update(prep, "updateCustomer");
 		}
 		// MySQL bug?
-		//        String h_data = w_name + "    " + d_name;
+		// String h_data = w_name + "    " + d_name;
 		String hData = wName + " " + dName;
-		prep = prepare("INSERT INTO HISTORY (H_C_D_ID, H_C_W_ID, H_C_ID, H_D_ID, "
-				+ "H_W_ID, H_DATE, H_AMOUNT, H_DATA) "
+		prep = prepare("INSERT INTO HISTORY (H_C_D_ID, H_C_W_ID, H_C_ID, H_D_ID, " + "H_W_ID, H_DATE, H_AMOUNT, H_DATA) "
 				+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 		prep.setInt(1, cdId);
 		prep.setInt(2, wId);
@@ -482,13 +449,13 @@ public class BenchCThread {
 		db.update(prep, "insertHistory");
 		db.commit();
 	}
-
+	
 	private void processOrderStatus() throws SQLException {
 		int dId = random.getInt(1, bench.districtsPerWarehouse);
 		boolean byName;
 		String last = null;
 		int cId = -1;
-		if (random.getInt(1, 100) <= 60) {
+		if ( random.getInt(1, 100) <= 60 ) {
 			byName = true;
 			last = random.getLastname(random.getNonUniform(255, 0, 999));
 		} else {
@@ -497,12 +464,11 @@ public class BenchCThread {
 		}
 		PreparedStatement prep;
 		ResultSet rs;
-
+		
 		prep = prepare("UPDATE DISTRICT SET D_NEXT_O_ID=-1 WHERE D_ID=-1");
 		db.update(prep, "updateDistrict");
-		if (byName) {
-			prep = prepare("SELECT COUNT(C_ID) FROM CUSTOMER "
-					+ "WHERE C_LAST=? AND C_D_ID=? AND C_W_ID=?");
+		if ( byName ) {
+			prep = prepare("SELECT COUNT(C_ID) FROM CUSTOMER " + "WHERE C_LAST=? AND C_D_ID=? AND C_W_ID=?");
 			prep.setString(1, last);
 			prep.setInt(2, dId);
 			prep.setInt(3, warehouseId);
@@ -510,23 +476,21 @@ public class BenchCThread {
 			rs.next();
 			int namecnt = rs.getInt(1);
 			rs.close();
-			if (namecnt == 0) {
+			if ( namecnt == 0 ) {
 				// TODO TPC-C: check if this can happen
 				db.rollback();
 				return;
 			}
-			prep = prepare("SELECT C_BALANCE, C_FIRST, C_MIDDLE, C_ID "
-					+ "FROM CUSTOMER "
-					+ "WHERE C_LAST=? AND C_D_ID=? AND C_W_ID=? "
+			prep = prepare("SELECT C_BALANCE, C_FIRST, C_MIDDLE, C_ID " + "FROM CUSTOMER " + "WHERE C_LAST=? AND C_D_ID=? AND C_W_ID=? "
 					+ "ORDER BY C_FIRST");
 			prep.setString(1, last);
 			prep.setInt(2, dId);
 			prep.setInt(3, warehouseId);
 			rs = db.query(prep);
-			if (namecnt % 2 != 0) {
+			if ( namecnt % 2 != 0 ) {
 				namecnt++;
 			}
-			for (int n = 0; n < namecnt / 2; n++) {
+			for ( int n = 0; n < namecnt / 2; n++ ) {
 				rs.next();
 			}
 			// c_balance
@@ -537,9 +501,7 @@ public class BenchCThread {
 			rs.getString(3);
 			rs.close();
 		} else {
-			prep = prepare("SELECT C_BALANCE, C_FIRST, C_MIDDLE, C_LAST "
-					+ "FROM CUSTOMER "
-					+ "WHERE C_ID=? AND C_D_ID=? AND C_W_ID=?");
+			prep = prepare("SELECT C_BALANCE, C_FIRST, C_MIDDLE, C_LAST " + "FROM CUSTOMER " + "WHERE C_ID=? AND C_D_ID=? AND C_W_ID=?");
 			prep.setInt(1, cId);
 			prep.setInt(2, dId);
 			prep.setInt(3, warehouseId);
@@ -555,23 +517,21 @@ public class BenchCThread {
 			rs.getString(4);
 			rs.close();
 		}
-		prep = prepare("SELECT MAX(O_ID) "
-				+ "FROM ORDERS WHERE O_C_ID=? AND O_D_ID=? AND O_W_ID=?");
+		prep = prepare("SELECT MAX(O_ID) " + "FROM ORDERS WHERE O_C_ID=? AND O_D_ID=? AND O_W_ID=?");
 		prep.setInt(1, cId);
 		prep.setInt(2, dId);
 		prep.setInt(3, warehouseId);
 		rs = db.query(prep);
 		int oId = -1;
-		if (rs.next()) {
+		if ( rs.next() ) {
 			oId = rs.getInt(1);
-			if (rs.wasNull()) {
+			if ( rs.wasNull() ) {
 				oId = -1;
 			}
 		}
 		rs.close();
-		if (oId != -1) {
-			prep = prepare("SELECT O_ID, O_CARRIER_ID, O_ENTRY_D "
-					+ "FROM ORDERS WHERE O_ID=?");
+		if ( oId != -1 ) {
+			prep = prepare("SELECT O_ID, O_CARRIER_ID, O_ENTRY_D " + "FROM ORDERS WHERE O_ID=?");
 			prep.setInt(1, oId);
 			rs = db.query(prep);
 			rs.next();
@@ -581,14 +541,13 @@ public class BenchCThread {
 			// o_entry_d
 			rs.getTimestamp(3);
 			rs.close();
-			prep = prepare("SELECT OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, "
-					+ "OL_AMOUNT, OL_DELIVERY_D FROM ORDER_LINE "
+			prep = prepare("SELECT OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, " + "OL_AMOUNT, OL_DELIVERY_D FROM ORDER_LINE "
 					+ "WHERE OL_O_ID=? AND OL_D_ID=? AND OL_W_ID=?");
 			prep.setInt(1, oId);
 			prep.setInt(2, dId);
 			prep.setInt(3, warehouseId);
 			rs = db.query(prep);
-			while (rs.next()) {
+			while ( rs.next() ) {
 				// o_i_id
 				rs.getInt(1);
 				// ol_supply_w_id
@@ -604,38 +563,35 @@ public class BenchCThread {
 		}
 		db.commit();
 	}
-
+	
 	private void processDelivery() throws SQLException {
 		int carrierId = random.getInt(1, 10);
 		Timestamp datetime = new Timestamp(System.currentTimeMillis());
 		PreparedStatement prep;
 		ResultSet rs;
-
+		
 		prep = prepare("UPDATE DISTRICT SET D_NEXT_O_ID=-1 WHERE D_ID=-1");
 		db.update(prep, "updateDistrict");
-		for (int dId = 1; dId <= bench.districtsPerWarehouse; dId++) {
-			prep = prepare("SELECT MIN(NO_O_ID) FROM NEW_ORDER "
-					+ "WHERE NO_D_ID=? AND NO_W_ID=?");
+		for ( int dId = 1; dId <= bench.districtsPerWarehouse; dId++ ) {
+			prep = prepare("SELECT MIN(NO_O_ID) FROM NEW_ORDER " + "WHERE NO_D_ID=? AND NO_W_ID=?");
 			prep.setInt(1, dId);
 			prep.setInt(2, warehouseId);
 			rs = db.query(prep);
 			int noId = -1;
-			if (rs.next()) {
+			if ( rs.next() ) {
 				noId = rs.getInt(1);
-				if (rs.wasNull()) {
+				if ( rs.wasNull() ) {
 					noId = -1;
 				}
 			}
 			rs.close();
-			if (noId != -1) {
-				prep = prepare("DELETE FROM NEW_ORDER "
-						+ "WHERE NO_O_ID=? AND NO_D_ID=? AND NO_W_ID=?");
+			if ( noId != -1 ) {
+				prep = prepare("DELETE FROM NEW_ORDER " + "WHERE NO_O_ID=? AND NO_D_ID=? AND NO_W_ID=?");
 				prep.setInt(1, noId);
 				prep.setInt(2, dId);
 				prep.setInt(3, warehouseId);
 				db.update(prep, "deleteNewOrder");
-				prep = prepare("SELECT O_C_ID FROM ORDERS "
-						+ "WHERE O_ID=? AND O_D_ID=? AND O_W_ID=?");
+				prep = prepare("SELECT O_C_ID FROM ORDERS " + "WHERE O_ID=? AND O_D_ID=? AND O_W_ID=?");
 				prep.setInt(1, noId);
 				prep.setInt(2, dId);
 				prep.setInt(3, warehouseId);
@@ -644,22 +600,19 @@ public class BenchCThread {
 				// o_c_id
 				rs.getInt(1);
 				rs.close();
-				prep = prepare("UPDATE ORDERS SET O_CARRIER_ID=? "
-						+ "WHERE O_ID=? AND O_D_ID=? AND O_W_ID=?");
+				prep = prepare("UPDATE ORDERS SET O_CARRIER_ID=? " + "WHERE O_ID=? AND O_D_ID=? AND O_W_ID=?");
 				prep.setInt(1, carrierId);
 				prep.setInt(2, noId);
 				prep.setInt(3, dId);
 				prep.setInt(4, warehouseId);
 				db.update(prep, "updateOrders");
-				prep = prepare("UPDATE ORDER_LINE SET OL_DELIVERY_D=? "
-						+ "WHERE OL_O_ID=? AND OL_D_ID=? AND OL_W_ID=?");
+				prep = prepare("UPDATE ORDER_LINE SET OL_DELIVERY_D=? " + "WHERE OL_O_ID=? AND OL_D_ID=? AND OL_W_ID=?");
 				prep.setTimestamp(1, datetime);
 				prep.setInt(2, noId);
 				prep.setInt(3, dId);
 				prep.setInt(4, warehouseId);
 				db.update(prep, "updateOrderLine");
-				prep = prepare("SELECT SUM(OL_AMOUNT) FROM ORDER_LINE "
-						+ "WHERE OL_O_ID=? AND OL_D_ID=? AND OL_W_ID=?");
+				prep = prepare("SELECT SUM(OL_AMOUNT) FROM ORDER_LINE " + "WHERE OL_O_ID=? AND OL_D_ID=? AND OL_W_ID=?");
 				prep.setInt(1, noId);
 				prep.setInt(2, dId);
 				prep.setInt(3, warehouseId);
@@ -667,8 +620,7 @@ public class BenchCThread {
 				rs.next();
 				BigDecimal amount = rs.getBigDecimal(1);
 				rs.close();
-				prep = prepare("UPDATE CUSTOMER SET C_BALANCE=C_BALANCE+? "
-						+ "WHERE C_ID=? AND C_D_ID=? AND C_W_ID=?");
+				prep = prepare("UPDATE CUSTOMER SET C_BALANCE=C_BALANCE+? " + "WHERE C_ID=? AND C_D_ID=? AND C_W_ID=?");
 				prep.setBigDecimal(1, amount);
 				prep.setInt(2, noId);
 				prep.setInt(3, dId);
@@ -678,38 +630,34 @@ public class BenchCThread {
 		}
 		db.commit();
 	}
-
+	
 	private void processStockLevel() throws SQLException {
-		int dId = (terminalId % bench.districtsPerWarehouse) + 1;
+		int dId = ( terminalId % bench.districtsPerWarehouse ) + 1;
 		int threshold = random.getInt(10, 20);
 		PreparedStatement prep;
 		ResultSet rs;
-
+		
 		prep = prepare("UPDATE DISTRICT SET D_NEXT_O_ID=-1 WHERE D_ID=-1");
 		db.update(prep, "updateDistrict");
-
-		prep = prepare("SELECT D_NEXT_O_ID FROM DISTRICT "
-				+ "WHERE D_ID=? AND D_W_ID=?");
+		
+		prep = prepare("SELECT D_NEXT_O_ID FROM DISTRICT " + "WHERE D_ID=? AND D_W_ID=?");
 		prep.setInt(1, dId);
 		prep.setInt(2, warehouseId);
 		rs = db.query(prep);
 		rs.next();
 		int oId = rs.getInt(1);
 		rs.close();
-		//        prep = prepare("SELECT COUNT(DISTINCT S_I_ID) "
-		//                + "FROM ORDER_LINE, STOCK WHERE OL_W_ID=? AND "
-		//                + "OL_D_ID=? AND OL_O_ID<? AND "
-		//                + "OL_O_ID>=?-20 AND S_W_ID=? AND "
-		//                + "S_I_ID=OL_I_ID AND S_QUANTITY<?");
-		//        prep.setInt(1, warehouseId);
-		//        prep.setInt(2, d_id);
-		//        prep.setInt(3, o_id);
-		//        prep.setInt(4, o_id);
-		prep = prepare("SELECT COUNT(DISTINCT S_I_ID) "
-				+ "FROM ORDER_LINE, STOCK WHERE OL_W_ID=? AND "
-				+ "OL_D_ID=? AND OL_O_ID<? AND "
-				+ "OL_O_ID>=? AND S_W_ID=? AND "
-				+ "S_I_ID=OL_I_ID AND S_QUANTITY<?");
+		// prep = prepare("SELECT COUNT(DISTINCT S_I_ID) "
+		// + "FROM ORDER_LINE, STOCK WHERE OL_W_ID=? AND "
+		// + "OL_D_ID=? AND OL_O_ID<? AND "
+		// + "OL_O_ID>=?-20 AND S_W_ID=? AND "
+		// + "S_I_ID=OL_I_ID AND S_QUANTITY<?");
+		// prep.setInt(1, warehouseId);
+		// prep.setInt(2, d_id);
+		// prep.setInt(3, o_id);
+		// prep.setInt(4, o_id);
+		prep = prepare("SELECT COUNT(DISTINCT S_I_ID) " + "FROM ORDER_LINE, STOCK WHERE OL_W_ID=? AND " + "OL_D_ID=? AND OL_O_ID<? AND "
+				+ "OL_O_ID>=? AND S_W_ID=? AND " + "S_I_ID=OL_I_ID AND S_QUANTITY<?");
 		prep.setInt(1, warehouseId);
 		prep.setInt(2, dId);
 		prep.setInt(3, oId);
@@ -724,14 +672,14 @@ public class BenchCThread {
 		rs.close();
 		db.commit();
 	}
-
+	
 	private PreparedStatement prepare(String sql) throws SQLException {
 		PreparedStatement prep = (PreparedStatement) prepared.get(sql);
-		if (prep == null) {
+		if ( prep == null ) {
 			prep = db.prepare(sql);
 			prepared.put(sql, prep);
 		}
 		return prep;
 	}
-
+	
 }

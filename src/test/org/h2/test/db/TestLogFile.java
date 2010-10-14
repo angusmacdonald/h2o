@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.db;
 
@@ -21,27 +19,29 @@ import org.h2.test.TestBase;
  * Tests the database transaction log file.
  */
 public class TestLogFile extends TestBase {
-
+	
 	private static final int MAX_LOG_SIZE = 1;
+	
 	private Connection conn;
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	private long reconnect(int maxFiles) throws SQLException {
-		if (conn != null) {
+		if ( conn != null ) {
 			conn.close();
 		}
 		long length = 0;
 		ArrayList files = FileLister.getDatabaseFiles(baseDir, "logfile", false);
 		assertSmaller(files.size(), maxFiles + 2);
-		for (int i = 0; i < files.size(); i++) {
+		for ( int i = 0; i < files.size(); i++ ) {
 			String fileName = (String) files.get(i);
 			long len = new File(fileName).length();
 			length += len;
@@ -49,9 +49,9 @@ public class TestLogFile extends TestBase {
 		conn = getConnection("logfile");
 		return length;
 	}
-
+	
 	public void test() throws SQLException {
-		if (config.memory) {
+		if ( config.memory ) {
 			return;
 		}
 		deleteDb("logfile");
@@ -62,7 +62,7 @@ public class TestLogFile extends TestBase {
 			insert();
 			// data, index, log
 			int maxFiles = 3;
-			for (int i = 0; i < 3; i++) {
+			for ( int i = 0; i < 3; i++ ) {
 				long length = reconnect(maxFiles);
 				insert();
 				long l2 = reconnect(maxFiles);
@@ -75,18 +75,18 @@ public class TestLogFile extends TestBase {
 		}
 		deleteDb("logfile");
 	}
-
+	
 	private void checkLogSize() throws SQLException {
 		String[] files = new File(".").list();
-		for (int j = 0; j < files.length; j++) {
+		for ( int j = 0; j < files.length; j++ ) {
 			String name = files[j];
-			if (name.startsWith("logfile") && name.endsWith(".log.db")) {
+			if ( name.startsWith("logfile") && name.endsWith(".log.db") ) {
 				long length = new File(name).length();
 				assertSmaller(length, MAX_LOG_SIZE * 1024 * 1024 * 2);
 			}
 		}
 	}
-
+	
 	private void insert() throws SQLException {
 		Statement stat = conn.createStatement();
 		stat.execute("SET LOGSIZE 200");
@@ -95,16 +95,16 @@ public class TestLogFile extends TestBase {
 		stat.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255))");
 		PreparedStatement prep = conn.prepareStatement("INSERT INTO TEST VALUES(?, 'Hello' || ?)");
 		int len = getSize(1, 10000);
-		for (int i = 0; i < len; i++) {
+		for ( int i = 0; i < len; i++ ) {
 			prep.setInt(1, i);
 			prep.setInt(2, i);
 			prep.execute();
-			if (i > 0 && (i % 2000) == 0) {
+			if ( i > 0 && ( i % 2000 ) == 0 ) {
 				checkLogSize();
 			}
 		}
 		checkLogSize();
 		// stat.execute("TRUNCATE TABLE TEST");
 	}
-
+	
 }

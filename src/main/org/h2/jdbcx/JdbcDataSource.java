@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.jdbcx;
 
@@ -28,10 +26,8 @@ import org.h2.message.TraceObject;
 import org.h2.util.StringUtils;
 
 /**
- * A data source for H2 database connections. It is a factory for XAConnection
- * and Connection objects. This class is usually registered in a JNDI naming
- * service. To create a data source object and register it with a JNDI service,
- * use the following code:
+ * A data source for H2 database connections. It is a factory for XAConnection and Connection objects. This class is usually registered in a
+ * JNDI naming service. To create a data source object and register it with a JNDI service, use the following code:
  * 
  * <pre>
  * import org.h2.jdbcx.JdbcDataSource;
@@ -57,29 +53,32 @@ import org.h2.util.StringUtils;
  * Connection conn = ds.getConnection();
  * </pre>
  * 
- * In this example the user name and password are serialized as well; this may
- * be a security problem in some cases.
+ * In this example the user name and password are serialized as well; this may be a security problem in some cases.
  */
 public class JdbcDataSource extends TraceObject
-		// ## Java 1.4 begin ##
-		implements XADataSource, DataSource, ConnectionPoolDataSource,
-		Serializable, Referenceable
+// ## Java 1.4 begin ##
+		implements XADataSource, DataSource, ConnectionPoolDataSource, Serializable, Referenceable
 // ## Java 1.4 end ##
 {
-
+	
 	private static final long serialVersionUID = 1288136338451857771L;
-
+	
 	private transient JdbcDataSourceFactory factory;
+	
 	private transient PrintWriter logWriter;
+	
 	private int loginTimeout;
+	
 	private String user = "";
+	
 	private char[] password = new char[0];
+	
 	private String url = "";
-
+	
 	static {
 		org.h2.Driver.load();
 	}
-
+	
 	/**
 	 * The public constructor.
 	 */
@@ -88,17 +87,16 @@ public class JdbcDataSource extends TraceObject
 		int id = getNextId(TraceObject.DATA_SOURCE);
 		setTrace(factory.getTrace(), TraceObject.DATA_SOURCE, id);
 	}
-
-	private void readObject(java.io.ObjectInputStream in) throws IOException,
-			ClassNotFoundException {
+	
+	private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
 		initFactory();
 		in.defaultReadObject();
 	}
-
+	
 	private void initFactory() {
 		factory = new JdbcDataSourceFactory();
 	}
-
+	
 	/**
 	 * Get the login timeout in seconds, 0 meaning no timeout.
 	 * 
@@ -108,10 +106,9 @@ public class JdbcDataSource extends TraceObject
 		debugCodeCall("getLoginTimeout");
 		return loginTimeout;
 	}
-
+	
 	/**
-	 * Set the login timeout in seconds, 0 meaning no timeout. The default value
-	 * is 0. This value is ignored by this database.
+	 * Set the login timeout in seconds, 0 meaning no timeout. The default value is 0. This value is ignored by this database.
 	 * 
 	 * @param timeout
 	 *            the timeout in seconds
@@ -120,7 +117,7 @@ public class JdbcDataSource extends TraceObject
 		debugCodeCall("setLoginTimeout", timeout);
 		this.loginTimeout = timeout;
 	}
-
+	
 	/**
 	 * Get the current log writer for this object.
 	 * 
@@ -130,10 +127,9 @@ public class JdbcDataSource extends TraceObject
 		debugCodeCall("getLogWriter");
 		return logWriter;
 	}
-
+	
 	/**
-	 * Set the current log writer for this object. This value is ignored by this
-	 * database.
+	 * Set the current log writer for this object. This value is ignored by this database.
 	 * 
 	 * @param out
 	 *            the log writer
@@ -142,7 +138,7 @@ public class JdbcDataSource extends TraceObject
 		debugCodeCall("setLogWriter(out)");
 		logWriter = out;
 	}
-
+	
 	/**
 	 * Open a new connection using the current URL, user name and password.
 	 * 
@@ -152,10 +148,9 @@ public class JdbcDataSource extends TraceObject
 		debugCodeCall("getConnection");
 		return getJdbcConnection(user, StringUtils.cloneCharArray(password));
 	}
-
+	
 	/**
-	 * Open a new connection using the current URL and the specified user name
-	 * and password.
+	 * Open a new connection using the current URL and the specified user name and password.
 	 * 
 	 * @param user
 	 *            the user name
@@ -163,17 +158,15 @@ public class JdbcDataSource extends TraceObject
 	 *            the password
 	 * @return the connection
 	 */
-	public Connection getConnection(String user, String password)
-			throws SQLException {
-		if (isDebugEnabled()) {
+	public Connection getConnection(String user, String password) throws SQLException {
+		if ( isDebugEnabled() ) {
 			debugCode("getConnection(" + quote(user) + ", \"\");");
 		}
 		return getJdbcConnection(user, convertToCharArray(password));
 	}
-
-	private JdbcConnection getJdbcConnection(String user, char[] password)
-			throws SQLException {
-		if (isDebugEnabled()) {
+	
+	private JdbcConnection getJdbcConnection(String user, char[] password) throws SQLException {
+		if ( isDebugEnabled() ) {
 			debugCode("getJdbcConnection(" + quote(user) + ", new char[0]);");
 		}
 		Properties info = new Properties();
@@ -181,7 +174,7 @@ public class JdbcDataSource extends TraceObject
 		info.put("password", password);
 		return new JdbcConnection(url, info);
 	}
-
+	
 	/**
 	 * Get the current URL.
 	 * 
@@ -191,7 +184,7 @@ public class JdbcDataSource extends TraceObject
 		debugCodeCall("getURL");
 		return url;
 	}
-
+	
 	/**
 	 * Set the current URL.
 	 * 
@@ -202,7 +195,7 @@ public class JdbcDataSource extends TraceObject
 		debugCodeCall("setURL", url);
 		this.url = url;
 	}
-
+	
 	/**
 	 * Set the current password.
 	 * 
@@ -213,7 +206,7 @@ public class JdbcDataSource extends TraceObject
 		debugCodeCall("setPassword", "");
 		this.password = convertToCharArray(password);
 	}
-
+	
 	/**
 	 * Set the current password in the form of a char array.
 	 * 
@@ -221,20 +214,20 @@ public class JdbcDataSource extends TraceObject
 	 *            the new password in the form of a char array.
 	 */
 	public void setPasswordChars(char[] password) {
-		if (isDebugEnabled()) {
+		if ( isDebugEnabled() ) {
 			debugCode("setPasswordChars(new char[0]);");
 		}
 		this.password = password;
 	}
-
+	
 	private char[] convertToCharArray(String s) {
 		return s == null ? null : s.toCharArray();
 	}
-
+	
 	private String convertToString(char[] a) {
 		return a == null ? null : new String(a);
 	}
-
+	
 	/**
 	 * Get the current password.
 	 * 
@@ -244,7 +237,7 @@ public class JdbcDataSource extends TraceObject
 		debugCodeCall("getPassword");
 		return convertToString(password);
 	}
-
+	
 	/**
 	 * Get the current user name.
 	 * 
@@ -254,7 +247,7 @@ public class JdbcDataSource extends TraceObject
 		debugCodeCall("getUser");
 		return user;
 	}
-
+	
 	/**
 	 * Set the current user name.
 	 * 
@@ -265,7 +258,7 @@ public class JdbcDataSource extends TraceObject
 		debugCodeCall("setUser", user);
 		this.user = user;
 	}
-
+	
 	/**
 	 * Get a new reference for this object, using the current settings.
 	 * 
@@ -275,17 +268,16 @@ public class JdbcDataSource extends TraceObject
 	public Reference getReference() {
 		debugCodeCall("getReference");
 		String factoryClassName = JdbcDataSourceFactory.class.getName();
-		Reference ref = new Reference(getClass().getName(), factoryClassName,
-				null);
+		Reference ref = new Reference(getClass().getName(), factoryClassName, null);
 		ref.add(new StringRefAddr("url", url));
 		ref.add(new StringRefAddr("user", user));
 		ref.add(new StringRefAddr("password", convertToString(password)));
 		ref.add(new StringRefAddr("loginTimeout", String.valueOf(loginTimeout)));
 		return ref;
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
 	 * Open a new XA connection using the current URL, user name and password.
 	 * 
@@ -297,12 +289,11 @@ public class JdbcDataSource extends TraceObject
 		int id = getNextId(XA_DATA_SOURCE);
 		return new JdbcXAConnection(factory, id, url, user, password);
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
-	 * Open a new XA connection using the current URL and the specified user
-	 * name and password.
+	 * Open a new XA connection using the current URL and the specified user name and password.
 	 * 
 	 * @param user
 	 *            the user name
@@ -311,21 +302,18 @@ public class JdbcDataSource extends TraceObject
 	 * @return the connection
 	 */
 	// ## Java 1.4 begin ##
-	public XAConnection getXAConnection(String user, String password)
-			throws SQLException {
-		if (isDebugEnabled()) {
+	public XAConnection getXAConnection(String user, String password) throws SQLException {
+		if ( isDebugEnabled() ) {
 			debugCode("getXAConnection(" + quote(user) + ", \"\");");
 		}
 		int id = getNextId(XA_DATA_SOURCE);
-		return new JdbcXAConnection(factory, id, url, user,
-				convertToCharArray(password));
+		return new JdbcXAConnection(factory, id, url, user, convertToCharArray(password));
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
-	 * Open a new pooled connection using the current URL, user name and
-	 * password.
+	 * Open a new pooled connection using the current URL, user name and password.
 	 * 
 	 * @return the connection
 	 */
@@ -334,12 +322,11 @@ public class JdbcDataSource extends TraceObject
 		debugCodeCall("getPooledConnection");
 		return getXAConnection();
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
-	 * Open a new pooled connection using the current URL and the specified user
-	 * name and password.
+	 * Open a new pooled connection using the current URL and the specified user name and password.
 	 * 
 	 * @param user
 	 *            the user name
@@ -348,43 +335,42 @@ public class JdbcDataSource extends TraceObject
 	 * @return the connection
 	 */
 	// ## Java 1.4 begin ##
-	public PooledConnection getPooledConnection(String user, String password)
-			throws SQLException {
-		if (isDebugEnabled()) {
+	public PooledConnection getPooledConnection(String user, String password) throws SQLException {
+		if ( isDebugEnabled() ) {
 			debugCode("getPooledConnection(" + quote(user) + ", \"\");");
 		}
 		return getXAConnection(user, password);
 	}
-
+	
 	// ## Java 1.4 end ##
-
+	
 	/**
 	 * [Not supported] Return an object of this class if possible.
 	 * 
 	 * @param iface
 	 *            the class
 	 */
-
+	
 	public <T> T unwrap(Class<T> iface) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
+	
 	/**
 	 * [Not supported] Checks if unwrap can return an object of this class.
 	 * 
 	 * @param iface
 	 *            the class
 	 */
-
+	
 	public boolean isWrapperFor(Class<?> iface) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
+	
 	/**
 	 * INTERNAL
 	 */
 	public String toString() {
 		return getTraceObjectName() + ": url=" + url + " user=" + user;
 	}
-
+	
 }

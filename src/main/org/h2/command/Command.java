@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.command;
 
@@ -26,70 +24,70 @@ import org.h2o.db.query.QueryProxyManager;
  * Represents a SQL statement. This object is only used on the server side.
  */
 public abstract class Command implements CommandInterface {
-
+	
 	/**
 	 * The session.
 	 */
 	protected final Session session;
-
+	
 	/**
 	 * The trace module.
 	 */
 	protected final Trace trace;
-
+	
 	/**
 	 * The last start time.
 	 */
 	protected long startTime;
-
+	
 	/**
 	 * If this query was canceled.
 	 */
 	private volatile boolean cancel;
-
+	
 	private final String sql;
-
+	
 	public Command(Parser parser, String sql) {
 		this.session = parser.getSession();
 		this.sql = sql;
 		trace = session.getDatabase().getTrace(Trace.COMMAND);
 	}
-
+	
 	/**
 	 * Check if this command is transactional. If it is not, then it forces the current transaction to commit.
 	 * 
 	 * @return true if it is
 	 */
 	public abstract boolean isTransactional();
-
+	
 	/**
 	 * Check if this command is a query.
 	 * 
 	 * @return true if it is
 	 */
 	public abstract boolean isQuery();
-
+	
 	/**
 	 * Get the list of parameters.
 	 * 
 	 * @return the list of parameters
 	 */
 	public abstract ObjectArray getParameters();
-
+	
 	/**
 	 * Check if this command is read only.
 	 * 
 	 * @return true if it is
 	 */
 	public abstract boolean isReadOnly();
-
+	
 	/**
 	 * Get an empty result set containing the meta data.
 	 * 
 	 * @return an empty result set
 	 */
 	public abstract LocalResult queryMeta() throws SQLException;
-
+	
 	/**
 	 * Execute an updating statement, if this is possible.
 	 * 
@@ -101,7 +99,7 @@ public abstract class Command implements CommandInterface {
 	public int update() throws SQLException, RemoteException {
 		throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_QUERY);
 	}
-
+	
 	/**
 	 * Local. Won't commit if it is part of a bigger transaction.
 	 * 
@@ -115,7 +113,7 @@ public abstract class Command implements CommandInterface {
 	protected int update(boolean partOfABiggerThing) throws SQLException, RemoteException {
 		throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_QUERY);
 	}
-
+	
 	/**
 	 * Execute a query statement, if this is possible.
 	 * 
@@ -129,7 +127,7 @@ public abstract class Command implements CommandInterface {
 	public LocalResult query(int maxrows) throws SQLException, RemoteException {
 		throw Message.getSQLException(ErrorCode.METHOD_ONLY_ALLOWED_FOR_QUERY);
 	}
-
+	
 	/**
 	 * Local. Won't commit if it is part of a bigger transaction.
 	 * 
@@ -142,19 +140,19 @@ public abstract class Command implements CommandInterface {
 	protected LocalResult query(int maxrows, boolean partOfABiggerThing) throws SQLException {
 		throw Message.getSQLException(ErrorCode.METHOD_ONLY_ALLOWED_FOR_QUERY);
 	}
-
+	
 	public final LocalResult getMetaDataLocal() throws SQLException {
 		return queryMeta();
 	}
-
+	
 	public final ResultInterface getMetaData() throws SQLException {
 		return queryMeta();
 	}
-
+	
 	public ResultInterface executeQuery(int maxrows, boolean scrollable) throws SQLException {
 		return executeQueryLocal(maxrows);
 	}
-
+	
 	/**
 	 * Execute a query and return a local result set. This method prepares everything and calls {@link #query(int)} finally.
 	 * 
@@ -167,14 +165,14 @@ public abstract class Command implements CommandInterface {
 		Database database = session.getDatabase();
 		Object sync = database.isMultiThreaded() ? (Object) session : (Object) database;
 		session.waitIfExclusiveModeEnabled();
-
-		synchronized (sync) {
-
+		
+		synchronized ( sync ) {
+			
 			try {
 				database.checkPowerOff();
 				session.setCurrentCommand(this, startTime);
 				return query(maxrows);
-			} catch (Exception e) {
+			} catch ( Exception e ) {
 				SQLException s = Message.convert(e, sql);
 				database.exceptionThrown(s, sql);
 				throw s;
@@ -183,14 +181,14 @@ public abstract class Command implements CommandInterface {
 			}
 		}
 	}
-
+	
 	/**
 	 * Start the stopwatch.
 	 */
 	void start() {
 		startTime = System.currentTimeMillis();
 	}
-
+	
 	/**
 	 * Check if this command has been canceled, and throw an exception if yes.
 	 * 
@@ -198,33 +196,33 @@ public abstract class Command implements CommandInterface {
 	 *             if the statement has been canceled
 	 */
 	public void checkCanceled() throws SQLException {
-		if (cancel) {
+		if ( cancel ) {
 			cancel = false;
 			throw Message.getSQLException(ErrorCode.STATEMENT_WAS_CANCELED);
 		}
 	}
-
+	
 	private void stop() throws SQLException {
 		session.closeTemporaryResults();
 		session.setCurrentCommand(null, 0);
-		if (!isTransactional()) {
+		if ( !isTransactional() ) {
 			session.commit(true);
-		} else if (session.getDatabase().isMultiThreaded()) {
+		} else if ( session.getDatabase().isMultiThreaded() ) {
 			Database db = session.getDatabase();
-			if (db != null) {
-				if (db.getLockMode() == Constants.LOCK_MODE_READ_COMMITTED) {
+			if ( db != null ) {
+				if ( db.getLockMode() == Constants.LOCK_MODE_READ_COMMITTED ) {
 					session.unlockReadLocks();
 				}
 			}
 		}
-		if (trace.isInfoEnabled()) {
+		if ( trace.isInfoEnabled() ) {
 			long time = System.currentTimeMillis() - startTime;
-			if (time > Constants.SLOW_QUERY_LIMIT_MS) {
+			if ( time > Constants.SLOW_QUERY_LIMIT_MS ) {
 				trace.info("slow query: " + time);
 			}
 		}
 	}
-
+	
 	public int executeUpdate(boolean partOfMultiQueryTransaction) throws SQLException {
 		long start = startTime = System.currentTimeMillis();
 		Database database = session.getDatabase();
@@ -235,49 +233,49 @@ public abstract class Command implements CommandInterface {
 		int rollback = session.getLogId();
 		session.setCurrentCommand(this, startTime);
 		try {
-			while (true) {
+			while ( true ) {
 				database.checkPowerOff();
 				try {
 					return update(partOfMultiQueryTransaction);
-				} catch (OutOfMemoryError e) {
+				} catch ( OutOfMemoryError e ) {
 					MemoryUtils.freeReserveMemory();
 					throw Message.convert(e);
-				} catch (SQLException e) {
-					if (e.getErrorCode() == ErrorCode.CONCURRENT_UPDATE_1) {
+				} catch ( SQLException e ) {
+					if ( e.getErrorCode() == ErrorCode.CONCURRENT_UPDATE_1 ) {
 						long now = System.currentTimeMillis();
-						if (now - start > session.getLockTimeout()) {
+						if ( now - start > session.getLockTimeout() ) {
 							throw e;
 						}
 						try {
-							if (sync == database) {
+							if ( sync == database ) {
 								database.wait(100);
 							} else {
 								Thread.sleep(100);
 							}
-						} catch (InterruptedException e1) {
+						} catch ( InterruptedException e1 ) {
 							// ignore
 						}
 						continue;
 					}
 					throw e;
-				} catch (Throwable e) {
+				} catch ( Throwable e ) {
 					e.printStackTrace();
 					throw Message.convert(e);
 				}
 			}
-		} catch (SQLException e) {
-			//e.printStackTrace();
+		} catch ( SQLException e ) {
+			// e.printStackTrace();
 			Message.addSQL(e, sql);
 			database.exceptionThrown(e, sql);
 			database.checkPowerOff();
-			if (e.getErrorCode() == ErrorCode.DEADLOCK_1) {
+			if ( e.getErrorCode() == ErrorCode.DEADLOCK_1 ) {
 				session.rollback();
-			} else if (e.getErrorCode() == ErrorCode.OUT_OF_MEMORY) {
+			} else if ( e.getErrorCode() == ErrorCode.OUT_OF_MEMORY ) {
 				// try to rollback, saving memory
 				try {
 					session.rollbackTo(rollback, true);
-				} catch (SQLException e2) {
-					if (e2.getErrorCode() == ErrorCode.OUT_OF_MEMORY) {
+				} catch ( SQLException e2 ) {
+					if ( e2.getErrorCode() == ErrorCode.OUT_OF_MEMORY ) {
 						// if rollback didn't work, there is a serious problem:
 						// the transaction may be applied partially
 						// in this case we need to panic:
@@ -295,19 +293,19 @@ public abstract class Command implements CommandInterface {
 		}
 		// }
 	}
-
+	
 	public void close() {
 		// nothing to do
 	}
-
+	
 	public void cancel() {
 		this.cancel = true;
 	}
-
+	
 	public String toString() {
 		return TraceObject.toString(sql, getParameters());
 	}
-
+	
 	/**
 	 * Request a query proxy from the Table Manager of the table involved in the query. This proxy contains the details of any locks that
 	 * were acquired.
@@ -316,19 +314,19 @@ public abstract class Command implements CommandInterface {
 	 * @throws SQLException
 	 */
 	public abstract void acquireLocks() throws SQLException;
-
+	
 	/**
 	 * @return the session
 	 */
 	public Session getSession() {
 		return session;
 	}
-
+	
 	/**
 	 * @return
 	 */
 	public abstract boolean shouldBePropagated();
-
+	
 	/**
 	 * Is the given command meant to be propagated to all machines?
 	 * 
@@ -338,6 +336,5 @@ public abstract class Command implements CommandInterface {
 	protected boolean isPropagatableCommand(Command command) {
 		return command.shouldBePropagated();
 	}
-
-
+	
 }

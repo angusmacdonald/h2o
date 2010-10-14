@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.result;
 
@@ -23,45 +21,48 @@ import org.h2.value.Value;
  * This class implements the disk buffer for the LocalResult class.
  */
 class ResultDiskBuffer implements ResultExternal {
-
+	
 	private static final int READ_AHEAD = 128;
-
+	
 	private DataPage rowBuff;
+	
 	private FileStore file;
+	
 	private ObjectArray tapes;
+	
 	private ResultDiskTape mainTape;
+	
 	private SortOrder sort;
+	
 	private int columnCount;
-
+	
 	/**
-	 * Represents a virtual disk tape for the merge sort algorithm. Each virtual
-	 * disk tape is a region of the temp file.
+	 * Represents a virtual disk tape for the merge sort algorithm. Each virtual disk tape is a region of the temp file.
 	 */
 	static class ResultDiskTape {
-
+		
 		/**
 		 * The start position of this tape in the file.
 		 */
 		long start;
-
+		
 		/**
 		 * The end position of this tape in the file.
 		 */
 		long end;
-
+		
 		/**
 		 * The current read position.
 		 */
 		long pos;
-
+		
 		/**
 		 * A list of rows in the buffer.
 		 */
 		ObjectArray buffer = new ObjectArray();
 	}
-
-	ResultDiskBuffer(Session session, SortOrder sort, int columnCount)
-			throws SQLException {
+	
+	ResultDiskBuffer(Session session, SortOrder sort, int columnCount) throws SQLException {
 		this.sort = sort;
 		this.columnCount = columnCount;
 		Database db = session.getDatabase();
@@ -70,16 +71,16 @@ class ResultDiskBuffer implements ResultExternal {
 		file = session.getDatabase().openFile(fileName, "rw", false);
 		file.setCheckedWriting(false);
 		file.seek(FileStore.HEADER_LENGTH);
-		if (sort != null) {
+		if ( sort != null ) {
 			tapes = new ObjectArray();
 		} else {
 			mainTape = new ResultDiskTape();
 			mainTape.pos = FileStore.HEADER_LENGTH;
 		}
 	}
-
+	
 	public void addRows(ObjectArray rows) throws SQLException {
-		if (sort != null) {
+		if ( sort != null ) {
 			sort.sort(rows);
 		}
 		DataPage buff = rowBuff;
@@ -87,21 +88,21 @@ class ResultDiskBuffer implements ResultExternal {
 		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 		int bufferLen = 0;
 		int maxBufferSize = SysProperties.LARGE_RESULT_BUFFER_SIZE;
-		for (int i = 0; i < rows.size(); i++) {
+		for ( int i = 0; i < rows.size(); i++ ) {
 			buff.reset();
 			buff.writeInt(0);
 			Value[] row = (Value[]) rows.get(i);
-			for (int j = 0; j < columnCount; j++) {
+			for ( int j = 0; j < columnCount; j++ ) {
 				buff.writeValue(row[j]);
 			}
 			buff.fillAligned();
 			int len = buff.length();
 			buff.setInt(0, len);
 			buff.updateChecksum();
-			if (maxBufferSize > 0) {
+			if ( maxBufferSize > 0 ) {
 				buffer.write(buff.getBytes(), 0, len);
 				bufferLen += len;
-				if (bufferLen > maxBufferSize) {
+				if ( bufferLen > maxBufferSize ) {
 					byte[] data = buffer.toByteArray();
 					buffer.reset();
 					file.write(data, 0, data.length);
@@ -111,11 +112,11 @@ class ResultDiskBuffer implements ResultExternal {
 				file.write(buff.getBytes(), 0, len);
 			}
 		}
-		if (bufferLen > 0) {
+		if ( bufferLen > 0 ) {
 			byte[] data = buffer.toByteArray();
 			file.write(data, 0, data.length);
 		}
-		if (sort != null) {
+		if ( sort != null ) {
 			ResultDiskTape tape = new ResultDiskTape();
 			tape.start = start;
 			tape.end = file.getFilePointer();
@@ -124,15 +125,15 @@ class ResultDiskBuffer implements ResultExternal {
 			mainTape.end = file.getFilePointer();
 		}
 	}
-
+	
 	public void done() throws SQLException {
 		file.seek(FileStore.HEADER_LENGTH);
 		file.autoDelete();
 	}
-
+	
 	public void reset() {
-		if (sort != null) {
-			for (int i = 0; i < tapes.size(); i++) {
+		if ( sort != null ) {
+			for ( int i = 0; i < tapes.size(); i++ ) {
 				ResultDiskTape tape = getTape(i);
 				tape.pos = tape.start;
 				tape.buffer = new ObjectArray();
@@ -142,7 +143,7 @@ class ResultDiskBuffer implements ResultExternal {
 			mainTape.buffer = new ObjectArray();
 		}
 	}
-
+	
 	private void readRow(ResultDiskTape tape) throws SQLException {
 		int min = Constants.FILE_BLOCK_SIZE;
 		DataPage buff = rowBuff;
@@ -150,26 +151,26 @@ class ResultDiskBuffer implements ResultExternal {
 		file.readFully(buff.getBytes(), 0, min);
 		int len = buff.readInt();
 		buff.checkCapacity(len);
-		if (len - min > 0) {
+		if ( len - min > 0 ) {
 			file.readFully(buff.getBytes(), min, len - min);
 		}
 		buff.check(len);
 		tape.pos += len;
 		Value[] row = new Value[columnCount];
-		for (int k = 0; k < columnCount; k++) {
+		for ( int k = 0; k < columnCount; k++ ) {
 			row[k] = buff.readValue();
 		}
 		tape.buffer.add(row);
 	}
-
+	
 	public Value[] next() throws SQLException {
 		return sort != null ? nextSorted() : nextUnsorted();
 	}
-
+	
 	private Value[] nextUnsorted() throws SQLException {
 		file.seek(mainTape.pos);
-		if (mainTape.buffer.size() == 0) {
-			for (int j = 0; mainTape.pos < mainTape.end && j < READ_AHEAD; j++) {
+		if ( mainTape.buffer.size() == 0 ) {
+			for ( int j = 0; mainTape.pos < mainTape.end && j < READ_AHEAD; j++ ) {
 				readRow(mainTape);
 			}
 		}
@@ -177,21 +178,21 @@ class ResultDiskBuffer implements ResultExternal {
 		mainTape.buffer.remove(0);
 		return row;
 	}
-
+	
 	private Value[] nextSorted() throws SQLException {
 		int next = -1;
-		for (int i = 0; i < tapes.size(); i++) {
+		for ( int i = 0; i < tapes.size(); i++ ) {
 			ResultDiskTape tape = getTape(i);
-			if (tape.buffer.size() == 0 && tape.pos < tape.end) {
+			if ( tape.buffer.size() == 0 && tape.pos < tape.end ) {
 				file.seek(tape.pos);
-				for (int j = 0; tape.pos < tape.end && j < READ_AHEAD; j++) {
+				for ( int j = 0; tape.pos < tape.end && j < READ_AHEAD; j++ ) {
 					readRow(tape);
 				}
 			}
-			if (tape.buffer.size() > 0) {
-				if (next == -1) {
+			if ( tape.buffer.size() > 0 ) {
+				if ( next == -1 ) {
 					next = i;
-				} else if (compareTapes(tape, getTape(next)) < 0) {
+				} else if ( compareTapes(tape, getTape(next)) < 0 ) {
 					next = i;
 				}
 			}
@@ -201,42 +202,41 @@ class ResultDiskBuffer implements ResultExternal {
 		t.buffer.remove(0);
 		return row;
 	}
-
+	
 	private ResultDiskTape getTape(int i) {
 		return (ResultDiskTape) tapes.get(i);
 	}
-
-	private int compareTapes(ResultDiskTape a, ResultDiskTape b)
-			throws SQLException {
+	
+	private int compareTapes(ResultDiskTape a, ResultDiskTape b) throws SQLException {
 		Value[] va = (Value[]) a.buffer.get(0);
 		Value[] vb = (Value[]) b.buffer.get(0);
 		return sort.compare(va, vb);
 	}
-
+	
 	protected void finalize() {
-		if (!SysProperties.runFinalize) {
+		if ( !SysProperties.runFinalize ) {
 			return;
 		}
 		close();
 	}
-
+	
 	public void close() {
-		if (file != null) {
+		if ( file != null ) {
 			file.closeAndDeleteSilently();
 			file = null;
 		}
 	}
-
+	
 	public int removeRow(Value[] values) {
 		throw Message.throwInternalError();
 	}
-
+	
 	public boolean contains(Value[] values) {
 		throw Message.throwInternalError();
 	}
-
+	
 	public int addRow(Value[] values) {
 		throw Message.throwInternalError();
 	}
-
+	
 }

@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.expression;
 
@@ -28,117 +26,123 @@ import org.h2.value.ValueString;
  * Pattern matching comparison expression: WHERE NAME LIKE ?
  */
 public class CompareLike extends Condition {
-
+	
 	private static final int MATCH = 0, ONE = 1, ANY = 2;
-
+	
 	private final CompareMode compareMode;
+	
 	private final boolean regexp;
+	
 	private Expression left;
+	
 	private Expression right;
+	
 	private Expression escape;
-
+	
 	private boolean isInit;
+	
 	private char[] pattern;
+	
 	private String patternString;
+	
 	private Pattern patternRegexp;
+	
 	private int[] types;
+	
 	private int patternLength;
+	
 	private boolean ignoreCase;
-
-	public CompareLike(CompareMode compareMode, Expression left,
-			Expression right, Expression escape, boolean regexp) {
+	
+	public CompareLike(CompareMode compareMode, Expression left, Expression right, Expression escape, boolean regexp) {
 		this.compareMode = compareMode;
 		this.regexp = regexp;
 		this.left = left;
 		this.right = right;
 		this.escape = escape;
 	}
-
+	
 	public String getSQL() {
 		String sql;
-		if (regexp) {
+		if ( regexp ) {
 			sql = left.getSQL() + " REGEXP " + right.getSQL();
 		} else {
 			sql = left.getSQL() + " LIKE " + right.getSQL();
-			if (escape != null) {
+			if ( escape != null ) {
 				sql += " ESCAPE " + escape.getSQL();
 			}
 		}
 		return "(" + sql + ")";
 	}
-
+	
 	public Expression optimize(Session session) throws SQLException {
 		left = left.optimize(session);
 		right = right.optimize(session);
-		if (left.getType() == Value.STRING_IGNORECASE) {
+		if ( left.getType() == Value.STRING_IGNORECASE ) {
 			ignoreCase = true;
 		}
-		if (left.isValueSet()) {
+		if ( left.isValueSet() ) {
 			Value l = left.getValue(session);
-			if (l == ValueNull.INSTANCE) {
+			if ( l == ValueNull.INSTANCE ) {
 				// NULL LIKE something > NULL
 				return ValueExpression.getNull();
 			}
 		}
-		if (escape != null) {
+		if ( escape != null ) {
 			escape = escape.optimize(session);
 		}
-		if (right.isValueSet() && (escape == null || escape.isValueSet())) {
-			if (left.isValueSet()) {
+		if ( right.isValueSet() && ( escape == null || escape.isValueSet() ) ) {
+			if ( left.isValueSet() ) {
 				return ValueExpression.get(getValue(session));
 			}
 			Value r = right.getValue(session);
-			if (r == ValueNull.INSTANCE) {
+			if ( r == ValueNull.INSTANCE ) {
 				// something LIKE NULL > NULL
 				return ValueExpression.getNull();
 			}
 			Value e = escape == null ? null : escape.getValue(session);
-			if (e == ValueNull.INSTANCE) {
+			if ( e == ValueNull.INSTANCE ) {
 				return ValueExpression.getNull();
 			}
 			String p = r.getString();
 			initPattern(p, getEscapeChar(e));
-			if ("%".equals(p)) {
+			if ( "%".equals(p) ) {
 				// optimization for X LIKE '%': convert to X IS NOT NULL
-				return new Comparison(session, Comparison.IS_NOT_NULL, left,
-						null).optimize(session);
+				return new Comparison(session, Comparison.IS_NOT_NULL, left, null).optimize(session);
 			}
-			if (isFullMatch()) {
+			if ( isFullMatch() ) {
 				// optimization for X LIKE 'Hello': convert to X = 'Hello'
 				Value value = ValueString.get(patternString);
 				Expression expr = ValueExpression.get(value);
-				return new Comparison(session, Comparison.EQUAL, left, expr)
-						.optimize(session);
+				return new Comparison(session, Comparison.EQUAL, left, expr).optimize(session);
 			}
 			isInit = true;
 		}
 		return this;
 	}
-
+	
 	private char getEscapeChar(Value e) {
-		if (e == null) {
+		if ( e == null ) {
 			return Constants.DEFAULT_ESCAPE_CHAR;
 		}
 		String es = e.getString();
 		char esc;
-		if (es == null || es.length() == 0) {
+		if ( es == null || es.length() == 0 ) {
 			esc = Constants.DEFAULT_ESCAPE_CHAR;
 		} else {
 			esc = es.charAt(0);
 		}
 		return esc;
 	}
-
-	public void createIndexConditions(Session session, TableFilter filter)
-			throws SQLException {
-		if (regexp) {
+	
+	public void createIndexConditions(Session session, TableFilter filter) throws SQLException {
+		if ( regexp ) {
 			return;
 		}
-		if (!(left instanceof ExpressionColumn)) {
+		if ( !( left instanceof ExpressionColumn ) ) {
 			return;
 		}
 		ExpressionColumn l = (ExpressionColumn) left;
-		if (filter != l.getTableFilter()) {
+		if ( filter != l.getTableFilter() ) {
 			return;
 		}
 		// parameters are always evaluatable, but
@@ -147,83 +151,76 @@ public class CompareLike extends Condition {
 		// otherwise we would need to prepare at execute time,
 		// which is maybe slower (but maybe not in this case!)
 		// TODO optimizer: like: check what other databases do
-		if (!right.isValueSet()) {
+		if ( !right.isValueSet() ) {
 			return;
 		}
-		if (escape != null && !escape.isValueSet()) {
+		if ( escape != null && !escape.isValueSet() ) {
 			return;
 		}
 		String p = right.getValue(session).getString();
 		Value e = escape == null ? null : escape.getValue(session);
-		if (e == ValueNull.INSTANCE) {
+		if ( e == ValueNull.INSTANCE ) {
 			// should already be optimized
 			Message.throwInternalError();
 		}
 		initPattern(p, getEscapeChar(e));
-		if (patternLength <= 0 || types[0] != MATCH) {
+		if ( patternLength <= 0 || types[0] != MATCH ) {
 			// can't use an index
 			return;
 		}
 		int dataType = l.getColumn().getType();
-		if (dataType != Value.STRING && dataType != Value.STRING_IGNORECASE
-				&& dataType != Value.STRING_FIXED) {
+		if ( dataType != Value.STRING && dataType != Value.STRING_IGNORECASE && dataType != Value.STRING_FIXED ) {
 			// column is not a varchar - can't use the index
 			return;
 		}
 		int maxMatch = 0;
 		StringBuilder buff = new StringBuilder();
-		while (maxMatch < patternLength && types[maxMatch] == MATCH) {
+		while ( maxMatch < patternLength && types[maxMatch] == MATCH ) {
 			buff.append(pattern[maxMatch++]);
 		}
 		String begin = buff.toString();
-		if (maxMatch == patternLength) {
-			filter.addIndexCondition(new IndexCondition(Comparison.EQUAL, l,
-					ValueExpression.get(ValueString.get(begin))));
+		if ( maxMatch == patternLength ) {
+			filter.addIndexCondition(new IndexCondition(Comparison.EQUAL, l, ValueExpression.get(ValueString.get(begin))));
 		} else {
 			// TODO check if this is correct according to Unicode rules (code
 			// points)
 			String end;
-			if (begin.length() > 0) {
-				filter.addIndexCondition(new IndexCondition(
-						Comparison.BIGGER_EQUAL, l, ValueExpression
-								.get(ValueString.get(begin))));
+			if ( begin.length() > 0 ) {
+				filter.addIndexCondition(new IndexCondition(Comparison.BIGGER_EQUAL, l, ValueExpression.get(ValueString.get(begin))));
 				char next = begin.charAt(begin.length() - 1);
 				// search the 'next' unicode character (or at least a character
 				// that is higher)
-				for (int i = 1; i < 2000; i++) {
-					end = begin.substring(0, begin.length() - 1)
-							+ (char) (next + i);
-					if (compareMode.compareString(begin, end, ignoreCase) == -1) {
-						filter.addIndexCondition(new IndexCondition(
-								Comparison.SMALLER, l, ValueExpression
-										.get(ValueString.get(end))));
+				for ( int i = 1; i < 2000; i++ ) {
+					end = begin.substring(0, begin.length() - 1) + (char) ( next + i );
+					if ( compareMode.compareString(begin, end, ignoreCase) == -1 ) {
+						filter.addIndexCondition(new IndexCondition(Comparison.SMALLER, l, ValueExpression.get(ValueString.get(end))));
 						break;
 					}
 				}
 			}
 		}
 	}
-
+	
 	public Value getValue(Session session) throws SQLException {
 		Value l = left.getValue(session);
-		if (l == ValueNull.INSTANCE) {
+		if ( l == ValueNull.INSTANCE ) {
 			return l;
 		}
-		if (!isInit) {
+		if ( !isInit ) {
 			Value r = right.getValue(session);
-			if (r == ValueNull.INSTANCE) {
+			if ( r == ValueNull.INSTANCE ) {
 				return r;
 			}
 			String p = r.getString();
 			Value e = escape == null ? null : escape.getValue(session);
-			if (e == ValueNull.INSTANCE) {
+			if ( e == ValueNull.INSTANCE ) {
 				return ValueNull.INSTANCE;
 			}
 			initPattern(p, getEscapeChar(e));
 		}
 		String value = l.getString();
 		boolean result;
-		if (regexp) {
+		if ( regexp ) {
 			// result = patternRegexp.matcher(value).matches();
 			result = patternRegexp.matcher(value).find();
 		} else {
@@ -231,33 +228,33 @@ public class CompareLike extends Condition {
 		}
 		return ValueBoolean.get(result);
 	}
-
+	
 	private boolean compare(String s, int pi, int si) {
 		// TODO check if this is correct according to Unicode rules (code
 		// points)
 		return compareMode.equalsChars(patternString, pi, s, si, ignoreCase);
 	}
-
+	
 	private boolean compareAt(String s, int pi, int si, int sLen) {
-		for (; pi < patternLength; pi++) {
+		for ( ; pi < patternLength; pi++ ) {
 			int type = types[pi];
 			switch (type) {
 			case MATCH:
-				if ((si >= sLen) || !compare(s, pi, si++)) {
+				if ( ( si >= sLen ) || !compare(s, pi, si++) ) {
 					return false;
 				}
 				break;
 			case ONE:
-				if (si++ >= sLen) {
+				if ( si++ >= sLen ) {
 					return false;
 				}
 				break;
 			case ANY:
-				if (++pi >= patternLength) {
+				if ( ++pi >= patternLength ) {
 					return true;
 				}
-				while (si < sLen) {
-					if (compare(s, pi, si) && compareAt(s, pi, si, sLen)) {
+				while ( si < sLen ) {
+					if ( compare(s, pi, si) && compareAt(s, pi, si, sLen) ) {
 						return true;
 					}
 					si++;
@@ -269,7 +266,7 @@ public class CompareLike extends Condition {
 		}
 		return si == sLen;
 	}
-
+	
 	/**
 	 * Test if the value matches the pattern.
 	 * 
@@ -281,30 +278,27 @@ public class CompareLike extends Condition {
 	 *            the escape character
 	 * @return true if the value matches
 	 */
-	public boolean test(String pattern, String value, char escape)
-			throws SQLException {
+	public boolean test(String pattern, String value, char escape) throws SQLException {
 		initPattern(pattern, escape);
 		return compareAt(value, 0, 0, value.length());
 	}
-
+	
 	private void initPattern(String p, char escape) throws SQLException {
-		if (regexp) {
+		if ( regexp ) {
 			patternString = p;
 			try {
-				if (ignoreCase) {
-					patternRegexp = Pattern
-							.compile(p, Pattern.CASE_INSENSITIVE);
+				if ( ignoreCase ) {
+					patternRegexp = Pattern.compile(p, Pattern.CASE_INSENSITIVE);
 				} else {
 					patternRegexp = Pattern.compile(p);
 				}
-			} catch (PatternSyntaxException e) {
-				throw Message.getSQLException(ErrorCode.LIKE_ESCAPE_ERROR_1,
-						new String[] { p }, e);
+			} catch ( PatternSyntaxException e ) {
+				throw Message.getSQLException(ErrorCode.LIKE_ESCAPE_ERROR_1, new String[] { p }, e);
 			}
 			return;
 		}
 		patternLength = 0;
-		if (p == null) {
+		if ( p == null ) {
 			types = null;
 			pattern = null;
 			return;
@@ -313,30 +307,26 @@ public class CompareLike extends Condition {
 		pattern = new char[len];
 		types = new int[len];
 		boolean lastAny = false;
-		for (int i = 0; i < len; i++) {
+		for ( int i = 0; i < len; i++ ) {
 			char c = p.charAt(i);
 			int type;
-			if (escape == c) {
-				if (i >= len - 1) {
-					throw Message.getSQLException(
-							ErrorCode.LIKE_ESCAPE_ERROR_1,
-							StringUtils.addAsterisk(p, i));
+			if ( escape == c ) {
+				if ( i >= len - 1 ) {
+					throw Message.getSQLException(ErrorCode.LIKE_ESCAPE_ERROR_1, StringUtils.addAsterisk(p, i));
 				}
 				c = p.charAt(++i);
-				if (c != '_' && c != '%' && c != escape) {
-					throw Message.getSQLException(
-							ErrorCode.LIKE_ESCAPE_ERROR_1,
-							StringUtils.addAsterisk(p, i));
+				if ( c != '_' && c != '%' && c != escape ) {
+					throw Message.getSQLException(ErrorCode.LIKE_ESCAPE_ERROR_1, StringUtils.addAsterisk(p, i));
 				}
 				type = MATCH;
 				lastAny = false;
-			} else if (c == '%') {
-				if (lastAny) {
+			} else if ( c == '%' ) {
+				if ( lastAny ) {
 					continue;
 				}
 				type = ANY;
 				lastAny = true;
-			} else if (c == '_') {
+			} else if ( c == '_' ) {
 				type = ONE;
 			} else {
 				type = MATCH;
@@ -345,59 +335,57 @@ public class CompareLike extends Condition {
 			types[patternLength] = type;
 			pattern[patternLength++] = c;
 		}
-		for (int i = 0; i < patternLength - 1; i++) {
-			if ((types[i] == ANY) && (types[i + 1] == ONE)) {
+		for ( int i = 0; i < patternLength - 1; i++ ) {
+			if ( ( types[i] == ANY ) && ( types[i + 1] == ONE ) ) {
 				types[i] = ONE;
 				types[i + 1] = ANY;
 			}
 		}
 		patternString = new String(pattern, 0, patternLength);
 	}
-
+	
 	private boolean isFullMatch() {
-		if (types == null) {
+		if ( types == null ) {
 			return false;
 		}
-		for (int type : types) {
-			if (type != MATCH) {
+		for ( int type : types ) {
+			if ( type != MATCH ) {
 				return false;
 			}
 		}
 		return true;
 	}
-
-	public void mapColumns(ColumnResolver resolver, int level)
-			throws SQLException {
+	
+	public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
 		left.mapColumns(resolver, level);
 		right.mapColumns(resolver, level);
-		if (escape != null) {
+		if ( escape != null ) {
 			escape.mapColumns(resolver, level);
 		}
 	}
-
+	
 	public void setEvaluatable(TableFilter tableFilter, boolean b) {
 		left.setEvaluatable(tableFilter, b);
 		right.setEvaluatable(tableFilter, b);
-		if (escape != null) {
+		if ( escape != null ) {
 			escape.setEvaluatable(tableFilter, b);
 		}
 	}
-
+	
 	public void updateAggregate(Session session) throws SQLException {
 		left.updateAggregate(session);
 		right.updateAggregate(session);
-		if (escape != null) {
+		if ( escape != null ) {
 			escape.updateAggregate(session);
 		}
 	}
-
+	
 	public boolean isEverything(ExpressionVisitor visitor) {
-		return left.isEverything(visitor) && right.isEverything(visitor)
-				&& (escape == null || escape.isEverything(visitor));
+		return left.isEverything(visitor) && right.isEverything(visitor) && ( escape == null || escape.isEverything(visitor) );
 	}
-
+	
 	public int getCost() {
 		return left.getCost() + right.getCost() + 3;
 	}
-
+	
 }

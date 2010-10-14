@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.db;
 
@@ -18,20 +16,20 @@ import java.util.Vector;
 import org.h2.test.TestBase;
 
 /**
- * Transactional tests, including transaction isolation tests, and tests related
- * to savepoints.
+ * Transactional tests, including transaction isolation tests, and tests related to savepoints.
  */
 public class TestTransaction extends TestBase {
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws SQLException {
 		testSetTransaction();
 		testReferential();
@@ -39,7 +37,7 @@ public class TestTransaction extends TestBase {
 		testIsolation();
 		deleteDb("transaction");
 	}
-
+	
 	private void testSetTransaction() throws SQLException {
 		deleteDb("transaction");
 		Connection conn = getConnection("transaction");
@@ -51,16 +49,16 @@ public class TestTransaction extends TestBase {
 		conn.commit();
 		assertSingleValue(stat, "select id from test", 1);
 		assertSingleValue(stat, "call @x", 1);
-
+		
 		stat.execute("update test set id=2");
 		stat.execute("set @x = 2");
 		conn.rollback();
 		assertSingleValue(stat, "select id from test", 1);
 		assertSingleValue(stat, "call @x", 2);
-
+		
 		conn.close();
 	}
-
+	
 	private void testReferential() throws SQLException {
 		deleteDb("transaction");
 		Connection c1 = getConnection("transaction");
@@ -77,7 +75,7 @@ public class TestTransaction extends TestBase {
 		try {
 			s2.executeUpdate("insert into B values('two', 1)");
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		c2.commit();
@@ -85,7 +83,7 @@ public class TestTransaction extends TestBase {
 		c1.close();
 		c2.close();
 	}
-
+	
 	private void testSavepoint() throws SQLException {
 		deleteDb("transaction");
 		Connection conn = getConnection("transaction");
@@ -99,7 +97,7 @@ public class TestTransaction extends TestBase {
 		int len = getSize(2000, 10000);
 		Random random = new Random(10);
 		Savepoint sp = null;
-		for (int i = 0; i < len; i++) {
+		for ( int i = 0; i < len; i++ ) {
 			int tableId = random.nextInt(2);
 			String table = "TEST" + tableId;
 			int op = random.nextInt(6);
@@ -109,7 +107,7 @@ public class TestTransaction extends TestBase {
 				count[tableId]++;
 				break;
 			case 1:
-				if (count[tableId] > 0) {
+				if ( count[tableId] > 0 ) {
 					stat.execute("DELETE FROM " + table + " WHERE ID=SELECT MIN(ID) FROM " + table);
 					count[tableId]--;
 				}
@@ -120,7 +118,7 @@ public class TestTransaction extends TestBase {
 				countSave[1] = count[1];
 				break;
 			case 3:
-				if (sp != null) {
+				if ( sp != null ) {
 					conn.rollback(sp);
 					count[0] = countSave[0];
 					count[1] = countSave[1];
@@ -145,14 +143,14 @@ public class TestTransaction extends TestBase {
 		}
 		conn.close();
 	}
-
+	
 	private void checkTableCount(Statement stat, String tableName, int count) throws SQLException {
 		ResultSet rs;
 		rs = stat.executeQuery("SELECT COUNT(*) FROM " + tableName);
 		rs.next();
 		assertEquals(count, rs.getInt(1));
 	}
-
+	
 	private void testIsolation() throws SQLException {
 		Connection conn = getConnection("transaction");
 		trace("default TransactionIsolation=" + conn.getTransactionIsolation());
@@ -183,7 +181,7 @@ public class TestTransaction extends TestBase {
 		testNestedResultSets(conn);
 		conn.close();
 	}
-
+	
 	private void testNestedResultSets(Connection conn) throws SQLException {
 		Statement stat = conn.createStatement();
 		test(stat, "CREATE TABLE NEST1(ID INT PRIMARY KEY,VALUE VARCHAR(255))");
@@ -193,16 +191,16 @@ public class TestTransaction extends TestBase {
 		ResultSet rs1, rs2;
 		result = new Vector();
 		rs1 = meta.getTables(null, null, "NEST%", null);
-		while (rs1.next()) {
+		while ( rs1.next() ) {
 			String table = rs1.getString("TABLE_NAME");
 			rs2 = meta.getColumns(null, null, table, null);
-			while (rs2.next()) {
+			while ( rs2.next() ) {
 				String column = rs2.getString("COLUMN_NAME");
 				trace("Table: " + table + " Column: " + column);
 				result.add(table + "." + column);
 			}
 		}
-		if (result.size() != 4) {
+		if ( result.size() != 4 ) {
 			fail("Wrong result, should be NEST1.ID, NEST1.NAME, NEST2.ID, NEST2.NAME but is " + result);
 		}
 		result = new Vector();
@@ -213,15 +211,15 @@ public class TestTransaction extends TestBase {
 		Statement s1 = conn.createStatement();
 		Statement s2 = conn.createStatement();
 		rs1 = s1.executeQuery("SELECT * FROM NEST1 ORDER BY ID");
-		while (rs1.next()) {
+		while ( rs1.next() ) {
 			rs2 = s2.executeQuery("SELECT * FROM NEST2 ORDER BY ID");
-			while (rs2.next()) {
+			while ( rs2.next() ) {
 				String v1 = rs1.getString("VALUE");
 				String v2 = rs2.getString("VALUE");
 				result.add(v1 + "/" + v2);
 			}
 		}
-		if (result.size() != 4) {
+		if ( result.size() != 4 ) {
 			fail("Wrong result, should be A/1, A/2, B/1, B/2 but is " + result);
 		}
 		result = new Vector();
@@ -230,34 +228,34 @@ public class TestTransaction extends TestBase {
 		try {
 			rs1.next();
 			fail("next worked on a closed result set");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		// this is already closed, so but closing again should no do any harm
 		rs1.close();
-		while (rs2.next()) {
+		while ( rs2.next() ) {
 			String v1 = rs2.getString("VALUE");
 			result.add(v1);
 		}
-		if (result.size() != 2) {
+		if ( result.size() != 2 ) {
 			fail("Wrong result, should be A, B but is " + result);
 		}
 		test(stat, "DROP TABLE NEST1");
 		test(stat, "DROP TABLE NEST2");
 	}
-
+	
 	private void testValue(Statement stat, String sql, String data) throws SQLException {
 		ResultSet rs = stat.executeQuery(sql);
 		rs.next();
 		String s = rs.getString(1);
-		if (s == null ? (data != null) : (!s.equals(data))) {
+		if ( s == null ? ( data != null ) : ( !s.equals(data) ) ) {
 			fail("s= " + s + " should be: " + data);
 		}
 	}
-
+	
 	private void test(Statement stat, String sql) throws SQLException {
 		trace(sql);
 		stat.execute(sql);
 	}
-
+	
 }

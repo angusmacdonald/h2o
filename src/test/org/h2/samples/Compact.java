@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.samples;
 
@@ -16,17 +14,16 @@ import org.h2.tools.RunScript;
 import org.h2.tools.Script;
 
 /**
- * This sample application shows how to compact the database files.
- * This is done by creating a SQL script, and then re-creating the database
+ * This sample application shows how to compact the database files. This is done by creating a SQL script, and then re-creating the database
  * using this script.
  */
 public class Compact {
-
+	
 	/**
-	 * This method is called when executing this sample application from the
-	 * command line.
-	 *
-	 * @param args the command line parameters
+	 * This method is called when executing this sample application from the command line.
+	 * 
+	 * @param args
+	 *            the command line parameters
 	 */
 	public static void main(String[] args) throws Exception {
 		DeleteDbFiles.execute("data", "test", true);
@@ -40,14 +37,18 @@ public class Compact {
 		compact("data", "test", "sa", "");
 		System.out.println("Done.");
 	}
-
+	
 	/**
 	 * Utility method to compact a database.
-	 *
-	 * @param dir the directory
-	 * @param dbName the database name
-	 * @param user the user name
-	 * @param password the password
+	 * 
+	 * @param dir
+	 *            the directory
+	 * @param dbName
+	 *            the database name
+	 * @param user
+	 *            the user name
+	 * @param password
+	 *            the password
 	 */
 	public static void compact(String dir, String dbName, String user, String password) throws SQLException {
 		String url = "jdbc:h2:" + dir + "/" + dbName;

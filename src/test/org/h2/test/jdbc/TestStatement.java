@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.jdbc;
 
@@ -21,36 +19,37 @@ import org.h2.test.TestBase;
  * Tests for the Statement implementation.
  */
 public class TestStatement extends TestBase {
-
+	
 	private Connection conn;
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws SQLException {
 		deleteDb("statement");
 		conn = getConnection("statement");
 		testTraceError();
-		if (config.jdk14) {
+		if ( config.jdk14 ) {
 			testSavepoint();
 		}
 		testConnectionRollback();
 		testStatement();
-		if (config.jdk14) {
+		if ( config.jdk14 ) {
 			testIdentity();
 		}
 		conn.close();
 		deleteDb("statement");
 	}
-
+	
 	private void testTraceError() throws SQLException {
-		if (config.memory || config.networked || config.traceLevelFile != 0) {
+		if ( config.memory || config.networked || config.traceLevelFile != 0 ) {
 			return;
 		}
 		Statement stat = conn.createStatement();
@@ -61,7 +60,7 @@ public class TestStatement extends TestBase {
 		long start = trace.length();
 		try {
 			stat.execute("ERROR");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			// ignore
 		}
 		long error = trace.length();
@@ -69,14 +68,14 @@ public class TestStatement extends TestBase {
 		start = error;
 		try {
 			stat.execute("INSERT INTO TEST VALUES(1)");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			// ignore
 		}
 		error = trace.length();
 		assertEquals(start, error);
 		stat.execute("DROP TABLE TEST IF EXISTS");
 	}
-
+	
 	private void testConnectionRollback() throws SQLException {
 		Statement stat = conn.createStatement();
 		conn.setAutoCommit(false);
@@ -88,7 +87,7 @@ public class TestStatement extends TestBase {
 		stat.execute("DROP TABLE TEST");
 		conn.setAutoCommit(true);
 	}
-
+	
 	private void testSavepoint() throws SQLException {
 		Statement stat = conn.createStatement();
 		stat.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255))");
@@ -99,7 +98,7 @@ public class TestStatement extends TestBase {
 		try {
 			savepoint1.getSavepointName();
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		stat.execute("DELETE FROM TEST");
@@ -111,7 +110,7 @@ public class TestStatement extends TestBase {
 		try {
 			savepoint2a.getSavepointId();
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		int id2 = savepoint2.getSavepointId();
@@ -123,7 +122,7 @@ public class TestStatement extends TestBase {
 		try {
 			savepointTest.getSavepointId();
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		conn.rollback(savepointTest);
@@ -136,23 +135,23 @@ public class TestStatement extends TestBase {
 		try {
 			conn.rollback(savepoint2);
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		stat.execute("DROP TABLE TEST");
 		conn.setAutoCommit(true);
 	}
-
+	
 	private void testStatement() throws SQLException {
-
+		
 		Statement stat = conn.createStatement();
-
-		//## Java 1.4 begin ##
+		
+		// ## Java 1.4 begin ##
 		assertEquals(ResultSet.HOLD_CURSORS_OVER_COMMIT, conn.getHoldability());
 		conn.setHoldability(ResultSet.CLOSE_CURSORS_AT_COMMIT);
 		assertEquals(ResultSet.CLOSE_CURSORS_AT_COMMIT, conn.getHoldability());
-		//## Java 1.4 end ##
-
+		// ## Java 1.4 end ##
+		
 		// ignored
 		stat.setCursorName("x");
 		// fixed return value
@@ -161,41 +160,41 @@ public class TestStatement extends TestBase {
 		stat.setFetchDirection(ResultSet.FETCH_REVERSE);
 		// ignored
 		stat.setMaxFieldSize(100);
-
+		
 		assertEquals(SysProperties.SERVER_RESULT_SET_FETCH_SIZE, stat.getFetchSize());
 		stat.setFetchSize(10);
 		assertEquals(10, stat.getFetchSize());
 		stat.setFetchSize(0);
 		assertEquals(SysProperties.SERVER_RESULT_SET_FETCH_SIZE, stat.getFetchSize());
 		assertEquals(ResultSet.TYPE_FORWARD_ONLY, stat.getResultSetType());
-		Statement stat2 = conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+		Statement stat2 = conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY,
+				ResultSet.HOLD_CURSORS_OVER_COMMIT);
 		assertEquals(ResultSet.TYPE_SCROLL_SENSITIVE, stat2.getResultSetType());
 		assertEquals(ResultSet.HOLD_CURSORS_OVER_COMMIT, stat2.getResultSetHoldability());
 		assertEquals(ResultSet.CONCUR_UPDATABLE, stat2.getResultSetConcurrency());
 		assertEquals(0, stat.getMaxFieldSize());
-		assertTrue(!((JdbcStatement) stat2).isClosed());
+		assertTrue(!( (JdbcStatement) stat2 ).isClosed());
 		stat2.close();
-		assertTrue(((JdbcStatement) stat2).isClosed());
-
-
+		assertTrue(( (JdbcStatement) stat2 ).isClosed());
+		
 		ResultSet rs;
 		int count;
 		boolean result;
-
+		
 		stat.execute("CREATE TABLE TEST(ID INT)");
 		stat.execute("SELECT * FROM TEST");
 		stat.execute("DROP TABLE TEST");
-
+		
 		conn.getTypeMap();
-
+		
 		// this method should not throw an exception - if not supported, this
 		// calls are ignored
-
-		if (config.jdk14) {
+		
+		if ( config.jdk14 ) {
 			assertEquals(stat.getResultSetHoldability(), ResultSet.HOLD_CURSORS_OVER_COMMIT);
 		}
 		assertEquals(stat.getResultSetConcurrency(), ResultSet.CONCUR_UPDATABLE);
-
+		
 		stat.cancel();
 		stat.setQueryTimeout(10);
 		assertTrue(stat.getQueryTimeout() == 10);
@@ -205,7 +204,7 @@ public class TestStatement extends TestBase {
 		try {
 			stat.setQueryTimeout(-1);
 			fail("setQueryTimeout(-1) didn't throw an exception");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		assertTrue(stat.getQueryTimeout() == 0);
@@ -230,13 +229,13 @@ public class TestStatement extends TestBase {
 		try {
 			stat.executeUpdate("SELECT * FROM TEST");
 			fail("executeUpdate allowed SELECT");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 			trace("no error - SELECT not allowed with executeUpdate");
 		}
 		count = stat.executeUpdate("DROP TABLE TEST");
 		assertTrue(count == 0);
-
+		
 		trace("execute");
 		result = stat.execute("CREATE TABLE TEST(ID INT PRIMARY KEY,VALUE VARCHAR(255))");
 		assertTrue(!result);
@@ -252,12 +251,12 @@ public class TestStatement extends TestBase {
 		assertTrue(result);
 		result = stat.execute("DROP TABLE TEST");
 		assertTrue(!result);
-
+		
 		trace("executeQuery");
 		try {
 			stat.executeQuery("CREATE TABLE TEST(ID INT PRIMARY KEY,VALUE VARCHAR(255))");
 			fail("executeQuery allowed CREATE TABLE");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 			trace("no error - CREATE not allowed with executeQuery");
 		}
@@ -265,21 +264,21 @@ public class TestStatement extends TestBase {
 		try {
 			stat.executeQuery("INSERT INTO TEST VALUES(1,'Hello')");
 			fail("executeQuery allowed INSERT");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 			trace("no error - INSERT not allowed with executeQuery");
 		}
 		try {
 			stat.executeQuery("UPDATE TEST SET VALUE='LDBC' WHERE ID=2");
 			fail("executeQuery allowed UPDATE");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 			trace("no error - UPDATE not allowed with executeQuery");
 		}
 		try {
 			stat.executeQuery("DELETE FROM TEST WHERE ID=3");
 			fail("executeQuery allowed DELETE");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 			trace("no error - DELETE not allowed with executeQuery");
 		}
@@ -287,7 +286,7 @@ public class TestStatement extends TestBase {
 		try {
 			stat.executeQuery("DROP TABLE TEST");
 			fail("executeQuery allowed DROP");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 			trace("no error - DROP not allowed with executeQuery");
 		}
@@ -298,7 +297,7 @@ public class TestStatement extends TestBase {
 			// supposed to be closed now
 			rs.next();
 			fail("getMoreResults didn't close this result set");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 			trace("no error - getMoreResults is supposed to close the result set");
 		}
@@ -306,18 +305,18 @@ public class TestStatement extends TestBase {
 		count = stat.executeUpdate("DELETE FROM TEST");
 		assertFalse(stat.getMoreResults());
 		assertTrue(stat.getUpdateCount() == -1);
-
+		
 		stat.execute("DROP TABLE TEST");
 		stat.executeUpdate("DROP TABLE IF EXISTS TEST");
-
+		
 		assertTrue(stat.getWarnings() == null);
 		stat.clearWarnings();
 		assertTrue(stat.getWarnings() == null);
 		assertTrue(conn == stat.getConnection());
-
+		
 		stat.close();
 	}
-
+	
 	private void testIdentity() throws SQLException {
 		Statement stat = conn.createStatement();
 		stat.execute("CREATE SEQUENCE SEQ");
@@ -359,5 +358,5 @@ public class TestStatement extends TestBase {
 		assertFalse(rs.next());
 		stat.execute("DROP TABLE TEST");
 	}
-
+	
 }

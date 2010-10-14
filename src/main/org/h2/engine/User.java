@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.engine;
 
@@ -26,26 +24,30 @@ import org.h2.util.StringUtils;
  * Represents a user object.
  */
 public class User extends RightOwner {
-
+	
 	private final boolean systemUser;
+	
 	private byte[] salt;
+	
 	private byte[] passwordHash;
+	
 	private boolean admin;
+	
 	public int sessions = 0;
-
+	
 	public User(Database database, int id, String userName, boolean systemUser) {
 		super(database, id, userName, Trace.USER);
 		this.systemUser = systemUser;
 	}
-
+	
 	public void setAdmin(boolean admin) {
 		this.admin = admin;
 	}
-
+	
 	public boolean getAdmin() {
 		return admin;
 	}
-
+	
 	/**
 	 * Set the salt and hash of the password for this user.
 	 * 
@@ -58,34 +60,33 @@ public class User extends RightOwner {
 		this.salt = salt;
 		this.passwordHash = hash;
 	}
-
+	
 	/**
-	 * Set the user name password hash. A random salt is generated as well. The
-	 * parameter is filled with zeros after use.
+	 * Set the user name password hash. A random salt is generated as well. The parameter is filled with zeros after use.
 	 * 
 	 * @param userPasswordHash
 	 *            the user name password hash
 	 */
 	public void setUserPasswordHash(byte[] userPasswordHash) {
-		if (userPasswordHash != null) {
+		if ( userPasswordHash != null ) {
 			salt = RandomUtils.getSecureBytes(Constants.SALT_LEN);
 			SHA256 sha = new SHA256();
 			this.passwordHash = sha.getHashWithSalt(userPasswordHash, salt);
 		}
 	}
-
+	
 	public String getCreateSQLForCopy(Table table, String quotedName) {
 		throw Message.throwInternalError();
 	}
-
+	
 	public String getCreateSQL() {
 		return getCreateSQL(true, false);
 	}
-
+	
 	public String getDropSQL() {
 		return null;
 	}
-
+	
 	/**
 	 * Checks that this user has the given rights for this database object.
 	 * 
@@ -97,48 +98,46 @@ public class User extends RightOwner {
 	 *             if this user does not have the required rights
 	 */
 	public void checkRight(Table table, int rightMask) throws SQLException {
-		if (rightMask != Right.SELECT && !systemUser) {
+		if ( rightMask != Right.SELECT && !systemUser ) {
 			database.checkWritingAllowed();
 		}
-		if (admin) {
+		if ( admin ) {
 			return;
 		}
 		Role publicRole = database.getPublicRole();
-		if (publicRole.isRightGrantedRecursive(table, rightMask)) {
+		if ( publicRole.isRightGrantedRecursive(table, rightMask) ) {
 			return;
 		}
-		if (table instanceof MetaTable || table instanceof RangeTable) {
+		if ( table instanceof MetaTable || table instanceof RangeTable ) {
 			// everybody has access to the metadata information
 			return;
 		}
 		String tableType = table.getTableType();
-		if (Table.VIEW.equals(tableType)) {
+		if ( Table.VIEW.equals(tableType) ) {
 			TableView v = (TableView) table;
-			if (v.getOwner() == this) {
+			if ( v.getOwner() == this ) {
 				// the owner of a view has access:
 				// SELECT * FROM (SELECT * FROM ...)
 				return;
 			}
-		} else if (tableType == null) {
+		} else if ( tableType == null ) {
 			// function table
 			return;
 		}
-		if (!isRightGrantedRecursive(table, rightMask)) {
-			if (table.getTemporary() && !table.getGlobalTemporary()) {
+		if ( !isRightGrantedRecursive(table, rightMask) ) {
+			if ( table.getTemporary() && !table.getGlobalTemporary() ) {
 				// the owner has all rights on local temporary tables
 				return;
 			}
-			throw Message.getSQLException(ErrorCode.NOT_ENOUGH_RIGHTS_FOR_1,
-					table.getSQL());
+			throw Message.getSQLException(ErrorCode.NOT_ENOUGH_RIGHTS_FOR_1, table.getSQL());
 		}
 	}
-
+	
 	/**
 	 * Get the CREATE SQL statement for this object.
 	 * 
 	 * @param password
-	 *            true if the password (actually the salt and hash) should be
-	 *            returned
+	 *            true if the password (actually the salt and hash) should be returned
 	 * @param ifNotExists
 	 *            true if IF NOT EXISTS should be used
 	 * @return the SQL statement
@@ -146,15 +145,15 @@ public class User extends RightOwner {
 	public String getCreateSQL(boolean password, boolean ifNotExists) {
 		StringBuilder buff = new StringBuilder();
 		buff.append("CREATE USER ");
-		if (ifNotExists) {
+		if ( ifNotExists ) {
 			buff.append("IF NOT EXISTS ");
 		}
 		buff.append(getSQL());
-		if (comment != null) {
+		if ( comment != null ) {
 			buff.append(" COMMENT ");
 			buff.append(StringUtils.quoteStringSQL(comment));
 		}
-		if (password) {
+		if ( password ) {
 			buff.append(" SALT '");
 			buff.append(ByteUtils.convertBytesToString(salt));
 			buff.append("' HASH '");
@@ -163,12 +162,12 @@ public class User extends RightOwner {
 		} else {
 			buff.append(" PASSWORD ''");
 		}
-		if (admin) {
+		if ( admin ) {
 			buff.append(" ADMIN");
 		}
 		return buff.toString();
 	}
-
+	
 	/**
 	 * Check the password of this user.
 	 * 
@@ -181,48 +180,47 @@ public class User extends RightOwner {
 		byte[] hash = sha.getHashWithSalt(userPasswordHash, salt);
 		return ByteUtils.compareSecure(hash, passwordHash);
 	}
-
+	
 	/**
-	 * Check if this user has admin rights. An exception is thrown if he does
-	 * not have them.
+	 * Check if this user has admin rights. An exception is thrown if he does not have them.
 	 * 
 	 * @throws SQLException
 	 *             if this user is not an admin
 	 */
 	public void checkAdmin() throws SQLException {
-		if (!admin) {
+		if ( !admin ) {
 			throw Message.getSQLException(ErrorCode.ADMIN_RIGHTS_REQUIRED);
 		}
 	}
-
+	
 	public int getType() {
 		return DbObject.USER;
 	}
-
+	
 	public ObjectArray getChildren() {
 		ObjectArray all = database.getAllRights();
 		ObjectArray children = new ObjectArray();
-		for (int i = 0; i < all.size(); i++) {
+		for ( int i = 0; i < all.size(); i++ ) {
 			Right right = (Right) all.get(i);
-			if (right.getGrantee() == this) {
+			if ( right.getGrantee() == this ) {
 				children.add(right);
 			}
 		}
 		all = database.getAllSchemas();
-		for (int i = 0; i < all.size(); i++) {
+		for ( int i = 0; i < all.size(); i++ ) {
 			Schema schema = (Schema) all.get(i);
-			if (schema.getOwner() == this) {
+			if ( schema.getOwner() == this ) {
 				children.add(schema);
 			}
 		}
 		return children;
 	}
-
+	
 	public void removeChildrenAndResources(Session session) throws SQLException {
 		ObjectArray rights = database.getAllRights();
-		for (int i = 0; i < rights.size(); i++) {
+		for ( int i = 0; i < rights.size(); i++ ) {
 			Right right = (Right) rights.get(i);
-			if (right.getGrantee() == this) {
+			if ( right.getGrantee() == this ) {
 				database.removeDatabaseObject(session, right);
 			}
 		}
@@ -232,29 +230,27 @@ public class User extends RightOwner {
 		passwordHash = null;
 		invalidate();
 	}
-
+	
 	public void checkRename() {
 		// ok
 	}
-
+	
 	/**
-	 * Check that this user does not own any schema. An exception is thrown if
-	 * he owns one or more schemas.
+	 * Check that this user does not own any schema. An exception is thrown if he owns one or more schemas.
 	 * 
 	 * @throws SQLException
 	 *             if this user owns a schema
 	 */
 	public void checkOwnsNoSchemas() throws SQLException {
-		if (database == null)
+		if ( database == null )
 			return;
 		ObjectArray schemas = database.getAllSchemas();
-		for (int i = 0; i < schemas.size(); i++) {
+		for ( int i = 0; i < schemas.size(); i++ ) {
 			Schema s = (Schema) schemas.get(i);
-			if (this == s.getOwner()) {
-				throw Message.getSQLException(ErrorCode.CANNOT_DROP_2,
-						new String[] { getName(), s.getName() });
+			if ( this == s.getOwner() ) {
+				throw Message.getSQLException(ErrorCode.CANNOT_DROP_2, new String[] { getName(), s.getName() });
 			}
 		}
 	}
-
+	
 }

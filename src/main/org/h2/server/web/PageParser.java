@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.server.web;
 
@@ -12,16 +10,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A page parser can parse an HTML page and replace the tags there. This class
- * is used by the H2 Console.
+ * A page parser can parse an HTML page and replace the tags there. This class is used by the H2 Console.
  */
 public class PageParser {
+	
 	private String page;
+	
 	private int pos;
+	
 	private Map settings;
+	
 	private int len;
+	
 	private StringBuilder result;
-
+	
 	private PageParser(String page, Map settings, int pos) {
 		this.page = page;
 		this.pos = pos;
@@ -29,7 +31,7 @@ public class PageParser {
 		this.settings = settings;
 		result = new StringBuilder(len);
 	}
-
+	
 	/**
 	 * Replace the tags in the HTML page with the given settings.
 	 * 
@@ -43,72 +45,72 @@ public class PageParser {
 		PageParser block = new PageParser(page, settings, 0);
 		return block.replaceTags();
 	}
-
+	
 	private void setError(int i) {
 		String s = page.substring(0, i) + "####BUG####" + page.substring(i);
 		s = PageParser.escapeHtml(s);
 		result = new StringBuilder(s);
 	}
-
+	
 	private String parseBlockUntil(String end) throws ParseException {
 		PageParser block = new PageParser(page, settings, pos);
 		block.parseAll();
-		if (!block.readIf(end)) {
+		if ( !block.readIf(end) ) {
 			throw new ParseException(page, block.pos);
 		}
 		pos = block.pos;
 		return block.result.toString();
 	}
-
+	
 	private String replaceTags() {
 		try {
 			parseAll();
-			if (pos != len) {
+			if ( pos != len ) {
 				setError(pos);
 			}
-		} catch (ParseException e) {
+		} catch ( ParseException e ) {
 			setError(pos);
 		}
 		return result.toString();
 	}
-
+	
 	private void parseAll() throws ParseException {
 		StringBuilder buff = result;
 		String p = page;
 		int i = pos;
-		for (; i < len; i++) {
+		for ( ; i < len; i++ ) {
 			char c = p.charAt(i);
 			switch (c) {
 			case '<': {
-				if (p.charAt(i + 3) == ':' && p.charAt(i + 1) == '/') {
+				if ( p.charAt(i + 3) == ':' && p.charAt(i + 1) == '/' ) {
 					// end tag
 					pos = i;
 					return;
-				} else if (p.charAt(i + 2) == ':') {
+				} else if ( p.charAt(i + 2) == ':' ) {
 					pos = i;
-					if (readIf("<c:forEach")) {
+					if ( readIf("<c:forEach") ) {
 						String var = readParam("var");
 						String items = readParam("items");
 						read(">");
 						int start = pos;
 						ArrayList list = (ArrayList) get(items);
-						if (list == null) {
+						if ( list == null ) {
 							result.append("?items?");
 							list = new ArrayList();
 						}
-						if (list.size() == 0) {
+						if ( list.size() == 0 ) {
 							parseBlockUntil("</c:forEach>");
 						}
-						for (int j = 0; j < list.size(); j++) {
+						for ( int j = 0; j < list.size(); j++ ) {
 							settings.put(var, list.get(j));
 							pos = start;
 							String block = parseBlockUntil("</c:forEach>");
 							result.append(block);
 						}
-					} else if (readIf("<c:if")) {
+					} else if ( readIf("<c:if") ) {
 						String test = readParam("test");
 						int eq = test.indexOf("=='");
-						if (eq < 0) {
+						if ( eq < 0 ) {
 							setError(i);
 							return;
 						}
@@ -118,7 +120,7 @@ public class PageParser {
 						read(">");
 						String block = parseBlockUntil("</c:if>");
 						pos--;
-						if (value.equals(val)) {
+						if ( value.equals(val) ) {
 							result.append(block);
 						}
 					} else {
@@ -132,10 +134,10 @@ public class PageParser {
 				break;
 			}
 			case '$':
-				if (p.charAt(i + 1) == '{') {
+				if ( p.charAt(i + 1) == '{' ) {
 					i += 2;
 					int j = p.indexOf('}', i);
-					if (j < 0) {
+					if ( j < 0 ) {
 						setError(i);
 						return;
 					}
@@ -154,33 +156,33 @@ public class PageParser {
 		}
 		pos = i;
 	}
-
+	
 	private Object get(String item) {
 		int dot = item.indexOf('.');
-		if (dot >= 0) {
+		if ( dot >= 0 ) {
 			String sub = item.substring(dot + 1);
 			item = item.substring(0, dot);
 			HashMap map = (HashMap) settings.get(item);
-			if (map == null) {
+			if ( map == null ) {
 				return "?" + item + "?";
 			}
 			return map.get(sub);
 		}
 		return settings.get(item);
 	}
-
+	
 	private void replaceTags(String s) {
-		if (s != null) {
+		if ( s != null ) {
 			result.append(PageParser.parse(s, settings));
 		}
 	}
-
+	
 	private String readParam(String name) throws ParseException {
 		read(name);
 		read("=");
 		read("\"");
 		int start = pos;
-		while (page.charAt(pos) != '"') {
+		while ( page.charAt(pos) != '"' ) {
 			pos++;
 		}
 		int end = pos;
@@ -188,29 +190,29 @@ public class PageParser {
 		String s = page.substring(start, end);
 		return PageParser.parse(s, settings);
 	}
-
+	
 	private void skipSpaces() {
-		while (page.charAt(pos) == ' ') {
+		while ( page.charAt(pos) == ' ' ) {
 			pos++;
 		}
 	}
-
+	
 	private void read(String s) throws ParseException {
-		if (!readIf(s)) {
+		if ( !readIf(s) ) {
 			throw new ParseException(s, pos);
 		}
 	}
-
+	
 	private boolean readIf(String s) {
 		skipSpaces();
-		if (page.regionMatches(pos, s, 0, s.length())) {
+		if ( page.regionMatches(pos, s, 0, s.length()) ) {
 			pos += s.length();
 			skipSpaces();
 			return true;
 		}
 		return false;
 	}
-
+	
 	/**
 	 * Convert data to HTML, but don't convert newlines and multiple spaces.
 	 * 
@@ -221,7 +223,7 @@ public class PageParser {
 	static String escapeHtmlData(String s) {
 		return escapeHtml(s, false);
 	}
-
+	
 	/**
 	 * Convert data to HTML, including newlines and multiple spaces.
 	 * 
@@ -232,22 +234,22 @@ public class PageParser {
 	public static String escapeHtml(String s) {
 		return escapeHtml(s, true);
 	}
-
+	
 	private static String escapeHtml(String s, boolean convertBreakAndSpace) {
-		if (s == null) {
+		if ( s == null ) {
 			return null;
 		}
-		if (convertBreakAndSpace) {
-			if (s.length() == 0) {
+		if ( convertBreakAndSpace ) {
+			if ( s.length() == 0 ) {
 				return "&nbsp;";
 			}
 		}
 		StringBuilder buff = new StringBuilder(s.length());
 		boolean convertSpace = true;
-		for (int i = 0; i < s.length(); i++) {
+		for ( int i = 0; i < s.length(); i++ ) {
 			char c = s.charAt(i);
-			if (c == ' ') {
-				if (convertSpace && convertBreakAndSpace) {
+			if ( c == ' ' ) {
+				if ( convertSpace && convertBreakAndSpace ) {
 					buff.append("&nbsp;");
 				} else {
 					buff.append(' ');
@@ -277,7 +279,7 @@ public class PageParser {
 				buff.append("&#39;");
 				break;
 			case '\n':
-				if (convertBreakAndSpace) {
+				if ( convertBreakAndSpace ) {
 					buff.append("<br />");
 					convertSpace = true;
 				} else {
@@ -285,7 +287,7 @@ public class PageParser {
 				}
 				break;
 			default:
-				if (c >= 128) {
+				if ( c >= 128 ) {
 					buff.append("&#");
 					buff.append((int) c);
 					buff.append(';');
@@ -297,7 +299,7 @@ public class PageParser {
 		}
 		return buff.toString();
 	}
-
+	
 	/**
 	 * Escape text as a the javascript string.
 	 * 
@@ -306,14 +308,14 @@ public class PageParser {
 	 * @return the javascript string
 	 */
 	static String escapeJavaScript(String s) {
-		if (s == null) {
+		if ( s == null ) {
 			return null;
 		}
-		if (s.length() == 0) {
+		if ( s.length() == 0 ) {
 			return "";
 		}
 		StringBuilder buff = new StringBuilder(s.length());
-		for (int i = 0; i < s.length(); i++) {
+		for ( int i = 0; i < s.length(); i++ ) {
 			char c = s.charAt(i);
 			switch (c) {
 			case '"':

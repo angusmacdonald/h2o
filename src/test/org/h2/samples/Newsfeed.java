@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.samples;
 
@@ -20,17 +18,16 @@ import org.h2.tools.RunScript;
 import org.h2.util.StringUtils;
 
 /**
- * The newsfeed application uses XML functions to create an RSS and Atom feed
- * from a simple SQL script. A textual representation of the data is created as
- * well.
+ * The newsfeed application uses XML functions to create an RSS and Atom feed from a simple SQL script. A textual representation of the data
+ * is created as well.
  */
 public class Newsfeed {
-
+	
 	/**
-	 * This method is called when executing this sample application from the
-	 * command line.
-	 *
-	 * @param args the command line parameters
+	 * This method is called when executing this sample application from the command line.
+	 * 
+	 * @param args
+	 *            the command line parameters
 	 */
 	public static void main(String[] args) throws Exception {
 		String targetDir = args.length == 0 ? "." : args[0];
@@ -39,10 +36,10 @@ public class Newsfeed {
 		InputStream in = Newsfeed.class.getResourceAsStream("newsfeed.sql");
 		ResultSet rs = RunScript.execute(conn, new InputStreamReader(in, "ISO-8859-1"));
 		in.close();
-		while (rs.next()) {
+		while ( rs.next() ) {
 			String file = rs.getString("FILE");
 			String content = rs.getString("CONTENT");
-			if (file.endsWith(".txt")) {
+			if ( file.endsWith(".txt") ) {
 				content = convertHtml2Text(content);
 			}
 			new File(targetDir).mkdirs();
@@ -54,11 +51,12 @@ public class Newsfeed {
 		}
 		conn.close();
 	}
-
+	
 	/**
 	 * Convert HTML text to plain text.
-	 *
-	 * @param html the html text
+	 * 
+	 * @param html
+	 *            the html text
 	 * @return the plain text
 	 */
 	private static String convertHtml2Text(String html) {
@@ -75,7 +73,7 @@ public class Newsfeed {
 		s = StringUtils.replaceAll(s, "<br />", "");
 		s = StringUtils.replaceAll(s, "<br/>", "");
 		s = StringUtils.replaceAll(s, "<br>", "");
-		if (s.indexOf('<') >= 0 || s.indexOf('>') >= 0) {
+		if ( s.indexOf('<') >= 0 || s.indexOf('>') >= 0 ) {
 			throw new Error("Unsupported HTML Tag: < or > in " + s);
 		}
 		return s;

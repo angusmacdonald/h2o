@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.db;
 
@@ -22,18 +20,19 @@ import org.h2.util.FileUtils;
  * Tests opening and closing a database.
  */
 public class TestOpenClose extends TestBase implements DatabaseEventListener {
-
+	
 	private int nextId = 10;
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws Exception {
 		testCloseDelay();
 		testBackup(false);
@@ -42,7 +41,7 @@ public class TestOpenClose extends TestBase implements DatabaseEventListener {
 		testReconnectFast();
 		deleteDb("openClose");
 	}
-
+	
 	private void testCloseDelay() throws Exception {
 		deleteDb(baseDir, "openClose");
 		String url = getURL("openClose;DB_CLOSE_DELAY=1", true);
@@ -51,7 +50,7 @@ public class TestOpenClose extends TestBase implements DatabaseEventListener {
 		conn.close();
 		Thread.sleep(950);
 		long time = System.currentTimeMillis();
-		for (int i = 0; System.currentTimeMillis() - time < 100; i++) {
+		for ( int i = 0; System.currentTimeMillis() - time < 100; i++ ) {
 			conn = DriverManager.getConnection(url, user, password);
 			conn.close();
 		}
@@ -59,11 +58,11 @@ public class TestOpenClose extends TestBase implements DatabaseEventListener {
 		conn.createStatement().execute("SHUTDOWN");
 		conn.close();
 	}
-
+	
 	private void testBackup(boolean encrypt) throws SQLException {
 		deleteDb(baseDir, "openClose");
 		String url;
-		if (encrypt) {
+		if ( encrypt ) {
 			url = "jdbc:h2:" + baseDir + "/openClose;CIPHER=XTEA";
 		} else {
 			url = "jdbc:h2:" + baseDir + "/openClose";
@@ -86,11 +85,10 @@ public class TestOpenClose extends TestBase implements DatabaseEventListener {
 		conn.close();
 		FileUtils.delete(baseDir + "/test.zip");
 	}
-
+	
 	private void testReconnectFast() throws SQLException {
 		deleteDb(baseDir, "openClose");
-		String url = "jdbc:h2:" + baseDir + "/openClose;DATABASE_EVENT_LISTENER='" + TestOpenClose.class.getName()
-		+ "'";
+		String url = "jdbc:h2:" + baseDir + "/openClose;DATABASE_EVENT_LISTENER='" + TestOpenClose.class.getName() + "'";
 		Connection conn = DriverManager.getConnection(url, "sa", "sa");
 		Statement stat = conn.createStatement();
 		try {
@@ -98,7 +96,7 @@ public class TestOpenClose extends TestBase implements DatabaseEventListener {
 			stat.execute("SET MAX_MEMORY_UNDO 100000");
 			stat.execute("CREATE INDEX IDXNAME ON TEST(NAME)");
 			stat.execute("INSERT INTO TEST SELECT X, X || ' Data' FROM SYSTEM_RANGE(1, 1000)");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			// ok
 		}
 		stat.close();
@@ -106,7 +104,7 @@ public class TestOpenClose extends TestBase implements DatabaseEventListener {
 		conn = DriverManager.getConnection(url, "sa", "sa");
 		stat = conn.createStatement();
 		ResultSet rs = stat.executeQuery("SELECT * FROM DUAL");
-		if (rs.next()) {
+		if ( rs.next() ) {
 			rs.getString(1);
 		}
 		rs.close();
@@ -119,7 +117,7 @@ public class TestOpenClose extends TestBase implements DatabaseEventListener {
 		stat.close();
 		conn.close();
 	}
-
+	
 	private void testCase() throws Exception {
 		org.h2.Driver.load();
 		deleteDb(baseDir, "openClose");
@@ -130,8 +128,9 @@ public class TestOpenClose extends TestBase implements DatabaseEventListener {
 		conn.close();
 		int len = this.getSize(200, 1000);
 		Thread[] threads = new Thread[len];
-		for (int i = 0; i < len; i++) {
+		for ( int i = 0; i < len; i++ ) {
 			threads[i] = new Thread() {
+				
 				public void run() {
 					try {
 						Connection conn = DriverManager.getConnection(url, "sa", "");
@@ -141,7 +140,7 @@ public class TestOpenClose extends TestBase implements DatabaseEventListener {
 						prep.setString(2, "employee " + id);
 						prep.execute();
 						conn.close();
-					} catch (Throwable e) {
+					} catch ( Throwable e ) {
 						TestBase.logError("insert", e);
 					}
 				}
@@ -151,7 +150,7 @@ public class TestOpenClose extends TestBase implements DatabaseEventListener {
 		// for(int i=0; i<len; i++) {
 		// threads[i].start();
 		// }
-		for (int i = 0; i < len; i++) {
+		for ( int i = 0; i < len; i++ ) {
 			threads[i].join();
 		}
 		conn = DriverManager.getConnection(url, "sa", "");
@@ -160,31 +159,31 @@ public class TestOpenClose extends TestBase implements DatabaseEventListener {
 		assertEquals(rs.getInt(1), len);
 		conn.close();
 	}
-
+	
 	synchronized int getNextId() {
 		return nextId++;
 	}
-
+	
 	public void diskSpaceIsLow(long stillAvailable) throws SQLException {
 		throw new SQLException("unexpected");
 	}
-
+	
 	public void exceptionThrown(SQLException e, String sql) {
 		throw new Error("unexpected: " + e + " sql: " + sql);
 	}
-
+	
 	public void setProgress(int state, String name, int current, int max) {
 		String stateName;
 		switch (state) {
 		case STATE_SCAN_FILE:
 			stateName = "Scan " + name + " " + current + "/" + max;
-			if (current > 0) {
+			if ( current > 0 ) {
 				throw new Error("unexpected: " + stateName);
 			}
 			break;
 		case STATE_CREATE_INDEX:
 			stateName = "Create Index " + name + " " + current + "/" + max;
-			if (!"SYS:SYS_ID".equals(name)) {
+			if ( !"SYS:SYS_ID".equals(name) ) {
 				throw new Error("unexpected: " + stateName);
 			}
 			break;
@@ -196,17 +195,17 @@ public class TestOpenClose extends TestBase implements DatabaseEventListener {
 		}
 		// System.out.println(": " + stateName);
 	}
-
+	
 	public void closingDatabase() {
 		// nothing to do
 	}
-
+	
 	public void init(String url) {
 		// nothing to do
 	}
-
+	
 	public void opened() {
 		// nothing to do
 	}
-
+	
 }

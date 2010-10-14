@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.index;
 
@@ -10,9 +8,11 @@ package org.h2.index;
  * Represents information about the properties of an index
  */
 public class IndexType {
+	
 	private boolean primaryKey, persistent, unique, hash, scan;
+	
 	private boolean belongsToConstraint;
-
+	
 	/**
 	 * Create a primary key index.
 	 * 
@@ -30,7 +30,7 @@ public class IndexType {
 		type.unique = true;
 		return type;
 	}
-
+	
 	/**
 	 * Create a unique index.
 	 * 
@@ -47,7 +47,7 @@ public class IndexType {
 		type.hash = hash;
 		return type;
 	}
-
+	
 	/**
 	 * Create a non-unique index.
 	 * 
@@ -60,7 +60,7 @@ public class IndexType {
 		type.persistent = persistent;
 		return type;
 	}
-
+	
 	/**
 	 * Create a scan pseudo-index.
 	 * 
@@ -74,7 +74,7 @@ public class IndexType {
 		type.scan = true;
 		return type;
 	}
-
+	
 	/**
 	 * Sets if this index belongs to a constraint.
 	 * 
@@ -84,17 +84,16 @@ public class IndexType {
 	public void setBelongsToConstraint(boolean belongsToConstraint) {
 		this.belongsToConstraint = belongsToConstraint;
 	}
-
+	
 	/**
-	 * If the index is created because of a constraint. Such indexes are to be
-	 * dropped once the constraint is dropped.
+	 * If the index is created because of a constraint. Such indexes are to be dropped once the constraint is dropped.
 	 * 
 	 * @return if the index belongs to a constraint
 	 */
 	public boolean getBelongsToConstraint() {
 		return belongsToConstraint;
 	}
-
+	
 	/**
 	 * Is this a hash index?
 	 * 
@@ -103,7 +102,7 @@ public class IndexType {
 	public boolean getHash() {
 		return hash;
 	}
-
+	
 	/**
 	 * Is this index persistent?
 	 * 
@@ -112,7 +111,7 @@ public class IndexType {
 	public boolean getPersistent() {
 		return persistent;
 	}
-
+	
 	/**
 	 * Does this index belong to a primary key constraint?
 	 * 
@@ -121,7 +120,7 @@ public class IndexType {
 	public boolean getPrimaryKey() {
 		return primaryKey;
 	}
-
+	
 	/**
 	 * Is this a unique index?
 	 * 
@@ -130,7 +129,7 @@ public class IndexType {
 	public boolean getUnique() {
 		return unique;
 	}
-
+	
 	/**
 	 * Get the SQL snippet to create such an index.
 	 * 
@@ -138,23 +137,23 @@ public class IndexType {
 	 */
 	public String getSQL() {
 		StringBuilder buff = new StringBuilder();
-		if (primaryKey) {
+		if ( primaryKey ) {
 			buff.append("PRIMARY KEY");
-			if (hash) {
+			if ( hash ) {
 				buff.append(" HASH");
 			}
 		} else {
-			if (unique) {
+			if ( unique ) {
 				buff.append("UNIQUE ");
 			}
-			if (hash) {
+			if ( hash ) {
 				buff.append("HASH ");
 			}
 			buff.append("INDEX");
 		}
 		return buff.toString();
 	}
-
+	
 	/**
 	 * Is this a table scan pseudo-index?
 	 * 
@@ -163,5 +162,5 @@ public class IndexType {
 	public boolean getScan() {
 		return scan;
 	}
-
+	
 }

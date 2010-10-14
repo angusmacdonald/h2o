@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.util;
 
@@ -17,14 +15,15 @@ import org.h2.value.ValueNull;
  * This hash map supports keys of type Value and values of type Object.
  */
 public class ValueHashMap extends HashBase {
-
+	
 	private Value[] keys;
+	
 	private Object[] values;
+	
 	private DataHandler handler;
-
+	
 	/**
-	 * Create a new value hash map using the given data handler. The data
-	 * handler is used to compare values.
+	 * Create a new value hash map using the given data handler. The data handler is used to compare values.
 	 * 
 	 * @param handler
 	 *            the data handler
@@ -32,29 +31,29 @@ public class ValueHashMap extends HashBase {
 	public ValueHashMap(DataHandler handler) {
 		this.handler = handler;
 	}
-
+	
 	protected void reset(int newLevel) {
 		super.reset(newLevel);
 		keys = new Value[len];
 		values = new Object[len];
 	}
-
+	
 	protected void rehash(int newLevel) throws SQLException {
 		Value[] oldKeys = keys;
 		Object[] oldValues = values;
 		reset(newLevel);
-		for (int i = 0; i < oldKeys.length; i++) {
+		for ( int i = 0; i < oldKeys.length; i++ ) {
 			Value k = oldKeys[i];
-			if (k != null && k != ValueNull.DELETED) {
+			if ( k != null && k != ValueNull.DELETED ) {
 				put(k, oldValues[i]);
 			}
 		}
 	}
-
+	
 	private int getIndex(Value key) {
 		return key.hashCode() & mask;
 	}
-
+	
 	/**
 	 * Add or update a key value pair.
 	 * 
@@ -70,9 +69,9 @@ public class ValueHashMap extends HashBase {
 		int deleted = -1;
 		do {
 			Value k = keys[index];
-			if (k == null) {
+			if ( k == null ) {
 				// found an empty record
-				if (deleted >= 0) {
+				if ( deleted >= 0 ) {
 					index = deleted;
 					deletedCount--;
 				}
@@ -80,22 +79,22 @@ public class ValueHashMap extends HashBase {
 				keys[index] = key;
 				values[index] = value;
 				return;
-			} else if (k == ValueNull.DELETED) {
+			} else if ( k == ValueNull.DELETED ) {
 				// found a deleted record
-				if (deleted < 0) {
+				if ( deleted < 0 ) {
 					deleted = index;
 				}
-			} else if (handler.compareTypeSave(k, key) == 0) {
+			} else if ( handler.compareTypeSave(k, key) == 0 ) {
 				// update existing
 				values[index] = value;
 				return;
 			}
-			index = (index + plus++) & mask;
-		} while (plus <= len);
+			index = ( index + plus++ ) & mask;
+		} while ( plus <= len );
 		// no space
 		Message.throwInternalError("hashmap is full");
 	}
-
+	
 	/**
 	 * Remove a key value pair.
 	 * 
@@ -108,12 +107,12 @@ public class ValueHashMap extends HashBase {
 		int plus = 1;
 		do {
 			Value k = keys[index];
-			if (k == null) {
+			if ( k == null ) {
 				// found an empty record
 				return;
-			} else if (k == ValueNull.DELETED) {
+			} else if ( k == ValueNull.DELETED ) {
 				// found a deleted record
-			} else if (handler.compareTypeSave(k, key) == 0) {
+			} else if ( handler.compareTypeSave(k, key) == 0 ) {
 				// found the record
 				keys[index] = ValueNull.DELETED;
 				values[index] = null;
@@ -121,14 +120,13 @@ public class ValueHashMap extends HashBase {
 				size--;
 				return;
 			}
-			index = (index + plus++) & mask;
-		} while (plus <= len);
+			index = ( index + plus++ ) & mask;
+		} while ( plus <= len );
 		// not found
 	}
-
+	
 	/**
-	 * Get the value for this key. This method returns null if the key was not
-	 * found.
+	 * Get the value for this key. This method returns null if the key was not found.
 	 * 
 	 * @param key
 	 *            the key
@@ -139,20 +137,20 @@ public class ValueHashMap extends HashBase {
 		int plus = 1;
 		do {
 			Value k = keys[index];
-			if (k == null) {
+			if ( k == null ) {
 				// found an empty record
 				return null;
-			} else if (k == ValueNull.DELETED) {
+			} else if ( k == ValueNull.DELETED ) {
 				// found a deleted record
-			} else if (handler.compareTypeSave(k, key) == 0) {
+			} else if ( handler.compareTypeSave(k, key) == 0 ) {
 				// found it
 				return values[index];
 			}
-			index = (index + plus++) & mask;
-		} while (plus <= len);
+			index = ( index + plus++ ) & mask;
+		} while ( plus <= len );
 		return null;
 	}
-
+	
 	/**
 	 * Get the list of keys.
 	 * 
@@ -160,14 +158,14 @@ public class ValueHashMap extends HashBase {
 	 */
 	public ObjectArray keys() {
 		ObjectArray list = new ObjectArray(size);
-		for (Value k : keys) {
-			if (k != null && k != ValueNull.DELETED) {
+		for ( Value k : keys ) {
+			if ( k != null && k != ValueNull.DELETED ) {
 				list.add(k);
 			}
 		}
 		return list;
 	}
-
+	
 	/**
 	 * Get the list of values.
 	 * 
@@ -175,13 +173,13 @@ public class ValueHashMap extends HashBase {
 	 */
 	public ObjectArray values() {
 		ObjectArray list = new ObjectArray(size);
-		for (int i = 0; i < keys.length; i++) {
+		for ( int i = 0; i < keys.length; i++ ) {
 			Value k = keys[i];
-			if (k != null && k != ValueNull.DELETED) {
+			if ( k != null && k != ValueNull.DELETED ) {
 				list.add(values[i]);
 			}
 		}
 		return list;
 	}
-
+	
 }

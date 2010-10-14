@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.server;
 
@@ -35,55 +33,67 @@ import org.h2.util.NetUtils;
 import org.h2.util.Tool;
 
 /**
- * The TCP server implements the native H2 database server protocol. It supports
- * multiple client connections to multiple databases (many to many). The same
- * database may be opened by multiple clients. Also supported is the mixed mode:
- * opening databases in embedded mode, and at the same time start a TCP server
- * to allow clients to connect to the same database over the network.
+ * The TCP server implements the native H2 database server protocol. It supports multiple client connections to multiple databases (many to
+ * many). The same database may be opened by multiple clients. Also supported is the mixed mode: opening databases in embedded mode, and at
+ * the same time start a TCP server to allow clients to connect to the same database over the network.
  */
 public class TcpServer implements Service {
-
+	
 	// TODO new feature: implement automatic client / server mode if 'socket'
 	// file locking is used
 	// TODO better exception message if the port is already in use, maybe
 	// automatically use the next free port?
-
+	
 	/**
 	 * The default port to use for the TCP server.
 	 */
 	public static final int DEFAULT_PORT = 9092;
-
+	
 	private static final int SHUTDOWN_NORMAL = 0;
+	
 	private static final int SHUTDOWN_FORCE = 1;
-
-	private static final Map SERVERS = Collections
-			.synchronizedMap(new HashMap());
-
+	
+	private static final Map SERVERS = Collections.synchronizedMap(new HashMap());
+	
 	private int port;
+	
 	private boolean trace;
+	
 	private boolean ssl;
+	
 	private boolean stop;
+	
 	private ServerSocket serverSocket;
+	
 	private Set running = Collections.synchronizedSet(new HashSet());
+	
 	private String baseDir;
+	
 	private boolean allowOthers;
+	
 	private boolean ifExists;
+	
 	private Connection managementDb;
+	
 	private PreparedStatement managementDbAdd;
+	
 	private PreparedStatement managementDbRemove;
+	
 	private String managementPassword = "";
+	
 	private Thread listenerThread;
+	
 	private int nextThreadId;
+	
 	private String key, keyDatabase;
-
+	
 	/**
 	 * H2O. The location of the system's System Table.
 	 */
 	private String systemTableLocation = null;
-
+	
 	/**
-	 * Get the database name of the management database. The management database
-	 * contains a table with active sessions (SESSIONS).
+	 * Get the database name of the management database. The management database contains a table with active sessions (SESSIONS).
 	 * 
 	 * @param port
 	 *            the TCP server port
@@ -92,31 +102,27 @@ public class TcpServer implements Service {
 	public static String getManagementDbName(int port) {
 		return "mem:" + Constants.MANAGEMENT_DB_PREFIX + port;
 	}
-
+	
 	private void initManagementDb() throws SQLException {
 		Properties prop = new Properties();
 		prop.setProperty("user", "sa");
 		prop.setProperty("password", managementPassword);
 		// avoid using the driver manager
-		Connection conn = Driver.load().connect(
-				"jdbc:h2:" + getManagementDbName(port), prop);
+		Connection conn = Driver.load().connect("jdbc:h2:" + getManagementDbName(port), prop);
 		managementDb = conn;
 		Statement stat = null;
 		try {
 			stat = conn.createStatement();
-			stat.execute("CREATE ALIAS IF NOT EXISTS STOP_SERVER FOR \""
-					+ TcpServer.class.getName() + ".stopServer\"");
+			stat.execute("CREATE ALIAS IF NOT EXISTS STOP_SERVER FOR \"" + TcpServer.class.getName() + ".stopServer\"");
 			stat.execute("CREATE TABLE IF NOT EXISTS SESSIONS(ID INT PRIMARY KEY, URL VARCHAR, USER VARCHAR, CONNECTED TIMESTAMP)");
-			managementDbAdd = conn
-					.prepareStatement("INSERT INTO SESSIONS VALUES(?, ?, ?, NOW())");
-			managementDbRemove = conn
-					.prepareStatement("DELETE FROM SESSIONS WHERE ID=?");
+			managementDbAdd = conn.prepareStatement("INSERT INTO SESSIONS VALUES(?, ?, ?, NOW())");
+			managementDbRemove = conn.prepareStatement("DELETE FROM SESSIONS WHERE ID=?");
 		} finally {
 			JdbcUtils.closeSilently(stat);
 		}
 		SERVERS.put("" + port, this);
 	}
-
+	
 	/**
 	 * Add a connection to the management database.
 	 * 
@@ -133,11 +139,11 @@ public class TcpServer implements Service {
 			managementDbAdd.setString(2, url);
 			managementDbAdd.setString(3, user);
 			managementDbAdd.execute();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			TraceSystem.traceThrowable(e);
 		}
 	}
-
+	
 	/**
 	 * Remove a connection from the management database.
 	 * 
@@ -148,110 +154,107 @@ public class TcpServer implements Service {
 		try {
 			managementDbRemove.setInt(1, id);
 			managementDbRemove.execute();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			TraceSystem.traceThrowable(e);
 		}
 	}
-
+	
 	private synchronized void stopManagementDb() {
-		if (managementDb != null) {
+		if ( managementDb != null ) {
 			try {
 				managementDb.close();
-			} catch (SQLException e) {
+			} catch ( SQLException e ) {
 				TraceSystem.traceThrowable(e);
 			}
 			managementDb = null;
 		}
 	}
-
+	
 	public void init(String[] args) {
 		port = DEFAULT_PORT;
-		for (int i = 0; args != null && i < args.length; i++) {
+		for ( int i = 0; args != null && i < args.length; i++ ) {
 			String a = args[i];
-			if ("-trace".equals(a)) {
+			if ( "-trace".equals(a) ) {
 				trace = true;
-			} else if ("-log".equals(a)
-					&& SysProperties.OLD_COMMAND_LINE_OPTIONS) {
+			} else if ( "-log".equals(a) && SysProperties.OLD_COMMAND_LINE_OPTIONS ) {
 				trace = Tool.readArgBoolean(args, i) == 1;
 				i++;
-			} else if ("-tcpSSL".equals(a)) {
-				if (Tool.readArgBoolean(args, i) != 0) {
+			} else if ( "-tcpSSL".equals(a) ) {
+				if ( Tool.readArgBoolean(args, i) != 0 ) {
 					ssl = Tool.readArgBoolean(args, i) == 1;
 					i++;
 				} else {
 					ssl = true;
 				}
-			} else if ("-tcpPort".equals(a)) {
+			} else if ( "-tcpPort".equals(a) ) {
 				port = MathUtils.decodeInt(args[++i]);
-			} else if ("-tcpPassword".equals(a)) {
+			} else if ( "-tcpPassword".equals(a) ) {
 				managementPassword = args[++i];
-			} else if ("-baseDir".equals(a)) {
+			} else if ( "-baseDir".equals(a) ) {
 				baseDir = args[++i];
-			} else if ("-key".equals(a)) {
+			} else if ( "-key".equals(a) ) {
 				key = args[++i];
 				keyDatabase = args[++i];
-			} else if ("-tcpAllowOthers".equals(a)) {
-				if (Tool.readArgBoolean(args, i) != 0) {
+			} else if ( "-tcpAllowOthers".equals(a) ) {
+				if ( Tool.readArgBoolean(args, i) != 0 ) {
 					allowOthers = Tool.readArgBoolean(args, i) == 1;
 					i++;
 				} else {
 					allowOthers = true;
 				}
-			} else if ("-ifExists".equals(a)) {
-				if (Tool.readArgBoolean(args, i) != 0) {
+			} else if ( "-ifExists".equals(a) ) {
+				if ( Tool.readArgBoolean(args, i) != 0 ) {
 					ifExists = Tool.readArgBoolean(args, i) == 1;
 					i++;
 				} else {
 					ifExists = true;
 				}
-			} else if ("-SMLocation".equals(a)) {
+			} else if ( "-SMLocation".equals(a) ) {
 				systemTableLocation = args[++i];
 			}
 		}
 		org.h2.Driver.load();
 	}
-
+	
 	public String getURL() {
-		return (ssl ? "ssl" : "tcp") + "://" + NetUtils.getLocalAddress() + ":"
-				+ port;
+		return ( ssl ? "ssl" : "tcp" ) + "://" + NetUtils.getLocalAddress() + ":" + port;
 	}
-
+	
 	public int getPort() {
 		return port;
 	}
-
+	
 	/**
-	 * Check if this socket may connect to this server. Remote connections are
-	 * not allowed if the flag allowOthers is set.
+	 * Check if this socket may connect to this server. Remote connections are not allowed if the flag allowOthers is set.
 	 * 
 	 * @param socket
 	 *            the socket
 	 * @return true if this client may connect
 	 */
 	boolean allow(Socket socket) {
-		if (allowOthers) {
+		if ( allowOthers ) {
 			return true;
 		}
 		try {
 			return NetUtils.isLocalAddress(socket);
-		} catch (UnknownHostException e) {
+		} catch ( UnknownHostException e ) {
 			traceError(e);
 			return false;
 		}
 	}
-
+	
 	public synchronized void start() throws SQLException {
 		stop = false;
 		serverSocket = NetUtils.createServerSocket(port, ssl);
 		port = serverSocket.getLocalPort();
 		initManagementDb();
 	}
-
+	
 	public void listen() {
 		listenerThread = Thread.currentThread();
 		String threadName = listenerThread.getName();
 		try {
-			while (!stop) {
+			while ( !stop ) {
 				Socket s = serverSocket.accept();
 				TcpServerThread c = new TcpServerThread(s, this, nextThreadId++);
 				running.add(c);
@@ -261,72 +264,71 @@ public class TcpServer implements Service {
 				thread.start();
 			}
 			serverSocket = NetUtils.closeSilently(serverSocket);
-		} catch (Exception e) {
-			if (!stop) {
+		} catch ( Exception e ) {
+			if ( !stop ) {
 				TraceSystem.traceThrowable(e);
 			}
 		}
 		stopManagementDb();
 	}
-
+	
 	public synchronized boolean isRunning(boolean traceError) {
-		if (serverSocket == null) {
+		if ( serverSocket == null ) {
 			return false;
 		}
 		try {
 			Socket s = NetUtils.createLoopbackSocket(port, ssl);
 			s.close();
 			return true;
-		} catch (Exception e) {
-			if (traceError) {
+		} catch ( Exception e ) {
+			if ( traceError ) {
 				traceError(e);
 			}
 			return false;
 		}
 	}
-
+	
 	public void stop() {
 		// TODO server: share code between web and tcp servers
 		// need to remove the server first, otherwise the connection is broken
 		// while the server is still registered in this map
 		SERVERS.remove("" + port);
-		if (!stop) {
+		if ( !stop ) {
 			stopManagementDb();
 			stop = true;
-			if (serverSocket != null) {
+			if ( serverSocket != null ) {
 				try {
 					serverSocket.close();
-				} catch (IOException e) {
+				} catch ( IOException e ) {
 					TraceSystem.traceThrowable(e);
 				}
 				serverSocket = null;
 			}
-			if (listenerThread != null) {
+			if ( listenerThread != null ) {
 				try {
 					listenerThread.join(1000);
-				} catch (InterruptedException e) {
+				} catch ( InterruptedException e ) {
 					TraceSystem.traceThrowable(e);
 				}
 			}
 		}
 		// TODO server: using a boolean 'now' argument? a timeout?
 		ArrayList list = new ArrayList(running);
-		for (int i = 0; i < list.size(); i++) {
+		for ( int i = 0; i < list.size(); i++ ) {
 			TcpServerThread c = (TcpServerThread) list.get(i);
-			if (c != null) {
+			if ( c != null ) {
 				c.close();
 				try {
 					c.getThread().join(100);
-				} catch (Exception e) {
+				} catch ( Exception e ) {
 					TraceSystem.traceThrowable(e);
 				}
 			}
 		}
 	}
-
+	
 	/**
-	 * Stop a running server. This method is called via reflection from the
-	 * STOP_SERVER function.
+	 * Stop a running server. This method is called via reflection from the STOP_SERVER function.
 	 * 
 	 * @param port
 	 *            the port where the server runs
@@ -337,26 +339,26 @@ public class TcpServer implements Service {
 	 */
 	public static void stopServer(int port, String password, int shutdownMode) {
 		TcpServer server = (TcpServer) SERVERS.get("" + port);
-		if (server == null) {
+		if ( server == null ) {
 			return;
 		}
-		if (!server.managementPassword.equals(password)) {
+		if ( !server.managementPassword.equals(password) ) {
 			return;
 		}
-		if (shutdownMode == SHUTDOWN_NORMAL) {
+		if ( shutdownMode == SHUTDOWN_NORMAL ) {
 			server.stopManagementDb();
 			server.stop = true;
 			try {
 				Socket s = NetUtils.createLoopbackSocket(port, false);
 				s.close();
-			} catch (Exception e) {
+			} catch ( Exception e ) {
 				// try to connect - so that accept returns
 			}
-		} else if (shutdownMode == SHUTDOWN_FORCE) {
+		} else if ( shutdownMode == SHUTDOWN_FORCE ) {
 			server.stop();
 		}
 	}
-
+	
 	/**
 	 * Remove a thread from the list.
 	 * 
@@ -366,7 +368,7 @@ public class TcpServer implements Service {
 	void remove(TcpServerThread t) {
 		running.remove(t);
 	}
-
+	
 	/**
 	 * Get the configured base directory.
 	 * 
@@ -375,7 +377,7 @@ public class TcpServer implements Service {
 	String getBaseDir() {
 		return baseDir;
 	}
-
+	
 	/**
 	 * Print a message if the trace flag is enabled.
 	 * 
@@ -383,11 +385,11 @@ public class TcpServer implements Service {
 	 *            the message
 	 */
 	void trace(String s) {
-		if (trace) {
+		if ( trace ) {
 			System.out.println(s);
 		}
 	}
-
+	
 	/**
 	 * Print a stack trace if the trace flag is enabled.
 	 * 
@@ -395,27 +397,27 @@ public class TcpServer implements Service {
 	 *            the exception
 	 */
 	void traceError(Throwable e) {
-		if (trace) {
+		if ( trace ) {
 			e.printStackTrace();
 		}
 	}
-
+	
 	public boolean getAllowOthers() {
 		return allowOthers;
 	}
-
+	
 	public String getType() {
 		return "TCP";
 	}
-
+	
 	public String getName() {
 		return "H2 TCP Server";
 	}
-
+	
 	boolean getIfExists() {
 		return ifExists;
 	}
-
+	
 	/**
 	 * Stop the TCP server with the given URL.
 	 * 
@@ -426,14 +428,13 @@ public class TcpServer implements Service {
 	 * @param force
 	 *            if the server should be stopped immediately
 	 */
-	public static synchronized void shutdown(String url, String password,
-			boolean force) throws SQLException {
+	public static synchronized void shutdown(String url, String password, boolean force) throws SQLException {
 		int port = Constants.DEFAULT_SERVER_PORT;
 		int idx = url.indexOf(':', "jdbc:h2:".length());
-		if (idx >= 0) {
+		if ( idx >= 0 ) {
 			String p = url.substring(idx + 1);
 			idx = p.indexOf('/');
-			if (idx >= 0) {
+			if ( idx >= 0 ) {
 				p = p.substring(0, idx);
 			}
 			port = MathUtils.decodeInt(p);
@@ -441,31 +442,30 @@ public class TcpServer implements Service {
 		String db = getManagementDbName(port);
 		try {
 			org.h2.Driver.load();
-		} catch (Throwable e) {
+		} catch ( Throwable e ) {
 			throw Message.convert(e);
 		}
-		for (int i = 0; i < 2; i++) {
+		for ( int i = 0; i < 2; i++ ) {
 			Connection conn = null;
 			PreparedStatement prep = null;
 			try {
-				conn = DriverManager.getConnection("jdbc:h2:" + url + "/" + db,
-						"sa", password);
+				conn = DriverManager.getConnection("jdbc:h2:" + url + "/" + db, "sa", password);
 				prep = conn.prepareStatement("CALL STOP_SERVER(?, ?, ?)");
 				prep.setInt(1, port);
 				prep.setString(2, password);
 				prep.setInt(3, force ? SHUTDOWN_FORCE : SHUTDOWN_NORMAL);
 				try {
 					prep.execute();
-				} catch (SQLException e) {
-					if (force) {
+				} catch ( SQLException e ) {
+					if ( force ) {
 						// ignore
 					} else {
 						throw e;
 					}
 				}
 				break;
-			} catch (SQLException e) {
-				if (i == 1) {
+			} catch ( SQLException e ) {
+				if ( i == 1 ) {
 					throw e;
 				}
 			} finally {
@@ -474,7 +474,7 @@ public class TcpServer implements Service {
 			}
 		}
 	}
-
+	
 	/**
 	 * Cancel a running statement.
 	 * 
@@ -485,18 +485,17 @@ public class TcpServer implements Service {
 	 */
 	void cancelStatement(String sessionId, int statementId) throws SQLException {
 		ArrayList list = new ArrayList(running);
-		for (int i = 0; i < list.size(); i++) {
+		for ( int i = 0; i < list.size(); i++ ) {
 			TcpServerThread c = (TcpServerThread) list.get(i);
-			if (c != null) {
+			if ( c != null ) {
 				c.cancelStatement(sessionId, statementId);
 			}
 		}
 	}
-
+	
 	/**
-	 * If no key is set, return the original database name. If a key is set,
-	 * check if the key matches. If yes, return the correct database name. If
-	 * not, throw an exception.
+	 * If no key is set, return the original database name. If a key is set, check if the key matches. If yes, return the correct database
+	 * name. If not, throw an exception.
 	 * 
 	 * @param db
 	 *            the key to test (or database name if no key is used)
@@ -505,20 +504,20 @@ public class TcpServer implements Service {
 	 *             if a key is set but doesn't match
 	 */
 	public String checkKeyAndGetDatabaseName(String db) throws SQLException {
-		if (key == null) {
+		if ( key == null ) {
 			return db;
 		}
-		if (key.equals(db)) {
+		if ( key.equals(db) ) {
 			return keyDatabase;
 		}
 		throw Message.getSQLException(ErrorCode.WRONG_USER_OR_PASSWORD);
 	}
-
+	
 	/**
 	 * @return
 	 */
 	public String getSystemTableLocation() {
 		return systemTableLocation;
 	}
-
+	
 }

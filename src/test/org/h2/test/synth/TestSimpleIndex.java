@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.synth;
 
@@ -15,44 +13,46 @@ import org.h2.test.TestBase;
 import org.h2.test.synth.sql.RandomGen;
 
 /**
- * A test that runs random operations against a table to test the various index
- * implementations.
+ * A test that runs random operations against a table to test the various index implementations.
  */
 public class TestSimpleIndex extends TestBase {
-
+	
 	private Connection conn;
+	
 	private Statement stat;
+	
 	private RandomGen random;
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws SQLException {
 		deleteDb("simpleIndex");
 		conn = getConnection("simpleIndex");
 		random = new RandomGen();
 		stat = conn.createStatement();
-		for (int i = 0; i < 10000; i++) {
+		for ( int i = 0; i < 10000; i++ ) {
 			testIndex(i);
 		}
 	}
-
+	
 	private void testIndex(int seed) throws SQLException {
 		random.setSeed(seed);
 		String unique = random.nextBoolean() ? "UNIQUE " : "";
 		int len = random.getInt(2) + 1;
 		StringBuilder buff = new StringBuilder();
-		for (int i = 0; i < len; i++) {
-			if (i > 0) {
+		for ( int i = 0; i < len; i++ ) {
+			if ( i > 0 ) {
 				buff.append(", ");
 			}
-			buff.append((char) ('A' + random.getInt(3)));
+			buff.append((char) ( 'A' + random.getInt(3) ));
 		}
 		String cols = buff.toString();
 		execute("CREATE MEMORY TABLE TEST_M(A INT, B INT, C INT, DATA VARCHAR(255))");
@@ -61,7 +61,7 @@ public class TestSimpleIndex extends TestBase {
 		execute("CREATE CACHED TABLE TEST_DI(A INT, B INT, C INT, DATA VARCHAR(255))");
 		execute("CREATE " + unique + "INDEX M ON TEST_MI(" + cols + ")");
 		execute("CREATE " + unique + "INDEX D ON TEST_DI(" + cols + ")");
-		for (int i = 0; i < 100; i++) {
+		for ( int i = 0; i < 100; i++ ) {
 			println("i=" + i);
 			testRows();
 		}
@@ -72,7 +72,7 @@ public class TestSimpleIndex extends TestBase {
 		execute("DROP TABLE TEST_MI");
 		execute("DROP TABLE TEST_DI");
 	}
-
+	
 	private void testRows() throws SQLException {
 		String a = randomValue(), b = randomValue(), c = randomValue();
 		String data = a + "/" + b + "/" + c;
@@ -84,25 +84,25 @@ public class TestSimpleIndex extends TestBase {
 		try {
 			execute("INSERT INTO TEST_MI " + sql);
 			em = false;
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			em = true;
 		}
 		try {
 			execute("INSERT INTO TEST_DI " + sql);
 			ed = false;
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			ed = true;
 		}
-		if (em != ed) {
+		if ( em != ed ) {
 			fail("different result: ");
 		}
-		if (!em) {
+		if ( !em ) {
 			execute("INSERT INTO TEST_M " + sql);
 			execute("INSERT INTO TEST_D " + sql);
 		}
 		StringBuilder buff = new StringBuilder("WHERE 1=1");
 		int len = random.getLog(10);
-		for (int i = 0; i < len; i++) {
+		for ( int i = 0; i < len; i++ ) {
 			buff.append(" AND ");
 			buff.append('A' + random.getInt(3));
 			switch (random.getInt(10)) {
@@ -146,31 +146,31 @@ public class TestSimpleIndex extends TestBase {
 		assertEquals(r1, r3);
 		assertEquals(r1, r4);
 	}
-
+	
 	private String getResult(String sql) throws SQLException {
 		ResultSet rs = stat.executeQuery(sql);
 		StringBuilder buff = new StringBuilder();
-		while (rs.next()) {
+		while ( rs.next() ) {
 			buff.append(rs.getString(1));
 			buff.append("; ");
 		}
 		rs.close();
 		return buff.toString();
 	}
-
+	
 	private String randomValue() {
-		return random.getInt(10) == 0 ? "NULL" : "" + (random.getInt(100) - 50);
+		return random.getInt(10) == 0 ? "NULL" : "" + ( random.getInt(100) - 50 );
 	}
-
+	
 	private void execute(String sql) throws SQLException {
 		try {
 			println(sql + ";");
 			stat.execute(sql);
 			println("> update count: 1");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			println("> exception");
 			throw e;
 		}
 	}
-
+	
 }

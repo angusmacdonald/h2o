@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.db;
 
@@ -18,24 +16,25 @@ import org.h2.util.FileUtils;
  * Test for the BACKUP SQL statement.
  */
 public class TestBackup extends TestBase {
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws SQLException {
-		if (config.memory || config.logMode == 0) {
+		if ( config.memory || config.logMode == 0 ) {
 			return;
 		}
 		testBackup();
 		deleteDb("backup");
 	}
-
+	
 	private void testBackup() throws SQLException {
 		deleteDb("backup");
 		Connection conn1, conn2, conn3;
@@ -52,21 +51,21 @@ public class TestBackup extends TestBase {
 		conn2.setAutoCommit(false);
 		stat2.execute("insert into test values(4, 'fourth (uncommitted)')");
 		stat2.execute("insert into testlob values(2, ' ', '00')");
-
+		
 		stat1.execute("backup to '" + baseDir + "/backup.zip'");
 		conn2.rollback();
 		assertEqualDatabases(stat1, stat2);
-
+		
 		Restore.execute(baseDir + "/backup.zip", baseDir, "restored", true);
 		conn3 = getConnection("restored");
 		stat3 = conn3.createStatement();
 		assertEqualDatabases(stat1, stat3);
-
+		
 		conn1.close();
 		conn2.close();
 		conn3.close();
 		deleteDb("restored");
 		FileUtils.delete(baseDir + "/backup.zip");
 	}
-
+	
 }

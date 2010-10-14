@@ -1,19 +1,10 @@
 /*
- * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved.
- * Project Homepage: http://blogs.cs.st-andrews.ac.uk/h2o
- *
- * H2O is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
-
- * H2O is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
-
- * You should have received a copy of the GNU General Public License
- * along with H2O.  If not, see <http://www.gnu.org/licenses/>.
+ * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved. Project Homepage:
+ * http://blogs.cs.st-andrews.ac.uk/h2o H2O is free software: you can redistribute it and/or modify it under the terms of the GNU General
+ * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. H2O
+ * is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General
+ * Public License along with H2O. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.h2o.locator.server;
 
@@ -35,41 +26,45 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
- * Used to write to database locator file. This class uses readers-writers
- * model.
+ * Used to write to database locator file. This class uses readers-writers model.
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class LocatorState {
+	
 	private int activeReaders = 0;
+	
 	private boolean writerPresent = false;
-
+	
 	private File locatorFile;
+	
 	private boolean locked = false;
+	
 	private String databaseWithLock = null;
+	
 	int updateCount = 1;
-
+	
 	public final static int LOCK_TIMEOUT = 3000;
+	
 	private long lockCreationTime = 0l;
-
+	
 	protected LocatorState(String location) {
 		locatorFile = new File(location);
-
-		if (locatorFile.getParentFile() != null) {
+		
+		if ( locatorFile.getParentFile() != null ) {
 			locatorFile.getParentFile().mkdirs();
 		}
-
+		
 		try {
-			if (!(locatorFile.createNewFile() || locatorFile.isFile())) {
-				ErrorHandling
-						.errorNoEvent("This is a directory, when I file should have been given.");
+			if ( !( locatorFile.createNewFile() || locatorFile.isFile() ) ) {
+				ErrorHandling.errorNoEvent("This is a directory, when I file should have been given.");
 			}
-		} catch (IOException e1) {
+		} catch ( IOException e1 ) {
 			e1.printStackTrace();
 		}
-
+		
 	}
-
+	
 	/**
 	 * Read the set of database locations from the file.
 	 * 
@@ -77,38 +72,36 @@ public class LocatorState {
 	 */
 	public ReplicaLocationsResponse readLocationsFromFile() {
 		startRead();
-
+		
 		// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Reader reading:");
-
+		
 		List<String> locations = new LinkedList<String>();
-
+		
 		try {
-			BufferedReader input = new BufferedReader(new FileReader(
-					locatorFile));
-
+			BufferedReader input = new BufferedReader(new FileReader(locatorFile));
+			
 			try {
 				String line = null;
-
-				while ((line = input.readLine()) != null) {
+				
+				while ( ( line = input.readLine() ) != null ) {
 					locations.add(line);
 				}
 			} finally {
 				input.close();
 			}
-
-		} catch (Exception e) {
+			
+		} catch ( Exception e ) {
 			e.printStackTrace();
 		}
-
-		ReplicaLocationsResponse response = new ReplicaLocationsResponse(
-				locations, updateCount);
-
+		
+		ReplicaLocationsResponse response = new ReplicaLocationsResponse(locations, updateCount);
+		
 		// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Finished reading.");
 		stopRead();
-
+		
 		return response;
 	}
-
+	
 	/**
 	 * Write the given array of database locations to the locator file.
 	 * 
@@ -117,16 +110,16 @@ public class LocatorState {
 	 */
 	public boolean writeLocationsToFile(String[] databaseLocations) {
 		startWrite();
-
+		
 		boolean successful = false;
-
+		
 		// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Writer writing.");
-
+		
 		try {
 			Writer output = new BufferedWriter(new FileWriter(locatorFile));
-
+			
 			try {
-				for (String location : databaseLocations) {
+				for ( String location : databaseLocations ) {
 					output.write(location + "\n");
 				}
 				successful = true;
@@ -135,20 +128,19 @@ public class LocatorState {
 			finally {
 				output.close();
 			}
-
-		} catch (IOException e) {
+			
+		} catch ( IOException e ) {
 			e.printStackTrace();
 		}
-
+		
 		// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Finished writing.");
 		stopWrite();
-
+		
 		return successful;
 	}
-
+	
 	/**
-	 * Create a lock file. This is used as a mechanism for re-creating System
-	 * Tables.
+	 * Create a lock file. This is used as a mechanism for re-creating System Tables.
 	 * 
 	 * @param requestingDatabase
 	 *            The database which is requesting the lock.
@@ -156,21 +148,20 @@ public class LocatorState {
 	 */
 	public LockRequestResponse lock(String requestingDatabase) {
 		startWrite();
-
+		
 		boolean success = false;
-
-		if (locked) {
+		
+		if ( locked ) {
 			// Check that the lock hasn't timed out.
-			if ((lockCreationTime + LOCK_TIMEOUT) < System.currentTimeMillis()) {
-				ErrorHandling.errorNoEvent("Lock held by " + databaseWithLock
-						+ " has timed out.");
+			if ( ( lockCreationTime + LOCK_TIMEOUT ) < System.currentTimeMillis() ) {
+				ErrorHandling.errorNoEvent("Lock held by " + databaseWithLock + " has timed out.");
 				locked = false;
 				databaseWithLock = null;
 				lockCreationTime = 0l;
 			}
 		}
-
-		if (locked && !this.databaseWithLock.equals(requestingDatabase)) {
+		
+		if ( locked && !this.databaseWithLock.equals(requestingDatabase) ) {
 			success = false;
 		} else {
 			locked = true;
@@ -178,29 +169,22 @@ public class LocatorState {
 			success = true;
 			databaseWithLock = requestingDatabase;
 		}
-
-		LockRequestResponse response = new LockRequestResponse(updateCount,
-				success);
-
+		
+		LockRequestResponse response = new LockRequestResponse(updateCount, success);
+		
 		stopWrite();
-
-		if (success) {
-			Diagnostic.traceNoEvent(DiagnosticLevel.INIT,
-					"LOCATOR LOCKED by database instance '"
-							+ requestingDatabase + "'");
+		
+		if ( success ) {
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "LOCATOR LOCKED by database instance '" + requestingDatabase + "'");
 		} else {
-			ErrorHandling
-					.errorNoEvent("Database instance '"
-							+ requestingDatabase
-							+ "' FAILED TO LOCK the locator server. The lock is held by "
-							+ databaseWithLock + ".");
+			ErrorHandling.errorNoEvent("Database instance '" + requestingDatabase
+					+ "' FAILED TO LOCK the locator server. The lock is held by " + databaseWithLock + ".");
 		}
 		return response;
 	}
-
+	
 	/**
-	 * Release a lock file. Indicates that a System Table has been created
-	 * successfully.
+	 * Release a lock file. Indicates that a System Table has been created successfully.
 	 * 
 	 * @param requestingDatabase
 	 *            The database which is requesting the lock.
@@ -208,12 +192,11 @@ public class LocatorState {
 	 */
 	public int releaseLockOnFile(String requestingDatabase) {
 		startWrite();
-
+		
 		int result = 0;
-
-		if (!locked || !requestingDatabase.equals(databaseWithLock)) {
-			ErrorHandling
-					.errorNoEvent("Tried to release lock, but lock wasn't held by this database.");
+		
+		if ( !locked || !requestingDatabase.equals(databaseWithLock) ) {
+			ErrorHandling.errorNoEvent("Tried to release lock, but lock wasn't held by this database.");
 			result = 0;
 		} else {
 			updateCount++;
@@ -222,94 +205,80 @@ public class LocatorState {
 			databaseWithLock = null;
 			result = 1;
 		}
-
+		
 		stopWrite();
-
-		if (result == 1) {
-			Diagnostic
-					.traceNoEvent(
-							DiagnosticLevel.INIT,
-							"Database instance at '"
-									+ requestingDatabase
-									+ "' has committed its creation of the system table.");
+		
+		if ( result == 1 ) {
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Database instance at '" + requestingDatabase
+					+ "' has committed its creation of the system table.");
 		} else {
-			Diagnostic
-					.traceNoEvent(
-							DiagnosticLevel.INIT,
-							"Database instance at '"
-									+ requestingDatabase
-									+ "' has failed to commit its creation of the system table.");
+			Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Database instance at '" + requestingDatabase
+					+ "' has failed to commit its creation of the system table.");
 		}
-
+		
 		return result;
 	}
-
+	
 	/*
-	 * #####################################
-	 * 
-	 * Reader-writer methods.
-	 * 
-	 * From: http://beg.projects.cis.ksu.edu/examples/small/readerswriters/
-	 * 
+	 * ##################################### Reader-writer methods. From: http://beg.projects.cis.ksu.edu/examples/small/readerswriters/
 	 * #####################################
 	 */
 
 	private boolean writeCondition() {
 		return activeReaders == 0 && !writerPresent;
 	}
-
+	
 	private boolean readCondition() {
 		return !writerPresent;
 	}
-
+	
 	private synchronized void startRead() {
-		while (!readCondition())
+		while ( !readCondition() )
 			try {
 				wait();
-			} catch (InterruptedException ex) {
+			} catch ( InterruptedException ex ) {
 			}
 		++activeReaders;
 	}
-
+	
 	private synchronized void stopRead() {
 		--activeReaders;
 		notifyAll();
 	}
-
+	
 	private synchronized void startWrite() {
-		while (!writeCondition())
+		while ( !writeCondition() )
 			try {
 				wait();
-			} catch (InterruptedException ex) {
+			} catch ( InterruptedException ex ) {
 			}
 		writerPresent = true;
 	}
-
+	
 	private synchronized void stopWrite() {
 		writerPresent = false;
 		notifyAll();
 	}
-
+	
 	/**
-	 * Create a new locator file. This is used by various test classes to
-	 * overwrite old locator files.
+	 * Create a new locator file. This is used by various test classes to overwrite old locator files.
 	 */
 	public void createNewLocatorFile() {
 		startWrite();
-
+		
 		locatorFile.delete();
 		try {
 			locatorFile.createNewFile();
-		} catch (IOException e) {
+		} catch ( IOException e ) {
 			e.printStackTrace();
 		}
-
+		
 		stopWrite();
 	}
-
+	
 	@Override
 	public String toString() {
 		return locatorFile.getAbsolutePath();
 	}
-
+	
 }

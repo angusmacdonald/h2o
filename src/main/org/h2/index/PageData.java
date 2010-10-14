@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.index;
 
@@ -17,51 +15,51 @@ import org.h2.store.Record;
  * A page that contains data rows.
  */
 abstract class PageData extends Record {
-
+	
 	/**
 	 * Indicator that the row count is not known.
 	 */
 	static final int UNKNOWN_ROWCOUNT = -1;
-
+	
 	/**
 	 * The index.
 	 */
 	protected final PageScanIndex index;
-
+	
 	/**
 	 * The page number of the parent.
 	 */
 	protected int parentPageId;
-
+	
 	/**
 	 * The data page.
 	 */
 	protected final DataPage data;
-
+	
 	/**
 	 * The number of entries.
 	 */
 	protected int entryCount;
-
+	
 	/**
 	 * The row keys.
 	 */
 	protected int[] keys;
-
+	
 	PageData(PageScanIndex index, int pageId, int parentPageId, DataPage data) {
 		this.index = index;
 		this.parentPageId = parentPageId;
 		this.data = data;
 		setPos(pageId);
 	}
-
+	
 	/**
 	 * Get the real row count. If required, this will read all child pages.
 	 * 
 	 * @return the row count
 	 */
 	abstract int getRowCount() throws SQLException;
-
+	
 	/**
 	 * Set the stored row count. This will write the page.
 	 * 
@@ -69,7 +67,7 @@ abstract class PageData extends Record {
 	 *            the stored row count
 	 */
 	abstract void setRowCountStored(int rowCount) throws SQLException;
-
+	
 	/**
 	 * Find an entry by key.
 	 * 
@@ -79,12 +77,12 @@ abstract class PageData extends Record {
 	 */
 	int find(int key) {
 		int l = 0, r = entryCount;
-		while (l < r) {
-			int i = (l + r) >>> 1;
+		while ( l < r ) {
+			int i = ( l + r ) >>> 1;
 			int k = keys[i];
-			if (k > key) {
+			if ( k > key ) {
 				r = i;
-			} else if (k == key) {
+			} else if ( k == key ) {
 				return i;
 			} else {
 				l = i + 1;
@@ -92,29 +90,28 @@ abstract class PageData extends Record {
 		}
 		return l;
 	}
-
+	
 	/**
 	 * Read the data.
 	 */
 	abstract void read() throws SQLException;
-
+	
 	/**
 	 * Add a row.
 	 * 
 	 * @param row
 	 *            the row
-	 * @return 0 if successful, or the split position if the page needs to be
-	 *         split
+	 * @return 0 if successful, or the split position if the page needs to be split
 	 */
 	abstract int addRow(Row row) throws SQLException;
-
+	
 	/**
 	 * Get a cursor.
 	 * 
 	 * @return the cursor
 	 */
 	abstract Cursor find() throws SQLException;
-
+	
 	/**
 	 * Get the key at this position.
 	 * 
@@ -125,7 +122,7 @@ abstract class PageData extends Record {
 	int getKey(int index) {
 		return keys[index];
 	}
-
+	
 	/**
 	 * Split the index page at the given point.
 	 * 
@@ -134,7 +131,7 @@ abstract class PageData extends Record {
 	 * @return the new page that contains about half the entries
 	 */
 	abstract PageData split(int splitPoint) throws SQLException;
-
+	
 	/**
 	 * Change the page id.
 	 * 
@@ -146,25 +143,25 @@ abstract class PageData extends Record {
 		setPos(id);
 		remapChildren();
 	}
-
+	
 	int getPageId() {
 		return getPos();
 	}
-
+	
 	/**
 	 * Get the last key of a page.
 	 * 
 	 * @return the last key
 	 */
 	abstract int getLastKey() throws SQLException;
-
+	
 	/**
 	 * Get the first child leaf page of a page.
 	 * 
 	 * @return the page
 	 */
 	abstract PageDataLeaf getFirstLeaf() throws SQLException;
-
+	
 	/**
 	 * Change the parent page id.
 	 * 
@@ -174,12 +171,12 @@ abstract class PageData extends Record {
 	void setParentPageId(int id) {
 		this.parentPageId = id;
 	}
-
+	
 	/**
 	 * Update the parent id of all children.
 	 */
 	abstract void remapChildren() throws SQLException;
-
+	
 	/**
 	 * Remove a row.
 	 * 
@@ -188,7 +185,7 @@ abstract class PageData extends Record {
 	 * @return true if this page is now empty
 	 */
 	abstract boolean remove(int key) throws SQLException;
-
+	
 	/**
 	 * Get the row for the given key.
 	 * 
@@ -199,5 +196,5 @@ abstract class PageData extends Record {
 	 * @return the row
 	 */
 	abstract Row getRow(Session session, int key) throws SQLException;
-
+	
 }

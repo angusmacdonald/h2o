@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.poweroff;
 
@@ -32,46 +30,49 @@ import java.util.zip.ZipOutputStream;
 import org.h2.util.IOUtils;
 
 /**
- * This standalone test checks if recovery of a database works after power
- * failure.
+ * This standalone test checks if recovery of a database works after power failure.
  */
 public class TestRecover {
-
+	
 	private static final String NODE = System.getProperty("test.node", "");
+	
 	private static final String DIR = System.getProperty("test.dir", "/temp/db");
-
+	
 	private static final String TEST_DIRECTORY = DIR + "/data" + NODE;
+	
 	private static final String BACKUP_DIRECTORY = DIR + "/last";
+	
 	private static final String URL = System.getProperty("test.url", "jdbc:h2:" + TEST_DIRECTORY + "/test;MAX_LOG_SIZE=2");
+	
 	private static final String DRIVER = System.getProperty("test.driver", "org.h2.Driver");
-
+	
 	private Random random;
-
+	
 	// private static final String DIR =
-	//     System.getProperty("test.dir", "/temp/derby");
+	// System.getProperty("test.dir", "/temp/derby");
 	// private static final String URL =
-	//     System.getProperty("test.url",
-	//         "jdbc:derby:/temp/derby/data/test;create=true");
+	// System.getProperty("test.url",
+	// "jdbc:derby:/temp/derby/data/test;create=true");
 	// private static final String DRIVER =
-	//     System.getProperty("test.driver",
-	//         "org.apache.derby.jdbc.EmbeddedDriver");
-
+	// System.getProperty("test.driver",
+	// "org.apache.derby.jdbc.EmbeddedDriver");
+	
 	/**
-	 * This method is called when executing this application from the command
-	 * line.
-	 *
-	 * @param args the command line parameters
+	 * This method is called when executing this application from the command line.
+	 * 
+	 * @param args
+	 *            the command line parameters
 	 */
 	public static void main(String[] args) throws Exception {
 		new TestRecover().runTest();
 	}
-
+	
 	private void runTest() throws Exception {
 		System.out.println("backup...");
 		new File(TEST_DIRECTORY).mkdirs();
 		File backup = backup(TEST_DIRECTORY, BACKUP_DIRECTORY, "data", 10, NODE);
 		System.out.println("check consistency...");
-		if (!testConsistency()) {
+		if ( !testConsistency() ) {
 			System.out.println("error! renaming file");
 			backup.renameTo(new File(backup.getParentFile(), "error-" + backup.getName()));
 		}
@@ -80,27 +81,27 @@ public class TestRecover {
 		System.out.println("testing...");
 		testLoop();
 	}
-
+	
 	private static File backup(String sourcePath, String targetPath, String basePath, int max, String node) throws IOException {
 		File root = new File(targetPath);
-		if (!root.exists()) {
+		if ( !root.exists() ) {
 			root.mkdirs();
 		}
-		while (true) {
+		while ( true ) {
 			File[] list = root.listFiles();
 			File oldest = null;
 			int count = 0;
-			for (int i = 0; i < list.length; i++) {
+			for ( int i = 0; i < list.length; i++ ) {
 				File f = list[i];
 				String name = f.getName();
-				if (f.isFile() && name.startsWith("backup") && name.endsWith(".zip")) {
+				if ( f.isFile() && name.startsWith("backup") && name.endsWith(".zip") ) {
 					count++;
-					if (oldest == null || f.lastModified() < oldest.lastModified()) {
+					if ( oldest == null || f.lastModified() < oldest.lastModified() ) {
 						oldest = f;
 					}
 				}
 			}
-			if (count < max) {
+			if ( count < max ) {
 				break;
 			}
 			oldest.delete();
@@ -111,7 +112,7 @@ public class TestRecover {
 		ArrayList list = new ArrayList();
 		File base = new File(sourcePath);
 		listRecursive(list, base);
-		if (list.size() == 0) {
+		if ( list.size() == 0 ) {
 			FileOutputStream out = new FileOutputStream(zipFile);
 			out.close();
 		} else {
@@ -120,17 +121,17 @@ public class TestRecover {
 				out = new FileOutputStream(zipFile);
 				ZipOutputStream zipOut = new ZipOutputStream(out);
 				String baseName = base.getAbsolutePath();
-				for (int i = 0; i < list.size(); i++) {
+				for ( int i = 0; i < list.size(); i++ ) {
 					File f = (File) list.get(i);
 					String fileName = f.getAbsolutePath();
 					String entryName = fileName;
-					if (fileName.startsWith(baseName)) {
+					if ( fileName.startsWith(baseName) ) {
 						entryName = entryName.substring(baseName.length());
 					}
-					if (entryName.startsWith("\\")) {
+					if ( entryName.startsWith("\\") ) {
 						entryName = entryName.substring(1);
 					}
-					if (!entryName.startsWith("/")) {
+					if ( !entryName.startsWith("/") ) {
 						entryName = "/" + entryName;
 					}
 					ZipEntry entry = new ZipEntry(basePath + entryName);
@@ -152,101 +153,101 @@ public class TestRecover {
 		}
 		return zipFile;
 	}
-
+	
 	private static void listRecursive(List list, File file) throws IOException {
 		File[] l = file.listFiles();
-		for (int i = 0; l != null && i < l.length; i++) {
+		for ( int i = 0; l != null && i < l.length; i++ ) {
 			File f = l[i];
-			if (f.isDirectory()) {
+			if ( f.isDirectory() ) {
 				listRecursive(list, f);
 			} else {
 				list.add(f);
 			}
 		}
 	}
-
+	
 	private static void deleteRecursive(File file) throws IOException {
-		if (file.isDirectory()) {
+		if ( file.isDirectory() ) {
 			File[] list = file.listFiles();
-			for (int i = 0; i < list.length; i++) {
+			for ( int i = 0; i < list.length; i++ ) {
 				deleteRecursive(list[i]);
 			}
 		}
-		if (file.exists() && !file.delete()) {
+		if ( file.exists() && !file.delete() ) {
 			throw new IOException("Could not delete " + file.getAbsolutePath());
 		}
 	}
-
+	
 	private void testLoop() throws Exception {
 		random = new SecureRandom();
-		while (true) {
+		while ( true ) {
 			runOneTest(random.nextInt());
 		}
 	}
-
+	
 	private Connection openConnection() throws Exception {
 		Class.forName(DRIVER);
 		Connection conn = DriverManager.getConnection(URL, "sa", "sa");
 		Statement stat = conn.createStatement();
 		try {
 			stat.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255))");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			// ignore
 		}
 		return conn;
 	}
-
+	
 	private void closeConnection(Connection conn) {
 		try {
 			conn.close();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			// ignore
 		}
-		if (DRIVER.startsWith("org.apache.derby")) {
+		if ( DRIVER.startsWith("org.apache.derby") ) {
 			try {
 				DriverManager.getConnection("jdbc:derby:;shutdown=true");
-			} catch (SQLException e) {
+			} catch ( SQLException e ) {
 				// ignore
 			}
 			try {
 				Driver driver = (Driver) Class.forName(DRIVER).newInstance();
 				DriverManager.registerDriver(driver);
-			} catch (Exception e) {
+			} catch ( Exception e ) {
 				e.printStackTrace();
 			}
 		}
 	}
-
+	
 	private void runOneTest(int i) throws Exception {
 		Random random = new Random(i);
 		Connection conn = openConnection();
 		PreparedStatement prepInsert = null;
 		PreparedStatement prepDelete = null;
 		conn.setAutoCommit(false);
-		for (int id = 0;; id++) {
+		for ( int id = 0;; id++ ) {
 			boolean rollback = random.nextInt(10) == 1;
 			int len;
-			if (random.nextInt(10) == 1) {
+			if ( random.nextInt(10) == 1 ) {
 				len = random.nextInt(100) * 2;
 			} else {
 				len = random.nextInt(2) * 2;
 			}
-			if (rollback && random.nextBoolean()) {
+			if ( rollback && random.nextBoolean() ) {
 				// make the length odd
 				len++;
 			}
-			//            byte[] data = new byte[len];
-			//            random.nextBytes(data);
+			// byte[] data = new byte[len];
+			// random.nextBytes(data);
 			int op = random.nextInt();
-			if (op % 1000000 == 0) {
+			if ( op % 1000000 == 0 ) {
 				closeConnection(conn);
 				conn = openConnection();
 				conn.setAutoCommit(false);
 				prepInsert = null;
 				prepDelete = null;
 			}
-			if (random.nextBoolean()) {
-				if (prepInsert == null) {
+			if ( random.nextBoolean() ) {
+				if ( prepInsert == null ) {
 					prepInsert = conn.prepareStatement("INSERT INTO TEST(ID, NAME) VALUES(?, ?)");
 				}
 				prepInsert.setInt(1, id);
@@ -257,21 +258,21 @@ public class TestRecover {
 				rs.next();
 				int count = rs.getInt(1);
 				rs.close();
-				if (count > 1000) {
-					if (prepDelete == null) {
+				if ( count > 1000 ) {
+					if ( prepDelete == null ) {
 						prepDelete = conn.prepareStatement("DELETE FROM TEST WHERE ROWNUM <= 4");
 					}
 					prepDelete.execute();
 				}
 			}
-			if (rollback) {
+			if ( rollback ) {
 				conn.rollback();
 			} else {
 				conn.commit();
 			}
 		}
 	}
-
+	
 	private boolean testConsistency() {
 		FileOutputStream out = null;
 		PrintWriter p = null;
@@ -280,7 +281,7 @@ public class TestRecover {
 			p = new PrintWriter(out);
 			p.println("Results");
 			p.flush();
-		} catch (Throwable t) {
+		} catch ( Throwable t ) {
 			t.printStackTrace();
 			System.exit(0);
 		}
@@ -290,12 +291,12 @@ public class TestRecover {
 			ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM TEST");
 			int max = 0;
 			int count = 0;
-			while (rs.next()) {
+			while ( rs.next() ) {
 				count++;
 				int id = rs.getInt("ID");
 				String name = rs.getString("NAME");
 				int value = Integer.parseInt(name);
-				if (value % 2 == 0) {
+				if ( value % 2 == 0 ) {
 					throw new Exception("unexpected odd entry " + id);
 				}
 				max = Math.max(max, id);
@@ -304,15 +305,15 @@ public class TestRecover {
 			closeConnection(conn);
 			System.out.println("max row id: " + max + " rows: " + count);
 			return true;
-		} catch (Throwable t) {
+		} catch ( Throwable t ) {
 			t.printStackTrace();
 			t.printStackTrace(p);
 			return false;
 		} finally {
-			if (conn != null) {
+			if ( conn != null ) {
 				try {
 					closeConnection(conn);
-				} catch (Throwable t2) {
+				} catch ( Throwable t2 ) {
 					t2.printStackTrace();
 					t2.printStackTrace(p);
 				}
@@ -322,5 +323,5 @@ public class TestRecover {
 			IOUtils.closeSilently(out);
 		}
 	}
-
+	
 }

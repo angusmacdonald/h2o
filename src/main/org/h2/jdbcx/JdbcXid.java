@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.jdbcx;
 
@@ -24,33 +22,31 @@ public class JdbcXid extends TraceObject
 		implements Xid
 // ## Java 1.4 end ##
 {
-
+	
 	private static final String PREFIX = "XID";
-
+	
 	private int formatId;
+	
 	private byte[] branchQualifier;
+	
 	private byte[] globalTransactionId;
-
-	JdbcXid(JdbcDataSourceFactory factory, int id, String tid)
-			throws SQLException {
+	
+	JdbcXid(JdbcDataSourceFactory factory, int id, String tid) throws SQLException {
 		setTrace(factory.getTrace(), TraceObject.XID, id);
 		try {
 			StringTokenizer tokenizer = new StringTokenizer(tid, "_");
 			String prefix = tokenizer.nextToken();
-			if (!PREFIX.equals(prefix)) {
-				throw Message
-						.getSQLException(ErrorCode.WRONG_XID_FORMAT_1, tid);
+			if ( !PREFIX.equals(prefix) ) {
+				throw Message.getSQLException(ErrorCode.WRONG_XID_FORMAT_1, tid);
 			}
 			formatId = Integer.parseInt(tokenizer.nextToken());
-			branchQualifier = ByteUtils.convertStringToBytes(tokenizer
-					.nextToken());
-			globalTransactionId = ByteUtils.convertStringToBytes(tokenizer
-					.nextToken());
-		} catch (RuntimeException e) {
+			branchQualifier = ByteUtils.convertStringToBytes(tokenizer.nextToken());
+			globalTransactionId = ByteUtils.convertStringToBytes(tokenizer.nextToken());
+		} catch ( RuntimeException e ) {
 			throw Message.getSQLException(ErrorCode.WRONG_XID_FORMAT_1, tid);
 		}
 	}
-
+	
 	/**
 	 * INTERNAL
 	 */
@@ -64,7 +60,7 @@ public class JdbcXid extends TraceObject
 		buff.append(ByteUtils.convertBytesToString(globalTransactionId));
 		return buff.toString();
 	}
-
+	
 	/**
 	 * Get the format id.
 	 * 
@@ -74,7 +70,7 @@ public class JdbcXid extends TraceObject
 		debugCodeCall("getFormatId");
 		return formatId;
 	}
-
+	
 	/**
 	 * The transaction branch identifier.
 	 * 
@@ -84,7 +80,7 @@ public class JdbcXid extends TraceObject
 		debugCodeCall("getBranchQualifier");
 		return branchQualifier;
 	}
-
+	
 	/**
 	 * The global transaction identifier.
 	 * 
@@ -94,12 +90,12 @@ public class JdbcXid extends TraceObject
 		debugCodeCall("getGlobalTransactionId");
 		return globalTransactionId;
 	}
-
+	
 	/**
 	 * INTERNAL
 	 */
 	public String toString() {
 		return getTraceObjectName() + ": " + getAsString();
 	}
-
+	
 }

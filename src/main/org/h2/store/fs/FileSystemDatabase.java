@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.store.fs;
 
@@ -30,60 +28,57 @@ import org.h2.util.StringUtils;
  * This file system stores everything in a database.
  */
 public class FileSystemDatabase extends FileSystem {
-
+	
 	private static final HashMap INSTANCES = new HashMap();
+	
 	private Connection conn;
+	
 	private String url;
+	
 	private HashMap preparedMap = new HashMap();
+	
 	private boolean log;
-
-	private FileSystemDatabase(String url, Connection conn, boolean log)
-			throws SQLException {
+	
+	private FileSystemDatabase(String url, Connection conn, boolean log) throws SQLException {
 		this.url = url;
 		this.conn = conn;
 		this.log = log;
 		Statement stat = conn.createStatement();
 		conn.setAutoCommit(false);
 		stat.execute("SET ALLOW_LITERALS NONE");
-		stat.execute("CREATE TABLE IF NOT EXISTS FILES("
-				+ "ID IDENTITY, PARENTID BIGINT, NAME VARCHAR, "
-				+ "LASTMODIFIED BIGINT, LENGTH BIGINT, "
-				+ "UNIQUE(PARENTID, NAME))");
-		stat.execute("CREATE TABLE IF NOT EXISTS FILEDATA("
-				+ "ID BIGINT PRIMARY KEY, DATA BLOB)");
-		PreparedStatement prep = conn
-				.prepareStatement("SET MAX_LENGTH_INPLACE_LOB ?");
+		stat.execute("CREATE TABLE IF NOT EXISTS FILES(" + "ID IDENTITY, PARENTID BIGINT, NAME VARCHAR, "
+				+ "LASTMODIFIED BIGINT, LENGTH BIGINT, " + "UNIQUE(PARENTID, NAME))");
+		stat.execute("CREATE TABLE IF NOT EXISTS FILEDATA(" + "ID BIGINT PRIMARY KEY, DATA BLOB)");
+		PreparedStatement prep = conn.prepareStatement("SET MAX_LENGTH_INPLACE_LOB ?");
 		prep.setLong(1, 4096);
 		prep.execute();
 		stat.execute("MERGE INTO FILES VALUES(ZERO(), NULL, SPACE(ZERO()), ZERO(), NULL)");
 		commit();
-		if (log) {
-			ResultSet rs = stat
-					.executeQuery("SELECT * FROM FILES ORDER BY PARENTID, NAME");
-			while (rs.next()) {
+		if ( log ) {
+			ResultSet rs = stat.executeQuery("SELECT * FROM FILES ORDER BY PARENTID, NAME");
+			while ( rs.next() ) {
 				long id = rs.getLong("ID");
 				long parentId = rs.getLong("PARENTID");
 				String name = rs.getString("NAME");
 				long lastModified = rs.getLong("LASTMODIFIED");
 				long length = rs.getLong("LENGTH");
-				log(id + " " + name + " parent:" + parentId + " length:"
-						+ length + " lastMod:" + lastModified);
+				log(id + " " + name + " parent:" + parentId + " length:" + length + " lastMod:" + lastModified);
 			}
 		}
 	}
-
+	
 	public static synchronized FileSystem getInstance(String url) {
 		int idx = url.indexOf('/');
-		if (idx > 0) {
+		if ( idx > 0 ) {
 			url = url.substring(0, idx);
 		}
 		FileSystemDatabase fs = (FileSystemDatabase) INSTANCES.get(url);
-		if (fs != null) {
+		if ( fs != null ) {
 			return fs;
 		}
 		Connection conn;
 		try {
-			if (url.startsWith("jdbc:h2:")) {
+			if ( url.startsWith("jdbc:h2:") ) {
 				// avoid using DriverManager if possible
 				conn = Driver.load().connect(url, new Properties());
 			} else {
@@ -93,11 +88,11 @@ public class FileSystemDatabase extends FileSystem {
 			fs = new FileSystemDatabase(url, conn, log);
 			INSTANCES.put(url, fs);
 			return fs;
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			throw Message.convertToInternal(e);
 		}
 	}
-
+	
 	/**
 	 * Close the underlying database.
 	 */
@@ -105,33 +100,33 @@ public class FileSystemDatabase extends FileSystem {
 		JdbcUtils.closeSilently(conn);
 		INSTANCES.remove(url);
 	}
-
+	
 	private void commit() {
 		try {
 			conn.commit();
-		} catch (SQLException e) {
-			if (log) {
+		} catch ( SQLException e ) {
+			if ( log ) {
 				e.printStackTrace();
 			}
 		}
 	}
-
+	
 	private void rollback() {
 		try {
 			conn.rollback();
-		} catch (SQLException e) {
-			if (log) {
+		} catch ( SQLException e ) {
+			if ( log ) {
 				e.printStackTrace();
 			}
 		}
 	}
-
+	
 	private void log(String s) {
-		if (log) {
+		if ( log ) {
 			System.out.println(s);
 		}
 	}
-
+	
 	private long getId(String fileName, boolean parent) {
 		fileName = translateFileName(fileName);
 		log(fileName);
@@ -139,80 +134,79 @@ public class FileSystemDatabase extends FileSystem {
 			String[] path = StringUtils.arraySplit(fileName, '/', false);
 			long id = 0;
 			int len = parent ? path.length - 1 : path.length;
-			if (fileName.endsWith("/")) {
+			if ( fileName.endsWith("/") ) {
 				len--;
 			}
-			for (int i = 1; i < len; i++) {
+			for ( int i = 1; i < len; i++ ) {
 				PreparedStatement prep = prepare("SELECT ID FROM FILES WHERE PARENTID=? AND NAME=?");
 				prep.setLong(1, id);
 				prep.setString(2, path[i]);
 				ResultSet rs = prep.executeQuery();
-				if (!rs.next()) {
+				if ( !rs.next() ) {
 					return -1;
 				}
 				id = rs.getLong(1);
 			}
 			return id;
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			throw convert(e);
 		}
 	}
-
+	
 	private String translateFileName(String fileName) {
-		if (fileName.startsWith(url)) {
+		if ( fileName.startsWith(url) ) {
 			fileName = fileName.substring(url.length());
 		}
 		return fileName;
 	}
-
+	
 	private PreparedStatement prepare(String sql) throws SQLException {
 		PreparedStatement prep = (PreparedStatement) preparedMap.get(sql);
-		if (prep == null) {
+		if ( prep == null ) {
 			prep = conn.prepareStatement(sql);
 			preparedMap.put(sql, prep);
 		}
 		return prep;
 	}
-
+	
 	private RuntimeException convert(SQLException e) {
-		if (log) {
+		if ( log ) {
 			e.printStackTrace();
 		}
 		return new RuntimeException(e.toString(), e);
 	}
-
+	
 	public boolean canWrite(String fileName) {
 		return true;
 	}
-
+	
 	public void copy(String original, String copy) throws SQLException {
 		try {
 			OutputStream out = openFileOutputStream(copy, false);
 			InputStream in = openFileInputStream(original);
 			IOUtils.copyAndClose(in, out);
-		} catch (IOException e) {
+		} catch ( IOException e ) {
 			rollback();
-			throw Message.convertIOException(e, "Can not copy " + original
-					+ " to " + copy);
+			throw Message.convertIOException(e, "Can not copy " + original + " to " + copy);
 		}
 	}
-
+	
 	public void createDirs(String fileName) {
 		fileName = translateFileName(fileName);
 		try {
 			String[] path = StringUtils.arraySplit(fileName, '/', false);
 			long parentId = 0;
 			int len = path.length;
-			if (fileName.endsWith("/")) {
+			if ( fileName.endsWith("/") ) {
 				len--;
 			}
 			len--;
-			for (int i = 1; i < len; i++) {
+			for ( int i = 1; i < len; i++ ) {
 				PreparedStatement prep = prepare("SELECT ID FROM FILES WHERE PARENTID=? AND NAME=?");
 				prep.setLong(1, parentId);
 				prep.setString(2, path[i]);
 				ResultSet rs = prep.executeQuery();
-				if (!rs.next()) {
+				if ( !rs.next() ) {
 					prep = prepare("INSERT INTO FILES(NAME, PARENTID, LASTMODIFIED) VALUES(?, ?, ?)");
 					prep.setString(1, path[i]);
 					prep.setLong(2, parentId);
@@ -226,37 +220,36 @@ public class FileSystemDatabase extends FileSystem {
 				}
 			}
 			commit();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			rollback();
 			throw convert(e);
 		}
 	}
-
+	
 	public boolean createNewFile(String fileName) throws SQLException {
 		try {
-			if (exists(fileName)) {
+			if ( exists(fileName) ) {
 				return false;
 			}
 			openFileObject(fileName, "rw").close();
 			return true;
-		} catch (IOException e) {
+		} catch ( IOException e ) {
 			throw Message.convert(e);
 		}
 	}
-
-	public String createTempFile(String name, String suffix,
-			boolean deleteOnExit, boolean inTempDir) throws IOException {
+	
+	public String createTempFile(String name, String suffix, boolean deleteOnExit, boolean inTempDir) throws IOException {
 		name += ".";
-		for (int i = 0;; i++) {
+		for ( int i = 0;; i++ ) {
 			String n = name + i + suffix;
-			if (!exists(n)) {
+			if ( !exists(n) ) {
 				// creates the file (not thread safe)
 				openFileObject(n, "rw").close();
 				return n;
 			}
 		}
 	}
-
+	
 	public synchronized void delete(String fileName) {
 		try {
 			long id = getId(fileName, false);
@@ -267,36 +260,36 @@ public class FileSystemDatabase extends FileSystem {
 			prep.setLong(1, id);
 			prep.execute();
 			commit();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			rollback();
 			throw convert(e);
 		}
 	}
-
+	
 	public void deleteRecursive(String fileName) throws SQLException {
 		throw Message.getUnsupportedException();
 	}
-
+	
 	public boolean exists(String fileName) {
 		long id = getId(fileName, false);
 		return id >= 0;
 	}
-
+	
 	public boolean fileStartsWith(String fileName, String prefix) {
 		fileName = translateFileName(fileName);
 		return fileName.startsWith(prefix);
 	}
-
+	
 	public String getAbsolutePath(String fileName) {
 		return fileName;
 	}
-
+	
 	public String getFileName(String fileName) {
 		fileName = translateFileName(fileName);
 		String[] path = StringUtils.arraySplit(fileName, '/', false);
 		return path[path.length - 1];
 	}
-
+	
 	public synchronized long getLastModified(String fileName) {
 		try {
 			long id = getId(fileName, false);
@@ -305,20 +298,20 @@ public class FileSystemDatabase extends FileSystem {
 			ResultSet rs = prep.executeQuery();
 			rs.next();
 			return rs.getLong(1);
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			throw convert(e);
 		}
 	}
-
+	
 	public String getParent(String fileName) {
 		int idx = Math.max(fileName.indexOf(':'), fileName.lastIndexOf('/'));
 		return fileName.substring(0, idx);
 	}
-
+	
 	public boolean isAbsolute(String fileName) {
 		return true;
 	}
-
+	
 	public synchronized boolean isDirectory(String fileName) {
 		try {
 			long id = getId(fileName, false);
@@ -328,15 +321,15 @@ public class FileSystemDatabase extends FileSystem {
 			rs.next();
 			rs.getLong(1);
 			return rs.wasNull();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			throw convert(e);
 		}
 	}
-
+	
 	public boolean isReadOnly(String fileName) {
 		return false;
 	}
-
+	
 	public synchronized long length(String fileName) {
 		try {
 			long id = getId(fileName, false);
@@ -345,15 +338,15 @@ public class FileSystemDatabase extends FileSystem {
 			ResultSet rs = prep.executeQuery();
 			rs.next();
 			return rs.getLong(1);
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			throw convert(e);
 		}
 	}
-
+	
 	public synchronized String[] listFiles(String path) {
 		try {
 			String name = path;
-			if (!name.endsWith("/")) {
+			if ( !name.endsWith("/") ) {
 				name += "/";
 			}
 			long id = getId(path, false);
@@ -361,33 +354,32 @@ public class FileSystemDatabase extends FileSystem {
 			prep.setLong(1, id);
 			ResultSet rs = prep.executeQuery();
 			ArrayList list = new ArrayList();
-			while (rs.next()) {
+			while ( rs.next() ) {
 				list.add(name + rs.getString(1));
 			}
 			String[] result = new String[list.size()];
 			list.toArray(result);
 			return result;
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			throw convert(e);
 		}
 	}
-
+	
 	public String normalize(String fileName) {
 		return fileName;
 	}
-
+	
 	public InputStream openFileInputStream(String fileName) throws IOException {
 		return new FileObjectInputStream(openFileObject(fileName, "r"));
 	}
-
-	public FileObject openFileObject(String fileName, String mode)
-			throws IOException {
+	
+	public FileObject openFileObject(String fileName, String mode) throws IOException {
 		try {
 			long id = getId(fileName, false);
 			PreparedStatement prep = prepare("SELECT DATA FROM FILEDATA WHERE ID=?");
 			prep.setLong(1, id);
 			ResultSet rs = prep.executeQuery();
-			if (rs.next()) {
+			if ( rs.next() ) {
 				InputStream in = rs.getBinaryStream(1);
 				ByteArrayOutputStream out = new ByteArrayOutputStream();
 				IOUtils.copyAndClose(in, out);
@@ -395,26 +387,24 @@ public class FileSystemDatabase extends FileSystem {
 				return new FileObjectDatabase(this, fileName, data, false);
 			}
 			return new FileObjectDatabase(this, fileName, new byte[0], true);
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			throw convert(e);
 		}
 	}
-
-	public OutputStream openFileOutputStream(String fileName, boolean append)
-			throws SQLException {
+	
+	public OutputStream openFileOutputStream(String fileName, boolean append) throws SQLException {
 		try {
-			return new FileObjectOutputStream(openFileObject(fileName, "rw"),
-					append);
-		} catch (IOException e) {
+			return new FileObjectOutputStream(openFileObject(fileName, "rw"), append);
+		} catch ( IOException e ) {
 			throw Message.convertIOException(e, fileName);
 		}
 	}
-
+	
 	public synchronized void rename(String oldName, String newName) {
 		try {
 			long parentOld = getId(oldName, true);
 			long parentNew = getId(newName, true);
-			if (parentOld != parentNew) {
+			if ( parentOld != parentNew ) {
 				throw Message.getUnsupportedException();
 			}
 			newName = getFileName(newName);
@@ -424,17 +414,17 @@ public class FileSystemDatabase extends FileSystem {
 			prep.setLong(2, id);
 			prep.execute();
 			commit();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			rollback();
 			throw convert(e);
 		}
 	}
-
+	
 	public boolean tryDelete(String fileName) {
 		delete(fileName);
 		return true;
 	}
-
+	
 	/**
 	 * Update a file in the file system.
 	 * 
@@ -448,7 +438,7 @@ public class FileSystemDatabase extends FileSystem {
 	synchronized void write(String fileName, byte[] b, int len) {
 		try {
 			long id = getId(fileName, false);
-			if (id >= 0) {
+			if ( id >= 0 ) {
 				PreparedStatement prep = prepare("DELETE FROM FILES WHERE ID=?");
 				prep.setLong(1, id);
 				prep.execute();
@@ -475,10 +465,10 @@ public class FileSystemDatabase extends FileSystem {
 			prep.setLong(2, id);
 			prep.execute();
 			commit();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			rollback();
 			throw convert(e);
 		}
 	}
-
+	
 }

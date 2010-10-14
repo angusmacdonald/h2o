@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.unit;
 
@@ -49,43 +47,44 @@ import org.h2.value.ValueTimestamp;
 import org.h2.value.ValueUuid;
 
 /**
- * Tests the memory consumption of values. Values can estimate how much memory
- * they occupy, and this tests if this estimation is correct.
+ * Tests the memory consumption of values. Values can estimate how much memory they occupy, and this tests if this estimation is correct.
  */
 public class TestValueMemory extends TestBase implements DataHandler {
-
+	
 	private Random random = new Random(1);
+	
 	private SmallLRUCache lobFileListCache = new SmallLRUCache(128);
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws SQLException {
-		for (int i = 0; i < Value.TYPE_COUNT; i++) {
+		for ( int i = 0; i < Value.TYPE_COUNT; i++ ) {
 			testType(i);
 		}
 	}
-
+	
 	private void testType(int type) throws SQLException {
 		System.gc();
 		System.gc();
 		long first = MemoryUtils.getMemoryUsed();
 		ArrayList list = new ArrayList();
 		long memory = 0;
-		for (int i = 0; memory < 1000000; i++) {
+		for ( int i = 0; memory < 1000000; i++ ) {
 			Value v = create(type);
 			memory += v.getMemory();
 			list.add(v);
 		}
 		Object[] array = list.toArray();
 		IdentityHashMap map = new IdentityHashMap();
-		for (int i = 0; i < array.length; i++) {
+		for ( int i = 0; i < array.length; i++ ) {
 			map.put(array[i], array[i]);
 		}
 		int size = map.size();
@@ -96,10 +95,11 @@ public class TestValueMemory extends TestBase implements DataHandler {
 		System.gc();
 		long used = MemoryUtils.getMemoryUsed() - first;
 		memory /= 1024;
-		if (used > memory * 3) {
+		if ( used > memory * 3 ) {
 			fail("Type: " + type + " Used memory: " + used + " calculated: " + memory + " " + array.length + " size: " + size);
 		}
 	}
+	
 	private Value create(int type) throws SQLException {
 		switch (type) {
 		case Value.NULL:
@@ -146,7 +146,7 @@ public class TestValueMemory extends TestBase implements DataHandler {
 		case Value.ARRAY: {
 			int len = random.nextInt(20);
 			Value[] list = new Value[len];
-			for (int i = 0; i < list.length; i++) {
+			for ( int i = 0; i < list.length; i++ ) {
 				list[i] = create(Value.STRING);
 			}
 			return ValueArray.get(list);
@@ -164,98 +164,98 @@ public class TestValueMemory extends TestBase implements DataHandler {
 			throw new Error("type=" + type);
 		}
 	}
-
+	
 	private byte[] randomBytes(int len) {
 		byte[] data = new byte[len];
-		if (random.nextBoolean()) {
+		if ( random.nextBoolean() ) {
 			// don't initialize always (compression)
 			random.nextBytes(data);
 		}
 		return data;
 	}
-
+	
 	private String randomString(int len) {
 		char[] chars = new char[len];
-		if (random.nextBoolean()) {
+		if ( random.nextBoolean() ) {
 			// don't initialize always (compression)
-			for (int i = 0; i < chars.length; i++) {
-				chars[i] = (char) (random.nextGaussian() * 100);
+			for ( int i = 0; i < chars.length; i++ ) {
+				chars[i] = (char) ( random.nextGaussian() * 100 );
 			}
 		}
 		return new String(chars);
 	}
-
+	
 	public int allocateObjectId(boolean needFresh, boolean dataFile) {
 		return 0;
 	}
-
+	
 	public void checkPowerOff() {
 		// nothing to do
 	}
-
+	
 	public void checkWritingAllowed() {
 		// nothing to do
 	}
-
+	
 	public int compareTypeSave(Value a, Value b) {
 		return 0;
 	}
-
+	
 	public String createTempFile() throws SQLException {
 		String name = baseDir + "/valueMemory/data";
 		try {
 			return FileUtils.createTempFile(name, Constants.SUFFIX_TEMP_FILE, true, false);
-		} catch (IOException e) {
+		} catch ( IOException e ) {
 			throw Message.convertIOException(e, name);
 		}
 	}
-
+	
 	public void freeUpDiskSpace() {
 		// nothing to do
 	}
-
+	
 	public int getChecksum(byte[] data, int start, int end) {
 		return 0;
 	}
-
+	
 	public String getDatabasePath() {
 		return baseDir + "/valueMemory";
 	}
-
+	
 	public String getLobCompressionAlgorithm(int type) {
 		return "LZF";
 	}
-
+	
 	public Object getLobSyncObject() {
 		return this;
 	}
-
+	
 	public int getMaxLengthInplaceLob() {
 		return 100;
 	}
-
+	
 	public void handleInvalidChecksum() {
 		// nothing to do
 	}
-
+	
 	public FileStore openFile(String name, String mode, boolean mustExist) throws SQLException {
 		return FileStore.open(this, name, mode);
 	}
-
+	
 	public boolean getLobFilesInDirectories() {
 		return SysProperties.LOB_FILES_IN_DIRECTORIES;
 	}
-
+	
 	public SmallLRUCache getLobFileListCache() {
 		return lobFileListCache;
 	}
-
+	
 	public TempFileDeleter getTempFileDeleter() {
 		return TempFileDeleter.getInstance();
 	}
-
+	
 	public Trace getTrace() {
 		return null;
 	}
-
+	
 }

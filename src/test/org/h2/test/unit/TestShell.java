@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.unit;
 
@@ -22,30 +20,33 @@ import org.h2.tools.Shell;
  * Test the shell tool.
  */
 public class TestShell extends TestBase {
-
+	
 	/**
 	 * The output stream of the tool.
 	 */
 	PrintStream toolOut;
-
+	
 	/**
 	 * The input stream of the tool.
 	 */
 	InputStream toolIn;
-
+	
 	private PrintStream testOut;
+	
 	private PipedInputStream testIn;
+	
 	private LineNumberReader lineReader;
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws IOException {
 		testIn = new PipedInputStream();
 		PipedOutputStream out = new PipedOutputStream(testIn);
@@ -54,12 +55,13 @@ public class TestShell extends TestBase {
 		testOut = new PrintStream(out, true);
 		toolIn = new PipedInputStream(out);
 		new Thread(new Runnable() {
+			
 			public void run() {
 				try {
 					Shell shell = new Shell();
 					shell.setStreams(toolIn, toolOut, toolOut);
 					shell.run(new String[0]);
-				} catch (SQLException e) {
+				} catch ( SQLException e ) {
 					e.printStackTrace();
 				} finally {
 					toolOut.close();
@@ -92,7 +94,7 @@ public class TestShell extends TestBase {
 		read("sql> ...>");
 		testOut.println("show public");
 		read("sql>");
-		while (read("").startsWith("INFORMATION_SCHEMA")) {
+		while ( read("").startsWith("INFORMATION_SCHEMA") ) {
 			// ignore
 		}
 		testOut.println("insert into test values(1, 'Hello');");
@@ -108,12 +110,12 @@ public class TestShell extends TestBase {
 		testOut.println("exit");
 		read("sql>");
 	}
-
+	
 	private String read(String expectedStart) throws IOException {
 		String line = lineReader.readLine();
 		// System.out.println(": " + line);
 		assertStartsWith(line, expectedStart);
 		return line;
 	}
-
+	
 }

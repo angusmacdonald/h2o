@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.jdbc;
 
@@ -23,10 +21,11 @@ import org.h2.value.Value;
  * Represents an ARRAY value.
  */
 public class JdbcArray extends TraceObject implements Array {
-
+	
 	private Value value;
+	
 	private JdbcConnection conn;
-
+	
 	/**
 	 * INTERNAL
 	 */
@@ -35,10 +34,9 @@ public class JdbcArray extends TraceObject implements Array {
 		this.conn = conn;
 		this.value = value;
 	}
-
+	
 	/**
-	 * Returns the value as a Java array. This method always returns an
-	 * Object[].
+	 * Returns the value as a Java array. This method always returns an Object[].
 	 * 
 	 * @return the Object array
 	 * @throws SQLException
@@ -48,14 +46,13 @@ public class JdbcArray extends TraceObject implements Array {
 			debugCodeCall("getArray");
 			checkClosed();
 			return get();
-		} catch (Exception e) {
+		} catch ( Exception e ) {
 			throw logAndConvert(e);
 		}
 	}
-
+	
 	/**
-	 * Returns the value as a Java array. This method always returns an
-	 * Object[].
+	 * Returns the value as a Java array. This method always returns an Object[].
 	 * 
 	 * @param map
 	 *            is ignored. Only empty or null maps are supported
@@ -68,15 +65,14 @@ public class JdbcArray extends TraceObject implements Array {
 			checkMap(map);
 			checkClosed();
 			return get();
-		} catch (Exception e) {
+		} catch ( Exception e ) {
 			throw logAndConvert(e);
 		}
 	}
-
+	
 	/**
-	 * Returns the value as a Java array. A subset of the array is returned,
-	 * starting from the index (1 meaning the first element) and up to the given
-	 * object count. This method always returns an Object[].
+	 * Returns the value as a Java array. A subset of the array is returned, starting from the index (1 meaning the first element) and up to
+	 * the given object count. This method always returns an Object[].
 	 * 
 	 * @param index
 	 *            the start index of the subset (starting with 1)
@@ -90,15 +86,14 @@ public class JdbcArray extends TraceObject implements Array {
 			debugCode("getArray(" + index + ", " + count + ");");
 			checkClosed();
 			return get(index, count);
-		} catch (Exception e) {
+		} catch ( Exception e ) {
 			throw logAndConvert(e);
 		}
 	}
-
+	
 	/**
-	 * Returns the value as a Java array. A subset of the array is returned,
-	 * starting from the index (1 meaning the first element) and up to the given
-	 * object count. This method always returns an Object[].
+	 * Returns the value as a Java array. A subset of the array is returned, starting from the index (1 meaning the first element) and up to
+	 * the given object count. This method always returns an Object[].
 	 * 
 	 * @param index
 	 *            the start index of the subset (starting with 1)
@@ -111,19 +106,17 @@ public class JdbcArray extends TraceObject implements Array {
 	 */
 	public Object getArray(long index, int count, Map map) throws SQLException {
 		try {
-			debugCode("getArray(" + index + ", " + count + ", " + quoteMap(map)
-					+ ");");
+			debugCode("getArray(" + index + ", " + count + ", " + quoteMap(map) + ");");
 			checkClosed();
 			checkMap(map);
 			return get(index, count);
-		} catch (Exception e) {
+		} catch ( Exception e ) {
 			throw logAndConvert(e);
 		}
 	}
-
+	
 	/**
-	 * Returns the base type of the array. This database does support mixed type
-	 * arrays and therefore there is no base type.
+	 * Returns the base type of the array. This database does support mixed type arrays and therefore there is no base type.
 	 * 
 	 * @return Types.NULL
 	 * @throws SQLException
@@ -133,14 +126,13 @@ public class JdbcArray extends TraceObject implements Array {
 			debugCodeCall("getBaseType");
 			checkClosed();
 			return Types.NULL;
-		} catch (Exception e) {
+		} catch ( Exception e ) {
 			throw logAndConvert(e);
 		}
 	}
-
+	
 	/**
-	 * Returns the base type name of the array. This database does support mixed
-	 * type arrays and therefore there is no base type.
+	 * Returns the base type name of the array. This database does support mixed type arrays and therefore there is no base type.
 	 * 
 	 * @return "NULL"
 	 * @throws SQLException
@@ -150,14 +142,13 @@ public class JdbcArray extends TraceObject implements Array {
 			debugCodeCall("getBaseTypeName");
 			checkClosed();
 			return "NULL";
-		} catch (Exception e) {
+		} catch ( Exception e ) {
 			throw logAndConvert(e);
 		}
 	}
-
+	
 	/**
-	 * Returns the value as a result set. The first column contains the index
-	 * (starting with 1) and the second column the value.
+	 * Returns the value as a result set. The first column contains the index (starting with 1) and the second column the value.
 	 * 
 	 * @return the result set
 	 * @throws SQLException
@@ -167,14 +158,13 @@ public class JdbcArray extends TraceObject implements Array {
 			debugCodeCall("getResultSet");
 			checkClosed();
 			return getResultSet(get(), 0);
-		} catch (Exception e) {
+		} catch ( Exception e ) {
 			throw logAndConvert(e);
 		}
 	}
-
+	
 	/**
-	 * Returns the value as a result set. The first column contains the index
-	 * (starting with 1) and the second column the value.
+	 * Returns the value as a result set. The first column contains the index (starting with 1) and the second column the value.
 	 * 
 	 * @param map
 	 *            is ignored. Only empty or null maps are supported
@@ -187,16 +177,14 @@ public class JdbcArray extends TraceObject implements Array {
 			checkClosed();
 			checkMap(map);
 			return getResultSet(get(), 0);
-		} catch (Exception e) {
+		} catch ( Exception e ) {
 			throw logAndConvert(e);
 		}
 	}
-
+	
 	/**
-	 * Returns the value as a result set. The first column contains the index
-	 * (starting with 1) and the second column the value. A subset of the array
-	 * is returned, starting from the index (1 meaning the first element) and up
-	 * to the given object count.
+	 * Returns the value as a result set. The first column contains the index (starting with 1) and the second column the value. A subset of
+	 * the array is returned, starting from the index (1 meaning the first element) and up to the given object count.
 	 * 
 	 * @param index
 	 *            the start index of the subset (starting with 1)
@@ -210,16 +198,14 @@ public class JdbcArray extends TraceObject implements Array {
 			debugCode("getResultSet(" + index + ", " + count + ");");
 			checkClosed();
 			return getResultSet(get(index, count), index);
-		} catch (Exception e) {
+		} catch ( Exception e ) {
 			throw logAndConvert(e);
 		}
 	}
-
+	
 	/**
-	 * Returns the value as a result set. The first column contains the index
-	 * (starting with 1) and the second column the value. A subset of the array
-	 * is returned, starting from the index (1 meaning the first element) and up
-	 * to the given object count.
+	 * Returns the value as a result set. The first column contains the index (starting with 1) and the second column the value. A subset of
+	 * the array is returned, starting from the index (1 meaning the first element) and up to the given object count.
 	 * 
 	 * @param index
 	 *            the start index of the subset (starting with 1)
@@ -230,19 +216,17 @@ public class JdbcArray extends TraceObject implements Array {
 	 * @return the result set
 	 * @throws SQLException
 	 */
-	public ResultSet getResultSet(long index, int count, Map map)
-			throws SQLException {
+	public ResultSet getResultSet(long index, int count, Map map) throws SQLException {
 		try {
-			debugCode("getResultSet(" + index + ", " + count + ", "
-					+ quoteMap(map) + ");");
+			debugCode("getResultSet(" + index + ", " + count + ", " + quoteMap(map) + ");");
 			checkClosed();
 			checkMap(map);
 			return getResultSet(get(index, count), index);
-		} catch (Exception e) {
+		} catch ( Exception e ) {
 			throw logAndConvert(e);
 		}
 	}
-
+	
 	/**
 	 * Release all resources of this object.
 	 */
@@ -250,14 +234,13 @@ public class JdbcArray extends TraceObject implements Array {
 		debugCodeCall("free");
 		value = null;
 	}
-
-	private ResultSet getResultSet(Object[] array, long offset)
-			throws SQLException {
+	
+	private ResultSet getResultSet(Object[] array, long offset) throws SQLException {
 		SimpleResultSet rs = new SimpleResultSet();
 		rs.addColumn("INDEX", Types.BIGINT, 0, 0);
 		// TODO array result set: there are multiple data types possible
 		rs.addColumn("VALUE", Types.NULL, 0, 0);
-		for (int i = 0; i < array.length; i++) {
+		for ( int i = 0; i < array.length; i++ ) {
 			Object[] row = new Object[2];
 			row[0] = ObjectUtils.getLong(offset + i + 1);
 			row[1] = array[i];
@@ -265,39 +248,37 @@ public class JdbcArray extends TraceObject implements Array {
 		}
 		return rs;
 	}
-
+	
 	private void checkClosed() throws SQLException {
 		conn.checkClosed();
-		if (value == null) {
+		if ( value == null ) {
 			throw Message.getSQLException(ErrorCode.OBJECT_CLOSED);
 		}
 	}
-
+	
 	private Object[] get() throws SQLException {
 		return (Object[]) value.convertTo(Value.ARRAY).getObject();
 	}
-
+	
 	private Object[] get(long index, int count) throws SQLException {
 		Object[] array = get();
-		if (count < 0 || count > array.length) {
-			throw Message.getInvalidValueException("" + count, "count (1.."
-					+ array.length + ")");
+		if ( count < 0 || count > array.length ) {
+			throw Message.getInvalidValueException("" + count, "count (1.." + array.length + ")");
 		}
-		if (index < 1 || index > array.length) {
-			throw Message.getInvalidValueException("" + index, "index (1.."
-					+ array.length + ")");
+		if ( index < 1 || index > array.length ) {
+			throw Message.getInvalidValueException("" + index, "index (1.." + array.length + ")");
 		}
 		Object[] subset = new Object[count];
-		System.arraycopy(array, (int) (index - 1), subset, 0, count);
+		System.arraycopy(array, (int) ( index - 1 ), subset, 0, count);
 		return subset;
 	}
-
+	
 	private void checkMap(Map map) throws SQLException {
-		if (map != null && map.size() > 0) {
+		if ( map != null && map.size() > 0 ) {
 			throw Message.getUnsupportedException();
 		}
 	}
-
+	
 	/**
 	 * INTERNAL
 	 */

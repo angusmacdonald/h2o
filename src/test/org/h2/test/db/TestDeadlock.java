@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.db;
 
@@ -17,33 +15,35 @@ import org.h2.test.TestBase;
  * Test the deadlock detection mechanism.
  */
 public class TestDeadlock extends TestBase {
-
+	
 	/**
 	 * The first connection.
 	 */
 	Connection c1;
-
+	
 	/**
 	 * The second connection.
 	 */
 	Connection c2;
-
+	
 	/**
 	 * The third connection.
 	 */
 	Connection c3;
+	
 	private volatile SQLException lastException;
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		Constants.IS_TESTING_H2_TESTS = true;
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws Exception {
 		deleteDb("deadlock");
 		testDiningPhilosophers();
@@ -52,7 +52,7 @@ public class TestDeadlock extends TestBase {
 		testNoDeadlock();
 		deleteDb("deadlock");
 	}
-
+	
 	private void initTest() throws SQLException {
 		c1 = getConnection("deadlock");
 		c2 = getConnection("deadlock");
@@ -65,46 +65,46 @@ public class TestDeadlock extends TestBase {
 		c3.setAutoCommit(false);
 		lastException = null;
 	}
-
+	
 	private void end() throws SQLException {
 		c1.close();
 		c2.close();
 		c3.close();
 	}
-
+	
 	/**
-	 * This class wraps exception handling to simplify creating small threads
-	 * that execute a statement.
+	 * This class wraps exception handling to simplify creating small threads that execute a statement.
 	 */
 	abstract class DoIt extends Thread {
-
+		
 		/**
 		 * The operation to execute.
 		 */
 		abstract void execute() throws SQLException;
-
+		
 		public void run() {
 			try {
 				execute();
-			} catch (SQLException e) {
+			} catch ( SQLException e ) {
 				catchDeadlock(e);
 			}
 		}
 	}
-
+	
 	/**
 	 * Add the exception to the list of exceptions.
-	 *
-	 * @param e the exception
+	 * 
+	 * @param e
+	 *            the exception
 	 */
 	void catchDeadlock(SQLException e) {
-		if (lastException != null) {
+		if ( lastException != null ) {
 			lastException.setNextException(e);
 		} else {
 			lastException = e;
 		}
 	}
-
+	
 	private void testNoDeadlock() throws Exception {
 		initTest();
 		c1.createStatement().execute("CREATE TABLE TEST_A(ID INT PRIMARY KEY)");
@@ -115,6 +115,7 @@ public class TestDeadlock extends TestBase {
 		c2.createStatement().execute("INSERT INTO TEST_B VALUES(1)");
 		c3.createStatement().execute("INSERT INTO TEST_C VALUES(1)");
 		DoIt t2 = new DoIt() {
+			
 			public void execute() throws SQLException {
 				c1.createStatement().execute("DELETE FROM TEST_B");
 				c1.commit();
@@ -122,6 +123,7 @@ public class TestDeadlock extends TestBase {
 		};
 		t2.start();
 		DoIt t3 = new DoIt() {
+			
 			public void execute() throws SQLException {
 				c2.createStatement().execute("DELETE FROM TEST_C");
 				c2.commit();
@@ -132,12 +134,12 @@ public class TestDeadlock extends TestBase {
 		try {
 			c3.createStatement().execute("DELETE FROM TEST_C");
 			c3.commit();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			catchDeadlock(e);
 		}
 		t2.join();
 		t3.join();
-		if (lastException != null) {
+		if ( lastException != null ) {
 			throw lastException;
 		}
 		c1.commit();
@@ -145,11 +147,11 @@ public class TestDeadlock extends TestBase {
 		c3.commit();
 		c1.createStatement().execute("DROP TABLE TEST_A, TEST_B, TEST_C");
 		end();
-
+		
 	}
-
+	
 	private void testThreePhilosophers() throws Exception {
-		if (config.mvcc) {
+		if ( config.mvcc ) {
 			return;
 		}
 		initTest();
@@ -161,6 +163,7 @@ public class TestDeadlock extends TestBase {
 		c2.createStatement().execute("INSERT INTO TEST_B VALUES(1)");
 		c3.createStatement().execute("INSERT INTO TEST_C VALUES(1)");
 		DoIt t2 = new DoIt() {
+			
 			public void execute() throws SQLException {
 				c1.createStatement().execute("DELETE FROM TEST_B");
 				c1.commit();
@@ -168,6 +171,7 @@ public class TestDeadlock extends TestBase {
 		};
 		t2.start();
 		DoIt t3 = new DoIt() {
+			
 			public void execute() throws SQLException {
 				c2.createStatement().execute("DELETE FROM TEST_C");
 				c2.commit();
@@ -177,7 +181,7 @@ public class TestDeadlock extends TestBase {
 		try {
 			c3.createStatement().execute("DELETE FROM TEST_A");
 			c3.commit();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			catchDeadlock(e);
 		}
 		t2.join();
@@ -189,9 +193,9 @@ public class TestDeadlock extends TestBase {
 		c1.createStatement().execute("DROP TABLE TEST_A, TEST_B, TEST_C");
 		end();
 	}
-
+	
 	private void testLockUpgrade() throws Exception {
-		if (config.mvcc) {
+		if ( config.mvcc ) {
 			return;
 		}
 		initTest();
@@ -203,6 +207,7 @@ public class TestDeadlock extends TestBase {
 		c1.createStatement().executeQuery("SELECT * FROM TEST");
 		c2.createStatement().executeQuery("SELECT * FROM TEST");
 		Thread t1 = new DoIt() {
+			
 			public void execute() throws SQLException {
 				c1.createStatement().execute("DELETE FROM TEST");
 				c1.commit();
@@ -212,7 +217,7 @@ public class TestDeadlock extends TestBase {
 		try {
 			c2.createStatement().execute("DELETE FROM TEST");
 			c2.commit();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			catchDeadlock(e);
 		}
 		t1.join();
@@ -222,9 +227,9 @@ public class TestDeadlock extends TestBase {
 		c1.createStatement().execute("DROP TABLE TEST");
 		end();
 	}
-
+	
 	private void testDiningPhilosophers() throws Exception {
-		if (config.mvcc) {
+		if ( config.mvcc ) {
 			return;
 		}
 		initTest();
@@ -233,6 +238,7 @@ public class TestDeadlock extends TestBase {
 		c1.createStatement().execute("INSERT INTO T1 VALUES(1)");
 		c2.createStatement().execute("INSERT INTO T2 VALUES(1)");
 		DoIt t1 = new DoIt() {
+			
 			public void execute() throws SQLException {
 				c1.createStatement().execute("INSERT INTO T2 VALUES(2)");
 				c1.commit();
@@ -241,7 +247,7 @@ public class TestDeadlock extends TestBase {
 		t1.start();
 		try {
 			c2.createStatement().execute("INSERT INTO T1 VALUES(2)");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			catchDeadlock(e);
 		}
 		t1.join();
@@ -251,18 +257,19 @@ public class TestDeadlock extends TestBase {
 		c1.createStatement().execute("DROP TABLE T1, T2");
 		end();
 	}
-
+	
 	private void checkDeadlock() throws SQLException {
-		if (lastException != null) lastException.printStackTrace();
-
+		if ( lastException != null )
+			lastException.printStackTrace();
+		
 		assertTrue(lastException != null);
 		assertKnownException(lastException);
 		assertEquals(ErrorCode.DEADLOCK_1, lastException.getErrorCode());
 		SQLException e2 = lastException.getNextException();
-		if (e2 != null) {
+		if ( e2 != null ) {
 			// we have two exception, but there should only be one
 			throw e2;
 		}
 	}
-
+	
 }

@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.db;
 
@@ -17,27 +15,27 @@ import org.h2.constant.ErrorCode;
 import org.h2.test.TestBase;
 
 /**
- * Tests out of memory situations. The database must not get corrupted, and
- * transactions must stay atomic.
+ * Tests out of memory situations. The database must not get corrupted, and transactions must stay atomic.
  */
 public class TestOutOfMemory extends TestBase {
-
+	
 	private LinkedList list = new LinkedList();
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws SQLException {
-		if (config.memory || config.mvcc) {
+		if ( config.memory || config.mvcc ) {
 			return;
 		}
-		for (int i = 0; i < 5; i++) {
+		for ( int i = 0; i < 5; i++ ) {
 			System.gc();
 		}
 		deleteDb("outOfMemory");
@@ -53,7 +51,7 @@ public class TestOutOfMemory extends TestBase {
 			try {
 				prep.execute();
 				fail();
-			} catch (SQLException e) {
+			} catch ( SQLException e ) {
 				assertEquals(ErrorCode.OUT_OF_MEMORY, e.getErrorCode());
 			}
 			list = null;
@@ -65,29 +63,29 @@ public class TestOutOfMemory extends TestBase {
 		}
 		deleteDb("outOfMemory");
 	}
-
+	
 	private void eatMemory(int remainingKB) {
 		byte[] reserve = new byte[remainingKB * 1024];
 		int max = 128 * 1024 * 1024;
 		int div = 2;
-		while (true) {
+		while ( true ) {
 			long free = Runtime.getRuntime().freeMemory();
 			long freeTry = free / div;
 			int eat = (int) Math.min(max, freeTry);
 			try {
 				byte[] block = new byte[eat];
 				list.add(block);
-			} catch (OutOfMemoryError e) {
-				if (eat < 32) {
+			} catch ( OutOfMemoryError e ) {
+				if ( eat < 32 ) {
 					break;
 				}
-				if (eat == max) {
+				if ( eat == max ) {
 					max /= 2;
-					if (max < 128) {
+					if ( max < 128 ) {
 						break;
 					}
 				}
-				if (eat == freeTry) {
+				if ( eat == freeTry ) {
 					div += 1;
 				} else {
 					div = 2;
@@ -99,5 +97,5 @@ public class TestOutOfMemory extends TestBase {
 		// actually it is anyway garbage collected
 		reserve = null;
 	}
-
+	
 }

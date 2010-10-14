@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.jdbc;
 
@@ -15,43 +13,43 @@ import java.sql.SQLException;
 import org.h2.test.TestBase;
 
 /**
- * Tests a custom BigDecimal implementation, as well
- * as direct modification of a byte in a byte array.
+ * Tests a custom BigDecimal implementation, as well as direct modification of a byte in a byte array.
  */
 public class TestZloty extends TestBase {
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws SQLException {
 		testZloty();
 		testModifyBytes();
 		deleteDb("zloty");
 	}
-
+	
 	/**
 	 * This class overrides BigDecimal and implements some strange comparison method.
 	 */
 	private static class ZlotyBigDecimal extends BigDecimal {
-
+		
 		private static final long serialVersionUID = -8004563653683501484L;
-
+		
 		public ZlotyBigDecimal(String s) {
 			super(s);
 		}
-
+		
 		public int compareTo(BigDecimal bd) {
 			return -super.compareTo(bd);
 		}
-
+		
 	}
-
+	
 	private void testModifyBytes() throws SQLException {
 		deleteDb("zloty");
 		Connection conn = getConnection("zloty");
@@ -77,10 +75,10 @@ public class TestZloty extends TestBase {
 		assertFalse(rs.next());
 		conn.close();
 	}
-
+	
 	/**
 	 * H2 destroyer application ;->
-	 *
+	 * 
 	 * @author Maciej Wegorkiewicz
 	 */
 	private void testZloty() throws SQLException {
@@ -96,15 +94,16 @@ public class TestZloty extends TestBase {
 			prep.setBigDecimal(2, new ZlotyBigDecimal("11.0"));
 			prep.execute();
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
-
+		
 		prep.setInt(1, 3);
 		try {
 			BigDecimal value = new BigDecimal("12.100000") {
+				
 				private static final long serialVersionUID = -7909023971521750844L;
-
+				
 				public String toString() {
 					return "12,100000 EURO";
 				}
@@ -112,11 +111,11 @@ public class TestZloty extends TestBase {
 			prep.setBigDecimal(2, value);
 			prep.execute();
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
-
+		
 		conn.close();
 	}
-
+	
 }

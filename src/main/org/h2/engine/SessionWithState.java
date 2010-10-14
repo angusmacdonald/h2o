@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.engine;
 
@@ -17,19 +15,21 @@ import org.h2.value.Value;
  * The base class for both remote and embedded sessions.
  */
 public abstract class SessionWithState implements SessionInterface {
-
+	
 	protected ObjectArray sessionState;
+	
 	protected boolean sessionStateChanged;
+	
 	private boolean sessionStateUpdating;
-
+	
 	/**
 	 * Re-create the session state using the stored sessionState list.
 	 */
 	protected void recreateSessionState() throws SQLException {
-		if (sessionState != null && sessionState.size() > 0) {
+		if ( sessionState != null && sessionState.size() > 0 ) {
 			sessionStateUpdating = true;
 			try {
-				for (int i = 0; i < sessionState.size(); i++) {
+				for ( int i = 0; i < sessionState.size(); i++ ) {
 					String sql = (String) sessionState.get(i);
 					CommandInterface ci = prepareCommand(sql, Integer.MAX_VALUE);
 					ci.executeUpdate();
@@ -40,24 +40,22 @@ public abstract class SessionWithState implements SessionInterface {
 			}
 		}
 	}
-
+	
 	/**
 	 * Read the session state if necessary.
 	 */
 	public void readSessionState() throws SQLException {
-		if (!sessionStateChanged || sessionStateUpdating) {
+		if ( !sessionStateChanged || sessionStateUpdating ) {
 			return;
 		}
 		sessionStateChanged = false;
 		sessionState = new ObjectArray();
-		CommandInterface ci = prepareCommand(
-				"SELECT * FROM INFORMATION_SCHEMA.SESSION_STATE",
-				Integer.MAX_VALUE);
+		CommandInterface ci = prepareCommand("SELECT * FROM INFORMATION_SCHEMA.SESSION_STATE", Integer.MAX_VALUE);
 		ResultInterface result = ci.executeQuery(0, false);
-		while (result.next()) {
+		while ( result.next() ) {
 			Value[] row = result.currentRow();
 			sessionState.add(row[1].getString());
 		}
 	}
-
+	
 }

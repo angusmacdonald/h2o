@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.unit;
 
@@ -19,16 +17,17 @@ import org.h2.util.IOUtils;
  * Tests the stream to UTF-8 reader conversion.
  */
 public class TestReader extends TestBase {
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws Exception {
 		String s = "\u00ef\u00f6\u00fc";
 		StringReader r = new StringReader(s);
@@ -39,5 +38,5 @@ public class TestReader extends TestBase {
 		String s2 = IOUtils.readStringAndClose(r2, Integer.MAX_VALUE);
 		assertEquals(s2, "\u00ef\u00f6\u00fc");
 	}
-
+	
 }

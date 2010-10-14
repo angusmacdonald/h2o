@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.jdbc;
 
@@ -16,15 +14,21 @@ import org.h2.engine.Constants;
  * Represents a database exception.
  */
 public class JdbcSQLException extends SQLException {
-
+	
 	private static final long serialVersionUID = -8200821788226954151L;
+	
 	private final String originalMessage;
+	
 	private final Throwable cause;
+	
 	private final String stackTrace;
+	
 	private String message;
+	
 	private String sql;
+	
 	private volatile Object payload;
-
+	
 	/**
 	 * Creates a SQLException a message, sqlstate and cause.
 	 * 
@@ -35,8 +39,7 @@ public class JdbcSQLException extends SQLException {
 	 * @param cause
 	 *            the exception that was the reason for this exception
 	 */
-	public JdbcSQLException(String message, String sql, String state,
-			int errorCode, Throwable cause, String stackTrace) {
+	public JdbcSQLException(String message, String sql, String state, int errorCode, Throwable cause, String stackTrace) {
 		super(message, state, errorCode);
 		this.originalMessage = message;
 		this.sql = sql;
@@ -47,7 +50,7 @@ public class JdbcSQLException extends SQLException {
 		initCause(cause);
 		// ## Java 1.4 end ##
 	}
-
+	
 	/**
 	 * Get the detail error message.
 	 * 
@@ -56,14 +59,14 @@ public class JdbcSQLException extends SQLException {
 	public String getMessage() {
 		return message;
 	}
-
+	
 	/**
 	 * INTERNAL
 	 */
 	public String getOriginalMessage() {
 		return originalMessage;
 	}
-
+	
 	/**
 	 * Prints the stack trace to the standard error stream.
 	 */
@@ -74,7 +77,7 @@ public class JdbcSQLException extends SQLException {
 		// later on which would be a problem if done in the wrong way.
 		printStackTrace(System.err);
 	}
-
+	
 	/**
 	 * Prints the stack trace to the specified print writer.
 	 * 
@@ -82,25 +85,24 @@ public class JdbcSQLException extends SQLException {
 	 *            the print writer
 	 */
 	public void printStackTrace(PrintWriter s) {
-		if (s != null) {
+		if ( s != null ) {
 			super.printStackTrace(s);
 			/*
-			 * ## Java 1.3 only begin ## if (cause != null) {
-			 * cause.printStackTrace(s); } ## Java 1.3 only end ##
+			 * ## Java 1.3 only begin ## if (cause != null) { cause.printStackTrace(s); } ## Java 1.3 only end ##
 			 */
 			// getNextException().printStackTrace(s) would be very very slow
 			// if many exceptions are joined
 			SQLException next = getNextException();
-			for (int i = 0; i < 100 && next != null; i++) {
+			for ( int i = 0; i < 100 && next != null; i++ ) {
 				s.println(next.toString());
 				next = next.getNextException();
 			}
-			if (next != null) {
+			if ( next != null ) {
 				s.println("(truncated)");
 			}
 		}
 	}
-
+	
 	/**
 	 * Prints the stack trace to the specified print stream.
 	 * 
@@ -108,32 +110,31 @@ public class JdbcSQLException extends SQLException {
 	 *            the print stream
 	 */
 	public void printStackTrace(PrintStream s) {
-		if (s != null) {
+		if ( s != null ) {
 			super.printStackTrace(s);
 			/*
-			 * ## Java 1.3 only begin ## if (cause != null) {
-			 * cause.printStackTrace(s); } ## Java 1.3 only end ##
+			 * ## Java 1.3 only begin ## if (cause != null) { cause.printStackTrace(s); } ## Java 1.3 only end ##
 			 */
 			// getNextException().printStackTrace(s) would be very very slow
 			// if many exceptions are joined
 			SQLException next = getNextException();
-			for (int i = 0; i < 100 && next != null; i++) {
+			for ( int i = 0; i < 100 && next != null; i++ ) {
 				s.println(next.toString());
 				next = next.getNextException();
 			}
-			if (next != null) {
+			if ( next != null ) {
 				s.println("(truncated)");
 			}
 		}
 	}
-
+	
 	/**
 	 * INTERNAL
 	 */
 	public Throwable getOriginalCause() {
 		return cause;
 	}
-
+	
 	/**
 	 * Returns the SQL statement.
 	 * 
@@ -142,7 +143,7 @@ public class JdbcSQLException extends SQLException {
 	public String getSQL() {
 		return sql;
 	}
-
+	
 	/**
 	 * INTERNAL
 	 */
@@ -150,11 +151,10 @@ public class JdbcSQLException extends SQLException {
 		this.sql = sql;
 		buildMessage();
 	}
-
+	
 	private void buildMessage() {
-		StringBuilder buff = new StringBuilder(originalMessage == null ? "- "
-				: originalMessage);
-		if (sql != null) {
+		StringBuilder buff = new StringBuilder(originalMessage == null ? "- " : originalMessage);
+		if ( sql != null ) {
 			buff.append("; SQL statement:\n");
 			buff.append(sql);
 		}
@@ -165,20 +165,19 @@ public class JdbcSQLException extends SQLException {
 		buff.append(']');
 		message = buff.toString();
 	}
-
+	
 	/**
-	 * Returns the class name, the message, and in the server mode, the stack
-	 * trace of the server
+	 * Returns the class name, the message, and in the server mode, the stack trace of the server
 	 * 
 	 * @return the string representation
 	 */
 	public String toString() {
-		if (stackTrace == null) {
+		if ( stackTrace == null ) {
 			return super.toString();
 		}
 		return stackTrace;
 	}
-
+	
 	/**
 	 * Get the error related payload object.
 	 * 
@@ -187,7 +186,7 @@ public class JdbcSQLException extends SQLException {
 	public Object getPayload() {
 		return payload;
 	}
-
+	
 	/**
 	 * Set the error related payload object.
 	 * 
@@ -197,5 +196,5 @@ public class JdbcSQLException extends SQLException {
 	public void setPayload(Object payload) {
 		this.payload = payload;
 	}
-
+	
 }

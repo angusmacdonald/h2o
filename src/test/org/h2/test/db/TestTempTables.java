@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.db;
 
@@ -17,16 +15,17 @@ import org.h2.test.TestBase;
  * Temporary table tests.
  */
 public class TestTempTables extends TestBase {
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws SQLException {
 		deleteDb("tempTables");
 		Connection c1 = getConnection("tempTables");
@@ -38,7 +37,7 @@ public class TestTempTables extends TestBase {
 		c2.close();
 		deleteDb("tempTables");
 	}
-
+	
 	private void testConstraints(Connection conn1, Connection conn2) throws SQLException {
 		Statement s1 = conn1.createStatement(), s2 = conn2.createStatement();
 		s1.execute("create local temporary table test(id int unique)");
@@ -48,7 +47,7 @@ public class TestTempTables extends TestBase {
 		s1.execute("drop table test");
 		s2.execute("drop table test");
 	}
-
+	
 	private void testIndexes(Connection conn1, Connection conn2) throws SQLException {
 		conn1.createStatement().executeUpdate("create local temporary table test(id int)");
 		conn1.createStatement().executeUpdate("create index idx_id on test(id)");
@@ -61,7 +60,7 @@ public class TestTempTables extends TestBase {
 		conn1.createStatement().executeUpdate("drop table test");
 		conn1.createStatement().executeUpdate("drop table test");
 	}
-
+	
 	private void testTables(Connection c1, Connection c2) throws SQLException {
 		Statement s1 = c1.createStatement();
 		Statement s2 = c2.createStatement();
@@ -79,7 +78,7 @@ public class TestTempTables extends TestBase {
 		s2.execute("DROP TABLE GT2");
 		s2.execute("DROP TABLE LT");
 		s1.execute("DROP TABLE LT");
-
+		
 		// temp tables: 'on commit' syntax is currently not documented, because
 		// not tested well
 		// and hopefully nobody is using it, as it looks like functional sugar
@@ -94,7 +93,7 @@ public class TestTempTables extends TestBase {
 		rs = s1.executeQuery("select * from test_temp");
 		assertResultRowCount(rs, 0);
 		s1.execute("drop table test_temp");
-
+		
 		s1.execute("create local temporary table test_temp(id int) on commit drop");
 		s1.execute("insert into test_temp values(1)");
 		rs = s1.executeQuery("select * from test_temp");
@@ -103,9 +102,9 @@ public class TestTempTables extends TestBase {
 		try {
 			rs = s1.executeQuery("select * from test_temp");
 			fail("test_temp should have been dropped automatically");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 	}
-
+	
 }

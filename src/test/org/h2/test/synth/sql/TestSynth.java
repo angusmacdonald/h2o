@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.synth.sql;
 
@@ -13,93 +11,101 @@ import org.h2.test.TestBase;
 import org.h2.util.RandomUtils;
 
 /**
- * A test that generates random SQL statements against a number of databases
- * and compares the results.
+ * A test that generates random SQL statements against a number of databases and compares the results.
  */
 public class TestSynth extends TestBase {
-
-	//  TODO hsqldb: call 1||null should return 1 but returns null
-	//  TODO hsqldb: call mod(1) should return invalid parameter count
-
+	
+	// TODO hsqldb: call 1||null should return 1 but returns null
+	// TODO hsqldb: call mod(1) should return invalid parameter count
+	
 	/**
 	 * A H2 database connection.
 	 */
 	static final int H2 = 0;
-
+	
 	/**
 	 * An in-memory H2 database connection.
 	 */
 	static final int H2_MEM = 1;
-
+	
 	/**
 	 * An HSQLDB database connection.
 	 */
 	static final int HSQLDB = 2;
-
+	
 	/**
 	 * A MySQL database connection.
 	 */
 	static final int MYSQL = 3;
-
+	
 	/**
 	 * A PostgreSQL database connection.
 	 */
 	static final int POSTGRESQL = 4;
+	
 	private static final String DIR = "synth";
-
+	
 	private DbState db = new DbState(this);
+	
 	private ArrayList databases;
+	
 	private ArrayList commands;
+	
 	private RandomGen random = new RandomGen();
+	
 	private boolean showError, showLog;
+	
 	private boolean stopImmediately;
+	
 	private int mode;
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	/**
 	 * Check whether this database is of the specified type.
-	 *
-	 * @param isType the database type
+	 * 
+	 * @param isType
+	 *            the database type
 	 * @return true if it is
 	 */
 	boolean is(int isType) {
 		return mode == isType;
 	}
-
+	
 	/**
 	 * Get the random number generator.
-	 *
+	 * 
 	 * @return the random number generator
 	 */
 	RandomGen random() {
 		return random;
 	}
-
+	
 	/**
 	 * Get a random identifier.
-	 *
+	 * 
 	 * @return the random identifier
 	 */
 	String randomIdentifier() {
 		int len = random.getLog(8) + 2;
-		while (true) {
+		while ( true ) {
 			return random.randomString(len);
 		}
 	}
-
+	
 	private void add(Command command) throws Exception {
 		command.run(db);
 		commands.add(command);
 	}
-
+	
 	private void addRandomCommands() throws Exception {
 		switch (random.getInt(20)) {
 		case 0: {
@@ -143,33 +149,33 @@ public class TestSynth extends TestBase {
 		}
 		}
 	}
-
+	
 	private void testRun(int seed) throws Exception {
 		random.setSeed(seed);
 		commands = new ArrayList();
 		add(Command.getConnect(this));
 		add(Command.getReset(this));
-
-		for (int i = 0; i < 1; i++) {
+		
+		for ( int i = 0; i < 1; i++ ) {
 			Table table = Table.newRandomTable(this);
 			add(Command.getCreateTable(this, table));
 			add(Command.getCreateIndex(this, table.newRandomIndex()));
 		}
-		for (int i = 0; i < 2000; i++) {
+		for ( int i = 0; i < 2000; i++ ) {
 			addRandomCommands();
 		}
 		// for (int i = 0; i < 20; i++) {
-			// Table table = randomTable();
-			// add(Command.getRandomInsert(this, table));
-			// }
+		// Table table = randomTable();
+		// add(Command.getRandomInsert(this, table));
+		// }
 		// for (int i = 0; i < 100; i++) {
-			// Table table = randomTable();
-			// add(Command.getRandomSelect(this, table));
-			// }
+		// Table table = randomTable();
+		// add(Command.getRandomSelect(this, table));
+		// }
 		// for (int i = 0; i < 10; i++) {
-			// Table table = randomTable();
-			// add(Command.getRandomUpdate(this, table));
-			// }
+		// Table table = randomTable();
+		// add(Command.getRandomUpdate(this, table));
+		// }
 		// for (int i = 0; i < 30; i++) {
 		// Table table = randomTable();
 		// add(Command.getRandomSelect(this, table));
@@ -191,137 +197,139 @@ public class TestSynth extends TestBase {
 		// }
 		add(Command.getDisconnect(this));
 		add(Command.getEnd(this));
-
-		for (int i = 0; i < commands.size(); i++) {
+		
+		for ( int i = 0; i < commands.size(); i++ ) {
 			Command command = (Command) commands.get(i);
 			boolean stop = process(seed, i, command);
-			if (stop) {
+			if ( stop ) {
 				break;
 			}
 		}
 	}
-
+	
 	private boolean process(int seed, int id, Command command) throws Exception {
 		try {
-
+			
 			ArrayList results = new ArrayList();
-			for (int i = 0; i < databases.size(); i++) {
+			for ( int i = 0; i < databases.size(); i++ ) {
 				DbInterface db = (DbInterface) databases.get(i);
 				Result result = command.run(db);
 				results.add(result);
-				if (showError && i == 0) {
+				if ( showError && i == 0 ) {
 					// result.log();
 				}
 			}
 			compareResults(results);
-
-		} catch (Error e) {
-			if (showError) {
+			
+		} catch ( Error e ) {
+			if ( showError ) {
 				TestBase.logError("synth", e);
 			}
 			System.out.println("new TestSynth().init(test).testCase(" + seed + "); // id=" + id + " " + e.toString());
-			if (stopImmediately) {
+			if ( stopImmediately ) {
 				System.exit(0);
 			}
 			return true;
 		}
 		return false;
 	}
-
+	
 	private void compareResults(ArrayList results) {
 		Result original = (Result) results.get(0);
-		for (int i = 1; i < results.size(); i++) {
+		for ( int i = 1; i < results.size(); i++ ) {
 			Result copy = (Result) results.get(i);
-			if (original.compareTo(copy) != 0) {
-				if (showError) {
+			if ( original.compareTo(copy) != 0 ) {
+				if ( showError ) {
 					throw new Error("Results don't match: original (0): \r\n" + original + "\r\n" + "other:\r\n" + copy);
 				}
 				throw new Error("Results don't match");
 			}
 		}
 	}
-
+	
 	/**
 	 * Get a random table.
-	 *
+	 * 
 	 * @return the table
 	 */
 	Table randomTable() {
 		return db.randomTable();
 	}
-
+	
 	/**
 	 * Print this message if the log is enabled.
-	 *
-	 * @param id the id
-	 * @param s the message
+	 * 
+	 * @param id
+	 *            the id
+	 * @param s
+	 *            the message
 	 */
 	void log(int id, String s) {
-		if (showLog && id == 0) {
+		if ( showLog && id == 0 ) {
 			System.out.println(s);
 		}
 	}
-
+	
 	int getMode() {
 		return mode;
 	}
-
+	
 	private void addDatabase(String className, String url, String user, String password, boolean useSentinel) {
 		DbConnection db = new DbConnection(this, className, url, user, password, databases.size(), useSentinel);
 		databases.add(db);
 	}
-
+	
 	public TestBase init(TestAll conf) throws Exception {
 		super.init(conf);
 		String old = baseDir;
 		baseDir = TestBase.getTestDir("synth");
 		deleteDb("synth");
 		databases = new ArrayList();
-
+		
 		// mode = HSQLDB;
 		// addDatabase("org.hsqldb.jdbcDriver", "jdbc:hsqldb:test", "sa", "" );
 		// addDatabase("org.h2.Driver", "jdbc:h2:synth;mode=hsqldb", "sa", "");
-
+		
 		// mode = POSTGRESQL;
 		// addDatabase("org.postgresql.Driver", "jdbc:postgresql:test", "sa",
 		// "sa");
 		// addDatabase("org.h2.Driver", "jdbc:h2:synth;mode=postgresql", "sa",
 		// "");
-
+		
 		mode = H2_MEM;
 		org.h2.Driver.load();
 		addDatabase("org.h2.Driver", "jdbc:h2:mem:synth", "sa", "", true);
 		addDatabase("org.h2.Driver", "jdbc:h2:" + baseDir + "/" + DIR + "/synth", "sa", "", false);
-
+		
 		// addDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://localhost/test",
 		// "sa", "");
 		// addDatabase("org.h2.Driver", "jdbc:h2:synth;mode=mysql", "sa", "");
-
+		
 		// addDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://localhost/test",
 		// "sa", "");
 		// addDatabase("org.ldbc.jdbc.jdbcDriver",
 		// "jdbc:ldbc:mysql://localhost/test", "sa", "");
 		// addDatabase("org.h2.Driver", "jdbc:h2:memFS:synth", "sa", "");
-
+		
 		// MySQL: NOT is bound to column: NOT ID = 1 means (NOT ID) = 1 instead
 		// of NOT (ID=1)
-		for (int i = 0; i < databases.size(); i++) {
+		for ( int i = 0; i < databases.size(); i++ ) {
 			DbConnection conn = (DbConnection) databases.get(i);
 			System.out.println(i + " = " + conn.toString());
 		}
 		showError = true;
 		showLog = false;
-
+		
 		// stopImmediately = true;
 		// showLog = true;
 		// testRun(110600); // id=27 java.lang.Error: Results don't match:
 		// original (0):
 		// System.exit(0);
-
+		
 		baseDir = old;
 		return this;
 	}
-
+	
 	public void testCase(int seed) throws Exception {
 		String old = baseDir;
 		baseDir = TestBase.getTestDir("synth");
@@ -329,18 +337,18 @@ public class TestSynth extends TestBase {
 		try {
 			printTime("TestSynth " + seed);
 			testRun(seed);
-		} catch (Error e) {
+		} catch ( Error e ) {
 			TestBase.logError("error", e);
 			System.exit(0);
 		}
 		baseDir = old;
 	}
-
+	
 	public void test() throws Exception {
-		while (true) {
+		while ( true ) {
 			int seed = RandomUtils.nextInt(Integer.MAX_VALUE);
 			testCase(seed);
 		}
 	}
-
+	
 }

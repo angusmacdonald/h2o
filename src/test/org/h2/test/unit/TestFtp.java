@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.unit;
 
@@ -16,24 +14,25 @@ import org.h2.tools.Server;
  * Tests the FTP server tool.
  */
 public class TestFtp extends TestBase implements FtpEventListener {
-
+	
 	private FtpEvent lastEvent;
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws Exception {
 		test(baseDir);
 	}
-
+	
 	private void test(String dir) throws Exception {
-		Server server = Server.createFtpServer(new String[]{"-ftpDir", dir, "-ftpPort", "8121"}).start();
+		Server server = Server.createFtpServer(new String[] { "-ftpDir", dir, "-ftpPort", "8121" }).start();
 		FtpServer ftp = (FtpServer) server.getService();
 		ftp.setEventListener(this);
 		FtpClient client = FtpClient.open("localhost:8121");
@@ -50,17 +49,17 @@ public class TestFtp extends TestBase implements FtpEventListener {
 		client.close();
 		server.stop();
 	}
-
+	
 	public void beforeCommand(FtpEvent event) {
 		lastEvent = event;
 	}
-
+	
 	public void afterCommand(FtpEvent event) {
 		lastEvent = event;
 	}
-
+	
 	public void onUnsupportedCommand(FtpEvent event) {
 		lastEvent = event;
 	}
-
+	
 }

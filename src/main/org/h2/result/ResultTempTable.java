@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.result;
 
@@ -29,13 +27,19 @@ import org.h2.value.ValueArray;
  * This class implements the temp table buffer for the LocalResult class.
  */
 public class ResultTempTable implements ResultExternal {
+	
 	private static final String COLUMN_NAME = "DATA";
+	
 	private Session session;
+	
 	private TableData table;
+	
 	private SortOrder sort;
+	
 	private Index index;
+	
 	private Cursor cursor;
-
+	
 	public ResultTempTable(Session session, SortOrder sort) throws SQLException {
 		this.session = session;
 		this.sort = sort;
@@ -46,8 +50,7 @@ public class ResultTempTable implements ResultExternal {
 		columns.add(column);
 		int tableId = session.getDatabase().allocateObjectId(true, true);
 		String tableName = "TEMP_RESULT_SET_" + tableId;
-		table = schema.createTable(tableName, tableId, columns, false, false,
-				Index.EMPTY_HEAD);
+		table = schema.createTable(tableName, tableId, columns, false, false, Index.EMPTY_HEAD);
 		int indexId = session.getDatabase().allocateObjectId(true, false);
 		IndexColumn indexColumn = new IndexColumn();
 		indexColumn.column = column;
@@ -55,96 +58,94 @@ public class ResultTempTable implements ResultExternal {
 		IndexType indexType;
 		indexType = IndexType.createPrimaryKey(true, false);
 		IndexColumn[] indexCols = new IndexColumn[] { indexColumn };
-		if (SysProperties.PAGE_STORE) {
-			index = new PageBtreeIndex(table, indexId, tableName, indexCols,
-					indexType, Index.EMPTY_HEAD);
+		if ( SysProperties.PAGE_STORE ) {
+			index = new PageBtreeIndex(table, indexId, tableName, indexCols, indexType, Index.EMPTY_HEAD);
 		} else {
-			index = new BtreeIndex(session, table, indexId, tableName,
-					indexCols, indexType, Index.EMPTY_HEAD);
+			index = new BtreeIndex(session, table, indexId, tableName, indexCols, indexType, Index.EMPTY_HEAD);
 		}
 		table.getIndexes().add(index);
 	}
-
+	
 	public int removeRow(Value[] values) throws SQLException {
 		Row row = convertToRow(values);
 		Cursor cursor = find(row);
-		if (cursor != null) {
+		if ( cursor != null ) {
 			row = cursor.get();
 			table.removeRow(session, row);
 		}
 		return (int) table.getRowCount(session);
 	}
-
+	
 	public boolean contains(Value[] values) throws SQLException {
 		return find(convertToRow(values)) != null;
 	}
-
+	
 	public int addRow(Value[] values) throws SQLException {
 		Row row = convertToRow(values);
 		Cursor cursor = find(row);
-		if (cursor == null) {
+		if ( cursor == null ) {
 			table.addRow(session, row);
 		}
 		return (int) table.getRowCount(session);
 	}
-
+	
 	public void addRows(ObjectArray rows) throws SQLException {
-		if (sort != null) {
+		if ( sort != null ) {
 			sort.sort(rows);
 		}
-		for (int i = 0; i < rows.size(); i++) {
+		for ( int i = 0; i < rows.size(); i++ ) {
 			Value[] values = (Value[]) rows.get(i);
 			addRow(values);
 		}
 	}
-
+	
 	public void close() {
 		try {
-			if (table != null) {
+			if ( table != null ) {
 				index.remove(session);
 				ObjectArray indexes = table.getIndexes();
 				indexes.remove(indexes.indexOf(index));
 				table.removeChildrenAndResources(session);
 			}
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			throw Message.convertToInternal(e);
 		} finally {
 			table = null;
 		}
 	}
-
+	
 	public void done() {
 		// nothing to do
 	}
-
+	
 	public Value[] next() throws SQLException {
-		if (!cursor.next()) {
+		if ( !cursor.next() ) {
 			return null;
 		}
 		Row row = cursor.get();
 		ValueArray data = (ValueArray) row.getValue(0);
 		return data.getList();
 	}
-
+	
 	public void reset() throws SQLException {
 		cursor = index.find(session, null, null);
 	}
-
+	
 	private Row convertToRow(Value[] values) {
 		ValueArray data = ValueArray.get(values);
 		return new Row(new Value[] { data }, data.getMemory());
 	}
-
+	
 	private Cursor find(Row row) throws SQLException {
 		Cursor cursor = index.find(session, row, row);
-		while (cursor.next()) {
+		while ( cursor.next() ) {
 			SearchRow found;
 			found = cursor.getSearchRow();
-			if (found.getValue(0).equals(row.getValue(0))) {
+			if ( found.getValue(0).equals(row.getValue(0)) ) {
 				return cursor;
 			}
 		}
 		return null;
 	}
-
+	
 }

@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.command.dml;
 
@@ -26,19 +24,21 @@ import org.h2.value.ValueResultSet;
  * This class represents the statement CALL.
  */
 public class Call extends Prepared {
+	
 	private Expression value;
+	
 	private ObjectArray expressions;
-
+	
 	public Call(Session session, boolean internalQuery) {
 		super(session, internalQuery);
 	}
-
+	
 	public LocalResult queryMeta() throws SQLException {
 		LocalResult result = new LocalResult(session, expressions, 1);
 		result.done();
 		return result;
 	}
-
+	
 	public int update() throws SQLException, RemoteException {
 		Value v = value.getValue(session);
 		int type = v.getType();
@@ -55,20 +55,19 @@ public class Call extends Prepared {
 			return v.getInt();
 		}
 	}
-
+	
 	public LocalResult query(int maxrows) throws SQLException {
 		setCurrentRowNumber(1);
 		Value v = value.getValue(session);
-		if (v.getType() == Value.RESULT_SET) {
-			ResultSet rs = ((ValueResultSet) v).getResultSet();
+		if ( v.getType() == Value.RESULT_SET ) {
+			ResultSet rs = ( (ValueResultSet) v ).getResultSet();
 			return LocalResult.read(session, rs, maxrows);
-		} else if (v.getType() == Value.ARRAY) {
-			Value[] list = ((ValueArray) v).getList();
+		} else if ( v.getType() == Value.ARRAY ) {
+			Value[] list = ( (ValueArray) v ).getList();
 			ObjectArray expr = new ObjectArray();
-			for (int i = 0; i < list.length; i++) {
+			for ( int i = 0; i < list.length; i++ ) {
 				Value e = list[i];
-				Column col = new Column("C" + (i + 1), e.getType(),
-						e.getPrecision(), e.getScale(), e.getDisplaySize());
+				Column col = new Column("C" + ( i + 1 ), e.getType(), e.getPrecision(), e.getScale(), e.getDisplaySize());
 				expr.add(new ExpressionColumn(session.getDatabase(), col));
 			}
 			LocalResult result = new LocalResult(session, expr, list.length);
@@ -83,28 +82,28 @@ public class Call extends Prepared {
 		result.done();
 		return result;
 	}
-
+	
 	public void prepare() throws SQLException {
 		value = value.optimize(session);
 		expressions = new ObjectArray();
 		expressions.add(value);
 	}
-
+	
 	public void setValue(Expression expression) {
 		value = expression;
 	}
-
+	
 	public boolean isQuery() {
 		return true;
 	}
-
+	
 	public boolean isTransactional() {
 		return true;
 	}
-
+	
 	public boolean isReadOnly() {
 		return value.isEverything(ExpressionVisitor.READONLY);
-
+		
 	}
-
+	
 }

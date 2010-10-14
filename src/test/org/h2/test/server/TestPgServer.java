@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.server;
 
@@ -22,38 +20,39 @@ import org.h2.tools.Server;
  * Tests the PostgreSQL server protocol compliant implementation.
  */
 public class TestPgServer extends TestBase {
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws SQLException {
 		deleteDb("test");
-		Server server = Server.createPgServer(new String[]{"-baseDir", baseDir, "-pgPort", "5535"});
+		Server server = Server.createPgServer(new String[] { "-baseDir", baseDir, "-pgPort", "5535" });
 		server.start();
 		try {
 			Class.forName("org.postgresql.Driver");
 			testPgClient();
-		} catch (ClassNotFoundException e) {
+		} catch ( ClassNotFoundException e ) {
 			println("PostgreSQL JDBC driver not found - PgServer not tested");
 		} finally {
 			server.stop();
 		}
 		deleteDb("test");
 	}
-
+	
 	private void testPgClient() throws SQLException {
 		Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:5535/test", "sa", "sa");
 		Statement stat = conn.createStatement();
 		try {
 			stat.execute("select ***");
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		conn.close();
@@ -107,7 +106,7 @@ public class TestPgServer extends TestBase {
 		s = rs.getString(3);
 		assertEquals(s, "PUBLIC");
 		assertFalse(rs.next());
-
+		
 		conn.setAutoCommit(false);
 		stat.execute("delete from test");
 		conn.rollback();
@@ -118,14 +117,13 @@ public class TestPgServer extends TestBase {
 		assertEquals(1, rs.getInt(1));
 		assertEquals("Hallo", rs.getString(2));
 		assertFalse(rs.next());
-
+		
 		rs = stat.executeQuery("select id, name, pg_get_userbyid(id) from information_schema.users order by id");
 		rs.next();
 		assertEquals(rs.getString(2), rs.getString(3));
 		assertFalse(rs.next());
-
-
+		
 		conn.close();
 	}
-
+	
 }

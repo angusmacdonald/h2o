@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.table;
 
@@ -20,17 +18,16 @@ import org.h2.util.StringUtils;
  * A utility class to create table links for a whole schema.
  */
 public class LinkSchema {
-
+	
 	private LinkSchema() {
 		// utility class
 	}
-
+	
 	/**
 	 * Link all tables of a schema to the database.
 	 * 
 	 * @param conn
-	 *            the connection to the database where the links are to be
-	 *            created
+	 *            the connection to the database where the links are to be created
 	 * @param targetSchema
 	 *            the schema name where the objects should be created
 	 * @param driver
@@ -45,8 +42,7 @@ public class LinkSchema {
 	 *            the schema where the existing tables are
 	 * @return a result set with the created tables
 	 */
-	public static ResultSet linkSchema(Connection conn, String targetSchema,
-			String driver, String url, String user, String password,
+	public static ResultSet linkSchema(Connection conn, String targetSchema, String driver, String url, String user, String password,
 			String sourceSchema) throws SQLException {
 		Connection c2 = null;
 		Statement stat = null;
@@ -56,10 +52,9 @@ public class LinkSchema {
 		try {
 			c2 = JdbcUtils.getConnection(driver, url, user, password);
 			stat = conn.createStatement();
-			stat.execute("CREATE SCHEMA IF NOT EXISTS "
-					+ StringUtils.quoteIdentifier(targetSchema));
+			stat.execute("CREATE SCHEMA IF NOT EXISTS " + StringUtils.quoteIdentifier(targetSchema));
 			rs = c2.getMetaData().getTables(null, sourceSchema, null, null);
-			while (rs.next()) {
+			while ( rs.next() ) {
 				String table = rs.getString("TABLE_NAME");
 				StringBuilder buff = new StringBuilder();
 				buff.append("DROP TABLE IF EXISTS ");

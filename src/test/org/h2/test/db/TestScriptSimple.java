@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.db;
 
@@ -18,54 +16,54 @@ import org.h2.test.TestBase;
 import org.h2.util.ScriptReader;
 
 /**
- * This test runs a simple SQL script file and compares the output with the
- * expected output.
+ * This test runs a simple SQL script file and compares the output with the expected output.
  */
 public class TestScriptSimple extends TestBase {
-
+	
 	private Connection conn;
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 		Constants.IS_TESTING_H2_TESTS = true;
-
+		
 		System.exit(1);
 	}
-
+	
 	public void test() throws Exception {
 		Constants.IS_TESTING_H2_TESTS = true;
-
-		if (config.memory || config.big || config.networked) {
+		
+		if ( config.memory || config.big || config.networked ) {
 			return;
 		}
 		deleteDb("scriptSimple");
 		reconnect();
-		String inFile = "org/h2/test/testSimple.in.txt"; //"org/h2/test/testSimple.in.txt";
+		String inFile = "org/h2/test/testSimple.in.txt"; // "org/h2/test/testSimple.in.txt";
 		InputStream is = getClass().getClassLoader().getResourceAsStream(inFile);
 		LineNumberReader lineReader = new LineNumberReader(new InputStreamReader(is, "Cp1252"));
 		ScriptReader reader = new ScriptReader(lineReader);
-		while (true) {
+		while ( true ) {
 			String sql = reader.readStatement();
-			if (sql == null) {
+			if ( sql == null ) {
 				break;
 			}
 			sql = sql.trim();
 			System.out.println(sql);
-			//System.out.println(sql);
+			// System.out.println(sql);
 			try {
-
-				if ("@reconnect".equals(sql.toLowerCase())) {
+				
+				if ( "@reconnect".equals(sql.toLowerCase()) ) {
 					reconnect();
-				} else if (sql.length() == 0) {
+				} else if ( sql.length() == 0 ) {
 					// ignore
-				} else if (sql.toLowerCase().startsWith("select")) {
+				} else if ( sql.toLowerCase().startsWith("select") ) {
 					ResultSet rs = conn.createStatement().executeQuery(sql);
-					while (rs.next()) {
+					while ( rs.next() ) {
 						String expected = reader.readStatement().trim();
 						String got = "> " + rs.getString(1);
 						assertEquals(expected, got);
@@ -73,7 +71,7 @@ public class TestScriptSimple extends TestBase {
 				} else {
 					conn.createStatement().execute(sql);
 				}
-			} catch (SQLException e) {
+			} catch ( SQLException e ) {
 				System.err.println(sql);
 				e.printStackTrace();
 				throw e;
@@ -83,12 +81,12 @@ public class TestScriptSimple extends TestBase {
 		conn.close();
 		deleteDb("scriptSimple");
 	}
-
+	
 	private void reconnect() throws SQLException {
-		if (conn != null) {
+		if ( conn != null ) {
 			conn.close();
 		}
 		conn = getConnection("scriptSimple");
 	}
-
+	
 }

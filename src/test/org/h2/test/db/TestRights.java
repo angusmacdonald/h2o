@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.test.db;
 
@@ -20,18 +18,19 @@ import org.h2.util.FileUtils;
  * Access rights tests.
  */
 public class TestRights extends TestBase {
-
+	
 	private Statement stat;
-
+	
 	/**
 	 * Run just this test.
-	 *
-	 * @param a ignored
+	 * 
+	 * @param a
+	 *            ignored
 	 */
 	public static void main(String[] a) throws Exception {
 		TestBase.createCaller().init().test();
 	}
-
+	
 	public void test() throws SQLException {
 		testGetTables();
 		testDropTempTables();
@@ -40,37 +39,37 @@ public class TestRights extends TestBase {
 		testAccessRights();
 		deleteDb("rights");
 	}
-
-	//    public void testLowerCaseUser() throws SQLException {
+	
+	// public void testLowerCaseUser() throws SQLException {
 	// Documentation: For compatibility,
 	// only unquoted or uppercase user names are allowed.
-	//        deleteDb("rights");
-	//        Connection conn = getConnection("rights");
-	//        stat = conn.createStatement();
-	//        stat.execute("CREATE USER \"TEST1\" PASSWORD 'abc'");
-	//        stat.execute("CREATE USER \"Test2\" PASSWORD 'abc'");
-	//        conn.close();
-	//        conn = getConnection("rights", "TEST1", "abc");
-	//        conn.close();
-	//        conn = getConnection("rights", "Test2", "abc");
-	//        conn.close();
-	//    }
-
+	// deleteDb("rights");
+	// Connection conn = getConnection("rights");
+	// stat = conn.createStatement();
+	// stat.execute("CREATE USER \"TEST1\" PASSWORD 'abc'");
+	// stat.execute("CREATE USER \"Test2\" PASSWORD 'abc'");
+	// conn.close();
+	// conn = getConnection("rights", "TEST1", "abc");
+	// conn.close();
+	// conn = getConnection("rights", "Test2", "abc");
+	// conn.close();
+	// }
+	
 	private void testGetTables() throws SQLException {
 		deleteDb("rights");
 		Connection conn = getConnection("rights");
 		stat = conn.createStatement();
-
+		
 		stat.execute("CREATE USER IF NOT EXISTS TEST PASSWORD 'TEST'");
 		stat.execute("CREATE TABLE TEST(ID INT)");
 		stat.execute("GRANT ALL ON TEST TO TEST");
 		Connection conn2 = getConnection("rights", "TEST", getPassword("TEST"));
 		DatabaseMetaData meta = conn2.getMetaData();
-		meta.getTables(null, null, "%", new String[]{"TABLE", "VIEW", "SEQUENCE"});
+		meta.getTables(null, null, "%", new String[] { "TABLE", "VIEW", "SEQUENCE" });
 		conn2.close();
 		conn.close();
 	}
-
+	
 	private void testDropTempTables() throws SQLException {
 		deleteDb("rights");
 		Connection conn = getConnection("rights");
@@ -82,7 +81,7 @@ public class TestRights extends TestBase {
 		try {
 			stat2.execute("SELECT * FROM TEST");
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		stat2.execute("CREATE LOCAL TEMPORARY TABLE IF NOT EXISTS MY_TEST(ID INT)");
@@ -92,9 +91,9 @@ public class TestRights extends TestBase {
 		conn2.close();
 		conn.close();
 	}
-
+	
 	private void testSchemaRenameUser() throws SQLException {
-		if (config.memory) {
+		if ( config.memory ) {
 			return;
 		}
 		deleteDb("rights");
@@ -111,13 +110,13 @@ public class TestRights extends TestBase {
 		try {
 			stat.execute("alter user test1 admin false");
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		try {
 			stat.execute("drop user test1");
 			fail();
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		stat.execute("drop schema b");
@@ -125,19 +124,19 @@ public class TestRights extends TestBase {
 		stat.execute("drop user test1");
 		conn.close();
 	}
-
+	
 	private void testAccessRights() throws SQLException {
-		if (config.memory) {
+		if ( config.memory ) {
 			return;
 		}
-
+		
 		deleteDb("rights");
 		Connection conn = getConnection("rights");
 		stat = conn.createStatement();
 		// default table type
 		testTableType(conn, "MEMORY");
 		testTableType(conn, "CACHED");
-
+		
 		// rights on tables and views
 		executeSuccess("CREATE USER PASS_READER PASSWORD 'abc'");
 		executeSuccess("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR)");
@@ -146,7 +145,7 @@ public class TestRights extends TestBase {
 		executeSuccess("GRANT SELECT ON PASS_NAME TO PASS_READER");
 		executeSuccess("GRANT SELECT, INSERT, UPDATE ON TEST TO PASS_READER");
 		conn.close();
-
+		
 		conn = getConnection("rights", "PASS_READER", getPassword("abc"));
 		stat = conn.createStatement();
 		executeSuccess("SELECT * FROM PASS_NAME");
@@ -161,10 +160,10 @@ public class TestRights extends TestBase {
 		executeError("SELECT * FROM (SELECT * FROM PASS)");
 		executeError("CREATE VIEW X AS SELECT * FROM PASS_READER");
 		conn.close();
-
+		
 		conn = getConnection("rights");
 		stat = conn.createStatement();
-
+		
 		executeSuccess("DROP TABLE TEST");
 		executeSuccess("CREATE USER TEST PASSWORD 'abc'");
 		executeSuccess("ALTER USER TEST ADMIN TRUE");
@@ -190,36 +189,36 @@ public class TestRights extends TestBase {
 		executeSuccess("REVOKE UPDATE, DELETE ON SUB_TABLE FROM SUB2");
 		executeSuccess("GRANT SUB2 TO SUB1");
 		executeSuccess("GRANT SUB1 TO TEST");
-
+		
 		executeSuccess("ALTER USER TEST SET PASSWORD 'def'");
 		executeSuccess("CREATE USER TEST2 PASSWORD 'def' ADMIN");
 		executeSuccess("ALTER USER TEST ADMIN FALSE");
 		executeSuccess("SCRIPT TO '" + baseDir + "/rights.sql' CIPHER XTEA PASSWORD 'test'");
 		conn.close();
-
+		
 		try {
 			conn = getConnection("rights", "Test", getPassword("abc"));
 			fail("mixed case user name");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		try {
 			conn = getConnection("rights", "TEST", getPassword("abc"));
 			fail("wrong password");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		try {
 			conn = getConnection("rights", "TEST", getPassword(""));
 			fail("wrong password");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 		conn = getConnection("rights", "TEST", getPassword("def"));
 		stat = conn.createStatement();
-
+		
 		executeError("SET DEFAULT_TABLE_TYPE MEMORY");
-
+		
 		executeSuccess("SELECT * FROM TEST");
 		executeSuccess("SELECT * FROM SYSTEM_RANGE(1,2)");
 		executeSuccess("SELECT * FROM SCHEMA_A.TABLE_B");
@@ -234,7 +233,7 @@ public class TestRights extends TestBase {
 		executeSuccess("INSERT INTO SUB_TABLE VALUES(1)");
 		executeError("DELETE FROM SUB_TABLE");
 		executeError("UPDATE FROM SUB_TABLE");
-
+		
 		executeError("CREATE USER TEST3 PASSWORD 'def'");
 		executeError("ALTER USER TEST2 ADMIN FALSE");
 		executeError("ALTER USER TEST2 SET PASSWORD 'ghi'");
@@ -242,18 +241,18 @@ public class TestRights extends TestBase {
 		executeError("ALTER USER TEST RENAME TO TEST_X");
 		executeSuccess("ALTER USER TEST SET PASSWORD 'ghi'");
 		executeError("DROP USER TEST2");
-
+		
 		conn.close();
 		conn = getConnection("rights");
 		stat = conn.createStatement();
 		executeSuccess("DROP ROLE SUB1");
 		executeSuccess("DROP TABLE ROLE_TABLE");
 		executeSuccess("DROP USER TEST");
-
+		
 		conn.close();
 		conn = getConnection("rights");
 		stat = conn.createStatement();
-
+		
 		executeSuccess("DROP TABLE IF EXISTS TEST");
 		executeSuccess("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255))");
 		executeSuccess("CREATE USER GUEST PASSWORD 'abc'");
@@ -264,36 +263,35 @@ public class TestRights extends TestBase {
 		conn.close();
 		FileUtils.delete(baseDir + "/rights.sql");
 	}
-
+	
 	private void testTableType(Connection conn, String type) throws SQLException {
 		executeSuccess("SET DEFAULT_TABLE_TYPE " + type);
 		executeSuccess("CREATE TABLE TEST(ID INT)");
-		ResultSet rs = conn.createStatement().executeQuery(
-		"SELECT STORAGE_TYPE FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='TEST'");
+		ResultSet rs = conn.createStatement().executeQuery("SELECT STORAGE_TYPE FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='TEST'");
 		rs.next();
 		assertEquals(rs.getString(1), type);
 		executeSuccess("DROP TABLE TEST");
 	}
-
+	
 	private void executeError(String sql) throws SQLException {
 		try {
 			stat.execute(sql);
 			fail("not admin");
-		} catch (SQLException e) {
+		} catch ( SQLException e ) {
 			assertKnownException(e);
 		}
 	}
-
+	
 	private void executeSuccess(String sql) throws SQLException {
-		if (stat.execute(sql)) {
+		if ( stat.execute(sql) ) {
 			ResultSet rs = stat.getResultSet();
-
+			
 			// this will check if the result set is updatable
 			rs.getConcurrency();
-
+			
 			ResultSetMetaData meta = rs.getMetaData();
 			int columnCount = meta.getColumnCount();
-			for (int i = 0; i < columnCount; i++) {
+			for ( int i = 0; i < columnCount; i++ ) {
 				meta.getCatalogName(i + 1);
 				meta.getColumnClassName(i + 1);
 				meta.getColumnDisplaySize(i + 1);
@@ -306,12 +304,12 @@ public class TestRights extends TestBase {
 				meta.getSchemaName(i + 1);
 				meta.getTableName(i + 1);
 			}
-			while (rs.next()) {
-				for (int i = 0; i < columnCount; i++) {
+			while ( rs.next() ) {
+				for ( int i = 0; i < columnCount; i++ ) {
 					rs.getObject(i + 1);
 				}
 			}
 		}
 	}
-
+	
 }

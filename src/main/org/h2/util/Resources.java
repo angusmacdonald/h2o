@@ -1,8 +1,6 @@
 /*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License,
- * Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html).
- * Initial Developer: H2 Group
+ * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
+ * (http://h2database.com/html/license.html). Initial Developer: H2 Group
  */
 package org.h2.util;
 
@@ -14,35 +12,34 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 /**
- * This class is responsible to read resources and generate the
- * ResourceData.java file from the resources.
+ * This class is responsible to read resources and generate the ResourceData.java file from the resources.
  */
 public class Resources {
-
+	
 	private static final HashMap FILES = new HashMap();
-
+	
 	private Resources() {
 		// utility class
 	}
-
+	
 	static {
 		loadFromZip();
 	}
-
+	
 	private static void loadFromZip() {
 		InputStream in = Resources.class.getResourceAsStream("data.zip");
-		if (in == null) {
+		if ( in == null ) {
 			return;
 		}
 		ZipInputStream zipIn = new ZipInputStream(in);
 		try {
-			while (true) {
+			while ( true ) {
 				ZipEntry entry = zipIn.getNextEntry();
-				if (entry == null) {
+				if ( entry == null ) {
 					break;
 				}
 				String entryName = entry.getName();
-				if (!entryName.startsWith("/")) {
+				if ( !entryName.startsWith("/") ) {
 					entryName = "/" + entryName;
 				}
 				ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -51,12 +48,12 @@ public class Resources {
 				FILES.put(entryName, out.toByteArray());
 			}
 			zipIn.close();
-		} catch (IOException e) {
+		} catch ( IOException e ) {
 			// if this happens we have a real problem
 			e.printStackTrace();
 		}
 	}
-
+	
 	/**
 	 * Get a resource from the resource map.
 	 * 
@@ -66,11 +63,11 @@ public class Resources {
 	 */
 	public static byte[] get(String name) throws IOException {
 		byte[] data;
-		if (FILES.size() == 0) {
+		if ( FILES.size() == 0 ) {
 			// TODO web: security (check what happens with files like 'lpt1.txt'
 			// on windows)
 			InputStream in = Resources.class.getResourceAsStream(name);
-			if (in == null) {
+			if ( in == null ) {
 				data = null;
 			} else {
 				data = IOUtils.readBytesAndClose(in, 0);
@@ -80,5 +77,5 @@ public class Resources {
 		}
 		return data == null ? new byte[0] : data;
 	}
-
+	
 }
