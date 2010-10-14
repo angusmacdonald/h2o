@@ -15,29 +15,29 @@ package org.h2o.db.query.locking;
  * 
  */
 public enum LockType {
-	
-	/*
-	 * Permission to execute a SELECT statement (with no updates).
-	 */
-	READ,
 
-	/*
-	 * Permission to execute an update (other than CREATE TABLE, CREATE SCHEMA).
-	 */
-	WRITE,
+    /*
+     * Permission to execute a SELECT statement (with no updates).
+     */
+    READ,
 
-	/*
-	 * Permission to execute CREATE TABLE, CREATE SCHEMA.
-	 */
-	CREATE,
+    /*
+     * Permission to execute an update (other than CREATE TABLE, CREATE SCHEMA).
+     */
+    WRITE,
 
-	/*
-	 * No lock granted.
-	 */
-	NONE,
+    /*
+     * Permission to execute CREATE TABLE, CREATE SCHEMA.
+     */
+    CREATE,
 
-	/*
-	 * DROP TABLE request.
-	 */
-	DROP
+    /*
+     * No lock granted.
+     */
+    NONE,
+
+    /*
+     * DROP TABLE request.
+     */
+    DROP
 }

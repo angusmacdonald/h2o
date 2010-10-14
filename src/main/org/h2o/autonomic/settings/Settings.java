@@ -37,166 +37,174 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class Settings {
-	
-	/**
-	 * The set of table names that don't represent user tables, but system commands or specialized operations.
-	 */
-	public static Set<String> reservedTableNames = new HashSet<String>();
-	
-	static {
-		reservedTableNames.add("SYSTEM_RANGE");
-		reservedTableNames.add("TABLE");
-	}
-	
-	private LocalH2OProperties localSettings;
-	
-	private DatabaseDescriptorFile globalSettings;
-	
-	public Settings(LocalH2OProperties localSettings, DatabaseDescriptorFile databaseDescriptorFile) throws StartupException {
-		this.localSettings = localSettings;
-		this.globalSettings = databaseDescriptorFile;
-		
-		/*
-		 * 1. Load Local Settings.
-		 */
-		try {
-			localSettings.loadProperties();
-		} catch ( IOException e ) {
-			e.printStackTrace();
-		}
-		
-		/*
-		 * 2. Iterate through global settings. If there is a setting here which is not specified by the local settings, add it to the local
-		 * settings.
-		 */
-		iterateThroughDatabaseSettings(globalSettings.getSettings());
-		
-		/*
-		 * 3. Iterate through default settings. If there is a setting here which is not specified by the local and global settings, add it
-		 * to the local settings.
-		 */
-		iterateThroughDatabaseSettings(defaultSettings());
-		
-	}
-	
-	/**
-	 * Iterates through database settings in the specified properties file looking for anything that has not already been specified at a
-	 * lower level.
-	 */
-	public void iterateThroughDatabaseSettings(Properties settings) {
-		for ( Entry<Object, Object> entry : settings.entrySet() ) {
-			String propertyName = (String) entry.getKey();
-			String propertyValue = (String) entry.getValue();
-			
-			if ( localSettings.getProperty(propertyName) == null ) {
-				Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Updating setting " + propertyName + " = " + propertyValue);
-				localSettings.setProperty(propertyName, propertyValue);
-			}
-		}
-	}
-	
-	public static Properties defaultSettings() {
-		Properties defaults = new Properties();
-		
-		// The time in-between attempts to replicate the system table's state
-		// onto a new successor.
-		defaults.setProperty("REPLICATOR_SLEEP_TIME", "2000");
-		
-		// The number of copies required for individual relations in the system.
-		defaults.setProperty("RELATION_REPLICATION_FACTOR", "1");
-		
-		// Number of copies required of the System Table's state.
-		defaults.setProperty("SYSTEM_TABLE_REPLICATION_FACTOR", "2");
-		
-		// Number of copies required of Table Manager state.
-		defaults.setProperty("TABLE_MANAGER_REPLICATION_FACTOR", "2");
-		
-		/*
-		 * The number of times a database should attempt to connect to an active instance when previous attempts have failed due to bind
-		 * exceptions. <p>For example, if the value of this is 100, the instance will attempt to create a server on 100 different ports
-		 * before giving up.
-		 */
-		defaults.setProperty("ATTEMPTS_AFTER_BIND_EXCEPTIONS", "100");
-		
-		/*
-		 * The number of attempts that an instance will make to create/join a database system. It may fail because a lock is held on
-		 * creating the System Table, or because no System Table instances are active.
-		 */
-		defaults.setProperty("ATTEMPTS_TO_CREATE_OR_JOIN_SYSTEM", "20");
-		
-		/*
-		 * Whether the system is replicating the meta-data of the System Table and Table Managers.
-		 */
-		defaults.setProperty("METADATA_REPLICATION_ENABLED", "true");
-		
-		/*
-		 * The time between checks to ensure that database meta-data is sufficiently replicated.
-		 */
-		defaults.setProperty("METADATA_REPLICATION_THREAD_SLEEP_TIME", "5000");
-		
-		/*
-		 * The time between checks to ensure that Table Managers are still running.
-		 */
-		defaults.setProperty("TABLE_MANAGER_LIVENESS_CHECKER_THREAD_SLEEP_TIME", "10000");
-		
-		/*
-		 * Whether diagnostic events are to be consumed and sent to an event monitor.
-		 */
-		defaults.setProperty("DATABASE_EVENTS_ENABLED", "false");
-		
-		/*
-		 * The number of replicas that must update before an update can take place.
-		 */
-		defaults.setProperty("ASYNCHRONOUS_REPLICATION_FACTOR", "2");
-		
-		/*
-		 * Whether asynchronous replication is enabled.
-		 */
-		defaults.setProperty("ASYNCHRONOUS_REPLICATION_ENABLED", "true");
-		
-		/*
-		 * If true this delays the commit of an insert query. This should always be false unless you are testing asynchronous updates.
-		 */
-		defaults.setProperty("DELAY_QUERY_COMMIT", "false");
-		
-		return defaults;
-	}
-	
-	public LocalH2OProperties getLocalSettings() {
-		return localSettings;
-	}
-	
-	public String get(String string) {
-		return localSettings.getProperty(string);
-	}
-	
-	public void set(String key, String value) {
-		localSettings.setProperty(key, value);
-	}
-	
-	public static void saveAsLocalProperties(Properties newSettings, String databaseName) {
-		
-		/*
-		 * Load any existing properties file because there might be other info that we don't want to delete. For example, the location of
-		 * any locators.
-		 */
-		LocalH2OProperties localSettings = new LocalH2OProperties(DatabaseURL.parseURL(databaseName));
-		try {
-			localSettings.loadProperties();
-		} catch ( IOException e ) {
-			e.printStackTrace();
-		}
-		
-		// Overwrite local database settings with those provided via newSettings
-		// parameter.
-		for ( Entry<Object, Object> entry : newSettings.entrySet() ) {
-			String propertyName = (String) entry.getKey();
-			String propertyValue = (String) entry.getValue();
-			
-			localSettings.setProperty(propertyName, propertyValue);
-		}
-		
-		localSettings.saveAndClose();
-	}
-	
+
+    /**
+     * The set of table names that don't represent user tables, but system commands or specialized operations.
+     */
+    public static Set<String> reservedTableNames = new HashSet<String>();
+
+    static {
+        reservedTableNames.add("SYSTEM_RANGE");
+        reservedTableNames.add("TABLE");
+    }
+
+    private LocalH2OProperties localSettings;
+
+    private DatabaseDescriptorFile globalSettings;
+
+    public Settings(LocalH2OProperties localSettings, DatabaseDescriptorFile databaseDescriptorFile) throws StartupException {
+
+        this.localSettings = localSettings;
+        this.globalSettings = databaseDescriptorFile;
+
+        /*
+         * 1. Load Local Settings.
+         */
+        try {
+            localSettings.loadProperties();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        /*
+         * 2. Iterate through global settings. If there is a setting here which is not specified by the local settings, add it to the local
+         * settings.
+         */
+        iterateThroughDatabaseSettings(globalSettings.getSettings());
+
+        /*
+         * 3. Iterate through default settings. If there is a setting here which is not specified by the local and global settings, add it
+         * to the local settings.
+         */
+        iterateThroughDatabaseSettings(defaultSettings());
+
+    }
+
+    /**
+     * Iterates through database settings in the specified properties file looking for anything that has not already been specified at a
+     * lower level.
+     */
+    public void iterateThroughDatabaseSettings(Properties settings) {
+
+        for (Entry<Object, Object> entry : settings.entrySet()) {
+            String propertyName = (String) entry.getKey();
+            String propertyValue = (String) entry.getValue();
+
+            if (localSettings.getProperty(propertyName) == null) {
+                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Updating setting " + propertyName + " = " + propertyValue);
+                localSettings.setProperty(propertyName, propertyValue);
+            }
+        }
+    }
+
+    public static Properties defaultSettings() {
+
+        Properties defaults = new Properties();
+
+        // The time in-between attempts to replicate the system table's state
+        // onto a new successor.
+        defaults.setProperty("REPLICATOR_SLEEP_TIME", "2000");
+
+        // The number of copies required for individual relations in the system.
+        defaults.setProperty("RELATION_REPLICATION_FACTOR", "1");
+
+        // Number of copies required of the System Table's state.
+        defaults.setProperty("SYSTEM_TABLE_REPLICATION_FACTOR", "2");
+
+        // Number of copies required of Table Manager state.
+        defaults.setProperty("TABLE_MANAGER_REPLICATION_FACTOR", "2");
+
+        /*
+         * The number of times a database should attempt to connect to an active instance when previous attempts have failed due to bind
+         * exceptions. <p>For example, if the value of this is 100, the instance will attempt to create a server on 100 different ports
+         * before giving up.
+         */
+        defaults.setProperty("ATTEMPTS_AFTER_BIND_EXCEPTIONS", "100");
+
+        /*
+         * The number of attempts that an instance will make to create/join a database system. It may fail because a lock is held on
+         * creating the System Table, or because no System Table instances are active.
+         */
+        defaults.setProperty("ATTEMPTS_TO_CREATE_OR_JOIN_SYSTEM", "20");
+
+        /*
+         * Whether the system is replicating the meta-data of the System Table and Table Managers.
+         */
+        defaults.setProperty("METADATA_REPLICATION_ENABLED", "true");
+
+        /*
+         * The time between checks to ensure that database meta-data is sufficiently replicated.
+         */
+        defaults.setProperty("METADATA_REPLICATION_THREAD_SLEEP_TIME", "5000");
+
+        /*
+         * The time between checks to ensure that Table Managers are still running.
+         */
+        defaults.setProperty("TABLE_MANAGER_LIVENESS_CHECKER_THREAD_SLEEP_TIME", "10000");
+
+        /*
+         * Whether diagnostic events are to be consumed and sent to an event monitor.
+         */
+        defaults.setProperty("DATABASE_EVENTS_ENABLED", "false");
+
+        /*
+         * The number of replicas that must update before an update can take place.
+         */
+        defaults.setProperty("ASYNCHRONOUS_REPLICATION_FACTOR", "2");
+
+        /*
+         * Whether asynchronous replication is enabled.
+         */
+        defaults.setProperty("ASYNCHRONOUS_REPLICATION_ENABLED", "true");
+
+        /*
+         * If true this delays the commit of an insert query. This should always be false unless you are testing asynchronous updates.
+         */
+        defaults.setProperty("DELAY_QUERY_COMMIT", "false");
+
+        return defaults;
+    }
+
+    public LocalH2OProperties getLocalSettings() {
+
+        return localSettings;
+    }
+
+    public String get(String string) {
+
+        return localSettings.getProperty(string);
+    }
+
+    public void set(String key, String value) {
+
+        localSettings.setProperty(key, value);
+    }
+
+    public static void saveAsLocalProperties(Properties newSettings, String databaseName) {
+
+        /*
+         * Load any existing properties file because there might be other info that we don't want to delete. For example, the location of
+         * any locators.
+         */
+        LocalH2OProperties localSettings = new LocalH2OProperties(DatabaseURL.parseURL(databaseName));
+        try {
+            localSettings.loadProperties();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Overwrite local database settings with those provided via newSettings
+        // parameter.
+        for (Entry<Object, Object> entry : newSettings.entrySet()) {
+            String propertyName = (String) entry.getKey();
+            String propertyValue = (String) entry.getValue();
+
+            localSettings.setProperty(propertyName, propertyValue);
+        }
+
+        localSettings.saveAndClose();
+    }
+
 }

@@ -14,25 +14,25 @@ package org.h2o.autonomic.framework;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public interface MonitoringData {
-	
-	/**
-	 * Specifies where the monitoring data originated.
-	 * 
-	 * @return Location of monitoring data (e.g. Table Manager, Database Instance, Local Resource Monitoring)
-	 */
-	public MonitoringDataLocation getDataLocation();
-	
-	/**
-	 * Specifies precisely what is being monitored.
-	 * 
-	 * @return
-	 */
-	public String getAspectBeingMonitored();
-	
-	/**
-	 * The results of the monitoring.
-	 * 
-	 * @return
-	 */
-	public Object getData();
+
+    /**
+     * Specifies where the monitoring data originated.
+     * 
+     * @return Location of monitoring data (e.g. Table Manager, Database Instance, Local Resource Monitoring)
+     */
+    public MonitoringDataLocation getDataLocation();
+
+    /**
+     * Specifies precisely what is being monitored.
+     * 
+     * @return
+     */
+    public String getAspectBeingMonitored();
+
+    /**
+     * The results of the monitoring.
+     * 
+     * @return
+     */
+    public Object getData();
 }

@@ -12,10 +12,10 @@ package org.h2o.autonomic.settings;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class Updates {
-	
-	/**
-	 * Whether updates in the system are propagated synchronously (to all replicas at the same time), or asynchronously (to one replica
-	 * initially, then eventually to the rest.
-	 */
-	public static boolean SYNCHRONOUS_UPDATE = true;
+
+    /**
+     * Whether updates in the system are propagated synchronously (to all replicas at the same time), or asynchronously (to one replica
+     * initially, then eventually to the rest.
+     */
+    public static boolean SYNCHRONOUS_UPDATE = true;
 }

@@ -16,44 +16,46 @@ import org.h2.message.Message;
  * This class represents the statement DROP USER
  */
 public class DropUser extends DefineCommand {
-	
-	private boolean ifExists;
-	
-	private String userName;
-	
-	public DropUser(Session session) {
-		super(session);
-	}
-	
-	public void setIfExists(boolean b) {
-		ifExists = b;
-	}
-	
-	public void setUserName(String userName) {
-		this.userName = userName;
-	}
-	
-	public int update() throws SQLException {
-		session.getUser().checkAdmin();
-		session.commit(true);
-		Database db = session.getDatabase();
-		User user = db.findUser(userName);
-		if ( user == null ) {
-			if ( !ifExists ) {
-				throw Message.getSQLException(ErrorCode.USER_NOT_FOUND_1, userName);
-			}
-		} else {
-			if ( user == session.getUser() ) {
-				throw Message.getSQLException(ErrorCode.CANNOT_DROP_CURRENT_USER);
-			}
-			user.checkOwnsNoSchemas();
-			db.removeDatabaseObject(session, user);
-		}
-		return 0;
-	}
-	
-	public boolean isTransactional() {
-		return false;
-	}
-	
+
+    private boolean ifExists;
+
+    private String userName;
+
+    public DropUser(Session session) {
+
+        super(session);
+    }
+
+    public void setIfExists(boolean b) {
+
+        ifExists = b;
+    }
+
+    public void setUserName(String userName) {
+
+        this.userName = userName;
+    }
+
+    public int update() throws SQLException {
+
+        session.getUser().checkAdmin();
+        session.commit(true);
+        Database db = session.getDatabase();
+        User user = db.findUser(userName);
+        if (user == null) {
+            if (!ifExists) { throw Message.getSQLException(ErrorCode.USER_NOT_FOUND_1, userName); }
+        }
+        else {
+            if (user == session.getUser()) { throw Message.getSQLException(ErrorCode.CANNOT_DROP_CURRENT_USER); }
+            user.checkOwnsNoSchemas();
+            db.removeDatabaseObject(session, user);
+        }
+        return 0;
+    }
+
+    public boolean isTransactional() {
+
+        return false;
+    }
+
 }

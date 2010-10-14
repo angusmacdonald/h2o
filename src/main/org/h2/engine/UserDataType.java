@@ -15,48 +15,57 @@ import org.h2.table.Table;
  * Represents a domain (user-defined data type).
  */
 public class UserDataType extends DbObjectBase {
-	
-	private Column column;
-	
-	public UserDataType(Database database, int id, String name) {
-		initDbObjectBase(database, id, name, Trace.DATABASE);
-	}
-	
-	public String getCreateSQLForCopy(Table table, String quotedName) {
-		throw Message.throwInternalError();
-	}
-	
-	public String getDropSQL() {
-		return "DROP DOMAIN IF EXISTS " + getSQL();
-	}
-	
-	public String getCreateSQL() {
-		StringBuilder buff = new StringBuilder();
-		buff.append("CREATE DOMAIN ");
-		buff.append(getSQL());
-		buff.append(" AS ");
-		buff.append(column.getCreateSQL());
-		return buff.toString();
-	}
-	
-	public Column getColumn() {
-		return column;
-	}
-	
-	public int getType() {
-		return DbObject.USER_DATATYPE;
-	}
-	
-	public void removeChildrenAndResources(Session session) throws SQLException {
-		database.removeMeta(session, getId());
-	}
-	
-	public void checkRename() {
-		// ok
-	}
-	
-	public void setColumn(Column column) {
-		this.column = column;
-	}
-	
+
+    private Column column;
+
+    public UserDataType(Database database, int id, String name) {
+
+        initDbObjectBase(database, id, name, Trace.DATABASE);
+    }
+
+    public String getCreateSQLForCopy(Table table, String quotedName) {
+
+        throw Message.throwInternalError();
+    }
+
+    public String getDropSQL() {
+
+        return "DROP DOMAIN IF EXISTS " + getSQL();
+    }
+
+    public String getCreateSQL() {
+
+        StringBuilder buff = new StringBuilder();
+        buff.append("CREATE DOMAIN ");
+        buff.append(getSQL());
+        buff.append(" AS ");
+        buff.append(column.getCreateSQL());
+        return buff.toString();
+    }
+
+    public Column getColumn() {
+
+        return column;
+    }
+
+    public int getType() {
+
+        return DbObject.USER_DATATYPE;
+    }
+
+    public void removeChildrenAndResources(Session session) throws SQLException {
+
+        database.removeMeta(session, getId());
+    }
+
+    public void checkRename() {
+
+        // ok
+    }
+
+    public void setColumn(Column column) {
+
+        this.column = column;
+    }
+
 }

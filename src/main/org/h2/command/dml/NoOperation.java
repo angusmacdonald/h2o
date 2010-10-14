@@ -12,33 +12,40 @@ import org.h2.result.LocalResult;
  * Represents an empty statement or a statement that has no effect.
  */
 public class NoOperation extends Prepared {
-	
-	public NoOperation(Session session, boolean internalQuery) {
-		super(session, internalQuery);
-	}
-	
-	public int update() {
-		return 0;
-	}
-	
-	public boolean isQuery() {
-		return false;
-	}
-	
-	public boolean isTransactional() {
-		return true;
-	}
-	
-	public boolean needRecompile() {
-		return false;
-	}
-	
-	public boolean isReadOnly() {
-		return true;
-	}
-	
-	public LocalResult queryMeta() {
-		return null;
-	}
-	
+
+    public NoOperation(Session session, boolean internalQuery) {
+
+        super(session, internalQuery);
+    }
+
+    public int update() {
+
+        return 0;
+    }
+
+    public boolean isQuery() {
+
+        return false;
+    }
+
+    public boolean isTransactional() {
+
+        return true;
+    }
+
+    public boolean needRecompile() {
+
+        return false;
+    }
+
+    public boolean isReadOnly() {
+
+        return true;
+    }
+
+    public LocalResult queryMeta() {
+
+        return null;
+    }
+
 }

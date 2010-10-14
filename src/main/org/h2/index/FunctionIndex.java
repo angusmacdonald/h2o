@@ -19,78 +19,91 @@ import org.h2.table.IndexColumn;
  * An index for a function that returns a result set. This index can only scan through all rows, search is not supported.
  */
 public class FunctionIndex extends BaseIndex {
-	
-	private FunctionTable functionTable;
-	
-	private LocalResult result;
-	
-	public FunctionIndex(FunctionTable functionTable, IndexColumn[] columns) {
-		initBaseIndex(functionTable, 0, null, columns, IndexType.createNonUnique(true));
-		this.functionTable = functionTable;
-	}
-	
-	public void close(Session session) {
-		// nothing to do
-	}
-	
-	public void add(Session session, Row row) throws SQLException {
-		throw Message.getUnsupportedException();
-	}
-	
-	public void remove(Session session, Row row) throws SQLException {
-		throw Message.getUnsupportedException();
-	}
-	
-	public Cursor find(Session session, SearchRow first, SearchRow last) throws SQLException {
-		// TODO sometimes result.reset() would be enough (but not when
-		// parameters are used)
-		result = functionTable.getResult(session);
-		return new FunctionCursor(result);
-	}
-	
-	public double getCost(Session session, int[] masks) throws SQLException {
-		if ( masks != null ) {
-			throw Message.getUnsupportedException();
-		}
-		long expectedRows;
-		if ( functionTable.canGetRowCount() ) {
-			expectedRows = functionTable.getRowCountApproximation();
-		} else {
-			expectedRows = SysProperties.ESTIMATED_FUNCTION_TABLE_ROWS;
-		}
-		return expectedRows * 10;
-	}
-	
-	public void remove(Session session) throws SQLException {
-		throw Message.getUnsupportedException();
-	}
-	
-	public void truncate(Session session) throws SQLException {
-		throw Message.getUnsupportedException();
-	}
-	
-	public boolean needRebuild() {
-		return false;
-	}
-	
-	public void checkRename() throws SQLException {
-		throw Message.getUnsupportedException();
-	}
-	
-	public boolean canGetFirstOrLast() {
-		return false;
-	}
-	
-	public Cursor findFirstOrLast(Session session, boolean first) throws SQLException {
-		throw Message.getUnsupportedException();
-	}
-	
-	public long getRowCount(Session session) {
-		return functionTable.getRowCount(session);
-	}
-	
-	public long getRowCountApproximation() {
-		return functionTable.getRowCountApproximation();
-	}
-	
+
+    private FunctionTable functionTable;
+
+    private LocalResult result;
+
+    public FunctionIndex(FunctionTable functionTable, IndexColumn[] columns) {
+
+        initBaseIndex(functionTable, 0, null, columns, IndexType.createNonUnique(true));
+        this.functionTable = functionTable;
+    }
+
+    public void close(Session session) {
+
+        // nothing to do
+    }
+
+    public void add(Session session, Row row) throws SQLException {
+
+        throw Message.getUnsupportedException();
+    }
+
+    public void remove(Session session, Row row) throws SQLException {
+
+        throw Message.getUnsupportedException();
+    }
+
+    public Cursor find(Session session, SearchRow first, SearchRow last) throws SQLException {
+
+        // TODO sometimes result.reset() would be enough (but not when
+        // parameters are used)
+        result = functionTable.getResult(session);
+        return new FunctionCursor(result);
+    }
+
+    public double getCost(Session session, int[] masks) throws SQLException {
+
+        if (masks != null) { throw Message.getUnsupportedException(); }
+        long expectedRows;
+        if (functionTable.canGetRowCount()) {
+            expectedRows = functionTable.getRowCountApproximation();
+        }
+        else {
+            expectedRows = SysProperties.ESTIMATED_FUNCTION_TABLE_ROWS;
+        }
+        return expectedRows * 10;
+    }
+
+    public void remove(Session session) throws SQLException {
+
+        throw Message.getUnsupportedException();
+    }
+
+    public void truncate(Session session) throws SQLException {
+
+        throw Message.getUnsupportedException();
+    }
+
+    public boolean needRebuild() {
+
+        return false;
+    }
+
+    public void checkRename() throws SQLException {
+
+        throw Message.getUnsupportedException();
+    }
+
+    public boolean canGetFirstOrLast() {
+
+        return false;
+    }
+
+    public Cursor findFirstOrLast(Session session, boolean first) throws SQLException {
+
+        throw Message.getUnsupportedException();
+    }
+
+    public long getRowCount(Session session) {
+
+        return functionTable.getRowCount(session);
+    }
+
+    public long getRowCountApproximation() {
+
+        return functionTable.getRowCountApproximation();
+    }
+
 }

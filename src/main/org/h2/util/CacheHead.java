@@ -8,9 +8,10 @@ package org.h2.util;
  * The head element of the linked list.
  */
 public class CacheHead extends CacheObject {
-	
-	public boolean canRemove() {
-		return false;
-	}
-	
+
+    public boolean canRemove() {
+
+        return false;
+    }
+
 }

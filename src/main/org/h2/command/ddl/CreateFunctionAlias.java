@@ -16,56 +16,62 @@ import org.h2.message.Message;
  * This class represents the statement CREATE ALIAS
  */
 public class CreateFunctionAlias extends DefineCommand {
-	
-	private String aliasName;
-	
-	private String javaClassMethod;
-	
-	private boolean deterministic;
-	
-	private boolean ifNotExists;
-	
-	private boolean force;
-	
-	public CreateFunctionAlias(Session session) {
-		super(session);
-	}
-	
-	public int update() throws SQLException {
-		session.commit(true);
-		session.getUser().checkAdmin();
-		Database db = session.getDatabase();
-		if ( db.findFunctionAlias(aliasName) != null ) {
-			if ( !ifNotExists ) {
-				throw Message.getSQLException(ErrorCode.FUNCTION_ALIAS_ALREADY_EXISTS_1, aliasName);
-			}
-		} else {
-			int id = getObjectId(false, true);
-			FunctionAlias functionAlias = new FunctionAlias(db, id, aliasName, javaClassMethod, force);
-			functionAlias.setDeterministic(deterministic);
-			db.addDatabaseObject(session, functionAlias);
-		}
-		return 0;
-	}
-	
-	public void setAliasName(String name) {
-		this.aliasName = name;
-	}
-	
-	public void setJavaClassMethod(String string) {
-		this.javaClassMethod = string;
-	}
-	
-	public void setIfNotExists(boolean ifNotExists) {
-		this.ifNotExists = ifNotExists;
-	}
-	
-	public void setForce(boolean force) {
-		this.force = force;
-	}
-	
-	public void setDeterministic(boolean deterministic) {
-		this.deterministic = deterministic;
-	}
-	
+
+    private String aliasName;
+
+    private String javaClassMethod;
+
+    private boolean deterministic;
+
+    private boolean ifNotExists;
+
+    private boolean force;
+
+    public CreateFunctionAlias(Session session) {
+
+        super(session);
+    }
+
+    public int update() throws SQLException {
+
+        session.commit(true);
+        session.getUser().checkAdmin();
+        Database db = session.getDatabase();
+        if (db.findFunctionAlias(aliasName) != null) {
+            if (!ifNotExists) { throw Message.getSQLException(ErrorCode.FUNCTION_ALIAS_ALREADY_EXISTS_1, aliasName); }
+        }
+        else {
+            int id = getObjectId(false, true);
+            FunctionAlias functionAlias = new FunctionAlias(db, id, aliasName, javaClassMethod, force);
+            functionAlias.setDeterministic(deterministic);
+            db.addDatabaseObject(session, functionAlias);
+        }
+        return 0;
+    }
+
+    public void setAliasName(String name) {
+
+        this.aliasName = name;
+    }
+
+    public void setJavaClassMethod(String string) {
+
+        this.javaClassMethod = string;
+    }
+
+    public void setIfNotExists(boolean ifNotExists) {
+
+        this.ifNotExists = ifNotExists;
+    }
+
+    public void setForce(boolean force) {
+
+        this.force = force;
+    }
+
+    public void setDeterministic(boolean deterministic) {
+
+        this.deterministic = deterministic;
+    }
+
 }

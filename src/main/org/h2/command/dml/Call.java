@@ -24,86 +24,96 @@ import org.h2.value.ValueResultSet;
  * This class represents the statement CALL.
  */
 public class Call extends Prepared {
-	
-	private Expression value;
-	
-	private ObjectArray expressions;
-	
-	public Call(Session session, boolean internalQuery) {
-		super(session, internalQuery);
-	}
-	
-	public LocalResult queryMeta() throws SQLException {
-		LocalResult result = new LocalResult(session, expressions, 1);
-		result.done();
-		return result;
-	}
-	
-	public int update() throws SQLException, RemoteException {
-		Value v = value.getValue(session);
-		int type = v.getType();
-		switch (type) {
-		case Value.RESULT_SET:
-		case Value.ARRAY:
-			// this will throw an exception
-			// methods returning a result set may not be called like this.
-			return super.update();
-		case Value.UNKNOWN:
-		case Value.NULL:
-			return 0;
-		default:
-			return v.getInt();
-		}
-	}
-	
-	public LocalResult query(int maxrows) throws SQLException {
-		setCurrentRowNumber(1);
-		Value v = value.getValue(session);
-		if ( v.getType() == Value.RESULT_SET ) {
-			ResultSet rs = ( (ValueResultSet) v ).getResultSet();
-			return LocalResult.read(session, rs, maxrows);
-		} else if ( v.getType() == Value.ARRAY ) {
-			Value[] list = ( (ValueArray) v ).getList();
-			ObjectArray expr = new ObjectArray();
-			for ( int i = 0; i < list.length; i++ ) {
-				Value e = list[i];
-				Column col = new Column("C" + ( i + 1 ), e.getType(), e.getPrecision(), e.getScale(), e.getDisplaySize());
-				expr.add(new ExpressionColumn(session.getDatabase(), col));
-			}
-			LocalResult result = new LocalResult(session, expr, list.length);
-			result.addRow(list);
-			result.done();
-			return result;
-		}
-		LocalResult result = new LocalResult(session, expressions, 1);
-		Value[] row = new Value[1];
-		row[0] = v;
-		result.addRow(row);
-		result.done();
-		return result;
-	}
-	
-	public void prepare() throws SQLException {
-		value = value.optimize(session);
-		expressions = new ObjectArray();
-		expressions.add(value);
-	}
-	
-	public void setValue(Expression expression) {
-		value = expression;
-	}
-	
-	public boolean isQuery() {
-		return true;
-	}
-	
-	public boolean isTransactional() {
-		return true;
-	}
-	
-	public boolean isReadOnly() {
-		return value.isEverything(ExpressionVisitor.READONLY);
-		
-	}
-	
+
+    private Expression value;
+
+    private ObjectArray expressions;
+
+    public Call(Session session, boolean internalQuery) {
+
+        super(session, internalQuery);
+    }
+
+    public LocalResult queryMeta() throws SQLException {
+
+        LocalResult result = new LocalResult(session, expressions, 1);
+        result.done();
+        return result;
+    }
+
+    public int update() throws SQLException, RemoteException {
+
+        Value v = value.getValue(session);
+        int type = v.getType();
+        switch (type) {
+            case Value.RESULT_SET:
+            case Value.ARRAY:
+                // this will throw an exception
+                // methods returning a result set may not be called like this.
+                return super.update();
+            case Value.UNKNOWN:
+            case Value.NULL:
+                return 0;
+            default:
+                return v.getInt();
+        }
+    }
+
+    public LocalResult query(int maxrows) throws SQLException {
+
+        setCurrentRowNumber(1);
+        Value v = value.getValue(session);
+        if (v.getType() == Value.RESULT_SET) {
+            ResultSet rs = ((ValueResultSet) v).getResultSet();
+            return LocalResult.read(session, rs, maxrows);
+        }
+        else if (v.getType() == Value.ARRAY) {
+            Value[] list = ((ValueArray) v).getList();
+            ObjectArray expr = new ObjectArray();
+            for (int i = 0; i < list.length; i++) {
+                Value e = list[i];
+                Column col = new Column("C" + (i + 1), e.getType(), e.getPrecision(), e.getScale(), e.getDisplaySize());
+                expr.add(new ExpressionColumn(session.getDatabase(), col));
+            }
+            LocalResult result = new LocalResult(session, expr, list.length);
+            result.addRow(list);
+            result.done();
+            return result;
+        }
+        LocalResult result = new LocalResult(session, expressions, 1);
+        Value[] row = new Value[1];
+        row[0] = v;
+        result.addRow(row);
+        result.done();
+        return result;
+    }
+
+    public void prepare() throws SQLException {
+
+        value = value.optimize(session);
+        expressions = new ObjectArray();
+        expressions.add(value);
+    }
+
+    public void setValue(Expression expression) {
+
+        value = expression;
+    }
+
+    public boolean isQuery() {
+
+        return true;
+    }
+
+    public boolean isTransactional() {
+
+        return true;
+    }
+
+    public boolean isReadOnly() {
+
+        return value.isEverything(ExpressionVisitor.READONLY);
+
+    }
+
 }

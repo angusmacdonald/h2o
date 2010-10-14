@@ -24,131 +24,144 @@ import org.h2o.util.exceptions.StartupException;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class DatabaseDescriptorFile {
-	
-	private Properties properties;
-	
-	private String propertiesFileLocation;
-	
-	private FileOutputStream fos;
-	
-	private static final String DATABASENAME = "databaseName";
-	
-	private static final String CREATIONDATE = "creationDate";
-	
-	private static final String LOCATORLOCATIONS = "locatorLocations";
-	
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		String fileLocation = "\\\\shell\\angus\\public_html\\databases";
-		
-		DatabaseDescriptorFile cddf = new DatabaseDescriptorFile("testDB", fileLocation);
-		cddf.createPropertiesFile();
-		cddf.setLocatorLocations("testDB", fileLocation);
-	}
-	
-	public DatabaseDescriptorFile(String databaseName, String propertiesFileFolder) {
-		
-		this.propertiesFileLocation = propertiesFileFolder + "/" + databaseName + ".h2o";
-		this.properties = new Properties();
-		
-	}
-	
-	/**
-	 * @param url
-	 */
-	public DatabaseDescriptorFile(String url) {
-		this.propertiesFileLocation = url;
-		this.properties = new Properties();
-	}
-	
-	public String[] getLocatorLocations() throws StartupException {
-		
-		openPropertiesFile();
-		
-		String locatorLocations = properties.getProperty(LOCATORLOCATIONS);
-		
-		return locatorLocations.split(",");
-	}
-	
-	private void openPropertiesFile() throws StartupException {
-		if ( propertiesFileLocation.startsWith("http:") ) { // Parse URL, request
-															// file from
-															// webpage.
-			
-			try {
-				URL url = new URL(propertiesFileLocation);
-				InputStreamReader isr = new InputStreamReader(url.openStream());
-				
-				properties.load(isr);
-				
-			} catch ( IOException e ) {
-				e.printStackTrace();
-			}
-		} else { // Try to open the file from disk.
-			File f = new File(propertiesFileLocation);
-			FileInputStream fis;
-			try {
-				fis = new FileInputStream(f);
-				properties.load(fis);
-			} catch ( FileNotFoundException e ) {
-				e.printStackTrace();
-				throw new StartupException(e.getMessage());
-			} catch ( IOException e ) {
-				e.printStackTrace();
-				throw new StartupException(e.getMessage());
-			}
-			
-		}
-	}
-	
-	public void setLocatorLocations(String databaseName, String... locations) {
-		String locatorLocations = "";
-		
-		for ( String locatorFile : locations ) {
-			locatorLocations += locatorFile + ",";
-		}
-		locatorLocations = locatorLocations.substring(0, locatorLocations.length() - 1);
-		
-		properties.setProperty(DATABASENAME, databaseName);
-		properties.setProperty(CREATIONDATE, new Date().getTime() + "");
-		properties.setProperty(LOCATORLOCATIONS, locatorLocations);
-		
-		try {
-			// fos = new FileOutputStream(propertiesFileLocation);
-			properties.store(fos, "H2O Database Descriptor File.");
-		} catch ( IOException e ) {
-			e.printStackTrace();
-		}
-	}
-	
-	public Properties getSettings() throws StartupException {
-		
-		openPropertiesFile();
-		
-		return properties;
-	}
-	
-	public void createPropertiesFile() {
-		/*
-		 * Create the properties file.
-		 */
-		File f = new File(propertiesFileLocation);
-		try {
-			f.createNewFile();
-		} catch ( IOException e ) {
-			e.printStackTrace();
-		}
-		
-		try {
-			fos = new FileOutputStream(propertiesFileLocation);
-		} catch ( FileNotFoundException e ) {
-			e.printStackTrace();
-		}
-	}
-	
-	public String getProperty(String key) {
-		return properties.getProperty(key);
-	}
+
+    private Properties properties;
+
+    private String propertiesFileLocation;
+
+    private FileOutputStream fos;
+
+    private static final String DATABASENAME = "databaseName";
+
+    private static final String CREATIONDATE = "creationDate";
+
+    private static final String LOCATORLOCATIONS = "locatorLocations";
+
+    /**
+     * @param args
+     */
+    public static void main(String[] args) {
+
+        String fileLocation = "\\\\shell\\angus\\public_html\\databases";
+
+        DatabaseDescriptorFile cddf = new DatabaseDescriptorFile("testDB", fileLocation);
+        cddf.createPropertiesFile();
+        cddf.setLocatorLocations("testDB", fileLocation);
+    }
+
+    public DatabaseDescriptorFile(String databaseName, String propertiesFileFolder) {
+
+        this.propertiesFileLocation = propertiesFileFolder + "/" + databaseName + ".h2o";
+        this.properties = new Properties();
+
+    }
+
+    /**
+     * @param url
+     */
+    public DatabaseDescriptorFile(String url) {
+
+        this.propertiesFileLocation = url;
+        this.properties = new Properties();
+    }
+
+    public String[] getLocatorLocations() throws StartupException {
+
+        openPropertiesFile();
+
+        String locatorLocations = properties.getProperty(LOCATORLOCATIONS);
+
+        return locatorLocations.split(",");
+    }
+
+    private void openPropertiesFile() throws StartupException {
+
+        if (propertiesFileLocation.startsWith("http:")) { // Parse URL, request
+                                                          // file from
+                                                          // webpage.
+
+            try {
+                URL url = new URL(propertiesFileLocation);
+                InputStreamReader isr = new InputStreamReader(url.openStream());
+
+                properties.load(isr);
+
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        else { // Try to open the file from disk.
+            File f = new File(propertiesFileLocation);
+            FileInputStream fis;
+            try {
+                fis = new FileInputStream(f);
+                properties.load(fis);
+            }
+            catch (FileNotFoundException e) {
+                e.printStackTrace();
+                throw new StartupException(e.getMessage());
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+                throw new StartupException(e.getMessage());
+            }
+
+        }
+    }
+
+    public void setLocatorLocations(String databaseName, String... locations) {
+
+        String locatorLocations = "";
+
+        for (String locatorFile : locations) {
+            locatorLocations += locatorFile + ",";
+        }
+        locatorLocations = locatorLocations.substring(0, locatorLocations.length() - 1);
+
+        properties.setProperty(DATABASENAME, databaseName);
+        properties.setProperty(CREATIONDATE, new Date().getTime() + "");
+        properties.setProperty(LOCATORLOCATIONS, locatorLocations);
+
+        try {
+            // fos = new FileOutputStream(propertiesFileLocation);
+            properties.store(fos, "H2O Database Descriptor File.");
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Properties getSettings() throws StartupException {
+
+        openPropertiesFile();
+
+        return properties;
+    }
+
+    public void createPropertiesFile() {
+
+        /*
+         * Create the properties file.
+         */
+        File f = new File(propertiesFileLocation);
+        try {
+            f.createNewFile();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            fos = new FileOutputStream(propertiesFileLocation);
+        }
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String getProperty(String key) {
+
+        return properties.getProperty(key);
+    }
 }

@@ -14,65 +14,65 @@ import org.h2o.db.query.QueryProxyManager;
  * Represents a SQL statement.
  */
 public interface CommandInterface {
-	
-	/**
-	 * Check if this is a query.
-	 * 
-	 * @return true if it is a query
-	 */
-	boolean isQuery();
-	
-	/**
-	 * Get the parameters (if any).
-	 * 
-	 * @return the parameters
-	 */
-	ObjectArray getParameters();
-	
-	/**
-	 * Execute the query.
-	 * 
-	 * @param maxRows
-	 *            the maximum number of rows returned
-	 * @param scrollable
-	 *            if the result set must be scrollable
-	 * @return the result
-	 */
-	ResultInterface executeQuery(int maxRows, boolean scrollable) throws SQLException;
-	
-	/**
-	 * Execute the statement
-	 * 
-	 * @return the update count
-	 */
-	int executeUpdate() throws SQLException;
-	
-	/**
-	 * Close the statement.
-	 */
-	void close();
-	
-	/**
-	 * Cancel the statement if it is still processing.
-	 */
-	void cancel();
-	
-	/**
-	 * Get an empty result set containing the meta data of the result.
-	 * 
-	 * @return the empty result
-	 */
-	ResultInterface getMetaData() throws SQLException;
-	
-	/**
-	 * @param isMultiQueryTransaction
-	 * @return
-	 */
-	int executeUpdate(boolean isMultiQueryTransaction) throws SQLException;
-	
-	/**
-	 * @param b
-	 */
-	void setIsPreparedStatement(boolean preparedStatement);
-	
+
+    /**
+     * Check if this is a query.
+     * 
+     * @return true if it is a query
+     */
+    boolean isQuery();
+
+    /**
+     * Get the parameters (if any).
+     * 
+     * @return the parameters
+     */
+    ObjectArray getParameters();
+
+    /**
+     * Execute the query.
+     * 
+     * @param maxRows
+     *            the maximum number of rows returned
+     * @param scrollable
+     *            if the result set must be scrollable
+     * @return the result
+     */
+    ResultInterface executeQuery(int maxRows, boolean scrollable) throws SQLException;
+
+    /**
+     * Execute the statement
+     * 
+     * @return the update count
+     */
+    int executeUpdate() throws SQLException;
+
+    /**
+     * Close the statement.
+     */
+    void close();
+
+    /**
+     * Cancel the statement if it is still processing.
+     */
+    void cancel();
+
+    /**
+     * Get an empty result set containing the meta data of the result.
+     * 
+     * @return the empty result
+     */
+    ResultInterface getMetaData() throws SQLException;
+
+    /**
+     * @param isMultiQueryTransaction
+     * @return
+     */
+    int executeUpdate(boolean isMultiQueryTransaction) throws SQLException;
+
+    /**
+     * @param b
+     */
+    void setIsPreparedStatement(boolean preparedStatement);
+
 }

@@ -18,52 +18,61 @@ import org.h2.value.Value;
  * A user-defined constant as created by the SQL statement CREATE CONSTANT
  */
 public class Constant extends SchemaObjectBase {
-	
-	private Value value;
-	
-	private ValueExpression expression;
-	
-	public Constant(Schema schema, int id, String name) {
-		initSchemaObjectBase(schema, id, name, Trace.SCHEMA);
-	}
-	
-	public String getCreateSQLForCopy(Table table, String quotedName) {
-		throw Message.throwInternalError();
-	}
-	
-	public String getDropSQL() {
-		return null;
-	}
-	
-	public String getCreateSQL() {
-		StringBuilder buff = new StringBuilder();
-		buff.append("CREATE CONSTANT ");
-		buff.append(getSQL());
-		buff.append(" VALUE ");
-		buff.append(value.getSQL());
-		return buff.toString();
-	}
-	
-	public int getType() {
-		return DbObject.CONSTANT;
-	}
-	
-	public void removeChildrenAndResources(Session session) throws SQLException {
-		database.removeMeta(session, getId());
-		invalidate();
-	}
-	
-	public void checkRename() {
-		// ok
-	}
-	
-	public void setValue(Value value) {
-		this.value = value;
-		expression = ValueExpression.get(value);
-	}
-	
-	public ValueExpression getValue() {
-		return expression;
-	}
-	
+
+    private Value value;
+
+    private ValueExpression expression;
+
+    public Constant(Schema schema, int id, String name) {
+
+        initSchemaObjectBase(schema, id, name, Trace.SCHEMA);
+    }
+
+    public String getCreateSQLForCopy(Table table, String quotedName) {
+
+        throw Message.throwInternalError();
+    }
+
+    public String getDropSQL() {
+
+        return null;
+    }
+
+    public String getCreateSQL() {
+
+        StringBuilder buff = new StringBuilder();
+        buff.append("CREATE CONSTANT ");
+        buff.append(getSQL());
+        buff.append(" VALUE ");
+        buff.append(value.getSQL());
+        return buff.toString();
+    }
+
+    public int getType() {
+
+        return DbObject.CONSTANT;
+    }
+
+    public void removeChildrenAndResources(Session session) throws SQLException {
+
+        database.removeMeta(session, getId());
+        invalidate();
+    }
+
+    public void checkRename() {
+
+        // ok
+    }
+
+    public void setValue(Value value) {
+
+        this.value = value;
+        expression = ValueExpression.get(value);
+    }
+
+    public ValueExpression getValue() {
+
+        return expression;
+    }
+
 }

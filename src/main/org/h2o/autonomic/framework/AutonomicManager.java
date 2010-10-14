@@ -23,13 +23,13 @@ import java.util.Observer;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public interface AutonomicManager extends Serializable, Observer {
-	
-	/**
-	 * Sends monitoring data to the manager so that the knowledge-base can be updated and analysed. This method is called by classes
-	 * implementing {@link AutonomicMonitor} where the manager has subscribed for updates from the given class.
-	 * 
-	 * @param monitoringData
-	 *            Data which provides
-	 */
-	public void recieveData(MonitoringData monitoringData);
+
+    /**
+     * Sends monitoring data to the manager so that the knowledge-base can be updated and analysed. This method is called by classes
+     * implementing {@link AutonomicMonitor} where the manager has subscribed for updates from the given class.
+     * 
+     * @param monitoringData
+     *            Data which provides
+     */
+    public void recieveData(MonitoringData monitoringData);
 }

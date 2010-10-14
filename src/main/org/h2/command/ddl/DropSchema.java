@@ -20,47 +20,49 @@ import org.h2o.util.exceptions.MovedException;
  * This class represents the statement DROP SCHEMA
  */
 public class DropSchema extends DefineCommand {
-	
-	private String schemaName;
-	
-	private boolean ifExists;
-	
-	public DropSchema(Session session) {
-		super(session);
-	}
-	
-	public void setSchemaName(String name) {
-		this.schemaName = name;
-	}
-	
-	public int update() throws SQLException, RemoteException {
-		session.getUser().checkAdmin();
-		session.commit(true);
-		Database db = session.getDatabase();
-		Schema schema = db.findSchema(schemaName);
-		if ( schema == null ) {
-			if ( !ifExists ) {
-				throw Message.getSQLException(ErrorCode.SCHEMA_NOT_FOUND_1, schemaName);
-			}
-		} else {
-			if ( !schema.canDrop() ) {
-				throw Message.getSQLException(ErrorCode.SCHEMA_CAN_NOT_BE_DROPPED_1, schemaName);
-			}
-			db.removeDatabaseObject(session, schema);
-			
-			if ( Constants.IS_H2O ) {
-				try {
-					db.getSystemTable().removeTableInformation(new TableInfo(null, schemaName));
-				} catch ( MovedException e ) {
-					throw new RemoteException("System Table has moved.");
-				}
-			}
-		}
-		return 0;
-	}
-	
-	public void setIfExists(boolean ifExists) {
-		this.ifExists = ifExists;
-	}
-	
+
+    private String schemaName;
+
+    private boolean ifExists;
+
+    public DropSchema(Session session) {
+
+        super(session);
+    }
+
+    public void setSchemaName(String name) {
+
+        this.schemaName = name;
+    }
+
+    public int update() throws SQLException, RemoteException {
+
+        session.getUser().checkAdmin();
+        session.commit(true);
+        Database db = session.getDatabase();
+        Schema schema = db.findSchema(schemaName);
+        if (schema == null) {
+            if (!ifExists) { throw Message.getSQLException(ErrorCode.SCHEMA_NOT_FOUND_1, schemaName); }
+        }
+        else {
+            if (!schema.canDrop()) { throw Message.getSQLException(ErrorCode.SCHEMA_CAN_NOT_BE_DROPPED_1, schemaName); }
+            db.removeDatabaseObject(session, schema);
+
+            if (Constants.IS_H2O) {
+                try {
+                    db.getSystemTable().removeTableInformation(new TableInfo(null, schemaName));
+                }
+                catch (MovedException e) {
+                    throw new RemoteException("System Table has moved.");
+                }
+            }
+        }
+        return 0;
+    }
+
+    public void setIfExists(boolean ifExists) {
+
+        this.ifExists = ifExists;
+    }
+
 }

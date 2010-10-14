@@ -10,30 +10,34 @@ import org.h2.index.Index;
  * The plan item describes the index to be used, and the estimated cost when using it.
  */
 public class PlanItem {
-	
-	/**
-	 * The cost.
-	 */
-	double cost;
-	
-	private Index index;
-	
-	private PlanItem joinPlan;
-	
-	void setIndex(Index index) {
-		this.index = index;
-	}
-	
-	public Index getIndex() {
-		return index;
-	}
-	
-	PlanItem getJoinPlan() {
-		return joinPlan;
-	}
-	
-	void setJoinPlan(PlanItem joinPlan) {
-		this.joinPlan = joinPlan;
-	}
-	
+
+    /**
+     * The cost.
+     */
+    double cost;
+
+    private Index index;
+
+    private PlanItem joinPlan;
+
+    void setIndex(Index index) {
+
+        this.index = index;
+    }
+
+    public Index getIndex() {
+
+        return index;
+    }
+
+    PlanItem getJoinPlan() {
+
+        return joinPlan;
+    }
+
+    void setJoinPlan(PlanItem joinPlan) {
+
+        this.joinPlan = joinPlan;
+    }
+
 }

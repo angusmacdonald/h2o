@@ -18,27 +18,27 @@ import org.h2o.db.wrappers.DatabaseInstanceWrapper;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public interface ILockingTable {
-	
-	/**
-	 * Request a lock on the given table.
-	 * 
-	 * @param lockType
-	 *            Type of lock requested.
-	 * @param databaseInstanceWrapper
-	 *            Proxy for the machine making the request.
-	 * @return Type of lock granted.
-	 */
-	public LockType requestLock(LockType lockType, DatabaseInstanceWrapper databaseInstanceWrapper);
-	
-	/**
-	 * Release the lock of this type held by this machine.
-	 * 
-	 * @param lockType
-	 *            Type of lock held.
-	 * @param requestingMachine
-	 *            Proxy for the machine making the request.
-	 * @return True if the success was successful.
-	 */
-	public LockType releaseLock(DatabaseInstanceWrapper requestingMachine);
-	
+
+    /**
+     * Request a lock on the given table.
+     * 
+     * @param lockType
+     *            Type of lock requested.
+     * @param databaseInstanceWrapper
+     *            Proxy for the machine making the request.
+     * @return Type of lock granted.
+     */
+    public LockType requestLock(LockType lockType, DatabaseInstanceWrapper databaseInstanceWrapper);
+
+    /**
+     * Release the lock of this type held by this machine.
+     * 
+     * @param lockType
+     *            Type of lock held.
+     * @param requestingMachine
+     *            Proxy for the machine making the request.
+     * @return True if the success was successful.
+     */
+    public LockType releaseLock(DatabaseInstanceWrapper requestingMachine);
+
 }

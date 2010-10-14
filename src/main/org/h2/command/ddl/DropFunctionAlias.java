@@ -16,36 +16,39 @@ import org.h2.message.Message;
  * This class represents the statement DROP ALIAS
  */
 public class DropFunctionAlias extends DefineCommand {
-	
-	private String aliasName;
-	
-	private boolean ifExists;
-	
-	public DropFunctionAlias(Session session) {
-		super(session);
-	}
-	
-	public int update() throws SQLException {
-		session.getUser().checkAdmin();
-		session.commit(true);
-		Database db = session.getDatabase();
-		FunctionAlias functionAlias = db.findFunctionAlias(aliasName);
-		if ( functionAlias == null ) {
-			if ( !ifExists ) {
-				throw Message.getSQLException(ErrorCode.FUNCTION_ALIAS_NOT_FOUND_1, aliasName);
-			}
-		} else {
-			db.removeDatabaseObject(session, functionAlias);
-		}
-		return 0;
-	}
-	
-	public void setAliasName(String name) {
-		this.aliasName = name;
-	}
-	
-	public void setIfExists(boolean ifExists) {
-		this.ifExists = ifExists;
-	}
-	
+
+    private String aliasName;
+
+    private boolean ifExists;
+
+    public DropFunctionAlias(Session session) {
+
+        super(session);
+    }
+
+    public int update() throws SQLException {
+
+        session.getUser().checkAdmin();
+        session.commit(true);
+        Database db = session.getDatabase();
+        FunctionAlias functionAlias = db.findFunctionAlias(aliasName);
+        if (functionAlias == null) {
+            if (!ifExists) { throw Message.getSQLException(ErrorCode.FUNCTION_ALIAS_NOT_FOUND_1, aliasName); }
+        }
+        else {
+            db.removeDatabaseObject(session, functionAlias);
+        }
+        return 0;
+    }
+
+    public void setAliasName(String name) {
+
+        this.aliasName = name;
+    }
+
+    public void setIfExists(boolean ifExists) {
+
+        this.ifExists = ifExists;
+    }
+
 }

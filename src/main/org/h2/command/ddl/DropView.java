@@ -18,40 +18,41 @@ import org.h2.table.Table;
  * This class represents the statement DROP VIEW
  */
 public class DropView extends SchemaCommand {
-	
-	private String viewName;
-	
-	private boolean ifExists;
-	
-	public DropView(Session session, Schema schema) {
-		super(session, schema);
-	}
-	
-	public void setIfExists(boolean b) {
-		ifExists = b;
-	}
-	
-	public void setViewName(String viewName) {
-		this.viewName = viewName;
-	}
-	
-	public int update() throws SQLException {
-		// TODO rights: what rights are required to drop a view?
-		session.commit(true);
-		Table view = getSchema().findTableOrView(session, viewName, LocationPreference.NO_PREFERENCE);
-		if ( view == null ) {
-			if ( !ifExists ) {
-				throw Message.getSQLException(ErrorCode.VIEW_NOT_FOUND_1, viewName);
-			}
-		} else {
-			if ( !Table.VIEW.equals(view.getTableType()) ) {
-				throw Message.getSQLException(ErrorCode.VIEW_NOT_FOUND_1, viewName);
-			}
-			session.getUser().checkRight(view, Right.ALL);
-			view.lock(session, true, true);
-			session.getDatabase().removeSchemaObject(session, view);
-		}
-		return 0;
-	}
-	
+
+    private String viewName;
+
+    private boolean ifExists;
+
+    public DropView(Session session, Schema schema) {
+
+        super(session, schema);
+    }
+
+    public void setIfExists(boolean b) {
+
+        ifExists = b;
+    }
+
+    public void setViewName(String viewName) {
+
+        this.viewName = viewName;
+    }
+
+    public int update() throws SQLException {
+
+        // TODO rights: what rights are required to drop a view?
+        session.commit(true);
+        Table view = getSchema().findTableOrView(session, viewName, LocationPreference.NO_PREFERENCE);
+        if (view == null) {
+            if (!ifExists) { throw Message.getSQLException(ErrorCode.VIEW_NOT_FOUND_1, viewName); }
+        }
+        else {
+            if (!Table.VIEW.equals(view.getTableType())) { throw Message.getSQLException(ErrorCode.VIEW_NOT_FOUND_1, viewName); }
+            session.getUser().checkRight(view, Right.ALL);
+            view.lock(session, true, true);
+            session.getDatabase().removeSchemaObject(session, view);
+        }
+        return 0;
+    }
+
 }

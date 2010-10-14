@@ -16,40 +16,40 @@ import org.h2.result.SearchRow;
  * 
  */
 public interface Cursor {
-	
-	/**
-	 * Get the complete current row. All column are available.
-	 * 
-	 * @return the complete row
-	 */
-	Row get() throws SQLException;
-	
-	/**
-	 * Get the current row. Only the data for indexed columns is available in this row.
-	 * 
-	 * @return the search row
-	 */
-	SearchRow getSearchRow() throws SQLException;
-	
-	/**
-	 * Get the position of the current row.
-	 * 
-	 * @return the position
-	 */
-	int getPos();
-	
-	/**
-	 * Skip to the next row if one is available.
-	 * 
-	 * @return true if another row is available
-	 */
-	boolean next() throws SQLException;
-	
-	/**
-	 * Skip to the previous row if one is available. No filtering is made here.
-	 * 
-	 * @return true if another row is available
-	 */
-	boolean previous() throws SQLException;
-	
+
+    /**
+     * Get the complete current row. All column are available.
+     * 
+     * @return the complete row
+     */
+    Row get() throws SQLException;
+
+    /**
+     * Get the current row. Only the data for indexed columns is available in this row.
+     * 
+     * @return the search row
+     */
+    SearchRow getSearchRow() throws SQLException;
+
+    /**
+     * Get the position of the current row.
+     * 
+     * @return the position
+     */
+    int getPos();
+
+    /**
+     * Skip to the next row if one is available.
+     * 
+     * @return true if another row is available
+     */
+    boolean next() throws SQLException;
+
+    /**
+     * Skip to the previous row if one is available. No filtering is made here.
+     * 
+     * @return true if another row is available
+     */
+    boolean previous() throws SQLException;
+
 }

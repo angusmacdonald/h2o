@@ -10,60 +10,58 @@ import java.util.HashMap;
  * Represents an optional BNF rule.
  */
 public class RuleOptional implements Rule {
-	
-	private Rule rule;
-	
-	private boolean mapSet;
-	
-	RuleOptional(Rule rule) {
-		this.rule = rule;
-	}
-	
-	public String toString() {
-		return "[" + rule.toString() + "]";
-	}
-	
-	public String name() {
-		return null;
-	}
-	
-	public String random(Bnf config, int level) {
-		if ( level > 10 ? config.getRandom().nextInt(level) == 1 : config.getRandom().nextInt(4) == 1 ) {
-			return rule.random(config, level + 1);
-		}
-		return "";
-	}
-	
-	public Rule last() {
-		return this;
-	}
-	
-	public void setLinks(HashMap ruleMap) {
-		if ( !mapSet ) {
-			rule.setLinks(ruleMap);
-			mapSet = true;
-		}
-	}
-	
-	public boolean matchRemove(Sentence sentence) {
-		if ( sentence.shouldStop() ) {
-			return false;
-		}
-		String query = sentence.getQuery();
-		if ( query.length() == 0 ) {
-			return true;
-		}
-		if ( !rule.matchRemove(sentence) ) {
-			return true;
-		}
-		return true;
-	}
-	
-	public void addNextTokenList(Sentence sentence) {
-		if ( sentence.shouldStop() ) {
-			return;
-		}
-		rule.addNextTokenList(sentence);
-	}
-	
+
+    private Rule rule;
+
+    private boolean mapSet;
+
+    RuleOptional(Rule rule) {
+
+        this.rule = rule;
+    }
+
+    public String toString() {
+
+        return "[" + rule.toString() + "]";
+    }
+
+    public String name() {
+
+        return null;
+    }
+
+    public String random(Bnf config, int level) {
+
+        if (level > 10 ? config.getRandom().nextInt(level) == 1 : config.getRandom().nextInt(4) == 1) { return rule.random(config, level + 1); }
+        return "";
+    }
+
+    public Rule last() {
+
+        return this;
+    }
+
+    public void setLinks(HashMap ruleMap) {
+
+        if (!mapSet) {
+            rule.setLinks(ruleMap);
+            mapSet = true;
+        }
+    }
+
+    public boolean matchRemove(Sentence sentence) {
+
+        if (sentence.shouldStop()) { return false; }
+        String query = sentence.getQuery();
+        if (query.length() == 0) { return true; }
+        if (!rule.matchRemove(sentence)) { return true; }
+        return true;
+    }
+
+    public void addNextTokenList(Sentence sentence) {
+
+        if (sentence.shouldStop()) { return; }
+        rule.addNextTokenList(sentence);
+    }
+
 }

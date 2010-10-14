@@ -11,21 +11,25 @@ import org.h2.value.ValueBoolean;
  * Represents a condition returning a boolean value, or NULL.
  */
 public abstract class Condition extends Expression {
-	
-	public int getType() {
-		return Value.BOOLEAN;
-	}
-	
-	public int getScale() {
-		return 0;
-	}
-	
-	public long getPrecision() {
-		return ValueBoolean.PRECISION;
-	}
-	
-	public int getDisplaySize() {
-		return ValueBoolean.DISPLAY_SIZE;
-	}
-	
+
+    public int getType() {
+
+        return Value.BOOLEAN;
+    }
+
+    public int getScale() {
+
+        return 0;
+    }
+
+    public long getPrecision() {
+
+        return ValueBoolean.PRECISION;
+    }
+
+    public int getDisplaySize() {
+
+        return ValueBoolean.DISPLAY_SIZE;
+    }
+
 }

@@ -19,37 +19,40 @@ import org.h2.table.Table;
  * This class represents the statement DROP TRIGGER
  */
 public class DropTrigger extends SchemaCommand {
-	
-	private String triggerName;
-	
-	private boolean ifExists;
-	
-	public DropTrigger(Session session, Schema schema) {
-		super(session, schema);
-	}
-	
-	public void setIfExists(boolean b) {
-		ifExists = b;
-	}
-	
-	public void setTriggerName(String triggerName) {
-		this.triggerName = triggerName;
-	}
-	
-	public int update() throws SQLException {
-		session.commit(true);
-		Database db = session.getDatabase();
-		TriggerObject trigger = getSchema().findTrigger(triggerName);
-		if ( trigger == null ) {
-			if ( !ifExists ) {
-				throw Message.getSQLException(ErrorCode.TRIGGER_NOT_FOUND_1, triggerName);
-			}
-		} else {
-			Table table = trigger.getTable();
-			session.getUser().checkRight(table, Right.ALL);
-			db.removeSchemaObject(session, trigger);
-		}
-		return 0;
-	}
-	
+
+    private String triggerName;
+
+    private boolean ifExists;
+
+    public DropTrigger(Session session, Schema schema) {
+
+        super(session, schema);
+    }
+
+    public void setIfExists(boolean b) {
+
+        ifExists = b;
+    }
+
+    public void setTriggerName(String triggerName) {
+
+        this.triggerName = triggerName;
+    }
+
+    public int update() throws SQLException {
+
+        session.commit(true);
+        Database db = session.getDatabase();
+        TriggerObject trigger = getSchema().findTrigger(triggerName);
+        if (trigger == null) {
+            if (!ifExists) { throw Message.getSQLException(ErrorCode.TRIGGER_NOT_FOUND_1, triggerName); }
+        }
+        else {
+            Table table = trigger.getTable();
+            session.getUser().checkRight(table, Right.ALL);
+            db.removeSchemaObject(session, trigger);
+        }
+        return 0;
+    }
+
 }

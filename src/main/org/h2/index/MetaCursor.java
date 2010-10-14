@@ -13,36 +13,42 @@ import org.h2.util.ObjectArray;
  * An index for a meta data table. This index can only scan through all rows, search is not supported.
  */
 public class MetaCursor implements Cursor {
-	
-	private Row current;
-	
-	private ObjectArray rows;
-	
-	private int index;
-	
-	MetaCursor(ObjectArray rows) {
-		this.rows = rows;
-	}
-	
-	public Row get() {
-		return current;
-	}
-	
-	public SearchRow getSearchRow() {
-		return current;
-	}
-	
-	public int getPos() {
-		throw Message.throwInternalError();
-	}
-	
-	public boolean next() {
-		current = (Row) ( index >= rows.size() ? null : rows.get(index++) );
-		return current != null;
-	}
-	
-	public boolean previous() {
-		throw Message.throwInternalError();
-	}
-	
+
+    private Row current;
+
+    private ObjectArray rows;
+
+    private int index;
+
+    MetaCursor(ObjectArray rows) {
+
+        this.rows = rows;
+    }
+
+    public Row get() {
+
+        return current;
+    }
+
+    public SearchRow getSearchRow() {
+
+        return current;
+    }
+
+    public int getPos() {
+
+        throw Message.throwInternalError();
+    }
+
+    public boolean next() {
+
+        current = (Row) (index >= rows.size() ? null : rows.get(index++));
+        return current != null;
+    }
+
+    public boolean previous() {
+
+        throw Message.throwInternalError();
+    }
+
 }

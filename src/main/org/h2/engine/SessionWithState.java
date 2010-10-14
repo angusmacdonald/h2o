@@ -15,47 +15,48 @@ import org.h2.value.Value;
  * The base class for both remote and embedded sessions.
  */
 public abstract class SessionWithState implements SessionInterface {
-	
-	protected ObjectArray sessionState;
-	
-	protected boolean sessionStateChanged;
-	
-	private boolean sessionStateUpdating;
-	
-	/**
-	 * Re-create the session state using the stored sessionState list.
-	 */
-	protected void recreateSessionState() throws SQLException {
-		if ( sessionState != null && sessionState.size() > 0 ) {
-			sessionStateUpdating = true;
-			try {
-				for ( int i = 0; i < sessionState.size(); i++ ) {
-					String sql = (String) sessionState.get(i);
-					CommandInterface ci = prepareCommand(sql, Integer.MAX_VALUE);
-					ci.executeUpdate();
-				}
-			} finally {
-				sessionStateUpdating = false;
-				sessionStateChanged = false;
-			}
-		}
-	}
-	
-	/**
-	 * Read the session state if necessary.
-	 */
-	public void readSessionState() throws SQLException {
-		if ( !sessionStateChanged || sessionStateUpdating ) {
-			return;
-		}
-		sessionStateChanged = false;
-		sessionState = new ObjectArray();
-		CommandInterface ci = prepareCommand("SELECT * FROM INFORMATION_SCHEMA.SESSION_STATE", Integer.MAX_VALUE);
-		ResultInterface result = ci.executeQuery(0, false);
-		while ( result.next() ) {
-			Value[] row = result.currentRow();
-			sessionState.add(row[1].getString());
-		}
-	}
-	
+
+    protected ObjectArray sessionState;
+
+    protected boolean sessionStateChanged;
+
+    private boolean sessionStateUpdating;
+
+    /**
+     * Re-create the session state using the stored sessionState list.
+     */
+    protected void recreateSessionState() throws SQLException {
+
+        if (sessionState != null && sessionState.size() > 0) {
+            sessionStateUpdating = true;
+            try {
+                for (int i = 0; i < sessionState.size(); i++) {
+                    String sql = (String) sessionState.get(i);
+                    CommandInterface ci = prepareCommand(sql, Integer.MAX_VALUE);
+                    ci.executeUpdate();
+                }
+            }
+            finally {
+                sessionStateUpdating = false;
+                sessionStateChanged = false;
+            }
+        }
+    }
+
+    /**
+     * Read the session state if necessary.
+     */
+    public void readSessionState() throws SQLException {
+
+        if (!sessionStateChanged || sessionStateUpdating) { return; }
+        sessionStateChanged = false;
+        sessionState = new ObjectArray();
+        CommandInterface ci = prepareCommand("SELECT * FROM INFORMATION_SCHEMA.SESSION_STATE", Integer.MAX_VALUE);
+        ResultInterface result = ci.executeQuery(0, false);
+        while (result.next()) {
+            Value[] row = result.currentRow();
+            sessionState.add(row[1].getString());
+        }
+    }
+
 }

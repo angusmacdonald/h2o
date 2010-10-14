@@ -19,21 +19,21 @@ import org.h2o.H2O;
  * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
  */
 public class CustomH2OExample {
-	
-	public static void main(String[] args) {
-		
-		String databaseName = "MyFirstDatabase"; // the name of the database
-													// domain.
-		int tcpPort = 9998; // the port on which the database's TCP JDBC server
-							// will run.
-		String rootFolder = "db_data"; // where the database will be created
-										// (where persisted state is stored).
-		String descriptorLocation = "db_data" + File.separator + "MyFirstDatabase.h2od"; // location of the database descriptor
-																							// file.
-		
-		H2O db = new H2O(databaseName, tcpPort, 0, rootFolder, descriptorLocation);
-		
-		db.startDatabase();
-	}
-	
+
+    public static void main(String[] args) {
+
+        String databaseName = "MyFirstDatabase"; // the name of the database
+                                                 // domain.
+        int tcpPort = 9998; // the port on which the database's TCP JDBC server
+                            // will run.
+        String rootFolder = "db_data"; // where the database will be created
+                                       // (where persisted state is stored).
+        String descriptorLocation = "db_data" + File.separator + "MyFirstDatabase.h2od"; // location of the database descriptor
+                                                                                         // file.
+
+        H2O db = new H2O(databaseName, tcpPort, 0, rootFolder, descriptorLocation);
+
+        db.startDatabase();
+    }
+
 }

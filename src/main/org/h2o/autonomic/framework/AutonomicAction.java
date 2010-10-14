@@ -13,5 +13,5 @@ package org.h2o.autonomic.framework;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public interface AutonomicAction {
-	
+
 }

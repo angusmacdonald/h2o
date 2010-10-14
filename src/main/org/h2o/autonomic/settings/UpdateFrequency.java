@@ -12,5 +12,5 @@ package org.h2o.autonomic.settings;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public enum UpdateFrequency {
-	
+
 }

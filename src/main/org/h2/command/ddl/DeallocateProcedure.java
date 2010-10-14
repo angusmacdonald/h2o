@@ -10,20 +10,23 @@ import org.h2.engine.Session;
  * This class represents the statement DEALLOCATE
  */
 public class DeallocateProcedure extends DefineCommand {
-	
-	private String procedureName;
-	
-	public DeallocateProcedure(Session session) {
-		super(session);
-	}
-	
-	public int update() {
-		session.removeProcedure(procedureName);
-		return 0;
-	}
-	
-	public void setProcedureName(String name) {
-		this.procedureName = name;
-	}
-	
+
+    private String procedureName;
+
+    public DeallocateProcedure(Session session) {
+
+        super(session);
+    }
+
+    public int update() {
+
+        session.removeProcedure(procedureName);
+        return 0;
+    }
+
+    public void setProcedureName(String name) {
+
+        this.procedureName = name;
+    }
+
 }

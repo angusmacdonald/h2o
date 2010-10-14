@@ -13,49 +13,53 @@ import java.sql.SQLException;
  * Represents a batch update database exception.
  */
 public class JdbcBatchUpdateException extends BatchUpdateException {
-	
-	private static final long serialVersionUID = 9006432914018679675L;
-	
-	/**
-	 * INTERNAL
-	 */
-	JdbcBatchUpdateException(SQLException next, int[] updateCounts) {
-		super(next.getMessage(), next.getSQLState(), next.getErrorCode(), updateCounts);
-	}
-	
-	/**
-	 * INTERNAL
-	 */
-	public void printStackTrace() {
-		// The default implementation already does that,
-		// but we do it again to avoid problems.
-		// If it is not implemented, somebody might implement it
-		// later on which would be a problem if done in the wrong way.
-		printStackTrace(System.err);
-	}
-	
-	/**
-	 * INTERNAL
-	 */
-	public void printStackTrace(PrintWriter s) {
-		if ( s != null ) {
-			super.printStackTrace(s);
-			if ( getNextException() != null ) {
-				getNextException().printStackTrace(s);
-			}
-		}
-	}
-	
-	/**
-	 * INTERNAL
-	 */
-	public void printStackTrace(PrintStream s) {
-		if ( s != null ) {
-			super.printStackTrace(s);
-			if ( getNextException() != null ) {
-				getNextException().printStackTrace(s);
-			}
-		}
-	}
-	
+
+    private static final long serialVersionUID = 9006432914018679675L;
+
+    /**
+     * INTERNAL
+     */
+    JdbcBatchUpdateException(SQLException next, int[] updateCounts) {
+
+        super(next.getMessage(), next.getSQLState(), next.getErrorCode(), updateCounts);
+    }
+
+    /**
+     * INTERNAL
+     */
+    public void printStackTrace() {
+
+        // The default implementation already does that,
+        // but we do it again to avoid problems.
+        // If it is not implemented, somebody might implement it
+        // later on which would be a problem if done in the wrong way.
+        printStackTrace(System.err);
+    }
+
+    /**
+     * INTERNAL
+     */
+    public void printStackTrace(PrintWriter s) {
+
+        if (s != null) {
+            super.printStackTrace(s);
+            if (getNextException() != null) {
+                getNextException().printStackTrace(s);
+            }
+        }
+    }
+
+    /**
+     * INTERNAL
+     */
+    public void printStackTrace(PrintStream s) {
+
+        if (s != null) {
+            super.printStackTrace(s);
+            if (getNextException() != null) {
+                getNextException().printStackTrace(s);
+            }
+        }
+    }
+
 }

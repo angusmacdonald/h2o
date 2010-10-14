@@ -19,77 +19,91 @@ import org.h2.value.Value;
  * column expressions.
  */
 public class Wildcard extends Expression {
-	
-	private String schema;
-	
-	private String table;
-	
-	public Wildcard(String schema, String table) {
-		this.schema = schema;
-		this.table = table;
-	}
-	
-	public boolean isWildcard() {
-		return true;
-	}
-	
-	public Value getValue(Session session) {
-		throw Message.throwInternalError();
-	}
-	
-	public int getType() {
-		throw Message.throwInternalError();
-	}
-	
-	public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
-		throw Message.getSQLException(ErrorCode.SYNTAX_ERROR_1, table);
-	}
-	
-	public Expression optimize(Session session) throws SQLException {
-		throw Message.getSQLException(ErrorCode.SYNTAX_ERROR_1, table);
-	}
-	
-	public void setEvaluatable(TableFilter tableFilter, boolean b) {
-		Message.throwInternalError();
-	}
-	
-	public int getScale() {
-		throw Message.throwInternalError();
-	}
-	
-	public long getPrecision() {
-		throw Message.throwInternalError();
-	}
-	
-	public int getDisplaySize() {
-		throw Message.throwInternalError();
-	}
-	
-	public String getTableAlias() {
-		return table;
-	}
-	
-	public String getSchemaName() {
-		return schema;
-	}
-	
-	public String getSQL() {
-		if ( table == null ) {
-			return "*";
-		}
-		return StringUtils.quoteIdentifier(table) + ".*";
-	}
-	
-	public void updateAggregate(Session session) {
-		Message.throwInternalError();
-	}
-	
-	public boolean isEverything(ExpressionVisitor visitor) {
-		throw Message.throwInternalError();
-	}
-	
-	public int getCost() {
-		throw Message.throwInternalError();
-	}
-	
+
+    private String schema;
+
+    private String table;
+
+    public Wildcard(String schema, String table) {
+
+        this.schema = schema;
+        this.table = table;
+    }
+
+    public boolean isWildcard() {
+
+        return true;
+    }
+
+    public Value getValue(Session session) {
+
+        throw Message.throwInternalError();
+    }
+
+    public int getType() {
+
+        throw Message.throwInternalError();
+    }
+
+    public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
+
+        throw Message.getSQLException(ErrorCode.SYNTAX_ERROR_1, table);
+    }
+
+    public Expression optimize(Session session) throws SQLException {
+
+        throw Message.getSQLException(ErrorCode.SYNTAX_ERROR_1, table);
+    }
+
+    public void setEvaluatable(TableFilter tableFilter, boolean b) {
+
+        Message.throwInternalError();
+    }
+
+    public int getScale() {
+
+        throw Message.throwInternalError();
+    }
+
+    public long getPrecision() {
+
+        throw Message.throwInternalError();
+    }
+
+    public int getDisplaySize() {
+
+        throw Message.throwInternalError();
+    }
+
+    public String getTableAlias() {
+
+        return table;
+    }
+
+    public String getSchemaName() {
+
+        return schema;
+    }
+
+    public String getSQL() {
+
+        if (table == null) { return "*"; }
+        return StringUtils.quoteIdentifier(table) + ".*";
+    }
+
+    public void updateAggregate(Session session) {
+
+        Message.throwInternalError();
+    }
+
+    public boolean isEverything(ExpressionVisitor visitor) {
+
+        throw Message.throwInternalError();
+    }
+
+    public int getCost() {
+
+        throw Message.throwInternalError();
+    }
+
 }

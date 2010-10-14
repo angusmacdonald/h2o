@@ -19,55 +19,62 @@ import org.h2o.db.wrappers.DatabaseInstanceWrapper;
  * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
  */
 public class QueryResult {
-	
-	private int result;
-	
-	private SQLException exception = null;
-	
-	private DatabaseInstanceWrapper wrapper;
-	
-	private TableInfo tableInfo;
-	
-	private int updateID;
-	
-	public QueryResult(int result, DatabaseInstanceWrapper wrapper, int updateID, TableInfo tableInfo) {
-		this.result = result;
-		this.wrapper = wrapper;
-		this.updateID = updateID;
-		this.tableInfo = tableInfo;
-	}
-	
-	public QueryResult(SQLException exception, DatabaseInstanceWrapper wrapper, int updateID, TableInfo tableInfo) {
-		this.exception = exception;
-		this.wrapper = wrapper;
-		this.updateID = updateID;
-		this.tableInfo = tableInfo;
-	}
-	
-	public SQLException getException() {
-		return exception;
-	}
-	
-	public DatabaseInstanceWrapper getWrapper() {
-		return wrapper;
-	}
-	
-	public int getResult() {
-		return result;
-	}
-	
-	public int getUpdateID() {
-		return updateID;
-	}
-	
-	public TableInfo getTable() {
-		return tableInfo;
-	}
-	
-	@Override
-	public String toString() {
-		return "QueryResult [result=" + result + ", exception=" + exception + ", wrapper=" + wrapper + ", tableInfo=" + tableInfo
-				+ ", updateID=" + updateID + "]";
-	}
-	
+
+    private int result;
+
+    private SQLException exception = null;
+
+    private DatabaseInstanceWrapper wrapper;
+
+    private TableInfo tableInfo;
+
+    private int updateID;
+
+    public QueryResult(int result, DatabaseInstanceWrapper wrapper, int updateID, TableInfo tableInfo) {
+
+        this.result = result;
+        this.wrapper = wrapper;
+        this.updateID = updateID;
+        this.tableInfo = tableInfo;
+    }
+
+    public QueryResult(SQLException exception, DatabaseInstanceWrapper wrapper, int updateID, TableInfo tableInfo) {
+
+        this.exception = exception;
+        this.wrapper = wrapper;
+        this.updateID = updateID;
+        this.tableInfo = tableInfo;
+    }
+
+    public SQLException getException() {
+
+        return exception;
+    }
+
+    public DatabaseInstanceWrapper getWrapper() {
+
+        return wrapper;
+    }
+
+    public int getResult() {
+
+        return result;
+    }
+
+    public int getUpdateID() {
+
+        return updateID;
+    }
+
+    public TableInfo getTable() {
+
+        return tableInfo;
+    }
+
+    @Override
+    public String toString() {
+
+        return "QueryResult [result=" + result + ", exception=" + exception + ", wrapper=" + wrapper + ", tableInfo=" + tableInfo + ", updateID=" + updateID + "]";
+    }
+
 }

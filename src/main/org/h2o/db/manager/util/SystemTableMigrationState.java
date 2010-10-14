@@ -11,37 +11,38 @@ package org.h2o.db.manager.util;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 public class SystemTableMigrationState {
-	
-	/**
-	 * If this System Table has been moved to another location (i.e. its state has been transferred to another machine and it is no longer
-	 * active) this field will not be null, and will note the new location of the System Table.
-	 */
-	public String movedLocation = null;
-	
-	/**
-	 * Whether the System Table is in the process of being migrated. If this is true the System Table will be 'locked', unable to service
-	 * requests.
-	 */
-	public boolean inMigration = false;
-	
-	/**
-	 * Whether the System Table has been moved to another location.
-	 */
-	public boolean hasMoved = false;
-	
-	/**
-	 * Whether the System Table has been shutdown.
-	 */
-	public boolean shutdown = false;
-	
-	/**
-	 * The amount of time which has elapsed since migration began. Used to timeout requests which take too long.
-	 */
-	public long migrationTime = 0l;
-	
-	public IChordRemoteReference location = null;
-	
-	public SystemTableMigrationState(IChordRemoteReference localChordReference) {
-		location = localChordReference;
-	}
+
+    /**
+     * If this System Table has been moved to another location (i.e. its state has been transferred to another machine and it is no longer
+     * active) this field will not be null, and will note the new location of the System Table.
+     */
+    public String movedLocation = null;
+
+    /**
+     * Whether the System Table is in the process of being migrated. If this is true the System Table will be 'locked', unable to service
+     * requests.
+     */
+    public boolean inMigration = false;
+
+    /**
+     * Whether the System Table has been moved to another location.
+     */
+    public boolean hasMoved = false;
+
+    /**
+     * Whether the System Table has been shutdown.
+     */
+    public boolean shutdown = false;
+
+    /**
+     * The amount of time which has elapsed since migration began. Used to timeout requests which take too long.
+     */
+    public long migrationTime = 0l;
+
+    public IChordRemoteReference location = null;
+
+    public SystemTableMigrationState(IChordRemoteReference localChordReference) {
+
+        location = localChordReference;
+    }
 }

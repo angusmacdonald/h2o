@@ -8,25 +8,26 @@ package org.h2.log;
  * Represents a record in the transaction log.
  */
 class LogRecord {
-	
-	/**
-	 * The log file of this record.
-	 */
-	LogFile log;
-	
-	/**
-	 * The position in the log file.
-	 */
-	int logRecordId;
-	
-	/**
-	 * The session id of this record.
-	 */
-	int sessionId;
-	
-	LogRecord(LogFile log, int logRecordId, int sessionId) {
-		this.log = log;
-		this.logRecordId = logRecordId;
-		this.sessionId = sessionId;
-	}
+
+    /**
+     * The log file of this record.
+     */
+    LogFile log;
+
+    /**
+     * The position in the log file.
+     */
+    int logRecordId;
+
+    /**
+     * The session id of this record.
+     */
+    int sessionId;
+
+    LogRecord(LogFile log, int logRecordId, int sessionId) {
+
+        this.log = log;
+        this.logRecordId = logRecordId;
+        this.sessionId = sessionId;
+    }
 }

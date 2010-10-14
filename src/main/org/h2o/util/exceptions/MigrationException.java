@@ -12,10 +12,11 @@ package org.h2o.util.exceptions;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class MigrationException extends Exception {
-	
-	private static final long serialVersionUID = -2549559616713278150L;
-	
-	public MigrationException(String message) {
-		super(message);
-	}
+
+    private static final long serialVersionUID = -2549559616713278150L;
+
+    public MigrationException(String message) {
+
+        super(message);
+    }
 }

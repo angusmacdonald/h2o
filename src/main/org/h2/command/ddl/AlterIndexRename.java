@@ -18,33 +18,35 @@ import org.h2.schema.Schema;
  * This class represents the statement ALTER INDEX RENAME
  */
 public class AlterIndexRename extends DefineCommand {
-	
-	private Index oldIndex;
-	
-	private String newIndexName;
-	
-	public AlterIndexRename(Session session) {
-		super(session);
-	}
-	
-	public void setOldIndex(Index index) {
-		oldIndex = index;
-	}
-	
-	public void setNewName(String name) {
-		newIndexName = name;
-	}
-	
-	public int update() throws SQLException {
-		session.commit(true);
-		Database db = session.getDatabase();
-		Schema schema = oldIndex.getSchema();
-		if ( schema.findIndex(session, newIndexName) != null || newIndexName.equals(oldIndex.getName()) ) {
-			throw Message.getSQLException(ErrorCode.INDEX_ALREADY_EXISTS_1, newIndexName);
-		}
-		session.getUser().checkRight(oldIndex.getTable(), Right.ALL);
-		db.renameSchemaObject(session, oldIndex, newIndexName);
-		return 0;
-	}
-	
+
+    private Index oldIndex;
+
+    private String newIndexName;
+
+    public AlterIndexRename(Session session) {
+
+        super(session);
+    }
+
+    public void setOldIndex(Index index) {
+
+        oldIndex = index;
+    }
+
+    public void setNewName(String name) {
+
+        newIndexName = name;
+    }
+
+    public int update() throws SQLException {
+
+        session.commit(true);
+        Database db = session.getDatabase();
+        Schema schema = oldIndex.getSchema();
+        if (schema.findIndex(session, newIndexName) != null || newIndexName.equals(oldIndex.getName())) { throw Message.getSQLException(ErrorCode.INDEX_ALREADY_EXISTS_1, newIndexName); }
+        session.getUser().checkRight(oldIndex.getTable(), Right.ALL);
+        db.renameSchemaObject(session, oldIndex, newIndexName);
+        return 0;
+    }
+
 }

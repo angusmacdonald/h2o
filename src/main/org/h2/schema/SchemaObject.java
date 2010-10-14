@@ -10,11 +10,11 @@ import org.h2.engine.DbObject;
  * Any database object that is stored in a schema.
  */
 public interface SchemaObject extends DbObject {
-	
-	/**
-	 * Get the schema in which this object is defined
-	 * 
-	 * @return the schema
-	 */
-	Schema getSchema();
+
+    /**
+     * Get the schema in which this object is defined
+     * 
+     * @return the schema
+     */
+    Schema getSchema();
 }

@@ -8,34 +8,34 @@ package org.h2.fulltext;
  * The settings of one full text search index.
  */
 class IndexInfo {
-	
-	/**
-	 * The index id.
-	 */
-	int id;
-	
-	/**
-	 * The schema name.
-	 */
-	String schema;
-	
-	/**
-	 * The table name.
-	 */
-	String table;
-	
-	/**
-	 * The column indexes of the key columns.
-	 */
-	int[] keys;
-	
-	/**
-	 * The column indexes of the index columns.
-	 */
-	int[] indexColumns;
-	
-	/**
-	 * The column names.
-	 */
-	String[] columns;
+
+    /**
+     * The index id.
+     */
+    int id;
+
+    /**
+     * The schema name.
+     */
+    String schema;
+
+    /**
+     * The table name.
+     */
+    String table;
+
+    /**
+     * The column indexes of the key columns.
+     */
+    int[] keys;
+
+    /**
+     * The column indexes of the index columns.
+     */
+    int[] indexColumns;
+
+    /**
+     * The column names.
+     */
+    String[] columns;
 }

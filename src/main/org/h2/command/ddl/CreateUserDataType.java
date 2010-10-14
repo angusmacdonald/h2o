@@ -19,55 +19,54 @@ import org.h2.value.DataType;
  * This class represents the statement CREATE DOMAIN
  */
 public class CreateUserDataType extends DefineCommand {
-	
-	private String typeName;
-	
-	private Column column;
-	
-	private boolean ifNotExists;
-	
-	public CreateUserDataType(Session session) {
-		super(session);
-	}
-	
-	public void setTypeName(String name) {
-		this.typeName = name;
-	}
-	
-	public void setColumn(Column column) {
-		this.column = column;
-	}
-	
-	public void setIfNotExists(boolean ifNotExists) {
-		this.ifNotExists = ifNotExists;
-	}
-	
-	public int update() throws SQLException {
-		session.getUser().checkAdmin();
-		session.commit(true);
-		Database db = session.getDatabase();
-		session.getUser().checkAdmin();
-		if ( db.findUserDataType(typeName) != null ) {
-			if ( ifNotExists ) {
-				return 0;
-			}
-			throw Message.getSQLException(ErrorCode.USER_DATA_TYPE_ALREADY_EXISTS_1, typeName);
-		}
-		DataType builtIn = DataType.getTypeByName(typeName);
-		if ( builtIn != null ) {
-			if ( !builtIn.hidden ) {
-				throw Message.getSQLException(ErrorCode.USER_DATA_TYPE_ALREADY_EXISTS_1, typeName);
-			}
-			ReplicaSet replicaSet = session.getDatabase().getFirstUserTable();
-			if ( replicaSet != null ) {
-				throw Message.getSQLException(ErrorCode.USER_DATA_TYPE_ALREADY_EXISTS_1, typeName + " (" + replicaSet.getSQL() + ")");
-			}
-		}
-		int id = getObjectId(false, true);
-		UserDataType type = new UserDataType(db, id, typeName);
-		type.setColumn(column);
-		db.addDatabaseObject(session, type);
-		return 0;
-	}
-	
+
+    private String typeName;
+
+    private Column column;
+
+    private boolean ifNotExists;
+
+    public CreateUserDataType(Session session) {
+
+        super(session);
+    }
+
+    public void setTypeName(String name) {
+
+        this.typeName = name;
+    }
+
+    public void setColumn(Column column) {
+
+        this.column = column;
+    }
+
+    public void setIfNotExists(boolean ifNotExists) {
+
+        this.ifNotExists = ifNotExists;
+    }
+
+    public int update() throws SQLException {
+
+        session.getUser().checkAdmin();
+        session.commit(true);
+        Database db = session.getDatabase();
+        session.getUser().checkAdmin();
+        if (db.findUserDataType(typeName) != null) {
+            if (ifNotExists) { return 0; }
+            throw Message.getSQLException(ErrorCode.USER_DATA_TYPE_ALREADY_EXISTS_1, typeName);
+        }
+        DataType builtIn = DataType.getTypeByName(typeName);
+        if (builtIn != null) {
+            if (!builtIn.hidden) { throw Message.getSQLException(ErrorCode.USER_DATA_TYPE_ALREADY_EXISTS_1, typeName); }
+            ReplicaSet replicaSet = session.getDatabase().getFirstUserTable();
+            if (replicaSet != null) { throw Message.getSQLException(ErrorCode.USER_DATA_TYPE_ALREADY_EXISTS_1, typeName + " (" + replicaSet.getSQL() + ")"); }
+        }
+        int id = getObjectId(false, true);
+        UserDataType type = new UserDataType(db, id, typeName);
+        type.setColumn(column);
+        db.addDatabaseObject(session, type);
+        return 0;
+    }
+
 }

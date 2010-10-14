@@ -23,60 +23,66 @@ import org.h2o.viewer.server.handlers.EventHandler;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class EventWorker extends Thread {
-	
-	private Socket socket;
-	
-	private EventHandler eventHandler;
-	
-	/**
-	 * @param newConnection
-	 *            The new incoming connection on the server.
-	 * @param eventHandler
-	 *            The location of the locator file, which stores where
-	 */
-	protected EventWorker(Socket newConnection, EventHandler eventHandler) {
-		this.eventHandler = eventHandler;
-		this.socket = newConnection;
-	}
-	
-	/**
-	 * Service the current incoming connection.
-	 */
-	public void run() {
-		
-		ObjectInputStream input = null;
-		
-		try {
-			socket.setSoTimeout(5000);
-			input = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
-		} catch ( SocketException e1 ) {
-			e1.printStackTrace();
-		} catch ( IOException e ) {
-			e.printStackTrace();
-		}
-		
-		try {
-			try { // ends with 'finally' to close the socket connection.
-					// Diagnostic.traceNoEvent(DiagnosticLevel.INIT,
-					// "Created new LocatorConnectionHandler thread.");
-				
-				// Get single-line request from the client.
-				
-				try {
-					H2OEvent event = (H2OEvent) input.readObject();
-					
-					input.close();
-					
-					eventHandler.pushEvent(event);
-				} catch ( ClassNotFoundException e ) {
-					e.printStackTrace();
-				}
-				
-			} finally {
-				socket.close();
-			}
-		} catch ( IOException e ) {
-			
-		}
-	}
+
+    private Socket socket;
+
+    private EventHandler eventHandler;
+
+    /**
+     * @param newConnection
+     *            The new incoming connection on the server.
+     * @param eventHandler
+     *            The location of the locator file, which stores where
+     */
+    protected EventWorker(Socket newConnection, EventHandler eventHandler) {
+
+        this.eventHandler = eventHandler;
+        this.socket = newConnection;
+    }
+
+    /**
+     * Service the current incoming connection.
+     */
+    public void run() {
+
+        ObjectInputStream input = null;
+
+        try {
+            socket.setSoTimeout(5000);
+            input = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
+        }
+        catch (SocketException e1) {
+            e1.printStackTrace();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            try { // ends with 'finally' to close the socket connection.
+                  // Diagnostic.traceNoEvent(DiagnosticLevel.INIT,
+                  // "Created new LocatorConnectionHandler thread.");
+
+                // Get single-line request from the client.
+
+                try {
+                    H2OEvent event = (H2OEvent) input.readObject();
+
+                    input.close();
+
+                    eventHandler.pushEvent(event);
+                }
+                catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+
+            }
+            finally {
+                socket.close();
+            }
+        }
+        catch (IOException e) {
+
+        }
+    }
 }

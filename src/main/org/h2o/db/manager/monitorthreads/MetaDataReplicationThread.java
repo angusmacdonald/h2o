@@ -13,77 +13,80 @@ import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.replication.MetaDataReplicaManager;
 
 public class MetaDataReplicationThread extends Thread {
-	
-	private MetaDataReplicaManager metaDataReplicaManager;
-	
-	private ISystemTableReference systemTableReference;
-	
-	private boolean running = true;
-	
-	private int threadSleepTime;
-	
-	private Database database;
-	
-	public MetaDataReplicationThread(MetaDataReplicaManager metaDataReplicaManager, ISystemTableReference systemTableReference,
-			Database database, int threadSleepTime) {
-		this.metaDataReplicaManager = metaDataReplicaManager;
-		this.systemTableReference = systemTableReference;
-		this.database = database;
-		this.threadSleepTime = threadSleepTime;
-	}
-	
-	public void run() {
-		int i = 0;
-		
-		/*
-		 * Sleep.
-		 */
-		try {
-			Thread.sleep(threadSleepTime);
-		} catch ( InterruptedException e ) {
-		}
-		
-		while ( isRunning() ) {
-			if ( !database.isRunning() )
-				continue;
-			
-			/*
-			 * Sleep.
-			 */
-			try {
-				Thread.sleep(threadSleepTime);
-			} catch ( InterruptedException e ) {
-			}
-			
-			/*
-			 * Check that there are a sufficient number of replicas of Table Manager state.
-			 */
-			metaDataReplicaManager.replicateMetaDataIfPossible(systemTableReference, false);
-			
-			/*
-			 * Check that there are a sufficient number of replicas of System Table state.
-			 */
-			metaDataReplicaManager.replicateMetaDataIfPossible(systemTableReference, true);
-			
-			if ( !database.isRunning() )
-				return;
-			i++;
-		}
-	}
-	
-	/**
-	 * @return the running
-	 */
-	public synchronized boolean isRunning() {
-		return running;
-	}
-	
-	/**
-	 * @param running
-	 *            the running to set
-	 */
-	public synchronized void setRunning(boolean running) {
-		this.running = running;
-	}
-	
+
+    private MetaDataReplicaManager metaDataReplicaManager;
+
+    private ISystemTableReference systemTableReference;
+
+    private boolean running = true;
+
+    private int threadSleepTime;
+
+    private Database database;
+
+    public MetaDataReplicationThread(MetaDataReplicaManager metaDataReplicaManager, ISystemTableReference systemTableReference, Database database, int threadSleepTime) {
+
+        this.metaDataReplicaManager = metaDataReplicaManager;
+        this.systemTableReference = systemTableReference;
+        this.database = database;
+        this.threadSleepTime = threadSleepTime;
+    }
+
+    public void run() {
+
+        int i = 0;
+
+        /*
+         * Sleep.
+         */
+        try {
+            Thread.sleep(threadSleepTime);
+        }
+        catch (InterruptedException e) {
+        }
+
+        while (isRunning()) {
+            if (!database.isRunning()) continue;
+
+            /*
+             * Sleep.
+             */
+            try {
+                Thread.sleep(threadSleepTime);
+            }
+            catch (InterruptedException e) {
+            }
+
+            /*
+             * Check that there are a sufficient number of replicas of Table Manager state.
+             */
+            metaDataReplicaManager.replicateMetaDataIfPossible(systemTableReference, false);
+
+            /*
+             * Check that there are a sufficient number of replicas of System Table state.
+             */
+            metaDataReplicaManager.replicateMetaDataIfPossible(systemTableReference, true);
+
+            if (!database.isRunning()) return;
+            i++;
+        }
+    }
+
+    /**
+     * @return the running
+     */
+    public synchronized boolean isRunning() {
+
+        return running;
+    }
+
+    /**
+     * @param running
+     *            the running to set
+     */
+    public synchronized void setRunning(boolean running) {
+
+        this.running = running;
+    }
+
 }

@@ -19,12 +19,12 @@ import org.h2o.util.exceptions.MovedException;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public interface H2ORemote extends Remote {
-	
-	/**
-	 * Used to check that a Table Manager is still accessible via RMI. This method will return false if the database has been closed - an
-	 * exception will be thrown if it is unavailable.
-	 * 
-	 * @throws MovedException
-	 */
-	public boolean isAlive() throws RemoteException, MovedException;
+
+    /**
+     * Used to check that a Table Manager is still accessible via RMI. This method will return false if the database has been closed - an
+     * exception will be thrown if it is unavailable.
+     * 
+     * @throws MovedException
+     */
+    public boolean isAlive() throws RemoteException, MovedException;
 }

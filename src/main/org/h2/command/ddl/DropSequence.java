@@ -17,40 +17,41 @@ import org.h2.schema.Sequence;
  * This class represents the statement DROP SEQUENCE
  */
 public class DropSequence extends SchemaCommand {
-	
-	private String sequenceName;
-	
-	private boolean ifExists;
-	
-	public DropSequence(Session session, Schema schema) {
-		super(session, schema);
-	}
-	
-	public void setIfExists(boolean b) {
-		ifExists = b;
-	}
-	
-	public void setSequenceName(String sequenceName) {
-		this.sequenceName = sequenceName;
-	}
-	
-	public int update() throws SQLException {
-		// TODO rights: what are the rights required for a sequence?
-		session.getUser().checkAdmin();
-		session.commit(true);
-		Database db = session.getDatabase();
-		Sequence sequence = getSchema().findSequence(sequenceName);
-		if ( sequence == null ) {
-			if ( !ifExists ) {
-				throw Message.getSQLException(ErrorCode.SEQUENCE_NOT_FOUND_1, sequenceName);
-			}
-		} else {
-			if ( sequence.getBelongsToTable() ) {
-				throw Message.getSQLException(ErrorCode.SEQUENCE_BELONGS_TO_A_TABLE_1, sequenceName);
-			}
-			db.removeSchemaObject(session, sequence);
-		}
-		return 0;
-	}
-	
+
+    private String sequenceName;
+
+    private boolean ifExists;
+
+    public DropSequence(Session session, Schema schema) {
+
+        super(session, schema);
+    }
+
+    public void setIfExists(boolean b) {
+
+        ifExists = b;
+    }
+
+    public void setSequenceName(String sequenceName) {
+
+        this.sequenceName = sequenceName;
+    }
+
+    public int update() throws SQLException {
+
+        // TODO rights: what are the rights required for a sequence?
+        session.getUser().checkAdmin();
+        session.commit(true);
+        Database db = session.getDatabase();
+        Sequence sequence = getSchema().findSequence(sequenceName);
+        if (sequence == null) {
+            if (!ifExists) { throw Message.getSQLException(ErrorCode.SEQUENCE_NOT_FOUND_1, sequenceName); }
+        }
+        else {
+            if (sequence.getBelongsToTable()) { throw Message.getSQLException(ErrorCode.SEQUENCE_BELONGS_TO_A_TABLE_1, sequenceName); }
+            db.removeSchemaObject(session, sequence);
+        }
+        return 0;
+    }
+
 }

@@ -19,19 +19,20 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
  */
 public class StandaloneH2OExample {
-	
-	public static void main(String[] args) {
-		Diagnostic.setLevel(DiagnosticLevel.FINAL);
-		
-		String databaseName = "MyFirstDatabase";// the name of the database
-												// domain.
-		int tcpPort = 9999; // the port on which the databases TCP JDBC server
-							// will run.
-		String rootFolder = "db_data"; // where the database will be created
-										// (where persisted state is stored).
-		
-		H2O db = new H2O(databaseName, tcpPort, 8282, rootFolder);
-		db.startDatabase();
-	}
-	
+
+    public static void main(String[] args) {
+
+        Diagnostic.setLevel(DiagnosticLevel.FINAL);
+
+        String databaseName = "MyFirstDatabase";// the name of the database
+                                                // domain.
+        int tcpPort = 9999; // the port on which the databases TCP JDBC server
+                            // will run.
+        String rootFolder = "db_data"; // where the database will be created
+                                       // (where persisted state is stored).
+
+        H2O db = new H2O(databaseName, tcpPort, 8282, rootFolder);
+        db.startDatabase();
+    }
+
 }

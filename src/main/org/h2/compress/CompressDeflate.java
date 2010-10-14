@@ -22,55 +22,60 @@ import org.h2.message.Message;
  * See also java.util.zip.Deflater for details.
  */
 public class CompressDeflate implements Compressor {
-	
-	private int level = Deflater.DEFAULT_COMPRESSION;
-	
-	private int strategy = Deflater.DEFAULT_STRATEGY;
-	
-	public void setOptions(String options) throws SQLException {
-		if ( options == null ) {
-			return;
-		}
-		try {
-			StringTokenizer tokenizer = new StringTokenizer(options);
-			while ( tokenizer.hasMoreElements() ) {
-				String option = tokenizer.nextToken();
-				if ( "level".equals(option) || "l".equals(option) ) {
-					level = Integer.parseInt(tokenizer.nextToken());
-				} else if ( "strategy".equals(option) || "s".equals(option) ) {
-					strategy = Integer.parseInt(tokenizer.nextToken());
-				}
-				Deflater deflater = new Deflater(level);
-				deflater.setStrategy(strategy);
-			}
-		} catch ( Exception e ) {
-			throw Message.getSQLException(ErrorCode.UNSUPPORTED_COMPRESSION_OPTIONS_1, options);
-		}
-	}
-	
-	public int compress(byte[] in, int inLen, byte[] out, int outPos) {
-		Deflater deflater = new Deflater(level);
-		deflater.setStrategy(strategy);
-		deflater.setInput(in, 0, inLen);
-		deflater.finish();
-		int compressed = deflater.deflate(out, outPos, out.length - outPos);
-		return compressed;
-	}
-	
-	public int getAlgorithm() {
-		return Compressor.DEFLATE;
-	}
-	
-	public void expand(byte[] in, int inPos, int inLen, byte[] out, int outPos, int outLen) throws SQLException {
-		Inflater decompresser = new Inflater();
-		decompresser.setInput(in, inPos, inLen);
-		decompresser.finished();
-		try {
-			decompresser.inflate(out, outPos, outLen);
-		} catch ( DataFormatException e ) {
-			throw Message.getSQLException(ErrorCode.COMPRESSION_ERROR, null, e);
-		}
-		decompresser.end();
-	}
-	
+
+    private int level = Deflater.DEFAULT_COMPRESSION;
+
+    private int strategy = Deflater.DEFAULT_STRATEGY;
+
+    public void setOptions(String options) throws SQLException {
+
+        if (options == null) { return; }
+        try {
+            StringTokenizer tokenizer = new StringTokenizer(options);
+            while (tokenizer.hasMoreElements()) {
+                String option = tokenizer.nextToken();
+                if ("level".equals(option) || "l".equals(option)) {
+                    level = Integer.parseInt(tokenizer.nextToken());
+                }
+                else if ("strategy".equals(option) || "s".equals(option)) {
+                    strategy = Integer.parseInt(tokenizer.nextToken());
+                }
+                Deflater deflater = new Deflater(level);
+                deflater.setStrategy(strategy);
+            }
+        }
+        catch (Exception e) {
+            throw Message.getSQLException(ErrorCode.UNSUPPORTED_COMPRESSION_OPTIONS_1, options);
+        }
+    }
+
+    public int compress(byte[] in, int inLen, byte[] out, int outPos) {
+
+        Deflater deflater = new Deflater(level);
+        deflater.setStrategy(strategy);
+        deflater.setInput(in, 0, inLen);
+        deflater.finish();
+        int compressed = deflater.deflate(out, outPos, out.length - outPos);
+        return compressed;
+    }
+
+    public int getAlgorithm() {
+
+        return Compressor.DEFLATE;
+    }
+
+    public void expand(byte[] in, int inPos, int inLen, byte[] out, int outPos, int outLen) throws SQLException {
+
+        Inflater decompresser = new Inflater();
+        decompresser.setInput(in, inPos, inLen);
+        decompresser.finished();
+        try {
+            decompresser.inflate(out, outPos, outLen);
+        }
+        catch (DataFormatException e) {
+            throw Message.getSQLException(ErrorCode.COMPRESSION_ERROR, null, e);
+        }
+        decompresser.end();
+    }
+
 }

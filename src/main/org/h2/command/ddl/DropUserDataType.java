@@ -16,36 +16,39 @@ import org.h2.message.Message;
  * This class represents the statement DROP DOMAIN
  */
 public class DropUserDataType extends DefineCommand {
-	
-	private String typeName;
-	
-	private boolean ifExists;
-	
-	public DropUserDataType(Session session) {
-		super(session);
-	}
-	
-	public void setIfExists(boolean ifExists) {
-		this.ifExists = ifExists;
-	}
-	
-	public int update() throws SQLException {
-		session.getUser().checkAdmin();
-		session.commit(true);
-		Database db = session.getDatabase();
-		UserDataType type = db.findUserDataType(typeName);
-		if ( type == null ) {
-			if ( !ifExists ) {
-				throw Message.getSQLException(ErrorCode.USER_DATA_TYPE_NOT_FOUND_1, typeName);
-			}
-		} else {
-			db.removeDatabaseObject(session, type);
-		}
-		return 0;
-	}
-	
-	public void setTypeName(String name) {
-		this.typeName = name;
-	}
-	
+
+    private String typeName;
+
+    private boolean ifExists;
+
+    public DropUserDataType(Session session) {
+
+        super(session);
+    }
+
+    public void setIfExists(boolean ifExists) {
+
+        this.ifExists = ifExists;
+    }
+
+    public int update() throws SQLException {
+
+        session.getUser().checkAdmin();
+        session.commit(true);
+        Database db = session.getDatabase();
+        UserDataType type = db.findUserDataType(typeName);
+        if (type == null) {
+            if (!ifExists) { throw Message.getSQLException(ErrorCode.USER_DATA_TYPE_NOT_FOUND_1, typeName); }
+        }
+        else {
+            db.removeDatabaseObject(session, type);
+        }
+        return 0;
+    }
+
+    public void setTypeName(String name) {
+
+        this.typeName = name;
+    }
+
 }

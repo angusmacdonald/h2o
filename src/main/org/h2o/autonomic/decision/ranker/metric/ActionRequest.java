@@ -11,55 +11,56 @@ package org.h2o.autonomic.decision.ranker.metric;
 import java.io.Serializable;
 
 public class ActionRequest implements Serializable {
-	
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -3656189458012849935L;
-	
-	/**
-	 * The time this action is expected to take in milliseconds.
-	 */
-	public long expectedTimeToCompletion;
-	
-	/**
-	 * The amount of disk space needed to complete the action (in KB).
-	 */
-	public long immediateDiskSpace;
-	
-	/*
-	 * ####################### PROBABILITY-BASED. ####################### cpu + memory + network + disk should add up to one.
-	 */
-	/**
-	 * The importance of CPU capacity in this operation.
-	 */
-	public double cpu;
-	
-	/**
-	 * The importance of memory capacity in this operation.
-	 */
-	public double memory;
-	
-	/**
-	 * The importance of network capacity in this operation.
-	 */
-	public double network;
-	
-	/**
-	 * The perceived importance of disk space in the future.
-	 * 
-	 * For example, a create table operation does not require much disk space immediately, but if a lot of data is subsequently added to the
-	 * table it needs more space.
-	 */
-	public double disk;
-	
-	public ActionRequest(long expectedTimeToCompletion, long immediateDiskSpace, double cpu, double memory, double network, double disk) {
-		this.expectedTimeToCompletion = expectedTimeToCompletion;
-		this.immediateDiskSpace = immediateDiskSpace;
-		
-		this.cpu = cpu;
-		this.memory = memory;
-		this.network = network;
-		this.disk = disk;
-	}
+
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -3656189458012849935L;
+
+    /**
+     * The time this action is expected to take in milliseconds.
+     */
+    public long expectedTimeToCompletion;
+
+    /**
+     * The amount of disk space needed to complete the action (in KB).
+     */
+    public long immediateDiskSpace;
+
+    /*
+     * ####################### PROBABILITY-BASED. ####################### cpu + memory + network + disk should add up to one.
+     */
+    /**
+     * The importance of CPU capacity in this operation.
+     */
+    public double cpu;
+
+    /**
+     * The importance of memory capacity in this operation.
+     */
+    public double memory;
+
+    /**
+     * The importance of network capacity in this operation.
+     */
+    public double network;
+
+    /**
+     * The perceived importance of disk space in the future.
+     * 
+     * For example, a create table operation does not require much disk space immediately, but if a lot of data is subsequently added to the
+     * table it needs more space.
+     */
+    public double disk;
+
+    public ActionRequest(long expectedTimeToCompletion, long immediateDiskSpace, double cpu, double memory, double network, double disk) {
+
+        this.expectedTimeToCompletion = expectedTimeToCompletion;
+        this.immediateDiskSpace = immediateDiskSpace;
+
+        this.cpu = cpu;
+        this.memory = memory;
+        this.network = network;
+        this.disk = disk;
+    }
 }

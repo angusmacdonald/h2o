@@ -14,39 +14,43 @@ package org.h2o.util.exceptions;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class StartupException extends Exception {
-	
-	private static final long serialVersionUID = -5874576242653632952L;
-	
-	/**
-	 * 
-	 */
-	public StartupException() {
-		// TODO Auto-generated constructor stub
-	}
-	
-	/**
-	 * @param message
-	 */
-	public StartupException(String message) {
-		super(message);
-		// TODO Auto-generated constructor stub
-	}
-	
-	/**
-	 * @param cause
-	 */
-	public StartupException(Throwable cause) {
-		super(cause);
-		// TODO Auto-generated constructor stub
-	}
-	
-	/**
-	 * @param message
-	 * @param cause
-	 */
-	public StartupException(String message, Throwable cause) {
-		super(message, cause);
-		// TODO Auto-generated constructor stub
-	}
-	
+
+    private static final long serialVersionUID = -5874576242653632952L;
+
+    /**
+     * 
+     */
+    public StartupException() {
+
+        // TODO Auto-generated constructor stub
+    }
+
+    /**
+     * @param message
+     */
+    public StartupException(String message) {
+
+        super(message);
+        // TODO Auto-generated constructor stub
+    }
+
+    /**
+     * @param cause
+     */
+    public StartupException(Throwable cause) {
+
+        super(cause);
+        // TODO Auto-generated constructor stub
+    }
+
+    /**
+     * @param message
+     * @param cause
+     */
+    public StartupException(String message, Throwable cause) {
+
+        super(message, cause);
+        // TODO Auto-generated constructor stub
+    }
+
 }

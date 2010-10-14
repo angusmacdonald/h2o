@@ -10,9 +10,10 @@ import java.sql.SQLException;
  * A factory for embedded database sessions.
  */
 public class SessionFactoryEmbedded implements SessionFactory {
-	
-	public SessionInterface createSession(ConnectionInfo ci) throws SQLException {
-		return Engine.getInstance().getSession(ci);
-	}
-	
+
+    public SessionInterface createSession(ConnectionInfo ci) throws SQLException {
+
+        return Engine.getInstance().getSession(ci);
+    }
+
 }

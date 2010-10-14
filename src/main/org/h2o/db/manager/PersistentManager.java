@@ -61,15 +61,13 @@ public abstract class PersistentManager {
     private boolean isSystemTable;
 
     /**
-     * 
      * @param db
      * @param tables
      * @param replicas
      * @param connections
      * @param tableManagerRelation
      * @param isSystemTable
-     * @param tableInfo
-     *            null if this is the system table.
+     * @param tableInfo null if this is the system table.
      * @throws Exception
      */
     public PersistentManager(final Database db, final String tables, final String replicas, final String connections, final String tableManagerRelation, final boolean isSystemTable) throws Exception {

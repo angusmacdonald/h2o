@@ -8,9 +8,9 @@ package org.h2.server;
  * A shutdown handler is a listener for shutdown events.
  */
 public interface ShutdownHandler {
-	
-	/**
-	 * Tell the listener to shut down.
-	 */
-	void shutdown();
+
+    /**
+     * Tell the listener to shut down.
+     */
+    void shutdown();
 }

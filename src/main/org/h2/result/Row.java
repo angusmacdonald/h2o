@@ -15,97 +15,107 @@ import org.h2.value.Value;
  * Represents a row in a table.
  */
 public class Row extends Record implements SearchRow {
-	
-	public static final int MEMORY_CALCULATE = -1;
-	
-	private final Value[] data;
-	
-	private final int memory;
-	
-	private int version;
-	
-	public Row(Value[] data, int memory) {
-		this.data = data;
-		this.memory = memory;
-	}
-	
-	public void setPosAndVersion(SearchRow row) {
-		setPos(row.getPos());
-		setVersion(row.getVersion());
-	}
-	
-	public int getVersion() {
-		return version;
-	}
-	
-	public void setVersion(int version) {
-		this.version = version;
-	}
-	
-	public Value getValue(int i) {
-		return data[i];
-	}
-	
-	public void write(DataPage buff) throws SQLException {
-		buff.writeInt(data.length);
-		for ( Value v : data ) {
-			buff.writeValue(v);
-		}
-	}
-	
-	public int getByteCount(DataPage dummy) throws SQLException {
-		int len = data.length;
-		int size = DataPage.LENGTH_INT;
-		for ( int i = 0; i < len; i++ ) {
-			Value v = data[i];
-			size += dummy.getValueLen(v);
-		}
-		return size;
-	}
-	
-	public void setValue(int i, Value v) {
-		data[i] = v;
-	}
-	
-	public boolean isEmpty() {
-		return data == null;
-	}
-	
-	public int getColumnCount() {
-		return data.length;
-	}
-	
-	public int getMemorySize() {
-		if ( memory != MEMORY_CALCULATE ) {
-			return blockCount * ( DiskFile.BLOCK_SIZE / 8 ) + memory * 4;
-		}
-		int m = blockCount * ( DiskFile.BLOCK_SIZE / 16 );
-		for ( int i = 0; data != null && i < data.length; i++ ) {
-			m += data[i].getMemory();
-		}
-		return m;
-	}
-	
-	public String toString() {
-		StringBuilder buff = new StringBuilder(data.length * 5);
-		buff.append("( /* pos:");
-		buff.append(getPos());
-		if ( version != 0 ) {
-			buff.append(" v:" + version);
-		}
-		if ( getDeleted() ) {
-			buff.append(" deleted");
-		}
-		buff.append(" */ ");
-		for ( int i = 0; i < data.length; i++ ) {
-			if ( i > 0 ) {
-				buff.append(", ");
-			}
-			Value v = data[i];
-			buff.append(v == null ? "null" : v.getTraceSQL());
-		}
-		buff.append(')');
-		return buff.toString();
-	}
-	
+
+    public static final int MEMORY_CALCULATE = -1;
+
+    private final Value[] data;
+
+    private final int memory;
+
+    private int version;
+
+    public Row(Value[] data, int memory) {
+
+        this.data = data;
+        this.memory = memory;
+    }
+
+    public void setPosAndVersion(SearchRow row) {
+
+        setPos(row.getPos());
+        setVersion(row.getVersion());
+    }
+
+    public int getVersion() {
+
+        return version;
+    }
+
+    public void setVersion(int version) {
+
+        this.version = version;
+    }
+
+    public Value getValue(int i) {
+
+        return data[i];
+    }
+
+    public void write(DataPage buff) throws SQLException {
+
+        buff.writeInt(data.length);
+        for (Value v : data) {
+            buff.writeValue(v);
+        }
+    }
+
+    public int getByteCount(DataPage dummy) throws SQLException {
+
+        int len = data.length;
+        int size = DataPage.LENGTH_INT;
+        for (int i = 0; i < len; i++) {
+            Value v = data[i];
+            size += dummy.getValueLen(v);
+        }
+        return size;
+    }
+
+    public void setValue(int i, Value v) {
+
+        data[i] = v;
+    }
+
+    public boolean isEmpty() {
+
+        return data == null;
+    }
+
+    public int getColumnCount() {
+
+        return data.length;
+    }
+
+    public int getMemorySize() {
+
+        if (memory != MEMORY_CALCULATE) { return blockCount * (DiskFile.BLOCK_SIZE / 8) + memory * 4; }
+        int m = blockCount * (DiskFile.BLOCK_SIZE / 16);
+        for (int i = 0; data != null && i < data.length; i++) {
+            m += data[i].getMemory();
+        }
+        return m;
+    }
+
+    public String toString() {
+
+        StringBuilder buff = new StringBuilder(data.length * 5);
+        buff.append("( /* pos:");
+        buff.append(getPos());
+        if (version != 0) {
+            buff.append(" v:" + version);
+        }
+        if (getDeleted()) {
+            buff.append(" deleted");
+        }
+        buff.append(" */ ");
+        for (int i = 0; i < data.length; i++) {
+            if (i > 0) {
+                buff.append(", ");
+            }
+            Value v = data[i];
+            buff.append(v == null ? "null" : v.getTraceSQL());
+        }
+        buff.append(')');
+        return buff.toString();
+    }
+
 }

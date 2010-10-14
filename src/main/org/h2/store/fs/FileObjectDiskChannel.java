@@ -14,75 +14,84 @@ import java.nio.channels.FileChannel;
  * File which uses NIO FileChannel.
  */
 public class FileObjectDiskChannel implements FileObject {
-	
-	private final String name;
-	
-	private FileChannel channel;
-	
-	FileObjectDiskChannel(String fileName, String mode) throws FileNotFoundException {
-		this.name = fileName;
-		RandomAccessFile file = new RandomAccessFile(fileName, mode);
-		channel = file.getChannel();
-	}
-	
-	public void close() throws IOException {
-		channel.close();
-	}
-	
-	public long getFilePointer() throws IOException {
-		return channel.position();
-	}
-	
-	public String getName() {
-		return name;
-	}
-	
-	public long length() throws IOException {
-		return channel.size();
-	}
-	
-	public void readFully(byte[] b, int off, int len) throws IOException {
-		if ( len == 0 ) {
-			return;
-		}
-		// reading the size can reduce the performance
-		// if (channel.size() <= off + len) {
-		// throw new java.io.EOFException();
-		// }
-		ByteBuffer buf = ByteBuffer.wrap(b);
-		buf.position(off);
-		buf.limit(off + len);
-		channel.read(buf);
-	}
-	
-	public void seek(long pos) throws IOException {
-		channel.position(pos);
-	}
-	
-	public void setFileLength(long newLength) throws IOException {
-		if ( newLength <= channel.size() ) {
-			long oldPos = channel.position();
-			channel.truncate(newLength);
-			if ( oldPos > newLength ) {
-				oldPos = newLength;
-			}
-			channel.position(oldPos);
-		} else {
-			// extend by writing to the new location
-			ByteBuffer b = ByteBuffer.allocate(1);
-			channel.write(b, newLength - 1);
-		}
-	}
-	
-	public void sync() throws IOException {
-		channel.force(true);
-	}
-	
-	public void write(byte[] b, int off, int len) throws IOException {
-		ByteBuffer buf = ByteBuffer.wrap(b);
-		buf.position(off);
-		buf.limit(off + len);
-		channel.write(buf);
-	}
-	
+
+    private final String name;
+
+    private FileChannel channel;
+
+    FileObjectDiskChannel(String fileName, String mode) throws FileNotFoundException {
+
+        this.name = fileName;
+        RandomAccessFile file = new RandomAccessFile(fileName, mode);
+        channel = file.getChannel();
+    }
+
+    public void close() throws IOException {
+
+        channel.close();
+    }
+
+    public long getFilePointer() throws IOException {
+
+        return channel.position();
+    }
+
+    public String getName() {
+
+        return name;
+    }
+
+    public long length() throws IOException {
+
+        return channel.size();
+    }
+
+    public void readFully(byte[] b, int off, int len) throws IOException {
+
+        if (len == 0) { return; }
+        // reading the size can reduce the performance
+        // if (channel.size() <= off + len) {
+        // throw new java.io.EOFException();
+        // }
+        ByteBuffer buf = ByteBuffer.wrap(b);
+        buf.position(off);
+        buf.limit(off + len);
+        channel.read(buf);
+    }
+
+    public void seek(long pos) throws IOException {
+
+        channel.position(pos);
+    }
+
+    public void setFileLength(long newLength) throws IOException {
+
+        if (newLength <= channel.size()) {
+            long oldPos = channel.position();
+            channel.truncate(newLength);
+            if (oldPos > newLength) {
+                oldPos = newLength;
+            }
+            channel.position(oldPos);
+        }
+        else {
+            // extend by writing to the new location
+            ByteBuffer b = ByteBuffer.allocate(1);
+            channel.write(b, newLength - 1);
+        }
+    }
+
+    public void sync() throws IOException {
+
+        channel.force(true);
+    }
+
+    public void write(byte[] b, int off, int len) throws IOException {
+
+        ByteBuffer buf = ByteBuffer.wrap(b);
+        buf.position(off);
+        buf.limit(off + len);
+        channel.write(buf);
+    }
+
 }

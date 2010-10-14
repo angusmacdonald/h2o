@@ -13,24 +13,26 @@ import java.util.Map;
  */
 public class SmallLRUCache
 // ## Java 1.4 begin ##
-		extends LinkedHashMap
+                extends LinkedHashMap
 // ## Java 1.4 end ##
 /*
  * ## Java 1.3 only begin ## extends HashMap ## Java 1.3 only end ##
  */
 {
-	
-	private static final long serialVersionUID = 3643268440910181829L;
-	
-	private int size;
-	
-	public SmallLRUCache(int size) {
-		this.size = size;
-	}
-	
-	// ## Java 1.4 begin ##
-	protected boolean removeEldestEntry(Map.Entry eldest) {
-		return size() > size;
-	}
-	// ## Java 1.4 end ##
+
+    private static final long serialVersionUID = 3643268440910181829L;
+
+    private int size;
+
+    public SmallLRUCache(int size) {
+
+        this.size = size;
+    }
+
+    // ## Java 1.4 begin ##
+    protected boolean removeEldestEntry(Map.Entry eldest) {
+
+        return size() > size;
+    }
+    // ## Java 1.4 end ##
 }

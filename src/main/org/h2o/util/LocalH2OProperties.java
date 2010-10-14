@@ -18,41 +18,46 @@ import org.h2o.db.id.DatabaseURL;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class LocalH2OProperties extends H2OPropertiesWrapper {
-	
-	/**
-	 * @param dbURL
-	 *            The URL of this database instance. This is used to name and locate the properties file for this database on disk.
-	 * @param appendum
-	 *            A string to be added on to the DBurl as part of the properties file name.
-	 */
-	public LocalH2OProperties(DatabaseURL dbURL) {
-		
-		super("config" + File.separator + dbURL.sanitizedLocation() + ".properties");
-	}
-	
-	/**
-	 * @param string
-	 */
-	public LocalH2OProperties(String descriptorLocation) {
-		super("config" + File.separator + descriptorLocation + ".properties");
-	}
-	
-	@Override
-	public void createNewFile() {
-		try {
-			super.createNewFile();
-		} catch ( IOException e ) {
-			e.printStackTrace();
-		}
-	}
-	
-	@Override
-	public void saveAndClose() {
-		try {
-			super.saveAndClose();
-		} catch ( IOException e ) {
-			e.printStackTrace();
-		}
-	}
-	
+
+    /**
+     * @param dbURL
+     *            The URL of this database instance. This is used to name and locate the properties file for this database on disk.
+     * @param appendum
+     *            A string to be added on to the DBurl as part of the properties file name.
+     */
+    public LocalH2OProperties(DatabaseURL dbURL) {
+
+        super("config" + File.separator + dbURL.sanitizedLocation() + ".properties");
+    }
+
+    /**
+     * @param string
+     */
+    public LocalH2OProperties(String descriptorLocation) {
+
+        super("config" + File.separator + descriptorLocation + ".properties");
+    }
+
+    @Override
+    public void createNewFile() {
+
+        try {
+            super.createNewFile();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void saveAndClose() {
+
+        try {
+            super.saveAndClose();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

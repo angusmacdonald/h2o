@@ -11,25 +11,27 @@ import org.osgi.framework.BundleContext;
  * The driver activator loads the H2 driver when starting the bundle. The driver is unloaded when stopping the bundle.
  */
 public class DbDriverActivator implements BundleActivator {
-	
-	/**
-	 * Start the bundle. This will load and register the database driver.
-	 * 
-	 * @param bundleContext
-	 *            the bundle context
-	 */
-	public void start(BundleContext bundleContext) {
-		org.h2.Driver.load();
-	}
-	
-	/**
-	 * Stop the bundle. This will deregister the database driver.
-	 * 
-	 * @param bundleContext
-	 *            the bundle context
-	 */
-	public void stop(BundleContext bundleContext) {
-		org.h2.Driver.unload();
-	}
-	
+
+    /**
+     * Start the bundle. This will load and register the database driver.
+     * 
+     * @param bundleContext
+     *            the bundle context
+     */
+    public void start(BundleContext bundleContext) {
+
+        org.h2.Driver.load();
+    }
+
+    /**
+     * Stop the bundle. This will deregister the database driver.
+     * 
+     * @param bundleContext
+     *            the bundle context
+     */
+    public void stop(BundleContext bundleContext) {
+
+        org.h2.Driver.unload();
+    }
+
 }

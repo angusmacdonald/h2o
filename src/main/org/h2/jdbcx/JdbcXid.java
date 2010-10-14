@@ -19,83 +19,88 @@ import org.h2.util.ByteUtils;
  */
 public class JdbcXid extends TraceObject
 // ## Java 1.4 begin ##
-		implements Xid
+                implements Xid
 // ## Java 1.4 end ##
 {
-	
-	private static final String PREFIX = "XID";
-	
-	private int formatId;
-	
-	private byte[] branchQualifier;
-	
-	private byte[] globalTransactionId;
-	
-	JdbcXid(JdbcDataSourceFactory factory, int id, String tid) throws SQLException {
-		setTrace(factory.getTrace(), TraceObject.XID, id);
-		try {
-			StringTokenizer tokenizer = new StringTokenizer(tid, "_");
-			String prefix = tokenizer.nextToken();
-			if ( !PREFIX.equals(prefix) ) {
-				throw Message.getSQLException(ErrorCode.WRONG_XID_FORMAT_1, tid);
-			}
-			formatId = Integer.parseInt(tokenizer.nextToken());
-			branchQualifier = ByteUtils.convertStringToBytes(tokenizer.nextToken());
-			globalTransactionId = ByteUtils.convertStringToBytes(tokenizer.nextToken());
-		} catch ( RuntimeException e ) {
-			throw Message.getSQLException(ErrorCode.WRONG_XID_FORMAT_1, tid);
-		}
-	}
-	
-	/**
-	 * INTERNAL
-	 */
-	public String getAsString() {
-		StringBuilder buff = new StringBuilder(PREFIX);
-		buff.append('_');
-		buff.append(formatId);
-		buff.append('_');
-		buff.append(ByteUtils.convertBytesToString(branchQualifier));
-		buff.append('_');
-		buff.append(ByteUtils.convertBytesToString(globalTransactionId));
-		return buff.toString();
-	}
-	
-	/**
-	 * Get the format id.
-	 * 
-	 * @return the format id
-	 */
-	public int getFormatId() {
-		debugCodeCall("getFormatId");
-		return formatId;
-	}
-	
-	/**
-	 * The transaction branch identifier.
-	 * 
-	 * @return the identifier
-	 */
-	public byte[] getBranchQualifier() {
-		debugCodeCall("getBranchQualifier");
-		return branchQualifier;
-	}
-	
-	/**
-	 * The global transaction identifier.
-	 * 
-	 * @return the transaction id
-	 */
-	public byte[] getGlobalTransactionId() {
-		debugCodeCall("getGlobalTransactionId");
-		return globalTransactionId;
-	}
-	
-	/**
-	 * INTERNAL
-	 */
-	public String toString() {
-		return getTraceObjectName() + ": " + getAsString();
-	}
-	
+
+    private static final String PREFIX = "XID";
+
+    private int formatId;
+
+    private byte[] branchQualifier;
+
+    private byte[] globalTransactionId;
+
+    JdbcXid(JdbcDataSourceFactory factory, int id, String tid) throws SQLException {
+
+        setTrace(factory.getTrace(), TraceObject.XID, id);
+        try {
+            StringTokenizer tokenizer = new StringTokenizer(tid, "_");
+            String prefix = tokenizer.nextToken();
+            if (!PREFIX.equals(prefix)) { throw Message.getSQLException(ErrorCode.WRONG_XID_FORMAT_1, tid); }
+            formatId = Integer.parseInt(tokenizer.nextToken());
+            branchQualifier = ByteUtils.convertStringToBytes(tokenizer.nextToken());
+            globalTransactionId = ByteUtils.convertStringToBytes(tokenizer.nextToken());
+        }
+        catch (RuntimeException e) {
+            throw Message.getSQLException(ErrorCode.WRONG_XID_FORMAT_1, tid);
+        }
+    }
+
+    /**
+     * INTERNAL
+     */
+    public String getAsString() {
+
+        StringBuilder buff = new StringBuilder(PREFIX);
+        buff.append('_');
+        buff.append(formatId);
+        buff.append('_');
+        buff.append(ByteUtils.convertBytesToString(branchQualifier));
+        buff.append('_');
+        buff.append(ByteUtils.convertBytesToString(globalTransactionId));
+        return buff.toString();
+    }
+
+    /**
+     * Get the format id.
+     * 
+     * @return the format id
+     */
+    public int getFormatId() {
+
+        debugCodeCall("getFormatId");
+        return formatId;
+    }
+
+    /**
+     * The transaction branch identifier.
+     * 
+     * @return the identifier
+     */
+    public byte[] getBranchQualifier() {
+
+        debugCodeCall("getBranchQualifier");
+        return branchQualifier;
+    }
+
+    /**
+     * The global transaction identifier.
+     * 
+     * @return the transaction id
+     */
+    public byte[] getGlobalTransactionId() {
+
+        debugCodeCall("getGlobalTransactionId");
+        return globalTransactionId;
+    }
+
+    /**
+     * INTERNAL
+     */
+    public String toString() {
+
+        return getTraceObjectName() + ": " + getAsString();
+    }
+
 }

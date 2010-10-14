@@ -14,46 +14,53 @@ import org.h2.value.ValueLong;
  * The cursor implementation for the range index.
  */
 class RangeCursor implements Cursor {
-	
-	private boolean beforeFirst;
-	
-	private long current;
-	
-	private Row currentRow;
-	
-	private long min, max;
-	
-	RangeCursor(long min, long max) {
-		this.min = min;
-		this.max = max;
-		beforeFirst = true;
-	}
-	
-	public Row get() {
-		return currentRow;
-	}
-	
-	public SearchRow getSearchRow() {
-		return currentRow;
-	}
-	
-	public int getPos() {
-		throw Message.throwInternalError();
-	}
-	
-	public boolean next() {
-		if ( beforeFirst ) {
-			beforeFirst = false;
-			current = min;
-		} else {
-			current++;
-		}
-		currentRow = new Row(new Value[] { ValueLong.get(current) }, 0);
-		return current <= max;
-	}
-	
-	public boolean previous() {
-		throw Message.throwInternalError();
-	}
-	
+
+    private boolean beforeFirst;
+
+    private long current;
+
+    private Row currentRow;
+
+    private long min, max;
+
+    RangeCursor(long min, long max) {
+
+        this.min = min;
+        this.max = max;
+        beforeFirst = true;
+    }
+
+    public Row get() {
+
+        return currentRow;
+    }
+
+    public SearchRow getSearchRow() {
+
+        return currentRow;
+    }
+
+    public int getPos() {
+
+        throw Message.throwInternalError();
+    }
+
+    public boolean next() {
+
+        if (beforeFirst) {
+            beforeFirst = false;
+            current = min;
+        }
+        else {
+            current++;
+        }
+        currentRow = new Row(new Value[]{ValueLong.get(current)}, 0);
+        return current <= max;
+    }
+
+    public boolean previous() {
+
+        throw Message.throwInternalError();
+    }
+
 }

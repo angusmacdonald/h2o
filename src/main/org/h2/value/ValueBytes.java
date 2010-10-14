@@ -11,48 +11,46 @@ import org.h2.util.ByteUtils;
  * Implementation of the BINARY data type.
  */
 public class ValueBytes extends ValueBytesBase {
-	
-	private static final ValueBytes EMPTY = new ValueBytes(new byte[0]);
-	
-	protected ValueBytes(byte[] v) {
-		super(v);
-	}
-	
-	/**
-	 * Get or create a bytes value for the given byte array. Clone the data.
-	 * 
-	 * @param b
-	 *            the byte array
-	 * @return the value
-	 */
-	public static ValueBytes get(byte[] b) {
-		if ( b.length == 0 ) {
-			return EMPTY;
-		}
-		b = ByteUtils.cloneByteArray(b);
-		return getNoCopy(b);
-	}
-	
-	/**
-	 * Get or create a bytes value for the given byte array. Do not clone the date.
-	 * 
-	 * @param b
-	 *            the byte array
-	 * @return the value
-	 */
-	public static ValueBytes getNoCopy(byte[] b) {
-		if ( b.length == 0 ) {
-			return EMPTY;
-		}
-		ValueBytes obj = new ValueBytes(b);
-		if ( b.length > SysProperties.OBJECT_CACHE_MAX_PER_ELEMENT_SIZE ) {
-			return obj;
-		}
-		return (ValueBytes) Value.cache(obj);
-	}
-	
-	public int getType() {
-		return Value.BYTES;
-	}
-	
+
+    private static final ValueBytes EMPTY = new ValueBytes(new byte[0]);
+
+    protected ValueBytes(byte[] v) {
+
+        super(v);
+    }
+
+    /**
+     * Get or create a bytes value for the given byte array. Clone the data.
+     * 
+     * @param b
+     *            the byte array
+     * @return the value
+     */
+    public static ValueBytes get(byte[] b) {
+
+        if (b.length == 0) { return EMPTY; }
+        b = ByteUtils.cloneByteArray(b);
+        return getNoCopy(b);
+    }
+
+    /**
+     * Get or create a bytes value for the given byte array. Do not clone the date.
+     * 
+     * @param b
+     *            the byte array
+     * @return the value
+     */
+    public static ValueBytes getNoCopy(byte[] b) {
+
+        if (b.length == 0) { return EMPTY; }
+        ValueBytes obj = new ValueBytes(b);
+        if (b.length > SysProperties.OBJECT_CACHE_MAX_PER_ELEMENT_SIZE) { return obj; }
+        return (ValueBytes) Value.cache(obj);
+    }
+
+    public int getType() {
+
+        return Value.BYTES;
+    }
+
 }

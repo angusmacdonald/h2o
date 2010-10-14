@@ -11,37 +11,40 @@ import java.io.InputStream;
  * Allows to read from a file object like an input stream.
  */
 public class FileObjectInputStream extends InputStream {
-	
-	private FileObject file;
-	
-	private byte[] buffer = new byte[1];
-	
-	FileObjectInputStream(FileObject file) {
-		this.file = file;
-	}
-	
-	public int read() throws IOException {
-		if ( file.getFilePointer() >= file.length() ) {
-			return -1;
-		}
-		file.readFully(buffer, 0, 1);
-		return buffer[0] & 0xff;
-	}
-	
-	public int read(byte[] b) throws IOException {
-		return read(b, 0, b.length);
-	}
-	
-	public int read(byte[] b, int off, int len) throws IOException {
-		if ( file.getFilePointer() + len < file.length() ) {
-			file.readFully(b, off, len);
-			return len;
-		}
-		return super.read(b, off, len);
-	}
-	
-	public void close() throws IOException {
-		file.close();
-	}
-	
+
+    private FileObject file;
+
+    private byte[] buffer = new byte[1];
+
+    FileObjectInputStream(FileObject file) {
+
+        this.file = file;
+    }
+
+    public int read() throws IOException {
+
+        if (file.getFilePointer() >= file.length()) { return -1; }
+        file.readFully(buffer, 0, 1);
+        return buffer[0] & 0xff;
+    }
+
+    public int read(byte[] b) throws IOException {
+
+        return read(b, 0, b.length);
+    }
+
+    public int read(byte[] b, int off, int len) throws IOException {
+
+        if (file.getFilePointer() + len < file.length()) {
+            file.readFully(b, off, len);
+            return len;
+        }
+        return super.read(b, off, len);
+    }
+
+    public void close() throws IOException {
+
+        file.close();
+    }
+
 }

@@ -17,78 +17,85 @@ import org.h2.message.TraceSystem;
  * Sorted properties file. This implementation requires that store() internally calls keys().
  */
 public class SortedProperties extends Properties {
-	
-	private static final long serialVersionUID = 5657650728102821923L;
-	
-	public synchronized Enumeration keys() {
-		Vector v = new Vector(keySet());
-		Collections.sort(v);
-		return v.elements();
-	}
-	
-	/**
-	 * Get a boolean property value from a properties object.
-	 * 
-	 * @param prop
-	 *            the properties object
-	 * @param key
-	 *            the key
-	 * @param def
-	 *            the default value
-	 * @return the value if set, or the default value if not
-	 */
-	public static boolean getBooleanProperty(Properties prop, String key, boolean def) {
-		String value = prop.getProperty(key, "" + def);
-		try {
-			return Boolean.valueOf(value).booleanValue();
-		} catch ( Exception e ) {
-			TraceSystem.traceThrowable(e);
-			return def;
-		}
-	}
-	
-	/**
-	 * Get an int property value from a properties object.
-	 * 
-	 * @param prop
-	 *            the properties object
-	 * @param key
-	 *            the key
-	 * @param def
-	 *            the default value
-	 * @return the value if set, or the default value if not
-	 */
-	public static int getIntProperty(Properties prop, String key, int def) {
-		String value = prop.getProperty(key, "" + def);
-		try {
-			return MathUtils.decodeInt(value);
-		} catch ( Exception e ) {
-			TraceSystem.traceThrowable(e);
-			return def;
-		}
-	}
-	
-	/**
-	 * Load a properties object from a file.
-	 * 
-	 * @param fileName
-	 *            the name of the properties file
-	 * @return the properties object
-	 */
-	public static synchronized SortedProperties loadProperties(String fileName) throws IOException {
-		SortedProperties prop = new SortedProperties();
-		if ( FileUtils.exists(fileName) ) {
-			InputStream in = null;
-			try {
-				in = FileUtils.openFileInputStream(fileName);
-				prop.load(in);
-			} finally {
-				if ( in != null ) {
-					in.close();
-				}
-			}
-		}
-		return prop;
-	}
-	
+
+    private static final long serialVersionUID = 5657650728102821923L;
+
+    public synchronized Enumeration keys() {
+
+        Vector v = new Vector(keySet());
+        Collections.sort(v);
+        return v.elements();
+    }
+
+    /**
+     * Get a boolean property value from a properties object.
+     * 
+     * @param prop
+     *            the properties object
+     * @param key
+     *            the key
+     * @param def
+     *            the default value
+     * @return the value if set, or the default value if not
+     */
+    public static boolean getBooleanProperty(Properties prop, String key, boolean def) {
+
+        String value = prop.getProperty(key, "" + def);
+        try {
+            return Boolean.valueOf(value).booleanValue();
+        }
+        catch (Exception e) {
+            TraceSystem.traceThrowable(e);
+            return def;
+        }
+    }
+
+    /**
+     * Get an int property value from a properties object.
+     * 
+     * @param prop
+     *            the properties object
+     * @param key
+     *            the key
+     * @param def
+     *            the default value
+     * @return the value if set, or the default value if not
+     */
+    public static int getIntProperty(Properties prop, String key, int def) {
+
+        String value = prop.getProperty(key, "" + def);
+        try {
+            return MathUtils.decodeInt(value);
+        }
+        catch (Exception e) {
+            TraceSystem.traceThrowable(e);
+            return def;
+        }
+    }
+
+    /**
+     * Load a properties object from a file.
+     * 
+     * @param fileName
+     *            the name of the properties file
+     * @return the properties object
+     */
+    public static synchronized SortedProperties loadProperties(String fileName) throws IOException {
+
+        SortedProperties prop = new SortedProperties();
+        if (FileUtils.exists(fileName)) {
+            InputStream in = null;
+            try {
+                in = FileUtils.openFileInputStream(fileName);
+                prop.load(in);
+            }
+            finally {
+                if (in != null) {
+                    in.close();
+                }
+            }
+        }
+        return prop;
+    }
+
 }

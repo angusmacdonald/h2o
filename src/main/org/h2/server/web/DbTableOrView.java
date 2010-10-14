@@ -13,64 +13,65 @@ import java.util.ArrayList;
  * Contains meta data information about a table or a view. This class is used by the H2 Console.
  */
 public class DbTableOrView {
-	
-	/**
-	 * The schema this table belongs to.
-	 */
-	DbSchema schema;
-	
-	/**
-	 * The table name.
-	 */
-	String name;
-	
-	/**
-	 * The quoted table name.
-	 */
-	String quotedName;
-	
-	/**
-	 * True if this represents a view.
-	 */
-	boolean isView;
-	
-	/**
-	 * True if this represents a linked table.
-	 */
-	boolean isLinked;
-	
-	/**
-	 * The column list.
-	 */
-	DbColumn[] columns;
-	
-	DbTableOrView(DbSchema schema, ResultSet rs) throws SQLException {
-		this.schema = schema;
-		name = rs.getString("TABLE_NAME");
-		String type = rs.getString("TABLE_TYPE");
-		isView = "VIEW".equals(type);
-		isLinked = "TABLE LINK".equals(type);
-		quotedName = schema.contents.quoteIdentifier(name);
-	}
-	
-	/**
-	 * Read the column for this table from the database meta data.
-	 * 
-	 * @param meta
-	 *            the database meta data
-	 */
-	void readColumns(DatabaseMetaData meta) throws SQLException {
-		
-		ResultSet rs = meta.getColumns(null, schema.name, name, null);
-		
-		ArrayList list = new ArrayList();
-		while ( rs.next() ) {
-			DbColumn column = new DbColumn(rs);
-			list.add(column);
-		}
-		rs.close();
-		columns = new DbColumn[list.size()];
-		list.toArray(columns);
-	}
-	
+
+    /**
+     * The schema this table belongs to.
+     */
+    DbSchema schema;
+
+    /**
+     * The table name.
+     */
+    String name;
+
+    /**
+     * The quoted table name.
+     */
+    String quotedName;
+
+    /**
+     * True if this represents a view.
+     */
+    boolean isView;
+
+    /**
+     * True if this represents a linked table.
+     */
+    boolean isLinked;
+
+    /**
+     * The column list.
+     */
+    DbColumn[] columns;
+
+    DbTableOrView(DbSchema schema, ResultSet rs) throws SQLException {
+
+        this.schema = schema;
+        name = rs.getString("TABLE_NAME");
+        String type = rs.getString("TABLE_TYPE");
+        isView = "VIEW".equals(type);
+        isLinked = "TABLE LINK".equals(type);
+        quotedName = schema.contents.quoteIdentifier(name);
+    }
+
+    /**
+     * Read the column for this table from the database meta data.
+     * 
+     * @param meta
+     *            the database meta data
+     */
+    void readColumns(DatabaseMetaData meta) throws SQLException {
+
+        ResultSet rs = meta.getColumns(null, schema.name, name, null);
+
+        ArrayList list = new ArrayList();
+        while (rs.next()) {
+            DbColumn column = new DbColumn(rs);
+            list.add(column);
+        }
+        rs.close();
+        columns = new DbColumn[list.size()];
+        list.toArray(columns);
+    }
+
 }

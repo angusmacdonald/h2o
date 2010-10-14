@@ -10,19 +10,22 @@ import java.io.IOException;
  * This file system stores files on disk and uses java.nio to access the files. This class used memory mapped files.
  */
 public class FileSystemDiskNioMapped extends FileSystemDiskNio {
-	
-	private static final FileSystemDiskNioMapped INSTANCE = new FileSystemDiskNioMapped();
-	
-	public static FileSystemDisk getInstance() {
-		return INSTANCE;
-	}
-	
-	protected String getPrefix() {
-		return FileSystem.PREFIX_NIO_MAPPED;
-	}
-	
-	protected FileObject open(String fileName, String mode) throws IOException {
-		return new FileObjectDiskMapped(fileName, mode);
-	}
-	
+
+    private static final FileSystemDiskNioMapped INSTANCE = new FileSystemDiskNioMapped();
+
+    public static FileSystemDisk getInstance() {
+
+        return INSTANCE;
+    }
+
+    protected String getPrefix() {
+
+        return FileSystem.PREFIX_NIO_MAPPED;
+    }
+
+    protected FileObject open(String fileName, String mode) throws IOException {
+
+        return new FileObjectDiskMapped(fileName, mode);
+    }
+
 }

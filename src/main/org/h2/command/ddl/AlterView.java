@@ -14,22 +14,25 @@ import org.h2.table.TableView;
  * This class represents the statement ALTER VIEW
  */
 public class AlterView extends DefineCommand {
-	
-	private TableView view;
-	
-	public AlterView(Session session) {
-		super(session);
-	}
-	
-	public void setView(TableView view) {
-		this.view = view;
-	}
-	
-	public int update() throws SQLException {
-		session.commit(true);
-		session.getUser().checkRight(view, Right.ALL);
-		view.recompile(session);
-		return 0;
-	}
-	
+
+    private TableView view;
+
+    public AlterView(Session session) {
+
+        super(session);
+    }
+
+    public void setView(TableView view) {
+
+        this.view = view;
+    }
+
+    public int update() throws SQLException {
+
+        session.commit(true);
+        session.getUser().checkRight(view, Right.ALL);
+        view.recompile(session);
+        return 0;
+    }
+
 }

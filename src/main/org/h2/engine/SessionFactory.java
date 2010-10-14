@@ -10,14 +10,14 @@ import java.sql.SQLException;
  * A class that implements this interface can create new database sessions.
  */
 public interface SessionFactory {
-	
-	/**
-	 * Create a new session.
-	 * 
-	 * @param ci
-	 *            the connection parameters
-	 * @return the new session
-	 */
-	SessionInterface createSession(ConnectionInfo ci) throws SQLException;
-	
+
+    /**
+     * Create a new session.
+     * 
+     * @param ci
+     *            the connection parameters
+     * @return the new session
+     */
+    SessionInterface createSession(ConnectionInfo ci) throws SQLException;
+
 }

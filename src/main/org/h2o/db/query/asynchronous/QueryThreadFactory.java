@@ -11,8 +11,9 @@ package org.h2o.db.query.asynchronous;
 import java.util.concurrent.ThreadFactory;
 
 class QueryThreadFactory implements ThreadFactory {
-	
-	public Thread newThread(Runnable r) {
-		return new Thread(r);
-	}
+
+    public Thread newThread(Runnable r) {
+
+        return new Thread(r);
+    }
 }
