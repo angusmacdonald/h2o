@@ -89,12 +89,11 @@ public class H2OPropertiesWrapper {
 		File f = new File(propertiesFileLocation);
 
 		if (f.getParentFile() != null) {
-			if (!f.getParentFile().mkdirs())
-				throw new IOException(); // create any directories specified in the path, if necessary.
+			f.getParentFile().mkdirs(); // create any directories specified in the path, if necessary.
+				
 		}
 
-		if (!f.createNewFile())
-			throw new IOException(); // create the properties file.
+		f.createNewFile(); // create the properties file.
 
 		inputStream = new FileInputStream(propertiesFileLocation);
 	}
