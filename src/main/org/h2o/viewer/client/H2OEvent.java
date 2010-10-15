@@ -11,79 +11,69 @@ package org.h2o.viewer.client;
 import java.io.Serializable;
 import java.util.Date;
 
+
 public class H2OEvent implements Serializable {
-
-    private static final long serialVersionUID = 3398067681240079321L;
-
-    public static final String DATABASE_STARTUP = "DATABASE_STARTUP";
-
-    public Date time;
-
-    public String database;
-
-    public DatabaseStates eventType;
-
-    public String eventValue;
-
-    public int eventSize;
-
-    public H2OEvent() {
-
-    };
-
-    public H2OEvent(String database, DatabaseStates state) {
-
-        this(database, state, null, 0);
-    }
-
-    public H2OEvent(String database, DatabaseStates state, String eventValue) {
-
-        this(database, state, eventValue, 0);
-    }
-
-    public H2OEvent(String database, DatabaseStates state, String eventValue, int eventSize) {
-
-        this.time = new Date();
-        this.database = database;
-
-        this.eventType = state;
-        this.eventValue = eventValue;
-        this.eventSize = eventSize;
-    }
-
-    public Date getTime() {
-
-        return time;
-    }
-
-    public DatabaseStates getEventType() {
-
-        return eventType;
-    }
-
-    public String getEventValue() {
-
-        return eventValue;
-    }
-
-    public String getDatabase() {
-
-        return database;
-    }
-
-    public int getEventSize() {
-
-        return eventSize;
-    }
-
-    @Override
-    public String toString() {
-
-        return "H2OEvent [time=" + time + ", database=" + database + ", eventType=" + eventType + ", eventValue=" + eventValue + "]";
-    }
-
-    public String getDescription() {
-
-        return toString();
-    }
+	
+	private static final long serialVersionUID = 3398067681240079321L;
+	
+	public static final String DATABASE_STARTUP = "DATABASE_STARTUP";
+	
+	public Date time;
+	
+	public String database;
+	
+	public DatabaseStates eventType;
+	
+	public String eventValue;
+	
+	public int eventSize;
+	
+	public H2OEvent() {
+	};
+	
+	public H2OEvent(String database, DatabaseStates state) {
+		this(database, state, null, 0);
+	}
+	
+	public H2OEvent(String database, DatabaseStates state, String eventValue) {
+		this(database, state, eventValue, 0);
+	}
+	
+	public H2OEvent(String database, DatabaseStates state, String eventValue, int eventSize) {
+		this.time = new Date();
+		this.database = database;
+		
+		this.eventType = state;
+		this.eventValue = eventValue;
+		this.eventSize = eventSize;
+	}
+	
+	public Date getTime() {
+		return time;
+	}
+	
+	public DatabaseStates getEventType() {
+		return eventType;
+	}
+	
+	public String getEventValue() {
+		return eventValue;
+	}
+	
+	public String getDatabase() {
+		return database;
+	}
+	
+	public int getEventSize() {
+		return eventSize;
+	}
+	
+	@Override
+	public String toString() {
+		return "H2OEvent [time=" + time + ", database=" + database + ", eventType=" + eventType + ", eventValue=" + eventValue + "]";
+	}
+	
+	public String getDescription() {
+		return toString();
+	}
 }

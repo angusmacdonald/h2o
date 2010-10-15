@@ -11,7 +11,6 @@ package org.h2o.db.query.locking;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.h2.engine.Constants;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -24,80 +23,78 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  * 
  */
 public class LockingTable implements ILockingTable {
-
-    private DatabaseInstanceWrapper writeLock;
-
-    private Set<DatabaseInstanceWrapper> readLocks;
-
-    private final String tableName;
-
-    public LockingTable(String tableName) {
-
-        this.tableName = tableName;
-        this.writeLock = null;
-        this.readLocks = new HashSet<DatabaseInstanceWrapper>();
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.util.ILockingTable#requestLock(org.h2.h2o.util.LockType, org.h2.h2o.comms.remote.DatabaseInstanceRemote)
-     */
-    public synchronized LockType requestLock(LockType lockType, DatabaseInstanceWrapper requestingMachine) {
-
-        if (writeLock != null && !(requestingMachine.equals(writeLock) && lockType.equals(LockType.WRITE))) { return LockType.NONE; // exclusive lock held.
-        }
-
-        if (lockType == LockType.READ) {
-
-            readLocks.add(requestingMachine);
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "READ lock taken out on " + tableName);
-            return LockType.READ;
-
-        }
-        else if ((lockType == LockType.WRITE || lockType == LockType.CREATE) && (readLocks.size() == 0)) { // ||
-                                                                                                           // readLocks.contains(requestingMachine)
-            // if write lock request + no read locks held.
-
-            writeLock = requestingMachine;
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "WRITE lock taken out on " + tableName);
-            return lockType; // will either be WRITE or CREATE
-        }
-
-        return LockType.NONE;
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.util.ILockingTable#releaseLock(org.h2.h2o.comms.remote. DatabaseInstanceRemote)
-     */
-    public synchronized LockType releaseLock(DatabaseInstanceWrapper requestingMachine) {
-
-        LockType toReturn = LockType.NONE;
-        // Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "'" + tableName +
-        // "' unlocked by " + requestingMachine.getDatabaseURL().getOriginalURL());
-
-        if (readLocks.remove(requestingMachine)) {
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "READ lock released on " + tableName);
-            toReturn = LockType.READ;
-        }
-
-        if (writeLock != null && writeLock.equals(requestingMachine)) {
-            writeLock = null;
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "WRITE lock released on " + tableName);
-            toReturn = LockType.WRITE;
-        }
-
-        if (!toReturn.equals(LockType.NONE)) { return toReturn; }
-
-        assert false : "Unexpected code path: attempted to release a lock which wasn't held for table: " + tableName;
-
-        return toReturn; // should never get to this.
-    }
-
-    @Override
-    public String toString() {
-
-        return "LockingTable [writeLock=" + writeLock + ", readLocksSize=" + readLocks.size() + "]";
-    }
-
+	
+	private DatabaseInstanceWrapper writeLock;
+	
+	private Set<DatabaseInstanceWrapper> readLocks;
+	
+	private final String tableName;
+	
+	public LockingTable(String tableName) {
+		this.tableName = tableName;
+		this.writeLock = null;
+		this.readLocks = new HashSet<DatabaseInstanceWrapper>();
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see org.h2.h2o.util.ILockingTable#requestLock(org.h2.h2o.util.LockType, org.h2.h2o.comms.remote.DatabaseInstanceRemote)
+	 */
+	public synchronized LockType requestLock(LockType lockType, DatabaseInstanceWrapper requestingMachine) {
+		if ( writeLock != null && !( requestingMachine.equals(writeLock) && lockType.equals(LockType.WRITE) ) ) {
+			return LockType.NONE; // exclusive lock held.
+		}
+		
+		if ( lockType == LockType.READ ) {
+			
+			readLocks.add(requestingMachine);
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "READ lock taken out on " + tableName);
+			return LockType.READ;
+			
+		} else if ( ( lockType == LockType.WRITE || lockType == LockType.CREATE ) && ( readLocks.size() == 0 ) ) { // ||
+																													// readLocks.contains(requestingMachine)
+			// if write lock request + no read locks held.
+			
+			writeLock = requestingMachine;
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "WRITE lock taken out on " + tableName);
+			return lockType; // will either be WRITE or CREATE
+		}
+		
+		return LockType.NONE;
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see org.h2.h2o.util.ILockingTable#releaseLock(org.h2.h2o.comms.remote. DatabaseInstanceRemote)
+	 */
+	public synchronized LockType releaseLock(DatabaseInstanceWrapper requestingMachine) {
+		LockType toReturn = LockType.NONE;
+		// Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "'" + tableName +
+		// "' unlocked by " + requestingMachine.getDatabaseURL().getOriginalURL());
+		
+		if ( readLocks.remove(requestingMachine) ) {
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "READ lock released on " + tableName);
+			toReturn = LockType.READ;
+		}
+		
+		if ( writeLock != null && writeLock.equals(requestingMachine) ) {
+			writeLock = null;
+			Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "WRITE lock released on " + tableName);
+			toReturn = LockType.WRITE;
+		}
+		
+		if ( !toReturn.equals(LockType.NONE) ) {
+			return toReturn;
+		}
+		
+		assert false : "Unexpected code path: attempted to release a lock which wasn't held for table: " + tableName;
+		
+		return toReturn; // should never get to this.
+	}
+	
+	@Override
+	public String toString() {
+		return "LockingTable [writeLock=" + writeLock + ", readLocksSize=" + readLocks.size() + "]";
+	}
+	
 }
