@@ -16,59 +16,64 @@ import java.net.UnknownHostException;
 import org.h2.util.NetUtils;
 
 import uk.ac.standrews.cs.nds.eventModel.IEvent;
-import uk.ac.standrews.cs.nds.eventModel.eventBus.EventBus;
-import uk.ac.standrews.cs.nds.eventModel.eventBus.busInterfaces.IEventBus;
 import uk.ac.standrews.cs.nds.eventModel.eventBus.busInterfaces.IEventConsumer;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 public class H2OEventConsumer implements IEventConsumer {
-	
-	IEventBus bus = new EventBus();
-	
-	private Socket socket;
-	
-	private ObjectOutputStream out;
-	
-	private boolean interested = true;
-	
-	@Override
-	public boolean interested(IEvent event) {
-		return interested && event.getType().equals(H2OEventBus.H2O_EVENT);
-	}
-	
-	@Override
-	public void receiveEvent(IEvent event) {
-		Object obj = event.get(H2OEventBus.H2O_EVENT);
-		
-		try {
-			try {
-				getConnection();
-			} catch ( UnknownHostException e ) {
-				ErrorHandling.errorNoEvent("Event server not running. Events will be disabled.");
-				interested = false;
-				return;
-			}
-			
-			out.writeObject(obj);
-			out.flush();
-		} catch ( IOException e ) {
-			ErrorHandling.errorNoEvent("Event server not connected. Events will be disabled.");
-			interested = false;
-			return;
-		} finally {
-			try {
-				if ( out != null )
-					out.close();
-				if ( socket != null )
-					socket.close();
-			} catch ( IOException e ) {
-			}
-		}
-		
-	}
-	
-	private void getConnection() throws UnknownHostException, IOException {
-		socket = new Socket(NetUtils.getLocalAddress(), 4444);
-		out = new ObjectOutputStream(socket.getOutputStream());
-	}
+
+    private Socket socket;
+
+    private ObjectOutputStream out;
+
+    private boolean interested = true;
+
+    @Override
+    public boolean interested(final IEvent event) {
+
+        return interested && event.getType().equals(H2OEventBus.H2O_EVENT);
+    }
+
+    @Override
+    public void receiveEvent(final IEvent event) {
+
+        final Object obj = event.get(H2OEventBus.H2O_EVENT);
+
+        try {
+            try {
+                getConnection();
+            }
+            catch (final UnknownHostException e) {
+                ErrorHandling.errorNoEvent("Event server not running. Events will be disabled.");
+                interested = false;
+                return;
+            }
+
+            out.writeObject(obj);
+            out.flush();
+        }
+        catch (final IOException e) {
+            ErrorHandling.errorNoEvent("Event server not connected. Events will be disabled.");
+            interested = false;
+            return;
+        }
+        finally {
+            try {
+                if (out != null) {
+                    out.close();
+                }
+                if (socket != null) {
+                    socket.close();
+                }
+            }
+            catch (final IOException e) {
+            }
+        }
+
+    }
+
+    private void getConnection() throws UnknownHostException, IOException {
+
+        socket = new Socket(NetUtils.getLocalAddress(), 4444);
+        out = new ObjectOutputStream(socket.getOutputStream());
+    }
 }

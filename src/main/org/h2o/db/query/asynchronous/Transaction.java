@@ -15,7 +15,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
 import org.h2.engine.Database;
@@ -28,7 +27,7 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 public class Transaction {
 
-    private String transactionID;
+    private final String transactionID;
 
     /**
      * The set of all queries being executed as part of this transaction.
@@ -57,12 +56,12 @@ public class Transaction {
      * @param expectedUpdateID
      * @param tableName
      */
-    public Transaction(String transactionID, List<FutureTask<QueryResult>> executingQueries, List<CommitResult> recentlyCompletedQueries, int expectedUpdateID) {
+    public Transaction(final String transactionID, final List<FutureTask<QueryResult>> executingQueries, final List<CommitResult> recentlyCompletedQueries, final int expectedUpdateID) {
 
         this.transactionID = transactionID;
-        this.incompleteQueries = executingQueries;
+        incompleteQueries = executingQueries;
         this.expectedUpdateID = expectedUpdateID;
-        this.completedQueries = new HashSet<CommitResult>(recentlyCompletedQueries);
+        completedQueries = new HashSet<CommitResult>(recentlyCompletedQueries);
 
         if (completedQueries == null) {
             completedQueries = new HashSet<CommitResult>();
@@ -75,18 +74,18 @@ public class Transaction {
      * @param db
      * @return true if the transaction has fully committed and can be removed.
      */
-    public boolean checkForCompletion(Database db) {
+    public boolean checkForCompletion(final Database db) {
 
-        List<FutureTask<QueryResult>> recentlyCompletedQueries = new LinkedList<FutureTask<QueryResult>>();
+        final List<FutureTask<QueryResult>> recentlyCompletedQueries = new LinkedList<FutureTask<QueryResult>>();
 
-        if (incompleteQueries == null && transactionHasCommitted) return true;
+        if (incompleteQueries == null && transactionHasCommitted) { return true; }
 
         /*
          * Wait until all remote queries have been completed.
          */
         while (incompleteQueries != null && incompleteQueries.size() > 0) {
             for (int y = 0; y < incompleteQueries.size();) {
-                FutureTask<QueryResult> incompleteQuery = incompleteQueries.get(y);
+                final FutureTask<QueryResult> incompleteQuery = incompleteQueries.get(y);
 
                 if (incompleteQuery.isDone()) {
 
@@ -109,38 +108,36 @@ public class Transaction {
          * 
          */
 
-        List<CommitResult> recentlyCompletedCommits = new LinkedList<CommitResult>();
+        final List<CommitResult> recentlyCompletedCommits = new LinkedList<CommitResult>();
 
-        for (FutureTask<QueryResult> completedQuery : recentlyCompletedQueries) {
+        for (final FutureTask<QueryResult> completedQuery : recentlyCompletedQueries) {
 
             QueryResult asyncResult = null;
             try {
                 asyncResult = completedQuery.get();
             }
-            catch (InterruptedException e) {
+            catch (final Exception e) {
                 e.printStackTrace();
-            }
-            catch (ExecutionException e) {
-                e.printStackTrace();
+                break;
             }
 
             if (asyncResult.getException() == null) { // If the query executed successfully.
-                int result = asyncResult.getResult();
-                DatabaseInstanceWrapper wrapper = asyncResult.getWrapper();
+                final int result = asyncResult.getResult();
+                final DatabaseInstanceWrapper wrapper = asyncResult.getWrapper();
                 if (result != 0) {
                     // Prepare operation failed at remote machine
-                    CommitResult commitResult = new CommitResult(false, wrapper, asyncResult.getUpdateID(), expectedUpdateID, asyncResult.getTable());
+                    final CommitResult commitResult = new CommitResult(false, wrapper, asyncResult.getUpdateID(), expectedUpdateID, asyncResult.getTable());
                     recentlyCompletedCommits.add(commitResult);
 
                 }
                 else {
-                    CommitResult commitResult = new CommitResult(true, wrapper, asyncResult.getUpdateID(), expectedUpdateID, asyncResult.getTable());
+                    final CommitResult commitResult = new CommitResult(true, wrapper, asyncResult.getUpdateID(), expectedUpdateID, asyncResult.getTable());
                     recentlyCompletedCommits.add(commitResult);
                 }
 
             }
             else {
-                CommitResult commitResult = new CommitResult(true, asyncResult.getWrapper(), asyncResult.getUpdateID(), expectedUpdateID, asyncResult.getTable());
+                final CommitResult commitResult = new CommitResult(true, asyncResult.getWrapper(), asyncResult.getUpdateID(), expectedUpdateID, asyncResult.getTable());
                 recentlyCompletedCommits.add(commitResult);
             }
         }
@@ -149,7 +146,7 @@ public class Transaction {
             // Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Asynchronous updates completed for transaction '" + transactionID + "'.");
             commit(recentlyCompletedCommits, db);
 
-            return (incompleteQueries.size() == 0);
+            return incompleteQueries.size() == 0;
         }
         else { // Store new commits along with other commits for this transaction.
             completedQueries.addAll(recentlyCompletedCommits);
@@ -164,11 +161,11 @@ public class Transaction {
      * 
      * @param completedUpdates
      */
-    public synchronized void commit(Collection<CommitResult> newlyCompletedUpdates, Database db) {
+    public synchronized void commit(final Collection<CommitResult> newlyCompletedUpdates, final Database db) {
 
-        if (!db.isRunning()) return;
+        if (!db.isRunning()) { return; }
 
-        for (CommitResult completedQuery : newlyCompletedUpdates) {
+        for (final CommitResult completedQuery : newlyCompletedUpdates) {
 
             if (completedQuery.isCommitQuery()) {
                 if (!completedQuery.isCommit()) {
@@ -176,14 +173,14 @@ public class Transaction {
                 }
             }
             else {
-                TableInfo tableName = completedQuery.getTable();
+                final TableInfo tableName = completedQuery.getTable();
 
                 TableManagerRemote tableManager = null;
 
                 try {
                     tableManager = db.getSystemTableReference().lookup(tableName, true);
                 }
-                catch (SQLException e) {
+                catch (final SQLException e) {
                     e.printStackTrace();
                 }
 
@@ -191,15 +188,15 @@ public class Transaction {
                     try {
                         tableManager.releaseLockAndUpdateReplicaState(true, db.getLocalDatabaseInstanceInWrapper(), newlyCompletedUpdates, true);
                     }
-                    catch (RemoteException e) {
+                    catch (final RemoteException e) {
                         e.printStackTrace();
                     }
-                    catch (MovedException e) {
+                    catch (final MovedException e) {
                         try {
                             tableManager = db.getSystemTableReference().lookup(tableName, false);
                             tableManager.releaseLockAndUpdateReplicaState(true, db.getLocalDatabaseInstanceInWrapper(), newlyCompletedUpdates, true);
                         }
-                        catch (Exception e1) {
+                        catch (final Exception e1) {
                             e1.printStackTrace();
                         }
                     }
@@ -236,20 +233,22 @@ public class Transaction {
         return transactionHasCommitted;
     }
 
-    public void setHasCommitted(boolean transactionHasCommitted) {
+    public void setHasCommitted(final boolean transactionHasCommitted) {
 
         this.transactionHasCommitted = transactionHasCommitted;
     }
 
-    public void addQueries(List<FutureTask<QueryResult>> newIncompleteQueries) {
+    public void addQueries(final List<FutureTask<QueryResult>> newIncompleteQueries) {
 
-        if (newIncompleteQueries == null) return;
-        if (incompleteQueries == null) incompleteQueries = new LinkedList<FutureTask<QueryResult>>();
+        if (newIncompleteQueries == null) { return; }
+        if (incompleteQueries == null) {
+            incompleteQueries = new LinkedList<FutureTask<QueryResult>>();
+        }
 
         incompleteQueries.addAll(newIncompleteQueries);
     }
 
-    public void addCompletedQueries(List<CommitResult> recentlyCompletedQueries) {
+    public void addCompletedQueries(final List<CommitResult> recentlyCompletedQueries) {
 
         completedQueries.addAll(recentlyCompletedQueries);
     }

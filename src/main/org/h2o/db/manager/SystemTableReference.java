@@ -33,8 +33,8 @@ import org.h2o.db.wrappers.SystemTableWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.viewer.H2OEventBus;
-import org.h2o.viewer.client.DatabaseStates;
-import org.h2o.viewer.client.H2OEvent;
+import org.h2o.viewer.gwt.client.DatabaseStates;
+import org.h2o.viewer.gwt.client.H2OEvent;
 
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
 import uk.ac.standrews.cs.nds.p2p.util.SHA1KeyFactory;

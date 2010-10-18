@@ -26,8 +26,8 @@ import org.h2o.db.query.QueryProxyManager;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.viewer.H2OEventBus;
-import org.h2o.viewer.client.DatabaseStates;
-import org.h2o.viewer.client.H2OEvent;
+import org.h2o.viewer.gwt.client.DatabaseStates;
+import org.h2o.viewer.gwt.client.H2OEvent;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 

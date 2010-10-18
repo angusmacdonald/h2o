@@ -2,7 +2,7 @@ package org.h2o.viewer.gui;
 
 import javax.swing.JPanel;
 
-import org.h2o.viewer.client.H2OEvent;
+import org.h2o.viewer.gwt.client.H2OEvent;
 
 public interface EventActions {
 

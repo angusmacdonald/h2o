@@ -37,14 +37,14 @@ public class LocatorClientConnection {
     /**
      * Port on which the locator server can be found.
      */
-    private int port;
+    private final int port;
 
     /**
      * Host on which the locator server can be found
      */
-    private String hostname;
+    private final String hostname;
 
-    protected LocatorClientConnection(String hostname, int port) {
+    protected LocatorClientConnection(final String hostname, final int port) {
 
         this.hostname = hostname;
         this.port = port;
@@ -61,7 +61,7 @@ public class LocatorClientConnection {
         try {
             s = new Socket(hostname, port);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw new IOException("Locator server was not found. Make sure server is running on " + hostname + ":" + port + ". Program will now terminate (original error: " + e.getMessage() + ").");
         }
     }
@@ -76,7 +76,7 @@ public class LocatorClientConnection {
             try {
                 setupSocketConnection();
             }
-            catch (IOException e) {
+            catch (final IOException e) {
                 ErrorHandling.errorNoEvent("Locator server not found at " + hostname + ":" + port);
             }
         }
@@ -91,7 +91,7 @@ public class LocatorClientConnection {
     /**
      * Send the current set of database instances which hold System Table meta-data state.
      */
-    public boolean sendDatabaseLocation(String[] locations) throws IOException {
+    public boolean sendDatabaseLocation(final String[] locations) throws IOException {
 
         boolean successful = false;
 
@@ -99,27 +99,31 @@ public class LocatorClientConnection {
         OutputStream os = null;
         BufferedReader br = null;
         try {
-            String requestMessage = LocatorProtocol.constructSetRequest(locations);
+            final String requestMessage = LocatorProtocol.constructSetRequest(locations);
 
             os = writeToOutputStream(requestMessage);
 
             br = new BufferedReader(new InputStreamReader(s.getInputStream()));
-            int response = br.read();
-            successful = (response == 1);
+            final int response = br.read();
+            successful = response == 1;
 
         }
-        catch (UnknownHostException e) {
+        catch (final UnknownHostException e) {
             e.printStackTrace();
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             e.printStackTrace();
         }
         finally {
             try {
-                if (os != null) os.close();
-                if (br != null) br.close();
+                if (os != null) {
+                    os.close();
+                }
+                if (br != null) {
+                    br.close();
+                }
             }
-            catch (IOException e) {
+            catch (final IOException e) {
                 e.printStackTrace();
             }
         }
@@ -135,28 +139,32 @@ public class LocatorClientConnection {
      * @return If greater than zero this is the update count. Zero if the lock wasn't taken out.
      * @throws IOException
      */
-    public int requestLock(String databaseInstanceString) throws IOException {
+    public int requestLock(final String databaseInstanceString) throws IOException {
 
         setupSocketConnection();
 
         OutputStream os = null;
         BufferedReader br = null;
         try {
-            String requestMessage = LocatorProtocol.constructLockRequest(databaseInstanceString);
+            final String requestMessage = LocatorProtocol.constructLockRequest(databaseInstanceString);
 
             os = writeToOutputStream(requestMessage);
 
             br = new BufferedReader(new InputStreamReader(s.getInputStream()));
-            int result = br.read();
+            final int result = br.read();
             return result;
 
         }
         finally {
             try {
-                if (os != null) os.close();
-                if (br != null) br.close();
+                if (os != null) {
+                    os.close();
+                }
+                if (br != null) {
+                    br.close();
+                }
             }
-            catch (IOException e) {
+            catch (final IOException e) {
                 e.printStackTrace();
             }
         }
@@ -170,29 +178,33 @@ public class LocatorClientConnection {
      * @return True if the commit action was confirmed; otherwise false.
      * @throws IOException
      */
-    public boolean confirmSystemTableCreation(String databaseInstanceString) throws IOException {
+    public boolean confirmSystemTableCreation(final String databaseInstanceString) throws IOException {
 
         setupSocketConnection();
 
         OutputStream os = null;
         BufferedReader br = null;
         try {
-            String requestMessage = LocatorProtocol.constructCommitRequest(databaseInstanceString);
+            final String requestMessage = LocatorProtocol.constructCommitRequest(databaseInstanceString);
 
             os = writeToOutputStream(requestMessage);
 
             br = new BufferedReader(new InputStreamReader(s.getInputStream()));
-            int result = br.read();
+            final int result = br.read();
 
             return result == 1;
 
         }
         finally {
             try {
-                if (os != null) os.close();
-                if (br != null) br.close();
+                if (os != null) {
+                    os.close();
+                }
+                if (br != null) {
+                    br.close();
+                }
             }
-            catch (IOException e) {
+            catch (final IOException e) {
                 e.printStackTrace();
             }
         }
@@ -204,7 +216,7 @@ public class LocatorClientConnection {
      * @return
      * @throws IOException
      */
-    private OutputStream writeToOutputStream(String requestMessage) throws IOException {
+    private OutputStream writeToOutputStream(final String requestMessage) throws IOException {
 
         OutputStream os;
         os = s.getOutputStream();
@@ -217,20 +229,25 @@ public class LocatorClientConnection {
     public ReplicaLocationsResponse getDatabaseLocations() throws IOException {
 
         setupSocketConnection();
-        List<String> locations = new LinkedList<String>();
+        final List<String> locations = new LinkedList<String>();
         ReplicaLocationsResponse response = null;
 
         OutputStream os = null;
         BufferedReader br = null;
         try {
-            String requestMessage = LocatorProtocol.constructGetRequest();
+            final String requestMessage = LocatorProtocol.constructGetRequest();
 
             os = writeToOutputStream(requestMessage);
 
             br = new BufferedReader(new InputStreamReader(s.getInputStream()));
             String inputLine;
 
-            int updateCount = Integer.parseInt(br.readLine());
+            final String readLineResult = br.readLine();
+            int updateCount = 0;
+
+            if (readLineResult != null) {
+                updateCount = Integer.parseInt(readLineResult);
+            }
 
             while ((inputLine = br.readLine()) != null) {
                 locations.add(inputLine);
@@ -240,10 +257,14 @@ public class LocatorClientConnection {
         }
         finally {
             try {
-                if (os != null) os.close();
-                if (br != null) br.close();
+                if (os != null) {
+                    os.close();
+                }
+                if (br != null) {
+                    br.close();
+                }
             }
-            catch (IOException e) {
+            catch (final IOException e) {
                 e.printStackTrace();
             }
         }
@@ -251,29 +272,29 @@ public class LocatorClientConnection {
         return response;
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(final String[] args) throws InterruptedException {
 
         Diagnostic.setLevel(DiagnosticLevel.INIT);
-        LocatorClientConnection lcc = new LocatorClientConnection("eigg", 29999);
+        final LocatorClientConnection lcc = new LocatorClientConnection("eigg", 29999);
         List<String> ls;
         try {
             ls = lcc.getDatabaseLocations().getLocations();
 
-            for (String l : ls) {
+            for (final String l : ls) {
                 System.out.println(l);
             }
 
-            String[] locations = {"one1", "two1", "three1"};
+            final String[] locations = {"one1", "two1", "three1"};
 
             lcc.sendDatabaseLocation(locations);
 
             ls = lcc.getDatabaseLocations().getLocations();
 
-            for (String l : ls) {
+            for (final String l : ls) {
                 System.out.println(l);
             }
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             e.printStackTrace();
         }
     }

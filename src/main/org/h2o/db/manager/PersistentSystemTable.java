@@ -67,7 +67,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
      */
     public static final String PASSWORD = "";
 
-    public PersistentSystemTable(Database db, boolean createTables) throws Exception {
+    public PersistentSystemTable(final Database db, final boolean createTables) throws Exception {
 
         super(db, TABLES, null, CONNECTIONS, TABLEMANAGERSTATE, true);
 
@@ -79,7 +79,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
                 String sql = createSQL(TABLES, CONNECTIONS);
                 sql += "\n\nCREATE TABLE IF NOT EXISTS " + TABLEMANAGERSTATE + "(" + "table_id INTEGER NOT NULL, " + "connection_id INTEGER NOT NULL, " + "primary_location_connection_id INTEGER NOT NULL, " + "active BOOLEAN, " + "FOREIGN KEY (table_id) REFERENCES " + TABLES + " (table_id) ON DELETE CASCADE , " + " FOREIGN KEY (connection_id) REFERENCES " + CONNECTIONS + " (connection_id)); ";
 
-                boolean success = getNewQueryParser();
+                final boolean success = getNewQueryParser();
 
                 if (!success) { throw new StartupException("Database has already been shutdown."); }
                 sqlQuery = queryParser.prepareCommand(sql);
@@ -88,7 +88,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
                 sqlQuery.close();
 
             }
-            catch (SQLException e) {
+            catch (final SQLException e) {
                 e.printStackTrace();
                 throw new Exception("Couldn't create manager state tables.");
             }
@@ -229,9 +229,10 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
      * @param schemaName
      * @return
      */
-    public Set<String> getAllTablesInSchema(String schemaName) {
+    @Override
+    public Set<String> getAllTablesInSchema(final String schemaName) {
 
-        String sql = "SELECT tablename FROM " + TABLES + " WHERE schemaname='" + schemaName + "';";
+        final String sql = "SELECT tablename FROM " + TABLES + " WHERE schemaname='" + schemaName + "';";
 
         LocalResult result = null;
 
@@ -240,7 +241,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
             result = sqlQuery.executeQueryLocal(0);
 
-            Set<String> tableNames = new HashSet<String>();
+            final Set<String> tableNames = new HashSet<String>();
             while (result.next()) {
                 tableNames.add(result.currentRow()[0].getString());
             }
@@ -248,7 +249,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
             return tableNames;
 
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             e.printStackTrace();
             return null;
         }
@@ -259,6 +260,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
      * 
      * @return
      */
+    @Override
     public int getNewTableSetNumber() {
 
         return 1;
@@ -269,12 +271,12 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
      * @see org.h2.h2o.ISystemTable#exists(java.lang.String)
      */
     @Override
-    public boolean exists(TableInfo ti) throws RemoteException {
+    public boolean exists(final TableInfo ti) throws RemoteException {
 
         try {
             return isTableListed(ti);
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             e.printStackTrace();
             return false;
         }
@@ -285,7 +287,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
      * @see org.h2.h2o.ISystemTable#lookup(java.lang.String)
      */
     @Override
-    public TableManagerWrapper lookup(TableInfo ti) throws RemoteException {
+    public TableManagerWrapper lookup(final TableInfo ti) throws RemoteException {
 
         //
         // /*
@@ -318,7 +320,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
      * @see org.h2.h2o.manager.ISystemTable#buildSystemTableState(org.h2.h2o.manager .ISystemTable)
      */
     @Override
-    public void buildSystemTableState(ISystemTable otherSystemTable) throws RemoteException {
+    public void buildSystemTableState(final ISystemTable otherSystemTable) throws RemoteException {
 
         /*
          * Persist the state of the given System Table reference to disk.
@@ -332,16 +334,18 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
             try {
                 databasesInSystem = otherSystemTable.getConnectionInformation();
             }
-            catch (SQLException e) {
+            catch (final SQLException e) {
                 e.printStackTrace();
             }
 
-            for (Entry<DatabaseURL, DatabaseInstanceWrapper> databaseEntry : databasesInSystem.entrySet()) {
-                try {
-                    addConnectionInformation(databaseEntry.getKey(), databaseEntry.getValue());
-                }
-                catch (SQLException e) {
-                    e.printStackTrace();
+            if (databasesInSystem != null) {
+                for (final Entry<DatabaseURL, DatabaseInstanceWrapper> databaseEntry : databasesInSystem.entrySet()) {
+                    try {
+                        addConnectionInformation(databaseEntry.getKey(), databaseEntry.getValue());
+                    }
+                    catch (final SQLException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
 
@@ -349,13 +353,13 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
              * Obtain references to Table Managers.
              */
 
-            Map<TableInfo, TableManagerWrapper> tableManagers = otherSystemTable.getTableManagers();
+            final Map<TableInfo, TableManagerWrapper> tableManagers = otherSystemTable.getTableManagers();
 
-            for (Entry<TableInfo, TableManagerWrapper> dmEntry : tableManagers.entrySet()) {
+            for (final Entry<TableInfo, TableManagerWrapper> dmEntry : tableManagers.entrySet()) {
                 try {
                     super.addTableInformation(dmEntry.getValue().getTableManager().getDatabaseURL(), dmEntry.getKey(), false);
                 }
-                catch (SQLException e) {
+                catch (final SQLException e) {
                     e.printStackTrace();
                 }
             }
@@ -364,17 +368,17 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
              * Get table manager replica locations
              */
 
-            Map<TableInfo, Set<DatabaseURL>> replicaLocations = otherSystemTable.getReplicaLocations();
-            Map<TableInfo, DatabaseURL> primaryLocations = otherSystemTable.getPrimaryLocations();
+            final Map<TableInfo, Set<DatabaseURL>> replicaLocations = otherSystemTable.getReplicaLocations();
+            final Map<TableInfo, DatabaseURL> primaryLocations = otherSystemTable.getPrimaryLocations();
 
-            for (Entry<TableInfo, Set<DatabaseURL>> databaseEntry : replicaLocations.entrySet()) {
-                for (DatabaseURL tableInfo : databaseEntry.getValue()) {
+            for (final Entry<TableInfo, Set<DatabaseURL>> databaseEntry : replicaLocations.entrySet()) {
+                for (final DatabaseURL tableInfo : databaseEntry.getValue()) {
                     addTableManagerStateReplica(databaseEntry.getKey(), tableInfo, primaryLocations.get(databaseEntry.getKey()), false);
                 }
             }
 
         }
-        catch (MovedException e) {
+        catch (final MovedException e) {
             e.printStackTrace();
         }
 
@@ -387,9 +391,9 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     @Override
     public Map<DatabaseURL, DatabaseInstanceWrapper> getConnectionInformation() throws RemoteException, SQLException {
 
-        Map<DatabaseURL, DatabaseInstanceWrapper> databaseLocations = new HashMap<DatabaseURL, DatabaseInstanceWrapper>();
+        final Map<DatabaseURL, DatabaseInstanceWrapper> databaseLocations = new HashMap<DatabaseURL, DatabaseInstanceWrapper>();
 
-        String sql = "SELECT * FROM " + CONNECTIONS + ";";
+        final String sql = "SELECT * FROM " + CONNECTIONS + ";";
 
         LocalResult result = null;
 
@@ -404,19 +408,19 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
                  * "connection_type VARCHAR(5), " + "machine_name VARCHAR(255)," + "db_location VARCHAR(255)," +
                  * "connection_port INT NOT NULL, " + "rmi_port INT NOT NULL, " + "PRIMARY KEY (connection_id) );";
                  */
-                Value[] row = result.currentRow();
-                String connectionType = row[1].getString();
-                String hostName = row[2].getString();
-                String dbLocation = row[3].getString();
-                int dbPort = row[4].getInt();
-                int rmiPort = row[5].getInt();
-                DatabaseURL dbURL = new DatabaseURL(connectionType, hostName, dbPort, dbLocation, false);
+                final Value[] row = result.currentRow();
+                final String connectionType = row[1].getString();
+                final String hostName = row[2].getString();
+                final String dbLocation = row[3].getString();
+                final int dbPort = row[4].getInt();
+                final int rmiPort = row[5].getInt();
+                final DatabaseURL dbURL = new DatabaseURL(connectionType, hostName, dbPort, dbLocation, false);
                 dbURL.setRMIPort(rmiPort);
                 databaseLocations.put(dbURL, null);
             }
 
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             e.printStackTrace();
         }
 
@@ -427,11 +431,11 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
          */
     }
 
-    private DatabaseURL getDatabaseURL(int replicaConnectionID) {
+    private DatabaseURL getDatabaseURL(final int replicaConnectionID) {
 
         DatabaseURL dbURL = null;
 
-        String sql = "SELECT * FROM " + CONNECTIONS + " WHERE connection_id=" + replicaConnectionID + ";";
+        final String sql = "SELECT * FROM " + CONNECTIONS + " WHERE connection_id=" + replicaConnectionID + ";";
 
         LocalResult result = null;
 
@@ -446,19 +450,19 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
                  * "connection_type VARCHAR(5), " + "machine_name VARCHAR(255)," + "db_location VARCHAR(255)," +
                  * "connection_port INT NOT NULL, " + "rmi_port INT NOT NULL, " + "PRIMARY KEY (connection_id) );";
                  */
-                Value[] row = result.currentRow();
-                String connectionType = row[1].getString();
-                String hostName = row[2].getString();
-                String dbLocation = row[3].getString();
-                int dbPort = row[4].getInt();
-                int rmiPort = row[5].getInt();
+                final Value[] row = result.currentRow();
+                final String connectionType = row[1].getString();
+                final String hostName = row[2].getString();
+                final String dbLocation = row[3].getString();
+                final int dbPort = row[4].getInt();
+                final int rmiPort = row[5].getInt();
                 dbURL = new DatabaseURL(connectionType, hostName, dbPort, dbLocation, false);
                 dbURL.setRMIPort(rmiPort);
 
             }
 
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             e.printStackTrace();
         }
 
@@ -472,14 +476,14 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     @Override
     public Map<TableInfo, TableManagerWrapper> getTableManagers() throws RemoteException {
 
-        Map<TableInfo, TableManagerWrapper> tableManagers = new HashMap<TableInfo, TableManagerWrapper>();
+        final Map<TableInfo, TableManagerWrapper> tableManagers = new HashMap<TableInfo, TableManagerWrapper>();
 
-        IDatabaseRemote remoteInterface = getDB().getRemoteInterface();
+        final IDatabaseRemote remoteInterface = getDB().getRemoteInterface();
 
         /*
          * Parse the query resultset to find the primary location of every table.
          */
-        String sql = "SELECT db_location, connection_type, machine_name, connection_port, tablename, schemaname, chord_port " + "FROM " + CONNECTIONS + ", " + TABLES + " " + "WHERE " + CONNECTIONS + ".connection_id = " + TABLES + ".manager_location;";
+        final String sql = "SELECT db_location, connection_type, machine_name, connection_port, tablename, schemaname, chord_port " + "FROM " + CONNECTIONS + ", " + TABLES + " " + "WHERE " + CONNECTIONS + ".connection_id = " + TABLES + ".manager_location;";
 
         // SELECT db_location, connection_type, machine_name, connection_port,
         // tablename, schemaname, chord_port FROM H2O.H2O_REPLICA,
@@ -496,19 +500,19 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
             result = sqlQuery.executeQueryLocal(0);
 
             while (result != null && result.next()) {
-                Value[] row = result.currentRow();
+                final Value[] row = result.currentRow();
 
-                String dbLocation = row[0].getString();
-                String connectionType = row[1].getString();
-                String machineName = row[2].getString();
-                String connectionPort = row[3].getString();
+                final String dbLocation = row[0].getString();
+                final String connectionType = row[1].getString();
+                final String machineName = row[2].getString();
+                final String connectionPort = row[3].getString();
 
-                String tableName = row[4].getString();
-                String schemaName = row[5].getString();
-                int chord_port = row[6].getInt();
+                final String tableName = row[4].getString();
+                final String schemaName = row[5].getString();
+                final int chord_port = row[6].getInt();
 
-                DatabaseURL dbURL = new DatabaseURL(connectionType, machineName, Integer.parseInt(connectionPort), dbLocation, false, chord_port);
-                TableInfo ti = new TableInfo(tableName, schemaName);
+                final DatabaseURL dbURL = new DatabaseURL(connectionType, machineName, Integer.parseInt(connectionPort), dbLocation, false, chord_port);
+                final TableInfo ti = new TableInfo(tableName, schemaName);
 
                 /*
                  * Perform lookups to get remote references to every Table Manager.
@@ -517,27 +521,27 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
                 DatabaseInstanceRemote dir = null;
                 try {
                     dir = remoteInterface.getDatabaseInstanceAt(dbURL); // .findTableManagerReference(ti,
-                                                                        // dbURL);
+                    // dbURL);
                 }
-                catch (Exception e) {
+                catch (final Exception e) {
                     // Will happen if its no longer active.
                 }
 
                 if (dir != null) {
-                    TableManagerRemote dmReference = dir.findTableManagerReference(ti);
+                    final TableManagerRemote dmReference = dir.findTableManagerReference(ti);
 
-                    TableManagerWrapper dmw = new TableManagerWrapper(ti, dmReference, dbURL);
+                    final TableManagerWrapper dmw = new TableManagerWrapper(ti, dmReference, dbURL);
                     tableManagers.put(ti, dmw);
                 }
                 else {
-                    TableManagerWrapper dmw = new TableManagerWrapper(ti, null, dbURL);
+                    final TableManagerWrapper dmw = new TableManagerWrapper(ti, null, dbURL);
                     tableManagers.put(ti, dmw);
                 }
 
             }
 
         }
-        catch (SQLException e1) {
+        catch (final SQLException e1) {
             e1.printStackTrace();
         }
 
@@ -555,11 +559,11 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
          * Parse the schema tables to obtain the required amount of table information.
          */
 
-        String sql = "SELECT connection_id, tablename, schemaname    FROM " + TABLEMANAGERSTATE + ", " + TABLES + " WHERE " + TABLES + ".table_id" + "=" + TABLEMANAGERSTATE + ".table_id;";
+        final String sql = "SELECT connection_id, tablename, schemaname    FROM " + TABLEMANAGERSTATE + ", " + TABLES + " WHERE " + TABLES + ".table_id" + "=" + TABLEMANAGERSTATE + ".table_id;";
 
         LocalResult result = null;
 
-        Map<TableInfo, Set<DatabaseURL>> replicaLocations = new HashMap<TableInfo, Set<DatabaseURL>>();
+        final Map<TableInfo, Set<DatabaseURL>> replicaLocations = new HashMap<TableInfo, Set<DatabaseURL>>();
 
         try {
             sqlQuery = getParser().prepareCommand(sql);
@@ -567,15 +571,15 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
             result = sqlQuery.executeQueryLocal(0);
 
             while (result != null && result.next()) {
-                Value[] row = result.currentRow();
+                final Value[] row = result.currentRow();
 
-                int replicaConnectionID = row[0].getInt();
+                final int replicaConnectionID = row[0].getInt();
 
-                String tableName = row[1].getString();
-                String schemaName = row[2].getString();
+                final String tableName = row[1].getString();
+                final String schemaName = row[2].getString();
 
-                TableInfo ti = new TableInfo(tableName, schemaName);
-                DatabaseURL replicaURL = getDatabaseURL(replicaConnectionID);
+                final TableInfo ti = new TableInfo(tableName, schemaName);
+                final DatabaseURL replicaURL = getDatabaseURL(replicaConnectionID);
                 // DatabaseURL primaryURL =
                 // getDatabaseURL(primaryManagerConnectionID);
 
@@ -583,14 +587,16 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
                  * Add this replica to the set of replica locations for this table.
                  */
                 Set<DatabaseURL> specificTableReplicaLocations = replicaLocations.get(ti);
-                if (specificTableReplicaLocations == null) specificTableReplicaLocations = new HashSet<DatabaseURL>();
+                if (specificTableReplicaLocations == null) {
+                    specificTableReplicaLocations = new HashSet<DatabaseURL>();
+                }
                 specificTableReplicaLocations.add(replicaURL);
                 replicaLocations.put(ti, specificTableReplicaLocations);
 
             }
 
         }
-        catch (SQLException e1) {
+        catch (final SQLException e1) {
             e1.printStackTrace();
         }
 
@@ -604,11 +610,11 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
          * Parse the schema tables to obtain the required amount of table information.
          */
 
-        String sql = "SELECT primary_location_connection_id, tablename, schemaname    FROM " + TABLEMANAGERSTATE + ", " + TABLES + " WHERE " + TABLES + ".table_id" + "=" + TABLEMANAGERSTATE + ".table_id;";
+        final String sql = "SELECT primary_location_connection_id, tablename, schemaname    FROM " + TABLEMANAGERSTATE + ", " + TABLES + " WHERE " + TABLES + ".table_id" + "=" + TABLEMANAGERSTATE + ".table_id;";
 
         LocalResult result = null;
 
-        Map<TableInfo, DatabaseURL> primaryLocations = new HashMap<TableInfo, DatabaseURL>();
+        final Map<TableInfo, DatabaseURL> primaryLocations = new HashMap<TableInfo, DatabaseURL>();
 
         try {
             sqlQuery = getParser().prepareCommand(sql);
@@ -616,14 +622,14 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
             result = sqlQuery.executeQueryLocal(0);
 
             while (result != null && result.next()) {
-                Value[] row = result.currentRow();
+                final Value[] row = result.currentRow();
 
-                int primaryManagerConnectionID = row[0].getInt();
-                String tableName = row[1].getString();
-                String schemaName = row[2].getString();
+                final int primaryManagerConnectionID = row[0].getInt();
+                final String tableName = row[1].getString();
+                final String schemaName = row[2].getString();
 
-                TableInfo ti = new TableInfo(tableName, schemaName);
-                DatabaseURL primaryURL = getDatabaseURL(primaryManagerConnectionID);
+                final TableInfo ti = new TableInfo(tableName, schemaName);
+                final DatabaseURL primaryURL = getDatabaseURL(primaryManagerConnectionID);
 
                 /*
                  * Add this replica to the set of replica locations for this table.
@@ -633,7 +639,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
             }
 
         }
-        catch (SQLException e1) {
+        catch (final SQLException e1) {
             e1.printStackTrace();
         }
 
@@ -666,7 +672,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
      * @see org.h2.h2o.manager.ISystemTable#getDatabaseInstance(org.h2.h2o.util. DatabaseURL)
      */
     @Override
-    public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL) throws RemoteException, MovedException {
+    public DatabaseInstanceRemote getDatabaseInstance(final DatabaseURL databaseURL) throws RemoteException, MovedException {
 
         // TODO Auto-generated method stub
         return null;
@@ -688,7 +694,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
      * @see org.h2.h2o.manager.ISystemTable#changeTableManagerLocation(org.h2.h2o .comms.remote.TableManagerRemote)
      */
     @Override
-    public void changeTableManagerLocation(TableManagerRemote locationOfManager, TableInfo tableInfo) {
+    public void changeTableManagerLocation(final TableManagerRemote locationOfManager, final TableInfo tableInfo) {
 
         super.changeTableManagerLocation(tableInfo);
     }
@@ -698,12 +704,12 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
      * @see org.h2.h2o.manager.ISystemTable#addTableInformation(org.h2.h2o.comms. remote.TableManagerRemote, org.h2.h2o.util.TableInfo)
      */
     @Override
-    public boolean addTableInformation(TableManagerRemote tableManager, TableInfo tableDetails, Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException, SQLException {
+    public boolean addTableInformation(final TableManagerRemote tableManager, final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException, SQLException {
 
-        boolean added = super.addTableInformation(tableManager.getDatabaseURL(), tableDetails, false);
+        final boolean added = super.addTableInformation(tableManager.getDatabaseURL(), tableDetails, false);
 
         if (added) {
-            int connectionID = getConnectionID(tableDetails.getURL());
+            final int connectionID = getConnectionID(tableDetails.getURL());
             addTableManagerReplicaInformationOnCreateTable(getTableID(tableDetails), connectionID, true, replicaLocations);
         }
 
@@ -716,7 +722,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
      * org.h2.h2o.comms.remote.DatabaseInstanceWrapper)
      */
     @Override
-    public int addConnectionInformation(DatabaseURL databaseURL, DatabaseInstanceWrapper databaseInstanceWrapper) throws RemoteException, MovedException, SQLException {
+    public int addConnectionInformation(final DatabaseURL databaseURL, final DatabaseInstanceWrapper databaseInstanceWrapper) throws RemoteException, MovedException, SQLException {
 
         return super.addConnectionInformation(databaseURL, databaseInstanceWrapper.isActive());
     }
@@ -726,25 +732,25 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
      * @see org.h2.h2o.manager.ISystemTable#getLocalDatabaseInstances(org.h2.h2o. util.DatabaseURL)
      */
     @Override
-    public Set<TableManagerWrapper> getLocalDatabaseInstances(DatabaseURL localMachineLocation) throws RemoteException, MovedException {
+    public Set<TableManagerWrapper> getLocalDatabaseInstances(final DatabaseURL localMachineLocation) throws RemoteException, MovedException {
 
-        int connectionID = getConnectionID(localMachineLocation);
+        final int connectionID = getConnectionID(localMachineLocation);
 
         assert connectionID != -1;
 
-        String sql = "SELECT tablename, schemaname FROM " + TABLES + "  WHERE manager_location= " + connectionID + ";";
+        final String sql = "SELECT tablename, schemaname FROM " + TABLES + "  WHERE manager_location= " + connectionID + ";";
 
-        Set<TableManagerWrapper> localTables = new HashSet<TableManagerWrapper>();
+        final Set<TableManagerWrapper> localTables = new HashSet<TableManagerWrapper>();
         try {
-            LocalResult rs = executeQuery(sql);
+            final LocalResult rs = executeQuery(sql);
 
             while (rs.next()) {
-                TableInfo tableInfo = new TableInfo(rs.currentRow()[0].getString(), rs.currentRow()[1].getString());
-                TableManagerWrapper dmw = new TableManagerWrapper(tableInfo, null, null);
+                final TableInfo tableInfo = new TableInfo(rs.currentRow()[0].getString(), rs.currentRow()[1].getString());
+                final TableManagerWrapper dmw = new TableManagerWrapper(tableInfo, null, null);
                 localTables.add(dmw);
             }
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             e.printStackTrace();
         }
 
@@ -756,12 +762,12 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
      * @see org.h2.h2o.manager.ISystemTable#addTableManagerStateReplica(org.h2.h2o .util.TableInfo, org.h2.h2o.util.DatabaseURL)
      */
     @Override
-    public void addTableManagerStateReplica(TableInfo table, DatabaseURL replicaLocation, DatabaseURL primaryLocation, boolean active) throws RemoteException, MovedException {
+    public void addTableManagerStateReplica(final TableInfo table, final DatabaseURL replicaLocation, final DatabaseURL primaryLocation, final boolean active) throws RemoteException, MovedException {
 
         try {
             addTableManagerReplicaInformation(getTableID(table), getConnectionID(replicaLocation), getConnectionID(primaryLocation), active);
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             throw new RemoteException(e.getMessage());
         }
     }
@@ -771,12 +777,12 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
      * @see org.h2.h2o.manager.ISystemTable#removeTableManagerStateReplica(org.h2 .h2o.util.TableInfo, org.h2.h2o.util.DatabaseURL)
      */
     @Override
-    public void removeTableManagerStateReplica(TableInfo table, DatabaseURL replicaLocation) throws RemoteException, MovedException {
+    public void removeTableManagerStateReplica(final TableInfo table, final DatabaseURL replicaLocation) throws RemoteException, MovedException {
 
         try {
             removeTableManagerReplicaInformation(getTableID(table), getConnectionID(replicaLocation));
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             throw new RemoteException(e.getMessage());
         }
     }
@@ -788,7 +794,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     @Override
     protected DatabaseURL getLocation() throws RemoteException {
 
-        return this.getDB().getURL();
+        return getDB().getURL();
     }
 
     /*
@@ -806,13 +812,13 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
      * @see org.h2.h2o.manager.ISystemTable#removeTableInformation(org.h2.h2o.util .TableInfo)
      */
     @Override
-    public boolean removeTableInformation(TableInfo ti) throws RemoteException, MovedException {
+    public boolean removeTableInformation(final TableInfo ti) throws RemoteException, MovedException {
 
         return removeTableInformation(ti, false);
     }
 
     @Override
-    public TableManagerRemote recreateTableManager(TableInfo table) throws RemoteException, MovedException {
+    public TableManagerRemote recreateTableManager(final TableInfo table) throws RemoteException, MovedException {
 
         return null;
         // Done by in-memory system table.
@@ -827,7 +833,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     }
 
     @Override
-    public Queue<DatabaseInstanceWrapper> getAvailableMachines(ActionRequest typeOfRequest) {
+    public Queue<DatabaseInstanceWrapper> getAvailableMachines(final ActionRequest typeOfRequest) {
 
         // TODO Auto-generated method stub
         return null;

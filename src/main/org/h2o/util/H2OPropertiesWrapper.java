@@ -19,9 +19,9 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  */
 public class H2OPropertiesWrapper {
 
-    private Properties properties;
+    private final Properties properties;
 
-    private String propertiesFileLocation;
+    private final String propertiesFileLocation;
 
     private FileOutputStream outputStream = null;
 
@@ -37,9 +37,9 @@ public class H2OPropertiesWrapper {
      * @param fileLocation
      *            the location of the file containing properties
      */
-    public H2OPropertiesWrapper(String fileLocation) {
+    public H2OPropertiesWrapper(final String fileLocation) {
 
-        this.propertiesFileLocation = fileLocation;
+        propertiesFileLocation = fileLocation;
         properties = new Properties();
     }
 
@@ -53,24 +53,29 @@ public class H2OPropertiesWrapper {
 
         if (propertiesFileLocation.startsWith("http:")) { // Parse URL, request file from webpage.
 
-            URL url = new URL(propertiesFileLocation);
-            InputStreamReader inputReader = new InputStreamReader(url.openStream());
+            final URL url = new URL(propertiesFileLocation);
+            final InputStreamReader inputReader = new InputStreamReader(url.openStream());
 
-            properties.load(inputReader);
-
+            try {
+                properties.load(inputReader);
+            }
+            finally {
+                inputReader.close();
+            }
         }
         else { // Try to open the file from disk.
 
-            File f = new File(propertiesFileLocation);
+            final File f = new File(propertiesFileLocation);
 
-            if (!f.exists()) throw new IOException("Properties file doesn't exist at this location (" + propertiesFileLocation + ").");
+            if (!f.exists()) { throw new IOException("Properties file doesn't exist at this location (" + propertiesFileLocation + ").");
             // This check is necessary because a file will be created when FileInputStream is created.
+            }
 
             if (inputStream == null) {
                 try {
                     inputStream = new FileInputStream(propertiesFileLocation);
                 }
-                catch (FileNotFoundException e) {
+                catch (final FileNotFoundException e) {
                     ErrorHandling.exceptionError(e, "Unexpected file not found exception");
                 }
             }
@@ -87,7 +92,7 @@ public class H2OPropertiesWrapper {
     public void createNewFile() throws IOException {
 
         removePropertiesFile();
-        File f = new File(propertiesFileLocation);
+        final File f = new File(propertiesFileLocation);
 
         if (f.getParentFile() != null) {
             f.getParentFile().mkdirs(); // create any directories specified in the path, if necessary.
@@ -106,7 +111,7 @@ public class H2OPropertiesWrapper {
      *            a key
      * @return the corresponding property
      */
-    public String getProperty(String key) {
+    public String getProperty(final String key) {
 
         return properties.getProperty(key);
     }
@@ -118,7 +123,7 @@ public class H2OPropertiesWrapper {
      *            a key
      * @return true if the property for the key is true
      */
-    public boolean isEnabled(String key) {
+    public boolean isEnabled(final String key) {
 
         return TRUE.equals(getProperty(key));
     }
@@ -131,7 +136,7 @@ public class H2OPropertiesWrapper {
      * @param value
      *            the new value to be associated with the key
      */
-    public void setProperty(String key, String value) {
+    public void setProperty(final String key, final String value) {
 
         properties.setProperty(key, value);
     }
@@ -142,7 +147,7 @@ public class H2OPropertiesWrapper {
      * @param propertyComment
      *            the comment
      */
-    public void setPropertyComment(String propertyComment) {
+    public void setPropertyComment(final String propertyComment) {
 
         comment = propertyComment;
     }
@@ -150,17 +155,21 @@ public class H2OPropertiesWrapper {
     private boolean removePropertiesFile() {
 
         try {
-            if (inputStream != null) inputStream.close();
+            if (inputStream != null) {
+                inputStream.close();
+            }
             inputStream = null;
 
-            if (outputStream != null) outputStream.close();
+            if (outputStream != null) {
+                outputStream.close();
+            }
             outputStream = null;
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             e.printStackTrace();
         }
 
-        File f = new File(propertiesFileLocation);
+        final File f = new File(propertiesFileLocation);
 
         return f.delete();
     }
@@ -173,12 +182,18 @@ public class H2OPropertiesWrapper {
      */
     public void saveAndClose() throws IOException {
 
-        if (outputStream == null) outputStream = new FileOutputStream(propertiesFileLocation);
+        if (outputStream == null) {
+            outputStream = new FileOutputStream(propertiesFileLocation);
+        }
 
         properties.store(outputStream, comment);
 
-        if (inputStream != null) inputStream.close();
-        if (outputStream != null) outputStream.close();
+        if (inputStream != null) {
+            inputStream.close();
+        }
+        if (outputStream != null) {
+            outputStream.close();
+        }
     }
 
     /**

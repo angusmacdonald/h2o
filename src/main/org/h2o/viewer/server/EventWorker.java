@@ -14,7 +14,7 @@ import java.io.ObjectInputStream;
 import java.net.Socket;
 import java.net.SocketException;
 
-import org.h2o.viewer.client.H2OEvent;
+import org.h2o.viewer.gwt.client.H2OEvent;
 import org.h2o.viewer.server.handlers.EventHandler;
 
 /**
@@ -24,9 +24,9 @@ import org.h2o.viewer.server.handlers.EventHandler;
  */
 public class EventWorker extends Thread {
 
-    private Socket socket;
+    private final Socket socket;
 
-    private EventHandler eventHandler;
+    private final EventHandler eventHandler;
 
     /**
      * @param newConnection
@@ -34,15 +34,16 @@ public class EventWorker extends Thread {
      * @param eventHandler
      *            The location of the locator file, which stores where
      */
-    protected EventWorker(Socket newConnection, EventHandler eventHandler) {
+    protected EventWorker(final Socket newConnection, final EventHandler eventHandler) {
 
         this.eventHandler = eventHandler;
-        this.socket = newConnection;
+        socket = newConnection;
     }
 
     /**
      * Service the current incoming connection.
      */
+    @Override
     public void run() {
 
         ObjectInputStream input = null;
@@ -51,10 +52,10 @@ public class EventWorker extends Thread {
             socket.setSoTimeout(5000);
             input = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
         }
-        catch (SocketException e1) {
+        catch (final SocketException e1) {
             e1.printStackTrace();
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             e.printStackTrace();
         }
 
@@ -65,15 +66,17 @@ public class EventWorker extends Thread {
 
                 // Get single-line request from the client.
 
-                try {
-                    H2OEvent event = (H2OEvent) input.readObject();
+                if (input != null) {
+                    try {
+                        final H2OEvent event = (H2OEvent) input.readObject();
 
-                    input.close();
+                        input.close();
 
-                    eventHandler.pushEvent(event);
-                }
-                catch (ClassNotFoundException e) {
-                    e.printStackTrace();
+                        eventHandler.pushEvent(event);
+                    }
+                    catch (final ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }
                 }
 
             }
@@ -81,7 +84,7 @@ public class EventWorker extends Thread {
                 socket.close();
             }
         }
-        catch (IOException e) {
+        catch (final IOException e) {
 
         }
     }

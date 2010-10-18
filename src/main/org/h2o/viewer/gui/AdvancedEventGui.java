@@ -21,7 +21,7 @@ import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 import javax.swing.border.TitledBorder;
 
-import org.h2o.viewer.client.H2OEvent;
+import org.h2o.viewer.gwt.client.H2OEvent;
 
 /**
  * This code was edited or generated using CloudGarden's Jigloo SWT/Swing GUI Builder, which is free for non-commercial use. If Jigloo is

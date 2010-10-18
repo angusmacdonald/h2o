@@ -24,36 +24,36 @@ import org.h2.util.NetUtils;
  */
 public class QueryExample {
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
 
-        String jdbcURL = "jdbc:h2:tcp://" + NetUtils.getLocalAddress() + ":9998/db_data//MyFirstDatabase9998";
+        final String jdbcURL = "jdbc:h2:tcp://" + NetUtils.getLocalAddress() + ":9998/db_data//MyFirstDatabase9998";
 
         /*
          * Default system password. You'd probably want to change this.
          */
-        String userName = "sa";
-        String password = "";
-
+        final String userName = "sa";
+        final String password = "";
+        Connection conn = null;
         try {
             /*
              * Create connection to the H2O database instance.
              */
-            Connection conn = DriverManager.getConnection(jdbcURL, userName, password);
+            conn = DriverManager.getConnection(jdbcURL, userName, password);
 
             /*
              * Create a basic table on the H2O instance and add some even more basic data.
              */
-            Statement stat = conn.createStatement();
+            final Statement stat = conn.createStatement();
             stat.executeUpdate("CREATE TABLE TEST (ID INT);");
             stat.executeUpdate("INSERT INTO TEST VALUES(7);");
 
             /*
              * Query the database to check that the data was added successfully.
              */
-            ResultSet rs = stat.executeQuery("SELECT * FROM TEST;");
+            final ResultSet rs = stat.executeQuery("SELECT * FROM TEST;");
 
             if (rs.next()) {
-                int result = rs.getInt(1);
+                final int result = rs.getInt(1);
                 System.out.println("A result was successfully obtained from the database: " + result);
 
                 if (result == 7) {
@@ -67,8 +67,16 @@ public class QueryExample {
                 System.err.println("The database didn't return any entries. This wasn't expected.");
             }
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             e.printStackTrace();
+        }
+        finally {
+            try {
+                conn.close();
+            }
+            catch (final SQLException e) {
+                //Do something with this if you want...
+            }
         }
     }
 

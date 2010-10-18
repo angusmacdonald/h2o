@@ -9,7 +9,7 @@ import javax.swing.JTextPane;
 import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 
-import org.h2o.viewer.client.H2OEvent;
+import org.h2o.viewer.gwt.client.H2OEvent;
 import org.h2o.viewer.server.EventServer;
 import org.h2o.viewer.server.handlers.EventHandler;
 
@@ -22,14 +22,14 @@ public class BasicEventGui extends JFrame implements EventHandler {
 
     private JTextPane eventOutput;
 
-    private Queue<H2OEvent> events = new LinkedList<H2OEvent>();
+    private final Queue<H2OEvent> events = new LinkedList<H2OEvent>();
 
     /**
      * Auto-generated main method to display this JFrame
      */
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
 
-        BasicEventGui gui = new BasicEventGui();
+        final BasicEventGui gui = new BasicEventGui();
         gui.setLocationRelativeTo(null); // centre
         gui.setVisible(true);
     }
@@ -41,11 +41,11 @@ public class BasicEventGui extends JFrame implements EventHandler {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             e.printStackTrace();
         }
         Diagnostic.setLevel(DiagnosticLevel.INIT);
-        EventServer server = new EventServer(EventServer.EVENT_SERVER_PORT, this);
+        final EventServer server = new EventServer(EventServer.EVENT_SERVER_PORT, this);
         server.start();
     }
 
@@ -62,12 +62,13 @@ public class BasicEventGui extends JFrame implements EventHandler {
             pack();
             setSize(900, 500);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
+            e.printStackTrace();
         }
     }
 
     @Override
-    public boolean pushEvent(H2OEvent event) {
+    public boolean pushEvent(final H2OEvent event) {
 
         events.add(event);
 

@@ -50,11 +50,11 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  */
 public class H2O {
 
-    private String databaseName;
+    private final String databaseName;
 
-    private String port;
+    private final String port;
 
-    private String webPort;
+    private final String webPort;
 
     private String descriptorFileLocation;
 
@@ -80,13 +80,13 @@ public class H2O {
      * @throws StartupException
      * @throws IOException
      */
-    public static void main(String[] args) throws StartupException {
+    public static void main(final String[] args) throws StartupException {
 
         Diagnostic.setLevel(DiagnosticLevel.FINAL);
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting H2O Server Instance.");
 
-        Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
-        H2O db = parseArguments(arguments);
+        final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
+        final H2O db = parseArguments(arguments);
 
         db.startDatabase();
     }
@@ -107,13 +107,13 @@ public class H2O {
      * @param defaultFolder
      *            The folder in which database files will be created.
      */
-    public H2O(String databaseName, int port, int webPort, String defaultFolder, String databaseDescriptorLocation) {
+    public H2O(final String databaseName, final int port, final int webPort, final String defaultFolder, final String databaseDescriptorLocation) {
 
         this.databaseName = databaseName;
         this.port = port + "";
         this.webPort = webPort + "";
-        this.descriptorFileLocation = databaseDescriptorLocation;
-        this.defaultLocation = defaultFolder;
+        descriptorFileLocation = databaseDescriptorLocation;
+        defaultLocation = defaultFolder;
     }
 
     /**
@@ -130,7 +130,7 @@ public class H2O {
      * @param defaultFolder
      *            The folder in which database files will be created.
      */
-    public H2O(String databaseName, int port, String defaultFolder, String databaseDescriptorLocation) {
+    public H2O(final String databaseName, final int port, final String defaultFolder, final String databaseDescriptorLocation) {
 
         this(databaseName, port, 0, defaultFolder, databaseDescriptorLocation);
     }
@@ -150,7 +150,7 @@ public class H2O {
      * @param defaultFolder
      *            The folder in which database files will be created.
      */
-    public H2O(String databaseName, int port, int webPort, String defaultFolder) {
+    public H2O(final String databaseName, final int port, final int webPort, final String defaultFolder) {
 
         this(databaseName, port, webPort, defaultFolder, null);
     }
@@ -168,12 +168,12 @@ public class H2O {
      * @param defaultFolder
      *            The folder in which database files will be created.
      */
-    public H2O(String databaseName, int port, String defaultFolder) {
+    public H2O(final String databaseName, final int port, final String defaultFolder) {
 
         this(databaseName, port, 0, defaultFolder, null);
     }
 
-    private static H2O parseArguments(Map<String, String> arguments) throws StartupException {
+    private static H2O parseArguments(final Map<String, String> arguments) throws StartupException {
 
         String databaseName = null;
         String port = null;
@@ -229,12 +229,12 @@ public class H2O {
 
         if (descriptorFileLocation == null) { // A new locator server should be
                                               // started.
-            int locatorPort = Integer.parseInt(port) + 1;
-            H2OLocator locator = new H2OLocator(databaseName, locatorPort, true, defaultLocation);
+            final int locatorPort = Integer.parseInt(port) + 1;
+            final H2OLocator locator = new H2OLocator(databaseName, locatorPort, true, defaultLocation);
             descriptorFileLocation = locator.start(true);
         }
 
-        String databaseURL = generateDatabaseURL();
+        final String databaseURL = generateDatabaseURL();
         startServer(databaseURL);
         initializeDatabase(databaseURL);
     }
@@ -249,10 +249,10 @@ public class H2O {
             }
         }
 
-        String hostname = NetUtils.getLocalAddress();
-        String databaseLocation = ((defaultLocation != null) ? defaultLocation : "") + databaseName + port;
+        final String hostname = NetUtils.getLocalAddress();
+        final String databaseLocation = (defaultLocation != null ? defaultLocation : "") + databaseName + port;
 
-        String databaseURL = createDatabaseURL(port, hostname, databaseLocation);
+        final String databaseURL = createDatabaseURL(port, hostname, databaseLocation);
         /*
          * Display to user.
          */
@@ -271,11 +271,11 @@ public class H2O {
      * @param databaseURL
      * @param arguments
      */
-    private void startServer(String databaseURL) {
+    private void startServer(final String databaseURL) {
 
-        List<String> h2oArgs = new LinkedList<String>(); // arguments to be
-                                                         // passed to the H2
-                                                         // server.
+        final List<String> h2oArgs = new LinkedList<String>(); // arguments to be
+        // passed to the H2
+        // server.
         h2oArgs.add("-tcp");
 
         /*
@@ -306,15 +306,13 @@ public class H2O {
         /*
          * Set URL to be displayed in browser.
          */
-        if (webPort != null) {
-            setUpWebLink(databaseURL);
-        }
+        setUpWebLink(databaseURL);
 
-        Server s = new Server();
+        final Server s = new Server();
         try {
             s.run(h2oArgs.toArray(new String[0]), System.out);
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             e.printStackTrace();
         }
     }
@@ -324,14 +322,14 @@ public class H2O {
      * 
      * @param databaseURL
      */
-    private void initializeDatabase(String databaseURL) {
+    private void initializeDatabase(final String databaseURL) {
 
-        LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(databaseURL));
+        final LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(databaseURL));
 
         try {
             properties.loadProperties();
         }
-        catch (IOException e1) {
+        catch (final IOException e1) {
             properties.createNewFile();
             properties.setProperty("diagnosticLevel", DiagnosticLevel.NONE.toString());
         }
@@ -346,17 +344,19 @@ public class H2O {
         try {
             Class.forName("org.h2.Driver");
         }
-        catch (ClassNotFoundException e) {
+        catch (final ClassNotFoundException e) {
             e.printStackTrace();
         }
 
         try {
+            /*
+             * Create a connection so that the database starts up, but don't do anything with it here.
+             */
             DriverManager.getConnection(databaseURL, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             e.printStackTrace();
-            System.exit(0);
+            throw new RuntimeException("Database couldn't be initialized.");
         }
     }
 
@@ -365,39 +365,41 @@ public class H2O {
      * 
      * @param databaseURL
      */
-    private void setUpWebLink(String databaseURL) {
+    private void setUpWebLink(final String databaseURL) {
 
         try {
-            Properties serverProperties = loadServerProperties();
-            List<String> servers = new LinkedList<String>();
+            final Properties serverProperties = loadServerProperties();
+            final List<String> servers = new LinkedList<String>();
 
             for (int i = 0;; i++) {
-                String data = serverProperties.getProperty(String.valueOf(i));
+                final String data = serverProperties.getProperty(String.valueOf(i));
                 if (data == null) {
                     break;
                 }
-                if (!data.contains(databaseURL)) servers.add(data);
+                if (!data.contains(databaseURL)) {
+                    servers.add(data);
+                }
 
                 serverProperties.remove(String.valueOf(i));
             }
 
             int i = 0;
-            for (String server : servers) {
+            for (final String server : servers) {
                 serverProperties.setProperty(i + "", server);
                 i++;
             }
 
             serverProperties.setProperty(i + "", "QuickStart-H2O-Database|org.h2.Driver|" + databaseURL + "|sa");
 
-            OutputStream out = FileUtils.openFileOutputStream(getPropertiesFileName(), false);
+            final OutputStream out = FileUtils.openFileOutputStream(getPropertiesFileName(), false);
             serverProperties.store(out, Constants.SERVER_PROPERTIES_TITLE);
 
             out.close();
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             e.printStackTrace();
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             e.printStackTrace();
         }
     }
@@ -410,18 +412,18 @@ public class H2O {
 
     private Properties loadServerProperties() {
 
-        String fileName = getPropertiesFileName();
+        final String fileName = getPropertiesFileName();
         try {
             return SortedProperties.loadProperties(fileName);
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             return new Properties();
         }
     }
 
     protected static String removeParenthesis(String text) {
 
-        if (text == null) return null;
+        if (text == null) { return null; }
 
         if (text.startsWith("'") && text.endsWith("'")) {
             text = text.substring(1, text.length() - 1);
@@ -429,7 +431,7 @@ public class H2O {
         return text;
     }
 
-    protected static String createDatabaseURL(String port, String hostname, String databaseLocation) {
+    protected static String createDatabaseURL(final String port, final String hostname, String databaseLocation) {
 
         if (!databaseLocation.startsWith("/")) {
             databaseLocation = "/" + databaseLocation;

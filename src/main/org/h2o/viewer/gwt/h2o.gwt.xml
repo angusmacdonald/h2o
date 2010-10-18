@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module>
+
+ <inherits name='com.google.gwt.user.User'/>
+  <!-- Specify the paths for code that is to be used by the h2o-viewer project. http://www.vogella.de/articles/GWT/article.html#modules             -->
+  <source path='client'/>
+</module>

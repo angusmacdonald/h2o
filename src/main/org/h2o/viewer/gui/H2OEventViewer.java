@@ -3,8 +3,8 @@ package org.h2o.viewer.gui;
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
-import org.h2o.viewer.client.DatabaseStates;
-import org.h2o.viewer.client.H2OEvent;
+import org.h2o.viewer.gwt.client.DatabaseStates;
+import org.h2o.viewer.gwt.client.H2OEvent;
 import org.h2o.viewer.server.EventServer;
 import org.h2o.viewer.server.handlers.EventHandler;
 
@@ -13,29 +13,29 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 public class H2OEventViewer implements EventHandler {
 
-    private EventActions action;
+    private final EventActions action;
 
-    private EventServer server;
+    private final EventServer server;
 
     /**
      * Auto-generated main method to display this JPanel inside a new JFrame.
      */
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
 
         Diagnostic.setLevel(DiagnosticLevel.INIT);
 
-        AdvancedEventGui gui = new AdvancedEventGui();
-        JFrame frame = new JFrame();
+        final AdvancedEventGui gui = new AdvancedEventGui();
+        final JFrame frame = new JFrame();
         frame.getContentPane().add(gui);
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
 
-        H2OEventViewer newViewer = new H2OEventViewer(gui);
+        final H2OEventViewer newViewer = new H2OEventViewer(gui);
         newViewer.start();
     }
 
-    public H2OEventViewer(EventActions action) {
+    public H2OEventViewer(final EventActions action) {
 
         this.action = action;
 
@@ -50,11 +50,11 @@ public class H2OEventViewer implements EventHandler {
     }
 
     @Override
-    public boolean pushEvent(H2OEvent event) {
+    public boolean pushEvent(final H2OEvent event) {
 
         System.out.println(event);
 
-        DatabaseStates state = (event.getEventType());
+        final DatabaseStates state = event.getEventType();
 
         try {
 
@@ -73,7 +73,7 @@ public class H2OEventViewer implements EventHandler {
                     action.tableManagerMigration(event);
                     break;
                 case TABLE_DELETION:
-                    action.tableDeletion(event);
+                    action.tableDeletion(event); //deletion also results in table manager being shutdown...
                 case TABLE_MANAGER_SHUTDOWN:
                     action.tableManagerShutdown(event);
                     break;
@@ -104,7 +104,7 @@ public class H2OEventViewer implements EventHandler {
             }
 
         }
-        catch (NullPointerException e) {
+        catch (final NullPointerException e) {
             e.printStackTrace();
         }
 

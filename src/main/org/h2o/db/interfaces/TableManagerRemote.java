@@ -8,6 +8,7 @@
  */
 package org.h2o.db.interfaces;
 
+import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -28,7 +29,7 @@ import org.h2o.util.exceptions.StartupException;
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public interface TableManagerRemote extends H2ORemote, Migratable {
+public interface TableManagerRemote extends H2ORemote, Migratable, Serializable {
 
     public QueryProxy getQueryProxy(LockType lockType, DatabaseInstanceWrapper databaseInstanceRemote) throws RemoteException, SQLException, MovedException;
 

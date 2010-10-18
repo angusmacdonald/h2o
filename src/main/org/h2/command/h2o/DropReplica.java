@@ -16,8 +16,8 @@ import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.viewer.H2OEventBus;
-import org.h2o.viewer.client.DatabaseStates;
-import org.h2o.viewer.client.H2OEvent;
+import org.h2o.viewer.gwt.client.DatabaseStates;
+import org.h2o.viewer.gwt.client.H2OEvent;
 
 /**
  * Represents the DROP REPLICA command, allowing individual replicas to be dropped.

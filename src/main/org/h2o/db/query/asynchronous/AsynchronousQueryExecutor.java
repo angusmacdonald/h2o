@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -28,14 +27,14 @@ import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 public class AsynchronousQueryExecutor {
 
-    private Database database;
+    private final Database database;
 
     int updatesNeededBeforeCommit = 0;
 
     /**
      * @param database
      */
-    public AsynchronousQueryExecutor(Database database) {
+    public AsynchronousQueryExecutor(final Database database) {
 
         this.database = database;
 
@@ -47,7 +46,8 @@ public class AsynchronousQueryExecutor {
 
     private static ExecutorService queryExecutor = Executors.newCachedThreadPool(new QueryThreadFactory() {
 
-        public Thread newThread(Runnable r) {
+        @Override
+        public Thread newThread(final Runnable r) {
 
             return new Thread(r);
         }
@@ -71,31 +71,33 @@ public class AsynchronousQueryExecutor {
      *            ready for the eventual commit.
      * @return True if everything was executed successfully (a global commit).
      */
-    public boolean executeQuery(String query, String transactionNameForQuery, Map<DatabaseInstanceWrapper, Integer> allReplicas, TableInfo tableName, Session session, boolean commitOperation) {
+    public boolean executeQuery(final String query, final String transactionNameForQuery, final Map<DatabaseInstanceWrapper, Integer> allReplicas, final TableInfo tableName, final Session session, final boolean commitOperation) {
 
-        Parser parser = new Parser(session, true);
+        final Parser parser = new Parser(session, true);
 
-        List<FutureTask<QueryResult>> executingQueries = new LinkedList<FutureTask<QueryResult>>();
+        final List<FutureTask<QueryResult>> executingQueries = new LinkedList<FutureTask<QueryResult>>();
 
-        int expectedUpdateID = getExpectedUpdateID(allReplicas);
+        final int expectedUpdateID = getExpectedUpdateID(allReplicas);
 
         if (updatesNeededBeforeCommit == 0) { // will be zero if asynchronous updates are off.
             updatesNeededBeforeCommit = allReplicas.size();
         }
 
         int i = 0;
-        for (Entry<DatabaseInstanceWrapper, Integer> replicaToExecuteQueryOn : allReplicas.entrySet()) {
+        for (final Entry<DatabaseInstanceWrapper, Integer> replicaToExecuteQueryOn : allReplicas.entrySet()) {
 
-            String localURL = session.getDatabase().getURL().getURL();
+            final String localURL = session.getDatabase().getURL().getURL();
 
             // Decide whether the query is to be executed local or remotely.
-            boolean isReplicaLocal = (replicaToExecuteQueryOn == null || localURL.equals(replicaToExecuteQueryOn.getKey().getURL().getURL()));
+            final boolean isReplicaLocal = replicaToExecuteQueryOn == null || localURL.equals(replicaToExecuteQueryOn.getKey().getURL().getURL());
 
             // Start execution of queries.
-            Integer replicaUpdateID = replicaToExecuteQueryOn.getValue();
+            if (replicaToExecuteQueryOn != null) {
+                final Integer replicaUpdateID = replicaToExecuteQueryOn.getValue();
 
-            executeQueryOnSpecifiedReplica(query, transactionNameForQuery, replicaToExecuteQueryOn.getKey(), replicaUpdateID, isReplicaLocal, parser, executingQueries, commitOperation, tableName);
-            i++;
+                executeQueryOnSpecifiedReplica(query, transactionNameForQuery, replicaToExecuteQueryOn.getKey(), replicaUpdateID, isReplicaLocal, parser, executingQueries, commitOperation, tableName);
+                i++;
+            }
         }
 
         // Wait for enough queries to execute, then return the result.
@@ -109,11 +111,11 @@ public class AsynchronousQueryExecutor {
      * @param allReplicas
      * @return
      */
-    private int getExpectedUpdateID(Map<DatabaseInstanceWrapper, Integer> allReplicas) {
+    private int getExpectedUpdateID(final Map<DatabaseInstanceWrapper, Integer> allReplicas) {
 
         int expectedUpdateID = 0;
 
-        for (Integer updateID : allReplicas.values()) {
+        for (final Integer updateID : allReplicas.values()) {
             if (updateID > expectedUpdateID) {
                 expectedUpdateID = updateID;
             }
@@ -147,12 +149,13 @@ public class AsynchronousQueryExecutor {
      *            ready for the eventual commit.
      * @param tableInfo
      */
-    private void executeQueryOnSpecifiedReplica(String sql, String transactionName, DatabaseInstanceWrapper replicaToExecuteQueryOn, Integer updateID, boolean isReplicaLocal, Parser parser, List<FutureTask<QueryResult>> executingQueries, boolean commitOperation, TableInfo tableInfo) {
+    private void executeQueryOnSpecifiedReplica(final String sql, final String transactionName, final DatabaseInstanceWrapper replicaToExecuteQueryOn, final Integer updateID, final boolean isReplicaLocal, final Parser parser, final List<FutureTask<QueryResult>> executingQueries, final boolean commitOperation, final TableInfo tableInfo) {
 
         final RemoteQueryExecutor qt = new RemoteQueryExecutor(sql, transactionName, replicaToExecuteQueryOn, updateID, parser, isReplicaLocal, commitOperation, tableInfo);
 
-        FutureTask<QueryResult> future = new FutureTask<QueryResult>(new Callable<QueryResult>() {
+        final FutureTask<QueryResult> future = new FutureTask<QueryResult>(new Callable<QueryResult>() {
 
+            @Override
             public QueryResult call() {
 
                 return qt.executeQuery();
@@ -176,11 +179,12 @@ public class AsynchronousQueryExecutor {
      * @param tableName
      * @return True if everything was executed successfully (a global commit).
      */
-    private boolean waitUntilRemoteQueriesFinish(List<FutureTask<QueryResult>> incompleteQueries, int updatesNeededBeforeCommit, String transactionNameForQuery, int expectedUpdateID, TableInfo tableName) {
+    private boolean waitUntilRemoteQueriesFinish(final List<FutureTask<QueryResult>> incompleteQueries, final int updatesNeededBeforeCommit, final String transactionNameForQuery, final int expectedUpdateID, final TableInfo tableName) {
 
-        if (incompleteQueries.size() == 0) return true; // the commit value has not changed.
+        if (incompleteQueries.size() == 0) { return true; // the commit value has not changed.
+        }
 
-        List<FutureTask<QueryResult>> completedQueries = new LinkedList<FutureTask<QueryResult>>();
+        final List<FutureTask<QueryResult>> completedQueries = new LinkedList<FutureTask<QueryResult>>();
 
         /*
          * Wait until all remote queries have been completed.
@@ -188,7 +192,7 @@ public class AsynchronousQueryExecutor {
         while (incompleteQueries.size() > 0 && completedQueries.size() < updatesNeededBeforeCommit) {
 
             for (int y = 0; y < incompleteQueries.size(); y++) {
-                FutureTask<QueryResult> remoteQuery = incompleteQueries.get(y);
+                final FutureTask<QueryResult> remoteQuery = incompleteQueries.get(y);
 
                 if (remoteQuery.isDone()) {
                     // If the query is done add it to the list of completed
@@ -208,38 +212,38 @@ public class AsynchronousQueryExecutor {
          * All of the queries have now completed. Iterate through these queries and check that they executed successfully.
          */
 
-        List<CommitResult> recentlyCompletedQueries = new LinkedList<CommitResult>();
+        final List<CommitResult> recentlyCompletedQueries = new LinkedList<CommitResult>();
 
-        for (FutureTask<QueryResult> completedQuery : completedQueries) {
+        for (final FutureTask<QueryResult> completedQuery : completedQueries) {
 
             QueryResult asyncResult = null;
 
             try {
                 asyncResult = completedQuery.get();
             }
-            catch (InterruptedException e) {
+            catch (final Exception e) {
                 e.printStackTrace();
-            }
-            catch (ExecutionException e) {
-                e.printStackTrace();
+                continue;
             }
 
+            assert asyncResult != null : "The result of a completed transaction should never be null.";
+
             if (asyncResult.getException() == null) { // If the query executed successfully.
-                int result = asyncResult.getResult();
-                DatabaseInstanceWrapper url = asyncResult.getWrapper();
+                final int result = asyncResult.getResult();
+                final DatabaseInstanceWrapper url = asyncResult.getWrapper();
                 if (result != 0) {
                     // Prepare operation failed at remote machine
-                    CommitResult commitResult = new CommitResult(false, url, asyncResult.getUpdateID(), expectedUpdateID, tableName);
+                    final CommitResult commitResult = new CommitResult(false, url, asyncResult.getUpdateID(), expectedUpdateID, tableName);
                     recentlyCompletedQueries.add(commitResult);
                     globalCommit = false;
                 }
                 else {
-                    CommitResult commitResult = new CommitResult(true, url, asyncResult.getUpdateID(), expectedUpdateID, tableName);
+                    final CommitResult commitResult = new CommitResult(true, url, asyncResult.getUpdateID(), expectedUpdateID, tableName);
                     recentlyCompletedQueries.add(commitResult);
                 }
             }
             else {
-                CommitResult commitResult = new CommitResult(true, asyncResult.getWrapper(), asyncResult.getUpdateID(), expectedUpdateID, tableName);
+                final CommitResult commitResult = new CommitResult(true, asyncResult.getWrapper(), asyncResult.getUpdateID(), expectedUpdateID, tableName);
                 recentlyCompletedQueries.add(commitResult);
                 globalCommit = false;
             }

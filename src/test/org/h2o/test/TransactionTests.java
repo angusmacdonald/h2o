@@ -89,7 +89,7 @@ public class TransactionTests {
 	 * Tests that where two replicas exist, an insert statement updates both.
 	 */
 	@Test
-	public void UpdateMultipleReplicas() {
+	public void updateMultipleReplicas() {
 		
 		try {
 			sb.execute("CREATE REPLICA TEST");
@@ -127,7 +127,7 @@ public class TransactionTests {
 	 * Checks that the 2PC protocol works for two distributed operations.
 	 */
 	@Test
-	public void LocalTwoPhase() {
+	public void localTwoPhase() {
 		
 		try {
 			ca.setAutoCommit(false);
@@ -161,7 +161,7 @@ public class TransactionTests {
 	 * Checks that, on failure, the 2PC protocol rolls back every distributed operation.
 	 */
 	@Test
-	public void LocalTwoPhaseFail() {
+	public void localTwoPhaseFail() {
 		
 		try {
 			ca.setAutoCommit(false);

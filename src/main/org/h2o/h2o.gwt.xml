@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<module rename-to='h2o'>
-  <!-- Inherit the core Web Toolkit stuff.                        -->
-  <inherits name='com.google.gwt.user.User'/>
-
-  <!-- Specify the paths for code that is to be used by the h2o-viewer project.             -->
-  <source path='org.h2o.viewer.client'/>
-</module>

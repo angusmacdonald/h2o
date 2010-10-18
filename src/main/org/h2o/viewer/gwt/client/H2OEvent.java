@@ -6,7 +6,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General
  * Public License along with H2O. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.viewer.client;
+package org.h2o.viewer.gwt.client;
 
 import java.io.Serializable;
 import java.util.Date;

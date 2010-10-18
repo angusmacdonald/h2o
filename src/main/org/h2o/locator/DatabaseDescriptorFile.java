@@ -25,9 +25,9 @@ import org.h2o.util.exceptions.StartupException;
  */
 public class DatabaseDescriptorFile {
 
-    private Properties properties;
+    private final Properties properties;
 
-    private String propertiesFileLocation;
+    private final String propertiesFileLocation;
 
     private FileOutputStream fos;
 
@@ -40,36 +40,36 @@ public class DatabaseDescriptorFile {
     /**
      * @param args
      */
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
 
-        String fileLocation = "\\\\shell\\angus\\public_html\\databases";
+        final String fileLocation = "\\\\shell\\angus\\public_html\\databases";
 
-        DatabaseDescriptorFile cddf = new DatabaseDescriptorFile("testDB", fileLocation);
+        final DatabaseDescriptorFile cddf = new DatabaseDescriptorFile("testDB", fileLocation);
         cddf.createPropertiesFile();
         cddf.setLocatorLocations("testDB", fileLocation);
     }
 
-    public DatabaseDescriptorFile(String databaseName, String propertiesFileFolder) {
+    public DatabaseDescriptorFile(final String databaseName, final String propertiesFileFolder) {
 
-        this.propertiesFileLocation = propertiesFileFolder + "/" + databaseName + ".h2o";
-        this.properties = new Properties();
+        propertiesFileLocation = propertiesFileFolder + "/" + databaseName + ".h2o";
+        properties = new Properties();
 
     }
 
     /**
      * @param url
      */
-    public DatabaseDescriptorFile(String url) {
+    public DatabaseDescriptorFile(final String url) {
 
-        this.propertiesFileLocation = url;
-        this.properties = new Properties();
+        propertiesFileLocation = url;
+        properties = new Properties();
     }
 
     public String[] getLocatorLocations() throws StartupException {
 
         openPropertiesFile();
 
-        String locatorLocations = properties.getProperty(LOCATORLOCATIONS);
+        final String locatorLocations = properties.getProperty(LOCATORLOCATIONS);
 
         return locatorLocations.split(",");
     }
@@ -79,55 +79,71 @@ public class DatabaseDescriptorFile {
         if (propertiesFileLocation.startsWith("http:")) { // Parse URL, request
                                                           // file from
                                                           // webpage.
-
+            InputStreamReader isr = null;
             try {
-                URL url = new URL(propertiesFileLocation);
-                InputStreamReader isr = new InputStreamReader(url.openStream());
+                final URL url = new URL(propertiesFileLocation);
+                isr = new InputStreamReader(url.openStream());
 
                 properties.load(isr);
 
             }
-            catch (IOException e) {
+            catch (final IOException e) {
                 e.printStackTrace();
+            }
+            finally {
+                try {
+                    isr.close();
+                }
+                catch (final IOException e) {
+                    //Doesn't matter at this point.
+                }
             }
         }
         else { // Try to open the file from disk.
-            File f = new File(propertiesFileLocation);
-            FileInputStream fis;
+            final File f = new File(propertiesFileLocation);
+            FileInputStream fis = null;
             try {
                 fis = new FileInputStream(f);
                 properties.load(fis);
             }
-            catch (FileNotFoundException e) {
+            catch (final FileNotFoundException e) {
                 e.printStackTrace();
                 throw new StartupException(e.getMessage());
             }
-            catch (IOException e) {
+            catch (final IOException e) {
                 e.printStackTrace();
                 throw new StartupException(e.getMessage());
+            }
+            finally {
+                try {
+                    fis.close();
+                }
+                catch (final IOException e) {
+                    //Doesn't matter at this point.
+                }
             }
 
         }
     }
 
-    public void setLocatorLocations(String databaseName, String... locations) {
+    public void setLocatorLocations(final String databaseName, final String... locations) {
 
-        String locatorLocations = "";
+        final StringBuilder locatorLocations = new StringBuilder();
+        for (final String locatorFile : locations) {
 
-        for (String locatorFile : locations) {
-            locatorLocations += locatorFile + ",";
+            locatorLocations.append(locatorFile);
+            locatorLocations.append(",");
+
         }
-        locatorLocations = locatorLocations.substring(0, locatorLocations.length() - 1);
-
         properties.setProperty(DATABASENAME, databaseName);
         properties.setProperty(CREATIONDATE, new Date().getTime() + "");
-        properties.setProperty(LOCATORLOCATIONS, locatorLocations);
+        properties.setProperty(LOCATORLOCATIONS, locatorLocations.substring(0, locatorLocations.length() - 1));
 
         try {
             // fos = new FileOutputStream(propertiesFileLocation);
             properties.store(fos, "H2O Database Descriptor File.");
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             e.printStackTrace();
         }
     }
@@ -144,23 +160,23 @@ public class DatabaseDescriptorFile {
         /*
          * Create the properties file.
          */
-        File f = new File(propertiesFileLocation);
+        final File f = new File(propertiesFileLocation);
         try {
             f.createNewFile();
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             e.printStackTrace();
         }
 
         try {
             fos = new FileOutputStream(propertiesFileLocation);
         }
-        catch (FileNotFoundException e) {
+        catch (final FileNotFoundException e) {
             e.printStackTrace();
         }
     }
 
-    public String getProperty(String key) {
+    public String getProperty(final String key) {
 
         return properties.getProperty(key);
     }

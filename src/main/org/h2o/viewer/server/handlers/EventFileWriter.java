@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.h2o.viewer.client.H2OEvent;
+import org.h2o.viewer.gwt.client.H2OEvent;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 

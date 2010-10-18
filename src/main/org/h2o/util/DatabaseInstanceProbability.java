@@ -8,7 +8,7 @@ public class DatabaseInstanceProbability implements Serializable, Comparable<Dat
 
     private double probability;
 
-    public DatabaseInstanceProbability(double probability) {
+    public DatabaseInstanceProbability(final double probability) {
 
         this.probability = probability;
     }
@@ -18,16 +18,45 @@ public class DatabaseInstanceProbability implements Serializable, Comparable<Dat
         return probability;
     }
 
-    public void setProbability(double probability) {
+    public void setProbability(final double probability) {
 
         this.probability = probability;
     }
 
     @Override
-    public int compareTo(DatabaseInstanceProbability o) {
+    public int compareTo(final DatabaseInstanceProbability o) {
 
-        if (this.getProbability() > o.getProbability()) return 1;
-        else if (this.getProbability() < o.getProbability()) return -1;
-        else return 0;
+        if (getProbability() > o.getProbability()) {
+            return 1;
+        }
+        else if (getProbability() < o.getProbability()) {
+            return -1;
+        }
+        else {
+            return 0;
+        }
     }
+
+    @Override
+    public int hashCode() {
+
+        final int prime = 31;
+        int result = 1;
+        long temp;
+        temp = Double.doubleToLongBits(probability);
+        result = prime * result + (int) (temp ^ temp >>> 32);
+        return result;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+
+        if (this == obj) { return true; }
+        if (obj == null) { return false; }
+        if (getClass() != obj.getClass()) { return false; }
+        final DatabaseInstanceProbability other = (DatabaseInstanceProbability) obj;
+        if (Double.doubleToLongBits(probability) != Double.doubleToLongBits(other.probability)) { return false; }
+        return true;
+    }
+
 }
