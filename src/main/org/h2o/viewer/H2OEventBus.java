@@ -10,8 +10,8 @@ package org.h2o.viewer;
 
 import org.h2o.viewer.gwt.client.H2OEvent;
 
-import uk.ac.standrews.cs.nds.eventModel.Event;
-import uk.ac.standrews.cs.nds.eventModel.eventBus.busInterfaces.IEventBus;
+import uk.ac.standrews.cs.nds.events.Event;
+import uk.ac.standrews.cs.nds.events.bus.interfaces.IEventBus;
 
 public class H2OEventBus {
 	

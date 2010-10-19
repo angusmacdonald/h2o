@@ -98,8 +98,8 @@ import org.h2o.viewer.H2OEventConsumer;
 import org.h2o.viewer.gwt.client.DatabaseStates;
 import org.h2o.viewer.gwt.client.H2OEvent;
 
-import uk.ac.standrews.cs.nds.eventModel.eventBus.EventBus;
-import uk.ac.standrews.cs.nds.eventModel.eventBus.busInterfaces.IEventBus;
+import uk.ac.standrews.cs.nds.events.bus.EventBus;
+import uk.ac.standrews.cs.nds.events.bus.interfaces.IEventBus;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;

@@ -15,8 +15,8 @@ import java.net.UnknownHostException;
 
 import org.h2.util.NetUtils;
 
-import uk.ac.standrews.cs.nds.eventModel.IEvent;
-import uk.ac.standrews.cs.nds.eventModel.eventBus.busInterfaces.IEventConsumer;
+import uk.ac.standrews.cs.nds.events.IEvent;
+import uk.ac.standrews.cs.nds.events.bus.interfaces.IEventConsumer;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 public class H2OEventConsumer implements IEventConsumer {
