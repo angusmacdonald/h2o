@@ -201,6 +201,12 @@ public class AsynchronousQueryExecutor {
                     incompleteQueries.remove(y);
                 }
                 else {
+                    try {
+                        Thread.sleep(30);
+                    }
+                    catch (final InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     // We could sleep for a time here before checking again.
                 }
             }

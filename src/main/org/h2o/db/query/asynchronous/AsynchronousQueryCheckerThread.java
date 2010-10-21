@@ -22,11 +22,12 @@ public class AsynchronousQueryCheckerThread extends Thread {
 
     private static final int SLEEP_TIME = 100;
 
-    public AsynchronousQueryCheckerThread(AsynchronousQueryManager queryManager) {
+    public AsynchronousQueryCheckerThread(final AsynchronousQueryManager queryManager) {
 
         this.queryManager = queryManager;
     }
 
+    @Override
     public void run() {
 
         while (true) {
@@ -34,7 +35,7 @@ public class AsynchronousQueryCheckerThread extends Thread {
             try {
                 Thread.sleep(SLEEP_TIME);
             }
-            catch (InterruptedException e) {
+            catch (final InterruptedException e) {
             }
 
             queryManager.checkForCompletion();

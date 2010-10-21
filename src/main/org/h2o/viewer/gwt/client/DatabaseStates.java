@@ -32,5 +32,7 @@ public enum DatabaseStates { // comments - what information is appropriate
     META_TABLE_REPLICA_CREATION
     // database name, location of replicas in MetaDataReplicationManager.java
     // (Implemented)
+    , KEEP_ALIVE
+    //regular message sent by a database to indicate it is still active.
 
 }

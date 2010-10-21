@@ -97,9 +97,10 @@ import org.h2o.viewer.H2OEventBus;
 import org.h2o.viewer.H2OEventConsumer;
 import org.h2o.viewer.gwt.client.DatabaseStates;
 import org.h2o.viewer.gwt.client.H2OEvent;
+import org.h2o.viewer.server.KeepAliveMessageThread;
 
-import uk.ac.standrews.cs.nds.events.bus.EventBus;
-import uk.ac.standrews.cs.nds.events.bus.interfaces.IEventBus;
+import uk.ac.standrews.cs.nds.eventModel.eventBus.EventBus;
+import uk.ac.standrews.cs.nds.eventModel.eventBus.busInterfaces.IEventBus;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -316,6 +317,8 @@ public class Database implements DataHandler {
 
     private H2OEventConsumer eventConsumer;
 
+    private KeepAliveMessageThread keepAliveMessageThread;
+
     public Database(final String name, final ConnectionInfo ci, final String cipher) throws SQLException {
 
         localSchema.add(Constants.H2O_SCHEMA);
@@ -326,10 +329,6 @@ public class Database implements DataHandler {
         databaseShortName = parseDatabaseShortName();
 
         final DatabaseURL localMachineLocation = DatabaseURL.parseURL(ci.getOriginalURL());
-
-        if (Constants.IS_H2O && !isManagementDB()) {
-            setDiagnosticLevel(localMachineLocation);
-        }
 
         // Ensure testing constants are all set to false.
         Constants.IS_TESTING_PRE_COMMIT_FAILURE = false;
@@ -352,8 +351,6 @@ public class Database implements DataHandler {
 
         if (Constants.IS_H2O && !isManagementDB()) {
 
-            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "H2O, Database '" + name + "'.");
-
             /*
              * Get Settings for Database.
              */
@@ -362,9 +359,20 @@ public class Database implements DataHandler {
                 localSettings.loadProperties();
             }
             catch (final IOException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
+                localSettings.createNewFile();
+                try {
+                    localSettings.loadProperties();
+                }
+                catch (final IOException e) {
+                    ErrorHandling.exceptionError(e, "Failed to create properties file for database.");
+                }
             }
+
+            if (Constants.IS_H2O && !isManagementDB()) {
+                setDiagnosticLevel(localMachineLocation);
+            }
+            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "H2O, Database '" + name + "'.");
+
             H2OLocatorInterface locatorInterface;
             try {
                 locatorInterface = databaseRemote.getLocatorServerReference(localSettings);
@@ -384,9 +392,13 @@ public class Database implements DataHandler {
 
                 eventConsumer = new H2OEventConsumer();
                 bus.register(eventConsumer);
+
+                H2OEventBus.publish(new H2OEvent(localMachineLocation.getDbLocation(), DatabaseStates.DATABASE_STARTUP, localMachineLocation.getURL()));
+
+                keepAliveMessageThread = new KeepAliveMessageThread(localMachineLocation.getDbLocation());
+                keepAliveMessageThread.start();
             }
 
-            H2OEventBus.publish(new H2OEvent(localMachineLocation.getDbLocation(), DatabaseStates.DATABASE_STARTUP, localMachineLocation.getURL()));
         }
 
         multiThreaded = true; // H2O. Required for the H2O push replication

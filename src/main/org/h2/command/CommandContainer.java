@@ -27,7 +27,7 @@ public class CommandContainer extends Command {
 
     private Prepared prepared;
 
-    CommandContainer(Parser parser, String sql, Prepared prepared) {
+    CommandContainer(final Parser parser, final String sql, final Prepared prepared) {
 
         super(parser, sql);
         prepared.setCommand(this);
@@ -35,21 +35,25 @@ public class CommandContainer extends Command {
 
     }
 
+    @Override
     public ObjectArray getParameters() {
 
         return prepared.getParameters();
     }
 
+    @Override
     public boolean isTransactional() {
 
         return prepared.isTransactional();
     }
 
+    @Override
     public boolean isQuery() {
 
         return prepared.isQuery();
     }
 
+    @Override
     public int executeUpdate() throws SQLException {
 
         return executeUpdate(false);
@@ -60,18 +64,18 @@ public class CommandContainer extends Command {
         if (prepared.needRecompile()) {
             // TODO test with 'always recompile'
             prepared.setModificationMetaId(0);
-            String sql = prepared.getSQL();
-            ObjectArray oldParams = prepared.getParameters();
-            Parser parser = new Parser(session, false);
+            final String sql = prepared.getSQL();
+            final ObjectArray oldParams = prepared.getParameters();
+            final Parser parser = new Parser(session, false);
             prepared = parser.parseOnly(sql);
-            long mod = prepared.getModificationMetaId();
+            final long mod = prepared.getModificationMetaId();
             prepared.setModificationMetaId(0);
-            ObjectArray newParams = prepared.getParameters();
+            final ObjectArray newParams = prepared.getParameters();
             for (int i = 0; i < newParams.size(); i++) {
-                Parameter old = (Parameter) oldParams.get(i);
+                final Parameter old = (Parameter) oldParams.get(i);
                 if (old.isValueSet()) {
-                    Value v = old.getValue(session);
-                    Parameter p = (Parameter) newParams.get(i);
+                    final Value v = old.getValue(session);
+                    final Parameter p = (Parameter) newParams.get(i);
                     p.setValue(v);
                 }
             }
@@ -80,14 +84,16 @@ public class CommandContainer extends Command {
         }
     }
 
+    @Override
     public int update() throws SQLException, RemoteException {
 
-        int resultOfUpdate = update(false);
+        final int resultOfUpdate = update(false);
 
         return resultOfUpdate;
     }
 
-    public LocalResult query(int maxrows) throws SQLException {
+    @Override
+    public LocalResult query(final int maxrows) throws SQLException {
 
         return query(maxrows, false);
     }
@@ -97,7 +103,7 @@ public class CommandContainer extends Command {
      * @see org.h2.command.Command#query(int, boolean)
      */
     @Override
-    protected LocalResult query(int maxrows, boolean partOfMultiQueryTransaction) throws SQLException {
+    protected LocalResult query(final int maxrows, final boolean partOfMultiQueryTransaction) throws SQLException {
 
         recompileIfRequired();
 
@@ -114,10 +120,10 @@ public class CommandContainer extends Command {
 
         }
 
-        QueryProxyManager currentProxyManager = session.getProxyManagerForTransaction();
+        final QueryProxyManager currentProxyManager = session.getProxyManagerForTransaction();
 
         try {
-            LocalResult result = prepared.query(maxrows);
+            final LocalResult result = prepared.query(maxrows);
             prepared.trace(startTime, result.getRowCount());
             if (session.getApplicationAutoCommit()) {
                 currentProxyManager.releaseLocksAndUpdateReplicaState(null, true);
@@ -130,7 +136,7 @@ public class CommandContainer extends Command {
             }
             return result;
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             currentProxyManager.releaseLocksAndUpdateReplicaState(null, true);
             throw e;
         }
@@ -151,20 +157,20 @@ public class CommandContainer extends Command {
      * @see org.h2.command.Command#update(boolean)
      */
     @Override
-    protected int update(boolean partOfMultiQueryTransaction) throws SQLException, RemoteException {
+    protected int update(final boolean partOfMultiQueryTransaction) throws SQLException, RemoteException {
 
         recompileIfRequired();
         start();
         prepared.checkParameters();
         int updateCount;
 
-        boolean singleQuery = !partOfMultiQueryTransaction, transactionCommand = prepared.isTransactionCommand();
+        final boolean singleQuery = !partOfMultiQueryTransaction, transactionCommand = prepared.isTransactionCommand();
 
         if (!transactionCommand) { // Not a prepare or commit.
 
-            QueryProxyManager currentProxyManager = session.getProxyManagerForTransaction();
+            final QueryProxyManager currentProxyManager = session.getProxyManagerForTransaction();
 
-            assert (currentProxyManager != null);
+            assert currentProxyManager != null;
 
             getLock(); // this throws an SQLException if no lock is found.
 
@@ -176,7 +182,7 @@ public class CommandContainer extends Command {
 
                 updateCount = prepared.update(currentProxyManager.getTransactionName());
 
-                boolean commit = true; // An exception would already have been thrown if it should have been a rollback.
+                final boolean commit = true; // An exception would already have been thrown if it should have been a rollback.
 
                 H2OTest.createTableFailure();
 
@@ -189,7 +195,7 @@ public class CommandContainer extends Command {
                 }
 
             }
-            catch (SQLException e) {
+            catch (final SQLException e) {
                 currentProxyManager.finishTransaction(false, true, session.getDatabase());
                 session.rollback();
 
@@ -216,7 +222,7 @@ public class CommandContainer extends Command {
                 }
 
             }
-            catch (SQLException e) {
+            catch (final SQLException e) {
                 ErrorHandling.errorNoEvent("Transaction not found for query: " + prepared.getSQL());
                 e.printStackTrace();
                 throw e;
@@ -227,11 +233,13 @@ public class CommandContainer extends Command {
         return updateCount;
     }
 
+    @Override
     public boolean isReadOnly() {
 
         return prepared.isReadOnly();
     }
 
+    @Override
     public LocalResult queryMeta() throws SQLException {
 
         return prepared.queryMeta();
@@ -270,37 +278,38 @@ public class CommandContainer extends Command {
      * @see org.h2.command.CommandInterface#isPreparedStatement(boolean)
      */
     @Override
-    public void setIsPreparedStatement(boolean preparedStatement) {
+    public void setIsPreparedStatement(final boolean preparedStatement) {
 
         prepared.setPreparedStatement(preparedStatement);
     }
 
     private void doLock() throws SQLException {
 
-        long max = System.currentTimeMillis() + session.getLockTimeout();
+        final long max = System.currentTimeMillis() + session.getLockTimeout();
 
         while (true) {
 
             /*
              * Check if lock has been obtained.
              */
-            this.acquireLocks();
+            acquireLocks();
 
-            if (session.getProxyManager().hasAllLocks()) return;
+            if (session.getProxyManager().hasAllLocks()) { return; }
 
             // ErrorHandling.errorNoEvent("No lock obtained yet: " + prepared.getSQL());
 
             /*
              * Check current time.. wait.
              */
-            long now = System.currentTimeMillis();
+            final long now = System.currentTimeMillis();
             if (now >= max) { throw new SQLException("Couldn't obtain locks for all tables involved in query."); }
+
             try {
                 // TODO al says: WTF
                 for (int i = 0; i < 20; i++) {
-                    long free = Runtime.getRuntime().freeMemory();
+                    final long free = Runtime.getRuntime().freeMemory();
                     System.gc();
-                    long free2 = Runtime.getRuntime().freeMemory();
+                    final long free2 = Runtime.getRuntime().freeMemory();
                     if (free == free2) {
                         break;
                     }
@@ -313,7 +322,7 @@ public class CommandContainer extends Command {
                 }
                 Thread.sleep(sleep);
             }
-            catch (InterruptedException e) {
+            catch (final InterruptedException e) {
                 // ignore
             }
         }
