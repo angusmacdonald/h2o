@@ -40,7 +40,8 @@
     <property name="compile-dest-dir"     value="bin" />
 	
 	<property name="test-name"            value="org.h2o.run.CheckInTests" />
-	<property name="cobertura-exclude"    value="**/test/**/*.class" />
+	<property name="cobertura-exclude"    value="**/test/**/*.class **/run/**/*.class" />
+	<property name="cobertura-src"        value="src/main" />
 
 	<!-- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! -->
 
