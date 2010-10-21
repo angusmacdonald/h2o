@@ -5,7 +5,7 @@
        
 	<import file="${hudson-tools-archive-dir}/build-common.xml"/>
 
-	<target name="build" depends="do-init-release, do-compile, project-jar, do-test, release-doc, do-checkstyle, do-findbugs, do-cpd, do-highlight" />
+	<target name="build" depends="do-init-release, do-compile, do-test, project-jar, release-doc, do-checkstyle, do-findbugs, do-cpd, do-highlight" />
 
 	<!-- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! -->
 
@@ -15,7 +15,7 @@
 	<property name="lib-slf4j"            location="ext/slf4j-api-1.5.0.jar" />
 
 	<path id="project-classpath">
-	    <pathelement location="bin/h2o.jar" />
+	    <pathelement location="bin" />
 	    <pathelement location="${lib-nds}" />
 	    <pathelement location="${lib-stachord}" />
 	    <pathelement location="${lib-mindterm}" />
