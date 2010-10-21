@@ -14,10 +14,22 @@
 	<property name="lib-servlet"          location="ext/servlet-api-2.4.jar" />
 	<property name="lib-slf4j"            location="ext/slf4j-api-1.5.0.jar" />
 
-	<property name="classpath"            value="bin:${lib-nds}:${lib-stachord}:${lib-junit}:${lib-tools}:${lib-mindterm}:${lib-lucene}:${lib-osgi}:${lib-servlet}:${lib-slf4j}" />
+	<path id="project-classpath">
+	    <pathelement location="bin" />
+	    <pathelement location="${lib-nds}" />
+	    <pathelement location="${lib-stachord}" />
+	    <pathelement location="${lib-mindterm}" />
+	    <pathelement location="${lib-junit}" />
+        <pathelement location="${lib-tools}" />
+        <pathelement location="${lib-lucene}" />
+        <pathelement location="${lib-osgi}" />
+        <pathelement location="${lib-servlet}" />
+        <pathelement location="${lib-slf4j}" />
+	</path>
+	
+	<property name="classpath"            value="${toString:project-classpath}" />
 
     <property name="checkstyle-check-dir" value="src/main/org/h2o" />
-    <property name="pmd-check-dir"        value="src/main/org/h2o" />
 	<property name="cpd-check-dir"        value="src/main/org/h2o" />
 
 	<property name="findbugs-src-dir"     value="src/main/org/h2o" />
@@ -27,18 +39,11 @@
 	<property name="compile-includes"     value="**/*.java" />
     <property name="compile-dest-dir"     value="bin" />
 	
-	<property name="test-name" value="org.h2o.run.CheckInTests" />
+	<property name="test-name"            value="org.h2o.run.CheckInTests" />
+	<property name="cobertura-exclude"    value="**/test/**/*.class" />
 
 	<!-- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! -->
 
-	<!-- Initialise release directory structure. -->
-	<target name="do-init-release">
-		<mkdir dir="bin" />
-		<mkdir dir="colored" />
-		<mkdir dir="doc" />
-		<mkdir dir="junit" />
-	</target>
-	
 	<!-- Generate project jar. -->
 	<target name="project-jar">
 		<jar destfile="bin/h2o.jar">
