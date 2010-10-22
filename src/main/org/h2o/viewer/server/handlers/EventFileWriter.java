@@ -19,6 +19,8 @@ import java.util.List;
 
 import org.h2o.viewer.gwt.client.H2OEvent;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
@@ -28,16 +30,20 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  */
 public class EventFileWriter implements EventHandler {
 
-    private File file;
+    private final File file;
 
     private BufferedWriter output;
 
-    public EventFileWriter(String location) {
+    public EventFileWriter(final String location) {
 
         file = new File(location);
 
         if (file.getParentFile() != null) {
-            file.getParentFile().mkdirs();
+            final boolean successful = file.getParentFile().mkdirs();
+
+            if (!successful) {
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to create folder for locator file. It may already exist.");
+            }
         }
 
         try {
@@ -45,14 +51,14 @@ public class EventFileWriter implements EventHandler {
                 ErrorHandling.errorNoEvent("This is a directory, when I file should have been given.");
             }
         }
-        catch (IOException e1) {
+        catch (final IOException e1) {
             e1.printStackTrace();
         }
 
         try {
             output = new BufferedWriter(new FileWriter(file));
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             e.printStackTrace();
         }
 
@@ -64,10 +70,10 @@ public class EventFileWriter implements EventHandler {
 
         // Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Reader reading:");
 
-        List<String> events = new LinkedList<String>();
+        final List<String> events = new LinkedList<String>();
 
         try {
-            BufferedReader input = new BufferedReader(new FileReader(file));
+            final BufferedReader input = new BufferedReader(new FileReader(file));
 
             try {
                 String line = null;
@@ -81,7 +87,7 @@ public class EventFileWriter implements EventHandler {
             }
 
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             e.printStackTrace();
         }
 
@@ -91,7 +97,7 @@ public class EventFileWriter implements EventHandler {
     }
 
     @Override
-    public boolean pushEvent(H2OEvent event) {
+    public boolean pushEvent(final H2OEvent event) {
 
         startWrite();
 
@@ -104,7 +110,7 @@ public class EventFileWriter implements EventHandler {
             successful = true;
 
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             e.printStackTrace();
         }
 
@@ -118,18 +124,24 @@ public class EventFileWriter implements EventHandler {
      * #####################################
      */
 
-    /**
-     * Create a new locator file. This is used by various test classes to overwrite old locator files.
-     */
     public void createNewFile() {
 
         startWrite();
 
-        file.delete();
-        try {
-            file.createNewFile();
+        boolean successful = file.delete();
+
+        if (!successful) {
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to delete file. It may not have existed.");
         }
-        catch (IOException e) {
+
+        try {
+            successful = file.createNewFile();
+
+            if (!successful) {
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to create new event file.");
+            }
+        }
+        catch (final IOException e) {
             e.printStackTrace();
         }
 
@@ -158,12 +170,13 @@ public class EventFileWriter implements EventHandler {
 
     protected synchronized void startRead() {
 
-        while (!readCondition())
+        while (!readCondition()) {
             try {
                 wait();
             }
-            catch (InterruptedException ex) {
+            catch (final InterruptedException ex) {
             }
+        }
         ++activeReaders;
     }
 
@@ -175,12 +188,13 @@ public class EventFileWriter implements EventHandler {
 
     protected synchronized void startWrite() {
 
-        while (!writeCondition())
+        while (!writeCondition()) {
             try {
                 wait();
             }
-            catch (InterruptedException ex) {
+            catch (final InterruptedException ex) {
             }
+        }
         writerPresent = true;
     }
 

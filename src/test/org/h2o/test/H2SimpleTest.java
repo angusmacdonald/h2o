@@ -17,11 +17,13 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import org.h2.engine.Constants;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.util.ScriptReader;
 import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.locator.server.LocatorServer;
 import org.h2o.run.AllTests;
 import org.h2o.util.LocalH2OProperties;
@@ -86,6 +88,7 @@ public class H2SimpleTest {
         final LineNumberReader lineReader = new LineNumberReader(new InputStreamReader(is, "Cp1252"));
         final ScriptReader reader = new ScriptReader(lineReader);
 
+        Statement query = null;
         try {
 
             while (true) {
@@ -106,7 +109,8 @@ public class H2SimpleTest {
                         // ignore
                     }
                     else if (sql.toLowerCase().startsWith("select")) {
-                        final ResultSet rs = conn.createStatement().executeQuery(sql);
+                        query = conn.createStatement();
+                        final ResultSet rs = query.executeQuery(sql);
                         while (rs.next()) {
                             final String expected = reader.readStatement().trim();
                             final String got = "> " + rs.getString(1);
@@ -126,7 +130,7 @@ public class H2SimpleTest {
             }
         }
         finally {
-
+            query.close();
             is.close();
             conn.close();
             DeleteDbFiles.execute(baseDir, "scriptSimple", true);
@@ -153,7 +157,7 @@ public class H2SimpleTest {
     private Connection getConnection(final String url) throws SQLException {
 
         org.h2.Driver.load();
-        return DriverManager.getConnection(url, "sa", "");
+        return DriverManager.getConnection(url, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
     }
 
     /**

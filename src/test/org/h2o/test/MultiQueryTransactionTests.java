@@ -94,19 +94,19 @@ public class MultiQueryTransactionTests extends TestBase {
             final int[] pKey = queryToExecute.getPrimaryKey();
             final String[] secondCol = queryToExecute.getSecondColumn();
 
-            String sqlToExecute = queryToExecute.getSQL();
+            final StringBuilder sqlToExecute = new StringBuilder(queryToExecute.getSQL());
             /*
              * Delete some of these entries...
              */
             final int toDelete = TOTAL_ITERATIONS / 2;
 
             for (int i = toDelete / 2; i < toDelete; i++) {
-                sqlToExecute += "DELETE FROM TEST WHERE ID = " + i + ";";
+                sqlToExecute.append("DELETE FROM TEST WHERE ID = " + i + ";");
                 pKey[i - 1] = 0;
                 secondCol[i - 1] = null;
             }
 
-            sb.execute(sqlToExecute);
+            sb.execute(sqlToExecute.toString());
 
             validateOnFirstMachine(queryToExecute.getTableName(), pKey, secondCol);
 

@@ -36,7 +36,7 @@ public class LocatorState {
 
     private boolean writerPresent = false;
 
-    private File locatorFile;
+    private final File locatorFile;
 
     private boolean locked = false;
 
@@ -48,12 +48,16 @@ public class LocatorState {
 
     private long lockCreationTime = 0l;
 
-    protected LocatorState(String location) {
+    protected LocatorState(final String location) {
 
         locatorFile = new File(location);
 
         if (locatorFile.getParentFile() != null) {
-            locatorFile.getParentFile().mkdirs();
+            final boolean successful = locatorFile.getParentFile().mkdirs();
+
+            if (!successful) {
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to create folder for locator file. It may already exist.");
+            }
         }
 
         try {
@@ -61,7 +65,7 @@ public class LocatorState {
                 ErrorHandling.errorNoEvent("This is a directory, when I file should have been given.");
             }
         }
-        catch (IOException e1) {
+        catch (final IOException e1) {
             e1.printStackTrace();
         }
 
@@ -78,10 +82,10 @@ public class LocatorState {
 
         // Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Reader reading:");
 
-        List<String> locations = new LinkedList<String>();
+        final List<String> locations = new LinkedList<String>();
 
         try {
-            BufferedReader input = new BufferedReader(new FileReader(locatorFile));
+            final BufferedReader input = new BufferedReader(new FileReader(locatorFile));
 
             try {
                 String line = null;
@@ -95,11 +99,11 @@ public class LocatorState {
             }
 
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             e.printStackTrace();
         }
 
-        ReplicaLocationsResponse response = new ReplicaLocationsResponse(locations, updateCount);
+        final ReplicaLocationsResponse response = new ReplicaLocationsResponse(locations, updateCount);
 
         // Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Finished reading.");
         stopRead();
@@ -113,7 +117,7 @@ public class LocatorState {
      * @param databaseLocations
      *            Locations to be written to the file, each on a new line.
      */
-    public boolean writeLocationsToFile(String[] databaseLocations) {
+    public boolean writeLocationsToFile(final String[] databaseLocations) {
 
         startWrite();
 
@@ -122,10 +126,10 @@ public class LocatorState {
         // Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Writer writing.");
 
         try {
-            Writer output = new BufferedWriter(new FileWriter(locatorFile));
+            final Writer output = new BufferedWriter(new FileWriter(locatorFile));
 
             try {
-                for (String location : databaseLocations) {
+                for (final String location : databaseLocations) {
                     output.write(location + "\n");
                 }
                 successful = true;
@@ -136,7 +140,7 @@ public class LocatorState {
             }
 
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             e.printStackTrace();
         }
 
@@ -153,7 +157,7 @@ public class LocatorState {
      *            The database which is requesting the lock.
      * @return true if the lock was successfully taken out; otherwise false.
      */
-    public LockRequestResponse lock(String requestingDatabase) {
+    public LockRequestResponse lock(final String requestingDatabase) {
 
         startWrite();
 
@@ -161,7 +165,7 @@ public class LocatorState {
 
         if (locked) {
             // Check that the lock hasn't timed out.
-            if ((lockCreationTime + LOCK_TIMEOUT) < System.currentTimeMillis()) {
+            if (lockCreationTime + LOCK_TIMEOUT < System.currentTimeMillis()) {
                 ErrorHandling.errorNoEvent("Lock held by " + databaseWithLock + " has timed out.");
                 locked = false;
                 databaseWithLock = null;
@@ -169,7 +173,7 @@ public class LocatorState {
             }
         }
 
-        if (locked && !this.databaseWithLock.equals(requestingDatabase)) {
+        if (locked && !databaseWithLock.equals(requestingDatabase)) {
             success = false;
         }
         else {
@@ -179,7 +183,7 @@ public class LocatorState {
             databaseWithLock = requestingDatabase;
         }
 
-        LockRequestResponse response = new LockRequestResponse(updateCount, success);
+        final LockRequestResponse response = new LockRequestResponse(updateCount, success);
 
         stopWrite();
 
@@ -199,7 +203,7 @@ public class LocatorState {
      *            The database which is requesting the lock.
      * @return 0 if the commit failed; 1 if it succeeded.
      */
-    public int releaseLockOnFile(String requestingDatabase) {
+    public int releaseLockOnFile(final String requestingDatabase) {
 
         startWrite();
 
@@ -246,12 +250,13 @@ public class LocatorState {
 
     private synchronized void startRead() {
 
-        while (!readCondition())
+        while (!readCondition()) {
             try {
                 wait();
             }
-            catch (InterruptedException ex) {
+            catch (final InterruptedException ex) {
             }
+        }
         ++activeReaders;
     }
 
@@ -263,12 +268,13 @@ public class LocatorState {
 
     private synchronized void startWrite() {
 
-        while (!writeCondition())
+        while (!writeCondition()) {
             try {
                 wait();
             }
-            catch (InterruptedException ex) {
+            catch (final InterruptedException ex) {
             }
+        }
         writerPresent = true;
     }
 
@@ -289,7 +295,7 @@ public class LocatorState {
         try {
             locatorFile.createNewFile();
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             e.printStackTrace();
         }
 
