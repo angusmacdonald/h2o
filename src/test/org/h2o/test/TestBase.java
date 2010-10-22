@@ -9,6 +9,9 @@
 package org.h2o.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.rmi.NotBoundException;
@@ -45,6 +48,8 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  */
 public class TestBase {
 
+    public static final long SHUTDOWN_CHECK_DELAY = 1000;
+
     Connection ca = null;
 
     Connection cb = null;
@@ -71,22 +76,8 @@ public class TestBase {
         Diagnostic.setLevel(DiagnosticLevel.INIT);
         Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.stachord");
 
-        createProperties("jdbc:h2:mem:two");
-        createProperties("jdbc:h2:mem:three");
-    }
-
-    private static void createProperties(final String url) {
-
-        System.out.println("\n>>>>>>>>>>>>>>>>>>>>> recording Chord port: " + chordPort + "\n");
-
-        final LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(url));
-
-        properties.createNewFile();
-        // "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
-        properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
-        properties.setProperty("databaseName", "testDB");
-        properties.setProperty("chordPort", "" + chordPort++);
-        properties.saveAndClose();
+        createProperties("jdbc:h2:mem:two", true);
+        createProperties("jdbc:h2:mem:three", true);
     }
 
     /**
@@ -122,131 +113,34 @@ public class TestBase {
     }
 
     /**
-     * Delete all of the database files created in these tests
-     */
-    private static void deleteDatabaseData(final String baseDir, final String db) {
-
-        try {
-            DeleteDbFiles.execute(baseDir, db, true);
-        }
-        catch (final SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * 
-     */
-    public static void setUpDescriptorFiles() {
-
-        // DatabaseLocatorFile dlf = new DatabaseLocatorFile("testDB", "\\\\shell\\angus\\public_html\\databases");
-        //
-        // dlf.setProperties("testDB", "jdbc:h2:mem:one" + "+" + ChordRemote.currentPort);
-        //
-
-        LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:mem:one"));
-        properties.createNewFile();
-        properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
-        properties.setProperty("databaseName", "testDB");
-        properties.setProperty("chordPort", "" + chordPort++);
-        properties.saveAndClose();
-
-        properties = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"));
-        properties.createNewFile();
-        properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
-        properties.setProperty("databaseName", "testDB");
-        properties.setProperty("chordPort", "" + chordPort++);
-        properties.saveAndClose();
-
-        properties = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:three"));
-        properties.createNewFile();
-        properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
-        properties.setProperty("databaseName", "testDB");
-        properties.setProperty("chordPort", "" + chordPort++);
-        properties.saveAndClose();
-
-        properties = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"));
-        properties.createNewFile();
-        properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
-        properties.setProperty("databaseName", "testDB");
-        properties.setProperty("chordPort", "" + chordPort++);
-        properties.saveAndClose();
-
-    }
-
-    /**
-     * This is done because the server doesn't release the original port when it is stopped programmatically.
-     */
-    public static void resetLocatorFile() {
-
-        LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:db_data/test/scriptSimple"));
-
-        properties.createNewFile();
-        // "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
-        properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
-        properties.setProperty("databaseName", "testDB");
-        properties.saveAndClose();
-
-        properties = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"));
-
-        properties.createNewFile();
-        // "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
-        properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
-        properties.setProperty("databaseName", "testDB");
-        properties.saveAndClose();
-
-    }
-
-    public static void setUpDescriptorFiles(final String[] dbLocations, final String descriptorLocation, final String databaseName) {
-
-        // DatabaseLocatorFile dlf = new DatabaseLocatorFile("testDB", "\\\\shell\\angus\\public_html\\databases");
-        //
-        // dlf.setProperties("testDB", "jdbc:h2:mem:one" + "+" + ChordRemote.currentPort);
-        //
-
-        for (final String location : dbLocations) {
-            final LocalH2OProperties knownHosts = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:mem:" + location));
-            knownHosts.createNewFile();
-            knownHosts.setProperty("descriptor", descriptorLocation);
-            knownHosts.setProperty("databaseName", "testDB");
-            knownHosts.saveAndClose();
-        }
-
-    }
-
-    /**
      * @throws SQLException
+     * @throws InterruptedException 
      * @throws java.lang.Exception
      */
     @After
-    public void tearDown() throws SQLException {
+    public void tearDown() throws SQLException, InterruptedException {
 
-        try {
-            // sa.execute("DROP TABLE IF EXISTS TEST");
-            // sb.execute("DROP TABLE IF EXISTS TEST");
-            sa.execute("DROP ALL OBJECTS");
-            sb.execute("DROP ALL OBJECTS");
+        // sa.execute("DROP TABLE IF EXISTS TEST");
+        // sb.execute("DROP TABLE IF EXISTS TEST");
+        sa.execute("DROP ALL OBJECTS");
+        sb.execute("DROP ALL OBJECTS");
 
-            if (!sa.isClosed()) {
-                sa.close();
-            }
-            if (!sb.isClosed()) {
-                sb.close();
-            }
-
-            if (!ca.isClosed()) {
-                ca.close();
-            }
-            if (!cb.isClosed()) {
-                cb.close();
-            }
-
-            closeDatabaseCompletely();
-
+        if (!sa.isClosed()) {
+            sa.close();
         }
-        catch (final Exception e) {
-            e.printStackTrace();
+        if (!sb.isClosed()) {
+            sb.close();
         }
+
+        if (!ca.isClosed()) {
+            ca.close();
+        }
+        if (!cb.isClosed()) {
+            cb.close();
+        }
+
+        closeDatabaseCompletely();
+
         ca = null;
         cb = null;
         sa = null;
@@ -254,15 +148,36 @@ public class TestBase {
 
         ls.setRunning(false);
         while (!ls.isFinished()) {
+            Thread.sleep(SHUTDOWN_CHECK_DELAY);
         };
     }
 
     /**
-     * Close the database explicitly, in case it didn't shut down correctly between tests.
-     */
-    public static void closeDatabaseCompletely() {
+    * 
+    */
+    protected static void setUpDescriptorFiles() {
 
-        obliterateRMIRegistyContents();
+        createProperties("jdbc:h2:mem:one", true);
+        createProperties("jdbc:h2:mem:two", true);
+        createProperties("jdbc:h2:three", true);
+        createProperties("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", true);
+    }
+
+    /**
+     * This is done because the server doesn't release the original port when it is stopped programmatically.
+     */
+    protected static void resetLocatorFile() {
+
+        createProperties("jdbc:h2:db_data/test/scriptSimple", false);
+        createProperties("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", false);
+    }
+
+    /**
+    * Close the database explicitly, in case it didn't shut down correctly between tests.
+    */
+    protected static void closeDatabaseCompletely() {
+
+        obliterateRMIRegistryContents();
         Collection<Database> dbs = Engine.getInstance().closeAllDatabases();
 
         for (final Database db : dbs) {
@@ -271,47 +186,6 @@ public class TestBase {
         }
 
         dbs = null;
-
-    }
-
-    /**
-     * Removes every object from the RMI registry.
-     */
-    private static void obliterateRMIRegistyContents() {
-
-        Registry registry = null;
-
-        try {
-            registry = LocateRegistry.getRegistry(20000);
-
-        }
-        catch (final RemoteException e) {
-            e.printStackTrace();
-        }
-
-        if (registry != null) {
-            try {
-                final String[] listOfObjects = registry.list();
-
-                for (final String l : listOfObjects) {
-                    try {
-                        if (!l.equals("IChordNode")) {
-                            registry.unbind(l);
-                        }
-                    }
-                    catch (final NotBoundException e) {
-                        fail("Failed to remove " + l + " from RMI registry.");
-                    }
-                }
-
-                if (registry.list().length > 0) {
-                    fail("Somehow failed to empty RMI registry.");
-                }
-            }
-            catch (final Exception e) {
-                // It happens for tests where the registry was not set up.
-            }
-        }
     }
 
     /**
@@ -326,48 +200,22 @@ public class TestBase {
      *            The results actually returned.
      * @throws SQLException
      */
-    public void validateResults(final int[] pKey, final String[] secondCol, final ResultSet rs) throws SQLException {
+    protected void validateResults(final int[] pKey, final String[] secondCol, final ResultSet rs) throws SQLException {
 
-        if (rs == null) {
-            fail("Resultset was null. Probably an incorrectly set test.");
-        }
+        assertNotNull("Resultset was null. Probably an incorrectly set test.", rs);
 
         for (int i = 0; i < pKey.length; i++) {
             if (pKey[i] != 0 && secondCol[i] != null) { // indicates the entry was deleted as part of the test.
-                if (rs.next()) {
-                    assertEquals(pKey[i], rs.getInt(1));
-                    assertEquals(secondCol[i], rs.getString(2));
 
-                }
-                else {
-                    fail("Expected an entry here.");
-                }
+                assertTrue(rs.next());
+                assertEquals(pKey[i], rs.getInt(1));
+                assertEquals(secondCol[i], rs.getString(2));
             }
         }
 
-        if (rs.next()) {
-            System.err.println(rs.getInt(1) + ": " + rs.getString(2));
-            fail("Too many entries.");
-        }
+        assertFalse("Too many entries: " + rs.getInt(1) + ": " + rs.getString(2), rs.next());
 
         rs.close();
-    }
-
-    /**
-     * Create a replica on the second test database.
-     * 
-     * @throws SQLException
-     */
-    protected void createReplicaOnB(final String tableName) throws SQLException {
-
-        /*
-         * Create replica on B.
-         */
-        sb.execute("CREATE REPLICA " + tableName + ";");
-
-        if (sb.getUpdateCount() != 0) {
-            fail("Expected update count to be '0'");
-        }
     }
 
     protected void createReplicaOnB() throws SQLException {
@@ -439,4 +287,80 @@ public class TestBase {
         stat.execute(sqlQuery);
     }
 
+    private static void createProperties(final String url, final boolean include_chord_port) {
+
+        final LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(url));
+
+        properties.createNewFile();
+        // "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
+        properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
+        properties.setProperty("databaseName", "testDB");
+
+        if (include_chord_port) {
+            properties.setProperty("chordPort", "" + chordPort++);
+        }
+
+        properties.saveAndClose();
+    }
+
+    /**
+     * Delete all of the database files created in these tests
+     * @throws SQLException 
+     */
+    private static void deleteDatabaseData(final String baseDir, final String db) throws SQLException {
+
+        DeleteDbFiles.execute(baseDir, db, true);
+    }
+
+    /**
+     * Removes every object from the RMI registry.
+     */
+    private static void obliterateRMIRegistryContents() {
+
+        Registry registry = null;
+
+        try {
+            registry = LocateRegistry.getRegistry(20000);
+        }
+        catch (final RemoteException e) {
+            e.printStackTrace();
+        }
+
+        if (registry != null) {
+            try {
+                final String[] listOfObjects = registry.list();
+
+                for (final String l : listOfObjects) {
+                    try {
+                        if (!l.equals("IChordNode")) {
+                            registry.unbind(l);
+                        }
+                    }
+                    catch (final NotBoundException e) {
+                        fail("Failed to remove " + l + " from RMI registry.");
+                    }
+                }
+
+                assertEquals("Somehow failed to empty RMI registry.", 0, registry.list().length);
+            }
+            catch (final Exception e) {
+                // It happens for tests where the registry was not set up.
+            }
+        }
+    }
+
+    /**
+     * Create a replica on the second test database.
+     * 
+     * @throws SQLException
+     */
+    private void createReplicaOnB(final String tableName) throws SQLException {
+
+        /*
+         * Create replica on B.
+         */
+        sb.execute("CREATE REPLICA " + tableName + ";");
+
+        assertEquals(0, sb.getUpdateCount());
+    }
 }

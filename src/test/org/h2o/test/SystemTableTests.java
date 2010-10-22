@@ -9,6 +9,7 @@
 package org.h2o.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.sql.Connection;
@@ -38,12 +39,13 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 public class SystemTableTests {
 
     private static final String BASEDIR = "db_data/unittests/";
-    private static final long SHUTDOWN_CHECK_DELAY = 1000;
 
     @BeforeClass
     public static void initialSetUp() throws SQLException {
 
         Diagnostic.setLevel(DiagnosticLevel.INIT);
+        Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.stachord");
+
         Constants.IS_NON_SM_TEST = true;
         Constants.IS_TEST = true;
 
@@ -59,8 +61,6 @@ public class SystemTableTests {
     public void setUp() throws Exception {
 
         Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-        // PersistentSystemTable.USERNAME = "sa";
-        // PersistentSystemTable.PASSWORD = "sa";
 
         TestBase.setUpDescriptorFiles();
 
@@ -82,7 +82,7 @@ public class SystemTableTests {
         ls.setRunning(false);
 
         while (!ls.isFinished()) {
-            Thread.sleep(SHUTDOWN_CHECK_DELAY);
+            Thread.sleep(TestBase.SHUTDOWN_CHECK_DELAY);
         }
     }
 
@@ -94,7 +94,7 @@ public class SystemTableTests {
      * @throws InterruptedException
      */
     @Test
-    public void schemaTableCreation() throws ClassNotFoundException, InterruptedException {
+    public void schemaTableCreation() throws ClassNotFoundException, InterruptedException, SQLException {
 
         Connection conn = null;
         // start the server, allows to access the database remotely
@@ -114,10 +114,6 @@ public class SystemTableTests {
             stat.executeQuery("SELECT * FROM H2O.H2O_CONNECTION");
 
         }
-        catch (final SQLException e1) {
-            e1.printStackTrace();
-            fail("Couldn't find System Table tables.");
-        }
         finally {
             try {
                 if (conn != null) {
@@ -134,7 +130,7 @@ public class SystemTableTests {
             server.stop();
 
             while (server.isRunning(false)) {
-                Thread.sleep(SHUTDOWN_CHECK_DELAY);
+                Thread.sleep(TestBase.SHUTDOWN_CHECK_DELAY);
             };
         }
     }
@@ -187,24 +183,21 @@ public class SystemTableTests {
             sa.execute("SELECT * FROM H2O.H2O_TABLE;");
 
             final ResultSet rs = sa.getResultSet();
-            if (!rs.next()) {
-                fail("There shouldn't be a single table in the System Table.");
-            }
 
-            if (!rs.getString(3).equals("TEST")) {
-                fail("This entry should be for the TEST table.");
-            }
+            assertTrue("There shouldn't be a single table in the System Table.", rs.next());
+            assertEquals("This entry should be for the TEST table.", rs.getString(3), "TEST");
+            assertEquals("This entry should be for the PUBLIC schema.", rs.getString(2), "PUBLIC");
 
-            if (!rs.getString(2).equals("PUBLIC")) {
-                fail("This entry should be for the PUBLIC schema.");
-            }
             rs.close();
         }
         finally {
 
-            conn.close();
-
-            sa.close();
+            if (conn != null) {
+                conn.close();
+            }
+            if (sa != null) {
+                sa.close();
+            }
 
             // stop the server
             server.stop();

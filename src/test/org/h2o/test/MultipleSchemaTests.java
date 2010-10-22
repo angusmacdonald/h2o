@@ -9,7 +9,8 @@
 package org.h2o.test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -31,100 +32,62 @@ public class MultipleSchemaTests extends TestBase {
 
     /**
      * Tests that a table in a non-default schema is added successfully to the System Table.
+     * @throws SQLException 
      */
     @Test
-    public void testSystemTableAdd() {
+    public void TestSystemTableAdd() throws SQLException {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 
-        try {
+        setup();
 
-            sa.execute("CREATE SCHEMA SCHEMA2");
-            sa.execute("CREATE TABLE SCHEMA2.TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-
-            sa.execute("SELECT tablename, schemaname FROM H2O.H2O_TABLE;");
-
-            final ResultSet rs = sa.getResultSet();
-
-            if (rs.next()) {
-                assertEquals("TEST", rs.getString(1));
-                assertEquals("PUBLIC", rs.getString(2));
-            }
-            if (rs.next()) {
-                assertEquals("TEST", rs.getString(1));
-                assertEquals("SCHEMA2", rs.getString(2));
-            }
-            else {
-                fail("Expected a System Table entry here.");
-            }
-
-            sa.execute("DROP TABLE IF EXISTS SCHEMA2.TEST");
-            sa.execute("DROP SCHEMA IF EXISTS SCHEMA2");
-        }
-        catch (final SQLException e) {
-            e.printStackTrace();
-            fail("An Unexpected SQLException was thrown.");
-        }
+        sa.execute("DROP TABLE IF EXISTS SCHEMA2.TEST");
+        sa.execute("DROP SCHEMA IF EXISTS SCHEMA2");
     }
 
     /**
      * Tests that a table in a non-default schema is dropped successfully from the System Table.
+     * @throws SQLException 
      */
     @Test
-    public void testSystemTableDrop() {
+    public void TestSystemTableDrop() throws SQLException {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 
-        try {
+        setup();
 
-            sa.execute("CREATE SCHEMA SCHEMA2");
-            sa.execute("CREATE TABLE SCHEMA2.TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+        // Drop the table and check the result of the update.
+        sa.execute("DROP TABLE SCHEMA2.TEST");
 
-            sa.execute("SELECT tablename, schemaname FROM H2O.H2O_TABLE;");
+        assertEquals(0, sa.getUpdateCount());
 
-            ResultSet rs = sa.getResultSet();
+        // Check that the System Table has correct information.
+        sa.execute("SELECT tablename, schemaname FROM H2O.H2O_TABLE;");
+        final ResultSet rs = sa.getResultSet();
 
-            if (rs.next()) {
-                assertEquals("TEST", rs.getString(1));
-                assertEquals("PUBLIC", rs.getString(2));
-            }
-            if (rs.next()) {
-                assertEquals("TEST", rs.getString(1));
-                assertEquals("SCHEMA2", rs.getString(2));
-            }
-            else {
-                fail("Expected a System Table entry here.");
-            }
-
-            /*
-             * Drop the table and check the result of the update
-             */
-            sa.execute("DROP TABLE SCHEMA2.TEST");
-
-            final int result = sa.getUpdateCount();
-            if (result != 0) {
-                fail("Expected update count to be '0'");
-            }
-
-            /*
-             * Now check that the System Table has correct information.
-             */
-            sa.execute("SELECT tablename, schemaname FROM H2O.H2O_TABLE;");
-            rs = sa.getResultSet();
-
-            if (rs.next()) {
-                assertEquals("TEST", rs.getString(1));
-                assertEquals("PUBLIC", rs.getString(2));
-            }
-            if (rs.next()) {
-                fail("There should only be one entry here.");
-            }
-
+        if (rs.next()) {
+            assertEquals("TEST", rs.getString(1));
+            assertEquals("PUBLIC", rs.getString(2));
         }
-        catch (final SQLException e) {
-            e.printStackTrace();
-            fail("An Unexpected SQLException was thrown.");
-        }
+        assertFalse("There should only be one entry here.", rs.next());
+    }
+
+    private void setup() throws SQLException {
+
+        sa.execute("CREATE SCHEMA SCHEMA2");
+        sa.execute("CREATE TABLE SCHEMA2.TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+
+        sa.execute("SELECT tablename, schemaname FROM H2O.H2O_TABLE;");
+
+        final ResultSet rs = sa.getResultSet();
+
+        assertTrue(rs.next());
+        assertEquals("TEST", rs.getString(1));
+        assertEquals("PUBLIC", rs.getString(2));
+
+        assertTrue("Expected a System Table entry here.", rs.next());
+        assertEquals("TEST", rs.getString(1));
+        assertEquals("SCHEMA2", rs.getString(2));
     }
 
     //	/**

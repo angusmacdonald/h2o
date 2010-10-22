@@ -8,6 +8,7 @@
  */
 package org.h2o.run;
 
+import org.h2o.test.MultipleSchemaTests;
 import org.h2o.test.SystemTableTests;
 import org.h2o.test.TransactionNameTests;
 import org.junit.runner.RunWith;
@@ -17,8 +18,8 @@ import org.junit.runners.Suite;
  * Tests run on each build.
  */
 @RunWith(Suite.class)
-//@Suite.SuiteClasses({MultipleSchemaTests.class, ReplicaTests.class, CustomSettingsTests.class, IndexTests.class, UpdateTests.class, MultiQueryTransactionTests.class, H2Tests.class, WrapperTests.class, RestartTests.class, LocatorTests.class, AsynchronousTests.class})
-@Suite.SuiteClasses({TransactionNameTests.class, SystemTableTests.class})
+//@Suite.SuiteClasses({ReplicaTests.class, CustomSettingsTests.class, IndexTests.class, UpdateTests.class, MultiQueryTransactionTests.class, H2Tests.class, WrapperTests.class, RestartTests.class, LocatorTests.class, AsynchronousTests.class})
+@Suite.SuiteClasses({TransactionNameTests.class, SystemTableTests.class, MultipleSchemaTests.class})
 public class CheckInTests {
     // Empty.
 }
