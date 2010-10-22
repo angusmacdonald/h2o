@@ -69,8 +69,17 @@ public class TestBase {
         Constants.IS_NON_SM_TEST = true;
 
         Diagnostic.setLevel(DiagnosticLevel.INIT);
+        Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.stachord");
 
-        LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:mem:two"));
+        createProperties("jdbc:h2:mem:two");
+        createProperties("jdbc:h2:mem:three");
+    }
+
+    private static void createProperties(final String url) {
+
+        System.out.println("\n>>>>>>>>>>>>>>>>>>>>> recording Chord port: " + chordPort + "\n");
+
+        final LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(url));
 
         properties.createNewFile();
         // "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
@@ -78,16 +87,6 @@ public class TestBase {
         properties.setProperty("databaseName", "testDB");
         properties.setProperty("chordPort", "" + chordPort++);
         properties.saveAndClose();
-
-        properties = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:mem:three"));
-
-        properties.createNewFile();
-        // "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
-        properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
-        properties.setProperty("databaseName", "testDB");
-        properties.setProperty("chordPort", "" + chordPort++);
-        properties.saveAndClose();
-
     }
 
     /**
