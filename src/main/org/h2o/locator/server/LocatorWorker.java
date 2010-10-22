@@ -29,9 +29,9 @@ public class LocatorWorker extends Thread {
 
     private static final String SEPARATOR = "::";
 
-    private Socket socket;
+    private final Socket socket;
 
-    private LocatorState locatorState;
+    private final LocatorState locatorState;
 
     /**
      * @param newConnection
@@ -39,15 +39,16 @@ public class LocatorWorker extends Thread {
      * @param locatorFile
      *            The location of the locator file, which stores where
      */
-    protected LocatorWorker(Socket newConnection, LocatorState locatorFile) {
+    protected LocatorWorker(final Socket newConnection, final LocatorState locatorFile) {
 
-        this.locatorState = locatorFile;
-        this.socket = newConnection;
+        locatorState = locatorFile;
+        socket = newConnection;
     }
 
     /**
      * Service the current incoming connection.
      */
+    @Override
     public void run() {
 
         try {
@@ -58,23 +59,28 @@ public class LocatorWorker extends Thread {
 
                 // Get single-line request from the client.
 
-                BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                final BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-                String requestLine = "", request = "";
-                String requestType = requestLine = br.readLine(); // The first line always specifies the type of the request being made.
+                String requestLine = "";
+
+                StringBuilder request = new StringBuilder();
+                final String requestType = requestLine = br.readLine(); // The first line always specifies the type of the request being made.
 
                 if (requestType == null) { // Request didn't contain anything.
                     return;
                 }
 
                 while ((requestLine = br.readLine()) != null) {
-                    if (requestLine.contains("END")) break;
+                    if (requestLine.contains("END")) {
+                        break;
+                    }
 
-                    request += requestLine + SEPARATOR;
+                    request.append(requestLine);
+                    request.append(SEPARATOR);
                 }
 
                 if (request.length() > SEPARATOR.length()) {
-                    request = request.substring(0, request.length() - SEPARATOR.length());
+                    request = new StringBuilder(request.substring(0, request.length() - SEPARATOR.length()));
                 }
                 /*
                  * If the request is empty this is interpreted as a request for the database locations. Read from the locator file and
@@ -83,19 +89,19 @@ public class LocatorWorker extends Thread {
                  */
 
                 if (requestType.equals(LocatorProtocol.GET)) {
-                    ReplicaLocationsResponse response = locatorState.readLocationsFromFile();
+                    final ReplicaLocationsResponse response = locatorState.readLocationsFromFile();
                     sendResponse(LocatorProtocol.constructGetResponse(response));
                 }
                 else if (requestType.equals(LocatorProtocol.SET)) {
-                    String[] databaseLocations = request.split(SEPARATOR);
+                    final String[] databaseLocations = request.toString().split(SEPARATOR);
                     sendResponse(locatorState.writeLocationsToFile(databaseLocations));
                 }
                 else if (requestType.equals(LocatorProtocol.LOCK)) {
-                    LockRequestResponse response = locatorState.lock(request);
+                    final LockRequestResponse response = locatorState.lock(request.toString());
                     sendResponse(LocatorProtocol.constructLockResponse(response));
                 }
                 else if (requestType.equals(LocatorProtocol.COMMIT)) {
-                    sendResponse(locatorState.releaseLockOnFile(request));
+                    sendResponse(locatorState.releaseLockOnFile(request.toString()));
                 }
                 else {
                     ErrorHandling.errorNoEvent("Request not recognized: " + requestType);
@@ -105,7 +111,7 @@ public class LocatorWorker extends Thread {
                 socket.close();
             }
         }
-        catch (IOException e) {
+        catch (final IOException e) {
 
         }
     }
@@ -116,25 +122,25 @@ public class LocatorWorker extends Thread {
      * @param response
      *            The response to be sent.
      */
-    private void sendResponse(String response) throws IOException {
+    private void sendResponse(final String response) throws IOException {
 
-        OutputStream output = socket.getOutputStream();
-        output.write((response.getBytes()));
+        final OutputStream output = socket.getOutputStream();
+        output.write(response.getBytes());
         output.flush();
         output.close();
     }
 
-    private void sendResponse(int response) throws IOException {
+    private void sendResponse(final int response) throws IOException {
 
-        OutputStream output = socket.getOutputStream();
+        final OutputStream output = socket.getOutputStream();
         output.write(response);
         output.flush();
         output.close();
     }
 
-    private void sendResponse(boolean successful) throws IOException {
+    private void sendResponse(final boolean successful) throws IOException {
 
-        OutputStream output = socket.getOutputStream();
+        final OutputStream output = socket.getOutputStream();
         output.write(successful ? 1 : 0);
         output.flush();
         output.close();

@@ -94,7 +94,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
      * Maintained because a nosuchobjectexception is occasionally thrown. See http
      * ://stackoverflow.com/questions/645208/java-rmi-nosuchobjectexception-no -such-object-in-table/854097#854097.
      */
-    public static HashSet<TableManagerRemote> tableManagerReferences = new HashSet<TableManagerRemote>();
+    public final static HashSet<TableManagerRemote> tableManagerReferences = new HashSet<TableManagerRemote>();
 
     public InMemorySystemTable(final Database database) throws Exception {
 
@@ -594,7 +594,8 @@ public class InMemorySystemTable implements ISystemTable, Remote {
             }
         }
 
-        ErrorHandling.errorNoEvent("Failed to recreate Table Manager for " + tableManagerWrapper.getTableInfo() + ". There were " + tmReplicaLocations.get(tableManagerWrapper.getTableInfo()).size() + " replicas available (including the failed machine) at " + PrettyPrinter.toString(tmReplicaLocations.get(tableManagerWrapper.getTableInfo())) + ".");
+        ErrorHandling.errorNoEvent("Failed to recreate Table Manager for " + tableManagerWrapper.getTableInfo() + ". There were " + tmReplicaLocations.get(tableManagerWrapper.getTableInfo()).size() + " replicas available (including the failed machine) at "
+                        + PrettyPrinter.toString(tmReplicaLocations.get(tableManagerWrapper.getTableInfo())) + ".");
         return false;
     }
 

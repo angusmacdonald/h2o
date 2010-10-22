@@ -843,9 +843,10 @@ public class MultiQueryTransactionTests extends TestBase {
     /**
      * Tests that prepared statements work in the system where no replication is involved, and the connection is made through a TCP server.
      * This test uses some of the *Remote classes in H2 which have slightly different behaviour.
+     * @throws SQLException 
      */
     @Test
-    public void testPreparedStatementsTcpServer() {
+    public void testPreparedStatementsTcpServer() throws SQLException {
 
         /*
          * Reset the locator file. This test doesn't use the in-memory database.
@@ -868,57 +869,76 @@ public class MultiQueryTransactionTests extends TestBase {
         Server server = null;
         Statement sa = null;
         PreparedStatement mStmt = null;
+
         try {
-            server = Server.createTcpServer(new String[]{"-tcpPort", "9990", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test"});
-            server.start();
+            try {
+                server = Server.createTcpServer(new String[]{"-tcpPort", "9990", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test"});
+                server.start();
 
-            Class.forName("org.h2.Driver");
-            conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+                Class.forName("org.h2.Driver");
+                conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
-            sa = conn.createStatement();
+                sa = conn.createStatement();
 
-            sa.execute("DROP ALL OBJECTS;");
-            sa.execute("CREATE TABLE TEST5(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-            sa.execute("INSERT INTO TEST5 VALUES(1, 'Hello');");
-            sa.execute("INSERT INTO TEST5 VALUES(2, 'World');");
+                sa.execute("DROP ALL OBJECTS;");
+                sa.execute("CREATE TABLE TEST5(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+                sa.execute("INSERT INTO TEST5 VALUES(1, 'Hello');");
+                sa.execute("INSERT INTO TEST5 VALUES(2, 'World');");
 
-            server.shutdown();
-            server.stop();
+                server.shutdown();
+                server.stop();
 
-            TestBase.resetLocatorFile();
+                TestBase.resetLocatorFile();
 
-            server = Server.createTcpServer(new String[]{"-tcpPort", "9990", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test"});
+                server = Server.createTcpServer(new String[]{"-tcpPort", "9990", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test"});
 
-            server.start();
+                server.start();
 
-            conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+                conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
-            mStmt = conn.prepareStatement("insert into PUBLIC.TEST5 (id,name) values (?,?)");
+                mStmt = conn.prepareStatement("insert into PUBLIC.TEST5 (id,name) values (?,?)");
 
-            for (int i = 3; i < 100; i++) {
-                mStmt.setInt(1, i);
-                mStmt.setString(2, "helloNumber" + i);
-                mStmt.addBatch();
+                for (int i = 3; i < 100; i++) {
+                    mStmt.setInt(1, i);
+                    mStmt.setString(2, "helloNumber" + i);
+                    mStmt.addBatch();
+                }
+
+                mStmt.executeBatch();
+
+                final int[] pKey = new int[100];
+                final String[] secondCol = new String[100];
+
+                pKey[0] = 1;
+                pKey[1] = 2;
+                secondCol[0] = "Hello";
+                secondCol[1] = "World";
+
+                final TestQuery test2query = createMultipleInsertStatements("TEST5", pKey, secondCol, 3);
+
+                sa = conn.createStatement();
+
+                sa.execute("SELECT LOCAL * FROM PUBLIC.TEST5 ORDER BY ID;");
+
+                validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
+
             }
 
-            mStmt.executeBatch();
+            finally {
 
-            final int[] pKey = new int[100];
-            final String[] secondCol = new String[100];
+                conn.close();
+                mStmt.close();
+                sa.close();
 
-            pKey[0] = 1;
-            pKey[1] = 2;
-            secondCol[0] = "Hello";
-            secondCol[1] = "World";
+                // stop the server
+                server.stop();
 
-            final TestQuery test2query = createMultipleInsertStatements("TEST5", pKey, secondCol, 3);
-
-            sa = conn.createStatement();
-
-            sa.execute("SELECT LOCAL * FROM PUBLIC.TEST5 ORDER BY ID;");
-
-            validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
-
+                try {
+                    DeleteDbFiles.execute("db_data/unittests/", "schema_test", true);
+                }
+                catch (final SQLException e) {
+                }
+            }
         }
         catch (final SQLException e1) {
             e1.printStackTrace();
@@ -926,25 +946,6 @@ public class MultiQueryTransactionTests extends TestBase {
         }
         catch (final ClassNotFoundException e) {
             e.printStackTrace();
-        }
-        finally {
-            try {
-                conn.close();
-                mStmt.close();
-                sa.close();
-            }
-            catch (final Exception e) {
-
-            }
-
-            // stop the server
-            server.stop();
-
-            try {
-                DeleteDbFiles.execute("db_data/unittests/", "schema_test", true);
-            }
-            catch (final SQLException e) {
-            }
         }
 
     }
@@ -961,11 +962,13 @@ public class MultiQueryTransactionTests extends TestBase {
         createReplicaOnB();
 
         PreparedStatement mStmt = null;
+        Statement stt = null;
         try {
             ca.setAutoCommit(false);
 
-            ca.createStatement().execute("drop table if exists australia");
-            ca.createStatement().execute("create table australia (ID  INTEGER NOT NULL, Name VARCHAR(100), FirstName VARCHAR(100), Points INTEGER, LicenseID INTEGER, PRIMARY KEY(ID))");
+            stt = ca.createStatement();
+            stt.execute("drop table if exists australia");
+            stt.execute("create table australia (ID  INTEGER NOT NULL, Name VARCHAR(100), FirstName VARCHAR(100), Points INTEGER, LicenseID INTEGER, PRIMARY KEY(ID))");
 
             ca.commit();
 
@@ -980,7 +983,7 @@ public class MultiQueryTransactionTests extends TestBase {
             mStmt.setInt(5, 400);
             mStmt.addBatch();
 
-            ResultSet rs = ca.createStatement().executeQuery("select * from australia");
+            ResultSet rs = stt.executeQuery("select * from australia");
 
             /*
              * H2O used to throw an error here because the prepared statement command would use the 'CALL AUTOCOMMIT()' query to find
@@ -1006,7 +1009,7 @@ public class MultiQueryTransactionTests extends TestBase {
 
             ca.setAutoCommit(false);
 
-            rs = ca.createStatement().executeQuery("select * from australia");
+            rs = stt.executeQuery("select * from australia");
 
             if (!rs.next()) {
                 fail("The table should have one entry.");
@@ -1014,9 +1017,9 @@ public class MultiQueryTransactionTests extends TestBase {
 
             ca.setAutoCommit(false);
 
-            ca.createStatement().execute("drop table australia");
+            stt.execute("drop table australia");
 
-            ca.createStatement().execute("create table australia (ID  INTEGER NOT NULL, Name VARCHAR(100), " + "FirstName VARCHAR(100), Points INTEGER, LicenseID INTEGER, PRIMARY KEY(ID))");
+            stt.execute("create table australia (ID  INTEGER NOT NULL, Name VARCHAR(100), " + "FirstName VARCHAR(100), Points INTEGER, LicenseID INTEGER, PRIMARY KEY(ID))");
 
             ca.commit();
 
@@ -1026,6 +1029,7 @@ public class MultiQueryTransactionTests extends TestBase {
             fail("Unexpected SQL Exception was thrown. Not cool.");
         }
         finally {
+            stt.close();
             mStmt.close();
         }
     }

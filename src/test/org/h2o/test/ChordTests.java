@@ -41,11 +41,6 @@ public class ChordTests extends TestBase {
 
     private static String[] dbs = {"two", "three"}; // , "four", "five", "six", "seven", "eight", "nine"
 
-    /**
-     * Whether the System Table state has been replicated yet.
-     */
-    protected static boolean isReplicated = false;
-
     @BeforeClass
     public static void initialSetUp() {
 
@@ -53,17 +48,6 @@ public class ChordTests extends TestBase {
         Constants.IS_TEST = true;
         Constants.IS_NON_SM_TEST = false;
 
-        setReplicated(false);
-    }
-
-    public static synchronized void setReplicated(final boolean b) {
-
-        isReplicated = b;
-    }
-
-    public static synchronized boolean isReplicated() {
-
-        return isReplicated;
     }
 
     /**

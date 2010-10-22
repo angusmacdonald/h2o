@@ -33,7 +33,7 @@ public class MultipleSchemaTests extends TestBase {
      * Tests that a table in a non-default schema is added successfully to the System Table.
      */
     @Test
-    public void TestSystemTableAdd() {
+    public void testSystemTableAdd() {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 
@@ -71,7 +71,7 @@ public class MultipleSchemaTests extends TestBase {
      * Tests that a table in a non-default schema is dropped successfully from the System Table.
      */
     @Test
-    public void TestSystemTableDrop() {
+    public void testSystemTableDrop() {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 
@@ -131,7 +131,7 @@ public class MultipleSchemaTests extends TestBase {
     //	 * Tests that a non-default schema is dropped successfully from the System Table.
     //	 */
     //	@Test
-    //	public void TestSystemTableDropSchema() {
+    //	public void testSystemTableDropSchema() {
     //		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
     //		try {
     //			
@@ -190,7 +190,7 @@ public class MultipleSchemaTests extends TestBase {
     //	 * Tests the feature to create multiple replicas at the same time.
     //	 */
     //	@Test
-    //	public void CreateMultipleTestTablesLocal() {
+    //	public void createMultipleTestTablesLocal() {
     //		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
     //		try {
     //			
@@ -232,7 +232,7 @@ public class MultipleSchemaTests extends TestBase {
     //	 * replicas.
     //	 */
     //	@Test
-    //	public void CreateMultipleTestReplicas() {
+    //	public void createMultipleTestReplicas() {
     //		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
     //		
     //		try {
@@ -276,7 +276,7 @@ public class MultipleSchemaTests extends TestBase {
     //	 * table in the default schema.
     //	 */
     //	@Test
-    //	public void TestTableDoesntExist() {
+    //	public void testTableDoesntExist() {
     //		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
     //		try {
     //			
@@ -296,7 +296,7 @@ public class MultipleSchemaTests extends TestBase {
     //	 * the TEST table in the default schema.
     //	 */
     //	@Test
-    //	public void TestTableDoesntExistForReplica() {
+    //	public void testTableDoesntExistForReplica() {
     //		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
     //		try {
     //			
@@ -316,7 +316,7 @@ public class MultipleSchemaTests extends TestBase {
     //	 * Tries to create a replica of a schema that doesn't exist. Should fail.
     //	 */
     //	@Test
-    //	public void TestTableDoesntExistForReplica2() {
+    //	public void testTableDoesntExistForReplica2() {
     //		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
     //		try {
     //			
@@ -336,7 +336,7 @@ public class MultipleSchemaTests extends TestBase {
     //	 * Tests replication of an entire schema of tables.
     //	 */
     //	@Test
-    //	public void ReplicateSchema() {
+    //	public void replicateSchema() {
     //		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
     //		try {
     //			

@@ -24,16 +24,17 @@ import org.h2.util.NetUtils;
  */
 public class QueryExample {
 
-    public static void main(final String[] args) {
+    public static void main(final String[] args) throws SQLException {
 
         final String jdbcURL = "jdbc:h2:tcp://" + NetUtils.getLocalAddress() + ":9998/db_data//MyFirstDatabase9998";
 
         /*
-         * Default system password. You'd probably want to change this.
+         * Default system password. You'd probably want to change this through a standard SQL create user call when the database is first created.
          */
         final String userName = "sa";
         final String password = "";
         Connection conn = null;
+        Statement stat = null;
         try {
             /*
              * Create connection to the H2O database instance.
@@ -43,7 +44,7 @@ public class QueryExample {
             /*
              * Create a basic table on the H2O instance and add some even more basic data.
              */
-            final Statement stat = conn.createStatement();
+            stat = conn.createStatement();
             stat.executeUpdate("CREATE TABLE TEST (ID INT);");
             stat.executeUpdate("INSERT INTO TEST VALUES(7);");
 
@@ -71,12 +72,8 @@ public class QueryExample {
             e.printStackTrace();
         }
         finally {
-            try {
-                conn.close();
-            }
-            catch (final SQLException e) {
-                //Do something with this if you want...
-            }
+            conn.close();
+            stat.close();
         }
     }
 

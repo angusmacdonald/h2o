@@ -10,6 +10,8 @@ import java.net.URL;
 import java.util.Properties;
 import java.util.Set;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
@@ -95,12 +97,16 @@ public class H2OPropertiesWrapper {
         final File f = new File(propertiesFileLocation);
 
         if (f.getParentFile() != null) {
-            f.getParentFile().mkdirs(); // create any directories specified in the path, if necessary.
-
+            final boolean successful = f.getParentFile().mkdirs(); // create any directories specified in the path, if necessary.
+            if (!successful) {
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to create folder. It may already exist.");
+            }
         }
 
-        f.createNewFile(); // create the properties file.
-
+        final boolean successful = f.createNewFile(); // create the properties file.
+        if (!successful) {
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to create folder. It may already exist.");
+        }
         inputStream = new FileInputStream(propertiesFileLocation);
     }
 

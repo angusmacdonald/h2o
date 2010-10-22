@@ -15,6 +15,9 @@ import org.h2o.db.id.DatabaseURL;
 import org.h2o.locator.DatabaseDescriptorFile;
 import org.h2o.util.LocalH2OProperties;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
@@ -24,7 +27,7 @@ public class StaticServerSetup {
      * @param args
      * @throws IOException
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(final String[] args) throws IOException {
 
         setUpStaticDescriptorFiles();
     }
@@ -35,23 +38,27 @@ public class StaticServerSetup {
      */
     public static void setUpStaticDescriptorFiles() throws IOException {
 
-        String databaseName = "angusDB";
+        final String databaseName = "angusDB";
 
-        String descriptorFile = "http://www.cs.st-andrews.ac.uk/~angus/databases/" + databaseName + ".h2o";
+        final String descriptorFile = "http://www.cs.st-andrews.ac.uk/~angus/databases/" + databaseName + ".h2o";
 
-        String initialSchemaManager = "jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db";
+        final String initialSchemaManager = "jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db";
 
         /*
          * Clear locator file.
          */
 
-        File f = new File("config\\locatorFile.locator");
-        f.delete();
+        final File f = new File("config\\locatorFile.locator");
+        final boolean successful = f.delete();
+
+        if (!successful) {
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to delete locator file.");
+        }
 
         /*
          * Setup descriptor file.
          */
-        DatabaseDescriptorFile ddf = new DatabaseDescriptorFile("\\\\shell\\angus\\public_html\\databases\\" + databaseName + ".h2o");
+        final DatabaseDescriptorFile ddf = new DatabaseDescriptorFile("\\\\shell\\angus\\public_html\\databases\\" + databaseName + ".h2o");
         ddf.createPropertiesFile();
         ddf.setLocatorLocations(databaseName, "eigg:29999");
         // System.out.println("\\\\shell\\angus\\public_html\\databases" +

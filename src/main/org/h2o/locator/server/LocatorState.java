@@ -291,9 +291,16 @@ public class LocatorState {
 
         startWrite();
 
-        locatorFile.delete();
+        boolean successful = locatorFile.delete();
+
+        if (!successful) {
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to delete locator file. It may not have existed.");
+        }
         try {
-            locatorFile.createNewFile();
+            successful = locatorFile.createNewFile();
+            if (!successful) {
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to create locator file. It may already exist.");
+            }
         }
         catch (final IOException e) {
             e.printStackTrace();
