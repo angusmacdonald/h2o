@@ -16,6 +16,7 @@
 
 	<path id="project-classpath">
 	    <pathelement location="bin" />
+	    <pathelement location="src" />
 	    <pathelement location="${lib-nds}" />
 	    <pathelement location="${lib-stachord}" />
 	    <pathelement location="${lib-mindterm}" />
@@ -52,7 +53,7 @@
                 <attribute name="Main-Class" value="org.h2o.H2O"/>
             </manifest>
 			<fileset dir="bin" includes="**/*.class" />
-			<fileset dir="src/main" includes="**/*.java" />
+			<fileset dir="src/main" />
 		</jar>
 	</target>
 
