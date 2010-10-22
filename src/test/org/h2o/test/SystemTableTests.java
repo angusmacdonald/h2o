@@ -38,16 +38,20 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 public class SystemTableTests {
 
     private static final String BASEDIR = "db_data/unittests/";
-    private static final long SHUTDOWN_CHECK_DELAY = 1000;
 
     @BeforeClass
-    public static void initialSetUp() throws SQLException {
+    public static void initialSetUp() {
 
         Diagnostic.setLevel(DiagnosticLevel.INIT);
         Constants.IS_NON_SM_TEST = true;
         Constants.IS_TEST = true;
+        try {
+            DeleteDbFiles.execute(BASEDIR, "schema_test", true);
+        }
+        catch (final SQLException e) {
+            e.printStackTrace();
+        }
 
-        DeleteDbFiles.execute(BASEDIR, "schema_test", true);
     }
 
     private LocatorServer ls;
@@ -77,13 +81,18 @@ public class SystemTableTests {
 
         TestBase.closeDatabaseCompletely();
 
-        DeleteDbFiles.execute(BASEDIR, "schema_test", false);
+        try {
+            DeleteDbFiles.execute(BASEDIR, "schema_test", false);
+        }
+        catch (final SQLException e) {
+            e.printStackTrace();
+        }
 
         ls.setRunning(false);
-
         while (!ls.isFinished()) {
-            Thread.sleep(SHUTDOWN_CHECK_DELAY);
+
         }
+
     }
 
     /**
@@ -100,8 +109,8 @@ public class SystemTableTests {
         // start the server, allows to access the database remotely
         Server server = null;
         Statement stat = null;
-
         try {
+
             server = Server.createTcpServer(new String[]{"-tcpPort", "9082", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9082/db_data/unittests/schema_test"});
             server.start();
 
@@ -120,23 +129,20 @@ public class SystemTableTests {
         }
         finally {
             try {
-                if (conn != null) {
-                    conn.close();
-                }
-                if (stat != null) {
-                    stat.close();
-                }
+                conn.close();
+                stat.close();
             }
             catch (final SQLException e) {
+
             }
 
             // stop the server
             server.stop();
 
             while (server.isRunning(false)) {
-                Thread.sleep(SHUTDOWN_CHECK_DELAY);
             };
         }
+
     }
 
     /**
@@ -147,13 +153,12 @@ public class SystemTableTests {
      * @throws InterruptedException
      */
     @Test
-    public void schemaTableCreationPersistence() throws ClassNotFoundException, InterruptedException, SQLException {
+    public void schemaTableCreationPersistence() throws ClassNotFoundException, InterruptedException {
 
         Connection conn = null;
         // start the server, allows to access the database remotely
         Server server = null;
         Statement sa = null;
-
         try {
             TestBase.resetLocatorFile();
 
@@ -183,8 +188,19 @@ public class SystemTableTests {
 
             sa = conn.createStatement();
 
-            sa.execute("SELECT * FROM TEST;");
-            sa.execute("SELECT * FROM H2O.H2O_TABLE;");
+            try {
+                sa.execute("SELECT * FROM TEST;");
+            }
+            catch (final SQLException e) {
+                fail("The TEST table was not found.");
+            }
+
+            try {
+                sa.execute("SELECT * FROM H2O.H2O_TABLE;");
+            }
+            catch (final SQLException e) {
+                fail("The TEST table was not found.");
+            }
 
             final ResultSet rs = sa.getResultSet();
             if (!rs.next()) {
@@ -194,27 +210,30 @@ public class SystemTableTests {
             if (!rs.getString(3).equals("TEST")) {
                 fail("This entry should be for the TEST table.");
             }
-
             if (!rs.getString(2).equals("PUBLIC")) {
                 fail("This entry should be for the PUBLIC schema.");
             }
             rs.close();
+
+        }
+        catch (final SQLException e1) {
+            e1.printStackTrace();
+            fail("Couldn't find System Table tables.");
         }
         finally {
             try {
-                if (conn != null) {
-                    conn.close();
-                }
-                if (sa != null) {
-                    sa.close();
-                }
+                conn.close();
+                sa.close();
             }
             catch (final SQLException e) {
+
             }
 
             // stop the server
             server.stop();
+
         }
+
     }
 
     // /**
