@@ -129,8 +129,12 @@ public class SystemTableTests {
         }
         finally {
             try {
-                conn.close();
-                stat.close();
+                if (conn != null) {
+                    conn.close();
+                }
+                if (stat != null) {
+                    stat.close();
+                }
             }
             catch (final SQLException e) {
 
