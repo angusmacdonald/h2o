@@ -23,6 +23,9 @@ import org.h2o.db.id.DatabaseURL;
 import org.h2o.run.AllTests;
 import org.h2o.util.LocalH2OProperties;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+
 /**
  * The base class for all tests.
  */
@@ -182,7 +185,11 @@ public abstract class H2TestBase {
         }
         name += ".index.db";
         if (new File(name).canWrite()) {
-            new File(name).delete();
+            final boolean successful = new File(name).delete();
+
+            if (!successful) {
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to delete file.");
+            }
         }
     }
 

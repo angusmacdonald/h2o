@@ -57,42 +57,66 @@ public class H2TestView extends H2TestBase {
     @Test
     public void testInSelect() throws SQLException {
 
-        final Connection conn = getConnection("view");
-        final Statement stat = conn.createStatement();
-        stat.execute("create table test(id int primary key) as select 1");
-        final PreparedStatement prep = conn.prepareStatement("select * from test t where t.id in (select t2.id from test t2 where t2.id in (?, ?))");
-        prep.setInt(1, 1);
-        prep.setInt(2, 2);
-        prep.execute();
-        conn.close();
+        Connection conn = null;
+
+        Statement stat = null;
+
+        try {
+            conn = getConnection("view");
+
+            stat = conn.createStatement();
+            stat.execute("create table test(id int primary key) as select 1");
+            final PreparedStatement prep = conn.prepareStatement("select * from test t where t.id in (select t2.id from test t2 where t2.id in (?, ?))");
+            prep.setInt(1, 1);
+            prep.setInt(2, 2);
+            prep.execute();
+        }
+        finally {
+            conn.close();
+            stat.close();
+        }
     }
 
     @Test
     public void testUnionReconnect() throws SQLException {
 
         if (config.memory) { return; }
-        Connection conn = getConnection("view");
-        Statement stat = conn.createStatement();
-        stat.execute("create table t1(k smallint, ts timestamp(6))");
-        stat.execute("create table t2(k smallint, ts timestamp(6))");
-        stat.execute("create table t3(k smallint, ts timestamp(6))");
-        stat.execute("create view v_max_ts as select " + "max(ts) from (select max(ts) as ts from t1 " + "union select max(ts) as ts from t2 " + "union select max(ts) as ts from t3)");
-        stat.execute("create view v_test as select max(ts) as ts from t1 " + "union select max(ts) as ts from t2 " + "union select max(ts) as ts from t3");
-        conn.close();
-        conn = getConnection("view");
-        stat = conn.createStatement();
-        stat.execute("select * from v_max_ts");
-        conn.close();
-        deleteDb("view");
+        Connection conn = null;
+
+        Statement stat = null;
+
+        try {
+            conn = getConnection("view");
+
+            stat = conn.createStatement();
+            stat.execute("create table t1(k smallint, ts timestamp(6))");
+            stat.execute("create table t2(k smallint, ts timestamp(6))");
+            stat.execute("create table t3(k smallint, ts timestamp(6))");
+            stat.execute("create view v_max_ts as select " + "max(ts) from (select max(ts) as ts from t1 " + "union select max(ts) as ts from t2 " + "union select max(ts) as ts from t3)");
+            stat.execute("create view v_test as select max(ts) as ts from t1 " + "union select max(ts) as ts from t2 " + "union select max(ts) as ts from t3");
+            conn.close();
+            conn = getConnection("view");
+            stat = conn.createStatement();
+            stat.execute("select * from v_max_ts");
+        }
+        finally {
+            conn.close();
+            stat.close();
+            deleteDb("view");
+        }
     }
 
     @Test
     public void testManyViews() throws SQLException {
 
-        Connection conn = getConnection("view2");
-        final Statement s = conn.createStatement();
+        Connection conn = null;
+
+        Statement s = null;
 
         try {
+            conn = getConnection("view2");
+
+            s = conn.createStatement();
             s.execute("create table t0(id int primary key)");
             s.execute("insert into t0 values(1), (2), (3)");
             for (int i = 0; i < 30; i++) {

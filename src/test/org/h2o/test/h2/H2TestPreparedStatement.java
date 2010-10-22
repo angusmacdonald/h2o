@@ -148,34 +148,43 @@ public class H2TestPreparedStatement extends H2TestBase {
     @Test
     public void testTempView() throws SQLException {
 
-        final Statement stat = conn.createStatement();
-        PreparedStatement prep;
-        stat.execute("CREATE TABLE TEST(FIELD INT PRIMARY KEY)");
-        stat.execute("INSERT INTO TEST VALUES(1)");
-        stat.execute("INSERT INTO TEST VALUES(2)");
-        prep = conn.prepareStatement("select FIELD FROM " + "(select FIELD FROM (SELECT FIELD  FROM TEST WHERE FIELD = ?) AS T2 " + "WHERE T2.FIELD = ?) AS T3 WHERE T3.FIELD = ?");
-        prep.setInt(1, 1);
-        prep.setInt(2, 1);
-        prep.setInt(3, 1);
-        ResultSet rs = prep.executeQuery();
-        rs.next();
-        assertEquals(1, rs.getInt(1));
-        prep.setInt(1, 2);
-        prep.setInt(2, 2);
-        prep.setInt(3, 2);
-        rs = prep.executeQuery();
-        rs.next();
-        assertEquals(2, rs.getInt(1));
-        stat.execute("DROP TABLE TEST");
+        Statement stat = null;
+        PreparedStatement prep = null;
+        try {
+
+            stat = conn.createStatement();
+            stat.execute("CREATE TABLE TEST(FIELD INT PRIMARY KEY)");
+            stat.execute("INSERT INTO TEST VALUES(1)");
+            stat.execute("INSERT INTO TEST VALUES(2)");
+            prep = conn.prepareStatement("select FIELD FROM " + "(select FIELD FROM (SELECT FIELD  FROM TEST WHERE FIELD = ?) AS T2 " + "WHERE T2.FIELD = ?) AS T3 WHERE T3.FIELD = ?");
+            prep.setInt(1, 1);
+            prep.setInt(2, 1);
+            prep.setInt(3, 1);
+            ResultSet rs = prep.executeQuery();
+            rs.next();
+            assertEquals(1, rs.getInt(1));
+            prep.setInt(1, 2);
+            prep.setInt(2, 2);
+            prep.setInt(3, 2);
+            rs = prep.executeQuery();
+            rs.next();
+            assertEquals(2, rs.getInt(1));
+            stat.execute("DROP TABLE TEST");
+        }
+        finally {
+            stat.close();
+            prep.close();
+        }
     }
 
     @Test
     public void testInsertFunction() throws SQLException {
 
         Statement stat = null;
+        PreparedStatement prep = null;
         try {
             stat = conn.createStatement();
-            PreparedStatement prep;
+
             ResultSet rs;
 
             stat.execute("CREATE TABLE TEST(ID INT, H BINARY)");
@@ -194,97 +203,128 @@ public class H2TestPreparedStatement extends H2TestBase {
         }
         finally {
             stat.close();
+            prep.close();
         }
     }
 
     @Test
     public void testPrepareRecompile() throws SQLException {
 
-        final Statement stat = conn.createStatement();
-        PreparedStatement prep;
+        Statement stat = null;
+        PreparedStatement prep = null;
         ResultSet rs;
 
-        prep = conn.prepareStatement("SELECT COUNT(*) FROM DUAL WHERE ? IS NULL");
-        prep.setString(1, null);
-        prep.executeQuery();
-        stat.execute("CREATE TABLE TEST(ID INT)");
-        stat.execute("DROP TABLE TEST");
-        prep.setString(1, null);
-        prep.executeQuery();
-        prep.setString(1, "X");
-        rs = prep.executeQuery();
-        rs.next();
-        assertEquals(rs.getInt(1), 0);
+        try {
+            stat = conn.createStatement();
+            prep = conn.prepareStatement("SELECT COUNT(*) FROM DUAL WHERE ? IS NULL");
+            prep.setString(1, null);
+            prep.executeQuery();
+            stat.execute("CREATE TABLE TEST(ID INT)");
+            stat.execute("DROP TABLE TEST");
+            prep.setString(1, null);
+            prep.executeQuery();
+            prep.setString(1, "X");
+            rs = prep.executeQuery();
+            rs.next();
+            assertEquals(rs.getInt(1), 0);
 
-        stat.execute("CREATE TABLE t1 (c1 INT, c2 VARCHAR(10))");
-        stat.execute("INSERT INTO t1 SELECT X, CONCAT('Test', X)  FROM SYSTEM_RANGE(1, 5);");
-        prep = conn.prepareStatement("SELECT c1, c2 FROM t1 WHERE c1 = ?");
-        prep.setInt(1, 1);
-        prep.executeQuery();
-        stat.execute("CREATE TABLE t2 (x int PRIMARY KEY)");
-        prep.setInt(1, 2);
-        rs = prep.executeQuery();
-        rs.next();
-        assertEquals(rs.getInt(1), 2);
-        prep.setInt(1, 3);
-        rs = prep.executeQuery();
-        rs.next();
-        assertEquals(rs.getInt(1), 3);
-        stat.execute("DROP TABLE t1, t2");
-
+            stat.execute("CREATE TABLE t1 (c1 INT, c2 VARCHAR(10))");
+            stat.execute("INSERT INTO t1 SELECT X, CONCAT('Test', X)  FROM SYSTEM_RANGE(1, 5);");
+            prep = conn.prepareStatement("SELECT c1, c2 FROM t1 WHERE c1 = ?");
+            prep.setInt(1, 1);
+            prep.executeQuery();
+            stat.execute("CREATE TABLE t2 (x int PRIMARY KEY)");
+            prep.setInt(1, 2);
+            rs = prep.executeQuery();
+            rs.next();
+            assertEquals(rs.getInt(1), 2);
+            prep.setInt(1, 3);
+            rs = prep.executeQuery();
+            rs.next();
+            assertEquals(rs.getInt(1), 3);
+            stat.execute("DROP TABLE t1, t2");
+        }
+        finally {
+            stat.close();
+            prep.close();
+        }
     }
 
     @Test
     public void testMaxRowsChange() throws SQLException {
 
-        final PreparedStatement prep = conn.prepareStatement("SELECT * FROM SYSTEM_RANGE(1, 100)");
-        ResultSet rs;
-        for (int j = 1; j < 20; j++) {
-            prep.setMaxRows(j);
-            rs = prep.executeQuery();
-            for (int i = 0; i < j; i++) {
-                assertTrue(rs.next());
+        PreparedStatement prep = null;
+
+        try {
+
+            prep = conn.prepareStatement("SELECT * FROM SYSTEM_RANGE(1, 100)");
+            ResultSet rs;
+            for (int j = 1; j < 20; j++) {
+                prep.setMaxRows(j);
+                rs = prep.executeQuery();
+                for (int i = 0; i < j; i++) {
+                    assertTrue(rs.next());
+                }
+                assertFalse(rs.next());
             }
-            assertFalse(rs.next());
+        }
+        finally {
+            prep.close();
         }
     }
 
     @Test
     public void testUnknownDataType() throws SQLException {
 
+        PreparedStatement prep = null;
+
         try {
-            final PreparedStatement prep = conn.prepareStatement("SELECT * FROM (SELECT ? FROM DUAL)");
+            try {
+
+                prep = conn.prepareStatement("SELECT * FROM (SELECT ? FROM DUAL)");
+                prep.setInt(1, 1);
+                prep.execute();
+                fail();
+            }
+            catch (final SQLException e) {
+                assertKnownException(e);
+            }
+            prep = conn.prepareStatement("SELECT -?");
             prep.setInt(1, 1);
             prep.execute();
-            fail();
+            prep = conn.prepareStatement("SELECT ?-?");
+            prep.setInt(1, 1);
+            prep.setInt(2, 2);
+            prep.execute();
         }
-        catch (final SQLException e) {
-            assertKnownException(e);
+        finally {
+            prep.close();
         }
-        PreparedStatement prep = conn.prepareStatement("SELECT -?");
-        prep.setInt(1, 1);
-        prep.execute();
-        prep = conn.prepareStatement("SELECT ?-?");
-        prep.setInt(1, 1);
-        prep.setInt(2, 2);
-        prep.execute();
     }
 
     @Test
     public void testCancelReuse() throws Exception {
 
-        conn.createStatement().execute("CREATE ALIAS YIELD FOR \"java.lang.Thread.yield\"");
-        final PreparedStatement prep = conn.prepareStatement("SELECT YIELD() FROM SYSTEM_RANGE(1, 1000000) LIMIT ?");
+        Statement createAlias = null;
+
+        PreparedStatement prep = null;
 
         try {
+
+            createAlias = conn.createStatement();
+            createAlias.execute("CREATE ALIAS YIELD FOR \"java.lang.Thread.yield\"");
+
+            prep = conn.prepareStatement("SELECT YIELD() FROM SYSTEM_RANGE(1, 1000000) LIMIT ?");
             prep.setInt(1, 100000000);
+
+            final PreparedStatement finalPrep = prep;
             final Thread t = new Thread() {
 
                 @Override
                 public void run() {
 
                     try {
-                        prep.execute();
+                        finalPrep.execute();
                     }
                     catch (final SQLException e) {
                         // ignore
@@ -306,6 +346,7 @@ public class H2TestPreparedStatement extends H2TestBase {
             assertFalse(rs.next());
         }
         finally {
+            createAlias.close();
             prep.close();
         }
     }
@@ -402,7 +443,7 @@ public class H2TestPreparedStatement extends H2TestBase {
             stat.execute("CREATE TABLE TEST(ID INT, DATA BINARY, JAVA OTHER)");
             prep = conn.prepareStatement("INSERT INTO TEST VALUES(?, ?, ?)");
             prep.setInt(1, 1);
-            prep.setObject(2, new Integer(11));
+            prep.setObject(2, Integer.valueOf(11));
             prep.setObject(3, null);
             prep.execute();
             prep.setInt(1, 2);
@@ -796,7 +837,8 @@ public class H2TestPreparedStatement extends H2TestBase {
 
             assertTrue(stat.execute("SELECT * FROM T_INT ORDER BY ID"));
             rs = stat.getResultSet();
-            assertResultSetOrdered(rs, new String[][]{{"1", "0"}, {"2", "-1"}, {"3", "3"}, {"4", null}, {"5", "0"}, {"6", "-1"}, {"7", "3"}, {"8", null}, {"9", "-4"}, {"10", "5"}, {"11", null}, {"12", "1"}, {"13", "0"}, {"14", "-20"}, {"15", "100"}, {"16", "30000"}, {"17", "-30000"}, {"18", "" + Integer.MAX_VALUE}, {"19", "" + Integer.MIN_VALUE},});
+            assertResultSetOrdered(rs, new String[][]{{"1", "0"}, {"2", "-1"}, {"3", "3"}, {"4", null}, {"5", "0"}, {"6", "-1"}, {"7", "3"}, {"8", null}, {"9", "-4"}, {"10", "5"}, {"11", null}, {"12", "1"}, {"13", "0"}, {"14", "-20"}, {"15", "100"}, {"16", "30000"}, {"17", "-30000"},
+                            {"18", "" + Integer.MAX_VALUE}, {"19", "" + Integer.MIN_VALUE},});
 
             prep = conn.prepareStatement("INSERT INTO T_DECIMAL_0 VALUES(?,?)");
             prep.setInt(1, 1);

@@ -89,10 +89,11 @@ public class H2TestBatchUpdates extends H2TestBase {
         deleteDb("batchUpdates");
         final Connection conn = getConnection("batchUpdates");
         Statement stat = null;
+        CallableStatement call = null;
         try {
             stat = conn.createStatement();
             stat.execute("CREATE ALIAS updatePrices FOR \"" + getClass().getName() + ".updatePrices\"");
-            final CallableStatement call = conn.prepareCall("{call updatePrices(?, ?)}");
+            call = conn.prepareCall("{call updatePrices(?, ?)}");
             call.setString(1, "Hello");
             call.setFloat(2, 1.4f);
             call.addBatch();
@@ -107,6 +108,7 @@ public class H2TestBatchUpdates extends H2TestBase {
             assertEquals(4, total);
         }
         finally {
+            call.close();
             conn.close();
             stat.close();
         }
@@ -131,9 +133,10 @@ public class H2TestBatchUpdates extends H2TestBase {
 
         deleteDb("batchUpdates");
         final Connection conn = getConnection("batchUpdates");
-        final Statement stat = conn.createStatement();
+        Statement stat = null;
 
         try {
+            stat = conn.createStatement();
             stat.execute("create table test(id int primary key)");
             final PreparedStatement prep = conn.prepareStatement("insert into test values(?)");
             for (int i = 0; i < 700; i++) {
@@ -524,20 +527,27 @@ public class H2TestBatchUpdates extends H2TestBase {
         boolean batchExceptionFlag = false;
         final String selectCoffee = COFFEE_SELECT1;
         trace("selectCoffee = " + selectCoffee);
-        final Statement stmt = conn.createStatement();
-        stmt.addBatch(selectCoffee);
+        Statement stmt = null;
+
         try {
-            final int[] updateCount = stmt.executeBatch();
-            trace("updateCount Length : " + updateCount.length);
+            stmt = conn.createStatement();
+            stmt.addBatch(selectCoffee);
+            try {
+                final int[] updateCount = stmt.executeBatch();
+                trace("updateCount Length : " + updateCount.length);
+            }
+            catch (final BatchUpdateException be) {
+                batchExceptionFlag = true;
+            }
+            if (batchExceptionFlag) {
+                trace("executeBatch select");
+            }
+            else {
+                fail("executeBatch");
+            }
         }
-        catch (final BatchUpdateException be) {
-            batchExceptionFlag = true;
-        }
-        if (batchExceptionFlag) {
-            trace("executeBatch select");
-        }
-        else {
-            fail("executeBatch");
+        finally {
+            stmt.close();
         }
     }
 

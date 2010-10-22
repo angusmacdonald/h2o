@@ -201,16 +201,10 @@ public class SystemTableTests {
             rs.close();
         }
         finally {
-            try {
-                if (conn != null) {
-                    conn.close();
-                }
-                if (sa != null) {
-                    sa.close();
-                }
-            }
-            catch (final SQLException e) {
-            }
+
+            conn.close();
+
+            sa.close();
 
             // stop the server
             server.stop();
