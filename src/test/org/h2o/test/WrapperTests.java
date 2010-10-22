@@ -30,6 +30,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import uk.ac.standrews.cs.nds.remote_management.PlatformDescriptor;
 import uk.ac.standrews.cs.nds.remote_management.ProcessInvocation;
 import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -62,6 +63,8 @@ public class WrapperTests {
     @Test
     public void startSingleDatabaseInstance() throws InterruptedException {
 
+        killExistingProcessesIfNotOnWindows();
+
         Diagnostic.setLevel(DiagnosticLevel.INIT);
 
         final int locatorPort = 29990;
@@ -77,6 +80,7 @@ public class WrapperTests {
             locatorArgs.add("-f'" + defaultLocation + "'");
 
             try {
+
                 locatorProcess = ProcessInvocation.runJavaProcess(H2OLocator.class, locatorArgs);
             }
             catch (final IOException e) {
@@ -111,6 +115,22 @@ public class WrapperTests {
             }
             if (databaseProcess != null) {
                 databaseProcess.destroy();
+            }
+        }
+    }
+
+    private void killExistingProcessesIfNotOnWindows() {
+
+        if (!PlatformDescriptor.getPlatform().getName().equals(PlatformDescriptor.NAME_WINDOWS)) {
+            try {
+                ProcessInvocation.killMatchingProcesses(H2OLocator.class.getSimpleName());
+
+                ProcessInvocation.killMatchingProcesses(H2O.class.getSimpleName());
+            }
+            catch (final IOException e1) {
+
+                e1.printStackTrace();
+                //Error thrown if no matching processes were found.
             }
         }
     }

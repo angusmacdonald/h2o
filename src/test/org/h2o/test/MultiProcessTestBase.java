@@ -30,6 +30,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+import uk.ac.standrews.cs.nds.remote_management.PlatformDescriptor;
 import uk.ac.standrews.cs.nds.remote_management.ProcessInvocation;
 import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -99,12 +100,16 @@ public class MultiProcessTestBase extends TestBase {
     @Before
     public void setUp() throws Exception {
 
+        killExistingProcessesIfNotOnWindows();
+
         ls = new LocatorServer(29999, "junitLocator");
         ls.createNewLocatorFile();
 
         Constants.IS_TEAR_DOWN = false;
 
         org.h2.Driver.load();
+
+        processes = new HashMap<String, Process>();
 
         fullDbName = getFullDatabaseName();
 
@@ -127,6 +132,13 @@ public class MultiProcessTestBase extends TestBase {
         sleep(2000);
         createConnectionsToDatabases();
 
+    }
+
+    private void killExistingProcessesIfNotOnWindows() throws IOException {
+
+        if (!PlatformDescriptor.getPlatform().getName().equals(PlatformDescriptor.NAME_WINDOWS)) {
+            ProcessInvocation.killMatchingProcesses(StartDatabaseInstance.class.getSimpleName());
+        }
     }
 
     /**
@@ -546,8 +558,6 @@ public class MultiProcessTestBase extends TestBase {
     }
 
     private String[] getFullDatabaseName() {
-
-        processes = new HashMap<String, Process>();
 
         fullDbName = new String[dbs.length];
         for (int i = 0; i < dbs.length; i++) {

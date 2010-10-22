@@ -22,6 +22,8 @@ import org.h2o.db.id.TableInfo;
 import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
@@ -159,12 +161,16 @@ public class ReplicaManager implements Serializable {
      */
     public Set<DatabaseInstanceWrapper> completeUpdate(final boolean commit, final Collection<CommitResult> committedQueries, final TableInfo tableInfo, final boolean firstPartOfUpdate) {
 
+        //Replicas that are currently marked as active (this may be changed during this update).
         final HashMap<DatabaseInstanceWrapper, Integer> oldActiveReplicas = new HashMap<DatabaseInstanceWrapper, Integer>(activeReplicas);
 
-        final List<CommitResult> successfullyCommittedQueries = new LinkedList<CommitResult>(); // queries that were successfully committed here.
+        // queries that are successfully committed in this method (their update ID must be correct.
+        final List<CommitResult> successfullyCommittedQueries = new LinkedList<CommitResult>();
 
+        //The database instances that have had their replicas updated by this method.
         final Set<DatabaseInstanceWrapper> instancesUpdated = new HashSet<DatabaseInstanceWrapper>();
 
+        //The update ID that is expected for these updates to pass.
         final int expectedUpdateID = getUpdateIDFromCommittedQueries(committedQueries, tableInfo);
 
         /*
@@ -229,6 +235,7 @@ public class ReplicaManager implements Serializable {
                             addToAllReplicas(wrapper, newUpdateID);
 
                             successfullyCommittedQueries.add(commitResult); // this query has been successfully updated.
+                            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Replica successfully updated: " + commitResult);
                         }
                         else {
                             if (!allRollback) {

@@ -27,6 +27,7 @@ import org.h2o.util.exceptions.MovedException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
@@ -238,14 +239,14 @@ public abstract class PersistentManager {
 
         persistReplicaActiveInformation(tableDetails, newlyInactiveReplicas, false);
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Set " + newlyInactiveReplicas.size() + " replicas as inactive");
+        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Set " + newlyInactiveReplicas.size() + " " + tableDetails + " replicas as inactive: " + PrettyPrinter.toString(newlyInactiveReplicas));
     }
 
-    public void persistActiveInformation(final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> newlyInactiveReplicas) {
+    public void persistActiveInformation(final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> newlyActiveReplicas) {
 
-        persistReplicaActiveInformation(tableDetails, newlyInactiveReplicas, true);
+        persistReplicaActiveInformation(tableDetails, newlyActiveReplicas, true);
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Set " + newlyInactiveReplicas.size() + " replicas as inactive");
+        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Set " + newlyActiveReplicas.size() + " replicas as active: " + PrettyPrinter.toString(newlyActiveReplicas));
     }
 
     private void persistReplicaActiveInformation(final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> newlyInactiveReplicas, final boolean active) {

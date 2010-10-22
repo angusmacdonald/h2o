@@ -32,6 +32,8 @@ import org.h2o.db.wrappers.TableManagerWrapper;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.util.exceptions.StartupException;
 
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
+
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
@@ -391,9 +393,14 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     @Override
     public Map<DatabaseURL, DatabaseInstanceWrapper> getConnectionInformation() throws RemoteException, SQLException {
 
+        return getConnectionInformation("SELECT * FROM " + CONNECTIONS + ";");
+    }
+
+    private Map<DatabaseURL, DatabaseInstanceWrapper> getConnectionInformation(final String query) throws RemoteException, SQLException {
+
         final Map<DatabaseURL, DatabaseInstanceWrapper> databaseLocations = new HashMap<DatabaseURL, DatabaseInstanceWrapper>();
 
-        final String sql = "SELECT * FROM " + CONNECTIONS + ";";
+        final String sql = query;
 
         LocalResult result = null;
 
@@ -433,40 +440,22 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
     private DatabaseURL getDatabaseURL(final int replicaConnectionID) {
 
-        DatabaseURL dbURL = null;
-
-        final String sql = "SELECT * FROM " + CONNECTIONS + " WHERE connection_id=" + replicaConnectionID + ";";
-
-        LocalResult result = null;
-
+        Map<DatabaseURL, DatabaseInstanceWrapper> connectionInformation;
         try {
-            sqlQuery = getParser().prepareCommand(sql);
+            connectionInformation = getConnectionInformation("SELECT * FROM " + CONNECTIONS + " WHERE connection_id=" + replicaConnectionID + ";");
 
-            result = sqlQuery.executeQueryLocal(0);
+            assert connectionInformation.size() <= 1 : "There shouldn't be multiple databases with the same connection ID";
 
-            while (result.next()) {
-                /*
-                 * sql += "CREATE TABLE IF NOT EXISTS " + CONNECTIONS +"(" + "connection_id INT NOT NULL auto_increment," +
-                 * "connection_type VARCHAR(5), " + "machine_name VARCHAR(255)," + "db_location VARCHAR(255)," +
-                 * "connection_port INT NOT NULL, " + "rmi_port INT NOT NULL, " + "PRIMARY KEY (connection_id) );";
-                 */
-                final Value[] row = result.currentRow();
-                final String connectionType = row[1].getString();
-                final String hostName = row[2].getString();
-                final String dbLocation = row[3].getString();
-                final int dbPort = row[4].getInt();
-                final int rmiPort = row[5].getInt();
-                dbURL = new DatabaseURL(connectionType, hostName, dbPort, dbLocation, false);
-                dbURL.setRMIPort(rmiPort);
-
+            for (final DatabaseURL dbURL : connectionInformation.keySet()) {
+                return dbURL; //return the only database URL with the specified connection ID.
             }
 
         }
-        catch (final SQLException e) {
-            e.printStackTrace();
+        catch (final Exception e) {
+            ErrorHandling.exceptionErrorNoEvent(e, "Failed to get the database URL of a database with the connection ID: " + replicaConnectionID);
         }
 
-        return dbURL;
+        return null;
     }
 
     /*
