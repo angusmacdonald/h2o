@@ -93,10 +93,6 @@ public class TestBase {
         ls.createNewLocatorFile();
         ls.start();
 
-        // Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-        // PersistentSystemTable.USERNAME = "sa";
-        // PersistentSystemTable.PASSWORD = "sa";
-
         org.h2.Driver.load();
 
         ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
@@ -120,8 +116,6 @@ public class TestBase {
     @After
     public void tearDown() throws SQLException, InterruptedException {
 
-        // sa.execute("DROP TABLE IF EXISTS TEST");
-        // sb.execute("DROP TABLE IF EXISTS TEST");
         sa.execute("DROP ALL OBJECTS");
         sb.execute("DROP ALL OBJECTS");
 

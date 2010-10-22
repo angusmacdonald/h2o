@@ -35,7 +35,7 @@ public class MultipleSchemaTests extends TestBase {
      * @throws SQLException 
      */
     @Test
-    public void TestSystemTableAdd() throws SQLException {
+    public void testSystemTableAdd() throws SQLException {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 
@@ -50,7 +50,7 @@ public class MultipleSchemaTests extends TestBase {
      * @throws SQLException 
      */
     @Test
-    public void TestSystemTableDrop() throws SQLException {
+    public void testSystemTableDrop() throws SQLException {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 
@@ -72,6 +72,36 @@ public class MultipleSchemaTests extends TestBase {
         assertFalse("There should only be one entry here.", rs.next());
     }
 
+    /**
+     * Tests that a non-default schema is dropped successfully from the System Table.
+     * @throws SQLException 
+     */
+    @Test
+    public void testSystemTableDropSchema() throws SQLException {
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
+
+        setup();
+
+        // Drop the table and check the result of the update.
+
+        sa.execute("DROP TABLE IF EXISTS SCHEMA2.TEST");
+        sa.execute("DROP SCHEMA SCHEMA2");
+
+        assertEquals(0, sa.getUpdateCount());
+
+        // Now check that the System Table has correct information.
+        sa.execute("SELECT tablename, schemaname FROM H2O.H2O_TABLE;");
+        final ResultSet rs = sa.getResultSet();
+
+        if (rs.next()) {
+            assertEquals("TEST", rs.getString(1));
+            assertEquals("PUBLIC", rs.getString(2));
+        }
+
+        assertFalse("There should only be one entry here.", rs.next());
+    }
+
     private void setup() throws SQLException {
 
         sa.execute("CREATE SCHEMA SCHEMA2");
@@ -90,150 +120,69 @@ public class MultipleSchemaTests extends TestBase {
         assertEquals("SCHEMA2", rs.getString(2));
     }
 
-    //	/**
-    //	 * Tests that a non-default schema is dropped successfully from the System Table.
-    //	 */
-    //	@Test
-    //	public void testSystemTableDropSchema() {
-    //		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
-    //		try {
-    //			
-    //			sa.execute("CREATE SCHEMA SCHEMA2");
-    //			sa.execute("CREATE TABLE SCHEMA2.TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-    //			
-    //			sa.execute("SELECT tablename, schemaname FROM H2O.H2O_TABLE;");
-    //			
-    //			ResultSet rs = sa.getResultSet();
-    //			
-    //			if ( rs.next() ) {
-    //				assertEquals("TEST", rs.getString(1));
-    //				assertEquals("PUBLIC", rs.getString(2));
-    //			}
-    //			if ( rs.next() ) {
-    //				assertEquals("TEST", rs.getString(1));
-    //				assertEquals("SCHEMA2", rs.getString(2));
-    //			} else {
-    //				fail("Expected a System Table entry here.");
-    //			}
-    //			
-    //			/*
-    //			 * Drop the table and check the result of the update
-    //			 */
+    /**
+     * Tests the feature to create multiple replicas at the same time.
+     * @throws SQLException 
+     */
+    @Test
+    public void createMultipleTestTablesLocal() throws SQLException {
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
+
+        sa.execute("CREATE SCHEMA SCHEMA2");
+        sa.execute("CREATE TABLE SCHEMA2.TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+        sa.execute("INSERT INTO SCHEMA2.TEST VALUES(4, 'Meh');");
+        sa.execute("INSERT INTO SCHEMA2.TEST VALUES(5, 'Heh');");
+
+        sa.execute("SELECT LOCAL ONLY * FROM SCHEMA2.TEST ORDER BY ID;");
+
+        final int[] pKey = {4, 5};
+        final String[] secondCol = {"Meh", "Heh"};
+
+        validateResults(pKey, secondCol, sa.getResultSet());
+
+        sa.execute("SELECT LOCAL ONLY * FROM TEST ORDER BY ID;");
+
+        final int[] pKey2 = {1, 2};
+        final String[] secondCol2 = {"Hello", "World"};
+
+        validateResults(pKey2, secondCol2, sa.getResultSet());
+    }
+
+    //    /**
+    //     * Creates a new TEST table in a different schema, then creates remote replicas for each. Tested for success by accessing these remote
+    //     * replicas.
+    //     * @throws SQLException 
+    //     */
+    //    @Test
+    //    public void createMultipleTestReplicas() throws SQLException {
     //
-    //			sa.execute("DROP TABLE IF EXISTS SCHEMA2.TEST");
-    //			
-    //			sa.execute("DROP SCHEMA SCHEMA2");
-    //			
-    //			int result = sa.getUpdateCount();
-    //			if ( result != 0 ) {
-    //				fail("Expected update count to be '0'");
-    //			}
-    //			
-    //			/*
-    //			 * Now check that the System Table has correct information.
-    //			 */
-    //			sa.execute("SELECT tablename, schemaname FROM H2O.H2O_TABLE;");
-    //			rs = sa.getResultSet();
-    //			
-    //			if ( rs.next() ) {
-    //				assertEquals("TEST", rs.getString(1));
-    //				assertEquals("PUBLIC", rs.getString(2));
-    //			}
-    //			if ( rs.next() ) {
-    //				fail("There should only be one entry here.");
-    //			}
-    //			
-    //		} catch ( SQLException e ) {
-    //			e.printStackTrace();
-    //			fail("An Unexpected SQLException was thrown.");
-    //		}
-    //	}
-    //	
-    //	/**
-    //	 * Tests the feature to create multiple replicas at the same time.
-    //	 */
-    //	@Test
-    //	public void createMultipleTestTablesLocal() {
-    //		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
-    //		try {
-    //			
-    //			sa.execute("CREATE SCHEMA SCHEMA2");
-    //			sa.execute("CREATE TABLE SCHEMA2.TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-    //			sa.execute("INSERT INTO SCHEMA2.TEST VALUES(4, 'Meh');");
-    //			sa.execute("INSERT INTO SCHEMA2.TEST VALUES(5, 'Heh');");
-    //			
-    //			// sb.execute("CREATE REPLICA TEST, TEST2;");
-    //			//
-    //			// if (sb.getUpdateCount() != 0){
-    //			// fail("Expected update count to be '0'");
-    //			// }
-    //			
-    //			sa.execute("SELECT LOCAL ONLY * FROM SCHEMA2.TEST ORDER BY ID;");
-    //			
-    //			int[] pKey = { 4, 5 };
-    //			String[] secondCol = { "Meh", "Heh" };
-    //			
-    //			validateResults(pKey, secondCol, sa.getResultSet());
-    //			
-    //			sa.execute("SELECT LOCAL ONLY * FROM TEST ORDER BY ID;");
-    //			
-    //			int[] pKey2 = { 1, 2 };
-    //			String[] secondCol2 = { "Hello", "World" };
-    //			
-    //			validateResults(pKey2, secondCol2, sa.getResultSet());
-    //			
-    //			sa.execute("DROP ALL OBJECTS");
-    //			
-    //		} catch ( SQLException e ) {
-    //			e.printStackTrace();
-    //			fail("An Unexpected SQLException was thrown.");
-    //		}
-    //	}
-    //	
-    //	/**
-    //	 * Creates a new TEST table in a different schema, then creates remote replicas for each. Tested for success by accessing these remote
-    //	 * replicas.
-    //	 */
-    //	@Test
-    //	public void createMultipleTestReplicas() {
-    //		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
-    //		
-    //		try {
-    //			
-    //			sa.execute("CREATE SCHEMA SCHEMA2");
-    //			sa.execute("CREATE TABLE SCHEMA2.TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-    //			sa.execute("INSERT INTO SCHEMA2.TEST VALUES(4, 'Meh');");
-    //			sa.execute("INSERT INTO SCHEMA2.TEST VALUES(5, 'Heh');");
-    //			
-    //			sb.execute("CREATE REPLICA TEST, SCHEMA2.TEST;");
-    //			
-    //			if ( sb.getUpdateCount() != 0 ) {
-    //				fail("Expected update count to be '0'");
-    //			}
-    //			
-    //			sb.execute("SELECT LOCAL ONLY * FROM SCHEMA2.TEST ORDER BY ID;");
-    //			
-    //			int[] pKey = { 4, 5 };
-    //			String[] secondCol = { "Meh", "Heh" };
-    //			
-    //			validateResults(pKey, secondCol, sb.getResultSet());
-    //			
-    //			sb.execute("SELECT LOCAL ONLY * FROM TEST ORDER BY ID;");
-    //			
-    //			int[] pKey2 = { 1, 2 };
-    //			String[] secondCol2 = { "Hello", "World" };
-    //			
-    //			validateResults(pKey2, secondCol2, sb.getResultSet());
-    //			
-    //			sa.execute("DROP ALL OBJECTS");
-    //			sb.execute("DROP ALL OBJECTS");
-    //			
-    //		} catch ( SQLException e ) {
-    //			e.printStackTrace();
-    //			fail("An Unexpected SQLException was thrown.");
-    //		}
-    //	}
-    //	
+    //        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
+    //
+    //        sa.execute("CREATE SCHEMA SCHEMA2");
+    //        sa.execute("CREATE TABLE SCHEMA2.TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+    //        sa.execute("INSERT INTO SCHEMA2.TEST VALUES(4, 'Meh');");
+    //        sa.execute("INSERT INTO SCHEMA2.TEST VALUES(5, 'Heh');");
+    //
+    //        sb.execute("CREATE REPLICA TEST, SCHEMA2.TEST;");
+    //
+    //        assertEquals(0, sb.getUpdateCount());
+    //
+    //        sb.execute("SELECT LOCAL ONLY * FROM SCHEMA2.TEST ORDER BY ID;");
+    //
+    //        final int[] pKey = {4, 5};
+    //        final String[] secondCol = {"Meh", "Heh"};
+    //
+    //        validateResults(pKey, secondCol, sb.getResultSet());
+    //
+    //        sb.execute("SELECT LOCAL ONLY * FROM TEST ORDER BY ID;");
+    //
+    //        final int[] pKey2 = {1, 2};
+    //        final String[] secondCol2 = {"Hello", "World"};
+    //
+    //        validateResults(pKey2, secondCol2, sb.getResultSet());
+    //    }
+
     //	/**
     //	 * Tries to access SCHEMA2.TEST, where the SCHEMA2 schema does not exist. This should return an error, rather than finding the TEST
     //	 * table in the default schema.
