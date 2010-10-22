@@ -16,7 +16,7 @@
 
 	<path id="project-classpath">
 	    <pathelement location="bin" />
-	    <pathelement location="src" />
+	    <pathelement location="src/main" />
 	    <pathelement location="${lib-nds}" />
 	    <pathelement location="${lib-stachord}" />
 	    <pathelement location="${lib-mindterm}" />
