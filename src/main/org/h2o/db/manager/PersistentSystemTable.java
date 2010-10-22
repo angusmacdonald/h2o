@@ -21,6 +21,7 @@ import org.h2.engine.Database;
 import org.h2.result.LocalResult;
 import org.h2.value.Value;
 import org.h2o.autonomic.decision.ranker.metric.ActionRequest;
+import org.h2o.db.DefaultSettings;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
@@ -62,12 +63,12 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     /**
      * The database username used to communicate with System Table tables.
      */
-    public static final String USERNAME = "sa";
+    public static final String USERNAME = DefaultSettings.getString("PersistentSystemTable.DEFAULT_USERNAME");
 
     /**
      * The database password used to communicate with System Table tables.
      */
-    public static final String PASSWORD = "";
+    public static final String PASSWORD = DefaultSettings.getString("PersistentSystemTable.DEFAULT_PASSWORD");
 
     public PersistentSystemTable(final Database db, final boolean createTables) throws Exception {
 
@@ -79,7 +80,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
              */
             try {
                 String sql = createSQL(TABLES, CONNECTIONS);
-                sql += "\n\nCREATE TABLE IF NOT EXISTS " + TABLEMANAGERSTATE + "(" + "table_id INTEGER NOT NULL, " + "connection_id INTEGER NOT NULL, " + "primary_location_connection_id INTEGER NOT NULL, " + "active BOOLEAN, " + "FOREIGN KEY (table_id) REFERENCES " + TABLES + " (table_id) ON DELETE CASCADE , " + " FOREIGN KEY (connection_id) REFERENCES " + CONNECTIONS + " (connection_id)); ";
+                sql += "\n\nCREATE TABLE IF NOT EXISTS " + TABLEMANAGERSTATE + "(" + "table_id INTEGER NOT NULL, " + "connection_id INTEGER NOT NULL, " + "primary_location_connection_id INTEGER NOT NULL, " + "active BOOLEAN, " + "FOREIGN KEY (table_id) REFERENCES " + TABLES + " (table_id) ON DELETE CASCADE , " + " FOREIGN KEY (connection_id) REFERENCES " + CONNECTIONS + " (connection_id)); "; //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$
 
                 final boolean success = getNewQueryParser();
 
@@ -234,7 +235,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     @Override
     public Set<String> getAllTablesInSchema(final String schemaName) {
 
-        final String sql = "SELECT tablename FROM " + TABLES + " WHERE schemaname='" + schemaName + "';";
+        final String sql = "SELECT tablename FROM " + TABLES + " WHERE schemaname='" + schemaName + "';"; //$NON-NLS-3$
 
         LocalResult result = null;
 
@@ -442,7 +443,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
         Map<DatabaseURL, DatabaseInstanceWrapper> connectionInformation;
         try {
-            connectionInformation = getConnectionInformation("SELECT * FROM " + CONNECTIONS + " WHERE connection_id=" + replicaConnectionID + ";");
+            connectionInformation = getConnectionInformation("SELECT * FROM " + CONNECTIONS + " WHERE connection_id=" + replicaConnectionID + ";"); //$NON-NLS-3$
 
             assert connectionInformation.size() <= 1 : "There shouldn't be multiple databases with the same connection ID";
 
@@ -472,7 +473,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
         /*
          * Parse the query resultset to find the primary location of every table.
          */
-        final String sql = "SELECT db_location, connection_type, machine_name, connection_port, tablename, schemaname, chord_port " + "FROM " + CONNECTIONS + ", " + TABLES + " " + "WHERE " + CONNECTIONS + ".connection_id = " + TABLES + ".manager_location;";
+        final String sql = "SELECT db_location, connection_type, machine_name, connection_port, tablename, schemaname, chord_port " + "FROM " + CONNECTIONS + ", " + TABLES + " " + "WHERE " + CONNECTIONS + ".connection_id = " + TABLES + ".manager_location;"; //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
 
         // SELECT db_location, connection_type, machine_name, connection_port,
         // tablename, schemaname, chord_port FROM H2O.H2O_REPLICA,
@@ -548,7 +549,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
          * Parse the schema tables to obtain the required amount of table information.
          */
 
-        final String sql = "SELECT connection_id, tablename, schemaname    FROM " + TABLEMANAGERSTATE + ", " + TABLES + " WHERE " + TABLES + ".table_id" + "=" + TABLEMANAGERSTATE + ".table_id;";
+        final String sql = "SELECT connection_id, tablename, schemaname    FROM " + TABLEMANAGERSTATE + ", " + TABLES + " WHERE " + TABLES + ".table_id" + "=" + TABLEMANAGERSTATE + ".table_id;"; //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
 
         LocalResult result = null;
 
@@ -599,7 +600,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
          * Parse the schema tables to obtain the required amount of table information.
          */
 
-        final String sql = "SELECT primary_location_connection_id, tablename, schemaname    FROM " + TABLEMANAGERSTATE + ", " + TABLES + " WHERE " + TABLES + ".table_id" + "=" + TABLEMANAGERSTATE + ".table_id;";
+        final String sql = "SELECT primary_location_connection_id, tablename, schemaname    FROM " + TABLEMANAGERSTATE + ", " + TABLES + " WHERE " + TABLES + ".table_id" + "=" + TABLEMANAGERSTATE + ".table_id;"; //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
 
         LocalResult result = null;
 

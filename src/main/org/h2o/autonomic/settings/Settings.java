@@ -41,21 +41,21 @@ public class Settings {
     /**
      * The set of table names that don't represent user tables, but system commands or specialized operations.
      */
-    public static Set<String> reservedTableNames = new HashSet<String>();
+    public static final Set<String> reservedTableNames = new HashSet<String>();
 
     static {
         reservedTableNames.add("SYSTEM_RANGE");
         reservedTableNames.add("TABLE");
     }
 
-    private LocalH2OProperties localSettings;
+    private final LocalH2OProperties localSettings;
 
-    private DatabaseDescriptorFile globalSettings;
+    private final DatabaseDescriptorFile globalSettings;
 
-    public Settings(LocalH2OProperties localSettings, DatabaseDescriptorFile databaseDescriptorFile) throws StartupException {
+    public Settings(final LocalH2OProperties localSettings, final DatabaseDescriptorFile databaseDescriptorFile) throws StartupException {
 
         this.localSettings = localSettings;
-        this.globalSettings = databaseDescriptorFile;
+        globalSettings = databaseDescriptorFile;
 
         /*
          * 1. Load Local Settings.
@@ -63,7 +63,7 @@ public class Settings {
         try {
             localSettings.loadProperties();
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             e.printStackTrace();
         }
 
@@ -85,11 +85,11 @@ public class Settings {
      * Iterates through database settings in the specified properties file looking for anything that has not already been specified at a
      * lower level.
      */
-    public void iterateThroughDatabaseSettings(Properties settings) {
+    public void iterateThroughDatabaseSettings(final Properties settings) {
 
-        for (Entry<Object, Object> entry : settings.entrySet()) {
-            String propertyName = (String) entry.getKey();
-            String propertyValue = (String) entry.getValue();
+        for (final Entry<Object, Object> entry : settings.entrySet()) {
+            final String propertyName = (String) entry.getKey();
+            final String propertyValue = (String) entry.getValue();
 
             if (localSettings.getProperty(propertyName) == null) {
                 Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Updating setting " + propertyName + " = " + propertyValue);
@@ -100,7 +100,7 @@ public class Settings {
 
     public static Properties defaultSettings() {
 
-        Properties defaults = new Properties();
+        final Properties defaults = new Properties();
 
         // The time in-between attempts to replicate the system table's state
         // onto a new successor.
@@ -171,35 +171,35 @@ public class Settings {
         return localSettings;
     }
 
-    public String get(String string) {
+    public String get(final String string) {
 
         return localSettings.getProperty(string);
     }
 
-    public void set(String key, String value) {
+    public void set(final String key, final String value) {
 
         localSettings.setProperty(key, value);
     }
 
-    public static void saveAsLocalProperties(Properties newSettings, String databaseName) {
+    public static void saveAsLocalProperties(final Properties newSettings, final String databaseName) {
 
         /*
          * Load any existing properties file because there might be other info that we don't want to delete. For example, the location of
          * any locators.
          */
-        LocalH2OProperties localSettings = new LocalH2OProperties(DatabaseURL.parseURL(databaseName));
+        final LocalH2OProperties localSettings = new LocalH2OProperties(DatabaseURL.parseURL(databaseName));
         try {
             localSettings.loadProperties();
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             e.printStackTrace();
         }
 
         // Overwrite local database settings with those provided via newSettings
         // parameter.
-        for (Entry<Object, Object> entry : newSettings.entrySet()) {
-            String propertyName = (String) entry.getKey();
-            String propertyValue = (String) entry.getValue();
+        for (final Entry<Object, Object> entry : newSettings.entrySet()) {
+            final String propertyName = (String) entry.getKey();
+            final String propertyValue = (String) entry.getValue();
 
             localSettings.setProperty(propertyName, propertyValue);
         }

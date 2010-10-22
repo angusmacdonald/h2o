@@ -32,13 +32,13 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  */
 public class H2OLocator {
 
-    private String databaseName;
+    private final String databaseName;
 
-    private String port;
+    private final String port;
 
-    private boolean createDescriptor;
+    private final boolean createDescriptor;
 
-    private String defaultLocation;
+    private final String defaultLocation;
 
     /**
      * Starts an H2O Locator server.
@@ -56,22 +56,22 @@ public class H2OLocator {
      *            called <em>MyFirstDatabase</em> on port 20000, and creates a descriptor file specifying this in the local folder.
      * @throws IOException
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(final String[] args) throws IOException {
 
-        Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
+        final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
 
-        String databaseName = arguments.get("-n");
-        String port = arguments.get("-p");
-        boolean createDescriptor = arguments.containsKey("-d");
+        final String databaseName = arguments.get("-n");
+        final String port = arguments.get("-p");
+        final boolean createDescriptor = arguments.containsKey("-d");
         String defaultLocation = arguments.get("-f"); // e.g. "db_data/wrapper"
         defaultLocation = removeParenthesis(defaultLocation);
 
-        H2OLocator locator = new H2OLocator(databaseName, Integer.parseInt(port), createDescriptor, defaultLocation);
+        final H2OLocator locator = new H2OLocator(databaseName, Integer.parseInt(port), createDescriptor, defaultLocation);
 
         locator.start(false);
     }
 
-    public H2OLocator(String databaseName, int port, boolean createDescriptor, String defaultLocation) {
+    public H2OLocator(final String databaseName, final int port, final boolean createDescriptor, final String defaultLocation) {
 
         Diagnostic.setLevel(DiagnosticLevel.FINAL);
 
@@ -81,9 +81,9 @@ public class H2OLocator {
         this.defaultLocation = defaultLocation;
     }
 
-    public String start(boolean startInNewThead) {
+    public String start(final boolean startInNewThead) {
 
-        String locatorLocation = NetUtils.getLocalAddress() + ":" + port;
+        final String locatorLocation = NetUtils.getLocalAddress() + ":" + port;
         String descriptorFileLocation = null;
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting locator server.");
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Port: " + port);
@@ -98,12 +98,12 @@ public class H2OLocator {
             try {
                 descriptorFileLocation = createDescriptorFile(locatorLocation);
             }
-            catch (Exception e) {
+            catch (final Exception e) {
                 ErrorHandling.exceptionError(e, "Failed to create descriptor file. If you manually create this file the location of this server must be included.");
             }
         }
 
-        LocatorServer server = new LocatorServer(Integer.parseInt(port), databaseName);
+        final LocatorServer server = new LocatorServer(Integer.parseInt(port), databaseName);
 
         if (startInNewThead) {
             server.start();
@@ -115,27 +115,31 @@ public class H2OLocator {
         return descriptorFileLocation;
     }
 
-    private String createDescriptorFile(String locatorLocation) throws FileNotFoundException, IOException {
+    private String createDescriptorFile(final String locatorLocation) throws FileNotFoundException, IOException {
 
-        String descriptorFilename = defaultLocation + File.separator + databaseName + ".h2od";
+        final String descriptorFilename = defaultLocation + File.separator + databaseName + ".h2od";
 
         File f = new File(defaultLocation);
 
         if (!f.exists()) {
-            f.mkdir();
+            final boolean successful = f.mkdir();
+
+            if (!successful) {
+                ErrorHandling.errorNoEvent("Failed to crreate new directory for locator file. It may already exist.");
+            }
         }
 
         f = new File(descriptorFilename);
         try {
             f.createNewFile();
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             e.printStackTrace();
         }
 
-        FileOutputStream fos = new FileOutputStream(descriptorFilename);
+        final FileOutputStream fos = new FileOutputStream(descriptorFilename);
 
-        Properties descriptor = new Properties();
+        final Properties descriptor = new Properties();
 
         descriptor.setProperty("databaseName", databaseName);
         descriptor.setProperty("locatorLocations", locatorLocation);
@@ -151,7 +155,7 @@ public class H2OLocator {
 
     public static String removeParenthesis(String text) {
 
-        if (text == null) return null;
+        if (text == null) { return null; }
 
         if (text.startsWith("'") && text.endsWith("'")) {
             text = text.substring(1, text.length() - 1);

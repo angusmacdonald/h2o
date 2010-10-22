@@ -70,14 +70,16 @@ public class LocatorProtocol {
      * 
      * @return The string of the response to be sent.
      */
-    public static String constructGetResponse(ReplicaLocationsResponse response) {
+    public static String constructGetResponse(final ReplicaLocationsResponse response) {
 
-        String message = "" + response.getUpdateCount() + "\n";
-        for (String location : response.getLocations()) {
-            message += location + "\n";
+        final StringBuilder message = new StringBuilder();
+        message.append(response.getUpdateCount() + "\n");
+        for (final String location : response.getLocations()) {
+            message.append(location);
+            message.append("\n");
         }
 
-        return message;
+        return message.toString();
     }
 
     /**
@@ -92,19 +94,23 @@ public class LocatorProtocol {
      * 
      * @return The string of the request to be sent.
      */
-    public static String constructSetRequest(String[] locations) {
+    public static String constructSetRequest(final String[] locations) {
 
-        String delimeter = "\n";
+        final String delimeter = "\n";
 
-        String message = SET + delimeter;
+        final StringBuilder message = new StringBuilder();
+        message.append(SET + delimeter);
 
-        for (String location : locations) {
-            message += location + delimeter;
+        for (final String location : locations) {
+
+            message.append(location);
+            message.append(delimeter);
+
         }
 
-        message += END_DELIMETER;
+        message.append(END_DELIMETER);
 
-        return message;
+        return message.toString();
     }
 
     /**
@@ -119,7 +125,7 @@ public class LocatorProtocol {
      * 
      * @return The string of the request to be sent.
      */
-    public static String constructLockRequest(String databaseURL) {
+    public static String constructLockRequest(final String databaseURL) {
 
         return LOCK + "\n" + databaseURL + END_DELIMETER;
     }
@@ -138,9 +144,9 @@ public class LocatorProtocol {
      * 
      * @return The string of the response to be sent.
      */
-    public static int constructLockResponse(LockRequestResponse response) {
+    public static int constructLockResponse(final LockRequestResponse response) {
 
-        return (response.isSuccessful() ? response.getUpdateCount() : 0);
+        return response.isSuccessful() ? response.getUpdateCount() : 0;
     }
 
     /**
@@ -150,9 +156,9 @@ public class LocatorProtocol {
      *            The response recieved from the server.
      * @return The update count recieved from the server. This is '0' if no lock was granted.
      */
-    public static int parseLockResponse(String response) {
+    public static int parseLockResponse(final String response) {
 
-        int result = Integer.parseInt(response);
+        final int result = Integer.parseInt(response);
         return result;
     }
 
@@ -168,7 +174,7 @@ public class LocatorProtocol {
      * 
      * @return The string of the request to be sent.
      */
-    public static String constructCommitRequest(String databaseURL) {
+    public static String constructCommitRequest(final String databaseURL) {
 
         return COMMIT + "\n" + databaseURL + END_DELIMETER;
     }
