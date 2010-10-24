@@ -86,13 +86,12 @@ public class InMemorySystemTable implements ISystemTable, Remote {
     private boolean started = false;
 
     /**
-     * Locations where the state of the System Table is replicated.
-     */
-    // private Set<DatabaseInstanceRemote> systemTableState;
-
-    /**
-     * Maintained because a nosuchobjectexception is occasionally thrown. See http
-     * ://stackoverflow.com/questions/645208/java-rmi-nosuchobjectexception-no -such-object-in-table/854097#854097.
+     * Maintained because RMI registry uses weak references so it's possible for otherwise unreferenced
+     * exposed objects to be garbage collected.
+     * 
+     * http://download.oracle.com/javase/6/docs/platform/rmi/spec/rmi-arch4.html
+     * 
+     * See http://stackoverflow.com/questions/645208/java-rmi-nosuchobjectexception-no-such-object-in-table/854097#854097.
      */
     public final static HashSet<TableManagerRemote> tableManagerReferences = new HashSet<TableManagerRemote>();
 
@@ -120,10 +119,6 @@ public class InMemorySystemTable implements ISystemTable, Remote {
      **** Methods which involve updating the System Table's state.
      ******************************************************************/
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.ISystemTable#confirmTableCreation(java.lang.String, org.h2.h2o.comms.remote.TableManagerRemote)
-     */
     @Override
     public boolean addTableInformation(final TableManagerRemote tableManager, final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException {
 
@@ -158,10 +153,6 @@ public class InMemorySystemTable implements ISystemTable, Remote {
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.ISystemTable#removeTable(java.lang.String, java.lang.String)
-     */
     @Override
     public boolean removeTableInformation(final TableInfo ti) throws RemoteException {
 

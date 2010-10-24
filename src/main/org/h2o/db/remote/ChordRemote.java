@@ -10,6 +10,7 @@ package org.h2o.db.remote;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.rmi.AlreadyBoundException;
 import java.rmi.ConnectException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -100,7 +101,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
     /**
      * Used to cache the location of the System Table by asking the known node where it is on startup. This is only ever really used for
-     * this initial lookup. The rest of the System Table funcitonality is hidden behind the SystemTableReference object.
+     * this initial lookup. The rest of the System Table functionality is hidden behind the SystemTableReference object.
      */
     private DatabaseURL actualSystemTableLocation = null;
 
@@ -131,10 +132,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         this.localMachineLocation = localMachineLocation;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.IRemoteDatabase#connectToDatabaseSystem(org.h2.h2o.util. DatabaseURL, org.h2.engine.Session)
-     */
     @Override
     public DatabaseURL connectToDatabaseSystem(final Session session, final Settings databaseSettings) throws StartupException {
 
@@ -302,7 +299,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                 instances.append(instance + "\n");
             }
 
-            throw new StartupException("\n\nAfter " + attempts + " the H2O instance at " + localMachineLocation + " couldn't find an active instance with System Table state, so it cannot connect to the database system.\n\n" + "Please re-instantiate one of the following database instances:\n\n" + instances + "\n\n");
+            throw new StartupException("\n\nAfter " + attempts + " the H2O instance at " + localMachineLocation + " couldn't find an active instance with System Table state, so it cannot connect to the database system.\n\n" + "Please re-instantiate one of the following database instances:\n\n"
+                            + instances + "\n\n");
         }
         else {
             Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Database at " + localMachineLocation + " successful created/connected to chord ring.");
@@ -500,13 +498,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     @Override
     public DatabaseInstanceRemote getDatabaseInstanceAt(final String hostname, final int port) throws RemoteException, NotBoundException {
 
-        DatabaseInstanceRemote dir = null;
-
         final Registry remoteRegistry = LocateRegistry.getRegistry(hostname, port);
 
-        dir = (DatabaseInstanceRemote) remoteRegistry.lookup(LOCAL_DATABASE_INSTANCE);
-
-        return dir;
+       return (DatabaseInstanceRemote) remoteRegistry.lookup(LOCAL_DATABASE_INSTANCE);
     }
 
     /**
@@ -552,7 +546,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
         chordNode.addObserver(this);
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Started local Chord node on : " + databaseURL.sanitizedLocation() + " : " + hostname + ":" + port + " : initialized with key :" + chordNode.getKey().toString(10) + " : " + chordNode.getKey() + " : System Table at " + systemTableRef.getLookupLocation() + " : ");
+        Diagnostic.traceNoEvent(DiagnosticLevel.INIT,
+                        "Started local Chord node on : " + databaseURL.sanitizedLocation() + " : " + hostname + ":" + port + " : initialized with key :" + chordNode.getKey().toString(10) + " : " + chordNode.getKey() + " : System Table at " + systemTableRef.getLookupLocation() + " : ");
         // Diagnostic.traceNoEvent(DiagnosticLevel.INIT,
         // "System Table key: : : : :" +
         // SystemTableReference.systemTableKey.toString(10) + " : " +
@@ -657,7 +652,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             e.printStackTrace();
         }
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Started local Chord node on : " + databaseName + " : " + localHostname + " : " + rmiPort + " : initialized with key :" + chordNode.getKey().toString(10) + " : " + chordNode.getKey() + " : System Table at " + systemTableRef.getLookupLocation() + " : " + chordNode.getSuccessor().getKey());
+        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Started local Chord node on : " + databaseName + " : " + localHostname + " : " + rmiPort + " : initialized with key :" + chordNode.getKey().toString(10) + " : " + chordNode.getKey() + " : System Table at " + systemTableRef.getLookupLocation()
+                        + " : " + chordNode.getSuccessor().getKey());
 
         return true;
     }
@@ -865,10 +861,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.remote.IDatabaseRemote#getRmiPort()
-     */
     @Override
     public int getRmiPort() {
 
@@ -886,10 +878,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         return LocateRegistry.getRegistry(rmiPort);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.remote.IDatabaseRemote#shutdown()
-     */
     @Override
     public void shutdown() {
 
@@ -996,20 +984,12 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.remote.IChordInterface#getChordNode()
-     */
     @Override
     public IChordNode getChordNode() {
 
         return chordNode;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.remote.IChordInterface#getSystemTableLocation()
-     */
     @Override
     public DatabaseURL getSystemTableLocation() throws RemoteException {
 
@@ -1035,10 +1015,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         return actualSystemTableLocation;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.remote.IChordInterface#lookupSystemTableNodeLocation()
-     */
     @Override
     public IChordRemoteReference lookupSystemTableNodeLocation() throws RemoteException {
 
@@ -1051,10 +1027,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         return lookupLocation;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.remote.IDatabaseRemote#exportSystemTable(org.h2.h2o.manager .SystemTableReference)
-     */
     @Override
     public void exportSystemTable(final ISystemTableReference systemTableRef) {
 
@@ -1071,20 +1043,12 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.remote.IChordInterface#getLocalChordReference()
-     */
     @Override
     public IChordRemoteReference getLocalChordReference() {
 
         return chordNode.getSelfReference();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.remote.IChordInterface#getLookupLocation(uk.ac.standrews.cs .nds.p2p.interfaces.IKey)
-     */
     @Override
     public IChordRemoteReference getLookupLocation(final IKey systemTableKey) throws RemoteException {
 
@@ -1092,20 +1056,12 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.remote.IDatabaseRemote#inShutdown()
-     */
     @Override
     public boolean inShutdown() {
 
         return inShutdown;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.remote.IChordInterface#bind(java.lang.String, org.h2.h2o.comms.remote.TableManagerRemote)
-     */
     @Override
     public void bind(final String fullTableName, final TableManagerRemote stub) {
 
@@ -1113,6 +1069,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             getLocalRegistry().rebind(fullTableName, stub);
         }
         catch (final Exception e) {
+            e.printStackTrace();
             // Doesn't matter.
         }
     }
@@ -1179,5 +1136,4 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
         return locatorInterface;
     }
-
 }
