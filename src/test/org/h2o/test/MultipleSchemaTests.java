@@ -149,132 +149,109 @@ public class MultipleSchemaTests extends TestBase {
         validateResults(pKey2, secondCol2, sa.getResultSet());
     }
 
-    //    /**
-    //     * Creates a new TEST table in a different schema, then creates remote replicas for each. Tested for success by accessing these remote
-    //     * replicas.
-    //     * @throws SQLException 
-    //     */
-    //    @Test
-    //    public void createMultipleTestReplicas() throws SQLException {
-    //
-    //        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
-    //
-    //        sa.execute("CREATE SCHEMA SCHEMA2");
-    //        sa.execute("CREATE TABLE SCHEMA2.TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-    //        sa.execute("INSERT INTO SCHEMA2.TEST VALUES(4, 'Meh');");
-    //        sa.execute("INSERT INTO SCHEMA2.TEST VALUES(5, 'Heh');");
-    //
-    //        sb.execute("CREATE REPLICA TEST, SCHEMA2.TEST;");
-    //
-    //        assertEquals(0, sb.getUpdateCount());
-    //
-    //        sb.execute("SELECT LOCAL ONLY * FROM SCHEMA2.TEST ORDER BY ID;");
-    //
-    //        final int[] pKey = {4, 5};
-    //        final String[] secondCol = {"Meh", "Heh"};
-    //
-    //        validateResults(pKey, secondCol, sb.getResultSet());
-    //
-    //        sb.execute("SELECT LOCAL ONLY * FROM TEST ORDER BY ID;");
-    //
-    //        final int[] pKey2 = {1, 2};
-    //        final String[] secondCol2 = {"Hello", "World"};
-    //
-    //        validateResults(pKey2, secondCol2, sb.getResultSet());
-    //    }
+    /**
+     * Creates a new TEST table in a different schema, then creates remote replicas for each. Tested for success by accessing these remote
+     * replicas.
+     * @throws SQLException 
+     */
+    @Test
+    public void createMultipleTestReplicas() throws SQLException {
 
-    //	/**
-    //	 * Tries to access SCHEMA2.TEST, where the SCHEMA2 schema does not exist. This should return an error, rather than finding the TEST
-    //	 * table in the default schema.
-    //	 */
-    //	@Test
-    //	public void testTableDoesntExist() {
-    //		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
-    //		try {
-    //			
-    //			sa.execute("SELECT * FROM SCEMA2.TEST");
-    //			
-    //			if ( sa.getUpdateCount() == 0 ) {
-    //				fail("Expected a failure");
-    //			}
-    //			
-    //		} catch ( SQLException e ) {
-    //			// expected.
-    //		}
-    //	}
-    //	
-    //	/**
-    //	 * Tries to create a repica for SCHEMA2.TEST, where the SCHEMA2 schema does not exist. This should return an error, rather than finding
-    //	 * the TEST table in the default schema.
-    //	 */
-    //	@Test
-    //	public void testTableDoesntExistForReplica() {
-    //		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
-    //		try {
-    //			
-    //			sb.execute("CREATE REPLICA SCEMA2.TEST;");
-    //			
-    //			if ( sb.getUpdateCount() == 0 ) {
-    //				fail("Expected a failure");
-    //			}
-    //			
-    //		} catch ( SQLException e ) {
-    //			// expected.
-    //		}
-    //		
-    //	}
-    //	
-    //	/**
-    //	 * Tries to create a replica of a schema that doesn't exist. Should fail.
-    //	 */
-    //	@Test
-    //	public void testTableDoesntExistForReplica2() {
-    //		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
-    //		try {
-    //			
-    //			sb.execute("CREATE REPLICA SCEMA2;");
-    //			
-    //			if ( sb.getUpdateCount() == 0 ) {
-    //				fail("Expected a failure");
-    //			}
-    //			
-    //		} catch ( SQLException e ) {
-    //			// expected.
-    //		}
-    //		
-    //	}
-    //	
-    //	/**
-    //	 * Tests replication of an entire schema of tables.
-    //	 */
-    //	@Test
-    //	public void replicateSchema() {
-    //		Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
-    //		try {
-    //			
-    //			sa.execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-    //			sa.execute("INSERT INTO TEST2 VALUES(4, 'Meh');");
-    //			sa.execute("INSERT INTO TEST2 VALUES(5, 'Heh');");
-    //			
-    //			sb.execute("CREATE REPLICA SCHEMA PUBLIC;");
-    //			
-    //			if ( sb.getUpdateCount() != 0 ) {
-    //				fail("Expected update count to be '0'");
-    //			}
-    //			
-    //			/*
-    //			 * Check that the local copy has only two entries.
-    //			 */
-    //			sb.execute("SELECT LOCAL ONLY * FROM TEST2 ORDER BY ID;");
-    //			
-    //			int[] pKey = { 4, 5 };
-    //			String[] secondCol = { "Meh", "Heh" };
-    //			
-    //			validateResults(pKey, secondCol, sb.getResultSet());
-    //			
-    //		} catch ( SQLException e ) {
-    //			e.printStackTrace();
-    //			fail("An Unexpected SQLException was thrown.");
-    //		}
-    //	}
+        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
+
+        sa.execute("CREATE SCHEMA SCHEMA2");
+        sa.execute("CREATE TABLE SCHEMA2.TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+        sa.execute("INSERT INTO SCHEMA2.TEST VALUES(4, 'Meh');");
+        sa.execute("INSERT INTO SCHEMA2.TEST VALUES(5, 'Heh');");
+
+        sb.execute("CREATE REPLICA TEST, SCHEMA2.TEST;");
+
+        assertEquals(0, sb.getUpdateCount());
+
+        sb.execute("SELECT LOCAL ONLY * FROM SCHEMA2.TEST ORDER BY ID;");
+
+        final int[] pKey = {4, 5};
+        final String[] secondCol = {"Meh", "Heh"};
+
+        validateResults(pKey, secondCol, sb.getResultSet());
+
+        sb.execute("SELECT LOCAL ONLY * FROM TEST ORDER BY ID;");
+
+        final int[] pKey2 = {1, 2};
+        final String[] secondCol2 = {"Hello", "World"};
+
+        validateResults(pKey2, secondCol2, sb.getResultSet());
+    }
+
+    /**
+     * Tries to access SCHEMA2.TEST, where the SCHEMA2 schema does not exist. This should return an error, rather than finding the TEST
+     * table in the default schema.
+     * @throws SQLException 
+     */
+    @Test(expected = SQLException.class)
+    public void testTableDoesntExist() throws SQLException {
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
+
+        sa.execute("SELECT * FROM SCHEMA2.TEST");
+
+        assertFalse("Expected a failure", sa.getUpdateCount() == 0);
+    }
+
+    /**
+     * Tries to create a replica for SCHEMA2.TEST, where the SCHEMA2 schema does not exist. This should return an error, rather than finding
+     * the TEST table in the default schema.
+     * @throws SQLException 
+     */
+    @Test(expected = SQLException.class)
+    public void testTableDoesntExistForReplica() throws SQLException {
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
+
+        sb.execute("CREATE REPLICA SCHEMA2.TEST;");
+
+        assertFalse("Expected a failure", sb.getUpdateCount() == 0);
+    }
+
+    /**
+     * Tries to create a replica of a schema that doesn't exist. Should fail.
+     * @throws SQLException 
+     */
+    @Test(expected = SQLException.class)
+    public void testTableDoesntExistForReplica2() throws SQLException {
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
+
+        sb.execute("CREATE REPLICA SCHEMA2;");
+
+        assertFalse("Expected a failure", sb.getUpdateCount() == 0);
+    }
+
+    /**
+     * Tests replication of an entire schema of tables.
+     * @throws SQLException 
+     */
+    @Test
+    public void replicateSchema() throws SQLException {
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
+
+        sa.execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+        sa.execute("INSERT INTO TEST2 VALUES(4, 'Meh');");
+        sa.execute("INSERT INTO TEST2 VALUES(5, 'Heh');");
+
+        sb.execute("CREATE REPLICA SCHEMA PUBLIC;");
+
+        assertEquals("Expected update count to be '0'", 0, sb.getUpdateCount());
+
+        /*
+         * Check that the local copy has only two entries.
+         */
+        sb.execute("SELECT LOCAL ONLY * FROM TEST2 ORDER BY ID;");
+
+        final int[] pKey = {4, 5};
+        final String[] secondCol = {"Meh", "Heh"};
+
+        validateResults(pKey, secondCol, sb.getResultSet());
+    }
 }
