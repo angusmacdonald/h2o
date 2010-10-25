@@ -13,7 +13,7 @@ import java.util.Date;
 
 public class H2OEvent implements Serializable {
 
-    public static final long KEEP_ALIVE_SLEEP_TIME = 30000;
+    public static final long KEEP_ALIVE_SLEEP_TIME = 15000;
 
     private static final long serialVersionUID = 3398067681240079321L;
 

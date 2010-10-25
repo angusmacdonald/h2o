@@ -107,11 +107,9 @@ public class DatabaseDescriptorFile {
                 properties.load(fis);
             }
             catch (final FileNotFoundException e) {
-                e.printStackTrace();
                 throw new StartupException(e.getMessage());
             }
             catch (final IOException e) {
-                e.printStackTrace();
                 throw new StartupException(e.getMessage());
             }
             finally {

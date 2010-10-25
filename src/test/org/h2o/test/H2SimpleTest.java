@@ -130,7 +130,9 @@ public class H2SimpleTest {
             }
         }
         finally {
-            query.close();
+            if (query != null) {
+                query.close();
+            }
             is.close();
             conn.close();
             DeleteDbFiles.execute(baseDir, "scriptSimple", true);
