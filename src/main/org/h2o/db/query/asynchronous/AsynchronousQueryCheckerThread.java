@@ -8,6 +8,8 @@
  */
 package org.h2o.db.query.asynchronous;
 
+import org.h2o.db.DefaultSettings;
+
 /**
  * Thread that continuously checks whether a set of queries have been completed.
  * 
@@ -20,8 +22,6 @@ public class AsynchronousQueryCheckerThread extends Thread {
      */
     AsynchronousQueryManager queryManager;
 
-    private static final int SLEEP_TIME = 100;
-
     public AsynchronousQueryCheckerThread(final AsynchronousQueryManager queryManager) {
 
         this.queryManager = queryManager;
@@ -30,10 +30,12 @@ public class AsynchronousQueryCheckerThread extends Thread {
     @Override
     public void run() {
 
+        final int sleepTime = Integer.valueOf(DefaultSettings.getString("AsynchronousQueryCheckerThread.SLEEP_TIME_BETWEEN_ASYNC_QUERY_CHECK"));
+
         while (true) {
 
             try {
-                Thread.sleep(SLEEP_TIME);
+                Thread.sleep(sleepTime);
             }
             catch (final InterruptedException e) {
             }

@@ -130,9 +130,11 @@ public abstract class PersistentManager {
 
         String sql = "CREATE SCHEMA IF NOT EXISTS H2O; ";
 
-        sql += "CREATE TABLE IF NOT EXISTS " + connections + "(" + "connection_id INTEGER NOT NULL auto_increment(1,1)," + "connection_type VARCHAR(5), " + "machine_name VARCHAR(255)," + "db_location VARCHAR(255)," + "connection_port INT NOT NULL, " + "chord_port INT NOT NULL, " + "active BOOLEAN, " + "PRIMARY KEY (connection_id) );";
+        sql += "CREATE TABLE IF NOT EXISTS " + connections + "(" + "connection_id INTEGER NOT NULL auto_increment(1,1)," + "connection_type VARCHAR(5), " + "machine_name VARCHAR(255)," + "db_location VARCHAR(255)," + "connection_port INT NOT NULL, " + "chord_port INT NOT NULL, "
+                        + "active BOOLEAN, " + "PRIMARY KEY (connection_id) );";
 
-        sql += "CREATE SCHEMA IF NOT EXISTS H2O; " + "\n\nCREATE TABLE IF NOT EXISTS " + tables + "( table_id INT NOT NULL auto_increment(1,1), " + "schemaname VARCHAR(255), tablename VARCHAR(255), " + "last_modification INT NOT NULL, " + "manager_location INTEGER NOT NULL, " + "PRIMARY KEY (table_id), " + "FOREIGN KEY (manager_location) REFERENCES " + connections + " (connection_id));";
+        sql += "CREATE SCHEMA IF NOT EXISTS H2O; " + "\n\nCREATE TABLE IF NOT EXISTS " + tables + "( table_id INT NOT NULL auto_increment(1,1), " + "schemaname VARCHAR(255), tablename VARCHAR(255), " + "last_modification INT NOT NULL, " + "manager_location INTEGER NOT NULL, "
+                        + "PRIMARY KEY (table_id), " + "FOREIGN KEY (manager_location) REFERENCES " + connections + " (connection_id));";
 
         return sql;
     }
@@ -243,6 +245,8 @@ public abstract class PersistentManager {
     }
 
     public void persistActiveInformation(final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> newlyActiveReplicas) {
+
+        if (newlyActiveReplicas == null || newlyActiveReplicas.size() == 0) { return; }
 
         persistReplicaActiveInformation(tableDetails, newlyActiveReplicas, true);
 
@@ -410,7 +414,8 @@ public abstract class PersistentManager {
      */
     public boolean isReplicaListed(final TableInfo ti, final int connectionID) throws SQLException {
 
-        final String sql = "SELECT count(*) FROM " + replicaRelation + ", " + tableRelation + ", " + connectionRelation + " WHERE tablename='" + ti.getTableName() + "' AND schemaname='" + ti.getSchemaName() + "' AND " + tableRelation + ".table_id=" + replicaRelation + ".table_id AND " + replicaRelation + ".connection_id = " + connectionRelation + ".connection_id AND " + connectionRelation + ".connection_id = " + connectionID + ";";
+        final String sql = "SELECT count(*) FROM " + replicaRelation + ", " + tableRelation + ", " + connectionRelation + " WHERE tablename='" + ti.getTableName() + "' AND schemaname='" + ti.getSchemaName() + "' AND " + tableRelation + ".table_id=" + replicaRelation + ".table_id AND "
+                        + replicaRelation + ".connection_id = " + connectionRelation + ".connection_id AND " + connectionRelation + ".connection_id = " + connectionID + ";";
 
         return countCheck(sql);
     }

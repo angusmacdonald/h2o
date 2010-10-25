@@ -13,7 +13,7 @@ import java.util.Date;
 
 public class H2OEvent implements Serializable {
 
-    public static final long KEEP_ALIVE_SLEEP_TIME = 15000;
+    public static final long KEEP_ALIVE_SLEEP_TIME = 30000;
 
     private static final long serialVersionUID = 3398067681240079321L;
 
@@ -81,7 +81,7 @@ public class H2OEvent implements Serializable {
     @Override
     public String toString() {
 
-        return "H2OEvent [time=" + time + ", database=" + database + ", eventType=" + eventType + ", eventValue=" + eventValue + "]";
+        return "H2OEvent [time=" + time + ", database=" + database + ", eventType=" + eventType + ", eventValue=" + eventValue + "]"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
     }
 
     public String getDescription() {

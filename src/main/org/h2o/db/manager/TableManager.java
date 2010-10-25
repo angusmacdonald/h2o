@@ -275,8 +275,9 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         final String databaseName = session.getDatabase().getURL().sanitizedLocation().toUpperCase();
         String sql = createSQL(getMetaTableName(databaseName, TableManager.TABLES), getMetaTableName(databaseName, TableManager.CONNECTIONS));
 
-        sql += "\n\nCREATE TABLE IF NOT EXISTS " + getMetaTableName(databaseName, TableManager.REPLICAS) + "(" + "replica_id INTEGER NOT NULL auto_increment(1,1), " + "table_id INTEGER NOT NULL, " + "connection_id INTEGER NOT NULL, " + "storage_type VARCHAR(255), " + "active boolean NOT NULL, " + "table_set INT NOT NULL, " + "PRIMARY KEY (replica_id), " + "FOREIGN KEY (table_id) REFERENCES " + getMetaTableName(databaseName, TableManager.TABLES) + " (table_id) ON DELETE CASCADE , "
-                        + " FOREIGN KEY (connection_id) REFERENCES " + getMetaTableName(databaseName, TableManager.CONNECTIONS) + " (connection_id));";
+        sql += "\n\nCREATE TABLE IF NOT EXISTS " + getMetaTableName(databaseName, TableManager.REPLICAS) + "(" + "replica_id INTEGER NOT NULL auto_increment(1,1), " + "table_id INTEGER NOT NULL, " + "connection_id INTEGER NOT NULL, " + "storage_type VARCHAR(255), " + "active boolean NOT NULL, "
+                        + "table_set INT NOT NULL, " + "PRIMARY KEY (replica_id), " + "FOREIGN KEY (table_id) REFERENCES " + getMetaTableName(databaseName, TableManager.TABLES) + " (table_id) ON DELETE CASCADE , " + " FOREIGN KEY (connection_id) REFERENCES "
+                        + getMetaTableName(databaseName, TableManager.CONNECTIONS) + " (connection_id));";
 
         final Parser parser = new Parser(session, true);
 
@@ -550,27 +551,33 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         /*
          * Update the set of 'active replicas' and their update IDs.
          */
+        updateActiveReplicaSet(commit, committedQueries, asynchronousCommit, lockType);
 
-        if (lockType == LockType.WRITE || asynchronousCommit) { // creates are viewed as writes in the locking table.
+    }
+
+    /**
+     * Update the set of 'active replicas' and their update IDs.
+     * @param commit
+     * @param committedQueries
+     * @param asynchronousCommit
+     * @param lockType
+     */
+    private void updateActiveReplicaSet(final boolean commit, final Collection<CommitResult> committedQueries, final boolean asynchronousCommit, final LockType lockType) {
+
+        if (lockType == LockType.WRITE || asynchronousCommit) { // LockType.WRITE == LockType.CREATE in the locking table.
             final Set<DatabaseInstanceWrapper> changed = replicaManager.completeUpdate(commit, committedQueries, tableInfo, !asynchronousCommit);
 
             if (!asynchronousCommit && changed.size() < replicaManager.getActiveReplicas().size() && changed.size() > 1) {
                 // This is the first part of a query. Some replicas will be made inactive.
                 persistInactiveInformation(tableInfo, changed);
-
-                // printCurrentActiveReplicas();
-
             }
             else {
                 // This is the asynchronous part of the query. Some replicas will be made active.
-
                 persistActiveInformation(tableInfo, changed);
-
             }
 
             printCurrentActiveReplicas();
-        } // reads don't change the set of active replicas.
-
+        } // else: reads don't change the set of active replicas.
     }
 
     private void printCurrentActiveReplicas() {
@@ -578,8 +585,9 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         if (Diagnostic.getLevel().equals(DiagnosticLevel.INIT)) {
 
             final String databaseName = db.getURL().sanitizedLocation();
-            final String sql = "SELECT LOCAL ONLY " + "connection_type, machine_name, db_location, connection_port, chord_port, " + getMetaTableName(databaseName, REPLICAS) + ".table_id, " + getMetaTableName(databaseName, REPLICAS) + ".connection_id FROM " + getMetaTableName(databaseName, REPLICAS) + ", " + getMetaTableName(databaseName, TABLES) + ", " + getMetaTableName(databaseName, CONNECTIONS) + " WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND "
-                            + getMetaTableName(databaseName, REPLICAS) + ".active='true' AND " + getMetaTableName(databaseName, TABLES) + ".table_id=" + getMetaTableName(databaseName, REPLICAS) + ".table_id AND " + getMetaTableName(databaseName, REPLICAS) + ".connection_id=" + getMetaTableName(databaseName, CONNECTIONS) + ".connection_id;";
+            final String sql = "SELECT LOCAL ONLY " + "connection_type, machine_name, db_location, connection_port, chord_port, " + getMetaTableName(databaseName, REPLICAS) + ".table_id, " + getMetaTableName(databaseName, REPLICAS) + ".connection_id FROM " + getMetaTableName(databaseName, REPLICAS)
+                            + ", " + getMetaTableName(databaseName, TABLES) + ", " + getMetaTableName(databaseName, CONNECTIONS) + " WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND " + getMetaTableName(databaseName, REPLICAS) + ".active='true' AND "
+                            + getMetaTableName(databaseName, TABLES) + ".table_id=" + getMetaTableName(databaseName, REPLICAS) + ".table_id AND " + getMetaTableName(databaseName, REPLICAS) + ".connection_id=" + getMetaTableName(databaseName, CONNECTIONS) + ".connection_id;";
 
             try {
 
@@ -637,9 +645,13 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
     private void preMethodTest() throws RemoteException, MovedException {
 
-        if (hasMoved || shutdown) {
-            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Table Manager has moved. Throwing MovedException.");
+        if (hasMoved) {
+            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Table Manager " + fullName + " has moved. Throwing MovedException.");
             throw new MovedException(movedLocation);
+        }
+        else if (shutdown) {
+            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Table Manager " + fullName + " has shutdown. An old reference was probably cached somewhere.");
+            throw new MovedException(null);
         }
         /*
          * If the manager is being migrated, and has been migrated for less than 10 seconds (timeout period, throw an execption.
@@ -837,7 +849,8 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         final String oldconnectionRelation = getMetaTableName(oldPrimaryDatabaseName, CONNECTIONS);
         final String oldReplicaRelation = getMetaTableName(oldPrimaryDatabaseName, REPLICAS);
 
-        final String sql = "SELECT LOCAL ONLY connection_type, machine_name, db_location, connection_port, chord_port FROM " + oldReplicaRelation + ", " + oldTableRelation + ", " + oldconnectionRelation + " WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND " + oldReplicaRelation + ".active='true' AND " + oldTableRelation + ".table_id=" + oldReplicaRelation + ".table_id AND " + oldconnectionRelation + ".connection_id=" + oldReplicaRelation + ".connection_id;";
+        final String sql = "SELECT LOCAL ONLY connection_type, machine_name, db_location, connection_port, chord_port FROM " + oldReplicaRelation + ", " + oldTableRelation + ", " + oldconnectionRelation + " WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND "
+                        + oldReplicaRelation + ".active='true' AND " + oldTableRelation + ".table_id=" + oldReplicaRelation + ".table_id AND " + oldconnectionRelation + ".connection_id=" + oldReplicaRelation + ".connection_id;";
 
         LocalResult rs = null;
         try {

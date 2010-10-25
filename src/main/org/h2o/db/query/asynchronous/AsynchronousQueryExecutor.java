@@ -21,6 +21,7 @@ import java.util.concurrent.FutureTask;
 import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
+import org.h2o.db.DefaultSettings;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.query.QueryProxy;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
@@ -38,8 +39,8 @@ public class AsynchronousQueryExecutor {
 
         this.database = database;
 
-        if (database.getDatabaseSettings().get("ASYNCHRONOUS_REPLICATION_ENABLED").equals("true")) {
-            updatesNeededBeforeCommit = Integer.parseInt(database.getDatabaseSettings().get("ASYNCHRONOUS_REPLICATION_FACTOR"));
+        if (database.getDatabaseSettings().get("ASYNCHRONOUS_REPLICATION_ENABLED").equals("true")) { //$NON-NLS-1$ //$NON-NLS-2$
+            updatesNeededBeforeCommit = Integer.parseInt(database.getDatabaseSettings().get("ASYNCHRONOUS_REPLICATION_FACTOR")); //$NON-NLS-1$
         }
 
     }
@@ -149,7 +150,8 @@ public class AsynchronousQueryExecutor {
      *            ready for the eventual commit.
      * @param tableInfo
      */
-    private void executeQueryOnSpecifiedReplica(final String sql, final String transactionName, final DatabaseInstanceWrapper replicaToExecuteQueryOn, final Integer updateID, final boolean isReplicaLocal, final Parser parser, final List<FutureTask<QueryResult>> executingQueries, final boolean commitOperation, final TableInfo tableInfo) {
+    private void executeQueryOnSpecifiedReplica(final String sql, final String transactionName, final DatabaseInstanceWrapper replicaToExecuteQueryOn, final Integer updateID, final boolean isReplicaLocal, final Parser parser, final List<FutureTask<QueryResult>> executingQueries,
+                    final boolean commitOperation, final TableInfo tableInfo) {
 
         final RemoteQueryExecutor qt = new RemoteQueryExecutor(sql, transactionName, replicaToExecuteQueryOn, updateID, parser, isReplicaLocal, commitOperation, tableInfo);
 
@@ -184,6 +186,9 @@ public class AsynchronousQueryExecutor {
         if (incompleteQueries.size() == 0) { return true; // the commit value has not changed.
         }
 
+        final Integer sleepTime = Integer.valueOf(DefaultSettings.getString("AsynchronousQueryExecutor.SLEEP_TIME_WAITING_FOR_QUERIES_TO_COMPLETE")); //$NON-NLS-1$
+
+        assert sleepTime != null : "Sleep time property couldn't be found.";
         final List<FutureTask<QueryResult>> completedQueries = new LinkedList<FutureTask<QueryResult>>();
 
         /*
@@ -202,7 +207,8 @@ public class AsynchronousQueryExecutor {
                 }
                 else {
                     try {
-                        Thread.sleep(30);
+
+                        Thread.sleep(sleepTime);
                     }
                     catch (final InterruptedException e) {
                         e.printStackTrace();
@@ -232,7 +238,7 @@ public class AsynchronousQueryExecutor {
                 continue;
             }
 
-            assert asyncResult != null : "The result of a completed transaction should never be null.";
+            assert asyncResult != null : "The result of a completed transaction should never be null."; //$NON-NLS-1$
 
             if (asyncResult.getException() == null) { // If the query executed successfully.
                 final int result = asyncResult.getResult();
