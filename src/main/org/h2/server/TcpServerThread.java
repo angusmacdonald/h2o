@@ -32,7 +32,6 @@ import org.h2.value.Value;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
-import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * One server thread is opened per client connection.
@@ -152,7 +151,6 @@ public class TcpServerThread implements Runnable {
                     process();
                 }
                 catch (final Throwable e) {
-                    ErrorHandling.exceptionError(e, "Error in TCPServer. This should be handled by H2's server code.");
                     sendError(e);
                 }
             }
