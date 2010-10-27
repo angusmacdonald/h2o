@@ -26,7 +26,7 @@ public class QueryExample {
 
     public static void main(final String[] args) throws SQLException {
 
-        final String jdbcURL = "jdbc:h2:tcp://" + NetUtils.getLocalAddress() + ":9998/db_data//MyFirstDatabase9998";
+        final String jdbcURL = "jdbc:h2:tcp://" + NetUtils.getLocalAddress() + ":9999/db_data//MyFirstDatabase9999";
 
         /*
          * Default system password. You'd probably want to change this through a standard SQL create user call when the database is first created.

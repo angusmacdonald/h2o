@@ -5,9 +5,10 @@
 package org.h2.engine;
 
 import java.sql.SQLException;
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.h2.command.CommandInterface;
 import org.h2.command.Parser;
@@ -34,7 +35,7 @@ public class Engine {
 
     private Engine() {
 
-        // don't allow others to instantiate
+        // Don't allow others to instantiate.
     }
 
     public static Engine getInstance() {
@@ -48,16 +49,16 @@ public class Engine {
      * @param databaseName
      * @return
      */
-    public static Database getDatabase(String databaseName) {
+    public static Database getDatabase(final String databaseName) {
 
         return DATABASES.get(databaseName);
     }
 
-    private Session openSession(ConnectionInfo ci, boolean ifExists, String cipher) throws SQLException {
+    private Session openSession(final ConnectionInfo ci, final boolean ifExists, final String cipher) throws SQLException {
 
-        String name = ci.getName();
+        final String name = ci.getName();
         Database database;
-        boolean openNew = ci.getProperty("OPEN_NEW", false);
+        final boolean openNew = ci.getProperty("OPEN_NEW", false);
         if (openNew || ci.isUnnamedInMemory()) {
             database = null;
         }
@@ -105,7 +106,7 @@ public class Engine {
                 throw Message.getSQLException(ErrorCode.WRONG_USER_OR_PASSWORD);
             }
             checkClustering(ci, database);
-            Session session = database.createSession(user);
+            final Session session = database.createSession(user);
             return session;
         }
     }
@@ -117,27 +118,27 @@ public class Engine {
      *            the connection information
      * @return the session
      */
-    public Session getSession(ConnectionInfo ci) throws SQLException {
+    public Session getSession(final ConnectionInfo ci) throws SQLException {
 
         try {
             ConnectionInfo backup = null;
-            String lockMethodName = ci.getProperty("FILE_LOCK", null);
-            int fileLockMethod = FileLock.getFileLockMethod(lockMethodName);
+            final String lockMethodName = ci.getProperty("FILE_LOCK", null);
+            final int fileLockMethod = FileLock.getFileLockMethod(lockMethodName);
             if (fileLockMethod == FileLock.LOCK_SERIALIZED) {
                 try {
                     backup = (ConnectionInfo) ci.clone();
                 }
-                catch (CloneNotSupportedException e) {
+                catch (final CloneNotSupportedException e) {
                 }
             }
-            Session session = openSession(ci);
+            final Session session = openSession(ci);
             validateUserAndPassword(true);
             if (backup != null) {
                 session.setConnectionInfo(backup);
             }
             return session;
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             if (e.getErrorCode() == ErrorCode.WRONG_USER_OR_PASSWORD) {
                 validateUserAndPassword(false);
             }
@@ -145,11 +146,11 @@ public class Engine {
         }
     }
 
-    private synchronized Session openSession(ConnectionInfo ci) throws SQLException {
+    private synchronized Session openSession(final ConnectionInfo ci) throws SQLException {
 
-        boolean ifExists = ci.removeProperty("IFEXISTS", false);
-        boolean ignoreUnknownSetting = ci.removeProperty("IGNORE_UNKNOWN_SETTINGS", false);
-        String cipher = ci.removeProperty("CIPHER", null);
+        final boolean ifExists = ci.removeProperty("IFEXISTS", false);
+        final boolean ignoreUnknownSetting = ci.removeProperty("IGNORE_UNKNOWN_SETTINGS", false);
+        final String cipher = ci.removeProperty("CIPHER", null);
         Session session;
         while (true) {
             session = openSession(ci, ifExists, cipher);
@@ -161,19 +162,19 @@ public class Engine {
             try {
                 Thread.sleep(1);
             }
-            catch (InterruptedException e) {
+            catch (final InterruptedException e) {
                 // ignore
             }
         }
-        String[] keys = ci.getKeys();
+        final String[] keys = ci.getKeys();
         session.setAllowLiterals(true);
-        for (String setting : keys) {
-            String value = ci.getProperty(setting);
+        for (final String setting : keys) {
+            final String value = ci.getProperty(setting);
             try {
-                CommandInterface command = session.prepareCommand("SET " + Parser.quoteIdentifier(setting) + " " + value, Integer.MAX_VALUE);
+                final CommandInterface command = session.prepareCommand("SET " + Parser.quoteIdentifier(setting) + " " + value, Integer.MAX_VALUE);
                 command.executeUpdate();
             }
-            catch (SQLException e) {
+            catch (final SQLException e) {
                 if (!ignoreUnknownSetting) {
                     session.close();
                     throw e;
@@ -186,15 +187,15 @@ public class Engine {
         return session;
     }
 
-    private void checkClustering(ConnectionInfo ci, Database database) throws SQLException {
+    private void checkClustering(final ConnectionInfo ci, final Database database) throws SQLException {
 
-        String clusterSession = ci.getProperty(SetTypes.CLUSTER, null);
+        final String clusterSession = ci.getProperty(SetTypes.CLUSTER, null);
         if (Constants.CLUSTERING_DISABLED.equals(clusterSession)) {
             // in this case, no checking is made
             // (so that a connection can be made to disable/change clustering)
             return;
         }
-        String clusterDb = database.getCluster();
+        final String clusterDb = database.getCluster();
         if (!Constants.CLUSTERING_DISABLED.equals(clusterDb)) {
             if (!StringUtils.equals(clusterSession, clusterDb)) {
                 if (clusterDb.equals(Constants.CLUSTERING_DISABLED)) { throw Message.getSQLException(ErrorCode.CLUSTER_ERROR_DATABASE_RUNS_ALONE); }
@@ -209,7 +210,7 @@ public class Engine {
      * @param name
      *            the database name
      */
-    public void close(String name) {
+    public void close(final String name) {
 
         DATABASES.remove(name);
     }
@@ -228,9 +229,9 @@ public class Engine {
      * @throws SQLException
      *             the exception 'wrong user or password'
      */
-    private static void validateUserAndPassword(boolean correct) throws SQLException {
+    private static void validateUserAndPassword(final boolean correct) throws SQLException {
 
-        int min = SysProperties.DELAY_WRONG_PASSWORD_MIN;
+        final int min = SysProperties.DELAY_WRONG_PASSWORD_MIN;
         if (correct) {
             long delay = wrongPasswordDelay;
             if (delay > min && delay > 0) {
@@ -243,7 +244,7 @@ public class Engine {
                     try {
                         Thread.sleep(delay);
                     }
-                    catch (InterruptedException e) {
+                    catch (final InterruptedException e) {
                         // ignore
                     }
                     wrongPasswordDelay = min;
@@ -269,7 +270,7 @@ public class Engine {
                     try {
                         Thread.sleep(delay);
                     }
-                    catch (InterruptedException e) {
+                    catch (final InterruptedException e) {
                         // ignore
                     }
                 }
@@ -283,12 +284,10 @@ public class Engine {
      * 
      * @return
      */
-    public Collection<Database> closeAllDatabases() {
+    public Set<Database> getAllDatabases() {
 
-        Collection<Database> dbSet = DATABASES.values();
-        DATABASES.clear();
-
-        return dbSet;
+        final Set<Database> result = new HashSet<Database>();
+        result.addAll(DATABASES.values());
+        return result;
     }
-
 }
