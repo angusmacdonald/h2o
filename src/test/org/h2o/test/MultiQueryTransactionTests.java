@@ -583,29 +583,38 @@ public class MultiQueryTransactionTests extends TestBase {
     @Test
     public void testPreparedStatementsNoReplication() throws SQLException {
 
-        final PreparedStatement mStmt = ca.prepareStatement("insert into PUBLIC.TEST (id,name) values (?,?)");
+        PreparedStatement mStmt = null;
+        try {
+            mStmt = ca.prepareStatement("insert into PUBLIC.TEST (id,name) values (?,?)");
 
-        for (int i = 3; i < 100; i++) {
-            mStmt.setInt(1, i);
-            mStmt.setString(2, "helloNumber" + i);
-            mStmt.addBatch();
+            for (int i = 3; i < 100; i++) {
+                mStmt.setInt(1, i);
+                mStmt.setString(2, "helloNumber" + i);
+                mStmt.addBatch();
+            }
+
+            mStmt.executeBatch();
+
+            final int[] pKey = new int[100];
+            final String[] secondCol = new String[100];
+
+            pKey[0] = 1;
+            pKey[1] = 2;
+            secondCol[0] = "Hello";
+            secondCol[1] = "World";
+
+            final TestQuery test2query = createMultipleInsertStatements("TEST", pKey, secondCol, 3);
+
+            sa.execute("SELECT LOCAL * FROM PUBLIC.TEST ORDER BY ID;");
+
+            validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
+        }
+        finally {
+            if (mStmt != null) {
+                mStmt.close();
+            }
         }
 
-        mStmt.executeBatch();
-
-        final int[] pKey = new int[100];
-        final String[] secondCol = new String[100];
-
-        pKey[0] = 1;
-        pKey[1] = 2;
-        secondCol[0] = "Hello";
-        secondCol[1] = "World";
-
-        final TestQuery test2query = createMultipleInsertStatements("TEST", pKey, secondCol, 3);
-
-        sa.execute("SELECT LOCAL * FROM PUBLIC.TEST ORDER BY ID;");
-
-        validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
     }
 
     /**
@@ -668,35 +677,41 @@ public class MultiQueryTransactionTests extends TestBase {
         // update bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
         createReplicaOnB();
 
-        PreparedStatement mStmt = ca.prepareStatement("insert into PUBLIC.TEST (id,name) values (?,?)");
+        PreparedStatement mStmt = null;
+        try {
+            mStmt = ca.prepareStatement("insert into PUBLIC.TEST (id,name) values (?,?)");
 
-        for (int i = 3; i < 10; i++) {
-            mStmt.setInt(1, i);
-            mStmt.setString(2, "helloNumber" + i);
+            for (int i = 3; i < 10; i++) {
+                mStmt.setInt(1, i);
+                mStmt.setString(2, "helloNumber" + i);
+                mStmt.addBatch();
+            }
+
+            mStmt.executeBatch();
+
+            mStmt = ca.prepareStatement("delete from PUBLIC.TEST where id=?;");
+            mStmt.setInt(1, 9);
             mStmt.addBatch();
+            mStmt.executeBatch();
+            //
+
+            final int[] pKey = new int[9];
+            final String[] secondCol = new String[9];
+
+            pKey[0] = 1;
+            pKey[1] = 2;
+            secondCol[0] = "Hello";
+            secondCol[1] = "World";
+
+            final TestQuery test2query = createMultipleInsertStatements("TEST", pKey, secondCol, 3);
+
+            sa.execute("SELECT LOCAL * FROM PUBLIC.TEST ORDER BY ID;");
+
+            validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
         }
-
-        mStmt.executeBatch();
-
-        mStmt = ca.prepareStatement("delete from PUBLIC.TEST where id=?;");
-        mStmt.setInt(1, 9);
-        mStmt.addBatch();
-        mStmt.executeBatch();
-        //
-
-        final int[] pKey = new int[9];
-        final String[] secondCol = new String[9];
-
-        pKey[0] = 1;
-        pKey[1] = 2;
-        secondCol[0] = "Hello";
-        secondCol[1] = "World";
-
-        final TestQuery test2query = createMultipleInsertStatements("TEST", pKey, secondCol, 3);
-
-        sa.execute("SELECT LOCAL * FROM PUBLIC.TEST ORDER BY ID;");
-
-        validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
+        finally {
+            mStmt.close();
+        }
     }
 
     // /**
