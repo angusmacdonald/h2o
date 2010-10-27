@@ -1614,7 +1614,7 @@ public class Database implements DataHandler {
                     trigger.close();
                 }
                 meta.close(systemSession);
-                systemSession.commit(true);
+                //                systemSession.commit(true);
                 indexSummaryValid = true;
             }
         }
