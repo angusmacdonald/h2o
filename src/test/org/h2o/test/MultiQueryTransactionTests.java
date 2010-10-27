@@ -693,7 +693,6 @@ public class MultiQueryTransactionTests extends TestBase {
             mStmt.setInt(1, 9);
             mStmt.addBatch();
             mStmt.executeBatch();
-            //
 
             final int[] pKey = new int[9];
             final String[] secondCol = new String[9];
@@ -817,12 +816,7 @@ public class MultiQueryTransactionTests extends TestBase {
             validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
         }
         finally {
-            try {
-                mStmt.close();
-            }
-            catch (final SQLException e) {
-                //Doesn't matter.
-            }
+            mStmt.close();
         }
     }
 
@@ -857,83 +851,72 @@ public class MultiQueryTransactionTests extends TestBase {
         PreparedStatement mStmt = null;
 
         try {
+            server = Server.createTcpServer(new String[]{"-tcpPort", "9990", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test"});
+            server.start();
+
+            conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+
+            sa = conn.createStatement();
+
+            sa.execute("DROP ALL OBJECTS;");
+            sa.execute("CREATE TABLE TEST5(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+            sa.execute("INSERT INTO TEST5 VALUES(1, 'Hello');");
+            sa.execute("INSERT INTO TEST5 VALUES(2, 'World');");
+
+            server.shutdown();
+            server.stop();
+
+            TestBase.resetLocatorFile();
+
+            server = Server.createTcpServer(new String[]{"-tcpPort", "9990", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test"});
+
+            server.start();
+
+            conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+
+            mStmt = conn.prepareStatement("insert into PUBLIC.TEST5 (id,name) values (?,?)");
+
+            for (int i = 3; i < 100; i++) {
+                mStmt.setInt(1, i);
+                mStmt.setString(2, "helloNumber" + i);
+                mStmt.addBatch();
+            }
+
+            mStmt.executeBatch();
+
+            final int[] pKey = new int[100];
+            final String[] secondCol = new String[100];
+
+            pKey[0] = 1;
+            pKey[1] = 2;
+            secondCol[0] = "Hello";
+            secondCol[1] = "World";
+
+            final TestQuery test2query = createMultipleInsertStatements("TEST5", pKey, secondCol, 3);
+
+            sa = conn.createStatement();
+
+            sa.execute("SELECT LOCAL * FROM PUBLIC.TEST5 ORDER BY ID;");
+
+            validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
+
+        }
+
+        finally {
+
+            conn.close();
+            mStmt.close();
+            sa.close();
+
+            // stop the server
+            server.stop();
+
             try {
-                server = Server.createTcpServer(new String[]{"-tcpPort", "9990", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test"});
-                server.start();
-
-                Class.forName("org.h2.Driver");
-                conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-
-                sa = conn.createStatement();
-
-                sa.execute("DROP ALL OBJECTS;");
-                sa.execute("CREATE TABLE TEST5(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-                sa.execute("INSERT INTO TEST5 VALUES(1, 'Hello');");
-                sa.execute("INSERT INTO TEST5 VALUES(2, 'World');");
-
-                server.shutdown();
-                server.stop();
-
-                TestBase.resetLocatorFile();
-
-                server = Server.createTcpServer(new String[]{"-tcpPort", "9990", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test"});
-
-                server.start();
-
-                conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-
-                mStmt = conn.prepareStatement("insert into PUBLIC.TEST5 (id,name) values (?,?)");
-
-                for (int i = 3; i < 100; i++) {
-                    mStmt.setInt(1, i);
-                    mStmt.setString(2, "helloNumber" + i);
-                    mStmt.addBatch();
-                }
-
-                mStmt.executeBatch();
-
-                final int[] pKey = new int[100];
-                final String[] secondCol = new String[100];
-
-                pKey[0] = 1;
-                pKey[1] = 2;
-                secondCol[0] = "Hello";
-                secondCol[1] = "World";
-
-                final TestQuery test2query = createMultipleInsertStatements("TEST5", pKey, secondCol, 3);
-
-                sa = conn.createStatement();
-
-                sa.execute("SELECT LOCAL * FROM PUBLIC.TEST5 ORDER BY ID;");
-
-                validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
-
+                DeleteDbFiles.execute("db_data/unittests/", "schema_test", true);
             }
-
-            finally {
-
-                conn.close();
-                mStmt.close();
-                sa.close();
-
-                // stop the server
-                server.stop();
-
-                try {
-                    DeleteDbFiles.execute("db_data/unittests/", "schema_test", true);
-                }
-                catch (final SQLException e) {
-                }
+            catch (final SQLException e) {
             }
         }
-        catch (final SQLException e1) {
-            e1.printStackTrace();
-            fail("Unexpected SQL Exception was thrown. Not cool.");
-        }
-        catch (final ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-
     }
 
     /**
@@ -1009,10 +992,6 @@ public class MultiQueryTransactionTests extends TestBase {
 
             ca.commit();
 
-        }
-        catch (final SQLException ex) {
-            ex.printStackTrace();
-            fail("Unexpected SQL Exception was thrown. Not cool.");
         }
         finally {
             stt.close();
@@ -1095,10 +1074,6 @@ public class MultiQueryTransactionTests extends TestBase {
                 assertEquals(numberOfInserts, rs.getInt(1));
             }
             sa.execute("drop table if exists RESOURCE_MONITORING.PROCESS");
-        }
-        catch (final SQLException ex) {
-            ex.printStackTrace();
-            fail("Unexpected SQL Exception was thrown.");
         }
         finally {
             sa.close();
