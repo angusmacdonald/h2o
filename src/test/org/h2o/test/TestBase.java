@@ -172,14 +172,12 @@ public class TestBase {
     protected static void closeDatabaseCompletely() {
 
         obliterateRMIRegistryContents();
-        Collection<Database> dbs = Engine.getInstance().closeAllDatabases();
+        final Collection<Database> dbs = Engine.getInstance().getAllDatabases();
 
         for (final Database db : dbs) {
             db.close(false);
             db.shutdownImmediately();
         }
-
-        dbs = null;
     }
 
     /**
