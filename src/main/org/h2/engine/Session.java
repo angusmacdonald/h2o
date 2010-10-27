@@ -63,23 +63,23 @@ public class Session extends SessionWithState {
 
     private final int serialId = nextSerialId++;
 
-    private Database database;
+    private final Database database;
 
     private ConnectionInfo connectionInfo;
 
-    private User user;
+    private final User user;
 
-    private int id;
+    private final int id;
 
-    private ObjectArray locks = new ObjectArray();
+    private final ObjectArray locks = new ObjectArray();
 
     private QueryProxyManager proxyManagerForCurrentTransaction = null;
 
-    private UndoLog undoLog;
+    private final UndoLog undoLog;
 
     private Random random;
 
-    private LogSystem logSystem;
+    private final LogSystem logSystem;
 
     private int lockTimeout;
 
@@ -91,7 +91,7 @@ public class Session extends SessionWithState {
 
     private HashMap<String, Integer> savepoints;
 
-    private Exception stackTrace = new Exception();
+    private final Exception stackTrace = new Exception();
 
     private Map<String, Table> localTempTables;
 
@@ -129,7 +129,7 @@ public class Session extends SessionWithState {
 
     private boolean closed;
 
-    private long sessionStart = System.currentTimeMillis();
+    private final long sessionStart = System.currentTimeMillis();
 
     private long currentCommandStart;
 
@@ -154,25 +154,25 @@ public class Session extends SessionWithState {
      */
     private boolean applicationAutoCommit = true;
 
-    public Session(Database database, User user, int id) { // TODO remove public
+    public Session(final Database database, final User user, final int id) { // TODO remove public
 
-                                                           // identifier - only
-                                                           // needed for RMI
-                                                           // tests
+        // identifier - only
+        // needed for RMI
+        // tests
         this.database = database;
-        this.undoLog = new UndoLog(this);
+        undoLog = new UndoLog(this);
         this.user = user;
         this.user.sessions++;
         this.id = id;
-        this.logSystem = database.getLog();
-        Setting setting = database.findSetting(SetTypes.getTypeName(SetTypes.DEFAULT_LOCK_TIMEOUT));
-        this.lockTimeout = setting == null ? Constants.INITIAL_LOCK_TIMEOUT : setting.getIntValue();
-        this.currentSchemaName = Constants.SCHEMA_MAIN;
+        logSystem = database.getLog();
+        final Setting setting = database.findSetting(SetTypes.getTypeName(SetTypes.DEFAULT_LOCK_TIMEOUT));
+        lockTimeout = setting == null ? Constants.INITIAL_LOCK_TIMEOUT : setting.getIntValue();
+        currentSchemaName = Constants.SCHEMA_MAIN;
     }
 
-    public boolean setCommitOrRollbackDisabled(boolean x) {
+    public boolean setCommitOrRollbackDisabled(final boolean x) {
 
-        boolean old = commitOrRollbackDisabled;
+        final boolean old = commitOrRollbackDisabled;
         commitOrRollbackDisabled = x;
         return old;
     }
@@ -192,7 +192,7 @@ public class Session extends SessionWithState {
      * @param value
      *            the new value (may not be null)
      */
-    public void setVariable(String name, Value value) throws SQLException {
+    public void setVariable(final String name, Value value) throws SQLException {
 
         initVariables();
         modificationId++;
@@ -222,10 +222,10 @@ public class Session extends SessionWithState {
      *            the variable name
      * @return the value, or NULL
      */
-    public Value getVariable(String name) {
+    public Value getVariable(final String name) {
 
         initVariables();
-        Value v = variables.get(name);
+        final Value v = variables.get(name);
         return v == null ? ValueNull.INSTANCE : v;
     }
 
@@ -237,7 +237,7 @@ public class Session extends SessionWithState {
     public String[] getVariableNames() {
 
         if (variables == null) { return new String[0]; }
-        String[] list = new String[variables.size()];
+        final String[] list = new String[variables.size()];
         variables.keySet().toArray(list);
         return list;
     }
@@ -249,7 +249,7 @@ public class Session extends SessionWithState {
      *            the table name
      * @return the table, or null
      */
-    public Table findLocalTempTable(String name) {
+    public Table findLocalTempTable(final String name) {
 
         if (localTempTables == null) { return null; }
         return localTempTables.get(name);
@@ -269,7 +269,7 @@ public class Session extends SessionWithState {
      * @throws SQLException
      *             if a table with this name already exists
      */
-    public void addLocalTempTable(Table table) throws SQLException {
+    public void addLocalTempTable(final Table table) throws SQLException {
 
         if (localTempTables == null) {
             localTempTables = new HashMap<String, Table>();
@@ -285,7 +285,7 @@ public class Session extends SessionWithState {
      * @param table
      *            the table
      */
-    public void removeLocalTempTable(Table table) throws SQLException {
+    public void removeLocalTempTable(final Table table) throws SQLException {
 
         modificationId++;
         localTempTables.remove(table.getName());
@@ -299,7 +299,7 @@ public class Session extends SessionWithState {
      *            the table name
      * @return the table, or null
      */
-    public Index findLocalTempTableIndex(String name) {
+    public Index findLocalTempTableIndex(final String name) {
 
         if (localTempTableIndexes == null) { return null; }
         return localTempTableIndexes.get(name);
@@ -319,7 +319,7 @@ public class Session extends SessionWithState {
      * @throws SQLException
      *             if a index with this name already exists
      */
-    public void addLocalTempTableIndex(Index index) throws SQLException {
+    public void addLocalTempTableIndex(final Index index) throws SQLException {
 
         if (localTempTableIndexes == null) {
             localTempTableIndexes = new HashMap<String, Index>();
@@ -334,7 +334,7 @@ public class Session extends SessionWithState {
      * @param index
      *            the index
      */
-    public void removeLocalTempTableIndex(Index index) throws SQLException {
+    public void removeLocalTempTableIndex(final Index index) throws SQLException {
 
         if (localTempTableIndexes != null) {
             localTempTableIndexes.remove(index.getName());
@@ -349,7 +349,7 @@ public class Session extends SessionWithState {
      *            the constraint name
      * @return the constraint, or null
      */
-    public Constraint findLocalTempTableConstraint(String name) {
+    public Constraint findLocalTempTableConstraint(final String name) {
 
         if (localTempTableConstraints == null) { return null; }
         return localTempTableConstraints.get(name);
@@ -374,12 +374,12 @@ public class Session extends SessionWithState {
      * @throws SQLException
      *             if a constraint with the same name already exists
      */
-    public void addLocalTempTableConstraint(Constraint constraint) throws SQLException {
+    public void addLocalTempTableConstraint(final Constraint constraint) throws SQLException {
 
         if (localTempTableConstraints == null) {
             localTempTableConstraints = new HashMap<String, Constraint>();
         }
-        String name = constraint.getName();
+        final String name = constraint.getName();
         if (localTempTableConstraints.get(name) != null) { throw Message.getSQLException(ErrorCode.CONSTRAINT_ALREADY_EXISTS_1, constraint.getSQL()); }
         localTempTableConstraints.put(name, constraint);
     }
@@ -390,7 +390,7 @@ public class Session extends SessionWithState {
      * @param constraint
      *            the constraint
      */
-    public void removeLocalTempTableConstraint(Constraint constraint) throws SQLException {
+    public void removeLocalTempTableConstraint(final Constraint constraint) throws SQLException {
 
         if (localTempTableConstraints != null) {
             localTempTableConstraints.remove(constraint.getName());
@@ -398,6 +398,7 @@ public class Session extends SessionWithState {
         }
     }
 
+    @Override
     protected void finalize() {
 
         if (!SysProperties.runFinalize) { return; }
@@ -414,12 +415,13 @@ public class Session extends SessionWithState {
         return lockTimeout;
     }
 
-    public void setLockTimeout(int lockTimeout) {
+    public void setLockTimeout(final int lockTimeout) {
 
         this.lockTimeout = lockTimeout;
     }
 
-    public CommandInterface prepareCommand(String sql, int fetchSize) throws SQLException {
+    @Override
+    public CommandInterface prepareCommand(final String sql, final int fetchSize) throws SQLException {
 
         return prepareLocal(sql);
     }
@@ -431,7 +433,7 @@ public class Session extends SessionWithState {
      *            the SQL statement
      * @return the prepared statement
      */
-    public Prepared prepare(String sql) throws SQLException {
+    public Prepared prepare(final String sql) throws SQLException {
 
         return prepare(sql, false);
     }
@@ -445,9 +447,9 @@ public class Session extends SessionWithState {
      *            true if the rights have already been checked
      * @return the prepared statement
      */
-    public Prepared prepare(String sql, boolean rightsChecked) throws SQLException {
+    public Prepared prepare(final String sql, final boolean rightsChecked) throws SQLException {
 
-        Parser parser = new Parser(this, true);
+        final Parser parser = new Parser(this, true);
         parser.setRightsChecked(rightsChecked);
         return parser.prepare(sql);
     }
@@ -459,10 +461,10 @@ public class Session extends SessionWithState {
      *            the SQL statement
      * @return the prepared statement
      */
-    public Command prepareLocal(String sql) throws SQLException {
+    public Command prepareLocal(final String sql) throws SQLException {
 
         if (closed) { throw Message.getSQLException(ErrorCode.CONNECTION_BROKEN); }
-        Parser parser = new Parser(this, false);
+        final Parser parser = new Parser(this, false);
         return parser.prepareCommand(sql);
     }
 
@@ -471,12 +473,14 @@ public class Session extends SessionWithState {
         return database;
     }
 
+    @Override
     public int getPowerOffCount() {
 
         return database.getPowerOffCount();
     }
 
-    public void setPowerOffCount(int count) {
+    @Override
+    public void setPowerOffCount(final int count) {
 
         database.setPowerOffCount(count);
     }
@@ -486,7 +490,7 @@ public class Session extends SessionWithState {
         return lastUncommittedDelete;
     }
 
-    public void setLastUncommittedDelete(int deleteId) {
+    public void setLastUncommittedDelete(final int deleteId) {
 
         lastUncommittedDelete = deleteId;
     }
@@ -498,7 +502,7 @@ public class Session extends SessionWithState {
      * @param ddl
      *            if the statement was a data definition statement
      */
-    public void commit(boolean ddl) throws SQLException {
+    public void commit(final boolean ddl) throws SQLException {
 
         commit(ddl, false);
     }
@@ -513,7 +517,7 @@ public class Session extends SessionWithState {
      *            true if the calling command/method has already called commit on the transactions queryProxyManager object, meaning it
      *            shouldn't be called again.
      */
-    public void commit(boolean ddl, boolean hasAlreadyCommittedQueryProxy) throws SQLException {
+    public void commit(final boolean ddl, final boolean hasAlreadyCommittedQueryProxy) throws SQLException {
 
         checkCommitRollback();
         lastUncommittedDelete = 0;
@@ -525,16 +529,16 @@ public class Session extends SessionWithState {
         }
         if (undoLog.size() > 0) {
             if (database.isMultiVersion()) {
-                ArrayList<Row> rows = new ArrayList<Row>();
+                final ArrayList<Row> rows = new ArrayList<Row>();
                 synchronized (database) {
                     while (undoLog.size() > 0) {
-                        UndoLogRecord entry = undoLog.getLast();
+                        final UndoLogRecord entry = undoLog.getLast();
                         entry.commit();
                         rows.add(entry.getRow());
                         undoLog.removeLast(false);
                     }
                     for (int i = 0; i < rows.size(); i++) {
-                        Row r = rows.get(i);
+                        final Row r = rows.get(i);
                         r.commit();
                     }
                 }
@@ -554,9 +558,9 @@ public class Session extends SessionWithState {
             // need to flush the log file, because we can't unlink lobs if the
             // commit record is not written
             logSystem.flush();
-            Iterator<ValueLob> it = unlinkMap.values().iterator();
+            final Iterator<ValueLob> it = unlinkMap.values().iterator();
             while (it.hasNext()) {
-                Value v = it.next();
+                final Value v = it.next();
                 v.unlink();
             }
             unlinkMap = null;
@@ -606,18 +610,18 @@ public class Session extends SessionWithState {
      * @param trimToSize
      *            if the list should be trimmed
      */
-    public void rollbackTo(int index, boolean trimToSize) throws SQLException {
+    public void rollbackTo(final int index, final boolean trimToSize) throws SQLException {
 
         while (undoLog.size() > index) {
-            UndoLogRecord entry = undoLog.getLast();
+            final UndoLogRecord entry = undoLog.getLast();
             entry.undo(this);
             undoLog.removeLast(trimToSize);
         }
         if (savepoints != null) {
-            String[] names = new String[savepoints.size()];
+            final String[] names = new String[savepoints.size()];
             savepoints.keySet().toArray(names);
-            for (String name : names) {
-                Integer id = savepoints.get(name);
+            for (final String name : names) {
+                final Integer id = savepoints.get(name);
                 if (id.intValue() > index) {
                     savepoints.remove(name);
                 }
@@ -635,20 +639,22 @@ public class Session extends SessionWithState {
         return id;
     }
 
+    @Override
     public void cancel() {
 
         cancelAt = System.currentTimeMillis();
     }
 
+    @Override
     public void close() throws SQLException {
 
         if (!closed) {
             try {
                 cleanTempTables(true);
-                this.user.sessions--;
+                user.sessions--;
 
-                if (this.user.sessions == 0 && (Constants.IS_NON_SM_TEST || this.getDatabase().getSystemSession().getUser().sessions == 0)) {
-                    IDatabaseRemote cr = database.getRemoteInterface();
+                if (user.sessions == 0 && (Constants.IS_NON_SM_TEST || getDatabase().getSystemSession().getUser().sessions == 0)) {
+                    final IDatabaseRemote cr = database.getRemoteInterface();
                     cr.shutdown();
                     database.removeSession(this);
                 }
@@ -666,7 +672,7 @@ public class Session extends SessionWithState {
      * @param table
      *            the table that is locked
      */
-    public void addLock(Table table) {
+    public void addLock(final Table table) {
 
         if (SysProperties.CHECK) {
             if (locks.indexOf(table) >= 0) {
@@ -686,19 +692,19 @@ public class Session extends SessionWithState {
      * @param row
      *            the row
      */
-    public void log(Table table, short type, Row row) throws SQLException {
+    public void log(final Table table, final short type, final Row row) throws SQLException {
 
         log(new UndoLogRecord(table, type, row));
     }
 
-    private void log(UndoLogRecord log) throws SQLException {
+    private void log(final UndoLogRecord log) throws SQLException {
 
         // called _after_ the row was inserted successfully into the table,
         // otherwise rollback will try to rollback a not-inserted row
 
         // XXX because of exclusive locking at the H2O level, it is assumed that this is not needed.
         if (SysProperties.CHECK) {
-            int lockMode = database.getLockMode();
+            final int lockMode = database.getLockMode();
             if (lockMode != Constants.LOCK_MODE_OFF && !database.isMultiVersion()) {
                 if (locks.indexOf(log.getTable()) < 0 && !Table.TABLE_LINK.equals(log.getTable().getTableType())) {
 
@@ -731,7 +737,7 @@ public class Session extends SessionWithState {
             return;
         }
         for (int i = 0; i < locks.size(); i++) {
-            Table t = (Table) locks.get(i);
+            final Table t = (Table) locks.get(i);
             if (!t.isLockedExclusively()) {
                 synchronized (database) {
                     t.unlock(this);
@@ -753,7 +759,7 @@ public class Session extends SessionWithState {
         if (locks.size() > 0) {
             synchronized (database) {
                 for (int i = 0; i < locks.size(); i++) {
-                    Table t = (Table) locks.get(i);
+                    final Table t = (Table) locks.get(i);
                     t.unlock(this);
                 }
                 locks.clear();
@@ -766,12 +772,12 @@ public class Session extends SessionWithState {
         }
     }
 
-    private void cleanTempTables(boolean closeSession) throws SQLException {
+    private void cleanTempTables(final boolean closeSession) throws SQLException {
 
         if (localTempTables != null && localTempTables.size() > 0) {
-            ObjectArray list = new ObjectArray(localTempTables.values());
+            final ObjectArray list = new ObjectArray(localTempTables.values());
             for (int i = 0; i < list.size(); i++) {
-                Table table = (Table) list.get(i);
+                final Table table = (Table) list.get(i);
                 if (closeSession || table.getOnCommitDrop()) {
                     modificationId++;
                     table.setModified();
@@ -793,6 +799,7 @@ public class Session extends SessionWithState {
         return random;
     }
 
+    @Override
     public Trace getTrace() {
 
         if (traceModuleName == null) {
@@ -802,9 +809,9 @@ public class Session extends SessionWithState {
         return database.getTrace(traceModuleName);
     }
 
-    public void setLastIdentity(Value last) {
+    public void setLastIdentity(final Value last) {
 
-        this.lastIdentity = last;
+        lastIdentity = last;
     }
 
     public Value getLastIdentity() {
@@ -821,7 +828,7 @@ public class Session extends SessionWithState {
      * @param pos
      *            the position of the log entry in the log file
      */
-    public void addLogPos(int logId, int pos) {
+    public void addLogPos(final int logId, final int pos) {
 
         if (firstUncommittedLog == LogSystem.LOG_WRITTEN) {
             firstUncommittedLog = logId;
@@ -859,7 +866,7 @@ public class Session extends SessionWithState {
      * @param name
      *            the savepoint name
      */
-    public void addSavepoint(String name) {
+    public void addSavepoint(final String name) {
 
         if (savepoints == null) {
             savepoints = new HashMap<String, Integer>();
@@ -873,13 +880,13 @@ public class Session extends SessionWithState {
      * @param name
      *            the savepoint name
      */
-    public void rollbackToSavepoint(String name) throws SQLException {
+    public void rollbackToSavepoint(final String name) throws SQLException {
 
         checkCommitRollback();
         if (savepoints == null) { throw Message.getSQLException(ErrorCode.SAVEPOINT_IS_INVALID_1, name); }
-        Integer id = savepoints.get(name);
+        final Integer id = savepoints.get(name);
         if (id == null) { throw Message.getSQLException(ErrorCode.SAVEPOINT_IS_INVALID_1, name); }
-        int i = id.intValue();
+        final int i = id.intValue();
         rollbackTo(i, false);
     }
 
@@ -889,7 +896,7 @@ public class Session extends SessionWithState {
      * @param transactionName
      *            the name of the transaction
      */
-    public void prepareCommit(String transactionName) throws SQLException {
+    public void prepareCommit(final String transactionName) throws SQLException {
 
         if (containsUncommitted()) {
             // need to commit even if rollback is not possible (create/drop
@@ -907,7 +914,7 @@ public class Session extends SessionWithState {
      * @param commit
      *            true for commit, false for rollback
      */
-    public void setPreparedTransaction(String transactionName, boolean commit) throws SQLException {
+    public void setPreparedTransaction(final String transactionName, final boolean commit) throws SQLException {
 
         if (currentTransactionName != null && currentTransactionName.equals(transactionName)) {
             if (commit) {
@@ -918,11 +925,11 @@ public class Session extends SessionWithState {
             }
         }
         else {
-            ObjectArray list = logSystem.getInDoubtTransactions();
-            int state = commit ? InDoubtTransaction.COMMIT : InDoubtTransaction.ROLLBACK;
+            final ObjectArray list = logSystem.getInDoubtTransactions();
+            final int state = commit ? InDoubtTransaction.COMMIT : InDoubtTransaction.ROLLBACK;
             boolean found = false;
             for (int i = 0; list != null && i < list.size(); i++) {
-                InDoubtTransaction p = (InDoubtTransaction) list.get(i);
+                final InDoubtTransaction p = (InDoubtTransaction) list.get(i);
                 if (p.getTransaction().equals(transactionName)) {
                     p.setState(state);
                     found = true;
@@ -935,12 +942,13 @@ public class Session extends SessionWithState {
         }
     }
 
+    @Override
     public boolean isClosed() {
 
         return closed;
     }
 
-    public void setThrottle(int throttle) {
+    public void setThrottle(final int throttle) {
 
         this.throttle = throttle;
     }
@@ -951,13 +959,13 @@ public class Session extends SessionWithState {
     public void throttle() {
 
         if (throttle == 0) { return; }
-        long time = System.currentTimeMillis();
+        final long time = System.currentTimeMillis();
         if (lastThrottle + Constants.THROTTLE_DELAY > time) { return; }
         lastThrottle = time + throttle;
         try {
             Thread.sleep(throttle);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             // ignore
         }
     }
@@ -970,10 +978,10 @@ public class Session extends SessionWithState {
      * @param startTime
      *            the time execution has been started
      */
-    public void setCurrentCommand(Command command, long startTime) {
+    public void setCurrentCommand(final Command command, final long startTime) {
 
-        this.currentCommand = command;
-        this.currentCommandStart = startTime;
+        currentCommand = command;
+        currentCommandStart = startTime;
         if (queryTimeout > 0 && startTime != 0) {
             cancelAt = startTime + queryTimeout;
         }
@@ -989,7 +997,7 @@ public class Session extends SessionWithState {
 
         throttle();
         if (cancelAt == 0) { return; }
-        long time = System.currentTimeMillis();
+        final long time = System.currentTimeMillis();
         if (time >= cancelAt) {
             cancelAt = 0;
             throw Message.getSQLException(ErrorCode.STATEMENT_WAS_CANCELED);
@@ -1011,15 +1019,15 @@ public class Session extends SessionWithState {
         return allowLiterals;
     }
 
-    public void setAllowLiterals(boolean b) {
+    public void setAllowLiterals(final boolean b) {
 
-        this.allowLiterals = b;
+        allowLiterals = b;
     }
 
-    public void setCurrentSchema(Schema schema) {
+    public void setCurrentSchema(final Schema schema) {
 
         modificationId++;
-        this.currentSchemaName = schema.getName();
+        currentSchemaName = schema.getName();
     }
 
     public String getCurrentSchemaName() {
@@ -1034,7 +1042,7 @@ public class Session extends SessionWithState {
      *            if the url should be 'jdbc:columnlist:connection'
      * @return the internal connection
      */
-    public JdbcConnection createConnection(boolean columnList) {
+    public JdbcConnection createConnection(final boolean columnList) {
 
         String url;
         if (columnList) {
@@ -1046,6 +1054,7 @@ public class Session extends SessionWithState {
         return new JdbcConnection(this, getUser().getName(), url);
     }
 
+    @Override
     public DataHandler getDataHandler() {
 
         return database;
@@ -1057,7 +1066,7 @@ public class Session extends SessionWithState {
      * @param v
      *            the value
      */
-    public void unlinkAtCommit(ValueLob v) {
+    public void unlinkAtCommit(final ValueLob v) {
 
         if (SysProperties.CHECK && !v.isLinked()) {
             Message.throwInternalError();
@@ -1074,7 +1083,7 @@ public class Session extends SessionWithState {
      * @param v
      *            the value
      */
-    public void unlinkAtCommitStop(Value v) {
+    public void unlinkAtCommitStop(final Value v) {
 
         if (unlinkMap != null) {
             unlinkMap.remove(v.toString());
@@ -1088,7 +1097,7 @@ public class Session extends SessionWithState {
      *            the SQL statement
      * @return the new identifier
      */
-    public String getNextSystemIdentifier(String sql) {
+    public String getNextSystemIdentifier(final String sql) {
 
         String id;
         do {
@@ -1104,7 +1113,7 @@ public class Session extends SessionWithState {
      * @param procedure
      *            the procedure to add
      */
-    public void addProcedure(Procedure procedure) {
+    public void addProcedure(final Procedure procedure) {
 
         if (procedures == null) {
             procedures = new HashMap<String, Procedure>();
@@ -1118,7 +1127,7 @@ public class Session extends SessionWithState {
      * @param name
      *            the name of the procedure to remove
      */
-    public void removeProcedure(String name) {
+    public void removeProcedure(final String name) {
 
         if (procedures != null) {
             procedures.remove(name);
@@ -1132,16 +1141,16 @@ public class Session extends SessionWithState {
      *            the procedure name
      * @return the procedure or null
      */
-    public Procedure getProcedure(String name) {
+    public Procedure getProcedure(final String name) {
 
         if (procedures == null) { return null; }
         return procedures.get(name);
     }
 
-    public void setSchemaSearchPath(String[] schemas) {
+    public void setSchemaSearchPath(final String[] schemas) {
 
         modificationId++;
-        this.schemaSearchPath = schemas;
+        schemaSearchPath = schemas;
     }
 
     public String[] getSchemaSearchPath() {
@@ -1149,6 +1158,7 @@ public class Session extends SessionWithState {
         return schemaSearchPath;
     }
 
+    @Override
     public int hashCode() {
 
         return user.getName().hashCode();
@@ -1156,19 +1166,21 @@ public class Session extends SessionWithState {
         // return serialId;
     }
 
-    public boolean equals(Object obj) {
+    @Override
+    public boolean equals(final Object obj) {
 
         return user.getName().equals(((Session) obj).getUser().getName());
     }
 
+    @Override
     public String toString() {
 
         return "#" + serialId + " (user: " + user.getName() + ")";
     }
 
-    public void setUndoLogEnabled(boolean b) {
+    public void setUndoLogEnabled(final boolean b) {
 
-        this.undoLogEnabled = b;
+        undoLogEnabled = b;
     }
 
     public boolean getUndoLogEnabled() {
@@ -1193,7 +1205,7 @@ public class Session extends SessionWithState {
     public Table[] getLocks() {
 
         synchronized (database) {
-            Table[] list = new Table[locks.size()];
+            final Table[] list = new Table[locks.size()];
             locks.toArray(list);
             return list;
         }
@@ -1205,14 +1217,14 @@ public class Session extends SessionWithState {
     public void waitIfExclusiveModeEnabled() {
 
         while (true) {
-            Session exclusive = database.getExclusiveSession();
+            final Session exclusive = database.getExclusiveSession();
             if (exclusive == null || exclusive == this) {
                 break;
             }
             try {
                 Thread.sleep(100);
             }
-            catch (InterruptedException e) {
+            catch (final InterruptedException e) {
                 // ignore
             }
         }
@@ -1225,7 +1237,7 @@ public class Session extends SessionWithState {
      * @param result
      *            the temporary result set
      */
-    public void addTemporaryResult(LocalResult result) {
+    public void addTemporaryResult(final LocalResult result) {
 
         if (!result.needToClose()) { return; }
         if (temporaryResults == null) {
@@ -1243,7 +1255,7 @@ public class Session extends SessionWithState {
     public void closeTemporaryResults() {
 
         if (temporaryResults != null) {
-            for (LocalResult result : temporaryResults) {
+            for (final LocalResult result : temporaryResults) {
                 result.close();
             }
             temporaryResults = null;
@@ -1252,7 +1264,7 @@ public class Session extends SessionWithState {
 
     public void setQueryTimeout(int queryTimeout) {
 
-        int max = SysProperties.getMaxQueryTimeout();
+        final int max = SysProperties.getMaxQueryTimeout();
         if (max != 0 && (max < queryTimeout || queryTimeout == 0)) {
             // the value must be at most max
             queryTimeout = max;
@@ -1260,7 +1272,7 @@ public class Session extends SessionWithState {
         this.queryTimeout = queryTimeout;
         // must reset the cancel at here,
         // otherwise it is still used
-        this.cancelAt = 0;
+        cancelAt = 0;
     }
 
     public int getQueryTimeout() {
@@ -1268,9 +1280,9 @@ public class Session extends SessionWithState {
         return queryTimeout;
     }
 
-    public void setWaitForLock(Table table) {
+    public void setWaitForLock(final Table table) {
 
-        this.waitForLock = table;
+        waitForLock = table;
     }
 
     public Table getWaitForLock() {
@@ -1283,22 +1295,24 @@ public class Session extends SessionWithState {
         return modificationId;
     }
 
+    @Override
     public boolean isReconnectNeeded() {
 
         return database.isReconnectNeeded();
     }
 
+    @Override
     public SessionInterface reconnect() throws SQLException {
 
         readSessionState();
         close();
-        Session newSession = Engine.getInstance().getSession(connectionInfo);
+        final Session newSession = Engine.getInstance().getSession(connectionInfo);
         newSession.sessionState = sessionState;
         newSession.recreateSessionState();
         return newSession;
     }
 
-    public void setConnectionInfo(ConnectionInfo ci) {
+    public void setConnectionInfo(final ConnectionInfo ci) {
 
         connectionInfo = ci;
     }
@@ -1309,8 +1323,9 @@ public class Session extends SessionWithState {
         return ValueString.get(firstUncommittedLog + "-" + firstUncommittedPos + "-" + id);
     }
 
-    public void setApplicationAutoCommit(boolean applicationAutoCommit) {
+    public void setApplicationAutoCommit(final boolean applicationAutoCommit) {
 
+        System.out.println("setting autocommit: " + applicationAutoCommit);
         this.applicationAutoCommit = applicationAutoCommit;
     }
 
@@ -1335,11 +1350,11 @@ public class Session extends SessionWithState {
      */
     public QueryProxyManager getProxyManagerForTransaction() {
 
-        if (this.proxyManagerForCurrentTransaction == null) {
-            this.proxyManagerForCurrentTransaction = new QueryProxyManager(getDatabase(), this);
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "New transaction started: " + this.proxyManagerForCurrentTransaction.getTransactionName());
+        if (proxyManagerForCurrentTransaction == null) {
+            proxyManagerForCurrentTransaction = new QueryProxyManager(getDatabase(), this);
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "New transaction started: " + proxyManagerForCurrentTransaction.getTransactionName());
         }
-        return this.proxyManagerForCurrentTransaction;
+        return proxyManagerForCurrentTransaction;
     }
 
     /**
@@ -1347,7 +1362,7 @@ public class Session extends SessionWithState {
      */
     public void completeTransaction() {
 
-        this.proxyManagerForCurrentTransaction = new QueryProxyManager(getDatabase(), this);
+        proxyManagerForCurrentTransaction = new QueryProxyManager(getDatabase(), this);
     }
 
 }
