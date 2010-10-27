@@ -413,14 +413,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
          * This is done so that the local database instance is exported correctly on RMI. It doesn't seem to work properly otherwise ('No
          * such object' errors in Database.createH2OTables()).
          */
-        DatabaseInstanceRemote stub = null;
         try {
-            stub = (DatabaseInstanceRemote) UnicastRemoteObject.exportObject(localInstance, 0);
-        }
-        catch (final RemoteException e) {
-            e.printStackTrace();
-        }
-        try {
+            final DatabaseInstanceRemote stub = (DatabaseInstanceRemote) UnicastRemoteObject.exportObject(localInstance, 0);
 
             getLocalRegistry().rebind(LOCAL_DATABASE_INSTANCE, stub);
 
@@ -431,30 +425,18 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.IRemoteDatabase#getLocalDatabaseInstance()
-     */
     @Override
     public DatabaseInstanceRemote getLocalDatabaseInstance() {
 
         return localInstance;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.IDatabaseRemote#getLocalMachineLocation()
-     */
     @Override
     public DatabaseURL getLocalMachineLocation() {
 
         return localMachineLocation;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.remote.IDatabaseRemote#getDatabaseInstanceAt(uk.ac.standrews .cs.stachordRMI.interfaces.IChordRemoteReference)
-     */
     @Override
     public DatabaseInstanceRemote getDatabaseInstanceAt(final IChordRemoteReference lookupLocation) throws RemoteException {
 
@@ -471,10 +453,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.remote.IDatabaseRemote#getDatabaseInstanceAt(org.h2.h2o.util .DatabaseURL)
-     */
     @Override
     public DatabaseInstanceRemote getDatabaseInstanceAt(final DatabaseURL dbURL) throws RemoteException {
 
@@ -1046,7 +1024,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
         try {
             final ISystemTable stub = (ISystemTable) UnicastRemoteObject.exportObject(systemTableRef.getSystemTable(), 0);
-            getLocalRegistry().bind(SystemTableReference.SCHEMA_MANAGER, stub);
+            getLocalRegistry().rebind(SystemTableReference.SCHEMA_MANAGER, stub);
 
         }
         catch (final Exception e) {
@@ -1064,7 +1042,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     public IChordRemoteReference getLookupLocation(final IKey systemTableKey) throws RemoteException {
 
         return chordNode.lookup(systemTableKey);
-
     }
 
     @Override
