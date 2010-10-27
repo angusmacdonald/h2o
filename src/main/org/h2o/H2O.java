@@ -50,6 +50,16 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  */
 public class H2O {
 
+    private static final String DEFAULT_TCP_PORT = "9090";
+
+    private static final int DEFAULT_WEB_PORT = 2123;
+
+    private static final String DEFAULT_DATABASE_LOCATION = "data";
+
+    private static final String DEFAULT_DATABASE_PORT = "2121";
+
+    private static final String DEFAULT_DATABASE_NAME = "DefaultH2ODatabase";
+
     private final String databaseName;
 
     private final String port;
@@ -186,11 +196,10 @@ public class H2O {
             // Fill with default arguments.
             Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "No user arguments were specified. Creating a database with default arguments.");
 
-            databaseName = "DefaultH2ODatabase";
-            port = "2121";
-            descriptorFileLocation = null; // e.g. AllTests.TEST_DESCRIPTOR_FILE
-            defaultLocation = "data"; // e.g. "db_data"
-            webPort = 2123;
+            databaseName = DEFAULT_DATABASE_NAME;
+            port = DEFAULT_DATABASE_PORT;
+            defaultLocation = DEFAULT_DATABASE_LOCATION;
+            webPort = DEFAULT_WEB_PORT;
         }
         else {
 
@@ -199,8 +208,7 @@ public class H2O {
              */
             databaseName = arguments.get("-n");
             port = arguments.get("-p");
-            descriptorFileLocation = arguments.get("-d"); // e.g.
-                                                          // AllTests.TEST_DESCRIPTOR_FILE
+            descriptorFileLocation = arguments.get("-d"); // e.g. AllTests.TEST_DESCRIPTOR_FILE
             defaultLocation = arguments.get("-f"); // e.g. "db_data"
             web = arguments.get("-w");
 
@@ -227,8 +235,7 @@ public class H2O {
      */
     public void startDatabase() {
 
-        if (descriptorFileLocation == null) { // A new locator server should be
-                                              // started.
+        if (descriptorFileLocation == null) { // A new locator server should be started.
             final int locatorPort = Integer.parseInt(port) + 1;
             final H2OLocator locator = new H2OLocator(databaseName, locatorPort, true, defaultLocation);
             descriptorFileLocation = locator.start(true);
@@ -273,18 +280,11 @@ public class H2O {
      */
     private void startServer(final String databaseURL) {
 
-        final List<String> h2oArgs = new LinkedList<String>(); // arguments to be
-        // passed to the H2
-        // server.
+        final List<String> h2oArgs = new LinkedList<String>(); // Arguments to be passed to the H2 server.
         h2oArgs.add("-tcp");
 
-        /*
-         * TCP port information.
-         */
-        String tcpPort = "9090"; // default
-        if (port != null) {
-            tcpPort = port;
-        }
+        // TCP port information.
+        final String tcpPort = port != null ? port : DEFAULT_TCP_PORT;
 
         h2oArgs.add("-tcpPort");
         h2oArgs.add(tcpPort);
@@ -292,9 +292,7 @@ public class H2O {
         h2oArgs.add("-tcpAllowOthers"); // allow remote connections.
         h2oArgs.add("-webAllowOthers");
 
-        /*
-         * Web Interface
-         */
+        // Web Interface.
 
         if (!webPort.equals("0")) {
             h2oArgs.add("-web");
@@ -303,9 +301,7 @@ public class H2O {
             h2oArgs.add("-browser");
         }
 
-        /*
-         * Set URL to be displayed in browser.
-         */
+        // Set URL to be displayed in browser.
         setUpWebLink(databaseURL);
 
         final Server s = new Server();
@@ -341,12 +337,12 @@ public class H2O {
 
         properties.saveAndClose();
 
-        try {
-            Class.forName("org.h2.Driver");
-        }
-        catch (final ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+        //        try {
+        //            Class.forName("org.h2.Driver");
+        //        }
+        //        catch (final ClassNotFoundException e) {
+        //            e.printStackTrace();
+        //        }
 
         try {
             /*
