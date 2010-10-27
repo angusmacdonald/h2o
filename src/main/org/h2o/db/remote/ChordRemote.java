@@ -10,7 +10,6 @@ package org.h2o.db.remote;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.rmi.AlreadyBoundException;
 import java.rmi.ConnectException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -500,7 +499,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
         final Registry remoteRegistry = LocateRegistry.getRegistry(hostname, port);
 
-       return (DatabaseInstanceRemote) remoteRegistry.lookup(LOCAL_DATABASE_INSTANCE);
+        return (DatabaseInstanceRemote) remoteRegistry.lookup(LOCAL_DATABASE_INSTANCE);
     }
 
     /**
@@ -982,6 +981,18 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         if (!Constants.IS_NON_SM_TEST) {
             chordNode.shutDown();
         }
+
+        unexportSystemTable();
+    }
+
+    private void unexportSystemTable() {
+
+        try {
+            getLocalRegistry().unbind(SystemTableReference.SCHEMA_MANAGER);
+        }
+        catch (final Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -1030,16 +1041,13 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     @Override
     public void exportSystemTable(final ISystemTableReference systemTableRef) {
 
-        ISystemTable stub = null;
-
         try {
-            stub = (ISystemTable) UnicastRemoteObject.exportObject(systemTableRef.getSystemTable(), 0);
+            final ISystemTable stub = (ISystemTable) UnicastRemoteObject.exportObject(systemTableRef.getSystemTable(), 0);
             getLocalRegistry().bind(SystemTableReference.SCHEMA_MANAGER, stub);
 
         }
         catch (final Exception e) {
             e.printStackTrace();
-            // ErrorHandling.hardError("Failed to export and bind System Table.");
         }
     }
 
