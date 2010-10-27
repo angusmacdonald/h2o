@@ -530,95 +530,82 @@ public class MultiQueryTransactionTests extends TestBase {
 
     /**
      * Test executing a set of queries where the external application explicitly turns auto-commit off.
+     * @throws SQLException 
      */
     @Test
-    public void testAutoCommitOffExternal() {
+    public void testAutoCommitOffExternal() throws SQLException {
+
+        ca.setAutoCommit(false);
+
+        // Execute some queries
+
+        sa.execute("INSERT INTO TEST VALUES(3, 'Quite');");
+        sa.execute("INSERT INTO TEST VALUES(4, 'A');");
+        sa.execute("INSERT INTO TEST VALUES(5, 'Few');");
+        sa.execute("INSERT INTO TEST VALUES(6, 'Cases');");
+
+        ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+        cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+
+        final Statement sa2 = cb.createStatement();
 
         try {
-            ca.setAutoCommit(false);
+            sa2.executeQuery("SELECT LOCAL * FROM TEST ORDER BY ID;");
 
-            // Execute some queries
-
-            sa.execute("INSERT INTO TEST VALUES(3, 'Quite');");
-            sa.execute("INSERT INTO TEST VALUES(4, 'A');");
-            sa.execute("INSERT INTO TEST VALUES(5, 'Few');");
-            sa.execute("INSERT INTO TEST VALUES(6, 'Cases');");
-
-            ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-            cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-
-            final Statement sa2 = cb.createStatement();
-
-            try {
-                sa2.executeQuery("SELECT LOCAL * FROM TEST ORDER BY ID;");
-
-                fail("Query timeout expected.");
-
-            }
-            catch (final SQLException e) {
-                // Timeout expected.
-            }
-
-            // Commit
-            ca.commit();
-
-            // Check that changes have now been committed.
-
-            sa.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
-
-            final int[] pKey2 = {1, 2, 3, 4, 5, 6};
-            final String[] secondCol2 = {"Hello", "World", "Quite", "A", "Few", "Cases"};
-
-            validateResults(pKey2, secondCol2, sa.getResultSet());
-
-            sa.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
-
-            ca.setAutoCommit(true);
+            fail("Query timeout expected.");
 
         }
         catch (final SQLException e) {
-            e.printStackTrace();
-            fail("An Unexpected SQLException was thrown.");
+            // Timeout expected.
         }
+
+        // Commit
+        ca.commit();
+
+        // Check that changes have now been committed.
+
+        sa.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
+
+        final int[] pKey2 = {1, 2, 3, 4, 5, 6};
+        final String[] secondCol2 = {"Hello", "World", "Quite", "A", "Few", "Cases"};
+
+        validateResults(pKey2, secondCol2, sa.getResultSet());
+
+        sa.execute("SELECT LOCAL * FROM TEST ORDER BY ID;");
+
+        ca.setAutoCommit(true);
     }
 
     /**
      * Tests that prepared statements work in the system where no replication is involved.
+     * @throws SQLException 
      */
     @Test
-    public void testPreparedStatementsNoReplication() {
+    public void testPreparedStatementsNoReplication() throws SQLException {
 
-        PreparedStatement mStmt = null;
-        try {
-            mStmt = ca.prepareStatement("insert into PUBLIC.TEST (id,name) values (?,?)");
+        final PreparedStatement mStmt = ca.prepareStatement("insert into PUBLIC.TEST (id,name) values (?,?)");
 
-            for (int i = 3; i < 100; i++) {
-                mStmt.setInt(1, i);
-                mStmt.setString(2, "helloNumber" + i);
-                mStmt.addBatch();
-            }
-
-            mStmt.executeBatch();
-
-            final int[] pKey = new int[100];
-            final String[] secondCol = new String[100];
-
-            pKey[0] = 1;
-            pKey[1] = 2;
-            secondCol[0] = "Hello";
-            secondCol[1] = "World";
-
-            final TestQuery test2query = createMultipleInsertStatements("TEST", pKey, secondCol, 3);
-
-            sa.execute("SELECT LOCAL * FROM PUBLIC.TEST ORDER BY ID;");
-
-            validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
-
+        for (int i = 3; i < 100; i++) {
+            mStmt.setInt(1, i);
+            mStmt.setString(2, "helloNumber" + i);
+            mStmt.addBatch();
         }
-        catch (final SQLException ex) {
-            ex.printStackTrace();
-            fail("Unexpected SQL Exception was thrown. Not cool.");
-        }
+
+        mStmt.executeBatch();
+
+        final int[] pKey = new int[100];
+        final String[] secondCol = new String[100];
+
+        pKey[0] = 1;
+        pKey[1] = 2;
+        secondCol[0] = "Hello";
+        secondCol[1] = "World";
+
+        final TestQuery test2query = createMultipleInsertStatements("TEST", pKey, secondCol, 3);
+
+        sa.execute("SELECT LOCAL * FROM PUBLIC.TEST ORDER BY ID;");
+
+        validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
     }
 
     /**
@@ -665,10 +652,6 @@ public class MultiQueryTransactionTests extends TestBase {
             validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
 
         }
-        catch (final SQLException ex) {
-            ex.printStackTrace();
-            fail("Unexpected SQL Exception was thrown. Not cool.");
-        }
         finally {
             mStmt.close();
         }
@@ -685,43 +668,35 @@ public class MultiQueryTransactionTests extends TestBase {
         // update bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
         createReplicaOnB();
 
-        PreparedStatement mStmt = null;
-        try {
-            mStmt = ca.prepareStatement("insert into PUBLIC.TEST (id,name) values (?,?)");
+        PreparedStatement mStmt = ca.prepareStatement("insert into PUBLIC.TEST (id,name) values (?,?)");
 
-            for (int i = 3; i < 10; i++) {
-                mStmt.setInt(1, i);
-                mStmt.setString(2, "helloNumber" + i);
-                mStmt.addBatch();
-            }
-
-            mStmt.executeBatch();
-
-            mStmt = ca.prepareStatement("delete from PUBLIC.TEST where id=?;");
-            mStmt.setInt(1, 9);
+        for (int i = 3; i < 10; i++) {
+            mStmt.setInt(1, i);
+            mStmt.setString(2, "helloNumber" + i);
             mStmt.addBatch();
-            mStmt.executeBatch();
-            //
-
-            final int[] pKey = new int[9];
-            final String[] secondCol = new String[9];
-
-            pKey[0] = 1;
-            pKey[1] = 2;
-            secondCol[0] = "Hello";
-            secondCol[1] = "World";
-
-            final TestQuery test2query = createMultipleInsertStatements("TEST", pKey, secondCol, 3);
-
-            sa.execute("SELECT LOCAL * FROM PUBLIC.TEST ORDER BY ID;");
-
-            validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
-
         }
-        catch (final SQLException ex) {
-            ex.printStackTrace();
-            fail("Unexpected SQL Exception was thrown. Not cool.");
-        }
+
+        mStmt.executeBatch();
+
+        mStmt = ca.prepareStatement("delete from PUBLIC.TEST where id=?;");
+        mStmt.setInt(1, 9);
+        mStmt.addBatch();
+        mStmt.executeBatch();
+        //
+
+        final int[] pKey = new int[9];
+        final String[] secondCol = new String[9];
+
+        pKey[0] = 1;
+        pKey[1] = 2;
+        secondCol[0] = "Hello";
+        secondCol[1] = "World";
+
+        final TestQuery test2query = createMultipleInsertStatements("TEST", pKey, secondCol, 3);
+
+        sa.execute("SELECT LOCAL * FROM PUBLIC.TEST ORDER BY ID;");
+
+        validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
     }
 
     // /**
@@ -789,9 +764,10 @@ public class MultiQueryTransactionTests extends TestBase {
 
     /**
      * Tests that prepared statements work in the system where replication is involved.
+     * @throws SQLException 
      */
     @Test
-    public void testPreparedStatementsReplication() {
+    public void testPreparedStatementsReplication() throws SQLException {
 
         PreparedStatement mStmt = null;
         try {
@@ -824,11 +800,6 @@ public class MultiQueryTransactionTests extends TestBase {
             sa.execute("SELECT LOCAL * FROM PUBLIC.TEST ORDER BY ID;");
 
             validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
-
-        }
-        catch (final SQLException ex) {
-            ex.printStackTrace();
-            fail("Unexpected SQL Exception was thrown. Not cool.");
         }
         finally {
             try {

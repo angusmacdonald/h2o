@@ -8,7 +8,7 @@
  */
 package org.h2o.test;
 
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertEquals;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -100,32 +100,24 @@ public class H2SimpleTest {
 
                 Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Query: " + sql);
 
-                try {
-
-                    if ("@reconnect".equals(sql.toLowerCase())) {
-                        reconnect();
-                    }
-                    else if (sql.length() == 0) {
-                        // ignore
-                    }
-                    else if (sql.toLowerCase().startsWith("select")) {
-                        query = conn.createStatement();
-                        final ResultSet rs = query.executeQuery(sql);
-                        while (rs.next()) {
-                            final String expected = reader.readStatement().trim();
-                            final String got = "> " + rs.getString(1);
-                            org.junit.Assert.assertEquals(expected, got);
-                        }
-                    }
-                    else {
-                        conn.createStatement().execute(sql);
+                if ("@reconnect".equals(sql.toLowerCase())) {
+                    reconnect();
+                }
+                else if (sql.length() == 0) {
+                    // ignore
+                }
+                else if (sql.toLowerCase().startsWith("select")) {
+                    query = conn.createStatement();
+                    final ResultSet rs = query.executeQuery(sql);
+                    while (rs.next()) {
+                        final String expected = reader.readStatement().trim();
+                        final String got = "> " + rs.getString(1);
+                        assertEquals(expected, got);
                     }
                 }
-                catch (final SQLException e) {
-
-                    System.err.println(sql);
-                    e.printStackTrace();
-                    fail("Shouldn't have thrown this exception.");
+                else {
+                    query = conn.createStatement();
+                    query.execute(sql);
                 }
             }
         }

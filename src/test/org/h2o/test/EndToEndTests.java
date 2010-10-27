@@ -272,7 +272,6 @@ public class EndToEndTests {
         if (statement != null) {
             statement.close();
         }
-
     }
 
     private Connection makeConnection() throws SQLException {

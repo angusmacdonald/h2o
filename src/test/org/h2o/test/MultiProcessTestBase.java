@@ -193,14 +193,18 @@ public class MultiProcessTestBase extends TestBase {
 
     protected void executeUpdateOnSecondMachine(final String sql) throws SQLException {
 
-        final Statement s = connections[1].createStatement();
-        s.executeUpdate(sql);
+        executeUpdateOnNthMachine(sql, 1);
     }
 
     protected void executeUpdateOnNthMachine(final String sql, final int machineNumber) throws SQLException {
 
         final Statement s = connections[machineNumber].createStatement();
-        s.executeUpdate(sql);
+        try {
+            s.executeUpdate(sql);
+        }
+        finally {
+            s.close();
+        }
     }
 
     /**
