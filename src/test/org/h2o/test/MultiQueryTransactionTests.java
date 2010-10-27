@@ -628,23 +628,24 @@ public class MultiQueryTransactionTests extends TestBase {
         // update bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
         createReplicaOnB();
 
-        PreparedStatement mStmt = null;
+        PreparedStatement mStmt1 = null;
+        PreparedStatement mStmt2 = null;
         try {
-            mStmt = ca.prepareStatement("insert into PUBLIC.TEST (id,name) values (?,?)");
+            mStmt1 = ca.prepareStatement("insert into PUBLIC.TEST (id,name) values (?,?)");
 
             for (int i = 3; i < 10; i++) {
-                mStmt.setInt(1, i);
-                mStmt.setString(2, "helloNumber" + i);
-                mStmt.addBatch();
+                mStmt1.setInt(1, i);
+                mStmt1.setString(2, "helloNumber" + i);
+                mStmt1.addBatch();
             }
 
-            mStmt.executeBatch();
+            mStmt1.executeBatch();
 
-            mStmt = ca.prepareStatement("update PUBLIC.TEST set name=? where id=?;");
-            mStmt.setString(1, "New Order");
-            mStmt.setInt(2, 1);
-            mStmt.addBatch();
-            mStmt.executeBatch();
+            mStmt2 = ca.prepareStatement("update PUBLIC.TEST set name=? where id=?;");
+            mStmt2.setString(1, "New Order");
+            mStmt2.setInt(2, 1);
+            mStmt2.addBatch();
+            mStmt2.executeBatch();
 
             final int[] pKey = new int[10];
             final String[] secondCol = new String[10];
@@ -662,7 +663,8 @@ public class MultiQueryTransactionTests extends TestBase {
 
         }
         finally {
-            mStmt.close();
+            mStmt1.close();
+            mStmt2.close();
         }
     }
 
@@ -677,22 +679,23 @@ public class MultiQueryTransactionTests extends TestBase {
         // update bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
         createReplicaOnB();
 
-        PreparedStatement mStmt = null;
+        PreparedStatement mStmt1 = null;
+        PreparedStatement mStmt2 = null;
         try {
-            mStmt = ca.prepareStatement("insert into PUBLIC.TEST (id,name) values (?,?)");
+            mStmt1 = ca.prepareStatement("insert into PUBLIC.TEST (id,name) values (?,?)");
 
             for (int i = 3; i < 10; i++) {
-                mStmt.setInt(1, i);
-                mStmt.setString(2, "helloNumber" + i);
-                mStmt.addBatch();
+                mStmt1.setInt(1, i);
+                mStmt1.setString(2, "helloNumber" + i);
+                mStmt1.addBatch();
             }
 
-            mStmt.executeBatch();
+            mStmt1.executeBatch();
 
-            mStmt = ca.prepareStatement("delete from PUBLIC.TEST where id=?;");
-            mStmt.setInt(1, 9);
-            mStmt.addBatch();
-            mStmt.executeBatch();
+            mStmt2 = ca.prepareStatement("delete from PUBLIC.TEST where id=?;");
+            mStmt2.setInt(1, 9);
+            mStmt2.addBatch();
+            mStmt2.executeBatch();
 
             final int[] pKey = new int[9];
             final String[] secondCol = new String[9];
@@ -709,7 +712,8 @@ public class MultiQueryTransactionTests extends TestBase {
             validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
         }
         finally {
-            mStmt.close();
+            mStmt1.close();
+            mStmt2.close();
         }
     }
 
@@ -851,55 +855,64 @@ public class MultiQueryTransactionTests extends TestBase {
         PreparedStatement mStmt = null;
 
         try {
-            server = Server.createTcpServer(new String[]{"-tcpPort", "9990", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test"});
-            server.start();
+            try {
+                server = Server.createTcpServer(new String[]{"-tcpPort", "9990", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test"});
+                server.start();
 
-            conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+                conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
-            sa = conn.createStatement();
+                sa = conn.createStatement();
 
-            sa.execute("DROP ALL OBJECTS;");
-            sa.execute("CREATE TABLE TEST5(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-            sa.execute("INSERT INTO TEST5 VALUES(1, 'Hello');");
-            sa.execute("INSERT INTO TEST5 VALUES(2, 'World');");
-
-            server.shutdown();
-            server.stop();
+                sa.execute("DROP ALL OBJECTS;");
+                sa.execute("CREATE TABLE TEST5(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+                sa.execute("INSERT INTO TEST5 VALUES(1, 'Hello');");
+                sa.execute("INSERT INTO TEST5 VALUES(2, 'World');");
+            }
+            finally {
+                server.shutdown();
+                server.stop();
+            }
 
             TestBase.resetLocatorFile();
 
-            server = Server.createTcpServer(new String[]{"-tcpPort", "9990", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test"});
+            try {
+                server = Server.createTcpServer(new String[]{"-tcpPort", "9990", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test"});
 
-            server.start();
+                server.start();
 
-            conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+                conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9990/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
-            mStmt = conn.prepareStatement("insert into PUBLIC.TEST5 (id,name) values (?,?)");
+                mStmt = conn.prepareStatement("insert into PUBLIC.TEST5 (id,name) values (?,?)");
 
-            for (int i = 3; i < 100; i++) {
-                mStmt.setInt(1, i);
-                mStmt.setString(2, "helloNumber" + i);
-                mStmt.addBatch();
+                for (int i = 3; i < 100; i++) {
+                    mStmt.setInt(1, i);
+                    mStmt.setString(2, "helloNumber" + i);
+                    mStmt.addBatch();
+                }
+
+                mStmt.executeBatch();
+
+                final int[] pKey = new int[100];
+                final String[] secondCol = new String[100];
+
+                pKey[0] = 1;
+                pKey[1] = 2;
+                secondCol[0] = "Hello";
+                secondCol[1] = "World";
+
+                final TestQuery test2query = createMultipleInsertStatements("TEST5", pKey, secondCol, 3);
+
+                sa = conn.createStatement();
+
+                sa.execute("SELECT LOCAL * FROM PUBLIC.TEST5 ORDER BY ID;");
+
+                validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
             }
+            finally {
+                server.shutdown();
+                server.stop();
 
-            mStmt.executeBatch();
-
-            final int[] pKey = new int[100];
-            final String[] secondCol = new String[100];
-
-            pKey[0] = 1;
-            pKey[1] = 2;
-            secondCol[0] = "Hello";
-            secondCol[1] = "World";
-
-            final TestQuery test2query = createMultipleInsertStatements("TEST5", pKey, secondCol, 3);
-
-            sa = conn.createStatement();
-
-            sa.execute("SELECT LOCAL * FROM PUBLIC.TEST5 ORDER BY ID;");
-
-            validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
-
+            }
         }
 
         finally {
@@ -907,9 +920,6 @@ public class MultiQueryTransactionTests extends TestBase {
             conn.close();
             mStmt.close();
             sa.close();
-
-            // stop the server
-            server.stop();
 
             try {
                 DeleteDbFiles.execute("db_data/unittests/", "schema_test", true);
