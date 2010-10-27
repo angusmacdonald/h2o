@@ -869,6 +869,10 @@ public class MultiQueryTransactionTests extends TestBase {
                 sa.execute("INSERT INTO TEST5 VALUES(2, 'World');");
             }
             finally {
+                if (conn != null) {
+                    conn.close();
+                }
+
                 server.shutdown();
                 server.stop();
             }
@@ -911,15 +915,19 @@ public class MultiQueryTransactionTests extends TestBase {
             finally {
                 server.shutdown();
                 server.stop();
-
             }
         }
-
         finally {
 
-            conn.close();
-            mStmt.close();
-            sa.close();
+            if (conn != null) {
+                conn.close();
+            }
+            if (mStmt != null) {
+                mStmt.close();
+            }
+            if (sa != null) {
+                sa.close();
+            }
 
             try {
                 DeleteDbFiles.execute("db_data/unittests/", "schema_test", true);
@@ -978,7 +986,9 @@ public class MultiQueryTransactionTests extends TestBase {
 
             System.err.println("About to execute select.");
 
-            cb.createStatement().executeQuery("select * from australia");
+            final Statement statement = cb.createStatement();
+            statement.executeQuery("select * from australia");
+            statement.close();
 
             System.err.println("Executed select.");
 
