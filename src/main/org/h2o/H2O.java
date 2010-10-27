@@ -10,14 +10,19 @@ package org.h2o;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 import org.h2.engine.Constants;
+import org.h2.engine.Database;
+import org.h2.engine.Engine;
+import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;
 import org.h2.util.FileUtils;
 import org.h2.util.NetUtils;
@@ -51,24 +56,21 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 public class H2O {
 
     private static final String DEFAULT_TCP_PORT = "9090";
-
     private static final int DEFAULT_WEB_PORT = 2123;
 
     private static final String DEFAULT_DATABASE_LOCATION = "data";
-
-    private static final String DEFAULT_DATABASE_PORT = "2121";
-
     private static final String DEFAULT_DATABASE_NAME = "DefaultH2ODatabase";
 
     private final String databaseName;
-
     private final String port;
-
     private final String webPort;
 
     private String descriptorFileLocation;
 
     private String defaultLocation;
+    private Connection connection;
+    private H2OLocator locator;
+    private Server server;
 
     /**
      * Starts a H2O database instance.
@@ -76,7 +78,7 @@ public class H2O {
      * @param args
      *            <ul>
      *            <li><em>-n</em>. Specify the name of the database for which this locator server is running.</li>
-     *            <li><em>-p</em>. The port on which the databases TCP server is to run.</li>
+     *            <li><em>-p</em>. The port on which the database's TCP server is to run.</li>
      *            <li><em>-w</em>. Specify that a web port should be opened and the web interface should be started. The web port must be
      *            specified.</li>
      *            </ul>
@@ -87,8 +89,8 @@ public class H2O {
      *            from. <em>Example: StartDatabase -nMyFirstDatabase -p9999 -d'config\MyFirstDatabase.h2od'</em> . This creates a new
      *            database instance for the database called <em>MyFirstDatabase</em> on port 9999, and initializes by connecting to the
      *            locator files specified in the file <em>'config\MyFirstDatabase.h2od'</em>.
-     * @throws StartupException
-     * @throws IOException
+     *            
+     * @throws StartupException if an error occurs while parsing the command line arguments
      */
     public static void main(final String[] args) throws StartupException {
 
@@ -113,7 +115,7 @@ public class H2O {
      * @param webPort
      *            The port on which this databases web interface is to be run.
      * @param databaseDescriptorLocation
-     *            The location of the database decscriptor file for this database world.
+     *            The location of the database descriptor file for this database world.
      * @param defaultFolder
      *            The folder in which database files will be created.
      */
@@ -183,6 +185,61 @@ public class H2O {
         this(databaseName, port, 0, defaultFolder, null);
     }
 
+    // -------------------------------------------------------------------------------------------------------
+
+    /**
+     * Starts up an H2O server and initializes the database.
+     */
+    public void startDatabase() {
+
+        if (descriptorFileLocation == null) {
+
+            // A new locator server should be started.
+            final int locatorPort = Integer.parseInt(port) + 1;
+            locator = new H2OLocator(databaseName, locatorPort, true, defaultLocation);
+            descriptorFileLocation = locator.start();
+        }
+
+        final String databaseURL = generateDatabaseURL();
+
+        startServer(databaseURL);
+        initializeDatabase(databaseURL);
+    }
+
+    /**
+     * Shuts down the H2O server.
+     * @throws SQLException if an error occurs while shutting down the H2O server
+     */
+    public void shutdown() throws SQLException {
+
+        connection.close();
+
+        final Collection<Database> dbs = Engine.getInstance().getAllDatabases();
+
+        for (final Database db : dbs) {
+
+            db.close(true);
+            db.shutdownImmediately();
+        }
+
+        if (locator != null) {
+            locator.shutdown();
+        }
+
+        shutdownServer();
+    }
+
+    /**
+     * Deletes the persistent database state.
+     * @throws SQLException if the state cannot be deleted
+     */
+    public void deleteState() throws SQLException {
+
+        DeleteDbFiles.execute(defaultLocation, databaseName + port, true);
+    }
+
+    // -------------------------------------------------------------------------------------------------------
+
     private static H2O parseArguments(final Map<String, String> arguments) throws StartupException {
 
         String databaseName = null;
@@ -197,7 +254,7 @@ public class H2O {
             Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "No user arguments were specified. Creating a database with default arguments.");
 
             databaseName = DEFAULT_DATABASE_NAME;
-            port = DEFAULT_DATABASE_PORT;
+            port = DEFAULT_TCP_PORT;
             defaultLocation = DEFAULT_DATABASE_LOCATION;
             webPort = DEFAULT_WEB_PORT;
         }
@@ -228,22 +285,6 @@ public class H2O {
         }
 
         return new H2O(databaseName, Integer.parseInt(port), webPort, defaultLocation, descriptorFileLocation);
-    }
-
-    /**
-     * Start up an H2O server and initialize the database.
-     */
-    public void startDatabase() {
-
-        if (descriptorFileLocation == null) { // A new locator server should be started.
-            final int locatorPort = Integer.parseInt(port) + 1;
-            final H2OLocator locator = new H2OLocator(databaseName, locatorPort, true, defaultLocation);
-            descriptorFileLocation = locator.start(true);
-        }
-
-        final String databaseURL = generateDatabaseURL();
-        startServer(databaseURL);
-        initializeDatabase(databaseURL);
     }
 
     private String generateDatabaseURL() {
@@ -304,13 +345,18 @@ public class H2O {
         // Set URL to be displayed in browser.
         setUpWebLink(databaseURL);
 
-        final Server s = new Server();
+        server = new Server();
         try {
-            s.run(h2oArgs.toArray(new String[0]), System.out);
+            server.run(h2oArgs.toArray(new String[0]), System.out);
         }
         catch (final SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    private void shutdownServer() {
+
+        server.shutdown();
     }
 
     /**
@@ -337,18 +383,9 @@ public class H2O {
 
         properties.saveAndClose();
 
-        //        try {
-        //            Class.forName("org.h2.Driver");
-        //        }
-        //        catch (final ClassNotFoundException e) {
-        //            e.printStackTrace();
-        //        }
-
         try {
-            /*
-             * Create a connection so that the database starts up, but don't do anything with it here.
-             */
-            DriverManager.getConnection(databaseURL, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+            // Create a connection so that the database starts up, but don't do anything with it here.
+            connection = DriverManager.getConnection(databaseURL, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
         }
         catch (final SQLException e) {
             e.printStackTrace();
@@ -417,7 +454,7 @@ public class H2O {
         }
     }
 
-    protected static String removeParenthesis(String text) {
+    private static String removeParenthesis(String text) {
 
         if (text == null) { return null; }
 
@@ -427,7 +464,7 @@ public class H2O {
         return text;
     }
 
-    protected static String createDatabaseURL(final String port, final String hostname, String databaseLocation) {
+    private static String createDatabaseURL(final String port, final String hostname, String databaseLocation) {
 
         if (!databaseLocation.startsWith("/")) {
             databaseLocation = "/" + databaseLocation;
