@@ -990,6 +990,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         try {
             getLocalRegistry().unbind(SystemTableReference.SCHEMA_MANAGER);
         }
+        catch (final NotBoundException e) {
+            // Ignore.
+        }
         catch (final Exception e) {
             e.printStackTrace();
         }
