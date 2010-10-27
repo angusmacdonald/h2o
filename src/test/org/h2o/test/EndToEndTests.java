@@ -9,6 +9,7 @@
 package org.h2o.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.sql.Connection;
@@ -29,11 +30,6 @@ import org.junit.Test;
  */
 public class EndToEndTests {
 
-    public interface IDBAction {
-
-        void execute(Connection connection) throws SQLException;
-    }
-
     // The name of the database domain.
     private static final String DATABASE_NAME = "MyFirstDatabase";
 
@@ -48,6 +44,8 @@ public class EndToEndTests {
 
     private static final String USER_NAME = "sa";
     private static final String PASSWORD = "";
+
+    private static final int value = 7;
 
     /**
      * Tests whether a new database can be created, data inserted and read back.
@@ -92,7 +90,7 @@ public class EndToEndTests {
 
         H2O db = initDB();
         db.startDatabase();
-        doCreateAndInsert();
+        doCreateAndInsert(true);
         db.shutdown();
 
         db = initDB();
@@ -103,7 +101,34 @@ public class EndToEndTests {
         db.deleteState();
     }
 
+    /**
+     * Tests whether data can be inserted during one instantiation of a database and read in another.
+     * @throws SQLException if the test fails
+     */
+    @Test
+    public void noAutoCommit() throws SQLException {
+
+        deleteDatabaseState();
+
+        H2O db = initDB();
+        db.startDatabase();
+        doCreateAndInsert(false);
+        db.shutdown();
+
+        db = initDB();
+        db.startDatabase();
+        doCheckNoValues();
+        db.shutdown();
+
+        db.deleteState();
+    }
+
     // -------------------------------------------------------------------------------------------------------
+
+    interface IDBAction {
+
+        void execute(Connection connection) throws SQLException;
+    }
 
     private H2O initDB() {
 
@@ -138,13 +163,14 @@ public class EndToEndTests {
         });
     }
 
-    private void doCreateAndInsert() throws SQLException {
+    private void doCreateAndInsert(final boolean auto_commit) throws SQLException {
 
         performAction(new IDBAction() {
 
             @Override
             public void execute(final Connection connection) throws SQLException {
 
+                connection.setAutoCommit(auto_commit);
                 createTable(connection);
                 insertValues(connection);
             }
@@ -163,6 +189,18 @@ public class EndToEndTests {
         });
     }
 
+    private void doCheckNoValues() throws SQLException {
+
+        performAction(new IDBAction() {
+
+            @Override
+            public void execute(final Connection connection) throws SQLException {
+
+                checkNoValues(connection);
+            }
+        });
+    }
+
     private void deleteDatabaseState() throws SQLException {
 
         DeleteDbFiles.execute(DATABASE_LOCATION, DATABASE_NAME + TCP_PORT, true);
@@ -172,9 +210,9 @@ public class EndToEndTests {
 
         Statement statement = null;
         try {
-            // Create a table and add some data.
             statement = connection.createStatement();
 
+            // Create a table.
             statement.executeUpdate("CREATE TABLE TEST (ID INT);");
         }
         finally {
@@ -186,10 +224,9 @@ public class EndToEndTests {
 
         Statement statement = null;
         try {
-            // Create a table and add some data.
             statement = connection.createStatement();
 
-            final int value = 7;
+            // Add some data.
             statement.executeUpdate("INSERT INTO TEST VALUES(" + value + ");");
         }
         finally {
@@ -201,15 +238,29 @@ public class EndToEndTests {
 
         Statement statement = null;
         try {
-            // Create a table and add some data.
             statement = connection.createStatement();
 
-            final int value = 7;
             // Query the database to check that the data was added successfully.
             final ResultSet result_set = statement.executeQuery("SELECT * FROM TEST;");
 
             assertTrue(result_set.next());
             assertEquals(value, result_set.getInt(1));
+        }
+        finally {
+            closeIfNotNull(statement);
+        }
+    }
+
+    private void checkNoValues(final Connection connection) throws SQLException {
+
+        Statement statement = null;
+        try {
+            statement = connection.createStatement();
+
+            // Query the database to check that the data was added successfully.
+            final ResultSet result_set = statement.executeQuery("SELECT * FROM TEST;");
+
+            assertFalse(result_set.next());
         }
         finally {
             closeIfNotNull(statement);
