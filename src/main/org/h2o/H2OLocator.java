@@ -32,6 +32,8 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  */
 public class H2OLocator {
 
+    private static final long SHUTDOWN_CHECK_DELAY = 2000;
+
     private final String databaseName;
 
     private final String port;
@@ -39,6 +41,8 @@ public class H2OLocator {
     private final boolean createDescriptor;
 
     private final String defaultLocation;
+
+    private LocatorServer server;
 
     /**
      * Starts an H2O Locator server.
@@ -68,7 +72,7 @@ public class H2OLocator {
 
         final H2OLocator locator = new H2OLocator(databaseName, Integer.parseInt(port), createDescriptor, defaultLocation);
 
-        locator.start(false);
+        locator.start();
     }
 
     public H2OLocator(final String databaseName, final int port, final boolean createDescriptor, final String defaultLocation) {
@@ -81,7 +85,7 @@ public class H2OLocator {
         this.defaultLocation = defaultLocation;
     }
 
-    public String start(final boolean startInNewThead) {
+    public String start() {
 
         final String locatorLocation = NetUtils.getLocalAddress() + ":" + port;
         String descriptorFileLocation = null;
@@ -103,16 +107,25 @@ public class H2OLocator {
             }
         }
 
-        final LocatorServer server = new LocatorServer(Integer.parseInt(port), databaseName);
+        server = new LocatorServer(Integer.parseInt(port), databaseName);
 
-        if (startInNewThead) {
-            server.start();
-        }
-        else {
-            server.run();
-        }
+        server.start();
 
         return descriptorFileLocation;
+    }
+
+    public void shutdown() {
+
+        server.setRunning(false);
+
+        while (!server.isFinished()) {
+            try {
+                Thread.sleep(SHUTDOWN_CHECK_DELAY);
+            }
+            catch (final InterruptedException e) {
+                // Ignore and carry on.
+            }
+        }
     }
 
     private String createDescriptorFile(final String locatorLocation) throws FileNotFoundException, IOException {
@@ -153,7 +166,7 @@ public class H2OLocator {
         return descriptorFilename;
     }
 
-    public static String removeParenthesis(String text) {
+    private static String removeParenthesis(String text) {
 
         if (text == null) { return null; }
 
