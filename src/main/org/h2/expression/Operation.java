@@ -51,19 +51,20 @@ public class Operation extends Expression {
      */
     public static final int NEGATE = 5;
 
-    private int opType;
+    private final int opType;
 
     private Expression left, right;
 
     private int dataType;
 
-    public Operation(int opType, Expression left, Expression right) {
+    public Operation(final int opType, final Expression left, final Expression right) {
 
         this.opType = opType;
         this.left = left;
         this.right = right;
     }
 
+    @Override
     public String getSQL() {
 
         String sql;
@@ -95,16 +96,23 @@ public class Operation extends Expression {
         return "(" + sql + ")";
     }
 
-    public Value getValue(Session session) throws SQLException {
+    public Value getRightValue(final Session session) throws SQLException {
 
-        Value l = left.getValue(session).convertTo(dataType);
-        Value r = right == null ? null : right.getValue(session).convertTo(dataType);
+        return right.getValue(session).convertTo(dataType);
+
+    }
+
+    @Override
+    public Value getValue(final Session session) throws SQLException {
+
+        final Value l = left.getValue(session).convertTo(dataType);
+        final Value r = right == null ? null : right.getValue(session).convertTo(dataType);
 
         switch (opType) {
             case NEGATE:
                 return l == ValueNull.INSTANCE ? l : l.negate();
             case CONCAT: {
-                Mode mode = session.getDatabase().getMode();
+                final Mode mode = session.getDatabase().getMode();
                 if (l == ValueNull.INSTANCE) {
                     if (mode.nullConcatIsNull) { return ValueNull.INSTANCE; }
                     return r;
@@ -113,8 +121,8 @@ public class Operation extends Expression {
                     if (mode.nullConcatIsNull) { return ValueNull.INSTANCE; }
                     return l;
                 }
-                String s1 = l.getString(), s2 = r.getString();
-                StringBuilder buff = new StringBuilder(s1.length() + s2.length());
+                final String s1 = l.getString(), s2 = r.getString();
+                final StringBuilder buff = new StringBuilder(s1.length() + s2.length());
                 buff.append(s1);
                 buff.append(s2);
                 return ValueString.get(buff.toString());
@@ -136,7 +144,8 @@ public class Operation extends Expression {
         }
     }
 
-    public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
+    @Override
+    public void mapColumns(final ColumnResolver resolver, final int level) throws SQLException {
 
         left.mapColumns(resolver, level);
         if (right != null) {
@@ -144,7 +153,8 @@ public class Operation extends Expression {
         }
     }
 
-    public Expression optimize(Session session) throws SQLException {
+    @Override
+    public Expression optimize(final Session session) throws SQLException {
 
         left = left.optimize(session);
         switch (opType) {
@@ -164,9 +174,9 @@ public class Operation extends Expression {
             case MULTIPLY:
             case DIVIDE:
                 right = right.optimize(session);
-                int l = left.getType();
-                int r = right.getType();
-                if ((l == Value.NULL && r == Value.NULL) || (l == Value.UNKNOWN && r == Value.UNKNOWN)) {
+                final int l = left.getType();
+                final int r = right.getType();
+                if (l == Value.NULL && r == Value.NULL || l == Value.UNKNOWN && r == Value.UNKNOWN) {
                     // example: (? + ?) - the most safe data type is probably
                     // decimal
                     dataType = Value.DECIMAL;
@@ -174,7 +184,7 @@ public class Operation extends Expression {
                 else if (l == Value.DATE || l == Value.TIMESTAMP) {
                     if (r == Value.INT && (opType == PLUS || opType == MINUS)) {
                         // Oracle date add
-                        Function f = Function.getFunction(session.getDatabase(), "DATEADD");
+                        final Function f = Function.getFunction(session.getDatabase(), "DATEADD");
                         f.setParameter(0, ValueExpression.get(ValueString.get("DAY")));
                         if (opType == MINUS) {
                             right = new Operation(NEGATE, right, null);
@@ -187,7 +197,7 @@ public class Operation extends Expression {
                     }
                     else if (opType == MINUS && (l == Value.DATE || l == Value.TIMESTAMP)) {
                         // Oracle date subtract
-                        Function f = Function.getFunction(session.getDatabase(), "DATEDIFF");
+                        final Function f = Function.getFunction(session.getDatabase(), "DATEDIFF");
                         f.setParameter(0, ValueExpression.get(ValueString.get("DAY")));
                         f.setParameter(1, right);
                         f.setParameter(2, left);
@@ -206,7 +216,8 @@ public class Operation extends Expression {
         return this;
     }
 
-    public void setEvaluatable(TableFilter tableFilter, boolean b) {
+    @Override
+    public void setEvaluatable(final TableFilter tableFilter, final boolean b) {
 
         left.setEvaluatable(tableFilter, b);
         if (right != null) {
@@ -214,11 +225,13 @@ public class Operation extends Expression {
         }
     }
 
+    @Override
     public int getType() {
 
         return dataType;
     }
 
+    @Override
     public long getPrecision() {
 
         if (right != null) {
@@ -232,6 +245,7 @@ public class Operation extends Expression {
         return left.getPrecision();
     }
 
+    @Override
     public int getDisplaySize() {
 
         if (right != null) {
@@ -245,13 +259,15 @@ public class Operation extends Expression {
         return left.getDisplaySize();
     }
 
+    @Override
     public int getScale() {
 
         if (right != null) { return Math.max(left.getScale(), right.getScale()); }
         return left.getScale();
     }
 
-    public void updateAggregate(Session session) throws SQLException {
+    @Override
+    public void updateAggregate(final Session session) throws SQLException {
 
         left.updateAggregate(session);
         if (right != null) {
@@ -259,11 +275,13 @@ public class Operation extends Expression {
         }
     }
 
-    public boolean isEverything(ExpressionVisitor visitor) {
+    @Override
+    public boolean isEverything(final ExpressionVisitor visitor) {
 
         return left.isEverything(visitor) && (right == null || right.isEverything(visitor));
     }
 
+    @Override
     public int getCost() {
 
         return left.getCost() + 1 + (right == null ? 0 : right.getCost());

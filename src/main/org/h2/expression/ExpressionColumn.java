@@ -29,7 +29,7 @@ import org.h2.value.ValueBoolean;
  */
 public class ExpressionColumn extends Expression {
 
-    private Database database;
+    private final Database database;
 
     private String schemaName;
 
@@ -45,13 +45,13 @@ public class ExpressionColumn extends Expression {
 
     private boolean evaluatable;
 
-    public ExpressionColumn(Database database, Column column) {
+    public ExpressionColumn(final Database database, final Column column) {
 
         this.database = database;
         this.column = column;
     }
 
-    public ExpressionColumn(Database database, String schemaName, String tableAlias, String columnName) {
+    public ExpressionColumn(final Database database, final String schemaName, final String tableAlias, final String columnName) {
 
         this.database = database;
         this.schemaName = schemaName;
@@ -59,6 +59,7 @@ public class ExpressionColumn extends Expression {
         this.columnName = columnName;
     }
 
+    @Override
     public String getSQL() {
 
         String sql;
@@ -82,12 +83,13 @@ public class ExpressionColumn extends Expression {
         return resolver == null ? null : resolver.getTableFilter();
     }
 
-    public void mapColumns(ColumnResolver resolver, int level) throws SQLException {
+    @Override
+    public void mapColumns(final ColumnResolver resolver, final int level) throws SQLException {
 
         if (tableAlias != null && !tableAlias.equals(resolver.getTableAlias())) { return; }
         if (schemaName != null && !schemaName.equals(resolver.getSchemaName())) { return; }
         Column[] columns = resolver.getColumns();
-        for (Column col : columns) {
+        for (final Column col : columns) {
             if (columnName.equals(col.getName())) {
                 mapColumn(resolver, col, level);
                 return;
@@ -95,7 +97,7 @@ public class ExpressionColumn extends Expression {
         }
         columns = resolver.getSystemColumns();
         for (int i = 0; columns != null && i < columns.length; i++) {
-            Column col = columns[i];
+            final Column col = columns[i];
             if (columnName.equals(col.getName())) {
                 mapColumn(resolver, col, level);
                 return;
@@ -103,7 +105,7 @@ public class ExpressionColumn extends Expression {
         }
     }
 
-    private void mapColumn(ColumnResolver resolver, Column col, int level) throws SQLException {
+    private void mapColumn(final ColumnResolver resolver, final Column col, final int level) throws SQLException {
 
         if (this.resolver == null) {
             queryLevel = level;
@@ -120,12 +122,13 @@ public class ExpressionColumn extends Expression {
         }
     }
 
-    public Expression optimize(Session session) throws SQLException {
+    @Override
+    public Expression optimize(final Session session) throws SQLException {
 
         if (resolver == null) {
-            Schema schema = session.getDatabase().findSchema(tableAlias == null ? session.getCurrentSchemaName() : tableAlias);
+            final Schema schema = session.getDatabase().findSchema(tableAlias == null ? session.getCurrentSchemaName() : tableAlias);
             if (schema != null) {
-                Constant constant = schema.findConstant(columnName);
+                final Constant constant = schema.findConstant(columnName);
                 if (constant != null) { return constant.getValue(); }
             }
             String name = columnName;
@@ -140,17 +143,18 @@ public class ExpressionColumn extends Expression {
         return resolver.optimize(this, column);
     }
 
-    public void updateAggregate(Session session) throws SQLException {
+    @Override
+    public void updateAggregate(final Session session) throws SQLException {
 
-        Value now = resolver.getValue(column);
-        Select select = resolver.getSelect();
+        final Value now = resolver.getValue(column);
+        final Select select = resolver.getSelect();
         if (select == null) { throw Message.getSQLException(ErrorCode.MUST_GROUP_BY_COLUMN_1, getSQL()); }
-        HashMap values = select.getCurrentGroup();
+        final HashMap values = select.getCurrentGroup();
         if (values == null) {
             // this is a different level (the enclosing query)
             return;
         }
-        Value v = (Value) values.get(this);
+        final Value v = (Value) values.get(this);
         if (v == null) {
             values.put(this, now);
         }
@@ -159,30 +163,36 @@ public class ExpressionColumn extends Expression {
         }
     }
 
-    public Value getValue(Session session) throws SQLException {
+    @Override
+    public Value getValue(final Session session) throws SQLException {
 
         // TODO refactor: simplify check if really part of an aggregated value /
         // detection of
         // usage of non-grouped by columns without aggregate function
-        Select select = resolver.getSelect();
+        final Select select = resolver.getSelect();
         if (select != null) {
-            HashMap values = select.getCurrentGroup();
+            final HashMap values = select.getCurrentGroup();
             if (values != null) {
-                Value v = (Value) values.get(this);
+                final Value v = (Value) values.get(this);
                 if (v != null) { return v; }
             }
         }
-        Value value = resolver.getValue(column);
-        if (value == null) { throw Message.getSQLException(ErrorCode.MUST_GROUP_BY_COLUMN_1, getSQL()); }
+        final Value value = resolver.getValue(column);
+        if (value == null) {
+            final int i = 0;
+            throw Message.getSQLException(ErrorCode.MUST_GROUP_BY_COLUMN_1, getSQL());
+        }
         return value;
     }
 
+    @Override
     public int getType() {
 
         return column.getType();
     }
 
-    public void setEvaluatable(TableFilter tableFilter, boolean b) {
+    @Override
+    public void setEvaluatable(final TableFilter tableFilter, final boolean b) {
 
         if (resolver != null && tableFilter == resolver.getTableFilter()) {
             evaluatable = b;
@@ -194,16 +204,19 @@ public class ExpressionColumn extends Expression {
         return column;
     }
 
+    @Override
     public int getScale() {
 
         return column.getScale();
     }
 
+    @Override
     public long getPrecision() {
 
         return column.getPrecision();
     }
 
+    @Override
     public int getDisplaySize() {
 
         return column.getDisplaySize();
@@ -219,39 +232,46 @@ public class ExpressionColumn extends Expression {
         return tableAlias;
     }
 
+    @Override
     public String getColumnName() {
 
         return columnName != null ? columnName : column.getName();
     }
 
+    @Override
     public String getSchemaName() {
 
-        Table table = column.getTable();
+        final Table table = column.getTable();
         return table == null ? null : table.getSchema().getName();
     }
 
+    @Override
     public String getTableName() {
 
-        Table table = column.getTable();
+        final Table table = column.getTable();
         return table == null ? null : table.getName();
     }
 
+    @Override
     public String getAlias() {
 
         return column == null ? null : column.getName();
     }
 
+    @Override
     public boolean isAutoIncrement() {
 
         return column.getSequence() != null;
     }
 
+    @Override
     public int getNullable() {
 
         return column.getNullable() ? Column.NULLABLE : Column.NOT_NULLABLE;
     }
 
-    public boolean isEverything(ExpressionVisitor visitor) {
+    @Override
+    public boolean isEverything(final ExpressionVisitor visitor) {
 
         switch (visitor.getType()) {
             case ExpressionVisitor.OPTIMIZABLE_MIN_MAX_COUNT_ALL:
@@ -260,12 +280,12 @@ public class ExpressionColumn extends Expression {
             case ExpressionVisitor.DETERMINISTIC:
                 return true;
             case ExpressionVisitor.INDEPENDENT:
-                return this.queryLevel < visitor.getQueryLevel();
+                return queryLevel < visitor.getQueryLevel();
             case ExpressionVisitor.EVALUATABLE:
                 // if the current value is known (evaluatable set)
                 // or if this columns belongs to a 'higher level' query and is
                 // therefore just a parameter
-                return evaluatable || visitor.getQueryLevel() < this.queryLevel;
+                return evaluatable || visitor.getQueryLevel() < queryLevel;
             case ExpressionVisitor.SET_MAX_DATA_MODIFICATION_ID:
                 visitor.addDataModificationId(column.getTable().getMaxDataModificationId());
                 return true;
@@ -279,21 +299,24 @@ public class ExpressionColumn extends Expression {
         }
     }
 
+    @Override
     public int getCost() {
 
         return 2;
     }
 
-    public void createIndexConditions(Session session, TableFilter filter) {
+    @Override
+    public void createIndexConditions(final Session session, final TableFilter filter) {
 
-        TableFilter tf = getTableFilter();
+        final TableFilter tf = getTableFilter();
         if (filter == tf && column.getType() == Value.BOOLEAN) {
-            IndexCondition cond = new IndexCondition(Comparison.EQUAL, this, ValueExpression.get(ValueBoolean.get(true)));
+            final IndexCondition cond = new IndexCondition(Comparison.EQUAL, this, ValueExpression.get(ValueBoolean.get(true)));
             filter.addIndexCondition(cond);
         }
     }
 
-    public Expression getNotIfPossible(Session session) {
+    @Override
+    public Expression getNotIfPossible(final Session session) {
 
         return new Comparison(session, Comparison.EQUAL, this, ValueExpression.get(ValueBoolean.get(false)));
     }

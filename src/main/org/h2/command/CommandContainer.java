@@ -16,8 +16,6 @@ import org.h2.value.Value;
 import org.h2o.db.query.QueryProxyManager;
 import org.h2o.test.H2OTest;
 
-import uk.ac.standrews.cs.nds.util.Diagnostic;
-import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
@@ -174,9 +172,9 @@ public class CommandContainer extends Command {
 
             getLock(); // this throws an SQLException if no lock is found.
 
-            if (Diagnostic.getLevel() == DiagnosticLevel.INIT || Diagnostic.getLevel() == DiagnosticLevel.FULL) {
-                currentProxyManager.addSQL(prepared.getSQL());
-            }
+            //            if (Diagnostic.getLevel() == DiagnosticLevel.INIT || Diagnostic.getLevel() == DiagnosticLevel.FULL) {
+            //                currentProxyManager.addSQL(prepared.getSQL());
+            //            }
 
             try {
 

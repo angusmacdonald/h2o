@@ -443,8 +443,9 @@ public class Database implements DataHandler {
         openDatabase(traceLevelFile, traceLevelSystemOut, closeAtVmShutdown, ci, localMachineLocation);
 
         if (Constants.IS_H2O && !isManagementDB()) {
+            final boolean metaDataReplicationEnabled = Boolean.parseBoolean(databaseSettings.get("METADATA_REPLICATION_ENABLED"));
 
-            if (!Constants.IS_NON_SM_TEST) {
+            if (!Constants.IS_NON_SM_TEST && metaDataReplicationEnabled) {
                 metaDataReplicationThread.start();
             }
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Started database at " + getURL());

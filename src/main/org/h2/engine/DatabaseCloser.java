@@ -18,7 +18,7 @@ public class DatabaseCloser extends Thread {
 
     private final Trace trace;
 
-    private volatile WeakReference databaseRef;
+    private volatile WeakReference<Database> databaseRef;
 
     private int delayInMillis;
 
@@ -26,7 +26,7 @@ public class DatabaseCloser extends Thread {
 
     DatabaseCloser(Database db, int delayInMillis, boolean shutdownHook) {
 
-        this.databaseRef = new WeakReference(db);
+        this.databaseRef = new WeakReference<Database>(db);
         this.delayInMillis = delayInMillis;
         this.shutdownHook = shutdownHook;
         trace = db.getTrace(Trace.DATABASE);
@@ -74,7 +74,7 @@ public class DatabaseCloser extends Thread {
         Database database = null;
         synchronized (this) {
             if (databaseRef != null) {
-                database = (Database) databaseRef.get();
+                database = databaseRef.get();
             }
         }
         if (database != null) {

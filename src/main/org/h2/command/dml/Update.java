@@ -43,19 +43,19 @@ public class Update extends Prepared {
 
     private QueryProxy queryProxy = null;
 
-    public Update(Session session, boolean internalQuery) {
+    public Update(final Session session, final boolean internalQuery) {
 
         super(session, internalQuery);
     }
 
-    public void setTableFilter(TableFilter tableFilter) {
+    public void setTableFilter(final TableFilter tableFilter) {
 
         this.tableFilter = tableFilter;
-        Table table = tableFilter.getTable();
+        final Table table = tableFilter.getTable();
         expressions = new Expression[table.getColumns().length];
     }
 
-    public void setCondition(Expression condition) {
+    public void setCondition(final Expression condition) {
 
         this.condition = condition;
     }
@@ -68,31 +68,32 @@ public class Update extends Prepared {
      * @param expression
      *            the expression
      */
-    public void setAssignment(Column column, Expression expression) throws SQLException {
+    public void setAssignment(final Column column, final Expression expression) throws SQLException {
 
-        int id = column.getColumnId();
+        final int id = column.getColumnId();
         if (expressions[id] != null) { throw Message.getSQLException(ErrorCode.DUPLICATE_COLUMN_NAME_1, column.getName()); }
         expressions[id] = expression;
         if (expression instanceof Parameter) {
-            Parameter p = (Parameter) expression;
+            final Parameter p = (Parameter) expression;
             p.setColumn(column);
         }
     }
 
-    public int update(String transactionName) throws SQLException {
+    @Override
+    public int update(final String transactionName) throws SQLException {
 
         tableFilter.startQuery(session);
         tableFilter.reset();
-        RowList rows = new RowList(session);
+        final RowList rows = new RowList(session);
         try {
-            Table table = tableFilter.getTable();
+            final Table table = tableFilter.getTable();
             setTable(table);
             session.getUser().checkRight(table, Right.UPDATE);
 
             /*
              * (QUERY PROPAGATED TO ALL REPLICAS).
              */
-            if (isRegularTable() && ((queryProxy != null && queryProxy.getNumberOfReplicas() > 1) || !isReplicaLocal(queryProxy))) {
+            if (isRegularTable() && thisIsNotALocalOrSingleTableUpdate()) {
 
                 String sql = null;
                 if (isPreparedStatement()) {
@@ -102,13 +103,15 @@ public class Update extends Prepared {
                     sql = sqlStatement;
                 }
 
-                if (queryProxy == null) queryProxy = new QueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper()); // in case of MERGE statement.
+                if (queryProxy == null) {
+                    queryProxy = new QueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper()); // in case of MERGE statement.
+                }
                 return queryProxy.executeUpdate(sql, transactionName, session);
             }
 
             table.fireBefore(session);
             table.lock(session, true, false);
-            int columnCount = table.getColumns().length;
+            final int columnCount = table.getColumns().length;
             // get the old rows, compute the new rows
             setCurrentRowNumber(0);
             int count = 0;
@@ -116,17 +119,17 @@ public class Update extends Prepared {
                 checkCanceled();
                 setCurrentRowNumber(count + 1);
                 if (condition == null || Boolean.TRUE.equals(condition.getBooleanValue(session))) {
-                    Row oldRow = tableFilter.get();
-                    Row newRow = table.getTemplateRow();
+                    final Row oldRow = tableFilter.get();
+                    final Row newRow = table.getTemplateRow();
                     for (int i = 0; i < columnCount; i++) {
-                        Expression newExpr = expressions[i];
+                        final Expression newExpr = expressions[i];
                         Value newValue;
                         if (newExpr == null) {
                             newValue = oldRow.getValue(i);
                         }
                         else if (newExpr == ValueExpression.getDefault()) {
-                            Column column = table.getColumn(i);
-                            Expression defaultExpr = column.getDefaultExpression();
+                            final Column column = table.getColumn(i);
+                            final Expression defaultExpr = column.getDefaultExpression();
                             Value v;
                             if (defaultExpr == null) {
                                 v = column.validateConvertUpdateSequence(session, null);
@@ -134,11 +137,11 @@ public class Update extends Prepared {
                             else {
                                 v = defaultExpr.getValue(session);
                             }
-                            int type = column.getType();
+                            final int type = column.getType();
                             newValue = v.convertTo(type);
                         }
                         else {
-                            Column column = table.getColumn(i);
+                            final Column column = table.getColumn(i);
                             newValue = newExpr.getValue(session).convertTo(column.getType());
                         }
                         newRow.setValue(i, newValue);
@@ -165,8 +168,8 @@ public class Update extends Prepared {
                 rows.invalidateCache();
                 for (rows.reset(); rows.hasNext();) {
                     checkCanceled();
-                    Row o = rows.next();
-                    Row n = rows.next();
+                    final Row o = rows.next();
+                    final Row n = rows.next();
                     table.fireAfterRow(session, o, n);
                 }
             }
@@ -176,6 +179,18 @@ public class Update extends Prepared {
         finally {
             rows.close();
         }
+    }
+
+    /**
+     * Returns true if this update involves a query proxy where there are multiple replicas.
+     * @return
+     */
+    private boolean thisIsNotALocalOrSingleTableUpdate() {
+
+        final boolean multipleReplicas = queryProxy.getNumberOfReplicas() > 1;
+        final boolean notLocal = !isReplicaLocal(queryProxy);
+
+        return queryProxy != null && multipleReplicas || notLocal;
     }
 
     /**
@@ -198,37 +213,27 @@ public class Update extends Prepared {
             // use the loop structure from below to obtain this information. how
             // do you know if it is a prepared statement.
 
-            Expression[] expr = expressions;
-            String[] values = new String[expressions.length + 1]; // The last
-                                                                  // expression
-                                                                  // is the
-                                                                  // where
-                                                                  // condition,
-                                                                  // everything
-                                                                  // before it
-                                                                  // is part
-                                                                  // of the
-                                                                  // set
-                                                                  // expression.
-            Column[] columns = table.getColumns();
+            final Expression[] expr = expressions;
+            final String[] values = new String[expressions.length + 1]; // The last expression is the  where condition, everything before it is part of the set  expression.
+            final Column[] columns = table.getColumns();
 
             /*
              * 'Expressions' stores all of the expressions being set by this update. The expression will be null if nothing is being set.
              * 'Condition' stores the set condition.
              */
-            for (int i = 0; i < (expressions.length); i++) {
+            for (int i = 0; i < expressions.length; i++) {
 
-                Column c = columns[i];
-                int index = c.getColumnId();
-                Expression e = expr[i];
+                final Column c = columns[i];
+                final int index = c.getColumnId();
+                final Expression e = expr[i];
 
                 evaluateExpression(e, values, i, c.getType(), expr);
             }
 
-            int y = 2;
+            final int y = 2;
 
-            Comparison comparison = ((Comparison) condition);
-            Expression setExpression = comparison.getExpression(false);
+            final Comparison comparison = (Comparison) condition;
+            final Expression setExpression = comparison.getExpression(false);
 
             evaluateExpression(setExpression, values, y, setExpression.getType(), expr);
 
@@ -241,8 +246,12 @@ public class Update extends Prepared {
             int count = 1;
             for (int i = 1; i <= values.length; i++) {
                 if (values[i - 1] != null) {
-                    if (addComma) sql += ", ";
-                    else addComma = true;
+                    if (addComma) {
+                        sql += ", ";
+                    }
+                    else {
+                        addComma = true;
+                    }
 
                     sql += count + ": " + values[i - 1];
 
@@ -251,47 +260,65 @@ public class Update extends Prepared {
             }
             sql += "};";
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             e.printStackTrace();
             throw e;
         }
         return sql;
     }
 
-    private void evaluateExpression(Expression e, String[] values, int i, int colummType, Expression[] expr) throws SQLException {
+    private void evaluateExpression(Expression e, final String[] values, final int i, final int colummType, final Expression[] expr) throws SQLException {
+
+        //UPDATE warehouse SET w_ytd = w_ytd + ?  WHERE w_id = ?  {1: 4966.03, 2: 1};
 
         // Only add the expression if it is unspecified in the query (there will
         // be an instance of parameter somewhere).
-        if (e != null && e instanceof Parameter || ((e instanceof Operation) && e.toString().contains("?"))) {
-            // e can be null (DEFAULT)
-            e = e.optimize(session);
-            try {
-                Value v = e.getValue(session).convertTo(colummType);
-                values[i] = v.toString();
-                // newRow.setValue(index, v);
+        try {
+            if (e != null && e instanceof Parameter || e instanceof Operation && e.toString().contains("?")) {
+                // e can be null (DEFAULT)
+                e = e.optimize(session);
+                try {
+                    if (e instanceof Operation) {
+                        final Operation eo = (Operation) e;
+                        final Value v = eo.getRightValue(session);
+                        values[i] = v.toString();
+                    }
+                    else {
+                        final Value v = e.getValue(session).convertTo(colummType);
+                        values[i] = v.toString();
+                    }
+                    // newRow.setValue(index, v);
+                }
+                catch (final SQLException ex) {
+                    throw setRow(ex, 0, getSQL(expr));
+                }
             }
-            catch (SQLException ex) {
-                throw setRow(ex, 0, getSQL(expr));
-            }
+
+        }
+
+        catch (final SQLException e1) {
+            e1.printStackTrace();
+            throw e1;
         }
     }
 
+    @Override
     public String getPlanSQL() {
 
-        StringBuilder buff = new StringBuilder();
+        final StringBuilder buff = new StringBuilder();
         buff.append("UPDATE ");
         buff.append(tableFilter.getPlanSQL(false));
         buff.append("\nSET ");
-        Table table = tableFilter.getTable();
-        int columnCount = table.getColumns().length;
+        final Table table = tableFilter.getTable();
+        final int columnCount = table.getColumns().length;
         for (int i = 0, j = 0; i < columnCount; i++) {
-            Expression newExpr = expressions[i];
+            final Expression newExpr = expressions[i];
             if (newExpr != null) {
                 if (j > 0) {
                     buff.append(",\n");
                 }
                 j++;
-                Column column = table.getColumn(i);
+                final Column column = table.getColumn(i);
                 buff.append(column.getName());
                 buff.append(" = ");
                 buff.append(newExpr.getSQL());
@@ -303,6 +330,7 @@ public class Update extends Prepared {
         return buff.toString();
     }
 
+    @Override
     public void prepare() throws SQLException {
 
         if (condition != null) {
@@ -311,22 +339,24 @@ public class Update extends Prepared {
             condition.createIndexConditions(session, tableFilter);
         }
         for (int i = 0; i < expressions.length; i++) {
-            Expression expr = expressions[i];
+            final Expression expr = expressions[i];
             if (expr != null) {
                 expr.mapColumns(tableFilter, 0);
                 expressions[i] = expr.optimize(session);
             }
         }
-        PlanItem item = tableFilter.getBestPlanItem(session);
+        final PlanItem item = tableFilter.getBestPlanItem(session);
         tableFilter.setPlanItem(item);
         tableFilter.prepare();
     }
 
+    @Override
     public boolean isTransactional() {
 
         return true;
     }
 
+    @Override
     public LocalResult queryMeta() {
 
         return null;
@@ -337,7 +367,7 @@ public class Update extends Prepared {
      * @see org.h2.command.Prepared#acquireLocks()
      */
     @Override
-    public void acquireLocks(QueryProxyManager queryProxyManager) throws SQLException {
+    public void acquireLocks(final QueryProxyManager queryProxyManager) throws SQLException {
 
         /*
          * (QUERY PROPAGATED TO ALL REPLICAS).
@@ -363,7 +393,7 @@ public class Update extends Prepared {
     @Override
     protected boolean isRegularTable() {
 
-        boolean isLocal = session.getDatabase().isTableLocal(tableFilter.getTable().getSchema());
+        final boolean isLocal = session.getDatabase().isTableLocal(tableFilter.getTable().getSchema());
         return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery && !isLocal;
     }
 

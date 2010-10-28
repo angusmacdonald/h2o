@@ -20,9 +20,9 @@ public class TableInfo implements Serializable {
      */
     private static final long serialVersionUID = -2023146600034394467L;
 
-    private String schemaName;
+    private final String schemaName;
 
-    private String tableName;
+    private final String tableName;
 
     private long modificationID;
 
@@ -32,7 +32,7 @@ public class TableInfo implements Serializable {
 
     private DatabaseURL dbLocation;
 
-    public TableInfo(String tableName, String schemaName, long modificationID, int tableSet, String tableType, DatabaseURL dbLocation) {
+    public TableInfo(final String tableName, final String schemaName, final long modificationID, final int tableSet, final String tableType, final DatabaseURL dbLocation) {
 
         this(tableName, schemaName);
 
@@ -46,7 +46,7 @@ public class TableInfo implements Serializable {
      * @param tableName
      * @param schemaName
      */
-    public TableInfo(String tableName, String schemaName) {
+    public TableInfo(final String tableName, final String schemaName) {
 
         this.tableName = tableName;
         this.schemaName = schemaName;
@@ -55,14 +55,14 @@ public class TableInfo implements Serializable {
     /**
      * @param tableName2
      */
-    public TableInfo(String fqTableName) {
+    public TableInfo(final String fqTableName) {
 
-        String[] name = fqTableName.split("\\.");
+        final String[] name = fqTableName.split("\\.");
 
         assert name.length == 2;
 
-        this.tableName = name[1];
-        this.schemaName = name[0];
+        tableName = name[1];
+        schemaName = name[0];
     }
 
     /**
@@ -70,14 +70,14 @@ public class TableInfo implements Serializable {
      * @param schemaName2
      * @param databaseURL
      */
-    public TableInfo(String tableName, String schemaName, DatabaseURL databaseURL) {
+    public TableInfo(final String tableName, final String schemaName, final DatabaseURL databaseURL) {
 
         this(tableName, schemaName);
 
-        this.dbLocation = databaseURL;
+        dbLocation = databaseURL;
     }
 
-    public TableInfo(TableInfo tableInfo) {
+    public TableInfo(final TableInfo tableInfo) {
 
         this(tableInfo.getTableName(), tableInfo.getSchemaName());
     }
@@ -151,9 +151,9 @@ public class TableInfo implements Serializable {
         return new TableInfo(tableName, schemaName);
     }
 
-    public void setURL(DatabaseURL url) {
+    public void setURL(final DatabaseURL url) {
 
-        this.dbLocation = url;
+        dbLocation = url;
     }
 
     /*
@@ -165,9 +165,9 @@ public class TableInfo implements Serializable {
 
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((dbLocation == null) ? 0 : dbLocation.hashCode());
-        result = prime * result + ((schemaName == null) ? 0 : schemaName.hashCode());
-        result = prime * result + ((tableName == null) ? 0 : tableName.hashCode());
+        result = prime * result + (dbLocation == null ? 0 : dbLocation.hashCode());
+        result = prime * result + (schemaName == null ? 0 : schemaName.hashCode());
+        result = prime * result + (tableName == null ? 0 : tableName.hashCode());
         return result;
     }
 
@@ -176,24 +176,24 @@ public class TableInfo implements Serializable {
      * @see java.lang.Object#equals(java.lang.Object)
      */
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
 
-        if (this == obj) return true;
-        if (obj == null) return false;
-        if (getClass() != obj.getClass()) return false;
-        TableInfo other = (TableInfo) obj;
+        if (this == obj) { return true; }
+        if (obj == null) { return false; }
+        if (getClass() != obj.getClass()) { return false; }
+        final TableInfo other = (TableInfo) obj;
         if (dbLocation == null) {
-            if (other.dbLocation != null) return false;
+            if (other.dbLocation != null) { return false; }
         }
-        else if (!dbLocation.equals(other.dbLocation)) return false;
+        else if (!dbLocation.equals(other.dbLocation)) { return false; }
         if (schemaName == null) {
-            if (other.schemaName != null) return false;
+            if (other.schemaName != null) { return false; }
         }
-        else if (!schemaName.equals(other.schemaName)) return false;
+        else if (!schemaName.equals(other.schemaName)) { return false; }
         if (tableName == null) {
-            if (other.tableName != null) return false;
+            if (other.tableName != null) { return false; }
         }
-        else if (!tableName.equals(other.tableName)) return false;
+        else if (!tableName.equals(other.tableName)) { return false; }
         return true;
     }
 
