@@ -1325,7 +1325,6 @@ public class Session extends SessionWithState {
 
     public void setApplicationAutoCommit(final boolean applicationAutoCommit) {
 
-        System.out.println("setting autocommit: " + applicationAutoCommit);
         this.applicationAutoCommit = applicationAutoCommit;
     }
 
