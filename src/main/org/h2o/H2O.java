@@ -62,15 +62,17 @@ public class H2O {
     private static final String DEFAULT_DATABASE_NAME = "DefaultH2ODatabase";
 
     private final String databaseName;
-    private final String port;
+    private final String tcpPort;
     private final String webPort;
 
     private String descriptorFileLocation;
 
-    private String defaultLocation;
+    private String databaseLocation;
     private Connection connection;
     private H2OLocator locator;
     private Server server;
+
+    // -------------------------------------------------------------------------------------------------------
 
     /**
      * Starts a H2O database instance.
@@ -91,8 +93,10 @@ public class H2O {
      *            locator files specified in the file <em>'config\MyFirstDatabase.h2od'</em>.
      *            
      * @throws StartupException if an error occurs while parsing the command line arguments
+     * @throws IOException if the server properties cannot be written
+     * @throws SQLException if the server properties cannot be opened
      */
-    public static void main(final String[] args) throws StartupException {
+    public static void main(final String[] args) throws StartupException, IOException, SQLException {
 
         Diagnostic.setLevel(DiagnosticLevel.FINAL);
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting H2O Server Instance.");
@@ -103,6 +107,8 @@ public class H2O {
         db.startDatabase();
     }
 
+    // -------------------------------------------------------------------------------------------------------
+
     /**
      * Start a new H2O instance using the specified descriptor file to find an existing, running, locator server. This also starts H2O's web
      * interface.
@@ -110,7 +116,7 @@ public class H2O {
      * @param databaseName
      *            The name of the database being created. This is the global name (it is the same for all database instances that are to be
      *            part of this database world (i.e. with the same global schema).
-     * @param port
+     * @param tcpPort
      *            The port on which this databases TCP server is being run on.
      * @param webPort
      *            The port on which this databases web interface is to be run.
@@ -119,13 +125,13 @@ public class H2O {
      * @param defaultFolder
      *            The folder in which database files will be created.
      */
-    public H2O(final String databaseName, final int port, final int webPort, final String defaultFolder, final String databaseDescriptorLocation) {
+    public H2O(final String databaseName, final int tcpPort, final int webPort, final String defaultFolder, final String databaseDescriptorLocation) {
 
         this.databaseName = databaseName;
-        this.port = port + "";
+        this.tcpPort = tcpPort + "";
         this.webPort = webPort + "";
         descriptorFileLocation = databaseDescriptorLocation;
-        defaultLocation = defaultFolder;
+        databaseLocation = defaultFolder;
     }
 
     /**
@@ -135,16 +141,16 @@ public class H2O {
      * @param databaseName
      *            The name of the database being created. This is the global name (it is the same for all database instances that are to be
      *            part of this database world (i.e. with the same global schema).
-     * @param port
+     * @param tcpPort
      *            The port on which this databases TCP server is being run on.
      * @param databaseDescriptorLocation
-     *            The location of the database decscriptor file for this database world.
+     *            The location of the database descriptor file for this database world.
      * @param defaultFolder
      *            The folder in which database files will be created.
      */
-    public H2O(final String databaseName, final int port, final String defaultFolder, final String databaseDescriptorLocation) {
+    public H2O(final String databaseName, final int tcpPort, final String defaultFolder, final String databaseDescriptorLocation) {
 
-        this(databaseName, port, 0, defaultFolder, databaseDescriptorLocation);
+        this(databaseName, tcpPort, 0, defaultFolder, databaseDescriptorLocation);
     }
 
     /**
@@ -155,16 +161,16 @@ public class H2O {
      * @param databaseName
      *            The name of the database being created. This is the global name (it is the same for all database instances that are to be
      *            part of this database world (i.e. with the same global schema).
-     * @param port
+     * @param tcpPort
      *            The port on which this databases TCP server is being run on.
      * @param webPort
      *            The port on which this databases web interface is to be run.
      * @param defaultFolder
      *            The folder in which database files will be created.
      */
-    public H2O(final String databaseName, final int port, final int webPort, final String defaultFolder) {
+    public H2O(final String databaseName, final int tcpPort, final int webPort, final String defaultFolder) {
 
-        this(databaseName, port, webPort, defaultFolder, null);
+        this(databaseName, tcpPort, webPort, defaultFolder, null);
     }
 
     /**
@@ -175,28 +181,31 @@ public class H2O {
      * @param databaseName
      *            The name of the database being created. This is the global name (it is the same for all database instances that are to be
      *            part of this database world (i.e. with the same global schema).
-     * @param port
+     * @param tcpPort
      *            The port on which this databases TCP server is being run on.
      * @param defaultFolder
      *            The folder in which database files will be created.
      */
-    public H2O(final String databaseName, final int port, final String defaultFolder) {
+    public H2O(final String databaseName, final int tcpPort, final String defaultFolder) {
 
-        this(databaseName, port, 0, defaultFolder, null);
+        this(databaseName, tcpPort, 0, defaultFolder, null);
     }
 
     // -------------------------------------------------------------------------------------------------------
 
     /**
      * Starts up an H2O server and initializes the database.
+     * 
+     * @throws IOException if the server properties cannot be written
+     * @throws SQLException if the server properties cannot be opened
      */
-    public void startDatabase() {
+    public void startDatabase() throws SQLException, IOException {
 
         if (descriptorFileLocation == null) {
 
             // A new locator server should be started.
-            final int locatorPort = Integer.parseInt(port) + 1;
-            locator = new H2OLocator(databaseName, locatorPort, true, defaultLocation);
+            final int locatorPort = Integer.parseInt(tcpPort) + 1;
+            locator = new H2OLocator(databaseName, locatorPort, true, databaseLocation);
             descriptorFileLocation = locator.start();
         }
 
@@ -235,7 +244,7 @@ public class H2O {
      */
     public void deleteState() throws SQLException {
 
-        DeleteDbFiles.execute(defaultLocation, databaseName + port, true);
+        DeleteDbFiles.execute(databaseLocation, databaseName + tcpPort, true);
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -245,7 +254,7 @@ public class H2O {
         String databaseName = null;
         String port = null;
         String descriptorFileLocation = null;
-        String defaultLocation = null;
+        String databaseLocation = null;
         String web = null;
         int webPort = 0;
 
@@ -254,8 +263,8 @@ public class H2O {
             Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "No user arguments were specified. Creating a database with default arguments.");
 
             databaseName = DEFAULT_DATABASE_NAME;
+            databaseLocation = DEFAULT_DATABASE_LOCATION;
             port = DEFAULT_TCP_PORT;
-            defaultLocation = DEFAULT_DATABASE_LOCATION;
             webPort = DEFAULT_WEB_PORT;
         }
         else {
@@ -264,9 +273,9 @@ public class H2O {
              * Get required command line arguments.
              */
             databaseName = arguments.get("-n");
+            databaseLocation = arguments.get("-f"); // e.g. "db_data"
             port = arguments.get("-p");
             descriptorFileLocation = arguments.get("-d"); // e.g. AllTests.TEST_DESCRIPTOR_FILE
-            defaultLocation = arguments.get("-f"); // e.g. "db_data"
             web = arguments.get("-w");
 
             if (web != null) {
@@ -279,33 +288,29 @@ public class H2O {
                 descriptorFileLocation = removeParenthesis(descriptorFileLocation);
             }
 
-            if (defaultLocation != null) {
-                defaultLocation = removeParenthesis(defaultLocation);
+            if (databaseLocation != null) {
+                databaseLocation = removeParenthesis(databaseLocation);
             }
         }
 
-        return new H2O(databaseName, Integer.parseInt(port), webPort, defaultLocation, descriptorFileLocation);
+        return new H2O(databaseName, Integer.parseInt(port), webPort, databaseLocation, descriptorFileLocation);
     }
 
     private String generateDatabaseURL() {
 
-        if (defaultLocation != null) {
-            if (!defaultLocation.endsWith("/") && !defaultLocation.endsWith("\\")) { // add a trailing
-                                                                                     // slash if it isn't
-                                                                                     // already there.
-                defaultLocation = defaultLocation + "/";
-            }
+        // Add a trailing slash if it isn't already there.
+        if (databaseLocation != null && !databaseLocation.endsWith("/") && !databaseLocation.endsWith("\\")) {
+            databaseLocation = databaseLocation + "/";
         }
 
         final String hostname = NetUtils.getLocalAddress();
-        final String databaseLocation = (defaultLocation != null ? defaultLocation : "") + databaseName + port;
+        final String location = (databaseLocation != null ? databaseLocation : "") + databaseName + tcpPort;
 
-        final String databaseURL = createDatabaseURL(port, hostname, databaseLocation);
-        /*
-         * Display to user.
-         */
+        final String databaseURL = createDatabaseURL(tcpPort, hostname, location);
+
+        // Display to user.
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Database Name: " + databaseName);
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Port: " + port);
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Port: " + tcpPort);
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Hostname: " + hostname);
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Generated JDBC URL: " + databaseURL);
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Specified Descriptor File Location: " + descriptorFileLocation);
@@ -316,19 +321,20 @@ public class H2O {
     /**
      * Call the H2O server class with the required parameters to initialize the TCP server.
      * 
-     * @param databaseURL
-     * @param arguments
+     * @param databaseURL the database URL
+     * @throws IOException if the server properties cannot be written
+     * @throws SQLException if the server properties cannot be opened
      */
-    private void startServer(final String databaseURL) {
+    private void startServer(final String databaseURL) throws SQLException, IOException {
 
         final List<String> h2oArgs = new LinkedList<String>(); // Arguments to be passed to the H2 server.
         h2oArgs.add("-tcp");
 
         // TCP port information.
-        final String tcpPort = port != null ? port : DEFAULT_TCP_PORT;
+        final String tcp = tcpPort != null ? tcpPort : DEFAULT_TCP_PORT;
 
         h2oArgs.add("-tcpPort");
-        h2oArgs.add(tcpPort);
+        h2oArgs.add(tcp);
 
         h2oArgs.add("-tcpAllowOthers"); // allow remote connections.
         h2oArgs.add("-webAllowOthers");
@@ -346,12 +352,7 @@ public class H2O {
         setUpWebLink(databaseURL);
 
         server = new Server();
-        try {
-            server.run(h2oArgs.toArray(new String[0]), System.out);
-        }
-        catch (final SQLException e) {
-            e.printStackTrace();
-        }
+        server.run(h2oArgs.toArray(new String[0]), System.out);
     }
 
     private void shutdownServer() {
@@ -396,45 +397,39 @@ public class H2O {
     /**
      * Set the primary database URL in the browser to equal the URL of this database.
      * 
-     * @param databaseURL
+     * @param databaseURL the database URL
+     * @throws IOException if the server properties cannot be written
+     * @throws SQLException if the server properties cannot be opened
      */
-    private void setUpWebLink(final String databaseURL) {
+    private void setUpWebLink(final String databaseURL) throws IOException, SQLException {
 
-        try {
-            final Properties serverProperties = loadServerProperties();
-            final List<String> servers = new LinkedList<String>();
+        final Properties serverProperties = loadServerProperties();
+        final List<String> servers = new LinkedList<String>();
 
-            for (int i = 0;; i++) {
-                final String data = serverProperties.getProperty(String.valueOf(i));
-                if (data == null) {
-                    break;
-                }
-                if (!data.contains(databaseURL)) {
-                    servers.add(data);
-                }
-
-                serverProperties.remove(String.valueOf(i));
+        for (int i = 0;; i++) {
+            final String data = serverProperties.getProperty(String.valueOf(i));
+            if (data == null) {
+                break;
+            }
+            if (!data.contains(databaseURL)) {
+                servers.add(data);
             }
 
-            int i = 0;
-            for (final String server : servers) {
-                serverProperties.setProperty(i + "", server);
-                i++;
-            }
-
-            serverProperties.setProperty(i + "", "QuickStart-H2O-Database|org.h2.Driver|" + databaseURL + "|sa");
-
-            final OutputStream out = FileUtils.openFileOutputStream(getPropertiesFileName(), false);
-            serverProperties.store(out, Constants.SERVER_PROPERTIES_TITLE);
-
-            out.close();
+            serverProperties.remove(String.valueOf(i));
         }
-        catch (final IOException e) {
-            e.printStackTrace();
+
+        int i = 0;
+        for (final String server : servers) {
+            serverProperties.setProperty(i + "", server);
+            i++;
         }
-        catch (final SQLException e) {
-            e.printStackTrace();
-        }
+
+        serverProperties.setProperty(i + "", "QuickStart-H2O-Database|org.h2.Driver|" + databaseURL + "|sa");
+
+        final OutputStream out = FileUtils.openFileOutputStream(getPropertiesFileName(), false);
+        serverProperties.store(out, Constants.SERVER_PROPERTIES_TITLE);
+
+        out.close();
     }
 
     private String getPropertiesFileName() {

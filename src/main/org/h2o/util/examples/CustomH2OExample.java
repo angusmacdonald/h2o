@@ -9,6 +9,8 @@
 package org.h2o.util.examples;
 
 import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
 
 import org.h2o.H2O;
 
@@ -20,20 +22,21 @@ import org.h2o.H2O;
  */
 public class CustomH2OExample {
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) throws SQLException, IOException {
 
-        String databaseName = "MyFirstDatabase"; // the name of the database
-                                                 // domain.
-        int tcpPort = 9998; // the port on which the database's TCP JDBC server
-                            // will run.
-        String rootFolder = "db_data"; // where the database will be created
-                                       // (where persisted state is stored).
-        String descriptorLocation = "db_data" + File.separator + "MyFirstDatabase.h2od"; // location of the database descriptor
-                                                                                         // file.
+        // The name of the database domain.
+        final String databaseName = "MyFirstDatabase";
 
-        H2O db = new H2O(databaseName, tcpPort, 0, rootFolder, descriptorLocation);
+        // The port on which the database's TCP JDBC server will run.
+        final int tcpPort = 9999;
 
+        // Where the database will be created (where persisted state is stored).
+        final String rootFolder = "db_data";
+
+        // The location of the database descriptor file.
+        final String descriptorLocation = "db_data" + File.separator + "MyFirstDatabase.h2od";
+
+        final H2O db = new H2O(databaseName, tcpPort, 0, rootFolder, descriptorLocation);
         db.startDatabase();
     }
-
 }

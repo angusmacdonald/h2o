@@ -8,6 +8,9 @@
  */
 package org.h2o.util.examples;
 
+import java.io.IOException;
+import java.sql.SQLException;
+
 import org.h2o.H2O;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -20,7 +23,7 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  */
 public class StandaloneH2OExample {
 
-    public static void main(final String[] args) {
+    public static void main(final String[] args) throws SQLException, IOException {
 
         Diagnostic.setLevel(DiagnosticLevel.FINAL);
 
