@@ -28,7 +28,7 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class MultipleSchemaTests extends TestBase {
+public class MultipleSchemaTests extends TestBase2 {
 
     /**
      * Tests that a table in a non-default schema is added successfully to the System Table.
@@ -69,6 +69,7 @@ public class MultipleSchemaTests extends TestBase {
             assertEquals("TEST", rs.getString(1));
             assertEquals("PUBLIC", rs.getString(2));
         }
+
         assertFalse("There should only be one entry here.", rs.next());
     }
 
@@ -109,15 +110,23 @@ public class MultipleSchemaTests extends TestBase {
 
         sa.execute("SELECT tablename, schemaname FROM H2O.H2O_TABLE;");
 
-        final ResultSet rs = sa.getResultSet();
+        ResultSet rs = null;
+        try {
+            rs = sa.getResultSet();
 
-        assertTrue(rs.next());
-        assertEquals("TEST", rs.getString(1));
-        assertEquals("PUBLIC", rs.getString(2));
+            assertTrue(rs.next());
+            assertEquals("TEST", rs.getString(1));
+            assertEquals("PUBLIC", rs.getString(2));
 
-        assertTrue("Expected a System Table entry here.", rs.next());
-        assertEquals("TEST", rs.getString(1));
-        assertEquals("SCHEMA2", rs.getString(2));
+            assertTrue("Expected a System Table entry here.", rs.next());
+            assertEquals("TEST", rs.getString(1));
+            assertEquals("SCHEMA2", rs.getString(2));
+        }
+        finally {
+            if (rs != null) {
+                rs.close();
+            }
+        }
     }
 
     /**
