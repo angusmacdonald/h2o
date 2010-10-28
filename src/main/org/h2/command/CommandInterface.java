@@ -8,7 +8,6 @@ import java.sql.SQLException;
 
 import org.h2.result.ResultInterface;
 import org.h2.util.ObjectArray;
-import org.h2o.db.query.QueryProxyManager;
 
 /**
  * Represents a SQL statement.

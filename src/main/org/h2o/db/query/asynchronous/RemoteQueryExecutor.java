@@ -19,19 +19,19 @@ import org.h2o.test.H2OTest;
 
 public class RemoteQueryExecutor extends Thread {
 
-    private String query;
+    private final String query;
 
-    private String transactionName;
+    private final String transactionName;
 
-    private DatabaseInstanceWrapper databaseWrapper;
+    private final DatabaseInstanceWrapper databaseWrapper;
 
-    private boolean local;
+    private final boolean local;
 
-    private Parser parser;
+    private final Parser parser;
 
-    private boolean commitOperation;
+    private final boolean commitOperation;
 
-    private int updateID;
+    private final int updateID;
 
     private final TableInfo tableInfo;
 
@@ -50,11 +50,11 @@ public class RemoteQueryExecutor extends Thread {
      *            True if this is a COMMIT, false if it is another type of query. If it is false a PREPARE command will be executed to get
      *            ready for the eventual commit.
      */
-    public RemoteQueryExecutor(String query, String transactionName, DatabaseInstanceWrapper replica, int updateID, Parser parser, boolean local, boolean commitOperation, TableInfo tableInfo) {
+    public RemoteQueryExecutor(final String query, final String transactionName, final DatabaseInstanceWrapper replica, final int updateID, final Parser parser, final boolean local, final boolean commitOperation, final TableInfo tableInfo) {
 
         this.query = query;
         this.transactionName = transactionName;
-        this.databaseWrapper = replica;
+        databaseWrapper = replica;
         this.parser = parser;
         this.local = local;
         this.commitOperation = commitOperation;
@@ -92,18 +92,18 @@ public class RemoteQueryExecutor extends Thread {
             }
             else {
                 // Prepare for commit.
-                Command prepare = parser.prepareCommand("PREPARE COMMIT " + transactionName);
+                final Command prepare = parser.prepareCommand("PREPARE COMMIT " + transactionName);
                 prepare.executeUpdate();
 
                 // Execute query.
-                Command command = parser.prepareCommand(query);
+                final Command command = parser.prepareCommand(query);
                 result = command.executeUpdate();
             }
 
             qr = new QueryResult(result, databaseWrapper, updateID, tableInfo);
 
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             qr = new QueryResult(e, databaseWrapper, updateID, tableInfo);
         }
 
@@ -116,19 +116,20 @@ public class RemoteQueryExecutor extends Thread {
         try {
             H2OTest.rmiFailure(databaseWrapper);
 
-            int result = databaseWrapper.getDatabaseInstance().execute(query, transactionName, commitOperation);
+            assert databaseWrapper != null && databaseWrapper.getDatabaseInstance() != null : "The wrapper supplied for remote query should not contain a null RMI reference.";
+
+            final int result = databaseWrapper.getDatabaseInstance().execute(query, transactionName, commitOperation);
 
             qr = new QueryResult(result, databaseWrapper, updateID, tableInfo);
 
         }
-        catch (RemoteException e) {
+        catch (final RemoteException e) {
             qr = new QueryResult(new SQLException(e.getMessage()), databaseWrapper, updateID, tableInfo);
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             qr = new QueryResult(e, databaseWrapper, updateID, tableInfo);
         }
 
         return qr;
     }
-
 }

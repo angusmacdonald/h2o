@@ -1614,10 +1614,7 @@ public class Database implements DataHandler {
                     trigger.close();
                 }
                 meta.close(systemSession);
-
-                // Experimentally disabled to address data being committed even with auto-commit turned off.
-                //      systemSession.commit(true);
-
+                //systemSession.commit(true);
                 indexSummaryValid = true;
             }
         }

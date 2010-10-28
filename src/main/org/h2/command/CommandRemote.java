@@ -19,11 +19,6 @@ import org.h2.result.ResultRemote;
 import org.h2.util.ObjectArray;
 import org.h2.value.Transfer;
 import org.h2.value.Value;
-import org.h2o.db.query.QueryProxyManager;
-
-import uk.ac.standrews.cs.nds.util.Diagnostic;
-import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
-import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * Represents the client-side part of a SQL statement. This class is not used in embedded mode.
@@ -50,9 +45,9 @@ public class CommandRemote implements CommandInterface {
 
     private int paramCount;
 
-    private int created;
+    private final int created;
 
-    public CommandRemote(SessionRemote session, ObjectArray transferList, String sql, int fetchSize) throws SQLException {
+    public CommandRemote(final SessionRemote session, final ObjectArray transferList, final String sql, final int fetchSize) throws SQLException {
 
         this.transferList = transferList;
         trace = session.getTrace();
@@ -66,14 +61,14 @@ public class CommandRemote implements CommandInterface {
         created = session.getLastReconnect();
     }
 
-    private void prepare(SessionRemote s, boolean createParams) throws SQLException {
+    private void prepare(final SessionRemote s, final boolean createParams) throws SQLException {
 
         id = s.getNextId();
         paramCount = 0;
-        boolean readParams = s.getClientVersion() >= Constants.TCP_PROTOCOL_VERSION_6;
+        final boolean readParams = s.getClientVersion() >= Constants.TCP_PROTOCOL_VERSION_6;
         for (int i = 0, count = 0; i < transferList.size(); i++) {
             try {
-                Transfer transfer = (Transfer) transferList.get(i);
+                final Transfer transfer = (Transfer) transferList.get(i);
                 if (readParams && createParams) {
                     s.traceOperation("SESSION_PREPARE_READ_PARAMS", id);
                     transfer.writeInt(SessionRemote.SESSION_PREPARE_READ_PARAMS).writeInt(id).writeString(sql);
@@ -90,7 +85,7 @@ public class CommandRemote implements CommandInterface {
                     parameters.clear();
                     for (int j = 0; j < paramCount; j++) {
                         if (readParams) {
-                            ParameterRemote p = new ParameterRemote(j);
+                            final ParameterRemote p = new ParameterRemote(j);
                             p.readMetaData(transfer);
                             parameters.add(p);
                         }
@@ -100,7 +95,7 @@ public class CommandRemote implements CommandInterface {
                     }
                 }
             }
-            catch (IOException e) {
+            catch (final IOException e) {
                 // Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Error contacting server. It will be removed from the active set.");
                 s.removeServer(e, i--, ++count);
 
@@ -108,11 +103,13 @@ public class CommandRemote implements CommandInterface {
         }
     }
 
+    @Override
     public boolean isQuery() {
 
         return isQuery;
     }
 
+    @Override
     public ObjectArray getParameters() {
 
         return parameters;
@@ -131,26 +128,27 @@ public class CommandRemote implements CommandInterface {
         }
     }
 
+    @Override
     public ResultInterface getMetaData() throws SQLException {
 
         synchronized (session) {
             if (!isQuery) { return null; }
-            int objectId = session.getNextId();
+            final int objectId = session.getNextId();
             ResultRemote result = null;
             for (int i = 0, count = 0; i < transferList.size(); i++) {
                 prepareIfRequired();
-                Transfer transfer = (Transfer) transferList.get(i);
+                final Transfer transfer = (Transfer) transferList.get(i);
                 try {
                     // TODO cluster: support load balance with values for each
                     // server / auto detect
                     session.traceOperation("COMMAND_GET_META_DATA", id);
                     transfer.writeInt(SessionRemote.COMMAND_GET_META_DATA).writeInt(id).writeInt(objectId);
                     session.done(transfer);
-                    int columnCount = transfer.readInt();
+                    final int columnCount = transfer.readInt();
                     result = new ResultRemote(session, transfer, objectId, columnCount, Integer.MAX_VALUE);
                     break;
                 }
-                catch (IOException e) {
+                catch (final IOException e) {
                     session.removeServer(e, i--, ++count);
                 }
             }
@@ -159,15 +157,16 @@ public class CommandRemote implements CommandInterface {
         }
     }
 
-    public ResultInterface executeQuery(int maxRows, boolean scrollable) throws SQLException {
+    @Override
+    public ResultInterface executeQuery(final int maxRows, final boolean scrollable) throws SQLException {
 
         checkParameters();
         synchronized (session) {
-            int objectId = session.getNextId();
+            final int objectId = session.getNextId();
             ResultRemote result = null;
             for (int i = 0, count = 0; i < transferList.size(); i++) {
                 prepareIfRequired();
-                Transfer transfer = (Transfer) transferList.get(i);
+                final Transfer transfer = (Transfer) transferList.get(i);
                 try {
                     // TODO cluster: support load balance with values for each
                     // server / auto detect
@@ -183,7 +182,7 @@ public class CommandRemote implements CommandInterface {
                     transfer.writeInt(fetch);
                     sendParameters(transfer);
                     session.done(transfer);
-                    int columnCount = transfer.readInt();
+                    final int columnCount = transfer.readInt();
                     if (result != null) {
                         result.close();
                         result = null;
@@ -193,7 +192,7 @@ public class CommandRemote implements CommandInterface {
                         break;
                     }
                 }
-                catch (IOException e) {
+                catch (final IOException e) {
                     session.removeServer(e, i--, ++count);
                 }
             }
@@ -203,6 +202,7 @@ public class CommandRemote implements CommandInterface {
         }
     }
 
+    @Override
     public int executeUpdate() throws SQLException {
 
         checkParameters();
@@ -211,7 +211,7 @@ public class CommandRemote implements CommandInterface {
             boolean autoCommit = false;
             for (int i = 0, count = 0; i < transferList.size(); i++) {
                 prepareIfRequired();
-                Transfer transfer = (Transfer) transferList.get(i);
+                final Transfer transfer = (Transfer) transferList.get(i);
                 try {
                     session.traceOperation("COMMAND_EXECUTE_UPDATE", id);
                     transfer.writeInt(SessionRemote.COMMAND_EXECUTE_UPDATE).writeInt(id);
@@ -220,7 +220,7 @@ public class CommandRemote implements CommandInterface {
                     updateCount = transfer.readInt();
                     autoCommit = transfer.readBoolean();
                 }
-                catch (IOException e) {
+                catch (final IOException e) {
                     session.removeServer(e, i--, ++count);
                 }
             }
@@ -233,50 +233,51 @@ public class CommandRemote implements CommandInterface {
 
     private void checkParameters() throws SQLException {
 
-        int len = parameters.size();
+        final int len = parameters.size();
         for (int i = 0; i < len; i++) {
-            ParameterInterface p = (ParameterInterface) parameters.get(i);
+            final ParameterInterface p = (ParameterInterface) parameters.get(i);
             p.checkSet();
         }
     }
 
-    private void sendParameters(Transfer transfer) throws IOException, SQLException {
+    private void sendParameters(final Transfer transfer) throws IOException, SQLException {
 
-        int len = parameters.size();
+        final int len = parameters.size();
         transfer.writeInt(len);
         for (int i = 0; i < len; i++) {
-            ParameterInterface p = (ParameterInterface) parameters.get(i);
+            final ParameterInterface p = (ParameterInterface) parameters.get(i);
             transfer.writeValue(p.getParamValue());
         }
     }
 
+    @Override
     public void close() {
 
         if (session == null || session.isClosed()) { return; }
         synchronized (session) {
             for (int i = 0; i < transferList.size(); i++) {
                 try {
-                    Transfer transfer = (Transfer) transferList.get(i);
+                    final Transfer transfer = (Transfer) transferList.get(i);
                     session.traceOperation("COMMAND_CLOSE", id);
                     transfer.writeInt(SessionRemote.COMMAND_CLOSE).writeInt(id);
                 }
-                catch (IOException e) {
+                catch (final IOException e) {
                     trace.error("close", e);
                 }
             }
         }
         session = null;
-        int len = parameters.size();
+        final int len = parameters.size();
         try {
             for (int i = 0; i < len; i++) {
-                ParameterInterface p = (ParameterInterface) parameters.get(i);
-                Value v = p.getParamValue();
+                final ParameterInterface p = (ParameterInterface) parameters.get(i);
+                final Value v = p.getParamValue();
                 if (v != null) {
                     v.close();
                 }
             }
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             trace.error("close", e);
         }
         parameters.clear();
@@ -285,11 +286,13 @@ public class CommandRemote implements CommandInterface {
     /**
      * Cancel this current statement.
      */
+    @Override
     public void cancel() {
 
         session.cancelStatement(id);
     }
 
+    @Override
     public String toString() {
 
         return TraceObject.toString(sql, getParameters());
@@ -300,7 +303,7 @@ public class CommandRemote implements CommandInterface {
      * @see org.h2.command.CommandInterface#executeUpdate(boolean)
      */
     @Override
-    public int executeUpdate(boolean isMultiQueryTransaction) throws SQLException {
+    public int executeUpdate(final boolean isMultiQueryTransaction) throws SQLException {
 
         return executeUpdate();
     }
@@ -310,7 +313,7 @@ public class CommandRemote implements CommandInterface {
      * @see org.h2.command.CommandInterface#isPreparedStatement(boolean)
      */
     @Override
-    public void setIsPreparedStatement(boolean preparedStatement) {
+    public void setIsPreparedStatement(final boolean preparedStatement) {
 
         // ErrorHandling.hardError("Didn't expect this to be called.");
     }

@@ -249,7 +249,7 @@ public class FailureTests extends MultiProcessTestBase {
 
             // createConnectionsToDatabases();
 
-            assertTrue(assertTestTableExists(connections[1], 2));
+            assertTrue(assertTestTableExists(connections[1], 2, false));
         }
         catch (final SQLException e) {
             e.printStackTrace();

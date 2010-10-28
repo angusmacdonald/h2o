@@ -26,11 +26,15 @@ import org.h2o.db.id.TableInfo;
 import org.h2o.db.query.QueryProxy;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
+
 public class AsynchronousQueryExecutor {
 
     private final Database database;
 
     int updatesNeededBeforeCommit = 0;
+
+    private static Integer sleepTimeWhileWaitingForQueriesToFinish = Integer.valueOf(DefaultSettings.getString("AsynchronousQueryExecutor.SLEEP_TIME_WAITING_FOR_QUERIES_TO_COMPLETE")); //$NON-NLS-1$
 
     /**
      * @param database
@@ -186,9 +190,7 @@ public class AsynchronousQueryExecutor {
         if (incompleteQueries.size() == 0) { return true; // the commit value has not changed.
         }
 
-        final Integer sleepTime = Integer.valueOf(DefaultSettings.getString("AsynchronousQueryExecutor.SLEEP_TIME_WAITING_FOR_QUERIES_TO_COMPLETE")); //$NON-NLS-1$
-
-        assert sleepTime != null : "Sleep time property couldn't be found.";
+        assert sleepTimeWhileWaitingForQueriesToFinish != null : "Sleep time property couldn't be found.";
         final List<FutureTask<QueryResult>> completedQueries = new LinkedList<FutureTask<QueryResult>>();
 
         /*
@@ -208,7 +210,7 @@ public class AsynchronousQueryExecutor {
                 else {
                     try {
 
-                        Thread.sleep(sleepTime);
+                        Thread.sleep(sleepTimeWhileWaitingForQueriesToFinish);
                     }
                     catch (final InterruptedException e) {
                         e.printStackTrace();
@@ -234,7 +236,7 @@ public class AsynchronousQueryExecutor {
                 asyncResult = completedQuery.get();
             }
             catch (final Exception e) {
-                e.printStackTrace();
+                ErrorHandling.exceptionError(e, "Failed to obtain result from asynchronous query. The replica involved will be marked as inactive if this transaction commits.");
                 continue;
             }
 

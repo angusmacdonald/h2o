@@ -85,14 +85,6 @@ public class CommandContainer extends Command {
     }
 
     @Override
-    public int update() throws SQLException, RemoteException {
-
-        final int resultOfUpdate = update(false);
-
-        return resultOfUpdate;
-    }
-
-    @Override
     public LocalResult query(final int maxrows) throws SQLException {
 
         return query(maxrows, false);
@@ -114,7 +106,8 @@ public class CommandContainer extends Command {
          * If this is a SELECT query that does not target any meta-tables then locks must be acquired. If it is something else then no locks
          * are needed.
          */
-        if (!prepared.sqlStatement.contains("H2O.") && !prepared.sqlStatement.contains("INFORMATION_SCHEMA.") && !prepared.sqlStatement.contains("SYSTEM_RANGE") && !prepared.sqlStatement.contains("information_schema.") && !prepared.sqlStatement.contains("CALL DATABASE()") && prepared instanceof Select) {
+        if (!prepared.sqlStatement.contains("H2O.") && !prepared.sqlStatement.contains("INFORMATION_SCHEMA.") && !prepared.sqlStatement.contains("SYSTEM_RANGE") && !prepared.sqlStatement.contains("information_schema.") && !prepared.sqlStatement.contains("CALL DATABASE()")
+                        && prepared instanceof Select) {
 
             getLock();
 
@@ -152,6 +145,12 @@ public class CommandContainer extends Command {
         }
     }
 
+    @Override
+    public int update() throws SQLException, RemoteException {
+
+        return update(false);
+    }
+
     /*
      * (non-Javadoc)
      * @see org.h2.command.Command#update(boolean)
@@ -164,7 +163,8 @@ public class CommandContainer extends Command {
         prepared.checkParameters();
         int updateCount;
 
-        final boolean singleQuery = !partOfMultiQueryTransaction, transactionCommand = prepared.isTransactionCommand();
+        final boolean singleQuery = !partOfMultiQueryTransaction;
+        final boolean transactionCommand = prepared.isTransactionCommand();
 
         if (!transactionCommand) { // Not a prepare or commit.
 

@@ -311,7 +311,7 @@ public class SysProperties {
      * System property <code>h2.objectCache</code> (default: true).<br />
      * Cache commonly used objects (integers, strings).
      */
-    public static final boolean OBJECT_CACHE = getBooleanSetting("h2.objectCache", true);
+    public static final boolean OBJECT_CACHE = getBooleanSetting("h2.objectCache", false);
 
     /**
      * System property <code>h2.objectCacheMaxPerElementSize</code> (default: 4096).<br />
@@ -559,26 +559,26 @@ public class SysProperties {
         // utility class
     }
 
-    private static boolean getBooleanSetting(String name, boolean defaultValue) {
+    private static boolean getBooleanSetting(final String name, final boolean defaultValue) {
 
-        String s = getProperty(name);
+        final String s = getProperty(name);
         if (s != null) {
             try {
                 return Boolean.valueOf(s).booleanValue();
             }
-            catch (NumberFormatException e) {
+            catch (final NumberFormatException e) {
                 // ignore
             }
         }
         return defaultValue;
     }
 
-    private static String getProperty(String name) {
+    private static String getProperty(final String name) {
 
         try {
             return System.getProperty(name);
         }
-        catch (SecurityException e) {
+        catch (final SecurityException e) {
             // applets may not do that - ignore
             return null;
         }
@@ -587,23 +587,23 @@ public class SysProperties {
     /**
      * INTERNAL
      */
-    public static String getStringSetting(String name, String defaultValue) {
+    public static String getStringSetting(final String name, final String defaultValue) {
 
-        String s = getProperty(name);
+        final String s = getProperty(name);
         return s == null ? defaultValue : s;
     }
 
     /**
      * INTERNAL
      */
-    public static int getIntSetting(String name, int defaultValue) {
+    public static int getIntSetting(final String name, final int defaultValue) {
 
-        String s = getProperty(name);
+        final String s = getProperty(name);
         if (s != null) {
             try {
                 return Integer.decode(s).intValue();
             }
-            catch (NumberFormatException e) {
+            catch (final NumberFormatException e) {
                 // ignore
             }
         }
@@ -641,7 +641,7 @@ public class SysProperties {
     /**
      * INTERNAL
      */
-    public static void setScriptDirectory(String dir) {
+    public static void setScriptDirectory(final String dir) {
 
         System.setProperty("h2.scriptDirectory", dir);
     }

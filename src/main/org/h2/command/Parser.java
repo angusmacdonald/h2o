@@ -4860,7 +4860,9 @@ public class Parser {
             } // XXX this might fail if its not the default schema.
         }
         else { // 1
-
+            System.err.println("searchRemote: " + searchRemote);
+            System.err.println("database.getSystemTableReference().isConnectedToSM(): " + database.getSystemTableReference().isConnectedToSM());
+            System.err.println("!(locale == LocationPreference.LOCAL_STRICT): " + !(locale == LocationPreference.LOCAL_STRICT));
             throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
         }
 

@@ -38,44 +38,45 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
     /**
      * The parsed JDBC connection string for this database.
      */
-    private DatabaseURL databaseURL;
+    private final DatabaseURL databaseURL;
 
     /**
      * Used to parse queries on this machine.
      */
-    private Parser parser;
+    private final Parser parser;
 
     /**
      * Whether the database instance is alive or in the process of being shut down.
      */
     private boolean alive = true;
 
-    private Database database;
+    private final Database database;
 
-    public DatabaseInstance(DatabaseURL databaseURL, Session session) {
+    public DatabaseInstance(final DatabaseURL databaseURL, final Session session) {
 
         this.databaseURL = databaseURL;
-        this.database = session.getDatabase();
-        this.parser = new Parser(session, true);
+        database = session.getDatabase();
+        parser = new Parser(session, true);
     }
 
     /*
      * (non-Javadoc)
      * @see org.h2.command.dm.DatabaseInstanceRemote#executeUpdate(org.h2.command .Prepared)
      */
-    public int execute(String query, String transactionName, boolean commitOperation) throws RemoteException, SQLException {
+    @Override
+    public int execute(final String query, final String transactionName, final boolean commitOperation) throws RemoteException, SQLException {
 
         if (query == null) {
             ErrorHandling.hardError("Shouldn't happen.");
         }
 
-        Command command = parser.prepareCommand(query);
+        final Command command = parser.prepareCommand(query);
 
         try {
             if (commitOperation) {
                 // System.err.println("committing - " + query + " - (" + commitOperation + ") " + transactionName + " on " +
                 // this.databaseURL);
-                return command.executeUpdate(); // This is a COMMIT.
+                return command.update(); // This is a COMMIT.
             }
             else {
                 /*
@@ -94,9 +95,10 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
         }
     }
 
-    public int prepare(String transactionName) throws RemoteException, SQLException {
+    @Override
+    public int prepare(final String transactionName) throws RemoteException, SQLException {
 
-        Command command = parser.prepareCommand("PREPARE COMMIT " + transactionName);
+        final Command command = parser.prepareCommand("PREPARE COMMIT " + transactionName);
         return command.executeUpdate();
     }
 
@@ -127,7 +129,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
     @Override
     public DatabaseURL getSystemTableURL() throws RemoteException {
 
-        DatabaseURL systemTableURL = database.getSystemTableReference().getSystemTableURL();
+        final DatabaseURL systemTableURL = database.getSystemTableReference().getSystemTableURL();
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Responding to request for System Table location at database '" + database.getDatabaseLocation() + "'. " + "System table location: " + systemTableURL);
 
         return systemTableURL;
@@ -138,21 +140,21 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
      * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#executeUpdate(java.lang .String)
      */
     @Override
-    public int executeUpdate(String sql, boolean systemTableCommand) throws RemoteException, SQLException {
+    public int executeUpdate(final String sql, final boolean systemTableCommand) throws RemoteException, SQLException {
 
-        if (!database.isRunning()) throw new SQLException("The database either hasn't fully started, or is being shut down.");
+        if (!database.isRunning()) { throw new SQLException("The database either hasn't fully started, or is being shut down."); }
 
         Command command = null;
         if (systemTableCommand) {
 
-            Parser schemaParser = new Parser(database.getH2OSession(), true);
+            final Parser schemaParser = new Parser(database.getH2OSession(), true);
             command = schemaParser.prepareCommand(sql);
         }
         else {
             command = parser.prepareCommand(sql);
         }
 
-        int result = command.executeUpdate(false);
+        final int result = command.executeUpdate(false);
         command.close();
 
         return result;
@@ -163,19 +165,19 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Responding to request to recreate System Table on '" + database.getDatabaseLocation() + "'.");
 
-        ISystemTableReference systemTableReference = this.database.getSystemTableReference();
+        final ISystemTableReference systemTableReference = database.getSystemTableReference();
         return systemTableReference.migrateSystemTableToLocalInstance(true, true);
     }
 
     @Override
-    public boolean recreateTableManager(TableInfo tableInfo, DatabaseURL previousLocation) throws RemoteException {
+    public boolean recreateTableManager(final TableInfo tableInfo, final DatabaseURL previousLocation) throws RemoteException {
 
         boolean success = false;
         try {
             executeUpdate("RECREATE TABLEMANAGER " + tableInfo.getFullTableName() + " FROM '" + previousLocation.sanitizedLocation() + "';", true);
             success = true;
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             e.printStackTrace();
         }
         return success;
@@ -187,9 +189,9 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
      * (uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference)
      */
     @Override
-    public void setSystemTableLocation(IChordRemoteReference systemTableLocation, DatabaseURL databaseURL) throws RemoteException {
+    public void setSystemTableLocation(final IChordRemoteReference systemTableLocation, final DatabaseURL databaseURL) throws RemoteException {
 
-        this.database.getSystemTableReference().setSystemTableLocation(systemTableLocation, databaseURL);
+        database.getSystemTableReference().setSystemTableLocation(systemTableLocation, databaseURL);
     }
 
     /*
@@ -197,12 +199,12 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
      * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#findTableManagerReference (org.h2.h2o.util.TableInfo)
      */
     @Override
-    public TableManagerRemote findTableManagerReference(TableInfo ti) throws RemoteException {
+    public TableManagerRemote findTableManagerReference(final TableInfo ti) throws RemoteException {
 
         try {
-            return this.database.getSystemTableReference().lookup(ti, true);
+            return database.getSystemTableReference().lookup(ti, true);
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             ErrorHandling.errorNoEvent("Couldn't find Table Manager at this machine. Table Manager needs to be re-instantiated.."); // TODO
                                                                                                                                     // allow
                                                                                                                                     // for
@@ -214,7 +216,8 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
         }
     }
 
-    public void setAlive(boolean alive) {
+    @Override
+    public void setAlive(final boolean alive) {
 
         this.alive = alive;
     }
@@ -236,7 +239,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
     @Override
     public int hashCode() {
 
-        int result = 31 + ((databaseURL.getURL() == null) ? 0 : databaseURL.getURL().hashCode());
+        final int result = 31 + (databaseURL.getURL() == null ? 0 : databaseURL.getURL().hashCode());
         return result;
     }
 
@@ -245,16 +248,16 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
      * @see java.lang.Object#equals(java.lang.Object)
      */
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
 
-        if (this == obj) return true;
-        if (obj == null) return false;
-        if (getClass() != obj.getClass()) return false;
-        DatabaseInstance other = (DatabaseInstance) obj;
+        if (this == obj) { return true; }
+        if (obj == null) { return false; }
+        if (getClass() != obj.getClass()) { return false; }
+        final DatabaseInstance other = (DatabaseInstance) obj;
         if (databaseURL.getURL() == null) {
-            if (other.databaseURL.getURL() != null) return false;
+            if (other.databaseURL.getURL() != null) { return false; }
         }
-        else if (!databaseURL.getURL().equals(other.databaseURL.getURL())) return false;
+        else if (!databaseURL.getURL().equals(other.databaseURL.getURL())) { return false; }
         return true;
     }
 

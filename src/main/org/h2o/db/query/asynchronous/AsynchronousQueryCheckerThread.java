@@ -22,6 +22,8 @@ public class AsynchronousQueryCheckerThread extends Thread {
      */
     AsynchronousQueryManager queryManager;
 
+    private final static int sleepTime = Integer.valueOf(DefaultSettings.getString("AsynchronousQueryCheckerThread.SLEEP_TIME_BETWEEN_ASYNC_QUERY_CHECK"));
+
     public AsynchronousQueryCheckerThread(final AsynchronousQueryManager queryManager) {
 
         this.queryManager = queryManager;
@@ -29,8 +31,6 @@ public class AsynchronousQueryCheckerThread extends Thread {
 
     @Override
     public void run() {
-
-        final int sleepTime = Integer.valueOf(DefaultSettings.getString("AsynchronousQueryCheckerThread.SLEEP_TIME_BETWEEN_ASYNC_QUERY_CHECK"));
 
         while (true) {
 

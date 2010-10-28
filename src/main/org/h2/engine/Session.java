@@ -566,8 +566,10 @@ public class Session extends SessionWithState {
             unlinkMap = null;
         }
 
+        logSystem.flush(); //added here while testing large memory leak (27/10/10).
+
         if (proxyManagerForCurrentTransaction != null && !ddl && !hasAlreadyCommittedQueryProxy) {
-            proxyManagerForCurrentTransaction.finishTransaction(true, applicationAutoCommit, getDatabase());
+            proxyManagerForCurrentTransaction.finishTransaction(true, true, getDatabase());
             proxyManagerForCurrentTransaction = null;
         }
 

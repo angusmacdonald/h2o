@@ -12,8 +12,6 @@ import org.h2.util.ObjectArray;
 import org.h2o.db.query.QueryProxyManager;
 import org.h2o.test.H2OTest;
 
-import uk.ac.standrews.cs.nds.util.ErrorHandling;
-
 /**
  * Represents a list of SQL statements.
  */
@@ -25,10 +23,10 @@ public class CommandList extends Command {
 
     // TODO lock if possible!
 
-    public CommandList(Parser parser, String sql, Command c, String remaining) {
+    public CommandList(final Parser parser, final String sql, final Command c, final String remaining) {
 
         super(parser, sql);
-        this.command = c;
+        command = c;
 
         /*
          * Split and store remaining commands.
@@ -39,11 +37,13 @@ public class CommandList extends Command {
 
     }
 
+    @Override
     public ObjectArray getParameters() {
 
         return command.getParameters();
     }
 
+    @Override
     public int executeUpdate() throws SQLException {
 
         return executeUpdate(true);
@@ -58,9 +58,9 @@ public class CommandList extends Command {
                 /*
                  * H2O. Iterate through remaining commands rather than recursively calling this method.
                  */
-                for (String sqlStatement : remaining) {
+                for (final String sqlStatement : remaining) {
 
-                    Command remainingCommand = session.prepareLocal(sqlStatement);
+                    final Command remainingCommand = session.prepareLocal(sqlStatement);
 
                     if (remainingCommand.isQuery()) {
                         remainingCommand.query(0, true);
@@ -73,7 +73,7 @@ public class CommandList extends Command {
                 H2OTest.queryFailure();
 
             }
-            catch (SQLException e) {
+            catch (final SQLException e) {
                 rollbackException = e;
             }
         }
@@ -87,11 +87,12 @@ public class CommandList extends Command {
      * @see org.h2.command.Command#update(boolean)
      */
     @Override
-    protected int update(boolean partOfMultiQueryTransaction) throws SQLException, RemoteException {
+    protected int update(final boolean partOfMultiQueryTransaction) throws SQLException, RemoteException {
 
         return update();
     }
 
+    @Override
     public int update() throws SQLException, RemoteException {
 
         /*
@@ -99,18 +100,19 @@ public class CommandList extends Command {
          */
         // proxyManager.begin();
 
-        int updateCount = command.executeUpdate(true);
-        SQLException rollbackException = executeRemaining();
+        final int updateCount = command.executeUpdate(true);
+        final SQLException rollbackException = executeRemaining();
 
         commit(rollbackException);
 
         return updateCount;
     }
 
-    public LocalResult query(int maxrows) throws SQLException, RemoteException {
+    @Override
+    public LocalResult query(final int maxrows) throws SQLException, RemoteException {
 
-        LocalResult result = command.query(maxrows);
-        SQLException rollbackException = executeRemaining();
+        final LocalResult result = command.query(maxrows);
+        final SQLException rollbackException = executeRemaining();
 
         commit(rollbackException);
 
@@ -124,14 +126,14 @@ public class CommandList extends Command {
      *            Exception thrown during query. Will be null if none was thrown and transaction was successful.
      * @throws SQLException
      */
-    private void commit(SQLException rollbackException) throws SQLException {
+    private void commit(final SQLException rollbackException) throws SQLException {
 
         if (session.getApplicationAutoCommit() || rollbackException != null) {
             /*
              * Having executed all commands, rollback if there was an exception. Otherwise, commit.
              */
 
-            QueryProxyManager currentProxyManager = session.getProxyManagerForTransaction();
+            final QueryProxyManager currentProxyManager = session.getProxyManagerForTransaction();
             currentProxyManager.finishTransaction(rollbackException == null, true, session.getDatabase());
 
             /*
@@ -141,21 +143,25 @@ public class CommandList extends Command {
         }
     }
 
+    @Override
     public boolean isQuery() {
 
         return command.isQuery();
     }
 
+    @Override
     public boolean isTransactional() {
 
         return true;
     }
 
+    @Override
     public boolean isReadOnly() {
 
         return false;
     }
 
+    @Override
     public LocalResult queryMeta() throws SQLException {
 
         return command.queryMeta();
@@ -186,7 +192,7 @@ public class CommandList extends Command {
      * @see org.h2.command.CommandInterface#isPreparedStatement(boolean)
      */
     @Override
-    public void setIsPreparedStatement(boolean preparedStatement) {
+    public void setIsPreparedStatement(final boolean preparedStatement) {
 
         command.setIsPreparedStatement(preparedStatement);
     }

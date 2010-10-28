@@ -31,18 +31,18 @@ public class StringCache {
      *            the original string
      * @return a string with the same content, if possible from the cache
      */
-    public static String get(String s) {
+    public static String get(final String s) {
 
         if (!SysProperties.OBJECT_CACHE || !ENABLED) { return s; }
         if (s == null) {
             return s;
         }
         else if (s.length() == 0) { return ""; }
-        int hash = s.hashCode();
-        String[] cache = getCache();
+        final int hash = s.hashCode();
+        final String[] cache = getCache();
         if (cache != null) {
-            int index = hash & (SysProperties.OBJECT_CACHE_SIZE - 1);
-            String cached = cache[index];
+            final int index = hash & SysProperties.OBJECT_CACHE_SIZE - 1;
+            final String cached = cache[index];
             if (cached != null) {
                 if (s.equals(cached)) { return cached; }
             }
@@ -67,11 +67,11 @@ public class StringCache {
             return s;
         }
         else if (s.length() == 0) { return ""; }
-        int hash = s.hashCode();
-        String[] cache = getCache();
-        int index = hash & (SysProperties.OBJECT_CACHE_SIZE - 1);
+        final int hash = s.hashCode();
+        final String[] cache = getCache();
+        final int index = hash & SysProperties.OBJECT_CACHE_SIZE - 1;
         if (cache != null) {
-            String cached = cache[index];
+            final String cached = cache[index];
             if (cached != null) {
                 if (s.equals(cached)) { return cached; }
             }
@@ -97,7 +97,7 @@ public class StringCache {
         try {
             cache = new String[SysProperties.OBJECT_CACHE_SIZE];
         }
-        catch (OutOfMemoryError e) {
+        catch (final OutOfMemoryError e) {
             return null;
         }
         softCache = new SoftReference(cache);
