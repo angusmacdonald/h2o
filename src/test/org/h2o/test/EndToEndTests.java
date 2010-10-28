@@ -12,6 +12,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -45,7 +46,7 @@ public class EndToEndTests {
     private static final String USER_NAME = "sa";
     private static final String PASSWORD = "";
 
-    private static final int value = 7;
+    private static final int INT_TEST_VALUE = 7;
 
     /**
      * Tests whether a new database can be created, data inserted and read back.
@@ -53,71 +54,101 @@ public class EndToEndTests {
      * Postconditions: persistent database state is not present
      * 
      * @throws SQLException if the test fails
+     * @throws IOException if the test fails
      */
     @Test
-    public void simpleLifeCycle() throws SQLException {
+    public void simpleLifeCycle() throws SQLException, IOException {
+
+        deleteDatabaseState();
+
+        // Auto-commit is on by default.
+
+        final H2O db = initDB();
+        db.startDatabase();
+        createAndInsertWithAutoCommit();
+        assertDataIsPresent();
+        db.shutdown();
+
+        db.deleteState();
+    }
+
+    /**
+     * Tests whether a database can be properly cleaned up, by running the whole life cycle twice.
+     * 
+     * @throws SQLException if the test fails
+     * @throws IOException if the test fails
+     */
+    @Test
+    public void completeCleanUp() throws SQLException, IOException {
+
+        simpleLifeCycle();
+        simpleLifeCycle();
+    }
+
+    /**
+     * Tests whether data can be inserted during one instantiation of a database and read in another.
+     * 
+     * @throws SQLException if the test fails
+     * @throws IOException if the test fails
+     */
+    @Test
+    public void persistence() throws SQLException, IOException {
+
+        deleteDatabaseState();
+
+        H2O db = initDB();
+        db.startDatabase();
+        createAndInsertWithAutoCommit();
+        db.shutdown();
+
+        db = initDB();
+        db.startDatabase();
+        assertDataIsPresent();
+        db.shutdown();
+
+        db.deleteState();
+    }
+
+    /**
+     * Tests whether data that has been inserted but not committed is visible within the same transaction.
+     * 
+     * @throws SQLException if the test fails
+     * @throws IOException if the test fails
+     */
+    @Test
+    public void updateVisibleWithinTransaction() throws SQLException, IOException {
 
         deleteDatabaseState();
 
         final H2O db = initDB();
         db.startDatabase();
-        doLifeCycle();
+        createAndInsertWithoutAutoCommit();
+        assertDataIsPresent();
         db.shutdown();
 
         db.deleteState();
     }
 
     /**
-     * Tests whether a database can be created, removed, and created again.
+     * Tests whether data that has been inserted is correctly rolled back when auto-commit is disabled and there is no explicit commit.
+     * A table is created and populated in the first instantiation of the database. The second instantiation tries to read the data, which should fail.
      * 
      * @throws SQLException if the test fails
+     * @throws IOException if the test fails
      */
     @Test
-    public void completeCleanUp() throws SQLException {
-
-        simpleLifeCycle();
-        simpleLifeCycle();
-    }
-
-    /**
-     * Tests whether data can be inserted during one instantiation of a database and read in another.
-     * @throws SQLException if the test fails
-     */
-    @Test
-    public void persistence() throws SQLException {
+    public void noAutoCommit() throws SQLException, IOException {
 
         deleteDatabaseState();
 
         H2O db = initDB();
         db.startDatabase();
-        doCreateAndInsert(true);
+        createAndInsertWithoutAutoCommit();
         db.shutdown();
 
         db = initDB();
         db.startDatabase();
-        doCheckValues();
-        db.shutdown();
-
-        db.deleteState();
-    }
-
-    /**
-     * Tests whether data can be inserted during one instantiation of a database and read in another.
-     * @throws SQLException if the test fails
-     */
-    @Test
-    public void noAutoCommit() throws SQLException {
-
-        deleteDatabaseState();
-
-        H2O db = initDB();
-        db.startDatabase();
-        doCreateAndInsert(false);
-        db.shutdown();
-
-        db = initDB();
-        db.startDatabase();
-        doCheckNoValues();
+        assertDataIsNotPresent();
         db.shutdown();
 
         db.deleteState();
@@ -132,7 +163,7 @@ public class EndToEndTests {
 
     private H2O initDB() {
 
-        return new H2O(DATABASE_NAME, TCP_PORT, WEB_PORT, DATABASE_LOCATION);
+        return new H2O(DATABASE_NAME, TCP_PORT, DATABASE_LOCATION);
     }
 
     private void performAction(final IDBAction action) throws SQLException {
@@ -149,18 +180,14 @@ public class EndToEndTests {
         }
     }
 
-    private void doLifeCycle() throws SQLException {
+    private void createAndInsertWithAutoCommit() throws SQLException {
 
-        performAction(new IDBAction() {
+        doCreateAndInsert(true);
+    }
 
-            @Override
-            public void execute(final Connection connection) throws SQLException {
+    private void createAndInsertWithoutAutoCommit() throws SQLException {
 
-                createTable(connection);
-                insertValues(connection);
-                checkValues(connection);
-            }
-        });
+        doCreateAndInsert(false);
     }
 
     private void doCreateAndInsert(final boolean auto_commit) throws SQLException {
@@ -177,26 +204,26 @@ public class EndToEndTests {
         });
     }
 
-    private void doCheckValues() throws SQLException {
+    private void assertDataIsPresent() throws SQLException {
 
         performAction(new IDBAction() {
 
             @Override
             public void execute(final Connection connection) throws SQLException {
 
-                checkValues(connection);
+                assertDataIsPresent(connection);
             }
         });
     }
 
-    private void doCheckNoValues() throws SQLException {
+    private void assertDataIsNotPresent() throws SQLException {
 
         performAction(new IDBAction() {
 
             @Override
             public void execute(final Connection connection) throws SQLException {
 
-                checkNoValues(connection);
+                assertDataIsNotPresent(connection);
             }
         });
     }
@@ -226,40 +253,40 @@ public class EndToEndTests {
         try {
             statement = connection.createStatement();
 
-            // Add some data.
-            statement.executeUpdate("INSERT INTO TEST VALUES(" + value + ");");
+            statement.executeUpdate("INSERT INTO TEST VALUES(" + INT_TEST_VALUE + ");");
         }
         finally {
             closeIfNotNull(statement);
         }
     }
 
-    private void checkValues(final Connection connection) throws SQLException {
+    private void assertDataIsPresent(final Connection connection) throws SQLException {
 
         Statement statement = null;
         try {
             statement = connection.createStatement();
 
-            // Query the database to check that the data was added successfully.
             final ResultSet result_set = statement.executeQuery("SELECT * FROM TEST;");
 
+            // The result set should contain the single test value.
             assertTrue(result_set.next());
-            assertEquals(value, result_set.getInt(1));
+            assertEquals(INT_TEST_VALUE, result_set.getInt(1));
+            assertFalse(result_set.next());
         }
         finally {
             closeIfNotNull(statement);
         }
     }
 
-    private void checkNoValues(final Connection connection) throws SQLException {
+    private void assertDataIsNotPresent(final Connection connection) throws SQLException {
 
         Statement statement = null;
         try {
             statement = connection.createStatement();
 
-            // Query the database to check that the data was added successfully.
             final ResultSet result_set = statement.executeQuery("SELECT * FROM TEST;");
 
+            // The result set should be empty.
             assertFalse(result_set.next());
         }
         finally {
