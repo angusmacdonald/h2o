@@ -8,7 +8,6 @@
  */
 package org.h2o.test;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -18,6 +17,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.h2.tools.DeleteDbFiles;
 import org.h2.util.NetUtils;
@@ -62,8 +63,8 @@ public class EndToEndTests {
 
         final H2O db = initDB();
         db.startDatabase();
-        createAndInsertWithAutoCommitWithoutExplicitCommit();
-        assertDataIsPresent();
+        createAndInsertWithAutoCommitWithoutExplicitCommit(1);
+        assertDataIsPresent(1);
         db.shutdown();
 
         db.deleteState();
@@ -95,12 +96,12 @@ public class EndToEndTests {
 
         H2O db = initDB();
         db.startDatabase();
-        createAndInsertWithAutoCommitWithoutExplicitCommit();
+        createAndInsertWithAutoCommitWithoutExplicitCommit(1);
         db.shutdown();
 
         db = initDB();
         db.startDatabase();
-        assertDataIsPresent();
+        assertDataIsPresent(1);
         db.shutdown();
 
         db.deleteState();
@@ -119,8 +120,8 @@ public class EndToEndTests {
 
         final H2O db = initDB();
         db.startDatabase();
-        createAndInsertWithoutAutoCommitWithoutExplicitCommit();
-        assertDataIsPresent();
+        createAndInsertWithoutAutoCommitWithoutExplicitCommit(1);
+        assertDataIsPresent(1);
         db.shutdown();
 
         db.deleteState();
@@ -134,13 +135,13 @@ public class EndToEndTests {
      * @throws IOException if the test fails
      */
     @Test
-    public void noAutoCommit() throws SQLException, IOException {
+    public void rollbackWithoutAutoCommit() throws SQLException, IOException {
 
         deleteDatabaseState();
 
         H2O db = initDB();
         db.startDatabase();
-        createAndInsertWithoutAutoCommitWithoutExplicitCommit();
+        createAndInsertWithoutAutoCommitWithoutExplicitCommit(1);
         db.shutdown();
 
         db = initDB();
@@ -164,12 +165,36 @@ public class EndToEndTests {
 
         H2O db = initDB();
         db.startDatabase();
-        createAndInsertWithoutAutoCommitWithExplicitCommit();
+        createAndInsertWithoutAutoCommitWithExplicitCommit(1);
         db.shutdown();
 
         db = initDB();
         db.startDatabase();
-        assertDataIsPresent();
+        assertDataIsPresent(1);
+        db.shutdown();
+
+        db.deleteState();
+    }
+
+    /**
+     * Tests whether a series of values can be inserted during one instantiation of a database and read in another, with auto-commit disabled and using explicit commit.
+     * 
+     * @throws SQLException if the test fails
+     * @throws IOException if the test fails
+     */
+    @Test
+    public void multipleInserts() throws SQLException, IOException {
+
+        deleteDatabaseState();
+
+        H2O db = initDB();
+        db.startDatabase();
+        createAndInsertWithoutAutoCommitWithExplicitCommit(100);
+        db.shutdown();
+
+        db = initDB();
+        db.startDatabase();
+        assertDataIsPresent(100);
         db.shutdown();
 
         db.deleteState();
@@ -201,22 +226,22 @@ public class EndToEndTests {
         }
     }
 
-    private void createAndInsertWithAutoCommitWithoutExplicitCommit() throws SQLException {
+    private void createAndInsertWithAutoCommitWithoutExplicitCommit(final int number_of_rows_to_insert) throws SQLException {
 
-        doCreateAndInsert(true, false);
+        doCreateAndInsert(number_of_rows_to_insert, true, false);
     }
 
-    private void createAndInsertWithoutAutoCommitWithoutExplicitCommit() throws SQLException {
+    private void createAndInsertWithoutAutoCommitWithoutExplicitCommit(final int number_of_rows_to_insert) throws SQLException {
 
-        doCreateAndInsert(false, false);
+        doCreateAndInsert(number_of_rows_to_insert, false, false);
     }
 
-    private void createAndInsertWithoutAutoCommitWithExplicitCommit() throws SQLException {
+    private void createAndInsertWithoutAutoCommitWithExplicitCommit(final int number_of_rows_to_insert) throws SQLException {
 
-        doCreateAndInsert(false, true);
+        doCreateAndInsert(number_of_rows_to_insert, false, true);
     }
 
-    private void doCreateAndInsert(final boolean auto_commit, final boolean explicit_commit) throws SQLException {
+    private void doCreateAndInsert(final int number_of_rows_to_insert, final boolean auto_commit, final boolean explicit_commit) throws SQLException {
 
         performAction(new IDBAction() {
 
@@ -225,7 +250,7 @@ public class EndToEndTests {
 
                 connection.setAutoCommit(auto_commit);
                 createTable(connection);
-                insertValues(connection);
+                insertValues(number_of_rows_to_insert, connection);
                 if (explicit_commit) {
                     connection.commit();
                 }
@@ -233,14 +258,14 @@ public class EndToEndTests {
         });
     }
 
-    private void assertDataIsPresent() throws SQLException {
+    private void assertDataIsPresent(final int number_of_rows_inserted) throws SQLException {
 
         performAction(new IDBAction() {
 
             @Override
             public void execute(final Connection connection) throws SQLException {
 
-                assertDataIsPresent(connection);
+                assertDataIsPresent(number_of_rows_inserted, connection);
             }
         });
     }
@@ -276,20 +301,23 @@ public class EndToEndTests {
         }
     }
 
-    private void insertValues(final Connection connection) throws SQLException {
+    private void insertValues(final int number_of_rows_to_insert, final Connection connection) throws SQLException {
 
         Statement statement = null;
         try {
             statement = connection.createStatement();
 
-            statement.executeUpdate("INSERT INTO TEST VALUES(" + INT_TEST_VALUE + ");");
+            for (int i = 0; i < number_of_rows_to_insert; i++) {
+
+                statement.executeUpdate("INSERT INTO TEST VALUES(" + i + ");");
+            }
         }
         finally {
             closeIfNotNull(statement);
         }
     }
 
-    private void assertDataIsPresent(final Connection connection) throws SQLException {
+    private void assertDataIsPresent(final int number_of_rows_inserted, final Connection connection) throws SQLException {
 
         Statement statement = null;
         try {
@@ -297,9 +325,23 @@ public class EndToEndTests {
 
             final ResultSet result_set = statement.executeQuery("SELECT * FROM TEST;");
 
-            // The result set should contain the single test value.
-            assertTrue(result_set.next());
-            assertEquals(INT_TEST_VALUE, result_set.getInt(1));
+            // Check for duplicates.
+            final Set<Integer> already_seen = new HashSet<Integer>();
+
+            for (int i = 0; i < number_of_rows_inserted; i++) {
+
+                // There should be another value.
+                assertTrue(result_set.next());
+                final int value_read = result_set.getInt(1);
+
+                // The value shouldn't have been read already.
+                assertFalse(already_seen.contains(value_read));
+
+                // The value should be between 0 and n-1.
+                assertTrue(value_read >= 0 && value_read < number_of_rows_inserted);
+
+                already_seen.add(value_read);
+            }
             assertFalse(result_set.next());
         }
         finally {
