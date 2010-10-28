@@ -872,9 +872,7 @@ public class MultiQueryTransactionTests extends TestBase {
                 if (conn != null) {
                     conn.close();
                 }
-                if (sa != null) {
-                    sa.close();
-                }
+
                 server.shutdown();
                 server.stop();
             }
