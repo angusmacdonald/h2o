@@ -227,8 +227,10 @@ public class H2O {
 
         for (final Database db : dbs) {
 
-            db.close(true);
-            db.shutdownImmediately();
+            if (db.getShortName().equalsIgnoreCase(databaseName + tcpPort) || db.getShortName().equalsIgnoreCase(Constants.MANAGEMENT_DB_PREFIX + tcpPort)) {
+                db.close(true);
+                db.shutdownImmediately();
+            }
         }
 
         if (locator != null) {
@@ -364,8 +366,9 @@ public class H2O {
      * Connects to the server and initializes the database at a particular location on disk.
      * 
      * @param databaseURL
+     * @throws SQLException 
      */
-    private void initializeDatabase(final String databaseURL) {
+    private void initializeDatabase(final String databaseURL) throws SQLException {
 
         final LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(databaseURL));
 
@@ -377,21 +380,14 @@ public class H2O {
             properties.setProperty("diagnosticLevel", DiagnosticLevel.NONE.toString());
         }
 
-        // Overwrite these properties regardless of whether properties file
-        // exists or not.
+        // Overwrite these properties regardless of whether properties file exists or not.
         properties.setProperty("descriptor", descriptorFileLocation);
         properties.setProperty("databaseName", databaseName);
 
         properties.saveAndClose();
 
-        try {
-            // Create a connection so that the database starts up, but don't do anything with it here.
-            connection = DriverManager.getConnection(databaseURL, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-        }
-        catch (final SQLException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Database couldn't be initialized.");
-        }
+        // Create a connection so that the database starts up, but don't do anything with it here.
+        connection = DriverManager.getConnection(databaseURL, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
     }
 
     /**
