@@ -65,7 +65,7 @@ public class EndToEndTests {
 
         final H2O db = initDB();
         db.startDatabase();
-        createAndInsertWithAutoCommit();
+        createAndInsertWithAutoCommitWithoutExplicitCommit();
         assertDataIsPresent();
         db.shutdown();
 
@@ -98,7 +98,7 @@ public class EndToEndTests {
 
         H2O db = initDB();
         db.startDatabase();
-        createAndInsertWithAutoCommit();
+        createAndInsertWithAutoCommitWithoutExplicitCommit();
         db.shutdown();
 
         db = initDB();
@@ -122,7 +122,7 @@ public class EndToEndTests {
 
         final H2O db = initDB();
         db.startDatabase();
-        createAndInsertWithoutAutoCommit();
+        createAndInsertWithoutAutoCommitWithoutExplicitCommit();
         assertDataIsPresent();
         db.shutdown();
 
@@ -143,12 +143,36 @@ public class EndToEndTests {
 
         H2O db = initDB();
         db.startDatabase();
-        createAndInsertWithoutAutoCommit();
+        createAndInsertWithoutAutoCommitWithoutExplicitCommit();
         db.shutdown();
 
         db = initDB();
         db.startDatabase();
         assertDataIsNotPresent();
+        db.shutdown();
+
+        db.deleteState();
+    }
+
+    /**
+     * Tests whether data can be inserted during one instantiation of a database and read in another, with auto-commit disabled and using explicit commit.
+     * 
+     * @throws SQLException if the test fails
+     * @throws IOException if the test fails
+     */
+    @Test
+    public void explicitCommit() throws SQLException, IOException {
+
+        deleteDatabaseState();
+
+        H2O db = initDB();
+        db.startDatabase();
+        createAndInsertWithoutAutoCommitWithExplicitCommit();
+        db.shutdown();
+
+        db = initDB();
+        db.startDatabase();
+        assertDataIsPresent();
         db.shutdown();
 
         db.deleteState();
@@ -180,17 +204,22 @@ public class EndToEndTests {
         }
     }
 
-    private void createAndInsertWithAutoCommit() throws SQLException {
+    private void createAndInsertWithAutoCommitWithoutExplicitCommit() throws SQLException {
 
-        doCreateAndInsert(true);
+        doCreateAndInsert(true, false);
     }
 
-    private void createAndInsertWithoutAutoCommit() throws SQLException {
+    private void createAndInsertWithoutAutoCommitWithoutExplicitCommit() throws SQLException {
 
-        doCreateAndInsert(false);
+        doCreateAndInsert(false, false);
     }
 
-    private void doCreateAndInsert(final boolean auto_commit) throws SQLException {
+    private void createAndInsertWithoutAutoCommitWithExplicitCommit() throws SQLException {
+
+        doCreateAndInsert(false, true);
+    }
+
+    private void doCreateAndInsert(final boolean auto_commit, final boolean explicit_commit) throws SQLException {
 
         performAction(new IDBAction() {
 
@@ -200,6 +229,9 @@ public class EndToEndTests {
                 connection.setAutoCommit(auto_commit);
                 createTable(connection);
                 insertValues(connection);
+                if (explicit_commit) {
+                    connection.commit();
+                }
             }
         });
     }
