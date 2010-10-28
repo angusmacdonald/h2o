@@ -8,6 +8,7 @@
  */
 package org.h2o.test;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.sql.SQLException;
@@ -23,417 +24,460 @@ import org.junit.Test;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class CompetingTests extends TestBase {
-	
-	/**
-	 * Tests the case of multiple database instances attempting to access a table at the same time. Exclusive access should be ensured
-	 * during the period of writes.
-	 * 
-	 * <p>
-	 * Numerous entries should cause failure, because of the lock contention.
-	 */
-	@Test
-	public void testConcurrentQueriesCompetingUpdates1() {
-		try {
-			sb.execute("CREATE REPLICA TEST");
-		} catch ( SQLException e1 ) {
-			e1.printStackTrace();
-			fail("This wasn't even the interesting part of the test.");
-		}
-		
-		try {
-			Thread.sleep(100);
-		} catch ( InterruptedException e ) {
-		}
-		int entries = 100;
-		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
-		
-		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
-		new Thread(cta).start();
-		
-		ctb.run();
-		
-		boolean result = ctb.successful;
-		
-		Assert.assertEquals(true, result);
-	}
-	
-	@Test
-	public void testConcurrentQueriesCompetingUpdates2() {
-		try {
-			sb.execute("CREATE REPLICA TEST");
-		} catch ( SQLException e1 ) {
-			e1.printStackTrace();
-			fail("This wasn't even the interesting part of the test.");
-		}
-		
-		try {
-			Thread.sleep(100);
-		} catch ( InterruptedException e ) {
-		}
-		int entries = 100;
-		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
-		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
-		new Thread(cta).start();
-		
-		ctb.run();
-		
-		boolean result = ctb.successful;
-		
-		Assert.assertEquals(true, result);
-	}
-	
-	@Test
-	public void testConcurrentQueriesCompetingUpdates3() {
-		try {
-			sb.execute("CREATE REPLICA TEST");
-		} catch ( SQLException e1 ) {
-			e1.printStackTrace();
-			fail("This wasn't even the interesting part of the test.");
-		}
-		
-		try {
-			Thread.sleep(100);
-		} catch ( InterruptedException e ) {
-		}
-		int entries = 100;
-		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
-		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
-		new Thread(cta).start();
-		
-		ctb.run();
-		
-		boolean result = ctb.successful;
-		
-		Assert.assertEquals(true, result);
-	}
-	
-	@Test
-	public void testConcurrentQueriesCompetingUpdates4() {
-		try {
-			sb.execute("CREATE REPLICA TEST");
-		} catch ( SQLException e1 ) {
-			e1.printStackTrace();
-			fail("This wasn't even the interesting part of the test.");
-		}
-		
-		try {
-			Thread.sleep(100);
-		} catch ( InterruptedException e ) {
-		}
-		int entries = 100;
-		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
-		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
-		new Thread(cta).start();
-		
-		ctb.run();
-		
-		boolean result = ctb.successful;
-		
-		Assert.assertEquals(true, result);
-	}
-	
-	@Test
-	public void testConcurrentQueriesCompetingUpdates5() {
-		try {
-			sb.execute("CREATE REPLICA TEST");
-		} catch ( SQLException e1 ) {
-			e1.printStackTrace();
-			fail("This wasn't even the interesting part of the test.");
-		}
-		
-		try {
-			Thread.sleep(100);
-		} catch ( InterruptedException e ) {
-		}
-		int entries = 100;
-		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
-		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
-		new Thread(cta).start();
-		
-		ctb.run();
-		
-		boolean result = ctb.successful;
-		
-		Assert.assertEquals(true, result);
-	}
-	
-	@Test
-	public void testConcurrentQueriesCompetingUpdates6() {
-		try {
-			sb.execute("CREATE REPLICA TEST");
-		} catch ( SQLException e1 ) {
-			e1.printStackTrace();
-			fail("This wasn't even the interesting part of the test.");
-		}
-		
-		try {
-			Thread.sleep(100);
-		} catch ( InterruptedException e ) {
-		}
-		int entries = 100;
-		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
-		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
-		new Thread(cta).start();
-		
-		ctb.run();
-		
-		boolean result = ctb.successful;
-		
-		Assert.assertEquals(true, result);
-	}
-	
-	@Test
-	public void testConcurrentQueriesCompetingUpdates7() {
-		try {
-			sb.execute("CREATE REPLICA TEST");
-		} catch ( SQLException e1 ) {
-			e1.printStackTrace();
-			fail("This wasn't even the interesting part of the test.");
-		}
-		
-		try {
-			Thread.sleep(100);
-		} catch ( InterruptedException e ) {
-		}
-		int entries = 100;
-		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
-		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
-		new Thread(cta).start();
-		
-		ctb.run();
-		
-		boolean result = ctb.successful;
-		
-		Assert.assertEquals(true, result);
-	}
-	
-	@Test
-	public void testConcurrentQueriesCompetingUpdates8() {
-		try {
-			sb.execute("CREATE REPLICA TEST");
-		} catch ( SQLException e1 ) {
-			e1.printStackTrace();
-			fail("This wasn't even the interesting part of the test.");
-		}
-		
-		try {
-			Thread.sleep(100);
-		} catch ( InterruptedException e ) {
-		}
-		try {
-			Thread.sleep(100);
-		} catch ( InterruptedException e ) {
-		}
-		int entries = 100;
-		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
-		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
-		new Thread(cta).start();
-		
-		ctb.run();
-		
-		boolean result = ctb.successful;
-		
-		Assert.assertEquals(true, result);
-	}
-	
-	@Test
-	public void testConcurrentQueriesCompetingUpdates9() {
-		try {
-			sb.execute("CREATE REPLICA TEST");
-		} catch ( SQLException e1 ) {
-			e1.printStackTrace();
-			fail("This wasn't even the interesting part of the test.");
-		}
-		
-		try {
-			Thread.sleep(100);
-		} catch ( InterruptedException e ) {
-		}
-		int entries = 100;
-		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
-		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
-		new Thread(cta).start();
-		
-		ctb.run();
-		
-		boolean result = ctb.successful;
-		
-		Assert.assertEquals(true, result);
-	}
-	
-	@Test
-	public void testConcurrentQueriesCompetingUpdates9a() {
-		try {
-			sb.execute("CREATE REPLICA TEST");
-		} catch ( SQLException e1 ) {
-			e1.printStackTrace();
-			fail("This wasn't even the interesting part of the test.");
-		}
-		
-		try {
-			Thread.sleep(100);
-		} catch ( InterruptedException e ) {
-		}
-		int entries = 100;
-		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
-		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
-		new Thread(cta).start();
-		
-		ctb.run();
-		
-		boolean result = ctb.successful;
-		
-		Assert.assertEquals(true, result);
-	}
-	
-	@Test
-	public void testConcurrentQueriesCompetingUpdates9b() {
-		try {
-			sb.execute("CREATE REPLICA TEST");
-		} catch ( SQLException e1 ) {
-			e1.printStackTrace();
-			fail("This wasn't even the interesting part of the test.");
-		}
-		
-		try {
-			Thread.sleep(100);
-		} catch ( InterruptedException e ) {
-		}
-		int entries = 100;
-		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
-		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
-		new Thread(cta).start();
-		
-		ctb.run();
-		
-		boolean result = ctb.successful;
-		
-		Assert.assertEquals(true, result);
-	}
-	
-	@Test
-	public void testConcurrentQueriesCompetingUpdates9v() {
-		try {
-			sb.execute("CREATE REPLICA TEST");
-		} catch ( SQLException e1 ) {
-			e1.printStackTrace();
-			fail("This wasn't even the interesting part of the test.");
-		}
-		
-		try {
-			Thread.sleep(100);
-		} catch ( InterruptedException e ) {
-		}
-		int entries = 100;
-		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
-		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
-		new Thread(cta).start();
-		
-		ctb.run();
-		
-		boolean result = ctb.successful;
-		
-		Assert.assertEquals(true, result);
-	}
-	
-	@Test
-	public void testConcurrentQueriesCompetingUpdates9ds() {
-		try {
-			sb.execute("CREATE REPLICA TEST");
-		} catch ( SQLException e1 ) {
-			e1.printStackTrace();
-			fail("This wasn't even the interesting part of the test.");
-		}
-		
-		try {
-			Thread.sleep(100);
-		} catch ( InterruptedException e ) {
-		}
-		int entries = 100;
-		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
-		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
-		new Thread(cta).start();
-		
-		ctb.run();
-		
-		boolean result = ctb.successful;
-		
-		Assert.assertEquals(true, result);
-	}
-	
-	@Test
-	public void testConcurrentQueriesCompetingUpdatessdvs() {
-		try {
-			sb.execute("CREATE REPLICA TEST");
-		} catch ( SQLException e1 ) {
-			e1.printStackTrace();
-			fail("This wasn't even the interesting part of the test.");
-		}
-		
-		try {
-			Thread.sleep(100);
-		} catch ( InterruptedException e ) {
-		}
-		int entries = 100;
-		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
-		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
-		new Thread(cta).start();
-		
-		ctb.run();
-		
-		boolean result = ctb.successful;
-		
-		Assert.assertEquals(true, result);
-	}
-	
-	@Test
-	public void testConcurrentQueriesCompetingUpdates9tjedf() {
-		try {
-			sb.execute("CREATE REPLICA TEST");
-		} catch ( SQLException e1 ) {
-			e1.printStackTrace();
-			fail("This wasn't even the interesting part of the test.");
-		}
-		
-		try {
-			Thread.sleep(100);
-		} catch ( InterruptedException e ) {
-		}
-		int entries = 100;
-		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
-		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
-		new Thread(cta).start();
-		
-		ctb.run();
-		
-		boolean result = ctb.successful;
-		
-		Assert.assertEquals(true, result);
-	}
-	
-	@Test
-	public void testConcurrentQueriesCompetingUpdates9lkuu() {
-		try {
-			sb.execute("CREATE REPLICA TEST");
-		} catch ( SQLException e1 ) {
-			e1.printStackTrace();
-			fail("This wasn't even the interesting part of the test.");
-		}
-		
-		try {
-			Thread.sleep(100);
-		} catch ( InterruptedException e ) {
-		}
-		int entries = 100;
-		ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
-		ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
-		new Thread(cta).start();
-		
-		ctb.run();
-		
-		boolean result = ctb.successful;
-		
-		Assert.assertEquals(true, result);
-	}
-	
+
+    /**
+     * Tests the case of multiple database instances attempting to access a table at the same time. Exclusive access should be ensured
+     * during the period of writes.
+     * 
+     * <p>
+     * Numerous entries should cause failure, because of the lock contention.
+     * @throws SQLException 
+     */
+    @Test
+    public void testConcurrentQueriesCompetingUpdates1() throws SQLException {
+
+        sb.execute("CREATE REPLICA TEST");
+
+        try {
+            Thread.sleep(100);
+        }
+        catch (final InterruptedException e) {
+        }
+
+        final int entries = 100;
+        final ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
+
+        final ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
+        new Thread(cta).start();
+
+        ctb.run();
+
+        assertTrue(ctb.successful);
+    }
+
+    @Test
+    public void testConcurrentQueriesCompetingUpdates2() {
+
+        try {
+            sb.execute("CREATE REPLICA TEST");
+        }
+        catch (final SQLException e1) {
+            e1.printStackTrace();
+            fail("This wasn't even the interesting part of the test.");
+        }
+
+        try {
+            Thread.sleep(100);
+        }
+        catch (final InterruptedException e) {
+        }
+        final int entries = 100;
+        final ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
+        final ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
+        new Thread(cta).start();
+
+        ctb.run();
+
+        final boolean result = ctb.successful;
+
+        Assert.assertEquals(true, result);
+    }
+
+    @Test
+    public void testConcurrentQueriesCompetingUpdates3() {
+
+        try {
+            sb.execute("CREATE REPLICA TEST");
+        }
+        catch (final SQLException e1) {
+            e1.printStackTrace();
+            fail("This wasn't even the interesting part of the test.");
+        }
+
+        try {
+            Thread.sleep(100);
+        }
+        catch (final InterruptedException e) {
+        }
+        final int entries = 100;
+        final ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
+        final ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
+        new Thread(cta).start();
+
+        ctb.run();
+
+        final boolean result = ctb.successful;
+
+        Assert.assertEquals(true, result);
+    }
+
+    @Test
+    public void testConcurrentQueriesCompetingUpdates4() {
+
+        try {
+            sb.execute("CREATE REPLICA TEST");
+        }
+        catch (final SQLException e1) {
+            e1.printStackTrace();
+            fail("This wasn't even the interesting part of the test.");
+        }
+
+        try {
+            Thread.sleep(100);
+        }
+        catch (final InterruptedException e) {
+        }
+        final int entries = 100;
+        final ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
+        final ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
+        new Thread(cta).start();
+
+        ctb.run();
+
+        final boolean result = ctb.successful;
+
+        Assert.assertEquals(true, result);
+    }
+
+    @Test
+    public void testConcurrentQueriesCompetingUpdates5() {
+
+        try {
+            sb.execute("CREATE REPLICA TEST");
+        }
+        catch (final SQLException e1) {
+            e1.printStackTrace();
+            fail("This wasn't even the interesting part of the test.");
+        }
+
+        try {
+            Thread.sleep(100);
+        }
+        catch (final InterruptedException e) {
+        }
+        final int entries = 100;
+        final ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
+        final ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
+        new Thread(cta).start();
+
+        ctb.run();
+
+        final boolean result = ctb.successful;
+
+        Assert.assertEquals(true, result);
+    }
+
+    @Test
+    public void testConcurrentQueriesCompetingUpdates6() {
+
+        try {
+            sb.execute("CREATE REPLICA TEST");
+        }
+        catch (final SQLException e1) {
+            e1.printStackTrace();
+            fail("This wasn't even the interesting part of the test.");
+        }
+
+        try {
+            Thread.sleep(100);
+        }
+        catch (final InterruptedException e) {
+        }
+        final int entries = 100;
+        final ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
+        final ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
+        new Thread(cta).start();
+
+        ctb.run();
+
+        final boolean result = ctb.successful;
+
+        Assert.assertEquals(true, result);
+    }
+
+    @Test
+    public void testConcurrentQueriesCompetingUpdates7() {
+
+        try {
+            sb.execute("CREATE REPLICA TEST");
+        }
+        catch (final SQLException e1) {
+            e1.printStackTrace();
+            fail("This wasn't even the interesting part of the test.");
+        }
+
+        try {
+            Thread.sleep(100);
+        }
+        catch (final InterruptedException e) {
+        }
+        final int entries = 100;
+        final ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
+        final ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
+        new Thread(cta).start();
+
+        ctb.run();
+
+        final boolean result = ctb.successful;
+
+        Assert.assertEquals(true, result);
+    }
+
+    @Test
+    public void testConcurrentQueriesCompetingUpdates8() {
+
+        try {
+            sb.execute("CREATE REPLICA TEST");
+        }
+        catch (final SQLException e1) {
+            e1.printStackTrace();
+            fail("This wasn't even the interesting part of the test.");
+        }
+
+        try {
+            Thread.sleep(100);
+        }
+        catch (final InterruptedException e) {
+        }
+        try {
+            Thread.sleep(100);
+        }
+        catch (final InterruptedException e) {
+        }
+        final int entries = 100;
+        final ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
+        final ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
+        new Thread(cta).start();
+
+        ctb.run();
+
+        final boolean result = ctb.successful;
+
+        Assert.assertEquals(true, result);
+    }
+
+    @Test
+    public void testConcurrentQueriesCompetingUpdates9() {
+
+        try {
+            sb.execute("CREATE REPLICA TEST");
+        }
+        catch (final SQLException e1) {
+            e1.printStackTrace();
+            fail("This wasn't even the interesting part of the test.");
+        }
+
+        try {
+            Thread.sleep(100);
+        }
+        catch (final InterruptedException e) {
+        }
+        final int entries = 100;
+        final ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
+        final ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
+        new Thread(cta).start();
+
+        ctb.run();
+
+        final boolean result = ctb.successful;
+
+        Assert.assertEquals(true, result);
+    }
+
+    @Test
+    public void testConcurrentQueriesCompetingUpdates9a() {
+
+        try {
+            sb.execute("CREATE REPLICA TEST");
+        }
+        catch (final SQLException e1) {
+            e1.printStackTrace();
+            fail("This wasn't even the interesting part of the test.");
+        }
+
+        try {
+            Thread.sleep(100);
+        }
+        catch (final InterruptedException e) {
+        }
+        final int entries = 100;
+        final ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
+        final ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
+        new Thread(cta).start();
+
+        ctb.run();
+
+        final boolean result = ctb.successful;
+
+        Assert.assertEquals(true, result);
+    }
+
+    @Test
+    public void testConcurrentQueriesCompetingUpdates9b() {
+
+        try {
+            sb.execute("CREATE REPLICA TEST");
+        }
+        catch (final SQLException e1) {
+            e1.printStackTrace();
+            fail("This wasn't even the interesting part of the test.");
+        }
+
+        try {
+            Thread.sleep(100);
+        }
+        catch (final InterruptedException e) {
+        }
+        final int entries = 100;
+        final ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
+        final ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
+        new Thread(cta).start();
+
+        ctb.run();
+
+        final boolean result = ctb.successful;
+
+        Assert.assertEquals(true, result);
+    }
+
+    @Test
+    public void testConcurrentQueriesCompetingUpdates9v() {
+
+        try {
+            sb.execute("CREATE REPLICA TEST");
+        }
+        catch (final SQLException e1) {
+            e1.printStackTrace();
+            fail("This wasn't even the interesting part of the test.");
+        }
+
+        try {
+            Thread.sleep(100);
+        }
+        catch (final InterruptedException e) {
+        }
+        final int entries = 100;
+        final ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
+        final ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
+        new Thread(cta).start();
+
+        ctb.run();
+
+        final boolean result = ctb.successful;
+
+        Assert.assertEquals(true, result);
+    }
+
+    @Test
+    public void testConcurrentQueriesCompetingUpdates9ds() {
+
+        try {
+            sb.execute("CREATE REPLICA TEST");
+        }
+        catch (final SQLException e1) {
+            e1.printStackTrace();
+            fail("This wasn't even the interesting part of the test.");
+        }
+
+        try {
+            Thread.sleep(100);
+        }
+        catch (final InterruptedException e) {
+        }
+        final int entries = 100;
+        final ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
+        final ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
+        new Thread(cta).start();
+
+        ctb.run();
+
+        final boolean result = ctb.successful;
+
+        Assert.assertEquals(true, result);
+    }
+
+    @Test
+    public void testConcurrentQueriesCompetingUpdatessdvs() {
+
+        try {
+            sb.execute("CREATE REPLICA TEST");
+        }
+        catch (final SQLException e1) {
+            e1.printStackTrace();
+            fail("This wasn't even the interesting part of the test.");
+        }
+
+        try {
+            Thread.sleep(100);
+        }
+        catch (final InterruptedException e) {
+        }
+        final int entries = 100;
+        final ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
+        final ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
+        new Thread(cta).start();
+
+        ctb.run();
+
+        final boolean result = ctb.successful;
+
+        Assert.assertEquals(true, result);
+    }
+
+    @Test
+    public void testConcurrentQueriesCompetingUpdates9tjedf() {
+
+        try {
+            sb.execute("CREATE REPLICA TEST");
+        }
+        catch (final SQLException e1) {
+            e1.printStackTrace();
+            fail("This wasn't even the interesting part of the test.");
+        }
+
+        try {
+            Thread.sleep(100);
+        }
+        catch (final InterruptedException e) {
+        }
+        final int entries = 100;
+        final ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
+        final ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
+        new Thread(cta).start();
+
+        ctb.run();
+
+        final boolean result = ctb.successful;
+
+        Assert.assertEquals(true, result);
+    }
+
+    @Test
+    public void testConcurrentQueriesCompetingUpdates9lkuu() {
+
+        try {
+            sb.execute("CREATE REPLICA TEST");
+        }
+        catch (final SQLException e1) {
+            e1.printStackTrace();
+            fail("This wasn't even the interesting part of the test.");
+        }
+
+        try {
+            Thread.sleep(100);
+        }
+        catch (final InterruptedException e) {
+        }
+        final int entries = 100;
+        final ConcurrentTest cta = new ConcurrentTest(sa, 3, entries, true);
+        final ConcurrentTest ctb = new ConcurrentTest(sb, 3000, entries, true);
+        new Thread(cta).start();
+
+        ctb.run();
+
+        final boolean result = ctb.successful;
+
+        Assert.assertEquals(true, result);
+    }
+
 }

@@ -40,9 +40,6 @@ public class EndToEndTests {
     // The port on which the database's TCP JDBC server will run.
     private static final int TCP_PORT = 9999;
 
-    // The port on which the database's web interface will run.
-    private static final int WEB_PORT = 8282;
-
     private static final String USER_NAME = "sa";
     private static final String PASSWORD = "";
 
