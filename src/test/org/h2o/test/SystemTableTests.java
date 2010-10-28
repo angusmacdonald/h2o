@@ -145,47 +145,44 @@ public class SystemTableTests {
     @Test
     public void schemaTableCreationPersistence() throws ClassNotFoundException, InterruptedException, SQLException {
 
-        Connection conn1 = null;
-        Connection conn2 = null;
+        Connection conn = null;
         // start the server, allows to access the database remotely
-        Server server1 = null;
-        Server server2 = null;
-        Statement sa1 = null;
-        Statement sa2 = null;
+        Server server = null;
+        Statement sa = null;
 
         try {
             TestBase.resetLocatorFile();
 
-            server1 = Server.createTcpServer(new String[]{"-tcpPort", "9082", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9082/db_data/unittests/schema_test"});
-            server1.start();
+            server = Server.createTcpServer(new String[]{"-tcpPort", "9082", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9082/db_data/unittests/schema_test"});
+            server.start();
 
             Class.forName("org.h2.Driver");
-            conn1 = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9082/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+            conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9082/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
-            sa1 = conn1.createStatement();
+            sa = conn.createStatement();
 
-            sa1.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-            sa1.execute("INSERT INTO TEST VALUES(1, 'Hello');");
-            sa1.execute("INSERT INTO TEST VALUES(2, 'World');");
+            sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+            sa.execute("INSERT INTO TEST VALUES(1, 'Hello');");
+            sa.execute("INSERT INTO TEST VALUES(2, 'World');");
 
-            server1.shutdown();
-            server1.stop();
+            server.shutdown();
+            server.stop();
 
             TestBase.resetLocatorFile();
 
-            server2 = Server.createTcpServer(new String[]{"-tcpPort", "9082", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9082/db_data/unittests/schema_test"});
+            server = Server.createTcpServer(new String[]{"-tcpPort", "9082", "-SMLocation", "jdbc:h2:sm:tcp://localhost:9082/db_data/unittests/schema_test"});
 
-            server2.start();
+            server.start();
 
-            conn2 = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9082/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+            conn = DriverManager.getConnection("jdbc:h2:sm:tcp://localhost:9082/db_data/unittests/schema_test", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
             TestBase.resetLocatorFile();
 
-            sa2 = conn2.createStatement();
+            sa = conn.createStatement();
 
-            sa2.execute("SELECT * FROM TEST;");
-            sa2.execute("SELECT * FROM H2O.H2O_TABLE;");
+            sa.execute("SELECT * FROM TEST;");
+            sa.execute("SELECT * FROM H2O.H2O_TABLE;");
 
-            final ResultSet rs = sa2.getResultSet();
+            final ResultSet rs = sa.getResultSet();
 
             assertTrue("There shouldn't be a single table in the System Table.", rs.next());
             assertEquals("This entry should be for the TEST table.", rs.getString(3), "TEST");
@@ -195,22 +192,15 @@ public class SystemTableTests {
         }
         finally {
 
-            if (conn1 != null) {
-                conn1.close();
+            if (conn != null) {
+                conn.close();
             }
-            if (conn2 != null) {
-                conn2.close();
-            }
-            if (sa1 != null) {
-                sa1.close();
-            }
-            if (sa2 != null) {
-                sa2.close();
+            if (sa != null) {
+                sa.close();
             }
 
             // stop the server
-            server1.stop();
-            server2.stop();
+            server.stop();
         }
     }
 
