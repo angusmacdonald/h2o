@@ -918,15 +918,19 @@ public class MultiQueryTransactionTests extends TestBase {
             }
         }
         finally {
-
-            if (conn != null) {
-                conn.close();
+            try {
+                if (conn != null) {
+                    conn.close();
+                }
+                if (mStmt != null) {
+                    mStmt.close();
+                }
+                if (sa != null) {
+                    sa.close();
+                }
             }
-            if (mStmt != null) {
-                mStmt.close();
-            }
-            if (sa != null) {
-                sa.close();
+            catch (final Exception e) {
+                //Doesn't matter.
             }
 
             try {
