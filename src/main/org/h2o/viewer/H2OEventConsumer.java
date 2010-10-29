@@ -13,10 +13,13 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
+import org.h2.engine.Database;
 import org.h2.util.NetUtils;
 
 import uk.ac.standrews.cs.nds.events.IEvent;
 import uk.ac.standrews.cs.nds.events.bus.interfaces.IEventConsumer;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 public class H2OEventConsumer implements IEventConsumer {
@@ -26,6 +29,13 @@ public class H2OEventConsumer implements IEventConsumer {
     private ObjectOutputStream out;
 
     private boolean interested = true;
+
+    private final Database database;
+
+    public H2OEventConsumer(final Database database) {
+
+        this.database = database;
+    }
 
     @Override
     public boolean interested(final IEvent event) {
@@ -73,7 +83,12 @@ public class H2OEventConsumer implements IEventConsumer {
 
     private void getConnection() throws UnknownHostException, IOException {
 
-        socket = new Socket(NetUtils.getLocalAddress(), 4444);
+        final String host = database.getDatabaseSettings().get("EVENT_SERVER_LOCATION");
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Trying to connect to event server at: " + host);
+
+        System.err.println(NetUtils.getLocalAddress());
+        socket = new Socket(host, 4444);
         out = new ObjectOutputStream(socket.getOutputStream());
     }
 }

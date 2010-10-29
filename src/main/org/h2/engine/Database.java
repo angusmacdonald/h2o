@@ -390,7 +390,7 @@ public class Database implements DataHandler {
                 final IEventBus bus = new EventBus();
                 H2OEventBus.setBus(bus);
 
-                eventConsumer = new H2OEventConsumer();
+                eventConsumer = new H2OEventConsumer(this);
                 bus.register(eventConsumer);
 
                 H2OEventBus.publish(new H2OEvent(localMachineLocation.getDbLocation(), DatabaseStates.DATABASE_STARTUP, localMachineLocation.getURL()));
