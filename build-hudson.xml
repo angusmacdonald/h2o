@@ -51,7 +51,7 @@
 	<!-- Run nightly tests. -->
 	<target name="do-test-nightly">
 		<ant target="do-test-no-coverage" antfile="build-hudson.xml">
-			<property name="test-name" value="org.h2o.run.CheckInTests" />
+			<property name="test-name" value="org.h2o.run.NightlyTests" />
 		</ant>
 	</target>
 	
