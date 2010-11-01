@@ -134,7 +134,7 @@ public class TestBase2 {
                         }
                         finally {
                             try {
-                                db1.deleteState();
+                                db1.deletePersistentState();
                             }
                             finally {
                                 try {
@@ -142,7 +142,7 @@ public class TestBase2 {
                                 }
                                 finally {
                                     try {
-                                        db2.deleteState();
+                                        db2.deletePersistentState();
                                     }
                                     finally {
                                         locator.shutdown();

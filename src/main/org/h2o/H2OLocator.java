@@ -35,12 +35,9 @@ public class H2OLocator {
     private static final long SHUTDOWN_CHECK_DELAY = 2000;
 
     private final String databaseName;
-
     private final String port;
-
+    private final String configurationDirectory;
     private final boolean createDescriptor;
-
-    private final String descriptorFileDirectory;
 
     private LocatorServer server;
 
@@ -75,14 +72,14 @@ public class H2OLocator {
         locator.start();
     }
 
-    public H2OLocator(final String databaseName, final int port, final boolean createDescriptor, final String descriptorFileDirectory) {
+    public H2OLocator(final String databaseName, final int port, final boolean createDescriptor, final String configurationDirectory) {
 
         Diagnostic.setLevel(DiagnosticLevel.FINAL);
 
         this.databaseName = databaseName;
         this.port = port + "";
         this.createDescriptor = createDescriptor;
-        this.descriptorFileDirectory = descriptorFileDirectory;
+        this.configurationDirectory = configurationDirectory;
     }
 
     public String start() {
@@ -107,7 +104,7 @@ public class H2OLocator {
             }
         }
 
-        server = new LocatorServer(Integer.parseInt(port), databaseName);
+        server = new LocatorServer(Integer.parseInt(port), databaseName, configurationDirectory);
         server.start();
 
         return descriptorFilePath;
@@ -129,9 +126,9 @@ public class H2OLocator {
 
     private String createDescriptorFile(final String locatorLocation) throws FileNotFoundException, IOException {
 
-        final String descriptorFilePath = descriptorFileDirectory + File.separator + databaseName + ".h2od";
+        final String descriptorFilePath = configurationDirectory + File.separator + databaseName + ".h2od";
 
-        File f = new File(descriptorFileDirectory);
+        File f = new File(configurationDirectory);
 
         if (!f.exists()) {
             final boolean successful = f.mkdir();
@@ -174,5 +171,4 @@ public class H2OLocator {
         }
         return text;
     }
-
 }

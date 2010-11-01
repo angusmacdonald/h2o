@@ -19,23 +19,25 @@ import org.h2o.db.id.DatabaseURL;
  */
 public class LocalH2OProperties extends H2OPropertiesWrapper {
 
+    public static final String DEFAULT_CONFIG_DIRECTORY = "config";
+
     /**
      * @param dbURL
      *            The URL of this database instance. This is used to name and locate the properties file for this database on disk.
      * @param appendum
      *            A string to be added on to the DBurl as part of the properties file name.
      */
-    public LocalH2OProperties(DatabaseURL dbURL) {
+    public LocalH2OProperties(final DatabaseURL dbURL) {
 
-        super("config" + File.separator + dbURL.sanitizedLocation() + ".properties");
+        this(dbURL.sanitizedLocation());
     }
 
     /**
      * @param string
      */
-    public LocalH2OProperties(String descriptorLocation) {
+    public LocalH2OProperties(final String descriptorLocation) {
 
-        super("config" + File.separator + descriptorLocation + ".properties");
+        super(DEFAULT_CONFIG_DIRECTORY + File.separator + descriptorLocation + ".properties");
     }
 
     @Override
@@ -44,7 +46,7 @@ public class LocalH2OProperties extends H2OPropertiesWrapper {
         try {
             super.createNewFile();
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             e.printStackTrace();
         }
     }
@@ -55,9 +57,8 @@ public class LocalH2OProperties extends H2OPropertiesWrapper {
         try {
             super.saveAndClose();
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             e.printStackTrace();
         }
     }
-
 }

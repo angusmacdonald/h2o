@@ -244,7 +244,7 @@ public class H2O {
      * Deletes the persistent database state.
      * @throws SQLException if the state cannot be deleted
      */
-    public void deleteState() throws SQLException {
+    public void deletePersistentState() throws SQLException {
 
         DeleteDbFiles.execute(databaseLocation, databaseName + tcpPort, true);
     }
@@ -375,7 +375,7 @@ public class H2O {
         try {
             properties.loadProperties();
         }
-        catch (final IOException e1) {
+        catch (final IOException e) {
             properties.createNewFile();
             properties.setProperty("diagnosticLevel", DiagnosticLevel.NONE.toString());
         }

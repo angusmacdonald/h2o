@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import org.h2o.util.LocalH2OProperties;
+
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
@@ -23,30 +25,33 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  */
 public class LocatorServer extends Thread {
 
-    private static final int LOCATOR_SERVER_PORT = 29999;
+    private static final int DEFAULT_LOCATOR_SERVER_PORT = 29999;
 
     private boolean running = true;
 
     private ServerSocket ss;
 
-    private LocatorState locatorFile;
+    private final LocatorState locatorState;
 
-    private int port;
+    private final int port;
 
     private boolean finished = false;
 
-    /**
-     * @param locatorServerPort
-     */
-    public LocatorServer(int port, String databaseName) {
+    public LocatorServer(final int port, final String databaseName) {
+
+        this(port, databaseName, LocalH2OProperties.DEFAULT_CONFIG_DIRECTORY);
+    }
+
+    public LocatorServer(final int port, final String databaseName, final String locatorFileDirectory) {
 
         this.port = port;
-        locatorFile = new LocatorState("config" + File.separator + databaseName + port + ".locator");
+        locatorState = new LocatorState(locatorFileDirectory + File.separator + databaseName + port + ".locator");
     }
 
     /**
      * Starts the server and listens until the running field is set to false.
      */
+    @Override
     public void run() {
 
         try {
@@ -57,10 +62,10 @@ public class LocatorServer extends Thread {
                 ss = new ServerSocket(port);
 
                 ss.setSoTimeout(500);
-                Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Server listening on port " + port + ", locator file at '" + locatorFile + "'.");
+                Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Server listening on port " + port + ", locator file at '" + locatorState + "'.");
 
             }
-            catch (IOException e) {
+            catch (final IOException e) {
                 e.printStackTrace();
             }
 
@@ -70,21 +75,23 @@ public class LocatorServer extends Thread {
             while (isRunning()) {
                 try {
 
-                    Socket newConnection = ss.accept();
+                    final Socket newConnection = ss.accept();
 
-                    LocatorWorker connectionHandler = new LocatorWorker(newConnection, locatorFile);
+                    final LocatorWorker connectionHandler = new LocatorWorker(newConnection, locatorState);
                     connectionHandler.start();
                 }
-                catch (IOException e) {
+                catch (final IOException e) {
                     // e.printStackTrace();
                 }
             }
         }
         finally {
             try {
-                if (ss != null) ss.close();
+                if (ss != null) {
+                    ss.close();
+                }
             }
-            catch (IOException e) {
+            catch (final IOException e) {
                 e.printStackTrace();
             }
         }
@@ -95,53 +102,35 @@ public class LocatorServer extends Thread {
     /**
      * @param args
      */
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
 
         Diagnostic.setLevel(DiagnosticLevel.INIT);
-        LocatorServer server = new LocatorServer(LOCATOR_SERVER_PORT, "locatorFile");
+        final LocatorServer server = new LocatorServer(DEFAULT_LOCATOR_SERVER_PORT, "locatorFile");
         server.start();
     }
 
-    /**
-     * 
-     */
     public void createNewLocatorFile() {
 
-        locatorFile.createNewLocatorFile();
+        locatorState.createNewLocatorFile();
     }
 
-    /**
-     * @return the running
-     */
     public synchronized boolean isRunning() {
 
         return running;
     }
 
-    /**
-     * @param running
-     *            the running to set
-     */
-    public synchronized void setRunning(boolean running) {
+    public synchronized void setRunning(final boolean running) {
 
         this.running = running;
     }
 
-    /**
-     * @return the finished
-     */
     public synchronized boolean isFinished() {
 
         return finished;
     }
 
-    /**
-     * @param finished
-     *            the finished to set
-     */
-    public synchronized void setFinished(boolean finished) {
+    public synchronized void setFinished(final boolean finished) {
 
         this.finished = finished;
     }
-
 }
