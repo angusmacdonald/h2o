@@ -19,10 +19,15 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 
 import org.h2.tools.DeleteDbFiles;
 import org.h2.util.NetUtils;
 import org.h2o.H2O;
+import org.h2o.H2OLocator;
+import org.h2o.util.LocalH2OProperties;
 import org.junit.Test;
 
 /**
@@ -33,18 +38,22 @@ import org.junit.Test;
 public class EndToEndTests {
 
     // The name of the database domain.
-    private static final String DATABASE_NAME = "MyFirstDatabase";
+    private static final String DATABASE_NAME = "end_to_end";
 
     // Where the database will be created (where persisted state is stored).
     private static final String DATABASE_LOCATION = "db_data";
 
     // The port on which the database's TCP JDBC server will run.
     private static final int TCP_PORT = 9999;
+    private static final int LOCATOR_PORT = 5999;
 
     private static final String USER_NAME = "sa";
     private static final String PASSWORD = "";
 
-    private static final int INT_TEST_VALUE = 7;
+    private static final String DESCRIPTOR_DIRECTORY = LocalH2OProperties.DEFAULT_CONFIG_DIRECTORY;
+
+    H2OLocator locator;
+    H2O db;
 
     /**
      * Tests whether a new database can be created, data inserted and read back.
@@ -61,13 +70,13 @@ public class EndToEndTests {
 
         // Auto-commit is on by default.
 
-        final H2O db = initDB();
-        db.startDatabase();
-        createAndInsertWithAutoCommitWithoutExplicitCommit(1);
+        startup();
+        createWithAutoCommit();
+        insertWithAutoCommit(1, 0);
         assertDataIsPresent(1);
-        db.shutdown();
+        shutdown();
 
-        db.deleteState();
+        db.deletePersistentState();
     }
 
     /**
@@ -94,17 +103,16 @@ public class EndToEndTests {
 
         deleteDatabaseState();
 
-        H2O db = initDB();
-        db.startDatabase();
-        createAndInsertWithAutoCommitWithoutExplicitCommit(1);
-        db.shutdown();
+        startup();
+        createWithAutoCommit();
+        insertWithAutoCommit(1, 0);
+        shutdown();
 
-        db = initDB();
-        db.startDatabase();
+        startup();
         assertDataIsPresent(1);
-        db.shutdown();
+        shutdown();
 
-        db.deleteState();
+        db.deletePersistentState();
     }
 
     /**
@@ -118,13 +126,13 @@ public class EndToEndTests {
 
         deleteDatabaseState();
 
-        final H2O db = initDB();
-        db.startDatabase();
-        createAndInsertWithoutAutoCommitWithoutExplicitCommit(1);
+        startup();
+        createWithoutAutoCommit();
+        insertWithoutAutoCommitWithoutExplicitCommit(1, 0);
         assertDataIsPresent(1);
-        db.shutdown();
+        shutdown();
 
-        db.deleteState();
+        db.deletePersistentState();
     }
 
     /**
@@ -139,17 +147,16 @@ public class EndToEndTests {
 
         deleteDatabaseState();
 
-        H2O db = initDB();
-        db.startDatabase();
-        createAndInsertWithoutAutoCommitWithoutExplicitCommit(1);
-        db.shutdown();
+        startup();
+        createWithoutAutoCommit();
+        insertWithoutAutoCommitWithoutExplicitCommit(1, 0);
+        shutdown();
 
-        db = initDB();
-        db.startDatabase();
+        startup();
         assertDataIsNotPresent();
-        db.shutdown();
+        shutdown();
 
-        db.deleteState();
+        db.deletePersistentState();
     }
 
     /**
@@ -163,17 +170,16 @@ public class EndToEndTests {
 
         deleteDatabaseState();
 
-        H2O db = initDB();
-        db.startDatabase();
-        createAndInsertWithoutAutoCommitWithExplicitCommit(1);
-        db.shutdown();
+        startup();
+        createWithoutAutoCommit();
+        insertWithoutAutoCommitWithExplicitCommit(1, 0);
+        shutdown();
 
-        db = initDB();
-        db.startDatabase();
+        startup();
         assertDataIsPresent(1);
-        db.shutdown();
+        shutdown();
 
-        db.deleteState();
+        db.deletePersistentState();
     }
 
     /**
@@ -185,19 +191,104 @@ public class EndToEndTests {
     @Test
     public void multipleInserts() throws SQLException, IOException {
 
+        final int number_of_values = 100;
+
+        deleteDatabaseState();
+
+        startup();
+        createWithoutAutoCommit();
+        insertWithoutAutoCommitWithExplicitCommit(number_of_values, 0);
+        shutdown();
+
+        startup();
+        assertDataIsPresent(number_of_values);
+        shutdown();
+
+        db.deletePersistentState();
+    }
+
+    /**
+     * Tests whether updates can be performed concurrently. The test starts two threads, each performing an update to the same table, with an artificial delay
+     * to increase the probability of temporal overlap.
+     * 
+     * The test currently fails due to an "unexpected code path" error. When that is fixed the test should be changed to make the update threads retry on
+     * error, since it's legitimate for an update to fail due to not being able to obtain locks.
+     * 
+     * @throws SQLException if the test fails
+     * @throws IOException if the test fails
+     */
+    @Test
+    public void concurrentUpdates() throws SQLException, IOException {
+
         deleteDatabaseState();
 
         H2O db = initDB();
         db.startDatabase();
-        createAndInsertWithoutAutoCommitWithExplicitCommit(100);
+
+        createWithAutoCommit();
+
+        final Semaphore sync = new Semaphore(-1);
+        final SQLException[] exception_wrapper = new SQLException[1];
+
+        final Thread t1 = new UpdateThread(1, 0, 5000, sync, exception_wrapper);
+        final Thread t2 = new UpdateThread(1, 1, 5000, sync, exception_wrapper);
+
+        t1.start();
+        t2.start();
+
+        waitForThreads(sync);
         db.shutdown();
+        if (exception_wrapper[0] != null) { throw exception_wrapper[0]; }
 
         db = initDB();
         db.startDatabase();
-        assertDataIsPresent(100);
+        assertDataIsPresent(2);
         db.shutdown();
 
-        db.deleteState();
+        db.deletePersistentState();
+    }
+
+    /**
+     * A generalised version of {@link #concurrentUpdates()} with multiple threads and multiple values being inserted.
+     * 
+     * @throws SQLException if the test fails
+     * @throws IOException if the test fails
+     */
+    @Test
+    public void multipleThreads() throws SQLException, IOException {
+
+        final int number_of_values = 10;
+        final int number_of_threads = 5;
+
+        deleteDatabaseState();
+
+        H2O db = initDB();
+        db.startDatabase();
+
+        createWithAutoCommit();
+
+        final ExecutorService pool = Executors.newFixedThreadPool(number_of_threads);
+        final Semaphore sync = new Semaphore(1 - number_of_threads);
+        final SQLException[] exception_wrapper = new SQLException[1];
+
+        // Schedule a check job for each of the hosts in the list.
+        for (int i = 0; i < number_of_threads; i++) {
+
+            final int j = i;
+
+            pool.execute(new UpdateThread(number_of_values, j * number_of_values, 1000, sync, exception_wrapper));
+        }
+
+        waitForThreads(sync);
+        db.shutdown();
+        if (exception_wrapper[0] != null) { throw exception_wrapper[0]; }
+
+        db = initDB();
+        db.startDatabase();
+        assertDataIsPresent(number_of_values * number_of_threads);
+        db.shutdown();
+
+        db.deletePersistentState();
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -205,6 +296,67 @@ public class EndToEndTests {
     interface IDBAction {
 
         void execute(Connection connection) throws SQLException;
+    }
+
+    private class UpdateThread extends Thread {
+
+        private final int number_of_values;
+        private final int starting_value;
+        private final long delay;
+        private final Semaphore sync;
+        private final SQLException[] exception_wrapper;
+
+        public UpdateThread(final int number_of_values, final int starting_value, final long delay, final Semaphore sync, final SQLException[] exception_wrapper) {
+
+            this.number_of_values = number_of_values;
+            this.starting_value = starting_value;
+            this.delay = delay;
+            this.sync = sync;
+            this.exception_wrapper = exception_wrapper;
+        }
+
+        @Override
+        public void run() {
+
+            try {
+                insertWithoutAutoCommitWithExplicitCommit(number_of_values, starting_value, delay);
+            }
+            catch (final SQLException e) {
+                exception_wrapper[0] = e;
+            }
+            finally {
+                sync.release();
+            }
+        }
+    };
+
+    private void waitForThreads(final Semaphore sync) {
+
+        while (true) {
+            try {
+                sync.acquire();
+                break;
+            }
+            catch (final InterruptedException e) {
+                // Try again.
+            }
+        }
+    }
+
+    private void startup() throws SQLException, IOException {
+
+        locator = new H2OLocator(DATABASE_NAME, LOCATOR_PORT, true, DESCRIPTOR_DIRECTORY);
+        final String descriptorFilePath = locator.start();
+
+        db = new H2O(DATABASE_NAME, TCP_PORT, DATABASE_LOCATION, descriptorFilePath);
+
+        db.startDatabase();
+    }
+
+    private void shutdown() throws SQLException {
+
+        db.shutdown();
+        locator.shutdown();
     }
 
     private H2O initDB() {
@@ -226,22 +378,37 @@ public class EndToEndTests {
         }
     }
 
-    private void createAndInsertWithAutoCommitWithoutExplicitCommit(final int number_of_rows_to_insert) throws SQLException {
+    private void insertWithAutoCommit(final int number_of_rows_to_insert, final long delay) throws SQLException {
 
-        doCreateAndInsert(number_of_rows_to_insert, true, false);
+        doInsert(number_of_rows_to_insert, 0, true, false, delay);
     }
 
-    private void createAndInsertWithoutAutoCommitWithoutExplicitCommit(final int number_of_rows_to_insert) throws SQLException {
+    private void insertWithoutAutoCommitWithoutExplicitCommit(final int number_of_rows_to_insert, final long delay) throws SQLException {
 
-        doCreateAndInsert(number_of_rows_to_insert, false, false);
+        doInsert(number_of_rows_to_insert, 0, false, false, delay);
     }
 
-    private void createAndInsertWithoutAutoCommitWithExplicitCommit(final int number_of_rows_to_insert) throws SQLException {
+    private void insertWithoutAutoCommitWithExplicitCommit(final int number_of_rows_to_insert, final long delay) throws SQLException {
 
-        doCreateAndInsert(number_of_rows_to_insert, false, true);
+        insertWithoutAutoCommitWithExplicitCommit(number_of_rows_to_insert, 0, delay);
     }
 
-    private void doCreateAndInsert(final int number_of_rows_to_insert, final boolean auto_commit, final boolean explicit_commit) throws SQLException {
+    private void insertWithoutAutoCommitWithExplicitCommit(final int number_of_rows_to_insert, final int starting_value, final long delay) throws SQLException {
+
+        doInsert(number_of_rows_to_insert, starting_value, false, true, delay);
+    }
+
+    private void createWithAutoCommit() throws SQLException {
+
+        doCreate(true);
+    }
+
+    private void createWithoutAutoCommit() throws SQLException {
+
+        doCreate(false);
+    }
+
+    private void doCreate(final boolean auto_commit) throws SQLException {
 
         performAction(new IDBAction() {
 
@@ -250,7 +417,20 @@ public class EndToEndTests {
 
                 connection.setAutoCommit(auto_commit);
                 createTable(connection);
-                insertValues(number_of_rows_to_insert, connection);
+            }
+        });
+    }
+
+    private void doInsert(final int number_of_rows_to_insert, final int starting_value, final boolean auto_commit, final boolean explicit_commit, final long delay) throws SQLException {
+
+        performAction(new IDBAction() {
+
+            @Override
+            public void execute(final Connection connection) throws SQLException {
+
+                connection.setAutoCommit(auto_commit);
+                insertValues(number_of_rows_to_insert, starting_value, connection, delay);
+
                 if (explicit_commit) {
                     connection.commit();
                 }
@@ -301,7 +481,7 @@ public class EndToEndTests {
         }
     }
 
-    private void insertValues(final int number_of_rows_to_insert, final Connection connection) throws SQLException {
+    private void insertValues(final int number_of_rows_to_insert, final int starting_value, final Connection connection, final long delay) throws SQLException {
 
         Statement statement = null;
         try {
@@ -309,11 +489,24 @@ public class EndToEndTests {
 
             for (int i = 0; i < number_of_rows_to_insert; i++) {
 
-                statement.executeUpdate("INSERT INTO TEST VALUES(" + i + ");");
+                final int val = i + starting_value;
+
+                statement.executeUpdate("INSERT INTO TEST VALUES(" + val + ");");
+                sleep(delay);
             }
         }
         finally {
             closeIfNotNull(statement);
+        }
+    }
+
+    private void sleep(final long delay) {
+
+        try {
+            Thread.sleep(delay);
+        }
+        catch (final InterruptedException e) {
+            // Ignore and carry on.
         }
     }
 
