@@ -55,7 +55,7 @@ public class H2OEvent implements Serializable {
 
     public Date getTime() {
 
-        return time;
+        return (Date) time.clone();
     }
 
     public DatabaseStates getEventType() {

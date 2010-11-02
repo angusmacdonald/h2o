@@ -920,7 +920,7 @@ public class H2TestPreparedStatement extends H2TestBase {
             prep.setObject(13, new java.util.Date(java.sql.Date.valueOf("2001-02-03").getTime()));
             final byte[] arr_original = new byte[]{10, 20, 30};
             prep.setObject(14, arr_original);
-            prep.setObject(15, new Character('a'));
+            prep.setObject(15, Character.valueOf('a'));
             prep.setObject(16, "2001-01-02", Types.DATE);
             // converting to null seems strange...
             prep.setObject(17, "2001-01-02", Types.NULL);
