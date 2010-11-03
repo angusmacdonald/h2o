@@ -8,6 +8,7 @@
  */
 package org.h2o.test.h2;
 
+import org.h2o.test.H2SimpleTest;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -17,7 +18,7 @@ import org.junit.runners.Suite;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 @RunWith(Suite.class)
-@Suite.SuiteClasses({H2TestBatchUpdates.class, H2TestBigResult.class})
-public class H2Tests {
+@Suite.SuiteClasses({H2SimpleTest.class, H2TestPreparedStatement.class, H2TestBigDb.class, H2TestView.class, H2TriggerSample.class})
+public class H2TestsFailing {
     // The above annotations do all the work.
 }

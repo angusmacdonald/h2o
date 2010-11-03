@@ -346,8 +346,12 @@ public class H2TestPreparedStatement extends H2TestBase {
             assertFalse(rs.next());
         }
         finally {
-            createAlias.close();
-            prep.close();
+            if (createAlias != null) {
+                createAlias.close();
+            }
+            if (prep != null) {
+                prep.close();
+            }
         }
     }
 
@@ -880,15 +884,19 @@ public class H2TestPreparedStatement extends H2TestBase {
             catch (final SQLException e) {
                 trace("no error - getMoreResults is supposed to close the result set");
             }
-            assertTrue(prep.getUpdateCount() == -1);
+            assertEquals(-1, prep.getUpdateCount());
             prep = conn.prepareStatement("DELETE FROM TEST");
             prep.executeUpdate();
             assertFalse(prep.getMoreResults());
-            assertTrue(prep.getUpdateCount() == -1);
+            assertEquals(-1, prep.getUpdateCount());
         }
         finally {
-            stat.close();
-            prep.close();
+            if (stat != null) {
+                stat.close();
+            }
+            if (prep != null) {
+                prep.close();
+            }
         }
     }
 
@@ -1057,8 +1065,12 @@ public class H2TestPreparedStatement extends H2TestBase {
             assertFalse(rs.next());
         }
         finally {
-            stat.close();
-            prep.close();
+            if (stat != null) {
+                stat.close();
+            }
+            if (prep != null) {
+                prep.close();
+            }
 
         }
     }
@@ -1156,14 +1168,18 @@ public class H2TestPreparedStatement extends H2TestBase {
             assertEquals(rs.getString(3), ascii2);
 
             assertFalse(rs.next());
-            assertTrue(prep.getWarnings() == null);
+            assertEquals(null, prep.getWarnings());
             prep.clearWarnings();
-            assertTrue(prep.getWarnings() == null);
-            assertTrue(conn == prep.getConnection());
+            assertEquals(null, prep.getWarnings());
+            assertEquals(conn, prep.getConnection());
         }
         finally {
-            prep.close();
-            stat.close();
+            if (prep != null) {
+                prep.close();
+            }
+            if (stat != null) {
+                stat.close();
+            }
         }
     }
 
