@@ -18,7 +18,7 @@ import org.junit.runners.Suite;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 @RunWith(Suite.class)
-@Suite.SuiteClasses({H2SimpleTest.class, H2TestPreparedStatementFailing.class, H2TestBigDb.class, H2TestView.class, H2TriggerSample.class})
+@Suite.SuiteClasses({H2SimpleTest.class, H2TestPreparedStatementFailing.class, H2TestBigDb.class, H2TestViewFailing.class, H2TriggerSample.class})
 public class H2TestsFailing {
     // The above annotations do all the work.
 }

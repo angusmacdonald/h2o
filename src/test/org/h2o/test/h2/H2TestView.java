@@ -4,12 +4,8 @@
  */
 package org.h2o.test.h2;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -102,36 +98,6 @@ public class H2TestView extends H2TestBase {
         finally {
             conn.close();
             stat.close();
-            deleteDb("view");
-        }
-    }
-
-    @Test
-    public void testManyViews() throws SQLException {
-
-        Connection conn = null;
-
-        Statement s = null;
-
-        try {
-            conn = getConnection("view2");
-
-            s = conn.createStatement();
-            s.execute("create table t0(id int primary key)");
-            s.execute("insert into t0 values(1), (2), (3)");
-            for (int i = 0; i < 30; i++) {
-                s.execute("create view t" + (i + 1) + " as select * from t" + i);
-                s.execute("select * from t" + (i + 1));
-                final ResultSet rs = s.executeQuery("select count(*) from t" + (i + 1) + " where id=2");
-                assertTrue(rs.next());
-                assertEquals(rs.getInt(1), 1);
-            }
-        }
-        finally {
-            s.close();
-            conn.close();
-            conn = getConnection("view");
-            conn.close();
             deleteDb("view");
         }
     }
