@@ -19,7 +19,6 @@ import org.junit.runners.Suite;
  * Tests run on each build.
  */
 @RunWith(Suite.class)
-//@Suite.SuiteClasses({ReplicaTests.class, CustomSettingsTests.class, IndexTests.class, UpdateTests.class, MultiQueryTransactionTests.class, H2Tests.class, WrapperTests.class, RestartTests.class, LocatorTests.class, AsynchronousTests.class})
 @Suite.SuiteClasses({TransactionNameTests.class, SystemTableTests.class, MultipleSchemaTests.class, EndToEndTests.class})
 public class CheckInTests {
     // Empty.

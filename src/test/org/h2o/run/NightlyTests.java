@@ -8,7 +8,24 @@
  */
 package org.h2o.run;
 
+import org.h2o.test.AsynchronousTests;
+import org.h2o.test.ChordTests;
+import org.h2o.test.CompetingTests;
+import org.h2o.test.ConcurrentTest;
+import org.h2o.test.CustomSettingsTests;
 import org.h2o.test.FailingEndToEndTests;
+import org.h2o.test.FailureTests;
+import org.h2o.test.H2OTest;
+import org.h2o.test.IndexTests;
+import org.h2o.test.LocatorDatabaseTests;
+import org.h2o.test.LocatorTests;
+import org.h2o.test.MultiQueryTransactionTests;
+import org.h2o.test.ReplicaTests;
+import org.h2o.test.RestartTests;
+import org.h2o.test.TableManagerTests;
+import org.h2o.test.UpdateTests;
+import org.h2o.test.WrapperTests;
+import org.h2o.test.h2.H2Tests;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -16,7 +33,8 @@ import org.junit.runners.Suite;
  * Tests run nightly.
  */
 @RunWith(Suite.class)
-@Suite.SuiteClasses({FailingEndToEndTests.class})
+@Suite.SuiteClasses({H2Tests.class, ChordTests.class, CompetingTests.class, ConcurrentTest.class, FailureTests.class, H2OTest.class, IndexTests.class, LocatorDatabaseTests.class, ReplicaTests.class, FailingEndToEndTests.class, ReplicaTests.class, TableManagerTests.class, CustomSettingsTests.class,
+                IndexTests.class, UpdateTests.class, MultiQueryTransactionTests.class, H2Tests.class, WrapperTests.class, RestartTests.class, LocatorTests.class, AsynchronousTests.class})
 public class NightlyTests {
     // Empty.
 }
