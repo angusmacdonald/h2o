@@ -65,7 +65,7 @@ public class MultiProcessTestBase extends TestBase {
 
         setReplicated(false);
         deleteDatabaseData();
-        ChordRemote.currentPort = 40000;
+        ChordRemote.setCurrentPort(40000);
     }
 
     public static synchronized void setReplicated(final boolean b) {

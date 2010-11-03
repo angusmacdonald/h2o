@@ -23,13 +23,13 @@ import org.h2o.db.id.TableInfo;
  * 
  * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
  */
-public class AsynchronousQueryManager {
+public final class AsynchronousQueryManager {
 
-    private AsynchronousQueryCheckerThread checkerThread = new AsynchronousQueryCheckerThread(this);
+    private final AsynchronousQueryCheckerThread checkerThread = new AsynchronousQueryCheckerThread(this);
 
-    private Database db;
+    private final Database db;
 
-    public AsynchronousQueryManager(Database db) {
+    public AsynchronousQueryManager(final Database db) {
 
         this.db = db;
         checkerThread.start();
@@ -45,22 +45,22 @@ public class AsynchronousQueryManager {
      */
     Map<String, Transaction> activeTransactions = new HashMap<String, Transaction>();
 
-    public synchronized void addTransaction(String transactionNameForQuery, TableInfo tableName, List<FutureTask<QueryResult>> incompleteQueries, List<CommitResult> recentlyCompletedQueries, int expectedUpdateID) {
+    public synchronized void addTransaction(final String transactionNameForQuery, final TableInfo tableName, final List<FutureTask<QueryResult>> incompleteQueries, final List<CommitResult> recentlyCompletedQueries, final int expectedUpdateID) {
 
         if (activeTransactions.containsKey(transactionNameForQuery)) {
-            Transaction existingTransaction = activeTransactions.get(transactionNameForQuery);
+            final Transaction existingTransaction = activeTransactions.get(transactionNameForQuery);
             existingTransaction.addQueries(incompleteQueries);
             existingTransaction.addCompletedQueries(recentlyCompletedQueries);
             activeTransactions.put(transactionNameForQuery, existingTransaction);
         }
         else {
-            Transaction newTransaction = new Transaction(transactionNameForQuery, incompleteQueries, recentlyCompletedQueries, expectedUpdateID);
+            final Transaction newTransaction = new Transaction(transactionNameForQuery, incompleteQueries, recentlyCompletedQueries, expectedUpdateID);
 
             activeTransactions.put(transactionNameForQuery, newTransaction);
         }
     }
 
-    public synchronized Transaction getTransaction(String transactionID) {
+    public synchronized Transaction getTransaction(final String transactionID) {
 
         return activeTransactions.get(transactionID);
     }
@@ -70,17 +70,17 @@ public class AsynchronousQueryManager {
      */
     public synchronized void checkForCompletion() {
 
-        List<String> finishedTransactions = new LinkedList<String>();
+        final List<String> finishedTransactions = new LinkedList<String>();
 
-        for (Entry<String, Transaction> activeTransaction : activeTransactions.entrySet()) {
-            boolean finished = activeTransaction.getValue().checkForCompletion(db);
+        for (final Entry<String, Transaction> activeTransaction : activeTransactions.entrySet()) {
+            final boolean finished = activeTransaction.getValue().checkForCompletion(db);
 
             if (finished) {
                 finishedTransactions.add(activeTransaction.getKey());
             }
         }
 
-        for (String transactionName : finishedTransactions) {
+        for (final String transactionName : finishedTransactions) {
             activeTransactions.remove(transactionName);
         }
     }

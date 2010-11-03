@@ -60,7 +60,7 @@ public class MultipleServers {
 
     private void createMultiplePropertiesFiles(final String[] dbNames) {
 
-        ChordRemote.currentPort = 30003;
+        ChordRemote.setCurrentPort(30003);
         for (final String db : dbNames) {
 
             final String fullDBName = "jdbc:h2:mem:" + db;

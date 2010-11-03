@@ -123,7 +123,17 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     /**
      * Port to be used for the next database instance. Currently used for testing.
      */
-    public static int currentPort = 30000;
+    private static int currentPort = 30000;
+
+    public static synchronized int getCurrentPort() {
+
+        return currentPort++;
+    }
+
+    public static synchronized void setCurrentPort(final int port) {
+
+        currentPort = port;
+    }
 
     public ChordRemote(final DatabaseURL localMachineLocation, final ISystemTableReference systemTableRef) {
 
@@ -241,7 +251,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                     if (locked) {
                         final String chordPort = localSettings.getProperty("chordPort");
 
-                        int portToUse = currentPort++;
+                        int portToUse = getCurrentPort();
                         if (chordPort != null) {
                             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Obtained chord port from disk: " + chordPort);
                             portToUse = Integer.parseInt(chordPort);
@@ -382,7 +392,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                 portToJoinOn = Integer.parseInt(chordPort);
             }
             else {
-                portToJoinOn = currentPort++;
+                portToJoinOn = getCurrentPort();
             }
 
             if (instanceURL.getRMIPort() == portToJoinOn) {
