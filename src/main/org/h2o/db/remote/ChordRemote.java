@@ -681,7 +681,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             // If the old predecessor is no longer available it has failed - try
             // to recover processses.
             if (predecessorURL != null) {
-                H2OEventBus.publish(new H2OEvent(predecessorURL.getDbLocation(), DatabaseStates.DATABASE_FAILURE, null));
+                H2OEventBus.publish(new H2OEvent(predecessorURL.getURL(), DatabaseStates.DATABASE_FAILURE, null));
             }
         }
 

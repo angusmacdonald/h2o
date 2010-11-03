@@ -349,7 +349,7 @@ public class CreateTable extends SchemaCommand {
 
         try {
             tableManager.persistToCompleteStartup(tableInfo);
-            H2OEventBus.publish(new H2OEvent(session.getDatabase().getURL().getDbLocation(), DatabaseStates.TABLE_CREATION, tableInfo.getFullTableName()));
+            H2OEventBus.publish(new H2OEvent(session.getDatabase().getURL().getURL(), DatabaseStates.TABLE_CREATION, tableInfo.getFullTableName()));
         }
         catch (final StartupException e) {
             throw new SQLException("Failed to create table. Couldn't persist table manager meta-data [" + e.getMessage() + "].");
@@ -559,7 +559,7 @@ public class CreateTable extends SchemaCommand {
             catch (final Exception e) {
                 // May already be exported.
             }
-            H2OEventBus.publish(new H2OEvent(db.getURL().getDbLocation(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
+            H2OEventBus.publish(new H2OEvent(db.getURL().getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
 
             queryProxy = QueryProxy.getQueryProxyAndLock(tableManager, ti.getFullTableName(), db, LockType.CREATE, db.getLocalDatabaseInstanceInWrapper(), false);
 

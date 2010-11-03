@@ -321,6 +321,8 @@ public class Database implements DataHandler {
 
     public Database(final String name, final ConnectionInfo ci, final String cipher) throws SQLException {
 
+        Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.stachord");
+
         localSchema.add(Constants.H2O_SCHEMA);
         localSchema.add("RESOURCE_MONITORING");
         localSchema.add(Constants.SCHEMA_INFORMATION);
@@ -393,9 +395,9 @@ public class Database implements DataHandler {
                 eventConsumer = new H2OEventConsumer(this);
                 bus.register(eventConsumer);
 
-                H2OEventBus.publish(new H2OEvent(localMachineLocation.getDbLocation(), DatabaseStates.DATABASE_STARTUP, localMachineLocation.getURL()));
+                H2OEventBus.publish(new H2OEvent(localMachineLocation.getURL(), DatabaseStates.DATABASE_STARTUP, localMachineLocation.getURL()));
 
-                keepAliveMessageThread = new KeepAliveMessageThread(localMachineLocation.getDbLocation());
+                keepAliveMessageThread = new KeepAliveMessageThread(localMachineLocation.getURL());
                 keepAliveMessageThread.start();
             }
 
@@ -1554,7 +1556,7 @@ public class Database implements DataHandler {
         closing = true;
         stopServer();
         if (Constants.IS_H2O && !isManagementDB() && !fromShutdownHook) {
-            H2OEventBus.publish(new H2OEvent(getURL().getDbLocation(), DatabaseStates.DATABASE_SHUTDOWN, null));
+            H2OEventBus.publish(new H2OEvent(getURL().getURL(), DatabaseStates.DATABASE_SHUTDOWN, null));
 
             metaDataReplicationThread.setRunning(false);
             running = false;

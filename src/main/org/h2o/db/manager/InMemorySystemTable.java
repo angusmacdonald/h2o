@@ -112,7 +112,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
 
         started = true;
 
-        H2OEventBus.publish(new H2OEvent(database.getURL().getDbLocation(), DatabaseStates.SYSTEM_TABLE_CREATION));
+        H2OEventBus.publish(new H2OEvent(database.getURL().getURL(), DatabaseStates.SYSTEM_TABLE_CREATION));
     }
 
     /******************************************************************
@@ -306,7 +306,7 @@ public class InMemorySystemTable implements ISystemTable, Remote {
             try {
                 tm = new TableManager(ti, database);
                 tm.recreateReplicaManagerState(tableManagerWrapper.getURL().sanitizedLocation());
-                H2OEventBus.publish(new H2OEvent(database.getURL().getDbLocation(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
+                H2OEventBus.publish(new H2OEvent(database.getURL().getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
 
             }
             catch (final SQLException e) {

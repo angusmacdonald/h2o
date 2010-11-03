@@ -630,7 +630,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
         shutdown = true;
 
-        H2OEventBus.publish(new H2OEvent(db.getURL().getDbLocation(), DatabaseStates.TABLE_MANAGER_SHUTDOWN));
+        H2OEventBus.publish(new H2OEvent(db.getURL().getURL(), DatabaseStates.TABLE_MANAGER_SHUTDOWN));
 
         try {
             UnicastRemoteObject.unexportObject(this, true);

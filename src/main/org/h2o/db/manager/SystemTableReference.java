@@ -360,7 +360,7 @@ public class SystemTableReference implements ISystemTableReference {
         // }
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Finished building new System Table on " + db.getURL().getDbLocation() + ".");
-        H2OEventBus.publish(new H2OEvent(db.getURL().getDbLocation(), DatabaseStates.SYSTEM_TABLE_MIGRATION));
+        H2OEventBus.publish(new H2OEvent(db.getURL().getURL(), DatabaseStates.SYSTEM_TABLE_MIGRATION));
         return systemTableWrapper.getSystemTable();
     }
 

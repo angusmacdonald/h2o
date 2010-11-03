@@ -129,7 +129,8 @@ public class MetaDataReplicaManager {
          */
         final String databaseName = db.getURL().sanitizedLocation().toUpperCase();
 
-        addNewReplicaLocationQuery = "CREATE REPLICA IF NOT EXISTS " + TableManager.getMetaTableName(databaseName, TableManager.TABLES) + ", " + TableManager.getMetaTableName(databaseName, TableManager.REPLICAS) + ", " + TableManager.getMetaTableName(databaseName, TableManager.CONNECTIONS) + " FROM '" + db.getURL().getOriginalURL() + "';";
+        addNewReplicaLocationQuery = "CREATE REPLICA IF NOT EXISTS " + TableManager.getMetaTableName(databaseName, TableManager.TABLES) + ", " + TableManager.getMetaTableName(databaseName, TableManager.REPLICAS) + ", " + TableManager.getMetaTableName(databaseName, TableManager.CONNECTIONS)
+                        + " FROM '" + db.getURL().getOriginalURL() + "';";
 
         addNewSystemTableQuery = "CREATE REPLICA IF NOT EXISTS " + PersistentSystemTable.TABLES + ", " + PersistentSystemTable.CONNECTIONS + ", " + PersistentSystemTable.TABLEMANAGERSTATE + " FROM '" + db.getURL().getOriginalURL() + "';";
 
@@ -314,10 +315,10 @@ public class MetaDataReplicaManager {
 
         // Publish H2O event: database is the location of the replica. Value is the database it is for.
         if (isSystemTable) {
-            H2OEventBus.publish(new H2OEvent(newReplicaLocation.getURL().getDbLocation(), DatabaseStates.META_TABLE_REPLICA_CREATION, "System Table State: " + db.getURL().getDbLocation()));
+            H2OEventBus.publish(new H2OEvent(newReplicaLocation.getURL().getURL(), DatabaseStates.META_TABLE_REPLICA_CREATION, "System Table State: " + db.getURL().getDbLocation()));
         }
         else {
-            H2OEventBus.publish(new H2OEvent(newReplicaLocation.getURL().getDbLocation(), DatabaseStates.META_TABLE_REPLICA_CREATION, "Table Manager State: " + db.getURL().getDbLocation()));
+            H2OEventBus.publish(new H2OEvent(newReplicaLocation.getURL().getURL(), DatabaseStates.META_TABLE_REPLICA_CREATION, "Table Manager State: " + db.getURL().getDbLocation()));
         }
     }
 
