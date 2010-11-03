@@ -43,7 +43,7 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
-public class InMemorySystemTable implements ISystemTable, Remote {
+public final class InMemorySystemTable implements ISystemTable, Remote {
 
     private final Database database;
 
