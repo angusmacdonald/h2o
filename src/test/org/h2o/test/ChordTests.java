@@ -9,7 +9,8 @@
 package org.h2o.test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -50,9 +51,6 @@ public class ChordTests extends TestBase {
 
     }
 
-    /**
-     * @throws java.lang.Exception
-     */
     @Override
     @Before
     public void setUp() throws Exception {
@@ -62,20 +60,7 @@ public class ChordTests extends TestBase {
 
         Constants.IS_TEAR_DOWN = false;
 
-        // Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-        // PersistentSystemTable.USERNAME = "angus";
-        // PersistentSystemTable.PASSWORD = "";
-
         org.h2.Driver.load();
-
-        // for (String db: dbs){
-        //
-        // H2oProperties knownHosts = new H2oProperties(DatabaseURL.parseURL("jdbc:h2:mem:" + db), "instances");
-        // knownHosts.createNewFile();
-        // knownHosts.setProperty("jdbc:h2:sm:mem:one", ChordRemote.currentPort + "");
-        // knownHosts.saveAndClose();
-        //
-        // }
 
         TestBase.setUpDescriptorFiles();
         ls = new LocatorServer(29999, "junitLocator");
@@ -109,9 +94,6 @@ public class ChordTests extends TestBase {
         sas[0].execute(sql);
     }
 
-    /**
-     * @throws java.lang.Exception
-     */
     @Override
     @After
     public void tearDown() {
@@ -134,184 +116,119 @@ public class ChordTests extends TestBase {
     }
 
     @Test
-    public void baseTest() {
+    public void baseTest() throws SQLException {
 
-        try {
-            sas[0].execute("SELECT * FROM TEST;");
-        }
-        catch (final SQLException e) {
-            e.printStackTrace();
-            fail("Failed to execute query.");
-        }
+        sas[0].execute("SELECT * FROM TEST;");
     }
 
     /**
      * This sequence of events used to lock the sys table causing entries to not be included in the System Table. If this fails or holds
      * then the problem is still there.
+     * @throws SQLException 
      */
     @Test
-    public void sysTableLock() {
+    public void sysTableLock() throws SQLException {
 
-        try {
-            sas[1].execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-            sas[2].execute("CREATE TABLE TEST3(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+        sas[1].execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+        sas[2].execute("CREATE TABLE TEST3(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 
-            final ResultSet rs = sas[0].executeQuery("SELECT * FROM H2O.H2O_TABLE");
+        final ResultSet rs = sas[0].executeQuery("SELECT * FROM H2O.H2O_TABLE");
 
-            if (rs.next() && rs.next() && rs.next()) {
-                // pass
-            }
-            else {
-                fail("Not enough results.");
-            }
-
-            if (rs.next()) {
-                fail("Too many results.");
-            }
-        }
-        catch (final SQLException e) {
-            e.printStackTrace();
-            fail("Failed to execute query.");
-        }
+        assertTrue(rs.next() && rs.next() && rs.next());
+        assertFalse(rs.next());
     }
 
     /**
      * Tests that when the Table Manager is migrated another database instance is able to connect to the new manager without any manual
      * intervention.
+     * @throws SQLException 
      * 
      */
     @Test
-    public void TableManagerMigration() throws InterruptedException {
+    public void tableManagerMigration() throws SQLException {
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
-        try {
-            sas[1].executeUpdate("MIGRATE TABLEMANAGER test");
+        sas[1].executeUpdate("MIGRATE TABLEMANAGER test");
 
-            /*
-             * Test that the new Table Manager can be found.
-             */
-            sas[1].executeUpdate("INSERT INTO TEST VALUES(4, 'helloagain');");
+        /*
+         * Test that the new Table Manager can be found.
+         */
+        sas[1].executeUpdate("INSERT INTO TEST VALUES(4, 'helloagain');");
 
-            /*
-             * Test that the old Table Manager is no longer accessible, and that the referene can be updated.
-             */
-            sas[0].executeUpdate("INSERT INTO TEST VALUES(5, 'helloagainagain');");
-
-        }
-        catch (final SQLException e) {
-            e.printStackTrace();
-            fail("Didn't work.");
-        }
+        /*
+         * Test that the old Table Manager is no longer accessible, and that the referene can be updated.
+         */
+        sas[0].executeUpdate("INSERT INTO TEST VALUES(5, 'helloagainagain');");
     }
 
     /**
      * Tests that when migration fails when an incorrect table name is given.
+     * @throws SQLException 
      */
     @Test
-    public void TableManagerMigrationFail() throws InterruptedException {
+    public void tableManagerMigrationFail() throws SQLException {
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
-        try {
-            sas[1].executeUpdate("MIGRATE TABLEMANAGER testy");
-            fail("Didn't work.");
-        }
-        catch (final SQLException e) {
-        }
+        sas[1].executeUpdate("MIGRATE TABLEMANAGER testy");
     }
 
     @Test
-    public void TableManagerMigrationWithCachedReference() throws InterruptedException {
+    public void tableManagerMigrationWithCachedReference() throws SQLException {
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
-        try {
-            sas[0].executeUpdate("INSERT INTO TEST VALUES(7, '7');");
-            sas[1].executeUpdate("INSERT INTO TEST VALUES(6, '6');");
-            sas[2].executeUpdate("INSERT INTO TEST VALUES(8, '8');");
+        sas[0].executeUpdate("INSERT INTO TEST VALUES(7, '7');");
+        sas[1].executeUpdate("INSERT INTO TEST VALUES(6, '6');");
+        sas[2].executeUpdate("INSERT INTO TEST VALUES(8, '8');");
 
-            sas[1].executeUpdate("MIGRATE TABLEMANAGER test");
+        sas[1].executeUpdate("MIGRATE TABLEMANAGER test");
 
-            /*
-             * Test that the new Table Manager can be found.
-             */
-            sas[2].executeUpdate("INSERT INTO TEST VALUES(4, 'helloagain');");
+        /*
+         * Test that the new Table Manager can be found.
+         */
+        sas[2].executeUpdate("INSERT INTO TEST VALUES(4, 'helloagain');");
 
-            /*
-             * Test that the old Table Manager is no longer accessible, and that the referene can be updated.
-             */
-            sas[0].executeUpdate("INSERT INTO TEST VALUES(5, 'helloagainagain');");
+        /*
+         * Test that the old Table Manager is no longer accessible, and that the referene can be updated.
+         */
+        sas[0].executeUpdate("INSERT INTO TEST VALUES(5, 'helloagainagain');");
 
-            final ResultSet rs = sas[0].executeQuery("SELECT manager_location FROM H2O.H2O_TABLE");
+        final ResultSet rs = sas[0].executeQuery("SELECT manager_location FROM H2O.H2O_TABLE");
 
-            if (rs.next()) {
-                assertEquals(2, rs.getInt(1));
-            }
-            else {
-                fail("System Table wasn't updated correctly.");
-            }
-        }
-        catch (final SQLException e) {
-            e.printStackTrace();
-            fail("Didn't work.");
-        }
+        assertTrue("System Table wasn't updated correctly.", rs.next());
+        assertEquals(2, rs.getInt(1));
     }
 
     /**
      * Tests that when the System Table is migrated another database instance is able to connect to the new manager without any manual
      * intervention.
+     * @throws SQLException 
      */
     @Test
-    public void SystemTableMigration() throws InterruptedException {
+    public void systemTableMigration() throws SQLException {
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
-        try {
-            sas[1].executeUpdate("MIGRATE SYSTEMTABLE");
+        sas[1].executeUpdate("MIGRATE SYSTEMTABLE");
 
-            sas[2].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-            sas[2].execute("SELECT * FROM TEST2;");
-        }
-        catch (final SQLException e) {
-            e.printStackTrace();
-            fail("Didn't work.");
-        }
+        sas[2].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+        sas[2].execute("SELECT * FROM TEST2;");
     }
 
     @SuppressWarnings("deprecation")
     @Test
-    public void SystemTableFailure() throws InterruptedException {
+    public void SystemTableFailure() throws InterruptedException, SQLException {
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
-        try {
+        dts[0].stop();
+        sas[0].close();
 
-            dts[0].stop();
-            sas[0].close();
+        Thread.sleep(5000);
 
-            Thread.sleep(5000);
-
-            sas[1].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-
-        }
-        catch (final SQLException e) {
-            e.printStackTrace();
-            fail("Didn't complete query");
-        }
+        sas[1].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
     }
 
     @Test
-    public void FirstMachineDisconnect() throws InterruptedException {
+    public void FirstMachineDisconnect() throws InterruptedException, SQLException {
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
-        try {
-            sas[0].close();
-            dts[0].getConnection().close();
+        sas[0].close();
+        dts[0].getConnection().close();
 
-            Thread.sleep(5000);
+        Thread.sleep(5000);
 
-            sas[1].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-
-        }
-        catch (final SQLException e) {
-            e.printStackTrace();
-            fail("Didn't complete query");
-        }
+        sas[1].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
     }
 }
