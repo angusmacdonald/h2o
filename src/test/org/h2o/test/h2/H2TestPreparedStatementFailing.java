@@ -25,6 +25,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+
 /**
  * Tests for the PreparedStatement implementation.
  */
@@ -51,18 +54,20 @@ public class H2TestPreparedStatementFailing extends H2TestBase {
     }
 
     @After
-    public void tearDown() throws SQLException {
+    public void tearDown() throws SQLException, InterruptedException {
 
         conn.close();
 
         ls.setRunning(false);
         while (!ls.isFinished()) {
+            Thread.sleep(SHUTDOWN_CHECK_DELAY);
         };
-
     }
 
     @Test(timeout = 60000)
     public void testBlob() throws SQLException {
+
+        Diagnostic.trace(DiagnosticLevel.FULL);
 
         trace("testBlob");
         Statement stat = null;
@@ -163,6 +168,8 @@ public class H2TestPreparedStatementFailing extends H2TestBase {
     @Test(timeout = 60000)
     public void testCancelReuse() throws Exception {
 
+        Diagnostic.trace(DiagnosticLevel.FULL);
+
         Statement createAlias = null;
 
         PreparedStatement prep = null;
@@ -215,6 +222,8 @@ public class H2TestPreparedStatementFailing extends H2TestBase {
 
     @Test(timeout = 60000)
     public void testClob() throws SQLException {
+
+        Diagnostic.trace(DiagnosticLevel.FULL);
 
         trace("testClob");
         Statement stat = null;
@@ -312,6 +321,8 @@ public class H2TestPreparedStatementFailing extends H2TestBase {
 
     @Test(timeout = 60000)
     public void testDataTypes() throws SQLException {
+
+        Diagnostic.trace(DiagnosticLevel.FULL);
 
         Statement stat = null;
         PreparedStatement prep = null;
@@ -452,6 +463,8 @@ public class H2TestPreparedStatementFailing extends H2TestBase {
     @Test(timeout = 60000)
     public void testPrepareRecompile() throws SQLException {
 
+        Diagnostic.trace(DiagnosticLevel.FULL);
+
         Statement stat = null;
         PreparedStatement prep = null;
         ResultSet rs;
@@ -513,10 +526,6 @@ public class H2TestPreparedStatementFailing extends H2TestBase {
         return getSize(LOB_SIZE, LOB_SIZE_BIG);
     }
 
-    /**
-     * @param big1
-     * @param arr
-     */
     private void checkBytes(final byte[] big1, final byte[] arr) {
 
         for (int i = 0; i < arr.length; i++) {

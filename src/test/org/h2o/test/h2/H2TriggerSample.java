@@ -21,6 +21,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+
 /**
  * This sample application shows how to use database triggers.
  */
@@ -43,18 +46,20 @@ public class H2TriggerSample extends H2TestBase {
     }
 
     @After
-    public void tearDown() throws SQLException {
+    public void tearDown() throws SQLException, InterruptedException {
 
         ls.setRunning(false);
         while (!ls.isFinished()) {
+            Thread.sleep(SHUTDOWN_CHECK_DELAY);
         };
 
         DeleteDbFiles.execute("data\\test\\", "test", true);
-
     }
 
     @Test(timeout = 60000)
     public void triggerTest() throws SQLException, ClassNotFoundException {
+
+        Diagnostic.trace(DiagnosticLevel.FULL);
 
         DeleteDbFiles.execute("data\\test\\", "test", true);
 
@@ -142,5 +147,4 @@ public class H2TriggerSample extends H2TestBase {
             prep.execute();
         }
     }
-
 }

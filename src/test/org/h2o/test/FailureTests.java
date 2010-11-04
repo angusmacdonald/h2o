@@ -38,6 +38,8 @@ public class FailureTests extends MultiProcessTestBase {
     @Test(timeout = 60000)
     public void systemTableMigrationOnFailureRequestingInstance() throws InterruptedException, SQLException {
 
+        Diagnostic.trace(DiagnosticLevel.FULL);
+
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
         sql += "INSERT INTO TEST VALUES(1, 'Hello');";
         sql += "INSERT INTO TEST VALUES(2, 'World');";
@@ -79,6 +81,8 @@ public class FailureTests extends MultiProcessTestBase {
     @Test(timeout = 60000)
     public void systemTableMigrationOnFailureMaintenanceMechanism() throws InterruptedException, SQLException {
 
+        Diagnostic.trace(DiagnosticLevel.FULL);
+
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
         sql += "INSERT INTO TEST VALUES(1, 'Hello');";
         sql += "INSERT INTO TEST VALUES(2, 'World');";
@@ -118,6 +122,8 @@ public class FailureTests extends MultiProcessTestBase {
     @Test(timeout = 60000)
     public void tableManagerMetaDataCorrect() throws InterruptedException, SQLException {
 
+        Diagnostic.trace(DiagnosticLevel.FULL);
+
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
         sql += "INSERT INTO TEST VALUES(1, 'Hello');";
         sql += "INSERT INTO TEST VALUES(2, 'World');";
@@ -147,6 +153,8 @@ public class FailureTests extends MultiProcessTestBase {
      */
     @Test(timeout = 60000)
     public void tableManagerMigrationOnFailureDetectedBySystemTableMigration() throws InterruptedException, SQLException {
+
+        Diagnostic.trace(DiagnosticLevel.FULL);
 
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
         sql += "INSERT INTO TEST VALUES(1, 'Hello');";
@@ -191,6 +199,8 @@ public class FailureTests extends MultiProcessTestBase {
     @Test(timeout = 60000)
     public void tableManagerMigrationOnFailureDetectedByQueryingInstance() throws InterruptedException, SQLException {
 
+        Diagnostic.trace(DiagnosticLevel.FULL);
+
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
         sql += "INSERT INTO TEST VALUES(1, 'Hello');";
         sql += "INSERT INTO TEST VALUES(2, 'World');";
@@ -234,6 +244,8 @@ public class FailureTests extends MultiProcessTestBase {
     @Test(timeout = 60000)
     public void tableManagerMigrationOnFailureSystemTableDoesntFail() throws InterruptedException, SQLException {
 
+        Diagnostic.trace(DiagnosticLevel.FULL);
+
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
         sql += "INSERT INTO TEST VALUES(1, 'Hello');";
         sql += "INSERT INTO TEST VALUES(2, 'World');";
@@ -276,6 +288,8 @@ public class FailureTests extends MultiProcessTestBase {
      */
     @Test(timeout = 60000)
     public void tableManagerMigrationOnFailureSystemTableDoesntFailLinkedTable() throws InterruptedException, SQLException {
+
+        Diagnostic.trace(DiagnosticLevel.FULL);
 
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
         sql += "INSERT INTO TEST VALUES(1, 'Hello');";
@@ -329,6 +343,8 @@ public class FailureTests extends MultiProcessTestBase {
      */
     @Test(timeout = 60000)
     public void multipleFailures() throws InterruptedException, SQLException {
+
+        Diagnostic.trace(DiagnosticLevel.FULL);
 
         String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
         String create2 = "CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST2 VALUES(4, 'Meh'); INSERT INTO TEST2 VALUES(5, 'Heh');";
@@ -400,6 +416,8 @@ public class FailureTests extends MultiProcessTestBase {
      */
     @Test(timeout = 60000)
     public void multipleSTFailures() throws InterruptedException, SQLException {
+
+        Diagnostic.trace(DiagnosticLevel.FULL);
 
         String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
         String create2 = "CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST2 VALUES(4, 'Meh'); INSERT INTO TEST2 VALUES(5, 'Heh');";
@@ -479,6 +497,8 @@ public class FailureTests extends MultiProcessTestBase {
     @Test(timeout = 60000)
     public void killOffNonSTMachines() throws InterruptedException, SQLException {
 
+        Diagnostic.trace(DiagnosticLevel.FULL);
+
         String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
         String create2 = "CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST2 VALUES(4, 'Meh'); INSERT INTO TEST2 VALUES(5, 'Heh');";
         String create3 = "CREATE TABLE TEST3(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST3 VALUES(4, 'Clouds'); INSERT INTO TEST3 VALUES(5, 'Rainbows');";
@@ -536,6 +556,8 @@ public class FailureTests extends MultiProcessTestBase {
     @Test(timeout = 60000)
     public void killOffNonSTMachines2() throws InterruptedException, SQLException {
 
+        Diagnostic.trace(DiagnosticLevel.FULL);
+
         String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
         String create2 = "CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST2 VALUES(4, 'Meh'); INSERT INTO TEST2 VALUES(5, 'Heh');";
         String create3 = "CREATE TABLE TEST3(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST3 VALUES(4, 'Clouds'); INSERT INTO TEST3 VALUES(5, 'Rainbows');";
@@ -586,6 +608,8 @@ public class FailureTests extends MultiProcessTestBase {
      */
     @Test(timeout = 60000)
     public void killOffTMqueryThenRestartMachine() throws InterruptedException, SQLException {
+
+        Diagnostic.trace(DiagnosticLevel.FULL);
 
         String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
         String create2 = "CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST2 VALUES(4, 'Meh'); INSERT INTO TEST2 VALUES(5, 'Heh');";
@@ -640,6 +664,8 @@ public class FailureTests extends MultiProcessTestBase {
      */
     @Test(timeout = 60000)
     public void killOffTMqueryThenRestartMachineTwice() throws InterruptedException, SQLException {
+
+        Diagnostic.trace(DiagnosticLevel.FULL);
 
         String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
         String create2 = "CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST2 VALUES(4, 'Meh'); INSERT INTO TEST2 VALUES(5, 'Heh');";

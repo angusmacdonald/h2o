@@ -19,6 +19,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+
 /**
  * Test for views.
  */
@@ -42,19 +45,21 @@ public class H2TestViewFailing extends H2TestBase {
     }
 
     @After
-    public void tearDown() throws SQLException {
+    public void tearDown() throws SQLException, InterruptedException {
 
         ls.setRunning(false);
         while (!ls.isFinished()) {
+            Thread.sleep(SHUTDOWN_CHECK_DELAY);
         };
 
         DeleteDbFiles.execute("data\\test\\", "view", true);
         DeleteDbFiles.execute("data\\test\\", "view2", true);
-
     }
 
     @Test(timeout = 60000)
     public void testManyViews() throws SQLException {
+
+        Diagnostic.trace(DiagnosticLevel.FULL);
 
         Connection conn = null;
 

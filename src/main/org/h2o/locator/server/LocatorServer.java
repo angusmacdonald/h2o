@@ -17,6 +17,7 @@ import org.h2o.util.LocalH2OProperties;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * The locator server class. Creates a ServerSocket and listens for connections constantly.
@@ -29,7 +30,7 @@ public class LocatorServer extends Thread {
 
     private boolean running = true;
 
-    private ServerSocket ss;
+    private ServerSocket server_socket;
 
     private final LocatorState locatorState;
 
@@ -55,27 +56,17 @@ public class LocatorServer extends Thread {
     public void run() {
 
         try {
-            /*
-             * Set up the server socket.
-             */
-            try {
-                ss = new ServerSocket(port);
+            // Set up the server socket.
+            server_socket = new ServerSocket(port);
 
-                ss.setSoTimeout(500);
-                Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Server listening on port " + port + ", locator file at '" + locatorState + "'.");
+            server_socket.setSoTimeout(500);
+            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Server listening on port " + port + ", locator file at '" + locatorState + "'.");
 
-            }
-            catch (final IOException e) {
-                e.printStackTrace();
-            }
-
-            /*
-             * Start listening for incoming connections. Pass them off to a worker thread if they come.
-             */
+            // Start listening for incoming connections. Pass them off to a worker thread if they come.
             while (isRunning()) {
                 try {
 
-                    final Socket newConnection = ss.accept();
+                    final Socket newConnection = server_socket.accept();
 
                     final LocatorWorker connectionHandler = new LocatorWorker(newConnection, locatorState);
                     connectionHandler.start();
@@ -85,14 +76,17 @@ public class LocatorServer extends Thread {
                 }
             }
         }
+        catch (final IOException e) {
+            ErrorHandling.exceptionError(e, "Server IO error");
+        }
         finally {
             try {
-                if (ss != null) {
-                    ss.close();
+                if (server_socket != null) {
+                    server_socket.close();
                 }
             }
             catch (final IOException e) {
-                e.printStackTrace();
+                ErrorHandling.exceptionError(e, "Error closing server socket");
             }
         }
 

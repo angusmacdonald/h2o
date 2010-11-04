@@ -18,6 +18,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+
 /**
  * Test for big databases.
  */
@@ -41,17 +44,19 @@ public class H2TestBigDb extends H2TestBase {
     }
 
     @After
-    public void tearDown() throws SQLException {
+    public void tearDown() throws SQLException, InterruptedException {
 
         DeleteDbFiles.execute("data\\test\\", "bigDb", true);
         ls.setRunning(false);
         while (!ls.isFinished()) {
+            Thread.sleep(SHUTDOWN_CHECK_DELAY);
         };
-
     }
 
     @Test(timeout = 60000)
     public void testLargeTable() throws SQLException {
+
+        Diagnostic.trace(DiagnosticLevel.FULL);
 
         final Connection conn = getConnection("bigDb");
         final Statement stat = conn.createStatement();
@@ -107,6 +112,8 @@ public class H2TestBigDb extends H2TestBase {
     @Test(timeout = 60000)
     public void testLeftSummary() throws SQLException {
 
+        Diagnostic.trace(DiagnosticLevel.FULL);
+
         final Connection conn = getConnection("bigDb");
         final Statement stat = conn.createStatement();
         PreparedStatement prep = null;
@@ -142,6 +149,8 @@ public class H2TestBigDb extends H2TestBase {
 
     @Test(timeout = 60000)
     public void testInsert() throws SQLException {
+
+        Diagnostic.trace(DiagnosticLevel.FULL);
 
         Connection conn = null;
         Statement stat = null;

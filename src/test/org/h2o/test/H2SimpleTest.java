@@ -43,37 +43,40 @@ public class H2SimpleTest {
 
     private static final String BASE_TEST_DIR = "db_data";
 
-    private Connection conn;
+    private static final long SHUTDOWN_CHECK_DELAY = 2000;
 
-    private LocatorServer ls;
+    private Connection connection;
+
+    private LocatorServer locator_server;
 
     protected static String baseDir = getTestDir("");
 
     @Before
     public void setUp() throws Exception {
 
-        ls = new LocatorServer(29999, "junitLocator");
-        ls.createNewLocatorFile();
-        ls.start();
+        locator_server = new LocatorServer(29999, "junitLocator");
+        locator_server.createNewLocatorFile();
+        locator_server.start();
     }
 
     @After
     public void tearDown() throws Exception {
 
-        ls.setRunning(false);
-        while (!ls.isFinished()) {
+        locator_server.setRunning(false);
+        while (!locator_server.isFinished()) {
+            Thread.sleep(SHUTDOWN_CHECK_DELAY);
         };
-
     }
 
     @Test(timeout = 60000)
     public void largeTest() throws Exception {
 
+        Diagnostic.trace(DiagnosticLevel.FULL);
+
         Constants.IS_NON_SM_TEST = true;
         final LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:db_data/test/scriptSimple"));
 
         properties.createNewFile();
-        // "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
         properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
         properties.setProperty("databaseName", "testDB");
         properties.saveAndClose();
@@ -107,7 +110,7 @@ public class H2SimpleTest {
                     // ignore
                 }
                 else if (sql.toLowerCase().startsWith("select")) {
-                    query = conn.createStatement();
+                    query = connection.createStatement();
                     final ResultSet rs = query.executeQuery(sql);
                     while (rs.next()) {
                         final String expected = reader.readStatement().trim();
@@ -116,7 +119,7 @@ public class H2SimpleTest {
                     }
                 }
                 else {
-                    query = conn.createStatement();
+                    query = connection.createStatement();
                     query.execute(sql);
                 }
             }
@@ -126,31 +129,29 @@ public class H2SimpleTest {
                 query.close();
             }
             is.close();
-            conn.close();
+            connection.close();
             DeleteDbFiles.execute(baseDir, "scriptSimple", true);
         }
     }
 
     private void reconnect() throws SQLException {
 
-        if (conn != null) {
-            conn.close();
+        if (connection != null) {
+            connection.close();
         }
 
         final LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL("jdbc:h2:db_data/test/scriptSimple"));
 
         properties.createNewFile();
-        // "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
         properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
         properties.setProperty("databaseName", "testDB");
         properties.saveAndClose();
 
-        conn = getConnection("jdbc:h2:db_data/test/scriptSimple;LOG=1;LOCK_TIMEOUT=50");
+        connection = getConnection("jdbc:h2:db_data/test/scriptSimple;LOG=1;LOCK_TIMEOUT=50");
     }
 
     private Connection getConnection(final String url) throws SQLException {
 
-        org.h2.Driver.load();
         return DriverManager.getConnection(url, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
     }
 

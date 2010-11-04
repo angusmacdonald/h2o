@@ -40,6 +40,8 @@ public abstract class H2TestBase {
 
     private static final String BASE_TEST_DIR = "data";
 
+    protected static final long SHUTDOWN_CHECK_DELAY = 2000;
+
     /**
      * The test configuration.
      */
