@@ -8,12 +8,7 @@
  */
 package org.h2o.run;
 
-import org.h2o.test.ChordTests;
 import org.h2o.test.EndToEndTests;
-import org.h2o.test.MultipleSchemaTests;
-import org.h2o.test.SystemTableTests;
-import org.h2o.test.TransactionNameTests;
-import org.h2o.test.h2.H2Tests;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -21,7 +16,8 @@ import org.junit.runners.Suite;
  * Tests run on each build.
  */
 @RunWith(Suite.class)
-@Suite.SuiteClasses({H2Tests.class, ChordTests.class, TransactionNameTests.class, SystemTableTests.class, MultipleSchemaTests.class, EndToEndTests.class})
+@Suite.SuiteClasses({EndToEndTests.class})
+//, H2Tests.class, ChordTests.class, TransactionNameTests.class, SystemTableTests.class, MultipleSchemaTests.class})
 public class CheckInTests {
     // Empty.
 }

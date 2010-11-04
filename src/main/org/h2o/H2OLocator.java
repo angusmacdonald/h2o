@@ -74,8 +74,6 @@ public class H2OLocator {
 
     public H2OLocator(final String databaseName, final int port, final boolean createDescriptor, final String configurationDirectory) {
 
-        Diagnostic.setLevel(DiagnosticLevel.FINAL);
-
         this.databaseName = databaseName;
         this.port = port + "";
         this.createDescriptor = createDescriptor;
@@ -99,7 +97,7 @@ public class H2OLocator {
             try {
                 descriptorFilePath = createDescriptorFile(locatorLocation);
             }
-            catch (final Exception e) {
+            catch (final IOException e) {
                 ErrorHandling.exceptionError(e, "Failed to create descriptor file. If you manually create this file the location of this server must be included.");
             }
         }
@@ -131,33 +129,26 @@ public class H2OLocator {
         File f = new File(configurationDirectory);
 
         if (!f.exists()) {
-            final boolean successful = f.mkdir();
-
-            if (!successful) {
-                ErrorHandling.errorNoEvent("Failed to create new directory for locator file. It may already exist.");
-            }
+            if (!f.mkdir()) { throw new IOException("Could not create directory for descriptor file"); }
         }
 
         f = new File(descriptorFilePath);
-        try {
-            f.createNewFile();
-        }
-        catch (final IOException e) {
-            e.printStackTrace();
+        if (!f.exists()) {
+            if (!f.createNewFile()) { throw new IOException("Could not create descriptor file"); }
         }
 
-        final FileOutputStream fos = new FileOutputStream(descriptorFilePath);
+        final FileOutputStream output_stream = new FileOutputStream(descriptorFilePath);
 
         final Properties descriptor = new Properties();
 
         descriptor.setProperty("databaseName", databaseName);
         descriptor.setProperty("locatorLocations", locatorLocation);
 
-        descriptor.store(fos, "H2O Database Descriptor file.");
+        descriptor.store(output_stream, "H2O Database Descriptor file.");
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "\n\tThe descriptor file for this database has been created at: " + f.getAbsolutePath() + "\n\t" + "The location of this file must be accessible to new H2O database instances (you can put it in your webspace and link to the URL).");
 
-        fos.close();
+        output_stream.close();
 
         return descriptorFilePath;
     }

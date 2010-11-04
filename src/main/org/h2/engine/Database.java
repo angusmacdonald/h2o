@@ -3231,8 +3231,6 @@ public class Database implements DataHandler {
 
         final String diagnosticLevel = databaseProperties.getProperty("diagnosticLevel");
 
-        Diagnostic.setLevel(DiagnosticLevel.INIT);
-
         if (diagnosticLevel != null) {
 
             Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Setting diagnostic level to " + diagnosticLevel);

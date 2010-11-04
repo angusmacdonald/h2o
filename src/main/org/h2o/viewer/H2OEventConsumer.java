@@ -17,7 +17,8 @@ import org.h2.engine.Database;
 
 import uk.ac.standrews.cs.nds.events.IEvent;
 import uk.ac.standrews.cs.nds.events.bus.interfaces.IEventConsumer;
-import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 public class H2OEventConsumer implements IEventConsumer {
 
@@ -50,7 +51,7 @@ public class H2OEventConsumer implements IEventConsumer {
                 getConnection();
             }
             catch (final UnknownHostException e) {
-                ErrorHandling.errorNoEvent("Event server not running. Events will be disabled.");
+                Diagnostic.trace(DiagnosticLevel.RUN, "Event server not running. Events will be disabled.");
                 interested = false;
                 return;
             }
@@ -59,7 +60,7 @@ public class H2OEventConsumer implements IEventConsumer {
             out.flush();
         }
         catch (final IOException e) {
-            ErrorHandling.errorNoEvent("Event server not connected. Events will be disabled.");
+            Diagnostic.trace(DiagnosticLevel.RUN, "Event server not connected. Events will be disabled.");
             interested = false;
             return;
         }
@@ -75,7 +76,6 @@ public class H2OEventConsumer implements IEventConsumer {
             catch (final IOException e) {
             }
         }
-
     }
 
     private void getConnection() throws UnknownHostException, IOException {

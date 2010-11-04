@@ -22,6 +22,9 @@ import org.h2.server.web.WebServer;
 import org.h2.util.StartBrowser;
 import org.h2.util.Tool;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+
 /**
  * This tool can be used to start various database servers (listeners).
  */
@@ -40,18 +43,18 @@ public class Server implements Runnable, ShutdownHandler {
         // nothing to do
     }
 
-    private Server(Service service, String[] args) throws SQLException {
+    private Server(final Service service, final String[] args) throws SQLException {
 
         this.service = service;
         try {
             service.init(args);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw Message.convert(e);
         }
     }
 
-    private void showUsage(String a, PrintStream out) {
+    private void showUsage(final String a, final PrintStream out) {
 
         if (a != null) {
             out.println("Unsupported option: " + a);
@@ -127,9 +130,9 @@ public class Server implements Runnable, ShutdownHandler {
      *            the command line arguments
      * @throws SQLException
      */
-    public static void main(String[] args) throws SQLException {
+    public static void main(final String[] args) throws SQLException {
 
-        int exitCode = new Server().run(args, System.out);
+        final int exitCode = new Server().run(args, System.out);
         if (exitCode != 0) {
             System.exit(exitCode);
         }
@@ -138,7 +141,7 @@ public class Server implements Runnable, ShutdownHandler {
     /**
      * INTERNAL
      */
-    public int run(String[] args, PrintStream out) throws SQLException {
+    public int run(final String[] args, final PrintStream out) throws SQLException {
 
         boolean tcpStart = false, pgStart = false, webStart = false, ftpStart = false;
         boolean browserStart = false;
@@ -147,7 +150,7 @@ public class Server implements Runnable, ShutdownHandler {
         String tcpShutdownServer = "";
         boolean startDefaultServers = true;
         for (int i = 0; args != null && i < args.length; i++) {
-            String arg = args[i];
+            final String arg = args[i];
             if (arg == null) {
                 continue;
             }
@@ -302,7 +305,7 @@ public class Server implements Runnable, ShutdownHandler {
         }
         // TODO server: maybe use one single properties file?
         if (tcpShutdown) {
-            out.println("Shutting down TCP Server at " + tcpShutdownServer);
+            Diagnostic.traceNoSource(DiagnosticLevel.RUN, "Shutting down TCP Server at " + tcpShutdownServer);
             shutdownTcpServer(tcpShutdownServer, tcpPassword, tcpShutdownForce);
         }
         if (tcpStart) {
@@ -310,24 +313,24 @@ public class Server implements Runnable, ShutdownHandler {
             try {
                 tcp.start();
             }
-            catch (SQLException e) {
+            catch (final SQLException e) {
                 // ignore (status is displayed)
                 e.printStackTrace();
                 exitCode = EXIT_ERROR;
             }
-            out.println(tcp.getStatus());
+            Diagnostic.traceNoSource(DiagnosticLevel.RUN, tcp.getStatus());
         }
         if (pgStart) {
             pg = createPgServer(args);
             try {
                 pg.start();
             }
-            catch (SQLException e) {
+            catch (final SQLException e) {
                 // ignore (status is displayed)
                 e.printStackTrace();
                 exitCode = EXIT_ERROR;
             }
-            out.println(pg.getStatus());
+            Diagnostic.traceNoSource(DiagnosticLevel.RUN, pg.getStatus());
         }
         if (webStart) {
             web = createWebServer(args);
@@ -335,7 +338,7 @@ public class Server implements Runnable, ShutdownHandler {
             try {
                 web.start();
             }
-            catch (SQLException e) {
+            catch (final SQLException e) {
                 // ignore (status is displayed)
                 e.printStackTrace();
                 exitCode = EXIT_ERROR;
@@ -353,12 +356,12 @@ public class Server implements Runnable, ShutdownHandler {
             try {
                 ftp.start();
             }
-            catch (SQLException e) {
+            catch (final SQLException e) {
                 // ignore (status is displayed)
                 e.printStackTrace();
                 exitCode = EXIT_ERROR;
             }
-            out.println(ftp.getStatus());
+            Diagnostic.traceNoSource(DiagnosticLevel.RUN, ftp.getStatus());
         }
 
         return exitCode;
@@ -382,14 +385,14 @@ public class Server implements Runnable, ShutdownHandler {
      * @throws ClassNotFoundException
      * @throws SQLException
      */
-    public static void shutdownTcpServer(String url, String password, boolean force) throws SQLException {
+    public static void shutdownTcpServer(final String url, final String password, final boolean force) throws SQLException {
 
         TcpServer.shutdown(url, password, force);
     }
 
     String getStatus() {
 
-        StringBuilder buff = new StringBuilder();
+        final StringBuilder buff = new StringBuilder();
         if (isRunning(false)) {
             buff.append(service.getType());
             buff.append(" server running on ");
@@ -422,10 +425,10 @@ public class Server implements Runnable, ShutdownHandler {
      *            the argument list
      * @return the server
      */
-    public static Server createWebServer(String[] args) throws SQLException {
+    public static Server createWebServer(final String[] args) throws SQLException {
 
-        WebServer service = new WebServer();
-        Server server = new Server(service, args);
+        final WebServer service = new WebServer();
+        final Server server = new Server(service, args);
         service.setShutdownHandler(server);
         return server;
     }
@@ -442,7 +445,7 @@ public class Server implements Runnable, ShutdownHandler {
      *            the argument list
      * @return the server
      */
-    public static Server createFtpServer(String[] args) throws SQLException {
+    public static Server createFtpServer(final String[] args) throws SQLException {
 
         return new Server(new FtpServer(), args);
     }
@@ -459,7 +462,7 @@ public class Server implements Runnable, ShutdownHandler {
      *            the argument list
      * @return the server
      */
-    public static Server createTcpServer(String[] args) throws SQLException {
+    public static Server createTcpServer(final String[] args) throws SQLException {
 
         return new Server(new TcpServer(), args);
     }
@@ -476,7 +479,7 @@ public class Server implements Runnable, ShutdownHandler {
      *            the argument list
      * @return the server
      */
-    public static Server createPgServer(String[] args) throws SQLException {
+    public static Server createPgServer(final String[] args) throws SQLException {
 
         return new Server(new PgServer(), args);
     }
@@ -491,8 +494,8 @@ public class Server implements Runnable, ShutdownHandler {
     public Server start() throws SQLException {
 
         service.start();
-        Thread t = new Thread(this);
-        String name = service.getName() + " (" + service.getURL() + ")";
+        final Thread t = new Thread(this);
+        final String name = service.getName() + " (" + service.getURL() + ")";
         t.setName(name);
         t.start();
 
@@ -504,14 +507,14 @@ public class Server implements Runnable, ShutdownHandler {
         throw Message.getSQLException(ErrorCode.EXCEPTION_OPENING_PORT_2, new String[]{name, "timeout"});
     }
 
-    private static void wait(int i) {
+    private static void wait(final int i) {
 
         try {
             // sleep at most 4096 ms
-            long sleep = (long) i * (long) i;
+            final long sleep = (long) i * (long) i;
             Thread.sleep(sleep);
         }
-        catch (InterruptedException e) {
+        catch (final InterruptedException e) {
             // ignore
         }
     }
@@ -543,7 +546,7 @@ public class Server implements Runnable, ShutdownHandler {
      *            if errors should be written
      * @return if the server is running
      */
-    public boolean isRunning(boolean traceError) {
+    public boolean isRunning(final boolean traceError) {
 
         return service.isRunning(traceError);
     }
@@ -579,12 +582,13 @@ public class Server implements Runnable, ShutdownHandler {
     /**
      * INTERNAL
      */
+    @Override
     public void run() {
 
         try {
             service.listen();
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             TraceSystem.traceThrowable(e);
         }
     }
@@ -592,7 +596,7 @@ public class Server implements Runnable, ShutdownHandler {
     /**
      * INTERNAL
      */
-    public void setShutdownHandler(ShutdownHandler shutdownHandler) {
+    public void setShutdownHandler(final ShutdownHandler shutdownHandler) {
 
         this.shutdownHandler = shutdownHandler;
     }
@@ -600,6 +604,7 @@ public class Server implements Runnable, ShutdownHandler {
     /**
      * INTERNAL
      */
+    @Override
     public void shutdown() {
 
         if (shutdownHandler != null) {
@@ -627,13 +632,14 @@ public class Server implements Runnable, ShutdownHandler {
      * @param conn
      *            the database connection (the database must be open)
      */
-    public static void startWebServer(Connection conn) throws SQLException {
+    public static void startWebServer(final Connection conn) throws SQLException {
 
         final Object waitUntilDisconnected = new Object();
-        WebServer webServer = new WebServer();
-        Server server = new Server(webServer, new String[]{"-webPort", "0"});
+        final WebServer webServer = new WebServer();
+        final Server server = new Server(webServer, new String[]{"-webPort", "0"});
         webServer.setShutdownHandler(new ShutdownHandler() {
 
+            @Override
             public void shutdown() {
 
                 synchronized (waitUntilDisconnected) {
@@ -642,13 +648,13 @@ public class Server implements Runnable, ShutdownHandler {
             }
         });
         server.start();
-        String url = webServer.addSession(conn);
+        final String url = webServer.addSession(conn);
         StartBrowser.openURL(url);
         synchronized (waitUntilDisconnected) {
             try {
                 waitUntilDisconnected.wait();
             }
-            catch (InterruptedException e) {
+            catch (final InterruptedException e) {
                 // ignore
             }
         }

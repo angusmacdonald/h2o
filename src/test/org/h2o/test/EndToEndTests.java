@@ -11,6 +11,7 @@ package org.h2o.test;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -20,12 +21,16 @@ import java.sql.Statement;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.h2.tools.DeleteDbFiles;
 import org.h2.util.NetUtils;
 import org.h2o.H2O;
 import org.h2o.H2OLocator;
 import org.h2o.util.LocalH2OProperties;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
  * User-centric tests.
@@ -53,31 +58,52 @@ public class EndToEndTests {
     H2O db;
 
     /**
-     * Tests whether a new database can be created, data inserted and read back.
-     * Preconditions: none
-     * Postconditions: persistent database state is not present
+     * Sets up the test, removing persistent state to be safe.
      * 
-     * @throws SQLException if the test fails
-     * @throws IOException if the test fails
+     * @throws SQLException if fixture setup fails
+     * @throws IOException if fixture setup fails
      */
-    @Test
-    public void simpleLifeCycle() throws SQLException, IOException {
+    @Before
+    public void before() throws SQLException, IOException {
 
-        deleteDatabaseState();
+        Diagnostic.setLevel(DiagnosticLevel.NONE);
 
-        // Auto-commit is on by default.
-
+        deletePersistentState();
         startup();
-        createWithAutoCommit();
-        insertOneRowWithAutoCommitNoDelay();
-        assertOneRowIsPresent();
-        shutdown();
-
-        db.deletePersistentState();
     }
 
     /**
-     * Tests whether a database can be properly cleaned up, by running the whole life cycle twice.
+     * Tears down the test, removing persistent state.
+     * 
+     * @throws SQLException if fixture tear-down fails
+     */
+    @After
+    public void after() throws SQLException {
+
+        shutdown();
+        deletePersistentState();
+
+        assertPersistentStateIsAbsent();
+    }
+
+    /**
+      * Tests whether a new database can be created, data inserted and read back.
+      * 
+      * @throws SQLException if the test fails
+      * @throws IOException if the test fails
+      */
+    @Test
+    public void simpleLifeCycle() throws SQLException, IOException {
+
+        Diagnostic.trace();
+
+        createWithAutoCommit();
+        insertOneRowWithAutoCommitNoDelay();
+        assertOneRowIsPresent();
+    }
+
+    /**
+     * Tests whether a database is properly cleaned up, by running the whole life cycle twice.
      * 
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
@@ -85,7 +111,11 @@ public class EndToEndTests {
     @Test
     public void completeCleanUp() throws SQLException, IOException {
 
+        Diagnostic.trace();
+
         simpleLifeCycle();
+        after();
+        before();
         simpleLifeCycle();
     }
 
@@ -98,18 +128,14 @@ public class EndToEndTests {
     @Test
     public void persistence() throws SQLException, IOException {
 
-        deleteDatabaseState();
+        Diagnostic.trace();
 
-        startup();
         createWithAutoCommit();
         insertOneRowWithAutoCommitNoDelay();
         shutdown();
 
         startup();
         assertOneRowIsPresent();
-        shutdown();
-
-        db.deletePersistentState();
     }
 
     /**
@@ -121,15 +147,11 @@ public class EndToEndTests {
     @Test
     public void updateVisibleWithinTransaction() throws SQLException, IOException {
 
-        deleteDatabaseState();
+        Diagnostic.trace();
 
-        startup();
         createWithoutAutoCommit();
         insertOneRowNoCommitNoDelay();
         assertOneRowIsPresent();
-        shutdown();
-
-        db.deletePersistentState();
     }
 
     /**
@@ -142,18 +164,14 @@ public class EndToEndTests {
     @Test
     public void rollbackWithoutAutoCommit() throws SQLException, IOException {
 
-        deleteDatabaseState();
+        Diagnostic.trace();
 
-        startup();
         createWithoutAutoCommit();
         insertOneRowNoCommitNoDelay();
         shutdown();
 
         startup();
         assertDataIsNotPresent();
-        shutdown();
-
-        db.deletePersistentState();
     }
 
     /**
@@ -165,18 +183,14 @@ public class EndToEndTests {
     @Test
     public void explicitCommit() throws SQLException, IOException {
 
-        deleteDatabaseState();
+        Diagnostic.trace();
 
-        startup();
         createWithoutAutoCommit();
         insertOneRowExplicitCommitNoDelay();
         shutdown();
 
         startup();
         assertOneRowIsPresent();
-        shutdown();
-
-        db.deletePersistentState();
     }
 
     /**
@@ -188,20 +202,16 @@ public class EndToEndTests {
     @Test
     public void multipleInserts() throws SQLException, IOException {
 
+        Diagnostic.trace();
+
         final int number_of_values = 100;
 
-        deleteDatabaseState();
-
-        startup();
         createWithoutAutoCommit();
         insertRowsExplicitCommitNoDelay(number_of_values);
         shutdown();
 
         startup();
         assertDataIsPresent(number_of_values);
-        shutdown();
-
-        db.deletePersistentState();
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -214,9 +224,9 @@ public class EndToEndTests {
     private void startup() throws SQLException, IOException {
 
         locator = new H2OLocator(DATABASE_NAME, LOCATOR_PORT, true, DESCRIPTOR_DIRECTORY);
-        final String descriptorFilePath = locator.start();
+        final String descriptor_file_path = locator.start();
 
-        db = new H2O(DATABASE_NAME, TCP_PORT, DATABASE_LOCATION, descriptorFilePath);
+        db = new H2O(DATABASE_NAME, TCP_PORT, DATABASE_LOCATION, descriptor_file_path);
 
         db.startDatabase();
     }
@@ -225,6 +235,18 @@ public class EndToEndTests {
 
         db.shutdown();
         locator.shutdown();
+    }
+
+    private void deletePersistentState() {
+
+        deleteDatabaseDirectoryIfPresent();
+        deleteConfigDirectoryIfPresent();
+    }
+
+    private void assertPersistentStateIsAbsent() {
+
+        assertDatabaseDirectoryIsAbsent();
+        assertConfigDirectoryIsAbsent();
     }
 
     private void assertOneRowIsPresent() throws SQLException {
@@ -350,9 +372,48 @@ public class EndToEndTests {
         });
     }
 
-    private void deleteDatabaseState() throws SQLException {
+    private void deleteDatabaseDirectoryIfPresent() {
 
-        DeleteDbFiles.execute(DATABASE_LOCATION, DATABASE_NAME + TCP_PORT, true);
+        try {
+            delete(new File(DATABASE_LOCATION));
+        }
+        catch (final IOException e) {
+            // Ignore.
+        }
+    }
+
+    private void deleteConfigDirectoryIfPresent() {
+
+        try {
+            delete(new File(LocalH2OProperties.DEFAULT_CONFIG_DIRECTORY));
+        }
+        catch (final IOException e) {
+            // Ignore.
+        }
+    }
+
+    private void delete(final File file) throws IOException {
+
+        if (file.isDirectory()) {
+
+            final String[] children = file.list();
+            if (children == null) { throw new IOException("null directory listing"); }
+            for (final String child : children) {
+                delete(new File(file, child));
+            }
+        }
+
+        if (!file.delete()) { throw new IOException("couldn't delete file " + file.getAbsolutePath()); }
+    }
+
+    private void assertDatabaseDirectoryIsAbsent() {
+
+        assertFalse(new File(DATABASE_LOCATION).exists());
+    }
+
+    private void assertConfigDirectoryIsAbsent() {
+
+        assertFalse(new File(LocalH2OProperties.DEFAULT_CONFIG_DIRECTORY).exists());
     }
 
     private void createTable(final Connection connection) throws SQLException {
