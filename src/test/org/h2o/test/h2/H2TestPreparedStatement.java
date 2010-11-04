@@ -53,17 +53,17 @@ public class H2TestPreparedStatement extends H2TestBase {
     }
 
     @After
-    public void tearDown() throws SQLException {
+    public void tearDown() throws SQLException, InterruptedException {
 
         conn.close();
 
         ls.setRunning(false);
         while (!ls.isFinished()) {
+            Thread.sleep(SHUTDOWN_CHECK_DELAY);
         };
-
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testLobTempFiles() throws SQLException {
 
         Statement stat = null;
@@ -106,8 +106,12 @@ public class H2TestPreparedStatement extends H2TestBase {
             stat.execute("DROP TABLE TEST");
         }
         finally {
-            prep.close();
-            stat.close();
+            if (prep != null) {
+                prep.close();
+            }
+            if (stat != null) {
+                stat.close();
+            }
         }
     }
 
@@ -116,7 +120,7 @@ public class H2TestPreparedStatement extends H2TestBase {
         return new String(new char[100000]).replace('\0', (char) ('0' + i));
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testExecuteErrorTwice() throws SQLException {
 
         PreparedStatement prep = null;
@@ -139,11 +143,13 @@ public class H2TestPreparedStatement extends H2TestBase {
             }
         }
         finally {
-            prep.close();
+            if (prep != null) {
+                prep.close();
+            }
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testTempView() throws SQLException {
 
         Statement stat = null;
@@ -170,12 +176,16 @@ public class H2TestPreparedStatement extends H2TestBase {
             stat.execute("DROP TABLE TEST");
         }
         finally {
-            stat.close();
-            prep.close();
+            if (stat != null) {
+                stat.close();
+            }
+            if (prep != null) {
+                prep.close();
+            }
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testInsertFunction() throws SQLException {
 
         Statement stat = null;
@@ -200,12 +210,16 @@ public class H2TestPreparedStatement extends H2TestBase {
             stat.execute("DROP TABLE TEST");
         }
         finally {
-            stat.close();
-            prep.close();
+            if (stat != null) {
+                stat.close();
+            }
+            if (prep != null) {
+                prep.close();
+            }
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testMaxRowsChange() throws SQLException {
 
         PreparedStatement prep = null;
@@ -224,11 +238,13 @@ public class H2TestPreparedStatement extends H2TestBase {
             }
         }
         finally {
-            prep.close();
+            if (prep != null) {
+                prep.close();
+            }
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testUnknownDataType() throws SQLException {
 
         PreparedStatement prep = null;
@@ -253,11 +269,13 @@ public class H2TestPreparedStatement extends H2TestBase {
             prep.execute();
         }
         finally {
-            prep.close();
+            if (prep != null) {
+                prep.close();
+            }
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testCoalesce() throws SQLException {
 
         Statement stat = null;
@@ -273,12 +291,16 @@ public class H2TestPreparedStatement extends H2TestBase {
             stat.executeUpdate("drop table test");
         }
         finally {
-            stat.close();
-            prep.close();
+            if (stat != null) {
+                stat.close();
+            }
+            if (prep != null) {
+                prep.close();
+            }
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testPreparedStatementMetaData() throws SQLException {
 
         PreparedStatement prep = null;
@@ -295,11 +317,13 @@ public class H2TestPreparedStatement extends H2TestBase {
             assertEquals(meta.getColumnTypeName(1), "INTEGER");
         }
         finally {
-            prep.close();
+            if (prep != null) {
+                prep.close();
+            }
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testArray() throws SQLException {
 
         PreparedStatement prep = null;
@@ -315,11 +339,13 @@ public class H2TestPreparedStatement extends H2TestBase {
             assertFalse(rs.next());
         }
         finally {
-            prep.close();
+            if (prep != null) {
+                prep.close();
+            }
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testUUIDGeneratedKeys() throws SQLException {
 
         Statement stat = null;
@@ -335,11 +361,13 @@ public class H2TestPreparedStatement extends H2TestBase {
             stat.execute("DROP TABLE TEST_UUID");
         }
         finally {
-            stat.close();
+            if (stat != null) {
+                stat.close();
+            }
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testSetObject() throws SQLException {
 
         Statement stat = null;
@@ -372,12 +400,16 @@ public class H2TestPreparedStatement extends H2TestBase {
             stat.execute("DROP TABLE TEST");
         }
         finally {
-            stat.close();
-            prep.close();
+            if (stat != null) {
+                stat.close();
+            }
+            if (prep != null) {
+                prep.close();
+            }
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testDate() throws SQLException {
 
         PreparedStatement prep = null;
@@ -392,11 +424,13 @@ public class H2TestPreparedStatement extends H2TestBase {
             assertEquals(ts.toString(), ts2.toString());
         }
         finally {
-            prep.close();
+            if (prep != null) {
+                prep.close();
+            }
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testPreparedSubquery() throws SQLException {
 
         Statement s = null;
@@ -440,7 +474,7 @@ public class H2TestPreparedStatement extends H2TestBase {
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testParameterMetaData() throws SQLException {
 
         PreparedStatement prep = null;
@@ -500,12 +534,15 @@ public class H2TestPreparedStatement extends H2TestBase {
             stat.execute("DROP TABLE TEST3");
         }
         finally {
-            prep.close();
+            if (prep != null) {
+                prep.close();
+            }
             prep1.close();
             prep2.close();
             prep3.close();
-            stat.close();
-
+            if (stat != null) {
+                stat.close();
+            }
         }
     }
 
@@ -519,7 +556,7 @@ public class H2TestPreparedStatement extends H2TestBase {
         assertEquals(scale, meta.getScale(index));
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testLikeIndex() throws SQLException {
 
         Statement stat = null;
@@ -560,13 +597,17 @@ public class H2TestPreparedStatement extends H2TestBase {
             stat.execute("DROP TABLE IF EXISTS TEST");
         }
         finally {
-            stat.close();
-            prep.close();
+            if (stat != null) {
+                stat.close();
+            }
+            if (prep != null) {
+                prep.close();
+            }
             prepExe.close();
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testCasewhen() throws SQLException {
 
         Statement stat = null;
@@ -630,12 +671,16 @@ public class H2TestPreparedStatement extends H2TestBase {
             stat.execute("DROP TABLE TEST");
         }
         finally {
-            prep.close();
-            stat.close();
+            if (prep != null) {
+                prep.close();
+            }
+            if (stat != null) {
+                stat.close();
+            }
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testSubquery() throws SQLException {
 
         Statement stat = null;
@@ -658,12 +703,16 @@ public class H2TestPreparedStatement extends H2TestBase {
             stat.execute("DROP TABLE TEST");
         }
         finally {
-            stat.close();
-            prep.close();
+            if (stat != null) {
+                stat.close();
+            }
+            if (prep != null) {
+                prep.close();
+            }
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testObject() throws SQLException {
 
         Statement stat = null;
@@ -728,8 +777,12 @@ public class H2TestPreparedStatement extends H2TestBase {
             stat.execute("DROP TABLE TEST");
         }
         finally {
-            prep.close();
-            stat.close();
+            if (prep != null) {
+                prep.close();
+            }
+            if (stat != null) {
+                stat.close();
+            }
         }
     }
 }
