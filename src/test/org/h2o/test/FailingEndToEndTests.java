@@ -74,8 +74,14 @@ public class FailingEndToEndTests {
         final Semaphore sync = new Semaphore(-1);
         final SQLException[] exception_wrapper = new SQLException[1];
 
-        new UpdateThread(1, 0, 5000, sync, exception_wrapper).start();
-        new UpdateThread(1, 1, 5000, sync, exception_wrapper).start();
+        final Thread firstUpdateThread = new UpdateThread(1, 0, 5000, sync, exception_wrapper);
+        final Thread secondUpdateThread = new UpdateThread(1, 1, 5000, sync, exception_wrapper);
+
+        firstUpdateThread.setName("First Update Thread");
+        secondUpdateThread.setName("Second Update Thread");
+
+        firstUpdateThread.start();
+        secondUpdateThread.start();
 
         waitForThreads(sync);
         db.shutdown();

@@ -266,16 +266,17 @@ public class MetaDataReplicaManager {
 
                     replicaManager.add(newReplicaLocation);
 
-                    for (final TableInfo ti : localTableManagers) {
-                        db.getSystemTableReference().getSystemTable().addTableManagerStateReplica(ti, newReplicaLocation.getURL(), localDatabase.getURL(), true);
-                    }
-
                     if (isSystemTable) {
                         try {
                             updateLocatorFiles(isSystemTable);
                         }
                         catch (final Exception e) {
                             throw new RemoteException(e.getMessage());
+                        }
+                    }
+                    else {
+                        for (final TableInfo ti : localTableManagers) {
+                            db.getSystemTableReference().getSystemTable().addTableManagerStateReplica(ti, newReplicaLocation.getURL(), localDatabase.getURL(), true);
                         }
                     }
 

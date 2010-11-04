@@ -122,7 +122,8 @@ public class FailureTests extends MultiProcessTestBase {
     }
 
     /**
-     * Test that System Table correctly records the locations of Table Manager meta-data.
+     * Test that System Table correctly records the locations of Table Manager meta-data (given the replication factor specified in
+     * the settings for the database (currently 2).
      * 
      * @throws InterruptedException
      */
