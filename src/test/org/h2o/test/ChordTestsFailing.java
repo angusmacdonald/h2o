@@ -8,11 +8,6 @@
  */
 package org.h2o.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
@@ -21,7 +16,6 @@ import org.h2o.test.util.StartDatabaseInstance;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -47,7 +41,6 @@ public class ChordTestsFailing extends TestBase {
         Diagnostic.setLevel(DiagnosticLevel.INIT);
         Constants.IS_TEST = true;
         Constants.IS_NON_SM_TEST = false;
-
     }
 
     @Override
@@ -112,30 +105,5 @@ public class ChordTestsFailing extends TestBase {
         ls.setRunning(false);
         while (!ls.isFinished()) {
         };
-    }
-
-    @Test
-    public void tableManagerMigrationWithCachedReference() throws SQLException {
-
-        sas[0].executeUpdate("INSERT INTO TEST VALUES(7, '7');");
-        sas[1].executeUpdate("INSERT INTO TEST VALUES(6, '6');");
-        sas[2].executeUpdate("INSERT INTO TEST VALUES(8, '8');");
-
-        sas[1].executeUpdate("MIGRATE TABLEMANAGER test");
-
-        /*
-         * Test that the new Table Manager can be found.
-         */
-        sas[2].executeUpdate("INSERT INTO TEST VALUES(4, 'helloagain');");
-
-        /*
-         * Test that the old Table Manager is no longer accessible, and that the reference can be updated.
-         */
-        sas[0].executeUpdate("INSERT INTO TEST VALUES(5, 'helloagainagain');");
-
-        final ResultSet rs = sas[0].executeQuery("SELECT manager_location FROM H2O.H2O_TABLE");
-
-        assertTrue("System Table wasn't updated correctly.", rs.next());
-        assertEquals(2, rs.getInt(1));
     }
 }

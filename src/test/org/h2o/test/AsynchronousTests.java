@@ -8,7 +8,6 @@
  */
 package org.h2o.test;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.sql.SQLException;
@@ -31,56 +30,51 @@ public class AsynchronousTests extends MultiProcessTestBase {
      * Tests that an update can complete with only two machines.
      * 
      * @throws InterruptedException
+     * @throws SQLException 
      */
     @Test(timeout = 25000)
-    public void basicAsynchronousUpdate() throws InterruptedException {
+    public void basicAsynchronousUpdate() throws InterruptedException, SQLException {
 
         final String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
 
-        try {
+        killDatabase(2);
 
-            killDatabase(2);
+        sleep(5000);
 
-            sleep(5000);
+        delayQueryCommit(2);
 
-            delayQueryCommit(2);
+        startDatabase(2);
 
-            startDatabase(2);
+        sleep("About to create recreate connections to the newly restarted database.", 2000);
 
-            sleep("About to create recreate connections to the newly restarted database.", 2000);
+        createConnectionsToDatabase(2);
 
-            createConnectionsToDatabase(2);
+        executeUpdateOnNthMachine(create1, 0);
 
-            executeUpdateOnNthMachine(create1, 0);
+        sleep(1000);
 
-            sleep(1000);
+        /*
+         * Create test table.
+         */
+        assertTestTableExists(2, 0);
+        assertMetaDataExists(connections[0], 1);
 
-            /*
-             * Create test table.
-             */
-            assertTestTableExists(2, 0);
-            assertMetaDataExists(connections[0], 1);
+        sleep(2000);
 
-            sleep(2000);
+        final String createReplica = "CREATE REPLICA TEST;";
+        executeUpdateOnNthMachine(createReplica, 1);
+        executeUpdateOnNthMachine(createReplica, 2);
 
-            final String createReplica = "CREATE REPLICA TEST;";
-            executeUpdateOnNthMachine(createReplica, 1);
-            executeUpdateOnNthMachine(createReplica, 2);
+        sleep("About to begin test.\n\n\n\n", 3000);
 
-            sleep("About to begin test.\n\n\n\n", 3000);
+        final String update = "INSERT INTO TEST VALUES(3, 'Third');";
 
-            final String update = "INSERT INTO TEST VALUES(3, 'Third');";
+        executeUpdateOnNthMachine(update, 0);
 
-            executeUpdateOnNthMachine(update, 0);
+        assertTestTableExists(connections[0], 3);
+        assertTestTableExists(connections[1], 3);
+        assertTestTableExists(connections[2], 3, false);
 
-            assertTrue(assertTestTableExists(connections[0], 3));
-            assertTrue(assertTestTableExists(connections[1], 3));
-            assertTrue(assertTestTableExists(connections[2], 3, false));
-        }
-        catch (final SQLException e) {
-            e.printStackTrace();
-            fail("Unexpected exception.");
-        }
     }
 
     /**
@@ -88,77 +82,59 @@ public class AsynchronousTests extends MultiProcessTestBase {
      * 
      * 
      * @throws InterruptedException
+     * @throws SQLException 
      */
     @Test
-    public void inactiveReplicaRecognisedOnRestart() throws InterruptedException {
+    public void inactiveReplicaRecognisedOnRestart() throws InterruptedException, SQLException {
 
         final String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
 
-        try {
+        killDatabase(2);
 
-            killDatabase(2);
+        sleep(5000);
 
-            sleep(5000);
+        delayQueryCommit(2);
 
-            delayQueryCommit(2);
+        startDatabase(2);
 
-            startDatabase(2);
+        sleep("About to create recreate connections to the newly restarted database.", 2000);
 
-            sleep("About to create recreate connections to the newly restarted database.", 2000);
+        createConnectionsToDatabase(2);
 
-            createConnectionsToDatabase(2);
+        executeUpdateOnNthMachine(create1, 1);
 
-            executeUpdateOnNthMachine(create1, 1);
+        sleep(1000);
 
-            sleep(1000);
+        /*
+         * Create test table.
+         */
+        assertTestTableExists(2, 1);
+        assertMetaDataExists(connections[0], 1);
 
-            /*
-             * Create test table.
-             */
-            assertTestTableExists(2, 1);
-            assertMetaDataExists(connections[0], 1);
+        sleep(2000);
 
-            sleep(2000);
+        final String createReplica = "CREATE REPLICA TEST;";
+        executeUpdateOnNthMachine(createReplica, 0);
+        executeUpdateOnNthMachine(createReplica, 2);
 
-            final String createReplica = "CREATE REPLICA TEST;";
-            executeUpdateOnNthMachine(createReplica, 0);
-            executeUpdateOnNthMachine(createReplica, 2);
+        sleep("About to begin test.\n\n\n\n", 3000);
 
-            sleep("About to begin test.\n\n\n\n", 3000);
+        final String update = "INSERT INTO TEST VALUES(3, 'Third');";
 
-            final String update = "INSERT INTO TEST VALUES(3, 'Third');";
+        executeUpdateOnNthMachine(update, 1);
 
-            executeUpdateOnNthMachine(update, 1);
+        assertTestTableExists(connections[0], 3);
+        assertTestTableExists(connections[1], 3);
 
-            assertTrue(assertTestTableExists(connections[0], 3));
-            assertTrue(assertTestTableExists(connections[1], 3));
+        sleep(2000);
 
-            sleep(2000);
+        killDatabase(1);
 
-            killDatabase(1);
+        sleep(5000);
 
-            sleep(5000);
+        sleep("Wait for database to startup and reconnect.", 10000);
 
-            // startDatabase(1);
-            //
-            // sleep(2000);
-            //
-            // createConnectionsToDatabase(1);
-
-            sleep("Wait for database to startup and reconnect.", 10000);
-
-            // try {
-            // assertFalse(assertTestTableExists(connections[2], 3));
-            // fail("Expected Exception.");
-            // } catch (SQLException e) {
-            // }
-
-            assertTrue(assertTestTableExists(connections[2], 3, false));
-        }
-        catch (final SQLException e) {
-            e.printStackTrace();
-            fail("Unexpected exception.");
-        }
+        assertTestTableExists(connections[2], 3, false);
     }
 
     /**
@@ -166,58 +142,52 @@ public class AsynchronousTests extends MultiProcessTestBase {
      * 
      * 
      * @throws InterruptedException
+     * @throws SQLException 
      */
     @Test
-    public void asynchronousUpdateEventuallyCommitted() throws InterruptedException {
+    public void asynchronousUpdateEventuallyCommitted() throws InterruptedException, SQLException {
 
         final String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
 
-        try {
+        killDatabase(2);
 
-            killDatabase(2);
+        sleep(5000);
 
-            sleep(5000);
+        delayQueryCommit(2);
 
-            delayQueryCommit(2);
+        startDatabase(2);
 
-            startDatabase(2);
+        sleep("About to create recreate connections to the newly restarted database.", 2000);
 
-            sleep("About to create recreate connections to the newly restarted database.", 2000);
+        createConnectionsToDatabase(2);
 
-            createConnectionsToDatabase(2);
+        executeUpdateOnNthMachine(create1, 0);
 
-            executeUpdateOnNthMachine(create1, 0);
+        sleep(1000);
 
-            sleep(1000);
+        /*
+         * Create test table.
+         */
+        assertTestTableExists(2, 0);
+        assertMetaDataExists(connections[0], 1);
 
-            /*
-             * Create test table.
-             */
-            assertTestTableExists(2, 0);
-            assertMetaDataExists(connections[0], 1);
+        sleep(2000);
 
-            sleep(2000);
+        final String createReplica = "CREATE REPLICA TEST;";
+        executeUpdateOnNthMachine(createReplica, 1);
+        executeUpdateOnNthMachine(createReplica, 2);
 
-            final String createReplica = "CREATE REPLICA TEST;";
-            executeUpdateOnNthMachine(createReplica, 1);
-            executeUpdateOnNthMachine(createReplica, 2);
+        sleep("About to begin test.\n\n\n\n", 3000);
 
-            sleep("About to begin test.\n\n\n\n", 3000);
+        final String update = "INSERT INTO TEST VALUES(3, 'Third');";
 
-            final String update = "INSERT INTO TEST VALUES(3, 'Third');";
+        executeUpdateOnNthMachine(update, 0);
 
-            executeUpdateOnNthMachine(update, 0);
+        assertTestTableExists(connections[0], 3);
+        assertTestTableExists(connections[1], 3);
 
-            assertTrue(assertTestTableExists(connections[0], 3));
-            assertTrue(assertTestTableExists(connections[1], 3));
-
-            Thread.sleep(11000);
-            assertTrue(assertTestTableExists(connections[2], 3));
-        }
-        catch (final SQLException e) {
-            e.printStackTrace();
-            fail("Unexpected exception.");
-        }
+        Thread.sleep(11000);
+        assertTestTableExists(connections[2], 3);
     }
 
     /**
@@ -225,75 +195,68 @@ public class AsynchronousTests extends MultiProcessTestBase {
      * 
      * 
      * @throws InterruptedException
+     * @throws SQLException 
      */
     @Test
-    public void anotherTransactionIntervenes() throws InterruptedException {
+    public void anotherTransactionIntervenes() throws InterruptedException, SQLException {
 
         final String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
 
+        killDatabase(2);
+
+        sleep(5000);
+
+        delayQueryCommit(2);
+
+        startDatabase(2);
+
+        sleep("About to create recreate connections to the newly restarted database.", 2000);
+
+        createConnectionsToDatabase(2);
+
+        executeUpdateOnNthMachine(create1, 0);
+
+        sleep(1000);
+
+        /*
+         * Create test table.
+         */
+        assertTestTableExists(2, 0);
+        assertMetaDataExists(connections[0], 1);
+
+        sleep(2000);
+
+        final String createReplica = "CREATE REPLICA TEST;";
+        executeUpdateOnNthMachine(createReplica, 1);
+        executeUpdateOnNthMachine(createReplica, 2);
+
+        sleep("About to begin test.\n\n\n\n", 3000);
+
+        final String update = "INSERT INTO TEST VALUES(3, 'Third');";
+
+        executeUpdateOnNthMachine(update, 0);
+
+        assertTestTableExists(connections[0], 3);
+        assertTestTableExists(connections[1], 3);
+
+        Thread.sleep(5000);
+
+        final String update2 = "INSERT INTO TEST VALUES(4, 'Fourth');";
+
+        executeUpdateOnNthMachine(update2, 0);
+
+        Thread.sleep(10000);
+
         try {
-
-            killDatabase(2);
-
-            sleep(5000);
-
-            delayQueryCommit(2);
-
-            startDatabase(2);
-
-            sleep("About to create recreate connections to the newly restarted database.", 2000);
-
-            createConnectionsToDatabase(2);
-
-            executeUpdateOnNthMachine(create1, 0);
-
-            sleep(1000);
-
-            /*
-             * Create test table.
-             */
-            assertTestTableExists(2, 0);
-            assertMetaDataExists(connections[0], 1);
-
-            sleep(2000);
-
-            final String createReplica = "CREATE REPLICA TEST;";
-            executeUpdateOnNthMachine(createReplica, 1);
-            executeUpdateOnNthMachine(createReplica, 2);
-
-            sleep("About to begin test.\n\n\n\n", 3000);
-
-            final String update = "INSERT INTO TEST VALUES(3, 'Third');";
-
-            executeUpdateOnNthMachine(update, 0);
-
-            assertTrue(assertTestTableExists(connections[0], 3));
-            assertTrue(assertTestTableExists(connections[1], 3));
-
-            Thread.sleep(5000);
-
-            final String update2 = "INSERT INTO TEST VALUES(4, 'Fourth');";
-
-            executeUpdateOnNthMachine(update2, 0);
-
-            Thread.sleep(10000);
-
-            try {
-                assertTestTableExists(connections[2], 4);
-                fail("Expected an exception to be thrown because this replica is now inactive.");
-            }
-            catch (final Exception e) {
-                //Expected.
-            }
-
-            assertTrue(assertTestTableExists(connections[0], 4));
-            assertTrue(assertTestTableExists(connections[1], 4));
-
+            assertTestTableExists(connections[2], 4);
+            fail("Expected an exception to be thrown because this replica is now inactive.");
         }
-        catch (final SQLException e) {
-            e.printStackTrace();
-            fail("Unexpected exception.");
+        catch (final Exception e) {
+            //Expected.
         }
+
+        assertTestTableExists(connections[0], 4);
+        assertTestTableExists(connections[1], 4);
     }
 
     /**

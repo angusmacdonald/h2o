@@ -1,6 +1,7 @@
 package org.h2o.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
@@ -387,24 +388,9 @@ public class MultiProcessTestBase extends TestBase {
         return tableName;
     }
 
-    /**
-     * Select all entries from the test table. Checks that the number of entries in the table matches the number of entries expected.
-     * Matches the contents of the first two entries as well.
-     * 
-     * @param expectedEntries
-     *            The number of entries that should be in the test table.
-     * @param databaseNumber
-     * @return true if the connection was active. false if the connection wasn't open.
-     * @throws SQLException
-     */
-    protected boolean assertTestTableExists(final int expectedEntries, final int databaseNumber, final boolean localOnly) throws SQLException {
+    protected void assertTestTableExists(final int expectedEntries, final int databaseNumber) throws SQLException {
 
-        return assertTestTableExists(connections[databaseNumber], expectedEntries, localOnly);
-    }
-
-    protected boolean assertTestTableExists(final int expectedEntries, final int databaseNumber) throws SQLException {
-
-        return assertTestTableExists(connections[databaseNumber], expectedEntries, true);
+        assertTestTableExists(connections[databaseNumber], expectedEntries, true);
     }
 
     /**
@@ -417,16 +403,14 @@ public class MultiProcessTestBase extends TestBase {
      * @return true if the connection was active. false if the connection wasn't open.
      * @throws SQLException
      */
-    protected boolean assertTestTableExists(final Connection connnection, final int expectedEntries, final boolean localOnly) throws SQLException {
+    protected void assertTestTableExists(final Connection connnection, final int expectedEntries, final boolean localOnly) throws SQLException {
 
         Statement s = null;
         ResultSet rs = null;
 
-        /*
-         * Query database.
-         */
+        // Query database.
 
-        if (connnection == null || connnection.isClosed()) { return false; }
+        assertFalse(connnection == null || connnection.isClosed());
 
         try {
             s = connnection.createStatement();
@@ -461,16 +445,14 @@ public class MultiProcessTestBase extends TestBase {
                 s.close();
             }
         }
-
-        return true;
     }
 
-    protected boolean assertTestTableExists(final Connection connnection, final int expectedEntries) throws SQLException {
+    protected void assertTestTableExists(final Connection connnection, final int expectedEntries) throws SQLException {
 
-        return assertTestTableExists(connnection, expectedEntries, true);
+        assertTestTableExists(connnection, expectedEntries, true);
     }
 
-    protected boolean assertTest2TableExists(final Connection connnection, final int expectedEntries) throws SQLException {
+    protected void assertTest2TableExists(final Connection connnection, final int expectedEntries) throws SQLException {
 
         Statement s = null;
         ResultSet rs = null;
@@ -479,7 +461,7 @@ public class MultiProcessTestBase extends TestBase {
          * Query database.
          */
 
-        if (connnection == null || connnection.isClosed()) { return false; }
+        assertFalse(connnection == null || connnection.isClosed());
 
         try {
             s = connnection.createStatement();
@@ -509,11 +491,9 @@ public class MultiProcessTestBase extends TestBase {
                 s.close();
             }
         }
-
-        return true;
     }
 
-    protected boolean assertTest3TableExists(final Connection connnection, final int expectedEntries) throws SQLException {
+    protected void assertTest3TableExists(final Connection connnection, final int expectedEntries) throws SQLException {
 
         Statement s = null;
         ResultSet rs = null;
@@ -522,7 +502,7 @@ public class MultiProcessTestBase extends TestBase {
          * Query database.
          */
 
-        if (connnection == null || connnection.isClosed()) { return false; }
+        assertFalse(connnection == null || connnection.isClosed());
 
         try {
             s = connnection.createStatement();
@@ -552,8 +532,6 @@ public class MultiProcessTestBase extends TestBase {
                 s.close();
             }
         }
-
-        return true;
     }
 
     public MultiProcessTestBase() {
