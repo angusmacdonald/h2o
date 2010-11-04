@@ -133,6 +133,7 @@ public class MultiProcessTestBase extends TestBase {
         sleep(2000);
         createConnectionsToDatabases();
 
+        Diagnostic.setLevel(DiagnosticLevel.FULL);
     }
 
     private void killExistingProcessesIfNotOnWindows() throws IOException {
