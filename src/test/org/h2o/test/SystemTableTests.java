@@ -9,6 +9,7 @@
 package org.h2o.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -26,6 +27,7 @@ import org.h2o.locator.server.LocatorServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -123,16 +125,19 @@ public class SystemTableTests {
                     stat.close();
                 }
             }
-            catch (final SQLException e) {
+            finally {
+                shutdownServer(server);
             }
-
-            // stop the server
-            server.stop();
-
-            while (server.isRunning(false)) {
-                Thread.sleep(TestBase.SHUTDOWN_CHECK_DELAY);
-            };
         }
+    }
+
+    private void shutdownServer(final Server server) throws InterruptedException {
+
+        server.stop();
+
+        while (server.isRunning(false)) {
+            Thread.sleep(TestBase.SHUTDOWN_CHECK_DELAY);
+        };
     }
 
     /**
@@ -192,56 +197,50 @@ public class SystemTableTests {
         }
         finally {
 
-            if (conn != null) {
-                conn.close();
+            try {
+                if (conn != null) {
+                    conn.close();
+                }
+                if (sa != null) {
+                    sa.close();
+                }
             }
-            if (sa != null) {
-                sa.close();
+            finally {
+                shutdownServer(server);
             }
-
-            // stop the server
-            server.stop();
         }
     }
 
-    // /**
-    // * Tests that a database is able to connect to a remote database and establish linked table connections
-    // * to all System Table tables.
-    // * @throws SQLException
-    // * @throws InterruptedException
-    // */
-    // @Test
-    // public void linkedSchemaTableTest(){
-    // org.h2.Driver.load();
-    //
-    // try{
-    // Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-    // Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-    // Statement sa = ca.createStatement();
-    // Statement sb = cb.createStatement();
-    //
-    // sb.execute("SELECT * FROM H2O.H2O_TABLE;");
-    // sb.execute("SELECT * FROM H2O.H2O_REPLICA;");
-    // sb.execute("SELECT * FROM H2O.H2O_CONNECTION;");
-    //
-    // ResultSet rs = sb.getResultSet();
-    //
-    // if (!rs.next()){
-    // fail("There should be at least one row for local instance itself.");
-    // }
-    //
-    // rs.close();
-    //
-    // sa.execute("DROP ALL OBJECTS");
-    // sb.execute("DROP ALL OBJECTS");
-    // ca.close();
-    // cb.close();
-    //
-    // } catch (SQLException e){
-    // fail("An Unexpected SQLException was thrown.");
-    // e.printStackTrace();
-    // }
-    // }
+    /**
+    * Tests that a database is able to connect to a remote database and establish linked table connections
+    * to all System Table tables.
+    * @throws SQLException
+    * @throws InterruptedException
+    */
+    @Test
+    @Ignore
+    public void linkedSchemaTableTest() throws SQLException {
+
+        final Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+        final Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+        final Statement sa = ca.createStatement();
+        final Statement sb = cb.createStatement();
+
+        sb.execute("SELECT * FROM H2O.H2O_TABLE;");
+        sb.execute("SELECT * FROM H2O.H2O_REPLICA;");
+        sb.execute("SELECT * FROM H2O.H2O_CONNECTION;");
+
+        final ResultSet rs = sb.getResultSet();
+
+        assertTrue("There should be at least one row for local instance itself.", rs.next());
+
+        rs.close();
+
+        sa.execute("DROP ALL OBJECTS");
+        sb.execute("DROP ALL OBJECTS");
+        ca.close();
+        cb.close();
+    }
 
     /**
      * Tests that when a new table is added to the database it is also added to the System Table.
@@ -250,40 +249,41 @@ public class SystemTableTests {
      * @throws InterruptedException
      */
     @Test
-    public void testTableInsertion() {
+    public void testTableInsertion() throws SQLException {
 
-        org.h2.Driver.load();
+        Connection ca = null;
+        Statement sa = null;
+        ResultSet rs = null;
 
         try {
-            final Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-            final Statement sa = ca.createStatement();
-
-            sa.execute("SELECT * FROM H2O.H2O_TABLE;");
-            ResultSet rs = sa.getResultSet();
-            if (rs.next()) {
-                fail("There shouldn't be any tables in the System Table yet.");
-            }
-            rs.close();
-
-            sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+            ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+            sa = ca.createStatement();
 
             sa.execute("SELECT * FROM H2O.H2O_TABLE;");
             rs = sa.getResultSet();
-            if (rs.next()) {
-                assertEquals("TEST", rs.getString(3));
-                assertEquals("PUBLIC", rs.getString(2));
-            }
-            else {
-                fail("Table PUBLIC.TEST was not found in the System Table.");
-            }
+            assertFalse("There shouldn't be any tables in the System Table yet.", rs.next());
             rs.close();
 
-            sa.close();
-            ca.close();
+            sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+            sa.execute("SELECT * FROM H2O.H2O_TABLE;");
+
+            rs = sa.getResultSet();
+
+            assertTrue("Table PUBLIC.TEST was not found in the System Table.", rs.next());
+            assertEquals("TEST", rs.getString(3));
+            assertEquals("PUBLIC", rs.getString(2));
         }
-        catch (final SQLException e) {
-            e.printStackTrace();
-            fail("An Unexpected SQLException was thrown.");
+        finally {
+
+            if (rs != null) {
+                rs.close();
+            }
+            if (sa != null) {
+                sa.close();
+            }
+            if (ca != null) {
+                ca.close();
+            }
         }
     }
 
@@ -294,56 +294,55 @@ public class SystemTableTests {
      * @throws InterruptedException
      */
     @Test
-    public void testTableAccessibilityOnCreate() {
+    public void testTableAccessibilityOnCreate() throws SQLException {
 
-        org.h2.Driver.load();
+        Connection ca = null;
+        Connection cb = null;
+
+        Statement sa = null;
+        Statement sb = null;
+
+        ResultSet rs = null;
 
         try {
-            final Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-            final Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+            ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+            cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
-            final Statement sa = ca.createStatement();
-            final Statement sb = cb.createStatement();
+            sa = ca.createStatement();
+            sb = cb.createStatement();
 
             sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
             sa.execute("INSERT INTO TEST VALUES(1, 'Hello');");
             sa.execute("INSERT INTO TEST VALUES(2, 'World');");
 
-            try {
-                sb.execute("SELECT * FROM TEST;");
-            }
-            catch (final SQLException e) {
-                e.printStackTrace();
-                fail("The TEST table was not found.");
-            }
-            final ResultSet rs = sb.getResultSet();
+            sb.execute("SELECT * FROM TEST;");
 
-            if (rs.next()) {
-                assertEquals(1, rs.getInt(1));
-                assertEquals("Hello", rs.getString(2));
-            }
-            else {
-                fail("Test was not remotely accessible.");
-            }
+            rs = sb.getResultSet();
 
-            if (rs.next()) {
-                assertEquals(2, rs.getInt(1));
-                assertEquals("World", rs.getString(2));
-            }
-            else {
-                fail("Not all of the contents of test were remotely accessible.");
-            }
+            assertTrue("Test was not remotely accessible.", rs.next());
+            assertEquals(1, rs.getInt(1));
+            assertEquals("Hello", rs.getString(2));
 
-            rs.close();
-            sa.close();
-            sb.close();
-            ca.close();
-            cb.close();
+            assertTrue("Not all of the contents of test were remotely accessible.", rs.next());
+            assertEquals(2, rs.getInt(1));
+            assertEquals("World", rs.getString(2));
         }
-        catch (final SQLException e) {
-            e.printStackTrace();
-            fail("An Unexpected SQLException was thrown.");
-
+        finally {
+            if (rs != null) {
+                rs.close();
+            }
+            if (sa != null) {
+                sa.close();
+            }
+            if (sb != null) {
+                sb.close();
+            }
+            if (ca != null) {
+                ca.close();
+            }
+            if (cb != null) {
+                cb.close();
+            }
         }
     }
 
@@ -354,32 +353,29 @@ public class SystemTableTests {
      * @throws InterruptedException
      */
     @Test
-    public void testTableAccessibilityOnDrop() {
+    public void testTableAccessibilityOnDrop() throws SQLException {
 
-        org.h2.Driver.load();
+        Connection ca = null;
+        Statement sa = null;
+        ResultSet rs = null;
 
         try {
-            final Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-            final Statement sa = ca.createStatement();
+            ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+            sa = ca.createStatement();
 
             sa.execute("SELECT * FROM H2O.H2O_TABLE;");
-            ResultSet rs = sa.getResultSet();
-            if (rs.next()) {
-                fail("There shouldn't be any tables in the System Table yet.");
-            }
+            rs = sa.getResultSet();
+            assertFalse("There shouldn't be any tables in the System Table yet.", rs.next());
             rs.close();
 
             sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 
             sa.execute("SELECT * FROM H2O.H2O_TABLE;");
             rs = sa.getResultSet();
-            if (rs.next()) {
-                assertEquals("TEST", rs.getString(3));
-                assertEquals("PUBLIC", rs.getString(2));
-            }
-            else {
-                fail("Table TEST was not found in the System Table.");
-            }
+            assertTrue("Table TEST was not found in the System Table.", rs.next());
+            assertEquals("TEST", rs.getString(3));
+            assertEquals("PUBLIC", rs.getString(2));
+
             rs.close();
 
             sa.execute("DROP TABLE TEST;");
@@ -394,18 +390,18 @@ public class SystemTableTests {
 
             sa.execute("SELECT * FROM H2O.H2O_TABLE;");
             rs = sa.getResultSet();
-            if (rs.next()) {
-                fail("There shouldn't be any entries in the System Table.");
-            }
-            rs.close();
-
-            sa.close();
-            ca.close();
-
+            assertFalse("There shouldn't be any entries in the System Table.", rs.next());
         }
-        catch (final SQLException e) {
-            fail("An Unexpected SQLException was thrown.");
-            e.printStackTrace();
+        finally {
+            if (rs != null) {
+                rs.close();
+            }
+            if (sa != null) {
+                sa.close();
+            }
+            if (ca != null) {
+                ca.close();
+            }
         }
     }
 
@@ -416,21 +412,24 @@ public class SystemTableTests {
      * @throws InterruptedException
      */
     @Test
-    public void testTableRemoteAccessibilityOnDrop() {
+    public void testTableRemoteAccessibilityOnDrop() throws SQLException {
 
-        org.h2.Driver.load();
+        Connection ca = null;
+        Statement sa = null;
+        Connection cb = null;
+        Statement sb = null;
 
         try {
-            final Connection ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+            ca = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
-            final Statement sa = ca.createStatement();
+            sa = ca.createStatement();
 
             sa.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));");
             sa.execute("INSERT INTO TEST VALUES(1, 'Hello');");
             sa.execute("INSERT INTO TEST VALUES(2, 'World');");
 
-            final Connection cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-            final Statement sb = cb.createStatement();
+            cb = DriverManager.getConnection("jdbc:h2:mem:two", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+            sb = cb.createStatement();
 
             sa.execute("DROP TABLE TEST;");
 
@@ -441,16 +440,20 @@ public class SystemTableTests {
             catch (final SQLException e) {
                 // Expected.
             }
-
-            sa.close();
-            sb.close();
-            ca.close();
-            cb.close();
         }
-        catch (final SQLException e) {
-            e.printStackTrace();
-            fail("An Unexpected SQLException was thrown.");
-
+        finally {
+            if (sa != null) {
+                sa.close();
+            }
+            if (sb != null) {
+                sb.close();
+            }
+            if (ca != null) {
+                ca.close();
+            }
+            if (cb != null) {
+                cb.close();
+            }
         }
     }
 }
