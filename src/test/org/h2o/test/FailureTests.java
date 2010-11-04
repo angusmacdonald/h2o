@@ -35,7 +35,7 @@ public class FailureTests extends MultiProcessTestBase {
      * @throws InterruptedException
      * @throws SQLException 
      */
-    @Test
+    @Test(timeout = 60000)
     public void systemTableMigrationOnFailureRequestingInstance() throws InterruptedException, SQLException {
 
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
@@ -76,7 +76,7 @@ public class FailureTests extends MultiProcessTestBase {
      * @throws InterruptedException
      * @throws SQLException 
      */
-    @Test
+    @Test(timeout = 60000)
     public void systemTableMigrationOnFailureMaintenanceMechanism() throws InterruptedException, SQLException {
 
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
@@ -115,7 +115,7 @@ public class FailureTests extends MultiProcessTestBase {
      * @throws InterruptedException
      * @throws SQLException 
      */
-    @Test
+    @Test(timeout = 60000)
     public void tableManagerMetaDataCorrect() throws InterruptedException, SQLException {
 
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
@@ -145,7 +145,7 @@ public class FailureTests extends MultiProcessTestBase {
      * @throws InterruptedException
      * @throws SQLException 
      */
-    @Test
+    @Test(timeout = 60000)
     public void tableManagerMigrationOnFailureDetectedBySystemTableMigration() throws InterruptedException, SQLException {
 
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
@@ -188,7 +188,7 @@ public class FailureTests extends MultiProcessTestBase {
      * @throws InterruptedException
      * @throws SQLException 
      */
-    @Test
+    @Test(timeout = 60000)
     public void tableManagerMigrationOnFailureDetectedByQueryingInstance() throws InterruptedException, SQLException {
 
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
@@ -231,7 +231,7 @@ public class FailureTests extends MultiProcessTestBase {
      * @throws InterruptedException
      * @throws SQLException 
      */
-    @Test
+    @Test(timeout = 60000)
     public void tableManagerMigrationOnFailureSystemTableDoesntFail() throws InterruptedException, SQLException {
 
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
@@ -274,7 +274,7 @@ public class FailureTests extends MultiProcessTestBase {
      * @throws InterruptedException
      * @throws SQLException 
      */
-    @Test
+    @Test(timeout = 60000)
     public void tableManagerMigrationOnFailureSystemTableDoesntFailLinkedTable() throws InterruptedException, SQLException {
 
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
@@ -327,7 +327,7 @@ public class FailureTests extends MultiProcessTestBase {
      * Queries every table to ensure they are still accessible.
      * @throws SQLException 
      */
-    @Test
+    @Test(timeout = 60000)
     public void multipleFailures() throws InterruptedException, SQLException {
 
         String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
@@ -398,7 +398,7 @@ public class FailureTests extends MultiProcessTestBase {
      * Queries every table to ensure they are still accessible.
      * @throws SQLException 
      */
-    @Test
+    @Test(timeout = 60000)
     public void multipleSTFailures() throws InterruptedException, SQLException {
 
         String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
@@ -476,7 +476,7 @@ public class FailureTests extends MultiProcessTestBase {
      * @throws InterruptedException
      * @throws SQLException 
      */
-    @Test
+    @Test(timeout = 60000)
     public void killOffNonSTMachines() throws InterruptedException, SQLException {
 
         String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
@@ -533,7 +533,7 @@ public class FailureTests extends MultiProcessTestBase {
      * @throws InterruptedException
      * @throws SQLException 
      */
-    @Test
+    @Test(timeout = 60000)
     public void killOffNonSTMachines2() throws InterruptedException, SQLException {
 
         String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
@@ -584,7 +584,7 @@ public class FailureTests extends MultiProcessTestBase {
      * that it can access the table through the new table manager.
      * @throws SQLException 
      */
-    @Test
+    @Test(timeout = 60000)
     public void killOffTMqueryThenRestartMachine() throws InterruptedException, SQLException {
 
         String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
@@ -638,7 +638,7 @@ public class FailureTests extends MultiProcessTestBase {
      * Then the TM is killed off again (along with the whole database instance) and the table is queried again.
      * @throws SQLException 
      */
-    @Test
+    @Test(timeout = 60000)
     public void killOffTMqueryThenRestartMachineTwice() throws InterruptedException, SQLException {
 
         String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
