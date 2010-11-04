@@ -51,6 +51,8 @@ public class H2TestPreparedStatementFailing extends H2TestBase {
         config = new TestAll();
 
         conn = getConnection("preparedStatement");
+
+        Diagnostic.setLevel(DiagnosticLevel.FULL);
     }
 
     @After

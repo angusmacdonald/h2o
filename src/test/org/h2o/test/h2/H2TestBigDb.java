@@ -41,6 +41,8 @@ public class H2TestBigDb extends H2TestBase {
         if (config.networked && config.big) { return; }
 
         DeleteDbFiles.execute("data\\test\\", "bigDb", true);
+
+        Diagnostic.setLevel(DiagnosticLevel.FULL);
     }
 
     @After

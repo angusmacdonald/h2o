@@ -41,7 +41,7 @@ public class H2TestViewFailing extends H2TestBase {
 
         config = new TestAll();
 
-        if (config.memory) { return; }
+        Diagnostic.setLevel(DiagnosticLevel.FULL);
     }
 
     @After

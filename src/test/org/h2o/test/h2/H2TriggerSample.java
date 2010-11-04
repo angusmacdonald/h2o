@@ -42,7 +42,7 @@ public class H2TriggerSample extends H2TestBase {
 
         config = new TestAll();
 
-        if (config.memory) { return; }
+        Diagnostic.setLevel(DiagnosticLevel.FULL);
     }
 
     @After
@@ -89,7 +89,6 @@ public class H2TriggerSample extends H2TestBase {
             stat.close();
             conn.close();
         }
-
     }
 
     /**

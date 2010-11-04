@@ -57,6 +57,8 @@ public class H2SimpleTest {
         locator_server = new LocatorServer(29999, "junitLocator");
         locator_server.createNewLocatorFile();
         locator_server.start();
+
+        Diagnostic.setLevel(DiagnosticLevel.FULL);
     }
 
     @After
@@ -85,7 +87,7 @@ public class H2SimpleTest {
 
         DeleteDbFiles.execute(baseDir, "scriptSimple", true);
         reconnect();
-        final String inFile = "org/h2/test/reconnecttest.txt"; // org/h2/test/testSimple.in.txt
+        final String inFile = "org/h2/test/reconnecttest.txt";
 
         final InputStream is = getClass().getClassLoader().getResourceAsStream(inFile);
         final LineNumberReader lineReader = new LineNumberReader(new InputStreamReader(is, "Cp1252"));
