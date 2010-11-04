@@ -9,7 +9,6 @@
 package org.h2o.test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.sql.ResultSet;
@@ -32,7 +31,7 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class ChordTests extends TestBase {
+public class ChordTestsFailing extends TestBase {
 
     private Statement[] sas;
 
@@ -116,61 +115,6 @@ public class ChordTests extends TestBase {
     }
 
     @Test
-    public void baseTest() throws SQLException {
-
-        sas[0].execute("SELECT * FROM TEST;");
-    }
-
-    /**
-     * This sequence of events used to lock the sys table causing entries to not be included in the System Table. If this fails or holds
-     * then the problem is still there.
-     * @throws SQLException 
-     */
-    @Test
-    public void sysTableLock() throws SQLException {
-
-        sas[1].execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-        sas[2].execute("CREATE TABLE TEST3(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-
-        final ResultSet rs = sas[0].executeQuery("SELECT * FROM H2O.H2O_TABLE");
-
-        assertTrue(rs.next() && rs.next() && rs.next());
-        assertFalse(rs.next());
-    }
-
-    /**
-     * Tests that when the Table Manager is migrated another database instance is able to connect to the new manager without any manual
-     * intervention.
-     * @throws SQLException 
-     * 
-     */
-    @Test
-    public void tableManagerMigration() throws SQLException {
-
-        sas[1].executeUpdate("MIGRATE TABLEMANAGER test");
-
-        /*
-         * Test that the new Table Manager can be found.
-         */
-        sas[1].executeUpdate("INSERT INTO TEST VALUES(4, 'helloagain');");
-
-        /*
-         * Test that the old Table Manager is no longer accessible, and that the referene can be updated.
-         */
-        sas[0].executeUpdate("INSERT INTO TEST VALUES(5, 'helloagainagain');");
-    }
-
-    /**
-     * Tests that when migration fails when an incorrect table name is given.
-     * @throws SQLException 
-     */
-    @Test(expected = SQLException.class)
-    public void tableManagerMigrationFail() throws SQLException {
-
-        sas[1].executeUpdate("MIGRATE TABLEMANAGER testy");
-    }
-
-    @Test
     public void tableManagerMigrationWithCachedReference() throws SQLException {
 
         sas[0].executeUpdate("INSERT INTO TEST VALUES(7, '7');");
@@ -193,42 +137,5 @@ public class ChordTests extends TestBase {
 
         assertTrue("System Table wasn't updated correctly.", rs.next());
         assertEquals(2, rs.getInt(1));
-    }
-
-    /**
-     * Tests that when the System Table is migrated another database instance is able to connect to the new manager without any manual
-     * intervention.
-     * @throws SQLException 
-     */
-    @Test
-    public void systemTableMigration() throws SQLException {
-
-        sas[1].executeUpdate("MIGRATE SYSTEMTABLE");
-
-        sas[2].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-        sas[2].execute("SELECT * FROM TEST2;");
-    }
-
-    @SuppressWarnings("deprecation")
-    @Test
-    public void SystemTableFailure() throws InterruptedException, SQLException {
-
-        dts[0].stop();
-        sas[0].close();
-
-        Thread.sleep(5000);
-
-        sas[1].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-    }
-
-    @Test
-    public void FirstMachineDisconnect() throws InterruptedException, SQLException {
-
-        sas[0].close();
-        dts[0].getConnection().close();
-
-        Thread.sleep(5000);
-
-        sas[1].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
     }
 }

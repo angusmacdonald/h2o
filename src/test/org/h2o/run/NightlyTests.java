@@ -8,6 +8,8 @@
  */
 package org.h2o.run;
 
+import org.h2o.test.ChordTestsFailing;
+import org.h2o.test.CompetingTests;
 import org.h2o.test.h2.H2TestsFailing;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -16,8 +18,8 @@ import org.junit.runners.Suite;
  * Tests run nightly.
  */
 @RunWith(Suite.class)
-@Suite.SuiteClasses({H2TestsFailing.class})
-//, CompetingTests.class, ConcurrentTest.class, FailureTests.class, H2OTest.class, IndexTests.class, LocatorDatabaseTests.class, ReplicaTests.class, FailingEndToEndTests.class, ReplicaTests.class, TableManagerTests.class, CustomSettingsTests.class,
+@Suite.SuiteClasses({H2TestsFailing.class, ChordTestsFailing.class, CompetingTests.class})
+//, ConcurrentTest.class, FailureTests.class, H2OTest.class, IndexTests.class, LocatorDatabaseTests.class, ReplicaTests.class, FailingEndToEndTests.class, ReplicaTests.class, TableManagerTests.class, CustomSettingsTests.class,
 //IndexTests.class, UpdateTests.class, MultiQueryTransactionTests.class, H2Tests.class, WrapperTests.class, RestartTests.class, LocatorTests.class, AsynchronousTests.class})
 public class NightlyTests {
     // Empty.
