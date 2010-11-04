@@ -114,7 +114,7 @@ public class ChordTests extends TestBase {
         };
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void baseTest() throws SQLException {
 
         sas[0].execute("SELECT * FROM TEST;");
