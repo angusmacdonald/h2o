@@ -66,7 +66,7 @@ public class H2SimpleTest {
 
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void largeTest() throws Exception {
 
         Constants.IS_NON_SM_TEST = true;

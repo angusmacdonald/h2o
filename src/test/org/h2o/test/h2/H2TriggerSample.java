@@ -53,7 +53,7 @@ public class H2TriggerSample extends H2TestBase {
 
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void triggerTest() throws SQLException, ClassNotFoundException {
 
         DeleteDbFiles.execute("data\\test\\", "test", true);
@@ -74,8 +74,6 @@ public class H2TriggerSample extends H2TestBase {
 
             stat.execute("INSERT INTO INVOICE VALUES(1, 10.0)");
             stat.execute("INSERT INTO INVOICE VALUES(2, 19.95)");
-            // stat.execute("UPDATE INVOICE SET AMOUNT=20.0 WHERE ID=2");
-            // stat.execute("DELETE FROM INVOICE WHERE ID=1");
 
             ResultSet rs;
             rs = stat.executeQuery("SELECT AMOUNT FROM INVOICE_SUM");

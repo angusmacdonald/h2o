@@ -50,7 +50,7 @@ public class H2TestBigDb extends H2TestBase {
 
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testLargeTable() throws SQLException {
 
         final Connection conn = getConnection("bigDb");
@@ -104,7 +104,7 @@ public class H2TestBigDb extends H2TestBase {
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testLeftSummary() throws SQLException {
 
         final Connection conn = getConnection("bigDb");
@@ -140,7 +140,7 @@ public class H2TestBigDb extends H2TestBase {
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testInsert() throws SQLException {
 
         Connection conn = null;
@@ -167,5 +167,4 @@ public class H2TestBigDb extends H2TestBase {
             stat.close();
         }
     }
-
 }

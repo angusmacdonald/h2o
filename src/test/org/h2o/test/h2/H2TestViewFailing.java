@@ -53,7 +53,7 @@ public class H2TestViewFailing extends H2TestBase {
 
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testManyViews() throws SQLException {
 
         Connection conn = null;

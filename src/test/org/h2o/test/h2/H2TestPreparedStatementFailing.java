@@ -61,7 +61,7 @@ public class H2TestPreparedStatementFailing extends H2TestBase {
 
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testBlob() throws SQLException {
 
         trace("testBlob");
@@ -157,11 +157,10 @@ public class H2TestPreparedStatementFailing extends H2TestBase {
             if (prep != null) {
                 prep.close();
             }
-
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testCancelReuse() throws Exception {
 
         Statement createAlias = null;
@@ -214,7 +213,7 @@ public class H2TestPreparedStatementFailing extends H2TestBase {
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testClob() throws SQLException {
 
         trace("testClob");
@@ -311,7 +310,7 @@ public class H2TestPreparedStatementFailing extends H2TestBase {
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testDataTypes() throws SQLException {
 
         Statement stat = null;
@@ -450,7 +449,7 @@ public class H2TestPreparedStatementFailing extends H2TestBase {
         }
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testPrepareRecompile() throws SQLException {
 
         Statement stat = null;
