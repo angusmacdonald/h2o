@@ -8,7 +8,6 @@
  */
 package org.h2o.test;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -168,31 +167,6 @@ public class ChordTests extends TestBase {
     public void tableManagerMigrationFail() throws SQLException {
 
         sas[1].executeUpdate("MIGRATE TABLEMANAGER testy");
-    }
-
-    @Test
-    public void tableManagerMigrationWithCachedReference() throws SQLException {
-
-        sas[0].executeUpdate("INSERT INTO TEST VALUES(7, '7');");
-        sas[1].executeUpdate("INSERT INTO TEST VALUES(6, '6');");
-        sas[2].executeUpdate("INSERT INTO TEST VALUES(8, '8');");
-
-        sas[1].executeUpdate("MIGRATE TABLEMANAGER test");
-
-        /*
-         * Test that the new Table Manager can be found.
-         */
-        sas[2].executeUpdate("INSERT INTO TEST VALUES(4, 'helloagain');");
-
-        /*
-         * Test that the old Table Manager is no longer accessible, and that the reference can be updated.
-         */
-        sas[0].executeUpdate("INSERT INTO TEST VALUES(5, 'helloagainagain');");
-
-        final ResultSet rs = sas[0].executeQuery("SELECT manager_location FROM H2O.H2O_TABLE");
-
-        assertTrue("System Table wasn't updated correctly.", rs.next());
-        assertEquals(2, rs.getInt(1));
     }
 
     /**
