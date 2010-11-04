@@ -327,10 +327,6 @@ public class Parser {
 
     private Prepared parse(final String sql) throws SQLException {
 
-        if (!internalQuery && Diagnostic.getLevel().equals(DiagnosticLevel.FULL)) {
-            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Incoming Query: " + sql);
-        }
-
         Prepared p;
         try {
             // first, try the fast variant

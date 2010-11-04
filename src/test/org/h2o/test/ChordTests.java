@@ -164,7 +164,7 @@ public class ChordTests extends TestBase {
      * Tests that when migration fails when an incorrect table name is given.
      * @throws SQLException 
      */
-    @Test
+    @Test(expected = SQLException.class)
     public void tableManagerMigrationFail() throws SQLException {
 
         sas[1].executeUpdate("MIGRATE TABLEMANAGER testy");
