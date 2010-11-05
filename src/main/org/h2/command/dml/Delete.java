@@ -23,6 +23,7 @@ import org.h2.util.StringUtils;
 import org.h2.value.Value;
 import org.h2o.db.query.QueryProxy;
 import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 
 /**
@@ -36,32 +37,34 @@ public class Delete extends Prepared {
 
     private QueryProxy queryProxy = null;
 
-    public Delete(Session session, boolean internalQuery) {
+    public Delete(final Session session, final boolean internalQuery) {
 
         super(session, internalQuery);
     }
 
-    public void setTableFilter(TableFilter tableFilter) {
+    public void setTableFilter(final TableFilter tableFilter) {
 
         this.tableFilter = tableFilter;
-        this.table = tableFilter.getTable();
+        table = tableFilter.getTable();
     }
 
-    public void setCondition(Expression condition) {
+    public void setCondition(final Expression condition) {
 
         this.condition = condition;
     }
 
+    @Override
     public int update() throws SQLException {
 
         return update(null);
     }
 
-    public int update(String transactionName) throws SQLException {
+    @Override
+    public int update(final String transactionName) throws SQLException {
 
         tableFilter.startQuery(session);
         tableFilter.reset();
-        Table table = tableFilter.getTable();
+        final Table table = tableFilter.getTable();
         setTable(table);
         session.getUser().checkRight(table, Right.DELETE);
 
@@ -84,14 +87,14 @@ public class Delete extends Prepared {
 
         table.fireBefore(session);
         table.lock(session, true, false);
-        RowList rows = new RowList(session);
+        final RowList rows = new RowList(session);
         try {
             setCurrentRowNumber(0);
             while (tableFilter.next()) {
                 checkCanceled();
                 setCurrentRowNumber(rows.size() + 1);
                 if (condition == null || Boolean.TRUE.equals(condition.getBooleanValue(session))) {
-                    Row row = tableFilter.get();
+                    final Row row = tableFilter.get();
                     if (table.fireRow()) {
                         table.fireBeforeRow(session, row, null);
                     }
@@ -100,13 +103,13 @@ public class Delete extends Prepared {
             }
             for (rows.reset(); rows.hasNext();) {
                 checkCanceled();
-                Row row = rows.next();
+                final Row row = rows.next();
                 table.removeRow(session, row);
                 session.log(table, UndoLogRecord.DELETE, row);
             }
             if (table.fireRow()) {
                 for (rows.reset(); rows.hasNext();) {
-                    Row row = rows.next();
+                    final Row row = rows.next();
                     table.fireAfterRow(session, row, null);
                 }
             }
@@ -120,12 +123,12 @@ public class Delete extends Prepared {
 
     private String adjustForPreparedStatement() throws SQLException {
 
-        String[] values = new String[1];
+        final String[] values = new String[1];
 
-        int y = 0;
+        final int y = 0;
 
-        Comparison comparison = ((Comparison) condition);
-        Expression setExpression = comparison.getExpression(false);
+        final Comparison comparison = (Comparison) condition;
+        final Expression setExpression = comparison.getExpression(false);
 
         evaluateExpression(setExpression, values, y, setExpression.getType());
 
@@ -137,8 +140,12 @@ public class Delete extends Prepared {
         int count = 1;
         for (int i = 1; i <= values.length; i++) {
             if (values[i - 1] != null) {
-                if (addComma) sql += ", ";
-                else addComma = true;
+                if (addComma) {
+                    sql += ", ";
+                }
+                else {
+                    addComma = true;
+                }
 
                 sql += count + ": " + values[i - 1];
 
@@ -150,7 +157,7 @@ public class Delete extends Prepared {
         return sql;
     }
 
-    private void evaluateExpression(Expression e, String[] values, int i, int colummType) throws SQLException {
+    private void evaluateExpression(Expression e, final String[] values, final int i, final int colummType) throws SQLException {
 
         // Only add the expression if it is unspecified in the query (there will
         // be an instance of parameter somewhere).
@@ -158,15 +165,16 @@ public class Delete extends Prepared {
             // e can be null (DEFAULT)
             e = e.optimize(session);
 
-            Value v = e.getValue(session).convertTo(colummType);
+            final Value v = e.getValue(session).convertTo(colummType);
             values[i] = v.toString();
 
         }
     }
 
+    @Override
     public String getPlanSQL() {
 
-        StringBuilder buff = new StringBuilder();
+        final StringBuilder buff = new StringBuilder();
         buff.append("DELETE FROM ");
         buff.append(tableFilter.getPlanSQL(false));
         if (condition != null) {
@@ -175,6 +183,7 @@ public class Delete extends Prepared {
         return buff.toString();
     }
 
+    @Override
     public void prepare() throws SQLException {
 
         if (condition != null) {
@@ -182,16 +191,18 @@ public class Delete extends Prepared {
             condition = condition.optimize(session);
             condition.createIndexConditions(session, tableFilter);
         }
-        PlanItem item = tableFilter.getBestPlanItem(session);
+        final PlanItem item = tableFilter.getBestPlanItem(session);
         tableFilter.setPlanItem(item);
         tableFilter.prepare();
     }
 
+    @Override
     public boolean isTransactional() {
 
         return true;
     }
 
+    @Override
     public LocalResult queryMeta() {
 
         return null;
@@ -202,7 +213,7 @@ public class Delete extends Prepared {
      * @see org.h2.command.Prepared#acquireLocks()
      */
     @Override
-    public void acquireLocks(QueryProxyManager queryProxyManager) throws SQLException {
+    public void acquireLocks(final QueryProxyManager queryProxyManager) throws SQLException {
 
         /*
          * (QUERY PROPAGATED TO ALL REPLICAS).
@@ -211,12 +222,12 @@ public class Delete extends Prepared {
             queryProxy = queryProxyManager.getQueryProxy(table.getFullName());
 
             if (queryProxy == null) {
-                queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, session.getDatabase());
+                queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, LockRequest.createNewLockRequest(session), session.getDatabase());
             }
             queryProxyManager.addProxy(queryProxy);
         }
         else {
-            queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper()));
+            queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(LockRequest.createNewLockRequest(session)));
         }
 
     }

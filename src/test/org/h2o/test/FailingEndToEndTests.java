@@ -29,6 +29,8 @@ import org.h2o.H2O;
 import org.h2o.H2OLocator;
 import org.junit.Test;
 
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
+
 /**
  * User-centric tests.
  *
@@ -231,21 +233,33 @@ public class FailingEndToEndTests {
         });
     }
 
-    private void doInsert(final int number_of_rows_to_insert, final int starting_value, final boolean auto_commit, final boolean explicit_commit, final long delay) throws SQLException {
+    private void doInsert(final int number_of_rows_to_insert, final int starting_value, final boolean auto_commit, final boolean explicit_commit, final long delay) {
 
-        performAction(new IDBAction() {
+        boolean thrownException = false;
 
-            @Override
-            public void execute(final Connection connection) throws SQLException {
+        do {
+            thrownException = false;
+            try {
+                performAction(new IDBAction() {
 
-                connection.setAutoCommit(auto_commit);
-                insertValues(number_of_rows_to_insert, starting_value, connection, delay);
+                    @Override
+                    public void execute(final Connection connection) throws SQLException {
 
-                if (explicit_commit) {
-                    connection.commit();
-                }
+                        connection.setAutoCommit(auto_commit);
+                        insertValues(number_of_rows_to_insert, starting_value, connection, delay);
+
+                        if (explicit_commit) {
+                            connection.commit();
+                        }
+                    }
+                });
             }
-        });
+            catch (final SQLException e) {
+                ErrorHandling.errorNoEvent("Could not obtain lock for table. Will try again.");
+                thrownException = true;
+            }
+        }
+        while (thrownException == true);
     }
 
     private void assertDataIsPresent(final int number_of_rows_inserted) throws SQLException {

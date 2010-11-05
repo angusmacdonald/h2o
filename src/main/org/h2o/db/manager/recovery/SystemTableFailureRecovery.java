@@ -28,20 +28,21 @@ import org.h2o.util.exceptions.MovedException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
 
-    private Database db;
+    private final Database db;
 
-    private SystemTableReference stReference;
+    private final SystemTableReference stReference;
 
     private IDatabaseRemote remoteInterface;
 
-    public SystemTableFailureRecovery(Database db, SystemTableReference systemTableReference) {
+    public SystemTableFailureRecovery(final Database db, final SystemTableReference systemTableReference) {
 
         this.db = db;
-        this.stReference = systemTableReference;
-        this.remoteInterface = db.getRemoteInterface();
+        stReference = systemTableReference;
+        remoteInterface = db.getRemoteInterface();
     }
 
     /*
@@ -50,7 +51,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
      * org.h2o.db.manager.SystemTableReference)
      */
     @Override
-    public SystemTableWrapper get() throws LocatorException, SystemTableAccessException {
+    public synchronized SystemTableWrapper get() throws LocatorException, SystemTableAccessException {
 
         /*
          * 1. Get the location of the System Table (as the lookup instance currently knows it. 2. Contact the registry of that instance to
@@ -63,11 +64,12 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         try {
             return tryToFindSystemTableViaLocator();
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
+            //This just means that no System Table was active, not that it can't be found anywhere.
             ErrorHandling.errorNoEvent(db.getURL() + ": Couldn't find active System Table at any of the locator sites. Will try to recreate System Table elsewhere.");
         }
 
-        SystemTableWrapper systemTableWrapper = reinstantiateSystemTable();
+        final SystemTableWrapper systemTableWrapper = reinstantiateSystemTable();
 
         return systemTableWrapper;
     }
@@ -76,19 +78,20 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
      * (non-Javadoc)
      * @see org.h2o.db.manager.ISystemTableFailureRecovery#find(org.h2o.util.exceptions.MovedException, org.h2o.db.remote.ChordRemote)
      */
-    public SystemTableWrapper find(MovedException e) throws SQLException, RemoteException {
+    @Override
+    public synchronized SystemTableWrapper find(final MovedException e) throws SQLException, RemoteException {
 
-        String newLocation = e.getMessage();
+        final String newLocation = e.getMessage();
 
         if (newLocation == null) { throw new SQLException("The System Table has been shutdown. It must be re-instantiated before another query can be answered."); }
 
-        DatabaseURL systemTableLocationURL = DatabaseURL.parseURL(newLocation);
-        DatabaseInstanceRemote databaseInstance = lookForDatabaseInstanceAt(remoteInterface, systemTableLocationURL);
+        final DatabaseURL systemTableLocationURL = DatabaseURL.parseURL(newLocation);
+        final DatabaseInstanceRemote databaseInstance = lookForDatabaseInstanceAt(remoteInterface, systemTableLocationURL);
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, db.getURL() + ": This System Table reference is old. It has been moved to: " + newLocation);
 
         if (databaseInstance.isSystemTable()) {
-            SystemTableWrapper wrapper = new SystemTableWrapper(databaseInstance.getSystemTable(), databaseInstance.getURL());
+            final SystemTableWrapper wrapper = new SystemTableWrapper(databaseInstance.getSystemTable(), databaseInstance.getURL());
             return wrapper;
         }
         else {
@@ -101,7 +104,8 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
      * @see org.h2o.db.manager.ISystemTableFailureRecovery#restart(org.h2.engine.Database, boolean, boolean,
      * org.h2o.db.manager.interfaces.SystemTableRemote)
      */
-    public SystemTableWrapper restart(boolean persistedSchemaTablesExist, boolean recreateFromPersistedState, SystemTableRemote oldSystemTable) throws SystemTableAccessException {
+    @Override
+    public synchronized SystemTableWrapper restart(final boolean persistedSchemaTablesExist, final boolean recreateFromPersistedState, final SystemTableRemote oldSystemTable) throws SystemTableAccessException {
 
         if (recreateFromPersistedState) {
             return restartSystemTableFromPersistedState(persistedSchemaTablesExist);
@@ -140,20 +144,20 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
 
         SystemTableWrapper newSystemTableWrapper = null;
 
-        List<String> stLocations = getActiveSystemTableLocationsFromLocator();
+        final List<String> stLocations = getActiveSystemTableLocationsFromLocator();
 
         boolean localMachineHoldsSystemTableState = false;
-        for (String location : stLocations) {
-            DatabaseURL url = DatabaseURL.parseURL(location);
+        for (final String location : stLocations) {
+            final DatabaseURL url = DatabaseURL.parseURL(location);
             localMachineHoldsSystemTableState = url.equals(db.getURL());
         }
 
         if (localMachineHoldsSystemTableState) {
             // Re-instantiate the System Table on this node
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, db.getURL() + ": A copy of the System Table state exists on " + db.getURL() + ". It will be re-instantiated here.");
-            SystemTableRemote newSystemTable = stReference.migrateSystemTableToLocalInstance(true, true); // throws
-                                                                                                          // SystemTableCreationException
-                                                                                                          // if it fails.
+            final SystemTableRemote newSystemTable = stReference.migrateSystemTableToLocalInstance(true, true); // throws
+            // SystemTableCreationException
+            // if it fails.
             newSystemTableWrapper = new SystemTableWrapper(newSystemTable, db.getURL());
 
         }
@@ -182,9 +186,11 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
      */
     private List<String> getActiveSystemTableLocationsFromLocator() throws LocatorException {
 
-        if (remoteInterface == null) remoteInterface = db.getRemoteInterface();
+        if (remoteInterface == null) {
+            remoteInterface = db.getRemoteInterface();
+        }
 
-        H2OLocatorInterface locatorInterface = remoteInterface.getLocatorInterface();
+        final H2OLocatorInterface locatorInterface = remoteInterface.getLocatorInterface();
 
         if (locatorInterface == null) { throw new LocatorException("Failed to find locator servers."); }
 
@@ -193,7 +199,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         try {
             stLocations = locatorInterface.getLocations();
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             throw new LocatorException("Failed to obtain a list of instances which hold System Table state: " + e.getMessage());
         }
 
@@ -211,27 +217,27 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, db.getURL() + ": Attempting to fix a broken System Table connection.");
 
-        List<String> locatorLocations = getActiveSystemTableLocationsFromLocator();
+        final List<String> locatorLocations = getActiveSystemTableLocationsFromLocator();
 
         DatabaseInstanceRemote databaseInstance = null;
 
-        for (String locatorLocation : locatorLocations) {
+        for (final String locatorLocation : locatorLocations) {
             try {
                 databaseInstance = lookForDatabaseInstanceAt(remoteInterface, DatabaseURL.parseURL(locatorLocation));
 
-                boolean isSystemTable = databaseInstance.isSystemTable();
+                final boolean isSystemTable = databaseInstance.isSystemTable();
 
                 if (isSystemTable) {
-                    SystemTableWrapper wrapper = new SystemTableWrapper(databaseInstance.getSystemTable(), databaseInstance.getURL());
+                    final SystemTableWrapper wrapper = new SystemTableWrapper(databaseInstance.getSystemTable(), databaseInstance.getURL());
                     return wrapper;
                 }
             }
-            catch (Exception e) {
+            catch (final Exception e) {
                 // May be thrown if database isn't active.
             }
         }
 
-        throw new SQLException(db.getURL() + ": Couldn't find active System Table.");
+        throw new SQLException(db.getURL() + ": Couldn't find active System Table. System tables exist at: " + PrettyPrinter.toString(locatorLocations));
     }
 
     /**
@@ -243,17 +249,17 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
      * @throws SQLException
      * @throws SystemTableAccessException
      */
-    private SystemTableWrapper startSystemTableOnOneOfSpecifiedMachines(List<String> stLocations) throws SystemTableAccessException {
+    private SystemTableWrapper startSystemTableOnOneOfSpecifiedMachines(final List<String> stLocations) throws SystemTableAccessException {
 
-        for (String systemTableLocation : stLocations) {
-            DatabaseURL url = DatabaseURL.parseURL(systemTableLocation);
+        for (final String systemTableLocation : stLocations) {
+            final DatabaseURL url = DatabaseURL.parseURL(systemTableLocation);
 
             DatabaseInstanceRemote databaseInstance = null;
 
             try {
                 databaseInstance = lookForDatabaseInstanceAt(remoteInterface, url);
             }
-            catch (Exception e) {
+            catch (final Exception e) {
                 // May be thrown if database isn't active.
                 continue;
             }
@@ -267,11 +273,11 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
                 try {
                     systemTable = databaseInstance.recreateSystemTable(); // throws a SystemTableCreationException if it fails.
                 }
-                catch (RemoteException e) {
+                catch (final RemoteException e) {
                     // May be thrown if database isn't active.
                     continue;
                 }
-                catch (SQLException e) {
+                catch (final SQLException e) {
                     // Thrown if it failed to create the System Table.
                     e.printStackTrace();
                     continue; // try another machine.
@@ -284,7 +290,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         throw new SystemTableAccessException("Failed to create new System Table.");
     }
 
-    private DatabaseInstanceRemote lookForDatabaseInstanceAt(IDatabaseRemote iDatabaseRemote, DatabaseURL url) throws RemoteException {
+    private DatabaseInstanceRemote lookForDatabaseInstanceAt(final IDatabaseRemote iDatabaseRemote, final DatabaseURL url) throws RemoteException {
 
         DatabaseInstanceRemote databaseInstance;
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Looking for database instance at: " + url.getHostname() + ":" + url.getRMIPort());
@@ -299,7 +305,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
      * @param oldSystemTable
      * @return
      */
-    private SystemTableWrapper moveSystemTableToLocalMachine(SystemTableRemote oldSystemTable) throws SystemTableAccessException {
+    private SystemTableWrapper moveSystemTableToLocalMachine(final SystemTableRemote oldSystemTable) throws SystemTableAccessException {
 
         /*
          * CREATE A NEW System Table BY COPYING THE STATE OF THE CURRENT ACTIVE IN-MEMORY System Table.
@@ -315,7 +321,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         try {
             newSystemTable = new SystemTable(db, true);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             ErrorHandling.exceptionError(e, "Failed to create new in-memory System Table.");
             throw new SystemTableAccessException("Failed to create new in-memory System Table.");
         }
@@ -326,14 +332,14 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         try {
             oldSystemTable.prepareForMigration(db.getURL().getURLwithRMIPort());
         }
-        catch (RemoteException e) {
+        catch (final RemoteException e) {
             e.printStackTrace();
         }
-        catch (MigrationException e) {
+        catch (final MigrationException e) {
             ErrorHandling.exceptionError(e, "This System Table is already being migrated to another instance.");
             throw new SystemTableAccessException("This System Table is already being migrated to another instance.");
         }
-        catch (MovedException e) {
+        catch (final MovedException e) {
             ErrorHandling.exceptionError(e, "This System Table has already been migrated to another instance.");
             throw new SystemTableAccessException("This System Table is already being migrated to another instance.");
         }
@@ -344,19 +350,19 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         try {
             newSystemTable.buildSystemTableState(oldSystemTable);
         }
-        catch (RemoteException e) {
+        catch (final RemoteException e) {
             ErrorHandling.exceptionError(e, "Failed to migrate System Table to new machine.");
             throw new SystemTableAccessException("Failed to migrate System Table to new machine.");
         }
-        catch (MovedException e) {
+        catch (final MovedException e) {
             ErrorHandling.exceptionError(e, "This shouldn't be possible here. The System Table has moved, but this instance should have had exclusive rights to it.");
             throw new SystemTableAccessException("This shouldn't be possible here. The System Table has moved, but this instance should have had exclusive rights to it.");
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             ErrorHandling.exceptionError(e, "Couldn't create persisted tables as expected.");
             throw new SystemTableAccessException("Couldn't create persisted tables as expected.");
         }
-        catch (NullPointerException e) {
+        catch (final NullPointerException e) {
             // ErrorHandling.exceptionError(e,
             // "Failed to migrate System Table to new machine. Machine has already been shut down.");
 
@@ -368,22 +374,22 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         try {
             oldSystemTable.completeMigration();
         }
-        catch (RemoteException e) {
+        catch (final RemoteException e) {
             ErrorHandling.exceptionError(e, "Failed to complete migration.");
             throw new SystemTableAccessException("Failed to complete migration.");
 
         }
-        catch (MovedException e) {
+        catch (final MovedException e) {
             ErrorHandling.exceptionError(e, "This shouldn't be possible here. The System Table has moved, but this instance should have had exclusive rights to it.");
             throw new SystemTableAccessException("This shouldn't be possible here. The System Table has moved, but this instance should have had exclusive rights to it.");
         }
-        catch (MigrationException e) {
+        catch (final MigrationException e) {
             ErrorHandling.exceptionError(e, "Migration process timed out. It took too long.");
             throw new SystemTableAccessException("Migration process timed out. It took too long.");
         }
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "System Table officially migrated to " + db.getURL().getDbLocation() + ".");
 
-        SystemTableWrapper wrapper = new SystemTableWrapper(newSystemTable, db.getURL());
+        final SystemTableWrapper wrapper = new SystemTableWrapper(newSystemTable, db.getURL());
         return wrapper;
     }
 
@@ -392,7 +398,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
      * 
      * @throws SystemTableAccessException
      */
-    private SystemTableWrapper restartSystemTableFromPersistedState(boolean persistedSchemaTablesExist) throws SystemTableAccessException {
+    private SystemTableWrapper restartSystemTableFromPersistedState(final boolean persistedSchemaTablesExist) throws SystemTableAccessException {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Preparing to re-instantiate System Table from persistent store.");
 
@@ -408,7 +414,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         try {
             newSystemTable = new SystemTable(db, false); // false - don't overwrite saved persisted state.
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             ErrorHandling.exceptionError(e, "Failed to create new in-memory System Table.");
             throw new SystemTableAccessException("Failed to create new in-memory System Table.");
         }
@@ -418,20 +424,20 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
 
             Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, db.getURL() + ": New System Table created.");
         }
-        catch (RemoteException e) {
+        catch (final RemoteException e) {
             e.printStackTrace();
             throw new SystemTableAccessException("Failed to contact some remote process when recreating System Table locally.");
         }
-        catch (MovedException e) {
+        catch (final MovedException e) {
             e.printStackTrace();
             throw new SystemTableAccessException("This shouldn't be possible here. The System Table has moved, but this instance should have had exclusive rights to it.");
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             ErrorHandling.exceptionError(e, "Persisted state didn't exist on machine as expected.");
             throw new SystemTableAccessException("Persisted state didn't exist on machine as expected.");
         }
 
-        SystemTableWrapper wrapper = new SystemTableWrapper(newSystemTable, db.getURL());
+        final SystemTableWrapper wrapper = new SystemTableWrapper(newSystemTable, db.getURL());
 
         return wrapper;
     }

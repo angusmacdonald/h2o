@@ -30,6 +30,7 @@ import org.h2.table.TableData;
 import org.h2.util.ObjectArray;
 import org.h2o.db.query.QueryProxy;
 import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 
 /**
@@ -88,23 +89,24 @@ public class AlterTableAlterColumn extends SchemaCommand {
 
     private QueryProxy queryProxy = null;
 
-    public AlterTableAlterColumn(Session session, Schema schema, boolean internalQuery) {
+    public AlterTableAlterColumn(final Session session, final Schema schema, final boolean internalQuery) {
 
         super(session, schema);
         setInternalQuery(internalQuery);
     }
 
-    public void setOldColumn(Column oldColumn) {
+    public void setOldColumn(final Column oldColumn) {
 
         this.oldColumn = oldColumn;
     }
 
-    public void setAddBefore(String before) {
+    public void setAddBefore(final String before) {
 
-        this.addBefore = before;
+        addBefore = before;
     }
 
-    public int update(String transactionName) throws SQLException, RemoteException {
+    @Override
+    public int update(final String transactionName) throws SQLException, RemoteException {
 
         session.commit(true);
 
@@ -113,18 +115,18 @@ public class AlterTableAlterColumn extends SchemaCommand {
          */
         if (isRegularTable()) {
             if (queryProxy == null) {
-                queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, session.getDatabase());
+                queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, LockRequest.createNewLockRequest(session), session.getDatabase());
             }
             // if (queryProxy.getNumberOfReplicas() > 1){
             return queryProxy.executeUpdate(sqlStatement, transactionName, session);
             // } //Else, just execute it now.
         }
 
-        Database db = session.getDatabase();
+        final Database db = session.getDatabase();
         session.getUser().checkRight(table, Right.ALL);
         table.checkSupportAlter();
         table.lock(session, true, true);
-        Sequence sequence = oldColumn == null ? null : oldColumn.getSequence();
+        final Sequence sequence = oldColumn == null ? null : oldColumn.getSequence();
         switch (type) {
             case NOT_NULL: {
                 if (!oldColumn.getNullable()) {
@@ -186,7 +188,7 @@ public class AlterTableAlterColumn extends SchemaCommand {
                 break;
             }
             case SELECTIVITY: {
-                int value = newSelectivity.optimize(session).getValue(session).getInt();
+                final int value = newSelectivity.optimize(session).getValue(session).getInt();
                 oldColumn.setSelectivity(value);
                 db.update(session, table);
                 break;
@@ -197,44 +199,44 @@ public class AlterTableAlterColumn extends SchemaCommand {
         return 0;
     }
 
-    private void convertToIdentityIfRequired(Column c) {
+    private void convertToIdentityIfRequired(final Column c) {
 
         if (c.getAutoIncrement()) {
             c.setOriginalSQL("IDENTITY");
         }
     }
 
-    private void removeSequence(Sequence sequence) throws SQLException {
+    private void removeSequence(final Sequence sequence) throws SQLException {
 
         if (sequence != null) {
             table.removeSequence(session, sequence);
             sequence.setBelongsToTable(false);
-            Database db = session.getDatabase();
+            final Database db = session.getDatabase();
             db.removeSchemaObject(session, sequence);
         }
     }
 
     private void checkNoViews() throws SQLException {
 
-        ObjectArray children = table.getChildren();
+        final ObjectArray children = table.getChildren();
         for (int i = 0; i < children.size(); i++) {
-            DbObject child = (DbObject) children.get(i);
+            final DbObject child = (DbObject) children.get(i);
             if (child.getType() == DbObject.TABLE_OR_VIEW) { throw Message.getSQLException(ErrorCode.OPERATION_NOT_SUPPORTED_WITH_VIEWS_2, new String[]{table.getName(), child.getName()}); }
         }
     }
 
     private void copyData() throws SQLException, RemoteException {
 
-        Database db = session.getDatabase();
-        String tempName = db.getTempTableName(session.getId());
-        Column[] columns = table.getColumns();
-        ObjectArray newColumns = new ObjectArray();
-        for (Column column : columns) {
-            Column col = column.getClone();
+        final Database db = session.getDatabase();
+        final String tempName = db.getTempTableName(session.getId());
+        final Column[] columns = table.getColumns();
+        final ObjectArray newColumns = new ObjectArray();
+        for (final Column column : columns) {
+            final Column col = column.getClone();
             newColumns.add(col);
         }
         if (type == DROP) {
-            int position = oldColumn.getColumnId();
+            final int position = oldColumn.getColumnId();
             newColumns.remove(position);
         }
         else if (type == ADD) {
@@ -248,28 +250,28 @@ public class AlterTableAlterColumn extends SchemaCommand {
             newColumns.add(position, newColumn);
         }
         else if (type == CHANGE_TYPE) {
-            int position = oldColumn.getColumnId();
+            final int position = oldColumn.getColumnId();
             newColumns.remove(position);
             newColumns.add(position, newColumn);
         }
-        boolean persistent = table.getPersistent();
+        final boolean persistent = table.getPersistent();
         // create a table object in order to get the SQL statement
         // can't just use this table, because most column objects are 'shared'
         // with the old table
         // still need a new id because using 0 would mean: the new table tries
         // to use the rows of the table 0 (the meta table)
-        int id = -1;
+        final int id = -1;
         TableData newTable = getSchema().createTable(tempName, id, newColumns, persistent, false, Index.EMPTY_HEAD);
         newTable.setComment(table.getComment());
-        StringBuilder buff = new StringBuilder(newTable.getCreateSQL());
-        StringBuilder columnList = new StringBuilder();
+        final StringBuilder buff = new StringBuilder(newTable.getCreateSQL());
+        final StringBuilder columnList = new StringBuilder();
         for (int i = 0; i < newColumns.size(); i++) {
-            Column nc = (Column) newColumns.get(i);
+            final Column nc = (Column) newColumns.get(i);
             if (columnList.length() > 0) {
                 columnList.append(", ");
             }
             if (type == ADD && nc == newColumn) {
-                Expression def = nc.getDefaultExpression();
+                final Expression def = nc.getDefaultExpression();
                 columnList.append(def == null ? "NULL" : def.getSQL());
             }
             else {
@@ -286,33 +288,33 @@ public class AlterTableAlterColumn extends SchemaCommand {
         }
         buff.append(" FROM ");
         buff.append(table.getSQL());
-        String newTableSQL = buff.toString();
+        final String newTableSQL = buff.toString();
         execute(newTableSQL, true);
         newTable = (TableData) newTable.getSchema().getTableOrView(session, newTable.getName());
         ObjectArray children = table.getChildren();
-        ObjectArray triggers = new ObjectArray();
+        final ObjectArray triggers = new ObjectArray();
         for (int i = 0; i < children.size(); i++) {
-            DbObject child = (DbObject) children.get(i);
+            final DbObject child = (DbObject) children.get(i);
             if (child instanceof Sequence) {
                 continue;
             }
             else if (child instanceof Index) {
-                Index idx = (Index) child;
+                final Index idx = (Index) child;
                 if (idx.getIndexType().getBelongsToConstraint()) {
                     continue;
                 }
             }
-            String createSQL = child.getCreateSQL();
+            final String createSQL = child.getCreateSQL();
             if (createSQL == null) {
                 continue;
             }
             if (child.getType() == DbObject.TABLE_OR_VIEW) {
                 Message.throwInternalError();
             }
-            String quotedName = Parser.quoteIdentifier(tempName + "_" + child.getName());
+            final String quotedName = Parser.quoteIdentifier(tempName + "_" + child.getName());
             String sql = null;
             if (child instanceof ConstraintReferential) {
-                ConstraintReferential r = (ConstraintReferential) child;
+                final ConstraintReferential r = (ConstraintReferential) child;
                 if (r.getTable() != table) {
                     sql = r.getCreateSQLForCopy(r.getTable(), newTable, quotedName, false);
                 }
@@ -329,26 +331,26 @@ public class AlterTableAlterColumn extends SchemaCommand {
                 }
             }
         }
-        String tableName = table.getName();
+        final String tableName = table.getName();
         table.setModified();
-        for (Column column : columns) {
+        for (final Column column : columns) {
             // if we don't do that, the sequence is dropped when the table is
             // dropped
-            Sequence seq = column.getSequence();
+            final Sequence seq = column.getSequence();
             if (seq != null) {
                 table.removeSequence(session, seq);
                 column.setSequence(null);
             }
         }
         for (int i = 0; i < triggers.size(); i++) {
-            String sql = (String) triggers.get(i);
+            final String sql = (String) triggers.get(i);
             execute(sql, true);
         }
         execute("DROP TABLE " + table.getSQL(), true);
         db.renameSchemaObject(session, newTable, tableName);
         children = newTable.getChildren();
         for (int i = 0; i < children.size(); i++) {
-            DbObject child = (DbObject) children.get(i);
+            final DbObject child = (DbObject) children.get(i);
             if (child instanceof Sequence) {
                 continue;
             }
@@ -363,9 +365,9 @@ public class AlterTableAlterColumn extends SchemaCommand {
         }
     }
 
-    private void execute(String sql, boolean ddl) throws SQLException, RemoteException {
+    private void execute(final String sql, final boolean ddl) throws SQLException, RemoteException {
 
-        Prepared command = session.prepare(sql);
+        final Prepared command = session.prepare(sql);
         command.update();
         if (ddl && session.getDatabase().isMultiVersion()) {
             // TODO this should work without MVCC, but avoid risks at the moment
@@ -375,16 +377,16 @@ public class AlterTableAlterColumn extends SchemaCommand {
 
     private void dropSingleColumnIndexes() throws SQLException {
 
-        Database db = session.getDatabase();
+        final Database db = session.getDatabase();
         ObjectArray indexes = table.getIndexes();
         for (int i = 0; i < indexes.size(); i++) {
-            Index index = (Index) indexes.get(i);
+            final Index index = (Index) indexes.get(i);
             if (index.getCreateSQL() == null) {
                 continue;
             }
             boolean dropIndex = false;
-            Column[] cols = index.getColumns();
-            for (Column col : cols) {
+            final Column[] cols = index.getColumns();
+            for (final Column col : cols) {
                 if (col == oldColumn) {
                     if (cols.length == 1) {
                         dropIndex = true;
@@ -404,42 +406,42 @@ public class AlterTableAlterColumn extends SchemaCommand {
 
     private void checkNullable() throws SQLException {
 
-        ObjectArray indexes = table.getIndexes();
+        final ObjectArray indexes = table.getIndexes();
         for (int i = 0; i < indexes.size(); i++) {
-            Index index = (Index) indexes.get(i);
+            final Index index = (Index) indexes.get(i);
             if (index.getColumnIndex(oldColumn) < 0) {
                 continue;
             }
-            IndexType indexType = index.getIndexType();
+            final IndexType indexType = index.getIndexType();
             if (indexType.getPrimaryKey() || indexType.getHash()) { throw Message.getSQLException(ErrorCode.COLUMN_IS_PART_OF_INDEX_1, index.getSQL()); }
         }
     }
 
     private void checkNoNullValues() throws SQLException {
 
-        String sql = "SELECT COUNT(*) FROM " + table.getSQL() + " WHERE " + oldColumn.getSQL() + " IS NULL";
-        Prepared command = session.prepare(sql);
-        LocalResult result = command.query(0);
+        final String sql = "SELECT COUNT(*) FROM " + table.getSQL() + " WHERE " + oldColumn.getSQL() + " IS NULL";
+        final Prepared command = session.prepare(sql);
+        final LocalResult result = command.query(0);
         result.next();
         if (result.currentRow()[0].getInt() > 0) { throw Message.getSQLException(ErrorCode.COLUMN_CONTAINS_NULL_VALUES_1, oldColumn.getSQL()); }
     }
 
-    public void setType(int type) {
+    public void setType(final int type) {
 
         this.type = type;
     }
 
-    public void setSelectivity(Expression selectivity) {
+    public void setSelectivity(final Expression selectivity) {
 
         newSelectivity = selectivity;
     }
 
-    public void setDefaultExpression(Expression defaultExpression) {
+    public void setDefaultExpression(final Expression defaultExpression) {
 
         this.defaultExpression = defaultExpression;
     }
 
-    public void setNewColumn(Column newColumn) {
+    public void setNewColumn(final Column newColumn) {
 
         this.newColumn = newColumn;
     }
@@ -449,7 +451,7 @@ public class AlterTableAlterColumn extends SchemaCommand {
      * @see org.h2.command.Prepared#acquireLocks()
      */
     @Override
-    public void acquireLocks(QueryProxyManager queryProxyManager) throws SQLException {
+    public void acquireLocks(final QueryProxyManager queryProxyManager) throws SQLException {
 
         /*
          * (QUERY PROPAGATED TO ALL REPLICAS).
@@ -459,23 +461,24 @@ public class AlterTableAlterColumn extends SchemaCommand {
             queryProxy = queryProxyManager.getQueryProxy(table.getFullName());
 
             if (queryProxy == null) {
-                queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, session.getDatabase());
+                queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, LockRequest.createNewLockRequest(session), session.getDatabase());
             }
 
             queryProxyManager.addProxy(queryProxy);
         }
         else {
 
-            queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper()));
+            queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(LockRequest.createNewLockRequest(session)));
         }
     }
 
     /**
      * True if the table involved in the prepared statement is a regular table - i.e. not an H2O meta-data table.
      */
+    @Override
     protected boolean isRegularTable() {
 
-        boolean isLocal = session.getDatabase().isTableLocal(getSchema());
+        final boolean isLocal = session.getDatabase().isTableLocal(getSchema());
         return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !isStartup() && !internalQuery && !isLocal;
 
     }

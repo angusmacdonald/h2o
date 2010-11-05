@@ -38,6 +38,7 @@ import org.h2o.db.manager.util.Migratable;
 import org.h2o.db.query.QueryProxy;
 import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.query.locking.ILockingTable;
+import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.db.query.locking.LockingTable;
 import org.h2o.db.replication.ReplicaManager;
@@ -357,7 +358,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
      * @see org.h2.h2o.manager.TableManagerRemote2#getQueryProxy(org.h2.h2o.util. LockType, org.h2.h2o.comms.remote.DatabaseInstanceRemote)
      */
     @Override
-    public synchronized QueryProxy getQueryProxy(LockType lockRequested, final DatabaseInstanceWrapper databaseInstanceWrapper) throws RemoteException, SQLException, MovedException {
+    public synchronized QueryProxy getQueryProxy(LockType lockRequested, final LockRequest lockRequest) throws RemoteException, SQLException, MovedException {
 
         preMethodTest();
 
@@ -377,9 +378,9 @@ public class TableManager extends PersistentManager implements TableManagerRemot
             lockRequested = LockType.WRITE;
         }
 
-        final LockType lockGranted = lockingTable.requestLock(lockRequested, databaseInstanceWrapper);
+        final LockType lockGranted = lockingTable.requestLock(lockRequested, lockRequest);
 
-        final QueryProxy qp = new QueryProxy(lockGranted, tableInfo, selectReplicaLocations(lockRequested, databaseInstanceWrapper, isDrop), this, databaseInstanceWrapper, currentUpdateID, lockRequested);
+        final QueryProxy qp = new QueryProxy(lockGranted, tableInfo, selectReplicaLocations(lockRequested, lockRequest, isDrop), this, lockRequest, currentUpdateID, lockRequested);
 
         return qp;
     }
@@ -402,7 +403,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
      * @return The set of database instances that should host a replica for the given table/schema. The return value will be NULL if no more
      *         replicas need to be created.
      */
-    private Map<DatabaseInstanceWrapper, Integer> selectReplicaLocations(final LockType lockType, final DatabaseInstanceWrapper requestingDatabase, final boolean isDrop) {
+    private Map<DatabaseInstanceWrapper, Integer> selectReplicaLocations(final LockType lockType, final LockRequest lockRequest, final boolean isDrop) {
 
         if (lockType == LockType.READ || lockType == LockType.NONE) { return replicaManager.getActiveReplicas(); }// else, a more informed decision is needed.
 
@@ -421,7 +422,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
              * We know that the CREATE operation has been executed on the machine on which this Table Manager has been created, because it
              * is the create operation that initializes the Table Manager in the first place.
              */
-            newReplicaLocations.put(requestingDatabase, 0);
+            newReplicaLocations.put(lockRequest.getRequestLocation(), 0);
             if (relationReplicationFactor == 1) { return newReplicaLocations; // No more replicas are needed
             // currently.
             }
@@ -538,14 +539,14 @@ public class TableManager extends PersistentManager implements TableManagerRemot
      * @see org.h2.h2o.manager.TableManagerRemote2#releaseLock(org.h2.h2o.comms.remote .DatabaseInstanceRemote, java.util.Set, int)
      */
     @Override
-    public void releaseLockAndUpdateReplicaState(final boolean commit, final DatabaseInstanceWrapper requestingDatabase, final Collection<CommitResult> committedQueries, final boolean asynchronousCommit) throws RemoteException, MovedException {
+    public void releaseLockAndUpdateReplicaState(final boolean commit, final LockRequest lockRequest, final Collection<CommitResult> committedQueries, final boolean asynchronousCommit) throws RemoteException, MovedException {
 
         /*
          * Release the locks.
          */
         LockType lockType = LockType.NONE;
         if (!asynchronousCommit) {
-            lockType = lockingTable.releaseLock(requestingDatabase);
+            lockType = lockingTable.releaseLock(lockRequest);
         }
 
         /*
@@ -857,7 +858,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
             rs = executeQuery(sql);
         }
         catch (final SQLException e) {
-            ErrorHandling.errorNoEvent("Error replicating table manager state.");
+            ErrorHandling.errorNoEvent(db.getURL() + ": Error replicating table manager state.");
             throw e;
         }
 

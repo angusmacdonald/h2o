@@ -146,7 +146,7 @@ public class Settings {
         /*
          * Whether diagnostic events are to be consumed and sent to an event monitor.
          */
-        defaults.setProperty("DATABASE_EVENTS_ENABLED", "true");
+        defaults.setProperty("DATABASE_EVENTS_ENABLED", "false");
 
         /*
          * The location of the event server that is to receive diagnostic events. This field doesn't matter if DATABASE_EVENTS_ENABLED

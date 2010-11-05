@@ -25,6 +25,7 @@ import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.db.manager.recovery.SystemTableAccessException;
 import org.h2o.db.query.asynchronous.AsynchronousQueryExecutor;
+import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.test.H2OTest;
@@ -65,7 +66,7 @@ public class QueryProxy implements Serializable {
      * The database instance making the request. This is used to request the lock (i.e. the lock for the given query is taken out in the
      * name of this database instance.
      */
-    private final DatabaseInstanceWrapper requestingDatabase;
+    private final LockRequest requestingDatabase;
 
     /**
      * ID assigned to this update by the Table Manager. This is returned to inform the Table Manager what replicas were updated.
@@ -91,7 +92,7 @@ public class QueryProxy implements Serializable {
      * @param updateID
      *            ID given to this update.
      */
-    public QueryProxy(final LockType lockGranted, final TableInfo tableName, final Map<DatabaseInstanceWrapper, Integer> allReplicas, final TableManagerRemote tableManager, final DatabaseInstanceWrapper requestingMachine, final int updateID, final LockType lockRequested) {
+    public QueryProxy(final LockType lockGranted, final TableInfo tableName, final Map<DatabaseInstanceWrapper, Integer> allReplicas, final TableManagerRemote tableManager, final LockRequest requestingMachine, final int updateID, final LockType lockRequested) {
 
         this.lockGranted = lockGranted;
         this.lockRequested = lockRequested;
@@ -106,16 +107,16 @@ public class QueryProxy implements Serializable {
      * Creates a dummy query proxy.
      * 
      * @see #getDummyQueryProxy(DatabaseInstanceRemote)
-     * @param localDatabaseInstance
+     * @param lockRequest
      */
-    public QueryProxy(final DatabaseInstanceWrapper localDatabaseInstance) {
+    public QueryProxy(final LockRequest lockRequest) {
 
         lockGranted = LockType.WRITE;
         allReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
-        if (localDatabaseInstance != null) { // true when the DB hasn't started yet (management DB, etc.)
-            allReplicas.put(localDatabaseInstance, 0);
+        if (lockRequest != null) { // true when the DB hasn't started yet (management DB, etc.)
+            allReplicas.put(lockRequest.getRequestLocation(), 0);
         }
-        requestingDatabase = localDatabaseInstance;
+        requestingDatabase = lockRequest;
         tableName = new TableInfo("Dummy", "Table");
     }
 
@@ -135,7 +136,7 @@ public class QueryProxy implements Serializable {
              * If we don't know of any replicas and this is a CREATE TABLE statement then we just run the query on the local DB instance.
              */
             allReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
-            allReplicas.put(requestingDatabase, 0);
+            allReplicas.put(requestingDatabase.getRequestLocation(), 0);
         }
         else if (allReplicas == null || allReplicas.size() == 0) {
             /*
@@ -175,23 +176,23 @@ public class QueryProxy implements Serializable {
      *            Table involved in query.
      * @param lockType
      *            Lock required for query
-     * @param db
+     * @param lockRequest
      *            Local database instance - needed to inform DM of: the identity of the requesting machine, and to obtain the Table Manager
      *            for the given table.
      * @return
      * @throws SQLException
      */
-    public static QueryProxy getQueryProxyAndLock(final Table table, final LockType lockType, final Database db) throws SQLException {
+    public static QueryProxy getQueryProxyAndLock(final Table table, final LockType lockType, final LockRequest lockRequest, final Database db) throws SQLException {
 
         // if the table is temporary it only exists as part of this transaction
         // - i.e. no lock is needed.
         // if one of the reserved table names is used (SYSTEM_RANGE, for
         // example) it isn't a proper table so won't have a Table Manager.
         if (table != null && !table.getTemporary() && !Settings.reservedTableNames.contains(table.getName())) {
-            return getQueryProxyAndLock(db, table.getFullName(), lockType, db.getLocalDatabaseInstanceInWrapper());
+            return getQueryProxyAndLock(lockRequest, table.getFullName(), lockType, db);
         }
         else {
-            return getDummyQueryProxy(db.getLocalDatabaseInstanceInWrapper());
+            return getDummyQueryProxy(lockRequest);
         }
     }
 
@@ -200,39 +201,37 @@ public class QueryProxy implements Serializable {
      * only replica. Used in cases where a query won't have to be propagated, or where no particular table is specified in the query (e.g.
      * create schema), and so it isn't possible to lock on a particular table.
      * 
-     * @param localDatabaseInstance
+     * @param lockRequest
      * @return
      */
-    public static QueryProxy getDummyQueryProxy(final DatabaseInstanceWrapper localDatabaseInstance) {
+    public static QueryProxy getDummyQueryProxy(final LockRequest lockRequest) {
 
-        return new QueryProxy(localDatabaseInstance);
+        return new QueryProxy(lockRequest);
     }
 
     /**
      * Obtain a query proxy for the given table.
      * 
      * @param tableManager
-     * @param requestingDatabase
+     * @param lockRequest
      *            DB making the request.
      * @return Query proxy for a specific table within H20.
      * @throws SQLException
      */
-    public static QueryProxy getQueryProxyAndLock(TableManagerRemote tableManager, final String tableName, final Database db, final LockType lockType, final DatabaseInstanceWrapper requestingDatabase, final boolean alreadyCalled) throws SQLException {
+    public static QueryProxy getQueryProxyAndLock(TableManagerRemote tableManager, final String tableName, final LockRequest lockRequest, final LockType lockType, final Database db, final boolean alreadyCalled) throws SQLException {
 
-        if (requestingDatabase == null) {
-            ErrorHandling.hardError("A requesting database must be specified.");
-        }
+        assert lockRequest != null : "A requesting database must be specified.";
 
         try {
             QueryProxy queryProxy = null;
             try {
-                queryProxy = tableManager.getQueryProxy(lockType, requestingDatabase);
+                queryProxy = tableManager.getQueryProxy(lockType, lockRequest);
             }
             catch (final MovedException e) {
                 // Get an uncached Table Manager from the System Table
                 tableManager = db.getSystemTableReference().lookup(tableName, false);
 
-                queryProxy = tableManager.getQueryProxy(lockType, requestingDatabase);
+                queryProxy = tableManager.getQueryProxy(lockType, lockRequest);
             }
             return queryProxy;
         }
@@ -265,7 +264,7 @@ public class QueryProxy implements Serializable {
                 if (systemTableActive) {
                     try {
                         final TableManagerRemote newTableManager = db.getSystemTable().recreateTableManager(new TableInfo(tableName));
-                        if (newTableManager != null) { return getQueryProxyAndLock(newTableManager, tableName, db, lockType, requestingDatabase, true); }
+                        if (newTableManager != null) { return getQueryProxyAndLock(newTableManager, tableName, lockRequest, lockType, db, true); }
                     }
                     catch (final RemoteException e1) {
                         e1.printStackTrace();
@@ -283,7 +282,7 @@ public class QueryProxy implements Serializable {
         }
     }
 
-    public static QueryProxy getQueryProxyAndLock(final Database db, final String tableName, final LockType lockType, final DatabaseInstanceWrapper requestingDatabase) throws SQLException {
+    public static QueryProxy getQueryProxyAndLock(final LockRequest lockRequest, final String tableName, final LockType lockType, final Database db) throws SQLException {
 
         final TableManagerRemote tableManager = db.getSystemTableReference().lookup(tableName, true);
 
@@ -293,7 +292,7 @@ public class QueryProxy implements Serializable {
             throw new SQLException("Table Manager not found for table.");
         }
 
-        return getQueryProxyAndLock(tableManager, tableName, db, lockType, requestingDatabase, false);
+        return getQueryProxyAndLock(tableManager, tableName, lockRequest, lockType, db, false);
     }
 
     public LockType getLockGranted() {
@@ -317,7 +316,7 @@ public class QueryProxy implements Serializable {
         }
 
         final String plural = allReplicas.size() == 1 ? "" : "s";
-        return tableName + " (" + allReplicas.size() + " replica" + plural + "), with lock '" + lockGranted + "'";
+        return tableName + " (" + allReplicas.size() + " replica" + plural + "), with lock '" + lockGranted + "', request from " + requestingDatabase;
     }
 
     /**
@@ -334,11 +333,9 @@ public class QueryProxy implements Serializable {
     public Map<DatabaseInstanceWrapper, Integer> getRemoteReplicaLocations() {
 
         final Map<DatabaseInstanceWrapper, Integer> remoteReplicas = new HashMap<DatabaseInstanceWrapper, Integer>(allReplicas);
-        final Integer removedItem = remoteReplicas.remove(requestingDatabase);
+        final Integer removedItem = remoteReplicas.remove(requestingDatabase.getRequestLocation());
 
-        if (removedItem == null) {
-            ErrorHandling.errorNoEvent("Tried to remove the local replica from the set of all replicas, but failed. Possibly equality check problem.");
-        }
+        assert removedItem != null : "Tried to remove the local replica from the set of all replicas, but failed. Possibly equality check problem.";
 
         return remoteReplicas;
     }
@@ -370,7 +367,7 @@ public class QueryProxy implements Serializable {
     /**
      * @return the requestingDatabase
      */
-    public DatabaseInstanceWrapper getRequestingDatabase() {
+    public LockRequest getRequestingDatabase() {
 
         return requestingDatabase;
     }
@@ -383,7 +380,7 @@ public class QueryProxy implements Serializable {
      */
     public boolean isSingleDatabase(final DatabaseInstanceRemote localDatabase) {
 
-        return allReplicas != null && allReplicas.size() == 1 && getRequestingDatabase().getDatabaseInstance() == localDatabase;
+        return allReplicas != null && allReplicas.size() == 1 && getRequestingDatabase().getRequestLocation().getDatabaseInstance() == localDatabase;
     }
 
     /**

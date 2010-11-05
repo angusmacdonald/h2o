@@ -20,6 +20,7 @@ import java.util.concurrent.FutureTask;
 import org.h2.engine.Database;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.TableManagerRemote;
+import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
 
@@ -185,8 +186,10 @@ public class Transaction {
                 }
 
                 if (tableManager != null) {
+                    final DatabaseInstanceWrapper databaseHoldingLock = db.getLocalDatabaseInstanceInWrapper(); //not used in this case because the updates have already completed.
+                    final LockRequest lockRequest = new LockRequest(databaseHoldingLock, -1); //session ID doesn't matter because no locks are held at this point.
                     try {
-                        tableManager.releaseLockAndUpdateReplicaState(true, db.getLocalDatabaseInstanceInWrapper(), newlyCompletedUpdates, true);
+                        tableManager.releaseLockAndUpdateReplicaState(true, lockRequest, newlyCompletedUpdates, true);
                     }
                     catch (final RemoteException e) {
                         e.printStackTrace();
@@ -194,7 +197,7 @@ public class Transaction {
                     catch (final MovedException e) {
                         try {
                             tableManager = db.getSystemTableReference().lookup(tableName, false);
-                            tableManager.releaseLockAndUpdateReplicaState(true, db.getLocalDatabaseInstanceInWrapper(), newlyCompletedUpdates, true);
+                            tableManager.releaseLockAndUpdateReplicaState(true, lockRequest, newlyCompletedUpdates, true);
                         }
                         catch (final Exception e1) {
                             e1.printStackTrace();

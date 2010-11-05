@@ -1366,4 +1366,9 @@ public class Session extends SessionWithState {
         proxyManagerForCurrentTransaction = new QueryProxyManager(getDatabase(), this);
     }
 
+    public int getSerialID() {
+
+        return serialId;
+    }
+
 }

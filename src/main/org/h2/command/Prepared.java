@@ -24,6 +24,7 @@ import org.h2.util.ObjectArray;
 import org.h2.value.Value;
 import org.h2o.db.query.QueryProxy;
 import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
@@ -83,10 +84,10 @@ public abstract class Prepared {
      * 
      * @return
      */
-    protected boolean isReplicaLocal(QueryProxy queryProxy) {
+    protected boolean isReplicaLocal(final QueryProxy queryProxy) {
 
-        for (DatabaseInstanceWrapper replica : queryProxy.getReplicaLocations().keySet()) {
-            if (!this.session.getDatabase().getURL().equals(replica.getURL())) return false;
+        for (final DatabaseInstanceWrapper replica : queryProxy.getReplicaLocations().keySet()) {
+            if (!session.getDatabase().getURL().equals(replica.getURL())) { return false; }
         }
 
         return true;
@@ -99,7 +100,7 @@ public abstract class Prepared {
      *            the session
      * @param internalQuery2
      */
-    public Prepared(Session session, boolean internalQuery) {
+    public Prepared(final Session session, final boolean internalQuery) {
 
         this.session = session;
         this.internalQuery = internalQuery;
@@ -137,7 +138,7 @@ public abstract class Prepared {
      */
     public boolean needRecompile() throws SQLException {
 
-        Database db = session.getDatabase();
+        final Database db = session.getDatabase();
         if (db == null) { throw Message.getSQLException(ErrorCode.CONNECTION_BROKEN); }
         // TODO parser: currently, compiling every create/drop/... twice!
         // because needRecompile return true even for the first execution
@@ -160,9 +161,9 @@ public abstract class Prepared {
      * @param id
      *            the new id
      */
-    void setModificationMetaId(long id) {
+    void setModificationMetaId(final long id) {
 
-        this.modificationMetaId = id;
+        modificationMetaId = id;
     }
 
     /**
@@ -171,7 +172,7 @@ public abstract class Prepared {
      * @param parameters
      *            the parameter list
      */
-    public void setParameterList(ObjectArray parameters) {
+    public void setParameterList(final ObjectArray parameters) {
 
         this.parameters = parameters;
     }
@@ -195,7 +196,7 @@ public abstract class Prepared {
     protected void checkParameters() throws SQLException {
 
         for (int i = 0; parameters != null && i < parameters.size(); i++) {
-            Parameter param = (Parameter) parameters.get(i);
+            final Parameter param = (Parameter) parameters.get(i);
             param.checkSet();
         }
     }
@@ -206,7 +207,7 @@ public abstract class Prepared {
      * @param command
      *            the new command
      */
-    public void setCommand(Command command) {
+    public void setCommand(final Command command) {
 
         this.command = command;
     }
@@ -250,19 +251,21 @@ public abstract class Prepared {
      * @throws SQLException
      * @throws RemoteException
      */
-    public int update(String transactionName) throws SQLException, RemoteException {
+    public int update(final String transactionName) throws SQLException, RemoteException {
 
         /*
          * If the subclass doesn't override this method, then it does not propagate the query to a remote machine. As a result, it does not
          * need to know the transactionName, so it is acceptable to simply call update().
          */
-        int result = update();
+        final int result = update();
 
         /*
          * Because these subclasses don't propagate the query, they also don't do anything to prepare the transaction locally. Consquently
          * this action is done here. 23/09/2010 - it doesn't need prepared if auto-commit is off.
          */
-        if (session.getApplicationAutoCommit()) prepareTransaction(transactionName);
+        if (session.getApplicationAutoCommit()) {
+            prepareTransaction(transactionName);
+        }
 
         return result;
     }
@@ -276,10 +279,10 @@ public abstract class Prepared {
      *             Thrown if the PREPARE COMMIT statement fails.
      * 
      */
-    protected void prepareTransaction(String transactionName) throws SQLException {
+    protected void prepareTransaction(final String transactionName) throws SQLException {
 
         if (!isTransactionCommand()) {
-            Command command = new Parser(session, true).prepareCommand("PREPARE COMMIT " + transactionName);
+            final Command command = new Parser(session, true).prepareCommand("PREPARE COMMIT " + transactionName);
             command.executeUpdate();
         }
     }
@@ -293,7 +296,7 @@ public abstract class Prepared {
      * @throws SQLException
      *             if it is not a query
      */
-    public LocalResult query(int maxrows) throws SQLException {
+    public LocalResult query(final int maxrows) throws SQLException {
 
         throw Message.getSQLException(ErrorCode.METHOD_ONLY_ALLOWED_FOR_QUERY);
     }
@@ -304,9 +307,9 @@ public abstract class Prepared {
      * @param sql
      *            the SQL statement
      */
-    public void setSQL(String sql) {
+    public void setSQL(final String sql) {
 
-        this.sqlStatement = sql;
+        sqlStatement = sql;
     }
 
     /**
@@ -340,9 +343,9 @@ public abstract class Prepared {
      *            if the object id is used for the
      * @return the object id
      */
-    protected int getObjectId(boolean needFresh, boolean dataFile) {
+    protected int getObjectId(final boolean needFresh, final boolean dataFile) {
 
-        Database db = session.getDatabase();
+        final Database db = session.getDatabase();
         int id = objectId;
         if (id == 0) {
             id = db.allocateObjectId(needFresh, dataFile);
@@ -370,7 +373,7 @@ public abstract class Prepared {
     public void checkCanceled() throws SQLException {
 
         session.checkCanceled();
-        Command c = command != null ? command : session.getCurrentCommand();
+        final Command c = command != null ? command : session.getCurrentCommand();
         if (c != null) {
             c.checkCanceled();
         }
@@ -382,9 +385,9 @@ public abstract class Prepared {
      * @param i
      *            the object id
      */
-    public void setObjectId(int i) {
+    public void setObjectId(final int i) {
 
-        this.objectId = i;
+        objectId = i;
     }
 
     /**
@@ -393,7 +396,7 @@ public abstract class Prepared {
      * @param headPos
      *            the head position
      */
-    public void setHeadPos(int headPos) {
+    public void setHeadPos(final int headPos) {
 
         this.headPos = headPos;
     }
@@ -404,9 +407,9 @@ public abstract class Prepared {
      * @param currentSession
      *            the new session
      */
-    public void setSession(Session currentSession) {
+    public void setSession(final Session currentSession) {
 
-        this.session = currentSession;
+        session = currentSession;
     }
 
     /**
@@ -417,13 +420,13 @@ public abstract class Prepared {
      * @param count
      *            the update count
      */
-    void trace(long startTime, int count) throws SQLException {
+    void trace(final long startTime, final int count) throws SQLException {
 
         if (session.getTrace().isInfoEnabled()) {
-            long time = System.currentTimeMillis() - startTime;
+            final long time = System.currentTimeMillis() - startTime;
             String params;
             if (parameters.size() > 0) {
-                StringBuilder buff = new StringBuilder(parameters.size() * 10);
+                final StringBuilder buff = new StringBuilder(parameters.size() * 10);
                 buff.append(" {");
                 for (int i = 0; i < parameters.size(); i++) {
                     if (i > 0) {
@@ -431,8 +434,8 @@ public abstract class Prepared {
                     }
                     buff.append(i + 1);
                     buff.append(": ");
-                    Expression e = (Expression) parameters.get(i);
-                    Value v = e.getValue(session);
+                    final Expression e = (Expression) parameters.get(i);
+                    final Value v = e.getValue(session);
                     buff.append(v.getTraceSQL());
                 }
                 buff.append("}");
@@ -451,7 +454,7 @@ public abstract class Prepared {
      * @param prepareAlways
      *            the new value
      */
-    public void setPrepareAlways(boolean prepareAlways) {
+    public void setPrepareAlways(final boolean prepareAlways) {
 
         this.prepareAlways = prepareAlways;
     }
@@ -462,9 +465,9 @@ public abstract class Prepared {
      * @param rowNumber
      *            the row number
      */
-    protected void setCurrentRowNumber(int rowNumber) {
+    protected void setCurrentRowNumber(final int rowNumber) {
 
-        this.currentRowNumber = rowNumber;
+        currentRowNumber = rowNumber;
     }
 
     /**
@@ -482,6 +485,7 @@ public abstract class Prepared {
      * 
      * @return the SQL statement
      */
+    @Override
     public String toString() {
 
         return sqlStatement;
@@ -494,14 +498,14 @@ public abstract class Prepared {
      *            the value list
      * @return the SQL snippet
      */
-    protected String getSQL(Value[] values) {
+    protected String getSQL(final Value[] values) {
 
-        StringBuilder buff = new StringBuilder();
+        final StringBuilder buff = new StringBuilder();
         for (int i = 0; i < values.length; i++) {
             if (i > 0) {
                 buff.append(", ");
             }
-            Value v = values[i];
+            final Value v = values[i];
             if (v != null) {
                 buff.append(v.getSQL());
             }
@@ -516,14 +520,14 @@ public abstract class Prepared {
      *            the expression list
      * @return the SQL snippet
      */
-    protected String getSQL(Expression[] list) {
+    protected String getSQL(final Expression[] list) {
 
-        StringBuilder buff = new StringBuilder();
+        final StringBuilder buff = new StringBuilder();
         for (int i = 0; i < list.length; i++) {
             if (i > 0) {
                 buff.append(", ");
             }
-            Expression e = list[i];
+            final Expression e = list[i];
             if (e != null) {
                 buff.append(e.getSQL());
             }
@@ -542,11 +546,11 @@ public abstract class Prepared {
      *            the values of the row
      * @return the exception
      */
-    protected SQLException setRow(SQLException ex, int rowId, String values) {
+    protected SQLException setRow(final SQLException ex, final int rowId, final String values) {
 
         if (ex instanceof JdbcSQLException) {
-            JdbcSQLException e = (JdbcSQLException) ex;
-            StringBuilder buff = new StringBuilder();
+            final JdbcSQLException e = (JdbcSQLException) ex;
+            final StringBuilder buff = new StringBuilder();
             if (sqlStatement != null) {
                 buff.append(sqlStatement);
             }
@@ -566,7 +570,7 @@ public abstract class Prepared {
      * @param startup
      *            True, if it is; otherwise, false.
      */
-    public void setStartup(boolean startup) {
+    public void setStartup(final boolean startup) {
 
         this.startup = startup;
     }
@@ -586,11 +590,11 @@ public abstract class Prepared {
      */
     protected boolean isRegularTable() {
 
-        Set<String> localSchema = session.getDatabase().getLocalSchema();
+        final Set<String> localSchema = session.getDatabase().getLocalSchema();
         try {
             return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery && !localSchema.contains(table.getSchema().getName());
         }
-        catch (NullPointerException e) {
+        catch (final NullPointerException e) {
             // Shouldn't occur, ever. Something should have probably overridden
             // this if it can't possibly know about a particular table.
             ErrorHandling.hardError("isRegularTable() check failed.");
@@ -598,7 +602,7 @@ public abstract class Prepared {
         }
     }
 
-    public void setTable(Table table) {
+    public void setTable(final Table table) {
 
         this.table = table;
     }
@@ -611,13 +615,13 @@ public abstract class Prepared {
      * @return
      * @throws SQLException
      */
-    public void acquireLocks(QueryProxyManager queryProxyManager) throws SQLException {
+    public void acquireLocks(final QueryProxyManager queryProxyManager) throws SQLException {
 
-        queryProxyManager.addProxy(QueryProxy.getQueryProxyAndLock(table, LockType.READ, session.getDatabase()));
+        queryProxyManager.addProxy(QueryProxy.getQueryProxyAndLock(table, LockType.READ, LockRequest.createNewLockRequest(session), session.getDatabase()));
     }
 
     /**
-     * Should this command be propagated to multiple sites. This method will be overridedn if true.
+     * Should this command be propagated to multiple sites. This method will be overrided if true.
      */
     public boolean shouldBePropagated() {
 
@@ -638,7 +642,7 @@ public abstract class Prepared {
      * @param internalQuery
      *            the internalQuery to set
      */
-    public void setInternalQuery(boolean internalQuery) {
+    public void setInternalQuery(final boolean internalQuery) {
 
         this.internalQuery = internalQuery;
     }
@@ -646,7 +650,7 @@ public abstract class Prepared {
     /**
      * @param preparedStatement
      */
-    public void setPreparedStatement(boolean preparedStatement) {
+    public void setPreparedStatement(final boolean preparedStatement) {
 
     }
 

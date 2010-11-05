@@ -27,6 +27,7 @@ import org.h2o.db.id.TableInfo;
 import org.h2o.db.query.QueryProxy;
 import org.h2o.db.query.QueryProxyManager;
 import org.h2o.db.query.asynchronous.CommitResult;
+import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.test.AsynchronousTests;
 
@@ -37,7 +38,7 @@ public class Insert extends Prepared {
 
     private Column[] columns;
 
-    private ObjectArray list = new ObjectArray();
+    private final ObjectArray list = new ObjectArray();
 
     private Query query;
 
@@ -51,7 +52,7 @@ public class Insert extends Prepared {
      *            True if this query has been sent internally through the RMI interface, false if it has come from an external JBDC
      *            connection.
      */
-    public Insert(Session session, boolean internalQuery) {
+    public Insert(final Session session, final boolean internalQuery) {
 
         super(session, internalQuery);
 
@@ -59,7 +60,7 @@ public class Insert extends Prepared {
     }
 
     @Override
-    public void setCommand(Command command) {
+    public void setCommand(final Command command) {
 
         super.setCommand(command);
         if (query != null) {
@@ -67,12 +68,12 @@ public class Insert extends Prepared {
         }
     }
 
-    public void setColumns(Column[] columns) {
+    public void setColumns(final Column[] columns) {
 
         this.columns = columns;
     }
 
-    public void setQuery(Query query) {
+    public void setQuery(final Query query) {
 
         this.query = query;
     }
@@ -83,7 +84,7 @@ public class Insert extends Prepared {
      * @param expr
      *            the list of values
      */
-    public void addRow(Expression[] expr) {
+    public void addRow(final Expression[] expr) {
 
         list.add(expr);
     }
@@ -93,34 +94,36 @@ public class Insert extends Prepared {
      * @see org.h2.command.Prepared#acquireLocks()
      */
     @Override
-    public void acquireLocks(QueryProxyManager queryProxyManager) throws SQLException {
+    public void acquireLocks(final QueryProxyManager queryProxyManager) throws SQLException {
 
         /*
          * (QUERY PROPAGATED TO ALL REPLICAS).
          */
+
         if (isRegularTable()) {
 
             queryProxy = queryProxyManager.getQueryProxy(table.getFullName());
 
             if (queryProxy == null || !queryProxy.getLockGranted().equals(LockType.WRITE)) {
-                queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, session.getDatabase());
+                queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, LockRequest.createNewLockRequest(session), session.getDatabase());
             }
 
             queryProxyManager.addProxy(queryProxy);
         }
         else {
-            queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper()));
+            queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(LockRequest.createNewLockRequest(session)));
         }
 
     }
 
+    @Override
     public int update() throws SQLException {
 
         return update(null);
     }
 
     @Override
-    public int update(String transactionName) throws SQLException {
+    public int update(final String transactionName) throws SQLException {
 
         int count = 0;
 
@@ -148,7 +151,7 @@ public class Insert extends Prepared {
              * If this is going to be an entirely local query we still need to create a record of it incase it is part of a larger
              * transaction.
              */
-            List<CommitResult> recentlyCompletedQueries = new LinkedList<CommitResult>();
+            final List<CommitResult> recentlyCompletedQueries = new LinkedList<CommitResult>();
             recentlyCompletedQueries.add(new CommitResult(true, session.getDatabase().getLocalDatabaseInstanceInWrapper(), queryProxy.getUpdateID(), queryProxy.getUpdateID(), new TableInfo(table.getFullName())));
             session.getDatabase().getAsynchronousQueryManager().addTransaction(transactionName, new TableInfo(table.getFullName()), null, recentlyCompletedQueries, 0);
         }
@@ -159,22 +162,22 @@ public class Insert extends Prepared {
         if (list.size() > 0) {
             count = 0;
             for (int x = 0; x < list.size(); x++) {
-                Expression[] expr = (Expression[]) list.get(x);
-                Row newRow = table.getTemplateRow();
+                final Expression[] expr = (Expression[]) list.get(x);
+                final Row newRow = table.getTemplateRow();
                 setCurrentRowNumber(x + 1);
                 for (int i = 0; i < columns.length; i++) {
-                    Column c = columns[i];
-                    int index = c.getColumnId();
+                    final Column c = columns[i];
+                    final int index = c.getColumnId();
                     Expression e = expr[i];
                     if (e != null) {
                         // e can be null (DEFAULT)
                         e = e.optimize(session);
                         try {
-                            Value v = e.getValue(session).convertTo(c.getType());
+                            final Value v = e.getValue(session).convertTo(c.getType());
                             newRow.setValue(index, v);
 
                         }
-                        catch (SQLException ex) {
+                        catch (final SQLException ex) {
                             throw setRow(ex, x, getSQL(expr));
                         }
                     }
@@ -192,24 +195,24 @@ public class Insert extends Prepared {
             }
         }
         else {
-            LocalResult rows = query.query(0);
+            final LocalResult rows = query.query(0);
             count = 0;
             table.fireBefore(session);
             table.lock(session, true, false);
             while (rows.next()) {
                 checkCanceled();
                 count++;
-                Value[] r = rows.currentRow();
-                Row newRow = table.getTemplateRow();
+                final Value[] r = rows.currentRow();
+                final Row newRow = table.getTemplateRow();
                 setCurrentRowNumber(count);
                 for (int j = 0; j < columns.length; j++) {
-                    Column c = columns[j];
-                    int index = c.getColumnId();
+                    final Column c = columns[j];
+                    final int index = c.getColumnId();
                     try {
-                        Value v = r[j].convertTo(c.getType());
+                        final Value v = r[j].convertTo(c.getType());
                         newRow.setValue(index, v);
                     }
-                    catch (SQLException ex) {
+                    catch (final SQLException ex) {
                         throw setRow(ex, count, getSQL(r));
                     }
                 }
@@ -242,25 +245,25 @@ public class Insert extends Prepared {
         // use the loop structure from below to obtain this information. how do
         // you know if it is a prepared statement.
 
-        Expression[] expr = (Expression[]) list.get(0);
-        String[] values = new String[columns.length];
+        final Expression[] expr = (Expression[]) list.get(0);
+        final String[] values = new String[columns.length];
 
         for (int i = 0; i < columns.length; i++) {
-            Column c = columns[i];
-            int index = c.getColumnId();
+            final Column c = columns[i];
+            final int index = c.getColumnId();
             Expression e = expr[i];
 
             // Only add the expression if it is unspecified in the query (there
             // will be an instance of parameter somewhere).
-            if (e != null && e instanceof Parameter || ((e instanceof Operation) && e.toString().contains("?"))) {
+            if (e != null && e instanceof Parameter || e instanceof Operation && e.toString().contains("?")) {
                 // e can be null (DEFAULT)
                 e = e.optimize(session);
                 try {
-                    Value v = e.getValue(session).convertTo(c.getType());
+                    final Value v = e.getValue(session).convertTo(c.getType());
                     values[i] = v.toString();
                     // newRow.setValue(index, v);
                 }
-                catch (SQLException ex) {
+                catch (final SQLException ex) {
                     throw setRow(ex, 0, getSQL(expr));
                 }
             }
@@ -274,7 +277,9 @@ public class Insert extends Prepared {
 
         for (int i = 1; i <= columns.length; i++) {
             if (values[i - 1] != null) {
-                if (i > 1) sql += ", ";
+                if (i > 1) {
+                    sql += ", ";
+                }
                 sql += i + ": " + values[i - 1];
 
             }
@@ -287,7 +292,7 @@ public class Insert extends Prepared {
     @Override
     public String getPlanSQL() {
 
-        StringBuilder buff = new StringBuilder();
+        final StringBuilder buff = new StringBuilder();
         buff.append("INSERT INTO ");
         buff.append(table.getSQL());
         buff.append('(');
@@ -301,7 +306,7 @@ public class Insert extends Prepared {
         if (list.size() > 0) {
             buff.append("VALUES ");
             for (int x = 0; x < list.size(); x++) {
-                Expression[] expr = (Expression[]) list.get(x);
+                final Expression[] expr = (Expression[]) list.get(x);
                 if (x > 0) {
                     buff.append(", ");
                 }
@@ -310,7 +315,7 @@ public class Insert extends Prepared {
                     if (i > 0) {
                         buff.append(", ");
                     }
-                    Expression e = expr[i];
+                    final Expression e = expr[i];
                     if (e == null) {
                         buff.append("DEFAULT");
                     }
@@ -341,14 +346,14 @@ public class Insert extends Prepared {
         }
         if (list.size() > 0) {
             for (int x = 0; x < list.size(); x++) {
-                Expression[] expr = (Expression[]) list.get(x);
+                final Expression[] expr = (Expression[]) list.get(x);
                 if (expr.length != columns.length) { throw Message.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH); }
                 for (int i = 0; i < expr.length; i++) {
                     Expression e = expr[i];
                     if (e != null) {
                         e = e.optimize(session);
                         if (e instanceof Parameter) {
-                            Parameter p = (Parameter) e;
+                            final Parameter p = (Parameter) e;
                             p.setColumn(columns[i]);
                         }
                         expr[i] = e;

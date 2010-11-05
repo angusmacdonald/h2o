@@ -23,6 +23,7 @@ import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.query.QueryProxy;
 import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.viewer.H2OEventBus;
@@ -227,7 +228,7 @@ public class DropTable extends SchemaCommand {
 
                 if (tableManager == null) {
                     // Will happen if the table doesn't exist but IF NOT EXISTS has been specified.
-                    queryProxy = QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper());
+                    queryProxy = QueryProxy.getDummyQueryProxy(LockRequest.createNewLockRequest(session));
                 }
                 else {
                     /*
@@ -237,13 +238,13 @@ public class DropTable extends SchemaCommand {
 
                     final LockType lockToRequest = session.getApplicationAutoCommit() ? LockType.WRITE : LockType.DROP;
 
-                    queryProxy = QueryProxy.getQueryProxyAndLock(tableManager, fullTableName, database, lockToRequest, session.getDatabase().getLocalDatabaseInstanceInWrapper(), false);
+                    queryProxy = QueryProxy.getQueryProxyAndLock(tableManager, fullTableName, LockRequest.createNewLockRequest(session), lockToRequest, database, false);
                 }
             }
             queryProxyManager.addProxy(queryProxy);
         }
         else {
-            queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper()));
+            queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(LockRequest.createNewLockRequest(session)));
         }
 
     }

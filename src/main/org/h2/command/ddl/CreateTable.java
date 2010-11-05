@@ -42,6 +42,7 @@ import org.h2o.db.query.QueryProxy;
 import org.h2o.db.query.QueryProxyManager;
 import org.h2o.db.query.asynchronous.AsynchronousQueryExecutor;
 import org.h2o.db.query.asynchronous.CommitResult;
+import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.TransactionNameGenerator;
@@ -561,14 +562,14 @@ public class CreateTable extends SchemaCommand {
             }
             H2OEventBus.publish(new H2OEvent(db.getURL().getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
 
-            queryProxy = QueryProxy.getQueryProxyAndLock(tableManager, ti.getFullTableName(), db, LockType.CREATE, db.getLocalDatabaseInstanceInWrapper(), false);
+            queryProxy = QueryProxy.getQueryProxyAndLock(tableManager, ti.getFullTableName(), LockRequest.createNewLockRequest(session), LockType.CREATE, db, false);
 
         }
         else if (Constants.IS_H2O) {
             /*
              * This is a system table, but it still needs a QueryProxy to indicate that it is acceptable to execute the query.
              */
-            queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.CREATE, db);
+            queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.CREATE, LockRequest.createNewLockRequest(session), db);
 
         }
 

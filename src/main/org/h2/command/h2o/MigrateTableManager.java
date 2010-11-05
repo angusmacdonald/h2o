@@ -14,6 +14,7 @@ import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.TableManager;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.query.QueryProxy;
+import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.util.exceptions.MigrationException;
 import org.h2o.util.exceptions.MovedException;
@@ -82,11 +83,11 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 
             QueryProxy qp = null;
             try {
-                qp = tableManager.getQueryProxy(LockType.WRITE, db.getLocalDatabaseInstanceInWrapper());
+                qp = tableManager.getQueryProxy(LockType.WRITE, LockRequest.createNewLockRequest(session));
             }
             catch (final MovedException e) {
                 tableManager = sm.lookup(new TableInfo(tableName, schemaName), false);
-                qp = tableManager.getQueryProxy(LockType.WRITE, db.getLocalDatabaseInstanceInWrapper());
+                qp = tableManager.getQueryProxy(LockType.WRITE, LockRequest.createNewLockRequest(session));
             }
 
             if (!qp.getLockGranted().equals(LockType.NONE)) {

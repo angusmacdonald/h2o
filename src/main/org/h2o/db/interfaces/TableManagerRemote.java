@@ -18,9 +18,9 @@ import org.h2o.db.id.TableInfo;
 import org.h2o.db.manager.util.Migratable;
 import org.h2o.db.query.QueryProxy;
 import org.h2o.db.query.asynchronous.CommitResult;
+import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.db.replication.ReplicaManager;
-import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.util.exceptions.StartupException;
 
@@ -31,7 +31,7 @@ import org.h2o.util.exceptions.StartupException;
  */
 public interface TableManagerRemote extends H2ORemote, Migratable, Serializable {
 
-    public QueryProxy getQueryProxy(LockType lockType, DatabaseInstanceWrapper databaseInstanceRemote) throws RemoteException, SQLException, MovedException;
+    public QueryProxy getQueryProxy(LockType lockType, LockRequest lockRequest) throws RemoteException, SQLException, MovedException;
 
     /*
      * (non-Javadoc)
@@ -76,7 +76,7 @@ public interface TableManagerRemote extends H2ORemote, Migratable, Serializable 
      *            True if this is a commit of a replica where other replicas have already committed, and this is being done asynchronously.
      * @throws MovedException
      */
-    public void releaseLockAndUpdateReplicaState(boolean commit, DatabaseInstanceWrapper requestingDatabase, Collection<CommitResult> commitedQueries, boolean asynchronousCommit) throws RemoteException, MovedException;
+    public void releaseLockAndUpdateReplicaState(boolean commit, LockRequest requestingDatabase, Collection<CommitResult> commitedQueries, boolean asynchronousCommit) throws RemoteException, MovedException;
 
     /**
      * Deconstruct this Table Manager. This is required for testing where a remote reference to a Table Manager may not completely die when

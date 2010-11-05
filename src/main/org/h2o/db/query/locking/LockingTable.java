@@ -12,10 +12,9 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.h2o.db.wrappers.DatabaseInstanceWrapper;
-
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * Represents a locking table for a given table - this is maintained by the table's Table Manager.
@@ -27,9 +26,9 @@ public class LockingTable implements ILockingTable, Serializable {
 
     private static final long serialVersionUID = 2044915610751482232L;
 
-    private DatabaseInstanceWrapper writeLock;
+    private LockRequest writeLock;
 
-    private final Set<DatabaseInstanceWrapper> readLocks;
+    private final Set<LockRequest> readLocks;
 
     private final String tableName;
 
@@ -37,7 +36,7 @@ public class LockingTable implements ILockingTable, Serializable {
 
         this.tableName = tableName;
         writeLock = null;
-        readLocks = new HashSet<DatabaseInstanceWrapper>();
+        readLocks = new HashSet<LockRequest>();
     }
 
     /*
@@ -45,9 +44,9 @@ public class LockingTable implements ILockingTable, Serializable {
      * @see org.h2.h2o.util.ILockingTable#requestLock(org.h2.h2o.util.LockType, org.h2.h2o.comms.remote.DatabaseInstanceRemote)
      */
     @Override
-    public synchronized LockType requestLock(final LockType lockType, final DatabaseInstanceWrapper requestingMachine) {
+    public synchronized LockType requestLock(final LockType lockType, final LockRequest requestingMachine) {
 
-        if (writeLock != null && !(requestingMachine.equals(writeLock) && lockType.equals(LockType.WRITE))) { return LockType.NONE; // exclusive lock held.
+        if (writeLock != null) { return LockType.NONE; // exclusive lock held.
         }
 
         if (lockType == LockType.READ) {
@@ -74,7 +73,7 @@ public class LockingTable implements ILockingTable, Serializable {
      * @see org.h2.h2o.util.ILockingTable#releaseLock(org.h2.h2o.comms.remote. DatabaseInstanceRemote)
      */
     @Override
-    public synchronized LockType releaseLock(final DatabaseInstanceWrapper requestingMachine) {
+    public synchronized LockType releaseLock(final LockRequest requestingMachine) {
 
         LockType toReturn = LockType.NONE;
         // Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "'" + tableName +
@@ -94,7 +93,7 @@ public class LockingTable implements ILockingTable, Serializable {
         if (!toReturn.equals(LockType.NONE)) { return toReturn; }
 
         assert false : "Unexpected code path: attempted to release a lock which wasn't held for table: " + tableName;
-
+        ErrorHandling.hardError("Unexpected Code Path: attempted to release a lock which wasn't held for table: " + tableName);
         return toReturn; // should never get to this.
     }
 

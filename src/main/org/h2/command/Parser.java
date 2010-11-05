@@ -157,6 +157,7 @@ import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.query.QueryProxy;
+import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
@@ -4922,7 +4923,7 @@ public class Parser {
              * This requests LockType.NONE because it doesn't need a lock for the table at this point - only the location of active
              * instances. It will request a read/write lock at a later point.
              */
-            qp = tableManager.getQueryProxy(LockType.NONE, database.getLocalDatabaseInstanceInWrapper());
+            qp = tableManager.getQueryProxy(LockType.NONE, LockRequest.createNewLockRequest(session));
 
         }
         catch (final MovedException e) {
@@ -4931,7 +4932,7 @@ public class Parser {
             tableManager = session.getDatabase().getSystemTableReference().lookup(tableInfo, false);
 
             try {
-                qp = tableManager.getQueryProxy(LockType.NONE, database.getLocalDatabaseInstanceInWrapper());
+                qp = tableManager.getQueryProxy(LockType.NONE, LockRequest.createNewLockRequest(session));
 
             }
             catch (final Exception e1) {
@@ -4963,13 +4964,13 @@ public class Parser {
             }
             else {
                 try {
-                    qp = tableManager.getQueryProxy(LockType.NONE, database.getLocalDatabaseInstanceInWrapper());
+                    qp = tableManager.getQueryProxy(LockType.NONE, LockRequest.createNewLockRequest(session));
                 }
                 catch (final RemoteException e1) {
                     // Recreate Table Manager then try again.
                     try {
                         tableManager = systemTableReference.getSystemTable().recreateTableManager(tableInfo);
-                        qp = tableManager.getQueryProxy(LockType.NONE, database.getLocalDatabaseInstanceInWrapper());
+                        qp = tableManager.getQueryProxy(LockType.NONE, LockRequest.createNewLockRequest(session));
                     }
                     catch (final RemoteException e2) {
                         ErrorHandling.errorNoEvent("Failed to contact Table Manager: " + e.getMessage());

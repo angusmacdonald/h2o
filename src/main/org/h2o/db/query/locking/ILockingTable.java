@@ -9,7 +9,6 @@
 
 package org.h2o.db.query.locking;
 
-import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 /**
  * Interface for a table lock manager. Each manager controls access to a single table. Calling classes can either request a lock or release
@@ -24,11 +23,11 @@ public interface ILockingTable {
      * 
      * @param lockType
      *            Type of lock requested.
-     * @param databaseInstanceWrapper
+     * @param lockRequest
      *            Proxy for the machine making the request.
      * @return Type of lock granted.
      */
-    public LockType requestLock(LockType lockType, DatabaseInstanceWrapper databaseInstanceWrapper);
+    public LockType requestLock(LockType lockType, LockRequest lockRequest);
 
     /**
      * Release the lock of this type held by this machine.
@@ -39,6 +38,6 @@ public interface ILockingTable {
      *            Proxy for the machine making the request.
      * @return True if the success was successful.
      */
-    public LockType releaseLock(DatabaseInstanceWrapper requestingMachine);
+    public LockType releaseLock(LockRequest requestingMachine);
 
 }

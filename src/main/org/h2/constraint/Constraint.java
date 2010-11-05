@@ -47,11 +47,11 @@ public abstract class Constraint extends SchemaObjectBase implements Comparable 
      */
     protected Table table;
 
-    public Constraint(Schema schema, int id, String name, Table table) {
+    public Constraint(final Schema schema, final int id, final String name, final Table table) {
 
         initSchemaObjectBase(schema, id, name, Trace.CONSTRAINT);
         this.table = table;
-        this.setTemporary(table.getTemporary());
+        setTemporary(table.getTemporary());
     }
 
     /**
@@ -135,11 +135,13 @@ public abstract class Constraint extends SchemaObjectBase implements Comparable 
      */
     public abstract Index getUniqueIndex();
 
+    @Override
     public void checkRename() {
 
         // ok
     }
 
+    @Override
     public int getType() {
 
         return DbObject.CONSTRAINT;
@@ -155,6 +157,7 @@ public abstract class Constraint extends SchemaObjectBase implements Comparable 
         return table;
     }
 
+    @Override
     public String getDropSQL() {
 
         return null;
@@ -162,7 +165,7 @@ public abstract class Constraint extends SchemaObjectBase implements Comparable 
 
     private int getConstraintTypeOrder() {
 
-        String constraintType = getConstraintType();
+        final String constraintType = getConstraintType();
         if (CHECK.equals(constraintType)) {
             return 0;
         }
@@ -180,12 +183,13 @@ public abstract class Constraint extends SchemaObjectBase implements Comparable 
         }
     }
 
-    public int compareTo(Object other) {
+    @Override
+    public int compareTo(final Object other) {
 
         if (this == other) { return 0; }
-        Constraint otherConstraint = (Constraint) other;
-        int thisType = getConstraintTypeOrder();
-        int otherType = otherConstraint.getConstraintTypeOrder();
+        final Constraint otherConstraint = (Constraint) other;
+        final int thisType = getConstraintTypeOrder();
+        final int otherType = otherConstraint.getConstraintTypeOrder();
         return thisType - otherType;
     }
 

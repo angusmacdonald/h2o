@@ -28,6 +28,7 @@ import org.h2.util.StringUtils;
 import org.h2.value.Value;
 import org.h2o.db.query.QueryProxy;
 import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 
 /**
@@ -104,7 +105,7 @@ public class Update extends Prepared {
                 }
 
                 if (queryProxy == null) {
-                    queryProxy = new QueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper()); // in case of MERGE statement.
+                    queryProxy = new QueryProxy(LockRequest.createNewLockRequest(session)); // in case of MERGE statement.
                 }
                 return queryProxy.executeUpdate(sql, transactionName, session);
             }
@@ -377,12 +378,12 @@ public class Update extends Prepared {
             queryProxy = queryProxyManager.getQueryProxy(tableFilter.getTable().getFullName());
 
             if (queryProxy == null || !queryProxy.getLockGranted().equals(LockType.WRITE)) {
-                queryProxy = QueryProxy.getQueryProxyAndLock(tableFilter.getTable(), LockType.WRITE, session.getDatabase());
+                queryProxy = QueryProxy.getQueryProxyAndLock(tableFilter.getTable(), LockType.WRITE, LockRequest.createNewLockRequest(session), session.getDatabase());
             }
             queryProxyManager.addProxy(queryProxy);
         }
         else {
-            queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper()));
+            queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(LockRequest.createNewLockRequest(session)));
         }
     }
 

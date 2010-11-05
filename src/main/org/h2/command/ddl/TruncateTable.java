@@ -12,6 +12,7 @@ import org.h2.engine.Session;
 import org.h2.message.Message;
 import org.h2o.db.query.QueryProxy;
 import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 
 /**
@@ -19,11 +20,12 @@ import org.h2o.db.query.locking.LockType;
  */
 public class TruncateTable extends DefineCommand {
 
-    public TruncateTable(Session session) {
+    public TruncateTable(final Session session) {
 
         super(session);
     }
 
+    @Override
     public int update() throws SQLException {
 
         session.commit(true);
@@ -39,7 +41,7 @@ public class TruncateTable extends DefineCommand {
      * @see org.h2.command.Prepared#acquireLocks()
      */
     @Override
-    public void acquireLocks(QueryProxyManager queryProxyManager) throws SQLException {
+    public void acquireLocks(final QueryProxyManager queryProxyManager) throws SQLException {
 
         /*
          * (QUERY PROPAGATED TO ALL REPLICAS).
@@ -49,13 +51,13 @@ public class TruncateTable extends DefineCommand {
             QueryProxy queryProxy = queryProxyManager.getQueryProxy(table.getFullName());
 
             if (queryProxy == null || !queryProxy.getLockGranted().equals(LockType.WRITE)) {
-                queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, session.getDatabase());
+                queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, LockRequest.createNewLockRequest(session), session.getDatabase());
             }
 
             queryProxyManager.addProxy(queryProxy);
         }
         else {
-            queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(session.getDatabase().getLocalDatabaseInstanceInWrapper()));
+            queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(LockRequest.createNewLockRequest(session)));
         }
 
     }
