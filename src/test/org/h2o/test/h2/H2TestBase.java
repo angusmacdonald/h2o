@@ -38,7 +38,7 @@ public abstract class H2TestBase {
      */
     protected static String baseDir = getTestDir("");
 
-    private static final String BASE_TEST_DIR = "data";
+    protected static final String BASE_TEST_DIR = "data";
 
     protected static final long SHUTDOWN_CHECK_DELAY = 2000;
 
@@ -104,17 +104,6 @@ public abstract class H2TestBase {
     }
 
     /**
-     * Run a test case using the given seed value.
-     * 
-     * @param seed
-     *            the random seed value
-     */
-    public void testCase(final int seed) throws Exception {
-
-        // do nothing
-    }
-
-    /**
      * Open a database connection in admin mode. The default user name and password is used.
      * 
      * @param name
@@ -131,15 +120,12 @@ public abstract class H2TestBase {
     public static void setUpDescriptorFiles(final String url) {
 
         final LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(url));
+
         properties.createNewFile();
         properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
         properties.setProperty("databaseName", "testDB");
         properties.setProperty("chordPort", "" + ++port);
         properties.saveAndClose();
-        //
-        // LocatorServer ls = new LocatorServer(29999, "junitLocator");
-        // ls.createNewLocatorFile();
-        // ls.start();
     }
 
     /**
@@ -276,10 +262,6 @@ public abstract class H2TestBase {
 
     private Connection getConnectionInternal(final String url, final String user, final String password) throws SQLException {
 
-        org.h2.Driver.load();
-        // url += ";DEFAULT_TABLE_TYPE=1";
-        // Class.forName("org.hsqldb.jdbcDriver");
-        // return DriverManager.getConnection("jdbc:hsqldb:" + name, "sa", "");
         return DriverManager.getConnection(url, user, password);
     }
 
@@ -515,20 +497,6 @@ public abstract class H2TestBase {
     }
 
     /**
-     * Check if a result set contains the expected data. The sort order is not significant
-     * 
-     * @param rs
-     *            the result set
-     * @param data
-     *            the expected data
-     * @throws AssertionError
-     *             if there is a mismatch
-     */
-    // void assertResultSetUnordered(ResultSet rs, String[][] data) {
-    // assertResultSet(false, rs, data);
-    // }
-
-    /**
      * Check if a result set contains the expected data.
      * 
      * @param ordered
@@ -685,7 +653,7 @@ public abstract class H2TestBase {
     public static H2TestBase createCaller() {
 
         final String className = new Exception().getStackTrace()[1].getClassName();
-        org.h2.Driver.load();
+
         try {
             return (H2TestBase) Class.forName(className).newInstance();
         }
@@ -693,5 +661,4 @@ public abstract class H2TestBase {
             throw new RuntimeException("Can not create object " + className, e);
         }
     }
-
 }

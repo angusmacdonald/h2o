@@ -22,22 +22,36 @@ public class LocalH2OProperties extends H2OPropertiesWrapper {
     public static final String DEFAULT_CONFIG_DIRECTORY = "config";
 
     /**
-     * @param dbURL
-     *            The URL of this database instance. This is used to name and locate the properties file for this database on disk.
-     * @param appendum
-     *            A string to be added on to the DBurl as part of the properties file name.
+     * @param dbURL the URL of this database instance. This is used to name and locate the properties file for this database on disk.
      */
     public LocalH2OProperties(final DatabaseURL dbURL) {
 
-        this(dbURL.sanitizedLocation());
+        this(getConfigurationDirectoryPath(dbURL.getDbLocation()), dbURL.sanitizedLocation());
     }
 
-    /**
-     * @param string
-     */
-    public LocalH2OProperties(final String descriptorLocation) {
+    //    public LocalH2OProperties(final String configDirectoryPath, final DatabaseURL dbURL) {
+    //
+    //        this(configDirectoryPath, dbURL.sanitizedLocation());
+    //    }
 
-        super(DEFAULT_CONFIG_DIRECTORY + File.separator + descriptorLocation + ".properties");
+    //    public LocalH2OProperties(final String propertiesFileName) {
+    //
+    //        this(DEFAULT_CONFIG_DIRECTORY, propertiesFileName);
+    //    }
+
+    public LocalH2OProperties(final String configDirectoryPath, final String propertiesFileName) {
+
+        super(configDirectoryPath + File.separator + propertiesFileName + ".properties");
+    }
+
+    public static String getConfigurationDirectoryPath(final String databaseBaseDirectoryPath, final String databaseName, final String port) {
+
+        return databaseBaseDirectoryPath + File.separator + databaseName + port + "." + DEFAULT_CONFIG_DIRECTORY;
+    }
+
+    public static String getConfigurationDirectoryPath(final String databaseDirectoryPath) {
+
+        return databaseDirectoryPath + "." + DEFAULT_CONFIG_DIRECTORY;
     }
 
     @Override

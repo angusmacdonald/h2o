@@ -36,10 +36,13 @@ public class StandaloneH2OExample {
         // The port on which the database's web interface will run.
         final int webPort = 8282;
 
-        // Where the database will be created (where persisted state is stored).
-        final String rootFolder = "db_data";
+        // Where configuration files are stored.
+        final String configurationDirectoryPath = "db_config";
 
-        final H2O db = new H2O(databaseName, tcpPort, webPort, rootFolder);
+        // Where the database will be created (where persisted state is stored).
+        final String databaseDirectoryPath = "db_data";
+
+        final H2O db = new H2O(databaseName, tcpPort, webPort, configurationDirectoryPath, databaseDirectoryPath);
         db.startDatabase();
     }
 }

@@ -55,19 +55,16 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  */
 public class H2O {
 
-    private static final String DEFAULT_TCP_PORT = "9090";
-    private static final int DEFAULT_WEB_PORT = 2123;
-
-    private static final String DEFAULT_DATABASE_LOCATION = "data";
-    private static final String DEFAULT_DATABASE_NAME = "DefaultH2ODatabase";
+    private static final String DEFAULT_CONFIGURATION_DIRECTORY_PATH = ".";
 
     private final String databaseName;
     private final String tcpPort;
     private final String webPort;
 
     private String descriptorFileLocation;
+    private final String configurationDirectoryPath;
+    private String databaseBaseDirectoryPath;
 
-    private String databaseLocation;
     private Connection connection;
     private H2OLocator locator;
     private Server server;
@@ -79,16 +76,14 @@ public class H2O {
      * 
      * @param args
      *            <ul>
-     *            <li><em>-n</em>. Specify the name of the database for which this locator server is running.</li>
-     *            <li><em>-p</em>. The port on which the database's TCP server is to run.</li>
-     *            <li><em>-w</em>. Specify that a web port should be opened and the web interface should be started. The web port must be
-     *            specified.</li>
-     *            </ul>
-     *            <li><em>-d</em>. Specify the location of the database descriptor file. Can be local on disk, or remote via HTTP. If no
-     *            descriptor file is specified the database will start up its own locator server locally, and create a descriptor file for
-     *            the purpose. Essentially, this creates an entirely new database without complex setup.</li></ul> <li><em>-f</em>.
-     *            Optional. Specify the folder in which the database will be created. The default is the folder this class is being run
-     *            from. <em>Example: StartDatabase -nMyFirstDatabase -p9999 -d'config\MyFirstDatabase.h2od'</em> . This creates a new
+     *            <li><em>-n<name></em>. The name of the database.</li>
+     *            <li><em>-p<port></em>. The port on which the database's TCP server is to run.</li>
+     *            <li><em>-w<port></em>. Optional. Specifies that a web port should be opened and the web interface should be started.</li>
+     *            <li><em>-d<descriptor></em>. Optional. Specifies the URL or local file path of the database descriptor file. If not specified the database will create a new descriptor file in the database directory.</li>
+     *            <li><em>-f</em>. Optional. Specifies the directory containing the persistent database state. The default is the current working directory.</li>
+     *            </p>
+     *            <p>
+     *            <em>Example: java H2O -nMyFirstDatabase -p9999 -d'config\MyFirstDatabase.h2od'</em>. This creates a new
      *            database instance for the database called <em>MyFirstDatabase</em> on port 9999, and initializes by connecting to the
      *            locator files specified in the file <em>'config\MyFirstDatabase.h2od'</em>.
      *            
@@ -102,7 +97,7 @@ public class H2O {
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting H2O Server Instance.");
 
         final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
-        final H2O db = parseArguments(arguments);
+        final H2O db = initialiseFromCommandLineArguments(arguments);
 
         db.startDatabase();
     }
@@ -110,85 +105,67 @@ public class H2O {
     // -------------------------------------------------------------------------------------------------------
 
     /**
-     * Start a new H2O instance using the specified descriptor file to find an existing, running, locator server. This also starts H2O's web
-     * interface.
+     * Start a new H2O instance using the specified descriptor file to find an existing, running, locator server. This also starts H2O's web interface.
      * 
-     * @param databaseName
-     *            The name of the database being created. This is the global name (it is the same for all database instances that are to be
-     *            part of this database world (i.e. with the same global schema).
-     * @param tcpPort
-     *            The port on which this databases TCP server is being run on.
-     * @param webPort
-     *            The port on which this databases web interface is to be run.
-     * @param databaseDescriptorLocation
-     *            The location of the database descriptor file for this database world.
-     * @param defaultFolder
-     *            The folder in which database files will be created.
+     * @param databaseName the name of the database
+     * @param tcpPort the port for this database's TCP server
+     * @param webPort the port for this database's web interface
+     * @param configurationDirectoryPath the directory in which configuration files are stored
+     * @param databaseBaseDirectoryPath the directory in which database files are stored
+     * @param databaseDescriptorLocation the location (file path or URL) of the database descriptor file
      */
-    public H2O(final String databaseName, final int tcpPort, final int webPort, final String defaultFolder, final String databaseDescriptorLocation) {
+    public H2O(final String databaseName, final int tcpPort, final int webPort, final String databaseBaseDirectoryPath, final String databaseDescriptorLocation) {
 
         this.databaseName = databaseName;
         this.tcpPort = tcpPort + "";
         this.webPort = webPort + "";
         descriptorFileLocation = databaseDescriptorLocation;
-        databaseLocation = defaultFolder;
+        configurationDirectoryPath = LocalH2OProperties.getConfigurationDirectoryPath(databaseBaseDirectoryPath, databaseName, this.tcpPort);
+        this.databaseBaseDirectoryPath = databaseBaseDirectoryPath;
     }
 
     /**
      * Start a new H2O instance using the specified descriptor file to find an existing, running, locator server. This option does not start
      * H2O's web interface.
      * 
-     * @param databaseName
-     *            The name of the database being created. This is the global name (it is the same for all database instances that are to be
-     *            part of this database world (i.e. with the same global schema).
-     * @param tcpPort
-     *            The port on which this databases TCP server is being run on.
-     * @param databaseDescriptorLocation
-     *            The location of the database descriptor file for this database world.
-     * @param defaultFolder
-     *            The folder in which database files will be created.
+     * @param databaseName the name of the database
+     * @param tcpPort the port for this database's TCP server
+     * @param configurationDirectoryPath the directory in which configuration files are stored
+     * @param databaseDirectoryPath the directory in which database files are stored
+     * @param databaseDescriptorLocation the location (file path or URL) of the database descriptor file
      */
-    public H2O(final String databaseName, final int tcpPort, final String defaultFolder, final String databaseDescriptorLocation) {
+    public H2O(final String databaseName, final int tcpPort, final String databaseDirectoryPath, final String databaseDescriptorLocation) {
 
-        this(databaseName, tcpPort, 0, defaultFolder, databaseDescriptorLocation);
+        this(databaseName, tcpPort, 0, databaseDirectoryPath, databaseDescriptorLocation);
     }
 
     /**
      * Start a local H2O instance with a running TCP server <strong>and web interface </strong>. This will automatically start a local
-     * locator file, and doesn't need a descriptor file to run. A descriptor file will be created if you subsequently want to start another
-     * H2O instance as part of the same database.
+     * locator file, and doesn't need a descriptor file to run. A descriptor file will be created in the configuration directory.
      * 
-     * @param databaseName
-     *            The name of the database being created. This is the global name (it is the same for all database instances that are to be
-     *            part of this database world (i.e. with the same global schema).
-     * @param tcpPort
-     *            The port on which this databases TCP server is being run on.
-     * @param webPort
-     *            The port on which this databases web interface is to be run.
-     * @param defaultFolder
-     *            The folder in which database files will be created.
+     * @param databaseName the name of the database
+     * @param tcpPort the port for this database's TCP server
+     * @param webPort the port for this database's web interface
+     * @param configurationDirectoryPath the directory in which configuration files are stored
+     * @param databaseDirectoryPath the directory in which database files are stored
      */
-    public H2O(final String databaseName, final int tcpPort, final int webPort, final String defaultFolder) {
+    public H2O(final String databaseName, final int tcpPort, final int webPort, final String databaseDirectoryPath) {
 
-        this(databaseName, tcpPort, webPort, defaultFolder, null);
+        this(databaseName, tcpPort, webPort, databaseDirectoryPath, null);
     }
 
     /**
      * Start a local H2O instance with a running TCP server, <strong>but without a web interface</strong>. This will automatically start a
-     * local locator file, and doesn't need a descriptor file to run. A descriptor file will be created if you subsequently want to start
-     * another H2O instance as part of the same database.
+     * local locator file, and doesn't need a descriptor file to run. A descriptor file will be created in the configuration directory.
      * 
-     * @param databaseName
-     *            The name of the database being created. This is the global name (it is the same for all database instances that are to be
-     *            part of this database world (i.e. with the same global schema).
-     * @param tcpPort
-     *            The port on which this databases TCP server is being run on.
-     * @param defaultFolder
-     *            The folder in which database files will be created.
+     * @param databaseName the name of the database
+     * @param tcpPort the port for this database's TCP server
+     * @param configurationDirectoryPath the directory in which configuration files are stored
+     * @param databaseDirectoryPath the directory in which database files are stored
      */
-    public H2O(final String databaseName, final int tcpPort, final String defaultFolder) {
+    public H2O(final String databaseName, final int tcpPort, final String databaseDirectoryPath) {
 
-        this(databaseName, tcpPort, 0, defaultFolder, null);
+        this(databaseName, tcpPort, 0, databaseDirectoryPath, null);
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -205,7 +182,7 @@ public class H2O {
 
             // A new locator server should be started.
             final int locatorPort = Integer.parseInt(tcpPort) + 1;
-            locator = new H2OLocator(databaseName, locatorPort, true, databaseLocation);
+            locator = new H2OLocator(databaseName, locatorPort, true, databaseBaseDirectoryPath);
             descriptorFileLocation = locator.start();
         }
 
@@ -221,7 +198,9 @@ public class H2O {
      */
     public void shutdown() throws SQLException {
 
-        connection.close();
+        if (connection != null) {
+            connection.close();
+        }
 
         final Collection<Database> dbs = Engine.getInstance().getAllDatabases();
 
@@ -246,67 +225,50 @@ public class H2O {
      */
     public void deletePersistentState() throws SQLException {
 
-        DeleteDbFiles.execute(databaseLocation, databaseName + tcpPort, true);
+        DeleteDbFiles.execute(databaseBaseDirectoryPath, databaseName + tcpPort, true);
     }
 
     // -------------------------------------------------------------------------------------------------------
 
-    private static H2O parseArguments(final Map<String, String> arguments) throws StartupException {
+    private static H2O initialiseFromCommandLineArguments(final Map<String, String> arguments) throws StartupException {
 
-        String databaseName = null;
-        String port = null;
-        String descriptorFileLocation = null;
-        String databaseLocation = null;
-        String web = null;
+        // Get required command line arguments.
+        final String databaseName = arguments.get("-n");
+        final String port = arguments.get("-p");
+
+        if (databaseName == null || port == null) { throw new StartupException("One of the required command line arguments was not supplied. Please check the documentation to ensure you have included all necessary arguments"); }
+
+        // Get optional command line arguments.
+        String databaseDirectoryPath = arguments.get("-f");
+        String descriptorFileLocation = arguments.get("-d");
+        final String web = arguments.get("-w");
+
         int webPort = 0;
 
-        if (arguments.size() == 0) {
-            // Fill with default arguments.
-            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "No user arguments were specified. Creating a database with default arguments.");
-
-            databaseName = DEFAULT_DATABASE_NAME;
-            databaseLocation = DEFAULT_DATABASE_LOCATION;
-            port = DEFAULT_TCP_PORT;
-            webPort = DEFAULT_WEB_PORT;
-        }
-        else {
-
-            /*
-             * Get required command line arguments.
-             */
-            databaseName = arguments.get("-n");
-            databaseLocation = arguments.get("-f"); // e.g. "db_data"
-            port = arguments.get("-p");
-            descriptorFileLocation = arguments.get("-d"); // e.g. AllTests.TEST_DESCRIPTOR_FILE
-            web = arguments.get("-w");
-
-            if (web != null) {
-                webPort = Integer.parseInt(web);
-            }
-
-            if (databaseName == null || port == null) { throw new StartupException("One of the required command line arguments was not supplied. Please check the documentation to ensure you have included" + "all necessary arguments"); }
-
-            if (descriptorFileLocation != null) {
-                descriptorFileLocation = removeParenthesis(descriptorFileLocation);
-            }
-
-            if (databaseLocation != null) {
-                databaseLocation = removeParenthesis(databaseLocation);
-            }
+        if (web != null) {
+            webPort = Integer.parseInt(web);
         }
 
-        return new H2O(databaseName, Integer.parseInt(port), webPort, databaseLocation, descriptorFileLocation);
+        if (descriptorFileLocation != null) {
+            descriptorFileLocation = removeParenthesis(descriptorFileLocation);
+        }
+
+        if (databaseDirectoryPath != null) {
+            databaseDirectoryPath = removeParenthesis(databaseDirectoryPath);
+        }
+
+        return new H2O(databaseName, Integer.parseInt(port), webPort, databaseDirectoryPath, descriptorFileLocation);
     }
 
     private String generateDatabaseURL() {
 
         // Add a trailing slash if it isn't already there.
-        if (databaseLocation != null && !databaseLocation.endsWith("/") && !databaseLocation.endsWith("\\")) {
-            databaseLocation = databaseLocation + "/";
+        if (databaseBaseDirectoryPath != null && !databaseBaseDirectoryPath.endsWith("/") && !databaseBaseDirectoryPath.endsWith("\\")) {
+            databaseBaseDirectoryPath = databaseBaseDirectoryPath + "/";
         }
 
         final String hostname = NetUtils.getLocalAddress();
-        final String location = (databaseLocation != null ? databaseLocation : "") + databaseName + tcpPort;
+        final String location = (databaseBaseDirectoryPath != null ? databaseBaseDirectoryPath : "") + databaseName + tcpPort;
 
         final String databaseURL = createDatabaseURL(tcpPort, hostname, location);
 
@@ -332,11 +294,8 @@ public class H2O {
         final List<String> h2oArgs = new LinkedList<String>(); // Arguments to be passed to the H2 server.
         h2oArgs.add("-tcp");
 
-        // TCP port information.
-        final String tcp = tcpPort != null ? tcpPort : DEFAULT_TCP_PORT;
-
         h2oArgs.add("-tcpPort");
-        h2oArgs.add(tcp);
+        h2oArgs.add(tcpPort);
 
         h2oArgs.add("-tcpAllowOthers"); // allow remote connections.
         h2oArgs.add("-webAllowOthers");

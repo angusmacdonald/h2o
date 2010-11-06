@@ -11,80 +11,27 @@ package org.h2o.test;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 
-import org.h2.util.NetUtils;
-import org.h2o.H2O;
-import org.h2o.H2OLocator;
-import org.h2o.util.LocalH2OProperties;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
-import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
  * User-centric tests.
  *
  * @author Graham Kirby (graham@cs.st-andrews.ac.uk)
  */
-public class EndToEndTests {
-
-    // The name of the database domain.
-    private static final String DATABASE_NAME = "end_to_end";
-
-    // Where the database will be created (where persisted state is stored).
-    private static final String DATABASE_LOCATION = "db_data";
-
-    // The port on which the database's TCP JDBC server will run.
-    private static final int TCP_PORT = 9999;
-    private static final int LOCATOR_PORT = 5999;
-
-    private static final String USER_NAME = "sa";
-    private static final String PASSWORD = "";
-
-    private static final String DESCRIPTOR_DIRECTORY = LocalH2OProperties.DEFAULT_CONFIG_DIRECTORY;
-
-    H2OLocator locator;
-    H2O db;
-
-    /**
-     * Sets up the test, removing persistent state to be safe.
-     * 
-     * @throws SQLException if fixture setup fails
-     * @throws IOException if fixture setup fails
-     */
-    @Before
-    public void before() throws SQLException, IOException {
-
-        Diagnostic.setLevel(DiagnosticLevel.NONE);
-
-        deletePersistentState();
-        startup();
-    }
-
-    /**
-     * Tears down the test, removing persistent state.
-     * 
-     * @throws SQLException if fixture tear-down fails
-     */
-    @After
-    public void after() throws SQLException {
-
-        shutdown();
-        deletePersistentState();
-
-        assertPersistentStateIsAbsent();
-    }
+public class EndToEndTests extends H2OTestBase {
 
     /**
       * Tests whether a new database can be created, data inserted and read back.
@@ -114,8 +61,8 @@ public class EndToEndTests {
         Diagnostic.trace();
 
         simpleLifeCycle();
-        after();
-        before();
+        tearDown();
+        setUp();
         simpleLifeCycle();
     }
 
@@ -214,6 +161,78 @@ public class EndToEndTests {
         assertDataIsPresent(number_of_values);
     }
 
+    /**
+     * Tests whether updates can be performed concurrently. The test starts two threads, each performing an update to the same table, with an artificial delay
+     * to increase the probability of temporal overlap.
+     * 
+     * The test currently fails due to an "unexpected code path" error. When that is fixed the test should be changed to make the update threads retry on
+     * error, since it's legitimate for an update to fail due to not being able to obtain locks.
+     * 
+     * @throws SQLException if the test fails
+     * @throws IOException if the test fails
+     */
+    @Test
+    public void concurrentUpdates() throws SQLException, IOException {
+
+        Diagnostic.trace();
+
+        createWithAutoCommit();
+
+        final Semaphore sync = new Semaphore(-1);
+        final SQLException[] exception_wrapper = new SQLException[1];
+
+        final Thread firstUpdateThread = new UpdateThread(1, 0, 5000, sync, exception_wrapper);
+        final Thread secondUpdateThread = new UpdateThread(1, 1, 5000, sync, exception_wrapper);
+
+        firstUpdateThread.setName("First Update Thread");
+        secondUpdateThread.setName("Second Update Thread");
+
+        firstUpdateThread.start();
+        secondUpdateThread.start();
+
+        waitForThreads(sync);
+        if (exception_wrapper[0] != null) { throw exception_wrapper[0]; }
+        shutdown();
+
+        startup();
+        assertDataIsPresent(2);
+    }
+
+    /**
+     * A generalised version of {@link #concurrentUpdates()} with multiple threads and multiple values being inserted.
+     * 
+     * @throws SQLException if the test fails
+     * @throws IOException if the test fails
+     */
+    @Test
+    public void multipleThreads() throws SQLException, IOException {
+
+        Diagnostic.trace();
+
+        final int number_of_values = 10;
+        final int number_of_threads = 3;
+
+        createWithAutoCommit();
+
+        final ExecutorService pool = Executors.newFixedThreadPool(number_of_threads);
+        final Semaphore sync = new Semaphore(1 - number_of_threads);
+        final SQLException[] exception_wrapper = new SQLException[1];
+
+        for (int i = 0; i < number_of_threads; i++) {
+
+            final int j = i;
+
+            pool.execute(new UpdateThread(number_of_values, j * number_of_values, 1000, sync, exception_wrapper));
+        }
+
+        waitForThreads(sync);
+        if (exception_wrapper[0] != null) { throw exception_wrapper[0]; }
+        shutdown();
+
+        startup();
+        assertDataIsPresent(number_of_values * number_of_threads);
+    }
+
     // -------------------------------------------------------------------------------------------------------
 
     interface IDBAction {
@@ -221,32 +240,49 @@ public class EndToEndTests {
         void execute(Connection connection) throws SQLException;
     }
 
-    private void startup() throws SQLException, IOException {
+    private class UpdateThread extends Thread {
 
-        locator = new H2OLocator(DATABASE_NAME, LOCATOR_PORT, true, DESCRIPTOR_DIRECTORY);
-        final String descriptor_file_path = locator.start();
+        private final int number_of_values;
+        private final int starting_value;
+        private final long delay;
+        private final Semaphore sync;
+        private final SQLException[] exception_wrapper;
 
-        db = new H2O(DATABASE_NAME, TCP_PORT, DATABASE_LOCATION, descriptor_file_path);
+        public UpdateThread(final int number_of_values, final int starting_value, final long delay, final Semaphore sync, final SQLException[] exception_wrapper) {
 
-        db.startDatabase();
-    }
+            this.number_of_values = number_of_values;
+            this.starting_value = starting_value;
+            this.delay = delay;
+            this.sync = sync;
+            this.exception_wrapper = exception_wrapper;
+        }
 
-    private void shutdown() throws SQLException {
+        @Override
+        public void run() {
 
-        db.shutdown();
-        locator.shutdown();
-    }
+            try {
+                insertWithoutAutoCommitWithExplicitCommit(number_of_values, starting_value, delay);
+            }
+            catch (final SQLException e) {
+                exception_wrapper[0] = e;
+            }
+            finally {
+                sync.release();
+            }
+        }
+    };
 
-    private void deletePersistentState() {
+    private void waitForThreads(final Semaphore sync) {
 
-        deleteDatabaseDirectoryIfPresent();
-        deleteConfigDirectoryIfPresent();
-    }
-
-    private void assertPersistentStateIsAbsent() {
-
-        assertDatabaseDirectoryIsAbsent();
-        assertConfigDirectoryIsAbsent();
+        while (true) {
+            try {
+                sync.acquire();
+                break;
+            }
+            catch (final InterruptedException e) {
+                // Try again.
+            }
+        }
     }
 
     private void assertOneRowIsPresent() throws SQLException {
@@ -331,21 +367,30 @@ public class EndToEndTests {
         });
     }
 
-    private void doInsert(final int number_of_rows_to_insert, final int starting_value, final boolean auto_commit, final boolean explicit_commit, final long delay) throws SQLException {
+    private void doInsert(final int number_of_rows_to_insert, final int starting_value, final boolean auto_commit, final boolean explicit_commit, final long delay) {
 
-        performAction(new IDBAction() {
+        while (true) {
 
-            @Override
-            public void execute(final Connection connection) throws SQLException {
+            try {
+                performAction(new IDBAction() {
 
-                connection.setAutoCommit(auto_commit);
-                insertValues(number_of_rows_to_insert, starting_value, connection, delay);
+                    @Override
+                    public void execute(final Connection connection) throws SQLException {
 
-                if (explicit_commit) {
-                    connection.commit();
-                }
+                        connection.setAutoCommit(auto_commit);
+                        insertValues(number_of_rows_to_insert, starting_value, connection, delay);
+
+                        if (explicit_commit) {
+                            connection.commit();
+                        }
+                    }
+                });
+                break;
             }
-        });
+            catch (final SQLException e) {
+                // Ignore and try again.
+            }
+        }
     }
 
     private void assertDataIsPresent(final int number_of_rows_inserted) throws SQLException {
@@ -370,50 +415,6 @@ public class EndToEndTests {
                 assertDataIsNotPresent(connection);
             }
         });
-    }
-
-    private void deleteDatabaseDirectoryIfPresent() {
-
-        try {
-            delete(new File(DATABASE_LOCATION));
-        }
-        catch (final IOException e) {
-            // Ignore.
-        }
-    }
-
-    private void deleteConfigDirectoryIfPresent() {
-
-        try {
-            delete(new File(LocalH2OProperties.DEFAULT_CONFIG_DIRECTORY));
-        }
-        catch (final IOException e) {
-            // Ignore.
-        }
-    }
-
-    private void delete(final File file) throws IOException {
-
-        if (file.isDirectory()) {
-
-            final String[] children = file.list();
-            if (children == null) { throw new IOException("null directory listing"); }
-            for (final String child : children) {
-                delete(new File(file, child));
-            }
-        }
-
-        if (!file.delete()) { throw new IOException("couldn't delete file " + file.getAbsolutePath()); }
-    }
-
-    private void assertDatabaseDirectoryIsAbsent() {
-
-        assertFalse(new File(DATABASE_LOCATION).exists());
-    }
-
-    private void assertConfigDirectoryIsAbsent() {
-
-        assertFalse(new File(LocalH2OProperties.DEFAULT_CONFIG_DIRECTORY).exists());
     }
 
     private void createTable(final Connection connection) throws SQLException {
@@ -512,13 +513,5 @@ public class EndToEndTests {
         if (statement != null) {
             statement.close();
         }
-    }
-
-    private Connection makeConnection() throws SQLException {
-
-        final String jdbcURL = "jdbc:h2:tcp://" + NetUtils.getLocalAddress() + ":" + TCP_PORT + "/" + DATABASE_LOCATION + "/" + DATABASE_NAME + TCP_PORT;
-
-        // Create connection to the H2O database instance.
-        return DriverManager.getConnection(jdbcURL, USER_NAME, PASSWORD);
     }
 }

@@ -4,71 +4,62 @@
  */
 package org.h2o.test.h2;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.h2.test.TestAll;
-import org.h2.tools.DeleteDbFiles;
-import org.h2o.locator.server.LocatorServer;
+import org.h2o.test.H2OTestBase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+
 /**
  * Test for views.
  */
-public class H2TestView extends H2TestBase {
+public class H2TestView extends H2OTestBase {
 
-    private LocatorServer ls;
+    private Connection connection;
 
+    @Override
     @Before
-    public void setUp() throws SQLException {
+    public void setUp() throws SQLException, IOException {
 
-        DeleteDbFiles.execute("data\\test\\", "view", true);
-        DeleteDbFiles.execute("data\\test\\", "view2", true);
+        super.setUp();
 
-        ls = new LocatorServer(29999, "junitLocator");
-        ls.createNewLocatorFile();
-        ls.start();
-
-        config = new TestAll();
-
-        if (config.memory) { return; }
+        connection = makeConnection();
     }
 
+    @Override
     @After
     public void tearDown() throws SQLException {
 
-        ls.setRunning(false);
-        while (!ls.isFinished()) {
-        };
+        if (connection != null) {
+            connection.close();
+        }
 
-        DeleteDbFiles.execute("data\\test\\", "view", true);
-        DeleteDbFiles.execute("data\\test\\", "view2", true);
-
+        super.tearDown();
     }
 
     @Test
     public void testInSelect() throws SQLException {
 
-        Connection conn = null;
+        Diagnostic.trace();
 
         Statement stat = null;
 
         try {
-            conn = getConnection("view");
-
-            stat = conn.createStatement();
+            stat = connection.createStatement();
             stat.execute("create table test(id int primary key) as select 1");
-            final PreparedStatement prep = conn.prepareStatement("select * from test t where t.id in (select t2.id from test t2 where t2.id in (?, ?))");
+            final PreparedStatement prep = connection.prepareStatement("select * from test t where t.id in (select t2.id from test t2 where t2.id in (?, ?))");
             prep.setInt(1, 1);
             prep.setInt(2, 2);
             prep.execute();
         }
         finally {
-            conn.close();
             stat.close();
         }
     }
@@ -76,29 +67,23 @@ public class H2TestView extends H2TestBase {
     @Test
     public void testUnionReconnect() throws SQLException {
 
-        if (config.memory) { return; }
-        Connection conn = null;
+        Diagnostic.trace();
 
         Statement stat = null;
 
         try {
-            conn = getConnection("view");
-
-            stat = conn.createStatement();
+            stat = connection.createStatement();
             stat.execute("create table t1(k smallint, ts timestamp(6))");
             stat.execute("create table t2(k smallint, ts timestamp(6))");
             stat.execute("create table t3(k smallint, ts timestamp(6))");
             stat.execute("create view v_max_ts as select " + "max(ts) from (select max(ts) as ts from t1 " + "union select max(ts) as ts from t2 " + "union select max(ts) as ts from t3)");
             stat.execute("create view v_test as select max(ts) as ts from t1 " + "union select max(ts) as ts from t2 " + "union select max(ts) as ts from t3");
-            conn.close();
-            conn = getConnection("view");
-            stat = conn.createStatement();
+
+            stat = connection.createStatement();
             stat.execute("select * from v_max_ts");
         }
         finally {
-            conn.close();
             stat.close();
-            deleteDb("view");
         }
     }
 }

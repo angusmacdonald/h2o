@@ -7,7 +7,9 @@ package org.h2o.test.h2;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -20,59 +22,52 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
 
-import org.h2.test.TestAll;
-import org.h2.tools.DeleteDbFiles;
-import org.h2o.locator.server.LocatorServer;
+import org.h2o.test.H2OTestBase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+
 /**
  * Tests for the PreparedStatement implementation.
  */
-public class H2TestPreparedStatement extends H2TestBase {
+public class H2TestPreparedStatement extends H2OTestBase {
 
-    private static final int LOB_SIZE = 4000, LOB_SIZE_BIG = 512 * 1024;
+    private Connection connection;
 
-    private LocatorServer ls;
-
-    private Connection conn;
-
+    @Override
     @Before
-    public void setUp() throws SQLException {
+    public void setUp() throws SQLException, IOException {
 
-        DeleteDbFiles.execute("data\\test\\", "preparedStatement", true);
+        super.setUp();
 
-        ls = new LocatorServer(29999, "junitLocator");
-        ls.createNewLocatorFile();
-        ls.start();
-
-        config = new TestAll();
-
-        conn = getConnection("preparedStatement");
+        connection = makeConnection();
     }
 
+    @Override
     @After
-    public void tearDown() throws SQLException, InterruptedException {
+    public void tearDown() throws SQLException {
 
-        conn.close();
+        if (connection != null) {
+            connection.close();
+        }
 
-        ls.setRunning(false);
-        while (!ls.isFinished()) {
-            Thread.sleep(SHUTDOWN_CHECK_DELAY);
-        };
+        super.tearDown();
     }
 
     @Test(timeout = 60000)
     public void testLobTempFiles() throws SQLException {
 
+        Diagnostic.trace();
+
         Statement stat = null;
         PreparedStatement prep = null;
 
         try {
-            stat = conn.createStatement();
+            stat = connection.createStatement();
             stat.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, DATA CLOB)");
-            prep = conn.prepareStatement("INSERT INTO TEST VALUES(?, ?)");
+            prep = connection.prepareStatement("INSERT INTO TEST VALUES(?, ?)");
             for (int i = 0; i < 5; i++) {
                 prep.setInt(1, i);
                 if (i % 2 == 0) {
@@ -123,23 +118,27 @@ public class H2TestPreparedStatement extends H2TestBase {
     @Test(timeout = 60000)
     public void testExecuteErrorTwice() throws SQLException {
 
+        Diagnostic.trace();
+
         PreparedStatement prep = null;
 
         try {
-            prep = conn.prepareStatement("CREATE TABLE BAD AS SELECT A");
+            prep = connection.prepareStatement("CREATE TABLE BAD AS SELECT A");
+
             try {
                 prep.execute();
                 fail();
             }
             catch (final SQLException e) {
-                assertKnownException(e);
+                // Expected.
             }
+
             try {
                 prep.execute();
                 fail();
             }
             catch (final SQLException e) {
-                assertKnownException(e);
+                // Expected.
             }
         }
         finally {
@@ -152,15 +151,17 @@ public class H2TestPreparedStatement extends H2TestBase {
     @Test(timeout = 60000)
     public void testTempView() throws SQLException {
 
+        Diagnostic.trace();
+
         Statement stat = null;
         PreparedStatement prep = null;
         try {
 
-            stat = conn.createStatement();
+            stat = connection.createStatement();
             stat.execute("CREATE TABLE TEST(FIELD INT PRIMARY KEY)");
             stat.execute("INSERT INTO TEST VALUES(1)");
             stat.execute("INSERT INTO TEST VALUES(2)");
-            prep = conn.prepareStatement("select FIELD FROM " + "(select FIELD FROM (SELECT FIELD  FROM TEST WHERE FIELD = ?) AS T2 " + "WHERE T2.FIELD = ?) AS T3 WHERE T3.FIELD = ?");
+            prep = connection.prepareStatement("select FIELD FROM " + "(select FIELD FROM (SELECT FIELD  FROM TEST WHERE FIELD = ?) AS T2 " + "WHERE T2.FIELD = ?) AS T3 WHERE T3.FIELD = ?");
             prep.setInt(1, 1);
             prep.setInt(2, 1);
             prep.setInt(3, 1);
@@ -188,15 +189,17 @@ public class H2TestPreparedStatement extends H2TestBase {
     @Test(timeout = 60000)
     public void testInsertFunction() throws SQLException {
 
+        Diagnostic.trace();
+
         Statement stat = null;
         PreparedStatement prep = null;
         try {
-            stat = conn.createStatement();
+            stat = connection.createStatement();
 
             ResultSet rs;
 
             stat.execute("CREATE TABLE TEST(ID INT, H BINARY)");
-            prep = conn.prepareStatement("INSERT INTO TEST VALUES(?, HASH('SHA256', STRINGTOUTF8(?), 5))");
+            prep = connection.prepareStatement("INSERT INTO TEST VALUES(?, HASH('SHA256', STRINGTOUTF8(?), 5))");
             prep.setInt(1, 1);
             prep.setString(2, "One");
             prep.execute();
@@ -222,11 +225,13 @@ public class H2TestPreparedStatement extends H2TestBase {
     @Test(timeout = 60000)
     public void testMaxRowsChange() throws SQLException {
 
+        Diagnostic.trace();
+
         PreparedStatement prep = null;
 
         try {
 
-            prep = conn.prepareStatement("SELECT * FROM SYSTEM_RANGE(1, 100)");
+            prep = connection.prepareStatement("SELECT * FROM SYSTEM_RANGE(1, 100)");
             ResultSet rs;
             for (int j = 1; j < 20; j++) {
                 prep.setMaxRows(j);
@@ -247,23 +252,26 @@ public class H2TestPreparedStatement extends H2TestBase {
     @Test(timeout = 60000)
     public void testUnknownDataType() throws SQLException {
 
+        Diagnostic.trace();
+
         PreparedStatement prep = null;
 
         try {
             try {
 
-                prep = conn.prepareStatement("SELECT * FROM (SELECT ? FROM DUAL)");
+                prep = connection.prepareStatement("SELECT * FROM (SELECT ? FROM DUAL)");
                 prep.setInt(1, 1);
                 prep.execute();
                 fail();
             }
             catch (final SQLException e) {
-                assertKnownException(e);
+                // Expected.
             }
-            prep = conn.prepareStatement("SELECT -?");
+
+            prep = connection.prepareStatement("SELECT -?");
             prep.setInt(1, 1);
             prep.execute();
-            prep = conn.prepareStatement("SELECT ?-?");
+            prep = connection.prepareStatement("SELECT ?-?");
             prep.setInt(1, 1);
             prep.setInt(2, 2);
             prep.execute();
@@ -278,14 +286,16 @@ public class H2TestPreparedStatement extends H2TestBase {
     @Test(timeout = 60000)
     public void testCoalesce() throws SQLException {
 
+        Diagnostic.trace();
+
         Statement stat = null;
         PreparedStatement prep = null;
 
         try {
-            stat = conn.createStatement();
+            stat = connection.createStatement();
             stat.executeUpdate("create table test(tm timestamp)");
             stat.executeUpdate("insert into test values(current_timestamp)");
-            prep = conn.prepareStatement("update test set tm = coalesce(?,tm)");
+            prep = connection.prepareStatement("update test set tm = coalesce(?,tm)");
             prep.setTimestamp(1, new java.sql.Timestamp(System.currentTimeMillis()));
             prep.executeUpdate();
             stat.executeUpdate("drop table test");
@@ -303,15 +313,17 @@ public class H2TestPreparedStatement extends H2TestBase {
     @Test(timeout = 60000)
     public void testPreparedStatementMetaData() throws SQLException {
 
+        Diagnostic.trace();
+
         PreparedStatement prep = null;
 
         try {
-            prep = conn.prepareStatement("select * from table(x int = ?, name varchar = ?)");
+            prep = connection.prepareStatement("select * from table(x int = ?, name varchar = ?)");
             ResultSetMetaData meta = prep.getMetaData();
             assertEquals(meta.getColumnCount(), 2);
             assertEquals(meta.getColumnTypeName(1), "INTEGER");
             assertEquals(meta.getColumnTypeName(2), "VARCHAR");
-            prep = conn.prepareStatement("call 1");
+            prep = connection.prepareStatement("call 1");
             meta = prep.getMetaData();
             assertEquals(meta.getColumnCount(), 1);
             assertEquals(meta.getColumnTypeName(1), "INTEGER");
@@ -326,10 +338,12 @@ public class H2TestPreparedStatement extends H2TestBase {
     @Test(timeout = 60000)
     public void testArray() throws SQLException {
 
+        Diagnostic.trace();
+
         PreparedStatement prep = null;
 
         try {
-            prep = conn.prepareStatement("select * from table(x int = ?) order by x");
+            prep = connection.prepareStatement("select * from table(x int = ?) order by x");
             prep.setObject(1, new Object[]{new BigDecimal("1"), "2"});
             final ResultSet rs = prep.executeQuery();
             rs.next();
@@ -348,10 +362,12 @@ public class H2TestPreparedStatement extends H2TestBase {
     @Test(timeout = 60000)
     public void testUUIDGeneratedKeys() throws SQLException {
 
+        Diagnostic.trace();
+
         Statement stat = null;
 
         try {
-            stat = conn.createStatement();
+            stat = connection.createStatement();
             stat.execute("CREATE TABLE TEST_UUID(id UUID DEFAULT random_UUID() PRIMARY KEY)");
             stat.execute("INSERT INTO TEST_UUID() VALUES()");
             final ResultSet rs = stat.getGeneratedKeys();
@@ -370,12 +386,14 @@ public class H2TestPreparedStatement extends H2TestBase {
     @Test(timeout = 60000)
     public void testSetObject() throws SQLException {
 
+        Diagnostic.trace();
+
         Statement stat = null;
         PreparedStatement prep = null;
         try {
-            stat = conn.createStatement();
+            stat = connection.createStatement();
             stat.execute("CREATE TABLE TEST(ID INT, DATA BINARY, JAVA OTHER)");
-            prep = conn.prepareStatement("INSERT INTO TEST VALUES(?, ?, ?)");
+            prep = connection.prepareStatement("INSERT INTO TEST VALUES(?, ?, ?)");
             prep.setInt(1, 1);
             prep.setObject(2, Integer.valueOf(11));
             prep.setObject(3, null);
@@ -384,7 +402,7 @@ public class H2TestPreparedStatement extends H2TestBase {
             prep.setObject(2, Integer.valueOf(101), Types.OTHER);
             prep.setObject(3, Integer.valueOf(103), Types.OTHER);
             prep.execute();
-            final PreparedStatement p2 = conn.prepareStatement("SELECT * FROM TEST ORDER BY ID");
+            final PreparedStatement p2 = connection.prepareStatement("SELECT * FROM TEST ORDER BY ID");
             final ResultSet rs = p2.executeQuery();
             rs.next();
             Object o = rs.getObject(2);
@@ -412,10 +430,12 @@ public class H2TestPreparedStatement extends H2TestBase {
     @Test(timeout = 60000)
     public void testDate() throws SQLException {
 
+        Diagnostic.trace();
+
         PreparedStatement prep = null;
 
         try {
-            prep = conn.prepareStatement("SELECT ?");
+            prep = connection.prepareStatement("SELECT ?");
             final Timestamp ts = Timestamp.valueOf("2001-02-03 04:05:06");
             prep.setObject(1, new java.util.Date(ts.getTime()));
             final ResultSet rs = prep.executeQuery();
@@ -433,16 +453,18 @@ public class H2TestPreparedStatement extends H2TestBase {
     @Test(timeout = 60000)
     public void testPreparedSubquery() throws SQLException {
 
+        Diagnostic.trace();
+
         Statement s = null;
         PreparedStatement u = null;
         PreparedStatement p = null;
         try {
-            s = conn.createStatement();
+            s = connection.createStatement();
             s.executeUpdate("CREATE TABLE TEST(ID IDENTITY, FLAG BIT)");
             s.executeUpdate("INSERT INTO TEST(ID, FLAG) VALUES(0, FALSE)");
             s.executeUpdate("INSERT INTO TEST(ID, FLAG) VALUES(1, FALSE)");
-            u = conn.prepareStatement("SELECT ID, FLAG FROM TEST ORDER BY ID");
-            p = conn.prepareStatement("UPDATE TEST SET FLAG=true WHERE ID=(SELECT ?)");
+            u = connection.prepareStatement("SELECT ID, FLAG FROM TEST ORDER BY ID");
+            p = connection.prepareStatement("UPDATE TEST SET FLAG=true WHERE ID=(SELECT ?)");
             p.clearParameters();
             p.setLong(1, 0);
             assertEquals(p.executeUpdate(), 1);
@@ -457,7 +479,7 @@ public class H2TestPreparedStatement extends H2TestBase {
             assertEquals(rs.getInt(1), 1);
             assertTrue(rs.getBoolean(2));
 
-            p = conn.prepareStatement("SELECT * FROM TEST WHERE EXISTS(SELECT * FROM TEST WHERE ID=?)");
+            p = connection.prepareStatement("SELECT * FROM TEST WHERE EXISTS(SELECT * FROM TEST WHERE ID=?)");
             p.setInt(1, -1);
             rs = p.executeQuery();
             assertFalse(rs.next());
@@ -477,13 +499,15 @@ public class H2TestPreparedStatement extends H2TestBase {
     @Test(timeout = 60000)
     public void testParameterMetaData() throws SQLException {
 
+        Diagnostic.trace();
+
         PreparedStatement prep = null;
         PreparedStatement prep3 = null;
         PreparedStatement prep1 = null;
         PreparedStatement prep2 = null;
         Statement stat = null;
         try {
-            prep = conn.prepareStatement("SELECT ?, ?, ? FROM DUAL");
+            prep = connection.prepareStatement("SELECT ?, ?, ? FROM DUAL");
             final ParameterMetaData pm = prep.getParameterMetaData();
             assertEquals(pm.getParameterClassName(1), "java.lang.String");
             assertEquals(pm.getParameterTypeName(1), "VARCHAR");
@@ -494,40 +518,44 @@ public class H2TestPreparedStatement extends H2TestBase {
             assertEquals(pm.getScale(1), 0);
             assertEquals(pm.isNullable(1), ResultSetMetaData.columnNullableUnknown);
             assertEquals(pm.isSigned(1), true);
+
             try {
                 pm.getPrecision(0);
                 fail();
             }
             catch (final SQLException e) {
-                assertKnownException(e);
+                // Expected.
             }
+
             try {
                 pm.getPrecision(4);
                 fail();
             }
             catch (final SQLException e) {
-                assertKnownException(e);
+                // Expected.
             }
+
             prep.close();
+
             try {
                 pm.getPrecision(1);
                 fail();
             }
             catch (final SQLException e) {
-                assertKnownException(e);
+                // Expected.
             }
 
-            stat = conn.createStatement();
+            stat = connection.createStatement();
             stat.execute("CREATE TABLE TEST3(ID INT, NAME VARCHAR(255), DATA DECIMAL(10,2))");
-            prep1 = conn.prepareStatement("UPDATE TEST3 SET ID=?, NAME=?, DATA=?");
-            prep2 = conn.prepareStatement("INSERT INTO TEST3 VALUES(?, ?, ?)");
+            prep1 = connection.prepareStatement("UPDATE TEST3 SET ID=?, NAME=?, DATA=?");
+            prep2 = connection.prepareStatement("INSERT INTO TEST3 VALUES(?, ?, ?)");
             checkParameter(prep1, 1, "java.lang.Integer", 4, "INTEGER", 10, 0);
             checkParameter(prep1, 2, "java.lang.String", 12, "VARCHAR", 255, 0);
             checkParameter(prep1, 3, "java.math.BigDecimal", 3, "DECIMAL", 10, 2);
             checkParameter(prep2, 1, "java.lang.Integer", 4, "INTEGER", 10, 0);
             checkParameter(prep2, 2, "java.lang.String", 12, "VARCHAR", 255, 0);
             checkParameter(prep2, 3, "java.math.BigDecimal", 3, "DECIMAL", 10, 2);
-            prep3 = conn.prepareStatement("SELECT * FROM TEST3 WHERE ID=? AND NAME LIKE ? AND ?>DATA");
+            prep3 = connection.prepareStatement("SELECT * FROM TEST3 WHERE ID=? AND NAME LIKE ? AND ?>DATA");
             checkParameter(prep3, 1, "java.lang.Integer", 4, "INTEGER", 10, 0);
             checkParameter(prep3, 2, "java.lang.String", 12, "VARCHAR", 0, 0);
             checkParameter(prep3, 3, "java.math.BigDecimal", 3, "DECIMAL", 10, 2);
@@ -559,19 +587,21 @@ public class H2TestPreparedStatement extends H2TestBase {
     @Test(timeout = 60000)
     public void testLikeIndex() throws SQLException {
 
+        Diagnostic.trace();
+
         Statement stat = null;
         PreparedStatement prep = null, prepExe = null;
 
         try {
-            stat = conn.createStatement();
+            stat = connection.createStatement();
             stat.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255))");
             stat.execute("INSERT INTO TEST VALUES(1, 'Hello')");
             stat.execute("INSERT INTO TEST VALUES(2, 'World')");
             stat.execute("create index idxname on test(name);");
 
-            prep = conn.prepareStatement("EXPLAIN SELECT * FROM TEST WHERE NAME LIKE ?");
+            prep = connection.prepareStatement("EXPLAIN SELECT * FROM TEST WHERE NAME LIKE ?");
             assertEquals(prep.getParameterMetaData().getParameterCount(), 1);
-            prepExe = conn.prepareStatement("SELECT * FROM TEST WHERE NAME LIKE ?");
+            prepExe = connection.prepareStatement("SELECT * FROM TEST WHERE NAME LIKE ?");
             prep.setString(1, "%orld");
             prepExe.setString(1, "%orld");
             ResultSet rs = prep.executeQuery();
@@ -608,57 +638,59 @@ public class H2TestPreparedStatement extends H2TestBase {
     }
 
     @Test(timeout = 60000)
-    public void testCasewhen() throws SQLException {
+    public void testCaseWhen() throws SQLException {
+
+        Diagnostic.trace();
 
         Statement stat = null;
         PreparedStatement prep = null;
         try {
-            stat = conn.createStatement();
+            stat = connection.createStatement();
 
             stat.execute("CREATE TABLE TEST(ID INT)");
             stat.execute("INSERT INTO TEST VALUES(1),(2),(3)");
 
             ResultSet rs;
-            prep = conn.prepareStatement("EXPLAIN SELECT COUNT(*) FROM TEST WHERE CASEWHEN(ID=1, ID, ID)=? GROUP BY ID");
+            prep = connection.prepareStatement("EXPLAIN SELECT COUNT(*) FROM TEST WHERE CASEWHEN(ID=1, ID, ID)=? GROUP BY ID");
             prep.setInt(1, 1);
             rs = prep.executeQuery();
             rs.next();
             String plan = rs.getString(1);
-            trace(plan);
             rs.close();
-            prep = conn.prepareStatement("EXPLAIN SELECT COUNT(*) FROM TEST WHERE CASE ID WHEN 1 THEN ID WHEN 2 THEN ID ELSE ID END=? GROUP BY ID");
+            prep = connection.prepareStatement("EXPLAIN SELECT COUNT(*) FROM TEST WHERE CASE ID WHEN 1 THEN ID WHEN 2 THEN ID ELSE ID END=? GROUP BY ID");
             prep.setInt(1, 1);
             rs = prep.executeQuery();
             rs.next();
             plan = rs.getString(1);
-            trace(plan);
 
-            prep = conn.prepareStatement("SELECT COUNT(*) FROM TEST WHERE CASEWHEN(ID=1, ID, ID)=? GROUP BY ID");
+            prep = connection.prepareStatement("SELECT COUNT(*) FROM TEST WHERE CASEWHEN(ID=1, ID, ID)=? GROUP BY ID");
             prep.setInt(1, 1);
             rs = prep.executeQuery();
             assertTrue(rs.next());
             assertEquals(rs.getInt(1), 1);
             assertFalse(rs.next());
 
-            prep = conn.prepareStatement("SELECT COUNT(*) FROM TEST WHERE CASE ID WHEN 1 THEN ID WHEN 2 THEN ID ELSE ID END=? GROUP BY ID");
+            prep = connection.prepareStatement("SELECT COUNT(*) FROM TEST WHERE CASE ID WHEN 1 THEN ID WHEN 2 THEN ID ELSE ID END=? GROUP BY ID");
             prep.setInt(1, 1);
             rs = prep.executeQuery();
             assertTrue(rs.next());
             assertEquals(rs.getInt(1), 1);
             assertFalse(rs.next());
 
-            prep = conn.prepareStatement("SELECT * FROM TEST WHERE ? IS NULL");
+            prep = connection.prepareStatement("SELECT * FROM TEST WHERE ? IS NULL");
             prep.setString(1, "Hello");
             rs = prep.executeQuery();
             assertFalse(rs.next());
+
             try {
-                conn.prepareStatement("select ? from dual union select ? from dual");
+                connection.prepareStatement("select ? from dual union select ? from dual");
                 fail();
             }
             catch (final SQLException e) {
-                assertKnownException(e);
+                // Expected.
             }
-            prep = conn.prepareStatement("select cast(? as varchar) from dual union select ? from dual");
+
+            prep = connection.prepareStatement("select cast(? as varchar) from dual union select ? from dual");
             assertEquals(prep.getParameterMetaData().getParameterCount(), 2);
             prep.setString(1, "a");
             prep.setString(2, "a");
@@ -683,13 +715,15 @@ public class H2TestPreparedStatement extends H2TestBase {
     @Test(timeout = 60000)
     public void testSubquery() throws SQLException {
 
+        Diagnostic.trace();
+
         Statement stat = null;
         PreparedStatement prep = null;
         try {
-            stat = conn.createStatement();
+            stat = connection.createStatement();
             stat.execute("CREATE TABLE TEST(ID INT)");
             stat.execute("INSERT INTO TEST VALUES(1),(2),(3)");
-            prep = conn.prepareStatement("select x.id, ? from " + "(select * from test where id in(?, ?)) x where x.id*2 <>  ?");
+            prep = connection.prepareStatement("select x.id, ? from " + "(select * from test where id in(?, ?)) x where x.id*2 <>  ?");
             assertEquals(prep.getParameterMetaData().getParameterCount(), 4);
             prep.setInt(1, 0);
             prep.setInt(2, 1);
@@ -715,16 +749,18 @@ public class H2TestPreparedStatement extends H2TestBase {
     @Test(timeout = 60000)
     public void testObject() throws SQLException {
 
+        Diagnostic.trace();
+
         Statement stat = null;
         PreparedStatement prep = null;
 
         try {
-            stat = conn.createStatement();
+            stat = connection.createStatement();
             ResultSet rs;
             stat.execute("DROP TABLE IF EXISTS TEST;");
             stat.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255))");
             stat.execute("INSERT INTO TEST VALUES(1, 'Hello')");
-            prep = conn.prepareStatement("SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? FROM TEST");
+            prep = connection.prepareStatement("SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? FROM TEST");
             prep.setObject(1, Boolean.valueOf(true));
             prep.setObject(2, "Abc");
             prep.setObject(3, new BigDecimal("10.2"));

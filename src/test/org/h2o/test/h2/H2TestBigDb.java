@@ -4,64 +4,54 @@
  */
 package org.h2o.test.h2;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.h2.test.TestAll;
-import org.h2.tools.DeleteDbFiles;
 import org.h2.util.MemoryUtils;
-import org.h2o.locator.server.LocatorServer;
+import org.h2o.test.H2OTestBase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
-import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
  * Test for big databases.
  */
-public class H2TestBigDb extends H2TestBase {
+public class H2TestBigDb extends H2OTestBase {
 
-    protected LocatorServer ls;
+    private Connection connection;
 
+    @Override
     @Before
-    public void setUp() throws SQLException {
+    public void setUp() throws SQLException, IOException {
 
-        ls = new LocatorServer(29999, "junitLocator");
-        ls.createNewLocatorFile();
-        ls.start();
+        super.setUp();
 
-        config = new TestAll();
-
-        if (config.memory) { return; }
-        if (config.networked && config.big) { return; }
-
-        DeleteDbFiles.execute("data\\test\\", "bigDb", true);
-
-        Diagnostic.setLevel(DiagnosticLevel.FULL);
+        connection = makeConnection();
     }
 
+    @Override
     @After
-    public void tearDown() throws SQLException, InterruptedException {
+    public void tearDown() throws SQLException {
 
-        DeleteDbFiles.execute("data\\test\\", "bigDb", true);
-        ls.setRunning(false);
-        while (!ls.isFinished()) {
-            Thread.sleep(SHUTDOWN_CHECK_DELAY);
-        };
+        if (connection != null) {
+            connection.close();
+        }
+
+        super.tearDown();
     }
 
     @Test(timeout = 60000)
     public void testLargeTable() throws SQLException {
 
-        Diagnostic.trace(DiagnosticLevel.FULL);
+        Diagnostic.trace();
 
-        final Connection conn = getConnection("bigDb");
-        final Statement stat = conn.createStatement();
+        final Statement stat = connection.createStatement();
         PreparedStatement prep = null;
         try {
             stat.execute("CREATE CACHED TABLE TEST(" + "M_CODE CHAR(1) DEFAULT CAST(RAND()*9 AS INT)," + "PRD_CODE CHAR(20) DEFAULT SECURE_RAND(10)," + "ORG_CODE_SUPPLIER CHAR(13) DEFAULT SECURE_RAND(6)," + "PRD_CODE_1 CHAR(14) DEFAULT SECURE_RAND(7),"
@@ -71,41 +61,32 @@ public class H2TestBigDb extends H2TestBase {
                             + "PRICE_GROUP CHAR(20) DEFAULT SECURE_RAND(10)," + "LEAD_TIME INTEGER DEFAULT RAND()," + "LEAD_TIME_UNIT_CODE CHAR(3) DEFAULT SECURE_RAND(1)," + "PRD_GROUP CHAR(10) DEFAULT SECURE_RAND(5)," + "WEIGHT_GROSS DECIMAL(7,3) DEFAULT RAND(),"
                             + "WEIGHT_UNIT_CODE CHAR(3) DEFAULT SECURE_RAND(1)," + "PACK_UNIT_CODE CHAR(3) DEFAULT SECURE_RAND(1)," + "PACK_LENGTH DECIMAL(7,3) DEFAULT RAND()," + "PACK_WIDTH DECIMAL(7,3) DEFAULT RAND()," + "PACK_HEIGHT DECIMAL(7,3) DEFAULT RAND(),"
                             + "SIZE_UNIT_CODE CHAR(3) DEFAULT SECURE_RAND(1)," + "STATUS_CODE CHAR(3) DEFAULT SECURE_RAND(1)," + "INTRA_STAT_CODE CHAR(12) DEFAULT SECURE_RAND(6)," + "PRD_TITLE CHAR(50) DEFAULT SECURE_RAND(25)," + "VALID_FROM DATE DEFAULT NOW()," + "MOD_DATUM DATE DEFAULT NOW())");
-            final int len = getSize(10, 50000);
-            try {
-                prep = conn.prepareStatement("INSERT INTO TEST(PRD_CODE) VALUES('abc' || ?)");
-                long time = System.currentTimeMillis();
-                for (int i = 0; i < len; i++) {
-                    if (i % 1000 == 0) {
-                        final long t = System.currentTimeMillis();
-                        if (t - time > 1000) {
-                            time = t;
-                            final int free = MemoryUtils.getMemoryFree();
-                            println("i: " + i + " free: " + free + " used: " + MemoryUtils.getMemoryUsed());
-                        }
-                    }
-                    prep.setInt(1, i);
-                    prep.execute();
-                }
-                stat.execute("CREATE INDEX IDX_TEST_PRD_CODE ON TEST(PRD_CODE)");
-                final ResultSet rs = stat.executeQuery("SELECT * FROM TEST");
-                final int columns = rs.getMetaData().getColumnCount();
-                while (rs.next()) {
-                    for (int i = 0; i < columns; i++) {
-                        rs.getString(i + 1);
-                    }
-                }
-            }
-            catch (final OutOfMemoryError e) {
-                H2TestBase.logError("memory", e);
-                conn.close();
-                throw e;
-            }
-            conn.close();
+            final int len = 50000;
 
+            prep = connection.prepareStatement("INSERT INTO TEST(PRD_CODE) VALUES('abc' || ?)");
+            long time = System.currentTimeMillis();
+            for (int i = 0; i < len; i++) {
+                if (i % 1000 == 0) {
+                    final long t = System.currentTimeMillis();
+                    if (t - time > 1000) {
+                        time = t;
+                        final int free = MemoryUtils.getMemoryFree();
+                    }
+                }
+                prep.setInt(1, i);
+                prep.execute();
+            }
+            stat.execute("CREATE INDEX IDX_TEST_PRD_CODE ON TEST(PRD_CODE)");
+            final ResultSet rs = stat.executeQuery("SELECT * FROM TEST");
+            final int columns = rs.getMetaData().getColumnCount();
+            while (rs.next()) {
+                for (int i = 0; i < columns; i++) {
+                    rs.getString(i + 1);
+                }
+            }
         }
         finally {
-            conn.close();
+
             stat.close();
             prep.close();
         }
@@ -114,18 +95,17 @@ public class H2TestBigDb extends H2TestBase {
     @Test(timeout = 60000)
     public void testLeftSummary() throws SQLException {
 
-        Diagnostic.trace(DiagnosticLevel.FULL);
+        Diagnostic.trace();
 
-        final Connection conn = getConnection("bigDb");
-        final Statement stat = conn.createStatement();
+        final Statement stat = connection.createStatement();
         PreparedStatement prep = null;
         try {
             stat.execute("DROP TABLE IF EXISTS TEST;");
             stat.execute("CREATE TABLE TEST(ID INT, NEG INT AS -ID, NAME VARCHAR, PRIMARY KEY(ID, NAME))");
             stat.execute("CREATE INDEX IDX_NEG ON TEST(NEG, NAME)");
-            prep = conn.prepareStatement("INSERT INTO TEST(ID, NAME) VALUES(?, '1234567890')");
-            final int len = getSize(10, 1000);
-            final int block = getSize(3, 10);
+            prep = connection.prepareStatement("INSERT INTO TEST(ID, NAME) VALUES(?, '1234567890')");
+            final int len = 1000;
+            final int block = 10;
             int left, x = 0;
             for (int i = 0; i < len; i++) {
                 left = x + block / 2;
@@ -138,13 +118,10 @@ public class H2TestBigDb extends H2TestBase {
                 final ResultSet rs = stat.executeQuery("SELECT COUNT(*) FROM TEST");
                 rs.next();
                 final int count = rs.getInt(1);
-                trace("count: " + count);
             }
-            conn.close();
         }
         finally {
             prep.close();
-            conn.close();
             stat.close();
         }
     }
@@ -152,21 +129,19 @@ public class H2TestBigDb extends H2TestBase {
     @Test(timeout = 60000)
     public void testInsert() throws SQLException {
 
-        Diagnostic.trace(DiagnosticLevel.FULL);
+        Diagnostic.trace();
 
-        Connection conn = null;
         Statement stat = null;
         PreparedStatement prep = null;
         try {
-            conn = getConnection("bigDb");
-            stat = conn.createStatement();
+
+            stat = connection.createStatement();
             stat.execute("DROP TABLE IF EXISTS TEST;");
             stat.execute("CREATE TABLE TEST(ID IDENTITY, NAME VARCHAR)");
-            prep = conn.prepareStatement("INSERT INTO TEST(NAME) VALUES('Hello World')");
-            final int len = getSize(1000, 10000);
+            prep = connection.prepareStatement("INSERT INTO TEST(NAME) VALUES('Hello World')");
+            final int len = 10000;
             for (int i = 0; i < len; i++) {
                 if (i % 1000 == 0) {
-                    println("rows: " + i);
                     Thread.yield();
                 }
                 prep.execute();
@@ -174,7 +149,6 @@ public class H2TestBigDb extends H2TestBase {
         }
         finally {
             prep.close();
-            conn.close();
             stat.close();
         }
     }

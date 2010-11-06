@@ -360,24 +360,15 @@ public class Database implements DataHandler {
             try {
                 localSettings.loadProperties();
             }
-            catch (final IOException e1) {
-                localSettings.createNewFile();
-                try {
-                    localSettings.loadProperties();
-                }
-                catch (final IOException e) {
-                    ErrorHandling.exceptionError(e, "Failed to create properties file for database.");
-                }
+            catch (final IOException e) {
+                throw new SQLException("Cannot load properties: " + e.getMessage());
             }
 
-            if (Constants.IS_H2O && !isManagementDB()) {
-                setDiagnosticLevel(localMachineLocation);
-            }
+            setDiagnosticLevel(localMachineLocation);
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "H2O, Database '" + name + "'.");
 
-            H2OLocatorInterface locatorInterface;
             try {
-                locatorInterface = databaseRemote.getLocatorServerReference(localSettings);
+                final H2OLocatorInterface locatorInterface = databaseRemote.getLocatorServerReference(localSettings);
 
                 databaseSettings = new Settings(localSettings, locatorInterface.getDescriptor());
             }
@@ -400,11 +391,9 @@ public class Database implements DataHandler {
                 keepAliveMessageThread = new KeepAliveMessageThread(localMachineLocation.getURL());
                 keepAliveMessageThread.start();
             }
-
         }
 
-        multiThreaded = true; // H2O. Required for the H2O push replication
-        // feature, among other things.
+        multiThreaded = true; // H2O. Required for the H2O push replication feature, among other things.
 
         this.cipher = cipher;
         final String lockMethodName = ci.getProperty("FILE_LOCK", null);

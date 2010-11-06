@@ -27,6 +27,7 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
 public class LocatorServer extends Thread {
 
     private static final int DEFAULT_LOCATOR_SERVER_PORT = 29999;
+    private static final long SHUTDOWN_CHECK_DELAY = 2000;
 
     private boolean running = true;
 
@@ -91,6 +92,20 @@ public class LocatorServer extends Thread {
         }
 
         setFinished(true);
+    }
+
+    public void shutdown() {
+
+        setRunning(false);
+
+        while (!isFinished()) {
+            try {
+                Thread.sleep(SHUTDOWN_CHECK_DELAY);
+            }
+            catch (final InterruptedException e) {
+                // Ignore and carry on.
+            }
+        }
     }
 
     /**

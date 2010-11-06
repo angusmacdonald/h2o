@@ -6,58 +6,57 @@ package org.h2o.test.h2;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.h2.test.TestAll;
-import org.h2.tools.DeleteDbFiles;
-import org.h2o.locator.server.LocatorServer;
+import org.h2o.test.H2OTestBase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+
 /**
  * Test for big result sets.
  */
-public class H2TestBigResult extends H2TestBase {
+public class H2TestBigResult extends H2OTestBase {
 
-    private LocatorServer ls;
+    private Connection connection;
 
+    @Override
     @Before
-    public void setUp() throws SQLException {
+    public void setUp() throws SQLException, IOException {
 
-        ls = new LocatorServer(29999, "junitLocator");
-        ls.createNewLocatorFile();
-        ls.start();
+        super.setUp();
 
-        config = new TestAll();
-
-        if (config.memory) { return; }
+        connection = makeConnection();
     }
 
+    @Override
     @After
     public void tearDown() throws SQLException {
 
-        DeleteDbFiles.execute("data\\test\\", "bigResult", true);
-        ls.setRunning(false);
-        while (!ls.isFinished()) {
-        };
+        if (connection != null) {
+            connection.close();
+        }
 
+        super.tearDown();
     }
 
     @Test
     public void testLargeSubquery() throws SQLException {
 
-        deleteDb("bigResult");
-        final Connection conn = getConnection("bigResult");
+        Diagnostic.trace();
+
         Statement stat = null;
         try {
-            stat = conn.createStatement();
+            stat = connection.createStatement();
 
-            final int len = getSize(1000, 4000);
+            final int len = 4000;
             stat.execute("SET MAX_MEMORY_ROWS " + len / 10);
             stat.execute("CREATE TABLE RECOVERY(TRANSACTION_ID INT, SQL_STMT VARCHAR)");
             stat.execute("INSERT INTO RECOVERY " + "SELECT X, CASE MOD(X, 2) WHEN 0 THEN 'commit' ELSE 'begin' END " + "FROM SYSTEM_RANGE(1, " + len + ")");
@@ -72,19 +71,18 @@ public class H2TestBigResult extends H2TestBase {
         }
         finally {
             stat.close();
-            conn.close();
         }
     }
 
     @Test
     public void testLargeUpdateDelete() throws SQLException {
 
-        deleteDb("bigResult");
-        final Connection conn = getConnection("bigResult");
-        final Statement stat = conn.createStatement();
+        Diagnostic.trace();
+
+        final Statement stat = connection.createStatement();
 
         try {
-            final int len = getSize(10000, 100000);
+            final int len = 100000;
             stat.execute("DROP ALL OBJECTS;");
             stat.execute("SET MAX_OPERATION_MEMORY 4096");
             stat.execute("CREATE TABLE TEST AS SELECT * FROM SYSTEM_RANGE(1, " + len + ")");
@@ -92,7 +90,6 @@ public class H2TestBigResult extends H2TestBase {
             stat.execute("DELETE FROM TEST");
         }
         finally {
-            conn.close();
             stat.close();
         }
     }
@@ -100,12 +97,12 @@ public class H2TestBigResult extends H2TestBase {
     @Test
     public void testLimitBufferedResult() throws SQLException {
 
-        deleteDb("bigResult");
-        final Connection conn = getConnection("bigResult");
+        Diagnostic.trace();
+
         Statement stat = null;
 
         try {
-            stat = conn.createStatement();
+            stat = connection.createStatement();
 
             stat.execute("DROP TABLE IF EXISTS TEST");
             stat.execute("CREATE TABLE TEST(ID INT)");
@@ -129,23 +126,22 @@ public class H2TestBigResult extends H2TestBase {
         }
         finally {
             stat.close();
-            conn.close();
         }
     }
 
     @Test
     public void testOrderGroup() throws SQLException {
 
-        deleteDb("bigResult");
-        Connection conn = getConnection("bigResult");
+        Diagnostic.trace();
+
         Statement stat = null;
 
         try {
-            stat = conn.createStatement();
+            stat = connection.createStatement();
             stat.execute("DROP TABLE IF EXISTS TEST");
             stat.execute("CREATE TABLE TEST(" + "ID INT PRIMARY KEY, " + "Name VARCHAR(255), " + "FirstName VARCHAR(255), " + "Points INT," + "LicenseID INT)");
-            final int len = getSize(10, 5000);
-            PreparedStatement prep = conn.prepareStatement("INSERT INTO TEST VALUES(?, ?, ?, ?, ?)");
+            final int len = 5000;
+            PreparedStatement prep = connection.prepareStatement("INSERT INTO TEST VALUES(?, ?, ?, ?, ?)");
             for (int i = 0; i < len; i++) {
                 prep.setInt(1, i);
                 prep.setString(2, "Name " + i);
@@ -154,9 +150,9 @@ public class H2TestBigResult extends H2TestBase {
                 prep.setInt(5, i * i);
                 prep.execute();
             }
-            conn.close();
-            conn = getConnection("bigResult");
-            stat = conn.createStatement();
+            stat.close();
+
+            stat = connection.createStatement();
             stat.setMaxRows(len + 1);
             ResultSet rs = stat.executeQuery("SELECT * FROM TEST ORDER BY ID");
             for (int i = 0; i < len; i++) {
@@ -186,21 +182,21 @@ public class H2TestBigResult extends H2TestBase {
                 rs.getInt(2);
             }
 
-            conn.setAutoCommit(false);
+            connection.setAutoCommit(false);
             stat.setMaxRows(0);
             stat.execute("SET MAX_MEMORY_ROWS 0");
             stat.execute("CREATE TABLE DATA(ID INT, NAME VARCHAR_IGNORECASE(255))");
-            prep = conn.prepareStatement("INSERT INTO DATA VALUES(?, ?)");
+            prep = connection.prepareStatement("INSERT INTO DATA VALUES(?, ?)");
             for (int i = 0; i < len; i++) {
                 prep.setInt(1, i);
                 prep.setString(2, "" + i / 200);
                 prep.execute();
             }
-            final Statement s2 = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+            final Statement s2 = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
             rs = s2.executeQuery("SELECT NAME FROM DATA");
             rs.last();
-            conn.commit();
-            conn.setAutoCommit(true);
+            connection.commit();
+            connection.setAutoCommit(true);
 
             rs = s2.executeQuery("SELECT NAME FROM DATA ORDER BY ID");
             while (rs.next()) {
@@ -209,19 +205,18 @@ public class H2TestBigResult extends H2TestBase {
         }
         finally {
             stat.close();
-            conn.close();
         }
     }
 
     @Test
     public void testDeleteAllObjects() throws SQLException {
 
-        deleteDb("bigResult");
-        final Connection conn = getConnection("bigResult");
+        Diagnostic.trace();
+
         Statement stat = null;
         try {
-            stat = conn.createStatement();
-            final int len = getSize(10000, 100000);
+            stat = connection.createStatement();
+            final int len = 100000;
             stat.execute("DROP TABLE IF EXISTS TEST");
             stat.execute("CREATE TABLE TEST(ID INT)");
             stat.execute("DROP ALL OBJECTS;");
@@ -230,9 +225,6 @@ public class H2TestBigResult extends H2TestBase {
         }
         finally {
             stat.close();
-            conn.close();
         }
-
     }
-
 }

@@ -5,8 +5,11 @@
 package org.h2o.test.h2;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.sql.BatchUpdateException;
 import java.sql.CallableStatement;
@@ -17,26 +20,22 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.h2.test.TestAll;
-import org.h2.tools.DeleteDbFiles;
-import org.h2o.locator.server.LocatorServer;
+import org.h2o.test.H2OTestBase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+
 /**
  * Test for batch updates.
  */
-public class H2TestBatchUpdates extends H2TestBase {
+public class H2TestBatchUpdates extends H2OTestBase {
 
     private static final String COFFEE_UPDATE = "UPDATE TEST SET PRICE=PRICE*20 WHERE TYPE_ID=?";
 
     private static final String COFFEE_SELECT = "SELECT PRICE FROM TEST WHERE KEY_ID=?";
 
-    // private static final String COFFEE_QUERY =
-    // "SELECT C_NAME,PRICE FROM TEST WHERE TYPE_ID=?";
-    // private static final String COFFEE_DELETE =
-    // "DELETE FROM TEST WHERE KEY_ID=?";
     private static final String COFFEE_INSERT1 = "INSERT INTO TEST VALUES(9,'COFFEE-9',9.0,5)";
 
     private static final String COFFEE_DELETE1 = "DELETE FROM TEST WHERE KEY_ID=9";
@@ -53,47 +52,43 @@ public class H2TestBatchUpdates extends H2TestBase {
 
     private static final int coffeeType = 11;
 
-    private Connection conn;
+    private Connection connection;
 
     private Statement stat;
 
     private PreparedStatement prep;
 
-    private LocatorServer ls;
-
+    @Override
     @Before
-    public void setUp() throws SQLException {
+    public void setUp() throws SQLException, IOException {
 
-        DeleteDbFiles.execute("data\\test\\", "batchUpdates", true);
+        super.setUp();
 
-        ls = new LocatorServer(29999, "junitLocator");
-        ls.createNewLocatorFile();
-        ls.start();
-
-        config = new TestAll();
-
+        connection = makeConnection();
     }
 
+    @Override
     @After
     public void tearDown() throws SQLException {
 
-        ls.setRunning(false);
-        while (!ls.isFinished()) {
-        };
+        if (connection != null) {
+            connection.close();
+        }
 
+        super.tearDown();
     }
 
     @Test
     public void testExecuteCall() throws SQLException {
 
-        deleteDb("batchUpdates");
-        final Connection conn = getConnection("batchUpdates");
+        Diagnostic.trace();
+
         Statement stat = null;
         CallableStatement call = null;
         try {
-            stat = conn.createStatement();
+            stat = connection.createStatement();
             stat.execute("CREATE ALIAS updatePrices FOR \"" + getClass().getName() + ".updatePrices\"");
-            call = conn.prepareCall("{call updatePrices(?, ?)}");
+            call = connection.prepareCall("{call updatePrices(?, ?)}");
             call.setString(1, "Hello");
             call.setFloat(2, 1.4f);
             call.addBatch();
@@ -109,7 +104,6 @@ public class H2TestBatchUpdates extends H2TestBase {
         }
         finally {
             call.close();
-            conn.close();
             stat.close();
         }
     }
@@ -131,14 +125,14 @@ public class H2TestBatchUpdates extends H2TestBase {
     @Test
     public void testException() throws SQLException {
 
-        deleteDb("batchUpdates");
-        final Connection conn = getConnection("batchUpdates");
+        Diagnostic.trace();
+
         Statement stat = null;
 
         try {
-            stat = conn.createStatement();
+            stat = connection.createStatement();
             stat.execute("create table test(id int primary key)");
-            final PreparedStatement prep = conn.prepareStatement("insert into test values(?)");
+            final PreparedStatement prep = connection.prepareStatement("insert into test values(?)");
             for (int i = 0; i < 700; i++) {
                 prep.setString(1, "x");
                 prep.addBatch();
@@ -159,26 +153,22 @@ public class H2TestBatchUpdates extends H2TestBase {
             }
         }
         finally {
-            conn.close();
             stat.close();
         }
     }
 
     public void testCoffee() throws SQLException {
 
-        deleteDb("batchUpdates");
-        conn = getConnection("batchUpdates");
-        stat = conn.createStatement();
-        final DatabaseMetaData meta = conn.getMetaData();
-        if (!meta.supportsBatchUpdates()) {
-            fail("does not support BatchUpdates");
-        }
+        stat = connection.createStatement();
+        final DatabaseMetaData meta = connection.getMetaData();
+        assertTrue(!meta.supportsBatchUpdates());
+
         stat.executeUpdate("DROP TABLE IF EXISTS TEST;");
         stat.executeUpdate("CREATE TABLE TEST(KEY_ID INT PRIMARY KEY," + "C_NAME VARCHAR(255),PRICE DECIMAL(20,2),TYPE_ID INT)");
         String newName = null;
         float newPrice = 0;
         int newType = 0;
-        prep = conn.prepareStatement("INSERT INTO TEST VALUES(?,?,?,?)");
+        prep = connection.prepareStatement("INSERT INTO TEST VALUES(?,?,?,?)");
         int newKey = 1;
         for (int i = 1; i <= coffeeType && newKey <= coffeeSize; i++) {
             for (int j = 1; j <= i && newKey <= coffeeSize; j++) {
@@ -193,7 +183,7 @@ public class H2TestBatchUpdates extends H2TestBase {
                 newKey = newKey + 1;
             }
         }
-        trace("Inserted the Rows ");
+
         testAddBatch01();
         testAddBatch02();
         testClearBatch01();
@@ -207,17 +197,15 @@ public class H2TestBatchUpdates extends H2TestBase {
         testExecuteBatch07();
         testContinueBatch01();
 
-        conn.close();
+        connection.close();
     }
 
     private void testAddBatch01() throws SQLException {
 
-        trace("testAddBatch01");
         int i = 0;
         final int[] retValue = {0, 0, 0};
         final String s = COFFEE_UPDATE;
-        trace("Prepared Statement String:" + s);
-        prep = conn.prepareStatement(s);
+        prep = connection.prepareStatement(s);
         prep.setInt(1, 2);
         prep.addBatch();
         prep.setInt(1, 3);
@@ -227,22 +215,8 @@ public class H2TestBatchUpdates extends H2TestBase {
         final int[] updateCount = prep.executeBatch();
         final int updateCountLen = updateCount.length;
 
-        // PreparedStatement p;
-        // p = conn.prepareStatement(COFFEE_UPDATE);
-        // p.setInt(1,2);
-        // System.out.println("upc="+p.executeUpdate());
-        // p.setInt(1,3);
-        // System.out.println("upc="+p.executeUpdate());
-        // p.setInt(1,4);
-        // System.out.println("upc="+p.executeUpdate());
+        assertEquals(3, updateCountLen);
 
-        trace("updateCount length:" + updateCountLen);
-        if (updateCountLen != 3) {
-            fail("updateCount: " + updateCountLen);
-        }
-        else {
-            trace("addBatch add the SQL statements to Batch ");
-        }
         final String query1 = "SELECT COUNT(*) FROM TEST WHERE TYPE_ID=2";
         final String query2 = "SELECT COUNT(*) FROM TEST WHERE TYPE_ID=3";
         final String query3 = "SELECT COUNT(*) FROM TEST WHERE TYPE_ID=4";
@@ -256,14 +230,12 @@ public class H2TestBatchUpdates extends H2TestBase {
         rs.next();
         retValue[i++] = rs.getInt(1);
         for (int j = 0; j < updateCount.length; j++) {
-            trace("UpdateCount:" + updateCount[j]);
             assertEquals(updateCount[j], retValue[j]);
         }
     }
 
     private void testAddBatch02() throws SQLException {
 
-        trace("testAddBatch02");
         int i = 0;
         final int[] retValue = {0, 0, 0};
         int updCountLength = 0;
@@ -275,13 +247,9 @@ public class H2TestBatchUpdates extends H2TestBase {
         stat.addBatch(sInsCoffee);
         final int[] updateCount = stat.executeBatch();
         updCountLength = updateCount.length;
-        trace("updateCount Length:" + updCountLength);
-        if (updCountLength != 3) {
-            fail("addBatch " + updCountLength);
-        }
-        else {
-            trace("addBatch add the SQL statements to Batch ");
-        }
+
+        assertEquals(3, updCountLength);
+
         final String query1 = "SELECT COUNT(*) FROM TEST WHERE TYPE_ID=1";
         final ResultSet rs = stat.executeQuery(query1);
         rs.next();
@@ -290,22 +258,17 @@ public class H2TestBatchUpdates extends H2TestBase {
         retValue[i++] = 1;
         // 1 as insert Statement will insert only one row
         retValue[i++] = 1;
-        trace("ReturnValue count : " + retValue.length);
+
         for (int j = 0; j < updateCount.length; j++) {
-            trace("Update Count:" + updateCount[j]);
-            trace("Returned Value : " + retValue[j]);
-            if (updateCount[j] != retValue[j]) {
-                fail("j=" + j + " right:" + retValue[j]);
-            }
+
+            assertEquals(updateCount[j], retValue[j]);
         }
     }
 
     private void testClearBatch01() throws SQLException {
 
-        trace("testClearBatch01");
         final String sPrepStmt = COFFEE_UPDATE;
-        trace("Prepared Statement String:" + sPrepStmt);
-        prep = conn.prepareStatement(sPrepStmt);
+        prep = connection.prepareStatement(sPrepStmt);
         prep.setInt(1, 2);
         prep.addBatch();
         prep.setInt(1, 3);
@@ -315,17 +278,11 @@ public class H2TestBatchUpdates extends H2TestBase {
         prep.clearBatch();
         final int[] updateCount = prep.executeBatch();
         final int updCountLength = updateCount.length;
-        if (updCountLength == 0) {
-            trace("clearBatch Method clears the current Batch ");
-        }
-        else {
-            fail("clearBatch " + updCountLength);
-        }
+        assertEquals(0, updCountLength);
     }
 
     private void testClearBatch02() throws SQLException {
 
-        trace("testClearBatch02");
         int updCountLength = 0;
         final String sUpdCoffee = COFFEE_UPDATE1;
         final String sInsCoffee = COFFEE_INSERT1;
@@ -336,25 +293,19 @@ public class H2TestBatchUpdates extends H2TestBase {
         stat.clearBatch();
         final int[] updateCount = stat.executeBatch();
         updCountLength = updateCount.length;
-        trace("updateCount Length:" + updCountLength);
-        if (updCountLength == 0) {
-            trace("clearBatch Method clears the current Batch ");
-        }
-        else {
-            fail("clearBatch");
-        }
+
+        assertEquals(0, updCountLength);
     }
 
     private void testExecuteBatch01() throws SQLException {
 
-        trace("testExecuteBatch01");
         int i = 0;
         final int[] retValue = {0, 0, 0};
         int updCountLength = 0;
         final String sPrepStmt = COFFEE_UPDATE;
-        trace("Prepared Statement String:" + sPrepStmt);
+
         // get the PreparedStatement object
-        prep = conn.prepareStatement(sPrepStmt);
+        prep = connection.prepareStatement(sPrepStmt);
         prep.setInt(1, 1);
         prep.addBatch();
         prep.setInt(1, 2);
@@ -363,14 +314,9 @@ public class H2TestBatchUpdates extends H2TestBase {
         prep.addBatch();
         final int[] updateCount = prep.executeBatch();
         updCountLength = updateCount.length;
-        trace("Successfully Updated");
-        trace("updateCount Length:" + updCountLength);
-        if (updCountLength != 3) {
-            fail("executeBatch");
-        }
-        else {
-            trace("executeBatch executes the Batch of SQL statements");
-        }
+
+        assertEquals(3, updCountLength);
+
         // 1 is the number that is set First for Type Id in Prepared Statement
         final String query1 = "SELECT COUNT(*) FROM TEST WHERE TYPE_ID=1";
         // 2 is the number that is set second for Type id in Prepared Statement
@@ -386,63 +332,45 @@ public class H2TestBatchUpdates extends H2TestBase {
         rs = stat.executeQuery(query3);
         rs.next();
         retValue[i++] = rs.getInt(1);
-        trace("retValue length : " + retValue.length);
+
         for (int j = 0; j < updateCount.length; j++) {
-            trace("UpdateCount Value:" + updateCount[j]);
-            trace("RetValue : " + retValue[j]);
-            if (updateCount[j] != retValue[j]) {
-                fail("j=" + j + " right:" + retValue[j]);
-            }
+
+            assertEquals(updateCount[j], retValue[j]);
         }
     }
 
     private void testExecuteBatch02() throws SQLException {
 
-        trace("testExecuteBatch02");
         final String sPrepStmt = COFFEE_UPDATE;
-        trace("Prepared Statement String:" + sPrepStmt);
-        prep = conn.prepareStatement(sPrepStmt);
+
+        prep = connection.prepareStatement(sPrepStmt);
         prep.setInt(1, 1);
         prep.setInt(1, 2);
         prep.setInt(1, 3);
         final int[] updateCount = prep.executeBatch();
         final int updCountLength = updateCount.length;
-        trace("UpdateCount Length : " + updCountLength);
-        if (updCountLength == 0) {
-            trace("executeBatch does not execute Empty Batch");
-        }
-        else {
-            fail("executeBatch");
-        }
+
+        assertEquals(0, updCountLength);
     }
 
     private void testExecuteBatch03() throws SQLException {
 
-        trace("testExecuteBatch03");
-        boolean batchExceptionFlag = false;
         final String sPrepStmt = COFFEE_SELECT;
-        trace("Prepared Statement String :" + sPrepStmt);
-        prep = conn.prepareStatement(sPrepStmt);
+
+        prep = connection.prepareStatement(sPrepStmt);
         prep.setInt(1, 1);
         prep.addBatch();
         try {
-            final int[] updateCount = prep.executeBatch();
-            trace("Update Count" + updateCount.length);
+            prep.executeBatch();
+            fail();
         }
         catch (final BatchUpdateException b) {
-            batchExceptionFlag = true;
-        }
-        if (batchExceptionFlag) {
-            trace("select not allowed; correct");
-        }
-        else {
-            fail("executeBatch select");
+            // Ignore.
         }
     }
 
     private void testExecuteBatch04() throws SQLException {
 
-        trace("testExecuteBatch04");
         int i = 0;
         final int[] retValue = {0, 0, 0};
         int updCountLength = 0;
@@ -454,14 +382,9 @@ public class H2TestBatchUpdates extends H2TestBase {
         stat.addBatch(sInsCoffee);
         final int[] updateCount = stat.executeBatch();
         updCountLength = updateCount.length;
-        trace("Successfully Updated");
-        trace("updateCount Length:" + updCountLength);
-        if (updCountLength != 3) {
-            fail("executeBatch");
-        }
-        else {
-            trace("executeBatch executes the Batch of SQL statements");
-        }
+
+        assertEquals(3, updCountLength);
+
         final String query1 = "SELECT COUNT(*) FROM TEST WHERE TYPE_ID=1";
         final ResultSet rs = stat.executeQuery(query1);
         rs.next();
@@ -471,32 +394,20 @@ public class H2TestBatchUpdates extends H2TestBase {
         // 1 as Insert Statement will insert only one row
         retValue[i++] = 1;
         for (int j = 0; j < updateCount.length; j++) {
-            trace("Update Count : " + updateCount[j]);
-            if (updateCount[j] != retValue[j]) {
-                fail("j=" + j + " right:" + retValue[j]);
-            }
+            assertEquals(updateCount[j], retValue[j]);
         }
     }
 
     private void testExecuteBatch05() throws SQLException {
 
-        trace("testExecuteBatch05");
         int updCountLength = 0;
         final int[] updateCount = stat.executeBatch();
         updCountLength = updateCount.length;
-        trace("updateCount Length:" + updCountLength);
-        if (updCountLength == 0) {
-            trace("executeBatch Method does not execute the Empty Batch ");
-        }
-        else {
-            fail("executeBatch 0!=" + updCountLength);
-        }
+        assertEquals(0, updCountLength);
     }
 
     private void testExecuteBatch06() throws SQLException {
 
-        trace("testExecuteBatch06");
-        boolean batchExceptionFlag = false;
         // Insert a row which is already Present
         final String sInsCoffee = COFFEE_INSERT1;
         final String sDelCoffee = COFFEE_DELETE1;
@@ -505,45 +416,27 @@ public class H2TestBatchUpdates extends H2TestBase {
         stat.addBatch(sDelCoffee);
         try {
             stat.executeBatch();
+            fail();
         }
         catch (final BatchUpdateException b) {
-            batchExceptionFlag = true;
-            final int[] updCounts = b.getUpdateCounts();
-            for (final int updCount : updCounts) {
-                trace("Update counts:" + updCount);
-            }
-        }
-        if (batchExceptionFlag) {
-            trace("executeBatch insert duplicate; correct");
-        }
-        else {
-            fail("executeBatch");
+            // Ignore.
         }
     }
 
     private void testExecuteBatch07() throws SQLException {
 
-        trace("testExecuteBatch07");
-        boolean batchExceptionFlag = false;
         final String selectCoffee = COFFEE_SELECT1;
-        trace("selectCoffee = " + selectCoffee);
         Statement stmt = null;
 
         try {
-            stmt = conn.createStatement();
+            stmt = connection.createStatement();
             stmt.addBatch(selectCoffee);
             try {
-                final int[] updateCount = stmt.executeBatch();
-                trace("updateCount Length : " + updateCount.length);
+                stmt.executeBatch();
+                fail();
             }
             catch (final BatchUpdateException be) {
-                batchExceptionFlag = true;
-            }
-            if (batchExceptionFlag) {
-                trace("executeBatch select");
-            }
-            else {
-                fail("executeBatch");
+                // Ignore.
             }
         }
         finally {
@@ -553,13 +446,11 @@ public class H2TestBatchUpdates extends H2TestBase {
 
     private void testContinueBatch01() throws SQLException {
 
-        trace("testContinueBatch01");
         int[] batchUpdates = {0, 0, 0};
         int buCountLen = 0;
         try {
             final String sPrepStmt = COFFEE_UPDATE_SET;
-            trace("Prepared Statement String:" + sPrepStmt);
-            prep = conn.prepareStatement(sPrepStmt);
+            prep = connection.prepareStatement(sPrepStmt);
             // Now add a legal update to the batch
             prep.setInt(1, 1);
             prep.setString(2, "Continue-1");
@@ -585,25 +476,19 @@ public class H2TestBatchUpdates extends H2TestBase {
             prep.executeBatch();
         }
         catch (final BatchUpdateException b) {
-            trace("expected BatchUpdateException");
             batchUpdates = b.getUpdateCounts();
             buCountLen = batchUpdates.length;
         }
-        if (buCountLen == 1) {
-            trace("no continued updates - OK");
-            return;
-        }
-        else if (buCountLen == 3) {
-            trace("Driver supports continued updates.");
+
+        if (buCountLen == 3) {
+
             // Check to see if the third row from the batch was added
             final String query = COFFEE_SELECT_CONTINUED;
-            trace("Query is: " + query);
             final ResultSet rs = stat.executeQuery(query);
             rs.next();
             final int count = rs.getInt(1);
             rs.close();
             stat.close();
-            trace("Count val is: " + count);
             // Make sure that we have the correct error code for
             // the failed update.
             if (!(batchUpdates[1] == -3 && count == 1)) {

@@ -32,8 +32,6 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  */
 public class H2OLocator {
 
-    private static final long SHUTDOWN_CHECK_DELAY = 2000;
-
     private final String databaseName;
     private final String port;
     private final String configurationDirectory;
@@ -64,7 +62,7 @@ public class H2OLocator {
         final String databaseName = arguments.get("-n");
         final String port = arguments.get("-p");
         final boolean createDescriptor = arguments.containsKey("-d");
-        String descriptorFileDirectory = arguments.get("-f"); // e.g. "db_data/wrapper"
+        String descriptorFileDirectory = arguments.get("-f");
         descriptorFileDirectory = removeParenthesis(descriptorFileDirectory);
 
         final H2OLocator locator = new H2OLocator(databaseName, Integer.parseInt(port), createDescriptor, descriptorFileDirectory);
@@ -110,16 +108,7 @@ public class H2OLocator {
 
     public void shutdown() {
 
-        server.setRunning(false);
-
-        while (!server.isFinished()) {
-            try {
-                Thread.sleep(SHUTDOWN_CHECK_DELAY);
-            }
-            catch (final InterruptedException e) {
-                // Ignore and carry on.
-            }
-        }
+        server.shutdown();
     }
 
     private String createDescriptorFile(final String locatorLocation) throws FileNotFoundException, IOException {
@@ -129,7 +118,7 @@ public class H2OLocator {
         File f = new File(configurationDirectory);
 
         if (!f.exists()) {
-            if (!f.mkdir()) { throw new IOException("Could not create directory for descriptor file"); }
+            if (!f.mkdirs()) { throw new IOException("Could not create directory for descriptor file"); }
         }
 
         f = new File(descriptorFilePath);

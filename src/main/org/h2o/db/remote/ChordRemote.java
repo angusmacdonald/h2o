@@ -268,14 +268,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                         newSMLocation.setRMIPort(portToUse);
 
                         systemTableRef.setSystemTableURL(newSMLocation);
-
-                        // if (!connected){ //if STILL not connected.
-                        // unlockLocator();
-                        // throw new
-                        // StartupException("Tried to connect to an existing database system and couldn't. Also tried to create"
-                        // +
-                        // " a new network and this also failed.");
-                        // }
                     }
                 }
 
@@ -311,9 +303,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             throw new StartupException("\n\nAfter " + attempts + " the H2O instance at " + localMachineLocation + " couldn't find an active instance with System Table state, so it cannot connect to the database system.\n\n" + "Please re-instantiate one of the following database instances:\n\n"
                             + instances + "\n\n");
         }
-        else {
-            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Database at " + localMachineLocation + " successful created/connected to chord ring.");
-        }
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Database at " + localMachineLocation + " successful created/connected to chord ring.");
 
         try {
             final DatabaseURL dbURL = systemTableRef.getSystemTableURL();
@@ -341,18 +332,17 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     /**
      * Get a reference to the locator servers for this database system.
      * 
-     * @param localDatabaseProperties
-     *            Properties file containing the location of the database descriptor.
+     * @param localDatabaseProperties aroperties file containing the location of the database descriptor and the name of the database
      * @return
-     * @throws StartupException
-     *             Thrown if the descriptor file couldn't be found.
+     * @throws StartupException if the descriptor file couldn't be found.
      */
     public H2OLocatorInterface getLocatorServerReference(final LocalH2OProperties localDatabaseProperties) throws StartupException {
 
         final String descriptorLocation = localDatabaseProperties.getProperty("descriptor");
         final String databaseName = localDatabaseProperties.getProperty("databaseName");
 
-        if (descriptorLocation == null || databaseName == null) { throw new StartupException("The location of the database descriptor was not specified. The database will now exit."); }
+        if (descriptorLocation == null) { throw new StartupException("The location of the database descriptor was not specified. The database will now exit."); }
+        if (databaseName == null) { throw new StartupException("The name of the database was not specified. The database will now exit."); }
 
         try {
             locatorInterface = new H2OLocatorInterface(databaseName, descriptorLocation);
