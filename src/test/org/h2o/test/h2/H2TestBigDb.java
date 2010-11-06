@@ -46,7 +46,7 @@ public class H2TestBigDb extends H2OTestBase {
         super.tearDown();
     }
 
-    @Test(timeout = 60000)
+    @Test(timeout = 600000)
     public void testLargeTable() throws SQLException {
 
         Diagnostic.trace();
