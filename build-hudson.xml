@@ -63,8 +63,26 @@
             </manifest>
 			<fileset dir="bin" includes="**/*.class" />
 			<fileset dir="src/main" />
+		    <archives>
+				<zips>
+					<fileset file="${lib-nds}" />
+					<fileset file="${lib-stachord}" />
+				</zips>
+			</archives>
 		</jar>
 	</target>
+	
+	<!--
+	<target name="project-jar">
+		<jar destfile="bin/h2o.jar">
+            <manifest>
+                <attribute name="Main-Class" value="org.h2o.H2O"/>
+            </manifest>
+			<fileset dir="bin" includes="**/*.class" />
+			<fileset dir="src/main" />
+		</jar>
+	</target>
+	-->
 
 	<!-- Generate javadoc. -->
 	<target name="release-doc">
