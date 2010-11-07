@@ -59,7 +59,7 @@ public class H2O {
     private final int tcpPort;
     private final int webPort;
 
-    private String descriptorFileLocation;
+    private String databaseDescriptorLocation;
     private String databaseBaseDirectoryPath;
 
     private Connection connection;
@@ -115,7 +115,7 @@ public class H2O {
         this.databaseName = databaseName;
         this.tcpPort = tcpPort;
         this.webPort = webPort;
-        descriptorFileLocation = databaseDescriptorLocation;
+        this.databaseDescriptorLocation = databaseDescriptorLocation;
         this.databaseBaseDirectoryPath = databaseBaseDirectoryPath;
     }
 
@@ -170,14 +170,14 @@ public class H2O {
      */
     public void startDatabase() throws SQLException, IOException {
 
-        if (descriptorFileLocation == null) {
+        if (databaseDescriptorLocation == null) {
 
             // A new locator server should be started.
             final int locatorPort = tcpPort + 1;
 
             locator = new H2OLocator(databaseName, databaseBaseDirectoryPath, locatorPort, tcpPort, true);
 
-            descriptorFileLocation = locator.start();
+            databaseDescriptorLocation = locator.start();
         }
 
         final String databaseURL = generateDatabaseURL();
@@ -234,7 +234,7 @@ public class H2O {
 
         // Get optional command line arguments.
         String databaseDirectoryPath = arguments.get("-f");
-        String descriptorFileLocation = arguments.get("-d");
+        String databaseDescriptorLocation = arguments.get("-d");
         final String webPortString = arguments.get("-w");
 
         int tcpPort = 0;
@@ -251,15 +251,15 @@ public class H2O {
             throw new StartupException("Invalid port specified.");
         }
 
-        if (descriptorFileLocation != null) {
-            descriptorFileLocation = removeParenthesis(descriptorFileLocation);
+        if (databaseDescriptorLocation != null) {
+            databaseDescriptorLocation = removeQuotes(databaseDescriptorLocation);
         }
 
         if (databaseDirectoryPath != null) {
-            databaseDirectoryPath = removeParenthesis(databaseDirectoryPath);
+            databaseDirectoryPath = removeQuotes(databaseDirectoryPath);
         }
 
-        return new H2O(databaseName, tcpPort, webPort, databaseDirectoryPath, descriptorFileLocation);
+        return new H2O(databaseName, tcpPort, webPort, databaseDirectoryPath, databaseDescriptorLocation);
     }
 
     private String generateDatabaseURL() {
@@ -279,7 +279,7 @@ public class H2O {
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Port: " + tcpPort);
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Hostname: " + hostname);
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Generated JDBC URL: " + databaseURL);
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Specified Descriptor File Location: " + descriptorFileLocation);
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Specified Descriptor File Location: " + databaseDescriptorLocation);
 
         return databaseURL;
     }
@@ -342,7 +342,7 @@ public class H2O {
         }
 
         // Overwrite these properties regardless of whether properties file exists or not.
-        properties.setProperty("descriptor", descriptorFileLocation);
+        properties.setProperty("descriptor", databaseDescriptorLocation);
         properties.setProperty("databaseName", databaseName);
 
         properties.saveAndClose();
@@ -406,7 +406,7 @@ public class H2O {
         }
     }
 
-    private static String removeParenthesis(String text) {
+    private static String removeQuotes(String text) {
 
         if (text == null) { return null; }
 
