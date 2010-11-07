@@ -55,14 +55,11 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  */
 public class H2O {
 
-    private static final String DEFAULT_CONFIGURATION_DIRECTORY_PATH = ".";
-
     private final String databaseName;
     private final String tcpPort;
     private final String webPort;
 
     private String descriptorFileLocation;
-    private final String configurationDirectoryPath;
     private String databaseBaseDirectoryPath;
 
     private Connection connection;
@@ -110,7 +107,6 @@ public class H2O {
      * @param databaseName the name of the database
      * @param tcpPort the port for this database's TCP server
      * @param webPort the port for this database's web interface
-     * @param configurationDirectoryPath the directory in which configuration files are stored
      * @param databaseBaseDirectoryPath the directory in which database files are stored
      * @param databaseDescriptorLocation the location (file path or URL) of the database descriptor file
      */
@@ -120,7 +116,6 @@ public class H2O {
         this.tcpPort = tcpPort + "";
         this.webPort = webPort + "";
         descriptorFileLocation = databaseDescriptorLocation;
-        configurationDirectoryPath = LocalH2OProperties.getConfigurationDirectoryPath(databaseBaseDirectoryPath, databaseName, this.tcpPort);
         this.databaseBaseDirectoryPath = databaseBaseDirectoryPath;
     }
 
@@ -130,7 +125,6 @@ public class H2O {
      * 
      * @param databaseName the name of the database
      * @param tcpPort the port for this database's TCP server
-     * @param configurationDirectoryPath the directory in which configuration files are stored
      * @param databaseDirectoryPath the directory in which database files are stored
      * @param databaseDescriptorLocation the location (file path or URL) of the database descriptor file
      */
@@ -146,7 +140,6 @@ public class H2O {
      * @param databaseName the name of the database
      * @param tcpPort the port for this database's TCP server
      * @param webPort the port for this database's web interface
-     * @param configurationDirectoryPath the directory in which configuration files are stored
      * @param databaseDirectoryPath the directory in which database files are stored
      */
     public H2O(final String databaseName, final int tcpPort, final int webPort, final String databaseDirectoryPath) {
@@ -160,7 +153,6 @@ public class H2O {
      * 
      * @param databaseName the name of the database
      * @param tcpPort the port for this database's TCP server
-     * @param configurationDirectoryPath the directory in which configuration files are stored
      * @param databaseDirectoryPath the directory in which database files are stored
      */
     public H2O(final String databaseName, final int tcpPort, final String databaseDirectoryPath) {
@@ -234,19 +226,27 @@ public class H2O {
 
         // Get required command line arguments.
         final String databaseName = arguments.get("-n");
-        final String port = arguments.get("-p");
+        final String tcpPortString = arguments.get("-p");
 
-        if (databaseName == null || port == null) { throw new StartupException("One of the required command line arguments was not supplied. Please check the documentation to ensure you have included all necessary arguments"); }
+        if (databaseName == null || tcpPortString == null) { throw new StartupException("One of the required command line arguments was not supplied. Please check the documentation to ensure you have included all necessary arguments"); }
 
         // Get optional command line arguments.
         String databaseDirectoryPath = arguments.get("-f");
         String descriptorFileLocation = arguments.get("-d");
-        final String web = arguments.get("-w");
+        final String webPortString = arguments.get("-w");
 
+        int tcpPort = 0;
         int webPort = 0;
 
-        if (web != null) {
-            webPort = Integer.parseInt(web);
+        try {
+            tcpPort = Integer.parseInt(tcpPortString);
+
+            if (webPortString != null) {
+                webPort = Integer.parseInt(webPortString);
+            }
+        }
+        catch (final NumberFormatException e) {
+            throw new StartupException("Invalid port specified.");
         }
 
         if (descriptorFileLocation != null) {
@@ -257,7 +257,7 @@ public class H2O {
             databaseDirectoryPath = removeParenthesis(databaseDirectoryPath);
         }
 
-        return new H2O(databaseName, Integer.parseInt(port), webPort, databaseDirectoryPath, descriptorFileLocation);
+        return new H2O(databaseName, tcpPort, webPort, databaseDirectoryPath, descriptorFileLocation);
     }
 
     private String generateDatabaseURL() {
