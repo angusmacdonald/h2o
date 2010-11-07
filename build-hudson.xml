@@ -63,14 +63,9 @@
             </manifest>
 			<fileset dir="bin" includes="**/*.class" />
 			<fileset dir="src/main" />
-			<restrict>
-		    <archives>
-				<zips>
-					<fileset file="${lib-nds}" />
-					<fileset file="${lib-stachord}" />
-				</zips>
-			</archives>
-				</restrict>
+			
+		    <zipfileset src="${lib-nds}"/>
+		    <zipfileset src="${lib-stachord}"/>
 		</jar>
 	</target>
 	
