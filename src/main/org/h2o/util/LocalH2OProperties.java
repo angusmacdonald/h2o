@@ -29,22 +29,12 @@ public class LocalH2OProperties extends H2OPropertiesWrapper {
         this(getConfigurationDirectoryPath(dbURL.getDbLocation()), dbURL.sanitizedLocation());
     }
 
-    //    public LocalH2OProperties(final String configDirectoryPath, final DatabaseURL dbURL) {
-    //
-    //        this(configDirectoryPath, dbURL.sanitizedLocation());
-    //    }
-
-    //    public LocalH2OProperties(final String propertiesFileName) {
-    //
-    //        this(DEFAULT_CONFIG_DIRECTORY, propertiesFileName);
-    //    }
-
     public LocalH2OProperties(final String configDirectoryPath, final String propertiesFileName) {
 
         super(configDirectoryPath + File.separator + propertiesFileName + ".properties");
     }
 
-    public static String getConfigurationDirectoryPath(final String databaseBaseDirectoryPath, final String databaseName, final String port) {
+    public static String getConfigurationDirectoryPath(final String databaseBaseDirectoryPath, final String databaseName, final int port) {
 
         return databaseBaseDirectoryPath + File.separator + databaseName + port + "." + DEFAULT_CONFIG_DIRECTORY;
     }

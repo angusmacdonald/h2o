@@ -56,8 +56,8 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 public class H2O {
 
     private final String databaseName;
-    private final String tcpPort;
-    private final String webPort;
+    private final int tcpPort;
+    private final int webPort;
 
     private String descriptorFileLocation;
     private String databaseBaseDirectoryPath;
@@ -113,8 +113,8 @@ public class H2O {
     public H2O(final String databaseName, final int tcpPort, final int webPort, final String databaseBaseDirectoryPath, final String databaseDescriptorLocation) {
 
         this.databaseName = databaseName;
-        this.tcpPort = tcpPort + "";
-        this.webPort = webPort + "";
+        this.tcpPort = tcpPort;
+        this.webPort = webPort;
         descriptorFileLocation = databaseDescriptorLocation;
         this.databaseBaseDirectoryPath = databaseBaseDirectoryPath;
     }
@@ -173,8 +173,10 @@ public class H2O {
         if (descriptorFileLocation == null) {
 
             // A new locator server should be started.
-            final int locatorPort = Integer.parseInt(tcpPort) + 1;
-            locator = new H2OLocator(databaseName, locatorPort, true, databaseBaseDirectoryPath);
+            final int locatorPort = tcpPort + 1;
+
+            locator = new H2OLocator(databaseName, databaseBaseDirectoryPath, locatorPort, tcpPort, true);
+
             descriptorFileLocation = locator.start();
         }
 
@@ -295,17 +297,17 @@ public class H2O {
         h2oArgs.add("-tcp");
 
         h2oArgs.add("-tcpPort");
-        h2oArgs.add(tcpPort);
+        h2oArgs.add(String.valueOf(tcpPort));
 
         h2oArgs.add("-tcpAllowOthers"); // allow remote connections.
         h2oArgs.add("-webAllowOthers");
 
         // Web Interface.
 
-        if (!webPort.equals("0")) {
+        if (webPort != 0) {
             h2oArgs.add("-web");
             h2oArgs.add("-webPort");
-            h2oArgs.add(webPort);
+            h2oArgs.add(String.valueOf(webPort));
             h2oArgs.add("-browser");
         }
 
@@ -414,7 +416,7 @@ public class H2O {
         return text;
     }
 
-    private static String createDatabaseURL(final String port, final String hostname, String databaseLocation) {
+    private static String createDatabaseURL(final int port, final String hostname, String databaseLocation) {
 
         if (!databaseLocation.startsWith("/")) {
             databaseLocation = "/" + databaseLocation;

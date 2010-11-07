@@ -17,6 +17,7 @@ import java.util.Properties;
 
 import org.h2.util.NetUtils;
 import org.h2o.locator.server.LocatorServer;
+import org.h2o.util.LocalH2OProperties;
 
 import uk.ac.standrews.cs.nds.util.CommandLineArgs;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -33,7 +34,7 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
 public class H2OLocator {
 
     private final String databaseName;
-    private final String port;
+    private final String locatorPort;
     private final String configurationDirectory;
     private final boolean createDescriptor;
 
@@ -51,40 +52,45 @@ public class H2OLocator {
      *            this class is being run from. If this option is not chosen you must add the location of this locator server to an existing
      *            descriptor file.</li>
      *            </ul>
-     *            <em>Example: StartLocatorServer -lMyFirstDatabase -p20000 -d</em> . This creates a new locator server for the database
+     *            <em>Example: StartLocatorServer -nMyFirstDatabase -p20000 -d</em> . This creates a new locator server for the database
      *            called <em>MyFirstDatabase</em> on port 20000, and creates a descriptor file specifying this in the local folder.
-     * @throws IOException
      */
-    public static void main(final String[] args) throws IOException {
+    public static void main(final String[] args) {
 
         final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
 
         final String databaseName = arguments.get("-n");
-        final String port = arguments.get("-p");
+        final String locatorPortString = arguments.get("-p");
         final boolean createDescriptor = arguments.containsKey("-d");
-        String descriptorFileDirectory = arguments.get("-f");
-        descriptorFileDirectory = removeParenthesis(descriptorFileDirectory);
+        final String configurationDirectory = removeQuotes(arguments.get("-f"));
 
-        final H2OLocator locator = new H2OLocator(databaseName, Integer.parseInt(port), createDescriptor, descriptorFileDirectory);
+        final H2OLocator locator = new H2OLocator(databaseName, Integer.parseInt(locatorPortString), createDescriptor, configurationDirectory);
 
         locator.start();
     }
 
-    public H2OLocator(final String databaseName, final int port, final boolean createDescriptor, final String configurationDirectory) {
+    public H2OLocator(final String databaseName, final int locatorPort, final boolean createDescriptor, final String configurationDirectory) {
 
         this.databaseName = databaseName;
-        this.port = port + "";
+        this.locatorPort = locatorPort + "";
         this.createDescriptor = createDescriptor;
         this.configurationDirectory = configurationDirectory;
     }
 
+    public H2OLocator(final String databaseName, final String databaseBaseDirectoryPath, final int locatorPort, final int databasePort, final boolean createDescriptor) {
+
+        this(databaseName, locatorPort, createDescriptor, LocalH2OProperties.getConfigurationDirectoryPath(databaseBaseDirectoryPath, databaseName, databasePort));
+    }
+
+    //
+
     public String start() {
 
-        final String locatorLocation = NetUtils.getLocalAddress() + ":" + port;
+        final String locatorLocation = NetUtils.getLocalAddress() + ":" + locatorPort;
         String descriptorFilePath = null;
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting locator server.");
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Port: " + port);
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Port: " + locatorPort);
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Name: " + databaseName);
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Locator location: " + locatorLocation);
 
@@ -100,7 +106,7 @@ public class H2OLocator {
             }
         }
 
-        server = new LocatorServer(Integer.parseInt(port), databaseName, configurationDirectory);
+        server = new LocatorServer(Integer.parseInt(locatorPort), databaseName, configurationDirectory);
         server.start();
 
         return descriptorFilePath;
@@ -142,7 +148,7 @@ public class H2OLocator {
         return descriptorFilePath;
     }
 
-    private static String removeParenthesis(String text) {
+    private static String removeQuotes(String text) {
 
         if (text == null) { return null; }
 

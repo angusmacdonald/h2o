@@ -8,7 +8,6 @@ import java.sql.SQLException;
 import org.h2.util.NetUtils;
 import org.h2o.H2O;
 import org.h2o.H2OLocator;
-import org.h2o.util.LocalH2OProperties;
 import org.junit.After;
 import org.junit.Before;
 
@@ -60,8 +59,8 @@ public class H2OTestBase {
 
     void startup() throws SQLException, IOException {
 
-        final String configuration_directory_path = LocalH2OProperties.getConfigurationDirectoryPath(DATABASE_BASE_DIRECTORY_PATH, DATABASE_NAME, String.valueOf(TCP_PORT));
-        locator = new H2OLocator(DATABASE_NAME, LOCATOR_PORT, true, configuration_directory_path);
+        //        final String configuration_directory_path = LocalH2OProperties.getConfigurationDirectoryPath(DATABASE_BASE_DIRECTORY_PATH, DATABASE_NAME, String.valueOf(TCP_PORT));
+        locator = new H2OLocator(DATABASE_NAME, DATABASE_BASE_DIRECTORY_PATH, LOCATOR_PORT, TCP_PORT, true);
         final String descriptor_file_path = locator.start();
 
         db = new H2O(DATABASE_NAME, TCP_PORT, DATABASE_BASE_DIRECTORY_PATH, descriptor_file_path);

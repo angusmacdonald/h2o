@@ -76,7 +76,7 @@ public class TestBase2 {
         DeleteDbFiles.execute(DATABASE_LOCATION1, DATABASE_NAME + TCP_PORT1, true);
         DeleteDbFiles.execute(DATABASE_LOCATION2, DATABASE_NAME + TCP_PORT2, true);
 
-        locator = new H2OLocator(DATABASE_NAME, 5999, true, DESCRIPTOR_DIRECTORY);
+        locator = new H2OLocator(DATABASE_NAME, DATABASE_LOCATION1, 5999, TCP_PORT1, true);
         final String descriptorFilePath = locator.start();
 
         db1 = new H2O(DATABASE_NAME, TCP_PORT1, DATABASE_LOCATION1, descriptorFilePath);
