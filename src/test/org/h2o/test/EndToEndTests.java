@@ -18,8 +18,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 
 import org.junit.Test;
@@ -179,10 +177,9 @@ public class EndToEndTests extends H2OTestBase {
         createWithAutoCommit();
 
         final Semaphore sync = new Semaphore(-1);
-        final SQLException[] exception_wrapper = new SQLException[1];
 
-        final Thread firstUpdateThread = new UpdateThread(1, 0, 5000, sync, exception_wrapper);
-        final Thread secondUpdateThread = new UpdateThread(1, 1, 5000, sync, exception_wrapper);
+        final Thread firstUpdateThread = new UpdateThread(1, 0, 5000, sync);
+        final Thread secondUpdateThread = new UpdateThread(1, 1, 5000, sync);
 
         firstUpdateThread.setName("First Update Thread");
         secondUpdateThread.setName("Second Update Thread");
@@ -191,46 +188,10 @@ public class EndToEndTests extends H2OTestBase {
         secondUpdateThread.start();
 
         waitForThreads(sync);
-        if (exception_wrapper[0] != null) { throw exception_wrapper[0]; }
         shutdown();
 
         startup();
         assertDataIsPresent(2);
-    }
-
-    /**
-     * A generalised version of {@link #concurrentUpdates()} with multiple threads and multiple values being inserted.
-     * 
-     * @throws SQLException if the test fails
-     * @throws IOException if the test fails
-     */
-    @Test
-    public void multipleThreads() throws SQLException, IOException {
-
-        Diagnostic.trace();
-
-        final int number_of_values = 10;
-        final int number_of_threads = 10;
-
-        createWithAutoCommit();
-
-        final ExecutorService pool = Executors.newFixedThreadPool(number_of_threads);
-        final Semaphore sync = new Semaphore(1 - number_of_threads);
-        final SQLException[] exception_wrapper = new SQLException[1];
-
-        for (int i = 0; i < number_of_threads; i++) {
-
-            final int j = i;
-
-            pool.execute(new UpdateThread(number_of_values, j * number_of_values, 1000, sync, exception_wrapper));
-        }
-
-        waitForThreads(sync);
-        if (exception_wrapper[0] != null) { throw exception_wrapper[0]; }
-        shutdown();
-
-        startup();
-        assertDataIsPresent(number_of_values * number_of_threads);
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -240,21 +201,19 @@ public class EndToEndTests extends H2OTestBase {
         void execute(Connection connection) throws SQLException;
     }
 
-    private class UpdateThread extends Thread {
+    class UpdateThread extends Thread {
 
         private final int number_of_values;
         private final int starting_value;
         private final long delay;
         private final Semaphore sync;
-        private final SQLException[] exception_wrapper;
 
-        public UpdateThread(final int number_of_values, final int starting_value, final long delay, final Semaphore sync, final SQLException[] exception_wrapper) {
+        public UpdateThread(final int number_of_values, final int starting_value, final long delay, final Semaphore sync) {
 
             this.number_of_values = number_of_values;
             this.starting_value = starting_value;
             this.delay = delay;
             this.sync = sync;
-            this.exception_wrapper = exception_wrapper;
         }
 
         @Override
@@ -263,16 +222,13 @@ public class EndToEndTests extends H2OTestBase {
             try {
                 insertWithoutAutoCommitWithExplicitCommit(number_of_values, starting_value, delay);
             }
-            catch (final SQLException e) {
-                exception_wrapper[0] = e;
-            }
             finally {
                 sync.release();
             }
         }
     };
 
-    private void waitForThreads(final Semaphore sync) {
+    protected void waitForThreads(final Semaphore sync) {
 
         while (true) {
             try {
@@ -290,22 +246,22 @@ public class EndToEndTests extends H2OTestBase {
         assertDataIsPresent(1);
     }
 
-    private void insertOneRowWithAutoCommitNoDelay() throws SQLException {
+    private void insertOneRowWithAutoCommitNoDelay() {
 
         insertWithAutoCommit(1, 0);
     }
 
-    private void insertOneRowNoCommitNoDelay() throws SQLException {
+    private void insertOneRowNoCommitNoDelay() {
 
         insertWithoutAutoCommitWithoutExplicitCommit(1, 0);
     }
 
-    private void insertOneRowExplicitCommitNoDelay() throws SQLException {
+    private void insertOneRowExplicitCommitNoDelay() {
 
         insertWithoutAutoCommitWithExplicitCommit(1, 0);
     }
 
-    private void insertRowsExplicitCommitNoDelay(final int number_of_values) throws SQLException {
+    private void insertRowsExplicitCommitNoDelay(final int number_of_values) {
 
         insertWithoutAutoCommitWithExplicitCommit(number_of_values, 0);
     }
@@ -324,27 +280,27 @@ public class EndToEndTests extends H2OTestBase {
         }
     }
 
-    private void insertWithAutoCommit(final int number_of_rows_to_insert, final long delay) throws SQLException {
+    private void insertWithAutoCommit(final int number_of_rows_to_insert, final long delay) {
 
         doInsert(number_of_rows_to_insert, 0, true, false, delay);
     }
 
-    private void insertWithoutAutoCommitWithoutExplicitCommit(final int number_of_rows_to_insert, final long delay) throws SQLException {
+    private void insertWithoutAutoCommitWithoutExplicitCommit(final int number_of_rows_to_insert, final long delay) {
 
         doInsert(number_of_rows_to_insert, 0, false, false, delay);
     }
 
-    private void insertWithoutAutoCommitWithExplicitCommit(final int number_of_rows_to_insert, final long delay) throws SQLException {
+    private void insertWithoutAutoCommitWithExplicitCommit(final int number_of_rows_to_insert, final long delay) {
 
         insertWithoutAutoCommitWithExplicitCommit(number_of_rows_to_insert, 0, delay);
     }
 
-    private void insertWithoutAutoCommitWithExplicitCommit(final int number_of_rows_to_insert, final int starting_value, final long delay) throws SQLException {
+    private void insertWithoutAutoCommitWithExplicitCommit(final int number_of_rows_to_insert, final int starting_value, final long delay) {
 
         doInsert(number_of_rows_to_insert, starting_value, false, true, delay);
     }
 
-    private void createWithAutoCommit() throws SQLException {
+    protected void createWithAutoCommit() throws SQLException {
 
         doCreate(true);
     }
@@ -393,7 +349,7 @@ public class EndToEndTests extends H2OTestBase {
         }
     }
 
-    private void assertDataIsPresent(final int number_of_rows_inserted) throws SQLException {
+    protected void assertDataIsPresent(final int number_of_rows_inserted) throws SQLException {
 
         performAction(new IDBAction() {
 
