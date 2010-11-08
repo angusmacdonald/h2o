@@ -71,9 +71,7 @@ public class H2TestBatchUpdates extends H2OTestBase {
     @After
     public void tearDown() throws SQLException {
 
-        if (connection != null) {
-            connection.close();
-        }
+        closeIfNotNull(connection);
 
         super.tearDown();
     }
@@ -103,8 +101,8 @@ public class H2TestBatchUpdates extends H2OTestBase {
             assertEquals(4, total);
         }
         finally {
-            call.close();
-            stat.close();
+            closeIfNotNull(call);
+            closeIfNotNull(stat);
         }
     }
 
@@ -153,7 +151,7 @@ public class H2TestBatchUpdates extends H2OTestBase {
             }
         }
         finally {
-            stat.close();
+            closeIfNotNull(stat);
         }
     }
 

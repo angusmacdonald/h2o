@@ -40,7 +40,7 @@ public class H2TestPreparedStatementFailing extends H2TestBase {
     private Connection conn;
 
     @Before
-    public void setUp() throws SQLException {
+    public void setUp() throws SQLException, IOException {
 
         DeleteDbFiles.execute("data\\test\\", "preparedStatement", true);
 

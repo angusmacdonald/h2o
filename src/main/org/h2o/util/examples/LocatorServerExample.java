@@ -8,6 +8,8 @@
  */
 package org.h2o.util.examples;
 
+import java.io.IOException;
+
 import org.h2o.H2OLocator;
 
 /**
@@ -17,7 +19,7 @@ import org.h2o.H2OLocator;
  */
 public class LocatorServerExample {
 
-    public static void main(final String[] args) {
+    public static void main(final String[] args) throws IOException {
 
         // The name of the database domain.
         final String databaseName = "MyFirstDatabase";

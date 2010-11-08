@@ -34,7 +34,7 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
 public class H2OLocator {
 
     private final String databaseName;
-    private final String locatorPort;
+    private final int locatorPort;
     private final String configurationDirectory;
     private final boolean createDescriptor;
 
@@ -54,8 +54,10 @@ public class H2OLocator {
      *            </ul>
      *            <em>Example: StartLocatorServer -nMyFirstDatabase -p20000 -d</em> . This creates a new locator server for the database
      *            called <em>MyFirstDatabase</em> on port 20000, and creates a descriptor file specifying this in the local folder.
+     *            
+     * @throws IOException if the locator server cannot be started using the given port
      */
-    public static void main(final String[] args) {
+    public static void main(final String[] args) throws IOException {
 
         final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
 
@@ -72,7 +74,7 @@ public class H2OLocator {
     public H2OLocator(final String databaseName, final int locatorPort, final boolean createDescriptor, final String configurationDirectory) {
 
         this.databaseName = databaseName;
-        this.locatorPort = locatorPort + "";
+        this.locatorPort = locatorPort;
         this.createDescriptor = createDescriptor;
         this.configurationDirectory = configurationDirectory;
     }
@@ -82,9 +84,7 @@ public class H2OLocator {
         this(databaseName, locatorPort, createDescriptor, LocalH2OProperties.getConfigurationDirectoryPath(databaseBaseDirectoryPath, databaseName, databasePort));
     }
 
-    //
-
-    public String start() {
+    public String start() throws IOException {
 
         final String locatorLocation = NetUtils.getLocalAddress() + ":" + locatorPort;
         String descriptorFilePath = null;
@@ -106,7 +106,7 @@ public class H2OLocator {
             }
         }
 
-        server = new LocatorServer(Integer.parseInt(locatorPort), databaseName, configurationDirectory);
+        server = new LocatorServer(locatorPort, databaseName, configurationDirectory);
         server.start();
 
         return descriptorFilePath;

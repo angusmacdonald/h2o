@@ -6,6 +6,7 @@ package org.h2o.test.h2;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -32,7 +33,7 @@ public class H2TriggerSample extends H2TestBase {
     private LocatorServer ls;
 
     @Before
-    public void setUp() throws SQLException {
+    public void setUp() throws SQLException, IOException {
 
         DeleteDbFiles.execute("data\\test\\", "test", true);
 

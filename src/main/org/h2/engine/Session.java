@@ -153,11 +153,9 @@ public class Session extends SessionWithState {
      */
     private boolean applicationAutoCommit = true;
 
-    public Session(final Database database, final User user, final int id) { // TODO remove public
+    public Session(final Database database, final User user, final int id) {
 
-        // identifier - only
-        // needed for RMI
-        // tests
+        // TODO remove public identifier - only needed for RMI tests.
         this.database = database;
         undoLog = new UndoLog(this);
         this.user = user;

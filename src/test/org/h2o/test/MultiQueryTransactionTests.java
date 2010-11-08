@@ -11,6 +11,7 @@ package org.h2o.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -828,9 +829,10 @@ public class MultiQueryTransactionTests extends TestBase {
      * Tests that prepared statements work in the system where no replication is involved, and the connection is made through a TCP server.
      * This test uses some of the *Remote classes in H2 which have slightly different behaviour.
      * @throws SQLException 
+     * @throws IOException 
      */
     @Test
-    public void testPreparedStatementsTcpServer() throws SQLException {
+    public void testPreparedStatementsTcpServer() throws SQLException, IOException {
 
         /*
          * Reset the locator file. This test doesn't use the in-memory database.
@@ -1029,9 +1031,10 @@ public class MultiQueryTransactionTests extends TestBase {
      * 
      * @throws SQLException
      * @throws ClassNotFoundException
+     * @throws IOException 
      */
     // @Test
-    public void largeNumberOfInsertsCoupleAtATime() throws SQLException, ClassNotFoundException {
+    public void largeNumberOfInsertsCoupleAtATime() throws SQLException, ClassNotFoundException, IOException {
 
         // update bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
         // createReplicaOnB();

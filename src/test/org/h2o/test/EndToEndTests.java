@@ -463,11 +463,4 @@ public class EndToEndTests extends H2OTestBase {
             closeIfNotNull(statement);
         }
     }
-
-    private void closeIfNotNull(final Statement statement) throws SQLException {
-
-        if (statement != null) {
-            statement.close();
-        }
-    }
 }

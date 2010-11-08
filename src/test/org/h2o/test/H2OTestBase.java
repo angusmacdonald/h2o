@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import org.h2.util.NetUtils;
 import org.h2o.H2O;
@@ -16,20 +17,20 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 public class H2OTestBase {
 
-    protected static final String DATABASE_NAME = "end_to_end";
-    protected static final String DATABASE_BASE_DIRECTORY_PATH = "db_data";
-    protected static final int TCP_PORT = 9999;
-    protected static final int LOCATOR_PORT = 5999;
-    protected static final String USER_NAME = "sa";
-    protected static final String PASSWORD = "";
+    private static final String DATABASE_NAME = "db";
+    private static final String DATABASE_BASE_DIRECTORY_ROOT = "db_data";
+    private static final int TCP_PORT = 9999;
+    private static final int LOCATOR_PORT = 5999;
+    private static final String USER_NAME = "sa";
+    private static final String PASSWORD = "";
 
-    private final PersistentStateManager persistent_state_manager = new PersistentStateManager(DATABASE_BASE_DIRECTORY_PATH);
-
-    protected H2OLocator locator;
-    protected H2O db;
+    private H2OLocator locator;
+    private H2O db;
+    private String database_base_directory_path;
+    private PersistentStateManager persistent_state_manager;
 
     /**
-     * Sets up the test, removing persistent state to be safe.
+     * Sets up the test.
      * 
      * @throws SQLException if fixture setup fails
      * @throws IOException if fixture setup fails
@@ -39,7 +40,9 @@ public class H2OTestBase {
 
         Diagnostic.setLevel(DiagnosticLevel.NONE);
 
-        persistent_state_manager.deletePersistentState();
+        database_base_directory_path = DATABASE_BASE_DIRECTORY_ROOT + System.currentTimeMillis();
+        persistent_state_manager = new PersistentStateManager(database_base_directory_path);
+
         startup();
     }
 
@@ -57,14 +60,46 @@ public class H2OTestBase {
         persistent_state_manager.assertPersistentStateIsAbsent();
     }
 
-    void startup() throws SQLException, IOException {
+    void startup() throws IOException {
 
-        locator = new H2OLocator(DATABASE_NAME, DATABASE_BASE_DIRECTORY_PATH, LOCATOR_PORT, TCP_PORT, true);
-        final String descriptor_file_path = locator.start();
+        final String descriptor_file_path = startupLocator();
 
-        db = new H2O(DATABASE_NAME, TCP_PORT, DATABASE_BASE_DIRECTORY_PATH, descriptor_file_path);
+        startupDatabase(descriptor_file_path);
+    }
 
-        db.startDatabase();
+    private String startupLocator() {
+
+        int locator_port = LOCATOR_PORT;
+        String descriptor_file_path;
+
+        while (true) {
+            try {
+                locator = new H2OLocator(DATABASE_NAME, database_base_directory_path, locator_port, TCP_PORT, true);
+                descriptor_file_path = locator.start();
+                break;
+            }
+            catch (final IOException e) {
+                locator_port++;
+            }
+        }
+        return descriptor_file_path;
+    }
+
+    private void startupDatabase(final String descriptor_file_path) throws IOException {
+
+        int tcp_port = TCP_PORT;
+
+        while (true) {
+            try {
+                db = new H2O(DATABASE_NAME, TCP_PORT, database_base_directory_path, descriptor_file_path);
+
+                db.startDatabase();
+                break;
+            }
+            catch (final SQLException e) {
+                tcp_port++;
+            }
+        }
     }
 
     void shutdown() throws SQLException {
@@ -75,9 +110,23 @@ public class H2OTestBase {
 
     protected Connection makeConnection() throws SQLException {
 
-        final String jdbcURL = "jdbc:h2:tcp://" + NetUtils.getLocalAddress() + ":" + TCP_PORT + "/" + DATABASE_BASE_DIRECTORY_PATH + "/" + DATABASE_NAME + TCP_PORT;
+        final String jdbcURL = "jdbc:h2:tcp://" + NetUtils.getLocalAddress() + ":" + TCP_PORT + "/" + database_base_directory_path + "/" + DATABASE_NAME + TCP_PORT;
 
         // Create connection to the H2O database instance.
         return DriverManager.getConnection(jdbcURL, USER_NAME, PASSWORD);
+    }
+
+    protected void closeIfNotNull(final Connection connection) throws SQLException {
+
+        if (connection != null) {
+            connection.close();
+        }
+    }
+
+    protected void closeIfNotNull(final Statement statement) throws SQLException {
+
+        if (statement != null) {
+            statement.close();
+        }
     }
 }
