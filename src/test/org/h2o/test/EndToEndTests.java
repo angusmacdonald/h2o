@@ -210,7 +210,7 @@ public class EndToEndTests extends H2OTestBase {
         Diagnostic.trace();
 
         final int number_of_values = 10;
-        final int number_of_threads = 3;
+        final int number_of_threads = 10;
 
         createWithAutoCommit();
 
