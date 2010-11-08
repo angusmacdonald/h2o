@@ -26,7 +26,6 @@ import org.h2.index.Cursor;
 import org.h2.index.Index;
 import org.h2.index.IndexType;
 import org.h2.log.LogSystem;
-import org.h2.log.UndoLogRecord;
 import org.h2.message.Message;
 import org.h2.message.Trace;
 import org.h2.message.TraceSystem;
@@ -257,7 +256,7 @@ public class Database implements DataHandler {
     private Mode mode = Mode.getInstance(Mode.REGULAR);
 
     // TODO change in version 1.2
-    private boolean multiThreaded;
+    private final boolean multiThreaded;
 
     private int maxOperationMemory = SysProperties.DEFAULT_MAX_OPERATION_MEMORY;
 
@@ -1232,11 +1231,6 @@ public class Database implements DataHandler {
             objectIds.set(id);
             meta.lock(session, true, true);
             meta.addRow(session, r);
-            if (isMultiVersion()) {
-                // TODO this should work without MVCC, but avoid risks at the
-                // moment
-                session.log(meta, UndoLogRecord.INSERT, r);
-            }
         }
         if (SysProperties.PAGE_STORE && id > 0) {
             databaseObjects.put(ObjectUtils.getInteger(id), obj);
@@ -1261,12 +1255,7 @@ public class Database implements DataHandler {
                 final Row found = cursor.get();
                 meta.lock(session, true, true);
                 meta.removeRow(session, found);
-                if (isMultiVersion()) {
-                    // TODO this should work without MVCC, but avoid risks at
-                    // the
-                    // moment
-                    session.log(meta, UndoLogRecord.DELETE, found);
-                }
+
                 objectIds.clear(id);
                 if (SysProperties.CHECK) {
                     checkMetaFree(session, id);
@@ -2697,16 +2686,6 @@ public class Database implements DataHandler {
     }
 
     /**
-     * Check if multi version concurrency is enabled for this database.
-     * 
-     * @return true if it is enabled
-     */
-    public boolean isMultiVersion() {
-
-        return multiVersion;
-    }
-
-    /**
      * Called after the database has been opened and initialized. This method notifies the event listener if one has been set.
      */
     public void opened() {
@@ -2724,21 +2703,6 @@ public class Database implements DataHandler {
     public Mode getMode() {
 
         return mode;
-    }
-
-    public boolean isMultiThreaded() {
-
-        return multiThreaded;
-    }
-
-    public void setMultiThreaded(final boolean multiThreaded) throws SQLException {
-
-        if (multiThreaded && multiVersion && this.multiThreaded != multiThreaded) {
-            // currently the combination of MVCC and MULTI_THREADED is not
-            // supported
-            throw Message.getSQLException(ErrorCode.CANNOT_CHANGE_SETTING_WHEN_OPEN_1, "MVCC & MULTI_THREADED");
-        }
-        this.multiThreaded = multiThreaded;
     }
 
     public void setMaxOperationMemory(final int maxOperationMemory) {

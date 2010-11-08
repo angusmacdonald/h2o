@@ -247,10 +247,6 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.TableManagerRemote2#removeTableManager()
-     */
     @Override
     public boolean removeTableInformation() throws RemoteException, SQLException, MovedException {
 
@@ -273,12 +269,21 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Creating Table Manager tables.");
 
+        final StringBuilder builder = new StringBuilder();
+
         final String databaseName = session.getDatabase().getURL().sanitizedLocation().toUpperCase();
         String sql = createSQL(getMetaTableName(databaseName, TableManager.TABLES), getMetaTableName(databaseName, TableManager.CONNECTIONS));
 
-        sql += "\n\nCREATE TABLE IF NOT EXISTS " + getMetaTableName(databaseName, TableManager.REPLICAS) + "(" + "replica_id INTEGER NOT NULL auto_increment(1,1), " + "table_id INTEGER NOT NULL, " + "connection_id INTEGER NOT NULL, " + "storage_type VARCHAR(255), " + "active boolean NOT NULL, "
-                        + "table_set INT NOT NULL, " + "PRIMARY KEY (replica_id), " + "FOREIGN KEY (table_id) REFERENCES " + getMetaTableName(databaseName, TableManager.TABLES) + " (table_id) ON DELETE CASCADE , " + " FOREIGN KEY (connection_id) REFERENCES "
-                        + getMetaTableName(databaseName, TableManager.CONNECTIONS) + " (connection_id));";
+        builder.append(sql);
+        builder.append("\n\nCREATE TABLE IF NOT EXISTS ");
+        builder.append(getMetaTableName(databaseName, TableManager.REPLICAS));
+        builder.append("(replica_id INTEGER NOT NULL auto_increment(1,1), table_id INTEGER NOT NULL, connection_id INTEGER NOT NULL, storage_type VARCHAR(255), active boolean NOT NULL, ");
+        builder.append("table_set INT NOT NULL, PRIMARY KEY (replica_id), FOREIGN KEY (table_id) REFERENCES ");
+        builder.append(getMetaTableName(databaseName, TableManager.TABLES));
+        builder.append(" (table_id) ON DELETE CASCADE ,  FOREIGN KEY (connection_id) REFERENCES ");
+        builder.append(getMetaTableName(databaseName, TableManager.CONNECTIONS));
+        builder.append(" (connection_id));");
+        sql += builder.toString();
 
         final Parser parser = new Parser(session, true);
 

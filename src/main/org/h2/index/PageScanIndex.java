@@ -37,38 +37,26 @@ public class PageScanIndex extends BaseIndex implements RowIndex {
 
     private long rowCount;
 
-    public PageScanIndex(TableData table, int id, IndexColumn[] columns, IndexType indexType, int headPos) throws SQLException {
+    public PageScanIndex(final TableData table, final int id, final IndexColumn[] columns, final IndexType indexType, int headPos) throws SQLException {
 
         initBaseIndex(table, id, table.getName() + "_TABLE_SCAN", columns, indexType);
-        // trace.setLevel(TraceSystem.DEBUG);
-        if (database.isMultiVersion()) {
-            int todoMvcc;
-        }
+
         tableData = table;
-        if (!database.isPersistent() || id < 0) {
-            int todo;
-            return;
-        }
-        this.store = database.getPageStore();
+        if (!database.isPersistent() || id < 0) { return; }
+        store = database.getPageStore();
         if (headPos == Index.EMPTY_HEAD) {
             // new table
             headPos = store.allocatePage();
-            PageDataLeaf root = new PageDataLeaf(this, headPos, Page.ROOT, store.createDataPage());
+            final PageDataLeaf root = new PageDataLeaf(this, headPos, Page.ROOT, store.createDataPage());
             store.updateRecord(root, true, root.data);
-            int test;
-            // } else if (store.isNew()) {
-            // // the system table for a new database
-            // PageDataLeaf root = new PageDataLeaf(this, headPos,
-            // Page.ROOT, store.createDataPage());
-            // store.updateRecord(root, true, root.data);
+
         }
         else {
-            PageData root = getPage(headPos);
+            final PageData root = getPage(headPos);
             lastKey = root.getLastKey();
             rowCount = root.getRowCount();
             // could have been created before, but never committed
             store.updateRecord(root, false, null);
-            int reuseKeysIfManyDeleted;
         }
         this.headPos = headPos;
         if (trace.isDebugEnabled()) {
@@ -77,12 +65,14 @@ public class PageScanIndex extends BaseIndex implements RowIndex {
         table.setRowCount(rowCount);
     }
 
+    @Override
     public int getHeadPos() {
 
         return headPos;
     }
 
-    public void add(Session session, Row row) throws SQLException {
+    @Override
+    public void add(final Session session, final Row row) throws SQLException {
 
         row.setPos(++lastKey);
         if (trace.isDebugEnabled()) {
@@ -90,8 +80,8 @@ public class PageScanIndex extends BaseIndex implements RowIndex {
         }
         if (tableData.getContainsLargeObject()) {
             for (int i = 0; i < row.getColumnCount(); i++) {
-                Value v = row.getValue(i);
-                Value v2 = v.link(database, getId());
+                final Value v = row.getValue(i);
+                final Value v2 = v.link(database, getId());
                 if (v2.isLinked()) {
                     session.unlinkAtCommitStop(v2);
                 }
@@ -102,22 +92,22 @@ public class PageScanIndex extends BaseIndex implements RowIndex {
         }
         while (true) {
             PageData root = getPage(headPos);
-            int splitPoint = root.addRow(row);
+            final int splitPoint = root.addRow(row);
             if (splitPoint == 0) {
                 break;
             }
             if (trace.isDebugEnabled()) {
                 trace.debug("split " + splitPoint);
             }
-            int pivot = root.getKey(splitPoint - 1);
-            PageData page1 = root;
-            PageData page2 = root.split(splitPoint);
-            int rootPageId = root.getPageId();
-            int id = store.allocatePage();
+            final int pivot = root.getKey(splitPoint - 1);
+            final PageData page1 = root;
+            final PageData page2 = root.split(splitPoint);
+            final int rootPageId = root.getPageId();
+            final int id = store.allocatePage();
             page1.setPageId(id);
             page1.setParentPageId(headPos);
             page2.setParentPageId(headPos);
-            PageDataNode newRoot = new PageDataNode(this, rootPageId, Page.ROOT, store.createDataPage());
+            final PageDataNode newRoot = new PageDataNode(this, rootPageId, Page.ROOT, store.createDataPage());
             newRoot.init(page1, pivot, page2);
             store.updateRecord(page1, true, page1.data);
             store.updateRecord(page2, true, page2.data);
@@ -135,20 +125,20 @@ public class PageScanIndex extends BaseIndex implements RowIndex {
      *            the page id
      * @return the page
      */
-    PageData getPage(int id) throws SQLException {
+    PageData getPage(final int id) throws SQLException {
 
-        Record rec = store.getRecord(id);
+        final Record rec = store.getRecord(id);
         if (rec != null) {
             if (rec instanceof PageDataLeafOverflow) {
-                int test;
+                final int test;
                 System.out.println("stop");
             }
             return (PageData) rec;
         }
-        DataPage data = store.readPage(id);
+        final DataPage data = store.readPage(id);
         data.reset();
-        int parentPageId = data.readInt();
-        int type = data.readByte() & 255;
+        final int parentPageId = data.readInt();
+        final int type = data.readByte() & 255;
         PageData result;
         switch (type & ~Page.FLAG_LAST) {
             case Page.TYPE_DATA_LEAF:
@@ -158,7 +148,7 @@ public class PageScanIndex extends BaseIndex implements RowIndex {
                 result = new PageDataNode(this, id, parentPageId, data);
                 break;
             case Page.TYPE_EMPTY:
-                PageDataLeaf empty = new PageDataLeaf(this, id, parentPageId, data);
+                final PageDataLeaf empty = new PageDataLeaf(this, id, parentPageId, data);
                 return empty;
             default:
                 throw Message.getSQLException(ErrorCode.FILE_CORRUPTED_1, "page=" + id + " type=" + type);
@@ -167,58 +157,64 @@ public class PageScanIndex extends BaseIndex implements RowIndex {
         return result;
     }
 
+    @Override
     public boolean canGetFirstOrLast() {
 
         return false;
     }
 
-    public Cursor find(Session session, SearchRow first, SearchRow last) throws SQLException {
+    @Override
+    public Cursor find(final Session session, final SearchRow first, final SearchRow last) throws SQLException {
 
-        PageData root = getPage(headPos);
+        final PageData root = getPage(headPos);
         return root.find();
     }
 
-    public Cursor findFirstOrLast(Session session, boolean first) throws SQLException {
+    @Override
+    public Cursor findFirstOrLast(final Session session, final boolean first) throws SQLException {
 
         throw Message.getUnsupportedException();
     }
 
-    public double getCost(Session session, int[] masks) throws SQLException {
+    @Override
+    public double getCost(final Session session, final int[] masks) throws SQLException {
 
-        long cost = 10 * (tableData.getRowCountApproximation() + Constants.COST_ROW_OFFSET);
+        final long cost = 10 * (tableData.getRowCountApproximation() + Constants.COST_ROW_OFFSET);
         return cost;
     }
 
+    @Override
     public boolean needRebuild() {
 
         return false;
     }
 
-    public void remove(Session session, Row row) throws SQLException {
+    @Override
+    public void remove(final Session session, final Row row) throws SQLException {
 
         if (trace.isDebugEnabled()) {
             trace.debug("remove " + row.getPos());
         }
         if (tableData.getContainsLargeObject()) {
             for (int i = 0; i < row.getColumnCount(); i++) {
-                Value v = row.getValue(i);
+                final Value v = row.getValue(i);
                 if (v.isLinked()) {
                     session.unlinkAtCommit((ValueLob) v);
                 }
             }
         }
-        int invalidateRowCount;
+        final int invalidateRowCount;
         // setChanged(session);
         if (rowCount == 1) {
-            int todoMaybeImprove;
+            final int todoMaybeImprove;
             removeAllRows();
         }
         else {
-            int key = row.getPos();
-            PageData root = getPage(headPos);
+            final int key = row.getPos();
+            final PageData root = getPage(headPos);
             root.remove(key);
             rowCount--;
-            int todoReuseKeys;
+            final int todoReuseKeys;
             // if (key == lastKey - 1) {
             // lastKey--;
             // }
@@ -226,15 +222,17 @@ public class PageScanIndex extends BaseIndex implements RowIndex {
         store.logAddOrRemoveRow(session, tableData.getId(), row, false);
     }
 
-    public void remove(Session session) throws SQLException {
+    @Override
+    public void remove(final Session session) throws SQLException {
 
         if (trace.isDebugEnabled()) {
             trace.debug("remove");
         }
-        int todo;
+        final int todo;
     }
 
-    public void truncate(Session session) throws SQLException {
+    @Override
+    public void truncate(final Session session) throws SQLException {
 
         if (trace.isDebugEnabled()) {
             trace.debug("truncate");
@@ -249,22 +247,24 @@ public class PageScanIndex extends BaseIndex implements RowIndex {
     private void removeAllRows() throws SQLException {
 
         store.removeRecord(headPos);
-        int todoLogOldData;
-        int freePages;
-        PageDataLeaf root = new PageDataLeaf(this, headPos, Page.ROOT, store.createDataPage());
+        final int todoLogOldData;
+        final int freePages;
+        final PageDataLeaf root = new PageDataLeaf(this, headPos, Page.ROOT, store.createDataPage());
         store.updateRecord(root, true, null);
         rowCount = 0;
         lastKey = 0;
     }
 
+    @Override
     public void checkRename() throws SQLException {
 
         throw Message.getUnsupportedException();
     }
 
-    public Row getRow(Session session, int key) throws SQLException {
+    @Override
+    public Row getRow(final Session session, final int key) throws SQLException {
 
-        PageData root = getPage(headPos);
+        final PageData root = getPage(headPos);
         return root.getRow(session, key);
     }
 
@@ -280,41 +280,46 @@ public class PageScanIndex extends BaseIndex implements RowIndex {
      *            the data page
      * @return the row
      */
-    Row readRow(DataPage data) throws SQLException {
+    Row readRow(final DataPage data) throws SQLException {
 
         return tableData.readRow(data);
     }
 
+    @Override
     public long getRowCountApproximation() {
 
         return rowCount;
     }
 
-    public long getRowCount(Session session) {
+    @Override
+    public long getRowCount(final Session session) {
 
         return rowCount;
     }
 
+    @Override
     public String getCreateSQL() {
 
         return null;
     }
 
-    public int getColumnIndex(Column col) {
+    @Override
+    public int getColumnIndex(final Column col) {
 
         // the scan index cannot use any columns
         // TODO it can if there is an INT primary key
         return -1;
     }
 
-    public void close(Session session) throws SQLException {
+    @Override
+    public void close(final Session session) throws SQLException {
 
         if (trace.isDebugEnabled()) {
             trace.debug("close");
         }
-        int todoWhyNotClose;
+        final int todoWhyNotClose;
         // store = null;
-        int writeRowCount;
+        final int writeRowCount;
     }
 
 }

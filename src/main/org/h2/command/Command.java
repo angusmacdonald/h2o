@@ -175,10 +175,9 @@ public abstract class Command implements CommandInterface {
 
         startTime = System.currentTimeMillis();
         final Database database = session.getDatabase();
-        final Object sync = database.isMultiThreaded() ? (Object) session : (Object) database;
         session.waitIfExclusiveModeEnabled();
 
-        synchronized (sync) {
+        synchronized (session) {
 
             try {
                 database.checkPowerOff();
@@ -225,7 +224,7 @@ public abstract class Command implements CommandInterface {
         if (!isTransactional()) {
             session.commit(true);
         }
-        else if (session.getDatabase().isMultiThreaded()) {
+        else {
             final Database db = session.getDatabase();
             if (db != null) {
                 if (db.getLockMode() == Constants.LOCK_MODE_READ_COMMITTED) {
@@ -246,9 +245,9 @@ public abstract class Command implements CommandInterface {
 
         final long start = startTime = System.currentTimeMillis();
         final Database database = session.getDatabase();
-        // MemoryUtils.allocateReserveMemory();
-        final Object sync = database.isMultiThreaded() ? (Object) session : (Object) database;
+
         session.waitIfExclusiveModeEnabled();
+        // TODO this looks interesting...
         // synchronized (sync) {
         final int rollback = session.getLogId();
         session.setCurrentCommand(this, startTime);
@@ -267,12 +266,7 @@ public abstract class Command implements CommandInterface {
                         final long now = System.currentTimeMillis();
                         if (now - start > session.getLockTimeout()) { throw e; }
                         try {
-                            if (sync == database) {
-                                database.wait(100);
-                            }
-                            else {
-                                Thread.sleep(100);
-                            }
+                            Thread.sleep(100);
                         }
                         catch (final InterruptedException e1) {
                             // ignore

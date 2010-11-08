@@ -5,7 +5,6 @@
 package org.h2.engine;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -528,21 +527,6 @@ public class Session extends SessionWithState {
             logSystem.commit(this);
         }
         if (undoLog.size() > 0) {
-            if (database.isMultiVersion()) {
-                final ArrayList<Row> rows = new ArrayList<Row>();
-                synchronized (database) {
-                    while (undoLog.size() > 0) {
-                        final UndoLogRecord entry = undoLog.getLast();
-                        entry.commit();
-                        rows.add(entry.getRow());
-                        undoLog.removeLast(false);
-                    }
-                    for (int i = 0; i < rows.size(); i++) {
-                        final Row r = rows.get(i);
-                        r.commit();
-                    }
-                }
-            }
             undoLog.clear();
         }
         if (!ddl) {
@@ -701,13 +685,15 @@ public class Session extends SessionWithState {
 
     private void log(final UndoLogRecord log) throws SQLException {
 
+        // TODO don't understand comment below - why the reference to row insertion?
+
         // called _after_ the row was inserted successfully into the table,
         // otherwise rollback will try to rollback a not-inserted row
 
         // XXX because of exclusive locking at the H2O level, it is assumed that this is not needed.
         if (SysProperties.CHECK) {
             final int lockMode = database.getLockMode();
-            if (lockMode != Constants.LOCK_MODE_OFF && !database.isMultiVersion()) {
+            if (lockMode != Constants.LOCK_MODE_OFF) {
                 if (locks.indexOf(log.getTable()) < 0 && !Table.TABLE_LINK.equals(log.getTable().getTableType())) {
 
                     /*
@@ -734,10 +720,6 @@ public class Session extends SessionWithState {
      */
     public void unlockReadLocks() {
 
-        if (database.isMultiVersion()) {
-            // MVCC: keep shared locks (insert / update / delete)
-            return;
-        }
         for (int i = 0; i < locks.size(); i++) {
             final Table t = (Table) locks.get(i);
             if (!t.isLockedExclusively()) {

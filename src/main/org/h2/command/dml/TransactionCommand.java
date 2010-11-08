@@ -88,23 +88,24 @@ public class TransactionCommand extends Prepared {
      */
     public static final int BEGIN = 14;
 
-    private int type;
+    private final int type;
 
     private String savepointName;
 
     private String transactionName;
 
-    public TransactionCommand(Session session, int type, boolean internalQuery) {
+    public TransactionCommand(final Session session, final int type, final boolean internalQuery) {
 
         super(session, internalQuery);
         this.type = type;
     }
 
-    public void setSavepointName(String name) {
+    public void setSavepointName(final String name) {
 
-        this.savepointName = name;
+        savepointName = name;
     }
 
+    @Override
     public int update() throws SQLException {
 
         switch (type) {
@@ -160,29 +161,22 @@ public class TransactionCommand extends Prepared {
                 session.commit(false);
                 // close the database, but don't update the persistent setting
                 session.getDatabase().setCloseDelay(0);
-                Database db = session.getDatabase();
+                final Database db = session.getDatabase();
                 // throttle, to allow testing concurrent
                 // execution of shutdown and query
                 session.throttle();
-                Session[] sessions = db.getSessions(false);
-                for (Session s : sessions) {
-                    if (db.isMultiThreaded()) {
-                        synchronized (s) {
-                            s.rollback();
-                        }
-                    }
-                    else {
-                        // if not multi-threaded, the session could already own
-                        // the lock, which would result in a deadlock
-                        // the other session can not concurrently do anything
-                        // because the current session has locked the database
+                final Session[] sessions = db.getSessions(false);
+                for (final Session s : sessions) {
+
+                    synchronized (s) {
                         s.rollback();
                     }
+
                     if (s != session) {
                         s.close();
                     }
                 }
-                LogSystem log = db.getLog();
+                final LogSystem log = db.getLog();
                 log.setDisabled(false);
                 log.checkpoint();
                 session.close();
@@ -194,21 +188,24 @@ public class TransactionCommand extends Prepared {
         return 0;
     }
 
+    @Override
     public boolean isTransactional() {
 
         return true;
     }
 
+    @Override
     public boolean needRecompile() {
 
         return false;
     }
 
-    public void setTransactionName(String string) {
+    public void setTransactionName(final String string) {
 
-        this.transactionName = string;
+        transactionName = string;
     }
 
+    @Override
     public LocalResult queryMeta() {
 
         return null;

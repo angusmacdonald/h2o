@@ -22,7 +22,6 @@ import org.h2.index.Cursor;
 import org.h2.index.HashIndex;
 import org.h2.index.Index;
 import org.h2.index.IndexType;
-import org.h2.index.MultiVersionIndex;
 import org.h2.index.PageBtreeIndex;
 import org.h2.index.PageScanIndex;
 import org.h2.index.RowIndex;
@@ -128,9 +127,6 @@ public class TableData extends Table implements RecordReader {
 
         int i = 0;
         lastModificationId = database.getNextModificationDataId();
-        if (database.isMultiVersion()) {
-            row.setSessionId(session.getId());
-        }
         try {
             for (; i < indexes.size(); i++) {
                 final Index index = (Index) indexes.get(i);
@@ -160,7 +156,7 @@ public class TableData extends Table implements RecordReader {
 
     private void checkRowCount(final Session session, final Index index, final int offset) {
 
-        if (SysProperties.CHECK && !database.isMultiVersion()) {
+        if (SysProperties.CHECK) {
             final long rc = index.getRowCount(session);
             if (rc != rowCount + offset) {
                 ErrorHandling.error("rowCount expected " + (rowCount + offset) + " got " + rc + " " + getName() + "." + index.getName());
@@ -219,9 +215,7 @@ public class TableData extends Table implements RecordReader {
                 index = new TreeIndex(this, indexId, indexName, cols, indexType);
             }
         }
-        if (database.isMultiVersion()) {
-            index = new MultiVersionIndex(index, this);
-        }
+
         if (index.needRebuild() && rowCount > 0) {
             try {
                 final Index scan = getScanIndex(session);
@@ -335,7 +329,6 @@ public class TableData extends Table implements RecordReader {
     @Override
     public long getRowCount(final Session session) {
 
-        if (database.isMultiVersion()) { return getScanIndex(session).getRowCount(session); }
         return rowCount;
     }
 
@@ -346,15 +339,6 @@ public class TableData extends Table implements RecordReader {
             database = session.getDatabase();
         }
 
-        if (database.isMultiVersion()) {
-            if (row.getDeleted()) { throw Message.getSQLException(ErrorCode.CONCURRENT_UPDATE_1, getName()); }
-            final int old = row.getSessionId();
-            final int newId = session.getId();
-            if (old == 0) {
-                row.setSessionId(newId);
-            }
-            else if (old != newId) { throw Message.getSQLException(ErrorCode.CONCURRENT_UPDATE_1, getName()); }
-        }
         lastModificationId = database.getNextModificationDataId();
         int i = indexes.size() - 1;
         try {
@@ -409,27 +393,18 @@ public class TableData extends Table implements RecordReader {
     }
 
     @Override
-    public void lock(final Session session, boolean exclusive, final boolean force) throws SQLException {
+    public void lock(final Session session, final boolean exclusive, final boolean force) throws SQLException {
 
         final int lockMode = database.getLockMode();
-        if (lockMode == Constants.LOCK_MODE_OFF) { return; }
-        if (!force && database.isMultiVersion()) {
-            // MVCC: update, delete, and insert use a shared lock.
-            // Select doesn't lock
-            if (exclusive) {
-                exclusive = false;
-            }
-            else {
-                return;
-            }
-        }
 
-        synchronized (database) {
-            try {
-                doLock(session, lockMode, exclusive);
-            }
-            finally {
-                session.setWaitForLock(null);
+        if (lockMode != Constants.LOCK_MODE_OFF) {
+            synchronized (database) {
+                try {
+                    doLock(session, lockMode, exclusive);
+                }
+                finally {
+                    session.setWaitForLock(null);
+                }
             }
         }
     }
@@ -463,17 +438,7 @@ public class TableData extends Table implements RecordReader {
             }
             else {
                 if (lockExclusive == null) {
-                    if (lockMode == Constants.LOCK_MODE_READ_COMMITTED) {
-                        if (!database.isMultiThreaded() && !database.isMultiVersion()) {
-                            // READ_COMMITTED: a read lock is acquired,
-                            // but released immediately after the operation
-                            // is complete.
-                            // When allowing only one thread, no lock is
-                            // required.
-                            // Row level locks work like read committed.
-                            return;
-                        }
-                    }
+
                     if (!lockShared.contains(session)) {
                         traceLock(session, exclusive, "ok");
                         session.addLock(this);

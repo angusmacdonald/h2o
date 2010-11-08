@@ -369,10 +369,6 @@ public class AlterTableAlterColumn extends SchemaCommand {
 
         final Prepared command = session.prepare(sql);
         command.update();
-        if (ddl && session.getDatabase().isMultiVersion()) {
-            // TODO this should work without MVCC, but avoid risks at the moment
-            session.commit(true);
-        }
     }
 
     private void dropSingleColumnIndexes() throws SQLException {
