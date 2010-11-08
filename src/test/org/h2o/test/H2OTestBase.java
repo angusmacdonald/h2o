@@ -59,7 +59,6 @@ public class H2OTestBase {
 
     void startup() throws SQLException, IOException {
 
-        //        final String configuration_directory_path = LocalH2OProperties.getConfigurationDirectoryPath(DATABASE_BASE_DIRECTORY_PATH, DATABASE_NAME, String.valueOf(TCP_PORT));
         locator = new H2OLocator(DATABASE_NAME, DATABASE_BASE_DIRECTORY_PATH, LOCATOR_PORT, TCP_PORT, true);
         final String descriptor_file_path = locator.start();
 
