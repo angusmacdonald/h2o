@@ -32,12 +32,36 @@ public class EndToEndTestsLongRunning extends EndToEndTests {
      * @throws IOException if the test fails
      */
     @Test
-    public void multipleThreads() throws SQLException, IOException {
+    public void multipleThreads1() throws SQLException, IOException {
+
+        Diagnostic.trace();
+
+        final int number_of_values = 5;
+        final int number_of_threads = 5;
+        final int delay = 5000;
+
+        multipleThreads(number_of_values, number_of_threads, delay);
+    }
+
+    /**
+     * A generalised version of {@link #concurrentUpdates()} with multiple threads and multiple values being inserted.
+     * 
+     * @throws SQLException if the test fails
+     * @throws IOException if the test fails
+     */
+    @Test
+    public void multipleThreads2() throws SQLException, IOException {
 
         Diagnostic.trace();
 
         final int number_of_values = 20;
         final int number_of_threads = 20;
+        final int delay = 1000;
+
+        multipleThreads(number_of_values, number_of_threads, delay);
+    }
+
+    private void multipleThreads(final int number_of_values, final int number_of_threads, final int delay) throws SQLException, IOException {
 
         createWithAutoCommit();
 
@@ -48,7 +72,7 @@ public class EndToEndTestsLongRunning extends EndToEndTests {
 
             final int j = i;
 
-            pool.execute(new UpdateThread(number_of_values, j * number_of_values, 1000, sync));
+            pool.execute(new UpdateThread(number_of_values, j * number_of_values, delay, sync));
         }
 
         waitForThreads(sync);
