@@ -16,7 +16,7 @@ import java.util.Collection;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.manager.util.Migratable;
-import org.h2o.db.query.QueryProxy;
+import org.h2o.db.query.TableProxy;
 import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
@@ -31,7 +31,7 @@ import org.h2o.util.exceptions.StartupException;
  */
 public interface TableManagerRemote extends H2ORemote, Migratable, Serializable {
 
-    public QueryProxy getQueryProxy(LockType lockType, LockRequest lockRequest) throws RemoteException, SQLException, MovedException;
+    public TableProxy getQueryProxy(LockType lockType, LockRequest lockRequest) throws RemoteException, SQLException, MovedException;
 
     /*
      * (non-Javadoc)
@@ -63,7 +63,7 @@ public interface TableManagerRemote extends H2ORemote, Migratable, Serializable 
     public DatabaseURL getLocation() throws RemoteException, MovedException;
 
     /**
-     * Release a lock held by the database instance specified in the parameter. Called at the end of QueryProxy.executeQuery() to indicate
+     * Release a lock held by the database instance specified in the parameter. Called at the end of TableProxy.executeQuery() to indicate
      * that the transaction has finished (it may have succeeded or failed).
      * 
      * @param commit

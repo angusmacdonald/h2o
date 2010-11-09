@@ -27,8 +27,8 @@ import org.h2.schema.TriggerObject;
 import org.h2.table.Column;
 import org.h2.table.TableData;
 import org.h2.util.ObjectArray;
-import org.h2o.db.query.QueryProxy;
-import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.TableProxy;
+import org.h2o.db.query.TableProxyManager;
 import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 
@@ -86,8 +86,6 @@ public class AlterTableAlterColumn extends SchemaCommand {
 
     private String addBefore;
 
-    private QueryProxy queryProxy = null;
-
     public AlterTableAlterColumn(final Session session, final Schema schema, final boolean internalQuery) {
 
         super(session, schema);
@@ -113,11 +111,11 @@ public class AlterTableAlterColumn extends SchemaCommand {
          * (QUERY PROPAGATED TO ALL REPLICAS).
          */
         if (isRegularTable()) {
-            if (queryProxy == null) {
-                queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, LockRequest.createNewLockRequest(session), session.getDatabase());
+            if (tableProxy == null) {
+                tableProxy = TableProxy.getQueryProxyAndLock(table, LockType.WRITE, LockRequest.createNewLockRequest(session), session.getDatabase());
             }
-            // if (queryProxy.getNumberOfReplicas() > 1){
-            return queryProxy.executeUpdate(sqlStatement, transactionName, session);
+            // if (tableProxy.getNumberOfReplicas() > 1){
+            return tableProxy.executeUpdate(sqlStatement, transactionName, session);
             // } //Else, just execute it now.
         }
 
@@ -446,25 +444,10 @@ public class AlterTableAlterColumn extends SchemaCommand {
      * @see org.h2.command.Prepared#acquireLocks()
      */
     @Override
-    public void acquireLocks(final QueryProxyManager queryProxyManager) throws SQLException {
+    public void acquireLocks(final TableProxyManager tableProxyManager) throws SQLException {
 
-        /*
-         * (QUERY PROPAGATED TO ALL REPLICAS).
-         */
-        if (isRegularTable()) {
+        acquireLocks(tableProxyManager, table, LockType.WRITE);
 
-            queryProxy = queryProxyManager.getQueryProxy(table.getFullName());
-
-            if (queryProxy == null) {
-                queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, LockRequest.createNewLockRequest(session), session.getDatabase());
-            }
-
-            queryProxyManager.addProxy(queryProxy);
-        }
-        else {
-
-            queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(LockRequest.createNewLockRequest(session)));
-        }
     }
 
     /**

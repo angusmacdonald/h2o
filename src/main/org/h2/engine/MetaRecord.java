@@ -16,7 +16,7 @@ import org.h2.schema.SchemaObject;
 import org.h2.util.ObjectArray;
 import org.h2.value.ValueInt;
 import org.h2.value.ValueString;
-import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.TableProxyManager;
 
 /**
  * A record in the system table of the database. It contains the SQL statement to create the database object.
@@ -96,7 +96,7 @@ public class MetaRecord {
      *            the database event listener
      * @param proxyManager
      */
-    void execute(Database db, Session systemSession, DatabaseEventListener listener, QueryProxyManager proxyManager) throws SQLException {
+    void execute(Database db, Session systemSession, DatabaseEventListener listener, TableProxyManager proxyManager) throws SQLException {
 
         try {
             Prepared command = systemSession.prepare(sql);

@@ -23,7 +23,7 @@ import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2o.db.DefaultSettings;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.query.QueryProxy;
+import org.h2o.db.query.TableProxy;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -134,7 +134,7 @@ public class AsynchronousQueryExecutor {
      * 
      * <p>
      * This method begins execution of the queries but does not actually return their results (because it is asynchronous). See
-     * {@link QueryProxy#waitUntilRemoteQueriesFinish(boolean[], List)} for the result.
+     * {@link TableProxy#waitUntilRemoteQueriesFinish(boolean[], List)} for the result.
      * 
      * @param sql
      *            The query to be executed

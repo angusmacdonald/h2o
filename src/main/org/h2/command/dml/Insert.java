@@ -24,10 +24,8 @@ import org.h2.table.Column;
 import org.h2.util.ObjectArray;
 import org.h2.value.Value;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.query.QueryProxy;
-import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.TableProxyManager;
 import org.h2o.db.query.asynchronous.CommitResult;
-import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.test.AsynchronousTests;
 
@@ -41,8 +39,6 @@ public class Insert extends Prepared {
     private final ObjectArray list = new ObjectArray();
 
     private Query query;
-
-    private QueryProxy queryProxy = null;
 
     /**
      * 
@@ -94,25 +90,9 @@ public class Insert extends Prepared {
      * @see org.h2.command.Prepared#acquireLocks()
      */
     @Override
-    public void acquireLocks(final QueryProxyManager queryProxyManager) throws SQLException {
+    public void acquireLocks(final TableProxyManager tableProxyManager) throws SQLException {
 
-        /*
-         * (QUERY PROPAGATED TO ALL REPLICAS).
-         */
-
-        if (isRegularTable()) {
-
-            queryProxy = queryProxyManager.getQueryProxy(table.getFullName());
-
-            if (queryProxy == null || !queryProxy.getLockGranted().equals(LockType.WRITE)) {
-                queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, LockRequest.createNewLockRequest(session), session.getDatabase());
-            }
-
-            queryProxyManager.addProxy(queryProxy);
-        }
-        else {
-            queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(LockRequest.createNewLockRequest(session)));
-        }
+        acquireLocks(tableProxyManager, table, LockType.WRITE);
 
     }
 
@@ -132,8 +112,8 @@ public class Insert extends Prepared {
         /*
          * (QUERY PROPAGATED TO ALL REPLICAS).
          */
-        if (isRegularTable() && (queryProxy.getNumberOfReplicas() > 1 || !isReplicaLocal(queryProxy))) { // &&
-                                                                                                         // queryProxy.getNumberOfReplicas()
+        if (isRegularTable() && (tableProxy.getNumberOfReplicas() > 1 || !isReplicaLocal(tableProxy))) { // &&
+                                                                                                         // tableProxy.getNumberOfReplicas()
                                                                                                          // > 1
             String sql;
 
@@ -144,7 +124,7 @@ public class Insert extends Prepared {
                 sql = sqlStatement;
             }
 
-            return queryProxy.executeUpdate(sql, transactionName, session);
+            return tableProxy.executeUpdate(sql, transactionName, session);
         }
         else if (isRegularTable()) {
             /*
@@ -152,7 +132,7 @@ public class Insert extends Prepared {
              * transaction.
              */
             final List<CommitResult> recentlyCompletedQueries = new LinkedList<CommitResult>();
-            recentlyCompletedQueries.add(new CommitResult(true, session.getDatabase().getLocalDatabaseInstanceInWrapper(), queryProxy.getUpdateID(), queryProxy.getUpdateID(), new TableInfo(table.getFullName())));
+            recentlyCompletedQueries.add(new CommitResult(true, session.getDatabase().getLocalDatabaseInstanceInWrapper(), tableProxy.getUpdateID(), tableProxy.getUpdateID(), new TableInfo(table.getFullName())));
             session.getDatabase().getAsynchronousQueryManager().addTransaction(transactionName, new TableInfo(table.getFullName()), null, recentlyCompletedQueries, 0);
         }
 

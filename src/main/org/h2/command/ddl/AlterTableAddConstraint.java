@@ -26,8 +26,8 @@ import org.h2.table.IndexColumn;
 import org.h2.table.Table;
 import org.h2.table.TableFilter;
 import org.h2.util.ObjectArray;
-import org.h2o.db.query.QueryProxy;
-import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.TableProxy;
+import org.h2o.db.query.TableProxyManager;
 import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 
@@ -86,8 +86,6 @@ public class AlterTableAddConstraint extends SchemaCommand {
 
     private final boolean ifNotExists;
 
-    private QueryProxy queryProxy = null;
-
     public AlterTableAddConstraint(final Session session, final Schema schema, final boolean ifNotExists, final boolean internalQuery) {
 
         super(session, schema);
@@ -134,13 +132,13 @@ public class AlterTableAddConstraint extends SchemaCommand {
          */
         if (isRegularTable()) {
 
-            // if (queryProxy.getNumberOfReplicas() > 1){
+            // if (tableProxy.getNumberOfReplicas() > 1){
             if (sqlStatement != null) {
 
-                if (queryProxy == null) {
-                    queryProxy = QueryProxy.getQueryProxyAndLock(getSchema().getTableOrView(session, tableName), LockType.WRITE, LockRequest.createNewLockRequest(session), session.getDatabase());
+                if (tableProxy == null) {
+                    tableProxy = TableProxy.getQueryProxyAndLock(getSchema().getTableOrView(session, tableName), LockType.WRITE, LockRequest.createNewLockRequest(session), session.getDatabase());
                 }
-                return queryProxy.executeUpdate(sqlStatement, transactionName, session);
+                return tableProxy.executeUpdate(sqlStatement, transactionName, session);
             }
             // } //Else, just execute it now.
         }
@@ -397,25 +395,11 @@ public class AlterTableAddConstraint extends SchemaCommand {
      * @see org.h2.command.Prepared#acquireLocks()
      */
     @Override
-    public void acquireLocks(final QueryProxyManager queryProxyManager) throws SQLException {
+    public void acquireLocks(final TableProxyManager tableProxyManager) throws SQLException {
 
-        /*
-         * (QUERY PROPAGATED TO ALL REPLICAS).
-         */
-        if (isRegularTable()) {
+        final Table nonNullTable = getSchema().getTableOrView(session, tableName);
+        acquireLocks(tableProxyManager, nonNullTable, LockType.WRITE);
 
-            queryProxy = queryProxyManager.getQueryProxy(getSchema().getTableOrView(session, tableName).getFullName());
-
-            if (queryProxy == null) {
-                queryProxy = QueryProxy.getQueryProxyAndLock(getSchema().getTableOrView(session, tableName), LockType.WRITE, LockRequest.createNewLockRequest(session), session.getDatabase());
-            }
-
-            queryProxyManager.addProxy(queryProxy);
-        }
-        else {
-
-            queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(LockRequest.createNewLockRequest(session)));
-        }
     }
 
     /**

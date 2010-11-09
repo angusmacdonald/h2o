@@ -212,7 +212,7 @@ public class Transaction {
     }
 
     /**
-     * Called by the QueryProxyManager for a transaction when it is committing the transaction. It must send details of the completed
+     * Called by the TableProxyManager for a transaction when it is committing the transaction. It must send details of the completed
      * updates to the Table Manager.
      */
     public synchronized Set<CommitResult> getCompletedQueries() {

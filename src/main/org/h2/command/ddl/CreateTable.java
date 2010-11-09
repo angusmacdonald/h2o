@@ -37,8 +37,8 @@ import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.TableManager;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
-import org.h2o.db.query.QueryProxy;
-import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.TableProxy;
+import org.h2o.db.query.TableProxyManager;
 import org.h2o.db.query.asynchronous.AsynchronousQueryExecutor;
 import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.query.locking.LockRequest;
@@ -84,8 +84,6 @@ public class CreateTable extends SchemaCommand {
     private String comment;
 
     private boolean clustered;
-
-    private QueryProxy queryProxy = null;
 
     public CreateTable(final Session session, final Schema schema) {
 
@@ -337,7 +335,7 @@ public class CreateTable extends SchemaCommand {
      */
     private void addInformationToSystemTable(final ISystemTable systemTable, final ISystemTableReference systemTableReference, final TableInfo tableInfo) throws RemoteException, MovedException, SQLException {
 
-        final TableManagerRemote tableManager = queryProxy.getTableManager();
+        final TableManagerRemote tableManager = tableProxy.getTableManager();
 
         // XXX its a hack to pass in replica locations like this, and it should
         // be unncessesary.
@@ -367,13 +365,13 @@ public class CreateTable extends SchemaCommand {
      */
     private void createReplicas(final TableInfo tableInfo, final String transactionName) throws RemoteException, SQLException, MovedException {
 
-        final Map<DatabaseInstanceWrapper, Integer> replicaLocations = queryProxy.getRemoteReplicaLocations();
+        final Map<DatabaseInstanceWrapper, Integer> replicaLocations = tableProxy.getRemoteReplicaLocations();
 
         if (replicaLocations != null && replicaLocations.size() > 0) {
             /*
              * If true, this table should be immediately replicated onto a number of other instances.
              */
-            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Creating replica of table " + tableInfo.getFullTableName() + " onto " + (queryProxy.getReplicaLocations().size() - 1) + " other instances.");
+            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Creating replica of table " + tableInfo.getFullTableName() + " onto " + (tableProxy.getReplicaLocations().size() - 1) + " other instances.");
 
             String sql = sqlStatement.substring("CREATE TABLE".length());
             sql = "CREATE EMPTY REPLICA" + sql;
@@ -506,11 +504,11 @@ public class CreateTable extends SchemaCommand {
      * for something which hasn't yet been created.
      */
     @Override
-    public void acquireLocks(final QueryProxyManager queryProxyManager) throws SQLException {
+    public void acquireLocks(final TableProxyManager tableProxyManager) throws SQLException {
 
         final Database db = session.getDatabase();
 
-        assert queryProxyManager.getQueryProxy(tableName) == null; // should
+        assert tableProxyManager.getQueryProxy(tableName) == null; // should
                                                                    // never
                                                                    // exist.
 
@@ -534,7 +532,7 @@ public class CreateTable extends SchemaCommand {
 
         }
 
-        queryProxy = null;
+        tableProxy = null;
         if (!db.isTableLocal(getSchema()) && !db.isManagementDB() && !isStartup()) { // if it is startup
                                                                                      // then we don't
                                                                                      // want to create a
@@ -561,17 +559,17 @@ public class CreateTable extends SchemaCommand {
             }
             H2OEventBus.publish(new H2OEvent(db.getURL().getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
 
-            queryProxy = QueryProxy.getQueryProxyAndLock(tableManager, ti.getFullTableName(), LockRequest.createNewLockRequest(session), LockType.CREATE, db, false);
+            tableProxy = TableProxy.getQueryProxyAndLock(tableManager, ti.getFullTableName(), LockRequest.createNewLockRequest(session), LockType.CREATE, db, false);
 
         }
         else {
             /*
-             * This is a system table, but it still needs a QueryProxy to indicate that it is acceptable to execute the query.
+             * This is a system table, but it still needs a TableProxy to indicate that it is acceptable to execute the query.
              */
-            queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.CREATE, LockRequest.createNewLockRequest(session), db);
+            tableProxy = TableProxy.getQueryProxyAndLock(table, LockType.CREATE, LockRequest.createNewLockRequest(session), db);
 
         }
 
-        queryProxyManager.addProxy(queryProxy);
+        tableProxyManager.addProxy(tableProxy);
     }
 }

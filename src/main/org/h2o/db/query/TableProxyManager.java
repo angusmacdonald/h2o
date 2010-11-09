@@ -46,7 +46,7 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class QueryProxyManager {
+public class TableProxyManager {
 
     private final String transactionName;
 
@@ -58,7 +58,7 @@ public class QueryProxyManager {
 
     private final LockRequest requestingDatabase;
 
-    private final Map<String, QueryProxy> queryProxies;
+    private final Map<String, TableProxy> tableProxies;
 
     private Command prepareCommand = null;
 
@@ -88,7 +88,7 @@ public class QueryProxyManager {
      *            The session on which this set of queries is being executed. This must be the same session as the one used to execute the
      *            set of queries, otherwise commit won't work correctly (it won't be able to unlock anything).
      */
-    public QueryProxyManager(final Database db, final Session session) {
+    public TableProxyManager(final Database db, final Session session) {
 
         this(db, session, false);
 
@@ -104,7 +104,7 @@ public class QueryProxyManager {
      *            True if this proxy manager is being used to execute meta-records on system startup. This just adds the local database as
      *            the only replica.
      */
-    public QueryProxyManager(final Database db, final Session session, final boolean metaRecordProxy) {
+    public TableProxyManager(final Database db, final Session session, final boolean metaRecordProxy) {
 
         this.session = session;
 
@@ -122,7 +122,7 @@ public class QueryProxyManager {
 
         requestingDatabase = LockRequest.createNewLockRequest(session);
 
-        queryProxies = new HashMap<String, QueryProxy>();
+        tableProxies = new HashMap<String, TableProxy>();
 
     }
 
@@ -133,9 +133,23 @@ public class QueryProxyManager {
      * @param proxy
      *            Proxy for a particular table.
      */
-    public void addProxy(final QueryProxy proxy) throws SQLException {
+    public void addProxy(final TableProxy proxy) throws SQLException {
 
-        if (hasLock(proxy)) {
+        boolean hasLock = hasLock(proxy);
+
+        if (!hasLock && getTableManagersThatHoldLocks().contains(proxy.getTableManager())) {
+            assert false : "this should never happen?";
+
+            // The new proxy doesn't have the lock,but a lock is held in the QPM by another
+            // query proxy.  It can acquire the lock from here.
+
+            final TableProxy qpWithTM = getQueryProxyWithTableManager(proxy.getTableManager());
+            proxy.setLockType(qpWithTM.getLockGranted());
+
+            hasLock = hasLock(proxy);
+        }
+
+        if (hasLock) {
 
             tableName = proxy.getTableName();
             if (proxy.getUpdateID() > updateID) { // the update ID should be the highest of all the proxy update IDs
@@ -155,7 +169,7 @@ public class QueryProxyManager {
             }
 
         } //Else: No locks could be found. H2O will try again until the query timeout is reached.
-        queryProxies.put(proxy.getTableName().getFullTableName(), proxy);
+        tableProxies.put(proxy.getTableName().getFullTableName(), proxy);
     }
 
     /**
@@ -165,29 +179,17 @@ public class QueryProxyManager {
      *            New proxy.
      * @return true if locks are already held by one of the proxies; otherwise false.
      */
-    public boolean hasLock(final QueryProxy newProxy) {
+    public boolean hasLock(final TableProxy newProxy) {
 
-        if (newProxy.getLockGranted() != LockType.NONE) { return true; // this proxy already holds the required lock
-        }
+        return newProxy.getLockGranted() != LockType.NONE; // this proxy already holds the required lock
 
-        // The proxy doesn't hold the lock - does the manager already have it?
-        if (getTableManagersThatHoldLocks().contains(newProxy.getTableManager())) {
-
-            final QueryProxy qpWithTM = getQueryProxyWithTableManager(newProxy.getTableManager());
-
-            newProxy.setLockType(qpWithTM.getLockGranted());
-            return true;
-        }
-        else {
-            return false;
-        }
     }
 
     public void releaseReadLocks() {
 
-        final Set<QueryProxy> toRemove = new HashSet<QueryProxy>();
+        final Set<TableProxy> toRemove = new HashSet<TableProxy>();
 
-        for (final QueryProxy qp : queryProxies.values()) {
+        for (final TableProxy qp : tableProxies.values()) {
             if (qp.getLockGranted().equals(LockType.READ)) {
                 try {
                     toRemove.add(qp);
@@ -200,9 +202,9 @@ public class QueryProxyManager {
             }
         }
 
-        for (final QueryProxy qpToRemove : toRemove) {
+        for (final TableProxy qpToRemove : toRemove) {
 
-            queryProxies.remove(qpToRemove.getTableName().getFullTableName());
+            tableProxies.remove(qpToRemove.getTableName().getFullTableName());
         }
     }
 
@@ -277,7 +279,7 @@ public class QueryProxyManager {
             printTraceOutputOfExecutedQueries();
 
             if (h2oCommit) {
-                queryProxies.clear();
+                tableProxies.clear();
             }
 
         }
@@ -402,9 +404,9 @@ public class QueryProxyManager {
      * @param table
      * @return
      */
-    public QueryProxy getQueryProxy(final String tableName) {
+    public TableProxy getQueryProxy(final String tableName) {
 
-        return queryProxies.get(tableName);
+        return tableProxies.get(tableName);
     }
 
     /**
@@ -452,7 +454,7 @@ public class QueryProxyManager {
      */
     public boolean hasAllLocks() {
 
-        for (final QueryProxy qp : queryProxies.values()) {
+        for (final TableProxy qp : tableProxies.values()) {
             if (qp.getLockGranted().equals(LockType.NONE)) { return false; }
         }
 
@@ -462,7 +464,7 @@ public class QueryProxyManager {
     @Override
     public String toString() {
 
-        return "QueryProxyManager [transactionName=" + transactionName + ", localDatabase=" + localDatabase + "]";
+        return "TableProxyManager [transactionName=" + transactionName + ", localDatabase=" + localDatabase + "]";
     }
 
     /**
@@ -474,7 +476,7 @@ public class QueryProxyManager {
 
         final Set<TableManagerRemote> tableManagers = new HashSet<TableManagerRemote>();
 
-        for (final QueryProxy qp : queryProxies.values()) {
+        for (final TableProxy qp : tableProxies.values()) {
 
             if (qp.getTableManager() != null && qp.getLockGranted() != LockType.NONE) {
                 tableManagers.add(qp.getTableManager());
@@ -487,9 +489,9 @@ public class QueryProxyManager {
     /**
      * Get the query proxy that holds a lock for the specified table manager.
      */
-    private QueryProxy getQueryProxyWithTableManager(final TableManagerRemote tableManager) {
+    private TableProxy getQueryProxyWithTableManager(final TableManagerRemote tableManager) {
 
-        for (final QueryProxy qp : queryProxies.values()) {
+        for (final TableProxy qp : tableProxies.values()) {
 
             if (qp.getTableManager() != null && qp.getTableManager().equals(tableManager)) { return qp; }
         }
@@ -512,7 +514,7 @@ public class QueryProxyManager {
         if (this == obj) { return true; }
         if (obj == null) { return false; }
         if (getClass() != obj.getClass()) { return false; }
-        final QueryProxyManager other = (QueryProxyManager) obj;
+        final TableProxyManager other = (TableProxyManager) obj;
         if (transactionName == null) {
             if (other.transactionName != null) { return false; }
         }

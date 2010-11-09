@@ -9,7 +9,7 @@ import java.sql.SQLException;
 
 import org.h2.result.LocalResult;
 import org.h2.util.ObjectArray;
-import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.TableProxyManager;
 import org.h2o.test.H2OTest;
 
 /**
@@ -133,7 +133,7 @@ public class CommandList extends Command {
              * Having executed all commands, rollback if there was an exception. Otherwise, commit.
              */
 
-            final QueryProxyManager currentProxyManager = session.getProxyManagerForTransaction();
+            final TableProxyManager currentProxyManager = session.getProxyManagerForTransaction();
             currentProxyManager.finishTransaction(rollbackException == null, true, session.getDatabase());
 
             /*

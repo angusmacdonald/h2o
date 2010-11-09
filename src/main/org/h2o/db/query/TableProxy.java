@@ -43,7 +43,7 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class QueryProxy implements Serializable {
+public class TableProxy implements Serializable {
 
     /**
      * Generated serial version.
@@ -92,7 +92,7 @@ public class QueryProxy implements Serializable {
      * @param updateID
      *            ID given to this update.
      */
-    public QueryProxy(final LockType lockGranted, final TableInfo tableName, final Map<DatabaseInstanceWrapper, Integer> allReplicas, final TableManagerRemote tableManager, final LockRequest requestingMachine, final int updateID, final LockType lockRequested) {
+    public TableProxy(final LockType lockGranted, final TableInfo tableName, final Map<DatabaseInstanceWrapper, Integer> allReplicas, final TableManagerRemote tableManager, final LockRequest requestingMachine, final int updateID, final LockType lockRequested) {
 
         this.lockGranted = lockGranted;
         this.lockRequested = lockRequested;
@@ -109,7 +109,7 @@ public class QueryProxy implements Serializable {
      * @see #getDummyQueryProxy(DatabaseInstanceRemote)
      * @param lockRequest
      */
-    public QueryProxy(final LockRequest lockRequest) {
+    public TableProxy(final LockRequest lockRequest) {
 
         lockGranted = LockType.WRITE;
         allReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
@@ -182,7 +182,7 @@ public class QueryProxy implements Serializable {
      * @return
      * @throws SQLException
      */
-    public static QueryProxy getQueryProxyAndLock(final Table table, final LockType lockType, final LockRequest lockRequest, final Database db) throws SQLException {
+    public static TableProxy getQueryProxyAndLock(final Table table, final LockType lockType, final LockRequest lockRequest, final Database db) throws SQLException {
 
         // if the table is temporary it only exists as part of this transaction
         // - i.e. no lock is needed.
@@ -204,9 +204,9 @@ public class QueryProxy implements Serializable {
      * @param lockRequest
      * @return
      */
-    public static QueryProxy getDummyQueryProxy(final LockRequest lockRequest) {
+    public static TableProxy getDummyQueryProxy(final LockRequest lockRequest) {
 
-        return new QueryProxy(lockRequest);
+        return new TableProxy(lockRequest);
     }
 
     /**
@@ -218,22 +218,22 @@ public class QueryProxy implements Serializable {
      * @return Query proxy for a specific table within H20.
      * @throws SQLException
      */
-    public static QueryProxy getQueryProxyAndLock(TableManagerRemote tableManager, final String tableName, final LockRequest lockRequest, final LockType lockType, final Database db, final boolean alreadyCalled) throws SQLException {
+    public static TableProxy getQueryProxyAndLock(TableManagerRemote tableManager, final String tableName, final LockRequest lockRequest, final LockType lockType, final Database db, final boolean alreadyCalled) throws SQLException {
 
         assert lockRequest != null : "A requesting database must be specified.";
 
         try {
-            QueryProxy queryProxy = null;
+            TableProxy tableProxy = null;
             try {
-                queryProxy = tableManager.getQueryProxy(lockType, lockRequest);
+                tableProxy = tableManager.getQueryProxy(lockType, lockRequest);
             }
             catch (final MovedException e) {
                 // Get an uncached Table Manager from the System Table
                 tableManager = db.getSystemTableReference().lookup(tableName, false);
 
-                queryProxy = tableManager.getQueryProxy(lockType, lockRequest);
+                tableProxy = tableManager.getQueryProxy(lockType, lockRequest);
             }
-            return queryProxy;
+            return tableProxy;
         }
         catch (final java.rmi.NoSuchObjectException e) {
             e.printStackTrace();
@@ -282,7 +282,7 @@ public class QueryProxy implements Serializable {
         }
     }
 
-    public static QueryProxy getQueryProxyAndLock(final LockRequest lockRequest, final String tableName, final LockType lockType, final Database db) throws SQLException {
+    public static TableProxy getQueryProxyAndLock(final LockRequest lockRequest, final String tableName, final LockType lockType, final Database db) throws SQLException {
 
         final TableManagerRemote tableManager = db.getSystemTableReference().lookup(tableName, true);
 
@@ -357,11 +357,11 @@ public class QueryProxy implements Serializable {
     }
 
     /**
-     * @param write
+     * @param lockGranted
      */
-    public void setLockType(final LockType write) {
+    protected void setLockType(final LockType lockGranted) {
 
-        lockGranted = write;
+        this.lockGranted = lockGranted;
     }
 
     /**

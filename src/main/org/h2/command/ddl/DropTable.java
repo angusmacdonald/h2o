@@ -20,8 +20,8 @@ import org.h2.table.Table;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
-import org.h2o.db.query.QueryProxy;
-import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.TableProxy;
+import org.h2o.db.query.TableProxyManager;
 import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.util.exceptions.MovedException;
@@ -43,8 +43,6 @@ public class DropTable extends SchemaCommand {
     ReplicaSet tables = null;
 
     private DropTable next;
-
-    private QueryProxy queryProxy;
 
     public DropTable(final Session session, final Schema schema, final boolean internalQuery) {
 
@@ -123,7 +121,7 @@ public class DropTable extends SchemaCommand {
 
             if (!db.isManagementDB() && !db.isTableLocal(getSchema()) && !internalQuery) {
 
-                queryProxy.executeUpdate(sqlStatement, transactionName, session);
+                tableProxy.executeUpdate(sqlStatement, transactionName, session);
 
                 final ISystemTableReference sm = db.getSystemTableReference();
                 try {
@@ -190,7 +188,7 @@ public class DropTable extends SchemaCommand {
      * @see org.h2.command.Prepared#acquireLocks()
      */
     @Override
-    public void acquireLocks(final QueryProxyManager queryProxyManager) throws SQLException {
+    public void acquireLocks(final TableProxyManager tableProxyManager) throws SQLException {
 
         /*
          * (QUERY PROPAGATED TO ALL REPLICAS).
@@ -198,16 +196,16 @@ public class DropTable extends SchemaCommand {
         if (isRegularTable()) {
 
             final String fullTableName = getSchema().getName() + "." + tableName;
-            queryProxy = queryProxyManager.getQueryProxy(fullTableName);
+            tableProxy = tableProxyManager.getQueryProxy(fullTableName);
 
-            if (queryProxy == null || !queryProxy.getLockGranted().equals(LockType.WRITE)) {
+            if (tableProxy == null || !tableProxy.getLockGranted().equals(LockType.WRITE)) {
 
                 final Database database = getSchema().getDatabase();
                 final TableManagerRemote tableManager = database.getSystemTableReference().lookup(fullTableName, true);
 
                 if (tableManager == null) {
                     // Will happen if the table doesn't exist but IF NOT EXISTS has been specified.
-                    queryProxy = QueryProxy.getDummyQueryProxy(LockRequest.createNewLockRequest(session));
+                    tableProxy = TableProxy.getDummyQueryProxy(LockRequest.createNewLockRequest(session));
                 }
                 else {
                     /*
@@ -217,13 +215,13 @@ public class DropTable extends SchemaCommand {
 
                     final LockType lockToRequest = session.getApplicationAutoCommit() ? LockType.WRITE : LockType.DROP;
 
-                    queryProxy = QueryProxy.getQueryProxyAndLock(tableManager, fullTableName, LockRequest.createNewLockRequest(session), lockToRequest, database, false);
+                    tableProxy = TableProxy.getQueryProxyAndLock(tableManager, fullTableName, LockRequest.createNewLockRequest(session), lockToRequest, database, false);
                 }
             }
-            queryProxyManager.addProxy(queryProxy);
+            tableProxyManager.addProxy(tableProxy);
         }
         else {
-            queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(LockRequest.createNewLockRequest(session)));
+            tableProxyManager.addProxy(TableProxy.getDummyQueryProxy(LockRequest.createNewLockRequest(session)));
         }
 
     }

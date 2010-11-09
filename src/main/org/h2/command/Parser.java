@@ -156,7 +156,7 @@ import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
-import org.h2o.db.query.QueryProxy;
+import org.h2o.db.query.TableProxy;
 import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
@@ -305,6 +305,7 @@ public class Parser {
             p.prepare();
 
             Command c = new CommandContainer(this, sql, p);
+
             p.setCommand(c);
             if (isToken(";")) {
                 final String remaining = originalSQL.substring(parseIndex);
@@ -4743,9 +4744,6 @@ public class Parser {
      */
     private Table readTableOrView(final String tableName, final boolean searchRemote, final LocationPreference locale, final boolean alreadyCalled) throws SQLException {
 
-        // System.out.println("Looking for table '" + tableName + "'");
-        // same algorithm than readSequence
-
         String localSchemaName = null;
 
         if (getSchema() != null) {
@@ -4778,7 +4776,7 @@ public class Parser {
             final TableManagerRemote tableManager = session.getDatabase().getSystemTableReference().lookup(tableInfo, true);
 
             if (tableManager != null) {
-                QueryProxy qp = null;
+                TableProxy qp = null;
 
                 qp = getQueryProxyFromTableManager(tableInfo, tableManager, qp);
 
@@ -4884,7 +4882,7 @@ public class Parser {
         return table;
     }
 
-    private QueryProxy getQueryProxyFromTableManager(final TableInfo tableInfo, TableManagerRemote tableManager, QueryProxy qp) throws SQLException {
+    private TableProxy getQueryProxyFromTableManager(final TableInfo tableInfo, TableManagerRemote tableManager, TableProxy qp) throws SQLException {
 
         try {
             /*

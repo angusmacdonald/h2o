@@ -21,8 +21,8 @@ import org.h2.result.LocalResult;
 import org.h2.table.Table;
 import org.h2.util.ObjectArray;
 import org.h2.value.Value;
-import org.h2o.db.query.QueryProxy;
-import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.TableProxy;
+import org.h2o.db.query.TableProxyManager;
 import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
@@ -78,14 +78,16 @@ public abstract class Prepared {
 
     protected boolean internalQuery;
 
+    protected TableProxy tableProxy;
+
     /**
      * True if every replica is local. This will only be the case if there is only one replica.
      * 
      * @return
      */
-    protected boolean isReplicaLocal(final QueryProxy queryProxy) {
+    protected boolean isReplicaLocal(final TableProxy tableProxy) {
 
-        for (final DatabaseInstanceWrapper replica : queryProxy.getReplicaLocations().keySet()) {
+        for (final DatabaseInstanceWrapper replica : tableProxy.getReplicaLocations().keySet()) {
             if (!session.getDatabase().getURL().equals(replica.getURL())) { return false; }
         }
 
@@ -608,15 +610,32 @@ public abstract class Prepared {
 
     /**
      * Request a lock for the given query, in preparation for its execution. Must be called before update(). This method will be overriden
-     * if a QueryProxy can be returned - prepared statements have to acquire a lock in this manner.
+     * if a TableProxy can be returned - prepared statements have to acquire a lock in this manner.
      * 
-     * @param queryProxyManager
+     * @param tableProxyManager
      * @return
      * @throws SQLException
      */
-    public void acquireLocks(final QueryProxyManager queryProxyManager) throws SQLException {
+    public void acquireLocks(final TableProxyManager tableProxyManager) throws SQLException {
 
-        queryProxyManager.addProxy(QueryProxy.getQueryProxyAndLock(table, LockType.READ, LockRequest.createNewLockRequest(session), session.getDatabase()));
+        tableProxyManager.addProxy(TableProxy.getQueryProxyAndLock(table, LockType.READ, LockRequest.createNewLockRequest(session), session.getDatabase()));
+    }
+
+    public void acquireLocks(final TableProxyManager tableProxyManager, final Table table, final LockType lockRequested) throws SQLException {
+
+        if (isRegularTable()) {
+
+            tableProxy = tableProxyManager.getQueryProxy(table.getFullName());
+
+            if (!lockAlreadyGranted(tableProxy)) {
+                tableProxy = TableProxy.getQueryProxyAndLock(table, lockRequested, LockRequest.createNewLockRequest(session), session.getDatabase());
+            }
+
+            tableProxyManager.addProxy(tableProxy);
+        }
+        else {
+            tableProxyManager.addProxy(TableProxy.getDummyQueryProxy(LockRequest.createNewLockRequest(session)));
+        }
     }
 
     /**
@@ -660,6 +679,16 @@ public abstract class Prepared {
 
         return sqlStatement.contains("?");
         // return preparedStatement;
+    }
+
+    /**
+     * True if the Table Proxy has either a WRITE or CREATE lock.
+     * @param tableProxy
+     * @return
+     */
+    protected boolean lockAlreadyGranted(final TableProxy tableProxy) {
+
+        return tableProxy != null && (tableProxy.getLockGranted().equals(LockType.WRITE) || tableProxy.getLockGranted().equals(LockType.CREATE));
     }
 
 }

@@ -10,9 +10,7 @@ import org.h2.constant.ErrorCode;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.message.Message;
-import org.h2o.db.query.QueryProxy;
-import org.h2o.db.query.QueryProxyManager;
-import org.h2o.db.query.locking.LockRequest;
+import org.h2o.db.query.TableProxyManager;
 import org.h2o.db.query.locking.LockType;
 
 /**
@@ -41,24 +39,9 @@ public class TruncateTable extends DefineCommand {
      * @see org.h2.command.Prepared#acquireLocks()
      */
     @Override
-    public void acquireLocks(final QueryProxyManager queryProxyManager) throws SQLException {
+    public void acquireLocks(final TableProxyManager tableProxyManager) throws SQLException {
 
-        /*
-         * (QUERY PROPAGATED TO ALL REPLICAS).
-         */
-        if (isRegularTable()) {
-
-            QueryProxy queryProxy = queryProxyManager.getQueryProxy(table.getFullName());
-
-            if (queryProxy == null || !queryProxy.getLockGranted().equals(LockType.WRITE)) {
-                queryProxy = QueryProxy.getQueryProxyAndLock(table, LockType.WRITE, LockRequest.createNewLockRequest(session), session.getDatabase());
-            }
-
-            queryProxyManager.addProxy(queryProxy);
-        }
-        else {
-            queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(LockRequest.createNewLockRequest(session)));
-        }
+        acquireLocks(tableProxyManager, table, LockType.WRITE);
 
     }
 

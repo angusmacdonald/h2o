@@ -13,7 +13,7 @@ import org.h2.expression.Parameter;
 import org.h2.result.LocalResult;
 import org.h2.util.ObjectArray;
 import org.h2.value.Value;
-import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.TableProxyManager;
 import org.h2o.test.H2OTest;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -108,10 +108,9 @@ public class CommandContainer extends Command {
                         && prepared instanceof Select) {
 
             getLock();
-
         }
 
-        final QueryProxyManager currentProxyManager = session.getProxyManagerForTransaction();
+        final TableProxyManager currentProxyManager = session.getProxyManagerForTransaction();
 
         try {
             final LocalResult result = prepared.query(maxrows);
@@ -166,7 +165,7 @@ public class CommandContainer extends Command {
 
         if (!transactionCommand) { // Not a prepare or commit.
 
-            final QueryProxyManager currentProxyManager = session.getProxyManagerForTransaction();
+            final TableProxyManager currentProxyManager = session.getProxyManagerForTransaction();
 
             assert currentProxyManager != null;
 

@@ -255,6 +255,7 @@ public class TcpServerThread implements Runnable {
                 final ObjectArray params = command.getParameters();
                 final int paramCount = params.size();
                 transfer.writeInt(getState(old)).writeBoolean(isQuery).writeBoolean(readonly).writeInt(paramCount);
+
                 if (operation == SessionRemote.SESSION_PREPARE_READ_PARAMS) {
                     for (int i = 0; i < paramCount; i++) {
                         final Parameter p = (Parameter) params.get(i);

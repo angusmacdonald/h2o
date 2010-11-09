@@ -35,7 +35,7 @@ import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.util.Migratable;
-import org.h2o.db.query.QueryProxy;
+import org.h2o.db.query.TableProxy;
 import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.query.locking.ILockingTable;
 import org.h2o.db.query.locking.LockRequest;
@@ -363,7 +363,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
      * @see org.h2.h2o.manager.TableManagerRemote2#getQueryProxy(org.h2.h2o.util. LockType, org.h2.h2o.comms.remote.DatabaseInstanceRemote)
      */
     @Override
-    public synchronized QueryProxy getQueryProxy(LockType lockRequested, final LockRequest lockRequest) throws RemoteException, SQLException, MovedException {
+    public synchronized TableProxy getQueryProxy(LockType lockRequested, final LockRequest lockRequest) throws RemoteException, SQLException, MovedException {
 
         preMethodTest();
 
@@ -385,7 +385,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
         final LockType lockGranted = lockingTable.requestLock(lockRequested, lockRequest);
 
-        final QueryProxy qp = new QueryProxy(lockGranted, tableInfo, selectReplicaLocations(lockRequested, lockRequest, isDrop), this, lockRequest, currentUpdateID, lockRequested);
+        final TableProxy qp = new TableProxy(lockGranted, tableInfo, selectReplicaLocations(lockRequested, lockRequest, isDrop), this, lockRequest, currentUpdateID, lockRequested);
 
         return qp;
     }

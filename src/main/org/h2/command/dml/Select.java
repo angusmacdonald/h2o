@@ -44,8 +44,8 @@ import org.h2.util.ValueHashMap;
 import org.h2.value.Value;
 import org.h2.value.ValueArray;
 import org.h2.value.ValueNull;
-import org.h2o.db.query.QueryProxy;
-import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.TableProxy;
+import org.h2o.db.query.TableProxyManager;
 import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 
@@ -1240,19 +1240,19 @@ public class Select extends Query {
      * @see org.h2.command.Prepared#acquireLocks(org.h2.h2o.comms.QueryProxyManager)
      */
     @Override
-    public void acquireLocks(final QueryProxyManager queryProxyManager) throws SQLException {
+    public void acquireLocks(final TableProxyManager tableProxyManager) throws SQLException {
 
         for (final Table table : getTables()) {
             if (!session.getDatabase().isTableLocal(table.getSchema())) {
 
                 if (Table.TABLE.equals(table.getTableType())) {
-                    QueryProxy qp = queryProxyManager.getQueryProxy(table.getFullName());
+                    TableProxy qp = tableProxyManager.getQueryProxy(table.getFullName());
 
                     if (qp == null || qp.getLockGranted().equals(LockType.NONE)) {
-                        qp = QueryProxy.getQueryProxyAndLock(table, LockType.READ, LockRequest.createNewLockRequest(session), session.getDatabase());
+                        qp = TableProxy.getQueryProxyAndLock(table, LockType.READ, LockRequest.createNewLockRequest(session), session.getDatabase());
                     }
 
-                    queryProxyManager.addProxy(qp);
+                    tableProxyManager.addProxy(qp);
                 }
                 else if (Table.VIEW.equals(table.getTableType())) {
                     // Get locks for the tables involved in executing the view.
@@ -1262,8 +1262,8 @@ public class Select extends Query {
                     for (final Table theseTables : tables) {
                         if (!session.getDatabase().isTableLocal(theseTables.getSchema())) {
 
-                            final QueryProxy qp = QueryProxy.getQueryProxyAndLock(theseTables, LockType.READ, LockRequest.createNewLockRequest(session), session.getDatabase());
-                            queryProxyManager.addProxy(qp);
+                            final TableProxy qp = TableProxy.getQueryProxyAndLock(theseTables, LockType.READ, LockRequest.createNewLockRequest(session), session.getDatabase());
+                            tableProxyManager.addProxy(qp);
                         }
                     }
                 }

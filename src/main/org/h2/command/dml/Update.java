@@ -25,8 +25,8 @@ import org.h2.table.Table;
 import org.h2.table.TableFilter;
 import org.h2.util.StringUtils;
 import org.h2.value.Value;
-import org.h2o.db.query.QueryProxy;
-import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.TableProxy;
+import org.h2o.db.query.TableProxyManager;
 import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 
@@ -40,8 +40,6 @@ public class Update extends Prepared {
     private TableFilter tableFilter;
 
     private Expression[] expressions;
-
-    private QueryProxy queryProxy = null;
 
     public Update(final Session session, final boolean internalQuery) {
 
@@ -103,10 +101,10 @@ public class Update extends Prepared {
                     sql = sqlStatement;
                 }
 
-                if (queryProxy == null) {
-                    queryProxy = new QueryProxy(LockRequest.createNewLockRequest(session)); // in case of MERGE statement.
+                if (tableProxy == null) {
+                    tableProxy = new TableProxy(LockRequest.createNewLockRequest(session)); // in case of MERGE statement.
                 }
-                return queryProxy.executeUpdate(sql, transactionName, session);
+                return tableProxy.executeUpdate(sql, transactionName, session);
             }
 
             table.fireBefore(session);
@@ -187,10 +185,10 @@ public class Update extends Prepared {
      */
     private boolean thisIsNotALocalOrSingleTableUpdate() {
 
-        final boolean multipleReplicas = queryProxy.getNumberOfReplicas() > 1;
-        final boolean notLocal = !isReplicaLocal(queryProxy);
+        final boolean multipleReplicas = tableProxy.getNumberOfReplicas() > 1;
+        final boolean notLocal = !isReplicaLocal(tableProxy);
 
-        return queryProxy != null && multipleReplicas || notLocal;
+        return tableProxy != null && multipleReplicas || notLocal;
     }
 
     /**
@@ -367,23 +365,10 @@ public class Update extends Prepared {
      * @see org.h2.command.Prepared#acquireLocks()
      */
     @Override
-    public void acquireLocks(final QueryProxyManager queryProxyManager) throws SQLException {
+    public void acquireLocks(final TableProxyManager tableProxyManager) throws SQLException {
 
-        /*
-         * (QUERY PROPAGATED TO ALL REPLICAS).
-         */
-        if (isRegularTable()) {
+        acquireLocks(tableProxyManager, tableFilter.getTable(), LockType.WRITE);
 
-            queryProxy = queryProxyManager.getQueryProxy(tableFilter.getTable().getFullName());
-
-            if (queryProxy == null || !queryProxy.getLockGranted().equals(LockType.WRITE)) {
-                queryProxy = QueryProxy.getQueryProxyAndLock(tableFilter.getTable(), LockType.WRITE, LockRequest.createNewLockRequest(session), session.getDatabase());
-            }
-            queryProxyManager.addProxy(queryProxy);
-        }
-        else {
-            queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(LockRequest.createNewLockRequest(session)));
-        }
     }
 
     /*

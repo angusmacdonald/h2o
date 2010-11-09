@@ -41,7 +41,7 @@ import org.h2.value.ValueLob;
 import org.h2.value.ValueLong;
 import org.h2.value.ValueNull;
 import org.h2.value.ValueString;
-import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.TableProxyManager;
 import org.h2o.db.remote.IDatabaseRemote;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -72,7 +72,7 @@ public class Session extends SessionWithState {
 
     private final ObjectArray locks = new ObjectArray();
 
-    private QueryProxyManager proxyManagerForCurrentTransaction = null;
+    private TableProxyManager proxyManagerForCurrentTransaction = null;
 
     private final UndoLog undoLog;
 
@@ -1318,7 +1318,7 @@ public class Session extends SessionWithState {
     /**
      * @return the currentTransactionLocks
      */
-    public QueryProxyManager getProxyManager() {
+    public TableProxyManager getProxyManager() {
 
         return proxyManagerForCurrentTransaction;
     }
@@ -1329,21 +1329,21 @@ public class Session extends SessionWithState {
      * 
      * @return
      */
-    public QueryProxyManager getProxyManagerForTransaction() {
+    public TableProxyManager getProxyManagerForTransaction() {
 
         if (proxyManagerForCurrentTransaction == null) {
-            proxyManagerForCurrentTransaction = new QueryProxyManager(getDatabase(), this);
+            proxyManagerForCurrentTransaction = new TableProxyManager(getDatabase(), this);
             Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "New transaction started: " + proxyManagerForCurrentTransaction.getTransactionName());
         }
         return proxyManagerForCurrentTransaction;
     }
 
     /**
-     * Completes the transaction by resetting the QueryProxyManager for this session.
+     * Completes the transaction by resetting the TableProxyManager for this session.
      */
     public void completeTransaction() {
 
-        proxyManagerForCurrentTransaction = new QueryProxyManager(getDatabase(), this);
+        proxyManagerForCurrentTransaction = new TableProxyManager(getDatabase(), this);
     }
 
     public int getSerialID() {

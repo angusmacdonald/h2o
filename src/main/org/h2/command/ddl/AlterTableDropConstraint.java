@@ -12,9 +12,8 @@ import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
-import org.h2o.db.query.QueryProxy;
-import org.h2o.db.query.QueryProxyManager;
-import org.h2o.db.query.locking.LockRequest;
+import org.h2.table.Table;
+import org.h2o.db.query.TableProxyManager;
 import org.h2o.db.query.locking.LockType;
 
 /**
@@ -25,8 +24,6 @@ public class AlterTableDropConstraint extends SchemaCommand {
     private String constraintName;
 
     private final boolean ifExists;
-
-    private QueryProxy queryProxy = null;
 
     public AlterTableDropConstraint(final Session session, final Schema schema, final boolean ifExists, final boolean internalQuery) {
 
@@ -48,7 +45,7 @@ public class AlterTableDropConstraint extends SchemaCommand {
         /*
          * (QUERY PROPAGATED TO ALL REPLICAS).
          */
-        if (isRegularTable()) { return queryProxy.executeUpdate(sqlStatement, transactionName, session); }
+        if (isRegularTable()) { return tableProxy.executeUpdate(sqlStatement, transactionName, session); }
 
         final Constraint constraint = getSchema().findConstraint(session, constraintName);
         if (constraint == null) {
@@ -67,25 +64,11 @@ public class AlterTableDropConstraint extends SchemaCommand {
      * @see org.h2.command.Prepared#acquireLocks()
      */
     @Override
-    public void acquireLocks(final QueryProxyManager queryProxyManager) throws SQLException {
+    public void acquireLocks(final TableProxyManager tableProxyManager) throws SQLException {
 
-        /*
-         * (QUERY PROPAGATED TO ALL REPLICAS).
-         */
-        if (isRegularTable()) {
+        final Table nonNullTable = getSchema().findConstraint(session, constraintName).getTable();
+        acquireLocks(tableProxyManager, nonNullTable, LockType.WRITE);
 
-            queryProxy = queryProxyManager.getQueryProxy(getSchema().findConstraint(session, constraintName).getTable().getFullName());
-
-            if (queryProxy == null) {
-                queryProxy = QueryProxy.getQueryProxyAndLock(getSchema().findConstraint(session, constraintName).getTable(), LockType.WRITE, LockRequest.createNewLockRequest(session), session.getDatabase());
-            }
-
-            queryProxyManager.addProxy(queryProxy);
-        }
-        else {
-
-            queryProxyManager.addProxy(QueryProxy.getDummyQueryProxy(LockRequest.createNewLockRequest(session)));
-        }
     }
 
     /**

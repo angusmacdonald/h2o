@@ -13,7 +13,7 @@ import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.TableManager;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
-import org.h2o.db.query.QueryProxy;
+import org.h2o.db.query.TableProxy;
 import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.util.exceptions.MigrationException;
@@ -81,7 +81,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
                 Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, getSchema().getName() + tableName);
             }
 
-            QueryProxy qp = null;
+            TableProxy qp = null;
             try {
                 qp = tableManager.getQueryProxy(LockType.WRITE, LockRequest.createNewLockRequest(session));
             }

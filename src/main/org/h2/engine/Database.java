@@ -81,7 +81,7 @@ import org.h2o.db.manager.TableManager;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.manager.interfaces.SystemTableRemote;
 import org.h2o.db.manager.monitorthreads.MetaDataReplicationThread;
-import org.h2o.db.query.QueryProxyManager;
+import org.h2o.db.query.TableProxyManager;
 import org.h2o.db.query.asynchronous.AsynchronousQueryManager;
 import org.h2o.db.remote.ChordRemote;
 import org.h2o.db.remote.IChordInterface;
@@ -938,7 +938,7 @@ public class Database implements DataHandler {
         }
 
         if (records.size() > 0) {
-            final QueryProxyManager proxyManager = new QueryProxyManager(this, systemSession, true);
+            final TableProxyManager proxyManager = new TableProxyManager(this, systemSession, true);
 
             for (int i = 0; i < records.size(); i++) {
                 final MetaRecord rec = (MetaRecord) records.get(i);
@@ -2843,7 +2843,7 @@ public class Database implements DataHandler {
             if (add) {
                 objectIds.set(m.getId());
 
-                final QueryProxyManager proxyManager = new QueryProxyManager(this, systemSession, true);
+                final TableProxyManager proxyManager = new TableProxyManager(this, systemSession, true);
 
                 m.execute(this, systemSession, eventListener, proxyManager);
             }
