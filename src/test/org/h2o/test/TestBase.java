@@ -116,21 +116,29 @@ public class TestBase {
     @After
     public void tearDown() throws SQLException, InterruptedException {
 
-        sa.execute("DROP ALL OBJECTS");
-        sb.execute("DROP ALL OBJECTS");
+        if (sa != null) {
+            sa.execute("DROP ALL OBJECTS");
 
-        if (!sa.isClosed()) {
-            sa.close();
-        }
-        if (!sb.isClosed()) {
-            sb.close();
+            if (!sa.isClosed()) {
+                sa.close();
+            }
+
+            if (!ca.isClosed()) {
+                ca.close();
+            }
         }
 
-        if (!ca.isClosed()) {
-            ca.close();
-        }
-        if (!cb.isClosed()) {
-            cb.close();
+        if (sb != null) {
+            sb.execute("DROP ALL OBJECTS");
+
+            if (!sb.isClosed()) {
+                sb.close();
+            }
+
+            if (!cb.isClosed()) {
+                cb.close();
+            }
+
         }
 
         closeDatabaseCompletely();

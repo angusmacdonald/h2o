@@ -349,16 +349,6 @@ public class SystemTableReference implements ISystemTableReference {
             ErrorHandling.errorNoEvent("Failed to export System Table object: " + e.getMessage());
         }
 
-        // try {
-        // Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Checking System Table Accessibility...");
-        // systemTableWrapper.getSystemTable().checkTableManagerAccessibility();
-        // System.err.println("...");
-        // } catch (RemoteException e) {
-        // e.printStackTrace();
-        // } catch (MovedException e) {
-        // e.printStackTrace();
-        // }
-
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Finished building new System Table on " + db.getURL().getDbLocation() + ".");
         H2OEventBus.publish(new H2OEvent(db.getURL().getURL(), DatabaseStates.SYSTEM_TABLE_MIGRATION));
         return systemTableWrapper.getSystemTable();

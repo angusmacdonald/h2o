@@ -19,9 +19,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.h2.engine.Constants;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;
+import org.h2o.autonomic.settings.TestingSettings;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.locator.server.LocatorServer;
 import org.junit.Test;
@@ -153,7 +153,7 @@ public class MultiQueryTransactionTests extends TestBase {
     public void testFailureLocal() {
 
         try {
-            Constants.IS_TESTING_QUERY_FAILURE = true;
+            TestingSettings.IS_TESTING_QUERY_FAILURE = true;
 
             /*
              * Create then execute INSERTS for TEST table.
@@ -195,7 +195,7 @@ public class MultiQueryTransactionTests extends TestBase {
     public void testFailureRemote() {
 
         try {
-            Constants.IS_TESTING_QUERY_FAILURE = true;
+            TestingSettings.IS_TESTING_QUERY_FAILURE = true;
 
             createReplicaOnB();
 
@@ -399,7 +399,7 @@ public class MultiQueryTransactionTests extends TestBase {
             secondCol[1] = "World";
             validateOnFirstMachine("TEST", pKey, secondCol);
 
-            Constants.IS_TESTING_QUERY_FAILURE = true;
+            TestingSettings.IS_TESTING_QUERY_FAILURE = true;
             try {
                 sa.execute(testQuery.getSQL() + test2query.getSQL()); // Insert test rows.
                 fail("This query should have failed.");
@@ -450,8 +450,8 @@ public class MultiQueryTransactionTests extends TestBase {
                 fail("There should only be one table in the System Table.");
             }
 
-            Constants.IS_TESTING_CREATETABLE_FAILURE = true;
-            Constants.IS_TESTING_QUERY_FAILURE = true;
+            TestingSettings.IS_TESTING_CREATETABLE_FAILURE = true;
+            TestingSettings.IS_TESTING_QUERY_FAILURE = true;
 
             try {
                 createSecondTable(sb, "TEST2");
@@ -475,8 +475,8 @@ public class MultiQueryTransactionTests extends TestBase {
             fail("An Unexpected SQLException was thrown.");
         }
 
-        Constants.IS_TESTING_CREATETABLE_FAILURE = false;
-        Constants.IS_TESTING_QUERY_FAILURE = false;
+        TestingSettings.IS_TESTING_CREATETABLE_FAILURE = false;
+        TestingSettings.IS_TESTING_QUERY_FAILURE = false;
 
     }
 

@@ -10,7 +10,6 @@ import java.util.Set;
 
 import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
-import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
@@ -85,15 +84,10 @@ public class DropTable extends SchemaCommand {
 
     private void prepareDrop(final String transactionName) throws SQLException {
 
-        if (Constants.IS_H2O) {
-            tables = getSchema().getTablesOrViews(session, tableName);
+        tables = getSchema().getTablesOrViews(session, tableName);
 
-            if (tables != null) {
-                table = tables.getACopy();
-            }
-        }
-        else {
-            table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
+        if (tables != null) {
+            table = tables.getACopy();
         }
 
         TableManagerRemote tableManager = null;
@@ -108,21 +102,11 @@ public class DropTable extends SchemaCommand {
         else {
             session.getUser().checkRight(table, Right.ALL);
 
-            // XXX changed to add the table null checks because some tests show
-            // up the tableManager existing when the local table doesn't.
-            if (table != null && !table.canDrop() || Constants.IS_H2O && tableName.startsWith("H2O_")) { // H2O
-                // -
-                // ensure
-                // schema
-                // tables
-                // aren't
-                // dropped.
+            if (table != null && !table.canDrop() || tableName.startsWith("H2O_")) { // H2O  - ensure schema tables aren't dropped.
                 throw Message.getSQLException(ErrorCode.CANNOT_DROP_TABLE_1, tableName);
             }
-            if (Constants.IS_H2O && !internalQuery && table != null) {
-                table.lock(session, true, true); // lock isn't acquired here -
-                // the query is distributed
-                // to each replica first.
+            if (!internalQuery && table != null) {
+                table.lock(session, true, true); // lock isn't acquired here - the query is distributed to each replica first.
             }
         }
         if (next != null) {
@@ -132,17 +116,12 @@ public class DropTable extends SchemaCommand {
 
     private void executeDrop(final String transactionName) throws SQLException, RemoteException {
 
-        // need to get the table again, because it may be dropped already
-        // meanwhile (dependent object, or same object)
+        // need to get the table again, because it may be dropped already in the meantime (dependent object, or same object)
         table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
         if (table != null) {
             final Database db = session.getDatabase();
-            /*
-             * ################################################################## ####### Remove any System Table entries.
-             * ################################################################## #######
-             */
 
-            if (Constants.IS_H2O && !db.isManagementDB() && !db.isTableLocal(getSchema()) && !internalQuery) {
+            if (!db.isManagementDB() && !db.isTableLocal(getSchema()) && !internalQuery) {
 
                 queryProxy.executeUpdate(sqlStatement, transactionName, session);
 
@@ -258,7 +237,7 @@ public class DropTable extends SchemaCommand {
 
         final Set<String> localSchema = session.getDatabase().getLocalSchema();
         try {
-            return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery && !localSchema.contains(getSchema().getName());
+            return !session.getDatabase().isManagementDB() && !internalQuery && !localSchema.contains(getSchema().getName());
         }
         catch (final NullPointerException e) {
             // Shouldn't occur, ever. Something should have probably overridden

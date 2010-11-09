@@ -9,7 +9,6 @@ import java.sql.SQLException;
 import java.util.HashMap;
 
 import org.h2.constant.SysProperties;
-import org.h2.engine.Constants;
 import org.h2.util.JdbcUtils;
 import org.h2.util.ObjectUtils;
 import org.h2.util.StringUtils;
@@ -22,7 +21,7 @@ public class TableLinkConnection {
     /**
      * The map where the link is kept.
      */
-    private HashMap<TableLinkConnection, TableLinkConnection> map;
+    private final HashMap<TableLinkConnection, TableLinkConnection> map;
 
     /**
      * The connection information.
@@ -39,7 +38,7 @@ public class TableLinkConnection {
      */
     private int useCounter;
 
-    private TableLinkConnection(HashMap<TableLinkConnection, TableLinkConnection> map, String driver, String url, String user, String password) {
+    private TableLinkConnection(final HashMap<TableLinkConnection, TableLinkConnection> map, final String driver, final String url, final String user, final String password) {
 
         this.map = map;
         this.driver = driver;
@@ -63,10 +62,10 @@ public class TableLinkConnection {
      *            the password
      * @return a connection
      */
-    public static TableLinkConnection open(HashMap<TableLinkConnection, TableLinkConnection> linkConnections, String driver, String url, String user, String password) throws SQLException {
+    public static TableLinkConnection open(final HashMap<TableLinkConnection, TableLinkConnection> linkConnections, final String driver, final String url, final String user, final String password) throws SQLException {
 
-        TableLinkConnection t = new TableLinkConnection(linkConnections, driver, url, user, password);
-        if (Constants.IS_H2O || !SysProperties.SHARE_LINKED_CONNECTIONS) {
+        final TableLinkConnection t = new TableLinkConnection(linkConnections, driver, url, user, password);
+        if (!SysProperties.SHARE_LINKED_CONNECTIONS) {
             t.open();
             return t;
         }
@@ -94,15 +93,17 @@ public class TableLinkConnection {
         conn = JdbcUtils.getConnection(driver, getUrl(), user, password);
     }
 
+    @Override
     public int hashCode() {
 
         return ObjectUtils.hashCode(driver) ^ ObjectUtils.hashCode(getUrl()) ^ ObjectUtils.hashCode(user) ^ ObjectUtils.hashCode(password);
     }
 
-    public boolean equals(Object o) {
+    @Override
+    public boolean equals(final Object o) {
 
         if (o instanceof TableLinkConnection) {
-            TableLinkConnection other = (TableLinkConnection) o;
+            final TableLinkConnection other = (TableLinkConnection) o;
             return StringUtils.equals(driver, other.driver) && StringUtils.equals(getUrl(), other.getUrl()) && StringUtils.equals(user, other.user) && StringUtils.equals(password, other.password);
         }
         return false;

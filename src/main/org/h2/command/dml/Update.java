@@ -8,7 +8,6 @@ import java.sql.SQLException;
 
 import org.h2.command.Prepared;
 import org.h2.constant.ErrorCode;
-import org.h2.engine.Constants;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.expression.Comparison;
@@ -395,7 +394,7 @@ public class Update extends Prepared {
     protected boolean isRegularTable() {
 
         final boolean isLocal = session.getDatabase().isTableLocal(tableFilter.getTable().getSchema());
-        return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery && !isLocal;
+        return !session.getDatabase().isManagementDB() && !internalQuery && !isLocal;
     }
 
 }

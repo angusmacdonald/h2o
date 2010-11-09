@@ -13,7 +13,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 
-import org.h2.engine.Constants;
 import org.h2.jdbc.JdbcConnection;
 import org.h2.message.TraceSystem;
 import org.h2.store.FileLock;
@@ -52,10 +51,6 @@ public abstract class H2TestBase {
      */
     protected long start;
 
-    static {
-        Constants.IS_H2O = true;
-    }
-
     /**
      * Get the test directory for this test.
      * 
@@ -85,7 +80,6 @@ public abstract class H2TestBase {
 
         baseDir = getTestDir("");
         config = new TestAll();
-        Constants.IS_H2O = true;
         return this;
     }
 

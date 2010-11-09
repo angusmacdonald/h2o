@@ -120,6 +120,7 @@ public class MultiProcessTestBase extends TestBase {
             properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
             // properties.setProperty("RELATION_REPLICATION_FACTOR", "2");
             properties.setProperty("databaseName", "testDB");
+            properties.setProperty("diagnosticLevel", "INIT");
 
             properties.saveAndClose();
         }
@@ -133,7 +134,6 @@ public class MultiProcessTestBase extends TestBase {
         sleep(2000);
         createConnectionsToDatabases();
 
-        Diagnostic.setLevel(DiagnosticLevel.FULL);
     }
 
     private void killExistingProcessesIfNotOnWindows() throws IOException {
@@ -416,10 +416,10 @@ public class MultiProcessTestBase extends TestBase {
         try {
             s = connnection.createStatement();
             if (localOnly) {
-                rs = s.executeQuery("SELECT LOCAL ONLY * FROM " + "TEST" + ";");
+                rs = s.executeQuery("SELECT LOCAL ONLY * FROM " + "PUBLIC.TEST" + ";");
             }
             else {
-                rs = s.executeQuery("SELECT * FROM " + "TEST" + ";");
+                rs = s.executeQuery("SELECT * FROM " + "PUBLIC.TEST" + ";");
             }
 
             int actualEntries = 0;
@@ -553,7 +553,7 @@ public class MultiProcessTestBase extends TestBase {
     }
 
     /**
-     * Starts all databases, ensuring the first database, 'one', will be the intial System Table if the parameter is true.
+     * Starts all databases, ensuring the first database, 'one', will be the initial System Table if the parameter is true.
      * 
      * @throws InterruptedException
      */

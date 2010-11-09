@@ -94,7 +94,7 @@ public class TableFilter implements ColumnResolver {
      * @param select
      *            the select statement
      */
-    public TableFilter(Session session, Table table, String alias, boolean rightsChecked, Select select) throws SQLException {
+    public TableFilter(final Session session, final Table table, final String alias, final boolean rightsChecked, final Select select) throws SQLException {
 
         this.session = session;
         this.table = table;
@@ -106,6 +106,7 @@ public class TableFilter implements ColumnResolver {
         }
     }
 
+    @Override
     public Select getSelect() {
 
         return select;
@@ -126,7 +127,7 @@ public class TableFilter implements ColumnResolver {
      * @param force
      *            lock even in the MVCC mode
      */
-    public void lock(Session session, boolean exclusive, boolean force) throws SQLException {
+    public void lock(final Session session, final boolean exclusive, final boolean force) throws SQLException {
 
         table.lock(session, exclusive, force);
         if (join != null) {
@@ -141,7 +142,7 @@ public class TableFilter implements ColumnResolver {
      *            the session
      * @return the best plan item
      */
-    public PlanItem getBestPlanItem(Session session) throws SQLException {
+    public PlanItem getBestPlanItem(final Session session) throws SQLException {
 
         PlanItem item;
         if (indexConditions.size() == 0) {
@@ -150,16 +151,16 @@ public class TableFilter implements ColumnResolver {
             item.cost = item.getIndex().getCost(session, null);
         }
         else {
-            int len = table.getColumns().length;
+            final int len = table.getColumns().length;
             int[] masks = new int[len];
             for (int i = 0; i < indexConditions.size(); i++) {
-                IndexCondition condition = (IndexCondition) indexConditions.get(i);
+                final IndexCondition condition = (IndexCondition) indexConditions.get(i);
                 if (condition.isEvaluatable()) {
                     if (condition.isAlwaysFalse()) {
                         masks = null;
                         break;
                     }
-                    int id = condition.getColumn().getColumnId();
+                    final int id = condition.getColumn().getColumnId();
                     masks[id] |= condition.getMask();
                 }
             }
@@ -179,7 +180,7 @@ public class TableFilter implements ColumnResolver {
 
         // this table filter is now evaluatable - in all sub-joins
         do {
-            Expression e = join.getJoinCondition();
+            final Expression e = join.getJoinCondition();
             if (e != null) {
                 e.setEvaluatable(this, true);
             }
@@ -194,7 +195,7 @@ public class TableFilter implements ColumnResolver {
      * @param item
      *            the plan item
      */
-    public void setPlanItem(PlanItem item) {
+    public void setPlanItem(final PlanItem item) {
 
         setIndex(item.getIndex());
         if (join != null) {
@@ -211,9 +212,9 @@ public class TableFilter implements ColumnResolver {
 
         // forget all unused index conditions
         for (int i = 0; i < indexConditions.size(); i++) {
-            IndexCondition condition = (IndexCondition) indexConditions.get(i);
+            final IndexCondition condition = (IndexCondition) indexConditions.get(i);
             if (!condition.isAlwaysFalse()) {
-                Column col = condition.getColumn();
+                final Column col = condition.getColumn();
                 if (index.getColumnIndex(col) < 0) {
                     indexConditions.remove(i);
                     i--;
@@ -240,7 +241,7 @@ public class TableFilter implements ColumnResolver {
      * @param session
      *            the session
      */
-    public void startQuery(Session session) {
+    public void startQuery(final Session session) {
 
         this.session = session;
         scanCount = 0;
@@ -261,7 +262,7 @@ public class TableFilter implements ColumnResolver {
         foundOne = false;
     }
 
-    private Value getMax(Value a, Value b, boolean bigger) throws SQLException {
+    private Value getMax(final Value a, final Value b, final boolean bigger) throws SQLException {
 
         if (a == null) {
             return b;
@@ -288,23 +289,23 @@ public class TableFilter implements ColumnResolver {
         else if (state == BEFORE_FIRST) {
             SearchRow start = null, end = null;
             for (int i = 0; i < indexConditions.size(); i++) {
-                IndexCondition condition = (IndexCondition) indexConditions.get(i);
+                final IndexCondition condition = (IndexCondition) indexConditions.get(i);
                 if (condition.isAlwaysFalse()) {
                     alwaysFalse = true;
                     break;
                 }
-                Column column = condition.getColumn();
-                int type = column.getType();
-                int id = column.getColumnId();
-                Value v = condition.getCurrentValue(session).convertTo(type);
+                final Column column = condition.getColumn();
+                final int type = column.getType();
+                final int id = column.getColumnId();
+                final Value v = condition.getCurrentValue(session).convertTo(type);
                 boolean isStart = condition.isStart(), isEnd = condition.isEnd();
-                IndexColumn idxCol = indexColumns[id];
+                final IndexColumn idxCol = indexColumns[id];
                 if (idxCol != null && (idxCol.sortType & SortOrder.DESCENDING) != 0) {
                     // if the index column is sorted the other way, we swap end
                     // and start
                     // NULLS_FIRST / NULLS_LAST is not a problem, as nulls never
                     // match anyway
-                    boolean temp = isStart;
+                    final boolean temp = isStart;
                     isStart = isEnd;
                     isEnd = temp;
                 }
@@ -379,7 +380,7 @@ public class TableFilter implements ColumnResolver {
             if (!isOk(filterCondition)) {
                 continue;
             }
-            boolean joinConditionOk = isOk(joinCondition);
+            final boolean joinConditionOk = isOk(joinCondition);
             if (state == FOUND) {
                 if (joinConditionOk) {
                     foundOne = true;
@@ -408,7 +409,7 @@ public class TableFilter implements ColumnResolver {
         // scanCount);
     }
 
-    private boolean isOk(Expression condition) throws SQLException {
+    private boolean isOk(final Expression condition) throws SQLException {
 
         if (condition == null) { return true; }
         return Boolean.TRUE.equals(condition.getBooleanValue(session));
@@ -441,12 +442,12 @@ public class TableFilter implements ColumnResolver {
      * @param current
      *            the current row
      */
-    public void set(Row current) {
+    public void set(final Row current) {
 
         // this is currently only used so that check constraints work - to set
         // the current (new) row
         this.current = current;
-        this.currentSearchRow = current;
+        currentSearchRow = current;
     }
 
     /**
@@ -454,6 +455,7 @@ public class TableFilter implements ColumnResolver {
      * 
      * @return the alias name
      */
+    @Override
     public String getTableAlias() {
 
         if (alias != null) { return alias; }
@@ -466,7 +468,7 @@ public class TableFilter implements ColumnResolver {
      * @param condition
      *            the index condition
      */
-    public void addIndexCondition(IndexCondition condition) {
+    public void addIndexCondition(final IndexCondition condition) {
 
         indexConditions.add(condition);
     }
@@ -479,7 +481,7 @@ public class TableFilter implements ColumnResolver {
      * @param join
      *            if this is in fact a join condition
      */
-    public void addFilterCondition(Expression condition, boolean join) {
+    public void addFilterCondition(final Expression condition, final boolean join) {
 
         if (join) {
             if (joinCondition == null) {
@@ -509,13 +511,13 @@ public class TableFilter implements ColumnResolver {
      * @param on
      *            the join condition
      */
-    public void addJoin(TableFilter filter, boolean outer, Expression on) throws SQLException {
+    public void addJoin(final TableFilter filter, final boolean outer, final Expression on) throws SQLException {
 
         if (on != null) {
             on.mapColumns(this, 0);
         }
         if (join == null) {
-            this.join = filter;
+            join = filter;
             filter.outerJoin = outer;
             if (on != null) {
                 filter.mapAndAddFilter(on);
@@ -532,7 +534,7 @@ public class TableFilter implements ColumnResolver {
      * @param on
      *            the condition
      */
-    public void mapAndAddFilter(Expression on) throws SQLException {
+    public void mapAndAddFilter(final Expression on) throws SQLException {
 
         on.mapColumns(this, 0);
         addFilterCondition(on, true);
@@ -564,9 +566,9 @@ public class TableFilter implements ColumnResolver {
      *            if this is a joined table
      * @return the SQL statement snippet
      */
-    public String getPlanSQL(boolean join) {
+    public String getPlanSQL(final boolean join) {
 
-        StringBuilder buff = new StringBuilder();
+        final StringBuilder buff = new StringBuilder();
         if (join) {
             if (outerJoin) {
                 buff.append("LEFT OUTER JOIN ");
@@ -582,12 +584,12 @@ public class TableFilter implements ColumnResolver {
         }
         if (index != null) {
             buff.append(" /* ");
-            StringBuilder planBuff = new StringBuilder();
+            final StringBuilder planBuff = new StringBuilder();
             planBuff.append(index.getPlanSQL());
             if (indexConditions.size() > 0) {
                 planBuff.append(": ");
                 for (int i = 0; i < indexConditions.size(); i++) {
-                    IndexCondition condition = (IndexCondition) indexConditions.get(i);
+                    final IndexCondition condition = (IndexCondition) indexConditions.get(i);
                     if (i > 0) {
                         planBuff.append(" AND ");
                     }
@@ -626,7 +628,7 @@ public class TableFilter implements ColumnResolver {
     void removeUnusableIndexConditions() {
 
         for (int i = 0; i < indexConditions.size(); i++) {
-            IndexCondition cond = (IndexCondition) indexConditions.get(i);
+            final IndexCondition cond = (IndexCondition) indexConditions.get(i);
             if (!cond.isEvaluatable()) {
                 indexConditions.remove(i--);
             }
@@ -638,15 +640,15 @@ public class TableFilter implements ColumnResolver {
         return index;
     }
 
-    public void setIndex(Index index) {
+    public void setIndex(final Index index) {
 
         this.index = index;
-        Column[] columns = table.getColumns();
+        final Column[] columns = table.getColumns();
         indexColumns = new IndexColumn[columns.length];
-        IndexColumn[] idxCols = index.getIndexColumns();
+        final IndexColumn[] idxCols = index.getIndexColumns();
         if (idxCols != null) {
             for (int i = 0; i < columns.length; i++) {
-                int idx = index.getColumnIndex(columns[i]);
+                final int idx = index.getColumnIndex(columns[i]);
                 if (idx >= 0) {
                     indexColumns[i] = idxCols[idx];
                 }
@@ -654,7 +656,7 @@ public class TableFilter implements ColumnResolver {
         }
     }
 
-    public void setUsed(boolean used) {
+    public void setUsed(final boolean used) {
 
         this.used = used;
     }
@@ -670,7 +672,7 @@ public class TableFilter implements ColumnResolver {
      * @param session
      *            the new session
      */
-    void setSession(Session session) {
+    void setSession(final Session session) {
 
         this.session = session;
     }
@@ -680,7 +682,7 @@ public class TableFilter implements ColumnResolver {
      */
     public void removeJoin() {
 
-        this.join = null;
+        join = null;
     }
 
     public Expression getJoinCondition() {
@@ -693,7 +695,7 @@ public class TableFilter implements ColumnResolver {
      */
     public void removeJoinCondition() {
 
-        this.joinCondition = null;
+        joinCondition = null;
     }
 
     public Expression getFilterCondition() {
@@ -706,12 +708,12 @@ public class TableFilter implements ColumnResolver {
      */
     public void removeFilterCondition() {
 
-        this.filterCondition = null;
+        filterCondition = null;
     }
 
-    public void setFullCondition(Expression condition) {
+    public void setFullCondition(final Expression condition) {
 
-        this.fullCondition = condition;
+        fullCondition = condition;
         if (join != null) {
             join.setFullCondition(condition);
         }
@@ -723,7 +725,7 @@ public class TableFilter implements ColumnResolver {
      * @param fromOuterJoin
      *            if this method was called from an outer joined table
      */
-    void optimizeFullCondition(boolean fromOuterJoin) {
+    void optimizeFullCondition(final boolean fromOuterJoin) {
 
         if (fullCondition != null) {
             fullCondition.addFilterConditions(this, fromOuterJoin || outerJoin);
@@ -742,7 +744,7 @@ public class TableFilter implements ColumnResolver {
      * @param b
      *            the new flag
      */
-    public void setEvaluatable(TableFilter filter, boolean b) {
+    public void setEvaluatable(final TableFilter filter, final boolean b) {
 
         if (filterCondition != null) {
             filterCondition.setEvaluatable(filter, b);
@@ -755,11 +757,13 @@ public class TableFilter implements ColumnResolver {
         }
     }
 
+    @Override
     public String getSchemaName() {
 
         return table.getSchema().getName();
     }
 
+    @Override
     public Column[] getColumns() {
 
         return table.getColumns();
@@ -771,10 +775,11 @@ public class TableFilter implements ColumnResolver {
      * 
      * @return the system columns
      */
+    @Override
     public Column[] getSystemColumns() {
 
         if (!session.getDatabase().getMode().systemColumns) { return null; }
-        Column[] sys = new Column[3];
+        final Column[] sys = new Column[3];
         sys[0] = new Column("oid", Value.INT);
         sys[0].setTable(table, 0);
         sys[1] = new Column("ctid", Value.STRING);
@@ -784,33 +789,37 @@ public class TableFilter implements ColumnResolver {
         return sys;
     }
 
-    public Value getValue(Column column) throws SQLException {
+    @Override
+    public Value getValue(final Column column) throws SQLException {
 
         if (currentSearchRow == null) { return null; }
-        int columnId = column.getColumnId();
+        final int columnId = column.getColumnId();
         if (current == null) {
-            Value v = currentSearchRow.getValue(columnId);
+            final Value v = currentSearchRow.getValue(columnId);
             if (v != null) { return v; }
             current = cursor.get();
         }
         return current.getValue(columnId);
     }
 
+    @Override
     public TableFilter getTableFilter() {
 
         return this;
     }
 
-    public void setAlias(String alias) {
+    public void setAlias(final String alias) {
 
         this.alias = alias;
     }
 
-    public Expression optimize(ExpressionColumn expressionColumn, Column column) {
+    @Override
+    public Expression optimize(final ExpressionColumn expressionColumn, final Column column) {
 
         return expressionColumn;
     }
 
+    @Override
     public String toString() {
 
         return alias != null ? alias : "" + table;
@@ -822,7 +831,7 @@ public class TableFilter implements ColumnResolver {
      * @param c
      *            the column to add
      */
-    public void addNaturalJoinColumn(Column c) {
+    public void addNaturalJoinColumn(final Column c) {
 
         if (naturalJoinColumns == null) {
             naturalJoinColumns = new ObjectArray();
@@ -837,7 +846,7 @@ public class TableFilter implements ColumnResolver {
      *            the column to check
      * @return true if this is a joined natural join column
      */
-    public boolean isNaturalJoinColumn(Column c) {
+    public boolean isNaturalJoinColumn(final Column c) {
 
         return naturalJoinColumns != null && naturalJoinColumns.indexOf(c) >= 0;
     }

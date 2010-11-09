@@ -10,7 +10,6 @@ import java.util.Set;
 
 import org.h2.constant.ErrorCode;
 import org.h2.constant.SysProperties;
-import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
@@ -592,7 +591,7 @@ public abstract class Prepared {
 
         final Set<String> localSchema = session.getDatabase().getLocalSchema();
         try {
-            return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery && !localSchema.contains(table.getSchema().getName());
+            return !session.getDatabase().isManagementDB() && !internalQuery && !localSchema.contains(table.getSchema().getName());
         }
         catch (final NullPointerException e) {
             // Shouldn't occur, ever. Something should have probably overridden

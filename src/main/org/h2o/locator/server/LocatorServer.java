@@ -26,29 +26,28 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  */
 public class LocatorServer extends Thread {
 
+    private static final int DEFAULT_LOCATOR_SERVER_PORT = 29999;
     private static final long SHUTDOWN_CHECK_DELAY = 2000;
 
     private boolean running = true;
 
-    private final ServerSocket server_socket;
+    private ServerSocket server_socket;
 
     private final LocatorState locatorState;
 
+    private final int port;
+
     private boolean finished = false;
 
-    public LocatorServer(final int port, final String databaseName) throws IOException {
+    public LocatorServer(final int port, final String databaseName) {
 
         this(port, databaseName, LocalH2OProperties.DEFAULT_CONFIG_DIRECTORY);
     }
 
-    public LocatorServer(final int port, final String databaseName, final String locatorFileDirectory) throws IOException {
+    public LocatorServer(final int port, final String databaseName, final String locatorFileDirectory) {
 
+        this.port = port;
         locatorState = new LocatorState(locatorFileDirectory + File.separator + databaseName + port + ".locator");
-
-        // Set up the server socket.
-        server_socket = new ServerSocket(port);
-
-        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Server listening on port " + port + ", locator file at '" + locatorState + "'.");
     }
 
     /**
@@ -58,17 +57,38 @@ public class LocatorServer extends Thread {
     public void run() {
 
         try {
+            // Set up the server socket.
+            server_socket = new ServerSocket(port);
+
+            server_socket.setSoTimeout(500);
+            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Server listening on port " + port + ", locator file at '" + locatorState + "'.");
+
             // Start listening for incoming connections. Pass them off to a worker thread if they come.
-            while (true) {
+            while (isRunning()) {
+                try {
 
-                final Socket newConnection = server_socket.accept();
+                    final Socket newConnection = server_socket.accept();
 
-                final LocatorWorker connectionHandler = new LocatorWorker(newConnection, locatorState);
-                connectionHandler.start();
+                    final LocatorWorker connectionHandler = new LocatorWorker(newConnection, locatorState);
+                    connectionHandler.start();
+                }
+                catch (final IOException e) {
+                    // e.printStackTrace();
+                }
             }
         }
         catch (final IOException e) {
-            // Server socket has been closed.
+            ErrorHandling.exceptionError(e, "Server IO error");
+        }
+        finally {
+            try {
+                if (server_socket != null) {
+                    server_socket.close();
+                }
+            }
+            catch (final IOException e) {
+                ErrorHandling.exceptionError(e, "Error closing server socket");
+            }
         }
 
         setFinished(true);
@@ -76,14 +96,7 @@ public class LocatorServer extends Thread {
 
     public void shutdown() {
 
-        try {
-            if (server_socket != null) {
-                server_socket.close();
-            }
-        }
-        catch (final IOException e) {
-            ErrorHandling.exceptionError(e, "Error closing server socket");
-        }
+        setRunning(false);
 
         while (!isFinished()) {
             try {
@@ -93,6 +106,16 @@ public class LocatorServer extends Thread {
                 // Ignore and carry on.
             }
         }
+    }
+
+    /**
+     * @param args
+     */
+    public static void main(final String[] args) {
+
+        Diagnostic.setLevel(DiagnosticLevel.INIT);
+        final LocatorServer server = new LocatorServer(DEFAULT_LOCATOR_SERVER_PORT, "locatorFile");
+        server.start();
     }
 
     public void createNewLocatorFile() {

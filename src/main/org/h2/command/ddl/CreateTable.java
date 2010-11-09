@@ -20,7 +20,6 @@ import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
 import org.h2.constraint.Constraint;
 import org.h2.constraint.ConstraintReferential;
-import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
@@ -263,7 +262,7 @@ public class CreateTable extends SchemaCommand {
              */
 
             final boolean localTable = db.isTableLocal(getSchema());
-            if (Constants.IS_H2O && !db.isManagementDB() && !localTable && !isStartup()) {
+            if (!db.isManagementDB() && !localTable && !isStartup()) {
                 final ISystemTable systemTable = db.getSystemTable(); // db.getSystemSession()
                 final ISystemTableReference systemTableReference = db.getSystemTableReference();
 
@@ -315,7 +314,7 @@ public class CreateTable extends SchemaCommand {
                 table.setTableSet(tableSet);
             }
 
-            if (Constants.IS_H2O && !db.isManagementDB()) {
+            if (!db.isManagementDB()) {
                 prepareTransaction(transactionName);
             }
 
@@ -498,7 +497,7 @@ public class CreateTable extends SchemaCommand {
     protected boolean isRegularTable() {
 
         final boolean isLocal = session.getDatabase().isTableLocal(getSchema());
-        return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery && !isLocal;
+        return !session.getDatabase().isManagementDB() && !internalQuery && !isLocal;
     }
 
     /*
@@ -520,7 +519,7 @@ public class CreateTable extends SchemaCommand {
          * elsewhere. ###################################################################### ###
          */
 
-        if (Constants.IS_H2O && !db.getSystemTableReference().isSystemTableLocal() && !db.isManagementDB() && !db.isTableLocal(getSchema()) && !isStartup()) {
+        if (!db.getSystemTableReference().isSystemTableLocal() && !db.isManagementDB() && !db.isTableLocal(getSchema()) && !isStartup()) {
 
             final TableManagerRemote tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, false);
 
@@ -536,11 +535,11 @@ public class CreateTable extends SchemaCommand {
         }
 
         queryProxy = null;
-        if (Constants.IS_H2O && !db.isTableLocal(getSchema()) && !db.isManagementDB() && !isStartup()) { // if it is startup
-                                                                                                         // then we don't
-                                                                                                         // want to create a
-                                                                                                         // table manager
-                                                                                                         // yet.
+        if (!db.isTableLocal(getSchema()) && !db.isManagementDB() && !isStartup()) { // if it is startup
+                                                                                     // then we don't
+                                                                                     // want to create a
+                                                                                     // table manager
+                                                                                     // yet.
 
             // TableInfo tableDetails, Database databas
             final TableInfo ti = new TableInfo(tableName, getSchema().getName(), 0l, 0, "TABLE", db.getURL());
@@ -565,7 +564,7 @@ public class CreateTable extends SchemaCommand {
             queryProxy = QueryProxy.getQueryProxyAndLock(tableManager, ti.getFullTableName(), LockRequest.createNewLockRequest(session), LockType.CREATE, db, false);
 
         }
-        else if (Constants.IS_H2O) {
+        else {
             /*
              * This is a system table, but it still needs a QueryProxy to indicate that it is acceptable to execute the query.
              */
@@ -575,5 +574,4 @@ public class CreateTable extends SchemaCommand {
 
         queryProxyManager.addProxy(queryProxy);
     }
-
 }

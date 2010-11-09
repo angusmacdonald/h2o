@@ -164,9 +164,13 @@ public class WrapperTests {
         }
         finally {
             try {
-                conn.close();
+                if (conn != null) {
+                    conn.close();
+                }
 
-                stat.close();
+                if (stat != null) {
+                    stat.close();
+                }
             }
             catch (final SQLException e) {
             }

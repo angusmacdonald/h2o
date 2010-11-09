@@ -22,6 +22,7 @@ import java.sql.Statement;
 import org.h2.engine.Constants;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.util.ScriptReader;
+import org.h2o.autonomic.settings.TestingSettings;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.locator.server.LocatorServer;
@@ -83,7 +84,7 @@ public class H2SimpleTest {
         properties.setProperty("databaseName", "testDB");
         properties.saveAndClose();
 
-        Constants.IS_TESTING_H2_TESTS = true;
+        TestingSettings.IS_TESTING_H2_TESTS = true;
 
         DeleteDbFiles.execute(baseDir, "scriptSimple", true);
         reconnect();

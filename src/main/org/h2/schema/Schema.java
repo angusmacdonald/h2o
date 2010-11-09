@@ -35,25 +35,25 @@ public class Schema extends DbObjectBase {
 
     private User owner;
 
-    private boolean system;
+    private final boolean system;
 
-    private Map<String, ReplicaSet> tablesAndViews = new HashMap<String, ReplicaSet>();
+    private final Map<String, ReplicaSet> tablesAndViews = new HashMap<String, ReplicaSet>();
 
-    private Map indexes = new HashMap();
+    private final Map indexes = new HashMap();
 
-    private Map sequences = new HashMap();
+    private final Map sequences = new HashMap();
 
-    private Map triggers = new HashMap();
+    private final Map triggers = new HashMap();
 
-    private Map constraints = new HashMap();
+    private final Map constraints = new HashMap();
 
-    private Map constants = new HashMap();
+    private final Map constants = new HashMap();
 
     /**
      * The set of returned unique names that are not yet stored. It is used to avoid returning the same unique name twice when multiple
      * threads concurrently create objects.
      */
-    private HashSet temporaryUniqueNames = new HashSet();
+    private final HashSet temporaryUniqueNames = new HashSet();
 
     /**
      * Create a new schema object.
@@ -69,7 +69,7 @@ public class Schema extends DbObjectBase {
      * @param system
      *            if this is a system schema (such a schema can not be dropped)
      */
-    public Schema(Database database, int id, String schemaName, User owner, boolean system) {
+    public Schema(final Database database, final int id, final String schemaName, final User owner, final boolean system) {
 
         initDbObjectBase(database, id, schemaName, Trace.SCHEMA);
         this.owner = owner;
@@ -86,20 +86,23 @@ public class Schema extends DbObjectBase {
         return !system;
     }
 
-    public String getCreateSQLForCopy(Table table, String quotedName) {
+    @Override
+    public String getCreateSQLForCopy(final Table table, final String quotedName) {
 
         throw Message.throwInternalError();
     }
 
+    @Override
     public String getDropSQL() {
 
         return null;
     }
 
+    @Override
     public String getCreateSQL() {
 
         if (system) { return null; }
-        StringBuilder buff = new StringBuilder();
+        final StringBuilder buff = new StringBuilder();
         buff.append("CREATE SCHEMA IF NOT EXISTS ");
         buff.append(getSQL());
         buff.append(" AUTHORIZATION ");
@@ -107,27 +110,29 @@ public class Schema extends DbObjectBase {
         return buff.toString();
     }
 
+    @Override
     public int getType() {
 
         return DbObject.SCHEMA;
     }
 
-    public void removeChildrenAndResources(Session session) throws SQLException {
+    @Override
+    public void removeChildrenAndResources(final Session session) throws SQLException {
 
         while (triggers != null && triggers.size() > 0) {
-            TriggerObject obj = (TriggerObject) triggers.values().toArray()[0];
+            final TriggerObject obj = (TriggerObject) triggers.values().toArray()[0];
             database.removeSchemaObject(session, obj);
         }
         while (constraints != null && constraints.size() > 0) {
-            Constraint obj = (Constraint) constraints.values().toArray()[0];
+            final Constraint obj = (Constraint) constraints.values().toArray()[0];
             database.removeSchemaObject(session, obj);
         }
         while (tablesAndViews != null && tablesAndViews.size() > 0) {
-            ReplicaSet replicaSet = (ReplicaSet) tablesAndViews.values().toArray()[0];
-            Set<Table> tables = replicaSet.getAllCopies();
-            Table[] array = tables.toArray(new Table[0]);
+            final ReplicaSet replicaSet = (ReplicaSet) tablesAndViews.values().toArray()[0];
+            final Set<Table> tables = replicaSet.getAllCopies();
+            final Table[] array = tables.toArray(new Table[0]);
 
-            for (Table table : array) {
+            for (final Table table : array) {
                 database.removeSchemaObject(session, table);
             }
             replicaSet.removeAllCopies();
@@ -135,15 +140,15 @@ public class Schema extends DbObjectBase {
 
         }
         while (indexes != null && indexes.size() > 0) {
-            Index obj = (Index) indexes.values().toArray()[0];
+            final Index obj = (Index) indexes.values().toArray()[0];
             database.removeSchemaObject(session, obj);
         }
         while (sequences != null && sequences.size() > 0) {
-            Sequence obj = (Sequence) sequences.values().toArray()[0];
+            final Sequence obj = (Sequence) sequences.values().toArray()[0];
             database.removeSchemaObject(session, obj);
         }
         while (constants != null && constants.size() > 0) {
-            Constant obj = (Constant) constants.values().toArray()[0];
+            final Constant obj = (Constant) constants.values().toArray()[0];
             database.removeSchemaObject(session, obj);
         }
         database.removeMeta(session, getId());
@@ -151,6 +156,7 @@ public class Schema extends DbObjectBase {
         invalidate();
     }
 
+    @Override
     public void checkRename() {
 
         // ok
@@ -166,7 +172,7 @@ public class Schema extends DbObjectBase {
         return owner;
     }
 
-    private Map getMap(int type) {
+    private Map getMap(final int type) {
 
         switch (type) {
             case DbObject.TABLE_OR_VIEW:
@@ -192,14 +198,14 @@ public class Schema extends DbObjectBase {
      * @param obj
      *            the object to add
      */
-    public void add(SchemaObject obj) {
+    public void add(final SchemaObject obj) {
 
         if (SysProperties.CHECK && obj.getSchema() != this) {
             Message.throwInternalError("wrong schema");
         }
-        String name = obj.getName();
-        int type = obj.getType();
-        Map map = getMap(type);
+        final String name = obj.getName();
+        final int type = obj.getType();
+        final Map map = getMap(type);
 
         if (SysProperties.CHECK && map.get(name) != null && type != DbObject.TABLE_OR_VIEW) {
             Message.throwInternalError("object already exists");
@@ -212,7 +218,7 @@ public class Schema extends DbObjectBase {
                 tablesAndViews.put(name, new ReplicaSet(obj));
             }
             else {
-                ReplicaSet replicaSet = tablesAndViews.get(name);
+                final ReplicaSet replicaSet = tablesAndViews.get(name);
                 replicaSet.addNewReplica(obj); // XXX assumes this will never
                                                // try to over-write an existing
                                                // table.
@@ -233,10 +239,10 @@ public class Schema extends DbObjectBase {
      * @param newName
      *            the new name
      */
-    public void rename(SchemaObject obj, String newName) throws SQLException {
+    public void rename(final SchemaObject obj, final String newName) throws SQLException {
 
-        int type = obj.getType();
-        Map map = getMap(type);
+        final int type = obj.getType();
+        final Map map = getMap(type);
 
         if (SysProperties.CHECK) {
             if (!map.containsKey(obj.getName())) {
@@ -248,9 +254,9 @@ public class Schema extends DbObjectBase {
         }
         if (type == DbObject.TABLE_OR_VIEW) {
 
-            Table table = (Table) obj;
-            String tableName = table.getName();
-            ReplicaSet replicaSet = tablesAndViews.get(tableName);
+            final Table table = (Table) obj;
+            final String tableName = table.getName();
+            final ReplicaSet replicaSet = tablesAndViews.get(tableName);
             replicaSet.checkRename();
             tablesAndViews.remove(tableName);
 
@@ -282,9 +288,9 @@ public class Schema extends DbObjectBase {
      * @param locale
      * @return the object or null
      */
-    public Table findTableOrView(Session session, String name, LocationPreference locale) {
+    public Table findTableOrView(final Session session, final String name, final LocationPreference locale) {
 
-        ReplicaSet replicaSet = tablesAndViews.get(name);
+        final ReplicaSet replicaSet = tablesAndViews.get(name);
 
         Table table = null;
         if (replicaSet == null && session != null) {
@@ -292,15 +298,7 @@ public class Schema extends DbObjectBase {
         }
         else if (replicaSet != null) {
 
-            if ((replicaSet.size() == 1 && !locale.isStrict()) || locale == LocationPreference.NO_PREFERENCE) { // XXX more
-                                                                                                                // advanced
-                                                                                                                // logic
-                                                                                                                // to
-                                                                                                                // choose
-                                                                                                                // replica
-                                                                                                                // would
-                                                                                                                // go
-                                                                                                                // here.
+            if (replicaSet.size() == 1 && !locale.isStrict() || locale == LocationPreference.NO_PREFERENCE) { // XXX more advanced logic to choose replica would go here.
                 table = replicaSet.getACopy();
             }
             else if (locale == LocationPreference.LOCAL || locale == LocationPreference.LOCAL_STRICT) {
@@ -317,6 +315,23 @@ public class Schema extends DbObjectBase {
     }
 
     /**
+     * Remove a LinkedTable if one already exists and it doesn't point to the correct database URL
+     * (the urlRequired parameter). This is called from CreateLinkedTable if a linked table has 
+     * to be created to another URL.
+     * @return Returns true if the link table required (at the correct URL) already exists).
+     */
+    public boolean removeLinkedTable(final SchemaObject obj, final String urlRequired) {
+
+        final Table table = (Table) obj;
+        final ReplicaSet replicaSet = tablesAndViews.get(table.getName());
+
+        final boolean linkedTableAlreadyExists = replicaSet.removeLinkedTable(table, urlRequired);
+
+        return linkedTableAlreadyExists;
+
+    }
+
+    /**
      * Try to find a LOCAL VERSION of a table or view with this name. This method returns null if no object with this name exists. Local
      * temporary tables are also returned.
      * 
@@ -326,9 +341,9 @@ public class Schema extends DbObjectBase {
      *            the object name
      * @return the object or null
      */
-    public Table findLocalTableOrView(Session session, String name) {
+    public Table findLocalTableOrView(final Session session, final String name) {
 
-        ReplicaSet replicaSet = tablesAndViews.get(name);
+        final ReplicaSet replicaSet = tablesAndViews.get(name);
 
         Table table = null;
         if (replicaSet == null && session != null) {
@@ -349,7 +364,7 @@ public class Schema extends DbObjectBase {
      *            the object name
      * @return the object or null
      */
-    public Index findIndex(Session session, String name) {
+    public Index findIndex(final Session session, final String name) {
 
         Index index = (Index) indexes.get(name);
         if (index == null) {
@@ -365,7 +380,7 @@ public class Schema extends DbObjectBase {
      *            the object name
      * @return the object or null
      */
-    public TriggerObject findTrigger(String name) {
+    public TriggerObject findTrigger(final String name) {
 
         return (TriggerObject) triggers.get(name);
     }
@@ -377,7 +392,7 @@ public class Schema extends DbObjectBase {
      *            the object name
      * @return the object or null
      */
-    public Sequence findSequence(String sequenceName) {
+    public Sequence findSequence(final String sequenceName) {
 
         return (Sequence) sequences.get(sequenceName);
     }
@@ -391,7 +406,7 @@ public class Schema extends DbObjectBase {
      *            the object name
      * @return the object or null
      */
-    public Constraint findConstraint(Session session, String name) {
+    public Constraint findConstraint(final Session session, final String name) {
 
         Constraint constraint = (Constraint) constraints.get(name);
         if (constraint == null) {
@@ -407,7 +422,7 @@ public class Schema extends DbObjectBase {
      *            the object name
      * @return the object or null
      */
-    public Constant findConstant(String constantName) {
+    public Constant findConstant(final String constantName) {
 
         return (Constant) constants.get(constantName);
     }
@@ -418,7 +433,7 @@ public class Schema extends DbObjectBase {
      * @param name
      *            the object name
      */
-    public void freeUniqueName(String name) {
+    public void freeUniqueName(final String name) {
 
         if (name != null) {
             synchronized (temporaryUniqueNames) {
@@ -427,9 +442,9 @@ public class Schema extends DbObjectBase {
         }
     }
 
-    private String getUniqueName(DbObject obj, Map map, String prefix) {
+    private String getUniqueName(final DbObject obj, final Map map, String prefix) {
 
-        String hash = Integer.toHexString(obj.getName().hashCode()).toUpperCase();
+        final String hash = Integer.toHexString(obj.getName().hashCode()).toUpperCase();
         String name = null;
         synchronized (temporaryUniqueNames) {
             for (int i = 1; i < hash.length(); i++) {
@@ -462,7 +477,7 @@ public class Schema extends DbObjectBase {
      *            the constraint table
      * @return the unique name
      */
-    public String getUniqueConstraintName(Session session, Table table) {
+    public String getUniqueConstraintName(final Session session, final Table table) {
 
         Map tableConstraints;
         if (table.getTemporary() && !table.getGlobalTemporary()) {
@@ -485,7 +500,7 @@ public class Schema extends DbObjectBase {
      *            the index name prefix
      * @return the unique name
      */
-    public String getUniqueIndexName(Session session, Table table, String prefix) {
+    public String getUniqueIndexName(final Session session, final Table table, final String prefix) {
 
         Map tableIndexes;
         if (table.getTemporary() && !table.getGlobalTemporary()) {
@@ -508,9 +523,9 @@ public class Schema extends DbObjectBase {
      * @throws SQLException
      *             if no such object exists
      */
-    public Table getTableOrView(Session session, String name) throws SQLException {
+    public Table getTableOrView(final Session session, final String name) throws SQLException {
 
-        ReplicaSet tables = tablesAndViews.get(name);
+        final ReplicaSet tables = tablesAndViews.get(name);
 
         Table table;
         if (tables == null && session != null) {
@@ -523,9 +538,9 @@ public class Schema extends DbObjectBase {
         return table;
     }
 
-    public ReplicaSet getTablesOrViews(Session session, String name) throws SQLException {
+    public ReplicaSet getTablesOrViews(final Session session, final String name) throws SQLException {
 
-        ReplicaSet tables = tablesAndViews.get(name);
+        final ReplicaSet tables = tablesAndViews.get(name);
 
         return tables;
     }
@@ -539,9 +554,9 @@ public class Schema extends DbObjectBase {
      * @throws SQLException
      *             if no such object exists
      */
-    public Index getIndex(String name) throws SQLException {
+    public Index getIndex(final String name) throws SQLException {
 
-        Index index = (Index) indexes.get(name);
+        final Index index = (Index) indexes.get(name);
         if (index == null) { throw Message.getSQLException(ErrorCode.INDEX_NOT_FOUND_1, name); }
         return index;
     }
@@ -555,9 +570,9 @@ public class Schema extends DbObjectBase {
      * @throws SQLException
      *             if no such object exists
      */
-    public Constraint getConstraint(String name) throws SQLException {
+    public Constraint getConstraint(final String name) throws SQLException {
 
-        Constraint constraint = (Constraint) constraints.get(name);
+        final Constraint constraint = (Constraint) constraints.get(name);
         if (constraint == null) { throw Message.getSQLException(ErrorCode.CONSTRAINT_NOT_FOUND_1, name); }
         return constraint;
     }
@@ -571,9 +586,9 @@ public class Schema extends DbObjectBase {
      * @throws SQLException
      *             if no such object exists
      */
-    public Constant getConstant(String constantName) throws SQLException {
+    public Constant getConstant(final String constantName) throws SQLException {
 
-        Constant constant = (Constant) constants.get(constantName);
+        final Constant constant = (Constant) constants.get(constantName);
         if (constant == null) { throw Message.getSQLException(ErrorCode.CONSTANT_NOT_FOUND_1, constantName); }
         return constant;
     }
@@ -587,9 +602,9 @@ public class Schema extends DbObjectBase {
      * @throws SQLException
      *             if no such object exists
      */
-    public Sequence getSequence(String sequenceName) throws SQLException {
+    public Sequence getSequence(final String sequenceName) throws SQLException {
 
-        Sequence sequence = (Sequence) sequences.get(sequenceName);
+        final Sequence sequence = (Sequence) sequences.get(sequenceName);
         if (sequence == null) { throw Message.getSQLException(ErrorCode.SEQUENCE_NOT_FOUND_1, sequenceName); }
         return sequence;
     }
@@ -601,9 +616,9 @@ public class Schema extends DbObjectBase {
      *            the object type
      * @return a (possible empty) list of all objects
      */
-    public ObjectArray getAll(int type) {
+    public ObjectArray getAll(final int type) {
 
-        Map map = getMap(type);
+        final Map map = getMap(type);
         return new ObjectArray(map.values());
     }
 
@@ -613,20 +628,20 @@ public class Schema extends DbObjectBase {
      * @param obj
      *            the object to remove
      */
-    public void remove(SchemaObject obj) {
+    public void remove(final SchemaObject obj) {
 
-        String objName = obj.getName();
-        Map map = getMap(obj.getType());
+        final String objName = obj.getName();
+        final Map map = getMap(obj.getType());
 
         if (SysProperties.CHECK && !map.containsKey(objName)) {
             Message.throwInternalError("not found: " + objName);
         }
         if (obj.getType() == DbObject.TABLE_OR_VIEW) {
 
-            Table table = (Table) obj;
-            ReplicaSet replicaSet = tablesAndViews.get(table.getName());
+            final Table table = (Table) obj;
+            final ReplicaSet replicaSet = tablesAndViews.get(table.getName());
 
-            boolean inUse = replicaSet.removeCopy(table);
+            final boolean inUse = replicaSet.removeCopy(table);
 
             if (!inUse) {
                 // Delete this replicaSet
@@ -658,7 +673,7 @@ public class Schema extends DbObjectBase {
      *            the position (page number) of the head
      * @return the created {@link TableData} object
      */
-    public TableData createTable(String tableName, int id, ObjectArray columns, boolean persistent, boolean clustered, int headPos) throws SQLException {
+    public TableData createTable(final String tableName, final int id, final ObjectArray columns, final boolean persistent, final boolean clustered, final int headPos) throws SQLException {
 
         return new TableData(this, tableName, id, columns, persistent, clustered, headPos);
     }
@@ -688,7 +703,7 @@ public class Schema extends DbObjectBase {
      *            create the object even if the database can not be accessed
      * @return the {@link TableLink} object
      */
-    public TableLink createTableLink(int id, String tableName, String driver, String url, String user, String password, String originalSchema, String originalTable, boolean emitUpdates, boolean force) throws SQLException {
+    public TableLink createTableLink(final int id, final String tableName, final String driver, final String url, final String user, final String password, final String originalSchema, final String originalTable, final boolean emitUpdates, final boolean force) throws SQLException {
 
         return new TableLink(this, id, tableName, driver, url, user, password, originalSchema, originalTable, emitUpdates, force);
     }

@@ -3803,7 +3803,7 @@ public class Parser {
             defaultMode = setting == null ? Constants.DEFAULT_TABLE_TYPE : setting.getIntValue();
             return parseCreateTable(false, false, defaultMode == Table.TYPE_CACHED);
         }
-        else if (readIf("EMPTY") && Constants.IS_H2O) {
+        else if (readIf("EMPTY")) {
             read("REPLICA");
             int defaultMode;
             final Setting setting = database.findSetting(SetTypes.getTypeName(SetTypes.DEFAULT_TABLE_TYPE));
@@ -3816,7 +3816,7 @@ public class Parser {
                 return null;
             }
         }
-        else if (readIf("REPLICA") && Constants.IS_H2O) {
+        else if (readIf("REPLICA")) {
             int defaultMode;
             final Setting setting = database.findSetting(SetTypes.getTypeName(SetTypes.DEFAULT_TABLE_TYPE));
             defaultMode = setting == null ? Constants.DEFAULT_TABLE_TYPE : setting.getIntValue();
@@ -4684,7 +4684,7 @@ public class Parser {
         final ScriptCommand command = new ScriptCommand(session, internalQuery);
         boolean data = true, passwords = true, settings = true, dropTables = false, simple = false;
 
-        if (Constants.IS_H2O && readIf("TABLE")) {
+        if (readIf("TABLE")) {
             command.setTable(readIdentifierWithSchema());
             command.setSchema(getSchema().getName());
         }
@@ -4791,7 +4791,6 @@ public class Parser {
                 }
 
                 tableFound = true;
-                // System.err.println("USER TABLE: ");
             }
             else {
                 // It might be a view. Continue on and check.
@@ -4813,6 +4812,8 @@ public class Parser {
             if (table != null) { return table; }
         }
         Table table = database.getSchema(session.getCurrentSchemaName()).findTableOrView(session, tableName, locale);
+
+        table = removeReferenceToLinkedTableIfInvalid(replicaLocations, table);
 
         /*
          * Return if: the table was found by the ST and is local the table was found by the ST, and isn't local but a LinkedTable is, or if
@@ -4846,7 +4847,7 @@ public class Parser {
          * location.
          */
 
-        if (Constants.IS_H2O && searchRemote && database.getSystemTableReference().isConnectedToSM() && !(locale == LocationPreference.LOCAL_STRICT)) { // 2 or 3
+        if (searchRemote && database.getSystemTableReference().isConnectedToSM() && !(locale == LocationPreference.LOCAL_STRICT)) { // 2 or 3
 
             try {
                 return findViaSystemTable(tableName, localSchemaName);
@@ -4857,63 +4858,30 @@ public class Parser {
             } // XXX this might fail if its not the default schema.
         }
         else { // 1
-            System.err.println("searchRemote: " + searchRemote);
-            System.err.println("database.getSystemTableReference().isConnectedToSM(): " + database.getSystemTableReference().isConnectedToSM());
-            System.err.println("!(locale == LocationPreference.LOCAL_STRICT): " + !(locale == LocationPreference.LOCAL_STRICT));
             throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
         }
 
     }
 
-    private Table readTableOrViewOld(final String tableName, final boolean searchRemote, final LocationPreference locale) throws SQLException {
+    /**
+     * Remove any references in the schema to this table if it is a Linked Table and it points to a location
+     * that is no longer a replica.
+     * @param replicaLocations      The set of valid replica locations for a particular table
+     * @param table                 Local reference for this table.
+     * @return
+     * @throws SQLException
+     */
+    private Table removeReferenceToLinkedTableIfInvalid(final Queue<DatabaseInstanceWrapper> replicaLocations, final Table table) throws SQLException {
 
-        //System.out.println("Looking for table '" + tableName + "'");
-        // same algorithm than readSequence
+        //
+        //        if (table != null && table instanceof TableLink) {
+        //            if (!replicaLocations.contains(((TableLink) table).getUrl())) {
+        //                database.getSchema(session.getCurrentSchemaName()).removeLinkedTable(table, "");
+        //                table = null;
+        //            }
+        //        }
 
-        if (schemaName != null) {
-            final Table table = getSchema().getTableOrView(session, tableName);
-            if (table != null) { return table; }
-        }
-        Table table = database.getSchema(session.getCurrentSchemaName()).findTableOrView(session, tableName, locale);
-        if (table != null) { return table; }
-        String[] schemaNames = session.getSchemaSearchPath();
-
-        if (schemaNames == null) {
-            schemaNames = new String[1];
-            schemaNames[0] = session.getCurrentSchemaName();
-        }
-
-        for (int i = 0; schemaNames != null && i < schemaNames.length; i++) {
-            final Schema s = database.getSchema(schemaNames[i]);
-            table = s.findTableOrView(session, tableName, locale);
-            if (table != null) { return table; }
-        }
-
-        /*
-         * There are three possibilities at this point:
-         *  1. The table has not been found and doesn't exist.
-         *  2. The table has not been found, but currently exists as a linked table. [update: this won't happen as the linked table is given the same name as the table.]
-         *  3. The table has not been found, but exists in some remote location.
-         */
-
-        if (Constants.IS_H2O && searchRemote && database.getSystemTableReference().isConnectedToSM() && !(locale == LocationPreference.LOCAL_STRICT)) { // 2 or 3
-            String schemaName = "PUBLIC";
-
-            if (getSchema() != null) {
-                schemaName = getSchema().getName();
-            }
-
-            try {
-                return findViaSystemTable(tableName, schemaName);
-            }
-            catch (final RemoteException e) {
-                e.printStackTrace();
-                throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
-            } //XXX this might fail if its not the default schema.
-        }
-        else { // 1
-            throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
-        }
+        return table;
     }
 
     private QueryProxy getQueryProxyFromTableManager(final TableInfo tableInfo, TableManagerRemote tableManager, QueryProxy qp) throws SQLException {
@@ -5007,7 +4975,7 @@ public class Parser {
         String tableLocation = null;
 
         final TableInfo tableInfo = new TableInfo(tableName, thisSchemaName);
-        TableManagerRemote tableManager = session.getDatabase().getSystemTableReference().lookup(new TableInfo(tableName, thisSchemaName), true);
+        TableManagerRemote tableManager = session.getDatabase().getSystemTableReference().lookup(tableInfo, true);
 
         if (tableManager == null) { throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableInfo.toString()); }
 
@@ -5061,11 +5029,11 @@ public class Parser {
 
         int result = -1;
 
-        for (final DatabaseInstanceWrapper l : replicaLocations.keySet()) {
-            tableLocation = l.getURL().getURL();
+        for (final DatabaseInstanceWrapper replicaLocation : replicaLocations.keySet()) {
+            tableLocation = replicaLocation.getURL().getURL();
 
             try {
-                if (l.getURL().equals(session.getDatabase().getURL()) || !l.getDatabaseInstance().isAlive()) {
+                if (replicaLocation.getURL().equals(session.getDatabase().getURL()) || !replicaLocation.getDatabaseInstance().isAlive()) {
                     continue;
                 }
             }
@@ -5073,9 +5041,9 @@ public class Parser {
                 continue; // remote db isn't accessible.
             }
 
-            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Creating linked table for " + tableName + " to " + l.getURL());
+            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Creating linked table for " + tableInfo.getFullTableName() + " to " + replicaLocation.getURL());
 
-            final String sql = "CREATE LINKED TABLE IF NOT EXISTS " + tableName + "('org.h2.Driver', '" + tableLocation + "', '" + PersistentSystemTable.USERNAME + "', '" + PersistentSystemTable.PASSWORD + "', '" + tableName + "');";
+            final String sql = "CREATE LINKED TABLE " + tableInfo.getTableName() + "('org.h2.Driver', '" + tableLocation + "', '" + PersistentSystemTable.USERNAME + "', '" + PersistentSystemTable.PASSWORD + "', '" + tableName + "');";
 
             try {
                 final Command sqlQuery = queryParser.prepareCommand(sql);
@@ -5083,6 +5051,7 @@ public class Parser {
                 break;
             }
             catch (final Exception e) {
+                e.printStackTrace();
                 // Will happen if the connection that that table is broken.
             }
         }

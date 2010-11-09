@@ -425,7 +425,7 @@ public class AlterTableAddConstraint extends SchemaCommand {
     protected boolean isRegularTable() {
 
         final boolean isLocal = session.getDatabase().isTableLocal(getSchema());
-        return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !isStartup() && !internalQuery && !isLocal;
+        return !session.getDatabase().isManagementDB() && !isStartup() && !internalQuery && !isLocal;
 
     }
 

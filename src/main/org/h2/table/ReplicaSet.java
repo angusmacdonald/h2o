@@ -22,7 +22,7 @@ public class ReplicaSet {
     /**
      * The name of the table for which these replicas represent.
      */
-    private String tableName;
+    private final String tableName;
 
     /**
      * The set of all replicas of this table.
@@ -44,16 +44,16 @@ public class ReplicaSet {
      * 
      * @param obj
      */
-    public ReplicaSet(SchemaObject obj) {
+    public ReplicaSet(final SchemaObject obj) {
 
-        Table table = (Table) obj;
+        final Table table = (Table) obj;
 
         replicas = new HashSet<Table>();
 
         replicas.add(table);
 
         primaryCopy = table;
-        localCopy = (table.isLocal()) ? table : null;
+        localCopy = table.isLocal() ? table : null;
 
         tableName = primaryCopy.getName();
     }
@@ -89,11 +89,11 @@ public class ReplicaSet {
      * @param table
      *            The replica to be added.
      */
-    public void addNewReplica(SchemaObject obj) {
+    public void addNewReplica(final SchemaObject obj) {
 
-        Table table = (Table) obj;
+        final Table table = (Table) obj;
 
-        localCopy = (table.isLocal()) ? table : null;
+        localCopy = table.isLocal() ? table : null;
 
         replicas.add(table);
 
@@ -135,7 +135,7 @@ public class ReplicaSet {
      */
     public Table getACopy() {
 
-        return (getLocalCopy() == null) ? getPrimaryCopy() : getLocalCopy();
+        return getLocalCopy() == null ? getPrimaryCopy() : getLocalCopy();
     }
 
     /**
@@ -143,16 +143,53 @@ public class ReplicaSet {
      * 
      * @param table
      *            Table to be removed.
-     * @return True, if other tables exist.
+     * @return True if other tables exist.
      */
-    public boolean removeCopy(Table table) {
+    public boolean removeCopy(final Table table) {
 
         replicas.remove(table);
 
-        if (table == localCopy) localCopy = null;
-        if (table == primaryCopy) primaryCopy = null;
+        if (table == localCopy) {
+            localCopy = null;
+        }
+        if (table == primaryCopy) {
+            primaryCopy = null;
+        }
 
-        return (replicas.size() == 0) ? false : true;
+        return replicas.size() > 0;
+    }
+
+    /**
+     * Remove a LinkedTable if one already exists and it doesn't point to the correct database URL
+     * (the urlRequired parameter). This is called from CreateLinkedTable if a linked table has 
+     * to be created to another URL.
+     * @param table
+     * @param urlRequired
+     * @return Returns true if the link table required (at the correct URL) already exists).
+     */
+    public boolean removeLinkedTable(final Table table, final String urlRequired) {
+
+        boolean linkedTableAlreadyExists = false;
+        Table linkedTableToRemove = null;
+
+        for (final Table iTable : replicas) {
+            if (iTable instanceof TableLink) {
+                final TableLink linkedTable = (TableLink) iTable;
+
+                if (!linkedTable.getUrl().equals(urlRequired)) {
+                    linkedTableToRemove = iTable;
+                }
+                else {
+                    linkedTableAlreadyExists = true;
+                }
+
+                break; //there can only ever be one linked table.
+            }
+        }
+
+        final boolean anythingRemoved = replicas.remove(linkedTableToRemove);
+
+        return linkedTableAlreadyExists;
     }
 
     /**
@@ -160,10 +197,10 @@ public class ReplicaSet {
      * 
      * @param set
      */
-    public void addDependencies(Set set) {
+    public void addDependencies(final Set set) {
 
         if (replicas != null && replicas.size() > 0) {
-            for (Table table : replicas) {
+            for (final Table table : replicas) {
                 table.addDependencies(set);
             }
         }
@@ -204,7 +241,7 @@ public class ReplicaSet {
     public void checkRename() throws SQLException {
 
         if (replicas != null && replicas.size() > 0) {
-            for (Table table : replicas) {
+            for (final Table table : replicas) {
                 table.checkRename();
             }
         }
@@ -214,20 +251,20 @@ public class ReplicaSet {
      * @param newName
      * @throws SQLException
      */
-    public void rename(String newName) throws SQLException {
+    public void rename(final String newName) throws SQLException {
 
         if (replicas != null && replicas.size() > 0) {
-            for (Table table : replicas) {
+            for (final Table table : replicas) {
                 table.rename(newName);
             }
         }
     }
 
-    public Index addIndex(Session session, String indexName, int indexId, IndexColumn[] cols, IndexType indexType, int headPos, String comment) throws SQLException {
+    public Index addIndex(final Session session, final String indexName, final int indexId, final IndexColumn[] cols, final IndexType indexType, final int headPos, final String comment) throws SQLException {
 
         Index index = null;
-        for (Table table : replicas) {
-            Index tempIndex = table.addIndex(session, indexName, indexId, cols, indexType, headPos, comment);
+        for (final Table table : replicas) {
+            final Index tempIndex = table.addIndex(session, indexName, indexId, cols, indexType, headPos, comment);
 
             if (table == localCopy) {
                 index = tempIndex;
@@ -241,9 +278,9 @@ public class ReplicaSet {
      * @see org.h2.table.Table#addRow(org.h2.engine.Session, org.h2.result.Row)
      */
 
-    public void addRow(Session session, Row row) throws SQLException {
+    public void addRow(final Session session, final Row row) throws SQLException {
 
-        for (Table table : replicas) {
+        for (final Table table : replicas) {
             table.addRow(session, row);
         }
     }
@@ -288,7 +325,7 @@ public class ReplicaSet {
 
     public void checkSupportAlter() throws SQLException {
 
-        for (Table table : replicas) {
+        for (final Table table : replicas) {
             table.checkSupportAlter();
         }
     }
@@ -298,9 +335,9 @@ public class ReplicaSet {
      * @see org.h2.table.Table#close(org.h2.engine.Session)
      */
 
-    public void close(Session session) throws SQLException {
+    public void close(final Session session) throws SQLException {
 
-        for (Table table : replicas) {
+        for (final Table table : replicas) {
             table.close(session);
         }
     }
@@ -326,7 +363,7 @@ public class ReplicaSet {
 
         long max = 0;
 
-        for (Table table : replicas) {
+        for (final Table table : replicas) {
             if (max < table.getMaxDataModificationId()) {
                 max = table.getMaxDataModificationId();
             }
@@ -339,7 +376,7 @@ public class ReplicaSet {
      * @see org.h2.table.Table#getRowCount(org.h2.engine.Session)
      */
 
-    public long getRowCount(Session session) throws SQLException {
+    public long getRowCount(final Session session) throws SQLException {
 
         if (localCopy != null) {
             return localCopy.getRowCount(session);
@@ -375,7 +412,7 @@ public class ReplicaSet {
      * @see org.h2.table.Table#getScanIndex(org.h2.engine.Session)
      */
 
-    public Index getScanIndex(Session session) throws SQLException {
+    public Index getScanIndex(final Session session) throws SQLException {
 
         Message.throwInternalError("Can't be called yet.");
 
@@ -431,7 +468,7 @@ public class ReplicaSet {
      * @see org.h2.table.Table#lock(org.h2.engine.Session, boolean, boolean)
      */
 
-    public void lock(Session session, boolean exclusive, boolean force) throws SQLException {
+    public void lock(final Session session, final boolean exclusive, final boolean force) throws SQLException {
 
         Message.throwInternalError("Shouldn't be called.");
     }
@@ -441,9 +478,9 @@ public class ReplicaSet {
      * @see org.h2.table.Table#removeRow(org.h2.engine.Session, org.h2.result.Row)
      */
 
-    public void removeRow(Session session, Row row) throws SQLException {
+    public void removeRow(final Session session, final Row row) throws SQLException {
 
-        for (Table table : replicas) {
+        for (final Table table : replicas) {
             table.removeRow(session, row);
         }
     }
@@ -453,7 +490,7 @@ public class ReplicaSet {
      * @see org.h2.table.Table#truncate(org.h2.engine.Session)
      */
 
-    public void truncate(Session session) throws SQLException {
+    public void truncate(final Session session) throws SQLException {
 
         Message.throwInternalError("Can't be called yet.");
     }
@@ -463,7 +500,7 @@ public class ReplicaSet {
      * @see org.h2.table.Table#unlock(org.h2.engine.Session)
      */
 
-    public void unlock(Session s) {
+    public void unlock(final Session s) {
 
         Message.throwInternalError("Can't be called yet.");
     }
@@ -495,4 +532,5 @@ public class ReplicaSet {
 
         return replicas.size();
     }
+
 }

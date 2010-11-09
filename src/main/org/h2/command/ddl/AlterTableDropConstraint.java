@@ -8,7 +8,6 @@ import java.sql.SQLException;
 
 import org.h2.constant.ErrorCode;
 import org.h2.constraint.Constraint;
-import org.h2.engine.Constants;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.message.Message;
@@ -95,7 +94,7 @@ public class AlterTableDropConstraint extends SchemaCommand {
     @Override
     protected boolean isRegularTable() {
 
-        return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !internalQuery;
+        return !session.getDatabase().isManagementDB() && !internalQuery;
 
     }
 }

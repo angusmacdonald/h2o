@@ -91,11 +91,12 @@ public class ScriptCommand extends ScriptBase {
 
     private String schemaName = null;
 
-    public ScriptCommand(Session session, boolean internalQuery) {
+    public ScriptCommand(final Session session, final boolean internalQuery) {
 
         super(session, internalQuery);
     }
 
+    @Override
     public boolean isQuery() {
 
         return true;
@@ -103,45 +104,47 @@ public class ScriptCommand extends ScriptBase {
 
     // TODO lock all tables for 'script' command
 
-    public void setData(boolean data) {
+    public void setData(final boolean data) {
 
         this.data = data;
     }
 
-    public void setPasswords(boolean passwords) {
+    public void setPasswords(final boolean passwords) {
 
         this.passwords = passwords;
     }
 
-    public void setSettings(boolean settings) {
+    public void setSettings(final boolean settings) {
 
         this.settings = settings;
     }
 
-    public void setLobBlockSize(long blockSize) {
+    public void setLobBlockSize(final long blockSize) {
 
-        this.lobBlockSize = MathUtils.convertLongToInt(blockSize);
+        lobBlockSize = MathUtils.convertLongToInt(blockSize);
     }
 
-    public void setDrop(boolean drop) {
+    public void setDrop(final boolean drop) {
 
         this.drop = drop;
     }
 
+    @Override
     public LocalResult queryMeta() throws SQLException {
 
-        LocalResult result = createResult();
+        final LocalResult result = createResult();
         result.done();
         return result;
     }
 
     private LocalResult createResult() {
 
-        Expression[] expressions = new Expression[]{new ExpressionColumn(session.getDatabase(), new Column("SCRIPT", Value.STRING))};
+        final Expression[] expressions = new Expression[]{new ExpressionColumn(session.getDatabase(), new Column("SCRIPT", Value.STRING))};
         return new LocalResult(session, expressions, 1);
     }
 
-    public LocalResult query(int maxrows) throws SQLException {
+    @Override
+    public LocalResult query(final int maxrows) throws SQLException {
 
         session.getUser().checkAdmin();
         reset();
@@ -152,38 +155,40 @@ public class ScriptCommand extends ScriptBase {
             if (out != null) {
                 buffer = new byte[Constants.IO_BUFFER_SIZE];
             }
-            Database db = session.getDatabase();
+            final Database db = session.getDatabase();
 
-            if (Constants.IS_H2O && singleTable) {
+            if (singleTable) {
 
                 /*
                  * Beginning of H2O code to get insert statements for a single table.
                  */
-                if (schemaName == null) schemaName = session.getCurrentSchemaName();
-                Table table = db.getSchema(schemaName).findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE); // TODO
-                                                                                                                              // ensure
-                                                                                                                              // it
-                                                                                                                              // works
-                                                                                                                              // in
-                                                                                                                              // schema's
-                                                                                                                              // other
-                                                                                                                              // than
-                                                                                                                              // 'public'.
+                if (schemaName == null) {
+                    schemaName = session.getCurrentSchemaName();
+                }
+                final Table table = db.getSchema(schemaName).findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE); // TODO
+                // ensure
+                // it
+                // works
+                // in
+                // schema's
+                // other
+                // than
+                // 'public'.
 
                 if (table == null) { throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName); }
 
                 table.lock(session, false, false);
 
-                String tableType = table.getTableType();
+                final String tableType = table.getTableType();
 
                 if (Table.TABLE.equals(tableType)) {
 
-                    PlanItem plan = table.getBestPlanItem(session, null);
-                    Index index = plan.getIndex();
-                    Cursor cursor = index.find(session, null, null);
+                    final PlanItem plan = table.getBestPlanItem(session, null);
+                    final Index index = plan.getIndex();
+                    final Cursor cursor = index.find(session, null, null);
                     StringBuilder buff = new StringBuilder();
 
-                    Column[] columns = table.getColumns();
+                    final Column[] columns = table.getColumns();
 
                     for (int j = 0; j < columns.length; j++) {
                         if (j > 0) {
@@ -195,10 +200,10 @@ public class ScriptCommand extends ScriptBase {
 
                     add(buff.toString(), true);
                     buff = new StringBuilder();
-                    String ins = buff.toString();
+                    final String ins = buff.toString();
                     buff = null;
                     while (cursor.next()) {
-                        Row row = cursor.get();
+                        final Row row = cursor.get();
                         if (buff == null) {
                             buff = new StringBuilder(ins);
                         }
@@ -207,7 +212,7 @@ public class ScriptCommand extends ScriptBase {
                             if (j > 0) {
                                 buff.append(Constants.REPLICATION_DELIMETER);
                             }
-                            Value v = row.getValue(j);
+                            final Value v = row.getValue(j);
                             if (v.getPrecision() > lobBlockSize) {
                                 int id;
                                 if (v.getType() == Value.CLOB) {
@@ -255,9 +260,9 @@ public class ScriptCommand extends ScriptBase {
             else {
 
                 if (settings) {
-                    ObjectArray settings = db.getAllSettings();
+                    final ObjectArray settings = db.getAllSettings();
                     for (int i = 0; i < settings.size(); i++) {
-                        Setting setting = (Setting) settings.get(i);
+                        final Setting setting = (Setting) settings.get(i);
                         if (setting.getName().equals(SetTypes.getTypeName(SetTypes.CREATE_BUILD))) {
                             // don't add CREATE_BUILD to the script
                             // (it is only set when creating the database)
@@ -269,68 +274,69 @@ public class ScriptCommand extends ScriptBase {
                 if (out != null) {
                     add("", true);
                 }
-                ObjectArray users = db.getAllUsers();
+                final ObjectArray users = db.getAllUsers();
                 for (int i = 0; i < users.size(); i++) {
-                    User user = (User) users.get(i);
+                    final User user = (User) users.get(i);
                     add(user.getCreateSQL(passwords, true), false);
                 }
-                ObjectArray roles = db.getAllRoles();
+                final ObjectArray roles = db.getAllRoles();
                 for (int i = 0; i < roles.size(); i++) {
-                    Role role = (Role) roles.get(i);
+                    final Role role = (Role) roles.get(i);
                     add(role.getCreateSQL(true), false);
                 }
-                ObjectArray schemas = db.getAllSchemas();
+                final ObjectArray schemas = db.getAllSchemas();
                 for (int i = 0; i < schemas.size(); i++) {
-                    Schema schema = (Schema) schemas.get(i);
+                    final Schema schema = (Schema) schemas.get(i);
                     add(schema.getCreateSQL(), false);
                 }
-                ObjectArray datatypes = db.getAllUserDataTypes();
+                final ObjectArray datatypes = db.getAllUserDataTypes();
                 for (int i = 0; i < datatypes.size(); i++) {
-                    UserDataType datatype = (UserDataType) datatypes.get(i);
+                    final UserDataType datatype = (UserDataType) datatypes.get(i);
                     if (drop) {
                         add(datatype.getDropSQL(), false);
                     }
                     add(datatype.getCreateSQL(), false);
                 }
-                ObjectArray constants = db.getAllSchemaObjects(DbObject.CONSTANT);
+                final ObjectArray constants = db.getAllSchemaObjects(DbObject.CONSTANT);
                 for (int i = 0; i < constants.size(); i++) {
-                    Constant constant = (Constant) constants.get(i);
+                    final Constant constant = (Constant) constants.get(i);
                     add(constant.getCreateSQL(), false);
                 }
-                ObjectArray functionAliases = db.getAllFunctionAliases();
+                final ObjectArray functionAliases = db.getAllFunctionAliases();
                 for (int i = 0; i < functionAliases.size(); i++) {
-                    FunctionAlias alias = (FunctionAlias) functionAliases.get(i);
+                    final FunctionAlias alias = (FunctionAlias) functionAliases.get(i);
                     if (drop) {
                         add(alias.getDropSQL(), false);
                     }
                     add(alias.getCreateSQL(), false);
                 }
-                ObjectArray aggregates = db.getAllAggregates();
+                final ObjectArray aggregates = db.getAllAggregates();
                 for (int i = 0; i < aggregates.size(); i++) {
-                    UserAggregate agg = (UserAggregate) aggregates.get(i);
+                    final UserAggregate agg = (UserAggregate) aggregates.get(i);
                     if (drop) {
                         add(agg.getDropSQL(), false);
                     }
                     add(agg.getCreateSQL(), false);
                 }
 
-                ObjectArray tables = new ObjectArray(db.getAllReplicas());
+                final ObjectArray tables = new ObjectArray(db.getAllReplicas());
 
                 // sort by id, so that views are after tables and views on views
                 // after the base views
                 tables.sort(new Comparator() {
 
-                    public int compare(Object o1, Object o2) {
+                    @Override
+                    public int compare(final Object o1, final Object o2) {
 
-                        Table t1 = (Table) o1;
-                        Table t2 = (Table) o2;
+                        final Table t1 = (Table) o1;
+                        final Table t2 = (Table) o2;
                         return t1.getId() - t2.getId();
                     }
                 });
                 for (int i = 0; i < tables.size(); i++) {
-                    Table table = (Table) tables.get(i);
+                    final Table table = (Table) tables.get(i);
                     table.lock(session, false, false);
-                    String sql = table.getCreateSQL();
+                    final String sql = table.getCreateSQL();
                     if (sql == null) {
                         // null for metadata tables
                         continue;
@@ -339,34 +345,34 @@ public class ScriptCommand extends ScriptBase {
                         add(table.getDropSQL(), false);
                     }
                 }
-                ObjectArray sequences = db.getAllSchemaObjects(DbObject.SEQUENCE);
+                final ObjectArray sequences = db.getAllSchemaObjects(DbObject.SEQUENCE);
                 for (int i = 0; i < sequences.size(); i++) {
-                    Sequence sequence = (Sequence) sequences.get(i);
+                    final Sequence sequence = (Sequence) sequences.get(i);
                     if (drop && !sequence.getBelongsToTable()) {
                         add(sequence.getDropSQL(), false);
                     }
                     add(sequence.getCreateSQL(), false);
                 }
                 for (int i = 0; i < tables.size(); i++) {
-                    Table table = (Table) tables.get(i);
+                    final Table table = (Table) tables.get(i);
                     table.lock(session, false, false);
-                    String sql = table.getCreateSQL();
+                    final String sql = table.getCreateSQL();
                     if (sql == null) {
                         // null for metadata tables
                         continue;
                     }
-                    String tableType = table.getTableType();
+                    final String tableType = table.getTableType();
                     add(sql, false);
                     if (Table.TABLE.equals(tableType)) {
                         if (table.canGetRowCount()) {
-                            String rowcount = "-- " + table.getRowCountApproximation() + " +/- SELECT COUNT(*) FROM " + table.getSQL();
+                            final String rowcount = "-- " + table.getRowCountApproximation() + " +/- SELECT COUNT(*) FROM " + table.getSQL();
                             add(rowcount, false);
                         }
                         if (data) {
-                            PlanItem plan = table.getBestPlanItem(session, null);
-                            Index index = plan.getIndex();
-                            Cursor cursor = index.find(session, null, null);
-                            Column[] columns = table.getColumns();
+                            final PlanItem plan = table.getBestPlanItem(session, null);
+                            final Index index = plan.getIndex();
+                            final Cursor cursor = index.find(session, null, null);
+                            final Column[] columns = table.getColumns();
                             StringBuilder buff = new StringBuilder();
                             buff.append("INSERT INTO ");
                             buff.append(table.getSQL());
@@ -382,10 +388,10 @@ public class ScriptCommand extends ScriptBase {
                                 buff.append('\n');
                             }
                             buff.append('(');
-                            String ins = buff.toString();
+                            final String ins = buff.toString();
                             buff = null;
                             while (cursor.next()) {
-                                Row row = cursor.get();
+                                final Row row = cursor.get();
                                 if (buff == null) {
                                     buff = new StringBuilder(ins);
                                 }
@@ -396,7 +402,7 @@ public class ScriptCommand extends ScriptBase {
                                     if (j > 0) {
                                         buff.append(", ");
                                     }
-                                    Value v = row.getValue(j);
+                                    final Value v = row.getValue(j);
                                     if (v.getPrecision() > lobBlockSize) {
                                         int id;
                                         if (v.getType() == Value.CLOB) {
@@ -426,9 +432,9 @@ public class ScriptCommand extends ScriptBase {
                             }
                         }
                     }
-                    ObjectArray indexes = table.getIndexes();
+                    final ObjectArray indexes = table.getIndexes();
                     for (int j = 0; indexes != null && j < indexes.size(); j++) {
-                        Index index = (Index) indexes.get(j);
+                        final Index index = (Index) indexes.get(j);
                         if (!index.getIndexType().getBelongsToConstraint()) {
                             add(index.getCreateSQL(), false);
                         }
@@ -441,33 +447,34 @@ public class ScriptCommand extends ScriptBase {
                     add("DROP ALIAS IF EXISTS SYSTEM_COMBINE_BLOB", true);
                     tempLobTableCreated = false;
                 }
-                ObjectArray constraints = db.getAllSchemaObjects(DbObject.CONSTRAINT);
+                final ObjectArray constraints = db.getAllSchemaObjects(DbObject.CONSTRAINT);
                 constraints.sort(new Comparator() {
 
-                    public int compare(Object o1, Object o2) {
+                    @Override
+                    public int compare(final Object o1, final Object o2) {
 
-                        Constraint c1 = (Constraint) o1;
-                        Constraint c2 = (Constraint) o2;
+                        final Constraint c1 = (Constraint) o1;
+                        final Constraint c2 = (Constraint) o2;
                         return c1.compareTo(c2);
                     }
                 });
                 for (int i = 0; i < constraints.size(); i++) {
-                    Constraint constraint = (Constraint) constraints.get(i);
+                    final Constraint constraint = (Constraint) constraints.get(i);
                     add(constraint.getCreateSQLWithoutIndexes(), false);
                 }
-                ObjectArray triggers = db.getAllSchemaObjects(DbObject.TRIGGER);
+                final ObjectArray triggers = db.getAllSchemaObjects(DbObject.TRIGGER);
                 for (int i = 0; i < triggers.size(); i++) {
-                    TriggerObject trigger = (TriggerObject) triggers.get(i);
+                    final TriggerObject trigger = (TriggerObject) triggers.get(i);
                     add(trigger.getCreateSQL(), false);
                 }
-                ObjectArray rights = db.getAllRights();
+                final ObjectArray rights = db.getAllRights();
                 for (int i = 0; i < rights.size(); i++) {
-                    Right right = (Right) rights.get(i);
+                    final Right right = (Right) rights.get(i);
                     add(right.getCreateSQL(), false);
                 }
-                ObjectArray comments = db.getAllComments();
+                final ObjectArray comments = db.getAllComments();
                 for (int i = 0; i < comments.size(); i++) {
-                    Comment comment = (Comment) comments.get(i);
+                    final Comment comment = (Comment) comments.get(i);
                     add(comment.getCreateSQL(), false);
                 }
             }
@@ -476,19 +483,19 @@ public class ScriptCommand extends ScriptBase {
             }
 
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             throw Message.convertIOException(e, getFileName());
         }
         finally {
             closeIO();
         }
         result.done();
-        LocalResult r = result;
+        final LocalResult r = result;
         reset();
         return r;
     }
 
-    private int writeLobStream(ValueLob v) throws IOException, SQLException {
+    private int writeLobStream(final ValueLob v) throws IOException, SQLException {
 
         if (!tempLobTableCreated) {
             add("CREATE TABLE IF NOT EXISTS SYSTEM_LOB_STREAM(ID INT, PART INT, CDATA VARCHAR, BDATA BINARY, PRIMARY KEY(ID, PART))", true);
@@ -496,22 +503,22 @@ public class ScriptCommand extends ScriptBase {
             add("CREATE ALIAS IF NOT EXISTS SYSTEM_COMBINE_BLOB FOR \"" + this.getClass().getName() + ".combineBlob\"", true);
             tempLobTableCreated = true;
         }
-        int id = nextLobId++;
+        final int id = nextLobId++;
         switch (v.getType()) {
             case Value.BLOB: {
-                byte[] bytes = new byte[lobBlockSize];
-                InputStream in = v.getInputStream();
+                final byte[] bytes = new byte[lobBlockSize];
+                final InputStream in = v.getInputStream();
                 try {
                     for (int i = 0;; i++) {
-                        StringBuilder buff = new StringBuilder(lobBlockSize * 2);
+                        final StringBuilder buff = new StringBuilder(lobBlockSize * 2);
                         buff.append("INSERT INTO SYSTEM_LOB_STREAM VALUES(" + id + ", " + i + ", NULL, '");
-                        int len = IOUtils.readFully(in, bytes, 0, lobBlockSize);
+                        final int len = IOUtils.readFully(in, bytes, 0, lobBlockSize);
                         if (len <= 0) {
                             break;
                         }
                         buff.append(ByteUtils.convertBytesToString(bytes, len));
                         buff.append("')");
-                        String sql = buff.toString();
+                        final String sql = buff.toString();
                         add(sql, true);
                     }
                 }
@@ -521,19 +528,19 @@ public class ScriptCommand extends ScriptBase {
                 break;
             }
             case Value.CLOB: {
-                char[] chars = new char[lobBlockSize];
-                Reader in = v.getReader();
+                final char[] chars = new char[lobBlockSize];
+                final Reader in = v.getReader();
                 try {
                     for (int i = 0;; i++) {
-                        StringBuilder buff = new StringBuilder(lobBlockSize * 2);
+                        final StringBuilder buff = new StringBuilder(lobBlockSize * 2);
                         buff.append("INSERT INTO SYSTEM_LOB_STREAM VALUES(" + id + ", " + i + ", ");
-                        int len = IOUtils.readFully(in, chars, lobBlockSize);
+                        final int len = IOUtils.readFully(in, chars, lobBlockSize);
                         if (len < 0) {
                             break;
                         }
                         buff.append(StringUtils.quoteStringSQL(new String(chars, 0, len)));
                         buff.append(", NULL)");
-                        String sql = buff.toString();
+                        final String sql = buff.toString();
                         add(sql, true);
                     }
                 }
@@ -557,7 +564,7 @@ public class ScriptCommand extends ScriptBase {
      *            the lob id
      * @return a stream for the combined data
      */
-    public static InputStream combineBlob(Connection conn, int id) throws SQLException, IOException {
+    public static InputStream combineBlob(final Connection conn, final int id) throws SQLException, IOException {
 
         if (id < 0) { return null; }
         final ResultSet rs = getLobStream(conn, "BDATA", id);
@@ -567,6 +574,7 @@ public class ScriptCommand extends ScriptBase {
 
             private boolean closed;
 
+            @Override
             public int read() throws IOException {
 
                 while (true) {
@@ -580,16 +588,17 @@ public class ScriptCommand extends ScriptBase {
                             current = rs.getBinaryStream(1);
                             current = new BufferedInputStream(current);
                         }
-                        int x = current.read();
+                        final int x = current.read();
                         if (x >= 0) { return x; }
                         current = null;
                     }
-                    catch (SQLException e) {
+                    catch (final SQLException e) {
                         Message.convertToIOException(e);
                     }
                 }
             }
 
+            @Override
             public void close() throws IOException {
 
                 if (closed) { return; }
@@ -597,7 +606,7 @@ public class ScriptCommand extends ScriptBase {
                 try {
                     rs.close();
                 }
-                catch (SQLException e) {
+                catch (final SQLException e) {
                     Message.convertToIOException(e);
                 }
             }
@@ -613,7 +622,7 @@ public class ScriptCommand extends ScriptBase {
      *            the lob id
      * @return a reader for the combined data
      */
-    public static Reader combineClob(Connection conn, int id) throws SQLException, IOException {
+    public static Reader combineClob(final Connection conn, final int id) throws SQLException, IOException {
 
         if (id < 0) { return null; }
         final ResultSet rs = getLobStream(conn, "CDATA", id);
@@ -623,6 +632,7 @@ public class ScriptCommand extends ScriptBase {
 
             private boolean closed;
 
+            @Override
             public int read() throws IOException {
 
                 while (true) {
@@ -636,16 +646,17 @@ public class ScriptCommand extends ScriptBase {
                             current = rs.getCharacterStream(1);
                             current = new BufferedReader(current);
                         }
-                        int x = current.read();
+                        final int x = current.read();
                         if (x >= 0) { return x; }
                         current = null;
                     }
-                    catch (SQLException e) {
+                    catch (final SQLException e) {
                         Message.convertToIOException(e);
                     }
                 }
             }
 
+            @Override
             public void close() throws IOException {
 
                 if (closed) { return; }
@@ -653,12 +664,13 @@ public class ScriptCommand extends ScriptBase {
                 try {
                     rs.close();
                 }
-                catch (SQLException e) {
+                catch (final SQLException e) {
                     Message.convertToIOException(e);
                 }
             }
 
-            public int read(char[] buffer, int off, int len) throws IOException {
+            @Override
+            public int read(final char[] buffer, final int off, final int len) throws IOException {
 
                 if (len == 0) { return 0; }
                 int c = read();
@@ -677,9 +689,9 @@ public class ScriptCommand extends ScriptBase {
         };
     }
 
-    private static ResultSet getLobStream(Connection conn, String column, int id) throws SQLException {
+    private static ResultSet getLobStream(final Connection conn, final String column, final int id) throws SQLException {
 
-        PreparedStatement prep = conn.prepareStatement("SELECT " + column + " FROM SYSTEM_LOB_STREAM WHERE ID=? ORDER BY PART");
+        final PreparedStatement prep = conn.prepareStatement("SELECT " + column + " FROM SYSTEM_LOB_STREAM WHERE ID=? ORDER BY PART");
         prep.setInt(1, id);
         return prep.executeQuery();
     }
@@ -691,13 +703,13 @@ public class ScriptCommand extends ScriptBase {
         lineSeparator = StringUtils.utf8Encode(SysProperties.LINE_SEPARATOR);
     }
 
-    private void add(String s, boolean insert) throws SQLException, IOException {
+    private void add(String s, final boolean insert) throws SQLException, IOException {
 
         if (s == null) { return; }
         s += ";";
         if (out != null) {
-            byte[] buff = StringUtils.utf8Encode(s);
-            int len = MathUtils.roundUp(buff.length + lineSeparator.length, Constants.FILE_BLOCK_SIZE);
+            final byte[] buff = StringUtils.utf8Encode(s);
+            final int len = MathUtils.roundUp(buff.length + lineSeparator.length, Constants.FILE_BLOCK_SIZE);
             buffer = ByteUtils.copy(buff, buffer);
 
             if (len > buffer.length) {
@@ -712,19 +724,19 @@ public class ScriptCommand extends ScriptBase {
             }
             out.write(buffer, 0, len);
             if (!insert) {
-                Value[] row = new Value[1];
+                final Value[] row = new Value[1];
                 row[0] = ValueString.get(s);
                 result.addRow(row);
             }
         }
         else {
-            Value[] row = new Value[1];
+            final Value[] row = new Value[1];
             row[0] = ValueString.get(s);
             result.addRow(row);
         }
     }
 
-    public void setSimple(boolean simple) {
+    public void setSimple(final boolean simple) {
 
         this.simple = simple;
     }
@@ -735,7 +747,7 @@ public class ScriptCommand extends ScriptBase {
      * @param tableName
      *            The table for which the insert statements are required.
      */
-    public void setTable(String tableName) {
+    public void setTable(final String tableName) {
 
         singleTable = true;
         this.tableName = tableName;
@@ -749,9 +761,9 @@ public class ScriptCommand extends ScriptBase {
      * 
      * @param name
      */
-    public void setSchema(String name) {
+    public void setSchema(final String name) {
 
-        this.schemaName = name;
+        schemaName = name;
     }
 
 }

@@ -16,6 +16,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
+import org.h2o.autonomic.settings.TestingSettings;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.util.LocalH2OProperties;
@@ -29,142 +30,145 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class MultipleServersStandalone {
-	
-	private Connection[] cas;
-	
-	private Statement[] sas;
-	
-	private String[] dbs = { "two", "three", "four", "five", "six", "seven", "eight", "nine" };
-	
-	public MultipleServersStandalone() {
-		initialSetUp();
-		
-		try {
-			setUp();
-		} catch ( Exception e ) {
-			e.printStackTrace();
-		}
-		
-	}
-	
-	public void initialSetUp() {
-		Diagnostic.setLevel(DiagnosticLevel.INIT);
-		
-		createMultiplePropertiesFiles(dbs);
-		
-	}
-	
-	private void createMultiplePropertiesFiles(String[] dbNames) {
-		for ( String db : dbNames ) {
-			
-			String fullDBName = "jdbc:h2:mem:" + db;
-			DatabaseURL dbURL = DatabaseURL.parseURL(fullDBName);
-			
-			LocalH2OProperties knownHosts = new LocalH2OProperties(dbURL);
-			knownHosts.createNewFile();
-			knownHosts.setProperty("jdbc:h2:sm:mem:one", "30000"); // //jdbc:h2:sm:mem:one
-			knownHosts.saveAndClose();
-			
-		}
-	}
-	
-	public void setUp() throws Exception {
-		Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-		// PersistentSystemTable.USERNAME = "angus";
-		// PersistentSystemTable.PASSWORD = "";
-		
-		org.h2.Driver.load();
-		
-		cas = new Connection[dbs.length + 1];
-		cas[0] = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-		for ( int i = 1; i < cas.length; i++ ) {
-			
-			// Thread.sleep(1000);
-			cas[i] = DriverManager.getConnection("jdbc:h2:mem:" + dbs[i - 1], PersistentSystemTable.USERNAME,
-					PersistentSystemTable.PASSWORD);
-		}
-		
-		sas = new Statement[dbs.length + 1];
-		
-		// for (int i = 0; i < cas.length; i ++){
-		// sas[i] = cas[i].createStatement();
-		// }
-		
-		// String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
-		// sql += "INSERT INTO TEST VALUES(1, 'Hello');";
-		// sql += "INSERT INTO TEST VALUES(2, 'World');";
-		//
-		// sas[0].execute(sql);
-		
-	}
-	
-	public void tearDown() {
-		
-		for ( int i = 0; i < sas.length; i++ ) {
-			try {
-				if ( !sas[i].isClosed() )
-					sas[i].close();
-				sas[i] = null;
-			} catch ( Exception e ) {
-				e.printStackTrace();
-				fail("Statements aren't being closed correctly.");
-			}
-		}
-		
-		for ( int i = 0; i < cas.length; i++ ) {
-			try {
-				if ( !cas[i].isClosed() )
-					cas[i].close();
-				cas[i] = null;
-			} catch ( Exception e ) {
-				e.printStackTrace();
-				fail("Connections aren't being closed correctly.");
-			}
-		}
-		
-		cas = null;
-		sas = null;
-	}
-	
-	/**
-	 * @param args
-	 * @throws InterruptedException
-	 */
-	public static void main(String[] args) throws InterruptedException {
-		Constants.IS_TEST = true;
-		MultipleServersStandalone servers = new MultipleServersStandalone();
-		
-		Thread.sleep(10000);
-		
-		servers.testSystemTableFailure();
-		
-		// Thread.sleep(2000);
-		
-		// servers.insertSecondTable();
-	}
-	
-	/**
-	 * 
-	 */
-	private void insertSecondTable() {
-		try {
-			sas[1].execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-		} catch ( SQLException e ) {
-			e.printStackTrace();
-		}
-	}
-	
-	/**
-	 * 
-	 */
-	private void testSystemTableFailure() {
-		Diagnostic.trace("CLOSING System Table INSTANCE");
-		
-		try {
-			cas[0].close();
-		} catch ( SQLException e ) {
-			e.printStackTrace();
-		}
-	}
-	
+
+    private Connection[] cas;
+
+    private Statement[] sas;
+
+    private final String[] dbs = {"two", "three", "four", "five", "six", "seven", "eight", "nine"};
+
+    public MultipleServersStandalone() {
+
+        initialSetUp();
+
+        try {
+            setUp();
+        }
+        catch (final Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void initialSetUp() {
+
+        Diagnostic.setLevel(DiagnosticLevel.INIT);
+
+        createMultiplePropertiesFiles(dbs);
+
+    }
+
+    private void createMultiplePropertiesFiles(final String[] dbNames) {
+
+        for (final String db : dbNames) {
+
+            final String fullDBName = "jdbc:h2:mem:" + db;
+            final DatabaseURL dbURL = DatabaseURL.parseURL(fullDBName);
+
+            final LocalH2OProperties knownHosts = new LocalH2OProperties(dbURL);
+            knownHosts.createNewFile();
+            knownHosts.setProperty("jdbc:h2:sm:mem:one", "30000"); // //jdbc:h2:sm:mem:one
+            knownHosts.saveAndClose();
+
+        }
+    }
+
+    public void setUp() throws Exception {
+
+        TestingSettings.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
+        // PersistentSystemTable.USERNAME = "angus";
+        // PersistentSystemTable.PASSWORD = "";
+
+        org.h2.Driver.load();
+
+        cas = new Connection[dbs.length + 1];
+        cas[0] = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+        for (int i = 1; i < cas.length; i++) {
+
+            // Thread.sleep(1000);
+            cas[i] = DriverManager.getConnection("jdbc:h2:mem:" + dbs[i - 1], PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+        }
+
+        sas = new Statement[dbs.length + 1];
+
+    }
+
+    public void tearDown() {
+
+        for (int i = 0; i < sas.length; i++) {
+            try {
+                if (!sas[i].isClosed()) {
+                    sas[i].close();
+                }
+                sas[i] = null;
+            }
+            catch (final Exception e) {
+                e.printStackTrace();
+                fail("Statements aren't being closed correctly.");
+            }
+        }
+
+        for (int i = 0; i < cas.length; i++) {
+            try {
+                if (!cas[i].isClosed()) {
+                    cas[i].close();
+                }
+                cas[i] = null;
+            }
+            catch (final Exception e) {
+                e.printStackTrace();
+                fail("Connections aren't being closed correctly.");
+            }
+        }
+
+        cas = null;
+        sas = null;
+    }
+
+    /**
+     * @param args
+     * @throws InterruptedException
+     */
+    public static void main(final String[] args) throws InterruptedException {
+
+        Constants.IS_TEST = true;
+        final MultipleServersStandalone servers = new MultipleServersStandalone();
+
+        Thread.sleep(10000);
+
+        servers.testSystemTableFailure();
+
+        // Thread.sleep(2000);
+
+        // servers.insertSecondTable();
+    }
+
+    /**
+     * 
+     */
+    private void insertSecondTable() {
+
+        try {
+            sas[1].execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+        }
+        catch (final SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 
+     */
+    private void testSystemTableFailure() {
+
+        Diagnostic.trace("CLOSING System Table INSTANCE");
+
+        try {
+            cas[0].close();
+        }
+        catch (final SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

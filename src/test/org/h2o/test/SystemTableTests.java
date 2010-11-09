@@ -22,6 +22,7 @@ import java.sql.Statement;
 import org.h2.engine.Constants;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;
+import org.h2o.autonomic.settings.TestingSettings;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.locator.server.LocatorServer;
 import org.junit.After;
@@ -62,7 +63,7 @@ public class SystemTableTests {
     @Before
     public void setUp() throws Exception {
 
-        Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
+        TestingSettings.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
 
         TestBase.setUpDescriptorFiles();
 

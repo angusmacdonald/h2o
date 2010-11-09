@@ -5,7 +5,6 @@ import java.sql.SQLException;
 
 import org.h2.command.ddl.SchemaCommand;
 import org.h2.constant.ErrorCode;
-import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
@@ -124,7 +123,7 @@ public class DropReplica extends SchemaCommand {
              * ################################################################## ####### Remove any System Table entries.
              * ################################################################## #######
              */
-            if (Constants.IS_H2O && !db.isManagementDB() && !db.isTableLocal(getSchema())) {
+            if (!db.isManagementDB() && !db.isTableLocal(getSchema())) {
                 final ISystemTable sm = db.getSystemTable(); // db.getSystemSession()
 
                 final TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), 0, table.getTableType(), db.getURL());

@@ -169,6 +169,11 @@ public class Settings {
          */
         defaults.setProperty("DELAY_QUERY_COMMIT", "false");
 
+        /*
+         * Sets the default level of diagnostics for the database system.
+         */
+        defaults.setProperty("diagnosticLevel", "INIT"); //Options that make sense for this system: NONE, FINAL, INIT, FULL
+
         return defaults;
     }
 

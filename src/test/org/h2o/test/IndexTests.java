@@ -19,6 +19,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
+import org.h2o.autonomic.settings.TestingSettings;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.locator.server.LocatorServer;
 import org.junit.After;
@@ -52,7 +53,7 @@ public class IndexTests {
     @Before
     public void setUp() throws Exception {
 
-        Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:mem:one";
+        TestingSettings.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:mem:one";
         Constants.IS_NON_SM_TEST = true;
 
         TestBase.setUpDescriptorFiles();
@@ -69,10 +70,12 @@ public class IndexTests {
         sa = ca.createStatement();
         sb = cb.createStatement();
 
-        sa.execute("CREATE TABLE Address(id INT NOT NULL, street VARCHAR(255), PRIMARY KEY (id)); " + "CREATE TABLE Person(id INT NOT NULL, name VARCHAR(255), address_id INT NOT NULL, PRIMARY KEY (id), FOREIGN KEY (address_id) REFERENCES Address (id));" + "INSERT INTO Address VALUES (0, 'Glasgow Road');" + "INSERT INTO Address VALUES (1, 'Kinnessburn Terrace');" + "INSERT INTO Address VALUES (2, 'Lamond Drive');" + "INSERT INTO Address VALUES (3, 'North Street');"
-                        + "INSERT INTO Address VALUES (4, 'Market Street');" + "INSERT INTO Address VALUES (5, 'Hawthorn Avenue');" + "INSERT INTO Person VALUES (0, 'Angus Macdonald', 0);" + "INSERT INTO Person VALUES (1, 'Alan Dearle', 1);" + "INSERT INTO Person VALUES (2, 'Graham Kirby', 2);" + "INSERT INTO Person VALUES (3, 'Dharini Balasubramaniam', 2);" + "INSERT INTO Person VALUES (4, 'Jon Lewis', 3);");
+        sa.execute("CREATE TABLE Address(id INT NOT NULL, street VARCHAR(255), PRIMARY KEY (id)); " + "CREATE TABLE Person(id INT NOT NULL, name VARCHAR(255), address_id INT NOT NULL, PRIMARY KEY (id), FOREIGN KEY (address_id) REFERENCES Address (id));"
+                        + "INSERT INTO Address VALUES (0, 'Glasgow Road');" + "INSERT INTO Address VALUES (1, 'Kinnessburn Terrace');" + "INSERT INTO Address VALUES (2, 'Lamond Drive');" + "INSERT INTO Address VALUES (3, 'North Street');" + "INSERT INTO Address VALUES (4, 'Market Street');"
+                        + "INSERT INTO Address VALUES (5, 'Hawthorn Avenue');" + "INSERT INTO Person VALUES (0, 'Angus Macdonald', 0);" + "INSERT INTO Person VALUES (1, 'Alan Dearle', 1);" + "INSERT INTO Person VALUES (2, 'Graham Kirby', 2);"
+                        + "INSERT INTO Person VALUES (3, 'Dharini Balasubramaniam', 2);" + "INSERT INTO Person VALUES (4, 'Jon Lewis', 3);");
 
-        Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:mem:one";
+        TestingSettings.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:mem:one";
         // PersistentSystemTable.USERNAME = "sa";
         // PersistentSystemTable.PASSWORD = "sa";
 

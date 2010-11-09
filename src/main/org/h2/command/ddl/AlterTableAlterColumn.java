@@ -11,7 +11,6 @@ import org.h2.command.Parser;
 import org.h2.command.Prepared;
 import org.h2.constant.ErrorCode;
 import org.h2.constraint.ConstraintReferential;
-import org.h2.engine.Constants;
 import org.h2.engine.Database;
 import org.h2.engine.DbObject;
 import org.h2.engine.Right;
@@ -475,7 +474,7 @@ public class AlterTableAlterColumn extends SchemaCommand {
     protected boolean isRegularTable() {
 
         final boolean isLocal = session.getDatabase().isTableLocal(getSchema());
-        return Constants.IS_H2O && !session.getDatabase().isManagementDB() && !isStartup() && !internalQuery && !isLocal;
+        return !session.getDatabase().isManagementDB() && !isStartup() && !internalQuery && !isLocal;
 
     }
 }

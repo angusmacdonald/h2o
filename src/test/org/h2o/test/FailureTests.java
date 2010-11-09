@@ -154,8 +154,6 @@ public class FailureTests extends MultiProcessTestBase {
     @Test(timeout = 60000)
     public void tableManagerMigrationOnFailureDetectedBySystemTableMigration() throws InterruptedException, SQLException {
 
-        Diagnostic.trace(DiagnosticLevel.FULL);
-
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
         sql += "INSERT INTO TEST VALUES(1, 'Hello');";
         sql += "INSERT INTO TEST VALUES(2, 'World');";
@@ -183,7 +181,7 @@ public class FailureTests extends MultiProcessTestBase {
 
         sleep(15000);
 
-        assertTestTableExists(connections[1], 2);
+        assertTestTableExists(connections[1], 2, false);
     }
 
     /**

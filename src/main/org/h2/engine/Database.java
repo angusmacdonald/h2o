@@ -72,6 +72,7 @@ import org.h2.value.Value;
 import org.h2.value.ValueInt;
 import org.h2.value.ValueLob;
 import org.h2o.autonomic.settings.Settings;
+import org.h2o.autonomic.settings.TestingSettings;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.manager.SystemTable;
@@ -332,10 +333,10 @@ public class Database implements DataHandler {
         final DatabaseURL localMachineLocation = DatabaseURL.parseURL(ci.getOriginalURL());
 
         // Ensure testing constants are all set to false.
-        Constants.IS_TESTING_PRE_COMMIT_FAILURE = false;
-        Constants.IS_TESTING_PRE_PREPARE_FAILURE = false;
-        Constants.IS_TESTING_QUERY_FAILURE = false;
-        Constants.IS_TESTING_CREATETABLE_FAILURE = false;
+        TestingSettings.IS_TESTING_PRE_COMMIT_FAILURE = false;
+        TestingSettings.IS_TESTING_PRE_PREPARE_FAILURE = false;
+        TestingSettings.IS_TESTING_QUERY_FAILURE = false;
+        TestingSettings.IS_TESTING_CREATETABLE_FAILURE = false;
 
         transactionNameGenerator = new TransactionNameGenerator(localMachineLocation);
         asynchronousQueryManager = new AsynchronousQueryManager(this);
@@ -350,7 +351,7 @@ public class Database implements DataHandler {
 
         filePasswordHash = ci.getFilePasswordHash();
 
-        if (Constants.IS_H2O && !isManagementDB()) {
+        if (!isManagementDB()) {
 
             /*
              * Get Settings for Database.
@@ -359,15 +360,22 @@ public class Database implements DataHandler {
             try {
                 localSettings.loadProperties();
             }
-            catch (final IOException e) {
-                throw new SQLException("Cannot load properties: " + e.getMessage());
+            catch (final IOException e1) {
+                localSettings.createNewFile();
+                try {
+                    localSettings.loadProperties();
+                }
+                catch (final IOException e) {
+                    ErrorHandling.exceptionError(e, "Failed to create properties file for database.");
+                }
             }
 
             setDiagnosticLevel(localMachineLocation);
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "H2O, Database '" + name + "'.");
 
+            H2OLocatorInterface locatorInterface;
             try {
-                final H2OLocatorInterface locatorInterface = databaseRemote.getLocatorServerReference(localSettings);
+                locatorInterface = databaseRemote.getLocatorServerReference(localSettings);
 
                 databaseSettings = new Settings(localSettings, locatorInterface.getDescriptor());
             }
@@ -390,9 +398,11 @@ public class Database implements DataHandler {
                 keepAliveMessageThread = new KeepAliveMessageThread(localMachineLocation.getURL());
                 keepAliveMessageThread.start();
             }
+
         }
 
-        multiThreaded = true; // H2O. Required for the H2O push replication feature, among other things.
+        multiThreaded = true; // H2O. Required for the H2O push replication
+        // feature, among other things.
 
         this.cipher = cipher;
         final String lockMethodName = ci.getProperty("FILE_LOCK", null);
@@ -432,7 +442,7 @@ public class Database implements DataHandler {
         cacheType = StringUtils.toUpperEnglish(ci.removeProperty("CACHE_TYPE", CacheLRU.TYPE_NAME));
         openDatabase(traceLevelFile, traceLevelSystemOut, closeAtVmShutdown, ci, localMachineLocation);
 
-        if (Constants.IS_H2O && !isManagementDB()) {
+        if (!isManagementDB()) {
             final boolean metaDataReplicationEnabled = Boolean.parseBoolean(databaseSettings.get("METADATA_REPLICATION_ENABLED"));
 
             if (!Constants.IS_NON_SM_TEST && metaDataReplicationEnabled) {
@@ -873,7 +883,7 @@ public class Database implements DataHandler {
         /*
          * H2O STARTUP CODE FOR System Table, TABLE INSTANITATION
          */
-        if (Constants.IS_H2O && !isManagementDB()) { // don't run this code with
+        if (!isManagementDB()) { // don't run this code with
             // the TCP server
             // management DB
 
@@ -919,7 +929,7 @@ public class Database implements DataHandler {
 
         MetaRecord.sort(records);
 
-        if (Constants.IS_H2O && !isManagementDB() && databaseExists) {
+        if (!isManagementDB() && databaseExists) {
             /*
              * Create or connect to a new System Table instance if this node already has tables on it.
              */
@@ -943,7 +953,7 @@ public class Database implements DataHandler {
             proxyManager.finishTransaction(true, true, this);
         }
 
-        if (Constants.IS_H2O && !isManagementDB()) {
+        if (!isManagementDB()) {
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, " Executed meta-records.");
         }
 
@@ -964,7 +974,7 @@ public class Database implements DataHandler {
         systemSession.commit(true);
         traceSystem.getTrace(Trace.DATABASE).info("opened " + databaseName);
 
-        if (Constants.IS_H2O && !isManagementDB() && (!databaseExists || !systemTableRef.isSystemTableLocal())) { // don't
+        if (!isManagementDB() && (!databaseExists || !systemTableRef.isSystemTableLocal())) { // don't
             // run
             // this
             // code
@@ -998,7 +1008,7 @@ public class Database implements DataHandler {
             // state.
 
         }
-        else if (Constants.IS_H2O && !isManagementDB() && databaseExists && systemTableRef.isSystemTableLocal()) {
+        else if (!isManagementDB() && databaseExists && systemTableRef.isSystemTableLocal()) {
             /*
              * This is the System Table. Reclaim previously held state.
              */
@@ -1533,7 +1543,7 @@ public class Database implements DataHandler {
 
         closing = true;
         stopServer();
-        if (Constants.IS_H2O && !isManagementDB() && !fromShutdownHook) {
+        if (!isManagementDB() && !fromShutdownHook) {
             H2OEventBus.publish(new H2OEvent(getURL().getURL(), DatabaseStates.DATABASE_SHUTDOWN, null));
 
             metaDataReplicationThread.setRunning(false);

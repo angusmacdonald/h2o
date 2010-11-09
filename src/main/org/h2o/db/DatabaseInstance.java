@@ -74,8 +74,6 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 
         try {
             if (commitOperation) {
-                // System.err.println("committing - " + query + " - (" + commitOperation + ") " + transactionName + " on " +
-                // this.databaseURL);
                 return command.update(); // This is a COMMIT.
             }
             else {
@@ -84,9 +82,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
                  * remotely initiated and consequently needs to wait for the remote machine to commit.
                  */
 
-                // System.err.println("executing: " + query);
                 command.executeUpdate(true);
-                // System.err.println("preparing: " + query);
                 return prepare(transactionName); // This wasn't a COMMIT. Execute a PREPARE.
             }
         }

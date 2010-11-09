@@ -32,7 +32,7 @@ public class AsynchronousTests extends MultiProcessTestBase {
      * @throws InterruptedException
      * @throws SQLException 
      */
-    @Test(timeout = 25000)
+    @Test(timeout = 35000)
     public void basicAsynchronousUpdate() throws InterruptedException, SQLException {
 
         final String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
@@ -197,7 +197,7 @@ public class AsynchronousTests extends MultiProcessTestBase {
      * @throws InterruptedException
      * @throws SQLException 
      */
-    @Test
+    @Test(timeout = 60000)
     public void anotherTransactionIntervenes() throws InterruptedException, SQLException {
 
         final String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
@@ -273,7 +273,7 @@ public class AsynchronousTests extends MultiProcessTestBase {
 
         if (databaseSettings == null) { return; }
 
-        if (!table.getName().equals("TEST")) { return; }
+        if (!table.getName().contains("TEST")) { return; }
 
         final boolean delay = Boolean.parseBoolean(databaseSettings.get("DELAY_QUERY_COMMIT"));
 
