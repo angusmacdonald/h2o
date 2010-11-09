@@ -31,6 +31,12 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
  */
 public class EndToEndTests extends H2OTestBase {
 
+    @Override
+    protected int getNumberOfDatabases() {
+
+        return 1;
+    }
+
     /**
       * Tests whether a new database can be created, data inserted and read back.
       * 
@@ -268,16 +274,8 @@ public class EndToEndTests extends H2OTestBase {
 
     private void performAction(final IDBAction action) throws SQLException {
 
-        Connection connection = null;
-        try {
-            connection = makeConnection();
-            action.execute(connection);
-        }
-        finally {
-            if (connection != null) {
-                connection.close();
-            }
-        }
+        final Connection connection = getConnections()[0];
+        action.execute(connection);
     }
 
     private void insertWithAutoCommit(final int number_of_rows_to_insert, final long delay) {

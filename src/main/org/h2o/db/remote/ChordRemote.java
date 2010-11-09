@@ -148,10 +148,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
         establishChordConnection(localMachineLocation, session);
 
-        localMachineLocation.setRMIPort(getRmiPort()); // set the port on
-                                                       // which the RMI
-                                                       // server is
-                                                       // running.
+        localMachineLocation.setRMIPort(getRmiPort()); // set the port on which the RMI server is running.
 
         /*
          * The System Table location must be known at this point, otherwise the database instance will not start.
@@ -468,10 +465,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.remote.IChordInterface#getDatabaseInstanceAt(java.lang.String, int)
-     */
     @Override
     public DatabaseInstanceRemote getDatabaseInstanceAt(final String hostname, final int port) throws RemoteException, NotBoundException {
 
@@ -496,6 +489,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     private boolean startChordRing(final String hostname, final int port, final DatabaseURL databaseURL) {
 
         rmiPort = port;
+        System.out.println("chord node port starting: " + rmiPort);
 
         final InetSocketAddress localChordAddress = new InetSocketAddress(hostname, port);
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Deploying new Chord ring on " + hostname + ":" + port);
@@ -505,10 +499,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
          */
         try {
             chordNode = ChordNodeFactory.createLocalNode(localChordAddress);
-
-            if (Constants.IS_TEST) {
-                // allNodes.add(chordNode);
-            }
         }
         catch (final RemoteException e) {
             e.printStackTrace();
@@ -525,10 +515,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT,
                         "Started local Chord node on : " + databaseURL.sanitizedLocation() + " : " + hostname + ":" + port + " : initialized with key :" + chordNode.getKey().toString(10) + " : " + chordNode.getKey() + " : System Table at " + systemTableRef.getLookupLocation() + " : ");
-        // Diagnostic.traceNoEvent(DiagnosticLevel.INIT,
-        // "System Table key: : : : :" +
-        // SystemTableReference.systemTableKey.toString(10) + " : " +
-        // SystemTableReference.systemTableKey);
 
         return true;
     }
@@ -555,6 +541,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
         rmiPort = localPort;
 
+        System.out.println("chord node port joining: " + rmiPort);
         InetSocketAddress localChordAddress = new InetSocketAddress(localHostname, rmiPort);
         final InetSocketAddress knownHostAddress = new InetSocketAddress(remoteHostname, remotePort);
 
@@ -563,29 +550,19 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
         final int maxNumberOfAttempts = Integer.parseInt(databaseSettings.get("ATTEMPTS_AFTER_BIND_EXCEPTIONS"));
 
-        while (!connected && attempts < maxNumberOfAttempts) { // only have
-                                                               // multiple
-                                                               // attempts if
-                                                               // there is a
-                                                               // bind
-                                                               // exception.
-                                                               // otherwise
-                                                               // this just
-                                                               // returns
-                                                               // false.
+        while (!connected && attempts < maxNumberOfAttempts) { // only have multiple attempts if there is a bind exception.
+
             try {
                 chordNode = ChordNodeFactory.createLocalNode(localChordAddress);
                 chordNode.join(ChordNodeFactory.bindToRemoteNode(knownHostAddress));
 
             }
-            catch (final ConnectException e) { // database instance we're trying to
-                                               // connect to doesn't exist.
-                // e.printStackTrace();
+            catch (final ConnectException e) { // database instance we're trying to connect to doesn't exist.
+
                 ErrorHandling.errorNoEvent("Failed to connect to chord node on + " + localHostname + ":" + rmiPort + " known host: " + remoteHostname + ":" + remotePort);
                 return false;
             }
-            catch (final ExportException e) { // bind exception (most commonly
-                // nested in ExportException
+            catch (final ExportException e) { // bind exception (most commonly nested in ExportException
 
                 if (attempts > 50) {
                     ErrorHandling.errorNoEvent("Failed to connect to chord ring with known host: " + remoteHostname + ":" + remotePort + ", on address " + localHostname + ":" + rmiPort + ".");
@@ -649,8 +626,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     @Override
     public void update(final Observable o, final Object arg) {
 
-        // Diagnostic.traceNoEvent(DiagnosticLevel.INIT, arg);
-
         /*
          * If the predecessor of this node has changed.
          */
@@ -674,12 +649,10 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                 return;
             }
             predecessor.getRemote().getPredecessor();
-            return; // the old predecessor has not failed, so nothing needs to
-                    // be recovered.
+            return; // the old predecessor has not failed, so nothing needs to be recovered.
         }
         catch (final RemoteException e1) {
-            // If the old predecessor is no longer available it has failed - try
-            // to recover processses.
+            // If the old predecessor is no longer available it has failed - try to recover processes.
             if (predecessorURL != null) {
                 H2OEventBus.publish(new H2OEvent(predecessorURL.getURL(), DatabaseStates.DATABASE_FAILURE, null));
             }
@@ -845,7 +818,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     }
 
     /**
-     * Returns a reference to this chord nodes RMI registry.
+     * Returns a reference to this chord node's RMI registry.
      * 
      * @return The RMI registry of this chord node.
      * @throws RemoteException
@@ -874,13 +847,13 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
         final IChordRemoteReference successor = chordNode.getSuccessor();
 
-        final boolean successesorIsDifferentMachine = successor != null && !chordNode.getKey().equals(successor.getKey());
+        final boolean successorIsDifferentMachine = successor != null && !chordNode.getKey().equals(successor.getKey());
         final boolean thisIsntATestThatShouldPreventThis = !Constants.IS_NON_SM_TEST && !Constants.IS_TEAR_DOWN;
         final boolean systemTableHeldLocally = systemTableRef.isSystemTableLocal();
 
         DatabaseInstanceRemote successorDB = null;
 
-        if (successesorIsDifferentMachine && thisIsntATestThatShouldPreventThis) {
+        if (successorIsDifferentMachine && thisIsntATestThatShouldPreventThis) {
 
             try {
                 successorDB = getDatabaseInstanceAt(successor);
@@ -893,7 +866,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         /*
          * Migrate any local Table Managers.
          */
-        if (successesorIsDifferentMachine && thisIsntATestThatShouldPreventThis) {
+        if (successorIsDifferentMachine && thisIsntATestThatShouldPreventThis) {
 
             try {
                 // /successorDB = getDatabaseInstanceAt(successor);
@@ -907,8 +880,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
                     final TableManagerRemote dmr = wrapper.getTableManager();
                     if (dmr.getReplicaManager().contains(new DatabaseInstanceWrapper(localMachineLocation, localInstance, true)) && dmr.getReplicaManager().getNumberOfReplicas() == 1) {
-                        // This machine holds the only replica - replicate on
-                        // the successor as well.
+                        // This machine holds the only replica - replicate on the successor as well.
                         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Replicating table [" + wrapper.getTableInfo().getFullTableName() + "] to successor: " + successor);
 
                         successorDB.executeUpdate("CREATE REPLICA " + wrapper.getTableInfo().getFullTableName() + ";", false);
@@ -941,7 +913,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         /*
          * Migrate the System Table if needed.
          */
-        if (systemTableHeldLocally && successesorIsDifferentMachine && thisIsntATestThatShouldPreventThis) {
+        if (systemTableHeldLocally && successorIsDifferentMachine && thisIsntATestThatShouldPreventThis) {
 
             // Migrate the System Table to this node before shutdown.
             try {

@@ -14,7 +14,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2o.test.H2OTestBase;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -28,23 +27,18 @@ public class H2TestBigResult extends H2OTestBase {
     private Connection connection;
 
     @Override
+    protected int getNumberOfDatabases() {
+
+        return 1;
+    }
+
+    @Override
     @Before
     public void setUp() throws SQLException, IOException {
 
         super.setUp();
 
-        connection = makeConnection();
-    }
-
-    @Override
-    @After
-    public void tearDown() throws SQLException {
-
-        if (connection != null) {
-            connection.close();
-        }
-
-        super.tearDown();
+        connection = getConnections()[0];
     }
 
     @Test

@@ -19,30 +19,25 @@ import org.h2o.db.id.DatabaseURL;
  */
 public class LocalH2OProperties extends H2OPropertiesWrapper {
 
-    public static final String DEFAULT_CONFIG_DIRECTORY = "config";
-
     /**
      * @param dbURL the URL of this database instance. This is used to name and locate the properties file for this database on disk.
      */
     public LocalH2OProperties(final DatabaseURL dbURL) {
 
-        this(getConfigurationDirectoryPath(dbURL.getDbLocation()), dbURL.sanitizedLocation());
+        super(dbURL.getDbDirectory() + File.separator + dbURL.getDbName() + ".properties");
     }
 
-    public LocalH2OProperties(final String configDirectoryPath, final String propertiesFileName) {
+    //    private LocalH2OProperties(final String configDirectoryPath, final String propertiesFileName) {
+    //
+    //        super(configDirectoryPath + File.separator + propertiesFileName + ".properties");
+    //    }
 
-        super(configDirectoryPath + File.separator + propertiesFileName + ".properties");
-    }
+    //    private static String getConfigurationDirectoryPath(final String databaseDirectoryPath) {
+    //
+    //        return databaseDirectoryPath + "." + DEFAULT_CONFIG_DIRECTORY;
+    //    }
 
-    public static String getConfigurationDirectoryPath(final String databaseBaseDirectoryPath, final String databaseName, final int port) {
-
-        return databaseBaseDirectoryPath + File.separator + databaseName + port + "." + DEFAULT_CONFIG_DIRECTORY;
-    }
-
-    public static String getConfigurationDirectoryPath(final String databaseDirectoryPath) {
-
-        return databaseDirectoryPath + "." + DEFAULT_CONFIG_DIRECTORY;
-    }
+    // TODO are these needed?
 
     @Override
     public void createNewFile() {

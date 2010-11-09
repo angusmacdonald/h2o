@@ -250,14 +250,9 @@ public class Database implements DataHandler {
 
     private boolean referentialIntegrity = true;
 
-    private final boolean multiVersion;
-
     private DatabaseCloser closeOnExit;
 
     private Mode mode = Mode.getInstance(Mode.REGULAR);
-
-    // TODO change in version 1.2
-    private final boolean multiThreaded;
 
     private int maxOperationMemory = SysProperties.DEFAULT_MAX_OPERATION_MEMORY;
 
@@ -401,9 +396,6 @@ public class Database implements DataHandler {
 
         }
 
-        multiThreaded = true; // H2O. Required for the H2O push replication
-        // feature, among other things.
-
         this.cipher = cipher;
         final String lockMethodName = ci.getProperty("FILE_LOCK", null);
         accessModeLog = ci.getProperty("ACCESS_MODE_LOG", "rw").toLowerCase();
@@ -435,7 +427,7 @@ public class Database implements DataHandler {
         if (ignoreSummary != null) {
             recovery = true;
         }
-        multiVersion = ci.getProperty("MVCC", false);
+
         final boolean closeAtVmShutdown = ci.getProperty("DB_CLOSE_ON_EXIT", true);
         final int traceLevelFile = ci.getIntProperty(SetTypes.TRACE_LEVEL_FILE, TraceSystem.DEFAULT_TRACE_LEVEL_FILE);
         final int traceLevelSystemOut = ci.getIntProperty(SetTypes.TRACE_LEVEL_SYSTEM_OUT, TraceSystem.DEFAULT_TRACE_LEVEL_SYSTEM_OUT);

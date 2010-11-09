@@ -7,63 +7,71 @@ import java.io.IOException;
 
 public class PersistentStateManager {
 
-    private final File database_directory;
+    private final File[] database_directories;
 
-    //    private final File config_directory;
+    private final File config_directory;
 
     // -------------------------------------------------------------------------------------------------------
 
-    public PersistentStateManager(final String database_directory_path) {
+    public PersistentStateManager(final String config_directory_path, final String[] database_directory_paths) {
 
-        database_directory = new File(database_directory_path);
-        //        config_directory = new File(config_directory_path);
+        config_directory = new File(config_directory_path);
+        database_directories = new File[database_directory_paths.length];
+
+        for (int i = 0; i < database_directory_paths.length; i++) {
+            database_directories[i] = new File(database_directory_paths[i]);
+        }
     }
 
     // -------------------------------------------------------------------------------------------------------
 
     public void deletePersistentState() {
 
-        deleteDatabaseDirectoryIfPresent();
-        //        deleteConfigDirectoryIfPresent();
+        deleteDatabaseDirectoriesIfPresent();
+        deleteConfigDirectoryIfPresent();
     }
 
     public void assertPersistentStateIsAbsent() {
 
-        assertDatabaseDirectoryIsAbsent();
-        //        assertConfigDirectoryIsAbsent();
+        assertDatabaseDirectoriesAreAbsent();
+        assertConfigDirectoryIsAbsent();
     }
 
     // -------------------------------------------------------------------------------------------------------
 
-    private void deleteDatabaseDirectoryIfPresent() {
+    private void deleteDatabaseDirectoriesIfPresent() {
 
         try {
-            delete(database_directory);
+            for (final File database_directory : database_directories) {
+                delete(database_directory);
+            }
         }
         catch (final IOException e) {
             // Ignore.
         }
     }
 
-    //    private void deleteConfigDirectoryIfPresent() {
-    //
-    //        try {
-    //            delete(config_directory);
-    //        }
-    //        catch (final IOException e) {
-    //            // Ignore.
-    //        }
-    //    }
+    private void deleteConfigDirectoryIfPresent() {
 
-    private void assertDatabaseDirectoryIsAbsent() {
-
-        assertFalse(database_directory.exists());
+        try {
+            delete(config_directory);
+        }
+        catch (final IOException e) {
+            // Ignore.
+        }
     }
 
-    //    private void assertConfigDirectoryIsAbsent() {
-    //
-    //        assertFalse(config_directory.exists());
-    //    }
+    private void assertDatabaseDirectoriesAreAbsent() {
+
+        for (final File database_directory : database_directories) {
+            assertFalse(database_directory.exists());
+        }
+    }
+
+    private void assertConfigDirectoryIsAbsent() {
+
+        assertFalse(config_directory.exists());
+    }
 
     private void delete(final File file) throws IOException {
 

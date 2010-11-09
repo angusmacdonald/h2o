@@ -443,7 +443,7 @@ public class CreateReplica extends SchemaCommand {
                     statement = statement.substring(0, statement.length() - 1);
 
                     int i = 0;
-                    for (String part : statement.split(Constants.REPLICATION_DELIMETER)) {
+                    for (String part : statement.split(Constants.REPLICATION_DELIMITER)) {
                         part = part.trim();
                         if (firstRun) {
                             types.add(new Integer(part));

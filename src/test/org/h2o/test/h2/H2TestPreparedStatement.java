@@ -23,7 +23,6 @@ import java.sql.Timestamp;
 import java.sql.Types;
 
 import org.h2o.test.H2OTestBase;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -37,23 +36,18 @@ public class H2TestPreparedStatement extends H2OTestBase {
     private Connection connection;
 
     @Override
+    protected int getNumberOfDatabases() {
+
+        return 1;
+    }
+
+    @Override
     @Before
     public void setUp() throws SQLException, IOException {
 
         super.setUp();
 
-        connection = makeConnection();
-    }
-
-    @Override
-    @After
-    public void tearDown() throws SQLException {
-
-        if (connection != null) {
-            connection.close();
-        }
-
-        super.tearDown();
+        connection = getConnections()[0];
     }
 
     @Test(timeout = 60000)
@@ -61,21 +55,21 @@ public class H2TestPreparedStatement extends H2OTestBase {
 
         Diagnostic.trace();
 
-        Statement stat = null;
-        PreparedStatement prep = null;
+        Statement statement = null;
+        PreparedStatement prepared_statement = null;
 
         try {
-            stat = connection.createStatement();
-            stat.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, DATA CLOB)");
-            prep = connection.prepareStatement("INSERT INTO TEST VALUES(?, ?)");
+            statement = connection.createStatement();
+            statement.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, DATA CLOB)");
+            prepared_statement = connection.prepareStatement("INSERT INTO TEST VALUES(?, ?)");
             for (int i = 0; i < 5; i++) {
-                prep.setInt(1, i);
+                prepared_statement.setInt(1, i);
                 if (i % 2 == 0) {
-                    prep.setCharacterStream(2, new StringReader(getString(i)), -1);
+                    prepared_statement.setCharacterStream(2, new StringReader(getString(i)), -1);
                 }
-                prep.execute();
+                prepared_statement.execute();
             }
-            ResultSet rs = stat.executeQuery("SELECT * FROM TEST ORDER BY ID");
+            ResultSet rs = statement.executeQuery("SELECT * FROM TEST ORDER BY ID");
             int check = 0;
             for (int i = 0; i < 5; i++) {
                 assertTrue(rs.next());
@@ -85,28 +79,24 @@ public class H2TestPreparedStatement extends H2OTestBase {
                 assertEquals(getString(check), rs.getString(2));
             }
             assertFalse(rs.next());
-            stat.execute("DELETE FROM TEST");
+            statement.execute("DELETE FROM TEST");
             for (int i = 0; i < 3; i++) {
-                prep.setInt(1, i);
-                prep.setCharacterStream(2, new StringReader(getString(i)), -1);
-                prep.addBatch();
+                prepared_statement.setInt(1, i);
+                prepared_statement.setCharacterStream(2, new StringReader(getString(i)), -1);
+                prepared_statement.addBatch();
             }
-            prep.executeBatch();
-            rs = stat.executeQuery("SELECT * FROM TEST ORDER BY ID");
+            prepared_statement.executeBatch();
+            rs = statement.executeQuery("SELECT * FROM TEST ORDER BY ID");
             for (int i = 0; i < 3; i++) {
                 assertTrue(rs.next());
                 assertEquals(getString(i), rs.getString(2));
             }
             assertFalse(rs.next());
-            stat.execute("DROP TABLE TEST");
+            statement.execute("DROP TABLE TEST");
         }
         finally {
-            if (prep != null) {
-                prep.close();
-            }
-            if (stat != null) {
-                stat.close();
-            }
+            closeIfNotNull(prepared_statement);
+            closeIfNotNull(statement);
         }
     }
 
@@ -120,13 +110,13 @@ public class H2TestPreparedStatement extends H2OTestBase {
 
         Diagnostic.trace();
 
-        PreparedStatement prep = null;
+        PreparedStatement prepared_statement = null;
 
         try {
-            prep = connection.prepareStatement("CREATE TABLE BAD AS SELECT A");
+            prepared_statement = connection.prepareStatement("CREATE TABLE BAD AS SELECT A");
 
             try {
-                prep.execute();
+                prepared_statement.execute();
                 fail();
             }
             catch (final SQLException e) {
@@ -134,7 +124,7 @@ public class H2TestPreparedStatement extends H2OTestBase {
             }
 
             try {
-                prep.execute();
+                prepared_statement.execute();
                 fail();
             }
             catch (final SQLException e) {
@@ -142,9 +132,7 @@ public class H2TestPreparedStatement extends H2OTestBase {
             }
         }
         finally {
-            if (prep != null) {
-                prep.close();
-            }
+            closeIfNotNull(prepared_statement);
         }
     }
 
@@ -153,36 +141,32 @@ public class H2TestPreparedStatement extends H2OTestBase {
 
         Diagnostic.trace();
 
-        Statement stat = null;
-        PreparedStatement prep = null;
-        try {
+        Statement statement = null;
+        PreparedStatement prepared_statement = null;
 
-            stat = connection.createStatement();
-            stat.execute("CREATE TABLE TEST(FIELD INT PRIMARY KEY)");
-            stat.execute("INSERT INTO TEST VALUES(1)");
-            stat.execute("INSERT INTO TEST VALUES(2)");
-            prep = connection.prepareStatement("select FIELD FROM " + "(select FIELD FROM (SELECT FIELD  FROM TEST WHERE FIELD = ?) AS T2 " + "WHERE T2.FIELD = ?) AS T3 WHERE T3.FIELD = ?");
-            prep.setInt(1, 1);
-            prep.setInt(2, 1);
-            prep.setInt(3, 1);
-            ResultSet rs = prep.executeQuery();
+        try {
+            statement = connection.createStatement();
+            statement.execute("CREATE TABLE TEST(FIELD INT PRIMARY KEY)");
+            statement.execute("INSERT INTO TEST VALUES(1)");
+            statement.execute("INSERT INTO TEST VALUES(2)");
+            prepared_statement = connection.prepareStatement("select FIELD FROM " + "(select FIELD FROM (SELECT FIELD  FROM TEST WHERE FIELD = ?) AS T2 " + "WHERE T2.FIELD = ?) AS T3 WHERE T3.FIELD = ?");
+            prepared_statement.setInt(1, 1);
+            prepared_statement.setInt(2, 1);
+            prepared_statement.setInt(3, 1);
+            ResultSet rs = prepared_statement.executeQuery();
             rs.next();
             assertEquals(1, rs.getInt(1));
-            prep.setInt(1, 2);
-            prep.setInt(2, 2);
-            prep.setInt(3, 2);
-            rs = prep.executeQuery();
+            prepared_statement.setInt(1, 2);
+            prepared_statement.setInt(2, 2);
+            prepared_statement.setInt(3, 2);
+            rs = prepared_statement.executeQuery();
             rs.next();
             assertEquals(2, rs.getInt(1));
-            stat.execute("DROP TABLE TEST");
+            statement.execute("DROP TABLE TEST");
         }
         finally {
-            if (stat != null) {
-                stat.close();
-            }
-            if (prep != null) {
-                prep.close();
-            }
+            closeIfNotNull(statement);
+            closeIfNotNull(prepared_statement);
         }
     }
 
@@ -191,34 +175,31 @@ public class H2TestPreparedStatement extends H2OTestBase {
 
         Diagnostic.trace();
 
-        Statement stat = null;
-        PreparedStatement prep = null;
+        Statement statement = null;
+        PreparedStatement prepared_statement = null;
+
         try {
-            stat = connection.createStatement();
+            statement = connection.createStatement();
 
             ResultSet rs;
 
-            stat.execute("CREATE TABLE TEST(ID INT, H BINARY)");
-            prep = connection.prepareStatement("INSERT INTO TEST VALUES(?, HASH('SHA256', STRINGTOUTF8(?), 5))");
-            prep.setInt(1, 1);
-            prep.setString(2, "One");
-            prep.execute();
-            prep.setInt(1, 2);
-            prep.setString(2, "Two");
-            prep.execute();
-            rs = stat.executeQuery("SELECT COUNT(DISTINCT H) FROM TEST");
+            statement.execute("CREATE TABLE TEST(ID INT, H BINARY)");
+            prepared_statement = connection.prepareStatement("INSERT INTO TEST VALUES(?, HASH('SHA256', STRINGTOUTF8(?), 5))");
+            prepared_statement.setInt(1, 1);
+            prepared_statement.setString(2, "One");
+            prepared_statement.execute();
+            prepared_statement.setInt(1, 2);
+            prepared_statement.setString(2, "Two");
+            prepared_statement.execute();
+            rs = statement.executeQuery("SELECT COUNT(DISTINCT H) FROM TEST");
             rs.next();
             assertEquals(rs.getInt(1), 2);
 
-            stat.execute("DROP TABLE TEST");
+            statement.execute("DROP TABLE TEST");
         }
         finally {
-            if (stat != null) {
-                stat.close();
-            }
-            if (prep != null) {
-                prep.close();
-            }
+            closeIfNotNull(statement);
+            closeIfNotNull(prepared_statement);
         }
     }
 
@@ -227,15 +208,15 @@ public class H2TestPreparedStatement extends H2OTestBase {
 
         Diagnostic.trace();
 
-        PreparedStatement prep = null;
+        PreparedStatement prepared_statement = null;
 
         try {
 
-            prep = connection.prepareStatement("SELECT * FROM SYSTEM_RANGE(1, 100)");
+            prepared_statement = connection.prepareStatement("SELECT * FROM SYSTEM_RANGE(1, 100)");
             ResultSet rs;
             for (int j = 1; j < 20; j++) {
-                prep.setMaxRows(j);
-                rs = prep.executeQuery();
+                prepared_statement.setMaxRows(j);
+                rs = prepared_statement.executeQuery();
                 for (int i = 0; i < j; i++) {
                     assertTrue(rs.next());
                 }
@@ -243,9 +224,7 @@ public class H2TestPreparedStatement extends H2OTestBase {
             }
         }
         finally {
-            if (prep != null) {
-                prep.close();
-            }
+            closeIfNotNull(prepared_statement);
         }
     }
 
@@ -254,32 +233,30 @@ public class H2TestPreparedStatement extends H2OTestBase {
 
         Diagnostic.trace();
 
-        PreparedStatement prep = null;
+        PreparedStatement prepared_statement = null;
 
         try {
             try {
 
-                prep = connection.prepareStatement("SELECT * FROM (SELECT ? FROM DUAL)");
-                prep.setInt(1, 1);
-                prep.execute();
+                prepared_statement = connection.prepareStatement("SELECT * FROM (SELECT ? FROM DUAL)");
+                prepared_statement.setInt(1, 1);
+                prepared_statement.execute();
                 fail();
             }
             catch (final SQLException e) {
                 // Expected.
             }
 
-            prep = connection.prepareStatement("SELECT -?");
-            prep.setInt(1, 1);
-            prep.execute();
-            prep = connection.prepareStatement("SELECT ?-?");
-            prep.setInt(1, 1);
-            prep.setInt(2, 2);
-            prep.execute();
+            prepared_statement = connection.prepareStatement("SELECT -?");
+            prepared_statement.setInt(1, 1);
+            prepared_statement.execute();
+            prepared_statement = connection.prepareStatement("SELECT ?-?");
+            prepared_statement.setInt(1, 1);
+            prepared_statement.setInt(2, 2);
+            prepared_statement.execute();
         }
         finally {
-            if (prep != null) {
-                prep.close();
-            }
+            closeIfNotNull(prepared_statement);
         }
     }
 
@@ -288,25 +265,21 @@ public class H2TestPreparedStatement extends H2OTestBase {
 
         Diagnostic.trace();
 
-        Statement stat = null;
-        PreparedStatement prep = null;
+        Statement statement = null;
+        PreparedStatement prepared_statement = null;
 
         try {
-            stat = connection.createStatement();
-            stat.executeUpdate("create table test(tm timestamp)");
-            stat.executeUpdate("insert into test values(current_timestamp)");
-            prep = connection.prepareStatement("update test set tm = coalesce(?,tm)");
-            prep.setTimestamp(1, new java.sql.Timestamp(System.currentTimeMillis()));
-            prep.executeUpdate();
-            stat.executeUpdate("drop table test");
+            statement = connection.createStatement();
+            statement.executeUpdate("create table test(tm timestamp)");
+            statement.executeUpdate("insert into test values(current_timestamp)");
+            prepared_statement = connection.prepareStatement("update test set tm = coalesce(?,tm)");
+            prepared_statement.setTimestamp(1, new java.sql.Timestamp(System.currentTimeMillis()));
+            prepared_statement.executeUpdate();
+            statement.executeUpdate("drop table test");
         }
         finally {
-            if (stat != null) {
-                stat.close();
-            }
-            if (prep != null) {
-                prep.close();
-            }
+            closeIfNotNull(statement);
+            closeIfNotNull(prepared_statement);
         }
     }
 
@@ -315,23 +288,21 @@ public class H2TestPreparedStatement extends H2OTestBase {
 
         Diagnostic.trace();
 
-        PreparedStatement prep = null;
+        PreparedStatement prepared_statement = null;
 
         try {
-            prep = connection.prepareStatement("select * from table(x int = ?, name varchar = ?)");
-            ResultSetMetaData meta = prep.getMetaData();
+            prepared_statement = connection.prepareStatement("select * from table(x int = ?, name varchar = ?)");
+            ResultSetMetaData meta = prepared_statement.getMetaData();
             assertEquals(meta.getColumnCount(), 2);
             assertEquals(meta.getColumnTypeName(1), "INTEGER");
             assertEquals(meta.getColumnTypeName(2), "VARCHAR");
-            prep = connection.prepareStatement("call 1");
-            meta = prep.getMetaData();
+            prepared_statement = connection.prepareStatement("call 1");
+            meta = prepared_statement.getMetaData();
             assertEquals(meta.getColumnCount(), 1);
             assertEquals(meta.getColumnTypeName(1), "INTEGER");
         }
         finally {
-            if (prep != null) {
-                prep.close();
-            }
+            closeIfNotNull(prepared_statement);
         }
     }
 
@@ -340,12 +311,12 @@ public class H2TestPreparedStatement extends H2OTestBase {
 
         Diagnostic.trace();
 
-        PreparedStatement prep = null;
+        PreparedStatement prepared_statement = null;
 
         try {
-            prep = connection.prepareStatement("select * from table(x int = ?) order by x");
-            prep.setObject(1, new Object[]{new BigDecimal("1"), "2"});
-            final ResultSet rs = prep.executeQuery();
+            prepared_statement = connection.prepareStatement("select * from table(x int = ?) order by x");
+            prepared_statement.setObject(1, new Object[]{new BigDecimal("1"), "2"});
+            final ResultSet rs = prepared_statement.executeQuery();
             rs.next();
             assertEquals(rs.getString(1), "1");
             rs.next();
@@ -353,9 +324,7 @@ public class H2TestPreparedStatement extends H2OTestBase {
             assertFalse(rs.next());
         }
         finally {
-            if (prep != null) {
-                prep.close();
-            }
+            closeIfNotNull(prepared_statement);
         }
     }
 
@@ -364,22 +333,20 @@ public class H2TestPreparedStatement extends H2OTestBase {
 
         Diagnostic.trace();
 
-        Statement stat = null;
+        Statement statement = null;
 
         try {
-            stat = connection.createStatement();
-            stat.execute("CREATE TABLE TEST_UUID(id UUID DEFAULT random_UUID() PRIMARY KEY)");
-            stat.execute("INSERT INTO TEST_UUID() VALUES()");
-            final ResultSet rs = stat.getGeneratedKeys();
+            statement = connection.createStatement();
+            statement.execute("CREATE TABLE TEST_UUID(id UUID DEFAULT random_UUID() PRIMARY KEY)");
+            statement.execute("INSERT INTO TEST_UUID() VALUES()");
+            final ResultSet rs = statement.getGeneratedKeys();
             rs.next();
             final byte[] data = rs.getBytes(1);
             assertEquals(data.length, 16);
-            stat.execute("DROP TABLE TEST_UUID");
+            statement.execute("DROP TABLE TEST_UUID");
         }
         finally {
-            if (stat != null) {
-                stat.close();
-            }
+            closeIfNotNull(statement);
         }
     }
 
@@ -388,20 +355,21 @@ public class H2TestPreparedStatement extends H2OTestBase {
 
         Diagnostic.trace();
 
-        Statement stat = null;
-        PreparedStatement prep = null;
+        Statement statement = null;
+        PreparedStatement prepared_statement = null;
+
         try {
-            stat = connection.createStatement();
-            stat.execute("CREATE TABLE TEST(ID INT, DATA BINARY, JAVA OTHER)");
-            prep = connection.prepareStatement("INSERT INTO TEST VALUES(?, ?, ?)");
-            prep.setInt(1, 1);
-            prep.setObject(2, Integer.valueOf(11));
-            prep.setObject(3, null);
-            prep.execute();
-            prep.setInt(1, 2);
-            prep.setObject(2, Integer.valueOf(101), Types.OTHER);
-            prep.setObject(3, Integer.valueOf(103), Types.OTHER);
-            prep.execute();
+            statement = connection.createStatement();
+            statement.execute("CREATE TABLE TEST(ID INT, DATA BINARY, JAVA OTHER)");
+            prepared_statement = connection.prepareStatement("INSERT INTO TEST VALUES(?, ?, ?)");
+            prepared_statement.setInt(1, 1);
+            prepared_statement.setObject(2, Integer.valueOf(11));
+            prepared_statement.setObject(3, null);
+            prepared_statement.execute();
+            prepared_statement.setInt(1, 2);
+            prepared_statement.setObject(2, Integer.valueOf(101), Types.OTHER);
+            prepared_statement.setObject(3, Integer.valueOf(103), Types.OTHER);
+            prepared_statement.execute();
             final PreparedStatement p2 = connection.prepareStatement("SELECT * FROM TEST ORDER BY ID");
             final ResultSet rs = p2.executeQuery();
             rs.next();
@@ -415,15 +383,11 @@ public class H2TestPreparedStatement extends H2OTestBase {
             assertTrue(o instanceof Integer);
             assertEquals(((Integer) o).intValue(), 103);
             assertFalse(rs.next());
-            stat.execute("DROP TABLE TEST");
+            statement.execute("DROP TABLE TEST");
         }
         finally {
-            if (stat != null) {
-                stat.close();
-            }
-            if (prep != null) {
-                prep.close();
-            }
+            closeIfNotNull(statement);
+            closeIfNotNull(prepared_statement);
         }
     }
 
@@ -432,21 +396,19 @@ public class H2TestPreparedStatement extends H2OTestBase {
 
         Diagnostic.trace();
 
-        PreparedStatement prep = null;
+        PreparedStatement prepared_statement = null;
 
         try {
-            prep = connection.prepareStatement("SELECT ?");
+            prepared_statement = connection.prepareStatement("SELECT ?");
             final Timestamp ts = Timestamp.valueOf("2001-02-03 04:05:06");
-            prep.setObject(1, new java.util.Date(ts.getTime()));
-            final ResultSet rs = prep.executeQuery();
+            prepared_statement.setObject(1, new java.util.Date(ts.getTime()));
+            final ResultSet rs = prepared_statement.executeQuery();
             rs.next();
             final Timestamp ts2 = rs.getTimestamp(1);
             assertEquals(ts.toString(), ts2.toString());
         }
         finally {
-            if (prep != null) {
-                prep.close();
-            }
+            closeIfNotNull(prepared_statement);
         }
     }
 
@@ -490,9 +452,9 @@ public class H2TestPreparedStatement extends H2OTestBase {
             s.executeUpdate("DROP TABLE IF EXISTS TEST");
         }
         finally {
-            s.close();
-            u.close();
-            p.close();
+            closeIfNotNull(s);
+            closeIfNotNull(u);
+            closeIfNotNull(p);
         }
     }
 
@@ -562,15 +524,11 @@ public class H2TestPreparedStatement extends H2OTestBase {
             stat.execute("DROP TABLE TEST3");
         }
         finally {
-            if (prep != null) {
-                prep.close();
-            }
-            prep1.close();
-            prep2.close();
-            prep3.close();
-            if (stat != null) {
-                stat.close();
-            }
+            closeIfNotNull(prep);
+            closeIfNotNull(prep1);
+            closeIfNotNull(prep2);
+            closeIfNotNull(prep3);
+            closeIfNotNull(stat);
         }
     }
 
@@ -627,13 +585,9 @@ public class H2TestPreparedStatement extends H2OTestBase {
             stat.execute("DROP TABLE IF EXISTS TEST");
         }
         finally {
-            if (stat != null) {
-                stat.close();
-            }
-            if (prep != null) {
-                prep.close();
-            }
-            prepExe.close();
+            closeIfNotNull(stat);
+            closeIfNotNull(prep);
+            closeIfNotNull(prepExe);
         }
     }
 
@@ -642,44 +596,44 @@ public class H2TestPreparedStatement extends H2OTestBase {
 
         Diagnostic.trace();
 
-        Statement stat = null;
-        PreparedStatement prep = null;
+        Statement statement = null;
+        PreparedStatement prepared_statement = null;
         try {
-            stat = connection.createStatement();
+            statement = connection.createStatement();
 
-            stat.execute("CREATE TABLE TEST(ID INT)");
-            stat.execute("INSERT INTO TEST VALUES(1),(2),(3)");
+            statement.execute("CREATE TABLE TEST(ID INT)");
+            statement.execute("INSERT INTO TEST VALUES(1),(2),(3)");
 
             ResultSet rs;
-            prep = connection.prepareStatement("EXPLAIN SELECT COUNT(*) FROM TEST WHERE CASEWHEN(ID=1, ID, ID)=? GROUP BY ID");
-            prep.setInt(1, 1);
-            rs = prep.executeQuery();
+            prepared_statement = connection.prepareStatement("EXPLAIN SELECT COUNT(*) FROM TEST WHERE CASEWHEN(ID=1, ID, ID)=? GROUP BY ID");
+            prepared_statement.setInt(1, 1);
+            rs = prepared_statement.executeQuery();
             rs.next();
             String plan = rs.getString(1);
             rs.close();
-            prep = connection.prepareStatement("EXPLAIN SELECT COUNT(*) FROM TEST WHERE CASE ID WHEN 1 THEN ID WHEN 2 THEN ID ELSE ID END=? GROUP BY ID");
-            prep.setInt(1, 1);
-            rs = prep.executeQuery();
+            prepared_statement = connection.prepareStatement("EXPLAIN SELECT COUNT(*) FROM TEST WHERE CASE ID WHEN 1 THEN ID WHEN 2 THEN ID ELSE ID END=? GROUP BY ID");
+            prepared_statement.setInt(1, 1);
+            rs = prepared_statement.executeQuery();
             rs.next();
             plan = rs.getString(1);
 
-            prep = connection.prepareStatement("SELECT COUNT(*) FROM TEST WHERE CASEWHEN(ID=1, ID, ID)=? GROUP BY ID");
-            prep.setInt(1, 1);
-            rs = prep.executeQuery();
+            prepared_statement = connection.prepareStatement("SELECT COUNT(*) FROM TEST WHERE CASEWHEN(ID=1, ID, ID)=? GROUP BY ID");
+            prepared_statement.setInt(1, 1);
+            rs = prepared_statement.executeQuery();
             assertTrue(rs.next());
             assertEquals(rs.getInt(1), 1);
             assertFalse(rs.next());
 
-            prep = connection.prepareStatement("SELECT COUNT(*) FROM TEST WHERE CASE ID WHEN 1 THEN ID WHEN 2 THEN ID ELSE ID END=? GROUP BY ID");
-            prep.setInt(1, 1);
-            rs = prep.executeQuery();
+            prepared_statement = connection.prepareStatement("SELECT COUNT(*) FROM TEST WHERE CASE ID WHEN 1 THEN ID WHEN 2 THEN ID ELSE ID END=? GROUP BY ID");
+            prepared_statement.setInt(1, 1);
+            rs = prepared_statement.executeQuery();
             assertTrue(rs.next());
             assertEquals(rs.getInt(1), 1);
             assertFalse(rs.next());
 
-            prep = connection.prepareStatement("SELECT * FROM TEST WHERE ? IS NULL");
-            prep.setString(1, "Hello");
-            rs = prep.executeQuery();
+            prepared_statement = connection.prepareStatement("SELECT * FROM TEST WHERE ? IS NULL");
+            prepared_statement.setString(1, "Hello");
+            rs = prepared_statement.executeQuery();
             assertFalse(rs.next());
 
             try {
@@ -690,25 +644,21 @@ public class H2TestPreparedStatement extends H2OTestBase {
                 // Expected.
             }
 
-            prep = connection.prepareStatement("select cast(? as varchar) from dual union select ? from dual");
-            assertEquals(prep.getParameterMetaData().getParameterCount(), 2);
-            prep.setString(1, "a");
-            prep.setString(2, "a");
-            rs = prep.executeQuery();
+            prepared_statement = connection.prepareStatement("select cast(? as varchar) from dual union select ? from dual");
+            assertEquals(prepared_statement.getParameterMetaData().getParameterCount(), 2);
+            prepared_statement.setString(1, "a");
+            prepared_statement.setString(2, "a");
+            rs = prepared_statement.executeQuery();
             rs.next();
             assertEquals(rs.getString(1), "a");
             assertEquals(rs.getString(1), "a");
             assertFalse(rs.next());
 
-            stat.execute("DROP TABLE TEST");
+            statement.execute("DROP TABLE TEST");
         }
         finally {
-            if (prep != null) {
-                prep.close();
-            }
-            if (stat != null) {
-                stat.close();
-            }
+            closeIfNotNull(prepared_statement);
+            closeIfNotNull(statement);
         }
     }
 
@@ -717,32 +667,28 @@ public class H2TestPreparedStatement extends H2OTestBase {
 
         Diagnostic.trace();
 
-        Statement stat = null;
-        PreparedStatement prep = null;
+        Statement statement = null;
+        PreparedStatement prepared_statement = null;
         try {
-            stat = connection.createStatement();
-            stat.execute("CREATE TABLE TEST(ID INT)");
-            stat.execute("INSERT INTO TEST VALUES(1),(2),(3)");
-            prep = connection.prepareStatement("select x.id, ? from " + "(select * from test where id in(?, ?)) x where x.id*2 <>  ?");
-            assertEquals(prep.getParameterMetaData().getParameterCount(), 4);
-            prep.setInt(1, 0);
-            prep.setInt(2, 1);
-            prep.setInt(3, 2);
-            prep.setInt(4, 4);
-            final ResultSet rs = prep.executeQuery();
+            statement = connection.createStatement();
+            statement.execute("CREATE TABLE TEST(ID INT)");
+            statement.execute("INSERT INTO TEST VALUES(1),(2),(3)");
+            prepared_statement = connection.prepareStatement("select x.id, ? from " + "(select * from test where id in(?, ?)) x where x.id*2 <>  ?");
+            assertEquals(prepared_statement.getParameterMetaData().getParameterCount(), 4);
+            prepared_statement.setInt(1, 0);
+            prepared_statement.setInt(2, 1);
+            prepared_statement.setInt(3, 2);
+            prepared_statement.setInt(4, 4);
+            final ResultSet rs = prepared_statement.executeQuery();
             rs.next();
             assertEquals(rs.getInt(1), 1);
             assertEquals(rs.getInt(2), 0);
             assertFalse(rs.next());
-            stat.execute("DROP TABLE TEST");
+            statement.execute("DROP TABLE TEST");
         }
         finally {
-            if (stat != null) {
-                stat.close();
-            }
-            if (prep != null) {
-                prep.close();
-            }
+            closeIfNotNull(prepared_statement);
+            closeIfNotNull(statement);
         }
     }
 
@@ -751,39 +697,39 @@ public class H2TestPreparedStatement extends H2OTestBase {
 
         Diagnostic.trace();
 
-        Statement stat = null;
-        PreparedStatement prep = null;
+        Statement statement = null;
+        PreparedStatement prepared_statement = null;
 
         try {
-            stat = connection.createStatement();
+            statement = connection.createStatement();
             ResultSet rs;
-            stat.execute("DROP TABLE IF EXISTS TEST;");
-            stat.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255))");
-            stat.execute("INSERT INTO TEST VALUES(1, 'Hello')");
-            prep = connection.prepareStatement("SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? FROM TEST");
-            prep.setObject(1, Boolean.valueOf(true));
-            prep.setObject(2, "Abc");
-            prep.setObject(3, new BigDecimal("10.2"));
-            prep.setObject(4, Byte.valueOf((byte) 0xff));
-            prep.setObject(5, new Short(Short.MAX_VALUE));
-            prep.setObject(6, new Integer(Integer.MIN_VALUE));
-            prep.setObject(7, new Long(Long.MAX_VALUE));
-            prep.setObject(8, new Float(Float.MAX_VALUE));
-            prep.setObject(9, new Double(Double.MAX_VALUE));
-            prep.setObject(10, java.sql.Date.valueOf("2001-02-03"));
-            prep.setObject(11, java.sql.Time.valueOf("04:05:06"));
-            prep.setObject(12, java.sql.Timestamp.valueOf("2001-02-03 04:05:06.123456789"));
-            prep.setObject(13, new java.util.Date(java.sql.Date.valueOf("2001-02-03").getTime()));
+            statement.execute("DROP TABLE IF EXISTS TEST;");
+            statement.execute("CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255))");
+            statement.execute("INSERT INTO TEST VALUES(1, 'Hello')");
+            prepared_statement = connection.prepareStatement("SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? FROM TEST");
+            prepared_statement.setObject(1, Boolean.valueOf(true));
+            prepared_statement.setObject(2, "Abc");
+            prepared_statement.setObject(3, new BigDecimal("10.2"));
+            prepared_statement.setObject(4, Byte.valueOf((byte) 0xff));
+            prepared_statement.setObject(5, new Short(Short.MAX_VALUE));
+            prepared_statement.setObject(6, new Integer(Integer.MIN_VALUE));
+            prepared_statement.setObject(7, new Long(Long.MAX_VALUE));
+            prepared_statement.setObject(8, new Float(Float.MAX_VALUE));
+            prepared_statement.setObject(9, new Double(Double.MAX_VALUE));
+            prepared_statement.setObject(10, java.sql.Date.valueOf("2001-02-03"));
+            prepared_statement.setObject(11, java.sql.Time.valueOf("04:05:06"));
+            prepared_statement.setObject(12, java.sql.Timestamp.valueOf("2001-02-03 04:05:06.123456789"));
+            prepared_statement.setObject(13, new java.util.Date(java.sql.Date.valueOf("2001-02-03").getTime()));
             final byte[] arr_original = new byte[]{10, 20, 30};
-            prep.setObject(14, arr_original);
-            prep.setObject(15, Character.valueOf('a'));
-            prep.setObject(16, "2001-01-02", Types.DATE);
+            prepared_statement.setObject(14, arr_original);
+            prepared_statement.setObject(15, Character.valueOf('a'));
+            prepared_statement.setObject(16, "2001-01-02", Types.DATE);
             // converting to null seems strange...
-            prep.setObject(17, "2001-01-02", Types.NULL);
-            prep.setObject(18, "3.725", Types.DOUBLE);
-            prep.setObject(19, "23:22:21", Types.TIME);
-            prep.setObject(20, new java.math.BigInteger("12345"), Types.OTHER);
-            rs = prep.executeQuery();
+            prepared_statement.setObject(17, "2001-01-02", Types.NULL);
+            prepared_statement.setObject(18, "3.725", Types.DOUBLE);
+            prepared_statement.setObject(19, "23:22:21", Types.TIME);
+            prepared_statement.setObject(20, new java.math.BigInteger("12345"), Types.OTHER);
+            rs = prepared_statement.executeQuery();
             rs.next();
             assertTrue(rs.getObject(1).equals(Boolean.valueOf(true)));
             assertTrue(rs.getObject(2).equals("Abc"));
@@ -810,15 +756,11 @@ public class H2TestPreparedStatement extends H2OTestBase {
             assertTrue(rs.getObject(19).equals(java.sql.Time.valueOf("23:22:21")));
             assertTrue(rs.getObject(20).equals(new java.math.BigInteger("12345")));
 
-            stat.execute("DROP TABLE TEST");
+            statement.execute("DROP TABLE TEST");
         }
         finally {
-            if (prep != null) {
-                prep.close();
-            }
-            if (stat != null) {
-                stat.close();
-            }
+            closeIfNotNull(prepared_statement);
+            closeIfNotNull(statement);
         }
     }
 }

@@ -13,8 +13,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import org.h2o.util.LocalH2OProperties;
-
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -25,6 +23,8 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class LocatorServer extends Thread {
+
+    public static final String DEFAULT_CONFIG_DIRECTORY = "config";
 
     private static final int DEFAULT_LOCATOR_SERVER_PORT = 29999;
     private static final long SHUTDOWN_CHECK_DELAY = 2000;
@@ -41,7 +41,7 @@ public class LocatorServer extends Thread {
 
     public LocatorServer(final int port, final String databaseName) {
 
-        this(port, databaseName, LocalH2OProperties.DEFAULT_CONFIG_DIRECTORY);
+        this(port, databaseName, DEFAULT_CONFIG_DIRECTORY);
     }
 
     public LocatorServer(final int port, final String databaseName, final String locatorFileDirectory) {

@@ -110,7 +110,7 @@ public class H2O {
      * @param databaseBaseDirectoryPath the directory in which database files are stored
      * @param databaseDescriptorLocation the location (file path or URL) of the database descriptor file
      */
-    public H2O(final String databaseName, final int tcpPort, final int webPort, final String databaseBaseDirectoryPath, final String databaseDescriptorLocation) {
+    private H2O(final String databaseName, final int tcpPort, final int webPort, final String databaseBaseDirectoryPath, final String databaseDescriptorLocation) {
 
         this.databaseName = databaseName;
         this.tcpPort = tcpPort;
@@ -135,7 +135,7 @@ public class H2O {
 
     /**
      * Start a local H2O instance with a running TCP server <strong>and web interface </strong>. This will automatically start a local
-     * locator file, and doesn't need a descriptor file to run. A descriptor file will be created in the configuration directory.
+     * locator file, and doesn't need a descriptor file to run. A descriptor file will be created within the database directory.
      * 
      * @param databaseName the name of the database
      * @param tcpPort the port for this database's TCP server
@@ -145,19 +145,6 @@ public class H2O {
     public H2O(final String databaseName, final int tcpPort, final int webPort, final String databaseDirectoryPath) {
 
         this(databaseName, tcpPort, webPort, databaseDirectoryPath, null);
-    }
-
-    /**
-     * Start a local H2O instance with a running TCP server, <strong>but without a web interface</strong>. This will automatically start a
-     * local locator file, and doesn't need a descriptor file to run. A descriptor file will be created in the configuration directory.
-     * 
-     * @param databaseName the name of the database
-     * @param tcpPort the port for this database's TCP server
-     * @param databaseDirectoryPath the directory in which database files are stored
-     */
-    public H2O(final String databaseName, final int tcpPort, final String databaseDirectoryPath) {
-
-        this(databaseName, tcpPort, 0, databaseDirectoryPath, null);
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -175,7 +162,7 @@ public class H2O {
             // A new locator server should be started.
             final int locatorPort = tcpPort + 1;
 
-            locator = new H2OLocator(databaseName, databaseBaseDirectoryPath, locatorPort, tcpPort, true);
+            locator = new H2OLocator(databaseName, locatorPort, true, databaseBaseDirectoryPath);
 
             databaseDescriptorLocation = locator.start();
         }

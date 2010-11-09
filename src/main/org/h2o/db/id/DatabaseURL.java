@@ -8,9 +8,12 @@
  */
 package org.h2o.db.id;
 
+import java.io.File;
 import java.io.Serializable;
 
 import org.h2.util.NetUtils;
+
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * Parsed representation of an H2 database URL.
@@ -29,52 +32,52 @@ public class DatabaseURL implements Serializable {
     /**
      * The original unedited database URL.
      */
-    private String originalURL;
+    private final String originalURL;
 
     /**
      * Original URL edited to remove localhost, and replace with the local hostname.
      */
-    private String newURL;
+    private final String newURL;
 
     /**
      * New URL, but without <code>:sm:</code>, if that exists in the URL. This gives the class a way of comparing database instances,
      * because the existence of <code>:sm:</code> could render a true equals comparison false.
      */
-    private String urlWithoutSM;
+    private final String urlWithoutSM;
 
     /**
      * Hostname contained in the URL. If the DB is in-memory there will be no host name - this field will be set to null.
      */
-    private String hostname;
+    private final String hostname;
 
     /**
      * Port number in the URL. If the DB is in-memory there will be no port number - this field will be set to -1.
      */
-    private int port;
+    private final int port;
 
     /**
      * The location of the database on disk.
      */
-    private String dbLocation;
+    private final String dbLocation;
 
     /**
      * Whether the database is in-memory.
      */
-    private boolean mem;
+    private final boolean mem;
 
     /**
      * Whether the database is open to TCP connections.
      */
-    private boolean tcp;
+    private final boolean tcp;
 
     /**
      * Whether the database in question is a System Table.
      */
-    private boolean systemTable;
+    private final boolean systemTable;
 
     private int rmiPort;
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
 
         // Test.
         System.out.println("First test, TCP DB:");
@@ -97,9 +100,9 @@ public class DatabaseURL implements Serializable {
 
     public static DatabaseURL parseURL(String url) {
 
-        if (url == null) return null;
+        if (url == null) { return null; }
 
-        String[] split = url.split("\\+");
+        final String[] split = url.split("\\+");
 
         url = split[0];
 
@@ -108,9 +111,9 @@ public class DatabaseURL implements Serializable {
             rmiPort = Integer.parseInt(split[1]);
         }
 
-        boolean tcp = (url.contains(":tcp:"));
-        boolean mem = (url.contains(":mem:"));
-        boolean systemTable = (url.contains(":sm:"));
+        final boolean tcp = url.contains(":tcp:");
+        final boolean mem = url.contains(":mem:");
+        final boolean systemTable = url.contains(":sm:");
 
         int port = -1;
         String hostname = null;
@@ -139,7 +142,7 @@ public class DatabaseURL implements Serializable {
             try {
                 port = new Integer(portString).intValue();
             }
-            catch (NumberFormatException e) {
+            catch (final NumberFormatException e) {
                 port = DEFAULT_PORT_NUMBER;
             }
 
@@ -155,23 +158,25 @@ public class DatabaseURL implements Serializable {
                 url = url.substring("jdbc:h2:".length());
             }
 
-            String[] remaining = url.split(";");
+            final String[] remaining = url.split(";");
 
             dbLocation = remaining[0];
 
             // XXX the rest is currently ignored.
         }
 
-        if (hostname == null) hostname = NetUtils.getLocalAddress();
+        if (hostname == null) {
+            hostname = NetUtils.getLocalAddress();
+        }
 
         return new DatabaseURL(url, hostname, port, dbLocation, tcp, mem, systemTable, rmiPort);
     }
 
-    private DatabaseURL(String originalURL, String hostname, int port, String dbLocation, boolean tcp, boolean mem, boolean systemTable, int rmiPort) {
+    private DatabaseURL(final String originalURL, final String hostname, final int port, final String dbLocation, final boolean tcp, final boolean mem, final boolean systemTable, final int rmiPort) {
 
         this.originalURL = originalURL;
-        this.newURL = "jdbc:h2:" + ((tcp) ? "tcp://" + hostname + ":" + port + "/" : "") + ((mem) ? "mem:" : "") + dbLocation;
-        this.urlWithoutSM = "jdbc:h2:" + ((tcp) ? "tcp://" + hostname + ":" + port + "/" : "") + ((mem) ? "mem:" : "") + dbLocation;
+        newURL = "jdbc:h2:" + (tcp ? "tcp://" + hostname + ":" + port + "/" : "") + (mem ? "mem:" : "") + dbLocation;
+        urlWithoutSM = "jdbc:h2:" + (tcp ? "tcp://" + hostname + ":" + port + "/" : "") + (mem ? "mem:" : "") + dbLocation;
         this.hostname = hostname;
         this.port = port;
         this.tcp = tcp;
@@ -187,13 +192,13 @@ public class DatabaseURL implements Serializable {
      * @param connectionPort
      * @param dbLocation2
      */
-    public DatabaseURL(String connectionType, String hostname, int port, String dbLocation, boolean systemTable) {
+    public DatabaseURL(final String connectionType, final String hostname, final int port, final String dbLocation, final boolean systemTable) {
 
         this(null, hostname, port, dbLocation, connectionType.equals("tcp"), connectionType.equals("mem"), systemTable, 0);
 
     }
 
-    public DatabaseURL(String connectionType, String hostname, int port, String dbLocation, boolean systemTable, int rmiPort) {
+    public DatabaseURL(final String connectionType, final String hostname, final int port, final String dbLocation, final boolean systemTable, final int rmiPort) {
 
         this(connectionType, hostname, port, dbLocation, systemTable);
         this.rmiPort = rmiPort;
@@ -233,6 +238,34 @@ public class DatabaseURL implements Serializable {
     public String getDbLocation() {
 
         return dbLocation;
+    }
+
+    /**
+     * Returns the name of the database. This assumes that the database location is represented as a two-part path <db_root>/<db_name>.
+     * @return the name of the database
+     */
+    public String getDbDirectory() {
+
+        return getDbLocationComponents()[0];
+    }
+
+    private String[] getDbLocationComponents() {
+
+        final String[] parts = dbLocation.split(File.separator);
+        if (parts.length != 2) {
+            ErrorHandling.error("dbLocation expected to have two components but was: " + dbLocation);
+            return null;
+        }
+        return parts;
+    }
+
+    /**
+     * Returns the name of the database. This assumes that the database location is represented as a two-part path <db_root>/<db_name>.
+     * @return the name of the database
+     */
+    public String getDbName() {
+
+        return getDbLocationComponents()[1];
     }
 
     /**
@@ -297,7 +330,7 @@ public class DatabaseURL implements Serializable {
      */
     public boolean isValid() {
 
-        return (newURL != null);
+        return newURL != null;
     }
 
     /*
@@ -312,7 +345,7 @@ public class DatabaseURL implements Serializable {
         result = prime * result + (mem ? 1231 : 1237);
         result = prime * result + port;
         result = prime * result + (tcp ? 1231 : 1237);
-        result = prime * result + ((urlWithoutSM == null) ? 0 : urlWithoutSM.hashCode());
+        result = prime * result + (urlWithoutSM == null ? 0 : urlWithoutSM.hashCode());
         return result;
     }
 
@@ -321,26 +354,26 @@ public class DatabaseURL implements Serializable {
      * @see java.lang.Object#equals(java.lang.Object)
      */
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
 
-        if (this == obj) return true;
-        if (obj == null) return false;
-        if (getClass() != obj.getClass()) return false;
-        DatabaseURL other = (DatabaseURL) obj;
-        if (mem != other.mem) return false;
-        if (port != other.port) return false;
-        if (tcp != other.tcp) return false;
+        if (this == obj) { return true; }
+        if (obj == null) { return false; }
+        if (getClass() != obj.getClass()) { return false; }
+        final DatabaseURL other = (DatabaseURL) obj;
+        if (mem != other.mem) { return false; }
+        if (port != other.port) { return false; }
+        if (tcp != other.tcp) { return false; }
         if (urlWithoutSM == null) {
-            if (other.urlWithoutSM != null) return false;
+            if (other.urlWithoutSM != null) { return false; }
         }
-        else if (!urlWithoutSM.equals(other.urlWithoutSM)) return false;
+        else if (!urlWithoutSM.equals(other.urlWithoutSM)) { return false; }
         return true;
     }
 
     /**
      * @param rmiPort
      */
-    public void setRMIPort(int rmiPort) {
+    public void setRMIPort(final int rmiPort) {
 
         this.rmiPort = rmiPort;
     }

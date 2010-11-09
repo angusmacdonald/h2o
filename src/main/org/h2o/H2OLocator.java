@@ -17,7 +17,6 @@ import java.util.Properties;
 
 import org.h2.util.NetUtils;
 import org.h2o.locator.server.LocatorServer;
-import org.h2o.util.LocalH2OProperties;
 
 import uk.ac.standrews.cs.nds.util.CommandLineArgs;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -79,9 +78,14 @@ public class H2OLocator {
         this.configurationDirectory = configurationDirectory;
     }
 
-    public H2OLocator(final String databaseName, final String databaseBaseDirectoryPath, final int locatorPort, final int databasePort, final boolean createDescriptor) {
+    //    public H2OLocator(final String databaseName, final String databaseBaseDirectoryPath, final int locatorPort, final int databasePort, final boolean createDescriptor) {
+    //
+    //        this(databaseName, locatorPort, createDescriptor, getConfigurationDirectoryPath(databaseBaseDirectoryPath, databaseName, databasePort));
+    //    }
 
-        this(databaseName, locatorPort, createDescriptor, LocalH2OProperties.getConfigurationDirectoryPath(databaseBaseDirectoryPath, databaseName, databasePort));
+    private static String getConfigurationDirectoryPath(final String databaseBaseDirectoryPath, final String databaseName, final int port) {
+
+        return databaseBaseDirectoryPath + File.separator + databaseName + port;
     }
 
     public String start() throws IOException {

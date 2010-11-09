@@ -21,7 +21,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2o.test.H2OTestBase;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -54,9 +53,15 @@ public class H2TestBatchUpdates extends H2OTestBase {
 
     private Connection connection;
 
-    private Statement stat;
+    private Statement statement;
 
     private PreparedStatement prep;
+
+    @Override
+    protected int getNumberOfDatabases() {
+
+        return 1;
+    }
 
     @Override
     @Before
@@ -64,16 +69,7 @@ public class H2TestBatchUpdates extends H2OTestBase {
 
         super.setUp();
 
-        connection = makeConnection();
-    }
-
-    @Override
-    @After
-    public void tearDown() throws SQLException {
-
-        closeIfNotNull(connection);
-
-        super.tearDown();
+        connection = getConnections()[0];
     }
 
     @Test
@@ -157,12 +153,12 @@ public class H2TestBatchUpdates extends H2OTestBase {
 
     public void testCoffee() throws SQLException {
 
-        stat = connection.createStatement();
+        statement = connection.createStatement();
         final DatabaseMetaData meta = connection.getMetaData();
         assertTrue(!meta.supportsBatchUpdates());
 
-        stat.executeUpdate("DROP TABLE IF EXISTS TEST;");
-        stat.executeUpdate("CREATE TABLE TEST(KEY_ID INT PRIMARY KEY," + "C_NAME VARCHAR(255),PRICE DECIMAL(20,2),TYPE_ID INT)");
+        statement.executeUpdate("DROP TABLE IF EXISTS TEST;");
+        statement.executeUpdate("CREATE TABLE TEST(KEY_ID INT PRIMARY KEY," + "C_NAME VARCHAR(255),PRICE DECIMAL(20,2),TYPE_ID INT)");
         String newName = null;
         float newPrice = 0;
         int newType = 0;
@@ -218,13 +214,13 @@ public class H2TestBatchUpdates extends H2OTestBase {
         final String query1 = "SELECT COUNT(*) FROM TEST WHERE TYPE_ID=2";
         final String query2 = "SELECT COUNT(*) FROM TEST WHERE TYPE_ID=3";
         final String query3 = "SELECT COUNT(*) FROM TEST WHERE TYPE_ID=4";
-        ResultSet rs = stat.executeQuery(query1);
+        ResultSet rs = statement.executeQuery(query1);
         rs.next();
         retValue[i++] = rs.getInt(1);
-        rs = stat.executeQuery(query2);
+        rs = statement.executeQuery(query2);
         rs.next();
         retValue[i++] = rs.getInt(1);
-        rs = stat.executeQuery(query3);
+        rs = statement.executeQuery(query3);
         rs.next();
         retValue[i++] = rs.getInt(1);
         for (int j = 0; j < updateCount.length; j++) {
@@ -240,16 +236,16 @@ public class H2TestBatchUpdates extends H2OTestBase {
         final String sUpdCoffee = COFFEE_UPDATE1;
         final String sDelCoffee = COFFEE_DELETE1;
         final String sInsCoffee = COFFEE_INSERT1;
-        stat.addBatch(sUpdCoffee);
-        stat.addBatch(sDelCoffee);
-        stat.addBatch(sInsCoffee);
-        final int[] updateCount = stat.executeBatch();
+        statement.addBatch(sUpdCoffee);
+        statement.addBatch(sDelCoffee);
+        statement.addBatch(sInsCoffee);
+        final int[] updateCount = statement.executeBatch();
         updCountLength = updateCount.length;
 
         assertEquals(3, updCountLength);
 
         final String query1 = "SELECT COUNT(*) FROM TEST WHERE TYPE_ID=1";
-        final ResultSet rs = stat.executeQuery(query1);
+        final ResultSet rs = statement.executeQuery(query1);
         rs.next();
         retValue[i++] = rs.getInt(1);
         // 1 as delete Statement will delete only one row
@@ -285,11 +281,11 @@ public class H2TestBatchUpdates extends H2OTestBase {
         final String sUpdCoffee = COFFEE_UPDATE1;
         final String sInsCoffee = COFFEE_INSERT1;
         final String sDelCoffee = COFFEE_DELETE1;
-        stat.addBatch(sUpdCoffee);
-        stat.addBatch(sDelCoffee);
-        stat.addBatch(sInsCoffee);
-        stat.clearBatch();
-        final int[] updateCount = stat.executeBatch();
+        statement.addBatch(sUpdCoffee);
+        statement.addBatch(sDelCoffee);
+        statement.addBatch(sInsCoffee);
+        statement.clearBatch();
+        final int[] updateCount = statement.executeBatch();
         updCountLength = updateCount.length;
 
         assertEquals(0, updCountLength);
@@ -321,13 +317,13 @@ public class H2TestBatchUpdates extends H2OTestBase {
         final String query2 = "SELECT COUNT(*) FROM TEST WHERE TYPE_ID=2";
         // 3 is the number that is set Third for Type id in Prepared Statement
         final String query3 = "SELECT COUNT(*) FROM TEST WHERE TYPE_ID=3";
-        ResultSet rs = stat.executeQuery(query1);
+        ResultSet rs = statement.executeQuery(query1);
         rs.next();
         retValue[i++] = rs.getInt(1);
-        rs = stat.executeQuery(query2);
+        rs = statement.executeQuery(query2);
         rs.next();
         retValue[i++] = rs.getInt(1);
-        rs = stat.executeQuery(query3);
+        rs = statement.executeQuery(query3);
         rs.next();
         retValue[i++] = rs.getInt(1);
 
@@ -375,16 +371,16 @@ public class H2TestBatchUpdates extends H2OTestBase {
         final String sUpdCoffee = COFFEE_UPDATE1;
         final String sInsCoffee = COFFEE_INSERT1;
         final String sDelCoffee = COFFEE_DELETE1;
-        stat.addBatch(sUpdCoffee);
-        stat.addBatch(sDelCoffee);
-        stat.addBatch(sInsCoffee);
-        final int[] updateCount = stat.executeBatch();
+        statement.addBatch(sUpdCoffee);
+        statement.addBatch(sDelCoffee);
+        statement.addBatch(sInsCoffee);
+        final int[] updateCount = statement.executeBatch();
         updCountLength = updateCount.length;
 
         assertEquals(3, updCountLength);
 
         final String query1 = "SELECT COUNT(*) FROM TEST WHERE TYPE_ID=1";
-        final ResultSet rs = stat.executeQuery(query1);
+        final ResultSet rs = statement.executeQuery(query1);
         rs.next();
         retValue[i++] = rs.getInt(1);
         // 1 as Delete Statement will delete only one row
@@ -399,7 +395,7 @@ public class H2TestBatchUpdates extends H2OTestBase {
     private void testExecuteBatch05() throws SQLException {
 
         int updCountLength = 0;
-        final int[] updateCount = stat.executeBatch();
+        final int[] updateCount = statement.executeBatch();
         updCountLength = updateCount.length;
         assertEquals(0, updCountLength);
     }
@@ -409,11 +405,11 @@ public class H2TestBatchUpdates extends H2OTestBase {
         // Insert a row which is already Present
         final String sInsCoffee = COFFEE_INSERT1;
         final String sDelCoffee = COFFEE_DELETE1;
-        stat.addBatch(sInsCoffee);
-        stat.addBatch(sInsCoffee);
-        stat.addBatch(sDelCoffee);
+        statement.addBatch(sInsCoffee);
+        statement.addBatch(sInsCoffee);
+        statement.addBatch(sDelCoffee);
         try {
-            stat.executeBatch();
+            statement.executeBatch();
             fail();
         }
         catch (final BatchUpdateException b) {
@@ -482,11 +478,11 @@ public class H2TestBatchUpdates extends H2OTestBase {
 
             // Check to see if the third row from the batch was added
             final String query = COFFEE_SELECT_CONTINUED;
-            final ResultSet rs = stat.executeQuery(query);
+            final ResultSet rs = statement.executeQuery(query);
             rs.next();
             final int count = rs.getInt(1);
             rs.close();
-            stat.close();
+            statement.close();
             // Make sure that we have the correct error code for
             // the failed update.
             if (!(batchUpdates[1] == -3 && count == 1)) {

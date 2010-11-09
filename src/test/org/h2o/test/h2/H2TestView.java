@@ -11,7 +11,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2o.test.H2OTestBase;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -25,23 +24,18 @@ public class H2TestView extends H2OTestBase {
     private Connection connection;
 
     @Override
+    protected int getNumberOfDatabases() {
+
+        return 1;
+    }
+
+    @Override
     @Before
     public void setUp() throws SQLException, IOException {
 
         super.setUp();
 
-        connection = makeConnection();
-    }
-
-    @Override
-    @After
-    public void tearDown() throws SQLException {
-
-        if (connection != null) {
-            connection.close();
-        }
-
-        super.tearDown();
+        connection = getConnections()[0];
     }
 
     @Test
@@ -49,18 +43,18 @@ public class H2TestView extends H2OTestBase {
 
         Diagnostic.trace();
 
-        Statement stat = null;
+        Statement statement = null;
 
         try {
-            stat = connection.createStatement();
-            stat.execute("create table test(id int primary key) as select 1");
+            statement = connection.createStatement();
+            statement.execute("create table test(id int primary key) as select 1");
             final PreparedStatement prep = connection.prepareStatement("select * from test t where t.id in (select t2.id from test t2 where t2.id in (?, ?))");
             prep.setInt(1, 1);
             prep.setInt(2, 2);
             prep.execute();
         }
         finally {
-            stat.close();
+            closeIfNotNull(statement);
         }
     }
 
@@ -69,21 +63,21 @@ public class H2TestView extends H2OTestBase {
 
         Diagnostic.trace();
 
-        Statement stat = null;
+        Statement statement = null;
 
         try {
-            stat = connection.createStatement();
-            stat.execute("create table t1(k smallint, ts timestamp(6))");
-            stat.execute("create table t2(k smallint, ts timestamp(6))");
-            stat.execute("create table t3(k smallint, ts timestamp(6))");
-            stat.execute("create view v_max_ts as select " + "max(ts) from (select max(ts) as ts from t1 " + "union select max(ts) as ts from t2 " + "union select max(ts) as ts from t3)");
-            stat.execute("create view v_test as select max(ts) as ts from t1 " + "union select max(ts) as ts from t2 " + "union select max(ts) as ts from t3");
+            statement = connection.createStatement();
+            statement.execute("create table t1(k smallint, ts timestamp(6))");
+            statement.execute("create table t2(k smallint, ts timestamp(6))");
+            statement.execute("create table t3(k smallint, ts timestamp(6))");
+            statement.execute("create view v_max_ts as select " + "max(ts) from (select max(ts) as ts from t1 " + "union select max(ts) as ts from t2 " + "union select max(ts) as ts from t3)");
+            statement.execute("create view v_test as select max(ts) as ts from t1 " + "union select max(ts) as ts from t2 " + "union select max(ts) as ts from t3");
 
-            stat = connection.createStatement();
-            stat.execute("select * from v_max_ts");
+            statement = connection.createStatement();
+            statement.execute("select * from v_max_ts");
         }
         finally {
-            stat.close();
+            closeIfNotNull(statement);
         }
     }
 }

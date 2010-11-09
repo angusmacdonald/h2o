@@ -475,7 +475,7 @@ public class Constants {
 
     public static final String H2O_SCHEMA = "H2O";
 
-    public static final String REPLICATION_DELIMETER = "###";
+    public static final String REPLICATION_DELIMITER = "###";
 
     public static boolean IS_TEAR_DOWN = false;
 
