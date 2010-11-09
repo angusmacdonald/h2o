@@ -166,7 +166,10 @@ public class Insert extends Prepared {
                 table.fireBefore(session);
                 table.validateConvertUpdateSequence(session, newRow);
                 table.fireBeforeRow(session, null, newRow);
-                table.lock(session, true, false);
+                final Session lockSession = table.lock(session, true, false);
+
+                assert lockSession == session : "The lock should have been taken out on the requesting session.";
+
                 table.addRow(session, newRow);
                 session.log(table, UndoLogRecord.INSERT, newRow);
                 table.fireAfter(session);
@@ -178,7 +181,10 @@ public class Insert extends Prepared {
             final LocalResult rows = query.query(0);
             count = 0;
             table.fireBefore(session);
-            table.lock(session, true, false);
+            final Session lockSession = table.lock(session, true, false);
+
+            assert lockSession == session : "The lock should have been taken out on the requesting session.";
+
             while (rows.next()) {
                 checkCanceled();
                 count++;

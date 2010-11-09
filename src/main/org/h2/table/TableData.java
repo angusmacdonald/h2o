@@ -393,33 +393,43 @@ public class TableData extends Table implements RecordReader {
     }
 
     @Override
-    public void lock(final Session session, final boolean exclusive, final boolean force) throws SQLException {
+    public Session lock(final Session session, final boolean exclusive, final boolean force) throws SQLException {
 
         final int lockMode = database.getLockMode();
 
         if (lockMode != Constants.LOCK_MODE_OFF) {
             synchronized (database) {
                 try {
-                    doLock(session, lockMode, exclusive);
+                    return doLock(session, lockMode, exclusive);
                 }
                 finally {
                     session.setWaitForLock(null);
                 }
             }
         }
+
+        return null;
     }
 
-    private void doLock(Session session, final int lockMode, final boolean exclusive) throws SQLException {
+    private Session doLock(Session session, final int lockMode, final boolean exclusive) throws SQLException {
 
         final long max = System.currentTimeMillis() + session.getLockTimeout();
 
         boolean checkDeadlock = false;
         while (true) {
-            if (lockExclusive != null) {
-                session = lockExclusive; // XXX H2O hack to stop SYS table locking on B-to-A-to-B DB communication. Will cause issues with multiple users?
+            if (lockExclusive != null && session != lockExclusive) {
+                /* 
+                  * XXX H2O hack. It ensures that A-B-A communication doesn't lock up the DB (normally through the SYS table), as the returning update can use the same session
+                  * as the originating update (which has all of the pertinent locks).
+                  * 
+                  * This happens when the PUBLIC.SYS table is altered (after almost every update through the Database.remoteMeta() [line 1266] method. This is called from 
+                  * TableData.validateConvertUpdateSequence -> Column -> ... -> Sequence.flush(), after a user table has been updated. It seems that an updating user 
+                  * transaction obtains an exclusive lock on the PUBLIC.SYS table.
+                  */
+                session = lockExclusive;
             }
 
-            if (lockExclusive == session) { return; }
+            if (lockExclusive == session) { return session; }
 
             if (exclusive) {
                 if (lockExclusive == null) {
@@ -427,12 +437,12 @@ public class TableData extends Table implements RecordReader {
                         traceLock(session, exclusive, "added for");
                         session.addLock(this);
                         lockExclusive = session;
-                        return;
+                        return session;
                     }
                     else if (lockShared.size() == 1 && lockShared.contains(session)) {
                         traceLock(session, exclusive, "add (upgraded) for ");
                         lockExclusive = session;
-                        return;
+                        return session;
                     }
                 }
             }
@@ -444,7 +454,7 @@ public class TableData extends Table implements RecordReader {
                         session.addLock(this);
                         lockShared.add(session);
                     }
-                    return;
+                    return session;
                 }
             }
             session.setWaitForLock(this);

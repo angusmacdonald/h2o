@@ -339,8 +339,9 @@ public class MetaTable extends Table {
         throw Message.getUnsupportedException();
     }
 
-    public void lock(final Session session, final boolean exclusive, final boolean force) {
+    public Session lock(final Session session, final boolean exclusive, final boolean force) {
 
+        return null;
         // nothing to do
     }
 

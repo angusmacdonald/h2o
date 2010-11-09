@@ -48,7 +48,7 @@ public class TableView extends Table {
 
     private SQLException createException;
 
-    private SmallLRUCache indexCache = new SmallLRUCache(Constants.VIEW_INDEX_CACHE_SIZE);
+    private final SmallLRUCache indexCache = new SmallLRUCache(Constants.VIEW_INDEX_CACHE_SIZE);
 
     private long lastModificationCheck;
 
@@ -60,18 +60,18 @@ public class TableView extends Table {
 
     public List<Table> getTables() {
 
-        List<Table> ts = new LinkedList<Table>();
+        final List<Table> ts = new LinkedList<Table>();
 
-        Table[] tablesAndViews = new Table[tables.size()];
+        final Table[] tablesAndViews = new Table[tables.size()];
         tables.toArray(tablesAndViews);
 
-        for (Table tableOrView : tablesAndViews) {
+        for (final Table tableOrView : tablesAndViews) {
             if (tableOrView != null && Table.TABLE.equals(tableOrView.getTableType())) {
                 ts.add(tableOrView); // it's a table.
             }
             else if (tableOrView != null && Table.VIEW.equals(tableOrView.getTableType())) {
                 // recurse - its a view.
-                TableView view = (TableView) tableOrView;
+                final TableView view = (TableView) tableOrView;
                 ts.addAll(view.getTables());
             }
         }
@@ -80,7 +80,7 @@ public class TableView extends Table {
 
     }
 
-    public TableView(Schema schema, int id, String name, String querySQL, ObjectArray params, String[] columnNames, Session session, boolean recursive) throws SQLException {
+    public TableView(final Schema schema, final int id, final String name, final String querySQL, final ObjectArray params, final String[] columnNames, final Session session, final boolean recursive) throws SQLException {
 
         super(schema, id, name, false);
         this.querySQL = querySQL;
@@ -97,26 +97,26 @@ public class TableView extends Table {
      *            the session
      * @return the query
      */
-    public Query recompileQuery(Session session) throws SQLException {
+    public Query recompileQuery(final Session session) throws SQLException {
 
-        Prepared p = session.prepare(querySQL);
+        final Prepared p = session.prepare(querySQL);
         if (!(p instanceof Query)) { throw Message.getSyntaxError(querySQL, 0); }
-        Query query = (Query) p;
+        final Query query = (Query) p;
         querySQL = query.getPlanSQL();
         return query;
     }
 
-    private void initColumnsAndTables(Session session) throws SQLException {
+    private void initColumnsAndTables(final Session session) throws SQLException {
 
         Column[] cols;
         removeViewFromTables();
         try {
-            Query query = recompileQuery(session);
+            final Query query = recompileQuery(session);
             tables = new ObjectArray(query.getTables());
-            ObjectArray expressions = query.getExpressions();
-            ObjectArray list = new ObjectArray();
+            final ObjectArray expressions = query.getExpressions();
+            final ObjectArray list = new ObjectArray();
             for (int i = 0; i < query.getColumnCount(); i++) {
-                Expression expr = (Expression) expressions.get(i);
+                final Expression expr = (Expression) expressions.get(i);
                 String name = null;
                 if (columnNames != null && columnNames.length > i) {
                     name = columnNames[i];
@@ -124,11 +124,11 @@ public class TableView extends Table {
                 if (name == null) {
                     name = expr.getAlias();
                 }
-                int type = expr.getType();
-                long precision = expr.getPrecision();
-                int scale = expr.getScale();
-                int displaySize = expr.getDisplaySize();
-                Column col = new Column(name, type, precision, scale, displaySize);
+                final int type = expr.getType();
+                final long precision = expr.getPrecision();
+                final int scale = expr.getScale();
+                final int displaySize = expr.getDisplaySize();
+                final Column col = new Column(name, type, precision, scale, displaySize);
                 col.setTable(this, i);
                 list.add(col);
             }
@@ -137,7 +137,7 @@ public class TableView extends Table {
             createException = null;
             viewQuery = query;
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             createException = e;
             // if it can't be compiled, then it's a 'zero column table'
             // this avoids problems when creating the view when opening the
@@ -171,11 +171,12 @@ public class TableView extends Table {
         return createException != null;
     }
 
-    public PlanItem getBestPlanItem(Session session, int[] masks) throws SQLException {
+    @Override
+    public PlanItem getBestPlanItem(final Session session, final int[] masks) throws SQLException {
 
-        PlanItem item = new PlanItem();
+        final PlanItem item = new PlanItem();
         item.cost = index.getCost(session, masks);
-        IntArray masksArray = new IntArray(masks == null ? new int[0] : masks);
+        final IntArray masksArray = new IntArray(masks == null ? new int[0] : masks);
         ViewIndex i2 = (ViewIndex) indexCache.get(masksArray);
         if (i2 == null || i2.getSession() != session) {
             i2 = new ViewIndex(this, index, session, masks);
@@ -185,14 +186,16 @@ public class TableView extends Table {
         return item;
     }
 
+    @Override
     public String getDropSQL() {
 
         return "DROP VIEW IF EXISTS " + getSQL();
     }
 
+    @Override
     public String getCreateSQL() {
 
-        StringBuilder buff = new StringBuilder();
+        final StringBuilder buff = new StringBuilder();
         buff.append("CREATE FORCE VIEW ");
         buff.append(getSQL());
         if (comment != null) {
@@ -224,79 +227,95 @@ public class TableView extends Table {
         return buff.toString();
     }
 
+    @Override
     public void checkRename() {
 
         // ok
     }
 
-    public void lock(Session session, boolean exclusive, boolean force) {
+    @Override
+    public Session lock(final Session session, final boolean exclusive, final boolean force) {
 
+        return null;
         // exclusive lock means: the view will be dropped
     }
 
-    public void close(Session session) {
+    @Override
+    public void close(final Session session) {
 
         // nothing to do
     }
 
-    public void unlock(Session s) {
+    @Override
+    public void unlock(final Session s) {
 
         // nothing to do
     }
 
+    @Override
     public boolean isLockedExclusively() {
 
         return false;
     }
 
-    public Index addIndex(Session session, String indexName, int indexId, IndexColumn[] cols, IndexType indexType, int headPos, String comment) throws SQLException {
+    @Override
+    public Index addIndex(final Session session, final String indexName, final int indexId, final IndexColumn[] cols, final IndexType indexType, final int headPos, final String comment) throws SQLException {
 
         throw Message.getUnsupportedException();
     }
 
-    public void removeRow(Session session, Row row) throws SQLException {
+    @Override
+    public void removeRow(final Session session, final Row row) throws SQLException {
 
         throw Message.getUnsupportedException();
     }
 
-    public void addRow(Session session, Row row) throws SQLException {
+    @Override
+    public void addRow(final Session session, final Row row) throws SQLException {
 
         throw Message.getUnsupportedException();
     }
 
+    @Override
     public void checkSupportAlter() throws SQLException {
 
         // TODO view: alter what? rename is ok
         throw Message.getUnsupportedException();
     }
 
-    public void truncate(Session session) throws SQLException {
+    @Override
+    public void truncate(final Session session) throws SQLException {
 
         throw Message.getUnsupportedException();
     }
 
-    public long getRowCount(Session session) {
+    @Override
+    public long getRowCount(final Session session) {
 
         throw Message.throwInternalError();
     }
 
+    @Override
     public boolean canGetRowCount() {
 
         // TODO view: could get the row count, but not that easy
         return false;
     }
 
+    @Override
     public boolean canDrop() {
 
         return true;
     }
 
+    @Override
     public String getTableType() {
 
         return Table.VIEW;
     }
 
-    public void removeChildrenAndResources(Session session) throws SQLException {
+    @Override
+    public void removeChildrenAndResources(final Session session) throws SQLException {
 
         removeViewFromTables();
         super.removeChildrenAndResources(session);
@@ -306,10 +325,11 @@ public class TableView extends Table {
         invalidate();
     }
 
+    @Override
     public String getSQL() {
 
         if (getTemporary()) {
-            StringBuilder buff = new StringBuilder(querySQL.length());
+            final StringBuilder buff = new StringBuilder(querySQL.length());
             buff.append("(");
             buff.append(querySQL);
             buff.append(")");
@@ -318,16 +338,18 @@ public class TableView extends Table {
         return super.getSQL();
     }
 
-    public Index getScanIndex(Session session) throws SQLException {
+    @Override
+    public Index getScanIndex(final Session session) throws SQLException {
 
         if (createException != null) {
-            String msg = createException.getMessage();
+            final String msg = createException.getMessage();
             throw Message.getSQLException(ErrorCode.VIEW_IS_INVALID_2, new String[]{getSQL(), msg}, createException);
         }
-        PlanItem item = getBestPlanItem(session, null);
+        final PlanItem item = getBestPlanItem(session, null);
         return item.getIndex();
     }
 
+    @Override
     public ObjectArray getIndexes() {
 
         return null;
@@ -339,16 +361,17 @@ public class TableView extends Table {
      * @param session
      *            the session
      */
-    public void recompile(Session session) throws SQLException {
+    public void recompile(final Session session) throws SQLException {
 
         for (int i = 0; i < tables.size(); i++) {
-            Table t = (Table) tables.get(i);
+            final Table t = (Table) tables.get(i);
             t.removeView(this);
         }
         tables.clear();
         initColumnsAndTables(session);
     }
 
+    @Override
     public long getMaxDataModificationId() {
 
         if (createException != null) { return Long.MAX_VALUE; }
@@ -356,7 +379,7 @@ public class TableView extends Table {
         // if nothing was modified in the database since the last check, and the
         // last is known, then we don't need to check again
         // this speeds up nested views
-        long dbMod = database.getModificationDataId();
+        final long dbMod = database.getModificationDataId();
         if (dbMod > lastModificationCheck && maxDataModificationId <= dbMod) {
             maxDataModificationId = viewQuery.getMaxDataModificationId();
             lastModificationCheck = dbMod;
@@ -364,6 +387,7 @@ public class TableView extends Table {
         return maxDataModificationId;
     }
 
+    @Override
     public Index getUniqueIndex() {
 
         return null;
@@ -373,7 +397,7 @@ public class TableView extends Table {
 
         if (tables != null) {
             for (int i = 0; i < tables.size(); i++) {
-                Table t = (Table) tables.get(i);
+                final Table t = (Table) tables.get(i);
                 t.removeView(this);
             }
             tables.clear();
@@ -383,12 +407,12 @@ public class TableView extends Table {
     private void addViewToTables() {
 
         for (int i = 0; i < tables.size(); i++) {
-            Table t = (Table) tables.get(i);
+            final Table t = (Table) tables.get(i);
             t.addView(this);
         }
     }
 
-    private void setOwner(User owner) {
+    private void setOwner(final User owner) {
 
         this.owner = owner;
     }
@@ -413,11 +437,11 @@ public class TableView extends Table {
      *            the top level query
      * @return the view table
      */
-    public static TableView createTempView(Session session, User owner, String name, Query query, Query topQuery) throws SQLException {
+    public static TableView createTempView(final Session session, final User owner, final String name, final Query query, final Query topQuery) throws SQLException {
 
-        Schema mainSchema = session.getDatabase().getSchema(Constants.SCHEMA_MAIN);
-        String querySQL = query.getPlanSQL();
-        TableView v = new TableView(mainSchema, 0, name, querySQL, query.getParameters(), null, session, false);
+        final Schema mainSchema = session.getDatabase().getSchema(Constants.SCHEMA_MAIN);
+        final String querySQL = query.getPlanSQL();
+        final TableView v = new TableView(mainSchema, 0, name, querySQL, query.getParameters(), null, session, false);
         v.setTopQuery(topQuery);
         if (v.createException != null) { throw v.createException; }
         v.setOwner(owner);
@@ -425,11 +449,12 @@ public class TableView extends Table {
         return v;
     }
 
-    private void setTopQuery(Query topQuery) {
+    private void setTopQuery(final Query topQuery) {
 
         this.topQuery = topQuery;
     }
 
+    @Override
     public long getRowCountApproximation() {
 
         return ROW_COUNT_APPROXIMATION;

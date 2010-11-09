@@ -65,7 +65,7 @@ public class TableLink extends Table {
 
     private boolean readOnly;
 
-    public TableLink(Schema schema, int id, String name, String driver, String url, String user, String password, String originalSchema, String originalTable, boolean emitUpdates, boolean force) throws SQLException {
+    public TableLink(final Schema schema, final int id, final String name, final String driver, final String url, final String user, final String password, final String originalSchema, final String originalTable, final boolean emitUpdates, final boolean force) throws SQLException {
 
         super(schema, id, name, false);
         this.driver = driver;
@@ -78,10 +78,10 @@ public class TableLink extends Table {
         try {
             connect();
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             connectException = e;
             if (!force) { throw e; }
-            Column[] cols = new Column[0];
+            final Column[] cols = new Column[0];
             setColumns(cols);
             linkedIndex = new LinkedIndex(this, id, IndexColumn.wrap(cols), IndexType.createNonUnique(false));
             indexes.add(linkedIndex);
@@ -95,7 +95,7 @@ public class TableLink extends Table {
             try {
                 readMetaData();
             }
-            catch (SQLException e) {
+            catch (final SQLException e) {
                 conn.close();
                 conn = null;
                 throw e;
@@ -105,7 +105,7 @@ public class TableLink extends Table {
 
     private void readMetaData() throws SQLException {
 
-        DatabaseMetaData meta = conn.getConnection().getMetaData();
+        final DatabaseMetaData meta = conn.getConnection().getMetaData();
         storesLowerCase = meta.storesLowerCaseIdentifiers();
         storesMixedCase = meta.storesMixedCaseIdentifiers();
         supportsMixedCaseIdentifiers = meta.supportsMixedCaseIdentifiers();
@@ -117,21 +117,21 @@ public class TableLink extends Table {
         rs.close();
 
         if (originalTable.contains(".")) {
-            String[] split = originalTable.split("\\.");
+            final String[] split = originalTable.split("\\.");
             originalSchema = split[0];
             originalTable = split[1];
         }
         rs = meta.getColumns(null, originalSchema, originalTable, null);
         int i = 0;
-        ObjectArray columnList = new ObjectArray();
-        HashMap columnMap = new HashMap();
+        final ObjectArray columnList = new ObjectArray();
+        final HashMap columnMap = new HashMap();
         String catalog = null, schema = null;
         while (rs.next()) {
-            String thisCatalog = rs.getString("TABLE_CAT");
+            final String thisCatalog = rs.getString("TABLE_CAT");
             if (catalog == null) {
                 catalog = thisCatalog;
             }
-            String thisSchema = rs.getString("TABLE_SCHEM");
+            final String thisSchema = rs.getString("TABLE_SCHEM");
             if (schema == null) {
                 schema = thisSchema;
             }
@@ -145,13 +145,13 @@ public class TableLink extends Table {
             String n = rs.getString("COLUMN_NAME");
 
             n = convertColumnName(n);
-            int sqlType = rs.getInt("DATA_TYPE");
+            final int sqlType = rs.getInt("DATA_TYPE");
             long precision = rs.getInt("COLUMN_SIZE");
             precision = convertPrecision(sqlType, precision);
-            int scale = rs.getInt("DECIMAL_DIGITS");
-            int displaySize = MathUtils.convertLongToInt(precision);
-            int type = DataType.convertSQLTypeToValueType(sqlType);
-            Column col = new Column(n, type, precision, scale, displaySize);
+            final int scale = rs.getInt("DECIMAL_DIGITS");
+            final int displaySize = MathUtils.convertLongToInt(precision);
+            final int type = DataType.convertSQLTypeToValueType(sqlType);
+            final Column col = new Column(n, type, precision, scale, displaySize);
             if (rs.getString("COLUMN_DEF") == null) {
                 col.setNullable(rs.getBoolean("IS_NULLABLE"));
             }
@@ -173,17 +173,17 @@ public class TableLink extends Table {
             rs = stat.executeQuery("SELECT * FROM " + qualifiedTableName + " T WHERE 1=0");
             if (columnList.size() == 0) {
                 // alternative solution
-                ResultSetMetaData rsMeta = rs.getMetaData();
+                final ResultSetMetaData rsMeta = rs.getMetaData();
                 for (i = 0; i < rsMeta.getColumnCount();) {
                     String n = rsMeta.getColumnName(i + 1);
                     n = convertColumnName(n);
-                    int sqlType = rsMeta.getColumnType(i + 1);
+                    final int sqlType = rsMeta.getColumnType(i + 1);
                     long precision = rsMeta.getPrecision(i + 1);
                     precision = convertPrecision(sqlType, precision);
-                    int scale = rsMeta.getScale(i + 1);
-                    int displaySize = rsMeta.getColumnDisplaySize(i + 1);
-                    int type = DataType.convertSQLTypeToValueType(sqlType);
-                    Column col = new Column(n, type, precision, scale, displaySize);
+                    final int scale = rsMeta.getScale(i + 1);
+                    final int displaySize = rsMeta.getColumnDisplaySize(i + 1);
+                    final int type = DataType.convertSQLTypeToValueType(sqlType);
+                    final Column col = new Column(n, type, precision, scale, displaySize);
                     col.setTable(this, i++);
                     columnList.add(col);
                     columnMap.put(n, col);
@@ -191,22 +191,22 @@ public class TableLink extends Table {
             }
             rs.close();
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, new String[]{originalTable + "(" + e.toString() + ")"}, e);
         }
         finally {
             JdbcUtils.closeSilently(stat);
         }
-        Column[] cols = new Column[columnList.size()];
+        final Column[] cols = new Column[columnList.size()];
         columnList.toArray(cols);
         setColumns(cols);
-        int id = getId();
+        final int id = getId();
         linkedIndex = new LinkedIndex(this, id, IndexColumn.wrap(cols), IndexType.createNonUnique(false));
         indexes.add(linkedIndex);
         try {
             rs = meta.getPrimaryKeys(null, originalSchema, originalTable);
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             // Some ODBC bridge drivers don't support it:
             // some combinations of "DataDirect SequeLink(R) for JDBC"
             // http://www.datadirect.com/index.ssp
@@ -218,7 +218,7 @@ public class TableLink extends Table {
             // the problem is, the rows are not sorted by KEY_SEQ
             list = new ObjectArray();
             do {
-                int idx = rs.getInt("KEY_SEQ");
+                final int idx = rs.getInt("KEY_SEQ");
                 if (pkName == null) {
                     pkName = rs.getString("PK_NAME");
                 }
@@ -227,7 +227,7 @@ public class TableLink extends Table {
                 }
                 String col = rs.getString("COLUMN_NAME");
                 col = convertColumnName(col);
-                Column column = (Column) columnMap.get(col);
+                final Column column = (Column) columnMap.get(col);
                 list.set(idx - 1, column);
             }
             while (rs.next());
@@ -237,7 +237,7 @@ public class TableLink extends Table {
         try {
             rs = meta.getIndexInfo(null, originalSchema, originalTable, false, true);
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             // Oracle throws an exception if the table is not found or is a
             // SYNONYM
             rs = null;
@@ -251,7 +251,7 @@ public class TableLink extends Table {
                     // ignore index statistics
                     continue;
                 }
-                String newIndex = rs.getString("INDEX_NAME");
+                final String newIndex = rs.getString("INDEX_NAME");
                 if (pkName.equals(newIndex)) {
                     continue;
                 }
@@ -263,11 +263,11 @@ public class TableLink extends Table {
                     indexName = newIndex;
                     list.clear();
                 }
-                boolean unique = !rs.getBoolean("NON_UNIQUE");
+                final boolean unique = !rs.getBoolean("NON_UNIQUE");
                 indexType = unique ? IndexType.createUnique(false, false) : IndexType.createNonUnique(false);
                 String col = rs.getString("COLUMN_NAME");
                 col = convertColumnName(col);
-                Column column = (Column) columnMap.get(col);
+                final Column column = (Column) columnMap.get(col);
                 list.add(column);
             }
             rs.close();
@@ -277,7 +277,7 @@ public class TableLink extends Table {
         }
     }
 
-    private long convertPrecision(int sqlType, long precision) {
+    private long convertPrecision(final int sqlType, long precision) {
 
         // workaround for an Oracle problem
         // the precision reported by Oracle is 7 for a date column
@@ -307,22 +307,24 @@ public class TableLink extends Table {
         return columnName;
     }
 
-    private void addIndex(ObjectArray list, IndexType indexType) {
+    private void addIndex(final ObjectArray list, final IndexType indexType) {
 
-        Column[] cols = new Column[list.size()];
+        final Column[] cols = new Column[list.size()];
         list.toArray(cols);
-        Index index = new LinkedIndex(this, 0, IndexColumn.wrap(cols), indexType);
+        final Index index = new LinkedIndex(this, 0, IndexColumn.wrap(cols), indexType);
         indexes.add(index);
     }
 
+    @Override
     public String getDropSQL() {
 
         return "DROP TABLE IF EXISTS " + getSQL();
     }
 
+    @Override
     public String getCreateSQL() {
 
-        StringBuilder buff = new StringBuilder();
+        final StringBuilder buff = new StringBuilder();
         buff.append("CREATE FORCE ");
         if (getTemporary()) {
             if (globalTemporary) {
@@ -356,22 +358,27 @@ public class TableLink extends Table {
         return buff.toString();
     }
 
-    public Index addIndex(Session session, String indexName, int indexId, IndexColumn[] cols, IndexType indexType, int headPos, String comment) throws SQLException {
+    @Override
+    public Index addIndex(final Session session, final String indexName, final int indexId, final IndexColumn[] cols, final IndexType indexType, final int headPos, final String comment) throws SQLException {
 
         throw Message.getUnsupportedException();
     }
 
-    public void lock(Session session, boolean exclusive, boolean force) {
+    @Override
+    public Session lock(final Session session, final boolean exclusive, final boolean force) {
 
+        return null;
         // nothing to do
     }
 
+    @Override
     public boolean isLockedExclusively() {
 
         return false;
     }
 
-    public Index getScanIndex(Session session) {
+    @Override
+    public Index getScanIndex(final Session session) {
 
         return linkedIndex;
     }
@@ -381,19 +388,22 @@ public class TableLink extends Table {
         if (readOnly) { throw Message.getSQLException(ErrorCode.DATABASE_IS_READ_ONLY); }
     }
 
-    public void removeRow(Session session, Row row) throws SQLException {
+    @Override
+    public void removeRow(final Session session, final Row row) throws SQLException {
 
         checkReadOnly();
         getScanIndex(session).remove(session, row);
     }
 
-    public void addRow(Session session, Row row) throws SQLException {
+    @Override
+    public void addRow(final Session session, final Row row) throws SQLException {
 
         checkReadOnly();
         getScanIndex(session).add(session, row);
     }
 
-    public void close(Session session) throws SQLException {
+    @Override
+    public void close(final Session session) throws SQLException {
 
         if (conn != null) {
             try {
@@ -405,18 +415,19 @@ public class TableLink extends Table {
         }
     }
 
-    public synchronized long getRowCount(Session session) throws SQLException {
+    @Override
+    public synchronized long getRowCount(final Session session) throws SQLException {
 
-        String sql = "SELECT COUNT(*) FROM " + qualifiedTableName;
+        final String sql = "SELECT COUNT(*) FROM " + qualifiedTableName;
         try {
-            PreparedStatement prep = getPreparedStatement(sql, false);
-            ResultSet rs = prep.executeQuery();
+            final PreparedStatement prep = getPreparedStatement(sql, false);
+            final ResultSet rs = prep.executeQuery();
             rs.next();
-            long count = rs.getLong(1);
+            final long count = rs.getLong(1);
             rs.close();
             return count;
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             throw wrapException(sql, e);
         }
     }
@@ -430,7 +441,7 @@ public class TableLink extends Table {
      *            the SQL exception from the remote database
      * @return the wrapped SQL exception
      */
-    public SQLException wrapException(String sql, SQLException e) {
+    public SQLException wrapException(final String sql, final SQLException e) {
 
         return Message.getSQLException(ErrorCode.ERROR_ACCESSING_LINKED_TABLE_2, new String[]{sql, e.toString()}, e);
     }
@@ -449,9 +460,9 @@ public class TableLink extends Table {
      *            if the prepared statement must be removed from the map until reusePreparedStatement is called (only required for queries)
      * @return the prepared statement
      */
-    public PreparedStatement getPreparedStatement(String sql, boolean exclusive) throws SQLException {
+    public PreparedStatement getPreparedStatement(final String sql, final boolean exclusive) throws SQLException {
 
-        Trace trace = database.getTrace(Trace.TABLE);
+        final Trace trace = database.getTrace(Trace.TABLE);
         if (trace.isDebugEnabled()) {
             trace.debug(getName() + ":\n" + sql);
         }
@@ -467,42 +478,50 @@ public class TableLink extends Table {
         return prep;
     }
 
-    public void unlock(Session s) {
+    @Override
+    public void unlock(final Session s) {
 
         // nothing to do
     }
 
+    @Override
     public void checkRename() {
 
         // ok
     }
 
+    @Override
     public void checkSupportAlter() throws SQLException {
 
         throw Message.getUnsupportedException();
     }
 
-    public void truncate(Session session) throws SQLException {
+    @Override
+    public void truncate(final Session session) throws SQLException {
 
         throw Message.getUnsupportedException();
     }
 
+    @Override
     public boolean canGetRowCount() {
 
         return true;
     }
 
+    @Override
     public boolean canDrop() {
 
         return true;
     }
 
+    @Override
     public String getTableType() {
 
         return Table.TABLE_LINK;
     }
 
-    public void removeChildrenAndResources(Session session) throws SQLException {
+    @Override
+    public void removeChildrenAndResources(final Session session) throws SQLException {
 
         super.removeChildrenAndResources(session);
         close(session);
@@ -518,35 +537,39 @@ public class TableLink extends Table {
         return url.startsWith("jdbc:oracle:");
     }
 
+    @Override
     public ObjectArray getIndexes() {
 
         return indexes;
     }
 
+    @Override
     public long getMaxDataModificationId() {
 
         // data may have been modified externally
         return Long.MAX_VALUE;
     }
 
+    @Override
     public Index getUniqueIndex() {
 
         for (int i = 0; i < indexes.size(); i++) {
-            Index idx = (Index) indexes.get(i);
+            final Index idx = (Index) indexes.get(i);
             if (idx.getIndexType().getUnique()) { return idx; }
         }
         return null;
     }
 
-    public void updateRows(Prepared prepared, Session session, RowList rows) throws SQLException {
+    @Override
+    public void updateRows(final Prepared prepared, final Session session, final RowList rows) throws SQLException {
 
         boolean deleteInsert;
         checkReadOnly();
         if (emitUpdates) {
             for (rows.reset(); rows.hasNext();) {
                 prepared.checkCanceled();
-                Row oldRow = rows.next();
-                Row newRow = rows.next();
+                final Row oldRow = rows.next();
+                final Row newRow = rows.next();
                 linkedIndex.update(oldRow, newRow);
                 session.log(this, UndoLogRecord.DELETE, oldRow);
                 session.log(this, UndoLogRecord.INSERT, newRow);
@@ -561,12 +584,13 @@ public class TableLink extends Table {
         }
     }
 
-    public void setGlobalTemporary(boolean globalTemporary) {
+    @Override
+    public void setGlobalTemporary(final boolean globalTemporary) {
 
         this.globalTemporary = globalTemporary;
     }
 
-    public void setReadOnly(boolean readOnly) {
+    public void setReadOnly(final boolean readOnly) {
 
         this.readOnly = readOnly;
     }
@@ -576,6 +600,7 @@ public class TableLink extends Table {
         return conn;
     }
 
+    @Override
     public long getRowCountApproximation() {
 
         return ROW_COUNT_APPROXIMATION;
@@ -589,7 +614,7 @@ public class TableLink extends Table {
      * @param sql
      *            the SQL statement
      */
-    public void reusePreparedStatement(PreparedStatement prep, String sql) {
+    public void reusePreparedStatement(final PreparedStatement prep, final String sql) {
 
         prepared.put(sql, prep);
     }
