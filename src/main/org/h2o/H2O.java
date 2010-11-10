@@ -55,13 +55,17 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  */
 public class H2O {
 
-    private final String databaseName;
-    private final int tcpPort;
-    private final int webPort;
+    public static final String DEFAULT_DATABASE_DIRECTORY_PATH = "db_files";
+    public static final String DEFAULT_DATABASE_NAME = "database";
+    public static final int DEFAULT_TCP_PORT = 9090;
+
+    private String databaseName;
+    private int tcpPort;
+    private int webPort;
 
     private String databaseDescriptorLocation;
-    private final String databaseBaseDirectoryPath;
-    private final DiagnosticLevel diagnosticLevel;
+    private String databaseBaseDirectoryPath;
+    private DiagnosticLevel diagnosticLevel;
 
     private Connection connection;
     private H2OLocator locator;
@@ -94,10 +98,106 @@ public class H2O {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting H2O Server Instance.");
 
-        final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
-        final H2O db = initialiseFromCommandLineArguments(arguments);
-
+        final H2O db = new H2O(args);
         db.startDatabase();
+    }
+
+    // -------------------------------------------------------------------------------------------------------
+
+    /**
+     * Starts a new H2O instance using the specified descriptor file to find an existing, running, locator server. This option does not start
+     * H2O's web interface.
+     * 
+     * @param databaseName the name of the database
+     * @param tcpPort the port for this database's TCP server
+     * @param databaseDirectoryPath the directory in which database files are stored
+     * @param databaseDescriptorLocation the location (file path or URL) of the database descriptor file
+     */
+    public H2O(final String databaseName, final int tcpPort, final String databaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
+
+        init(databaseName, tcpPort, 0, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel);
+    }
+
+    /**
+     * Starts a local H2O instance with a running TCP server <strong>and web interface</strong>. This will automatically start a local
+     * locator file, and doesn't need a descriptor file to run. A descriptor file will be created within the database directory.
+     * 
+     * @param databaseName the name of the database
+     * @param tcpPort the port for this database's TCP server
+     * @param webPort the port for this database's web interface
+     * @param databaseDirectoryPath the directory in which database files are stored
+     */
+    public H2O(final String databaseName, final int tcpPort, final int webPort, final String databaseDirectoryPath, final DiagnosticLevel diagnosticLevel) {
+
+        init(databaseName, tcpPort, webPort, databaseDirectoryPath, null, diagnosticLevel);
+    }
+
+    public H2O(final String[] args) throws StartupException {
+
+        final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
+
+        final String databaseName = processDatabaseName(arguments.get("-n"));
+        final int tcpPort = processTCPPort(arguments.get("-p"));
+        final String databaseDirectoryPath = processDatabaseDirectoryPath(arguments.get("-f"));
+
+        final String databaseDescriptorLocation = processDatabaseDescriptorLocation(arguments.get("-d"));
+        final int webPort = processWebPort(arguments.get("-w"));
+        final DiagnosticLevel diagnosticLevel = processDiagnosticLevel(arguments.get("-D"));
+
+        init(databaseName, tcpPort, webPort, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel);
+    }
+
+    private String processDatabaseName(final String arg) {
+
+        return arg == null ? DEFAULT_DATABASE_NAME : arg;
+    }
+
+    private String processDatabaseDirectoryPath(final String arg) {
+
+        return arg == null ? DEFAULT_DATABASE_DIRECTORY_PATH : removeQuotes(arg);
+    }
+
+    private String processDatabaseDescriptorLocation(final String arg) {
+
+        return arg == null ? null : removeQuotes(arg);
+    }
+
+    private int processTCPPort(final String arg) throws StartupException {
+
+        try {
+            return arg == null ? DEFAULT_TCP_PORT : Integer.parseInt(arg);
+        }
+        catch (final NumberFormatException e) {
+            throw new StartupException("Invalid port: " + arg);
+        }
+    }
+
+    private int processWebPort(final String arg) throws StartupException {
+
+        try {
+            return arg == null ? 0 : Integer.parseInt(arg);
+        }
+        catch (final NumberFormatException e) {
+            throw new StartupException("Invalid port: " + arg);
+        }
+    }
+
+    private DiagnosticLevel processDiagnosticLevel(final String arg) throws StartupException {
+
+        if (arg != null) {
+
+            try {
+                final int level = Integer.parseInt(arg);
+                if (level < DiagnosticLevel.getMinValue() || level > DiagnosticLevel.getMaxValue()) { throw new StartupException("Invalid diagnostic level specified: " + arg); }
+
+                return DiagnosticLevel.fromNumericalValue(level);
+            }
+            catch (final Exception e) {
+                throw new StartupException("Invalid diagnostic level specified: " + arg);
+            }
+        }
+
+        return DiagnosticLevel.NONE;
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -111,7 +211,7 @@ public class H2O {
      * @param databaseBaseDirectoryPath the directory in which database files are stored
      * @param databaseDescriptorLocation the location (file path or URL) of the database descriptor file
      */
-    private H2O(final String databaseName, final int tcpPort, final int webPort, final String databaseBaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
+    private void init(final String databaseName, final int tcpPort, final int webPort, final String databaseBaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
 
         this.databaseName = databaseName;
         this.tcpPort = tcpPort;
@@ -119,34 +219,6 @@ public class H2O {
         this.databaseDescriptorLocation = databaseDescriptorLocation;
         this.databaseBaseDirectoryPath = databaseBaseDirectoryPath;
         this.diagnosticLevel = diagnosticLevel;
-    }
-
-    /**
-     * Start a new H2O instance using the specified descriptor file to find an existing, running, locator server. This option does not start
-     * H2O's web interface.
-     * 
-     * @param databaseName the name of the database
-     * @param tcpPort the port for this database's TCP server
-     * @param databaseDirectoryPath the directory in which database files are stored
-     * @param databaseDescriptorLocation the location (file path or URL) of the database descriptor file
-     */
-    public H2O(final String databaseName, final int tcpPort, final String databaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
-
-        this(databaseName, tcpPort, 0, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel);
-    }
-
-    /**
-     * Start a local H2O instance with a running TCP server <strong>and web interface </strong>. This will automatically start a local
-     * locator file, and doesn't need a descriptor file to run. A descriptor file will be created within the database directory.
-     * 
-     * @param databaseName the name of the database
-     * @param tcpPort the port for this database's TCP server
-     * @param webPort the port for this database's web interface
-     * @param databaseDirectoryPath the directory in which database files are stored
-     */
-    public H2O(final String databaseName, final int tcpPort, final int webPort, final String databaseDirectoryPath, final DiagnosticLevel diagnosticLevel) {
-
-        this(databaseName, tcpPort, webPort, databaseDirectoryPath, null, diagnosticLevel);
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -212,61 +284,6 @@ public class H2O {
     }
 
     // -------------------------------------------------------------------------------------------------------
-
-    private static H2O initialiseFromCommandLineArguments(final Map<String, String> arguments) throws StartupException {
-
-        // Get required command line arguments.
-        final String databaseName = arguments.get("-n");
-        final String tcpPortString = arguments.get("-p");
-
-        if (databaseName == null || tcpPortString == null) { throw new StartupException("One of the required command line arguments was not supplied. Please check the documentation to ensure you have included all necessary arguments"); }
-
-        // Get optional command line arguments.
-        String databaseDirectoryPath = arguments.get("-f");
-        String databaseDescriptorLocation = arguments.get("-d");
-        final String webPortString = arguments.get("-w");
-        final String diagnosticLevelAsInt = arguments.get("-D");
-
-        int tcpPort = 0;
-        int webPort = 0;
-
-        try {
-            tcpPort = Integer.parseInt(tcpPortString);
-
-            if (webPortString != null) {
-                webPort = Integer.parseInt(webPortString);
-            }
-        }
-        catch (final NumberFormatException e) {
-            throw new StartupException("Invalid port specified.");
-        }
-
-        if (databaseDescriptorLocation != null) {
-            databaseDescriptorLocation = removeQuotes(databaseDescriptorLocation);
-        }
-
-        if (databaseDirectoryPath != null) {
-            databaseDirectoryPath = removeQuotes(databaseDirectoryPath);
-        }
-
-        DiagnosticLevel diagnosticLevel = DiagnosticLevel.NONE;
-
-        if (diagnosticLevelAsInt != null) {
-
-            try {
-                final int level = Integer.parseInt(diagnosticLevelAsInt);
-
-                if (level < DiagnosticLevel.getMinValue() || level > DiagnosticLevel.getMaxValue()) { throw new StartupException("Invalid diagnostic level specified."); }
-
-                diagnosticLevel = DiagnosticLevel.fromNumericalValue(level);
-            }
-            catch (final Exception e) {
-                throw new StartupException("Invalid diagnostic level specified.");
-            }
-        }
-
-        return new H2O(databaseName, tcpPort, webPort, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel);
-    }
 
     private String generateDatabaseURL() {
 
