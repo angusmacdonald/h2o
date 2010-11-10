@@ -8,7 +8,6 @@
  */
 package org.h2o.util;
 
-import java.io.File;
 import java.io.IOException;
 
 import org.h2o.db.id.DatabaseURL;
@@ -24,18 +23,8 @@ public class LocalH2OProperties extends H2OPropertiesWrapper {
      */
     public LocalH2OProperties(final DatabaseURL dbURL) {
 
-        super(dbURL.getDbDirectory() + File.separator + dbURL.getDbName() + ".properties");
+        super(dbURL.getPropertiesFilePath());
     }
-
-    //    private LocalH2OProperties(final String configDirectoryPath, final String propertiesFileName) {
-    //
-    //        super(configDirectoryPath + File.separator + propertiesFileName + ".properties");
-    //    }
-
-    //    private static String getConfigurationDirectoryPath(final String databaseDirectoryPath) {
-    //
-    //        return databaseDirectoryPath + "." + DEFAULT_CONFIG_DIRECTORY;
-    //    }
 
     // TODO are these needed?
 

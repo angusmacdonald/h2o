@@ -12,8 +12,6 @@ import java.io.Serializable;
 
 import org.h2.util.NetUtils;
 
-import uk.ac.standrews.cs.nds.util.ErrorHandling;
-
 /**
  * Parsed representation of an H2 database URL.
  * 
@@ -239,34 +237,9 @@ public class DatabaseURL implements Serializable {
         return dbLocation;
     }
 
-    /**
-     * Returns the name of the database. This assumes that the database location is represented as a two-part path <db_root>/<db_name>.
-     * @return the name of the database
-     */
-    public String getDbDirectory() {
+    public String getPropertiesFilePath() {
 
-        return getDbLocationComponents()[0];
-    }
-
-    private String[] getDbLocationComponents() {
-
-        final String[] parts = dbLocation.split("/");
-        if (parts.length != 2) {
-
-            ErrorHandling.error("dbLocation expected to have two components but was: " + dbLocation);
-            return null;
-
-        }
-        return parts;
-    }
-
-    /**
-     * Returns the name of the database. This assumes that the database location is represented as a two-part path <db_root>/<db_name>.
-     * @return the name of the database
-     */
-    public String getDbName() {
-
-        return getDbLocationComponents()[1];
+        return dbLocation + ".properties";
     }
 
     /**
