@@ -14,6 +14,8 @@ import java.sql.SQLException;
 
 import org.h2o.H2O;
 
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+
 /**
  * Creates a custom H2O instance. This requires a locator server to be run first. To do this run the {@link LocatorServerExample} class
  * first.
@@ -36,7 +38,7 @@ public class CustomH2OExample {
         // The location of the database descriptor file.
         final String descriptorLocation = "db_data" + File.separator + "MyFirstDatabase.h2od";
 
-        final H2O db = new H2O(databaseName, tcpPort, rootFolder, descriptorLocation);
+        final H2O db = new H2O(databaseName, tcpPort, rootFolder, descriptorLocation, DiagnosticLevel.NONE);
         db.startDatabase();
     }
 }

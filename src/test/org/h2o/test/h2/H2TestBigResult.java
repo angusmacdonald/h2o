@@ -17,7 +17,9 @@ import org.h2o.test.H2OTestBase;
 import org.junit.Before;
 import org.junit.Test;
 
+import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
 
 /**
  * Test for big result sets.
@@ -34,11 +36,11 @@ public class H2TestBigResult extends H2OTestBase {
 
     @Override
     @Before
-    public void setUp() throws SQLException, IOException {
+    public void setUp() throws SQLException, IOException, UnknownPlatformException, UndefinedDiagnosticLevelException {
 
         super.setUp();
 
-        connection = getConnections()[0];
+        connection = makeTestDriver().getConnection();
     }
 
     @Test

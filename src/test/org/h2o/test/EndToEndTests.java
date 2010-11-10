@@ -8,34 +8,21 @@
  */
 package org.h2o.test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 import org.junit.Test;
 
+import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 
 /**
- * User-centric tests.
+ * User-oriented tests.
  *
  * @author Graham Kirby (graham@cs.st-andrews.ac.uk)
  */
-public class EndToEndTests extends H2OTestBase {
-
-    @Override
-    protected int getNumberOfDatabases() {
-
-        return 1;
-    }
+public class EndToEndTests extends EndToEndTestsCommon {
 
     /**
       * Tests whether a new database can be created, data inserted and read back.
@@ -48,26 +35,14 @@ public class EndToEndTests extends H2OTestBase {
 
         Diagnostic.trace();
 
-        createWithAutoCommit();
-        insertOneRowWithAutoCommitNoDelay();
-        assertOneRowIsPresent();
-    }
+        final EndToEndTestDriver driver = makeSpecificTestDriver();
 
-    /**
-     * Tests whether a database is properly cleaned up, by running the whole life cycle twice.
-     * 
-     * @throws SQLException if the test fails
-     * @throws IOException if the test fails
-     */
-    @Test
-    public void completeCleanUp() throws SQLException, IOException {
+        driver.setAutoCommitOn();
+        driver.setNoDelay();
 
-        Diagnostic.trace();
-
-        simpleLifeCycle();
-        tearDown();
-        setUp();
-        simpleLifeCycle();
+        driver.createTable();
+        driver.insertOneRow();
+        driver.assertOneRowIsPresent();
     }
 
     /**
@@ -75,18 +50,27 @@ public class EndToEndTests extends H2OTestBase {
      * 
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
+     * @throws UnknownPlatformException 
      */
     @Test
-    public void persistence() throws SQLException, IOException {
+    public void persistence() throws SQLException, IOException, UnknownPlatformException {
 
         Diagnostic.trace();
 
-        createWithAutoCommit();
-        insertOneRowWithAutoCommitNoDelay();
-        shutdown();
+        final EndToEndTestDriver driver1 = makeSpecificTestDriver();
 
+        driver1.setAutoCommitOn();
+        driver1.setNoDelay();
+
+        driver1.createTable();
+        driver1.insertOneRow();
+
+        shutdown();
         startup();
-        assertOneRowIsPresent();
+
+        final EndToEndTestDriver driver2 = makeSpecificTestDriver();
+
+        driver2.assertOneRowIsPresent();
     }
 
     /**
@@ -100,9 +84,14 @@ public class EndToEndTests extends H2OTestBase {
 
         Diagnostic.trace();
 
-        createWithoutAutoCommit();
-        insertOneRowNoCommitNoDelay();
-        assertOneRowIsPresent();
+        final EndToEndTestDriver driver = makeSpecificTestDriver();
+
+        driver.setAutoCommitOff();
+        driver.setNoDelay();
+
+        driver.createTable();
+        driver.insertOneRow();
+        driver.assertOneRowIsPresent();
     }
 
     /**
@@ -111,18 +100,27 @@ public class EndToEndTests extends H2OTestBase {
      * 
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
+     * @throws UnknownPlatformException 
      */
     @Test
-    public void rollbackWithoutAutoCommit() throws SQLException, IOException {
+    public void rollbackWithoutAutoCommit() throws SQLException, IOException, UnknownPlatformException {
 
         Diagnostic.trace();
 
-        createWithoutAutoCommit();
-        insertOneRowNoCommitNoDelay();
-        shutdown();
+        final EndToEndTestDriver driver1 = makeSpecificTestDriver();
 
+        driver1.setAutoCommitOff();
+        driver1.setNoDelay();
+
+        driver1.createTable();
+        driver1.insertOneRow();
+
+        shutdown();
         startup();
-        assertDataIsNotPresent();
+
+        final EndToEndTestDriver driver2 = makeSpecificTestDriver();
+
+        driver2.assertDataIsNotPresent();
     }
 
     /**
@@ -130,18 +128,28 @@ public class EndToEndTests extends H2OTestBase {
      * 
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
+     * @throws UnknownPlatformException 
      */
     @Test
-    public void explicitCommit() throws SQLException, IOException {
+    public void explicitCommit() throws SQLException, IOException, UnknownPlatformException {
 
         Diagnostic.trace();
 
-        createWithoutAutoCommit();
-        insertOneRowExplicitCommitNoDelay();
-        shutdown();
+        final EndToEndTestDriver driver1 = makeSpecificTestDriver();
 
+        driver1.setAutoCommitOff();
+        driver1.setNoDelay();
+
+        driver1.createTable();
+        driver1.insertOneRow();
+        driver1.commit();
+
+        shutdown();
         startup();
-        assertOneRowIsPresent();
+
+        final EndToEndTestDriver driver2 = makeSpecificTestDriver();
+
+        driver2.assertOneRowIsPresent();
     }
 
     /**
@@ -149,20 +157,30 @@ public class EndToEndTests extends H2OTestBase {
      * 
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
+     * @throws UnknownPlatformException 
      */
     @Test
-    public void multipleInserts() throws SQLException, IOException {
+    public void multipleInserts() throws SQLException, IOException, UnknownPlatformException {
 
         Diagnostic.trace();
 
         final int number_of_values = 100;
 
-        createWithoutAutoCommit();
-        insertRowsExplicitCommitNoDelay(number_of_values);
-        shutdown();
+        final EndToEndTestDriver driver1 = makeSpecificTestDriver();
 
+        driver1.setAutoCommitOff();
+        driver1.setNoDelay();
+
+        driver1.createTable();
+        driver1.insertRows(number_of_values);
+        driver1.commit();
+
+        shutdown();
         startup();
-        assertDataIsPresent(number_of_values);
+
+        final EndToEndTestDriver driver2 = makeSpecificTestDriver();
+
+        driver2.assertDataIsPresent(number_of_values);
     }
 
     /**
@@ -174,291 +192,36 @@ public class EndToEndTests extends H2OTestBase {
      * 
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
+     * @throws UnknownPlatformException 
      */
     @Test
-    public void concurrentUpdates() throws SQLException, IOException {
+    public void concurrentUpdates() throws SQLException, IOException, UnknownPlatformException {
 
         Diagnostic.trace();
 
-        createWithAutoCommit();
+        final EndToEndTestDriver driver1 = makeSpecificTestDriver();
 
+        driver1.createTable();
+        driver1.commit();
+
+        // Initial value of -1 means that main thread waiting on it will be blocked until it is signalled twice.
         final Semaphore sync = new Semaphore(-1);
 
-        final Thread firstUpdateThread = new UpdateThread(1, 0, 5000, sync);
-        final Thread secondUpdateThread = new UpdateThread(1, 1, 5000, sync);
+        final EndToEndTestDriver driver2 = makeSpecificTestDriver();
+        final EndToEndTestDriver driver3 = makeSpecificTestDriver();
 
-        firstUpdateThread.setName("First Update Thread");
-        secondUpdateThread.setName("Second Update Thread");
+        driver2.setAutoCommitOff();
+        driver3.setAutoCommitOff();
 
-        firstUpdateThread.start();
-        secondUpdateThread.start();
+        new UpdateThread(driver2, 1, 0, 5000, sync).start();
+        new UpdateThread(driver3, 1, 1, 5000, sync).start();
 
         waitForThreads(sync);
+
         shutdown();
-
         startup();
-        assertDataIsPresent(2);
-    }
 
-    // -------------------------------------------------------------------------------------------------------
-
-    interface IDBAction {
-
-        void execute(Connection connection) throws SQLException;
-    }
-
-    class UpdateThread extends Thread {
-
-        private final int number_of_values;
-        private final int starting_value;
-        private final long delay;
-        private final Semaphore sync;
-
-        public UpdateThread(final int number_of_values, final int starting_value, final long delay, final Semaphore sync) {
-
-            this.number_of_values = number_of_values;
-            this.starting_value = starting_value;
-            this.delay = delay;
-            this.sync = sync;
-        }
-
-        @Override
-        public void run() {
-
-            try {
-                insertWithoutAutoCommitWithExplicitCommit(number_of_values, starting_value, delay);
-            }
-            finally {
-                sync.release();
-            }
-        }
-    };
-
-    protected void waitForThreads(final Semaphore sync) {
-
-        while (true) {
-            try {
-                sync.acquire();
-                break;
-            }
-            catch (final InterruptedException e) {
-                // Try again.
-            }
-        }
-    }
-
-    private void assertOneRowIsPresent() throws SQLException {
-
-        assertDataIsPresent(1);
-    }
-
-    private void insertOneRowWithAutoCommitNoDelay() {
-
-        insertWithAutoCommit(1, 0);
-    }
-
-    private void insertOneRowNoCommitNoDelay() {
-
-        insertWithoutAutoCommitWithoutExplicitCommit(1, 0);
-    }
-
-    private void insertOneRowExplicitCommitNoDelay() {
-
-        insertWithoutAutoCommitWithExplicitCommit(1, 0);
-    }
-
-    private void insertRowsExplicitCommitNoDelay(final int number_of_values) {
-
-        insertWithoutAutoCommitWithExplicitCommit(number_of_values, 0);
-    }
-
-    private void performAction(final IDBAction action) throws SQLException {
-
-        final Connection connection = getConnections()[0];
-        action.execute(connection);
-    }
-
-    private void insertWithAutoCommit(final int number_of_rows_to_insert, final long delay) {
-
-        doInsert(number_of_rows_to_insert, 0, true, false, delay);
-    }
-
-    private void insertWithoutAutoCommitWithoutExplicitCommit(final int number_of_rows_to_insert, final long delay) {
-
-        doInsert(number_of_rows_to_insert, 0, false, false, delay);
-    }
-
-    private void insertWithoutAutoCommitWithExplicitCommit(final int number_of_rows_to_insert, final long delay) {
-
-        insertWithoutAutoCommitWithExplicitCommit(number_of_rows_to_insert, 0, delay);
-    }
-
-    private void insertWithoutAutoCommitWithExplicitCommit(final int number_of_rows_to_insert, final int starting_value, final long delay) {
-
-        doInsert(number_of_rows_to_insert, starting_value, false, true, delay);
-    }
-
-    protected void createWithAutoCommit() throws SQLException {
-
-        doCreate(true);
-    }
-
-    private void createWithoutAutoCommit() throws SQLException {
-
-        doCreate(false);
-    }
-
-    private void doCreate(final boolean auto_commit) throws SQLException {
-
-        performAction(new IDBAction() {
-
-            @Override
-            public void execute(final Connection connection) throws SQLException {
-
-                connection.setAutoCommit(auto_commit);
-                createTable(connection);
-            }
-        });
-    }
-
-    private void doInsert(final int number_of_rows_to_insert, final int starting_value, final boolean auto_commit, final boolean explicit_commit, final long delay) {
-
-        while (true) {
-
-            try {
-                performAction(new IDBAction() {
-
-                    @Override
-                    public void execute(final Connection connection) throws SQLException {
-
-                        connection.setAutoCommit(auto_commit);
-                        insertValues(number_of_rows_to_insert, starting_value, connection, delay);
-
-                        if (explicit_commit) {
-                            connection.commit();
-                        }
-                    }
-                });
-                break;
-            }
-            catch (final SQLException e) {
-                // Ignore and try again.
-            }
-        }
-    }
-
-    protected void assertDataIsPresent(final int number_of_rows_inserted) throws SQLException {
-
-        performAction(new IDBAction() {
-
-            @Override
-            public void execute(final Connection connection) throws SQLException {
-
-                assertDataIsPresent(number_of_rows_inserted, connection);
-            }
-        });
-    }
-
-    private void assertDataIsNotPresent() throws SQLException {
-
-        performAction(new IDBAction() {
-
-            @Override
-            public void execute(final Connection connection) throws SQLException {
-
-                assertDataIsNotPresent(connection);
-            }
-        });
-    }
-
-    private void createTable(final Connection connection) throws SQLException {
-
-        Statement statement = null;
-        try {
-            statement = connection.createStatement();
-
-            // Create a table.
-            statement.executeUpdate("CREATE TABLE TEST (ID INT);");
-        }
-        finally {
-            closeIfNotNull(statement);
-        }
-    }
-
-    private void insertValues(final int number_of_rows_to_insert, final int starting_value, final Connection connection, final long delay) throws SQLException {
-
-        Statement statement = null;
-        try {
-            statement = connection.createStatement();
-
-            for (int i = 0; i < number_of_rows_to_insert; i++) {
-
-                final int val = i + starting_value;
-
-                statement.executeUpdate("INSERT INTO TEST VALUES(" + val + ");");
-                sleep(delay);
-            }
-        }
-        finally {
-            closeIfNotNull(statement);
-        }
-    }
-
-    private void sleep(final long delay) {
-
-        try {
-            Thread.sleep(delay);
-        }
-        catch (final InterruptedException e) {
-            // Ignore and carry on.
-        }
-    }
-
-    private void assertDataIsPresent(final int number_of_rows_inserted, final Connection connection) throws SQLException {
-
-        Statement statement = null;
-        try {
-            statement = connection.createStatement();
-
-            final ResultSet result_set = statement.executeQuery("SELECT * FROM TEST;");
-
-            // Check for duplicates.
-            final Set<Integer> already_seen = new HashSet<Integer>();
-
-            for (int i = 0; i < number_of_rows_inserted; i++) {
-
-                // There should be another value.
-                assertTrue(result_set.next());
-                final int value_read = result_set.getInt(1);
-
-                // The value shouldn't have been read already.
-                assertFalse(already_seen.contains(value_read));
-
-                // The value should be between 0 and n-1.
-                assertTrue(value_read >= 0 && value_read < number_of_rows_inserted);
-
-                already_seen.add(value_read);
-            }
-            assertFalse(result_set.next());
-        }
-        finally {
-            closeIfNotNull(statement);
-        }
-    }
-
-    private void assertDataIsNotPresent(final Connection connection) throws SQLException {
-
-        Statement statement = null;
-        try {
-            statement = connection.createStatement();
-
-            final ResultSet result_set = statement.executeQuery("SELECT * FROM TEST;");
-
-            // The result set should be empty.
-            assertFalse(result_set.next());
-        }
-        finally {
-            closeIfNotNull(statement);
-        }
+        final EndToEndTestDriver driver4 = makeSpecificTestDriver();
+        driver4.assertDataIsPresent(2);
     }
 }

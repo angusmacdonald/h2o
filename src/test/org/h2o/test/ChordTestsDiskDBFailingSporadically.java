@@ -11,113 +11,78 @@ package org.h2o.test;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
-import org.h2o.locator.server.LocatorServer;
-import org.h2o.test.util.StartDatabaseInstance;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
+import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
-import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
 
 /**
  * Tests on multiple databases.
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class ChordTests extends TestBase {
+public class ChordTestsDiskDBFailingSporadically extends H2OTestBase {
 
-    private Statement[] sas;
+    private TestDriver[] drivers;
+    private Statement[] statements;
 
-    private StartDatabaseInstance[] dts;
+    private static final int number_of_databases = 3;
 
-    private LocatorServer ls;
+    @Override
+    protected int getNumberOfDatabases() {
 
-    private static String[] dbs = {"two", "three"}; // , "four", "five", "six", "seven", "eight", "nine"
-
-    @BeforeClass
-    public static void initialSetUp() {
-
-        Diagnostic.setLevel(DiagnosticLevel.INIT);
-        Constants.IS_TEST = true;
-        Constants.IS_NON_SM_TEST = false;
-
+        return number_of_databases;
     }
 
     @Override
     @Before
-    public void setUp() throws Exception {
+    public void setUp() throws SQLException, IOException, UnknownPlatformException, UndefinedDiagnosticLevelException {
 
-        ls = new LocatorServer(29999, "junitLocator");
-        ls.createNewLocatorFile();
+        super.setUp();
 
-        Constants.IS_TEAR_DOWN = false;
+        drivers = new TestDriver[number_of_databases];
+        statements = new Statement[number_of_databases];
 
-        org.h2.Driver.load();
-
-        TestBase.setUpDescriptorFiles();
-        ls = new LocatorServer(29999, "junitLocator");
-        ls.createNewLocatorFile();
-        ls.start();
-
-        dts = new StartDatabaseInstance[dbs.length + 1];
-        dts[0] = new StartDatabaseInstance("jdbc:h2:sm:mem:one", false);
-        dts[0].start();
-
-        Thread.sleep(5000);
-
-        for (int i = 1; i < dts.length; i++) {
-
-            dts[i] = new StartDatabaseInstance("jdbc:h2:mem:" + dbs[i - 1], false);
-            dts[i].start();
-
-            Thread.sleep(5000);
-        }
-
-        sas = new Statement[dbs.length + 1];
-
-        for (int i = 0; i < dts.length; i++) {
-            sas[i] = dts[i].getConnection().createStatement();
+        for (int i = 0; i < number_of_databases; i++) {
+            drivers[i] = makeTestDriver(i);
+            statements[i] = drivers[i].getConnection().createStatement();
         }
 
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
         sql += "INSERT INTO TEST VALUES(1, 'Hello');";
         sql += "INSERT INTO TEST VALUES(2, 'World');";
 
-        sas[0].execute(sql);
+        statements[0].execute(sql);
+
+        Constants.IS_TEST = true;
+        Constants.IS_NON_SM_TEST = false;
+        Constants.IS_TEAR_DOWN = false;
     }
 
     @Override
     @After
-    public void tearDown() {
+    public void tearDown() throws SQLException {
 
         Constants.IS_TEAR_DOWN = true;
 
-        for (final StartDatabaseInstance dt : dts) {
-            dt.setRunning(false);
-        }
-
-        closeDatabaseCompletely();
-
-        ls.setRunning(false);
-        dts = null;
-        sas = null;
-
-        ls.setRunning(false);
-        while (!ls.isFinished()) {
-        };
+        super.tearDown();
     }
 
     @Test(timeout = 60000)
     public void baseTest() throws SQLException {
 
-        sas[0].execute("SELECT * FROM TEST;");
+        Diagnostic.trace();
+
+        statements[0].execute("SELECT * FROM TEST;");
     }
 
     /**
@@ -128,12 +93,14 @@ public class ChordTests extends TestBase {
     @Test(timeout = 60000)
     public void sysTableLock() throws SQLException {
 
+        Diagnostic.trace();
+
         Constants.IS_NON_SM_TEST = true;
 
-        sas[1].execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-        sas[2].execute("CREATE TABLE TEST3(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+        statements[1].execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+        statements[2].execute("CREATE TABLE TEST3(ID INT PRIMARY KEY, NAME VARCHAR(255));");
 
-        final ResultSet rs = sas[0].executeQuery("SELECT * FROM H2O.H2O_TABLE");
+        final ResultSet rs = statements[0].executeQuery("SELECT * FROM H2O.H2O_TABLE");
 
         assertTrue(rs.next() && rs.next() && rs.next());
         assertFalse(rs.next());
@@ -148,17 +115,17 @@ public class ChordTests extends TestBase {
     @Test(timeout = 60000)
     public void tableManagerMigration() throws SQLException {
 
-        sas[1].executeUpdate("MIGRATE TABLEMANAGER test");
+        statements[1].executeUpdate("MIGRATE TABLEMANAGER test");
 
         /*
          * Test that the new Table Manager can be found.
          */
-        sas[1].executeUpdate("INSERT INTO TEST VALUES(4, 'helloagain');");
+        statements[1].executeUpdate("INSERT INTO TEST VALUES(4, 'helloagain');");
 
         /*
          * Test that the old Table Manager is no longer accessible, and that the reference can be updated.
          */
-        sas[0].executeUpdate("INSERT INTO TEST VALUES(5, 'helloagainagain');");
+        statements[0].executeUpdate("INSERT INTO TEST VALUES(5, 'helloagainagain');");
     }
 
     /**
@@ -169,20 +136,20 @@ public class ChordTests extends TestBase {
     @Test(timeout = 60000)
     public void tableManagerDoubleMigration() throws SQLException {
 
-        sas[1].executeUpdate("MIGRATE TABLEMANAGER test");
+        statements[1].executeUpdate("MIGRATE TABLEMANAGER test");
 
         /*
          * Test that the new Table Manager can be found.
          */
-        sas[1].executeUpdate("INSERT INTO TEST VALUES(4, 'helloagain');");
+        statements[1].executeUpdate("INSERT INTO TEST VALUES(4, 'helloagain');");
 
-        sas[0].executeUpdate("MIGRATE TABLEMANAGER test");
+        statements[0].executeUpdate("MIGRATE TABLEMANAGER test");
 
         /*
          * Test that the new Table Manager can be found.
          */
-        sas[0].executeUpdate("INSERT INTO TEST VALUES(5, 'helloagainagain');");
-        sas[1].executeUpdate("INSERT INTO TEST VALUES(6, 'helloagainagainagain');");
+        statements[0].executeUpdate("INSERT INTO TEST VALUES(5, 'helloagainagain');");
+        statements[1].executeUpdate("INSERT INTO TEST VALUES(6, 'helloagainagainagain');");
 
     }
 
@@ -193,7 +160,7 @@ public class ChordTests extends TestBase {
     @Test(expected = SQLException.class, timeout = 60000)
     public void tableManagerMigrationFail() throws SQLException {
 
-        sas[1].executeUpdate("MIGRATE TABLEMANAGER testy");
+        statements[1].executeUpdate("MIGRATE TABLEMANAGER testy");
     }
 
     /**
@@ -204,10 +171,10 @@ public class ChordTests extends TestBase {
     @Test(timeout = 60000)
     public void systemTableMigration() throws SQLException {
 
-        sas[1].executeUpdate("MIGRATE SYSTEMTABLE");
+        statements[1].executeUpdate("MIGRATE SYSTEMTABLE");
 
-        sas[2].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-        sas[2].execute("SELECT * FROM TEST2;");
+        statements[2].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+        statements[2].execute("SELECT * FROM TEST2;");
     }
 
     /**
@@ -217,37 +184,37 @@ public class ChordTests extends TestBase {
     @Test(timeout = 60000)
     public void doubleSystemTableMigration() throws SQLException {
 
-        sas[1].executeUpdate("MIGRATE SYSTEMTABLE");
+        statements[1].executeUpdate("MIGRATE SYSTEMTABLE");
 
-        sas[2].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-        sas[2].execute("SELECT * FROM TEST2;");
+        statements[2].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+        statements[2].execute("SELECT * FROM TEST2;");
 
-        sas[0].execute("MIGRATE SYSTEMTABLE");
+        statements[0].execute("MIGRATE SYSTEMTABLE");
 
-        sas[2].executeUpdate("CREATE TABLE TEST3(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-        sas[2].execute("SELECT * FROM TEST3;");
+        statements[2].executeUpdate("CREATE TABLE TEST3(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+        statements[2].execute("SELECT * FROM TEST3;");
 
     }
 
     @Test(timeout = 60000)
     public void systemTableFailure() throws InterruptedException, SQLException {
 
-        dts[0].stop();
-        sas[0].close();
+        db_processes[0].destroy();
+        statements[0].close();
 
         Thread.sleep(10000);
 
-        sas[1].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+        statements[1].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
     }
 
     @Test(timeout = 60000)
     public void firstMachineDisconnect() throws InterruptedException, SQLException {
 
-        sas[0].close();
-        dts[0].getConnection().close();
+        statements[0].close();
+        drivers[0].getConnection().close();
 
         Thread.sleep(10000);
 
-        sas[1].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+        statements[1].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
     }
 }

@@ -1144,7 +1144,7 @@ public class Parser {
                 table = getDualTable();
             }
             else {
-                table = readTableOrView(tableName, true, currentSelect.getLocationPreference(), false);
+                table = readTableOrView(tableName, true, currentSelect.getLocationPreference());
             }
         }
         alias = readFromAlias(alias);
@@ -4730,7 +4730,7 @@ public class Parser {
 
     private Table readTableOrView() throws SQLException {
 
-        return readTableOrView(readIdentifierWithSchema(null), true, LocationPreference.NO_PREFERENCE, false);
+        return readTableOrView(readIdentifierWithSchema(null), true, LocationPreference.NO_PREFERENCE);
     }
 
     /**
@@ -4742,7 +4742,7 @@ public class Parser {
      * @return
      * @throws SQLException
      */
-    private Table readTableOrView(final String tableName, final boolean searchRemote, final LocationPreference locale, final boolean alreadyCalled) throws SQLException {
+    private Table readTableOrView(final String tableName, final boolean searchRemote, final LocationPreference locale) throws SQLException {
 
         String localSchemaName = null;
 
@@ -4776,16 +4776,13 @@ public class Parser {
             final TableManagerRemote tableManager = session.getDatabase().getSystemTableReference().lookup(tableInfo, true);
 
             if (tableManager != null) {
-                TableProxy qp = null;
+                final TableProxy tableProxy = getProxyFromTableManager(tableInfo, tableManager);
 
-                qp = getQueryProxyFromTableManager(tableInfo, tableManager, qp);
-
-                if (qp != null && qp.getReplicaLocations() != null) {
-                    replicaLocations.addAll(qp.getReplicaLocations().keySet());
-                }
+                replicaLocations.addAll(tableProxy.getReplicaLocations().keySet());
 
                 if (replicaLocations.size() == 0) {
-                    ErrorHandling.errorNoEvent("There should be at least one active replica.");
+                    ErrorHandling.errorNoEvent("No active replicas for table: " + tableName);
+                    throw new SQLException("No active replicas for table: " + tableName);
                 }
 
                 tableFound = true;
@@ -4882,7 +4879,7 @@ public class Parser {
         return table;
     }
 
-    private TableProxy getQueryProxyFromTableManager(final TableInfo tableInfo, TableManagerRemote tableManager, TableProxy qp) throws SQLException {
+    private TableProxy getProxyFromTableManager(final TableInfo tableInfo, TableManagerRemote tableManager) throws SQLException {
 
         final ISystemTableReference systemTableReference = session.getDatabase().getSystemTableReference();
         try {
@@ -4890,7 +4887,7 @@ public class Parser {
              * This requests LockType.NONE because it doesn't need a lock for the table at this point - only the location of active
              * instances. It will request a read/write lock at a later point.
              */
-            qp = tableManager.getQueryProxy(LockType.NONE, LockRequest.createNewLockRequest(session));
+            return tableManager.getQueryProxy(LockType.NONE, LockRequest.createNewLockRequest(session));
 
         }
         catch (final MovedException e) {
@@ -4899,8 +4896,7 @@ public class Parser {
             tableManager = systemTableReference.lookup(tableInfo, false);
 
             try {
-                qp = tableManager.getQueryProxy(LockType.NONE, LockRequest.createNewLockRequest(session));
-
+                return tableManager.getQueryProxy(LockType.NONE, LockRequest.createNewLockRequest(session));
             }
             catch (final Exception e1) {
                 throw new SQLException("Unable to contact Table Manager for " + tableInfo + ":: " + e1.getMessage());
@@ -4927,38 +4923,31 @@ public class Parser {
                 }
             }
             catch (final Exception e2) {
-                e2.printStackTrace();
                 throw new SQLException("Unable to contact the System Table for " + tableInfo + ":: " + e2.getMessage());
             }
 
+
             tableManager = systemTableReference.lookup(tableInfo, false);
 
-            if (tableManager == null) {
-                ErrorHandling.errorNoEvent("Table Manager was null for table lookup: " + tableInfo);
+            if (tableManager == null) { throw new SQLException("Table Manager was null for table lookup: " + tableInfo); }
+
+            try {
+                return tableManager.getQueryProxy(LockType.NONE, LockRequest.createNewLockRequest(session));
             }
-            else {
+            catch (final RemoteException e1) {
+                // Recreate Table Manager then try again.
                 try {
-                    qp = tableManager.getQueryProxy(LockType.NONE, LockRequest.createNewLockRequest(session));
+                    tableManager = systemTableReference.getSystemTable().recreateTableManager(tableInfo);
+                    return tableManager.getQueryProxy(LockType.NONE, LockRequest.createNewLockRequest(session));
                 }
-                catch (final RemoteException e1) {
-                    // Recreate Table Manager then try again.
-                    try {
-                        tableManager = systemTableReference.getSystemTable().recreateTableManager(tableInfo);
-                        qp = tableManager.getQueryProxy(LockType.NONE, LockRequest.createNewLockRequest(session));
-                    }
-                    catch (final RemoteException e2) {
-                        ErrorHandling.errorNoEvent("Failed to contact Table Manager: " + e.getMessage());
-                    }
-                    catch (final MovedException e2) {
-                        e2.printStackTrace();
-                    }
+                catch (final Exception e2) {
+                    throw new SQLException("Failed to contact Table Manager: " + e2.getMessage());
                 }
-                catch (final MovedException e1) {
-                    e1.printStackTrace();
-                }
+            }
+            catch (final MovedException e1) {
+                throw new SQLException("Table moved: " + e1.getMessage());
             }
         }
-        return qp;
     }
 
     /**
@@ -5065,7 +5054,7 @@ public class Parser {
         if (result == 0) {
             // Linked table was successfully added.
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Successfully created linked table '" + tableName + "'. Attempting to access it.");
-            return readTableOrView(tableName, false, LocationPreference.PRIMARY, true);
+            return readTableOrView(tableName, false, LocationPreference.PRIMARY);
         }
         else {
             throw new SQLException("Couldn't find active copy of table " + tableName + " to connect to.");

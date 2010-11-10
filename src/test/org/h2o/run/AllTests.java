@@ -35,16 +35,15 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-		// Unit tests.
-		// H2oProperties.class,
-		TransactionNameTests.class,
-		// Database Tests
-		SystemTableTests.class, MultipleSchemaTests.class, ReplicaTests.class, CustomSettingsTests.class, IndexTests.class,
-		UpdateTests.class, MultiQueryTransactionTests.class, H2Tests.class, WrapperTests.class, RestartTests.class, LocatorTests.class,
-		// LocatorDatabaseTests.class,
-		ChordTests.class, AsynchronousTests.class, FailureTests.class })
+// Unit tests.
+// H2oProperties.class,
+                TransactionNameTests.class,
+                // Database Tests
+                SystemTableTests.class, MultipleSchemaTests.class, ReplicaTests.class, CustomSettingsTests.class, IndexTests.class, UpdateTests.class, MultiQueryTransactionTests.class, H2Tests.class, WrapperTests.class, RestartTests.class, LocatorTests.class,
+                // LocatorDatabaseTests.class,
+                ChordTests.class, AsynchronousTests.class, FailureTests.class})
 public class AllTests {
-	
-	// The above annotations do all the work.
-	public static final String TEST_DESCRIPTOR_FILE = "service" + File.separator + "testDB.h2o";
+
+    // The above annotations do all the work.
+    public static final String TEST_DESCRIPTOR_FILE = "service" + File.separator + "testDB.h2o";
 }

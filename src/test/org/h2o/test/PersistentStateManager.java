@@ -1,7 +1,5 @@
 package org.h2o.test;
 
-import static org.junit.Assert.assertFalse;
-
 import java.io.File;
 import java.io.IOException;
 
@@ -27,14 +25,23 @@ public class PersistentStateManager {
 
     public void deletePersistentState() {
 
-        deleteDatabaseDirectoriesIfPresent();
-        deleteConfigDirectoryIfPresent();
+        do {
+            deleteDatabaseDirectoriesIfPresent();
+            deleteConfigDirectoryIfPresent();
+
+            try {
+                Thread.sleep(1000);
+            }
+            catch (final InterruptedException e) {
+                // Ignore.
+            }
+        }
+        while (!persistentStateIsAbsent());
     }
 
-    public void assertPersistentStateIsAbsent() {
+    private boolean persistentStateIsAbsent() {
 
-        assertDatabaseDirectoriesAreAbsent();
-        assertConfigDirectoryIsAbsent();
+        return databaseDirectoriesAreAbsent() && configDirectoryIsAbsent();
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -47,7 +54,6 @@ public class PersistentStateManager {
             }
         }
         catch (final IOException e) {
-            e.printStackTrace();
             // Ignore.
         }
     }
@@ -62,16 +68,17 @@ public class PersistentStateManager {
         }
     }
 
-    private void assertDatabaseDirectoriesAreAbsent() {
+    private boolean databaseDirectoriesAreAbsent() {
 
         for (final File database_directory : database_directories) {
-            assertFalse(database_directory.exists());
+            if (database_directory.exists()) { return false; }
         }
+        return true;
     }
 
-    private void assertConfigDirectoryIsAbsent() {
+    private boolean configDirectoryIsAbsent() {
 
-        assertFalse(config_directory.exists());
+        return !config_directory.exists();
     }
 
     private void delete(final File file) throws IOException {

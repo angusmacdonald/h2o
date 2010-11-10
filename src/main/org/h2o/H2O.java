@@ -60,7 +60,8 @@ public class H2O {
     private final int webPort;
 
     private String databaseDescriptorLocation;
-    private String databaseBaseDirectoryPath;
+    private final String databaseBaseDirectoryPath;
+    private final DiagnosticLevel diagnosticLevel;
 
     private Connection connection;
     private H2OLocator locator;
@@ -78,6 +79,7 @@ public class H2O {
      *            <li><em>-w<port></em>. Optional. Specifies that a web port should be opened and the web interface should be started.</li>
      *            <li><em>-d<descriptor></em>. Optional. Specifies the URL or local file path of the database descriptor file. If not specified the database will create a new descriptor file in the database directory.</li>
      *            <li><em>-f</em>. Optional. Specifies the directory containing the persistent database state. The default is the current working directory.</li>
+     *            <li><em>-D<level></em>. Optional. Specifies a diagnostic level from 0 (most detailed) to 6 (least detailed).</li>
      *            </p>
      *            <p>
      *            <em>Example: java H2O -nMyFirstDatabase -p9999 -d'config\MyFirstDatabase.h2od'</em>. This creates a new
@@ -90,7 +92,6 @@ public class H2O {
      */
     public static void main(final String[] args) throws StartupException, IOException, SQLException {
 
-        Diagnostic.setLevel(DiagnosticLevel.FINAL);
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting H2O Server Instance.");
 
         final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
@@ -110,13 +111,14 @@ public class H2O {
      * @param databaseBaseDirectoryPath the directory in which database files are stored
      * @param databaseDescriptorLocation the location (file path or URL) of the database descriptor file
      */
-    private H2O(final String databaseName, final int tcpPort, final int webPort, final String databaseBaseDirectoryPath, final String databaseDescriptorLocation) {
+    private H2O(final String databaseName, final int tcpPort, final int webPort, final String databaseBaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
 
         this.databaseName = databaseName;
         this.tcpPort = tcpPort;
         this.webPort = webPort;
         this.databaseDescriptorLocation = databaseDescriptorLocation;
         this.databaseBaseDirectoryPath = databaseBaseDirectoryPath;
+        this.diagnosticLevel = diagnosticLevel;
     }
 
     /**
@@ -128,9 +130,9 @@ public class H2O {
      * @param databaseDirectoryPath the directory in which database files are stored
      * @param databaseDescriptorLocation the location (file path or URL) of the database descriptor file
      */
-    public H2O(final String databaseName, final int tcpPort, final String databaseDirectoryPath, final String databaseDescriptorLocation) {
+    public H2O(final String databaseName, final int tcpPort, final String databaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
 
-        this(databaseName, tcpPort, 0, databaseDirectoryPath, databaseDescriptorLocation);
+        this(databaseName, tcpPort, 0, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel);
     }
 
     /**
@@ -142,9 +144,9 @@ public class H2O {
      * @param webPort the port for this database's web interface
      * @param databaseDirectoryPath the directory in which database files are stored
      */
-    public H2O(final String databaseName, final int tcpPort, final int webPort, final String databaseDirectoryPath) {
+    public H2O(final String databaseName, final int tcpPort, final int webPort, final String databaseDirectoryPath, final DiagnosticLevel diagnosticLevel) {
 
-        this(databaseName, tcpPort, webPort, databaseDirectoryPath, null);
+        this(databaseName, tcpPort, webPort, databaseDirectoryPath, null, diagnosticLevel);
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -223,6 +225,7 @@ public class H2O {
         String databaseDirectoryPath = arguments.get("-f");
         String databaseDescriptorLocation = arguments.get("-d");
         final String webPortString = arguments.get("-w");
+        final String diagnosticLevelAsInt = arguments.get("-D");
 
         int tcpPort = 0;
         int webPort = 0;
@@ -246,25 +249,32 @@ public class H2O {
             databaseDirectoryPath = removeQuotes(databaseDirectoryPath);
         }
 
-        return new H2O(databaseName, tcpPort, webPort, databaseDirectoryPath, databaseDescriptorLocation);
+        DiagnosticLevel diagnosticLevel = DiagnosticLevel.NONE;
+
+        if (diagnosticLevelAsInt != null) {
+
+            try {
+                final int level = Integer.parseInt(diagnosticLevelAsInt);
+
+                if (level < DiagnosticLevel.getMinValue() || level > DiagnosticLevel.getMaxValue()) { throw new StartupException("Invalid diagnostic level specified."); }
+
+                diagnosticLevel = DiagnosticLevel.fromNumericalValue(level);
+            }
+            catch (final Exception e) {
+                throw new StartupException("Invalid diagnostic level specified.");
+            }
+        }
+
+        return new H2O(databaseName, tcpPort, webPort, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel);
     }
 
     private String generateDatabaseURL() {
 
-        // Add a trailing slash if it isn't already there.
-        if (databaseBaseDirectoryPath != null && !databaseBaseDirectoryPath.endsWith("/") && !databaseBaseDirectoryPath.endsWith("\\")) {
-            databaseBaseDirectoryPath = databaseBaseDirectoryPath + "/";
-        }
-
-        final String hostname = NetUtils.getLocalAddress();
-        final String location = (databaseBaseDirectoryPath != null ? databaseBaseDirectoryPath : "") + databaseName + tcpPort;
-
-        final String databaseURL = createDatabaseURL(tcpPort, hostname, location);
+        final String databaseURL = createDatabaseURL(tcpPort, databaseBaseDirectoryPath, databaseName);
 
         // Display to user.
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Database Name: " + databaseName);
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Port: " + tcpPort);
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Hostname: " + hostname);
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Generated JDBC URL: " + databaseURL);
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Specified Descriptor File Location: " + databaseDescriptorLocation);
 
@@ -325,7 +335,7 @@ public class H2O {
         }
         catch (final IOException e) {
             properties.createNewFile();
-            properties.setProperty("diagnosticLevel", DiagnosticLevel.NONE.toString());
+            properties.setProperty("diagnosticLevel", diagnosticLevel.toString());
         }
 
         // Overwrite these properties regardless of whether properties file exists or not.
@@ -403,11 +413,21 @@ public class H2O {
         return text;
     }
 
-    private static String createDatabaseURL(final int port, final String hostname, String databaseLocation) {
+    public static String createDatabaseURL(final int port, final String database_base_directory_path, final String database_name) {
 
-        if (!databaseLocation.startsWith("/")) {
-            databaseLocation = "/" + databaseLocation;
+        String base = "";
+        if (database_base_directory_path != null) {
+            // Ensure one trailing forward slash.
+            base = database_base_directory_path;
+
+            if (base.endsWith("\\")) {
+                base = base.substring(0, base.length() - 1);
+            }
+            if (!base.endsWith("/")) {
+                base += "/";
+            }
         }
-        return "jdbc:h2:tcp://" + hostname + ":" + port + databaseLocation;
+
+        return "jdbc:h2:tcp://" + NetUtils.getLocalAddress() + ":" + port + "/" + base + database_name + port;
     }
 }

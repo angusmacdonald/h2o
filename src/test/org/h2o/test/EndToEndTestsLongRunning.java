@@ -16,6 +16,7 @@ import java.util.concurrent.Semaphore;
 
 import org.junit.Test;
 
+import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 
 /**
@@ -23,16 +24,17 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
  *
  * @author Graham Kirby (graham@cs.st-andrews.ac.uk)
  */
-public class EndToEndTestsLongRunning extends EndToEndTests {
+public class EndToEndTestsLongRunning extends EndToEndTestsCommon {
 
     /**
-     * A generalised version of {@link #concurrentUpdates()} with multiple threads and multiple values being inserted.
+     * A generalised version of {@link #concurrentUpdates()} with multiple threads each inserting multiple values via its own connection.
      * 
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
+     * @throws UnknownPlatformException 
      */
     @Test
-    public void multipleThreads1() throws SQLException, IOException {
+    public void multipleThreads1() throws SQLException, IOException, UnknownPlatformException {
 
         Diagnostic.trace();
 
@@ -44,41 +46,52 @@ public class EndToEndTestsLongRunning extends EndToEndTests {
     }
 
     /**
-     * A generalised version of {@link #concurrentUpdates()} with multiple threads and multiple values being inserted.
+     * A generalised version of {@link #concurrentUpdates()} with multiple threads each inserting multiple values via its own connection.
      * 
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
+     * @throws UnknownPlatformException 
      */
     @Test
-    public void multipleThreads2() throws SQLException, IOException {
+    public void multipleThreads2() throws SQLException, IOException, UnknownPlatformException {
 
         Diagnostic.trace();
 
         final int number_of_values = 20;
         final int number_of_threads = 20;
-        final int delay = 1000;
+        final int delay = 0;
 
         multipleThreads(number_of_values, number_of_threads, delay);
     }
 
-    private void multipleThreads(final int number_of_values, final int number_of_threads, final int delay) throws SQLException, IOException {
+    private void multipleThreads(final int number_of_values, final int number_of_threads, final int delay) throws SQLException, IOException, UnknownPlatformException {
 
-        createWithAutoCommit();
+        final EndToEndTestDriver driver1 = makeSpecificTestDriver();
+
+        driver1.createTable();
+        driver1.commit();
 
         final ExecutorService pool = Executors.newFixedThreadPool(number_of_threads);
+
+        // Initial value of -1 means that main thread waiting on it will be blocked until all the worker threads have signalled it.
         final Semaphore sync = new Semaphore(1 - number_of_threads);
 
         for (int i = 0; i < number_of_threads; i++) {
 
             final int j = i;
+            final EndToEndTestDriver driver = makeSpecificTestDriver();
 
-            pool.execute(new UpdateThread(number_of_values, j * number_of_values, delay, sync));
+            driver.setAutoCommitOff();
+
+            pool.execute(new UpdateThread(driver, number_of_values, j * number_of_values, delay, sync));
         }
 
         waitForThreads(sync);
-        shutdown();
 
+        shutdown();
         startup();
-        assertDataIsPresent(number_of_values * number_of_threads);
+
+        final EndToEndTestDriver driver2 = makeSpecificTestDriver();
+        driver2.assertDataIsPresent(number_of_values * number_of_threads);
     }
 }

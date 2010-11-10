@@ -161,6 +161,8 @@ public class ReplicaManager implements Serializable {
      */
     public Set<DatabaseInstanceWrapper> completeUpdate(final boolean commit, final Collection<CommitResult> committedQueries, final TableInfo tableInfo, final boolean firstPartOfUpdate) {
 
+        Diagnostic.trace(DiagnosticLevel.FULL, "commit: " + commit + " table info: " + tableInfo.getFullTableName());
+
         //Replicas that are currently marked as active (this may be changed during this update).
         final HashMap<DatabaseInstanceWrapper, Integer> oldActiveReplicas = new HashMap<DatabaseInstanceWrapper, Integer>(activeReplicas);
 
@@ -216,7 +218,7 @@ public class ReplicaManager implements Serializable {
                  * information is for this table OR no table is specified (which is the case for queries which have bypassed the
                  * asynchronous update manager. THEN... Update the active/all replica set with new update IDs where appropriate.
                  */
-                if (getAllReplicas().containsKey(wrapper) && (tableInfo.equals(commitResult.getTable()) || commitResult.getTable() == null)) {
+                if (allReplicas.containsKey(wrapper) && (tableInfo.equals(commitResult.getTable()) || commitResult.getTable() == null)) {
 
                     final Integer currentID = allReplicas.get(wrapper);
 

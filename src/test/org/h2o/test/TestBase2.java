@@ -79,8 +79,8 @@ public class TestBase2 {
         locator = new H2OLocator(DATABASE_NAME, 5999, true, DATABASE_LOCATION1);
         final String descriptorFilePath = locator.start();
 
-        db1 = new H2O(DATABASE_NAME, TCP_PORT1, DATABASE_LOCATION1, descriptorFilePath);
-        db2 = new H2O(DATABASE_NAME, TCP_PORT2, DATABASE_LOCATION2, descriptorFilePath);
+        db1 = new H2O(DATABASE_NAME, TCP_PORT1, DATABASE_LOCATION1, descriptorFilePath, DiagnosticLevel.NONE);
+        db2 = new H2O(DATABASE_NAME, TCP_PORT2, DATABASE_LOCATION2, descriptorFilePath, DiagnosticLevel.NONE);
 
         db1.startDatabase();
         db2.startDatabase();

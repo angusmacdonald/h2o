@@ -489,7 +489,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     private boolean startChordRing(final String hostname, final int port, final DatabaseURL databaseURL) {
 
         rmiPort = port;
-        System.out.println("chord node port starting: " + rmiPort);
 
         final InetSocketAddress localChordAddress = new InetSocketAddress(hostname, port);
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Deploying new Chord ring on " + hostname + ":" + port);
@@ -541,7 +540,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
         rmiPort = localPort;
 
-        System.out.println("chord node port joining: " + rmiPort);
         InetSocketAddress localChordAddress = new InetSocketAddress(localHostname, rmiPort);
         final InetSocketAddress knownHostAddress = new InetSocketAddress(remoteHostname, remotePort);
 

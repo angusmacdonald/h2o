@@ -39,7 +39,7 @@ public class StandaloneH2OExample {
         // Where the database will be created (where persisted state is stored).
         final String databaseDirectoryPath = "db_data";
 
-        final H2O db = new H2O(databaseName, tcpPort, webPort, databaseDirectoryPath);
+        final H2O db = new H2O(databaseName, tcpPort, webPort, databaseDirectoryPath, DiagnosticLevel.NONE);
         db.startDatabase();
     }
 }
