@@ -295,7 +295,12 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         throw new SystemTableAccessException("Failed to create new System Table.");
     }
 
-    private DatabaseInstanceRemote lookForDatabaseInstanceAt(final IDatabaseRemote iDatabaseRemote, final DatabaseURL url) throws RemoteException {
+    private DatabaseInstanceRemote lookForDatabaseInstanceAt(IDatabaseRemote iDatabaseRemote, final DatabaseURL url) throws RemoteException {
+
+        if (iDatabaseRemote == null) {
+            iDatabaseRemote = db.getRemoteInterface();
+            remoteInterface = iDatabaseRemote;
+        }
 
         DatabaseInstanceRemote databaseInstance;
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Looking for database instance at: " + url.getHostname() + ":" + url.getRMIPort());
@@ -310,7 +315,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
      * @param oldSystemTable
      * @return
      */
-    private SystemTableWrapper moveSystemTableToLocalMachine(final SystemTableRemote oldSystemTable) throws SystemTableAccessException {
+    private SystemTableWrapper moveSystemTableToLocalMachine(SystemTableRemote oldSystemTable) throws SystemTableAccessException {
 
         /*
          * CREATE A NEW System Table BY COPYING THE STATE OF THE CURRENT ACTIVE IN-MEMORY System Table.
@@ -345,8 +350,33 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
             throw new SystemTableAccessException("This System Table is already being migrated to another instance.");
         }
         catch (final MovedException e) {
-            ErrorHandling.exceptionError(e, "This System Table has already been migrated to another instance.");
-            throw new SystemTableAccessException("This System Table is already being migrated to another instance.");
+
+            try {
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "The local instance (where the System Table is being migrated to) has an old System Table reference that must be updated.");
+                stReference.handleMovedException(e);
+            }
+            catch (final SQLException e1) {
+                //Failed to find new System Table
+                e1.printStackTrace();
+                throw new SystemTableAccessException("This System Table has already being migrated to another instance and that other instance is inaccessible");
+
+            }
+
+            try {
+                oldSystemTable = stReference.getSystemTable();
+                oldSystemTable.prepareForMigration(db.getURL().getURLwithRMIPort());
+            }
+            catch (final RemoteException e1) {
+                e.printStackTrace();
+            }
+            catch (final MigrationException e1) {
+                ErrorHandling.exceptionError(e, "This System Table is already being migrated to another instance.");
+                throw new SystemTableAccessException("This System Table is already being migrated to another instance.");
+            }
+            catch (final MovedException e1) {
+                ErrorHandling.exceptionError(e, "This System Table has already been migrated to another instance.");
+                throw new SystemTableAccessException("This System Table is already being migrated to another instance.");
+            }
         }
 
         /*

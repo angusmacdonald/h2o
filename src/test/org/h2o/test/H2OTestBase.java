@@ -160,8 +160,10 @@ public abstract class H2OTestBase {
 
     private void closeConnections() throws SQLException {
 
-        for (final Connection connection : connections) {
-            closeIfNotNull(connection);
+        if (connections != null) {
+            for (final Connection connection : connections) {
+                closeIfNotNull(connection);
+            }
         }
     }
 

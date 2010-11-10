@@ -118,6 +118,31 @@ public class ChordTests extends H2OTestBase {
     }
 
     /**
+     * Tests that when the Table Manager is migrated another database instance is able to migrate back to the original instance without error.
+     * @throws SQLException 
+     * 
+     */
+    @Test(timeout = 60000)
+    public void tableManagerDoubleMigration() throws SQLException {
+
+        statements[1].executeUpdate("MIGRATE TABLEMANAGER test");
+
+        /*
+         * Test that the new Table Manager can be found.
+         */
+        statements[1].executeUpdate("INSERT INTO TEST VALUES(4, 'helloagain');");
+
+        statements[0].executeUpdate("MIGRATE TABLEMANAGER test");
+
+        /*
+         * Test that the new Table Manager can be found.
+         */
+        statements[0].executeUpdate("INSERT INTO TEST VALUES(5, 'helloagainagain');");
+        statements[1].executeUpdate("INSERT INTO TEST VALUES(6, 'helloagainagainagain');");
+
+    }
+
+    /**
      * Tests that when migration fails when an incorrect table name is given.
      * @throws SQLException 
      */
@@ -139,6 +164,25 @@ public class ChordTests extends H2OTestBase {
 
         statements[2].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
         statements[2].execute("SELECT * FROM TEST2;");
+    }
+
+    /**
+     * Tests that when the System Table is migrated another database instance and back to the original instance that it still works.
+     * @throws SQLException 
+     */
+    @Test(timeout = 60000)
+    public void doubleSystemTableMigration() throws SQLException {
+
+        statements[1].executeUpdate("MIGRATE SYSTEMTABLE");
+
+        statements[2].executeUpdate("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+        statements[2].execute("SELECT * FROM TEST2;");
+
+        statements[0].execute("MIGRATE SYSTEMTABLE");
+
+        statements[2].executeUpdate("CREATE TABLE TEST3(ID INT PRIMARY KEY, NAME VARCHAR(255));");
+        statements[2].execute("SELECT * FROM TEST3;");
+
     }
 
     @Test(timeout = 60000)

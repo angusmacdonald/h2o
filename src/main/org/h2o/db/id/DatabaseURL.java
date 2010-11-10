@@ -251,10 +251,21 @@ public class DatabaseURL implements Serializable {
 
     private String[] getDbLocationComponents() {
 
-        final String[] parts = dbLocation.split(File.separator);
+        String fileSeparator = File.separator;
+
+        if (fileSeparator.equals("\\")) {
+            fileSeparator += "\\"; //to be used as a regex the backslash needs to be escaped.
+        }
+
+        String[] parts = dbLocation.split(fileSeparator);
         if (parts.length != 2) {
-            ErrorHandling.error("dbLocation expected to have two components but was: " + dbLocation);
-            return null;
+
+            parts = dbLocation.split("/"); //try a forward slash if the first check failed.
+
+            if (parts.length != 2) {
+                ErrorHandling.error("dbLocation expected to have two components but was: " + dbLocation);
+                return null;
+            }
         }
         return parts;
     }
