@@ -549,16 +549,16 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         /*
          * Release the locks.
          */
-        LockType lockType = LockType.NONE;
-        if (!asynchronousCommit) {
-            lockType = lockingTable.releaseLock(lockRequest);
-        }
+        final LockType lockType = lockingTable.peekAtLockGranted(lockRequest);
 
         /*
          * Update the set of 'active replicas' and their update IDs.
          */
         updateActiveReplicaSet(commit, committedQueries, asynchronousCommit, lockType);
 
+        if (!asynchronousCommit) {
+            lockingTable.releaseLock(lockRequest);
+        }
     }
 
     /**

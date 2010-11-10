@@ -97,4 +97,14 @@ public class LockingTable implements ILockingTable, Serializable {
 
         return "LockingTable [writeLock=" + writeLock + ", readLocksSize=" + readLocks.size() + "]";
     }
+
+    @Override
+    public LockType peekAtLockGranted(final LockRequest lockRequest) {
+
+        if (readLocks.contains(lockRequest)) { return LockType.READ; }
+
+        if (writeLock != null && writeLock.equals(lockRequest)) { return LockType.WRITE; }
+
+        return LockType.NONE;
+    }
 }

@@ -47,6 +47,7 @@ public class PersistentStateManager {
             }
         }
         catch (final IOException e) {
+            e.printStackTrace();
             // Ignore.
         }
     }

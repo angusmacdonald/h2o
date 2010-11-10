@@ -9,7 +9,6 @@
 
 package org.h2o.db.query.locking;
 
-
 /**
  * Interface for a table lock manager. Each manager controls access to a single table. Calling classes can either request a lock or release
  * a currently held lock.
@@ -36,8 +35,15 @@ public interface ILockingTable {
      *            Type of lock held.
      * @param requestingMachine
      *            Proxy for the machine making the request.
-     * @return True if the success was successful.
+     * @return The type of lock that was released.
      */
     public LockType releaseLock(LockRequest requestingMachine);
+
+    /**
+     * Find out what type of lock a particular session-database has been granted.
+     * @param lockRequest   The object identifying the session requesting the lock.
+     * @return  The type of lock granted.
+     */
+    public LockType peekAtLockGranted(LockRequest lockRequest);
 
 }

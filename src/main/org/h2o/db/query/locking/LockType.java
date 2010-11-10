@@ -32,12 +32,13 @@ public enum LockType {
     CREATE,
 
     /*
-     * No lock granted.
-     */
-    NONE,
-
-    /*
      * DROP TABLE request.
      */
-    DROP
+    DROP,
+
+    /*
+     * No lock granted.
+     */
+    NONE
+
 }
