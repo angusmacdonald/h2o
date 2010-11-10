@@ -8,7 +8,6 @@
  */
 package org.h2o.db.id;
 
-import java.io.File;
 import java.io.Serializable;
 
 import org.h2.util.NetUtils;
@@ -251,21 +250,12 @@ public class DatabaseURL implements Serializable {
 
     private String[] getDbLocationComponents() {
 
-        String fileSeparator = File.separator;
-
-        if (fileSeparator.equals("\\")) {
-            fileSeparator += "\\"; //to be used as a regex the backslash needs to be escaped.
-        }
-
-        String[] parts = dbLocation.split(fileSeparator);
+        final String[] parts = dbLocation.split("/");
         if (parts.length != 2) {
 
-            parts = dbLocation.split("/"); //try a forward slash if the first check failed.
+            ErrorHandling.error("dbLocation expected to have two components but was: " + dbLocation);
+            return null;
 
-            if (parts.length != 2) {
-                ErrorHandling.error("dbLocation expected to have two components but was: " + dbLocation);
-                return null;
-            }
         }
         return parts;
     }
