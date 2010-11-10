@@ -4884,6 +4884,7 @@ public class Parser {
 
     private TableProxy getQueryProxyFromTableManager(final TableInfo tableInfo, TableManagerRemote tableManager, TableProxy qp) throws SQLException {
 
+        final ISystemTableReference systemTableReference = session.getDatabase().getSystemTableReference();
         try {
             /*
              * This requests LockType.NONE because it doesn't need a lock for the table at this point - only the location of active
@@ -4895,7 +4896,7 @@ public class Parser {
         catch (final MovedException e) {
             // Query System Table again, bypassing the cache.
 
-            tableManager = session.getDatabase().getSystemTableReference().lookup(tableInfo, false);
+            tableManager = systemTableReference.lookup(tableInfo, false);
 
             try {
                 qp = tableManager.getQueryProxy(LockType.NONE, LockRequest.createNewLockRequest(session));
@@ -4906,22 +4907,29 @@ public class Parser {
             }
         }
         catch (final Exception e) {
-            // Attempt to recreate the table manager in-case it has failed, then
-            // try again.
+            // Attempt to recreate the table manager in-case it has failed, then try again.
             try {
-                final ISystemTable systemTable = session.getDatabase().getSystemTableReference().getSystemTable();
+                ISystemTable systemTable = systemTableReference.getSystemTable();
                 if (systemTable != null) {
-                    systemTable.recreateTableManager(tableInfo);
+
+                    try {
+                        systemTable.recreateTableManager(tableInfo);
+                    }
+                    catch (final Exception e2) { //try to recover from this error.
+                        systemTable = systemTableReference.failureRecovery();
+                        systemTable.recreateTableManager(tableInfo);
+
+                    }
+
                 }
                 else {
                     throw new SQLException("System table was returned as null.");
                 }
             }
             catch (final Exception e2) {
+                e2.printStackTrace();
                 throw new SQLException("Unable to contact the System Table for " + tableInfo + ":: " + e2.getMessage());
             }
-
-            final ISystemTableReference systemTableReference = session.getDatabase().getSystemTableReference();
 
             tableManager = systemTableReference.lookup(tableInfo, false);
 

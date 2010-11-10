@@ -135,6 +135,8 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
      */
     private SystemTableWrapper reinstantiateSystemTable() throws LocatorException, SystemTableAccessException {
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Beginning attempt to re-instantiate the System Table.");
+
         /*
          * There is no guarantee this node has a replica of the System Table state. Obtain the list of replicas from the locator server.
          * There are a number of cases: 1. This node holds a copy of System Table state. It can then apply to the locator server to become
@@ -154,7 +156,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
 
         if (localMachineHoldsSystemTableState) {
             // Re-instantiate the System Table on this node
-            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, db.getURL() + ": A copy of the System Table state exists on " + db.getURL() + ". It will be re-instantiated here.");
+            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, db.getURL() + ": A copy of the System Table state exists locally (on " + db.getURL() + "). It will be re-instantiated here.");
             final SystemTableRemote newSystemTable = stReference.migrateSystemTableToLocalInstance(true, true); // throws
             // SystemTableCreationException
             // if it fails.
@@ -163,7 +165,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         }
         else {
 
-            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, db.getURL() + ": Attempting to find another machine which can re-instantiate the System Table.");
+            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, db.getURL() + ": Attempting to find another machine which can re-instantiate the System Table (this machine does not hold replicated state.");
 
             /*
              * Try to find an active instance with System Table state.
@@ -210,8 +212,8 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
      * The System Table connection has been lost. Try to connect to the System Table lookup location and obtain a reference to the new
      * System Table.
      * 
-     * @throws SQLException
-     * @throws LocatorException
+     * @throws SQLException         Thrown if an active System Table could not be found.
+     * @throws LocatorException     If can't connect to the locator server.
      */
     private SystemTableWrapper tryToFindSystemTableViaLocator() throws SQLException, LocatorException {
 
@@ -237,7 +239,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
             }
         }
 
-        throw new SQLException(db.getURL() + ": Couldn't find active System Table. System tables exist at: " + PrettyPrinter.toString(locatorLocations));
+        throw new SQLException(db.getURL() + ": Couldn't find active System Table. System table replicas exist at: " + PrettyPrinter.toString(locatorLocations));
     }
 
     /**
@@ -257,6 +259,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
             DatabaseInstanceRemote databaseInstance = null;
 
             try {
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempting to start System Table. Looking to connect to instance at " + url);
                 databaseInstance = lookForDatabaseInstanceAt(remoteInterface, url);
             }
             catch (final Exception e) {
@@ -268,6 +271,8 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
              * Attempt to recreate the System Table on this machine.
              */
             if (databaseInstance != null) {
+
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Connected to machine at " + url + ". Beginning attempt to recreate System Table.");
 
                 SystemTableRemote systemTable = null;
                 try {
@@ -412,6 +417,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         }
 
         try {
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Creating new System Table instance");
             newSystemTable = new SystemTable(db, false); // false - don't overwrite saved persisted state.
         }
         catch (final Exception e) {
@@ -420,8 +426,8 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         }
 
         try {
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Building state of new System Table");
             newSystemTable.buildSystemTableState();
-
             Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, db.getURL() + ": New System Table created.");
         }
         catch (final RemoteException e) {
@@ -438,6 +444,8 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         }
 
         final SystemTableWrapper wrapper = new SystemTableWrapper(newSystemTable, db.getURL());
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Created new System Table at " + wrapper.getURL());
 
         return wrapper;
     }

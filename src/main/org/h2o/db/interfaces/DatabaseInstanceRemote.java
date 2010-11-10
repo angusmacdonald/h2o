@@ -87,11 +87,12 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit {
      * 
      * @param tableInfo
      *            The table name and schema name of the table to be found.
+     * @param searchOnlyCache Whether to only look in the cache and not in the System Table. If this if true and useCache is false the method will do nothing.
      * @return Remote reference to the Table Manager, or null if nothing was found.
      * @throws RemoteException
      *             Thrown if there were problems connecting to the instance.
      */
-    public TableManagerRemote findTableManagerReference(TableInfo tableInfo) throws RemoteException;
+    public TableManagerRemote findTableManagerReference(TableInfo tableInfo, boolean searchOnlyCache) throws RemoteException;
 
     /**
      * Set whether this database instance is alive or being shut down.

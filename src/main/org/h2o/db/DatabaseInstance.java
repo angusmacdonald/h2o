@@ -195,19 +195,14 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
      * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#findTableManagerReference (org.h2.h2o.util.TableInfo)
      */
     @Override
-    public TableManagerRemote findTableManagerReference(final TableInfo ti) throws RemoteException {
+    public TableManagerRemote findTableManagerReference(final TableInfo ti, final boolean searchOnlyCache) throws RemoteException {
 
         try {
-            return database.getSystemTableReference().lookup(ti, true);
+            return database.getSystemTableReference().lookup(ti, true, searchOnlyCache);
         }
         catch (final SQLException e) {
-            ErrorHandling.errorNoEvent("Couldn't find Table Manager at this machine. Table Manager needs to be re-instantiated.."); // TODO
-                                                                                                                                    // allow
-                                                                                                                                    // for
-                                                                                                                                    // re-instantiation
-                                                                                                                                    // at
-                                                                                                                                    // this
-                                                                                                                                    // point.
+            ErrorHandling.errorNoEvent("Couldn't find Table Manager at this machine. Table Manager needs to be re-instantiated.");
+            // TODO allow for re-instantiation at this point.
             return null;
         }
     }

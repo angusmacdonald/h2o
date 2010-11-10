@@ -177,6 +177,8 @@ public interface ISystemTableReference {
      * 
      * @param fqTableName
      *            the table whose manager is to be found (fully qualified name includes schema name).
+     * @param useCache 
+     *             Whether to look in the local cache before querying the System Table.
      * @return Remote reference to the Table Manager in question.
      * @throws SQLException
      *             Thrown if the System Table could not be found anywhere, and lookup failed twice.
@@ -192,11 +194,31 @@ public interface ISystemTableReference {
      * 
      * @param tableInfo
      *            The table name and schema name are used in the lookup.
+     * @param useCache 
+     *             Whether to look in the local cache before querying the System Table.
      * @return
      * @throws SQLException
      *             Thrown if the System Table cannot be found.
      */
     public TableManagerRemote lookup(TableInfo tableInfo, boolean useCache) throws SQLException;
+
+    /**
+     * Find the Table Manager for the given table in the database system.
+     * 
+     * <p>
+     * This method is a wrapper for a possibly remote System Table call. If the System Table call fails this method will check if the System
+     * Table has moved and redirect the call if it has.
+     * 
+     * @param tableInfo
+     *            The table name and schema name are used in the lookup.
+     * @param useCache 
+     *             Whether to look in the local cache before querying the System Table.
+     * @param searchOnlyCache Whether to only look in the cache and not in the System Table. If this if true and useCache is false the method will do nothing.
+     * @return
+     * @throws SQLException
+     *             Thrown if the System Table cannot be found.
+     */
+    public TableManagerRemote lookup(TableInfo tableInfo, boolean useCache, boolean searchOnlyCache) throws SQLException;
 
     /**
      * Check if the node given as a parameter is the node on which the System Table is held.

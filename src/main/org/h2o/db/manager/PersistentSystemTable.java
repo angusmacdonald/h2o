@@ -33,6 +33,8 @@ import org.h2o.db.wrappers.TableManagerWrapper;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.util.exceptions.StartupException;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
@@ -510,6 +512,8 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
                 DatabaseInstanceRemote dir = null;
                 try {
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Finding database instance at : " + dbURL);
+
                     dir = remoteInterface.getDatabaseInstanceAt(dbURL); // .findTableManagerReference(ti,
                     // dbURL);
                 }
@@ -517,16 +521,22 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
                     // Will happen if its no longer active.
                 }
 
-                if (dir != null) {
-                    final TableManagerRemote dmReference = dir.findTableManagerReference(ti);
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Found database instance at : " + dbURL);
 
-                    final TableManagerWrapper dmw = new TableManagerWrapper(ti, dmReference, dbURL);
+                if (dir != null) {
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Finding table manager reference.");
+                    final TableManagerRemote tmReference = dir.findTableManagerReference(ti, true);
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Found table manager reference.");
+
+                    final TableManagerWrapper dmw = new TableManagerWrapper(ti, tmReference, dbURL);
                     tableManagers.put(ti, dmw);
                 }
                 else {
                     final TableManagerWrapper dmw = new TableManagerWrapper(ti, null, dbURL);
                     tableManagers.put(ti, dmw);
                 }
+
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Created new Table Manager");
 
             }
 

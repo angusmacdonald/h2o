@@ -368,6 +368,7 @@ public class FailureTests extends MultiProcessTestBase {
         executeUpdateOnNthMachine(create2, 0);
         create3 = "CREATE REPLICA TEST3";
         executeUpdateOnNthMachine(create3, 0);
+        executeUpdateOnNthMachine(create3, 1);
 
         sleep("Wait for create replica commands to execute.", 10000);
 

@@ -435,6 +435,8 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
 
         // Make sure this contains remote references for each URL
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Obtaining references to database instances.");
+
         for (final Entry<DatabaseURL, DatabaseInstanceWrapper> remoteDB : connectedMachines.entrySet()) {
             final DatabaseInstanceWrapper wrapper = remoteDB.getValue();
 
@@ -454,6 +456,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
                 else {
                     // Look for a remote reference.
                     try {
+
                         dir = database.getRemoteInterface().getDatabaseInstanceAt(remoteDB.getKey());
 
                         if (dir != null) {
@@ -464,6 +467,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
                         // Couldn't find reference to this database instance.
                         active = false;
                     }
+
                 }
 
             }
@@ -471,19 +475,28 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
             databasesInSystem.put(remoteDB.getKey(), new DatabaseInstanceWrapper(remoteDB.getKey(), dir, active));
         }
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Obtaining references to Table Managers.");
         /*
          * Obtain references to Table Managers, though not necessarily references to active TM proxies.
          */
         tableManagers = otherSystemTable.getTableManagers();
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Received Table Managers");
+
         tmReplicaLocations = otherSystemTable.getReplicaLocations();
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Received Replica Locations");
+
         primaryLocations = otherSystemTable.getPrimaryLocations();
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Received Primary Locations");
 
         /*
          * At this point some of the Table Manager references will be null if the Table Managers could not be found at their old location.
          * BUT, a new Table Manager cannot be created at this point because it would require contact with the System Table, which is not yet
          * active.
          */
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "New System Table started.");
 
         started = true;
 
@@ -559,12 +572,20 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
         if (isAlive(tableManagerWrapper.getTableManager())) { return false; // check that it isn't already active.
         }
 
-        for (final DatabaseURL replicaLocation : tmReplicaLocations.get(tableManagerWrapper.getTableInfo())) {
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Beginning attempt to recreate Table Manager for " + tableManagerWrapper.getTableInfo());
+
+        final Set<DatabaseURL> tableManagerReplicaLocations = tmReplicaLocations.get(tableManagerWrapper.getTableInfo());
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Table Manager replicas exist at " + tableManagerReplicaLocations);
+
+        for (final DatabaseURL replicaLocation : tableManagerReplicaLocations) {
             try {
                 final DatabaseInstanceWrapper instance = databasesInSystem.get(replicaLocation);
 
                 if (instance != null && instance.getDatabaseInstance() != null) {
                     final boolean success = instance.getDatabaseInstance().recreateTableManager(tableManagerWrapper.getTableInfo(), tableManagerWrapper.getURL());
+
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, success + ": attempt to recreate Table Manager for " + tableManagerWrapper.getTableInfo() + " on machine " + instance.getURL() + ".");
 
                     if (success) {
                         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Table Manager for " + tableManagerWrapper.getTableInfo() + " recreated on " + instance.getURL());
@@ -585,8 +606,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
             }
         }
 
-        ErrorHandling.errorNoEvent("Failed to recreate Table Manager for " + tableManagerWrapper.getTableInfo() + ". There were " + tmReplicaLocations.get(tableManagerWrapper.getTableInfo()).size() + " replicas available (including the failed machine) at "
-                        + PrettyPrinter.toString(tmReplicaLocations.get(tableManagerWrapper.getTableInfo())) + ".");
+        ErrorHandling.errorNoEvent("Failed to recreate Table Manager for " + tableManagerWrapper.getTableInfo() + ". There were " + tableManagerReplicaLocations.size() + " replicas available (including the failed machine) at " + PrettyPrinter.toString(tableManagerReplicaLocations) + ".");
         return false;
     }
 

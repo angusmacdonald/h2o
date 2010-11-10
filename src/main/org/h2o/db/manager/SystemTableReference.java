@@ -131,6 +131,8 @@ public class SystemTableReference implements ISystemTableReference {
     @Override
     public SystemTableRemote getSystemTable(final boolean inShutdown) {
 
+        boolean foundSystemTable = false;
+
         try {
 
             if (systemTableWrapper.getSystemTable() == null) {
@@ -138,6 +140,8 @@ public class SystemTableReference implements ISystemTableReference {
             }
 
             systemTableWrapper.getSystemTable().checkConnection();
+
+            foundSystemTable = true;
         }
         catch (final MovedException e) {
             if (!inShutdown) {
@@ -150,29 +154,31 @@ public class SystemTableReference implements ISystemTableReference {
             }
         }
         catch (final Exception e) {
+
             /*
              * SQLException when: findSystemTable() has failed to find the System Table instances registry. This indicates that the system
              * table instance has failed, so we should try to recreate the System Table somewhere else.
              */
-            ErrorHandling.errorNoEvent(db.getURL() + ": Failed to find System Table. Attempting to re-instantiate it on a valid instance (via locator servers).");
+            ErrorHandling.errorNoEvent(db.getURL() + ": The current System Table reference points to an inactive instance. " + "H2O will attempt to find an active System Table.");
 
             try {
                 systemTableWrapper = systemTableRecovery.get();
+                foundSystemTable = true; // would throw an exception if it didn't.
             }
             catch (final LocatorException e1) {
-                ErrorHandling.errorNoEvent("Couldn't find any locator servers when looking for the System Table.");
+                ErrorHandling.errorNoEvent("Couldn't find any locator servers when looking for the System Table: " + e1.getMessage());
             }
             catch (final SystemTableAccessException e1) {
-                ErrorHandling.errorNoEvent("Failed to recreate the System Table anywhere.");
+                ErrorHandling.errorNoEvent("Tried to recreate the System Table (through recovery mechanisms) and failed to find a suitable instance.");
             }
         }
 
-        if (systemTableWrapper.getSystemTable() != null) {
+        if (foundSystemTable && systemTableWrapper.getSystemTable() != null) {
             try {
                 systemTableNode = systemTableWrapper.getSystemTable().getChordReference();
             }
             catch (final RemoteException e) {
-                ErrorHandling.errorNoEvent("Failed to obtain the System Table's chord reference.");
+                ErrorHandling.errorNoEvent("Failed to obtain the new System Table's chord reference.");
             }
         }
 
@@ -406,6 +412,12 @@ public class SystemTableReference implements ISystemTableReference {
     @Override
     public TableManagerRemote lookup(final TableInfo tableInfo, final boolean useCache) throws SQLException {
 
+        return lookup(tableInfo, useCache, false);
+    }
+
+    @Override
+    public TableManagerRemote lookup(final TableInfo tableInfo, final boolean useCache, final boolean searchOnlyCache) throws SQLException {
+
         if (tableInfo == null) { return null; }
 
         /*
@@ -431,56 +443,61 @@ public class SystemTableReference implements ISystemTableReference {
             if (tableManager != null) { return tableManager; }
         }
 
-        int lookupCount = 0;
+        if (!searchOnlyCache) {
+            int lookupCount = 0;
 
-        while (lookupCount < 2) {
-            lookupCount++;
+            while (lookupCount < 2) {
+                lookupCount++;
 
-            /*
-             * CHECK THREE: The Table Manager proxy is not known. Contact the System Table for the managers location.
-             */
-            try {
-                if (systemTableWrapper.getSystemTable() == null) {
-                    systemTableWrapper = systemTableRecovery.get();
-                }
-                else {
-
-                    final TableManagerWrapper tableManagerWrapper = systemTableWrapper.getSystemTable().lookup(tableInfo);
-
-                    if (tableManagerWrapper == null) { return null; // During a create table operation it is expected that the lookup will return null here.
-                    }
-
-                    // Put this Table Manager in the local cache then return it.
-                    final TableManagerRemote tableManager = tableManagerWrapper.getTableManager();
-                    cachedTableManagerReferences.put(tableInfo, tableManager);
-
-                    return tableManager;
-                }
-            }
-            catch (final MovedException e) {
-                handleMovedException(e);
-            }
-            catch (final RemoteException e) {
-                ErrorHandling.errorNoEvent("Error trying to recreate System Table. Trying again.");
-
+                /*
+                 * CHECK THREE: The Table Manager proxy is not known. Contact the System Table for the managers location.
+                 */
                 try {
-                    systemTableWrapper = systemTableRecovery.get();
+                    if (systemTableWrapper.getSystemTable() == null) {
+                        systemTableWrapper = systemTableRecovery.get();
+                    }
+                    else {
+
+                        final TableManagerWrapper tableManagerWrapper = systemTableWrapper.getSystemTable().lookup(tableInfo);
+
+                        if (tableManagerWrapper == null) { return null; // During a create table operation it is expected that the lookup will return null here.
+                        }
+
+                        // Put this Table Manager in the local cache then return it.
+                        final TableManagerRemote tableManager = tableManagerWrapper.getTableManager();
+                        cachedTableManagerReferences.put(tableInfo, tableManager);
+
+                        return tableManager;
+                    }
                 }
-                catch (final LocatorException e1) {
+                catch (final MovedException e) {
+                    ErrorHandling.errorNoEvent("Current System Table reference points to System Table that has moved to: " + e.getMessage());
+                    handleMovedException(e);
+                }
+                catch (final RemoteException e) {
+                    ErrorHandling.errorNoEvent("Error trying to connect to existing System Table reference.");
+
+                    try {
+                        systemTableWrapper = systemTableRecovery.get();
+                    }
+                    catch (final LocatorException e1) {
+                        ErrorHandling.errorNoEvent("Couldn't find locator servers.");
+                        throw new SQLException("Couldn't find locator servers.");
+                    }
+                    catch (final SystemTableAccessException e1) {
+                        ErrorHandling.errorNoEvent("Failed to create System Table.");
+                        throw new SQLException("Failed to create System Table.");
+                    }
+                }
+                catch (final LocatorException e) {
                     throw new SQLException("Couldn't find locator servers.");
                 }
-                catch (final SystemTableAccessException e1) {
+                catch (final SystemTableAccessException e) {
                     throw new SQLException("Failed to create System Table.");
                 }
             }
-            catch (final LocatorException e) {
-                throw new SQLException("Couldn't find locator servers.");
-            }
-            catch (final SystemTableAccessException e) {
-                throw new SQLException("Failed to create System Table.");
-            }
-        }
 
+        }
         throw new SQLException("Failed to find System Table.");
     }
 

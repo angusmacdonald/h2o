@@ -466,7 +466,7 @@ public class MultiProcessTestBase extends TestBase {
 
         try {
             s = connnection.createStatement();
-            rs = s.executeQuery("SELECT * FROM " + "TEST2" + ";");
+            rs = s.executeQuery("SELECT * FROM " + "PUBLIC.TEST2" + ";");
 
             int actualEntries = 0;
             while (rs.next()) {
@@ -507,7 +507,7 @@ public class MultiProcessTestBase extends TestBase {
 
         try {
             s = connnection.createStatement();
-            rs = s.executeQuery("SELECT * FROM " + "TEST3" + ";");
+            rs = s.executeQuery("SELECT * FROM " + "PUBLIC.TEST3" + ";");
 
             int actualEntries = 0;
             while (rs.next()) {
