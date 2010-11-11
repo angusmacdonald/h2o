@@ -122,7 +122,7 @@ public class FtpServer implements Service {
      */
     ServerSocket createDataSocket() throws SQLException {
 
-        return NetUtils.createServerSocket(0, false);
+        return NetUtils.createServerSocketWithRetry(0, false);
     }
 
     private void appendFile(StringBuilder buff, String fileName) throws SQLException {
@@ -291,7 +291,7 @@ public class FtpServer implements Service {
         fs = FileSystem.getInstance(root);
         root = fs.normalize(root);
         fs.mkdirs(root);
-        serverSocket = NetUtils.createServerSocket(port, false);
+        serverSocket = NetUtils.createServerSocketWithRetry(port, false);
         port = serverSocket.getLocalPort();
     }
 

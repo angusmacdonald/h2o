@@ -428,7 +428,7 @@ public class FileLock {
         }
         try {
             // 0 to use any free port
-            socket = NetUtils.createServerSocket(0, false);
+            socket = NetUtils.createServerSocketWithRetry(0, false);
             int port = socket.getLocalPort();
             properties.setProperty("ipAddress", ipAddress);
             properties.setProperty("port", String.valueOf(port));

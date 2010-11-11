@@ -117,7 +117,8 @@ public class EndToEndTests extends EndToEndTestsCommon {
 
         driver1.createTable();
 
-        driver1.commit();
+        // This test should pass without this commit!
+        //        driver1.commit();
 
         driver1.insertOneRow();
 

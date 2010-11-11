@@ -220,7 +220,7 @@ public class H2O {
         this.databaseBaseDirectoryPath = databaseBaseDirectoryPath;
         this.diagnosticLevel = diagnosticLevel;
 
-        System.out.println("using db port: " + tcpPort);
+        //        System.out.println("using db port: " + tcpPort);
     }
 
     // -------------------------------------------------------------------------------------------------------

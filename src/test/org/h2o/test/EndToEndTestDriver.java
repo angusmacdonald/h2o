@@ -106,16 +106,9 @@ public class EndToEndTestDriver extends TestDriver {
 
         for (int i = 0; i < number_of_rows_expected; i++) {
             assertThat("expected another row", result_set.next(), is(true));
-            System.out.println("row: " + i + " value: " + result_set.getInt(1));
         }
 
-        System.out.println("extra rows start");
-        while (result_set.next()) {
-            System.out.println("value: " + result_set.getInt(1));
-        }
-        System.out.println("extra rows end");
-
-        //        assertThat("expected " + number_of_rows_expected + " rows", result_set.next(), is(false));
+        assertThat("expected " + number_of_rows_expected + " rows but found more", result_set.next(), is(false));
     }
 
     private void assertValuesInRange(final Statement statement, final int number_of_rows_expected) throws SQLException {

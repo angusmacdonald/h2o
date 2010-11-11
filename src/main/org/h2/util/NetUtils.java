@@ -18,6 +18,8 @@ import org.h2.constant.SysProperties;
 import org.h2.message.Message;
 import org.h2.security.SecureSocketFactory;
 
+import uk.ac.standrews.cs.nds.util.NetworkUtil;
+
 /**
  * This utility class contains socket helper functions.
  */
@@ -45,7 +47,7 @@ public class NetUtils {
      *            if SSL should be used
      * @return the socket
      */
-    public static Socket createLoopbackSocket(int port, boolean ssl) throws IOException {
+    public static Socket createLoopbackSocket(final int port, final boolean ssl) throws IOException {
 
         InetAddress address = getBindAddress();
         if (address == null) {
@@ -65,20 +67,20 @@ public class NetUtils {
      *            if SSL should be used
      * @return the socket
      */
-    public static Socket createSocket(String server, int defaultPort, boolean ssl) throws IOException {
+    public static Socket createSocket(String server, final int defaultPort, final boolean ssl) throws IOException {
 
         int port = defaultPort;
         // IPv6: RFC 2732 format is '[a:b:c:d:e:f:g:h]' or
         // '[a:b:c:d:e:f:g:h]:port'
         // RFC 2396 format is 'a.b.c.d' or 'a.b.c.d:port' or 'hostname' or
         // 'hostname:port'
-        int startIndex = server.startsWith("[") ? server.indexOf(']') : 0;
-        int idx = server.indexOf(':', startIndex);
+        final int startIndex = server.startsWith("[") ? server.indexOf(']') : 0;
+        final int idx = server.indexOf(':', startIndex);
         if (idx >= 0) {
             port = MathUtils.decodeInt(server.substring(idx + 1));
             server = server.substring(0, idx);
         }
-        InetAddress address = InetAddress.getByName(server);
+        final InetAddress address = InetAddress.getByName(server);
         return createSocket(address, port, ssl);
     }
 
@@ -93,10 +95,10 @@ public class NetUtils {
      *            if SSL should be used
      * @return the socket
      */
-    public static Socket createSocket(InetAddress address, int port, boolean ssl) throws IOException {
+    public static Socket createSocket(final InetAddress address, final int port, final boolean ssl) throws IOException {
 
         if (ssl) { return SecureSocketFactory.createSocket(address, port); }
-        Socket socket = new Socket();
+        final Socket socket = new Socket();
         socket.connect(new InetSocketAddress(address, port), SysProperties.SOCKET_CONNECT_TIMEOUT);
         return socket;
     }
@@ -110,14 +112,18 @@ public class NetUtils {
      *            if SSL should be used
      * @return the server socket
      */
-    public static ServerSocket createServerSocket(int port, boolean ssl) throws SQLException {
+    public static ServerSocket createServerSocketWithRetry(final int port, final boolean ssl) throws SQLException {
 
-        try {
-            return createServerSocketTry(port, ssl);
-        }
-        catch (SQLException e) {
-            // try again
-            return createServerSocketTry(port, ssl);
+        final long startTime = System.currentTimeMillis();
+
+        while (true) {
+            try {
+                return createServerSocket(port, ssl);
+            }
+            catch (final SQLException e) {
+                // Ignore and try again if timeout has not been exceeded.
+                if (System.currentTimeMillis() - startTime > SysProperties.SERVER_SOCKET_RETRY_TIMEOUT) { throw e; }
+            }
         }
     }
 
@@ -128,7 +134,7 @@ public class NetUtils {
      */
     private static InetAddress getBindAddress() throws UnknownHostException {
 
-        String host = SysProperties.BIND_ADDRESS;
+        final String host = SysProperties.BIND_ADDRESS;
         if (host == null || host.length() == 0) { return null; }
         synchronized (NetUtils.class) {
             if (bindAddress == null) {
@@ -138,18 +144,18 @@ public class NetUtils {
         return bindAddress;
     }
 
-    private static ServerSocket createServerSocketTry(int port, boolean ssl) throws SQLException {
+    private static ServerSocket createServerSocket(final int port, final boolean ssl) throws SQLException {
 
         try {
-            InetAddress bindAddress = getBindAddress();
+            final InetAddress bindAddress = getBindAddress();
             if (ssl) { return SecureSocketFactory.createServerSocket(port, bindAddress); }
-            if (bindAddress == null) { return new ServerSocket(port); }
-            return new ServerSocket(port, 0, bindAddress);
+            if (bindAddress == null) { return NetworkUtil.makeReusableServerSocket(port); }
+            return NetworkUtil.makeReusableServerSocket(port, bindAddress);
         }
-        catch (BindException be) {
+        catch (final BindException be) {
             throw Message.getSQLException(ErrorCode.EXCEPTION_OPENING_PORT_2, new String[]{"" + port, be.toString()}, be);
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             throw Message.convertIOException(e, "port: " + port + " ssl: " + ssl);
         }
     }
@@ -161,17 +167,17 @@ public class NetUtils {
      *            the socket
      * @return true if it is
      */
-    public static boolean isLocalAddress(Socket socket) throws UnknownHostException {
+    public static boolean isLocalAddress(final Socket socket) throws UnknownHostException {
 
-        InetAddress test = socket.getInetAddress();
+        final InetAddress test = socket.getInetAddress();
         // ## Java 1.4 begin ##
         if (test.isLoopbackAddress()) { return true; }
         // ## Java 1.4 end ##
-        InetAddress localhost = InetAddress.getLocalHost();
+        final InetAddress localhost = InetAddress.getLocalHost();
         // localhost.getCanonicalHostName() is very very slow
-        String host = localhost.getHostAddress();
-        InetAddress[] list = InetAddress.getAllByName(host);
-        for (InetAddress addr : list) {
+        final String host = localhost.getHostAddress();
+        final InetAddress[] list = InetAddress.getAllByName(host);
+        for (final InetAddress addr : list) {
             if (test.equals(addr)) { return true; }
         }
         return false;
@@ -184,13 +190,13 @@ public class NetUtils {
      *            the socket
      * @return null
      */
-    public static ServerSocket closeSilently(ServerSocket socket) {
+    public static ServerSocket closeSilently(final ServerSocket socket) {
 
         if (socket != null) {
             try {
                 socket.close();
             }
-            catch (IOException e) {
+            catch (final IOException e) {
                 // ignore
             }
         }
@@ -204,7 +210,7 @@ public class NetUtils {
      */
     public static synchronized String getLocalAddress() {
 
-        long now = System.currentTimeMillis();
+        final long now = System.currentTimeMillis();
         if (cachedLocalAddress != null) {
             if (cachedLocalAddressTime + CACHE_MILLIS > now) { return cachedLocalAddress; }
         }
@@ -215,7 +221,7 @@ public class NetUtils {
                 bind = InetAddress.getLocalHost();
             }
         }
-        catch (UnknownHostException e) {
+        catch (final UnknownHostException e) {
             // ignore
         }
         String address = bind == null ? "localhost" : bind.getHostAddress();

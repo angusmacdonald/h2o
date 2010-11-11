@@ -270,7 +270,7 @@ public class TcpServer implements Service {
     public synchronized void start() throws SQLException {
 
         stop = false;
-        serverSocket = NetUtils.createServerSocket(port, ssl);
+        serverSocket = NetUtils.createServerSocketWithRetry(port, ssl);
         port = serverSocket.getLocalPort();
         initManagementDb();
     }

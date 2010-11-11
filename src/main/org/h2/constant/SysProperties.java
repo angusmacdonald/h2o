@@ -517,6 +517,12 @@ public class SysProperties {
     public static final int SOCKET_CONNECT_TIMEOUT = getIntSetting("h2.socketConnectTimeout", 2000);
 
     /**
+     * System property <code>h2.serverSocketRetryTimeout</code> (default: 30000).<br />
+     * The timeout in milliseconds for a server socket to be created successfully.
+     */
+    public static final int SERVER_SOCKET_RETRY_TIMEOUT = getIntSetting("h2.serverSocketRetryTimeout", 30000);
+
+    /**
      * System property <code>h2.sortNullsHigh</code> (default: false).<br />
      * Invert the default sorting behavior for NULL values, such that NULL values are sorted to the end of a result set in an ascending sort
      * and to the beginning of a result set in a descending sort.

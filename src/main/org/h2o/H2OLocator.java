@@ -77,7 +77,7 @@ public class H2OLocator {
         this.createDescriptor = createDescriptor;
         this.configurationDirectory = configurationDirectory;
 
-        System.out.println("using locator port: " + locatorPort);
+        //        System.out.println("using locator port: " + locatorPort);
     }
 
     private static String getConfigurationDirectoryPath(final String databaseBaseDirectoryPath, final String databaseName, final int port) {

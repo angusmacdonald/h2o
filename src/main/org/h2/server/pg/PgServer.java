@@ -159,7 +159,7 @@ public class PgServer implements Service {
 
     public void start() throws SQLException {
 
-        serverSocket = NetUtils.createServerSocket(port, false);
+        serverSocket = NetUtils.createServerSocketWithRetry(port, false);
     }
 
     public void listen() {
