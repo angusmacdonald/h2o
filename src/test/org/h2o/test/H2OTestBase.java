@@ -32,7 +32,7 @@ public abstract class H2OTestBase {
     private static final String PASSWORD = "";
 
     // The diagnostic level set for both test and database processes. 0 is FULL, 6 is NONE.
-    private static final int DIAGNOSTIC_LEVEL = 0;
+    private static final int DIAGNOSTIC_LEVEL = 6;
 
     private Process locator_process;
     protected Process[] db_processes;
