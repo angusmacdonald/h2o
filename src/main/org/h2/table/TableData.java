@@ -54,7 +54,7 @@ public class TableData extends Table implements RecordReader {
 
     private long rowCount;
 
-    private Session lockExclusive;
+    private Session sessionHoldingExclusiveLock;
 
     private HashSet lockShared = new HashSet();
 
@@ -389,7 +389,7 @@ public class TableData extends Table implements RecordReader {
     @Override
     boolean isLockedExclusivelyBy(final Session session) {
 
-        return lockExclusive == session;
+        return sessionHoldingExclusiveLock == session;
     }
 
     @Override
@@ -400,7 +400,7 @@ public class TableData extends Table implements RecordReader {
         if (lockMode != Constants.LOCK_MODE_OFF) {
             synchronized (database) {
                 try {
-                    return doLock(session, lockMode, exclusive);
+                    return doLock(session, exclusive);
                 }
                 finally {
                     session.setWaitForLock(null);
@@ -411,13 +411,13 @@ public class TableData extends Table implements RecordReader {
         return null;
     }
 
-    private Session doLock(Session session, final int lockMode, final boolean exclusive) throws SQLException {
+    private Session doLock(Session session, final boolean exclusive) throws SQLException {
 
         final long max = System.currentTimeMillis() + session.getLockTimeout();
 
         boolean checkDeadlock = false;
         while (true) {
-            if (lockExclusive != null && session != lockExclusive) {
+            if (sessionHoldingExclusiveLock != null && session != sessionHoldingExclusiveLock) {
                 /* 
                   * XXX H2O hack. It ensures that A-B-A communication doesn't lock up the DB (normally through the SYS table), as the returning update can use the same session
                   * as the originating update (which has all of the pertinent locks).
@@ -426,28 +426,29 @@ public class TableData extends Table implements RecordReader {
                   * TableData.validateConvertUpdateSequence -> Column -> ... -> Sequence.flush(), after a user table has been updated. It seems that an updating user 
                   * transaction obtains an exclusive lock on the PUBLIC.SYS table.
                   */
-                session = lockExclusive;
+                session = sessionHoldingExclusiveLock;
+                System.out.println(">>>> performing H2O hack in TableData.doLock()");
             }
 
-            if (lockExclusive == session) { return session; }
+            if (sessionHoldingExclusiveLock == session) { return session; }
 
             if (exclusive) {
-                if (lockExclusive == null) {
+                if (sessionHoldingExclusiveLock == null) {
                     if (lockShared.isEmpty()) {
                         traceLock(session, exclusive, "added for");
                         session.addLock(this);
-                        lockExclusive = session;
+                        sessionHoldingExclusiveLock = session;
                         return session;
                     }
                     else if (lockShared.size() == 1 && lockShared.contains(session)) {
                         traceLock(session, exclusive, "add (upgraded) for ");
-                        lockExclusive = session;
+                        sessionHoldingExclusiveLock = session;
                         return session;
                     }
                 }
             }
             else {
-                if (lockExclusive == null) {
+                if (sessionHoldingExclusiveLock == null) {
 
                     if (!lockShared.contains(session)) {
                         traceLock(session, exclusive, "ok");
@@ -470,7 +471,7 @@ public class TableData extends Table implements RecordReader {
             if (now >= max) {
                 traceLock(session, exclusive, "timeout after " + session.getLockTimeout());
 
-                System.err.println(lockExclusive);
+                System.err.println(sessionHoldingExclusiveLock);
                 throw Message.getSQLException(ErrorCode.LOCK_TIMEOUT_1, getName());
             }
             try {
@@ -515,7 +516,7 @@ public class TableData extends Table implements RecordReader {
                 final Table t = locks[j];
                 buff.append(t);
                 if (t instanceof TableData) {
-                    if (((TableData) t).lockExclusive == s) {
+                    if (((TableData) t).sessionHoldingExclusiveLock == s) {
                         buff.append(" (exclusive)");
                     }
                     else {
@@ -557,10 +558,10 @@ public class TableData extends Table implements RecordReader {
                     }
                 }
             }
-            if (error == null && lockExclusive != null) {
-                final Table t = lockExclusive.getWaitForLock();
+            if (error == null && sessionHoldingExclusiveLock != null) {
+                final Table t = sessionHoldingExclusiveLock.getWaitForLock();
                 if (t != null) {
-                    error = t.checkDeadlock(lockExclusive, clash);
+                    error = t.checkDeadlock(sessionHoldingExclusiveLock, clash);
                     if (error != null) {
                         error.add(session);
                     }
@@ -624,16 +625,16 @@ public class TableData extends Table implements RecordReader {
     @Override
     public boolean isLockedExclusively() {
 
-        return lockExclusive != null;
+        return sessionHoldingExclusiveLock != null;
     }
 
     @Override
     public void unlock(final Session s) {
 
         if (database != null) {
-            traceLock(s, lockExclusive == s, "unlock");
-            if (lockExclusive == s) {
-                lockExclusive = null;
+            traceLock(s, sessionHoldingExclusiveLock == s, "unlock");
+            if (sessionHoldingExclusiveLock == s) {
+                sessionHoldingExclusiveLock = null;
             }
             if (lockShared != null && lockShared.size() > 0) {
                 lockShared.remove(s);
@@ -706,7 +707,7 @@ public class TableData extends Table implements RecordReader {
         scanIndex.remove(session);
         database.removeMeta(session, getId());
         scanIndex = null;
-        lockExclusive = null;
+        sessionHoldingExclusiveLock = null;
         lockShared = null;
         invalidate();
     }

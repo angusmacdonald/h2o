@@ -1,6 +1,8 @@
 package org.h2o.test;
 
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import java.sql.Connection;
@@ -50,7 +52,11 @@ public class EndToEndTestDriver extends TestDriver {
                 break;
             }
             catch (final SQLException e) {
-                // Ignore and try again.
+                // Filter out messages saying couldn't get locks.
+                if (!e.getMessage().startsWith("Could")) {
+                    System.out.println("retrying after exception: " + e.getMessage());
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -76,38 +82,73 @@ public class EndToEndTestDriver extends TestDriver {
 
     public void assertOneRowIsPresent() throws SQLException {
 
-        assertDataIsPresent(1);
+        assertDataIsCorrect(1);
     }
 
-    public void assertDataIsPresent(final int number_of_rows_inserted) throws SQLException {
+    public void assertDataIsCorrect(final int number_of_rows_expected) throws SQLException {
 
         Statement statement = null;
         try {
             statement = connection.createStatement();
 
-            final ResultSet result_set = statement.executeQuery("SELECT * FROM TEST;");
-
-            // Check for duplicates.
-            final Set<Integer> already_seen = new HashSet<Integer>();
-
-            for (int i = 0; i < number_of_rows_inserted; i++) {
-
-                // There should be another value.
-                assertTrue(result_set.next());
-                final int value_read = result_set.getInt(1);
-
-                // The value shouldn't have been read already.
-                assertFalse(already_seen.contains(value_read));
-
-                // The value should be between 0 and n-1.
-                assertTrue(value_read >= 0 && value_read < number_of_rows_inserted);
-
-                already_seen.add(value_read);
-            }
-            assertFalse(result_set.next());
+            assertCorrectNumberOfRows(statement, number_of_rows_expected);
+            assertValuesInRange(statement, number_of_rows_expected);
+            assertNoDuplicateValues(statement, number_of_rows_expected); // Things are very bad if this fails - relational semantics.
         }
         finally {
             closeIfNotNull(statement);
+        }
+    }
+
+    private void assertCorrectNumberOfRows(final Statement statement, final int number_of_rows_expected) throws SQLException {
+
+        final ResultSet result_set = statement.executeQuery("SELECT * FROM TEST;");
+
+        for (int i = 0; i < number_of_rows_expected; i++) {
+            assertThat("expected another row", result_set.next(), is(true));
+            System.out.println("row: " + i + " value: " + result_set.getInt(1));
+        }
+
+        System.out.println("extra rows start");
+        while (result_set.next()) {
+            System.out.println("value: " + result_set.getInt(1));
+        }
+        System.out.println("extra rows end");
+
+        //        assertThat("expected " + number_of_rows_expected + " rows", result_set.next(), is(false));
+    }
+
+    private void assertValuesInRange(final Statement statement, final int number_of_rows_expected) throws SQLException {
+
+        final ResultSet result_set = statement.executeQuery("SELECT * FROM TEST;");
+
+        for (int i = 0; i < number_of_rows_expected; i++) {
+
+            result_set.next();
+
+            // Get value of attribute with index 1.
+            final int value_read = result_set.getInt(1);
+
+            // The value should be between 0 and n-1.
+            assertTrue(value_read >= 0 && value_read < number_of_rows_expected);
+        }
+    }
+
+    private void assertNoDuplicateValues(final Statement statement, final int number_of_rows_expected) throws SQLException {
+
+        final ResultSet result_set = statement.executeQuery("SELECT * FROM TEST;");
+
+        final Set<Integer> already_seen = new HashSet<Integer>();
+
+        for (int i = 0; i < number_of_rows_expected; i++) {
+
+            result_set.next();
+            final int value_read = result_set.getInt(1);
+
+            // The value shouldn't have been read already.
+            assertFalse(already_seen.contains(value_read));
+
+            already_seen.add(value_read);
         }
     }
 

@@ -225,13 +225,13 @@ public class TableProxy implements Serializable {
         try {
             TableProxy tableProxy = null;
             try {
-                tableProxy = tableManager.getQueryProxy(lockType, lockRequest);
+                tableProxy = tableManager.getTableProxy(lockType, lockRequest);
             }
             catch (final MovedException e) {
                 // Get an uncached Table Manager from the System Table
                 tableManager = db.getSystemTableReference().lookup(tableName, false);
 
-                tableProxy = tableManager.getQueryProxy(lockType, lockRequest);
+                tableProxy = tableManager.getTableProxy(lockType, lockRequest);
             }
             return tableProxy;
         }

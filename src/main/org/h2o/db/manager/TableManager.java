@@ -363,7 +363,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
      * @see org.h2.h2o.manager.TableManagerRemote2#getQueryProxy(org.h2.h2o.util. LockType, org.h2.h2o.comms.remote.DatabaseInstanceRemote)
      */
     @Override
-    public synchronized TableProxy getQueryProxy(LockType lockRequested, final LockRequest lockRequest) throws RemoteException, SQLException, MovedException {
+    public synchronized TableProxy getTableProxy(LockType lockRequested, final LockRequest lockRequest) throws RemoteException, SQLException, MovedException {
 
         preMethodTest();
 

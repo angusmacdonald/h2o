@@ -31,7 +31,7 @@ import org.h2o.util.exceptions.StartupException;
  */
 public interface TableManagerRemote extends H2ORemote, Migratable, Serializable {
 
-    public TableProxy getQueryProxy(LockType lockType, LockRequest lockRequest) throws RemoteException, SQLException, MovedException;
+    public TableProxy getTableProxy(LockType lockType, LockRequest lockRequest) throws RemoteException, SQLException, MovedException;
 
     /*
      * (non-Javadoc)

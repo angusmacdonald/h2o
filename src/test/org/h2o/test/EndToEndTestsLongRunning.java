@@ -89,9 +89,17 @@ public class EndToEndTestsLongRunning extends EndToEndTestsCommon {
         waitForThreads(sync);
 
         shutdown();
+
+        try {
+            Thread.sleep(10000);
+        }
+        catch (final InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         startup();
 
         final EndToEndTestDriver driver2 = makeSpecificTestDriver();
-        driver2.assertDataIsPresent(number_of_values * number_of_threads);
+        driver2.assertDataIsCorrect(number_of_values * number_of_threads);
     }
 }

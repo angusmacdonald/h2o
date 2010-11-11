@@ -183,7 +183,7 @@ public class EndToEndTests extends EndToEndTestsCommon {
 
         final EndToEndTestDriver driver2 = makeSpecificTestDriver();
 
-        driver2.assertDataIsPresent(number_of_values);
+        driver2.assertDataIsCorrect(number_of_values);
     }
 
     /**
@@ -225,6 +225,6 @@ public class EndToEndTests extends EndToEndTestsCommon {
         startup();
 
         final EndToEndTestDriver driver4 = makeSpecificTestDriver();
-        driver4.assertDataIsPresent(2);
+        driver4.assertDataIsCorrect(2);
     }
 }
