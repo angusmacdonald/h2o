@@ -550,12 +550,12 @@ public class Session extends SessionWithState {
 
         logSystem.flush();
 
+        unlockAllH2Locks();
+
         if (proxyManagerForCurrentTransaction != null && !ddl && !hasAlreadyCommittedQueryProxy) {
             proxyManagerForCurrentTransaction.finishTransaction(true, true, getDatabase());
             proxyManagerForCurrentTransaction = null;
         }
-
-        unlockAll();
     }
 
     private void checkCommitRollback() throws SQLException {
@@ -579,7 +579,7 @@ public class Session extends SessionWithState {
             logSystem.commit(this);
         }
         cleanTempTables(false);
-        unlockAll();
+        unlockAllH2Locks();
         if (autoCommitAtTransactionEnd) {
             setApplicationAutoCommit(true);
             autoCommitAtTransactionEnd = false;
@@ -716,7 +716,7 @@ public class Session extends SessionWithState {
     /**
      * Unlock all read locks. This is done if the transaction isolation mode is READ_COMMITTED.
      */
-    public void unlockReadLocks() {
+    public void unlockH2ReadLocks() {
 
         for (int i = 0; i < locks.size(); i++) {
             final Table t = (Table) locks.get(i);
@@ -730,7 +730,7 @@ public class Session extends SessionWithState {
         }
     }
 
-    private void unlockAll() throws SQLException {
+    private void unlockAllH2Locks() throws SQLException {
 
         if (SysProperties.CHECK) {
             if (undoLog.size() > 0) {
@@ -1350,5 +1350,4 @@ public class Session extends SessionWithState {
 
         return serialId;
     }
-
 }

@@ -116,6 +116,9 @@ public class EndToEndTests extends EndToEndTestsCommon {
         driver1.setNoDelay();
 
         driver1.createTable();
+
+        driver1.commit();
+
         driver1.insertOneRow();
 
         shutdown();

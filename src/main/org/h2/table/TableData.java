@@ -389,7 +389,7 @@ public class TableData extends Table implements RecordReader {
     @Override
     boolean isLockedExclusivelyBy(final Session session) {
 
-        return sessionHoldingExclusiveLock == session;
+        return getSessionHoldingExclusiveLock() == session;
     }
 
     @Override
@@ -417,7 +417,7 @@ public class TableData extends Table implements RecordReader {
 
         boolean checkDeadlock = false;
         while (true) {
-            if (sessionHoldingExclusiveLock != null && session != sessionHoldingExclusiveLock) {
+            if (getSessionHoldingExclusiveLock() != null && session != getSessionHoldingExclusiveLock()) {
                 /* 
                   * XXX H2O hack. It ensures that A-B-A communication doesn't lock up the DB (normally through the SYS table), as the returning update can use the same session
                   * as the originating update (which has all of the pertinent locks).
@@ -426,29 +426,29 @@ public class TableData extends Table implements RecordReader {
                   * TableData.validateConvertUpdateSequence -> Column -> ... -> Sequence.flush(), after a user table has been updated. It seems that an updating user 
                   * transaction obtains an exclusive lock on the PUBLIC.SYS table.
                   */
-                session = sessionHoldingExclusiveLock;
-                System.out.println(">>>> performing H2O hack in TableData.doLock()");
+
+                session = getSessionHoldingExclusiveLock();
             }
 
-            if (sessionHoldingExclusiveLock == session) { return session; }
+            if (getSessionHoldingExclusiveLock() == session) { return session; }
 
             if (exclusive) {
-                if (sessionHoldingExclusiveLock == null) {
+                if (getSessionHoldingExclusiveLock() == null) {
                     if (lockShared.isEmpty()) {
                         traceLock(session, exclusive, "added for");
                         session.addLock(this);
-                        sessionHoldingExclusiveLock = session;
+                        setSessionHoldingExclusiveLock(session);
                         return session;
                     }
                     else if (lockShared.size() == 1 && lockShared.contains(session)) {
                         traceLock(session, exclusive, "add (upgraded) for ");
-                        sessionHoldingExclusiveLock = session;
+                        setSessionHoldingExclusiveLock(session);
                         return session;
                     }
                 }
             }
             else {
-                if (sessionHoldingExclusiveLock == null) {
+                if (getSessionHoldingExclusiveLock() == null) {
 
                     if (!lockShared.contains(session)) {
                         traceLock(session, exclusive, "ok");
@@ -471,7 +471,7 @@ public class TableData extends Table implements RecordReader {
             if (now >= max) {
                 traceLock(session, exclusive, "timeout after " + session.getLockTimeout());
 
-                System.err.println(sessionHoldingExclusiveLock);
+                System.err.println(getSessionHoldingExclusiveLock());
                 throw Message.getSQLException(ErrorCode.LOCK_TIMEOUT_1, getName());
             }
             try {
@@ -516,7 +516,7 @@ public class TableData extends Table implements RecordReader {
                 final Table t = locks[j];
                 buff.append(t);
                 if (t instanceof TableData) {
-                    if (((TableData) t).sessionHoldingExclusiveLock == s) {
+                    if (((TableData) t).getSessionHoldingExclusiveLock() == s) {
                         buff.append(" (exclusive)");
                     }
                     else {
@@ -558,10 +558,10 @@ public class TableData extends Table implements RecordReader {
                     }
                 }
             }
-            if (error == null && sessionHoldingExclusiveLock != null) {
-                final Table t = sessionHoldingExclusiveLock.getWaitForLock();
+            if (error == null && getSessionHoldingExclusiveLock() != null) {
+                final Table t = getSessionHoldingExclusiveLock().getWaitForLock();
                 if (t != null) {
-                    error = t.checkDeadlock(sessionHoldingExclusiveLock, clash);
+                    error = t.checkDeadlock(getSessionHoldingExclusiveLock(), clash);
                     if (error != null) {
                         error.add(session);
                     }
@@ -625,16 +625,16 @@ public class TableData extends Table implements RecordReader {
     @Override
     public boolean isLockedExclusively() {
 
-        return sessionHoldingExclusiveLock != null;
+        return getSessionHoldingExclusiveLock() != null;
     }
 
     @Override
     public void unlock(final Session s) {
 
         if (database != null) {
-            traceLock(s, sessionHoldingExclusiveLock == s, "unlock");
-            if (sessionHoldingExclusiveLock == s) {
-                sessionHoldingExclusiveLock = null;
+            traceLock(s, getSessionHoldingExclusiveLock() == s, "unlock");
+            if (getSessionHoldingExclusiveLock() == s) {
+                setSessionHoldingExclusiveLock(null);
             }
             if (lockShared != null && lockShared.size() > 0) {
                 lockShared.remove(s);
@@ -707,7 +707,7 @@ public class TableData extends Table implements RecordReader {
         scanIndex.remove(session);
         database.removeMeta(session, getId());
         scanIndex = null;
-        sessionHoldingExclusiveLock = null;
+        setSessionHoldingExclusiveLock(null);
         lockShared = null;
         invalidate();
     }
@@ -794,6 +794,16 @@ public class TableData extends Table implements RecordReader {
     public boolean isLocal() {
 
         return true;
+    }
+
+    public void setSessionHoldingExclusiveLock(final Session sessionHoldingExclusiveLock) {
+
+        this.sessionHoldingExclusiveLock = sessionHoldingExclusiveLock;
+    }
+
+    public Session getSessionHoldingExclusiveLock() {
+
+        return sessionHoldingExclusiveLock;
     }
 
 }

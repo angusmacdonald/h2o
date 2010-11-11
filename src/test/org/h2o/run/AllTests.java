@@ -13,6 +13,8 @@ import java.io.File;
 import org.h2o.test.AsynchronousTests;
 import org.h2o.test.ChordTests;
 import org.h2o.test.CustomSettingsTests;
+import org.h2o.test.EndToEndTests;
+import org.h2o.test.EndToEndTestsLongRunning;
 import org.h2o.test.FailureTests;
 import org.h2o.test.IndexTests;
 import org.h2o.test.LocatorTests;
@@ -39,9 +41,11 @@ import org.junit.runners.Suite;
 // H2oProperties.class,
                 TransactionNameTests.class,
                 // Database Tests
-                SystemTableTests.class, MultipleSchemaTests.class, ReplicaTests.class, CustomSettingsTests.class, IndexTests.class, UpdateTests.class, MultiQueryTransactionTests.class, H2Tests.class, WrapperTests.class, RestartTests.class, LocatorTests.class,
-                // LocatorDatabaseTests.class,
-                ChordTests.class, AsynchronousTests.class, FailureTests.class})
+                SystemTableTests.class, MultipleSchemaTests.class, ReplicaTests.class, CustomSettingsTests.class, IndexTests.class, UpdateTests.class, MultiQueryTransactionTests.class, H2Tests.class, WrapperTests.class, RestartTests.class, LocatorTests.class, ChordTests.class,
+                // End-to-end tests
+                EndToEndTests.class, EndToEndTestsLongRunning.class,
+                //Other multi-process tests.
+                AsynchronousTests.class, FailureTests.class})
 public class AllTests {
 
     // The above annotations do all the work.

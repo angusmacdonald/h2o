@@ -40,6 +40,12 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
+/**
+ * One instance of this class exists per database instance. This instance is responsible for managing the replication of meta-data for 
+ * H2O processes on this instance - Table Manager and System Table state.
+ *
+ * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
+ */
 public class MetaDataReplicaManager {
 
     /*
@@ -59,7 +65,8 @@ public class MetaDataReplicaManager {
     private final ReplicaManager systemTableReplicas;
 
     /*
-     * QUERIES
+     * QUERIES - standard set of queries used to create new replicas
+     * and drop old replicas.
      */
     private final String addNewReplicaLocationQuery;
 
@@ -142,7 +149,7 @@ public class MetaDataReplicaManager {
     /**
      * Attempts to replicate local meta-data to the machine provided by the parameter.
      */
-    public synchronized void replicateMetaDataIfPossible(final ISystemTableReference systemTableRef, final boolean isSystemTable, final DatabaseInstanceWrapper successorInstance) {
+    public synchronized void replicateMetaDataToRemoteInstance(final ISystemTableReference systemTableRef, final boolean isSystemTable, final DatabaseInstanceWrapper databaseInstance) {
 
         if (isSystemTable && !systemTableRef.isSystemTableLocal()) { return; }
 
@@ -153,9 +160,9 @@ public class MetaDataReplicaManager {
                                                                                                                         // enabled.
         }
 
-        if (!isLocal(successorInstance) && successorInstance.isActive()) {
+        if (!isLocal(databaseInstance) && databaseInstance.isActive()) {
             try {
-                addReplicaLocation(successorInstance, isSystemTable);
+                addReplicaLocation(databaseInstance, isSystemTable);
             }
             catch (final RemoteException e) {
                 // May fail.
@@ -165,8 +172,8 @@ public class MetaDataReplicaManager {
 
     /**
      * Attempts to replicate local meta-data to any available machines, until the desired replication factor is reached.
-     * 
-     * @param systemTableRef
+     * @param systemTableRef    Reference to the System Table.
+     * @param isSystemTable     True if System Table state is to be replicated, False if Table Manager state is to be replicated.
      */
     public synchronized void replicateMetaDataIfPossible(final ISystemTableReference systemTableRef, final boolean isSystemTable) {
 
@@ -217,6 +224,13 @@ public class MetaDataReplicaManager {
         }
     }
 
+    /**
+     * Replicate meta-tables to the location specified.
+     * @param newReplicaLocation    The location on which replicas will be added.
+     * @param isSystemTable         True if System Table state is to be replicated, False if Table Manager state is to be replicated.
+     * @return  True if the replica was created successfully.
+     * @throws RemoteException      Thrown if the new replica location couldn't be contacted.
+     */
     private boolean addReplicaLocation(final DatabaseInstanceWrapper newReplicaLocation, final boolean isSystemTable) throws RemoteException {
 
         if (newReplicaLocation.getURL().equals(db.getURL())) { return false; // can't replicate to the local machine
@@ -225,6 +239,15 @@ public class MetaDataReplicaManager {
         return addReplicaLocation(newReplicaLocation, isSystemTable, 0);
     }
 
+    /**
+     * Replicate meta-tables to the location specified.
+     * @param newReplicaLocation    The location on which replicas will be added.
+     * @param isSystemTable         True if System Table state is to be replicated, False if Table Manager state is to be replicated.
+     * @param numberOfPreviousAttempts     The number of attempts made so far to replicate to this machine. This method will try 5 times to replicate
+     * state before giving up.
+     * @return  True if the replica was created successfully.
+     * @throws RemoteException
+     */
     private boolean addReplicaLocation(final DatabaseInstanceWrapper newReplicaLocation, final boolean isSystemTable, final int numberOfPreviousAttempts) throws RemoteException {
 
         final ReplicaManager replicaManager = isSystemTable ? systemTableReplicas : tableManagerReplicas;
@@ -283,7 +306,6 @@ public class MetaDataReplicaManager {
                     return true;
                 }
                 catch (final SQLException e) {
-                    // e.printStackTrace();
                     /*
                      * Usually thrown if the CREATE REPLICA command couldn't connect back to this database. This often happens when the
                      * database has only recently started and hasn't fully initialized, so this code attempts the operation again.
@@ -301,6 +323,7 @@ public class MetaDataReplicaManager {
                     }
                 }
                 catch (final Exception e) {
+                    e.printStackTrace();
                     /*
                      * Usually thrown if this database couldn't connect to the remote instance.
                      */

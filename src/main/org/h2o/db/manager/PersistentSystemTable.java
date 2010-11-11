@@ -511,11 +511,11 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
                  */
 
                 DatabaseInstanceRemote dir = null;
+
                 try {
                     Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Finding database instance at : " + dbURL);
 
-                    dir = remoteInterface.getDatabaseInstanceAt(dbURL); // .findTableManagerReference(ti,
-                    // dbURL);
+                    dir = remoteInterface.getDatabaseInstanceAt(dbURL);
                 }
                 catch (final Exception e) {
                     // Will happen if its no longer active.
@@ -525,7 +525,13 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
                 if (dir != null) {
                     Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Finding table manager reference.");
-                    final TableManagerRemote tmReference = dir.findTableManagerReference(ti, true);
+                    TableManagerRemote tmReference = null;
+                    try {
+                        tmReference = dir.findTableManagerReference(ti, true);
+                    }
+                    catch (final RemoteException e1) {//thrown if dir is not accessible.
+                        ErrorHandling.errorNoEvent("Failed to find Table Manager reference for " + ti + " when recreating System Table state.");
+                    }
                     Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Found table manager reference.");
 
                     final TableManagerWrapper dmw = new TableManagerWrapper(ti, tmReference, dbURL);

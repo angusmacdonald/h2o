@@ -174,7 +174,7 @@ public class FailureTests extends MultiProcessTestBase {
 
         sleep(3000);
 
-        assertTestTableExists(connections[1], 2);
+        assertTestTableExistsLocally(connections[1], 2);
 
         // Kill off the System Table process.
         killDatabase(findSystemTableInstance());
@@ -219,7 +219,7 @@ public class FailureTests extends MultiProcessTestBase {
 
         sleep("Created replica of test.", 3000);
 
-        assertTestTableExists(connections[1], 2);
+        assertTestTableExistsLocally(connections[1], 2);
 
         /*
          * Kill off the System Table process.
@@ -264,7 +264,7 @@ public class FailureTests extends MultiProcessTestBase {
 
         sleep(3000);
 
-        assertTestTableExists(connections[1], 2);
+        assertTestTableExistsLocally(connections[1], 2);
 
         /*
          * Kill off the System Table process.
@@ -273,7 +273,7 @@ public class FailureTests extends MultiProcessTestBase {
 
         sleep(4000);
 
-        assertTestTableExists(connections[0], 2);
+        assertTestTableExistsLocally(connections[0], 2);
     }
 
     /**
@@ -309,7 +309,7 @@ public class FailureTests extends MultiProcessTestBase {
 
         sleep(3000);
 
-        assertTestTableExists(connections[1], 2);
+        assertTestTableExistsLocally(connections[1], 2);
 
         /*
          * Kill off the System Table process.
@@ -372,7 +372,9 @@ public class FailureTests extends MultiProcessTestBase {
 
         sleep("Wait for create replica commands to execute.", 10000);
 
-        assertTestTableExists(connections[1], 2);
+        assertTestTableExistsLocally(connections[1], 2);
+        assertTest2TableExists(connections[1], 2);
+        assertTest3TableExists(connections[1], 2);
 
         /*
          * Kill off the System Table process.
@@ -381,7 +383,7 @@ public class FailureTests extends MultiProcessTestBase {
 
         sleep("Killed off System Table database.", 15000);
 
-        assertTestTableExists(connections[1], 2);
+        assertTestTableExistsLocally(connections[1], 2);
 
         startDatabase(0);
         createConnectionsToDatabase(0);
@@ -390,7 +392,7 @@ public class FailureTests extends MultiProcessTestBase {
         killDatabase(2);
         sleep("About to test accessibility of test tables.", 4000);
 
-        assertTestTableExists(connections[1], 2);
+        assertTestTableExistsLocally(connections[1], 2);
         assertTest2TableExists(connections[1], 2);
         assertTest3TableExists(connections[1], 2);
     }
@@ -448,7 +450,7 @@ public class FailureTests extends MultiProcessTestBase {
 
         sleep("Waiting for create replica commands to execute.", 3000);
 
-        assertTestTableExists(connections[1], 2);
+        assertTestTableExistsLocally(connections[1], 2);
 
         final Set<String> activeConnections = new HashSet<String>();
         for (final Connection c : connections) {
@@ -525,7 +527,7 @@ public class FailureTests extends MultiProcessTestBase {
 
         sleep("Wait for create replica commands to execute.", 3000);
 
-        assertTestTableExists(connections[1], 2);
+        assertTestTableExistsLocally(connections[1], 2);
 
         /*
          * Kill off the non-system table instances.
@@ -534,7 +536,7 @@ public class FailureTests extends MultiProcessTestBase {
         killDatabase(2);
         sleep("Killed off two databases.", 15000);
 
-        assertTestTableExists(connections[0], 2);
+        assertTestTableExistsLocally(connections[0], 2);
         assertTest2TableExists(connections[0], 2);
 
         try {
@@ -585,7 +587,7 @@ public class FailureTests extends MultiProcessTestBase {
 
         sleep("Wait for create replica commands to execute.", 3000);
 
-        assertTestTableExists(connections[1], 2);
+        assertTestTableExistsLocally(connections[1], 2);
 
         /*
          * Kill off the non-system table instances.
@@ -595,7 +597,7 @@ public class FailureTests extends MultiProcessTestBase {
         killDatabase(1);
         sleep("Killed off two databases.", 15000);
 
-        assertTestTableExists(connections[0], 2);
+        assertTestTableExistsLocally(connections[0], 2);
         assertTest2TableExists(connections[0], 2);
         assertTest3TableExists(connections[0], 2);
     }
@@ -637,7 +639,7 @@ public class FailureTests extends MultiProcessTestBase {
 
         sleep("Wait for create replica commands to execute.", 3000);
 
-        assertTestTableExists(connections[1], 2);
+        assertTestTableExistsLocally(connections[1], 2);
 
         /*
          * Kill off the non-system table instances.
@@ -693,7 +695,7 @@ public class FailureTests extends MultiProcessTestBase {
 
         sleep("Wait for create replica commands to execute.", 3000);
 
-        assertTestTableExists(connections[1], 2);
+        assertTestTableExistsLocally(connections[1], 2);
 
         /*
          * Kill off the non-system table instances.

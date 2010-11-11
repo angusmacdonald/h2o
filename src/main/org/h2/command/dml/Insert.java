@@ -166,11 +166,13 @@ public class Insert extends Prepared {
                 table.fireBefore(session);
                 table.validateConvertUpdateSequence(session, newRow);
                 table.fireBeforeRow(session, null, newRow);
+
                 final Session lockSession = table.lock(session, true, false);
 
                 assert lockSession == session : "The lock should have been taken out on the requesting session.";
 
                 table.addRow(session, newRow);
+
                 session.log(table, UndoLogRecord.INSERT, newRow);
                 table.fireAfter(session);
                 table.fireAfterRow(session, null, newRow);
@@ -204,13 +206,18 @@ public class Insert extends Prepared {
                 }
                 table.validateConvertUpdateSequence(session, newRow);
                 table.fireBeforeRow(session, null, newRow);
+
+                assert lockSession == session : "The lock should have been taken out on the requesting session.";
+
                 table.addRow(session, newRow);
+
                 session.log(table, UndoLogRecord.INSERT, newRow);
                 table.fireAfterRow(session, null, newRow);
             }
             rows.close();
             table.fireAfter(session);
         }
+
         return count;
     }
 

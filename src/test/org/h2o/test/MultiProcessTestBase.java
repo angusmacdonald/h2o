@@ -448,7 +448,7 @@ public class MultiProcessTestBase extends TestBase {
         }
     }
 
-    protected void assertTestTableExists(final Connection connnection, final int expectedEntries) throws SQLException {
+    protected void assertTestTableExistsLocally(final Connection connnection, final int expectedEntries) throws SQLException {
 
         assertTestTableExists(connnection, expectedEntries, true);
     }

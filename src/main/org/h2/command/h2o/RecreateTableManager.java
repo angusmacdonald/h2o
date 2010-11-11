@@ -91,11 +91,11 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
 
         }
         catch (final SQLException e) {
-            e.printStackTrace();
+            //Update Failed.
             return -1;
         }
         catch (final Exception e) {
-            e.printStackTrace();
+            //Update Failed.
             return -1;
         }
 

@@ -782,7 +782,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
                 final DatabaseInstanceWrapper successorInstanceWrapper = new DatabaseInstanceWrapper(successorInstance.getURL(), successorInstance, true);
 
-                metaDataReplicaManager.replicateMetaDataIfPossible(systemTableRef, true, successorInstanceWrapper);
+                metaDataReplicaManager.replicateMetaDataToRemoteInstance(systemTableRef, true, successorInstanceWrapper);
 
             }
 
@@ -797,7 +797,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
                 final DatabaseInstanceWrapper successorInstanceWrapper = new DatabaseInstanceWrapper(successorInstance.getURL(), successorInstance, true);
 
-                metaDataReplicaManager.replicateMetaDataIfPossible(systemTableRef, false, successorInstanceWrapper);
+                metaDataReplicaManager.replicateMetaDataToRemoteInstance(systemTableRef, false, successorInstanceWrapper);
 
             }
         }
@@ -1027,8 +1027,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             getLocalRegistry().rebind(fullTableName, stub);
         }
         catch (final Exception e) {
-            e.printStackTrace();
             // Doesn't matter.
+            ErrorHandling.errorNoEvent("Error rebinding Table Manager for table " + fullTableName);
         }
     }
 

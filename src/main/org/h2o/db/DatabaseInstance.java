@@ -201,9 +201,11 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
             return database.getSystemTableReference().lookup(ti, true, searchOnlyCache);
         }
         catch (final SQLException e) {
+            e.printStackTrace();
             ErrorHandling.error(e, "Couldn't find Table Manager at this machine. Table Manager needs to be re-instantiated.");
             // TODO allow for re-instantiation at this point.
-            return null;
+
+            throw new RemoteException(e.getMessage());
         }
     }
 

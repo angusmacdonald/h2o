@@ -38,7 +38,7 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
- * Manages query proxies where multiple instances are required in a single transaction.
+ * Manages table proxies where multiple locks are required in a single transaction.
  * 
  * <p>
  * Situations where this is important, include: where multiple tables are on the same machines, and where a table is accessed by multiple
@@ -143,7 +143,7 @@ public class TableProxyManager {
             // The new proxy doesn't have the lock,but a lock is held in the QPM by another
             // query proxy.  It can acquire the lock from here.
 
-            final TableProxy qpWithTM = getQueryProxyWithTableManager(proxy.getTableManager());
+            final TableProxy qpWithTM = getQueryProxyForTable(proxy.getTableManager());
             proxy.setLockType(qpWithTM.getLockGranted());
 
             hasLock = hasLock(proxy);
@@ -489,7 +489,7 @@ public class TableProxyManager {
     /**
      * Get the query proxy that holds a lock for the specified table manager.
      */
-    private TableProxy getQueryProxyWithTableManager(final TableManagerRemote tableManager) {
+    private TableProxy getQueryProxyForTable(final TableManagerRemote tableManager) {
 
         for (final TableProxy qp : tableProxies.values()) {
 

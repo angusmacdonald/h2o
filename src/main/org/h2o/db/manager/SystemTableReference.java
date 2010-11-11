@@ -497,8 +497,12 @@ public class SystemTableReference implements ISystemTableReference {
                 }
             }
 
+            throw new SQLException("Failed to find System Table.");
         }
-        throw new SQLException("Failed to find System Table.");
+        else { //only using local cache so we haven't looked at the System Table.
+            return null;
+        }
+
     }
 
     /*

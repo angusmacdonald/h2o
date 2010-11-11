@@ -4926,7 +4926,6 @@ public class Parser {
                 throw new SQLException("Unable to contact the System Table for " + tableInfo + ":: " + e2.getMessage());
             }
 
-
             tableManager = systemTableReference.lookup(tableInfo, false);
 
             if (tableManager == null) { throw new SQLException("Table Manager was null for table lookup: " + tableInfo); }
@@ -5009,8 +5008,6 @@ public class Parser {
                 throw new SQLException("Unable to contact Table Manager for " + tableName + ":: " + e1.getMessage());
             }
         }
-
-        //
 
         /*
          * Must be a different session from that of the executing user transaction, because this must commit in the midst of it all.

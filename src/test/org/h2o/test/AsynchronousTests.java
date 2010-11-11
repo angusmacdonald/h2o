@@ -71,8 +71,8 @@ public class AsynchronousTests extends MultiProcessTestBase {
 
         executeUpdateOnNthMachine(update, 0);
 
-        assertTestTableExists(connections[0], 3);
-        assertTestTableExists(connections[1], 3);
+        assertTestTableExistsLocally(connections[0], 3);
+        assertTestTableExistsLocally(connections[1], 3);
         assertTestTableExists(connections[2], 3, false);
 
     }
@@ -84,7 +84,7 @@ public class AsynchronousTests extends MultiProcessTestBase {
      * @throws InterruptedException
      * @throws SQLException 
      */
-    @Test
+    @Test(timeout = 60000)
     public void inactiveReplicaRecognisedOnRestart() throws InterruptedException, SQLException {
 
         final String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
@@ -123,8 +123,8 @@ public class AsynchronousTests extends MultiProcessTestBase {
 
         executeUpdateOnNthMachine(update, 1);
 
-        assertTestTableExists(connections[0], 3);
-        assertTestTableExists(connections[1], 3);
+        assertTestTableExistsLocally(connections[0], 3);
+        assertTestTableExistsLocally(connections[1], 3);
 
         sleep(2000);
 
@@ -144,7 +144,7 @@ public class AsynchronousTests extends MultiProcessTestBase {
      * @throws InterruptedException
      * @throws SQLException 
      */
-    @Test
+    @Test(timeout = 60000)
     public void asynchronousUpdateEventuallyCommitted() throws InterruptedException, SQLException {
 
         final String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
@@ -183,11 +183,11 @@ public class AsynchronousTests extends MultiProcessTestBase {
 
         executeUpdateOnNthMachine(update, 0);
 
-        assertTestTableExists(connections[0], 3);
-        assertTestTableExists(connections[1], 3);
+        assertTestTableExistsLocally(connections[0], 3);
+        assertTestTableExistsLocally(connections[1], 3);
 
         Thread.sleep(11000);
-        assertTestTableExists(connections[2], 3);
+        assertTestTableExistsLocally(connections[2], 3);
     }
 
     /**
@@ -236,8 +236,8 @@ public class AsynchronousTests extends MultiProcessTestBase {
 
         executeUpdateOnNthMachine(update, 0);
 
-        assertTestTableExists(connections[0], 3);
-        assertTestTableExists(connections[1], 3);
+        assertTestTableExistsLocally(connections[0], 3);
+        assertTestTableExistsLocally(connections[1], 3);
 
         Thread.sleep(5000);
 
@@ -248,15 +248,15 @@ public class AsynchronousTests extends MultiProcessTestBase {
         Thread.sleep(10000);
 
         try {
-            assertTestTableExists(connections[2], 4);
+            assertTestTableExistsLocally(connections[2], 4);
             fail("Expected an exception to be thrown because this replica is now inactive.");
         }
         catch (final Exception e) {
             //Expected.
         }
 
-        assertTestTableExists(connections[0], 4);
-        assertTestTableExists(connections[1], 4);
+        assertTestTableExistsLocally(connections[0], 4);
+        assertTestTableExistsLocally(connections[1], 4);
     }
 
     /**

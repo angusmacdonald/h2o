@@ -228,7 +228,7 @@ public abstract class Command implements CommandInterface {
             final Database db = session.getDatabase();
             if (db != null) {
                 if (db.getLockMode() == Constants.LOCK_MODE_READ_COMMITTED) {
-                    session.unlockReadLocks();
+                    session.unlockH2ReadLocks();
                 }
             }
         }
