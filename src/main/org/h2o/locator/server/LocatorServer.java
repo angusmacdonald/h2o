@@ -12,11 +12,13 @@ import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.SQLException;
+
+import org.h2.util.NetUtils;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
-import uk.ac.standrews.cs.nds.util.NetworkUtil;
 
 /**
  * The locator server class. Creates a ServerSocket and listens for connections constantly.
@@ -59,7 +61,8 @@ public class LocatorServer extends Thread {
 
         try {
             // Set up the server socket.
-            server_socket = NetworkUtil.makeReusableServerSocket(port);
+            //            server_socket = NetworkUtil.makeReusableServerSocket(port);
+            server_socket = NetUtils.createServerSocketWithRetry(port, false);
 
             server_socket.setSoTimeout(500);
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Server listening on port " + port + ", locator file at '" + locatorState + "'.");
@@ -79,6 +82,9 @@ public class LocatorServer extends Thread {
             }
         }
         catch (final IOException e) {
+            ErrorHandling.exceptionError(e, "Server IO error");
+        }
+        catch (final SQLException e) {
             ErrorHandling.exceptionError(e, "Server IO error");
         }
         finally {
