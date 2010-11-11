@@ -51,9 +51,10 @@ public class EndToEndTests extends EndToEndTestsCommon {
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
      * @throws UnknownPlatformException 
+     * @throws InterruptedException 
      */
     @Test
-    public void persistence() throws SQLException, IOException, UnknownPlatformException {
+    public void persistence() throws SQLException, IOException, UnknownPlatformException, InterruptedException {
 
         Diagnostic.trace();
 
@@ -66,6 +67,8 @@ public class EndToEndTests extends EndToEndTestsCommon {
         driver1.insertOneRow();
 
         shutdown();
+
+        Thread.sleep(10000);
         startup();
 
         final EndToEndTestDriver driver2 = makeSpecificTestDriver();
