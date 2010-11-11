@@ -16,6 +16,7 @@ import java.net.Socket;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.NetworkUtil;
 
 /**
  * The locator server class. Creates a ServerSocket and listens for connections constantly.
@@ -58,7 +59,7 @@ public class LocatorServer extends Thread {
 
         try {
             // Set up the server socket.
-            server_socket = new ServerSocket(port);
+            server_socket = NetworkUtil.makeReusableServerSocket(port);
 
             server_socket.setSoTimeout(500);
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Server listening on port " + port + ", locator file at '" + locatorState + "'.");
