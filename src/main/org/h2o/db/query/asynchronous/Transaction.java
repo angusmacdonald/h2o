@@ -105,10 +105,6 @@ public class Transaction {
             }
         }
 
-        /*
-         * 
-         */
-
         final List<CommitResult> recentlyCompletedCommits = new LinkedList<CommitResult>();
 
         for (final FutureTask<QueryResult> completedQuery : recentlyCompletedQueries) {
@@ -147,13 +143,11 @@ public class Transaction {
             // Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Asynchronous updates completed for transaction '" + transactionID + "'.");
             commit(recentlyCompletedCommits, db);
 
-            return incompleteQueries.size() == 0;
-        }
-        else { // Store new commits along with other commits for this transaction.
-            completedQueries.addAll(recentlyCompletedCommits);
-            return false;
+            return incompleteQueries == null || incompleteQueries.size() == 0;
         }
 
+        completedQueries.addAll(recentlyCompletedCommits);
+        return false;
     }
 
     /**
