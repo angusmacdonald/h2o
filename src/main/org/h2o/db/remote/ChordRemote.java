@@ -370,10 +370,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     private void establishLocatorInterface(final LocalH2OProperties localDatabaseProperties) throws LocatorException {
 
         final String descriptorLocation = localDatabaseProperties.getProperty("descriptor");
-        final String databaseName = localDatabaseProperties.getProperty("databaseName");
 
         if (descriptorLocation == null) { throw new LocatorException("The location of the database descriptor was not specified. The database will now exit."); }
-        if (databaseName == null) { throw new LocatorException("The name of the database was not specified. The database will now exit."); }
 
         final long startTime = System.currentTimeMillis();
         while (true) {

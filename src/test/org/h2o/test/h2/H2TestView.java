@@ -10,6 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.h2o.test.DatabaseType;
 import org.h2o.test.H2OTestBase;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,6 +23,12 @@ import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
  * Test for views.
  */
 public class H2TestView extends H2OTestBase {
+
+    @Override
+    public DatabaseType getDatabaseType() {
+
+        return DatabaseType.DISK;
+    }
 
     private Connection connection;
 

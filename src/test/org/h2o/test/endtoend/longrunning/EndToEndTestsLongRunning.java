@@ -6,7 +6,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General
  * Public License along with H2O. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.test;
+package org.h2o.test.endtoend.longrunning;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -14,6 +14,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 
+import org.h2o.test.DatabaseType;
+import org.h2o.test.endtoend.normal.EndToEndTestDriver;
+import org.h2o.test.endtoend.normal.EndToEndTestsCommon;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
@@ -25,6 +28,12 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
  * @author Graham Kirby (graham@cs.st-andrews.ac.uk)
  */
 public class EndToEndTestsLongRunning extends EndToEndTestsCommon {
+
+    @Override
+    public DatabaseType getDatabaseType() {
+
+        return DatabaseType.DISK;
+    }
 
     /**
      * A generalised version of {@link #concurrentUpdates()} with multiple threads each inserting multiple values via its own connection.

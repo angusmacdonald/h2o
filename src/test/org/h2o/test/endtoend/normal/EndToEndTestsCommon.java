@@ -6,18 +6,22 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General
  * Public License along with H2O. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.test;
+package org.h2o.test.endtoend.normal;
 
 import java.sql.Connection;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
+
+import org.h2o.test.H2OTestBase;
+import org.h2o.test.ITestDriverFactory;
+import org.h2o.test.TestDriver;
 
 /**
  * User-oriented tests.
  *
  * @author Graham Kirby (graham@cs.st-andrews.ac.uk)
  */
-public class EndToEndTestsCommon extends H2OTestBase {
+public abstract class EndToEndTestsCommon extends H2OTestBase {
 
     @Override
     protected int getNumberOfDatabases() {
@@ -30,7 +34,7 @@ public class EndToEndTestsCommon extends H2OTestBase {
         return (EndToEndTestDriver) makeTestDriver();
     }
 
-    class UpdateThread extends Thread {
+    public class UpdateThread extends Thread {
 
         private final EndToEndTestDriver driver;
         private final int number_of_values;

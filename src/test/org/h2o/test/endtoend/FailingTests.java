@@ -6,23 +6,21 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy
  * of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.run;
+package org.h2o.test.endtoend;
 
-import org.h2o.test.FailureTests;
-import org.h2o.test.endtoend.longrunning.EndToEndTestsLongRunning;
-import org.h2o.test.h2.H2TestBigDbLongRunning;
-import org.h2o.test.h2.H2TestBigResult;
-import org.h2o.test.h2.H2TestsFailing;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 /**
- * Tests run nightly.
+ * Test suite that defines which end-to-end tests should be run nightly.
+ * 
+ * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
+ * @author Graham Kirby (graham@cs.st-andrews.ac.uk)
  */
 @RunWith(Suite.class)
-@Suite.SuiteClasses({H2TestsFailing.class, FailureTests.class, H2TestBigDbLongRunning.class, H2TestBigResult.class, EndToEndTestsLongRunning.class})
-//, H2OTest.class, IndexTests.class, LocatorDatabaseTests.class, ReplicaTests.class, ReplicaTests.class, TableManagerTests.class, CustomSettingsTests.class,
-//IndexTests.class, UpdateTests.class, MultiQueryTransactionTests.class, H2Tests.class, WrapperTests.class, RestartTests.class, LocatorTests.class, AsynchronousTests.class})
-public class NightlyTests {
-    // Empty.
+@Suite.SuiteClasses({
+
+})
+public class FailingTests {
+
 }

@@ -38,6 +38,12 @@ public class ChordTestsDiskDBFailingSporadically extends H2OTestBase {
     private static final int number_of_databases = 3;
 
     @Override
+    public DatabaseType getDatabaseType() {
+
+        return DatabaseType.DISK;
+    }
+
+    @Override
     protected int getNumberOfDatabases() {
 
         return number_of_databases;

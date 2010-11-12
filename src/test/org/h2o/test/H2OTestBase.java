@@ -47,18 +47,7 @@ public abstract class H2OTestBase {
 
     protected abstract int getNumberOfDatabases();
 
-    public ITestDriverFactory getTestDriverFactory() {
-
-        return new ITestDriverFactory() {
-
-            @Override
-            public TestDriver makeConnectionDriver(final int db_port, final String database_base_directory_path, final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
-
-                return new TestDriver(db_port, database_base_directory_path, database_name, username, password, connections_to_be_closed);
-            }
-        };
-    }
-
+    // -------------------------------------------------------------------------------------------------------
     /**
      * Sets up the test.
      * 
@@ -96,6 +85,43 @@ public abstract class H2OTestBase {
         first_db_port += getNumberOfDatabases();
     }
 
+    // -------------------------------------------------------------------------------------------------------
+
+    protected void startup() throws IOException, UnknownPlatformException {
+
+        final String descriptor_file_path = startupLocator();
+
+        startupDatabases(descriptor_file_path);
+        connections_to_be_closed = new HashSet<Connection>();
+    }
+
+    protected void shutdown() {
+
+        closeConnections();
+
+        for (final Process p : db_processes) {
+            p.destroy();
+        }
+
+        locator_process.destroy();
+    }
+
+    protected ITestDriverFactory getTestDriverFactory() {
+
+        return new ITestDriverFactory() {
+
+            @Override
+            public TestDriver makeConnectionDriver(final int db_port, final String database_base_directory_path, final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
+
+                return new TestDriver(db_port, database_base_directory_path, database_name, username, password, connections_to_be_closed);
+            }
+        };
+    }
+
+    // -------------------------------------------------------------------------------------------------------
+
+    protected abstract DatabaseType getDatabaseType();
+
     private void setUpConfigDirectoryPath() {
 
         config_directory_path = CONFIG_DIRECTORY_ROOT + System.currentTimeMillis();
@@ -109,14 +135,6 @@ public abstract class H2OTestBase {
         for (int i = 0; i < database_base_directory_paths.length; i++) {
             database_base_directory_paths[i] = DATABASE_BASE_DIRECTORY_ROOT + (current + i);
         }
-    }
-
-    protected void startup() throws IOException, UnknownPlatformException {
-
-        final String descriptor_file_path = startupLocator();
-
-        startupDatabases(descriptor_file_path);
-        connections_to_be_closed = new HashSet<Connection>();
     }
 
     private String startupLocator() throws UnknownPlatformException, IOException {
@@ -149,17 +167,6 @@ public abstract class H2OTestBase {
 
             db_processes[i] = ProcessInvocation.runJavaProcess(H2O.class, db_args);
         }
-    }
-
-    void shutdown() {
-
-        closeConnections();
-
-        for (final Process p : db_processes) {
-            p.destroy();
-        }
-
-        locator_process.destroy();
     }
 
     private void closeConnections() {

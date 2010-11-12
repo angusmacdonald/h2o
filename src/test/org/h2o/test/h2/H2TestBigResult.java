@@ -13,6 +13,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.h2o.test.DatabaseType;
 import org.h2o.test.H2OTestBase;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,6 +28,12 @@ import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
 public class H2TestBigResult extends H2OTestBase {
 
     private Connection connection;
+
+    @Override
+    public DatabaseType getDatabaseType() {
+
+        return DatabaseType.DISK;
+    }
 
     @Override
     protected int getNumberOfDatabases() {

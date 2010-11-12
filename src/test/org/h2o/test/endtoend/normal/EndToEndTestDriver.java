@@ -1,4 +1,4 @@
-package org.h2o.test;
+package org.h2o.test.endtoend.normal;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
@@ -12,6 +12,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.h2o.test.TestDriver;
 
 public class EndToEndTestDriver extends TestDriver {
 

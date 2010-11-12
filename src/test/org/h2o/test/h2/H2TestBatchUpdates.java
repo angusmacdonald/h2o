@@ -20,6 +20,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.h2o.test.DatabaseType;
 import org.h2o.test.H2OTestBase;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,6 +49,12 @@ public class H2TestBatchUpdates extends H2OTestBase {
     private Connection connection;
     private Statement statement;
     private PreparedStatement prep;
+
+    @Override
+    public DatabaseType getDatabaseType() {
+
+        return DatabaseType.DISK;
+    }
 
     @Override
     protected int getNumberOfDatabases() {
