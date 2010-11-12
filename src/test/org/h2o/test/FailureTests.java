@@ -8,12 +8,14 @@
  */
 package org.h2o.test;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.h2o.db.manager.recovery.LocatorException;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -34,9 +36,11 @@ public class FailureTests extends MultiProcessTestBase {
      * 
      * @throws InterruptedException
      * @throws SQLException 
+     * @throws LocatorException 
+     * @throws IOException 
      */
     @Test(timeout = 60000)
-    public void systemTableMigrationOnFailureRequestingInstance() throws InterruptedException, SQLException {
+    public void systemTableMigrationOnFailureRequestingInstance() throws InterruptedException, SQLException, IOException, LocatorException {
 
         Diagnostic.trace(DiagnosticLevel.FULL);
 
@@ -77,9 +81,11 @@ public class FailureTests extends MultiProcessTestBase {
      * 
      * @throws InterruptedException
      * @throws SQLException 
+     * @throws LocatorException 
+     * @throws IOException 
      */
     @Test(timeout = 60000)
-    public void systemTableMigrationOnFailureMaintenanceMechanism() throws InterruptedException, SQLException {
+    public void systemTableMigrationOnFailureMaintenanceMechanism() throws InterruptedException, SQLException, IOException, LocatorException {
 
         Diagnostic.trace(DiagnosticLevel.FULL);
 
@@ -150,9 +156,11 @@ public class FailureTests extends MultiProcessTestBase {
      * 
      * @throws InterruptedException
      * @throws SQLException 
+     * @throws LocatorException 
+     * @throws IOException 
      */
     @Test(timeout = 60000)
-    public void tableManagerMigrationOnFailureDetectedBySystemTableMigration() throws InterruptedException, SQLException {
+    public void tableManagerMigrationOnFailureDetectedBySystemTableMigration() throws InterruptedException, SQLException, IOException, LocatorException {
 
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
         sql += "INSERT INTO TEST VALUES(1, 'Hello');";
@@ -193,9 +201,11 @@ public class FailureTests extends MultiProcessTestBase {
      * 
      * @throws InterruptedException
      * @throws SQLException 
+     * @throws LocatorException 
+     * @throws IOException 
      */
     @Test(timeout = 60000)
-    public void tableManagerMigrationOnFailureDetectedByQueryingInstance() throws InterruptedException, SQLException {
+    public void tableManagerMigrationOnFailureDetectedByQueryingInstance() throws InterruptedException, SQLException, IOException, LocatorException {
 
         Diagnostic.trace(DiagnosticLevel.FULL);
 
@@ -338,9 +348,11 @@ public class FailureTests extends MultiProcessTestBase {
      * 
      * Queries every table to ensure they are still accessible.
      * @throws SQLException 
+     * @throws LocatorException 
+     * @throws IOException 
      */
     @Test(timeout = 60000)
-    public void multipleFailures() throws InterruptedException, SQLException {
+    public void multipleFailures() throws InterruptedException, SQLException, IOException, LocatorException {
 
         Diagnostic.trace(DiagnosticLevel.FULL);
 
@@ -414,9 +426,11 @@ public class FailureTests extends MultiProcessTestBase {
      * 
      * Queries every table to ensure they are still accessible.
      * @throws SQLException 
+     * @throws LocatorException 
+     * @throws IOException 
      */
     @Test(timeout = 60000)
-    public void multipleSTFailures() throws InterruptedException, SQLException {
+    public void multipleSTFailures() throws InterruptedException, SQLException, IOException, LocatorException {
 
         Diagnostic.trace(DiagnosticLevel.FULL);
 

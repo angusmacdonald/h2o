@@ -2,6 +2,7 @@ package org.h2o.test;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Set;
@@ -71,6 +72,18 @@ public class TestDriver {
         try {
             if (statement != null) {
                 statement.close();
+            }
+        }
+        catch (final SQLException e) {
+            // Ignore and carry on, only trying to tidy up.
+        }
+    }
+
+    protected void closeIfNotNull(final ResultSet result_set) {
+
+        try {
+            if (result_set != null) {
+                result_set.close();
             }
         }
         catch (final SQLException e) {

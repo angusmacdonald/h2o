@@ -29,16 +29,17 @@ import org.h2.engine.Constants;
 import org.h2.tools.DeleteDbFiles;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.manager.PersistentSystemTable;
+import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.db.remote.ChordRemote;
 import org.h2o.locator.client.H2OLocatorInterface;
 import org.h2o.locator.server.LocatorServer;
 import org.h2o.run.AllTests;
 import org.h2o.test.util.StartDatabaseInstance;
 import org.h2o.util.LocalH2OProperties;
-import org.h2o.util.exceptions.StartupException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.remote_management.ProcessInvocation;
@@ -58,11 +59,7 @@ public class LocatorDatabaseTests extends TestBase {
 
     private LocatorServer ls;
 
-    private static String[] dbs = {"one", "two"};// , "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen",
-                                                 // "fourteen", "fifteen"};
-
-    // "sixteen", "seventeen", "eighteen", "nineteen", "twenty", "twenty-one", "twenty-one", "twenty-two", "twenty-three", "twenty-four",
-    // "twenty-five", "twenty-six", "twenty-seven"};
+    private static String[] dbs = {"one", "two"};
     private String[] fullDbName = null;
 
     Map<String, Process> processes;
@@ -96,9 +93,6 @@ public class LocatorDatabaseTests extends TestBase {
         return isReplicated;
     }
 
-    /**
-     * @throws java.lang.Exception
-     */
     @Override
     @Before
     public void setUp() throws Exception {
@@ -129,13 +123,6 @@ public class LocatorDatabaseTests extends TestBase {
         sleep(5000);
         createConnectionsToDatabases();
         sleep(5000);
-
-        // sas = new Statement[dbs.length + 1];
-        //
-        // for (int i = 0; i < dts.length; i ++){
-        // sas[i] = dts[i].getConnection().createStatement();
-        // }
-
     }
 
     /**
@@ -159,14 +146,6 @@ public class LocatorDatabaseTests extends TestBase {
 
         ls.setRunning(false);
 
-        // for (int i = 0; i < dbs.length; i ++){
-        // try {
-        // if (!connections[i].isClosed()) connections[i].close();
-        // } catch (SQLException e) {
-        // e.printStackTrace();
-        // }
-        // }
-
         while (!ls.isFinished()) {
         };
     }
@@ -178,23 +157,18 @@ public class LocatorDatabaseTests extends TestBase {
 
     /**
      * Starts up every database then creates a test table on one of them.
+     * @throws SQLException 
      */
     @Test
-    public void createTestTable() {
+    public void createTestTable() throws SQLException {
 
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
         sql += "INSERT INTO TEST VALUES(1, 'Hello');";
         sql += "INSERT INTO TEST VALUES(2, 'World');";
 
-        try {
-            executeUpdateOnFirstMachine(sql);
+        executeUpdateOnFirstMachine(sql);
 
-            assertTestTableExists(2);
-        }
-        catch (final SQLException e) {
-            e.printStackTrace();
-            fail("Unexpected exception");
-        }
+        assertTestTableExists(2);
     }
 
     /**
@@ -202,42 +176,40 @@ public class LocatorDatabaseTests extends TestBase {
      * accessed.
      * 
      * @throws InterruptedException
+     * @throws SQLException 
+     * @throws LocatorException 
+     * @throws IOException 
      */
     @Test
-    public void killDatabasesThenRestart() throws InterruptedException {
+    public void killDatabasesThenRestart() throws InterruptedException, SQLException, IOException, LocatorException {
 
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
         sql += "INSERT INTO TEST VALUES(1, 'Hello');";
         sql += "INSERT INTO TEST VALUES(2, 'World');";
         sleep(10000);
-        try {
-            executeUpdateOnFirstMachine(sql);
 
-            assertTestTableExists(2);
-            assertMetaDataExists(getSystemTableConnection(), 1);
+        executeUpdateOnFirstMachine(sql);
 
-            sleep(10000);
+        assertTestTableExists(2);
+        assertMetaDataExists(getSystemTableConnection(), 1);
 
-            /*
-             * Kill off databases.
-             */
-            killDatabases();
+        sleep(10000);
 
-            sleep(10000);
+        /*
+         * Kill off databases.
+         */
+        killDatabases();
 
-            startDatabases(false);
+        sleep(10000);
 
-            sleep(10000);
+        startDatabases(false);
 
-            createConnectionsToDatabases();
+        sleep(10000);
 
-            assertTestTableExists(2);
-            assertMetaDataExists(connections[0], 1);
-        }
-        catch (final SQLException e) {
-            e.printStackTrace();
-            fail("Unexpected exception");
-        }
+        createConnectionsToDatabases();
+
+        assertTestTableExists(2);
+        assertMetaDataExists(connections[0], 1);
     }
 
     /**
@@ -246,6 +218,7 @@ public class LocatorDatabaseTests extends TestBase {
      * @throws InterruptedException
      */
     @Test
+    @Ignore
     public void noMajorityForOneNode() throws InterruptedException {
 
     }
@@ -255,15 +228,20 @@ public class LocatorDatabaseTests extends TestBase {
      * locks.
      */
     @Test
+    @Ignore
     public void twoLocatorsEachProcessStuckOnOneLock() {
 
     }
 
     /**
      * Databases restart but no System Table instances are running. They shouldn't be able to start and will fail eventually.
+     * @throws LocatorException 
+     * @throws IOException 
      */
     @Test
-    public void noSystemTableRunning() throws InterruptedException {
+    public void noSystemTableRunning() throws InterruptedException, IOException, LocatorException {
+
+        // TODO is the SQLException caught at the end required for the test to pass? If so should use (expected=SQLException.class).
 
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
         sql += "INSERT INTO TEST VALUES(1, 'Hello');";
@@ -300,15 +278,16 @@ public class LocatorDatabaseTests extends TestBase {
         }
         catch (final SQLException e) {
         }
-
     }
 
     /**
      * Databases restart but no System Table instances are running. They shouldn't be able to start initially. Then a System Table instance
      * is started and they should connect and operate normally.
+     * @throws LocatorException 
+     * @throws IOException 
      */
     @Test
-    public void noSystemTableRunningAtFirst() throws InterruptedException {
+    public void noSystemTableRunningAtFirst() throws InterruptedException, IOException, LocatorException {
 
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
         sql += "INSERT INTO TEST VALUES(1, 'Hello');";
@@ -364,9 +343,11 @@ public class LocatorDatabaseTests extends TestBase {
      * Connect to existing Database instance with ST state, but find no ST running.
      * 
      * @throws InterruptedException
+     * @throws LocatorException 
+     * @throws IOException 
      */
     @Test
-    public void systemTableMigrationOnFailure() throws InterruptedException {
+    public void systemTableMigrationOnFailure() throws InterruptedException, IOException, LocatorException {
 
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
         sql += "INSERT INTO TEST VALUES(1, 'Hello');";
@@ -412,9 +393,11 @@ public class LocatorDatabaseTests extends TestBase {
      * Connect to existing Database instance with ST state and TM state, but find no ST or TM running.
      * 
      * @throws InterruptedException
+     * @throws LocatorException 
+     * @throws IOException 
      */
     @Test
-    public void tableManagerMigrationOnFailure() throws InterruptedException {
+    public void tableManagerMigrationOnFailure() throws InterruptedException, IOException, LocatorException {
 
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
         sql += "INSERT INTO TEST VALUES(1, 'Hello');";
@@ -465,6 +448,7 @@ public class LocatorDatabaseTests extends TestBase {
      * @throws InterruptedException
      */
     @Test
+    @Ignore
     public void instancesRunningButNoSystemTable() throws InterruptedException {
 
     }
@@ -477,6 +461,7 @@ public class LocatorDatabaseTests extends TestBase {
      * thinks there should be system table tables on disk already.
      */
     @Test
+    @Ignore
     public void locatorServerNotRunning() {
 
     }
@@ -518,7 +503,7 @@ public class LocatorDatabaseTests extends TestBase {
         Thread.sleep(time);
     }
 
-    private void printSystemTableInstances() {
+    private void printSystemTableInstances() throws IOException, LocatorException {
 
         final List<String> sts = findSystemTableInstances();
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Printing list of valid System Table Instances: ");
@@ -529,36 +514,21 @@ public class LocatorDatabaseTests extends TestBase {
 
     /**
      * Get a set of all database instances which hold system table state
+     * @throws IOException 
+     * @throws LocatorException 
      */
-    private List<String> findSystemTableInstances() {
+    private List<String> findSystemTableInstances() throws IOException, LocatorException {
 
         final LocalH2OProperties persistedInstanceInformation = new LocalH2OProperties(DatabaseURL.parseURL(fullDbName[0]));
-        try {
-            persistedInstanceInformation.loadProperties();
-        }
-        catch (final IOException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
-        }
+        persistedInstanceInformation.loadProperties();
 
         /*
          * Contact descriptor for SM locations.
          */
         final String descriptorLocation = persistedInstanceInformation.getProperty("descriptor");
-        final String databaseName = persistedInstanceInformation.getProperty("databaseName");
 
-        List<String> locations = null;
-
-        try {
-            final H2OLocatorInterface dl = new H2OLocatorInterface(databaseName, descriptorLocation);
-            locations = dl.getLocations();
-        }
-        catch (final IOException e) {
-            fail("Failed to find System Table locations.");
-        }
-        catch (final StartupException e) {
-            fail("Failed to find System Table locations.");
-        }
+        final H2OLocatorInterface dl = new H2OLocatorInterface(descriptorLocation);
+        final List<String> locations = dl.getLocations();
 
         /*
          * Parse these locations to ensure they are of the correct form.
@@ -571,12 +541,12 @@ public class LocatorDatabaseTests extends TestBase {
         return parsedLocations;
     }
 
-    private String findSystemTableInstance() {
+    private String findSystemTableInstance() throws IOException, LocatorException {
 
         return findSystemTableInstances().get(0);
     }
 
-    private Connection getSystemTableConnection() {
+    private Connection getSystemTableConnection() throws IOException, LocatorException {
 
         for (final String instance : findSystemTableInstances()) {
             final DatabaseURL dbURL = DatabaseURL.parseURL(instance);
@@ -598,8 +568,10 @@ public class LocatorDatabaseTests extends TestBase {
 
     /**
      * Get a set of all database instances which don't hold System Table state.
+     * @throws LocatorException 
+     * @throws IOException 
      */
-    private List<String> findNonSystemTableInstances() {
+    private List<String> findNonSystemTableInstances() throws IOException, LocatorException {
 
         final List<String> systemTableInstances = findSystemTableInstances();
 

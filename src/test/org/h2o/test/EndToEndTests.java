@@ -25,7 +25,7 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
 public class EndToEndTests extends EndToEndTestsCommon {
 
     /**
-      * Tests whether a new database can be created, data inserted and read back.
+      * Checks that a new database can be created, data inserted and read back.
       * 
       * @throws SQLException if the test fails
       * @throws IOException if the test fails
@@ -46,15 +46,14 @@ public class EndToEndTests extends EndToEndTestsCommon {
     }
 
     /**
-     * Tests whether data can be inserted during one instantiation of a database and read in another.
+     * Checks that data can be inserted during one instantiation of a database and read in another.
      * 
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
-     * @throws UnknownPlatformException 
-     * @throws InterruptedException 
+     * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
      */
     @Test
-    public void persistence() throws SQLException, IOException, UnknownPlatformException, InterruptedException {
+    public void persistence() throws SQLException, IOException, UnknownPlatformException {
 
         Diagnostic.trace();
 
@@ -67,8 +66,6 @@ public class EndToEndTests extends EndToEndTestsCommon {
         driver1.insertOneRow();
 
         shutdown();
-
-        Thread.sleep(10000);
         startup();
 
         final EndToEndTestDriver driver2 = makeSpecificTestDriver();
@@ -77,7 +74,7 @@ public class EndToEndTests extends EndToEndTestsCommon {
     }
 
     /**
-     * Tests whether data that has been inserted but not committed is visible within the same transaction.
+     * Checks that data that has been inserted but not committed is visible within the same transaction.
      * 
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
@@ -98,12 +95,13 @@ public class EndToEndTests extends EndToEndTestsCommon {
     }
 
     /**
-     * Tests whether data that has been inserted is correctly rolled back when auto-commit is disabled and there is no explicit commit.
-     * A table is created and populated in the first instantiation of the database. The second instantiation tries to read the data, which should fail.
+     * Checks that data that has been inserted is correctly rolled back when auto-commit is disabled and there is no explicit commit.
+     * A table is created and populated in the first instantiation of the database. The second instantiation tries to access the table,
+     * which should fail since the transaction creating it did not commit.
      * 
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
-     * @throws UnknownPlatformException 
+     * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
      */
     @Test
     public void rollbackWithoutAutoCommit() throws SQLException, IOException, UnknownPlatformException {
@@ -116,10 +114,6 @@ public class EndToEndTests extends EndToEndTestsCommon {
         driver1.setNoDelay();
 
         driver1.createTable();
-
-        // This test should pass without this commit!
-        //        driver1.commit();
-
         driver1.insertOneRow();
 
         shutdown();
@@ -127,15 +121,15 @@ public class EndToEndTests extends EndToEndTestsCommon {
 
         final EndToEndTestDriver driver2 = makeSpecificTestDriver();
 
-        driver2.assertDataIsNotPresent();
+        driver2.assertTableIsNotPresent();
     }
 
     /**
-     * Tests whether data can be inserted during one instantiation of a database and read in another, with auto-commit disabled and using explicit commit.
+     * Checks that data can be inserted during one instantiation of a database and read in another, with auto-commit disabled and using explicit commit.
      * 
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
-     * @throws UnknownPlatformException 
+     * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
      */
     @Test
     public void explicitCommit() throws SQLException, IOException, UnknownPlatformException {
@@ -160,11 +154,11 @@ public class EndToEndTests extends EndToEndTestsCommon {
     }
 
     /**
-     * Tests whether a series of values can be inserted during one instantiation of a database and read in another, with auto-commit disabled and using explicit commit.
+     * Checks that a series of values can be inserted during one instantiation of a database and read in another, with auto-commit disabled and using explicit commit.
      * 
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
-     * @throws UnknownPlatformException 
+     * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
      */
     @Test
     public void multipleInserts() throws SQLException, IOException, UnknownPlatformException {
@@ -191,7 +185,7 @@ public class EndToEndTests extends EndToEndTestsCommon {
     }
 
     /**
-     * Tests whether updates can be performed concurrently. The test starts two threads, each performing an update to the same table, with an artificial delay
+     * Checks that updates can be performed concurrently. The test starts two threads, each performing an update to the same table, with an artificial delay
      * to increase the probability of temporal overlap.
      * 
      * The test currently fails due to an "unexpected code path" error. When that is fixed the test should be changed to make the update threads retry on
@@ -199,7 +193,7 @@ public class EndToEndTests extends EndToEndTestsCommon {
      * 
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
-     * @throws UnknownPlatformException 
+     * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
      */
     @Test
     public void concurrentUpdates() throws SQLException, IOException, UnknownPlatformException {
@@ -223,7 +217,7 @@ public class EndToEndTests extends EndToEndTestsCommon {
         new UpdateThread(driver2, 1, 0, 5000, sync).start();
         new UpdateThread(driver3, 1, 1, 5000, sync).start();
 
-        waitForThreads(sync);
+        waitForSemaphore(sync);
 
         shutdown();
         startup();

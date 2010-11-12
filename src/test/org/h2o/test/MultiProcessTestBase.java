@@ -20,13 +20,13 @@ import org.h2.engine.Constants;
 import org.h2.tools.DeleteDbFiles;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.manager.PersistentSystemTable;
+import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.db.remote.ChordRemote;
 import org.h2o.locator.client.H2OLocatorInterface;
 import org.h2o.locator.server.LocatorServer;
 import org.h2o.run.AllTests;
 import org.h2o.test.util.StartDatabaseInstance;
 import org.h2o.util.LocalH2OProperties;
-import org.h2o.util.exceptions.StartupException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -211,36 +211,22 @@ public class MultiProcessTestBase extends TestBase {
 
     /**
      * Get a set of all database instances which hold system table state
+     * @throws IOException 
+     * @throws LocatorException 
      */
-    private List<String> findSystemTableInstances() {
+    private List<String> findSystemTableInstances() throws IOException, LocatorException {
 
         final LocalH2OProperties persistedInstanceInformation = new LocalH2OProperties(DatabaseURL.parseURL(fullDbName[0]));
-        try {
-            persistedInstanceInformation.loadProperties();
-        }
-        catch (final IOException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
-        }
+
+        persistedInstanceInformation.loadProperties();
 
         /*
          * Contact descriptor for SM locations.
          */
         final String descriptorLocation = persistedInstanceInformation.getProperty("descriptor");
-        final String databaseName = persistedInstanceInformation.getProperty("databaseName");
 
-        List<String> locations = null;
-
-        try {
-            final H2OLocatorInterface dl = new H2OLocatorInterface(databaseName, descriptorLocation);
-            locations = dl.getLocations();
-        }
-        catch (final IOException e) {
-            fail("Failed to find System Table locations.");
-        }
-        catch (final StartupException e) {
-            fail("Failed to find System Table locations.");
-        }
+        final H2OLocatorInterface dl = new H2OLocatorInterface(descriptorLocation);
+        final List<String> locations = dl.getLocations();
 
         /*
          * Parse these locations to ensure they are of the correct form.
@@ -264,12 +250,12 @@ public class MultiProcessTestBase extends TestBase {
         properties.saveAndClose();
     }
 
-    protected String findSystemTableInstance() {
+    protected String findSystemTableInstance() throws IOException, LocatorException {
 
         return findSystemTableInstances().get(0);
     }
 
-    protected Connection getSystemTableConnection() {
+    protected Connection getSystemTableConnection() throws IOException, LocatorException {
 
         for (final String instance : findSystemTableInstances()) {
             final DatabaseURL dbURL = DatabaseURL.parseURL(instance);
@@ -290,8 +276,10 @@ public class MultiProcessTestBase extends TestBase {
 
     /**
      * Get a set of all database instances which don't hold System Table state.
+     * @throws LocatorException 
+     * @throws IOException 
      */
-    protected List<String> findNonSystemTableInstances() {
+    protected List<String> findNonSystemTableInstances() throws IOException, LocatorException {
 
         final List<String> systemTableInstances = findSystemTableInstances();
 

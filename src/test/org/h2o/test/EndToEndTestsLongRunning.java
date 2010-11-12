@@ -86,7 +86,7 @@ public class EndToEndTestsLongRunning extends EndToEndTestsCommon {
             pool.execute(new UpdateThread(driver, number_of_values, j * number_of_values, delay, sync));
         }
 
-        waitForThreads(sync);
+        waitForSemaphore(sync);
 
         shutdown();
 

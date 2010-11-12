@@ -60,7 +60,7 @@ public class EndToEndTestsCommon extends H2OTestBase {
         }
     };
 
-    protected void waitForThreads(final Semaphore sync) {
+    protected void waitForSemaphore(final Semaphore sync) {
 
         while (true) {
             try {

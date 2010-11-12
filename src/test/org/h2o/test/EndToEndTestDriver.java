@@ -4,6 +4,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -102,61 +103,85 @@ public class EndToEndTestDriver extends TestDriver {
 
     private void assertCorrectNumberOfRows(final Statement statement, final int number_of_rows_expected) throws SQLException {
 
-        final ResultSet result_set = statement.executeQuery("SELECT * FROM TEST;");
+        ResultSet result_set = null;
 
-        for (int i = 0; i < number_of_rows_expected; i++) {
-            assertThat("expected another row", result_set.next(), is(true));
+        try {
+            result_set = statement.executeQuery("SELECT * FROM TEST;");
+
+            for (int i = 0; i < number_of_rows_expected; i++) {
+                assertThat("expected another row", result_set.next(), is(true));
+            }
+
+            assertThat("expected " + number_of_rows_expected + " rows but found more", result_set.next(), is(false));
         }
-
-        assertThat("expected " + number_of_rows_expected + " rows but found more", result_set.next(), is(false));
+        finally {
+            closeIfNotNull(result_set);
+        }
     }
 
     private void assertValuesInRange(final Statement statement, final int number_of_rows_expected) throws SQLException {
 
-        final ResultSet result_set = statement.executeQuery("SELECT * FROM TEST;");
+        ResultSet result_set = null;
 
-        for (int i = 0; i < number_of_rows_expected; i++) {
+        try {
+            result_set = statement.executeQuery("SELECT * FROM TEST;");
 
-            result_set.next();
+            for (int i = 0; i < number_of_rows_expected; i++) {
 
-            // Get value of attribute with index 1.
-            final int value_read = result_set.getInt(1);
+                result_set.next();
 
-            // The value should be between 0 and n-1.
-            assertTrue(value_read >= 0 && value_read < number_of_rows_expected);
+                // Get value of attribute with index 1.
+                final int value_read = result_set.getInt(1);
+
+                // The value should be between 0 and n-1.
+                assertTrue(value_read >= 0 && value_read < number_of_rows_expected);
+            }
+        }
+        finally {
+            closeIfNotNull(result_set);
         }
     }
 
     private void assertNoDuplicateValues(final Statement statement, final int number_of_rows_expected) throws SQLException {
 
-        final ResultSet result_set = statement.executeQuery("SELECT * FROM TEST;");
+        ResultSet result_set = null;
 
-        final Set<Integer> already_seen = new HashSet<Integer>();
+        try {
+            result_set = statement.executeQuery("SELECT * FROM TEST;");
 
-        for (int i = 0; i < number_of_rows_expected; i++) {
+            final Set<Integer> already_seen = new HashSet<Integer>();
 
-            result_set.next();
-            final int value_read = result_set.getInt(1);
+            for (int i = 0; i < number_of_rows_expected; i++) {
 
-            // The value shouldn't have been read already.
-            assertFalse(already_seen.contains(value_read));
+                result_set.next();
+                final int value_read = result_set.getInt(1);
 
-            already_seen.add(value_read);
+                // The value shouldn't have been read already.
+                assertFalse(already_seen.contains(value_read));
+
+                already_seen.add(value_read);
+            }
+        }
+        finally {
+            closeIfNotNull(result_set);
         }
     }
 
-    public void assertDataIsNotPresent() throws SQLException {
+    public void assertTableIsNotPresent() throws SQLException {
 
         Statement statement = null;
+        ResultSet result_set = null;
         try {
             statement = connection.createStatement();
+            result_set = statement.executeQuery("SELECT * FROM TEST;");
 
-            final ResultSet result_set = statement.executeQuery("SELECT * FROM TEST;");
-
-            // The result set should be empty.
-            assertFalse(result_set.next());
+            fail("database TEST was present unexpectedly");
+        }
+        catch (final SQLException e) {
+            // Expected path since TEST should not exist.
         }
         finally {
+            closeIfNotNull(result_set);
             closeIfNotNull(statement);
         }
     }
