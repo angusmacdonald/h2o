@@ -356,13 +356,13 @@ public class Database implements DataHandler {
             try {
                 localSettings.loadProperties();
             }
-            catch (final IOException e1) {
-                localSettings.createNewFile();
+            catch (final IOException e) {
                 try {
+                    localSettings.createNewFile();
                     localSettings.loadProperties();
                 }
-                catch (final IOException e) {
-                    ErrorHandling.exceptionError(e, "Failed to create properties file for database.");
+                catch (final IOException e1) {
+                    ErrorHandling.exceptionError(e1, "Failed to create properties file for database.");
                 }
             }
 

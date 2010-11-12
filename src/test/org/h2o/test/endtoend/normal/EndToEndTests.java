@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.concurrent.Semaphore;
 
-import org.h2o.test.DatabaseType;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
@@ -38,13 +37,7 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
  *
  * @author Graham Kirby (graham@cs.st-andrews.ac.uk)
  */
-public class EndToEndTests extends EndToEndTestsCommon {
-
-    @Override
-    public DatabaseType getDatabaseType() {
-
-        return DatabaseType.DISK;
-    }
+public abstract class EndToEndTests extends EndToEndTestsCommon {
 
     /**
       * Checks that a new database can be created, data inserted and read back.

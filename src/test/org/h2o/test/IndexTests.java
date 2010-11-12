@@ -12,6 +12,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -149,9 +150,10 @@ public class IndexTests {
 
     /**
      * Check that a new table, unrelated to person and address is given a different tableset ID.
+     * @throws IOException 
      */
     @Test
-    public void checkTableSetID2() {
+    public void checkTableSetID2() throws IOException {
 
         TestBase.resetLocatorFile();
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");

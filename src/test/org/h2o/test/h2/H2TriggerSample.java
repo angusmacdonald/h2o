@@ -58,7 +58,7 @@ public class H2TriggerSample extends H2TestBase {
     }
 
     @Test(timeout = 60000)
-    public void triggerTest() throws SQLException, ClassNotFoundException {
+    public void triggerTest() throws SQLException, ClassNotFoundException, IOException {
 
         Diagnostic.trace(DiagnosticLevel.FULL);
 

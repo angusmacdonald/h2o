@@ -29,6 +29,7 @@ import org.h2.util.NetUtils;
 import org.h2.util.SortedProperties;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.manager.PersistentSystemTable;
+import org.h2o.test.DatabaseType;
 import org.h2o.util.LocalH2OProperties;
 import org.h2o.util.exceptions.StartupException;
 
@@ -71,6 +72,7 @@ public class H2O {
     private Connection connection;
     private H2OLocator locator;
     private Server server;
+    private DatabaseType databaseType;
 
     // -------------------------------------------------------------------------------------------------------
 
@@ -83,8 +85,9 @@ public class H2O {
      *            <li><em>-p<port></em>. The port on which the database's TCP server is to run.</li>
      *            <li><em>-w<port></em>. Optional. Specifies that a web port should be opened and the web interface should be started.</li>
      *            <li><em>-d<descriptor></em>. Optional. Specifies the URL or local file path of the database descriptor file. If not specified the database will create a new descriptor file in the database directory.</li>
-     *            <li><em>-f</em>. Optional. Specifies the directory containing the persistent database state. The default is the current working directory.</li>
+     *            <li><em>-f<directory></em>. Optional. Specifies the directory containing the persistent database state. The default is the current working directory.</li>
      *            <li><em>-D<level></em>. Optional. Specifies a diagnostic level from 0 (most detailed) to 6 (least detailed).</li>
+     *            <li><em>-M</em>. Optional. Specifies an in-memory database. If specified, the -p, -w and -f flags are ignored.</li>
      *            </p>
      *            <p>
      *            <em>Example: java H2O -nMyFirstDatabase -p9999 -d'config\MyFirstDatabase.h2od'</em>. This creates a new
@@ -136,70 +139,31 @@ public class H2O {
 
     public H2O(final String[] args) throws StartupException {
 
-        final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
-
-        final String databaseName = processDatabaseName(arguments.get("-n"));
-        final int tcpPort = processTCPPort(arguments.get("-p"));
-        final String databaseDirectoryPath = processDatabaseDirectoryPath(arguments.get("-f"));
-
-        final String databaseDescriptorLocation = processDatabaseDescriptorLocation(arguments.get("-d"));
-        final int webPort = processWebPort(arguments.get("-w"));
-        final DiagnosticLevel diagnosticLevel = processDiagnosticLevel(arguments.get("-D"));
-
-        init(databaseName, tcpPort, webPort, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel);
+        init(args);
     }
 
-    private String processDatabaseName(final String arg) {
+    /**
+     * Starts an in-memory database.
+     * 
+     * @param databaseName
+     * @param databaseDescriptorLocation
+     * @param diagnosticLevel
+     */
+    public H2O(final String databaseName, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
 
-        return arg == null ? DEFAULT_DATABASE_NAME : arg;
+        init(databaseName, databaseDescriptorLocation, diagnosticLevel);
     }
 
-    private String processDatabaseDirectoryPath(final String arg) {
+    /**
+     * Starts an in-memory database.
+     * 
+     * @param databaseName
+     * @param databaseDescriptorLocation
+     * @param diagnosticLevel
+     */
+    public H2O(final String databaseName, final DiagnosticLevel diagnosticLevel) {
 
-        return arg == null ? DEFAULT_DATABASE_DIRECTORY_PATH : removeQuotes(arg);
-    }
-
-    private String processDatabaseDescriptorLocation(final String arg) {
-
-        return arg == null ? null : removeQuotes(arg);
-    }
-
-    private int processTCPPort(final String arg) throws StartupException {
-
-        try {
-            return arg == null ? DEFAULT_TCP_PORT : Integer.parseInt(arg);
-        }
-        catch (final NumberFormatException e) {
-            throw new StartupException("Invalid port: " + arg);
-        }
-    }
-
-    private int processWebPort(final String arg) throws StartupException {
-
-        try {
-            return arg == null ? 0 : Integer.parseInt(arg);
-        }
-        catch (final NumberFormatException e) {
-            throw new StartupException("Invalid port: " + arg);
-        }
-    }
-
-    private DiagnosticLevel processDiagnosticLevel(final String arg) throws StartupException {
-
-        if (arg != null) {
-
-            try {
-                return DiagnosticLevel.fromNumericalValue(Integer.parseInt(arg));
-            }
-            catch (final NumberFormatException e) {
-                throw new StartupException("Invalid diagnostic level specified: " + arg);
-            }
-            catch (final UndefinedDiagnosticLevelException e) {
-                throw new StartupException("Invalid diagnostic level specified: " + arg);
-            }
-        }
-
-        return DiagnosticLevel.NONE;
+        this(databaseName, null, diagnosticLevel);
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -222,7 +186,63 @@ public class H2O {
         this.databaseBaseDirectoryPath = databaseBaseDirectoryPath;
         this.diagnosticLevel = diagnosticLevel;
 
-        //        System.out.println("using db port: " + tcpPort);
+        databaseType = DatabaseType.DISK;
+    }
+
+    private void init(final String databaseName, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
+
+        this.databaseName = databaseName;
+        this.databaseDescriptorLocation = databaseDescriptorLocation;
+        this.diagnosticLevel = diagnosticLevel;
+
+        databaseType = DatabaseType.MEMORY;
+    }
+
+    private void init(final String[] args) throws StartupException {
+
+        final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
+
+        final String databaseName = processDatabaseName(arguments.get("-n"));
+        final int tcpPort = processTCPPort(arguments.get("-p"));
+        final String databaseDirectoryPath = processDatabaseDirectoryPath(arguments.get("-f"));
+
+        final String databaseDescriptorLocation = processDatabaseDescriptorLocation(arguments.get("-d"));
+        final int webPort = processWebPort(arguments.get("-w"));
+        final DiagnosticLevel diagnosticLevel = processDiagnosticLevel(arguments.get("-D"));
+
+        final DatabaseType databaseType = processDatabaseType(arguments.get("-M"));
+
+        if (databaseType == DatabaseType.DISK) {
+            init(databaseName, tcpPort, webPort, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel);
+        }
+        else {
+            init(databaseName, databaseDescriptorLocation, diagnosticLevel);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------------------
+
+    public static String createDatabaseURL(final int port, final String database_base_directory_path, final String database_name) {
+
+        String base = "";
+        if (database_base_directory_path != null) {
+            // Ensure one trailing forward slash.
+            base = database_base_directory_path;
+
+            if (base.endsWith("\\")) {
+                base = base.substring(0, base.length() - 1);
+            }
+            if (!base.endsWith("/")) {
+                base += "/";
+            }
+        }
+
+        return "jdbc:h2:tcp://" + NetUtils.getLocalAddress() + ":" + port + "/" + base + database_name + port;
+    }
+
+    public static String createDatabaseURL(final String database_name) {
+
+        return "jdbc:h2:mem:" + database_name;
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -289,18 +309,65 @@ public class H2O {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private String generateDatabaseURL() {
+    private String processDatabaseName(final String arg) {
 
-        final String databaseURL = createDatabaseURL(tcpPort, databaseBaseDirectoryPath, databaseName);
-
-        // Display to user.
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Database Name: " + databaseName);
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Port: " + tcpPort);
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Generated JDBC URL: " + databaseURL);
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Specified Descriptor File Location: " + databaseDescriptorLocation);
-
-        return databaseURL;
+        return arg == null ? DEFAULT_DATABASE_NAME : arg;
     }
+
+    private String processDatabaseDirectoryPath(final String arg) {
+
+        return arg == null ? DEFAULT_DATABASE_DIRECTORY_PATH : removeQuotes(arg);
+    }
+
+    private String processDatabaseDescriptorLocation(final String arg) {
+
+        return arg == null ? null : removeQuotes(arg);
+    }
+
+    private int processTCPPort(final String arg) throws StartupException {
+
+        try {
+            return arg == null ? DEFAULT_TCP_PORT : Integer.parseInt(arg);
+        }
+        catch (final NumberFormatException e) {
+            throw new StartupException("Invalid port: " + arg);
+        }
+    }
+
+    private int processWebPort(final String arg) throws StartupException {
+
+        try {
+            return arg == null ? 0 : Integer.parseInt(arg);
+        }
+        catch (final NumberFormatException e) {
+            throw new StartupException("Invalid port: " + arg);
+        }
+    }
+
+    private DiagnosticLevel processDiagnosticLevel(final String arg) throws StartupException {
+
+        if (arg != null) {
+
+            try {
+                return DiagnosticLevel.fromNumericalValue(Integer.parseInt(arg));
+            }
+            catch (final NumberFormatException e) {
+                throw new StartupException("Invalid diagnostic level specified: " + arg);
+            }
+            catch (final UndefinedDiagnosticLevelException e) {
+                throw new StartupException("Invalid diagnostic level specified: " + arg);
+            }
+        }
+
+        return DiagnosticLevel.NONE;
+    }
+
+    private DatabaseType processDatabaseType(final String arg) {
+
+        return arg == null ? DatabaseType.DISK : DatabaseType.MEMORY;
+    }
+
+    // -------------------------------------------------------------------------------------------------------
 
     /**
      * Call the H2O server class with the required parameters to initialize the TCP server.
@@ -346,8 +413,9 @@ public class H2O {
      * 
      * @param databaseURL
      * @throws SQLException 
+     * @throws IOException 
      */
-    private void initializeDatabase(final String databaseURL) throws SQLException {
+    private void initializeDatabase(final String databaseURL) throws SQLException, IOException {
 
         final LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(databaseURL));
 
@@ -434,21 +502,9 @@ public class H2O {
         return text;
     }
 
-    public static String createDatabaseURL(final int port, final String database_base_directory_path, final String database_name) {
+    private String generateDatabaseURL() {
 
-        String base = "";
-        if (database_base_directory_path != null) {
-            // Ensure one trailing forward slash.
-            base = database_base_directory_path;
-
-            if (base.endsWith("\\")) {
-                base = base.substring(0, base.length() - 1);
-            }
-            if (!base.endsWith("/")) {
-                base += "/";
-            }
-        }
-
-        return "jdbc:h2:tcp://" + NetUtils.getLocalAddress() + ":" + port + "/" + base + database_name + port;
+        if (databaseType == DatabaseType.DISK) { return createDatabaseURL(tcpPort, databaseBaseDirectoryPath, databaseName); }
+        return createDatabaseURL(databaseName);
     }
 }

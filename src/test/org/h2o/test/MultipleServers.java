@@ -8,8 +8,7 @@
  */
 package org.h2o.test;
 
-import static org.junit.Assert.fail;
-
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -37,28 +36,21 @@ public class MultipleServers {
 
     private final String[] dbs = {"two", "three", "four", "five", "six", "seven", "eight", "nine"};
 
-    public MultipleServers() {
+    public MultipleServers() throws SQLException, IOException {
 
         initialSetUp();
 
-        try {
-            setUp();
-        }
-        catch (final Exception e) {
-            e.printStackTrace();
-        }
-
+        setUp();
     }
 
-    public void initialSetUp() {
+    public void initialSetUp() throws IOException {
 
         Diagnostic.setLevel(DiagnosticLevel.INIT);
 
         createMultiplePropertiesFiles(dbs);
-
     }
 
-    private void createMultiplePropertiesFiles(final String[] dbNames) {
+    private void createMultiplePropertiesFiles(final String[] dbNames) throws IOException {
 
         ChordRemote.setCurrentPort(30003);
         for (final String db : dbNames) {
@@ -70,64 +62,38 @@ public class MultipleServers {
             knownHosts.createNewFile();
             knownHosts.setProperty("jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db", "30000"); // //jdbc:h2:sm:mem:one
             knownHosts.saveAndClose();
-
         }
     }
 
-    public void setUp() throws Exception {
-
-        // Constants.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-        // PersistentSystemTable.USERNAME = "angus";
-        // PersistentSystemTable.PASSWORD = "";
-
-        org.h2.Driver.load();
+    public void setUp() throws SQLException {
 
         cas = new Connection[dbs.length + 1];
-        // cas[0] = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+
         for (int i = 1; i < cas.length; i++) {
             cas[i] = DriverManager.getConnection("jdbc:h2:mem:" + dbs[i - 1], PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
         }
 
         sas = new Statement[dbs.length + 1];
-
-        // for (int i = 0; i < cas.length; i ++){
-        // sas[i] = cas[i].createStatement();
-        // }
-
-        // String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
-        // sql += "INSERT INTO TEST VALUES(1, 'Hello');";
-        // sql += "INSERT INTO TEST VALUES(2, 'World');";
-        //
-        // sas[0].execute(sql);
-
     }
 
-    public void tearDown() {
+    public void tearDown() throws SQLException {
 
         for (int i = 0; i < sas.length; i++) {
-            try {
-                if (!sas[i].isClosed()) {
-                    sas[i].close();
-                }
-                sas[i] = null;
+
+            if (!sas[i].isClosed()) {
+                sas[i].close();
             }
-            catch (final Exception e) {
-                e.printStackTrace();
-                fail("Statements aren't being closed correctly.");
-            }
+            sas[i] = null;
+
         }
 
         for (int i = 0; i < cas.length; i++) {
-            try {
-                if (!cas[i].isClosed()) {
-                    cas[i].close();
-                }
-                cas[i] = null;
+
+            if (!cas[i].isClosed()) {
+                cas[i].close();
             }
-            catch (final Exception e) {
-                e.printStackTrace();
-                fail("Connections aren't being closed correctly.");
-            }
+            cas[i] = null;
+
         }
 
         cas = null;
@@ -137,32 +103,22 @@ public class MultipleServers {
     /**
      * @param args
      * @throws InterruptedException
+     * @throws IOException 
+     * @throws SQLException 
      */
-    public static void main(final String[] args) throws InterruptedException {
+    public static void main(final String[] args) throws InterruptedException, SQLException, IOException {
 
         Constants.IS_TEST = false;
         new MultipleServers();
-
-        // Thread.sleep(2000);
-
-        // servers.testSystemTableFailure();
-
-        // Thread.sleep(2000);
-
-        // servers.insertSecondTable();
     }
 
     /**
+     * @throws SQLException 
      * 
      */
-    private void insertSecondTable() {
+    private void insertSecondTable() throws SQLException {
 
-        try {
-            sas[1].execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-        }
-        catch (final SQLException e) {
-            e.printStackTrace();
-        }
+        sas[1].execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
     }
 
     /**
@@ -179,5 +135,4 @@ public class MultipleServers {
             e.printStackTrace();
         }
     }
-
 }

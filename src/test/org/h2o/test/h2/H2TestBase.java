@@ -6,6 +6,7 @@ package org.h2o.test.h2;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -103,15 +104,16 @@ public abstract class H2TestBase {
      * @param name
      *            the database name
      * @return the connection
+     * @throws IOException 
      */
-    public Connection getConnection(final String name) throws SQLException {
+    public Connection getConnection(final String name) throws SQLException, IOException {
 
         final String databaseURL = getURL(name, true);
         setUpDescriptorFiles(databaseURL);
         return getConnectionInternal(databaseURL, getUser(), getPassword());
     }
 
-    public static void setUpDescriptorFiles(final String url) {
+    private static void setUpDescriptorFiles(final String url) throws IOException {
 
         final LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(url));
 

@@ -115,6 +115,12 @@ public abstract class H2OTestBase {
 
                 return new TestDriver(db_port, database_base_directory_path, database_name, username, password, connections_to_be_closed);
             }
+
+            @Override
+            public TestDriver makeConnectionDriver(final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
+
+                return new TestDriver(database_name, username, password, connections_to_be_closed);
+            }
         };
     }
 
@@ -156,12 +162,22 @@ public abstract class H2OTestBase {
 
         for (int i = 0; i < db_processes.length; i++) {
 
-            final int port = first_db_port + i;
-
             final List<String> db_args = new ArrayList<String>();
-            db_args.add("-n" + DATABASE_NAME);
-            db_args.add("-p" + port);
-            db_args.add("-f" + database_base_directory_paths[i]);
+
+            if (getDatabaseType() == DatabaseType.DISK) {
+
+                final int port = first_db_port + i;
+
+                db_args.add("-n" + DATABASE_NAME);
+                db_args.add("-p" + port);
+                db_args.add("-f" + database_base_directory_paths[i]);
+            }
+            else {
+
+                db_args.add("-n" + DATABASE_NAME + i);
+                db_args.add("-M" + DIAGNOSTIC_LEVEL);
+            }
+
             db_args.add("-d" + descriptor_file_path);
             db_args.add("-D" + DIAGNOSTIC_LEVEL);
 
@@ -183,8 +199,13 @@ public abstract class H2OTestBase {
 
     protected TestDriver makeTestDriver(final int db_index) {
 
-        final int db_port = first_db_port + db_index;
-        return getTestDriverFactory().makeConnectionDriver(db_port, database_base_directory_paths[db_index], DATABASE_NAME, USER_NAME, PASSWORD, connections_to_be_closed);
+        if (getDatabaseType() == DatabaseType.DISK) {
+
+            final int db_port = first_db_port + db_index;
+            return getTestDriverFactory().makeConnectionDriver(db_port, database_base_directory_paths[db_index], DATABASE_NAME, USER_NAME, PASSWORD, connections_to_be_closed);
+        }
+        return getTestDriverFactory().makeConnectionDriver(DATABASE_NAME + db_index, USER_NAME, PASSWORD, connections_to_be_closed);
+
     }
 
     protected void closeIfNotNull(final Connection connection) {

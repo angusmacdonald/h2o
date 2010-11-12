@@ -16,8 +16,21 @@ public class TestDriver {
 
     public TestDriver(final int db_port, final String database_base_directory_path, final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
 
-        delay = 0;
         final String jdbcURL = H2O.createDatabaseURL(db_port, database_base_directory_path, database_name);
+
+        init(jdbcURL, username, password, connections_to_be_closed);
+    }
+
+    public TestDriver(final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
+
+        final String jdbcURL = H2O.createDatabaseURL(database_name);
+
+        init(jdbcURL, username, password, connections_to_be_closed);
+    }
+
+    private void init(final String jdbcURL, final String username, final String password, final Set<Connection> connections_to_be_closed) {
+
+        delay = 0;
 
         // Create connection to the H2O database instance.
         while (connection == null) {

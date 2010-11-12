@@ -10,6 +10,7 @@ package org.h2o.test;
 
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -110,9 +111,10 @@ public class RestartTests {
      * into the table then issues a SELECT query.
      * 
      * @throws ClassNotFoundException
+     * @throws IOException 
      */
     @Test
-    public void basicRestart() throws ClassNotFoundException {
+    public void basicRestart() throws ClassNotFoundException, IOException {
 
         try {
 

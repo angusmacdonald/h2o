@@ -192,7 +192,7 @@ public class Settings {
         localSettings.setProperty(key, value);
     }
 
-    public static void saveAsLocalProperties(final Properties newSettings, final String databaseName) {
+    public static void saveAsLocalProperties(final Properties newSettings, final String databaseName) throws IOException {
 
         /*
          * Load any existing properties file because there might be other info that we don't want to delete. For example, the location of
@@ -217,5 +217,4 @@ public class Settings {
 
         localSettings.saveAndClose();
     }
-
 }

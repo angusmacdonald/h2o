@@ -13,6 +13,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -147,9 +148,10 @@ public class SystemTableTests {
      * @throws SQLException
      * @throws ClassNotFoundException
      * @throws InterruptedException
+     * @throws IOException 
      */
     @Test
-    public void schemaTableCreationPersistence() throws ClassNotFoundException, InterruptedException, SQLException {
+    public void schemaTableCreationPersistence() throws ClassNotFoundException, InterruptedException, SQLException, IOException {
 
         Connection conn = null;
         // start the server, allows to access the database remotely

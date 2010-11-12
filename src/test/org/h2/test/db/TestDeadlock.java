@@ -4,6 +4,7 @@
  */
 package org.h2.test.db;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -56,7 +57,7 @@ public class TestDeadlock extends TestBase {
         deleteDb("deadlock");
     }
 
-    private void initTest() throws SQLException {
+    private void initTest() throws SQLException, IOException {
 
         c1 = getConnection("deadlock");
         c2 = getConnection("deadlock");

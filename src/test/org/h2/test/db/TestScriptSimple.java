@@ -4,6 +4,7 @@
  */
 package org.h2.test.db;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
@@ -87,12 +88,11 @@ public class TestScriptSimple extends TestBase {
         deleteDb("scriptSimple");
     }
 
-    private void reconnect() throws SQLException {
+    private void reconnect() throws SQLException, IOException {
 
         if (conn != null) {
             conn.close();
         }
         conn = getConnection("scriptSimple");
     }
-
 }

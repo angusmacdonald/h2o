@@ -61,7 +61,7 @@ public class ChordTests extends TestBase {
 
         org.h2.Driver.load();
 
-        TestBase.setUpDescriptorFiles();
+        setUpDescriptorFiles();
         ls = new LocatorServer(29999, "junitLocator");
         ls.createNewLocatorFile();
         ls.start();

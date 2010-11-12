@@ -6,6 +6,7 @@ package org.h2.test;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.sql.Connection;
@@ -143,15 +144,16 @@ public abstract class TestBase {
      * @param name
      *            the database name
      * @return the connection
+     * @throws IOException 
      */
-    public Connection getConnection(final String name) throws SQLException {
+    public Connection getConnection(final String name) throws SQLException, IOException {
 
         final String databaseURL = getURL(name, true);
         setUpDescriptorFiles(databaseURL);
         return getConnectionInternal(databaseURL, getUser(), getPassword());
     }
 
-    public static void setUpDescriptorFiles(final String url) {
+    public static void setUpDescriptorFiles(final String url) throws IOException {
 
         final LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(url));
         properties.createNewFile();
@@ -159,10 +161,6 @@ public abstract class TestBase {
         properties.setProperty("databaseName", "testDB");
         properties.setProperty("chordPort", "" + 50000);
         properties.saveAndClose();
-        //
-        // LocatorServer ls = new LocatorServer(29999, "junitLocator");
-        // ls.createNewLocatorFile();
-        // ls.start();
     }
 
     /**

@@ -58,7 +58,7 @@ public class H2TestViewFailing extends H2TestBase {
     }
 
     @Test(timeout = 60000)
-    public void testManyViews() throws SQLException {
+    public void testManyViews() throws SQLException, IOException {
 
         Diagnostic.trace(DiagnosticLevel.FULL);
 

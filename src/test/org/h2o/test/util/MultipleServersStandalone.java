@@ -8,8 +8,7 @@
  */
 package org.h2o.test.util;
 
-import static org.junit.Assert.fail;
-
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -37,20 +36,14 @@ public class MultipleServersStandalone {
 
     private final String[] dbs = {"two", "three", "four", "five", "six", "seven", "eight", "nine"};
 
-    public MultipleServersStandalone() {
+    public MultipleServersStandalone() throws SQLException, IOException {
 
         initialSetUp();
 
-        try {
-            setUp();
-        }
-        catch (final Exception e) {
-            e.printStackTrace();
-        }
-
+        setUp();
     }
 
-    public void initialSetUp() {
+    public void initialSetUp() throws IOException {
 
         Diagnostic.setLevel(DiagnosticLevel.INIT);
 
@@ -58,7 +51,7 @@ public class MultipleServersStandalone {
 
     }
 
-    private void createMultiplePropertiesFiles(final String[] dbNames) {
+    private void createMultiplePropertiesFiles(final String[] dbNames) throws IOException {
 
         for (final String db : dbNames) {
 
@@ -69,15 +62,12 @@ public class MultipleServersStandalone {
             knownHosts.createNewFile();
             knownHosts.setProperty("jdbc:h2:sm:mem:one", "30000"); // //jdbc:h2:sm:mem:one
             knownHosts.saveAndClose();
-
         }
     }
 
-    public void setUp() throws Exception {
+    public void setUp() throws SQLException {
 
         TestingSettings.DEFAULT_SCHEMA_MANAGER_LOCATION = "jdbc:h2:sm:mem:one";
-        // PersistentSystemTable.USERNAME = "angus";
-        // PersistentSystemTable.PASSWORD = "";
 
         org.h2.Driver.load();
 
@@ -85,40 +75,27 @@ public class MultipleServersStandalone {
         cas[0] = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
         for (int i = 1; i < cas.length; i++) {
 
-            // Thread.sleep(1000);
             cas[i] = DriverManager.getConnection("jdbc:h2:mem:" + dbs[i - 1], PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
         }
 
         sas = new Statement[dbs.length + 1];
-
     }
 
-    public void tearDown() {
+    public void tearDown() throws SQLException {
 
         for (int i = 0; i < sas.length; i++) {
-            try {
-                if (!sas[i].isClosed()) {
-                    sas[i].close();
-                }
-                sas[i] = null;
+            if (!sas[i].isClosed()) {
+                sas[i].close();
             }
-            catch (final Exception e) {
-                e.printStackTrace();
-                fail("Statements aren't being closed correctly.");
-            }
+            sas[i] = null;
         }
 
         for (int i = 0; i < cas.length; i++) {
-            try {
-                if (!cas[i].isClosed()) {
-                    cas[i].close();
-                }
-                cas[i] = null;
+
+            if (!cas[i].isClosed()) {
+                cas[i].close();
             }
-            catch (final Exception e) {
-                e.printStackTrace();
-                fail("Connections aren't being closed correctly.");
-            }
+            cas[i] = null;
         }
 
         cas = null;
@@ -128,8 +105,10 @@ public class MultipleServersStandalone {
     /**
      * @param args
      * @throws InterruptedException
+     * @throws IOException 
+     * @throws SQLException 
      */
-    public static void main(final String[] args) throws InterruptedException {
+    public static void main(final String[] args) throws InterruptedException, SQLException, IOException {
 
         Constants.IS_TEST = true;
         final MultipleServersStandalone servers = new MultipleServersStandalone();
@@ -137,23 +116,6 @@ public class MultipleServersStandalone {
         Thread.sleep(10000);
 
         servers.testSystemTableFailure();
-
-        // Thread.sleep(2000);
-
-        // servers.insertSecondTable();
-    }
-
-    /**
-     * 
-     */
-    private void insertSecondTable() {
-
-        try {
-            sas[1].execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
-        }
-        catch (final SQLException e) {
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -170,5 +132,4 @@ public class MultipleServersStandalone {
             e.printStackTrace();
         }
     }
-
 }

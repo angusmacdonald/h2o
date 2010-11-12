@@ -239,7 +239,7 @@ public class MultiProcessTestBase extends TestBase {
         return parsedLocations;
     }
 
-    protected void delayQueryCommit(final int dbName) {
+    protected void delayQueryCommit(final int dbName) throws IOException {
 
         final String location = fullDbName[dbName];
         final LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(location));

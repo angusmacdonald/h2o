@@ -269,7 +269,12 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
                         if (connected) {
                             localSettings.setProperty("chordPort", portToUse + "");
-                            localSettings.saveAndClose();
+                            try {
+                                localSettings.saveAndClose();
+                            }
+                            catch (final IOException e) {
+                                throw new StartupException("Couldn't save Chord port to properties file");
+                            }
                         }
 
                         newSMLocation = localMachineLocation;
@@ -397,8 +402,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
      * Try to join an existing chord ring.
      * 
      * @return True if a connection was successful; otherwise false.
+     * @throws StartupException 
      */
-    private boolean attemptToJoinChordRing(final LocalH2OProperties persistedInstanceInformation, final DatabaseURL localMachineLocation, final List<String> databaseInstances) {
+    private boolean attemptToJoinChordRing(final LocalH2OProperties persistedInstanceInformation, final DatabaseURL localMachineLocation, final List<String> databaseInstances) throws StartupException {
 
         /*
          * Try to connect via each of the database instances that are known.
@@ -433,7 +439,12 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
             if (connected) {
                 persistedInstanceInformation.setProperty("chordPort", rmiPort + "");
-                persistedInstanceInformation.saveAndClose();
+                try {
+                    persistedInstanceInformation.saveAndClose();
+                }
+                catch (final IOException e) {
+                    throw new StartupException("Couldn't save Chord port to properties file");
+                }
                 chordNode.addObserver(this);
 
                 Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Successfully connected to an existing chord ring at " + url);

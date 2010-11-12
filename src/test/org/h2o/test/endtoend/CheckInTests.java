@@ -8,7 +8,7 @@
  */
 package org.h2o.test.endtoend;
 
-import org.h2o.test.endtoend.normal.EndToEndTests;
+import org.h2o.test.endtoend.normal.EndToEndDiskTests;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -21,7 +21,7 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
 
-EndToEndTests.class})
+EndToEndDiskTests.class})
 public class CheckInTests {
     // Empty.
 }

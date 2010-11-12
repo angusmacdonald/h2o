@@ -14,6 +14,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -68,7 +69,7 @@ public class TestBase {
     protected static final int ROWS_IN_DATABASE = 2;
 
     @BeforeClass
-    public static void initialSetUp() {
+    public static void initialSetUp() throws IOException {
 
         Constants.IS_TEAR_DOWN = false;
         Constants.IS_NON_SM_TEST = true;
@@ -154,10 +155,7 @@ public class TestBase {
         };
     }
 
-    /**
-    * 
-    */
-    protected static void setUpDescriptorFiles() {
+    protected static void setUpDescriptorFiles() throws IOException {
 
         createProperties("jdbc:h2:mem:one", true);
         createProperties("jdbc:h2:mem:two", true);
@@ -167,8 +165,9 @@ public class TestBase {
 
     /**
      * This is done because the server doesn't release the original port when it is stopped programmatically.
+     * @throws IOException 
      */
-    protected static void resetLocatorFile() {
+    protected static void resetLocatorFile() throws IOException {
 
         createProperties("jdbc:h2:db_data/test/scriptSimple", false);
         createProperties("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", false);
@@ -287,7 +286,7 @@ public class TestBase {
         stat.execute(sqlQuery);
     }
 
-    private static void createProperties(final String url, final boolean include_chord_port) {
+    private static void createProperties(final String url, final boolean include_chord_port) throws IOException {
 
         final LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(url));
 

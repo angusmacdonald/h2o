@@ -8,8 +8,6 @@
  */
 package org.h2o.util;
 
-import java.io.IOException;
-
 import org.h2o.db.id.DatabaseURL;
 
 /**
@@ -28,25 +26,25 @@ public class LocalH2OProperties extends H2OPropertiesWrapper {
 
     // TODO are these needed?
 
-    @Override
-    public void createNewFile() {
-
-        try {
-            super.createNewFile();
-        }
-        catch (final IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void saveAndClose() {
-
-        try {
-            super.saveAndClose();
-        }
-        catch (final IOException e) {
-            e.printStackTrace();
-        }
-    }
+    //    @Override
+    //    public void createNewFile() {
+    //
+    //        try {
+    //            super.createNewFile();
+    //        }
+    //        catch (final IOException e) {
+    //            e.printStackTrace();
+    //        }
+    //    }
+    //
+    //    @Override
+    //    public void saveAndClose() {
+    //
+    //        try {
+    //            super.saveAndClose();
+    //        }
+    //        catch (final IOException e) {
+    //            e.printStackTrace();
+    //        }
+    //    }
 }

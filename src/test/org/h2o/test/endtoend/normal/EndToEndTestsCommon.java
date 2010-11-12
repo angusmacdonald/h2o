@@ -34,7 +34,7 @@ public abstract class EndToEndTestsCommon extends H2OTestBase {
         return (EndToEndTestDriver) makeTestDriver();
     }
 
-    public class UpdateThread extends Thread {
+    public static class UpdateThread extends Thread {
 
         private final EndToEndTestDriver driver;
         private final int number_of_values;
@@ -86,6 +86,12 @@ public abstract class EndToEndTestsCommon extends H2OTestBase {
             public TestDriver makeConnectionDriver(final int db_port, final String database_base_directory_path, final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
 
                 return new EndToEndTestDriver(db_port, database_base_directory_path, database_name, username, password, connections_to_be_closed);
+            }
+
+            @Override
+            public TestDriver makeConnectionDriver(final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
+
+                return new EndToEndTestDriver(database_name, username, password, connections_to_be_closed);
             }
         };
     }
