@@ -97,6 +97,7 @@ public class H2O {
      */
     public static void main(final String[] args) throws StartupException, IOException, SQLException {
 
+        System.out.println("starting H2O");
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting H2O Server Instance.");
 
         final H2O db = new H2O(args);
