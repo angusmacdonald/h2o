@@ -358,22 +358,23 @@ public class H2TestPreparedStatement extends H2OTestBase {
         Diagnostic.trace();
 
         Statement statement = null;
-        PreparedStatement prepared_statement = null;
+        PreparedStatement prepared_statement1 = null;
+        PreparedStatement prepared_statement2 = null;
 
         try {
             statement = connection.createStatement();
             statement.execute("CREATE TABLE TEST(ID INT, DATA BINARY, JAVA OTHER)");
-            prepared_statement = connection.prepareStatement("INSERT INTO TEST VALUES(?, ?, ?)");
-            prepared_statement.setInt(1, 1);
-            prepared_statement.setObject(2, Integer.valueOf(11));
-            prepared_statement.setObject(3, null);
-            prepared_statement.execute();
-            prepared_statement.setInt(1, 2);
-            prepared_statement.setObject(2, Integer.valueOf(101), Types.OTHER);
-            prepared_statement.setObject(3, Integer.valueOf(103), Types.OTHER);
-            prepared_statement.execute();
-            final PreparedStatement p2 = connection.prepareStatement("SELECT * FROM TEST ORDER BY ID");
-            final ResultSet rs = p2.executeQuery();
+            prepared_statement1 = connection.prepareStatement("INSERT INTO TEST VALUES(?, ?, ?)");
+            prepared_statement1.setInt(1, 1);
+            prepared_statement1.setObject(2, Integer.valueOf(11));
+            prepared_statement1.setObject(3, null);
+            prepared_statement1.execute();
+            prepared_statement1.setInt(1, 2);
+            prepared_statement1.setObject(2, Integer.valueOf(101), Types.OTHER);
+            prepared_statement1.setObject(3, Integer.valueOf(103), Types.OTHER);
+            prepared_statement1.execute();
+            prepared_statement2 = connection.prepareStatement("SELECT * FROM TEST ORDER BY ID");
+            final ResultSet rs = prepared_statement2.executeQuery();
             rs.next();
             Object o = rs.getObject(2);
             assertTrue(o instanceof byte[]);
@@ -389,7 +390,8 @@ public class H2TestPreparedStatement extends H2OTestBase {
         }
         finally {
             closeIfNotNull(statement);
-            closeIfNotNull(prepared_statement);
+            closeIfNotNull(prepared_statement1);
+            closeIfNotNull(prepared_statement2);
         }
     }
 

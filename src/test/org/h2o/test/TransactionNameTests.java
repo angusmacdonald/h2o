@@ -8,7 +8,9 @@
  */
 package org.h2o.test;
 
-import static org.junit.Assert.assertNotNull;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNot.not;
+import static org.junit.Assert.assertThat;
 
 import org.h2o.util.TransactionNameGenerator;
 import org.junit.Test;
@@ -20,6 +22,8 @@ public class TransactionNameTests {
      */
     @Test
     public void testGeneration() {
+
+        // TODO this doesn't seem to check anything.
 
         final long lastNumber = Long.MAX_VALUE - 1000;
 
@@ -38,7 +42,7 @@ public class TransactionNameTests {
 
         final TransactionNameGenerator instance = new TransactionNameGenerator(null);
 
-        assertNotNull(instance.generateName());
+        assertThat(instance.generateName(), is(not(null)));
     }
 
     /**
@@ -47,6 +51,6 @@ public class TransactionNameTests {
     @Test
     public void nullCheck2() {
 
-        assertNotNull(TransactionNameGenerator.generateName((String) null));
+        assertThat(TransactionNameGenerator.generateName((String) null), is(not(null)));
     }
 }

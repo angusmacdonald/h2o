@@ -130,27 +130,30 @@ public class H2TestBigResult extends H2OTestBase {
 
         Diagnostic.trace();
 
-        Statement stat = null;
+        Statement statement1 = null;
+        Statement statement2 = null;
+        PreparedStatement prep1 = null;
+        PreparedStatement prep2 = null;
 
         try {
-            stat = connection.createStatement();
-            stat.execute("DROP TABLE IF EXISTS TEST");
-            stat.execute("CREATE TABLE TEST(" + "ID INT PRIMARY KEY, " + "Name VARCHAR(255), " + "FirstName VARCHAR(255), " + "Points INT," + "LicenseID INT)");
+            statement1 = connection.createStatement();
+            statement1.execute("DROP TABLE IF EXISTS TEST");
+            statement1.execute("CREATE TABLE TEST(" + "ID INT PRIMARY KEY, " + "Name VARCHAR(255), " + "FirstName VARCHAR(255), " + "Points INT," + "LicenseID INT)");
             final int len = 5000;
-            PreparedStatement prep = connection.prepareStatement("INSERT INTO TEST VALUES(?, ?, ?, ?, ?)");
+            prep1 = connection.prepareStatement("INSERT INTO TEST VALUES(?, ?, ?, ?, ?)");
             for (int i = 0; i < len; i++) {
-                prep.setInt(1, i);
-                prep.setString(2, "Name " + i);
-                prep.setString(3, "First Name " + i);
-                prep.setInt(4, i * 10);
-                prep.setInt(5, i * i);
-                prep.execute();
+                prep1.setInt(1, i);
+                prep1.setString(2, "Name " + i);
+                prep1.setString(3, "First Name " + i);
+                prep1.setInt(4, i * 10);
+                prep1.setInt(5, i * i);
+                prep1.execute();
             }
-            stat.close();
+            statement1.close();
 
-            stat = connection.createStatement();
-            stat.setMaxRows(len + 1);
-            ResultSet rs = stat.executeQuery("SELECT * FROM TEST ORDER BY ID");
+            statement1 = connection.createStatement();
+            statement1.setMaxRows(len + 1);
+            ResultSet rs = statement1.executeQuery("SELECT * FROM TEST ORDER BY ID");
             for (int i = 0; i < len; i++) {
                 rs.next();
                 assertEquals(i, rs.getInt(1));
@@ -160,8 +163,8 @@ public class H2TestBigResult extends H2OTestBase {
                 assertEquals(i * i, rs.getInt(5));
             }
 
-            stat.setMaxRows(len + 1);
-            rs = stat.executeQuery("SELECT * FROM TEST WHERE ID >= 1000 ORDER BY ID");
+            statement1.setMaxRows(len + 1);
+            rs = statement1.executeQuery("SELECT * FROM TEST WHERE ID >= 1000 ORDER BY ID");
             for (int i = 1000; i < len; i++) {
                 rs.next();
                 assertEquals(i, rs.getInt(1));
@@ -171,36 +174,39 @@ public class H2TestBigResult extends H2OTestBase {
                 assertEquals(i * i, rs.getInt(5));
             }
 
-            stat.execute("SET MAX_MEMORY_ROWS 2");
-            rs = stat.executeQuery("SELECT Name, SUM(ID) FROM TEST GROUP BY NAME");
+            statement1.execute("SET MAX_MEMORY_ROWS 2");
+            rs = statement1.executeQuery("SELECT Name, SUM(ID) FROM TEST GROUP BY NAME");
             while (rs.next()) {
                 rs.getString(1);
                 rs.getInt(2);
             }
 
             connection.setAutoCommit(false);
-            stat.setMaxRows(0);
-            stat.execute("SET MAX_MEMORY_ROWS 0");
-            stat.execute("CREATE TABLE DATA(ID INT, NAME VARCHAR_IGNORECASE(255))");
-            prep = connection.prepareStatement("INSERT INTO DATA VALUES(?, ?)");
+            statement1.setMaxRows(0);
+            statement1.execute("SET MAX_MEMORY_ROWS 0");
+            statement1.execute("CREATE TABLE DATA(ID INT, NAME VARCHAR_IGNORECASE(255))");
+            prep2 = connection.prepareStatement("INSERT INTO DATA VALUES(?, ?)");
             for (int i = 0; i < len; i++) {
-                prep.setInt(1, i);
-                prep.setString(2, "" + i / 200);
-                prep.execute();
+                prep2.setInt(1, i);
+                prep2.setString(2, "" + i / 200);
+                prep2.execute();
             }
-            final Statement s2 = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-            rs = s2.executeQuery("SELECT NAME FROM DATA");
+            statement2 = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+            rs = statement2.executeQuery("SELECT NAME FROM DATA");
             rs.last();
             connection.commit();
             connection.setAutoCommit(true);
 
-            rs = s2.executeQuery("SELECT NAME FROM DATA ORDER BY ID");
+            rs = statement2.executeQuery("SELECT NAME FROM DATA ORDER BY ID");
             while (rs.next()) {
                 // do nothing
             }
         }
         finally {
-            stat.close();
+            closeIfNotNull(statement1);
+            closeIfNotNull(statement2);
+            closeIfNotNull(prep1);
+            closeIfNotNull(prep2);
         }
     }
 

@@ -326,20 +326,23 @@ public class H2TestPreparedStatementFailing extends H2TestBase {
 
         Diagnostic.trace(DiagnosticLevel.FULL);
 
-        Statement stat = null;
+        Statement statement1 = null;
+        Statement statement2 = null;
+        Statement statement3 = null;
         PreparedStatement prep = null;
+
         try {
-            conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-            conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
-            stat = conn.createStatement();
+            statement1 = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+            statement2 = conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+            statement3 = conn.createStatement();
 
             ResultSet rs;
             trace("Create tables");
-            stat.execute("CREATE TABLE T_INT(ID INT PRIMARY KEY,VALUE INT)");
-            stat.execute("CREATE TABLE T_VARCHAR(ID INT PRIMARY KEY,VALUE VARCHAR(255))");
-            stat.execute("CREATE TABLE T_DECIMAL_0(ID INT PRIMARY KEY,VALUE DECIMAL(30,0))");
-            stat.execute("CREATE TABLE T_DECIMAL_10(ID INT PRIMARY KEY,VALUE DECIMAL(20,10))");
-            stat.execute("CREATE TABLE T_DATETIME(ID INT PRIMARY KEY,VALUE DATETIME)");
+            statement3.execute("CREATE TABLE T_INT(ID INT PRIMARY KEY,VALUE INT)");
+            statement3.execute("CREATE TABLE T_VARCHAR(ID INT PRIMARY KEY,VALUE VARCHAR(255))");
+            statement3.execute("CREATE TABLE T_DECIMAL_0(ID INT PRIMARY KEY,VALUE DECIMAL(30,0))");
+            statement3.execute("CREATE TABLE T_DECIMAL_10(ID INT PRIMARY KEY,VALUE DECIMAL(20,10))");
+            statement3.execute("CREATE TABLE T_DATETIME(ID INT PRIMARY KEY,VALUE DATETIME)");
             prep = conn.prepareStatement("INSERT INTO T_INT VALUES(?,?)", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
             prep.setInt(1, 1);
             prep.setInt(2, 0);
@@ -401,8 +404,8 @@ public class H2TestPreparedStatementFailing extends H2TestBase {
             prep.setLong(2, Integer.MIN_VALUE);
             prep.executeUpdate();
 
-            assertTrue(stat.execute("SELECT * FROM T_INT ORDER BY ID"));
-            rs = stat.getResultSet();
+            assertTrue(statement3.execute("SELECT * FROM T_INT ORDER BY ID"));
+            rs = statement3.getResultSet();
             assertResultSetOrdered(rs, new String[][]{{"1", "0"}, {"2", "-1"}, {"3", "3"}, {"4", null}, {"5", "0"}, {"6", "-1"}, {"7", "3"}, {"8", null}, {"9", "-4"}, {"10", "5"}, {"11", null}, {"12", "1"}, {"13", "0"}, {"14", "-20"}, {"15", "100"}, {"16", "30000"}, {"17", "-30000"},
                             {"18", "" + Integer.MAX_VALUE}, {"19", "" + Integer.MIN_VALUE},});
 
@@ -426,12 +429,12 @@ public class H2TestPreparedStatementFailing extends H2TestBase {
             prep.setFloat(2, -40);
             prep.executeUpdate();
 
-            rs = stat.executeQuery("SELECT VALUE FROM T_DECIMAL_0 ORDER BY ID");
+            rs = statement3.executeQuery("SELECT VALUE FROM T_DECIMAL_0 ORDER BY ID");
             checkBigDecimal(rs, new String[]{"" + Long.MAX_VALUE, "" + Long.MIN_VALUE, "10", "-20", "30", "-40"});
 
             // getMoreResults
-            stat.execute("CREATE TABLE TEST(ID INT)");
-            stat.execute("INSERT INTO TEST VALUES(1)");
+            statement3.execute("CREATE TABLE TEST(ID INT)");
+            statement3.execute("INSERT INTO TEST VALUES(1)");
             prep = conn.prepareStatement("SELECT * FROM TEST");
             // just to check if it doesn't throw an exception - it may be null
             prep.getMetaData();
@@ -453,12 +456,10 @@ public class H2TestPreparedStatementFailing extends H2TestBase {
             assertEquals(-1, prep.getUpdateCount());
         }
         finally {
-            if (stat != null) {
-                stat.close();
-            }
-            if (prep != null) {
-                prep.close();
-            }
+            closeIfNotNull(statement1);
+            closeIfNotNull(statement2);
+            closeIfNotNull(statement3);
+            closeIfNotNull(prep);
         }
     }
 
@@ -468,42 +469,44 @@ public class H2TestPreparedStatementFailing extends H2TestBase {
         Diagnostic.trace(DiagnosticLevel.FULL);
 
         Statement stat = null;
-        PreparedStatement prep = null;
+        PreparedStatement prep1 = null;
+        PreparedStatement prep2 = null;
         ResultSet rs;
 
         try {
             stat = conn.createStatement();
-            prep = conn.prepareStatement("SELECT COUNT(*) FROM DUAL WHERE ? IS NULL");
-            prep.setString(1, null);
-            prep.executeQuery();
+            prep1 = conn.prepareStatement("SELECT COUNT(*) FROM DUAL WHERE ? IS NULL");
+            prep1.setString(1, null);
+            prep1.executeQuery();
             stat.execute("CREATE TABLE TEST(ID INT)");
             stat.execute("DROP TABLE TEST");
-            prep.setString(1, null);
-            prep.executeQuery();
-            prep.setString(1, "X");
-            rs = prep.executeQuery();
+            prep1.setString(1, null);
+            prep1.executeQuery();
+            prep1.setString(1, "X");
+            rs = prep1.executeQuery();
             rs.next();
             assertEquals(rs.getInt(1), 0);
 
             stat.execute("CREATE TABLE t1 (c1 INT, c2 VARCHAR(10))");
             stat.execute("INSERT INTO t1 SELECT X, CONCAT('Test', X)  FROM SYSTEM_RANGE(1, 5);");
-            prep = conn.prepareStatement("SELECT c1, c2 FROM t1 WHERE c1 = ?");
-            prep.setInt(1, 1);
-            prep.executeQuery();
+            prep2 = conn.prepareStatement("SELECT c1, c2 FROM t1 WHERE c1 = ?");
+            prep2.setInt(1, 1);
+            prep2.executeQuery();
             stat.execute("CREATE TABLE t2 (x int PRIMARY KEY)");
-            prep.setInt(1, 2);
-            rs = prep.executeQuery();
+            prep2.setInt(1, 2);
+            rs = prep2.executeQuery();
             rs.next();
             assertEquals(rs.getInt(1), 2);
-            prep.setInt(1, 3);
-            rs = prep.executeQuery();
+            prep2.setInt(1, 3);
+            rs = prep2.executeQuery();
             rs.next();
             assertEquals(rs.getInt(1), 3);
             stat.execute("DROP TABLE t1, t2");
         }
         finally {
-            stat.close();
-            prep.close();
+            closeIfNotNull(prep1);
+            closeIfNotNull(prep2);
+            closeIfNotNull(stat);
         }
     }
 
@@ -523,7 +526,7 @@ public class H2TestPreparedStatementFailing extends H2TestBase {
         assertFalse(rs.next());
     }
 
-    private int getLength() throws SQLException {
+    private int getLength() {
 
         return getSize(LOB_SIZE, LOB_SIZE_BIG);
     }
@@ -534,4 +537,29 @@ public class H2TestPreparedStatementFailing extends H2TestBase {
             assertEquals(arr[i], big1[i]);
         }
     }
+
+    protected void closeIfNotNull(final Connection connection) {
+
+        try {
+            if (connection != null) {
+                connection.close();
+            }
+        }
+        catch (final SQLException e) {
+            // Ignore and carry on, only trying to tidy up.
+        }
+    }
+
+    protected void closeIfNotNull(final Statement statement) {
+
+        try {
+            if (statement != null) {
+                statement.close();
+            }
+        }
+        catch (final SQLException e) {
+            // Ignore and carry on, only trying to tidy up.
+        }
+    }
+
 }

@@ -46,17 +46,19 @@ public class H2TestView extends H2OTestBase {
         Diagnostic.trace();
 
         Statement statement = null;
+        PreparedStatement prep = null;
 
         try {
             statement = connection.createStatement();
             statement.execute("create table test(id int primary key) as select 1");
-            final PreparedStatement prep = connection.prepareStatement("select * from test t where t.id in (select t2.id from test t2 where t2.id in (?, ?))");
+            prep = connection.prepareStatement("select * from test t where t.id in (select t2.id from test t2 where t2.id in (?, ?))");
             prep.setInt(1, 1);
             prep.setInt(2, 2);
             prep.execute();
         }
         finally {
             closeIfNotNull(statement);
+            closeIfNotNull(prep);
         }
     }
 

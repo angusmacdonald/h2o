@@ -171,6 +171,9 @@ public class SystemTableTests {
             sa.execute("INSERT INTO TEST VALUES(1, 'Hello');");
             sa.execute("INSERT INTO TEST VALUES(2, 'World');");
 
+            sa.close();
+            conn.close();
+
             server.shutdown();
             server.stop();
 
@@ -239,6 +242,8 @@ public class SystemTableTests {
 
         sa.execute("DROP ALL OBJECTS");
         sb.execute("DROP ALL OBJECTS");
+        sa.close();
+        sb.close();
         ca.close();
         cb.close();
     }
