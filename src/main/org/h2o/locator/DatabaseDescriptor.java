@@ -18,12 +18,13 @@ import java.net.URL;
 import java.util.Date;
 import java.util.Properties;
 
+import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.util.exceptions.StartupException;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class DatabaseDescriptorFile {
+public class DatabaseDescriptor {
 
     private final Properties properties;
 
@@ -44,30 +45,34 @@ public class DatabaseDescriptorFile {
 
         final String fileLocation = "\\\\shell\\angus\\public_html\\databases";
 
-        final DatabaseDescriptorFile cddf = new DatabaseDescriptorFile("testDB", fileLocation);
+        final DatabaseDescriptor cddf = new DatabaseDescriptor("testDB", fileLocation);
         cddf.createPropertiesFile();
         cddf.setLocatorLocations("testDB", fileLocation);
     }
 
-    public DatabaseDescriptorFile(final String databaseName, final String propertiesFileFolder) {
+    public DatabaseDescriptor(final String databaseName, final String propertiesFileFolder) {
 
         propertiesFileLocation = propertiesFileFolder + "/" + databaseName + ".h2o";
         properties = new Properties();
-
     }
 
     /**
      * @param url
      */
-    public DatabaseDescriptorFile(final String url) {
+    public DatabaseDescriptor(final String url) {
 
         propertiesFileLocation = url;
         properties = new Properties();
     }
 
-    public String[] getLocatorLocations() throws StartupException {
+    public String[] getLocatorLocations() throws LocatorException {
 
-        openPropertiesFile();
+        try {
+            openPropertiesFile();
+        }
+        catch (final StartupException e) {
+            throw new LocatorException(e);
+        }
 
         final String locatorLocations = properties.getProperty(LOCATORLOCATIONS);
 
@@ -76,9 +81,7 @@ public class DatabaseDescriptorFile {
 
     private void openPropertiesFile() throws StartupException {
 
-        if (propertiesFileLocation.startsWith("http:")) { // Parse URL, request
-                                                          // file from
-                                                          // webpage.
+        if (propertiesFileLocation.startsWith("http:")) { // Parse URL, request file from webpage.
             InputStreamReader isr = null;
             try {
                 final URL url = new URL(propertiesFileLocation);
@@ -120,7 +123,6 @@ public class DatabaseDescriptorFile {
                     //Doesn't matter at this point.
                 }
             }
-
         }
     }
 

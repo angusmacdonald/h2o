@@ -81,6 +81,7 @@ import org.h2o.db.manager.TableManager;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.manager.interfaces.SystemTableRemote;
 import org.h2o.db.manager.monitorthreads.MetaDataReplicationThread;
+import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.db.query.TableProxyManager;
 import org.h2o.db.query.asynchronous.AsynchronousQueryManager;
 import org.h2o.db.remote.ChordRemote;
@@ -368,11 +369,13 @@ public class Database implements DataHandler {
             setDiagnosticLevel(localMachineLocation);
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "H2O, Database '" + name + "'.");
 
-            H2OLocatorInterface locatorInterface;
             try {
-                locatorInterface = databaseRemote.getLocatorServerReference(localSettings);
+                final H2OLocatorInterface locatorInterface = databaseRemote.getLocatorInterface();
 
                 databaseSettings = new Settings(localSettings, locatorInterface.getDescriptor());
+            }
+            catch (final LocatorException e) {
+                throw new SQLException(e.getMessage());
             }
             catch (final StartupException e) {
                 throw new SQLException(e.getMessage());

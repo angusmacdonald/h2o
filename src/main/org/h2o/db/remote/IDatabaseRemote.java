@@ -15,6 +15,7 @@ import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
+import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.locator.client.H2OLocatorInterface;
 import org.h2o.util.exceptions.StartupException;
 
@@ -98,5 +99,5 @@ public interface IDatabaseRemote {
      */
     public DatabaseInstanceRemote getDatabaseInstanceAt(DatabaseURL databaseURL) throws RemoteException;
 
-    public H2OLocatorInterface getLocatorInterface();
+    public H2OLocatorInterface getLocatorInterface() throws LocatorException;
 }

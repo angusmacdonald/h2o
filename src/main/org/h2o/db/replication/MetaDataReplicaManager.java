@@ -425,7 +425,7 @@ public class MetaDataReplicaManager {
         final String databaseName = persistedInstanceInformation.getProperty("databaseName");
 
         if (descriptorLocation == null || databaseName == null) { throw new Exception("The location of the database descriptor must be specifed (it was not found). The database will now terminate."); }
-        final H2OLocatorInterface dl = new H2OLocatorInterface(databaseName, descriptorLocation);
+        final H2OLocatorInterface dl = new H2OLocatorInterface(descriptorLocation);
 
         final boolean successful = dl.setLocations(getReplicaLocations(isSystemTable));
 

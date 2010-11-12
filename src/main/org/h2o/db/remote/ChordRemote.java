@@ -35,6 +35,7 @@ import org.h2o.db.manager.SystemTableReference;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.manager.interfaces.SystemTableRemote;
+import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.db.replication.MetaDataReplicaManager;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
@@ -87,6 +88,16 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
      * Name under which the local database instance is bound to its RMI registry.
      */
     private static final String LOCAL_DATABASE_INSTANCE = "LOCAL_INSTANCE";
+
+    /**
+     * The timeout interval for contacting locator servers. 
+     */
+    private static final long LOCATOR_CONTACT_RETRY_TIMEOUT = 30000;
+
+    /**
+     * The retry interval between successive attempts to contact locator servers.
+     */
+    private static final long LOCATOR_CONTACT_RETRY_WAIT = 2000;
 
     /**
      * The local chord node for this database instance.
@@ -326,28 +337,62 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         return systemTableRef.getSystemTableURL();
     }
 
+    @Override
+    public H2OLocatorInterface getLocatorInterface() throws LocatorException {
+
+        // Obtain a reference to the locator servers if one is not already held.
+        if (locatorInterface == null) {
+            establishLocatorInterface();
+        }
+
+        return locatorInterface;
+    }
+
+    private void establishLocatorInterface() throws LocatorException {
+
+        try {
+            final LocalH2OProperties persistedInstanceInformation = new LocalH2OProperties(localMachineLocation);
+            persistedInstanceInformation.loadProperties();
+            establishLocatorInterface(persistedInstanceInformation);
+        }
+        catch (final IOException e) {
+            throw new LocatorException(e.getMessage());
+        }
+    }
+
     /**
      * Get a reference to the locator servers for this database system.
      * 
-     * @param localDatabaseProperties aroperties file containing the location of the database descriptor and the name of the database
+     * @param localDatabaseProperties a properties file containing the location of the database descriptor and the name of the database
      * @return
      * @throws StartupException if the descriptor file couldn't be found.
      */
-    public H2OLocatorInterface getLocatorServerReference(final LocalH2OProperties localDatabaseProperties) throws StartupException {
+    private void establishLocatorInterface(final LocalH2OProperties localDatabaseProperties) throws LocatorException {
 
         final String descriptorLocation = localDatabaseProperties.getProperty("descriptor");
         final String databaseName = localDatabaseProperties.getProperty("databaseName");
 
-        if (descriptorLocation == null) { throw new StartupException("The location of the database descriptor was not specified. The database will now exit."); }
-        if (databaseName == null) { throw new StartupException("The name of the database was not specified. The database will now exit."); }
+        if (descriptorLocation == null) { throw new LocatorException("The location of the database descriptor was not specified. The database will now exit."); }
+        if (databaseName == null) { throw new LocatorException("The name of the database was not specified. The database will now exit."); }
 
-        try {
-            locatorInterface = new H2OLocatorInterface(databaseName, descriptorLocation);
+        final long startTime = System.currentTimeMillis();
+        while (true) {
+            try {
+                locatorInterface = new H2OLocatorInterface(descriptorLocation);
+                return;
+            }
+            catch (final IOException e) {
+                // Wait and try again if timeout has not been exceeded.
+
+                if (System.currentTimeMillis() - startTime > LOCATOR_CONTACT_RETRY_TIMEOUT) { throw new LocatorException(e.getMessage()); }
+                try {
+                    Thread.sleep(LOCATOR_CONTACT_RETRY_WAIT);
+                }
+                catch (final InterruptedException e1) {
+                    // Ignore and carry on.
+                }
+            }
         }
-        catch (final IOException e) {
-            throw new StartupException(e.getMessage());
-        }
-        return locatorInterface;
     }
 
     /**
@@ -1068,30 +1113,5 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     public void setAsReadyToReplicateMetaData(final MetaDataReplicaManager metaDataReplicaManager) {
 
         this.metaDataReplicaManager = metaDataReplicaManager;
-    }
-
-    @Override
-    public H2OLocatorInterface getLocatorInterface() {
-
-        /*
-         * Obtain a reference to the locator servers if one is not already held.
-         */
-        if (locatorInterface == null) {
-            final LocalH2OProperties persistedInstanceInformation = new LocalH2OProperties(localMachineLocation);
-            try {
-                persistedInstanceInformation.loadProperties();
-            }
-            catch (final IOException e) {
-                e.printStackTrace();
-            }
-            try {
-                locatorInterface = getLocatorServerReference(persistedInstanceInformation);
-            }
-            catch (final StartupException e) {
-                ErrorHandling.errorNoEvent("Failed to obtain a reference to the locator servers: " + e.getMessage());
-            }
-        }
-
-        return locatorInterface;
     }
 }

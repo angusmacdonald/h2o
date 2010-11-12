@@ -20,7 +20,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.h2o.db.id.DatabaseURL;
-import org.h2o.locator.DatabaseDescriptorFile;
+import org.h2o.locator.DatabaseDescriptor;
 import org.h2o.util.LocalH2OProperties;
 import org.h2o.util.exceptions.StartupException;
 
@@ -50,9 +50,9 @@ public class Settings {
 
     private final LocalH2OProperties localSettings;
 
-    private final DatabaseDescriptorFile globalSettings;
+    private final DatabaseDescriptor globalSettings;
 
-    public Settings(final LocalH2OProperties localSettings, final DatabaseDescriptorFile databaseDescriptorFile) throws StartupException {
+    public Settings(final LocalH2OProperties localSettings, final DatabaseDescriptor databaseDescriptorFile) throws StartupException {
 
         this.localSettings = localSettings;
         globalSettings = databaseDescriptorFile;

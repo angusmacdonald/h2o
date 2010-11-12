@@ -12,7 +12,7 @@ import java.io.File;
 import java.io.IOException;
 
 import org.h2o.db.id.DatabaseURL;
-import org.h2o.locator.DatabaseDescriptorFile;
+import org.h2o.locator.DatabaseDescriptor;
 import org.h2o.util.LocalH2OProperties;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -58,7 +58,7 @@ public class StaticServerSetup {
         /*
          * Setup descriptor file.
          */
-        final DatabaseDescriptorFile ddf = new DatabaseDescriptorFile("\\\\shell\\angus\\public_html\\databases\\" + databaseName + ".h2o");
+        final DatabaseDescriptor ddf = new DatabaseDescriptor("\\\\shell\\angus\\public_html\\databases\\" + databaseName + ".h2o");
         ddf.createPropertiesFile();
         ddf.setLocatorLocations(databaseName, "eigg:29999");
         // System.out.println("\\\\shell\\angus\\public_html\\databases" +

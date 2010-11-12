@@ -17,89 +17,73 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.h2o.locator.DatabaseDescriptorFile;
+import org.h2o.db.manager.recovery.LocatorException;
+import org.h2o.locator.DatabaseDescriptor;
 import org.h2o.locator.messages.ReplicaLocationsResponse;
 import org.h2o.util.exceptions.StartupException;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+
 /**
- * Used to find an existing database system by connecting through the set of known nodes (system table nodes).
+ * Supports the discovery of an existing database system by connecting through a set of known nodes (system table nodes).
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
+ * @author Graham Kirby (graham@cs.st-andrews.ac.uk)
  */
 public class H2OLocatorInterface {
 
     private static final int MINIMUM_NUMER_OF_LOCATOR_SERVERS = 1;
 
-    private String[] locatorLocations;
+    private final String[] locatorLocations;
 
     /**
      * Connections to locator servers and the corresponding last known update count on that server.
      */
     private Map<LocatorClientConnection, Integer> locatorConnections;
 
-    private DatabaseDescriptorFile descriptor;
+    private DatabaseDescriptor descriptor;
+
+    // -------------------------------------------------------------------------------------------------------
 
     /**
-     * Finds locator server locations from the descriptor file.
+     * Initialises from a specified descriptor file.
      * 
-     * @param databaseName
-     *            Name of the database being connected to.
-     * @param descriptorURL
-     *            Location of the descriptor file.
-     * @throws IOException
-     * @throws StartupException
+     * @param descriptorURL the location of the descriptor file, either a file path or URL.
+     * 
+     * @throws IOException if no locator servers specified in the descriptor file can be accessed
+     * @throws StartupException if the descriptor file cannot be accessed
      */
-    public H2OLocatorInterface(String databaseName, String descriptorURL) throws IOException, StartupException {
+    public H2OLocatorInterface(final String descriptorURL) throws IOException, LocatorException {
 
-        descriptor = new DatabaseDescriptorFile(descriptorURL);
-        this.locatorLocations = descriptor.getLocatorLocations();
+        descriptor = new DatabaseDescriptor(descriptorURL);
+        locatorLocations = descriptor.getLocatorLocations();
         connectToLocators();
     }
 
     /**
-     * Used for testing where the locator locations are already known.
+     * Used for testing, where the locator locations are already known.
      */
-    public H2OLocatorInterface(String[] locatorLocations) throws IOException {
+    public H2OLocatorInterface(final String[] locatorLocations) throws IOException {
 
         this.locatorLocations = locatorLocations;
         connectToLocators();
     }
 
-    /**
-     * Connect to all of the specified locator servers.
-     */
-    private void connectToLocators() throws IOException {
-
-        locatorConnections = new HashMap<LocatorClientConnection, Integer>();
-
-        for (String location : locatorLocations) {
-            try {
-                LocatorClientConnection lcc = getLocatorConnection(location);
-
-                if (lcc.checkIsConnected()) {
-                    locatorConnections.put(lcc, 0);
-                }
-            }
-            catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        if (locatorConnections.size() == 0) { throw new IOException("Could not connect to any locator servers."); }
-    }
+    // -------------------------------------------------------------------------------------------------------
 
     /**
-     * Get the set of database locations which hold valid, up-to-date, system table state.
-     * 
-     * @return Database URLs represented as strings, where system table state is stored.
-     * @throws IOException
-     *             Thrown if the method was unable to connect to a locator server.
-     */
+      * Get the set of database locations which hold valid, up-to-date, system table state.
+      * 
+      * @return Database URLs represented as strings, where system table state is stored.
+      * @throws IOException
+      *             Thrown if the method was unable to connect to a locator server.
+      */
     public List<String> getLocations() throws IOException {
 
         ReplicaLocationsResponse majorityResponse = null;
-        List<ReplicaLocationsResponse> resultList = new LinkedList<ReplicaLocationsResponse>();
-        Set<ReplicaLocationsResponse> resultSet = new HashSet<ReplicaLocationsResponse>();
+        final List<ReplicaLocationsResponse> resultList = new LinkedList<ReplicaLocationsResponse>();
+        final Set<ReplicaLocationsResponse> resultSet = new HashSet<ReplicaLocationsResponse>();
 
         int initialMatches = 1;
         boolean foundMajority = false;
@@ -107,30 +91,25 @@ public class H2OLocatorInterface {
         /*
          * Get responses. Loop through each locator server.
          */
-        for (Entry<LocatorClientConnection, Integer> locatorLocation : locatorConnections.entrySet()) {
+        for (final Entry<LocatorClientConnection, Integer> locatorLocation : locatorConnections.entrySet()) {
 
-            LocatorClientConnection lcc = locatorLocation.getKey();
+            final LocatorClientConnection lcc = locatorLocation.getKey();
 
             if (!lcc.checkIsConnected()) { // not connected.
                 break;
             }
-            ReplicaLocationsResponse response = lcc.getDatabaseLocations();
+            final ReplicaLocationsResponse response = lcc.getDatabaseLocations();
 
-            locatorLocation.setValue(response.getUpdateCount()); // update
-                                                                 // updatecount
+            locatorLocation.setValue(response.getUpdateCount());
 
-            if (!foundMajority) { // if we've found the majority the only thing
-                                  // needing updated is the update count.
+            // If we've found the majority the only thing needing updated is the update count.
+            if (!foundMajority) {
                 resultList.add(response);
-                boolean newEntry = resultSet.add(response);
+                final boolean newEntry = resultSet.add(response);
 
-                if (!newEntry || locatorConnections.size() == 1) { // if we
-                                                                   // quickly
-                                                                   // get a
-                                                                   // majority,
-                                                                   // use this.
+                if (!newEntry || locatorConnections.size() == 1) { // if we quickly get a majority, use this.
                     initialMatches++;
-                    if (initialMatches >= (locatorConnections.size() / 2) + 1) {
+                    if (initialMatches >= locatorConnections.size() / 2 + 1) {
                         majorityResponse = response;
                         foundMajority = true;
                     }
@@ -144,10 +123,10 @@ public class H2OLocatorInterface {
             /*
              * Pick majority response.
              */
-            Map<ReplicaLocationsResponse, Integer> matches = new HashMap<ReplicaLocationsResponse, Integer>();
+            final Map<ReplicaLocationsResponse, Integer> matches = new HashMap<ReplicaLocationsResponse, Integer>();
 
-            for (ReplicaLocationsResponse response : resultList) {
-                Integer count = matches.get(response);
+            for (final ReplicaLocationsResponse response : resultList) {
+                final Integer count = matches.get(response);
 
                 if (count == null) {
                     matches.put(response, 1);
@@ -158,8 +137,8 @@ public class H2OLocatorInterface {
             }
 
             int currentMax = 0;
-            for (Entry<ReplicaLocationsResponse, Integer> entry : matches.entrySet()) {
-                int count = entry.getValue();
+            for (final Entry<ReplicaLocationsResponse, Integer> entry : matches.entrySet()) {
+                final int count = entry.getValue();
 
                 if (count > currentMax) {
                     majorityResponse = entry.getKey();
@@ -167,7 +146,8 @@ public class H2OLocatorInterface {
                 }
             }
 
-            if (currentMax < (resultList.size() / 2) + 1) return null; // no majority found.
+            if (currentMax < resultList.size() / 2 + 1) { return null; // no majority found.
+            }
         }
 
         return majorityResponse.getLocations();
@@ -181,15 +161,15 @@ public class H2OLocatorInterface {
      * @throws IOException
      *             Thrown if the method was unable to connect to a locator server.
      */
-    public boolean setLocations(String[] replicaLocations) throws IOException {
+    public boolean setLocations(final String[] replicaLocations) throws IOException {
 
         // boolean[] successful = new boolean[locatorLocations.length];
         int successCount = 0;
         boolean successful = false;
 
-        for (String locatorLocation : locatorLocations) {
+        for (final String locatorLocation : locatorLocations) {
 
-            LocatorClientConnection lcc = getLocatorConnection(locatorLocation);
+            final LocatorClientConnection lcc = getLocatorConnection(locatorLocation);
 
             if (!lcc.checkIsConnected()) {
                 successful = false;
@@ -198,25 +178,27 @@ public class H2OLocatorInterface {
                 successful = lcc.sendDatabaseLocation(replicaLocations);
             }
 
-            if (successful) successCount++;
+            if (successful) {
+                successCount++;
+            }
         }
 
         return hasAchievedMajority(successCount, locatorConnections.size());
     }
 
-    public boolean lockLocators(String databaseInstanceString) throws IOException, StartupException {
+    public boolean lockLocators(final String databaseInstanceString) throws IOException, StartupException {
 
         int successful = 0;
 
         if (locatorLocations.length < MINIMUM_NUMER_OF_LOCATOR_SERVERS) { throw new StartupException("Not enough locator servers to reach majority consensus."); }
 
-        for (Entry<LocatorClientConnection, Integer> locatorLocation : locatorConnections.entrySet()) {
-            LocatorClientConnection lcc = locatorLocation.getKey();
+        for (final Entry<LocatorClientConnection, Integer> locatorLocation : locatorConnections.entrySet()) {
+            final LocatorClientConnection lcc = locatorLocation.getKey();
 
             if (!lcc.checkIsConnected()) {
                 break;
             }
-            int result = lcc.requestLock(databaseInstanceString);
+            final int result = lcc.requestLock(databaseInstanceString);
 
             if (locatorLocation.getValue() == 0) {
                 throw new StartupException("Update count for a locator server is still set at 0. A get message should have" + " been sent by this client before a lock request.");
@@ -231,16 +213,18 @@ public class H2OLocatorInterface {
         return hasAchievedMajority(successful, locatorConnections.size());
     }
 
-    public boolean commitLocators(String databaseInstanceString) throws IOException, StartupException {
+    public boolean commitLocators(final String databaseInstanceString) throws IOException, StartupException {
 
         int successful = 0;
 
         if (locatorConnections.size() < MINIMUM_NUMER_OF_LOCATOR_SERVERS) { throw new StartupException("Not enough locator servers to reach majority consensus."); }
 
-        for (Entry<LocatorClientConnection, Integer> locatorLocation : locatorConnections.entrySet()) {
-            LocatorClientConnection lcc = locatorLocation.getKey();
-            boolean unlocked = lcc.confirmSystemTableCreation(databaseInstanceString);
-            if (unlocked) successful++;
+        for (final Entry<LocatorClientConnection, Integer> locatorLocation : locatorConnections.entrySet()) {
+            final LocatorClientConnection lcc = locatorLocation.getKey();
+            final boolean unlocked = lcc.confirmSystemTableCreation(databaseInstanceString);
+            if (unlocked) {
+                successful++;
+            }
         }
 
         return hasAchievedMajority(successful, locatorConnections.size());
@@ -253,23 +237,23 @@ public class H2OLocatorInterface {
      *            String of the form 'host:port'.
      * @return New connection to the locator server.
      */
-    private LocatorClientConnection getLocatorConnection(String locatorLocation) throws IOException {
+    private LocatorClientConnection getLocatorConnection(final String locatorLocation) throws IOException {
 
         String host = "";
         int port = 0;
 
         try {
-            String[] locatorLocatonAddress = locatorLocation.split(":");
+            final String[] locatorLocatonAddress = locatorLocation.split(":");
 
             host = locatorLocatonAddress[0];
             port = Integer.parseInt(locatorLocatonAddress[1]);
 
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             e.printStackTrace();
             throw new IOException("Failed to parse locator location from database descriptor. Ensure the descriptor file lists locators as host:port combinations.");
         }
-        LocatorClientConnection lcc = new LocatorClientConnection(host, port);
+        final LocatorClientConnection lcc = new LocatorClientConnection(host, port);
         return lcc;
 
     }
@@ -279,14 +263,38 @@ public class H2OLocatorInterface {
      * 
      * This is public to allow junit tests to access it.
      */
-    public static boolean hasAchievedMajority(int successfulResponses, int numberOfLocators) {
+    public static boolean hasAchievedMajority(final int successfulResponses, final int numberOfLocators) {
 
-        return successfulResponses >= (numberOfLocators / 2 + 1);
+        return successfulResponses >= numberOfLocators / 2 + 1;
     }
 
-    public DatabaseDescriptorFile getDescriptor() {
+    public DatabaseDescriptor getDescriptor() {
 
         return descriptor;
     }
 
+    // -------------------------------------------------------------------------------------------------------
+
+    /**
+      * Connect to all of the specified locator servers.
+      */
+    private void connectToLocators() throws IOException {
+
+        locatorConnections = new HashMap<LocatorClientConnection, Integer>();
+
+        for (final String location : locatorLocations) {
+            try {
+                final LocatorClientConnection lcc = getLocatorConnection(location);
+
+                if (lcc.checkIsConnected()) {
+                    locatorConnections.put(lcc, 0);
+                }
+            }
+            catch (final IOException e) {
+                Diagnostic.trace(DiagnosticLevel.FULL, "error contacting locator server at location: " + location + " : " + e.getMessage());
+            }
+        }
+
+        if (locatorConnections.size() == 0) { throw new IOException("Could not connect to any locator servers."); }
+    }
 }
