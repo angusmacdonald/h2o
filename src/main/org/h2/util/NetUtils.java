@@ -117,12 +117,20 @@ public class NetUtils {
         final long startTime = System.currentTimeMillis();
 
         while (true) {
+
             try {
                 return createServerSocket(port, ssl);
             }
             catch (final SQLException e) {
-                // Ignore and try again if timeout has not been exceeded.
+                // Wait and try again if timeout has not been exceeded.
+
                 if (System.currentTimeMillis() - startTime > SysProperties.SERVER_SOCKET_RETRY_TIMEOUT) { throw e; }
+                try {
+                    Thread.sleep(SysProperties.SERVER_SOCKET_RETRY_WAIT);
+                }
+                catch (final InterruptedException e1) {
+                    // Ignore and carry on.
+                }
             }
         }
     }
