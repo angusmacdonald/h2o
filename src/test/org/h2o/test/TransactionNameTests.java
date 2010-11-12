@@ -9,7 +9,7 @@
 package org.h2o.test;
 
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNot.not;
+import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
 
 import org.h2o.util.TransactionNameGenerator;
@@ -42,7 +42,7 @@ public class TransactionNameTests {
 
         final TransactionNameGenerator instance = new TransactionNameGenerator(null);
 
-        assertThat(instance.generateName(), is(not(null)));
+        assertThat(instance.generateName(), is(notNullValue()));
     }
 
     /**
@@ -51,6 +51,6 @@ public class TransactionNameTests {
     @Test
     public void nullCheck2() {
 
-        assertThat(TransactionNameGenerator.generateName((String) null), is(not(null)));
+        assertThat(TransactionNameGenerator.generateName((String) null), is(notNullValue()));
     }
 }
