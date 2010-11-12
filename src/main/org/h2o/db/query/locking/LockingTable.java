@@ -26,44 +26,48 @@ public class LockingTable implements ILockingTable, Serializable {
 
     private static final long serialVersionUID = 2044915610751482232L;
 
-    private LockRequest writeLock;
+    private LockRequest writeLockHolder;
 
-    private final Set<LockRequest> readLocks;
+    private final Set<LockRequest> readLockHolders;
 
     private final String tableName;
 
     public LockingTable(final String tableName) {
 
         this.tableName = tableName;
-        writeLock = null;
-        readLocks = new HashSet<LockRequest>();
+        writeLockHolder = null;
+        readLockHolders = new HashSet<LockRequest>();
     }
 
     @Override
     public synchronized LockType requestLock(final LockType lockType, final LockRequest lockRequest) {
 
-        if (writeLock != null) {
+        if (writeLockHolder != null) {
 
             Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "lock refused(1): " + lockType + " on " + tableName + " requester: " + lockRequest);
+
             // Exclusive lock already held by another session, so can't grant any type of lock.
             return LockType.NONE;
         }
 
         if (lockType == LockType.READ) {
 
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "lock granted: " + lockType + " on " + tableName + " requester: " + lockRequest);
+
             // At this point no exclusive lock is currently held, given previous check.
             // So the request can be granted.
-            readLocks.add(lockRequest);
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "lock granted: " + lockType + " on " + tableName + " requester: " + lockRequest);
+            readLockHolders.add(lockRequest);
             return LockType.READ;
         }
-        else if ((lockType == LockType.WRITE || lockType == LockType.CREATE) && readLocks.size() == 0) {
+
+        if ((lockType == LockType.WRITE || lockType == LockType.CREATE) && readLockHolders.size() == 0) {
+
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "lock granted: " + lockType + " on " + tableName + " requester: " + lockRequest);
 
             // This is a write lock request, and no read locks are currently held.
             // TODO what about DROP requests?
 
-            writeLock = lockRequest;
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "lock granted: " + lockType + " on " + tableName + " requester: " + lockRequest);
+            writeLockHolder = lockRequest;
             return lockType; // Either WRITE or CREATE
         }
 
@@ -77,13 +81,13 @@ public class LockingTable implements ILockingTable, Serializable {
     @Override
     public synchronized LockType releaseLock(final LockRequest lockRequest) {
 
-        if (readLocks.remove(lockRequest)) {
+        if (readLockHolders.remove(lockRequest)) {
             Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "lock released: " + LockType.READ + " on " + tableName + " requester: " + lockRequest);
             return LockType.READ;
         }
 
-        if (writeLock != null && writeLock.equals(lockRequest)) {
-            writeLock = null;
+        if (writeLockHolder != null && writeLockHolder.equals(lockRequest)) {
+            writeLockHolder = null;
             Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "lock released: " + LockType.WRITE + " on " + tableName + " requester: " + lockRequest);
             return LockType.WRITE;
         }
@@ -93,17 +97,17 @@ public class LockingTable implements ILockingTable, Serializable {
     }
 
     @Override
-    public String toString() {
+    public synchronized String toString() {
 
-        return "LockingTable [writeLock=" + writeLock + ", readLocksSize=" + readLocks.size() + "]";
+        return "LockingTable [writeLock=" + writeLockHolder + ", readLocksSize=" + readLockHolders.size() + "]";
     }
 
     @Override
-    public LockType peekAtLockGranted(final LockRequest lockRequest) {
+    public synchronized LockType peekAtLockGranted(final LockRequest lockRequest) {
 
-        if (readLocks.contains(lockRequest)) { return LockType.READ; }
+        if (readLockHolders.contains(lockRequest)) { return LockType.READ; }
 
-        if (writeLock != null && writeLock.equals(lockRequest)) { return LockType.WRITE; }
+        if (writeLockHolder != null && writeLockHolder.equals(lockRequest)) { return LockType.WRITE; }
 
         return LockType.NONE;
     }

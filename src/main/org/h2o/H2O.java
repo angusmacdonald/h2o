@@ -35,6 +35,7 @@ import org.h2o.util.exceptions.StartupException;
 import uk.ac.standrews.cs.nds.util.CommandLineArgs;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
 
 /**
  * This class starts an instance of an H2O database. It can be run from the command line (see the main method for applicable arguments), or
@@ -187,12 +188,12 @@ public class H2O {
         if (arg != null) {
 
             try {
-                final int level = Integer.parseInt(arg);
-                if (level < DiagnosticLevel.getMinValue() || level > DiagnosticLevel.getMaxValue()) { throw new StartupException("Invalid diagnostic level specified: " + arg); }
-
-                return DiagnosticLevel.fromNumericalValue(level);
+                return DiagnosticLevel.fromNumericalValue(Integer.parseInt(arg));
             }
-            catch (final Exception e) {
+            catch (final NumberFormatException e) {
+                throw new StartupException("Invalid diagnostic level specified: " + arg);
+            }
+            catch (final UndefinedDiagnosticLevelException e) {
                 throw new StartupException("Invalid diagnostic level specified: " + arg);
             }
         }

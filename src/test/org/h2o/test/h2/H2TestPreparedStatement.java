@@ -601,7 +601,12 @@ public class H2TestPreparedStatement extends H2OTestBase {
         Diagnostic.trace();
 
         Statement statement = null;
-        PreparedStatement prepared_statement = null;
+        PreparedStatement prepared_statement1 = null;
+        PreparedStatement prepared_statement2 = null;
+        PreparedStatement prepared_statement3 = null;
+        PreparedStatement prepared_statement4 = null;
+        PreparedStatement prepared_statement5 = null;
+        PreparedStatement prepared_statement6 = null;
         try {
             statement = connection.createStatement();
 
@@ -609,35 +614,33 @@ public class H2TestPreparedStatement extends H2OTestBase {
             statement.execute("INSERT INTO TEST VALUES(1),(2),(3)");
 
             ResultSet rs;
-            prepared_statement = connection.prepareStatement("EXPLAIN SELECT COUNT(*) FROM TEST WHERE CASEWHEN(ID=1, ID, ID)=? GROUP BY ID");
-            prepared_statement.setInt(1, 1);
-            rs = prepared_statement.executeQuery();
+            prepared_statement1 = connection.prepareStatement("EXPLAIN SELECT COUNT(*) FROM TEST WHERE CASEWHEN(ID=1, ID, ID)=? GROUP BY ID");
+            prepared_statement1.setInt(1, 1);
+            rs = prepared_statement1.executeQuery();
             rs.next();
-            String plan = rs.getString(1);
             rs.close();
-            prepared_statement = connection.prepareStatement("EXPLAIN SELECT COUNT(*) FROM TEST WHERE CASE ID WHEN 1 THEN ID WHEN 2 THEN ID ELSE ID END=? GROUP BY ID");
-            prepared_statement.setInt(1, 1);
-            rs = prepared_statement.executeQuery();
+            prepared_statement2 = connection.prepareStatement("EXPLAIN SELECT COUNT(*) FROM TEST WHERE CASE ID WHEN 1 THEN ID WHEN 2 THEN ID ELSE ID END=? GROUP BY ID");
+            prepared_statement2.setInt(1, 1);
+            rs = prepared_statement2.executeQuery();
             rs.next();
-            plan = rs.getString(1);
 
-            prepared_statement = connection.prepareStatement("SELECT COUNT(*) FROM TEST WHERE CASEWHEN(ID=1, ID, ID)=? GROUP BY ID");
-            prepared_statement.setInt(1, 1);
-            rs = prepared_statement.executeQuery();
+            prepared_statement3 = connection.prepareStatement("SELECT COUNT(*) FROM TEST WHERE CASEWHEN(ID=1, ID, ID)=? GROUP BY ID");
+            prepared_statement3.setInt(1, 1);
+            rs = prepared_statement3.executeQuery();
             assertTrue(rs.next());
             assertEquals(rs.getInt(1), 1);
             assertFalse(rs.next());
 
-            prepared_statement = connection.prepareStatement("SELECT COUNT(*) FROM TEST WHERE CASE ID WHEN 1 THEN ID WHEN 2 THEN ID ELSE ID END=? GROUP BY ID");
-            prepared_statement.setInt(1, 1);
-            rs = prepared_statement.executeQuery();
+            prepared_statement4 = connection.prepareStatement("SELECT COUNT(*) FROM TEST WHERE CASE ID WHEN 1 THEN ID WHEN 2 THEN ID ELSE ID END=? GROUP BY ID");
+            prepared_statement4.setInt(1, 1);
+            rs = prepared_statement4.executeQuery();
             assertTrue(rs.next());
             assertEquals(rs.getInt(1), 1);
             assertFalse(rs.next());
 
-            prepared_statement = connection.prepareStatement("SELECT * FROM TEST WHERE ? IS NULL");
-            prepared_statement.setString(1, "Hello");
-            rs = prepared_statement.executeQuery();
+            prepared_statement5 = connection.prepareStatement("SELECT * FROM TEST WHERE ? IS NULL");
+            prepared_statement5.setString(1, "Hello");
+            rs = prepared_statement5.executeQuery();
             assertFalse(rs.next());
 
             try {
@@ -648,11 +651,11 @@ public class H2TestPreparedStatement extends H2OTestBase {
                 // Expected.
             }
 
-            prepared_statement = connection.prepareStatement("select cast(? as varchar) from dual union select ? from dual");
-            assertEquals(prepared_statement.getParameterMetaData().getParameterCount(), 2);
-            prepared_statement.setString(1, "a");
-            prepared_statement.setString(2, "a");
-            rs = prepared_statement.executeQuery();
+            prepared_statement6 = connection.prepareStatement("select cast(? as varchar) from dual union select ? from dual");
+            assertEquals(prepared_statement6.getParameterMetaData().getParameterCount(), 2);
+            prepared_statement6.setString(1, "a");
+            prepared_statement6.setString(2, "a");
+            rs = prepared_statement6.executeQuery();
             rs.next();
             assertEquals(rs.getString(1), "a");
             assertEquals(rs.getString(1), "a");
@@ -661,7 +664,12 @@ public class H2TestPreparedStatement extends H2OTestBase {
             statement.execute("DROP TABLE TEST");
         }
         finally {
-            closeIfNotNull(prepared_statement);
+            closeIfNotNull(prepared_statement1);
+            closeIfNotNull(prepared_statement2);
+            closeIfNotNull(prepared_statement3);
+            closeIfNotNull(prepared_statement4);
+            closeIfNotNull(prepared_statement5);
+            closeIfNotNull(prepared_statement6);
             closeIfNotNull(statement);
         }
     }

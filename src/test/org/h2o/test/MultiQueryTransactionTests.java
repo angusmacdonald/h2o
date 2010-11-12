@@ -641,47 +641,56 @@ public class MultiQueryTransactionTests extends TestBase {
     @Ignore
     public void testPreparedStatementsMultipleTransactions() throws SQLException {
 
-        PreparedStatement mStmt = null;
+        PreparedStatement mStmt1 = null;
+        PreparedStatement mStmt2 = null;
 
-        final Connection cc = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+        try {
+            final Connection cc = DriverManager.getConnection("jdbc:h2:sm:mem:one", PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
-        cc.setAutoCommit(false);
-        mStmt = cc.prepareStatement("CREATE TABLE PUBLIC.TEST5 (ID INT, NAME VARCHAR(255));");
+            cc.setAutoCommit(false);
+            mStmt1 = cc.prepareStatement("CREATE TABLE PUBLIC.TEST5 (ID INT, NAME VARCHAR(255));");
 
-        mStmt.execute();
+            mStmt1.execute();
 
-        cc.commit();
+            cc.commit();
 
-        cc.close();
+            cc.close();
 
-        while (!cc.isClosed()) {
-        };
+            while (!cc.isClosed()) {
+            };
 
-        mStmt = null;
+            mStmt2 = ca.prepareStatement("insert into PUBLIC.TEST5 (id,name) values (?,?)");
 
-        mStmt = ca.prepareStatement("insert into PUBLIC.TEST5 (id,name) values (?,?)");
+            for (int i = 3; i < 100; i++) {
+                mStmt2.setInt(1, i);
+                mStmt2.setString(2, "helloNumber" + i);
+                mStmt2.addBatch();
+            }
 
-        for (int i = 3; i < 100; i++) {
-            mStmt.setInt(1, i);
-            mStmt.setString(2, "helloNumber" + i);
-            mStmt.addBatch();
+            mStmt2.executeBatch();
+
+            final int[] pKey = new int[100];
+            final String[] secondCol = new String[100];
+
+            pKey[0] = 1;
+            pKey[1] = 2;
+            secondCol[0] = "Hello";
+            secondCol[1] = "World";
+
+            final TestQuery test2query = createMultipleInsertStatements("TEST5", pKey, secondCol, 3);
+
+            sa.execute("SELECT LOCAL * FROM PUBLIC.TEST5 ORDER BY ID;");
+
+            validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
         }
-
-        mStmt.executeBatch();
-
-        final int[] pKey = new int[100];
-        final String[] secondCol = new String[100];
-
-        pKey[0] = 1;
-        pKey[1] = 2;
-        secondCol[0] = "Hello";
-        secondCol[1] = "World";
-
-        final TestQuery test2query = createMultipleInsertStatements("TEST5", pKey, secondCol, 3);
-
-        sa.execute("SELECT LOCAL * FROM PUBLIC.TEST5 ORDER BY ID;");
-
-        validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
+        finally {
+            if (mStmt1 != null) {
+                mStmt1.close();
+            }
+            if (mStmt2 != null) {
+                mStmt2.close();
+            }
+        }
     }
 
     /**

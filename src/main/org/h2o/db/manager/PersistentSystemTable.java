@@ -102,132 +102,6 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
         super.updateLocatorFiles(true);
     }
 
-    // public DatabaseURL getTableManagerLocation(String tableName, String
-    // schemaName) throws SQLException{
-    // String sql =
-    // "SELECT db_location, connection_type, machine_name, connection_port " +
-    // "FROM H2O.H2O_REPLICA, H2O.H2O_CONNECTION, H2O.H2O_TABLE " +
-    // "WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName +
-    // "' AND " + TABLES + ".table_id=" + REPLICAS + ".table_id " +
-    // "AND H2O_CONNECTION.connection_id = H2O_REPLICA.connection_id AND primary_copy = true;";
-    //
-    // LocalResult result = null;
-    //
-    // sqlQuery = getParser().prepareCommand(sql);
-    //
-    // try {
-    //
-    // result = sqlQuery.executeQueryLocal(1);
-    //
-    // } catch (Exception e){
-    // e.printStackTrace();
-    // }
-    //
-    // if (result != null && result.next()){
-    // Value[] row = result.currentRow();
-    //
-    // String dbLocation = row[0].getString();
-    // String connectionType = row[1].getString();
-    // String machineName = row[2].getString();
-    // String connectionPort = row[3].getString();
-    //
-    // DatabaseURL dbURL = new DatabaseURL(connectionType, machineName,
-    // Integer.parseInt(connectionPort), dbLocation, false);
-    //
-    // return dbURL;
-    // }
-    //
-    // Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Looking for table: " +
-    // schemaName + "." + tableName + " (but it wasn't found).");
-    // throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1,
-    // tableName);
-    //
-    //
-    // }
-
-    // /**
-    // * Creates the set of tables used by the System Table.
-    // * @return Result of the update.
-    // * @throws SQLException
-    // */
-    // protected int setupManagerStateTables() throws SQLException{
-    //
-    // String sql = super.createSQL(TABLES, REPLICAS, CONNECTIONS);
-    //
-    // String tableManagerLocation = "H2O.DATA_MANAGER_LOCATIONS";
-    //
-    // sql += "\n\nCREATE TABLE IF NOT EXISTS " + tableManagerLocation + "(" +
-    // "replica_id INTEGER NOT NULL auto_increment(1,1), " +
-    // "table_id INTEGER NOT NULL, " +
-    // "connection_id INTEGER NOT NULL, " +
-    // "storage_type VARCHAR(255), " +
-    // "last_modification INT NOT NULL, " +
-    // "table_set INT NOT NULL, " +
-    // "primary_copy BOOLEAN, " +
-    // "PRIMARY KEY (replica_id), " +
-    // "FOREIGN KEY (table_id) REFERENCES " + tables +
-    // " (table_id) ON DELETE CASCADE , " +
-    // " FOREIGN KEY (connection_id) REFERENCES " + connections +
-    // " (connection_id));";
-    //
-    // return executeUpdate(sql);
-    // }
-
-    // /**
-    // * Creates linked tables for a remote System Table, location specified by
-    // the paramter.
-    // * @param systemTableLocation Location of the remote System Table.
-    // * @return Result of the update.
-    // * @throws SQLException
-    // */
-    // public int createLinkedTablesForSystemTable(String systemTableLocation)
-    // throws SQLException{
-    // String sql = "CREATE SCHEMA IF NOT EXISTS H2O;";
-    // String tableName = TABLES;
-    // sql += "\nCREATE LINKED TABLE IF NOT EXISTS " + tableName +
-    // "('org.h2.Driver', '" + systemTableLocation + "', '" + USERNAME + "', '"
-    // + PASSWORD + "', '" + tableName + "');";
-    // tableName = CONNECTIONS;
-    // sql += "\nCREATE LINKED TABLE IF NOT EXISTS " + tableName +
-    // "('org.h2.Driver', '" + systemTableLocation + "', '" + USERNAME + "', '"
-    // + PASSWORD + "', '" + tableName + "');";
-    // // tableName = REPLICAS;
-    // // sql += "\nCREATE LINKED TABLE IF NOT EXISTS " + tableName +
-    // "('org.h2.Driver', '" + systemTableLocation + "', '" + USERNAME + "', '"
-    // + PASSWORD + "', '" + tableName + "');";
-    //
-    // //System.out.println("Linked table query: " + sql);
-    //
-    // return executeUpdate(sql);
-    // }
-    //
-    // /**
-    // * Contacts the System Table and accesses information on the set of
-    // available remote tables.
-    // * @param localMachineAddress The address of the local requesting machine
-    // (so as to exclude local results)
-    // * @param localMachinePort The port number of the local requesting machine
-    // (so as to exclude local results)
-    // * @param dbLocation The location of the database on the local machine.
-    // * @return Result-set of all remote tables.
-    // * @throws SQLException
-    // */
-    // public LocalResult getAllRemoteTables(String localMachineAddress, int
-    // localMachinePort, String dbLocation) throws SQLException{
-    // String sql =
-    // "SELECT schemaname, tablename, db_location, connection_type, machine_name, connection_port "
-    // +
-    // "FROM " + REPLICAS + ", " + CONNECTIONS + ", " + TABLES +
-    // " WHERE " + CONNECTIONS + ".connection_id = " + REPLICAS +
-    // ".connection_id " +
-    // "AND " + TABLES + ".table_id=" + REPLICAS + ".table_id " +
-    // "AND NOT (machine_name = '" + localMachineAddress +
-    // "' AND connection_port = " + localMachinePort + " AND db_location = '" +
-    // dbLocation + "');";
-    //
-    // return executeQuery(sql);
-    // }
-
     /**
      * Get the names of all the tables in a given schema.
      * 
@@ -271,10 +145,6 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
         return 1;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.ISystemTable#exists(java.lang.String)
-     */
     @Override
     public boolean exists(final TableInfo ti) throws RemoteException {
 
@@ -287,43 +157,12 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.ISystemTable#lookup(java.lang.String)
-     */
     @Override
     public TableManagerWrapper lookup(final TableInfo ti) throws RemoteException {
-
-        //
-        // /*
-        // * Get the machine location of the table's Table Manager.
-        // */
-        // DatabaseURL dbURL = null;
-        //
-        // try {
-        // dbURL = getTableManagerLocation(ti.getTableName(),
-        // ti.getSchemaName());
-        // } catch (SQLException e) {
-        // e.printStackTrace();
-        // return null;
-        // }
-        //
-        // /*
-        // * Use the chord interface to get a remote reference to this Table
-        // Manager.
-        // */
-        //
-        // IDatabaseRemote remoteInterface = db.getRemoteInterface();
-        //
-        // return remoteInterface.refindTableManagerReference(ti, dbURL);
 
         return null;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#buildSystemTableState(org.h2.h2o.manager .ISystemTable)
-     */
     @Override
     public void buildSystemTableState(final ISystemTable otherSystemTable) throws RemoteException {
 
@@ -381,12 +220,10 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
                     addTableManagerStateReplica(databaseEntry.getKey(), tableInfo, primaryLocations.get(databaseEntry.getKey()), false);
                 }
             }
-
         }
         catch (final MovedException e) {
             e.printStackTrace();
         }
-
     }
 
     /*
@@ -475,7 +312,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
         /*
          * Parse the query resultset to find the primary location of every table.
          */
-        final String sql = "SELECT db_location, connection_type, machine_name, connection_port, tablename, schemaname, chord_port " + "FROM " + CONNECTIONS + ", " + TABLES + " " + "WHERE " + CONNECTIONS + ".connection_id = " + TABLES + ".manager_location;"; //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
+        final String sql = "SELECT db_location, connection_type, machine_name, connection_port, tablename, schemaname, chord_port FROM " + CONNECTIONS + ", " + TABLES + " WHERE " + CONNECTIONS + ".connection_id = " + TABLES + ".manager_location;";
 
         // SELECT db_location, connection_type, machine_name, connection_port,
         // tablename, schemaname, chord_port FROM H2O.H2O_REPLICA,
@@ -509,7 +346,6 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
                 /*
                  * Perform lookups to get remote references to every Table Manager.
                  */
-
                 DatabaseInstanceRemote dir = null;
 
                 try {
@@ -517,7 +353,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
                     dir = remoteInterface.getDatabaseInstanceAt(dbURL);
                 }
-                catch (final Exception e) {
+                catch (final RemoteException e) {
                     // Will happen if its no longer active.
                 }
 
@@ -543,9 +379,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
                 }
 
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Created new Table Manager");
-
             }
-
         }
         catch (final SQLException e1) {
             e1.printStackTrace();
