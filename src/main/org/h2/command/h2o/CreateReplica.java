@@ -218,10 +218,7 @@ public class CreateReplica extends SchemaCommand {
 
         if (whereReplicaWillBeCreated != null || db.getFullDatabasePath().equals(whereReplicaWillBeCreated)) {
             final int result = pushCommand(whereReplicaWillBeCreated, "CREATE REPLICA " + tableName + " FROM '" + whereDataWillBeTakenFrom + "'", true); // command
-            // will
-            // be
-            // executed
-            // elsewhere
+            // will  be executed elsewhere
 
             // Update the System Table here.
 
@@ -267,12 +264,7 @@ public class CreateReplica extends SchemaCommand {
         }
 
         boolean createEntirelyNewReplica = true;
-        if (getSchema().findLocalTableOrView(session, tableName) != null) { // H2O.
-            // Check
-            // for
-            // local
-            // version
-            // here.
+        if (getSchema().findLocalTableOrView(session, tableName) != null) { // H2O. Check  for  local version  here.
             if (ifNotExists && !updateData) {
                 return 0;
             }
@@ -284,28 +276,9 @@ public class CreateReplica extends SchemaCommand {
             }
         }
 
-        final String fullTableName = getSchema().getName() + "." + tableName; // getSchema().getName()
-        // + "."
-        // +
-
+        final String fullTableName = getSchema().getName() + "." + tableName;
         if (!empty && getSchema().findTableOrView(session, fullTableName, LocationPreference.NO_PREFERENCE) == null) { // H2O.
-            // Check
-            // for
-            // the
-            // existence
-            // of
-            // any
-            // version.
-            // if a
-            // linked
-            // table
-            // version
-            // doesn't
-            // exist
-            // we
-            // must
-            // create
-            // it.
+            // Check for the existence of any version. if a linked table version doesn't exist we must create it.
             final String createLinkedTable = "\nCREATE LINKED TABLE IF NOT EXISTS " + fullTableName + "('org.h2.Driver', '" + whereDataWillBeTakenFrom + "', '" + PersistentSystemTable.USERNAME + "', '" + PersistentSystemTable.PASSWORD + "', '" + fullTableName + "');";
             final Parser queryParser = new Parser(session, true);
             final Command sqlQuery = queryParser.prepareCommand(createLinkedTable);
@@ -474,7 +447,7 @@ public class CreateReplica extends SchemaCommand {
                 command.update();
             }
 
-            if (createEntirelyNewReplica) {
+            if (createEntirelyNewReplica && !empty) { //if this a CREATE EMPTY REPLICA statement the table manager hasn't been created yet.
                 // #############################
                 // Add to Table Manager.
                 // #############################

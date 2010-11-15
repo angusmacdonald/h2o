@@ -164,7 +164,10 @@ public class TableProxy implements Serializable {
         H2OTest.rmiFailure(); // Test code to simulate the failure of DB
                               // instances at this point.
 
-        if (!globalCommit) { throw new SQLException("Commit failed on one or more replicas. The query will be rolled back."); }
+        if (!globalCommit) {
+            System.out.println("");
+            throw new SQLException("Commit failed on one or more replicas. The query will be rolled back.");
+        }
 
         return 0;
     }
@@ -325,6 +328,17 @@ public class TableProxy implements Serializable {
     public Map<DatabaseInstanceWrapper, Integer> getReplicaLocations() {
 
         return allReplicas;
+    }
+
+    /**
+     * Add a new replica location. This should be used carefully because locks (and replica locations) have already been acquired
+     * when the TableProxy is created. Currently this is only used to 
+     * @param databaseInstanceWrapper
+     */
+    public void addReplicaLocation(final DatabaseInstanceWrapper databaseInstanceWrapper) {
+
+        allReplicas.put(databaseInstanceWrapper, updateID);
+
     }
 
     /**

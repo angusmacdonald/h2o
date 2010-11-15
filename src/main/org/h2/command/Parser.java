@@ -4814,7 +4814,7 @@ public class Parser {
          * Return if: the table was found by the ST and is local the table was found by the ST, and isn't local but a LinkedTable is, or if
          * it wasn't found but this is a view.
          */
-        if (table != null && (replicaLocations.contains(database.getLocalDatabaseInstanceInWrapper()) || tableFound && table.getTableType().equals(Table.TABLE_LINK)) && (!tableFound && table.getTableType().equals(Table.VIEW) || tableFound)) {
+        if (isTableAccessible(replicaLocations, tableFound, table)) {
             // TODO Check that this is a table link to a valid location - ( (TableLink) table).getConnection().getUrl();
             return table;
         }
@@ -4856,6 +4856,20 @@ public class Parser {
             throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
         }
 
+    }
+
+    /**
+     * Whether a table exists that can be returned to the user.
+     * 
+     * <p>This will be true if the table is found on the system table and exists somewhere, or if it is not found on the system table but exists locally.
+     * In the latter case this will only happen if the 'table' is in fact a view, or if it has only been created as part of the current transaction and has not be committted
+     * to the System Table yet.
+     * <p>If the table doesn't actually exist it will not exist locally or on the System Table so will throw an exception.
+     */
+    private boolean isTableAccessible(final Queue<DatabaseInstanceWrapper> replicaLocations, final boolean foundBySystemTable, final Table table) {
+
+        return table != null && foundBySystemTable && (replicaLocations.contains(database.getLocalDatabaseInstanceInWrapper()) || table.getTableType().equals(Table.TABLE_LINK)) //is local, or known about locally.
+                        || !foundBySystemTable && table != null; //part of the current transaction but hasn't committed yet.
     }
 
     /**

@@ -911,8 +911,6 @@ public class MultiQueryTransactionTests extends TestBase {
             statement.executeQuery("select * from australia");
             statement.close();
 
-            System.err.println("Executed select.");
-
             // Execute batch seems to auto-commit, so the table's already exist before this point.
 
             ca.commit();

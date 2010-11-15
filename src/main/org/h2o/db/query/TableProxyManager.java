@@ -257,7 +257,7 @@ public class TableProxyManager {
             }
             else {
                 /*
-                 * The set of replicas that were updated. This is returned to the DM when locks are released.
+                 * Get the set of replicas that were updated. This is sent to the table manager when locks are released.
                  */
                 commitedQueries = committingTransaction.getCompletedQueries();
                 committingTransaction.setHasCommitted(h2oCommit);
@@ -380,9 +380,11 @@ public class TableProxyManager {
      * @param committedQueries
      *            The set of updates that have been attempted on tables involved in this transaction. This will be null if a query was
      *            performed (because there were no updates).
+     * @throws SQLException
+     *          Thrown if the table manager is persisting a CREATE TABLE statement and it couldn't connect to the System Table.
      * 
      */
-    public void releaseLocksAndUpdateReplicaState(final Set<CommitResult> committedQueries, final boolean commit) {
+    public void releaseLocksAndUpdateReplicaState(final Set<CommitResult> committedQueries, final boolean commit) throws SQLException {
 
         try {
             for (final TableManagerRemote tableManagerProxy : getTableManagersThatHoldLocks()) {

@@ -8,8 +8,6 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,20 +31,17 @@ import org.h2.table.TableData;
 import org.h2.util.ObjectArray;
 import org.h2.value.DataType;
 import org.h2o.db.id.TableInfo;
+import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.TableManager;
 import org.h2o.db.manager.interfaces.ISystemTable;
-import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.query.TableProxy;
 import org.h2o.db.query.TableProxyManager;
-import org.h2o.db.query.asynchronous.AsynchronousQueryExecutor;
-import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.TransactionNameGenerator;
 import org.h2o.util.exceptions.MovedException;
-import org.h2o.util.exceptions.StartupException;
 import org.h2o.viewer.H2OEventBus;
 import org.h2o.viewer.gwt.client.DatabaseStates;
 import org.h2o.viewer.gwt.client.H2OEvent;
@@ -84,6 +79,8 @@ public class CreateTable extends SchemaCommand {
     private String comment;
 
     private boolean clustered;
+
+    private TableManager tableManager = null;
 
     public CreateTable(final Session session, final Schema schema) {
 
@@ -261,9 +258,7 @@ public class CreateTable extends SchemaCommand {
 
             final boolean localTable = db.isTableLocal(getSchema());
             if (!db.isManagementDB() && !localTable && !isStartup()) {
-                final ISystemTable systemTable = db.getSystemTable(); // db.getSystemSession()
-                final ISystemTableReference systemTableReference = db.getSystemTableReference();
-
+                final ISystemTable systemTable = db.getSystemTable();
                 assert systemTable != null;
 
                 int tableSet = -1;
@@ -301,8 +296,6 @@ public class CreateTable extends SchemaCommand {
 
                     final TableInfo tableInfo = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getURL());
 
-                    addInformationToSystemTable(systemTable, systemTableReference, tableInfo);
-
                     createReplicas(tableInfo, transactionName);
 
                 }
@@ -327,38 +320,11 @@ public class CreateTable extends SchemaCommand {
     }
 
     /**
-     * Inform the System Table that the new table has been created.
-     * 
-     * @param systemTable
-     * @param systemTableReference
-     * @param tableInfo
-     */
-    private void addInformationToSystemTable(final ISystemTable systemTable, final ISystemTableReference systemTableReference, final TableInfo tableInfo) throws RemoteException, MovedException, SQLException {
-
-        final TableManagerRemote tableManager = tableProxy.getTableManager();
-
-        // XXX its a hack to pass in replica locations like this, and it should
-        // be unncessesary.
-        final Set<DatabaseInstanceWrapper> replicaLocations = session.getDatabase().getMetaDataReplicaManager().getTableManagerReplicaLocations();
-        replicaLocations.add(session.getDatabase().getLocalDatabaseInstanceInWrapper());
-        final boolean successful = systemTableReference.addTableInformation(tableManager, tableInfo, replicaLocations);
-
-        if (!successful) { throw new SQLException("Failed to add Table Manager reference to System Table: " + systemTable); }
-
-        try {
-            tableManager.persistToCompleteStartup(tableInfo);
-            H2OEventBus.publish(new H2OEvent(session.getDatabase().getURL().getURL(), DatabaseStates.TABLE_CREATION, tableInfo.getFullTableName()));
-        }
-        catch (final StartupException e) {
-            throw new SQLException("Failed to create table. Couldn't persist table manager meta-data [" + e.getMessage() + "].");
-        }
-    }
-
-    /**
      * Create replicas if required by the system configuration (Settings.RELATION_REPLICATION_FACTOR).
      * 
      * @param tableInfo
      *            The name of the table being created.
+     * @param tableManager 
      * @throws RemoteException
      * @throws SQLException
      * @throws MovedException
@@ -374,23 +340,34 @@ public class CreateTable extends SchemaCommand {
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Creating replica of table " + tableInfo.getFullTableName() + " onto " + (tableProxy.getReplicaLocations().size() - 1) + " other instances.");
 
             String sql = sqlStatement.substring("CREATE TABLE".length());
-            sql = "CREATE EMPTY REPLICA" + sql;
+            sql = "CREATE EMPTY REPLICA" + sql + " FROM '" + getSchema().getDatabase().getURL().getURLwithRMIPort() + "'";
 
-            // Get the set of only remote replica locations.
+            final Set<DatabaseInstanceWrapper> successfulUpdates = new HashSet<DatabaseInstanceWrapper>();
 
-            // Execute query.
-            final AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor(getSchema().getDatabase());
-            queryExecutor.executeQuery(sql, transactionName, replicaLocations, tableInfo, session, false);
+            //Execute create replica operations.
+            for (final DatabaseInstanceWrapper replicaLocation : replicaLocations.keySet()) {
+                final DatabaseInstanceRemote instance = replicaLocation.getDatabaseInstance();
 
-            /*
-             * Add this local database's CREATE TABLE query as a transaction in the asynchronous query manager. Because there are multiple replicas involved
-             * the asynchronous query manager will have to send out commits to every machine involved, including this machine.
-             */
-            final CommitResult thisCommit = new CommitResult(true, getSchema().getDatabase().getLocalDatabaseInstanceInWrapper(), 0, 0, tableInfo);
-            final List<CommitResult> commitList = new LinkedList<CommitResult>();
-            commitList.add(thisCommit);
-            getSchema().getDatabase().getAsynchronousQueryManager().addTransaction(transactionName, tableInfo, null, commitList, 0);
+                final int result = instance.execute(sql, transactionName, false);
 
+                if (result == 0) {
+
+                    successfulUpdates.add(replicaLocation);
+                }
+            }
+
+            // Update meta-data to reflect replica locations.
+
+            for (final DatabaseInstanceWrapper databaseInstanceWrapper : successfulUpdates) {
+                // Update Table Manager meta-data.
+
+                final TableInfo tableDetails = new TableInfo(tableInfo, databaseInstanceWrapper.getURL());
+                tableManager.addInitialReplicaInformation(tableDetails);
+
+                // Update query proxy.
+
+                tableProxy.addReplicaLocation(databaseInstanceWrapper);
+            }
         }
     }
 
@@ -508,9 +485,7 @@ public class CreateTable extends SchemaCommand {
 
         final Database db = session.getDatabase();
 
-        assert tableProxyManager.getQueryProxy(tableName) == null; // should
-                                                                   // never
-                                                                   // exist.
+        assert tableProxyManager.getQueryProxy(tableName) == null; // should never exist.
 
         /*
          * ###################################################################### ### H2O. Check that the table doesn't already exist
@@ -533,25 +508,18 @@ public class CreateTable extends SchemaCommand {
         }
 
         tableProxy = null;
-        if (!db.isTableLocal(getSchema()) && !db.isManagementDB() && !isStartup()) { // if it is startup
-                                                                                     // then we don't
-                                                                                     // want to create a
-                                                                                     // table manager
-                                                                                     // yet.
+        if (!db.isTableLocal(getSchema()) && !db.isManagementDB() && !isStartup()) { // if it is startup then we don't want to create a table manager yet.
 
-            // TableInfo tableDetails, Database databas
             final TableInfo ti = new TableInfo(tableName, getSchema().getName(), 0l, 0, "TABLE", db.getURL());
-            TableManager tableManager = null;
             try {
-                tableManager = new TableManager(ti, db);
+                tableManager = new TableManager(ti, db, false);
             }
             catch (final Exception e1) {
                 e1.printStackTrace();
             }
-            /*
-             * Make Table Manager serializable first.
-             */
+
             try {
+                //Make Table Manager exportable first.
                 UnicastRemoteObject.exportObject(tableManager, 0);
             }
             catch (final Exception e) {
@@ -564,7 +532,7 @@ public class CreateTable extends SchemaCommand {
         }
         else {
             /*
-             * This is a system table, but it still needs a TableProxy to indicate that it is acceptable to execute the query.
+             * This is a system table meta-table, but it still needs a TableProxy to indicate that it is acceptable to execute the query.
              */
             tableProxy = TableProxy.getQueryProxyAndLock(table, LockType.CREATE, LockRequest.createNewLockRequest(session), db);
 

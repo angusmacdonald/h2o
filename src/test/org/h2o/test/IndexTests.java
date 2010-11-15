@@ -25,6 +25,7 @@ import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.locator.server.LocatorServer;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -153,6 +154,7 @@ public class IndexTests {
      * @throws IOException 
      */
     @Test
+    @Ignore
     public void checkTableSetID2() throws IOException {
 
         TestBase.resetLocatorFile();

@@ -197,6 +197,10 @@ public class Transaction {
                             e1.printStackTrace();
                         }
                     }
+                    catch (final SQLException e) {
+                        //Doesn't matter because the transaction has already committed at this point.
+                        e.printStackTrace();
+                    }
                 }
                 else {
                     // ErrorHandling.errorNoEvent("Table Manager not found for table : " + tableName);

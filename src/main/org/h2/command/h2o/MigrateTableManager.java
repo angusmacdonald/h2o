@@ -125,7 +125,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
         final TableInfo ti = new TableInfo(tableName, schemaName, 0l, 0, "TABLE", db.getURL());
 
         try {
-            newTableManager = new TableManager(ti, db);
+            newTableManager = new TableManager(ti, db, true);
             newTableManager.persistToCompleteStartup(ti);
         }
         catch (final Exception e) {

@@ -300,11 +300,8 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
             /*
              * It is okay to re-instantiate the Table Manager here.
              */
-            // TableManager dm =
-            // TableManager.createTableManagerFromPersistentStore(ti.getSchemaName(),
-            // ti.getSchemaName());
             try {
-                tm = new TableManager(ti, database);
+                tm = new TableManager(ti, database, true);
                 tm.recreateReplicaManagerState(tableManagerWrapper.getURL().sanitizedLocation());
                 H2OEventBus.publish(new H2OEvent(database.getURL().getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
 

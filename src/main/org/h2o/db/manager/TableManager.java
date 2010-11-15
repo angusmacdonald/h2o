@@ -14,6 +14,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +68,8 @@ import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class TableManager extends PersistentManager implements TableManagerRemote, AutonomicController, Migratable {
+
+    private static final long serialVersionUID = 3347740231310946286L;
 
     /**
      * Name of the schema used to store Table Manager tables.
@@ -158,9 +161,30 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
     private final TableInfo tableInfo;
 
-    public TableManager(final TableInfo tableDetails, final Database database) throws Exception {
+    /**
+     * True if the table has already been created and this new instance is being created as part of a Table
+     * Manager migration or recreation. False if this is being created as part of a CREATE TABLE operation.
+     */
+    private boolean tableAlreadyExists;
+
+    /**
+     * Temporarily stores the set of replicas that were created as part of the CREATE TABLE command for this
+     * table. This information is persisted (and this field is emptied) when the transaction containing the CREATE TABLE
+     * operation commits. 
+     */
+    private final Set<TableInfo> temporaryInitialReplicas = new HashSet<TableInfo>();
+
+    /**
+     * A new Table Manager object is created when acquiring locks during a CREATE TABLE operation and when recreating or moving
+     * an existing Table Manager.
+     * @param tableAlreadyExists    True if the table has already been created and this new instance is being created as part of a Table
+     * Manager migration or recreation. False if this is being created as part of a CREATE TABLE operation.
+     * @throws Exception
+     */
+    public TableManager(final TableInfo tableDetails, final Database database, final boolean tableAlreadyExists) throws Exception {
 
         super(database);
+        this.tableAlreadyExists = tableAlreadyExists;
 
         final String dbName = database.getURL().sanitizedLocation();
         setMetaDataTableNames(getMetaTableName(dbName, TABLES), getMetaTableName(dbName, REPLICAS), getMetaTableName(dbName, CONNECTIONS), getMetaTableName(dbName, TABLEMANAGERSTATE));
@@ -544,20 +568,42 @@ public class TableManager extends PersistentManager implements TableManagerRemot
      * @see org.h2.h2o.manager.TableManagerRemote2#releaseLock(org.h2.h2o.comms.remote .DatabaseInstanceRemote, java.util.Set, int)
      */
     @Override
-    public void releaseLockAndUpdateReplicaState(final boolean commit, final LockRequest lockRequest, final Collection<CommitResult> committedQueries, final boolean asynchronousCommit) throws RemoteException, MovedException {
+    public void releaseLockAndUpdateReplicaState(final boolean commit, final LockRequest lockRequest, final Collection<CommitResult> committedQueries, final boolean asynchronousCommit) throws RemoteException, MovedException, SQLException {
 
-        /*
-         * Release the locks.
-         */
+        if (!tableAlreadyExists && commit) { //If it's not a commit (on a CREATE TABLE request) nothing needs to be persisted.
+            tableAlreadyExists = true;
+            //This commit is the first commit of this table, so we must update the System Table.
+            completeCreationByUpdatingSystemTable();
+        }
+
+        //Find the type of lock that was taken out.
         final LockType lockType = lockingTable.peekAtLockGranted(lockRequest);
 
-        /*
-         * Update the set of 'active replicas' and their update IDs.
-         */
+        //Update the set of 'active replicas' and their update IDs.
         updateActiveReplicaSet(commit, committedQueries, asynchronousCommit, lockType);
 
+        //Release locks.
         if (!asynchronousCommit) {
             lockingTable.releaseLock(lockRequest);
+        }
+    }
+
+    private void completeCreationByUpdatingSystemTable() throws RemoteException, MovedException, SQLException {
+
+        //Add Basic Table Information to the System Table.
+        final Set<DatabaseInstanceWrapper> replicaLocations = db.getMetaDataReplicaManager().getTableManagerReplicaLocations();
+        replicaLocations.add(db.getLocalDatabaseInstanceInWrapper());
+        final TableInfo tableInfo = new TableInfo(tableName, schemaName, db.getURL());
+        final boolean successful = db.getSystemTableReference().addTableInformation(this, tableInfo, replicaLocations);
+
+        if (!successful) { throw new SQLException("Failed to add Table Manager reference to System Table."); }
+
+        try {
+            persistToCompleteStartup(tableInfo);
+            H2OEventBus.publish(new H2OEvent(db.getURL().getURL(), DatabaseStates.TABLE_CREATION, tableInfo.getFullTableName()));
+        }
+        catch (final StartupException e) {
+            throw new SQLException("Failed to create table. Couldn't persist table manager meta-data [" + e.getMessage() + "].");
         }
     }
 
@@ -918,6 +964,11 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
         try {
             addTableInformation(getDB().getURL(), tableInfo);
+
+            for (final TableInfo replica : temporaryInitialReplicas) {
+                addReplicaInformation(replica);
+            }
+            temporaryInitialReplicas.clear();
         }
         catch (final MovedException e) {
             throw new StartupException("Newly created Table Manager throws a MovedException. This should never happen - serious internal error.");
@@ -956,6 +1007,17 @@ public class TableManager extends PersistentManager implements TableManagerRemot
     public String toString() {
 
         return "TableManager [fullName=" + fullName + ", lockingTable=" + lockingTable + "]";
+    }
+
+    /**
+     * Add information on the set of replicas initially created for this table (as part of the CREATE TABLE operation). This information
+     * must be persisted later once the CREATE TABLE operation has succeeded.
+     * @param tableDetails
+     */
+    public void addInitialReplicaInformation(final TableInfo tableDetails) {
+
+        temporaryInitialReplicas.add(tableDetails);
+
     }
 
 }

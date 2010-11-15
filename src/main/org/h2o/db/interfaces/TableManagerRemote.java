@@ -75,8 +75,10 @@ public interface TableManagerRemote extends H2ORemote, Migratable, Serializable 
      * @param asynchronousCommit
      *            True if this is a commit of a replica where other replicas have already committed, and this is being done asynchronously.
      * @throws MovedException
+     * @throws SQLException
+     *          Thrown if the table manager is persisting a CREATE TABLE statement and it couldn't connect to the System Table.
      */
-    public void releaseLockAndUpdateReplicaState(boolean commit, LockRequest requestingDatabase, Collection<CommitResult> commitedQueries, boolean asynchronousCommit) throws RemoteException, MovedException;
+    public void releaseLockAndUpdateReplicaState(boolean commit, LockRequest requestingDatabase, Collection<CommitResult> commitedQueries, boolean asynchronousCommit) throws RemoteException, MovedException, SQLException;
 
     /**
      * Deconstruct this Table Manager. This is required for testing where a remote reference to a Table Manager may not completely die when

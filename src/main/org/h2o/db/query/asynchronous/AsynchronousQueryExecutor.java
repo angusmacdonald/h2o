@@ -259,6 +259,10 @@ public class AsynchronousQueryExecutor {
             else {
                 final CommitResult commitResult = new CommitResult(true, asyncResult.getWrapper(), asyncResult.getUpdateID(), expectedUpdateID, tableName);
                 recentlyCompletedQueries.add(commitResult);
+
+                if (asyncResult.getException() != null) {
+                    asyncResult.getException().printStackTrace();
+                }
                 globalCommit = false;
             }
 

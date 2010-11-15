@@ -42,7 +42,7 @@ public class CommitResult implements Serializable {
      * @param tableName
      *            Name of the table which is being updated by this query.
      */
-    public CommitResult(boolean commit, DatabaseInstanceWrapper wrapper, int updateID, int expectedUpdateID, TableInfo tableName) {
+    public CommitResult(final boolean commit, final DatabaseInstanceWrapper wrapper, final int updateID, final int expectedUpdateID, final TableInfo tableName) {
 
         this.commit = commit;
         this.wrapper = wrapper;
@@ -50,17 +50,17 @@ public class CommitResult implements Serializable {
         this.expectedUpdateID = expectedUpdateID;
         this.tableName = tableName;
 
-        this.isCommitQuery = (tableName == null);
+        isCommitQuery = tableName == null;
     }
 
-    public CommitResult(boolean commit, DatabaseInstanceWrapper wrapper, int updateID, int expectedUpdateID) {
+    public CommitResult(final boolean commit, final DatabaseInstanceWrapper wrapper, final int updateID, final int expectedUpdateID) {
 
         this.commit = commit;
         this.wrapper = wrapper;
         this.updateID = updateID;
         this.expectedUpdateID = expectedUpdateID;
-        this.isCommitQuery = true;
-        this.tableName = null;
+        isCommitQuery = true;
+        tableName = null;
     }
 
     public DatabaseInstanceWrapper getDatabaseInstanceWrapper() {
@@ -94,29 +94,29 @@ public class CommitResult implements Serializable {
         final int prime = 31;
         int result = 1;
         result = prime * result + (commit ? 1231 : 1237);
-        result = prime * result + ((tableName == null) ? 0 : tableName.hashCode());
+        result = prime * result + (tableName == null ? 0 : tableName.hashCode());
         result = prime * result + updateID;
-        result = prime * result + ((wrapper == null) ? 0 : wrapper.hashCode());
+        result = prime * result + (wrapper == null ? 0 : wrapper.hashCode());
         return result;
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
 
-        if (this == obj) return true;
-        if (obj == null) return false;
-        if (getClass() != obj.getClass()) return false;
-        CommitResult other = (CommitResult) obj;
-        if (commit != other.commit) return false;
+        if (this == obj) { return true; }
+        if (obj == null) { return false; }
+        if (getClass() != obj.getClass()) { return false; }
+        final CommitResult other = (CommitResult) obj;
+        if (commit != other.commit) { return false; }
         if (tableName == null) {
-            if (other.tableName != null) return false;
+            if (other.tableName != null) { return false; }
         }
-        else if (!tableName.equals(other.tableName)) return false;
-        if (updateID != other.updateID) return false;
+        else if (!tableName.equals(other.tableName)) { return false; }
+        if (updateID != other.updateID) { return false; }
         if (wrapper == null) {
-            if (other.wrapper != null) return false;
+            if (other.wrapper != null) { return false; }
         }
-        else if (!wrapper.equals(other.wrapper)) return false;
+        else if (!wrapper.equals(other.wrapper)) { return false; }
         return true;
     }
 

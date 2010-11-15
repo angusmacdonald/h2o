@@ -63,7 +63,7 @@ public class TestBase2 {
     @BeforeClass
     public static void initialSetUp() {
 
-        Diagnostic.setLevel(DiagnosticLevel.INIT);
+        Diagnostic.setLevel(DiagnosticLevel.FULL);
         Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.stachord");
     }
 

@@ -21,19 +21,12 @@ import org.h2o.db.id.TableInfo;
 /**
  * Manages the set of updates currently being executed by this database instance. There is one instance of this class per database instance.
  * 
+ * This class stores (potentially) many {@link Transaction} objects. It starts a thread of the class {@link AsynchronousQueryCheckerThread} which periodically checks
+ * whether any asynchronous transactions have finished executing. 
+ * 
  * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
  */
 public final class AsynchronousQueryManager {
-
-    private final AsynchronousQueryCheckerThread checkerThread = new AsynchronousQueryCheckerThread(this);
-
-    private final Database db;
-
-    public AsynchronousQueryManager(final Database db) {
-
-        this.db = db;
-        checkerThread.start();
-    }
 
     /**
      * Map of currently executing transactions.
@@ -44,6 +37,16 @@ public final class AsynchronousQueryManager {
      * Value: transaction object
      */
     Map<String, Transaction> activeTransactions = new HashMap<String, Transaction>();
+
+    private final AsynchronousQueryCheckerThread checkerThread = new AsynchronousQueryCheckerThread(this);
+
+    private final Database db;
+
+    public AsynchronousQueryManager(final Database db) {
+
+        this.db = db;
+        checkerThread.start();
+    }
 
     public synchronized void addTransaction(final String transactionNameForQuery, final TableInfo tableName, final List<FutureTask<QueryResult>> incompleteQueries, final List<CommitResult> recentlyCompletedQueries, final int expectedUpdateID) {
 

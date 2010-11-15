@@ -83,7 +83,7 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
         TableManager tm = null;
 
         try {
-            tm = new TableManager(ti, db);
+            tm = new TableManager(ti, db, true);
             tm.recreateReplicaManagerState(oldPrimaryLocation);
             tm.persistToCompleteStartup(ti);
             tm.persistReplicaInformation();
