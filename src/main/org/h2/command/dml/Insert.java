@@ -169,7 +169,7 @@ public class Insert extends Prepared {
 
                 final Session lockSession = table.lock(session, true, false);
 
-                assert lockSession == session : "The lock should have been taken out on the requesting session.";
+                assert lockSession == session : "The lock should have been taken out on the requesting session. Fish";
 
                 table.addRow(session, newRow);
 
