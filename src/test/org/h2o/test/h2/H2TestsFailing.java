@@ -8,7 +8,6 @@
  */
 package org.h2o.test.h2;
 
-import org.h2o.test.H2SimpleTest;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 

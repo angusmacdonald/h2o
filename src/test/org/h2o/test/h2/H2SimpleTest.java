@@ -6,7 +6,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General
  * Public License along with H2O. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.test;
+package org.h2o.test.h2;
 
 import static org.junit.Assert.assertEquals;
 
@@ -51,7 +51,7 @@ public class H2SimpleTest {
 
     private LocatorServer locator_server;
 
-    protected static String baseDir = getTestDir("");
+    protected static final String baseDir = getTestDir("");
 
     @Before
     public void setUp() throws Exception {

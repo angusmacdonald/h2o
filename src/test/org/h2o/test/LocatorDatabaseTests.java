@@ -70,7 +70,7 @@ public class LocatorDatabaseTests extends TestBase {
     /**
      * Whether the System Table state has been replicated yet.
      */
-    public static boolean isReplicated = false;
+    static boolean isReplicated = false;
 
     @BeforeClass
     public static void initialSetUp() {

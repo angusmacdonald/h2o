@@ -615,6 +615,7 @@ public class H2TestPreparedStatement extends H2OTestBase {
         PreparedStatement prepared_statement4 = null;
         PreparedStatement prepared_statement5 = null;
         PreparedStatement prepared_statement6 = null;
+        PreparedStatement prepared_statement7 = null;
         try {
             statement = connection.createStatement();
 
@@ -652,18 +653,18 @@ public class H2TestPreparedStatement extends H2OTestBase {
             assertFalse(rs.next());
 
             try {
-                connection.prepareStatement("select ? from dual union select ? from dual");
+                prepared_statement6 = connection.prepareStatement("select ? from dual union select ? from dual");
                 fail();
             }
             catch (final SQLException e) {
                 // Expected.
             }
 
-            prepared_statement6 = connection.prepareStatement("select cast(? as varchar) from dual union select ? from dual");
-            assertEquals(prepared_statement6.getParameterMetaData().getParameterCount(), 2);
-            prepared_statement6.setString(1, "a");
-            prepared_statement6.setString(2, "a");
-            rs = prepared_statement6.executeQuery();
+            prepared_statement7 = connection.prepareStatement("select cast(? as varchar) from dual union select ? from dual");
+            assertEquals(prepared_statement7.getParameterMetaData().getParameterCount(), 2);
+            prepared_statement7.setString(1, "a");
+            prepared_statement7.setString(2, "a");
+            rs = prepared_statement7.executeQuery();
             rs.next();
             assertEquals(rs.getString(1), "a");
             assertEquals(rs.getString(1), "a");
@@ -678,6 +679,7 @@ public class H2TestPreparedStatement extends H2OTestBase {
             closeIfNotNull(prepared_statement4);
             closeIfNotNull(prepared_statement5);
             closeIfNotNull(prepared_statement6);
+            closeIfNotNull(prepared_statement7);
             closeIfNotNull(statement);
         }
     }

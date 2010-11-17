@@ -66,7 +66,7 @@ public class H2OLocatorInterface {
      */
     public H2OLocatorInterface(final String[] locatorLocations) throws IOException {
 
-        this.locatorLocations = locatorLocations;
+        this.locatorLocations = locatorLocations.clone();
         connectToLocators();
     }
 

@@ -54,7 +54,7 @@ public class MultiProcessTestBase extends TestBase {
     /**
      * Whether the System Table state has been replicated yet.
      */
-    protected static boolean isReplicated = false;
+    static boolean isReplicated = false;
 
     @BeforeClass
     public static void initialSetUp() {

@@ -1,14 +1,30 @@
-/*
- * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved. Project Homepage:
- * http://blogs.cs.st-andrews.ac.uk/h2o H2O is free software: you can redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. H2O
- * is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General
- * Public License along with H2O. If not, see <http://www.gnu.org/licenses/>.
- */
+/***************************************************************************
+ *                                                                         *
+ * H2O                                                                     *
+ * Copyright (C) 2010 Distributed Systems Architecture Research Group      *
+ * University of St Andrews, Scotland                                      *
+ * http://blogs.cs.st-andrews.ac.uk/h2o/                                   *
+ *                                                                         *
+ * This file is part of H2O, a distributed database based on the open      *
+ * source database H2 (www.h2database.com).                                *
+ *                                                                         *
+ * H2O is free software: you can redistribute it and/or                    *
+ * modify it under the terms of the GNU General Public License as          *
+ * published by the Free Software Foundation, either version 3 of the      *
+ * License, or (at your option) any later version.                         *
+ *                                                                         *
+ * H2O is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ * GNU General Public License for more details.                            *
+ *                                                                         *
+ * You should have received a copy of the GNU General Public License       *
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.            *
+ *                                                                         *
+ ***************************************************************************/
+
 package org.h2o.db.interfaces;
 
-import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -29,32 +45,20 @@ import org.h2o.util.exceptions.StartupException;
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public interface TableManagerRemote extends H2ORemote, Migratable, Serializable {
+public interface TableManagerRemote extends H2ORemote, Migratable {
 
     public TableProxy getTableProxy(LockType lockType, LockRequest lockRequest) throws RemoteException, SQLException, MovedException;
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.PersistentManager#addTableInformation(org.h2.h2o.util .DatabaseURL, org.h2.h2o.util.TableInfo)
-     */
     public boolean addTableInformation(DatabaseURL tableManagerURL, TableInfo tableDetails) throws RemoteException, MovedException, SQLException;
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.PersistentManager#addReplicaInformation(org.h2.h2o .util.TableInfo)
-     */
     public void addReplicaInformation(TableInfo tableDetails) throws RemoteException, MovedException, SQLException;
 
     public void removeReplicaInformation(TableInfo ti) throws RemoteException, MovedException, SQLException;
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.comms.remote.TableManagerRemote#removeTableManager()
-     */
     public boolean removeTableInformation() throws RemoteException, SQLException, MovedException;
 
     /**
-     * Get the location of a single replica for the given table. This is used in creating linked tables, so the return type is string rather
+     * Gets the location of a single replica for the given table. This is used in creating linked tables, so the return type is string rather
      * than DatabaseInstanceRemote.
      * 
      * @return Database connection URL for a given remote database.
@@ -63,14 +67,14 @@ public interface TableManagerRemote extends H2ORemote, Migratable, Serializable 
     public DatabaseURL getLocation() throws RemoteException, MovedException;
 
     /**
-     * Release a lock held by the database instance specified in the parameter. Called at the end of TableProxy.executeQuery() to indicate
+     * Releases a lock held by the database instance specified in the parameter. Called at the end of TableProxy.executeQuery() to indicate
      * that the transaction has finished (it may have succeeded or failed).
      * 
      * @param commit
      * 
      * @param requestingDatabase
      *            Database which made the original request. Lock was taken out in its name.
-     * @param commitedQueries
+     * @param committedQueries
      *            The set of replicas that were successfully updated by this query.
      * @param asynchronousCommit
      *            True if this is a commit of a replica where other replicas have already committed, and this is being done asynchronously.
@@ -78,10 +82,10 @@ public interface TableManagerRemote extends H2ORemote, Migratable, Serializable 
      * @throws SQLException
      *          Thrown if the table manager is persisting a CREATE TABLE statement and it couldn't connect to the System Table.
      */
-    public void releaseLockAndUpdateReplicaState(boolean commit, LockRequest requestingDatabase, Collection<CommitResult> commitedQueries, boolean asynchronousCommit) throws RemoteException, MovedException, SQLException;
+    public void releaseLockAndUpdateReplicaState(boolean commit, LockRequest requestingDatabase, Collection<CommitResult> committedQueries, boolean asynchronousCommit) throws RemoteException, MovedException, SQLException;
 
     /**
-     * Deconstruct this Table Manager. This is required for testing where a remote reference to a Table Manager may not completely die when
+     * Deconstructs this Table Manager. This is required for testing where a remote reference to a Table Manager may not completely die when
      * expected - this method should essentially render the Table Manager unusable.
      * 
      * <p>
