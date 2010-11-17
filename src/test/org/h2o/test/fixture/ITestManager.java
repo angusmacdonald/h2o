@@ -27,14 +27,23 @@ package org.h2o.test.fixture;
 import java.io.IOException;
 import java.sql.SQLException;
 
-
 import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
-import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
 
 public interface ITestManager {
 
-    void setUp() throws SQLException, IOException, UnknownPlatformException, UndefinedDiagnosticLevelException;
+    /**
+     * Sets up the test.
+     * 
+     * @throws IOException if fixture setup fails
+     * @throws UnknownPlatformException  if fixture setup fails
+     */
+    void setUp() throws IOException, UnknownPlatformException;
 
+    /**
+     * Tears down the test, removing persistent state.
+     * 
+     * @throws SQLException if fixture tear-down fails
+     */
     void tearDown() throws SQLException;
 
     void startup() throws IOException, UnknownPlatformException;

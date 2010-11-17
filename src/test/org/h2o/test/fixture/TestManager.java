@@ -35,18 +35,20 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import org.h2.engine.Constants;
 import org.h2o.H2OLocator;
 
 import uk.ac.standrews.cs.nds.remote_management.ProcessInvocation;
 import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
-import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
 
 /**
  * Base class for test managers that abstract over the details of instantiating and cleaning up a set of in-memory or on-disk database instances.
  * 
  * TODO explain port usage.
+ * TODO explain database and directory naming.
+ * TODO explain locator process.
  *
  * @author Graham Kirby (graham@cs.st-andrews.ac.uk)
  */
@@ -64,28 +66,59 @@ public abstract class TestManager implements ITestManager {
     // The separation between the chosen locator port and the first database port.
     private static final int LOCATOR_DB_PORT_SEPARATION = 20000;
 
+    // The root for configuration directory names, to be appended with time-stamp.
+    private static final String CONFIG_DIRECTORY_ROOT = "db_config_";
+
+    // The root for database names, used differently by in-memory and on-disk test managers.
     protected static final String DATABASE_NAME_ROOT = "db";
-    protected static final String DATABASE_BASE_DIRECTORY_ROOT = "db_data_";
-    protected static final String CONFIG_DIRECTORY_ROOT = "db_config_";
-    protected static final String USER_NAME = "sa";
+
+    // The database user name.
+    protected static final String USER_NAME = Constants.MANAGEMENT_DB_USER;
+
+    // The database password.
     protected static final String PASSWORD = "";
 
     // The diagnostic level set for both test and database processes. 0 is FULL, 6 is NONE.
     protected static final DiagnosticLevel DIAGNOSTIC_LEVEL = DiagnosticLevel.NONE;
 
-    private PersistentStateManager persistent_state_manager;
-    private Process locator_process;
-    private String config_directory_path;
-    protected String descriptor_file_path;
-    protected String[] database_base_directory_paths;
-    protected int number_of_databases;
-    protected Set<Connection> connections_to_be_closed;
+    // -------------------------------------------------------------------------------------------------------
 
+    // The locator port used in the first test.
     static int first_locator_port = LOWEST_PORT + new Random().nextInt(LOCATOR_PORT_RANGE);
+
+    // The first database port used in the first test.
     static int first_db_port = first_locator_port + LOCATOR_DB_PORT_SEPARATION;
 
     // -------------------------------------------------------------------------------------------------------
 
+    // The persistent state manager used to clean up on-disk state on tear-down.
+    private PersistentStateManager persistent_state_manager;
+
+    // A handle to the locator server process.
+    private Process locator_process;
+
+    // The path of the directory within which the locator server creates the database descriptor file.
+    private String config_directory_path;
+
+    // The path of the database descriptor file.
+    protected String descriptor_file_path;
+
+    // The paths of the base directories within which the database files are stored.
+    protected String[] database_base_directory_paths;
+
+    // The number of databases used in the test.
+    protected int number_of_databases;
+
+    // The connections created in the test, to be closed on tear-down.
+    protected Set<Connection> connections_to_be_closed;
+
+    // -------------------------------------------------------------------------------------------------------
+
+    /**
+     * Initialises a test manager using a given number of database instances.
+     * 
+     * @param number_of_databases the number of databases
+     */
     public TestManager(final int number_of_databases) {
 
         this.number_of_databases = number_of_databases;
@@ -93,16 +126,8 @@ public abstract class TestManager implements ITestManager {
 
     // -------------------------------------------------------------------------------------------------------
 
-    /**
-      * Sets up the test.
-      * 
-      * @throws SQLException if fixture setup fails
-      * @throws IOException if fixture setup fails
-      * @throws UnknownPlatformException 
-      * @throws UndefinedDiagnosticLevelException 
-      */
     @Override
-    public void setUp() throws SQLException, IOException, UnknownPlatformException, UndefinedDiagnosticLevelException {
+    public void setUp() throws IOException, UnknownPlatformException {
 
         Diagnostic.setLevel(DIAGNOSTIC_LEVEL);
 
@@ -113,11 +138,6 @@ public abstract class TestManager implements ITestManager {
         startup();
     }
 
-    /**
-     * Tears down the test, removing persistent state.
-     * 
-     * @throws SQLException if fixture tear-down fails
-     */
     @Override
     public void tearDown() throws SQLException {
 
@@ -161,9 +181,17 @@ public abstract class TestManager implements ITestManager {
         }
     }
 
-    protected String getDatabaseDescriptorLocation() {
+    protected void shutdownLocator() {
 
-        return config_directory_path + File.separator + DATABASE_NAME_ROOT + DATABASE_DESCRIPTOR_SUFFIX;
+        if (locator_process != null) {
+            locator_process.destroy();
+        }
+        locator_process = null;
+    }
+
+    protected void setupDatabaseDescriptorLocation() {
+
+        descriptor_file_path = config_directory_path + File.separator + DATABASE_NAME_ROOT + DATABASE_DESCRIPTOR_SUFFIX;
     }
 
     protected void closeConnections() {
@@ -171,14 +199,6 @@ public abstract class TestManager implements ITestManager {
         for (final Connection connection : connections_to_be_closed) {
             closeIfNotNull(connection);
         }
-    }
-
-    protected void shutdownLocator() {
-
-        if (locator_process != null) {
-            locator_process.destroy();
-        }
-        locator_process = null;
     }
 
     // -------------------------------------------------------------------------------------------------------

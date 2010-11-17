@@ -12,6 +12,8 @@ import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 
 public class DiskTestManager extends TestManager {
 
+    protected static final String DATABASE_BASE_DIRECTORY_ROOT = "db_data_";
+
     private Process[] db_processes;
     private final IDiskConnectionDriverFactory connection_driver_factory;
 
@@ -21,11 +23,6 @@ public class DiskTestManager extends TestManager {
         this.connection_driver_factory = connection_driver_factory;
     }
 
-    /**
-     * Tears down the test, removing persistent state.
-     * 
-     * @throws SQLException if fixture tear-down fails
-     */
     @Override
     public void tearDown() throws SQLException {
 
@@ -42,10 +39,8 @@ public class DiskTestManager extends TestManager {
         super.startup();
 
         startupLocator();
-
-        descriptor_file_path = getDatabaseDescriptorLocation();
-
-        startupDatabaseProcesses(descriptor_file_path);
+        setupDatabaseDescriptorLocation();
+        startupDatabaseProcesses();
     }
 
     @Override
@@ -55,7 +50,6 @@ public class DiskTestManager extends TestManager {
 
         shutdownDatabases();
         shutdownLocator();
-
     }
 
     @Override
@@ -85,7 +79,7 @@ public class DiskTestManager extends TestManager {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private void startupDatabaseProcesses(final String descriptor_file_path) throws IOException, UnknownPlatformException {
+    private void startupDatabaseProcesses() throws IOException, UnknownPlatformException {
 
         db_processes = new Process[database_base_directory_paths.length];
 

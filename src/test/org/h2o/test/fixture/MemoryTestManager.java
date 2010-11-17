@@ -32,12 +32,18 @@ import org.h2o.H2O;
 import org.h2o.db.id.DatabaseURL;
 
 import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
-import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
 
+/**
+ * Test manager that abstracts over the details of instantiating and cleaning up a set of in-memory database instances.
+ *
+ * @author Graham Kirby (graham@cs.st-andrews.ac.uk)
+ */
 public class MemoryTestManager extends TestManager {
 
     private String[] db_names;
     private final IMemoryConnectionDriverFactory connection_driver_factory;
+
+    // -------------------------------------------------------------------------------------------------------
 
     public MemoryTestManager(final int number_of_databases, final IMemoryConnectionDriverFactory connection_driver_factory) {
 
@@ -45,29 +51,18 @@ public class MemoryTestManager extends TestManager {
         this.connection_driver_factory = connection_driver_factory;
     }
 
-    /**
-      * Sets up the test.
-      * 
-      * @throws SQLException if fixture setup fails
-      * @throws IOException if fixture setup fails
-      * @throws UnknownPlatformException 
-      * @throws UndefinedDiagnosticLevelException 
-      */
+    // -------------------------------------------------------------------------------------------------------
+
     @Override
-    public void setUp() throws SQLException, IOException, UnknownPlatformException, UndefinedDiagnosticLevelException {
+    public void setUp() throws IOException, UnknownPlatformException {
 
         super.setUp();
 
         startupLocator();
-        descriptor_file_path = getDatabaseDescriptorLocation();
-        initializeDatabaseProperties(descriptor_file_path);
+        setupDatabaseDescriptorLocation();
+        initializeDatabaseProperties();
     }
 
-    /**
-     * Tears down the test, removing persistent state.
-     * 
-     * @throws SQLException if fixture tear-down fails
-     */
     @Override
     public void tearDown() throws SQLException {
 
@@ -95,7 +90,7 @@ public class MemoryTestManager extends TestManager {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private void initializeDatabaseProperties(final String descriptor_file_path) throws IOException {
+    private void initializeDatabaseProperties() throws IOException {
 
         db_names = new String[number_of_databases];
 
