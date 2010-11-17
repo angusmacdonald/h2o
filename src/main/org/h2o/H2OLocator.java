@@ -17,6 +17,7 @@ import java.util.Properties;
 
 import org.h2.util.NetUtils;
 import org.h2o.locator.server.LocatorServer;
+import org.h2o.util.exceptions.StartupException;
 
 import uk.ac.standrews.cs.nds.util.CommandLineArgs;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -30,7 +31,9 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  * 
  * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
  */
-public class H2OLocator {
+public class H2OLocator extends H2OCommon {
+
+    private static final DiagnosticLevel DEFAULT_DIAGNOSTIC_LEVEL = DiagnosticLevel.FINAL;
 
     private final String databaseName;
     private final int locatorPort;
@@ -50,15 +53,16 @@ public class H2OLocator {
      *            <li><em>-f</em>. Optional. Specify the folder into which the descriptor file will be generated. The default is the folder
      *            this class is being run from. If this option is not chosen you must add the location of this locator server to an existing
      *            descriptor file.</li>
+     *            <li><em>-D<level></em>. Optional. Specifies a diagnostic level from 0 (most detailed) to 6 (least detailed).</li>
      *            </ul>
      *            <em>Example: StartLocatorServer -nMyFirstDatabase -p20000 -d</em> . This creates a new locator server for the database
      *            called <em>MyFirstDatabase</em> on port 20000, and creates a descriptor file specifying this in the local folder.
      *            
+     * @throws StartupException if an error occurs while parsing the command line arguments
      * @throws IOException if the locator server cannot be started using the given port
      */
-    public static void main(final String[] args) throws IOException {
+    public static void main(final String[] args) throws StartupException, IOException {
 
-        Diagnostic.setLevel(DiagnosticLevel.FINAL);
         final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
 
         final String databaseName = arguments.get("-n");
@@ -66,8 +70,10 @@ public class H2OLocator {
         final boolean createDescriptor = arguments.containsKey("-d");
         final String configurationDirectory = removeQuotes(arguments.get("-f"));
 
-        final H2OLocator locator = new H2OLocator(databaseName, Integer.parseInt(locatorPortString), createDescriptor, configurationDirectory);
+        final DiagnosticLevel diagnosticLevel = processDiagnosticLevel(arguments.get("-D"), DEFAULT_DIAGNOSTIC_LEVEL);
+        Diagnostic.setLevel(diagnosticLevel);
 
+        final H2OLocator locator = new H2OLocator(databaseName, Integer.parseInt(locatorPortString), createDescriptor, configurationDirectory);
         locator.start();
     }
 
@@ -77,8 +83,6 @@ public class H2OLocator {
         this.locatorPort = locatorPort;
         this.createDescriptor = createDescriptor;
         this.configurationDirectory = configurationDirectory;
-
-        //        System.out.println("using locator port: " + locatorPort);
     }
 
     private static String getConfigurationDirectoryPath(final String databaseBaseDirectoryPath, final String databaseName, final int port) {

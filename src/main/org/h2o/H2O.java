@@ -54,7 +54,6 @@ import uk.ac.standrews.cs.nds.util.CommandLineArgs;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
-import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
 
 /**
  * This class starts an instance of an H2O database. It can be run from the command line (see the main method for applicable arguments), or
@@ -73,11 +72,13 @@ import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
  * 
  * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
  */
-public class H2O {
+public class H2O extends H2OCommon {
 
     public static final String DEFAULT_DATABASE_DIRECTORY_PATH = "db_files";
     public static final String DEFAULT_DATABASE_NAME = "database";
     public static final int DEFAULT_TCP_PORT = 9090;
+
+    private static final DiagnosticLevel DEFAULT_DIAGNOSTIC_LEVEL = DiagnosticLevel.NONE;
 
     private String databaseName;
     private int tcpPort;
@@ -213,7 +214,7 @@ public class H2O {
 
         final String databaseDescriptorLocation = processDatabaseDescriptorLocation(arguments.get("-d"));
         final int webPort = processWebPort(arguments.get("-w"));
-        final DiagnosticLevel diagnosticLevel = processDiagnosticLevel(arguments.get("-D"));
+        final DiagnosticLevel diagnosticLevel = processDiagnosticLevel(arguments.get("-D"), DEFAULT_DIAGNOSTIC_LEVEL);
 
         final DatabaseType databaseType = processDatabaseType(arguments.get("-M"));
 
@@ -252,14 +253,12 @@ public class H2O {
             }
         }
 
-        final DatabaseURL url = new DatabaseURL("tcp", NetUtils.getLocalAddress(), port, base + database_name + port, false);
-        return url;
+        return new DatabaseURL("tcp", NetUtils.getLocalAddress(), port, base + database_name + port, false);
     }
 
     public static DatabaseURL createDatabaseURL(final String database_name) {
 
-        final DatabaseURL url = new DatabaseURL("mem", NetUtils.getLocalAddress(), 0, database_name, false);
-        return url;
+        return new DatabaseURL("mem", NetUtils.getLocalAddress(), 0, database_name, false);
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -359,24 +358,6 @@ public class H2O {
         catch (final NumberFormatException e) {
             throw new StartupException("Invalid port: " + arg);
         }
-    }
-
-    private DiagnosticLevel processDiagnosticLevel(final String arg) throws StartupException {
-
-        if (arg != null) {
-
-            try {
-                return DiagnosticLevel.fromNumericalValue(Integer.parseInt(arg));
-            }
-            catch (final NumberFormatException e) {
-                throw new StartupException("Invalid diagnostic level specified: " + arg);
-            }
-            catch (final UndefinedDiagnosticLevelException e) {
-                throw new StartupException("Invalid diagnostic level specified: " + arg);
-            }
-        }
-
-        return DiagnosticLevel.NONE;
     }
 
     private DatabaseType processDatabaseType(final String arg) {
