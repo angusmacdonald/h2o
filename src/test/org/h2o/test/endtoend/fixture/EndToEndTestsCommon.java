@@ -6,15 +6,11 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General
  * Public License along with H2O. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.test.endtoend.normal;
+package org.h2o.test.endtoend.fixture;
 
-import java.sql.Connection;
-import java.util.Set;
 import java.util.concurrent.Semaphore;
 
-import org.h2o.test.H2OTestBase;
-import org.h2o.test.ITestDriverFactory;
-import org.h2o.test.TestDriver;
+import org.h2o.test.fixture.H2OTestBase;
 
 /**
  * User-oriented tests.
@@ -23,26 +19,20 @@ import org.h2o.test.TestDriver;
  */
 public abstract class EndToEndTestsCommon extends H2OTestBase {
 
-    @Override
-    protected int getNumberOfDatabases() {
+    protected EndToEndConnectionDriver makeSpecificConnectionDriver() {
 
-        return 1;
-    }
-
-    protected EndToEndTestDriver makeSpecificTestDriver() {
-
-        return (EndToEndTestDriver) makeTestDriver();
+        return (EndToEndConnectionDriver) getTestManager().makeConnectionDriver(0);
     }
 
     public static class UpdateThread extends Thread {
 
-        private final EndToEndTestDriver driver;
+        private final EndToEndConnectionDriver driver;
         private final int number_of_values;
         private final int starting_value;
         private final long delay;
         private final Semaphore sync;
 
-        public UpdateThread(final EndToEndTestDriver driver, final int number_of_values, final int starting_value, final long delay, final Semaphore sync) {
+        public UpdateThread(final EndToEndConnectionDriver driver, final int number_of_values, final int starting_value, final long delay, final Semaphore sync) {
 
             this.driver = driver;
             this.number_of_values = number_of_values;
@@ -75,24 +65,5 @@ public abstract class EndToEndTestsCommon extends H2OTestBase {
                 // Try again.
             }
         }
-    }
-
-    @Override
-    public ITestDriverFactory getTestDriverFactory() {
-
-        return new ITestDriverFactory() {
-
-            @Override
-            public TestDriver makeConnectionDriver(final int db_port, final String database_base_directory_path, final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
-
-                return new EndToEndTestDriver(db_port, database_base_directory_path, database_name, username, password, connections_to_be_closed);
-            }
-
-            @Override
-            public TestDriver makeConnectionDriver(final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
-
-                return new EndToEndTestDriver(database_name, username, password, connections_to_be_closed);
-            }
-        };
     }
 }

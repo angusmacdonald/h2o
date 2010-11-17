@@ -10,7 +10,7 @@ import java.sql.SQLException;
 import org.h2.result.LocalResult;
 import org.h2.util.ObjectArray;
 import org.h2o.db.query.TableProxyManager;
-import org.h2o.test.H2OTest;
+import org.h2o.test.fixture.H2OTest;
 
 /**
  * Represents a list of SQL statements.

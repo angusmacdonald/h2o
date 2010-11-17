@@ -23,6 +23,7 @@ import org.h2.tools.Server;
 import org.h2o.autonomic.settings.TestingSettings;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.locator.server.LocatorServer;
+import org.h2o.test.fixture.TestBase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;

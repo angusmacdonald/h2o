@@ -15,6 +15,7 @@ import static org.junit.Assert.assertTrue;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.h2o.test.fixture.TestBase2;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;

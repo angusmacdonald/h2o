@@ -527,7 +527,7 @@ public class CreateTable extends SchemaCommand {
             }
             H2OEventBus.publish(new H2OEvent(db.getURL().getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
 
-            tableProxy = TableProxy.getQueryProxyAndLock(tableManager, ti.getFullTableName(), LockRequest.createNewLockRequest(session), LockType.CREATE, db, false);
+            tableProxy = TableProxy.getTableProxyAndLock(tableManager, ti.getFullTableName(), LockRequest.createNewLockRequest(session), LockType.CREATE, db, false);
 
         }
         else {

@@ -22,21 +22,18 @@
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.            *
  *                                                                         *
  ***************************************************************************/
+package org.h2o.test.fixture;
 
-package org.h2o.util;
+import java.sql.Connection;
+import java.util.Set;
 
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.test.endtoend.fixture.EndToEndConnectionDriver;
 
-/**
- * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
- */
-public class LocalH2OProperties extends H2OPropertiesWrapper {
+public class MemoryConnectionDriverFactory implements IMemoryConnectionDriverFactory {
 
-    /**
-     * @param dbURL the URL of this database instance. This is used to name and locate the properties file for this database on disk.
-     */
-    public LocalH2OProperties(final DatabaseURL dbURL) {
+    @Override
+    public ConnectionDriver makeConnectionDriver(final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
 
-        super(dbURL.getPropertiesFilePath());
+        return new EndToEndConnectionDriver(database_name, username, password, connections_to_be_closed);
     }
 }

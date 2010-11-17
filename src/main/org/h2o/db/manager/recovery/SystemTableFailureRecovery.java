@@ -1,11 +1,28 @@
-/*
- * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved. Project Homepage:
- * http://blogs.cs.st-andrews.ac.uk/h2o H2O is free software: you can redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. H2O
- * is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General
- * Public License along with H2O. If not, see <http://www.gnu.org/licenses/>.
- */
+/***************************************************************************
+ *                                                                         *
+ * H2O                                                                     *
+ * Copyright (C) 2010 Distributed Systems Architecture Research Group      *
+ * University of St Andrews, Scotland                                      *
+ * http://blogs.cs.st-andrews.ac.uk/h2o/                                   *
+ *                                                                         *
+ * This file is part of H2O, a distributed database based on the open      *
+ * source database H2 (www.h2database.com).                                *
+ *                                                                         *
+ * H2O is free software: you can redistribute it and/or                    *
+ * modify it under the terms of the GNU General Public License as          *
+ * published by the Free Software Foundation, either version 3 of the      *
+ * License, or (at your option) any later version.                         *
+ *                                                                         *
+ * H2O is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ * GNU General Public License for more details.                            *
+ *                                                                         *
+ * You should have received a copy of the GNU General Public License       *
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.            *
+ *                                                                         *
+ ***************************************************************************/
+
 package org.h2o.db.manager.recovery;
 
 import java.io.IOException;
@@ -45,11 +62,6 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         remoteInterface = db.getRemoteInterface();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2o.db.manager.ISystemTableFailureRecovery#get(org.h2.engine.Database, org.h2o.db.remote.ChordRemote,
-     * org.h2o.db.manager.SystemTableReference)
-     */
     @Override
     public synchronized SystemTableWrapper get() throws LocatorException, SystemTableAccessException {
 
@@ -69,15 +81,9 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
             ErrorHandling.errorNoEvent(db.getURL() + ": Couldn't find active System Table at any of the locator sites. Will try to recreate System Table elsewhere.");
         }
 
-        final SystemTableWrapper systemTableWrapper = reinstantiateSystemTable();
-
-        return systemTableWrapper;
+        return reinstantiateSystemTable();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2o.db.manager.ISystemTableFailureRecovery#find(org.h2o.util.exceptions.MovedException, org.h2o.db.remote.ChordRemote)
-     */
     @Override
     public synchronized SystemTableWrapper find(final MovedException e) throws SQLException, RemoteException {
 
@@ -94,26 +100,14 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
             final SystemTableWrapper wrapper = new SystemTableWrapper(databaseInstance.getSystemTable(), databaseInstance.getURL());
             return wrapper;
         }
-        else {
-            throw new SQLException(db.getURL() + ": Failed to find new location of System Table at " + systemTableLocationURL);
-        }
+        throw new SQLException(db.getURL() + ": Failed to find new location of System Table at " + systemTableLocationURL);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2o.db.manager.ISystemTableFailureRecovery#restart(org.h2.engine.Database, boolean, boolean,
-     * org.h2o.db.manager.interfaces.SystemTableRemote)
-     */
     @Override
     public synchronized SystemTableWrapper restart(final boolean persistedSchemaTablesExist, final boolean recreateFromPersistedState, final SystemTableRemote oldSystemTable) throws SystemTableAccessException {
 
-        if (recreateFromPersistedState) {
-            return restartSystemTableFromPersistedState(persistedSchemaTablesExist);
-
-        }
-        else {
-            return moveSystemTableToLocalMachine(oldSystemTable);
-        }
+        if (recreateFromPersistedState) { return restartSystemTableFromPersistedState(persistedSchemaTablesExist); }
+        return moveSystemTableToLocalMachine(oldSystemTable);
     }
 
     /*
@@ -161,7 +155,6 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
             // SystemTableCreationException
             // if it fails.
             newSystemTableWrapper = new SystemTableWrapper(newSystemTable, db.getURL());
-
         }
         else {
 
@@ -172,7 +165,6 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
              */
 
             newSystemTableWrapper = startSystemTableOnOneOfSpecifiedMachines(stLocations);
-
         }
 
         return newSystemTableWrapper;
@@ -235,6 +227,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
                 }
             }
             catch (final Exception e) {
+                Diagnostic.trace(DiagnosticLevel.FULL, "database not active: " + locatorLocation);
                 // May be thrown if database isn't active.
             }
         }
@@ -359,7 +352,6 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
                 //Failed to find new System Table
                 e1.printStackTrace();
                 throw new SystemTableAccessException("This System Table has already being migrated to another instance and that other instance is inaccessible");
-
             }
 
             try {
@@ -400,7 +392,6 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         catch (final NullPointerException e) {
             // ErrorHandling.exceptionError(e,
             // "Failed to migrate System Table to new machine. Machine has already been shut down.");
-
         }
 
         /*

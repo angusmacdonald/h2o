@@ -1,4 +1,4 @@
-package org.h2o.test;
+package org.h2o.test.fixture;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -8,27 +8,29 @@ import java.sql.Statement;
 import java.util.Set;
 
 import org.h2o.H2O;
+import org.h2o.db.id.DatabaseURL;
 
-public class TestDriver {
+public abstract class ConnectionDriver {
 
     protected Connection connection;
     protected long delay;
 
-    public TestDriver(final int db_port, final String database_base_directory_path, final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
+    public ConnectionDriver(final int db_port, final String database_base_directory_path, final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
 
-        final String jdbcURL = H2O.createDatabaseURL(db_port, database_base_directory_path, database_name);
-
-        init(jdbcURL, username, password, connections_to_be_closed);
-    }
-
-    public TestDriver(final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
-
-        final String jdbcURL = H2O.createDatabaseURL(database_name);
+        final DatabaseURL jdbcURL = H2O.createDatabaseURL(db_port, database_base_directory_path, database_name);
 
         init(jdbcURL, username, password, connections_to_be_closed);
     }
 
-    private void init(final String jdbcURL, final String username, final String password, final Set<Connection> connections_to_be_closed) {
+    public ConnectionDriver(final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
+
+        // TODO make constructor DatabaseURL(database_name)
+        final DatabaseURL jdbcURL = H2O.createDatabaseURL(database_name);
+
+        init(jdbcURL, username, password, connections_to_be_closed);
+    }
+
+    private void init(final DatabaseURL jdbcURL, final String username, final String password, final Set<Connection> connections_to_be_closed) {
 
         delay = 0;
 
@@ -36,10 +38,12 @@ public class TestDriver {
         while (connection == null) {
 
             try {
-                connection = DriverManager.getConnection(jdbcURL, username, password);
+                connection = DriverManager.getConnection(jdbcURL.getURL(), username, password);
                 connections_to_be_closed.add(connection);
             }
-            catch (final SQLException e) {
+
+            catch (final Exception e) {
+
                 // Wait and retry.
                 sleep(2000);
             }
@@ -64,20 +68,6 @@ public class TestDriver {
     public void setDelay(final long delay) {
 
         this.delay = delay;
-    }
-
-    public void createTable() throws SQLException {
-
-        Statement statement = null;
-        try {
-            statement = connection.createStatement();
-
-            // Create a table.
-            statement.executeUpdate("CREATE TABLE TEST (ID INT);");
-        }
-        finally {
-            closeIfNotNull(statement);
-        }
     }
 
     protected void closeIfNotNull(final Statement statement) {

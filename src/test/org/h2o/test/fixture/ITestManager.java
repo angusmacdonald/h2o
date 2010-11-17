@@ -22,21 +22,24 @@
  * along with H2O.  If not, see <http://www.gnu.org/licenses/>.            *
  *                                                                         *
  ***************************************************************************/
+package org.h2o.test.fixture;
 
-package org.h2o.util;
+import java.io.IOException;
+import java.sql.SQLException;
 
-import org.h2o.db.id.DatabaseURL;
 
-/**
- * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
- */
-public class LocalH2OProperties extends H2OPropertiesWrapper {
+import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
+import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
 
-    /**
-     * @param dbURL the URL of this database instance. This is used to name and locate the properties file for this database on disk.
-     */
-    public LocalH2OProperties(final DatabaseURL dbURL) {
+public interface ITestManager {
 
-        super(dbURL.getPropertiesFilePath());
-    }
+    void setUp() throws SQLException, IOException, UnknownPlatformException, UndefinedDiagnosticLevelException;
+
+    void tearDown() throws SQLException;
+
+    void startup() throws IOException, UnknownPlatformException;
+
+    void shutdown();
+
+    ConnectionDriver makeConnectionDriver(int db_index);
 }

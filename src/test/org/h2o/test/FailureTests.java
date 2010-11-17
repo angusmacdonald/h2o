@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.h2o.db.manager.recovery.LocatorException;
+import org.h2o.test.fixture.MultiProcessTestBase;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;

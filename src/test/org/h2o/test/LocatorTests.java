@@ -20,6 +20,7 @@ import org.h2.engine.Constants;
 import org.h2o.locator.client.H2OLocatorInterface;
 import org.h2o.locator.server.LocatorServer;
 import org.h2o.locator.server.LocatorState;
+import org.h2o.test.fixture.TestBase;
 import org.h2o.util.exceptions.StartupException;
 import org.junit.After;
 import org.junit.Before;

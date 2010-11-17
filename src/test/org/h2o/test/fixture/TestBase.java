@@ -6,7 +6,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General
  * Public License along with H2O. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.test;
+package org.h2o.test.fixture;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -51,14 +51,10 @@ public class TestBase {
 
     public static final long SHUTDOWN_CHECK_DELAY = 1000;
 
-    Connection ca = null;
-
-    Connection cb = null;
-
-    Statement sa = null;
-
-    Statement sb = null;
-
+    protected Connection ca = null;
+    protected Connection cb = null;
+    protected Statement sa = null;
+    protected Statement sb = null;
     protected LocatorServer ls;
 
     private static int chordPort = 40000;
@@ -155,10 +151,11 @@ public class TestBase {
         };
     }
 
-    protected static void setUpDescriptorFiles() throws IOException {
+    public static void setUpDescriptorFiles() throws IOException {
 
         createProperties("jdbc:h2:mem:one", true);
         createProperties("jdbc:h2:mem:two", true);
+        createProperties("jdbc:h2:mem:three", true);
         createProperties("jdbc:h2:three", true);
         createProperties("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", true);
     }
@@ -167,7 +164,7 @@ public class TestBase {
      * This is done because the server doesn't release the original port when it is stopped programmatically.
      * @throws IOException 
      */
-    protected static void resetLocatorFile() throws IOException {
+    public static void resetLocatorFile() throws IOException {
 
         createProperties("jdbc:h2:db_data/test/scriptSimple", false);
         createProperties("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", false);
@@ -176,7 +173,7 @@ public class TestBase {
     /**
     * Close the database explicitly, in case it didn't shut down correctly between tests.
     */
-    protected static void closeDatabaseCompletely() {
+    public static void closeDatabaseCompletely() {
 
         obliterateRMIRegistryContents();
         final Collection<Database> dbs = Engine.getInstance().getAllDatabases();

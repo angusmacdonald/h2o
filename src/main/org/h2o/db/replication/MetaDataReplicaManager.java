@@ -1,11 +1,28 @@
-/*
- * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved. Project Homepage:
- * http://blogs.cs.st-andrews.ac.uk/h2o H2O is free software: you can redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. H2O
- * is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General
- * Public License along with H2O. If not, see <http://www.gnu.org/licenses/>.
- */
+/***************************************************************************
+ *                                                                         *
+ * H2O                                                                     *
+ * Copyright (C) 2010 Distributed Systems Architecture Research Group      *
+ * University of St Andrews, Scotland                                      *
+ * http://blogs.cs.st-andrews.ac.uk/h2o/                                   *
+ *                                                                         *
+ * This file is part of H2O, a distributed database based on the open      *
+ * source database H2 (www.h2database.com).                                *
+ *                                                                         *
+ * H2O is free software: you can redistribute it and/or                    *
+ * modify it under the terms of the GNU General Public License as          *
+ * published by the Free Software Foundation, either version 3 of the      *
+ * License, or (at your option) any later version.                         *
+ *                                                                         *
+ * H2O is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ * GNU General Public License for more details.                            *
+ *                                                                         *
+ * You should have received a copy of the GNU General Public License       *
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.            *
+ *                                                                         *
+ ***************************************************************************/
+
 package org.h2o.db.replication;
 
 import java.rmi.RemoteException;
@@ -156,16 +173,16 @@ public class MetaDataReplicaManager {
         final ReplicaManager replicaManager = isSystemTable ? systemTableReplicas : tableManagerReplicas;
         final int managerStateReplicationFactor = isSystemTable ? systemTableReplicationFactor : tableManagerReplicationFactor;
 
-        if (!metaDataReplicationEnabled || replicaManager.allReplicasSize() >= managerStateReplicationFactor) { return; // replication factor already reached, or replication is not
-                                                                                                                        // enabled.
-        }
+        // Check that replication is enabled and replication factor has not already been reached.
+        if (metaDataReplicationEnabled && replicaManager.allReplicasSize() < managerStateReplicationFactor) {
 
-        if (!isLocal(databaseInstance) && databaseInstance.isActive()) {
-            try {
-                addReplicaLocation(databaseInstance, isSystemTable);
-            }
-            catch (final RemoteException e) {
-                // May fail.
+            if (!isLocal(databaseInstance) && databaseInstance.isActive()) {
+                try {
+                    addReplicaLocation(databaseInstance, isSystemTable);
+                }
+                catch (final RemoteException e) {
+                    Diagnostic.trace(DiagnosticLevel.FULL, "failed to add replica location: databaseInstance: " + databaseInstance);
+                }
             }
         }
     }
@@ -182,43 +199,42 @@ public class MetaDataReplicaManager {
         final ReplicaManager replicaManager = isSystemTable ? systemTableReplicas : tableManagerReplicas;
         final int managerStateReplicationFactor = isSystemTable ? systemTableReplicationFactor : tableManagerReplicationFactor;
 
-        if (!metaDataReplicationEnabled || replicaManager.allReplicasSize() >= managerStateReplicationFactor) { return; // replication factor already reached, or replication is not
-                                                                                                                        // enabled.
-        }
+        // Check that replication is enabled and replication factor has not already been reached.
+        if (metaDataReplicationEnabled && replicaManager.allReplicasSize() < managerStateReplicationFactor) {
 
-        Queue<DatabaseInstanceWrapper> databaseInstances = null;
+            Queue<DatabaseInstanceWrapper> databaseInstances = null;
 
-        try {
-            final ISystemTable systemTable = systemTableRef.getSystemTable();
+            try {
+                final ISystemTable systemTable = systemTableRef.getSystemTable();
 
-            if (systemTable == null) {
-                Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "System table was NULL so the meta-data manager is unable to replicate.");
-                return;
-            }
-            else {
+                if (systemTable == null) {
+                    Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "System table was NULL so the meta-data manager is unable to replicate.");
+                    return;
+                }
                 databaseInstances = systemTable.getAvailableMachines(new CreateReplicaRequest(20, 100, 200));
             }
-        }
-        catch (final Exception e) {
-            e.printStackTrace();
-            return; // just return, the system will attempt to replicate later on.
-        }
+            catch (final Exception e) {
+                Diagnostic.trace(DiagnosticLevel.FULL, "error discovering available machines");
+                return; // just return, the system will attempt to replicate later on.
+            }
 
-        if (databaseInstances.size() == 1) { return; }
+            if (databaseInstances.size() != 1) {
 
-        for (final DatabaseInstanceWrapper databaseInstance : databaseInstances) {
+                for (final DatabaseInstanceWrapper databaseInstance : databaseInstances) {
 
-            if (!isLocal(databaseInstance) && databaseInstance.isActive()) {
-                try {
+                    if (!isLocal(databaseInstance) && databaseInstance.isActive()) {
+                        try {
 
-                    addReplicaLocation(databaseInstance, isSystemTable);
+                            addReplicaLocation(databaseInstance, isSystemTable);
 
-                    if (replicaManager.allReplicasSize() >= managerStateReplicationFactor) {
-                        break;
+                            if (replicaManager.allReplicasSize() >= managerStateReplicationFactor) {
+                                break;
+                            }
+                        }
+                        catch (final RemoteException e) {
+                            // May fail. Try next database.
+                        }
                     }
-                }
-                catch (final RemoteException e) {
-                    // May fail. Try next database.
                 }
             }
         }
@@ -241,11 +257,12 @@ public class MetaDataReplicaManager {
 
     /**
      * Replicate meta-tables to the location specified.
-     * @param newReplicaLocation    The location on which replicas will be added.
-     * @param isSystemTable         True if System Table state is to be replicated, False if Table Manager state is to be replicated.
-     * @param numberOfPreviousAttempts     The number of attempts made so far to replicate to this machine. This method will try 5 times to replicate
+     * 
+     * @param newReplicaLocation the location on which replicas will be added
+     * @param isSystemTable true if System Table state is to be replicated, false if Table Manager state is to be replicated
+     * @param numberOfPreviousAttempts the number of attempts made so far to replicate to this machine. This method will try 5 times to replicate
      * state before giving up.
-     * @return  True if the replica was created successfully.
+     * @return true if the replica was created successfully
      * @throws RemoteException
      */
     private boolean addReplicaLocation(final DatabaseInstanceWrapper newReplicaLocation, final boolean isSystemTable, final int numberOfPreviousAttempts) throws RemoteException {
@@ -267,8 +284,8 @@ public class MetaDataReplicaManager {
                     if (isSystemTable) {
                         deleteOldEntries = dropOldSystemTableReplica;
                     }
-                    else if (localTableManagers.size() > 0) { // if there are any local Table Managers clear old meta data on them from
-                                                              // remote machines.
+                    else if (localTableManagers.size() > 0) {
+                        // if there are any local Table Managers clear old meta data on them from remote machines.
                         deleteOldEntries = dropOldTableManagerReplica;
                     }
 
@@ -315,21 +332,18 @@ public class MetaDataReplicaManager {
                             Thread.sleep(10);
                         }
                         catch (final InterruptedException e1) {
+                            // Ignore.
                         }
                         return addReplicaLocation(newReplicaLocation, isSystemTable, numberOfPreviousAttempts + 1);
                     }
-                    else {
-                        ErrorHandling.errorNoEvent(localDatabase.getURL() + " failed to replicate " + (isSystemTable ? "System Table" : "Table Manager") + " state onto: " + newReplicaLocation.getURL().getDbLocation() + ".");
-                    }
+                    Diagnostic.trace(DiagnosticLevel.FULL, localDatabase.getURL() + " failed to replicate " + (isSystemTable ? "System Table" : "Table Manager") + " state onto: " + newReplicaLocation.getURL().getDbLocation() + ".");
                 }
                 catch (final Exception e) {
-                    e.printStackTrace();
                     /*
                      * Usually thrown if this database couldn't connect to the remote instance.
                      */
                     throw new RemoteException(e.getMessage());
                 }
-
             }
         }
         return false;

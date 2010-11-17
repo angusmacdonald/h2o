@@ -23,20 +23,8 @@
  *                                                                         *
  ***************************************************************************/
 
-package org.h2o.util;
+package org.h2o.test.fixture;
 
-import org.h2o.db.id.DatabaseURL;
-
-/**
- * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
- */
-public class LocalH2OProperties extends H2OPropertiesWrapper {
-
-    /**
-     * @param dbURL the URL of this database instance. This is used to name and locate the properties file for this database on disk.
-     */
-    public LocalH2OProperties(final DatabaseURL dbURL) {
-
-        super(dbURL.getPropertiesFilePath());
-    }
+public enum DatabaseType {
+    DISK, MEMORY
 }

@@ -20,9 +20,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
+import org.h2.jdbc.JdbcSQLException;
 import org.h2o.autonomic.settings.TestingSettings;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.locator.server.LocatorServer;
+import org.h2o.test.fixture.TestBase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -193,71 +195,76 @@ public class IndexTests {
 
     // Do the same tests for replicas ebing created.
 
-    // /**
-    // * Check that the replicated copy of person maintains its primary key. Tested by trying
-    // * to break this integrity constraint.
-    // */
-    // @Test
-    // public void checkPrimaryKeyHeld(){
-    //
-    // try{
-    //
-    // sb.execute("CREATE REPLICA Person, Address;");
-    //
-    // if (sb.getUpdateCount() != 0){
-    // fail("Expected update count to be '0'");
-    // }
-    //
-    // try{
-    // sb.execute("INSERT INTO Person VALUES (0, 'One Person Too Many', 0);");
-    //
-    // fail("This should have caused an exception to be thrown.");
-    //
-    // } catch(JdbcSQLException e){
-    // //Expected.
-    // }
-    //
-    // } catch (SQLException e){
-    // e.printStackTrace();
-    // fail("An Unexpected SQLException was thrown.");
-    // }
-    // }
-    //
-    // /**
-    // * Try to delete from the address table - should fail because it violates referential integrity.
-    // */
-    // @Test
-    // public void deleteFromAddress(){
-    //
-    // try{
-    //
-    // sb.execute("CREATE REPLICA Person, Address;");
-    //
-    // if (sb.getUpdateCount() != 0){
-    // fail("Expected update count to be '0'");
-    // }
-    //
-    // try{
-    // sb.execute("DELETE FROM ADDRESS;");
-    //
-    // sb.execute("SELECT LOCAL ONLY * FROM ADDRESS;");
-    //
-    // ResultSet rs = sb.getResultSet();
-    //
-    // if (!rs.next()){
-    // System.err.println("Contents were deleted.");
-    // }
-    //
-    // fail("This should have caused an exception to be thrown.");
-    //
-    // } catch(JdbcSQLException e){
-    // //Expected.
-    // }
-    //
-    //
-    // } catch (SQLException e){
-    // e.printStackTrace();
-    // fail("An Unexpected SQLException was thrown.");
-    // }
-    // }
+    /**
+    * Check that the replicated copy of person maintains its primary key. Tested by trying
+    * to break this integrity constraint.
+    */
+    @Test
+    @Ignore
+    public void checkPrimaryKeyHeld() {
+
+        try {
+
+            sb.execute("CREATE REPLICA Person, Address;");
+
+            if (sb.getUpdateCount() != 0) {
+                fail("Expected update count to be '0'");
+            }
+
+            try {
+                sb.execute("INSERT INTO Person VALUES (0, 'One Person Too Many', 0);");
+
+                fail("This should have caused an exception to be thrown.");
+
+            }
+            catch (final JdbcSQLException e) {
+                //Expected.
+            }
+
+        }
+        catch (final SQLException e) {
+            e.printStackTrace();
+            fail("An Unexpected SQLException was thrown.");
+        }
+    }
+
+    /**
+    * Try to delete from the address table - should fail because it violates referential integrity.
+    */
+    @Test
+    @Ignore
+    public void deleteFromAddress() {
+
+        try {
+
+            sb.execute("CREATE REPLICA Person, Address;");
+
+            if (sb.getUpdateCount() != 0) {
+                fail("Expected update count to be '0'");
+            }
+
+            try {
+                sb.execute("DELETE FROM ADDRESS;");
+
+                sb.execute("SELECT LOCAL ONLY * FROM ADDRESS;");
+
+                final ResultSet rs = sb.getResultSet();
+
+                if (!rs.next()) {
+                    System.err.println("Contents were deleted.");
+                }
+
+                fail("This should have caused an exception to be thrown.");
+
+            }
+            catch (final JdbcSQLException e) {
+                //Expected.
+            }
+
+        }
+        catch (final SQLException e) {
+            e.printStackTrace();
+            fail("An Unexpected SQLException was thrown.");
+        }
+    }
 }

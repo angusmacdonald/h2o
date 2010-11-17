@@ -21,7 +21,7 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
 
-org.h2o.test.endtoend.CheckInTests.class, H2Tests.class, ChordTests.class, TransactionNameTests.class, SystemTableTests.class})
+org.h2o.test.endtoend.suites.CheckInTests.class, H2Tests.class, ChordTests.class, TransactionNameTests.class, SystemTableTests.class})
 //, MultipleSchemaTests.class})
 public class CheckInTests {
     // Empty.

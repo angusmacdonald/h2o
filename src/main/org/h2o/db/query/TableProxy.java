@@ -1,11 +1,28 @@
-/*
- * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved. Project Homepage:
- * http://blogs.cs.st-andrews.ac.uk/h2o H2O is free software: you can redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. H2O
- * is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General
- * Public License along with H2O. If not, see <http://www.gnu.org/licenses/>.
- */
+/***************************************************************************
+ *                                                                         *
+ * H2O                                                                     *
+ * Copyright (C) 2010 Distributed Systems Architecture Research Group      *
+ * University of St Andrews, Scotland                                      *
+ * http://blogs.cs.st-andrews.ac.uk/h2o/                                   *
+ *                                                                         *
+ * This file is part of H2O, a distributed database based on the open      *
+ * source database H2 (www.h2database.com).                                *
+ *                                                                         *
+ * H2O is free software: you can redistribute it and/or                    *
+ * modify it under the terms of the GNU General Public License as          *
+ * published by the Free Software Foundation, either version 3 of the      *
+ * License, or (at your option) any later version.                         *
+ *                                                                         *
+ * H2O is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ * GNU General Public License for more details.                            *
+ *                                                                         *
+ * You should have received a copy of the GNU General Public License       *
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.            *
+ *                                                                         *
+ ***************************************************************************/
+
 package org.h2o.db.query;
 
 import java.io.Serializable;
@@ -28,9 +45,11 @@ import org.h2o.db.query.asynchronous.AsynchronousQueryExecutor;
 import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
-import org.h2o.test.H2OTest;
+import org.h2o.test.fixture.H2OTest;
 import org.h2o.util.exceptions.MovedException;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
@@ -191,12 +210,8 @@ public class TableProxy implements Serializable {
         // - i.e. no lock is needed.
         // if one of the reserved table names is used (SYSTEM_RANGE, for
         // example) it isn't a proper table so won't have a Table Manager.
-        if (table != null && !table.getTemporary() && !Settings.reservedTableNames.contains(table.getName())) {
-            return getQueryProxyAndLock(lockRequest, table.getFullName(), lockType, db);
-        }
-        else {
-            return getDummyQueryProxy(lockRequest);
-        }
+        if (table != null && !table.getTemporary() && !Settings.reservedTableNames.contains(table.getName())) { return getTableProxyAndLock(lockRequest, table.getFullName(), lockType, db); }
+        return getDummyQueryProxy(lockRequest);
     }
 
     /**
@@ -221,7 +236,7 @@ public class TableProxy implements Serializable {
      * @return Query proxy for a specific table within H20.
      * @throws SQLException
      */
-    public static TableProxy getQueryProxyAndLock(TableManagerRemote tableManager, final String tableName, final LockRequest lockRequest, final LockType lockType, final Database db, final boolean alreadyCalled) throws SQLException {
+    public static TableProxy getTableProxyAndLock(TableManagerRemote tableManager, final String tableName, final LockRequest lockRequest, final LockType lockType, final Database db, final boolean alreadyCalled) throws SQLException {
 
         assert lockRequest != null : "A requesting database must be specified.";
 
@@ -267,7 +282,7 @@ public class TableProxy implements Serializable {
                 if (systemTableActive) {
                     try {
                         final TableManagerRemote newTableManager = db.getSystemTable().recreateTableManager(new TableInfo(tableName));
-                        if (newTableManager != null) { return getQueryProxyAndLock(newTableManager, tableName, lockRequest, lockType, db, true); }
+                        if (newTableManager != null) { return getTableProxyAndLock(newTableManager, tableName, lockRequest, lockType, db, true); }
                     }
                     catch (final RemoteException e1) {
                         e1.printStackTrace();
@@ -285,17 +300,17 @@ public class TableProxy implements Serializable {
         }
     }
 
-    public static TableProxy getQueryProxyAndLock(final LockRequest lockRequest, final String tableName, final LockType lockType, final Database db) throws SQLException {
+    public static TableProxy getTableProxyAndLock(final LockRequest lockRequest, final String tableName, final LockType lockType, final Database db) throws SQLException {
 
         final TableManagerRemote tableManager = db.getSystemTableReference().lookup(tableName, true);
 
         if (tableManager == null) {
-            ErrorHandling.errorNoEvent("Table Manager proxy was null when requesting table.");
+            Diagnostic.trace(DiagnosticLevel.FULL, "Table Manager proxy was null when requesting table.");
             db.getSystemTableReference();
             throw new SQLException("Table Manager not found for table.");
         }
 
-        return getQueryProxyAndLock(tableManager, tableName, lockRequest, lockType, db, false);
+        return getTableProxyAndLock(tableManager, tableName, lockRequest, lockType, db, false);
     }
 
     public LockType getLockGranted() {
@@ -303,10 +318,6 @@ public class TableProxy implements Serializable {
         return lockGranted;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
 
@@ -322,9 +333,6 @@ public class TableProxy implements Serializable {
         return tableName + " (" + allReplicas.size() + " replica" + plural + "), with lock '" + lockGranted + "', request from " + requestingDatabase;
     }
 
-    /**
-     * @return
-     */
     public Map<DatabaseInstanceWrapper, Integer> getReplicaLocations() {
 
         return allReplicas;
@@ -341,9 +349,6 @@ public class TableProxy implements Serializable {
 
     }
 
-    /**
-     * @return
-     */
     public Map<DatabaseInstanceWrapper, Integer> getRemoteReplicaLocations() {
 
         final Map<DatabaseInstanceWrapper, Integer> remoteReplicas = new HashMap<DatabaseInstanceWrapper, Integer>(allReplicas);
@@ -354,25 +359,16 @@ public class TableProxy implements Serializable {
         return remoteReplicas;
     }
 
-    /**
-     * @return
-     */
     public TableManagerRemote getTableManager() {
 
         return tableManager;
     }
 
-    /**
-     * @return
-     */
     public int getUpdateID() {
 
         return updateID;
     }
 
-    /**
-     * @param lockGranted
-     */
     protected void setLockType(final LockType lockGranted) {
 
         this.lockGranted = lockGranted;
@@ -389,8 +385,6 @@ public class TableProxy implements Serializable {
     /**
      * Checks whether there is only one database in the system. Currently used in CreateReplica to ensure the system doesn't try to create a
      * replica of something on the same instance.
-     * 
-     * @return
      */
     public boolean isSingleDatabase(final DatabaseInstanceRemote localDatabase) {
 
@@ -399,20 +393,14 @@ public class TableProxy implements Serializable {
 
     /**
      * Name of the table this proxy holds locks for.
-     * 
-     * @return
      */
     public TableInfo getTableName() {
 
         return tableName;
     }
 
-    /**
-     * @return
-     */
     public int getNumberOfReplicas() {
 
         return allReplicas == null ? 0 : allReplicas.size();
     }
-
 }

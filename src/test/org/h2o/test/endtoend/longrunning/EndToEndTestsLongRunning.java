@@ -14,9 +14,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 
-import org.h2o.test.DatabaseType;
-import org.h2o.test.endtoend.normal.EndToEndTestDriver;
-import org.h2o.test.endtoend.normal.EndToEndTestsCommon;
+import org.h2o.test.endtoend.fixture.EndToEndConnectionDriver;
+import org.h2o.test.endtoend.fixture.EndToEndTestsCommon;
+import org.h2o.test.fixture.DiskConnectionDriverFactory;
+import org.h2o.test.fixture.DiskTestManager;
+import org.h2o.test.fixture.IDiskConnectionDriverFactory;
+import org.h2o.test.fixture.ITestManager;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
@@ -29,10 +32,14 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
  */
 public class EndToEndTestsLongRunning extends EndToEndTestsCommon {
 
-    @Override
-    public DatabaseType getDatabaseType() {
+    private final IDiskConnectionDriverFactory connection_driver_factory = new DiskConnectionDriverFactory();
 
-        return DatabaseType.DISK;
+    private final ITestManager test_manager = new DiskTestManager(1, connection_driver_factory);
+
+    @Override
+    public ITestManager getTestManager() {
+
+        return test_manager;
     }
 
     /**
@@ -75,7 +82,7 @@ public class EndToEndTestsLongRunning extends EndToEndTestsCommon {
 
     private void multipleThreads(final int number_of_values, final int number_of_threads, final int delay) throws SQLException, IOException, UnknownPlatformException {
 
-        final EndToEndTestDriver driver1 = makeSpecificTestDriver();
+        final EndToEndConnectionDriver driver1 = makeSpecificConnectionDriver();
 
         driver1.createTable();
         driver1.commit();
@@ -88,7 +95,7 @@ public class EndToEndTestsLongRunning extends EndToEndTestsCommon {
         for (int i = 0; i < number_of_threads; i++) {
 
             final int j = i;
-            final EndToEndTestDriver driver = makeSpecificTestDriver();
+            final EndToEndConnectionDriver driver = makeSpecificConnectionDriver();
 
             driver.setAutoCommitOff();
 
@@ -98,17 +105,9 @@ public class EndToEndTestsLongRunning extends EndToEndTestsCommon {
         waitForSemaphore(sync);
 
         shutdown();
-
-        try {
-            Thread.sleep(10000);
-        }
-        catch (final InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
         startup();
 
-        final EndToEndTestDriver driver2 = makeSpecificTestDriver();
+        final EndToEndConnectionDriver driver2 = makeSpecificConnectionDriver();
         driver2.assertDataIsCorrect(number_of_values * number_of_threads);
     }
 }

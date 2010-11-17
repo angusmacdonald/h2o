@@ -1,7 +1,28 @@
-/*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html). Initial Developer: H2 Group
- */
+/***************************************************************************
+ *                                                                         *
+ * H2O                                                                     *
+ * Copyright (C) 2010 Distributed Systems Architecture Research Group      *
+ * University of St Andrews, Scotland                                      *
+ * http://blogs.cs.st-andrews.ac.uk/h2o/                                   *
+ *                                                                         *
+ * This file is part of H2O, a distributed database based on the open      *
+ * source database H2 (www.h2database.com).                                *
+ *                                                                         *
+ * H2O is free software: you can redistribute it and/or                    *
+ * modify it under the terms of the GNU General Public License as          *
+ * published by the Free Software Foundation, either version 3 of the      *
+ * License, or (at your option) any later version.                         *
+ *                                                                         *
+ * H2O is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ * GNU General Public License for more details.                            *
+ *                                                                         *
+ * You should have received a copy of the GNU General Public License       *
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.            *
+ *                                                                         *
+ ***************************************************************************/
+
 package org.h2.command.h2o;
 
 import java.rmi.RemoteException;
@@ -61,6 +82,8 @@ import org.h2o.viewer.H2OEventBus;
 import org.h2o.viewer.gwt.client.DatabaseStates;
 import org.h2o.viewer.gwt.client.H2OEvent;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
@@ -217,21 +240,19 @@ public class CreateReplica extends SchemaCommand {
         final Database db = session.getDatabase();
 
         if (whereReplicaWillBeCreated != null || db.getFullDatabasePath().equals(whereReplicaWillBeCreated)) {
-            final int result = pushCommand(whereReplicaWillBeCreated, "CREATE REPLICA " + tableName + " FROM '" + whereDataWillBeTakenFrom + "'", true); // command
-            // will  be executed elsewhere
+            // command will  be executed elsewhere
+            final int result = pushCommand(whereReplicaWillBeCreated, "CREATE REPLICA " + tableName + " FROM '" + whereDataWillBeTakenFrom + "'", true);
 
             // Update the System Table here.
 
             if (result == 0) {
                 try {
-                    final ISystemTable sm = db.getSystemTable(); // db.getSystemSession()
+                    final ISystemTable sm = db.getSystemTable();
 
                     final Table table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
 
                     if (tableSet == -1) {
-                        tableSet = 1; // sm.getTableSetNumber(new
-                        // TableInfo(tableName,
-                        // getSchema().getName()));
+                        tableSet = 1;
                     }
                     else {
                         if (next != null) {
@@ -249,12 +270,10 @@ public class CreateReplica extends SchemaCommand {
             }
 
             return result;
+        }
 
-        }
-        else {
-            readSQL(); // command will be executed here - get the table
-            // meta-data and contents.
-        }
+        // command will be executed here - get the table meta-data and contents.
+        readSQL();
 
         // TODO rights: what rights are required to create a table?
         session.commit(true);
@@ -264,7 +283,8 @@ public class CreateReplica extends SchemaCommand {
         }
 
         boolean createEntirelyNewReplica = true;
-        if (getSchema().findLocalTableOrView(session, tableName) != null) { // H2O. Check  for  local version  here.
+        if (getSchema().findLocalTableOrView(session, tableName) != null) {
+            // H2O. Check  for  local version  here.
             if (ifNotExists && !updateData) {
                 return 0;
             }
@@ -315,11 +335,8 @@ public class CreateReplica extends SchemaCommand {
             for (int i = 0; i < columns.size(); i++) {
                 final Column c = (Column) columns.get(i);
 
-                if (fullTableName.startsWith("H2O.H2O") && i == 0) { // XXX
-                    // nasty
-                    // h2o-specific
-                    // auto-increment
-                    // hack.
+                if (fullTableName.startsWith("H2O.H2O") && i == 0) {
+                    // XXX nasty h2o-specific auto-increment hack.
                     c.setAutoIncrement(true, 1, 1);
                 }
                 if (c.getAutoIncrement()) {
@@ -457,27 +474,18 @@ public class CreateReplica extends SchemaCommand {
                 if (!db.isTableLocal(getSchema())) {
                     TableManagerRemote tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, true);
 
-                    if (tableManager == null) {
-                        throw new SQLException("Error creating replica for " + tableName + ". Table Manager not found.");
+                    if (tableManager == null) { throw new SQLException("Error creating replica for " + tableName + ". Table Manager not found."); }
+
+                    try {
+                        tableManager.addReplicaInformation(ti);
                     }
-                    else {
-                        try {
-                            tableManager.addReplicaInformation(ti);
-                        }
-                        catch (final MovedException e) {
-                            // If this is an old cached reference contact the
-                            // system table directly.
-                            tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, false);
-                            tableManager.addReplicaInformation(ti);
-                        }
+                    catch (final MovedException e) {
+                        // If this is an old cached reference contact the system table directly.
+                        tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, false);
+                        tableManager.addReplicaInformation(ti);
                     }
 
                     H2OEventBus.publish(new H2OEvent(session.getDatabase().getURL().getURL(), DatabaseStates.REPLICA_CREATION, getSchema().getName() + "." + tableName));
-
-                }
-                else {
-                    //					H2OEventBus.publish(new H2OEvent(this.session.getDatabase().getURL().getDbLocation(),
-                    //							DatabaseStates.META_TABLE_REPLICA_CREATION, getSchema().getName() + "." + tableName));
                 }
             }
         }
@@ -552,7 +560,7 @@ public class CreateReplica extends SchemaCommand {
 
         }
         catch (final Exception e) {
-            e.printStackTrace();
+            Diagnostic.trace(DiagnosticLevel.FULL, "error pushing command: " + query);
             return 0;
         }
     }
@@ -649,8 +657,7 @@ public class CreateReplica extends SchemaCommand {
             connect(whereDataWillBeTakenFrom);
         }
         catch (final SQLException e) {
-            ErrorHandling.errorNoEvent("whereDataWillBeTakenFrom: " + whereDataWillBeTakenFrom);
-            e.printStackTrace();
+            Diagnostic.trace(DiagnosticLevel.FULL, "whereDataWillBeTakenFrom: " + whereDataWillBeTakenFrom);
             throw Message.getSQLException(ErrorCode.CONNECTION_BROKEN, tableName);
         }
     }
@@ -673,7 +680,6 @@ public class CreateReplica extends SchemaCommand {
                 }
             }
         }
-
     }
 
     /**
@@ -703,7 +709,7 @@ public class CreateReplica extends SchemaCommand {
             rs.close();
         }
         catch (final SQLException e) {
-            ErrorHandling.exceptionError(e, "Failed to fill replica.");
+            Diagnostic.trace(DiagnosticLevel.FULL, "Failed to fill replica: " + e.getMessage());
         }
         finally {
             JdbcUtils.closeSilently(stat);

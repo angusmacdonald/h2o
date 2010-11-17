@@ -22,8 +22,11 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
 
-import org.h2o.test.DatabaseType;
-import org.h2o.test.H2OTestBase;
+import org.h2o.test.fixture.DiskConnectionDriverFactory;
+import org.h2o.test.fixture.DiskTestManager;
+import org.h2o.test.fixture.H2OTestBase;
+import org.h2o.test.fixture.IDiskConnectionDriverFactory;
+import org.h2o.test.fixture.ITestManager;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -38,16 +41,14 @@ public class H2TestPreparedStatement extends H2OTestBase {
 
     private Connection connection;
 
-    @Override
-    public DatabaseType getDatabaseType() {
+    private final IDiskConnectionDriverFactory connection_driver_factory = new DiskConnectionDriverFactory();
 
-        return DatabaseType.DISK;
-    }
+    private final ITestManager test_manager = new DiskTestManager(1, connection_driver_factory);
 
     @Override
-    protected int getNumberOfDatabases() {
+    public ITestManager getTestManager() {
 
-        return 1;
+        return test_manager;
     }
 
     @Override
@@ -56,7 +57,7 @@ public class H2TestPreparedStatement extends H2OTestBase {
 
         super.setUp();
 
-        connection = makeTestDriver().getConnection();
+        connection = makeConnectionDriver().getConnection();
     }
 
     @Test(timeout = 60000)

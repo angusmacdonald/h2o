@@ -1,11 +1,28 @@
-/*
- * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved. Project Homepage:
- * http://blogs.cs.st-andrews.ac.uk/h2o H2O is free software: you can redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. H2O
- * is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General
- * Public License along with H2O. If not, see <http://www.gnu.org/licenses/>.
- */
+/***************************************************************************
+ *                                                                         *
+ * H2O                                                                     *
+ * Copyright (C) 2010 Distributed Systems Architecture Research Group      *
+ * University of St Andrews, Scotland                                      *
+ * http://blogs.cs.st-andrews.ac.uk/h2o/                                   *
+ *                                                                         *
+ * This file is part of H2O, a distributed database based on the open      *
+ * source database H2 (www.h2database.com).                                *
+ *                                                                         *
+ * H2O is free software: you can redistribute it and/or                    *
+ * modify it under the terms of the GNU General Public License as          *
+ * published by the Free Software Foundation, either version 3 of the      *
+ * License, or (at your option) any later version.                         *
+ *                                                                         *
+ * H2O is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ * GNU General Public License for more details.                            *
+ *                                                                         *
+ * You should have received a copy of the GNU General Public License       *
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.            *
+ *                                                                         *
+ ***************************************************************************/
+
 package org.h2o.db.remote;
 
 import java.io.IOException;
@@ -204,7 +221,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                 databaseInstances = locatorInterface.getLocations();
             }
             catch (final Exception e) {
-                e.printStackTrace();
                 throw new StartupException(e.getMessage());
             }
 
@@ -727,7 +743,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         }
         else {
             predecessorURL = null;
-
         }
 
         boolean systemTableAlive = true;
@@ -754,7 +769,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                 }
             }
         }
-
     }
 
     private boolean isSystemTableActive() {
@@ -785,20 +799,15 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
          */
         Set<TableManagerWrapper> localTableManagers = null;
         try {
-            /*
-             * This will throw a NullPointerException if the older successor has failed and was the System Table.
-             */
 
             final SystemTableRemote systemTable = systemTableRef.getSystemTable();
 
-            if (systemTable == null) {
-                /*
-                 * The previous successor has failed and it was the System Table, so no System Table exists currently. It is not the
-                 * responsibility of this node (the System Table's predecessor) to restart the System Table.
-                 */
-            }
-            else {
-                localTableManagers = systemTableRef.getSystemTable().getLocalDatabaseInstances(localMachineLocation);
+            /*
+             * If systemTable is null then the previous successor has failed and it was the System Table, so no System Table exists currently. It is not the
+             * responsibility of this node (the System Table's predecessor) to restart the System Table.
+             */
+            if (systemTable != null) {
+                localTableManagers = systemTable.getLocalDatabaseInstances(localMachineLocation);
             }
         }
         catch (final RemoteException e) {
@@ -816,28 +825,22 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         final IChordRemoteReference successor = chordNode.getSuccessor();
 
         /*
-         * If table managers running locally or the System Table is located locally then get a reference to the suceessor instance so that
+         * If table managers running locally or the System Table is located locally then get a reference to the successor instance so that
          * we can replicate meta-data onto it. If not, don't go to the effort of looking up the successor.
          */
         try {
 
-            String hostname = null;
-            int port = 0;
+            final InetSocketAddress address = successor.getRemote().getAddress();
+            final String hostname = address.getHostName();
+            final int port = address.getPort();
 
-            hostname = successor.getRemote().getAddress().getHostName();
-
-            port = successor.getRemote().getAddress().getPort();
-
-            DatabaseInstanceRemote successorInstance = null;
-
-            successorInstance = getDatabaseInstanceAt(hostname, port);
+            final DatabaseInstanceRemote successorInstance = getDatabaseInstanceAt(hostname, port);
 
             if (systemTableRef.isSystemTableLocal() || localTableManagers != null && localTableManagers.size() > 0) {
 
                 final DatabaseInstanceWrapper successorInstanceWrapper = new DatabaseInstanceWrapper(successorInstance.getURL(), successorInstance, true);
 
                 metaDataReplicaManager.replicateMetaDataToRemoteInstance(systemTableRef, true, successorInstanceWrapper);
-
             }
 
             /*
@@ -852,7 +855,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                 final DatabaseInstanceWrapper successorInstanceWrapper = new DatabaseInstanceWrapper(successorInstance.getURL(), successorInstance, true);
 
                 metaDataReplicaManager.replicateMetaDataToRemoteInstance(systemTableRef, false, successorInstanceWrapper);
-
             }
         }
         catch (final RemoteException e) {
@@ -907,21 +909,11 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
         if (successorIsDifferentMachine && thisIsntATestThatShouldPreventThis) {
 
+            /*
+             * Migrate any local Table Managers.
+             */
             try {
                 successorDB = getDatabaseInstanceAt(successor);
-            }
-            catch (final RemoteException e1) {
-                e1.printStackTrace();
-            }
-        }
-
-        /*
-         * Migrate any local Table Managers.
-         */
-        if (successorIsDifferentMachine && thisIsntATestThatShouldPreventThis) {
-
-            try {
-                // /successorDB = getDatabaseInstanceAt(successor);
 
                 final Set<TableManagerWrapper> localManagers = systemTableRef.getSystemTable().getLocalDatabaseInstances(getLocalMachineLocation());
 
@@ -947,9 +939,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                     Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Migrating Table Manager [" + wrapper.getTableInfo().getFullTableName() + "] to successor: " + successor);
 
                     successorDB.executeUpdate("MIGRATE TABLEMANAGER " + wrapper.getTableInfo().getFullTableName(), false);
-
                 }
-
             }
             catch (final RemoteException e) {
                 ErrorHandling.errorNoEvent("(Error during shutdown) " + e.getMessage());
@@ -960,23 +950,23 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             catch (final SQLException e) {
                 ErrorHandling.errorNoEvent("(Error during shutdown) " + e.getMessage());
             }
-        }
 
-        /*
-         * Migrate the System Table if needed.
-         */
-        if (systemTableHeldLocally && successorIsDifferentMachine && thisIsntATestThatShouldPreventThis) {
+            /*
+             * Migrate the System Table if needed.
+             */
+            if (systemTableHeldLocally) {
 
-            // Migrate the System Table to this node before shutdown.
-            try {
-                Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Migrating System Table to successor: " + successor);
-                successorDB = getDatabaseInstanceAt(successor);
+                // Migrate the System Table to this node before shutdown.
+                try {
+                    Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Migrating System Table to successor: " + successor);
+                    successorDB = getDatabaseInstanceAt(successor);
 
-                successorDB.executeUpdate("MIGRATE SYSTEMTABLE", false);
+                    successorDB.executeUpdate("MIGRATE SYSTEMTABLE", false);
 
-            }
-            catch (final Exception e) {
-                ErrorHandling.errorNoEvent("Failed to migrate System Table to successor: " + successor);
+                }
+                catch (final Exception e) {
+                    ErrorHandling.errorNoEvent("Failed to migrate System Table to successor: " + successor);
+                }
             }
         }
 
@@ -996,7 +986,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             // Ignore.
         }
         catch (final Exception e) {
-            e.printStackTrace();
+            Diagnostic.trace(DiagnosticLevel.FULL, "error unbinding system table from RMI");
         }
     }
 

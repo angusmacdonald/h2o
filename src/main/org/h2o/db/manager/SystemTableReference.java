@@ -1,11 +1,28 @@
-/*
- * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved. Project Homepage:
- * http://blogs.cs.st-andrews.ac.uk/h2o H2O is free software: you can redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. H2O
- * is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General
- * Public License along with H2O. If not, see <http://www.gnu.org/licenses/>.
- */
+/***************************************************************************
+ *                                                                         *
+ * H2O                                                                     *
+ * Copyright (C) 2010 Distributed Systems Architecture Research Group      *
+ * University of St Andrews, Scotland                                      *
+ * http://blogs.cs.st-andrews.ac.uk/h2o/                                   *
+ *                                                                         *
+ * This file is part of H2O, a distributed database based on the open      *
+ * source database H2 (www.h2database.com).                                *
+ *                                                                         *
+ * H2O is free software: you can redistribute it and/or                    *
+ * modify it under the terms of the GNU General Public License as          *
+ * published by the Free Software Foundation, either version 3 of the      *
+ * License, or (at your option) any later version.                         *
+ *                                                                         *
+ * H2O is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ * GNU General Public License for more details.                            *
+ *                                                                         *
+ * You should have received a copy of the GNU General Public License       *
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.            *
+ *                                                                         *
+ ***************************************************************************/
+
 package org.h2o.db.manager;
 
 import java.rmi.RemoteException;
@@ -118,10 +135,6 @@ public class SystemTableReference implements ISystemTableReference {
         systemTableRecovery = new SystemTableFailureRecovery(db, this);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTableReference#getSystemTable()
-     */
     @Override
     public SystemTableRemote getSystemTable() {
 
@@ -185,30 +198,18 @@ public class SystemTableReference implements ISystemTableReference {
         return systemTableWrapper.getSystemTable();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTableReference#getSystemTableLocation()
-     */
     @Override
     public DatabaseURL getSystemTableURL() {
 
         return systemTableWrapper.getURL();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTableReference#isSystemTableLocal()
-     */
     @Override
     public boolean isSystemTableLocal() {
 
         return isLocal;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTableReference#findSystemTable()
-     */
     @Override
     public SystemTableRemote findSystemTable() throws SQLException {
 
@@ -217,35 +218,15 @@ public class SystemTableReference implements ISystemTableReference {
             return systemTableWrapper.getSystemTable();
         }
         catch (final LocatorException e) {
-            e.printStackTrace();
+
             throw new SQLException("Couldn't find locator server(s).");
         }
         catch (final SystemTableAccessException e) {
-            e.printStackTrace();
+
             throw new SQLException("Couldn't create System Table.");
         }
-
-        // if (systemTableWrapper.getSystemTable() != null) {
-        // return systemTableWrapper.getSystemTable();
-        // }
-        //
-        // Registry registry = getSystemTableRegistry();
-        //
-        // try {
-        // systemTableWrapper.setSystemTable((SystemTableRemote) registry.lookup(SCHEMA_MANAGER));
-        // this.systemTableNode = systemTableWrapper.getSystemTable().getChordReference();
-        // } catch (Exception e) {
-        // throw new SQLException("Unable to find System Table. Attempted to find it through the registry at " +
-        // systemTableWrapper.getURL());
-        // }
-        //
-        // return systemTableWrapper.getSystemTable();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTableReference#getSystemTableRegistry()
-     */
     @Override
     public Registry getSystemTableRegistry() {
 
@@ -253,20 +234,14 @@ public class SystemTableReference implements ISystemTableReference {
 
         try {
             remoteRegistry = LocateRegistry.getRegistry(systemTableWrapper.getURL().getHostname(), systemTableWrapper.getURL().getRMIPort());
-
         }
         catch (final RemoteException e) {
             e.printStackTrace();
         }
 
         return remoteRegistry;
-
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTableReference#setNewSystemTableLocation(org .h2.h2o.util.DatabaseURL)
-     */
     @Override
     public void setSystemTableURL(final DatabaseURL newSMLocation) {
 
@@ -277,11 +252,6 @@ public class SystemTableReference implements ISystemTableReference {
         systemTableWrapper.setURL(newSMLocation);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTableReference#setSystemTableLocation(uk.ac
-     * .standrews.cs.stachordRMI.interfaces.IChordRemoteReference, org.h2.h2o.util.DatabaseURL)
-     */
     @Override
     public void setSystemTableLocation(final IChordRemoteReference systemTableLocation, final DatabaseURL databaseURL) {
 
@@ -289,50 +259,30 @@ public class SystemTableReference implements ISystemTableReference {
         systemTableWrapper.setURL(databaseURL);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTableReference#setSystemTable(org.h2.h2o.manager .SystemTable)
-     */
     @Override
     public void setSystemTable(final SystemTableRemote systemTable) {
 
         systemTableWrapper.setSystemTable(systemTable);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTableReference#isConnectedToSM()
-     */
     @Override
     public boolean isConnectedToSM() {
 
         return systemTableWrapper.getSystemTable() != null;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTableReference#setInKeyRange(boolean)
-     */
     @Override
     public void setInKeyRange(final boolean inKeyRange) {
 
         this.inKeyRange = inKeyRange;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTableReference#isInKeyRange()
-     */
     @Override
     public boolean isInKeyRange() {
 
         return inKeyRange;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTableReference#migrateSystemTableToLocalInstance (boolean, boolean)
-     */
     @Override
     public SystemTableRemote migrateSystemTableToLocalInstance(final boolean persistedSchemaTablesExist, final boolean recreateFromPersistedState) throws SystemTableAccessException {
 
@@ -360,10 +310,6 @@ public class SystemTableReference implements ISystemTableReference {
         return systemTableWrapper.getSystemTable();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTableReference#migrateSystemTableToLocalInstance ()
-     */
     @Override
     public void migrateSystemTableToLocalInstance() throws SystemTableAccessException {
 
@@ -379,30 +325,18 @@ public class SystemTableReference implements ISystemTableReference {
         migrateSystemTableToLocalInstance(persistedSchemaTablesExist, false);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTableReference#setLookupLocation(uk.ac.standrews .cs.stachordRMI.interfaces.IChordRemoteReference)
-     */
     @Override
     public void setLookupLocation(final IChordRemoteReference proxy) {
 
         lookupLocation = proxy;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTableReference#getLookupLocation()
-     */
     @Override
     public IChordRemoteReference getLookupLocation() {
 
         return lookupLocation;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTableReference#lookup(java.lang.String)
-     */
     @Override
     public TableManagerRemote lookup(final String tableName, final boolean useCache) throws SQLException {
 
@@ -499,16 +433,12 @@ public class SystemTableReference implements ISystemTableReference {
 
             throw new SQLException("Failed to find System Table.");
         }
-        else { //only using local cache so we haven't looked at the System Table.
-            return null;
-        }
+
+        //only using local cache so we haven't looked at the System Table.
+        return null;
 
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTableReference#isThisSystemTableNode(uk.ac. standrews.cs.stachordRMI.interfaces.IChordRemoteReference)
-     */
     @Override
     public boolean isThisSystemTableNode(final IChordRemoteReference otherNode) {
 
@@ -516,10 +446,6 @@ public class SystemTableReference implements ISystemTableReference {
         return systemTableNode.equals(otherNode);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTableReference#addProxy(org.h2.h2o.comms.remote .TableManagerRemote)
-     */
     @Override
     public void addProxy(final TableInfo tableInfo, final TableManagerRemote tableManager) {
 
@@ -531,11 +457,6 @@ public class SystemTableReference implements ISystemTableReference {
         localTableManagers.put(tableInfo.getGenericTableInfo(), (TableManager) tableManager);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTableReference#addNewTableManagerReference( org.h2.h2o.util.TableInfo,
-     * org.h2.h2o.comms.remote.TableManagerRemote)
-     */
     @Override
     public void addNewTableManagerReference(final TableInfo ti, final TableManagerRemote tm) {
 
@@ -554,7 +475,6 @@ public class SystemTableReference implements ISystemTableReference {
     @Override
     public boolean addTableInformation(final TableManagerRemote tableManagerRemote, final TableInfo ti, final Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException, SQLException { // changed by
 
-        // al
         localTableManagers.put(ti.getGenericTableInfo(), (TableManager) tableManagerRemote);
 
         return systemTableWrapper.getSystemTable().addTableInformation(tableManagerRemote, ti, replicaLocations);

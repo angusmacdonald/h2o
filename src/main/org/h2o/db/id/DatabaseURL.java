@@ -1,16 +1,35 @@
-/*
- * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved. Project Homepage:
- * http://blogs.cs.st-andrews.ac.uk/h2o H2O is free software: you can redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. H2O
- * is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General
- * Public License along with H2O. If not, see <http://www.gnu.org/licenses/>.
- */
+/***************************************************************************
+ *                                                                         *
+ * H2O                                                                     *
+ * Copyright (C) 2010 Distributed Systems Architecture Research Group      *
+ * University of St Andrews, Scotland                                      *
+ * http://blogs.cs.st-andrews.ac.uk/h2o/                                   *
+ *                                                                         *
+ * This file is part of H2O, a distributed database based on the open      *
+ * source database H2 (www.h2database.com).                                *
+ *                                                                         *
+ * H2O is free software: you can redistribute it and/or                    *
+ * modify it under the terms of the GNU General Public License as          *
+ * published by the Free Software Foundation, either version 3 of the      *
+ * License, or (at your option) any later version.                         *
+ *                                                                         *
+ * H2O is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ * GNU General Public License for more details.                            *
+ *                                                                         *
+ * You should have received a copy of the GNU General Public License       *
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.            *
+ *                                                                         *
+ ***************************************************************************/
+
 package org.h2o.db.id;
 
+import java.io.File;
 import java.io.Serializable;
 
 import org.h2.util.NetUtils;
+import org.h2o.H2O;
 
 /**
  * Parsed representation of an H2 database URL.
@@ -23,8 +42,6 @@ import org.h2.util.NetUtils;
 public class DatabaseURL implements Serializable {
 
     private static final long serialVersionUID = 3202062668933786677L;
-
-    private static final int DEFAULT_PORT_NUMBER = 9092;
 
     /**
      * The original unedited database URL.
@@ -140,7 +157,7 @@ public class DatabaseURL implements Serializable {
                 port = new Integer(portString).intValue();
             }
             catch (final NumberFormatException e) {
-                port = DEFAULT_PORT_NUMBER;
+                port = H2O.DEFAULT_TCP_PORT;
             }
 
             // Get DB location
@@ -150,7 +167,6 @@ public class DatabaseURL implements Serializable {
             dbLocation = url.substring(url.indexOf(":mem:") + 5);
         }
         else {
-            // jdbc:h2:data/test/scriptSimple;LOG=1;LOCK_TIMEOUT=50
             if (url.startsWith("jdbc:h2:")) {
                 url = url.substring("jdbc:h2:".length());
             }
@@ -239,7 +255,13 @@ public class DatabaseURL implements Serializable {
 
     public String getPropertiesFilePath() {
 
-        return dbLocation + ".properties";
+        String path = dbLocation + ".properties";
+        if (mem) {
+            // Store properties files for in-memory dbs in sub-directory of working directory.
+            path = H2O.DEFAULT_DATABASE_DIRECTORY_PATH + File.separator + path;
+        }
+
+        return path;
     }
 
     /**
@@ -289,28 +311,17 @@ public class DatabaseURL implements Serializable {
         return originalURL;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
 
         return "DatabaseURL [" + dbLocation + "]";
     }
 
-    /**
-     * @return
-     */
     public boolean isValid() {
 
         return newURL != null;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see java.lang.Object#hashCode()
-     */
     @Override
     public int hashCode() {
 
@@ -323,10 +334,6 @@ public class DatabaseURL implements Serializable {
         return result;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
     @Override
     public boolean equals(final Object obj) {
 
@@ -382,5 +389,4 @@ public class DatabaseURL implements Serializable {
 
         return getURL() + "+" + rmiPort;
     }
-
 }

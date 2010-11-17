@@ -17,6 +17,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.h2.engine.Constants;
+import org.h2o.test.fixture.ConnectionDriver;
+import org.h2o.test.fixture.DiskConnectionDriverFactory;
+import org.h2o.test.fixture.DiskTestManager;
+import org.h2o.test.fixture.H2OTestBase;
+import org.h2o.test.fixture.IDiskConnectionDriverFactory;
+import org.h2o.test.fixture.ITestManager;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,21 +38,19 @@ import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
  */
 public class ChordTestsDiskDBFailingSporadically extends H2OTestBase {
 
-    private TestDriver[] drivers;
+    private ConnectionDriver[] drivers;
     private Statement[] statements;
 
-    private static final int number_of_databases = 3;
+    private static final int NUMBER_OF_DATABASES = 3;
+
+    private final IDiskConnectionDriverFactory connection_driver_factory = new DiskConnectionDriverFactory();
+
+    private final DiskTestManager test_manager = new DiskTestManager(NUMBER_OF_DATABASES, connection_driver_factory);
 
     @Override
-    public DatabaseType getDatabaseType() {
+    public ITestManager getTestManager() {
 
-        return DatabaseType.DISK;
-    }
-
-    @Override
-    protected int getNumberOfDatabases() {
-
-        return number_of_databases;
+        return test_manager;
     }
 
     @Override
@@ -55,11 +59,11 @@ public class ChordTestsDiskDBFailingSporadically extends H2OTestBase {
 
         super.setUp();
 
-        drivers = new TestDriver[number_of_databases];
-        statements = new Statement[number_of_databases];
+        drivers = new ConnectionDriver[NUMBER_OF_DATABASES];
+        statements = new Statement[NUMBER_OF_DATABASES];
 
-        for (int i = 0; i < number_of_databases; i++) {
-            drivers[i] = makeTestDriver(i);
+        for (int i = 0; i < NUMBER_OF_DATABASES; i++) {
+            drivers[i] = makeConnectionDriver(i);
             statements[i] = drivers[i].getConnection().createStatement();
         }
 
@@ -205,7 +209,7 @@ public class ChordTestsDiskDBFailingSporadically extends H2OTestBase {
     @Test(timeout = 60000)
     public void systemTableFailure() throws InterruptedException, SQLException {
 
-        db_processes[0].destroy();
+        test_manager.killDBProcess(0);
         statements[0].close();
 
         Thread.sleep(10000);

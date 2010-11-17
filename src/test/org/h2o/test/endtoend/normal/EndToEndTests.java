@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.concurrent.Semaphore;
 
+import org.h2o.test.endtoend.fixture.EndToEndConnectionDriver;
+import org.h2o.test.endtoend.fixture.EndToEndTestsCommon;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
@@ -50,7 +52,7 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
 
         Diagnostic.trace();
 
-        final EndToEndTestDriver driver = makeSpecificTestDriver();
+        final EndToEndConnectionDriver driver = makeSpecificConnectionDriver();
 
         driver.setAutoCommitOn();
         driver.setNoDelay();
@@ -72,7 +74,7 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
 
         Diagnostic.trace();
 
-        final EndToEndTestDriver driver1 = makeSpecificTestDriver();
+        final EndToEndConnectionDriver driver1 = makeSpecificConnectionDriver();
 
         driver1.setAutoCommitOn();
         driver1.setNoDelay();
@@ -83,7 +85,7 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
         shutdown();
         startup();
 
-        final EndToEndTestDriver driver2 = makeSpecificTestDriver();
+        final EndToEndConnectionDriver driver2 = makeSpecificConnectionDriver();
 
         driver2.assertOneRowIsPresent();
     }
@@ -99,7 +101,7 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
 
         Diagnostic.trace();
 
-        final EndToEndTestDriver driver = makeSpecificTestDriver();
+        final EndToEndConnectionDriver driver = makeSpecificConnectionDriver();
 
         driver.setAutoCommitOff();
         driver.setNoDelay();
@@ -123,7 +125,7 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
 
         Diagnostic.trace();
 
-        final EndToEndTestDriver driver1 = makeSpecificTestDriver();
+        final EndToEndConnectionDriver driver1 = makeSpecificConnectionDriver();
 
         driver1.setAutoCommitOff();
         driver1.setNoDelay();
@@ -134,7 +136,7 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
         shutdown();
         startup();
 
-        final EndToEndTestDriver driver2 = makeSpecificTestDriver();
+        final EndToEndConnectionDriver driver2 = makeSpecificConnectionDriver();
 
         driver2.assertTableIsNotPresent();
     }
@@ -151,7 +153,7 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
 
         Diagnostic.trace();
 
-        final EndToEndTestDriver driver1 = makeSpecificTestDriver();
+        final EndToEndConnectionDriver driver1 = makeSpecificConnectionDriver();
 
         driver1.setAutoCommitOff();
         driver1.setNoDelay();
@@ -160,10 +162,11 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
         driver1.insertOneRow();
         driver1.commit();
 
+        // When using an in-memory database, shutdown() breaks the connection to it but doesn't destroy it.
         shutdown();
         startup();
 
-        final EndToEndTestDriver driver2 = makeSpecificTestDriver();
+        final EndToEndConnectionDriver driver2 = makeSpecificConnectionDriver();
 
         driver2.assertOneRowIsPresent();
     }
@@ -182,7 +185,7 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
 
         final int number_of_values = 100;
 
-        final EndToEndTestDriver driver1 = makeSpecificTestDriver();
+        final EndToEndConnectionDriver driver1 = makeSpecificConnectionDriver();
 
         driver1.setAutoCommitOff();
         driver1.setNoDelay();
@@ -191,10 +194,11 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
         driver1.insertRows(number_of_values);
         driver1.commit();
 
+        // When using an in-memory database, shutdown() breaks the connection to it but doesn't destroy it.
         shutdown();
         startup();
 
-        final EndToEndTestDriver driver2 = makeSpecificTestDriver();
+        final EndToEndConnectionDriver driver2 = makeSpecificConnectionDriver();
 
         driver2.assertDataIsCorrect(number_of_values);
     }
@@ -215,7 +219,7 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
 
         Diagnostic.trace();
 
-        final EndToEndTestDriver driver1 = makeSpecificTestDriver();
+        final EndToEndConnectionDriver driver1 = makeSpecificConnectionDriver();
 
         driver1.createTable();
         driver1.commit();
@@ -223,8 +227,8 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
         // Initial value of -1 means that main thread waiting on it will be blocked until it is signalled twice.
         final Semaphore sync = new Semaphore(-1);
 
-        final EndToEndTestDriver driver2 = makeSpecificTestDriver();
-        final EndToEndTestDriver driver3 = makeSpecificTestDriver();
+        final EndToEndConnectionDriver driver2 = makeSpecificConnectionDriver();
+        final EndToEndConnectionDriver driver3 = makeSpecificConnectionDriver();
 
         driver2.setAutoCommitOff();
         driver3.setAutoCommitOff();
@@ -237,7 +241,7 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
         shutdown();
         startup();
 
-        final EndToEndTestDriver driver4 = makeSpecificTestDriver();
+        final EndToEndConnectionDriver driver4 = makeSpecificConnectionDriver();
         driver4.assertDataIsCorrect(2);
     }
 }

@@ -1,4 +1,4 @@
-package org.h2o.test;
+package org.h2o.test.fixture;
 
 import java.io.File;
 import java.io.IOException;

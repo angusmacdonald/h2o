@@ -1,4 +1,4 @@
-package org.h2o.test;
+package org.h2o.test.fixture;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -25,7 +25,6 @@ import org.h2o.db.remote.ChordRemote;
 import org.h2o.locator.client.H2OLocatorInterface;
 import org.h2o.locator.server.LocatorServer;
 import org.h2o.run.AllTests;
-import org.h2o.test.util.StartDatabaseInstance;
 import org.h2o.util.LocalH2OProperties;
 import org.junit.After;
 import org.junit.Before;

@@ -10,8 +10,11 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.h2o.test.DatabaseType;
-import org.h2o.test.H2OTestBase;
+import org.h2o.test.fixture.DiskConnectionDriverFactory;
+import org.h2o.test.fixture.DiskTestManager;
+import org.h2o.test.fixture.H2OTestBase;
+import org.h2o.test.fixture.IDiskConnectionDriverFactory;
+import org.h2o.test.fixture.ITestManager;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -24,18 +27,16 @@ import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
  */
 public class H2TestView extends H2OTestBase {
 
-    @Override
-    public DatabaseType getDatabaseType() {
-
-        return DatabaseType.DISK;
-    }
-
     private Connection connection;
 
-    @Override
-    protected int getNumberOfDatabases() {
+    private final IDiskConnectionDriverFactory connection_driver_factory = new DiskConnectionDriverFactory();
 
-        return 1;
+    private final ITestManager test_manager = new DiskTestManager(1, connection_driver_factory);
+
+    @Override
+    public ITestManager getTestManager() {
+
+        return test_manager;
     }
 
     @Override
@@ -44,7 +45,7 @@ public class H2TestView extends H2OTestBase {
 
         super.setUp();
 
-        connection = makeTestDriver().getConnection();
+        connection = makeConnectionDriver().getConnection();
     }
 
     @Test

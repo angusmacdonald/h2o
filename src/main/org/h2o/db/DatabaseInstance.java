@@ -1,11 +1,28 @@
-/*
- * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved. Project Homepage:
- * http://blogs.cs.st-andrews.ac.uk/h2o H2O is free software: you can redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. H2O
- * is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General
- * Public License along with H2O. If not, see <http://www.gnu.org/licenses/>.
- */
+/***************************************************************************
+ *                                                                         *
+ * H2O                                                                     *
+ * Copyright (C) 2010 Distributed Systems Architecture Research Group      *
+ * University of St Andrews, Scotland                                      *
+ * http://blogs.cs.st-andrews.ac.uk/h2o/                                   *
+ *                                                                         *
+ * This file is part of H2O, a distributed database based on the open      *
+ * source database H2 (www.h2database.com).                                *
+ *                                                                         *
+ * H2O is free software: you can redistribute it and/or                    *
+ * modify it under the terms of the GNU General Public License as          *
+ * published by the Free Software Foundation, either version 3 of the      *
+ * License, or (at your option) any later version.                         *
+ *                                                                         *
+ * H2O is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ * GNU General Public License for more details.                            *
+ *                                                                         *
+ * You should have received a copy of the GNU General Public License       *
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.            *
+ *                                                                         *
+ ***************************************************************************/
+
 package org.h2o.db;
 
 import java.rmi.RemoteException;
@@ -59,10 +76,6 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
         parser = new Parser(session, true);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.command.dm.DatabaseInstanceRemote#executeUpdate(org.h2.command .Prepared)
-     */
     @Override
     public int execute(final String query, final String transactionName, final boolean commitOperation) throws RemoteException, SQLException {
 
@@ -73,18 +86,14 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
         final Command command = parser.prepareCommand(query);
 
         try {
-            if (commitOperation) {
-                return command.update(); // This is a COMMIT.
+            if (commitOperation) { return command.update(); // This is a COMMIT.
             }
-            else {
-                /*
-                 * If called from here executeUpdate should always be told the query is part of a larger transaction, because it was
-                 * remotely initiated and consequently needs to wait for the remote machine to commit.
-                 */
-
-                command.executeUpdate(true);
-                return prepare(transactionName); // This wasn't a COMMIT. Execute a PREPARE.
-            }
+            /*
+             * If called from here executeUpdate should always be told the query is part of a larger transaction, because it was
+             * remotely initiated and consequently needs to wait for the remote machine to commit.
+             */
+            command.executeUpdate(true);
+            return prepare(transactionName); // This wasn't a COMMIT. Execute a PREPARE.
         }
         finally {
             command.close();
@@ -98,10 +107,6 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
         return command.executeUpdate();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.comms.DatabaseInstanceRemote#getConnectionString()
-     */
     @Override
     public String getConnectionString() throws RemoteException {
 
@@ -131,10 +136,6 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
         return systemTableURL;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#executeUpdate(java.lang .String)
-     */
     @Override
     public int executeUpdate(final String sql, final boolean systemTableCommand) throws RemoteException, SQLException {
 
@@ -174,26 +175,17 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
             success = true;
         }
         catch (final SQLException e) {
-            e.printStackTrace();
+            Diagnostic.trace(DiagnosticLevel.FULL, "error recreating table manager");
         }
         return success;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#setSystemTableLocation
-     * (uk.ac.standrews.cs.stachordRMI.interfaces.IChordRemoteReference)
-     */
     @Override
     public void setSystemTableLocation(final IChordRemoteReference systemTableLocation, final DatabaseURL databaseURL) throws RemoteException {
 
         database.getSystemTableReference().setSystemTableLocation(systemTableLocation, databaseURL);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#findTableManagerReference (org.h2.h2o.util.TableInfo)
-     */
     @Override
     public TableManagerRemote findTableManagerReference(final TableInfo ti, final boolean searchOnlyCache) throws RemoteException {
 
@@ -201,8 +193,8 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
             return database.getSystemTableReference().lookup(ti, true, searchOnlyCache);
         }
         catch (final SQLException e) {
-            e.printStackTrace();
-            ErrorHandling.error(e, "Couldn't find Table Manager at this machine. Table Manager needs to be re-instantiated.");
+
+            Diagnostic.trace(DiagnosticLevel.FULL, "Couldn't find Table Manager at this machine. Table Manager needs to be re-instantiated.");
             // TODO allow for re-instantiation at this point.
 
             throw new RemoteException(e.getMessage());
@@ -215,20 +207,12 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
         this.alive = alive;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.comms.DatabaseInstanceRemote#testAvailability()
-     */
     @Override
     public boolean isAlive() throws RemoteException {
 
         return alive;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see java.lang.Object#hashCode()
-     */
     @Override
     public int hashCode() {
 
@@ -236,10 +220,6 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
         return result;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
     @Override
     public boolean equals(final Object obj) {
 
@@ -265,5 +245,4 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 
         return database.getSystemTableReference().getLocalSystemTable();
     }
-
 }

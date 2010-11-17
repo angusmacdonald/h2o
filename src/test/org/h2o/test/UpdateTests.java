@@ -18,6 +18,7 @@ import junit.framework.Assert;
 
 import org.h2o.autonomic.settings.TestingSettings;
 import org.h2o.db.manager.PersistentSystemTable;
+import org.h2o.test.fixture.TestBase;
 import org.junit.Test;
 
 /**

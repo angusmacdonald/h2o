@@ -6,9 +6,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy
  * of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.test.endtoend;
+package org.h2o.test.endtoend.suites;
 
 import org.h2o.test.endtoend.normal.EndToEndDiskTests;
+import org.h2o.test.endtoend.normal.EndToEndMemoryTests;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -21,7 +22,7 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
 
-EndToEndDiskTests.class})
+EndToEndDiskTests.class, EndToEndMemoryTests.class})
 public class CheckInTests {
     // Empty.
 }

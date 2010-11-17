@@ -1,7 +1,28 @@
-/*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html). Initial Developer: H2 Group
- */
+/***************************************************************************
+ *                                                                         *
+ * H2O                                                                     *
+ * Copyright (C) 2010 Distributed Systems Architecture Research Group      *
+ * University of St Andrews, Scotland                                      *
+ * http://blogs.cs.st-andrews.ac.uk/h2o/                                   *
+ *                                                                         *
+ * This file is part of H2O, a distributed database based on the open      *
+ * source database H2 (www.h2database.com).                                *
+ *                                                                         *
+ * H2O is free software: you can redistribute it and/or                    *
+ * modify it under the terms of the GNU General Public License as          *
+ * published by the Free Software Foundation, either version 3 of the      *
+ * License, or (at your option) any later version.                         *
+ *                                                                         *
+ * H2O is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ * GNU General Public License for more details.                            *
+ *                                                                         *
+ * You should have received a copy of the GNU General Public License       *
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.            *
+ *                                                                         *
+ ***************************************************************************/
+
 package org.h2;
 
 import java.sql.Connection;
@@ -44,7 +65,8 @@ public class Driver implements java.sql.Driver {
      *            the connection properties
      * @return the new connection
      */
-    public Connection connect(String url, Properties info) throws SQLException {
+    @Override
+    public Connection connect(final String url, Properties info) throws SQLException {
 
         try {
             if (info == null) {
@@ -53,7 +75,7 @@ public class Driver implements java.sql.Driver {
             if (!acceptsURL(url)) { return null; }
             return new JdbcConnection(url, info);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw Message.convert(e);
         }
     }
@@ -65,7 +87,8 @@ public class Driver implements java.sql.Driver {
      *            the database URL
      * @return if the driver understands the URL
      */
-    public boolean acceptsURL(String url) {
+    @Override
+    public boolean acceptsURL(final String url) {
 
         return url != null && url.startsWith(Constants.START_URL);
     }
@@ -75,6 +98,7 @@ public class Driver implements java.sql.Driver {
      * 
      * @return the major version number
      */
+    @Override
     public int getMajorVersion() {
 
         return Constants.VERSION_MAJOR;
@@ -85,6 +109,7 @@ public class Driver implements java.sql.Driver {
      * 
      * @return the minor version number
      */
+    @Override
     public int getMinorVersion() {
 
         return Constants.VERSION_MINOR;
@@ -99,7 +124,8 @@ public class Driver implements java.sql.Driver {
      *            the connection properties
      * @return a zero length array
      */
-    public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) {
+    @Override
+    public DriverPropertyInfo[] getPropertyInfo(final String url, final Properties info) {
 
         return new DriverPropertyInfo[0];
     }
@@ -109,6 +135,7 @@ public class Driver implements java.sql.Driver {
      * 
      * @return true
      */
+    @Override
     public boolean jdbcCompliant() {
 
         return true;
@@ -125,7 +152,7 @@ public class Driver implements java.sql.Driver {
                 DriverManager.registerDriver(INSTANCE);
             }
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             TraceSystem.traceThrowable(e);
         }
         return INSTANCE;
@@ -142,7 +169,7 @@ public class Driver implements java.sql.Driver {
                 DriverManager.deregisterDriver(INSTANCE);
             }
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             TraceSystem.traceThrowable(e);
         }
     }

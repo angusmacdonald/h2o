@@ -1,7 +1,28 @@
-/*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html). Initial Developer: H2 Group
- */
+/***************************************************************************
+ *                                                                         *
+ * H2O                                                                     *
+ * Copyright (C) 2010 Distributed Systems Architecture Research Group      *
+ * University of St Andrews, Scotland                                      *
+ * http://blogs.cs.st-andrews.ac.uk/h2o/                                   *
+ *                                                                         *
+ * This file is part of H2O, a distributed database based on the open      *
+ * source database H2 (www.h2database.com).                                *
+ *                                                                         *
+ * H2O is free software: you can redistribute it and/or                    *
+ * modify it under the terms of the GNU General Public License as          *
+ * published by the Free Software Foundation, either version 3 of the      *
+ * License, or (at your option) any later version.                         *
+ *                                                                         *
+ * H2O is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ * GNU General Public License for more details.                            *
+ *                                                                         *
+ * You should have received a copy of the GNU General Public License       *
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.            *
+ *                                                                         *
+ ***************************************************************************/
+
 package org.h2.engine;
 
 import java.io.IOException;
@@ -468,7 +489,7 @@ public class Database implements DataHandler {
             }
         }
         catch (final Throwable e) {
-            e.printStackTrace();
+
             if (traceSystem != null) {
                 if (e instanceof SQLException) {
                     final SQLException e2 = (SQLException) e;
@@ -969,39 +990,18 @@ public class Database implements DataHandler {
         systemSession.commit(true);
         traceSystem.getTrace(Trace.DATABASE).info("opened " + databaseName);
 
-        if (!isManagementDB() && (!databaseExists || !systemTableRef.isSystemTableLocal())) { // don't
-            // run
-            // this
-            // code
-            // with
-            // the
-            // TCP
-            // server
-            // management
-            // DB
+        if (!isManagementDB() && (!databaseExists || !systemTableRef.isSystemTableLocal())) {
+            // don't run this code with the TCP server management DB
 
             try {
                 createH2OTables(false, databaseExists);
             }
             catch (final Exception e) {
-                e.printStackTrace();
+                Diagnostic.trace(DiagnosticLevel.FULL, "error creating H2O tables");
             }
 
-            databaseRemote.setAsReadyToReplicateMetaData(metaDataReplicaManager); // called
-            // here,
-            // because
-            // at
-            // this
-            // point
-            // the
-            // system
-            // is
-            // ready
-            // to
-            // replicate
-            // TM
-            // state.
-
+            // called here, because at this point the system is ready to replicate TM state.
+            databaseRemote.setAsReadyToReplicateMetaData(metaDataReplicaManager);
         }
         else if (!isManagementDB() && databaseExists && systemTableRef.isSystemTableLocal()) {
             /*
@@ -1010,41 +1010,21 @@ public class Database implements DataHandler {
             try {
                 createH2OTables(true, databaseExists);
                 systemTableRef.getSystemTable().buildSystemTableState();
-                databaseRemote.setAsReadyToReplicateMetaData(metaDataReplicaManager); // called
-                // here,
-                // because
-                // at
-                // this
-                // point
-                // the
-                // system
-                // is
-                // ready
-                // to
-                // replicate
-                // TM
-                // state.
+                // called here, because at this point the system is ready to replicate TM state.
+                databaseRemote.setAsReadyToReplicateMetaData(metaDataReplicaManager);
 
                 Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Re-created System Table state.");
             }
             catch (final Exception e) {
-                e.printStackTrace();
+                Diagnostic.trace(DiagnosticLevel.FULL, "error creating H2O tables");
             }
         }
-
     }
 
-    /**
-     * @param databaseExists
-     * @param persistedTablesExist
-     * @param isStartup
-     */
     private void commitSystemTableCreation(final boolean databaseExists, final boolean persistedTablesExist, final boolean createTables) throws SQLException {
 
-        if (systemTableRef.isSystemTableLocal()) { // Create the System Table
-            // tables and immediately
-            // add local tables to this
-            // manager.
+        if (systemTableRef.isSystemTableLocal()) {
+            // Create the System Table tables and immediately add local tables to this manager.
 
             SystemTable systemTable = null;
             try {
@@ -1061,14 +1041,12 @@ public class Database implements DataHandler {
             databaseRemote.commitSystemTableCreation();
 
         }
-        else { // Not a System Table - Get a reference to the System Table.
+        else {
+            // Not a System Table - Get a reference to the System Table.
             systemTableRef.findSystemTable();
         }
     }
 
-    /**
-     * @return
-     */
     public DatabaseURL getURL() {
 
         return databaseRemote.getLocalMachineLocation();
@@ -1544,7 +1522,6 @@ public class Database implements DataHandler {
             metaDataReplicationThread.setRunning(false);
             running = false;
             removeLocalDatabaseInstance();
-
         }
 
         if (userSessions.size() > 0) {

@@ -17,7 +17,8 @@ import java.sql.Statement;
 
 import org.h2.engine.Constants;
 import org.h2o.locator.server.LocatorServer;
-import org.h2o.test.util.StartDatabaseInstance;
+import org.h2o.test.fixture.StartDatabaseInstance;
+import org.h2o.test.fixture.TestBase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -47,7 +48,6 @@ public class ChordTests extends TestBase {
         Diagnostic.setLevel(DiagnosticLevel.INIT);
         Constants.IS_TEST = true;
         Constants.IS_NON_SM_TEST = false;
-
     }
 
     @Override
@@ -62,8 +62,8 @@ public class ChordTests extends TestBase {
         org.h2.Driver.load();
 
         setUpDescriptorFiles();
-        ls = new LocatorServer(29999, "junitLocator");
-        ls.createNewLocatorFile();
+        //        ls = new LocatorServer(29999, "junitLocator");
+        //        ls.createNewLocatorFile();
         ls.start();
 
         dts = new StartDatabaseInstance[dbs.length + 1];

@@ -1,4 +1,4 @@
-package org.h2o.test.endtoend.normal;
+package org.h2o.test.endtoend.fixture;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
@@ -13,21 +13,20 @@ import java.sql.Statement;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.h2o.test.TestDriver;
+import org.h2o.test.fixture.ConnectionDriver;
 
-public class EndToEndTestDriver extends TestDriver {
+public class EndToEndConnectionDriver extends ConnectionDriver {
 
-    public EndToEndTestDriver(final int db_port, final String database_base_directory_path, final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
+    public EndToEndConnectionDriver(final int db_port, final String database_base_directory_path, final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
 
         super(db_port, database_base_directory_path, database_name, username, password, connections_to_be_closed);
     }
 
-    public EndToEndTestDriver(final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
+    public EndToEndConnectionDriver(final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
 
         super(database_name, username, password, connections_to_be_closed);
     }
 
-    @Override
     public void createTable() throws SQLException {
 
         Statement statement = null;

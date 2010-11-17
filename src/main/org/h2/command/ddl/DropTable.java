@@ -152,9 +152,6 @@ public class DropTable extends SchemaCommand {
                     t.setModified();
                     db.removeSchemaObject(session, t);
                 }
-
-                // db.removeTableManager(fullTableName, true);
-
             }
             H2OEventBus.publish(new H2OEvent(db.getURL().getURL(), DatabaseStates.TABLE_DELETION, getSchema().getName() + "." + tableName));
         }
@@ -183,10 +180,6 @@ public class DropTable extends SchemaCommand {
         return 0;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.command.Prepared#acquireLocks()
-     */
     @Override
     public void acquireLocks(final TableProxyManager tableProxyManager) throws SQLException {
 
@@ -215,7 +208,7 @@ public class DropTable extends SchemaCommand {
 
                     final LockType lockToRequest = session.getApplicationAutoCommit() ? LockType.WRITE : LockType.DROP;
 
-                    tableProxy = TableProxy.getQueryProxyAndLock(tableManager, fullTableName, LockRequest.createNewLockRequest(session), lockToRequest, database, false);
+                    tableProxy = TableProxy.getTableProxyAndLock(tableManager, fullTableName, LockRequest.createNewLockRequest(session), lockToRequest, database, false);
                 }
             }
             tableProxyManager.addProxy(tableProxy);
@@ -223,18 +216,13 @@ public class DropTable extends SchemaCommand {
         else {
             tableProxyManager.addProxy(TableProxy.getDummyQueryProxy(LockRequest.createNewLockRequest(session)));
         }
-
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.command.Prepared#isRegularTable()
-     */
     @Override
     protected boolean isRegularTable() {
 
-        final Set<String> localSchema = session.getDatabase().getLocalSchema();
         try {
+            final Set<String> localSchema = session.getDatabase().getLocalSchema();
             return !session.getDatabase().isManagementDB() && !internalQuery && !localSchema.contains(getSchema().getName());
         }
         catch (final NullPointerException e) {
@@ -244,5 +232,4 @@ public class DropTable extends SchemaCommand {
             return false;
         }
     }
-
 }

@@ -16,6 +16,7 @@ import java.sql.SQLException;
 import org.h2.table.Table;
 import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.id.DatabaseURL;
+import org.h2o.test.fixture.MultiProcessTestBase;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;

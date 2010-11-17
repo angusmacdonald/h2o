@@ -23,7 +23,17 @@
  ***************************************************************************/
 package org.h2o.test.endtoend.normal;
 
-import org.h2o.test.DatabaseType;
+import java.io.IOException;
+import java.sql.SQLException;
+
+import org.h2o.test.fixture.IMemoryConnectionDriverFactory;
+import org.h2o.test.fixture.ITestManager;
+import org.h2o.test.fixture.MemoryConnectionDriverFactory;
+import org.h2o.test.fixture.MemoryTestManager;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 
 /**
  * User-oriented tests.
@@ -32,9 +42,29 @@ import org.h2o.test.DatabaseType;
  */
 public class EndToEndMemoryTests extends EndToEndTests {
 
-    @Override
-    public DatabaseType getDatabaseType() {
+    private final IMemoryConnectionDriverFactory connection_driver_factory = new MemoryConnectionDriverFactory();
 
-        return DatabaseType.MEMORY;
+    private final ITestManager test_manager = new MemoryTestManager(1, connection_driver_factory);
+
+    @Override
+    public ITestManager getTestManager() {
+
+        return test_manager;
+    }
+
+    @Override
+    @Test
+    @Ignore
+    public void persistence() throws SQLException, IOException, UnknownPlatformException {
+
+        // Not applicable to in-memory database.
+    }
+
+    @Override
+    @Test
+    @Ignore
+    public void rollbackWithoutAutoCommit() throws SQLException, IOException, UnknownPlatformException {
+
+        // Not applicable to in-memory database.
     }
 }

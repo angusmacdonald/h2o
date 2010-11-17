@@ -1,11 +1,28 @@
-/*
- * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved. Project Homepage:
- * http://blogs.cs.st-andrews.ac.uk/h2o H2O is free software: you can redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. H2O
- * is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General
- * Public License along with H2O. If not, see <http://www.gnu.org/licenses/>.
- */
+/***************************************************************************
+ *                                                                         *
+ * H2O                                                                     *
+ * Copyright (C) 2010 Distributed Systems Architecture Research Group      *
+ * University of St Andrews, Scotland                                      *
+ * http://blogs.cs.st-andrews.ac.uk/h2o/                                   *
+ *                                                                         *
+ * This file is part of H2O, a distributed database based on the open      *
+ * source database H2 (www.h2database.com).                                *
+ *                                                                         *
+ * H2O is free software: you can redistribute it and/or                    *
+ * modify it under the terms of the GNU General Public License as          *
+ * published by the Free Software Foundation, either version 3 of the      *
+ * License, or (at your option) any later version.                         *
+ *                                                                         *
+ * H2O is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ * GNU General Public License for more details.                            *
+ *                                                                         *
+ * You should have received a copy of the GNU General Public License       *
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.            *
+ *                                                                         *
+ ***************************************************************************/
+
 package org.h2o;
 
 import java.io.IOException;
@@ -29,13 +46,14 @@ import org.h2.util.NetUtils;
 import org.h2.util.SortedProperties;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.manager.PersistentSystemTable;
-import org.h2o.test.DatabaseType;
+import org.h2o.test.fixture.DatabaseType;
 import org.h2o.util.LocalH2OProperties;
 import org.h2o.util.exceptions.StartupException;
 
 import uk.ac.standrews.cs.nds.util.CommandLineArgs;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
 
 /**
@@ -100,7 +118,6 @@ public class H2O {
      */
     public static void main(final String[] args) throws StartupException, IOException, SQLException {
 
-        System.out.println("starting H2O");
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting H2O Server Instance.");
 
         final H2O db = new H2O(args);
@@ -149,21 +166,9 @@ public class H2O {
      * @param databaseDescriptorLocation
      * @param diagnosticLevel
      */
-    public H2O(final String databaseName, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
+    public H2O(final String databaseName, final String databaseBaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
 
         init(databaseName, databaseDescriptorLocation, diagnosticLevel);
-    }
-
-    /**
-     * Starts an in-memory database.
-     * 
-     * @param databaseName
-     * @param databaseDescriptorLocation
-     * @param diagnosticLevel
-     */
-    public H2O(final String databaseName, final DiagnosticLevel diagnosticLevel) {
-
-        this(databaseName, null, diagnosticLevel);
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -182,8 +187,8 @@ public class H2O {
         this.databaseName = databaseName;
         this.tcpPort = tcpPort;
         this.webPort = webPort;
-        this.databaseDescriptorLocation = databaseDescriptorLocation;
         this.databaseBaseDirectoryPath = databaseBaseDirectoryPath;
+        this.databaseDescriptorLocation = databaseDescriptorLocation;
         this.diagnosticLevel = diagnosticLevel;
 
         databaseType = DatabaseType.DISK;
@@ -212,17 +217,27 @@ public class H2O {
 
         final DatabaseType databaseType = processDatabaseType(arguments.get("-M"));
 
-        if (databaseType == DatabaseType.DISK) {
-            init(databaseName, tcpPort, webPort, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel);
-        }
-        else {
-            init(databaseName, databaseDescriptorLocation, diagnosticLevel);
+        switch (databaseType) {
+            case MEMORY: {
+
+                init(databaseName, databaseDescriptorLocation, diagnosticLevel);
+                break;
+            }
+            case DISK: {
+
+                init(databaseName, tcpPort, webPort, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel);
+                break;
+            }
+            default: {
+                ErrorHandling.hardError("unexpected database type");
+            }
         }
     }
 
     // -------------------------------------------------------------------------------------------------------
 
-    public static String createDatabaseURL(final int port, final String database_base_directory_path, final String database_name) {
+    // TODO move to DatabaseURL
+    public static DatabaseURL createDatabaseURL(final int port, final String database_base_directory_path, final String database_name) {
 
         String base = "";
         if (database_base_directory_path != null) {
@@ -237,12 +252,14 @@ public class H2O {
             }
         }
 
-        return "jdbc:h2:tcp://" + NetUtils.getLocalAddress() + ":" + port + "/" + base + database_name + port;
+        final DatabaseURL url = new DatabaseURL("tcp", NetUtils.getLocalAddress(), port, base + database_name + port, false);
+        return url;
     }
 
-    public static String createDatabaseURL(final String database_name) {
+    public static DatabaseURL createDatabaseURL(final String database_name) {
 
-        return "jdbc:h2:mem:" + database_name;
+        final DatabaseURL url = new DatabaseURL("mem", NetUtils.getLocalAddress(), 0, database_name, false);
+        return url;
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -265,7 +282,7 @@ public class H2O {
             databaseDescriptorLocation = locator.start();
         }
 
-        final String databaseURL = generateDatabaseURL();
+        final DatabaseURL databaseURL = generateDatabaseURL();
 
         startServer(databaseURL);
         initializeDatabase(databaseURL);
@@ -376,7 +393,7 @@ public class H2O {
      * @throws IOException if the server properties cannot be written
      * @throws SQLException if the server properties cannot be opened
      */
-    private void startServer(final String databaseURL) throws SQLException, IOException {
+    private void startServer(final DatabaseURL databaseURL) throws SQLException, IOException {
 
         final List<String> h2oArgs = new LinkedList<String>(); // Arguments to be passed to the H2 server.
         h2oArgs.add("-tcp");
@@ -415,26 +432,31 @@ public class H2O {
      * @throws SQLException 
      * @throws IOException 
      */
-    private void initializeDatabase(final String databaseURL) throws SQLException, IOException {
+    private void initializeDatabase(final DatabaseURL databaseURL) throws SQLException, IOException {
 
-        final LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(databaseURL));
+        initializeDatabaseProperties(databaseURL, diagnosticLevel, databaseDescriptorLocation, databaseName);
+
+        // Create a connection so that the database starts up, but don't do anything with it here.
+        connection = DriverManager.getConnection(databaseURL.getURL(), PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+    }
+
+    public static void initializeDatabaseProperties(final DatabaseURL databaseURL, final DiagnosticLevel diagnosticLevel, final String databaseDescriptorLocation, final String databaseName) throws IOException {
+
+        final LocalH2OProperties properties = new LocalH2OProperties(databaseURL);
 
         try {
             properties.loadProperties();
         }
         catch (final IOException e) {
             properties.createNewFile();
-            properties.setProperty("diagnosticLevel", diagnosticLevel.toString());
         }
 
         // Overwrite these properties regardless of whether properties file exists or not.
+        properties.setProperty("diagnosticLevel", diagnosticLevel.toString());
         properties.setProperty("descriptor", databaseDescriptorLocation);
         properties.setProperty("databaseName", databaseName);
 
         properties.saveAndClose();
-
-        // Create a connection so that the database starts up, but don't do anything with it here.
-        connection = DriverManager.getConnection(databaseURL, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
     }
 
     /**
@@ -444,17 +466,18 @@ public class H2O {
      * @throws IOException if the server properties cannot be written
      * @throws SQLException if the server properties cannot be opened
      */
-    private void setUpWebLink(final String databaseURL) throws IOException, SQLException {
+    private void setUpWebLink(final DatabaseURL databaseURL) throws IOException, SQLException {
 
         final Properties serverProperties = loadServerProperties();
         final List<String> servers = new LinkedList<String>();
+        final String url_as_string = databaseURL.getURL();
 
         for (int i = 0;; i++) {
             final String data = serverProperties.getProperty(String.valueOf(i));
             if (data == null) {
                 break;
             }
-            if (!data.contains(databaseURL)) {
+            if (!data.contains(url_as_string)) {
                 servers.add(data);
             }
 
@@ -467,7 +490,7 @@ public class H2O {
             i++;
         }
 
-        serverProperties.setProperty(i + "", "QuickStart-H2O-Database|org.h2.Driver|" + databaseURL + "|sa");
+        serverProperties.setProperty(i + "", "QuickStart-H2O-Database|org.h2.Driver|" + url_as_string + "|sa");
 
         final OutputStream out = FileUtils.openFileOutputStream(getPropertiesFileName(), false);
         serverProperties.store(out, Constants.SERVER_PROPERTIES_TITLE);
@@ -477,7 +500,7 @@ public class H2O {
 
     private String getPropertiesFileName() {
 
-        // store the properties in the user directory
+        // Store the properties in the user directory.
         return FileUtils.getFileInUserHome(Constants.SERVER_PROPERTIES_FILE);
     }
 
@@ -502,9 +525,19 @@ public class H2O {
         return text;
     }
 
-    private String generateDatabaseURL() {
+    private DatabaseURL generateDatabaseURL() {
 
-        if (databaseType == DatabaseType.DISK) { return createDatabaseURL(tcpPort, databaseBaseDirectoryPath, databaseName); }
-        return createDatabaseURL(databaseName);
+        switch (databaseType) {
+            case DISK: {
+                return createDatabaseURL(tcpPort, databaseBaseDirectoryPath, databaseName);
+            }
+            case MEMORY: {
+                return createDatabaseURL(databaseName);
+            }
+            default: {
+                ErrorHandling.hardError("unknown database type");
+                return null;
+            }
+        }
     }
 }

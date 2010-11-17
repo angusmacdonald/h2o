@@ -23,7 +23,11 @@
  ***************************************************************************/
 package org.h2o.test.endtoend.normal;
 
-import org.h2o.test.DatabaseType;
+
+import org.h2o.test.fixture.DiskConnectionDriverFactory;
+import org.h2o.test.fixture.DiskTestManager;
+import org.h2o.test.fixture.IDiskConnectionDriverFactory;
+import org.h2o.test.fixture.ITestManager;
 
 /**
  * User-oriented tests.
@@ -32,9 +36,13 @@ import org.h2o.test.DatabaseType;
  */
 public class EndToEndDiskTests extends EndToEndTests {
 
-    @Override
-    public DatabaseType getDatabaseType() {
+    private final IDiskConnectionDriverFactory connection_driver_factory = new DiskConnectionDriverFactory();
 
-        return DatabaseType.DISK;
+    private final ITestManager test_manager = new DiskTestManager(1, connection_driver_factory);
+
+    @Override
+    public ITestManager getTestManager() {
+
+        return test_manager;
     }
 }

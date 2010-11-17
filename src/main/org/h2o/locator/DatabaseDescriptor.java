@@ -1,11 +1,28 @@
-/*
- * Copyright (C) 2009-2010 School of Computer Science, University of St Andrews. All rights reserved. Project Homepage:
- * http://blogs.cs.st-andrews.ac.uk/h2o H2O is free software: you can redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. H2O
- * is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General
- * Public License along with H2O. If not, see <http://www.gnu.org/licenses/>.
- */
+/***************************************************************************
+ *                                                                         *
+ * H2O                                                                     *
+ * Copyright (C) 2010 Distributed Systems Architecture Research Group      *
+ * University of St Andrews, Scotland                                      *
+ * http://blogs.cs.st-andrews.ac.uk/h2o/                                   *
+ *                                                                         *
+ * This file is part of H2O, a distributed database based on the open      *
+ * source database H2 (www.h2database.com).                                *
+ *                                                                         *
+ * H2O is free software: you can redistribute it and/or                    *
+ * modify it under the terms of the GNU General Public License as          *
+ * published by the Free Software Foundation, either version 3 of the      *
+ * License, or (at your option) any later version.                         *
+ *                                                                         *
+ * H2O is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ * GNU General Public License for more details.                            *
+ *                                                                         *
+ * You should have received a copy of the GNU General Public License       *
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.            *
+ *                                                                         *
+ ***************************************************************************/
+
 package org.h2o.locator;
 
 import java.io.File;
@@ -38,9 +55,6 @@ public class DatabaseDescriptor {
 
     private static final String LOCATORLOCATIONS = "locatorLocations";
 
-    /**
-     * @param args
-     */
     public static void main(final String[] args) {
 
         final String fileLocation = "\\\\shell\\angus\\public_html\\databases";
@@ -56,9 +70,6 @@ public class DatabaseDescriptor {
         properties = new Properties();
     }
 
-    /**
-     * @param url
-     */
     public DatabaseDescriptor(final String url) {
 
         propertiesFileLocation = url;
@@ -103,11 +114,11 @@ public class DatabaseDescriptor {
             }
         }
         else { // Try to open the file from disk.
-            final File f = new File(propertiesFileLocation);
-            FileInputStream fis = null;
+            final File file = new File(propertiesFileLocation);
+            FileInputStream input_stream = null;
             try {
-                fis = new FileInputStream(f);
-                properties.load(fis);
+                input_stream = new FileInputStream(file);
+                properties.load(input_stream);
             }
             catch (final FileNotFoundException e) {
                 throw new StartupException(e.getMessage());
@@ -117,10 +128,12 @@ public class DatabaseDescriptor {
             }
             finally {
                 try {
-                    fis.close();
+                    if (input_stream != null) {
+                        input_stream.close();
+                    }
                 }
                 catch (final IOException e) {
-                    //Doesn't matter at this point.
+                    // Doesn't matter at this point.
                 }
             }
         }

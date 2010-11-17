@@ -6,7 +6,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General
  * Public License along with H2O. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.test;
+package org.h2o.test.fixture;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -48,8 +48,8 @@ public class TestBase2 {
     Connection ca = null;
     Connection cb = null;
 
-    Statement sa = null;
-    Statement sb = null;
+    protected Statement sa = null;
+    protected Statement sb = null;
 
     private static final int TCP_PORT1 = 9990;
     private static final int TCP_PORT2 = 9999;
