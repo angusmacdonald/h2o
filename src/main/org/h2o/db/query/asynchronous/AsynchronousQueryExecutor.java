@@ -240,7 +240,7 @@ public class AsynchronousQueryExecutor {
                 continue;
             }
 
-            assert asyncResult != null : "The result of a completed transaction should never be null."; //$NON-NLS-1$
+            assert asyncResult != null : "The result of a completed transaction should never be null.";
 
             if (asyncResult.getException() == null) { // If the query executed successfully.
                 final int result = asyncResult.getResult();
@@ -260,9 +260,8 @@ public class AsynchronousQueryExecutor {
                 final CommitResult commitResult = new CommitResult(true, asyncResult.getWrapper(), asyncResult.getUpdateID(), expectedUpdateID, tableName);
                 recentlyCompletedQueries.add(commitResult);
 
-                if (asyncResult.getException() != null) {
-                    asyncResult.getException().printStackTrace();
-                }
+                asyncResult.getException().printStackTrace();
+
                 globalCommit = false;
             }
 

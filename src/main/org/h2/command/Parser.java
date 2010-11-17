@@ -1170,7 +1170,7 @@ public class Parser {
 
         read("TABLE");
         final Table table = readTableOrView();
-        final TruncateTable command = new TruncateTable(session);
+        final TruncateTable command = new TruncateTable(session, internalQuery);
         command.setTable(table);
         return command;
     }

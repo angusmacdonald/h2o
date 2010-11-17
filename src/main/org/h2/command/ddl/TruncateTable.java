@@ -18,13 +18,24 @@ import org.h2o.db.query.locking.LockType;
  */
 public class TruncateTable extends DefineCommand {
 
-    public TruncateTable(final Session session) {
+    public TruncateTable(final Session session, final boolean internalQuery) {
 
         super(session);
+
+        this.internalQuery = internalQuery;
     }
 
     @Override
-    public int update() throws SQLException {
+    public int update(final String transactionName) throws SQLException {
+
+        /*
+         * (QUERY PROPAGATED TO ALL REPLICAS).
+         */
+        if (!internalQuery && isRegularTable() && (tableProxy.getNumberOfReplicas() > 1 || !isReplicaLocal(tableProxy))) {
+
+        return tableProxy.executeUpdate(sqlStatement, transactionName, session);
+
+        }
 
         session.commit(true);
         if (!table.canTruncate()) { throw Message.getSQLException(ErrorCode.CANNOT_TRUNCATE_1, table.getSQL()); }

@@ -571,9 +571,10 @@ public class TableManager extends PersistentManager implements TableManagerRemot
     public void releaseLockAndUpdateReplicaState(final boolean commit, final LockRequest lockRequest, final Collection<CommitResult> committedQueries, final boolean asynchronousCommit) throws RemoteException, MovedException, SQLException {
 
         if (!tableAlreadyExists && commit) { //If it's not a commit (on a CREATE TABLE request) nothing needs to be persisted.
-            tableAlreadyExists = true;
             //This commit is the first commit of this table, so we must update the System Table.
             completeCreationByUpdatingSystemTable();
+
+            tableAlreadyExists = true;
         }
 
         //Find the type of lock that was taken out.

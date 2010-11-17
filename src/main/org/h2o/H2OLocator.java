@@ -58,6 +58,7 @@ public class H2OLocator {
      */
     public static void main(final String[] args) throws IOException {
 
+        Diagnostic.setLevel(DiagnosticLevel.FINAL);
         final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
 
         final String databaseName = arguments.get("-n");
