@@ -25,16 +25,13 @@
 package org.h2o.test.fixture;
 
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.HashSet;
 
 import org.h2.util.NetUtils;
 import org.h2o.H2O;
 import org.h2o.db.id.DatabaseURL;
 
 import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
-import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
 
 public class MemoryTestManager extends TestManager {
@@ -59,14 +56,8 @@ public class MemoryTestManager extends TestManager {
     @Override
     public void setUp() throws SQLException, IOException, UnknownPlatformException, UndefinedDiagnosticLevelException {
 
-        Diagnostic.setLevel(DIAGNOSTIC_LEVEL);
+        super.setUp();
 
-        setUpConfigDirectoryPath();
-        setUpDatabaseDirectoryPaths();
-
-        persistent_state_manager = new PersistentStateManager(config_directory_path, database_base_directory_paths);
-
-        startup();
         startupLocator();
         descriptor_file_path = getDatabaseDescriptorLocation();
         initializeDatabaseProperties(descriptor_file_path);
@@ -83,25 +74,16 @@ public class MemoryTestManager extends TestManager {
         closeConnections();
         shutdownLocator();
 
-        persistent_state_manager.deletePersistentState();
+        super.tearDown();
+    }
 
-        first_locator_port++;
-        first_db_port += number_of_databases;
+    @Override
+    public ConnectionDriver makeConnectionDriver(final int db_index) {
+
+        return connection_driver_factory.makeConnectionDriver(db_names[db_index], USER_NAME, PASSWORD, connections_to_be_closed);
     }
 
     // -------------------------------------------------------------------------------------------------------
-
-    @Override
-    public void startup() throws IOException, UnknownPlatformException {
-
-        connections_to_be_closed = new HashSet<Connection>();
-    }
-
-    @Override
-    public void shutdown() {
-
-        closeConnections();
-    }
 
     @Override
     protected void setUpDatabaseDirectoryPaths() {
@@ -111,22 +93,18 @@ public class MemoryTestManager extends TestManager {
         database_base_directory_paths = new String[]{H2O.DEFAULT_DATABASE_DIRECTORY_PATH};
     }
 
+    // -------------------------------------------------------------------------------------------------------
+
     private void initializeDatabaseProperties(final String descriptor_file_path) throws IOException {
 
         db_names = new String[number_of_databases];
 
         for (int i = 0; i < number_of_databases; i++) {
 
-            db_names[i] = DATABASE_NAME + System.currentTimeMillis();
+            db_names[i] = DATABASE_NAME_ROOT + System.currentTimeMillis();
             final DatabaseURL url = new DatabaseURL("mem", NetUtils.getLocalAddress(), 0, db_names[i], false);
 
             H2O.initializeDatabaseProperties(url, DIAGNOSTIC_LEVEL, descriptor_file_path, db_names[i]);
         }
-    }
-
-    @Override
-    public ConnectionDriver makeConnectionDriver(final int db_index) {
-
-        return connection_driver_factory.makeConnectionDriver(db_names[db_index], USER_NAME, PASSWORD, connections_to_be_closed);
     }
 }
