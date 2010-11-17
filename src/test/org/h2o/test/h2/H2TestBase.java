@@ -36,7 +36,7 @@ public abstract class H2TestBase {
     /**
      * The base directory to write test databases.
      */
-    static String baseDir = getTestDir("");
+    protected String baseDir = getTestDir("");
 
     protected static final String BASE_TEST_DIR = "data";
 
