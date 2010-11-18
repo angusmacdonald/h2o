@@ -34,7 +34,6 @@ public class CommandList extends Command {
         if (remaining != null) {
             this.remaining = remaining.split(";"); // TODO not particularly safe. i.e. no query can contain a semi-colon.
         }
-
     }
 
     @Override
@@ -79,13 +78,8 @@ public class CommandList extends Command {
         }
 
         return rollbackException;
-
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.command.Command#update(boolean)
-     */
     @Override
     protected int update(final boolean partOfMultiQueryTransaction) throws SQLException, RemoteException {
 
@@ -98,7 +92,6 @@ public class CommandList extends Command {
         /*
          * Execute the first update, then iterate through every subsequent update.
          */
-        // proxyManager.begin();
 
         final int updateCount = command.executeUpdate(true);
         final SQLException rollbackException = executeRemaining();
@@ -167,30 +160,18 @@ public class CommandList extends Command {
         return command.queryMeta();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.command.Command#acquireLocks()
-     */
     @Override
     public void acquireLocks() throws SQLException {
 
         command.acquireLocks();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.command.Command#shouldBePropagated()
-     */
     @Override
     public boolean shouldBePropagated() {
 
         return command.shouldBePropagated();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.command.CommandInterface#isPreparedStatement(boolean)
-     */
     @Override
     public void setIsPreparedStatement(final boolean preparedStatement) {
 

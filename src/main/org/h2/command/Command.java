@@ -247,8 +247,7 @@ public abstract class Command implements CommandInterface {
         final Database database = session.getDatabase();
 
         session.waitIfExclusiveModeEnabled();
-        // TODO this looks interesting...
-        // synchronized (sync) {
+
         final int rollback = session.getLogId();
         session.setCurrentCommand(this, startTime);
         try {
@@ -282,7 +281,7 @@ public abstract class Command implements CommandInterface {
             }
         }
         catch (final SQLException e) {
-            // e.printStackTrace();
+
             Message.addSQL(e, sql);
             database.exceptionThrown(e, sql);
             database.checkPowerOff();
@@ -313,7 +312,6 @@ public abstract class Command implements CommandInterface {
         finally {
             stop();
         }
-        // }
     }
 
     @Override
