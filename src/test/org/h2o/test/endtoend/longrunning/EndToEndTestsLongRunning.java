@@ -57,8 +57,9 @@ public class EndToEndTestsLongRunning extends EndToEndTestsCommon {
         final int number_of_values = 5;
         final int number_of_threads = 5;
         final int delay = 5000;
+        final int number_of_columns = 20;
 
-        multipleThreads(number_of_values, number_of_threads, delay);
+        multipleThreads(number_of_values, number_of_threads, delay, number_of_columns);
     }
 
     /**
@@ -75,15 +76,17 @@ public class EndToEndTestsLongRunning extends EndToEndTestsCommon {
 
         final int number_of_values = 20;
         final int number_of_threads = 20;
-        final int delay = 0;
+        final int delay = 1000;
+        final int number_of_columns = 20;
 
-        multipleThreads(number_of_values, number_of_threads, delay);
+        multipleThreads(number_of_values, number_of_threads, delay, number_of_columns);
     }
 
-    private void multipleThreads(final int number_of_values, final int number_of_threads, final int delay) throws SQLException, IOException, UnknownPlatformException {
+    private void multipleThreads(final int number_of_values, final int number_of_threads, final int delay, final int number_of_columns) throws SQLException, IOException, UnknownPlatformException {
 
         final EndToEndConnectionDriver driver1 = makeSpecificConnectionDriver();
 
+        driver1.setNumberOfColumns(number_of_columns);
         driver1.createTable();
         driver1.commit();
 
@@ -98,6 +101,7 @@ public class EndToEndTestsLongRunning extends EndToEndTestsCommon {
             final EndToEndConnectionDriver driver = makeSpecificConnectionDriver();
 
             driver.setAutoCommitOff();
+            driver.setNumberOfColumns(number_of_columns);
 
             pool.execute(new UpdateThread(driver, number_of_values, j * number_of_values, delay, sync));
         }

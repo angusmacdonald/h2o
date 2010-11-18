@@ -17,6 +17,12 @@ import org.h2o.test.fixture.ConnectionDriver;
 
 public class EndToEndConnectionDriver extends ConnectionDriver {
 
+    private static final int DEFAULT_NUMBER_OF_COLUMNS = 1;
+
+    private int number_of_columns = DEFAULT_NUMBER_OF_COLUMNS;
+
+    // -------------------------------------------------------------------------------------------------------
+
     public EndToEndConnectionDriver(final int db_port, final String database_base_directory_path, final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
 
         super(db_port, database_base_directory_path, database_name, username, password, connections_to_be_closed);
@@ -27,6 +33,8 @@ public class EndToEndConnectionDriver extends ConnectionDriver {
         super(database_name, username, password, connections_to_be_closed);
     }
 
+    // -------------------------------------------------------------------------------------------------------
+
     public void createTable() throws SQLException {
 
         Statement statement = null;
@@ -34,7 +42,7 @@ public class EndToEndConnectionDriver extends ConnectionDriver {
             statement = connection.createStatement();
 
             // Create a table.
-            statement.executeUpdate("CREATE TABLE TEST (ID INT);");
+            statement.executeUpdate(makeCreationStatement());
         }
         finally {
             closeIfNotNull(statement);
@@ -44,6 +52,11 @@ public class EndToEndConnectionDriver extends ConnectionDriver {
     public void insertOneRow() {
 
         insertRows(1, 0, false);
+    }
+
+    public void insertRows(final int number_of_values) {
+
+        insertRows(number_of_values, 0, false);
     }
 
     public void insertRows(final int number_of_rows_to_insert, final int starting_value, final boolean commit) {
@@ -68,25 +81,6 @@ public class EndToEndConnectionDriver extends ConnectionDriver {
         }
     }
 
-    private void doInsert(final int number_of_rows_to_insert, final int starting_value) throws SQLException {
-
-        Statement statement = null;
-        try {
-            statement = connection.createStatement();
-
-            for (int i = 0; i < number_of_rows_to_insert; i++) {
-
-                final int val = i + starting_value;
-
-                statement.executeUpdate("INSERT INTO TEST VALUES(" + val + ");");
-                sleep(delay);
-            }
-        }
-        finally {
-            closeIfNotNull(statement);
-        }
-    }
-
     public void assertOneRowIsPresent() throws SQLException {
 
         assertDataIsCorrect(1);
@@ -107,12 +101,57 @@ public class EndToEndConnectionDriver extends ConnectionDriver {
         }
     }
 
+    public void assertTableIsNotPresent() throws SQLException {
+
+        Statement statement = null;
+        ResultSet result_set = null;
+        try {
+            statement = connection.createStatement();
+            result_set = statement.executeQuery(makeSelectionStatement());
+
+            fail("database TEST was present unexpectedly");
+        }
+        catch (final SQLException e) {
+            // Expected path since TEST should not exist.
+        }
+        finally {
+            closeIfNotNull(result_set);
+            closeIfNotNull(statement);
+        }
+    }
+
+    public void setNumberOfColumns(final int number_of_columns) {
+
+        this.number_of_columns = number_of_columns;
+    }
+
+    // -------------------------------------------------------------------------------------------------------
+
+    private void doInsert(final int number_of_rows_to_insert, final int starting_value) throws SQLException {
+
+        Statement statement = null;
+        try {
+            statement = connection.createStatement();
+
+            for (int i = 0; i < number_of_rows_to_insert; i++) {
+
+                final int val = i + starting_value;
+
+                statement.executeUpdate(makeInsertionStatement(val));
+                sleep(delay);
+            }
+        }
+        finally {
+            closeIfNotNull(statement);
+        }
+    }
+
     private void assertCorrectNumberOfRows(final Statement statement, final int number_of_rows_expected) throws SQLException {
 
         ResultSet result_set = null;
 
         try {
-            result_set = statement.executeQuery("SELECT * FROM TEST;");
+            result_set = statement.executeQuery(makeSelectionStatement());
 
             for (int i = 0; i < number_of_rows_expected; i++) {
                 assertThat("expected another row", result_set.next(), is(true));
@@ -130,7 +169,7 @@ public class EndToEndConnectionDriver extends ConnectionDriver {
         ResultSet result_set = null;
 
         try {
-            result_set = statement.executeQuery("SELECT * FROM TEST;");
+            result_set = statement.executeQuery(makeSelectionStatement());
 
             for (int i = 0; i < number_of_rows_expected; i++) {
 
@@ -153,7 +192,7 @@ public class EndToEndConnectionDriver extends ConnectionDriver {
         ResultSet result_set = null;
 
         try {
-            result_set = statement.executeQuery("SELECT * FROM TEST;");
+            result_set = statement.executeQuery(makeSelectionStatement());
 
             final Set<Integer> already_seen = new HashSet<Integer>();
 
@@ -173,27 +212,42 @@ public class EndToEndConnectionDriver extends ConnectionDriver {
         }
     }
 
-    public void assertTableIsNotPresent() throws SQLException {
+    private String makeCreationStatement() {
 
-        Statement statement = null;
-        ResultSet result_set = null;
-        try {
-            statement = connection.createStatement();
-            result_set = statement.executeQuery("SELECT * FROM TEST;");
+        final StringBuilder builder = new StringBuilder();
 
-            fail("database TEST was present unexpectedly");
+        builder.append("CREATE TABLE TEST (");
+        for (int i = 0; i < number_of_columns; i++) {
+            if (i > 0) {
+                builder.append(", ");
+            }
+            builder.append("ID");
+            builder.append(i);
+            builder.append(" INT");
         }
-        catch (final SQLException e) {
-            // Expected path since TEST should not exist.
-        }
-        finally {
-            closeIfNotNull(result_set);
-            closeIfNotNull(statement);
-        }
+        builder.append(");");
+
+        return builder.toString();
     }
 
-    public void insertRows(final int number_of_values) {
+    private String makeInsertionStatement(final int val) {
 
-        insertRows(number_of_values, 0, false);
+        final StringBuilder builder = new StringBuilder();
+
+        builder.append("INSERT INTO TEST VALUES(");
+        for (int i = 0; i < number_of_columns; i++) {
+            if (i > 0) {
+                builder.append(", ");
+            }
+            builder.append(val);
+        }
+        builder.append(");");
+
+        return builder.toString();
+    }
+
+    private String makeSelectionStatement() {
+
+        return "SELECT * FROM TEST;";
     }
 }
