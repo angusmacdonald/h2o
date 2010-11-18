@@ -36,13 +36,13 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
 // Unit tests.
-// H2oProperties.class,
+// H2oProperties.class, 
                 TransactionNameTests.class,
                 // Database Tests
                 SystemTableTests.class, MultipleSchemaTests.class, ReplicaTests.class, CustomSettingsTests.class, IndexTests.class, UpdateTests.class, MultiQueryTransactionTests.class, H2Tests.class, WrapperTests.class, RestartTests.class, LocatorTests.class, ChordTests.class,
                 // End-to-end tests
                 org.h2o.test.endtoend.suites.AllTests.class,
-                //Other multi-process tests.
+                // Other multi-process tests.
                 AsynchronousTests.class, FailureTests.class})
 public class AllTests {
 

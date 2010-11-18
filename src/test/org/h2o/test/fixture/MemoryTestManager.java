@@ -40,7 +40,10 @@ import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
  */
 public class MemoryTestManager extends TestManager {
 
+    // The names of the in-memory databases.
     private String[] db_names;
+
+    // A factory for making connections to in-memory databases, specialised for a particular set of tests.
     private final IMemoryConnectionDriverFactory connection_driver_factory;
 
     // -------------------------------------------------------------------------------------------------------
