@@ -44,18 +44,16 @@ public class LockRequest implements Serializable {
     }
 
     @Override
-    public boolean equals(final Object obj) {
+    public boolean equals(final Object other) {
 
-        if (this == obj) { return true; }
-        if (obj == null) { return false; }
-        if (getClass() != obj.getClass()) { return false; }
-        final LockRequest other = (LockRequest) obj;
-        if (databaseMakingRequest == null) {
-            if (other.databaseMakingRequest != null) { return false; }
+        try {
+            final LockRequest other_request = (LockRequest) other;
+
+            return other_request != null && (databaseMakingRequest == other_request.databaseMakingRequest || databaseMakingRequest != null && databaseMakingRequest.equals(other_request.databaseMakingRequest)) && sessionID == other_request.sessionID;
         }
-        else if (!databaseMakingRequest.equals(other.databaseMakingRequest)) { return false; }
-        if (sessionID != other.sessionID) { return false; }
-        return true;
+        catch (final ClassCastException e) {
+            return false;
+        }
     }
 
     @Override
@@ -63,5 +61,4 @@ public class LockRequest implements Serializable {
 
         return "LockRequest [databaseMakingRequest=" + databaseMakingRequest + ", sessionID=" + sessionID + "]";
     }
-
 }

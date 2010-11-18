@@ -618,7 +618,7 @@ public abstract class Prepared {
      */
     public void acquireLocks(final TableProxyManager tableProxyManager) throws SQLException {
 
-        tableProxyManager.addProxy(TableProxy.getQueryProxyAndLock(table, LockType.READ, LockRequest.createNewLockRequest(session), session.getDatabase()));
+        tableProxyManager.addProxy(TableProxy.getTableProxyAndLock(table, LockType.READ, LockRequest.createNewLockRequest(session), session.getDatabase()));
     }
 
     public void acquireLocks(final TableProxyManager tableProxyManager, final Table table, final LockType lockRequested) throws SQLException {
@@ -628,7 +628,7 @@ public abstract class Prepared {
             tableProxy = tableProxyManager.getQueryProxy(table.getFullName());
 
             if (!lockAlreadyGranted(tableProxy)) {
-                tableProxy = TableProxy.getQueryProxyAndLock(table, lockRequested, LockRequest.createNewLockRequest(session), session.getDatabase());
+                tableProxy = TableProxy.getTableProxyAndLock(table, lockRequested, LockRequest.createNewLockRequest(session), session.getDatabase());
             }
 
             tableProxyManager.addProxy(tableProxy);

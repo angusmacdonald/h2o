@@ -1249,7 +1249,7 @@ public class Select extends Query {
                     TableProxy qp = tableProxyManager.getQueryProxy(table.getFullName());
 
                     if (qp == null || qp.getLockGranted().equals(LockType.NONE)) {
-                        qp = TableProxy.getQueryProxyAndLock(table, LockType.READ, LockRequest.createNewLockRequest(session), session.getDatabase());
+                        qp = TableProxy.getTableProxyAndLock(table, LockType.READ, LockRequest.createNewLockRequest(session), session.getDatabase());
                     }
 
                     tableProxyManager.addProxy(qp);
@@ -1262,7 +1262,7 @@ public class Select extends Query {
                     for (final Table theseTables : tables) {
                         if (!session.getDatabase().isTableLocal(theseTables.getSchema())) {
 
-                            final TableProxy qp = TableProxy.getQueryProxyAndLock(theseTables, LockType.READ, LockRequest.createNewLockRequest(session), session.getDatabase());
+                            final TableProxy qp = TableProxy.getTableProxyAndLock(theseTables, LockType.READ, LockRequest.createNewLockRequest(session), session.getDatabase());
                             tableProxyManager.addProxy(qp);
                         }
                     }

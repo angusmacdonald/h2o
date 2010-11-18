@@ -113,20 +113,12 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
         return databaseURL.getOriginalURL();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#getLocation()
-     */
     @Override
     public DatabaseURL getURL() throws RemoteException {
 
         return databaseURL;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.comms.remote.DatabaseInstanceRemote#getSystemTableLocation()
-     */
     @Override
     public DatabaseURL getSystemTableURL() throws RemoteException {
 
@@ -221,17 +213,16 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
     }
 
     @Override
-    public boolean equals(final Object obj) {
+    public boolean equals(final Object other) {
 
-        if (this == obj) { return true; }
-        if (obj == null) { return false; }
-        if (getClass() != obj.getClass()) { return false; }
-        final DatabaseInstance other = (DatabaseInstance) obj;
-        if (databaseURL.getURL() == null) {
-            if (other.databaseURL.getURL() != null) { return false; }
+        try {
+            final DatabaseInstance other_wrapper = (DatabaseInstance) other;
+
+            return other_wrapper != null && (databaseURL.getURL() == other_wrapper.databaseURL.getURL() || databaseURL.getURL() != null && databaseURL.getURL().equals(other_wrapper.databaseURL.getURL()));
         }
-        else if (!databaseURL.getURL().equals(other.databaseURL.getURL())) { return false; }
-        return true;
+        catch (final ClassCastException e) {
+            return false;
+        }
     }
 
     @Override

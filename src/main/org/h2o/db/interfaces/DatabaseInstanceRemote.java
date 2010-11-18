@@ -35,21 +35,21 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit {
      * @return
      * @throws RemoteException
      */
-    public String getConnectionString() throws RemoteException;
+    String getConnectionString() throws RemoteException;
 
     /**
      * Get the connection information for this database instance, including the instances RMI port.
      * 
      * @return Object containing all connection information for this database.
      */
-    public DatabaseURL getURL() throws RemoteException;
+    DatabaseURL getURL() throws RemoteException;
 
     /**
      * Get the URL of the System Table to which this instance is connected.
      * 
      * @return Object containing all connection information for the System Table.
      */
-    public DatabaseURL getSystemTableURL() throws RemoteException;
+    DatabaseURL getSystemTableURL() throws RemoteException;
 
     /**
      * Execute the given SQL update on this instance. Since no query proxy is provided with this method call the database instance must
@@ -79,7 +79,7 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit {
      * @throws RemoteException
      *             Thrown if there were problems connecting to the instance.
      */
-    public void setSystemTableLocation(IChordRemoteReference systemTableLocation, DatabaseURL databaseURL) throws RemoteException;
+    void setSystemTableLocation(IChordRemoteReference systemTableLocation, DatabaseURL databaseURL) throws RemoteException;
 
     /**
      * Look for a reference to the specified Table Manager. This may be called by a System Table which has just been re-instantiated from
@@ -92,7 +92,7 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit {
      * @throws RemoteException
      *             Thrown if there were problems connecting to the instance.
      */
-    public TableManagerRemote findTableManagerReference(TableInfo tableInfo, boolean searchOnlyCache) throws RemoteException;
+    TableManagerRemote findTableManagerReference(TableInfo tableInfo, boolean searchOnlyCache) throws RemoteException;
 
     /**
      * Set whether this database instance is alive or being shut down.
@@ -102,7 +102,7 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit {
      * @throws RemoteException
      *             Thrown if there were problems connecting to the instance.
      */
-    public void setAlive(boolean alive) throws RemoteException;
+    void setAlive(boolean alive) throws RemoteException;
 
     /**
      * Recreate the System Table on this machine.
@@ -111,7 +111,7 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit {
      * @throws RemoteException
      * @throws SystemTableAccessException
      */
-    public SystemTableRemote recreateSystemTable() throws RemoteException, SQLException, SystemTableAccessException;
+    SystemTableRemote recreateSystemTable() throws RemoteException, SQLException, SystemTableAccessException;
 
     /**
      * Recreate a Table Manager on this machine.
@@ -121,7 +121,7 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit {
      * @return True if the Table Manager was successfully recreated.
      * @throws RemoteException
      */
-    public boolean recreateTableManager(TableInfo tableInfo, DatabaseURL databaseURL) throws RemoteException;
+    boolean recreateTableManager(TableInfo tableInfo, DatabaseURL databaseURL) throws RemoteException;
 
     /**
      * Checks if this instance is running the System Table.
@@ -129,13 +129,12 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit {
      * @return True if this is machine is running the System Table; otherwise false.
      * @throws RemoteException
      */
-    public boolean isSystemTable() throws RemoteException;
+    boolean isSystemTable() throws RemoteException;
 
     /**
      * Get a reference to the reference for the System Table that this machine has.
      * 
      * @return
      */
-    public SystemTableRemote getSystemTable() throws RemoteException;
-
+    SystemTableRemote getSystemTable() throws RemoteException;
 }

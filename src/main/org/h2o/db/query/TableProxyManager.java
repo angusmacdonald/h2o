@@ -93,7 +93,6 @@ public class TableProxyManager {
         this(db, session, false);
 
         queries = new LinkedList<String>();
-
     }
 
     /**
@@ -123,7 +122,6 @@ public class TableProxyManager {
         requestingDatabase = LockRequest.createNewLockRequest(session);
 
         tableProxies = new HashMap<String, TableProxy>();
-
     }
 
     /**
@@ -161,7 +159,7 @@ public class TableProxyManager {
             }
             else {
                 /*
-                 * Adds the local database to the set of databases holding something relevent to the query, IF the set is currently empty.
+                 * Adds the local database to the set of databases holding something relevant to the query, IF the set is currently empty.
                  * Executed if no replica location was specified by the query proxy, which will happen on queries which don't involve a
                  * particular table (these are always local anyway).
                  */
@@ -175,25 +173,23 @@ public class TableProxyManager {
     /**
      * Tests whether any locks are already held for the given table, either by the new proxy, or by the manager itself.
      * 
-     * @param proxy
-     *            New proxy.
+     * @param proxy new proxy.
      * @return true if locks are already held by one of the proxies; otherwise false.
      */
     public boolean hasLock(final TableProxy newProxy) {
 
         return newProxy.getLockGranted() != LockType.NONE; // this proxy already holds the required lock
-
     }
 
     public void releaseReadLocks() {
 
         final Set<TableProxy> toRemove = new HashSet<TableProxy>();
 
-        for (final TableProxy qp : tableProxies.values()) {
-            if (qp.getLockGranted().equals(LockType.READ)) {
+        for (final TableProxy proxy : tableProxies.values()) {
+            if (proxy.getLockGranted().equals(LockType.READ)) {
                 try {
-                    toRemove.add(qp);
-                    qp.getTableManager().releaseLockAndUpdateReplicaState(false, requestingDatabase, null, false);
+                    toRemove.add(proxy);
+                    proxy.getTableManager().releaseLockAndUpdateReplicaState(false, requestingDatabase, null, false);
                 }
                 catch (final Exception e) {
                     ErrorHandling.errorNoEvent("Table Manager could not be contacted: " + e.getMessage());
@@ -202,9 +198,9 @@ public class TableProxyManager {
             }
         }
 
-        for (final TableProxy qpToRemove : toRemove) {
+        for (final TableProxy proxy : toRemove) {
 
-            tableProxies.remove(qpToRemove.getTableName().getFullTableName());
+            tableProxies.remove(proxy.getTableName().getFullTableName());
         }
     }
 
@@ -224,64 +220,52 @@ public class TableProxyManager {
 
         try {
             if (getTableManagersThatHoldLocks().size() == 0 && allReplicas.size() > 0 && h2oCommit) {
+
                 // H2O commit required to prevent stack overflow on recursive commit calls. testExecuteCall test fails without this.
+
                 /*
                  * tableManagers.size() == 0 - indicates this is a local internal database operation (e.g. the TCP server doing something).
                  * allReplicas.size() > 0 - confirms it is an internal operation. otherwise it may be a COMMIT from the application or a
                  * prepared statement.
                  */
-
                 commitLocal(commit, h2oCommit);
-
-                return;
             }
-            else if (getTableManagersThatHoldLocks().size() == 0 && allReplicas.size() == 0) {
+            else if ((getTableManagersThatHoldLocks().size() != 0 || allReplicas.size() > 0) && db.getAsynchronousQueryManager() != null) {
 
-                return;
-            }
-            else if (db.getAsynchronousQueryManager() == null) {
+                final Transaction committingTransaction = db.getAsynchronousQueryManager().getTransaction(transactionName);
 
-            return; // management db etc may call this.
-            }
+                Set<CommitResult> committedQueries = null;
 
-            final Transaction committingTransaction = db.getAsynchronousQueryManager().getTransaction(transactionName);
+                if (committingTransaction == null) {
+                    committedQueries = new HashSet<CommitResult>();
 
-            Set<CommitResult> commitedQueries = null;
+                    for (final Entry<DatabaseInstanceWrapper, Integer> replica : allReplicas.entrySet()) {
+                        committedQueries.add(new CommitResult(commit, replica.getKey(), replica.getValue(), updateID, tableName));
+                    }
+                }
+                else {
+                    /*
+                     * Get the set of replicas that were updated. This is sent to the table manager when locks are released.
+                     */
+                    committedQueries = committingTransaction.getCompletedQueries();
+                    committingTransaction.setHasCommitted(h2oCommit);
+                }
 
-            if (committingTransaction == null) {
-                commitedQueries = new HashSet<CommitResult>();
+                // TODO should this happen later?
+                releaseLocksAndUpdateReplicaState(committedQueries, commit);
 
-                for (final Entry<DatabaseInstanceWrapper, Integer> replica : allReplicas.entrySet()) {
-                    commitedQueries.add(new CommitResult(commit, replica.getKey(), replica.getValue(), updateID, tableName));
+                final boolean commitActionSuccessful = sendCommitMessagesToReplicas(commit, h2oCommit, db, committedQueries);
+
+                if (!commitActionSuccessful) {
+                    ErrorHandling.errorNoEvent("Commit message to replicas was unsuccessful for transaction '" + transactionName + "'.");
+                }
+
+                printTraceOutputOfExecutedQueries();
+
+                if (h2oCommit) {
+                    tableProxies.clear();
                 }
             }
-            else {
-                /*
-                 * Get the set of replicas that were updated. This is sent to the table manager when locks are released.
-                 */
-                commitedQueries = committingTransaction.getCompletedQueries();
-                committingTransaction.setHasCommitted(h2oCommit);
-            }
-
-            releaseLocksAndUpdateReplicaState(commitedQueries, commit);
-
-            final boolean commitActionSuccessful = sendCommitMessagesToReplicas(commit, h2oCommit, db, commitedQueries);
-
-            if (!commitActionSuccessful) {
-                ErrorHandling.errorNoEvent("Commit message to replicas was unsuccessful for transaction '" + transactionName + "'.");
-            }
-
-            // if (commitActionSuccessful && commit)
-            // updatedReplicas = allReplicas; // For asynchronous updates this should check for each replicas success.
-            //
-            // endTransaction(commitedQueries);
-
-            printTraceOutputOfExecutedQueries();
-
-            if (h2oCommit) {
-                tableProxies.clear();
-            }
-
         }
         finally {
             hasCommitted = true;
@@ -425,14 +409,10 @@ public class TableProxyManager {
         prepareCommand.executeUpdate();
     }
 
-    /**
-     * 
-     */
     public void begin() throws SQLException {
 
         final Command command = parser.prepareCommand("BEGIN");
         command.executeUpdate();
-
     }
 
     /**
@@ -451,9 +431,6 @@ public class TableProxyManager {
         return queries;
     }
 
-    /**
-     * @return
-     */
     public boolean hasAllLocks() {
 
         for (final TableProxy qp : tableProxies.values()) {
@@ -533,5 +510,4 @@ public class TableProxyManager {
 
         this.hasCommitted = hasCommitted;
     }
-
 }

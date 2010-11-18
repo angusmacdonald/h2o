@@ -78,8 +78,7 @@ public class TableProxy implements Serializable {
     /**
      * Proxy for the Table Manager of this table. Used to release any locks held at the end of the transaction.
      */
-    private TableManagerRemote tableManager; // changed by al - this is either a
-                                             // local guy or an RMI reference
+    private TableManagerRemote tableManager; // changed by al - this is either a local guy or an RMI reference
 
     /**
      * The database instance making the request. This is used to request the lock (i.e. the lock for the given query is taken out in the
@@ -100,16 +99,11 @@ public class TableProxy implements Serializable {
     private LockType lockRequested;
 
     /**
-     * @param lockGranted
-     *            The type of lock that has been granted
-     * @param tableName
-     *            Name of the table that is being used in the query
-     * @param allReplicas
-     *            Proxies for each of the replicas used in the query.
-     * @param tableManager
-     *            Proxy for the Table Manager of the table involved in the query (i.e. tableName).
-     * @param updateID
-     *            ID given to this update.
+     * @param lockGranted the type of lock that has been granted
+     * @param tableName name of the table that is being used in the query
+     * @param allReplicas proxies for each of the replicas used in the query.
+     * @param tableManager proxy for the Table Manager of the table involved in the query (i.e. tableName).
+     * @param updateID ID given to this update.
      */
     public TableProxy(final LockType lockGranted, final TableInfo tableName, final Map<DatabaseInstanceWrapper, Integer> allReplicas, final TableManagerRemote tableManager, final LockRequest requestingMachine, final int updateID, final LockType lockRequested) {
 
@@ -125,7 +119,6 @@ public class TableProxy implements Serializable {
     /**
      * Creates a dummy query proxy.
      * 
-     * @see #getDummyQueryProxy(DatabaseInstanceRemote)
      * @param lockRequest
      */
     public TableProxy(final LockRequest lockRequest) {
@@ -140,53 +133,50 @@ public class TableProxy implements Serializable {
     }
 
     /**
-     * Execute the given SQL update.
+     * Executes the given SQL update.
      * 
-     * @param query
-     *            The query to be executed
-     * @param db
-     *            Used to obtain proxies for remote database instances.
+     * @param query the query to be executed
      * @throws SQLException
      */
     public int executeUpdate(final String query, final String transactionNameForQuery, final Session session) throws SQLException {
 
-        if (lockRequested == LockType.CREATE && (allReplicas == null || allReplicas.size() == 0)) {
-            /*
-             * If we don't know of any replicas and this is a CREATE TABLE statement then we just run the query on the local DB instance.
-             */
-            allReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
-            allReplicas.put(requestingDatabase.getRequestLocation(), 0);
-        }
-        else if (allReplicas == null || allReplicas.size() == 0) {
-            /*
-             * If there are no replicas on which to execute the query.
-             */
-            try {
-                tableManager.releaseLockAndUpdateReplicaState(true, requestingDatabase, null, false);
+        if (allReplicas == null || allReplicas.size() == 0) {
+
+            if (lockRequested == LockType.CREATE) {
+
+                // If we don't know of any replicas and this is a CREATE TABLE statement then we just run the query on the local DB instance.
+
+                allReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
+                allReplicas.put(requestingDatabase.getRequestLocation(), 0);
             }
-            catch (final RemoteException e) {
-                ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the Table Manager");
+
+            else {
+                // There are no replicas on which to execute the query.
+
+                try {
+                    // TODO why do we still execute the query below after releasing lock?
+                    tableManager.releaseLockAndUpdateReplicaState(true, requestingDatabase, null, false);
+                }
+                catch (final RemoteException e) {
+                    ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the Table Manager");
+                }
+                catch (final MovedException e) {
+                    ErrorHandling.hardError("This should never happen at this point. The migrating machine should have a lock taken out.");
+                }
+                throw new SQLException("No replicas found to perform update: " + query);
             }
-            catch (final MovedException e) {
-                ErrorHandling.hardError("This should never happen at this point. The migrating machine should have a lock taken out.");
-            }
-            throw new SQLException("No replicas found to perform update: " + query);
         }
 
-        /*
-         * Execute the query. Send the query to each DB instance holding a replica.
-         */
+        // Execute the query. Send the query to each DB instance holding a replica.
 
         final AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor(session.getDatabase());
         final boolean globalCommit = queryExecutor.executeQuery(query, transactionNameForQuery, allReplicas, tableName, session, false);
 
-        H2OTest.rmiFailure(); // Test code to simulate the failure of DB
-                              // instances at this point.
+        H2OTest.rmiFailure(); // Test code to simulate the failure of DB instances at this point.
 
         if (!globalCommit) {
-            System.out.println("");
-            throw new SQLException("Commit failed on one or more replicas. The query will be rolled back.");
-        }
+
+        throw new SQLException("Commit failed on one or more replicas. The query will be rolled back."); }
 
         return 0;
     }
@@ -194,22 +184,18 @@ public class TableProxy implements Serializable {
     /**
      * Obtain a query proxy for the given table.
      * 
-     * @param tableName
-     *            Table involved in query.
-     * @param lockType
-     *            Lock required for query
-     * @param lockRequest
-     *            Local database instance - needed to inform DM of: the identity of the requesting machine, and to obtain the Table Manager
+     * @param table table involved in query.
+     * @param lockType lock required for query
+     * @param db local database instance - needed to inform DM of: the identity of the requesting machine, and to obtain the Table Manager
      *            for the given table.
      * @return
      * @throws SQLException
      */
-    public static TableProxy getQueryProxyAndLock(final Table table, final LockType lockType, final LockRequest lockRequest, final Database db) throws SQLException {
+    public static TableProxy getTableProxyAndLock(final Table table, final LockType lockType, final LockRequest lockRequest, final Database db) throws SQLException {
 
-        // if the table is temporary it only exists as part of this transaction
-        // - i.e. no lock is needed.
-        // if one of the reserved table names is used (SYSTEM_RANGE, for
-        // example) it isn't a proper table so won't have a Table Manager.
+        // If the table is temporary it only exists as part of this transaction - i.e. no lock is needed.
+        // If one of the reserved table names is used (SYSTEM_RANGE, for example) it isn't a proper table so won't have a Table Manager.
+
         if (table != null && !table.getTemporary() && !Settings.reservedTableNames.contains(table.getName())) { return getTableProxyAndLock(lockRequest, table.getFullName(), lockType, db); }
         return getDummyQueryProxy(lockRequest);
     }
@@ -228,11 +214,10 @@ public class TableProxy implements Serializable {
     }
 
     /**
-     * Obtain a query proxy for the given table.
+     * Obtain a proxy for the given table.
      * 
      * @param tableManager
-     * @param lockRequest
-     *            DB making the request.
+     * @param lockRequest DB making the request.
      * @return Query proxy for a specific table within H20.
      * @throws SQLException
      */
@@ -241,17 +226,15 @@ public class TableProxy implements Serializable {
         assert lockRequest != null : "A requesting database must be specified.";
 
         try {
-            TableProxy tableProxy = null;
             try {
-                tableProxy = tableManager.getTableProxy(lockType, lockRequest);
+                return tableManager.getTableProxy(lockType, lockRequest);
             }
             catch (final MovedException e) {
                 // Get an uncached Table Manager from the System Table
                 tableManager = db.getSystemTableReference().lookup(tableName, false);
 
-                tableProxy = tableManager.getTableProxy(lockType, lockRequest);
+                return tableManager.getTableProxy(lockType, lockRequest);
             }
-            return tableProxy;
         }
         catch (final java.rmi.NoSuchObjectException e) {
             e.printStackTrace();
@@ -322,9 +305,8 @@ public class TableProxy implements Serializable {
     public String toString() {
 
         if (tableManager == null) {
-            /*
-             * This is a dummy proxy.
-             */
+
+            // This is a dummy proxy.
 
             return "Dummy Query Proxy: Used for local query involving a system table or another entity entirely.";
         }
@@ -346,7 +328,6 @@ public class TableProxy implements Serializable {
     public void addReplicaLocation(final DatabaseInstanceWrapper databaseInstanceWrapper) {
 
         allReplicas.put(databaseInstanceWrapper, updateID);
-
     }
 
     public Map<DatabaseInstanceWrapper, Integer> getRemoteReplicaLocations() {

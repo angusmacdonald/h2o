@@ -26,15 +26,9 @@ public class DatabaseInstanceProbability implements Serializable, Comparable<Dat
     @Override
     public int compareTo(final DatabaseInstanceProbability o) {
 
-        if (getProbability() > o.getProbability()) {
-            return 1;
-        }
-        else if (getProbability() < o.getProbability()) {
-            return -1;
-        }
-        else {
-            return 0;
-        }
+        if (probability > o.getProbability()) { return 1; }
+        if (probability < o.getProbability()) { return -1; }
+        return 0;
     }
 
     @Override

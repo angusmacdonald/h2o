@@ -534,7 +534,7 @@ public class CreateTable extends SchemaCommand {
             /*
              * This is a system table meta-table, but it still needs a TableProxy to indicate that it is acceptable to execute the query.
              */
-            tableProxy = TableProxy.getQueryProxyAndLock(table, LockType.CREATE, LockRequest.createNewLockRequest(session), db);
+            tableProxy = TableProxy.getTableProxyAndLock(table, LockType.CREATE, LockRequest.createNewLockRequest(session), db);
 
         }
 

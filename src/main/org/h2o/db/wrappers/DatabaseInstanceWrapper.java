@@ -107,17 +107,16 @@ public class DatabaseInstanceWrapper implements Serializable, Comparable<Databas
     }
 
     @Override
-    public boolean equals(final Object obj) {
+    public boolean equals(final Object other) {
 
-        if (this == obj) { return true; }
-        if (obj == null) { return false; }
-        if (getClass() != obj.getClass()) { return false; }
-        final DatabaseInstanceWrapper other = (DatabaseInstanceWrapper) obj;
-        if (databaseInstance == null) {
-            if (other.databaseInstance != null) { return false; }
+        try {
+            final DatabaseInstanceWrapper other_wrapper = (DatabaseInstanceWrapper) other;
+
+            return other_wrapper != null && (databaseInstance == other_wrapper.databaseInstance || databaseInstance != null && databaseInstance.equals(other_wrapper.databaseInstance));
         }
-        else if (!databaseInstance.equals(other.databaseInstance)) { return false; }
-        return true;
+        catch (final ClassCastException e) {
+            return false;
+        }
     }
 
     public DatabaseInstanceProbability getAvailabilityInfo() {

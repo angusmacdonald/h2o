@@ -232,10 +232,6 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         return SCHEMA + "H2O_" + databaseName + "_" + tablePostfix;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.TableManagerRemote2#addTableInformation(org.h2.h2o .util.DatabaseURL, org.h2.h2o.util.TableInfo)
-     */
     @Override
     public boolean addTableInformation(final DatabaseURL tableManagerURL, final TableInfo tableDetails) throws RemoteException, MovedException, SQLException {
 
@@ -252,10 +248,6 @@ public class TableManager extends PersistentManager implements TableManagerRemot
          */
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.TableManagerRemote2#addReplicaInformation(org.h2.h2o .util.TableInfo)
-     */
     @Override
     public void addReplicaInformation(final TableInfo tableDetails) throws RemoteException, MovedException, SQLException {
 
@@ -266,10 +258,6 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         replicaManager.add(getDatabaseInstance(tableDetails.getURL()));
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.TableManagerRemote2#removeReplicaInformation(org.h2 .h2o.util.TableInfo)
-     */
     @Override
     public void removeReplicaInformation(final TableInfo ti) throws RemoteException, MovedException {
 
@@ -361,7 +349,6 @@ public class TableManager extends PersistentManager implements TableManagerRemot
                 try {
                     getDB().getSystemTableReference().handleMovedException(e1);
                     dir = systemTable.getDatabaseInstance(dbURL);
-
                 }
                 catch (final Exception e) {
                     e.printStackTrace();
@@ -382,9 +369,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
                 else {
 
                     getDB().getSystemTable().addConnectionInformation(dbURL, new DatabaseInstanceWrapper(dbURL, dir, true));
-
                 }
-
             }
             catch (final Exception e) {
                 // e.printStackTrace();
@@ -394,25 +379,17 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         return new DatabaseInstanceWrapper(dbURL, dir, true);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.comms.ITableManager#getQueryProxy(java.lang.String)
-     */
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.TableManagerRemote2#getQueryProxy(org.h2.h2o.util. LockType, org.h2.h2o.comms.remote.DatabaseInstanceRemote)
-     */
     @Override
-    public synchronized TableProxy getTableProxy(LockType lockRequested, final LockRequest lockRequest) throws RemoteException, SQLException, MovedException {
+    public synchronized TableProxy getTableProxy(LockType lockTypeRequested, final LockRequest lockRequest) throws RemoteException, SQLException, MovedException {
 
         preMethodTest();
 
-        if (replicaManager.allReplicasSize() == 0 && !lockRequested.equals(LockType.CREATE)) { throw new SQLException("Illegal State. There must be at least one replica"); }
+        if (replicaManager.allReplicasSize() == 0 && !lockTypeRequested.equals(LockType.CREATE)) { throw new SQLException("Illegal State. There must be at least one replica"); }
 
         int currentUpdateID = replicaManager.getCurrentUpdateID();
         boolean isDrop = false;
 
-        if (lockRequested == LockType.DROP) {
+        if (lockTypeRequested == LockType.DROP) {
             /*
              * If a table is dropped then created again with auto-commit turned off the update ID given here is higher than it is expected
              * to be on the create table operation. This just resets the update ID on the preceding drop. The LockType of DROP is not used
@@ -420,14 +397,12 @@ public class TableManager extends PersistentManager implements TableManagerRemot
              */
             currentUpdateID = 0;
             isDrop = true;
-            lockRequested = LockType.WRITE;
+            lockTypeRequested = LockType.WRITE;
         }
 
-        final LockType lockGranted = lockingTable.requestLock(lockRequested, lockRequest);
+        final LockType lockGranted = lockingTable.requestLock(lockTypeRequested, lockRequest);
 
-        final TableProxy qp = new TableProxy(lockGranted, tableInfo, selectReplicaLocations(lockRequested, lockRequest, isDrop), this, lockRequest, currentUpdateID, lockRequested);
-
-        return qp;
+        return new TableProxy(lockGranted, tableInfo, selectReplicaLocations(lockTypeRequested, lockRequest, isDrop), this, lockRequest, currentUpdateID, lockTypeRequested);
     }
 
     /**
@@ -468,8 +443,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
              * is the create operation that initializes the Table Manager in the first place.
              */
             newReplicaLocations.put(lockRequest.getRequestLocation(), 0);
-            if (relationReplicationFactor == 1) { return newReplicaLocations; // No more replicas are needed
-            // currently.
+            if (relationReplicationFactor == 1) { return newReplicaLocations; // No more replicas are needed currently.
             }
 
             try {
@@ -505,14 +479,12 @@ public class TableManager extends PersistentManager implements TableManagerRemot
                         break;
                     }
                 }
-
             }
 
             if (currentReplicationFactor < relationReplicationFactor) {
                 // Couldn't replicate to enough machines.
                 Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Insufficient number of machines available to reach a replication factor of " + relationReplicationFactor + ". The table will be replicated on " + currentReplicationFactor + " instances.");
             }
-
         }
         else if (lockType == LockType.WRITE) {
             Map<DatabaseInstanceWrapper, Integer> replicaLocations;
@@ -529,8 +501,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
                 }
             }
             else {
-                replicaLocations = replicaManager.getAllReplicas(); // The update could be sent to any or all machines holding the
-                                                                    // given table.
+                replicaLocations = replicaManager.getAllReplicas(); // The update could be sent to any or all machines holding the given table.
             }
 
             return replicaLocations;
@@ -539,10 +510,6 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         return newReplicaLocations;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.comms.TableManagerRemote#getLocation()
-     */
     @Override
     public DatabaseURL getLocation() throws RemoteException, MovedException {
 
@@ -551,24 +518,12 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         return getDB().getURL();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.TableManagerRemote2#getTableName()
-     */
     @Override
     public String getTableName() {
 
         return tableName;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.comms.TableManagerRemote#testAvailability()
-     */
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.TableManagerRemote2#isAlive()
-     */
     @Override
     public boolean isAlive() throws RemoteException, MovedException {
 
@@ -579,27 +534,24 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.TableManagerRemote2#releaseLock(org.h2.h2o.comms.remote .DatabaseInstanceRemote, java.util.Set, int)
-     */
     @Override
     public void releaseLockAndUpdateReplicaState(final boolean commit, final LockRequest lockRequest, final Collection<CommitResult> committedQueries, final boolean asynchronousCommit) throws RemoteException, MovedException, SQLException {
 
-        if (!tableAlreadyExists && commit) { //If it's not a commit (on a CREATE TABLE request) nothing needs to be persisted.
-            //This commit is the first commit of this table, so we must update the System Table.
+        // If it's not a commit (on a CREATE TABLE request) nothing needs to be persisted.
+        if (!tableAlreadyExists && commit) {
+            // This commit is the first commit of this table, so we must update the System Table.
             completeCreationByUpdatingSystemTable();
 
             tableAlreadyExists = true;
         }
 
-        //Find the type of lock that was taken out.
+        // Find the type of lock that was taken out.
         final LockType lockType = lockingTable.peekAtLockGranted(lockRequest);
 
-        //Update the set of 'active replicas' and their update IDs.
+        // Update the set of 'active replicas' and their update IDs.
         updateActiveReplicaSet(commit, committedQueries, asynchronousCommit, lockType);
 
-        //Release locks.
+        // Release locks.
         if (!asynchronousCommit) {
             lockingTable.releaseLock(lockRequest);
         }
@@ -607,7 +559,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
     private void completeCreationByUpdatingSystemTable() throws RemoteException, MovedException, SQLException {
 
-        //Add Basic Table Information to the System Table.
+        // Add Basic Table Information to the System Table.
         final Set<DatabaseInstanceWrapper> replicaLocations = db.getMetaDataReplicaManager().getTableManagerReplicaLocations();
         replicaLocations.add(db.getLocalDatabaseInstanceInWrapper());
         final TableInfo tableInfo = new TableInfo(tableName, schemaName, db.getURL());
@@ -633,6 +585,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
      */
     private void updateActiveReplicaSet(final boolean commit, final Collection<CommitResult> committedQueries, final boolean asynchronousCommit, final LockType lockType) {
 
+        // Reads don't change the set of active replicas.
         if (lockType == LockType.WRITE || asynchronousCommit) { // LockType.WRITE == LockType.CREATE in the locking table.
             final Set<DatabaseInstanceWrapper> changed = replicaManager.completeUpdate(commit, committedQueries, tableInfo, !asynchronousCommit);
 
@@ -646,7 +599,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
             }
 
             printCurrentActiveReplicas();
-        } // else: reads don't change the set of active replicas.
+        }
     }
 
     private void printCurrentActiveReplicas() {
@@ -668,7 +621,6 @@ public class TableManager extends PersistentManager implements TableManagerRemot
                     final DatabaseURL dbURL = new DatabaseURL(rs.currentRow()[0].getString(), rs.currentRow()[1].getString(), rs.currentRow()[3].getInt(), rs.currentRow()[2].getString(), false, rs.currentRow()[4].getInt());
 
                     Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "\tLocation: " + dbURL + "; tableID = " + rs.currentRow()[5].getString() + "; connectionID = " + rs.currentRow()[6].getString());
-
                 }
             }
             catch (final SQLException e) {
@@ -677,20 +629,12 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.TableManagerRemote2#getTableInfo()
-     */
     @Override
     public TableInfo getTableInfo() {
 
         return new TableInfo(tableName, schemaName, getDB().getURL());
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.comms.remote.TableManagerRemote#shutdown()
-     */
     @Override
     public void remove(final boolean dropCommand) {
 
@@ -739,10 +683,6 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.Migratable#checkConnection()
-     */
     @Override
     public void checkConnection() throws RemoteException, MovedException {
 
@@ -750,10 +690,6 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.Migratable#completeMigration()
-     */
     @Override
     public void completeMigration() throws RemoteException, MovedException, MigrationException {
 
@@ -765,10 +701,6 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         inMigration = false;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.Migratable#prepareForMigration(java.lang.String)
-     */
     @Override
     public void prepareForMigration(final String newLocation) throws RemoteException, MigrationException, MovedException {
 
@@ -781,10 +713,6 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         migrationTime = System.currentTimeMillis();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.TableManagerRemote2#buildTableManagerState(org.h2. h2o.comms.remote.TableManagerRemote)
-     */
     @Override
     public void buildTableManagerState(final TableManagerRemote otherTableManager) throws RemoteException, MovedException {
 
@@ -800,28 +728,12 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         replicaManager = otherTableManager.getReplicaManager();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.comms.remote.TableManagerRemote#getSchemaName()
-     */
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.TableManagerRemote2#getSchemaName()
-     */
     @Override
     public String getSchemaName() throws RemoteException {
 
         return schemaName;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.comms.remote.TableManagerRemote#getReplicaManager()
-     */
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.TableManagerRemote2#getReplicaManager()
-     */
     @Override
     public ReplicaManager getReplicaManager() throws RemoteException, MovedException {
 
@@ -830,28 +742,12 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         return replicaManager;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.comms.remote.TableManagerRemote#getTableSet()
-     */
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.TableManagerRemote2#getTableSet()
-     */
     @Override
     public int getTableSet() throws RemoteException {
 
         return 1; // TODO implement
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.comms.remote.TableManagerRemote#getDatabaseURL()
-     */
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.TableManagerRemote2#getDatabaseURL()
-     */
     @Override
     public DatabaseURL getDatabaseURL() throws RemoteException {
 
@@ -862,10 +758,6 @@ public class TableManager extends PersistentManager implements TableManagerRemot
      * Methods implementing the AutonomicController interface.
      ***********************************************************/
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.autonomic.AutonomicController#changeSetting(org.h2.h2o.autonomic .AutonomicAction)
-     */
     @Override
     public boolean changeSetting(final AutonomicAction action) throws RemoteException {
 
@@ -873,38 +765,18 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         return false;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.Migratable#shutdown(boolean)
-     */
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.TableManagerRemote2#shutdown(boolean)
-     */
     @Override
     public void shutdown(final boolean shutdown) throws RemoteException, MovedException {
 
         this.shutdown = shutdown;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.Migratable#getChordReference()
-     */
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.TableManagerRemote2#getChordReference()
-     */
     @Override
     public IChordRemoteReference getChordReference() throws RemoteException {
 
         return location;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.comms.remote.TableManagerRemote#recreateReplicaManagerState()
-     */
     @Override
     public void recreateReplicaManagerState(final String oldPrimaryDatabaseName) throws RemoteException, SQLException {
 
@@ -962,20 +834,12 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         replicaManager = rm;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.comms.remote.TableManagerRemote#getNumberofReplicas()
-     */
     @Override
     public int getNumberofReplicas() throws RemoteException {
 
         return replicaManager.getNumberOfReplicas();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.comms.remote.TableManagerRemote#persistToCompleteStartup()
-     */
     @Override
     public void persistToCompleteStartup(final TableInfo tableInfo) throws RemoteException, StartupException {
 
@@ -1034,7 +898,5 @@ public class TableManager extends PersistentManager implements TableManagerRemot
     public void addInitialReplicaInformation(final TableInfo tableDetails) {
 
         temporaryInitialReplicas.add(tableDetails);
-
     }
-
 }

@@ -88,10 +88,6 @@ public class CommandContainer extends Command {
         return query(maxrows, false);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.command.Command#query(int, boolean)
-     */
     @Override
     protected LocalResult query(final int maxrows, final boolean partOfMultiQueryTransaction) throws SQLException {
 
@@ -119,16 +115,14 @@ public class CommandContainer extends Command {
                 currentProxyManager.releaseLocksAndUpdateReplicaState(null, true);
 
                 session.completeTransaction();
-
             }
             else {
                 currentProxyManager.releaseReadLocks();
             }
             return result;
         }
-        catch (final SQLException e) {
+        finally {
             currentProxyManager.releaseLocksAndUpdateReplicaState(null, true);
-            throw e;
         }
     }
 
@@ -148,10 +142,6 @@ public class CommandContainer extends Command {
         return update(false);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.command.Command#update(boolean)
-     */
     @Override
     protected int update(final boolean partOfMultiQueryTransaction) throws SQLException, RemoteException {
 
@@ -170,10 +160,6 @@ public class CommandContainer extends Command {
             assert currentProxyManager != null;
 
             getLock(); // this throws an SQLException if no lock is found.
-
-            //            if (Diagnostic.getLevel() == DiagnosticLevel.INIT || Diagnostic.getLevel() == DiagnosticLevel.FULL) {
-            //                currentProxyManager.addSQL(prepared.getSQL());
-            //            }
 
             try {
 
@@ -242,38 +228,23 @@ public class CommandContainer extends Command {
         return prepared.queryMeta();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.command.Command#acquireLocks()
-     */
     @Override
     public void acquireLocks() throws SQLException {
 
         prepared.acquireLocks(session.getProxyManagerForTransaction());
     }
 
-    /**
-     * @return
-     */
     public String getTableName() {
 
         return prepared.table.getFullName();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.command.Command#shouldBePropagated()
-     */
     @Override
     public boolean shouldBePropagated() {
 
         return prepared.shouldBePropagated();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.command.CommandInterface#isPreparedStatement(boolean)
-     */
     @Override
     public void setIsPreparedStatement(final boolean preparedStatement) {
 
@@ -292,8 +263,6 @@ public class CommandContainer extends Command {
             acquireLocks();
 
             if (session.getProxyManager().hasAllLocks()) { return; }
-
-            // ErrorHandling.errorNoEvent("No lock obtained yet: " + prepared.getSQL());
 
             /*
              * Check current time.. wait.

@@ -12,7 +12,6 @@ package org.h2o.db.query.locking;
  * The type of lock granted for a given query.
  * 
  * @author angus
- * 
  */
 public enum LockType {
 
@@ -40,5 +39,4 @@ public enum LockType {
      * No lock granted.
      */
     NONE
-
 }
