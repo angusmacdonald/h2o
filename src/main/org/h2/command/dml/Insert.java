@@ -77,23 +77,17 @@ public class Insert extends Prepared {
     /**
      * Add a row to this merge statement.
      * 
-     * @param expr
-     *            the list of values
+     * @param expr the list of values
      */
     public void addRow(final Expression[] expr) {
 
         list.add(expr);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.command.Prepared#acquireLocks()
-     */
     @Override
     public void acquireLocks(final TableProxyManager tableProxyManager) throws SQLException {
 
         acquireLocks(tableProxyManager, table, LockType.WRITE);
-
     }
 
     @Override
@@ -112,9 +106,7 @@ public class Insert extends Prepared {
         /*
          * (QUERY PROPAGATED TO ALL REPLICAS).
          */
-        if (isRegularTable() && (tableProxy.getNumberOfReplicas() > 1 || !isReplicaLocal(tableProxy))) { // &&
-                                                                                                         // tableProxy.getNumberOfReplicas()
-                                                                                                         // > 1
+        if (isRegularTable() && (tableProxy.getNumberOfReplicas() > 1 || !isReplicaLocal(tableProxy))) {
             String sql;
 
             if (isPreparedStatement()) {
@@ -128,8 +120,7 @@ public class Insert extends Prepared {
         }
         else if (isRegularTable()) {
             /*
-             * If this is going to be an entirely local query we still need to create a record of it incase it is part of a larger
-             * transaction.
+             * If this is going to be an entirely local query we still need to create a record of it in case it is part of a larger transaction.
              */
             final List<CommitResult> recentlyCompletedQueries = new LinkedList<CommitResult>();
             recentlyCompletedQueries.add(new CommitResult(true, session.getDatabase().getLocalDatabaseInstanceInWrapper(), tableProxy.getUpdateID(), tableProxy.getUpdateID(), new TableInfo(table.getFullName())));
@@ -169,7 +160,7 @@ public class Insert extends Prepared {
 
                 final Session lockSession = table.lock(session, true, false);
 
-                assert lockSession == session : "The lock should have been taken out on the requesting session. Fish";
+                assert lockSession == session : "The lock should have been taken out on the requesting session.";
 
                 table.addRow(session, newRow);
 
@@ -372,10 +363,6 @@ public class Insert extends Prepared {
         return null;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.command.Prepared#shouldBePropagated()
-     */
     @Override
     public boolean shouldBePropagated() {
 
@@ -384,5 +371,4 @@ public class Insert extends Prepared {
          */
         return isRegularTable();
     }
-
 }
