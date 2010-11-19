@@ -119,6 +119,7 @@ public class H2O extends H2OCommon {
      */
     public static void main(final String[] args) throws StartupException, IOException, SQLException {
 
+        Diagnostic.setLevel(DiagnosticLevel.FINAL);
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting H2O Server Instance.");
 
         final H2O db = new H2O(args);
