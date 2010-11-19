@@ -115,15 +115,18 @@ public class CommandContainer extends Command {
                 currentProxyManager.releaseLocksAndUpdateReplicaState(null, true);
 
                 session.completeTransaction();
+
             }
             else {
                 currentProxyManager.releaseReadLocks();
             }
             return result;
         }
-        finally {
-            currentProxyManager.releaseLocksAndUpdateReplicaState(null, true);
+        catch (final SQLException e) {
+            currentProxyManager.releaseLocksAndUpdateReplicaState(null, false);
+            throw e;
         }
+
     }
 
     private void getLock() throws SQLException {

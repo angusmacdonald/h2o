@@ -140,31 +140,13 @@ public class TableProxy implements Serializable {
      */
     public int executeUpdate(final String query, final String transactionNameForQuery, final Session session) throws SQLException {
 
-        if (allReplicas == null || allReplicas.size() == 0) {
+        if ((allReplicas == null || allReplicas.size() == 0) && lockRequested == LockType.CREATE) {
 
-            if (lockRequested == LockType.CREATE) {
+            // If we don't know of any replicas and this is a CREATE TABLE statement then we just run the query on the local DB instance.
 
-                // If we don't know of any replicas and this is a CREATE TABLE statement then we just run the query on the local DB instance.
+            allReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
+            allReplicas.put(requestingDatabase.getRequestLocation(), 0);
 
-                allReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
-                allReplicas.put(requestingDatabase.getRequestLocation(), 0);
-            }
-
-            else {
-                // There are no replicas on which to execute the query.
-
-                try {
-                    // TODO why do we still execute the query below after releasing lock?
-                    tableManager.releaseLockAndUpdateReplicaState(true, requestingDatabase, null, false);
-                }
-                catch (final RemoteException e) {
-                    ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the Table Manager");
-                }
-                catch (final MovedException e) {
-                    ErrorHandling.hardError("This should never happen at this point. The migrating machine should have a lock taken out.");
-                }
-                throw new SQLException("No replicas found to perform update: " + query);
-            }
         }
 
         // Execute the query. Send the query to each DB instance holding a replica.

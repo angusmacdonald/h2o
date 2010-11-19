@@ -251,20 +251,11 @@ public class TableProxyManager {
                     committingTransaction.setHasCommitted(h2oCommit);
                 }
 
-                // TODO should this happen later?
-                releaseLocksAndUpdateReplicaState(committedQueries, commit);
+                commitAndReleaseLocks(commit, h2oCommit, db, committedQueries);
 
-                final boolean commitActionSuccessful = sendCommitMessagesToReplicas(commit, h2oCommit, db, committedQueries);
+                debugOutput();
 
-                if (!commitActionSuccessful) {
-                    ErrorHandling.errorNoEvent("Commit message to replicas was unsuccessful for transaction '" + transactionName + "'.");
-                }
-
-                printTraceOutputOfExecutedQueries();
-
-                if (h2oCommit) {
-                    tableProxies.clear();
-                }
+                clearLockedTablesOnCommit(h2oCommit);
             }
         }
         finally {
@@ -274,7 +265,25 @@ public class TableProxyManager {
         }
     }
 
-    private void printTraceOutputOfExecutedQueries() {
+    private void clearLockedTablesOnCommit(final boolean h2oCommit) {
+
+        if (h2oCommit) {
+            tableProxies.clear();
+        }
+    }
+
+    private void commitAndReleaseLocks(final boolean commit, final boolean h2oCommit, final Database db, Set<CommitResult> committedQueries) throws SQLException {
+
+        final boolean commitActionSuccessful = sendCommitMessagesToReplicas(commit, h2oCommit, db, committedQueries);
+
+        if (!commitActionSuccessful) {
+            ErrorHandling.errorNoEvent("Commit message to replicas was unsuccessful for transaction '" + transactionName + "'.");
+        }
+
+        releaseLocksAndUpdateReplicaState(committedQueries, commit);
+    }
+
+    private void debugOutput() {
 
         if (Diagnostic.getLevel() == DiagnosticLevel.FULL) {
             if (localDatabase.getURL().getRMIPort() > 0) {

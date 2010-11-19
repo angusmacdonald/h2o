@@ -25,6 +25,7 @@ public class PersistentStateManager {
 
     public void deletePersistentState() {
 
+        int attempts = 0;
         do {
             deleteDatabaseDirectoriesIfPresent();
             deleteConfigDirectoryIfPresent();
@@ -35,8 +36,10 @@ public class PersistentStateManager {
             catch (final InterruptedException e) {
                 // Ignore.
             }
+            System.err.println("sleeping...");
+            attempts++;
         }
-        while (!persistentStateIsAbsent());
+        while (!persistentStateIsAbsent() && attempts < 5);
     }
 
     private boolean persistentStateIsAbsent() {
