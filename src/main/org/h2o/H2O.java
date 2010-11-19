@@ -78,7 +78,7 @@ public class H2O extends H2OCommon {
     public static final String DEFAULT_DATABASE_NAME = "database";
     public static final int DEFAULT_TCP_PORT = 9090;
 
-    private static final DiagnosticLevel DEFAULT_DIAGNOSTIC_LEVEL = DiagnosticLevel.NONE;
+    private static final DiagnosticLevel DEFAULT_DIAGNOSTIC_LEVEL = DiagnosticLevel.FINAL;
 
     private String databaseName;
     private int tcpPort;
@@ -119,10 +119,10 @@ public class H2O extends H2OCommon {
      */
     public static void main(final String[] args) throws StartupException, IOException, SQLException {
 
-        Diagnostic.setLevel(DiagnosticLevel.FINAL);
+        final H2O db = new H2O(args);
+
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting H2O Server Instance.");
 
-        final H2O db = new H2O(args);
         db.startDatabase();
     }
 
@@ -194,6 +194,8 @@ public class H2O extends H2OCommon {
         this.diagnosticLevel = diagnosticLevel;
 
         databaseType = DatabaseType.DISK;
+
+        Diagnostic.setLevel(diagnosticLevel);
     }
 
     private void init(final String databaseName, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
@@ -203,6 +205,8 @@ public class H2O extends H2OCommon {
         this.diagnosticLevel = diagnosticLevel;
 
         databaseType = DatabaseType.MEMORY;
+
+        Diagnostic.setLevel(diagnosticLevel);
     }
 
     private void init(final String[] args) throws StartupException {
