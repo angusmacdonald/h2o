@@ -200,7 +200,7 @@ public class LogFile {
         buff.reset();
         buff.writeInt(0);
         buff.writeByte((byte) 'C');
-        buff.writeInt(session.getId());
+        buff.writeInt(session.getSessionId());
         writeBuffer(buff, null);
         if (logSystem.getFlushOnEachCommit()) {
             flush();
@@ -221,7 +221,7 @@ public class LogFile {
         buff.reset();
         buff.writeInt(0);
         buff.writeByte((byte) 'P');
-        buff.writeInt(session.getId());
+        buff.writeInt(session.getSessionId());
         buff.writeString(transaction);
         writeBuffer(buff, null);
         if (logSystem.getFlushOnEachCommit()) {
@@ -565,7 +565,7 @@ public class LogFile {
         buff.reset();
         buff.writeInt(0);
         buff.writeByte((byte) 'T');
-        buff.writeInt(session.getId());
+        buff.writeInt(session.getSessionId());
         buff.writeInt(storageId);
         buff.writeInt(recordId);
         buff.writeInt(blockCount);
@@ -594,7 +594,7 @@ public class LogFile {
         else {
             buff.writeByte((byte) 'I');
         }
-        buff.writeInt(session.getId());
+        buff.writeInt(session.getSessionId());
         buff.writeInt(storageId);
         buff.writeInt(record.getPos());
         int blockCount = record.getBlockCount();

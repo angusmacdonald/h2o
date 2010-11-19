@@ -13,9 +13,7 @@ public class LockRequest implements Serializable {
     private final int sessionID;
 
     /**
-     * 
-     * @param databaseMakingRequest
-     * @param sessionID                 This should be the value from session.getSerialID().
+     * @param sessionID this should be the value from session.getSerialID().
      */
     public LockRequest(final DatabaseInstanceWrapper databaseMakingRequest, final int sessionID) {
 
@@ -25,7 +23,7 @@ public class LockRequest implements Serializable {
 
     public static LockRequest createNewLockRequest(final Session session) {
 
-        return new LockRequest(session.getDatabase().getLocalDatabaseInstanceInWrapper(), session.getSerialID());
+        return new LockRequest(session.getDatabase().getLocalDatabaseInstanceInWrapper(), session.getSessionId());
     }
 
     public DatabaseInstanceWrapper getRequestLocation() {

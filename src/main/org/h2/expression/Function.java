@@ -725,7 +725,7 @@ public class Function extends Expression implements FunctionCall {
                 result = ValueString.get(session.getCurrentSchemaName());
                 break;
             case SESSION_ID:
-                result = ValueInt.get(session.getId());
+                result = ValueInt.get(session.getSessionId());
                 break;
             case IFNULL: {
                 result = v0 == ValueNull.INSTANCE ? args[1].getValue(session) : v0;
@@ -838,7 +838,7 @@ public class Function extends Expression implements FunctionCall {
         session.getUser().checkAdmin();
         Session[] sessions = session.getDatabase().getSessions(false);
         for (Session s : sessions) {
-            if (s.getId() == targetSessionId) {
+            if (s.getSessionId() == targetSessionId) {
                 Command c = s.getCurrentCommand();
                 if (c == null) { return false; }
                 c.cancel();

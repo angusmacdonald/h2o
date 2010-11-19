@@ -272,7 +272,7 @@ public class PageLog {
             trace.debug("log commit");
             reservePages(1);
             out.write(COMMIT);
-            out.writeInt(session.getId());
+            out.writeInt(session.getSessionId());
             if (store.getDatabase().getLog().getFlushOnEachCommit()) {
                 flush();
             }
@@ -311,7 +311,7 @@ public class PageLog {
             reservePages(1 + data.length() / store.getPageSize());
 
             out.write(add ? ADD : REMOVE);
-            out.writeInt(session.getId());
+            out.writeInt(session.getSessionId());
             out.writeInt(tableId);
             out.writeInt(row.getPos());
             out.writeInt(data.length());

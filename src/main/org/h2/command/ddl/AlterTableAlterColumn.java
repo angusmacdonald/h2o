@@ -225,7 +225,7 @@ public class AlterTableAlterColumn extends SchemaCommand {
     private void copyData() throws SQLException, RemoteException {
 
         final Database db = session.getDatabase();
-        final String tempName = db.getTempTableName(session.getId());
+        final String tempName = db.getTempTableName(session.getSessionId());
         final Column[] columns = table.getColumns();
         final ObjectArray newColumns = new ObjectArray();
         for (final Column column : columns) {

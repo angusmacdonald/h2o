@@ -607,7 +607,7 @@ public class TableData extends Table implements RecordReader {
     private void traceLock(final Session session, final boolean exclusive, final String s) {
 
         if (traceLock.isDebugEnabled()) {
-            traceLock.debug(session.getId() + " " + (exclusive ? "exclusive write lock" : "shared read lock") + " " + s + " " + getName());
+            traceLock.debug(session.getSessionId() + " " + (exclusive ? "exclusive write lock" : "shared read lock") + " " + s + " " + getName());
         }
     }
 

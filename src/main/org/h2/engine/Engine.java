@@ -206,7 +206,7 @@ public class Engine {
         }
         session.setAllowLiterals(false);
         session.commit(true);
-        session.getDatabase().getTrace(Trace.SESSION).info("connected #" + session.getId());
+        session.getDatabase().getTrace(Trace.SESSION).info("connected #" + session.getSessionId());
         return session;
     }
 

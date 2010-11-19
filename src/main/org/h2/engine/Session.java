@@ -79,13 +79,13 @@ public class Session extends SessionWithState {
      */
     private static final String SYSTEM_IDENTIFIER_PREFIX = "_";
 
-    private static int nextSerialId;
+    private static int nextSessionId = 0;
 
-    private final int serialId = getNextSerialId();
+    private final int sessionId = getNextSessionId();
 
-    private synchronized static int getNextSerialId() {
+    private synchronized static int getNextSessionId() {
 
-        return nextSerialId++;
+        return nextSessionId++;
     }
 
     private final Database database;
@@ -93,8 +93,6 @@ public class Session extends SessionWithState {
     private ConnectionInfo connectionInfo;
 
     private final User user;
-
-    private final int id;
 
     private final ObjectArray locks = new ObjectArray();
 
@@ -179,18 +177,23 @@ public class Session extends SessionWithState {
      */
     private boolean applicationAutoCommit = true;
 
-    public Session(final Database database, final User user, final int id) {
+    // Just used for debugging.
+    private static Set<Session> sessions = new HashSet<Session>();
+
+    public Session(final Database database, final User user) {
 
         // TODO remove public identifier - only needed for RMI tests.
         this.database = database;
-        undoLog = new UndoLog(this);
         this.user = user;
-        this.user.sessions++;
-        this.id = id;
+        undoLog = new UndoLog(this);
+        user.incrementSessionCount();
         logSystem = database.getLog();
         final Setting setting = database.findSetting(SetTypes.getTypeName(SetTypes.DEFAULT_LOCK_TIMEOUT));
         lockTimeout = setting == null ? Constants.INITIAL_LOCK_TIMEOUT : setting.getIntValue();
         currentSchemaName = Constants.SCHEMA_MAIN;
+
+        assert !sessions.contains(this) : "new session equal to an existing session";
+        sessions.add(this);
     }
 
     public boolean setCommitOrRollbackDisabled(final boolean x) {
@@ -392,10 +395,8 @@ public class Session extends SessionWithState {
     /**
      * Add a local temporary constraint to this session.
      * 
-     * @param constraint
-     *            the constraint to add
-     * @throws SQLException
-     *             if a constraint with the same name already exists
+     * @param constraint the constraint to add
+     * @throws SQLException if a constraint with the same name already exists
      */
     public void addLocalTempTableConstraint(final Constraint constraint) throws SQLException {
 
@@ -644,9 +645,9 @@ public class Session extends SessionWithState {
         return undoLog.size();
     }
 
-    public int getId() {
+    public int getSessionId() {
 
-        return id;
+        return sessionId;
     }
 
     @Override
@@ -656,14 +657,14 @@ public class Session extends SessionWithState {
     }
 
     @Override
-    public void close() throws SQLException {
+    public synchronized void close() throws SQLException {
 
         if (!closed) {
             try {
                 cleanTempTables(true);
-                user.sessions--;
+                user.decrementSessionCount();
 
-                if (user.sessions == 0 && (Constants.IS_NON_SM_TEST || getDatabase().getSystemSession().getUser().sessions == 0)) {
+                if (user.getSessionCount() == 0 && (Constants.IS_NON_SM_TEST || getDatabase().getSystemSession().getUser().getSessionCount() == 0)) {
                     final IDatabaseRemote cr = database.getRemoteInterface();
                     cr.shutdown();
                     database.removeSession(this);
@@ -810,7 +811,7 @@ public class Session extends SessionWithState {
     public Trace getTrace() {
 
         if (traceModuleName == null) {
-            traceModuleName = Trace.JDBC + "[" + id + "]";
+            traceModuleName = Trace.JDBC + "[" + sessionId + "]";
         }
         if (closed) { return new TraceSystem(null, false).getTrace(traceModuleName); }
         return database.getTrace(traceModuleName);
@@ -1168,7 +1169,7 @@ public class Session extends SessionWithState {
     @Override
     public int hashCode() {
 
-        return user.getName().hashCode() * serialId;
+        return user.getName().hashCode() * sessionId;
     }
 
     @Override
@@ -1177,7 +1178,7 @@ public class Session extends SessionWithState {
         try {
             final Session other_session = (Session) other;
 
-            return other_session != null && user.getName() == other_session.user.getName() && serialId == other_session.serialId;
+            return other_session != null && user.getName() == other_session.user.getName() && sessionId == other_session.sessionId;
         }
         catch (final ClassCastException e) {
             return false;
@@ -1187,7 +1188,7 @@ public class Session extends SessionWithState {
     @Override
     public String toString() {
 
-        return "#" + serialId + " (user: " + user.getName() + ")";
+        return "#" + sessionId + " (user: " + user.getName() + ")";
     }
 
     public void setUndoLogEnabled(final boolean b) {
@@ -1332,7 +1333,7 @@ public class Session extends SessionWithState {
     public Value getTransactionId() {
 
         if (undoLog.size() == 0 || !database.isPersistent()) { return ValueNull.INSTANCE; }
-        return ValueString.get(firstUncommittedLog + "-" + firstUncommittedPos + "-" + id);
+        return ValueString.get(firstUncommittedLog + "-" + firstUncommittedPos + "-" + sessionId);
     }
 
     public void setApplicationAutoCommit(final boolean applicationAutoCommit) {
@@ -1374,10 +1375,5 @@ public class Session extends SessionWithState {
     public void completeTransaction() {
 
         proxyManagerForCurrentTransaction = new TableProxyManager(getDatabase(), this);
-    }
-
-    public int getSerialID() {
-
-        return serialId;
     }
 }

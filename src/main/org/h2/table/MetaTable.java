@@ -1303,7 +1303,7 @@ public class MetaTable extends Table {
                         final Command command = s.getCurrentCommand();
                         add(rows, new String[]{
                                         // ID
-                                        "" + s.getId(),
+                                        "" + s.getSessionId(),
                                         // USER_NAME
                                         s.getUser().getName(),
                                         // SESSION_START
@@ -1329,7 +1329,7 @@ public class MetaTable extends Table {
                                             // TABLE_NAME
                                             table.getName(),
                                             // SESSION_ID
-                                            "" + s.getId(),
+                                            "" + s.getSessionId(),
                                             // LOCK_TYPE
                                             table.isLockedExclusivelyBy(s) ? "WRITE" : "READ",});
                         }

@@ -184,8 +184,6 @@ public class Database implements DataHandler {
 
     private Schema infoSchema;
 
-    private int nextSessionId;
-
     private User systemUser;
 
     private Session systemSession;
@@ -868,10 +866,10 @@ public class Database implements DataHandler {
         systemUser.setAdmin(true);
         h2oSchemaUser.setAdmin(true);
         h2oSystemUser.setAdmin(true);
-        systemSession = new Session(this, systemUser, ++nextSessionId);
-        h2oSession = new Session(this, h2oSchemaUser, ++nextSessionId);
 
-        h2oSystemSession = new Session(this, h2oSystemUser, ++nextSessionId);
+        systemSession = new Session(this, systemUser);
+        h2oSession = new Session(this, h2oSchemaUser);
+        h2oSystemSession = new Session(this, h2oSystemUser);
 
         final ObjectArray cols = new ObjectArray();
         final Column columnId = new Column("ID", Value.INT);
@@ -1456,9 +1454,9 @@ public class Database implements DataHandler {
     public synchronized Session createSession(final User user) throws SQLException {
 
         if (exclusiveSession != null) { throw Message.getSQLException(ErrorCode.DATABASE_IS_IN_EXCLUSIVE_MODE); }
-        final Session session = new Session(this, user, ++nextSessionId);
+        final Session session = new Session(this, user);
         userSessions.add(session);
-        traceSystem.getTrace(Trace.SESSION).info("connecting #" + session.getId() + " to " + databaseName);
+        traceSystem.getTrace(Trace.SESSION).info("connecting #" + session.getSessionId() + " to " + databaseName);
         if (delayedCloser != null) {
             delayedCloser.reset();
             delayedCloser = null;
@@ -1480,7 +1478,7 @@ public class Database implements DataHandler {
             }
             userSessions.remove(session);
             if (session != systemSession) {
-                traceSystem.getTrace(Trace.SESSION).info("disconnecting #" + session.getId());
+                traceSystem.getTrace(Trace.SESSION).info("disconnecting #" + session.getSessionId());
             }
         }
         if (userSessions.size() == 0 && session != systemSession) {
@@ -1498,7 +1496,7 @@ public class Database implements DataHandler {
             }
         }
         if (session != systemSession && session != null) {
-            traceSystem.getTrace(Trace.SESSION).info("disconnected #" + session.getId());
+            traceSystem.getTrace(Trace.SESSION).info("disconnected #" + session.getSessionId());
         }
     }
 
@@ -1538,7 +1536,7 @@ public class Database implements DataHandler {
                     s.close();
                 }
                 catch (final SQLException e) {
-                    traceSystem.getTrace(Trace.SESSION).error("disconnecting #" + s.getId(), e);
+                    traceSystem.getTrace(Trace.SESSION).error("disconnecting #" + s.getSessionId(), e);
                 }
             }
         }
