@@ -81,7 +81,12 @@ public class Session extends SessionWithState {
 
     private static int nextSerialId;
 
-    private final int serialId = nextSerialId++;
+    private final int serialId = getNextSerialId();
+
+    private synchronized static int getNextSerialId() {
+
+        return nextSerialId++;
+    }
 
     private final Database database;
 
@@ -1163,16 +1168,20 @@ public class Session extends SessionWithState {
     @Override
     public int hashCode() {
 
-        return user.getName().hashCode();
+        return user.getName().hashCode() * serialId;
     }
 
     @Override
-    public boolean equals(final Object obj) {
+    public boolean equals(final Object other) {
 
-        Diagnostic.trace(">>>>>>>>>>> Session.equals() called");
-        Diagnostic.printStackTrace();
+        try {
+            final Session other_session = (Session) other;
 
-        return user.getName().equals(((Session) obj).getUser().getName());
+            return other_session != null && user.getName() == other_session.user.getName() && serialId == other_session.serialId;
+        }
+        catch (final ClassCastException e) {
+            return false;
+        }
     }
 
     @Override
