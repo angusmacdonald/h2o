@@ -215,7 +215,7 @@ public class DataType {
         dataType = new DataType();
         add(Value.RESULT_SET, 0, "ResultSet", dataType, new String[]{"RESULT_SET"}, 20);
         for (int i = 0; i < TYPES_BY_VALUE_TYPE.size(); i++) {
-            DataType dt = (DataType) TYPES_BY_VALUE_TYPE.get(i);
+            final DataType dt = (DataType) TYPES_BY_VALUE_TYPE.get(i);
             if (dt == null) {
                 Message.throwInternalError("unmapped type " + i);
             }
@@ -223,10 +223,10 @@ public class DataType {
         }
     }
 
-    private static void add(int type, int sqlType, String jdbc, DataType dataType, String[] names, int memory) {
+    private static void add(final int type, final int sqlType, final String jdbc, final DataType dataType, final String[] names, final int memory) {
 
         for (int i = 0; i < names.length; i++) {
-            DataType dt = new DataType();
+            final DataType dt = new DataType();
             dt.type = type;
             dt.sqlType = sqlType;
             dt.jdbc = jdbc;
@@ -248,7 +248,7 @@ public class DataType {
             dt.hidden = i > 0;
             dt.memory = memory;
             for (int j = 0; j < TYPES.size(); j++) {
-                DataType t2 = (DataType) TYPES.get(j);
+                final DataType t2 = (DataType) TYPES.get(j);
                 if (t2.sqlType == dt.sqlType) {
                     dt.sqlTypePos++;
                 }
@@ -261,9 +261,9 @@ public class DataType {
         }
     }
 
-    private static DataType createDecimal(int maxPrecision, int defaultPrecision, int defaultScale, int defaultDisplaySize, boolean needsPrecisionAndScale, boolean autoInc) {
+    private static DataType createDecimal(final int maxPrecision, final int defaultPrecision, final int defaultScale, final int defaultDisplaySize, final boolean needsPrecisionAndScale, final boolean autoInc) {
 
-        DataType dataType = new DataType();
+        final DataType dataType = new DataType();
         dataType.maxPrecision = maxPrecision;
         dataType.defaultPrecision = defaultPrecision;
         dataType.defaultScale = defaultScale;
@@ -278,9 +278,9 @@ public class DataType {
         return dataType;
     }
 
-    private static DataType createDate(int precision, String prefix, int scale, int displaySize) {
+    private static DataType createDate(final int precision, final String prefix, final int scale, final int displaySize) {
 
-        DataType dataType = new DataType();
+        final DataType dataType = new DataType();
         dataType.prefix = prefix + " '";
         dataType.suffix = "'";
         dataType.maxPrecision = precision;
@@ -292,9 +292,9 @@ public class DataType {
         return dataType;
     }
 
-    private static DataType createString(boolean caseSensitive) {
+    private static DataType createString(final boolean caseSensitive) {
 
-        DataType dataType = new DataType();
+        final DataType dataType = new DataType();
         dataType.prefix = "'";
         dataType.suffix = "'";
         dataType.params = "LENGTH";
@@ -329,7 +329,7 @@ public class DataType {
      *            the data type
      * @return the value
      */
-    public static Value readValue(SessionInterface session, ResultSet rs, int columnIndex, int type) throws SQLException {
+    public static Value readValue(final SessionInterface session, final ResultSet rs, final int columnIndex, final int type) throws SQLException {
 
         Value v;
         switch (type) {
@@ -337,83 +337,83 @@ public class DataType {
                 return ValueNull.INSTANCE;
             }
             case Value.BYTES: {
-                byte[] buff = rs.getBytes(columnIndex);
+                final byte[] buff = rs.getBytes(columnIndex);
                 v = buff == null ? (Value) ValueNull.INSTANCE : ValueBytes.getNoCopy(buff);
                 break;
             }
             case Value.UUID: {
-                byte[] buff = rs.getBytes(columnIndex);
+                final byte[] buff = rs.getBytes(columnIndex);
                 v = buff == null ? (Value) ValueNull.INSTANCE : ValueUuid.get(buff);
                 break;
             }
             case Value.BOOLEAN: {
-                boolean value = rs.getBoolean(columnIndex);
+                final boolean value = rs.getBoolean(columnIndex);
                 v = rs.wasNull() ? (Value) ValueNull.INSTANCE : ValueBoolean.get(value);
                 break;
             }
             case Value.BYTE: {
-                byte value = rs.getByte(columnIndex);
+                final byte value = rs.getByte(columnIndex);
                 v = rs.wasNull() ? (Value) ValueNull.INSTANCE : ValueByte.get(value);
                 break;
             }
             case Value.DATE: {
-                Date value = rs.getDate(columnIndex);
+                final Date value = rs.getDate(columnIndex);
                 v = value == null ? (Value) ValueNull.INSTANCE : ValueDate.get(value);
                 break;
             }
             case Value.TIME: {
-                Time value = rs.getTime(columnIndex);
+                final Time value = rs.getTime(columnIndex);
                 v = value == null ? (Value) ValueNull.INSTANCE : ValueTime.get(value);
                 break;
             }
             case Value.TIMESTAMP: {
-                Timestamp value = rs.getTimestamp(columnIndex);
+                final Timestamp value = rs.getTimestamp(columnIndex);
                 v = value == null ? (Value) ValueNull.INSTANCE : ValueTimestamp.get(value);
                 break;
             }
             case Value.DECIMAL: {
-                BigDecimal value = rs.getBigDecimal(columnIndex);
+                final BigDecimal value = rs.getBigDecimal(columnIndex);
                 v = value == null ? (Value) ValueNull.INSTANCE : ValueDecimal.get(value);
                 break;
             }
             case Value.DOUBLE: {
-                double value = rs.getDouble(columnIndex);
+                final double value = rs.getDouble(columnIndex);
                 v = rs.wasNull() ? (Value) ValueNull.INSTANCE : ValueDouble.get(value);
                 break;
             }
             case Value.FLOAT: {
-                float value = rs.getFloat(columnIndex);
+                final float value = rs.getFloat(columnIndex);
                 v = rs.wasNull() ? (Value) ValueNull.INSTANCE : ValueFloat.get(value);
                 break;
             }
             case Value.INT: {
-                int value = rs.getInt(columnIndex);
+                final int value = rs.getInt(columnIndex);
                 v = rs.wasNull() ? (Value) ValueNull.INSTANCE : ValueInt.get(value);
                 break;
             }
             case Value.LONG: {
-                long value = rs.getLong(columnIndex);
+                final long value = rs.getLong(columnIndex);
                 v = rs.wasNull() ? (Value) ValueNull.INSTANCE : ValueLong.get(value);
                 break;
             }
             case Value.SHORT: {
-                short value = rs.getShort(columnIndex);
+                final short value = rs.getShort(columnIndex);
                 v = rs.wasNull() ? (Value) ValueNull.INSTANCE : ValueShort.get(value);
                 break;
             }
             case Value.STRING_IGNORECASE: {
-                String s = rs.getString(columnIndex);
-                v = (s == null) ? (Value) ValueNull.INSTANCE : ValueStringIgnoreCase.get(s);
+                final String s = rs.getString(columnIndex);
+                v = s == null ? (Value) ValueNull.INSTANCE : ValueStringIgnoreCase.get(s);
                 break;
             }
             case Value.STRING_FIXED: {
-                String s = rs.getString(columnIndex);
-                v = (s == null) ? (Value) ValueNull.INSTANCE : ValueStringFixed.get(s);
+                final String s = rs.getString(columnIndex);
+                v = s == null ? (Value) ValueNull.INSTANCE : ValueStringFixed.get(s);
                 break;
             }
             case Value.STRING: {
-                String s = rs.getString(columnIndex);
-                v = (s == null) ? (Value) ValueNull.INSTANCE : ValueString.get(s);
+                final String s = rs.getString(columnIndex);
+                v = s == null ? (Value) ValueNull.INSTANCE : ValueString.get(s);
                 break;
             }
             case Value.CLOB: {
@@ -421,7 +421,7 @@ public class DataType {
                     v = ValueLob.createSmallLob(Value.CLOB, StringUtils.utf8Encode(rs.getString(columnIndex)));
                 }
                 else {
-                    Reader in = rs.getCharacterStream(columnIndex);
+                    final Reader in = rs.getCharacterStream(columnIndex);
                     if (in == null) {
                         v = ValueNull.INSTANCE;
                     }
@@ -436,22 +436,22 @@ public class DataType {
                     v = ValueLob.createSmallLob(Value.BLOB, rs.getBytes(columnIndex));
                 }
                 else {
-                    InputStream in = rs.getBinaryStream(columnIndex);
-                    v = (in == null) ? (Value) ValueNull.INSTANCE : ValueLob.createBlob(in, -1, session.getDataHandler());
+                    final InputStream in = rs.getBinaryStream(columnIndex);
+                    v = in == null ? (Value) ValueNull.INSTANCE : ValueLob.createBlob(in, -1, session.getDataHandler());
                 }
                 break;
             }
             case Value.JAVA_OBJECT: {
-                byte[] buff = rs.getBytes(columnIndex);
+                final byte[] buff = rs.getBytes(columnIndex);
                 v = buff == null ? (Value) ValueNull.INSTANCE : ValueJavaObject.getNoCopy(buff);
                 break;
             }
             case Value.ARRAY: {
-                Array array = rs.getArray(columnIndex);
+                final Array array = rs.getArray(columnIndex);
                 if (array == null) { return ValueNull.INSTANCE; }
-                Object[] list = (Object[]) array.getArray();
+                final Object[] list = (Object[]) array.getArray();
                 if (list == null) { return ValueNull.INSTANCE; }
-                Value[] values = new Value[list.length];
+                final Value[] values = new Value[list.length];
                 for (int i = 0; i < list.length; i++) {
                     values[i] = DataType.convertToValue(session, list[i], Value.NULL);
                 }
@@ -471,7 +471,7 @@ public class DataType {
      *            the value type
      * @return the class name
      */
-    public static String getTypeClassName(int type) {
+    public static String getTypeClassName(final int type) {
 
         switch (type) {
             case Value.BOOLEAN:
@@ -546,7 +546,7 @@ public class DataType {
      *            the value type
      * @return the data type object
      */
-    public static DataType getDataType(int type) {
+    public static DataType getDataType(final int type) {
 
         DataType dt = (DataType) TYPES_BY_VALUE_TYPE.get(type);
         if (dt == null) {
@@ -562,7 +562,7 @@ public class DataType {
      *            the value type
      * @return the SQL type
      */
-    public static int convertTypeToSQLType(int type) {
+    public static int convertTypeToSQLType(final int type) {
 
         return getDataType(type).sqlType;
     }
@@ -574,7 +574,7 @@ public class DataType {
      *            the SQL type
      * @return the value type
      */
-    public static int convertSQLTypeToValueType(int sqlType) throws SQLException {
+    public static int convertSQLTypeToValueType(final int sqlType) throws SQLException {
 
         switch (sqlType) {
             case Types.CHAR:
@@ -634,79 +634,32 @@ public class DataType {
      *            the Java class
      * @return the value type
      */
-    public static int getTypeFromClass(Class x) throws SQLException {
+    public static int getTypeFromClass(final Class x) throws SQLException {
 
-        // TODO refactor: too many if/else in functions, can reduce!
         if (x == null) { return Value.NULL; }
-        if (ResultSet.class.isAssignableFrom(x)) {
-            return Value.RESULT_SET;
-        }
-        else if (String.class.isAssignableFrom(x)) {
-            return Value.STRING;
-        }
-        else if (BigDecimal.class.isAssignableFrom(x)) {
-            return Value.DECIMAL;
-        }
-        else if (Boolean.class.isAssignableFrom(x) || boolean.class.isAssignableFrom(x)) {
-            return Value.BOOLEAN;
-        }
-        else if (Byte.class.isAssignableFrom(x) || byte.class.isAssignableFrom(x)) {
-            return Value.BYTE;
-        }
-        else if (Short.class.isAssignableFrom(x) || short.class.isAssignableFrom(x)) {
-            return Value.SHORT;
-        }
-        else if (Integer.class.isAssignableFrom(x) || int.class.isAssignableFrom(x)) {
-            return Value.INT;
-        }
-        else if (Character.class.isAssignableFrom(x) || char.class.isAssignableFrom(x)) {
-            throw Message.getSQLException(ErrorCode.DATA_CONVERSION_ERROR_1, "char (not supported)");
-        }
-        else if (Long.class.isAssignableFrom(x) || long.class.isAssignableFrom(x)) {
-            return Value.LONG;
-        }
-        else if (Float.class.isAssignableFrom(x) || float.class.isAssignableFrom(x)) {
-            return Value.FLOAT;
-        }
-        else if (Double.class.isAssignableFrom(x) || double.class.isAssignableFrom(x)) {
-            return Value.DOUBLE;
-        }
-        else if (byte[].class.isAssignableFrom(x)) {
-            return Value.BYTES;
-        }
-        else if (Date.class.isAssignableFrom(x)) {
-            return Value.DATE;
-        }
-        else if (Time.class.isAssignableFrom(x)) {
-            return Value.TIME;
-        }
-        else if (Timestamp.class.isAssignableFrom(x)) {
-            return Value.TIMESTAMP;
-        }
-        else if (java.util.Date.class.isAssignableFrom(x)) {
-            return Value.TIMESTAMP;
-        }
-        else if (java.io.Reader.class.isAssignableFrom(x)) {
-            return Value.CLOB;
-        }
-        else if (java.sql.Clob.class.isAssignableFrom(x)) {
-            return Value.CLOB;
-        }
-        else if (java.io.InputStream.class.isAssignableFrom(x)) {
-            return Value.BLOB;
-        }
-        else if (java.sql.Blob.class.isAssignableFrom(x)) {
-            return Value.BLOB;
-        }
-        else if (Object[].class.isAssignableFrom(x)) {
-            return Value.ARRAY;
-        }
-        else if (Void.TYPE == x) {
-            return Value.NULL;
-        }
-        else {
-            return Value.JAVA_OBJECT;
-        }
+        if (ResultSet.class.isAssignableFrom(x)) { return Value.RESULT_SET; }
+        if (String.class.isAssignableFrom(x)) { return Value.STRING; }
+        if (BigDecimal.class.isAssignableFrom(x)) { return Value.DECIMAL; }
+        if (Boolean.class.isAssignableFrom(x) || boolean.class.isAssignableFrom(x)) { return Value.BOOLEAN; }
+        if (Byte.class.isAssignableFrom(x) || byte.class.isAssignableFrom(x)) { return Value.BYTE; }
+        if (Short.class.isAssignableFrom(x) || short.class.isAssignableFrom(x)) { return Value.SHORT; }
+        if (Integer.class.isAssignableFrom(x) || int.class.isAssignableFrom(x)) { return Value.INT; }
+        if (Character.class.isAssignableFrom(x) || char.class.isAssignableFrom(x)) { throw Message.getSQLException(ErrorCode.DATA_CONVERSION_ERROR_1, "char (not supported)"); }
+        if (Long.class.isAssignableFrom(x) || long.class.isAssignableFrom(x)) { return Value.LONG; }
+        if (Float.class.isAssignableFrom(x) || float.class.isAssignableFrom(x)) { return Value.FLOAT; }
+        if (Double.class.isAssignableFrom(x) || double.class.isAssignableFrom(x)) { return Value.DOUBLE; }
+        if (byte[].class.isAssignableFrom(x)) { return Value.BYTES; }
+        if (Date.class.isAssignableFrom(x)) { return Value.DATE; }
+        if (Time.class.isAssignableFrom(x)) { return Value.TIME; }
+        if (Timestamp.class.isAssignableFrom(x)) { return Value.TIMESTAMP; }
+        if (java.util.Date.class.isAssignableFrom(x)) { return Value.TIMESTAMP; }
+        if (java.io.Reader.class.isAssignableFrom(x)) { return Value.CLOB; }
+        if (java.sql.Clob.class.isAssignableFrom(x)) { return Value.CLOB; }
+        if (java.io.InputStream.class.isAssignableFrom(x)) { return Value.BLOB; }
+        if (java.sql.Blob.class.isAssignableFrom(x)) { return Value.BLOB; }
+        if (Object[].class.isAssignableFrom(x)) { return Value.ARRAY; }
+        if (Void.TYPE == x) { return Value.NULL; }
+        return Value.JAVA_OBJECT;
     }
 
     /**
@@ -720,7 +673,7 @@ public class DataType {
      *            the value type
      * @return the value
      */
-    public static Value convertToValue(SessionInterface session, Object x, int type) throws SQLException {
+    public static Value convertToValue(final SessionInterface session, final Object x, final int type) throws SQLException {
 
         if (x == null) { return ValueNull.INSTANCE; }
         if (type == Value.JAVA_OBJECT) {
@@ -770,11 +723,11 @@ public class DataType {
             return ValueTimestamp.get(new Timestamp(((java.util.Date) x).getTime()));
         }
         else if (x instanceof java.io.Reader) {
-            Reader r = new BufferedReader((java.io.Reader) x);
+            final Reader r = new BufferedReader((java.io.Reader) x);
             return ValueLob.createClob(r, -1, session.getDataHandler());
         }
         else if (x instanceof java.sql.Clob) {
-            Reader r = new BufferedReader(((java.sql.Clob) x).getCharacterStream());
+            final Reader r = new BufferedReader(((java.sql.Clob) x).getCharacterStream());
             return ValueLob.createClob(r, -1, session.getDataHandler());
         }
         else if (x instanceof java.io.InputStream) {
@@ -789,9 +742,9 @@ public class DataType {
         else if (x instanceof Object[]) {
             // (a.getClass().isArray());
             // (a.getClass().getComponentType().isPrimitive());
-            Object[] o = (Object[]) x;
-            int len = o.length;
-            Value[] v = new Value[len];
+            final Object[] o = (Object[]) x;
+            final int len = o.length;
+            final Value[] v = new Value[len];
             for (int i = 0; i < len; i++) {
                 v[i] = convertToValue(session, o[i], type);
             }
@@ -810,7 +763,7 @@ public class DataType {
      *            the type name
      * @return the data type object
      */
-    public static DataType getTypeByName(String s) {
+    public static DataType getTypeByName(final String s) {
 
         return (DataType) TYPES_BY_NAME.get(s);
     }
@@ -822,7 +775,7 @@ public class DataType {
      *            the value type
      * @return true if the value type is a lob type
      */
-    public static boolean isLargeObject(int type) {
+    public static boolean isLargeObject(final int type) {
 
         if (type == Value.BLOB || type == Value.CLOB) { return true; }
         return false;
@@ -835,7 +788,7 @@ public class DataType {
      *            the value type
      * @return true if add is supported
      */
-    public static boolean supportsAdd(int type) {
+    public static boolean supportsAdd(final int type) {
 
         switch (type) {
             case Value.BYTE:
@@ -858,7 +811,7 @@ public class DataType {
      *            the value type
      * @return the data type that supports adding
      */
-    public static int getAddProofType(int type) {
+    public static int getAddProofType(final int type) {
 
         switch (type) {
             case Value.BYTE:
@@ -883,7 +836,7 @@ public class DataType {
      *            the Java class
      * @return the default object
      */
-    public static Object getDefaultForPrimitiveType(Class clazz) {
+    public static Object getDefaultForPrimitiveType(final Class clazz) {
 
         if (clazz == Boolean.TYPE) {
             return Boolean.FALSE;
@@ -923,7 +876,7 @@ public class DataType {
      *            the target class
      * @return the converted object
      */
-    public static Object convertTo(SessionInterface session, JdbcConnection conn, Value v, Class paramClass) throws SQLException {
+    public static Object convertTo(final SessionInterface session, final JdbcConnection conn, final Value v, final Class paramClass) throws SQLException {
 
         if (paramClass == java.sql.Blob.class) {
             return new JdbcBlob(conn, v, 0);

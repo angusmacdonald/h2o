@@ -389,7 +389,7 @@ public class TableData extends Table implements RecordReader {
     @Override
     boolean isLockedExclusivelyBy(final Session session) {
 
-        return getSessionHoldingExclusiveLock() == session;
+        return holdsExclusiveLock(session);
     }
 
     @Override
@@ -417,6 +417,7 @@ public class TableData extends Table implements RecordReader {
 
         boolean checkDeadlock = false;
         while (true) {
+
             if (getSessionHoldingExclusiveLock() != null && session != getSessionHoldingExclusiveLock()) {
                 /* 
                   * XXX H2O hack. It ensures that A-B-A communication doesn't lock up the DB (normally through the SYS table), as the returning update can use the same session
@@ -430,35 +431,41 @@ public class TableData extends Table implements RecordReader {
                 session = getSessionHoldingExclusiveLock();
             }
 
-            if (getSessionHoldingExclusiveLock() == session) { return session; }
+            if (holdsExclusiveLock(session)) { return session; }
 
-            if (exclusive) {
-                if (getSessionHoldingExclusiveLock() == null) {
-                    if (lockShared.isEmpty()) {
+            if (noSessionHoldsExclusiveLock()) {
+
+                if (exclusive) {
+
+                    if (noSessionHoldsSharedLock()) {
+
                         traceLock(session, exclusive, "added for");
                         session.addLock(this);
-                        setSessionHoldingExclusiveLock(session);
+                        recordExclusiveLock(session);
                         return session;
                     }
-                    else if (lockShared.size() == 1 && lockShared.contains(session)) {
+                    else if (lockShared.size() == 1 && holdsSharedLock(session)) {
+
                         traceLock(session, exclusive, "add (upgraded) for ");
-                        setSessionHoldingExclusiveLock(session);
+                        recordExclusiveLock(session);
                         return session;
                     }
                 }
-            }
-            else {
-                if (getSessionHoldingExclusiveLock() == null) {
 
-                    if (!lockShared.contains(session)) {
+                else {
+
+                    if (!holdsSharedLock(session)) {
+
                         traceLock(session, exclusive, "ok");
                         session.addLock(this);
-                        lockShared.add(session);
+                        recordSharedLock(session);
                     }
                     return session;
                 }
             }
+
             session.setWaitForLock(this);
+
             if (checkDeadlock) {
                 final ObjectArray sessions = checkDeadlock(session, null);
                 if (sessions != null) { throw Message.getSQLException(ErrorCode.DEADLOCK_1, getDeadlockDetails(sessions)); }
@@ -467,6 +474,7 @@ public class TableData extends Table implements RecordReader {
                 // check for deadlocks from now on
                 checkDeadlock = true;
             }
+
             final long now = System.currentTimeMillis();
             if (now >= max) {
                 traceLock(session, exclusive, "timeout after " + session.getLockTimeout());
@@ -497,6 +505,31 @@ public class TableData extends Table implements RecordReader {
                 // ignore
             }
         }
+    }
+
+    private boolean recordSharedLock(final Session session) {
+
+        return lockShared.add(session);
+    }
+
+    private boolean holdsSharedLock(final Session session) {
+
+        return lockShared.contains(session);
+    }
+
+    private boolean noSessionHoldsSharedLock() {
+
+        return lockShared.isEmpty();
+    }
+
+    private boolean noSessionHoldsExclusiveLock() {
+
+        return getSessionHoldingExclusiveLock() == null;
+    }
+
+    private boolean holdsExclusiveLock(final Session session) {
+
+        return getSessionHoldingExclusiveLock() == session;
     }
 
     private String getDeadlockDetails(final ObjectArray sessions) {
@@ -632,9 +665,9 @@ public class TableData extends Table implements RecordReader {
     public void unlock(final Session s) {
 
         if (database != null) {
-            traceLock(s, getSessionHoldingExclusiveLock() == s, "unlock");
-            if (getSessionHoldingExclusiveLock() == s) {
-                setSessionHoldingExclusiveLock(null);
+            traceLock(s, holdsExclusiveLock(s), "unlock");
+            if (holdsExclusiveLock(s)) {
+                recordExclusiveLock(null);
             }
             if (lockShared != null && lockShared.size() > 0) {
                 lockShared.remove(s);
@@ -707,7 +740,7 @@ public class TableData extends Table implements RecordReader {
         scanIndex.remove(session);
         database.removeMeta(session, getId());
         scanIndex = null;
-        setSessionHoldingExclusiveLock(null);
+        recordExclusiveLock(null);
         lockShared = null;
         invalidate();
     }
@@ -786,17 +819,13 @@ public class TableData extends Table implements RecordReader {
         return scanIndex.getRowCountApproximation();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.table.Table#isLocal()
-     */
     @Override
     public boolean isLocal() {
 
         return true;
     }
 
-    public void setSessionHoldingExclusiveLock(final Session sessionHoldingExclusiveLock) {
+    public void recordExclusiveLock(final Session sessionHoldingExclusiveLock) {
 
         this.sessionHoldingExclusiveLock = sessionHoldingExclusiveLock;
     }
@@ -805,5 +834,4 @@ public class TableData extends Table implements RecordReader {
 
         return sessionHoldingExclusiveLock;
     }
-
 }

@@ -1164,12 +1164,13 @@ public class Session extends SessionWithState {
     public int hashCode() {
 
         return user.getName().hashCode();
-
-        // return serialId;
     }
 
     @Override
     public boolean equals(final Object obj) {
+
+        Diagnostic.trace(">>>>>>>>>>> Session.equals() called");
+        Diagnostic.printStackTrace();
 
         return user.getName().equals(((Session) obj).getUser().getName());
     }
