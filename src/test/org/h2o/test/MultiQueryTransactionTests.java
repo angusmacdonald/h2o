@@ -689,6 +689,54 @@ public class MultiQueryTransactionTests extends TestBase {
     }
 
     /**
+     * Tests that prepared statements work in the system where there are two replicas involved.
+     * 
+     * Tests that prepared statements can correctly be passed to remote machines correctly when the have an AND condition (for DELETES).
+     * 
+     * @throws SQLException
+     */
+    @Test
+    public void testPreparedStatementsDelete() throws SQLException {
+
+        // update bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
+        createReplicaOnB();
+
+        PreparedStatement mStmt1 = null;
+        PreparedStatement mStmt2 = null;
+        try {
+            mStmt1 = ca.prepareStatement("insert into PUBLIC.TEST (id,name) values (?,?)");
+
+            for (int i = 3; i < 10; i++) {
+                mStmt1.setInt(1, i);
+                mStmt1.setString(2, "helloNumber" + i);
+                mStmt1.addBatch();
+            }
+
+            mStmt1.executeBatch();
+
+            mStmt2 = ca.prepareStatement("delete from PUBLIC.TEST where id=? and name=?;");
+
+            mStmt2.setInt(1, 3);
+            mStmt2.setString(2, "helloNumber3");
+            mStmt2.addBatch();
+            mStmt2.executeBatch();
+
+            sa.execute("SELECT LOCAL * FROM PUBLIC.TEST WHERE ID=3");
+            final ResultSet rs = sa.getResultSet();
+
+            if (rs.next()) {
+
+                fail("Should only no entries.");
+
+            }
+        }
+        finally {
+            mStmt1.close();
+            mStmt2.close();
+        }
+    }
+
+    /**
     * Tests that prepared statements work in the system where no replication is involved.
      * @throws SQLException 
     */

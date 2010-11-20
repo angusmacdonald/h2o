@@ -12,11 +12,7 @@ import org.h2.command.Prepared;
 import org.h2.constant.ErrorCode;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
-import org.h2.expression.Comparison;
-import org.h2.expression.Condition;
-import org.h2.expression.ConditionAndOr;
 import org.h2.expression.Expression;
-import org.h2.expression.Operation;
 import org.h2.expression.Parameter;
 import org.h2.expression.ValueExpression;
 import org.h2.message.Message;
@@ -226,10 +222,10 @@ public class Update extends Prepared {
                 final int index = c.getColumnId();
                 final Expression e = expr[i];
 
-                evaluateExpression(e, values, c.getType(), expr);
+                evaluateExpressionForPreparedStatement(e, values, c.getType(), expr);
             }
 
-            recurisvelyEvaluateExpressions(expr, values, condition);
+            recurisvelyEvaluateExpressionsForPreparedStatements(expr, values, condition);
 
             // Edit the SQL String (add data to the end)
             // Example: update bahrain set Name=? where ID=? {1: 'PILOT_1', 2:
@@ -259,83 +255,6 @@ public class Update extends Prepared {
             throw new SQLException(e.getMessage());
         }
         return sql;
-    }
-
-    /**
-     * Used to evaluate (get the data from) expressions in the where clause of an UPDATE statement.
-     * @param expr       Used in exception handling to generate an error message, but for nothing else.
-     * @param values    The list storing the values that have already been extracted.
-     * @param conditionToEvaluate The current expression being evaluated. The WHERE clause ultimately contains expressions of type {@link Condition}, but these may
-     * be leafs in a tree with various conditionals. Currently this method is recursively called if the conditionToEvaluate is of type {@link ConditionAndOr}.
-     * @throws SQLException
-     */
-    private void recurisvelyEvaluateExpressions(final Expression[] expr, final List<String> values, final Expression conditionToEvaluate) throws SQLException {
-
-        if (conditionToEvaluate instanceof Comparison) {
-            //This is a leaf node - obtain its value by evaluating the expression.
-            final Comparison comparison = (Comparison) conditionToEvaluate;
-
-            final Expression setExpression = comparison.getExpression(false);
-
-            evaluateExpression(setExpression, values, setExpression.getType(), expr);
-        }
-        else if (conditionToEvaluate instanceof ConditionAndOr) {
-            //This is a branch node - obtain the left and right nodes and recursively evaluate.
-
-            //Get the values associated with this part of the condition.
-            final ConditionAndOr andor = (ConditionAndOr) conditionToEvaluate;
-
-            final Expression exprLeft = andor.getExpression(true);
-            final Expression exprRight = andor.getExpression(false);
-
-            //These should be of type 'comparison' - make this section of the code recursive, so we get all comparison values.
-            recurisvelyEvaluateExpressions(expr, values, exprLeft);
-            recurisvelyEvaluateExpressions(expr, values, exprRight);
-        }
-
-    }
-
-    /**
-     * Gets the value from an expression object and adds it to the values list (parameter).
-     * @param e         The expression to be evaluated (this method gets the value of this expression; its contents.
-     * @param values    The list storing the values that have already been extracted.
-     * @param colummType The type of data stored in the expression.
-     * @param expr       Used in exception handling to generate an error message, but for nothing else.
-     * @throws SQLException Thrown if there was an error trying to get the value of the expression.
-     */
-    private void evaluateExpression(Expression e, final List<String> values, final int colummType, final Expression[] expr) throws SQLException {
-
-        //UPDATE warehouse SET w_ytd = w_ytd + ?  WHERE w_id = ?  {1: 4966.03, 2: 1};
-
-        // Only add the expression if it is unspecified in the query (there will
-        // be an instance of parameter somewhere).
-        try {
-            if (e != null && e instanceof Parameter || e instanceof Operation && e.toString().contains("?")) {
-                // e can be null (DEFAULT)
-                e = e.optimize(session);
-                try {
-                    if (e instanceof Operation) {
-                        final Operation eo = (Operation) e;
-                        final Value v = eo.getRightValue(session);
-                        values.add(v.toString());
-                    }
-                    else {
-                        final Value v = e.getValue(session).convertTo(colummType);
-                        values.add(v.toString());
-                    }
-
-                }
-                catch (final SQLException ex) {
-                    throw setRow(ex, 0, getSQL(expr));
-                }
-            }
-
-        }
-
-        catch (final SQLException e1) {
-            e1.printStackTrace();
-            throw e1;
-        }
     }
 
     @Override

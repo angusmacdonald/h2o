@@ -5,13 +5,13 @@
 package org.h2.command.dml;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.h2.command.Prepared;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
-import org.h2.expression.Comparison;
 import org.h2.expression.Expression;
-import org.h2.expression.Parameter;
 import org.h2.log.UndoLogRecord;
 import org.h2.result.LocalResult;
 import org.h2.result.Row;
@@ -20,7 +20,6 @@ import org.h2.table.PlanItem;
 import org.h2.table.Table;
 import org.h2.table.TableFilter;
 import org.h2.util.StringUtils;
-import org.h2.value.Value;
 import org.h2o.db.query.TableProxyManager;
 import org.h2o.db.query.locking.LockType;
 
@@ -119,14 +118,9 @@ public class Delete extends Prepared {
 
     private String adjustForPreparedStatement() throws SQLException {
 
-        final String[] values = new String[1];
+        final List<String> values = new ArrayList<String>(); //Will be used to store the values contained within { } brackets in the final statement.
 
-        final int y = 0;
-
-        final Comparison comparison = (Comparison) condition;
-        final Expression setExpression = comparison.getExpression(false);
-
-        evaluateExpression(setExpression, values, y, setExpression.getType());
+        recurisvelyEvaluateExpressionsForPreparedStatements(null, values, condition);
 
         // Edit the SQL String
         // Example: update bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
@@ -134,8 +128,8 @@ public class Delete extends Prepared {
 
         boolean addComma = false;
         int count = 1;
-        for (int i = 1; i <= values.length; i++) {
-            if (values[i - 1] != null) {
+        for (final String value : values) {
+            if (value != null) {
                 if (addComma) {
                     sql += ", ";
                 }
@@ -143,7 +137,7 @@ public class Delete extends Prepared {
                     addComma = true;
                 }
 
-                sql += count + ": " + values[i - 1];
+                sql += count + ": " + value;
 
                 count++;
             }
@@ -151,20 +145,6 @@ public class Delete extends Prepared {
         sql += "};";
 
         return sql;
-    }
-
-    private void evaluateExpression(Expression e, final String[] values, final int i, final int colummType) throws SQLException {
-
-        // Only add the expression if it is unspecified in the query (there will
-        // be an instance of parameter somewhere).
-        if (e != null && e instanceof Parameter) {
-            // e can be null (DEFAULT)
-            e = e.optimize(session);
-
-            final Value v = e.getValue(session).convertTo(colummType);
-            values[i] = v.toString();
-
-        }
     }
 
     @Override
