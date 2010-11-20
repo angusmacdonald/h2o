@@ -151,6 +151,7 @@ public class TcpServerThread implements Runnable {
                     process();
                 }
                 catch (final Throwable e) {
+                    e.printStackTrace();
                     sendError(e);
                 }
             }

@@ -156,9 +156,7 @@ public class TableProxy implements Serializable {
 
         H2OTest.rmiFailure(); // Test code to simulate the failure of DB instances at this point.
 
-        if (!globalCommit) {
-
-        throw new SQLException("Commit failed on one or more replicas. The query will be rolled back."); }
+        if (!globalCommit) { throw new SQLException("Commit failed on one or more replicas. The query will be rolled back."); }
 
         return 0;
     }

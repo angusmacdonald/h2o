@@ -5,12 +5,16 @@
 package org.h2.command.dml;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.h2.command.Prepared;
 import org.h2.constant.ErrorCode;
 import org.h2.engine.Right;
 import org.h2.engine.Session;
 import org.h2.expression.Comparison;
+import org.h2.expression.Condition;
+import org.h2.expression.ConditionAndOr;
 import org.h2.expression.Expression;
 import org.h2.expression.Operation;
 import org.h2.expression.Parameter;
@@ -195,8 +199,9 @@ public class Update extends Prepared {
      * Adjusts the sqlStatement string to be a valid prepared statement. This is used when propagating prepared statements within the
      * system.
      * 
-     * @param sql
-     * @return
+     * This method takes the parsed SQL and extracts the values needed to pass information to the second machine.
+     * @return The SQL update string combined with prepared statement values at the end. 
+     * Example: update bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
      * @throws SQLException
      */
     private String adjustForPreparedStatement() throws SQLException {
@@ -206,13 +211,9 @@ public class Update extends Prepared {
 
             // Adjust the sqlStatement string to contain actual data.
 
-            // if this is a prepared statement the SQL must look like: update
-            // bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
-            // use the loop structure from below to obtain this information. how
-            // do you know if it is a prepared statement.
-
             final Expression[] expr = expressions;
-            final String[] values = new String[expressions.length + 1]; // The last expression is the  where condition, everything before it is part of the set  expression.
+
+            final List<String> values = new ArrayList<String>(); //Will be used to store the values contained within { } brackets in the final statement.
             final Column[] columns = table.getColumns();
 
             /*
@@ -220,30 +221,25 @@ public class Update extends Prepared {
              * 'Condition' stores the set condition.
              */
             for (int i = 0; i < expressions.length; i++) {
-
+                //Loop through all of the expressions that are part of the UPDATE clause (not part of the WHERE clause).
                 final Column c = columns[i];
                 final int index = c.getColumnId();
                 final Expression e = expr[i];
 
-                evaluateExpression(e, values, i, c.getType(), expr);
+                evaluateExpression(e, values, c.getType(), expr);
             }
 
-            final int y = 2;
+            recurisvelyEvaluateExpressions(expr, values, condition);
 
-            final Comparison comparison = (Comparison) condition;
-            final Expression setExpression = comparison.getExpression(false);
-
-            evaluateExpression(setExpression, values, y, setExpression.getType(), expr);
-
-            // Edit the SQL String
+            // Edit the SQL String (add data to the end)
             // Example: update bahrain set Name=? where ID=? {1: 'PILOT_1', 2:
             // 1};
             sql = new String(sqlStatement) + " {";
 
             boolean addComma = false;
             int count = 1;
-            for (int i = 1; i <= values.length; i++) {
-                if (values[i - 1] != null) {
+            for (final String value : values) {
+                if (value != null) {
                     if (addComma) {
                         sql += ", ";
                     }
@@ -251,21 +247,63 @@ public class Update extends Prepared {
                         addComma = true;
                     }
 
-                    sql += count + ": " + values[i - 1];
+                    sql += count + ": " + value;
 
                     count++;
                 }
             }
             sql += "};";
         }
-        catch (final SQLException e) {
+        catch (final Exception e) {
             e.printStackTrace();
-            throw e;
+            throw new SQLException(e.getMessage());
         }
         return sql;
     }
 
-    private void evaluateExpression(Expression e, final String[] values, final int i, final int colummType, final Expression[] expr) throws SQLException {
+    /**
+     * Used to evaluate (get the data from) expressions in the where clause of an UPDATE statement.
+     * @param expr       Used in exception handling to generate an error message, but for nothing else.
+     * @param values    The list storing the values that have already been extracted.
+     * @param conditionToEvaluate The current expression being evaluated. The WHERE clause ultimately contains expressions of type {@link Condition}, but these may
+     * be leafs in a tree with various conditionals. Currently this method is recursively called if the conditionToEvaluate is of type {@link ConditionAndOr}.
+     * @throws SQLException
+     */
+    private void recurisvelyEvaluateExpressions(final Expression[] expr, final List<String> values, final Expression conditionToEvaluate) throws SQLException {
+
+        if (conditionToEvaluate instanceof Comparison) {
+            //This is a leaf node - obtain its value by evaluating the expression.
+            final Comparison comparison = (Comparison) conditionToEvaluate;
+
+            final Expression setExpression = comparison.getExpression(false);
+
+            evaluateExpression(setExpression, values, setExpression.getType(), expr);
+        }
+        else if (conditionToEvaluate instanceof ConditionAndOr) {
+            //This is a branch node - obtain the left and right nodes and recursively evaluate.
+
+            //Get the values associated with this part of the condition.
+            final ConditionAndOr andor = (ConditionAndOr) conditionToEvaluate;
+
+            final Expression exprLeft = andor.getExpression(true);
+            final Expression exprRight = andor.getExpression(false);
+
+            //These should be of type 'comparison' - make this section of the code recursive, so we get all comparison values.
+            recurisvelyEvaluateExpressions(expr, values, exprLeft);
+            recurisvelyEvaluateExpressions(expr, values, exprRight);
+        }
+
+    }
+
+    /**
+     * Gets the value from an expression object and adds it to the values list (parameter).
+     * @param e         The expression to be evaluated (this method gets the value of this expression; its contents.
+     * @param values    The list storing the values that have already been extracted.
+     * @param colummType The type of data stored in the expression.
+     * @param expr       Used in exception handling to generate an error message, but for nothing else.
+     * @throws SQLException Thrown if there was an error trying to get the value of the expression.
+     */
+    private void evaluateExpression(Expression e, final List<String> values, final int colummType, final Expression[] expr) throws SQLException {
 
         //UPDATE warehouse SET w_ytd = w_ytd + ?  WHERE w_id = ?  {1: 4966.03, 2: 1};
 
@@ -279,13 +317,13 @@ public class Update extends Prepared {
                     if (e instanceof Operation) {
                         final Operation eo = (Operation) e;
                         final Value v = eo.getRightValue(session);
-                        values[i] = v.toString();
+                        values.add(v.toString());
                     }
                     else {
                         final Value v = e.getValue(session).convertTo(colummType);
-                        values[i] = v.toString();
+                        values.add(v.toString());
                     }
-                    // newRow.setValue(index, v);
+
                 }
                 catch (final SQLException ex) {
                     throw setRow(ex, 0, getSQL(expr));

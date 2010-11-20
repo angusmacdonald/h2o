@@ -229,48 +229,55 @@ public class Insert extends Prepared {
         // use the loop structure from below to obtain this information. how do
         // you know if it is a prepared statement.
 
-        final Expression[] expr = (Expression[]) list.get(0);
-        final String[] values = new String[columns.length];
+        try {
+            final Expression[] expr = (Expression[]) list.get(0);
+            final String[] values = new String[columns.length];
 
-        for (int i = 0; i < columns.length; i++) {
-            final Column c = columns[i];
-            final int index = c.getColumnId();
-            Expression e = expr[i];
+            for (int i = 0; i < columns.length; i++) {
+                final Column c = columns[i];
+                final int index = c.getColumnId();
+                Expression e = expr[i];
 
-            // Only add the expression if it is unspecified in the query (there
-            // will be an instance of parameter somewhere).
-            if (e != null && e instanceof Parameter || e instanceof Operation && e.toString().contains("?")) {
-                // e can be null (DEFAULT)
-                e = e.optimize(session);
-                try {
-                    final Value v = e.getValue(session).convertTo(c.getType());
-                    values[i] = v.toString();
-                    // newRow.setValue(index, v);
-                }
-                catch (final SQLException ex) {
-                    throw setRow(ex, 0, getSQL(expr));
+                // Only add the expression if it is unspecified in the query (there
+                // will be an instance of parameter somewhere).
+                if (e != null && e instanceof Parameter || e instanceof Operation && e.toString().contains("?")) {
+                    // e can be null (DEFAULT)
+                    e = e.optimize(session);
+                    try {
+                        final Value v = e.getValue(session).convertTo(c.getType());
+                        values[i] = v.toString();
+                        // newRow.setValue(index, v);
+                    }
+                    catch (final SQLException ex) {
+                        throw setRow(ex, 0, getSQL(expr));
+                    }
                 }
             }
-        }
 
-        // Edit the SQL String
-        // insert into PUBLIC.TEST (id,name) values (?,?) {1: 99, 2:
-        // 'helloNumber99'};
+            // Edit the SQL String
+            // insert into PUBLIC.TEST (id,name) values (?,?) {1: 99, 2:
+            // 'helloNumber99'};
 
-        String sql = new String(sqlStatement) + " {";
+            String sql = new String(sqlStatement) + " {";
 
-        for (int i = 1; i <= columns.length; i++) {
-            if (values[i - 1] != null) {
-                if (i > 1) {
-                    sql += ", ";
+            for (int i = 1; i <= columns.length; i++) {
+                if (values[i - 1] != null) {
+                    if (i > 1) {
+                        sql += ", ";
+                    }
+                    sql += i + ": " + values[i - 1];
+
                 }
-                sql += i + ": " + values[i - 1];
-
             }
-        }
-        sql += "};";
+            sql += "};";
 
-        return sql;
+            return sql;
+
+        }
+        catch (final SQLException e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @Override
