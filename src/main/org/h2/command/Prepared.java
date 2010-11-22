@@ -630,7 +630,7 @@ public abstract class Prepared {
 
         if (isRegularTable()) {
 
-            tableProxy = tableProxyManager.getQueryProxy(table.getFullName());
+            tableProxy = tableProxyManager.getTableProxy(table.getFullName());
 
             if (!lockAlreadyGranted(tableProxy)) {
                 tableProxy = TableProxy.getTableProxyAndLock(table, lockRequested, new LockRequest(session), session.getDatabase());

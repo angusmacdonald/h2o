@@ -1242,7 +1242,7 @@ public class Select extends Query {
             if (!session.getDatabase().isTableLocal(table.getSchema())) {
 
                 if (Table.TABLE.equals(table.getTableType())) {
-                    TableProxy qp = tableProxyManager.getQueryProxy(table.getFullName());
+                    TableProxy qp = tableProxyManager.getTableProxy(table.getFullName());
 
                     if (qp == null || qp.getLockGranted().equals(LockType.NONE)) {
                         qp = TableProxy.getTableProxyAndLock(table, LockType.READ, new LockRequest(session), session.getDatabase());

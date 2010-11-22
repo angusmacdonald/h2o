@@ -476,20 +476,19 @@ public class CreateTable extends SchemaCommand {
     }
 
     /*
-     * (non-Javadoc)
-     * @see org.h2.command.Prepared#acquireLocks() The queryProxyManager variable isn't used in create table, because it can't have a proxy
+     * The queryProxyManager variable isn't used in create table, because it can't have a proxy
      * for something which hasn't yet been created.
      */
     @Override
     public void acquireLocks(final TableProxyManager tableProxyManager) throws SQLException {
 
+        System.out.println("ctal1 " + tableProxyManager.getTransactionName());
         final Database db = session.getDatabase();
 
-        assert tableProxyManager.getQueryProxy(tableName) == null; // should never exist.
+        assert tableProxyManager.getTableProxy(tableName) == null; // should never exist.
 
         /*
-         * ###################################################################### ### H2O. Check that the table doesn't already exist
-         * elsewhere. ###################################################################### ###
+         * ### H2O. Check that the table doesn't already exist elsewhere. ###
          */
 
         if (!db.getSystemTableReference().isSystemTableLocal() && !db.isManagementDB() && !db.isTableLocal(getSchema()) && !isStartup()) {
@@ -507,12 +506,16 @@ public class CreateTable extends SchemaCommand {
 
         }
 
+        System.out.println("ctal2");
         tableProxy = null;
         if (!db.isTableLocal(getSchema()) && !db.isManagementDB() && !isStartup()) { // if it is startup then we don't want to create a table manager yet.
 
+            System.out.println("ctal3");
             final TableInfo ti = new TableInfo(tableName, getSchema().getName(), 0l, 0, "TABLE", db.getURL());
             try {
+                System.out.println("ctal4");
                 tableManager = new TableManager(ti, db, false);
+                System.out.println("ctal5");
             }
             catch (final Exception e1) {
                 e1.printStackTrace();

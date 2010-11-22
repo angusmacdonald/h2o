@@ -378,7 +378,7 @@ public class TableProxyManager {
      * @param table
      * @return
      */
-    public TableProxy getQueryProxy(final String tableName) {
+    public TableProxy getTableProxy(final String tableName) {
 
         return tableProxies.get(tableName);
     }

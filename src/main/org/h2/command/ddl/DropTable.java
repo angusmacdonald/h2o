@@ -189,7 +189,7 @@ public class DropTable extends SchemaCommand {
         if (isRegularTable()) {
 
             final String fullTableName = getSchema().getName() + "." + tableName;
-            tableProxy = tableProxyManager.getQueryProxy(fullTableName);
+            tableProxy = tableProxyManager.getTableProxy(fullTableName);
 
             if (tableProxy == null || !tableProxy.getLockGranted().equals(LockType.WRITE)) {
 

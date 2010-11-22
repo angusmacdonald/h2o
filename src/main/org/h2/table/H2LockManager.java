@@ -49,7 +49,7 @@ public class H2LockManager {
                     return obtainLock(session, exclusive);
                 }
                 finally {
-                    System.out.println("acquired H2 lock for: " + tableData.getFullName());
+                    //                    System.out.println("acquired H2 lock for: " + tableData.getFullName());
                     sessionsWaitingForLocks.remove(session);
                 }
             }
@@ -99,7 +99,7 @@ public class H2LockManager {
             if (isLockedSharedBy(s)) {
                 releaseSharedLock(s);
             }
-            System.out.println("releasing H2 lock for: " + tableData.getFullName());
+            //            System.out.println("releasing H2 lock for: " + tableData.getFullName());
 
             if (database.getSessionCount() > 1) {
                 database.notifyAll();
