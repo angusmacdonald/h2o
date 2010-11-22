@@ -1,13 +1,32 @@
-/*
- * Copyright 2004-2009 H2 Group. Multiple-Licensed under the H2 License, Version 1.0, and under the Eclipse Public License, Version 1.0
- * (http://h2database.com/html/license.html). Initial Developer: H2 Group
- */
+/***************************************************************************
+ *                                                                         *
+ * H2O                                                                     *
+ * Copyright (C) 2010 Distributed Systems Architecture Research Group      *
+ * University of St Andrews, Scotland                                      *
+ * http://blogs.cs.st-andrews.ac.uk/h2o/                                   *
+ *                                                                         *
+ * This file is part of H2O, a distributed database based on the open      *
+ * source database H2 (www.h2database.com).                                *
+ *                                                                         *
+ * H2O is free software: you can redistribute it and/or                    *
+ * modify it under the terms of the GNU General Public License as          *
+ * published by the Free Software Foundation, either version 3 of the      *
+ * License, or (at your option) any later version.                         *
+ *                                                                         *
+ * H2O is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ * GNU General Public License for more details.                            *
+ *                                                                         *
+ * You should have received a copy of the GNU General Public License       *
+ * along with H2O.  If not, see <http://www.gnu.org/licenses/>.            *
+ *                                                                         *
+ ***************************************************************************/
+
 package org.h2.table;
 
 import java.sql.SQLException;
 import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
 
 import org.h2.api.DatabaseEventListener;
 import org.h2.constant.ErrorCode;
@@ -28,7 +47,6 @@ import org.h2.index.RowIndex;
 import org.h2.index.ScanIndex;
 import org.h2.index.TreeIndex;
 import org.h2.message.Message;
-import org.h2.message.Trace;
 import org.h2.result.Row;
 import org.h2.schema.Schema;
 import org.h2.store.DataPage;
@@ -54,12 +72,6 @@ public class TableData extends Table implements RecordReader {
 
     private long rowCount;
 
-    private Session sessionHoldingExclusiveLock;
-
-    private HashSet lockShared = new HashSet();
-
-    private final Trace traceLock;
-
     private boolean globalTemporary;
 
     private final ObjectArray indexes = new ObjectArray();
@@ -68,6 +80,8 @@ public class TableData extends Table implements RecordReader {
 
     private boolean containsLargeObject;
 
+    private final H2LockManager lockManager;
+
     public TableData(final Schema schema, final String tableName, final int id, final ObjectArray columns, final boolean persistent, final boolean clustered, final int headPos) throws SQLException {
 
         super(schema, id, tableName, persistent);
@@ -75,6 +89,7 @@ public class TableData extends Table implements RecordReader {
         columns.toArray(cols);
         setColumns(cols);
         this.clustered = clustered;
+
         if (!clustered) {
             if (SysProperties.PAGE_STORE && database.isPersistent()) {
                 scanIndex = new PageScanIndex(this, id, IndexColumn.wrap(cols), IndexType.createScan(persistent), headPos);
@@ -84,13 +99,15 @@ public class TableData extends Table implements RecordReader {
             }
             indexes.add(scanIndex);
         }
+
         for (final Column col : cols) {
             if (DataType.isLargeObject(col.getType())) {
                 containsLargeObject = true;
                 memoryPerRow = Row.MEMORY_CALCULATE;
             }
         }
-        traceLock = database.getTrace(Trace.LOCK);
+
+        lockManager = new H2LockManager(this, database);
     }
 
     @Override
@@ -387,236 +404,6 @@ public class TableData extends Table implements RecordReader {
     }
 
     @Override
-    boolean isLockedExclusivelyBy(final Session session) {
-
-        return holdsExclusiveLock(session);
-    }
-
-    @Override
-    public Session lock(final Session session, final boolean exclusive, final boolean force) throws SQLException {
-
-        final int lockMode = database.getLockMode();
-
-        if (lockMode != Constants.LOCK_MODE_OFF) {
-            synchronized (database) {
-                try {
-                    return doLock(session, exclusive);
-                }
-                finally {
-                    session.setWaitForLock(null);
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private Session doLock(Session session, final boolean exclusive) throws SQLException {
-
-        final long max = System.currentTimeMillis() + session.getLockTimeout();
-
-        boolean checkDeadlock = false;
-        while (true) {
-
-            if (sessionHoldingExclusiveLock != null && sessionHoldingExclusiveLock != session) {
-
-                System.out.println("session: " + session + " stealing lock for table: " + getName() + " from session: " + sessionHoldingExclusiveLock);
-
-                /* 
-                  * XXX H2O hack. It ensures that A-B-A communication doesn't lock up the DB (normally through the SYS table), as the returning update can use the same session
-                  * as the originating update (which has all of the pertinent locks).
-                  * 
-                  * This happens when the PUBLIC.SYS table is altered (after almost every update through the Database.remoteMeta() [line 1266] method. This is called from 
-                  * TableData.validateConvertUpdateSequence -> Column -> ... -> Sequence.flush(), after a user table has been updated. It seems that an updating user 
-                  * transaction obtains an exclusive lock on the PUBLIC.SYS table.
-                  */
-
-                session = sessionHoldingExclusiveLock;
-            }
-
-            if (holdsExclusiveLock(session)) { return session; }
-
-            if (noSessionHoldsExclusiveLock()) {
-
-                if (exclusive) {
-
-                    if (noSessionHoldsSharedLock()) {
-
-                        traceLock(session, exclusive, "added for");
-                        session.addLock(this);
-                        recordExclusiveLock(session);
-                        return session;
-                    }
-                    else if (lockShared.size() == 1 && holdsSharedLock(session)) {
-
-                        traceLock(session, exclusive, "add (upgraded) for ");
-                        recordExclusiveLock(session);
-                        return session;
-                    }
-                }
-
-                else {
-
-                    if (!holdsSharedLock(session)) {
-
-                        traceLock(session, exclusive, "ok");
-                        session.addLock(this);
-                        recordSharedLock(session);
-                    }
-                    return session;
-                }
-            }
-
-            System.out.println("Session: " + session + " waiting for " + (exclusive ? "exclusive" : "shared") + " lock on table " + getName());
-
-            session.setWaitForLock(this);
-
-            if (checkDeadlock) {
-                final ObjectArray sessions = checkDeadlock(session, null);
-                if (sessions != null) { throw Message.getSQLException(ErrorCode.DEADLOCK_1, getDeadlockDetails(sessions)); }
-            }
-            else {
-                // check for deadlocks from now on
-                checkDeadlock = true;
-            }
-
-            final long now = System.currentTimeMillis();
-            if (now >= max) {
-                traceLock(session, exclusive, "timeout after " + session.getLockTimeout());
-
-                System.err.println(getSessionHoldingExclusiveLock());
-                throw Message.getSQLException(ErrorCode.LOCK_TIMEOUT_1, getName());
-            }
-            try {
-                traceLock(session, exclusive, "waiting for");
-                if (database.getLockMode() == Constants.LOCK_MODE_TABLE_GC) {
-                    for (int i = 0; i < 20; i++) {
-                        final long free = Runtime.getRuntime().freeMemory();
-                        System.gc();
-                        final long free2 = Runtime.getRuntime().freeMemory();
-                        if (free == free2) {
-                            break;
-                        }
-                    }
-                }
-                // don't wait too long so that deadlocks are detected early
-                long sleep = Math.min(Constants.DEADLOCK_CHECK, max - now);
-                if (sleep == 0) {
-                    sleep = 1;
-                }
-                database.wait(sleep);
-            }
-            catch (final InterruptedException e) {
-                // ignore
-            }
-        }
-    }
-
-    private boolean recordSharedLock(final Session session) {
-
-        return lockShared.add(session);
-    }
-
-    private boolean holdsSharedLock(final Session session) {
-
-        return lockShared.contains(session);
-    }
-
-    private boolean noSessionHoldsSharedLock() {
-
-        return lockShared.isEmpty();
-    }
-
-    private boolean noSessionHoldsExclusiveLock() {
-
-        return getSessionHoldingExclusiveLock() == null;
-    }
-
-    private boolean holdsExclusiveLock(final Session session) {
-
-        return getSessionHoldingExclusiveLock() == session;
-    }
-
-    private String getDeadlockDetails(final ObjectArray sessions) {
-
-        final StringBuilder buff = new StringBuilder();
-        for (int i = 0; i < sessions.size(); i++) {
-            buff.append('\n');
-            final Session s = (Session) sessions.get(i);
-            final Table lock = s.getWaitForLock();
-            buff.append("Session ").append(s).append(" is waiting to lock ").append(lock);
-            buff.append(" while locking ");
-            final Table[] locks = s.getLocks();
-            for (int j = 0; j < locks.length; j++) {
-                if (j > 0) {
-                    buff.append(", ");
-                }
-                final Table t = locks[j];
-                buff.append(t);
-                if (t instanceof TableData) {
-                    if (((TableData) t).getSessionHoldingExclusiveLock() == s) {
-                        buff.append(" (exclusive)");
-                    }
-                    else {
-                        buff.append(" (shared)");
-                    }
-                }
-            }
-            buff.append('.');
-        }
-        return buff.toString();
-    }
-
-    @Override
-    public ObjectArray checkDeadlock(final Session session, Session clash) {
-
-        // only one deadlock check at any given time
-        synchronized (TableData.class) {
-            if (clash == null) {
-                // verification is started
-                clash = session;
-            }
-            else if (clash == session) {
-                // we found a circle
-                return new ObjectArray();
-            }
-            ObjectArray error = null;
-            for (final Iterator it = lockShared.iterator(); it.hasNext();) {
-                final Session s = (Session) it.next();
-                if (s == session) {
-                    // it doesn't matter if we have locked the object already
-                    continue;
-                }
-                final Table t = s.getWaitForLock();
-                if (t != null) {
-                    error = t.checkDeadlock(s, clash);
-                    if (error != null) {
-                        error.add(session);
-                        break;
-                    }
-                }
-            }
-            if (error == null && getSessionHoldingExclusiveLock() != null) {
-                final Table t = getSessionHoldingExclusiveLock().getWaitForLock();
-                if (t != null) {
-                    error = t.checkDeadlock(getSessionHoldingExclusiveLock(), clash);
-                    if (error != null) {
-                        error.add(session);
-                    }
-                }
-            }
-            return error;
-        }
-    }
-
-    private void traceLock(final Session session, final boolean exclusive, final String s) {
-
-        if (traceLock.isDebugEnabled()) {
-            traceLock.debug(session.getSessionId() + " " + (exclusive ? "exclusive write lock" : "shared read lock") + " " + s + " " + getName());
-        }
-    }
-
-    @Override
     public String getDropSQL() {
 
         return "DROP TABLE IF EXISTS " + getSQL();
@@ -658,33 +445,6 @@ public class TableData extends Table implements RecordReader {
         }
         buff.append("\n)");
         return buff.toString();
-    }
-
-    @Override
-    public boolean isLockedExclusively() {
-
-        return getSessionHoldingExclusiveLock() != null;
-    }
-
-    @Override
-    public void unlock(final Session s) {
-
-        if (database != null) {
-            traceLock(s, holdsExclusiveLock(s), "unlock");
-            if (holdsExclusiveLock(s)) {
-                recordExclusiveLock(null);
-            }
-            if (lockShared != null && lockShared.size() > 0) {
-                lockShared.remove(s);
-            }
-            // TODO lock: maybe we need we fifo-queue to make sure nobody
-            // starves. check what other databases do
-            synchronized (database) {
-                if (database.getSessionCount() > 1) {
-                    database.notifyAll();
-                }
-            }
-        }
     }
 
     @Override
@@ -745,8 +505,7 @@ public class TableData extends Table implements RecordReader {
         scanIndex.remove(session);
         database.removeMeta(session, getId());
         scanIndex = null;
-        recordExclusiveLock(null);
-        lockShared = null;
+        lockManager.releaseAllLocks();
         invalidate();
     }
 
@@ -830,13 +589,27 @@ public class TableData extends Table implements RecordReader {
         return true;
     }
 
-    public void recordExclusiveLock(final Session sessionHoldingExclusiveLock) {
+    @Override
+    public Session lock(final Session session, final boolean exclusive, final boolean force) throws SQLException {
 
-        this.sessionHoldingExclusiveLock = sessionHoldingExclusiveLock;
+        return lockManager.lock(session, exclusive, force);
     }
 
-    public Session getSessionHoldingExclusiveLock() {
+    @Override
+    public void unlock(final Session s) {
 
-        return sessionHoldingExclusiveLock;
+        lockManager.unlock(s);
+    }
+
+    @Override
+    public boolean isLockedExclusively() {
+
+        return lockManager.isLockedExclusively();
+    }
+
+    @Override
+    boolean isLockedExclusivelyBy(final Session session) {
+
+        return lockManager.isLockedExclusivelyBy(session);
     }
 }

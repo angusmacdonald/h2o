@@ -103,7 +103,7 @@ public class CommandContainer extends Command {
         if (!prepared.sqlStatement.contains("H2O.") && !prepared.sqlStatement.contains("INFORMATION_SCHEMA.") && !prepared.sqlStatement.contains("SYSTEM_RANGE") && !prepared.sqlStatement.contains("information_schema.") && !prepared.sqlStatement.contains("CALL DATABASE()")
                         && prepared instanceof Select) {
 
-            getLock();
+            doLock();
         }
 
         final TableProxyManager currentProxyManager = session.getProxyManagerForTransaction();
@@ -129,16 +129,6 @@ public class CommandContainer extends Command {
 
     }
 
-    private void getLock() throws SQLException {
-
-        try {
-            doLock();
-        }
-        finally {
-            session.setWaitForLock(null);
-        }
-    }
-
     @Override
     public int update() throws SQLException, RemoteException {
 
@@ -162,7 +152,7 @@ public class CommandContainer extends Command {
 
             assert currentProxyManager != null;
 
-            getLock(); // this throws an SQLException if no lock is found.
+            doLock(); // This throws an SQLException if no lock is found.
 
             try {
 
@@ -173,10 +163,8 @@ public class CommandContainer extends Command {
                 H2OTest.createTableFailure();
 
                 if (singleQuery && session.getApplicationAutoCommit()) {
-                    /*
-                     * If it is one of a number of queries in the transaction then we must wait for the entire transaction to finish.
-                     */
 
+                    // If it is one of a number of queries in the transaction then we must wait for the entire transaction to finish.
                     currentProxyManager.finishTransaction(commit, true, session.getDatabase());
                 }
 
@@ -189,9 +177,7 @@ public class CommandContainer extends Command {
             }
         }
         else {
-            /*
-             * This is a transaction command. No need to commit such a query.
-             */
+            // This is a transaction command. No need to commit such a query.
 
             try {
 

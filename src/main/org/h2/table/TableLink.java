@@ -378,6 +378,12 @@ public class TableLink extends Table {
     }
 
     @Override
+    public boolean isLockedExclusivelyBy(final Session session) {
+
+        return false;
+    }
+
+    @Override
     public Index getScanIndex(final Session session) {
 
         return linkedIndex;

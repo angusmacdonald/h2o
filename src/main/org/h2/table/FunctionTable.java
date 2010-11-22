@@ -100,6 +100,12 @@ public class FunctionTable extends Table {
     }
 
     @Override
+    boolean isLockedExclusivelyBy(final Session session) {
+
+        return false;
+    }
+
+    @Override
     public Index addIndex(final Session session, final String indexName, final int indexId, final IndexColumn[] cols, final IndexType indexType, final int headPos, final String comment) throws SQLException {
 
         throw Message.getUnsupportedException();
@@ -235,10 +241,6 @@ public class FunctionTable extends Table {
         return rowCount;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.table.Table#isLocal()
-     */
     @Override
     public boolean isLocal() {
 

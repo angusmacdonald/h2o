@@ -324,28 +324,39 @@ public class MetaTable extends Table {
         return cols;
     }
 
+    @Override
     public String getDropSQL() {
 
         return null;
     }
 
+    @Override
     public String getCreateSQL() {
 
         return null;
     }
 
+    @Override
     public Index addIndex(final Session session, final String indexName, final int indexId, final IndexColumn[] cols, final IndexType indexType, final int headPos, final String comment) throws SQLException {
 
         throw Message.getUnsupportedException();
     }
 
+    @Override
     public Session lock(final Session session, final boolean exclusive, final boolean force) {
 
         return null;
         // nothing to do
     }
 
+    @Override
     public boolean isLockedExclusively() {
+
+        return false;
+    }
+
+    @Override
+    public boolean isLockedExclusivelyBy(final Session session) {
 
         return false;
     }
@@ -1404,26 +1415,31 @@ public class MetaTable extends Table {
         }
     }
 
+    @Override
     public void removeRow(final Session session, final Row row) throws SQLException {
 
         throw Message.getUnsupportedException();
     }
 
+    @Override
     public void addRow(final Session session, final Row row) throws SQLException {
 
         throw Message.getUnsupportedException();
     }
 
+    @Override
     public void removeChildrenAndResources(final Session session) throws SQLException {
 
         throw Message.getUnsupportedException();
     }
 
+    @Override
     public void close(final Session session) {
 
         // nothing to do
     }
 
+    @Override
     public void unlock(final Session s) {
 
         // nothing to do
@@ -1508,46 +1524,55 @@ public class MetaTable extends Table {
         rows.add(row);
     }
 
+    @Override
     public void checkRename() throws SQLException {
 
         throw Message.getUnsupportedException();
     }
 
+    @Override
     public void checkSupportAlter() throws SQLException {
 
         throw Message.getUnsupportedException();
     }
 
+    @Override
     public void truncate(final Session session) throws SQLException {
 
         throw Message.getUnsupportedException();
     }
 
+    @Override
     public long getRowCount(final Session session) {
 
         throw Message.throwInternalError();
     }
 
+    @Override
     public boolean canGetRowCount() {
 
         return false;
     }
 
+    @Override
     public boolean canDrop() {
 
         return false;
     }
 
+    @Override
     public String getTableType() {
 
         return Table.SYSTEM_TABLE;
     }
 
+    @Override
     public Index getScanIndex(final Session session) {
 
         return new MetaIndex(this, IndexColumn.wrap(columns), true);
     }
 
+    @Override
     public ObjectArray getIndexes() {
 
         if (index == null) { return null; }
@@ -1558,11 +1583,13 @@ public class MetaTable extends Table {
         return list;
     }
 
+    @Override
     public long getMaxDataModificationId() {
 
         return database.getModificationDataId();
     }
 
+    @Override
     public Index getUniqueIndex() {
 
         return null;
@@ -1578,6 +1605,7 @@ public class MetaTable extends Table {
         return META_TABLE_TYPE_COUNT;
     }
 
+    @Override
     public long getRowCountApproximation() {
 
         return ROW_COUNT_APPROXIMATION;

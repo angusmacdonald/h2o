@@ -395,10 +395,7 @@ public abstract class Table extends SchemaObjectBase {
      *            the session
      * @return true if it is
      */
-    boolean isLockedExclusivelyBy(final Session session) {
-
-        return false;
-    }
+    abstract boolean isLockedExclusivelyBy(final Session session);
 
     /**
      * Update a list of rows in this table.

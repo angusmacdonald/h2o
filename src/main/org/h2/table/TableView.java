@@ -259,6 +259,12 @@ public class TableView extends Table {
     }
 
     @Override
+    public boolean isLockedExclusivelyBy(final Session session) {
+
+        return false;
+    }
+
+    @Override
     public Index addIndex(final Session session, final String indexName, final int indexId, final IndexColumn[] cols, final IndexType indexType, final int headPos, final String comment) throws SQLException {
 
         throw Message.getUnsupportedException();

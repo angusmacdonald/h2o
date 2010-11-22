@@ -1293,16 +1293,6 @@ public class Session extends SessionWithState {
         return queryTimeout;
     }
 
-    public void setWaitForLock(final Table table) {
-
-        waitForLock = table;
-    }
-
-    public Table getWaitForLock() {
-
-        return waitForLock;
-    }
-
     public int getModificationId() {
 
         return modificationId;
