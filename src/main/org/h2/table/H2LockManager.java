@@ -159,7 +159,7 @@ public class H2LockManager {
 
                     System.out.println("session: " + session + " stealing lock for table: " + tableData.getName() + " from session: " + sessionHoldingExclusiveLock);
                     LockingTable.dumpLockHistory(tableData.getName());
-                    assert false;
+                    System.exit(0);
                 }
 
                 /* 
