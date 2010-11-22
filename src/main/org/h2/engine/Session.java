@@ -166,8 +166,6 @@ public class Session extends SessionWithState {
 
     private boolean commitOrRollbackDisabled;
 
-    private Table waitForLock;
-
     private int modificationId;
 
     private int modificationIdState;

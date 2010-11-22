@@ -198,7 +198,7 @@ public class DropTable extends SchemaCommand {
 
                 if (tableManager == null) {
                     // Will happen if the table doesn't exist but IF NOT EXISTS has been specified.
-                    tableProxy = TableProxy.getDummyQueryProxy(LockRequest.createNewLockRequest(session));
+                    tableProxy = TableProxy.getDummyQueryProxy(new LockRequest(session));
                 }
                 else {
                     /*
@@ -208,13 +208,13 @@ public class DropTable extends SchemaCommand {
 
                     final LockType lockToRequest = session.getApplicationAutoCommit() ? LockType.WRITE : LockType.DROP;
 
-                    tableProxy = TableProxy.getTableProxyAndLock(tableManager, fullTableName, LockRequest.createNewLockRequest(session), lockToRequest, database, false);
+                    tableProxy = TableProxy.getTableProxyAndLock(tableManager, fullTableName, new LockRequest(session), lockToRequest, database, false);
                 }
             }
             tableProxyManager.addProxy(tableProxy);
         }
         else {
-            tableProxyManager.addProxy(TableProxy.getDummyQueryProxy(LockRequest.createNewLockRequest(session)));
+            tableProxyManager.addProxy(TableProxy.getDummyQueryProxy(new LockRequest(session)));
         }
     }
 

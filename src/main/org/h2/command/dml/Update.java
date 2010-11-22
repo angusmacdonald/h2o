@@ -102,7 +102,7 @@ public class Update extends Prepared {
                 }
 
                 if (tableProxy == null) {
-                    tableProxy = new TableProxy(LockRequest.createNewLockRequest(session)); // in case of MERGE statement.
+                    tableProxy = new TableProxy(new LockRequest(session)); // in case of MERGE statement.
                 }
                 return tableProxy.executeUpdate(sql, transactionName, session);
             }

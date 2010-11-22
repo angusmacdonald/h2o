@@ -4901,7 +4901,7 @@ public class Parser {
              * This requests LockType.NONE because it doesn't need a lock for the table at this point - only the location of active
              * instances. It will request a read/write lock at a later point.
              */
-            return tableManager.getTableProxy(LockType.NONE, LockRequest.createNewLockRequest(session));
+            return tableManager.getTableProxy(LockType.NONE, new LockRequest(session));
 
         }
         catch (final MovedException e) {
@@ -4910,7 +4910,7 @@ public class Parser {
             tableManager = systemTableReference.lookup(tableInfo, false);
 
             try {
-                return tableManager.getTableProxy(LockType.NONE, LockRequest.createNewLockRequest(session));
+                return tableManager.getTableProxy(LockType.NONE, new LockRequest(session));
             }
             catch (final Exception e1) {
                 throw new SQLException("Unable to contact Table Manager for " + tableInfo + ":: " + e1.getMessage());
@@ -4945,13 +4945,13 @@ public class Parser {
             if (tableManager == null) { throw new SQLException("Table Manager was null for table lookup: " + tableInfo); }
 
             try {
-                return tableManager.getTableProxy(LockType.NONE, LockRequest.createNewLockRequest(session));
+                return tableManager.getTableProxy(LockType.NONE, new LockRequest(session));
             }
             catch (final RemoteException e1) {
                 // Recreate Table Manager then try again.
                 try {
                     tableManager = systemTableReference.getSystemTable().recreateTableManager(tableInfo);
-                    return tableManager.getTableProxy(LockType.NONE, LockRequest.createNewLockRequest(session));
+                    return tableManager.getTableProxy(LockType.NONE, new LockRequest(session));
                 }
                 catch (final Exception e2) {
                     throw new SQLException("Failed to contact Table Manager: " + e2.getMessage());

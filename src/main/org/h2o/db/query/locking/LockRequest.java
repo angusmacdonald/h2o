@@ -10,6 +10,7 @@ public class LockRequest implements Serializable {
     private static final long serialVersionUID = 468660463533445063L;
 
     private final DatabaseInstanceWrapper databaseMakingRequest;
+    private Session session = null;
     private final int sessionID;
 
     /**
@@ -21,9 +22,10 @@ public class LockRequest implements Serializable {
         this.sessionID = sessionID;
     }
 
-    public static LockRequest createNewLockRequest(final Session session) {
+    public LockRequest(final Session session) {
 
-        return new LockRequest(session.getDatabase().getLocalDatabaseInstanceInWrapper(), session.getSessionId());
+        this(session.getDatabase().getLocalDatabaseInstanceInWrapper(), session.getSessionId());
+        this.session = session;
     }
 
     public DatabaseInstanceWrapper getRequestLocation() {
@@ -57,6 +59,7 @@ public class LockRequest implements Serializable {
     @Override
     public String toString() {
 
-        return "LockRequest [databaseMakingRequest=" + databaseMakingRequest + ", sessionID=" + sessionID + "]";
+        final String user = session != null ? session.getUser().getName() : "unknown";
+        return "LockRequest [databaseMakingRequest=" + databaseMakingRequest + ", sessionID=" + sessionID + ", user=" + user + "]";
     }
 }

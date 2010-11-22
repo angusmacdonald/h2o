@@ -136,7 +136,7 @@ public class AlterTableAddConstraint extends SchemaCommand {
             if (sqlStatement != null) {
 
                 if (tableProxy == null) {
-                    tableProxy = TableProxy.getTableProxyAndLock(getSchema().getTableOrView(session, tableName), LockType.WRITE, LockRequest.createNewLockRequest(session), session.getDatabase());
+                    tableProxy = TableProxy.getTableProxyAndLock(getSchema().getTableOrView(session, tableName), LockType.WRITE, new LockRequest(session), session.getDatabase());
                 }
                 return tableProxy.executeUpdate(sqlStatement, transactionName, session);
             }

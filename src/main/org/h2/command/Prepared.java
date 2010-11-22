@@ -614,7 +614,7 @@ public abstract class Prepared {
     }
 
     /**
-     * Request a lock for the given query, in preparation for its execution. Must be called before update(). This method will be overriden
+     * Request a lock for the given query, in preparation for its execution. Must be called before update(). This method will be overridden
      * if a TableProxy can be returned - prepared statements have to acquire a lock in this manner.
      * 
      * @param tableProxyManager
@@ -623,7 +623,7 @@ public abstract class Prepared {
      */
     public void acquireLocks(final TableProxyManager tableProxyManager) throws SQLException {
 
-        tableProxyManager.addProxy(TableProxy.getTableProxyAndLock(table, LockType.READ, LockRequest.createNewLockRequest(session), session.getDatabase()));
+        tableProxyManager.addProxy(TableProxy.getTableProxyAndLock(table, LockType.READ, new LockRequest(session), session.getDatabase()));
     }
 
     public void acquireLocks(final TableProxyManager tableProxyManager, final Table table, final LockType lockRequested) throws SQLException {
@@ -633,18 +633,18 @@ public abstract class Prepared {
             tableProxy = tableProxyManager.getQueryProxy(table.getFullName());
 
             if (!lockAlreadyGranted(tableProxy)) {
-                tableProxy = TableProxy.getTableProxyAndLock(table, lockRequested, LockRequest.createNewLockRequest(session), session.getDatabase());
+                tableProxy = TableProxy.getTableProxyAndLock(table, lockRequested, new LockRequest(session), session.getDatabase());
             }
 
             tableProxyManager.addProxy(tableProxy);
         }
         else {
-            tableProxyManager.addProxy(TableProxy.getDummyQueryProxy(LockRequest.createNewLockRequest(session)));
+            tableProxyManager.addProxy(TableProxy.getDummyQueryProxy(new LockRequest(session)));
         }
     }
 
     /**
-     * Should this command be propagated to multiple sites. This method will be overrided if true.
+     * Should this command be propagated to multiple sites. This method will be overridden if true.
      */
     public boolean shouldBePropagated() {
 
@@ -683,7 +683,6 @@ public abstract class Prepared {
     public boolean isPreparedStatement() {
 
         return sqlStatement.contains("?");
-        // return preparedStatement;
     }
 
     /**

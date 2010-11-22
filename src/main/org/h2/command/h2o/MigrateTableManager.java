@@ -83,11 +83,11 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 
             TableProxy qp = null;
             try {
-                qp = tableManager.getTableProxy(LockType.WRITE, LockRequest.createNewLockRequest(session));
+                qp = tableManager.getTableProxy(LockType.WRITE, new LockRequest(session));
             }
             catch (final MovedException e) {
                 tableManager = sm.lookup(new TableInfo(tableName, schemaName), false);
-                qp = tableManager.getTableProxy(LockType.WRITE, LockRequest.createNewLockRequest(session));
+                qp = tableManager.getTableProxy(LockType.WRITE, new LockRequest(session));
             }
 
             if (!qp.getLockGranted().equals(LockType.NONE)) {

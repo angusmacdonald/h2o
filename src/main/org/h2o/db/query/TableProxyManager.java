@@ -117,7 +117,7 @@ public class TableProxyManager {
             allReplicas.put(localDatabase, 0);
         }
 
-        requestingDatabase = LockRequest.createNewLockRequest(session);
+        requestingDatabase = new LockRequest(session);
 
         tableProxies = new HashMap<String, TableProxy>();
     }

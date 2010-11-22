@@ -1235,10 +1235,6 @@ public class Select extends Query {
         return locationPreference;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.command.Prepared#acquireLocks(org.h2.h2o.comms.QueryProxyManager)
-     */
     @Override
     public void acquireLocks(final TableProxyManager tableProxyManager) throws SQLException {
 
@@ -1249,7 +1245,7 @@ public class Select extends Query {
                     TableProxy qp = tableProxyManager.getQueryProxy(table.getFullName());
 
                     if (qp == null || qp.getLockGranted().equals(LockType.NONE)) {
-                        qp = TableProxy.getTableProxyAndLock(table, LockType.READ, LockRequest.createNewLockRequest(session), session.getDatabase());
+                        qp = TableProxy.getTableProxyAndLock(table, LockType.READ, new LockRequest(session), session.getDatabase());
                     }
 
                     tableProxyManager.addProxy(qp);
@@ -1262,7 +1258,7 @@ public class Select extends Query {
                     for (final Table theseTables : tables) {
                         if (!session.getDatabase().isTableLocal(theseTables.getSchema())) {
 
-                            final TableProxy qp = TableProxy.getTableProxyAndLock(theseTables, LockType.READ, LockRequest.createNewLockRequest(session), session.getDatabase());
+                            final TableProxy qp = TableProxy.getTableProxyAndLock(theseTables, LockType.READ, new LockRequest(session), session.getDatabase());
                             tableProxyManager.addProxy(qp);
                         }
                     }
@@ -1270,5 +1266,4 @@ public class Select extends Query {
             }
         }
     }
-
 }

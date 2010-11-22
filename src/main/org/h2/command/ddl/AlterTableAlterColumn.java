@@ -112,11 +112,10 @@ public class AlterTableAlterColumn extends SchemaCommand {
          */
         if (isRegularTable()) {
             if (tableProxy == null) {
-                tableProxy = TableProxy.getTableProxyAndLock(table, LockType.WRITE, LockRequest.createNewLockRequest(session), session.getDatabase());
+                tableProxy = TableProxy.getTableProxyAndLock(table, LockType.WRITE, new LockRequest(session), session.getDatabase());
             }
-            // if (tableProxy.getNumberOfReplicas() > 1){
+
             return tableProxy.executeUpdate(sqlStatement, transactionName, session);
-            // } //Else, just execute it now.
         }
 
         final Database db = session.getDatabase();

@@ -219,7 +219,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         replicaManager = new ReplicaManager();
         replicaManager.add(database.getLocalDatabaseInstanceInWrapper()); // the first replica will be created here.
 
-        lockingTable = new LockingTable(schemaName + "." + tableName);
+        lockingTable = new LockingTable(schemaName, tableName);
 
         location = database.getChordInterface().getLocalChordReference();
 

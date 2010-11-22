@@ -527,14 +527,14 @@ public class CreateTable extends SchemaCommand {
             }
             H2OEventBus.publish(new H2OEvent(db.getURL().getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
 
-            tableProxy = TableProxy.getTableProxyAndLock(tableManager, ti.getFullTableName(), LockRequest.createNewLockRequest(session), LockType.CREATE, db, false);
+            tableProxy = TableProxy.getTableProxyAndLock(tableManager, ti.getFullTableName(), new LockRequest(session), LockType.CREATE, db, false);
 
         }
         else {
             /*
              * This is a system table meta-table, but it still needs a TableProxy to indicate that it is acceptable to execute the query.
              */
-            tableProxy = TableProxy.getTableProxyAndLock(table, LockType.CREATE, LockRequest.createNewLockRequest(session), db);
+            tableProxy = TableProxy.getTableProxyAndLock(table, LockType.CREATE, new LockRequest(session), db);
 
         }
 
