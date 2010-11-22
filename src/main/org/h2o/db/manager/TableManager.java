@@ -200,6 +200,9 @@ public class TableManager extends PersistentManager implements TableManagerRemot
     public TableManager(final TableInfo tableDetails, final Database database, final boolean tableAlreadyExists) throws Exception {
 
         super(database);
+
+        System.out.println("creating table manager for: " + tableDetails.getFullTableName());
+
         this.tableAlreadyExists = tableAlreadyExists;
 
         final String dbName = database.getURL().sanitizedLocation();

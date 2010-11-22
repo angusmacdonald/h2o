@@ -30,6 +30,8 @@ public class H2LockManager {
 
     public H2LockManager(final TableData tableData, final Database database) {
 
+        System.out.println("making H2 lock manager for table: " + tableData.getFullName());
+
         this.tableData = tableData;
         this.database = database;
         traceLock = database.getTrace(Trace.LOCK);
@@ -47,6 +49,7 @@ public class H2LockManager {
                     return obtainLock(session, exclusive);
                 }
                 finally {
+                    System.out.println("acquired H2 lock for: " + tableData.getFullName());
                     sessionsWaitingForLocks.remove(session);
                 }
             }
@@ -96,6 +99,7 @@ public class H2LockManager {
             if (isLockedSharedBy(s)) {
                 releaseSharedLock(s);
             }
+            System.out.println("releasing H2 lock for: " + tableData.getFullName());
 
             if (database.getSessionCount() > 1) {
                 database.notifyAll();
