@@ -418,9 +418,9 @@ public class TableData extends Table implements RecordReader {
         boolean checkDeadlock = false;
         while (true) {
 
-            if (getSessionHoldingExclusiveLock() != null && session != getSessionHoldingExclusiveLock()) {
+            if (sessionHoldingExclusiveLock != null && sessionHoldingExclusiveLock != session) {
 
-                System.out.println("using existing lock for table: " + getName());
+                System.out.println("session: " + session + " stealing lock for table: " + getName() + " from session: " + sessionHoldingExclusiveLock);
 
                 /* 
                   * XXX H2O hack. It ensures that A-B-A communication doesn't lock up the DB (normally through the SYS table), as the returning update can use the same session
@@ -431,7 +431,7 @@ public class TableData extends Table implements RecordReader {
                   * transaction obtains an exclusive lock on the PUBLIC.SYS table.
                   */
 
-                session = getSessionHoldingExclusiveLock();
+                session = sessionHoldingExclusiveLock;
             }
 
             if (holdsExclusiveLock(session)) { return session; }
