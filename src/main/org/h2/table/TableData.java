@@ -419,6 +419,9 @@ public class TableData extends Table implements RecordReader {
         while (true) {
 
             if (getSessionHoldingExclusiveLock() != null && session != getSessionHoldingExclusiveLock()) {
+
+                System.out.println("using existing lock for table: " + getName());
+
                 /* 
                   * XXX H2O hack. It ensures that A-B-A communication doesn't lock up the DB (normally through the SYS table), as the returning update can use the same session
                   * as the originating update (which has all of the pertinent locks).
@@ -463,6 +466,8 @@ public class TableData extends Table implements RecordReader {
                     return session;
                 }
             }
+
+            System.out.println("Session: " + session + " waiting for " + (exclusive ? "exclusive" : "shared") + " lock on table " + getName());
 
             session.setWaitForLock(this);
 

@@ -158,9 +158,9 @@ public class Insert extends Prepared {
                 table.validateConvertUpdateSequence(session, newRow);
                 table.fireBeforeRow(session, null, newRow);
 
-                final Session lockSession = table.lock(session, true, false);
+                final Session sessionGrantedLock = table.lock(session, true, false);
 
-                assert lockSession == session : "Lock not taken out on the requesting session for query: " + sqlStatement;
+                assert sessionGrantedLock == session : sessionIdentityAssertionInfo(session, sessionGrantedLock);
 
                 table.addRow(session, newRow);
 
@@ -212,6 +212,11 @@ public class Insert extends Prepared {
         return count;
     }
 
+    private String sessionIdentityAssertionInfo(final Session session, final Session sessionGrantedLock) {
+
+        return "Lock requested by session: " + session + " but granted to session: " + sessionGrantedLock + " for query: " + sqlStatement;
+    }
+
     /**
      * Adjusts the sqlStatement string to be a valid prepared statement. This is used when propagating prepared statements within the
      * system.
@@ -235,7 +240,6 @@ public class Insert extends Prepared {
 
             for (int i = 0; i < columns.length; i++) {
                 final Column c = columns[i];
-                final int index = c.getColumnId();
                 Expression e = expr[i];
 
                 // Only add the expression if it is unspecified in the query (there
@@ -266,7 +270,6 @@ public class Insert extends Prepared {
                         sql += ", ";
                     }
                     sql += i + ": " + values[i - 1];
-
                 }
             }
             sql += "};";
