@@ -383,7 +383,7 @@ public class CreateTable extends SchemaCommand {
             final int displaySize = expr.getDisplaySize();
             final DataType dt = DataType.getDataType(type);
             if (precision > 0 && (dt.defaultPrecision == 0 || dt.defaultPrecision > precision && dt.defaultPrecision < Byte.MAX_VALUE)) {
-                // dont' set precision to MAX_VALUE if this is the default
+                // don't set precision to MAX_VALUE if this is the default
                 precision = dt.defaultPrecision;
             }
             int scale = expr.getScale();
@@ -451,10 +451,6 @@ public class CreateTable extends SchemaCommand {
         this.clustered = clustered;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.command.Prepared#shouldBePropagated()
-     */
     @Override
     public boolean shouldBePropagated() {
 
@@ -464,10 +460,6 @@ public class CreateTable extends SchemaCommand {
         return isRegularTable();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.command.Prepared#isRegularTable()
-     */
     @Override
     protected boolean isRegularTable() {
 
@@ -482,7 +474,7 @@ public class CreateTable extends SchemaCommand {
     @Override
     public void acquireLocks(final TableProxyManager tableProxyManager) throws SQLException {
 
-        System.out.println("ctal1 " + tableProxyManager.getTransactionName());
+        System.out.println("acquiring locks to create table: " + tableName);
         final Database db = session.getDatabase();
 
         assert tableProxyManager.getTableProxy(tableName) == null; // should never exist.
@@ -491,7 +483,11 @@ public class CreateTable extends SchemaCommand {
          * ### H2O. Check that the table doesn't already exist elsewhere. ###
          */
 
-        if (!db.getSystemTableReference().isSystemTableLocal() && !db.isManagementDB() && !db.isTableLocal(getSchema()) && !isStartup()) {
+        final boolean tableLocal = db.isTableLocal(getSchema());
+        final boolean managementDB = db.isManagementDB();
+        final boolean startup = isStartup();
+
+        if (!db.getSystemTableReference().isSystemTableLocal() && !managementDB && !tableLocal && !startup) {
 
             final TableManagerRemote tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, false);
 
@@ -503,12 +499,14 @@ public class CreateTable extends SchemaCommand {
                     // The TableManager is not alive.
                 }
             }
-
         }
 
-        System.out.println("ctal2");
+        System.out.println("tableLocal: " + tableLocal);
+        System.out.println("managementDB: " + managementDB);
+        System.out.println("startup: " + startup);
         tableProxy = null;
-        if (!db.isTableLocal(getSchema()) && !db.isManagementDB() && !isStartup()) { // if it is startup then we don't want to create a table manager yet.
+
+        if (!tableLocal && !managementDB && !startup) { // if it is startup then we don't want to create a table manager yet.
 
             System.out.println("ctal3");
             final TableInfo ti = new TableInfo(tableName, getSchema().getName(), 0l, 0, "TABLE", db.getURL());
@@ -522,7 +520,7 @@ public class CreateTable extends SchemaCommand {
             }
 
             try {
-                //Make Table Manager exportable first.
+                // Make Table Manager exportable first.
                 UnicastRemoteObject.exportObject(tableManager, 0);
             }
             catch (final Exception e) {
