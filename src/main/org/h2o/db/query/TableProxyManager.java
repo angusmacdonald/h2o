@@ -33,8 +33,6 @@ import org.h2o.db.query.locking.LockType;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
 
-import uk.ac.standrews.cs.nds.util.Diagnostic;
-import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
@@ -253,8 +251,6 @@ public class TableProxyManager {
 
                 commitAndReleaseLocks(commit, h2oCommit, db, committedQueries);
 
-                debugOutput();
-
                 clearLockedTablesOnCommit(h2oCommit);
             }
         }
@@ -272,7 +268,7 @@ public class TableProxyManager {
         }
     }
 
-    private void commitAndReleaseLocks(final boolean commit, final boolean h2oCommit, final Database db, Set<CommitResult> committedQueries) throws SQLException {
+    private void commitAndReleaseLocks(final boolean commit, final boolean h2oCommit, final Database db, final Set<CommitResult> committedQueries) throws SQLException {
 
         final boolean commitActionSuccessful = sendCommitMessagesToReplicas(commit, h2oCommit, db, committedQueries);
 
@@ -283,23 +279,6 @@ public class TableProxyManager {
         releaseLocksAndUpdateReplicaState(committedQueries, commit);
     }
 
-    private void debugOutput() {
-
-        if (Diagnostic.getLevel() == DiagnosticLevel.FULL) {
-            if (localDatabase.getURL().getRMIPort() > 0) {
-                System.out.println("\tQueries in transaction (on DB at " + localDatabase.getURL().getRMIPort() + ": '" + transactionName + "'):");
-                if (queries != null) {
-                    for (final String query : queries) {
-                        if (query.equals("")) {
-                            continue;
-                        }
-                        System.out.println("\t\t" + query);
-                    }
-                }
-            }
-        }
-    }
-
     /**
      * 
      * @param commit
@@ -307,7 +286,7 @@ public class TableProxyManager {
      * @param db
      * @param commitedQueries
      *            Locations where replicas have committed. Send the commit message here.
-     * @return
+     * @return Whether the commit was successful.
      */
     private boolean sendCommitMessagesToReplicas(final boolean commit, final boolean h2oCommit, final Database db, final Set<CommitResult> commitedQueries) {
 
@@ -320,8 +299,8 @@ public class TableProxyManager {
 
         final Map<DatabaseInstanceWrapper, Integer> commitLocations = getCommittedLocations(commitedQueries);
 
-        final boolean actionSuccessful = queryExecutor.executeQuery(sql, transactionName, commitLocations, null, parser.getSession(), true);
-        return actionSuccessful;
+        final int returnValue = queryExecutor.executeQuery(sql, transactionName, commitLocations, null, parser.getSession(), true);
+        return returnValue >= 0;
     }
 
     private Map<DatabaseInstanceWrapper, Integer> getCommittedLocations(final Collection<CommitResult> commitedQueries) {

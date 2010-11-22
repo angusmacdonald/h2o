@@ -118,33 +118,40 @@ public class Delete extends Prepared {
 
     private String adjustForPreparedStatement() throws SQLException {
 
-        final List<String> values = new ArrayList<String>(); //Will be used to store the values contained within { } brackets in the final statement.
+        try {
+            final List<String> values = new ArrayList<String>(); //Will be used to store the values contained within { } brackets in the final statement.
 
-        recurisvelyEvaluateExpressionsForPreparedStatements(null, values, condition);
+            recurisvelyEvaluateExpressionsForPreparedStatements(null, values, condition);
 
-        // Edit the SQL String
-        // Example: update bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
-        String sql = new String(sqlStatement) + " {";
+            // Edit the SQL String
+            // Example: update bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
+            String sql = new String(sqlStatement) + " {";
 
-        boolean addComma = false;
-        int count = 1;
-        for (final String value : values) {
-            if (value != null) {
-                if (addComma) {
-                    sql += ", ";
+            boolean addComma = false;
+            int count = 1;
+            for (final String value : values) {
+                if (value != null) {
+                    if (addComma) {
+                        sql += ", ";
+                    }
+                    else {
+                        addComma = true;
+                    }
+
+                    sql += count + ": " + value;
+
+                    count++;
                 }
-                else {
-                    addComma = true;
-                }
-
-                sql += count + ": " + value;
-
-                count++;
             }
-        }
-        sql += "};";
+            sql += "};";
 
-        return sql;
+            return sql;
+
+        }
+        catch (final Exception e) {
+            e.printStackTrace();
+            throw new SQLException(e.getMessage());
+        }
     }
 
     @Override

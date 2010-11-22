@@ -616,8 +616,9 @@ public class MultiQueryTransactionTests extends TestBase {
             mStmt2.setString(1, "New Order");
             mStmt2.setInt(2, 3);
             mStmt2.setString(3, "helloNumber3");
-            mStmt2.addBatch();
-            mStmt2.executeBatch();
+            final int result = mStmt2.executeUpdate();
+
+            assertEquals(1, result); //one replica should have been updated.
 
             sa.execute("SELECT LOCAL * FROM PUBLIC.TEST WHERE ID=3");
             final ResultSet rs = sa.getResultSet();

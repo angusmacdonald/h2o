@@ -74,9 +74,9 @@ public class AsynchronousQueryExecutor {
      * @param commitOperation
      *            True if this is a COMMIT, false if it is another type of query. If it is false a PREPARE command will be executed to get
      *            ready for the eventual commit.
-     * @return True if everything was executed successfully (a global commit).
+     * @return The return value of the query. A negative number if there was a failure. 0 if nothing changed.
      */
-    public boolean executeQuery(final String query, final String transactionNameForQuery, final Map<DatabaseInstanceWrapper, Integer> allReplicas, final TableInfo tableName, final Session session, final boolean commitOperation) {
+    public int executeQuery(final String query, final String transactionNameForQuery, final Map<DatabaseInstanceWrapper, Integer> allReplicas, final TableInfo tableName, final Session session, final boolean commitOperation) {
 
         final Parser parser = new Parser(session, true);
 
@@ -183,11 +183,11 @@ public class AsynchronousQueryExecutor {
      * @param transactionNameForQuery
      * @param expectedUpdateID
      * @param tableName
-     * @return True if everything was executed successfully (a global commit).
+     * @return The return value of the query. A negative number if there was a failure. 0 if nothing changed.
      */
-    private boolean waitUntilRemoteQueriesFinish(final List<FutureTask<QueryResult>> incompleteQueries, final int updatesNeededBeforeCommit, final String transactionNameForQuery, final int expectedUpdateID, final TableInfo tableName) {
+    private int waitUntilRemoteQueriesFinish(final List<FutureTask<QueryResult>> incompleteQueries, final int updatesNeededBeforeCommit, final String transactionNameForQuery, final int expectedUpdateID, final TableInfo tableName) {
 
-        if (incompleteQueries.size() == 0) { return true; // the commit value has not changed.
+        if (incompleteQueries.size() == 0) { return 0; // the commit value has not changed.
         }
 
         assert sleepTimeWhileWaitingForQueriesToFinish != null : "Sleep time property couldn't be found.";
@@ -220,7 +220,8 @@ public class AsynchronousQueryExecutor {
             }
         }
 
-        boolean globalCommit = true;
+        final int[] returnValues = new int[completedQueries.size()];
+        int pos = 0;
 
         /*
          * All of the queries have now completed. Iterate through these queries and check that they executed successfully.
@@ -243,13 +244,15 @@ public class AsynchronousQueryExecutor {
             assert asyncResult != null : "The result of a completed transaction should never be null.";
 
             if (asyncResult.getException() == null) { // If the query executed successfully.
-                final int result = asyncResult.getResult();
+                returnValues[pos] = asyncResult.getResult();
+
                 final DatabaseInstanceWrapper url = asyncResult.getWrapper();
-                if (result != 0) {
+
+                if (returnValues[pos] < 0) {
                     // Prepare operation failed at remote machine
                     final CommitResult commitResult = new CommitResult(false, url, asyncResult.getUpdateID(), expectedUpdateID, tableName);
                     recentlyCompletedQueries.add(commitResult);
-                    globalCommit = false;
+
                 }
                 else {
                     final CommitResult commitResult = new CommitResult(true, url, asyncResult.getUpdateID(), expectedUpdateID, tableName);
@@ -262,15 +265,44 @@ public class AsynchronousQueryExecutor {
 
                 asyncResult.getException().printStackTrace();
 
-                globalCommit = false;
+                returnValues[pos] = -1; //error.
             }
 
+            pos++;
         }
 
         database.getAsynchronousQueryManager().addTransaction(transactionNameForQuery, tableName, incompleteQueries, recentlyCompletedQueries, expectedUpdateID);
 
-        return globalCommit;
+        return getSingleReturnValue(returnValues);
 
     }
 
+    /**
+     * Take all of the return values (from executing against multiple replicas) and return a single value to the user.
+     * 
+     * If there has been any kind of error the error value will be returned.
+     * @param returnValues  The return values currently executed.
+     * @return
+     */
+    private int getSingleReturnValue(final int[] returnValues) {
+
+        Integer singleReturnValue = null;
+
+        for (final int returnValue : returnValues) {
+            if (singleReturnValue == null) { //if singleReturnValue hasn't already been set, set the return value.
+                singleReturnValue = returnValue;
+            }
+            else if (singleReturnValue >= 0 && returnValue < 0) { //if singleReturnValue has been set only reset if it is an error message.
+                singleReturnValue = returnValue;
+            }
+            else if (singleReturnValue >= 0) { //if singleReturnValue has been set, and is not an error, check that the return values are equal. They always should be.
+                if (singleReturnValue != returnValue) {
+                    System.out.println("");
+                }
+                assert singleReturnValue == returnValue : "The successful result of the update should be the same for every replica.";
+            }
+        }
+
+        return singleReturnValue;
+    }
 }

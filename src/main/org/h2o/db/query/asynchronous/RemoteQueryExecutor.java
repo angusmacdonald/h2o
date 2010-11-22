@@ -82,13 +82,17 @@ public class RemoteQueryExecutor extends Thread {
 
                 // Execute query.
                 Command command = parser.prepareCommand(query);
-                command.executeUpdate(true); // True because it may need to wait
-                                             // for the remote machine to
-                                             // commit.
+                result = command.executeUpdate(true); // True because it may need to wait
+                // for the remote machine to
+                // commit.
 
                 // Prepare query for commit.
                 command = parser.prepareCommand("PREPARE COMMIT " + transactionName);
-                result = command.executeUpdate();
+                final int prepareResult = command.executeUpdate(); //XXX efficiency improvement: piggyback the prepare on the initial query call.
+
+                if (prepareResult != 0) {
+                    result = -1; //signals to the requesting instance that there was a failure preparing the command.
+                }
             }
             else {
                 // Prepare for commit.

@@ -92,8 +92,14 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
              * If called from here executeUpdate should always be told the query is part of a larger transaction, because it was
              * remotely initiated and consequently needs to wait for the remote machine to commit.
              */
-            command.executeUpdate(true);
-            return prepare(transactionName); // This wasn't a COMMIT. Execute a PREPARE.
+            int result = command.executeUpdate(true);
+
+            final int prepareResult = prepare(transactionName); // This wasn't a COMMIT. Execute a PREPARE.
+
+            if (prepareResult != 0) {
+                result = -1; //signifies an error.
+            }
+            return result;
         }
         finally {
             command.close();

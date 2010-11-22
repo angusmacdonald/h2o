@@ -28,32 +28,32 @@ public class Message {
 
     static {
         try {
-            byte[] messages = Resources.get("/org/h2/res/_messages_en.properties");
+            final byte[] messages = Resources.get("/org/h2/res/_messages_en.properties");
             if (messages != null) {
                 MESSAGES.load(new ByteArrayInputStream(messages));
             }
-            String language = Locale.getDefault().getLanguage();
+            final String language = Locale.getDefault().getLanguage();
             if (!"en".equals(language)) {
-                byte[] translations = Resources.get("/org/h2/res/_messages_" + language + ".properties");
+                final byte[] translations = Resources.get("/org/h2/res/_messages_" + language + ".properties");
                 // message: translated message + english
                 // (otherwise certain applications don't work)
                 if (translations != null) {
-                    Properties p = new Properties();
+                    final Properties p = new Properties();
                     p.load(new ByteArrayInputStream(translations));
-                    for (Object element : p.entrySet()) {
-                        Entry e = (Entry) element;
-                        String key = (String) e.getKey();
-                        String translation = (String) e.getValue();
+                    for (final Object element : p.entrySet()) {
+                        final Entry e = (Entry) element;
+                        final String key = (String) e.getKey();
+                        final String translation = (String) e.getValue();
                         if (translation != null && !translation.startsWith("#")) {
-                            String original = MESSAGES.getProperty(key);
-                            String message = translation + "\n" + original;
+                            final String original = MESSAGES.getProperty(key);
+                            final String message = translation + "\n" + original;
                             MESSAGES.put(key, message);
                         }
                     }
                 }
             }
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             TraceSystem.traceThrowable(e);
         }
     }
@@ -72,12 +72,12 @@ public class Message {
      *            the first parameter of the message
      * @return the SQLException object
      */
-    public static JdbcSQLException getSQLException(int errorCode, String p1) {
+    public static JdbcSQLException getSQLException(final int errorCode, final String p1) {
 
         return getSQLException(errorCode, new String[]{p1});
     }
 
-    private static String translate(String key, String[] param) {
+    private static String translate(final String key, final String[] param) {
 
         String message = null;
         if (MESSAGES != null) {
@@ -88,7 +88,7 @@ public class Message {
             message = "(Message " + key + " not found)";
         }
         if (param != null) {
-            Object[] o = param;
+            final Object[] o = param;
             message = MessageFormat.format(message, o);
         }
         return message;
@@ -105,10 +105,10 @@ public class Message {
      *            the cause of the exception
      * @return the SQLException object
      */
-    public static JdbcSQLException getSQLException(int errorCode, String[] params, Throwable cause) {
+    public static JdbcSQLException getSQLException(final int errorCode, final String[] params, final Throwable cause) {
 
-        String sqlstate = ErrorCode.getState(errorCode);
-        String message = translate(sqlstate, params);
+        final String sqlstate = ErrorCode.getState(errorCode);
+        final String message = translate(sqlstate, params);
         return new JdbcSQLException(message, null, sqlstate, errorCode, cause, null);
     }
 
@@ -121,7 +121,7 @@ public class Message {
      *            the list of parameters of the message
      * @return the SQLException object
      */
-    public static JdbcSQLException getSQLException(int errorCode, String[] params) {
+    public static JdbcSQLException getSQLException(final int errorCode, final String[] params) {
 
         return getSQLException(errorCode, params, null);
     }
@@ -135,7 +135,7 @@ public class Message {
      *            the position of the error in the SQL statement
      * @return the SQLException object
      */
-    public static SQLException getSyntaxError(String sql, int index) {
+    public static SQLException getSyntaxError(String sql, final int index) {
 
         sql = StringUtils.addAsterisk(sql, index);
         return getSQLException(ErrorCode.SYNTAX_ERROR_1, sql);
@@ -152,7 +152,7 @@ public class Message {
      *            the expected keyword at the given position
      * @return the SQLException object
      */
-    public static SQLException getSyntaxError(String sql, int index, String expected) {
+    public static SQLException getSyntaxError(String sql, final int index, final String expected) {
 
         sql = StringUtils.addAsterisk(sql, index);
         return getSQLException(ErrorCode.SYNTAX_ERROR_2, new String[]{sql, expected});
@@ -165,7 +165,7 @@ public class Message {
      *            the error code
      * @return the SQLException object
      */
-    public static JdbcSQLException getSQLException(int errorCode) {
+    public static JdbcSQLException getSQLException(final int errorCode) {
 
         return getSQLException(errorCode, (String) null);
     }
@@ -189,7 +189,7 @@ public class Message {
      *            the name of the parameter
      * @return the SQLException object
      */
-    public static JdbcSQLException getInvalidValueException(String value, String param) {
+    public static JdbcSQLException getInvalidValueException(final String value, final String param) {
 
         return getSQLException(ErrorCode.INVALID_VALUE_2, new String[]{value, param});
     }
@@ -204,9 +204,9 @@ public class Message {
      * @throws RuntimeException
      *             the exception
      */
-    public static RuntimeException throwInternalError(String s) {
+    public static RuntimeException throwInternalError(final String s) {
 
-        RuntimeException e = new RuntimeException(s);
+        final RuntimeException e = new RuntimeException(s);
         TraceSystem.traceThrowable(e);
         if (true) { throw e; }
         return e;
@@ -232,9 +232,9 @@ public class Message {
      *            the root cause
      * @return the error object
      */
-    public static Error getInternalError(String s, Exception e) {
+    public static Error getInternalError(final String s, final Exception e) {
 
-        Error e2 = new Error(s);
+        final Error e2 = new Error(s);
         // ## Java 1.4 begin ##
         e2.initCause(e);
         // ## Java 1.4 end ##
@@ -251,10 +251,10 @@ public class Message {
      *            the SQL statement
      * @return the error object
      */
-    public static SQLException addSQL(SQLException e, String sql) {
+    public static SQLException addSQL(final SQLException e, final String sql) {
 
         if (e instanceof JdbcSQLException) {
-            JdbcSQLException j = (JdbcSQLException) e;
+            final JdbcSQLException j = (JdbcSQLException) e;
             if (j.getSQL() == null) {
                 j.setSQL(sql);
             }
@@ -272,9 +272,9 @@ public class Message {
      *            the SQL statement or null if it is not known
      * @return the SQL exception object
      */
-    public static SQLException convert(Throwable e, String sql) {
+    public static SQLException convert(final Throwable e, final String sql) {
 
-        SQLException e2 = convert(e);
+        final SQLException e2 = convert(e);
         if (e2 instanceof JdbcSQLException) {
             ((JdbcSQLException) e2).setSQL(sql);
         }
@@ -300,8 +300,8 @@ public class Message {
             return getSQLException(ErrorCode.OUT_OF_MEMORY, null, e);
         }
         else if (e instanceof InvocationTargetException) {
-            InvocationTargetException te = (InvocationTargetException) e;
-            Throwable t = te.getTargetException();
+            final InvocationTargetException te = (InvocationTargetException) e;
+            final Throwable t = te.getTargetException();
             if (t instanceof SQLException) { return (SQLException) t; }
             return getSQLException(ErrorCode.EXCEPTION_IN_FUNCTION, null, e);
         }
@@ -318,7 +318,7 @@ public class Message {
      *            the message
      * @return the SQL exception object
      */
-    public static SQLException convertIOException(IOException e, String message) {
+    public static SQLException convertIOException(final IOException e, final String message) {
 
         if (message == null) { return getSQLException(ErrorCode.IO_EXCEPTION_1, new String[]{e.toString()}, e); }
         return getSQLException(ErrorCode.IO_EXCEPTION_2, new String[]{e.toString(), message}, e);
@@ -331,7 +331,7 @@ public class Message {
      *            the root cause
      * @return the error object
      */
-    public static InternalException convertToInternal(Exception e) {
+    public static InternalException convertToInternal(final Exception e) {
 
         return new InternalException(e);
     }
@@ -346,12 +346,12 @@ public class Message {
     public static IOException convertToIOException(Throwable e) {
 
         if (e instanceof JdbcSQLException) {
-            JdbcSQLException e2 = (JdbcSQLException) e;
+            final JdbcSQLException e2 = (JdbcSQLException) e;
             if (e2.getOriginalCause() != null) {
                 e = e2.getOriginalCause();
             }
         }
-        IOException io = new IOException(e.toString());
+        final IOException io = new IOException(e.toString());
         // ## Java 1.4 begin ##
         io.initCause(e);
         // ## Java 1.4 end ##

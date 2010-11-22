@@ -58,6 +58,10 @@ public class LockingTable implements ILockingTable, Serializable {
     @Override
     public synchronized LockType requestLock(final LockType lockType, final LockRequest lockRequest) {
 
+        if (lockType == LockType.NONE) { //Will be none if it just wants replica locations.
+            return LockType.NONE;
+        }
+
         if (writeLockHolder != null) {
 
             Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "lock refused(1): " + lockType + " on " + tableName + " requester: " + lockRequest);

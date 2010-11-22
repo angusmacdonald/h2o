@@ -549,7 +549,10 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         final LockType lockType = lockingTable.peekAtLockGranted(lockRequest);
 
         // Update the set of 'active replicas' and their update IDs.
-        updateActiveReplicaSet(commit, committedQueries, asynchronousCommit, lockType);
+        if (commit) {
+            //If this is a rollback it shouldn't affect the 'current' active set.
+            updateActiveReplicaSet(commit, committedQueries, asynchronousCommit, lockType);
+        }
 
         // Release locks.
         if (!asynchronousCommit) {

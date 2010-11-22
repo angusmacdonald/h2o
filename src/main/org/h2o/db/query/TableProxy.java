@@ -152,13 +152,13 @@ public class TableProxy implements Serializable {
         // Execute the query. Send the query to each DB instance holding a replica.
 
         final AsynchronousQueryExecutor queryExecutor = new AsynchronousQueryExecutor(session.getDatabase());
-        final boolean globalCommit = queryExecutor.executeQuery(query, transactionNameForQuery, allReplicas, tableName, session, false);
+        final int returnValue = queryExecutor.executeQuery(query, transactionNameForQuery, allReplicas, tableName, session, false);
 
         H2OTest.rmiFailure(); // Test code to simulate the failure of DB instances at this point.
 
-        if (!globalCommit) { throw new SQLException("Commit failed on one or more replicas. The query will be rolled back."); }
+        if (returnValue < 0) { throw new SQLException("Commit failed on one or more replicas. The query will be rolled back."); }
 
-        return 0;
+        return returnValue;
     }
 
     /**

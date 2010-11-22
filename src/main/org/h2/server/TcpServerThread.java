@@ -151,13 +151,13 @@ public class TcpServerThread implements Runnable {
                     process();
                 }
                 catch (final Throwable e) {
-                    e.printStackTrace();
                     sendError(e);
                 }
             }
             trace("Disconnect");
         }
         catch (final Throwable e) {
+            e.printStackTrace();
             server.traceError(e);
         }
         finally {
@@ -246,7 +246,7 @@ public class TcpServerThread implements Runnable {
                 final int id = transfer.readInt();
                 final String sql = transfer.readString();
 
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Incoming Query from TCP Server: " + sql);
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Incoming Query:: " + sql);
 
                 final int old = session.getModificationId();
                 final Command command = session.prepareLocal(sql);
