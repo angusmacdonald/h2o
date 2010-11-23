@@ -737,6 +737,44 @@ public class MultiQueryTransactionTests extends TestBase {
         }
     }
 
+    @Test
+    public void testPreparedStatementsDeleteMultipleConditions() throws SQLException {
+
+        // update bahrain set Name=? where ID=? {1: 'PILOT_1', 2: 1};
+        createReplicaOnB();
+
+        sa.executeUpdate("CREATE TABLE TEST2(attr_a INT, attr_b INT, attr_c INT);");
+        sb.executeUpdate("CREATE REPLICA TEST2");
+
+        PreparedStatement mStmt1 = null;
+        final PreparedStatement mStmt2 = null;
+        try {
+            mStmt1 = ca.prepareStatement("insert into PUBLIC.TEST2 (attr_a, attr_b, attr_c) values (?,?, ?)");
+
+            for (int i = 1; i < 10; i++) {
+                mStmt1.setInt(1, i);
+                mStmt1.setInt(2, i);
+                mStmt1.setInt(3, 3000 + i);
+                mStmt1.addBatch();
+            }
+
+            mStmt1.executeBatch();
+
+            mStmt1 = ca.prepareStatement("DELETE FROM test2" + " WHERE attr_a = ?" + " AND attr_b = ?" + " AND attr_c = ?");
+
+            mStmt1.setInt(1, 1);
+            mStmt1.setInt(2, 1);
+            mStmt1.setInt(3, 3001);
+            final int result = mStmt1.executeUpdate();
+
+            assertEquals(1, result);
+
+        }
+        finally {
+            mStmt1.close();
+        }
+    }
+
     /**
     * Tests that prepared statements work in the system where no replication is involved.
      * @throws SQLException 

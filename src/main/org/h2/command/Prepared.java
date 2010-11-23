@@ -6,7 +6,6 @@ package org.h2.command;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Set;
 
 import org.h2.constant.ErrorCode;
@@ -614,7 +613,7 @@ public abstract class Prepared {
     }
 
     /**
-     * Request a lock for the given query, in preparation for its execution. Must be called before update(). This method will be overridden
+     * Request a lock for the given query, in preparation for its execution. Must be called before update(). This method will be overriden
      * if a TableProxy can be returned - prepared statements have to acquire a lock in this manner.
      * 
      * @param tableProxyManager
@@ -703,7 +702,7 @@ public abstract class Prepared {
      * be leafs in a tree with various conditionals. Currently this method is recursively called if the conditionToEvaluate is of type {@link ConditionAndOr}.
      * @throws SQLException
      */
-    protected void recurisvelyEvaluateExpressionsForPreparedStatements(final Expression[] expr, final List<String> values, final Expression conditionToEvaluate) throws SQLException {
+    protected void recurisvelyEvaluateExpressionsForPreparedStatements(final Expression[] expr, final String[] values, final Expression conditionToEvaluate) throws SQLException {
 
         if (conditionToEvaluate instanceof Comparison) {
             //This is a leaf node - obtain its value by evaluating the expression.
@@ -737,7 +736,7 @@ public abstract class Prepared {
      * @param expr       Used in exception handling to generate an error message, but for nothing else.
      * @throws SQLException Thrown if there was an error trying to get the value of the expression.
      */
-    protected void evaluateExpressionForPreparedStatement(Expression e, final List<String> values, final int colummType, final Expression[] expr) throws SQLException {
+    protected void evaluateExpressionForPreparedStatement(Expression e, final String[] values, final int colummType, final Expression[] expr) throws SQLException {
 
         //UPDATE warehouse SET w_ytd = w_ytd + ?  WHERE w_id = ?  {1: 4966.03, 2: 1};
 
@@ -748,14 +747,33 @@ public abstract class Prepared {
                 // e can be null (DEFAULT)
                 e = e.optimize(session);
                 try {
-                    if (e instanceof Operation) {
+
+                    if (e instanceof Operation) { //operation should contain a parameter, so get the parameter.
                         final Operation eo = (Operation) e;
-                        final Value v = eo.getRightValue(session);
-                        values.add(v.toString());
+                        e = eo.getRightExpression();
+                    }
+
+                    if (e instanceof Parameter) {
+                        final Parameter ep = (Parameter) e;
+                        final int index = ep.getIndex();
+                        final Value v = ep.getValue(session).convertTo(colummType);
+                        values[index] = v.toString();
                     }
                     else {
+
                         final Value v = e.getValue(session).convertTo(colummType);
-                        values.add(v.toString());
+
+                        int index = 0;
+
+                        //Guess where to put the parameter in the values array - pick first available spot.
+                        for (int i = 0; i < values.length; i++) {
+                            if (values[i] == null) {
+                                index = i;
+                                break;
+                            }
+                        }
+
+                        values[index] = v.toString();
                     }
 
                 }
@@ -771,5 +789,4 @@ public abstract class Prepared {
             throw e1;
         }
     }
-
 }

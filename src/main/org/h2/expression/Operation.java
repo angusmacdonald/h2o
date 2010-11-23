@@ -102,6 +102,12 @@ public class Operation extends Expression {
 
     }
 
+    public Expression getRightExpression() throws SQLException {
+
+        return right;
+
+    }
+
     @Override
     public Value getValue(final Session session) throws SQLException {
 

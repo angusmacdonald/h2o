@@ -5,8 +5,6 @@
 package org.h2.command.dml;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.h2.command.Prepared;
 import org.h2.engine.Right;
@@ -119,7 +117,7 @@ public class Delete extends Prepared {
     private String adjustForPreparedStatement() throws SQLException {
 
         try {
-            final List<String> values = new ArrayList<String>(); //Will be used to store the values contained within { } brackets in the final statement.
+            final String[] values = new String[org.h2o.util.StringUtils.countNumberOfCharacters(sqlStatement, "?")]; //Will be used to store the values contained within { } brackets in the final statement.
 
             recurisvelyEvaluateExpressionsForPreparedStatements(null, values, condition);
 

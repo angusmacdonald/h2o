@@ -5,8 +5,6 @@
 package org.h2.command.dml;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.h2.command.Prepared;
 import org.h2.constant.ErrorCode;
@@ -209,7 +207,7 @@ public class Update extends Prepared {
 
             final Expression[] expr = expressions;
 
-            final List<String> values = new ArrayList<String>(); //Will be used to store the values contained within { } brackets in the final statement.
+            final String[] values = new String[org.h2o.util.StringUtils.countNumberOfCharacters(sqlStatement, "?")]; //Will be used to store the values contained within { } brackets in the final statement.
             final Column[] columns = table.getColumns();
 
             /*
