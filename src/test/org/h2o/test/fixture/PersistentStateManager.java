@@ -1,12 +1,15 @@
 package org.h2o.test.fixture;
 
+import static org.junit.Assert.fail;
+
 import java.io.File;
 import java.io.IOException;
 
 public class PersistentStateManager {
 
-    private final File[] database_directories;
+    private static final int MAX_ATTEMPTS_TO_DELETE_PERSISTENT_STATE = 5;
 
+    private final File[] database_directories;
     private final File config_directory;
 
     // -------------------------------------------------------------------------------------------------------
@@ -25,10 +28,12 @@ public class PersistentStateManager {
 
     public void deletePersistentState() {
 
-        int attempts = 0;
-        do {
+        for (int i = 0; i < MAX_ATTEMPTS_TO_DELETE_PERSISTENT_STATE; i++) {
+
             deleteDatabaseDirectoriesIfPresent();
             deleteConfigDirectoryIfPresent();
+
+            if (persistentStateIsAbsent()) { return; }
 
             try {
                 Thread.sleep(1000);
@@ -36,10 +41,8 @@ public class PersistentStateManager {
             catch (final InterruptedException e) {
                 // Ignore.
             }
-            System.err.println("sleeping...");
-            attempts++;
         }
-        while (!persistentStateIsAbsent() && attempts < 5);
+        fail("couldn't delete persistent state");
     }
 
     private boolean persistentStateIsAbsent() {

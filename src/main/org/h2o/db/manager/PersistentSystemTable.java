@@ -503,7 +503,6 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     @Override
     public boolean addTableInformation(final TableManagerRemote tableManager, final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException, SQLException {
 
-        Diagnostic.trace("adding for table: " + tableDetails.getTableName());
         final boolean added = super.addTableInformation(tableManager.getDatabaseURL(), tableDetails, false);
 
         if (added) {
@@ -511,7 +510,6 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
             addTableManagerReplicaInformationOnCreateTable(getTableID(tableDetails), connectionID, true, replicaLocations);
         }
 
-        Diagnostic.trace("successful: " + added);
         return added;
     }
 

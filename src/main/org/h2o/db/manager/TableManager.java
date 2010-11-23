@@ -190,8 +190,6 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
         super(database);
 
-        System.out.println("creating table manager for: " + tableDetails.getFullTableName());
-
         this.tableAlreadyExists = tableAlreadyExists;
 
         final String dbName = database.getURL().sanitizedLocation();

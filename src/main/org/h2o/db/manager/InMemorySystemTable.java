@@ -122,8 +122,6 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     @Override
     public boolean addTableInformation(final TableManagerRemote tableManager, final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException {
 
-        Diagnostic.trace("adding for table: " + tableDetails.getTableName());
-
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "New table successfully created: " + tableDetails);
 
         final TableInfo basicTableInfo = tableDetails.getGenericTableInfo();

@@ -65,7 +65,6 @@ public class LockingTable implements ILockingTable, Serializable {
         writeLockHolder = null;
         readLockHolders = new HashSet<LockRequest>();
 
-        System.out.println("created locking table for: " + tableName);
         lockTables.put(tableName, this);
     }
 

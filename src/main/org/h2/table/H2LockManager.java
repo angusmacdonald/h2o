@@ -13,7 +13,6 @@ import org.h2.engine.Session;
 import org.h2.message.Message;
 import org.h2.message.Trace;
 import org.h2.util.ObjectArray;
-import org.h2o.db.query.locking.LockingTable;
 
 public class H2LockManager {
 
@@ -29,8 +28,6 @@ public class H2LockManager {
     // -------------------------------------------------------------------------------------------------------
 
     public H2LockManager(final TableData tableData, final Database database) {
-
-        System.out.println("making H2 lock manager for table: " + tableData.getFullName());
 
         this.tableData = tableData;
         this.database = database;
@@ -49,7 +46,6 @@ public class H2LockManager {
                     return obtainLock(session, exclusive);
                 }
                 finally {
-                    //                    System.out.println("acquired H2 lock for: " + tableData.getFullName());
                     sessionsWaitingForLocks.remove(session);
                 }
             }
@@ -99,7 +95,6 @@ public class H2LockManager {
             if (isLockedSharedBy(s)) {
                 releaseSharedLock(s);
             }
-            //            System.out.println("releasing H2 lock for: " + tableData.getFullName());
 
             if (database.getSessionCount() > 1) {
                 database.notifyAll();
@@ -155,15 +150,10 @@ public class H2LockManager {
 
             if (sessionHoldingExclusiveLock != null && sessionHoldingExclusiveLock != session) {
 
-                if (!tableData.getName().equals("SYS")) {
-
-                    System.out.println("session: " + session + " stealing lock for table: " + tableData.getName() + " from session: " + sessionHoldingExclusiveLock);
-                    LockingTable.dumpLockHistory(tableData.getName());
-                    System.exit(0);
-                }
+                assert tableData.getName().equals("SYS") : "lock stealing only permitted for table SYS";
 
                 /* 
-                  * XXX H2O hack. It ensures that A-B-A communication doesn't lock up the DB (normally through the SYS table), as the returning update can use the same session
+                  * H2O hack. It ensures that A-B-A communication doesn't lock up the DB (normally through the SYS table), as the returning update can use the same session
                   * as the originating update (which has all of the pertinent locks).
                   * 
                   * This happens when the PUBLIC.SYS table is altered (after almost every update through the Database.remoteMeta() [line 1266] method. This is called from 
@@ -207,8 +197,6 @@ public class H2LockManager {
                 }
             }
 
-            System.out.println("Session: " + session + " waiting for " + (exclusive ? "exclusive" : "shared") + " lock on table " + tableData.getName());
-
             sessionsWaitingForLocks.put(session, tableData);
 
             if (checkDeadlock) {
@@ -224,7 +212,6 @@ public class H2LockManager {
             if (now >= max) {
                 traceLock(session, exclusive, "timeout after " + session.getLockTimeout());
 
-                System.err.println(getSessionHoldingExclusiveLock());
                 throw Message.getSQLException(ErrorCode.LOCK_TIMEOUT_1, tableData.getName());
             }
             try {

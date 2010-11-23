@@ -287,7 +287,7 @@ public class CreateTable extends SchemaCommand {
 
                         if (thisTableReferencesAnExistingTable) {
                             if (referencedTables.size() > 1) {
-                                System.err.println("Unexpected. Test that this still works.");
+                                Diagnostic.trace("Unexpected. Test that this still works.");
                             }
                             for (final Table tab : referencedTables) {
                                 tableSet = tab.getTableSet();
@@ -481,7 +481,6 @@ public class CreateTable extends SchemaCommand {
     @Override
     public void acquireLocks(final TableProxyManager tableProxyManager) throws SQLException {
 
-        System.out.println("acquiring locks to create table: " + tableName);
         final Database db = session.getDatabase();
 
         assert tableProxyManager.getTableProxy(tableName) == null; // should never exist.
@@ -508,19 +507,13 @@ public class CreateTable extends SchemaCommand {
             }
         }
 
-        System.out.println("tableLocal: " + tableLocal);
-        System.out.println("managementDB: " + managementDB);
-        System.out.println("startup: " + startup);
         tableProxy = null;
 
         if (!tableLocal && !managementDB && !startup) { // if it is startup then we don't want to create a table manager yet.
 
-            System.out.println("ctal3");
             final TableInfo ti = new TableInfo(tableName, getSchema().getName(), 0l, 0, "TABLE", db.getURL());
             try {
-                System.out.println("ctal4");
                 tableManager = new TableManager(ti, db, false);
-                System.out.println("ctal5");
             }
             catch (final Exception e1) {
                 e1.printStackTrace();
@@ -536,14 +529,12 @@ public class CreateTable extends SchemaCommand {
             H2OEventBus.publish(new H2OEvent(db.getURL().getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
 
             tableProxy = TableProxy.getTableProxyAndLock(tableManager, ti.getFullTableName(), new LockRequest(session), LockType.CREATE, db, false);
-
         }
         else {
             /*
              * This is a system table meta-table, but it still needs a TableProxy to indicate that it is acceptable to execute the query.
              */
             tableProxy = TableProxy.getTableProxyAndLock(table, LockType.CREATE, new LockRequest(session), db);
-
         }
 
         tableProxyManager.addProxy(tableProxy);

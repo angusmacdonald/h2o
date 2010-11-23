@@ -60,7 +60,7 @@ public class EndToEndConnectionDriver extends ConnectionDriver {
             fail("database TEST was created twice");
         }
         catch (final SQLException e) {
-            System.out.println("double creation failed as expected: " + e.getMessage());
+            // Expected.
         }
         finally {
             closeIfNotNull(statement);

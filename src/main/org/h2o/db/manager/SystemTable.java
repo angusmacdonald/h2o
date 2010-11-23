@@ -28,7 +28,6 @@ import org.h2o.db.wrappers.TableManagerWrapper;
 import org.h2o.util.exceptions.MigrationException;
 import org.h2o.util.exceptions.MovedException;
 
-import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 /**
@@ -86,8 +85,6 @@ public class SystemTable implements SystemTableRemote {
 
     @Override
     public boolean addTableInformation(final TableManagerRemote tableManager, final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException {
-
-        Diagnostic.trace("adding for table: " + tableDetails.getTableName());
 
         preMethodTest();
 
