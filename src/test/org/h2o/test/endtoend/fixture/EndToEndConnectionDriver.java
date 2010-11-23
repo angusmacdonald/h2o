@@ -42,7 +42,39 @@ public class EndToEndConnectionDriver extends ConnectionDriver {
             statement = connection.createStatement();
 
             // Create a table.
-            statement.executeUpdate(makeCreationStatement());
+            statement.executeUpdate(makeCreationStatement(false));
+        }
+        finally {
+            closeIfNotNull(statement);
+        }
+    }
+
+    public void assertTableCantBeRecreated() {
+
+        Statement statement = null;
+        try {
+            statement = connection.createStatement();
+
+            // Attempt to recreate a table, without guard.
+            statement.executeUpdate(makeCreationStatement(false));
+            fail("database TEST was created twice");
+        }
+        catch (final SQLException e) {
+            System.out.println("double creation failed as expected: " + e.getMessage());
+        }
+        finally {
+            closeIfNotNull(statement);
+        }
+    }
+
+    public void assertCreateIfNotExistsSuccessful() throws SQLException {
+
+        Statement statement = null;
+        try {
+            statement = connection.createStatement();
+
+            // Attempt to recreate a table, using guard.
+            statement.executeUpdate(makeCreationStatement(true));
         }
         finally {
             closeIfNotNull(statement);
@@ -212,11 +244,11 @@ public class EndToEndConnectionDriver extends ConnectionDriver {
         }
     }
 
-    private String makeCreationStatement() {
+    private String makeCreationStatement(final boolean include_guard) {
 
         final StringBuilder builder = new StringBuilder();
 
-        builder.append("CREATE TABLE TEST (");
+        builder.append("CREATE TABLE " + (include_guard ? "IF NOT EXISTS " : "") + "TEST (");
         for (int i = 0; i < number_of_columns; i++) {
             if (i > 0) {
                 builder.append(", ");

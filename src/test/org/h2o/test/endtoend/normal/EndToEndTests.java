@@ -172,6 +172,60 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
     }
 
     /**
+     * Checks that an attempt to recreate an existing table fails as expected.
+     * 
+     * @throws SQLException if the test fails
+     * @throws IOException if the test fails
+     * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
+     */
+    @Test
+    public void tableCantBeCreatedTwice() throws SQLException, IOException, UnknownPlatformException {
+
+        Diagnostic.trace();
+
+        final EndToEndConnectionDriver driver1 = makeSpecificConnectionDriver();
+
+        driver1.setAutoCommitOn();
+        driver1.setNoDelay();
+
+        driver1.createTable();
+
+        shutdown();
+        startup();
+
+        final EndToEndConnectionDriver driver2 = makeSpecificConnectionDriver();
+
+        driver2.assertTableCantBeRecreated();
+    }
+
+    /**
+     * Checks that an attempt to recreate an existing table is successful when guarded by "IF NOT EXISTS".
+     * 
+     * @throws SQLException if the test fails
+     * @throws IOException if the test fails
+     * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
+     */
+    @Test
+    public void createIfNotExists() throws SQLException, IOException, UnknownPlatformException {
+
+        Diagnostic.trace();
+
+        final EndToEndConnectionDriver driver1 = makeSpecificConnectionDriver();
+
+        driver1.setAutoCommitOn();
+        driver1.setNoDelay();
+
+        driver1.createTable();
+
+        shutdown();
+        startup();
+
+        final EndToEndConnectionDriver driver2 = makeSpecificConnectionDriver();
+
+        driver2.assertCreateIfNotExistsSuccessful();
+    }
+
+    /**
      * Checks that a series of values can be inserted during one instantiation of a database and read in another, with auto-commit disabled and using explicit commit.
      * 
      * @throws SQLException if the test fails
