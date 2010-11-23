@@ -57,7 +57,7 @@ public class H2LockManager {
 
     public void dumpLockHistory() {
 
-        System.out.println("H2O lock history for table: " + tableData.getName());
+        System.out.println("H2 lock history for table: " + tableData.getName());
         System.out.println(lockHistory);
     }
 
@@ -204,6 +204,8 @@ public class H2LockManager {
 
                     System.out.println("ERROR: session: " + session + " stealing lock for table: " + tableData.getName() + " from session: " + sessionHoldingExclusiveLock);
                     LockingTable.dumpLockHistory(tableData.getName());
+                    System.out.println();
+                    dumpLockHistory();
                     ErrorHandling.hardError("database quitting");
                 }
                 /* 
