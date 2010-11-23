@@ -28,6 +28,7 @@ import org.h2o.db.wrappers.TableManagerWrapper;
 import org.h2o.util.exceptions.MigrationException;
 import org.h2o.util.exceptions.MovedException;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 /**
@@ -38,42 +39,38 @@ public class SystemTable implements SystemTableRemote {
     /**
      * Interface to the in-memory state of the System Table.
      */
-    private ISystemTable inMemory;
+    private final ISystemTable inMemory;
 
     /**
      * Interface to the persisted state of this System Table. This object interacts with the database to store the state of the System Table
      * on disk.
      */
-    private ISystemTable persisted;
+    private final ISystemTable persisted;
 
     /**
      * Fields related to the migration functionality of the System Table.
      */
-    private SystemTableMigrationState migrationState;
+    private final SystemTableMigrationState migrationState;
 
     /**
      * The timeout period for migrating the System Table.
      */
     private static final int MIGRATION_TIMEOUT = 10000;
 
-    public SystemTable(Database db, boolean createTables) throws Exception {
+    public SystemTable(final Database db, final boolean createTables) throws Exception {
 
-        this.inMemory = new InMemorySystemTable(db);
-        this.persisted = new PersistentSystemTable(db, createTables);
+        inMemory = new InMemorySystemTable(db);
+        persisted = new PersistentSystemTable(db, createTables);
 
-        this.migrationState = new SystemTableMigrationState(db.getChordInterface().getLocalChordReference());
+        migrationState = new SystemTableMigrationState(db.getChordInterface().getLocalChordReference());
     }
 
     /******************************************************************
      **** Methods which require both in memory and persisted data structures to be updated.
      ******************************************************************/
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.ISystemTable#addConnectionInformation(org.h2.h2o.util.DatabaseURL )
-     */
     @Override
-    public int addConnectionInformation(DatabaseURL databaseURL, DatabaseInstanceWrapper remoteDatabase) throws RemoteException, MovedException {
+    public int addConnectionInformation(final DatabaseURL databaseURL, final DatabaseInstanceWrapper remoteDatabase) throws RemoteException, MovedException {
 
         preMethodTest();
 
@@ -81,43 +78,33 @@ public class SystemTable implements SystemTableRemote {
             inMemory.addConnectionInformation(databaseURL, remoteDatabase);
             return persisted.addConnectionInformation(databaseURL, remoteDatabase);
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             e.printStackTrace();
             return -1;
         }
-
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.ISystemTable#confirmTableCreation(java.lang.String, org.h2.h2o.comms.remote.TableManagerRemote, org.h2.h2o.TableInfo)
-     */
     @Override
-    public boolean addTableInformation(TableManagerRemote tableManager, TableInfo tableDetails, Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException {
+    public boolean addTableInformation(final TableManagerRemote tableManager, final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException {
+
+        Diagnostic.trace("adding for table: " + tableDetails.getTableName());
 
         preMethodTest();
-        boolean success;
+
         try {
-            success = inMemory.addTableInformation(tableManager, tableDetails, replicaLocations);
-            if (!success) return false;
-            success = persisted.addTableInformation(tableManager, tableDetails, replicaLocations);
+            return inMemory.addTableInformation(tableManager, tableDetails, replicaLocations) && persisted.addTableInformation(tableManager, tableDetails, replicaLocations);
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             e.printStackTrace();
-            success = false;
+            return false;
         }
-        return success;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.ISystemTable#removeTableInformation(java.lang.String, java.lang.String)
-     */
     @Override
-    public boolean removeTableInformation(TableInfo ti) throws RemoteException, MovedException {
+    public boolean removeTableInformation(final TableInfo ti) throws RemoteException, MovedException {
 
         preMethodTest();
-        boolean result = inMemory.removeTableInformation(ti);
+        final boolean result = inMemory.removeTableInformation(ti);
         persisted.removeTableInformation(ti);
 
         return result;
@@ -127,32 +114,20 @@ public class SystemTable implements SystemTableRemote {
      **** Methods which only require checking in memory data structures.
      ******************************************************************/
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.ISystemTable#exists(java.lang.String)
-     */
     @Override
-    public boolean exists(TableInfo ti) throws RemoteException, MovedException {
+    public boolean exists(final TableInfo ti) throws RemoteException, MovedException {
 
         preMethodTest();
         return inMemory.exists(ti);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.ISystemTable#getAllTablesInSchema(java.lang.String)
-     */
     @Override
-    public Set<String> getAllTablesInSchema(String schemaName) throws RemoteException, MovedException {
+    public Set<String> getAllTablesInSchema(final String schemaName) throws RemoteException, MovedException {
 
         preMethodTest();
         return inMemory.getAllTablesInSchema(schemaName);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.ISystemTable#getNewTableSetNumber()
-     */
     @Override
     public int getNewTableSetNumber() throws RemoteException, MovedException {
 
@@ -160,23 +135,15 @@ public class SystemTable implements SystemTableRemote {
         return inMemory.getNewTableSetNumber();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.ISystemTable#lookup(java.lang.String)
-     */
     @Override
-    public TableManagerWrapper lookup(TableInfo ti) throws RemoteException, MovedException {
+    public TableManagerWrapper lookup(final TableInfo ti) throws RemoteException, MovedException {
 
         preMethodTest();
         return inMemory.lookup(ti);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#buildSystemTableState(org.h2.h2o.manager .ISystemTable)
-     */
     @Override
-    public void buildSystemTableState(ISystemTable otherSystemTable) throws RemoteException, MovedException, SQLException {
+    public void buildSystemTableState(final ISystemTable otherSystemTable) throws RemoteException, MovedException, SQLException {
 
         preMethodTest();
         inMemory.buildSystemTableState(otherSystemTable);
@@ -184,10 +151,6 @@ public class SystemTable implements SystemTableRemote {
         persisted.buildSystemTableState(otherSystemTable);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#buildSystemTableState(org.h2.h2o.manager .ISystemTable)
-     */
     @Override
     public void buildSystemTableState() throws RemoteException, MovedException, SQLException {
 
@@ -196,20 +159,12 @@ public class SystemTable implements SystemTableRemote {
 
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#getConnectionInformation()
-     */
     @Override
     public Map<DatabaseURL, DatabaseInstanceWrapper> getConnectionInformation() throws RemoteException, MovedException, SQLException {
 
         return inMemory.getConnectionInformation();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#getTableManagers()
-     */
     @Override
     public Map<TableInfo, TableManagerWrapper> getTableManagers() throws RemoteException, MovedException {
 
@@ -226,10 +181,6 @@ public class SystemTable implements SystemTableRemote {
         return inMemory.getReplicaLocations();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#removeAllTableInformation()
-     */
     @Override
     public void removeAllTableInformation() throws RemoteException, MovedException, MovedException, MovedException {
 
@@ -238,33 +189,25 @@ public class SystemTable implements SystemTableRemote {
             inMemory.removeAllTableInformation();
             persisted.removeAllTableInformation();
         }
-        catch (RemoteException e) {
+        catch (final RemoteException e) {
             e.printStackTrace();
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#getDatabaseInstance(org.h2.h2o.util. DatabaseURL)
-     */
     @Override
-    public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL) throws RemoteException, MovedException {
+    public DatabaseInstanceRemote getDatabaseInstance(final DatabaseURL databaseURL) throws RemoteException, MovedException {
 
         preMethodTest();
         return inMemory.getDatabaseInstance(databaseURL);
     }
 
     @Override
-    public Queue<DatabaseInstanceWrapper> getAvailableMachines(ActionRequest typeOfRequest) throws RemoteException, MovedException {
+    public Queue<DatabaseInstanceWrapper> getAvailableMachines(final ActionRequest typeOfRequest) throws RemoteException, MovedException {
 
         preMethodTest();
         return inMemory.getAvailableMachines(typeOfRequest);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#getDatabaseInstances()
-     */
     @Override
     public Set<DatabaseInstanceWrapper> getDatabaseInstances() throws RemoteException, MovedException {
 
@@ -272,12 +215,8 @@ public class SystemTable implements SystemTableRemote {
         return inMemory.getDatabaseInstances();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#removeDatabaseInstance(org.h2.h2o.comms .remote.DatabaseInstanceRemote)
-     */
     @Override
-    public void removeConnectionInformation(DatabaseInstanceRemote localDatabaseInstance) throws RemoteException, MovedException {
+    public void removeConnectionInformation(final DatabaseInstanceRemote localDatabaseInstance) throws RemoteException, MovedException {
 
         preMethodTest();
         inMemory.removeConnectionInformation(localDatabaseInstance);
@@ -296,24 +235,16 @@ public class SystemTable implements SystemTableRemote {
         if (migrationState.inMigration) {
             // If it hasn't moved, but is in the process of migration an
             // exception will be thrown.
-            long currentTimeOfMigration = System.currentTimeMillis() - migrationState.migrationTime;
+            final long currentTimeOfMigration = System.currentTimeMillis() - migrationState.migrationTime;
 
-            if (currentTimeOfMigration < MIGRATION_TIMEOUT) {
-                throw new RemoteException("System Table is in the process of being moved.");
-            }
-            else {
-                migrationState.inMigration = false; // Timeout request.
-                this.migrationState.migrationTime = 0l;
-            }
+            if (currentTimeOfMigration < MIGRATION_TIMEOUT) { throw new RemoteException("System Table is in the process of being moved."); }
+            migrationState.inMigration = false; // Timeout request.
+            migrationState.migrationTime = 0l;
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#prepareForMigration()
-     */
     @Override
-    public synchronized void prepareForMigration(String newLocation) throws RemoteException, MovedException, MigrationException {
+    public synchronized void prepareForMigration(final String newLocation) throws RemoteException, MovedException, MigrationException {
 
         preMethodTest();
 
@@ -324,10 +255,6 @@ public class SystemTable implements SystemTableRemote {
         migrationState.migrationTime = System.currentTimeMillis();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#completeMigration()
-     */
     @Override
     public void completeMigration() throws RemoteException, MovedException, MigrationException {
 
@@ -336,28 +263,20 @@ public class SystemTable implements SystemTableRemote {
             throw new MigrationException("Migration process has timed-out. Took too long to migrate (timeout: " + MIGRATION_TIMEOUT + "ms)");
         }
 
-        this.migrationState.hasMoved = true;
-        this.migrationState.inMigration = false;
+        migrationState.hasMoved = true;
+        migrationState.inMigration = false;
 
         ((InMemorySystemTable) inMemory).removeTableManagerCheckerThread();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#checkConnection()
-     */
     @Override
     public void checkConnection() throws RemoteException, MovedException {
 
         preMethodTest();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#changeTableManagerLocation(org.h2.h2o .comms.remote.TableManagerRemote)
-     */
     @Override
-    public void changeTableManagerLocation(TableManagerRemote stub, TableInfo tableInfo) throws RemoteException, MovedException {
+    public void changeTableManagerLocation(final TableManagerRemote stub, final TableInfo tableInfo) throws RemoteException, MovedException {
 
         preMethodTest();
 
@@ -365,56 +284,35 @@ public class SystemTable implements SystemTableRemote {
         persisted.changeTableManagerLocation(stub, tableInfo);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.Migratable#shutdown()
-     */
     @Override
-    public void shutdown(boolean shutdown) throws RemoteException, MovedException {
+    public void shutdown(final boolean shutdown) throws RemoteException, MovedException {
 
-        this.migrationState.shutdown = shutdown;
-
+        migrationState.shutdown = shutdown;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.Migratable#getChordReference()
-     */
     @Override
     public IChordRemoteReference getChordReference() throws RemoteException {
 
         return migrationState.location;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#getLocalDatabaseInstances(org.h2.h2o. util.DatabaseURL)
-     */
     @Override
-    public Set<TableManagerWrapper> getLocalDatabaseInstances(DatabaseURL localMachineLocation) throws RemoteException, MovedException {
+    public Set<TableManagerWrapper> getLocalDatabaseInstances(final DatabaseURL localMachineLocation) throws RemoteException, MovedException {
 
         preMethodTest();
         return inMemory.getLocalDatabaseInstances(localMachineLocation);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#addTableManagerStateReplica(org.h2.h2o .util.TableInfo, org.h2.h2o.util.DatabaseURL)
-     */
     @Override
-    public void addTableManagerStateReplica(TableInfo table, DatabaseURL replicaLocation, DatabaseURL primaryLocation, boolean active) throws RemoteException, MovedException {
+    public void addTableManagerStateReplica(final TableInfo table, final DatabaseURL replicaLocation, final DatabaseURL primaryLocation, final boolean active) throws RemoteException, MovedException {
 
         preMethodTest();
         inMemory.addTableManagerStateReplica(table, replicaLocation, primaryLocation, active);
         persisted.addTableManagerStateReplica(table, replicaLocation, primaryLocation, active);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#removeTableManagerStateReplica(org.h2 .h2o.util.TableInfo, org.h2.h2o.util.DatabaseURL)
-     */
     @Override
-    public void removeTableManagerStateReplica(TableInfo table, DatabaseURL replicaLocation) throws RemoteException, MovedException {
+    public void removeTableManagerStateReplica(final TableInfo table, final DatabaseURL replicaLocation) throws RemoteException, MovedException {
 
         preMethodTest();
         inMemory.removeTableManagerStateReplica(table, replicaLocation);
@@ -428,11 +326,10 @@ public class SystemTable implements SystemTableRemote {
     }
 
     @Override
-    public TableManagerRemote recreateTableManager(TableInfo table) throws RemoteException, MovedException {
+    public TableManagerRemote recreateTableManager(final TableInfo table) throws RemoteException, MovedException {
 
         preMethodTest();
         return inMemory.recreateTableManager(table);
-
     }
 
     @Override
@@ -440,7 +337,5 @@ public class SystemTable implements SystemTableRemote {
 
         preMethodTest();
         return inMemory.checkTableManagerAccessibility();
-
     }
-
 }

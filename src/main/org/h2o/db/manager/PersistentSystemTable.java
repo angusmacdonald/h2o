@@ -136,8 +136,6 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
     /**
      * Returns the next available tableSet number. Not implemented in PersistentSystemTable.
-     * 
-     * @return
      */
     @Override
     public int getNewTableSetNumber() {
@@ -226,10 +224,6 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#getConnectionInformation()
-     */
     @Override
     public Map<DatabaseURL, DatabaseInstanceWrapper> getConnectionInformation() throws RemoteException, SQLException {
 
@@ -289,7 +283,6 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
             for (final DatabaseURL dbURL : connectionInformation.keySet()) {
                 return dbURL; //return the only database URL with the specified connection ID.
             }
-
         }
         catch (final Exception e) {
             ErrorHandling.exceptionErrorNoEvent(e, "Failed to get the database URL of a database with the connection ID: " + replicaConnectionID);
@@ -298,10 +291,6 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
         return null;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#getTableManagers()
-     */
     @Override
     public Map<TableInfo, TableManagerWrapper> getTableManagers() throws RemoteException {
 
@@ -388,10 +377,6 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
         return tableManagers;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#getReplicaLocations()
-     */
     @Override
     public Map<TableInfo, Set<DatabaseURL>> getReplicaLocations() throws RemoteException {
 
@@ -432,9 +417,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
                 }
                 specificTableReplicaLocations.add(replicaURL);
                 replicaLocations.put(ti, specificTableReplicaLocations);
-
             }
-
         }
         catch (final SQLException e1) {
             e1.printStackTrace();
@@ -477,7 +460,6 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
                 primaryLocations.put(ti, primaryURL);
             }
-
         }
         catch (final SQLException e1) {
             e1.printStackTrace();
@@ -486,31 +468,18 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
         return primaryLocations;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#buildSystemTableState()
-     */
     @Override
     public void buildSystemTableState() throws RemoteException {
 
         // TODO Auto-generated method stub
-
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#removeAllTableInformation()
-     */
     @Override
     public void removeAllTableInformation() throws RemoteException, MovedException {
 
         removeTableInformation(null);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#getDatabaseInstance(org.h2.h2o.util. DatabaseURL)
-     */
     @Override
     public DatabaseInstanceRemote getDatabaseInstance(final DatabaseURL databaseURL) throws RemoteException, MovedException {
 
@@ -518,10 +487,6 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
         return null;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#getDatabaseInstances()
-     */
     @Override
     public Set<DatabaseInstanceWrapper> getDatabaseInstances() throws RemoteException, MovedException {
 
@@ -529,23 +494,16 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
         return null;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#changeTableManagerLocation(org.h2.h2o .comms.remote.TableManagerRemote)
-     */
     @Override
     public void changeTableManagerLocation(final TableManagerRemote locationOfManager, final TableInfo tableInfo) {
 
         super.changeTableManagerLocation(tableInfo);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#addTableInformation(org.h2.h2o.comms. remote.TableManagerRemote, org.h2.h2o.util.TableInfo)
-     */
     @Override
     public boolean addTableInformation(final TableManagerRemote tableManager, final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException, SQLException {
 
+        Diagnostic.trace("adding for table: " + tableDetails.getTableName());
         final boolean added = super.addTableInformation(tableManager.getDatabaseURL(), tableDetails, false);
 
         if (added) {
@@ -553,24 +511,16 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
             addTableManagerReplicaInformationOnCreateTable(getTableID(tableDetails), connectionID, true, replicaLocations);
         }
 
+        Diagnostic.trace("successful: " + added);
         return added;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#addConnectionInformation(org.h2.h2o.util .DatabaseURL,
-     * org.h2.h2o.comms.remote.DatabaseInstanceWrapper)
-     */
     @Override
     public int addConnectionInformation(final DatabaseURL databaseURL, final DatabaseInstanceWrapper databaseInstanceWrapper) throws RemoteException, MovedException, SQLException {
 
         return super.addConnectionInformation(databaseURL, databaseInstanceWrapper.isActive());
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#getLocalDatabaseInstances(org.h2.h2o. util.DatabaseURL)
-     */
     @Override
     public Set<TableManagerWrapper> getLocalDatabaseInstances(final DatabaseURL localMachineLocation) throws RemoteException, MovedException {
 
@@ -597,10 +547,6 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
         return localTables;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#addTableManagerStateReplica(org.h2.h2o .util.TableInfo, org.h2.h2o.util.DatabaseURL)
-     */
     @Override
     public void addTableManagerStateReplica(final TableInfo table, final DatabaseURL replicaLocation, final DatabaseURL primaryLocation, final boolean active) throws RemoteException, MovedException {
 
@@ -612,10 +558,6 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#removeTableManagerStateReplica(org.h2 .h2o.util.TableInfo, org.h2.h2o.util.DatabaseURL)
-     */
     @Override
     public void removeTableManagerStateReplica(final TableInfo table, final DatabaseURL replicaLocation) throws RemoteException, MovedException {
 
@@ -627,30 +569,18 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.PersistentManager#getLocation()
-     */
     @Override
     protected DatabaseURL getLocation() throws RemoteException {
 
         return getDB().getURL();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.PersistentManager#getTableInfo()
-     */
     @Override
     protected TableInfo getTableInfo() {
 
         return null;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#removeTableInformation(org.h2.h2o.util .TableInfo)
-     */
     @Override
     public boolean removeTableInformation(final TableInfo ti) throws RemoteException, MovedException {
 
@@ -662,7 +592,6 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
         return null;
         // Done by in-memory system table.
-
     }
 
     @Override
@@ -678,5 +607,4 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
         // TODO Auto-generated method stub
         return null;
     }
-
 }

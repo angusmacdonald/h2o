@@ -122,6 +122,8 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     @Override
     public boolean addTableInformation(final TableManagerRemote tableManager, final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException {
 
+        Diagnostic.trace("adding for table: " + tableDetails.getTableName());
+
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "New table successfully created: " + tableDetails);
 
         final TableInfo basicTableInfo = tableDetails.getGenericTableInfo();
@@ -208,10 +210,6 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.ISystemTable#addConnectionInformation(org.h2.h2o.util.DatabaseURL )
-     */
     @Override
     public int addConnectionInformation(final DatabaseURL databaseURL, final DatabaseInstanceWrapper databaseInstanceRemote) throws RemoteException {
 
@@ -221,53 +219,10 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
         return 1;
     }
 
-    // /* (non-Javadoc)
-    // * @see
-    // org.h2.h2o.ISystemTable#addReplicaInformation(org.h2.h2o.TableInfo)
-    // */
-    // @Override
-    // public void addReplicaInformation(TableInfo ti) throws RemoteException {
-    //
-    // Set<TableInfo> replicas = replicaLocations.get(ti.getFullTableName());
-    //
-    // if (replicas == null){
-    // replicas = new HashSet<TableInfo>();
-    // }
-    //
-    // replicas.add(ti);
-    //
-    // replicaLocations.put(ti.getFullTableName(), replicas);
-    // }
-    //
-    // /* (non-Javadoc)
-    // * @see org.h2.h2o.ISystemTable#removeReplica(java.lang.String,
-    // org.h2.h2o.TableInfo)
-    // */
-    // @Override
-    // public void removeReplicaInformation(TableInfo ti) throws RemoteException
-    // {
-    // Diagnostic.traceNoEvent(DiagnosticLevel.FINAL,
-    // "Request to drop a single replica of '" + ti.getFullTableName() +
-    // "' from the system.");
-    //
-    // Set<TableInfo> replicas = replicaLocations.get(ti.getFullTableName());
-    //
-    // if (replicas == null){
-    // return;
-    // }
-    //
-    // replicas.remove(ti);
-    //
-    // }
-
     /******************************************************************
      **** Methods which involve querying the System Table.
      ******************************************************************/
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.ISystemTable#lookup(java.lang.String)
-     */
     @Override
     public TableManagerWrapper lookup(TableInfo ti) throws RemoteException {
 
@@ -377,20 +332,12 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
         return tableManagerWrapper;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.ISystemTable#exists(java.lang.String)
-     */
     @Override
     public boolean exists(final TableInfo ti) throws RemoteException {
 
         return tableManagers.containsKey(ti);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.ISystemTable#getAllTablesInSchema(java.lang.String)
-     */
     @Override
     public Set<String> getAllTablesInSchema(final String schemaName) throws RemoteException {
 
@@ -405,20 +352,12 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
         return tableNames;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.ISystemTable#getNewTableSetNumber()
-     */
     @Override
     public int getNewTableSetNumber() throws RemoteException {
 
         return tableSetNumber++;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#buildSystemTableState(org.h2.h2o.manager .ISystemTable)
-     */
     @Override
     public void buildSystemTableState(final ISystemTable otherSystemTable) throws RemoteException, MovedException, SQLException {
 
@@ -464,9 +403,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
                         // Couldn't find reference to this database instance.
                         active = false;
                     }
-
                 }
-
             }
 
             databasesInSystem.put(remoteDB.getKey(), new DatabaseInstanceWrapper(remoteDB.getKey(), dir, active));
@@ -496,7 +433,6 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "New System Table started.");
 
         started = true;
-
     }
 
     public void removeTableManagerCheckerThread() {
@@ -506,8 +442,6 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
 
     /**
      * Check that Table Managers are still alive.
-     * 
-     * @return
      */
     @Override
     public boolean checkTableManagerAccessibility() {
@@ -525,7 +459,6 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
                     anyTableManagerRecreated = true;
                 }
             }
-
         }
         return anyTableManagerRecreated;
     }
@@ -607,50 +540,30 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
         return false;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#getConnectionInformation()
-     */
     @Override
     public Map<DatabaseURL, DatabaseInstanceWrapper> getConnectionInformation() throws RemoteException {
 
         return databasesInSystem;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#getTableManagers()
-     */
     @Override
     public Map<TableInfo, TableManagerWrapper> getTableManagers() {
 
         return tableManagers;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#getReplicaLocations()
-     */
     @Override
     public Map<TableInfo, Set<DatabaseURL>> getReplicaLocations() {
 
         return tmReplicaLocations;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#buildSystemTableState()
-     */
     @Override
     public void buildSystemTableState() throws RemoteException {
 
         // TODO Auto-generated method stub
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#removeAllTableInformation()
-     */
     @Override
     public void removeAllTableInformation() throws RemoteException {
 
@@ -676,10 +589,6 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
         tableManagers.clear();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#getDatabaseInstance(org.h2.h2o.util. DatabaseURL)
-     */
     @Override
     public DatabaseInstanceRemote getDatabaseInstance(final DatabaseURL databaseURL) throws RemoteException, MovedException {
 
@@ -688,20 +597,12 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
         return wrapper.getDatabaseInstance();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#getDatabaseInstances()
-     */
     @Override
     public Set<DatabaseInstanceWrapper> getDatabaseInstances() throws RemoteException, MovedException {
 
         return new HashSet<DatabaseInstanceWrapper>(databasesInSystem.values());
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#removeDatabaseInstance(org.h2.h2o.comms .remote.DatabaseInstanceRemote)
-     */
     @Override
     public void removeConnectionInformation(final DatabaseInstanceRemote localDatabaseInstance) throws RemoteException, MovedException {
 
@@ -712,10 +613,6 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
         wrapper.setActive(false);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#changeTableManagerLocation(org.h2.h2o .comms.remote.TableManagerRemote)
-     */
     @Override
     public void changeTableManagerLocation(final TableManagerRemote stub, final TableInfo tableInfo) {
 
@@ -731,13 +628,8 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
         tableManagers.put(tableInfo.getGenericTableInfo(), dmw);
         tableManagerReferences.add(stub);
         database.getChordInterface().bind(tableInfo.getFullTableName(), stub);
-
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#getLocalDatabaseInstances(org.h2.h2o. util.DatabaseURL)
-     */
     @Override
     public Set<TableManagerWrapper> getLocalDatabaseInstances(final DatabaseURL databaseInstance) throws RemoteException, MovedException {
 
@@ -756,7 +648,6 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
                     return false;
                 }
             }
-
         };
 
         final Set<TableManagerWrapper> localManagers = CollectionFilter.filter(tableManagers.values(), isLocal, databaseInstance);
@@ -764,10 +655,6 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
         return localManagers;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#addTableManagerStateReplica(org.h2.h2o .util.TableInfo, org.h2.h2o.util.DatabaseURL)
-     */
     @Override
     public void addTableManagerStateReplica(final TableInfo table, final DatabaseURL replicaLocation, final DatabaseURL primaryLocation, final boolean active) throws RemoteException, MovedException {
 
@@ -782,13 +669,8 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
         replicas.add(replicaLocation);
 
         tmReplicaLocations.put(table.getGenericTableInfo(), replicas);
-
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.h2.h2o.manager.ISystemTable#removeTableManagerStateReplica(org.h2 .h2o.util.TableInfo, org.h2.h2o.util.DatabaseURL)
-     */
     @Override
     public void removeTableManagerStateReplica(final TableInfo table, final DatabaseURL replicaLocation) throws RemoteException, MovedException {
 
@@ -803,7 +685,6 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
         if (!removed) {
             ErrorHandling.errorNoEvent("Failed to remove Table Manager Replica state for a replica because it wasn't recorded. Table " + table + " at " + replicaLocation);
         }
-
     }
 
     @Override
@@ -827,5 +708,4 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
 
         return sortedMachines;
     }
-
 }
