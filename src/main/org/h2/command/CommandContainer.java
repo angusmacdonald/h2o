@@ -14,6 +14,7 @@ import org.h2.result.LocalResult;
 import org.h2.util.ObjectArray;
 import org.h2.value.Value;
 import org.h2o.db.query.TableProxyManager;
+import org.h2o.db.query.locking.LockException;
 import org.h2o.test.fixture.H2OTest;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -257,7 +258,7 @@ public class CommandContainer extends Command {
              * Check current time.. wait.
              */
             final long now = System.currentTimeMillis();
-            if (now >= max) { throw new SQLException("Couldn't obtain locks for all tables involved in query."); }
+            if (now >= max) { throw new LockException("Couldn't obtain locks for all tables involved in query."); }
 
             try {
                 // TODO al says: WTF
