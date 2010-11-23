@@ -364,4 +364,16 @@ public class TableProxy implements Serializable {
 
         return allReplicas == null ? 0 : allReplicas.size();
     }
+
+    /**
+     * Clear this Table Proxy of all information relating to a table. This is done when a transaction can return successfully despite
+     * having done nothing. 
+     * 
+     * <p>For example, CREATE TABLE IF NOT EXISTS will return 0 if the table exists, so it should not be possible
+     * for this Table Proxy to 'commit' the creation of this table a second time - the table proxy should effectively be discarded.
+     */
+    public void clear() {
+
+        tableManager = null;
+    }
 }
