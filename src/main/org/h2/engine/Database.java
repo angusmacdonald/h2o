@@ -339,7 +339,7 @@ public class Database implements DataHandler {
         Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.stachord");
 
         localSchema.add(Constants.H2O_SCHEMA);
-        localSchema.add("RESOURCE_MONITORING");
+        //        localSchema.add("RESOURCE_MONITORING");
         localSchema.add(Constants.SCHEMA_INFORMATION);
 
         databaseName = name;
