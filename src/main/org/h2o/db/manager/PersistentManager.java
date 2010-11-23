@@ -95,7 +95,7 @@ public abstract class PersistentManager {
     /*
      * Called by TableManager subclass which sets up table names later.
      */
-    public PersistentManager(final Database db) throws Exception {
+    public PersistentManager(final Database db) {
 
         this.db = db;
         isSystemTable = false;
@@ -104,12 +104,12 @@ public abstract class PersistentManager {
 
         final Session session = db.getSystemSession();
 
-        if (session == null) {
-            ErrorHandling.error("Couldn't find system session. Local database has been shutdown.");
-            return;
+        if (session != null) {
+            queryParser = new Parser(session, true);
         }
-
-        queryParser = new Parser(session, true);
+        else {
+            ErrorHandling.error("Couldn't find system session. Local database has been shutdown.");
+        }
     }
 
     public void setMetaDataTableNames(final String tables, final String replicas, final String connections, final String tableManagerRelation) {

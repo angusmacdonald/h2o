@@ -121,16 +121,6 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
     private ReplicaManager replicaManager;
 
-    // /**
-    // * Updates made asynchronously to a single table that haven't yet reached
-    // other replicas.
-    // *
-    // * <p>Key: The number given to the update by the Table Manager.
-    // * <p>Value: The SQL query for the update.
-    // */
-    // private Map<Integer, String> unPropagatedUpdates;
-    // private Map<Integer, String> inProgressUpdates;
-
     /**
      * Stores locks held by various databases for accessing this table (all replicas).
      */
@@ -195,9 +185,8 @@ public class TableManager extends PersistentManager implements TableManagerRemot
      * an existing Table Manager.
      * @param tableAlreadyExists    True if the table has already been created and this new instance is being created as part of a Table
      * Manager migration or recreation. False if this is being created as part of a CREATE TABLE operation.
-     * @throws Exception
      */
-    public TableManager(final TableInfo tableDetails, final Database database, final boolean tableAlreadyExists) throws Exception {
+    public TableManager(final TableInfo tableDetails, final Database database, final boolean tableAlreadyExists) {
 
         super(database);
 
@@ -227,7 +216,6 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         location = database.getChordInterface().getLocalChordReference();
 
         relationReplicationFactor = Integer.parseInt(database.getDatabaseSettings().get("RELATION_REPLICATION_FACTOR"));
-
     }
 
     public static String getMetaTableName(final String databaseName, final String tablePostfix) {

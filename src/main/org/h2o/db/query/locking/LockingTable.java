@@ -42,6 +42,8 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  */
 public class LockingTable implements ILockingTable, Serializable {
 
+    // TODO why does it need to be serializable?
+
     private static final long serialVersionUID = 2044915610751482232L;
 
     private LockRequest writeLockHolder;
