@@ -1,6 +1,7 @@
 package org.h2.table;
 
 import java.sql.SQLException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -28,6 +29,10 @@ public class H2LockManager {
     private final Database database;
     private final Trace traceLock;
 
+    // Used for debugging.
+    private static Map<String, H2LockManager> lockTables = new HashMap<String, H2LockManager>();
+    private final StringBuffer lockHistory = new StringBuffer();
+
     // -------------------------------------------------------------------------------------------------------
 
     public H2LockManager(final TableData tableData, final Database database) {
@@ -35,11 +40,46 @@ public class H2LockManager {
         this.tableData = tableData;
         this.database = database;
         traceLock = database.getTrace(Trace.LOCK);
+
+        lockTables.put(tableData.getName(), this);
+    }
+
+    public static void dumpLockHistory(final String tableName) {
+
+        final H2LockManager lockingTable = lockTables.get(tableName);
+        if (lockingTable == null) {
+            System.out.println("no H2 lock history for table: " + tableName);
+        }
+        else {
+            lockingTable.dumpLockHistory();
+        }
+    }
+
+    public void dumpLockHistory() {
+
+        System.out.println("H2O lock history for table: " + tableData.getName());
+        System.out.println(lockHistory);
     }
 
     // -------------------------------------------------------------------------------------------------------
 
     public Session lock(final Session session, final boolean exclusive, final boolean force) throws SQLException {
+
+        lockHistory.append("\nTIME: " + new Date() + "\n");
+        lockHistory.append("REQUEST: " + (exclusive ? "exclusive" : "shared") + "\n");
+        lockHistory.append("session: " + session + "\n");
+
+        final Session result = lock2(session, exclusive, force);
+
+        lockHistory.append("\nTIME: " + new Date() + "\n");
+        lockHistory.append("REPLY: " + (exclusive ? "exclusive" : "shared") + "\n");
+        lockHistory.append("session: " + session + "\n");
+        lockHistory.append("result: " + result + "\n");
+
+        return result;
+    }
+
+    public Session lock2(final Session session, final boolean exclusive, final boolean force) throws SQLException {
 
         final int lockMode = database.getLockMode();
 
@@ -80,6 +120,7 @@ public class H2LockManager {
     public void releaseAllLocks() {
 
         synchronized (database) {
+
             releaseExclusiveLock();
             releaseAllSharedLocks();
         }
@@ -91,14 +132,20 @@ public class H2LockManager {
 
             traceLock(s, isLockedExclusivelyBy(s), "unlock");
 
+            lockHistory.append("\nTIME: " + new Date() + "\n");
+            lockHistory.append("RELEASE:\n");
+
             if (isLockedExclusivelyBy(s)) {
                 releaseExclusiveLock();
+                lockHistory.append("released exclusive lock\n");
             }
 
             if (isLockedSharedBy(s)) {
                 releaseSharedLock(s);
+                lockHistory.append("released shared lock\n");
             }
 
+            lockHistory.append("session: " + s + "\n");
             if (database.getSessionCount() > 1) {
                 database.notifyAll();
             }

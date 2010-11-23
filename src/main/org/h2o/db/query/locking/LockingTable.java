@@ -26,6 +26,7 @@
 package org.h2o.db.query.locking;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -55,7 +56,7 @@ public class LockingTable implements ILockingTable, Serializable {
 
     // Used for debugging.
     private static Map<String, LockingTable> lockTables = new HashMap<String, LockingTable>();
-    private final StringBuilder lockHistory = new StringBuilder();
+    private final StringBuffer lockHistory = new StringBuffer();
 
     public LockingTable(final String schemaName, final String tableName) {
 
@@ -72,7 +73,7 @@ public class LockingTable implements ILockingTable, Serializable {
 
         final LockingTable lockingTable = lockTables.get(tableName);
         if (lockingTable == null) {
-            System.out.println("no history for table: " + tableName);
+            System.out.println("no H2O lock history for table: " + tableName);
         }
         else {
             lockingTable.dumpLockHistory();
@@ -81,7 +82,7 @@ public class LockingTable implements ILockingTable, Serializable {
 
     public void dumpLockHistory() {
 
-        System.out.println("lock history for table: " + fullName);
+        System.out.println("H2O lock history for table: " + fullName);
         System.out.println(lockHistory);
     }
 
@@ -89,7 +90,8 @@ public class LockingTable implements ILockingTable, Serializable {
     public synchronized LockType requestLock(final LockType lockType, final LockRequest lockRequest) {
 
         final LockType requestResult = requestLock2(lockType, lockRequest);
-        lockHistory.append("\nREQUEST: lock type: " + lockType + "\n");
+        lockHistory.append("\nTIME: " + new Date() + "\n");
+        lockHistory.append("REQUEST: lock type: " + lockType + "\n");
         lockHistory.append("lock request: " + lockRequest + "\n");
         lockHistory.append("result: " + requestResult + "\n");
         return requestResult;
@@ -142,7 +144,8 @@ public class LockingTable implements ILockingTable, Serializable {
     public synchronized LockType releaseLock(final LockRequest lockRequest) {
 
         final LockType requestResult = releaseLock2(lockRequest);
-        lockHistory.append("\nRELEASE:\n");
+        lockHistory.append("\nTIME: " + new Date() + "\n");
+        lockHistory.append("RELEASE:\n");
         lockHistory.append("lock request: " + lockRequest + "\n");
         lockHistory.append("result: " + requestResult + "\n");
         return requestResult;

@@ -61,7 +61,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
 
     private ObjectArray batchParameters;
 
-    JdbcPreparedStatement(JdbcConnection conn, String sql, int resultSetType, int id, boolean closeWithResultSet) throws SQLException {
+    JdbcPreparedStatement(final JdbcConnection conn, final String sql, final int resultSetType, final int id, final boolean closeWithResultSet) throws SQLException {
 
         super(conn, resultSetType, id, closeWithResultSet);
         setTrace(session.getTrace(), TraceObject.PREPARED_STATEMENT, id);
@@ -77,17 +77,18 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed or invalid
      */
+    @Override
     public ResultSet executeQuery() throws SQLException {
 
         try {
-            int id = getNextId(TraceObject.RESULT_SET);
+            final int id = getNextId(TraceObject.RESULT_SET);
             if (isDebugEnabled()) {
                 debugCodeAssign("ResultSet", TraceObject.RESULT_SET, id, "executeQuery()");
             }
             checkClosed();
             closeOldResultSet();
             ResultInterface result;
-            boolean scrollable = resultSetType != ResultSet.TYPE_FORWARD_ONLY;
+            final boolean scrollable = resultSetType != ResultSet.TYPE_FORWARD_ONLY;
             synchronized (session) {
                 try {
                     setExecutingStatement(command);
@@ -100,7 +101,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             resultSet = new JdbcResultSet(conn, this, result, id, closedByResultSet, scrollable);
             return resultSet;
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -117,6 +118,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed or invalid
      */
+    @Override
     public int executeUpdate() throws SQLException {
 
         try {
@@ -124,23 +126,20 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             checkClosed();
             return executeUpdateInternal(false);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
 
-    private int executeUpdateInternal(boolean isMultiQueryTransaction) throws SQLException {
+    private int executeUpdateInternal(final boolean isMultiQueryTransaction) throws SQLException {
 
         closeOldResultSet();
         synchronized (session) {
             try {
                 setExecutingStatement(command);
-                // command.addQueryProxyManager(proxyManager);
 
-                updateCount = command.executeUpdate(); // TODO set to false, so
-                                                       // each one runs as a
-                                                       // seperate transaction
-                // proxyManager = command.getQueryProxyManager();
+                updateCount = command.executeUpdate();
+                // TODO set to false, so each one runs as a separate transaction
             }
             finally {
                 setExecutingStatement(null);
@@ -157,10 +156,11 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed or invalid
      */
+    @Override
     public boolean execute() throws SQLException {
 
         try {
-            int id = getNextId(TraceObject.RESULT_SET);
+            final int id = getNextId(TraceObject.RESULT_SET);
             if (isDebugEnabled()) {
                 debugCodeCall("execute");
             }
@@ -172,8 +172,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
                     setExecutingStatement(command);
                     if (command.isQuery()) {
                         returnsResultSet = true;
-                        boolean scrollable = resultSetType != ResultSet.TYPE_FORWARD_ONLY;
-                        ResultInterface result = command.executeQuery(maxRows, scrollable);
+                        final boolean scrollable = resultSetType != ResultSet.TYPE_FORWARD_ONLY;
+                        final ResultInterface result = command.executeQuery(maxRows, scrollable);
                         resultSet = new JdbcResultSet(conn, this, result, id, closedByResultSet, scrollable);
                     }
                     else {
@@ -187,7 +187,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             return returnsResultSet;
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -198,19 +198,20 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed or invalid
      */
+    @Override
     public void clearParameters() throws SQLException {
 
         try {
             debugCodeCall("clearParameters");
             checkClosed();
-            ObjectArray parameters = command.getParameters();
+            final ObjectArray parameters = command.getParameters();
             for (int i = 0; i < parameters.size(); i++) {
-                ParameterInterface param = (ParameterInterface) parameters.get(i);
+                final ParameterInterface param = (ParameterInterface) parameters.get(i);
                 // can only delete old temp files if they are not in the batch
                 param.setValue(null, batchParameters == null);
             }
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -221,13 +222,14 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             Unsupported Feature
      */
-    public ResultSet executeQuery(String sql) throws SQLException {
+    @Override
+    public ResultSet executeQuery(final String sql) throws SQLException {
 
         try {
             debugCodeCall("executeQuery", sql);
             throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_PREPARED_STATEMENT);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -238,13 +240,14 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             Unsupported Feature
      */
-    public void addBatch(String sql) throws SQLException {
+    @Override
+    public void addBatch(final String sql) throws SQLException {
 
         try {
             debugCodeCall("addBatch", sql);
             throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_PREPARED_STATEMENT);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -255,13 +258,14 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             Unsupported Feature
      */
-    public int executeUpdate(String sql) throws SQLException {
+    @Override
+    public int executeUpdate(final String sql) throws SQLException {
 
         try {
             debugCodeCall("executeUpdate", sql);
             throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_PREPARED_STATEMENT);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -272,13 +276,14 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             Unsupported Feature
      */
-    public boolean execute(String sql) throws SQLException {
+    @Override
+    public boolean execute(final String sql) throws SQLException {
 
         try {
             debugCodeCall("execute", sql);
             throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_PREPARED_STATEMENT);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -295,7 +300,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setNull(int parameterIndex, int sqlType) throws SQLException {
+    @Override
+    public void setNull(final int parameterIndex, final int sqlType) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -303,7 +309,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             setParameter(parameterIndex, ValueNull.INSTANCE);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -318,7 +324,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setInt(int parameterIndex, int x) throws SQLException {
+    @Override
+    public void setInt(final int parameterIndex, final int x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -326,7 +333,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             setParameter(parameterIndex, ValueInt.get(x));
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -341,16 +348,17 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setString(int parameterIndex, String x) throws SQLException {
+    @Override
+    public void setString(final int parameterIndex, final String x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
                 debugCode("setString(" + parameterIndex + ", " + quote(x) + ");");
             }
-            Value v = x == null ? (Value) ValueNull.INSTANCE : ValueString.get(x);
+            final Value v = x == null ? (Value) ValueNull.INSTANCE : ValueString.get(x);
             setParameter(parameterIndex, v);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -365,16 +373,17 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
+    @Override
+    public void setBigDecimal(final int parameterIndex, final BigDecimal x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
                 debugCode("setBigDecimal(" + parameterIndex + ", " + quoteBigDecimal(x) + ");");
             }
-            Value v = x == null ? (Value) ValueNull.INSTANCE : ValueDecimal.get(x);
+            final Value v = x == null ? (Value) ValueNull.INSTANCE : ValueDecimal.get(x);
             setParameter(parameterIndex, v);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -389,16 +398,17 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setDate(int parameterIndex, java.sql.Date x) throws SQLException {
+    @Override
+    public void setDate(final int parameterIndex, final java.sql.Date x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
                 debugCode("setDate(" + parameterIndex + ", " + quoteDate(x) + ");");
             }
-            Value v = x == null ? (Value) ValueNull.INSTANCE : ValueDate.get(x);
+            final Value v = x == null ? (Value) ValueNull.INSTANCE : ValueDate.get(x);
             setParameter(parameterIndex, v);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -413,16 +423,17 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setTime(int parameterIndex, java.sql.Time x) throws SQLException {
+    @Override
+    public void setTime(final int parameterIndex, final java.sql.Time x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
                 debugCode("setTime(" + parameterIndex + ", " + quoteTime(x) + ");");
             }
-            Value v = x == null ? (Value) ValueNull.INSTANCE : ValueTime.get(x);
+            final Value v = x == null ? (Value) ValueNull.INSTANCE : ValueTime.get(x);
             setParameter(parameterIndex, v);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -437,16 +448,17 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setTimestamp(int parameterIndex, java.sql.Timestamp x) throws SQLException {
+    @Override
+    public void setTimestamp(final int parameterIndex, final java.sql.Timestamp x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
                 debugCode("setTimestamp(" + parameterIndex + ", " + quoteTimestamp(x) + ");");
             }
-            Value v = x == null ? (Value) ValueNull.INSTANCE : ValueTimestamp.get(x);
+            final Value v = x == null ? (Value) ValueNull.INSTANCE : ValueTimestamp.get(x);
             setParameter(parameterIndex, v);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -461,7 +473,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setObject(int parameterIndex, Object x) throws SQLException {
+    @Override
+    public void setObject(final int parameterIndex, final Object x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -475,7 +488,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
                 setParameter(parameterIndex, DataType.convertToValue(session, x, Value.UNKNOWN));
             }
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -492,22 +505,23 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setObject(int parameterIndex, Object x, int targetSqlType) throws SQLException {
+    @Override
+    public void setObject(final int parameterIndex, final Object x, final int targetSqlType) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
                 debugCode("setObject(" + parameterIndex + ", x, " + targetSqlType + ");");
             }
-            int type = DataType.convertSQLTypeToValueType(targetSqlType);
+            final int type = DataType.convertSQLTypeToValueType(targetSqlType);
             if (x == null) {
                 setParameter(parameterIndex, ValueNull.INSTANCE);
             }
             else {
-                Value v = DataType.convertToValue(conn.getSession(), x, type);
+                final Value v = DataType.convertToValue(conn.getSession(), x, type);
                 setParameter(parameterIndex, v.convertTo(type));
             }
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -526,7 +540,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setObject(int parameterIndex, Object x, int targetSqlType, int scale) throws SQLException {
+    @Override
+    public void setObject(final int parameterIndex, final Object x, final int targetSqlType, final int scale) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -534,7 +549,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             setObject(parameterIndex, x, targetSqlType);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -549,7 +564,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setBoolean(int parameterIndex, boolean x) throws SQLException {
+    @Override
+    public void setBoolean(final int parameterIndex, final boolean x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -557,7 +573,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             setParameter(parameterIndex, ValueBoolean.get(x));
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -572,7 +588,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setByte(int parameterIndex, byte x) throws SQLException {
+    @Override
+    public void setByte(final int parameterIndex, final byte x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -580,7 +597,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             setParameter(parameterIndex, ValueByte.get(x));
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -595,7 +612,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setShort(int parameterIndex, short x) throws SQLException {
+    @Override
+    public void setShort(final int parameterIndex, final short x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -603,7 +621,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             setParameter(parameterIndex, ValueShort.get(x));
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -618,7 +636,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setLong(int parameterIndex, long x) throws SQLException {
+    @Override
+    public void setLong(final int parameterIndex, final long x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -626,7 +645,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             setParameter(parameterIndex, ValueLong.get(x));
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -641,7 +660,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setFloat(int parameterIndex, float x) throws SQLException {
+    @Override
+    public void setFloat(final int parameterIndex, final float x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -649,7 +669,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             setParameter(parameterIndex, ValueFloat.get(x));
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -664,7 +684,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setDouble(int parameterIndex, double x) throws SQLException {
+    @Override
+    public void setDouble(final int parameterIndex, final double x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -672,7 +693,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             setParameter(parameterIndex, ValueDouble.get(x));
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -680,7 +701,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
     /**
      * [Not supported] Sets the value of a column as a reference.
      */
-    public void setRef(int parameterIndex, Ref x) throws SQLException {
+    @Override
+    public void setRef(final int parameterIndex, final Ref x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -688,7 +710,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             throw Message.getUnsupportedException();
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -705,7 +727,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setDate(int parameterIndex, java.sql.Date x, Calendar calendar) throws SQLException {
+    @Override
+    public void setDate(final int parameterIndex, final java.sql.Date x, final Calendar calendar) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -718,7 +741,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
                 setParameter(parameterIndex, DateTimeUtils.convertDateToUniversal(x, calendar));
             }
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -735,7 +758,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setTime(int parameterIndex, java.sql.Time x, Calendar calendar) throws SQLException {
+    @Override
+    public void setTime(final int parameterIndex, final java.sql.Time x, final Calendar calendar) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -748,7 +772,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
                 setParameter(parameterIndex, DateTimeUtils.convertTimeToUniversal(x, calendar));
             }
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -765,7 +789,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setTimestamp(int parameterIndex, java.sql.Timestamp x, Calendar calendar) throws SQLException {
+    @Override
+    public void setTimestamp(final int parameterIndex, final java.sql.Timestamp x, final Calendar calendar) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -778,7 +803,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
                 setParameter(parameterIndex, DateTimeUtils.convertTimestampToUniversal(x, calendar));
             }
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -788,7 +813,9 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * 
      * @deprecated
      */
-    public void setUnicodeStream(int parameterIndex, InputStream x, int length) throws SQLException {
+    @Deprecated
+    @Override
+    public void setUnicodeStream(final int parameterIndex, final InputStream x, final int length) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -796,7 +823,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             throw Message.getUnsupportedException();
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -813,7 +840,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setNull(int parameterIndex, int sqlType, String typeName) throws SQLException {
+    @Override
+    public void setNull(final int parameterIndex, final int sqlType, final String typeName) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -821,7 +849,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             setNull(parameterIndex, sqlType);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -836,7 +864,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setBlob(int parameterIndex, Blob x) throws SQLException {
+    @Override
+    public void setBlob(final int parameterIndex, final Blob x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -852,7 +881,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             setParameter(parameterIndex, v);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -867,17 +896,18 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setBlob(int parameterIndex, InputStream x) throws SQLException {
+    @Override
+    public void setBlob(final int parameterIndex, final InputStream x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
                 debugCode("setBlob(" + parameterIndex + ", x);");
             }
             checkClosed();
-            Value v = conn.createBlob(x, -1);
+            final Value v = conn.createBlob(x, -1);
             setParameter(parameterIndex, v);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -892,7 +922,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setClob(int parameterIndex, Clob x) throws SQLException {
+    @Override
+    public void setClob(final int parameterIndex, final Clob x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -908,7 +939,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             setParameter(parameterIndex, v);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -923,7 +954,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setClob(int parameterIndex, Reader x) throws SQLException {
+    @Override
+    public void setClob(final int parameterIndex, final Reader x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -939,7 +971,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             setParameter(parameterIndex, v);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -947,7 +979,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
     /**
      * [Not supported] Sets the value of a parameter as a Array.
      */
-    public void setArray(int parameterIndex, Array x) throws SQLException {
+    @Override
+    public void setArray(final int parameterIndex, final Array x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -955,7 +988,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             throw Message.getUnsupportedException();
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -970,16 +1003,17 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setBytes(int parameterIndex, byte[] x) throws SQLException {
+    @Override
+    public void setBytes(final int parameterIndex, final byte[] x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
                 debugCode("setBytes(" + parameterIndex + ", " + quoteBytes(x) + ");");
             }
-            Value v = x == null ? (Value) ValueNull.INSTANCE : ValueBytes.get(x);
+            final Value v = x == null ? (Value) ValueNull.INSTANCE : ValueBytes.get(x);
             setParameter(parameterIndex, v);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -996,17 +1030,18 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setBinaryStream(int parameterIndex, InputStream x, long length) throws SQLException {
+    @Override
+    public void setBinaryStream(final int parameterIndex, final InputStream x, final long length) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
                 debugCode("setBinaryStream(" + parameterIndex + ", x, " + length + "L);");
             }
             checkClosed();
-            Value v = conn.createBlob(x, length);
+            final Value v = conn.createBlob(x, length);
             setParameter(parameterIndex, v);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -1023,7 +1058,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setBinaryStream(int parameterIndex, InputStream x, int length) throws SQLException {
+    @Override
+    public void setBinaryStream(final int parameterIndex, final InputStream x, final int length) throws SQLException {
 
         setBinaryStream(parameterIndex, x, (long) length);
     }
@@ -1038,7 +1074,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setBinaryStream(int parameterIndex, InputStream x) throws SQLException {
+    @Override
+    public void setBinaryStream(final int parameterIndex, final InputStream x) throws SQLException {
 
         setBinaryStream(parameterIndex, x, -1);
     }
@@ -1055,7 +1092,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException {
+    @Override
+    public void setAsciiStream(final int parameterIndex, final InputStream x, final int length) throws SQLException {
 
         setAsciiStream(parameterIndex, x, (long) length);
     }
@@ -1072,17 +1110,18 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setAsciiStream(int parameterIndex, InputStream x, long length) throws SQLException {
+    @Override
+    public void setAsciiStream(final int parameterIndex, final InputStream x, final long length) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
                 debugCode("setAsciiStream(" + parameterIndex + ", x, " + length + "L);");
             }
             checkClosed();
-            Value v = conn.createClob(IOUtils.getAsciiReader(x), length);
+            final Value v = conn.createClob(IOUtils.getAsciiReader(x), length);
             setParameter(parameterIndex, v);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -1097,7 +1136,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setAsciiStream(int parameterIndex, InputStream x) throws SQLException {
+    @Override
+    public void setAsciiStream(final int parameterIndex, final InputStream x) throws SQLException {
 
         setAsciiStream(parameterIndex, x, -1);
     }
@@ -1114,7 +1154,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setCharacterStream(int parameterIndex, Reader x, int length) throws SQLException {
+    @Override
+    public void setCharacterStream(final int parameterIndex, final Reader x, final int length) throws SQLException {
 
         setCharacterStream(parameterIndex, x, (long) length);
     }
@@ -1129,7 +1170,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setCharacterStream(int parameterIndex, Reader x) throws SQLException {
+    @Override
+    public void setCharacterStream(final int parameterIndex, final Reader x) throws SQLException {
 
         setCharacterStream(parameterIndex, x, -1);
     }
@@ -1146,17 +1188,18 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setCharacterStream(int parameterIndex, Reader x, long length) throws SQLException {
+    @Override
+    public void setCharacterStream(final int parameterIndex, final Reader x, final long length) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
                 debugCode("setCharacterStream(" + parameterIndex + ", x, " + length + "L);");
             }
             checkClosed();
-            Value v = conn.createClob(x, length);
+            final Value v = conn.createClob(x, length);
             setParameter(parameterIndex, v);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -1164,7 +1207,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
     /**
      * [Not supported]
      */
-    public void setURL(int parameterIndex, URL x) throws SQLException {
+    @Override
+    public void setURL(final int parameterIndex, final URL x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -1172,7 +1216,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             throw Message.getUnsupportedException();
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -1184,22 +1228,23 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
+    @Override
     public ResultSetMetaData getMetaData() throws SQLException {
 
         try {
             debugCodeCall("getMetaData");
             checkClosed();
-            ResultInterface result = command.getMetaData();
+            final ResultInterface result = command.getMetaData();
             if (result == null) { return null; }
-            int id = getNextId(TraceObject.RESULT_SET_META_DATA);
+            final int id = getNextId(TraceObject.RESULT_SET_META_DATA);
             if (isDebugEnabled()) {
                 debugCodeAssign("ResultSetMetaData", TraceObject.RESULT_SET_META_DATA, id, "getMetaData()");
             }
-            String catalog = conn.getCatalog();
-            JdbcResultSetMetaData meta = new JdbcResultSetMetaData(null, this, result, catalog, session.getTrace(), id);
+            final String catalog = conn.getCatalog();
+            final JdbcResultSetMetaData meta = new JdbcResultSetMetaData(null, this, result, catalog, session.getTrace(), id);
             return meta;
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -1207,6 +1252,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
     /**
      * Clears the batch.
      */
+    @Override
     public void clearBatch() throws SQLException {
 
         try {
@@ -1214,7 +1260,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             checkClosed();
             batchParameters = null;
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -1222,6 +1268,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
     /**
      * Closes this statement. All result sets that where created by this statement become invalid after calling this method.
      */
+    @Override
     public void close() throws SQLException {
 
         try {
@@ -1232,7 +1279,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
                 command = null;
             }
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -1242,6 +1289,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * 
      * @return the array of update counts
      */
+    @Override
     public int[] executeBatch() throws SQLException {
 
         try {
@@ -1255,18 +1303,18 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
 
             command.setIsPreparedStatement(true);
 
-            boolean previousAutoCommit = conn.getAutoCommit();
+            final boolean previousAutoCommit = conn.getAutoCommit();
             conn.setAutoCommit(false);
-            int[] result = new int[batchParameters.size()];
+            final int[] result = new int[batchParameters.size()];
 
             boolean error = false;
             SQLException next = null;
             for (int i = 0; i < batchParameters.size(); i++) {
-                ObjectArray parameters = command.getParameters();
-                Value[] set = (Value[]) batchParameters.get(i);
+                final ObjectArray parameters = command.getParameters();
+                final Value[] set = (Value[]) batchParameters.get(i);
                 for (int j = 0; j < set.length; j++) {
-                    Value value = set[j];
-                    ParameterInterface param = (ParameterInterface) parameters.get(j);
+                    final Value value = set[j];
+                    final ParameterInterface param = (ParameterInterface) parameters.get(j);
                     param.setValue(value, false);
                 }
                 try {
@@ -1275,7 +1323,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
                     // BatchTests to pass, but I don't think its the correct
                     // behaviour to commit here.
                 }
-                catch (SQLException e) {
+                catch (final SQLException e) {
                     if (next == null) {
                         next = e;
                     }
@@ -1291,13 +1339,13 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
                 }
             }
 
-            int numOfParameters = batchParameters.size();
+            final int numOfParameters = batchParameters.size();
 
             batchParameters = null;
             if (error) {
                 // proxyManager.commit(false);
                 conn.rollback();
-                JdbcBatchUpdateException e = new JdbcBatchUpdateException(next, result);
+                final JdbcBatchUpdateException e = new JdbcBatchUpdateException(next, result);
                 e.setNextException(next);
                 throw e;
             }
@@ -1310,7 +1358,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
 
             return result;
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             // if (proxyManager != null) proxyManager.commit(false);
             throw logAndConvert(e);
         }
@@ -1319,16 +1367,17 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
     /**
      * Adds the current settings to the batch.
      */
+    @Override
     public void addBatch() throws SQLException {
 
         try {
             debugCodeCall("addBatch");
             checkClosed();
-            ObjectArray parameters = command.getParameters();
-            Value[] set = new Value[parameters.size()];
+            final ObjectArray parameters = command.getParameters();
+            final Value[] set = new Value[parameters.size()];
             for (int i = 0; i < parameters.size(); i++) {
-                ParameterInterface param = (ParameterInterface) parameters.get(i);
-                Value value = param.getParamValue();
+                final ParameterInterface param = (ParameterInterface) parameters.get(i);
+                final Value value = param.getParamValue();
                 set[i] = value;
             }
             if (batchParameters == null) {
@@ -1336,7 +1385,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             batchParameters.add(set);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -1347,7 +1396,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             Unsupported Feature
      */
-    public int executeUpdate(String sql, int autoGeneratedKeys) throws SQLException {
+    @Override
+    public int executeUpdate(final String sql, final int autoGeneratedKeys) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -1355,7 +1405,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_PREPARED_STATEMENT);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -1366,7 +1416,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             Unsupported Feature
      */
-    public int executeUpdate(String sql, int[] columnIndexes) throws SQLException {
+    @Override
+    public int executeUpdate(final String sql, final int[] columnIndexes) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -1374,7 +1425,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_PREPARED_STATEMENT);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -1385,7 +1436,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             Unsupported Feature
      */
-    public int executeUpdate(String sql, String[] columnNames) throws SQLException {
+    @Override
+    public int executeUpdate(final String sql, final String[] columnNames) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -1393,7 +1445,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_PREPARED_STATEMENT);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -1404,7 +1456,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             Unsupported Feature
      */
-    public boolean execute(String sql, int autoGeneratedKeys) throws SQLException {
+    @Override
+    public boolean execute(final String sql, final int autoGeneratedKeys) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -1412,7 +1465,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_PREPARED_STATEMENT);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -1423,7 +1476,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             Unsupported Feature
      */
-    public boolean execute(String sql, int[] columnIndexes) throws SQLException {
+    @Override
+    public boolean execute(final String sql, final int[] columnIndexes) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -1431,7 +1485,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_PREPARED_STATEMENT);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -1442,7 +1496,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             Unsupported Feature
      */
-    public boolean execute(String sql, String[] columnNames) throws SQLException {
+    @Override
+    public boolean execute(final String sql, final String[] columnNames) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -1450,7 +1505,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_PREPARED_STATEMENT);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -1461,18 +1516,19 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @return the meta data
      */
     // ## Java 1.4 begin ##
+    @Override
     public ParameterMetaData getParameterMetaData() throws SQLException {
 
         try {
-            int id = getNextId(TraceObject.PARAMETER_META_DATA);
+            final int id = getNextId(TraceObject.PARAMETER_META_DATA);
             if (isDebugEnabled()) {
                 debugCodeAssign("ParameterMetaData", TraceObject.PARAMETER_META_DATA, id, "getParameterMetaData()");
             }
             checkClosed();
-            JdbcParameterMetaData meta = new JdbcParameterMetaData(session.getTrace(), this, command, id);
+            final JdbcParameterMetaData meta = new JdbcParameterMetaData(session.getTrace(), this, command, id);
             return meta;
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -1481,13 +1537,13 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
 
     // =============================================================
 
-    private void setParameter(int parameterIndex, Value value) throws SQLException {
+    private void setParameter(int parameterIndex, final Value value) throws SQLException {
 
         checkClosed();
         parameterIndex--;
-        ObjectArray parameters = command.getParameters();
+        final ObjectArray parameters = command.getParameters();
         if (parameterIndex < 0 || parameterIndex >= parameters.size()) { throw Message.getInvalidValueException("" + (parameterIndex + 1), "parameterIndex"); }
-        ParameterInterface param = (ParameterInterface) parameters.get(parameterIndex);
+        final ParameterInterface param = (ParameterInterface) parameters.get(parameterIndex);
         // can only delete old temp files if they are not in the batch
         param.setValue(value, batchParameters == null);
     }
@@ -1496,7 +1552,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * [Not supported] Sets the value of a parameter as a row id.
      */
 
-    public void setRowId(int parameterIndex, RowId x) throws SQLException {
+    @Override
+    public void setRowId(final int parameterIndex, final RowId x) throws SQLException {
 
         throw Message.getUnsupportedException();
     }
@@ -1511,16 +1568,17 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setNString(int parameterIndex, String x) throws SQLException {
+    @Override
+    public void setNString(final int parameterIndex, final String x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
                 debugCode("setNString(" + parameterIndex + ", " + quote(x) + ");");
             }
-            Value v = x == null ? (Value) ValueNull.INSTANCE : ValueString.get(x);
+            final Value v = x == null ? (Value) ValueNull.INSTANCE : ValueString.get(x);
             setParameter(parameterIndex, v);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -1537,17 +1595,18 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setNCharacterStream(int parameterIndex, Reader x, long length) throws SQLException {
+    @Override
+    public void setNCharacterStream(final int parameterIndex, final Reader x, final long length) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
                 debugCode("setNCharacterStream(" + parameterIndex + ", x, " + length + "L);");
             }
             checkClosed();
-            Value v = conn.createClob(x, length);
+            final Value v = conn.createClob(x, length);
             setParameter(parameterIndex, v);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -1562,7 +1621,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setNCharacterStream(int parameterIndex, Reader x) throws SQLException {
+    @Override
+    public void setNCharacterStream(final int parameterIndex, final Reader x) throws SQLException {
 
         setNCharacterStream(parameterIndex, x, -1);
     }
@@ -1578,7 +1638,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      *             if this object is closed
      */
 
-    public void setNClob(int parameterIndex, NClob x) throws SQLException {
+    @Override
+    public void setNClob(final int parameterIndex, final NClob x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
@@ -1594,7 +1655,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
             }
             setParameter(parameterIndex, v);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -1609,17 +1670,18 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setNClob(int parameterIndex, Reader x) throws SQLException {
+    @Override
+    public void setNClob(final int parameterIndex, final Reader x) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
                 debugCode("setNClob(" + parameterIndex + ", x);");
             }
             checkClosed();
-            Value v = conn.createClob(x, -1);
+            final Value v = conn.createClob(x, -1);
             setParameter(parameterIndex, v);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -1634,17 +1696,18 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setClob(int parameterIndex, Reader x, long length) throws SQLException {
+    @Override
+    public void setClob(final int parameterIndex, final Reader x, final long length) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
                 debugCode("setClob(" + parameterIndex + ", x, " + length + "L);");
             }
             checkClosed();
-            Value v = conn.createClob(x, length);
+            final Value v = conn.createClob(x, length);
             setParameter(parameterIndex, v);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -1659,17 +1722,18 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setBlob(int parameterIndex, InputStream x, long length) throws SQLException {
+    @Override
+    public void setBlob(final int parameterIndex, final InputStream x, final long length) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
                 debugCode("setBlob(" + parameterIndex + ", x, " + length + "L);");
             }
             checkClosed();
-            Value v = conn.createBlob(x, length);
+            final Value v = conn.createBlob(x, length);
             setParameter(parameterIndex, v);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -1684,17 +1748,18 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * @throws SQLException
      *             if this object is closed
      */
-    public void setNClob(int parameterIndex, Reader x, long length) throws SQLException {
+    @Override
+    public void setNClob(final int parameterIndex, final Reader x, final long length) throws SQLException {
 
         try {
             if (isDebugEnabled()) {
                 debugCode("setNClob(" + parameterIndex + ", x, " + length + "L);");
             }
             checkClosed();
-            Value v = conn.createClob(x, length);
+            final Value v = conn.createClob(x, length);
             setParameter(parameterIndex, v);
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw logAndConvert(e);
         }
     }
@@ -1703,7 +1768,8 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      * [Not supported] Sets the value of a parameter as a SQLXML object.
      */
 
-    public void setSQLXML(int parameterIndex, SQLXML x) throws SQLException {
+    @Override
+    public void setSQLXML(final int parameterIndex, final SQLXML x) throws SQLException {
 
         throw Message.getUnsupportedException();
     }
@@ -1711,11 +1777,13 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
     /**
      * INTERNAL
      */
+    @Override
     public String toString() {
 
         return getTraceObjectName() + ": " + command;
     }
 
+    @Override
     boolean checkClosed() throws SQLException {
 
         if (super.checkClosed()) {
