@@ -477,7 +477,12 @@ public class SystemTableReference implements ISystemTableReference {
 
         localTableManagers.put(ti.getGenericTableInfo(), (TableManager) tableManagerRemote);
 
-        return systemTableWrapper.getSystemTable().addTableInformation(tableManagerRemote, ti, replicaLocations);
+        final boolean successful = systemTableWrapper.getSystemTable().addTableInformation(tableManagerRemote, ti, replicaLocations);
+
+        if (!successful) {
+            localTableManagers.remove(ti.getGenericTableInfo());
+        }
+        return successful;
     }
 
     @Override

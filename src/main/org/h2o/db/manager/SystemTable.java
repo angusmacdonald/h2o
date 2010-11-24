@@ -84,12 +84,12 @@ public class SystemTable implements SystemTableRemote {
     }
 
     @Override
-    public boolean addTableInformation(final TableManagerRemote tableManager, final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException {
+    public synchronized boolean addTableInformation(final TableManagerRemote tableManager, final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException {
 
         preMethodTest();
 
         try {
-            return inMemory.addTableInformation(tableManager, tableDetails, replicaLocations) && persisted.addTableInformation(tableManager, tableDetails, replicaLocations);
+            return persisted.addTableInformation(tableManager, tableDetails, replicaLocations) && inMemory.addTableInformation(tableManager, tableDetails, replicaLocations);
         }
         catch (final SQLException e) {
             e.printStackTrace();

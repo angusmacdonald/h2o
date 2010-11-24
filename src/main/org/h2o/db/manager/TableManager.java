@@ -526,26 +526,30 @@ public class TableManager extends PersistentManager implements TableManagerRemot
     @Override
     public void releaseLockAndUpdateReplicaState(final boolean commit, final LockRequest lockRequest, final Collection<CommitResult> committedQueries, final boolean asynchronousCommit) throws RemoteException, MovedException, SQLException {
 
-        // If it's not a commit (on a CREATE TABLE request) nothing needs to be persisted.
-        if (!tableAlreadyExists && commit) {
-            // This commit is the first commit of this table, so we must update the System Table.
-            completeCreationByUpdatingSystemTable();
+        try {
+            // If it's not a commit (on a CREATE TABLE request) nothing needs to be persisted.
+            if (!tableAlreadyExists && commit) {
+                // This commit is the first commit of this table, so we must update the System Table.
+                completeCreationByUpdatingSystemTable();
 
-            tableAlreadyExists = true;
+                tableAlreadyExists = true;
+            }
+
+            // Find the type of lock that was taken out.
+            final LockType lockType = lockingTable.peekAtLockGranted(lockRequest);
+
+            // Update the set of 'active replicas' and their update IDs.
+            if (commit) {
+                //If this is a rollback it shouldn't affect the 'current' active set.
+                updateActiveReplicaSet(commit, committedQueries, asynchronousCommit, lockType);
+            }
+
         }
-
-        // Find the type of lock that was taken out.
-        final LockType lockType = lockingTable.peekAtLockGranted(lockRequest);
-
-        // Update the set of 'active replicas' and their update IDs.
-        if (commit) {
-            //If this is a rollback it shouldn't affect the 'current' active set.
-            updateActiveReplicaSet(commit, committedQueries, asynchronousCommit, lockType);
-        }
-
-        // Release locks.
-        if (!asynchronousCommit) {
-            lockingTable.releaseLock(lockRequest);
+        finally {
+            // Release locks regardless whether the previous operations were successful.
+            if (!asynchronousCommit) {
+                lockingTable.releaseLock(lockRequest);
+            }
         }
     }
 

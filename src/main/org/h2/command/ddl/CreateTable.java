@@ -507,8 +507,6 @@ public class CreateTable extends SchemaCommand {
             }
         }
 
-        tableProxy = null;
-
         if (!tableLocal && !managementDB && !startup) { // if it is startup then we don't want to create a table manager yet.
 
             final TableInfo ti = new TableInfo(tableName, getSchema().getName(), 0l, 0, "TABLE", db.getURL());
