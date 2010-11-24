@@ -118,9 +118,6 @@ public class CommandContainer extends Command {
                 session.completeTransaction();
 
             }
-            else {
-                currentProxyManager.releaseReadLocks();
-            }
             return result;
         }
         catch (final SQLException e) {
