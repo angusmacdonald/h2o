@@ -179,9 +179,6 @@ public class TableProxyManager {
         return newProxy.getLockGranted() != LockType.NONE; // this proxy already holds the required lock
     }
 
-    /**
-     * Release all of the read locks in the current transaction.
-     */
     public void releaseReadLocks() {
 
         final Set<TableProxy> toRemove = new HashSet<TableProxy>();
