@@ -26,11 +26,10 @@
 package org.h2o.db.query.locking;
 
 import java.io.Serializable;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
+
+import org.h2.table.LockLogger;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -54,9 +53,10 @@ public class LockingTable implements ILockingTable, Serializable {
     private final String tableName;
     private final String fullName;
 
-    // Used for debugging.
-    private static Map<String, LockingTable> lockTables = new HashMap<String, LockingTable>();
-    private final StringBuffer lockHistory = new StringBuffer();
+    private final LockLogger lockLogger;
+
+    // Set this to true to enable logging of lock operations.
+    private final static boolean DO_LOCK_LOGGING = true;
 
     public LockingTable(final String schemaName, final String tableName) {
 
@@ -66,38 +66,18 @@ public class LockingTable implements ILockingTable, Serializable {
         writeLockHolder = null;
         readLockHolders = new HashSet<LockRequest>();
 
-        lockTables.put(tableName, this);
-    }
-
-    public static void dumpLockHistory(final String tableName) {
-
-        final LockingTable lockingTable = lockTables.get(tableName);
-        if (lockingTable == null) {
-            System.out.println("no H2O lock history for table: " + tableName);
-        }
-        else {
-            lockingTable.dumpLockHistory();
-        }
-    }
-
-    public void dumpLockHistory() {
-
-        System.out.println("H2O lock history for table: " + fullName);
-        System.out.println(lockHistory);
+        lockLogger = LockLogger.getLogger(DO_LOCK_LOGGING, tableName);
     }
 
     @Override
     public synchronized LockType requestLock(final LockType lockType, final LockRequest lockRequest) {
 
-        final LockType requestResult = requestLock2(lockType, lockRequest);
-        lockHistory.append("\nTIME: " + new Date() + "\n");
-        lockHistory.append("REQUEST: lock type: " + lockType + "\n");
-        lockHistory.append("lock request: " + lockRequest + "\n");
-        lockHistory.append("result: " + requestResult + "\n");
+        final LockType requestResult = doRequestLock(lockType, lockRequest);
+        lockLogger.prelock(lockType, lockRequest, requestResult);
         return requestResult;
     }
 
-    private synchronized LockType requestLock2(final LockType lockType, final LockRequest lockRequest) {
+    private synchronized LockType doRequestLock(final LockType lockType, final LockRequest lockRequest) {
 
         if (lockType == LockType.NONE) {
 
@@ -143,15 +123,12 @@ public class LockingTable implements ILockingTable, Serializable {
     @Override
     public synchronized LockType releaseLock(final LockRequest lockRequest) {
 
-        final LockType requestResult = releaseLock2(lockRequest);
-        lockHistory.append("\nTIME: " + new Date() + "\n");
-        lockHistory.append("RELEASE:\n");
-        lockHistory.append("lock request: " + lockRequest + "\n");
-        lockHistory.append("result: " + requestResult + "\n");
+        final LockType requestResult = doReleaseLock(lockRequest);
+        lockLogger.unlock(lockRequest, requestResult);
         return requestResult;
     }
 
-    private synchronized LockType releaseLock2(final LockRequest lockRequest) {
+    private synchronized LockType doReleaseLock(final LockRequest lockRequest) {
 
         if (readLockHolders.remove(lockRequest)) {
 

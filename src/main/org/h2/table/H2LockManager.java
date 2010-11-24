@@ -13,7 +13,6 @@ import org.h2.engine.Session;
 import org.h2.message.Message;
 import org.h2.message.Trace;
 import org.h2.util.ObjectArray;
-import org.h2o.db.query.locking.LockingTable;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
@@ -27,10 +26,10 @@ public class H2LockManager {
     private final TableData tableData;
     private final Database database;
     private final Trace traceLock;
+    private final LockLogger lockLogger;
 
-    // Used for debugging.
-    private static Map<String, H2LockManager> lockTables = new HashMap<String, H2LockManager>();
-    private final StringBuffer lockHistory = new StringBuffer();
+    // Set this to true to enable logging of lock operations.
+    private final static boolean DO_LOCK_LOGGING = false;
 
     // -------------------------------------------------------------------------------------------------------
 
@@ -40,45 +39,27 @@ public class H2LockManager {
         this.database = database;
         traceLock = database.getTrace(Trace.LOCK);
 
-        lockTables.put(tableData.getName(), this);
-    }
-
-    public static void dumpLockHistory(final String tableName) {
-
-        final H2LockManager lockingTable = lockTables.get(tableName);
-        if (lockingTable == null) {
-            System.out.println("no H2 lock history for table: " + tableName);
-        }
-        else {
-            lockingTable.dumpLockHistory();
-        }
-    }
-
-    public void dumpLockHistory() {
-
-        System.out.println("H2 lock history for table: " + tableData.getName());
-        System.out.println(lockHistory);
+        lockLogger = LockLogger.getLogger(DO_LOCK_LOGGING, tableData.getName());
     }
 
     // -------------------------------------------------------------------------------------------------------
 
     public Session lock(final Session session, final boolean exclusive, final boolean force) throws SQLException {
 
-        //        lockHistory.append("\nTIME: " + new Date() + "\n");
-        //        lockHistory.append("REQUEST: " + (exclusive ? "exclusive" : "shared") + "\n");
-        //        lockHistory.append("session: " + session + "\n");
+        Session result = null;
+        try {
+            lockLogger.prelock(session, exclusive);
 
-        final Session result = lock2(session, exclusive, force);
+            result = doLock(session, exclusive, force);
 
-        //        lockHistory.append("\nTIME: " + new Date() + "\n");
-        //        lockHistory.append("REPLY: " + (exclusive ? "exclusive" : "shared") + "\n");
-        //        lockHistory.append("session: " + session + "\n");
-        //        lockHistory.append("result: " + result + "\n");
-
-        return result;
+            return result;
+        }
+        finally {
+            lockLogger.postlock(session, exclusive, result);
+        }
     }
 
-    public Session lock2(final Session session, final boolean exclusive, final boolean force) throws SQLException {
+    private Session doLock(final Session session, final boolean exclusive, final boolean force) throws SQLException {
 
         final int lockMode = database.getLockMode();
 
@@ -129,22 +110,20 @@ public class H2LockManager {
 
         synchronized (database) {
 
-            traceLock(s, isLockedExclusivelyBy(s), "unlock");
+            final boolean lockedExclusively = isLockedExclusivelyBy(s);
 
-            //            lockHistory.append("\nTIME: " + new Date() + "\n");
-            //            lockHistory.append("RELEASE:\n");
+            traceLock(s, lockedExclusively, "unlock");
 
-            if (isLockedExclusivelyBy(s)) {
+            if (lockedExclusively) {
                 releaseExclusiveLock();
-                //                lockHistory.append("released exclusive lock\n");
             }
 
             if (isLockedSharedBy(s)) {
                 releaseSharedLock(s);
-                //                lockHistory.append("released shared lock\n");
             }
 
-            //            lockHistory.append("session: " + s + "\n");
+            lockLogger.unlock(s, lockedExclusively);
+
             if (database.getSessionCount() > 1) {
                 database.notifyAll();
             }
@@ -199,22 +178,22 @@ public class H2LockManager {
 
             if (sessionHoldingExclusiveLock != null && sessionHoldingExclusiveLock != session) {
 
+                /* 
+                 * H2O hack. It ensures that A-B-A communication doesn't lock up the DB (normally through the SYS table), as the returning update can use the same session
+                 * as the originating update (which has all of the pertinent locks).
+                 * 
+                 * This happens when the PUBLIC.SYS table is altered (after almost every update through the Database.remoteMeta() [line 1266] method. This is called from 
+                 * TableData.validateConvertUpdateSequence -> Column -> ... -> Sequence.flush(), after a user table has been updated. It seems that an updating user 
+                 * transaction obtains an exclusive lock on the PUBLIC.SYS table.
+                 */
+
                 if (!tableData.getName().equals("SYS")) {
 
                     System.out.println("ERROR: session: " + session + " stealing lock for table: " + tableData.getName() + " from session: " + sessionHoldingExclusiveLock);
-                    LockingTable.dumpLockHistory(tableData.getName());
                     System.out.println();
-                    dumpLockHistory();
+                    LockLogger.dumpLockHistory(tableData.getName());
                     ErrorHandling.hardError("database quitting");
                 }
-                /* 
-                  * H2O hack. It ensures that A-B-A communication doesn't lock up the DB (normally through the SYS table), as the returning update can use the same session
-                  * as the originating update (which has all of the pertinent locks).
-                  * 
-                  * This happens when the PUBLIC.SYS table is altered (after almost every update through the Database.remoteMeta() [line 1266] method. This is called from 
-                  * TableData.validateConvertUpdateSequence -> Column -> ... -> Sequence.flush(), after a user table has been updated. It seems that an updating user 
-                  * transaction obtains an exclusive lock on the PUBLIC.SYS table.
-                  */
 
                 session = sessionHoldingExclusiveLock;
             }
