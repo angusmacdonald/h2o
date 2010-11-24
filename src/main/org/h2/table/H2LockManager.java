@@ -1,7 +1,6 @@
 package org.h2.table;
 
 import java.sql.SQLException;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -65,16 +64,16 @@ public class H2LockManager {
 
     public Session lock(final Session session, final boolean exclusive, final boolean force) throws SQLException {
 
-        lockHistory.append("\nTIME: " + new Date() + "\n");
-        lockHistory.append("REQUEST: " + (exclusive ? "exclusive" : "shared") + "\n");
-        lockHistory.append("session: " + session + "\n");
+        //        lockHistory.append("\nTIME: " + new Date() + "\n");
+        //        lockHistory.append("REQUEST: " + (exclusive ? "exclusive" : "shared") + "\n");
+        //        lockHistory.append("session: " + session + "\n");
 
         final Session result = lock2(session, exclusive, force);
 
-        lockHistory.append("\nTIME: " + new Date() + "\n");
-        lockHistory.append("REPLY: " + (exclusive ? "exclusive" : "shared") + "\n");
-        lockHistory.append("session: " + session + "\n");
-        lockHistory.append("result: " + result + "\n");
+        //        lockHistory.append("\nTIME: " + new Date() + "\n");
+        //        lockHistory.append("REPLY: " + (exclusive ? "exclusive" : "shared") + "\n");
+        //        lockHistory.append("session: " + session + "\n");
+        //        lockHistory.append("result: " + result + "\n");
 
         return result;
     }
@@ -132,20 +131,20 @@ public class H2LockManager {
 
             traceLock(s, isLockedExclusivelyBy(s), "unlock");
 
-            lockHistory.append("\nTIME: " + new Date() + "\n");
-            lockHistory.append("RELEASE:\n");
+            //            lockHistory.append("\nTIME: " + new Date() + "\n");
+            //            lockHistory.append("RELEASE:\n");
 
             if (isLockedExclusivelyBy(s)) {
                 releaseExclusiveLock();
-                lockHistory.append("released exclusive lock\n");
+                //                lockHistory.append("released exclusive lock\n");
             }
 
             if (isLockedSharedBy(s)) {
                 releaseSharedLock(s);
-                lockHistory.append("released shared lock\n");
+                //                lockHistory.append("released shared lock\n");
             }
 
-            lockHistory.append("session: " + s + "\n");
+            //            lockHistory.append("session: " + s + "\n");
             if (database.getSessionCount() > 1) {
                 database.notifyAll();
             }
