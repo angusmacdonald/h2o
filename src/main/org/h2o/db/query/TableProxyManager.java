@@ -270,13 +270,19 @@ public class TableProxyManager {
 
     private void commitAndReleaseLocks(final boolean commit, final boolean h2oCommit, final Database db, final Set<CommitResult> committedQueries) throws SQLException {
 
-        final boolean commitActionSuccessful = sendCommitMessagesToReplicas(commit, h2oCommit, db, committedQueries);
+        boolean commitActionSuccessful = false;
 
-        if (!commitActionSuccessful) {
-            ErrorHandling.errorNoEvent("Commit message to replicas was unsuccessful for transaction '" + transactionName + "'.");
+        try {
+            commitActionSuccessful = sendCommitMessagesToReplicas(commit, h2oCommit, db, committedQueries);
+
+            if (!commitActionSuccessful) {
+                ErrorHandling.errorNoEvent("Commit message to replicas was unsuccessful for transaction '" + transactionName + "'.");
+            }
         }
-
-        releaseLocksAndUpdateReplicaState(committedQueries, commit);
+        finally {
+            //Release locks even if the commits failed. Issue a rollback if there was a failure.
+            releaseLocksAndUpdateReplicaState(committedQueries, commit && commitActionSuccessful);
+        }
     }
 
     /**
