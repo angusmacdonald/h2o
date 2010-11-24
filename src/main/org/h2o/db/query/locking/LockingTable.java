@@ -77,9 +77,9 @@ public class LockingTable implements ILockingTable, Serializable {
         return requestResult;
     }
 
-    private synchronized LockType doRequestLock(final LockType lockType, final LockRequest lockRequest) {
+    private synchronized LockType doRequestLock(final LockType requestedLock, final LockRequest requestingUser) {
 
-        if (lockType == LockType.NONE) {
+        if (requestedLock == LockType.NONE) {
 
             // Just want replica locations.
             return LockType.NONE;
@@ -87,33 +87,34 @@ public class LockingTable implements ILockingTable, Serializable {
 
         if (writeLockHolder != null) {
 
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "lock refused(1): " + lockType + " on " + fullName + " requester: " + lockRequest);
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "lock refused(1): " + requestedLock + " on " + fullName + " requester: " + requestingUser);
 
             // Exclusive lock already held by another session, so can't grant any type of lock.
             return LockType.NONE;
         }
 
-        if (lockType == LockType.READ) {
+        if (requestedLock == LockType.READ) {
 
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "lock granted: " + lockType + " on " + fullName + " requester: " + lockRequest);
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "lock granted: " + requestedLock + " on " + fullName + " requester: " + requestingUser);
 
             // At this point no exclusive lock is currently held, given previous check.
             // So the request can be granted.
-            readLockHolders.add(lockRequest);
+            readLockHolders.add(requestingUser);
             return LockType.READ;
         }
 
-        if ((lockType == LockType.WRITE || lockType == LockType.CREATE) && readLockHolders.size() == 0) {
+        if ((requestedLock == LockType.WRITE || requestedLock == LockType.CREATE) && (readLockHolders.size() == 0 || readLockHolders.contains(requestingUser))) {
 
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "lock granted: " + lockType + " on " + fullName + " requester: " + lockRequest);
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "lock granted: " + requestedLock + " on " + fullName + " requester: " + requestingUser);
 
             // This is a write lock request, and no read locks are currently held.
 
-            writeLockHolder = lockRequest;
-            return lockType; // Either WRITE or CREATE
+            readLockHolders.remove(requestingUser); //elevate the lock by removing the lower level lock if it exists.
+            writeLockHolder = requestingUser;
+            return requestedLock; // Either WRITE or CREATE
         }
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "lock refused(2): " + lockType + " on " + fullName + " requester: " + lockRequest);
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "lock refused(2): " + requestedLock + " on " + fullName + " requester: " + requestingUser);
 
         // Request is for a DROP lock, or for a WRITE/CREATE lock while there are current READ lock holders.
         // None of these can be granted.
