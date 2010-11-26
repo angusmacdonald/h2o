@@ -334,6 +334,8 @@ public class Database implements DataHandler {
 
     private KeepAliveMessageThread keepAliveMessageThread;
 
+    private LocalH2OProperties localSettings = null;
+
     public Database(final String name, final ConnectionInfo ci, final String cipher) throws SQLException {
 
         Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.stachord");
@@ -371,7 +373,7 @@ public class Database implements DataHandler {
             /*
              * Get Settings for Database.
              */
-            final LocalH2OProperties localSettings = new LocalH2OProperties(localMachineLocation);
+            localSettings = new LocalH2OProperties(localMachineLocation);
             try {
                 localSettings.loadProperties();
             }
@@ -1510,6 +1512,15 @@ public class Database implements DataHandler {
 
         if (closing) { return; }
 
+        if (localSettings != null) {
+            try {
+                localSettings.close();
+            }
+            catch (final IOException e) {
+                Diagnostic.trace(DiagnosticLevel.FULL, "error closing settings file");
+            }
+        }
+
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, getURL().getURL());
 
         closing = true;
@@ -1529,9 +1540,7 @@ public class Database implements DataHandler {
             userSessions.toArray(all);
             for (final Session s : all) {
                 try {
-                    // must roll back, otherwise the session is removed and
-                    // the log file that contains its uncommitted operations as
-                    // well
+                    // Must roll back, otherwise the session is removed and the log file that contains its uncommitted operations as well.
                     s.rollback();
                     s.close();
                 }

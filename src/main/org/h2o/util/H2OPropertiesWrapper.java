@@ -161,15 +161,7 @@ public class H2OPropertiesWrapper {
     private boolean removePropertiesFile() {
 
         try {
-            if (inputStream != null) {
-                inputStream.close();
-            }
-            inputStream = null;
-
-            if (outputStream != null) {
-                outputStream.close();
-            }
-            outputStream = null;
+            close();
         }
         catch (final IOException e) {
             e.printStackTrace();
@@ -178,6 +170,19 @@ public class H2OPropertiesWrapper {
         final File f = new File(propertiesFileLocation);
 
         return f.delete();
+    }
+
+    public void close() throws IOException {
+
+        if (inputStream != null) {
+            inputStream.close();
+        }
+        inputStream = null;
+
+        if (outputStream != null) {
+            outputStream.close();
+        }
+        outputStream = null;
     }
 
     /**
@@ -194,12 +199,7 @@ public class H2OPropertiesWrapper {
 
         properties.store(outputStream, comment);
 
-        if (inputStream != null) {
-            inputStream.close();
-        }
-        if (outputStream != null) {
-            outputStream.close();
-        }
+        close();
     }
 
     /**
