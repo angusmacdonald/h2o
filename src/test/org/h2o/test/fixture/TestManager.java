@@ -145,7 +145,7 @@ public abstract class TestManager implements ITestManager {
     @Override
     public void tearDown() throws SQLException {
 
-        // With in-memory databases we can't reliably delete persistent state due to lack of control
+        // In some cases we can't reliably delete persistent state due to lack of control
         // over when the database shuts down. So delegate the decision as to whether to fail to sub-classes.
         final boolean fail_if_persistent_state_cannot_be_deleted = failIfPersistentStateCannotBeDeleted();
 

@@ -94,8 +94,8 @@ public class MemoryTestManager extends TestManager {
     @Override
     protected boolean failIfPersistentStateCannotBeDeleted() {
 
-        // Can't reliably delete persistent state for in-memory databases.
-        return false;
+        // Can now reliably delete persistent state for in-memory databases.
+        return true;
     }
 
     // -------------------------------------------------------------------------------------------------------
