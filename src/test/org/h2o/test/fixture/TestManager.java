@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -130,6 +131,9 @@ public abstract class TestManager implements ITestManager {
     public void setUp() throws IOException, UnknownPlatformException {
 
         Diagnostic.setLevel(DIAGNOSTIC_LEVEL);
+        Diagnostic.setTimestampFlag(true);
+        Diagnostic.setTimestampFormat(new SimpleDateFormat("HH:mm:ss:SSS "));
+        Diagnostic.setTimestampDelimiterFlag(false);
 
         setUpConfigDirectoryPath();
         setUpDatabaseDirectoryPaths();
@@ -141,7 +145,11 @@ public abstract class TestManager implements ITestManager {
     @Override
     public void tearDown() throws SQLException {
 
-        persistent_state_manager.deletePersistentState();
+        // With in-memory databases we can't reliably delete persistent state due to lack of control
+        // over when the database shuts down. So delegate the decision as to whether to fail to sub-classes.
+        final boolean fail_if_persistent_state_cannot_be_deleted = failIfPersistentStateCannotBeDeleted();
+
+        persistent_state_manager.deletePersistentState(fail_if_persistent_state_cannot_be_deleted);
 
         // Update ports ready for the next test.
         first_locator_port++;
@@ -163,6 +171,8 @@ public abstract class TestManager implements ITestManager {
     // -------------------------------------------------------------------------------------------------------
 
     protected abstract void setUpDatabaseDirectoryPaths();
+
+    protected abstract boolean failIfPersistentStateCannotBeDeleted();
 
     // -------------------------------------------------------------------------------------------------------
 

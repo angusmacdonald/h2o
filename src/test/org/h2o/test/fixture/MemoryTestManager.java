@@ -91,6 +91,13 @@ public class MemoryTestManager extends TestManager {
         database_base_directory_paths = new String[]{H2O.DEFAULT_DATABASE_DIRECTORY_PATH};
     }
 
+    @Override
+    protected boolean failIfPersistentStateCannotBeDeleted() {
+
+        // Can't reliably delete persistent state for in-memory databases.
+        return false;
+    }
+
     // -------------------------------------------------------------------------------------------------------
 
     private void initializeDatabaseProperties() throws IOException {

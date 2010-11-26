@@ -77,6 +77,13 @@ public class DiskTestManager extends TestManager {
         }
     }
 
+    @Override
+    protected boolean failIfPersistentStateCannotBeDeleted() {
+
+        // Should be able to delete persistent state for on-disk databases.
+        return true;
+    }
+
     // -------------------------------------------------------------------------------------------------------
 
     private void startupDatabaseProcesses() throws IOException, UnknownPlatformException {

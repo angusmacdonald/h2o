@@ -7,6 +7,7 @@ import java.io.IOException;
 
 public class PersistentStateManager {
 
+    private static final int DELAY_BETWEEN_ATTEMPTS_TO_DELETE_PERSISTENT_STATE = 1000;
     private static final int MAX_ATTEMPTS_TO_DELETE_PERSISTENT_STATE = 5;
 
     private final File[] database_directories;
@@ -26,7 +27,7 @@ public class PersistentStateManager {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public void deletePersistentState() {
+    public void deletePersistentState(final boolean fail_if_persistent_state_cannot_be_deleted) {
 
         for (int i = 0; i < MAX_ATTEMPTS_TO_DELETE_PERSISTENT_STATE; i++) {
 
@@ -36,13 +37,16 @@ public class PersistentStateManager {
             if (persistentStateIsAbsent()) { return; }
 
             try {
-                Thread.sleep(1000);
+                Thread.sleep(DELAY_BETWEEN_ATTEMPTS_TO_DELETE_PERSISTENT_STATE);
             }
             catch (final InterruptedException e) {
                 // Ignore.
             }
         }
-        fail("couldn't delete persistent state");
+
+        if (fail_if_persistent_state_cannot_be_deleted) {
+            fail("couldn't delete persistent state");
+        }
     }
 
     private boolean persistentStateIsAbsent() {
