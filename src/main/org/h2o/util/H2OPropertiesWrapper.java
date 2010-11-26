@@ -25,9 +25,9 @@ public class H2OPropertiesWrapper {
 
     private final String propertiesFileLocation;
 
-    private FileOutputStream outputStream = null;
-
-    private FileInputStream inputStream = null;
+    //    private FileOutputStream outputStream = null;
+    //
+    //    private FileInputStream inputStream = null;
 
     private String comment = "Properties File";
 
@@ -73,16 +73,19 @@ public class H2OPropertiesWrapper {
             // This check is necessary because a file will be created when FileInputStream is created.
             }
 
-            if (inputStream == null) {
-                try {
-                    inputStream = new FileInputStream(propertiesFileLocation);
-                }
-                catch (final FileNotFoundException e) {
-                    ErrorHandling.exceptionError(e, "Unexpected file not found exception");
+            FileInputStream inputStream = null;
+            try {
+                inputStream = new FileInputStream(propertiesFileLocation);
+                properties.load(inputStream);
+            }
+            catch (final FileNotFoundException e) {
+                ErrorHandling.exceptionError(e, "Unexpected file not found exception");
+            }
+            finally {
+                if (inputStream != null) {
+                    inputStream.close();
                 }
             }
-
-            properties.load(inputStream);
         }
     }
 
@@ -107,7 +110,6 @@ public class H2OPropertiesWrapper {
         if (!successful) {
             Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to create folder. It may already exist.");
         }
-        inputStream = new FileInputStream(propertiesFileLocation);
     }
 
     /**
@@ -160,30 +162,30 @@ public class H2OPropertiesWrapper {
 
     private boolean removePropertiesFile() {
 
-        try {
-            close();
-        }
-        catch (final IOException e) {
-            e.printStackTrace();
-        }
+        //        try {
+        //            close();
+        //        }
+        //        catch (final IOException e) {
+        //            e.printStackTrace();
+        //        }
 
         final File f = new File(propertiesFileLocation);
 
         return f.delete();
     }
 
-    public void close() throws IOException {
-
-        if (inputStream != null) {
-            inputStream.close();
-        }
-        inputStream = null;
-
-        if (outputStream != null) {
-            outputStream.close();
-        }
-        outputStream = null;
-    }
+    //    public void close() throws IOException {
+    //
+    //        if (inputStream != null) {
+    //            inputStream.close();
+    //        }
+    //        inputStream = null;
+    //
+    //        if (outputStream != null) {
+    //            outputStream.close();
+    //        }
+    //        outputStream = null;
+    //    }
 
     /**
      * Save the properties file and close it.
@@ -193,13 +195,19 @@ public class H2OPropertiesWrapper {
      */
     public void saveAndClose() throws IOException {
 
-        if (outputStream == null) {
+        FileOutputStream outputStream = null;
+        try {
             outputStream = new FileOutputStream(propertiesFileLocation);
+            properties.store(outputStream, comment);
         }
-
-        properties.store(outputStream, comment);
-
-        close();
+        catch (final FileNotFoundException e) {
+            ErrorHandling.exceptionError(e, "Unexpected file not found exception");
+        }
+        finally {
+            if (outputStream != null) {
+                outputStream.close();
+            }
+        }
     }
 
     /**
@@ -211,5 +219,4 @@ public class H2OPropertiesWrapper {
 
         return properties.keySet();
     }
-
 }

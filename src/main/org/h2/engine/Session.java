@@ -677,8 +677,7 @@ public class Session extends SessionWithState {
     /**
      * Add a lock for the given table. The object is unlocked on commit or rollback.
      * 
-     * @param table
-     *            the table that is locked
+     * @param table the table that is locked
      */
     public void addLock(final Table table) {
 

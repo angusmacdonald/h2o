@@ -334,7 +334,7 @@ public class Database implements DataHandler {
 
     private KeepAliveMessageThread keepAliveMessageThread;
 
-    private LocalH2OProperties localSettings = null;
+    //    private LocalH2OProperties localSettings = null;
 
     public Database(final String name, final ConnectionInfo ci, final String cipher) throws SQLException {
 
@@ -373,7 +373,7 @@ public class Database implements DataHandler {
             /*
              * Get Settings for Database.
              */
-            localSettings = new LocalH2OProperties(localMachineLocation);
+            final LocalH2OProperties localSettings = new LocalH2OProperties(localMachineLocation);
             try {
                 localSettings.loadProperties();
             }
@@ -1484,6 +1484,7 @@ public class Database implements DataHandler {
             }
         }
         if (userSessions.size() == 0 && session != systemSession) {
+
             if (closeDelay == 0) {
                 close(false);
             }
@@ -1505,21 +1506,11 @@ public class Database implements DataHandler {
     /**
      * Close the database.
      * 
-     * @param fromShutdownHook
-     *            true if this method is called from the shutdown hook
+     * @param fromShutdownHook true if this method is called from the shutdown hook
      */
     public synchronized void close(final boolean fromShutdownHook) {
 
         if (closing) { return; }
-
-        if (localSettings != null) {
-            try {
-                localSettings.close();
-            }
-            catch (final IOException e) {
-                Diagnostic.trace(DiagnosticLevel.FULL, "error closing settings file");
-            }
-        }
 
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, getURL().getURL());
 
@@ -1584,7 +1575,6 @@ public class Database implements DataHandler {
                     trigger.close();
                 }
                 meta.close(systemSession);
-                //systemSession.commit(true);
                 indexSummaryValid = true;
             }
         }
