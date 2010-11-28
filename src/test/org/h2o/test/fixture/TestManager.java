@@ -47,9 +47,30 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 /**
  * Base class for test managers that abstract over the details of instantiating and cleaning up a set of in-memory or on-disk database instances.
  * 
- * TODO explain port usage.
- * TODO explain database and directory naming.
- * TODO explain locator process.
+ * Each manager instance creates a locator process and a number of databases. The ports and file names used are changed in successive tests
+ * to reduce interference.
+ * 
+ * The port on which the locator listens is selected from a given range
+ * and incremented on each test. For on-disk databases the same is true for the database port.
+ * 
+ * For in-memory databases the file system structure is as follows:
+ * 
+ * db_files
+ *    db[timestamp].properties - database properties
+ *    
+ * db_config_[timestamp]
+ *    db.h2od - database descriptor
+ *    db[port].locator - locator descriptor
+ * 
+ * For on-disk databases the file system structure is as follows:
+ * 
+ * db_data_[timestamp]
+ *    db[port].properties - database properties
+ *    db[port].* - database files
+ *    
+ * db_config_[timestamp]
+ *    db.h2od - database descriptor
+ *    db[port].locator - locator descriptor
  *
  * @author Graham Kirby (graham@cs.st-andrews.ac.uk)
  */
@@ -149,7 +170,7 @@ public abstract class TestManager implements ITestManager {
         // over when the database shuts down. So delegate the decision as to whether to fail to sub-classes.
         final boolean fail_if_persistent_state_cannot_be_deleted = failIfPersistentStateCannotBeDeleted();
 
-        persistent_state_manager.deletePersistentState(fail_if_persistent_state_cannot_be_deleted);
+        // persistent_state_manager.deletePersistentState(fail_if_persistent_state_cannot_be_deleted);
 
         // Update ports ready for the next test.
         first_locator_port++;
