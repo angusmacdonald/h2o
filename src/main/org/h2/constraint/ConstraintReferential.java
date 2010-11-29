@@ -380,7 +380,6 @@ public class ConstraintReferential extends Constraint {
 
     private boolean found(final Session session, final Index index, final SearchRow check, final Row excluding) throws SQLException {
 
-        System.out.println("ref integrity check: session " + session + " attempting to lock table: " + index.getTable().getFullName());
         index.getTable().lock(session, false, false);
         final Cursor cursor = index.find(session, check, check);
         while (cursor.next()) {

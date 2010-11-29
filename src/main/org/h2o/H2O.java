@@ -107,6 +107,7 @@ public class H2O extends H2OCommon {
      *            <li><em>-f<directory></em>. Optional. Specifies the directory containing the persistent database state. The default is the current working directory.</li>
      *            <li><em>-D<level></em>. Optional. Specifies a diagnostic level from 0 (most detailed) to 6 (least detailed).</li>
      *            <li><em>-M</em>. Optional. Specifies an in-memory database. If specified, the -p, -w and -f flags are ignored.</li>
+     *            </ul>
      *            </p>
      *            <p>
      *            <em>Example: java H2O -nMyFirstDatabase -p9999 -d'config\MyFirstDatabase.h2od'</em>. This creates a new

@@ -14,9 +14,6 @@ import org.h2.message.Message;
 import org.h2.message.Trace;
 import org.h2.util.ObjectArray;
 
-import uk.ac.standrews.cs.nds.util.Diagnostic;
-import uk.ac.standrews.cs.nds.util.ErrorHandling;
-
 public class H2LockManager {
 
     private Session sessionHoldingExclusiveLock;
@@ -187,16 +184,6 @@ public class H2LockManager {
                  * TableData.validateConvertUpdateSequence -> Column -> ... -> Sequence.flush(), after a user table has been updated. It seems that an updating user 
                  * transaction obtains an exclusive lock on the PUBLIC.SYS table.
                  */
-
-                if (!tableData.getName().equals("SYS")) {
-
-                    System.out.println("ERROR: session: " + session + " stealing lock for table: " + tableData.getName() + " from session: " + sessionHoldingExclusiveLock);
-                    System.out.println();
-                    Diagnostic.printStackTrace();
-                    System.out.println();
-                    LockLogger.dumpLockHistory(tableData.getName());
-                    ErrorHandling.hardError("database quitting");
-                }
 
                 session = sessionHoldingExclusiveLock;
             }
