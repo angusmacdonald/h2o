@@ -177,7 +177,7 @@ public class H2LockManager {
         boolean checkDeadlock = false;
         while (true) {
 
-            if (sessionHoldingExclusiveLock != null && sessionHoldingExclusiveLock != session) {
+            if (sessionHoldingExclusiveLock != null && sessionHoldingExclusiveLock != session && tableData.getName().equals("SYS")) {
 
                 /* 
                  * H2O hack. It ensures that A-B-A communication doesn't lock up the DB (normally through the SYS table), as the returning update can use the same session
