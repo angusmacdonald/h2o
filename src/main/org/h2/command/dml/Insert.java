@@ -162,6 +162,7 @@ public class Insert extends Prepared {
 
                 assert sessionGrantedLock == session : sessionIdentityAssertionInfo(session, sessionGrantedLock);
 
+                System.out.println("insert: session " + session + " locked table: " + table.getFullName());
                 table.addRow(session, newRow);
 
                 session.log(table, UndoLogRecord.INSERT, newRow);
