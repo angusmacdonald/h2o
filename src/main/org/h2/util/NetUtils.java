@@ -18,6 +18,8 @@ import org.h2.constant.SysProperties;
 import org.h2.message.Message;
 import org.h2.security.SecureSocketFactory;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.NetworkUtil;
 
 /**
@@ -126,6 +128,7 @@ public class NetUtils {
 
                 if (System.currentTimeMillis() - startTime > SysProperties.SERVER_SOCKET_RETRY_TIMEOUT) { throw e; }
                 try {
+                    Diagnostic.traceNoSource(DiagnosticLevel.NONE, "sleeping before retrying server socket creation");
                     Thread.sleep(SysProperties.SERVER_SOCKET_RETRY_WAIT);
                 }
                 catch (final InterruptedException e1) {

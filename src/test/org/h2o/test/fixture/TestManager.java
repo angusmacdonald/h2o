@@ -170,7 +170,7 @@ public abstract class TestManager implements ITestManager {
         // over when the database shuts down. So delegate the decision as to whether to fail to sub-classes.
         final boolean fail_if_persistent_state_cannot_be_deleted = failIfPersistentStateCannotBeDeleted();
 
-        // persistent_state_manager.deletePersistentState(fail_if_persistent_state_cannot_be_deleted);
+        persistent_state_manager.deletePersistentState(fail_if_persistent_state_cannot_be_deleted);
 
         // Update ports ready for the next test.
         first_locator_port++;

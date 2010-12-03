@@ -56,7 +56,10 @@ public class DiskTestManager extends TestManager {
     public ConnectionDriver makeConnectionDriver(final int db_index) {
 
         final int db_port = first_db_port + db_index;
-        return connection_driver_factory.makeConnectionDriver(db_port, database_base_directory_paths[db_index], DATABASE_NAME_ROOT, USER_NAME, PASSWORD, connections_to_be_closed);
+        System.out.println("makeConnectionDriver1");
+        final ConnectionDriver makeConnectionDriver = connection_driver_factory.makeConnectionDriver(db_port, database_base_directory_paths[db_index], DATABASE_NAME_ROOT, USER_NAME, PASSWORD, connections_to_be_closed);
+        System.out.println("makeConnectionDriver2");
+        return makeConnectionDriver;
     }
 
     public void killDBProcess(final int i) {
