@@ -30,8 +30,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+import uk.ac.standrews.cs.nds.remote_management.HostDescriptor;
 import uk.ac.standrews.cs.nds.remote_management.PlatformDescriptor;
-import uk.ac.standrews.cs.nds.remote_management.ProcessInvocation;
+import uk.ac.standrews.cs.nds.remote_management.ProcessManager;
 import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -137,8 +138,10 @@ public class MultiProcessTestBase extends TestBase {
 
     private void killExistingProcessesIfNotOnWindows() throws IOException {
 
-        if (!PlatformDescriptor.getPlatform().getName().equals(PlatformDescriptor.NAME_WINDOWS)) {
-            ProcessInvocation.killMatchingProcesses(StartDatabaseInstance.class.getSimpleName());
+        final HostDescriptor host_descriptor = new HostDescriptor();
+
+        if (!host_descriptor.getPlatform().getName().equals(PlatformDescriptor.NAME_WINDOWS)) {
+            host_descriptor.getProcessManager().killMatchingProcessesLocal(StartDatabaseInstance.class.getSimpleName());
         }
     }
 
@@ -586,7 +589,7 @@ public class MultiProcessTestBase extends TestBase {
         args.add("-p" + port);
 
         try {
-            processes.put(connectionString, ProcessInvocation.runJavaProcess(StartDatabaseInstance.class, args));
+            processes.put(connectionString, new ProcessManager().runJavaProcessLocal(StartDatabaseInstance.class, args));
         }
         catch (final IOException e) {
             ErrorHandling.error("Failed to create new database process.");

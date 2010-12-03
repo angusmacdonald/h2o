@@ -30,8 +30,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import uk.ac.standrews.cs.nds.remote_management.HostDescriptor;
 import uk.ac.standrews.cs.nds.remote_management.PlatformDescriptor;
-import uk.ac.standrews.cs.nds.remote_management.ProcessInvocation;
+import uk.ac.standrews.cs.nds.remote_management.ProcessManager;
 import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -81,7 +82,7 @@ public class WrapperTests {
 
             try {
 
-                locatorProcess = ProcessInvocation.runJavaProcess(H2OLocator.class, locatorArgs);
+                locatorProcess = new ProcessManager().runJavaProcessLocal(H2OLocator.class, locatorArgs);
             }
             catch (final IOException e) {
                 e.printStackTrace();
@@ -94,7 +95,7 @@ public class WrapperTests {
 
             Thread.sleep(1000);
 
-            startDatabaseInSeperateProcess(databasePort);
+            startDatabaseInSeparateProcess(databasePort);
 
             /*
              * Make application connection to the database.
@@ -121,11 +122,11 @@ public class WrapperTests {
 
     private void killExistingProcessesIfNotOnWindows() {
 
-        if (!PlatformDescriptor.getPlatform().getName().equals(PlatformDescriptor.NAME_WINDOWS)) {
+        final HostDescriptor host_descriptor = new HostDescriptor();
+        if (!host_descriptor.getPlatform().getName().equals(PlatformDescriptor.NAME_WINDOWS)) {
             try {
-                ProcessInvocation.killMatchingProcesses(H2OLocator.class.getSimpleName());
-
-                ProcessInvocation.killMatchingProcesses(H2O.class.getSimpleName());
+                host_descriptor.getProcessManager().killMatchingProcessesLocal(H2OLocator.class.getSimpleName());
+                host_descriptor.getProcessManager().killMatchingProcessesLocal(H2O.class.getSimpleName());
             }
             catch (final IOException e1) {
 
@@ -183,7 +184,7 @@ public class WrapperTests {
      * @param databasePort
      * @param databaseProcess
      */
-    private void startDatabaseInSeperateProcess(final String databasePort) {
+    private void startDatabaseInSeparateProcess(final String databasePort) {
 
         /*
          * Start the database instance.
@@ -196,7 +197,7 @@ public class WrapperTests {
             databaseArgs.add("-d'" + defaultLocation + File.separator + databaseName + ".h2od'");
             databaseArgs.add("-f'" + defaultLocation + "'");
 
-            databaseProcess = ProcessInvocation.runJavaProcess(H2O.class, databaseArgs);
+            databaseProcess = new ProcessManager().runJavaProcessLocal(H2O.class, databaseArgs);
         }
         catch (final IOException e) {
             fail("Unexpected IOException.");
@@ -231,5 +232,4 @@ public class WrapperTests {
             e.printStackTrace();
         }
     }
-
 }

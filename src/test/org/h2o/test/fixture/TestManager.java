@@ -39,7 +39,7 @@ import java.util.Set;
 import org.h2.engine.Constants;
 import org.h2o.H2OLocator;
 
-import uk.ac.standrews.cs.nds.remote_management.ProcessInvocation;
+import uk.ac.standrews.cs.nds.remote_management.ProcessManager;
 import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -208,7 +208,7 @@ public abstract class TestManager implements ITestManager {
             locator_args.add("-f" + config_directory_path);
             locator_args.add("-D" + DIAGNOSTIC_LEVEL.numericalValue());
 
-            locator_process = ProcessInvocation.runJavaProcess(H2OLocator.class, locator_args);
+            locator_process = new ProcessManager().runJavaProcessLocal(H2OLocator.class, locator_args);
         }
     }
 
