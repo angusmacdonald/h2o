@@ -42,7 +42,6 @@ import org.h2.engine.Engine;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;
 import org.h2.util.FileUtils;
-import org.h2.util.NetUtils;
 import org.h2.util.SortedProperties;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.manager.PersistentSystemTable;
@@ -54,6 +53,7 @@ import uk.ac.standrews.cs.nds.util.CommandLineArgs;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
 
 /**
  * This class starts an instance of an H2O database. It can be run from the command line (see the main method for applicable arguments), or
@@ -72,7 +72,7 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  * 
  * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
  */
-public class H2O extends H2OCommon {
+public class H2O {
 
     public static final String DEFAULT_DATABASE_DIRECTORY_PATH = "db_files";
     public static final String DEFAULT_DATABASE_NAME = "database";
@@ -159,7 +159,12 @@ public class H2O extends H2OCommon {
 
     public H2O(final String[] args) throws StartupException {
 
-        init(args);
+        try {
+            init(args);
+        }
+        catch (final UndefinedDiagnosticLevelException e) {
+            throw new StartupException("invalid diagnostic level");
+        }
     }
 
     /**
@@ -210,7 +215,7 @@ public class H2O extends H2OCommon {
         Diagnostic.setLevel(diagnosticLevel);
     }
 
-    private void init(final String[] args) throws StartupException {
+    private void init(final String[] args) throws StartupException, UndefinedDiagnosticLevelException {
 
         final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
 
@@ -220,7 +225,7 @@ public class H2O extends H2OCommon {
 
         final String databaseDescriptorLocation = processDatabaseDescriptorLocation(arguments.get("-d"));
         final int webPort = processWebPort(arguments.get("-w"));
-        final DiagnosticLevel diagnosticLevel = processDiagnosticLevel(arguments.get("-D"), DEFAULT_DIAGNOSTIC_LEVEL);
+        final DiagnosticLevel diagnosticLevel = DiagnosticLevel.getDiagnosticLevelFromCommandLineArg(arguments.get("-D"), DEFAULT_DIAGNOSTIC_LEVEL);
 
         final DatabaseType databaseType = processDatabaseType(arguments.get("-M"));
 
@@ -239,32 +244,6 @@ public class H2O extends H2OCommon {
                 ErrorHandling.hardError("unexpected database type");
             }
         }
-    }
-
-    // -------------------------------------------------------------------------------------------------------
-
-    // TODO move to DatabaseURL
-    public static DatabaseURL createDatabaseURL(final int port, final String database_base_directory_path, final String database_name) {
-
-        String base = "";
-        if (database_base_directory_path != null) {
-            // Ensure one trailing forward slash.
-            base = database_base_directory_path;
-
-            if (base.endsWith("\\")) {
-                base = base.substring(0, base.length() - 1);
-            }
-            if (!base.endsWith("/")) {
-                base += "/";
-            }
-        }
-
-        return new DatabaseURL("tcp", NetUtils.getLocalAddress(), port, base + database_name + port, false);
-    }
-
-    public static DatabaseURL createDatabaseURL(final String database_name) {
-
-        return new DatabaseURL("mem", NetUtils.getLocalAddress(), 0, database_name, false);
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -516,10 +495,10 @@ public class H2O extends H2OCommon {
 
         switch (databaseType) {
             case DISK: {
-                return createDatabaseURL(tcpPort, databaseBaseDirectoryPath, databaseName);
+                return new DatabaseURL(tcpPort, databaseBaseDirectoryPath, databaseName);
             }
             case MEMORY: {
-                return createDatabaseURL(databaseName);
+                return new DatabaseURL(databaseName);
             }
             default: {
                 ErrorHandling.hardError("unknown database type");

@@ -217,6 +217,33 @@ public class DatabaseURL implements Serializable {
         this.rmiPort = rmiPort;
     }
 
+    public DatabaseURL(final int port, final String database_base_directory_path, final String database_name) {
+
+        this("tcp", NetUtils.getLocalAddress(), port, getBase(database_base_directory_path) + database_name + port, false);
+    }
+
+    private static String getBase(final String database_base_directory_path) {
+
+        String base = "";
+        if (database_base_directory_path != null) {
+            // Ensure one trailing forward slash.
+            base = database_base_directory_path;
+
+            if (base.endsWith("\\")) {
+                base = base.substring(0, base.length() - 1);
+            }
+            if (!base.endsWith("/")) {
+                base += "/";
+            }
+        }
+        return base;
+    }
+
+    public DatabaseURL(final String database_name) {
+
+        this("mem", NetUtils.getLocalAddress(), 0, database_name, false);
+    }
+
     /**
      * Get a slightly modified version of the original URL - if the original included 'localhost' this resolves it to the local hostname.
      * 

@@ -23,6 +23,7 @@ import uk.ac.standrews.cs.nds.util.CommandLineArgs;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
 
 /**
  * This class starts a new H2O locator server. If this is the first locator server to be started an H2O database descriptor file can also be
@@ -31,7 +32,7 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  * 
  * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
  */
-public class H2OLocator extends H2OCommon {
+public class H2OLocator {
 
     private static final DiagnosticLevel DEFAULT_DIAGNOSTIC_LEVEL = DiagnosticLevel.FINAL;
 
@@ -60,8 +61,9 @@ public class H2OLocator extends H2OCommon {
      *            
      * @throws StartupException if an error occurs while parsing the command line arguments
      * @throws IOException if the locator server cannot be started using the given port
+     * @throws UndefinedDiagnosticLevelException 
      */
-    public static void main(final String[] args) throws StartupException, IOException {
+    public static void main(final String[] args) throws StartupException, IOException, UndefinedDiagnosticLevelException {
 
         final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
 
@@ -70,7 +72,7 @@ public class H2OLocator extends H2OCommon {
         final boolean createDescriptor = arguments.containsKey("-d");
         final String configurationDirectory = removeQuotes(arguments.get("-f"));
 
-        final DiagnosticLevel diagnosticLevel = processDiagnosticLevel(arguments.get("-D"), DEFAULT_DIAGNOSTIC_LEVEL);
+        final DiagnosticLevel diagnosticLevel = DiagnosticLevel.getDiagnosticLevelFromCommandLineArg(arguments.get("-D"), DEFAULT_DIAGNOSTIC_LEVEL);
         Diagnostic.setLevel(diagnosticLevel);
 
         final H2OLocator locator = new H2OLocator(databaseName, Integer.parseInt(locatorPortString), createDescriptor, configurationDirectory);
