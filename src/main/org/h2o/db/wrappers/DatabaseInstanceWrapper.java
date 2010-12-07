@@ -103,20 +103,26 @@ public class DatabaseInstanceWrapper implements Serializable, Comparable<Databas
         final int prime = 31;
         int result = 1;
         result = prime * result + (databaseInstance == null ? 0 : databaseInstance.hashCode());
+        result = prime * result + (databaseURL == null ? 0 : databaseURL.hashCode());
         return result;
     }
 
     @Override
-    public boolean equals(final Object other) {
+    public boolean equals(final Object obj) {
 
-        try {
-            final DatabaseInstanceWrapper other_wrapper = (DatabaseInstanceWrapper) other;
-
-            return other_wrapper != null && (databaseInstance == other_wrapper.databaseInstance || databaseInstance != null && databaseInstance.equals(other_wrapper.databaseInstance));
+        if (this == obj) { return true; }
+        if (obj == null) { return false; }
+        if (getClass() != obj.getClass()) { return false; }
+        final DatabaseInstanceWrapper other = (DatabaseInstanceWrapper) obj;
+        if (databaseInstance == null) {
+            if (other.databaseInstance != null) { return false; }
         }
-        catch (final ClassCastException e) {
-            return false;
+        else if (!databaseInstance.equals(other.databaseInstance)) { return false; }
+        if (databaseURL == null) {
+            if (other.databaseURL != null) { return false; }
         }
+        else if (!databaseURL.equals(other.databaseURL)) { return false; }
+        return true;
     }
 
     public DatabaseInstanceProbability getAvailabilityInfo() {
