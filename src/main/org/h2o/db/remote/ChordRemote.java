@@ -45,7 +45,7 @@ import org.h2.engine.Constants;
 import org.h2.engine.Session;
 import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.DatabaseInstance;
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.SystemTableReference;
@@ -94,7 +94,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     /**
      * Location information for the local database and chord instance.
      */
-    private final DatabaseURL localMachineLocation;
+    private final DatabaseID localMachineLocation;
 
     /**
      * Local wrapper for the System Table.
@@ -130,7 +130,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
      * Used to cache the location of the System Table by asking the known node where it is on startup. This is only ever really used for
      * this initial lookup. The rest of the System Table functionality is hidden behind the SystemTableReference object.
      */
-    private DatabaseURL actualSystemTableLocation = null;
+    private DatabaseID actualSystemTableLocation = null;
 
     /**
      * This chord nodes predecessor in the ring. When the predecessor changes this is used to determine if the System Table was located on
@@ -146,7 +146,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
     private MetaDataReplicaManager metaDataReplicaManager = null;
 
-    private DatabaseURL predecessorURL;
+    private DatabaseID predecessorURL;
 
     /**
      * Port to be used for the next database instance. Currently used for testing.
@@ -163,14 +163,14 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         currentPort = port;
     }
 
-    public ChordRemote(final DatabaseURL localMachineLocation, final ISystemTableReference systemTableRef) {
+    public ChordRemote(final DatabaseID localMachineLocation, final ISystemTableReference systemTableRef) {
 
         this.systemTableRef = systemTableRef;
         this.localMachineLocation = localMachineLocation;
     }
 
     @Override
-    public DatabaseURL connectToDatabaseSystem(final Session session, final Settings databaseSettings) throws StartupException {
+    public DatabaseID connectToDatabaseSystem(final Session session, final Settings databaseSettings) throws StartupException {
 
         this.databaseSettings = databaseSettings;
 
@@ -195,13 +195,13 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
      * 
      * @param databaseSettings
      */
-    private DatabaseURL establishChordConnection(final DatabaseURL localMachineLocation, final Session session) throws StartupException {
+    private DatabaseID establishChordConnection(final DatabaseID localMachineLocation, final Session session) throws StartupException {
 
         boolean connected = false;
 
         int attempts = 1; // attempts at connected
 
-        DatabaseURL newSMLocation = null;
+        DatabaseID newSMLocation = null;
 
         /*
          * Contact descriptor for SM locations.
@@ -336,9 +336,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Database at " + localMachineLocation + " successful created/connected to chord ring.");
 
         try {
-            final DatabaseURL dbURL = systemTableRef.getSystemTableURL();
+            final DatabaseID dbID = systemTableRef.getSystemTableURL();
 
-            if (dbURL == null) {
+            if (dbID == null) {
                 systemTableRef.setSystemTableURL(getSystemTableLocation());
             }
         }
@@ -420,13 +420,13 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
      * @return True if a connection was successful; otherwise false.
      * @throws StartupException 
      */
-    private boolean attemptToJoinChordRing(final LocalH2OProperties persistedInstanceInformation, final DatabaseURL localMachineLocation, final List<String> databaseInstances) throws StartupException {
+    private boolean attemptToJoinChordRing(final LocalH2OProperties persistedInstanceInformation, final DatabaseID localMachineLocation, final List<String> databaseInstances) throws StartupException {
 
         /*
          * Try to connect via each of the database instances that are known.
          */
         for (final String url : databaseInstances) {
-            final DatabaseURL instanceURL = DatabaseURL.parseURL(url);
+            final DatabaseID instanceURL = DatabaseID.parseURL(url);
 
             /*
              * Check first that the location isn't the local database instance (currently running).
@@ -499,7 +499,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     }
 
     @Override
-    public DatabaseURL getLocalMachineLocation() {
+    public DatabaseID getLocalMachineLocation() {
 
         return localMachineLocation;
     }
@@ -521,15 +521,15 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     }
 
     @Override
-    public DatabaseInstanceRemote getDatabaseInstanceAt(final DatabaseURL dbURL) throws RemoteException {
+    public DatabaseInstanceRemote getDatabaseInstanceAt(final DatabaseID dbID) throws RemoteException {
 
-        if (dbURL.equals(localMachineLocation)) { return getLocalDatabaseInstance(); }
+        if (dbID.equals(localMachineLocation)) { return getLocalDatabaseInstance(); }
 
         try {
-            return getDatabaseInstanceAt(dbURL.getHostname(), dbURL.getRMIPort());
+            return getDatabaseInstanceAt(dbID.getHostname(), dbID.getRMIPort());
         }
         catch (final NotBoundException e) {
-            ErrorHandling.errorNoEvent("Local instance of database " + dbURL + " not bound at " + dbURL.getRMIPort() + "." + " Request made by " + localMachineLocation.getURLwithRMIPort());
+            ErrorHandling.errorNoEvent("Local instance of database " + dbID + " not bound at " + dbID.getRMIPort() + "." + " Request made by " + localMachineLocation.getURLwithRMIPort());
             e.printStackTrace();
             return null;
         }
@@ -556,7 +556,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
      *            be left null.
      * @return True if the chord ring was started successfully; otherwise false.
      */
-    private boolean startChordRing(final String hostname, final int port, final DatabaseURL databaseURL) {
+    private boolean startChordRing(final String hostname, final int port, final DatabaseID databaseURL) {
 
         rmiPort = port;
 
@@ -703,6 +703,28 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         else if (arg.equals(IChordNode.SUCCESSOR_CHANGE_EVENT)) {
             successorChangeEvent();
         }
+        else if (arg.equals(IChordNode.OWN_ADDRESS_CHANGE_EVENT)) {
+            ownAddressChangeEvent();
+        }
+    }
+
+    /**
+     * Called when this H2O instances primary IP changes. This will happen when, for example, a laptop switches from a wired connection
+     * to a wireless connection, or if a machine is set to hibernate/sleep and it comes online in a different network.
+     * 
+     * <p>H2O must treat an IP change as if the H2O instance had failed and restarted (because other instances will no longer be able to
+     * access this instance at the known address). Consequently, any running System Table or Table Managers on this machine must be stopped
+     * until the database can successfully obtain permission from the locator servers to restart the System Table.
+     */
+    private void ownAddressChangeEvent() {
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "The local machines IP address has changed.");
+
+        //TODO Terminate local System Table / Table Manager Processes.
+
+        //TODO Attempt to make connection with active System Table via a locator server.
+
+        //TODO If attempt fails (but it is possible to connect to the locator server) request to recrate the System Table locally (if possible).
     }
 
     /**
@@ -997,7 +1019,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     }
 
     @Override
-    public DatabaseURL getSystemTableLocation() throws RemoteException {
+    public DatabaseID getSystemTableLocation() throws RemoteException {
 
         if (actualSystemTableLocation != null) { return actualSystemTableLocation; }
 

@@ -16,7 +16,7 @@ import java.util.Set;
 
 import org.h2.engine.Database;
 import org.h2o.autonomic.decision.ranker.metric.ActionRequest;
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.interfaces.TableManagerRemote;
@@ -69,7 +69,7 @@ public class SystemTable implements SystemTableRemote {
      ******************************************************************/
 
     @Override
-    public int addConnectionInformation(final DatabaseURL databaseURL, final DatabaseInstanceWrapper remoteDatabase) throws RemoteException, MovedException {
+    public int addConnectionInformation(final DatabaseID databaseURL, final DatabaseInstanceWrapper remoteDatabase) throws RemoteException, MovedException {
 
         preMethodTest();
 
@@ -157,7 +157,7 @@ public class SystemTable implements SystemTableRemote {
     }
 
     @Override
-    public Map<DatabaseURL, DatabaseInstanceWrapper> getConnectionInformation() throws RemoteException, MovedException, SQLException {
+    public Map<DatabaseID, DatabaseInstanceWrapper> getConnectionInformation() throws RemoteException, MovedException, SQLException {
 
         return inMemory.getConnectionInformation();
     }
@@ -173,7 +173,7 @@ public class SystemTable implements SystemTableRemote {
      * @see org.h2.h2o.manager.ISystemTable#getReplicaLocations()
      */
     @Override
-    public Map<TableInfo, Set<DatabaseURL>> getReplicaLocations() throws RemoteException, MovedException, MovedException {
+    public Map<TableInfo, Set<DatabaseID>> getReplicaLocations() throws RemoteException, MovedException, MovedException {
 
         return inMemory.getReplicaLocations();
     }
@@ -192,7 +192,7 @@ public class SystemTable implements SystemTableRemote {
     }
 
     @Override
-    public DatabaseInstanceRemote getDatabaseInstance(final DatabaseURL databaseURL) throws RemoteException, MovedException {
+    public DatabaseInstanceRemote getDatabaseInstance(final DatabaseID databaseURL) throws RemoteException, MovedException {
 
         preMethodTest();
         return inMemory.getDatabaseInstance(databaseURL);
@@ -294,14 +294,14 @@ public class SystemTable implements SystemTableRemote {
     }
 
     @Override
-    public Set<TableManagerWrapper> getLocalDatabaseInstances(final DatabaseURL localMachineLocation) throws RemoteException, MovedException {
+    public Set<TableManagerWrapper> getLocalDatabaseInstances(final DatabaseID localMachineLocation) throws RemoteException, MovedException {
 
         preMethodTest();
         return inMemory.getLocalDatabaseInstances(localMachineLocation);
     }
 
     @Override
-    public void addTableManagerStateReplica(final TableInfo table, final DatabaseURL replicaLocation, final DatabaseURL primaryLocation, final boolean active) throws RemoteException, MovedException {
+    public void addTableManagerStateReplica(final TableInfo table, final DatabaseID replicaLocation, final DatabaseID primaryLocation, final boolean active) throws RemoteException, MovedException {
 
         preMethodTest();
         inMemory.addTableManagerStateReplica(table, replicaLocation, primaryLocation, active);
@@ -309,7 +309,7 @@ public class SystemTable implements SystemTableRemote {
     }
 
     @Override
-    public void removeTableManagerStateReplica(final TableInfo table, final DatabaseURL replicaLocation) throws RemoteException, MovedException {
+    public void removeTableManagerStateReplica(final TableInfo table, final DatabaseID replicaLocation) throws RemoteException, MovedException {
 
         preMethodTest();
         inMemory.removeTableManagerStateReplica(table, replicaLocation);
@@ -317,7 +317,7 @@ public class SystemTable implements SystemTableRemote {
     }
 
     @Override
-    public Map<TableInfo, DatabaseURL> getPrimaryLocations() throws RemoteException, MovedException {
+    public Map<TableInfo, DatabaseID> getPrimaryLocations() throws RemoteException, MovedException {
 
         return inMemory.getPrimaryLocations();
     }

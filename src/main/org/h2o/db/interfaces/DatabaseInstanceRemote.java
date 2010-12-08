@@ -11,7 +11,7 @@ package org.h2o.db.interfaces;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.manager.interfaces.SystemTableRemote;
 import org.h2o.db.manager.recovery.SystemTableAccessException;
@@ -42,14 +42,14 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit {
      * 
      * @return Object containing all connection information for this database.
      */
-    DatabaseURL getURL() throws RemoteException;
+    DatabaseID getURL() throws RemoteException;
 
     /**
      * Get the URL of the System Table to which this instance is connected.
      * 
      * @return Object containing all connection information for the System Table.
      */
-    DatabaseURL getSystemTableURL() throws RemoteException;
+    DatabaseID getSystemTableURL() throws RemoteException;
 
     /**
      * Execute the given SQL update on this instance. Since no query proxy is provided with this method call the database instance must
@@ -79,7 +79,7 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit {
      * @throws RemoteException
      *             Thrown if there were problems connecting to the instance.
      */
-    void setSystemTableLocation(IChordRemoteReference systemTableLocation, DatabaseURL databaseURL) throws RemoteException;
+    void setSystemTableLocation(IChordRemoteReference systemTableLocation, DatabaseID databaseURL) throws RemoteException;
 
     /**
      * Look for a reference to the specified Table Manager. This may be called by a System Table which has just been re-instantiated from
@@ -121,7 +121,7 @@ public interface DatabaseInstanceRemote extends H2ORemote, TwoPhaseCommit {
      * @return True if the Table Manager was successfully recreated.
      * @throws RemoteException
      */
-    boolean recreateTableManager(TableInfo tableInfo, DatabaseURL databaseURL) throws RemoteException;
+    boolean recreateTableManager(TableInfo tableInfo, DatabaseID databaseURL) throws RemoteException;
 
     /**
      * Checks if this instance is running the System Table.

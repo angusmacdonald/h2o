@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.h2o.autonomic.decision.IReplicaChoice;
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.interfaces.TableManagerRemote;
@@ -84,7 +84,7 @@ public interface ISystemTable extends Remote, IReplicaChoice {
      *            The name and location of the new database instance.
      * @throws SQLException
      */
-    public int addConnectionInformation(DatabaseURL databaseURL, DatabaseInstanceWrapper databaseInstanceWrapper) throws RemoteException, MovedException, SQLException;
+    public int addConnectionInformation(DatabaseID databaseURL, DatabaseInstanceWrapper databaseInstanceWrapper) throws RemoteException, MovedException, SQLException;
 
     /**
      * Get a new table set number from the System Table. Each number given is unique (i.e. the same number should not be given twice).
@@ -143,7 +143,7 @@ public interface ISystemTable extends Remote, IReplicaChoice {
      * 
      * @throws SQLException
      */
-    public Map<DatabaseURL, DatabaseInstanceWrapper> getConnectionInformation() throws RemoteException, MovedException, SQLException;
+    public Map<DatabaseID, DatabaseInstanceWrapper> getConnectionInformation() throws RemoteException, MovedException, SQLException;
 
     /**
      * Returns a map of all Table Managers in the system.
@@ -154,7 +154,7 @@ public interface ISystemTable extends Remote, IReplicaChoice {
      * Returns a map of all replicas in the database system. Key is the fully qualified name of the table, value is the set of replica
      * locations.
      */
-    public Map<TableInfo, Set<DatabaseURL>> getReplicaLocations() throws RemoteException, MovedException;
+    public Map<TableInfo, Set<DatabaseID>> getReplicaLocations() throws RemoteException, MovedException;
 
     /**
      * Remove all references to Table Managers and replicas. Used to shutdown a System Table.
@@ -170,7 +170,7 @@ public interface ISystemTable extends Remote, IReplicaChoice {
      *            URL of the database reference.
      * @return Remote reference to the database instance.
      */
-    public DatabaseInstanceRemote getDatabaseInstance(DatabaseURL databaseURL) throws RemoteException, MovedException;
+    public DatabaseInstanceRemote getDatabaseInstance(DatabaseID databaseURL) throws RemoteException, MovedException;
 
     /**
      * Get remote references to every database instance in the database system.
@@ -192,7 +192,7 @@ public interface ISystemTable extends Remote, IReplicaChoice {
      * @param localMachineLocation
      * @return
      */
-    public Set<TableManagerWrapper> getLocalDatabaseInstances(DatabaseURL localMachineLocation) throws RemoteException, MovedException;
+    public Set<TableManagerWrapper> getLocalDatabaseInstances(DatabaseID localMachineLocation) throws RemoteException, MovedException;
 
     /**
      * Called when the location of the Table Manager is to be changed.
@@ -209,9 +209,9 @@ public interface ISystemTable extends Remote, IReplicaChoice {
      * @param replicaLocation
      *            Where the state has been replicated.
      */
-    public void addTableManagerStateReplica(TableInfo table, DatabaseURL replicaLocation, DatabaseURL primaryLocation, boolean active) throws RemoteException, MovedException;
+    public void addTableManagerStateReplica(TableInfo table, DatabaseID replicaLocation, DatabaseID primaryLocation, boolean active) throws RemoteException, MovedException;
 
-    public Map<TableInfo, DatabaseURL> getPrimaryLocations() throws RemoteException, MovedException;
+    public Map<TableInfo, DatabaseID> getPrimaryLocations() throws RemoteException, MovedException;
 
     /**
      * Add a location where a given table managers state was replicated.
@@ -221,7 +221,7 @@ public interface ISystemTable extends Remote, IReplicaChoice {
      * @param replicaLocation
      *            Where the state was replicated.
      */
-    public void removeTableManagerStateReplica(TableInfo table, DatabaseURL replicaLocation) throws RemoteException, MovedException;
+    public void removeTableManagerStateReplica(TableInfo table, DatabaseID replicaLocation) throws RemoteException, MovedException;
 
     /**
      * Recreate the table manager for the the table specified by the parameter if it has failed.

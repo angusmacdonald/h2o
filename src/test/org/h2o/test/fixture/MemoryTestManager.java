@@ -29,6 +29,7 @@ import java.sql.SQLException;
 
 import org.h2.util.NetUtils;
 import org.h2o.H2O;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
 
 import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
@@ -107,7 +108,7 @@ public class MemoryTestManager extends TestManager {
         for (int i = 0; i < number_of_databases; i++) {
 
             db_names[i] = DATABASE_NAME_ROOT + System.currentTimeMillis();
-            final DatabaseURL url = new DatabaseURL("mem", NetUtils.getLocalAddress(), 0, db_names[i], false);
+            final DatabaseID url = new DatabaseID(null, new DatabaseURL("mem", NetUtils.getLocalAddress(), 0, db_names[i], false));
 
             H2O.initializeDatabaseProperties(url, DIAGNOSTIC_LEVEL, descriptor_file_path, db_names[i]);
         }

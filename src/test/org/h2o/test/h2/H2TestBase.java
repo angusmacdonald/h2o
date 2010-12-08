@@ -19,7 +19,7 @@ import org.h2.message.TraceSystem;
 import org.h2.store.FileLock;
 import org.h2.test.TestAll;
 import org.h2.tools.DeleteDbFiles;
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.run.AllTests;
 import org.h2o.util.LocalH2OProperties;
 
@@ -115,7 +115,7 @@ public abstract class H2TestBase {
 
     private static void setUpDescriptorFiles(final String url) throws IOException {
 
-        final LocalH2OProperties properties = new LocalH2OProperties(DatabaseURL.parseURL(url));
+        final LocalH2OProperties properties = new LocalH2OProperties(DatabaseID.parseURL(url));
 
         properties.createNewFile();
         properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);

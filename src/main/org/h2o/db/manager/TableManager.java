@@ -47,6 +47,7 @@ import org.h2.result.LocalResult;
 import org.h2o.autonomic.decision.ranker.metric.CreateTableRequest;
 import org.h2o.autonomic.framework.AutonomicAction;
 import org.h2o.autonomic.framework.AutonomicController;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
@@ -222,7 +223,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
     }
 
     @Override
-    public boolean addTableInformation(final DatabaseURL tableManagerURL, final TableInfo tableDetails) throws RemoteException, MovedException, SQLException {
+    public boolean addTableInformation(final DatabaseID tableManagerURL, final TableInfo tableDetails) throws RemoteException, MovedException, SQLException {
 
         final int result = super.addConnectionInformation(tableManagerURL, true);
 
@@ -317,11 +318,11 @@ public class TableManager extends PersistentManager implements TableManagerRemot
     /**
      * Get the database instance at the specified database URL.
      * 
-     * @param dbURL
+     * @param dbID
      *            location of the database instance.
      * @return null if the instance wasn't found (including if it wasn't active).
      */
-    private DatabaseInstanceWrapper getDatabaseInstance(final DatabaseURL dbURL) {
+    private DatabaseInstanceWrapper getDatabaseInstance(final DatabaseID dbID) {
 
         final ISystemTable systemTable = getDB().getSystemTableReference().getSystemTable();
 
@@ -329,7 +330,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
         if (systemTable != null) {
             try {
-                dir = systemTable.getDatabaseInstance(dbURL);
+                dir = systemTable.getDatabaseInstance(dbID);
             }
             catch (final RemoteException e1) {
                 e1.printStackTrace();
@@ -337,7 +338,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
             catch (final MovedException e1) {
                 try {
                     getDB().getSystemTableReference().handleMovedException(e1);
-                    dir = systemTable.getDatabaseInstance(dbURL);
+                    dir = systemTable.getDatabaseInstance(dbID);
                 }
                 catch (final Exception e) {
                     e.printStackTrace();
@@ -350,14 +351,14 @@ public class TableManager extends PersistentManager implements TableManagerRemot
                 // The System Table doesn't contain a proper reference for the
                 // remote database instance. Try and find one,
                 // then update the System Table if successful.
-                dir = getDB().getRemoteInterface().getDatabaseInstanceAt(dbURL);
+                dir = getDB().getRemoteInterface().getDatabaseInstanceAt(dbID);
 
                 if (dir == null) {
                     ErrorHandling.errorNoEvent("DatabaseInstanceRemote wasn't found.");
                 }
                 else {
 
-                    getDB().getSystemTable().addConnectionInformation(dbURL, new DatabaseInstanceWrapper(dbURL, dir, true));
+                    getDB().getSystemTable().addConnectionInformation(dbID, new DatabaseInstanceWrapper(dbID, dir, true));
                 }
             }
             catch (final Exception e) {
@@ -365,7 +366,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
             }
         }
 
-        return new DatabaseInstanceWrapper(dbURL, dir, true);
+        return new DatabaseInstanceWrapper(dbID, dir, true);
     }
 
     @Override
@@ -500,7 +501,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
     }
 
     @Override
-    public DatabaseURL getLocation() throws RemoteException, MovedException {
+    public DatabaseID getLocation() throws RemoteException, MovedException {
 
         preMethodTest();
 
@@ -614,9 +615,9 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
                 while (rs.next()) {
 
-                    final DatabaseURL dbURL = new DatabaseURL(rs.currentRow()[0].getString(), rs.currentRow()[1].getString(), rs.currentRow()[3].getInt(), rs.currentRow()[2].getString(), false, rs.currentRow()[4].getInt());
+                    final DatabaseID dbID = new DatabaseID(null, new DatabaseURL(rs.currentRow()[0].getString(), rs.currentRow()[1].getString(), rs.currentRow()[3].getInt(), rs.currentRow()[2].getString(), false, rs.currentRow()[4].getInt()));
 
-                    Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "\tLocation: " + dbURL + "; tableID = " + rs.currentRow()[5].getString() + "; connectionID = " + rs.currentRow()[6].getString());
+                    Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "\tLocation: " + dbID + "; tableID = " + rs.currentRow()[5].getString() + "; connectionID = " + rs.currentRow()[6].getString());
                 }
             }
             catch (final SQLException e) {
@@ -745,7 +746,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
     }
 
     @Override
-    public DatabaseURL getDatabaseURL() throws RemoteException {
+    public DatabaseID getDatabaseURL() throws RemoteException {
 
         return getDB().getURL();
     }
@@ -801,13 +802,13 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         final List<DatabaseInstanceWrapper> replicaLocations = new LinkedList<DatabaseInstanceWrapper>();
         while (rs.next()) {
 
-            final DatabaseURL dbURL = new DatabaseURL(rs.currentRow()[0].getString(), rs.currentRow()[1].getString(), rs.currentRow()[3].getInt(), rs.currentRow()[2].getString(), false, rs.currentRow()[4].getInt());
+            final DatabaseID dbID = new DatabaseID(null, new DatabaseURL(rs.currentRow()[0].getString(), rs.currentRow()[1].getString(), rs.currentRow()[3].getInt(), rs.currentRow()[2].getString(), false, rs.currentRow()[4].getInt()));
 
             // Don't include the URL of the old instance unless it is still running.
-            final DatabaseInstanceWrapper replicaLocation = getDatabaseInstance(dbURL);
+            final DatabaseInstanceWrapper replicaLocation = getDatabaseInstance(dbID);
 
             boolean alive = true;
-            if (dbURL.sanitizedLocation().equals(oldPrimaryDatabaseName)) {
+            if (dbID.sanitizedLocation().equals(oldPrimaryDatabaseName)) {
                 try {
                     alive = replicaLocation.getDatabaseInstance().isAlive();
                 }
@@ -819,7 +820,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
             replicaLocation.setActive(alive); // even dead replicas must be recorded.
             replicaLocations.add(replicaLocation);
 
-            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Active replica for " + tableName + " found on " + dbURL);
+            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Active replica for " + tableName + " found on " + dbID);
 
         }
 

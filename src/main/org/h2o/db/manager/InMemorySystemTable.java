@@ -23,7 +23,7 @@ import java.util.Set;
 
 import org.h2.engine.Database;
 import org.h2o.autonomic.decision.ranker.metric.ActionRequest;
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.interfaces.TableManagerRemote;
@@ -67,16 +67,16 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
      * <li>Value: reference to the location of a table manager state replica for that table.</li>
      * </ul>
      */
-    private Map<TableInfo, Set<DatabaseURL>> tmReplicaLocations;
+    private Map<TableInfo, Set<DatabaseID>> tmReplicaLocations;
 
-    private Map<DatabaseURL, DatabaseInstanceWrapper> databasesInSystem = new HashMap<DatabaseURL, DatabaseInstanceWrapper>();
+    private Map<DatabaseID, DatabaseInstanceWrapper> databasesInSystem = new HashMap<DatabaseID, DatabaseInstanceWrapper>();
 
     /**
      * The next valid table set number which can be assigned by the System Table.
      */
     private int tableSetNumber = 1;
 
-    private Map<TableInfo, DatabaseURL> primaryLocations;
+    private Map<TableInfo, DatabaseID> primaryLocations;
 
     /**
      * A thread which periodically checks that Table Managers are still alive.
@@ -98,11 +98,11 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     public InMemorySystemTable(final Database database) throws Exception {
 
         this.database = database;
-        databasesInSystem = Collections.synchronizedMap(new HashMap<DatabaseURL, DatabaseInstanceWrapper>());
+        databasesInSystem = Collections.synchronizedMap(new HashMap<DatabaseID, DatabaseInstanceWrapper>());
         tableManagers = Collections.synchronizedMap(new HashMap<TableInfo, TableManagerWrapper>());
-        tmReplicaLocations = Collections.synchronizedMap(new HashMap<TableInfo, Set<DatabaseURL>>());
+        tmReplicaLocations = Collections.synchronizedMap(new HashMap<TableInfo, Set<DatabaseID>>());
 
-        primaryLocations = new HashMap<TableInfo, DatabaseURL>();
+        primaryLocations = new HashMap<TableInfo, DatabaseID>();
 
         final int replicationThreadSleepTime = Integer.parseInt(database.getDatabaseSettings().get("TABLE_MANAGER_LIVENESS_CHECKER_THREAD_SLEEP_TIME"));
 
@@ -138,10 +138,10 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
 
         primaryLocations.put(basicTableInfo, tableDetails.getURL());
 
-        Set<DatabaseURL> replicas = tmReplicaLocations.get(basicTableInfo);
+        Set<DatabaseID> replicas = tmReplicaLocations.get(basicTableInfo);
 
         if (replicas == null) {
-            replicas = new HashSet<DatabaseURL>();
+            replicas = new HashSet<DatabaseID>();
         }
 
         for (final DatabaseInstanceWrapper wrapper : replicaLocations) {
@@ -209,7 +209,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public int addConnectionInformation(final DatabaseURL databaseURL, final DatabaseInstanceWrapper databaseInstanceRemote) throws RemoteException {
+    public int addConnectionInformation(final DatabaseID databaseURL, final DatabaseInstanceWrapper databaseInstanceRemote) throws RemoteException {
 
         databasesInSystem.remove(databaseURL);
         databasesInSystem.put(databaseURL, databaseInstanceRemote);
@@ -285,7 +285,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
             // RECREATE TABLEMANAGER <tableName>
             try {
                 DatabaseInstanceRemote dir = getDatabaseInstance(tableManagerWrapper.getURL());
-                final DatabaseURL url = tableManagerWrapper.getURL();
+                final DatabaseID url = tableManagerWrapper.getURL();
                 ti = tableManagerWrapper.getTableInfo();
                 if (dir != null) {
                     dir.executeUpdate("RECREATE TABLEMANAGER " + ti.getFullTableName() + " FROM '" + url.sanitizedLocation() + "';", false);
@@ -293,10 +293,10 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
                 else {
                     // Remove location we know isn't active, then try to
                     // instantiate the table manager elsewhere.
-                    final Set<DatabaseURL> replicaLocations = tmReplicaLocations.get(tableManagerWrapper.getTableInfo());
+                    final Set<DatabaseID> replicaLocations = tmReplicaLocations.get(tableManagerWrapper.getTableInfo());
                     replicaLocations.remove(tableManagerWrapper.getURL());
 
-                    for (final DatabaseURL replicaLocation : replicaLocations) {
+                    for (final DatabaseID replicaLocation : replicaLocations) {
                         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Attempting to recreate table manager for " + tableManagerWrapper.getTableInfo() + " on " + replicaLocation);
 
                         dir = getDatabaseInstance(replicaLocation);
@@ -363,15 +363,15 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
         /*
          * Obtain references to connected machines.
          */
-        final Map<DatabaseURL, DatabaseInstanceWrapper> connectedMachines = otherSystemTable.getConnectionInformation();
+        final Map<DatabaseID, DatabaseInstanceWrapper> connectedMachines = otherSystemTable.getConnectionInformation();
 
-        databasesInSystem = new HashMap<DatabaseURL, DatabaseInstanceWrapper>();
+        databasesInSystem = new HashMap<DatabaseID, DatabaseInstanceWrapper>();
 
         // Make sure this contains remote references for each URL
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Obtaining references to database instances.");
 
-        for (final Entry<DatabaseURL, DatabaseInstanceWrapper> remoteDB : connectedMachines.entrySet()) {
+        for (final Entry<DatabaseID, DatabaseInstanceWrapper> remoteDB : connectedMachines.entrySet()) {
             final DatabaseInstanceWrapper wrapper = remoteDB.getValue();
 
             DatabaseInstanceRemote dir = null;
@@ -502,11 +502,11 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Beginning attempt to recreate Table Manager for " + tableManagerWrapper.getTableInfo());
 
-        final Set<DatabaseURL> tableManagerReplicaLocations = tmReplicaLocations.get(tableManagerWrapper.getTableInfo());
+        final Set<DatabaseID> tableManagerReplicaLocations = tmReplicaLocations.get(tableManagerWrapper.getTableInfo());
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Table Manager replicas exist at " + tableManagerReplicaLocations);
 
-        for (final DatabaseURL replicaLocation : tableManagerReplicaLocations) {
+        for (final DatabaseID replicaLocation : tableManagerReplicaLocations) {
             try {
                 final DatabaseInstanceWrapper instance = databasesInSystem.get(replicaLocation);
 
@@ -539,7 +539,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public Map<DatabaseURL, DatabaseInstanceWrapper> getConnectionInformation() throws RemoteException {
+    public Map<DatabaseID, DatabaseInstanceWrapper> getConnectionInformation() throws RemoteException {
 
         return databasesInSystem;
     }
@@ -551,7 +551,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public Map<TableInfo, Set<DatabaseURL>> getReplicaLocations() {
+    public Map<TableInfo, Set<DatabaseID>> getReplicaLocations() {
 
         return tmReplicaLocations;
     }
@@ -588,7 +588,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public DatabaseInstanceRemote getDatabaseInstance(final DatabaseURL databaseURL) throws RemoteException, MovedException {
+    public DatabaseInstanceRemote getDatabaseInstance(final DatabaseID databaseURL) throws RemoteException, MovedException {
 
         final DatabaseInstanceWrapper wrapper = databasesInSystem.get(databaseURL);
         if (wrapper == null) { return null; }
@@ -629,15 +629,15 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public Set<TableManagerWrapper> getLocalDatabaseInstances(final DatabaseURL databaseInstance) throws RemoteException, MovedException {
+    public Set<TableManagerWrapper> getLocalDatabaseInstances(final DatabaseID databaseInstance) throws RemoteException, MovedException {
 
         /*
          * Create an interator to go through and chec whether a given Table Manager is local to the specified machine.
          */
-        final Predicate<TableManagerWrapper, DatabaseURL> isLocal = new Predicate<TableManagerWrapper, DatabaseURL>() {
+        final Predicate<TableManagerWrapper, DatabaseID> isLocal = new Predicate<TableManagerWrapper, DatabaseID>() {
 
             @Override
-            public boolean apply(final TableManagerWrapper wrapper, final DatabaseURL databaseInstance) {
+            public boolean apply(final TableManagerWrapper wrapper, final DatabaseID databaseInstance) {
 
                 try {
                     return wrapper.isLocalTo(databaseInstance);
@@ -654,14 +654,14 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public void addTableManagerStateReplica(final TableInfo table, final DatabaseURL replicaLocation, final DatabaseURL primaryLocation, final boolean active) throws RemoteException, MovedException {
+    public void addTableManagerStateReplica(final TableInfo table, final DatabaseID replicaLocation, final DatabaseID primaryLocation, final boolean active) throws RemoteException, MovedException {
 
-        Set<DatabaseURL> replicas = tmReplicaLocations.get(table.getGenericTableInfo());
+        Set<DatabaseID> replicas = tmReplicaLocations.get(table.getGenericTableInfo());
 
         primaryLocations.put(table.getGenericTableInfo(), primaryLocation);
 
         if (replicas == null) {
-            replicas = new HashSet<DatabaseURL>();
+            replicas = new HashSet<DatabaseID>();
         }
 
         replicas.add(replicaLocation);
@@ -670,9 +670,9 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public void removeTableManagerStateReplica(final TableInfo table, final DatabaseURL replicaLocation) throws RemoteException, MovedException {
+    public void removeTableManagerStateReplica(final TableInfo table, final DatabaseID replicaLocation) throws RemoteException, MovedException {
 
-        final Set<DatabaseURL> replicas = tmReplicaLocations.get(table.getGenericTableInfo());
+        final Set<DatabaseID> replicas = tmReplicaLocations.get(table.getGenericTableInfo());
 
         if (replicas == null) {
             ErrorHandling.errorNoEvent("Failed to remove Table Manager Replica state for a replica because it wasn't recorded. Table " + table + ".");
@@ -686,7 +686,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public Map<TableInfo, DatabaseURL> getPrimaryLocations() {
+    public Map<TableInfo, DatabaseID> getPrimaryLocations() {
 
         return primaryLocations;
     }

@@ -19,7 +19,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.locator.DatabaseDescriptor;
 import org.h2o.util.LocalH2OProperties;
 import org.h2o.util.exceptions.StartupException;
@@ -198,7 +198,7 @@ public class Settings {
          * Load any existing properties file because there might be other info that we don't want to delete. For example, the location of
          * any locators.
          */
-        final LocalH2OProperties localSettings = new LocalH2OProperties(DatabaseURL.parseURL(databaseName));
+        final LocalH2OProperties localSettings = new LocalH2OProperties(DatabaseID.parseURL(databaseName));
         try {
             localSettings.loadProperties();
         }

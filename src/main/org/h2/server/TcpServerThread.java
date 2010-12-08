@@ -157,7 +157,6 @@ public class TcpServerThread implements Runnable {
             trace("Disconnect");
         }
         catch (final Throwable e) {
-            e.printStackTrace();
             server.traceError(e);
         }
         finally {

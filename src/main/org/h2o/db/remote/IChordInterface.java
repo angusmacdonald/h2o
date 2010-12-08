@@ -11,7 +11,7 @@ package org.h2o.db.remote;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.interfaces.TableManagerRemote;
 
@@ -32,7 +32,7 @@ public interface IChordInterface {
      * 
      * @return
      */
-    public DatabaseURL getSystemTableLocation() throws RemoteException;
+    public DatabaseID getSystemTableLocation() throws RemoteException;
 
     /**
      * Get a reference to the Chord node which is responsible for managing the database's System Table lookup, BUT NOT NECESSARILY THE

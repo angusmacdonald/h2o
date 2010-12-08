@@ -14,7 +14,7 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Set;
 
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.TableManager;
@@ -59,7 +59,7 @@ public interface ISystemTableReference {
      * 
      * @return Stored System Table location.
      */
-    public DatabaseURL getSystemTableURL();
+    public DatabaseID getSystemTableURL();
 
     /**
      * True if the System Table process is running locally.
@@ -95,7 +95,7 @@ public interface ISystemTableReference {
      * 
      * @param systemTableURL
      */
-    public void setSystemTableURL(DatabaseURL systemTableURL);
+    public void setSystemTableURL(DatabaseID systemTableURL);
 
     /**
      * Provide a reference to the actual System Table. This is typically called when a database has just been started, or when a new System
@@ -109,7 +109,7 @@ public interface ISystemTableReference {
      * 
      * @param newSMLocation
      */
-    public void setSystemTableLocation(IChordRemoteReference systemTableLocation, DatabaseURL databaseURL);
+    public void setSystemTableLocation(IChordRemoteReference systemTableLocation, DatabaseID databaseURL);
 
     /**
      * True if this instance has a reference to the System Table.

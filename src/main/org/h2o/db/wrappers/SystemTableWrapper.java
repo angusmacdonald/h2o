@@ -8,16 +8,16 @@
  */
 package org.h2o.db.wrappers;
 
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.manager.interfaces.SystemTableRemote;
 
 public class SystemTableWrapper {
 
     private SystemTableRemote systemTable;
 
-    private DatabaseURL url;
+    private DatabaseID url;
 
-    public SystemTableWrapper(SystemTableRemote systemTable, DatabaseURL url) {
+    public SystemTableWrapper(SystemTableRemote systemTable, DatabaseID url) {
 
         this.systemTable = systemTable;
         this.url = url;
@@ -32,7 +32,7 @@ public class SystemTableWrapper {
         return systemTable;
     }
 
-    public DatabaseURL getURL() {
+    public DatabaseID getURL() {
 
         return url;
     }
@@ -42,7 +42,7 @@ public class SystemTableWrapper {
         this.systemTable = systemTable;
     }
 
-    public void setURL(DatabaseURL url) {
+    public void setURL(DatabaseID url) {
 
         this.url = url;
     }

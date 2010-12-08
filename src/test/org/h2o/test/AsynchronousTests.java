@@ -15,7 +15,7 @@ import java.sql.SQLException;
 
 import org.h2.table.Table;
 import org.h2o.autonomic.settings.Settings;
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.test.fixture.MultiProcessTestBase;
 import org.junit.Test;
 
@@ -269,10 +269,10 @@ public class AsynchronousTests extends MultiProcessTestBase {
      * 
      * @param table
      * @param databaseSettings
-     * @param dbURL
+     * @param dbID
      * @param query
      */
-    public static void pauseThreadIfTestingAsynchronousUpdates(final Table table, final Settings databaseSettings, final DatabaseURL dbURL, final String query) {
+    public static void pauseThreadIfTestingAsynchronousUpdates(final Table table, final Settings databaseSettings, final DatabaseID dbID, final String query) {
 
         if (query == null || !query.contains("INSERT INTO TEST VALUES(3, 'Third')")) { return; }
 
@@ -284,7 +284,7 @@ public class AsynchronousTests extends MultiProcessTestBase {
 
         if (delay) {
             try {
-                ErrorHandling.errorNoEvent("Delay " + dbURL.getURL() + ": " + query);
+                ErrorHandling.errorNoEvent("Delay " + dbID.getURL() + ": " + query);
 
                 Thread.sleep(10000);
             }

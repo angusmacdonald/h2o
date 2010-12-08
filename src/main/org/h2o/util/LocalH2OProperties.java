@@ -25,7 +25,7 @@
 
 package org.h2o.util;
 
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
@@ -33,10 +33,10 @@ import org.h2o.db.id.DatabaseURL;
 public class LocalH2OProperties extends H2OPropertiesWrapper {
 
     /**
-     * @param dbURL the URL of this database instance. This is used to name and locate the properties file for this database on disk.
+     * @param dbID the URL of this database instance. This is used to name and locate the properties file for this database on disk.
      */
-    public LocalH2OProperties(final DatabaseURL dbURL) {
+    public LocalH2OProperties(final DatabaseID dbID) {
 
-        super(dbURL.getPropertiesFilePath());
+        super(dbID.getPropertiesFilePath());
     }
 }

@@ -94,7 +94,7 @@ import org.h2.value.ValueInt;
 import org.h2.value.ValueLob;
 import org.h2o.autonomic.settings.Settings;
 import org.h2o.autonomic.settings.TestingSettings;
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.manager.SystemTable;
 import org.h2o.db.manager.SystemTableReference;
@@ -347,7 +347,7 @@ public class Database implements DataHandler {
         databaseName = name;
         databaseShortName = parseDatabaseShortName();
 
-        final DatabaseURL localMachineLocation = DatabaseURL.parseURL(ci.getOriginalURL());
+        final DatabaseID localMachineLocation = DatabaseID.parseURL(ci.getOriginalURL());
 
         // Ensure testing constants are all set to false.
         TestingSettings.IS_TESTING_PRE_COMMIT_FAILURE = false;
@@ -469,7 +469,7 @@ public class Database implements DataHandler {
         running = true;
     }
 
-    private void openDatabase(final int traceLevelFile, final int traceLevelSystemOut, final boolean closeAtVmShutdown, final ConnectionInfo ci, final DatabaseURL localMachineLocation) throws SQLException {
+    private void openDatabase(final int traceLevelFile, final int traceLevelSystemOut, final boolean closeAtVmShutdown, final ConnectionInfo ci, final DatabaseID localMachineLocation) throws SQLException {
 
         try {
             open(traceLevelFile, traceLevelSystemOut, ci, localMachineLocation);
@@ -759,7 +759,7 @@ public class Database implements DataHandler {
         return StringUtils.toUpperEnglish(n);
     }
 
-    private synchronized void open(final int traceLevelFile, final int traceLevelSystemOut, final ConnectionInfo ci, final DatabaseURL localMachineLocation) throws SQLException, StartupException {
+    private synchronized void open(final int traceLevelFile, final int traceLevelSystemOut, final ConnectionInfo ci, final DatabaseID localMachineLocation) throws SQLException, StartupException {
 
         boolean databaseExists = false; // whether the database already exists
         // on disk. i.e. with .db.data files,
@@ -1047,7 +1047,7 @@ public class Database implements DataHandler {
         }
     }
 
-    public DatabaseURL getURL() {
+    public DatabaseID getURL() {
 
         return databaseRemote.getLocalMachineLocation();
     }
@@ -3047,7 +3047,7 @@ public class Database implements DataHandler {
      * @return
      */
 
-    public DatabaseInstanceRemote getDatabaseInstance(final DatabaseURL databaseURL) {
+    public DatabaseInstanceRemote getDatabaseInstance(final DatabaseID databaseURL) {
 
         try {
             return systemTableRef.getSystemTable().getDatabaseInstance(databaseURL);
@@ -3151,7 +3151,7 @@ public class Database implements DataHandler {
         return localSchema.contains(schema.getName());
     }
 
-    private void setDiagnosticLevel(final DatabaseURL localMachineLocation) {
+    private void setDiagnosticLevel(final DatabaseID localMachineLocation) {
 
         final LocalH2OProperties databaseProperties = new LocalH2OProperties(localMachineLocation);
         try {

@@ -12,7 +12,7 @@ import java.rmi.RemoteException;
 
 import org.h2.engine.Session;
 import org.h2o.autonomic.settings.Settings;
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.manager.recovery.LocatorException;
@@ -31,7 +31,7 @@ import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
  */
 public interface IDatabaseRemote {
 
-    public DatabaseURL connectToDatabaseSystem(Session systemSession, Settings databaseSettings) throws StartupException;
+    public DatabaseID connectToDatabaseSystem(Session systemSession, Settings databaseSettings) throws StartupException;
 
     /**
      * Get the remote reference of the local database instance.
@@ -66,7 +66,7 @@ public interface IDatabaseRemote {
      * 
      * @return Address of the local database instance.
      */
-    public DatabaseURL getLocalMachineLocation();
+    public DatabaseID getLocalMachineLocation();
 
     /**
      * Export the System Table contained within this SystemTableReference via the UnicastRemoteObject class to allow it to be accessed
@@ -97,7 +97,7 @@ public interface IDatabaseRemote {
      *            The hostname and RMI port of this reference are used to find the local RMI registry.
      * @return Database instance remote proxy for the database at the given location.
      */
-    public DatabaseInstanceRemote getDatabaseInstanceAt(DatabaseURL databaseURL) throws RemoteException;
+    public DatabaseInstanceRemote getDatabaseInstanceAt(DatabaseID databaseURL) throws RemoteException;
 
     public H2OLocatorInterface getLocatorInterface() throws LocatorException;
 }

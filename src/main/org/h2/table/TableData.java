@@ -153,6 +153,7 @@ public class TableData extends Table implements RecordReader {
             rowCount++;
         }
         catch (final Throwable e) {
+            e.printStackTrace();
             try {
                 while (--i >= 0) {
                     final Index index = (Index) indexes.get(i);

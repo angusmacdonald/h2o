@@ -36,7 +36,7 @@ import java.util.Set;
 
 import org.h2.engine.Database;
 import org.h2.table.ReplicaSet;
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.TableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
@@ -199,7 +199,7 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public DatabaseURL getSystemTableURL() {
+    public DatabaseID getSystemTableURL() {
 
         return systemTableWrapper.getURL();
     }
@@ -243,7 +243,7 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public void setSystemTableURL(final DatabaseURL newSMLocation) {
+    public void setSystemTableURL(final DatabaseID newSMLocation) {
 
         if (newSMLocation.equals(db.getURL())) {
             isLocal = true;
@@ -253,7 +253,7 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public void setSystemTableLocation(final IChordRemoteReference systemTableLocation, final DatabaseURL databaseURL) {
+    public void setSystemTableLocation(final IChordRemoteReference systemTableLocation, final DatabaseID databaseURL) {
 
         systemTableNode = systemTableLocation;
         systemTableWrapper.setURL(databaseURL);

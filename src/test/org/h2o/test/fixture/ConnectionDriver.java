@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Set;
 
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
 
 public abstract class ConnectionDriver {
@@ -16,7 +17,7 @@ public abstract class ConnectionDriver {
 
     public ConnectionDriver(final int db_port, final String database_base_directory_path, final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
 
-        final DatabaseURL jdbcURL = new DatabaseURL(db_port, database_base_directory_path, database_name);
+        final DatabaseID jdbcURL = new DatabaseID(null, new DatabaseURL(db_port, database_base_directory_path, database_name));
 
         init(jdbcURL, username, password, connections_to_be_closed);
     }
@@ -24,12 +25,12 @@ public abstract class ConnectionDriver {
     public ConnectionDriver(final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
 
         // TODO make constructor DatabaseURL(database_name)
-        final DatabaseURL jdbcURL = new DatabaseURL(database_name);
+        final DatabaseID jdbcURL = new DatabaseID(null, new DatabaseURL(database_name));
 
         init(jdbcURL, username, password, connections_to_be_closed);
     }
 
-    private void init(final DatabaseURL jdbcURL, final String username, final String password, final Set<Connection> connections_to_be_closed) {
+    private void init(final DatabaseID jdbcURL, final String username, final String password, final Set<Connection> connections_to_be_closed) {
 
         delay = 0;
 

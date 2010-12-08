@@ -4811,7 +4811,7 @@ public class Parser {
         table = removeReferenceToLinkedTableIfInvalid(replicaLocations, table);
 
         /*
-         * Return if: the table was found by the ST and is local the table was found by the ST, and isn't local but a LinkedTable is, or if
+         * Return if: the table was found by the ST and is local; the table was found by the ST, and isn't local but a LinkedTable is; or if
          * it wasn't found but this is a view.
          */
         if (isTableAccessible(replicaLocations, tableFound, table)) {
@@ -4868,7 +4868,7 @@ public class Parser {
      */
     private boolean isTableAccessible(final Queue<DatabaseInstanceWrapper> replicaLocations, final boolean foundBySystemTable, final Table table) {
 
-        return table != null && foundBySystemTable && (replicaLocations.contains(database.getLocalDatabaseInstanceInWrapper()) || table.getTableType().equals(Table.TABLE_LINK)) //is local, or known about locally.
+        return table != null && table.getName().equals("SESSIONS") || table != null && foundBySystemTable && (replicaLocations.contains(database.getLocalDatabaseInstanceInWrapper()) || table.getTableType().equals(Table.TABLE_LINK)) //is local, or known about locally.
                         || !foundBySystemTable && table != null; //part of the current transaction but hasn't committed yet.
     }
 

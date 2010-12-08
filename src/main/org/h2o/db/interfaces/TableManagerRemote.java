@@ -29,7 +29,7 @@ import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Collection;
 
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.manager.util.Migratable;
 import org.h2o.db.query.TableProxy;
@@ -49,7 +49,7 @@ public interface TableManagerRemote extends H2ORemote, Migratable {
 
     public TableProxy getTableProxy(LockType lockType, LockRequest lockRequest) throws RemoteException, SQLException, MovedException;
 
-    public boolean addTableInformation(DatabaseURL tableManagerURL, TableInfo tableDetails) throws RemoteException, MovedException, SQLException;
+    public boolean addTableInformation(DatabaseID tableManagerURL, TableInfo tableDetails) throws RemoteException, MovedException, SQLException;
 
     public void addReplicaInformation(TableInfo tableDetails) throws RemoteException, MovedException, SQLException;
 
@@ -64,7 +64,7 @@ public interface TableManagerRemote extends H2ORemote, Migratable {
      * @return Database connection URL for a given remote database.
      * @throws RemoteException
      */
-    public DatabaseURL getLocation() throws RemoteException, MovedException;
+    public DatabaseID getLocation() throws RemoteException, MovedException;
 
     /**
      * Releases a lock held by the database instance specified in the parameter. Called at the end of TableProxy.executeQuery() to indicate
@@ -132,7 +132,7 @@ public interface TableManagerRemote extends H2ORemote, Migratable {
     /**
      * The URL of the database on which this Table Manager is located.
      */
-    public DatabaseURL getDatabaseURL() throws RemoteException;
+    public DatabaseID getDatabaseURL() throws RemoteException;
 
     /**
      * Re-populate this Table Managers replica manager with state held locally on disk.

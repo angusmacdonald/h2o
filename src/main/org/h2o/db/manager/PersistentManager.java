@@ -17,7 +17,7 @@ import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.result.LocalResult;
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.replication.MetaDataReplicaManager;
@@ -160,21 +160,21 @@ public abstract class PersistentManager {
      * @throws RemoteException
      * @throws SQLException
      */
-    public boolean addTableInformation(final DatabaseURL tableManagerURL, final TableInfo tableDetails, final boolean addReplicaInfo) throws RemoteException, MovedException, SQLException {
+    public boolean addTableInformation(final DatabaseID tableManagerURL, final TableInfo tableDetails, final boolean addReplicaInfo) throws RemoteException, MovedException, SQLException {
 
         getNewQueryParser();
 
         try {
             assert !tableDetails.getTableName().startsWith("H2O_");
 
-            DatabaseURL dbURL = tableDetails.getURL();
+            DatabaseID dbID = tableDetails.getURL();
 
-            if (dbURL == null) {
+            if (dbID == null) {
                 // find the URL from the Table Manager.
-                dbURL = tableManagerURL;
+                dbID = tableManagerURL;
             }
 
-            final int connectionID = getConnectionID(dbURL);
+            final int connectionID = getConnectionID(dbID);
 
             assert connectionID != -1;
 
@@ -281,9 +281,9 @@ public abstract class PersistentManager {
      * @return True, if the connection information already exists.
      * @throws SQLException
      */
-    public boolean connectionInformationExists(final DatabaseURL dbURL) throws SQLException {
+    public boolean connectionInformationExists(final DatabaseID dbID) throws SQLException {
 
-        final String sql = "SELECT count(connection_id) FROM " + connectionRelation + " WHERE machine_name='" + dbURL.getHostname() + "' AND db_location='" + dbURL.getDbLocation() + "' AND connection_port=" + dbURL.getPort() + " AND connection_type='" + dbURL.getConnectionType() + "';";
+        final String sql = "SELECT count(connection_id) FROM " + connectionRelation + " WHERE machine_name='" + dbID.getHostname() + "' AND db_location='" + dbID.getDbLocation() + "' AND connection_port=" + dbID.getPort() + " AND connection_type='" + dbID.getConnectionType() + "';";
 
         return countCheck(sql);
     }
@@ -299,24 +299,24 @@ public abstract class PersistentManager {
      *            The location of the local database. Used to determine whether a database in running in embedded mode.
      * @return Result of the update.
      */
-    public int addConnectionInformation(final DatabaseURL dbURL, final boolean isActive) throws SQLException {
+    public int addConnectionInformation(final DatabaseID dbID, final boolean isActive) throws SQLException {
 
         final Session s = db.getH2OSession();
         queryParser = new Parser(s, true);
 
-        final String connection_type = dbURL.getConnectionType();
+        final String connection_type = dbID.getConnectionType();
 
         String sql = null;
 
-        if (connectionInformationExists(dbURL)) {
+        if (connectionInformationExists(dbID)) {
             // Update existing information - the chord port may have changed.
 
-            sql = "\nUPDATE " + connectionRelation + " SET chord_port = " + dbURL.getRMIPort() + ", active ='" + isActive + "' WHERE machine_name='" + dbURL.getHostname() + "' AND connection_port=" + dbURL.getPort() + " AND connection_type='" + dbURL.getConnectionType() + "';";
+            sql = "\nUPDATE " + connectionRelation + " SET chord_port = " + dbID.getRMIPort() + ", active ='" + isActive + "' WHERE machine_name='" + dbID.getHostname() + "' AND connection_port=" + dbID.getPort() + " AND connection_type='" + dbID.getConnectionType() + "';";
 
         }
         else {
             // Create a new entry.
-            sql = "\nINSERT INTO " + connectionRelation + " VALUES (null, '" + connection_type + "', '" + dbURL.getHostname() + "', '" + dbURL.getDbLocation() + "', " + dbURL.getPort() + ", " + dbURL.getRMIPort() + ", " + isActive + ");\n";
+            sql = "\nINSERT INTO " + connectionRelation + " VALUES (null, '" + connection_type + "', '" + dbID.getHostname() + "', '" + dbID.getDbLocation() + "', " + dbID.getPort() + ", " + dbID.getRMIPort() + ", " + isActive + ");\n";
 
         }
 
@@ -351,16 +351,16 @@ public abstract class PersistentManager {
      * @param connection_type
      * @return
      */
-    public int getConnectionID(final DatabaseURL dbURL) {
+    public int getConnectionID(final DatabaseID dbID) {
 
         final Session s = db.getSystemSession();
         queryParser = new Parser(s, true);
 
-        final String machine_name = dbURL.getHostname();
-        final int connection_port = dbURL.getPort();
-        final String connection_type = dbURL.getConnectionType();
+        final String machine_name = dbID.getHostname();
+        final int connection_port = dbID.getPort();
+        final String connection_type = dbID.getConnectionType();
 
-        final String sql = "SELECT connection_id FROM " + connectionRelation + " WHERE machine_name='" + machine_name + "' AND connection_port=" + connection_port + " AND connection_type='" + connection_type + "' AND db_location = '" + dbURL.getDbLocation() + "';";
+        final String sql = "SELECT connection_id FROM " + connectionRelation + " WHERE machine_name='" + machine_name + "' AND connection_port=" + connection_port + " AND connection_type='" + connection_type + "' AND db_location = '" + dbID.getDbLocation() + "';";
 
         LocalResult result = null;
         try {
@@ -542,7 +542,7 @@ public abstract class PersistentManager {
      * @return
      * @throws MovedException
      */
-    protected abstract DatabaseURL getLocation() throws RemoteException, MovedException;
+    protected abstract DatabaseID getLocation() throws RemoteException, MovedException;
 
     /**
      * @return
@@ -644,8 +644,8 @@ public abstract class PersistentManager {
          * TODO try to replicate somewhere else.
          */
 
-        final DatabaseURL dburl = databaseInstance.getURL();
-        final String sql = "\nUPDATE " + connectionRelation + " SET active = false WHERE machine_name='" + dburl.getHostname() + "' AND connection_port=" + dburl.getPort() + " AND connection_type='" + dburl.getConnectionType() + "';";
+        final DatabaseID dbID = databaseInstance.getURL();
+        final String sql = "\nUPDATE " + connectionRelation + " SET active = false WHERE machine_name='" + dbID.getHostname() + "' AND connection_port=" + dbID.getPort() + " AND connection_type='" + dbID.getConnectionType() + "';";
 
         try {
             executeUpdate(sql);

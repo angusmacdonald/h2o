@@ -32,7 +32,7 @@ import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.interfaces.TableManagerRemote;
@@ -55,7 +55,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
     /**
      * The parsed JDBC connection string for this database.
      */
-    private final DatabaseURL databaseURL;
+    private final DatabaseID databaseURL;
 
     /**
      * Used to parse queries on this machine.
@@ -69,7 +69,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
 
     private final Database database;
 
-    public DatabaseInstance(final DatabaseURL databaseURL, final Session session) {
+    public DatabaseInstance(final DatabaseID databaseURL, final Session session) {
 
         this.databaseURL = databaseURL;
         database = session.getDatabase();
@@ -120,15 +120,15 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
     }
 
     @Override
-    public DatabaseURL getURL() throws RemoteException {
+    public DatabaseID getURL() throws RemoteException {
 
         return databaseURL;
     }
 
     @Override
-    public DatabaseURL getSystemTableURL() throws RemoteException {
+    public DatabaseID getSystemTableURL() throws RemoteException {
 
-        final DatabaseURL systemTableURL = database.getSystemTableReference().getSystemTableURL();
+        final DatabaseID systemTableURL = database.getSystemTableReference().getSystemTableURL();
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Responding to request for System Table location at database '" + database.getDatabaseLocation() + "'. " + "System table location: " + systemTableURL);
 
         return systemTableURL;
@@ -165,7 +165,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
     }
 
     @Override
-    public boolean recreateTableManager(final TableInfo tableInfo, final DatabaseURL previousLocation) throws RemoteException {
+    public boolean recreateTableManager(final TableInfo tableInfo, final DatabaseID previousLocation) throws RemoteException {
 
         boolean success = false;
         try {
@@ -179,7 +179,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
     }
 
     @Override
-    public void setSystemTableLocation(final IChordRemoteReference systemTableLocation, final DatabaseURL databaseURL) throws RemoteException {
+    public void setSystemTableLocation(final IChordRemoteReference systemTableLocation, final DatabaseID databaseURL) throws RemoteException {
 
         database.getSystemTableReference().setSystemTableLocation(systemTableLocation, databaseURL);
     }

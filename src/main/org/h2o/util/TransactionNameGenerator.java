@@ -8,7 +8,7 @@
  */
 package org.h2o.util;
 
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 
 /**
  * Utility class which generates unique names for transactions.
@@ -26,18 +26,18 @@ public class TransactionNameGenerator {
 
     private String prefix;
 
-    public TransactionNameGenerator(DatabaseURL url) {
+    public TransactionNameGenerator(DatabaseID url) {
 
         this.prefix = generatePrefix(url);
     }
 
-    public TransactionNameGenerator(DatabaseURL url, long startNumber) {
+    public TransactionNameGenerator(DatabaseID url, long startNumber) {
 
         this(url);
         this.lastNumber = startNumber;
     }
 
-    private String generatePrefix(DatabaseURL url) {
+    private String generatePrefix(DatabaseID url) {
 
         String part = "";
 

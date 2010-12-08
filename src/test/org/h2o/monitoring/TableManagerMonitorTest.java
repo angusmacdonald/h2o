@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.SortedSet;
 
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.manager.monitoring.LockRequestPercentagesPerInstance;
 import org.h2o.db.manager.monitoring.TableManagerMonitor;
 import org.h2o.db.query.locking.LockRequest;
@@ -18,9 +18,9 @@ public class TableManagerMonitorTest {
 
     private TableManagerMonitor monitor = null;
 
-    final DatabaseInstanceWrapper dbWrapperOne = new DatabaseInstanceWrapper(DatabaseURL.parseURL("jdbc:h2:mem:one"), null, true);
-    final DatabaseInstanceWrapper dbWrapperTwo = new DatabaseInstanceWrapper(DatabaseURL.parseURL("jdbc:h2:mem:two"), null, true);
-    final DatabaseInstanceWrapper dbWrapperThree = new DatabaseInstanceWrapper(DatabaseURL.parseURL("jdbc:h2:mem:three"), null, true);
+    final DatabaseInstanceWrapper dbWrapperOne = new DatabaseInstanceWrapper(DatabaseID.parseURL("jdbc:h2:mem:one"), null, true);
+    final DatabaseInstanceWrapper dbWrapperTwo = new DatabaseInstanceWrapper(DatabaseID.parseURL("jdbc:h2:mem:two"), null, true);
+    final DatabaseInstanceWrapper dbWrapperThree = new DatabaseInstanceWrapper(DatabaseID.parseURL("jdbc:h2:mem:three"), null, true);
 
     final LockRequest lockRequestFromOne = new LockRequest(dbWrapperOne, 1);
     final LockRequest lockRequestFromOneSecondSession = new LockRequest(dbWrapperOne, 2);

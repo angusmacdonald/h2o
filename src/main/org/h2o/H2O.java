@@ -43,6 +43,7 @@ import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;
 import org.h2.util.FileUtils;
 import org.h2.util.SortedProperties;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.test.fixture.DatabaseType;
@@ -266,7 +267,7 @@ public class H2O {
             databaseDescriptorLocation = locator.start();
         }
 
-        final DatabaseURL databaseURL = generateDatabaseURL();
+        final DatabaseID databaseURL = generateDatabaseURL();
 
         startServer(databaseURL);
         initializeDatabase(databaseURL);
@@ -359,7 +360,7 @@ public class H2O {
      * @throws IOException if the server properties cannot be written
      * @throws SQLException if the server properties cannot be opened
      */
-    private void startServer(final DatabaseURL databaseURL) throws SQLException, IOException {
+    private void startServer(final DatabaseID databaseURL) throws SQLException, IOException {
 
         final List<String> h2oArgs = new LinkedList<String>(); // Arguments to be passed to the H2 server.
         h2oArgs.add("-tcp");
@@ -398,7 +399,7 @@ public class H2O {
      * @throws SQLException 
      * @throws IOException 
      */
-    private void initializeDatabase(final DatabaseURL databaseURL) throws SQLException, IOException {
+    private void initializeDatabase(final DatabaseID databaseURL) throws SQLException, IOException {
 
         initializeDatabaseProperties(databaseURL, diagnosticLevel, databaseDescriptorLocation, databaseName);
 
@@ -406,7 +407,7 @@ public class H2O {
         connection = DriverManager.getConnection(databaseURL.getURL(), PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
     }
 
-    public static void initializeDatabaseProperties(final DatabaseURL databaseURL, final DiagnosticLevel diagnosticLevel, final String databaseDescriptorLocation, final String databaseName) throws IOException {
+    public static void initializeDatabaseProperties(final DatabaseID databaseURL, final DiagnosticLevel diagnosticLevel, final String databaseDescriptorLocation, final String databaseName) throws IOException {
 
         final LocalH2OProperties properties = new LocalH2OProperties(databaseURL);
 
@@ -432,7 +433,7 @@ public class H2O {
      * @throws IOException if the server properties cannot be written
      * @throws SQLException if the server properties cannot be opened
      */
-    private void setUpWebLink(final DatabaseURL databaseURL) throws IOException, SQLException {
+    private void setUpWebLink(final DatabaseID databaseURL) throws IOException, SQLException {
 
         final Properties serverProperties = loadServerProperties();
         final List<String> servers = new LinkedList<String>();
@@ -491,14 +492,14 @@ public class H2O {
         return text;
     }
 
-    private DatabaseURL generateDatabaseURL() {
+    private DatabaseID generateDatabaseURL() {
 
         switch (databaseType) {
             case DISK: {
-                return new DatabaseURL(tcpPort, databaseBaseDirectoryPath, databaseName);
+                return new DatabaseID(null, new DatabaseURL(tcpPort, databaseBaseDirectoryPath, databaseName));
             }
             case MEMORY: {
-                return new DatabaseURL(databaseName);
+                return new DatabaseID(null, new DatabaseURL(databaseName));
             }
             default: {
                 ErrorHandling.hardError("unknown database type");

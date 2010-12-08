@@ -30,9 +30,9 @@ public class TableInfo implements Serializable {
 
     private String tableType;
 
-    private DatabaseURL dbLocation;
+    private DatabaseID dbLocation;
 
-    public TableInfo(final String tableName, final String schemaName, final long modificationID, final int tableSet, final String tableType, final DatabaseURL dbLocation) {
+    public TableInfo(final String tableName, final String schemaName, final long modificationID, final int tableSet, final String tableType, final DatabaseID dbLocation) {
 
         this(tableName, schemaName);
 
@@ -70,7 +70,7 @@ public class TableInfo implements Serializable {
      * @param schemaName2
      * @param databaseURL
      */
-    public TableInfo(final String tableName, final String schemaName, final DatabaseURL databaseURL) {
+    public TableInfo(final String tableName, final String schemaName, final DatabaseID databaseURL) {
 
         this(tableName, schemaName);
 
@@ -82,7 +82,7 @@ public class TableInfo implements Serializable {
         this(tableInfo.getTableName(), tableInfo.getSchemaName());
     }
 
-    public TableInfo(final TableInfo tableInfo, final DatabaseURL url) {
+    public TableInfo(final TableInfo tableInfo, final DatabaseID url) {
 
         this(tableInfo.getTableName(), tableInfo.getSchemaName());
 
@@ -132,7 +132,7 @@ public class TableInfo implements Serializable {
     /**
      * @return the dbLocation
      */
-    public DatabaseURL getURL() {
+    public DatabaseID getURL() {
 
         return dbLocation;
     }
@@ -158,7 +158,7 @@ public class TableInfo implements Serializable {
         return new TableInfo(tableName, schemaName);
     }
 
-    public void setURL(final DatabaseURL url) {
+    public void setURL(final DatabaseID url) {
 
         dbLocation = url;
     }

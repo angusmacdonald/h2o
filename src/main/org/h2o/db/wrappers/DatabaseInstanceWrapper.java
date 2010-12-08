@@ -27,7 +27,7 @@ package org.h2o.db.wrappers;
 
 import java.io.Serializable;
 
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.util.DatabaseInstanceProbability;
 
@@ -43,7 +43,7 @@ public class DatabaseInstanceWrapper implements Serializable, Comparable<Databas
 
     private static final long serialVersionUID = 9193285872031823819L;
 
-    private final DatabaseURL databaseURL;
+    private final DatabaseID databaseURL;
 
     private final DatabaseInstanceRemote databaseInstance;
 
@@ -59,7 +59,7 @@ public class DatabaseInstanceWrapper implements Serializable, Comparable<Databas
      * @param active
      *            Whether the database is currently active.
      */
-    public DatabaseInstanceWrapper(final DatabaseURL databaseURL, final DatabaseInstanceRemote databaseInstance, final boolean active) {
+    public DatabaseInstanceWrapper(final DatabaseID databaseURL, final DatabaseInstanceRemote databaseInstance, final boolean active) {
 
         super();
         this.databaseURL = databaseURL;
@@ -92,7 +92,7 @@ public class DatabaseInstanceWrapper implements Serializable, Comparable<Databas
         return databaseInstance;
     }
 
-    public DatabaseURL getURL() {
+    public DatabaseID getURL() {
 
         return databaseURL;
     }

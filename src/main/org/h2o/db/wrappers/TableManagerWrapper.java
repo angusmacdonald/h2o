@@ -12,7 +12,7 @@ import java.io.Serializable;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.TableManagerRemote;
 
@@ -36,9 +36,9 @@ public class TableManagerWrapper implements Serializable, Remote {
     /**
      * Location of the Table Manager.
      */
-    private DatabaseURL tableManagerURL;
+    private DatabaseID tableManagerURL;
 
-    public TableManagerWrapper(TableInfo tableInfo, TableManagerRemote tableManager, DatabaseURL tableManagerURL) {
+    public TableManagerWrapper(TableInfo tableInfo, TableManagerRemote tableManager, DatabaseID tableManagerURL) {
 
         this.tableInfo = tableInfo.getGenericTableInfo();
         this.tableManager = tableManager;
@@ -82,7 +82,7 @@ public class TableManagerWrapper implements Serializable, Remote {
     /**
      * @return the tableManagerURL
      */
-    public DatabaseURL getURL() {
+    public DatabaseID getURL() {
 
         return tableManagerURL;
     }
@@ -91,7 +91,7 @@ public class TableManagerWrapper implements Serializable, Remote {
      * @param tableManagerURL
      *            the tableManagerURL to set
      */
-    public void setTableManagerURL(DatabaseURL tableManagerURL) throws RemoteException {
+    public void setTableManagerURL(DatabaseID tableManagerURL) throws RemoteException {
 
         this.tableManagerURL = tableManagerURL;
     }
@@ -128,7 +128,7 @@ public class TableManagerWrapper implements Serializable, Remote {
      * @param localMachineLocation
      * @return
      */
-    public boolean isLocalTo(DatabaseURL localMachineLocation) throws RemoteException {
+    public boolean isLocalTo(DatabaseID localMachineLocation) throws RemoteException {
 
         return tableManagerURL.equals(localMachineLocation);
     }

@@ -31,7 +31,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.h2.engine.Database;
-import org.h2o.db.id.DatabaseURL;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.manager.SystemTable;
 import org.h2o.db.manager.SystemTableReference;
@@ -91,7 +91,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
 
         if (newLocation == null) { throw new SQLException("The System Table has been shutdown. It must be re-instantiated before another query can be answered."); }
 
-        final DatabaseURL systemTableLocationURL = DatabaseURL.parseURL(newLocation);
+        final DatabaseID systemTableLocationURL = DatabaseID.parseURL(newLocation);
         final DatabaseInstanceRemote databaseInstance = lookForDatabaseInstanceAt(remoteInterface, systemTableLocationURL);
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, db.getURL() + ": This System Table reference is old. It has been moved to: " + newLocation);
@@ -144,7 +144,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
 
         boolean localMachineHoldsSystemTableState = false;
         for (final String location : stLocations) {
-            final DatabaseURL url = DatabaseURL.parseURL(location);
+            final DatabaseID url = DatabaseID.parseURL(location);
             localMachineHoldsSystemTableState = url.equals(db.getURL());
         }
 
@@ -217,7 +217,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
 
         for (final String locatorLocation : locatorLocations) {
             try {
-                databaseInstance = lookForDatabaseInstanceAt(remoteInterface, DatabaseURL.parseURL(locatorLocation));
+                databaseInstance = lookForDatabaseInstanceAt(remoteInterface, DatabaseID.parseURL(locatorLocation));
 
                 final boolean isSystemTable = databaseInstance.isSystemTable();
 
@@ -247,7 +247,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
     private SystemTableWrapper startSystemTableOnOneOfSpecifiedMachines(final List<String> stLocations) throws SystemTableAccessException {
 
         for (final String systemTableLocation : stLocations) {
-            final DatabaseURL url = DatabaseURL.parseURL(systemTableLocation);
+            final DatabaseID url = DatabaseID.parseURL(systemTableLocation);
 
             DatabaseInstanceRemote databaseInstance = null;
 
@@ -288,7 +288,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         throw new SystemTableAccessException("Failed to create new System Table.");
     }
 
-    private DatabaseInstanceRemote lookForDatabaseInstanceAt(IDatabaseRemote iDatabaseRemote, final DatabaseURL url) throws RemoteException {
+    private DatabaseInstanceRemote lookForDatabaseInstanceAt(IDatabaseRemote iDatabaseRemote, final DatabaseID url) throws RemoteException {
 
         if (iDatabaseRemote == null) {
             iDatabaseRemote = db.getRemoteInterface();
