@@ -28,7 +28,7 @@ import org.h2o.db.id.DatabaseID;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.locator.server.LocatorServer;
 import org.h2o.run.AllTests;
-import org.h2o.util.LocalH2OProperties;
+import org.h2o.util.H2OPropertiesWrapper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -78,7 +78,7 @@ public class H2SimpleTest {
         Diagnostic.trace(DiagnosticLevel.FULL);
 
         Constants.IS_NON_SM_TEST = true;
-        final LocalH2OProperties properties = new LocalH2OProperties(DatabaseID.parseURL("jdbc:h2:db_data/test/scriptSimple"));
+        final H2OPropertiesWrapper properties = H2OPropertiesWrapper.getWrapper(DatabaseID.parseURL("jdbc:h2:db_data/test/scriptSimple"));
 
         properties.createNewFile();
         properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
@@ -144,7 +144,7 @@ public class H2SimpleTest {
             connection.close();
         }
 
-        final LocalH2OProperties properties = new LocalH2OProperties(DatabaseID.parseURL("jdbc:h2:db_data/test/scriptSimple"));
+        final H2OPropertiesWrapper properties = H2OPropertiesWrapper.getWrapper(DatabaseID.parseURL("jdbc:h2:db_data/test/scriptSimple"));
 
         properties.createNewFile();
         properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);

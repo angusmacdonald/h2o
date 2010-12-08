@@ -19,13 +19,14 @@ import java.util.Map;
 import org.h2.engine.Constants;
 import org.h2.tools.DeleteDbFiles;
 import org.h2o.db.id.DatabaseID;
+import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.db.remote.ChordRemote;
 import org.h2o.locator.client.H2OLocatorInterface;
 import org.h2o.locator.server.LocatorServer;
 import org.h2o.run.AllTests;
-import org.h2o.util.LocalH2OProperties;
+import org.h2o.util.H2OPropertiesWrapper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -94,9 +95,6 @@ public class MultiProcessTestBase extends TestBase {
         }
     }
 
-    /**
-     * @throws java.lang.Exception
-     */
     @Override
     @Before
     public void setUp() throws Exception {
@@ -115,10 +113,9 @@ public class MultiProcessTestBase extends TestBase {
         fullDbName = getFullDatabaseName();
 
         for (final String location : fullDbName) {
-            final LocalH2OProperties properties = new LocalH2OProperties(DatabaseID.parseURL(location));
+            final H2OPropertiesWrapper properties = H2OPropertiesWrapper.getWrapper(DatabaseID.parseURL(location));
             properties.createNewFile();
             properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
-            // properties.setProperty("RELATION_REPLICATION_FACTOR", "2");
             properties.setProperty("databaseName", "testDB");
             properties.setProperty("diagnosticLevel", "FULL");
 
@@ -218,7 +215,7 @@ public class MultiProcessTestBase extends TestBase {
      */
     private List<String> findSystemTableInstances() throws IOException, LocatorException {
 
-        final LocalH2OProperties persistedInstanceInformation = new LocalH2OProperties(DatabaseID.parseURL(fullDbName[0]));
+        final H2OPropertiesWrapper persistedInstanceInformation = H2OPropertiesWrapper.getWrapper(DatabaseID.parseURL(fullDbName[0]));
 
         persistedInstanceInformation.loadProperties();
 
@@ -235,7 +232,7 @@ public class MultiProcessTestBase extends TestBase {
          */
         final List<String> parsedLocations = new LinkedList<String>();
         for (final String l : locations) {
-            parsedLocations.add(DatabaseID.parseURL(l).getURL());
+            parsedLocations.add(DatabaseURL.parseURL(l).getURL());
         }
 
         return parsedLocations;
@@ -244,7 +241,7 @@ public class MultiProcessTestBase extends TestBase {
     protected void delayQueryCommit(final int dbName) throws IOException {
 
         final String location = fullDbName[dbName];
-        final LocalH2OProperties properties = new LocalH2OProperties(DatabaseID.parseURL(location));
+        final H2OPropertiesWrapper properties = H2OPropertiesWrapper.getWrapper(DatabaseID.parseURL(location));
         properties.createNewFile();
         properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
         properties.setProperty("databaseName", "testDB");
@@ -260,12 +257,12 @@ public class MultiProcessTestBase extends TestBase {
     protected Connection getSystemTableConnection() throws IOException, LocatorException {
 
         for (final String instance : findSystemTableInstances()) {
-            final DatabaseID dbID = DatabaseID.parseURL(instance);
+            final DatabaseURL dbURL = DatabaseURL.parseURL(instance);
             for (final Connection connection : connections) {
                 String connectionURL;
                 try {
                     connectionURL = connection.getMetaData().getURL();
-                    if (connectionURL.equals(dbID.getURL())) { return connection; }
+                    if (connectionURL.equals(dbURL.getURL())) { return connection; }
                 }
                 catch (final SQLException e) {
                     e.printStackTrace();
@@ -536,7 +533,7 @@ public class MultiProcessTestBase extends TestBase {
         for (int i = 0; i < dbs.length; i++) {
             final int port = 9080 + i;
             fullDbName[i] = "jdbc:h2:sm:tcp://localhost:" + port + "/db_data/multiprocesstests/" + dbs[i];
-            fullDbName[i] = DatabaseID.parseURL(fullDbName[i]).getURL();
+            fullDbName[i] = DatabaseURL.parseURL(fullDbName[i]).getURL();
         }
 
         return fullDbName;

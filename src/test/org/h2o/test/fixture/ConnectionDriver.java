@@ -24,7 +24,6 @@ public abstract class ConnectionDriver {
 
     public ConnectionDriver(final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
 
-        // TODO make constructor DatabaseURL(database_name)
         final DatabaseID jdbcURL = new DatabaseID(null, new DatabaseURL(database_name));
 
         init(jdbcURL, username, password, connections_to_be_closed);

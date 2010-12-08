@@ -28,6 +28,7 @@ import java.util.Map;
 import org.h2.engine.Constants;
 import org.h2.tools.DeleteDbFiles;
 import org.h2o.db.id.DatabaseID;
+import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.db.remote.ChordRemote;
@@ -36,7 +37,7 @@ import org.h2o.locator.server.LocatorServer;
 import org.h2o.run.AllTests;
 import org.h2o.test.fixture.StartDatabaseInstance;
 import org.h2o.test.fixture.TestBase;
-import org.h2o.util.LocalH2OProperties;
+import org.h2o.util.H2OPropertiesWrapper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -108,7 +109,7 @@ public class LocatorDatabaseTests extends TestBase {
         getFullDatabaseName();
 
         for (final String location : fullDbName) {
-            final LocalH2OProperties knownHosts = new LocalH2OProperties(DatabaseID.parseURL(location));
+            final H2OPropertiesWrapper knownHosts = H2OPropertiesWrapper.getWrapper(DatabaseID.parseURL(location));
             knownHosts.createNewFile();
             knownHosts.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
             knownHosts.setProperty("databaseName", "testDB");
@@ -520,7 +521,7 @@ public class LocatorDatabaseTests extends TestBase {
      */
     private List<String> findSystemTableInstances() throws IOException, LocatorException {
 
-        final LocalH2OProperties persistedInstanceInformation = new LocalH2OProperties(DatabaseID.parseURL(fullDbName[0]));
+        final H2OPropertiesWrapper persistedInstanceInformation = H2OPropertiesWrapper.getWrapper(DatabaseID.parseURL(fullDbName[0]));
         persistedInstanceInformation.loadProperties();
 
         /*
@@ -536,7 +537,7 @@ public class LocatorDatabaseTests extends TestBase {
          */
         final List<String> parsedLocations = new LinkedList<String>();
         for (final String l : locations) {
-            parsedLocations.add(DatabaseID.parseURL(l).getURL());
+            parsedLocations.add(DatabaseURL.parseURL(l).getURL());
         }
 
         return parsedLocations;
@@ -550,12 +551,12 @@ public class LocatorDatabaseTests extends TestBase {
     private Connection getSystemTableConnection() throws IOException, LocatorException {
 
         for (final String instance : findSystemTableInstances()) {
-            final DatabaseID dbID = DatabaseID.parseURL(instance);
+            final DatabaseURL dbURL = DatabaseURL.parseURL(instance);
             for (final Connection connection : connections) {
                 String connectionURL;
                 try {
                     connectionURL = connection.getMetaData().getURL();
-                    if (connectionURL.equals(dbID.getURL())) { return connection; }
+                    if (connectionURL.equals(dbURL.getURL())) { return connection; }
                 }
                 catch (final SQLException e) {
                     e.printStackTrace();
@@ -774,7 +775,7 @@ public class LocatorDatabaseTests extends TestBase {
         for (int i = 0; i < dbs.length; i++) {
             final int port = 9080 + i;
             fullDbName[i] = "jdbc:h2:sm:tcp://localhost:" + port + "/db_data/multiprocesstests/" + dbs[i];
-            fullDbName[i] = DatabaseID.parseURL(fullDbName[i]).getURL();
+            fullDbName[i] = DatabaseURL.parseURL(fullDbName[i]).getURL();
         }
     }
 

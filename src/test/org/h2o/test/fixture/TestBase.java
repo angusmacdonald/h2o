@@ -34,7 +34,7 @@ import org.h2o.db.id.DatabaseID;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.locator.server.LocatorServer;
 import org.h2o.run.AllTests;
-import org.h2o.util.LocalH2OProperties;
+import org.h2o.util.H2OPropertiesWrapper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -285,10 +285,10 @@ public class TestBase {
 
     private static void createProperties(final String url, final boolean include_chord_port) throws IOException {
 
-        final LocalH2OProperties properties = new LocalH2OProperties(DatabaseID.parseURL(url));
+        final H2OPropertiesWrapper properties = H2OPropertiesWrapper.getWrapper(DatabaseID.parseURL(url));
 
         properties.createNewFile();
-        // "jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test"
+
         properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
         properties.setProperty("databaseName", "testDB");
 

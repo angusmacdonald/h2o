@@ -57,7 +57,7 @@ import org.h2o.db.replication.MetaDataReplicaManager;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
 import org.h2o.locator.client.H2OLocatorInterface;
-import org.h2o.util.LocalH2OProperties;
+import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.util.exceptions.StartupException;
 import org.h2o.viewer.H2OEventBus;
@@ -262,7 +262,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
                     // Obtain a lock on the locator server first.
 
-                    final LocalH2OProperties localSettings = databaseSettings.getLocalSettings();
+                    final H2OPropertiesWrapper localSettings = databaseSettings.getLocalSettings();
 
                     boolean locked = false;
                     try {
@@ -372,7 +372,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     private void establishLocatorInterface() throws LocatorException {
 
         try {
-            final LocalH2OProperties persistedInstanceInformation = new LocalH2OProperties(localMachineLocation);
+            final H2OPropertiesWrapper persistedInstanceInformation = H2OPropertiesWrapper.getWrapper(localMachineLocation);
             persistedInstanceInformation.loadProperties();
             establishLocatorInterface(persistedInstanceInformation);
         }
@@ -388,7 +388,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
      * @return
      * @throws StartupException if the descriptor file couldn't be found.
      */
-    private void establishLocatorInterface(final LocalH2OProperties localDatabaseProperties) throws LocatorException {
+    private void establishLocatorInterface(final H2OPropertiesWrapper localDatabaseProperties) throws LocatorException {
 
         final String descriptorLocation = localDatabaseProperties.getProperty("descriptor");
 
@@ -417,10 +417,10 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     /**
      * Try to join an existing chord ring.
      * 
-     * @return True if a connection was successful; otherwise false.
+     * @return true if a connection was successful
      * @throws StartupException 
      */
-    private boolean attemptToJoinChordRing(final LocalH2OProperties persistedInstanceInformation, final DatabaseID localMachineLocation, final List<String> databaseInstances) throws StartupException {
+    private boolean attemptToJoinChordRing(final H2OPropertiesWrapper persistedInstanceInformation, final DatabaseID localMachineLocation, final List<String> databaseInstances) throws StartupException {
 
         /*
          * Try to connect via each of the database instances that are known.

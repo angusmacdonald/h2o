@@ -18,7 +18,7 @@ import org.h2.engine.Constants;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.db.remote.ChordRemote;
-import org.h2o.util.LocalH2OProperties;
+import org.h2o.util.H2OPropertiesWrapper;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -31,7 +31,6 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 public class MultipleServers {
 
     private Connection[] cas;
-
     private Statement[] sas;
 
     private final String[] dbs = {"two", "three", "four", "five", "six", "seven", "eight", "nine"};
@@ -39,7 +38,6 @@ public class MultipleServers {
     public MultipleServers() throws SQLException, IOException {
 
         initialSetUp();
-
         setUp();
     }
 
@@ -56,11 +54,11 @@ public class MultipleServers {
         for (final String db : dbNames) {
 
             final String fullDBName = "jdbc:h2:mem:" + db;
-            final DatabaseID dbID = DatabaseID.parseURL(fullDBName);
+            final DatabaseID dbURL = DatabaseID.parseURL(fullDBName);
 
-            final LocalH2OProperties knownHosts = new LocalH2OProperties(dbID);
+            final H2OPropertiesWrapper knownHosts = H2OPropertiesWrapper.getWrapper(dbURL);
             knownHosts.createNewFile();
-            knownHosts.setProperty("jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db", "30000"); // //jdbc:h2:sm:mem:one
+            knownHosts.setProperty("jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db", "30000");
             knownHosts.saveAndClose();
         }
     }
@@ -84,7 +82,6 @@ public class MultipleServers {
                 sas[i].close();
             }
             sas[i] = null;
-
         }
 
         for (int i = 0; i < cas.length; i++) {
@@ -93,37 +90,23 @@ public class MultipleServers {
                 cas[i].close();
             }
             cas[i] = null;
-
         }
 
         cas = null;
         sas = null;
     }
 
-    /**
-     * @param args
-     * @throws InterruptedException
-     * @throws IOException 
-     * @throws SQLException 
-     */
     public static void main(final String[] args) throws InterruptedException, SQLException, IOException {
 
         Constants.IS_TEST = false;
         new MultipleServers();
     }
 
-    /**
-     * @throws SQLException 
-     * 
-     */
     private void insertSecondTable() throws SQLException {
 
         sas[1].execute("CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255));");
     }
 
-    /**
-     * 
-     */
     private void testSystemTableFailure() {
 
         Diagnostic.trace("CLOSING System Table INSTANCE");

@@ -26,7 +26,7 @@ import org.h2.store.fs.FileSystem;
 import org.h2.tools.DeleteDbFiles;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.run.AllTests;
-import org.h2o.util.LocalH2OProperties;
+import org.h2o.util.H2OPropertiesWrapper;
 
 /**
  * The base class for all tests.
@@ -141,8 +141,7 @@ public abstract class TestBase {
     /**
      * Open a database connection in admin mode. The default user name and password is used.
      * 
-     * @param name
-     *            the database name
+     * @param name the database name
      * @return the connection
      * @throws IOException 
      */
@@ -155,7 +154,7 @@ public abstract class TestBase {
 
     public static void setUpDescriptorFiles(final String url) throws IOException {
 
-        final LocalH2OProperties properties = new LocalH2OProperties(DatabaseID.parseURL(url));
+        final H2OPropertiesWrapper properties = H2OPropertiesWrapper.getWrapper(DatabaseID.parseURL(url));
         properties.createNewFile();
         properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
         properties.setProperty("databaseName", "testDB");
@@ -166,12 +165,9 @@ public abstract class TestBase {
     /**
      * Open a database connection.
      * 
-     * @param name
-     *            the database name
-     * @param user
-     *            the user name to use
-     * @param password
-     *            the password to use
+     * @param name the database name
+     * @param user the user name to use
+     * @param password the password to use
      * @return the connection
      */
     protected Connection getConnection(final String name, final String user, final String password) throws SQLException {
@@ -182,8 +178,7 @@ public abstract class TestBase {
     /**
      * Get the password to use to login for the given user password. The file password is added if required.
      * 
-     * @param userPassword
-     *            the password of this user
+     * @param userPassword the password of this user
      * @return the login password
      */
     protected String getPassword(final String userPassword) {

@@ -18,7 +18,7 @@ import org.h2.engine.Constants;
 import org.h2o.autonomic.settings.TestingSettings;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.manager.PersistentSystemTable;
-import org.h2o.util.LocalH2OProperties;
+import org.h2o.util.H2OPropertiesWrapper;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -56,9 +56,9 @@ public class MultipleServersStandalone {
         for (final String db : dbNames) {
 
             final String fullDBName = "jdbc:h2:mem:" + db;
-            final DatabaseID dbID = DatabaseID.parseURL(fullDBName);
+            final DatabaseID dbURL = DatabaseID.parseURL(fullDBName);
 
-            final LocalH2OProperties knownHosts = new LocalH2OProperties(dbID);
+            final H2OPropertiesWrapper knownHosts = H2OPropertiesWrapper.getWrapper(dbURL);
             knownHosts.createNewFile();
             knownHosts.setProperty("jdbc:h2:sm:mem:one", "30000"); // //jdbc:h2:sm:mem:one
             knownHosts.saveAndClose();

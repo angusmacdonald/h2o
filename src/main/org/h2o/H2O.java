@@ -47,7 +47,7 @@ import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.test.fixture.DatabaseType;
-import org.h2o.util.LocalH2OProperties;
+import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.exceptions.StartupException;
 
 import uk.ac.standrews.cs.nds.util.CommandLineArgs;
@@ -267,10 +267,8 @@ public class H2O {
             databaseDescriptorLocation = locator.start();
         }
 
-        final DatabaseID databaseURL = generateDatabaseURL();
-
-        startServer(databaseURL);
-        initializeDatabase(databaseURL);
+        startServer();
+        initializeDatabase();
     }
 
     /**
@@ -360,31 +358,34 @@ public class H2O {
      * @throws IOException if the server properties cannot be written
      * @throws SQLException if the server properties cannot be opened
      */
-    private void startServer(final DatabaseID databaseURL) throws SQLException, IOException {
+    private void startServer() throws SQLException, IOException {
 
-        final List<String> h2oArgs = new LinkedList<String>(); // Arguments to be passed to the H2 server.
-        h2oArgs.add("-tcp");
+        final int number_of_args = webPort == 0 ? 5 : 9;
+        final String[] args = new String[number_of_args];
 
-        h2oArgs.add("-tcpPort");
-        h2oArgs.add(String.valueOf(tcpPort));
+        args[0] = "-tcp";
 
-        h2oArgs.add("-tcpAllowOthers"); // allow remote connections.
-        h2oArgs.add("-webAllowOthers");
+        args[1] = "-tcpPort";
+        args[2] = String.valueOf(tcpPort);
+
+        args[3] = "-tcpAllowOthers"; // allow remote connections.
+        args[4] = "-webAllowOthers";
 
         // Web Interface.
 
         if (webPort != 0) {
-            h2oArgs.add("-web");
-            h2oArgs.add("-webPort");
-            h2oArgs.add(String.valueOf(webPort));
-            h2oArgs.add("-browser");
+            args[5] = "-web";
+            args[6] = "-webPort";
+            args[7] = String.valueOf(webPort);
+            args[8] = "-browser";
         }
 
-        // Set URL to be displayed in browser.
-        setUpWebLink(databaseURL);
-
         server = new Server();
-        server.run(h2oArgs.toArray(new String[0]), System.out);
+
+        server.run(args, System.out);
+
+        // Set URL to be displayed in browser.
+        setUpWebLink();
     }
 
     private void shutdownServer() {
@@ -399,17 +400,19 @@ public class H2O {
      * @throws SQLException 
      * @throws IOException 
      */
-    private void initializeDatabase(final DatabaseID databaseURL) throws SQLException, IOException {
+    private void initializeDatabase() throws SQLException, IOException {
 
-        initializeDatabaseProperties(databaseURL, diagnosticLevel, databaseDescriptorLocation, databaseName);
+        final DatabaseID databaseID = generateDatabaseID();
+
+        initializeDatabaseProperties(databaseID, diagnosticLevel, databaseDescriptorLocation, databaseName, tcpPort);
 
         // Create a connection so that the database starts up, but don't do anything with it here.
-        connection = DriverManager.getConnection(databaseURL.getURL(), PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+        connection = DriverManager.getConnection(databaseID.getURL(), PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
     }
 
-    public static void initializeDatabaseProperties(final DatabaseID databaseURL, final DiagnosticLevel diagnosticLevel, final String databaseDescriptorLocation, final String databaseName) throws IOException {
+    public static void initializeDatabaseProperties(final DatabaseID databaseID, final DiagnosticLevel diagnosticLevel, final String databaseDescriptorLocation, final String databaseName, final int tcpPort) throws IOException {
 
-        final LocalH2OProperties properties = new LocalH2OProperties(databaseURL);
+        final H2OPropertiesWrapper properties = H2OPropertiesWrapper.getWrapper(databaseID);
 
         try {
             properties.loadProperties();
@@ -423,21 +426,26 @@ public class H2O {
         properties.setProperty("descriptor", databaseDescriptorLocation);
         properties.setProperty("databaseName", databaseName);
 
+        if (tcpPort != 0) {
+            properties.setProperty("tcpPort", String.valueOf(tcpPort));
+        }
+
         properties.saveAndClose();
     }
 
     /**
      * Set the primary database URL in the browser to equal the URL of this database.
      * 
-     * @param databaseURL the database URL
      * @throws IOException if the server properties cannot be written
      * @throws SQLException if the server properties cannot be opened
      */
-    private void setUpWebLink(final DatabaseID databaseURL) throws IOException, SQLException {
+    private void setUpWebLink() throws IOException, SQLException {
+
+        final DatabaseID databaseID = generateDatabaseID();
 
         final Properties serverProperties = loadServerProperties();
         final List<String> servers = new LinkedList<String>();
-        final String url_as_string = databaseURL.getURL();
+        final String url_as_string = databaseID.getURL();
 
         for (int i = 0;; i++) {
             final String data = serverProperties.getProperty(String.valueOf(i));
@@ -492,7 +500,7 @@ public class H2O {
         return text;
     }
 
-    private DatabaseID generateDatabaseURL() {
+    private DatabaseID generateDatabaseID() {
 
         switch (databaseType) {
             case DISK: {

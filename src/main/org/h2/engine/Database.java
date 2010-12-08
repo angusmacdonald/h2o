@@ -111,7 +111,7 @@ import org.h2o.db.remote.IDatabaseRemote;
 import org.h2o.db.replication.MetaDataReplicaManager;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.locator.client.H2OLocatorInterface;
-import org.h2o.util.LocalH2OProperties;
+import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.TransactionNameGenerator;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.util.exceptions.StartupException;
@@ -334,14 +334,11 @@ public class Database implements DataHandler {
 
     private KeepAliveMessageThread keepAliveMessageThread;
 
-    //    private LocalH2OProperties localSettings = null;
-
     public Database(final String name, final ConnectionInfo ci, final String cipher) throws SQLException {
 
         Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.stachord");
 
         localSchema.add(Constants.H2O_SCHEMA);
-        //        localSchema.add("RESOURCE_MONITORING");
         localSchema.add(Constants.SCHEMA_INFORMATION);
 
         databaseName = name;
@@ -359,13 +356,10 @@ public class Database implements DataHandler {
         asynchronousQueryManager = new AsynchronousQueryManager(this);
 
         compareMode = new CompareMode(null, null, 0);
-
         systemTableRef = new SystemTableReference(this);
-
         databaseRemote = new ChordRemote(localMachineLocation, systemTableRef);
 
         persistent = ci.isPersistent();
-
         filePasswordHash = ci.getFilePasswordHash();
 
         if (!isManagementDB()) {
@@ -373,7 +367,7 @@ public class Database implements DataHandler {
             /*
              * Get Settings for Database.
              */
-            final LocalH2OProperties localSettings = new LocalH2OProperties(localMachineLocation);
+            final H2OPropertiesWrapper localSettings = H2OPropertiesWrapper.getWrapper(localMachineLocation);
             try {
                 localSettings.loadProperties();
             }
@@ -3153,7 +3147,7 @@ public class Database implements DataHandler {
 
     private void setDiagnosticLevel(final DatabaseID localMachineLocation) {
 
-        final LocalH2OProperties databaseProperties = new LocalH2OProperties(localMachineLocation);
+        final H2OPropertiesWrapper databaseProperties = H2OPropertiesWrapper.getWrapper(localMachineLocation);
         try {
             databaseProperties.loadProperties();
         }

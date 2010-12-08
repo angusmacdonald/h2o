@@ -21,7 +21,7 @@ import java.util.Set;
 
 import org.h2o.db.id.DatabaseID;
 import org.h2o.locator.DatabaseDescriptor;
-import org.h2o.util.LocalH2OProperties;
+import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.exceptions.StartupException;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -48,11 +48,10 @@ public class Settings {
         reservedTableNames.add("TABLE");
     }
 
-    private final LocalH2OProperties localSettings;
-
+    private final H2OPropertiesWrapper localSettings;
     private final DatabaseDescriptor globalSettings;
 
-    public Settings(final LocalH2OProperties localSettings, final DatabaseDescriptor databaseDescriptorFile) throws StartupException {
+    public Settings(final H2OPropertiesWrapper localSettings, final DatabaseDescriptor databaseDescriptorFile) throws StartupException {
 
         this.localSettings = localSettings;
         globalSettings = databaseDescriptorFile;
@@ -177,7 +176,7 @@ public class Settings {
         return defaults;
     }
 
-    public LocalH2OProperties getLocalSettings() {
+    public H2OPropertiesWrapper getLocalSettings() {
 
         return localSettings;
     }
@@ -198,7 +197,7 @@ public class Settings {
          * Load any existing properties file because there might be other info that we don't want to delete. For example, the location of
          * any locators.
          */
-        final LocalH2OProperties localSettings = new LocalH2OProperties(DatabaseID.parseURL(databaseName));
+        final H2OPropertiesWrapper localSettings = H2OPropertiesWrapper.getWrapper(DatabaseID.parseURL(databaseName));
         try {
             localSettings.loadProperties();
         }

@@ -56,9 +56,9 @@ public class DiskTestManager extends TestManager {
     public ConnectionDriver makeConnectionDriver(final int db_index) {
 
         final int db_port = first_db_port + db_index;
-        System.out.println("makeConnectionDriver1");
+
         final ConnectionDriver makeConnectionDriver = connection_driver_factory.makeConnectionDriver(db_port, database_base_directory_paths[db_index], DATABASE_NAME_ROOT, USER_NAME, PASSWORD, connections_to_be_closed);
-        System.out.println("makeConnectionDriver2");
+
         return makeConnectionDriver;
     }
 
@@ -106,6 +106,8 @@ public class DiskTestManager extends TestManager {
             db_args.add("-D" + DIAGNOSTIC_LEVEL.numericalValue());
 
             db_processes[i] = new ProcessManager().runJavaProcessLocal(H2O.class, db_args);
+
+            // TODO read the actual port used from the properties file.
         }
     }
 
@@ -113,6 +115,12 @@ public class DiskTestManager extends TestManager {
 
         for (final Process p : db_processes) {
             p.destroy();
+            try {
+                p.waitFor();
+            }
+            catch (final InterruptedException e) {
+                // Ignore.
+            }
         }
     }
 }

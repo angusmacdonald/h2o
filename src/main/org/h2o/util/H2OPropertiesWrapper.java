@@ -7,8 +7,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+
+import org.h2o.db.id.DatabaseID;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -22,36 +26,49 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
 public class H2OPropertiesWrapper {
 
     private final Properties properties;
-
     private final String propertiesFileLocation;
-
-    //    private FileOutputStream outputStream = null;
-    //
-    //    private FileInputStream inputStream = null;
 
     private String comment = "Properties File";
 
     private static final String TRUE = "true";
 
+    private static Map<String, H2OPropertiesWrapper> map = new HashMap<String, H2OPropertiesWrapper>();
+
     /**
      * Creates a properties wrapper for a given file.
      * 
-     * @param fileLocation
-     *            the location of the file containing properties
+     * @param fileLocation the location of the file containing properties
      */
-    public H2OPropertiesWrapper(final String fileLocation) {
+    private H2OPropertiesWrapper(final String fileLocation) {
 
         propertiesFileLocation = fileLocation;
         properties = new Properties();
     }
 
+    public static synchronized H2OPropertiesWrapper getWrapper(final String fileLocation) {
+
+        H2OPropertiesWrapper wrapper = map.get(fileLocation);
+        if (wrapper == null) {
+            wrapper = new H2OPropertiesWrapper(fileLocation);
+            map.put(fileLocation, wrapper);
+        }
+        return wrapper;
+    }
+
+    /**
+     * @param dbID the URL of this database instance. This is used to name and locate the properties file for this database on disk.
+     */
+    public static synchronized H2OPropertiesWrapper getWrapper(final DatabaseID dbID) {
+
+        return getWrapper(dbID.getPropertiesFilePath());
+    }
+
     /**
      * Load the properties file into memory.
      * 
-     * @throws IOException
-     *             if the properties file does not exist or couldn't be loaded.
+     * @throws IOException if the properties file does not exist or couldn't be loaded.
      */
-    public void loadProperties() throws IOException {
+    public synchronized void loadProperties() throws IOException {
 
         if (propertiesFileLocation.startsWith("http:")) { // Parse URL, request file from webpage.
 
@@ -94,7 +111,7 @@ public class H2OPropertiesWrapper {
      * 
      * @throws IOException
      */
-    public void createNewFile() throws IOException {
+    public synchronized void createNewFile() throws IOException {
 
         removePropertiesFile();
         final File f = new File(propertiesFileLocation);
@@ -115,11 +132,10 @@ public class H2OPropertiesWrapper {
     /**
      * Gets the property associated with a given key
      * 
-     * @param key
-     *            a key
+     * @param key a key
      * @return the corresponding property
      */
-    public String getProperty(final String key) {
+    public synchronized String getProperty(final String key) {
 
         return properties.getProperty(key);
     }
@@ -127,11 +143,10 @@ public class H2OPropertiesWrapper {
     /**
      * Tests whether the property for a given key is true.
      * 
-     * @param key
-     *            a key
+     * @param key a key
      * @return true if the property for the key is true
      */
-    public boolean isEnabled(final String key) {
+    public synchronized boolean isEnabled(final String key) {
 
         return TRUE.equals(getProperty(key));
     }
@@ -139,12 +154,10 @@ public class H2OPropertiesWrapper {
     /**
      * Sets the property for a given key, and saves to the backing file.
      * 
-     * @param key
-     *            a key
-     * @param value
-     *            the new value to be associated with the key
+     * @param key a key
+     * @param value the new value to be associated with the key
      */
-    public void setProperty(final String key, final String value) {
+    public synchronized void setProperty(final String key, final String value) {
 
         properties.setProperty(key, value);
     }
@@ -152,40 +165,19 @@ public class H2OPropertiesWrapper {
     /**
      * Sets the property comment.
      * 
-     * @param propertyComment
-     *            the comment
+     * @param propertyComment the comment
      */
-    public void setPropertyComment(final String propertyComment) {
+    public synchronized void setPropertyComment(final String propertyComment) {
 
         comment = propertyComment;
     }
 
-    private boolean removePropertiesFile() {
-
-        //        try {
-        //            close();
-        //        }
-        //        catch (final IOException e) {
-        //            e.printStackTrace();
-        //        }
+    private synchronized boolean removePropertiesFile() {
 
         final File f = new File(propertiesFileLocation);
 
         return f.delete();
     }
-
-    //    public void close() throws IOException {
-    //
-    //        if (inputStream != null) {
-    //            inputStream.close();
-    //        }
-    //        inputStream = null;
-    //
-    //        if (outputStream != null) {
-    //            outputStream.close();
-    //        }
-    //        outputStream = null;
-    //    }
 
     /**
      * Save the properties file and close it.
@@ -193,7 +185,7 @@ public class H2OPropertiesWrapper {
      * @throws IOException
      *             if the file couldn't be saved.
      */
-    public void saveAndClose() throws IOException {
+    public synchronized void saveAndClose() throws IOException {
 
         FileOutputStream outputStream = null;
         try {
@@ -215,8 +207,13 @@ public class H2OPropertiesWrapper {
      * 
      * @return a set of the keys in this properties file
      */
-    public Set<Object> getKeys() {
+    public synchronized Set<Object> getKeys() {
 
         return properties.keySet();
+    }
+
+    public synchronized String getPropertiesFileLocation() {
+
+        return propertiesFileLocation;
     }
 }

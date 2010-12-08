@@ -47,7 +47,7 @@ import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.locator.client.H2OLocatorInterface;
-import org.h2o.util.LocalH2OProperties;
+import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.viewer.H2OEventBus;
 import org.h2o.viewer.gwt.client.DatabaseStates;
@@ -432,7 +432,7 @@ public class MetaDataReplicaManager {
      */
     public void updateLocatorFiles(final boolean isSystemTable) throws Exception {
 
-        final LocalH2OProperties persistedInstanceInformation = new LocalH2OProperties(db.getURL());
+        final H2OPropertiesWrapper persistedInstanceInformation = H2OPropertiesWrapper.getWrapper(db.getURL());
         persistedInstanceInformation.loadProperties();
 
         final String descriptorLocation = persistedInstanceInformation.getProperty("descriptor");

@@ -13,7 +13,7 @@ import java.io.IOException;
 
 import org.h2o.db.id.DatabaseID;
 import org.h2o.locator.DatabaseDescriptor;
-import org.h2o.util.LocalH2OProperties;
+import org.h2o.util.H2OPropertiesWrapper;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -61,36 +61,26 @@ public class StaticServerSetup {
         final DatabaseDescriptor ddf = new DatabaseDescriptor("\\\\shell\\angus\\public_html\\databases\\" + databaseName + ".h2o");
         ddf.createPropertiesFile();
         ddf.setLocatorLocations(databaseName, "eigg:29999");
-        // System.out.println("\\\\shell\\angus\\public_html\\databases" +
-        // databaseName + ".h2o");
-        /*
-         * Setup locator file.
-         */
-        // DatabaseLocatorFile dlf = new DatabaseLocatorFile("angusDB",
-        // "\\\\shell\\angus\\public_html\\databases");
-        // dlf.setProperties("testDB", initialSchemaManager + "+" +
-        // ChordRemote.currentPort);
-        //
+
         /*
          * Setup bootstrap files.
          */
-        LocalH2OProperties knownHosts = new LocalH2OProperties(DatabaseID.parseURL(initialSchemaManager));
+        H2OPropertiesWrapper knownHosts = H2OPropertiesWrapper.getWrapper(DatabaseID.parseURL(initialSchemaManager));
         knownHosts.createNewFile();
         knownHosts.setProperty("descriptor", descriptorFile);
         knownHosts.setProperty("databaseName", databaseName);
         knownHosts.saveAndClose();
 
-        knownHosts = new LocalH2OProperties(DatabaseID.parseURL("jdbc:h2:tcp://localhost:9191/db_data/three/test_db"));
+        knownHosts = H2OPropertiesWrapper.getWrapper(DatabaseID.parseURL("jdbc:h2:tcp://localhost:9191/db_data/three/test_db"));
         knownHosts.createNewFile();
         knownHosts.setProperty("descriptor", descriptorFile);
         knownHosts.setProperty("databaseName", databaseName);
         knownHosts.saveAndClose();
 
-        knownHosts = new LocalH2OProperties(DatabaseID.parseURL("jdbc:h2:tcp://localhost:9292/db_data/two/test_db"));
+        knownHosts = H2OPropertiesWrapper.getWrapper(DatabaseID.parseURL("jdbc:h2:tcp://localhost:9292/db_data/two/test_db"));
         knownHosts.createNewFile();
         knownHosts.setProperty("descriptor", descriptorFile);
         knownHosts.setProperty("databaseName", databaseName);
         knownHosts.saveAndClose();
     }
-
 }
