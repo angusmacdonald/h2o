@@ -18,6 +18,8 @@ import org.h2.constant.SysProperties;
 import org.h2.message.Message;
 import org.h2.security.SecureSocketFactory;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.NetworkUtil;
 
 /**
@@ -158,7 +160,7 @@ public class NetUtils {
             final InetAddress bindAddress = getBindAddress();
             if (ssl) { return SecureSocketFactory.createServerSocket(port, bindAddress); }
             if (bindAddress == null) { return NetworkUtil.makeReusableServerSocket(port); }
-            return NetworkUtil.makeReusableServerSocket(port, bindAddress);
+            return NetworkUtil.makeReusableServerSocket(bindAddress, port);
         }
         catch (final BindException be) {
             throw Message.getSQLException(ErrorCode.EXCEPTION_OPENING_PORT_2, new String[]{"" + port, be.toString()}, be);
