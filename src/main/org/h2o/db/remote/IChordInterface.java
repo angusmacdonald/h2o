@@ -16,7 +16,7 @@ import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.interfaces.TableManagerRemote;
 
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
-import uk.ac.standrews.cs.stachord.impl.RemoteChordException;
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.stachord.interfaces.IChordNode;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
@@ -31,28 +31,22 @@ public interface IChordInterface {
      * Get the actual location of the System Table by first looking up the location where the 'schemamanager' lookup resoloves to, then
      * querying the database instance at this location for the location of the System Table.
      * 
-     * @return
-     * @throws RemoteChordException 
      */
-    public DatabaseID getSystemTableLocation() throws RemoteException, RemoteChordException;
+    DatabaseID getSystemTableLocation() throws RemoteException, RPCException;
 
     /**
      * Get a reference to the Chord node which is responsible for managing the database's System Table lookup, BUT NOT NECESSARILY THE
      * System Table ITSELF.
      * 
      * @return Remote reference to the chord node managing the System Table.
-     * @throws RemoteException
-     * @throws RemoteChordException 
      */
-    public IChordRemoteReference lookupSystemTableNodeLocation() throws RemoteChordException;
+    IChordRemoteReference lookupSystemTableNodeLocation() throws RPCException;
 
     /**
      * Get the remote chord reference for the local chord node. This can be used for comparison (e.g. to check whether a reference that has
      * been passed in is equal to the local reference) or for lookup operations.
-     * 
-     * @return
      */
-    public IChordRemoteReference getLocalChordReference();
+    IChordRemoteReference getLocalChordReference();
 
     /**
      * Find the database instance located at the location given. The parameters specify the location of the node's RMI registry. This
@@ -68,7 +62,7 @@ public interface IChordInterface {
      * @throws NotBoundException
      *             Thrown if there wasn't a database instance interface exposed on the RMI proxy.
      */
-    public DatabaseInstanceRemote getDatabaseInstanceAt(String hostname, int port) throws RemoteException, NotBoundException;
+    DatabaseInstanceRemote getDatabaseInstanceAt(String hostname, int port) throws RemoteException, NotBoundException;
 
     /**
      * Finds the location of the chord node responsible for the given key.
@@ -76,10 +70,8 @@ public interface IChordInterface {
      * @param key
      *            The key to be used in the lookup.
      * @return The node responsible for the given key.
-     * @throws RemoteException
-     * @throws RemoteChordException 
      */
-    public IChordRemoteReference getLookupLocation(IKey key) throws RemoteChordException;
+    IChordRemoteReference getLookupLocation(IKey key) throws RPCException;
 
     /**
      * Return a reference to the local chord node. This can be used to find the local node's successor or predecessor, or to check whether
@@ -87,7 +79,7 @@ public interface IChordInterface {
      * 
      * @return the chord node of the local database instance.
      */
-    public IChordNode getChordNode();
+    IChordNode getChordNode();
 
     /**
      * Bind the given Table Manager to the local registry. This isn't used to access Table Managers, but to maintain references to them to
@@ -98,6 +90,5 @@ public interface IChordInterface {
      * @param stub
      *            Remote Table Manager proxy.
      */
-    public void bind(String fullTableName, TableManagerRemote stub);
-
+    void bind(String fullTableName, TableManagerRemote stub);
 }

@@ -19,7 +19,7 @@ import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.locator.client.H2OLocatorInterface;
 import org.h2o.util.exceptions.StartupException;
 
-import uk.ac.standrews.cs.stachord.impl.RemoteChordException;
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 /**
@@ -87,9 +87,8 @@ public interface IDatabaseRemote {
      * @throws RemoteException
      *             Thrown if there is a problem accessing the RMI registry.
      * @return Database instance remote proxy for the database at the given location.
-     * @throws RemoteChordException 
      */
-    public DatabaseInstanceRemote getDatabaseInstanceAt(IChordRemoteReference lookupLocation) throws RemoteException, RemoteChordException;
+    public DatabaseInstanceRemote getDatabaseInstanceAt(IChordRemoteReference lookupLocation) throws RemoteException, RPCException;
 
     /**
      * Find the database instance located at the location given. The parameter is used to get the hostname and RMI port of that chord nodes
