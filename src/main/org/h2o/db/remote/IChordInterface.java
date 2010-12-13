@@ -16,6 +16,7 @@ import org.h2o.db.interfaces.DatabaseInstanceRemote;
 import org.h2o.db.interfaces.TableManagerRemote;
 
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
+import uk.ac.standrews.cs.stachord.impl.RemoteChordException;
 import uk.ac.standrews.cs.stachord.interfaces.IChordNode;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
@@ -31,8 +32,9 @@ public interface IChordInterface {
      * querying the database instance at this location for the location of the System Table.
      * 
      * @return
+     * @throws RemoteChordException 
      */
-    public DatabaseID getSystemTableLocation() throws RemoteException;
+    public DatabaseID getSystemTableLocation() throws RemoteException, RemoteChordException;
 
     /**
      * Get a reference to the Chord node which is responsible for managing the database's System Table lookup, BUT NOT NECESSARILY THE
@@ -40,8 +42,9 @@ public interface IChordInterface {
      * 
      * @return Remote reference to the chord node managing the System Table.
      * @throws RemoteException
+     * @throws RemoteChordException 
      */
-    public IChordRemoteReference lookupSystemTableNodeLocation() throws RemoteException;
+    public IChordRemoteReference lookupSystemTableNodeLocation() throws RemoteChordException;
 
     /**
      * Get the remote chord reference for the local chord node. This can be used for comparison (e.g. to check whether a reference that has
@@ -74,8 +77,9 @@ public interface IChordInterface {
      *            The key to be used in the lookup.
      * @return The node responsible for the given key.
      * @throws RemoteException
+     * @throws RemoteChordException 
      */
-    public IChordRemoteReference getLookupLocation(IKey key) throws RemoteException;
+    public IChordRemoteReference getLookupLocation(IKey key) throws RemoteChordException;
 
     /**
      * Return a reference to the local chord node. This can be used to find the local node's successor or predecessor, or to check whether
