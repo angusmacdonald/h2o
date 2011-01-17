@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.concurrent.TimeoutException;
 
 import org.h2o.test.fixture.DiskConnectionDriverFactory;
 import org.h2o.test.fixture.DiskTestManager;
@@ -21,6 +22,8 @@ import org.junit.Test;
 import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
+
+import com.mindbright.ssh2.SSH2Exception;
 
 /**
  * Test for views.
@@ -41,7 +44,7 @@ public class H2TestView extends H2OTestBase {
 
     @Override
     @Before
-    public void setUp() throws SQLException, IOException, UnknownPlatformException, UndefinedDiagnosticLevelException {
+    public void setUp() throws SQLException, IOException, UnknownPlatformException, UndefinedDiagnosticLevelException, SSH2Exception, TimeoutException {
 
         super.setUp();
 

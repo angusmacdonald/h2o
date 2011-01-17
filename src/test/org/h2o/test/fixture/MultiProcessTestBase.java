@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 import org.h2.engine.Constants;
 import org.h2.tools.DeleteDbFiles;
@@ -38,6 +39,8 @@ import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+
+import com.mindbright.ssh2.SSH2Exception;
 
 public class MultiProcessTestBase extends TestBase {
 
@@ -130,7 +133,6 @@ public class MultiProcessTestBase extends TestBase {
 
         sleep(2000);
         createConnectionsToDatabases();
-
     }
 
     private void killExistingProcessesIfNotOnWindows() throws IOException {
@@ -138,7 +140,15 @@ public class MultiProcessTestBase extends TestBase {
         final HostDescriptor host_descriptor = new HostDescriptor();
 
         if (!host_descriptor.getPlatform().getName().equals(PlatformDescriptor.NAME_WINDOWS)) {
-            host_descriptor.getProcessManager().killMatchingProcessesLocal(StartDatabaseInstance.class.getSimpleName());
+            try {
+                host_descriptor.getProcessManager().killMatchingProcesses(StartDatabaseInstance.class.getSimpleName());
+            }
+            catch (final SSH2Exception e) {
+                ErrorHandling.error("unexpected exception on local host");
+            }
+            catch (final TimeoutException e) {
+                ErrorHandling.error("unexpected exception on local host");
+            }
         }
     }
 
@@ -210,8 +220,8 @@ public class MultiProcessTestBase extends TestBase {
 
     /**
      * Get a set of all database instances which hold system table state
-     * @throws IOException 
-     * @throws LocatorException 
+     * @throws IOException
+     * @throws LocatorException
      */
     private List<String> findSystemTableInstances() throws IOException, LocatorException {
 
@@ -275,8 +285,8 @@ public class MultiProcessTestBase extends TestBase {
 
     /**
      * Get a set of all database instances which don't hold System Table state.
-     * @throws LocatorException 
-     * @throws IOException 
+     * @throws LocatorException
+     * @throws IOException
      */
     protected List<String> findNonSystemTableInstances() throws IOException, LocatorException {
 
@@ -296,7 +306,7 @@ public class MultiProcessTestBase extends TestBase {
 
     /**
      * Query the System Table's persisted state (specifically the H2O_TABLE table) and check that there are the correct number of entries.
-     * 
+     *
      * @param connection
      *            Connection to execute the query on.
      * @param expectedEntries
@@ -328,7 +338,7 @@ public class MultiProcessTestBase extends TestBase {
     /**
      * Query the System Table's persisted state (specifically the H2O.H2O_TABLEMANAGER_STATE table) and check that there are the correct
      * number of entries.
-     * 
+     *
      * @param connection
      *            Connection to execute the query on.
      * @param expectedEntries
@@ -358,7 +368,7 @@ public class MultiProcessTestBase extends TestBase {
 
     /**
      * Get the name of the H2O meta table holding table information in the System Table. Uses reflection to access this value.
-     * 
+     *
      * @return This value will be something like 'H2O.H2O_TABLE', or null if the method couldn't find the value using reflection.
      */
     private String getTableMetaTableName() {
@@ -384,7 +394,7 @@ public class MultiProcessTestBase extends TestBase {
     /**
      * Select all entries from the test table. Checks that the number of entries in the table matches the number of entries expected.
      * Matches the contents of the first two entries as well.
-     * 
+     *
      * @param expectedEntries
      *            The number of entries that should be in the test table.
      * @param localOnly
@@ -541,7 +551,7 @@ public class MultiProcessTestBase extends TestBase {
 
     /**
      * Starts all databases, ensuring the first database, 'one', will be the initial System Table if the parameter is true.
-     * 
+     *
      * @throws InterruptedException
      */
     private void startDatabases(final boolean guaranteeOneIsSystemTable) throws InterruptedException {
@@ -558,7 +568,7 @@ public class MultiProcessTestBase extends TestBase {
 
     /**
      * Start all of the databases specified.
-     * 
+     *
      * @param databasesToStart
      *            The databases that will be started by this method.
      */
@@ -571,7 +581,7 @@ public class MultiProcessTestBase extends TestBase {
 
     /**
      * Start the specified database on the specified port.
-     * 
+     *
      * @param connectionString
      *            Connection string for the database being started.
      * @param port
@@ -586,7 +596,7 @@ public class MultiProcessTestBase extends TestBase {
         args.add("-p" + port);
 
         try {
-            processes.put(connectionString, new ProcessManager().runJavaProcessLocal(StartDatabaseInstance.class, args));
+            processes.put(connectionString, new ProcessManager().runJavaProcess(StartDatabaseInstance.class, args));
         }
         catch (final IOException e) {
             ErrorHandling.error("Failed to create new database process.");
@@ -594,11 +604,17 @@ public class MultiProcessTestBase extends TestBase {
         catch (final UnknownPlatformException e) {
             ErrorHandling.error("Failed to create new database process.");
         }
+        catch (final SSH2Exception e) {
+            ErrorHandling.error("Failed to create new database process.");
+        }
+        catch (final TimeoutException e) {
+            ErrorHandling.error("Failed to create new database process.");
+        }
     }
 
     /**
      * Start the specified database. As the port is not specified as a parameter the connection string must be parsed to find it.
-     * 
+     *
      * @param connectionString
      *            Database which is about to be started.
      */
@@ -642,7 +658,7 @@ public class MultiProcessTestBase extends TestBase {
 
     /**
      * Create a connection to the database specified by the connection string parameter.
-     * 
+     *
      * @param connectionString
      *            Database URL of the database which this method connects to.
      * @return The newly created connection.

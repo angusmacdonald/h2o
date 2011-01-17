@@ -3,12 +3,15 @@ package org.h2o.test.fixture;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
 import org.junit.Before;
 
 import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
+
+import com.mindbright.ssh2.SSH2Exception;
 
 public abstract class H2OTestBase {
 
@@ -18,21 +21,23 @@ public abstract class H2OTestBase {
 
     /**
      * Sets up the test.
-     * 
+     *
      * @throws SQLException if fixture setup fails
      * @throws IOException if fixture setup fails
-     * @throws UnknownPlatformException 
-     * @throws UndefinedDiagnosticLevelException 
+     * @throws UnknownPlatformException
+     * @throws UndefinedDiagnosticLevelException
+     * @throws TimeoutException
+     * @throws SSH2Exception
      */
     @Before
-    public void setUp() throws SQLException, IOException, UnknownPlatformException, UndefinedDiagnosticLevelException {
+    public void setUp() throws SQLException, IOException, UnknownPlatformException, UndefinedDiagnosticLevelException, SSH2Exception, TimeoutException {
 
         getTestManager().setUp();
     }
 
     /**
      * Tears down the test, removing persistent state.
-     * 
+     *
      * @throws SQLException if fixture tear-down fails
      */
     @After
@@ -43,7 +48,7 @@ public abstract class H2OTestBase {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public void startup() throws IOException, UnknownPlatformException {
+    public void startup() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
 
         getTestManager().startup();
     }

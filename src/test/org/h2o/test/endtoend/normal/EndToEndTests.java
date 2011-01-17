@@ -26,6 +26,7 @@ package org.h2o.test.endtoend.normal;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeoutException;
 
 import org.h2o.test.endtoend.fixture.EndToEndConnectionDriver;
 import org.h2o.test.endtoend.fixture.EndToEndTestsCommon;
@@ -33,6 +34,8 @@ import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
+
+import com.mindbright.ssh2.SSH2Exception;
 
 /**
  * User-oriented tests.
@@ -43,7 +46,7 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
 
     /**
       * Checks that a new database can be created, data inserted and read back.
-      * 
+      *
       * @throws SQLException if the test fails
       * @throws IOException if the test fails
       */
@@ -64,13 +67,15 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
 
     /**
      * Checks that data can be inserted during one instantiation of a database and read in another.
-     * 
+     *
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
      * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
+     * @throws TimeoutException
+     * @throws SSH2Exception
      */
     @Test
-    public void persistence() throws SQLException, IOException, UnknownPlatformException {
+    public void persistence() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
 
         Diagnostic.trace();
 
@@ -92,7 +97,7 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
 
     /**
      * Checks that data that has been inserted but not committed is visible within the same transaction.
-     * 
+     *
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
      */
@@ -115,13 +120,15 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
      * Checks that data that has been inserted is correctly rolled back when auto-commit is disabled and there is no explicit commit.
      * A table is created and populated in the first instantiation of the database. The second instantiation tries to access the table,
      * which should fail since the transaction creating it did not commit.
-     * 
+     *
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
      * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
+     * @throws TimeoutException
+     * @throws SSH2Exception
      */
     @Test
-    public void rollbackWithoutAutoCommit() throws SQLException, IOException, UnknownPlatformException {
+    public void rollbackWithoutAutoCommit() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
 
         Diagnostic.trace();
 
@@ -143,13 +150,15 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
 
     /**
      * Checks that data can be inserted during one instantiation of a database and read in another, with auto-commit disabled and using explicit commit.
-     * 
+     *
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
      * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
+     * @throws TimeoutException
+     * @throws SSH2Exception
      */
     @Test
-    public void explicitCommit() throws SQLException, IOException, UnknownPlatformException {
+    public void explicitCommit() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
 
         Diagnostic.trace();
 
@@ -173,13 +182,15 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
 
     /**
      * Checks that an attempt to recreate an existing table fails as expected.
-     * 
+     *
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
      * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
+     * @throws TimeoutException
+     * @throws SSH2Exception
      */
     @Test
-    public void tableCantBeCreatedTwice() throws SQLException, IOException, UnknownPlatformException {
+    public void tableCantBeCreatedTwice() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
 
         Diagnostic.trace();
 
@@ -200,13 +211,15 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
 
     /**
      * Checks that an attempt to recreate an existing table is successful when guarded by "IF NOT EXISTS".
-     * 
+     *
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
      * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
+     * @throws TimeoutException
+     * @throws SSH2Exception
      */
     @Test
-    public void createIfNotExists() throws SQLException, IOException, UnknownPlatformException {
+    public void createIfNotExists() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
 
         Diagnostic.trace();
 
@@ -227,13 +240,15 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
 
     /**
      * Checks that a series of values can be inserted during one instantiation of a database and read in another, with auto-commit disabled and using explicit commit.
-     * 
+     *
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
      * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
+     * @throws TimeoutException
+     * @throws SSH2Exception
      */
     @Test
-    public void multipleInserts() throws SQLException, IOException, UnknownPlatformException {
+    public void multipleInserts() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
 
         Diagnostic.trace();
 
@@ -260,16 +275,18 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
     /**
      * Checks that updates can be performed concurrently. The test starts two threads, each performing an update to the same table, with an artificial delay
      * to increase the probability of temporal overlap.
-     * 
+     *
      * The test currently fails due to an "unexpected code path" error. When that is fixed the test should be changed to make the update threads retry on
      * error, since it's legitimate for an update to fail due to not being able to obtain locks.
-     * 
+     *
      * @throws SQLException if the test fails
      * @throws IOException if the test fails
      * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
+     * @throws TimeoutException
+     * @throws SSH2Exception
      */
     @Test
-    public void concurrentUpdates() throws SQLException, IOException, UnknownPlatformException {
+    public void concurrentUpdates() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
 
         Diagnostic.trace();
 

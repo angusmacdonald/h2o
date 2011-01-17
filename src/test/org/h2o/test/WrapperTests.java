@@ -20,6 +20,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import org.h2.tools.DeleteDbFiles;
 import org.h2.util.NetUtils;
@@ -36,6 +37,9 @@ import uk.ac.standrews.cs.nds.remote_management.ProcessManager;
 import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
+
+import com.mindbright.ssh2.SSH2Exception;
 
 public class WrapperTests {
 
@@ -62,7 +66,7 @@ public class WrapperTests {
     }
 
     @Test
-    public void startSingleDatabaseInstance() throws InterruptedException {
+    public void startSingleDatabaseInstance() throws InterruptedException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
 
         killExistingProcessesIfNotOnWindows();
 
@@ -80,18 +84,7 @@ public class WrapperTests {
             locatorArgs.add("-d");
             locatorArgs.add("-f'" + defaultLocation + "'");
 
-            try {
-
-                locatorProcess = new ProcessManager().runJavaProcessLocal(H2OLocator.class, locatorArgs);
-            }
-            catch (final IOException e) {
-                e.printStackTrace();
-                fail("Unexpected IOException.");
-            }
-            catch (final UnknownPlatformException e) {
-                e.printStackTrace();
-                fail("Unexpected UnknownPlatformException.");
-            }
+            locatorProcess = new ProcessManager().runJavaProcess(H2OLocator.class, locatorArgs);
 
             Thread.sleep(1000);
 
@@ -125,20 +118,26 @@ public class WrapperTests {
         final HostDescriptor host_descriptor = new HostDescriptor();
         if (!host_descriptor.getPlatform().getName().equals(PlatformDescriptor.NAME_WINDOWS)) {
             try {
-                host_descriptor.getProcessManager().killMatchingProcessesLocal(H2OLocator.class.getSimpleName());
-                host_descriptor.getProcessManager().killMatchingProcessesLocal(H2O.class.getSimpleName());
+                host_descriptor.getProcessManager().killMatchingProcesses(H2OLocator.class.getSimpleName());
+                host_descriptor.getProcessManager().killMatchingProcesses(H2O.class.getSimpleName());
             }
             catch (final IOException e1) {
 
                 e1.printStackTrace();
                 //Error thrown if no matching processes were found.
             }
+            catch (final SSH2Exception e) {
+                ErrorHandling.error("unexpected exception on local host");
+            }
+            catch (final TimeoutException e) {
+                ErrorHandling.error("unexpected exception on local host");
+            }
         }
     }
 
     /**
      * Query the database at the specified location.
-     * 
+     *
      * @param databaseURL
      */
     private void testDatabaseAccess(final String databaseURL) {
@@ -180,31 +179,27 @@ public class WrapperTests {
 
     /**
      * Start a new database instance on the port specified.
-     * 
+     *
      * @param databasePort
      * @param databaseProcess
+     * @throws TimeoutException
+     * @throws SSH2Exception
+     * @throws UnknownPlatformException
+     * @throws IOException
      */
-    private void startDatabaseInSeparateProcess(final String databasePort) {
+    private void startDatabaseInSeparateProcess(final String databasePort) throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
 
         /*
          * Start the database instance.
          */
-        try {
-            final List<String> databaseArgs = new LinkedList<String>();
+        final List<String> databaseArgs = new LinkedList<String>();
 
-            databaseArgs.add("-n" + databaseName);
-            databaseArgs.add("-p" + databasePort);
-            databaseArgs.add("-d'" + defaultLocation + File.separator + databaseName + ".h2od'");
-            databaseArgs.add("-f'" + defaultLocation + "'");
+        databaseArgs.add("-n" + databaseName);
+        databaseArgs.add("-p" + databasePort);
+        databaseArgs.add("-d'" + defaultLocation + File.separator + databaseName + ".h2od'");
+        databaseArgs.add("-f'" + defaultLocation + "'");
 
-            databaseProcess = new ProcessManager().runJavaProcessLocal(H2O.class, databaseArgs);
-        }
-        catch (final IOException e) {
-            fail("Unexpected IOException.");
-        }
-        catch (final UnknownPlatformException e) {
-            fail("Unexpected UnknownPlatformException.");
-        }
+        databaseProcess = new ProcessManager().runJavaProcess(H2O.class, databaseArgs);
     }
 
     private String extractDatabaseLocation(final String databasePort, final String databaseName, String defaultLocation) {

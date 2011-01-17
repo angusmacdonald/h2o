@@ -4,11 +4,14 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import org.h2o.H2O;
 
 import uk.ac.standrews.cs.nds.remote_management.ProcessManager;
 import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
+
+import com.mindbright.ssh2.SSH2Exception;
 
 public class DiskTestManager extends TestManager {
 
@@ -34,7 +37,7 @@ public class DiskTestManager extends TestManager {
     // -------------------------------------------------------------------------------------------------------
 
     @Override
-    public void startup() throws IOException, UnknownPlatformException {
+    public void startup() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
 
         super.startup();
 
@@ -89,7 +92,7 @@ public class DiskTestManager extends TestManager {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private void startupDatabaseProcesses() throws IOException, UnknownPlatformException {
+    private void startupDatabaseProcesses() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
 
         db_processes = new Process[database_base_directory_paths.length];
 
@@ -105,7 +108,7 @@ public class DiskTestManager extends TestManager {
             db_args.add("-d" + descriptor_file_path);
             db_args.add("-D" + DIAGNOSTIC_LEVEL.numericalValue());
 
-            db_processes[i] = new ProcessManager().runJavaProcessLocal(H2O.class, db_args);
+            db_processes[i] = new ProcessManager().runJavaProcess(H2O.class, db_args);
 
             // TODO read the actual port used from the properties file.
         }

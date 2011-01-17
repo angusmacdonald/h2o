@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 import org.h2.engine.Constants;
 import org.h2.tools.DeleteDbFiles;
@@ -50,9 +51,11 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
+import com.mindbright.ssh2.SSH2Exception;
+
 /**
  * Class which conducts tests on <i>n</i> in-memory databases running at the same time.
- * 
+ *
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class LocatorDatabaseTests extends TestBase {
@@ -159,7 +162,7 @@ public class LocatorDatabaseTests extends TestBase {
 
     /**
      * Starts up every database then creates a test table on one of them.
-     * @throws SQLException 
+     * @throws SQLException
      */
     @Test
     public void createTestTable() throws SQLException {
@@ -176,11 +179,11 @@ public class LocatorDatabaseTests extends TestBase {
     /**
      * Starts up every database, creates a test table, kills every database, restarts, then checks that the test table can still be
      * accessed.
-     * 
+     *
      * @throws InterruptedException
-     * @throws SQLException 
-     * @throws LocatorException 
-     * @throws IOException 
+     * @throws SQLException
+     * @throws LocatorException
+     * @throws IOException
      */
     @Test
     public void killDatabasesThenRestart() throws InterruptedException, SQLException, IOException, LocatorException {
@@ -216,7 +219,7 @@ public class LocatorDatabaseTests extends TestBase {
 
     /**
      * One node gets a majority while another backs out then tries again.
-     * 
+     *
      * @throws InterruptedException
      */
     @Test
@@ -237,8 +240,8 @@ public class LocatorDatabaseTests extends TestBase {
 
     /**
      * Databases restart but no System Table instances are running. They shouldn't be able to start and will fail eventually.
-     * @throws LocatorException 
-     * @throws IOException 
+     * @throws LocatorException
+     * @throws IOException
      */
     @Test
     public void noSystemTableRunning() throws InterruptedException, IOException, LocatorException {
@@ -285,8 +288,8 @@ public class LocatorDatabaseTests extends TestBase {
     /**
      * Databases restart but no System Table instances are running. They shouldn't be able to start initially. Then a System Table instance
      * is started and they should connect and operate normally.
-     * @throws LocatorException 
-     * @throws IOException 
+     * @throws LocatorException
+     * @throws IOException
      */
     @Test
     public void noSystemTableRunningAtFirst() throws InterruptedException, IOException, LocatorException {
@@ -341,12 +344,12 @@ public class LocatorDatabaseTests extends TestBase {
 
     /**
      * Codenamed Problem B.
-     * 
+     *
      * Connect to existing Database instance with ST state, but find no ST running.
-     * 
+     *
      * @throws InterruptedException
-     * @throws LocatorException 
-     * @throws IOException 
+     * @throws LocatorException
+     * @throws IOException
      */
     @Test
     public void systemTableMigrationOnFailure() throws InterruptedException, IOException, LocatorException {
@@ -391,12 +394,12 @@ public class LocatorDatabaseTests extends TestBase {
 
     /**
      * Codenamed Problem B.
-     * 
+     *
      * Connect to existing Database instance with ST state and TM state, but find no ST or TM running.
-     * 
+     *
      * @throws InterruptedException
-     * @throws LocatorException 
-     * @throws IOException 
+     * @throws LocatorException
+     * @throws IOException
      */
     @Test
     public void tableManagerMigrationOnFailure() throws InterruptedException, IOException, LocatorException {
@@ -444,9 +447,9 @@ public class LocatorDatabaseTests extends TestBase {
 
     /**
      * Codenamed Problem B.
-     * 
+     *
      * Connect to existing Database instance with ST state, but find no ST running.
-     * 
+     *
      * @throws InterruptedException
      */
     @Test
@@ -458,7 +461,7 @@ public class LocatorDatabaseTests extends TestBase {
     /**
      * When a database is first started the locator server is not running so an error is thrown. Then the locator server is started and the
      * database must now start.
-     * 
+     *
      * This tests an edge case where the first time the database is started (before failing) it creates files on disk, so the second time it
      * thinks there should be system table tables on disk already.
      */
@@ -516,8 +519,8 @@ public class LocatorDatabaseTests extends TestBase {
 
     /**
      * Get a set of all database instances which hold system table state
-     * @throws IOException 
-     * @throws LocatorException 
+     * @throws IOException
+     * @throws LocatorException
      */
     private List<String> findSystemTableInstances() throws IOException, LocatorException {
 
@@ -570,8 +573,8 @@ public class LocatorDatabaseTests extends TestBase {
 
     /**
      * Get a set of all database instances which don't hold System Table state.
-     * @throws LocatorException 
-     * @throws IOException 
+     * @throws LocatorException
+     * @throws IOException
      */
     private List<String> findNonSystemTableInstances() throws IOException, LocatorException {
 
@@ -591,7 +594,7 @@ public class LocatorDatabaseTests extends TestBase {
 
     /**
      * Query the System Table's persisted state (specifically the H2O_TABLE table) and check that there are the correct number of entries.
-     * 
+     *
      * @param connection
      *            Connection to execute the query on.
      * @param expectedEntries
@@ -622,7 +625,7 @@ public class LocatorDatabaseTests extends TestBase {
 
     /**
      * Get the name of the H2O meta table holding table information in the System Table. Uses reflection to access this value.
-     * 
+     *
      * @return This value will be something like 'H2O.H2O_TABLE', or null if the method couldn't find the value using reflection.
      */
     private String getTableMetaTableName() {
@@ -643,7 +646,7 @@ public class LocatorDatabaseTests extends TestBase {
     /**
      * Select all entries from the test table. Checks that the number of entries in the table matches the number of entries expected.
      * Matches the contents of the first two entries as well.
-     * 
+     *
      * @param expectedEntries
      *            The number of entries that should be in the test table.
      * @return true if the connection was active. false if the connection wasn't open.
@@ -657,7 +660,7 @@ public class LocatorDatabaseTests extends TestBase {
     /**
      * Select all entries from the test table. Checks that the number of entries in the table matches the number of entries expected.
      * Matches the contents of the first two entries as well.
-     * 
+     *
      * @param expectedEntries
      *            The number of entries that should be in the test table.
      * @return true if the connection was active. false if the connection wasn't open.
@@ -793,7 +796,7 @@ public class LocatorDatabaseTests extends TestBase {
 
     /**
      * Start all of the databases specified.
-     * 
+     *
      * @param databasesToStart
      *            The databases that will be started by this method.
      */
@@ -806,7 +809,7 @@ public class LocatorDatabaseTests extends TestBase {
 
     /**
      * Start the specified database on the specified port.
-     * 
+     *
      * @param connectionString
      *            Connection string for the database being started.
      * @param port
@@ -821,7 +824,7 @@ public class LocatorDatabaseTests extends TestBase {
         args.add("-p" + port);
 
         try {
-            processes.put(connectionString, new ProcessManager().runJavaProcessLocal(StartDatabaseInstance.class, args));
+            processes.put(connectionString, new ProcessManager().runJavaProcess(StartDatabaseInstance.class, args));
         }
         catch (final IOException e) {
             ErrorHandling.error("Failed to create new database process.");
@@ -829,11 +832,17 @@ public class LocatorDatabaseTests extends TestBase {
         catch (final UnknownPlatformException e) {
             ErrorHandling.error("Failed to create new database process.");
         }
+        catch (final SSH2Exception e) {
+            ErrorHandling.error("Failed to create new database process.");
+        }
+        catch (final TimeoutException e) {
+            ErrorHandling.error("Failed to create new database process.");
+        }
     }
 
     /**
      * Start the specified database. As the port is not specified as a parameter the connection string must be parsed to find it.
-     * 
+     *
      * @param connectionString
      *            Database which is about to be started.
      */
@@ -861,7 +870,7 @@ public class LocatorDatabaseTests extends TestBase {
 
     /**
      * Create a connection to the database specified by the connection string parameter.
-     * 
+     *
      * @param connectionString
      *            Database URL of the database which this method connects to.
      * @return The newly created connection.

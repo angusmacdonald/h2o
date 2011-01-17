@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.concurrent.TimeoutException;
 
 import org.h2.engine.Constants;
 import org.h2o.test.fixture.ConnectionDriver;
@@ -31,9 +32,11 @@ import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
 
+import com.mindbright.ssh2.SSH2Exception;
+
 /**
  * Tests on multiple databases.
- * 
+ *
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class ChordTestsDiskDBFailingSporadically extends H2OTestBase {
@@ -55,7 +58,7 @@ public class ChordTestsDiskDBFailingSporadically extends H2OTestBase {
 
     @Override
     @Before
-    public void setUp() throws SQLException, IOException, UnknownPlatformException, UndefinedDiagnosticLevelException {
+    public void setUp() throws SQLException, IOException, UnknownPlatformException, UndefinedDiagnosticLevelException, SSH2Exception, TimeoutException {
 
         super.setUp();
 
@@ -98,7 +101,7 @@ public class ChordTestsDiskDBFailingSporadically extends H2OTestBase {
     /**
      * This sequence of events used to lock the sys table causing entries to not be included in the System Table. If this fails or holds
      * then the problem is still there.
-     * @throws SQLException 
+     * @throws SQLException
      */
     @Test(timeout = 60000)
     public void sysTableLock() throws SQLException {
@@ -119,8 +122,8 @@ public class ChordTestsDiskDBFailingSporadically extends H2OTestBase {
     /**
      * Tests that when the Table Manager is migrated another database instance is able to connect to the new manager without any manual
      * intervention.
-     * @throws SQLException 
-     * 
+     * @throws SQLException
+     *
      */
     @Test(timeout = 60000)
     public void tableManagerMigration() throws SQLException {
@@ -140,8 +143,8 @@ public class ChordTestsDiskDBFailingSporadically extends H2OTestBase {
 
     /**
      * Tests that when the Table Manager is migrated another database instance is able to migrate back to the original instance without error.
-     * @throws SQLException 
-     * 
+     * @throws SQLException
+     *
      */
     @Test(timeout = 60000)
     public void tableManagerDoubleMigration() throws SQLException {
@@ -165,7 +168,7 @@ public class ChordTestsDiskDBFailingSporadically extends H2OTestBase {
 
     /**
      * Tests that when migration fails when an incorrect table name is given.
-     * @throws SQLException 
+     * @throws SQLException
      */
     @Test(expected = SQLException.class, timeout = 60000)
     public void tableManagerMigrationFail() throws SQLException {
@@ -176,7 +179,7 @@ public class ChordTestsDiskDBFailingSporadically extends H2OTestBase {
     /**
      * Tests that when the System Table is migrated another database instance is able to connect to the new manager without any manual
      * intervention.
-     * @throws SQLException 
+     * @throws SQLException
      */
     @Test(timeout = 60000)
     public void systemTableMigration() throws SQLException {
@@ -189,7 +192,7 @@ public class ChordTestsDiskDBFailingSporadically extends H2OTestBase {
 
     /**
      * Tests that when the System Table is migrated another database instance and back to the original instance that it still works.
-     * @throws SQLException 
+     * @throws SQLException
      */
     @Test(timeout = 60000)
     public void doubleSystemTableMigration() throws SQLException {

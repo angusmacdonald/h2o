@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 
 import org.h2.engine.Constants;
 import org.h2o.H2OLocator;
@@ -44,30 +45,32 @@ import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
+import com.mindbright.ssh2.SSH2Exception;
+
 /**
  * Base class for test managers that abstract over the details of instantiating and cleaning up a set of in-memory or on-disk database instances.
- * 
+ *
  * Each manager instance creates a locator process and a number of databases. The ports and file names used are changed in successive tests
  * to reduce interference.
- * 
+ *
  * The port on which the locator listens is selected from a given range
  * and incremented on each test. For on-disk databases the same is true for the database port.
- * 
+ *
  * For in-memory databases the file system structure is as follows:
- * 
+ *
  * db_files
  *    db[timestamp].properties - database properties
- *    
+ *
  * db_config_[timestamp]
  *    db.h2od - database descriptor
  *    db[port].locator - locator descriptor
- * 
+ *
  * For on-disk databases the file system structure is as follows:
- * 
+ *
  * db_data_[timestamp]
  *    db[port].properties - database properties
  *    db[port].* - database files
- *    
+ *
  * db_config_[timestamp]
  *    db.h2od - database descriptor
  *    db[port].locator - locator descriptor
@@ -138,7 +141,7 @@ public abstract class TestManager implements ITestManager {
 
     /**
      * Initialises a test manager using a given number of database instances.
-     * 
+     *
      * @param number_of_databases the number of databases
      */
     public TestManager(final int number_of_databases) {
@@ -149,7 +152,7 @@ public abstract class TestManager implements ITestManager {
     // -------------------------------------------------------------------------------------------------------
 
     @Override
-    public void setUp() throws IOException, UnknownPlatformException {
+    public void setUp() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
 
         Diagnostic.setLevel(DIAGNOSTIC_LEVEL);
         Diagnostic.setTimestampFlag(true);
@@ -178,7 +181,7 @@ public abstract class TestManager implements ITestManager {
     }
 
     @Override
-    public void startup() throws IOException, UnknownPlatformException {
+    public void startup() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
 
         connections_to_be_closed = new HashSet<Connection>();
     }
@@ -197,7 +200,7 @@ public abstract class TestManager implements ITestManager {
 
     // -------------------------------------------------------------------------------------------------------
 
-    protected void startupLocator() throws UnknownPlatformException, IOException {
+    protected void startupLocator() throws UnknownPlatformException, IOException, SSH2Exception, TimeoutException {
 
         if (locator_process == null) {
 
@@ -208,7 +211,7 @@ public abstract class TestManager implements ITestManager {
             locator_args.add("-f" + config_directory_path);
             locator_args.add("-D" + DIAGNOSTIC_LEVEL.numericalValue());
 
-            locator_process = new ProcessManager().runJavaProcessLocal(H2OLocator.class, locator_args);
+            locator_process = new ProcessManager().runJavaProcess(H2OLocator.class, locator_args);
         }
     }
 

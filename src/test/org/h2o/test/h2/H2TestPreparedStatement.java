@@ -21,6 +21,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.util.concurrent.TimeoutException;
 
 import org.h2o.test.fixture.DiskConnectionDriverFactory;
 import org.h2o.test.fixture.DiskTestManager;
@@ -33,6 +34,8 @@ import org.junit.Test;
 import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
+
+import com.mindbright.ssh2.SSH2Exception;
 
 /**
  * Tests for the PreparedStatement implementation.
@@ -53,7 +56,7 @@ public class H2TestPreparedStatement extends H2OTestBase {
 
     @Override
     @Before
-    public void setUp() throws SQLException, IOException, UnknownPlatformException, UndefinedDiagnosticLevelException {
+    public void setUp() throws SQLException, IOException, UnknownPlatformException, UndefinedDiagnosticLevelException, SSH2Exception, TimeoutException {
 
         super.setUp();
 
