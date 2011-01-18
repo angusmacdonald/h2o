@@ -8,7 +8,7 @@ import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.schema.Schema;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.interfaces.TableManagerRemote;
+import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.TableManager;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.viewer.H2OEventBus;
@@ -103,7 +103,7 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
          * Make Table Manager serializable first.
          */
         try {
-            final TableManagerRemote tmr = (TableManagerRemote) UnicastRemoteObject.exportObject(tm, 0);
+            final ITableManagerRemote tmr = (ITableManagerRemote) UnicastRemoteObject.exportObject(tm, 0);
             db.getChordInterface().bind(ti.getFullTableName(), tmr);
         }
         catch (final RemoteException e) {

@@ -6,25 +6,45 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General
  * Public License along with H2O. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.db.interfaces;
+package org.h2o.db.manager.util;
 
-import java.rmi.Remote;
-import java.rmi.RemoteException;
-
+import org.h2o.util.exceptions.MigrationException;
 import org.h2o.util.exceptions.MovedException;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
+import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
+
 /**
- * Top-level remote interface for H2O objects. Specifies methods common to them all.
+ * Classes implementing this interface can be migrated to other machines in the system.
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public interface H2ORemote extends Remote {
+public interface IMigratable {
 
     /**
-     * Used to check that a Table Manager is still accessible via RMI. This method will return false if the database has been closed - an
-     * exception will be thrown if it is unavailable.
-     * 
      * @throws MovedException
+     * 
      */
-    public boolean isAlive() throws RemoteException, MovedException;
+    public void prepareForMigration(String newLocation) throws RPCException, MigrationException, MovedException;
+
+    /**
+     * 
+     */
+    public void checkConnection() throws RPCException, MovedException;
+
+    /**
+     * 
+     */
+    public void completeMigration() throws RPCException, MovedException, MigrationException;
+
+    /**
+     * Tell the manager to stop accepting queries.
+     */
+    public void shutdown(boolean shutdown) throws RPCException, MovedException;
+
+    /**
+     * 
+     */
+    public IChordRemoteReference getChordReference() throws RPCException;
+
 }

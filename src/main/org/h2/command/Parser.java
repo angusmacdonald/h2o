@@ -152,7 +152,7 @@ import org.h2.value.ValueString;
 import org.h2.value.ValueTime;
 import org.h2.value.ValueTimestamp;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.interfaces.TableManagerRemote;
+import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
@@ -4773,7 +4773,7 @@ public class Parser {
 
             final TableInfo tableInfo = new TableInfo(tableName, localSchemaName);
 
-            final TableManagerRemote tableManager = session.getDatabase().getSystemTableReference().lookup(tableInfo, true);
+            final ITableManagerRemote tableManager = session.getDatabase().getSystemTableReference().lookup(tableInfo, true);
 
             if (tableManager != null) {
                 final TableProxy tableProxy = getProxyFromTableManager(tableInfo, tableManager);
@@ -4893,7 +4893,7 @@ public class Parser {
         return table;
     }
 
-    private TableProxy getProxyFromTableManager(final TableInfo tableInfo, TableManagerRemote tableManager) throws SQLException {
+    private TableProxy getProxyFromTableManager(final TableInfo tableInfo, ITableManagerRemote tableManager) throws SQLException {
 
         final ISystemTableReference systemTableReference = session.getDatabase().getSystemTableReference();
         try {
@@ -4983,7 +4983,7 @@ public class Parser {
         String tableLocation = null;
 
         final TableInfo tableInfo = new TableInfo(tableName, thisSchemaName);
-        TableManagerRemote tableManager = session.getDatabase().getSystemTableReference().lookup(tableInfo, true);
+        ITableManagerRemote tableManager = session.getDatabase().getSystemTableReference().lookup(tableInfo, true);
 
         if (tableManager == null) { throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableInfo.toString()); }
 

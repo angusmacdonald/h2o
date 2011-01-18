@@ -10,7 +10,7 @@ import org.h2.engine.Session;
 import org.h2.message.Message;
 import org.h2.schema.Schema;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.interfaces.TableManagerRemote;
+import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.TableManager;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.query.TableProxy;
@@ -75,7 +75,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
             }
 
             final TableInfo ti = new TableInfo(tableName, schemaName);
-            TableManagerRemote tableManager = sm.lookup(ti, true);
+            ITableManagerRemote tableManager = sm.lookup(ti, true);
 
             if (tableManager == null) {
                 Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, getSchema().getName() + tableName);
@@ -113,14 +113,14 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
         return result;
     }
 
-    public int migrateTableManagerToLocalInstance(TableManagerRemote oldTableManager, final String schemaName, final Database db) throws SQLException {
+    public int migrateTableManagerToLocalInstance(ITableManagerRemote oldTableManager, final String schemaName, final Database db) throws SQLException {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Preparing to migrate Table Manager for [" + schemaName + "." + tableName);
 
         /*
          * Create a new System Table instance locally.
          */
-        TableManagerRemote newTableManager = null;
+        ITableManagerRemote newTableManager = null;
 
         final TableInfo ti = new TableInfo(tableName, schemaName, 0l, 0, "TABLE", db.getURL());
 
@@ -189,7 +189,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 
         try {
 
-            final TableManagerRemote stub = (TableManagerRemote) UnicastRemoteObject.exportObject(newTableManager, 0);
+            final ITableManagerRemote stub = (ITableManagerRemote) UnicastRemoteObject.exportObject(newTableManager, 0);
 
             db.getSystemTableReference().getSystemTable().changeTableManagerLocation(stub, ti);
             db.getSystemTableReference().addProxy(ti, newTableManager);

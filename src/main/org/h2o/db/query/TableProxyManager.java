@@ -8,7 +8,6 @@
  */
 package org.h2o.db.query;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,7 +23,7 @@ import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.interfaces.TableManagerRemote;
+import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.query.asynchronous.AsynchronousQueryExecutor;
 import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.query.asynchronous.Transaction;
@@ -33,6 +32,7 @@ import org.h2o.db.query.locking.LockType;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
@@ -368,11 +368,11 @@ public class TableProxyManager {
     public void releaseLocksAndUpdateReplicaState(final Set<CommitResult> committedQueries, final boolean commit) throws SQLException {
 
         try {
-            for (final TableManagerRemote tableManagerProxy : getTableManagersThatHoldLocks()) {
+            for (final ITableManagerRemote tableManagerProxy : getTableManagersThatHoldLocks()) {
                 tableManagerProxy.releaseLockAndUpdateReplicaState(commit, requestingDatabase, committedQueries, false);
             }
         }
-        catch (final RemoteException e) {
+        catch (final RPCException e) {
             ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the Table Manager");
         }
         catch (final MovedException e) {
@@ -448,9 +448,9 @@ public class TableProxyManager {
      * 
      * @return
      */
-    private Set<TableManagerRemote> getTableManagersThatHoldLocks() {
+    private Set<ITableManagerRemote> getTableManagersThatHoldLocks() {
 
-        final Set<TableManagerRemote> tableManagers = new HashSet<TableManagerRemote>();
+        final Set<ITableManagerRemote> tableManagers = new HashSet<ITableManagerRemote>();
 
         for (final TableProxy qp : tableProxies.values()) {
 
@@ -465,7 +465,7 @@ public class TableProxyManager {
     /**
      * Get the query proxy that holds a lock for the specified table manager.
      */
-    private TableProxy getQueryProxyForTable(final TableManagerRemote tableManager) {
+    private TableProxy getQueryProxyForTable(final ITableManagerRemote tableManager) {
 
         for (final TableProxy qp : tableProxies.values()) {
 

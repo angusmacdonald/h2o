@@ -16,7 +16,7 @@ import java.util.Set;
 
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.interfaces.TableManagerRemote;
+import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.TableManager;
 import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.db.manager.recovery.SystemTableAccessException;
@@ -38,7 +38,7 @@ public interface ISystemTableReference {
      * 
      * @return Reference to the system System Table.
      */
-    public SystemTableRemote getSystemTable();
+    public ISystemTableRemote getSystemTable();
 
     /**
      * Called with a 'true' parameter when the system is being shut down to allow it to ignore any exceptions that may occur if the System
@@ -48,7 +48,7 @@ public interface ISystemTableReference {
      *            If the system is being shut down any remote exceptions when contacting the System Table will be ignored.
      * @return
      */
-    public SystemTableRemote getSystemTable(boolean inShutdown);
+    public ISystemTableRemote getSystemTable(boolean inShutdown);
 
     /**
      * Get the location of the System Table instance.
@@ -74,7 +74,7 @@ public interface ISystemTableReference {
      * @throws SQLException
      *             If System Table registry access resulted in some kind of exception.
      */
-    public SystemTableRemote findSystemTable() throws SQLException;
+    public ISystemTableRemote findSystemTable() throws SQLException;
 
     /**
      * Returns a reference to the RMI registry of the System Table.
@@ -101,7 +101,7 @@ public interface ISystemTableReference {
      * Provide a reference to the actual System Table. This is typically called when a database has just been started, or when a new System
      * Table has been created.
      */
-    public void setSystemTable(SystemTableRemote systemTable);
+    public void setSystemTable(ISystemTableRemote systemTable);
 
     /**
      * Change the System Table URL and its location on chord. This doesn't update the actual reference to the System Table, so should only
@@ -137,7 +137,7 @@ public interface ISystemTableReference {
      * @return
      * @throws SystemTableAccessException
      */
-    public SystemTableRemote migrateSystemTableToLocalInstance(boolean persistedSchemaTablesExist, boolean recreateFromPersistedState) throws SystemTableAccessException;
+    public ISystemTableRemote migrateSystemTableToLocalInstance(boolean persistedSchemaTablesExist, boolean recreateFromPersistedState) throws SystemTableAccessException;
 
     /**
      * If called the System Table will be moved to the local database instance.
@@ -183,7 +183,7 @@ public interface ISystemTableReference {
      * @throws SQLException
      *             Thrown if the System Table could not be found anywhere, and lookup failed twice.
      */
-    public TableManagerRemote lookup(String fqTableName, boolean useCache) throws SQLException;
+    public ITableManagerRemote lookup(String fqTableName, boolean useCache) throws SQLException;
 
     /**
      * Find the Table Manager for the given table in the database system.
@@ -200,7 +200,7 @@ public interface ISystemTableReference {
      * @throws SQLException
      *             Thrown if the System Table cannot be found.
      */
-    public TableManagerRemote lookup(TableInfo tableInfo, boolean useCache) throws SQLException;
+    public ITableManagerRemote lookup(TableInfo tableInfo, boolean useCache) throws SQLException;
 
     /**
      * Find the Table Manager for the given table in the database system.
@@ -218,7 +218,7 @@ public interface ISystemTableReference {
      * @throws SQLException
      *             Thrown if the System Table cannot be found.
      */
-    public TableManagerRemote lookup(TableInfo tableInfo, boolean useCache, boolean searchOnlyCache) throws SQLException;
+    public ITableManagerRemote lookup(TableInfo tableInfo, boolean useCache, boolean searchOnlyCache) throws SQLException;
 
     /**
      * Check if the node given as a parameter is the node on which the System Table is held.
@@ -237,7 +237,7 @@ public interface ISystemTableReference {
      * @param tableManager
      *            The Table Manager to be added.
      */
-    void addProxy(TableInfo tableInfo, TableManagerRemote tableManager);
+    void addProxy(TableInfo tableInfo, ITableManagerRemote tableManager);
 
     /**
      * Add a new Table Manager reference to the System Table.
@@ -247,13 +247,13 @@ public interface ISystemTableReference {
      * @param tm
      *            The reference to the extant Table Manager.
      */
-    public void addNewTableManagerReference(TableInfo ti, TableManagerRemote tm);
+    public void addNewTableManagerReference(TableInfo ti, ITableManagerRemote tm);
 
     /**
      * Adds a new Table Manager to the System Table. Before doing this it stores a local reference to the Table Manager to bypass RMI calls
      * (which are extremely inefficient).
      * 
-     * @param tableManagerRemote
+     * @param iTableManagerRemote
      *            The table manager being added to the System Table.
      * @param ti
      *            Name of the table being added.
@@ -264,7 +264,7 @@ public interface ISystemTableReference {
      * @throws MovedException
      *             Thrown if the System Table has moved and a new reference is needed.
      */
-    public boolean addTableInformation(TableManagerRemote tableManagerRemote, TableInfo ti, Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException, SQLException;
+    public boolean addTableInformation(ITableManagerRemote iTableManagerRemote, TableInfo ti, Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException, SQLException;
 
     public void removeTableInformation(TableInfo tableInfo) throws RemoteException, MovedException;
 
@@ -277,7 +277,7 @@ public interface ISystemTableReference {
      * 
      * @return
      */
-    public SystemTableRemote getLocalSystemTable();
+    public ISystemTableRemote getLocalSystemTable();
 
     public ISystemTable failureRecovery() throws LocatorException, SQLException, SystemTableAccessException;
 

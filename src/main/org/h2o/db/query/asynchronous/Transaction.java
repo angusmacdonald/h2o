@@ -8,7 +8,6 @@
  */
 package org.h2o.db.query.asynchronous;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashSet;
@@ -19,11 +18,12 @@ import java.util.concurrent.FutureTask;
 
 import org.h2.engine.Database;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.interfaces.TableManagerRemote;
+import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 public class Transaction {
@@ -170,7 +170,7 @@ public class Transaction {
             else {
                 final TableInfo tableName = completedQuery.getTable();
 
-                TableManagerRemote tableManager = null;
+                ITableManagerRemote tableManager = null;
 
                 try {
                     tableManager = db.getSystemTableReference().lookup(tableName, true);
@@ -185,7 +185,7 @@ public class Transaction {
                     try {
                         tableManager.releaseLockAndUpdateReplicaState(true, lockRequest, newlyCompletedUpdates, true);
                     }
-                    catch (final RemoteException e) {
+                    catch (final RPCException e) {
                         e.printStackTrace();
                     }
                     catch (final MovedException e) {

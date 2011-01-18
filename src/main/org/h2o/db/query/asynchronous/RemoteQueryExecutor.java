@@ -8,7 +8,6 @@
  */
 package org.h2o.db.query.asynchronous;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.command.Command;
@@ -16,6 +15,8 @@ import org.h2.command.Parser;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.test.fixture.H2OTest;
+
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 
 public class RemoteQueryExecutor extends Thread {
 
@@ -127,7 +128,7 @@ public class RemoteQueryExecutor extends Thread {
             qr = new QueryResult(result, databaseWrapper, updateID, tableInfo);
 
         }
-        catch (final RemoteException e) {
+        catch (final RPCException e) {
             qr = new QueryResult(new SQLException(e.getMessage()), databaseWrapper, updateID, tableInfo);
         }
         catch (final SQLException e) {

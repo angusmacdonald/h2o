@@ -26,7 +26,6 @@
 package org.h2o.db.manager;
 
 import java.rmi.NoSuchObjectException;
-import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -46,12 +45,12 @@ import org.h2.engine.Session;
 import org.h2.result.LocalResult;
 import org.h2o.autonomic.decision.ranker.metric.CreateTableRequest;
 import org.h2o.autonomic.framework.AutonomicAction;
-import org.h2o.autonomic.framework.AutonomicController;
+import org.h2o.autonomic.framework.IAutonomicController;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.interfaces.DatabaseInstanceRemote;
-import org.h2o.db.interfaces.TableManagerRemote;
+import org.h2o.db.interfaces.IDatabaseInstanceRemote;
+import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.query.TableProxy;
 import org.h2o.db.query.asynchronous.CommitResult;
@@ -68,6 +67,7 @@ import org.h2o.viewer.H2OEventBus;
 import org.h2o.viewer.gwt.client.DatabaseStates;
 import org.h2o.viewer.gwt.client.H2OEvent;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -84,7 +84,7 @@ import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class TableManager extends PersistentManager implements TableManagerRemote, AutonomicController {
+public class TableManager extends PersistentManager implements ITableManagerRemote, IAutonomicController {
 
     private static final long serialVersionUID = 3347740231310946286L;
 
@@ -223,7 +223,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
     }
 
     @Override
-    public boolean addTableInformation(final DatabaseID tableManagerURL, final TableInfo tableDetails) throws RemoteException, MovedException, SQLException {
+    public boolean addTableInformation(final DatabaseID tableManagerURL, final TableInfo tableDetails) throws RPCException, MovedException, SQLException {
 
         final int result = super.addConnectionInformation(tableManagerURL, true);
 
@@ -239,7 +239,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
     }
 
     @Override
-    public void addReplicaInformation(final TableInfo tableDetails) throws RemoteException, MovedException, SQLException {
+    public void addReplicaInformation(final TableInfo tableDetails) throws RPCException, MovedException, SQLException {
 
         preMethodTest();
 
@@ -249,11 +249,11 @@ public class TableManager extends PersistentManager implements TableManagerRemot
     }
 
     @Override
-    public void removeReplicaInformation(final TableInfo ti) throws RemoteException, MovedException {
+    public void removeReplicaInformation(final TableInfo ti) throws RPCException, MovedException {
 
         super.removeReplicaInformation(ti);
 
-        DatabaseInstanceRemote dbInstance = getDB().getDatabaseInstance(ti.getURL());
+        IDatabaseInstanceRemote dbInstance = getDB().getDatabaseInstance(ti.getURL());
         if (dbInstance == null) {
             dbInstance = getDB().getDatabaseInstance(ti.getURL());
             if (dbInstance == null) {
@@ -266,7 +266,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
     }
 
     @Override
-    public boolean removeTableInformation() throws RemoteException, SQLException, MovedException {
+    public boolean removeTableInformation() throws RPCException, SQLException, MovedException {
 
         return removeTableInformation(getTableInfo(), true);
     }
@@ -309,7 +309,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         try {
             return query.update();
         }
-        catch (final RemoteException e) {
+        catch (final RPCException e) {
             e.printStackTrace();
             return -1;
         }
@@ -326,13 +326,13 @@ public class TableManager extends PersistentManager implements TableManagerRemot
 
         final ISystemTable systemTable = getDB().getSystemTableReference().getSystemTable();
 
-        DatabaseInstanceRemote dir = null;
+        IDatabaseInstanceRemote dir = null;
 
         if (systemTable != null) {
             try {
                 dir = systemTable.getDatabaseInstance(dbID);
             }
-            catch (final RemoteException e1) {
+            catch (final RPCException e1) {
                 e1.printStackTrace();
             }
             catch (final MovedException e1) {
@@ -370,7 +370,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
     }
 
     @Override
-    public synchronized TableProxy getTableProxy(LockType lockTypeRequested, final LockRequest lockRequest) throws RemoteException, SQLException, MovedException {
+    public synchronized TableProxy getTableProxy(LockType lockTypeRequested, final LockRequest lockRequest) throws RPCException, SQLException, MovedException {
 
         preMethodTest();
 
@@ -440,7 +440,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
                 // the update could be sent to any or all machines in the system.
                 potentialReplicaLocations = getDB().getSystemTable().getAvailableMachines(new CreateTableRequest(0));
             }
-            catch (final RemoteException e) {
+            catch (final RPCException e) {
                 e.printStackTrace();
             }
             catch (final MovedException e) {
@@ -501,7 +501,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
     }
 
     @Override
-    public DatabaseID getLocation() throws RemoteException, MovedException {
+    public DatabaseID getLocation() throws RPCException, MovedException {
 
         preMethodTest();
 
@@ -515,7 +515,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
     }
 
     @Override
-    public boolean isAlive() throws RemoteException, MovedException {
+    public boolean isAlive() throws RPCException, MovedException {
 
         if (shutdown) { return false; }
 
@@ -525,7 +525,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
     }
 
     @Override
-    public void releaseLockAndUpdateReplicaState(final boolean commit, final LockRequest lockRequest, final Collection<CommitResult> committedQueries, final boolean asynchronousCommit) throws RemoteException, MovedException, SQLException {
+    public void releaseLockAndUpdateReplicaState(final boolean commit, final LockRequest lockRequest, final Collection<CommitResult> committedQueries, final boolean asynchronousCommit) throws RPCException, MovedException, SQLException {
 
         try {
             // If it's not a commit (on a CREATE TABLE request) nothing needs to be persisted.
@@ -554,7 +554,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
         }
     }
 
-    private void completeCreationByUpdatingSystemTable() throws RemoteException, MovedException, SQLException {
+    private void completeCreationByUpdatingSystemTable() throws RPCException, MovedException, SQLException {
 
         // Add Basic Table Information to the System Table.
         final Set<DatabaseInstanceWrapper> replicaLocations = db.getMetaDataReplicaManager().getTableManagerReplicaLocations();
@@ -653,7 +653,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
      * Methods implementing the Migrate interface.
      ***********************************************************/
 
-    private void preMethodTest() throws RemoteException, MovedException {
+    private void preMethodTest() throws RPCException, MovedException {
 
         if (hasMoved) {
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Table Manager " + fullName + " has moved. Throwing MovedException.");
@@ -675,20 +675,20 @@ public class TableManager extends PersistentManager implements TableManagerRemot
                 inMigration = false; // Timeout request.
                 migrationTime = 0l;
 
-                throw new RemoteException("Timeout exception. Migration took too long. Current time :" + currentTimeOfMigration + ", TIMEOUT time: " + MIGRATION_TIMEOUT);
+                throw new RPCException("Timeout exception. Migration took too long. Current time :" + currentTimeOfMigration + ", TIMEOUT time: " + MIGRATION_TIMEOUT);
             }
         }
     }
 
     @Override
-    public void checkConnection() throws RemoteException, MovedException {
+    public void checkConnection() throws RPCException, MovedException {
 
         preMethodTest();
 
     }
 
     @Override
-    public void completeMigration() throws RemoteException, MovedException, MigrationException {
+    public void completeMigration() throws RPCException, MovedException, MigrationException {
 
         if (!inMigration) { // the migration process has timed out.
             throw new MigrationException("Migration process has timed-out. Took too long to migrate (timeout: " + MIGRATION_TIMEOUT + "ms)");
@@ -699,7 +699,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
     }
 
     @Override
-    public void prepareForMigration(final String newLocation) throws RemoteException, MigrationException, MovedException {
+    public void prepareForMigration(final String newLocation) throws RPCException, MigrationException, MovedException {
 
         preMethodTest();
 
@@ -711,7 +711,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
     }
 
     @Override
-    public void buildTableManagerState(final TableManagerRemote otherTableManager) throws RemoteException, MovedException {
+    public void buildTableManagerState(final ITableManagerRemote otherTableManager) throws RPCException, MovedException {
 
         preMethodTest();
 
@@ -726,13 +726,13 @@ public class TableManager extends PersistentManager implements TableManagerRemot
     }
 
     @Override
-    public String getSchemaName() throws RemoteException {
+    public String getSchemaName() throws RPCException {
 
         return schemaName;
     }
 
     @Override
-    public ReplicaManager getReplicaManager() throws RemoteException, MovedException {
+    public ReplicaManager getReplicaManager() throws RPCException, MovedException {
 
         preMethodTest();
 
@@ -740,13 +740,13 @@ public class TableManager extends PersistentManager implements TableManagerRemot
     }
 
     @Override
-    public int getTableSet() throws RemoteException {
+    public int getTableSet() throws RPCException {
 
         return 1; // TODO implement
     }
 
     @Override
-    public DatabaseID getDatabaseURL() throws RemoteException {
+    public DatabaseID getDatabaseURL() throws RPCException {
 
         return getDB().getURL();
     }
@@ -756,26 +756,26 @@ public class TableManager extends PersistentManager implements TableManagerRemot
      ***********************************************************/
 
     @Override
-    public boolean changeSetting(final AutonomicAction action) throws RemoteException {
+    public boolean changeSetting(final AutonomicAction action) throws RPCException {
 
         // TODO Auto-generated method stub
         return false;
     }
 
     @Override
-    public void shutdown(final boolean shutdown) throws RemoteException, MovedException {
+    public void shutdown(final boolean shutdown) throws RPCException, MovedException {
 
         this.shutdown = shutdown;
     }
 
     @Override
-    public IChordRemoteReference getChordReference() throws RemoteException {
+    public IChordRemoteReference getChordReference() throws RPCException {
 
         return location;
     }
 
     @Override
-    public void recreateReplicaManagerState(final String oldPrimaryDatabaseName) throws RemoteException, SQLException {
+    public void recreateReplicaManagerState(final String oldPrimaryDatabaseName) throws RPCException, SQLException {
 
         final ReplicaManager rm = new ReplicaManager();
 
@@ -832,13 +832,13 @@ public class TableManager extends PersistentManager implements TableManagerRemot
     }
 
     @Override
-    public int getNumberofReplicas() throws RemoteException {
+    public int getNumberofReplicas() throws RPCException {
 
         return replicaManager.getNumberOfReplicas();
     }
 
     @Override
-    public void persistToCompleteStartup(final TableInfo tableInfo) throws RemoteException, StartupException {
+    public void persistToCompleteStartup(final TableInfo tableInfo) throws RPCException, StartupException {
 
         try {
             addTableInformation(getDB().getURL(), tableInfo);
@@ -866,7 +866,7 @@ public class TableManager extends PersistentManager implements TableManagerRemot
                 super.addConnectionInformation(ti.getURL(), true);
                 super.addReplicaInformation(ti);
             }
-            catch (final RemoteException e) {
+            catch (final RPCException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }

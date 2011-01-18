@@ -19,7 +19,7 @@ import org.h2.engine.Session;
 import org.h2.result.LocalResult;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.interfaces.DatabaseInstanceRemote;
+import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.replication.MetaDataReplicaManager;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
@@ -633,7 +633,7 @@ public abstract class PersistentManager {
         return metaDataReplicaManager.getTableID(ti, isSystemTable);
     }
 
-    public void removeConnectionInformation(final DatabaseInstanceRemote databaseInstance) throws RemoteException, MovedException {
+    public void removeConnectionInformation(final IDatabaseInstanceRemote databaseInstance) throws RemoteException, MovedException {
 
         /*
          * If the System Tables state is replicated onto this machine remove it as a replica location.

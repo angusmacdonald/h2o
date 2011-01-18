@@ -31,7 +31,7 @@ import java.util.Collection;
 
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.manager.util.Migratable;
+import org.h2o.db.manager.util.IMigratable;
 import org.h2o.db.query.TableProxy;
 import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.query.locking.LockRequest;
@@ -40,22 +40,24 @@ import org.h2o.db.replication.ReplicaManager;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.util.exceptions.StartupException;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
+
 /**
  * Remote interface for Table Manager instances.
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public interface TableManagerRemote extends H2ORemote, Migratable {
+public interface ITableManagerRemote extends IH2ORemote, IMigratable {
 
-    public TableProxy getTableProxy(LockType lockType, LockRequest lockRequest) throws RemoteException, SQLException, MovedException;
+    public TableProxy getTableProxy(LockType lockType, LockRequest lockRequest) throws RPCException, SQLException, MovedException;
 
-    public boolean addTableInformation(DatabaseID tableManagerURL, TableInfo tableDetails) throws RemoteException, MovedException, SQLException;
+    public boolean addTableInformation(DatabaseID tableManagerURL, TableInfo tableDetails) throws RPCException, MovedException, SQLException;
 
-    public void addReplicaInformation(TableInfo tableDetails) throws RemoteException, MovedException, SQLException;
+    public void addReplicaInformation(TableInfo tableDetails) throws RPCException, MovedException, SQLException;
 
-    public void removeReplicaInformation(TableInfo ti) throws RemoteException, MovedException, SQLException;
+    public void removeReplicaInformation(TableInfo ti) throws RPCException, MovedException, SQLException;
 
-    public boolean removeTableInformation() throws RemoteException, SQLException, MovedException;
+    public boolean removeTableInformation() throws RPCException, SQLException, MovedException;
 
     /**
      * Gets the location of a single replica for the given table. This is used in creating linked tables, so the return type is string rather
@@ -64,7 +66,7 @@ public interface TableManagerRemote extends H2ORemote, Migratable {
      * @return Database connection URL for a given remote database.
      * @throws RemoteException
      */
-    public DatabaseID getLocation() throws RemoteException, MovedException;
+    public DatabaseID getLocation() throws RPCException, MovedException;
 
     /**
      * Releases a lock held by the database instance specified in the parameter. Called at the end of TableProxy.executeQuery() to indicate
@@ -82,7 +84,7 @@ public interface TableManagerRemote extends H2ORemote, Migratable {
      * @throws SQLException
      *          Thrown if the table manager is persisting a CREATE TABLE statement and it couldn't connect to the System Table.
      */
-    public void releaseLockAndUpdateReplicaState(boolean commit, LockRequest requestingDatabase, Collection<CommitResult> committedQueries, boolean asynchronousCommit) throws RemoteException, MovedException, SQLException;
+    public void releaseLockAndUpdateReplicaState(boolean commit, LockRequest requestingDatabase, Collection<CommitResult> committedQueries, boolean asynchronousCommit) throws RPCException, MovedException, SQLException;
 
     /**
      * Deconstructs this Table Manager. This is required for testing where a remote reference to a Table Manager may not completely die when
@@ -91,17 +93,17 @@ public interface TableManagerRemote extends H2ORemote, Migratable {
      * <p>
      * Also called when a table is dropped. If dropCommand is true all persisted state is removed as well.
      */
-    public void remove(boolean dropCommand) throws RemoteException;
+    public void remove(boolean dropCommand) throws RPCException;
 
     /**
      * The name of the schema which this table is in.
      */
-    public String getSchemaName() throws RemoteException;
+    public String getSchemaName() throws RPCException;
 
     /**
      * The name of the table this Table Manager is responsible for (not including schema name).
      */
-    public String getTableName() throws RemoteException;
+    public String getTableName() throws RPCException;
 
     /**
      * The object responsible for managing the set of replicas this Table Manager maintains.
@@ -111,12 +113,12 @@ public interface TableManagerRemote extends H2ORemote, Migratable {
      * 
      * @throws MovedException
      */
-    public ReplicaManager getReplicaManager() throws RemoteException, MovedException;
+    public ReplicaManager getReplicaManager() throws RPCException, MovedException;
 
     /**
      * Get the table set that this table is part of.
      */
-    public int getTableSet() throws RemoteException;
+    public int getTableSet() throws RPCException;
 
     /**
      * Build up the state of this Table Manager from the state of another extant manager. Used when migrating the state of the old manager
@@ -127,26 +129,26 @@ public interface TableManagerRemote extends H2ORemote, Migratable {
      * @throws MovedException
      *             Thrown if this Table Manager has already been moved to somewhere else.
      */
-    public void buildTableManagerState(TableManagerRemote oldTableManager) throws RemoteException, MovedException;
+    public void buildTableManagerState(ITableManagerRemote oldTableManager) throws RPCException, MovedException;
 
     /**
      * The URL of the database on which this Table Manager is located.
      */
-    public DatabaseID getDatabaseURL() throws RemoteException;
+    public DatabaseID getDatabaseURL() throws RPCException;
 
     /**
      * Re-populate this Table Managers replica manager with state held locally on disk.
      * 
      * @throws SQLException
      */
-    public void recreateReplicaManagerState(String oldPrimaryDatabaseName) throws RemoteException, SQLException;
+    public void recreateReplicaManagerState(String oldPrimaryDatabaseName) throws RPCException, SQLException;
 
     /**
      * Number of replicas of this table.
      * 
      * @return
      */
-    public int getNumberofReplicas() throws RemoteException;
+    public int getNumberofReplicas() throws RPCException;
 
     /**
      * Persist the information on this table manager to complete the creation of the table.
@@ -154,5 +156,5 @@ public interface TableManagerRemote extends H2ORemote, Migratable {
      * @param ti
      *            Used to get the table set number for this table manager.
      */
-    public void persistToCompleteStartup(TableInfo ti) throws RemoteException, StartupException;
+    public void persistToCompleteStartup(TableInfo ti) throws RPCException, StartupException;
 }

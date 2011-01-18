@@ -8,7 +8,6 @@
  */
 package org.h2o.db.manager;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Queue;
@@ -18,22 +17,23 @@ import org.h2.engine.Database;
 import org.h2o.autonomic.decision.ranker.metric.ActionRequest;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.interfaces.DatabaseInstanceRemote;
-import org.h2o.db.interfaces.TableManagerRemote;
+import org.h2o.db.interfaces.IDatabaseInstanceRemote;
+import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
-import org.h2o.db.manager.interfaces.SystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.manager.util.SystemTableMigrationState;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
 import org.h2o.util.exceptions.MigrationException;
 import org.h2o.util.exceptions.MovedException;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class SystemTable implements SystemTableRemote {
+public class SystemTable implements ISystemTableRemote {
 
     /**
      * Interface to the in-memory state of the System Table.
@@ -69,7 +69,7 @@ public class SystemTable implements SystemTableRemote {
      ******************************************************************/
 
     @Override
-    public int addConnectionInformation(final DatabaseID databaseURL, final DatabaseInstanceWrapper remoteDatabase) throws RemoteException, MovedException {
+    public int addConnectionInformation(final DatabaseID databaseURL, final DatabaseInstanceWrapper remoteDatabase) throws RPCException, MovedException {
 
         preMethodTest();
 
@@ -84,7 +84,7 @@ public class SystemTable implements SystemTableRemote {
     }
 
     @Override
-    public synchronized boolean addTableInformation(final TableManagerRemote tableManager, final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException {
+    public synchronized boolean addTableInformation(final ITableManagerRemote tableManager, final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> replicaLocations) throws RPCException, MovedException {
 
         preMethodTest();
 
@@ -98,7 +98,7 @@ public class SystemTable implements SystemTableRemote {
     }
 
     @Override
-    public boolean removeTableInformation(final TableInfo ti) throws RemoteException, MovedException {
+    public boolean removeTableInformation(final TableInfo ti) throws RPCException, MovedException {
 
         preMethodTest();
         final boolean result = inMemory.removeTableInformation(ti);
@@ -112,35 +112,35 @@ public class SystemTable implements SystemTableRemote {
      ******************************************************************/
 
     @Override
-    public boolean exists(final TableInfo ti) throws RemoteException, MovedException {
+    public boolean exists(final TableInfo ti) throws RPCException, MovedException {
 
         preMethodTest();
         return inMemory.exists(ti);
     }
 
     @Override
-    public Set<String> getAllTablesInSchema(final String schemaName) throws RemoteException, MovedException {
+    public Set<String> getAllTablesInSchema(final String schemaName) throws RPCException, MovedException {
 
         preMethodTest();
         return inMemory.getAllTablesInSchema(schemaName);
     }
 
     @Override
-    public int getNewTableSetNumber() throws RemoteException, MovedException {
+    public int getNewTableSetNumber() throws RPCException, MovedException {
 
         preMethodTest();
         return inMemory.getNewTableSetNumber();
     }
 
     @Override
-    public TableManagerWrapper lookup(final TableInfo ti) throws RemoteException, MovedException {
+    public TableManagerWrapper lookup(final TableInfo ti) throws RPCException, MovedException {
 
         preMethodTest();
         return inMemory.lookup(ti);
     }
 
     @Override
-    public void buildSystemTableState(final ISystemTable otherSystemTable) throws RemoteException, MovedException, SQLException {
+    public void buildSystemTableState(final ISystemTable otherSystemTable) throws RPCException, MovedException, SQLException {
 
         preMethodTest();
         inMemory.buildSystemTableState(otherSystemTable);
@@ -149,7 +149,7 @@ public class SystemTable implements SystemTableRemote {
     }
 
     @Override
-    public void buildSystemTableState() throws RemoteException, MovedException, SQLException {
+    public void buildSystemTableState() throws RPCException, MovedException, SQLException {
 
         preMethodTest();
         inMemory.buildSystemTableState(persisted);
@@ -157,13 +157,13 @@ public class SystemTable implements SystemTableRemote {
     }
 
     @Override
-    public Map<DatabaseID, DatabaseInstanceWrapper> getConnectionInformation() throws RemoteException, MovedException, SQLException {
+    public Map<DatabaseID, DatabaseInstanceWrapper> getConnectionInformation() throws RPCException, MovedException, SQLException {
 
         return inMemory.getConnectionInformation();
     }
 
     @Override
-    public Map<TableInfo, TableManagerWrapper> getTableManagers() throws RemoteException, MovedException {
+    public Map<TableInfo, TableManagerWrapper> getTableManagers() throws RPCException, MovedException {
 
         return inMemory.getTableManagers();
     }
@@ -173,57 +173,57 @@ public class SystemTable implements SystemTableRemote {
      * @see org.h2.h2o.manager.ISystemTable#getReplicaLocations()
      */
     @Override
-    public Map<TableInfo, Set<DatabaseID>> getReplicaLocations() throws RemoteException, MovedException, MovedException {
+    public Map<TableInfo, Set<DatabaseID>> getReplicaLocations() throws RPCException, MovedException, MovedException {
 
         return inMemory.getReplicaLocations();
     }
 
     @Override
-    public void removeAllTableInformation() throws RemoteException, MovedException, MovedException, MovedException {
+    public void removeAllTableInformation() throws RPCException, MovedException, MovedException, MovedException {
 
         preMethodTest();
         try {
             inMemory.removeAllTableInformation();
             persisted.removeAllTableInformation();
         }
-        catch (final RemoteException e) {
+        catch (final RPCException e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public DatabaseInstanceRemote getDatabaseInstance(final DatabaseID databaseURL) throws RemoteException, MovedException {
+    public IDatabaseInstanceRemote getDatabaseInstance(final DatabaseID databaseURL) throws RPCException, MovedException {
 
         preMethodTest();
         return inMemory.getDatabaseInstance(databaseURL);
     }
 
     @Override
-    public Queue<DatabaseInstanceWrapper> getAvailableMachines(final ActionRequest typeOfRequest) throws RemoteException, MovedException {
+    public Queue<DatabaseInstanceWrapper> getAvailableMachines(final ActionRequest typeOfRequest) throws RPCException, MovedException {
 
         preMethodTest();
         return inMemory.getAvailableMachines(typeOfRequest);
     }
 
     @Override
-    public Set<DatabaseInstanceWrapper> getDatabaseInstances() throws RemoteException, MovedException {
+    public Set<DatabaseInstanceWrapper> getDatabaseInstances() throws RPCException, MovedException {
 
         preMethodTest();
         return inMemory.getDatabaseInstances();
     }
 
     @Override
-    public void removeConnectionInformation(final DatabaseInstanceRemote localDatabaseInstance) throws RemoteException, MovedException {
+    public void removeConnectionInformation(final IDatabaseInstanceRemote localDatabaseInstance) throws RPCException, MovedException {
 
         preMethodTest();
         inMemory.removeConnectionInformation(localDatabaseInstance);
         persisted.removeConnectionInformation(localDatabaseInstance);
     }
 
-    private void preMethodTest() throws RemoteException, MovedException {
+    private void preMethodTest() throws RPCException, MovedException {
 
         if (migrationState.shutdown) {
-            throw new RemoteException(null);
+            throw new RPCException("");
         }
         else if (migrationState.hasMoved) { throw new MovedException(migrationState.movedLocation); }
         /*
@@ -234,14 +234,14 @@ public class SystemTable implements SystemTableRemote {
             // exception will be thrown.
             final long currentTimeOfMigration = System.currentTimeMillis() - migrationState.migrationTime;
 
-            if (currentTimeOfMigration < MIGRATION_TIMEOUT) { throw new RemoteException("System Table is in the process of being moved."); }
+            if (currentTimeOfMigration < MIGRATION_TIMEOUT) { throw new RPCException("System Table is in the process of being moved."); }
             migrationState.inMigration = false; // Timeout request.
             migrationState.migrationTime = 0l;
         }
     }
 
     @Override
-    public synchronized void prepareForMigration(final String newLocation) throws RemoteException, MovedException, MigrationException {
+    public synchronized void prepareForMigration(final String newLocation) throws RPCException, MovedException, MigrationException {
 
         preMethodTest();
 
@@ -253,7 +253,7 @@ public class SystemTable implements SystemTableRemote {
     }
 
     @Override
-    public void completeMigration() throws RemoteException, MovedException, MigrationException {
+    public void completeMigration() throws RPCException, MovedException, MigrationException {
 
         if (!migrationState.inMigration) { // the migration process has timed
                                            // out.
@@ -267,13 +267,13 @@ public class SystemTable implements SystemTableRemote {
     }
 
     @Override
-    public void checkConnection() throws RemoteException, MovedException {
+    public void checkConnection() throws RPCException, MovedException {
 
         preMethodTest();
     }
 
     @Override
-    public void changeTableManagerLocation(final TableManagerRemote stub, final TableInfo tableInfo) throws RemoteException, MovedException {
+    public void changeTableManagerLocation(final ITableManagerRemote stub, final TableInfo tableInfo) throws RPCException, MovedException {
 
         preMethodTest();
 
@@ -282,26 +282,26 @@ public class SystemTable implements SystemTableRemote {
     }
 
     @Override
-    public void shutdown(final boolean shutdown) throws RemoteException, MovedException {
+    public void shutdown(final boolean shutdown) throws RPCException, MovedException {
 
         migrationState.shutdown = shutdown;
     }
 
     @Override
-    public IChordRemoteReference getChordReference() throws RemoteException {
+    public IChordRemoteReference getChordReference() throws RPCException {
 
         return migrationState.location;
     }
 
     @Override
-    public Set<TableManagerWrapper> getLocalDatabaseInstances(final DatabaseID localMachineLocation) throws RemoteException, MovedException {
+    public Set<TableManagerWrapper> getLocalDatabaseInstances(final DatabaseID localMachineLocation) throws RPCException, MovedException {
 
         preMethodTest();
         return inMemory.getLocalDatabaseInstances(localMachineLocation);
     }
 
     @Override
-    public void addTableManagerStateReplica(final TableInfo table, final DatabaseID replicaLocation, final DatabaseID primaryLocation, final boolean active) throws RemoteException, MovedException {
+    public void addTableManagerStateReplica(final TableInfo table, final DatabaseID replicaLocation, final DatabaseID primaryLocation, final boolean active) throws RPCException, MovedException {
 
         preMethodTest();
         inMemory.addTableManagerStateReplica(table, replicaLocation, primaryLocation, active);
@@ -309,7 +309,7 @@ public class SystemTable implements SystemTableRemote {
     }
 
     @Override
-    public void removeTableManagerStateReplica(final TableInfo table, final DatabaseID replicaLocation) throws RemoteException, MovedException {
+    public void removeTableManagerStateReplica(final TableInfo table, final DatabaseID replicaLocation) throws RPCException, MovedException {
 
         preMethodTest();
         inMemory.removeTableManagerStateReplica(table, replicaLocation);
@@ -317,20 +317,20 @@ public class SystemTable implements SystemTableRemote {
     }
 
     @Override
-    public Map<TableInfo, DatabaseID> getPrimaryLocations() throws RemoteException, MovedException {
+    public Map<TableInfo, DatabaseID> getPrimaryLocations() throws RPCException, MovedException {
 
         return inMemory.getPrimaryLocations();
     }
 
     @Override
-    public TableManagerRemote recreateTableManager(final TableInfo table) throws RemoteException, MovedException {
+    public ITableManagerRemote recreateTableManager(final TableInfo table) throws RPCException, MovedException {
 
         preMethodTest();
         return inMemory.recreateTableManager(table);
     }
 
     @Override
-    public boolean checkTableManagerAccessibility() throws RemoteException, MovedException {
+    public boolean checkTableManagerAccessibility() throws RPCException, MovedException {
 
         preMethodTest();
         return inMemory.checkTableManagerAccessibility();

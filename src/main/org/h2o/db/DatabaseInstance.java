@@ -25,7 +25,6 @@
 
 package org.h2o.db;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.command.Command;
@@ -34,12 +33,13 @@ import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.interfaces.DatabaseInstanceRemote;
-import org.h2o.db.interfaces.TableManagerRemote;
+import org.h2o.db.interfaces.IDatabaseInstanceRemote;
+import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
-import org.h2o.db.manager.interfaces.SystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.manager.recovery.SystemTableAccessException;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -50,7 +50,7 @@ import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class DatabaseInstance implements DatabaseInstanceRemote {
+public class DatabaseInstance implements IDatabaseInstanceRemote {
 
     /**
      * The parsed JDBC connection string for this database.
@@ -77,7 +77,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
     }
 
     @Override
-    public int execute(final String query, final String transactionName, final boolean commitOperation) throws RemoteException, SQLException {
+    public int execute(final String query, final String transactionName, final boolean commitOperation) throws SQLException, RPCException {
 
         if (query == null) {
             ErrorHandling.hardError("Shouldn't happen.");
@@ -107,26 +107,26 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
     }
 
     @Override
-    public int prepare(final String transactionName) throws RemoteException, SQLException {
+    public int prepare(final String transactionName) throws SQLException {
 
         final Command command = parser.prepareCommand("PREPARE COMMIT " + transactionName);
         return command.executeUpdate();
     }
 
     @Override
-    public String getConnectionString() throws RemoteException {
+    public String getConnectionString() {
 
         return databaseURL.getOriginalURL();
     }
 
     @Override
-    public DatabaseID getURL() throws RemoteException {
+    public DatabaseID getURL() {
 
         return databaseURL;
     }
 
     @Override
-    public DatabaseID getSystemTableURL() throws RemoteException {
+    public DatabaseID getSystemTableURL() {
 
         final DatabaseID systemTableURL = database.getSystemTableReference().getSystemTableURL();
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Responding to request for System Table location at database '" + database.getDatabaseLocation() + "'. " + "System table location: " + systemTableURL);
@@ -135,7 +135,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
     }
 
     @Override
-    public int executeUpdate(final String sql, final boolean systemTableCommand) throws RemoteException, SQLException {
+    public int executeUpdate(final String sql, final boolean systemTableCommand) throws RPCException, SQLException {
 
         if (!database.isRunning()) { throw new SQLException("The database either hasn't fully started, or is being shut down."); }
 
@@ -156,7 +156,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
     }
 
     @Override
-    public SystemTableRemote recreateSystemTable() throws RemoteException, SystemTableAccessException {
+    public ISystemTableRemote recreateSystemTable() throws SystemTableAccessException {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Responding to request to recreate System Table on '" + database.getDatabaseLocation() + "'.");
 
@@ -165,7 +165,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
     }
 
     @Override
-    public boolean recreateTableManager(final TableInfo tableInfo, final DatabaseID previousLocation) throws RemoteException {
+    public boolean recreateTableManager(final TableInfo tableInfo, final DatabaseID previousLocation) throws RPCException {
 
         boolean success = false;
         try {
@@ -179,13 +179,13 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
     }
 
     @Override
-    public void setSystemTableLocation(final IChordRemoteReference systemTableLocation, final DatabaseID databaseURL) throws RemoteException {
+    public void setSystemTableLocation(final IChordRemoteReference systemTableLocation, final DatabaseID databaseURL) throws RPCException {
 
         database.getSystemTableReference().setSystemTableLocation(systemTableLocation, databaseURL);
     }
 
     @Override
-    public TableManagerRemote findTableManagerReference(final TableInfo ti, final boolean searchOnlyCache) throws RemoteException {
+    public ITableManagerRemote findTableManagerReference(final TableInfo ti, final boolean searchOnlyCache) throws RPCException {
 
         try {
             return database.getSystemTableReference().lookup(ti, true, searchOnlyCache);
@@ -195,7 +195,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
             Diagnostic.trace(DiagnosticLevel.FULL, "Couldn't find Table Manager at this machine. Table Manager needs to be re-instantiated.");
             // TODO allow for re-instantiation at this point.
 
-            throw new RemoteException(e.getMessage());
+            throw new RPCException(e.getMessage());
         }
     }
 
@@ -206,7 +206,7 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
     }
 
     @Override
-    public boolean isAlive() throws RemoteException {
+    public boolean isAlive() {
 
         return alive;
     }
@@ -232,13 +232,13 @@ public class DatabaseInstance implements DatabaseInstanceRemote {
     }
 
     @Override
-    public boolean isSystemTable() throws RemoteException {
+    public boolean isSystemTable() throws RPCException {
 
         return database.getSystemTableReference().isSystemTableLocal();
     }
 
     @Override
-    public SystemTableRemote getSystemTable() throws RemoteException {
+    public ISystemTableRemote getSystemTable() throws RPCException {
 
         return database.getSystemTableReference().getLocalSystemTable();
     }

@@ -1,12 +1,12 @@
 package org.h2o.db.manager.monitoring;
 
-import org.h2o.db.interfaces.TableManagerRemote;
+import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 /**
  * Represents the percentage of lock requests for a particular table that come from a particular machine.
  * 
- * Relationship: one {@link TableManagerRemote} -> many {@link LockRequestPercentagesPerInstance} objects -> one {@link DatabaseInstanceWrapper} each.
+ * Relationship: one {@link ITableManagerRemote} -> many {@link LockRequestPercentagesPerInstance} objects -> one {@link DatabaseInstanceWrapper} each.
  *
  * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
  */

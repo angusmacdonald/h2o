@@ -31,8 +31,8 @@ import org.h2.table.TableData;
 import org.h2.util.ObjectArray;
 import org.h2.value.DataType;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.interfaces.DatabaseInstanceRemote;
-import org.h2o.db.interfaces.TableManagerRemote;
+import org.h2o.db.interfaces.IDatabaseInstanceRemote;
+import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.TableManager;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.query.TableProxy;
@@ -353,7 +353,7 @@ public class CreateTable extends SchemaCommand {
 
             //Execute create replica operations.
             for (final DatabaseInstanceWrapper replicaLocation : replicaLocations.keySet()) {
-                final DatabaseInstanceRemote instance = replicaLocation.getDatabaseInstance();
+                final IDatabaseInstanceRemote instance = replicaLocation.getDatabaseInstance();
 
                 final int result = instance.execute(sql, transactionName, false);
 
@@ -495,7 +495,7 @@ public class CreateTable extends SchemaCommand {
 
         if (!db.getSystemTableReference().isSystemTableLocal() && !managementDB && !tableLocal && !startup) {
 
-            final TableManagerRemote tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, false);
+            final ITableManagerRemote tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, false);
 
             if (tableManager != null) {
                 try {

@@ -14,7 +14,7 @@ import java.rmi.RemoteException;
 
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.interfaces.TableManagerRemote;
+import org.h2o.db.interfaces.ITableManagerRemote;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
@@ -31,14 +31,14 @@ public class TableManagerWrapper implements Serializable, Remote {
     /**
      * Remote reference to the actual Table Manager.
      */
-    private TableManagerRemote tableManager;
+    private ITableManagerRemote tableManager;
 
     /**
      * Location of the Table Manager.
      */
     private DatabaseID tableManagerURL;
 
-    public TableManagerWrapper(TableInfo tableInfo, TableManagerRemote tableManager, DatabaseID tableManagerURL) {
+    public TableManagerWrapper(TableInfo tableInfo, ITableManagerRemote tableManager, DatabaseID tableManagerURL) {
 
         this.tableInfo = tableInfo.getGenericTableInfo();
         this.tableManager = tableManager;
@@ -65,7 +65,7 @@ public class TableManagerWrapper implements Serializable, Remote {
     /**
      * @return the tableManager
      */
-    public TableManagerRemote getTableManager() {
+    public ITableManagerRemote getTableManager() {
 
         return tableManager;
     }
@@ -74,7 +74,7 @@ public class TableManagerWrapper implements Serializable, Remote {
      * @param tableManager
      *            the tableManager to set
      */
-    public void setTableManager(TableManagerRemote tableManager) {
+    public void setTableManager(ITableManagerRemote tableManager) {
 
         this.tableManager = tableManager;
     }

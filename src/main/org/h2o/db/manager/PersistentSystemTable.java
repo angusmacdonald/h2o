@@ -25,8 +25,8 @@ import org.h2o.db.DefaultSettings;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.interfaces.DatabaseInstanceRemote;
-import org.h2o.db.interfaces.TableManagerRemote;
+import org.h2o.db.interfaces.IDatabaseInstanceRemote;
+import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.remote.IDatabaseRemote;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
@@ -34,6 +34,7 @@ import org.h2o.db.wrappers.TableManagerWrapper;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.util.exceptions.StartupException;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -145,7 +146,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     }
 
     @Override
-    public boolean exists(final TableInfo ti) throws RemoteException {
+    public boolean exists(final TableInfo ti) throws RPCException {
 
         try {
             return isTableListed(ti);
@@ -157,13 +158,13 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     }
 
     @Override
-    public TableManagerWrapper lookup(final TableInfo ti) throws RemoteException {
+    public TableManagerWrapper lookup(final TableInfo ti) throws RPCException {
 
         return null;
     }
 
     @Override
-    public void buildSystemTableState(final ISystemTable otherSystemTable) throws RemoteException {
+    public void buildSystemTableState(final ISystemTable otherSystemTable) throws RPCException {
 
         /*
          * Persist the state of the given System Table reference to disk.
@@ -226,7 +227,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     }
 
     @Override
-    public Map<DatabaseID, DatabaseInstanceWrapper> getConnectionInformation() throws RemoteException, SQLException {
+    public Map<DatabaseID, DatabaseInstanceWrapper> getConnectionInformation() throws RPCException, SQLException {
 
         return getConnectionInformation("SELECT * FROM " + CONNECTIONS + ";");
     }
@@ -293,7 +294,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     }
 
     @Override
-    public Map<TableInfo, TableManagerWrapper> getTableManagers() throws RemoteException {
+    public Map<TableInfo, TableManagerWrapper> getTableManagers() throws RPCException {
 
         final Map<TableInfo, TableManagerWrapper> tableManagers = new HashMap<TableInfo, TableManagerWrapper>();
 
@@ -336,7 +337,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
                 /*
                  * Perform lookups to get remote references to every Table Manager.
                  */
-                DatabaseInstanceRemote dir = null;
+                IDatabaseInstanceRemote dir = null;
 
                 try {
                     Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Finding database instance at : " + dbID);
@@ -351,7 +352,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
                 if (dir != null) {
                     Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Finding table manager reference.");
-                    TableManagerRemote tmReference = null;
+                    ITableManagerRemote tmReference = null;
                     try {
                         tmReference = dir.findTableManagerReference(ti, true);
                     }
@@ -379,7 +380,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     }
 
     @Override
-    public Map<TableInfo, Set<DatabaseID>> getReplicaLocations() throws RemoteException {
+    public Map<TableInfo, Set<DatabaseID>> getReplicaLocations() throws RPCException {
 
         /*
          * Parse the schema tables to obtain the required amount of table information.
@@ -428,7 +429,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     }
 
     @Override
-    public Map<TableInfo, DatabaseID> getPrimaryLocations() throws RemoteException, MovedException {
+    public Map<TableInfo, DatabaseID> getPrimaryLocations() throws RPCException, MovedException {
 
         /*
          * Parse the schema tables to obtain the required amount of table information.
@@ -470,39 +471,39 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     }
 
     @Override
-    public void buildSystemTableState() throws RemoteException {
+    public void buildSystemTableState() throws RPCException {
 
         // TODO Auto-generated method stub
     }
 
     @Override
-    public void removeAllTableInformation() throws RemoteException, MovedException {
+    public void removeAllTableInformation() throws RPCException, MovedException {
 
         removeTableInformation(null);
     }
 
     @Override
-    public DatabaseInstanceRemote getDatabaseInstance(final DatabaseID databaseURL) throws RemoteException, MovedException {
+    public IDatabaseInstanceRemote getDatabaseInstance(final DatabaseID databaseURL) throws RPCException, MovedException {
 
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public Set<DatabaseInstanceWrapper> getDatabaseInstances() throws RemoteException, MovedException {
+    public Set<DatabaseInstanceWrapper> getDatabaseInstances() throws RPCException, MovedException {
 
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public void changeTableManagerLocation(final TableManagerRemote locationOfManager, final TableInfo tableInfo) {
+    public void changeTableManagerLocation(final ITableManagerRemote locationOfManager, final TableInfo tableInfo) {
 
         super.changeTableManagerLocation(tableInfo);
     }
 
     @Override
-    public boolean addTableInformation(final TableManagerRemote tableManager, final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException, SQLException {
+    public boolean addTableInformation(final ITableManagerRemote tableManager, final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> replicaLocations) throws RPCException, MovedException, SQLException {
 
         final boolean added = super.addTableInformation(tableManager.getDatabaseURL(), tableDetails, false);
 
@@ -515,13 +516,13 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     }
 
     @Override
-    public int addConnectionInformation(final DatabaseID databaseURL, final DatabaseInstanceWrapper databaseInstanceWrapper) throws RemoteException, MovedException, SQLException {
+    public int addConnectionInformation(final DatabaseID databaseURL, final DatabaseInstanceWrapper databaseInstanceWrapper) throws RPCException, MovedException, SQLException {
 
         return super.addConnectionInformation(databaseURL, databaseInstanceWrapper.isActive());
     }
 
     @Override
-    public Set<TableManagerWrapper> getLocalDatabaseInstances(final DatabaseID localMachineLocation) throws RemoteException, MovedException {
+    public Set<TableManagerWrapper> getLocalDatabaseInstances(final DatabaseID localMachineLocation) throws RPCException, MovedException {
 
         final int connectionID = getConnectionID(localMachineLocation);
 
@@ -547,7 +548,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     }
 
     @Override
-    public void addTableManagerStateReplica(final TableInfo table, final DatabaseID replicaLocation, final DatabaseID primaryLocation, final boolean active) throws RemoteException, MovedException {
+    public void addTableManagerStateReplica(final TableInfo table, final DatabaseID replicaLocation, final DatabaseID primaryLocation, final boolean active) throws RPCException, MovedException {
 
         try {
             addTableManagerReplicaInformation(getTableID(table), getConnectionID(replicaLocation), getConnectionID(primaryLocation), active);
@@ -558,7 +559,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     }
 
     @Override
-    public void removeTableManagerStateReplica(final TableInfo table, final DatabaseID replicaLocation) throws RemoteException, MovedException {
+    public void removeTableManagerStateReplica(final TableInfo table, final DatabaseID replicaLocation) throws RPCException, MovedException {
 
         try {
             removeTableManagerReplicaInformation(getTableID(table), getConnectionID(replicaLocation));
@@ -581,13 +582,13 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     }
 
     @Override
-    public boolean removeTableInformation(final TableInfo ti) throws RemoteException, MovedException {
+    public boolean removeTableInformation(final TableInfo ti) throws RPCException, MovedException {
 
         return removeTableInformation(ti, false);
     }
 
     @Override
-    public TableManagerRemote recreateTableManager(final TableInfo table) throws RemoteException, MovedException {
+    public ITableManagerRemote recreateTableManager(final TableInfo table) throws RPCException, MovedException {
 
         return null;
         // Done by in-memory system table.

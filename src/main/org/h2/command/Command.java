@@ -4,7 +4,6 @@
  */
 package org.h2.command;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.constant.ErrorCode;
@@ -18,6 +17,8 @@ import org.h2.result.LocalResult;
 import org.h2.result.ResultInterface;
 import org.h2.util.MemoryUtils;
 import org.h2.util.ObjectArray;
+
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 
 /**
  * Represents a SQL statement. This object is only used on the server side.
@@ -96,9 +97,9 @@ public abstract class Command implements CommandInterface {
      * @return the update count
      * @throws SQLException
      *             if the command is not an updating statement
-     * @throws RemoteException
+     * @throws RPCException
      */
-    public int update() throws SQLException, RemoteException {
+    public int update() throws SQLException, RPCException {
 
         throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_QUERY);
     }
@@ -111,9 +112,9 @@ public abstract class Command implements CommandInterface {
      * @return the update count
      * @throws SQLException
      *             if the command is not an updating statement
-     * @throws RemoteException
+     * @throws RPCException
      */
-    protected int update(final boolean partOfABiggerThing) throws SQLException, RemoteException {
+    protected int update(final boolean partOfABiggerThing) throws SQLException, RPCException {
 
         throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_QUERY);
     }
@@ -126,9 +127,9 @@ public abstract class Command implements CommandInterface {
      * @return the local result set
      * @throws SQLException
      *             if the command is not a query
-     * @throws RemoteException
+     * @throws RPCException
      */
-    public LocalResult query(final int maxrows) throws SQLException, RemoteException {
+    public LocalResult query(final int maxrows) throws SQLException, RPCException {
 
         throw Message.getSQLException(ErrorCode.METHOD_ONLY_ALLOWED_FOR_QUERY);
     }

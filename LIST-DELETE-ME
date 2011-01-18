@@ -1,0 +1,47 @@
+H2O Serialised Values:
+----------------------
+
+IChordRemoteReference
+
+DatabaseID
+
+IDatabaseInstanceRemote
+
+TableInfo
+
+TableProxy
+
+ITableManagerRemote
+
+TableManagerWrapper							Set<TableManagerWrapper>
+
+ISystemTable
+
+ISystemTableRemote
+
+LockRequest
+
+LockType
+
+ReplicaManager
+
+ActionRequest
+
+DatabaseInstanceWrapper 					Set<DatabaseInstanceWrapper>
+
+
+											Map<DatabaseID, DatabaseInstanceWrapper>
+
+
+											Map<TableInfo, TableManagerWrapper>
+											
+											Map<TableInfo, Set<DatabaseID>>
+											
+											Map<TableInfo, DatabaseID> 
+											
+											Collection<CommitResult>
+											
+											Set<String>
+											
+											Queue<DatabaseInstanceWrapper>
+											

@@ -73,7 +73,7 @@ import org.h2.value.ValueString;
 import org.h2.value.ValueTime;
 import org.h2.value.ValueTimestamp;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.interfaces.TableManagerRemote;
+import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
@@ -472,7 +472,7 @@ public class CreateReplica extends SchemaCommand {
                 final TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getURL());
 
                 if (!db.isTableLocal(getSchema())) {
-                    TableManagerRemote tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, true);
+                    ITableManagerRemote tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, true);
 
                     if (tableManager == null) { throw new SQLException("Error creating replica for " + tableName + ". Table Manager not found."); }
 
@@ -1029,7 +1029,7 @@ public class CreateReplica extends SchemaCommand {
 
             final ISystemTableReference sm = session.getDatabase().getSystemTableReference();
 
-            TableManagerRemote tableManager;
+            ITableManagerRemote tableManager;
 
             tableManager = sm.lookup(new TableInfo(tableName, getSchema().getName()), true);
 

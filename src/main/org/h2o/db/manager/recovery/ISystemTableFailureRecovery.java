@@ -11,7 +11,7 @@ package org.h2o.db.manager.recovery;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 
-import org.h2o.db.manager.interfaces.SystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.wrappers.SystemTableWrapper;
 import org.h2o.util.exceptions.MovedException;
 
@@ -54,7 +54,7 @@ public interface ISystemTableFailureRecovery {
      * @throws SystemTableAccessException
      *             Thrown when the restart of the System Table failed.
      */
-    public SystemTableWrapper restart(boolean persistedSchemaTablesExist, boolean recreateFromPersistedState, SystemTableRemote oldSystemTable) throws SystemTableAccessException;
+    public SystemTableWrapper restart(boolean persistedSchemaTablesExist, boolean recreateFromPersistedState, ISystemTableRemote oldSystemTable) throws SystemTableAccessException;
 
     /**
      * Find the System Table after a MovedException is thrown on SystemTable lookup.

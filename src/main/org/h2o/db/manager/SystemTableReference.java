@@ -38,10 +38,10 @@ import org.h2.engine.Database;
 import org.h2.table.ReplicaSet;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.interfaces.TableManagerRemote;
+import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
-import org.h2o.db.manager.interfaces.SystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.db.manager.recovery.SystemTableAccessException;
 import org.h2o.db.manager.recovery.SystemTableFailureRecovery;
@@ -77,7 +77,7 @@ public class SystemTableReference implements ISystemTableReference {
      * System Table STATE.
      */
 
-    private final Map<TableInfo, TableManagerRemote> cachedTableManagerReferences = new HashMap<TableInfo, TableManagerRemote>();
+    private final Map<TableInfo, ITableManagerRemote> cachedTableManagerReferences = new HashMap<TableInfo, ITableManagerRemote>();
 
     private final Map<TableInfo, TableManager> localTableManagers = new HashMap<TableInfo, TableManager>();
 
@@ -136,13 +136,13 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public SystemTableRemote getSystemTable() {
+    public ISystemTableRemote getSystemTable() {
 
         return getSystemTable(false);
     }
 
     @Override
-    public SystemTableRemote getSystemTable(final boolean inShutdown) {
+    public ISystemTableRemote getSystemTable(final boolean inShutdown) {
 
         boolean foundSystemTable = false;
 
@@ -211,7 +211,7 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public SystemTableRemote findSystemTable() throws SQLException {
+    public ISystemTableRemote findSystemTable() throws SQLException {
 
         try {
             systemTableWrapper = systemTableRecovery.get();
@@ -260,7 +260,7 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public void setSystemTable(final SystemTableRemote systemTable) {
+    public void setSystemTable(final ISystemTableRemote systemTable) {
 
         systemTableWrapper.setSystemTable(systemTable);
     }
@@ -284,7 +284,7 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public SystemTableRemote migrateSystemTableToLocalInstance(final boolean persistedSchemaTablesExist, final boolean recreateFromPersistedState) throws SystemTableAccessException {
+    public ISystemTableRemote migrateSystemTableToLocalInstance(final boolean persistedSchemaTablesExist, final boolean recreateFromPersistedState) throws SystemTableAccessException {
 
         systemTableWrapper = systemTableRecovery.restart(persistedSchemaTablesExist, recreateFromPersistedState, systemTableWrapper.getSystemTable());
 
@@ -296,7 +296,7 @@ public class SystemTableReference implements ISystemTableReference {
         isLocal = systemTableWrapper.getURL().equals(db.getURL());
 
         try {
-            final SystemTableRemote stub = (SystemTableRemote) UnicastRemoteObject.exportObject(systemTableWrapper.getSystemTable(), 0);
+            final ISystemTableRemote stub = (ISystemTableRemote) UnicastRemoteObject.exportObject(systemTableWrapper.getSystemTable(), 0);
 
             getSystemTableRegistry().rebind(SCHEMA_MANAGER, stub);
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Binding System Table on port " + systemTableWrapper.getURL().getRMIPort());
@@ -338,19 +338,19 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public TableManagerRemote lookup(final String tableName, final boolean useCache) throws SQLException {
+    public ITableManagerRemote lookup(final String tableName, final boolean useCache) throws SQLException {
 
         return lookup(new TableInfo(tableName), useCache);
     }
 
     @Override
-    public TableManagerRemote lookup(final TableInfo tableInfo, final boolean useCache) throws SQLException {
+    public ITableManagerRemote lookup(final TableInfo tableInfo, final boolean useCache) throws SQLException {
 
         return lookup(tableInfo, useCache, false);
     }
 
     @Override
-    public TableManagerRemote lookup(final TableInfo tableInfo, final boolean useCache, final boolean searchOnlyCache) throws SQLException {
+    public ITableManagerRemote lookup(final TableInfo tableInfo, final boolean useCache, final boolean searchOnlyCache) throws SQLException {
 
         if (tableInfo == null) { return null; }
 
@@ -372,7 +372,7 @@ public class SystemTableReference implements ISystemTableReference {
             /*
              * CHECK TWO: The Table Manager is not local. Look in the cache of Remote Table Manager References.
              */
-            final TableManagerRemote tableManager = cachedTableManagerReferences.get(tableInfo);
+            final ITableManagerRemote tableManager = cachedTableManagerReferences.get(tableInfo);
 
             if (tableManager != null) { return tableManager; }
         }
@@ -398,7 +398,7 @@ public class SystemTableReference implements ISystemTableReference {
                         }
 
                         // Put this Table Manager in the local cache then return it.
-                        final TableManagerRemote tableManager = tableManagerWrapper.getTableManager();
+                        final ITableManagerRemote tableManager = tableManagerWrapper.getTableManager();
                         cachedTableManagerReferences.put(tableInfo, tableManager);
 
                         return tableManager;
@@ -447,7 +447,7 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public void addProxy(final TableInfo tableInfo, final TableManagerRemote tableManager) {
+    public void addProxy(final TableInfo tableInfo, final ITableManagerRemote tableManager) {
 
         cachedTableManagerReferences.remove(tableInfo);
         cachedTableManagerReferences.put(tableInfo, tableManager);
@@ -458,7 +458,7 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public void addNewTableManagerReference(final TableInfo ti, final TableManagerRemote tm) {
+    public void addNewTableManagerReference(final TableInfo ti, final ITableManagerRemote tm) {
 
         try {
             getSystemTable().changeTableManagerLocation(tm, ti);
@@ -473,11 +473,11 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public boolean addTableInformation(final TableManagerRemote tableManagerRemote, final TableInfo ti, final Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException, SQLException { // changed by
+    public boolean addTableInformation(final ITableManagerRemote iTableManagerRemote, final TableInfo ti, final Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException, SQLException { // changed by
 
-        localTableManagers.put(ti.getGenericTableInfo(), (TableManager) tableManagerRemote);
+        localTableManagers.put(ti.getGenericTableInfo(), (TableManager) iTableManagerRemote);
 
-        final boolean successful = systemTableWrapper.getSystemTable().addTableInformation(tableManagerRemote, ti, replicaLocations);
+        final boolean successful = systemTableWrapper.getSystemTable().addTableInformation(iTableManagerRemote, ti, replicaLocations);
 
         if (!successful) {
             localTableManagers.remove(ti.getGenericTableInfo());
@@ -510,7 +510,7 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public SystemTableRemote getLocalSystemTable() {
+    public ISystemTableRemote getLocalSystemTable() {
 
         return systemTableWrapper.getSystemTable();
     }

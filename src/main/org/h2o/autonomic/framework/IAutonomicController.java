@@ -6,13 +6,27 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General
  * Public License along with H2O. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.db.manager.interfaces;
+package org.h2o.autonomic.framework;
 
-import org.h2o.db.manager.util.Migratable;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
 
 /**
+ * The components of the database system being monitored implement the AutonomicController class to provide a mechanism for autonomic
+ * manager to update the functionality being managed.
+ * 
+ * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public interface SystemTableRemote extends ISystemTable, Migratable {
+public interface IAutonomicController extends Remote {
+
+    /**
+     * Adjust some configuration of the component being controlled.
+     * 
+     * @param action
+     *            The action (modification) to be performed.
+     * @return Whether the change was successfully applied.
+     */
+    public boolean changeSetting(AutonomicAction action) throws RemoteException;
 
 }

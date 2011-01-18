@@ -6,26 +6,24 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General
  * Public License along with H2O. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.h2o.autonomic.decision;
+package org.h2o.db.interfaces;
 
-import java.rmi.RemoteException;
-import java.util.Queue;
-
-import org.h2o.autonomic.decision.ranker.metric.ActionRequest;
-import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
 
-public interface IReplicaChoice {
+/**
+ * Top-level remote interface for H2O objects. Specifies methods common to them all.
+ * 
+ * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
+ */
+public interface IH2ORemote { // used to extend Remote
 
     /**
-     * Return an ordered set of machines on which data/procesess can be added to.
+     * Used to check that a Table Manager is still accessible via RMI. This method will return false if the database has been closed - an
+     * exception will be thrown if it is unavailable.
      * 
-     * @param typeOfRequest
-     *            Type of request being made. For example, a new replica being created, or a table manager being migrated.
      * @throws MovedException
-     * @throws RemoteException
      */
-    public Queue<DatabaseInstanceWrapper> getAvailableMachines(ActionRequest typeOfRequest) throws RPCException, MovedException;
+    public boolean isAlive() throws RPCException, MovedException;
 }

@@ -18,7 +18,7 @@ import org.h2.schema.Schema;
 import org.h2.table.ReplicaSet;
 import org.h2.table.Table;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.interfaces.TableManagerRemote;
+import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.query.TableProxy;
 import org.h2o.db.query.TableProxyManager;
@@ -88,7 +88,7 @@ public class DropTable extends SchemaCommand {
             table = tables.getACopy();
         }
 
-        TableManagerRemote tableManager = null;
+        ITableManagerRemote tableManager = null;
         if (table == null) {
             tableManager = getSchema().getDatabase().getSystemTableReference().lookup((getSchema().getName() + "." + tableName), false);
         }
@@ -194,7 +194,7 @@ public class DropTable extends SchemaCommand {
             if (tableProxy == null || !tableProxy.getLockGranted().equals(LockType.WRITE)) {
 
                 final Database database = getSchema().getDatabase();
-                final TableManagerRemote tableManager = database.getSystemTableReference().lookup(fullTableName, true);
+                final ITableManagerRemote tableManager = database.getSystemTableReference().lookup(fullTableName, true);
 
                 if (tableManager == null) {
                     // Will happen if the table doesn't exist but IF NOT EXISTS has been specified.

@@ -95,12 +95,12 @@ import org.h2.value.ValueLob;
 import org.h2o.autonomic.settings.Settings;
 import org.h2o.autonomic.settings.TestingSettings;
 import org.h2o.db.id.DatabaseID;
-import org.h2o.db.interfaces.DatabaseInstanceRemote;
+import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.manager.SystemTable;
 import org.h2o.db.manager.SystemTableReference;
 import org.h2o.db.manager.TableManager;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
-import org.h2o.db.manager.interfaces.SystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.manager.monitorthreads.MetaDataReplicationThread;
 import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.db.query.TableProxyManager;
@@ -2950,7 +2950,7 @@ public class Database implements DataHandler {
         return systemTableRef;
     }
 
-    public SystemTableRemote getSystemTable() {
+    public ISystemTableRemote getSystemTable() {
 
         return systemTableRef.getSystemTable();
     }
@@ -3041,7 +3041,7 @@ public class Database implements DataHandler {
      * @return
      */
 
-    public DatabaseInstanceRemote getDatabaseInstance(final DatabaseID databaseURL) {
+    public IDatabaseInstanceRemote getDatabaseInstance(final DatabaseID databaseURL) {
 
         try {
             return systemTableRef.getSystemTable().getDatabaseInstance(databaseURL);
@@ -3059,7 +3059,7 @@ public class Database implements DataHandler {
     /**
      * @return
      */
-    public DatabaseInstanceRemote getLocalDatabaseInstance() {
+    public IDatabaseInstanceRemote getLocalDatabaseInstance() {
 
         return databaseRemote.getLocalDatabaseInstance();
     }

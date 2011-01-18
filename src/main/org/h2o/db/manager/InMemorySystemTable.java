@@ -9,7 +9,6 @@
 package org.h2o.db.manager;
 
 import java.rmi.Remote;
-import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -25,8 +24,8 @@ import org.h2.engine.Database;
 import org.h2o.autonomic.decision.ranker.metric.ActionRequest;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.interfaces.DatabaseInstanceRemote;
-import org.h2o.db.interfaces.TableManagerRemote;
+import org.h2o.db.interfaces.IDatabaseInstanceRemote;
+import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.monitorthreads.TableManagerLivenessCheckerThread;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
@@ -38,6 +37,7 @@ import org.h2o.viewer.H2OEventBus;
 import org.h2o.viewer.gwt.client.DatabaseStates;
 import org.h2o.viewer.gwt.client.H2OEvent;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -93,7 +93,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
      * 
      * See http://stackoverflow.com/questions/645208/java-rmi-nosuchobjectexception-no-such-object-in-table/854097#854097.
      */
-    public final static HashSet<TableManagerRemote> tableManagerReferences = new HashSet<TableManagerRemote>();
+    public final static HashSet<ITableManagerRemote> tableManagerReferences = new HashSet<ITableManagerRemote>();
 
     public InMemorySystemTable(final Database database) throws Exception {
 
@@ -120,7 +120,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
      ******************************************************************/
 
     @Override
-    public boolean addTableInformation(final TableManagerRemote tableManager, final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException {
+    public boolean addTableInformation(final ITableManagerRemote tableManager, final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> replicaLocations) throws RPCException {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "New table successfully created: " + tableDetails);
 
@@ -154,7 +154,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public boolean removeTableInformation(final TableInfo ti) throws RemoteException {
+    public boolean removeTableInformation(final TableInfo ti) throws RPCException {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Request to completely drop table '" + ti.getFullTableName() + "' from the system.");
 
@@ -192,9 +192,9 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
      * they will become aware that it is no longer active.
      * 
      * @param tmw
-     * @throws RemoteException
+     * @throws RPCException
      */
-    private void setTableManagerAsShutdown(final TableManagerWrapper tmw) throws RemoteException {
+    private void setTableManagerAsShutdown(final TableManagerWrapper tmw) throws RPCException {
 
         if (tmw.getTableManager() != null) {
             try {
@@ -209,7 +209,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public int addConnectionInformation(final DatabaseID databaseURL, final DatabaseInstanceWrapper databaseInstanceRemote) throws RemoteException {
+    public int addConnectionInformation(final DatabaseID databaseURL, final DatabaseInstanceWrapper databaseInstanceRemote) throws RPCException {
 
         databasesInSystem.remove(databaseURL);
         databasesInSystem.put(databaseURL, databaseInstanceRemote);
@@ -222,13 +222,13 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
      ******************************************************************/
 
     @Override
-    public TableManagerWrapper lookup(TableInfo ti) throws RemoteException {
+    public TableManagerWrapper lookup(TableInfo ti) throws RPCException {
 
-        if (ti == null) { throw new RemoteException("The table information provided was null."); }
+        if (ti == null) { throw new RPCException("The table information provided was null."); }
 
         ti = ti.getGenericTableInfo();
         TableManagerWrapper tableManagerWrapper = tableManagers.get(ti);
-        TableManagerRemote tm = null;
+        ITableManagerRemote tm = null;
 
         if (tableManagerWrapper != null) {
             tm = tableManagerWrapper.getTableManager();
@@ -270,9 +270,9 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
              * Make Table Manager serializable first.
              */
             try {
-                tm = (TableManagerRemote) UnicastRemoteObject.exportObject(tm, 0);
+                tm = (ITableManagerRemote) UnicastRemoteObject.exportObject(tm, 0);
             }
-            catch (final RemoteException e) {
+            catch (final RPCException e) {
                 e.printStackTrace();
             }
 
@@ -284,7 +284,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
             // may already be active.
             // RECREATE TABLEMANAGER <tableName>
             try {
-                DatabaseInstanceRemote dir = getDatabaseInstance(tableManagerWrapper.getURL());
+                IDatabaseInstanceRemote dir = getDatabaseInstance(tableManagerWrapper.getURL());
                 final DatabaseID url = tableManagerWrapper.getURL();
                 ti = tableManagerWrapper.getTableInfo();
                 if (dir != null) {
@@ -331,13 +331,13 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public boolean exists(final TableInfo ti) throws RemoteException {
+    public boolean exists(final TableInfo ti) throws RPCException {
 
         return tableManagers.containsKey(ti);
     }
 
     @Override
-    public Set<String> getAllTablesInSchema(final String schemaName) throws RemoteException {
+    public Set<String> getAllTablesInSchema(final String schemaName) throws RPCException {
 
         final Set<String> tableNames = new HashSet<String>();
 
@@ -351,13 +351,13 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public int getNewTableSetNumber() throws RemoteException {
+    public int getNewTableSetNumber() throws RPCException {
 
         return tableSetNumber++;
     }
 
     @Override
-    public void buildSystemTableState(final ISystemTable otherSystemTable) throws RemoteException, MovedException, SQLException {
+    public void buildSystemTableState(final ISystemTable otherSystemTable) throws RPCException, MovedException, SQLException {
 
         started = false;
         /*
@@ -374,7 +374,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
         for (final Entry<DatabaseID, DatabaseInstanceWrapper> remoteDB : connectedMachines.entrySet()) {
             final DatabaseInstanceWrapper wrapper = remoteDB.getValue();
 
-            DatabaseInstanceRemote dir = null;
+            IDatabaseInstanceRemote dir = null;
 
             if (wrapper != null) {
                 wrapper.getDatabaseInstance();
@@ -467,7 +467,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
      * @param tableManager
      * @return
      */
-    private static boolean isAlive(final TableManagerRemote tableManager) {
+    private static boolean isAlive(final ITableManagerRemote tableManager) {
 
         boolean alive = true;
 
@@ -486,7 +486,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public TableManagerRemote recreateTableManager(final TableInfo tableInfo) {
+    public ITableManagerRemote recreateTableManager(final TableInfo tableInfo) {
 
         final TableManagerWrapper tableManager = tableManagers.get(tableInfo);
 
@@ -527,7 +527,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
                     }
                 }
             }
-            catch (final RemoteException e) {
+            catch (final RPCException e) {
                 // May fail on some nodes.
 
                 // TODO mark these instances as inactive.
@@ -539,7 +539,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public Map<DatabaseID, DatabaseInstanceWrapper> getConnectionInformation() throws RemoteException {
+    public Map<DatabaseID, DatabaseInstanceWrapper> getConnectionInformation() throws RPCException {
 
         return databasesInSystem;
     }
@@ -557,18 +557,18 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public void buildSystemTableState() throws RemoteException {
+    public void buildSystemTableState() throws RPCException {
 
         // TODO Auto-generated method stub
     }
 
     @Override
-    public void removeAllTableInformation() throws RemoteException {
+    public void removeAllTableInformation() throws RPCException {
 
         for (final TableManagerWrapper dmw : tableManagers.values()) {
             try {
 
-                TableManagerRemote dm = null;
+                ITableManagerRemote dm = null;
 
                 if (dmw != null) {
                     dm = dmw.getTableManager();
@@ -588,7 +588,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public DatabaseInstanceRemote getDatabaseInstance(final DatabaseID databaseURL) throws RemoteException, MovedException {
+    public IDatabaseInstanceRemote getDatabaseInstance(final DatabaseID databaseURL) throws RPCException, MovedException {
 
         final DatabaseInstanceWrapper wrapper = databasesInSystem.get(databaseURL);
         if (wrapper == null) { return null; }
@@ -596,13 +596,13 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public Set<DatabaseInstanceWrapper> getDatabaseInstances() throws RemoteException, MovedException {
+    public Set<DatabaseInstanceWrapper> getDatabaseInstances() throws RPCException, MovedException {
 
         return new HashSet<DatabaseInstanceWrapper>(databasesInSystem.values());
     }
 
     @Override
-    public void removeConnectionInformation(final DatabaseInstanceRemote localDatabaseInstance) throws RemoteException, MovedException {
+    public void removeConnectionInformation(final IDatabaseInstanceRemote localDatabaseInstance) throws RPCException, MovedException {
 
         final DatabaseInstanceWrapper wrapper = databasesInSystem.get(localDatabaseInstance.getURL());
 
@@ -612,7 +612,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public void changeTableManagerLocation(final TableManagerRemote stub, final TableInfo tableInfo) {
+    public void changeTableManagerLocation(final ITableManagerRemote stub, final TableInfo tableInfo) {
 
         final Object result = tableManagers.remove(tableInfo.getGenericTableInfo());
 
@@ -629,7 +629,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public Set<TableManagerWrapper> getLocalDatabaseInstances(final DatabaseID databaseInstance) throws RemoteException, MovedException {
+    public Set<TableManagerWrapper> getLocalDatabaseInstances(final DatabaseID databaseInstance) throws RPCException, MovedException {
 
         /*
          * Create an interator to go through and chec whether a given Table Manager is local to the specified machine.
@@ -642,7 +642,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
                 try {
                     return wrapper.isLocalTo(databaseInstance);
                 }
-                catch (final RemoteException e) {
+                catch (final RPCException e) {
                     return false;
                 }
             }
@@ -654,7 +654,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public void addTableManagerStateReplica(final TableInfo table, final DatabaseID replicaLocation, final DatabaseID primaryLocation, final boolean active) throws RemoteException, MovedException {
+    public void addTableManagerStateReplica(final TableInfo table, final DatabaseID replicaLocation, final DatabaseID primaryLocation, final boolean active) throws RPCException, MovedException {
 
         Set<DatabaseID> replicas = tmReplicaLocations.get(table.getGenericTableInfo());
 
@@ -670,7 +670,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public void removeTableManagerStateReplica(final TableInfo table, final DatabaseID replicaLocation) throws RemoteException, MovedException {
+    public void removeTableManagerStateReplica(final TableInfo table, final DatabaseID replicaLocation) throws RPCException, MovedException {
 
         final Set<DatabaseID> replicas = tmReplicaLocations.get(table.getGenericTableInfo());
 

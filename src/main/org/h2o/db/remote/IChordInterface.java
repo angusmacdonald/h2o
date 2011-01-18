@@ -12,8 +12,8 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 
 import org.h2o.db.id.DatabaseID;
-import org.h2o.db.interfaces.DatabaseInstanceRemote;
-import org.h2o.db.interfaces.TableManagerRemote;
+import org.h2o.db.interfaces.IDatabaseInstanceRemote;
+import org.h2o.db.interfaces.ITableManagerRemote;
 
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
@@ -62,7 +62,7 @@ public interface IChordInterface {
      * @throws NotBoundException
      *             Thrown if there wasn't a database instance interface exposed on the RMI proxy.
      */
-    DatabaseInstanceRemote getDatabaseInstanceAt(String hostname, int port) throws RemoteException, NotBoundException;
+    IDatabaseInstanceRemote getDatabaseInstanceAt(String hostname, int port) throws RemoteException, NotBoundException;
 
     /**
      * Finds the location of the chord node responsible for the given key.
@@ -90,5 +90,5 @@ public interface IChordInterface {
      * @param stub
      *            Remote Table Manager proxy.
      */
-    void bind(String fullTableName, TableManagerRemote stub);
+    void bind(String fullTableName, ITableManagerRemote stub);
 }

@@ -13,7 +13,7 @@ import java.rmi.RemoteException;
 import org.h2.engine.Session;
 import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.id.DatabaseID;
-import org.h2o.db.interfaces.DatabaseInstanceRemote;
+import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.locator.client.H2OLocatorInterface;
@@ -42,7 +42,7 @@ public interface IDatabaseRemote {
      * 
      * @return Remote reference of the local database.
      */
-    public DatabaseInstanceRemote getLocalDatabaseInstance();
+    public IDatabaseInstanceRemote getLocalDatabaseInstance();
 
     /**
      * Returns the port on which the local database instance is running its RMI server.
@@ -88,7 +88,7 @@ public interface IDatabaseRemote {
      *             Thrown if there is a problem accessing the RMI registry.
      * @return Database instance remote proxy for the database at the given location.
      */
-    public DatabaseInstanceRemote getDatabaseInstanceAt(IChordRemoteReference lookupLocation) throws RemoteException, RPCException;
+    public IDatabaseInstanceRemote getDatabaseInstanceAt(IChordRemoteReference lookupLocation) throws RemoteException, RPCException;
 
     /**
      * Find the database instance located at the location given. The parameter is used to get the hostname and RMI port of that chord nodes
@@ -98,7 +98,7 @@ public interface IDatabaseRemote {
      *            The hostname and RMI port of this reference are used to find the local RMI registry.
      * @return Database instance remote proxy for the database at the given location.
      */
-    public DatabaseInstanceRemote getDatabaseInstanceAt(DatabaseID databaseURL) throws RemoteException;
+    public IDatabaseInstanceRemote getDatabaseInstanceAt(DatabaseID databaseURL) throws RemoteException;
 
     public H2OLocatorInterface getLocatorInterface() throws LocatorException;
 }

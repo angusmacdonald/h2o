@@ -40,7 +40,7 @@ import org.h2.engine.Database;
 import org.h2.result.LocalResult;
 import org.h2o.autonomic.decision.ranker.metric.CreateReplicaRequest;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.interfaces.DatabaseInstanceRemote;
+import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.db.manager.TableManager;
 import org.h2o.db.manager.interfaces.ISystemTable;
@@ -53,6 +53,7 @@ import org.h2o.viewer.H2OEventBus;
 import org.h2o.viewer.gwt.client.DatabaseStates;
 import org.h2o.viewer.gwt.client.H2OEvent;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -382,7 +383,7 @@ public class MetaDataReplicaManager {
 
                     sqlQuery.close();
                 }
-                catch (final RemoteException e) {
+                catch (final RPCException e) {
                     e.printStackTrace();
                 }
             }
@@ -390,7 +391,7 @@ public class MetaDataReplicaManager {
                 try {
                     result = replica.getKey().getDatabaseInstance().executeUpdate(query, true);
                 }
-                catch (final RemoteException e) {
+                catch (final RPCException e) {
                     failed.put(replica.getKey(), replica.getValue());
                 }
             }
@@ -405,7 +406,7 @@ public class MetaDataReplicaManager {
                     try {
                         db.getSystemTable().removeTableManagerStateReplica(tableInfo, replica.getURL());
                     }
-                    catch (final RemoteException e1) {
+                    catch (final RPCException e1) {
                         e1.printStackTrace();
                     }
                     catch (final MovedException e1) {
@@ -498,7 +499,7 @@ public class MetaDataReplicaManager {
         }
     }
 
-    public void remove(final DatabaseInstanceRemote databaseInstance, final boolean isSystemTable) {
+    public void remove(final IDatabaseInstanceRemote databaseInstance, final boolean isSystemTable) {
 
         final ReplicaManager replicaManager = isSystemTable ? systemTableReplicas : tableManagerReplicas;
 

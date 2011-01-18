@@ -44,12 +44,12 @@ import org.h2.engine.Session;
 import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.DatabaseInstance;
 import org.h2o.db.id.DatabaseID;
-import org.h2o.db.interfaces.DatabaseInstanceRemote;
-import org.h2o.db.interfaces.TableManagerRemote;
+import org.h2o.db.interfaces.IDatabaseInstanceRemote;
+import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.SystemTableReference;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
-import org.h2o.db.manager.interfaces.SystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.db.replication.MetaDataReplicaManager;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
@@ -89,7 +89,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     /**
      * The remote interface of the local database instance.
      */
-    private DatabaseInstanceRemote localInstance;
+    private IDatabaseInstanceRemote localInstance;
 
     /**
      * Location information for the local database and chord instance.
@@ -490,7 +490,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
          * such object' errors in Database.createH2OTables()).
          */
         try {
-            final DatabaseInstanceRemote stub = (DatabaseInstanceRemote) UnicastRemoteObject.exportObject(localInstance, 0);
+            final IDatabaseInstanceRemote stub = (IDatabaseInstanceRemote) UnicastRemoteObject.exportObject(localInstance, 0);
 
             getLocalRegistry().rebind(LOCAL_DATABASE_INSTANCE, stub);
 
@@ -502,7 +502,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     }
 
     @Override
-    public DatabaseInstanceRemote getLocalDatabaseInstance() {
+    public IDatabaseInstanceRemote getLocalDatabaseInstance() {
 
         return localInstance;
     }
@@ -514,7 +514,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     }
 
     @Override
-    public DatabaseInstanceRemote getDatabaseInstanceAt(final IChordRemoteReference lookupLocation) throws RemoteException, RPCException {
+    public IDatabaseInstanceRemote getDatabaseInstanceAt(final IChordRemoteReference lookupLocation) throws RemoteException, RPCException {
 
         final InetSocketAddress address = lookupLocation.getRemote().getAddress();
 
@@ -531,7 +531,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     }
 
     @Override
-    public DatabaseInstanceRemote getDatabaseInstanceAt(final DatabaseID dbID) throws RemoteException {
+    public IDatabaseInstanceRemote getDatabaseInstanceAt(final DatabaseID dbID) throws RemoteException {
 
         if (dbID.equals(localMachineLocation)) { return getLocalDatabaseInstance(); }
 
@@ -546,11 +546,11 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     }
 
     @Override
-    public DatabaseInstanceRemote getDatabaseInstanceAt(final String hostname, final int port) throws RemoteException, NotBoundException {
+    public IDatabaseInstanceRemote getDatabaseInstanceAt(final String hostname, final int port) throws RemoteException, NotBoundException {
 
         final Registry remoteRegistry = LocateRegistry.getRegistry(hostname, port);
 
-        return (DatabaseInstanceRemote) remoteRegistry.lookup(LOCAL_DATABASE_INSTANCE);
+        return (IDatabaseInstanceRemote) remoteRegistry.lookup(LOCAL_DATABASE_INSTANCE);
     }
 
     /**
@@ -661,7 +661,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         rmiPort = localChordAddress.getPort();
 
         try {
-            final DatabaseInstanceRemote lookupInstance = getDatabaseInstanceAt(remoteHostname, remotePort);
+            final IDatabaseInstanceRemote lookupInstance = getDatabaseInstanceAt(remoteHostname, remotePort);
             actualSystemTableLocation = lookupInstance.getSystemTableURL();
             systemTableRef.setSystemTableURL(actualSystemTableLocation);
         }
@@ -821,7 +821,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         Set<TableManagerWrapper> localTableManagers = null;
         try {
 
-            final SystemTableRemote systemTable = systemTableRef.getSystemTable();
+            final ISystemTableRemote systemTable = systemTableRef.getSystemTable();
 
             /*
              * If systemTable is null then the previous successor has failed and it was the System Table, so no System Table exists currently. It is not the
@@ -855,7 +855,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             final String hostname = address.getHostName();
             final int port = address.getPort();
 
-            final DatabaseInstanceRemote successorInstance = getDatabaseInstanceAt(hostname, port);
+            final IDatabaseInstanceRemote successorInstance = getDatabaseInstanceAt(hostname, port);
 
             if (systemTableRef.isSystemTableLocal() || localTableManagers != null && localTableManagers.size() > 0) {
 
@@ -943,7 +943,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         final boolean thisIsntATestThatShouldPreventThis = !Constants.IS_NON_SM_TEST && !Constants.IS_TEAR_DOWN;
         final boolean systemTableHeldLocally = systemTableRef.isSystemTableLocal();
 
-        DatabaseInstanceRemote successorDB = null;
+        IDatabaseInstanceRemote successorDB = null;
 
         if (successorIsDifferentMachine && thisIsntATestThatShouldPreventThis) {
 
@@ -960,7 +960,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                  */
                 for (final TableManagerWrapper wrapper : localManagers) {
 
-                    final TableManagerRemote dmr = wrapper.getTableManager();
+                    final ITableManagerRemote dmr = wrapper.getTableManager();
                     if (dmr.getReplicaManager().contains(new DatabaseInstanceWrapper(localMachineLocation, localInstance, true)) && dmr.getReplicaManager().getNumberOfReplicas() == 1) {
                         // This machine holds the only replica - replicate on the successor as well.
                         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Replicating table [" + wrapper.getTableInfo().getFullTableName() + "] to successor: " + successor);
@@ -1049,7 +1049,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         final String lookupHostname = lookupLocation.getRemote().getAddress().getHostName();
         final int lookupPort = lookupLocation.getRemote().getAddress().getPort();
 
-        DatabaseInstanceRemote lookupInstance;
+        IDatabaseInstanceRemote lookupInstance;
         try {
             lookupInstance = getDatabaseInstanceAt(lookupHostname, lookupPort);
 
@@ -1106,7 +1106,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     }
 
     @Override
-    public void bind(final String fullTableName, final TableManagerRemote stub) {
+    public void bind(final String fullTableName, final ITableManagerRemote stub) {
 
         try {
             getLocalRegistry().rebind(fullTableName, stub);

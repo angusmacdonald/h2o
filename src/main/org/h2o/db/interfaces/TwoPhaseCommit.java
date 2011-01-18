@@ -11,6 +11,8 @@ package org.h2o.db.interfaces;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
+
 /**
  * RMI interface for H2O's two phase commit functionality.
  * 
@@ -33,7 +35,7 @@ public interface TwoPhaseCommit {
      * @throws RemoteException
      * @throws SQLException
      */
-    public int execute(String query, String transactionName, boolean commitOperation) throws RemoteException, SQLException;
+    public int execute(String query, String transactionName, boolean commitOperation) throws RPCException, SQLException;
 
     /**
      * Prepare the given machine to commit a set of queries that have already been executed.
@@ -44,5 +46,5 @@ public interface TwoPhaseCommit {
      * @throws RemoteException
      * @throws SQLException
      */
-    public int prepare(String transactionName) throws RemoteException, SQLException;
+    public int prepare(String transactionName) throws RPCException, SQLException;
 }

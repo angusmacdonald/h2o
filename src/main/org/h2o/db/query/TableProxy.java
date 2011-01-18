@@ -26,7 +26,6 @@
 package org.h2o.db.query;
 
 import java.io.Serializable;
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,8 +35,8 @@ import org.h2.engine.Session;
 import org.h2.table.Table;
 import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.interfaces.DatabaseInstanceRemote;
-import org.h2o.db.interfaces.TableManagerRemote;
+import org.h2o.db.interfaces.IDatabaseInstanceRemote;
+import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.db.manager.recovery.SystemTableAccessException;
@@ -48,6 +47,7 @@ import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.test.fixture.H2OTest;
 import org.h2o.util.exceptions.MovedException;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -78,7 +78,7 @@ public class TableProxy implements Serializable {
     /**
      * Proxy for the Table Manager of this table. Used to release any locks held at the end of the transaction.
      */
-    private TableManagerRemote tableManager; // changed by al - this is either a local guy or an RMI reference
+    private ITableManagerRemote tableManager; // changed by al - this is either a local guy or an RMI reference
 
     /**
      * The database instance making the request. This is used to request the lock (i.e. the lock for the given query is taken out in the
@@ -105,7 +105,7 @@ public class TableProxy implements Serializable {
      * @param tableManager proxy for the Table Manager of the table involved in the query (i.e. tableName).
      * @param updateID ID given to this update.
      */
-    public TableProxy(final LockType lockGranted, final TableInfo tableName, final Map<DatabaseInstanceWrapper, Integer> allReplicas, final TableManagerRemote tableManager, final LockRequest requestingMachine, final int updateID, final LockType lockRequested) {
+    public TableProxy(final LockType lockGranted, final TableInfo tableName, final Map<DatabaseInstanceWrapper, Integer> allReplicas, final ITableManagerRemote tableManager, final LockRequest requestingMachine, final int updateID, final LockType lockRequested) {
 
         this.lockGranted = lockGranted;
         this.lockRequested = lockRequested;
@@ -201,7 +201,7 @@ public class TableProxy implements Serializable {
      * @return Query proxy for a specific table within H20.
      * @throws SQLException
      */
-    public static TableProxy getTableProxyAndLock(TableManagerRemote tableManager, final String tableName, final LockRequest lockRequest, final LockType lockType, final Database db, final boolean alreadyCalled) throws SQLException {
+    public static TableProxy getTableProxyAndLock(ITableManagerRemote tableManager, final String tableName, final LockRequest lockRequest, final LockType lockType, final Database db, final boolean alreadyCalled) throws SQLException {
 
         assert lockRequest != null : "A requesting database must be specified.";
 
@@ -216,11 +216,11 @@ public class TableProxy implements Serializable {
                 return tableManager.getTableProxy(lockType, lockRequest);
             }
         }
-        catch (final java.rmi.NoSuchObjectException e) {
-            e.printStackTrace();
-            throw new SQLException("Table Manager could not be accessed. It may not have been exported to RMI correctly.");
-        }
-        catch (final RemoteException e) {
+        //        catch (final java.rmi.NoSuchObjectException e) {
+        //            e.printStackTrace();
+        //            throw new SQLException("Table Manager could not be accessed. It may not have been exported to RMI correctly.");
+        //        }
+        catch (final RPCException e) {
 
             if (!alreadyCalled) {
 
@@ -244,10 +244,10 @@ public class TableProxy implements Serializable {
 
                 if (systemTableActive) {
                     try {
-                        final TableManagerRemote newTableManager = db.getSystemTable().recreateTableManager(new TableInfo(tableName));
+                        final ITableManagerRemote newTableManager = db.getSystemTable().recreateTableManager(new TableInfo(tableName));
                         if (newTableManager != null) { return getTableProxyAndLock(newTableManager, tableName, lockRequest, lockType, db, true); }
                     }
-                    catch (final RemoteException e1) {
+                    catch (final RPCException e1) {
                         e1.printStackTrace();
                     }
                     catch (final MovedException e1) {
@@ -265,7 +265,7 @@ public class TableProxy implements Serializable {
 
     public static TableProxy getTableProxyAndLock(final LockRequest lockRequest, final String tableName, final LockType lockType, final Database db) throws SQLException {
 
-        final TableManagerRemote tableManager = db.getSystemTableReference().lookup(tableName, true);
+        final ITableManagerRemote tableManager = db.getSystemTableReference().lookup(tableName, true);
 
         if (tableManager == null) {
             Diagnostic.trace(DiagnosticLevel.FULL, "Table Manager proxy was null when requesting table.");
@@ -320,7 +320,7 @@ public class TableProxy implements Serializable {
         return remoteReplicas;
     }
 
-    public TableManagerRemote getTableManager() {
+    public ITableManagerRemote getTableManager() {
 
         return tableManager;
     }
@@ -347,7 +347,7 @@ public class TableProxy implements Serializable {
      * Checks whether there is only one database in the system. Currently used in CreateReplica to ensure the system doesn't try to create a
      * replica of something on the same instance.
      */
-    public boolean isSingleDatabase(final DatabaseInstanceRemote localDatabase) {
+    public boolean isSingleDatabase(final IDatabaseInstanceRemote localDatabase) {
 
         return allReplicas != null && allReplicas.size() == 1 && getRequestingDatabase().getRequestLocation().getDatabaseInstance() == localDatabase;
     }
