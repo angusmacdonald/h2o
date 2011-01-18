@@ -389,6 +389,16 @@ public class Constants {
     public static final String SUFFIX_DATA_FILE = ".data.db";
 
     /**
+     * The file name suffix of H2O properties files.
+     */
+    public static final String SUFFIX_PROPERTIES_FILE = ".properties";
+
+    /**
+     * The file name suffix of H2O locator server files.
+     */
+    public static final String SUFFIX_LOCATOR_FILE = ".locator";
+
+    /**
      * The file name suffix of page files.
      */
     public static final String SUFFIX_PAGE_FILE = ".h2.db";

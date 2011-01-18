@@ -78,13 +78,14 @@ public class Engine {
     private Session openSession(final ConnectionInfo ci, final boolean ifExists, final String cipher) throws SQLException {
 
         final String name = ci.getName();
+
         Database database;
         final boolean openNew = ci.getProperty("OPEN_NEW", false);
         if (openNew || ci.isUnnamedInMemory()) {
             database = null;
         }
         else {
-            database = DATABASES.get(name);
+            database = DATABASES.get(ci.getName());
         }
         User user = null;
         boolean opened = false;

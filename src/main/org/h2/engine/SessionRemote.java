@@ -100,7 +100,7 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 
     private byte[] fileEncryptionKey;
 
-    private Object lobSyncObject = new Object();
+    private final Object lobSyncObject = new Object();
 
     private String sessionId;
 
@@ -119,15 +119,15 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
         // nothing to do
     }
 
-    private SessionRemote(ConnectionInfo ci) throws SQLException {
+    private SessionRemote(final ConnectionInfo ci) throws SQLException {
 
-        this.connectionInfo = ci;
+        connectionInfo = ci;
     }
 
-    private Transfer initTransfer(ConnectionInfo ci, String db, String server) throws IOException, SQLException {
+    private Transfer initTransfer(final ConnectionInfo ci, final String db, final String server) throws IOException, SQLException {
 
-        Socket socket = NetUtils.createSocket(server, Constants.DEFAULT_SERVER_PORT, ci.isSSL());
-        Transfer trans = new Transfer(this);
+        final Socket socket = NetUtils.createSocket(server, Constants.DEFAULT_SERVER_PORT, ci.isSSL());
+        final Transfer trans = new Transfer(this);
         trans.setSocket(socket);
         trans.setSSL(ci.isSSL());
         trans.init();
@@ -140,9 +140,9 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
         trans.writeString(ci.getUserName());
         trans.writeBytes(ci.getUserPasswordHash());
         trans.writeBytes(ci.getFilePasswordHash());
-        String[] keys = ci.getKeys();
+        final String[] keys = ci.getKeys();
         trans.writeInt(keys.length);
-        for (String key : keys) {
+        for (final String key : keys) {
             trans.writeString(key).writeString(ci.getProperty(key));
         }
         try {
@@ -151,7 +151,7 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
                 clientVersion = trans.readInt();
             }
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             trans.close();
             throw e;
         }
@@ -159,6 +159,7 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
         return trans;
     }
 
+    @Override
     public void cancel() {
 
         // this method is called when closing the connection
@@ -172,16 +173,16 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
      * @param id
      *            the statement id
      */
-    public void cancelStatement(int id) {
+    public void cancelStatement(final int id) {
 
         if (clientVersion <= Constants.TCP_PROTOCOL_VERSION_5) {
             // older servers don't support this feature
             return;
         }
         for (int i = 0; i < transferList.size(); i++) {
-            Transfer transfer = (Transfer) transferList.get(i);
+            final Transfer transfer = (Transfer) transferList.get(i);
             try {
-                Transfer trans = transfer.openNewConnection();
+                final Transfer trans = transfer.openNewConnection();
                 trans.init();
                 trans.writeInt(clientVersion);
                 if (clientVersion >= Constants.TCP_PROTOCOL_VERSION_6) {
@@ -194,7 +195,7 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
                 trans.writeInt(id);
                 trans.close();
             }
-            catch (IOException e) {
+            catch (final IOException e) {
                 trace.debug("Could not cancel statement", e);
             }
         }
@@ -213,7 +214,7 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
         }
     }
 
-    public void setAutoCommit(boolean autoCommit) {
+    public void setAutoCommit(final boolean autoCommit) {
 
         this.autoCommit = autoCommit;
     }
@@ -228,26 +229,26 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
             // (update set id=1 where id=0, but update set id=2 where id=0 is
             // faster)
             for (int i = 0, count = 0; i < transferList.size(); i++) {
-                Transfer transfer = (Transfer) transferList.get(i);
+                final Transfer transfer = (Transfer) transferList.get(i);
                 try {
                     traceOperation("COMMAND_COMMIT", 0);
                     transfer.writeInt(SessionRemote.COMMAND_COMMIT);
                     done(transfer);
                 }
-                catch (IOException e) {
+                catch (final IOException e) {
                     removeServer(e, i--, ++count);
                 }
             }
         }
     }
 
-    private String getFilePrefix(String dir) {
+    private String getFilePrefix(final String dir) {
 
-        StringBuilder buff = new StringBuilder();
+        final StringBuilder buff = new StringBuilder();
         buff.append(dir);
         buff.append('/');
         for (int i = 0; i < databaseName.length(); i++) {
-            char ch = databaseName.charAt(i);
+            final char ch = databaseName.charAt(i);
             if (Character.isLetterOrDigit(ch)) {
                 buff.append(ch);
             }
@@ -258,48 +259,51 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
         return buff.toString();
     }
 
+    @Override
     public int getPowerOffCount() {
 
         return 0;
     }
 
-    public void setPowerOffCount(int count) throws SQLException {
+    @Override
+    public void setPowerOffCount(final int count) throws SQLException {
 
         throw Message.getUnsupportedException();
     }
 
-    public SessionInterface createSession(ConnectionInfo ci) throws SQLException {
+    @Override
+    public SessionInterface createSession(final ConnectionInfo ci) throws SQLException {
 
         return new SessionRemote(ci).connectEmbeddedOrServer(false);
     }
 
-    private SessionInterface connectEmbeddedOrServer(boolean openNew) throws SQLException {
+    private SessionInterface connectEmbeddedOrServer(final boolean openNew) throws SQLException {
 
-        ConnectionInfo ci = connectionInfo;
+        final ConnectionInfo ci = connectionInfo;
         if (ci.isRemote()) {
             connectServer(ci);
             return this;
         }
         // create the session using reflection,
         // so that the JDBC layer can be compiled without it
-        boolean autoServerMode = Boolean.valueOf(ci.getProperty("AUTO_SERVER", "false")).booleanValue();
+        final boolean autoServerMode = Boolean.valueOf(ci.getProperty("AUTO_SERVER", "false")).booleanValue();
         ConnectionInfo backup = null;
         try {
             if (autoServerMode) {
                 backup = (ConnectionInfo) ci.clone();
                 connectionInfo = (ConnectionInfo) ci.clone();
             }
-            SessionFactory sf = (SessionFactory) ClassUtils.loadSystemClass("org.h2.engine.SessionFactoryEmbedded").newInstance();
+            final SessionFactory sf = (SessionFactory) ClassUtils.loadSystemClass("org.h2.engine.SessionFactoryEmbedded").newInstance();
             if (openNew) {
                 ci.setProperty("OPEN_NEW", "true");
             }
             return sf.createSession(ci);
         }
-        catch (SQLException e) {
-            int errorCode = e.getErrorCode();
+        catch (final SQLException e) {
+            final int errorCode = e.getErrorCode();
             if (errorCode == ErrorCode.DATABASE_ALREADY_OPEN_1) {
                 if (autoServerMode) {
-                    String serverKey = (String) ((JdbcSQLException) e).getPayload();
+                    final String serverKey = (String) ((JdbcSQLException) e).getPayload();
                     if (serverKey != null) {
                         backup.setServerKey(serverKey);
                         // OPEN_NEW must be removed now, otherwise
@@ -313,38 +317,38 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
             }
             throw e;
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw Message.convert(e);
         }
     }
 
-    private void connectServer(ConnectionInfo ci) throws SQLException {
+    private void connectServer(final ConnectionInfo ci) throws SQLException {
 
         String name = ci.getName();
         if (name.startsWith("//")) {
             name = name.substring("//".length());
         }
-        int idx = name.indexOf('/');
+        final int idx = name.indexOf('/');
         if (idx < 0) { throw ci.getFormatException(); }
         databaseName = name.substring(idx + 1);
-        String server = name.substring(0, idx);
+        final String server = name.substring(0, idx);
         traceSystem = new TraceSystem(null, false);
         try {
-            String traceLevelFile = ci.getProperty(SetTypes.TRACE_LEVEL_FILE, null);
+            final String traceLevelFile = ci.getProperty(SetTypes.TRACE_LEVEL_FILE, null);
             if (traceLevelFile != null) {
-                int level = Integer.parseInt(traceLevelFile);
-                String prefix = getFilePrefix(SysProperties.CLIENT_TRACE_DIRECTORY);
-                String file = FileUtils.createTempFile(prefix, Constants.SUFFIX_TRACE_FILE, false, false);
+                final int level = Integer.parseInt(traceLevelFile);
+                final String prefix = getFilePrefix(SysProperties.CLIENT_TRACE_DIRECTORY);
+                final String file = FileUtils.createTempFile(prefix, Constants.SUFFIX_TRACE_FILE, false, false);
                 traceSystem.setFileName(file);
                 traceSystem.setLevelFile(level);
             }
-            String traceLevelSystemOut = ci.getProperty(SetTypes.TRACE_LEVEL_SYSTEM_OUT, null);
+            final String traceLevelSystemOut = ci.getProperty(SetTypes.TRACE_LEVEL_SYSTEM_OUT, null);
             if (traceLevelSystemOut != null) {
-                int level = Integer.parseInt(traceLevelSystemOut);
+                final int level = Integer.parseInt(traceLevelSystemOut);
                 traceSystem.setLevelSystemOut(level);
             }
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw Message.convert(e);
         }
         trace = traceSystem.getTrace(Trace.JDBC);
@@ -366,7 +370,7 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
                     try {
                         eventListener = (DatabaseEventListener) ClassUtils.loadUserClass(className).newInstance();
                     }
-                    catch (Throwable e) {
+                    catch (final Throwable e) {
                         throw Message.convert(e);
                     }
                 }
@@ -376,18 +380,18 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
         if (cipher != null) {
             fileEncryptionKey = RandomUtils.getSecureBytes(32);
         }
-        String[] servers = StringUtils.arraySplit(server, ',', true);
-        int len = servers.length;
+        final String[] servers = StringUtils.arraySplit(server, ',', true);
+        final int len = servers.length;
         transferList.clear();
         // TODO cluster: support at most 2 connections
         boolean switchOffCluster = false;
         try {
             for (int i = 0; i < len; i++) {
                 try {
-                    Transfer trans = initTransfer(ci, databaseName, servers[i]);
+                    final Transfer trans = initTransfer(ci, databaseName, servers[i]);
                     transferList.add(trans);
                 }
-                catch (IOException e) {
+                catch (final IOException e) {
                     switchOffCluster = true;
                 }
             }
@@ -397,7 +401,7 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
             }
             switchOffAutoCommitIfCluster();
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             traceSystem.close();
             throw e;
         }
@@ -409,20 +413,20 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
         try {
             // TODO check if a newer client version can be used
             // not required when sending TCP_DRIVER_VERSION_6
-            CommandInterface command = prepareCommand("SELECT VALUE FROM INFORMATION_SCHEMA.SETTINGS WHERE NAME=?", 1);
-            ParameterInterface param = (ParameterInterface) command.getParameters().get(0);
+            final CommandInterface command = prepareCommand("SELECT VALUE FROM INFORMATION_SCHEMA.SETTINGS WHERE NAME=?", 1);
+            final ParameterInterface param = (ParameterInterface) command.getParameters().get(0);
             param.setValue(ValueString.get("info.BUILD_ID"), false);
-            ResultInterface result = command.executeQuery(1, false);
+            final ResultInterface result = command.executeQuery(1, false);
             if (result.next()) {
-                Value[] v = result.currentRow();
-                int version = v[0].getInt();
+                final Value[] v = result.currentRow();
+                final int version = v[0].getInt();
                 if (version > 71) {
                     clientVersion = Constants.TCP_PROTOCOL_VERSION_6;
                 }
             }
             result.close();
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             trace.error("Error trying to upgrade client version", e);
             // ignore
         }
@@ -430,14 +434,14 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
             sessionId = ByteUtils.convertBytesToString(RandomUtils.getSecureBytes(32));
             synchronized (this) {
                 for (int i = 0; i < transferList.size(); i++) {
-                    Transfer transfer = (Transfer) transferList.get(i);
+                    final Transfer transfer = (Transfer) transferList.get(i);
                     try {
                         traceOperation("SESSION_SET_ID", 0);
                         transfer.writeInt(SessionRemote.SESSION_SET_ID);
                         transfer.writeString(sessionId);
                         done(transfer);
                     }
-                    catch (Exception e) {
+                    catch (final Exception e) {
                         trace.error("sessionSetId", e);
                     }
                 }
@@ -448,7 +452,7 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
 
     private void switchOffCluster() throws SQLException {
 
-        CommandInterface ci = prepareCommand("SET CLUSTER ''", Integer.MAX_VALUE);
+        final CommandInterface ci = prepareCommand("SET CLUSTER ''", Integer.MAX_VALUE);
         ci.executeUpdate();
     }
 
@@ -462,7 +466,7 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
      * @param count
      *            the retry count index
      */
-    public void removeServer(IOException e, int i, int count) throws SQLException {
+    public void removeServer(final IOException e, final int i, final int count) throws SQLException {
 
         transferList.remove(i);
         if (autoReconnect(count)) { return; }
@@ -470,7 +474,8 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
         switchOffCluster();
     }
 
-    public CommandInterface prepareCommand(String sql, int fetchSize) throws SQLException {
+    @Override
+    public CommandInterface prepareCommand(final String sql, final int fetchSize) throws SQLException {
 
         synchronized (this) {
             checkClosed();
@@ -485,7 +490,7 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
      *            the retry count index
      * @return true if reconnected
      */
-    public boolean autoReconnect(int count) throws SQLException {
+    public boolean autoReconnect(final int count) throws SQLException {
 
         if (!isClosed()) { return false; }
         if (!autoReconnect || !autoCommit) { return false; }
@@ -517,22 +522,23 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
      */
     public void checkClosed() throws SQLException {
 
-        if (isClosed()) { throw new SQLException("Could not connect to database instance specified: " + this.getDatabasePath()); }
+        if (isClosed()) { throw new SQLException("Could not connect to database instance specified: " + getDatabasePath()); }
     }
 
+    @Override
     public void close() throws SQLException {
 
         if (transferList != null) {
             synchronized (this) {
                 for (int i = 0; i < transferList.size(); i++) {
-                    Transfer transfer = (Transfer) transferList.get(i);
+                    final Transfer transfer = (Transfer) transferList.get(i);
                     try {
                         traceOperation("SESSION_CLOSE", 0);
                         transfer.writeInt(SessionRemote.SESSION_CLOSE);
                         done(transfer);
                         transfer.close();
                     }
-                    catch (Exception e) {
+                    catch (final Exception e) {
                         trace.error("close", e);
                     }
                 }
@@ -546,6 +552,7 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
         }
     }
 
+    @Override
     public Trace getTrace() {
 
         return traceSystem.getTrace(Trace.JDBC);
@@ -572,16 +579,16 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
      * @throws IOException
      *             if there is a communication problem between client and server
      */
-    public void done(Transfer transfer) throws SQLException, IOException {
+    public void done(final Transfer transfer) throws SQLException, IOException {
 
         transfer.flush();
-        int status = transfer.readInt();
+        final int status = transfer.readInt();
         if (status == STATUS_ERROR) {
-            String sqlstate = transfer.readString();
-            String message = transfer.readString();
-            String sql = transfer.readString();
-            int errorCode = transfer.readInt();
-            String stackTrace = transfer.readString();
+            final String sqlstate = transfer.readString();
+            final String message = transfer.readString();
+            final String sql = transfer.readString();
+            final int errorCode = transfer.readInt();
+            final String stackTrace = transfer.readString();
             throw new JdbcSQLException(message, sql, sqlstate, errorCode, null, stackTrace);
         }
         else if (status == STATUS_CLOSED) {
@@ -602,6 +609,7 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
         return transferList.size() > 1;
     }
 
+    @Override
     public boolean isClosed() {
 
         return transferList == null || transferList.size() == 0;
@@ -615,75 +623,87 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
      * @param id
      *            the id of the operation
      */
-    public void traceOperation(String operation, int id) {
+    public void traceOperation(final String operation, final int id) {
 
         if (trace.isDebugEnabled()) {
             trace.debug(operation + " " + id);
         }
     }
 
-    public int allocateObjectId(boolean needFresh, boolean dataFile) {
+    @Override
+    public int allocateObjectId(final boolean needFresh, final boolean dataFile) {
 
         return objectId++;
     }
 
+    @Override
     public void checkPowerOff() {
 
         // ok
     }
 
+    @Override
     public void checkWritingAllowed() {
 
         // ok
     }
 
-    public int compareTypeSave(Value a, Value b) {
+    @Override
+    public int compareTypeSave(final Value a, final Value b) {
 
         throw Message.throwInternalError();
     }
 
+    @Override
     public String createTempFile() throws SQLException {
 
         try {
-            String prefix = getFilePrefix(System.getProperty("java.io.tmpdir"));
+            final String prefix = getFilePrefix(System.getProperty("java.io.tmpdir"));
             return FileUtils.createTempFile(prefix, Constants.SUFFIX_TEMP_FILE, true, false);
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             throw Message.convertIOException(e, databaseName);
         }
     }
 
+    @Override
     public void freeUpDiskSpace() {
 
         // nothing to do
     }
 
-    public int getChecksum(byte[] data, int start, int end) {
+    @Override
+    public int getChecksum(final byte[] data, final int start, final int end) {
 
         return 0;
     }
 
+    @Override
     public String getDatabasePath() {
 
         return "";
     }
 
-    public String getLobCompressionAlgorithm(int type) {
+    @Override
+    public String getLobCompressionAlgorithm(final int type) {
 
         return null;
     }
 
+    @Override
     public int getMaxLengthInplaceLob() {
 
         return Constants.DEFAULT_MAX_LENGTH_CLIENTSIDE_LOB;
     }
 
+    @Override
     public void handleInvalidChecksum() throws SQLException {
 
         throw Message.getSQLException(ErrorCode.FILE_CORRUPTED_1, "wrong checksum");
     }
 
-    public FileStore openFile(String name, String mode, boolean mustExist) throws SQLException {
+    @Override
+    public FileStore openFile(final String name, final String mode, final boolean mustExist) throws SQLException {
 
         if (mustExist && !FileUtils.exists(name)) { throw Message.getSQLException(ErrorCode.FILE_CORRUPTED_1, name); }
         FileStore store;
@@ -697,28 +717,32 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
         try {
             store.init();
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             store.closeSilently();
             throw e;
         }
         return store;
     }
 
+    @Override
     public DataHandler getDataHandler() {
 
         return this;
     }
 
+    @Override
     public Object getLobSyncObject() {
 
         return lobSyncObject;
     }
 
+    @Override
     public boolean getLobFilesInDirectories() {
 
         return false;
     }
 
+    @Override
     public SmallLRUCache getLobFileListCache() {
 
         return null;
@@ -734,16 +758,19 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
         return lastReconnect;
     }
 
+    @Override
     public TempFileDeleter getTempFileDeleter() {
 
         return TempFileDeleter.getInstance();
     }
 
+    @Override
     public boolean isReconnectNeeded() {
 
         return false;
     }
 
+    @Override
     public SessionInterface reconnect() {
 
         return this;

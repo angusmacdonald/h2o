@@ -68,13 +68,13 @@ public class TableInfo implements Serializable {
     /**
      * @param tableName2
      * @param schemaName2
-     * @param databaseURL
+     * @param databaseID
      */
-    public TableInfo(final String tableName, final String schemaName, final DatabaseID databaseURL) {
+    public TableInfo(final String tableName, final String schemaName, final DatabaseID databaseID) {
 
         this(tableName, schemaName);
 
-        dbLocation = databaseURL;
+        dbLocation = databaseID;
     }
 
     public TableInfo(final TableInfo tableInfo) {

@@ -27,10 +27,13 @@ package org.h2o;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +45,7 @@ import org.h2.engine.Engine;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.tools.Server;
 import org.h2.util.FileUtils;
+import org.h2.util.NetUtils;
 import org.h2.util.SortedProperties;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
@@ -50,6 +54,9 @@ import org.h2o.test.fixture.DatabaseType;
 import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.exceptions.StartupException;
 
+import uk.ac.standrews.cs.nds.p2p.impl.Key;
+import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
+import uk.ac.standrews.cs.nds.p2p.util.SHA1KeyFactory;
 import uk.ac.standrews.cs.nds.util.CommandLineArgs;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -82,7 +89,7 @@ public class H2O {
     private static final DiagnosticLevel DEFAULT_DIAGNOSTIC_LEVEL = DiagnosticLevel.FINAL;
 
     private String databaseName;
-    private int tcpPort;
+    private final int tcpPort = DEFAULT_TCP_PORT;
     private int webPort;
 
     private String databaseDescriptorLocation;
@@ -94,6 +101,10 @@ public class H2O {
     private Server server;
     private DatabaseType databaseType;
 
+    private String databaseInstanceIdentifier;
+    private String strDatabaseURL;
+    private DatabaseID databaseID;
+
     // -------------------------------------------------------------------------------------------------------
 
     /**
@@ -102,7 +113,7 @@ public class H2O {
      * @param args
      *            <ul>
      *            <li><em>-n<name></em>. The name of the database.</li>
-     *            <li><em>-p<port></em>. The port on which the database's TCP server is to run.</li>
+     *            <li><em>-I<port></em>. The unique ID of this database. If none is specified a new database will be created with a new unique ID.</li>
      *            <li><em>-w<port></em>. Optional. Specifies that a web port should be opened and the web interface should be started.</li>
      *            <li><em>-d<descriptor></em>. Optional. Specifies the URL or local file path of the database descriptor file. If not specified the database will create a new descriptor file in the database directory.</li>
      *            <li><em>-f<directory></em>. Optional. Specifies the directory containing the persistent database state. The default is the current working directory.</li>
@@ -139,9 +150,9 @@ public class H2O {
      * @param databaseDirectoryPath the directory in which database files are stored
      * @param databaseDescriptorLocation the location (file path or URL) of the database descriptor file
      */
-    public H2O(final String databaseName, final int tcpPort, final String databaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
+    public H2O(final String databaseName, final String databaseInstanceIdentifier, final String databaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
 
-        init(databaseName, tcpPort, 0, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel);
+        init(databaseName, databaseInstanceIdentifier, 0, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel);
     }
 
     /**
@@ -153,9 +164,9 @@ public class H2O {
      * @param webPort the port for this database's web interface
      * @param databaseDirectoryPath the directory in which database files are stored
      */
-    public H2O(final String databaseName, final int tcpPort, final int webPort, final String databaseDirectoryPath, final DiagnosticLevel diagnosticLevel) {
+    public H2O(final String databaseName, final String databaseInstanceIdentifier, final int webPort, final String databaseDirectoryPath, final DiagnosticLevel diagnosticLevel) {
 
-        init(databaseName, tcpPort, webPort, databaseDirectoryPath, null, diagnosticLevel);
+        init(databaseName, databaseInstanceIdentifier, webPort, databaseDirectoryPath, null, diagnosticLevel);
     }
 
     public H2O(final String[] args) throws StartupException {
@@ -175,9 +186,9 @@ public class H2O {
      * @param databaseDescriptorLocation
      * @param diagnosticLevel
      */
-    public H2O(final String databaseName, final String databaseBaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
+    public H2O(final String databaseName, final String databaseBaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel, final String databaseInstanceIdentifier) {
 
-        init(databaseName, databaseDescriptorLocation, diagnosticLevel);
+        init(databaseName, databaseInstanceIdentifier, databaseDescriptorLocation, diagnosticLevel);
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -191,10 +202,10 @@ public class H2O {
      * @param databaseBaseDirectoryPath the directory in which database files are stored
      * @param databaseDescriptorLocation the location (file path or URL) of the database descriptor file
      */
-    private void init(final String databaseName, final int tcpPort, final int webPort, final String databaseBaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
+    private void init(final String databaseName, final String databaseInstanceIdentifier, final int webPort, final String databaseBaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
 
         this.databaseName = databaseName;
-        this.tcpPort = tcpPort;
+        this.databaseInstanceIdentifier = databaseInstanceIdentifier;
         this.webPort = webPort;
         this.databaseBaseDirectoryPath = databaseBaseDirectoryPath;
         this.databaseDescriptorLocation = databaseDescriptorLocation;
@@ -205,9 +216,11 @@ public class H2O {
         Diagnostic.setLevel(diagnosticLevel);
     }
 
-    private void init(final String databaseName, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
+    private void init(final String databaseName, final String databaseInstanceIdentifier, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
 
         this.databaseName = databaseName;
+        this.databaseInstanceIdentifier = databaseInstanceIdentifier;
+
         this.databaseDescriptorLocation = databaseDescriptorLocation;
         this.diagnosticLevel = diagnosticLevel;
 
@@ -221,7 +234,7 @@ public class H2O {
         final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
 
         final String databaseName = processDatabaseName(arguments.get("-n"));
-        final int tcpPort = processTCPPort(arguments.get("-p"));
+        final String databaseInstanceIdentifier = arguments.get("-i");
         final String databaseDirectoryPath = processDatabaseDirectoryPath(arguments.get("-f"));
 
         final String databaseDescriptorLocation = processDatabaseDescriptorLocation(arguments.get("-d"));
@@ -233,12 +246,12 @@ public class H2O {
         switch (databaseType) {
             case MEMORY: {
 
-                init(databaseName, databaseDescriptorLocation, diagnosticLevel);
+                init(databaseName, databaseInstanceIdentifier, databaseDescriptorLocation, diagnosticLevel);
                 break;
             }
             case DISK: {
 
-                init(databaseName, tcpPort, webPort, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel);
+                init(databaseName, databaseInstanceIdentifier, webPort, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel);
                 break;
             }
             default: {
@@ -267,8 +280,10 @@ public class H2O {
             databaseDescriptorLocation = locator.start();
         }
 
-        startServer();
-        initializeDatabase();
+        final DatabaseID databaseID = generateDatabaseIDandURL();
+
+        startServer(databaseID);
+        initializeDatabase(databaseID);
     }
 
     /**
@@ -285,7 +300,7 @@ public class H2O {
 
         for (final Database db : dbs) {
 
-            if (db.getShortName().equalsIgnoreCase(databaseName + tcpPort) || db.getShortName().equalsIgnoreCase(Constants.MANAGEMENT_DB_PREFIX + tcpPort)) {
+            if (db.getShortName().equalsIgnoreCase(getDatabaseName()) || db.getShortName().equalsIgnoreCase(Constants.MANAGEMENT_DB_PREFIX + tcpPort)) {
                 db.close(true);
                 db.shutdownImmediately();
             }
@@ -298,13 +313,18 @@ public class H2O {
         shutdownServer();
     }
 
+    private String getDatabaseName() {
+
+        return databaseID.getID();
+    }
+
     /**
      * Deletes the persistent database state.
      * @throws SQLException if the state cannot be deleted
      */
     public void deletePersistentState() throws SQLException {
 
-        DeleteDbFiles.execute(databaseBaseDirectoryPath, databaseName + tcpPort, true);
+        DeleteDbFiles.execute(databaseBaseDirectoryPath, getDatabaseName(), false);
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -322,16 +342,6 @@ public class H2O {
     private String processDatabaseDescriptorLocation(final String arg) {
 
         return arg == null ? null : removeQuotes(arg);
-    }
-
-    private int processTCPPort(final String arg) throws StartupException {
-
-        try {
-            return arg == null ? DEFAULT_TCP_PORT : Integer.parseInt(arg);
-        }
-        catch (final NumberFormatException e) {
-            throw new StartupException("Invalid port: " + arg);
-        }
     }
 
     private int processWebPort(final String arg) throws StartupException {
@@ -354,38 +364,81 @@ public class H2O {
     /**
      * Call the H2O server class with the required parameters to initialize the TCP server.
      * 
-     * @param databaseURL the database URL
+     * @param databaseID the database URL
      * @throws IOException if the server properties cannot be written
      * @throws SQLException if the server properties cannot be opened
      */
-    private void startServer() throws SQLException, IOException {
+    private void startServer(final DatabaseID databaseID) throws SQLException, IOException {
 
-        final int number_of_args = webPort == 0 ? 5 : 9;
-        final String[] args = new String[number_of_args];
+        final List<String> h2oArgs = new LinkedList<String>(); // Arguments to be passed to the H2 server.
+        h2oArgs.add("-tcp");
 
-        args[0] = "-tcp";
+        h2oArgs.add("-tcpPort");
+        h2oArgs.add(String.valueOf(databaseID.getPort()));
 
-        args[1] = "-tcpPort";
-        args[2] = String.valueOf(tcpPort);
-
-        args[3] = "-tcpAllowOthers"; // allow remote connections.
-        args[4] = "-webAllowOthers";
+        h2oArgs.add("-tcpAllowOthers"); // allow remote connections.
+        h2oArgs.add("-webAllowOthers");
 
         // Web Interface.
 
+        webPort = getInactiveTCPPort(webPort);
+
         if (webPort != 0) {
-            args[5] = "-web";
-            args[6] = "-webPort";
-            args[7] = String.valueOf(webPort);
-            args[8] = "-browser";
+            h2oArgs.add("-web");
+            h2oArgs.add("-webPort");
+            h2oArgs.add(String.valueOf(webPort));
+            h2oArgs.add("-browser");
         }
 
-        server = new Server();
-
-        server.run(args, System.out);
-
         // Set URL to be displayed in browser.
-        setUpWebLink();
+        setUpWebLink(databaseID);
+
+        server = new Server();
+        server.run(h2oArgs.toArray(new String[0]), System.out);
+    }
+
+    /**
+     * Find a TCP port that is available to be used by the database. Use the specified TCP port if possible,
+     * but not if it is currently used by another server.
+     * @param preferredTCPPort
+     * @return
+     */
+    private int getInactiveTCPPort(final int preferredTCPPort) {
+
+        Socket sock = null; //Attempt to create a socket connection to the specified port.
+
+        int tcpPortToUse = preferredTCPPort; //The port we'll try to connect to. The upcoming loop will keep on attempting connections until an open port is found.
+
+        boolean freePortFound = false;
+
+        while (!freePortFound) {
+            try {
+                sock = new Socket(NetUtils.getLocalAddress(), tcpPortToUse);
+                ErrorHandling.errorNoEvent("Can't use preferred TCP port " + tcpPortToUse + "");
+                tcpPortToUse++;
+            }
+            catch (final UnknownHostException e) {
+                ErrorHandling.errorNoEvent("Couldn't establish a local hostname. The database may start but it might try to start it's TCP server on a port" + " alread bound by another application.");
+                freePortFound = true; //not found, but there's nothing we can do here if the hostname doesn't resolve.
+            }
+            catch (final IOException e) {
+                freePortFound = true;
+                //Nothing is bound to this port - it can be used for this database instance.
+            }
+            finally {
+                try {
+                    if (sock != null && !sock.isClosed()) {
+                        sock.close();
+                    }
+                }
+                catch (final IOException e) {
+                    //Not important at this point.
+                }
+
+            }
+        }
+
+        return tcpPortToUse;
     }
 
     private void shutdownServer() {
@@ -396,23 +449,21 @@ public class H2O {
     /**
      * Connects to the server and initializes the database at a particular location on disk.
      * 
-     * @param databaseURL
+     * @param databaseID
      * @throws SQLException 
      * @throws IOException 
      */
-    private void initializeDatabase() throws SQLException, IOException {
+    private void initializeDatabase(final DatabaseID databaseID) throws SQLException, IOException {
 
-        final DatabaseID databaseID = generateDatabaseID();
-
-        initializeDatabaseProperties(databaseID, diagnosticLevel, databaseDescriptorLocation, databaseName, tcpPort);
+        initializeDatabaseProperties(databaseID, diagnosticLevel, databaseDescriptorLocation, databaseName);
 
         // Create a connection so that the database starts up, but don't do anything with it here.
-        connection = DriverManager.getConnection(databaseID.getURL(), PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+        connection = DriverManager.getConnection(databaseID.getURLandID(), PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
     }
 
-    public static void initializeDatabaseProperties(final DatabaseID databaseID, final DiagnosticLevel diagnosticLevel, final String databaseDescriptorLocation, final String databaseName, final int tcpPort) throws IOException {
+    public static void initializeDatabaseProperties(final DatabaseID databaseID, final DiagnosticLevel diagnosticLevel, final String databaseDescriptorLocation, final String databaseName) throws IOException {
 
-        final H2OPropertiesWrapper properties = H2OPropertiesWrapper.getWrapper(databaseID);
+        final LocalH2OProperties properties = new LocalH2OProperties(databaseID);
 
         try {
             properties.loadProperties();
@@ -426,22 +477,17 @@ public class H2O {
         properties.setProperty("descriptor", databaseDescriptorLocation);
         properties.setProperty("databaseName", databaseName);
 
-        if (tcpPort != 0) {
-            properties.setProperty("tcpPort", String.valueOf(tcpPort));
-        }
-
         properties.saveAndClose();
     }
 
     /**
      * Set the primary database URL in the browser to equal the URL of this database.
      * 
+     * @param databaseID the database URL
      * @throws IOException if the server properties cannot be written
      * @throws SQLException if the server properties cannot be opened
      */
-    private void setUpWebLink() throws IOException, SQLException {
-
-        final DatabaseID databaseID = generateDatabaseID();
+    private void setUpWebLink(final DatabaseID databaseID) throws IOException, SQLException {
 
         final Properties serverProperties = loadServerProperties();
         final List<String> servers = new LinkedList<String>();
@@ -500,19 +546,44 @@ public class H2O {
         return text;
     }
 
-    private DatabaseID generateDatabaseID() {
+    private DatabaseID generateDatabaseIDandURL() {
+
+        if (databaseInstanceIdentifier == null) {
+            databaseInstanceIdentifier = generateNewDatabaseID();
+        }
+
+        final int tcpPortToUse = getInactiveTCPPort(tcpPort);
 
         switch (databaseType) {
             case DISK: {
-                return new DatabaseID(null, new DatabaseURL(tcpPort, databaseBaseDirectoryPath, databaseName));
+                databaseID = new DatabaseID(databaseInstanceIdentifier, new DatabaseURL(tcpPortToUse, databaseBaseDirectoryPath, databaseInstanceIdentifier));
+                break;
             }
             case MEMORY: {
-                return new DatabaseID(null, new DatabaseURL(databaseName));
+                databaseID = new DatabaseID(databaseInstanceIdentifier, new DatabaseURL(databaseInstanceIdentifier));
+                break;
             }
             default: {
                 ErrorHandling.hardError("unknown database type");
                 return null;
             }
         }
+
+        return databaseID;
+    }
+
+    /**
+     * Generate a new unique database ID.
+     * @return
+     */
+    private String generateNewDatabaseID() {
+
+        final IKey my_key = new SHA1KeyFactory().generateKey((NetUtils.getLocalAddress() + new Date().getTime()).getBytes()); // use the time + location seed a unique id for this node.
+        return my_key.toString(Key.DEFAULT_RADIX);
+    }
+
+    public String getURL() {
+
+        return databaseID.getURL();
     }
 }

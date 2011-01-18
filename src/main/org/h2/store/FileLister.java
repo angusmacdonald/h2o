@@ -28,7 +28,7 @@ public class FileLister {
      *            the file name (without directory)
      * @return the database name or null
      */
-    public static String getDatabaseNameFromFileName(String fileName) {
+    public static String getDatabaseNameFromFileName(final String fileName) {
 
         if (SysProperties.PAGE_STORE) {
             if (fileName.endsWith(Constants.SUFFIX_PAGE_FILE)) { return fileName.substring(0, fileName.length() - Constants.SUFFIX_PAGE_FILE.length()); }
@@ -51,17 +51,17 @@ public class FileLister {
      *            are returned
      * @return the list of files
      */
-    public static ArrayList getDatabaseFiles(String dir, String db, boolean all) throws SQLException {
+    public static ArrayList getDatabaseFiles(String dir, final String db, final boolean all) throws SQLException {
 
         if (dir == null || dir.equals("")) {
             dir = ".";
         }
         dir = FileUtils.normalize(dir);
-        ArrayList files = new ArrayList();
-        String start = db == null ? null : FileUtils.normalize(dir + "/" + db);
-        String[] list = FileUtils.listFiles(dir);
+        final ArrayList files = new ArrayList();
+        final String start = db == null ? null : FileUtils.normalize(dir + "/" + db);
+        final String[] list = FileUtils.listFiles(dir);
         for (int i = 0; list != null && i < list.length; i++) {
-            String f = list[i];
+            final String f = list[i];
             boolean ok = false;
             if (f.endsWith(Constants.SUFFIX_DATA_FILE)) {
                 ok = true;
@@ -84,6 +84,12 @@ public class FileLister {
             else if (f.endsWith(Constants.SUFFIX_PAGE_FILE)) {
                 ok = true;
             }
+            else if (f.endsWith(Constants.SUFFIX_LOCATOR_FILE)) {
+                ok = true;
+            }
+            else if (f.endsWith(Constants.SUFFIX_PROPERTIES_FILE)) {
+                ok = true;
+            }
             else if (all) {
                 if (f.endsWith(Constants.SUFFIX_LOCK_FILE)) {
                     ok = true;
@@ -95,9 +101,10 @@ public class FileLister {
                     ok = true;
                 }
             }
+
             if (ok) {
-                if (db == null || FileUtils.fileStartsWith(f, start + ".")) {
-                    String fileName = f;
+                if (db == null || FileUtils.fileStartsWith(f, start + ".") || f.endsWith(Constants.SUFFIX_LOCATOR_FILE) || f.endsWith(Constants.SUFFIX_PROPERTIES_FILE)) {
+                    final String fileName = f;
                     files.add(fileName);
                 }
             }

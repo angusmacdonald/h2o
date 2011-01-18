@@ -125,9 +125,9 @@ public class LocatorProtocol {
      * 
      * @return The string of the request to be sent.
      */
-    public static String constructLockRequest(final String databaseURL) {
+    public static String constructLockRequest(final String databaseID) {
 
-        return LOCK + "\n" + databaseURL + END_DELIMETER;
+        return LOCK + "\n" + databaseID + END_DELIMETER;
     }
 
     /**
@@ -174,8 +174,8 @@ public class LocatorProtocol {
      * 
      * @return The string of the request to be sent.
      */
-    public static String constructCommitRequest(final String databaseURL) {
+    public static String constructCommitRequest(final String databaseID) {
 
-        return COMMIT + "\n" + databaseURL + END_DELIMETER;
+        return COMMIT + "\n" + databaseID + END_DELIMETER;
     }
 }

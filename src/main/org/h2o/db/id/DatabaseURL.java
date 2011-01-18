@@ -1,6 +1,5 @@
 package org.h2o.db.id;
 
-import java.io.File;
 import java.io.Serializable;
 
 import org.h2.util.NetUtils;
@@ -63,7 +62,7 @@ public class DatabaseURL implements Serializable {
      * @param url The database URL to be parsed.
      * @return Parsed version of the given URL.
      */
-    public static DatabaseURL parseURL(String url) {
+    protected static DatabaseURL parseURL(String url) {
 
         if (url == null) { return null; }
 
@@ -168,7 +167,7 @@ public class DatabaseURL implements Serializable {
      */
     public DatabaseURL(final int port, final String database_base_directory_path, final String database_name) {
 
-        this("tcp", NetUtils.getLocalAddress(), port, getBase(database_base_directory_path) + database_name + port, false);
+        this("tcp", NetUtils.getLocalAddress(), port, getBase(database_base_directory_path) + database_name, false);
     }
 
     /**
@@ -233,17 +232,6 @@ public class DatabaseURL implements Serializable {
         return dbLocation;
     }
 
-    public String getPropertiesFilePath() {
-
-        String path = dbLocation + ".properties";
-        if (mem) {
-            // Store properties files for in-memory dbs in sub-directory of working directory.
-            path = H2O.DEFAULT_DATABASE_DIRECTORY_PATH + File.separator + path;
-        }
-
-        return path;
-    }
-
     /**
      * Get the location of the database with all forward slashes removed. Useful if the location is to be used as part of a transaction or
      * file name.
@@ -294,7 +282,7 @@ public class DatabaseURL implements Serializable {
     @Override
     public String toString() {
 
-        return "DatabaseURL [" + dbLocation + "]";
+        return "databaseID [" + dbLocation + "]";
     }
 
     public boolean isValid() {
@@ -366,6 +354,33 @@ public class DatabaseURL implements Serializable {
         }
         else if (!urlWithoutSM.equals(other.urlWithoutSM)) { return false; }
         return true;
+    }
+
+    public String getPathToDatabase() {
+
+        if (dbLocation.contains("/")) {
+            return dbLocation.substring(0, dbLocation.lastIndexOf("/"));
+        }
+        else {
+            return "";
+        }
+    }
+
+    /**
+     * Get the name of this database on disk (the database location without the path to folder).
+     * @return
+     */
+    public String getName() {
+
+        if (dbLocation.contains("/")) {
+            return dbLocation.substring(dbLocation.lastIndexOf("/") + 1);
+        }
+        else if (dbLocation.contains("\\")) {
+            return dbLocation.substring(dbLocation.lastIndexOf("\\") + 1);
+        }
+        else {
+            return dbLocation;
+        }
     }
 
 }

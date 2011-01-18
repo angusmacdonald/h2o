@@ -904,6 +904,9 @@ public class MultiQueryTransactionTests extends TestBase {
         }
         catch (final SQLException e) {
         }
+
+        TestBase.setUpDescriptorFiles();
+
         Connection conn = null;
         // start the server, allows to access the database remotely
         Server server = null;

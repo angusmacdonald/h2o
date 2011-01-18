@@ -50,6 +50,7 @@ public class FailureTests extends MultiProcessTestBase {
         sql += "INSERT INTO TEST VALUES(2, 'World');";
 
         sleep(1000);
+
         /*
          * Create test table.
          */

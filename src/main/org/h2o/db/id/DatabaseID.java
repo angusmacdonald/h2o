@@ -25,7 +25,10 @@
 
 package org.h2o.db.id;
 
+import java.io.File;
 import java.io.Serializable;
+
+import org.h2o.H2O;
 
 /**
  * Unique identifier for an H2O database. This identifier is made up of:
@@ -58,22 +61,36 @@ public class DatabaseID implements Serializable {
 
     public DatabaseID(final String databaseID, final DatabaseURL databaseURL) {
 
+        assert databaseID != null : "The database ID should never be null.";
+
         this.databaseID = databaseID;
         this.databaseURL = databaseURL;
     }
 
     public DatabaseID(final String databaseID, final String databaseURL) {
 
+        assert databaseID != null : "The database ID should never be null.";
+
         this.databaseID = databaseID;
         this.databaseURL = DatabaseURL.parseURL(databaseURL);
     }
 
-    public static DatabaseID parseURL(final String url) {
+    public DatabaseID(final DatabaseURL databaseURL) {
 
-        return new DatabaseID(null, DatabaseURL.parseURL(url));
+        this.databaseURL = databaseURL;
+
+        databaseID = databaseURL.getName();
+
     }
 
-    public String getDatabaseID() {
+    public static DatabaseID parseURL(final String url) {
+
+        final DatabaseURL databaseURL = DatabaseURL.parseURL(url);
+
+        return new DatabaseID(databaseURL.getName(), databaseURL);
+    }
+
+    public String getID() {
 
         return databaseID;
     }
@@ -121,7 +138,13 @@ public class DatabaseID implements Serializable {
 
     public String getPropertiesFilePath() {
 
-        return databaseURL.getPropertiesFilePath();
+        String path = databaseURL.getPathToDatabase() + File.separator + databaseID + ".properties";
+        if (databaseURL.isMem()) {
+            // Store properties files for in-memory dbs in sub-directory of working directory.
+            path = H2O.DEFAULT_DATABASE_DIRECTORY_PATH + File.separator + path;
+        }
+
+        return path;
     }
 
     public String sanitizedLocation() {
@@ -203,4 +226,12 @@ public class DatabaseID implements Serializable {
         return true;
     }
 
+    /**
+     * Get the database URL and database ID in string form separated by a # symbol.
+     * @return
+     */
+    public String getURLandID() {
+
+        return databaseURL.getURL();
+    }
 }
