@@ -25,7 +25,7 @@
 
 package org.h2o.db.replication;
 
-import java.rmi.RemoteException;
+
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -181,7 +181,7 @@ public class MetaDataReplicaManager {
                 try {
                     addReplicaLocation(databaseInstance, isSystemTable);
                 }
-                catch (final RemoteException e) {
+                catch (final RPCException e) {
                     Diagnostic.trace(DiagnosticLevel.FULL, "failed to add replica location: databaseInstance: " + databaseInstance);
                 }
             }
@@ -232,7 +232,7 @@ public class MetaDataReplicaManager {
                                 break;
                             }
                         }
-                        catch (final RemoteException e) {
+                        catch (final RPCException e) {
                             // May fail. Try next database.
                         }
                     }
@@ -246,9 +246,9 @@ public class MetaDataReplicaManager {
      * @param newReplicaLocation    The location on which replicas will be added.
      * @param isSystemTable         True if System Table state is to be replicated, False if Table Manager state is to be replicated.
      * @return  True if the replica was created successfully.
-     * @throws RemoteException      Thrown if the new replica location couldn't be contacted.
+     * @throws RPCException      Thrown if the new replica location couldn't be contacted.
      */
-    private boolean addReplicaLocation(final DatabaseInstanceWrapper newReplicaLocation, final boolean isSystemTable) throws RemoteException {
+    private boolean addReplicaLocation(final DatabaseInstanceWrapper newReplicaLocation, final boolean isSystemTable) throws RPCException {
 
         if (newReplicaLocation.getURL().equals(db.getURL())) { return false; // can't replicate to the local machine
         }
@@ -264,9 +264,9 @@ public class MetaDataReplicaManager {
      * @param numberOfPreviousAttempts the number of attempts made so far to replicate to this machine. This method will try 5 times to replicate
      * state before giving up.
      * @return true if the replica was created successfully
-     * @throws RemoteException
+     * @throws RPCException
      */
-    private boolean addReplicaLocation(final DatabaseInstanceWrapper newReplicaLocation, final boolean isSystemTable, final int numberOfPreviousAttempts) throws RemoteException {
+    private boolean addReplicaLocation(final DatabaseInstanceWrapper newReplicaLocation, final boolean isSystemTable, final int numberOfPreviousAttempts) throws RPCException {
 
         final ReplicaManager replicaManager = isSystemTable ? systemTableReplicas : tableManagerReplicas;
         final int managerStateReplicationFactor = isSystemTable ? systemTableReplicationFactor : tableManagerReplicationFactor;
@@ -312,7 +312,7 @@ public class MetaDataReplicaManager {
                             updateLocatorFiles(isSystemTable);
                         }
                         catch (final Exception e) {
-                            throw new RemoteException(e.getMessage());
+                            throw new RPCException(e.getMessage());
                         }
                     }
                     else {
@@ -343,7 +343,7 @@ public class MetaDataReplicaManager {
                     /*
                      * Usually thrown if this database couldn't connect to the remote instance.
                      */
-                    throw new RemoteException(e.getMessage());
+                    throw new RPCException(e.getMessage());
                 }
             }
         }

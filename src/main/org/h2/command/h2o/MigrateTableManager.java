@@ -1,6 +1,5 @@
 package org.h2.command.h2o;
 
-import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 
@@ -22,6 +21,7 @@ import org.h2o.viewer.H2OEventBus;
 import org.h2o.viewer.gwt.client.DatabaseStates;
 import org.h2o.viewer.gwt.client.H2OEvent;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -59,7 +59,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
      * @see org.h2.command.Prepared#update()
      */
     @Override
-    public int update() throws SQLException, RemoteException {
+    public int update() throws SQLException, RPCException {
 
         int result = -1;
 
@@ -138,7 +138,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
         try {
             oldTableManager.prepareForMigration(db.getURL().getURLwithRMIPort());
         }
-        catch (final RemoteException e) {
+        catch (final RPCException e) {
             e.printStackTrace();
         }
         catch (final MigrationException e) {
@@ -154,7 +154,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
         try {
             newTableManager.buildTableManagerState(oldTableManager);
         }
-        catch (final RemoteException e) {
+        catch (final RPCException e) {
             e.printStackTrace();
             throw new SQLException("Failed to migrate Table Manager [" + schemaName + "." + tableName + "] to new machine.");
         }
@@ -168,7 +168,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
         try {
             oldTableManager.completeMigration();
         }
-        catch (final RemoteException e) {
+        catch (final RPCException e) {
             throw new SQLException("Failed to complete migration [" + schemaName + "." + tableName + "].");
 
         }
@@ -206,7 +206,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
      * @see org.h2.command.Prepared#update(java.lang.String)
      */
     @Override
-    public int update(final String transactionName) throws SQLException, RemoteException {
+    public int update(final String transactionName) throws SQLException, RPCException {
 
         return update();
     }

@@ -463,7 +463,7 @@ public class H2O {
 
     public static void initializeDatabaseProperties(final DatabaseID databaseID, final DiagnosticLevel diagnosticLevel, final String databaseDescriptorLocation, final String databaseName) throws IOException {
 
-        final LocalH2OProperties properties = new LocalH2OProperties(databaseID);
+        final H2OPropertiesWrapper properties = H2OPropertiesWrapper.getWrapper(databaseID);
 
         try {
             properties.loadProperties();

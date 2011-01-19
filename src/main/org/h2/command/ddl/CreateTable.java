@@ -4,7 +4,6 @@
  */
 package org.h2.command.ddl;
 
-import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.HashSet;
@@ -46,6 +45,7 @@ import org.h2o.viewer.H2OEventBus;
 import org.h2o.viewer.gwt.client.DatabaseStates;
 import org.h2o.viewer.gwt.client.H2OEvent;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
@@ -148,7 +148,7 @@ public class CreateTable extends SchemaCommand {
     }
 
     @Override
-    public int update() throws SQLException, RemoteException {
+    public int update() throws SQLException, RPCException {
 
         /*
          * The only time this is called is when a CreateTable command is replayed at database startup. This differs from the normal
@@ -160,7 +160,7 @@ public class CreateTable extends SchemaCommand {
     }
 
     @Override
-    public int update(final String transactionName) throws SQLException, RemoteException {
+    public int update(final String transactionName) throws SQLException, RPCException {
 
         // TODO rights: what rights are required to create a table?
         session.commit(true);
@@ -307,7 +307,7 @@ public class CreateTable extends SchemaCommand {
 
                 }
                 catch (final MovedException e) {
-                    throw new RemoteException("System Table has moved. Cannot complete query.");
+                    throw new RPCException("System Table has moved. Cannot complete query.");
                 }
                 table.setTableSet(tableSet);
             }
@@ -332,11 +332,11 @@ public class CreateTable extends SchemaCommand {
      * @param tableInfo
      *            The name of the table being created.
      * @param tableManager 
-     * @throws RemoteException
+     * @throws RPCException
      * @throws SQLException
      * @throws MovedException
      */
-    private void createReplicas(final TableInfo tableInfo, final String transactionName) throws RemoteException, SQLException, MovedException {
+    private void createReplicas(final TableInfo tableInfo, final String transactionName) throws RPCException, SQLException, MovedException {
 
         final Map<DatabaseInstanceWrapper, Integer> replicaLocations = tableProxy.getRemoteReplicaLocations();
 

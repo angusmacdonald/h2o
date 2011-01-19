@@ -25,7 +25,6 @@
 
 package org.h2o.db.manager;
 
-import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
@@ -55,6 +54,7 @@ import org.h2o.viewer.gwt.client.H2OEvent;
 
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
 import uk.ac.standrews.cs.nds.p2p.util.SHA1KeyFactory;
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -190,7 +190,7 @@ public class SystemTableReference implements ISystemTableReference {
             try {
                 systemTableNode = systemTableWrapper.getSystemTable().getChordReference();
             }
-            catch (final RemoteException e) {
+            catch (final RPCException e) {
                 ErrorHandling.errorNoEvent("Failed to obtain the new System Table's chord reference.");
             }
         }
@@ -232,12 +232,7 @@ public class SystemTableReference implements ISystemTableReference {
 
         Registry remoteRegistry = null;
 
-        try {
-            remoteRegistry = LocateRegistry.getRegistry(systemTableWrapper.getURL().getHostname(), systemTableWrapper.getURL().getRMIPort());
-        }
-        catch (final RemoteException e) {
-            e.printStackTrace();
-        }
+        remoteRegistry = LocateRegistry.getRegistry(systemTableWrapper.getURL().getHostname(), systemTableWrapper.getURL().getRMIPort());
 
         return remoteRegistry;
     }
@@ -408,7 +403,7 @@ public class SystemTableReference implements ISystemTableReference {
                     ErrorHandling.errorNoEvent("Current System Table reference points to System Table that has moved to: " + e.getMessage());
                     handleMovedException(e);
                 }
-                catch (final RemoteException e) {
+                catch (final RPCException e) {
                     ErrorHandling.errorNoEvent("Error trying to connect to existing System Table reference.");
 
                     try {
@@ -463,7 +458,7 @@ public class SystemTableReference implements ISystemTableReference {
         try {
             getSystemTable().changeTableManagerLocation(tm, ti);
         }
-        catch (final RemoteException e) {
+        catch (final RPCException e) {
             e.printStackTrace();
         }
         catch (final MovedException e) {
@@ -473,7 +468,7 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public boolean addTableInformation(final ITableManagerRemote iTableManagerRemote, final TableInfo ti, final Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException, SQLException { // changed by
+    public boolean addTableInformation(final ITableManagerRemote iTableManagerRemote, final TableInfo ti, final Set<DatabaseInstanceWrapper> replicaLocations) throws RPCException, MovedException, SQLException { // changed by
 
         localTableManagers.put(ti.getGenericTableInfo(), (TableManager) iTableManagerRemote);
 
@@ -486,7 +481,7 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public void removeTableInformation(final TableInfo tableInfo) throws RemoteException, MovedException {
+    public void removeTableInformation(final TableInfo tableInfo) throws RPCException, MovedException {
 
         localTableManagers.remove(tableInfo);
         cachedTableManagerReferences.remove(tableInfo);
@@ -495,7 +490,7 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public void removeAllTableInformation() throws RemoteException, MovedException {
+    public void removeAllTableInformation() throws RPCException, MovedException {
 
         localTableManagers.clear();
         cachedTableManagerReferences.clear();
@@ -521,7 +516,7 @@ public class SystemTableReference implements ISystemTableReference {
         try {
             systemTableWrapper = systemTableRecovery.find(e);
         }
-        catch (final RemoteException e1) {
+        catch (final RPCException e1) {
             e1.printStackTrace();
         }
     }

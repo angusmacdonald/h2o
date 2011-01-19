@@ -4,7 +4,6 @@
  */
 package org.h2.constraint;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.command.Parser;
@@ -27,6 +26,8 @@ import org.h2.util.ObjectArray;
 import org.h2.util.StringUtils;
 import org.h2.value.Value;
 import org.h2.value.ValueNull;
+
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 
 /**
  * A referential constraint.
@@ -480,7 +481,7 @@ public class ConstraintReferential extends Constraint {
             try {
                 prep.update();
             }
-            catch (final RemoteException e) {
+            catch (final RPCException e) {
                 throw new SQLException(e.getMessage());
             }
         }

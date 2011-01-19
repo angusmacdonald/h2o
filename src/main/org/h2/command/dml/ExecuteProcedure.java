@@ -4,7 +4,6 @@
  */
 package org.h2.command.dml;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.command.Prepared;
@@ -15,21 +14,23 @@ import org.h2.expression.Parameter;
 import org.h2.result.LocalResult;
 import org.h2.util.ObjectArray;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
+
 /**
  * This class represents the statement EXECUTE
  */
 public class ExecuteProcedure extends Prepared {
 
-    private ObjectArray expressions = new ObjectArray();
+    private final ObjectArray expressions = new ObjectArray();
 
     private Procedure procedure;
 
-    public ExecuteProcedure(Session session, boolean internalQuery) {
+    public ExecuteProcedure(final Session session, final boolean internalQuery) {
 
         super(session, internalQuery);
     }
 
-    public void setProcedure(Procedure procedure) {
+    public void setProcedure(final Procedure procedure) {
 
         this.procedure = procedure;
     }
@@ -42,50 +43,55 @@ public class ExecuteProcedure extends Prepared {
      * @param expr
      *            the expression
      */
-    public void setExpression(int index, Expression expr) {
+    public void setExpression(final int index, final Expression expr) {
 
         expressions.add(index, expr);
     }
 
     private void setParameters() throws SQLException {
 
-        Prepared prepared = procedure.getPrepared();
-        ObjectArray params = prepared.getParameters();
+        final Prepared prepared = procedure.getPrepared();
+        final ObjectArray params = prepared.getParameters();
         for (int i = 0; params != null && i < params.size() && i < expressions.size(); i++) {
-            Expression expr = (Expression) expressions.get(i);
-            Parameter p = (Parameter) params.get(i);
+            final Expression expr = (Expression) expressions.get(i);
+            final Parameter p = (Parameter) params.get(i);
             p.setValue(expr.getValue(session));
         }
     }
 
+    @Override
     public boolean isQuery() {
 
-        Prepared prepared = procedure.getPrepared();
+        final Prepared prepared = procedure.getPrepared();
         return prepared.isQuery();
     }
 
-    public int update() throws SQLException, RemoteException {
+    @Override
+    public int update() throws SQLException, RPCException {
 
         setParameters();
-        Prepared prepared = procedure.getPrepared();
+        final Prepared prepared = procedure.getPrepared();
         return prepared.update();
     }
 
-    public final LocalResult query(int limit) throws SQLException {
+    @Override
+    public final LocalResult query(final int limit) throws SQLException {
 
         setParameters();
-        Prepared prepared = procedure.getPrepared();
+        final Prepared prepared = procedure.getPrepared();
         return prepared.query(limit);
     }
 
+    @Override
     public boolean isTransactional() {
 
         return true;
     }
 
+    @Override
     public LocalResult queryMeta() throws SQLException {
 
-        Prepared prepared = procedure.getPrepared();
+        final Prepared prepared = procedure.getPrepared();
         return prepared.queryMeta();
     }
 

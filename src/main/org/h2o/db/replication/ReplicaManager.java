@@ -9,7 +9,6 @@
 package org.h2o.db.replication;
 
 import java.io.Serializable;
-import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,6 +21,7 @@ import org.h2o.db.id.TableInfo;
 import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -378,7 +378,7 @@ public class ReplicaManager implements Serializable {
         }
     }
 
-    public boolean contains(final DatabaseInstanceWrapper databaseInstanceWrapper) throws RemoteException {
+    public boolean contains(final DatabaseInstanceWrapper databaseInstanceWrapper) throws RPCException {
 
         return activeReplicas.containsKey(databaseInstanceWrapper);
     }

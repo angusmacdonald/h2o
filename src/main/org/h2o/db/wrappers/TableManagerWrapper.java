@@ -10,11 +10,12 @@ package org.h2o.db.wrappers;
 
 import java.io.Serializable;
 import java.rmi.Remote;
-import java.rmi.RemoteException;
 
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.ITableManagerRemote;
+
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
@@ -38,7 +39,7 @@ public class TableManagerWrapper implements Serializable, Remote {
      */
     private DatabaseID tableManagerURL;
 
-    public TableManagerWrapper(TableInfo tableInfo, ITableManagerRemote tableManager, DatabaseID tableManagerURL) {
+    public TableManagerWrapper(final TableInfo tableInfo, final ITableManagerRemote tableManager, final DatabaseID tableManagerURL) {
 
         this.tableInfo = tableInfo.getGenericTableInfo();
         this.tableManager = tableManager;
@@ -57,7 +58,7 @@ public class TableManagerWrapper implements Serializable, Remote {
      * @param tableInfo
      *            the tableInfo to set
      */
-    public void setTableInfo(TableInfo tableInfo) {
+    public void setTableInfo(final TableInfo tableInfo) {
 
         this.tableInfo = tableInfo.getGenericTableInfo();
     }
@@ -74,7 +75,7 @@ public class TableManagerWrapper implements Serializable, Remote {
      * @param tableManager
      *            the tableManager to set
      */
-    public void setTableManager(ITableManagerRemote tableManager) {
+    public void setTableManager(final ITableManagerRemote tableManager) {
 
         this.tableManager = tableManager;
     }
@@ -91,7 +92,7 @@ public class TableManagerWrapper implements Serializable, Remote {
      * @param tableManagerURL
      *            the tableManagerURL to set
      */
-    public void setTableManagerURL(DatabaseID tableManagerURL) throws RemoteException {
+    public void setTableManagerURL(final DatabaseID tableManagerURL) throws RPCException {
 
         this.tableManagerURL = tableManagerURL;
     }
@@ -111,16 +112,16 @@ public class TableManagerWrapper implements Serializable, Remote {
      * @see java.lang.Object#equals(java.lang.Object)
      */
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
 
-        if (this == obj) return true;
-        if (obj == null) return false;
-        if (getClass() != obj.getClass()) return false;
-        TableManagerWrapper other = (TableManagerWrapper) obj;
+        if (this == obj) { return true; }
+        if (obj == null) { return false; }
+        if (getClass() != obj.getClass()) { return false; }
+        final TableManagerWrapper other = (TableManagerWrapper) obj;
         if (tableInfo == null) {
-            if (other.tableInfo != null) return false;
+            if (other.tableInfo != null) { return false; }
         }
-        else if (!tableInfo.equals(other.tableInfo)) return false;
+        else if (!tableInfo.equals(other.tableInfo)) { return false; }
         return true;
     }
 
@@ -128,7 +129,7 @@ public class TableManagerWrapper implements Serializable, Remote {
      * @param localMachineLocation
      * @return
      */
-    public boolean isLocalTo(DatabaseID localMachineLocation) throws RemoteException {
+    public boolean isLocalTo(final DatabaseID localMachineLocation) throws RPCException {
 
         return tableManagerURL.equals(localMachineLocation);
     }

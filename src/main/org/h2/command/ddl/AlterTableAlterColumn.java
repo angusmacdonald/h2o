@@ -4,7 +4,6 @@
  */
 package org.h2.command.ddl;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.command.Parser;
@@ -31,6 +30,8 @@ import org.h2o.db.query.TableProxy;
 import org.h2o.db.query.TableProxyManager;
 import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
+
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 
 /**
  * This class represents the statements ALTER TABLE ADD, ALTER TABLE ALTER COLUMN, ALTER TABLE ALTER COLUMN RESTART, ALTER TABLE ALTER
@@ -103,7 +104,7 @@ public class AlterTableAlterColumn extends SchemaCommand {
     }
 
     @Override
-    public int update(final String transactionName) throws SQLException, RemoteException {
+    public int update(final String transactionName) throws SQLException, RPCException {
 
         session.commit(true);
 
@@ -221,7 +222,7 @@ public class AlterTableAlterColumn extends SchemaCommand {
         }
     }
 
-    private void copyData() throws SQLException, RemoteException {
+    private void copyData() throws SQLException, RPCException {
 
         final Database db = session.getDatabase();
         final String tempName = db.getTempTableName(session.getSessionId());
@@ -361,7 +362,7 @@ public class AlterTableAlterColumn extends SchemaCommand {
         }
     }
 
-    private void execute(final String sql, final boolean ddl) throws SQLException, RemoteException {
+    private void execute(final String sql, final boolean ddl) throws SQLException, RPCException {
 
         final Prepared command = session.prepare(sql);
         command.update();

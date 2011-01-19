@@ -8,13 +8,14 @@
  */
 package org.h2o.test.fixture;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.engine.Database;
 import org.h2.engine.Engine;
 import org.h2o.autonomic.settings.TestingSettings;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
+
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 
 /**
  * Utility class containing various methods that simulate failure in various parts of H2O. These methods are called from within the database
@@ -45,16 +46,16 @@ public class H2OTest {
     /**
      * @param replica
      *            .getDatabaseInstance()
-     * @throws RemoteException
+     * @throws RPCException
      */
-    public static void rmiFailure(final DatabaseInstanceWrapper replica) throws RemoteException {
+    public static void rmiFailure(final DatabaseInstanceWrapper replica) throws RPCException {
 
         if (TestingSettings.IS_TESTING_PRE_PREPARE_FAILURE || TestingSettings.IS_TESTING_PRE_COMMIT_FAILURE) {
 
             TestingSettings.IS_TESTING_PRE_COMMIT_FAILURE = false;
             TestingSettings.IS_TESTING_PRE_PREPARE_FAILURE = false;
 
-            if (replica.getDatabaseInstance().getConnectionString().contains("mem:two")) { throw new RemoteException("Testing remote failure"); }
+            if (replica.getDatabaseInstance().getConnectionString().contains("mem:two")) { throw new RPCException("Testing remote failure"); }
         }
     }
 

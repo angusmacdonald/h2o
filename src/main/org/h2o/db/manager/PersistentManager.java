@@ -8,7 +8,6 @@
  */
 package org.h2o.db.manager;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -24,6 +23,7 @@ import org.h2o.db.replication.MetaDataReplicaManager;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -157,10 +157,10 @@ public abstract class PersistentManager {
      * @param connection_type
      *            The type of connection (e.g. TCP, FTP).
      * @throws MovedException
-     * @throws RemoteException
+     * @throws RPCException
      * @throws SQLException
      */
-    public boolean addTableInformation(final DatabaseID tableManagerURL, final TableInfo tableDetails, final boolean addReplicaInfo) throws RemoteException, MovedException, SQLException {
+    public boolean addTableInformation(final DatabaseID tableManagerURL, final TableInfo tableDetails, final boolean addReplicaInfo) throws RPCException, MovedException, SQLException {
 
         getNewQueryParser();
 
@@ -210,13 +210,13 @@ public abstract class PersistentManager {
      * 
      * @param tableDetails
      *            Fully qualified name of the table, and its location (as a DatabaseURL).
-     * @throws RemoteException
+     * @throws RPCException
      *             Thrown if there was a problem connecting to this instance.
      * @throws MovedException
      *             Thrown if the instance has been migrated to another machine.
      * @throws SQLException
      */
-    public void addReplicaInformation(final TableInfo tableDetails) throws RemoteException, MovedException, SQLException {
+    public void addReplicaInformation(final TableInfo tableDetails) throws RPCException, MovedException, SQLException {
 
         // getNewQueryParser();
 
@@ -542,7 +542,7 @@ public abstract class PersistentManager {
      * @return
      * @throws MovedException
      */
-    protected abstract DatabaseID getLocation() throws RemoteException, MovedException;
+    protected abstract DatabaseID getLocation() throws RPCException, MovedException;
 
     /**
      * @return
@@ -559,10 +559,10 @@ public abstract class PersistentManager {
      * @param connectionType
      * @param schemaName
      * @throws MovedException
-     * @throws RemoteException
+     * @throws RPCException
      * @throws SQLException
      */
-    public void removeReplicaInformation(final TableInfo ti) throws RemoteException, MovedException {
+    public void removeReplicaInformation(final TableInfo ti) throws RPCException, MovedException {
 
         try {
 
@@ -633,7 +633,7 @@ public abstract class PersistentManager {
         return metaDataReplicaManager.getTableID(ti, isSystemTable);
     }
 
-    public void removeConnectionInformation(final IDatabaseInstanceRemote databaseInstance) throws RemoteException, MovedException {
+    public void removeConnectionInformation(final IDatabaseInstanceRemote databaseInstance) throws RPCException, MovedException {
 
         /*
          * If the System Tables state is replicated onto this machine remove it as a replica location.

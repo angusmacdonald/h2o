@@ -1,6 +1,5 @@
 package org.h2.command.dml;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -11,12 +10,14 @@ import org.h2.schema.Schema;
 import org.h2.table.TableLinkConnection;
 import org.h2o.db.manager.PersistentSystemTable;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
+
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class GetRmiPort extends SchemaCommand {
 
-    private String databaseLocation;
+    private final String databaseLocation;
 
     private TableLinkConnection conn;
 
@@ -25,7 +26,7 @@ public class GetRmiPort extends SchemaCommand {
      * @param internalQuery
      * @param databaseLocation
      */
-    public GetRmiPort(Session session, Schema schema, String databaseLocation) {
+    public GetRmiPort(final Session session, final Schema schema, final String databaseLocation) {
 
         super(session, schema);
 
@@ -47,7 +48,7 @@ public class GetRmiPort extends SchemaCommand {
      * @see org.h2.command.Prepared#update()
      */
     @Override
-    public int update() throws SQLException, RemoteException {
+    public int update() throws SQLException, RPCException {
 
         if (databaseLocation == null) {
             /*
@@ -69,7 +70,7 @@ public class GetRmiPort extends SchemaCommand {
      * @see org.h2.command.Prepared#update(java.lang.String)
      */
     @Override
-    public int update(String transactionName) throws SQLException, RemoteException {
+    public int update(final String transactionName) throws SQLException, RPCException {
 
         return update();
     }
@@ -82,11 +83,11 @@ public class GetRmiPort extends SchemaCommand {
      *            command also being pushed.
      * @return The result of the update.
      * @throws SQLException
-     * @throws RemoteException
+     * @throws RPCException
      */
-    private int pushCommand(String remoteDBLocation, String query) throws SQLException, RemoteException {
+    private int pushCommand(final String remoteDBLocation, final String query) throws SQLException, RPCException {
 
-        Database db = session.getDatabase();
+        final Database db = session.getDatabase();
 
         conn = db.getLinkConnection("org.h2.Driver", remoteDBLocation, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
 
@@ -94,13 +95,13 @@ public class GetRmiPort extends SchemaCommand {
 
         synchronized (conn) {
             try {
-                Statement stat = conn.getConnection().createStatement();
+                final Statement stat = conn.getConnection().createStatement();
 
                 stat.execute(query);
                 result = stat.getUpdateCount();
 
             }
-            catch (SQLException e) {
+            catch (final SQLException e) {
                 conn.close();
                 conn = null;
                 e.printStackTrace();

@@ -4,7 +4,6 @@
  */
 package org.h2.command.ddl;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -29,6 +28,7 @@ import org.h2o.viewer.H2OEventBus;
 import org.h2o.viewer.gwt.client.DatabaseStates;
 import org.h2o.viewer.gwt.client.H2OEvent;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
@@ -112,7 +112,7 @@ public class DropTable extends SchemaCommand {
         }
     }
 
-    private void executeDrop(final String transactionName) throws SQLException, RemoteException {
+    private void executeDrop(final String transactionName) throws SQLException, RPCException {
 
         // need to get the table again, because it may be dropped already in the meantime (dependent object, or same object)
         table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
@@ -134,7 +134,7 @@ public class DropTable extends SchemaCommand {
                         sm.removeTableInformation(new TableInfo(tableName, getSchema().getName()));
                     }
                     catch (final MovedException e1) {
-                        throw new RemoteException("System Table has moved.");
+                        throw new RPCException("System Table has moved.");
                     }
                 }
 
@@ -161,7 +161,7 @@ public class DropTable extends SchemaCommand {
     }
 
     @Override
-    public int update(final String transactionName) throws SQLException, RemoteException {
+    public int update(final String transactionName) throws SQLException, RPCException {
 
         session.commit(true);
         prepareDrop(transactionName);
@@ -170,7 +170,7 @@ public class DropTable extends SchemaCommand {
     }
 
     @Override
-    public int update() throws SQLException, RemoteException {
+    public int update() throws SQLException, RPCException {
 
         final String transactionName = "None";
 

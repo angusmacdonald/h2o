@@ -8,7 +8,7 @@
  */
 package org.h2o.db.interfaces;
 
-import java.rmi.RemoteException;
+
 import java.sql.SQLException;
 
 import org.h2o.db.id.DatabaseID;
@@ -34,7 +34,7 @@ public interface IDatabaseInstanceRemote extends IH2ORemote, TwoPhaseCommit {
      * This will similar to the form: jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test
      * 
      * @return
-     * @throws RemoteException
+     * @throws RPCException
      */
     String getConnectionString() throws RPCException;
 
@@ -62,7 +62,7 @@ public interface IDatabaseInstanceRemote extends IH2ORemote, TwoPhaseCommit {
      *            True if this command is to update a System Table replica; otherwise false. This is done to prevent deadlock, where there
      *            is a cycle between machines making updates.
      * @return Result of the update.
-     * @throws RemoteException
+     * @throws RPCException
      *             Thrown if there were problems connecting to the instance.
      * @throws SQLException
      *             Thrown if there was an error in the queries execution.
@@ -77,7 +77,7 @@ public interface IDatabaseInstanceRemote extends IH2ORemote, TwoPhaseCommit {
      *            The location in Chord of the System Table.
      * @param databaseURL
      *            Object containing all connection information for the System Table.
-     * @throws RemoteException
+     * @throws RPCException
      *             Thrown if there were problems connecting to the instance.
      */
     void setSystemTableLocation(IChordRemoteReference systemTableLocation, DatabaseID databaseURL) throws RPCException;
@@ -90,7 +90,7 @@ public interface IDatabaseInstanceRemote extends IH2ORemote, TwoPhaseCommit {
      *            The table name and schema name of the table to be found.
      * @param searchOnlyCache Whether to only look in the cache and not in the System Table. If this if true and useCache is false the method will do nothing.
      * @return Remote reference to the Table Manager, or null if nothing was found.
-     * @throws RemoteException
+     * @throws RPCException
      *             Thrown if there were problems connecting to the instance.
      */
     ITableManagerRemote findTableManagerReference(TableInfo tableInfo, boolean searchOnlyCache) throws RPCException;
@@ -100,7 +100,7 @@ public interface IDatabaseInstanceRemote extends IH2ORemote, TwoPhaseCommit {
      * 
      * @param alive
      *            True if the database instance is not being shut down.
-     * @throws RemoteException
+     * @throws RPCException
      *             Thrown if there were problems connecting to the instance.
      */
     void setAlive(boolean alive) throws RPCException;
@@ -109,7 +109,7 @@ public interface IDatabaseInstanceRemote extends IH2ORemote, TwoPhaseCommit {
      * Recreate the System Table on this machine.
      * 
      * @return True if the System Table was successfully recreated.
-     * @throws RemoteException
+     * @throws RPCException
      * @throws SystemTableAccessException
      */
     ISystemTableRemote recreateSystemTable() throws RPCException, SQLException, SystemTableAccessException;
@@ -120,7 +120,7 @@ public interface IDatabaseInstanceRemote extends IH2ORemote, TwoPhaseCommit {
      * @param databaseURL
      *            The location on which the table manager was previously held. Used to find the correct meta-table.
      * @return True if the Table Manager was successfully recreated.
-     * @throws RemoteException
+     * @throws RPCException
      */
     boolean recreateTableManager(TableInfo tableInfo, DatabaseID databaseURL) throws RPCException;
 
@@ -128,7 +128,7 @@ public interface IDatabaseInstanceRemote extends IH2ORemote, TwoPhaseCommit {
      * Checks if this instance is running the System Table.
      * 
      * @return True if this is machine is running the System Table; otherwise false.
-     * @throws RemoteException
+     * @throws RPCException
      */
     boolean isSystemTable() throws RPCException;
 

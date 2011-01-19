@@ -4,13 +4,14 @@
  */
 package org.h2.command;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.result.LocalResult;
 import org.h2.util.ObjectArray;
 import org.h2o.db.query.TableProxyManager;
 import org.h2o.test.fixture.H2OTest;
+
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 
 /**
  * Represents a list of SQL statements.
@@ -48,7 +49,7 @@ public class CommandList extends Command {
         return executeUpdate(true);
     }
 
-    private SQLException executeRemaining() throws SQLException, RemoteException {
+    private SQLException executeRemaining() throws SQLException, RPCException {
 
         SQLException rollbackException = null;
 
@@ -81,13 +82,13 @@ public class CommandList extends Command {
     }
 
     @Override
-    protected int update(final boolean partOfMultiQueryTransaction) throws SQLException, RemoteException {
+    protected int update(final boolean partOfMultiQueryTransaction) throws SQLException, RPCException {
 
         return update();
     }
 
     @Override
-    public int update() throws SQLException, RemoteException {
+    public int update() throws SQLException, RPCException {
 
         /*
          * Execute the first update, then iterate through every subsequent update.
@@ -102,7 +103,7 @@ public class CommandList extends Command {
     }
 
     @Override
-    public LocalResult query(final int maxrows) throws SQLException, RemoteException {
+    public LocalResult query(final int maxrows) throws SQLException, RPCException {
 
         final LocalResult result = command.query(maxrows);
         final SQLException rollbackException = executeRemaining();

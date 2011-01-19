@@ -8,7 +8,7 @@
  */
 package org.h2o.db.manager;
 
-import java.rmi.RemoteException;
+
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -232,7 +232,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
         return getConnectionInformation("SELECT * FROM " + CONNECTIONS + ";");
     }
 
-    private Map<DatabaseID, DatabaseInstanceWrapper> getConnectionInformation(final String query) throws RemoteException, SQLException {
+    private Map<DatabaseID, DatabaseInstanceWrapper> getConnectionInformation(final String query) throws RPCException, SQLException {
 
         final Map<DatabaseID, DatabaseInstanceWrapper> databaseLocations = new HashMap<DatabaseID, DatabaseInstanceWrapper>();
 
@@ -344,7 +344,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
                     dir = remoteInterface.getDatabaseInstanceAt(dbID);
                 }
-                catch (final RemoteException e) {
+                catch (final RPCException e) {
                     // Will happen if its no longer active.
                 }
 
@@ -356,7 +356,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
                     try {
                         tmReference = dir.findTableManagerReference(ti, true);
                     }
-                    catch (final RemoteException e1) {//thrown if dir is not accessible.
+                    catch (final RPCException e1) {//thrown if dir is not accessible.
                         ErrorHandling.errorNoEvent("Failed to find Table Manager reference for " + ti + " when recreating System Table state.");
                     }
                     Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Found table manager reference.");
@@ -554,7 +554,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
             addTableManagerReplicaInformation(getTableID(table), getConnectionID(replicaLocation), getConnectionID(primaryLocation), active);
         }
         catch (final SQLException e) {
-            throw new RemoteException(e.getMessage());
+            throw new RPCException(e.getMessage());
         }
     }
 
@@ -565,12 +565,12 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
             removeTableManagerReplicaInformation(getTableID(table), getConnectionID(replicaLocation));
         }
         catch (final SQLException e) {
-            throw new RemoteException(e.getMessage());
+            throw new RPCException(e.getMessage());
         }
     }
 
     @Override
-    protected DatabaseID getLocation() throws RemoteException {
+    protected DatabaseID getLocation() throws RPCException {
 
         return getDB().getURL();
     }

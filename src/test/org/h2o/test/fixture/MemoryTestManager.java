@@ -113,7 +113,7 @@ public class MemoryTestManager extends TestManager {
             db_names[i] = DATABASE_NAME_ROOT + System.currentTimeMillis();
             final DatabaseID url = new DatabaseID(null, new DatabaseURL("mem", NetUtils.getLocalAddress(), 0, db_names[i], false));
 
-            H2O.initializeDatabaseProperties(url, DIAGNOSTIC_LEVEL, descriptor_file_path, db_names[i], 0);
+            H2O.initializeDatabaseProperties(url, DIAGNOSTIC_LEVEL, descriptor_file_path, db_names[i]);
         }
     }
 }

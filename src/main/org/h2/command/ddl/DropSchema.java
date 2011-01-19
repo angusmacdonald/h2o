@@ -4,7 +4,6 @@
  */
 package org.h2.command.ddl;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.constant.ErrorCode;
@@ -14,6 +13,8 @@ import org.h2.message.Message;
 import org.h2.schema.Schema;
 import org.h2o.db.id.TableInfo;
 import org.h2o.util.exceptions.MovedException;
+
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 
 /**
  * This class represents the statement DROP SCHEMA
@@ -35,7 +36,7 @@ public class DropSchema extends DefineCommand {
     }
 
     @Override
-    public int update() throws SQLException, RemoteException {
+    public int update() throws SQLException, RPCException {
 
         session.getUser().checkAdmin();
         session.commit(true);
@@ -52,7 +53,7 @@ public class DropSchema extends DefineCommand {
                 db.getSystemTable().removeTableInformation(new TableInfo(null, schemaName));
             }
             catch (final MovedException e) {
-                throw new RemoteException("System Table has moved.");
+                throw new RPCException("System Table has moved.");
             }
 
         }

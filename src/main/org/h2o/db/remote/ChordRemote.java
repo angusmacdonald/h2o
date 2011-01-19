@@ -28,7 +28,6 @@ package org.h2o.db.remote;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
@@ -342,9 +341,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                 systemTableRef.setSystemTableURL(getSystemTableLocation());
             }
         }
-        catch (final RemoteException e) {
-            e.printStackTrace();
-        }
         catch (final RPCException e) {
             e.printStackTrace();
         }
@@ -514,7 +510,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     }
 
     @Override
-    public IDatabaseInstanceRemote getDatabaseInstanceAt(final IChordRemoteReference lookupLocation) throws RemoteException, RPCException {
+    public IDatabaseInstanceRemote getDatabaseInstanceAt(final IChordRemoteReference lookupLocation) throws RPCException, RPCException {
 
         final InetSocketAddress address = lookupLocation.getRemote().getAddress();
 
@@ -531,7 +527,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     }
 
     @Override
-    public IDatabaseInstanceRemote getDatabaseInstanceAt(final DatabaseID dbID) throws RemoteException {
+    public IDatabaseInstanceRemote getDatabaseInstanceAt(final DatabaseID dbID) throws RPCException {
 
         if (dbID.equals(localMachineLocation)) { return getLocalDatabaseInstance(); }
 
@@ -546,7 +542,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     }
 
     @Override
-    public IDatabaseInstanceRemote getDatabaseInstanceAt(final String hostname, final int port) throws RemoteException, NotBoundException {
+    public IDatabaseInstanceRemote getDatabaseInstanceAt(final String hostname, final int port) throws RPCException, NotBoundException {
 
         final Registry remoteRegistry = LocateRegistry.getRegistry(hostname, port);
 
@@ -665,7 +661,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             actualSystemTableLocation = lookupInstance.getSystemTableURL();
             systemTableRef.setSystemTableURL(actualSystemTableLocation);
         }
-        catch (final RemoteException e) {
+        catch (final RPCException e) {
             e.printStackTrace();
         }
         catch (final NotBoundException e) {
@@ -757,9 +753,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             try {
                 predecessorURL = getDatabaseInstanceAt(predecessor).getURL();
             }
-            catch (final RemoteException e) {
-                e.printStackTrace();
-            }
             catch (final RPCException e) {
                 e.printStackTrace();
             }
@@ -831,7 +824,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                 localTableManagers = systemTable.getLocalDatabaseInstances(localMachineLocation);
             }
         }
-        catch (final RemoteException e) {
+        catch (final RPCException e) {
             ErrorHandling.errorNoEvent("Remote exception thrown. Happens when successor has very recently changed and chord ring hasn't stabilized.");
         }
         catch (final MovedException e) {
@@ -878,9 +871,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                 metaDataReplicaManager.replicateMetaDataToRemoteInstance(systemTableRef, false, successorInstanceWrapper);
             }
         }
-        catch (final RemoteException e) {
-            ErrorHandling.errorNoEvent("Successor not known: " + e.getMessage());
-        }
         catch (final RPCException e) {
             ErrorHandling.errorNoEvent("Successor not known: " + e.getMessage());
         }
@@ -901,17 +891,11 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
      * @return The RMI registry of this chord node.
      * @throws RemoteChordException
      */
-    private Registry getLocalRegistry() throws RemoteException {
+    private Registry getLocalRegistry() throws RPCException {
 
-        try {
-            // Try to create new RMI registry.
-            return LocateRegistry.createRegistry(rmiPort);
-        }
-        catch (final RemoteException e) {
+        // Try to create new RMI registry.
+        return LocateRegistry.createRegistry(rmiPort);
 
-            // Maybe it already existed, so try getting existing registry.
-            return LocateRegistry.getRegistry(rmiPort);
-        }
     }
 
     @Override
@@ -979,9 +963,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                     successorDB.executeUpdate("MIGRATE TABLEMANAGER " + wrapper.getTableInfo().getFullTableName(), false);
                 }
             }
-            catch (final RemoteException e) {
-                ErrorHandling.errorNoEvent("(Error during shutdown) " + e.getMessage());
-            }
             catch (final RPCException e) {
                 ErrorHandling.errorNoEvent("(Error during shutdown) " + e.getMessage());
             }
@@ -1038,7 +1019,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     }
 
     @Override
-    public DatabaseID getSystemTableLocation() throws RemoteException, RPCException {
+    public DatabaseID getSystemTableLocation() throws RPCException, RPCException {
 
         if (actualSystemTableLocation != null) { return actualSystemTableLocation; }
 

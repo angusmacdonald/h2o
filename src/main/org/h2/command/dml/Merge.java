@@ -4,7 +4,6 @@
  */
 package org.h2.command.dml;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.command.Command;
@@ -23,6 +22,8 @@ import org.h2.table.Column;
 import org.h2.util.ObjectArray;
 import org.h2.value.Value;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
+
 /**
  * This class represents the statement MERGE
  */
@@ -32,18 +33,19 @@ public class Merge extends Prepared {
 
     private Column[] keys;
 
-    private ObjectArray list = new ObjectArray();
+    private final ObjectArray list = new ObjectArray();
 
     private Query query;
 
     private Prepared update;
 
-    public Merge(Session session, boolean internalQuery) {
+    public Merge(final Session session, final boolean internalQuery) {
 
         super(session, internalQuery);
     }
 
-    public void setCommand(Command command) {
+    @Override
+    public void setCommand(final Command command) {
 
         super.setCommand(command);
         if (query != null) {
@@ -51,17 +53,17 @@ public class Merge extends Prepared {
         }
     }
 
-    public void setColumns(Column[] columns) {
+    public void setColumns(final Column[] columns) {
 
         this.columns = columns;
     }
 
-    public void setKeys(Column[] keys) {
+    public void setKeys(final Column[] keys) {
 
         this.keys = keys;
     }
 
-    public void setQuery(Query query) {
+    public void setQuery(final Query query) {
 
         this.query = query;
     }
@@ -72,22 +74,23 @@ public class Merge extends Prepared {
      * @param expr
      *            the list of values
      */
-    public void addRow(Expression[] expr) {
+    public void addRow(final Expression[] expr) {
 
         list.add(expr);
     }
 
-    public int update() throws SQLException, RemoteException {
+    @Override
+    public int update() throws SQLException, RPCException {
 
         int count;
         session.getUser().checkRight(table, Right.INSERT);
         session.getUser().checkRight(table, Right.UPDATE);
         if (keys == null) {
-            Index idx = table.getPrimaryKey();
+            final Index idx = table.getPrimaryKey();
             if (idx == null) { throw Message.getSQLException(ErrorCode.CONSTRAINT_NOT_FOUND_1, "PRIMARY KEY"); }
             keys = idx.getColumns();
         }
-        StringBuilder buff = new StringBuilder("UPDATE ");
+        final StringBuilder buff = new StringBuilder("UPDATE ");
         buff.append(table.getSQL());
         buff.append(" SET ");
         for (int i = 0; i < columns.length; i++) {
@@ -105,26 +108,26 @@ public class Merge extends Prepared {
             buff.append(keys[i].getSQL());
             buff.append("=?");
         }
-        String sql = buff.toString();
+        final String sql = buff.toString();
         update = session.prepare(sql);
         setCurrentRowNumber(0);
         if (list.size() > 0) {
             count = 0;
             for (int x = 0; x < list.size(); x++) {
                 setCurrentRowNumber(x + 1);
-                Expression[] expr = (Expression[]) list.get(x);
-                Row newRow = table.getTemplateRow();
+                final Expression[] expr = (Expression[]) list.get(x);
+                final Row newRow = table.getTemplateRow();
                 for (int i = 0; i < columns.length; i++) {
-                    Column c = columns[i];
-                    int index = c.getColumnId();
-                    Expression e = expr[i];
+                    final Column c = columns[i];
+                    final int index = c.getColumnId();
+                    final Expression e = expr[i];
                     if (e != null) {
                         // e can be null (DEFAULT)
                         try {
-                            Value v = expr[i].getValue(session).convertTo(c.getType());
+                            final Value v = expr[i].getValue(session).convertTo(c.getType());
                             newRow.setValue(index, v);
                         }
-                        catch (SQLException ex) {
+                        catch (final SQLException ex) {
                             throw setRow(ex, count, getSQL(expr));
                         }
                     }
@@ -134,24 +137,24 @@ public class Merge extends Prepared {
             }
         }
         else {
-            LocalResult rows = query.query(0);
+            final LocalResult rows = query.query(0);
             count = 0;
             table.fireBefore(session);
             table.lock(session, true, false);
             while (rows.next()) {
                 checkCanceled();
                 count++;
-                Value[] r = rows.currentRow();
-                Row newRow = table.getTemplateRow();
+                final Value[] r = rows.currentRow();
+                final Row newRow = table.getTemplateRow();
                 setCurrentRowNumber(count);
                 for (int j = 0; j < columns.length; j++) {
-                    Column c = columns[j];
-                    int index = c.getColumnId();
+                    final Column c = columns[j];
+                    final int index = c.getColumnId();
                     try {
-                        Value v = r[j].convertTo(c.getType());
+                        final Value v = r[j].convertTo(c.getType());
                         newRow.setValue(index, v);
                     }
-                    catch (SQLException ex) {
+                    catch (final SQLException ex) {
                         throw setRow(ex, count, getSQL(r));
                     }
                 }
@@ -163,23 +166,23 @@ public class Merge extends Prepared {
         return count;
     }
 
-    private void merge(Row row) throws SQLException, RemoteException {
+    private void merge(final Row row) throws SQLException, RPCException {
 
-        ObjectArray k = update.getParameters();
+        final ObjectArray k = update.getParameters();
         for (int i = 0; i < columns.length; i++) {
-            Column col = columns[i];
-            Value v = row.getValue(col.getColumnId());
-            Parameter p = (Parameter) k.get(i);
+            final Column col = columns[i];
+            final Value v = row.getValue(col.getColumnId());
+            final Parameter p = (Parameter) k.get(i);
             p.setValue(v);
         }
         for (int i = 0; i < keys.length; i++) {
-            Column col = keys[i];
-            Value v = row.getValue(col.getColumnId());
+            final Column col = keys[i];
+            final Value v = row.getValue(col.getColumnId());
             if (v == null) { throw Message.getSQLException(ErrorCode.COLUMN_CONTAINS_NULL_VALUES_1, col.getSQL()); }
-            Parameter p = (Parameter) k.get(columns.length + i);
+            final Parameter p = (Parameter) k.get(columns.length + i);
             p.setValue(v);
         }
-        int count = update.update("Merge");
+        final int count = update.update("Merge");
         if (count == 0) {
             table.fireBefore(session);
             table.validateConvertUpdateSequence(session, row);
@@ -193,9 +196,10 @@ public class Merge extends Prepared {
         else if (count != 1) { throw Message.getSQLException(ErrorCode.DUPLICATE_KEY_1, table.getSQL()); }
     }
 
+    @Override
     public String getPlanSQL() {
 
-        StringBuilder buff = new StringBuilder();
+        final StringBuilder buff = new StringBuilder();
         buff.append("MERGE INTO ");
         buff.append(table.getSQL());
         buff.append('(');
@@ -220,7 +224,7 @@ public class Merge extends Prepared {
         if (list.size() > 0) {
             buff.append("VALUES ");
             for (int x = 0; x < list.size(); x++) {
-                Expression[] expr = (Expression[]) list.get(x);
+                final Expression[] expr = (Expression[]) list.get(x);
                 if (x > 0) {
                     buff.append(", ");
                 }
@@ -229,7 +233,7 @@ public class Merge extends Prepared {
                     if (i > 0) {
                         buff.append(", ");
                     }
-                    Expression e = expr[i];
+                    final Expression e = expr[i];
                     if (e == null) {
                         buff.append("DEFAULT");
                     }
@@ -246,6 +250,7 @@ public class Merge extends Prepared {
         return buff.toString();
     }
 
+    @Override
     public void prepare() throws SQLException {
 
         if (columns == null) {
@@ -259,10 +264,10 @@ public class Merge extends Prepared {
         }
         if (list.size() > 0) {
             for (int x = 0; x < list.size(); x++) {
-                Expression[] expr = (Expression[]) list.get(x);
+                final Expression[] expr = (Expression[]) list.get(x);
                 if (expr.length != columns.length) { throw Message.getSQLException(ErrorCode.COLUMN_COUNT_DOES_NOT_MATCH); }
                 for (int i = 0; i < expr.length; i++) {
-                    Expression e = expr[i];
+                    final Expression e = expr[i];
                     if (e != null) {
                         expr[i] = e.optimize(session);
                     }
@@ -275,11 +280,13 @@ public class Merge extends Prepared {
         }
     }
 
+    @Override
     public boolean isTransactional() {
 
         return true;
     }
 
+    @Override
     public LocalResult queryMeta() {
 
         return null;

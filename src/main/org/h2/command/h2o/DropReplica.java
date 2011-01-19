@@ -1,6 +1,5 @@
 package org.h2.command.h2o;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.command.ddl.SchemaCommand;
@@ -17,6 +16,8 @@ import org.h2o.util.exceptions.MovedException;
 import org.h2o.viewer.H2OEventBus;
 import org.h2o.viewer.gwt.client.DatabaseStates;
 import org.h2o.viewer.gwt.client.H2OEvent;
+
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 
 /**
  * Represents the DROP REPLICA command, allowing individual replicas to be dropped.
@@ -89,7 +90,7 @@ public class DropReplica extends SchemaCommand {
                 try {
                     numberOfReplicas = session.getDatabase().getSystemTable().lookup(new TableInfo(tableName, getSchema().getName())).getTableManager().getNumberofReplicas();
                 }
-                catch (final RemoteException e) {
+                catch (final RPCException e) {
                     throw new SQLException("Failed in communication with the System Table.");
                 }
                 catch (final MovedException e) {
@@ -132,7 +133,7 @@ public class DropReplica extends SchemaCommand {
                     final ITableManagerRemote tmr = sm.lookup(ti).getTableManager();
                     tmr.removeReplicaInformation(ti);
                 }
-                catch (final RemoteException e) {
+                catch (final RPCException e) {
                     throw new SQLException("Failed to remove replica on System Table/Table Manager");
                 }
                 catch (final MovedException e) {

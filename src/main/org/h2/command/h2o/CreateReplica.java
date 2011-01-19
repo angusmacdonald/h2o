@@ -25,7 +25,6 @@
 
 package org.h2.command.h2o;
 
-import java.rmi.RemoteException;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -82,6 +81,7 @@ import org.h2o.viewer.H2OEventBus;
 import org.h2o.viewer.gwt.client.DatabaseStates;
 import org.h2o.viewer.gwt.client.H2OEvent;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -235,7 +235,7 @@ public class CreateReplica extends SchemaCommand {
     }
 
     @Override
-    public int update() throws SQLException, RemoteException {
+    public int update() throws SQLException, RPCException {
 
         final Database db = session.getDatabase();
 
@@ -265,7 +265,7 @@ public class CreateReplica extends SchemaCommand {
                     sm.lookup(ti).getTableManager().addReplicaInformation(ti);
                 }
                 catch (final MovedException e) {
-                    throw new RemoteException("System Table has moved.");
+                    throw new RPCException("System Table has moved.");
                 }
             }
 
@@ -525,9 +525,9 @@ public class CreateReplica extends SchemaCommand {
      *            command also being pushed.
      * @return The result of the update.
      * @throws SQLException
-     * @throws RemoteException
+     * @throws RPCException
      */
-    private int pushCommand(final String remoteDBLocation, final String query, final boolean createReplica) throws SQLException, RemoteException {
+    private int pushCommand(final String remoteDBLocation, final String query, final boolean createReplica) throws SQLException, RPCException {
 
         try {
             final Database db = session.getDatabase();
@@ -1013,9 +1013,9 @@ public class CreateReplica extends SchemaCommand {
      * 
      * @param originalLocation
      * @throws JdbcSQLException
-     * @throws RemoteException
+     * @throws RPCException
      */
-    public void setOriginalLocation(final String originalLocation, final boolean contactSM) throws SQLException, RemoteException {
+    public void setOriginalLocation(final String originalLocation, final boolean contactSM) throws SQLException, RPCException {
 
         contactSystemTableOnCompletion(contactSM);
 

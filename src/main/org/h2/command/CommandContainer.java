@@ -4,7 +4,6 @@
  */
 package org.h2.command;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.command.dml.Select;
@@ -17,6 +16,7 @@ import org.h2o.db.query.TableProxyManager;
 import org.h2o.db.query.locking.LockException;
 import org.h2o.test.fixture.H2OTest;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
@@ -128,13 +128,13 @@ public class CommandContainer extends Command {
     }
 
     @Override
-    public int update() throws SQLException, RemoteException {
+    public int update() throws SQLException, RPCException {
 
         return update(false);
     }
 
     @Override
-    protected int update(final boolean partOfMultiQueryTransaction) throws SQLException, RemoteException {
+    protected int update(final boolean partOfMultiQueryTransaction) throws SQLException, RPCException {
 
         recompileIfRequired();
         start();

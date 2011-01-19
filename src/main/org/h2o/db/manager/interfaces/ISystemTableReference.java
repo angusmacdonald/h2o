@@ -8,7 +8,6 @@
  */
 package org.h2o.db.manager.interfaces;
 
-import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
 import java.sql.SQLException;
 import java.util.Map;
@@ -23,6 +22,7 @@ import org.h2o.db.manager.recovery.SystemTableAccessException;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 /**
@@ -259,16 +259,16 @@ public interface ISystemTableReference {
      *            Name of the table being added.
      * @param replicaLocations
      * @return True if the table was successfully added.
-     * @throws RemoteException
+     * @throws RPCException
      *             Thrown if the System Table could not be contacted.
      * @throws MovedException
      *             Thrown if the System Table has moved and a new reference is needed.
      */
-    public boolean addTableInformation(ITableManagerRemote iTableManagerRemote, TableInfo ti, Set<DatabaseInstanceWrapper> replicaLocations) throws RemoteException, MovedException, SQLException;
+    public boolean addTableInformation(ITableManagerRemote iTableManagerRemote, TableInfo ti, Set<DatabaseInstanceWrapper> replicaLocations) throws RPCException, MovedException, SQLException;
 
-    public void removeTableInformation(TableInfo tableInfo) throws RemoteException, MovedException;
+    public void removeTableInformation(TableInfo tableInfo) throws RPCException, MovedException;
 
-    public void removeAllTableInformation() throws RemoteException, MovedException;
+    public void removeAllTableInformation() throws RPCException, MovedException;
 
     public Map<TableInfo, TableManager> getLocalTableManagers();
 

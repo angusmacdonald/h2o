@@ -8,12 +8,13 @@
  */
 package org.h2o.db.manager.recovery;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.wrappers.SystemTableWrapper;
 import org.h2o.util.exceptions.MovedException;
+
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 
 /**
  * Provides utilities to find and recover the System Table in case of failure.
@@ -67,8 +68,8 @@ public interface ISystemTableFailureRecovery {
      * @return Reference to the new System Table.
      * @throws SQLException
      *             Thrown if the System Table was not found at the specified new location.
-     * @throws RemoteException
+     * @throws RPCException
      *             Thrown if it wasn't possible to connect to the database at the new specified location.
      */
-    public SystemTableWrapper find(MovedException e) throws SQLException, RemoteException;
+    public SystemTableWrapper find(MovedException e) throws SQLException, RPCException;
 }

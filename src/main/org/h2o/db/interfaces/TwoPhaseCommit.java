@@ -8,7 +8,7 @@
  */
 package org.h2o.db.interfaces;
 
-import java.rmi.RemoteException;
+
 import java.sql.SQLException;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
@@ -32,7 +32,7 @@ public interface TwoPhaseCommit {
      *            True if this is a COMMIT, false if it is another type of query. If it is false a PREPARE command will be executed to get
      *            ready for the eventual commit.
      * @return Result of the prepare - this should never fail in theory, bar some weird disk-based mishap.
-     * @throws RemoteException
+     * @throws RPCException
      * @throws SQLException
      */
     public int execute(String query, String transactionName, boolean commitOperation) throws RPCException, SQLException;
@@ -43,7 +43,7 @@ public interface TwoPhaseCommit {
      * @param transactionName
      *            The name to be given to this transaction - must be used again to commit the transaction.
      * @return Result of the prepare - this should never fail in theory, bar some weird disk-based mishap.
-     * @throws RemoteException
+     * @throws RPCException
      * @throws SQLException
      */
     public int prepare(String transactionName) throws RPCException, SQLException;

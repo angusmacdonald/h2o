@@ -25,7 +25,7 @@
 
 package org.h2o.db.interfaces;
 
-import java.rmi.RemoteException;
+
 import java.sql.SQLException;
 import java.util.Collection;
 
@@ -64,7 +64,7 @@ public interface ITableManagerRemote extends IH2ORemote, IMigratable {
      * than DatabaseInstanceRemote.
      * 
      * @return Database connection URL for a given remote database.
-     * @throws RemoteException
+     * @throws RPCException
      */
     public DatabaseID getLocation() throws RPCException, MovedException;
 

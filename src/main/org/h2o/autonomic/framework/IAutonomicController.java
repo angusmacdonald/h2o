@@ -9,7 +9,8 @@
 package org.h2o.autonomic.framework;
 
 import java.rmi.Remote;
-import java.rmi.RemoteException;
+
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 
 /**
  * The components of the database system being monitored implement the AutonomicController class to provide a mechanism for autonomic
@@ -27,6 +28,6 @@ public interface IAutonomicController extends Remote {
      *            The action (modification) to be performed.
      * @return Whether the change was successfully applied.
      */
-    public boolean changeSetting(AutonomicAction action) throws RemoteException;
+    public boolean changeSetting(AutonomicAction action) throws RPCException;
 
 }

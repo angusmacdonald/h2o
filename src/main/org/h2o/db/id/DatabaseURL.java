@@ -62,7 +62,7 @@ public class DatabaseURL implements Serializable {
      * @param url The database URL to be parsed.
      * @return Parsed version of the given URL.
      */
-    protected static DatabaseURL parseURL(String url) {
+    public static DatabaseURL parseURL(String url) {
 
         if (url == null) { return null; }
 

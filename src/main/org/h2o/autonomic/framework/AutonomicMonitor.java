@@ -9,7 +9,8 @@
 package org.h2o.autonomic.framework;
 
 import java.rmi.Remote;
-import java.rmi.RemoteException;
+
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 
 /**
  * <p>
@@ -33,7 +34,7 @@ public interface AutonomicMonitor extends Remote {
      *            The level of interest a manager has in this monitoring information. It may want to recieve updates every time there is a
      *            change, only at infrequent intervals, or somewhere in between.
      */
-    public void subscribe(AutonomicManager manager) throws RemoteException;
+    public void subscribe(AutonomicManager manager) throws RPCException;
 
     /**
      * Called to unsubscribe to events from this monitor.
@@ -41,14 +42,14 @@ public interface AutonomicMonitor extends Remote {
      * @param manager
      *            The manager which is unsubscribing from this monitor.
      */
-    public void unsubscribe(AutonomicManager manager) throws RemoteException;
+    public void unsubscribe(AutonomicManager manager) throws RPCException;
 
     /**
      * Request data on the state of the aspect being monitored. This provides a mechanism for synchronously acquiring such data, rather than
      * using the publish-subscribe mechanism.
      * 
      * @return
-     * @throws RemoteException
+     * @throws RPCException
      */
-    public MonitoringData requestState() throws RemoteException;
+    public MonitoringData requestState() throws RPCException;
 }

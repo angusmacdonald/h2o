@@ -8,7 +8,7 @@
  */
 package org.h2o.autonomic.decision;
 
-import java.rmi.RemoteException;
+
 import java.util.Queue;
 
 import org.h2o.autonomic.decision.ranker.metric.ActionRequest;
@@ -25,7 +25,7 @@ public interface IReplicaChoice {
      * @param typeOfRequest
      *            Type of request being made. For example, a new replica being created, or a table manager being migrated.
      * @throws MovedException
-     * @throws RemoteException
+     * @throws RPCException
      */
     public Queue<DatabaseInstanceWrapper> getAvailableMachines(ActionRequest typeOfRequest) throws RPCException, MovedException;
 }

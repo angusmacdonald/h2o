@@ -26,7 +26,6 @@
 package org.h2o.db.manager.recovery;
 
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -42,6 +41,7 @@ import org.h2o.locator.client.H2OLocatorInterface;
 import org.h2o.util.exceptions.MigrationException;
 import org.h2o.util.exceptions.MovedException;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -85,7 +85,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
     }
 
     @Override
-    public synchronized SystemTableWrapper find(final MovedException e) throws SQLException, RemoteException {
+    public synchronized SystemTableWrapper find(final MovedException e) throws SQLException, RPCException {
 
         final String newLocation = e.getMessage();
 
@@ -271,7 +271,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
                 try {
                     systemTable = databaseInstance.recreateSystemTable(); // throws a SystemTableCreationException if it fails.
                 }
-                catch (final RemoteException e) {
+                catch (final RPCException e) {
                     // May be thrown if database isn't active.
                     continue;
                 }
@@ -288,7 +288,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         throw new SystemTableAccessException("Failed to create new System Table.");
     }
 
-    private IDatabaseInstanceRemote lookForDatabaseInstanceAt(IDatabaseRemote iDatabaseRemote, final DatabaseID url) throws RemoteException {
+    private IDatabaseInstanceRemote lookForDatabaseInstanceAt(IDatabaseRemote iDatabaseRemote, final DatabaseID url) throws RPCException {
 
         if (iDatabaseRemote == null) {
             iDatabaseRemote = db.getRemoteInterface();
@@ -335,7 +335,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         try {
             oldSystemTable.prepareForMigration(db.getURL().getURLwithRMIPort());
         }
-        catch (final RemoteException e) {
+        catch (final RPCException e) {
             e.printStackTrace();
         }
         catch (final MigrationException e) {
@@ -358,7 +358,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
                 oldSystemTable = stReference.getSystemTable();
                 oldSystemTable.prepareForMigration(db.getURL().getURLwithRMIPort());
             }
-            catch (final RemoteException e1) {
+            catch (final RPCException e1) {
                 e.printStackTrace();
             }
             catch (final MigrationException e1) {
@@ -377,7 +377,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         try {
             newSystemTable.buildSystemTableState(oldSystemTable);
         }
-        catch (final RemoteException e) {
+        catch (final RPCException e) {
             ErrorHandling.exceptionError(e, "Failed to migrate System Table to new machine.");
             throw new SystemTableAccessException("Failed to migrate System Table to new machine.");
         }
@@ -400,7 +400,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         try {
             oldSystemTable.completeMigration();
         }
-        catch (final RemoteException e) {
+        catch (final RPCException e) {
             ErrorHandling.exceptionError(e, "Failed to complete migration.");
             throw new SystemTableAccessException("Failed to complete migration.");
 
@@ -451,7 +451,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
             newSystemTable.buildSystemTableState();
             Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, db.getURL() + ": New System Table created.");
         }
-        catch (final RemoteException e) {
+        catch (final RPCException e) {
             e.printStackTrace();
             throw new SystemTableAccessException("Failed to contact some remote process when recreating System Table locally.");
         }

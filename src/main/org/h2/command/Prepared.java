@@ -4,7 +4,6 @@
  */
 package org.h2.command;
 
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -31,6 +30,7 @@ import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
@@ -241,9 +241,9 @@ public abstract class Prepared {
      * @return the update count
      * @throws SQLException
      *             if it is a query
-     * @throws RemoteException
+     * @throws RPCException
      */
-    public int update() throws SQLException, RemoteException {
+    public int update() throws SQLException, RPCException {
 
         throw Message.getSQLException(ErrorCode.METHOD_NOT_ALLOWED_FOR_QUERY);
     }
@@ -254,9 +254,9 @@ public abstract class Prepared {
      * @param transactionName
      * @return
      * @throws SQLException
-     * @throws RemoteException
+     * @throws RPCException
      */
-    public int update(final String transactionName) throws SQLException, RemoteException {
+    public int update(final String transactionName) throws SQLException, RPCException {
 
         /*
          * If the subclass doesn't override this method, then it does not propagate the query to a remote machine. As a result, it does not

@@ -6,7 +6,6 @@ package org.h2.command;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.text.Collator;
 import java.util.HashSet;
@@ -162,6 +161,7 @@ import org.h2o.db.query.locking.LockType;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -3812,7 +3812,7 @@ public class Parser {
             try {
                 return parseCreateReplica(false, false, defaultMode == Table.TYPE_CACHED, true);
             }
-            catch (final RemoteException e) {
+            catch (final RPCException e) {
                 e.printStackTrace();
                 return null;
             }
@@ -3824,7 +3824,7 @@ public class Parser {
             try {
                 return parseCreateReplica(false, false, defaultMode == Table.TYPE_CACHED, false);
             }
-            catch (final RemoteException e) {
+            catch (final RPCException e) {
                 e.printStackTrace();
                 return null;
             }
@@ -4847,7 +4847,7 @@ public class Parser {
             try {
                 return findViaSystemTable(tableName, localSchemaName);
             }
-            catch (final RemoteException e) {
+            catch (final RPCException e) {
                 e.printStackTrace();
                 throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
             } // XXX this might fail if its not the default schema.
@@ -4947,7 +4947,7 @@ public class Parser {
             try {
                 return tableManager.getTableProxy(LockType.NONE, new LockRequest(session));
             }
-            catch (final RemoteException e1) {
+            catch (final RPCException e1) {
                 // Recreate Table Manager then try again.
                 try {
                     tableManager = systemTableReference.getSystemTable().recreateTableManager(tableInfo);
@@ -4973,9 +4973,9 @@ public class Parser {
      * @return Information on that table.
      * @throws SQLException
      *             if the table is not found.
-     * @throws RemoteException
+     * @throws RPCException
      */
-    public Table findViaSystemTable(final String tableName, final String thisSchemaName) throws SQLException, RemoteException {
+    public Table findViaSystemTable(final String tableName, final String thisSchemaName) throws SQLException, RPCException {
 
         /*
          * Attempt to locate the table if it exists remotely.
@@ -5489,7 +5489,7 @@ public class Parser {
         }
     }
 
-    private CreateReplica parseCreateReplica(final boolean temp, boolean globalTemp, final boolean persistent, final boolean empty) throws SQLException, RemoteException {
+    private CreateReplica parseCreateReplica(final boolean temp, boolean globalTemp, final boolean persistent, final boolean empty) throws SQLException, RPCException {
 
         final boolean ifNotExists = readIfNoExists();
         final boolean updateData = readUpdateData();
@@ -5541,7 +5541,7 @@ public class Parser {
                 }
             }
             catch (final MovedException e) {
-                throw new RemoteException("System Table has moved.");
+                throw new RPCException("System Table has moved.");
             }
         }
         else {

@@ -30,6 +30,7 @@ import org.h2.util.StringUtils;
 import org.h2.value.Transfer;
 import org.h2.value.Value;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
@@ -236,7 +237,7 @@ public class TcpServerThread implements Runnable {
         }
     }
 
-    private void process() throws IOException, SQLException {
+    private void process() throws IOException, SQLException, RPCException {
 
         final int operation = transfer.readInt();
         switch (operation) {

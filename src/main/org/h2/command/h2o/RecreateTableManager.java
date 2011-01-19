@@ -1,6 +1,5 @@
 package org.h2.command.h2o;
 
-import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 
@@ -15,6 +14,7 @@ import org.h2o.viewer.H2OEventBus;
 import org.h2o.viewer.gwt.client.DatabaseStates;
 import org.h2o.viewer.gwt.client.H2OEvent;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
@@ -62,7 +62,7 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
      * @see org.h2.command.Prepared#update()
      */
     @Override
-    public int update() throws SQLException, RemoteException {
+    public int update() throws SQLException, RPCException {
 
         final Database db = session.getDatabase();
         final ISystemTableReference systemTableReference = db.getSystemTableReference();
@@ -102,13 +102,9 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
         /*
          * Make Table Manager serializable first.
          */
-        try {
-            final ITableManagerRemote tmr = (ITableManagerRemote) UnicastRemoteObject.exportObject(tm, 0);
-            db.getChordInterface().bind(ti.getFullTableName(), tmr);
-        }
-        catch (final RemoteException e) {
-            e.printStackTrace();
-        }
+
+        final ITableManagerRemote tmr = (ITableManagerRemote) UnicastRemoteObject.exportObject(tm, 0);
+        db.getChordInterface().bind(ti.getFullTableName(), tmr);
 
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, ti + " recreated on " + db.getURL() + ".");
 
@@ -122,7 +118,7 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
      * @see org.h2.command.Prepared#update(java.lang.String)
      */
     @Override
-    public int update(final String transactionName) throws SQLException, RemoteException {
+    public int update(final String transactionName) throws SQLException, RPCException {
 
         return update();
     }

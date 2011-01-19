@@ -26,7 +26,6 @@
 package org.h2.engine;
 
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -123,6 +122,7 @@ import org.h2o.viewer.server.KeepAliveMessageThread;
 
 import uk.ac.standrews.cs.nds.events.bus.EventBus;
 import uk.ac.standrews.cs.nds.events.bus.interfaces.IEventBus;
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -3046,7 +3046,7 @@ public class Database implements DataHandler {
         try {
             return systemTableRef.getSystemTable().getDatabaseInstance(databaseURL);
         }
-        catch (final RemoteException e) {
+        catch (final RPCException e) {
             e.printStackTrace();
         }
         catch (final MovedException e) {

@@ -8,7 +8,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 
 import org.h2.command.Prepared;
@@ -18,6 +17,8 @@ import org.h2.message.Message;
 import org.h2.result.LocalResult;
 import org.h2.util.ScriptReader;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
+
 /**
  * This class represents the statement RUNSCRIPT
  */
@@ -25,21 +26,22 @@ public class RunScriptCommand extends ScriptBase {
 
     private String charset = SysProperties.FILE_ENCODING;
 
-    public RunScriptCommand(Session session, boolean internalQuery) {
+    public RunScriptCommand(final Session session, final boolean internalQuery) {
 
         super(session, internalQuery);
     }
 
+    @Override
     public int update() throws SQLException {
 
         session.getUser().checkAdmin();
         int count = 0;
         try {
             openInput();
-            Reader reader = new InputStreamReader(in, charset);
-            ScriptReader r = new ScriptReader(new BufferedReader(reader));
+            final Reader reader = new InputStreamReader(in, charset);
+            final ScriptReader r = new ScriptReader(new BufferedReader(reader));
             while (true) {
-                String sql = r.readStatement();
+                final String sql = r.readStatement();
                 if (sql == null) {
                     break;
                 }
@@ -48,7 +50,7 @@ public class RunScriptCommand extends ScriptBase {
             }
             reader.close();
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             throw Message.convertIOException(e, null);
         }
         finally {
@@ -57,10 +59,10 @@ public class RunScriptCommand extends ScriptBase {
         return count;
     }
 
-    private void execute(String sql) throws SQLException {
+    private void execute(final String sql) throws SQLException {
 
         try {
-            Prepared command = session.prepare(sql);
+            final Prepared command = session.prepare(sql);
             if (command.isQuery()) {
                 command.query(0);
             }
@@ -71,20 +73,21 @@ public class RunScriptCommand extends ScriptBase {
                 session.commit(false);
             }
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             throw Message.addSQL(e, sql);
         }
-        catch (RemoteException e) {
+        catch (final RPCException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
 
-    public void setCharset(String charset) {
+    public void setCharset(final String charset) {
 
         this.charset = charset;
     }
 
+    @Override
     public LocalResult queryMeta() {
 
         return null;

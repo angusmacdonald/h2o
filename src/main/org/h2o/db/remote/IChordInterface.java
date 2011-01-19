@@ -9,7 +9,7 @@
 package org.h2o.db.remote;
 
 import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
+
 
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
@@ -32,7 +32,7 @@ public interface IChordInterface {
      * querying the database instance at this location for the location of the System Table.
      * 
      */
-    DatabaseID getSystemTableLocation() throws RemoteException, RPCException;
+    DatabaseID getSystemTableLocation() throws RPCException, RPCException;
 
     /**
      * Get a reference to the Chord node which is responsible for managing the database's System Table lookup, BUT NOT NECESSARILY THE
@@ -57,12 +57,12 @@ public interface IChordInterface {
      * @param port
      *            Port on which the RMI registry is located.
      * @return Database instance remote proxy for the database at the given location.
-     * @throws RemoteException
+     * @throws RPCException
      *             Thrown if there was an error accessing the RMI proxy.
      * @throws NotBoundException
      *             Thrown if there wasn't a database instance interface exposed on the RMI proxy.
      */
-    IDatabaseInstanceRemote getDatabaseInstanceAt(String hostname, int port) throws RemoteException, NotBoundException;
+    IDatabaseInstanceRemote getDatabaseInstanceAt(String hostname, int port) throws RPCException, NotBoundException;
 
     /**
      * Finds the location of the chord node responsible for the given key.

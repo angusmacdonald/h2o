@@ -8,7 +8,7 @@
  */
 package org.h2o.db.remote;
 
-import java.rmi.RemoteException;
+
 
 import org.h2.engine.Session;
 import org.h2o.autonomic.settings.Settings;
@@ -84,11 +84,11 @@ public interface IDatabaseRemote {
      * 
      * @param lookupLocation
      *            The hostname and port of this reference are used to find the local RMI registry.
-     * @throws RemoteException
+     * @throws RPCException
      *             Thrown if there is a problem accessing the RMI registry.
      * @return Database instance remote proxy for the database at the given location.
      */
-    public IDatabaseInstanceRemote getDatabaseInstanceAt(IChordRemoteReference lookupLocation) throws RemoteException, RPCException;
+    public IDatabaseInstanceRemote getDatabaseInstanceAt(IChordRemoteReference lookupLocation) throws RPCException, RPCException;
 
     /**
      * Find the database instance located at the location given. The parameter is used to get the hostname and RMI port of that chord nodes
@@ -98,7 +98,7 @@ public interface IDatabaseRemote {
      *            The hostname and RMI port of this reference are used to find the local RMI registry.
      * @return Database instance remote proxy for the database at the given location.
      */
-    public IDatabaseInstanceRemote getDatabaseInstanceAt(DatabaseID databaseURL) throws RemoteException;
+    public IDatabaseInstanceRemote getDatabaseInstanceAt(DatabaseID databaseURL) throws RPCException;
 
     public H2OLocatorInterface getLocatorInterface() throws LocatorException;
 }

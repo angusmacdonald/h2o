@@ -16,7 +16,6 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.sql.Connection;
@@ -315,12 +314,7 @@ public class TestBase {
 
         Registry registry = null;
 
-        try {
-            registry = LocateRegistry.getRegistry(20000);
-        }
-        catch (final RemoteException e) {
-            e.printStackTrace();
-        }
+        registry = LocateRegistry.getRegistry(20000);
 
         if (registry != null) {
             try {
