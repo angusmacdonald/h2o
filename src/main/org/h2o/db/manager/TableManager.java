@@ -722,21 +722,13 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
         /*
          * Obtain replica manager.
          */
-        replicaManager = otherTableManager.getReplicaManager();
+        replicaManager = ReplicaManager.recreateReplicaManager(otherTableManager);
     }
 
     @Override
     public String getSchemaName() throws RPCException {
 
         return schemaName;
-    }
-
-    @Override
-    public ReplicaManager getReplicaManager() throws RPCException, MovedException {
-
-        preMethodTest();
-
-        return replicaManager;
     }
 
     @Override
@@ -895,5 +887,23 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
     public void addInitialReplicaInformation(final TableInfo tableDetails) {
 
         temporaryInitialReplicas.add(tableDetails);
+    }
+
+    @Override
+    public Map<DatabaseInstanceWrapper, Integer> getActiveReplicas() throws RPCException, MovedException {
+
+        return replicaManager.getActiveReplicas();
+    }
+
+    @Override
+    public Map<DatabaseInstanceWrapper, Integer> getAllReplicas() throws RPCException, MovedException {
+
+        return replicaManager.getAllReplicas();
+    }
+
+    @Override
+    public DatabaseInstanceWrapper getDatabaseLocation() throws RPCException, MovedException {
+
+        return replicaManager.getManagerLocation();
     }
 }

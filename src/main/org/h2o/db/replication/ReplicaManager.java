@@ -8,7 +8,6 @@
  */
 package org.h2o.db.replication;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,8 +17,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.h2o.db.id.TableInfo;
+import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
+import org.h2o.util.exceptions.MovedException;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -32,7 +33,7 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class ReplicaManager implements Serializable {
+public class ReplicaManager {
 
     private static final long serialVersionUID = 6064010173578943054L;
 
@@ -62,6 +63,29 @@ public class ReplicaManager implements Serializable {
         activeReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
         primaryLocation = null;
 
+    }
+
+    /**
+     * Used to recreate the state of the replica manager from an existing replica manager on another machine.
+     * @param activeReplicas2
+     * @param allReplicas2
+     * @param primaryLocation
+     */
+    private ReplicaManager(final Map<DatabaseInstanceWrapper, Integer> activeReplicas, final Map<DatabaseInstanceWrapper, Integer> allReplicas, final DatabaseInstanceWrapper primaryLocation) {
+
+        this.activeReplicas = activeReplicas;
+        this.allReplicas = allReplicas;
+        this.primaryLocation = primaryLocation;
+
+    }
+
+    /**
+     * Used to recreate the state of the replica manager from an existing replica manager on another machine.
+     * @param otherTableManager An existing table manager on another machine.
+     */
+    public static ReplicaManager recreateReplicaManager(final ITableManagerRemote otherTableManager) throws RPCException, MovedException {
+
+        return new ReplicaManager(otherTableManager.getActiveReplicas(), otherTableManager.getAllReplicas(), otherTableManager.getDatabaseLocation());
     }
 
     /**
@@ -386,6 +410,11 @@ public class ReplicaManager implements Serializable {
     public Map<DatabaseInstanceWrapper, Integer> getAllReplicas() {
 
         return allReplicas;
+    }
+
+    public DatabaseInstanceWrapper getManagerLocation() {
+
+        return primaryLocation;
     }
 
 }

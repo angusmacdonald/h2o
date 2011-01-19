@@ -162,17 +162,6 @@ public class TableManagerServer extends ApplicationServer {
             }
         });
 
-        // public ReplicaManager getReplicaManager() throws RPCException, MovedException;
-
-        handler_map.put("getReplicaManager", new Handler() {
-
-            @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
-
-                return marshaller.serializeReplicaManager(table_manager.getReplicaManager());
-            }
-        });
-
         // public int getTableSet() throws RPCException;
 
         handler_map.put("getTableSet", new Handler() {

@@ -27,6 +27,7 @@ package org.h2o.db.interfaces;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Map;
 
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
@@ -35,7 +36,7 @@ import org.h2o.db.query.TableProxy;
 import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
-import org.h2o.db.replication.ReplicaManager;
+import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.util.exceptions.StartupException;
 
@@ -111,14 +112,19 @@ public interface ITableManagerRemote extends IH2ORemote, IMigratable {
     public TableInfo getTableInfo() throws RPCException;
 
     /**
-     * The object responsible for managing the set of replicas this Table Manager maintains.
-     * 
-     * <p>
-     * This is called when the Table Manager is being migrated elsewhere, but shouldn't need to be called anywhere else.
-     * 
-     * @throws MovedException
+     * Get the set of  active replicas along with their corresponding update IDs.
      */
-    public ReplicaManager getReplicaManager() throws RPCException, MovedException;
+    public Map<DatabaseInstanceWrapper, Integer> getActiveReplicas() throws RPCException, MovedException;
+
+    /**
+     * Get the set of all replicas (both active and inactive) along with their corresponding update IDs.
+     */
+    public Map<DatabaseInstanceWrapper, Integer> getAllReplicas() throws RPCException, MovedException;
+
+    /**
+     * Get the location of this table manager.
+     */
+    public DatabaseInstanceWrapper getDatabaseLocation() throws RPCException, MovedException;
 
     /**
      * Get the table set that this table is part of.

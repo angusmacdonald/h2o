@@ -4989,7 +4989,7 @@ public class Parser {
 
         Map<DatabaseInstanceWrapper, Integer> replicaLocations = null;
         try {
-            replicaLocations = tableManager.getReplicaManager().getActiveReplicas();
+            replicaLocations = tableManager.getActiveReplicas();
 
         }
         catch (final MovedException e) {
@@ -4998,7 +4998,7 @@ public class Parser {
             tableManager = session.getDatabase().getSystemTableReference().lookup(new TableInfo(tableName, thisSchemaName), false);
 
             try {
-                replicaLocations = tableManager.getReplicaManager().getActiveReplicas();
+                replicaLocations = tableManager.getActiveReplicas();
             }
             catch (final MovedException e1) {
                 throw new SQLException("Unable to contact Table Manager for " + tableName + ":: " + e1.getMessage());
@@ -5016,7 +5016,7 @@ public class Parser {
 
             tableManager = session.getDatabase().getSystemTableReference().lookup(new TableInfo(tableName, thisSchemaName), false);
             try {
-                replicaLocations = tableManager.getReplicaManager().getActiveReplicas();
+                replicaLocations = tableManager.getActiveReplicas();
             }
             catch (final MovedException e1) {
                 throw new SQLException("Unable to contact Table Manager for " + tableName + ":: " + e1.getMessage());
