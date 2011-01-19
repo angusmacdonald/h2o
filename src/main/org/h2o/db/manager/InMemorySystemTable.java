@@ -9,7 +9,6 @@
 package org.h2o.db.manager;
 
 import java.rmi.Remote;
-import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -266,17 +265,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
                 e.printStackTrace();
             }
 
-            /*
-             * Make Table Manager serializable first.
-             */
-            try {
-                tm = (ITableManagerRemote) UnicastRemoteObject.exportObject(tm, 0);
-            }
-            catch (final RPCException e) {
-                e.printStackTrace();
-            }
-
-            database.getChordInterface().bind(ti.getFullTableName(), tm);
+            database.getTableManagerServer().exportObject(tm);
 
         }
         else if (tableManagerWrapper != null) {
@@ -577,7 +566,6 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
                 if (dm != null) {
                     dm.remove(true);
 
-                    UnicastRemoteObject.unexportObject(dm, true);
                 }
             }
             catch (final Exception e) {
@@ -625,7 +613,6 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
 
         tableManagers.put(tableInfo.getGenericTableInfo(), dmw);
         tableManagerReferences.add(stub);
-        database.getChordInterface().bind(tableInfo.getFullTableName(), stub);
     }
 
     @Override

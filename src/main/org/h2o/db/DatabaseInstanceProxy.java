@@ -30,7 +30,7 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
 
     // -------------------------------------------------------------------------------------------------------
 
-    private DatabaseInstanceProxy(final InetSocketAddress node_address) {
+    public DatabaseInstanceProxy(final InetSocketAddress node_address) {
 
         super(node_address);
     }

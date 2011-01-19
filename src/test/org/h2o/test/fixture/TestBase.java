@@ -12,12 +12,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.io.IOException;
-import java.rmi.NotBoundException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -174,7 +170,6 @@ public class TestBase {
     */
     public static void closeDatabaseCompletely() {
 
-        obliterateRMIRegistryContents();
         final Collection<Database> dbs = Engine.getInstance().getAllDatabases();
 
         for (final Database db : dbs) {
@@ -305,38 +300,6 @@ public class TestBase {
     private static void deleteDatabaseData(final String baseDir, final String db) throws SQLException {
 
         DeleteDbFiles.execute(baseDir, db, true);
-    }
-
-    /**
-     * Removes every object from the RMI registry.
-     */
-    private static void obliterateRMIRegistryContents() {
-
-        Registry registry = null;
-
-        registry = LocateRegistry.getRegistry(20000);
-
-        if (registry != null) {
-            try {
-                final String[] listOfObjects = registry.list();
-
-                for (final String l : listOfObjects) {
-                    try {
-                        if (!l.equals("IChordNode")) {
-                            registry.unbind(l);
-                        }
-                    }
-                    catch (final NotBoundException e) {
-                        fail("Failed to remove " + l + " from RMI registry.");
-                    }
-                }
-
-                assertEquals("Somehow failed to empty RMI registry.", 0, registry.list().length);
-            }
-            catch (final Exception e) {
-                // It happens for tests where the registry was not set up.
-            }
-        }
     }
 
     /**

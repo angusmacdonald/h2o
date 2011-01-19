@@ -93,11 +93,14 @@ import org.h2.value.ValueInt;
 import org.h2.value.ValueLob;
 import org.h2o.autonomic.settings.Settings;
 import org.h2o.autonomic.settings.TestingSettings;
+import org.h2o.db.DatabaseInstanceServer;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.manager.SystemTable;
 import org.h2o.db.manager.SystemTableReference;
+import org.h2o.db.manager.SystemTableServer;
 import org.h2o.db.manager.TableManager;
+import org.h2o.db.manager.TableManagerInstanceServer;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.manager.monitorthreads.MetaDataReplicationThread;
@@ -333,6 +336,12 @@ public class Database implements DataHandler {
     private H2OEventConsumer eventConsumer;
 
     private KeepAliveMessageThread keepAliveMessageThread;
+
+    private TableManagerInstanceServer table_manager_instance_server;
+
+    private DatabaseInstanceServer database_instance_server;
+
+    private SystemTableServer system_table_server;
 
     public Database(final String name, final ConnectionInfo ci, final String cipher) throws SQLException {
 
@@ -893,14 +902,18 @@ public class Database implements DataHandler {
         /*
          * H2O STARTUP CODE FOR System Table, TABLE INSTANITATION
          */
-        if (!isManagementDB()) { // don't run this code with
-            // the TCP server
-            // management DB
+        if (!isManagementDB()) { // don't run this code with the TCP server management DB
 
             /*
              * Connect to Database System.
              */
             databaseRemote.connectToDatabaseSystem(h2oSystemSession, databaseSettings);
+
+            // Establish Proxies
+
+            table_manager_instance_server = new TableManagerInstanceServer();
+            database_instance_server = new DatabaseInstanceServer(getLocalDatabaseInstance());
+            system_table_server = null; // added if we become a system table.
 
             /*
              * Create Meta-Data Replication Manager. Must be executed after call to databaseRemote because of
@@ -1030,7 +1043,6 @@ public class Database implements DataHandler {
             }
 
             systemTableRef.setSystemTable(systemTable);
-            databaseRemote.exportSystemTable(systemTableRef);
 
             databaseRemote.commitSystemTableCreation();
 
@@ -3185,5 +3197,10 @@ public class Database implements DataHandler {
     public AsynchronousQueryManager getAsynchronousQueryManager() {
 
         return asynchronousQueryManager;
+    }
+
+    public TableManagerInstanceServer getTableManagerServer() {
+
+        return table_manager_instance_server;
     }
 }

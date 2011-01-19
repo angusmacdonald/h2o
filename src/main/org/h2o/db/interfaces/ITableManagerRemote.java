@@ -25,7 +25,6 @@
 
 package org.h2o.db.interfaces;
 
-
 import java.sql.SQLException;
 import java.util.Collection;
 
@@ -104,6 +103,12 @@ public interface ITableManagerRemote extends IH2ORemote, IMigratable {
      * The name of the table this Table Manager is responsible for (not including schema name).
      */
     public String getTableName() throws RPCException;
+
+    /**
+     * The Information about this table
+     * @throws RPCException 
+     */
+    public TableInfo getTableInfo() throws RPCException;
 
     /**
      * The object responsible for managing the set of replicas this Table Manager maintains.

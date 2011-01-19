@@ -8,7 +8,6 @@
  */
 package org.h2o.db.manager.interfaces;
 
-import java.rmi.registry.Registry;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Set;
@@ -75,19 +74,6 @@ public interface ISystemTableReference {
      *             If System Table registry access resulted in some kind of exception.
      */
     public ISystemTableRemote findSystemTable() throws SQLException;
-
-    /**
-     * Returns a reference to the RMI registry of the System Table.
-     * 
-     * <p>
-     * A lookup is performed to identify where the System Table is currently located, then the registry is obtained.
-     * 
-     * <p>
-     * If the registry is not found this method returns null.
-     * 
-     * @return The RMI registry of this chord node.
-     */
-    public Registry getSystemTableRegistry();
 
     /**
      * Change the System Table URL. This doesn't update the actual reference to the System Table, so should only be used if the database has

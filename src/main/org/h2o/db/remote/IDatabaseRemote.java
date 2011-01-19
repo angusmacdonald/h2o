@@ -8,13 +8,10 @@
  */
 package org.h2o.db.remote;
 
-
-
 import org.h2.engine.Session;
 import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
-import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.locator.client.H2OLocatorInterface;
 import org.h2o.util.exceptions.StartupException;
@@ -49,7 +46,7 @@ public interface IDatabaseRemote {
      * 
      * @return
      */
-    public int getRmiPort();
+    public int getRPCPort();
 
     /**
      * Remove references to remote objects in preparation for the shutdown of the database system.
@@ -68,15 +65,6 @@ public interface IDatabaseRemote {
      * @return Address of the local database instance.
      */
     public DatabaseID getLocalMachineLocation();
-
-    /**
-     * Export the System Table contained within this SystemTableReference via the UnicastRemoteObject class to allow it to be accessed
-     * remotely.
-     * 
-     * @param systemTableRef
-     *            Local wrapper class for the System Table.
-     */
-    public void exportSystemTable(ISystemTableReference systemTableRef);
 
     /**
      * Find the database instance located at the location given. The chord reference parameter is used to get the hostname and port of that

@@ -25,9 +25,6 @@
 
 package org.h2o.db.manager;
 
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
@@ -228,16 +225,6 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public Registry getSystemTableRegistry() {
-
-        Registry remoteRegistry = null;
-
-        remoteRegistry = LocateRegistry.getRegistry(systemTableWrapper.getURL().getHostname(), systemTableWrapper.getURL().getRMIPort());
-
-        return remoteRegistry;
-    }
-
-    @Override
     public void setSystemTableURL(final DatabaseID newSMLocation) {
 
         if (newSMLocation.equals(db.getURL())) {
@@ -289,16 +276,6 @@ public class SystemTableReference implements ISystemTableReference {
          * Make the new System Table remotely accessible.
          */
         isLocal = systemTableWrapper.getURL().equals(db.getURL());
-
-        try {
-            final ISystemTableRemote stub = (ISystemTableRemote) UnicastRemoteObject.exportObject(systemTableWrapper.getSystemTable(), 0);
-
-            getSystemTableRegistry().rebind(SCHEMA_MANAGER, stub);
-            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Binding System Table on port " + systemTableWrapper.getURL().getRMIPort());
-        }
-        catch (final Exception e) {
-            ErrorHandling.errorNoEvent("Failed to export System Table object: " + e.getMessage());
-        }
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Finished building new System Table on " + db.getURL().getDbLocation() + ".");
         H2OEventBus.publish(new H2OEvent(db.getURL().getURL(), DatabaseStates.SYSTEM_TABLE_MIGRATION));

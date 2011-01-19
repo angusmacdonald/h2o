@@ -24,9 +24,8 @@ public class TableManagerServer extends ApplicationServer {
 
     public TableManagerServer(final ITableManagerRemote table_manager) {
 
-        this.table_manager = table_manager;
         handler_map = new HashMap<String, Handler>();
-
+        this.table_manager = table_manager;
         initHandlers();
     }
 
@@ -45,7 +44,7 @@ public class TableManagerServer extends ApplicationServer {
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                final LockType p0 = marshaller.deserializeLockType(args.getJSONObject(0)); // args.getBoolean(0) args.getJSONObject(0)
+                final LockType p0 = marshaller.deserializeLockType(args.getJSONObject(0));
                 final LockRequest p1 = marshaller.deserializeLockRequest(args.getJSONObject(1));
                 return marshaller.serializeTableProxy(table_manager.getTableProxy(p0, p1));
             }
@@ -244,6 +243,17 @@ public class TableManagerServer extends ApplicationServer {
                 final TableInfo p0 = marshaller.deserializeTableInfo(args.getJSONObject(0));
                 table_manager.persistToCompleteStartup(p0);
                 return JSONValue.NULL;
+            }
+        });
+
+        // public TableInfo getTableInfo() throws RPCException
+
+        handler_map.put("getTableInfo", new Handler() {
+
+            @Override
+            public JSONValue execute(final JSONArray args) throws Exception {
+
+                return marshaller.serializeTableInfo(table_manager.getTableInfo());
             }
         });
     }

@@ -407,4 +407,16 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
 
     }
 
+    @Override
+    public TableInfo getTableInfo() throws RPCException {
+
+        try {
+            return marshaller.deserializeTableInfo(makeCall("getTableInfo").getJSONObject());
+        }
+        catch (final Exception e) {
+            dealWithException(e);
+            return null; // not reached
+        }
+    }
+
 }

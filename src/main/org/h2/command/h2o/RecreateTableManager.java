@@ -1,13 +1,11 @@
 package org.h2.command.h2o;
 
-import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.schema.Schema;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.TableManager;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.viewer.H2OEventBus;
@@ -98,13 +96,6 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
             //Update Failed.
             return -1;
         }
-
-        /*
-         * Make Table Manager serializable first.
-         */
-
-        final ITableManagerRemote tmr = (ITableManagerRemote) UnicastRemoteObject.exportObject(tm, 0);
-        db.getChordInterface().bind(ti.getFullTableName(), tmr);
 
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, ti + " recreated on " + db.getURL() + ".");
 

@@ -28,9 +28,6 @@ package org.h2o.db.remote;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.rmi.NotBoundException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Observable;
@@ -42,6 +39,7 @@ import org.h2.engine.Constants;
 import org.h2.engine.Session;
 import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.DatabaseInstance;
+import org.h2o.db.DatabaseInstanceProxy;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
@@ -175,7 +173,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
         establishChordConnection(localMachineLocation, session);
 
-        localMachineLocation.setRMIPort(getRmiPort()); // set the port on which the RMI server is running.
+        localMachineLocation.setRMIPort(getRPCPort()); // set the port on which the RMI server is running.
 
         /*
          * The System Table location must be known at this point, otherwise the database instance will not start.
@@ -350,8 +348,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
          */
         localInstance = new DatabaseInstance(localMachineLocation, session);
 
-        exportConnectionObject();
-
         assert systemTableRef.getSystemTableURL() != null;
 
         return systemTableRef.getSystemTableURL();
@@ -476,27 +472,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         return false;
     }
 
-    /**
-     * Export the local database instance remote using UnicastRemoteObject.exportObject, so that it is remotely accessible.
-     */
-    private void exportConnectionObject() {
-
-        /*
-         * This is done so that the local database instance is exported correctly on RMI. It doesn't seem to work properly otherwise ('No
-         * such object' errors in Database.createH2OTables()).
-         */
-        try {
-            final IDatabaseInstanceRemote stub = (IDatabaseInstanceRemote) UnicastRemoteObject.exportObject(localInstance, 0);
-
-            getLocalRegistry().rebind(LOCAL_DATABASE_INSTANCE, stub);
-
-            localInstance = stub;
-        }
-        catch (final Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     @Override
     public IDatabaseInstanceRemote getLocalDatabaseInstance() {
 
@@ -544,9 +519,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     @Override
     public IDatabaseInstanceRemote getDatabaseInstanceAt(final String hostname, final int port) throws RPCException, NotBoundException {
 
-        final Registry remoteRegistry = LocateRegistry.getRegistry(hostname, port);
+        return new DatabaseInstanceProxy(new InetSocketAddress(hostname, port));
 
-        return (IDatabaseInstanceRemote) remoteRegistry.lookup(LOCAL_DATABASE_INSTANCE);
     }
 
     /**
@@ -880,22 +854,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     }
 
     @Override
-    public int getRmiPort() {
+    public int getRPCPort() {
 
         return rmiPort;
-    }
-
-    /**
-     * Returns a reference to this chord node's RMI registry.
-     * 
-     * @return The RMI registry of this chord node.
-     * @throws RemoteChordException
-     */
-    private Registry getLocalRegistry() throws RPCException {
-
-        // Try to create new RMI registry.
-        return LocateRegistry.createRegistry(rmiPort);
-
     }
 
     @Override
@@ -995,21 +956,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         if (!Constants.IS_NON_SM_TEST) {
             chordNode.shutDown();
         }
-
-        unexportSystemTable();
-    }
-
-    private void unexportSystemTable() {
-
-        try {
-            getLocalRegistry().unbind(SystemTableReference.SCHEMA_MANAGER);
-        }
-        catch (final NotBoundException e) {
-            // Ignore.
-        }
-        catch (final Exception e) {
-            Diagnostic.trace(DiagnosticLevel.FULL, "error unbinding system table from RMI");
-        }
     }
 
     @Override
@@ -1056,19 +1002,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     }
 
     @Override
-    public void exportSystemTable(final ISystemTableReference systemTableRef) {
-
-        try {
-            final ISystemTable stub = (ISystemTable) UnicastRemoteObject.exportObject(systemTableRef.getSystemTable(), 0);
-            final Registry registry = getLocalRegistry();
-            registry.rebind(SystemTableReference.SCHEMA_MANAGER, stub);
-        }
-        catch (final Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
     public IChordRemoteReference getLocalChordReference() {
 
         return chordNode.getSelfReference();
@@ -1084,18 +1017,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     public boolean inShutdown() {
 
         return inShutdown;
-    }
-
-    @Override
-    public void bind(final String fullTableName, final ITableManagerRemote stub) {
-
-        try {
-            getLocalRegistry().rebind(fullTableName, stub);
-        }
-        catch (final Exception e) {
-            // Doesn't matter.
-            ErrorHandling.errorNoEvent("Error rebinding Table Manager for table " + fullTableName);
-        }
     }
 
     /**

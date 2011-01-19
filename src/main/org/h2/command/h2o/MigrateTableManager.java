@@ -1,6 +1,5 @@
 package org.h2.command.h2o;
 
-import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 
 import org.h2.constant.ErrorCode;
@@ -188,10 +187,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
         oldTableManager = newTableManager;
 
         try {
-
-            final ITableManagerRemote stub = (ITableManagerRemote) UnicastRemoteObject.exportObject(newTableManager, 0);
-
-            db.getSystemTableReference().getSystemTable().changeTableManagerLocation(stub, ti);
+            db.getSystemTableReference().getSystemTable().changeTableManagerLocation(newTableManager, ti);
             db.getSystemTableReference().addProxy(ti, newTableManager);
         }
         catch (final Exception e) {

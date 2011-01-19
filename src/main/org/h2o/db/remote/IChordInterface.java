@@ -10,10 +10,8 @@ package org.h2o.db.remote;
 
 import java.rmi.NotBoundException;
 
-
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
-import org.h2o.db.interfaces.ITableManagerRemote;
 
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
@@ -81,14 +79,4 @@ public interface IChordInterface {
      */
     IChordNode getChordNode();
 
-    /**
-     * Bind the given Table Manager to the local registry. This isn't used to access Table Managers, but to maintain references to them to
-     * prevent their remote proxies from being garbage collected.
-     * 
-     * @param fullTableName
-     *            Name of the table.
-     * @param stub
-     *            Remote Table Manager proxy.
-     */
-    void bind(String fullTableName, ITableManagerRemote stub);
 }
