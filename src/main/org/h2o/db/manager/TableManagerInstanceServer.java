@@ -13,7 +13,7 @@ import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
- * This class maintains a Map of exported Table Managers and provides an RMI mechanism over the underlying JSON RMI mechanism.
+ * This class maintains a Map of exported Table Managers and provides an RMI mechanism over the underlying JSON RPC mechanism.
  * It assumes that the Table Manager is provided as the zeroth parameter on the wire.
  * This parameter is removed before calling the appropriate method in the appropriate TableManager.
  *
