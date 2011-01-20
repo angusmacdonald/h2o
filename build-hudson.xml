@@ -60,6 +60,11 @@
 		<jar destfile="bin/h2o.jar">
             <manifest>
                 <attribute name="Main-Class" value="org.h2o.H2O"/>
+                <attribute name="Class-Path" value="json.jar" />
+                <attribute name="Class-Path" value="lucene-core-2.2.0.jar" />
+                <attribute name="Class-Path" value="org.osgi.core-1.2.0.jar" />
+                <attribute name="Class-Path" value="servlet-api-2.4.jar" />
+                <attribute name="Class-Path" value="slf4j-api-1.5.0.jar" />
             </manifest>
 			<fileset dir="bin" includes="**/*.class" />
 			<fileset dir="src/main" />
