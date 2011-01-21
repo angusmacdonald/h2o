@@ -33,7 +33,7 @@ import org.h2o.H2O;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
 
-import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
+import uk.ac.standrews.cs.nds.madface.UnknownPlatformException;
 
 import com.mindbright.ssh2.SSH2Exception;
 
