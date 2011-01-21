@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.concurrent.TimeoutException;
 
-import uk.ac.standrews.cs.nds.madface.UnknownPlatformException;
+import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 
 import com.mindbright.ssh2.SSH2Exception;
 

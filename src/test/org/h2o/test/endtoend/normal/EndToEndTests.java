@@ -32,7 +32,7 @@ import org.h2o.test.endtoend.fixture.EndToEndConnectionDriver;
 import org.h2o.test.endtoend.fixture.EndToEndTestsCommon;
 import org.junit.Test;
 
-import uk.ac.standrews.cs.nds.madface.UnknownPlatformException;
+import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 
 import com.mindbright.ssh2.SSH2Exception;
