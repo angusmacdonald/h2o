@@ -153,7 +153,7 @@ import org.h2.value.ValueTimestamp;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.PersistentSystemTable;
-import org.h2o.db.manager.interfaces.ISystemTable;
+import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.query.TableProxy;
 import org.h2o.db.query.locking.LockRequest;
@@ -4919,15 +4919,15 @@ public class Parser {
         catch (final Exception e) {
             // Attempt to recreate the table manager in-case it has failed, then try again.
             try {
-                ISystemTable systemTable = systemTableReference.getSystemTable();
-                if (systemTable != null) {
+                ISystemTableRemote systemTableRemote = systemTableReference.getSystemTable();
+                if (systemTableRemote != null) {
 
                     try {
-                        systemTable.recreateTableManager(tableInfo);
+                        systemTableRemote.recreateTableManager(tableInfo);
                     }
                     catch (final Exception e2) { //try to recover from this error.
-                        systemTable = systemTableReference.failureRecovery();
-                        systemTable.recreateTableManager(tableInfo);
+                        systemTableRemote = systemTableReference.failureRecovery();
+                        systemTableRemote.recreateTableManager(tableInfo);
 
                     }
 
@@ -5506,9 +5506,9 @@ public class Parser {
             schemaName = readExpression().toString();
             final Schema s = getSchema();
 
-            final ISystemTable systemTable = session.getDatabase().getSystemTable();
+            final ISystemTableRemote systemTableRemote = session.getDatabase().getSystemTable();
             try {
-                final java.util.Set<String> tables = systemTable.getAllTablesInSchema(s.getName());
+                final java.util.Set<String> tables = systemTableRemote.getAllTablesInSchema(s.getName());
 
                 int numTables = 0;
 

@@ -51,7 +51,7 @@ import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
-import org.h2o.db.manager.interfaces.ISystemTable;
+import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.query.TableProxy;
 import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.query.locking.ILockingTable;
@@ -243,9 +243,9 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
         preMethodTest();
 
-        super.addConnectionInformation(tableDetails.getURL(), true);
+        super.addConnectionInformation(tableDetails.getDatabaseID(), true);
         super.addReplicaInformation(tableDetails);
-        replicaManager.add(getDatabaseInstance(tableDetails.getURL()));
+        replicaManager.add(getDatabaseInstance(tableDetails.getDatabaseID()));
     }
 
     @Override
@@ -253,9 +253,9 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
         super.removeReplicaInformation(ti);
 
-        IDatabaseInstanceRemote dbInstance = getDB().getDatabaseInstance(ti.getURL());
+        IDatabaseInstanceRemote dbInstance = getDB().getDatabaseInstance(ti.getDatabaseID());
         if (dbInstance == null) {
-            dbInstance = getDB().getDatabaseInstance(ti.getURL());
+            dbInstance = getDB().getDatabaseInstance(ti.getDatabaseID());
             if (dbInstance == null) {
                 ErrorHandling.errorNoEvent("Couldn't remove replica location.");
             }
@@ -324,13 +324,13 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
      */
     private DatabaseInstanceWrapper getDatabaseInstance(final DatabaseID dbID) {
 
-        final ISystemTable systemTable = getDB().getSystemTableReference().getSystemTable();
+        final ISystemTableRemote systemTableRemote = getDB().getSystemTableReference().getSystemTable();
 
         IDatabaseInstanceRemote dir = null;
 
-        if (systemTable != null) {
+        if (systemTableRemote != null) {
             try {
-                dir = systemTable.getDatabaseInstance(dbID);
+                dir = systemTableRemote.getDatabaseInstance(dbID);
             }
             catch (final RPCException e1) {
                 e1.printStackTrace();
@@ -338,7 +338,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
             catch (final MovedException e1) {
                 try {
                     getDB().getSystemTableReference().handleMovedException(e1);
-                    dir = systemTable.getDatabaseInstance(dbID);
+                    dir = systemTableRemote.getDatabaseInstance(dbID);
                 }
                 catch (final Exception e) {
                     e.printStackTrace();
@@ -855,7 +855,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
             final TableInfo ti = new TableInfo(getTableInfo());
             ti.setURL(dir.getURL());
             try {
-                super.addConnectionInformation(ti.getURL(), true);
+                super.addConnectionInformation(ti.getDatabaseID(), true);
                 super.addReplicaInformation(ti);
             }
             catch (final RPCException e) {

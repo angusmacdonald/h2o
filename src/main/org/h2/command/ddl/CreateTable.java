@@ -33,7 +33,7 @@ import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.TableManager;
-import org.h2o.db.manager.interfaces.ISystemTable;
+import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.query.TableProxy;
 import org.h2o.db.query.TableProxyManager;
 import org.h2o.db.query.locking.LockRequest;
@@ -265,8 +265,8 @@ public class CreateTable extends SchemaCommand {
 
             final boolean localTable = db.isTableLocal(getSchema());
             if (!db.isManagementDB() && !localTable && !isStartup()) {
-                final ISystemTable systemTable = db.getSystemTable();
-                assert systemTable != null;
+                final ISystemTableRemote systemTableRemote = db.getSystemTable();
+                assert systemTableRemote != null;
 
                 int tableSet = -1;
                 boolean thisTableReferencesAnExistingTable = false;
@@ -294,11 +294,11 @@ public class CreateTable extends SchemaCommand {
                             }
                         }
                         else {
-                            tableSet = systemTable.getNewTableSetNumber();
+                            tableSet = systemTableRemote.getNewTableSetNumber();
                         }
                     }
                     else {
-                        tableSet = systemTable.getNewTableSetNumber();
+                        tableSet = systemTableRemote.getNewTableSetNumber();
                     }
 
                     final TableInfo tableInfo = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getURL());

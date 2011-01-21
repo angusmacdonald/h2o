@@ -19,7 +19,7 @@ import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
-import org.h2o.db.manager.interfaces.ISystemTable;
+import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.manager.util.SystemTableMigrationState;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
@@ -38,13 +38,13 @@ public class SystemTable implements ISystemTableRemote {
     /**
      * Interface to the in-memory state of the System Table.
      */
-    private final ISystemTable inMemory;
+    private final ISystemTableRemote inMemory;
 
     /**
      * Interface to the persisted state of this System Table. This object interacts with the database to store the state of the System Table
      * on disk.
      */
-    private final ISystemTable persisted;
+    private final ISystemTableRemote persisted;
 
     /**
      * Fields related to the migration functionality of the System Table.
@@ -140,7 +140,7 @@ public class SystemTable implements ISystemTableRemote {
     }
 
     @Override
-    public void buildSystemTableState(final ISystemTable otherSystemTable) throws RPCException, MovedException, SQLException {
+    public void buildSystemTableState(final ISystemTableRemote otherSystemTable) throws RPCException, MovedException, SQLException {
 
         preMethodTest();
         inMemory.buildSystemTableState(otherSystemTable);

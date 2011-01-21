@@ -35,7 +35,7 @@ import org.h2.table.ReplicaSet;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.ITableManagerRemote;
-import org.h2o.db.manager.interfaces.ISystemTable;
+import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.manager.recovery.LocatorException;
@@ -499,7 +499,7 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public ISystemTable failureRecovery() throws LocatorException, SystemTableAccessException {
+    public ISystemTableRemote failureRecovery() throws LocatorException, SystemTableAccessException {
 
         systemTableWrapper = systemTableRecovery.get();
 

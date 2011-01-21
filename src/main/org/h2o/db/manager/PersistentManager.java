@@ -167,7 +167,7 @@ public abstract class PersistentManager {
         try {
             assert !tableDetails.getTableName().startsWith("H2O_");
 
-            DatabaseID dbID = tableDetails.getURL();
+            DatabaseID dbID = tableDetails.getDatabaseID();
 
             if (dbID == null) {
                 // find the URL from the Table Manager.
@@ -223,7 +223,7 @@ public abstract class PersistentManager {
         // queryParser = new Parser(db.getExclusiveSession(), true);
 
         try {
-            final int connectionID = getConnectionID(tableDetails.getURL());
+            final int connectionID = getConnectionID(tableDetails.getDatabaseID());
             final int tableID = metaDataReplicaManager.getTableID(tableDetails, isSystemTable);
 
             if (!isReplicaListed(tableDetails, connectionID)) { // the table doesn't already exist in the System Table.
@@ -566,7 +566,7 @@ public abstract class PersistentManager {
 
         try {
 
-            final int connectionID = getConnectionID(ti.getURL());
+            final int connectionID = getConnectionID(ti.getDatabaseID());
             int tableID;
 
             tableID = metaDataReplicaManager.getTableID(ti, isSystemTable);
@@ -681,7 +681,7 @@ public abstract class PersistentManager {
         // "About to update the location of the Table Manager " + tableInfo +
         // ".");
 
-        final int connectionID = getConnectionID(tableInfo.getURL());
+        final int connectionID = getConnectionID(tableInfo.getDatabaseID());
 
         assert connectionID != -1;
 
