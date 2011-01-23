@@ -31,10 +31,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import uk.ac.standrews.cs.nds.remote_management.HostDescriptor;
-import uk.ac.standrews.cs.nds.remote_management.PlatformDescriptor;
-import uk.ac.standrews.cs.nds.remote_management.ProcessManager;
-import uk.ac.standrews.cs.nds.remote_management.UnknownPlatformException;
+import uk.ac.standrews.cs.nds.madface.HostDescriptor;
+import uk.ac.standrews.cs.nds.madface.PlatformDescriptor;
+import uk.ac.standrews.cs.nds.madface.ProcessManager;
+import uk.ac.standrews.cs.nds.madface.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
