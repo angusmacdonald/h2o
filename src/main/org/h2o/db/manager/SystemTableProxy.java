@@ -81,7 +81,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableRemote {
             final JSONArray params = new JSONArray();
             params.put(marshaller.serializeITableManagerRemote(tableManager).getValue());
             params.put(marshaller.serializeTableInfo(tableDetails).getValue());
-            params.put(marshaller.serializeSetDatabaseInstanceWrapper(replicaLocations).getValue());
+            params.put(marshaller.serializeCollectionDatabaseInstanceWrapper(replicaLocations).getJSONArray());
 
             return makeCall("addTableInformation", params).getBoolean();
         }
@@ -157,7 +157,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableRemote {
         try {
             final JSONArray params = new JSONArray();
             params.put(schemaName);
-            return marshaller.deserializeSetString(makeCall("getAllTablesInSchema", params).getJSONObject());
+            return marshaller.deserializeSetString(makeCall("getAllTablesInSchema", params).getJSONArray());
 
         }
         catch (final MovedException e) {
@@ -293,7 +293,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableRemote {
     public Set<DatabaseInstanceWrapper> getDatabaseInstances() throws RPCException, MovedException {
 
         try {
-            return marshaller.deserializeSetDatabaseInstanceWrapper(makeCall("getDatabaseInstances").getJSONObject());
+            return marshaller.deserializeCollectionDatabaseInstanceWrapper(makeCall("getDatabaseInstances").getJSONArray());
         }
         catch (final MovedException e) {
             throw e;
@@ -325,7 +325,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableRemote {
         try {
             final JSONArray params = new JSONArray();
             params.put(marshaller.serializeDatabaseID(localMachineLocation).getValue());
-            return marshaller.deserializeSetTableManagerWrapper(makeCall("getLocalDatabaseInstances", params).getJSONObject());
+            return marshaller.deserializeCollectionTableManagerWrapper(makeCall("getLocalDatabaseInstances", params).getJSONArray());
         }
         catch (final MovedException e) {
             throw e;
@@ -443,7 +443,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableRemote {
         try {
             final JSONArray params = new JSONArray();
             params.put(marshaller.serializeActionRequest(typeOfRequest).getValue());
-            return marshaller.deserializeQueueDatabaseInstanceWrapper(makeCall("getAvailableMachines", params).getJSONObject());
+            return marshaller.deserializeQueueDatabaseInstanceWrapper(makeCall("getAvailableMachines", params).getJSONArray());
         }
         catch (final MovedException e) {
             throw e;

@@ -125,7 +125,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
 
         final TableInfo basicTableInfo = tableDetails.getGenericTableInfo();
 
-        final TableManagerWrapper tableManagerWrapper = new TableManagerWrapper(basicTableInfo, tableManager, tableDetails.getURL());
+        final TableManagerWrapper tableManagerWrapper = new TableManagerWrapper(basicTableInfo, tableManager, tableDetails.getDatabaseID());
 
         if (tableManagers.containsKey(basicTableInfo)) {
             ErrorHandling.errorNoEvent("Table " + tableDetails + " already exists.");
@@ -135,7 +135,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
         tableManagerReferences.add(tableManager);
         tableManagers.put(basicTableInfo, tableManagerWrapper);
 
-        primaryLocations.put(basicTableInfo, tableDetails.getURL());
+        primaryLocations.put(basicTableInfo, tableDetails.getDatabaseID());
 
         Set<DatabaseID> replicas = tmReplicaLocations.get(basicTableInfo);
 
@@ -609,7 +609,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
             assert false;
         }
 
-        final TableManagerWrapper dmw = new TableManagerWrapper(tableInfo, stub, tableInfo.getURL());
+        final TableManagerWrapper dmw = new TableManagerWrapper(tableInfo, stub, tableInfo.getDatabaseID());
 
         tableManagers.put(tableInfo.getGenericTableInfo(), dmw);
         tableManagerReferences.add(stub);

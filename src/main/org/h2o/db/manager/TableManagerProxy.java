@@ -14,6 +14,7 @@ import org.h2o.db.query.TableProxy;
 import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
+import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MigrationException;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.util.exceptions.StartupException;
@@ -140,7 +141,7 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
             final JSONArray params = new JSONArray();
             params.put(marshaller.serializeLockType(lockType).getValue());
             params.put(marshaller.serializeLockRequest(lockRequest).getValue());
-            return marshaller.deserializeTableProxy(makeCall("getTableProxy", params));
+            return marshaller.deserializeTableProxy(makeCall("getTableProxy", params).getJSONObject());
         }
         catch (final MovedException e) {
             throw e;
@@ -396,6 +397,42 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
 
         try {
             return marshaller.deserializeTableInfo(makeCall("getTableInfo").getJSONObject());
+        }
+        catch (final Exception e) {
+            dealWithException(e);
+            return null; // not reached
+        }
+    }
+
+    @Override
+    public Map<DatabaseInstanceWrapper, Integer> getActiveReplicas() throws RPCException, MovedException {
+
+        try {
+            return marshaller.deserializeMapDatabaseInstanceWrapperInteger(makeCall("getActiveReplicas").getJSONObject());
+        }
+        catch (final Exception e) {
+            dealWithException(e);
+            return null; // not reached
+        }
+    }
+
+    @Override
+    public Map<DatabaseInstanceWrapper, Integer> getAllReplicas() throws RPCException, MovedException {
+
+        try {
+            return marshaller.deserializeMapDatabaseInstanceWrapperInteger(makeCall("getAllReplicas").getJSONObject());
+        }
+        catch (final Exception e) {
+            dealWithException(e);
+            return null; // not reached
+        }
+    }
+
+    @Override
+    public DatabaseInstanceWrapper getDatabaseLocation() throws RPCException, MovedException {
+
+        try {
+            return marshaller.deserializeDatabaseInstanceWrapper(makeCall("getDatabaseLocation").getJSONObject());
         }
         catch (final Exception e) {
             dealWithException(e);

@@ -243,9 +243,9 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
         preMethodTest();
 
-        super.addConnectionInformation(tableDetails.getURL(), true);
+        super.addConnectionInformation(tableDetails.getDatabaseID(), true);
         super.addReplicaInformation(tableDetails);
-        replicaManager.add(getDatabaseInstance(tableDetails.getURL()));
+        replicaManager.add(getDatabaseInstance(tableDetails.getDatabaseID()));
     }
 
     @Override
@@ -253,9 +253,9 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
         super.removeReplicaInformation(ti);
 
-        IDatabaseInstanceRemote dbInstance = getDB().getDatabaseInstance(ti.getURL());
+        IDatabaseInstanceRemote dbInstance = getDB().getDatabaseInstance(ti.getDatabaseID());
         if (dbInstance == null) {
-            dbInstance = getDB().getDatabaseInstance(ti.getURL());
+            dbInstance = getDB().getDatabaseInstance(ti.getDatabaseID());
             if (dbInstance == null) {
                 ErrorHandling.errorNoEvent("Couldn't remove replica location.");
             }
@@ -855,7 +855,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
             final TableInfo ti = new TableInfo(getTableInfo());
             ti.setURL(dir.getURL());
             try {
-                super.addConnectionInformation(ti.getURL(), true);
+                super.addConnectionInformation(ti.getDatabaseID(), true);
                 super.addReplicaInformation(ti);
             }
             catch (final RPCException e) {

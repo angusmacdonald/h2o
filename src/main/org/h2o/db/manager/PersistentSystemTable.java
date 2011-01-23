@@ -508,7 +508,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
         final boolean added = super.addTableInformation(tableManager.getDatabaseURL(), tableDetails, false);
 
         if (added) {
-            final int connectionID = getConnectionID(tableDetails.getURL());
+            final int connectionID = getConnectionID(tableDetails.getDatabaseID());
             addTableManagerReplicaInformationOnCreateTable(getTableID(tableDetails), connectionID, true, replicaLocations);
         }
 

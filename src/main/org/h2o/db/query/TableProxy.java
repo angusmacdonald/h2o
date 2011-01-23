@@ -281,6 +281,16 @@ public class TableProxy implements Serializable {
         return lockGranted;
     }
 
+    public LockType getLockRequested() {
+
+        return lockRequested;
+    }
+
+    public Map<DatabaseInstanceWrapper, Integer> getAllReplicas() {
+
+        return allReplicas;
+    }
+   
     @Override
     public String toString() {
 
