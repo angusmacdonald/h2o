@@ -20,9 +20,9 @@ public class TableInfo implements Serializable {
      */
     private static final long serialVersionUID = -2023146600034394467L;
 
-    private final String schemaName;
-
     private final String tableName;
+
+    private final String schemaName;
 
     private long modificationID;
 
@@ -132,7 +132,7 @@ public class TableInfo implements Serializable {
     /**
      * @return the dbLocation
      */
-    public DatabaseID getURL() {
+    public DatabaseID getDatabaseID() {
 
         return dbLocation;
     }

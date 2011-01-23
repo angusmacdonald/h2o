@@ -71,7 +71,7 @@ public class ReplicaManager {
      * @param allReplicas2
      * @param primaryLocation
      */
-    private ReplicaManager(final Map<DatabaseInstanceWrapper, Integer> activeReplicas, final Map<DatabaseInstanceWrapper, Integer> allReplicas, final DatabaseInstanceWrapper primaryLocation) {
+    public ReplicaManager(final Map<DatabaseInstanceWrapper, Integer> activeReplicas, final Map<DatabaseInstanceWrapper, Integer> allReplicas, final DatabaseInstanceWrapper primaryLocation) {
 
         this.activeReplicas = activeReplicas;
         this.allReplicas = allReplicas;
@@ -372,6 +372,11 @@ public class ReplicaManager {
     public int getNumberOfReplicas() {
 
         return activeReplicas.size();
+    }
+
+    public DatabaseInstanceWrapper getPrimaryLocation() {
+
+        return primaryLocation;
     }
 
     /**

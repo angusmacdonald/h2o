@@ -43,7 +43,7 @@ import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.db.manager.TableManager;
-import org.h2o.db.manager.interfaces.ISystemTable;
+import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.locator.client.H2OLocatorInterface;
@@ -206,13 +206,13 @@ public class MetaDataReplicaManager {
             Queue<DatabaseInstanceWrapper> databaseInstances = null;
 
             try {
-                final ISystemTable systemTable = systemTableRef.getSystemTable();
+                final ISystemTableRemote systemTableRemote = systemTableRef.getSystemTable();
 
-                if (systemTable == null) {
+                if (systemTableRemote == null) {
                     Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "System table was NULL so the meta-data manager is unable to replicate.");
                     return;
                 }
-                databaseInstances = systemTable.getAvailableMachines(new CreateReplicaRequest(20, 100, 200));
+                databaseInstances = systemTableRemote.getAvailableMachines(new CreateReplicaRequest(20, 100, 200));
             }
             catch (final Exception e) {
                 Diagnostic.trace(DiagnosticLevel.FULL, "error discovering available machines");

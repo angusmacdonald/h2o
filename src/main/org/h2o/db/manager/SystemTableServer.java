@@ -9,7 +9,7 @@ import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
-import org.h2o.db.manager.interfaces.ISystemTable;
+import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.json.JSONArray;
@@ -204,7 +204,7 @@ public class SystemTableServer extends ApplicationServer {
                     system_table.buildSystemTableState();
                 }
                 else {
-                    final ISystemTable p0 = marshaller.deserializeISystemTable(args.getJSONObject(0));
+                    final ISystemTableRemote p0 = marshaller.deserializeISystemTable(args.getJSONObject(0));
                     system_table.buildSystemTableState(p0);
                 }
                 return JSONValue.NULL;

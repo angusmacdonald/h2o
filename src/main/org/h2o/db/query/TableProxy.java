@@ -37,7 +37,7 @@ import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
-import org.h2o.db.manager.interfaces.ISystemTable;
+import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.db.manager.recovery.SystemTableAccessException;
 import org.h2o.db.query.asynchronous.AsynchronousQueryExecutor;
@@ -224,11 +224,11 @@ public class TableProxy implements Serializable {
 
             if (!alreadyCalled) {
 
-                final ISystemTable systemTable = db.getSystemTable();
+                final ISystemTableRemote systemTableRemote = db.getSystemTable();
 
                 boolean systemTableActive = true;
 
-                if (systemTable == null) {
+                if (systemTableRemote == null) {
                     // reInstantiateSystemTable
                     try {
                         db.getSystemTableReference().failureRecovery();
@@ -279,6 +279,16 @@ public class TableProxy implements Serializable {
     public LockType getLockGranted() {
 
         return lockGranted;
+    }
+
+    public LockType getLockRequested() {
+
+        return lockRequested;
+    }
+
+    public Map<DatabaseInstanceWrapper, Integer> getAllReplicas() {
+
+        return allReplicas;
     }
 
     @Override

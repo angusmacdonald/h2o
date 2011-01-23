@@ -13,7 +13,7 @@ import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
-import org.h2o.db.manager.interfaces.ISystemTable;
+import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
@@ -171,7 +171,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableRemote {
     }
 
     @Override
-    public void buildSystemTableState(final ISystemTable otherSystemTable) throws RPCException, MovedException, SQLException {
+    public void buildSystemTableState(final ISystemTableRemote otherSystemTable) throws RPCException, MovedException, SQLException {
 
         try {
             final JSONArray params = new JSONArray();

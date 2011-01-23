@@ -130,6 +130,11 @@ public class DatabaseInstanceWrapper implements Serializable, Comparable<Databas
         return availabilityInfo;
     }
 
+    public boolean getActive() {
+
+        return active;
+    }
+
     @Override
     public int compareTo(final DatabaseInstanceWrapper o) {
 

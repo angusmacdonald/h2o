@@ -265,6 +265,6 @@ public interface ISystemTableReference {
      */
     public ISystemTableRemote getLocalSystemTable();
 
-    public ISystemTable failureRecovery() throws LocatorException, SQLException, SystemTableAccessException;
+    public ISystemTableRemote failureRecovery() throws LocatorException, SQLException, SystemTableAccessException;
 
 }

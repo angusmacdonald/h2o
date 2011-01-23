@@ -44,7 +44,7 @@ import org.h2o.db.id.DatabaseID;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.SystemTableReference;
-import org.h2o.db.manager.interfaces.ISystemTable;
+import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.manager.recovery.LocatorException;
@@ -736,7 +736,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         }
 
         boolean systemTableAlive = true;
-        ISystemTable newSystemTable = null;
+        ISystemTableRemote newSystemTable = null;
         if (systemTableWasOnPredecessor) {
             systemTableAlive = isSystemTableActive();
 

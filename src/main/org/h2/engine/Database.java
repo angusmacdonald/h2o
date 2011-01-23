@@ -912,7 +912,7 @@ public class Database implements DataHandler {
             // Establish Proxies
 
             table_manager_instance_server = new TableManagerInstanceServer();
-            database_instance_server = new DatabaseInstanceServer(getLocalDatabaseInstance());
+            database_instance_server = new DatabaseInstanceServer(getLocalDatabaseInstance()); // TODO <<<<<<--- ANGUS: We need to set local address and posr, start this running, database_instance_server.start() and provide way of getting address/port for serialisation
             system_table_server = null; // added if we become a system table.
 
             /*

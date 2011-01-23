@@ -1,7 +1,7 @@
 package org.h2o.db.manager;
 
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.Set;
 
 import org.h2o.db.H2OMarshaller;
 import org.h2o.db.id.DatabaseID;
@@ -44,7 +44,7 @@ public class TableManagerServer extends ApplicationServer {
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                final LockType p0 = marshaller.deserializeLockType(args.getJSONObject(0));
+                final LockType p0 = marshaller.deserializeLockType(args.getString(0));
                 final LockRequest p1 = marshaller.deserializeLockRequest(args.getJSONObject(1));
                 return marshaller.serializeTableProxy(table_manager.getTableProxy(p0, p1));
             }
@@ -120,7 +120,7 @@ public class TableManagerServer extends ApplicationServer {
 
                 final boolean p0 = args.getBoolean(0);
                 final LockRequest p1 = marshaller.deserializeLockRequest(args.getJSONObject(1));
-                final Collection<CommitResult> p2 = marshaller.deserializeCollectionCommitResult(args.getJSONObject(2));
+                final Set<CommitResult> p2 = marshaller.deserializeSetCommitResult(args.getJSONArray(2));
                 final boolean p3 = args.getBoolean(3);
                 table_manager.releaseLockAndUpdateReplicaState(p0, p1, p2, p3);
                 return JSONValue.NULL;
@@ -245,5 +245,39 @@ public class TableManagerServer extends ApplicationServer {
                 return marshaller.serializeTableInfo(table_manager.getTableInfo());
             }
         });
+
+        // public Map<DatabaseInstanceWrapper, Integer> getActiveReplicas() throws RPCException, MovedException {
+
+        handler_map.put("getActiveReplicas", new Handler() {
+
+            @Override
+            public JSONValue execute(final JSONArray args) throws Exception {
+
+                return marshaller.serializeMapDatabaseInstanceWrapperInteger(table_manager.getActiveReplicas());
+            }
+        });
+
+        // public Map<DatabaseInstanceWrapper, Integer> getAllReplicas() throws RPCException, MovedException {
+
+        handler_map.put("getAllReplicas", new Handler() {
+
+            @Override
+            public JSONValue execute(final JSONArray args) throws Exception {
+
+                return marshaller.serializeMapDatabaseInstanceWrapperInteger(table_manager.getAllReplicas());
+            }
+        });
+
+        //  public DatabaseInstanceWrapper getDatabaseLocation() throws RPCException, MovedException {
+
+        handler_map.put("getDatabaseLocation", new Handler() {
+
+            @Override
+            public JSONValue execute(final JSONArray args) throws Exception {
+
+                return marshaller.serializeDatabaseInstanceWrapper(table_manager.getDatabaseLocation());
+            }
+        });
+
     }
 }
