@@ -871,7 +871,7 @@ public class H2OMarshaller extends Marshaller {
         return new JSONValue(object);
     }
 
-    private CommitResult deserializeCommitResult(final JSONObject object) {
+    private CommitResult deserializeCommitResult(final JSONObject object) throws DeserializationException {
 
         if (object == null) { return null; }
 
@@ -880,7 +880,7 @@ public class H2OMarshaller extends Marshaller {
             final DatabaseInstanceWrapper wrapper = deserializeDatabaseInstanceWrapper(object.getJSONObject(WRAPPER));
             final int updateID = object.getInt(UPDATE_ID);
             final int expectedUpdateID = object.getInt(EXPECTED_UPDATE_ID);
-            final TableInfo tableName = deserializeDatabaseTableInfo(object.getJSONObject(TABLE_NAME));
+            final TableInfo tableName = deserializeTableInfo(object.getJSONObject(TABLE_NAME));
 
             return new CommitResult(commit, wrapper, updateID, expectedUpdateID, tableName);
         }
