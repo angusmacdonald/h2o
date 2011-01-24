@@ -152,12 +152,12 @@ public class MetaDataReplicaManager {
         /*
          * Queries.
          */
-        final String databaseName = db.getURL().sanitizedLocation().toUpperCase();
+        final String databaseName = db.getID().sanitizedLocation().toUpperCase();
 
         addNewReplicaLocationQuery = "CREATE REPLICA IF NOT EXISTS " + TableManager.getMetaTableName(databaseName, TableManager.TABLES) + ", " + TableManager.getMetaTableName(databaseName, TableManager.REPLICAS) + ", " + TableManager.getMetaTableName(databaseName, TableManager.CONNECTIONS)
-                        + " FROM '" + db.getURL().getOriginalURL() + "';";
+                        + " FROM '" + db.getID().getOriginalURL() + "';";
 
-        addNewSystemTableQuery = "CREATE REPLICA IF NOT EXISTS " + PersistentSystemTable.TABLES + ", " + PersistentSystemTable.CONNECTIONS + ", " + PersistentSystemTable.TABLEMANAGERSTATE + " FROM '" + db.getURL().getOriginalURL() + "';";
+        addNewSystemTableQuery = "CREATE REPLICA IF NOT EXISTS " + PersistentSystemTable.TABLES + ", " + PersistentSystemTable.CONNECTIONS + ", " + PersistentSystemTable.TABLEMANAGERSTATE + " FROM '" + db.getID().getOriginalURL() + "';";
 
         dropOldSystemTableReplica = "DROP REPLICA IF EXISTS " + PersistentSystemTable.TABLES + ", " + PersistentSystemTable.CONNECTIONS + ", " + PersistentSystemTable.TABLEMANAGERSTATE + ";";
 
@@ -250,7 +250,7 @@ public class MetaDataReplicaManager {
      */
     private boolean addReplicaLocation(final DatabaseInstanceWrapper newReplicaLocation, final boolean isSystemTable) throws RPCException {
 
-        if (newReplicaLocation.getURL().equals(db.getURL())) { return false; // can't replicate to the local machine
+        if (newReplicaLocation.getURL().equals(db.getID())) { return false; // can't replicate to the local machine
         }
 
         return addReplicaLocation(newReplicaLocation, isSystemTable, 0);
@@ -354,10 +354,10 @@ public class MetaDataReplicaManager {
 
         // Publish H2O event: database is the location of the replica. Value is the database it is for.
         if (isSystemTable) {
-            H2OEventBus.publish(new H2OEvent(newReplicaLocation.getURL().getURL(), DatabaseStates.META_TABLE_REPLICA_CREATION, "System Table State: " + db.getURL().getDbLocation()));
+            H2OEventBus.publish(new H2OEvent(newReplicaLocation.getURL().getURL(), DatabaseStates.META_TABLE_REPLICA_CREATION, "System Table State: " + db.getID().getDbLocation()));
         }
         else {
-            H2OEventBus.publish(new H2OEvent(newReplicaLocation.getURL().getURL(), DatabaseStates.META_TABLE_REPLICA_CREATION, "Table Manager State: " + db.getURL().getDbLocation()));
+            H2OEventBus.publish(new H2OEvent(newReplicaLocation.getURL().getURL(), DatabaseStates.META_TABLE_REPLICA_CREATION, "Table Manager State: " + db.getID().getDbLocation()));
         }
     }
 
@@ -421,7 +421,7 @@ public class MetaDataReplicaManager {
 
         // Check that there is a sufficient replication factor.
         if (!isSystemTable && metaDataReplicationEnabled && replicas.size() < managerStateReplicationFactor) {
-            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Insufficient replication factor (" + replicas.size() + "<" + managerStateReplicationFactor + ") of Table Manager State on " + db.getURL());
+            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Insufficient replication factor (" + replicas.size() + "<" + managerStateReplicationFactor + ") of Table Manager State on " + db.getID());
             replicateMetaDataIfPossible(db.getSystemTableReference(), isSystemTable);
         }
 
@@ -433,7 +433,7 @@ public class MetaDataReplicaManager {
      */
     public void updateLocatorFiles(final boolean isSystemTable) throws Exception {
 
-        final H2OPropertiesWrapper persistedInstanceInformation = H2OPropertiesWrapper.getWrapper(db.getURL());
+        final H2OPropertiesWrapper persistedInstanceInformation = H2OPropertiesWrapper.getWrapper(db.getID());
         persistedInstanceInformation.loadProperties();
 
         final String descriptorLocation = persistedInstanceInformation.getProperty("descriptor");

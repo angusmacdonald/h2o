@@ -92,7 +92,7 @@ public abstract class Prepared {
     protected boolean isReplicaLocal(final TableProxy tableProxy) {
 
         for (final DatabaseInstanceWrapper replica : tableProxy.getReplicaLocations().keySet()) {
-            if (!session.getDatabase().getURL().equals(replica.getURL())) { return false; }
+            if (!session.getDatabase().getID().equals(replica.getURL())) { return false; }
         }
 
         return true;

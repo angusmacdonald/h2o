@@ -127,7 +127,7 @@ public class Insert extends Prepared {
             session.getDatabase().getAsynchronousQueryManager().addTransaction(transactionName, new TableInfo(table.getFullName()), null, recentlyCompletedQueries, 0);
         }
 
-        AsynchronousTests.pauseThreadIfTestingAsynchronousUpdates(table, session.getDatabase().getDatabaseSettings(), session.getDatabase().getURL(), getSQL());
+        AsynchronousTests.pauseThreadIfTestingAsynchronousUpdates(table, session.getDatabase().getDatabaseSettings(), session.getDatabase().getID(), getSQL());
 
         setCurrentRowNumber(0);
         if (list.size() > 0) {

@@ -571,7 +571,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     @Override
     protected DatabaseID getLocation() throws RPCException {
 
-        return getDB().getURL();
+        return getDB().getID();
     }
 
     @Override

@@ -91,7 +91,7 @@ public class AsynchronousQueryExecutor {
         int i = 0;
         for (final Entry<DatabaseInstanceWrapper, Integer> replicaToExecuteQueryOn : allReplicas.entrySet()) {
 
-            final String localURL = session.getDatabase().getURL().getURL();
+            final String localURL = session.getDatabase().getID().getURL();
 
             // Decide whether the query is to be executed local or remotely.
             final boolean isReplicaLocal = replicaToExecuteQueryOn == null || localURL.equals(replicaToExecuteQueryOn.getKey().getURL().getURL());

@@ -101,8 +101,8 @@ import org.h2o.db.manager.SystemTableReference;
 import org.h2o.db.manager.SystemTableServer;
 import org.h2o.db.manager.TableManager;
 import org.h2o.db.manager.TableManagerInstanceServer;
-import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.manager.interfaces.ISystemTableMigratable;
+import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.manager.monitorthreads.MetaDataReplicationThread;
 import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.db.query.TableProxyManager;
@@ -467,7 +467,7 @@ public class Database implements DataHandler {
             if (!Constants.IS_NON_SM_TEST && metaDataReplicationEnabled) {
                 metaDataReplicationThread.start();
             }
-            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Started database at " + getURL());
+            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Started database at " + getID());
         }
         running = true;
     }
@@ -1053,7 +1053,7 @@ public class Database implements DataHandler {
         }
     }
 
-    public DatabaseID getURL() {
+    public DatabaseID getID() {
 
         return databaseRemote.getLocalMachineLocation();
     }
@@ -1518,12 +1518,12 @@ public class Database implements DataHandler {
 
         if (closing) { return; }
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, getURL().getURL());
+        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, getID().getURL());
 
         closing = true;
         stopServer();
         if (!isManagementDB() && !fromShutdownHook) {
-            H2OEventBus.publish(new H2OEvent(getURL().getURL(), DatabaseStates.DATABASE_SHUTDOWN, null));
+            H2OEventBus.publish(new H2OEvent(getID().getURL(), DatabaseStates.DATABASE_SHUTDOWN, null));
 
             metaDataReplicationThread.setRunning(false);
             running = false;
@@ -2953,7 +2953,7 @@ public class Database implements DataHandler {
             }
         }
 
-        systemTableRef.getSystemTable().addConnectionInformation(getURL(), new DatabaseInstanceWrapper(getURL(), databaseRemote.getLocalDatabaseInstance(), true));
+        systemTableRef.getSystemTable().addConnectionInformation(getID(), new DatabaseInstanceWrapper(getID(), databaseRemote.getLocalDatabaseInstance(), true));
 
     }
 
@@ -2987,7 +2987,7 @@ public class Database implements DataHandler {
      */
     public String getDatabaseLocation() {
 
-        return getURL().getDbLocation();
+        return getID().getDbLocation();
     }
 
     /**
@@ -3005,7 +3005,7 @@ public class Database implements DataHandler {
      */
     public String getLocalMachineAddress() {
 
-        return getURL().getHostname();
+        return getID().getHostname();
     }
 
     /**
@@ -3013,7 +3013,7 @@ public class Database implements DataHandler {
      */
     public int getLocalMachinePort() {
 
-        return getURL().getPort();
+        return getID().getPort();
     }
 
     /**
@@ -3045,7 +3045,7 @@ public class Database implements DataHandler {
      */
     public String getConnectionType() {
 
-        return getURL().getConnectionType();
+        return getID().getConnectionType();
     }
 
     /**
@@ -3081,7 +3081,7 @@ public class Database implements DataHandler {
      */
     public DatabaseInstanceWrapper getLocalDatabaseInstanceInWrapper() {
 
-        return new DatabaseInstanceWrapper(getURL(), databaseRemote.getLocalDatabaseInstance(), true);
+        return new DatabaseInstanceWrapper(getID(), databaseRemote.getLocalDatabaseInstance(), true);
     }
 
     public void removeLocalDatabaseInstance() {
@@ -3203,4 +3203,15 @@ public class Database implements DataHandler {
 
         return table_manager_instance_server;
     }
+
+    public SystemTableServer getSystemTableServer() {
+
+        return system_table_server;
+    }
+
+    public DatabaseInstanceServer getDatabaseInstanceServer() {
+
+        return database_instance_server;
+    }
+
 }

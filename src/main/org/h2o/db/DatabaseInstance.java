@@ -25,6 +25,7 @@
 
 package org.h2o.db;
 
+import java.net.InetSocketAddress;
 import java.sql.SQLException;
 
 import org.h2.command.Command;
@@ -35,8 +36,8 @@ import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
-import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.manager.interfaces.ISystemTableMigratable;
+import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.manager.recovery.SystemTableAccessException;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
@@ -69,10 +70,14 @@ public class DatabaseInstance implements IDatabaseInstanceRemote {
 
     private final Database database;
 
+    private final InetSocketAddress address;
+
     public DatabaseInstance(final DatabaseID databaseURL, final Session session) {
 
         this.databaseURL = databaseURL;
         database = session.getDatabase();
+
+        address = database.getDatabaseInstanceServer().getAddress();
         parser = new Parser(session, true);
     }
 
@@ -241,5 +246,11 @@ public class DatabaseInstance implements IDatabaseInstanceRemote {
     public ISystemTableMigratable getSystemTable() throws RPCException {
 
         return database.getSystemTableReference().getLocalSystemTable();
+    }
+
+    @Override
+    public InetSocketAddress getAddress() throws RPCException {
+
+        return address;
     }
 }

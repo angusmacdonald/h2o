@@ -25,6 +25,7 @@
 
 package org.h2o.db.manager;
 
+import java.net.InetSocketAddress;
 import java.rmi.NoSuchObjectException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
@@ -181,6 +182,8 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
      */
     private final Set<TableInfo> temporaryInitialReplicas = new HashSet<TableInfo>();
 
+    private final InetSocketAddress address;
+
     /**
      * A new Table Manager object is created when acquiring locks during a CREATE TABLE operation and when recreating or moving
      * an existing Table Manager.
@@ -191,9 +194,11 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
         super(database);
 
+        address = database.getTableManagerServer().getAddress();
+
         this.tableAlreadyExists = tableAlreadyExists;
 
-        final String dbName = database.getURL().sanitizedLocation();
+        final String dbName = database.getID().sanitizedLocation();
         setMetaDataTableNames(getMetaTableName(dbName, TABLES), getMetaTableName(dbName, REPLICAS), getMetaTableName(dbName, CONNECTIONS), getMetaTableName(dbName, TABLEMANAGERSTATE));
 
         tableName = tableDetails.getTableName();
@@ -289,7 +294,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
         final StringBuilder builder = new StringBuilder();
 
-        final String databaseName = session.getDatabase().getURL().sanitizedLocation().toUpperCase();
+        final String databaseName = session.getDatabase().getID().sanitizedLocation().toUpperCase();
         String sql = createSQL(getMetaTableName(databaseName, TableManager.TABLES), getMetaTableName(databaseName, TableManager.CONNECTIONS));
 
         builder.append(sql);
@@ -505,7 +510,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
         preMethodTest();
 
-        return getDB().getURL();
+        return getDB().getID();
     }
 
     @Override
@@ -559,14 +564,14 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
         // Add Basic Table Information to the System Table.
         final Set<DatabaseInstanceWrapper> replicaLocations = db.getMetaDataReplicaManager().getTableManagerReplicaLocations();
         replicaLocations.add(db.getLocalDatabaseInstanceInWrapper());
-        final TableInfo tableInfo = new TableInfo(tableName, schemaName, db.getURL());
+        final TableInfo tableInfo = new TableInfo(tableName, schemaName, db.getID());
         final boolean successful = db.getSystemTableReference().addTableInformation(this, tableInfo, replicaLocations);
 
         if (!successful) { throw new SQLException("Failed to add Table Manager reference to System Table."); }
 
         try {
             persistToCompleteStartup(tableInfo);
-            H2OEventBus.publish(new H2OEvent(db.getURL().getURL(), DatabaseStates.TABLE_CREATION, tableInfo.getFullTableName()));
+            H2OEventBus.publish(new H2OEvent(db.getID().getURL(), DatabaseStates.TABLE_CREATION, tableInfo.getFullTableName()));
         }
         catch (final StartupException e) {
             throw new SQLException("Failed to create table. Couldn't persist table manager meta-data [" + e.getMessage() + "].");
@@ -603,7 +608,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
         if (Diagnostic.getLevel().equals(DiagnosticLevel.INIT)) {
 
-            final String databaseName = db.getURL().sanitizedLocation();
+            final String databaseName = db.getID().sanitizedLocation();
             final String sql = "SELECT LOCAL ONLY " + "connection_type, machine_name, db_location, connection_port, chord_port, " + getMetaTableName(databaseName, REPLICAS) + ".table_id, " + getMetaTableName(databaseName, REPLICAS) + ".connection_id FROM " + getMetaTableName(databaseName, REPLICAS)
                             + ", " + getMetaTableName(databaseName, TABLES) + ", " + getMetaTableName(databaseName, CONNECTIONS) + " WHERE tablename = '" + tableName + "' AND schemaname='" + schemaName + "' AND " + getMetaTableName(databaseName, REPLICAS) + ".active='true' AND "
                             + getMetaTableName(databaseName, TABLES) + ".table_id=" + getMetaTableName(databaseName, REPLICAS) + ".table_id AND " + getMetaTableName(databaseName, REPLICAS) + ".connection_id=" + getMetaTableName(databaseName, CONNECTIONS) + ".connection_id;";
@@ -629,7 +634,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
     @Override
     public TableInfo getTableInfo() {
 
-        return new TableInfo(tableName, schemaName, getDB().getURL());
+        return new TableInfo(tableName, schemaName, getDB().getID());
     }
 
     @Override
@@ -640,7 +645,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
         shutdown = true;
 
-        H2OEventBus.publish(new H2OEvent(db.getURL().getURL(), DatabaseStates.TABLE_MANAGER_SHUTDOWN));
+        H2OEventBus.publish(new H2OEvent(db.getID().getURL(), DatabaseStates.TABLE_MANAGER_SHUTDOWN));
 
         try {
             UnicastRemoteObject.unexportObject(this, true);
@@ -740,7 +745,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
     @Override
     public DatabaseID getDatabaseURL() throws RPCException {
 
-        return getDB().getURL();
+        return getDB().getID();
     }
 
     /*******************************************************
@@ -787,7 +792,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
             rs = executeQuery(sql);
         }
         catch (final SQLException e) {
-            ErrorHandling.errorNoEvent(db.getURL() + ": Error replicating table manager state.");
+            ErrorHandling.errorNoEvent(db.getID() + ": Error replicating table manager state.");
             throw e;
         }
 
@@ -833,7 +838,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
     public void persistToCompleteStartup(final TableInfo tableInfo) throws RPCException, StartupException {
 
         try {
-            addTableInformation(getDB().getURL(), tableInfo);
+            addTableInformation(getDB().getID(), tableInfo);
 
             for (final TableInfo replica : temporaryInitialReplicas) {
                 addReplicaInformation(replica);
@@ -905,5 +910,11 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
     public DatabaseInstanceWrapper getDatabaseLocation() throws RPCException, MovedException {
 
         return replicaManager.getManagerLocation();
+    }
+
+    @Override
+    public InetSocketAddress getAddress() throws RPCException {
+
+        return address;
     }
 }

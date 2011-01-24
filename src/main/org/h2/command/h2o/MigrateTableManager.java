@@ -96,7 +96,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
                 throw Message.getSQLException(ErrorCode.LOCK_TIMEOUT_1, getSchema().getName() + tableName);
             }
 
-            H2OEventBus.publish(new H2OEvent(db.getURL().getURL(), DatabaseStates.TABLE_MANAGER_MIGRATION, ti.getFullTableName()));
+            H2OEventBus.publish(new H2OEvent(db.getID().getURL(), DatabaseStates.TABLE_MANAGER_MIGRATION, ti.getFullTableName()));
 
         }
         catch (final MovedException e) {
@@ -121,7 +121,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
          */
         ITableManagerRemote newTableManager = null;
 
-        final TableInfo ti = new TableInfo(tableName, schemaName, 0l, 0, "TABLE", db.getURL());
+        final TableInfo ti = new TableInfo(tableName, schemaName, 0l, 0, "TABLE", db.getID());
 
         try {
             newTableManager = new TableManager(ti, db, true);
@@ -135,7 +135,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
          * Stop the old, remote, manager from accepting any more requests.
          */
         try {
-            oldTableManager.prepareForMigration(db.getURL().getURLwithRMIPort());
+            oldTableManager.prepareForMigration(db.getID().getURLwithRMIPort());
         }
         catch (final RPCException e) {
             e.printStackTrace();

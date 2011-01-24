@@ -260,7 +260,7 @@ public class CreateReplica extends SchemaCommand {
                         }
                     }
 
-                    final TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getURL());
+                    final TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getID());
 
                     sm.lookup(ti).getTableManager().addReplicaInformation(ti);
                 }
@@ -469,7 +469,7 @@ public class CreateReplica extends SchemaCommand {
                 // Add to Table Manager.
                 // #############################
 
-                final TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getURL());
+                final TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getID());
 
                 if (!db.isTableLocal(getSchema())) {
                     ITableManagerRemote tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, true);
@@ -485,7 +485,7 @@ public class CreateReplica extends SchemaCommand {
                         tableManager.addReplicaInformation(ti);
                     }
 
-                    H2OEventBus.publish(new H2OEvent(session.getDatabase().getURL().getURL(), DatabaseStates.REPLICA_CREATION, getSchema().getName() + "." + tableName));
+                    H2OEventBus.publish(new H2OEvent(session.getDatabase().getID().getURL(), DatabaseStates.REPLICA_CREATION, getSchema().getName() + "." + tableName));
                 }
             }
         }

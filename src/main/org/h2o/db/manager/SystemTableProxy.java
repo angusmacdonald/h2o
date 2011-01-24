@@ -21,6 +21,7 @@ import org.h2o.util.exceptions.MigrationException;
 import org.h2o.util.exceptions.MovedException;
 import org.json.JSONArray;
 
+import uk.ac.standrews.cs.nds.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.rpc.Proxy;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
@@ -528,5 +529,29 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
             return null; // not reached
         }
 
+    }
+
+    @Override
+    public boolean isAlive() throws RPCException, MovedException {
+
+        try {
+            return makeCall("isAlive").getBoolean();
+        }
+        catch (final Exception e) {
+            dealWithException(e);
+            return false; // not reached
+        }
+    }
+
+    @Override
+    public InetSocketAddress getAddress() throws RPCException {
+
+        try {
+            return Marshaller.deserializeInetSocketAddress(makeCall("getAddress").getString());
+        }
+        catch (final Exception e) {
+            dealWithException(e);
+            return null; // not reached
+        }
     }
 }

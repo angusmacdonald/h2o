@@ -77,7 +77,7 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
             schemaName = "PUBLIC";
         }
 
-        final TableInfo ti = new TableInfo(tableName, schemaName, db.getURL());
+        final TableInfo ti = new TableInfo(tableName, schemaName, db.getID());
         TableManager tm = null;
 
         try {
@@ -85,7 +85,7 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
             tm.recreateReplicaManagerState(oldPrimaryLocation);
             tm.persistToCompleteStartup(ti);
             tm.persistReplicaInformation();
-            H2OEventBus.publish(new H2OEvent(db.getURL().getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
+            H2OEventBus.publish(new H2OEvent(db.getID().getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
 
         }
         catch (final SQLException e) {
@@ -97,7 +97,7 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
             return -1;
         }
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, ti + " recreated on " + db.getURL() + ".");
+        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, ti + " recreated on " + db.getID() + ".");
 
         systemTableReference.addNewTableManagerReference(ti, tm);
 

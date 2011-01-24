@@ -14,6 +14,7 @@ import org.h2o.db.manager.recovery.SystemTableAccessException;
 import org.h2o.util.exceptions.MovedException;
 import org.json.JSONArray;
 
+import uk.ac.standrews.cs.nds.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.rpc.Proxy;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
@@ -238,6 +239,18 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
 
         try {
             return marshaller.deserializeISystemTableRemote(makeCall("getSystemTable").getJSONObject());
+        }
+        catch (final Exception e) {
+            dealWithException(e);
+            return null; // final not reached
+        }
+    }
+
+    @Override
+    public InetSocketAddress getAddress() throws RPCException {
+
+        try {
+            return Marshaller.deserializeInetSocketAddress(makeCall("getAddress").getString());
         }
         catch (final Exception e) {
             dealWithException(e);

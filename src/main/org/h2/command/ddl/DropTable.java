@@ -153,7 +153,7 @@ public class DropTable extends SchemaCommand {
                     db.removeSchemaObject(session, t);
                 }
             }
-            H2OEventBus.publish(new H2OEvent(db.getURL().getURL(), DatabaseStates.TABLE_DELETION, getSchema().getName() + "." + tableName));
+            H2OEventBus.publish(new H2OEvent(db.getID().getURL(), DatabaseStates.TABLE_DELETION, getSchema().getName() + "." + tableName));
         }
         if (next != null) {
             next.executeDrop(transactionName);

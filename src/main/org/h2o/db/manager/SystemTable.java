@@ -8,6 +8,7 @@
  */
 package org.h2o.db.manager;
 
+import java.net.InetSocketAddress;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Queue;
@@ -51,6 +52,8 @@ public class SystemTable implements ISystemTableMigratable {
      */
     private final SystemTableMigrationState migrationState;
 
+    private final InetSocketAddress address;
+
     /**
      * The timeout period for migrating the System Table.
      */
@@ -62,6 +65,8 @@ public class SystemTable implements ISystemTableMigratable {
         persisted = new PersistentSystemTable(db, createTables);
 
         migrationState = new SystemTableMigrationState(db.getChordInterface().getLocalChordReference());
+
+        address = db.getSystemTableServer().getAddress();
     }
 
     /******************************************************************
@@ -334,5 +339,17 @@ public class SystemTable implements ISystemTableMigratable {
 
         preMethodTest();
         return inMemory.checkTableManagerAccessibility();
+    }
+
+    @Override
+    public boolean isAlive() throws RPCException, MovedException {
+
+        return true;
+    }
+
+    @Override
+    public InetSocketAddress getAddress() throws RPCException {
+
+        return address;
     }
 }

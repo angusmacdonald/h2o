@@ -5039,7 +5039,7 @@ public class Parser {
             tableLocation = replicaLocation.getURL().getURL();
 
             try {
-                if (replicaLocation.getURL().equals(session.getDatabase().getURL()) || !replicaLocation.getDatabaseInstance().isAlive()) {
+                if (replicaLocation.getURL().equals(session.getDatabase().getID()) || !replicaLocation.getDatabaseInstance().isAlive()) {
                     continue;
                 }
             }

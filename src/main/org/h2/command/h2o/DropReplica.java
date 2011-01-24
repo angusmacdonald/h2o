@@ -127,7 +127,7 @@ public class DropReplica extends SchemaCommand {
             if (!db.isManagementDB() && !db.isTableLocal(getSchema())) {
                 final ISystemTableMigratable sm = db.getSystemTable(); // db.getSystemSession()
 
-                final TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), 0, table.getTableType(), db.getURL());
+                final TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), 0, table.getTableType(), db.getID());
 
                 try {
                     final ITableManagerRemote tmr = sm.lookup(ti).getTableManager();
@@ -140,7 +140,7 @@ public class DropReplica extends SchemaCommand {
                     throw new SQLException("System Table has moved.");
                 }
             }
-            H2OEventBus.publish(new H2OEvent(session.getDatabase().getURL().getURL(), DatabaseStates.REPLICA_DELETION, getSchema().getName() + "." + tableName));
+            H2OEventBus.publish(new H2OEvent(session.getDatabase().getID().getURL(), DatabaseStates.REPLICA_DELETION, getSchema().getName() + "." + tableName));
         }
         if (next != null) {
             next.executeDrop();

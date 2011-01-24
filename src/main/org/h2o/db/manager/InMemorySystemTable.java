@@ -110,7 +110,7 @@ public final class InMemorySystemTable implements ISystemTable {
 
         started = true;
 
-        H2OEventBus.publish(new H2OEvent(database.getURL().getURL(), DatabaseStates.SYSTEM_TABLE_CREATION));
+        H2OEventBus.publish(new H2OEvent(database.getID().getURL(), DatabaseStates.SYSTEM_TABLE_CREATION));
     }
 
     /******************************************************************
@@ -247,14 +247,14 @@ public final class InMemorySystemTable implements ISystemTable {
          * know of it?
          */
 
-        if (tableManagerWrapper != null && database.getURL().equals(tableManagerWrapper.getURL())) {
+        if (tableManagerWrapper != null && database.getID().equals(tableManagerWrapper.getURL())) {
             /*
              * It is okay to re-instantiate the Table Manager here.
              */
             try {
                 tm = new TableManager(ti, database, true);
                 tm.recreateReplicaManagerState(tableManagerWrapper.getURL().sanitizedLocation());
-                H2OEventBus.publish(new H2OEvent(database.getURL().getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
+                H2OEventBus.publish(new H2OEvent(database.getID().getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
 
             }
             catch (final SQLException e) {
@@ -371,7 +371,7 @@ public final class InMemorySystemTable implements ISystemTable {
             boolean active = remoteDB.getValue() == null ? true : remoteDB.getValue().isActive();
 
             if (dir == null) {
-                if (remoteDB.getKey().equals(database.getURL())) {
+                if (remoteDB.getKey().equals(database.getID())) {
                     // Local machine.
                     dir = database.getLocalDatabaseInstance();
                 }
@@ -692,4 +692,5 @@ public final class InMemorySystemTable implements ISystemTable {
 
         return sortedMachines;
     }
+
 }

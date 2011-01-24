@@ -301,7 +301,7 @@ public class CreateTable extends SchemaCommand {
                         tableSet = systemTableRemote.getNewTableSetNumber();
                     }
 
-                    final TableInfo tableInfo = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getURL());
+                    final TableInfo tableInfo = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), tableSet, table.getTableType(), db.getID());
 
                     createReplicas(tableInfo, transactionName);
 
@@ -347,7 +347,7 @@ public class CreateTable extends SchemaCommand {
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Creating replica of table " + tableInfo.getFullTableName() + " onto " + (tableProxy.getReplicaLocations().size() - 1) + " other instances.");
 
             String sql = sqlStatement.substring("CREATE TABLE".length());
-            sql = "CREATE EMPTY REPLICA" + sql + " FROM '" + getSchema().getDatabase().getURL().getURLwithRMIPort() + "'";
+            sql = "CREATE EMPTY REPLICA" + sql + " FROM '" + getSchema().getDatabase().getID().getURLwithRMIPort() + "'";
 
             final Set<DatabaseInstanceWrapper> successfulUpdates = new HashSet<DatabaseInstanceWrapper>();
 
@@ -509,7 +509,7 @@ public class CreateTable extends SchemaCommand {
 
         if (!tableLocal && !managementDB && !startup) { // if it is startup then we don't want to create a table manager yet.
 
-            final TableInfo ti = new TableInfo(tableName, getSchema().getName(), 0l, 0, "TABLE", db.getURL());
+            final TableInfo ti = new TableInfo(tableName, getSchema().getName(), 0l, 0, "TABLE", db.getID());
             try {
                 tableManager = new TableManager(ti, db, false);
             }
@@ -524,7 +524,7 @@ public class CreateTable extends SchemaCommand {
             catch (final Exception e) {
                 // May already be exported.
             }
-            H2OEventBus.publish(new H2OEvent(db.getURL().getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
+            H2OEventBus.publish(new H2OEvent(db.getID().getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
 
             tableProxy = TableProxy.getTableProxyAndLock(tableManager, ti.getFullTableName(), new LockRequest(session), LockType.CREATE, db, false);
         }

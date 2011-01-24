@@ -8,6 +8,8 @@
  */
 package org.h2o.db.interfaces;
 
+import java.net.InetSocketAddress;
+
 import org.h2o.util.exceptions.MovedException;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
@@ -20,10 +22,12 @@ import uk.ac.standrews.cs.nds.rpc.RPCException;
 public interface IH2ORemote { // used to extend Remote
 
     /**
-     * Used to check that a Table Manager is still accessible via RMI. This method will return false if the database has been closed - an
+     * Used to check that a remote instance is still accessible. This method will return false if the database has been closed - an
      * exception will be thrown if it is unavailable.
      * 
      * @throws MovedException
      */
     public boolean isAlive() throws RPCException, MovedException;
+
+    public InetSocketAddress getAddress() throws RPCException;
 }

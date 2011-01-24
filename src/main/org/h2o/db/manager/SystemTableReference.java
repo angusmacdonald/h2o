@@ -169,7 +169,7 @@ public class SystemTableReference implements ISystemTableReference {
              * SQLException when: findSystemTable() has failed to find the System Table instances registry. This indicates that the system
              * table instance has failed, so we should try to recreate the System Table somewhere else.
              */
-            ErrorHandling.errorNoEvent(db.getURL() + ": The current System Table reference points to an inactive instance. " + "H2O will attempt to find an active System Table.");
+            ErrorHandling.errorNoEvent(db.getID() + ": The current System Table reference points to an inactive instance. " + "H2O will attempt to find an active System Table.");
 
             try {
                 systemTableWrapper = systemTableRecovery.get();
@@ -227,7 +227,7 @@ public class SystemTableReference implements ISystemTableReference {
     @Override
     public void setSystemTableURL(final DatabaseID newSMLocation) {
 
-        if (newSMLocation.equals(db.getURL())) {
+        if (newSMLocation.equals(db.getID())) {
             isLocal = true;
         }
 
@@ -275,10 +275,10 @@ public class SystemTableReference implements ISystemTableReference {
         /*
          * Make the new System Table remotely accessible.
          */
-        isLocal = systemTableWrapper.getURL().equals(db.getURL());
+        isLocal = systemTableWrapper.getURL().equals(db.getID());
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Finished building new System Table on " + db.getURL().getDbLocation() + ".");
-        H2OEventBus.publish(new H2OEvent(db.getURL().getURL(), DatabaseStates.SYSTEM_TABLE_MIGRATION));
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Finished building new System Table on " + db.getID().getDbLocation() + ".");
+        H2OEventBus.publish(new H2OEvent(db.getID().getURL(), DatabaseStates.SYSTEM_TABLE_MIGRATION));
         return systemTableWrapper.getSystemTable();
     }
 
