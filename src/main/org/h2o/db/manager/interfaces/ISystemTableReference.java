@@ -37,7 +37,7 @@ public interface ISystemTableReference {
      * 
      * @return Reference to the system System Table.
      */
-    public ISystemTableRemote getSystemTable();
+    public ISystemTableMigratable getSystemTable();
 
     /**
      * Called with a 'true' parameter when the system is being shut down to allow it to ignore any exceptions that may occur if the System
@@ -47,7 +47,7 @@ public interface ISystemTableReference {
      *            If the system is being shut down any remote exceptions when contacting the System Table will be ignored.
      * @return
      */
-    public ISystemTableRemote getSystemTable(boolean inShutdown);
+    public ISystemTableMigratable getSystemTable(boolean inShutdown);
 
     /**
      * Get the location of the System Table instance.
@@ -73,7 +73,7 @@ public interface ISystemTableReference {
      * @throws SQLException
      *             If System Table registry access resulted in some kind of exception.
      */
-    public ISystemTableRemote findSystemTable() throws SQLException;
+    public ISystemTableMigratable findSystemTable() throws SQLException;
 
     /**
      * Change the System Table URL. This doesn't update the actual reference to the System Table, so should only be used if the database has
@@ -87,7 +87,7 @@ public interface ISystemTableReference {
      * Provide a reference to the actual System Table. This is typically called when a database has just been started, or when a new System
      * Table has been created.
      */
-    public void setSystemTable(ISystemTableRemote systemTable);
+    public void setSystemTable(ISystemTableMigratable systemTable);
 
     /**
      * Change the System Table URL and its location on chord. This doesn't update the actual reference to the System Table, so should only
@@ -123,7 +123,7 @@ public interface ISystemTableReference {
      * @return
      * @throws SystemTableAccessException
      */
-    public ISystemTableRemote migrateSystemTableToLocalInstance(boolean persistedSchemaTablesExist, boolean recreateFromPersistedState) throws SystemTableAccessException;
+    public ISystemTableMigratable migrateSystemTableToLocalInstance(boolean persistedSchemaTablesExist, boolean recreateFromPersistedState) throws SystemTableAccessException;
 
     /**
      * If called the System Table will be moved to the local database instance.
@@ -263,8 +263,8 @@ public interface ISystemTableReference {
      * 
      * @return
      */
-    public ISystemTableRemote getLocalSystemTable();
+    public ISystemTableMigratable getLocalSystemTable();
 
-    public ISystemTableRemote failureRecovery() throws LocatorException, SQLException, SystemTableAccessException;
+    public ISystemTableMigratable failureRecovery() throws LocatorException, SQLException, SystemTableAccessException;
 
 }

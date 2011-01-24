@@ -44,9 +44,9 @@ import org.h2o.db.id.DatabaseID;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.SystemTableReference;
-import org.h2o.db.manager.interfaces.ISystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
-import org.h2o.db.manager.interfaces.ISystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.db.replication.MetaDataReplicaManager;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
@@ -736,7 +736,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         }
 
         boolean systemTableAlive = true;
-        ISystemTableRemote newSystemTable = null;
+        ISystemTableMigratable newSystemTable = null;
         if (systemTableWasOnPredecessor) {
             systemTableAlive = isSystemTableActive();
 
@@ -788,7 +788,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         Set<TableManagerWrapper> localTableManagers = null;
         try {
 
-            final ISystemTableRemote systemTable = systemTableRef.getSystemTable();
+            final ISystemTableMigratable systemTable = systemTableRef.getSystemTable();
 
             /*
              * If systemTable is null then the previous successor has failed and it was the System Table, so no System Table exists currently. It is not the

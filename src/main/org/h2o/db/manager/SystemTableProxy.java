@@ -14,7 +14,7 @@ import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
-import org.h2o.db.manager.interfaces.ISystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
 import org.h2o.util.exceptions.MigrationException;
@@ -25,7 +25,7 @@ import uk.ac.standrews.cs.nds.rpc.Proxy;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
-public class SystemTableProxy extends Proxy implements ISystemTableRemote {
+public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
     private static final Map<InetSocketAddress, SystemTableProxy> proxy_map;
     private static final H2OMarshaller marshaller;
@@ -171,12 +171,12 @@ public class SystemTableProxy extends Proxy implements ISystemTableRemote {
     }
 
     @Override
-    public void buildSystemTableState(final ISystemTable otherSystemTable) throws RPCException, MovedException, SQLException {
+    public void recreateSystemTable(final ISystemTable otherSystemTable) throws RPCException, MovedException, SQLException {
 
         try {
             final JSONArray params = new JSONArray();
-            params.put(marshaller.serializeISystemTable(otherSystemTable).getValue());
-            makeCall("buildSystemTableState", params);
+            params.put(marshaller.serializeISystemTableRemote(otherSystemTable).getValue());
+            makeCall("recreateSystemTable", params);
         }
         catch (final MovedException e) {
             throw e;
@@ -190,10 +190,10 @@ public class SystemTableProxy extends Proxy implements ISystemTableRemote {
     }
 
     @Override
-    public void buildSystemTableState() throws RPCException, MovedException, SQLException {
+    public void recreateInMemorySystemTableFromLocalPersistedState() throws RPCException, MovedException, SQLException {
 
         try {
-            makeCall("buildSystemTableState");
+            makeCall("recreateInMemorySystemTableFromLocalPersistedState");
         }
         catch (final MovedException e) {
             throw e;

@@ -13,7 +13,7 @@ import java.sql.SQLException;
 
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
-import org.h2o.db.manager.interfaces.ISystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.manager.recovery.SystemTableAccessException;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
@@ -112,7 +112,7 @@ public interface IDatabaseInstanceRemote extends IH2ORemote, TwoPhaseCommit {
      * @throws RPCException
      * @throws SystemTableAccessException
      */
-    ISystemTableRemote recreateSystemTable() throws RPCException, SQLException, SystemTableAccessException;
+    ISystemTableMigratable recreateSystemTable() throws RPCException, SQLException, SystemTableAccessException;
 
     /**
      * Recreate a Table Manager on this machine.
@@ -137,5 +137,5 @@ public interface IDatabaseInstanceRemote extends IH2ORemote, TwoPhaseCommit {
      * 
      * @return
      */
-    ISystemTableRemote getSystemTable() throws RPCException;
+    ISystemTableMigratable getSystemTable() throws RPCException;
 }

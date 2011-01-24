@@ -8,7 +8,6 @@
  */
 package org.h2o.db.manager;
 
-
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -164,7 +163,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     }
 
     @Override
-    public void buildSystemTableState(final ISystemTable otherSystemTable) throws RPCException {
+    public void recreateSystemTable(final ISystemTable otherSystemTable) throws RPCException {
 
         /*
          * Persist the state of the given System Table reference to disk.
@@ -471,7 +470,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     }
 
     @Override
-    public void buildSystemTableState() throws RPCException {
+    public void recreateInMemorySystemTableFromLocalPersistedState() throws RPCException {
 
         // TODO Auto-generated method stub
     }

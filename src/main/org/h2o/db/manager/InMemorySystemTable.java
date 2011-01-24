@@ -8,7 +8,6 @@
  */
 package org.h2o.db.manager;
 
-import java.rmi.Remote;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,7 +41,7 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
-public final class InMemorySystemTable implements ISystemTable, Remote {
+public final class InMemorySystemTable implements ISystemTable {
 
     private final Database database;
 
@@ -346,7 +345,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public void buildSystemTableState(final ISystemTable otherSystemTable) throws RPCException, MovedException, SQLException {
+    public void recreateSystemTable(final ISystemTable otherSystemTable) throws RPCException, MovedException, SQLException {
 
         started = false;
         /*
@@ -546,7 +545,7 @@ public final class InMemorySystemTable implements ISystemTable, Remote {
     }
 
     @Override
-    public void buildSystemTableState() throws RPCException {
+    public void recreateInMemorySystemTableFromLocalPersistedState() throws RPCException {
 
         // TODO Auto-generated method stub
     }

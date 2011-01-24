@@ -35,9 +35,9 @@ import org.h2.table.ReplicaSet;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.ITableManagerRemote;
-import org.h2o.db.manager.interfaces.ISystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
-import org.h2o.db.manager.interfaces.ISystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.db.manager.recovery.SystemTableAccessException;
 import org.h2o.db.manager.recovery.SystemTableFailureRecovery;
@@ -133,13 +133,13 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public ISystemTableRemote getSystemTable() {
+    public ISystemTableMigratable getSystemTable() {
 
         return getSystemTable(false);
     }
 
     @Override
-    public ISystemTableRemote getSystemTable(final boolean inShutdown) {
+    public ISystemTableMigratable getSystemTable(final boolean inShutdown) {
 
         boolean foundSystemTable = false;
 
@@ -208,7 +208,7 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public ISystemTableRemote findSystemTable() throws SQLException {
+    public ISystemTableMigratable findSystemTable() throws SQLException {
 
         try {
             systemTableWrapper = systemTableRecovery.get();
@@ -242,7 +242,7 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public void setSystemTable(final ISystemTableRemote systemTable) {
+    public void setSystemTable(final ISystemTableMigratable systemTable) {
 
         systemTableWrapper.setSystemTable(systemTable);
     }
@@ -266,7 +266,7 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public ISystemTableRemote migrateSystemTableToLocalInstance(final boolean persistedSchemaTablesExist, final boolean recreateFromPersistedState) throws SystemTableAccessException {
+    public ISystemTableMigratable migrateSystemTableToLocalInstance(final boolean persistedSchemaTablesExist, final boolean recreateFromPersistedState) throws SystemTableAccessException {
 
         systemTableWrapper = systemTableRecovery.restart(persistedSchemaTablesExist, recreateFromPersistedState, systemTableWrapper.getSystemTable());
 
@@ -482,7 +482,7 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public ISystemTableRemote getLocalSystemTable() {
+    public ISystemTableMigratable getLocalSystemTable() {
 
         return systemTableWrapper.getSystemTable();
     }
@@ -499,7 +499,7 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public ISystemTableRemote failureRecovery() throws LocatorException, SystemTableAccessException {
+    public ISystemTableMigratable failureRecovery() throws LocatorException, SystemTableAccessException {
 
         systemTableWrapper = systemTableRecovery.get();
 

@@ -51,7 +51,7 @@ import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
-import org.h2o.db.manager.interfaces.ISystemTable;
+import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.query.TableProxy;
 import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.query.locking.ILockingTable;
@@ -324,7 +324,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
      */
     private DatabaseInstanceWrapper getDatabaseInstance(final DatabaseID dbID) {
 
-        final ISystemTable systemTable = getDB().getSystemTableReference().getSystemTable();
+        final ISystemTableMigratable systemTable = getDB().getSystemTableReference().getSystemTable();
 
         IDatabaseInstanceRemote dir = null;
 

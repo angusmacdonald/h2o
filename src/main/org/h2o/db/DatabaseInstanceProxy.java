@@ -9,7 +9,7 @@ import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
-import org.h2o.db.manager.interfaces.ISystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.manager.recovery.SystemTableAccessException;
 import org.h2o.util.exceptions.MovedException;
 import org.json.JSONArray;
@@ -189,10 +189,10 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     }
 
     @Override
-    public ISystemTableRemote recreateSystemTable() throws RPCException, SQLException, SystemTableAccessException {
+    public ISystemTableMigratable recreateSystemTable() throws RPCException, SQLException, SystemTableAccessException {
 
         try {
-            return marshaller.deserializeSystemTableRemote(makeCall("recreateSystemTable").getJSONObject());
+            return marshaller.deserializeISystemTableRemote(makeCall("recreateSystemTable").getJSONObject());
         }
         catch (final SQLException e) {
             throw e;
@@ -234,10 +234,10 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     }
 
     @Override
-    public ISystemTableRemote getSystemTable() throws RPCException {
+    public ISystemTableMigratable getSystemTable() throws RPCException {
 
         try {
-            return marshaller.deserializeSystemTableRemote(makeCall("getSystemTable").getJSONObject());
+            return marshaller.deserializeISystemTableRemote(makeCall("getSystemTable").getJSONObject());
         }
         catch (final Exception e) {
             dealWithException(e);

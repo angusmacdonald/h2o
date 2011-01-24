@@ -11,7 +11,7 @@ import org.h2.message.Message;
 import org.h2.schema.Schema;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.ITableManagerRemote;
-import org.h2o.db.manager.interfaces.ISystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.viewer.H2OEventBus;
 import org.h2o.viewer.gwt.client.DatabaseStates;
@@ -125,7 +125,7 @@ public class DropReplica extends SchemaCommand {
              * ################################################################## #######
              */
             if (!db.isManagementDB() && !db.isTableLocal(getSchema())) {
-                final ISystemTableRemote sm = db.getSystemTable(); // db.getSystemSession()
+                final ISystemTableMigratable sm = db.getSystemTable(); // db.getSystemSession()
 
                 final TableInfo ti = new TableInfo(tableName, getSchema().getName(), table.getModificationId(), 0, table.getTableType(), db.getURL());
 

@@ -36,7 +36,7 @@ import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
-import org.h2o.db.manager.interfaces.ISystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.manager.recovery.SystemTableAccessException;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
@@ -156,7 +156,7 @@ public class DatabaseInstance implements IDatabaseInstanceRemote {
     }
 
     @Override
-    public ISystemTableRemote recreateSystemTable() throws SystemTableAccessException {
+    public ISystemTableMigratable recreateSystemTable() throws SystemTableAccessException {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Responding to request to recreate System Table on '" + database.getDatabaseLocation() + "'.");
 
@@ -238,7 +238,7 @@ public class DatabaseInstance implements IDatabaseInstanceRemote {
     }
 
     @Override
-    public ISystemTableRemote getSystemTable() throws RPCException {
+    public ISystemTableMigratable getSystemTable() throws RPCException {
 
         return database.getSystemTableReference().getLocalSystemTable();
     }

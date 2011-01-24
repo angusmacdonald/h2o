@@ -9,15 +9,15 @@
 package org.h2o.db.wrappers;
 
 import org.h2o.db.id.DatabaseID;
-import org.h2o.db.manager.interfaces.ISystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 
 public class SystemTableWrapper {
 
-    private ISystemTableRemote systemTable;
+    private ISystemTableMigratable systemTable;
 
     private DatabaseID url;
 
-    public SystemTableWrapper(ISystemTableRemote systemTable, DatabaseID url) {
+    public SystemTableWrapper(ISystemTableMigratable systemTable, DatabaseID url) {
 
         this.systemTable = systemTable;
         this.url = url;
@@ -27,7 +27,7 @@ public class SystemTableWrapper {
 
     } // All information may not be known at startup.
 
-    public ISystemTableRemote getSystemTable() {
+    public ISystemTableMigratable getSystemTable() {
 
         return systemTable;
     }
@@ -37,7 +37,7 @@ public class SystemTableWrapper {
         return url;
     }
 
-    public void setSystemTable(ISystemTableRemote systemTable) {
+    public void setSystemTable(ISystemTableMigratable systemTable) {
 
         this.systemTable = systemTable;
     }

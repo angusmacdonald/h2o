@@ -9,8 +9,7 @@ import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
-import org.h2o.db.manager.interfaces.ISystemTable;
-import org.h2o.db.manager.interfaces.ISystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.json.JSONArray;
 
@@ -20,11 +19,11 @@ import uk.ac.standrews.cs.nds.rpc.JSONValue;
 
 public class SystemTableServer extends ApplicationServer {
 
-    private final ISystemTableRemote system_table;
+    private final ISystemTableMigratable system_table;
     private final HashMap<String, Handler> handler_map;
     private static final H2OMarshaller marshaller = new H2OMarshaller();
 
-    public SystemTableServer(final ISystemTableRemote system_table) {
+    public SystemTableServer(final ISystemTableMigratable system_table) {
 
         this.system_table = system_table;
         handler_map = new HashMap<String, Handler>();
@@ -93,7 +92,7 @@ public class SystemTableServer extends ApplicationServer {
             }
         });
 
-        // ISystemTable operations
+        // ISystemTableRemote operations
 
         // public IChordRemoteReference getChordReference() throws RPCException;
 
@@ -192,21 +191,29 @@ public class SystemTableServer extends ApplicationServer {
             }
         });
 
-        //      public void buildSystemTableState(ISystemTable otherSystemTable) throws RPCException, MovedException, SQLException;
-        //      public void buildSystemTableState() throws RPCException, MovedException, SQLException;
+        //      public void recreateSystemTable(ISystemTableRemote otherSystemTable) throws RPCException, MovedException, SQLException;
 
-        handler_map.put("buildSystemTableState", new Handler() {
+        handler_map.put("recreateSystemTable", new Handler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                if (args.length() == 0) { // Note that buildSystemTableState is overloaded
-                    system_table.buildSystemTableState();
-                }
-                else {
-                    final ISystemTable p0 = marshaller.deserializeISystemTable(args.getJSONObject(0));
-                    system_table.buildSystemTableState(p0);
-                }
+                final ISystemTableMigratable p0 = marshaller.deserializeISystemTableRemote(args.getJSONObject(0));
+                system_table.recreateSystemTable(p0);
+
+                return JSONValue.NULL;
+            }
+        });
+
+        //      public void recreateInMemorySystemTableFromLocalPersistedState() throws RPCException, MovedException, SQLException;
+
+        handler_map.put("recreateInMemorySystemTableFromLocalPersistedState", new Handler() {
+
+            @Override
+            public JSONValue execute(final JSONArray args) throws Exception {
+
+                system_table.recreateInMemorySystemTableFromLocalPersistedState();
+
                 return JSONValue.NULL;
             }
         });

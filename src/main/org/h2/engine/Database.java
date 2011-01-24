@@ -102,7 +102,7 @@ import org.h2o.db.manager.SystemTableServer;
 import org.h2o.db.manager.TableManager;
 import org.h2o.db.manager.TableManagerInstanceServer;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
-import org.h2o.db.manager.interfaces.ISystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.manager.monitorthreads.MetaDataReplicationThread;
 import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.db.query.TableProxyManager;
@@ -1016,7 +1016,7 @@ public class Database implements DataHandler {
              */
             try {
                 createH2OTables(true, databaseExists);
-                systemTableRef.getSystemTable().buildSystemTableState();
+                systemTableRef.getSystemTable().recreateInMemorySystemTableFromLocalPersistedState();
                 // called here, because at this point the system is ready to replicate TM state.
                 databaseRemote.setAsReadyToReplicateMetaData(metaDataReplicaManager);
 
@@ -2962,7 +2962,7 @@ public class Database implements DataHandler {
         return systemTableRef;
     }
 
-    public ISystemTableRemote getSystemTable() {
+    public ISystemTableMigratable getSystemTable() {
 
         return systemTableRef.getSystemTable();
     }

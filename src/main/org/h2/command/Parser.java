@@ -153,7 +153,7 @@ import org.h2.value.ValueTimestamp;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.PersistentSystemTable;
-import org.h2o.db.manager.interfaces.ISystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.query.TableProxy;
 import org.h2o.db.query.locking.LockRequest;
@@ -4919,7 +4919,7 @@ public class Parser {
         catch (final Exception e) {
             // Attempt to recreate the table manager in-case it has failed, then try again.
             try {
-                ISystemTableRemote systemTableRemote = systemTableReference.getSystemTable();
+                ISystemTableMigratable systemTableRemote = systemTableReference.getSystemTable();
                 if (systemTableRemote != null) {
 
                     try {
@@ -5506,7 +5506,7 @@ public class Parser {
             schemaName = readExpression().toString();
             final Schema s = getSchema();
 
-            final ISystemTableRemote systemTableRemote = session.getDatabase().getSystemTable();
+            final ISystemTableMigratable systemTableRemote = session.getDatabase().getSystemTable();
             try {
                 final java.util.Set<String> tables = systemTableRemote.getAllTablesInSchema(s.getName());
 

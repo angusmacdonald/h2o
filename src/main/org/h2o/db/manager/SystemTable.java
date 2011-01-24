@@ -19,8 +19,8 @@ import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
-import org.h2o.db.manager.interfaces.ISystemTableRemote;
-import org.h2o.db.manager.interfaces.ISystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTable;
+import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.manager.util.SystemTableMigrationState;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
@@ -33,18 +33,18 @@ import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class SystemTable implements ISystemTableRemote {
+public class SystemTable implements ISystemTableMigratable {
 
     /**
      * Interface to the in-memory state of the System Table.
      */
-    private final ISystemTableRemote inMemory;
+    private final ISystemTable inMemory;
 
     /**
      * Interface to the persisted state of this System Table. This object interacts with the database to store the state of the System Table
      * on disk.
      */
-    private final ISystemTableRemote persisted;
+    private final ISystemTable persisted;
 
     /**
      * Fields related to the migration functionality of the System Table.
@@ -140,19 +140,19 @@ public class SystemTable implements ISystemTableRemote {
     }
 
     @Override
-    public void buildSystemTableState(final ISystemTableRemote otherSystemTable) throws RPCException, MovedException, SQLException {
+    public void recreateSystemTable(final ISystemTable otherSystemTable) throws RPCException, MovedException, SQLException {
 
         preMethodTest();
-        inMemory.buildSystemTableState(otherSystemTable);
+        inMemory.recreateSystemTable(otherSystemTable);
 
-        persisted.buildSystemTableState(otherSystemTable);
+        persisted.recreateSystemTable(otherSystemTable);
     }
 
     @Override
-    public void buildSystemTableState() throws RPCException, MovedException, SQLException {
+    public void recreateInMemorySystemTableFromLocalPersistedState() throws RPCException, MovedException, SQLException {
 
         preMethodTest();
-        inMemory.buildSystemTableState(persisted);
+        inMemory.recreateSystemTable(persisted);
 
     }
 

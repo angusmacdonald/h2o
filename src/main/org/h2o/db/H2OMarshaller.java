@@ -15,7 +15,8 @@ import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
-import org.h2o.db.manager.interfaces.ISystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTable;
+import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.query.TableProxy;
 import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.query.locking.LockRequest;
@@ -107,13 +108,13 @@ public class H2OMarshaller extends Marshaller {
 
     /////////////////////
 
-    public JSONValue serializeISystemTableRemote(final ISystemTableRemote source) { // yes is a reference type
+    public JSONValue serializeISystemTableRemote(final ISystemTable source) { // yes is a reference type
 
         // TODO FIX ME I AM A REFERENCE TYPE
         return null;
     }
 
-    public ISystemTableRemote deserializeSystemTableRemote(final JSONObject object) {
+    public ISystemTableMigratable deserializeISystemTableRemote(final JSONObject object) {
 
         // TODO FIX ME I AM A REFERENCE TYPE
         return null;

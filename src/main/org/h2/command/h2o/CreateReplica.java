@@ -74,7 +74,7 @@ import org.h2.value.ValueTimestamp;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.PersistentSystemTable;
-import org.h2o.db.manager.interfaces.ISystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.viewer.H2OEventBus;
@@ -247,7 +247,7 @@ public class CreateReplica extends SchemaCommand {
 
             if (result == 0) {
                 try {
-                    final ISystemTableRemote sm = db.getSystemTable();
+                    final ISystemTableMigratable sm = db.getSystemTable();
 
                     final Table table = getSchema().findTableOrView(session, tableName, LocationPreference.NO_PREFERENCE);
 
