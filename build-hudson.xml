@@ -5,7 +5,7 @@
 
 	<import file="${hudson-tools-archive-dir}/build-common.xml"/>
 
-	<target name="build" depends="do-init-release, do-compile, do-test-no-coverage, project-jar, release-doc, do-checkstyle, do-findbugs, do-cpd, do-highlight" />
+	<target name="build" depends="do-init-release, do-compile, do-test-no-coverage, project-jar, 3rd-party-jars, project-release, release-doc, do-checkstyle, do-findbugs, do-cpd, do-highlight" />
 
 	<target name="build-nightly" depends="do-init-release, do-compile, do-test-nightly" />
 
@@ -23,6 +23,7 @@
 	    <pathelement location="${lib-stachord}" />
 	    <pathelement location="${lib-json}" />
 	    <pathelement location="${lib-junit}" />
+	    <pathelement location="${lib-mindterm}" />
         <pathelement location="${lib-tools}" />
         <pathelement location="${lib-lucene}" />
         <pathelement location="${lib-osgi}" />
@@ -60,11 +61,6 @@
 		<jar destfile="bin/h2o.jar">
             <manifest>
                 <attribute name="Main-Class" value="org.h2o.H2O"/>
-                <attribute name="Class-Path" value="json.jar" />
-                <attribute name="Class-Path" value="lucene-core-2.2.0.jar" />
-                <attribute name="Class-Path" value="org.osgi.core-1.2.0.jar" />
-                <attribute name="Class-Path" value="servlet-api-2.4.jar" />
-                <attribute name="Class-Path" value="slf4j-api-1.5.0.jar" />
             </manifest>
 			<fileset dir="bin" includes="**/*.class" />
 			<fileset dir="src/main" />
@@ -72,6 +68,24 @@
 		    <zipfileset src="${lib-nds}"/>
 		    <zipfileset src="${lib-stachord}"/>
 		</jar>
+	</target>
+
+	<!-- Copy 3rd party jars. -->
+	<target name="3rd-party-jars">
+		<copy file="${lib-json}" todir="lib" />
+		<copy file="${lib-mindterm}" todir="lib" />
+		<copy file="${lib-lucene}" todir="lib" />
+		<copy file="${lib-osgi}" todir="lib" />
+		<copy file="${lib-servlet}" todir="lib" />
+		<copy file="${lib-slf4j}" todir="lib" />
+	</target>
+
+	<!-- Generate project release containing jar and libraries. -->
+	<target name="project-release">
+		<zip destfile="bin/stachord.zip">
+			<fileset dir="bin" includes="**/*.jar" />
+			<fileset dir="lib" includes="**/*.jar" />
+		</zip>
 	</target>
 
 	<!-- Generate javadoc. -->
