@@ -20,9 +20,9 @@ public class TableInfo implements Serializable {
      */
     private static final long serialVersionUID = -2023146600034394467L;
 
-    private final String tableName;
-
     private final String schemaName;
+
+    private final String tableName;
 
     private long modificationID;
 

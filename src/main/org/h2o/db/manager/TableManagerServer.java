@@ -1,7 +1,7 @@
 package org.h2o.db.manager;
 
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.Set;
 
 import org.h2o.db.H2OMarshaller;
 import org.h2o.db.id.DatabaseID;
@@ -120,7 +120,7 @@ public class TableManagerServer extends ApplicationServer {
 
                 final boolean p0 = args.getBoolean(0);
                 final LockRequest p1 = marshaller.deserializeLockRequest(args.getJSONObject(1));
-                final Set<CommitResult> p2 = marshaller.deserializeSetCommitResult(args.getJSONArray(2));
+                final Collection<CommitResult> p2 = marshaller.deserializeCollectionCommitResult(args.getJSONArray(2));
                 final boolean p3 = args.getBoolean(3);
                 table_manager.releaseLockAndUpdateReplicaState(p0, p1, p2, p3);
                 return JSONValue.NULL;
@@ -235,18 +235,7 @@ public class TableManagerServer extends ApplicationServer {
             }
         });
 
-        // public TableInfo getTableInfo() throws RPCException
-
-        handler_map.put("getTableInfo", new Handler() {
-
-            @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
-
-                return marshaller.serializeTableInfo(table_manager.getTableInfo());
-            }
-        });
-
-        // public Map<DatabaseInstanceWrapper, Integer> getActiveReplicas() throws RPCException, MovedException {
+        // public Map<DatabaseInstanceWrapper, Integer> getActiveReplicas() throws RPCException, MovedException
 
         handler_map.put("getActiveReplicas", new Handler() {
 
@@ -257,7 +246,7 @@ public class TableManagerServer extends ApplicationServer {
             }
         });
 
-        // public Map<DatabaseInstanceWrapper, Integer> getAllReplicas() throws RPCException, MovedException {
+        // public Map<DatabaseInstanceWrapper, Integer> getAllReplicas() throws RPCException, MovedException
 
         handler_map.put("getAllReplicas", new Handler() {
 
@@ -268,16 +257,15 @@ public class TableManagerServer extends ApplicationServer {
             }
         });
 
-        //  public DatabaseInstanceWrapper getDatabaseLocation() throws RPCException, MovedException {
+        // public TableInfo getTableInfo() throws RPCException
 
-        handler_map.put("getDatabaseLocation", new Handler() {
+        handler_map.put("getTableInfo", new Handler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                return marshaller.serializeDatabaseInstanceWrapper(table_manager.getDatabaseLocation());
+                return marshaller.serializeTableInfo(table_manager.getTableInfo());
             }
         });
-
     }
 }

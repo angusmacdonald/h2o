@@ -27,7 +27,7 @@ import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
-import org.h2o.db.manager.interfaces.ISystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.remote.IDatabaseRemote;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
@@ -42,7 +42,7 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class PersistentSystemTable extends PersistentManager implements ISystemTableRemote {
+public class PersistentSystemTable extends PersistentManager implements ISystemTable {
 
     /**
      * Name of the schema used to store System Table tables.
@@ -164,7 +164,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     }
 
     @Override
-    public void buildSystemTableState(final ISystemTableRemote otherSystemTable) throws RPCException {
+    public void buildSystemTableState(final ISystemTable otherSystemTable) throws RPCException {
 
         /*
          * Persist the state of the given System Table reference to disk.

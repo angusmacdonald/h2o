@@ -141,7 +141,7 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
             final JSONArray params = new JSONArray();
             params.put(marshaller.serializeLockType(lockType).getValue());
             params.put(marshaller.serializeLockRequest(lockRequest).getValue());
-            return marshaller.deserializeTableProxy(makeCall("getTableProxy", params));
+            return marshaller.deserializeTableProxy(makeCall("getTableProxy", params).getJSONObject());
         }
         catch (final MovedException e) {
             throw e;
@@ -410,9 +410,6 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
         try {
             return marshaller.deserializeMapDatabaseInstanceWrapperInteger(makeCall("getActiveReplicas").getJSONObject());
         }
-        catch (final MovedException e) {
-            throw e;
-        }
         catch (final Exception e) {
             dealWithException(e);
             return null; // not reached
@@ -424,9 +421,6 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
 
         try {
             return marshaller.deserializeMapDatabaseInstanceWrapperInteger(makeCall("getAllReplicas").getJSONObject());
-        }
-        catch (final MovedException e) {
-            throw e;
         }
         catch (final Exception e) {
             dealWithException(e);
@@ -440,12 +434,10 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
         try {
             return marshaller.deserializeDatabaseInstanceWrapper(makeCall("getDatabaseLocation").getJSONObject());
         }
-        catch (final MovedException e) {
-            throw e;
-        }
         catch (final Exception e) {
             dealWithException(e);
             return null; // not reached
         }
     }
+
 }

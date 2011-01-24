@@ -626,7 +626,7 @@ public class H2OMarshaller extends Marshaller {
         return object;
     }
 
-    private Collection<TableManagerWrapper> deserializeCollectionTableManagerWrapper(final JSONArray array) throws DeserializationException {
+    public Set<TableManagerWrapper> deserializeCollectionTableManagerWrapper(final JSONArray array) throws DeserializationException {
 
         if (array == null) { return null; }
 
@@ -891,7 +891,7 @@ public class H2OMarshaller extends Marshaller {
 
     /////////////////////
 
-    public JSONValue serializeSetCommitResult(final Set<CommitResult> source) {
+    public JSONValue serializeCollectionCommitResult(final Collection<CommitResult> source) {
 
         final JSONArray object = new JSONArray();
         for (final CommitResult instance : source) {
@@ -900,7 +900,7 @@ public class H2OMarshaller extends Marshaller {
         return new JSONValue(object);
     }
 
-    public Set<CommitResult> deserializeSetCommitResult(final JSONArray array) throws DeserializationException {
+    public Set<CommitResult> deserializeCollectionCommitResult(final JSONArray array) throws DeserializationException {
 
         if (array == null) { return null; }
 

@@ -9,7 +9,7 @@ import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
-import org.h2o.db.manager.interfaces.ISystemTableRemote;
+import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.interfaces.ISystemTableRemote;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.json.JSONArray;
@@ -139,7 +139,7 @@ public class SystemTableServer extends ApplicationServer {
 
                 final ITableManagerRemote p0 = marshaller.deserializeITableManagerRemote(args.getJSONObject(0));
                 final TableInfo p1 = marshaller.deserializeTableInfo(args.getJSONObject(1));
-                final Set<DatabaseInstanceWrapper> p2 = marshaller.deserializeSetDatabaseInstanceWrapper(args.getJSONObject(2));
+                final Set<DatabaseInstanceWrapper> p2 = marshaller.deserializeCollectionDatabaseInstanceWrapper(args.getJSONArray(2));
                 return new JSONValue(system_table.addTableInformation(p0, p1, p2));
             }
         });
@@ -204,7 +204,7 @@ public class SystemTableServer extends ApplicationServer {
                     system_table.buildSystemTableState();
                 }
                 else {
-                    final ISystemTableRemote p0 = marshaller.deserializeISystemTable(args.getJSONObject(0));
+                    final ISystemTable p0 = marshaller.deserializeISystemTable(args.getJSONObject(0));
                     system_table.buildSystemTableState(p0);
                 }
                 return JSONValue.NULL;
@@ -287,7 +287,7 @@ public class SystemTableServer extends ApplicationServer {
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                return marshaller.serializeSetDatabaseInstanceWrapper(system_table.getDatabaseInstances());
+                return marshaller.serializeCollectionDatabaseInstanceWrapper(system_table.getDatabaseInstances());
             }
         });
 
