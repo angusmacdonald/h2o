@@ -173,6 +173,21 @@ public class Settings {
          */
         defaults.setProperty("diagnosticLevel", "INIT"); //Options that make sense for this system: NONE, FINAL, INIT, FULL
 
+        /*
+         * The preferred port on which the table manager server will run. 
+         */
+        defaults.setProperty("TABLE_MANAGER_SERVER_PORT", "60100");
+
+        /*
+         * The preferred port on which the system table server will run. 
+         */
+        defaults.setProperty("SYSTEM_TABLE_SERVER_PORT", "61100");
+
+        /*
+         * The preferred port on which the database instance server will run. 
+         */
+        defaults.setProperty("DATABASE_INSTANCE_SERVER_PORT", "62100");
+
         return defaults;
     }
 

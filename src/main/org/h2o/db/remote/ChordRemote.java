@@ -46,7 +46,6 @@ import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.SystemTableReference;
 import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
-import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.db.replication.MetaDataReplicaManager;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
@@ -519,7 +518,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     @Override
     public IDatabaseInstanceRemote getDatabaseInstanceAt(final String hostname, final int port) throws RPCException, NotBoundException {
 
-        return new DatabaseInstanceProxy(new InetSocketAddress(hostname, port));
+        return DatabaseInstanceProxy.getProxy(new InetSocketAddress(hostname, port));
 
     }
 

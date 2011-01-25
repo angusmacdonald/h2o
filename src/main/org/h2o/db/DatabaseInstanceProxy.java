@@ -31,7 +31,17 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
 
     // -------------------------------------------------------------------------------------------------------
 
-    public DatabaseInstanceProxy(final InetSocketAddress node_address) {
+    public static synchronized DatabaseInstanceProxy getProxy(final InetSocketAddress proxy_address) {
+
+        DatabaseInstanceProxy proxy = proxy_map.get(proxy_address);
+        if (proxy == null) {
+            proxy = new DatabaseInstanceProxy(proxy_address);
+            proxy_map.put(proxy_address, proxy);
+        }
+        return proxy;
+    }
+
+    protected DatabaseInstanceProxy(final InetSocketAddress node_address) {
 
         super(node_address);
     }
@@ -167,7 +177,7 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
             final JSONArray params = new JSONArray();
             params.put(marshaller.serializeTableInfo(tableInfo).getValue());
             params.put(searchOnlyCache);
-            return marshaller.deserializeITableManagerRemote(makeCall("findTableManagerReference", params).getJSONObject());
+            return marshaller.deserializeITableManagerRemote(makeCall("findTableManagerReference", params).getString());
         }
         catch (final Exception e) {
             dealWithException(e);
@@ -193,7 +203,7 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     public ISystemTableMigratable recreateSystemTable() throws RPCException, SQLException, SystemTableAccessException {
 
         try {
-            return marshaller.deserializeISystemTableRemote(makeCall("recreateSystemTable").getJSONObject());
+            return marshaller.deserializeISystemTableMigratable(makeCall("recreateSystemTable").getString());
         }
         catch (final SQLException e) {
             throw e;
@@ -238,7 +248,7 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     public ISystemTableMigratable getSystemTable() throws RPCException {
 
         try {
-            return marshaller.deserializeISystemTableRemote(makeCall("getSystemTable").getJSONObject());
+            return marshaller.deserializeISystemTableMigratable(makeCall("getSystemTable").getString());
         }
         catch (final Exception e) {
             dealWithException(e);

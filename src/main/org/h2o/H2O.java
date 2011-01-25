@@ -27,8 +27,6 @@ package org.h2o;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -51,6 +49,7 @@ import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.test.fixture.DatabaseType;
+import org.h2o.util.H2ONetUtils;
 import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.exceptions.StartupException;
 
@@ -381,7 +380,7 @@ public class H2O {
 
         // Web Interface.
 
-        webPort = getInactiveTCPPort(webPort);
+        webPort = H2ONetUtils.getInactiveTCPPort(webPort);
 
         if (webPort != 0) {
             h2oArgs.add("-web");
@@ -395,50 +394,6 @@ public class H2O {
 
         server = new Server();
         server.run(h2oArgs.toArray(new String[0]), System.out);
-    }
-
-    /**
-     * Find a TCP port that is available to be used by the database. Use the specified TCP port if possible,
-     * but not if it is currently used by another server.
-     * @param preferredTCPPort
-     * @return
-     */
-    private int getInactiveTCPPort(final int preferredTCPPort) {
-
-        Socket sock = null; //Attempt to create a socket connection to the specified port.
-
-        int tcpPortToUse = preferredTCPPort; //The port we'll try to connect to. The upcoming loop will keep on attempting connections until an open port is found.
-
-        boolean freePortFound = false;
-
-        while (!freePortFound) {
-            try {
-                sock = new Socket(NetUtils.getLocalAddress(), tcpPortToUse);
-                ErrorHandling.errorNoEvent("Can't use preferred TCP port " + tcpPortToUse + "");
-                tcpPortToUse++;
-            }
-            catch (final UnknownHostException e) {
-                ErrorHandling.errorNoEvent("Couldn't establish a local hostname. The database may start but it might try to start it's TCP server on a port" + " alread bound by another application.");
-                freePortFound = true; //not found, but there's nothing we can do here if the hostname doesn't resolve.
-            }
-            catch (final IOException e) {
-                freePortFound = true;
-                //Nothing is bound to this port - it can be used for this database instance.
-            }
-            finally {
-                try {
-                    if (sock != null && !sock.isClosed()) {
-                        sock.close();
-                    }
-                }
-                catch (final IOException e) {
-                    //Not important at this point.
-                }
-
-            }
-        }
-
-        return tcpPortToUse;
     }
 
     private void shutdownServer() {
@@ -552,7 +507,7 @@ public class H2O {
             databaseInstanceIdentifier = generateNewDatabaseID();
         }
 
-        final int tcpPortToUse = getInactiveTCPPort(tcpPort);
+        final int tcpPortToUse = H2ONetUtils.getInactiveTCPPort(tcpPort);
 
         switch (databaseType) {
             case DISK: {

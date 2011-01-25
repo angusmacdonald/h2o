@@ -180,7 +180,7 @@ public class TableManagerServer extends ApplicationServer {
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                final ITableManagerRemote p0 = marshaller.deserializeITableManagerRemote(args.getJSONObject(0));
+                final ITableManagerRemote p0 = marshaller.deserializeITableManagerRemote(args.getString(0));
                 table_manager.buildTableManagerState(p0);
                 return JSONValue.NULL;
             }

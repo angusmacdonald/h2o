@@ -1,5 +1,6 @@
 package org.h2o.db;
 
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,6 +12,8 @@ import org.json.JSONArray;
 import uk.ac.standrews.cs.nds.rpc.ApplicationServer;
 import uk.ac.standrews.cs.nds.rpc.Handler;
 import uk.ac.standrews.cs.nds.rpc.JSONValue;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.NetworkUtil;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 public class DatabaseInstanceServer extends ApplicationServer {
@@ -19,7 +22,15 @@ public class DatabaseInstanceServer extends ApplicationServer {
     private final IDatabaseInstanceRemote instance;
     private static final H2OMarshaller marshaller = new H2OMarshaller();
 
-    public DatabaseInstanceServer(final IDatabaseInstanceRemote instance) {
+    public DatabaseInstanceServer(final IDatabaseInstanceRemote instance, final int port) {
+
+        super.setPort(port);
+        try {
+            super.setLocalAddress(NetworkUtil.getLocalIPv4Address());
+        }
+        catch (final UnknownHostException e) {
+            ErrorHandling.hardExceptionError(e, "Couldn't find local IP address.");
+        }
 
         this.instance = instance;
         handler_map = new HashMap<String, Handler>();
@@ -129,7 +140,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                return marshaller.serializeISystemTableRemote(instance.recreateSystemTable());
+                return marshaller.serializeISystemTableMigratable(instance.recreateSystemTable());
             }
         });
 
@@ -164,7 +175,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                return marshaller.serializeISystemTableRemote(instance.getSystemTable());
+                return marshaller.serializeISystemTableMigratable(instance.getSystemTable());
             }
         });
 

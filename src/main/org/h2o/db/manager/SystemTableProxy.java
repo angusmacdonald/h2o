@@ -36,6 +36,16 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
         proxy_map = new HashMap<InetSocketAddress, SystemTableProxy>();
     }
 
+    public static synchronized SystemTableProxy getProxy(final InetSocketAddress proxy_address) {
+
+        SystemTableProxy proxy = proxy_map.get(proxy_address);
+        if (proxy == null) {
+            proxy = new SystemTableProxy(proxy_address);
+            proxy_map.put(proxy_address, proxy);
+        }
+        return proxy;
+    }
+
     protected SystemTableProxy(final InetSocketAddress node_address) {
 
         super(node_address);
@@ -174,19 +184,26 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     @Override
     public void recreateSystemTable(final ISystemTable otherSystemTable) throws RPCException, MovedException, SQLException {
 
-        try {
-            final JSONArray params = new JSONArray();
-            params.put(marshaller.serializeISystemTableRemote(otherSystemTable).getValue());
-            makeCall("recreateSystemTable", params);
+        if (otherSystemTable instanceof ISystemTableMigratable) {
+            final ISystemTableMigratable migratableSystemTable = (ISystemTableMigratable) otherSystemTable;
+
+            try {
+                final JSONArray params = new JSONArray();
+                params.put(marshaller.serializeISystemTableMigratable(migratableSystemTable).getValue());
+                makeCall("recreateSystemTable", params);
+            }
+            catch (final MovedException e) {
+                throw e;
+            }
+            catch (final SQLException e) {
+                throw e;
+            }
+            catch (final Exception e) {
+                dealWithException(e);
+            }
         }
-        catch (final MovedException e) {
-            throw e;
-        }
-        catch (final SQLException e) {
-            throw e;
-        }
-        catch (final Exception e) {
-            dealWithException(e);
+        else {
+            throw new RPCException("Tried to serialize an implementing class of ISystemTable that was not migratable.");
         }
     }
 
@@ -412,7 +429,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
         try {
             final JSONArray params = new JSONArray();
             params.put(marshaller.serializeTableInfo(table).getValue());
-            return marshaller.deserializeITableManagerRemote(makeCall("recreateTableManager", params).getJSONObject());
+            return marshaller.deserializeITableManagerRemote(makeCall("recreateTableManager", params).getString());
         }
         catch (final MovedException e) {
             throw e;

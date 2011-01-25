@@ -1,5 +1,6 @@
 package org.h2o.db;
 
+import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,7 +16,8 @@ import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
-import org.h2o.db.manager.interfaces.ISystemTable;
+import org.h2o.db.manager.SystemTableProxy;
+import org.h2o.db.manager.TableManagerProxy;
 import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.query.TableProxy;
 import org.h2o.db.query.asynchronous.CommitResult;
@@ -31,8 +33,10 @@ import org.json.JSONObject;
 import uk.ac.standrews.cs.nds.rpc.DeserializationException;
 import uk.ac.standrews.cs.nds.rpc.JSONValue;
 import uk.ac.standrews.cs.nds.rpc.Marshaller;
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.stachord.impl.ChordRemoteMarshaller;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
@@ -96,36 +100,53 @@ public class H2OMarshaller extends Marshaller {
 
     public JSONValue serializeITableManagerRemote(final ITableManagerRemote source) { // yes is a reference type
 
-        // TODO FIX ME I AM A REFERENCE TYPE
-        return null;
+        try {
+            return serializeInetSocketAddress(source.getAddress());
+        }
+        catch (final RPCException e) {
+            ErrorHandling.exceptionError(e, "Unexpected RPCException.");
+            return JSONValue.NULL;
+        }
     }
 
-    public ITableManagerRemote deserializeITableManagerRemote(final JSONObject object) {
+    public ITableManagerRemote deserializeITableManagerRemote(final String address_string) throws DeserializationException {
 
-        // TODO FIX ME I AM A REFERENCE TYPE
-        return null;
-    }
+        final InetSocketAddress address = deserializeInetSocketAddress(address_string);
 
-    /////////////////////
-
-    public JSONValue serializeISystemTableRemote(final ISystemTable source) { // yes is a reference type
-
-        // TODO FIX ME I AM A REFERENCE TYPE
-        return null;
-    }
-
-    public ISystemTableMigratable deserializeISystemTableRemote(final JSONObject object) {
-
-        // TODO FIX ME I AM A REFERENCE TYPE
-        return null;
+        return TableManagerProxy.getProxy(address);
     }
 
     /////////////////////
 
-    public JSONValue serializeIDatabaseInstanceRemote(final IDatabaseInstanceRemote source) { // yes is a reference type
+    public JSONValue serializeISystemTableMigratable(final ISystemTableMigratable source) { // yes is a reference type
 
-        // TODO FIX ME I AM A REFERENCE TYPE
-        return null;
+        try {
+            return serializeInetSocketAddress(source.getAddress());
+        }
+        catch (final RPCException e) {
+            ErrorHandling.exceptionError(e, "Unexpected RPCException.");
+            return JSONValue.NULL;
+        }
+    }
+
+    public ISystemTableMigratable deserializeISystemTableMigratable(final String address_string) throws DeserializationException {
+
+        final InetSocketAddress address = deserializeInetSocketAddress(address_string);
+
+        return SystemTableProxy.getProxy(address);
+    }
+
+    /////////////////////
+
+    public JSONValue serializeIDatabaseInstanceRemote(final IDatabaseInstanceRemote source) {
+
+        try {
+            return serializeInetSocketAddress(source.getAddress());
+        }
+        catch (final RPCException e) {
+            ErrorHandling.exceptionError(e, "Unexpected RPCException.");
+            return JSONValue.NULL;
+        }
     }
 
     public IDatabaseInstanceRemote deserializeIDatabaseInstanceRemote(final JSONObject object) {
@@ -404,7 +425,7 @@ public class H2OMarshaller extends Marshaller {
 
         try {
             final TableInfo tableInfo = deserializeTableInfo(object.getJSONObject(TABLE_INFO));
-            final ITableManagerRemote tableManager = deserializeITableManagerRemote(object.getJSONObject(TABLE_MANAGER));
+            final ITableManagerRemote tableManager = deserializeITableManagerRemote(object.getString(TABLE_MANAGER));
             final DatabaseID tableManagerURL = deserializeDatabaseID(object.getJSONObject(TABLE_MANAGER_URL));
 
             return new TableManagerWrapper(tableInfo, tableManager, tableManagerURL);
@@ -451,7 +472,7 @@ public class H2OMarshaller extends Marshaller {
             final LockType lockGranted = deserializeLockType(object.getString(LOCK_GRANTED));
             final TableInfo tableName = deserializeTableInfo(object.getJSONObject(TABLE_NAME));
             final Map<DatabaseInstanceWrapper, Integer> allReplicas = deserializeMapDatabaseInstanceWrapperInteger(object.getJSONObject(ALL_REPLICAS));
-            final ITableManagerRemote tableManager = deserializeITableManagerRemote(object.getJSONObject(TABLE_MANAGER));
+            final ITableManagerRemote tableManager = deserializeITableManagerRemote(object.getString(TABLE_MANAGER));
             final LockRequest requestingDatabase = deserializeLockRequest(object.getJSONObject(REQUESTING_DATABASE));
             final int updateID = object.getInt(UPDATE_ID);
             final LockType lockRequested = deserializeLockType(object.getString(LOCK_REQUESTED));

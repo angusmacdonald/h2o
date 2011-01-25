@@ -1,5 +1,6 @@
 package org.h2o.db.manager;
 
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -16,6 +17,8 @@ import org.json.JSONArray;
 import uk.ac.standrews.cs.nds.rpc.ApplicationServer;
 import uk.ac.standrews.cs.nds.rpc.Handler;
 import uk.ac.standrews.cs.nds.rpc.JSONValue;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.NetworkUtil;
 
 public class SystemTableServer extends ApplicationServer {
 
@@ -23,7 +26,15 @@ public class SystemTableServer extends ApplicationServer {
     private final HashMap<String, Handler> handler_map;
     private static final H2OMarshaller marshaller = new H2OMarshaller();
 
-    public SystemTableServer(final ISystemTableMigratable system_table) {
+    public SystemTableServer(final ISystemTableMigratable system_table, final int port) {
+
+        super.setPort(port);
+        try {
+            super.setLocalAddress(NetworkUtil.getLocalIPv4Address());
+        }
+        catch (final UnknownHostException e) {
+            ErrorHandling.hardExceptionError(e, "Couldn't find local IP address.");
+        }
 
         this.system_table = system_table;
         handler_map = new HashMap<String, Handler>();
@@ -136,7 +147,7 @@ public class SystemTableServer extends ApplicationServer {
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                final ITableManagerRemote p0 = marshaller.deserializeITableManagerRemote(args.getJSONObject(0));
+                final ITableManagerRemote p0 = marshaller.deserializeITableManagerRemote(args.getString(0));
                 final TableInfo p1 = marshaller.deserializeTableInfo(args.getJSONObject(1));
                 final Set<DatabaseInstanceWrapper> p2 = marshaller.deserializeCollectionDatabaseInstanceWrapper(args.getJSONArray(2));
                 return new JSONValue(system_table.addTableInformation(p0, p1, p2));
@@ -198,7 +209,7 @@ public class SystemTableServer extends ApplicationServer {
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                final ISystemTableMigratable p0 = marshaller.deserializeISystemTableRemote(args.getJSONObject(0));
+                final ISystemTableMigratable p0 = marshaller.deserializeISystemTableMigratable(args.getString(0));
                 system_table.recreateSystemTable(p0);
 
                 return JSONValue.NULL;
@@ -330,7 +341,7 @@ public class SystemTableServer extends ApplicationServer {
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                final ITableManagerRemote p0 = marshaller.deserializeITableManagerRemote(args.getJSONObject(0));
+                final ITableManagerRemote p0 = marshaller.deserializeITableManagerRemote(args.getString(0));
                 final TableInfo p1 = marshaller.deserializeTableInfo(args.getJSONObject(1));
                 system_table.changeTableManagerLocation(p0, p1);
                 return JSONValue.NULL;

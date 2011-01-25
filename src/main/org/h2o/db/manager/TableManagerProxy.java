@@ -35,6 +35,16 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
         proxy_map = new HashMap<InetSocketAddress, TableManagerProxy>();
     }
 
+    public static synchronized TableManagerProxy getProxy(final InetSocketAddress proxy_address) {
+
+        TableManagerProxy proxy = proxy_map.get(proxy_address);
+        if (proxy == null) {
+            proxy = new TableManagerProxy(proxy_address);
+            proxy_map.put(proxy_address, proxy);
+        }
+        return proxy;
+    }
+
     protected TableManagerProxy(final InetSocketAddress node_address) {
 
         super(node_address);

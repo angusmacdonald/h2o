@@ -113,6 +113,7 @@ import org.h2o.db.remote.IDatabaseRemote;
 import org.h2o.db.replication.MetaDataReplicaManager;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.locator.client.H2OLocatorInterface;
+import org.h2o.util.H2ONetUtils;
 import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.TransactionNameGenerator;
 import org.h2o.util.exceptions.MovedException;
@@ -911,10 +912,31 @@ public class Database implements DataHandler {
 
             // Establish Proxies
 
-            table_manager_instance_server = new TableManagerInstanceServer();
-            database_instance_server = new DatabaseInstanceServer(getLocalDatabaseInstance()); // TODO <<<<<<--- ANGUS: We need to set local address and posr, start this running, database_instance_server.start() and provide way of getting address/port for serialisation
-            system_table_server = null; // added if we become a system table.
+            int preferredTableManagerPort = Integer.parseInt(databaseSettings.get("TABLE_MANAGER_SERVER_PORT"));
+            preferredTableManagerPort = H2ONetUtils.getInactiveTCPPort(preferredTableManagerPort);
 
+            table_manager_instance_server = new TableManagerInstanceServer(preferredTableManagerPort);
+
+            try {
+                table_manager_instance_server.start();
+            }
+            catch (final IOException e) {
+                ErrorHandling.hardExceptionError(e, "Couldn't start table manager instance server.");
+            }
+
+            int preferredDatabaseInstancePort = Integer.parseInt(databaseSettings.get("DATABASE_INSTANCE_SERVER_PORT"));
+            preferredDatabaseInstancePort = H2ONetUtils.getInactiveTCPPort(preferredDatabaseInstancePort);
+
+            database_instance_server = new DatabaseInstanceServer(getLocalDatabaseInstance(), preferredDatabaseInstancePort);
+
+            try {
+                database_instance_server.start();
+            }
+            catch (final IOException e) {
+                ErrorHandling.hardExceptionError(e, "Couldn't start database instance server.");
+            }
+
+            system_table_server = null;
             /*
              * Create Meta-Data Replication Manager. Must be executed after call to databaseRemote because of
              * getLocalDatabaseInstanceInWrapper() call.
@@ -1040,6 +1062,18 @@ public class Database implements DataHandler {
             catch (final Exception e) {
                 e.printStackTrace();
                 ErrorHandling.hardError(e.getMessage());
+            }
+
+            int preferredSystemTablePort = Integer.parseInt(databaseSettings.get("SYSTEM_TABLE_SERVER_PORT"));
+            preferredSystemTablePort = H2ONetUtils.getInactiveTCPPort(preferredSystemTablePort);
+
+            system_table_server = new SystemTableServer(systemTable, preferredSystemTablePort); // added if we become a system table.
+
+            try {
+                system_table_server.start();
+            }
+            catch (final IOException e) {
+                ErrorHandling.hardExceptionError(e, "Couldn't start system table instance server.");
             }
 
             systemTableRef.setSystemTable(systemTable);

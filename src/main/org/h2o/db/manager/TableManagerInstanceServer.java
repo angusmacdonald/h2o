@@ -1,5 +1,6 @@
 package org.h2o.db.manager;
 
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,6 +12,7 @@ import uk.ac.standrews.cs.nds.rpc.Handler;
 import uk.ac.standrews.cs.nds.rpc.JSONValue;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.NetworkUtil;
 
 /**
  * This class maintains a Map of exported Table Managers and provides an RMI mechanism over the underlying JSON RPC mechanism.
@@ -26,7 +28,15 @@ public class TableManagerInstanceServer extends ApplicationServer {
      */
     private final Map<String, TableManagerServer> table_manager_instances;
 
-    public TableManagerInstanceServer() {
+    public TableManagerInstanceServer(final int port) {
+
+        super.setPort(port);
+        try {
+            super.setLocalAddress(NetworkUtil.getLocalIPv4Address());
+        }
+        catch (final UnknownHostException e) {
+            ErrorHandling.hardExceptionError(e, "Couldn't find local IP address.");
+        }
 
         table_manager_instances = new HashMap<String, TableManagerServer>();
     }
