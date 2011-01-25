@@ -541,10 +541,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         try {
             chordNode = ChordNodeFactory.createLocalNode(localChordAddress);
         }
-        catch (final RemoteChordException e) {
-            e.printStackTrace();
-            return false;
-        }
         catch (final IOException e) {
             e.printStackTrace();
             return false;
@@ -555,11 +551,10 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         actualSystemTableLocation = databaseURL;
 
         systemTableRef.setInKeyRange(true);
-
         chordNode.addObserver(this);
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.INIT,
-                        "Started local Chord node on : " + databaseURL.sanitizedLocation() + " : " + hostname + ":" + port + " : initialized with key :" + chordNode.getKey().toString(10) + " : " + chordNode.getKey() + " : System Table at " + systemTableRef.getLookupLocation() + " : ");
+        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Started local Chord node on : ", databaseURL.sanitizedLocation(), " : ", hostname, ":", port, " : initialized with key :", chordNode.getKey().toString(10), " : ", chordNode.getKey(), " : System Table at ", systemTableRef.getLookupLocation(),
+                        " : ");
 
         return true;
     }
