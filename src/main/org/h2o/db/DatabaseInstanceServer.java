@@ -12,6 +12,7 @@ import org.json.JSONArray;
 import uk.ac.standrews.cs.nds.rpc.ApplicationServer;
 import uk.ac.standrews.cs.nds.rpc.Handler;
 import uk.ac.standrews.cs.nds.rpc.JSONValue;
+import uk.ac.standrews.cs.nds.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.nds.util.NetworkUtil;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
@@ -39,10 +40,15 @@ public class DatabaseInstanceServer extends ApplicationServer {
     }
 
     @Override
+    public Marshaller getMarshaller() {
+
+        return marshaller;
+    }
+
+    @Override
     public Handler getHandler(final String method_name) {
 
-        // TODO AL Auto-generated method stub
-        return null;
+        return handler_map.get(method_name);
     }
 
     private void initHandlers() {

@@ -29,12 +29,21 @@ import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
     private static final Map<InetSocketAddress, SystemTableProxy> proxy_map;
-    private static final H2OMarshaller marshaller;
+    private final H2OMarshaller marshaller;
 
     static {
-        marshaller = new H2OMarshaller();
         proxy_map = new HashMap<InetSocketAddress, SystemTableProxy>();
     }
+
+    // -------------------------------------------------------------------------------------------------------
+
+    protected SystemTableProxy(final InetSocketAddress node_address) {
+
+        super(node_address);
+        marshaller = new H2OMarshaller();
+    }
+
+    // -------------------------------------------------------------------------------------------------------
 
     public static synchronized SystemTableProxy getProxy(final InetSocketAddress proxy_address) {
 
@@ -46,10 +55,15 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
         return proxy;
     }
 
-    protected SystemTableProxy(final InetSocketAddress node_address) {
+    // -------------------------------------------------------------------------------------------------------
 
-        super(node_address);
+    @Override
+    public Marshaller getMarshaller() {
+
+        return marshaller;
     }
+
+    // -------------------------------------------------------------------------------------------------------
 
     @Override
     public TableManagerWrapper lookup(final TableInfo ti) throws RPCException, MovedException {
@@ -564,7 +578,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public InetSocketAddress getAddress() throws RPCException {
 
         try {
-            return Marshaller.deserializeInetSocketAddress(makeCall("getAddress").getString());
+            return marshaller.deserializeInetSocketAddress(makeCall("getAddress").getString());
         }
         catch (final Exception e) {
             dealWithException(e);

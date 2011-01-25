@@ -70,14 +70,14 @@ import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 /**
  * The interface between a local database instance and the rest of the database system.
- * 
+ *
  * <p>
  * Methods defined in IChordInterface relate to the database's interface and interactions with Chord.
- * 
+ *
  * <p>
  * Methods defined in IDatabaseRemote represent the rest of the databases distributed state such as remote references to the local
  * databases, database lookup capabilities.
- * 
+ *
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
@@ -103,7 +103,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     private static final String LOCAL_DATABASE_INSTANCE = "LOCAL_INSTANCE";
 
     /**
-     * The timeout interval for contacting locator servers. 
+     * The timeout interval for contacting locator servers.
      */
     private static final long LOCATOR_CONTACT_RETRY_TIMEOUT = 30000;
 
@@ -186,9 +186,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
     /**
      * Attempt to establish a new Chord connection by trying to connect to a number of known hosts.
-     * 
+     *
      * If no established ring is found a new Chord ring will be created.
-     * 
+     *
      * @param databaseSettings
      */
     private DatabaseID establishChordConnection(final DatabaseID localMachineLocation, final Session session) throws StartupException {
@@ -377,7 +377,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
     /**
      * Get a reference to the locator servers for this database system.
-     * 
+     *
      * @param localDatabaseProperties a properties file containing the location of the database descriptor and the name of the database
      * @return
      * @throws StartupException if the descriptor file couldn't be found.
@@ -410,9 +410,9 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
     /**
      * Try to join an existing chord ring.
-     * 
+     *
      * @return true if a connection was successful
-     * @throws StartupException 
+     * @throws StartupException
      */
     private boolean attemptToJoinChordRing(final H2OPropertiesWrapper persistedInstanceInformation, final DatabaseID localMachineLocation, final List<String> databaseInstances) throws StartupException {
 
@@ -519,12 +519,11 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     public IDatabaseInstanceRemote getDatabaseInstanceAt(final String hostname, final int port) throws RPCException, NotBoundException {
 
         return DatabaseInstanceProxy.getProxy(new InetSocketAddress(hostname, port));
-
     }
 
     /**
      * Start a new Chord ring at the specified location.
-     * 
+     *
      * @param hostname the hostname on which the Chord ring will be started. This must be a local address to the machine on which this process is running.
      * @param port the port on which the Chord node will listen.
      * @return true if the chord ring was started successfully; otherwise false.
@@ -567,7 +566,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
     /**
      * Join an existing chord ring.
-     * 
+     *
      * @param localHostname
      *            The hostname on which this node will start. This must be a local address to the machine on which this process is running.
      * @param localPort
@@ -580,7 +579,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
      *            The name of the database instance starting this Chord ring. This information is used purely for diagnostic output, so can
      *            be left null.
      * @return true if a node was successfully created and joined an existing Chord ring; otherwise false.
-     * @throws RemoteChordException 
+     * @throws RemoteChordException
      */
     private boolean joinChordRing(final String localHostname, final int localPort, final String remoteHostname, final int remotePort, final String databaseName) throws RPCException {
 
@@ -650,12 +649,12 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     /**
      * Called by various chord functions in {@link ChordNodeImpl} which are being observed. Of particular interest to this class is the case
      * where the predecessor of a node changes. This is used to assess whether the System Tables location has changed.
-     * 
+     *
      * <p>
      * If changing this method please note that it is called synchronously by the Observable class, ChordNodeImpl. This means that if you
      * try and do something such as chordNode.stabilize() you will possibly introduce some form of deadlock into Chord. This is difficult to
      * debug, but is the most likely cause of a ring failing to close properly (i.e. not stablizing even after an extended period).
-     * 
+     *
      * @see java.util.Observer#update(java.util.Observable, java.lang.Object)
      */
     @Override
@@ -678,7 +677,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     /**
      * Called when this H2O instances primary IP changes. This will happen when, for example, a laptop switches from a wired connection
      * to a wireless connection, or if a machine is set to hibernate/sleep and it comes online in a different network.
-     * 
+     *
      * <p>H2O must treat an IP change as if the H2O instance had failed and restarted (because other instances will no longer be able to
      * access this instance at the known address). Consequently, any running System Table or Table Managers on this machine must be stopped
      * until the database can successfully obtain permission from the locator servers to restart the System Table.
@@ -1020,7 +1019,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
     /**
      * Called when the local database has been created, has started an ST, and is ready to receive requests.
-     * 
+     *
      * <p>
      * The system will start throwing errors about meta-tables not existing if this is called too soon.
      */
@@ -1043,11 +1042,11 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
     /**
      * Called when the database is ready to replicate meta-data (i.e. it has created the local H2O meta-data tables at this point.
-     * 
+     *
      * <p>
      * This is called by the database object at the end of startup, so it is limited in what it can do. Anything involving querying the
      * local database may have to be run asynchronously.
-     * 
+     *
      * @param metaDataReplicaManager
      *            The replica manager for this databases meta-data.
      */

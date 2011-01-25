@@ -15,18 +15,29 @@ import org.json.JSONArray;
 import uk.ac.standrews.cs.nds.rpc.ApplicationServer;
 import uk.ac.standrews.cs.nds.rpc.Handler;
 import uk.ac.standrews.cs.nds.rpc.JSONValue;
+import uk.ac.standrews.cs.nds.rpc.Marshaller;
 
 public class TableManagerServer extends ApplicationServer {
 
     private final ITableManagerRemote table_manager;
     private final HashMap<String, Handler> handler_map;
-    private static final H2OMarshaller marshaller = new H2OMarshaller();
+    private final H2OMarshaller marshaller;
 
     public TableManagerServer(final ITableManagerRemote table_manager) {
 
-        handler_map = new HashMap<String, Handler>();
         this.table_manager = table_manager;
+        handler_map = new HashMap<String, Handler>();
+
+        marshaller = new H2OMarshaller();
         initHandlers();
+    }
+
+    // -------------------------------------------------------------------------------------------------------
+
+    @Override
+    public Marshaller getMarshaller() {
+
+        return marshaller;
     }
 
     @Override
@@ -34,6 +45,8 @@ public class TableManagerServer extends ApplicationServer {
 
         return handler_map.get(method_name);
     }
+
+    // -------------------------------------------------------------------------------------------------------
 
     private void initHandlers() {
 

@@ -17,6 +17,7 @@ import org.json.JSONArray;
 import uk.ac.standrews.cs.nds.rpc.ApplicationServer;
 import uk.ac.standrews.cs.nds.rpc.Handler;
 import uk.ac.standrews.cs.nds.rpc.JSONValue;
+import uk.ac.standrews.cs.nds.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.nds.util.NetworkUtil;
 
@@ -24,7 +25,7 @@ public class SystemTableServer extends ApplicationServer {
 
     private final ISystemTableMigratable system_table;
     private final HashMap<String, Handler> handler_map;
-    private static final H2OMarshaller marshaller = new H2OMarshaller();
+    private final H2OMarshaller marshaller;
 
     public SystemTableServer(final ISystemTableMigratable system_table, final int port) {
 
@@ -39,7 +40,16 @@ public class SystemTableServer extends ApplicationServer {
         this.system_table = system_table;
         handler_map = new HashMap<String, Handler>();
 
+        marshaller = new H2OMarshaller();
         initHandlers();
+    }
+
+    // -------------------------------------------------------------------------------------------------------
+
+    @Override
+    public Marshaller getMarshaller() {
+
+        return marshaller;
     }
 
     @Override
@@ -47,6 +57,8 @@ public class SystemTableServer extends ApplicationServer {
 
         return handler_map.get(method_name);
     }
+
+    // -------------------------------------------------------------------------------------------------------
 
     private void initHandlers() {
 

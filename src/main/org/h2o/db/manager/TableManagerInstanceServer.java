@@ -4,12 +4,14 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.h2o.db.H2OMarshaller;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.json.JSONArray;
 
 import uk.ac.standrews.cs.nds.rpc.ApplicationServer;
 import uk.ac.standrews.cs.nds.rpc.Handler;
 import uk.ac.standrews.cs.nds.rpc.JSONValue;
+import uk.ac.standrews.cs.nds.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.nds.util.NetworkUtil;
@@ -22,6 +24,8 @@ import uk.ac.standrews.cs.nds.util.NetworkUtil;
  * @author Alan Dearle (al@cs.st-andrews.ac.uk)
  */
 public class TableManagerInstanceServer extends ApplicationServer {
+
+    private final H2OMarshaller marshaller;
 
     /**
      *  Map from fully qualified table name to table manage instance.
@@ -38,12 +42,23 @@ public class TableManagerInstanceServer extends ApplicationServer {
             ErrorHandling.hardExceptionError(e, "Couldn't find local IP address.");
         }
 
+        marshaller = new H2OMarshaller();
         table_manager_instances = new HashMap<String, TableManagerServer>();
     }
 
+    // -------------------------------------------------------------------------------------------------------
+
+    @Override
+    public Marshaller getMarshaller() {
+
+        return marshaller;
+    }
+
+    // -------------------------------------------------------------------------------------------------------
+
     /**
-     * This method is used to expose a ITableManagerRemote so that it can be accessed remotely.
-     * @param tm - a tablemanager to be made eternally addressible 
+     * Exposes a ITableManagerRemote so that it can be accessed remotely.
+     * @param tm a table manager to be made eternally addressable
      */
     public void exportObject(final ITableManagerRemote tm) {
 
@@ -55,11 +70,10 @@ public class TableManagerInstanceServer extends ApplicationServer {
             // Therefore hard Error.
             ErrorHandling.hardError("RPC error on (what should be) local object");
         }
-
     }
 
     /**
-     * This makes an RMI call on the object identified in by the zeroth parameter from the JSON array of args
+     * Makes an RMI call on the object identified in by the zeroth parameter from the JSON array of args
      * and on the method whose name is specified in @param method_name.
      */
     @Override
@@ -74,7 +88,6 @@ public class TableManagerInstanceServer extends ApplicationServer {
                 args.remove(0); // remove the table name from the parameter list
                 final TableManagerServer object_server = table_manager_instances.get(table_name);
                 return object_server.getHandler(method_name).execute(args);
-
             }
         };
     }

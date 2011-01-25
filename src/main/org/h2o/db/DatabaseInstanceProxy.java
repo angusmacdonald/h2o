@@ -22,11 +22,18 @@ import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRemote {
 
     private static final Map<InetSocketAddress, DatabaseInstanceProxy> proxy_map;
-    private static final H2OMarshaller marshaller;
+    private final H2OMarshaller marshaller;
 
     static {
-        marshaller = new H2OMarshaller();
         proxy_map = new HashMap<InetSocketAddress, DatabaseInstanceProxy>();
+    }
+
+    // -------------------------------------------------------------------------------------------------------
+
+    private DatabaseInstanceProxy(final InetSocketAddress node_address) {
+
+        super(node_address);
+        marshaller = new H2OMarshaller();
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -41,9 +48,12 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
         return proxy;
     }
 
-    protected DatabaseInstanceProxy(final InetSocketAddress node_address) {
+    // -------------------------------------------------------------------------------------------------------
 
-        super(node_address);
+    @Override
+    public Marshaller getMarshaller() {
+
+        return marshaller;
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -260,7 +270,7 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     public InetSocketAddress getAddress() throws RPCException {
 
         try {
-            return Marshaller.deserializeInetSocketAddress(makeCall("getAddress").getString());
+            return marshaller.deserializeInetSocketAddress(makeCall("getAddress").getString());
         }
         catch (final Exception e) {
             dealWithException(e);
