@@ -13,20 +13,20 @@ import org.h2o.db.query.locking.LockType;
 import org.json.JSONArray;
 
 import uk.ac.standrews.cs.nds.rpc.ApplicationServer;
-import uk.ac.standrews.cs.nds.rpc.Handler;
+import uk.ac.standrews.cs.nds.rpc.IHandler;
 import uk.ac.standrews.cs.nds.rpc.JSONValue;
 import uk.ac.standrews.cs.nds.rpc.Marshaller;
 
 public class TableManagerServer extends ApplicationServer {
 
     private final ITableManagerRemote table_manager;
-    private final HashMap<String, Handler> handler_map;
+    private final HashMap<String, IHandler> handler_map;
     private final H2OMarshaller marshaller;
 
     public TableManagerServer(final ITableManagerRemote table_manager) {
 
         this.table_manager = table_manager;
-        handler_map = new HashMap<String, Handler>();
+        handler_map = new HashMap<String, IHandler>();
 
         marshaller = new H2OMarshaller();
         initHandlers();
@@ -41,7 +41,7 @@ public class TableManagerServer extends ApplicationServer {
     }
 
     @Override
-    public Handler getHandler(final String method_name) {
+    public IHandler getHandler(final String method_name) {
 
         return handler_map.get(method_name);
     }
@@ -52,7 +52,7 @@ public class TableManagerServer extends ApplicationServer {
 
         // public final TableProxy getTableProxy(final LockType lockType, final LockRequest lockRequest) throws RPCException, SQLException, MovedException;
 
-        handler_map.put("getTableProxy", new Handler() {
+        handler_map.put("getTableProxy", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -65,7 +65,7 @@ public class TableManagerServer extends ApplicationServer {
 
         // public final boolean addTableInformation(final DatabaseID tableManagerURL, final TableInfo tableDetails) throws RPCException, MovedException, SQLException;
 
-        handler_map.put("addTableInformation", new Handler() {
+        handler_map.put("addTableInformation", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -78,7 +78,7 @@ public class TableManagerServer extends ApplicationServer {
 
         // public void addReplicaInformation(final TableInfo tableDetails) throws RPCException, MovedException, SQLException;
 
-        handler_map.put("addReplicaInformation", new Handler() {
+        handler_map.put("addReplicaInformation", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -91,7 +91,7 @@ public class TableManagerServer extends ApplicationServer {
 
         //public void removeReplicaInformation(final TableInfo ti) throws RPCException, MovedException, SQLException;
 
-        handler_map.put("removeReplicaInformation", new Handler() {
+        handler_map.put("removeReplicaInformation", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -104,7 +104,7 @@ public class TableManagerServer extends ApplicationServer {
 
         // public boolean removeTableInformation() throws RPCException, SQLException, MovedException;
 
-        handler_map.put("removeTableInformation", new Handler() {
+        handler_map.put("removeTableInformation", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -115,7 +115,7 @@ public class TableManagerServer extends ApplicationServer {
 
         // public DatabaseID getLocation() throws RPCException, MovedException;
 
-        handler_map.put("getLocation", new Handler() {
+        handler_map.put("getLocation", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -126,7 +126,7 @@ public class TableManagerServer extends ApplicationServer {
 
         // public void releaseLockAndUpdateReplicaState(final boolean commit, final LockRequest requestingDatabase, final Collection<CommitResult> committedQueries, final boolean asynchronousCommit) throws RPCException, MovedException, SQLException;
 
-        handler_map.put("releaseLockAndUpdateReplicaState", new Handler() {
+        handler_map.put("releaseLockAndUpdateReplicaState", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -142,7 +142,7 @@ public class TableManagerServer extends ApplicationServer {
 
         // public void remove(final boolean dropCommand) throws RPCException;
 
-        handler_map.put("remove", new Handler() {
+        handler_map.put("remove", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -155,7 +155,7 @@ public class TableManagerServer extends ApplicationServer {
 
         // public String getSchemaName() throws RPCException;
 
-        handler_map.put("getSchemaName", new Handler() {
+        handler_map.put("getSchemaName", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -166,7 +166,7 @@ public class TableManagerServer extends ApplicationServer {
 
         // public String getTableName() throws RPCException;
 
-        handler_map.put("getTableName", new Handler() {
+        handler_map.put("getTableName", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -177,7 +177,7 @@ public class TableManagerServer extends ApplicationServer {
 
         // public int getTableSet() throws RPCException;
 
-        handler_map.put("getTableSet", new Handler() {
+        handler_map.put("getTableSet", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -188,7 +188,7 @@ public class TableManagerServer extends ApplicationServer {
 
         // public void buildTableManagerState(final ITableManagerRemote oldTableManager) throws RPCException, MovedException;
 
-        handler_map.put("buildTableManagerState", new Handler() {
+        handler_map.put("buildTableManagerState", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -201,7 +201,7 @@ public class TableManagerServer extends ApplicationServer {
 
         // public DatabaseID getDatabaseURL() throws RPCException;
 
-        handler_map.put("getDatabaseURL", new Handler() {
+        handler_map.put("getDatabaseURL", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -212,7 +212,7 @@ public class TableManagerServer extends ApplicationServer {
 
         // public void recreateReplicaManagerState(final String oldPrimaryDatabaseName) throws RPCException, SQLException;
 
-        handler_map.put("recreateReplicaManagerState", new Handler() {
+        handler_map.put("recreateReplicaManagerState", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -226,7 +226,7 @@ public class TableManagerServer extends ApplicationServer {
 
         // public int getNumberofReplicas() throws RPCException;
 
-        handler_map.put("getNumberofReplicas", new Handler() {
+        handler_map.put("getNumberofReplicas", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -237,7 +237,7 @@ public class TableManagerServer extends ApplicationServer {
 
         // public void persistToCompleteStartup(TableInfo ti) throws RPCException, StartupException;
 
-        handler_map.put("persistToCompleteStartup", new Handler() {
+        handler_map.put("persistToCompleteStartup", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -250,7 +250,7 @@ public class TableManagerServer extends ApplicationServer {
 
         // public Map<DatabaseInstanceWrapper, Integer> getActiveReplicas() throws RPCException, MovedException
 
-        handler_map.put("getActiveReplicas", new Handler() {
+        handler_map.put("getActiveReplicas", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -261,7 +261,7 @@ public class TableManagerServer extends ApplicationServer {
 
         // public Map<DatabaseInstanceWrapper, Integer> getAllReplicas() throws RPCException, MovedException
 
-        handler_map.put("getAllReplicas", new Handler() {
+        handler_map.put("getAllReplicas", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -272,7 +272,7 @@ public class TableManagerServer extends ApplicationServer {
 
         // public TableInfo getTableInfo() throws RPCException
 
-        handler_map.put("getTableInfo", new Handler() {
+        handler_map.put("getTableInfo", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {

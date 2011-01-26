@@ -10,7 +10,7 @@ import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.json.JSONArray;
 
 import uk.ac.standrews.cs.nds.rpc.ApplicationServer;
-import uk.ac.standrews.cs.nds.rpc.Handler;
+import uk.ac.standrews.cs.nds.rpc.IHandler;
 import uk.ac.standrews.cs.nds.rpc.JSONValue;
 import uk.ac.standrews.cs.nds.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -19,7 +19,7 @@ import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 public class DatabaseInstanceServer extends ApplicationServer {
 
-    private final Map<String, Handler> handler_map;
+    private final Map<String, IHandler> handler_map;
     private final IDatabaseInstanceRemote instance;
     private static final H2OMarshaller marshaller = new H2OMarshaller();
 
@@ -34,7 +34,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
         }
 
         this.instance = instance;
-        handler_map = new HashMap<String, Handler>();
+        handler_map = new HashMap<String, IHandler>();
 
         initHandlers();
     }
@@ -46,7 +46,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
     }
 
     @Override
-    public Handler getHandler(final String method_name) {
+    public IHandler getHandler(final String method_name) {
 
         return handler_map.get(method_name);
     }
@@ -55,7 +55,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
 
         // String getConnectionString() throws RPCException;
 
-        handler_map.put("getConnectionString", new Handler() {
+        handler_map.put("getConnectionString", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -66,7 +66,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
 
         // DatabaseID getURL() throws RPCException;
 
-        handler_map.put("getURL", new Handler() {
+        handler_map.put("getURL", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -77,7 +77,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
 
         // DatabaseID getSystemTableURL() throws RPCException;
 
-        handler_map.put("getSystemTableURL", new Handler() {
+        handler_map.put("getSystemTableURL", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -88,7 +88,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
 
         // final int executeUpdate(final String sql, final boolean systemTableCommand) throws RPCException, SQLException;
 
-        handler_map.put("executeUpdate", new Handler() {
+        handler_map.put("executeUpdate", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -101,7 +101,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
 
         // void setSystemTableLocation(final IChordRemoteReference systemTableLocation, final DatabaseID databaseURL) throws RPCException;
 
-        handler_map.put("setSystemTableLocation", new Handler() {
+        handler_map.put("setSystemTableLocation", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -115,7 +115,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
 
         // final ITableManagerRemote findTableManagerReference(final TableInfo tableInfo, final boolean searchOnlyCache) throws RPCException;
 
-        handler_map.put("findTableManagerReference", new Handler() {
+        handler_map.put("findTableManagerReference", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -128,7 +128,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
 
         // void setAlive(boolean alive) throws RPCException;
 
-        handler_map.put("setAlive", new Handler() {
+        handler_map.put("setAlive", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -141,7 +141,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
 
         // ISystemTableRemote recreateSystemTable() throws RPCException, SQLException, SystemTableAccessException;
 
-        handler_map.put("recreateSystemTable", new Handler() {
+        handler_map.put("recreateSystemTable", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -152,7 +152,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
 
         // boolean recreateTableManager(TableInfo tableInfo, DatabaseID databaseURL) throws RPCException;
 
-        handler_map.put("recreateTableManager", new Handler() {
+        handler_map.put("recreateTableManager", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -165,7 +165,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
 
         // boolean isSystemTable() throws RPCException;
 
-        handler_map.put("isSystemTable", new Handler() {
+        handler_map.put("isSystemTable", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
@@ -176,7 +176,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
 
         // ISystemTableRemote getSystemTable() throws RPCException;
 
-        handler_map.put("getSystemTable", new Handler() {
+        handler_map.put("getSystemTable", new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {

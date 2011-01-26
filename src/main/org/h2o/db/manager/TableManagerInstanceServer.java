@@ -9,7 +9,7 @@ import org.h2o.db.interfaces.ITableManagerRemote;
 import org.json.JSONArray;
 
 import uk.ac.standrews.cs.nds.rpc.ApplicationServer;
-import uk.ac.standrews.cs.nds.rpc.Handler;
+import uk.ac.standrews.cs.nds.rpc.IHandler;
 import uk.ac.standrews.cs.nds.rpc.JSONValue;
 import uk.ac.standrews.cs.nds.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
@@ -77,9 +77,9 @@ public class TableManagerInstanceServer extends ApplicationServer {
      * and on the method whose name is specified in @param method_name.
      */
     @Override
-    public Handler getHandler(final String method_name) {
+    public IHandler getHandler(final String method_name) {
 
-        return new Handler() {
+        return new IHandler() {
 
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
