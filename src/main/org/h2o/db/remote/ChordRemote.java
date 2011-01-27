@@ -541,7 +541,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         try {
             chordNode = ChordNodeFactory.createLocalNode(localChordAddress);
         }
-        catch (final IOException e) {
+        catch (final Exception e) {
             e.printStackTrace();
             return false;
         }
@@ -595,14 +595,13 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             try {
                 chordNode = ChordNodeFactory.createLocalNode(localChordAddress);
                 chordNode.join(ChordNodeFactory.bindToRemoteNode(knownHostAddress));
-
             }
             catch (final RemoteChordException e) { // database instance we're trying to connect to doesn't exist.
 
                 ErrorHandling.errorNoEvent("Failed to connect to chord node on + " + localHostname + ":" + rmiPort + " known host: " + remoteHostname + ":" + remotePort);
                 return false;
             }
-            catch (final IOException e) {
+            catch (final Exception e) {
                 ErrorHandling.errorNoEvent("Failed to create new chord node on + " + localHostname + ":" + rmiPort + " known host: " + remoteHostname + ":" + remotePort);
                 connected = false;
             }

@@ -1,7 +1,6 @@
 package org.h2o.db.manager;
 
 import java.util.Collection;
-import java.util.HashMap;
 
 import org.h2o.db.H2OMarshaller;
 import org.h2o.db.id.DatabaseID;
@@ -19,14 +18,20 @@ import uk.ac.standrews.cs.nds.rpc.Marshaller;
 
 public class TableManagerServer extends ApplicationServer {
 
+    private static final String DEFAULT_TABLE_MANAGER_REGISTRY_KEY = "H2O_TABLE_MANAGER";
+
     private final ITableManagerRemote table_manager;
-    private final HashMap<String, IHandler> handler_map;
     private final H2OMarshaller marshaller;
 
     public TableManagerServer(final ITableManagerRemote table_manager) {
 
+        this(table_manager, DEFAULT_TABLE_MANAGER_REGISTRY_KEY);
+    }
+
+    public TableManagerServer(final ITableManagerRemote table_manager, final String registry_key) {
+
         this.table_manager = table_manager;
-        handler_map = new HashMap<String, IHandler>();
+        this.registry_key = registry_key;
 
         marshaller = new H2OMarshaller();
         initHandlers();
@@ -41,9 +46,9 @@ public class TableManagerServer extends ApplicationServer {
     }
 
     @Override
-    public IHandler getHandler(final String method_name) {
+    public String getApplicationRegistryKey() {
 
-        return handler_map.get(method_name);
+        return registry_key;
     }
 
     // -------------------------------------------------------------------------------------------------------

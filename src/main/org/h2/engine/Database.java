@@ -133,9 +133,9 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * There is one database object per open database.
- * 
+ *
  * The format of the meta data table is: id int, headPos int (for indexes), objectType int, sql varchar
- * 
+ *
  * @since 2004-04-15 22:49
  */
 public class Database implements DataHandler {
@@ -522,7 +522,7 @@ public class Database implements DataHandler {
 
     /**
      * Check if two values are equal with the current comparison mode.
-     * 
+     *
      * @param a
      *            the first value
      * @param b
@@ -536,7 +536,7 @@ public class Database implements DataHandler {
 
     /**
      * Compare two values with the current comparison mode. The values may not be of the same type.
-     * 
+     *
      * @param a
      *            the first value
      * @param b
@@ -550,7 +550,7 @@ public class Database implements DataHandler {
 
     /**
      * Compare two values with the current comparison mode. The values must be of the same type.
-     * 
+     *
      * @param a
      *            the first value
      * @param b
@@ -678,7 +678,7 @@ public class Database implements DataHandler {
 
     /**
      * Check if a database with the given name exists.
-     * 
+     *
      * @param name
      *            the name of the database (including path)
      * @return true if one exists
@@ -690,7 +690,7 @@ public class Database implements DataHandler {
 
     /**
      * Get the trace object for the given module.
-     * 
+     *
      * @param module
      *            the module name
      * @return the trace object
@@ -717,7 +717,7 @@ public class Database implements DataHandler {
 
     /**
      * Check if the file password hash is correct.
-     * 
+     *
      * @param cipher
      *            the cipher algorithm
      * @param hash
@@ -920,7 +920,7 @@ public class Database implements DataHandler {
             try {
                 table_manager_instance_server.start();
             }
-            catch (final IOException e) {
+            catch (final Exception e) {
                 ErrorHandling.hardExceptionError(e, "Couldn't start table manager instance server.");
             }
 
@@ -932,7 +932,7 @@ public class Database implements DataHandler {
             try {
                 database_instance_server.start();
             }
-            catch (final IOException e) {
+            catch (final Exception e) {
                 ErrorHandling.hardExceptionError(e, "Couldn't start database instance server.");
             }
 
@@ -1072,7 +1072,7 @@ public class Database implements DataHandler {
             try {
                 system_table_server.start();
             }
-            catch (final IOException e) {
+            catch (final Exception e) {
                 ErrorHandling.hardExceptionError(e, "Couldn't start system table instance server.");
             }
 
@@ -1197,7 +1197,7 @@ public class Database implements DataHandler {
 
     /**
      * Remove the storage object from the file.
-     * 
+     *
      * @param id
      *            the storage id
      * @param file
@@ -1216,7 +1216,7 @@ public class Database implements DataHandler {
 
     /**
      * Get the storage object for the given file. An new object is created if required.
-     * 
+     *
      * @param id
      *            the storage id
      * @param file
@@ -1262,7 +1262,7 @@ public class Database implements DataHandler {
 
     /**
      * Remove the given object from the meta data.
-     * 
+     *
      * @param session
      *            the session
      * @param id
@@ -1318,7 +1318,7 @@ public class Database implements DataHandler {
 
     /**
      * Add a schema object to the database.
-     * 
+     *
      * @param session
      *            the session
      * @param obj
@@ -1339,7 +1339,7 @@ public class Database implements DataHandler {
 
     /**
      * Add an object to the database.
-     * 
+     *
      * @param session
      *            the session
      * @param obj
@@ -1368,7 +1368,7 @@ public class Database implements DataHandler {
 
     /**
      * Get the user defined aggregate function if it exists, or null if not.
-     * 
+     *
      * @param name
      *            the name of the user defined aggregate function
      * @return the aggregate function or null
@@ -1380,7 +1380,7 @@ public class Database implements DataHandler {
 
     /**
      * Get the comment for the given database object if one exists, or null if not.
-     * 
+     *
      * @param object
      *            the database object
      * @return the comment or null
@@ -1394,7 +1394,7 @@ public class Database implements DataHandler {
 
     /**
      * Get the user defined function if it exists, or null if not.
-     * 
+     *
      * @param name
      *            the name of the user defined function
      * @return the function or null
@@ -1406,7 +1406,7 @@ public class Database implements DataHandler {
 
     /**
      * Get the role if it exists, or null if not.
-     * 
+     *
      * @param roleName
      *            the name of the role
      * @return the role or null
@@ -1418,7 +1418,7 @@ public class Database implements DataHandler {
 
     /**
      * Get the schema if it exists, or null if not.
-     * 
+     *
      * @param schemaName
      *            the name of the schema
      * @return the schema or null
@@ -1430,7 +1430,7 @@ public class Database implements DataHandler {
 
     /**
      * Get the setting if it exists, or null if not.
-     * 
+     *
      * @param name
      *            the name of the setting
      * @return the setting or null
@@ -1442,7 +1442,7 @@ public class Database implements DataHandler {
 
     /**
      * Get the user if it exists, or null if not.
-     * 
+     *
      * @param name
      *            the name of the user
      * @return the user or null
@@ -1454,7 +1454,7 @@ public class Database implements DataHandler {
 
     /**
      * Get the user defined data type if it exists, or null if not.
-     * 
+     *
      * @param name
      *            the name of the user defined data type
      * @return the user defined data type or null
@@ -1466,7 +1466,7 @@ public class Database implements DataHandler {
 
     /**
      * Get user with the given name. This method throws an exception if the user does not exist.
-     * 
+     *
      * @param name
      *            the user name
      * @return the user
@@ -1486,7 +1486,7 @@ public class Database implements DataHandler {
 
     /**
      * Create a session for the given user.
-     * 
+     *
      * @param user
      *            the user
      * @return the session
@@ -1508,7 +1508,7 @@ public class Database implements DataHandler {
 
     /**
      * Remove a session. This method is called after the user has disconnected.
-     * 
+     *
      * @param session
      *            the session
      */
@@ -1545,7 +1545,7 @@ public class Database implements DataHandler {
 
     /**
      * Close the database.
-     * 
+     *
      * @param fromShutdownHook true if this method is called from the shutdown hook
      */
     public synchronized void close(final boolean fromShutdownHook) {
@@ -1809,7 +1809,7 @@ public class Database implements DataHandler {
 
     /**
      * Get all schema objects of the given type.
-     * 
+     *
      * @param type
      *            the object type
      * @return all objects of that type
@@ -1826,7 +1826,7 @@ public class Database implements DataHandler {
 
     /**
      * Get all tables. Replaces the getAllSchemaObjects method for this particular call.
-     * 
+     *
      * @param type
      *            the object type
      * @return all objects of that type
@@ -1843,7 +1843,7 @@ public class Database implements DataHandler {
 
     /**
      * Get every single table instance, including replicas for the same table.
-     * 
+     *
      * @return
      */
     public Set<Table> getAllReplicas() {
@@ -1932,7 +1932,7 @@ public class Database implements DataHandler {
 
     /**
      * Get all sessions that are currently connected to the database.
-     * 
+     *
      * @param includingSystemSession
      *            if the system session should also be included
      * @return the list of sessions
@@ -1950,7 +1950,7 @@ public class Database implements DataHandler {
 
     /**
      * Update an object in the system table.
-     * 
+     *
      * @param session
      *            the session
      * @param obj
@@ -1965,7 +1965,7 @@ public class Database implements DataHandler {
 
     /**
      * Rename a schema object.
-     * 
+     *
      * @param session
      *            the session
      * @param obj
@@ -1999,7 +1999,7 @@ public class Database implements DataHandler {
 
     /**
      * Rename a database object.
-     * 
+     *
      * @param session
      *            the session
      * @param obj
@@ -2080,7 +2080,7 @@ public class Database implements DataHandler {
 
     /**
      * Get or create the specified storage object.
-     * 
+     *
      * @param reader
      *            the record reader
      * @param id
@@ -2105,7 +2105,7 @@ public class Database implements DataHandler {
 
     /**
      * Get the schema. If the schema does not exist, an exception is thrown.
-     * 
+     *
      * @param schemaName
      *            the name of the schema
      * @return the schema
@@ -2121,7 +2121,7 @@ public class Database implements DataHandler {
 
     /**
      * Remove the object from the database.
-     * 
+     *
      * @param session
      *            the session
      * @param obj
@@ -2148,7 +2148,7 @@ public class Database implements DataHandler {
 
     /**
      * Get the first table that depends on this object.
-     * 
+     *
      * @param obj
      *            the object to find
      * @param except
@@ -2204,7 +2204,7 @@ public class Database implements DataHandler {
 
     /**
      * Remove an object from the system table.
-     * 
+     *
      * @param session
      *            the session
      * @param obj
@@ -2266,7 +2266,7 @@ public class Database implements DataHandler {
 
     /**
      * Check if this database disk-based.
-     * 
+     *
      * @return true if it is disk-based, false it it is in-memory only.
      */
     public boolean isPersistent() {
@@ -2311,7 +2311,7 @@ public class Database implements DataHandler {
 
     /**
      * Get a unique temporary table name.
-     * 
+     *
      * @param sessionId
      *            the session id
      * @return a unique name
@@ -2362,7 +2362,7 @@ public class Database implements DataHandler {
      * Delete an unused log file. It is deleted immediately if no writer thread is running, or deleted later on if one is running. Deleting
      * is delayed because the hard drive otherwise may delete the file a bit before the data is written to the new file, which can cause
      * problems when recovering.
-     * 
+     *
      * @param fileName
      *            the name of the file to be deleted
      */
@@ -2411,7 +2411,7 @@ public class Database implements DataHandler {
 
     /**
      * Set the progress of a long running operation. This method calls the {@link DatabaseEventListener} if one is registered.
-     * 
+     *
      * @param state
      *            the {@link DatabaseEventListener} state
      * @param name
@@ -2436,7 +2436,7 @@ public class Database implements DataHandler {
 
     /**
      * This method is called after an exception occurred, to inform the database event listener (if one is set).
-     * 
+     *
      * @param e
      *            the exception
      * @param sql
@@ -2572,7 +2572,7 @@ public class Database implements DataHandler {
 
     /**
      * Check if the database is in the process of closing.
-     * 
+     *
      * @return true if the database is closing
      */
     public boolean isClosing() {
@@ -2623,7 +2623,7 @@ public class Database implements DataHandler {
 
     /**
      * Called when the size if the data or index file has been changed.
-     * 
+     *
      * @param length
      *            the new file size
      */
@@ -2696,7 +2696,7 @@ public class Database implements DataHandler {
 
     /**
      * Check if the database is currently opening. This is true until all stored SQL statements have been executed.
-     * 
+     *
      * @return true if the database is still starting
      */
     public boolean isStarting() {
@@ -2758,7 +2758,7 @@ public class Database implements DataHandler {
 
     /**
      * Checks if the system table (containing the catalog) is locked.
-     * 
+     *
      * @return true if it is currently locked
      */
     public boolean isSysTableLocked() {
@@ -2768,7 +2768,7 @@ public class Database implements DataHandler {
 
     /**
      * Open a new connection or get an existing connection to another database.
-     * 
+     *
      * @param driver
      *            the database driver or null
      * @param url
@@ -2830,7 +2830,7 @@ public class Database implements DataHandler {
 
     /**
      * Redo a change in a table.
-     * 
+     *
      * @param tableId
      *            the object id of the table
      * @param row
@@ -2864,7 +2864,7 @@ public class Database implements DataHandler {
 
     /**
      * Get the first user defined table.
-     * 
+     *
      * @return the table or null if no table is defined
      */
     public ReplicaSet getFirstUserTable() {
@@ -2954,7 +2954,7 @@ public class Database implements DataHandler {
 
     /**
      * Get a database object.
-     * 
+     *
      * @param id
      *            the object id
      * @return the database object
@@ -2966,7 +2966,7 @@ public class Database implements DataHandler {
 
     /**
      * H2O Creates H2O schema meta-data tables, including System Table tables if this machine is a System Table.
-     * 
+     *
      * @throws Exception
      * @throws SQLException
      */
@@ -3016,7 +3016,7 @@ public class Database implements DataHandler {
      * <li><code>//mem:management_db_9081</code></li>
      * <li><code>//db_data/unittests/schema_test</code></li>
      * </ul>
-     * 
+     *
      * @return the databaseLocation
      */
     public String getDatabaseLocation() {
@@ -3026,7 +3026,7 @@ public class Database implements DataHandler {
 
     /**
      * Is this database instance an H2 management database?
-     * 
+     *
      * @return
      */
     public boolean isManagementDB() {
@@ -3053,7 +3053,7 @@ public class Database implements DataHandler {
     /**
      * Gets the full address of the database - i.e. one that can be used to connect to it remotely through JDBC. An example path:
      * jdbc:h2:sm:tcp://localhost:9090/db_data/one/test_db
-     * 
+     *
      * @return
      */
     public String getFullDatabasePath() {
@@ -3074,7 +3074,7 @@ public class Database implements DataHandler {
 
     /**
      * Returns the type of connection this database is open on (e.g. tcp, mem).
-     * 
+     *
      * @return
      */
     public String getConnectionType() {
@@ -3135,7 +3135,7 @@ public class Database implements DataHandler {
     }
 
     /**
-     * 
+     *
      */
     public IDatabaseRemote getRemoteInterface() {
 
@@ -3143,7 +3143,7 @@ public class Database implements DataHandler {
     }
 
     /**
-     * 
+     *
      */
     public IChordInterface getChordInterface() {
 

@@ -1,7 +1,6 @@
 package org.h2o.db.manager;
 
 import java.net.UnknownHostException;
-import java.util.HashMap;
 import java.util.Set;
 
 import org.h2o.autonomic.decision.ranker.metric.ActionRequest;
@@ -23,11 +22,17 @@ import uk.ac.standrews.cs.nds.util.NetworkUtil;
 
 public class SystemTableServer extends ApplicationServer {
 
+    private static final String DEFAULT_SYSTEM_TABLE_REGISTRY_KEY = "H2O_SYSTEM_TABLE";
+
     private final ISystemTableMigratable system_table;
-    private final HashMap<String, IHandler> handler_map;
     private final H2OMarshaller marshaller;
 
     public SystemTableServer(final ISystemTableMigratable system_table, final int port) {
+
+        this(system_table, port, DEFAULT_SYSTEM_TABLE_REGISTRY_KEY);
+    }
+
+    public SystemTableServer(final ISystemTableMigratable system_table, final int port, final String registry_key) {
 
         super.setPort(port);
         try {
@@ -38,7 +43,7 @@ public class SystemTableServer extends ApplicationServer {
         }
 
         this.system_table = system_table;
-        handler_map = new HashMap<String, IHandler>();
+        this.registry_key = registry_key;
 
         marshaller = new H2OMarshaller();
         initHandlers();
@@ -53,9 +58,9 @@ public class SystemTableServer extends ApplicationServer {
     }
 
     @Override
-    public IHandler getHandler(final String method_name) {
+    public String getApplicationRegistryKey() {
 
-        return handler_map.get(method_name);
+        return registry_key;
     }
 
     // -------------------------------------------------------------------------------------------------------

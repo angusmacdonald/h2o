@@ -1,8 +1,6 @@
 package org.h2o.db;
 
 import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
@@ -19,11 +17,17 @@ import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 public class DatabaseInstanceServer extends ApplicationServer {
 
-    private final Map<String, IHandler> handler_map;
+    private static final String DEFAULT_REGISTRY_KEY = "H2O_DATABASE";
+
     private final IDatabaseInstanceRemote instance;
     private static final H2OMarshaller marshaller = new H2OMarshaller();
 
     public DatabaseInstanceServer(final IDatabaseInstanceRemote instance, final int port) {
+
+        this(instance, port, DEFAULT_REGISTRY_KEY);
+    }
+
+    public DatabaseInstanceServer(final IDatabaseInstanceRemote instance, final int port, final String registry_key) {
 
         super.setPort(port);
         try {
@@ -34,7 +38,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
         }
 
         this.instance = instance;
-        handler_map = new HashMap<String, IHandler>();
+        this.registry_key = registry_key;
 
         initHandlers();
     }
@@ -46,10 +50,12 @@ public class DatabaseInstanceServer extends ApplicationServer {
     }
 
     @Override
-    public IHandler getHandler(final String method_name) {
+    public String getApplicationRegistryKey() {
 
-        return handler_map.get(method_name);
+        return registry_key;
     }
+
+    // -------------------------------------------------------------------------------------------------------
 
     private void initHandlers() {
 
