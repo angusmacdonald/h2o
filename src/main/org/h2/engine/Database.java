@@ -126,6 +126,7 @@ import org.h2o.viewer.server.KeepAliveMessageThread;
 
 import uk.ac.standrews.cs.nds.events.bus.EventBus;
 import uk.ac.standrews.cs.nds.events.bus.interfaces.IEventBus;
+import uk.ac.standrews.cs.nds.registry.LocateRegistry;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -934,6 +935,13 @@ public class Database implements DataHandler {
             }
             catch (final Exception e) {
                 ErrorHandling.hardExceptionError(e, "Couldn't start database instance server.");
+            }
+
+            try {
+                LocateRegistry.getRegistry().rebind(localMachineLocation.getID(), preferredDatabaseInstancePort);
+            }
+            catch (final Exception e) {
+                ErrorHandling.hardExceptionError(e, "Can't bind the database instance server in the registry.");
             }
 
             system_table_server = null;
