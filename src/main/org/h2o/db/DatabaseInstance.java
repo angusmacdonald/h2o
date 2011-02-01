@@ -70,14 +70,11 @@ public class DatabaseInstance implements IDatabaseInstanceRemote {
 
     private final Database database;
 
-    private final InetSocketAddress address;
-
     public DatabaseInstance(final DatabaseID databaseURL, final Session session) {
 
         this.databaseURL = databaseURL;
         database = session.getDatabase();
 
-        address = database.getDatabaseInstanceServer().getAddress();
         parser = new Parser(session, true);
     }
 
@@ -251,6 +248,6 @@ public class DatabaseInstance implements IDatabaseInstanceRemote {
     @Override
     public InetSocketAddress getAddress() throws RPCException {
 
-        return address;
+        return database.getDatabaseInstanceServer().getAddress();
     }
 }

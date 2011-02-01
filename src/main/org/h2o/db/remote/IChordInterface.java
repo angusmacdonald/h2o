@@ -8,10 +8,7 @@
  */
 package org.h2o.db.remote;
 
-import java.rmi.NotBoundException;
-
 import org.h2o.db.id.DatabaseID;
-import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
@@ -38,29 +35,13 @@ public interface IChordInterface {
      * 
      * @return Remote reference to the chord node managing the System Table.
      */
-    IChordRemoteReference lookupSystemTableNodeLocation() throws RPCException;
+    DatabaseID lookupSystemTableNodeLocation() throws RPCException;
 
     /**
      * Get the remote chord reference for the local chord node. This can be used for comparison (e.g. to check whether a reference that has
      * been passed in is equal to the local reference) or for lookup operations.
      */
     IChordRemoteReference getLocalChordReference();
-
-    /**
-     * Find the database instance located at the location given. The parameters specify the location of the node's RMI registry. This
-     * registry should contain a reference to the local database instance.
-     * 
-     * @param hostname
-     *            Host on which the RMI registry is located.
-     * @param port
-     *            Port on which the RMI registry is located.
-     * @return Database instance remote proxy for the database at the given location.
-     * @throws RPCException
-     *             Thrown if there was an error accessing the RMI proxy.
-     * @throws NotBoundException
-     *             Thrown if there wasn't a database instance interface exposed on the RMI proxy.
-     */
-    IDatabaseInstanceRemote getDatabaseInstanceAt(String hostname, int port) throws RPCException, NotBoundException;
 
     /**
      * Finds the location of the chord node responsible for the given key.

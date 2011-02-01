@@ -26,10 +26,14 @@
 package org.h2o.db.remote;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.rmi.NotBoundException;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Random;
@@ -43,7 +47,6 @@ import org.h2o.db.DatabaseInstanceProxy;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
-import org.h2o.db.manager.SystemTableReference;
 import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.manager.recovery.LocatorException;
@@ -59,6 +62,9 @@ import org.h2o.viewer.gwt.client.DatabaseStates;
 import org.h2o.viewer.gwt.client.H2OEvent;
 
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
+import uk.ac.standrews.cs.nds.registry.IRegistry;
+import uk.ac.standrews.cs.nds.registry.LocateRegistry;
+import uk.ac.standrews.cs.nds.registry.RegistryUnavailableException;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -118,11 +124,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     private IChordNode chordNode;
 
     /**
-     * The port on which the local Chord node is running its RMI server. This value should be the same as localMachineLocation.getRMIPort();
-     */
-    private int rmiPort;
-
-    /**
      * Used to cache the location of the System Table by asking the known node where it is on startup. This is only ever really used for
      * this initial lookup. The rest of the System Table functionality is hidden behind the SystemTableReference object.
      */
@@ -171,8 +172,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         this.databaseSettings = databaseSettings;
 
         establishChordConnection(localMachineLocation, session);
-
-        localMachineLocation.setRMIPort(getRPCPort()); // set the port on which the RMI server is running.
 
         /*
          * The System Table location must be known at this point, otherwise the database instance will not start.
@@ -454,7 +453,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             }
 
             if (connected) {
-                persistedInstanceInformation.setProperty("chordPort", rmiPort + "");
                 try {
                     persistedInstanceInformation.saveAndClose();
                 }
@@ -489,15 +487,47 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         final InetSocketAddress address = lookupLocation.getRemote().getAddress();
 
         final String hostname = address.getHostName();
-        final int port = address.getPort();
+
+        return getDatabaseInstanceAt(hostname);
+    }
+
+    public IDatabaseInstanceRemote getDatabaseInstanceAt(final String hostname) throws RPCException, RPCException {
 
         try {
-            return getDatabaseInstanceAt(hostname, port);
-        }
-        catch (final NotBoundException e) {
-            e.printStackTrace();
+            final IRegistry registry = LocateRegistry.getRegistry(InetAddress.getByName(hostname));
+
+            final Map<String, Integer> serverLocations = registry.getEntries();
+
+            for (final Entry<String, Integer> databaseServerLocation : serverLocations.entrySet()) {
+
+                if (!databaseServerLocation.equals(localMachineLocation.getID())) {
+                    //If this is not the local machine being listed.
+
+                    final IDatabaseInstanceRemote instanceReference = DatabaseInstanceProxy.getProxy(new InetSocketAddress(hostname, databaseServerLocation.getValue()));
+
+                    try {
+                        instanceReference.isAlive();
+
+                        return instanceReference; // return a reference if this database instance is active.
+                    }
+                    catch (final Exception e) {
+                        //Try again if the database is not active.
+                    }
+                }
+            }
+
+            ErrorHandling.errorNoEvent("Failed to find an active instance on the machine specified: " + hostname);
+
             return null;
         }
+        catch (final UnknownHostException e) {
+            ErrorHandling.exceptionError(e, "Failed to find the host specified: " + hostname);
+        }
+        catch (final RegistryUnavailableException e) {
+            ErrorHandling.exceptionError(e, "Couldn't find an active registry on this machine (the machine has probably failed): " + hostname);
+        }
+
+        return null;
     }
 
     @Override
@@ -506,19 +536,33 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         if (dbID.equals(localMachineLocation)) { return getLocalDatabaseInstance(); }
 
         try {
-            return getDatabaseInstanceAt(dbID.getHostname(), dbID.getRMIPort());
+            return getDatabaseInstanceAt(dbID.getHostname(), dbID.getID());
         }
         catch (final NotBoundException e) {
-            ErrorHandling.errorNoEvent("Local instance of database " + dbID + " not bound at " + dbID.getRMIPort() + "." + " Request made by " + localMachineLocation.getURLwithRMIPort());
+            ErrorHandling.errorNoEvent("Local instance of database " + dbID + " not bound." + " Request made by " + localMachineLocation.getURLwithRMIPort());
             e.printStackTrace();
             return null;
         }
     }
 
     @Override
-    public IDatabaseInstanceRemote getDatabaseInstanceAt(final String hostname, final int port) throws RPCException, NotBoundException {
+    public IDatabaseInstanceRemote getDatabaseInstanceAt(final String hostname, final String databaseName) throws RPCException, NotBoundException {
 
-        return DatabaseInstanceProxy.getProxy(new InetSocketAddress(hostname, port));
+        try {
+            final IRegistry registry = LocateRegistry.getRegistry(InetAddress.getByName(hostname));
+
+            final int port = registry.lookup(databaseName);
+
+            return DatabaseInstanceProxy.getProxy(new InetSocketAddress(hostname, port));
+        }
+        catch (final UnknownHostException e) {
+            ErrorHandling.exceptionError(e, "Failed to find the host specified: " + hostname);
+        }
+        catch (final RegistryUnavailableException e) {
+            ErrorHandling.exceptionError(e, "Couldn't find an active registry on this machine (the machine has probably failed): " + hostname);
+        }
+
+        return null;
     }
 
     /**
@@ -529,8 +573,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
      * @return true if the chord ring was started successfully; otherwise false.
      */
     private boolean startChordRing(final String hostname, final int port, final DatabaseID databaseURL) {
-
-        rmiPort = port;
 
         final InetSocketAddress localChordAddress = new InetSocketAddress(hostname, port);
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Deploying new Chord ring on " + hostname + ":" + port);
@@ -576,13 +618,11 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
      * @return true if a node was successfully created and joined an existing Chord ring; otherwise false.
      * @throws RemoteChordException
      */
-    private boolean joinChordRing(final String localHostname, final int localPort, final String remoteHostname, final int remotePort, final String databaseName) throws RPCException {
+    private boolean joinChordRing(final String localHostname, int localPort, final String remoteHostname, final int remotePort, final String databaseName) throws RPCException {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Trying to connect to existing Chord ring on " + remoteHostname + ":" + remotePort);
 
-        rmiPort = localPort;
-
-        InetSocketAddress localChordAddress = new InetSocketAddress(localHostname, rmiPort);
+        InetSocketAddress localChordAddress = new InetSocketAddress(localHostname, localPort);
         final InetSocketAddress knownHostAddress = new InetSocketAddress(remoteHostname, remotePort);
 
         boolean connected = false;
@@ -598,11 +638,11 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             }
             catch (final RemoteChordException e) { // database instance we're trying to connect to doesn't exist.
 
-                ErrorHandling.errorNoEvent("Failed to connect to chord node on + " + localHostname + ":" + rmiPort + " known host: " + remoteHostname + ":" + remotePort);
+                ErrorHandling.errorNoEvent("Failed to connect to chord node on + " + localHostname + ":" + localPort + " known host: " + remoteHostname + ":" + remotePort);
                 return false;
             }
             catch (final Exception e) {
-                ErrorHandling.errorNoEvent("Failed to create new chord node on + " + localHostname + ":" + rmiPort + " known host: " + remoteHostname + ":" + remotePort);
+                ErrorHandling.errorNoEvent("Failed to create new chord node on + " + localHostname + ":" + localPort + " known host: " + remoteHostname + ":" + remotePort);
                 connected = false;
             }
 
@@ -610,7 +650,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                 connected = true;
             }
             if (!connected) {
-                localChordAddress = new InetSocketAddress(localHostname, rmiPort++);
+                localChordAddress = new InetSocketAddress(localHostname, localPort++);
             }
 
             attempts++;
@@ -620,21 +660,16 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
         systemTableRef.setInKeyRange(false);
 
-        rmiPort = localChordAddress.getPort();
-
         try {
-            final IDatabaseInstanceRemote lookupInstance = getDatabaseInstanceAt(remoteHostname, remotePort);
+            final IDatabaseInstanceRemote lookupInstance = getDatabaseInstanceAt(remoteHostname);
             actualSystemTableLocation = lookupInstance.getSystemTableURL();
             systemTableRef.setSystemTableURL(actualSystemTableLocation);
         }
         catch (final RPCException e) {
             e.printStackTrace();
         }
-        catch (final NotBoundException e) {
-            e.printStackTrace();
-        }
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Started local Chord node on : " + databaseName + " : " + localHostname + " : " + rmiPort + " : initialized with key :" + chordNode.getKey().toString(10) + " : " + chordNode.getKey() + " : System Table at " + systemTableRef.getLookupLocation()
+        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Started local Chord node on : " + databaseName + " : " + localHostname + " : " + localPort + " : initialized with key :" + chordNode.getKey().toString(10) + " : " + chordNode.getKey() + " : System Table at " + systemTableRef.getLookupLocation()
                         + " : " + chordNode.getSuccessor().getCachedKey());
 
         return true;
@@ -814,7 +849,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             final String hostname = address.getHostName();
             final int port = address.getPort();
 
-            final IDatabaseInstanceRemote successorInstance = getDatabaseInstanceAt(hostname, port);
+            final IDatabaseInstanceRemote successorInstance = getDatabaseInstanceAt(hostname);
 
             if (systemTableRef.isSystemTableLocal() || localTableManagers != null && localTableManagers.size() > 0) {
 
@@ -840,15 +875,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         catch (final RPCException e) {
             ErrorHandling.errorNoEvent("Successor not known: " + e.getMessage());
         }
-        catch (final NotBoundException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public int getRPCPort() {
-
-        return rmiPort;
     }
 
     @Override
@@ -961,16 +987,16 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
         if (actualSystemTableLocation != null) { return actualSystemTableLocation; }
 
-        IChordRemoteReference lookupLocation = null;
-        lookupLocation = lookupSystemTableNodeLocation();
+        final IChordRemoteReference lookupLocation = null;
+        final DatabaseID stLocation = lookupSystemTableNodeLocation();
         systemTableRef.setLookupLocation(lookupLocation);
 
-        final String lookupHostname = lookupLocation.getRemote().getAddress().getHostName();
-        final int lookupPort = lookupLocation.getRemote().getAddress().getPort();
-
+        final String lookupHostname = stLocation.getHostname();
+        final String databaseName = stLocation.getID();
         IDatabaseInstanceRemote lookupInstance;
         try {
-            lookupInstance = getDatabaseInstanceAt(lookupHostname, lookupPort);
+
+            lookupInstance = getDatabaseInstanceAt(lookupHostname, databaseName);
 
             actualSystemTableLocation = lookupInstance.getSystemTableURL();
             systemTableRef.setSystemTableURL(actualSystemTableLocation);
@@ -982,15 +1008,17 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     }
 
     @Override
-    public IChordRemoteReference lookupSystemTableNodeLocation() throws RPCException {
+    public DatabaseID lookupSystemTableNodeLocation() throws RPCException {
 
-        IChordRemoteReference lookupLocation = null;
+        try {
+            final List<String> locations = locatorInterface.getLocations();
 
-        if (chordNode != null) {
-            lookupLocation = chordNode.lookup(SystemTableReference.systemTableKey);
+            return DatabaseID.parseURL(locations.get(0));
         }
-
-        return lookupLocation;
+        catch (final IOException e) {
+            ErrorHandling.exceptionError(e, "Failed to contact locator servers, so unable to get the location of a System Table.");
+            return null;
+        }
     }
 
     @Override

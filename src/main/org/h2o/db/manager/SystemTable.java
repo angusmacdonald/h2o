@@ -52,7 +52,7 @@ public class SystemTable implements ISystemTableMigratable {
      */
     private final SystemTableMigrationState migrationState;
 
-    private final InetSocketAddress address;
+    private final Database database;
 
     /**
      * The timeout period for migrating the System Table.
@@ -61,12 +61,12 @@ public class SystemTable implements ISystemTableMigratable {
 
     public SystemTable(final Database db, final boolean createTables) throws Exception {
 
+        database = db;
         inMemory = new InMemorySystemTable(db);
         persisted = new PersistentSystemTable(db, createTables);
 
         migrationState = new SystemTableMigrationState(db.getChordInterface().getLocalChordReference());
 
-        address = db.getSystemTableServer().getAddress();
     }
 
     /******************************************************************
@@ -350,6 +350,6 @@ public class SystemTable implements ISystemTableMigratable {
     @Override
     public InetSocketAddress getAddress() throws RPCException {
 
-        return address;
+        return database.getSystemTableServer().getAddress();
     }
 }

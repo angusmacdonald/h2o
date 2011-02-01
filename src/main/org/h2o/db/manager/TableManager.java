@@ -182,8 +182,6 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
      */
     private final Set<TableInfo> temporaryInitialReplicas = new HashSet<TableInfo>();
 
-    private final InetSocketAddress address;
-
     /**
      * A new Table Manager object is created when acquiring locks during a CREATE TABLE operation and when recreating or moving
      * an existing Table Manager.
@@ -193,8 +191,6 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
     public TableManager(final TableInfo tableDetails, final Database database, final boolean tableAlreadyExists) {
 
         super(database);
-
-        address = database.getTableManagerServer().getAddress();
 
         this.tableAlreadyExists = tableAlreadyExists;
 
@@ -915,6 +911,6 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
     @Override
     public InetSocketAddress getAddress() throws RPCException {
 
-        return address;
+        return getDB().getTableManagerServer().getAddress();
     }
 }

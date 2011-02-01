@@ -8,6 +8,8 @@
  */
 package org.h2o.db.remote;
 
+import java.rmi.NotBoundException;
+
 import org.h2.engine.Session;
 import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.id.DatabaseID;
@@ -42,13 +44,6 @@ public interface IDatabaseRemote {
     public IDatabaseInstanceRemote getLocalDatabaseInstance();
 
     /**
-     * Returns the port on which the local database instance is running its RMI server.
-     * 
-     * @return
-     */
-    public int getRPCPort();
-
-    /**
      * Remove references to remote objects in preparation for the shutdown of the database system.
      */
     public void shutdown();
@@ -67,16 +62,32 @@ public interface IDatabaseRemote {
     public DatabaseID getLocalMachineLocation();
 
     /**
-     * Find the database instance located at the location given. The chord reference parameter is used to get the hostname and port of that
-     * chord nodes RMI registry. This registry should contain a reference to the local database instance.
+     * Find a database instance located on the machine on which this chord reference is running.
+     * 
+     * This doesn't guarantee that the same database instance will be returned each time.
      * 
      * @param lookupLocation
-     *            The hostname and port of this reference are used to find the local RMI registry.
+     *            The hostname of this reference is used to find a local application registry.
      * @throws RPCException
      *             Thrown if there is a problem accessing the RMI registry.
      * @return Database instance remote proxy for the database at the given location.
      */
     public IDatabaseInstanceRemote getDatabaseInstanceAt(IChordRemoteReference lookupLocation) throws RPCException, RPCException;
+
+    /**
+     * Find the database instance located at the location given, with the given database name.
+     * 
+     * @param hostname
+     *            Host on which the RMI registry is located.
+     * @param name
+     *            ID of the database that this will obtain a reference to.
+     * @return Database instance remote proxy for the database at the given location.
+     * @throws RPCException
+     *             Thrown if there was an error accessing the RMI proxy.
+     * @throws NotBoundException
+     *             Thrown if there wasn't a database instance interface exposed on the RMI proxy.
+     */
+    IDatabaseInstanceRemote getDatabaseInstanceAt(String hostname, String name) throws RPCException, NotBoundException;
 
     /**
      * Find the database instance located at the location given. The parameter is used to get the hostname and RMI port of that chord nodes
